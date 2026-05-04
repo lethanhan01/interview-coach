@@ -466,10 +466,10 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    classDef candidate fill:#dbeafe,stroke:#2563eb
-    classDef systemNode fill:#dcfce7,stroke:#16a34a
-    classDef aiNode   fill:#ede9fe,stroke:#7c3aed
-    classDef dbNode   fill:#fef3c7,stroke:#d97706
+    classDef candidate fill:#dbeafe,stroke:#2563eb,color:#000000
+    classDef systemNode fill:#dcfce7,stroke:#16a34a,color:#000000
+    classDef aiNode   fill:#ede9fe,stroke:#7c3aed,color:#000000
+    classDef dbNode   fill:#fef3c7,stroke:#d97706,color:#000000
 
     Start([Bắt đầu]):::candidate --> AuthCheck{Đã đăng nhập?}:::candidate
     AuthCheck -->|Chưa| UC01["UC-01: Đăng ký / Đăng nhập\nbằng Google OAuth"]:::candidate
@@ -493,11 +493,11 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    classDef candidate fill:#dbeafe,stroke:#2563eb
-    classDef systemNode fill:#dcfce7,stroke:#16a34a
-    classDef aiNode   fill:#ede9fe,stroke:#7c3aed
-    classDef dbNode   fill:#fef3c7,stroke:#d97706
-    classDef extNode  fill:#fee2e2,stroke:#dc2626
+    classDef candidate fill:#dbeafe,stroke:#2563eb,color:#000000
+    classDef systemNode fill:#dcfce7,stroke:#16a34a,color:#000000
+    classDef aiNode fill:#ede9fe,stroke:#7c3aed,color:#000000
+    classDef dbNode fill:#fef3c7,stroke:#d97706,color:#000000
+    classDef extNode fill:#fee2e2,stroke:#dc2626,color:#000000
 
     StartCond([Điều kiện vào:\nPhiên đã cấu hình, Context Pack đã chọn]):::systemNode
 
@@ -550,10 +550,10 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    classDef candidate fill:#dbeafe,stroke:#2563eb
-    classDef systemNode fill:#dcfce7,stroke:#16a34a
-    classDef aiNode   fill:#ede9fe,stroke:#7c3aed
-    classDef dbNode   fill:#fef3c7,stroke:#d97706
+    classDef candidate fill:#dbeafe,stroke:#2563eb, color:#000000
+    classDef systemNode fill:#dcfce7,stroke:#16a34a, color:#000000
+    classDef aiNode   fill:#ede9fe,stroke:#7c3aed, color:#000000
+    classDef dbNode   fill:#fef3c7,stroke:#d97706, color:#000000
 
     StartCond([Điều kiện vào:\nSession đã hoàn thành, Surgical Feedback đã sinh]):::systemNode
 
