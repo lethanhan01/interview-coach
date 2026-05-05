@@ -5,9 +5,9 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| **Phiên bản tài liệu** | 1.5 |
+| **Phiên bản tài liệu** | 1.6 |
 | **Ngày soạn** | 05/05/2026 |
-| **Trạng thái** | Draft (Synchronized with Discovery Document v0.1) |
+| **Trạng thái** | Draft (SRS-focused revision) |
 | **Tác giả** | Lê Thành An — MSSV: 20235631 |
 | **Giảng viên hướng dẫn** | Tiến sĩ Cao Tuấn Dũng |
 | **Đơn vị** | Viện Công nghệ Thông tin và Truyền thông (SOICT), ĐHBKHN |
@@ -24,6 +24,7 @@
 | 1.3 | 03/05/2026 | Khắc phục 5 lỗi nghiêm trọng: (1) bổ sung bước 7 còn thiếu trong UC-05 Main Flow; (2) đồng bộ ngưỡng tối thiểu JD từ 50 lên 100 ký tự giữa UC-03 E-03-1 và AS-04; (3) làm rõ thứ tự bắt buộc moderation-trước-lưu-transcript trong R-05 để giải quyết mâu thuẫn với AS-02; (4) tách UC-09 thành row riêng trong Traceability Matrix; (5) bổ sung đầy đủ nhóm NFR AS, Q, OA vào Traceability Matrix. |
 | 1.4 | 03/05/2026 | Khắc phục 16 lỗi trung bình: bổ sung thuật ngữ Interview Type và Job Title vào Glossary; đồng bộ G1 với 2.2.2 (5 Mbps); làm rõ cơ chế gán Admin role; xóa quan hệ thừa AIEngine→UC-05 trong diagram; làm rõ bước [5] quy trình 2.5.1; thêm cross-reference R6-R10 → Mục 4.9; bổ sung AF-01-C (Logout), AF-02-C (xóa tài khoản), AF-05-A/B (UC-05), AF-06-C (thumbs up/down), AF-07-A/B rõ logic cột so sánh; thêm TTS preference vào UC-02; đặc tả job_title extraction trong UC-03; sửa AC-02-1 cho fresher; sửa AC-07-7 đo lường được; thêm AC-03-5, AC-07-8; bổ sung pagination UC-08; làm rõ cơ chế detect interrupted session; đồng bộ Whisper timeout E-04-3 với P-04 (10s); xử lý câu skip trong overall_score; làm rõ postcondition UC-06; giải quyết mâu thuẫn U-11 vs AF-07-B. |
 | 1.5 | 05/05/2026 | Đồng bộ với Discovery Document v0.1: bổ sung bối cảnh thị trường và motivation vào §1.1–1.2; cập nhật metrics thành công theo DD §11.1 (thêm activation rate, completion rate, return rate, thumbs up rate; đồng bộ Rewrite adoption ≥30%); thêm §1.2.5 Pivot Criteria từ DD §11.2; thêm §2.8 Design Principles từ DD §9.4; bổ sung giả định G9–G11 từ DD §10.1; đồng bộ target user 0–12 tháng; mở rộng Out of Scope từ DD §9.5; thêm tài liệu tham khảo DD; thêm bảng Insight Traceability vào §5. |
+| 1.6 | 05/05/2026 | Rà soát theo feedback: viết lại mục đích dự án, chuyển success metrics/pivot criteria/design principles sang Discovery Document, rút gọn môi trường vận hành và ràng buộc kỹ thuật, chuẩn hóa actor/business flow/use case diagram, bổ sung bảng dữ liệu đầu vào cho template Use Case, rút gọn NFR và tách Traceability Matrix sang tài liệu riêng. |
 
 ---
 
@@ -32,7 +33,6 @@
 - [1. Giới thiệu](#1-giới-thiệu)
   - [1.1 Mục đích](#11-mục-đích)
   - [1.2 Phạm vi](#12-phạm-vi)
-    - [1.2.5 Pivot Criteria](#125-pivot-criteria)
   - [1.3 Từ điển thuật ngữ](#13-từ-điển-thuật-ngữ)
   - [1.4 Tài liệu tham khảo](#14-tài-liệu-tham-khảo)
   - [1.5 Giả định & Phụ thuộc](#15-giả-định--phụ-thuộc)
@@ -42,13 +42,9 @@
   - [2.3 Biểu đồ Use Case tổng quan](#23-biểu-đồ-use-case-tổng-quan)
   - [2.4 Biểu đồ Use Case phân rã](#24-biểu-đồ-use-case-phân-rã)
   - [2.5 Quy trình nghiệp vụ](#25-quy-trình-nghiệp-vụ)
-  - [2.6 Ràng buộc công nghệ](#26-ràng-buộc-công-nghệ)
-  - [2.7 Các ràng buộc thiết kế](#27-các-ràng-buộc-thiết-kế)
-  - [2.8 Nguyên tắc thiết kế sản phẩm (Design Principles)](#28-nguyên-tắc-thiết-kế-sản-phẩm-design-principles)
 - [3. Đặc tả Use Case](#3-đặc-tả-use-case)
 - [4. Yêu cầu phi chức năng](#4-yêu-cầu-phi-chức-năng)
 - [5. Ma trận truy vết yêu cầu (Traceability Matrix)](#5-ma-trận-truy-vết-yêu-cầu-traceability-matrix)
-  - [5.2 Ma trận truy vết: Discovery Insight → SRS Requirement](#52-ma-trận-truy-vết-discovery-insight--srs-requirement)
 
 ---
 
@@ -56,18 +52,15 @@
 
 ## 1.1 Mục đích
 
-Tài liệu này là **Đặc tả Yêu cầu Phần mềm (Software Requirement Specification — SRS)** cho hệ thống **InterviewAI — AI Interview Coach System**, được phát triển trong khuôn khổ Đồ án Tốt nghiệp tại Viện Công nghệ Thông tin và Truyền thông, Đại học Bách khoa Hà Nội.
+Mục đích của dự án **InterviewAI — AI Interview Coach System** là xây dựng một ứng dụng web hỗ trợ sinh viên năm cuối và fresher CNTT tại Việt Nam luyện tập phỏng vấn xin việc trong môi trường mô phỏng có phản hồi từ AI. Hệ thống giúp Candidate tạo phiên phỏng vấn theo Job Description, trả lời bằng giọng nói hoặc văn bản, nhận câu hỏi đào sâu theo ngữ cảnh, xem feedback cụ thể theo từng đoạn transcript và luyện lại câu trả lời để cải thiện.
 
-Mục đích của tài liệu này là:
+Ở phiên bản v1.0, InterviewAI tập trung vào ba giá trị chính:
 
-1. **Định nghĩa rõ ràng** toàn bộ yêu cầu chức năng và phi chức năng của hệ thống, làm cơ sở thống nhất giữa các bên liên quan (sinh viên thực hiện, giảng viên hướng dẫn, hội đồng bảo vệ).
-2. **Xác định các ràng buộc hành vi của AI Engine** — những gì hệ thống AI phải đảm bảo (tính contextual của follow-up, actionability của feedback, nhất quán ngôn ngữ) mà không đi vào chi tiết cài đặt.
-3. **Làm nền tảng** cho các giai đoạn thiết kế hệ thống (System Design), lập trình (Development), và kiểm thử (Testing & Validation).
-4. **Giới hạn phạm vi** một cách tường minh để đảm bảo tính khả thi trong thời gian phát triển ba tháng với một lập trình viên.
+1. **Luyện tập theo ngữ cảnh tuyển dụng thực tế:** câu hỏi được sinh dựa trên JD, hồ sơ/CV và Context Pack mà Candidate lựa chọn.
+2. **Phản hồi cụ thể, có thể hành động:** feedback chỉ rõ đoạn nào trong câu trả lời tốt/chưa tốt, lý do và phiên bản cải thiện.
+3. **Vòng lặp cải thiện:** Candidate có thể rewrite câu trả lời và so sánh trước/sau để thấy điểm đã tiến bộ.
 
-Tài liệu được viết theo chuẩn **IEEE 830** có điều chỉnh. Các chi tiết kỹ thuật triển khai AI (prompt engineering, response schema, token budget, retry strategy) được tách sang **Software Architecture Document — SAD v1.0**.
-
-Tài liệu SRS này được xây dựng dựa trên kết quả của **[Discovery Document v0.1](../Discovery_Docs/Discovery_Document.md)** (05/2026) — tài liệu tổng hợp nghiên cứu người dùng (secondary research), phân tích thị trường và 5 đối thủ quốc tế, cùng định nghĩa vấn đề. Bối cảnh chính: mỗi năm có ~50.000–57.000 sinh viên CNTT tốt nghiệp tại Việt Nam nhưng chỉ ~30% sẵn sàng làm việc ngay (VINASA); 100% tools luyện phỏng vấn quốc tế chỉ hỗ trợ tiếng Anh với pricing $25–$150/tháng; chi phí AI đã giảm 200× tạo timing window để xây sản phẩm miễn phí cho sinh viên VN. Các quyết định về scope, personas, metrics thành công và design principles trong SRS đều có nguồn gốc từ Discovery Document và được tham chiếu xuyên suốt.
+Tài liệu này là **Đặc tả Yêu cầu Phần mềm (Software Requirement Specification — SRS)** cho InterviewAI. Vai trò của tài liệu là xác định phạm vi, tác nhân, quy trình nghiệp vụ, yêu cầu chức năng, yêu cầu phi chức năng và tiêu chí nghiệm thu ở mức yêu cầu. Các nội dung chiến lược sản phẩm như success metrics, pivot criteria và design principles được quản lý trong **[Discovery Document v0.1](../Discovery_Docs/Discovery_Document.md)**; các chi tiết kiến trúc, tech stack, prompt engineering, schema AI và vận hành kỹ thuật được quản lý trong **[SAD v1.0](../SAD/SAD_InterviewAI_v1.0.md)**.
 
 **Đối tượng đọc tài liệu:**
 
@@ -88,7 +81,7 @@ Tài liệu SRS này được xây dựng dựa trên kết quả của **[Disco
 
 ### 1.2.2 Mô tả tóm tắt
 
-InterviewAI là một ứng dụng web cho phép sinh viên năm cuối và fresher CNTT Việt Nam (0–12 tháng kinh nghiệm) luyện tập phỏng vấn xin việc thông qua ba tính năng cốt lõi. Sản phẩm nhắm vào khoảng trống thị trường đã được xác định qua Discovery Document: 0/5 đối thủ quốc tế hỗ trợ tiếng Việt, 100% rubric đánh giá theo Western culture, pricing $25–$150/tháng vượt xa khả năng sinh viên VN *(xem DD §3.2.3 Gap Analysis)*. Ba tính năng cốt lõi được tích hợp chặt chẽ:
+InterviewAI là một ứng dụng web cho phép sinh viên năm cuối và fresher CNTT Việt Nam (0–12 tháng kinh nghiệm) luyện tập phỏng vấn xin việc thông qua ba tính năng cốt lõi. Bối cảnh người dùng, khoảng trống thị trường và lý do lựa chọn phạm vi được trình bày trong Discovery Document; SRS này chỉ đặc tả các yêu cầu cần triển khai trong hệ thống. Ba tính năng cốt lõi được tích hợp chặt chẽ:
 
 - **Adaptive Follow-up**: AI không hỏi câu hỏi theo danh sách cố định mà đọc transcript câu trả lời của người dùng, xác định một claim hoặc điểm chưa rõ ràng, và sinh ra câu hỏi đào sâu tự nhiên dựa trên chính những gì người dùng vừa nói.
 - **Surgical Feedback**: Thay vì đưa ra nhận xét chung chung, hệ thống highlight từng đoạn cụ thể trong transcript, giải thích tại sao đoạn đó có vấn đề và cung cấp phiên bản đã cải thiện.
@@ -130,45 +123,7 @@ InterviewAI là một ứng dụng web cho phép sinh viên năm cuối và fres
 | 12 | Community features (forum, peer matching) | Cần critical mass user; phức tạp cho solo dev *(DD §9.5)* |
 | 13 | Enterprise / B2B (cho HR departments) | Khác hoàn toàn GTM; ngoài scope đồ án *(DD §9.5)* |
 
-### 1.2.4 Mục tiêu kinh doanh và đo lường thành công
-
-Prototype được coi là thành công khi đạt đồng thời các tiêu chí sau *(đồng bộ với DD §11.1 Success Metrics)*:
-
-**Adoption metrics:**
-
-| Tiêu chí | Mục tiêu | Phương pháp đo | Tần suất |
-|---|---|---|---|
-| Số user đăng ký | ≥ 50 người dùng thử nghiệm thực tế | Supabase Auth count | Daily |
-| Activation rate (đăng ký → hoàn thành 1 phiên) | ≥ 60% | Funnel analysis | Weekly |
-| Engagement — phiên trung bình/user | ≥ 2 phiên/người dùng | Session analytics | Weekly |
-
-**Engagement metrics:**
-
-| Tiêu chí | Mục tiêu | Phương pháp đo | Tần suất |
-|---|---|---|---|
-| Phiên hoàn thành (trả lời hết câu hỏi) | ≥ 70% | Session status tracking | Weekly |
-| Rewrite usage rate | ≥ 30% | Event tracking: `rewrite_started` | Weekly |
-| Return rate (quay lại trong 7 ngày) | ≥ 40% | Cohort analysis | Weekly |
-
-**Quality metrics:**
-
-| Tiêu chí | Mục tiêu | Phương pháp đo | Tần suất |
-|---|---|---|---|
-| Feedback quality | ≥ 80% đánh giá "cụ thể, hữu ích" | Post-session survey (5-point scale) | Per session |
-| Thumbs up rate | ≥ 70% | UI thumbs up/down trong UC-06 | Real-time |
-| Latency AI response | ≤ 8 giây (Surgical Feedback) | Server-side logging | Real-time |
-
-### 1.2.5 Pivot Criteria
-
-Các ngưỡng dưới đây xác định khi nào cần điều chỉnh chiến lược sản phẩm hoặc kỹ thuật *(nguồn: DD §11.2)*:
-
-| # | Điều kiện | Hành động |
-|---|---|---|
-| PC-01 | "Feedback hữu ích" rating < 50% sau 2 tuần beta | Iterate prompt engineering urgently; mời expert HR review rubric |
-| PC-02 | Activation rate < 30% | UX có vấn đề nghiêm trọng; simplify onboarding drastically |
-| PC-03 | Chi phí/phiên > $0.50 | Optimize prompt (giảm token); giảm scope; hoặc switch sang model rẻ hơn |
-| PC-04 | Whisper accuracy < 80% với tiếng Việt | Fallback text-only mode; evaluate PhoWhisper fine-tuned |
-| PC-05 | < 20 users sau 1 tháng launch | Re-evaluate distribution channels; tăng cường recruit qua network BKHN/FB groups |
+> **Ghi chú phạm vi tài liệu:** Mục tiêu kinh doanh, success metrics và pivot criteria không nằm trong SRS chính. Các nội dung này được chuyển sang Discovery Document, cụ thể tại DD §11.1 và DD §11.2, để SRS tập trung vào yêu cầu hệ thống.
 
 ---
 
@@ -239,29 +194,24 @@ Các ngưỡng dưới đây xác định khi nào cần điều chỉnh chiến
 | G3 | Người dùng có microphone hoạt động nếu muốn dùng voice input | Voice input là optional; text input là fallback |
 | G4 | Job Description được cung cấp dưới dạng văn bản thuần (plain text), không phải file | Không cần xử lý file parsing cho JD |
 | G5 | Người dùng có khả năng đọc và viết tiếng Việt hoặc tiếng Anh ở mức cơ bản | Hệ thống hỗ trợ hai ngôn ngữ, không có dịch thuật tự động |
-| G6 | OpenAI API duy trì uptime ≥ 99.5% | Theo SLA của OpenAI Enterprise; là điều kiện cần cho latency target |
-| G7 | Chi phí API OpenAI được tác giả chịu trực tiếp trong giai đoạn prototype | Không có cơ chế billing người dùng |
-| G8 | Rubric chấm điểm cho Context Pack VN và Western được nghiên cứu và thiết kế dựa trên tài liệu và phỏng vấn chuyên gia nhân sự | Chất lượng rubric ảnh hưởng trực tiếp đến chất lượng feedback; văn hóa PV VN khác biệt rõ với Western (DD §7 Insight #3, DD §6.4) |
-| G9 | Người dùng chấp nhận nói tiếng Việt với AI (voice input) | Cần validate qua pilot test; nhiều user có thể ngại nói với AI lần đầu → text input là fallback bắt buộc *(DD §10.1 A2, DD §7.3 H2)* |
-| G10 | LLM feedback tiếng Việt đủ chất lượng (cụ thể, actionable, không generic) | Đây là giả định **critical** — nếu sai sẽ ảnh hưởng trực tiếp đến core value prop; cần pilot test 5 user + HR đánh giá *(DD §10.1 A4)* |
-| G11 | Người dùng sẽ quay lại dùng ≥2 phiên (retention) | Nếu không đạt → sản phẩm chỉ là novelty; cần beta test 50 user để validate *(DD §10.1 A5)* |
+| G6 | Dịch vụ AI bên ngoài đủ khả dụng để hệ thống có thể tạo câu hỏi, follow-up, feedback và transcript trong luồng chính | Nếu phụ thuộc AI không khả dụng, hệ thống phải có fallback được mô tả tại Chương 4 |
+| G7 | Rubric chấm điểm cho Context Pack VN và Western được nghiên cứu và thiết kế dựa trên tài liệu và phỏng vấn chuyên gia nhân sự | Chất lượng rubric ảnh hưởng trực tiếp đến chất lượng feedback; văn hóa phỏng vấn VN khác biệt rõ với Western |
+| G8 | Người dùng có thể lựa chọn voice input hoặc text input tùy bối cảnh sử dụng | Voice input là giá trị chính, nhưng text input là fallback bắt buộc khi người dùng không muốn hoặc không thể ghi âm |
+| G9 | LLM feedback tiếng Việt đủ chất lượng ở mức cụ thể, actionable và không generic | Đây là giả định quan trọng ảnh hưởng trực tiếp đến core value của sản phẩm |
 
 ### 1.5.2 Phụ thuộc bên ngoài
 
 | STT | Phụ thuộc | Tác động nếu thay đổi |
 |---|---|---|
-| D1 | **OpenAI GPT-4o API** — Question Generator, Follow-up Engine, Feedback Analyzer | Nếu API thay đổi cấu trúc hoặc tăng giá đột ngột, cần đánh giá lại |
-| D2 | **OpenAI Whisper API** — Speech-to-Text | Có thể thay thế bằng Whisper self-hosted nếu cần kiểm soát chi phí |
-| D3 | **Supabase** — Auth, PostgreSQL, pgvector, Storage | Nếu Supabase thay đổi chính sách, có thể migrate sang self-hosted PostgreSQL |
-| D4 | **Cloudflare R2** — Lưu trữ audio recording | Có thể thay thế bằng AWS S3 hoặc Supabase Storage |
-| D5 | **Vercel** — Deploy Next.js frontend | Có thể deploy trên bất kỳ Node.js hosting nào |
-| D6 | **Railway / Render** — Deploy FastAPI backend | Có thể containerize và deploy trên VPS |
+| D1 | Dịch vụ LLM — Question Generator, Follow-up Engine, Feedback Analyzer | Nếu dịch vụ không khả dụng, các luồng AI phải chuyển sang fallback hoặc thông báo phù hợp |
+| D2 | Dịch vụ Speech-to-Text — chuyển đổi audio thành transcript | Nếu STT thất bại, Candidate phải có thể chuyển sang nhập câu trả lời bằng văn bản |
+| D3 | Dịch vụ xác thực OAuth — đăng nhập bằng tài khoản Google | Nếu OAuth lỗi, Candidate phải nhận được thông báo lỗi rõ ràng và có thể thử lại |
+| D4 | Cơ sở dữ liệu và lưu trữ file | Hệ thống phải lưu hồ sơ, phiên, transcript, feedback và file liên quan theo chính sách bảo mật dữ liệu |
 
 ### 1.5.3 Ràng buộc về thời gian và nguồn lực
 
 - **Thời gian phát triển:** 3 tháng (tháng 4 → tháng 6/2026), deadline bảo vệ trước tháng 7/2026.
 - **Nguồn lực:** 01 lập trình viên duy nhất — toàn bộ frontend, backend, AI integration, testing và deployment.
-- **Ngân sách API:** Chi phí ước tính ~$0.15–0.25/phiên (5 câu + follow-up với GPT-4o). Cần kiểm soát rate limit và token budget chặt chẽ.
 
 ---
 
@@ -269,463 +219,228 @@ Các ngưỡng dưới đây xác định khi nào cần điều chỉnh chiến
 
 ## 2.1 Các tác nhân
 
-Hệ thống InterviewAI bao gồm ba tác nhân chính tham gia vào các luồng nghiệp vụ khác nhau.
+Hệ thống InterviewAI có hai tác nhân người dùng và một tác nhân hệ thống phụ trợ. Phần này mô tả tác nhân ở mức yêu cầu nghiệp vụ; persona chi tiết, anti-persona và rationale sản phẩm nằm trong Discovery Document.
 
 ### 2.1.1 Người dùng (Candidate)
 
-**Mô tả:** Đối tượng người dùng chính của hệ thống. Đây là những cá nhân đang chuẩn bị cho quá trình tìm kiếm việc làm và muốn cải thiện kỹ năng phỏng vấn thông qua luyện tập có phản hồi từ AI.
-
-**Đặc điểm** *(chi tiết personas và anti-personas: xem DD §4)*:
-- **Core persona (Priority High):** Sinh viên năm cuối CNTT (22–23 tuổi) các trường đại học kỹ thuật tại Việt Nam, chưa có kinh nghiệm đi làm *(DD Persona A: Linh)*.
-- **Core persona (Priority High):** Fresher CNTT có 0–12 tháng kinh nghiệm, đã từng phỏng vấn nhưng chưa có offer *(DD Persona B: Hùng)*.
-- **Secondary persona (Priority Medium — V2):** Người chuyển ngành (non-tech pivot) muốn chuẩn bị cho phỏng vấn BA/PM trong lĩnh vực tech *(DD Persona C: Mai)*.
-
-**Quyền hạn trong hệ thống:**
-- Tạo và quản lý hồ sơ luyện tập cá nhân.
-- Khởi tạo và thực hiện phiên phỏng vấn AI.
-- Xem, tương tác với Surgical Feedback và thực hiện Rewrite & Compare.
-- Xem lịch sử toàn bộ các phiên đã thực hiện.
+| Thành phần | Mô tả |
+|---|---|
+| Actor | Candidate |
+| Mục tiêu | Luyện tập phỏng vấn xin việc theo JD, nhận feedback cụ thể và cải thiện câu trả lời qua các lần luyện lại. |
+| Đối tượng chính | Sinh viên năm cuối CNTT và fresher CNTT tại Việt Nam có 0–12 tháng kinh nghiệm. |
+| Quyền hạn | Quản lý hồ sơ luyện tập, tạo phiên phỏng vấn, trả lời câu hỏi, xem feedback, rewrite câu trả lời và xem lịch sử phiên. |
+| Use Case liên quan | UC-01, UC-02, UC-03, UC-03b, UC-04, UC-06, UC-07, UC-08 |
+| Dữ liệu thao tác | Thông tin hồ sơ, CV PDF, JD, cấu hình phiên, transcript câu trả lời, đánh giá feedback, lịch sử phiên. |
 
 ### 2.1.2 Quản trị viên (Admin)
 
-**Mô tả:** Người quản lý hệ thống, chịu trách nhiệm duy trì chất lượng dữ liệu và giám sát hoạt động của người dùng. Trong giai đoạn prototype, vai trò Admin thường do tác giả đồng thời đảm nhiệm.
-
-> **Cách gán vai trò Admin (v1.0):** Không có luồng đăng ký Admin qua giao diện. Vai trò `admin` được gán thủ công trực tiếp trong Supabase Dashboard bởi tác giả (cập nhật field `role = admin` trong bảng `users`). Admin đăng nhập bằng cùng luồng Google OAuth với Candidate (UC-01); hệ thống phân biệt vai trò qua JWT claims sau khi xác thực. Chỉ tài khoản có `role = admin` mới truy cập được các endpoint `/admin/*` (xem S-03).
-
-**Quyền hạn trong hệ thống:**
-- Xem và quản lý danh sách người dùng đăng ký.
-- CRUD (Tạo, Đọc, Cập nhật, Xóa) câu hỏi trong Question Bank.
-- Gắn tag câu hỏi theo vị trí công việc, level và Context Pack.
-- Xem số liệu sử dụng cơ bản của hệ thống.
+| Thành phần | Mô tả |
+|---|---|
+| Actor | Admin |
+| Mục tiêu | Duy trì dữ liệu hệ thống và hỗ trợ vận hành prototype. |
+| Cách cấp quyền | Không có luồng đăng ký Admin qua giao diện. Quyền `admin` được gán thủ công bởi tác giả trong cơ sở dữ liệu. |
+| Quyền hạn | Xem/quản lý người dùng, khóa/mở khóa tài khoản, thêm/sửa/xóa mềm câu hỏi trong Question Bank. |
+| Use Case liên quan | UC-01, UC-09, UC-10 |
+| Dữ liệu thao tác | Tài khoản người dùng, trạng thái tài khoản, câu hỏi seed, tag câu hỏi, Context Pack/category/difficulty của câu hỏi. |
 
 ### 2.1.3 Hệ thống AI (AI Engine)
 
-**Mô tả:** AI Engine không phải là một người dùng mà là một tác nhân hệ thống tự động, được kích hoạt bởi các hành động của Candidate. AI Engine giao tiếp với OpenAI API và trả kết quả về cho hệ thống backend để hiển thị cho người dùng.
-
-AI Engine bao gồm **ba module chức năng độc lập**, mỗi module có prompt riêng, input/output schema riêng và cơ chế fallback riêng:
-
----
-
-#### Module 1: Question Generator
-
-| Thuộc tính | Giá trị |
+| Thành phần | Mô tả |
 |---|---|
-| **Kích hoạt bởi** | UC-03: Cấu hình phiên phỏng vấn |
-| **Mô hình AI** | GPT-4o (JSON mode) |
-| **Input** | Job Description (plain text) + Context Pack ID + số câu yêu cầu (3–7) + CV người dùng (optional) |
-| **Output** | Danh sách câu hỏi phỏng vấn, mỗi câu có category (behavioral/situational/motivational) và difficulty level |
-| **Đặc điểm** | Câu hỏi được điều chỉnh theo văn hóa của Context Pack. Với VN Pack: câu hỏi về teamwork, tính kiên nhẫn, tôn trọng cấp trên. Với Western Pack: câu hỏi nhấn vào impact, ownership, data-driven. |
+| Actor | AI Engine |
+| Loại tác nhân | Tác nhân hệ thống phụ trợ, không phải người dùng cuối. |
+| Mục tiêu | Hỗ trợ hệ thống sinh câu hỏi, sinh follow-up, phân tích transcript và tạo Surgical Feedback. |
+| Kích hoạt bởi | Hành động của Candidate trong UC-03, UC-04, UC-05 và UC-07. |
+| Use Case liên quan | UC-03, UC-04, UC-05, UC-07 |
+| Dữ liệu xử lý | JD, Context Pack, CV structured data, câu hỏi, transcript, voice metrics, feedback schema. |
 
-#### Module 2: Follow-up Engine
-
-| Thuộc tính | Giá trị |
-|---|---|
-| **Kích hoạt bởi** | UC-04: Sau mỗi câu trả lời của Candidate |
-| **Mô hình AI** | GPT-4o (JSON mode) |
-| **Input** | Transcript câu trả lời + Câu hỏi gốc + JD + Context Pack rubric |
-| **Output** | JSON chứa follow_up_type, target_phrase, follow_up_question (hoặc skip_follow_up: true) |
-| **Đặc điểm** | Phải tham chiếu ít nhất 1 phrase cụ thể từ transcript của người dùng. Không được sinh câu hỏi generic. Nếu câu trả lời đã đầy đủ và rõ ràng, trả về skip_follow_up: true. |
-
-#### Module 3: Feedback Analyzer
-
-| Thuộc tính | Giá trị |
-|---|---|
-| **Kích hoạt bởi** | UC-05: Sau khi Candidate hoàn thành câu trả lời (và follow-up nếu có) |
-| **Mô hình AI** | GPT-4o (JSON mode) |
-| **Input** | Transcript đầy đủ (câu gốc + follow-up) + Câu hỏi + JD + Context Pack rubric + CV (optional) |
-| **Output** | Surgical Feedback JSON: mảng segments với annotation (level, reason, suggestion, improved_version), overall_score, model_answer, key_takeaway |
-| **Đặc điểm** | Đây là module phức tạp nhất. Mỗi segment phải có improved_version cụ thể, không phải nhận xét chung chung. Rubric chấm điểm thay đổi hoàn toàn theo Context Pack. |
+AI Engine gồm ba năng lực ở mức yêu cầu: **Question Generator**, **Follow-up Engine** và **Feedback Analyzer**. Chi tiết prompt, schema, retry/fallback và triển khai kỹ thuật nằm trong SAD.
 
 ---
 
 ## 2.2 Môi trường vận hành
 
-### 2.2.1 Môi trường triển khai
+SRS chỉ giữ các điều kiện vận hành ảnh hưởng trực tiếp đến người dùng và yêu cầu hệ thống. Sơ đồ triển khai, hosting, cấu hình server, lựa chọn framework và phân tích vận hành được trình bày trong **[SAD v1.0](../SAD/SAD_InterviewAI_v1.0.md)**.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        INTERNET                                  │
-└─────────────┬──────────────────────────────────┬────────────────┘
-              │                                  │
-   ┌──────────▼──────────┐           ┌───────────▼────────────┐
-   │   Frontend (Vercel)  │           │  Backend AI (Railway)  │
-   │   Next.js 14 PWA     │◄─────────►│  FastAPI (Python)      │
-   │   Port: 443 (HTTPS)  │           │  Port: 8000 (internal) │
-   └─────────────────────┘           └───────────┬────────────┘
-                                                  │
-              ┌───────────────────────────────────┼───────────────┐
-              │                                   │               │
-   ┌──────────▼──────────┐           ┌────────────▼────┐  ┌──────▼──────┐
-   │   Supabase Cloud     │           │  OpenAI API      │  │ Cloudflare  │
-   │   - PostgreSQL       │           │  - GPT-4o        │  │ R2 Storage  │
-   │   - Auth (JWT)       │           │  - Whisper-1     │  │ (Audio)     │
-   │   - pgvector         │           │  - Embeddings    │  └─────────────┘
-   └─────────────────────┘           └─────────────────┘
-```
-
-### 2.2.2 Yêu cầu phía máy khách (Client-side)
-
-| Yêu cầu | Tối thiểu | Khuyến nghị |
-|---|---|---|
-| Trình duyệt | Chrome 90+, Firefox 88+, Safari 14+ | Chrome 120+ |
-| Kết nối internet | 5 Mbps | 10 Mbps trở lên |
-| Microphone | Bắt buộc nếu dùng voice | Microphone tích hợp |
-| RAM | 4 GB | 8 GB |
-| JavaScript | Phải bật | — |
-
-### 2.2.3 Yêu cầu phía máy chủ (Server-side)
-
-| Thành phần | Cấu hình tối thiểu | Ghi chú |
-|---|---|---|
-| Next.js (Vercel) | Serverless Functions | Tự động scale |
-| FastAPI (Railway) | 512 MB RAM, 0.5 vCPU | Scale khi cần |
-| Supabase | Free tier (500 MB DB) | Đủ cho prototype |
-| Cloudflare R2 | 10 GB storage | $0.015/GB/tháng sau 10 GB |
+| Nhóm | Yêu cầu vận hành |
+|---|---|
+| Nền tảng sử dụng | Ứng dụng web chạy trên trình duyệt, không yêu cầu cài đặt app native. |
+| Trình duyệt | Trình duyệt hiện đại có bật JavaScript. |
+| Kết nối mạng | Cần kết nối internet ổn định để đăng nhập, tải phiên, upload audio và nhận phản hồi AI. |
+| Microphone | Chỉ bắt buộc khi Candidate chọn trả lời bằng giọng nói; text input luôn là fallback. |
+| Ngôn ngữ | Hệ thống hỗ trợ tiếng Việt và tiếng Anh trong luồng luyện phỏng vấn. |
 
 ---
 
 ## 2.3 Biểu đồ Use Case tổng quan
 
+Biểu đồ dưới đây dùng Mermaid `flowchart` để mô phỏng UML Use Case Diagram: actor nằm ngoài system boundary, use case nằm trong boundary, đường nét đứt biểu diễn `include`/`extend`. Biểu đồ không mô tả thứ tự xử lý.
+
 ```mermaid
 flowchart LR
-    Candidate(["👤 Candidate"])
-    Admin(["🔧 Admin"])
-    AIEngine(["🤖 AI Engine"])
+    classDef actor fill:#ffffff,stroke:#111827,color:#111827
+    classDef usecase fill:#eef2ff,stroke:#4f46e5,color:#111827
+    classDef system fill:#f8fafc,stroke:#64748b,color:#111827
 
-    subgraph SYS ["Hệ thống InterviewAI"]
+    Candidate["Candidate"]:::actor
+    Admin["Admin"]:::actor
+    AI["AI Engine\n(system actor)"]:::actor
+
+    subgraph SYS["InterviewAI System"]
         direction TB
-
-        subgraph GRP_A ["Nhóm A — Luyện phỏng vấn"]
-            UC01["UC-01\nĐăng ký / Đăng nhập"]
-            UC02["UC-02\nQuản lý hồ sơ"]
-            UC03["UC-03\nCấu hình phiên"]
-            UC03b["UC-03b\nChọn Context Pack"]
-            UC04["UC-04\nThực hiện phiên PV"]
-            UC05["UC-05\nSurgical Feedback"]
-            UC06["UC-06\nXem Feedback chi tiết"]
-            UC07["UC-07\nRewrite & Compare"]
-            UC08["UC-08\nXem lịch sử phiên"]
-        end
-
-        subgraph GRP_B ["Nhóm B — Quản trị hệ thống"]
-            UC09["UC-09\nQuản trị người dùng"]
-            UC10["UC-10\nQuản lý Question Bank"]
-        end
+        UC01(["UC-01\nĐăng ký / Đăng nhập"]):::usecase
+        UC02(["UC-02\nQuản lý hồ sơ luyện tập"]):::usecase
+        UC03(["UC-03\nCấu hình phiên phỏng vấn"]):::usecase
+        UC03b(["UC-03b\nChọn Context Pack"]):::usecase
+        UC04(["UC-04\nThực hiện phiên phỏng vấn AI"]):::usecase
+        UC05(["UC-05\nAI sinh Surgical Feedback"]):::usecase
+        UC06(["UC-06\nXem Surgical Feedback chi tiết"]):::usecase
+        UC07(["UC-07\nRewrite & Compare"]):::usecase
+        UC08(["UC-08\nXem danh sách phiên luyện tập"]):::usecase
+        UC09(["UC-09\nQuản trị người dùng"]):::usecase
+        UC10(["UC-10\nQuản lý ngân hàng câu hỏi"]):::usecase
     end
 
-    Candidate --> UC01
-    Candidate --> UC02
-    Candidate --> UC03
-    Candidate --> UC03b
-    Candidate --> UC04
-    Candidate --> UC06
-    Candidate --> UC07
-    Candidate --> UC08
+    Candidate --- UC01
+    Candidate --- UC02
+    Candidate --- UC03
+    Candidate --- UC04
+    Candidate --- UC06
+    Candidate --- UC07
+    Candidate --- UC08
 
-    UC03b -.->|include| UC03
-    UC04 -.->|include| UC05
-    UC06 -.->|include| UC05
+    Admin --- UC01
+    Admin --- UC09
+    Admin --- UC10
 
-    AIEngine --> UC04
+    AI --- UC03
+    AI --- UC04
+    AI --- UC05
+    AI --- UC07
 
-    Admin --> UC09
-    Admin --> UC10
+    UC03 -. "<<include>>" .-> UC03b
+    UC04 -. "<<include>>" .-> UC05
+    UC07 -. "<<include>>" .-> UC05
+    UC06 -. "<<extend>>" .-> UC07
 ```
 
 ---
 
 ## 2.4 Biểu đồ Use Case phân rã
 
-### 2.4.1 Phân rã: Thực hiện phiên phỏng vấn AI (UC-04)
-
-```mermaid
-flowchart TD
-    UC04["UC-04\nThực hiện phiên PV"]
-
-    UC04 --> A["Nhận câu hỏi từ\nQuestion Generator"]
-    A --> B["Trả lời bằng\nVoice hoặc Text"]
-    B --> C["Transcribe audio\n(Whisper API)"]
-    C --> D["Follow-up Engine\nphân tích transcript"]
-    D --> E{Skip\nfollow-up?}
-    E -->|Không| F["Hiển thị câu\nfollow-up cho user"]
-    F --> G["User trả lời follow-up"]
-    G --> H["Feedback Analyzer\nsinh Surgical Feedback"]
-    E -->|Có| H
-    H --> I{Còn câu\nhỏi không?}
-    I -->|Có| A
-    I -->|Không| J["Kết thúc phiên\nLưu session vào DB"]
-```
-
-### 2.4.2 Phân rã: Xem Surgical Feedback & Rewrite (UC-06 + UC-07)
-
-```mermaid
-flowchart TD
-    UC06["UC-06\nXem Surgical Feedback"]
-
-    UC06 --> A["Hiển thị\nAnnotated Transcript"]
-    A --> B["Segment màu XANH\ngood"]
-    A --> C["Segment màu VÀNG\nwarning"]
-    A --> D["Segment màu ĐỎ\ncritical"]
-
-    C --> E["Click/hover →\nPopup: reason +\nsuggestion +\nimproved_version"]
-    D --> E
-
-    E --> F{User muốn\nluyện lại?}
-    F -->|Có| UC07["UC-07\nRewrite & Compare"]
-    F -->|Không| G["Xem Model Answer\n& Key Takeaway"]
-
-    UC07 --> H["User nói/gõ\nlại câu trả lời"]
-    H --> I["Feedback Analyzer\nre-evaluate với\ncùng rubric"]
-    I --> J["Side-by-side:\nAnnotation cũ vs mới\n+ Delta Score"]
-```
-
-### 2.4.3 Phân rã: Quản lý hồ sơ luyện tập (UC-02)
+### 2.4.1 Nhóm Luyện phỏng vấn (Candidate)
 
 ```mermaid
 flowchart LR
-    UC02["UC-02\nQuản lý hồ sơ"] --> A["Cập nhật thông tin\ncá nhân"]
-    UC02 --> B["Upload CV (PDF)"]
-    UC02 --> C["Xem lịch sử\nphiên luyện tập"]
-    B --> D["Parse CV\n(pdfplumber)"]
-    D --> E["Lưu structured\nCV data vào DB"]
-    E --> F["Sử dụng trong\nQuestion Generator\n& Feedback Analyzer"]
+    classDef actor fill:#ffffff,stroke:#111827,color:#111827
+    classDef usecase fill:#eef2ff,stroke:#4f46e5,color:#111827
+
+    Candidate["Candidate"]:::actor
+
+    subgraph Interview["Interview Practice"]
+        UC01(["UC-01\nĐăng ký / Đăng nhập"]):::usecase
+        UC02(["UC-02\nQuản lý hồ sơ"]):::usecase
+        UC03(["UC-03\nCấu hình phiên"]):::usecase
+        UC03b(["UC-03b\nChọn Context Pack"]):::usecase
+        UC04(["UC-04\nThực hiện phiên"]):::usecase
+        UC05(["UC-05\nSinh feedback"]):::usecase
+        UC06(["UC-06\nXem feedback"]):::usecase
+        UC07(["UC-07\nRewrite & Compare"]):::usecase
+        UC08(["UC-08\nXem lịch sử"]):::usecase
+    end
+
+    Candidate --- UC01
+    Candidate --- UC02
+    Candidate --- UC03
+    Candidate --- UC04
+    Candidate --- UC06
+    Candidate --- UC07
+    Candidate --- UC08
+
+    UC03 -. "<<include>>" .-> UC03b
+    UC04 -. "<<include>>" .-> UC05
+    UC06 -. "<<extend>>" .-> UC07
+    UC08 -. "<<extend>>" .-> UC06
 ```
 
-### 2.4.4 Phân rã: Quản lý Question Bank (UC-10)
+### 2.4.2 Nhóm Quản trị hệ thống (Admin)
 
 ```mermaid
 flowchart LR
-    UC10["UC-10\nQuestion Bank"] --> A["Thêm câu hỏi mới"]
-    UC10 --> B["Sửa câu hỏi"]
-    UC10 --> C["Xóa câu hỏi"]
-    UC10 --> D["Tìm kiếm / Lọc\ncâu hỏi"]
-    A --> E["Gắn tag:\nContext Pack\nCategory / Level"]
-    D --> F["Lọc theo:\nVN / Western\nBehavioral / Situational\nJunior / Senior"]
+    classDef actor fill:#ffffff,stroke:#111827,color:#111827
+    classDef usecase fill:#eef2ff,stroke:#4f46e5,color:#111827
+
+    Admin["Admin"]:::actor
+
+    subgraph AdminScope["Administration"]
+        UC09(["UC-09\nQuản trị người dùng"]):::usecase
+        UC10(["UC-10\nQuản lý ngân hàng câu hỏi"]):::usecase
+    end
+
+    Admin --- UC09
+    Admin --- UC10
 ```
 
 ---
 
 ## 2.5 Quy trình nghiệp vụ
 
-### 2.5.1 Quy trình sử dụng phần mềm tổng quan
+### 2.5.1 Quy trình Candidate
 
 ```mermaid
 flowchart TD
-    classDef candidate fill:#dbeafe,stroke:#2563eb,color:#000000
-    classDef systemNode fill:#dcfce7,stroke:#16a34a,color:#000000
-    classDef aiNode   fill:#ede9fe,stroke:#7c3aed,color:#000000
-    classDef dbNode   fill:#fef3c7,stroke:#d97706,color:#000000
+    classDef actorStep fill:#dbeafe,stroke:#2563eb,color:#111827
+    classDef systemStep fill:#f8fafc,stroke:#64748b,color:#111827
 
-    Start([Bắt đầu]):::candidate --> AuthCheck{Đã đăng nhập?}:::candidate
-    AuthCheck -->|Chưa| UC01["UC-01: Đăng ký / Đăng nhập\nbằng Google OAuth"]:::candidate
-    AuthCheck -->|Rồi| ProfileCheck
-    UC01 --> ProfileCheck{Hồ sơ đã\nhoàn chỉnh?}:::systemNode
-    ProfileCheck -->|Chưa| UC02["UC-02: Tạo / Cập nhật hồ sơ\n(vị trí, ngôn ngữ, CV PDF, cài đặt TTS)"]:::candidate
-    ProfileCheck -->|Đã có| UC03["UC-03: Tạo phiên mới\n(JD, số câu 3–7, Context Pack VN / Western)"]:::candidate
-    UC02 --> UC03
-    UC03 --> UC04["UC-04: Thực hiện phiên phỏng vấn AI\n▶ Xem chi tiết 2.5.2"]:::systemNode
-    UC04 --> UC0506["UC-05 / UC-06: Xem Surgical Feedback\n▶ Xem chi tiết 2.5.3"]:::systemNode
-    UC0506 --> RWDecision{Rewrite\n& Compare?}:::candidate
-    RWDecision -->|Có – tối đa 5 lần mỗi câu| UC07["UC-07: Rewrite & Compare"]:::candidate
-    RWDecision -->|Không| SaveHist
-    UC07 --> SaveHist[("UC-08: Phiên lưu vào lịch sử")]:::dbNode
-    SaveHist --> End([Kết thúc]):::candidate
+    Start([Candidate bắt đầu sử dụng hệ thống]):::actorStep
+    Login["UC-01\nĐăng ký / đăng nhập"]:::actorStep
+    Profile{"Hồ sơ luyện tập\nđã hoàn chỉnh?"}:::systemStep
+    UpdateProfile["UC-02\nCập nhật hồ sơ / upload CV"]:::actorStep
+    Configure["UC-03 + UC-03b\nNhập JD, chọn số câu,\nchọn Context Pack"]:::actorStep
+    Interview["UC-04\nTrả lời câu hỏi bằng voice hoặc text"]:::actorStep
+    Feedback["UC-06\nXem Surgical Feedback"]:::actorStep
+    Rewrite{"Muốn luyện lại\ncâu trả lời?"}:::actorStep
+    RewriteUC["UC-07\nRewrite & Compare"]:::actorStep
+    History["UC-08\nXem lại lịch sử phiên"]:::actorStep
+    End([Kết thúc luồng Candidate]):::actorStep
+
+    Start --> Login --> Profile
+    Profile -->|Chưa| UpdateProfile --> Configure
+    Profile -->|Rồi| Configure
+    Configure --> Interview --> Feedback --> Rewrite
+    Rewrite -->|Có| RewriteUC --> History
+    Rewrite -->|Không| History
+    History --> End
 ```
 
-> **Chú thích màu:** 🔵 Xanh dương = Candidate &nbsp;|&nbsp; 🟢 Xanh lá = Hệ thống &nbsp;|&nbsp; 🟡 Vàng = Database
-
-### 2.5.2 Quy trình thực hiện một phiên phỏng vấn AI
+### 2.5.2 Quy trình Admin
 
 ```mermaid
 flowchart TD
-    classDef candidate fill:#dbeafe,stroke:#2563eb,color:#000000
-    classDef systemNode fill:#dcfce7,stroke:#16a34a,color:#000000
-    classDef aiNode fill:#ede9fe,stroke:#7c3aed,color:#000000
-    classDef dbNode fill:#fef3c7,stroke:#d97706,color:#000000
-    classDef extNode fill:#fee2e2,stroke:#dc2626,color:#000000
+    classDef actorStep fill:#dbeafe,stroke:#2563eb,color:#111827
 
-    StartCond([Điều kiện vào:\nPhiên đã cấu hình, Context Pack đã chọn]):::systemNode
+    Start([Admin đăng nhập]):::actorStep
+    UserMgmt["UC-09\nXem danh sách người dùng,\nkhóa/mở khóa tài khoản"]:::actorStep
+    QuestionMgmt["UC-10\nThêm, sửa, xóa mềm,\ntìm kiếm/lọc câu hỏi"]:::actorStep
+    End([Kết thúc luồng Admin]):::actorStep
 
-    StartCond --> QGen["Question Generator – GPT-4o\nSinh câu hỏi từ JD + Context Pack + Interview Type"]:::aiNode
-    QGen --> ShowQ["Hiển thị câu hỏi dạng text\n(số câu / tổng số)"]:::systemNode
-    ShowQ --> TTSCheck{tts_enabled\ntrong hồ sơ?}:::systemNode
-    TTSCheck -->|Bật| ReadTTS["Đọc to câu hỏi bằng TTS"]:::systemNode
-    TTSCheck -->|Tắt| AnswerMode
-    ReadTTS --> AnswerMode
-
-    AnswerMode{Candidate chọn\ncách trả lời}:::candidate
-    AnswerMode -->|Ghi âm| RecordAudio["Nhấn Ghi âm → Dừng\n(MediaRecorder API)"]:::candidate
-    AnswerMode -->|Nhập text| TypeAnswer["Gõ câu trả lời\nvào text box"]:::candidate
-    AnswerMode -->|Bỏ qua| SkipQ["Đánh dấu skipped = true\n(không tính điểm)"]:::systemNode
-
-    RecordAudio --> UploadR2["Upload audio → Cloudflare R2"]:::systemNode
-    UploadR2 --> WhisperAPI["Whisper API\nSTT: audio → transcript\n+ WPM, filler count, pause count"]:::extNode
-    WhisperAPI --> TranscriptReady["Transcript sẵn sàng + voice metrics"]:::systemNode
-    TypeAnswer --> TranscriptReady
-
-    TranscriptReady --> ModAPI["OpenAI Moderation API\nKiểm tra nội dung transcript"]:::extNode
-    ModAPI -->|Flagged| WarnUser["Cảnh báo nội dung không phù hợp\nKhông lưu – yêu cầu trả lời lại"]:::systemNode
-    WarnUser --> AnswerMode
-    ModAPI -->|Safe| SaveTransDB[("Lưu transcript vào DB\n(trước khi gọi AI)")]:::dbNode
-
-    SaveTransDB --> FUEngine["Follow-up Engine – GPT-4o\nInput: transcript + câu gốc + JD + rubric\nphân tích target_phrase"]:::aiNode
-    FUEngine --> FUDecision{skip_follow_up?}:::systemNode
-    FUDecision -->|false| ShowFU["Hiển thị câu follow-up"]:::systemNode
-    ShowFU --> FUAnswer["Candidate trả lời follow-up\n(voice hoặc text)"]:::candidate
-    FUAnswer --> CombineTrans["Gộp transcript:\ncâu gốc + follow-up"]:::systemNode
-    FUDecision -->|true| FBAInput
-    CombineTrans --> FBAInput["Input: combined transcript\n+ JD + rubric + Context Pack + CV"]:::systemNode
-
-    FBAInput --> FBAnalyzer["Feedback Analyzer – GPT-4o\nPydantic schema validation\nOutput: segments[], overall_score,\nmodel_answer, key_takeaway"]:::aiNode
-    FBAnalyzer --> LoadingInd["Loading indicator ~3–8 giây"]:::systemNode
-    LoadingInd --> SaveFeedDB[("Lưu feedback vào DB")]:::dbNode
-
-    SaveFeedDB --> NextQCheck{Còn câu hỏi?}:::systemNode
-    SkipQ --> NextQCheck
-    NextQCheck -->|Còn| QGen
-    NextQCheck -->|Hết| CalcScore["Tính session.overall_score\n= TB các câu đã trả lời\ncâu skip hiển thị —"]:::systemNode
-    CalcScore --> UpdateSess[("session.status = completed")]:::dbNode
-    UpdateSess --> EndScreen["Màn hình kết thúc\nTổng điểm + WPM\nNút Xem Feedback chi tiết"]:::systemNode
-    EndScreen --> EndCond([Điều kiện ra:\nSession lưu đầy đủ transcript, annotation, metadata]):::systemNode
+    Start --> UserMgmt
+    Start --> QuestionMgmt
+    UserMgmt --> End
+    QuestionMgmt --> End
 ```
 
-> **Chú thích màu:** 🔵 Xanh dương = Candidate &nbsp;|&nbsp; 🟢 Xanh lá = Hệ thống / Backend &nbsp;|&nbsp; 🟣 Tím = AI Engine (GPT-4o) &nbsp;|&nbsp; 🟡 Vàng = Database &nbsp;|&nbsp; 🔴 Đỏ = External API
+### 2.5.3 Đối chiếu quy trình nghiệp vụ với Use Case
 
-### 2.5.3 Quy trình xem Surgical Feedback và Rewrite & Compare
-
-```mermaid
-flowchart TD
-    classDef candidate fill:#dbeafe,stroke:#2563eb, color:#000000
-    classDef systemNode fill:#dcfce7,stroke:#16a34a, color:#000000
-    classDef aiNode   fill:#ede9fe,stroke:#7c3aed, color:#000000
-    classDef dbNode   fill:#fef3c7,stroke:#d97706, color:#000000
-
-    StartCond([Điều kiện vào:\nSession đã hoàn thành, Surgical Feedback đã sinh]):::systemNode
-
-    StartCond --> ShowAnnotated["Hiển thị Annotated Transcript\noverall_score và Key Takeaway ở đầu trang\nXANH = good  |  VÀNG = warning  |  ĐỎ = critical"]:::systemNode
-
-    ShowAnnotated --> ClickSeg{Candidate click\nvào segment?}:::candidate
-    ClickSeg -->|"Click VÀNG hoặc ĐỎ"| ShowPopup["Pop-up hiện:\n(1) Reason – tại sao có vấn đề\n(2) Suggestion – hướng cải thiện\n(3) Improved Version – đoạn đã viết lại"]:::systemNode
-    ShowPopup --> ClickSeg
-    ClickSeg -->|Xem tiếp| ViewModelAns["Xem Model Answer\ncâu trả lời mẫu dựa trên\nJD + Context Pack + CV"]:::systemNode
-
-    ViewModelAns --> ThumbsRating{Đánh giá\nfeedback?}:::candidate
-    ThumbsRating -->|"👍 Hữu ích / 👎 Chưa hữu ích"| SaveRating[("Lưu vào ai_quality_log\n(trong vòng 5 phút)")]:::dbNode
-    ThumbsRating -->|Bỏ qua| RWChoice
-    SaveRating --> RWChoice
-
-    RWChoice{Rewrite\n& Compare?}:::candidate
-    RWChoice -->|Không| EndCond
-
-    RWChoice -->|Có| CheckAttempt{"Số lần thử\n<= 5?"}:::systemNode
-    CheckAttempt -->|"Đã đủ 5 lần"| MaxReached["Đã đạt giới hạn\n5 lần rewrite / câu"]:::systemNode
-    MaxReached --> EndCond
-    CheckAttempt -->|Còn lần thử| RewriteInput["Candidate nhấn Luyện lại câu này\n(voice hoặc text)"]:::candidate
-
-    RewriteInput --> FBReanalyze["Feedback Analyzer – GPT-4o\nRe-evaluate với cùng rubric"]:::aiNode
-    FBReanalyze --> SaveNewFeed[("Lưu attempt mới vào DB")]:::dbNode
-    SaveNewFeed --> ShowSideBySide["Hiển thị Side-by-Side\nLEFT: lần trước (lần 3+: lần tốt nhất)\nRIGHT: lần vừa thực hiện\nCENTER: Delta score ↑+X / ↓-X"]:::systemNode
-
-    ShowSideBySide --> ImpNote["improvement_note:\n>= 1 yếu tố cụ thể đã thay đổi\n(filler words, STAR, kết quả định lượng...)"]:::systemNode
-    ImpNote --> RWChoice
-
-    EndCond([Điều kiện ra:\nCandidate đã xem xong feedback\nRewrite là tùy chọn, không bắt buộc]):::candidate
-```
-
-> **Chú thích màu:** 🔵 Xanh dương = Candidate &nbsp;|&nbsp; 🟢 Xanh lá = Hệ thống / Backend &nbsp;|&nbsp; 🟣 Tím = AI Engine (GPT-4o) &nbsp;|&nbsp; 🟡 Vàng = Database
-
----
-
-## 2.6 Ràng buộc công nghệ
-
-Mục này liệt kê các ràng buộc công nghệ **có ảnh hưởng trực tiếp đến yêu cầu hệ thống** (phạm vi, giao diện ngoài, tính sẵn có). Lựa chọn tech stack đầy đủ, phiên bản, lý do chọn và kiến trúc triển khai chi tiết được trình bày trong **[SAD v1.0 — Mục 1](SAD_InterviewAI_v1.0.md#1-kiến-trúc-hệ-thống)**.
-
-### 2.6.1 Giao diện ngoài bắt buộc
-
-| Dịch vụ bên ngoài | Vai trò trong hệ thống | Ảnh hưởng đến yêu cầu |
+| Actor | Quy trình nghiệp vụ | Use Case liên quan |
 |---|---|---|
-| **OpenAI GPT-4o API** | Sinh câu hỏi, follow-up, Surgical Feedback | Uptime ≥ 99.5% (G6); giới hạn token/chi phí (2.7.2); latency target (2.7.1) |
-| **OpenAI Whisper API** | Chuyển đổi audio → transcript | Giới hạn 25 MB/file (R13); latency ≤ 3s (R3) |
-| **Supabase** | Auth (JWT), cơ sở dữ liệu, Row-Level Security | RLS bắt buộc (R16); JWT TTL (R15) |
-| **Cloudflare R2** | Lưu trữ audio recording | TTL xóa tự động 30 ngày (R14); pre-signed URL (S-07) |
-| **Web Audio API / MediaRecorder** | Ghi âm phía trình duyệt | Ràng buộc định dạng audio (R11); yêu cầu trình duyệt (2.2.2) |
-
-### 2.6.2 Ràng buộc nền tảng
-
-- **Nền tảng web:** Hệ thống phải vận hành hoàn toàn trên trình duyệt — không yêu cầu cài đặt ứng dụng phía client.
-- **AI pipeline bằng Python:** Module xử lý AI phải chạy trên môi trường Python ≥ 3.11 để tương thích với hệ sinh thái AI/ML (yêu cầu từ phụ thuộc D1, D2).
-- **API key server-side:** Mọi secret (OpenAI key, Supabase service key) chỉ tồn tại trên server — không được expose ra client (S-05).
-- **HTTPS bắt buộc:** Toàn bộ giao tiếp phải qua TLS 1.2+ (R19, S-06).
-
----
-
-## 2.7 Các ràng buộc thiết kế
-
-### 2.7.1 Ràng buộc hiệu năng
-
-| STT | Ràng buộc | Giá trị mục tiêu | Ghi chú |
-|---|---|---|---|
-| R1 | Latency AI response (Surgical Feedback) | ≤ 8 giây | Từ khi user kết thúc câu trả lời đến khi annotation hiển thị |
-| R2 | Latency AI response (Follow-up Engine) | ≤ 5 giây | Cần nhanh hơn để duy trì flow |
-| R3 | Latency Whisper transcription | ≤ 3 giây | Cho audio ≤ 2 phút |
-| R4 | Latency non-AI actions | ≤ 200 ms | Load trang, navigation, CRUD |
-| R5 | Concurrent users (prototype) | ≥ 50 đồng thời | Đủ cho giai đoạn user testing |
-
-### 2.7.2 Ràng buộc token và chi phí AI
-
-| STT | Ràng buộc | Giá trị | Lý do |
-|---|---|---|---|
-| R6 | Token input tối đa — Surgical Feedback | 2,000 tokens | Kiểm soát chi phí; transcript ~500 tokens + JD ~800 tokens + rubric ~500 tokens |
-| R7 | Token output tối đa — Surgical Feedback | 1,500 tokens | Đủ cho ~5–8 segment annotations chi tiết |
-| R8 | Token tổng — Follow-up Engine | 1,000 tokens (in+out) | Tác vụ đơn giản, không cần nhiều token |
-| R9 | Chi phí ước tính mỗi phiên (5 câu) | $0.15–0.30 | Bao gồm cả follow-up và re-evaluation |
-| R10 | Rate limit mỗi người dùng | 10 phiên/ngày | Ngăn lạm dụng trong giai đoạn prototype |
-
-> **Lưu ý:** Các ràng buộc R6–R10 phản ánh yêu cầu mức thiết kế tổng quan. Giới hạn đầy đủ hơn — bao gồm giới hạn Rewrite (OA-06), alert chi phí (OA-07), alert tỷ lệ fallback (OA-08) và RPM hiệu dụng (OA-09) — được quy định tại **Mục 4.9 — Ràng buộc vận hành AI (OA-01..OA-09)**. Trong trường hợp giá trị mâu thuẫn, Mục 4.9 là nguồn uy quyền (authoritative source).
-
-### 2.7.3 Ràng buộc audio và media
-
-| STT | Ràng buộc | Giá trị | Ghi chú |
-|---|---|---|---|
-| R11 | Định dạng audio được chấp nhận | WebM, WAV, MP4 | WebM là output mặc định của MediaRecorder trên Chrome |
-| R12 | Thời lượng tối đa mỗi câu trả lời (voice) | 5 phút | Whisper API giới hạn 25 MB/request |
-| R13 | Kích thước file audio tối đa | 25 MB | Giới hạn của Whisper API |
-| R14 | Thời gian lưu audio trên R2 | 30 ngày | Sau đó tự động xóa; transcript vẫn được giữ |
-
-### 2.7.4 Ràng buộc bảo mật và quyền riêng tư
-
-| STT | Ràng buộc | Mô tả |
-|---|---|---|
-| R15 | Authentication | Tất cả API endpoints yêu cầu JWT token hợp lệ; token hết hạn sau 7 ngày |
-| R16 | Data isolation | Người dùng chỉ truy cập được dữ liệu của chính mình; Row-Level Security (RLS) trên Supabase |
-| R17 | Audio privacy | Audio recording không được chia sẻ với bên thứ ba ngoài Whisper API và Cloudflare R2 |
-| R18 | API key security | OpenAI API key không bao giờ được expose ra phía client; chỉ tồn tại trên server-side |
-| R19 | HTTPS | Toàn bộ giao tiếp phải qua HTTPS; không cho phép HTTP |
-
-### 2.7.5 Ràng buộc về chất lượng AI output
-
-| STT | Ràng buộc | Mô tả |
-|---|---|---|
-| R20 | Follow-up phải contextual | Câu follow-up phải chứa ít nhất 1 từ/phrase cụ thể từ transcript của người dùng. Output không đáp ứng tiêu chí này được coi là lỗi chất lượng. |
-| R21 | Surgical Feedback phải actionable | Mỗi segment có level "warning" hoặc "critical" bắt buộc phải có improved_version không rỗng. |
-| R22 | Schema validation bắt buộc | Backend phải validate JSON output của AI trước khi trả về client. Output không đúng schema → kích hoạt fallback. |
-| R23 | Ngôn ngữ nhất quán | AI phải trả lời bằng cùng ngôn ngữ với câu trả lời của người dùng (tiếng Việt → feedback tiếng Việt, tiếng Anh → feedback tiếng Anh). |
-
----
-
-## 2.8 Nguyên tắc thiết kế sản phẩm (Design Principles)
-
-Các nguyên tắc dưới đây được rút ra từ quá trình discovery và định hướng mọi quyết định thiết kế trong SRS *(nguồn: DD §9.4)*:
-
-| # | Nguyên tắc | Mô tả | Ảnh hưởng đến SRS |
-|---|---|---|---|
-| DP-01 | **Vietnamese-first** | Mọi feature mặc định tiếng Việt; English là tùy chọn | R23 (ngôn ngữ nhất quán), UC-03b (Context Pack VN ưu tiên), UC-04 (Whisper language default `vi`) |
-| DP-02 | **Specific over generic** | Feedback luôn quote transcript cụ thể, không nhận xét chung | R20 (follow-up contextual), R21 (improved_version bắt buộc), UC-05 (Surgical Feedback) |
-| DP-03 | **Actionable always** | Mỗi nhận xét phải có improved_version để user tham khảo | R21, UC-06 (popup: reason + suggestion + improved_version) |
-| DP-04 | **Free for students** | Không paywall, không freemium; chi phí tự lo trong scope đồ án | G7, OA-04 (≤$0.30/phiên), §1.2.5 PC-03 |
-| DP-05 | **Cultural intelligence** | Rubric thay đổi theo target company culture (VN vs MNC) | UC-03b, Context Pack design, G8 |
-| DP-06 | **Privacy by default** | Audio không lưu vĩnh viễn (TTL 30 ngày); transcript opt-in | R14, S-07, R17 |
-| DP-07 | **Speed > perfection** | P95 latency <5s cho follow-up; thà feedback đơn giản nhanh hơn detailed chậm | P-05, P-06, Fallback mechanism (E-04-5, E-04-6) |
+| Candidate | Đăng nhập/onboarding | UC-01, UC-02 |
+| Candidate | Tạo và cấu hình phiên phỏng vấn | UC-03, UC-03b |
+| Candidate | Thực hiện phiên phỏng vấn | UC-04, UC-05 |
+| Candidate | Xem feedback và luyện lại | UC-06, UC-07 |
+| Candidate | Xem lịch sử phiên | UC-08 |
+| Admin | Quản lý người dùng | UC-09 |
+| Admin | Quản lý ngân hàng câu hỏi | UC-10 |
 
 ---
 # 3. Đặc tả Use Case
@@ -745,11 +460,20 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | **Tác nhân phụ** | Hệ thống / AI tham gia |
 | **Tiền điều kiện** | Điều kiện phải thỏa trước khi UC bắt đầu |
 | **Hậu điều kiện** | Trạng thái hệ thống sau khi UC kết thúc thành công |
+| **Dữ liệu đầu vào** | Bảng mô tả các trường dữ liệu người dùng/hệ thống cần cung cấp |
 | **Main Flow** | Luồng sự kiện chính |
 | **Alternative Flow** | Luồng thay thế hợp lệ |
 | **Exception Flow** | Các kịch bản lỗi và xử lý |
 | **AI Spec** | *(Chỉ với UC liên quan AI)* Input/Output/Fallback |
 | **Acceptance Criteria** | Tiêu chí kiểm thử nghiệm thu |
+
+**Mẫu bảng dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `<field_name>` | Ý nghĩa nghiệp vụ của trường | Có/Không | Text/Number/File/Enum/Boolean | Quy tắc hợp lệ | Nếu có | Bảng dữ liệu, session config hoặc service xử lý |
+
+Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bảng này trước Main Flow. Với Use Case chỉ đọc dữ liệu có sẵn, ghi rõ "Không có dữ liệu đầu vào trực tiếp từ người dùng".
 
 ---
 
@@ -768,6 +492,12 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | **Tác nhân phụ** | Supabase Auth, Google Identity Platform |
 | **Tiền điều kiện** | Candidate có trình duyệt hỗ trợ; có tài khoản Google hợp lệ. |
 | **Hậu điều kiện** | Candidate được xác thực; JWT access token được lưu vào secure cookie; Candidate được chuyển đến Dashboard. |
+
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `google_oauth_response` | Kết quả xác thực từ Google OAuth | Có | OAuth payload | Token hợp lệ, email xác thực được | Không có | Supabase Auth / bảng `users` |
 
 **Main Flow:**
 
@@ -819,6 +549,17 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | **Tác nhân phụ** | FastAPI (CV parsing), Supabase Storage |
 | **Tiền điều kiện** | Candidate đã đăng nhập (UC-01 hoàn thành). |
 | **Hậu điều kiện** | Thông tin hồ sơ được lưu; `profile_completed = true`; CV data được parse và lưu dưới dạng structured JSON. |
+
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `full_name` | Họ tên Candidate | Có | Text | Không rỗng | Không có | `user_profiles` |
+| `target_position` | Vị trí ứng tuyển mục tiêu | Có | Text | Không rỗng | Không có | `user_profiles` |
+| `years_experience` | Số năm kinh nghiệm | Không | Number | Không âm | 0 | `user_profiles` |
+| `default_language` | Ngôn ngữ phỏng vấn mặc định | Có | Enum | `vi` hoặc `en` | `vi` | `user_profiles` |
+| `tts_enabled` | Bật/tắt đọc câu hỏi bằng giọng nói | Không | Boolean | true/false | false | `user_profiles` |
+| `cv_pdf` | File CV của Candidate | Không | File PDF | PDF, tối đa 5 MB | Không có | Storage + `cv_structured` |
 
 **Main Flow:**
 
@@ -873,6 +614,15 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | **Tiền điều kiện** | Candidate đã đăng nhập; `profile_completed = true`. |
 | **Hậu điều kiện** | Phiên mới được tạo với trạng thái `in_progress`; danh sách câu hỏi được sinh và lưu vào DB; Candidate chuyển đến màn hình phỏng vấn. |
 
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `job_description` | JD dùng để sinh câu hỏi và đánh giá câu trả lời | Có | Text | 100–5.000 ký tự | Không có | `interview_sessions` / AI Engine |
+| `num_questions` | Số câu hỏi trong phiên | Có | Enum/Number | 3, 5 hoặc 7 | 5 | `interview_sessions` |
+| `interview_type` | Loại phỏng vấn | Có | Enum | `behavioral` hoặc `mixed` | `behavioral` | `interview_sessions` |
+| `context_pack_id` | Context Pack được chọn ở UC-03b | Có | Enum/ID | Pack tồn tại | Không có | `interview_sessions` |
+
 **Main Flow:**
 
 1. Candidate nhấn **"Tạo phiên mới"** từ Dashboard.
@@ -900,7 +650,7 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | E-03-2 | Question Generator timeout (>10 giây) | Hủy bản ghi session; hiển thị: "Không thể tạo câu hỏi lúc này. Vui lòng thử lại." |
 | E-03-3 | Question Generator trả về ít hơn số câu yêu cầu | Chấp nhận số câu trả về nếu ≥ 3; nếu < 3 → xử lý như E-03-2. |
 
-> *Đặc tả kỹ thuật AI chi tiết (system prompt, input/output schema, cấu hình model, fallback strategy): xem **[SAD v1.0 — Mục 2.2.2](SAD_InterviewAI_v1.0.md#222-prompt-1--question-generator)**.*
+> *Đặc tả kỹ thuật AI chi tiết (system prompt, input/output schema, cấu hình model, fallback strategy): xem **[SAD v1.0 — Mục 2.2.2](../SAD/SAD_InterviewAI_v1.0.md#222-prompt-1--question-generator)**.*
 
 **Acceptance Criteria:**
 
@@ -923,6 +673,12 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | **Tác nhân phụ** | Hệ thống (load Context Pack config) |
 | **Tiền điều kiện** | Đây là Bước 3 trong UC-03; JD đã được nhập; số câu đã được chọn. |
 | **Hậu điều kiện** | `context_pack_id` được ghi vào bản ghi phiên; rubric JSON tương ứng được load vào bộ nhớ để sử dụng cho UC-04, UC-05, UC-07. |
+
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `context_pack_id` | Văn hóa phỏng vấn Candidate muốn luyện | Có | Enum/ID | `vn` hoặc `western` | Không có | Session config / `interview_sessions` |
 
 **Main Flow:**
 
@@ -971,6 +727,16 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | **Tác nhân phụ** | AI Engine (Whisper API, Follow-up Engine, Feedback Analyzer) |
 | **Tiền điều kiện** | UC-03 hoàn thành; phiên có `status = in_progress`; danh sách câu hỏi đã được lưu vào DB. |
 | **Hậu điều kiện** | Toàn bộ `user_answers`, `follow_up_questions`, `ai_feedbacks` và `annotated_segments` được lưu vào DB; `session.status = completed`; Candidate được chuyển đến UC-06 (Xem Feedback). |
+
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `session_id` | Phiên phỏng vấn đang thực hiện | Có | UUID/ID | Phiên thuộc Candidate và `status = in_progress` | Không có | `interview_sessions` |
+| `answer_mode` | Cách Candidate trả lời | Có | Enum | `voice` hoặc `text` | Không có | Frontend/session state |
+| `audio_blob` | Audio câu trả lời khi chọn voice | Có nếu voice | File audio | Định dạng hỗ trợ, tối đa 25 MB, tối đa 5 phút | Không có | STT service / storage tạm |
+| `answer_text` | Nội dung câu trả lời khi chọn text hoặc sau STT | Có | Text | Không rỗng sau khi submit | Không có | `user_answers` |
+| `skip_question` | Hành động bỏ qua câu hỏi | Không | Boolean | Chỉ từ câu thứ 2 trở đi | false | `user_answers.skipped` |
 
 #### Main Flow (lặp lại cho mỗi câu hỏi trong phiên)
 
@@ -1076,7 +842,7 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | E-04-6 | Feedback Analyzer timeout (> 15 giây) | Lưu transcript nhưng không lưu feedback; hiển thị: "Phân tích AI tạm thời không khả dụng. Câu trả lời đã được lưu, bạn có thể xem phân tích sau." |
 | E-04-7 | Feedback Analyzer trả về `segments = []` (mảng rỗng) | Kích hoạt Fallback: hiển thị feedback dạng text thuần từ field `key_takeaway` (vẫn được sinh); annotated transcript không có highlight. |
 
-> *Đặc tả kỹ thuật AI chi tiết (system prompt, input/output schema, validation rules, token budget, fallback): xem **[SAD v1.0 — Mục 2.2.3](SAD_InterviewAI_v1.0.md#223-prompt-2--follow-up-engine)** và **[Mục 2.2.4](SAD_InterviewAI_v1.0.md#224-prompt-3--feedback-analyzer-surgical-feedback)**.*
+> *Đặc tả kỹ thuật AI chi tiết (system prompt, input/output schema, validation rules, fallback): xem **[SAD v1.0 — Mục 2.2.3](../SAD/SAD_InterviewAI_v1.0.md#223-prompt-2--follow-up-engine)** và **[Mục 2.2.4](../SAD/SAD_InterviewAI_v1.0.md#224-prompt-3--feedback-analyzer-surgical-feedback)**.*
 
 **Acceptance Criteria:**
 
@@ -1105,6 +871,14 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | **Tiền điều kiện** | `user_answer` đã được lưu (bao gồm cả follow-up answer nếu có); `context_pack_id` đã xác định; `rubric_json` đã load. |
 | **Hậu điều kiện** | Bản ghi `ai_feedbacks` và mảng `annotated_segments` được lưu vào DB; `user_answer.feedback_generated = true`. |
 
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `user_answer_id` | Câu trả lời cần sinh feedback | Có | UUID/ID | Tồn tại và thuộc session hợp lệ | Không có | `user_answers` |
+| `combined_transcript` | Transcript câu gốc và follow-up nếu có | Có | Text | Không rỗng, đã qua moderation | Không có | Feedback Analyzer |
+| `question_context` | Câu hỏi, JD, Context Pack và CV nếu có | Có | Object | Đủ dữ liệu tối thiểu để đánh giá | Không có | Feedback Analyzer |
+
 **Main Flow:**
 
 1. Backend nhận trigger từ UC-04 (sau khi lưu `user_answer`).
@@ -1120,7 +894,7 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 
 7. FastAPI validate JSON response theo Pydantic schema: kiểm tra sự hiện diện đầy đủ của `segments[]`, `overall_score`, `model_answer`, `key_takeaway`; đảm bảo mỗi segment có `level ∈ {good, warning, critical}` và `improved_version` không rỗng với mọi segment có `level = warning` hoặc `critical`.
 
-> *Logic validate schema chi tiết (Pydantic model, validation rules): xem **[SAD v1.0 — Mục 2.3.3](SAD_InterviewAI_v1.0.md#233-schema-3--surgical-feedback-output-feedback-analyzer)**.*
+> *Logic validate schema chi tiết (Pydantic model, validation rules): xem **[SAD v1.0 — Mục 2.3.3](../SAD/SAD_InterviewAI_v1.0.md#233-schema-3--surgical-feedback-output-feedback-analyzer)**.*
 
 8. Nếu validation **pass**: lưu vào DB:
    - `INSERT INTO ai_feedbacks` (overall_score, model_answer, key_takeaway, context_pack_id, voice_summary_json, user_answer_id)
@@ -1140,7 +914,7 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | E-05-3 | Schema validation fail (segments rỗng, missing fields) | Kích hoạt Fallback; ghi log chi tiết validation error. |
 | E-05-4 | Database insert thất bại | Retry 1 lần; nếu vẫn lỗi → ghi vào error queue để xử lý sau; trả về status timeout cho người dùng. |
 
-> *Prompt và code của Text Fallback (generate_text_fallback): xem **[SAD v1.0 — Mục 2.4.2](SAD_InterviewAI_v1.0.md#242-fallback-text-feedback--prompt-đơn-giản)**.*
+> *Prompt và code của Text Fallback (generate_text_fallback): xem **[SAD v1.0 — Mục 2.4.2](../SAD/SAD_InterviewAI_v1.0.md#242-fallback-text-feedback--prompt-đơn-giản)**.*
 
 **Alternative Flow:**
 
@@ -1169,6 +943,14 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | **Tác nhân phụ** | Không có (chỉ đọc từ DB) |
 | **Tiền điều kiện** | `ai_feedbacks` và `annotated_segments` đã được lưu đầy đủ (UC-05 hoàn thành). |
 | **Hậu điều kiện** | `session.viewed = true` được cập nhật ngay khi trang Feedback load thành công (không phụ thuộc vào việc Candidate có click vào annotation hay không); Candidate có thể xem Model Answer và kích hoạt UC-07. |
+
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `session_id` | Phiên cần xem feedback | Có | UUID/ID | Thuộc Candidate hiện tại | Không có | `interview_sessions` |
+| `question_id` | Câu hỏi được chọn trong phiên | Không | UUID/ID | Thuộc session hiện tại | Câu hỏi đầu tiên | UI state / query param |
+| `feedback_rating` | Đánh giá hữu ích/chưa hữu ích | Không | Enum | `useful` hoặc `not_useful` | Không có | `ai_quality_log` |
 
 **Main Flow:**
 
@@ -1265,6 +1047,16 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | **Tiền điều kiện** | UC-06 đã hiển thị Surgical Feedback cho câu hỏi; tồn tại ít nhất 1 segment `warning` hoặc `critical`. |
 | **Hậu điều kiện** | `rewrite_answers` record được lưu với transcript mới, annotation mới và delta_score; Candidate thấy sự thay đổi rõ ràng giữa 2 phiên bản. |
 
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `question_id` | Câu hỏi Candidate muốn luyện lại | Có | UUID/ID | Có feedback gốc hợp lệ | Không có | `rewrite_answers` |
+| `attempt_number` | Số lần rewrite hiện tại | Có | Number | 1–5 | Tự tăng | `rewrite_answers` |
+| `answer_mode` | Cách Candidate rewrite | Có | Enum | `voice` hoặc `text` | Theo lần gốc | UI state |
+| `rewrite_audio` | Audio rewrite khi chọn voice | Có nếu voice | File audio | Định dạng hỗ trợ, tối đa 25 MB, tối đa 5 phút | Không có | STT service / storage tạm |
+| `rewrite_text` | Transcript/câu trả lời rewrite | Có | Text | Không rỗng sau khi submit | Không có | `rewrite_answers` |
+
 **Main Flow:**
 
 **Giai đoạn 1 — Khởi tạo Rewrite session**
@@ -1349,7 +1141,7 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | E-07-3 | Candidate đã thử 5 lần | Ẩn nút "Thử lại"; hiển thị: "Bạn đã luyện lại câu này 5 lần. Hãy xem Model Answer để tham khảo cách tốt nhất." |
 | E-07-4 | `delta_score` tính ra NaN hoặc null | Hiển thị điểm mới mà không hiển thị delta; ghi log. |
 
-> *Đặc tả kỹ thuật AI chi tiết (system prompt, input/output schema, token budget, validation): xem **[SAD v1.0 — Mục 2.2.5](SAD_InterviewAI_v1.0.md#225-prompt-4--rewrite-evaluator)**.*
+> *Đặc tả kỹ thuật AI chi tiết (system prompt, input/output schema, validation): xem **[SAD v1.0 — Mục 2.2.5](../SAD/SAD_InterviewAI_v1.0.md#225-prompt-4--rewrite-evaluator)**.*
 
 **Acceptance Criteria:**
 
@@ -1375,6 +1167,13 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | **Tác nhân phụ** | Không có |
 | **Tiền điều kiện** | Candidate đã đăng nhập; có ít nhất 1 phiên với `status = completed`. |
 | **Hậu điều kiện** | Không có thay đổi dữ liệu; Candidate có thể navigate đến UC-06 từ đây. |
+
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `page` | Trang danh sách phiên | Không | Number | Số nguyên dương | 1 | Query param / pagination |
+| `selected_session_id` | Phiên Candidate chọn để xem lại | Không | UUID/ID | Thuộc Candidate hiện tại | Không có | Điều hướng đến UC-06 |
 
 **Main Flow:**
 
@@ -1425,6 +1224,14 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | **Tiền điều kiện** | Admin đã đăng nhập với `role = admin`. |
 | **Hậu điều kiện** | Thay đổi trạng thái user được lưu và có hiệu lực ngay. |
 
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `search_query` | Từ khóa tìm user | Không | Text | Theo email hoặc tên | Rỗng | Admin Panel |
+| `user_id` | Người dùng được xem/cập nhật | Có khi thao tác chi tiết | UUID/ID | User tồn tại, không phải Admin bị cấm thao tác | Không có | Bảng `users` |
+| `status` | Trạng thái tài khoản mới | Có khi khóa/mở khóa | Enum | `active` hoặc `banned` | Không có | Bảng `users` |
+
 **Main Flow:**
 
 1. Admin truy cập trang **Admin Panel > Người dùng**.
@@ -1457,6 +1264,16 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 | **Tiền điều kiện** | Admin đã đăng nhập. |
 | **Hậu điều kiện** | Question Bank cập nhật; fallback của Question Generator sử dụng câu hỏi mới. |
 
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `question_text` | Nội dung câu hỏi seed | Có | Text | Không rỗng; cảnh báo nếu gần trùng | Không có | Bảng `questions` |
+| `context_pack_id` | Pack áp dụng cho câu hỏi | Có | Enum/ID | `vn` hoặc `western` | Không có | Bảng `questions` |
+| `category` | Nhóm câu hỏi | Có | Enum | `behavioral`, `situational`, `motivational` | `behavioral` | Bảng `questions` |
+| `difficulty` | Mức độ câu hỏi | Có | Enum | `junior`, `mid`, `senior` | `junior` | Bảng `questions` |
+| `tags` | Từ khóa mô tả câu hỏi | Không | Array/Text | Danh sách keyword | Rỗng | Bảng `questions` |
+
 **Main Flow:**
 
 1. Admin truy cập **Admin Panel > Ngân hàng câu hỏi**.
@@ -1481,312 +1298,147 @@ Mọi Use Case trong chương này đều tuân theo template sau:
 ---
 # 4. Yêu cầu phi chức năng
 
+Các yêu cầu phi chức năng dưới đây được mô tả ở mức phù hợp với giai đoạn prototype. Các số liệu vận hành chi tiết, alert và giới hạn hạ tầng AI được chuyển sang **[SAD v1.0](../SAD/SAD_InterviewAI_v1.0.md)**.
+
 ---
 
 ## 4.1 Tính dễ dùng (Usability)
 
-### 4.1.1 Nguyên tắc thiết kế
+| Mã | Yêu cầu |
+|---|---|
+| U-01 | Candidate phải có thể hiểu luồng chính mà không cần đọc tài liệu hướng dẫn riêng. |
+| U-02 | Form cấu hình phiên phải có nhãn, placeholder và thông báo validation rõ ràng. |
+| U-03 | Ý nghĩa các màu trong Annotated Transcript phải được hiển thị rõ trên màn hình feedback. |
+| U-04 | Tính năng Rewrite & Compare phải dễ tìm sau khi Candidate xem feedback. |
+| U-05 | Các thao tác chính phải có trạng thái phản hồi rõ ràng để người dùng biết hệ thống đang xử lý. |
+| U-06 | Hệ thống phải hiển thị loading/progress message trong các bước xử lý bất đồng bộ như sinh câu hỏi, transcribe và phân tích feedback. |
+| U-07 | Thông báo lỗi phải viết bằng ngôn ngữ người dùng, không hiển thị stack trace, mã lỗi kỹ thuật thô hoặc thông điệp khó hiểu. |
+| U-08 | Giao diện Annotated Transcript phải có legend màu sắc luôn hiển thị. |
+| U-09 | Popup feedback khi click segment phải đóng được bằng thao tác quen thuộc như click ra ngoài, phím Escape hoặc nút đóng. |
+| U-10 | Khu vực ghi âm phải thể hiện rõ trạng thái đang ghi, đã dừng, đang upload hoặc gặp lỗi. |
+| U-11 | Trên màn hình Rewrite & Compare, phần câu trả lời cũ chỉ cho phép đọc/xem annotation; mọi thao tác nhập mới nằm ở phần câu trả lời rewrite. |
+| U-12 | Giao diện phải sử dụng được trên desktop/laptop và không vỡ layout ở màn hình trình duyệt phổ biến. |
 
-Hệ thống được thiết kế để người dùng có thể hoàn thành phiên phỏng vấn đầu tiên **mà không cần đọc hướng dẫn**. Toàn bộ luồng chính (paste JD → chọn Context Pack → trả lời → xem feedback) phải hoàn thành được chỉ với các nút và placeholder text đủ rõ ràng.
+---
 
-### 4.1.2 Các tiêu chí đo lường Usability
-
-| Mã | Tiêu chí | Mục tiêu | Phương pháp đo |
-|---|---|---|---|
-| U-01 | Thời gian hoàn thành phiên đầu tiên (first session) | ≤ 5 phút kể từ lúc đăng nhập | User testing với nhóm 10 người |
-| U-02 | Tỷ lệ người dùng hoàn thành cấu hình phiên mà không cần hỗ trợ | ≥ 90% | Funnel analytics: Session Config → Session Start |
-| U-03 | Tỷ lệ người dùng hiểu được ý nghĩa 3 màu annotation | ≥ 85% trả lời đúng | Survey sau khi xem Annotated Transcript lần đầu |
-| U-04 | Tỷ lệ người dùng tìm và sử dụng tính năng Rewrite | ≥ 70% sau khi xem Feedback | Behavioral tracking: nút "Luyện lại" |
-| U-05 | Điểm SUS (System Usability Scale) | ≥ 70 / 100 | Khảo sát SUS 10 câu sau khi dùng thử |
-
-### 4.1.3 Yêu cầu cụ thể
+## 4.2 Hiệu năng và giới hạn sử dụng
 
 | Mã | Yêu cầu |
 |---|---|
-| U-06 | Hệ thống phải hiển thị trạng thái rõ ràng trong tất cả các bước có xử lý bất đồng bộ: loading spinner với text mô tả ("AI đang phân tích câu trả lời của bạn..."). |
-| U-07 | Tất cả thông báo lỗi phải được viết bằng ngôn ngữ người dùng (tiếng Việt / Anh), không hiển thị mã lỗi kỹ thuật thô (stack trace, HTTP status code). |
-| U-08 | Giao diện Annotated Transcript phải có legend màu sắc luôn hiển thị để người dùng không cần nhớ ý nghĩa từng màu. |
-| U-09 | Popup feedback khi click segment phải đóng được bằng cả ba cách: click ra ngoài, nhấn phím Escape, và nhấn nút X. |
-| U-10 | Khu vực ghi âm phải có visual feedback rõ ràng: waveform animation khi đang ghi, countdown timer nếu gần đạt giới hạn 5 phút. |
-| U-11 | Trên màn hình Rewrite & Compare, cột "Lần trước" phải được làm mờ (opacity 0.6) và **chỉ cho phép tương tác đọc** (click annotation popup để xem giải thích — xem AF-07-B); không cho phép ghi âm, nhập liệu hoặc bất kỳ hành động ghi nào trong cột này. Mục đích: Candidate tập trung nhập liệu ở cột mới nhưng vẫn có thể tham khảo annotation của lần trước. |
-| U-12 | Hệ thống phải responsive trên màn hình ≥ 1024px (desktop/laptop). Không yêu cầu mobile trong v1.0 nhưng không được vỡ layout. |
+| P-01 | Các trang thông thường phải tải đủ nhanh để không làm gián đoạn luồng luyện tập. |
+| P-02 | Các thao tác CRUD thông thường phải phản hồi trong thời gian người dùng cảm nhận là tức thời hoặc gần tức thời. |
+| P-03 | Upload audio phải có trạng thái tiến trình hoặc thông báo lỗi rõ ràng nếu mất nhiều thời gian. |
+| P-04 | Transcript từ voice input phải được trả về trong khoảng thời gian hợp lý; nếu STT lỗi hoặc quá lâu, hệ thống chuyển sang text input. |
+| P-05 | Follow-up question phải được sinh đủ nhanh để không làm đứt mạch phỏng vấn; nếu lỗi, hệ thống được phép bỏ qua follow-up. |
+| P-06 | Surgical Feedback phải có trạng thái đang phân tích; nếu chưa thể sinh feedback, transcript vẫn phải được lưu. |
+| P-07 | Rewrite Evaluator phải xử lý tương tự Surgical Feedback và không làm mất câu trả lời rewrite nếu AI gặp lỗi. |
+| P-08 | Toàn bộ pipeline cho một câu trả lời phải có fallback để Candidate không bị kẹt ở trạng thái chờ vô hạn. |
+| P-09 | Tạo câu hỏi từ JD phải hiển thị trạng thái xử lý và có fallback Question Bank khi AI không khả dụng. |
+| P-10 | Upload/parse CV phải kiểm tra định dạng, kích thước và thông báo lỗi rõ ràng. |
+| P-16 | File audio cho mỗi câu trả lời không được vượt quá 25 MB. |
+| P-17 | Thời lượng audio cho mỗi câu trả lời không được vượt quá 5 phút. |
+| P-18 | JD nhập vào không được vượt quá 5.000 ký tự. |
+| P-19 | File CV PDF không được vượt quá 5 MB. |
+| P-20 | Mỗi phiên phỏng vấn có tối đa 7 câu hỏi. |
+| P-21 | Mỗi câu hỏi cho phép tối đa 5 lần Rewrite. |
 
 ---
 
-## 4.2 Hiệu năng (Performance)
-
-### 4.2.1 Latency — Toàn bộ hệ thống
-
-Bảng dưới đây phân loại toàn bộ các operation theo thời gian phản hồi kỳ vọng, với ngưỡng cảnh báo và ngưỡng lỗi tương ứng.
-
-| Mã | Operation | Mục tiêu (P95) | Ngưỡng cảnh báo | Ngưỡng lỗi | Ghi chú |
-|---|---|---|---|---|---|
-| **P-01** | Tải trang (non-AI pages) | ≤ 1,500 ms | > 2,000 ms | > 5,000 ms | First Contentful Paint |
-| **P-02** | Tất cả API call non-AI (CRUD) | ≤ 200 ms | > 500 ms | > 2,000 ms | Đo từ client gửi đến nhận response |
-| **P-03** | Upload audio lên Cloudflare R2 | ≤ 2,000 ms | > 3,000 ms | > 8,000 ms | File ≤ 25 MB |
-| **P-04** | Whisper API — Transcription (audio ≤ 2 phút) | ≤ 3,000 ms | > 5,000 ms | > 10,000 ms | Đo từ khi gửi audio đến nhận transcript |
-| **P-05** | Follow-up Engine (GPT-4o) | ≤ 4,000 ms | > 6,000 ms | > 8,000 ms | Timeout trigger fallback ở 8,000 ms |
-| **P-06** | Feedback Analyzer — Surgical Feedback | ≤ 8,000 ms | > 10,000 ms | > 15,000 ms | Timeout trigger retry ở 15,000 ms |
-| **P-07** | Rewrite Evaluator (GPT-4o) | ≤ 8,000 ms | > 10,000 ms | > 15,000 ms | Tương tự Feedback Analyzer |
-| **P-08** | Toàn bộ pipeline một câu trả lời (Whisper + Follow-up + Feedback) | ≤ 15,000 ms | > 20,000 ms | > 30,000 ms | End-to-end từ user stop recording đến annotation hiển thị |
-| **P-09** | Question Generator (cấu hình phiên) | ≤ 10,000 ms | > 12,000 ms | > 15,000 ms | Có thể chạy background; UI tiếp tục ngay |
-| **P-10** | Parse CV PDF (pdfplumber) | ≤ 3,000 ms | > 5,000 ms | > 10,000 ms | File ≤ 5 MB |
-
-> **Chú thích P95:** 95% requests phải đạt mục tiêu. 5% còn lại có thể vượt nhưng không được vượt ngưỡng lỗi.
-
-### 4.2.2 Throughput và Concurrency
-
-| Mã | Tiêu chí | Mục tiêu | Giai đoạn |
-|---|---|---|---|
-| P-11 | Concurrent active sessions | ≥ 50 phiên đồng thời | Prototype (v1.0) |
-| P-12 | Concurrent active sessions | ≥ 500 phiên đồng thời | Sau prototype (v2.0) |
-| P-13 | API requests per second (non-AI) | ≥ 200 RPS | Prototype |
-| P-14 | OpenAI API calls per minute | Giới hạn bởi OpenAI tier | Theo tier đăng ký |
-| P-15 | Thời gian khởi động cold start — FastAPI | ≤ 5,000 ms | Railway deployment |
-
-### 4.2.3 Kích thước và giới hạn dữ liệu
-
-| Mã | Giới hạn | Giá trị | Lý do kỹ thuật |
-|---|---|---|---|
-| P-16 | Kích thước file audio tối đa | 25 MB | Giới hạn Whisper API |
-| P-17 | Thời lượng audio tối đa mỗi câu | 5 phút | Tránh transcript quá dài vượt token budget |
-| P-18 | Độ dài JD tối đa | 5,000 ký tự | Khoảng 1,000–1,500 tokens; kiểm soát input budget |
-| P-19 | Kích thước CV PDF tối đa | 5 MB | Đủ cho 3–5 trang CV; tránh timeout parse |
-| P-20 | Số câu hỏi tối đa mỗi phiên | 7 câu | Cân bằng giữa độ sâu và chi phí AI |
-| P-21 | Số lần Rewrite tối đa mỗi câu | 5 lần | Đồng bộ với UC-07 và kiểm soát chi phí AI của prototype |
-
----
-
-## 4.3 Bảo mật (Security)
-
-### 4.3.1 Xác thực và Phân quyền
-
-| Mã | Yêu cầu | Chi tiết |
-|---|---|---|
-| S-01 | JWT Authentication | Tất cả API endpoints (trừ `/auth/*` và `/health`) yêu cầu Bearer token hợp lệ. |
-| S-02 | Token expiry | JWT hết hạn sau **7 ngày**. Refresh token hết hạn sau **30 ngày**. |
-| S-03 | Role-based access | Hai role: `candidate` và `admin`. Endpoint `/admin/*` chỉ cho phép `admin`. Middleware validate role tại backend. |
-| S-04 | Row-Level Security (RLS) | Bật RLS trên tất cả bảng Supabase. Người dùng chỉ SELECT/UPDATE được row có `user_id = auth.uid()`. |
-| S-05 | API Key bảo mật | OpenAI API key, Cloudflare R2 credentials và Supabase service key **chỉ tồn tại trên server-side**. Không bao giờ expose ra client hoặc lưu trong localStorage. |
-
-### 4.3.2 Bảo vệ dữ liệu
-
-| Mã | Yêu cầu | Chi tiết |
-|---|---|---|
-| S-06 | HTTPS bắt buộc | Toàn bộ traffic phải qua TLS 1.2+. HTTP request bị redirect tự động về HTTPS. |
-| S-07 | Audio privacy | File audio chỉ được upload lên Cloudflare R2 và gửi đến Whisper API. Không chia sẻ với bất kỳ bên thứ ba nào khác. URL R2 phải là pre-signed URL với TTL 1 giờ — không phải public URL. |
-| S-08 | CV data | Nội dung CV parse được lưu dạng encrypted-at-rest trong Supabase. Không được log `cv_parsed_text` ra console hoặc error log. |
-| S-09 | Input sanitization | Tất cả text input từ người dùng (JD, câu trả lời) phải được strip HTML và kiểm tra độ dài trước khi đưa vào prompt AI. |
-| S-10 | Prompt injection prevention | System prompt của AI Engine phải được tách biệt hoàn toàn với user input bằng delimiter rõ ràng. Không cho phép user input override system prompt. |
-
-### 4.3.3 Giới hạn và Rate Limiting
-
-| Mã | Endpoint / Operation | Giới hạn | Hành vi khi vượt |
-|---|---|---|---|
-| S-11 | POST `/ai/*` (tất cả AI calls) | 10 requests/phút/user | HTTP 429; message: "Bạn đang gửi quá nhiều yêu cầu. Vui lòng thử lại sau." |
-| S-12 | POST `/sessions` (tạo phiên mới) | 10 phiên/ngày/user | HTTP 429; message: "Đã đạt giới hạn phiên hôm nay." |
-| S-13 | POST `/auth/*` (đăng nhập) | 20 attempts/15 phút/IP | Block IP 15 phút; log sự kiện |
-| S-14 | Upload file (CV, audio) | 50 MB/giờ/user | HTTP 429 |
-
----
-
-## 4.4 Độ tin cậy (Reliability)
-
-### 4.4.1 Uptime và Availability
-
-| Mã | Tiêu chí | Mục tiêu | Ghi chú |
-|---|---|---|---|
-| R-01 | Uptime hệ thống (frontend + backend non-AI) | ≥ 99.0% / tháng | Cho phép tối đa ~7 giờ downtime/tháng |
-| R-02 | Uptime khi phụ thuộc OpenAI có sự cố | Degraded mode hoạt động | Xem 4.4.2 |
-| R-03 | Thời gian phục hồi sau sự cố (RTO) | ≤ 30 phút | Với Railway auto-restart |
-| R-04 | Thời gian mất dữ liệu tối đa (RPO) | ≤ 5 phút | Supabase có WAL và point-in-time recovery |
-
-### 4.4.2 Degraded Mode — Khi OpenAI API không khả dụng
-
-| Tính năng | Hành vi khi OpenAI offline |
-|---|---|
-| Question Generator | Dùng câu hỏi từ Question Bank seed. Không tạo câu hỏi mới từ JD. |
-| Follow-up Engine | `skip_follow_up = true` cho toàn bộ câu. Phiên vẫn tiếp tục. |
-| Feedback Analyzer | Hiển thị fallback text: *"Phân tích AI tạm thời không khả dụng. Câu trả lời của bạn đã được lưu. Hãy quay lại sau để xem phân tích đầy đủ."* |
-| Whisper (STT) | Yêu cầu người dùng chuyển sang Text input. |
-
-### 4.4.3 Data Integrity
+## 4.3 Bảo mật và quyền riêng tư
 
 | Mã | Yêu cầu |
 |---|---|
-| R-05 | **Thứ tự xử lý transcript bắt buộc:** (1) Gọi OpenAI Moderation API kiểm tra transcript *trước tiên*; (2) Nếu kết quả **safe** → lưu transcript vào DB *trước khi* gọi Feedback Analyzer, đảm bảo dữ liệu không bị mất nếu AI fail sau đó; (3) Nếu kết quả **flagged** → không lưu raw transcript vào DB, chỉ lưu metadata moderation tối thiểu (user_id, question_id, flagged_at, flag_category). Xem AS-02 và luồng moderation tại 4.8.3 để biết chi tiết. |
-| R-06 | `InterviewSession` và `UserAnswer` phải được lưu với transaction — hoặc cả hai thành công, hoặc cả hai rollback. |
-| R-07 | Audio file trên R2 và `audio_url` trong DB phải nhất quán. Batch job hàng ngày kiểm tra orphaned files. |
-| R-08 | Không cho phép `DELETE` vật lý trên `UserAnswer`, `AIFeedback`, `AnnotatedSegment` trong vận hành thường nhật. Chỉ dùng soft delete (`is_deleted = true`). Ngoại lệ: luồng xóa dữ liệu theo yêu cầu tại SAD v1.0 Mục 4.4. |
+| S-01 | Tất cả API yêu cầu đăng nhập phải kiểm tra token xác thực hợp lệ. |
+| S-02 | Token đăng nhập phải có cơ chế hết hạn và làm mới an toàn. |
+| S-03 | Hệ thống phải phân quyền tối thiểu hai role: `candidate` và `admin`; các chức năng quản trị chỉ cho phép Admin. |
+| S-04 | Candidate chỉ được truy cập dữ liệu thuộc tài khoản của chính mình. |
+| S-05 | Secret và API key không được expose ra client hoặc lưu trong localStorage. |
+| S-06 | Giao tiếp giữa client và server phải dùng HTTPS trong môi trường triển khai. |
+| S-07 | Audio recording chỉ được dùng cho mục đích transcribe/phân tích trong hệ thống và không public URL. |
+| S-08 | Nội dung CV parse được không được ghi ra console hoặc log lỗi thô. |
+| S-09 | Text input từ người dùng phải được kiểm tra độ dài và sanitize trước khi xử lý tiếp. |
+| S-10 | System prompt/logic điều khiển AI phải được tách biệt với user input để giảm rủi ro prompt injection. |
+| S-11 | Các endpoint AI phải có rate limiting ở mức người dùng để tránh lạm dụng. |
+| S-12 | Tạo phiên mới phải có giới hạn sử dụng phù hợp cho prototype. |
+| S-13 | Luồng đăng nhập phải có cơ chế chống thử lại bất thường. |
+| S-14 | Upload file phải có kiểm tra kích thước và loại file. |
 
 ---
 
-## 4.5 Khả năng mở rộng (Scalability)
+## 4.4 Độ tin cậy và toàn vẹn dữ liệu
 
-| Mã | Tiêu chí | Thiết kế hiện tại | Thiết kế tương lai |
-|---|---|---|---|
-| SC-01 | Tăng concurrent users | Vercel auto-scale serverless; Railway scale theo container | Kubernetes + horizontal pod autoscaling |
-| SC-02 | Tăng AI throughput | Tăng OpenAI tier; thêm request queue | Multi-provider (OpenAI + Gemini + local LLM) |
-| SC-03 | Thêm Context Pack mới | Thêm record vào bảng `ContextPack` trong DB; không cần code thay đổi | — |
-| SC-04 | Thêm ngôn ngữ phỏng vấn | Cập nhật system prompt; filler words dictionary theo ngôn ngữ | — |
-| SC-05 | Vector search cho JD | pgvector đã được bật trên Supabase; schema sẵn sàng | Bật semantic search khi Question Bank > 1,000 câu |
-| SC-06 | Database | Supabase free tier (500 MB) đủ cho prototype | Supabase Pro ($25/tháng) khi vượt 500 MB |
-
----
-
-## 4.6 Khả năng bảo trì (Maintainability)
-
-| Mã | Yêu cầu | Chi tiết |
-|---|---|---|
-| M-01 | Cấu trúc monorepo | Codebase phải được tổ chức theo monorepo, tách rõ các service (frontend, backend auth, backend AI) và thư mục tài liệu. Xem SAD v1.0 Mục 5.1 cho cấu trúc chi tiết. |
-| M-02 | Environment variables | Tất cả config nhạy cảm phải qua `.env`. Không hardcode API key hoặc URL vào code. |
-| M-03 | Logging | Tất cả AI request/response (không bao gồm nội dung nhạy cảm) phải được log với `session_id`, `question_id`, `latency_ms`, `token_usage`. |
-| M-04 | Prompt versioning | Mỗi prompt type phải có version string (ví dụ: `followup-v1.2`). Khi cập nhật prompt, phải bump version và ghi chú thay đổi. |
-| M-05 | Schema migration | Mọi thay đổi schema DB phải qua migration files có versioning. Không chỉnh DB trực tiếp trên production. Xem SAD v1.0 Mục 5.3 cho tooling. |
-| M-06 | Error tracking | Tích hợp Sentry (hoặc tương đương) cho cả frontend và backend. Mọi unhandled exception phải tạo alert. |
-| M-07 | AI quality log | Hệ thống phải lưu log chất lượng AI riêng biệt gồm: session_id, question_id, prompt_version, output_quality — phục vụ cải thiện prompt. Xem SAD v1.0 Mục 5.4 và 5.5 cho schema chi tiết. |
-
----
-
-## 4.7 Chất lượng AI (AI Quality)
-
-### 4.7.1 Tiêu chí chất lượng định lượng
-
-| Mã | Tiêu chí | Mục tiêu | Phương pháp đo |
-|---|---|---|---|
-| Q-01 | Tỷ lệ Follow-up câu hỏi chứa phrase từ transcript người dùng | 100% | Automated test: kiểm tra `target_phrase` ∈ `user_transcript` |
-| Q-02 | Tỷ lệ Surgical Feedback segments `warning`/`critical` có `improved_version` không rỗng | 100% | Backend validation; log violation |
-| Q-03 | Tỷ lệ người dùng đánh giá feedback là "cụ thể và hữu ích" | ≥ 80% | Post-session survey (1 câu, 5-point scale) |
-| Q-04 | Tỷ lệ người dùng dùng tính năng Rewrite sau khi xem feedback | ≥ 30% | Behavioral tracking: event `rewrite_started` *(DD §11.1 đặt ≥30% là target thực tế)* |
-| Q-05 | Tỷ lệ AI output đúng schema (không cần fallback) | ≥ 95% | Log: `is_fallback` field trong `AIFeedback` |
-| Q-06 | Filler words tiếng Việt được detect chính xác | ≥ 90% precision | Manual test với transcript mẫu có/không có filler words |
-| Q-07 | Delta Score phản ánh đúng cải thiện thực tế | Correlation ≥ 0.7 với human rater | So sánh Delta Score AI với đánh giá của 3 HR chuyên gia |
-
-### 4.7.2 Cơ chế đo lường và cải thiện liên tục
-
-```
-Vòng lặp cải thiện chất lượng AI:
-
-[User session] → [AI output] → [User behavior]
-                                       │
-                    ┌──────────────────┤
-                    │                  │
-             [Survey rating]    [Rewrite rate]
-             [Thumbs up/down]   [Session completion]
-                    │
-                    ▼
-             [AIQualityLog]
-                    │
-                    ▼
-          [Weekly prompt review]
-                    │
-                    ▼
-          [Prompt update + version bump]
-```
-
-| Chu kỳ | Hoạt động |
+| Mã | Yêu cầu |
 |---|---|
-| Hàng ngày | Review log các session có `is_fallback = true` |
-| Hàng tuần | Phân tích survey ratings và Rewrite rate; identify outlier sessions |
-| Khi cần | Cập nhật prompt nếu Q-03 < 70% trong 3 ngày liên tiếp |
+| R-01 | Các luồng chính phải có thông báo lỗi và cách thử lại khi thao tác thất bại. |
+| R-02 | Khi dịch vụ AI không khả dụng, hệ thống phải có degraded mode để Candidate không mất dữ liệu đã nhập. |
+| R-03 | Hệ thống phải ghi nhận lỗi đủ để phục vụ debug trong giai đoạn prototype. |
+| R-04 | Dữ liệu phiên, câu trả lời và feedback đã lưu không được mất khi AI thất bại ở bước sau. |
+| R-05 | Transcript phải được kiểm tra nội dung không phù hợp trước khi lưu raw text; nếu flagged, chỉ lưu metadata tối thiểu. |
+| R-06 | Tạo phiên và lưu câu trả lời phải đảm bảo nhất quán dữ liệu, tránh trạng thái nửa lưu nửa mất. |
+| R-07 | Nếu hệ thống lưu audio URL, bản ghi trong DB và file thực tế phải nhất quán. |
+| R-08 | Dữ liệu phiên, câu trả lời và feedback không bị xóa vật lý trong vận hành thường nhật; dùng soft delete khi cần. |
 
 ---
 
-## 4.8 An toàn nội dung AI (AI Safety)
+## 4.5 Khả năng mở rộng
 
-### 4.8.1 Xử lý input không phù hợp
-
-| Mã | Loại input | Xử lý |
-|---|---|---|
-| AS-01 | JD chứa nội dung nhạy cảm / offensive | OpenAI Moderation API kiểm tra JD trước khi đưa vào Question Generator. Nếu flagged → từ chối tạo phiên, hiển thị thông báo. |
-| AS-02 | Câu trả lời chứa nội dung không phù hợp | OpenAI Moderation API kiểm tra transcript. Nếu flagged → không gọi Feedback Analyzer; hiển thị: *"Câu trả lời của bạn chứa nội dung không phù hợp và không thể phân tích."* Đồng thời không lưu raw transcript, chỉ lưu metadata moderation tối thiểu. |
-| AS-03 | Prompt injection trong câu trả lời | System prompt và user input được tách biệt bằng XML-style delimiter. Input người dùng được wrap trong `<user_answer>...</user_answer>`. |
-| AS-04 | JD quá ngắn hoặc vô nghĩa | Minimum **100 ký tự** (đồng bộ với điều kiện validation E-03-1 trong UC-03 và AC-03-2); nếu Question Generator trả về câu hỏi không liên quan đến phỏng vấn → fallback Question Bank. |
-
-### 4.8.2 Giới hạn nội dung AI được phép sinh
-
-| Loại nội dung | Cho phép | Không cho phép |
-|---|---|---|
-| Câu hỏi phỏng vấn | Tất cả loại phỏng vấn behavioral, situational, motivational | Câu hỏi phân biệt đối xử (tuổi, giới tính, tôn giáo, tình trạng hôn nhân) |
-| Feedback | Nhận xét về kỹ năng giao tiếp, cấu trúc, nội dung | Nhận xét về ngoại hình, giọng nói theo nghĩa phân biệt đối xử |
-| Model Answer | Câu trả lời mẫu phù hợp với JD | Bịa đặt thông tin không có trong CV hoặc JD |
-| Follow-up | Câu hỏi đào sâu về kinh nghiệm và kỹ năng | Câu hỏi về đời tư không liên quan đến công việc |
-
-### 4.8.3 Content Moderation Policy
-
-```
-Input flow với moderation:
-
-[User Input (JD / Transcript)]
-           │
-           ▼
-[OpenAI Moderation API]
-     /            \
-[Safe]          [Flagged]
-  │                │
-  ▼                ▼
-[Tiếp tục]    [Block + Log + Notify user]
-              [Không lưu raw flagged content vào DB ứng dụng]
-              [Chỉ lưu metadata moderation tối thiểu]
-```
+| Mã | Yêu cầu |
+|---|---|
+| SC-01 | Thiết kế hệ thống không được phụ thuộc vào một máy local duy nhất khi triển khai prototype. |
+| SC-02 | Các thao tác AI nên được tách khỏi UI để có thể thay đổi provider/queue trong tương lai. |
+| SC-03 | Hệ thống phải cho phép thêm Context Pack mới mà không phải viết lại toàn bộ luồng phỏng vấn. |
+| SC-04 | Hệ thống nên cho phép mở rộng thêm ngôn ngữ phỏng vấn trong các phiên bản sau. |
+| SC-05 | Question Bank phải có cấu trúc dữ liệu đủ rõ để mở rộng số lượng câu hỏi. |
 
 ---
 
-## 4.9 Ràng buộc vận hành AI (AI Operational Constraints)
+## 4.6 Khả năng bảo trì
 
-> *Phân tích token budget chi tiết, bảng chi phí ước tính theo quy mô và chiến lược tối ưu chi phí: xem **[SAD v1.0 — Chương 3](SAD_InterviewAI_v1.0.md#3-phân-tích-chi-phí-ai)**.*
+| Mã | Yêu cầu |
+|---|---|
+| M-01 | Codebase phải được tổ chức rõ ràng theo các module/service chính. |
+| M-02 | Cấu hình nhạy cảm phải được quản lý qua environment variables. |
+| M-03 | Các request AI phải có log metadata phục vụ debug, không log dữ liệu nhạy cảm thô. |
+| M-04 | Prompt hoặc cấu hình AI quan trọng phải có version để truy vết thay đổi. |
+| M-05 | Thay đổi schema dữ liệu phải có cơ chế migration/versioning. |
+| M-06 | Lỗi không xử lý phải được ghi nhận để phục vụ sửa lỗi. |
+| M-07 | Hệ thống phải lưu thông tin chất lượng AI ở mức cần thiết để cải thiện prompt/rubric sau này. |
 
-Bảng dưới đây tóm tắt các ràng buộc vận hành AI có ảnh hưởng trực tiếp đến thiết kế hệ thống. Đây là yêu cầu, không phải hướng dẫn cài đặt.
+---
 
-| Mã | Ràng buộc | Giá trị | Lý do |
-|---|---|---|---|
-| OA-01 | Token input tối đa — Surgical Feedback | 2,000 tokens/call | Tương đương transcript ~500t + JD ~800t + rubric ~500t |
-| OA-02 | Token output tối đa — Surgical Feedback | 1,500 tokens/call | Đủ cho ~5–8 segment annotations chi tiết |
-| OA-03 | Token tổng — Follow-up Engine | 1,000 tokens/call (in+out) | Tác vụ đơn giản, latency cần thấp |
-| OA-04 | Chi phí tối đa mỗi phiên (5 câu) | $0.30/phiên | Ngưỡng kinh tế cho giai đoạn prototype |
-| OA-05 | Giới hạn phiên mỗi người dùng | 10 phiên/ngày | Ngăn lạm dụng trong prototype |
-| OA-06 | Giới hạn Rewrite | 5 lần/câu hỏi | Kiểm soát chi phí; tương đồng với UC-07 |
-| OA-07 | Alert chi phí AI | > $20/ngày | Kích hoạt email alert; review thủ công |
-| OA-08 | Alert tỷ lệ fallback | > 10% sessions/giờ | Kích hoạt kiểm tra OpenAI status |
-| OA-09 | RPM hiệu dụng tối đa | 400 RPM (buffer 20%) | Giới hạn OpenAI tier mặc định 500 RPM |
+## 4.7 Chất lượng AI
+
+| Mã | Yêu cầu |
+|---|---|
+| Q-01 | Follow-up question phải bám vào nội dung Candidate vừa trả lời, không sinh câu hỏi generic. |
+| Q-02 | Segment feedback ở mức `warning` hoặc `critical` phải có gợi ý cải thiện cụ thể. |
+| Q-03 | Feedback phải giúp Candidate hiểu vấn đề và biết nên sửa câu trả lời như thế nào. |
+| Q-04 | Rewrite & Compare phải thể hiện được khác biệt giữa câu trả lời cũ và câu trả lời mới. |
+| Q-05 | Output AI có cấu trúc phải được validate trước khi lưu hoặc hiển thị. |
+| Q-06 | Voice metrics nếu hiển thị phải được trình bày như thông tin hỗ trợ, không thay thế đánh giá nội dung câu trả lời. |
+| Q-07 | Delta Score phải được giải thích đủ rõ để Candidate không hiểu nhầm điểm số là đánh giá tuyệt đối. |
+
+---
+
+## 4.8 An toàn nội dung AI
+
+| Mã | Yêu cầu |
+|---|---|
+| AS-01 | JD chứa nội dung không phù hợp phải bị từ chối hoặc yêu cầu nhập lại trước khi tạo phiên. |
+| AS-02 | Câu trả lời chứa nội dung không phù hợp không được gửi vào Feedback Analyzer như nội dung hợp lệ. |
+| AS-03 | User input không được phép override system instruction của AI Engine. |
+| AS-04 | JD quá ngắn hoặc vô nghĩa phải bị validation fail hoặc chuyển sang fallback phù hợp. |
+| AS-05 | AI không được sinh câu hỏi phỏng vấn có tính phân biệt đối xử hoặc hỏi đời tư không liên quan công việc. |
+| AS-06 | Feedback không được nhận xét ngoại hình, đặc điểm cá nhân nhạy cảm hoặc giọng nói theo hướng phân biệt đối xử. |
 
 # 5. Ma trận truy vết yêu cầu (Traceability Matrix)
 
-Ma trận dưới đây liên kết Use Case chức năng với toàn bộ yêu cầu phi chức năng — bao gồm các nhóm chức năng hệ thống (S, P, U, R, M), chất lượng AI (Q), an toàn AI (AS) và ràng buộc vận hành AI (OA) — cùng tiêu chí nghiệm thu tương ứng để đảm bảo kiểm thử coverage đầy đủ. Cột "Tài liệu thiết kế AI" tham chiếu đến SAD v1.0.
+Ma trận truy vết yêu cầu đã được tách thành tài liệu riêng để SRS chính gọn hơn và dễ bảo trì hơn:
 
-> **Ghi chú về nhóm NFR cross-cutting:** AS, Q, OA là các ràng buộc áp dụng xuyên nhiều Use Case. Các nhóm này được liệt kê tại các hàng UC chính liên quan và được tổng hợp riêng ở ba hàng cuối bảng.
+- **[RTM_InterviewAI.md](RTM_InterviewAI.md)** — truy vết Use Case → NFR và Discovery Insight → SRS Requirement.
 
-| Nhóm chức năng | Use Case | NFR liên quan | Tài liệu thiết kế AI (SAD v1.0) | Acceptance Criteria chính |
-|---|---|---|---|---|
-| Xác thực và phân quyền | UC-01 | S-01, S-02, S-03, S-04, R-01 | Không áp dụng | AC-01-1..AC-01-5 |
-| Hồ sơ và CV | UC-02 | P-10, S-08, S-09, R-05 | SAD 2.2.2 (CV context), SAD 4 (data retention) | AC-02-1..AC-02-4 |
-| Tạo phiên và chọn context | UC-03, UC-03b | P-09, U-06, S-09, SC-03, AS-01, AS-04, OA-05 | SAD 2.2.2, SAD 2.3.1, SAD 2.4.1 (fallback) | AC-03-1..AC-03-4, AC-03b-1..AC-03b-3 |
-| Phỏng vấn AI thời gian thực | UC-04 | P-04, P-05, P-06, P-08, U-10, R-05, AS-02, AS-03, Q-01, Q-06, OA-03, OA-04 | SAD 2.2.3, SAD 2.2.4, SAD 2.3.2, SAD 2.3.3, SAD 2.4.1 | AC-04-1..AC-04-8 |
-| Sinh Surgical Feedback backend | UC-05 | P-06, R-06, R-08, M-03, AS-02, Q-02, Q-05, OA-01, OA-02 | SAD 2.2.4, SAD 2.3.3, SAD 2.4 (retry/fallback) | AC-05-1..AC-05-6 |
-| Hiển thị feedback chi tiết | UC-06 | U-08, U-09, U-12, P-01, Q-03 | SAD 2.3.3 (segments/model_answer) | AC-06-1..AC-06-5 |
-| Rewrite và so sánh tiến bộ | UC-07 | P-07, P-21, U-11, Q-04, Q-07, OA-06 | SAD 2.2.5, SAD 2.3.4, SAD 2.4.1 (fallback) | AC-07-1..AC-07-7 |
-| Lịch sử phiên | UC-08 | P-01, P-02, R-01 | SAD 4 (retention policy) | AC-08-1..AC-08-3 |
-| Quản trị người dùng | UC-09 | S-03, M-03, R-01 | Không áp dụng | AC-09-1..AC-09-3 |
-| Quản trị Question Bank | UC-10 | M-05, SC-03, R-02 | SAD 2.3.1 (schema câu hỏi), SAD 2.4.1 (fallback source) | AC-10-1..AC-10-3 |
-| **An toàn nội dung AI** *(cross-cutting)* | UC-03, UC-04, UC-05 | **AS-01, AS-02, AS-03, AS-04** | SAD 2.4 (moderation flow) | AC-03-2, AC-04-1..AC-04-4, AC-05-4 |
-| **Chất lượng AI output** *(cross-cutting)* | UC-04, UC-05, UC-06, UC-07 | **Q-01, Q-02, Q-03, Q-04, Q-05, Q-06, Q-07** | SAD 2.3 (output schema), SAD 2.5 (quality metrics) | AC-04-3, AC-04-8, AC-05-2, AC-05-6, AC-07-2, AC-07-7 |
-| **Ràng buộc vận hành AI** *(cross-cutting)* | UC-03, UC-04, UC-05, UC-07 | **OA-01, OA-02, OA-03, OA-04, OA-05, OA-06, OA-07, OA-08, OA-09** | SAD 3 (phân tích chi phí AI) | S-11, S-12 |
+Khi thay đổi mã Use Case, mã NFR hoặc Acceptance Criteria trong tài liệu này, cần cập nhật tài liệu RTM tương ứng.
 
 ---
 
-## 5.2 Ma trận truy vết: Discovery Insight → SRS Requirement
-
-Bảng dưới đây liên kết các insight chính từ Discovery Document với yêu cầu SRS tương ứng, đảm bảo mọi phát hiện từ nghiên cứu đều được giải quyết trong đặc tả hệ thống.
-
-| DD Insight | Mô tả ngắn | Nguồn DD | UC/NFR tương ứng trong SRS | Design Principle |
-|---|---|---|---|---|
-| **I1: Thiếu feedback chất lượng** | Fresher biết câu hỏi sẽ được hỏi, nhưng không biết câu trả lời có tốt không | DD §7.1 #1 | **UC-05** (Surgical Feedback), **UC-06** (Xem chi tiết), **R21** (actionable), **Q-03** (≥80% hữu ích) | DP-02, DP-03 |
-| **I2: Tools chỉ feedback delivery, không content** | Yoodli focus filler words; không đánh giá nội dung câu trả lời | DD §7.1 #2 | **UC-05** (segment annotation trên content), **R20** (follow-up contextual) | DP-02 |
-| **I3: Khoảng trống ngôn ngữ và văn hóa** | 0/5 đối thủ hỗ trợ tiếng Việt; rubric Western không phù hợp VN | DD §7.1 #3 | **UC-03b** (Context Pack VN/Western), **R23** (ngôn ngữ nhất quán), **G8** (rubric research) | DP-01, DP-05 |
-| **I4: Chi phí AI đã hạ** | GPT-4o mini $0.15/1M tokens — giảm 200× | DD §7.1 #4 | **OA-04** (≤$0.30/phiên), **G7** (tác giả chịu chi phí), **§1.2.5 PC-03** | DP-04 |
-| **I5: Whisper hỗ trợ tiếng Việt đủ tốt** | WER ~10% cho audio sạch; PhoWhisper cải thiện | DD §7.1 #5 | **UC-04** (Voice Path), **P-04** (Whisper latency ≤3s), **§1.2.5 PC-04** | DP-07 |
-| **I6: Không có vòng lặp cải thiện** | User fail rồi không biết fix gì; HR không cho feedback | DD §7.1 #6 | **UC-07** (Rewrite & Compare), **UC-08** (Lịch sử phiên), **Q-04** (Rewrite rate ≥30%) | DP-03 |
-
----
-
-*Kết thúc tài liệu SRS v1.5 — AI Interview Coach System (InterviewAI)*
+*Kết thúc tài liệu SRS v1.6 — AI Interview Coach System (InterviewAI)*
