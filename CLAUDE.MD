@@ -30,6 +30,15 @@ In this phase, you act as a **Business Analyst (BA)** and **QA Engineer**, not a
 - Created [docs/glossary.md](docs/glossary.md) — 20 terms từ SRS §1.3 + Discovery, A–W
 - Created [docs/test-plan/strategy.md](docs/test-plan/strategy.md) — test scope, pyramid, environments, risks, entry/exit criteria
 
+**2026-05-06** — Blocker Fix session (7/7 blockers resolved):
+- **SRS [SRS-B1]**: Thêm `| Priority |` vào 8 NFR tables; thêm `**Priority:**` field vào 11 UC headers — MoSCoW đầy đủ toàn tài liệu
+- **SRS [SRS-B2/B3]**: P-01 → `< 2s (p95)`; P-02 → `< 300ms (p95)`; P-04 → `≤ 5s (p95)` consistent với AC-04-2/E-04-3; P-05 → `[Removed]` — threshold consolidated vào AC-04-4
+- **SRS [SRS-B4]**: Thêm 5 stub rows P-11..P-15 `[Removed]` để lấp gap
+- **SRS [SRS-B5]**: S-12 → `"≤ 10 phiên/24h, attempt thứ 11 bị reject với error message rõ ràng"`
+- **SRS [RTM-B1]**: Thêm AC-04-9 vào UC-04 (verify AS-05 — anti-discrimination questions); AC-05-7 vào UC-05 (verify AS-06 — anti-discrimination feedback)
+- **RTM [RTM-B1]**: Cập nhật row "An toàn nội dung AI" — thêm AC-04-9, AC-05-7 vào AC column
+- **RTM [RTM-B2]**: Map 8 security NFRs: S-04 → UC-04/05/06/07/08; S-07/S-10/S-11 → UC-04/05; S-12 → UC-03; S-14 → UC-02; S-05/S-06 → new cross-cutting row; xóa P-05 khỏi UC-04 NFR column (P-05 đã removed)
+
 ## Phase Roadmap
 
 | Phase | Status | Key Deliverables | Location |
@@ -46,6 +55,12 @@ In this phase, you act as a **Business Analyst (BA)** and **QA Engineer**, not a
 
 Phase transition log: see docs/PHASES.md
 
+## Rules Index
+
+Rules chi tiết: @.claude/rules/testing.md, @.claude/rules/api.md, @.claude/rules/db.md, @.claude/rules/security.md
+
+_(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase.)_
+
 ## Available Personas (Slash Commands)
 
 - `/ba-interview <topic>` — Conduct structured BA interview to elicit requirements
@@ -59,9 +74,9 @@ Phase transition log: see docs/PHASES.md
 |-----|--------|-----------|------|
 | Discovery Document | ✅ Done | Chưa audit | docs/Discovery_Docs/Discovery_Document.md |
 | Discovery Checklist | ✅ Done | Chưa audit | docs/Discovery_Docs/Checklist_Discovery.md |
-| SRS (full) | ⚠️ Needs fix | 5🔴 17 findings — FIX BEFORE NEXT PHASE | docs/SRS/SRS_InterviewAI_Full.md |
+| SRS (full) | 🟡 Blockers resolved | 0🔴 10🟡 3🟢 — should-fix còn lại chưa xử lý | docs/SRS/SRS_InterviewAI_Full.md |
 | SRS Checklist | ✅ Done | Chưa audit | docs/SRS/Checklist_SRS.md |
-| Requirements Traceability Matrix | ⚠️ Needs fix | 2🔴 12 findings — FIX BEFORE NEXT PHASE | docs/SRS/RTM_InterviewAI.md |
+| Requirements Traceability Matrix | 🟡 Blockers resolved | 0🔴 — should-fix còn lại chưa xử lý | docs/SRS/RTM_InterviewAI.md |
 | Software Architecture Document | ✅ Done | Chưa audit | docs/SAD/SAD_InterviewAI_v1.0.md |
 | Database Design | ⬜ Empty | Intentionally deferred | docs/design/database_design.md |
 | API Spec | ⬜ Empty | Intentionally deferred | docs/design/API_spec.md |
@@ -75,33 +90,23 @@ Phase transition log: see docs/PHASES.md
 ## Next Steps
 
 > **Thứ tự bắt buộc:** SRS phải ổn định → mới viết User Stories → mới viết Test Cases.
+> **Trạng thái hiện tại:** SRS blockers ✅ xong — đủ điều kiện bắt đầu User Stories.
 
-### 🔴 Làm ngay (unblock US và TC)
+### 🔴 Làm ngay
 
-**[1] Fix SRS blockers** — 5 findings từ `/qa-review` 2026-05-06:
-- Thêm MoSCoW priority vào tất cả UC headers và NFR rows (systematic — toàn bộ tài liệu)
-- Fix P-01, P-02, P-05: thêm ngưỡng số cụ thể hoặc xóa NFR và declare rằng threshold sống trong UC ACs
-- Fix P-04: chọn 1 con số (5s hoặc 10s), nhất quán hóa với AC-04-2 và E-04-3
-- Giải thích P-11..P-15 gap: ghi "Removed" hoặc renumber P-16..P-21 → P-11..P-16
-- Fix S-12: thêm threshold cụ thể (ví dụ "≤ 10 sessions/user/ngày")
-
-**[2] Fix RTM blockers** — 2 findings từ `/qa-review` RTM 2026-05-06:
-- Thêm AC cho AS-05 và AS-06 vào UC-04 hoặc UC-05, rồi cập nhật RTM AC column
-- Thêm 8 security NFRs vào RTM: S-04 → UC-04/05/06/07/08; S-05/S-06 → hàng cross-cutting; S-07 → UC-04; S-10/S-11/S-12/S-14 → UC tương ứng
-
-### 🟡 Làm sau khi blockers xong
-
-**[3] Viết User Stories** — MUST UCs trước: UC-01, UC-03, UC-04, UC-05, UC-06, UC-07
+**[1] Viết User Stories** — MUST UCs trước: UC-01, UC-03, UC-04, UC-05, UC-06, UC-07
 - Dùng template [docs/user-stories/README.md](docs/user-stories/README.md)
 - Mỗi story phải qua INVEST check trước khi commit
 - Update index table trong README.md và cột US trong RTM
 
-**[4] Hoàn thiện RTM** — sau khi US có:
+### 🟡 Làm song song hoặc ngay sau
+
+**[2] Hoàn thiện RTM** — sau khi US có:
 - Thêm cột "User Stories" vào RTM §1
 - Ghi chú UC-09/UC-10: không trace về Discovery insight (author confirmed)
 - Ghi chú vào §3 Maintenance Notes: khi có TC, thêm cột TC vào RTM
 
-**[5] Should-fix trong SRS** (10 findings còn lại) — sau blockers:
+**[3] Should-fix trong SRS** (10 findings còn lại từ /qa-review 2026-05-06):
 - U-01, U-12: thêm measurable criterion
 - S-11, S-13: thêm con số cụ thể
 - AS-04: thêm "< 100 ký tự" vào chính NFR text
@@ -117,8 +122,11 @@ Phase transition log: see docs/PHASES.md
 | Rules in .claude/rules/ (not CLAUDE.md) | Scoped rules by file path are more targeted than one monolithic instruction file. CLAUDE.md stays as project context; rules files stay as format enforcement. |
 | Audit SRS trước khi viết User Stories | US phải reference FR/UC cụ thể. Nếu UC còn lỗi format hoặc thiếu AC, US viết ra sẽ phải sửa lại — tốn công gấp đôi. Sequence đúng: fix SRS → US → TC. |
 | Performance threshold sống trong UC ACs, không nhất thiết duplicate vào NFR | AC-04-2 (≤5s), AC-05-1 (≤8s), AC-06-1 (≤500ms) đã có số cụ thể. NFR P-01/P-02/P-05 vague là blocker cần fix — chọn 1 trong 2: backfill số vào NFR hoặc xóa NFR và để ACs là nguồn sự thật duy nhất. Tránh duplicate số ở 2 chỗ gây inconsistency. |
-| TC chưa viết — intentionally deferred | SRS còn 5 blocker findings. Viết TC bây giờ sẽ phải sửa lại khi SRS thay đổi. TC sẽ được viết sau khi blockers fix xong và US được ký off. |
-| AS-05/AS-06 là blocker thực sự | Hai safety requirements không có AC nào verify — đây là gap nghiêm trọng nhất trong RTM vì chúng liên quan đến AI bias và discrimination. Phải có AC và kiểm tra thực tế trước launch. |
+| TC chưa viết — intentionally deferred | SRS blockers đã fix. TC sẽ được viết sau khi US được ký off — viết TC khi US chưa ổn định vẫn gây double-rework. |
+| AS-05/AS-06 là blocker thực sự | Hai safety requirements không có AC nào verify — gap nghiêm trọng nhất vì liên quan AI bias và discrimination. Đã fix: AC-04-9 (test 20 JDs, 0 câu hỏi phân biệt) và AC-05-7 (test 20 transcripts, 0 feedback phân biệt). |
+| P-01/P-02 threshold: < 2s / < 300ms | Không có AC backup cho P-01/P-02 → phải backfill số vào NFR (không thể xóa NFR). Dùng standard web perf benchmarks: 2s page load (p95), 300ms CRUD (p95). Điều chỉnh khi có dữ liệu benchmark thực từ staging. |
+| P-05 xóa khỏi SRS | Threshold của P-05 đã được cover bởi AC-04-4 (toàn bộ Phase 3+4 ≤ 12s). Duplicate threshold ở 2 chỗ gây risk inconsistency. Xóa NFR, giữ AC làm single source of truth. |
+| S-12 threshold: 10 phiên/24h | Prototype cần limit để ngăn lạm dụng API cost. 10 sessions/24h = đủ cho 1–2 buổi luyện tập nghiêm túc/ngày mà không abuse. Có thể nâng khi cần qua config. |
 
 ## Behavioral Guidelines (Documentation Mode)
 

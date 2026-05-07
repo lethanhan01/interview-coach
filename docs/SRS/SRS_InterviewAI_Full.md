@@ -487,6 +487,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 |---|---|
 | **Mã UC** | UC-01 |
 | **Tên UC** | Đăng ký / Đăng nhập hệ thống |
+| **Priority** | MUST |
 | **Mô tả tóm tắt** | Candidate tạo tài khoản mới hoặc đăng nhập vào hệ thống thông qua Google OAuth 2.0. |
 | **Tác nhân chính** | Candidate |
 | **Tác nhân phụ** | Supabase Auth, Google Identity Platform |
@@ -544,6 +545,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 |---|---|
 | **Mã UC** | UC-02 |
 | **Tên UC** | Quản lý hồ sơ luyện tập |
+| **Priority** | SHOULD |
 | **Mô tả tóm tắt** | Candidate cập nhật thông tin cá nhân, mục tiêu nghề nghiệp và upload CV để hệ thống cá nhân hóa câu hỏi và Model Answer. |
 | **Tác nhân chính** | Candidate |
 | **Tác nhân phụ** | FastAPI (CV parsing), Supabase Storage |
@@ -608,6 +610,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 |---|---|
 | **Mã UC** | UC-03 |
 | **Tên UC** | Cấu hình phiên phỏng vấn |
+| **Priority** | MUST |
 | **Mô tả tóm tắt** | Candidate tạo một phiên luyện tập mới bằng cách cung cấp Job Description và các tham số cấu hình cần thiết. |
 | **Tác nhân chính** | Candidate |
 | **Tác nhân phụ** | AI Engine (Question Generator) |
@@ -668,6 +671,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 |---|---|
 | **Mã UC** | UC-03b |
 | **Tên UC** | Chọn Context Pack |
+| **Priority** | SHOULD |
 | **Mô tả tóm tắt** | Candidate chọn văn hóa công ty phù hợp với vị trí đang ứng tuyển; hệ thống load rubric chấm điểm tương ứng cho toàn bộ phiên. |
 | **Tác nhân chính** | Candidate |
 | **Tác nhân phụ** | Hệ thống (load Context Pack config) |
@@ -722,6 +726,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 |---|---|
 | **Mã UC** | UC-04 |
 | **Tên UC** | Thực hiện phiên phỏng vấn AI |
+| **Priority** | MUST |
 | **Mô tả tóm tắt** | Candidate tương tác với AI phỏng vấn theo từng câu hỏi. Với mỗi câu, Candidate trả lời (voice/text), AI phân tích và đặt 1 câu follow-up dựa trên nội dung vừa nói, sau đó sinh Surgical Feedback. |
 | **Tác nhân chính** | Candidate |
 | **Tác nhân phụ** | AI Engine (Whisper API, Follow-up Engine, Feedback Analyzer) |
@@ -854,6 +859,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 - [ ] AC-04-6: Khi Feedback Analyzer timeout → transcript được lưu; hiển thị thông báo phù hợp.
 - [ ] AC-04-7: Phiên bị ngắt giữa chừng (đóng tab) → lần sau vào Dashboard thấy option "Tiếp tục".
 - [ ] AC-04-8: Voice metrics (WPM, filler count) được tính đúng (sai số ≤ 10% so với đếm thủ công).
+- [ ] AC-04-9 *(verify AS-05)*: Trong bộ kiểm thử 20 JD đa dạng ngành nghề, 0/20 question set do AI sinh ra chứa câu hỏi về tuổi tác, giới tính, tình trạng hôn nhân, tôn giáo, nguồn gốc dân tộc, sức khỏe, hoặc đời tư không liên quan yêu cầu công việc trong JD.
 
 ---
 
@@ -865,6 +871,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 |---|---|
 | **Mã UC** | UC-05 |
 | **Tên UC** | AI sinh Surgical Feedback |
+| **Priority** | MUST |
 | **Mô tả tóm tắt** | Backend gọi Feedback Analyzer, nhận Surgical Feedback JSON, validate schema và lưu dữ liệu annotation vào DB để UC-06 hiển thị. |
 | **Tác nhân chính** | Hệ thống (kích hoạt tự động sau mỗi câu trả lời hoàn chỉnh) |
 | **Tác nhân phụ** | AI Engine (Feedback Analyzer), Database |
@@ -929,6 +936,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 - [ ] AC-05-4: Khi validation fail → Fallback được kích hoạt; Candidate thấy text feedback thay vì lỗi kỹ thuật.
 - [ ] AC-05-5: Tất cả records `annotated_segments` có `feedback_id` FK hợp lệ, không có orphan record.
 - [ ] AC-05-6: Với cùng transcript và JD, 2 lần gọi Feedback Analyzer phải cho `overall_score` chênh lệch ≤ 10 điểm (temperature = 0.3 đảm bảo tính nhất quán).
+- [ ] AC-05-7 *(verify AS-06)*: Trong bộ kiểm thử 20 transcript đa dạng, 0/20 feedback output đề cập ngoại hình, giọng nói theo hướng phân biệt vùng miền/dân tộc, hoặc đặc điểm cá nhân không liên quan kỹ năng chuyên môn hay kỹ năng giao tiếp được đánh giá.
 
 ---
 
@@ -938,6 +946,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 |---|---|
 | **Mã UC** | UC-06 |
 | **Tên UC** | Xem Surgical Feedback chi tiết |
+| **Priority** | MUST |
 | **Mô tả tóm tắt** | Candidate xem transcript được highlight từng đoạn theo mức độ chất lượng, tương tác với từng annotation để hiểu chính xác cần sửa gì, và xem Model Answer. |
 | **Tác nhân chính** | Candidate |
 | **Tác nhân phụ** | Không có (chỉ đọc từ DB) |
@@ -1041,6 +1050,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 |---|---|
 | **Mã UC** | UC-07 |
 | **Tên UC** | Rewrite & Compare |
+| **Priority** | SHOULD |
 | **Mô tả tóm tắt** | Sau khi xem Surgical Feedback, Candidate nói hoặc gõ lại câu trả lời. AI re-evaluate theo cùng rubric và hiển thị so sánh hai phiên bản với delta score. |
 | **Tác nhân chính** | Candidate |
 | **Tác nhân phụ** | AI Engine (Whisper, Feedback Analyzer) |
@@ -1162,6 +1172,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 |---|---|
 | **Mã UC** | UC-08 |
 | **Tên UC** | Xem danh sách phiên luyện tập |
+| **Priority** | SHOULD |
 | **Mô tả tóm tắt** | Candidate xem lại toàn bộ phiên đã thực hiện, chọn một phiên để xem lại Surgical Feedback chi tiết. |
 | **Tác nhân chính** | Candidate |
 | **Tác nhân phụ** | Không có |
@@ -1218,6 +1229,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 |---|---|
 | **Mã UC** | UC-09 |
 | **Tên UC** | Quản trị người dùng |
+| **Priority** | COULD |
 | **Mô tả tóm tắt** | Admin xem, tìm kiếm và quản lý danh sách Candidate đã đăng ký hệ thống. |
 | **Tác nhân chính** | Admin |
 | **Tác nhân phụ** | Không có |
@@ -1258,6 +1270,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 |---|---|
 | **Mã UC** | UC-10 |
 | **Tên UC** | Quản lý ngân hàng câu hỏi |
+| **Priority** | COULD |
 | **Mô tả tóm tắt** | Admin thêm, sửa, xóa câu hỏi seed trong Question Bank và gắn tag phù hợp để Question Generator sử dụng làm fallback. |
 | **Tác nhân chính** | Admin |
 | **Tác nhân phụ** | Không có |
@@ -1304,132 +1317,137 @@ Các yêu cầu phi chức năng dưới đây được mô tả ở mức phù 
 
 ## 4.1 Tính dễ dùng (Usability)
 
-| Mã | Yêu cầu |
-|---|---|
-| U-01 | Candidate phải có thể hiểu luồng chính mà không cần đọc tài liệu hướng dẫn riêng. |
-| U-02 | Form cấu hình phiên phải có nhãn, placeholder và thông báo validation rõ ràng. |
-| U-03 | Ý nghĩa các màu trong Annotated Transcript phải được hiển thị rõ trên màn hình feedback. |
-| U-04 | Tính năng Rewrite & Compare phải dễ tìm sau khi Candidate xem feedback. |
-| U-05 | Các thao tác chính phải có trạng thái phản hồi rõ ràng để người dùng biết hệ thống đang xử lý. |
-| U-06 | Hệ thống phải hiển thị loading/progress message trong các bước xử lý bất đồng bộ như sinh câu hỏi, transcribe và phân tích feedback. |
-| U-07 | Thông báo lỗi phải viết bằng ngôn ngữ người dùng, không hiển thị stack trace, mã lỗi kỹ thuật thô hoặc thông điệp khó hiểu. |
-| U-08 | Giao diện Annotated Transcript phải có legend màu sắc luôn hiển thị. |
-| U-09 | Popup feedback khi click segment phải đóng được bằng thao tác quen thuộc như click ra ngoài, phím Escape hoặc nút đóng. |
-| U-10 | Khu vực ghi âm phải thể hiện rõ trạng thái đang ghi, đã dừng, đang upload hoặc gặp lỗi. |
-| U-11 | Trên màn hình Rewrite & Compare, phần câu trả lời cũ chỉ cho phép đọc/xem annotation; mọi thao tác nhập mới nằm ở phần câu trả lời rewrite. |
-| U-12 | Giao diện phải sử dụng được trên desktop/laptop và không vỡ layout ở màn hình trình duyệt phổ biến. |
+| Mã | Yêu cầu | Priority |
+|---|---|---|
+| U-01 | Candidate phải có thể hiểu luồng chính mà không cần đọc tài liệu hướng dẫn riêng. | SHOULD |
+| U-02 | Form cấu hình phiên phải có nhãn, placeholder và thông báo validation rõ ràng. | MUST |
+| U-03 | Ý nghĩa các màu trong Annotated Transcript phải được hiển thị rõ trên màn hình feedback. | MUST |
+| U-04 | Tính năng Rewrite & Compare phải dễ tìm sau khi Candidate xem feedback. | SHOULD |
+| U-05 | Các thao tác chính phải có trạng thái phản hồi rõ ràng để người dùng biết hệ thống đang xử lý. | MUST |
+| U-06 | Hệ thống phải hiển thị loading/progress message trong các bước xử lý bất đồng bộ như sinh câu hỏi, transcribe và phân tích feedback. | MUST |
+| U-07 | Thông báo lỗi phải viết bằng ngôn ngữ người dùng, không hiển thị stack trace, mã lỗi kỹ thuật thô hoặc thông điệp khó hiểu. | MUST |
+| U-08 | Giao diện Annotated Transcript phải có legend màu sắc luôn hiển thị. | SHOULD |
+| U-09 | Popup feedback khi click segment phải đóng được bằng thao tác quen thuộc như click ra ngoài, phím Escape hoặc nút đóng. | SHOULD |
+| U-10 | Khu vực ghi âm phải thể hiện rõ trạng thái đang ghi, đã dừng, đang upload hoặc gặp lỗi. | MUST |
+| U-11 | Trên màn hình Rewrite & Compare, phần câu trả lời cũ chỉ cho phép đọc/xem annotation; mọi thao tác nhập mới nằm ở phần câu trả lời rewrite. | MUST |
+| U-12 | Giao diện phải sử dụng được trên desktop/laptop và không vỡ layout ở màn hình trình duyệt phổ biến. | SHOULD |
 
 ---
 
 ## 4.2 Hiệu năng và giới hạn sử dụng
 
-| Mã | Yêu cầu |
-|---|---|
-| P-01 | Các trang thông thường phải tải đủ nhanh để không làm gián đoạn luồng luyện tập. |
-| P-02 | Các thao tác CRUD thông thường phải phản hồi trong thời gian người dùng cảm nhận là tức thời hoặc gần tức thời. |
-| P-03 | Upload audio phải có trạng thái tiến trình hoặc thông báo lỗi rõ ràng nếu mất nhiều thời gian. |
-| P-04 | Transcript từ voice input phải được trả về trong khoảng thời gian hợp lý; nếu STT lỗi hoặc quá lâu, hệ thống chuyển sang text input. |
-| P-05 | Follow-up question phải được sinh đủ nhanh để không làm đứt mạch phỏng vấn; nếu lỗi, hệ thống được phép bỏ qua follow-up. |
-| P-06 | Surgical Feedback phải có trạng thái đang phân tích; nếu chưa thể sinh feedback, transcript vẫn phải được lưu. |
-| P-07 | Rewrite Evaluator phải xử lý tương tự Surgical Feedback và không làm mất câu trả lời rewrite nếu AI gặp lỗi. |
-| P-08 | Toàn bộ pipeline cho một câu trả lời phải có fallback để Candidate không bị kẹt ở trạng thái chờ vô hạn. |
-| P-09 | Tạo câu hỏi từ JD phải hiển thị trạng thái xử lý và có fallback Question Bank khi AI không khả dụng. |
-| P-10 | Upload/parse CV phải kiểm tra định dạng, kích thước và thông báo lỗi rõ ràng. |
-| P-16 | File audio cho mỗi câu trả lời không được vượt quá 25 MB. |
-| P-17 | Thời lượng audio cho mỗi câu trả lời không được vượt quá 5 phút. |
-| P-18 | JD nhập vào không được vượt quá 5.000 ký tự. |
-| P-19 | File CV PDF không được vượt quá 5 MB. |
-| P-20 | Mỗi phiên phỏng vấn có tối đa 7 câu hỏi. |
-| P-21 | Mỗi câu hỏi cho phép tối đa 5 lần Rewrite. |
+| Mã | Yêu cầu | Priority |
+|---|---|---|
+| P-01 | Các trang thông thường phải tải trong < 2s (p95) tính từ khi server trả response đến khi DOM interactive. | SHOULD |
+| P-02 | Các thao tác CRUD thông thường phải phản hồi trong < 300ms (p95) tính từ khi client gửi request đến khi nhận response. | SHOULD |
+| P-03 | Upload audio phải có trạng thái tiến trình hoặc thông báo lỗi rõ ràng nếu mất nhiều thời gian. | SHOULD |
+| P-04 | Transcript từ voice input phải được trả về trong ≤ 5s (p95) kể từ khi dừng ghi âm — consistent với AC-04-2. Nếu Whisper API không phản hồi sau 10s (E-04-3), hệ thống tự động chuyển sang text input. | MUST |
+| P-05 | [Removed — threshold sống trong AC-04-4: toàn bộ Phase 3 + 4 (Follow-up + Feedback) ≤ 12s. Nếu cần tách riêng follow-up latency, thêm AC-04-9. Error handling vẫn giữ nguyên: xem E-04-5.] | N/A |
+| P-06 | Surgical Feedback phải có trạng thái đang phân tích; nếu chưa thể sinh feedback, transcript vẫn phải được lưu. | SHOULD |
+| P-07 | Rewrite Evaluator phải xử lý tương tự Surgical Feedback và không làm mất câu trả lời rewrite nếu AI gặp lỗi. | SHOULD |
+| P-08 | Toàn bộ pipeline cho một câu trả lời phải có fallback để Candidate không bị kẹt ở trạng thái chờ vô hạn. | MUST |
+| P-09 | Tạo câu hỏi từ JD phải hiển thị trạng thái xử lý và có fallback Question Bank khi AI không khả dụng. | SHOULD |
+| P-10 | Upload/parse CV phải kiểm tra định dạng, kích thước và thông báo lỗi rõ ràng. | MUST |
+| P-11 | [Removed — intentionally skipped in SRS v1.6. Renumbering avoided to preserve external references.] | N/A |
+| P-12 | [Removed — xem P-11.] | N/A |
+| P-13 | [Removed — xem P-11.] | N/A |
+| P-14 | [Removed — xem P-11.] | N/A |
+| P-15 | [Removed — xem P-11.] | N/A |
+| P-16 | File audio cho mỗi câu trả lời không được vượt quá 25 MB. | MUST |
+| P-17 | Thời lượng audio cho mỗi câu trả lời không được vượt quá 5 phút. | MUST |
+| P-18 | JD nhập vào không được vượt quá 5.000 ký tự. | MUST |
+| P-19 | File CV PDF không được vượt quá 5 MB. | MUST |
+| P-20 | Mỗi phiên phỏng vấn có tối đa 7 câu hỏi. | MUST |
+| P-21 | Mỗi câu hỏi cho phép tối đa 5 lần Rewrite. | MUST |
 
 ---
 
 ## 4.3 Bảo mật và quyền riêng tư
 
-| Mã | Yêu cầu |
-|---|---|
-| S-01 | Tất cả API yêu cầu đăng nhập phải kiểm tra token xác thực hợp lệ. |
-| S-02 | Token đăng nhập phải có cơ chế hết hạn và làm mới an toàn. |
-| S-03 | Hệ thống phải phân quyền tối thiểu hai role: `candidate` và `admin`; các chức năng quản trị chỉ cho phép Admin. |
-| S-04 | Candidate chỉ được truy cập dữ liệu thuộc tài khoản của chính mình. |
-| S-05 | Secret và API key không được expose ra client hoặc lưu trong localStorage. |
-| S-06 | Giao tiếp giữa client và server phải dùng HTTPS trong môi trường triển khai. |
-| S-07 | Audio recording chỉ được dùng cho mục đích transcribe/phân tích trong hệ thống và không public URL. |
-| S-08 | Nội dung CV parse được không được ghi ra console hoặc log lỗi thô. |
-| S-09 | Text input từ người dùng phải được kiểm tra độ dài và sanitize trước khi xử lý tiếp. |
-| S-10 | System prompt/logic điều khiển AI phải được tách biệt với user input để giảm rủi ro prompt injection. |
-| S-11 | Các endpoint AI phải có rate limiting ở mức người dùng để tránh lạm dụng. |
-| S-12 | Tạo phiên mới phải có giới hạn sử dụng phù hợp cho prototype. |
-| S-13 | Luồng đăng nhập phải có cơ chế chống thử lại bất thường. |
-| S-14 | Upload file phải có kiểm tra kích thước và loại file. |
+| Mã | Yêu cầu | Priority |
+|---|---|---|
+| S-01 | Tất cả API yêu cầu đăng nhập phải kiểm tra token xác thực hợp lệ. | MUST |
+| S-02 | Token đăng nhập phải có cơ chế hết hạn và làm mới an toàn. | MUST |
+| S-03 | Hệ thống phải phân quyền tối thiểu hai role: `candidate` và `admin`; các chức năng quản trị chỉ cho phép Admin. | MUST |
+| S-04 | Candidate chỉ được truy cập dữ liệu thuộc tài khoản của chính mình. | MUST |
+| S-05 | Secret và API key không được expose ra client hoặc lưu trong localStorage. | MUST |
+| S-06 | Giao tiếp giữa client và server phải dùng HTTPS trong môi trường triển khai. | MUST |
+| S-07 | Audio recording chỉ được dùng cho mục đích transcribe/phân tích trong hệ thống và không public URL. | MUST |
+| S-08 | Nội dung CV parse được không được ghi ra console hoặc log lỗi thô. | SHOULD |
+| S-09 | Text input từ người dùng phải được kiểm tra độ dài và sanitize trước khi xử lý tiếp. | MUST |
+| S-10 | System prompt/logic điều khiển AI phải được tách biệt với user input để giảm rủi ro prompt injection. | MUST |
+| S-11 | Các endpoint AI phải có rate limiting ở mức người dùng để tránh lạm dụng. | SHOULD |
+| S-12 | Mỗi Candidate không được tạo quá 10 phiên phỏng vấn mới trong 24 giờ. Attempt thứ 11 trở đi bị reject với error message rõ ràng. | SHOULD |
+| S-13 | Luồng đăng nhập phải có cơ chế chống thử lại bất thường. | SHOULD |
+| S-14 | Upload file phải có kiểm tra kích thước và loại file. | MUST |
 
 ---
 
 ## 4.4 Độ tin cậy và toàn vẹn dữ liệu
 
-| Mã | Yêu cầu |
-|---|---|
-| R-01 | Các luồng chính phải có thông báo lỗi và cách thử lại khi thao tác thất bại. |
-| R-02 | Khi dịch vụ AI không khả dụng, hệ thống phải có degraded mode để Candidate không mất dữ liệu đã nhập. |
-| R-03 | Hệ thống phải ghi nhận lỗi đủ để phục vụ debug trong giai đoạn prototype. |
-| R-04 | Dữ liệu phiên, câu trả lời và feedback đã lưu không được mất khi AI thất bại ở bước sau. |
-| R-05 | Transcript phải được kiểm tra nội dung không phù hợp trước khi lưu raw text; nếu flagged, chỉ lưu metadata tối thiểu. |
-| R-06 | Tạo phiên và lưu câu trả lời phải đảm bảo nhất quán dữ liệu, tránh trạng thái nửa lưu nửa mất. |
-| R-07 | Nếu hệ thống lưu audio URL, bản ghi trong DB và file thực tế phải nhất quán. |
-| R-08 | Dữ liệu phiên, câu trả lời và feedback không bị xóa vật lý trong vận hành thường nhật; dùng soft delete khi cần. |
+| Mã | Yêu cầu | Priority |
+|---|---|---|
+| R-01 | Các luồng chính phải có thông báo lỗi và cách thử lại khi thao tác thất bại. | MUST |
+| R-02 | Khi dịch vụ AI không khả dụng, hệ thống phải có degraded mode để Candidate không mất dữ liệu đã nhập. | MUST |
+| R-03 | Hệ thống phải ghi nhận lỗi đủ để phục vụ debug trong giai đoạn prototype. | SHOULD |
+| R-04 | Dữ liệu phiên, câu trả lời và feedback đã lưu không được mất khi AI thất bại ở bước sau. | MUST |
+| R-05 | Transcript phải được kiểm tra nội dung không phù hợp trước khi lưu raw text; nếu flagged, chỉ lưu metadata tối thiểu. | MUST |
+| R-06 | Tạo phiên và lưu câu trả lời phải đảm bảo nhất quán dữ liệu, tránh trạng thái nửa lưu nửa mất. | MUST |
+| R-07 | Nếu hệ thống lưu audio URL, bản ghi trong DB và file thực tế phải nhất quán. | SHOULD |
+| R-08 | Dữ liệu phiên, câu trả lời và feedback không bị xóa vật lý trong vận hành thường nhật; dùng soft delete khi cần. | SHOULD |
 
 ---
 
 ## 4.5 Khả năng mở rộng
 
-| Mã | Yêu cầu |
-|---|---|
-| SC-01 | Thiết kế hệ thống không được phụ thuộc vào một máy local duy nhất khi triển khai prototype. |
-| SC-02 | Các thao tác AI nên được tách khỏi UI để có thể thay đổi provider/queue trong tương lai. |
-| SC-03 | Hệ thống phải cho phép thêm Context Pack mới mà không phải viết lại toàn bộ luồng phỏng vấn. |
-| SC-04 | Hệ thống nên cho phép mở rộng thêm ngôn ngữ phỏng vấn trong các phiên bản sau. |
-| SC-05 | Question Bank phải có cấu trúc dữ liệu đủ rõ để mở rộng số lượng câu hỏi. |
+| Mã | Yêu cầu | Priority |
+|---|---|---|
+| SC-01 | Thiết kế hệ thống không được phụ thuộc vào một máy local duy nhất khi triển khai prototype. | SHOULD |
+| SC-02 | Các thao tác AI nên được tách khỏi UI để có thể thay đổi provider/queue trong tương lai. | COULD |
+| SC-03 | Hệ thống phải cho phép thêm Context Pack mới mà không phải viết lại toàn bộ luồng phỏng vấn. | MUST |
+| SC-04 | Hệ thống nên cho phép mở rộng thêm ngôn ngữ phỏng vấn trong các phiên bản sau. | COULD |
+| SC-05 | Question Bank phải có cấu trúc dữ liệu đủ rõ để mở rộng số lượng câu hỏi. | SHOULD |
 
 ---
 
 ## 4.6 Khả năng bảo trì
 
-| Mã | Yêu cầu |
-|---|---|
-| M-01 | Codebase phải được tổ chức rõ ràng theo các module/service chính. |
-| M-02 | Cấu hình nhạy cảm phải được quản lý qua environment variables. |
-| M-03 | Các request AI phải có log metadata phục vụ debug, không log dữ liệu nhạy cảm thô. |
-| M-04 | Prompt hoặc cấu hình AI quan trọng phải có version để truy vết thay đổi. |
-| M-05 | Thay đổi schema dữ liệu phải có cơ chế migration/versioning. |
-| M-06 | Lỗi không xử lý phải được ghi nhận để phục vụ sửa lỗi. |
-| M-07 | Hệ thống phải lưu thông tin chất lượng AI ở mức cần thiết để cải thiện prompt/rubric sau này. |
+| Mã | Yêu cầu | Priority |
+|---|---|---|
+| M-01 | Codebase phải được tổ chức rõ ràng theo các module/service chính. | SHOULD |
+| M-02 | Cấu hình nhạy cảm phải được quản lý qua environment variables. | MUST |
+| M-03 | Các request AI phải có log metadata phục vụ debug, không log dữ liệu nhạy cảm thô. | SHOULD |
+| M-04 | Prompt hoặc cấu hình AI quan trọng phải có version để truy vết thay đổi. | SHOULD |
+| M-05 | Thay đổi schema dữ liệu phải có cơ chế migration/versioning. | MUST |
+| M-06 | Lỗi không xử lý phải được ghi nhận để phục vụ sửa lỗi. | SHOULD |
+| M-07 | Hệ thống phải lưu thông tin chất lượng AI ở mức cần thiết để cải thiện prompt/rubric sau này. | COULD |
 
 ---
 
 ## 4.7 Chất lượng AI
 
-| Mã | Yêu cầu |
-|---|---|
-| Q-01 | Follow-up question phải bám vào nội dung Candidate vừa trả lời, không sinh câu hỏi generic. |
-| Q-02 | Segment feedback ở mức `warning` hoặc `critical` phải có gợi ý cải thiện cụ thể. |
-| Q-03 | Feedback phải giúp Candidate hiểu vấn đề và biết nên sửa câu trả lời như thế nào. |
-| Q-04 | Rewrite & Compare phải thể hiện được khác biệt giữa câu trả lời cũ và câu trả lời mới. |
-| Q-05 | Output AI có cấu trúc phải được validate trước khi lưu hoặc hiển thị. |
-| Q-06 | Voice metrics nếu hiển thị phải được trình bày như thông tin hỗ trợ, không thay thế đánh giá nội dung câu trả lời. |
-| Q-07 | Delta Score phải được giải thích đủ rõ để Candidate không hiểu nhầm điểm số là đánh giá tuyệt đối. |
+| Mã | Yêu cầu | Priority |
+|---|---|---|
+| Q-01 | Follow-up question phải bám vào nội dung Candidate vừa trả lời, không sinh câu hỏi generic. | MUST |
+| Q-02 | Segment feedback ở mức `warning` hoặc `critical` phải có gợi ý cải thiện cụ thể. | MUST |
+| Q-03 | Feedback phải giúp Candidate hiểu vấn đề và biết nên sửa câu trả lời như thế nào. | MUST |
+| Q-04 | Rewrite & Compare phải thể hiện được khác biệt giữa câu trả lời cũ và câu trả lời mới. | SHOULD |
+| Q-05 | Output AI có cấu trúc phải được validate trước khi lưu hoặc hiển thị. | MUST |
+| Q-06 | Voice metrics nếu hiển thị phải được trình bày như thông tin hỗ trợ, không thay thế đánh giá nội dung câu trả lời. | SHOULD |
+| Q-07 | Delta Score phải được giải thích đủ rõ để Candidate không hiểu nhầm điểm số là đánh giá tuyệt đối. | SHOULD |
 
 ---
 
 ## 4.8 An toàn nội dung AI
 
-| Mã | Yêu cầu |
-|---|---|
-| AS-01 | JD chứa nội dung không phù hợp phải bị từ chối hoặc yêu cầu nhập lại trước khi tạo phiên. |
-| AS-02 | Câu trả lời chứa nội dung không phù hợp không được gửi vào Feedback Analyzer như nội dung hợp lệ. |
-| AS-03 | User input không được phép override system instruction của AI Engine. |
-| AS-04 | JD quá ngắn hoặc vô nghĩa phải bị validation fail hoặc chuyển sang fallback phù hợp. |
-| AS-05 | AI không được sinh câu hỏi phỏng vấn có tính phân biệt đối xử hoặc hỏi đời tư không liên quan công việc. |
-| AS-06 | Feedback không được nhận xét ngoại hình, đặc điểm cá nhân nhạy cảm hoặc giọng nói theo hướng phân biệt đối xử. |
+| Mã | Yêu cầu | Priority |
+|---|---|---|
+| AS-01 | JD chứa nội dung không phù hợp phải bị từ chối hoặc yêu cầu nhập lại trước khi tạo phiên. | MUST |
+| AS-02 | Câu trả lời chứa nội dung không phù hợp không được gửi vào Feedback Analyzer như nội dung hợp lệ. | MUST |
+| AS-03 | User input không được phép override system instruction của AI Engine. | MUST |
+| AS-04 | JD quá ngắn hoặc vô nghĩa phải bị validation fail hoặc chuyển sang fallback phù hợp. | MUST |
+| AS-05 | AI không được sinh câu hỏi phỏng vấn có tính phân biệt đối xử hoặc hỏi đời tư không liên quan công việc. | MUST |
+| AS-06 | Feedback không được nhận xét ngoại hình, đặc điểm cá nhân nhạy cảm hoặc giọng nói theo hướng phân biệt đối xử. | MUST |
 
 # 5. Ma trận truy vết yêu cầu (Traceability Matrix)
 
