@@ -24,8 +24,8 @@ In this phase, you act as a **Business Analyst (BA)** and **QA Engineer**, not a
 **2026-05-06** — Requirements Analysis session:
 - Filled all [TODO] markers in [docs/PHASES.md](docs/PHASES.md) — Discovery key decisions (8 items), open questions (A2–A5), entry criteria (7 items checked), OQ-001/OQ-002
 - `/srs-audit` SRS v1.6 — 4 blockers, 10 should-fix, 3 minor (vague NFRs, P-11..P-15 gap, MoSCoW missing, P-04 inconsistency)
-- `/qa-review` [docs/SRS/SRS_InterviewAI_Full.md](docs/SRS/SRS_InterviewAI_Full.md) — 17 findings (5🔴 9🟡 3🟢): recommend FIX BEFORE NEXT PHASE
-- `/qa-review` [docs/SRS/RTM_InterviewAI.md](docs/SRS/RTM_InterviewAI.md) — 12 findings (2🔴 7🟡 3🟢): AS-05/AS-06 untestable; 8 security NFRs unmapped
+- `/qa-review` [docs/SRS/SRS_InterviewAI_Full.md](docs/SRS/SRS_InterviewAI_Full.md) — 17 findings (5 Blocker / 9 Should-fix / 3 Minor): recommend FIX BEFORE NEXT PHASE
+- `/qa-review` [docs/SRS/RTM_InterviewAI.md](docs/SRS/RTM_InterviewAI.md) — 12 findings (2 Blocker / 7 Should-fix / 3 Minor): AS-05/AS-06 untestable; 8 security NFRs unmapped
 - Created [docs/user-stories/README.md](docs/user-stories/README.md) — template + INVEST checklist + persona table + index
 - Created [docs/glossary.md](docs/glossary.md) — 20 terms từ SRS §1.3 + Discovery, A–W
 - Created [docs/test-plan/strategy.md](docs/test-plan/strategy.md) — test scope, pyramid, environments, risks, entry/exit criteria
@@ -39,19 +39,26 @@ In this phase, you act as a **Business Analyst (BA)** and **QA Engineer**, not a
 - **RTM [RTM-B1]**: Cập nhật row "An toàn nội dung AI" — thêm AC-04-9, AC-05-7 vào AC column
 - **RTM [RTM-B2]**: Map 8 security NFRs: S-04 → UC-04/05/06/07/08; S-07/S-10/S-11 → UC-04/05; S-12 → UC-03; S-14 → UC-02; S-05/S-06 → new cross-cutting row; xóa P-05 khỏi UC-04 NFR column (P-05 đã removed)
 
+**2026-05-08** — Style audit + SRS icon fix:
+- Created [docs/style-audit.md](docs/style-audit.md) — scanned 20 files (docs/**/*.md, CLAUDE.md, .claude/rules/**/*.md) against style rules in ~/.claude/CLAUDE.md; found 200+ icon violations across 7 files, 0 corporate phrases, 0 AI tells in any file
+- Fixed all icon violations in [docs/SRS/SRS_InterviewAI_Full.md](docs/SRS/SRS_InterviewAI_Full.md) — 36 lines changed, 0 emoji remaining
+  - Zone A (L691–L815): flag icons in table header, button icon prefixes, completion marks
+  - Zone B (L975–L1196): wireframe color tokens → RED/YELLOW/GREEN; popup section labels kept in Vietnamese (Vấn đề / Gợi ý / Nên nói); delta icon references removed
+- Remaining icon violations: CLAUDE.md (28), Discovery_Document.md (~50), Discovery_Document_Template.md (~50), Checklist_Discovery.md (27), PHASES.md (3), .claude/rules/srs-format.md (4)
+
 ## Phase Roadmap
 
 | Phase | Status | Key Deliverables | Location |
 |-------|--------|------------------|----------|
-| Discovery | ✅ Done | Problem statement, stakeholders | docs/Discovery_Docs/ |
-| Requirements Analysis | 🚧 Active | SRS, user stories, glossary, traceability matrix, test plan outline | docs/SRS/, docs/user-stories/, docs/glossary.md, docs/traceability-matrix.md, docs/test-plan/ |
-| Architectural Design | ⏭️ Next | Architecture overview, ADRs, component diagrams | docs/architecture/ |
-| Detailed Design | ⏭️ | Per-component design, API contracts | docs/design/ |
-| Database Design | ⏭️ | Schema, ERD, RLS strategy | docs/design/database.md |
-| UI/UX Design | ⏭️ | User flows, wireframes, design system | docs/ui/ |
-| Implementation | ⏭️ | Code | apps/ |
-| Integration | ⏭️ | Integration tests, deployment config | apps/, infra/ |
-| V&V / Testing | ⏭️ | E2E tests, test reports | tests/, docs/test-reports/ |
+| Discovery | Done | Problem statement, stakeholders | docs/Discovery_Docs/ |
+| Requirements Analysis | Active | SRS, user stories, glossary, traceability matrix, test plan outline | docs/SRS/, docs/user-stories/, docs/glossary.md, docs/traceability-matrix.md, docs/test-plan/ |
+| Architectural Design | Next | Architecture overview, ADRs, component diagrams | docs/architecture/ |
+| Detailed Design | Planned | Per-component design, API contracts | docs/design/ |
+| Database Design | Planned | Schema, ERD, RLS strategy | docs/design/database.md |
+| UI/UX Design | Planned | User flows, wireframes, design system | docs/ui/ |
+| Implementation | Planned | Code | apps/ |
+| Integration | Planned | Integration tests, deployment config | apps/, infra/ |
+| V&V / Testing | Planned | E2E tests, test reports | tests/, docs/test-reports/ |
 
 Phase transition log: see docs/PHASES.md
 
@@ -64,7 +71,7 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 ## Available Personas (Slash Commands)
 
 - `/ba-interview <topic>` — Conduct structured BA interview to elicit requirements
-- `/qa-review <file>` — QA review across 6 dimensions: testability, completeness, ambiguity, consistency, traceability, priority & scope. Output: 🔴 Blocker / 🟡 Should-fix / 🟢 Minor findings + recommendation (BLOCK / FIX BEFORE NEXT PHASE / OK)
+- `/qa-review <file>` — QA review across 6 dimensions: testability, completeness, ambiguity, consistency, traceability, priority & scope. Output: Blocker / Should-fix / Minor findings + recommendation (BLOCK / FIX BEFORE NEXT PHASE / OK)
 - `/srs-audit` — Audit current SRS against IEEE 830 / quality criteria
 - `/wrap-phase <phase>` — Generate phase output summary, prepare handoff to next phase
 
@@ -72,34 +79,35 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 
 | Doc | Status | Chất lượng | Path |
 |-----|--------|-----------|------|
-| Discovery Document | ✅ Done | Chưa audit | docs/Discovery_Docs/Discovery_Document.md |
-| Discovery Checklist | ✅ Done | Chưa audit | docs/Discovery_Docs/Checklist_Discovery.md |
-| SRS (full) | 🟡 Blockers resolved | 0🔴 10🟡 3🟢 — should-fix còn lại chưa xử lý | docs/SRS/SRS_InterviewAI_Full.md |
-| SRS Checklist | ✅ Done | Chưa audit | docs/SRS/Checklist_SRS.md |
-| Requirements Traceability Matrix | 🟡 Blockers resolved | 0🔴 — should-fix còn lại chưa xử lý | docs/SRS/RTM_InterviewAI.md |
-| Software Architecture Document | ✅ Done | Chưa audit | docs/SAD/SAD_InterviewAI_v1.0.md |
-| Database Design | ⬜ Empty | Intentionally deferred | docs/design/database_design.md |
-| API Spec | ⬜ Empty | Intentionally deferred | docs/design/API_spec.md |
-| Glossary | ✅ Done | Chưa audit | docs/glossary.md |
-| User Stories | 🚧 Template ready | Chưa có story nào | docs/user-stories/ |
-| Test Plan (strategy) | ✅ Done | Chưa audit | docs/test-plan/strategy.md |
-| Phase Transition Log | ✅ Done | Đã fill hết TODO | docs/PHASES.md |
-| Architecture ADRs | ⏭️ Planned | — | docs/architecture/ |
-| UI/UX Design | ⏭️ Planned | — | docs/ui/ |
+| Discovery Document | Done | Chưa audit | docs/Discovery_Docs/Discovery_Document.md |
+| Discovery Checklist | Done | Chưa audit | docs/Discovery_Docs/Checklist_Discovery.md |
+| SRS (full) | Blockers resolved | 0 Blocker / 10 Should-fix / 3 Minor — should-fix còn lại chưa xử lý | docs/SRS/SRS_InterviewAI_Full.md |
+| SRS Checklist | Done | Chưa audit | docs/SRS/Checklist_SRS.md |
+| Requirements Traceability Matrix | Blockers resolved | 0 Blocker — should-fix còn lại chưa xử lý | docs/SRS/RTM_InterviewAI.md |
+| Software Architecture Document | Done | Chưa audit | docs/SAD/SAD_InterviewAI_v1.0.md |
+| Database Design | Empty | Intentionally deferred | docs/design/database_design.md |
+| API Spec | Empty | Intentionally deferred | docs/design/API_spec.md |
+| Glossary | Done | Chưa audit | docs/glossary.md |
+| User Stories | Template ready | Chưa có story nào | docs/user-stories/ |
+| Test Plan (strategy) | Done | Chưa audit | docs/test-plan/strategy.md |
+| Phase Transition Log | Done | Đã fill hết TODO | docs/PHASES.md |
+| Architecture ADRs | Planned | — | docs/architecture/ |
+| UI/UX Design | Planned | — | docs/ui/ |
+| Style Audit Report | Done | SRS fixed; 5 files pending | docs/style-audit.md |
 
 ## Next Steps
 
 > **Thứ tự bắt buộc:** SRS phải ổn định → mới viết User Stories → mới viết Test Cases.
-> **Trạng thái hiện tại:** SRS blockers ✅ xong — đủ điều kiện bắt đầu User Stories.
+> **Trạng thái hiện tại:** SRS blockers resolved — đủ điều kiện bắt đầu User Stories.
 
-### 🔴 Làm ngay
+### Làm ngay (MUST)
 
 **[1] Viết User Stories** — MUST UCs trước: UC-01, UC-03, UC-04, UC-05, UC-06, UC-07
 - Dùng template [docs/user-stories/README.md](docs/user-stories/README.md)
 - Mỗi story phải qua INVEST check trước khi commit
 - Update index table trong README.md và cột US trong RTM
 
-### 🟡 Làm song song hoặc ngay sau
+### Làm song song hoặc ngay sau (SHOULD)
 
 **[2] Hoàn thiện RTM** — sau khi US có:
 - Thêm cột "User Stories" vào RTM §1
@@ -111,6 +119,14 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 - S-11, S-13: thêm con số cụ thể
 - AS-04: thêm "< 100 ký tự" vào chính NFR text
 - Q-03, Q-07: thêm AC dựa trên usability test hoặc survey
+
+**[4] Fix icon violations — files còn lại** (dựa trên [docs/style-audit.md](docs/style-audit.md)):
+- CLAUDE.md: 28 violations — ưu tiên cao nhất (loaded every session)
+- docs/PHASES.md: 3 violations — nhanh, làm cùng CLAUDE.md
+- .claude/rules/srs-format.md: 4 violations trong example blocks
+- docs/Discovery_Docs/Checklist_Discovery.md: 27 violations — (*) core markers, Done/Warning/Missing status icons
+- docs/Discovery_Docs/Discovery_Document.md: ~50 violations — fix khi next touched
+- docs/Discovery_Docs/Discovery_Document_Template.md: ~50 violations — fix khi next touched
 
 ## Key Decisions
 
@@ -127,6 +143,9 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 | P-01/P-02 threshold: < 2s / < 300ms | Không có AC backup cho P-01/P-02 → phải backfill số vào NFR (không thể xóa NFR). Dùng standard web perf benchmarks: 2s page load (p95), 300ms CRUD (p95). Điều chỉnh khi có dữ liệu benchmark thực từ staging. |
 | P-05 xóa khỏi SRS | Threshold của P-05 đã được cover bởi AC-04-4 (toàn bộ Phase 3+4 ≤ 12s). Duplicate threshold ở 2 chỗ gây risk inconsistency. Xóa NFR, giữ AC làm single source of truth. |
 | S-12 threshold: 10 phiên/24h | Prototype cần limit để ngăn lạm dụng API cost. 10 sessions/24h = đủ cho 1–2 buổi luyện tập nghiêm túc/ngày mà không abuse. Có thể nâng khi cần qua config. |
+| Style: color tokens trong SRS wireframe dùng RED/YELLOW/GREEN, không phải severity labels | Các màu trong wireframe mang nghĩa UI color (good/warning/critical), không phải severity status. Generic mapping không áp dụng được cho context này — dùng riêng cho status markers (CLAUDE.md, PHASES.md). |
+| Style: popup labels trong SRS giữ tiếng Việt | Doc viết bằng tiếng Việt. Đổi "Vấn đề:" → "Issue:" sẽ không nhất quán với phần còn lại. Chỉ xóa icon prefix, giữ nguyên label gốc. |
+| Style: box-drawing chars (┌ ┐ └ ┘ │) trong ASCII diagram không phải violation | Các ký tự này phục vụ mục đích cấu trúc (diagram), không phải decoration. Rule "no decorative symbols" không áp dụng. Giữ nguyên trong SAD và test-plan. |
 
 ## Behavioral Guidelines (Documentation Mode)
 

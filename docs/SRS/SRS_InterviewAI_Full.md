@@ -688,7 +688,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 
 1. Hệ thống hiển thị 2 lựa chọn Context Pack dưới dạng card:
 
-   | | 🇻🇳 Việt Nam | 🌍 Western / International |
+   | | Việt Nam | Western / International |
    |---|---|---|
    | **Mô tả ngắn** | Phù hợp với công ty Việt Nam, doanh nghiệp nội địa, cơ quan nhà nước | Phù hợp với công ty nước ngoài, startup quốc tế, môi trường đa văn hóa |
    | **Câu hỏi trọng tâm** | Teamwork, tôn trọng, sự kiên nhẫn, gắn bó lâu dài | Impact cụ thể, ownership, số liệu, tư duy độc lập |
@@ -750,13 +750,13 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 1. Hệ thống lấy câu hỏi tiếp theo từ `session_questions` (theo thứ tự `order_index`).
 2. Hiển thị câu hỏi dạng text trên màn hình; kèm indicator **"Câu [X] / [Total]"**.
 3. *(Optional)* Hệ thống đọc câu hỏi bằng Web Speech API (TTS) nếu Candidate đã bật cài đặt này.
-4. Hiển thị 2 nút: **🎤 Trả lời bằng giọng nói** và **✏️ Trả lời bằng văn bản**.
+4. Hiển thị 2 nút: **Trả lời bằng giọng nói** và **Trả lời bằng văn bản**.
 
 ---
 
 **Giai đoạn 2A — Trả lời bằng giọng nói (Voice Path)**
 
-5. Candidate nhấn nút **🎤 Bắt đầu ghi âm**.
+5. Candidate nhấn nút **Bắt đầu ghi âm**.
 6. Frontend kích hoạt `MediaRecorder` via Web Audio API; hiển thị waveform animation và timer đếm lên.
 7. Candidate nói câu trả lời.
 8. Candidate nhấn **■ Dừng ghi âm** (hoặc tự động dừng sau 5 phút).
@@ -774,7 +774,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 
 **Giai đoạn 2B — Trả lời bằng văn bản (Text Path)**
 
-5. Candidate nhấn **✏️ Trả lời bằng văn bản**.
+5. Candidate nhấn **Trả lời bằng văn bản**.
 6. Hiển thị textarea với placeholder gợi ý; Candidate gõ câu trả lời.
 7. Candidate nhấn **"Gửi câu trả lời"**.
 8. Frontend gửi text đến backend; backend lưu transcript; không tính voice metrics (WPM = null, filler = null).
@@ -795,7 +795,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
     17e. Backend lưu answer follow-up vào `user_answers` với `parent_question_id = original_question_id`.
 
     **Nếu `skip_follow_up = true`:**
-    17f. Bỏ qua bước 17a–17e; hiển thị indicator nhỏ: "Câu trả lời đã đầy đủ ✓".
+    17f. Bỏ qua bước 17a–17e; hiển thị indicator nhỏ: "Câu trả lời đã đầy đủ".
 
 ---
 
@@ -812,7 +812,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 21. Backend lưu dữ liệu vào DB:
     - `ai_feedbacks`: overall_score, model_answer, key_takeaway, context_pack_id
     - `annotated_segments`: 1 record cho mỗi phần tử trong mảng `segments[]`
-22. Frontend hiển thị indicator nhỏ: **"Đã phân tích ✓"** bên dưới câu trả lời.
+22. Frontend hiển thị indicator nhỏ: **"Đã phân tích"** bên dưới câu trả lời.
 
 ---
 
@@ -971,23 +971,23 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
    ```
    ┌─────────────────────────────────────────────────────────┐
    │  Câu hỏi: "Hãy kể về một lần bạn xử lý conflict..."   │
-   │  Điểm: 68/100  Context: 🇻🇳 VN Pack                   │
-   │  💡 Key Takeaway: "Thay 'cố gắng communicate'..."      │
+   │  Điểm: 68/100  Context: VN Pack                       │
+   │  Key Takeaway: "Thay 'cố gắng communicate'..."          │
    ├─────────────────────────────────────────────────────────┤
-   │  📝 Transcript của bạn                                  │
+   │  Transcript của bạn                                     │
    │                                                         │
-   │  [🔴 Ừm, thì hồi đó] tôi làm việc với một bạn trong   │
+   │  [RED: Ừm, thì hồi đó] tôi làm việc với một bạn trong │
    │  team và chúng tôi không đồng ý về cách thiết kế       │
-   │  database. [🟡 Tôi đã cố gắng communicate với bạn đó  │
-   │  nhưng mà không hiệu quả lắm.] [🔴 Cuối cùng team     │
+   │  database. [YELLOW: Tôi đã cố gắng communicate với bạn│
+   │  nhưng mà không hiệu quả lắm.] [RED: Cuối cùng team   │
    │  lead phải vào giải quyết và mọi thứ ổn hơn.]         │
    │                                                         │
-   │  [FOLLOW-UP] ... [🟢 Tôi đã chuẩn bị một doc nhỏ...]  │
+   │  [FOLLOW-UP] ... [GREEN: Tôi đã chuẩn bị một doc nhỏ...]│
    ├─────────────────────────────────────────────────────────┤
-   │  🎯 Câu trả lời mẫu (Model Answer)                     │
+   │  Câu trả lời mẫu (Model Answer)                        │
    │  Trong dự án thiết kế module thanh toán...              │
    ├─────────────────────────────────────────────────────────┤
-   │  [🔁 Luyện lại câu này]                                │
+   │  [Luyện lại câu này]                                   │
    └─────────────────────────────────────────────────────────┘
    ```
 
@@ -996,18 +996,18 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 
    ```
    ┌──────────────────────────────────────────┐
-   │ 🔴 Cần sửa ngay                          │
+   │ Cần sửa ngay                               │
    │ ─────────────────────────────────────    │
-   │ 📌 Vấn đề:                               │
+   │ Vấn đề:                                   │
    │ Mở đầu bằng 2 filler words liên tiếp    │
    │ ('Ừm', 'thì') tạo ấn tượng thiếu chuẩn  │
    │ bị và thiếu tự tin.                      │
    │ ─────────────────────────────────────    │
-   │ 💡 Gợi ý:                                │
+   │ Gợi ý:                                    │
    │ Bắt đầu bằng ngữ cảnh cụ thể thay vì    │
    │ filler words.                            │
    │ ─────────────────────────────────────    │
-   │ ✅ Nên nói:                              │
+   │ Nên nói:                                  │
    │ "Trong dự án thiết kế hệ thống thanh    │
    │  toán năm ngoái,"                        │
    └──────────────────────────────────────────┘
@@ -1015,15 +1015,15 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 
 7. Candidate đọc annotation; có thể đóng popup bằng cách click ra ngoài.
 8. Candidate xem **Model Answer** ở cuối trang.
-8b. *(Tùy chọn)* Candidate nhấn **👍 Hữu ích** hoặc **👎 Chưa hữu ích** để đánh giá chất lượng feedback của câu hỏi này. Hệ thống lưu vào `ai_quality_log` (xem vòng lặp cải thiện tại 4.7.2). Mỗi câu hỏi được đánh giá 1 lần; có thể thay đổi trong vòng 5 phút sau khi nhấn.
-9. Candidate nhấn **"🔁 Luyện lại câu này"** → kích hoạt UC-07.
+8b. *(Tùy chọn)* Candidate nhấn **+1 Hữu ích** hoặc **-1 Chưa hữu ích** để đánh giá chất lượng feedback của câu hỏi này. Hệ thống lưu vào `ai_quality_log` (xem vòng lặp cải thiện tại 4.7.2). Mỗi câu hỏi được đánh giá 1 lần; có thể thay đổi trong vòng 5 phút sau khi nhấn.
+9. Candidate nhấn **"Luyện lại câu này"** → kích hoạt UC-07.
 10. Candidate nhấn tab câu hỏi khác → quay lại bước 3 với câu hỏi mới.
 
 **Alternative Flow:**
 
 - **AF-06-A**: Feedback được sinh theo Fallback (không có segment annotation) → Hiển thị tab "Nhận xét chung" thay vì Annotated Transcript; text comment hiện ở vị trí transcript; không có màu highlight.
-- **AF-06-B**: Voice metrics khả dụng → Hiển thị badge nhỏ: `🎤 95 WPM · 4 filler words`.
-- **AF-06-C**: Candidate đã đánh giá 👍/👎 và muốn thay đổi trong 5 phút → Nhấn lại nút → Hệ thống cập nhật `ai_quality_log` với giá trị mới; nút được highlight để cho thấy lựa chọn hiện tại.
+- **AF-06-B**: Voice metrics khả dụng → Hiển thị badge nhỏ: `95 WPM · 4 filler words`.
+- **AF-06-C**: Candidate đã đánh giá +1/-1 và muốn thay đổi trong 5 phút → Nhấn lại nút → Hệ thống cập nhật `ai_quality_log` với giá trị mới; nút được highlight để cho thấy lựa chọn hiện tại.
 
 **Exception Flow:**
 
@@ -1035,7 +1035,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 **Acceptance Criteria:**
 
 - [ ] AC-06-1: Transcript với annotation load trong ≤ 500 ms.
-- [ ] AC-06-2: Màu highlight chính xác: 🟢 good, 🟡 warning, 🔴 critical.
+- [ ] AC-06-2: Màu highlight chính xác: green=good, yellow=warning, red=critical.
 - [ ] AC-06-3: Click vào đoạn annotated → popup hiển thị đủ 3 phần (reason, suggestion, improved_version).
 - [ ] AC-06-4: Model Answer luôn hiển thị đầy đủ, không bị truncate.
 - [ ] AC-06-5: Nút "Luyện lại câu này" chỉ hiện khi có ít nhất 1 segment `warning` hoặc `critical`.
@@ -1071,19 +1071,19 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 
 **Giai đoạn 1 — Khởi tạo Rewrite session**
 
-1. Candidate nhấn **"🔁 Luyện lại câu này"** từ UC-06.
+1. Candidate nhấn **"Luyện lại câu này"** từ UC-06.
 2. Hệ thống hiển thị màn hình Rewrite với layout 2 cột:
    - **Cột TRÁI** (50%): "Lần trả lời gốc" — Annotated Transcript cũ với highlight đỏ/vàng/xanh và điểm gốc.
    - **Cột PHẢI** (50%): "Lần thử [N]" — Vùng nhập liệu trống (Voice hoặc Text); countdown badge "Lần 1 / tối đa 5".
 3. Hệ thống hiển thị lại câu hỏi gốc ở trên cùng để Candidate tham khảo.
-4. Hiển thị **Key Takeaway** của lần gốc như "nhắc nhở": "💡 Nhớ: Thay 'cố gắng' bằng hành động cụ thể."
+4. Hiển thị **Key Takeaway** của lần gốc như "nhắc nhở": "Nhớ: Thay 'cố gắng' bằng hành động cụ thể."
 
 **Giai đoạn 2 — Candidate trả lời lại**
 
 5. Candidate chọn Voice hoặc Text (mặc định giống lần gốc).
 
    **Voice Path:**
-   6a. Candidate nhấn **🎤** → ghi âm → nhấn **■** dừng.
+   6a. Candidate nhấn **[ghi âm]** → bắt đầu ghi âm → nhấn **■** dừng.
    6b. Audio gửi đến Whisper → nhận transcript mới.
    6c. Transcript mới hiển thị ở Cột PHẢI với animation typing.
 
@@ -1108,25 +1108,25 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 
    ```
    ┌────────────────────────┬────────────────────────┐
-   │  📝 Lần gốc — 68/100  │  📝 Lần 1 — 81/100    │
+   │  Lần gốc — 68/100     │  Lần 1 — 81/100       │
    │                        │                        │
-   │  [🔴 Ừm, thì hồi đó] │  [🟢 Trong dự án       │
+   │  [RED: Ừm, thì hồi đó]│  [GREEN: Trong dự án   │
    │  tôi làm việc với...  │  thiết kế module...]   │
-   │  [🟡 cố gắng          │  [🟢 Tôi đã chủ động  │
+   │  [YELLOW: cố gắng     │  [GREEN: Tôi đã chủ động│
    │  communicate]         │  chuẩn bị document]    │
-   │  [🔴 Cuối cùng team   │  [🟡 Kết quả: hai     │
+   │  [RED: Cuối cùng team │  [YELLOW: Kết quả: hai│
    │  lead phải vào]       │  bên thống nhất]       │
    │                        │                        │
    │  Voice: 4 fillers      │  Voice: 1 filler       │
    ├────────────────────────┴────────────────────────┤
-   │          ↑ +13 điểm    Cải thiện tốt! 🎉       │
+   │          ↑ +13 điểm    Cải thiện tốt!            │
    └─────────────────────────────────────────────────┘
    ```
 
 12. Hiển thị **Delta Score badge** ở trung tâm:
-    - `delta > 10`: màu xanh đậm, icon 🎉, text "Cải thiện rõ rệt!"
-    - `delta 1–10`: màu xanh nhạt, icon ✓, text "Có cải thiện"
-    - `delta = 0`: màu vàng, icon ⚡, text "Chưa thay đổi nhiều — xem gợi ý bên trái"
+    - `delta > 10`: màu xanh đậm, text "Cải thiện rõ rệt!"
+    - `delta 1–10`: màu xanh nhạt, text "Có cải thiện"
+    - `delta = 0`: màu vàng, text "Chưa thay đổi nhiều — xem gợi ý bên trái"
     - `delta < 0`: màu cam, icon ↩, text "Điểm giảm — xem lại annotation gốc"
 
 13. Candidate có thể click vào annotation của **Lần 1** ở Cột PHẢI để xem popup giải thích mới.
@@ -1193,7 +1193,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 3. Mỗi card hiển thị:
    - Ngày và giờ thực hiện
    - Vị trí ứng tuyển (trích từ JD bằng AI, lưu khi tạo phiên)
-   - Context Pack icon (🇻🇳 hoặc 🌍)
+   - Context Pack label (VN hoặc Western)
    - Điểm tổng (`session.overall_score`)
    - Số câu đã trả lời / tổng số câu
    - Badge `Đã Rewrite` nếu có ít nhất 1 câu được luyện lại
