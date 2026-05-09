@@ -8,9 +8,9 @@ InterviewAI là ứng dụng web luyện phỏng vấn xin việc dành cho sinh
 **Started**: 2026-05-09  
 **Target completion**: TBD (sau khi hoàn thành SAD v1.1, HLD, ADRs, UI/UX, DB, API, LLD)
 
-**Phase snapshot (2026-05-09):** Requirements Analysis chưa exit chính thức (US 16 stories Draft, TC chưa viết) — user quyết định chuyển sang Architectural Design trước. SAD v1.1 đã xong. ADR-001 xong. ADR-002→005, HLD, UI/UX, DB, API, LLD còn pending.
+**Phase snapshot (2026-05-10):** Requirements Analysis chưa exit chính thức (US 16 stories Draft, TC chưa viết) — user quyết định chuyển sang Architectural Design trước. SAD v1.1 xong. ADR-001 đến ADR-005 xong. HLD v1.0 xong (929 dòng, 10 sections). Parallel phase (UI/UX + DB + API) hiện unblocked — đây là ưu tiên tiếp theo.
 
-**Architecture decision (confirmed 2026-05-09):** NestJS only backend (không dùng FastAPI). Xem technical-analysis.md và ADR-005 khi được tạo.
+**Architecture decision (confirmed 2026-05-09):** NestJS only backend (không dùng FastAPI). Xem ADR-005.
 
 In this phase, you act as a **Software Architect** and **Technical Lead**. You produce design documents, diagrams, and ADRs — not production code.
 
@@ -103,6 +103,14 @@ In this phase, you act as a **Software Architect** and **Technical Lead**. You p
 - Created [docs/Design/ArchitecturalDesign/ADRs/ADR-001_nextjs-app-router.md](docs/Design/ArchitecturalDesign/ADRs/ADR-001_nextjs-app-router.md)
 - TODO còn lại: ADR-002 đến ADR-005, HLD, UI/UX Design, Database Design, API Design, LLD
 
+**2026-05-10** — ADRs + HLD session:
+- Git cleanup: stage rename `docs/interview_ai_coach_session_type_spec.md` → `docs/Design/ArchitecturalDesign/interview_ai_coach_session_type_spec.md` (intentional move, git detect 100% rename); commit staged CLAUDE.MD + SAD changes + ADR-001
+- Created [docs/Design/ArchitecturalDesign/ADRs/ADR-002_nestjs-backend-framework.md](docs/Design/ArchitecturalDesign/ADRs/ADR-002_nestjs-backend-framework.md) — NestJS vs Express vs Fastify; Decision: NestJS (Guards/DI/Module system cho AI pipeline)
+- Created [docs/Design/ArchitecturalDesign/ADRs/ADR-003_supabase-database-auth.md](docs/Design/ArchitecturalDesign/ADRs/ADR-003_supabase-database-auth.md) — Supabase vs self-hosted; Decision: Supabase (Auth + RLS out of box, 1-day setup)
+- Created [docs/Design/ArchitecturalDesign/ADRs/ADR-004_openai-gpt4o-ai-model.md](docs/Design/ArchitecturalDesign/ADRs/ADR-004_openai-gpt4o-ai-model.md) — OpenAI vs Gemini vs Claude vs local; Decision: GPT-4o (JSON mode, Vietnamese quality, openai npm SDK)
+- Created [docs/Design/ArchitecturalDesign/ADRs/ADR-005_nestjs-only-ai-pipeline.md](docs/Design/ArchitecturalDesign/ADRs/ADR-005_nestjs-only-ai-pipeline.md) — FastAPI vs NestJS-only; Decision: NestJS-only (orchestration logic, không cần Python libs, 1 Dockerfile)
+- Created [docs/Design/ArchitecturalDesign/HLD_InterviewAI_v1.0.md](docs/Design/ArchitecturalDesign/HLD_InterviewAI_v1.0.md) — 929 dòng, 10 sections: component inventory (6 NestJS modules + 11 Next.js routes + infra), 5 data flows (Auth/SessionSetup/InterviewTurn/ReportGen/Rewrite), UC×Component mapping, 5 cross-cutting concerns (rate limit/Bull Queue/SSE/error handling/validation), AI pipeline architecture (3-layer prompt/4 prompts/3 pipelines/trigger evaluation), ~35 API endpoints inventory, security mapping, SLO-component mapping, appendix với 4 open questions cho LLD
+
 ## Phase Roadmap
 
 | Phase | Status | Key Deliverables | Location |
@@ -142,8 +150,8 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 | SRS Checklist | Done | Chưa audit | docs/SRS/Checklist_SRS.md |
 | Requirements Traceability Matrix | Updated — User Stories column added, UC-11/12/13 rows added | 0 Blocker — cột User Stories đầy đủ; §3 có note UC-09/10 + TC reminder | docs/RequirementAnalysis/SRS/RTM_InterviewAI.md |
 | Software Architecture Document | Updated → v1.1 | NestJS-only arch, C4 diagrams, Security §6, Business Constraints §7, TypeScript validators | docs/Design/ArchitecturalDesign/SAD_InterviewAI_v1.0.md |
-| Architecture Decision Records | ADR-001 done; ADR-002→005 pending | ADR-001: Next.js App Router | docs/Design/ArchitecturalDesign/ADRs/ |
-| High-Level Design | Pending | Chưa tạo | docs/Design/ArchitecturalDesign/HLD_InterviewAI_v1.0.md |
+| Architecture Decision Records | Done — ADR-001→005 Accepted | ADR-001: Next.js App Router; ADR-002: NestJS; ADR-003: Supabase; ADR-004: GPT-4o; ADR-005: NestJS-only pipeline | docs/Design/ArchitecturalDesign/ADRs/ |
+| High-Level Design | Done — v1.0, 929 dòng | 10 sections: 6 NestJS modules, 11 Next.js routes, 5 data flows (Mermaid), UC×Component mapping, 5 cross-cutting concerns, AI pipeline architecture, ~35 endpoints, 4 open questions cho LLD | docs/Design/ArchitecturalDesign/HLD_InterviewAI_v1.0.md |
 | UI/UX Design | Pending | Chưa tạo | docs/Design/UIUXDesign/UIUX_InterviewAI_v1.0.md |
 | Database Design | Pending | Chưa fill | docs/Design/DetailedDesign/database_design.md |
 | API Design (Detailed) | Pending | Chưa tạo | docs/Design/DetailedDesign/API_spec.md |
@@ -158,33 +166,25 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 ## Next Steps
 
 > **Thứ tự bắt buộc (Architectural Design):** ADRs → HLD → Parallel (UI/UX + DB + API) → LLD.
-> **Trạng thái hiện tại (2026-05-09):** SAD v1.1 xong. ADR-001 xong. ADR-002→005, HLD, và tất cả Detailed Design docs còn pending.
+> **Trạng thái hiện tại (2026-05-10):** SAD v1.1 xong. ADR-001→005 xong. HLD v1.0 xong. Parallel phase hiện unblocked.
 
 ### Làm ngay (MUST)
 
-**[1] ADR-002 → ADR-005** — 4 ADRs còn lại:
+**[1] ADR-001→005** — DONE (committed 2026-05-09/10)
 
-- ADR-002: NestJS vs Express vs Fastify — Decision: NestJS (TypeScript DI, guards, ecosystem)
-- ADR-003: Supabase vs self-hosted PostgreSQL — Decision: Supabase (Auth + RLS built-in)
-- ADR-004: OpenAI GPT-4o vs alternatives — Decision: OpenAI (JSON mode, Vietnamese quality)
-- ADR-005: FastAPI vs NestJS-only AI pipeline — Decision: NestJS only (xem technical-analysis.md §2)
-- Location: [docs/Design/ArchitecturalDesign/ADRs/](docs/Design/ArchitecturalDesign/ADRs/)
+**[2] HLD** — DONE (committed 2026-05-10): [HLD_InterviewAI_v1.0.md](docs/Design/ArchitecturalDesign/HLD_InterviewAI_v1.0.md)
 
-**[2] HLD** — unblocked sau khi ADRs xong:
+**[3] Parallel: UI/UX + Database Design + API Design** — UNBLOCKED, ưu tiên hiện tại:
 
-- File: [docs/Design/ArchitecturalDesign/HLD_InterviewAI_v1.0.md](docs/Design/ArchitecturalDesign/HLD_InterviewAI_v1.0.md)
-- Nội dung: component inventory, 5 data flows (auth/session/interview/feedback/rewrite), cross-cutting concerns (rate limit, error handling, async queue), UC→component mapping
-
-**[3] Parallel: UI/UX + Database Design + API Design** — sau HLD confirm:
-
-- [docs/Design/UIUXDesign/UIUX_InterviewAI_v1.0.md](docs/Design/UIUXDesign/UIUX_InterviewAI_v1.0.md) — sitemap, user flows (UC-01/03/04/06/07/13), screen inventory, design system
-- [docs/Design/DetailedDesign/database_design.md](docs/Design/DetailedDesign/database_design.md) — ER diagram, DDL, RLS policies, indexes
-- [docs/Design/DetailedDesign/API_spec.md](docs/Design/DetailedDesign/API_spec.md) — endpoints by domain, request/response schemas, error codes, rate limit headers
+- [docs/Design/UIUXDesign/UIUX_InterviewAI_v1.0.md](docs/Design/UIUXDesign/UIUX_InterviewAI_v1.0.md) — sitemap, user flows (UC-01/03/04/06/07/12/13), screen inventory (11 routes), design system tokens
+- [docs/Design/DetailedDesign/database_design.md](docs/Design/DetailedDesign/database_design.md) — ER diagram, DDL (~13 bảng từ HLD §2), RLS policies, indexes. Cần resolve open question pgvector scope trước khi viết schema (xem HLD §10.3 OQ-4)
+- [docs/Design/DetailedDesign/API_spec.md](docs/Design/DetailedDesign/API_spec.md) — full request/response schema cho ~35 endpoints từ HLD §7, DTOs, error codes, rate limit headers
 
 **[4] LLD** — sau khi cả 3 parallel docs confirm:
 
 - File: [docs/Design/DetailedDesign/LLD_InterviewAI_v1.0.md](docs/Design/DetailedDesign/LLD_InterviewAI_v1.0.md)
-- Nội dung: NestJS module breakdown, Next.js page structure, key algorithms (silence detection, annotation render), error handling detail
+- Nội dung: NestJS module/service breakdown, Next.js page/component detail, key algorithms (silence detection, annotation render, trigger evaluation), error handling detail
+- Cần resolve 3 open questions từ HLD §10.3 trước khi viết: SSE sticky session trên Railway, Bull vs BullMQ, polling vs SSE pattern nhất quán
 
 ### Làm khi next touched (LOW)
 
@@ -223,7 +223,12 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 | S-11 threshold: 60 requests/phút per user | 1 req/sec là ceiling tự nhiên cho 1 user dùng bình thường trong interview session (mỗi turn = 1 AI call). Threshold này ngăn abuse loop (bot gọi liên tục) mà không block legitimate use. Điều chỉnh khi có monitoring data thực từ staging. |
 | S-13 threshold: 5 failed OAuth redirects / 10 phút → block 15 phút | Google OAuth tự handle password retry — S-13 nhắm vào bot redirect loop. 5 failures trong 10 phút là bất thường với human user; 15 phút block đủ để dừng automated abuse mà không lock out người dùng thật quá lâu. Standard pattern cho OAuth abuse prevention. |
 | Usability thresholds: SUS ≥ 70, task completion ≥ 80%, Q-03 ≥ 80% rating ≥ 4 | SUS 70 = "Good" trên industry scale (Bangor et al. 2008); 80% task completion là standard threshold cho usability testing prototype. Các số này cho phép fail fast nếu UX quá phức tạp — không cần đạt SUS 90 cho prototype scope. |
-| NestJS only (không dùng FastAPI) | SRS không có requirement nào đòi local LLM inference hoặc Python-specific ML library. openai npm SDK đủ để gọi OpenAI API với full TypeScript types. pdf-parse (Node.js) đủ cho CV text extraction. Dùng 1 service thay vì 2 giảm: 1 Dockerfile, 1 deployment pipeline, 0 inter-service HTTP overhead (~10–30ms per AI call). Điều kiện để revise: nếu cần local inference (llama.cpp/vLLM) hoặc Python-only libs (pdfplumber, sentence-transformers) → tách AIModule ra FastAPI microservice khi đó. Xem technical-analysis.md §2 và ADR-005. |
+| NestJS only (không dùng FastAPI) | SRS không có requirement nào đòi local LLM inference hoặc Python-specific ML library. openai npm SDK đủ để gọi OpenAI API với full TypeScript types. pdf-parse (Node.js) đủ cho CV text extraction. Dùng 1 service thay vì 2 giảm: 1 Dockerfile, 1 deployment pipeline, 0 inter-service HTTP overhead (~10–30ms per AI call). Điều kiện để revise: nếu cần local inference (llama.cpp/vLLM) hoặc Python-only libs (pdfplumber, sentence-transformers) → tách AIModule ra FastAPI microservice khi đó. Xem ADR-005. |
+| Session type spec đặt tại docs/Design/ArchitecturalDesign/ | File đặc tả 3 loại session (HR/Technical/Mixed) là input trực tiếp cho thiết kế AI pipeline — thuộc Architectural Design, không phải Requirements Analysis. Move từ docs/ root sang docs/Design/ArchitecturalDesign/ để gần với HLD và ADR-005 là các tài liệu reference nó. Git rename 100% similarity, history preserved. |
+| SSE thay vì WebSocket cho real-time events | HLD có 5 event types (session.status, turn.follow_up, turn.feedback_ready, report.ready, rewrite.done) — tất cả đều server→client unidirectional. SSE đủ, đơn giản hơn WebSocket, NestJS hỗ trợ native qua @Sse() decorator + Observable. WebSocket cần socket.io và stateful connection — không justify cho use case này. Open question: SSE cần sticky session trên Railway load balancer — resolve khi viết LLD. |
+| 3 AI pipeline là Strategy pattern riêng biệt, không phải 1 pipeline với flag | HR/Technical/Mixed có trigger set, rubric, sequencing logic khác nhau đáng kể (xem session type spec §5.6). 1 pipeline với flag gây branching phức tạp, khó test, dễ regression khi thêm session type mới. Strategy pattern: thêm session type mới = thêm 1 class implement PipelineStrategy interface, không sửa code hiện tại. |
+| 5 Bull jobs tách riêng với timeout + fallback khác nhau | QuestionGenerationJob (15s, retry 1, fallback seed), FollowUpJob (8s, 0 retry, fallback skip), FeedbackJob (15s, retry 1, fallback text), RewriteEvalJob (15s, 0 retry, fallback no comparison), ComprehensiveReportJob (30s, retry 1, fallback partial report). Timeout khác nhau vì SLO khác nhau; retry 0 cho FollowUp và Rewrite vì fallback an toàn hơn retry (tránh double-charge OpenAI). |
+| 4 open questions từ HLD defer sang LLD | (1) SSE sticky session trên Railway — cần check Railway docs trước khi implement; (2) Bull vs BullMQ upgrade — BullMQ TypeScript support tốt hơn nhưng cần migration effort; (3) polling vs SSE nhất quán — hiện tại Session Setup dùng polling, các flow khác dùng SSE; (4) pgvector scope — SAD mention text-embedding-3-small nhưng không có UC nào explicit cần semantic search. Không resolve sớm để không over-engineer schema. |
 
 ## Behavioral Guidelines (Documentation Mode)
 
