@@ -22,3 +22,8 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Claude Code — personal overrides (không commit, chỉ dành cho máy cá nhân)
+CLAUDE.local.md
+.claude/
+**/CLAUDE.md
