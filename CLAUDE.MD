@@ -46,6 +46,29 @@ In this phase, you act as a **Business Analyst (BA)** and **QA Engineer**, not a
   - Zone B (L975–L1196): wireframe color tokens → RED/YELLOW/GREEN; popup section labels kept in Vietnamese (Vấn đề / Gợi ý / Nên nói); delta icon references removed
 - Remaining icon violations: CLAUDE.md (28), Discovery_Document.md (~50), Discovery_Document_Template.md (~50), Checklist_Discovery.md (27), PHASES.md (3), .claude/rules/srs-format.md (4)
 
+**2026-05-09** — SRS phase descriptions + TOC session:
+- Thêm section 2.5.4 "Mô tả chi tiết từng phase" vào [docs/RequirementAnalysis/SRS/SRS_InterviewAI_Full.md](docs/RequirementAnalysis/SRS/SRS_InterviewAI_Full.md) — 9 phase entries (lines 473–795), mỗi phase có: Mục tiêu, Actors, Đầu vào, Đầu ra/Artifacts, Luồng xử lý, Quy tắc nghiệp vụ, Use Case(s); nội dung derived 100% từ UC-01 đến UC-13 đã có trong SRS, không fabricate
+- Viết lại toàn bộ MỤC LỤC trong SRS (lines 31–95): từ 5 top-level entries → TOC đầy đủ 4 cấp: section 1–5, subsections 1.x / 2.x / 4.x, sub-subsections 1.x.x / 2.x.x / 2.5.x, phase entries (Phase 1–9) và UC entries (UC-01 đến UC-13, UC-09, UC-10); anchor links GFM-compliant
+
+**2026-05-08** — BRD alignment session:
+
+- Thay section 2.5 trong [docs/RequirementAnalysis/SRS/SRS_InterviewAI_Full.md](docs/RequirementAnalysis/SRS/SRS_InterviewAI_Full.md) bằng nội dung Business Requirements Document — 9-phase flowchart (Mermaid), bảng mapping BRD Phase → UC (11 rows)
+- Cập nhật UC-02: thêm `target_role_category`, `target_level`, `preferred_tech_stack`; thêm placement test prompt (bước 11); AC-02-5, AC-02-6
+- Cập nhật UC-03: thêm 9 trường mới (`jd_source`, `jd_url`, `session_type`, `difficulty`, `persona`, `mode`, `duration_min`, `language`, `show_prep_card`); mở rộng Main Flow thành 6 bước; E-03-4/E-03-5; AC-03-6 đến AC-03-10
+- Cập nhật UC-04: thêm Giai đoạn 0 (Opening Phase), silence detection (15s), 5 follow-up trigger rules, graceful timeout (30s), Reverse Questions ref UC-12, Closing Phase với self-evaluation; AF-04-E/F; AC-04-10 đến AC-04-15
+- Cập nhật UC-05: thêm 5 bước tổng hợp Comprehensive Report (Executive Summary, Comm Analysis, Competency Heatmap, Reverse Q Eval, Action Plan); AC-05-8 đến AC-05-11
+- Cập nhật UC-06: thêm Executive Summary section, Comm Analysis, Competency Heatmap, Reverse Questions Evaluation, Action Plan vào Main Flow (bước 2, 13–16); AF-06-D/E; AC-06-6 đến AC-06-9
+- Thêm UC-11 (Bài test định vị, COULD), UC-12 (Giai đoạn phỏng vấn ngược, SHOULD), UC-13 (Dashboard tiến trình, SHOULD) — mỗi UC có full header table, input data, Main Flow, AF, EF, AC
+- Cập nhật biểu đồ 2.3 và 2.4.1: thêm UC-11/12/13 với đúng include/extend relations
+
+**2026-05-09** — SRS scope cleanup + conflict resolution session:
+
+- UC-06 bước 5 & 7: xóa ASCII art layout (22+20 dòng) → thay bằng bullet list các thành phần bắt buộc (header / annotated transcript / model answer / nút hành động; popup fields: severity label, vấn đề, gợi ý, nên nói)
+- UC-07 Giai đoạn 4 bước 11: xóa ASCII art layout so sánh 2 cột (16 dòng) → thay bằng bullet list (cột trái, cột phải, delta score badge); bước 12 (Delta Score badge states) giữ nguyên
+- Audit Section 2.5 đối chiếu toàn bộ UC-01 đến UC-13: phát hiện 2 xung đột thực sự, 6 điểm khác mức độ chi tiết (không phải conflict)
+- Fix conflict #1 (Section 2.5.4 Phase 4 line 634): câu tự giới thiệu cố định đồng bộ với UC-04 canonical — `"Em hãy tự giới thiệu về bản thân và lý do em ứng tuyển vào vị trí này tại [Tên công ty]."`
+- Fix conflict #2 (Section 2.5.3 bảng mapping): thêm row `Sau Phase 8 — Rewrite & Compare (tùy chọn)` → UC-07; bảng nay đủ 13 UC
+
 ## Phase Roadmap
 
 | Phase | Status | Key Deliverables | Location |
@@ -81,7 +104,7 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 |-----|--------|-----------|------|
 | Discovery Document | Done | Chưa audit | docs/Discovery_Docs/Discovery_Document.md |
 | Discovery Checklist | Done | Chưa audit | docs/Discovery_Docs/Checklist_Discovery.md |
-| SRS (full) | Blockers resolved | 0 Blocker / 10 Should-fix / 3 Minor — should-fix còn lại chưa xử lý | docs/SRS/SRS_InterviewAI_Full.md |
+| SRS (full) | Updated — scope-clean, 2.5 conflicts resolved | 0 Blocker — ASCII art removed từ UC-06/07; Section 2.5 nhất quán với UC-04 và UC-07 đã mapped; 10 should-fix cũ chưa xử lý | docs/RequirementAnalysis/SRS/SRS_InterviewAI_Full.md |
 | SRS Checklist | Done | Chưa audit | docs/SRS/Checklist_SRS.md |
 | Requirements Traceability Matrix | Blockers resolved | 0 Blocker — should-fix còn lại chưa xử lý | docs/SRS/RTM_InterviewAI.md |
 | Software Architecture Document | Done | Chưa audit | docs/SAD/SAD_InterviewAI_v1.0.md |
@@ -98,11 +121,11 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 ## Next Steps
 
 > **Thứ tự bắt buộc:** SRS phải ổn định → mới viết User Stories → mới viết Test Cases.
-> **Trạng thái hiện tại:** SRS blockers resolved — đủ điều kiện bắt đầu User Stories.
+> **Trạng thái hiện tại:** SRS ổn định — 0 blocker, TOC đầy đủ, 9 phase descriptions đã có. Đủ điều kiện bắt đầu User Stories ngay.
 
 ### Làm ngay (MUST)
 
-**[1] Viết User Stories** — MUST UCs trước: UC-01, UC-03, UC-04, UC-05, UC-06, UC-07
+**[1] Viết User Stories** — MUST UCs trước: UC-01, UC-03, UC-04, UC-05, UC-06, UC-07; SHOULD thêm UC-11, UC-12, UC-13 (mới)
 - Dùng template [docs/user-stories/README.md](docs/user-stories/README.md)
 - Mỗi story phải qua INVEST check trước khi commit
 - Update index table trong README.md và cột US trong RTM
@@ -111,6 +134,7 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 
 **[2] Hoàn thiện RTM** — sau khi US có:
 - Thêm cột "User Stories" vào RTM §1
+- Thêm rows cho UC-11/UC-12/UC-13 (mới từ BRD alignment session)
 - Ghi chú UC-09/UC-10: không trace về Discovery insight (author confirmed)
 - Ghi chú vào §3 Maintenance Notes: khi có TC, thêm cột TC vào RTM
 
@@ -146,6 +170,11 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 | Style: color tokens trong SRS wireframe dùng RED/YELLOW/GREEN, không phải severity labels | Các màu trong wireframe mang nghĩa UI color (good/warning/critical), không phải severity status. Generic mapping không áp dụng được cho context này — dùng riêng cho status markers (CLAUDE.md, PHASES.md). |
 | Style: popup labels trong SRS giữ tiếng Việt | Doc viết bằng tiếng Việt. Đổi "Vấn đề:" → "Issue:" sẽ không nhất quán với phần còn lại. Chỉ xóa icon prefix, giữ nguyên label gốc. |
 | Style: box-drawing chars (┌ ┐ └ ┘ │) trong ASCII diagram không phải violation | Các ký tự này phục vụ mục đích cấu trúc (diagram), không phải decoration. Rule "no decorative symbols" không áp dụng. Giữ nguyên trong SAD và test-plan. |
+| Section 2.5.4 chèn vào chương 2, không tạo chương riêng | Mô tả quy trình nghiệp vụ thuộc phạm vi "tổng quan hệ thống" (chương 2). Tạo chương 6 mới sẽ phá vỡ cấu trúc IEEE 830 và làm lệch số chương các tài liệu cross-reference. |
+| MỤC LỤC viết lại đầy đủ 4 cấp (xuống đến ####) | TOC cũ chỉ có 5 top-level entries, bỏ sót 30+ subsections. TOC mới cover 1.x.x, 2.x.x, Phase 1–9, UC-01 đến UC-13. Anchor links theo GFM convention (lowercase, loại bỏ ký tự đặc biệt, space → hyphen). |
+| ASCII art layout trong UC descriptions → field list | Chi tiết rendering giao diện thuộc giai đoạn UI/UX Design, không phải Requirements Analysis. Đưa ASCII art vào SRS tạo risk xung đột khi UI/UX được thiết kế thực tế. Field list (thành phần bắt buộc + tên field schema) đủ để spec behavior và viết AC. |
+| Canonical cho câu tự giới thiệu là UC-04 | UC là spec chi tiết — nguồn sự thật. Section 2.5 là business overview — phải sync theo UC, không ngược lại. Khi hai nguồn mâu thuẫn, fix ở overview để khớp với spec. |
+| UC-07 đặt ở "Sau Phase 8" trong bảng mapping 2.5.3 | UC-07 là optional loop triggered từ Phase 8 — không phải phase độc lập, không có số thứ tự phase trong BRD. Nhãn "Sau Phase 8 — Rewrite & Compare (tùy chọn)" phản ánh đúng vị trí trong flowchart (sau RewriteDecision node) mà không phá vỡ numbering scheme của 9 phases. |
 
 ## Behavioral Guidelines (Documentation Mode)
 

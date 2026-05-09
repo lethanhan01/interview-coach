@@ -5,26 +5,11 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| **Phiên bản tài liệu** | 1.6 |
 | **Ngày soạn** | 05/05/2026 |
 | **Trạng thái** | Draft (SRS-focused revision) |
 | **Tác giả** | Lê Thành An — MSSV: 20235631 |
 | **Giảng viên hướng dẫn** | Tiến sĩ Cao Tuấn Dũng |
-| **Đơn vị** | Viện Công nghệ Thông tin và Truyền thông (SOICT), ĐHBKHN |
-
----
-
-## LỊCH SỬ PHIÊN BẢN
-
-| Phiên bản | Ngày | Mô tả |
-|---|---|---|
-| 1.0 | 21/04/2026 | Tài liệu gốc tách theo từng chương. |
-| 1.1 | 23/04/2026 | Bản hợp nhất đầy đủ, đồng bộ thuật ngữ và các ràng buộc liên chương. |
-| 1.2 | 02/05/2026 | Tách nội dung thiết kế kỹ thuật (tech stack, prompt engineering, schema AI, phân tích chi phí) sang SAD v1.0. SRS tập trung thuần vào yêu cầu. |
-| 1.3 | 03/05/2026 | Khắc phục 5 lỗi nghiêm trọng: (1) bổ sung bước 7 còn thiếu trong UC-05 Main Flow; (2) đồng bộ ngưỡng tối thiểu JD từ 50 lên 100 ký tự giữa UC-03 E-03-1 và AS-04; (3) làm rõ thứ tự bắt buộc moderation-trước-lưu-transcript trong R-05 để giải quyết mâu thuẫn với AS-02; (4) tách UC-09 thành row riêng trong Traceability Matrix; (5) bổ sung đầy đủ nhóm NFR AS, Q, OA vào Traceability Matrix. |
-| 1.4 | 03/05/2026 | Khắc phục 16 lỗi trung bình: bổ sung thuật ngữ Interview Type và Job Title vào Glossary; đồng bộ G1 với 2.2.2 (5 Mbps); làm rõ cơ chế gán Admin role; xóa quan hệ thừa AIEngine→UC-05 trong diagram; làm rõ bước [5] quy trình 2.5.1; thêm cross-reference R6-R10 → Mục 4.9; bổ sung AF-01-C (Logout), AF-02-C (xóa tài khoản), AF-05-A/B (UC-05), AF-06-C (thumbs up/down), AF-07-A/B rõ logic cột so sánh; thêm TTS preference vào UC-02; đặc tả job_title extraction trong UC-03; sửa AC-02-1 cho fresher; sửa AC-07-7 đo lường được; thêm AC-03-5, AC-07-8; bổ sung pagination UC-08; làm rõ cơ chế detect interrupted session; đồng bộ Whisper timeout E-04-3 với P-04 (10s); xử lý câu skip trong overall_score; làm rõ postcondition UC-06; giải quyết mâu thuẫn U-11 vs AF-07-B. |
-| 1.5 | 05/05/2026 | Đồng bộ với Discovery Document v0.1: bổ sung bối cảnh thị trường và motivation vào §1.1–1.2; cập nhật metrics thành công theo DD §11.1 (thêm activation rate, completion rate, return rate, thumbs up rate; đồng bộ Rewrite adoption ≥30%); thêm §1.2.5 Pivot Criteria từ DD §11.2; thêm §2.8 Design Principles từ DD §9.4; bổ sung giả định G9–G11 từ DD §10.1; đồng bộ target user 0–12 tháng; mở rộng Out of Scope từ DD §9.5; thêm tài liệu tham khảo DD; thêm bảng Insight Traceability vào §5. |
-| 1.6 | 05/05/2026 | Rà soát theo feedback: viết lại mục đích dự án, chuyển success metrics/pivot criteria/design principles sang Discovery Document, rút gọn môi trường vận hành và ràng buộc kỹ thuật, chuẩn hóa actor/business flow/use case diagram, bổ sung bảng dữ liệu đầu vào cho template Use Case, rút gọn NFR và tách Traceability Matrix sang tài liệu riêng. |
+| **Đơn vị** | Trường Công nghệ Thông tin và Truyền thông (SOICT), ĐHBKHN |
 
 ---
 
@@ -33,17 +18,66 @@
 - [1. Giới thiệu](#1-giới-thiệu)
   - [1.1 Mục đích](#11-mục-đích)
   - [1.2 Phạm vi](#12-phạm-vi)
+    - [1.2.1 Tên sản phẩm](#121-tên-sản-phẩm)
+    - [1.2.2 Mô tả tóm tắt](#122-mô-tả-tóm-tắt)
+    - [1.2.3 Phạm vi phiên bản hiện tại (v1.0 — Prototype)](#123-phạm-vi-phiên-bản-hiện-tại-v10--prototype)
   - [1.3 Từ điển thuật ngữ](#13-từ-điển-thuật-ngữ)
   - [1.4 Tài liệu tham khảo](#14-tài-liệu-tham-khảo)
   - [1.5 Giả định & Phụ thuộc](#15-giả-định--phụ-thuộc)
+    - [1.5.1 Giả định](#151-giả-định)
+    - [1.5.2 Phụ thuộc bên ngoài](#152-phụ-thuộc-bên-ngoài)
+    - [1.5.3 Ràng buộc về thời gian và nguồn lực](#153-ràng-buộc-về-thời-gian-và-nguồn-lực)
 - [2. Mô tả tổng quan](#2-mô-tả-tổng-quan)
   - [2.1 Các tác nhân](#21-các-tác-nhân)
+    - [2.1.1 Người dùng (Candidate)](#211-người-dùng-candidate)
+    - [2.1.2 Quản trị viên (Admin)](#212-quản-trị-viên-admin)
+    - [2.1.3 Hệ thống AI (AI Engine)](#213-hệ-thống-ai-ai-engine)
   - [2.2 Môi trường vận hành](#22-môi-trường-vận-hành)
   - [2.3 Biểu đồ Use Case tổng quan](#23-biểu-đồ-use-case-tổng-quan)
   - [2.4 Biểu đồ Use Case phân rã](#24-biểu-đồ-use-case-phân-rã)
+    - [2.4.1 Nhóm Luyện phỏng vấn (Candidate)](#241-nhóm-luyện-phỏng-vấn-candidate)
+    - [2.4.2 Nhóm Quản trị hệ thống (Admin)](#242-nhóm-quản-trị-hệ-thống-admin)
   - [2.5 Quy trình nghiệp vụ](#25-quy-trình-nghiệp-vụ)
+    - [2.5.1 Quy trình Candidate](#251-quy-trình-candidate)
+    - [2.5.2 Quy trình Admin](#252-quy-trình-admin)
+    - [2.5.3 Đối chiếu quy trình nghiệp vụ với Use Case](#253-đối-chiếu-quy-trình-nghiệp-vụ-với-use-case)
+    - [2.5.4 Mô tả chi tiết từng phase](#254-mô-tả-chi-tiết-từng-phase)
+      - [Phase 1 — Onboarding & Profile Setup](#phase-1--onboarding--profile-setup)
+      - [Phase 2 — Session Setup](#phase-2--session-setup)
+      - [Phase 3 — Question Generation](#phase-3--question-generation)
+      - [Phase 4 — Opening Phase](#phase-4--opening-phase)
+      - [Phase 5 — Main Interview Loop](#phase-5--main-interview-loop)
+      - [Phase 6 — Reverse Questions](#phase-6--reverse-questions)
+      - [Phase 7 — Closing](#phase-7--closing)
+      - [Phase 8 — Comprehensive Feedback](#phase-8--comprehensive-feedback)
+      - [Phase 9 — Long-term Progression](#phase-9--long-term-progression)
 - [3. Đặc tả Use Case](#3-đặc-tả-use-case)
+  - [Template Use Case](#template-use-case)
+  - [Nhóm A — Luyện phỏng vấn](#nhóm-a--luyện-phỏng-vấn)
+    - [UC-01: Đăng ký / Đăng nhập hệ thống](#uc-01-đăng-ký--đăng-nhập-hệ-thống)
+    - [UC-02: Quản lý hồ sơ luyện tập](#uc-02-quản-lý-hồ-sơ-luyện-tập)
+    - [UC-03: Cấu hình phiên phỏng vấn](#uc-03-cấu-hình-phiên-phỏng-vấn)
+    - [UC-03b: Chọn Context Pack](#uc-03b-chọn-context-pack)
+    - [UC-04: Thực hiện phiên phỏng vấn AI](#uc-04-thực-hiện-phiên-phỏng-vấn-ai)
+    - [UC-05: AI sinh Surgical Feedback](#uc-05-ai-sinh-surgical-feedback)
+    - [UC-06: Xem Surgical Feedback chi tiết](#uc-06-xem-surgical-feedback-chi-tiết)
+    - [UC-07: Rewrite & Compare](#uc-07-rewrite--compare)
+    - [UC-08: Xem danh sách phiên luyện tập](#uc-08-xem-danh-sách-phiên-luyện-tập)
+    - [UC-11: Bài test định vị](#uc-11-bài-test-định-vị)
+    - [UC-12: Giai đoạn phỏng vấn ngược](#uc-12-giai-đoạn-phỏng-vấn-ngược)
+    - [UC-13: Dashboard tiến trình cá nhân](#uc-13-dashboard-tiến-trình-cá-nhân)
+  - [Nhóm B — Quản trị hệ thống](#nhóm-b--quản-trị-hệ-thống)
+    - [UC-09: Quản trị người dùng](#uc-09-quản-trị-người-dùng)
+    - [UC-10: Quản lý ngân hàng câu hỏi](#uc-10-quản-lý-ngân-hàng-câu-hỏi)
 - [4. Yêu cầu phi chức năng](#4-yêu-cầu-phi-chức-năng)
+  - [4.1 Tính dễ dùng (Usability)](#41-tính-dễ-dùng-usability)
+  - [4.2 Hiệu năng và giới hạn sử dụng](#42-hiệu-năng-và-giới-hạn-sử-dụng)
+  - [4.3 Bảo mật và quyền riêng tư](#43-bảo-mật-và-quyền-riêng-tư)
+  - [4.4 Độ tin cậy và toàn vẹn dữ liệu](#44-độ-tin-cậy-và-toàn-vẹn-dữ-liệu)
+  - [4.5 Khả năng mở rộng](#45-khả-năng-mở-rộng)
+  - [4.6 Khả năng bảo trì](#46-khả-năng-bảo-trì)
+  - [4.7 Chất lượng AI](#47-chất-lượng-ai)
+  - [4.8 An toàn nội dung AI](#48-an-toàn-nội-dung-ai)
 - [5. Ma trận truy vết yêu cầu (Traceability Matrix)](#5-ma-trận-truy-vết-yêu-cầu-traceability-matrix)
 
 ---
@@ -293,12 +327,15 @@ flowchart LR
         UC03(["UC-03\nCấu hình phiên phỏng vấn"]):::usecase
         UC03b(["UC-03b\nChọn Context Pack"]):::usecase
         UC04(["UC-04\nThực hiện phiên phỏng vấn AI"]):::usecase
-        UC05(["UC-05\nAI sinh Surgical Feedback"]):::usecase
-        UC06(["UC-06\nXem Surgical Feedback chi tiết"]):::usecase
+        UC05(["UC-05\nAI sinh Comprehensive Feedback"]):::usecase
+        UC06(["UC-06\nXem Comprehensive Feedback"]):::usecase
         UC07(["UC-07\nRewrite & Compare"]):::usecase
         UC08(["UC-08\nXem danh sách phiên luyện tập"]):::usecase
         UC09(["UC-09\nQuản trị người dùng"]):::usecase
         UC10(["UC-10\nQuản lý ngân hàng câu hỏi"]):::usecase
+        UC11(["UC-11\nBài test định vị"]):::usecase
+        UC12(["UC-12\nGiai đoạn phỏng vấn ngược"]):::usecase
+        UC13(["UC-13\nDashboard tiến trình"]):::usecase
     end
 
     Candidate --- UC01
@@ -308,6 +345,7 @@ flowchart LR
     Candidate --- UC06
     Candidate --- UC07
     Candidate --- UC08
+    Candidate --- UC13
 
     Admin --- UC01
     Admin --- UC09
@@ -317,11 +355,15 @@ flowchart LR
     AI --- UC04
     AI --- UC05
     AI --- UC07
+    AI --- UC12
 
     UC03 -. "<<include>>" .-> UC03b
     UC04 -. "<<include>>" .-> UC05
+    UC04 -. "<<include>>" .-> UC12
     UC07 -. "<<include>>" .-> UC05
     UC06 -. "<<extend>>" .-> UC07
+    UC02 -. "<<extend>>" .-> UC11
+    UC08 -. "<<extend>>" .-> UC13
 ```
 
 ---
@@ -343,10 +385,13 @@ flowchart LR
         UC03(["UC-03\nCấu hình phiên"]):::usecase
         UC03b(["UC-03b\nChọn Context Pack"]):::usecase
         UC04(["UC-04\nThực hiện phiên"]):::usecase
-        UC05(["UC-05\nSinh feedback"]):::usecase
-        UC06(["UC-06\nXem feedback"]):::usecase
+        UC05(["UC-05\nSinh Comprehensive Feedback"]):::usecase
+        UC06(["UC-06\nXem Comprehensive Feedback"]):::usecase
         UC07(["UC-07\nRewrite & Compare"]):::usecase
         UC08(["UC-08\nXem lịch sử"]):::usecase
+        UC11(["UC-11\nBài test định vị"]):::usecase
+        UC12(["UC-12\nPhỏng vấn ngược"]):::usecase
+        UC13(["UC-13\nDashboard tiến trình"]):::usecase
     end
 
     Candidate --- UC01
@@ -356,11 +401,15 @@ flowchart LR
     Candidate --- UC06
     Candidate --- UC07
     Candidate --- UC08
+    Candidate --- UC13
 
     UC03 -. "<<include>>" .-> UC03b
     UC04 -. "<<include>>" .-> UC05
+    UC04 -. "<<include>>" .-> UC12
     UC06 -. "<<extend>>" .-> UC07
     UC08 -. "<<extend>>" .-> UC06
+    UC02 -. "<<extend>>" .-> UC11
+    UC08 -. "<<extend>>" .-> UC13
 ```
 
 ### 2.4.2 Nhóm Quản trị hệ thống (Admin)
@@ -385,32 +434,41 @@ flowchart LR
 
 ## 2.5 Quy trình nghiệp vụ
 
+Quy trình dưới đây phản ánh đầy đủ 9 phases được định nghĩa trong Business Requirements Document. Mỗi phase ánh xạ sang một hoặc nhiều Use Case trong SRS.
+
 ### 2.5.1 Quy trình Candidate
 
 ```mermaid
 flowchart TD
     classDef actorStep fill:#dbeafe,stroke:#2563eb,color:#111827
     classDef systemStep fill:#f8fafc,stroke:#64748b,color:#111827
+    classDef optionalStep fill:#f0fdf4,stroke:#16a34a,color:#111827
 
     Start([Candidate bắt đầu sử dụng hệ thống]):::actorStep
-    Login["UC-01\nĐăng ký / đăng nhập"]:::actorStep
-    Profile{"Hồ sơ luyện tập\nđã hoàn chỉnh?"}:::systemStep
-    UpdateProfile["UC-02\nCập nhật hồ sơ / upload CV"]:::actorStep
-    Configure["UC-03 + UC-03b\nNhập JD, chọn số câu,\nchọn Context Pack"]:::actorStep
-    Interview["UC-04\nTrả lời câu hỏi bằng voice hoặc text"]:::actorStep
-    Feedback["UC-06\nXem Surgical Feedback"]:::actorStep
-    Rewrite{"Muốn luyện lại\ncâu trả lời?"}:::actorStep
-    RewriteUC["UC-07\nRewrite & Compare"]:::actorStep
-    History["UC-08\nXem lại lịch sử phiên"]:::actorStep
+    P1_Login["[Phase 1] UC-01\nĐăng ký / Đăng nhập"]:::actorStep
+    P1_Profile["[Phase 1] UC-02\nHồ sơ + Mục tiêu nghề nghiệp\n+ Upload CV"]:::actorStep
+    P1_Test{"Làm bài test định vị?\n(tùy chọn)"}:::systemStep
+    P1_PlacementTest["[Phase 1] UC-11\nBài test định vị\n(hiệu chuẩn độ khó)"]:::optionalStep
+    P2["[Phase 2] UC-03 + UC-03b\nSession Setup: JD, loại phiên,\npersona, độ khó, mode, thời lượng"]:::actorStep
+    P3["[Phase 3] AI Backend\nSinh Interview Plan + rubric\n(chạy ngầm, không có UC riêng)"]:::systemStep
+    P4_Opening["[Phase 4] UC-04 — Opening Phase\nAI giới thiệu theo persona\nCâu tự giới thiệu cố định"]:::actorStep
+    P5_Loop["[Phase 5] UC-04 — Main Interview Loop\nCâu hỏi → Trả lời (voice/text)\n→ Follow-up → Surgical Feedback\n(lặp cho từng câu hỏi)"]:::actorStep
+    P6_ReverseQ["[Phase 6] UC-12\nGiai đoạn phỏng vấn ngược\nCandidate đặt câu hỏi cho AI interviewer"]:::actorStep
+    P7_Closing["[Phase 7] UC-04 — Closing\nAI kết thúc lịch sự theo persona\nSelf-evaluation tùy chọn (Practice mode)"]:::actorStep
+    P8_Feedback["[Phase 8] UC-05 + UC-06\nComprehensive Feedback Report:\nExecutive Summary, per-question,\nComm Analysis, Competency Heatmap,\nAction Plan"]:::actorStep
+    RewriteDecision{"Muốn luyện lại\ncâu trả lời?"}:::systemStep
+    Rewrite["UC-07\nRewrite & Compare"]:::actorStep
+    P9_History["UC-08\nXem lịch sử phiên"]:::actorStep
+    P9_Dashboard["[Phase 9] UC-13\nDashboard tiến trình cá nhân\n(biểu đồ, replay, streak, gợi ý)"]:::actorStep
     End([Kết thúc luồng Candidate]):::actorStep
 
-    Start --> Login --> Profile
-    Profile -->|Chưa| UpdateProfile --> Configure
-    Profile -->|Rồi| Configure
-    Configure --> Interview --> Feedback --> Rewrite
-    Rewrite -->|Có| RewriteUC --> History
-    Rewrite -->|Không| History
-    History --> End
+    Start --> P1_Login --> P1_Profile --> P1_Test
+    P1_Test -->|Có| P1_PlacementTest --> P2
+    P1_Test -->|Không| P2
+    P2 --> P3 --> P4_Opening --> P5_Loop --> P6_ReverseQ --> P7_Closing --> P8_Feedback --> RewriteDecision
+    RewriteDecision -->|Có| Rewrite --> P9_History
+    RewriteDecision -->|Không| P9_History
+    P9_History --> P9_Dashboard --> End
 ```
 
 ### 2.5.2 Quy trình Admin
@@ -432,15 +490,344 @@ flowchart TD
 
 ### 2.5.3 Đối chiếu quy trình nghiệp vụ với Use Case
 
-| Actor | Quy trình nghiệp vụ | Use Case liên quan |
+| BRD Phase | Tóm tắt | Use Case liên quan |
 |---|---|---|
-| Candidate | Đăng nhập/onboarding | UC-01, UC-02 |
-| Candidate | Tạo và cấu hình phiên phỏng vấn | UC-03, UC-03b |
-| Candidate | Thực hiện phiên phỏng vấn | UC-04, UC-05 |
-| Candidate | Xem feedback và luyện lại | UC-06, UC-07 |
-| Candidate | Xem lịch sử phiên | UC-08 |
-| Admin | Quản lý người dùng | UC-09 |
-| Admin | Quản lý ngân hàng câu hỏi | UC-10 |
+| Phase 1 — Onboarding & Profile Setup | Đăng ký, hồ sơ, mục tiêu nghề nghiệp, bài test định vị (tùy chọn) | UC-01, UC-02, UC-11 |
+| Phase 2 — Session Setup | JD (text/PDF/URL), loại phiên, persona, độ khó, mode, thời lượng, ngôn ngữ | UC-03, UC-03b |
+| Phase 3 — Question Generation | AI sinh Interview Plan + rubric theo JD/CV/level (chạy ngầm trong UC-03) | (backend, không có UC riêng) |
+| Phase 4 — Opening Phase | AI interviewer giới thiệu theo persona; câu tự giới thiệu cố định | UC-04 (Opening sub-phase) |
+| Phase 5 — Main Interview Loop | Câu hỏi → trả lời → follow-up → Surgical Feedback (lặp) | UC-04, UC-05 |
+| Phase 6 — Reverse Questions | Candidate đặt 1–3 câu hỏi; AI trả lời trong vai; hệ thống chấm điểm ngầm | UC-12 |
+| Phase 7 — Closing | AI kết thúc lịch sự; self-evaluation tùy chọn (Practice mode) | UC-04 (Closing sub-phase) |
+| Phase 8 — Comprehensive Feedback | Executive Summary, per-question analysis, Comm Analysis, Competency Heatmap, Action Plan | UC-05, UC-06 |
+| Sau Phase 8 — Rewrite & Compare (tùy chọn) | Candidate luyện lại câu trả lời bất kỳ; AI re-evaluate và hiển thị so sánh delta score | UC-07 |
+| Phase 9 — Long-term Progression | Dashboard, biểu đồ competency, replay, streak, benchmark, gợi ý session tiếp | UC-08, UC-13 |
+| Admin — User Management | Xem, tìm kiếm, khóa/mở khóa tài khoản Candidate | UC-09 |
+| Admin — Question Bank | CRUD câu hỏi seed với tags, context pack, difficulty | UC-10 |
+
+### 2.5.4 Mô tả chi tiết từng phase
+
+#### Phase 1 — Onboarding & Profile Setup
+
+**Mục tiêu:** Xác thực danh tính Candidate và thu thập hồ sơ cá nhân + mục tiêu nghề nghiệp để cá nhân hóa toàn bộ trải nghiệm luyện tập.
+
+**Actors:** Candidate, Google OAuth, AI (placement test scoring)
+
+**Đầu vào:**
+- Google account
+- full_name, target_position, target_role_category (bắt buộc), target_level (bắt buộc), preferred_tech_stack, default_language
+- cv_pdf (tùy chọn, tối đa 5 MB)
+
+**Đầu ra / Artifacts:**
+- `users` record (role = candidate)
+- `user_profiles` record (profile_completed = true)
+- JWT access token (7 ngày) + refresh token (30 ngày) lưu HttpOnly cookie
+- `cv_structured` JSON (nếu upload CV)
+- `placement_level` — intern / fresher / junior (nếu làm test định vị)
+
+**Luồng xử lý:**
+1. Candidate nhấn "Đăng nhập bằng Google" → redirect Google OAuth consent screen
+2. Supabase xác thực token; email mới → tạo `users` (role = candidate, profile_completed = false); email cũ → cập nhật `last_login_at`
+3. JWT cấp, lưu HttpOnly cookie; profile_completed = false → bắt buộc chuyển UC-02
+4. Candidate điền hồ sơ (target_role_category + target_level bắt buộc) → `profile_completed = true`
+5. (Tùy chọn) Upload CV PDF → FastAPI/pdfplumber parse → `cv_structured` JSON lưu DB + file gốc lưu Supabase Storage
+6. (Tùy chọn) Làm bài test định vị 5–10 câu trắc nghiệm/điền ngắn → AI scoring → `placement_level` lưu `user_profiles`
+
+**Quy tắc nghiệp vụ:**
+- Chỉ đăng nhập Google OAuth; không có email/password
+- `profile_completed = false` → không thể tạo session mới
+- CV PDF tối đa 5 MB; parse hoàn thành trong ≤ 5s (AC-02-3)
+- Placement test tùy chọn; bỏ qua → `placement_level = null`; khi tạo session không pre-fill difficulty
+- `placement_level` được dùng ở Phase 2 để pre-fill `difficulty` mặc định nếu Candidate không chọn thủ công
+- < 40% câu đúng → intern; 40–70% → fresher; > 70% → junior (AC-11-2)
+
+**Use Case(s):** UC-01, UC-02, UC-11
+
+---
+
+#### Phase 2 — Session Setup
+
+**Mục tiêu:** Capture đủ context (JD, loại phỏng vấn, persona, mode) để AI sinh câu hỏi phù hợp với đúng vai trò và văn hóa phỏng vấn. Candidate kiểm soát hoàn toàn các tham số phiên trước khi bắt đầu.
+
+**Actors:** Candidate
+
+**Đầu vào:**
+- job_description (100–5000 ký tự), jd_source (paste / pdf / url)
+- session_type (hr_behavioral / technical / mixed)
+- num_questions (3, 5, hoặc 7), difficulty (easy / medium / hard)
+- persona (friendly_hr / neutral_tech_lead / strict_senior / senior_manager)
+- mode (practice / exam), duration_min (15 / 30 / 45 / 60)
+- language (vi / en / mixed), context_pack_id
+
+**Đầu ra / Artifacts:**
+- `interview_sessions` record với status = generating
+- Trigger Phase 3 (Question Generation)
+
+**Luồng xử lý:**
+1. Candidate nhấn "Tạo phiên mới" → wizard 6 bước
+2. Bước 1: Nhập JD — paste text / upload PDF / dán URL (crawl timeout 10s; fail → fallback về paste)
+3. Bước 2: Chọn session type (HR/Behavioral, Technical, Mixed enabled; Live Coding, System Design disabled)
+4. Bước 3: Cấu hình num_questions, difficulty, persona, mode, duration_min, language
+5. Bước 4: Chọn Context Pack (VN / Western)
+6. Bước 5: Pre-interview Prep Card (toggle show_prep_card, tùy chọn)
+7. Bước 6: Xác nhận → tạo `interview_sessions` (status = generating) → trigger Phase 3
+
+**Quy tắc nghiệp vụ:**
+- JD tối thiểu 100 ký tự (AC-03-2)
+- Giới hạn 10 phiên/24h; phiên thứ 11 bị reject với error message rõ ràng (NFR S-12)
+- Nếu `placement_level` tồn tại → pre-fill `difficulty` mặc định; Candidate vẫn có thể override
+- Context Pack VN và Western tạo ra câu hỏi khác nhau rõ ràng (AC-03-3)
+- `mode = exam` → UC-04 không hiển thị Pause và Gợi ý (AC-03-7)
+
+**Use Case(s):** UC-03
+
+---
+
+#### Phase 3 — Question Generation
+
+**Mục tiêu:** Sinh Interview Plan gồm danh sách câu hỏi cá nhân hóa theo JD, CV, level và session_type trước khi phiên bắt đầu. Chạy ngầm — Candidate không cần tương tác.
+
+**Actors:** AI Backend (GPT-4o)
+
+**Đầu vào:**
+- jd_text, cv_structured, target_role_category, target_level
+- session_type, difficulty, num_questions, context_pack_id
+
+**Đầu ra / Artifacts:**
+- `session_questions[]` sắp xếp theo order_index tăng dần
+- `interview_sessions.plan_json`
+- `interview_sessions.status` cập nhật → in_progress
+
+**Luồng xử lý:**
+1. Backend nhận trigger sau khi `interview_sessions` được tạo (status = generating)
+2. GPT-4o trích xuất `job_title` từ JD text
+3. Question Generator xây system prompt từ JD, cv_structured, context_pack.rubric, session config
+4. GPT-4o sinh `num_questions` câu; sắp xếp theo độ khó tăng dần
+5. Backend validate schema; lưu `session_questions`; cập nhật `plan_json` và status = in_progress
+6. Redirect Candidate đến Phase 4
+
+**Quy tắc nghiệp vụ:**
+- Toàn bộ Phase 2 + Phase 3 hoàn thành trong ≤ 10s (AC-03-1)
+- `session_type = technical` → câu hỏi là technical; không lẫn HR (AC-03-6)
+- Context Pack xác định rubric chấm điểm dùng trong Phase 5 (Feedback Analyzer)
+- Câu hỏi liên quan đến tuổi tác, giới tính, tôn giáo, sức khỏe không được xuất hiện — kiểm thử 20 JD, 0/20 vi phạm (AC-04-9)
+
+**Use Case(s):** (backend; không có UC riêng — xử lý trong UC-03 Main Flow bước 8–10)
+
+---
+
+#### Phase 4 — Opening Phase
+
+**Mục tiêu:** Tạo bối cảnh phỏng vấn chân thực, giúp Candidate "vào vai" trước khi bắt đầu các câu hỏi chính thức. Không chấm điểm câu trả lời Opening.
+
+**Actors:** Candidate, AI (theo persona)
+
+**Đầu vào:**
+- session_id, persona, job_title, company_name (trích từ JD)
+- answer (voice hoặc text)
+
+**Đầu ra / Artifacts:**
+- `opening_transcript` lưu vào session
+- Không tạo `ai_feedbacks` hay `annotated_segments`
+
+**Luồng xử lý:**
+1. AI hiển thị avatar theo persona, tự giới thiệu (tên, vai trò, tên công ty trích từ JD)
+2. AI đặt câu tự giới thiệu cố định: "Em hãy tự giới thiệu về bản thân và lý do em ứng tuyển vào vị trí này tại [Tên công ty]."
+3. Candidate trả lời voice hoặc text
+4. AI phản hồi tự nhiên ngắn, thân thiện — không chấm điểm, không sinh Surgical Feedback
+5. Transcript lưu `opening_transcript`; chuyển Phase 5
+
+**Quy tắc nghiệp vụ:**
+- Câu tự giới thiệu là cố định — không thay đổi theo JD hay persona
+- AI không chấm điểm câu trả lời Opening; không tạo record `ai_feedbacks`
+- Tên công ty lấy từ JD; nếu không trích xuất được → dùng "công ty chúng tôi"
+- Phong cách AI nhất quán với persona đã chọn ở Phase 2 (AC-04-10)
+
+**Use Case(s):** UC-04 (Opening sub-phase)
+
+---
+
+#### Phase 5 — Main Interview Loop
+
+**Mục tiêu:** Core loop luyện tập — mỗi câu hỏi trải qua chu trình hỏi → trả lời → đào sâu (follow-up) → phản hồi tức thì (Surgical Feedback). Lặp đến hết câu hỏi trong session.
+
+**Actors:** Candidate, AI (Follow-up Engine, Feedback Analyzer), Whisper STT
+
+**Đầu vào:**
+- session_questions[]
+- answer — voice blob (tối đa 25 MB / 5 phút) hoặc text
+
+**Đầu ra / Artifacts:**
+- `user_answers[]`
+- `follow_up_questions[]`
+- `ai_feedbacks[]` (overall_score, model_answer, key_takeaway, voice_summary_json)
+- `annotated_segments[]` (text, level, reason, suggestion, improved_version)
+
+**Luồng xử lý** (lặp cho mỗi câu hỏi):
+1. Hiển thị câu hỏi + indicator "Câu X/Total" + timer mềm; TTS đọc nếu cài đặt bật
+2. Silence 15s → AI nhắc "Em cứ thoải mái suy nghĩ..." — chỉ 1 lần/câu (AC-04-11)
+3. Voice path: Candidate ghi âm → Whisper transcribe (≤ 5s) + tính voice metrics (WPM, filler count, pause count) | Text path: Candidate gõ → gửi → lưu transcript; không tính voice metrics
+4. Follow-up Engine đánh giá transcript theo 5 trigger rules; sinh tối đa 2 follow-up nếu triggered
+5. Candidate trả lời follow-up (nếu có); transcript follow-up ghép vào combined_transcript
+6. Feedback Analyzer: tổng hợp combined_transcript + JD + rubric + cv_structured → GPT-4o → Surgical Feedback JSON → validate schema → lưu `ai_feedbacks` + `annotated_segments` (≤ 12s tổng, AC-04-4)
+7. Hiển thị "Đã phân tích" → nút "Câu hỏi tiếp theo"
+8. Lặp từ bước 1; hết câu → chuyển Phase 6
+
+**Quy tắc nghiệp vụ:**
+- 5 Follow-up trigger rules: (1) Pronoun dilution — "chúng tôi"/"nhóm" > 70% và không có "tôi"/"em"; (2) Unquantified claim — claim không kèm con số; (3) Missing STAR Result — thiếu kết quả cụ thể; (4) Vague without example — chung chung không ví dụ; (5) Shallow technical — chỉ nêu concept, không giải thích how/why
+- Tối đa 2 follow-up/câu chính
+- mode = exam: không Pause, không Gợi ý; warning 30s cuối (AC-04-12, AC-04-13)
+- mode = practice: Pause và Gợi ý khả dụng
+- Transcript + follow-up lưu DB ngay cả khi Feedback Analyzer timeout (AC-04-6)
+- Segment warning/critical phải có `improved_version` không rỗng (AC-05-2)
+- Phiên ngắt giữa chừng → status = interrupted; Candidate có thể Resume từ câu dở (AC-04-7)
+
+**Use Case(s):** UC-04 (Main Loop), UC-05 (per-question feedback)
+
+---
+
+#### Phase 6 — Reverse Questions
+
+**Mục tiêu:** Cho phép Candidate luyện đặt câu hỏi ngược — kỹ năng được đánh giá cao trong phỏng vấn thực tế. AI đóng vai trả lời in-character; hệ thống chấm điểm ẩn để dùng trong Phase 8.
+
+**Actors:** Candidate, AI (in-character response + silent scoring)
+
+**Đầu vào:**
+- question_text (voice hoặc text, tối đa 3 câu, mỗi câu ≤ 500 ký tự)
+
+**Đầu ra / Artifacts:**
+- `reverse_questions[]` (question_text, ai_response, label, comment, session_id)
+- Nếu bỏ qua: reverse_questions = [] và reverse_q_eval_json = null
+
+**Luồng xử lý:**
+1. AI hỏi "Em có câu hỏi nào cho anh/chị không?" (phong cách theo persona)
+2. Candidate đặt câu — voice (Whisper transcribe) hoặc text
+3. Backend gọi AI song song: (a) sinh câu trả lời in-character; (b) chấm label Insightful / Generic / Red-flag + brief comment
+4. Frontend hiển thị câu trả lời AI; label không hiển thị cho Candidate
+5. Lưu record `reverse_questions` (question_text, ai_response, label, comment)
+6. Lặp tối đa 3 câu; Candidate nhấn "Không, cảm ơn" hoặc đủ 3 câu → AI lời đóng ngắn → Phase 7
+
+**Quy tắc nghiệp vụ:**
+- Tối đa 3 câu; câu thứ 4 bị reject cả UI lẫn API (AC-12-3)
+- Label không hiển thị trong Phase 6; chỉ xuất hiện trong Phase 8 Reverse Questions Evaluation (AC-12-2)
+- Candidate có thể bỏ qua toàn bộ Phase 6 bằng 1 thao tác — không có tác động phụ
+- Label phải xuất hiện đúng trong Phase 8 (AC-12-4)
+- Phong cách AI trả lời nhất quán với persona đã chọn (AC-12-1)
+
+**Use Case(s):** UC-12
+
+---
+
+#### Phase 7 — Closing
+
+**Mục tiêu:** Kết thúc phiên một cách chân thực theo phong cách persona; ghi nhận trạng thái hoàn thành; kích hoạt tổng hợp báo cáo.
+
+**Actors:** Candidate, AI
+
+**Đầu vào:**
+- session_id, mode
+- ai_feedbacks[] (để tính overall_score)
+
+**Đầu ra / Artifacts:**
+- `session.status = completed`
+- `session.overall_score` (trung bình điểm câu không skipped)
+- Trigger Phase 8
+
+**Luồng xử lý:**
+1. AI lời đóng lịch sự theo persona (cảm ơn, nêu next steps, chào)
+2. Nếu mode = practice → hiển thị self-evaluation prompt (tùy chọn; Candidate có thể bỏ qua)
+3. Tính `session.overall_score` = trung bình `ai_feedbacks.overall_score` của các câu không skipped
+4. Cập nhật `session.status = completed` (AC-04-15)
+5. Kích hoạt UC-05 tổng hợp Comprehensive Feedback
+6. Hiển thị "Đang tổng hợp báo cáo..." → redirect Phase 8 khi UC-05 hoàn thành
+
+**Quy tắc nghiệp vụ:**
+- mode = exam: không hiển thị self-evaluation prompt
+- Self-evaluation tùy chọn ngay cả trong practice mode; không ảnh hưởng overall_score
+- `overall_score` chỉ tính câu không skipped; câu skipped không tham gia vào trung bình
+
+**Use Case(s):** UC-04 (Closing sub-phase)
+
+---
+
+#### Phase 8 — Comprehensive Feedback
+
+**Mục tiêu:** Tổng hợp toàn bộ dữ liệu phiên thành báo cáo đa chiều để Candidate hiểu điểm mạnh/yếu và có hành động cụ thể để cải thiện.
+
+**Actors:** AI (tổng hợp tự động), Candidate (xem và tương tác)
+
+**Đầu vào:**
+- ai_feedbacks[], annotated_segments[], voice_metrics[]
+- reverse_questions[]
+- jd, cv_structured, session config
+
+**Đầu ra / Artifacts:**
+- `interview_sessions.executive_summary_json` (overall_score, recommendation, strengths[], areas_to_improve[])
+- `interview_sessions.comm_analysis_json` (WPM, filler_count, speak_ratio)
+- `interview_sessions.competency_heatmap_json` (5 axes, scale 1–5)
+- `interview_sessions.reverse_q_eval_json` (label + comment mỗi câu; null nếu Phase 6 bị bỏ qua)
+- `interview_sessions.action_plan_json` (3–5 items + resource)
+
+**Luồng xử lý — UC-05 tổng hợp (≤ 15s, AC-05-11):**
+1. Executive Summary: overall_score, gán recommendation badge, top 2 strengths + top 2 areas to improve
+2. Communication Analysis: WPM trung bình, tổng filler count, tỷ lệ nói/im lặng
+3. Competency Heatmap: nhóm scores theo 5 axes (Problem-solving, Communication, Technical Depth, Behavioral Maturity, Culture Fit), scale 1–5
+4. Reverse Questions Evaluation: gọi AI label `reverse_questions[]` → Insightful / Generic / Red-flag + comment
+5. Action Plan: gọi AI sinh 3–5 việc cụ thể cần luyện + resource gợi ý
+
+**Luồng xử lý — UC-06 Candidate xem:**
+1. Executive Summary: overall score + recommendation badge + disclaimer "điểm mô phỏng"
+2. Tab từng câu: Annotated Transcript (green/yellow/red highlight) → click → Annotation Popup (reason / suggestion / improved_version) + Model Answer
+3. Nút "Luyện lại câu này" — chỉ hiển thị khi ≥ 1 segment warning/critical (AC-06-5)
+4. Communication Analysis chart; Competency Heatmap radar/bar chart 5 axes
+5. Reverse Questions Evaluation — ẩn nếu reverse_q_eval_json = null (AC-06-9)
+6. Action Plan 3–5 items + resource + gợi ý session type tiếp theo
+
+**Quy tắc nghiệp vụ:**
+- Recommendation scale: ≥ 85 → Strong Hire / 70–84 → Hire / 55–69 → Borderline / < 55 → No Hire (AC-05-8)
+- Feedback không được đề cập ngoại hình, giới tính, vùng miền — kiểm thử 20 transcript, 0/20 vi phạm (AC-05-7)
+- Annotation Popup luôn hiển thị đủ 3 phần: reason + suggestion + improved_version (AC-06-3)
+- Model Answer không bị truncate (AC-06-4)
+- Transcript + annotation load ≤ 500ms (AC-06-1)
+
+**Use Case(s):** UC-05 (tổng hợp tự động), UC-06 (hiển thị)
+
+---
+
+#### Phase 9 — Long-term Progression
+
+**Mục tiêu:** Giúp Candidate theo dõi tiến độ theo thời gian, duy trì thói quen luyện tập, và nhận gợi ý session tiếp theo dựa trên điểm yếu hiện tại.
+
+**Actors:** Candidate (read-only)
+
+**Đầu vào:**
+- completed sessions[], competency_heatmap_json[]
+- time_range (7d / 30d / all), selected_session_id (replay)
+
+**Đầu ra / Artifacts:**
+- Read-only view (không thay đổi dữ liệu)
+- Click gợi ý session → UC-03 với config pre-fill dựa competency thấp nhất
+
+**Luồng xử lý — UC-13 Dashboard:**
+1. Competency Progress Chart: line/radar 5 axes, mỗi data point = 1 session, lọc theo time_range
+2. Streak: "Streak hiện tại: X ngày" — số ngày liên tiếp có ≥ 1 session completed
+3. Recommendation Card: gợi ý 1–2 session type dựa competency thấp nhất → click → UC-03 pre-fill
+4. Replay Section: danh sách session cũ → chọn → UC-06
+
+**Luồng xử lý — UC-08 Session History:**
+1. Danh sách phiên sorted `created_at DESC`, 10/trang, có pagination
+2. Mỗi card: ngày giờ, job_title, Context Pack label, overall_score, số câu, badge "Đã Rewrite"
+3. Phiên status = interrupted: badge "Chưa hoàn thành" + nút "Tiếp tục" (UC-04) hoặc "Xem những gì đã làm" (UC-06)
+4. Click card completed → UC-06
+
+**Quy tắc nghiệp vụ:**
+- Dashboard là read-only; không thay đổi dữ liệu
+- Streak reset về 0 nếu ngày hôm nay chưa có session completed (AC-13-4)
+- Recommendation fallback về default nếu AI lỗi (AC-13-3)
+- Phiên interrupted phân biệt rõ về mặt UI so với completed (AC-08-2)
+- Danh sách phiên load ≤ 300ms (AC-08-1)
+
+**Use Case(s):** UC-08, UC-13
 
 ---
 # 3. Đặc tả Use Case
@@ -546,7 +933,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | **Mã UC** | UC-02 |
 | **Tên UC** | Quản lý hồ sơ luyện tập |
 | **Priority** | SHOULD |
-| **Mô tả tóm tắt** | Candidate cập nhật thông tin cá nhân, mục tiêu nghề nghiệp và upload CV để hệ thống cá nhân hóa câu hỏi và Model Answer. |
+| **Mô tả tóm tắt** | Candidate cập nhật thông tin cá nhân, khai báo mục tiêu nghề nghiệp (vị trí, level, tech stack) và upload CV để hệ thống cá nhân hóa câu hỏi và Model Answer. Sau khi lưu hồ sơ, hệ thống gợi ý làm bài test định vị (UC-11, tùy chọn). |
 | **Tác nhân chính** | Candidate |
 | **Tác nhân phụ** | FastAPI (CV parsing), Supabase Storage |
 | **Tiền điều kiện** | Candidate đã đăng nhập (UC-01 hoàn thành). |
@@ -558,6 +945,9 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 |---|---|---|---|---|---|---|
 | `full_name` | Họ tên Candidate | Có | Text | Không rỗng | Không có | `user_profiles` |
 | `target_position` | Vị trí ứng tuyển mục tiêu | Có | Text | Không rỗng | Không có | `user_profiles` |
+| `target_role_category` | Nhóm vai trò mong muốn | Có | Enum | `backend`, `frontend`, `mobile`, `data`, `ai` | Không có | `user_profiles` |
+| `target_level` | Level mục tiêu | Có | Enum | `intern`, `fresher`, `junior` | Không có | `user_profiles` |
+| `preferred_tech_stack` | Tech stack chính (tự nhập) | Không | Text | Tối đa 200 ký tự | Không có | `user_profiles` |
 | `years_experience` | Số năm kinh nghiệm | Không | Number | Không âm | 0 | `user_profiles` |
 | `default_language` | Ngôn ngữ phỏng vấn mặc định | Có | Enum | `vi` hoặc `en` | `vi` | `user_profiles` |
 | `tts_enabled` | Bật/tắt đọc câu hỏi bằng giọng nói | Không | Boolean | true/false | false | `user_profiles` |
@@ -566,7 +956,9 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 **Main Flow:**
 
 1. Candidate truy cập trang **Hồ sơ** (Profile).
-2. Hệ thống hiển thị form với các trường: Họ tên, Vị trí ứng tuyển mục tiêu, Số năm kinh nghiệm, Ngôn ngữ phỏng vấn mặc định (Tiếng Việt / Tiếng Anh), Đọc câu hỏi bằng giọng nói — TTS (toggle bật/tắt, mặc định **tắt**). Cài đặt TTS được lưu vào `user_profiles.tts_enabled` và áp dụng tự động trong UC-04 Giai đoạn 1 bước 3.
+2. Hệ thống hiển thị form gồm 2 nhóm trường:
+   - **Thông tin cá nhân:** Họ tên, Số năm kinh nghiệm, Ngôn ngữ phỏng vấn mặc định (Tiếng Việt / Tiếng Anh), TTS (toggle bật/tắt, mặc định **tắt** — cài đặt được áp dụng tự động trong UC-04 Giai đoạn 0 và 1).
+   - **Mục tiêu nghề nghiệp:** Vị trí ứng tuyển mục tiêu (text tự do); Nhóm vai trò (Backend / Frontend / Mobile / Data / AI — Enum, bắt buộc); Level mục tiêu (Intern / Fresher / Junior — Enum, bắt buộc); Tech stack chính (text tự do, ≤ 200 ký tự, không bắt buộc).
 3. Candidate điền thông tin và nhấn **"Lưu thông tin"**.
 4. Hệ thống validate dữ liệu và lưu vào bảng `user_profiles`.
 5. Candidate nhấn **"Upload CV (PDF)"** — tùy chọn nhưng được khuyến nghị.
@@ -578,13 +970,15 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
    - Lưu JSON vào bảng `user_profiles.cv_structured`.
    - Upload file gốc lên Supabase Storage, lưu URL vào `user_profiles.cv_file_url`.
 9. Hệ thống cập nhật `profile_completed = true`.
-10. Hiển thị thông báo thành công; chuyển đến Dashboard.
+10. Hiển thị thông báo thành công.
+11. Hệ thống hiển thị prompt: **"Làm bài test định vị để hiệu chuẩn độ khó phù hợp với bạn? (5–10 câu, khoảng 5 phút)"** với 2 lựa chọn: **"Bắt đầu test"** → chuyển đến UC-11; **"Bỏ qua, vào Dashboard"** → chuyển đến Dashboard.
 
 **Alternative Flow:**
 
 - **AF-02-A**: Candidate bỏ qua upload CV → `cv_structured = null`. Hệ thống vẫn hoạt động; Question Generator và Feedback Analyzer không dùng dữ liệu CV.
 - **AF-02-B**: Candidate muốn cập nhật CV mới → upload file mới → file cũ trên Storage bị ghi đè, `cv_structured` được cập nhật.
 - **AF-02-C — Xóa tài khoản:** Tính năng tự xóa tài khoản qua giao diện không được hỗ trợ trong v1.0. Candidate muốn xóa dữ liệu liên hệ Admin; Admin xử lý thủ công qua UC-09 (cập nhật `users.status = deleted`, soft-delete toàn bộ phiên và dữ liệu liên quan; xóa audio file trên R2 theo quy trình SAD v1.0 Mục 4.4).
+- **AF-02-D**: Candidate bỏ qua bài test định vị (nhấn "Bỏ qua") → `user_profiles.placement_level = null`; UC-03 sẽ dùng difficulty do Candidate chọn thủ công, không có pre-fill từ placement test.
 
 **Exception Flow:**
 
@@ -601,6 +995,8 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 - [ ] AC-02-2: Trang Profile load trong ≤ 200 ms.
 - [ ] AC-02-3: Upload CV ≤ 5 MB hoàn thành trong ≤ 5 giây.
 - [ ] AC-02-4: Sau khi lưu hồ sơ, `profile_completed = true` được ghi vào DB.
+- [ ] AC-02-5: Thiếu `target_role_category` hoặc `target_level` → hiển thị lỗi validation; không cho lưu hồ sơ.
+- [ ] AC-02-6: Sau khi lưu hồ sơ thành công, prompt mời làm bài test định vị xuất hiện với 2 lựa chọn rõ ràng.
 
 ---
 
@@ -611,7 +1007,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | **Mã UC** | UC-03 |
 | **Tên UC** | Cấu hình phiên phỏng vấn |
 | **Priority** | MUST |
-| **Mô tả tóm tắt** | Candidate tạo một phiên luyện tập mới bằng cách cung cấp Job Description và các tham số cấu hình cần thiết. |
+| **Mô tả tóm tắt** | Candidate tạo một phiên luyện tập mới bằng cách cung cấp Job Description (text/PDF/URL), chọn loại phiên, độ khó, persona interviewer, mode, thời lượng và ngôn ngữ. |
 | **Tác nhân chính** | Candidate |
 | **Tác nhân phụ** | AI Engine (Question Generator) |
 | **Tiền điều kiện** | Candidate đã đăng nhập; `profile_completed = true`. |
@@ -622,28 +1018,39 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
 |---|---|---|---|---|---|---|
 | `job_description` | JD dùng để sinh câu hỏi và đánh giá câu trả lời | Có | Text | 100–5.000 ký tự | Không có | `interview_sessions` / AI Engine |
+| `jd_source` | Cách cung cấp JD | Có | Enum | `paste`, `pdf`, `url` | `paste` | Frontend state |
+| `jd_url` | URL của JD (chỉ khi `jd_source = url`) | Điều kiện | URL | URL hợp lệ, reachable | Không có | Frontend / crawler |
+| `session_type` | Loại phỏng vấn | Có | Enum | `hr_behavioral`, `technical`, `mixed` (v1.0 enabled); `live_coding`, `system_design`, `mock_final` (future — disabled trong v1.0) | `hr_behavioral` | `interview_sessions` |
 | `num_questions` | Số câu hỏi trong phiên | Có | Enum/Number | 3, 5 hoặc 7 | 5 | `interview_sessions` |
-| `interview_type` | Loại phỏng vấn | Có | Enum | `behavioral` hoặc `mixed` | `behavioral` | `interview_sessions` |
+| `difficulty` | Độ khó câu hỏi | Có | Enum | `easy`, `medium`, `hard` | `medium` (hoặc từ `placement_level` nếu có) | `interview_sessions` |
+| `persona` | Persona AI interviewer | Có | Enum | `friendly_hr`, `neutral_tech_lead`, `strict_senior`, `senior_manager` | `neutral_tech_lead` | `interview_sessions` |
+| `mode` | Chế độ phỏng vấn | Có | Enum | `practice` (có pause, có hint), `exam` (không pause, không hint) | `practice` | `interview_sessions` |
+| `duration_min` | Thời lượng phiên (phút) | Có | Enum | 15, 30, 45, 60 | 30 | `interview_sessions` |
+| `language` | Ngôn ngữ phỏng vấn | Có | Enum | `vi`, `en`, `mixed` | `vi` | `interview_sessions` |
+| `show_prep_card` | Hiển thị Pre-interview Prep Card trước khi bắt đầu | Không | Boolean | true/false | false | Frontend state |
 | `context_pack_id` | Context Pack được chọn ở UC-03b | Có | Enum/ID | Pack tồn tại | Không có | `interview_sessions` |
 
 **Main Flow:**
 
 1. Candidate nhấn **"Tạo phiên mới"** từ Dashboard.
-2. Hệ thống hiển thị form cấu hình phiên gồm 4 bước:
-   - **Bước 1 — Thông tin công việc:** Paste Job Description (text area, bắt buộc, min 100 ký tự).
-   - **Bước 2 — Cấu hình phỏng vấn:** Chọn số câu hỏi (3 / 5 / 7, mặc định 5); Loại phỏng vấn (Behavioral / Mixed, mặc định Behavioral).
-   - **Bước 3 — Chọn Context Pack:** Xem **UC-03b**.
-   - **Bước 4 — Xác nhận:** Hiển thị summary của tất cả lựa chọn.
-3. Candidate nhấn **"Bắt đầu phỏng vấn"**.
-4. Hệ thống tạo bản ghi `interview_sessions` với `status = generating`; song song đó trích xuất `job_title` ngắn gọn từ JD bằng GPT-4o (prompt nhỏ, max 10 tokens output, temperature = 0, chạy đồng thời với bước 5) và lưu vào `interview_sessions.job_title`. Nếu trích xuất thất bại → `job_title = null`; card UC-08 hiển thị "Phiên phỏng vấn" thay thế.
-5. FastAPI gọi Question Generator với payload: `{jd, context_pack_id, num_questions, interview_type, cv_structured}`.
-6. Question Generator trả về danh sách câu hỏi (xem AI Spec).
-7. Hệ thống lưu câu hỏi vào bảng `session_questions`; cập nhật `status = in_progress`.
-8. Redirect Candidate đến UC-04 (màn hình phỏng vấn).
+2. Hệ thống hiển thị form cấu hình phiên gồm 6 bước:
+   - **Bước 1 — Thông tin công việc:** Candidate chọn nguồn JD: paste text (text area, min 100 ký tự) / upload PDF / nhập URL. Nếu URL: hệ thống crawl và parse JD (spinner, tối đa 10 giây); nội dung được điền vào text area để Candidate xem lại và chỉnh sửa trước khi confirm. Nếu crawl thất bại → hiển thị lỗi E-03-4, chuyển về paste thủ công.
+   - **Bước 2 — Loại phỏng vấn:** Chọn session type (HR/Behavioral, Technical Knowledge, Mixed — enabled; Live Coding, System Design, Mock Final — hiển thị với badge "Sắp ra mắt", disabled trong v1.0).
+   - **Bước 3 — Cấu hình chi tiết:** Số câu hỏi (3 / 5 / 7, mặc định 5); Độ khó (Easy / Medium / Hard, mặc định Medium — pre-fill từ `placement_level` nếu có); Persona interviewer (Friendly HR / Neutral Tech Lead / Strict Senior / Senior Manager, mặc định Neutral Tech Lead); Mode (Practice / Exam, mặc định Practice); Thời lượng (15 / 30 / 45 / 60 phút, mặc định 30); Ngôn ngữ (Vietnamese / English / Mixed, mặc định Vietnamese).
+   - **Bước 4 — Chọn Context Pack:** Xem **UC-03b**.
+   - **Bước 5 — Pre-interview Prep Card (tùy chọn):** Candidate toggle "Xem Prep Card trước khi bắt đầu" → nếu bật: hệ thống hiển thị tóm tắt JD, gợi ý điểm research công ty và gợi ý câu STAR cần chuẩn bị (2–3 phút đọc); Candidate nhấn "Sẵn sàng" để tiếp tục.
+   - **Bước 6 — Xác nhận:** Hiển thị summary toàn bộ lựa chọn; Candidate nhấn **"Bắt đầu phỏng vấn"**.
+3. Hệ thống tạo bản ghi `interview_sessions` với `status = generating`; song song đó trích xuất `job_title` ngắn gọn từ JD bằng GPT-4o (prompt nhỏ, max 10 tokens output, temperature = 0, chạy đồng thời với bước 4) và lưu vào `interview_sessions.job_title`. Nếu trích xuất thất bại → `job_title = null`; card UC-08 hiển thị "Phiên phỏng vấn" thay thế.
+4. FastAPI gọi Question Generator với payload: `{jd, context_pack_id, num_questions, session_type, difficulty, persona, cv_structured}`.
+5. Question Generator trả về Interview Plan gồm danh sách câu hỏi kèm rubric từng câu, sắp xếp theo độ khó tăng dần (warm-up → core → stretch).
+6. Hệ thống lưu câu hỏi và rubric vào `session_questions`; lưu Interview Plan vào `interview_sessions.plan_json`; cập nhật `status = in_progress`.
+7. Redirect Candidate đến UC-04 (màn hình phỏng vấn — Opening Phase).
 
 **Alternative Flow:**
 
 - **AF-03-A**: Candidate nhấn "Hủy" ở bất kỳ bước nào → quay về Dashboard; phiên không được tạo.
+- **AF-03-B**: `placement_level` tồn tại trong profile → difficulty được pre-fill tương ứng (intern → easy, fresher → medium, junior → hard); Candidate vẫn có thể thay đổi thủ công.
+- **AF-03-C**: Candidate bỏ qua Pre-interview Prep Card (toggle tắt) → bỏ qua Bước 5; chuyển thẳng đến Bước 6.
 
 **Exception Flow:**
 
@@ -652,6 +1059,8 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | E-03-1 | JD dưới 100 ký tự | Hiển thị: "Job Description quá ngắn. Vui lòng cung cấp mô tả đầy đủ hơn." |
 | E-03-2 | Question Generator timeout (>10 giây) | Hủy bản ghi session; hiển thị: "Không thể tạo câu hỏi lúc này. Vui lòng thử lại." |
 | E-03-3 | Question Generator trả về ít hơn số câu yêu cầu | Chấp nhận số câu trả về nếu ≥ 3; nếu < 3 → xử lý như E-03-2. |
+| E-03-4 | URL JD không crawl được (timeout / 403 / 404 / không phải HTML) | Hiển thị: "Không tải được JD từ URL. Vui lòng paste nội dung thủ công."; chuyển về input paste. |
+| E-03-5 | PDF JD vượt quá 5 MB hoặc không đọc được text | Hiển thị: "Không thể đọc file PDF. Vui lòng paste nội dung thủ công."; chuyển về input paste. |
 
 > *Đặc tả kỹ thuật AI chi tiết (system prompt, input/output schema, cấu hình model, fallback strategy): xem **[SAD v1.0 — Mục 2.2.2](../SAD/SAD_InterviewAI_v1.0.md#222-prompt-1--question-generator)**.*
 
@@ -662,6 +1071,11 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 - [ ] AC-03-3: Câu hỏi của Context Pack VN và Western rõ ràng khác nhau về nội dung và phong cách.
 - [ ] AC-03-4: Bản ghi `interview_sessions` được tạo với đầy đủ foreign key hợp lệ.
 - [ ] AC-03-5: Card lịch sử trong UC-08 hiển thị `job_title` được trích xuất; hoặc hiển thị "Phiên phỏng vấn" nếu trích xuất thất bại — không hiển thị null/rỗng.
+- [ ] AC-03-6: Chọn `session_type = technical` → Question Generator nhận đúng `session_type = technical` trong payload; câu hỏi sinh ra thuộc domain technical, không phải behavioral.
+- [ ] AC-03-7: Chọn `mode = exam` → UC-04 không hiển thị nút Pause và không hiển thị nút Gợi ý trong toàn bộ phiên.
+- [ ] AC-03-8: URL JD crawl thành công → nội dung JD được điền vào text area; Candidate có thể chỉnh sửa trước khi confirm.
+- [ ] AC-03-9: `persona` được lưu vào `interview_sessions`; UC-04 Opening Phase sử dụng đúng tên và phong cách ngôn ngữ của persona đó.
+- [ ] AC-03-10: `interview_sessions.plan_json` được lưu sau khi Question Generator hoàn thành; câu hỏi sắp xếp theo thứ tự `order_index` tăng dần từ warm-up đến stretch.
 
 ---
 
@@ -720,18 +1134,18 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 
 ### UC-04: Thực hiện phiên phỏng vấn AI
 
-> **Đây là Use Case phức tạp nhất của hệ thống.** UC-04 tích hợp đồng thời Voice/Text input, Whisper transcription và Follow-up Engine. Mỗi câu hỏi có thể tạo ra tới 2 lượt tương tác (câu gốc + follow-up) trước khi chuyển sang Feedback Analyzer.
+> **Đây là Use Case phức tạp nhất của hệ thống.** UC-04 tích hợp Opening Phase (AI giới thiệu theo persona), Main Interview Loop (voice/text input, Whisper transcription, Follow-up Engine), Reverse Questions (tham chiếu UC-12) và Closing Phase (kết thúc lịch sự, self-evaluation). Mỗi câu hỏi trong Main Loop có thể tạo ra tới 2 lượt tương tác (câu gốc + follow-up) trước khi sinh Surgical Feedback.
 
 | Trường | Nội dung |
 |---|---|
 | **Mã UC** | UC-04 |
 | **Tên UC** | Thực hiện phiên phỏng vấn AI |
 | **Priority** | MUST |
-| **Mô tả tóm tắt** | Candidate tương tác với AI phỏng vấn theo từng câu hỏi. Với mỗi câu, Candidate trả lời (voice/text), AI phân tích và đặt 1 câu follow-up dựa trên nội dung vừa nói, sau đó sinh Surgical Feedback. |
+| **Mô tả tóm tắt** | Candidate tương tác với AI interviewer qua 4 giai đoạn tuần tự: (0) Opening Phase — AI giới thiệu và hỏi câu tự giới thiệu cố định; (1–3) Main Loop — từng câu hỏi, trả lời voice/text, follow-up, Surgical Feedback; (4) Reverse Questions — tham chiếu UC-12; (5) Closing — AI kết thúc lịch sự, self-evaluation tùy chọn. |
 | **Tác nhân chính** | Candidate |
-| **Tác nhân phụ** | AI Engine (Whisper API, Follow-up Engine, Feedback Analyzer) |
-| **Tiền điều kiện** | UC-03 hoàn thành; phiên có `status = in_progress`; danh sách câu hỏi đã được lưu vào DB. |
-| **Hậu điều kiện** | Toàn bộ `user_answers`, `follow_up_questions`, `ai_feedbacks` và `annotated_segments` được lưu vào DB; `session.status = completed`; Candidate được chuyển đến UC-06 (Xem Feedback). |
+| **Tác nhân phụ** | AI Engine (Whisper API, Follow-up Engine, Feedback Analyzer, UC-12) |
+| **Tiền điều kiện** | UC-03 hoàn thành; phiên có `status = in_progress`; Interview Plan và danh sách câu hỏi kèm rubric đã được lưu vào DB (`interview_sessions.plan_json`). |
+| **Hậu điều kiện** | Toàn bộ `user_answers`, `follow_up_questions`, `ai_feedbacks`, `annotated_segments` và `reverse_questions` được lưu vào DB; `session.status = completed`; Candidate được chuyển đến UC-06 (Xem Comprehensive Feedback). |
 
 **Dữ liệu đầu vào:**
 
@@ -743,14 +1157,26 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | `answer_text` | Nội dung câu trả lời khi chọn text hoặc sau STT | Có | Text | Không rỗng sau khi submit | Không có | `user_answers` |
 | `skip_question` | Hành động bỏ qua câu hỏi | Không | Boolean | Chỉ từ câu thứ 2 trở đi | false | `user_answers.skipped` |
 
-#### Main Flow (lặp lại cho mỗi câu hỏi trong phiên)
+#### Main Flow
 
-**Giai đoạn 1 — Hiển thị câu hỏi**
+**Giai đoạn 0 — Opening Phase (1–2 phút)**
+
+1. Hệ thống hiển thị avatar/text block của AI interviewer theo persona đã chọn (Friendly HR / Neutral Tech Lead / Strict Senior / Senior Manager).
+2. AI giới thiệu: tên persona, vai trò giả định, tên công ty từ `interview_sessions.job_title`.
+3. AI hỏi câu cố định: "Em hãy tự giới thiệu về bản thân và lý do em ứng tuyển vào vị trí này tại [Tên công ty]."
+4. Candidate trả lời (voice hoặc text — lặp lại Giai đoạn 2A hoặc 2B với `is_opening = true`).
+5. AI phản hồi tự nhiên ngắn (1–2 câu, không chấm điểm hiển thị); transcript được lưu vào `interview_sessions.opening_transcript` để tổng hợp trong UC-05.
+6. Chuyển sang Giai đoạn 1.
+
+---
+
+**Giai đoạn 1 — Hiển thị câu hỏi** *(lặp lại cho mỗi câu hỏi trong phiên)*
 
 1. Hệ thống lấy câu hỏi tiếp theo từ `session_questions` (theo thứ tự `order_index`).
-2. Hiển thị câu hỏi dạng text trên màn hình; kèm indicator **"Câu [X] / [Total]"**.
+2. Hiển thị câu hỏi dạng text trên màn hình; kèm indicator **"Câu [X] / [Total]"** và timer mềm đếm ngược theo `duration_min / num_questions` ước tính.
 3. *(Optional)* Hệ thống đọc câu hỏi bằng Web Speech API (TTS) nếu Candidate đã bật cài đặt này.
-4. Hiển thị 2 nút: **Trả lời bằng giọng nói** và **Trả lời bằng văn bản**.
+4. Hiển thị 2 nút: **Trả lời bằng giọng nói** và **Trả lời bằng văn bản**. Practice mode: hiển thị thêm nút **Gợi ý**.
+5. Nếu Candidate không có input sau **15 giây** → AI hiển thị/đọc prompt: "Em cứ thoải mái suy nghĩ, hoặc cần anh/chị làm rõ câu hỏi không?" Chỉ trigger 1 lần/câu hỏi; không tính vào timer.
 
 ---
 
@@ -784,7 +1210,13 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 **Giai đoạn 3 — Follow-up Engine phân tích [AI-critical]**
 
 14. Backend lưu `user_answer` vào DB với transcript và voice metrics.
-15. Backend gọi Follow-up Engine (xem **AI Spec — Follow-up Engine** bên dưới).
+15. Backend gọi Follow-up Engine với transcript và context (xem **AI Spec — Follow-up Engine** bên dưới). Follow-up Engine đánh giá transcript theo 5 trigger rules cụ thể:
+    - **Rule 1 — Pronoun dilution:** Trả lời dùng "chúng tôi"/"nhóm" chiếm > 70% subject, không có "tôi"/"em" → follow-up: "Cụ thể em đã làm gì trong đó?"
+    - **Rule 2 — Unquantified claim:** Có claim định lượng (tăng/giảm/cải thiện) nhưng không có số đo cụ thể → follow-up: "Em đo lường kết quả đó bằng cách nào?"
+    - **Rule 3 — Missing STAR Result:** Behavioral answer thiếu component Result → follow-up: "Kết quả cuối cùng ra sao?"
+    - **Rule 4 — Vague without example:** Trả lời chung chung không có ví dụ cụ thể → follow-up: "Cho anh/chị một ví dụ cụ thể được không?"
+    - **Rule 5 — Shallow technical:** Technical answer đúng nhưng chỉ nêu tên concept, không giải thích cơ chế → follow-up đào sâu concept tiếp theo trong cùng domain.
+    - Tối đa **2 follow-up/câu chính** để tránh sa lầy.
 16. Backend nhận response từ AI và kiểm tra `skip_follow_up`:
 
     **Nếu `skip_follow_up = false`:**
@@ -816,24 +1248,44 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 
 ---
 
-**Giai đoạn 5 — Chuyển câu hỏi tiếp theo hoặc kết thúc**
+**Giai đoạn 5 — Chuyển câu hỏi tiếp theo hoặc sang Giai đoạn 4**
 
 23. Backend kiểm tra còn câu hỏi chưa trả lời trong phiên:
 
     **Nếu còn câu hỏi:**
-    24a. Hiển thị nút **"Câu hỏi tiếp theo →"**.
-    24b. Candidate nhấn → quay về Giai đoạn 1 với câu hỏi tiếp theo.
+    24a. Nếu `mode = exam` và còn ≤ 30 giây của time limit phiên → AI hiển thị/đọc: "Còn 30 giây, em chốt ý chính nhé."
+    24b. Hiển thị nút **"Câu hỏi tiếp theo →"**.
+    24c. Candidate nhấn → quay về Giai đoạn 1 với câu hỏi tiếp theo.
 
     **Nếu đã trả lời hết:**
-    24c. Backend cập nhật `session.status = completed`; tính `session.overall_score` = trung bình cộng `overall_score` của các câu hỏi **đã trả lời** (`skipped = false`). Câu hỏi bị skip không được tính vào điểm tổng và hiển thị dấu `—` thay vì điểm số trên màn hình tổng kết.
-    24d. Hiển thị màn hình kết thúc: tổng điểm + nút **"Xem phân tích chi tiết"** → chuyển đến UC-06.
+    24d. Chuyển sang Giai đoạn 4 — Reverse Questions.
+
+---
+
+**Giai đoạn 4 — Reverse Questions** *(tham chiếu UC-12)*
+
+1. AI hỏi: "Buổi phỏng vấn đến đây kết thúc. Em có câu hỏi nào dành cho anh/chị không?"
+2. Hệ thống chuyển sang UC-12 (Giai đoạn phỏng vấn ngược) để Candidate đặt 1–3 câu hỏi.
+3. Sau khi UC-12 hoàn thành → quay lại UC-04 Giai đoạn 5.
+
+---
+
+**Giai đoạn 5 — Closing**
+
+1. AI mô phỏng kết thúc lịch sự theo đúng persona: cảm ơn, mô tả next step giả định ("Bên em sẽ phản hồi trong 5–7 ngày qua email"), chào tạm biệt.
+2. *(Chỉ khi `mode = practice`)* Hệ thống hiển thị prompt self-evaluation: "Em cảm thấy buổi phỏng vấn này thế nào? Câu nào em làm tốt nhất / chưa hài lòng nhất?" — Candidate điền text ngắn (tùy chọn, có thể bỏ qua); lưu vào `interview_sessions.self_eval_json`. Nếu bỏ qua → `self_eval_json = null`.
+3. Hệ thống kích hoạt UC-05 (sinh Comprehensive Feedback Report).
+4. Backend tính `session.overall_score` = trung bình cộng `overall_score` của các câu hỏi **đã trả lời** (`skipped = false`). Câu hỏi bị skip hiển thị dấu `—` thay vì điểm số.
+5. Backend cập nhật `session.status = completed`; hiển thị màn hình chờ xử lý ("Đang tổng hợp báo cáo...") → chuyển đến UC-06 khi UC-05 hoàn thành.
 
 #### Alternative Flow
 
 - **AF-04-A**: Candidate muốn bỏ qua một câu hỏi → Nhấn nút "Bỏ qua" (chỉ hiển thị từ câu thứ 2 trở đi) → Câu hỏi được đánh dấu `skipped = true`; không có feedback cho câu đó; chuyển sang câu tiếp.
-- **AF-04-B**: Candidate muốn nghe lại câu hỏi → Nhấn nút 🔊 → Web Speech API đọc lại.
+- **AF-04-B**: Candidate muốn nghe lại câu hỏi → Nhấn nút đọc lại → Web Speech API đọc lại câu hỏi.
 - **AF-04-C**: Candidate ghi âm nhưng nghe lại không hài lòng → Nhấn **"Ghi âm lại"** (trong 5 giây đầu sau khi dừng) → Audio cũ bị xóa, bắt đầu ghi mới.
 - **AF-04-D**: Candidate đang ở giữa phiên và đóng tab → Phiên được lưu với status `interrupted`; lần sau truy cập Dashboard → hiển thị "Tiếp tục phiên chưa hoàn thành?". *(Cơ chế phát hiện: Frontend lắng nghe sự kiện `beforeunload` và gửi Beacon API request `POST /api/session/{id}/interrupt`; kết hợp với timeout phía backend — nếu không có activity request trong 30 phút với phiên có `status = in_progress` → backend tự động cập nhật `status = interrupted` qua scheduled job.)*
+- **AF-04-E**: Candidate chọn `mode = practice` → nút **Pause** hiển thị; nhấn Pause → timer dừng, câu hỏi hiện vẫn trên màn hình; nhấn **Tiếp tục** để resume. Nút **Gợi ý** cũng hiển thị; nhấn → AI gợi ý hướng trả lời ngắn (1–2 câu, không phải model answer đầy đủ).
+- **AF-04-F**: Candidate chọn `mode = exam` → nút Pause ẩn; nút Gợi ý ẩn; timer đếm ngược cứng theo `duration_min`; hết giờ phiên → tự động kết thúc câu hỏi hiện tại và chuyển sang Giai đoạn 4.
 
 #### Exception Flow
 
@@ -860,6 +1312,12 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 - [ ] AC-04-7: Phiên bị ngắt giữa chừng (đóng tab) → lần sau vào Dashboard thấy option "Tiếp tục".
 - [ ] AC-04-8: Voice metrics (WPM, filler count) được tính đúng (sai số ≤ 10% so với đếm thủ công).
 - [ ] AC-04-9 *(verify AS-05)*: Trong bộ kiểm thử 20 JD đa dạng ngành nghề, 0/20 question set do AI sinh ra chứa câu hỏi về tuổi tác, giới tính, tình trạng hôn nhân, tôn giáo, nguồn gốc dân tộc, sức khỏe, hoặc đời tư không liên quan yêu cầu công việc trong JD.
+- [ ] AC-04-10: Opening Phase hiển thị đúng tên công ty từ `job_title`; câu tự giới thiệu cố định xuất hiện đầy đủ theo persona.
+- [ ] AC-04-11: Silence detection trigger sau đúng 15 giây không có input của Candidate; prompt AI xuất hiện; chỉ trigger 1 lần/câu hỏi.
+- [ ] AC-04-12: Mode `exam` — nút Pause không xuất hiện ở bất kỳ điểm nào trong phiên; nút Gợi ý không xuất hiện.
+- [ ] AC-04-13: Mode `exam` — khi còn 30 giây của time limit phiên, warning xuất hiện đúng lúc.
+- [ ] AC-04-14: Follow-up trigger Rule 1 (pronoun dilution) kích hoạt với transcript có ≥ 5 xuất hiện "chúng tôi"/"nhóm" và 0 "tôi"/"em"; follow-up được sinh.
+- [ ] AC-04-15: Closing Phase hoàn thành (AI nói lời kết thúc) → `session.status = completed` được cập nhật đúng trong DB.
 
 ---
 
@@ -872,11 +1330,11 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | **Mã UC** | UC-05 |
 | **Tên UC** | AI sinh Surgical Feedback |
 | **Priority** | MUST |
-| **Mô tả tóm tắt** | Backend gọi Feedback Analyzer, nhận Surgical Feedback JSON, validate schema và lưu dữ liệu annotation vào DB để UC-06 hiển thị. |
+| **Mô tả tóm tắt** | Backend gọi Feedback Analyzer cho từng câu hỏi, validate và lưu annotation. Sau khi tất cả câu hỏi được xử lý, tổng hợp Comprehensive Feedback Report gồm Executive Summary, Communication Analysis, Competency Heatmap, Reverse Questions Evaluation và Action Plan. |
 | **Tác nhân chính** | Hệ thống (kích hoạt tự động sau mỗi câu trả lời hoàn chỉnh) |
 | **Tác nhân phụ** | AI Engine (Feedback Analyzer), Database |
-| **Tiền điều kiện** | `user_answer` đã được lưu (bao gồm cả follow-up answer nếu có); `context_pack_id` đã xác định; `rubric_json` đã load. |
-| **Hậu điều kiện** | Bản ghi `ai_feedbacks` và mảng `annotated_segments` được lưu vào DB; `user_answer.feedback_generated = true`. |
+| **Tiền điều kiện** | `user_answer` đã được lưu (bao gồm cả follow-up answer nếu có); `context_pack_id` đã xác định; `rubric_json` đã load. UC-05 được gọi thêm một lần sau khi UC-04 Giai đoạn 5 kết thúc (khi tất cả câu hỏi đã được trả lời) để tổng hợp toàn phiên. |
+| **Hậu điều kiện** | Bản ghi `ai_feedbacks` và mảng `annotated_segments` được lưu vào DB per-question; `user_answer.feedback_generated = true`. `interview_sessions.executive_summary_json`, `comm_analysis_json`, `competency_heatmap_json`, `reverse_q_eval_json`, `action_plan_json` được lưu sau khi tổng hợp toàn phiên. |
 
 **Dữ liệu đầu vào:**
 
@@ -912,6 +1370,18 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 
 10. Trả về `{feedback_id, status: "success"}` cho UC-04.
 
+**Tổng hợp Comprehensive Feedback Report** *(chạy sau khi tất cả câu hỏi đã có feedback — được kích hoạt bởi UC-04 Giai đoạn 5)*
+
+1. **Executive Summary:** Tính `overall_score` = trung bình `ai_feedbacks.overall_score` của các câu không skipped; gán recommendation label theo ngưỡng (Strong Hire ≥ 85 / Hire 70–84 / Borderline 55–69 / No Hire < 55); xác định top 2 strengths và top 2 areas to improve từ rubric scores; lưu vào `interview_sessions.executive_summary_json`.
+
+2. **Communication Analysis:** Tính WPM trung bình toàn phiên; tổng filler word count; tỷ lệ thời gian nói vs im lặng (từ `voice_metrics` của từng `user_answer`); lưu vào `interview_sessions.comm_analysis_json`.
+
+3. **Competency Heatmap:** Nhóm `ai_feedbacks.overall_score` theo 5 competency (Problem-solving, Communication, Technical Depth, Behavioral Maturity, Culture Fit) dựa trên `session_questions.competency_tag`; scale về [1–5]; lưu vào `interview_sessions.competency_heatmap_json`.
+
+4. **Reverse Questions Evaluation:** Lấy danh sách `reverse_questions` từ UC-12; gọi AI để label từng câu (Insightful / Generic / Red-flag) và sinh brief comment; lưu vào `interview_sessions.reverse_q_eval_json`. Nếu UC-12 không có dữ liệu → `reverse_q_eval_json = null`.
+
+5. **Action Plan:** Gọi AI với context toàn phiên (competency scores, weakest areas, session_type) để sinh 3–5 việc cụ thể cần luyện, kèm tài liệu gợi ý và đề xuất session type kế tiếp; lưu vào `interview_sessions.action_plan_json`.
+
 **Exception Flow:**
 
 | Mã lỗi | Tình huống | Xử lý |
@@ -937,6 +1407,10 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 - [ ] AC-05-5: Tất cả records `annotated_segments` có `feedback_id` FK hợp lệ, không có orphan record.
 - [ ] AC-05-6: Với cùng transcript và JD, 2 lần gọi Feedback Analyzer phải cho `overall_score` chênh lệch ≤ 10 điểm (temperature = 0.3 đảm bảo tính nhất quán).
 - [ ] AC-05-7 *(verify AS-06)*: Trong bộ kiểm thử 20 transcript đa dạng, 0/20 feedback output đề cập ngoại hình, giọng nói theo hướng phân biệt vùng miền/dân tộc, hoặc đặc điểm cá nhân không liên quan kỹ năng chuyên môn hay kỹ năng giao tiếp được đánh giá.
+- [ ] AC-05-8: `executive_summary_json` được tạo với đủ 4 fields: `overall_score`, `recommendation`, `strengths[]` (≥ 1 item), `areas_to_improve[]` (≥ 1 item); recommendation value thuộc {"Strong Hire", "Hire", "Borderline", "No Hire"}.
+- [ ] AC-05-9: `competency_heatmap_json` có đủ 5 keys (Problem-solving, Communication, Technical Depth, Behavioral Maturity, Culture Fit); mỗi key có giá trị trong [1, 5].
+- [ ] AC-05-10: `action_plan_json` có ≥ 3 items; mỗi item có `action` (string, không rỗng) và `resource` (string, có thể null).
+- [ ] AC-05-11: Toàn bộ bước tổng hợp Comprehensive Report (steps 11–15 của UC-05) hoàn thành trong ≤ 15 giây sau khi câu hỏi cuối cùng được chấm.
 
 ---
 
@@ -947,7 +1421,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | **Mã UC** | UC-06 |
 | **Tên UC** | Xem Surgical Feedback chi tiết |
 | **Priority** | MUST |
-| **Mô tả tóm tắt** | Candidate xem transcript được highlight từng đoạn theo mức độ chất lượng, tương tác với từng annotation để hiểu chính xác cần sửa gì, và xem Model Answer. |
+| **Mô tả tóm tắt** | Candidate xem Comprehensive Feedback Report toàn phiên gồm: Executive Summary, phân tích từng câu hỏi (annotated transcript + annotation popup + Model Answer), Communication Analysis, Competency Heatmap, Reverse Questions Evaluation và Action Plan. |
 | **Tác nhân chính** | Candidate |
 | **Tác nhân phụ** | Không có (chỉ đọc từ DB) |
 | **Tiền điều kiện** | `ai_feedbacks` và `annotated_segments` đã được lưu đầy đủ (UC-05 hoàn thành). |
@@ -964,66 +1438,44 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 **Main Flow:**
 
 1. Candidate nhấn **"Xem phân tích chi tiết"** từ màn hình kết thúc phiên, hoặc chọn câu hỏi từ UC-08.
-2. Hệ thống hiển thị danh sách câu hỏi trong phiên dưới dạng tab.
-3. Candidate chọn tab câu hỏi muốn xem (mặc định là câu hỏi đầu tiên).
-4. Trang Feedback chi tiết hiển thị cấu trúc sau:
+2. Hệ thống hiển thị **Section Executive Summary** ở đầu trang:
+   - Overall score và recommendation badge (Strong Hire / Hire / Borderline / No Hire) kèm ghi chú: "Đây là điểm mô phỏng, không phải đánh giá thực từ nhà tuyển dụng."
+   - Top 2 điểm mạnh và top 2 điểm cần cải thiện.
+3. Bên dưới Executive Summary: danh sách câu hỏi trong phiên dưới dạng tab.
+4. Candidate chọn tab câu hỏi muốn xem (mặc định là câu hỏi đầu tiên).
+5. Trang Feedback từng câu hỏi hiển thị các thành phần sau:
+   - Header: câu hỏi gốc, điểm số (x/100), context pack, key takeaway ngắn.
+   - Annotated Transcript: toàn bộ transcript được highlight theo mức độ (RED = critical, YELLOW = warning, GREEN = good); các đoạn follow-up được gắn nhãn riêng.
+   - Model Answer: câu trả lời mẫu đầy đủ.
+   - Nút hành động: "Luyện lại câu này".
 
-   ```
-   ┌─────────────────────────────────────────────────────────┐
-   │  Câu hỏi: "Hãy kể về một lần bạn xử lý conflict..."   │
-   │  Điểm: 68/100  Context: VN Pack                       │
-   │  Key Takeaway: "Thay 'cố gắng communicate'..."          │
-   ├─────────────────────────────────────────────────────────┤
-   │  Transcript của bạn                                     │
-   │                                                         │
-   │  [RED: Ừm, thì hồi đó] tôi làm việc với một bạn trong │
-   │  team và chúng tôi không đồng ý về cách thiết kế       │
-   │  database. [YELLOW: Tôi đã cố gắng communicate với bạn│
-   │  nhưng mà không hiệu quả lắm.] [RED: Cuối cùng team   │
-   │  lead phải vào giải quyết và mọi thứ ổn hơn.]         │
-   │                                                         │
-   │  [FOLLOW-UP] ... [GREEN: Tôi đã chuẩn bị một doc nhỏ...]│
-   ├─────────────────────────────────────────────────────────┤
-   │  Câu trả lời mẫu (Model Answer)                        │
-   │  Trong dự án thiết kế module thanh toán...              │
-   ├─────────────────────────────────────────────────────────┤
-   │  [Luyện lại câu này]                                   │
-   └─────────────────────────────────────────────────────────┘
-   ```
+6. Candidate click hoặc hover vào đoạn màu **VÀNG** hoặc **ĐỎ**:
+7. Hệ thống hiển thị **Annotation Popup** bên cạnh đoạn được click, gồm các trường:
+   - Severity label (ví dụ: "Cần sửa ngay" / "Có thể cải thiện") — map từ `severity` của segment.
+   - Vấn đề: mô tả vấn đề cụ thể của đoạn đó (`reason`).
+   - Gợi ý: hướng cải thiện ngắn gọn (`suggestion`).
+   - Nên nói: ví dụ câu nói thay thế tốt hơn (`improved_version`).
 
-5. Candidate click hoặc hover vào đoạn màu **VÀNG** hoặc **ĐỎ**:
-6. Hệ thống hiển thị **Annotation Popup** bên cạnh đoạn được click:
-
-   ```
-   ┌──────────────────────────────────────────┐
-   │ Cần sửa ngay                               │
-   │ ─────────────────────────────────────    │
-   │ Vấn đề:                                   │
-   │ Mở đầu bằng 2 filler words liên tiếp    │
-   │ ('Ừm', 'thì') tạo ấn tượng thiếu chuẩn  │
-   │ bị và thiếu tự tin.                      │
-   │ ─────────────────────────────────────    │
-   │ Gợi ý:                                    │
-   │ Bắt đầu bằng ngữ cảnh cụ thể thay vì    │
-   │ filler words.                            │
-   │ ─────────────────────────────────────    │
-   │ Nên nói:                                  │
-   │ "Trong dự án thiết kế hệ thống thanh    │
-   │  toán năm ngoái,"                        │
-   └──────────────────────────────────────────┘
-   ```
-
-7. Candidate đọc annotation; có thể đóng popup bằng cách click ra ngoài.
-8. Candidate xem **Model Answer** ở cuối trang.
-8b. *(Tùy chọn)* Candidate nhấn **+1 Hữu ích** hoặc **-1 Chưa hữu ích** để đánh giá chất lượng feedback của câu hỏi này. Hệ thống lưu vào `ai_quality_log` (xem vòng lặp cải thiện tại 4.7.2). Mỗi câu hỏi được đánh giá 1 lần; có thể thay đổi trong vòng 5 phút sau khi nhấn.
-9. Candidate nhấn **"Luyện lại câu này"** → kích hoạt UC-07.
-10. Candidate nhấn tab câu hỏi khác → quay lại bước 3 với câu hỏi mới.
+8. Candidate đọc annotation; có thể đóng popup bằng cách click ra ngoài.
+9. Candidate xem **Model Answer** ở cuối trang.
+10. *(Tùy chọn)* Candidate nhấn **+1 Hữu ích** hoặc **-1 Chưa hữu ích** để đánh giá chất lượng feedback của câu hỏi này. Hệ thống lưu vào `ai_quality_log` (xem vòng lặp cải thiện tại 4.7.2). Mỗi câu hỏi được đánh giá 1 lần; có thể thay đổi trong vòng 5 phút sau khi nhấn.
+11. Candidate nhấn **"Luyện lại câu này"** → kích hoạt UC-07.
+12. Candidate nhấn tab câu hỏi khác → quay lại bước 4 với câu hỏi mới.
+13. Sau khi xem xong tất cả câu hỏi, Candidate cuộn xuống **Section Communication Analysis**:
+    - WPM trung bình toàn phiên và đánh giá (< 100 WPM: Chậm / 100–150 WPM: Bình thường / > 150 WPM: Nhanh).
+    - Tổng filler word count kèm ví dụ từng loại.
+    - Tỷ lệ thời gian nói vs im lặng (%).
+14. **Section Competency Heatmap**: radar chart hoặc bar chart với 5 competency axes (Problem-solving, Communication, Technical Depth, Behavioral Maturity, Culture Fit); mỗi axis hiển thị điểm [1–5].
+15. **Section Reverse Questions Evaluation**: danh sách câu hỏi Candidate đã đặt cho AI interviewer, mỗi câu kèm label (Insightful / Generic / Red-flag) và brief comment giải thích lý do. Section này ẩn nếu `reverse_q_eval_json = null`.
+16. **Section Action Plan**: danh sách 3–5 việc cần làm trước session tiếp theo, kèm tài liệu gợi ý và đề xuất loại session kế tiếp (có thể nhấn vào để tạo session mới với config được pre-fill).
 
 **Alternative Flow:**
 
 - **AF-06-A**: Feedback được sinh theo Fallback (không có segment annotation) → Hiển thị tab "Nhận xét chung" thay vì Annotated Transcript; text comment hiện ở vị trí transcript; không có màu highlight.
-- **AF-06-B**: Voice metrics khả dụng → Hiển thị badge nhỏ: `95 WPM · 4 filler words`.
+- **AF-06-B**: Voice metrics khả dụng → Hiển thị badge nhỏ trong Communication Analysis: `95 WPM · 4 filler words`.
 - **AF-06-C**: Candidate đã đánh giá +1/-1 và muốn thay đổi trong 5 phút → Nhấn lại nút → Hệ thống cập nhật `ai_quality_log` với giá trị mới; nút được highlight để cho thấy lựa chọn hiện tại.
+- **AF-06-D**: `reverse_q_eval_json = null` (Candidate không làm UC-12 hoặc UC-12 bị bỏ qua) → Section Reverse Questions Evaluation ẩn hoàn toàn; không hiển thị placeholder hay lỗi.
+- **AF-06-E**: Candidate nhấn vào đề xuất session type trong Action Plan → hệ thống chuyển đến UC-03 với `session_type` và `difficulty` được pre-fill theo gợi ý.
 
 **Exception Flow:**
 
@@ -1039,6 +1491,10 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 - [ ] AC-06-3: Click vào đoạn annotated → popup hiển thị đủ 3 phần (reason, suggestion, improved_version).
 - [ ] AC-06-4: Model Answer luôn hiển thị đầy đủ, không bị truncate.
 - [ ] AC-06-5: Nút "Luyện lại câu này" chỉ hiện khi có ít nhất 1 segment `warning` hoặc `critical`.
+- [ ] AC-06-6: Executive Summary hiển thị đúng recommendation badge theo ngưỡng điểm (AC-05-8); ghi chú "điểm mô phỏng" hiển thị rõ ràng.
+- [ ] AC-06-7: Competency Heatmap render đủ 5 axes với giá trị [1–5] khớp với `competency_heatmap_json`.
+- [ ] AC-06-8: Section Action Plan hiển thị đủ ≥ 3 items từ `action_plan_json`; mỗi item có action text và resource (hoặc để trống nếu null).
+- [ ] AC-06-9: Section Reverse Questions ẩn hoàn toàn khi `reverse_q_eval_json = null`; hiển thị đúng labels khi có dữ liệu.
 
 ---
 
@@ -1104,24 +1560,10 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 
 **Giai đoạn 4 — Hiển thị Comparison**
 
-11. Sau khi AI xử lý xong, màn hình cập nhật layout so sánh đầy đủ:
-
-   ```
-   ┌────────────────────────┬────────────────────────┐
-   │  Lần gốc — 68/100     │  Lần 1 — 81/100       │
-   │                        │                        │
-   │  [RED: Ừm, thì hồi đó]│  [GREEN: Trong dự án   │
-   │  tôi làm việc với...  │  thiết kế module...]   │
-   │  [YELLOW: cố gắng     │  [GREEN: Tôi đã chủ động│
-   │  communicate]         │  chuẩn bị document]    │
-   │  [RED: Cuối cùng team │  [YELLOW: Kết quả: hai│
-   │  lead phải vào]       │  bên thống nhất]       │
-   │                        │                        │
-   │  Voice: 4 fillers      │  Voice: 1 filler       │
-   ├────────────────────────┴────────────────────────┤
-   │          ↑ +13 điểm    Cải thiện tốt!            │
-   └─────────────────────────────────────────────────┘
-   ```
+11. Sau khi AI xử lý xong, màn hình cập nhật layout so sánh đầy đủ gồm các thành phần:
+    - Cột TRÁI: Annotated Transcript lần gốc kèm điểm gốc và voice metric (số filler words).
+    - Cột PHẢI: Annotated Transcript lần thử mới kèm điểm mới và voice metric.
+    - Delta Score badge ở trung tâm giữa hai cột, hiển thị `delta_score` (xem bước 12).
 
 12. Hiển thị **Delta Score badge** ở trung tâm:
     - `delta > 10`: màu xanh đậm, text "Cải thiện rõ rệt!"
@@ -1216,6 +1658,151 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 - [ ] AC-08-1: Danh sách phiên load trong ≤ 300 ms.
 - [ ] AC-08-2: Phiên interrupted được phân biệt rõ với phiên completed.
 - [ ] AC-08-3: Click vào phiên → navigate đến UC-06 đúng phiên trong ≤ 200 ms.
+
+---
+
+### UC-11: Bài test định vị
+
+| Trường | Nội dung |
+|---|---|
+| **Mã UC** | UC-11 |
+| **Tên UC** | Bài test định vị |
+| **Priority** | COULD |
+| **Mô tả tóm tắt** | Candidate làm 5–10 câu hỏi ngắn để hệ thống calibrate level hiện tại. Kết quả được lưu vào `user_profiles.placement_level` và dùng để pre-fill difficulty mặc định khi tạo session mới (UC-03). |
+| **Tác nhân chính** | Candidate |
+| **Tác nhân phụ** | AI Engine (scoring) |
+| **Tiền điều kiện** | UC-02 vừa hoàn thành; hệ thống hiển thị prompt mời làm test (bước 11 của UC-02 Main Flow). |
+| **Hậu điều kiện** | `user_profiles.placement_level` được ghi (`intern`, `fresher`, hoặc `junior`); Candidate chuyển về Dashboard. |
+
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `answer[]` | Danh sách câu trả lời của Candidate | Có | Array | 5–10 phần tử | Không có | AI Engine / scoring |
+
+**Main Flow:**
+
+1. Hệ thống hiển thị 5–10 câu hỏi trắc nghiệm hoặc điền ngắn, phân bố đều 3 levels (intern, fresher, junior), liên quan đến `target_role_category` của Candidate.
+2. Candidate trả lời từng câu; không có time limit cứng.
+3. Sau câu cuối, Candidate nhấn **"Nộp bài"**.
+4. Backend gọi AI scoring: chấm số câu đúng và tính level theo ngưỡng (đúng < 40%: intern; 40–70%: fresher; > 70%: junior).
+5. Hệ thống lưu `placement_level` vào `user_profiles`; hiển thị kết quả ngắn ("Level hiện tại của bạn: Fresher") và chuyển về Dashboard.
+
+**Alternative Flow:**
+
+- **AF-11-A**: Candidate nhấn **"Bỏ qua"** ở bất kỳ lúc nào → `placement_level` không được ghi; chuyển về Dashboard. Lần sau tạo session: difficulty không có pre-fill từ placement test.
+
+**Exception Flow:**
+
+| Mã lỗi | Tình huống | Xử lý |
+|---|---|---|
+| E-11-1 | AI scoring timeout (> 10 giây) | Lưu `placement_level = null`; hiển thị: "Không thể tính kết quả lúc này. Bạn có thể làm lại sau trong phần Hồ sơ."; chuyển về Dashboard. |
+
+**Acceptance Criteria:**
+
+- [ ] AC-11-1: Test hiển thị đúng 5–10 câu hỏi; không thể nộp bài khi còn câu chưa trả lời.
+- [ ] AC-11-2: Kết quả mapping sang đúng 1 trong 3 levels theo ngưỡng đã định; `placement_level` được lưu vào DB.
+- [ ] AC-11-3: Candidate có thể bỏ qua toàn bộ test bằng 1 thao tác; không có tác động phụ.
+- [ ] AC-11-4: Khi tạo session mới sau khi có `placement_level`, trường difficulty được pre-fill đúng level tương ứng.
+
+---
+
+### UC-12: Giai đoạn phỏng vấn ngược
+
+| Trường | Nội dung |
+|---|---|
+| **Mã UC** | UC-12 |
+| **Tên UC** | Giai đoạn phỏng vấn ngược |
+| **Priority** | SHOULD |
+| **Mô tả tóm tắt** | Candidate đặt 1–3 câu hỏi cho AI interviewer (đóng vai công ty theo persona đã chọn). AI trả lời trong vai; đồng thời hệ thống chấm điểm từng câu hỏi (Insightful / Generic / Red-flag) nhưng không hiển thị ngay cho Candidate — kết quả được dùng trong UC-05 Reverse Questions Evaluation. |
+| **Tác nhân chính** | Candidate |
+| **Tác nhân phụ** | AI Engine (in-character response + scoring) |
+| **Tiền điều kiện** | UC-04 Main Loop đã kết thúc (tất cả câu hỏi đã được trả lời hoặc skipped); UC-04 Giai đoạn 4 kích hoạt UC-12. |
+| **Hậu điều kiện** | `reverse_questions[]` được lưu vào DB với câu trả lời AI, timestamp và label score; dữ liệu được dùng trong UC-05 bước 4 (Reverse Questions Evaluation). |
+
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `question_text` | Câu hỏi Candidate đặt cho AI interviewer | Có | Text | Không rỗng, ≤ 500 ký tự | Không có | `reverse_questions` |
+| `answer_mode` | Cách đặt câu hỏi | Có | Enum | `voice` hoặc `text` | `text` | Frontend state |
+
+**Main Flow:**
+
+1. AI hiển thị: "Em có câu hỏi nào dành cho anh/chị/công ty không?" (theo phong cách persona).
+2. Candidate đặt câu hỏi (text hoặc voice; nếu voice → transcribe qua Whisper như UC-04 Giai đoạn 2A).
+3. Backend gọi AI để sinh câu trả lời in-character: AI phản hồi với tư cách công ty/persona (không phá vỡ vai); đồng thời backend chấm điểm câu hỏi (Insightful / Generic / Red-flag) và sinh brief comment — hai hành động này chạy song song, không hiển thị label cho Candidate.
+4. Frontend hiển thị chỉ câu trả lời của AI; không hiển thị label.
+5. Hệ thống lưu record vào `reverse_questions` (question_text, ai_response, label, comment, session_id).
+6. Nếu Candidate muốn đặt câu tiếp: quay lại bước 2 (tối đa 3 câu).
+7. Sau 3 câu hoặc Candidate nhấn **"Không, cảm ơn"**: AI nói lời đóng ngắn; UC-12 kết thúc; quay lại UC-04 Giai đoạn 5.
+
+**Alternative Flow:**
+
+- **AF-12-A**: Candidate không muốn đặt câu hỏi → Nhấn "Không, cảm ơn" ngay → UC-12 kết thúc; `reverse_questions` không có record nào; `reverse_q_eval_json = null` trong UC-05.
+
+**Exception Flow:**
+
+| Mã lỗi | Tình huống | Xử lý |
+|---|---|---|
+| E-12-1 | AI in-character response timeout (> 10 giây) | Hiển thị placeholder: "Xin lỗi, anh/chị cần kiểm tra lại thông tin này. Bạn có câu hỏi nào khác không?"; lưu record với `ai_response = "[timeout]"`. |
+| E-12-2 | Candidate đặt > 3 câu qua API bypass | Backend reject câu thứ 4 trở đi với HTTP 400; UI không cho phép nhập thêm sau câu thứ 3. |
+
+**Acceptance Criteria:**
+
+- [ ] AC-12-1: AI trả lời trong vai, phong cách ngôn ngữ nhất quán với persona đã chọn ở UC-03; không tiết lộ rằng đây là AI bot.
+- [ ] AC-12-2: Mỗi câu hỏi được label (Insightful / Generic / Red-flag) và lưu vào DB; label không hiển thị cho Candidate trong UC-12.
+- [ ] AC-12-3: Tối đa 3 câu hỏi được chấp nhận; câu thứ 4 bị reject ở cả UI và API.
+- [ ] AC-12-4: Label từ UC-12 xuất hiện đúng trong Section Reverse Questions Evaluation của UC-06.
+
+---
+
+### UC-13: Dashboard tiến trình cá nhân
+
+| Trường | Nội dung |
+|---|---|
+| **Mã UC** | UC-13 |
+| **Tên UC** | Dashboard tiến trình cá nhân |
+| **Priority** | SHOULD |
+| **Mô tả tóm tắt** | Candidate xem biểu đồ tiến bộ theo competency qua thời gian, replay session cũ với feedback đầy đủ, theo dõi streak luyện tập và nhận gợi ý session kế tiếp từ recommendation engine. |
+| **Tác nhân chính** | Candidate |
+| **Tác nhân phụ** | Recommendation Engine (backend) |
+| **Tiền điều kiện** | Candidate đã đăng nhập; có ít nhất 1 session với `status = completed`. |
+| **Hậu điều kiện** | Không có side effect — UC-13 là read-only view. Ngoại trừ khi Candidate nhấn vào gợi ý session → kích hoạt UC-03 với config pre-fill. |
+
+**Dữ liệu đầu vào:**
+
+| Trường dữ liệu | Mô tả | Bắt buộc | Kiểu dữ liệu | Validation | Giá trị mặc định | Nơi lưu/xử lý |
+|---|---|---|---|---|---|---|
+| `time_range` | Khoảng thời gian hiển thị biểu đồ | Không | Enum | `7d`, `30d`, `all` | `30d` | Query param |
+| `selected_session_id` | Session chọn để replay | Không | UUID/ID | Thuộc Candidate hiện tại | Không có | Navigate đến UC-06 |
+
+**Main Flow:**
+
+1. Candidate truy cập **Dashboard** hoặc **Tiến trình**.
+2. Hệ thống hiển thị **Competency Progress Chart**: line chart hoặc radar chart với 5 axes, mỗi data point là 1 session completed, có thể lọc theo time range (7 ngày / 30 ngày / Tất cả).
+3. Hệ thống hiển thị **Streak**: số ngày liên tiếp có ít nhất 1 session completed; hiển thị "Streak hiện tại: X ngày".
+4. Hệ thống hiển thị **Recommendation Card**: gợi ý 1–2 loại session kế tiếp dựa trên competency thấp nhất từ session gần nhất; Candidate có thể nhấn vào để tạo session mới với config pre-fill.
+5. Hệ thống hiển thị **Replay Section**: danh sách session cũ có thể xem lại; Candidate chọn 1 session → chuyển đến UC-06 với toàn bộ feedback của session đó.
+
+**Alternative Flow:**
+
+- **AF-13-A**: Chỉ có 1 session completed → Competency Chart hiển thị 1 data point duy nhất; streak = 1 ngày (nếu hôm nay).
+- **AF-13-B**: Candidate nhấn vào Recommendation Card → chuyển đến UC-03 với `session_type` và `difficulty` được pre-fill theo gợi ý; Candidate vẫn có thể thay đổi trước khi confirm.
+
+**Exception Flow:**
+
+| Mã lỗi | Tình huống | Xử lý |
+|---|---|---|
+| E-13-1 | Competency data không load được | Hiển thị skeleton 3 giây; retry 1 lần; nếu vẫn lỗi → hiển thị: "Không thể tải dữ liệu tiến trình. Vui lòng thử lại." |
+| E-13-2 | Recommendation Engine trả về rỗng | Hiển thị gợi ý mặc định: "Luyện thêm session Mixed Interview"; không crash. |
+
+**Acceptance Criteria:**
+
+- [ ] AC-13-1: Competency Chart hiển thị đúng dữ liệu từ `competency_heatmap_json` của từng session theo thứ tự thời gian.
+- [ ] AC-13-2: Replay load đúng session cũ và chuyển đến UC-06 với feedback đầy đủ trong ≤ 300 ms.
+- [ ] AC-13-3: Recommendation dựa trên competency thấp nhất của session gần nhất; nếu Recommendation Engine lỗi → fallback mặc định hiển thị.
+- [ ] AC-13-4: Streak tính đúng số ngày liên tiếp; reset về 0 nếu hôm nay chưa có session.
 
 ---
 
