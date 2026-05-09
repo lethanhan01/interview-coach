@@ -6,9 +6,7 @@
 | Thuộc tính | Giá trị |
 |---|---|
 | **Ngày soạn** | 05/05/2026 |
-| **Trạng thái** | Draft (SRS-focused revision) |
 | **Tác giả** | Lê Thành An — MSSV: 20235631 |
-| **Giảng viên hướng dẫn** | Tiến sĩ Cao Tuấn Dũng |
 | **Đơn vị** | Trường Công nghệ Thông tin và Truyền thông (SOICT), ĐHBKHN |
 
 ---
@@ -23,10 +21,6 @@
     - [1.2.3 Phạm vi phiên bản hiện tại (v1.0 — Prototype)](#123-phạm-vi-phiên-bản-hiện-tại-v10--prototype)
   - [1.3 Từ điển thuật ngữ](#13-từ-điển-thuật-ngữ)
   - [1.4 Tài liệu tham khảo](#14-tài-liệu-tham-khảo)
-  - [1.5 Giả định & Phụ thuộc](#15-giả-định--phụ-thuộc)
-    - [1.5.1 Giả định](#151-giả-định)
-    - [1.5.2 Phụ thuộc bên ngoài](#152-phụ-thuộc-bên-ngoài)
-    - [1.5.3 Ràng buộc về thời gian và nguồn lực](#153-ràng-buộc-về-thời-gian-và-nguồn-lực)
 - [2. Mô tả tổng quan](#2-mô-tả-tổng-quan)
   - [2.1 Các tác nhân](#21-các-tác-nhân)
     - [2.1.1 Người dùng (Candidate)](#211-người-dùng-candidate)
@@ -88,22 +82,13 @@
 
 Mục đích của dự án **InterviewAI — AI Interview Coach System** là xây dựng một ứng dụng web hỗ trợ sinh viên năm cuối và fresher CNTT tại Việt Nam luyện tập phỏng vấn xin việc trong môi trường mô phỏng có phản hồi từ AI. Hệ thống giúp Candidate tạo phiên phỏng vấn theo Job Description, trả lời bằng giọng nói hoặc văn bản, nhận câu hỏi đào sâu theo ngữ cảnh, xem feedback cụ thể theo từng đoạn transcript và luyện lại câu trả lời để cải thiện.
 
-Ở phiên bản v1.0, InterviewAI tập trung vào ba giá trị chính:
+InterviewAI tập trung vào ba giá trị chính:
 
 1. **Luyện tập theo ngữ cảnh tuyển dụng thực tế:** câu hỏi được sinh dựa trên JD, hồ sơ/CV và Context Pack mà Candidate lựa chọn.
 2. **Phản hồi cụ thể, có thể hành động:** feedback chỉ rõ đoạn nào trong câu trả lời tốt/chưa tốt, lý do và phiên bản cải thiện.
 3. **Vòng lặp cải thiện:** Candidate có thể rewrite câu trả lời và so sánh trước/sau để thấy điểm đã tiến bộ.
 
 Tài liệu này là **Đặc tả Yêu cầu Phần mềm (Software Requirement Specification — SRS)** cho InterviewAI. Vai trò của tài liệu là xác định phạm vi, tác nhân, quy trình nghiệp vụ, yêu cầu chức năng, yêu cầu phi chức năng và tiêu chí nghiệm thu ở mức yêu cầu. Các nội dung chiến lược sản phẩm như success metrics, pivot criteria và design principles được quản lý trong **[Discovery Document v0.1](../Discovery_Docs/Discovery_Document.md)**; các chi tiết kiến trúc, tech stack, prompt engineering, schema AI và vận hành kỹ thuật được quản lý trong **[SAD v1.0](../SAD/SAD_InterviewAI_v1.0.md)**.
-
-**Đối tượng đọc tài liệu:**
-
-| Đối tượng | Mục đích sử dụng |
-|---|---|
-| Sinh viên thực hiện | Tài liệu hướng dẫn thiết kế và phát triển |
-| Giảng viên hướng dẫn | Xem xét và phê duyệt định hướng kỹ thuật |
-| Hội đồng bảo vệ | Đánh giá mức độ hoàn chỉnh và tính khả thi |
-| Người dùng thử nghiệm | Hiểu phạm vi và kỳ vọng của sản phẩm |
 
 ---
 
@@ -139,6 +124,7 @@ InterviewAI là một ứng dụng web cho phép sinh viên năm cuối và fres
 | 10 | Quản trị người dùng (Admin) | CRUD cơ bản |
 | 11 | Quản lý Question Bank (Admin) | 60 câu seed data |
 
+<!--
 **Ngoài phạm vi (Out of Scope — không thực hiện trong v1.0):**
 
 | STT | Tính năng | Lý do loại trừ |
@@ -158,7 +144,7 @@ InterviewAI là một ứng dụng web cho phép sinh viên năm cuối và fres
 | 13 | Enterprise / B2B (cho HR departments) | Khác hoàn toàn GTM; ngoài scope đồ án *(DD §9.5)* |
 
 > **Ghi chú phạm vi tài liệu:** Mục tiêu kinh doanh, success metrics và pivot criteria không nằm trong SRS chính. Các nội dung này được chuyển sang Discovery Document, cụ thể tại DD §11.1 và DD §11.2, để SRS tập trung vào yêu cầu hệ thống.
-
+-->
 ---
 
 ## 1.3 Từ điển thuật ngữ
@@ -207,7 +193,6 @@ InterviewAI là một ứng dụng web cho phép sinh viên năm cuối và fres
 | [9] | Abootorabi et al. (2025). *Ask in Any Modality: A Comprehensive Survey on Multimodal Retrieval-Augmented Generation*. ACL 2025 Findings. arXiv:2502.08826 |
 | [10] | STAR Interview Method — Amazon Leadership Principles | https://www.amazon.jobs/en/principles |
 | [11] | IEEE 830-1998 — Recommended Practice for Software Requirements Specifications | IEEE Standards |
-| [12] | Khảo sát nhu cầu luyện tập phỏng vấn sinh viên BKHN (n=\[50\], 2026) | Nghiên cứu sơ bộ của tác giả |
 | [13] | SAD_InterviewAI_v1.0.md — Software Architecture Document (tài liệu đồng hành) | Tài liệu nội bộ dự án |
 | [14] | **Discovery Document v0.1** — Product Discovery / User Research Report (tài liệu đầu vào chính cho SRS) | [docs/Discovery_Docs/Discovery_Document.md](../Discovery_Docs/Discovery_Document.md) |
 | [15] | VINASA (2024). “Đánh giá chất lượng nhân lực CNTT tốt nghiệp” | Trích qua Tiền Phong; DD §1.1 |
@@ -216,7 +201,7 @@ InterviewAI là một ứng dụng web cho phép sinh viên năm cuối và fres
 | [18] | OpenAI (2024). “API Pricing Updates — GPT-4o mini” | DD §1.2, Insight #4 |
 
 ---
-
+<!--
 ## 1.5 Giả định & Phụ thuộc
 
 ### 1.5.1 Giả định
@@ -241,11 +226,7 @@ InterviewAI là một ứng dụng web cho phép sinh viên năm cuối và fres
 | D2 | Dịch vụ Speech-to-Text — chuyển đổi audio thành transcript | Nếu STT thất bại, Candidate phải có thể chuyển sang nhập câu trả lời bằng văn bản |
 | D3 | Dịch vụ xác thực OAuth — đăng nhập bằng tài khoản Google | Nếu OAuth lỗi, Candidate phải nhận được thông báo lỗi rõ ràng và có thể thử lại |
 | D4 | Cơ sở dữ liệu và lưu trữ file | Hệ thống phải lưu hồ sơ, phiên, transcript, feedback và file liên quan theo chính sách bảo mật dữ liệu |
-
-### 1.5.3 Ràng buộc về thời gian và nguồn lực
-
-- **Thời gian phát triển:** 3 tháng (tháng 4 → tháng 6/2026), deadline bảo vệ trước tháng 7/2026.
-- **Nguồn lực:** 01 lập trình viên duy nhất — toàn bộ frontend, backend, AI integration, testing và deployment.
+-->
 
 ---
 
@@ -264,7 +245,7 @@ Hệ thống InterviewAI có hai tác nhân người dùng và một tác nhân 
 | Đối tượng chính | Sinh viên năm cuối CNTT và fresher CNTT tại Việt Nam có 0–12 tháng kinh nghiệm. |
 | Quyền hạn | Quản lý hồ sơ luyện tập, tạo phiên phỏng vấn, trả lời câu hỏi, xem feedback, rewrite câu trả lời và xem lịch sử phiên. |
 | Use Case liên quan | UC-01, UC-02, UC-03, UC-03b, UC-04, UC-06, UC-07, UC-08 |
-| Dữ liệu thao tác | Thông tin hồ sơ, CV PDF, JD, cấu hình phiên, transcript câu trả lời, đánh giá feedback, lịch sử phiên. |
+| Dữ liệu thao tác | Thông tin hồ sơ, CV PDF, JD, cấu hình phiên, transcript câu trả lời, đánh giá feedback, xem lịch sử phiên. |
 
 ### 2.1.2 Quản trị viên (Admin)
 
@@ -294,7 +275,7 @@ AI Engine gồm ba năng lực ở mức yêu cầu: **Question Generator**, **F
 
 ## 2.2 Môi trường vận hành
 
-SRS chỉ giữ các điều kiện vận hành ảnh hưởng trực tiếp đến người dùng và yêu cầu hệ thống. Sơ đồ triển khai, hosting, cấu hình server, lựa chọn framework và phân tích vận hành được trình bày trong **[SAD v1.0](../SAD/SAD_InterviewAI_v1.0.md)**.
+SRS chỉ giữ các điều kiện vận hành ảnh hưởng trực tiếp đến người dùng và yêu cầu hệ thống. Sơ đồ triển khai, hosting, cấu hình server, lựa chọn framework và phân tích vận hành được trình bày trong **[SAD v1.0](docs\Design\ArchitecturalDesign\SAD_InterviewAI_v1.0.md)**.
 
 | Nhóm | Yêu cầu vận hành |
 |---|---|
@@ -327,8 +308,8 @@ flowchart LR
         UC03(["UC-03\nCấu hình phiên phỏng vấn"]):::usecase
         UC03b(["UC-03b\nChọn Context Pack"]):::usecase
         UC04(["UC-04\nThực hiện phiên phỏng vấn AI"]):::usecase
-        UC05(["UC-05\nAI sinh Comprehensive Feedback"]):::usecase
-        UC06(["UC-06\nXem Comprehensive Feedback"]):::usecase
+        UC05(["UC-05\nAI sinh Surgical Feedback"]):::usecase
+        UC06(["UC-06\nXem Surgical Feedback chi tiết"]):::usecase
         UC07(["UC-07\nRewrite & Compare"]):::usecase
         UC08(["UC-08\nXem danh sách phiên luyện tập"]):::usecase
         UC09(["UC-09\nQuản trị người dùng"]):::usecase
@@ -385,8 +366,8 @@ flowchart LR
         UC03(["UC-03\nCấu hình phiên"]):::usecase
         UC03b(["UC-03b\nChọn Context Pack"]):::usecase
         UC04(["UC-04\nThực hiện phiên"]):::usecase
-        UC05(["UC-05\nSinh Comprehensive Feedback"]):::usecase
-        UC06(["UC-06\nXem Comprehensive Feedback"]):::usecase
+        UC05(["UC-05\nSinh Surgical Feedback"]):::usecase
+        UC06(["UC-06\nXem Surgical Feedback"]):::usecase
         UC07(["UC-07\nRewrite & Compare"]):::usecase
         UC08(["UC-08\nXem lịch sử"]):::usecase
         UC11(["UC-11\nBài test định vị"]):::usecase

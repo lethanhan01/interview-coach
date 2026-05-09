@@ -2,34 +2,8 @@
 
 **Loại tài liệu:** Product Discovery / User Research Report
 **Mục đích:** Tổng hợp toàn bộ nghiên cứu người dùng, phân tích thị trường, và định nghĩa vấn đề — làm input chính thức cho SRS.
-**Vị trí trong chuỗi tài liệu:**
-
-```
-Business Case → [📍 Discovery Document] → Stakeholder Requirements → SRS → SAD → Code & Test
-```
 
 ---
-
-## Front Matter
-
-### Metadata
-
-| Thuộc tính | Giá trị |
-|---|---|
-| **Tên dự án** | InterviewAI — AI Interview Coach System |
-| **Phiên bản tài liệu** | 0.1 |
-| **Ngày soạn** | 2026-05-04 |
-| **Ngày cập nhật** | 2026-05-04 |
-| **Trạng thái** | Draft |
-| **Tác giả** | Lê Thành An — MSSV: 20235631 |
-| **Giảng viên hướng dẫn** | Tiến sĩ Cao Tuấn Dũng |
-| **Đơn vị** | Viện CNTT & TT (SOICT), ĐHBKHN |
-
-### Lịch sử phiên bản
-
-| Phiên bản | Ngày | Mô tả thay đổi |
-|---|---|---|
-| 0.1 | 2026-05-04 | Khởi tạo, draft toàn bộ các phần dựa trên secondary research |
 
 ### Mục lục
 
@@ -102,9 +76,9 @@ Trước khi xác định khoảng trống thị trường, cần đánh giá hi
 
 | # | Giả thuyết | Mức độ tự tin (1-5) | Sau research: Đúng / Sai / Cần điều chỉnh |
 |---|---|---|---|
-| H1 | Fresher VN có nhu cầu lớn về luyện phỏng vấn nhưng thiếu công cụ chất lượng | 5 | ✅ Đúng — 70% fresher cần đào tạo bổ sung (VINASA); không có tool tiếng Việt |
-| H2 | Họ thích voice input hơn text input vì giả lập tốt hơn | 3 | ⚠️ Cần điều chỉnh — Voice realistic hơn nhưng text "an toàn hơn" cho nhiều người, cần cả hai |
-| H3 | Họ sẵn sàng dùng AI feedback nếu nó cụ thể và actionable | 4 | ⚠️ Cần validate thêm — Gen Z VN cởi mở với AI nhưng cần chứng minh chất lượng |
+| H1 | Fresher VN có nhu cầu lớn về luyện phỏng vấn nhưng thiếu công cụ chất lượng | 5 |  Đúng — 70% fresher cần đào tạo bổ sung (VINASA); không có tool tiếng Việt |
+| H2 | Họ thích voice input hơn text input vì giả lập tốt hơn | 3 |  Cần điều chỉnh — Voice realistic hơn nhưng text "an toàn hơn" cho nhiều người, cần cả hai |
+| H3 | Họ sẵn sàng dùng AI feedback nếu nó cụ thể và actionable | 4 |  Cần validate thêm — Gen Z VN cởi mở với AI nhưng cần chứng minh chất lượng |
 | H4 | Văn hóa phỏng vấn VN khác biệt rõ rệt với Western, ảnh hưởng đến rubric | 4 | Cần validate qua expert interview với HR |
 | H5 | Sinh viên VN không sẵn sàng trả phí cho tool luyện phỏng vấn | 4 | Cần validate qua survey |
 | H6 | Feedback generic (như đa số tool hiện tại) không tạo giá trị thực | 4 | Cần validate qua pilot test |
