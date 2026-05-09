@@ -4,11 +4,15 @@ InterviewAI là ứng dụng web luyện phỏng vấn xin việc dành cho sinh
 
 ## Active Phase
 
-**Current**: Requirements Analysis  
-**Started**: 2026-05-06  
-**Target completion**: 2026-05-20 (ước tính — trước khi bắt đầu Architectural Design)
+**Current**: Architectural Design  
+**Started**: 2026-05-09  
+**Target completion**: TBD (sau khi hoàn thành SAD v1.1, HLD, ADRs, UI/UX, DB, API, LLD)
 
-In this phase, you act as a **Business Analyst (BA)** and **QA Engineer**, not a developer. You produce documentation, not code.
+**Phase snapshot (2026-05-09):** Requirements Analysis chưa exit chính thức (US 16 stories Draft, TC chưa viết) — user quyết định chuyển sang Architectural Design trước. SAD v1.1 đã xong. ADR-001 xong. ADR-002→005, HLD, UI/UX, DB, API, LLD còn pending.
+
+**Architecture decision (confirmed 2026-05-09):** NestJS only backend (không dùng FastAPI). Xem technical-analysis.md và ADR-005 khi được tạo.
+
+In this phase, you act as a **Software Architect** and **Technical Lead**. You produce design documents, diagrams, and ADRs — not production code.
 
 ### Session Log
 
@@ -84,16 +88,31 @@ In this phase, you act as a **Business Analyst (BA)** and **QA Engineer**, not a
 - Updated [docs/RequirementAnalysis/SRS/RTM_InterviewAI.md](docs/RequirementAnalysis/SRS/RTM_InterviewAI.md): thêm cột `User Stories` vào §1, điền US-IDs cho tất cả 10 UC rows; thêm 3 rows mới UC-11/12/13; thêm 2 notes vào §3 (UC-09/10 Discovery note + TC column reminder)
 - Fixed 7 SRS should-fix NFRs (U-01, U-12, S-11, S-13, AS-04, Q-03, Q-07): thêm measurable criterion vào mỗi Yêu cầu cell — SRS now 0 named should-fix remaining
 
+**2026-05-09** — Architectural Design initiation session:
+- Lên kế hoạch design phase (plan file tại `.claude/plans/`): SAD audit → HLD → Parallel (UI/UX + DB + API) → LLD
+- Tạo [.claude/plans/technical-analysis.md](.claude/plans/technical-analysis.md) — NestJS vs FastAPI analysis + SAD vs SRS conflict matrix (0 conflicts found, 8 gaps trong SAD được liệt kê)
+- Quyết định kiến trúc: **NestJS only** (bỏ FastAPI service riêng) — lý do: OpenAI API-only scope, không cần Python ecosystem, giảm deployment complexity cho prototype
+- Updated [docs/Design/ArchitecturalDesign/SAD_InterviewAI_v1.0.md](docs/Design/ArchitecturalDesign/SAD_InterviewAI_v1.0.md) → v1.1:
+  - Section 1.1: NestJS-only architecture, C4 Context diagram (Mermaid), C4 Container diagram (Mermaid), Sequence diagram UC-04
+  - Section 1.2: Tech stack bỏ FastAPI/Python/LangChain/pdfplumber; thêm openai SDK + pdf-parse (npm)
+  - Section 1.3: Update rationale cho NestJS (AI pipeline)
+  - Section 2.2.6, 2.3.2, 2.3.3, 2.4.2, 2.4.3: Python code → TypeScript/Zod
+  - Section 5.1: Repo structure update (single backend/ directory)
+  - Section 6 (mới): Kiến trúc Bảo mật — S-11/S-12/S-13 enforcement, JWT lifecycle, Supabase RLS policies
+  - Section 7 (mới): Ràng buộc Nghiệp vụ & SLO — P-01/P-02/P-04 latency, P-16→P-21 content limits
+- Created [docs/Design/ArchitecturalDesign/ADRs/ADR-001_nextjs-app-router.md](docs/Design/ArchitecturalDesign/ADRs/ADR-001_nextjs-app-router.md)
+- TODO còn lại: ADR-002 đến ADR-005, HLD, UI/UX Design, Database Design, API Design, LLD
+
 ## Phase Roadmap
 
 | Phase | Status | Key Deliverables | Location |
 |-------|--------|------------------|----------|
 | Discovery | Done | Problem statement, stakeholders | docs/Discovery_Docs/ |
-| Requirements Analysis | Active | SRS, user stories, glossary, traceability matrix, test plan outline | docs/SRS/, docs/user-stories/, docs/glossary.md, docs/traceability-matrix.md, docs/test-plan/ |
-| Architectural Design | Next | Architecture overview, ADRs, component diagrams | docs/architecture/ |
-| Detailed Design | Planned | Per-component design, API contracts | docs/design/ |
-| Database Design | Planned | Schema, ERD, RLS strategy | docs/design/database.md |
-| UI/UX Design | Planned | User flows, wireframes, design system | docs/ui/ |
+| Requirements Analysis | In-transition (US Draft, TC pending) | SRS, user stories, glossary, RTM, test plan outline | docs/RequirementAnalysis/ |
+| Architectural Design | Active | SAD v1.1, HLD, ADRs | docs/Design/ArchitecturalDesign/ |
+| Detailed Design | Active (parallel với AD) | DB Design, API Design, UI/UX Design, LLD | docs/Design/DetailedDesign/, docs/Design/UIUXDesign/ |
+| Database Design | Planned | Schema, ERD, RLS strategy | docs/Design/DetailedDesign/database_design.md |
+| UI/UX Design | Planned | User flows, wireframes, design system | docs/Design/UIUXDesign/ |
 | Implementation | Planned | Code | apps/ |
 | Integration | Planned | Integration tests, deployment config | apps/, infra/ |
 | V&V / Testing | Planned | E2E tests, test reports | tests/, docs/test-reports/ |
@@ -122,37 +141,54 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 | SRS (full) | Updated — scope-clean, 2.5 conflicts resolved, 7 NFR should-fix done | 0 Blocker, 0 named should-fix remaining — U-01/U-12/S-11/S-13/AS-04/Q-03/Q-07 đã thêm measurable criterion | docs/RequirementAnalysis/SRS/SRS_InterviewAI_Full.md |
 | SRS Checklist | Done | Chưa audit | docs/SRS/Checklist_SRS.md |
 | Requirements Traceability Matrix | Updated — User Stories column added, UC-11/12/13 rows added | 0 Blocker — cột User Stories đầy đủ; §3 có note UC-09/10 + TC reminder | docs/RequirementAnalysis/SRS/RTM_InterviewAI.md |
-| Software Architecture Document | Done | Chưa audit | docs/SAD/SAD_InterviewAI_v1.0.md |
-| Database Design | Empty | Intentionally deferred | docs/design/database_design.md |
-| API Spec | Empty | Intentionally deferred | docs/design/API_spec.md |
+| Software Architecture Document | Updated → v1.1 | NestJS-only arch, C4 diagrams, Security §6, Business Constraints §7, TypeScript validators | docs/Design/ArchitecturalDesign/SAD_InterviewAI_v1.0.md |
+| Architecture Decision Records | ADR-001 done; ADR-002→005 pending | ADR-001: Next.js App Router | docs/Design/ArchitecturalDesign/ADRs/ |
+| High-Level Design | Pending | Chưa tạo | docs/Design/ArchitecturalDesign/HLD_InterviewAI_v1.0.md |
+| UI/UX Design | Pending | Chưa tạo | docs/Design/UIUXDesign/UIUX_InterviewAI_v1.0.md |
+| Database Design | Pending | Chưa fill | docs/Design/DetailedDesign/database_design.md |
+| API Design (Detailed) | Pending | Chưa tạo | docs/Design/DetailedDesign/API_spec.md |
+| Low-Level Design | Pending | Chưa tạo | docs/Design/DetailedDesign/LLD_InterviewAI_v1.0.md |
+| Technical Analysis | Done | NestJS vs FastAPI + SAD vs SRS conflict matrix | .claude/plans/technical-analysis.md |
 | Glossary | Done | Chưa audit | docs/glossary.md |
 | User Stories | 16 stories — Draft | US-001→US-016; UC-01/03/03b/04/06/07/11/12/13 covered; INVEST flagged: US-010 (Small), US-013 (Small), US-016 (Small); UC-02/08 chưa có story; UC-05 không có story (backend-only) | docs/RequirementAnalysis/user-stories/ |
 | Test Plan (strategy) | Done | Chưa audit | docs/test-plan/strategy.md |
 | Phase Transition Log | Done | Đã fill hết TODO | docs/PHASES.md |
-| Architecture ADRs | Planned | — | docs/architecture/ |
-| UI/UX Design | Planned | — | docs/ui/ |
 | Style Audit Report | Done | SRS fixed; PHASES.md + srs-format.md fixed; 3 files pending (Discovery docs — fix khi next touched) | docs/style-audit.md |
 
 ## Next Steps
 
-> **Thứ tự bắt buộc:** SRS ổn định → User Stories → RTM update → Test Cases.
-> **Trạng thái hiện tại (2026-05-09):** US-001→US-016 đã tạo (Draft). RTM updated (cột User Stories + UC-11/12/13 rows). SRS 0 named should-fix remaining. Bước tiếp theo: ký off User Stories → viết Test Cases.
+> **Thứ tự bắt buộc (Architectural Design):** ADRs → HLD → Parallel (UI/UX + DB + API) → LLD.
+> **Trạng thái hiện tại (2026-05-09):** SAD v1.1 xong. ADR-001 xong. ADR-002→005, HLD, và tất cả Detailed Design docs còn pending.
 
 ### Làm ngay (MUST)
 
-**[1] Ký off User Stories (US-001→US-016)** — chuyển Status từ Draft → Ready:
-- Review từng story theo INVEST checklist
-- Xem xét tách US-010, US-013, US-016 nếu sprint planning cần (INVEST Small flag)
-- Sau khi ký off: unblock TC writing
+**[1] ADR-002 → ADR-005** — 4 ADRs còn lại:
 
-**[2] Viết Test Cases** — unblocked sau khi US ký off:
-- Dựa trên AC của từng US + UC tương ứng trong SRS
-- Dùng template từ [.claude/rules/test-plan.md](.claude/rules/test-plan.md)
-- Khi có TC, thêm cột `Test Cases` vào RTM §1
+- ADR-002: NestJS vs Express vs Fastify — Decision: NestJS (TypeScript DI, guards, ecosystem)
+- ADR-003: Supabase vs self-hosted PostgreSQL — Decision: Supabase (Auth + RLS built-in)
+- ADR-004: OpenAI GPT-4o vs alternatives — Decision: OpenAI (JSON mode, Vietnamese quality)
+- ADR-005: FastAPI vs NestJS-only AI pipeline — Decision: NestJS only (xem technical-analysis.md §2)
+- Location: [docs/Design/ArchitecturalDesign/ADRs/](docs/Design/ArchitecturalDesign/ADRs/)
+
+**[2] HLD** — unblocked sau khi ADRs xong:
+
+- File: [docs/Design/ArchitecturalDesign/HLD_InterviewAI_v1.0.md](docs/Design/ArchitecturalDesign/HLD_InterviewAI_v1.0.md)
+- Nội dung: component inventory, 5 data flows (auth/session/interview/feedback/rewrite), cross-cutting concerns (rate limit, error handling, async queue), UC→component mapping
+
+**[3] Parallel: UI/UX + Database Design + API Design** — sau HLD confirm:
+
+- [docs/Design/UIUXDesign/UIUX_InterviewAI_v1.0.md](docs/Design/UIUXDesign/UIUX_InterviewAI_v1.0.md) — sitemap, user flows (UC-01/03/04/06/07/13), screen inventory, design system
+- [docs/Design/DetailedDesign/database_design.md](docs/Design/DetailedDesign/database_design.md) — ER diagram, DDL, RLS policies, indexes
+- [docs/Design/DetailedDesign/API_spec.md](docs/Design/DetailedDesign/API_spec.md) — endpoints by domain, request/response schemas, error codes, rate limit headers
+
+**[4] LLD** — sau khi cả 3 parallel docs confirm:
+
+- File: [docs/Design/DetailedDesign/LLD_InterviewAI_v1.0.md](docs/Design/DetailedDesign/LLD_InterviewAI_v1.0.md)
+- Nội dung: NestJS module breakdown, Next.js page structure, key algorithms (silence detection, annotation render), error handling detail
 
 ### Làm khi next touched (LOW)
 
-**[3] Icon violations — files còn lại** (dựa trên [docs/style-audit.md](docs/style-audit.md)):
+**[5] Icon violations — files còn lại** (dựa trên [docs/style-audit.md](docs/style-audit.md)):
 - docs/Discovery_Docs/Checklist_Discovery.md: 27 violations — fix khi next touched
 - docs/Discovery_Docs/Discovery_Document.md: ~50 violations — fix khi next touched
 - docs/Discovery_Docs/Discovery_Document_Template.md: ~50 violations — fix khi next touched
@@ -184,6 +220,10 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 | User Stories đặt tại docs/RequirementAnalysis/user-stories/ | Đây là path thực tế của thư mục (agent confirm khi đọc README). Các references cũ trong session log 2026-05-06 dùng docs/user-stories/ là path template chưa chính xác — không cần sửa trong session log (historical), nhưng mọi reference mới phải dùng path đúng. |
 | US-010 và US-013 có INVEST Small flag | US-010 (session resilience): Beacon API + server-side timeout là non-trivial — có thể tách thành 2 tickets nếu cần. US-013 (rewrite & compare): cover 2 phases (submit + compare) — có thể tách US-013a/013b. Để nguyên là 1 story cho requirements clarity; tách khi sprint planning nếu cần. |
 | US-016 có INVEST Small flag | US-016 (progress dashboard): cover 4 sub-features (chart, streak, recommendation, replay) — có thể tách US-016a (chart + streak) và US-016b (recommendation + replay). Cùng pattern với US-013; giữ nguyên 1 story cho requirements clarity. |
+| S-11 threshold: 60 requests/phút per user | 1 req/sec là ceiling tự nhiên cho 1 user dùng bình thường trong interview session (mỗi turn = 1 AI call). Threshold này ngăn abuse loop (bot gọi liên tục) mà không block legitimate use. Điều chỉnh khi có monitoring data thực từ staging. |
+| S-13 threshold: 5 failed OAuth redirects / 10 phút → block 15 phút | Google OAuth tự handle password retry — S-13 nhắm vào bot redirect loop. 5 failures trong 10 phút là bất thường với human user; 15 phút block đủ để dừng automated abuse mà không lock out người dùng thật quá lâu. Standard pattern cho OAuth abuse prevention. |
+| Usability thresholds: SUS ≥ 70, task completion ≥ 80%, Q-03 ≥ 80% rating ≥ 4 | SUS 70 = "Good" trên industry scale (Bangor et al. 2008); 80% task completion là standard threshold cho usability testing prototype. Các số này cho phép fail fast nếu UX quá phức tạp — không cần đạt SUS 90 cho prototype scope. |
+| NestJS only (không dùng FastAPI) | SRS không có requirement nào đòi local LLM inference hoặc Python-specific ML library. openai npm SDK đủ để gọi OpenAI API với full TypeScript types. pdf-parse (Node.js) đủ cho CV text extraction. Dùng 1 service thay vì 2 giảm: 1 Dockerfile, 1 deployment pipeline, 0 inter-service HTTP overhead (~10–30ms per AI call). Điều kiện để revise: nếu cần local inference (llama.cpp/vLLM) hoặc Python-only libs (pdfplumber, sentence-transformers) → tách AIModule ra FastAPI microservice khi đó. Xem technical-analysis.md §2 và ADR-005. |
 
 ## Behavioral Guidelines (Documentation Mode)
 

@@ -5,8 +5,8 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| **Phiên bản tài liệu** | 1.0 |
-| **Ngày soạn** | 02/05/2026 |
+| **Phiên bản tài liệu** | 1.1 |
+| **Ngày soạn** | 09/05/2026 |
 | **Trạng thái** | Draft |
 | **Tác giả** | Lê Thành An — MSSV: 20235631 |
 | **Giảng viên hướng dẫn** | Tiến sĩ Cao Tuấn Dũng |
@@ -20,6 +20,7 @@
 | Phiên bản | Ngày | Mô tả |
 |---|---|---|
 | 1.0 | 02/05/2026 | Tách từ SRS v1.1: kiến trúc hệ thống, thiết kế AI pipeline, phân tích chi phí, chính sách lưu trữ dữ liệu. |
+| 1.1 | 09/05/2026 | Cập nhật: (1) Chuyển sang NestJS-only backend (bỏ FastAPI service riêng); (2) Thêm C4 diagrams và sequence diagram UC-04; (3) Thêm Security Architecture (S-11/S-12/S-13); (4) Thêm Business Constraints (P-20/P-21); (5) Cập nhật latency SLOs (P-01/P-02); (6) Validator code chuyển sang TypeScript/Zod. |
 
 ---
 
@@ -27,6 +28,9 @@
 
 - [1. Kiến trúc Hệ thống](#1-kiến-trúc-hệ-thống)
   - [1.1 Tổng quan kiến trúc triển khai](#11-tổng-quan-kiến-trúc-triển-khai)
+    - [C4 Level 1 — Context Diagram](#c4-level-1--context-diagram)
+    - [C4 Level 2 — Container Diagram](#c4-level-2--container-diagram)
+    - [Sequence Diagram — UC-04 Interview Turn](#sequence-diagram--uc-04-interview-turn)
   - [1.2 Tech Stack chi tiết](#12-tech-stack-chi-tiết)
   - [1.3 Lý do lựa chọn công nghệ chính](#13-lý-do-lựa-chọn-công-nghệ-chính)
 - [2. Thiết kế Tích hợp AI](#2-thiết-kế-tích-hợp-ai)
@@ -37,6 +41,15 @@
 - [3. Phân tích Chi phí AI](#3-phân-tích-chi-phí-ai)
 - [4. Chính sách Lưu trữ Dữ liệu AI](#4-chính-sách-lưu-trữ-dữ-liệu-ai)
 - [5. Hướng dẫn Triển khai & Bảo trì](#5-hướng-dẫn-triển-khai--bảo-trì)
+- [6. Kiến trúc Bảo mật](#6-kiến-trúc-bảo-mật)
+  - [6.1 Xác thực & Vòng đời Token (JWT)](#61-xác-thực--vòng-đời-token-jwt)
+  - [6.2 Supabase Row-Level Security (RLS)](#62-supabase-row-level-security-rls)
+  - [6.3 Rate Limiting](#63-rate-limiting)
+  - [6.4 Input Validation & Prompt Injection](#64-input-validation--prompt-injection)
+- [7. Ràng buộc Nghiệp vụ & SLO](#7-ràng-buộc-nghiệp-vụ--slo)
+  - [7.1 Session & Content Limits](#71-session--content-limits)
+  - [7.2 Latency SLOs](#72-latency-slos)
+  - [7.3 Availability & Reliability](#73-availability--reliability)
 
 ---
 
@@ -44,39 +57,95 @@
 
 ## 1.1 Tổng quan kiến trúc triển khai
 
-Hệ thống được phân tách thành hai service backend độc lập để tối ưu hóa theo đặc thù công việc: **NestJS** xử lý business logic và auth (strengths của TypeScript ecosystem), **FastAPI** xử lý AI pipeline (strengths của Python AI/ML ecosystem).
+Hệ thống dùng single backend service (NestJS) đảm nhận toàn bộ business logic, Auth, Session management, và AI Pipeline orchestration. Frontend (Next.js 14) giao tiếp với NestJS qua REST API (Bearer JWT). AI calls được thực hiện trực tiếp từ NestJS tới OpenAI API qua `openai` npm SDK — không có Python service riêng.
 
-```
-Frontend                    Backend                      External Services
-─────────                   ───────                      ─────────────────
-Next.js 14          ◄──►   NestJS (Auth + CRUD)  ◄──►  Supabase
-(React, Tailwind)   ◄──►   FastAPI (AI Pipeline) ◄──►  OpenAI API (GPT-4o, Whisper)
-                                    │               ◄──►  Cloudflare R2 (Audio)
-                             Bull + Redis
-                           (Job Queue — async)
+Quyết định kiến trúc này được ghi nhận tại ADR-005. Tóm tắt lý do: project chỉ dùng OpenAI API (không cần local inference), không có Python-only ML lib nào trong SRS scope, và 1 service đơn giản hơn đáng kể cho deployment của graduation project.
+
+### C4 Level 1 — Context Diagram
+
+```mermaid
+flowchart TB
+    candidate["Candidate\nSinh viên/fresher CNTT Việt Nam"]
+
+    subgraph system["InterviewAI System"]
+        direction LR
+        web["Next.js 14\nFrontend"]
+        api["NestJS\nBackend + AI"]
+    end
+
+    google["Google OAuth\n(External)"]
+    openai_ext["OpenAI API\nGPT-4o + Whisper\n(External)"]
+    supabase_ext["Supabase\nDB + Auth\n(External)"]
+    r2_ext["Cloudflare R2\nAudio Storage\n(External)"]
+
+    candidate -->|"HTTPS"| web
+    web -->|"REST / Bearer JWT"| api
+    api -->|"OAuth 2.0"| google
+    api -->|"AI API calls"| openai_ext
+    api -->|"SQL + RLS"| supabase_ext
+    api -->|"S3-compatible API"| r2_ext
 ```
 
-**Sơ đồ triển khai chi tiết:**
+### C4 Level 2 — Container Diagram
 
+```mermaid
+flowchart LR
+    candidate["Candidate"]
+
+    subgraph frontend["Frontend — Vercel"]
+        next["Next.js 14\nSSR + PWA\nWeb Audio API\nTypeScript / React"]
+    end
+
+    subgraph backend["Backend — Railway"]
+        nestjs["NestJS\nAuthModule · SessionModule\nTurnModule · AIModule\nReportModule\nTypeScript"]
+        queue["Bull Queue\n+ Redis 7.x\nasync AI jobs"]
+    end
+
+    subgraph data["Data — Supabase Cloud"]
+        pg["PostgreSQL 15\n+ pgvector 0.7"]
+    end
+
+    openai_c["OpenAI API\nGPT-4o · Whisper-1\ntext-embedding-3-small"]
+    r2_c["Cloudflare R2\nAudio (30-day retention)"]
+
+    candidate -->|"Browser"| next
+    next -->|"REST API\nBearer JWT"| nestjs
+    nestjs -->|"supabase-js\nRLS enforced"| pg
+    nestjs -->|"Enqueue jobs"| queue
+    queue -->|"openai SDK"| openai_c
+    nestjs -->|"S3 API"| r2_c
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        INTERNET                                  │
-└─────────────┬──────────────────────────────────┬────────────────┘
-              │                                  │
-   ┌──────────▼──────────┐           ┌───────────▼────────────┐
-   │   Frontend (Vercel)  │           │  Backend AI (Railway)  │
-   │   Next.js 14 PWA     │◄─────────►│  FastAPI (Python)      │
-   │   Port: 443 (HTTPS)  │           │  Port: 8000 (internal) │
-   └─────────────────────┘           └───────────┬────────────┘
-                                                  │
-              ┌───────────────────────────────────┼───────────────┐
-              │                                   │               │
-   ┌──────────▼──────────┐           ┌────────────▼────┐  ┌──────▼──────┐
-   │   Supabase Cloud     │           │  OpenAI API      │  │ Cloudflare  │
-   │   - PostgreSQL       │           │  - GPT-4o        │  │ R2 Storage  │
-   │   - Auth (JWT)       │           │  - Whisper-1     │  │ (Audio)     │
-   │   - pgvector         │           │  - Embeddings    │  └─────────────┘
-   └─────────────────────┘           └─────────────────┘
+
+### Sequence Diagram — UC-04 Interview Turn
+
+```mermaid
+sequenceDiagram
+    participant C as Candidate (Browser)
+    participant W as Next.js
+    participant N as NestJS
+    participant Q as Bull Queue
+    participant O as OpenAI API
+    participant S as Supabase
+
+    C->>W: Click Record, speak answer
+    W->>W: MediaRecorder captures audio
+    C->>W: Stop recording (manual hoặc 15s silence timeout)
+    W->>N: POST /api/v1/sessions/:id/turns (audio blob)
+    N->>O: Whisper STT (audio → text)
+    O-->>N: transcript text (~1-2s)
+    N->>Q: Enqueue follow-up job (transcript, question, jd)
+    Q->>O: GPT-4o Follow-up Engine
+    O-->>Q: follow_up_response (< 8s timeout)
+    Q-->>N: {follow_up_question | skip_follow_up: true}
+    N->>S: INSERT turn (question, transcript, audio_url)
+    N-->>W: 200 {turn_id, follow_up_question | null}
+    W-->>C: Hiển thị follow-up hoặc câu hỏi tiếp theo
+
+    Note over N,Q: Sau khi session kết thúc (tất cả turns)
+    N->>Q: Enqueue feedback jobs (per turn)
+    Q->>O: GPT-4o Feedback Analyzer (mỗi turn, ≤ 15s)
+    O-->>Q: surgical_feedback JSON
+    Q->>S: INSERT feedbacks + report
 ```
 
 ---
@@ -91,13 +160,11 @@ Next.js 14          ◄──►   NestJS (Auth + CRUD)  ◄──►  Supabase
 | | React Query | 5.x | Data fetching và caching | Cố định |
 | | Web Audio API | Native | Ghi âm từ microphone | Browser API — không thay |
 | | Web Speech API | Native | TTS đọc câu hỏi (optional) | Browser API — không thay |
-| **Backend Auth** | NestJS | 10.x | REST API: Auth, User, Session | Có thể thay bằng Express |
-| | TypeScript | 5.x | Type safety | Cố định |
-| **Backend AI** | FastAPI | 0.110.x | AI Pipeline: Whisper, GPT-4o | Cố định (Python ecosystem) |
-| | Python | 3.11+ | Runtime | Cố định |
-| | LangChain | 0.2.x | LLM orchestration | Có thể thay bằng gọi API trực tiếp |
-| | pdfplumber | 0.11.x | Parse CV PDF | Thay được bằng PyMuPDF |
-| **Queue** | Bull | 4.x | Job queue cho async AI tasks | Có thể thay bằng Celery |
+| **Backend** | NestJS | 10.x | REST API: Auth, Session CRUD, AI Pipeline orchestration | Có thể thay bằng Express |
+| | TypeScript | 5.x | Type safety; type sharing với Next.js frontend | Cố định |
+| | openai SDK | 4.x (npm) | OpenAI API client: GPT-4o, Whisper, Embeddings | Cố định khi dùng OpenAI |
+| | pdf-parse | 1.x (npm) | Parse CV PDF text extraction | Thay được bằng pdfjs-dist |
+| **Queue** | Bull | 4.x | Job queue cho async AI tasks (feedback generation) | Có thể thay bằng BullMQ |
 | | Redis | 7.x | Queue backend | Cố định khi dùng Bull |
 | **Database** | PostgreSQL | 15.x | Relational database chính | Qua Supabase |
 | | Supabase | Latest | Auth + DB + Storage + pgvector | Có thể self-host |
@@ -120,7 +187,7 @@ Next.js 14          ◄──►   NestJS (Auth + CRUD)  ◄──►  Supabase
 |---|---|
 | **GPT-4o** | JSON mode đảm bảo output schema chuẩn; chất lượng feedback tiếng Việt vượt trội; stable API với uptime cao. |
 | **Whisper API** | Độ chính xác cao nhất cho tiếng Việt trong các STT model hiện có; API đơn giản; latency ~1–2 giây. |
-| **FastAPI (Python)** | Python ecosystem tích hợp tốt nhất với LangChain, pdfplumber, và các AI library. Tốc độ phát triển nhanh. |
+| **NestJS (AI Pipeline)** | openai npm SDK type-safe và đủ cho API-only usage (không cần Python ecosystem khi không có local inference). Single service giảm deployment complexity. Type sharing với Next.js qua monorepo. |
 | **Supabase** | Cung cấp đồng thời Auth, PostgreSQL, pgvector và Storage — giảm số service cần quản lý. Free tier đủ cho prototype. |
 | **Next.js 14** | App Router hỗ trợ SSR tốt cho SEO; Web Audio API tích hợp tự nhiên trong browser; ecosystem React phong phú. |
 
@@ -461,7 +528,7 @@ Critical issues: {old_critical_issues_list}
 | **Temperature** | Question Generator | `temperature: 0.8` — cần câu hỏi đa dạng. |
 | **Max tokens** | Tất cả | Đặt `max_tokens` tương ứng với output budget trong Mục 3.1. |
 | **XML delimiter** | Tất cả user input | Input người dùng được wrap trong XML tag riêng để tránh prompt injection. |
-| **Schema validation** | Backend FastAPI | Validate Pydantic model sau khi nhận JSON từ AI trước khi lưu DB. |
+| **Schema validation** | Backend NestJS | Validate Zod schema sau khi nhận JSON từ AI trước khi lưu DB. |
 
 ---
 
@@ -537,26 +604,26 @@ Critical issues: {old_critical_issues_list}
 | `skip_follow_up` | Boolean bắt buộc. |
 | `reasoning` | Không rỗng (dùng cho internal logging). |
 
-**Backend validation (FastAPI/Pydantic):**
-```python
-class FollowUpResponse(BaseModel):
-    follow_up_type: Literal["clarify", "challenge", "expand", "skip"]
-    target_phrase: Optional[str]
-    follow_up_question: Optional[str]
-    skip_follow_up: bool
-    reasoning: str
+**Backend validation (NestJS/Zod):**
 
-    @validator("target_phrase")
-    def phrase_must_be_in_transcript(cls, v, values):
-        if not values.get("skip_follow_up") and v:
-            assert len(v) >= 3, "target_phrase quá ngắn"
-        return v
+```typescript
+import { z } from 'zod';
 
-    @validator("follow_up_question")
-    def question_required_if_not_skip(cls, v, values):
-        if not values.get("skip_follow_up"):
-            assert v and len(v) >= 20, "follow_up_question bắt buộc khi không skip"
-        return v
+const FollowUpResponseSchema = z.object({
+  follow_up_type: z.enum(['clarify', 'challenge', 'expand', 'skip']),
+  target_phrase: z.string().nullable(),
+  follow_up_question: z.string().nullable(),
+  skip_follow_up: z.boolean(),
+  reasoning: z.string().min(1),
+}).refine(
+  (d) => d.skip_follow_up || (d.target_phrase !== null && d.target_phrase.length >= 3),
+  { message: 'target_phrase bắt buộc và >= 3 ký tự khi skip_follow_up = false' },
+).refine(
+  (d) => d.skip_follow_up || (d.follow_up_question !== null && d.follow_up_question.length >= 20),
+  { message: 'follow_up_question bắt buộc khi skip_follow_up = false' },
+);
+
+type FollowUpResponse = z.infer<typeof FollowUpResponseSchema>;
 ```
 
 ---
@@ -629,26 +696,51 @@ class FollowUpResponse(BaseModel):
 | `model_answer` | Không rỗng, ≥ 50 ký tự | Fallback: "Model answer không khả dụng." |
 | `key_takeaway` | Không rỗng, ≤ 200 ký tự | Fallback: `segments[level=critical][0].reason` |
 
-**Backend validation (FastAPI):**
-```python
-def validate_feedback_schema(data: dict) -> tuple[bool, str]:
-    if not isinstance(data.get("overall_score"), int):
-        return False, "overall_score must be integer"
-    if not (0 <= data["overall_score"] <= 100):
-        return False, "overall_score out of range"
-    if not data.get("segments") or len(data["segments"]) == 0:
-        return False, "segments array is empty"
-    for i, seg in enumerate(data["segments"]):
-        if not seg.get("text") or not seg.get("level"):
-            return False, f"segment[{i}] missing required fields"
-        if seg["level"] not in ["good", "warning", "critical"]:
-            return False, f"segment[{i}] invalid level"
-        if seg["level"] in ["warning", "critical"]:
-            if not seg.get("improved_version"):
-                return False, f"segment[{i}] missing improved_version"
-    if len(data.get("model_answer", "")) < 100:
-        return False, "model_answer too short"
-    return True, "valid"
+**Backend validation (NestJS/Zod):**
+
+```typescript
+import { z } from 'zod';
+
+const SegmentSchema = z.object({
+  text: z.string().min(1),
+  start_index: z.number().int().min(0),
+  end_index: z.number().int(),
+  level: z.enum(['good', 'warning', 'critical']),
+  reason: z.string().min(1),
+  suggestion: z.string().nullable(),
+  improved_version: z.string().nullable(),
+}).refine((s) => s.start_index < s.end_index, {
+  message: 'start_index phải nhỏ hơn end_index',
+}).refine(
+  (s) => !['warning', 'critical'].includes(s.level) || s.improved_version !== null,
+  { message: 'improved_version bắt buộc cho segment warning/critical' },
+);
+
+const FeedbackResponseSchema = z.object({
+  overall_score: z.number().int().min(0).max(100),
+  context_pack: z.enum(['vn', 'western']),
+  segments: z.array(SegmentSchema).min(1),
+  model_answer: z.string().min(50),
+  key_takeaway: z.string().min(1).max(200),
+  voice_metrics: z.object({
+    filler_word_count: z.number().int().min(0),
+    filler_words_detected: z.array(z.string()),
+    estimated_wpm: z.number().min(0),
+    note: z.string(),
+  }),
+  generation_metadata: z.object({
+    prompt_version: z.string(),
+    context_pack: z.enum(['vn', 'western']),
+    is_fallback: z.boolean(),
+  }),
+});
+
+function validateFeedbackSchema(data: unknown): { valid: boolean; error?: string } {
+  const result = FeedbackResponseSchema.safeParse(data);
+  return result.success
+    ? { valid: true }
+    : { valid: false, error: result.error.issues[0]?.message };
+}
 ```
 
 ---
@@ -735,18 +827,28 @@ def validate_feedback_schema(data: dict) -> tuple[bool, str]:
 
 Khi Feedback Analyzer fail hoàn toàn (sau retry), hệ thống gọi GPT-4o với prompt đơn giản không yêu cầu segment annotation:
 
-```python
-def generate_text_fallback(transcript: str, question: str) -> dict:
-    simple_prompt = f"""
-    Câu hỏi: {question}
-    Câu trả lời: {transcript}
-
-    Đưa ra nhận xét ngắn gọn (2-3 câu) về điểm mạnh và điểm cần cải thiện.
-    Trả về JSON: {{"comment": "...", "strength": "...", "improvement": "..."}}
-    """
-    # Gọi GPT-4o với max_tokens=300
-    # Lưu vào ai_feedbacks với segments = [] và fallback_text = comment
-    # Không lưu annotated_segments
+```typescript
+async function generateTextFallback(
+  transcript: string,
+  question: string,
+): Promise<{ comment: string; strength: string; improvement: string }> {
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    max_tokens: 300,
+    response_format: { type: 'json_object' },
+    messages: [{
+      role: 'user',
+      content: [
+        `Câu hỏi: ${question}`,
+        `Câu trả lời: ${transcript}`,
+        'Đưa ra nhận xét ngắn gọn (2-3 câu) về điểm mạnh và điểm cần cải thiện.',
+        'Trả về JSON: {"comment": "...", "strength": "...", "improvement": "..."}',
+      ].join('\n'),
+    }],
+  });
+  // Parse JSON; lưu vào feedbacks với segments = [] và is_fallback = true
+  return JSON.parse(response.choices[0].message.content ?? '{}');
+}
 ```
 
 **Thông điệp hiển thị cho Candidate khi fallback:**
@@ -765,25 +867,25 @@ Hệ thống sẽ tự động thử phân tích lại trong 10 phút.
 
 ### 2.4.3 Retry Strategy
 
-```python
-RETRY_CONFIG = {
-    "feedback_analyzer": {
-        "max_retries": 1,
-        "initial_delay_ms": 3000,
-        "backoff_multiplier": 2,
-        "max_delay_ms": 10000,
-        "timeout_ms": 15000
-    },
-    "follow_up_engine": {
-        "max_retries": 0,  # Fail fast và skip
-        "timeout_ms": 8000
-    },
-    "question_generator": {
-        "max_retries": 1,
-        "initial_delay_ms": 2000,
-        "timeout_ms": 15000
-    }
-}
+```typescript
+const RETRY_CONFIG = {
+  feedback_analyzer: {
+    max_retries: 1,
+    initial_delay_ms: 3000,
+    backoff_multiplier: 2,
+    max_delay_ms: 10000,
+    timeout_ms: 15000,
+  },
+  follow_up_engine: {
+    max_retries: 0, // Fail fast và skip — không block phiên
+    timeout_ms: 8000,
+  },
+  question_generator: {
+    max_retries: 1,
+    initial_delay_ms: 2000,
+    timeout_ms: 15000,
+  },
+} as const;
 ```
 
 ---
@@ -909,12 +1011,18 @@ Khi Candidate yêu cầu xóa tài khoản:
 
 ## 5.1 Cấu trúc Repository
 
-```
+```text
 /
-├── frontend/           # Next.js 14 App
-├── backend-auth/       # NestJS — Auth, User, Session CRUD
-├── backend-ai/         # FastAPI — AI Pipeline (Whisper, GPT-4o)
-└── docs/               # SRS, SAD, ADR
+├── frontend/           # Next.js 14 App (SSR + PWA)
+├── backend/            # NestJS — Auth, Session CRUD, AI Pipeline orchestration
+│   ├── src/
+│   │   ├── auth/       # AuthModule: GoogleStrategy, JwtGuard
+│   │   ├── session/    # SessionModule: CRUD + business rules
+│   │   ├── turn/       # TurnModule: answer submission, Whisper STT
+│   │   ├── ai/         # AIModule: OpenAI gateway, prompt builder, Zod validators
+│   │   └── report/     # ReportModule: comprehensive report generation
+│   └── package.json    # includes openai, zod, bull, supabase-js
+└── docs/               # SRS, SAD, ADR, HLD, design docs
 ```
 
 ## 5.2 Prompt Versioning
@@ -963,4 +1071,100 @@ Khi Candidate yêu cầu xóa tài khoản:
 
 ---
 
-*Kết thúc tài liệu SAD v1.0 — AI Interview Coach System (InterviewAI)*
+---
+
+## 6. Kiến trúc Bảo mật
+
+### 6.1 Xác thực & Vòng đời Token (JWT)
+
+```text
+[Browser] → Google OAuth 2.0 → Supabase Auth → JWT (access + refresh)
+         ↑                                              ↓
+         └──────────── Bearer JWT ─────────── NestJS JwtGuard
+```
+
+- **Access token:** TTL 1 giờ. Gửi trong `Authorization: Bearer <token>` header.
+- **Refresh token:** TTL 7 ngày. Lưu trong HttpOnly cookie — không accessible từ JavaScript.
+- **Token rotation:** Mỗi refresh call tạo refresh token mới và invalidate token cũ.
+- **Revocation:** Supabase quản lý session store. Logout gọi `supabase.auth.signOut()` — invalidate server-side.
+
+### 6.2 Supabase Row-Level Security (RLS)
+
+Tất cả bảng dữ liệu người dùng có RLS enabled. NestJS dùng `supabase-js` với user JWT — RLS tự động enforce theo `auth.uid()`.
+
+| Bảng | Policy | Điều kiện |
+| --- | --- | --- |
+| users | SELECT, UPDATE | `auth.uid() = id` |
+| sessions | SELECT, INSERT, UPDATE | `auth.uid() = user_id` |
+| turns | SELECT, INSERT | via session ownership (join) |
+| feedbacks | SELECT | via turn → session ownership |
+| reports | SELECT | via session ownership |
+| rewrites | SELECT, INSERT | via turn → session ownership |
+| progress_snapshots | SELECT | `auth.uid() = user_id` |
+
+NestJS không cần implement authorization check riêng — RLS là enforcement layer duy nhất cho user data.
+
+### 6.3 Rate Limiting
+
+### S-11: User-level AI Rate Limit
+
+- **Rule:** ≤ 60 requests/phút per user (áp dụng cho tất cả AI inference endpoints).
+- **Implementation:** NestJS `@Throttle()` decorator trên AI-related controllers; window = 60s, limit = 60.
+- **Response khi vượt:** HTTP 429 + header `Retry-After: <seconds>`.
+
+### S-12: Session Creation Limit
+
+- **Rule:** ≤ 10 sessions mới trong 24 giờ per user.
+- **Implementation:** Application-layer check trong `SessionService.create()`: `SELECT COUNT(*) FROM sessions WHERE user_id = ? AND created_at > NOW() - INTERVAL '24 hours'`. Reject nếu ≥ 10.
+- **Response khi vượt:** HTTP 429 với error code `SESSION_LIMIT_EXCEEDED`.
+
+### S-13: OAuth DDoS Protection
+
+- **Rule:** Sau 5 OAuth redirect thất bại từ cùng IP trong 10 phút → block thêm 15 phút.
+- **Implementation:** Redis key `oauth_fail:<ip>` với TTL 10 phút; counter increment mỗi lần fail. Khi counter ≥ 5 → set Redis key `oauth_block:<ip>` TTL 15 phút; middleware trả 429.
+- **Phân biệt:** Rule này nhắm vào bot redirect loop, không phải password retry (Google OAuth handle password).
+
+### 6.4 Input Validation & Prompt Injection
+
+- **JD validation (AS-04):** JD text < 100 ký tự → reject với HTTP 422 `JD_TOO_SHORT` trước khi gửi lên AI.
+- **Prompt injection prevention:** Mọi user input (JD, transcript, CV text) đều được wrap trong XML tag trong prompt (xem §2.2.1). Model được instruction rõ rằng content trong tag là dữ liệu — không phải instruction.
+- **Output validation:** Mọi AI response đều qua Zod schema validation trước khi lưu DB (xem §2.3).
+
+---
+
+## 7. Ràng buộc Nghiệp vụ & SLO
+
+### 7.1 Session & Content Limits
+
+| Constraint | Value | SRS ref | Enforcement |
+| --- | --- | --- | --- |
+| Max sessions per user per 24h | 10 | S-12 | Application layer (SessionService) |
+| Max questions per session | 7 | P-20 | Application layer (TurnService) |
+| Max rewrite attempts per question | 5 | P-21 | Application layer (RewriteService) |
+| Max audio duration per answer | 5 phút | P-17 | Frontend: MediaRecorder stop; Backend: Whisper cắt tại 5 phút |
+| Max audio file size per answer | 25 MB | P-16 | Multipart upload validation trong NestJS |
+| Max JD length | 5,000 ký tự | P-18 | Input validation trước khi lưu session |
+| Min JD length | 100 ký tự | AS-04 | Input validation — reject nếu ngắn hơn |
+| Max CV file size | 5 MB | P-19 | Multipart upload validation |
+
+### 7.2 Latency SLOs
+
+| Metric | Target | SRS ref | Measurement point |
+| --- | --- | --- | --- |
+| Page load (normal pages) | < 2s (p95) | P-01 | Browser — Time to Interactive |
+| CRUD API response | < 300ms (p95) | P-02 | NestJS response time (không tính AI calls) |
+| Whisper STT + response | ≤ 5s (p95) | P-04 | Từ khi user dừng ghi âm đến khi nhận transcript |
+| Feedback generation (per turn) | ≤ 15s | SAD §2.4 timeout | Từ khi enqueue đến khi feedback available |
+| Session report generation | ≤ 8s (p95) | AC-05-1 | Từ khi session end đến khi report available |
+| Admin dashboard load | ≤ 500ms | AC-09-1 | API response time |
+
+### 7.3 Availability & Reliability
+
+- **Uptime target:** Không có SRS requirement về uptime % cho prototype scope. Monitor qua Railway health checks.
+- **Data durability:** Transcript và feedback lưu vĩnh viễn trong Supabase (PostgreSQL với daily backups theo Supabase default).
+- **Session recovery:** Nếu user mất kết nối trong phiên, Beacon API POST marks turn interrupted; data không mất (US-010).
+- **AI degradation:** Nếu AI service fail, system fallback theo ma trận §2.4.1 — Candidate không bị kẹt.
+
+---
+
+*Kết thúc tài liệu SAD v1.1 — AI Interview Coach System (InterviewAI)*
