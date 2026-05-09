@@ -40,7 +40,7 @@ Categories: `[icon]` = emoji/non-ASCII decoration | `[corp]` = banned corporate 
 - L95 [icon]: `### 🔴 Làm ngay` → `### Làm ngay (MUST)`
 - L102 [icon]: `### 🟡 Làm song song hoặc ngay sau` → `### Làm song song hoặc ngay sau (SHOULD)`
 
-Total: 28 lines with icon violations | 0 corp | 0 ai-tell | 0 hedge
+Total: 0 — violations removed during subsequent session edits (BRD alignment + session log updates, 2026-05-08/09)
 
 ---
 
@@ -60,6 +60,7 @@ No violations.
 Note: used as contrast markers (bad vs good examples). No rule carve-out for examples — flagged as violations. `BAD:`/`GOOD:` preserves intent without emoji.
 
 Total: 4 icon violations | 0 corp | 0 ai-tell | 0 hedge
+Fixed: 2026-05-09
 
 ---
 
@@ -215,6 +216,7 @@ Total: 50+ lines with icon violations | 0 corp | 0 ai-tell | 0 hedge
 - L51 [icon]: `⏭️ Not started` → `Not started`
 
 Total: 3 icon violations | 0 corp | 0 ai-tell | 0 hedge
+Fixed: 2026-05-09
 
 ---
 
@@ -314,9 +316,9 @@ judgment as SAD — structural, not decorative. Keep.
 
 | File | Icon lines | Corporate | AI tells | Hedging | Total |
 |------|----------:|----------:|---------:|--------:|------:|
-| CLAUDE.md | 28 | 0 | 0 | 0 | 28 |
+| CLAUDE.md | 0 (fixed) | 0 | 0 | 0 | 0 |
 | .claude/rules/docs-general.md | 0 | 0 | 0 | 0 | 0 |
-| .claude/rules/srs-format.md | 4 | 0 | 0 | 0 | 4 |
+| .claude/rules/srs-format.md | 0 (fixed) | 0 | 0 | 0 | 0 |
 | .claude/rules/user-stories.md | 0 | 0 | 0 | 0 | 0 |
 | .claude/rules/test-plan.md | 0 | 0 | 0 | 0 | 0 |
 | .claude/rules/testing.md | 0 | 0 | 0 | 0 | 0 |
@@ -326,7 +328,7 @@ judgment as SAD — structural, not decorative. Keep.
 | docs/Discovery_Docs/Checklist_Discovery.md | 27 | 0 | 0 | 0 | 27 |
 | docs/Discovery_Docs/Discovery_Document.md | 50+ | 0 | 0 | 0 | 50+ |
 | docs/Discovery_Docs/Discovery_Document_Template.md | 50+ | 0 | 0 | 0 | 50+ |
-| docs/PHASES.md | 3 | 0 | 0 | 0 | 3 |
+| docs/PHASES.md | 0 (fixed) | 0 | 0 | 0 | 0 |
 | docs/SRS/SRS_InterviewAI_Full.md | ~40 | 0 | 0 | 0 | ~40 |
 | docs/SRS/RTM_InterviewAI.md | 0 | 0 | 0 | 0 | 0 |
 | docs/SRS/Checklist_SRS.md | 0 | 0 | 0 | 0 | 0 |

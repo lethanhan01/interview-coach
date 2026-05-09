@@ -27,3 +27,6 @@ Thumbs.db
 CLAUDE.local.md
 .claude/settings.local.json
 .claude/cache/
+.claude/*
+CLAUDE.md
+server/CLAUDE.md

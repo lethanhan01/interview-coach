@@ -3,7 +3,7 @@
 This file tracks phase transitions and handoff artifacts.
 
 ## Phase: Discovery
-- Status: ✅ Completed 2026-05-04
+- Status: Completed 2026-05-04
 - Outputs: docs/Discovery_Docs/Discovery_Document.md
 - Key decisions:
   - Chọn Hướng A: AI Feedback Web App (loại Hướng B peer-to-peer, C human coach, D mobile-first)
@@ -20,7 +20,7 @@ This file tracks phase transitions and handoff artifacts.
   - A5: Retention — user có quay lại ≥2 phiên không? (beta test)
 
 ## Phase: Requirements Analysis (current)
-- Status: 🚧 In progress
+- Status: In progress
 - Started: 2026-05-06
 - Entry criteria met:
   - [x] Problem statement được định nghĩa rõ (Discovery §8)
@@ -48,6 +48,6 @@ This file tracks phase transitions and handoff artifacts.
   - OQ-002: Context Pack switching — user có thể đổi VN↔Western trong cùng một session hay chỉ lúc tạo session?
 
 ## Phase: Architectural Design (upcoming)
-- Status: ⏭️ Not started
+- Status: Not started
 - Entry criteria: Requirements Analysis exit criteria met
 - ...

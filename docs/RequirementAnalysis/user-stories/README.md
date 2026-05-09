@@ -93,6 +93,18 @@ So that [benefit].
 
 | ID | Tiêu đề | UC | Priority | Status |
 |----|---------|-----|----------|--------|
-| *(chưa có)* | | | | |
+| [US-001](US-001_google-auth.md) | Google OAuth login | UC-01 | MUST | Draft |
+| [US-002](US-002_session-persistence.md) | Session persistence and logout | UC-01 | MUST | Draft |
+| [US-003](US-003_jd-input.md) | Job Description input | UC-03 | MUST | Draft |
+| [US-004](US-004_session-config.md) | Interview session configuration | UC-03 | MUST | Draft |
+| [US-005](US-005_context-pack.md) | Context Pack selection | UC-03b | SHOULD | Draft |
+| [US-006](US-006_opening-phase.md) | Opening phase introduction | UC-04 | MUST | Draft |
+| [US-007](US-007_submit-answer.md) | Submit answer — voice or text | UC-04 | MUST | Draft |
+| [US-008](US-008_ai-followup.md) | AI follow-up questions | UC-04 | MUST | Draft |
+| [US-009](US-009_interview-modes.md) | Practice vs. Exam mode | UC-04 | MUST | Draft |
+| [US-010](US-010_session-resilience.md) | Session interruption and resumption | UC-04 | SHOULD | Draft |
+| [US-011](US-011_annotated-transcript.md) | Annotated transcript and per-question feedback | UC-06 | MUST | Draft |
+| [US-012](US-012_comprehensive-report.md) | Comprehensive session performance report | UC-06 | MUST | Draft |
+| [US-013](US-013_rewrite-compare.md) | Rewrite answer and compare improvement | UC-07 | SHOULD | Draft |
 
 *Cập nhật bảng này mỗi khi thêm story mới.*

@@ -41,10 +41,10 @@ Example template (collapsed):
 
 ## Non-Functional Requirement Format
 NFR must have measurable criterion. Examples:
-- ❌ "System shall be fast"
-- ✅ "p95 latency for /api/interview/turn shall be < 800ms under 100 concurrent users"
-- ❌ "System shall be secure"
-- ✅ "All API endpoints requiring auth shall reject requests without valid JWT within 50ms"
+- BAD: "System shall be fast"
+- GOOD: "p95 latency for /api/interview/turn shall be < 800ms under 100 concurrent users"
+- BAD: "System shall be secure"
+- GOOD: "All API endpoints requiring auth shall reject requests without valid JWT within 50ms"
 
 ## Don't
 - Don't write FR that prescribes implementation ("Use OAuth 2.0" is design, not requirement).
