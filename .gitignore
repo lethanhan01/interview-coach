@@ -25,8 +25,5 @@ Thumbs.db
 
 # Claude Code — personal overrides (không commit, chỉ dành cho máy cá nhân)
 CLAUDE.local.md
-.claude/settings.local.json
-.claude/cache/
-.claude/*
-CLAUDE.md
-server/CLAUDE.md
+.claude/
+**/CLAUDE.md

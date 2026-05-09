@@ -40,7 +40,6 @@ HLD nằm giữa SAD v1.1 (kiến trúc tổng thể, C4 diagrams, tech stack de
 - Interface contracts: danh sách endpoints ở mức path + method (không phải full schema)
 - Cross-cutting concerns: rate limiting, async queue, SSE, error handling
 
-Độc giả: Backend Engineer (NestJS), Frontend Engineer (Next.js), Technical Reviewer.
 
 ### 1.2 Phạm vi
 
@@ -299,10 +298,11 @@ sequenceDiagram
     participant B as Browser
     participant N as Next.js
     participant NJ as NestJS SessionModule
-    participant Q as Bull Queue
+    participant Q as BullMQ Queue
     participant NJA as NestJS AIModule
     participant O as OpenAI GPT-4o
     participant DB as PostgreSQL
+    participant Redis as Redis
 
     B->>N: Submit SessionWizard (6 bước hoàn tất)
     N->>NJ: POST /api/v1/sessions {jd, session_type, config}
@@ -333,11 +333,14 @@ sequenceDiagram
         NJA->>DB: UPDATE sessions SET status=in_progress
     end
 
-    loop Polling mỗi 2s
-        N->>NJ: GET /api/v1/sessions/:id/status
-        NJ-->>N: {status}
-    end
-    N->>B: Redirect /sessions/:id/interview khi status=in_progress
+    N->>NJ: GET /api/v1/sessions/:id/events (SSE open)
+    NJ-->>N: SSE stream open
+
+    Note over NJA,Redis: QuestionGenerationProcessor hoàn thành
+    NJA->>Redis: PUBLISH sse:session:{id} {event: "session.status", status: "in_progress"}
+    Redis-->>NJ: (tất cả instances nhận)
+    NJ-->>N: SSE event: session.status {status: "in_progress"}
+    N->>B: Redirect /sessions/:id/interview
 ```
 
 `AntiRepeatService` loại câu user đã gặp trong 30 ngày trước khi sample từ Question Bank. `SessionPlanValidator` kiểm tra coverage subcategory, difficulty distribution, và time budget trước khi xác nhận plan.
@@ -576,7 +579,7 @@ flowchart TD
     S12 -->|OK| Handler
 ```
 
-### 5.2 Bull Queue — Job Types và Processors
+### 5.2 BullMQ Queue — Job Types và Processors
 
 | Job | Queue Name | Timeout | Retry | Fallback khi fail |
 | --- | --- | --- | --- | --- |
@@ -591,7 +594,7 @@ flowchart LR
     SS["SessionService"]
     TS["TurnService"]
 
-    subgraph Redis["Redis 7.x (Bull backend)"]
+    subgraph Redis["Redis 7.x (BullMQ backend)"]
         Q1["question-gen"]
         Q2["follow-up"]
         Q3["feedback"]
@@ -599,7 +602,7 @@ flowchart LR
         Q5["report"]
     end
 
-    subgraph Processors["AIModule + ReportModule (Bull consumers)"]
+    subgraph Processors["AIModule + ReportModule (BullMQ consumers)"]
         P1["QuestionGenerationProcessor"]
         P2["FollowUpProcessor"]
         P3["FeedbackProcessor"]
@@ -643,18 +646,20 @@ Endpoint: `GET /api/v1/sessions/:id/events` — Bearer JWT required, `Content-Ty
 NestJS pattern:
 
 ```typescript
-// ReportController — SSE endpoint
+// SessionController — SSE endpoint
 @Sse('events')
 @UseGuards(JwtAuthGuard)
 sessionEvents(@Param('id') sessionId: string): Observable<MessageEvent> {
   return this.sseService.getSessionStream(sessionId);
 }
-// SseService dùng Subject<MessageEvent> per session_id
-// Bull job complete → sseService.emit(session_id, event)
+// SseService subscribe Redis channel sse:session:{session_id} qua ioredis
+// BullMQ processor complete → ioredis PUBLISH → SseService forward event
 // Frontend: new EventSource('/api/v1/sessions/:id/events')
 ```
 
 Lý do chọn SSE thay vì WebSocket: unidirectional (server → client) đủ cho use case; stateless per connection; NestJS `@Sse()` decorator native; không cần socket.io overhead.
+
+Multi-instance delivery (ADR-006): `SseService` không dùng in-memory `Subject`. Mỗi NestJS instance subscribe Redis channel `sse:session:{session_id}` qua ioredis. BullMQ processor publish vào channel sau khi DB write hoàn thành → tất cả instances nhận message → instance đang giữ SSE connection của client forward event. Redis đã là dependency của BullMQ — không cần thêm infrastructure mới.
 
 ### 5.4 Error Handling Hierarchy
 
@@ -918,12 +923,16 @@ Xem [docs/glossary.md](../../glossary.md).
 | ADR-003 | Supabase Database + Auth | RLS policy enforcement, `JwtGuard` integration, `supabase-js` usage |
 | ADR-004 | OpenAI GPT-4o | `OpenAIGateway`, 4 AI Services, `ZodValidatorService`, Prompt Version Registry |
 | ADR-005 | NestJS-only AI Pipeline | `AIModule` = 3 Pipeline Services + `PipelineStrategyFactory`; không có FastAPI service |
+| ADR-006 | SSE via Redis Pub/Sub | `SseService` — ioredis subscriber thay in-memory Subject; tất cả BullMQ processors publish vào Redis channel |
+| ADR-007 | BullMQ over Bull 4.x | Tất cả 5 queue processors trong `AIModule` và `ReportModule`; NestJS module config |
 
-### 10.3 Open Questions cho LLD
+### 10.3 Open Questions — Resolved
 
-Các câu hỏi cần quyết định trước khi viết LLD:
+Tất cả 4 open questions đã được resolve (2026-05-10) trước khi bắt đầu LLD.
 
-1. **SSE sticky session trên Railway**: SSE yêu cầu persistent connection — Railway load balancer có hỗ trợ sticky session không? Nếu không, cần Redis pub/sub để broadcast SSE events qua multiple instances.
-2. **Bull vs BullMQ**: SAD dùng Bull 4.x. BullMQ là successor với TypeScript support tốt hơn và không require Redis Cluster. Nên upgrade trước khi bắt đầu LLD không?
-3. **Polling vs SSE nhất quán**: Flow 2 (Session Setup) dùng polling `/status`. Các flows khác dùng SSE. Cần chọn 1 pattern nhất quán hoặc document rõ khi nào dùng polling vs SSE.
-4. **pgvector usage**: SAD v1.1 mention `text-embedding-3-small` cho JD embedding. SRS không có UC nào explicit cần semantic search. Confirm scope trước khi thiết kế DB schema.
+| # | Câu hỏi | Quyết định | Tham chiếu |
+| --- | --- | --- | --- |
+| OQ-1 | SSE sticky session trên Railway | Redis pub/sub qua ioredis — SseService subscribe channel per session_id; BullMQ processors publish sau DB write. Railway multi-instance autoscale không cần sticky session config. | ADR-006 |
+| OQ-2 | Bull vs BullMQ | BullMQ (`bullmq` + `@nestjs/bullmq`). Bull 4.x maintenance-only; BullMQ có TypeScript-first API, active development, Flows API. Migration: tất cả 5 queues đổi cùng lúc (không coexist). | ADR-007 |
+| OQ-3 | Polling vs SSE nhất quán | Polling bị loại. Session Setup (Flow 2) chuyển sang SSE — Frontend mở SSE connection sau POST /sessions, nhận `session.status` event. Tất cả 5 flows dùng SSE. Rule: polling chỉ dùng nếu SSE connection chưa thiết lập (không có session_id). | CLAUDE.md Key Decisions |
+| OQ-4 | pgvector usage | Defer sang v2. Không có UC nào trong SRS explicit cần semantic search. `AntiRepeatService` dùng SQL JOIN trên `session_questions` + `interview_sessions` để filter câu đã gặp trong 30 ngày. DB schema v1 không có vector column. | CLAUDE.md Key Decisions |
