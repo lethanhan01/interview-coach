@@ -1906,7 +1906,7 @@ Các yêu cầu phi chức năng dưới đây được mô tả ở mức phù 
 
 | Mã | Yêu cầu | Priority |
 |---|---|---|
-| U-01 | Candidate phải có thể hiểu luồng chính mà không cần đọc tài liệu hướng dẫn riêng. | SHOULD |
+| U-01 | Candidate phải có thể hiểu luồng chính mà không cần đọc tài liệu hướng dẫn riêng. Tiêu chí: tỷ lệ task completion ≥ 80% trong usability test (≥ 5 participants); SUS score ≥ 70. | SHOULD |
 | U-02 | Form cấu hình phiên phải có nhãn, placeholder và thông báo validation rõ ràng. | MUST |
 | U-03 | Ý nghĩa các màu trong Annotated Transcript phải được hiển thị rõ trên màn hình feedback. | MUST |
 | U-04 | Tính năng Rewrite & Compare phải dễ tìm sau khi Candidate xem feedback. | SHOULD |
@@ -1917,7 +1917,7 @@ Các yêu cầu phi chức năng dưới đây được mô tả ở mức phù 
 | U-09 | Popup feedback khi click segment phải đóng được bằng thao tác quen thuộc như click ra ngoài, phím Escape hoặc nút đóng. | SHOULD |
 | U-10 | Khu vực ghi âm phải thể hiện rõ trạng thái đang ghi, đã dừng, đang upload hoặc gặp lỗi. | MUST |
 | U-11 | Trên màn hình Rewrite & Compare, phần câu trả lời cũ chỉ cho phép đọc/xem annotation; mọi thao tác nhập mới nằm ở phần câu trả lời rewrite. | MUST |
-| U-12 | Giao diện phải sử dụng được trên desktop/laptop và không vỡ layout ở màn hình trình duyệt phổ biến. | SHOULD |
+| U-12 | Giao diện phải sử dụng được trên desktop/laptop và không vỡ layout ở màn hình trình duyệt phổ biến. Viewport width tối thiểu: 1024px; test trên Chrome/Firefox/Edge phiên bản stable mới nhất. | SHOULD |
 
 ---
 
@@ -1963,9 +1963,9 @@ Các yêu cầu phi chức năng dưới đây được mô tả ở mức phù 
 | S-08 | Nội dung CV parse được không được ghi ra console hoặc log lỗi thô. | SHOULD |
 | S-09 | Text input từ người dùng phải được kiểm tra độ dài và sanitize trước khi xử lý tiếp. | MUST |
 | S-10 | System prompt/logic điều khiển AI phải được tách biệt với user input để giảm rủi ro prompt injection. | MUST |
-| S-11 | Các endpoint AI phải có rate limiting ở mức người dùng để tránh lạm dụng. | SHOULD |
+| S-11 | Các endpoint AI phải có rate limiting ở mức người dùng để tránh lạm dụng. Ngưỡng: ≤ 60 requests/phút per user cho AI inference endpoints; request vượt ngưỡng nhận HTTP 429. | SHOULD |
 | S-12 | Mỗi Candidate không được tạo quá 10 phiên phỏng vấn mới trong 24 giờ. Attempt thứ 11 trở đi bị reject với error message rõ ràng. | SHOULD |
-| S-13 | Luồng đăng nhập phải có cơ chế chống thử lại bất thường. | SHOULD |
+| S-13 | Luồng đăng nhập phải có cơ chế chống thử lại bất thường. Ngưỡng: sau 5 OAuth redirect thất bại trong 10 phút từ cùng IP, block thêm OAuth redirect 15 phút. | SHOULD |
 | S-14 | Upload file phải có kiểm tra kích thước và loại file. | MUST |
 
 ---
@@ -2017,11 +2017,11 @@ Các yêu cầu phi chức năng dưới đây được mô tả ở mức phù 
 |---|---|---|
 | Q-01 | Follow-up question phải bám vào nội dung Candidate vừa trả lời, không sinh câu hỏi generic. | MUST |
 | Q-02 | Segment feedback ở mức `warning` hoặc `critical` phải có gợi ý cải thiện cụ thể. | MUST |
-| Q-03 | Feedback phải giúp Candidate hiểu vấn đề và biết nên sửa câu trả lời như thế nào. | MUST |
+| Q-03 | Feedback phải giúp Candidate hiểu vấn đề và biết nên sửa câu trả lời như thế nào. Tiêu chí: ≥ 80% Candidate trong usability test đánh giá feedback đủ rõ để sửa (scale 1–5, điểm ≥ 4). | MUST |
 | Q-04 | Rewrite & Compare phải thể hiện được khác biệt giữa câu trả lời cũ và câu trả lời mới. | SHOULD |
 | Q-05 | Output AI có cấu trúc phải được validate trước khi lưu hoặc hiển thị. | MUST |
 | Q-06 | Voice metrics nếu hiển thị phải được trình bày như thông tin hỗ trợ, không thay thế đánh giá nội dung câu trả lời. | SHOULD |
-| Q-07 | Delta Score phải được giải thích đủ rõ để Candidate không hiểu nhầm điểm số là đánh giá tuyệt đối. | SHOULD |
+| Q-07 | Delta Score phải được giải thích đủ rõ để Candidate không hiểu nhầm điểm số là đánh giá tuyệt đối. UI bắt buộc có tooltip giải thích Delta Score là điểm cải thiện tương đối; 0% nhầm lẫn điểm tuyệt đối trong usability test. | SHOULD |
 
 ---
 
@@ -2032,7 +2032,7 @@ Các yêu cầu phi chức năng dưới đây được mô tả ở mức phù 
 | AS-01 | JD chứa nội dung không phù hợp phải bị từ chối hoặc yêu cầu nhập lại trước khi tạo phiên. | MUST |
 | AS-02 | Câu trả lời chứa nội dung không phù hợp không được gửi vào Feedback Analyzer như nội dung hợp lệ. | MUST |
 | AS-03 | User input không được phép override system instruction của AI Engine. | MUST |
-| AS-04 | JD quá ngắn hoặc vô nghĩa phải bị validation fail hoặc chuyển sang fallback phù hợp. | MUST |
+| AS-04 | JD quá ngắn hoặc vô nghĩa phải bị validation fail hoặc chuyển sang fallback phù hợp. JD < 100 ký tự được coi là "quá ngắn" và bị validation fail với error message rõ ràng. | MUST |
 | AS-05 | AI không được sinh câu hỏi phỏng vấn có tính phân biệt đối xử hoặc hỏi đời tư không liên quan công việc. | MUST |
 | AS-06 | Feedback không được nhận xét ngoại hình, đặc điểm cá nhân nhạy cảm hoặc giọng nói theo hướng phân biệt đối xử. | MUST |
 

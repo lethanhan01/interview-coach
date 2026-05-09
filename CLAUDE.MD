@@ -77,6 +77,13 @@ In this phase, you act as a **Business Analyst (BA)** and **QA Engineer**, not a
 - Fix conflict #1 (Section 2.5.4 Phase 4 line 634): câu tự giới thiệu cố định đồng bộ với UC-04 canonical — `"Em hãy tự giới thiệu về bản thân và lý do em ứng tuyển vào vị trí này tại [Tên công ty]."`
 - Fix conflict #2 (Section 2.5.3 bảng mapping): thêm row `Sau Phase 8 — Rewrite & Compare (tùy chọn)` → UC-07; bảng nay đủ 13 UC
 
+**2026-05-09** — US coverage + RTM + SRS should-fix session:
+- Created US-014 (UC-11 Placement Test, COULD), US-015 (UC-12 Reverse Questions, SHOULD), US-016 (UC-13 Dashboard, SHOULD) tại [docs/RequirementAnalysis/user-stories/](docs/RequirementAnalysis/user-stories/)
+- Updated README.md index: 16 rows (US-001 → US-016)
+- INVEST Small flag: US-016 (cover 4 sub-features — có thể tách US-016a/016b khi sprint planning)
+- Updated [docs/RequirementAnalysis/SRS/RTM_InterviewAI.md](docs/RequirementAnalysis/SRS/RTM_InterviewAI.md): thêm cột `User Stories` vào §1, điền US-IDs cho tất cả 10 UC rows; thêm 3 rows mới UC-11/12/13; thêm 2 notes vào §3 (UC-09/10 Discovery note + TC column reminder)
+- Fixed 7 SRS should-fix NFRs (U-01, U-12, S-11, S-13, AS-04, Q-03, Q-07): thêm measurable criterion vào mỗi Yêu cầu cell — SRS now 0 named should-fix remaining
+
 ## Phase Roadmap
 
 | Phase | Status | Key Deliverables | Location |
@@ -112,14 +119,14 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 |-----|--------|-----------|------|
 | Discovery Document | Done | Chưa audit | docs/Discovery_Docs/Discovery_Document.md |
 | Discovery Checklist | Done | Chưa audit | docs/Discovery_Docs/Checklist_Discovery.md |
-| SRS (full) | Updated — scope-clean, 2.5 conflicts resolved | 0 Blocker — ASCII art removed từ UC-06/07; Section 2.5 nhất quán với UC-04 và UC-07 đã mapped; 10 should-fix cũ chưa xử lý | docs/RequirementAnalysis/SRS/SRS_InterviewAI_Full.md |
+| SRS (full) | Updated — scope-clean, 2.5 conflicts resolved, 7 NFR should-fix done | 0 Blocker, 0 named should-fix remaining — U-01/U-12/S-11/S-13/AS-04/Q-03/Q-07 đã thêm measurable criterion | docs/RequirementAnalysis/SRS/SRS_InterviewAI_Full.md |
 | SRS Checklist | Done | Chưa audit | docs/SRS/Checklist_SRS.md |
-| Requirements Traceability Matrix | Blockers resolved | 0 Blocker — should-fix còn lại chưa xử lý | docs/SRS/RTM_InterviewAI.md |
+| Requirements Traceability Matrix | Updated — User Stories column added, UC-11/12/13 rows added | 0 Blocker — cột User Stories đầy đủ; §3 có note UC-09/10 + TC reminder | docs/RequirementAnalysis/SRS/RTM_InterviewAI.md |
 | Software Architecture Document | Done | Chưa audit | docs/SAD/SAD_InterviewAI_v1.0.md |
 | Database Design | Empty | Intentionally deferred | docs/design/database_design.md |
 | API Spec | Empty | Intentionally deferred | docs/design/API_spec.md |
 | Glossary | Done | Chưa audit | docs/glossary.md |
-| User Stories | 13 stories — Draft | US-001→US-013; UC-01/03/03b/04/06/07 covered; INVEST flagged: US-010 (Small), US-013 (Small); UC-05 không có story (backend-only) | docs/RequirementAnalysis/user-stories/ |
+| User Stories | 16 stories — Draft | US-001→US-016; UC-01/03/03b/04/06/07/11/12/13 covered; INVEST flagged: US-010 (Small), US-013 (Small), US-016 (Small); UC-02/08 chưa có story; UC-05 không có story (backend-only) | docs/RequirementAnalysis/user-stories/ |
 | Test Plan (strategy) | Done | Chưa audit | docs/test-plan/strategy.md |
 | Phase Transition Log | Done | Đã fill hết TODO | docs/PHASES.md |
 | Architecture ADRs | Planned | — | docs/architecture/ |
@@ -129,30 +136,23 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 ## Next Steps
 
 > **Thứ tự bắt buộc:** SRS ổn định → User Stories → RTM update → Test Cases.
-> **Trạng thái hiện tại (2026-05-09):** US-001→US-013 đã tạo (Draft). Bước tiếp theo: cập nhật RTM và viết US cho SHOULD UCs còn lại.
+> **Trạng thái hiện tại (2026-05-09):** US-001→US-016 đã tạo (Draft). RTM updated (cột User Stories + UC-11/12/13 rows). SRS 0 named should-fix remaining. Bước tiếp theo: ký off User Stories → viết Test Cases.
 
 ### Làm ngay (MUST)
 
-**[1] Hoàn thiện RTM** — unblocked sau khi US-001→US-013 có:
-- Thêm cột "User Stories" vào RTM §1 — map US-ID vào từng UC row
-- Thêm rows cho UC-11/UC-12/UC-13 (thêm từ BRD alignment session, chưa có trong RTM)
-- Ghi chú UC-09/UC-10: không trace về Discovery insight (author confirmed)
-- Ghi chú vào §3 Maintenance Notes: khi có TC, thêm cột TC vào RTM
+**[1] Ký off User Stories (US-001→US-016)** — chuyển Status từ Draft → Ready:
+- Review từng story theo INVEST checklist
+- Xem xét tách US-010, US-013, US-016 nếu sprint planning cần (INVEST Small flag)
+- Sau khi ký off: unblock TC writing
 
-### Làm song song hoặc ngay sau (SHOULD)
+**[2] Viết Test Cases** — unblocked sau khi US ký off:
+- Dựa trên AC của từng US + UC tương ứng trong SRS
+- Dùng template từ [.claude/rules/test-plan.md](.claude/rules/test-plan.md)
+- Khi có TC, thêm cột `Test Cases` vào RTM §1
 
-**[2] Viết User Stories cho SHOULD UCs còn lại** — UC-11 (Placement Test), UC-12 (Reverse Questions), UC-13 (Dashboard tiến trình)
-- Dùng template [docs/RequirementAnalysis/user-stories/README.md](docs/RequirementAnalysis/user-stories/README.md)
-- Mỗi story qua INVEST check; cập nhật README.md index
-- US-010 và US-013 có INVEST Small flag — xem xét tách nếu cần
+### Làm khi next touched (LOW)
 
-**[3] Should-fix trong SRS** (10 findings còn lại từ /qa-review 2026-05-06):
-- U-01, U-12: thêm measurable criterion
-- S-11, S-13: thêm con số cụ thể
-- AS-04: thêm "< 100 ký tự" vào chính NFR text
-- Q-03, Q-07: thêm AC dựa trên usability test hoặc survey
-
-**[4] Icon violations — files còn lại** (dựa trên [docs/style-audit.md](docs/style-audit.md)):
+**[3] Icon violations — files còn lại** (dựa trên [docs/style-audit.md](docs/style-audit.md)):
 - docs/Discovery_Docs/Checklist_Discovery.md: 27 violations — fix khi next touched
 - docs/Discovery_Docs/Discovery_Document.md: ~50 violations — fix khi next touched
 - docs/Discovery_Docs/Discovery_Document_Template.md: ~50 violations — fix khi next touched
@@ -183,6 +183,7 @@ _(ui.md chưa tạo — client/ chưa có FE. Tạo khi bắt đầu UI/UX phase
 | UC-05 không có User Story riêng | UC-05 là backend-only process (trigger tự động sau UC-04, không có Candidate interaction). Viết story cho UC-05 sẽ vi phạm quy tắc "đừng viết technical task là user story". Value của UC-05 được capture đầy đủ bởi US-011 (annotated transcript) và US-012 (comprehensive report). |
 | User Stories đặt tại docs/RequirementAnalysis/user-stories/ | Đây là path thực tế của thư mục (agent confirm khi đọc README). Các references cũ trong session log 2026-05-06 dùng docs/user-stories/ là path template chưa chính xác — không cần sửa trong session log (historical), nhưng mọi reference mới phải dùng path đúng. |
 | US-010 và US-013 có INVEST Small flag | US-010 (session resilience): Beacon API + server-side timeout là non-trivial — có thể tách thành 2 tickets nếu cần. US-013 (rewrite & compare): cover 2 phases (submit + compare) — có thể tách US-013a/013b. Để nguyên là 1 story cho requirements clarity; tách khi sprint planning nếu cần. |
+| US-016 có INVEST Small flag | US-016 (progress dashboard): cover 4 sub-features (chart, streak, recommendation, replay) — có thể tách US-016a (chart + streak) và US-016b (recommendation + replay). Cùng pattern với US-013; giữ nguyên 1 story cho requirements clarity. |
 
 ## Behavioral Guidelines (Documentation Mode)
 

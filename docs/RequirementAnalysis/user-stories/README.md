@@ -106,5 +106,8 @@ So that [benefit].
 | [US-011](US-011_annotated-transcript.md) | Annotated transcript and per-question feedback | UC-06 | MUST | Draft |
 | [US-012](US-012_comprehensive-report.md) | Comprehensive session performance report | UC-06 | MUST | Draft |
 | [US-013](US-013_rewrite-compare.md) | Rewrite answer and compare improvement | UC-07 | SHOULD | Draft |
+| [US-014](US-014_placement-test.md) | Placement test for difficulty calibration | UC-11 | COULD | Draft |
+| [US-015](US-015_reverse-questions.md) | Ask questions to AI interviewer (reverse phase) | UC-12 | SHOULD | Draft |
+| [US-016](US-016_progress-dashboard.md) | Personal progress dashboard | UC-13 | SHOULD | Draft |
 
 *Cập nhật bảng này mỗi khi thêm story mới.*
