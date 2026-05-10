@@ -477,10 +477,10 @@ flowchart TD
 | Phase 2 — Session Setup | JD (text/PDF/URL), loại phiên, persona, độ khó, mode, thời lượng, ngôn ngữ | UC-03, UC-03b |
 | Phase 3 — Question Generation | AI sinh Interview Plan + rubric theo JD/CV/level (chạy ngầm trong UC-03) | (backend, không có UC riêng) |
 | Phase 4 — Opening Phase | AI interviewer giới thiệu theo persona; câu tự giới thiệu cố định | UC-04 (Opening sub-phase) |
-| Phase 5 — Main Interview Loop | Câu hỏi → trả lời → follow-up → Surgical Feedback (lặp) | UC-04, UC-05 |
+| Phase 5 — Main Interview Loop | Câu hỏi → trả lời (timer per question) → follow-up có điều kiện (4 rules, tối đa 2/câu) → "Đã ghi nhận" (lặp) | UC-04 |
 | Phase 6 — Reverse Questions | Candidate đặt 1–3 câu hỏi; AI trả lời trong vai; hệ thống chấm điểm ngầm | UC-12 |
 | Phase 7 — Closing | AI kết thúc lịch sự; self-evaluation tùy chọn (Practice mode) | UC-04 (Closing sub-phase) |
-| Phase 8 — Comprehensive Feedback | Executive Summary, per-question analysis, Comm Analysis, Competency Heatmap, Action Plan | UC-05, UC-06 |
+| Phase 8 — Comprehensive Feedback | Batch Surgical Feedback (song song N FeedbackJob) → Executive Summary, per-question Annotated Transcript, Comm Analysis, Competency Heatmap, Action Plan | UC-05, UC-06 |
 | Sau Phase 8 — Rewrite & Compare (tùy chọn) | Candidate luyện lại câu trả lời bất kỳ; AI re-evaluate và hiển thị so sánh delta score | UC-07 |
 | Phase 9 — Long-term Progression | Dashboard, biểu đồ competency, replay, streak, benchmark, gợi ý session tiếp | UC-08, UC-13 |
 | Admin — User Management | Xem, tìm kiếm, khóa/mở khóa tài khoản Candidate | UC-09 |
@@ -566,32 +566,60 @@ flowchart TD
 
 #### Phase 3 — Question Generation
 
-**Mục tiêu:** Sinh Interview Plan gồm danh sách câu hỏi cá nhân hóa theo JD, CV, level và session_type trước khi phiên bắt đầu. Chạy ngầm — Candidate không cần tương tác.
+**Mục tiêu:** Sinh Interview Plan chất lượng cao — danh sách câu hỏi cá nhân hóa theo JD, CV, level, session_type, với phân bổ competency hợp lý, thứ tự độ khó tăng dần và thời gian trả lời được phân bổ thực tế cho từng câu. Chạy ngầm — Candidate không cần tương tác. Thời gian chờ có thể dài hơn để đảm bảo chất lượng plan.
 
-**Actors:** AI Backend (GPT-4o)
+**Actors:** AI Backend (GPT-4o), [SYSTEM] Database/Question Bank
 
 **Đầu vào:**
 - jd_text, cv_structured, target_role_category, target_level
-- session_type, difficulty, num_questions, context_pack_id
+- session_type, difficulty, num_questions, context_pack_id, duration_min
 
 **Đầu ra / Artifacts:**
-- `session_questions[]` sắp xếp theo order_index tăng dần
-- `interview_sessions.plan_json`
+- `session_questions[]` sắp xếp theo order_index tăng dần, mỗi record có `estimated_time_min` và `competency_domain`
+- `interview_sessions.plan_json` (cấu trúc xem schema bên dưới)
 - `interview_sessions.status` cập nhật → in_progress
 
 **Luồng xử lý:**
-1. Backend nhận trigger sau khi `interview_sessions` được tạo (status = generating)
-2. GPT-4o trích xuất `job_title` từ JD text
-3. Question Generator xây system prompt từ JD, cv_structured, context_pack.rubric, session config
-4. GPT-4o sinh `num_questions` câu; sắp xếp theo độ khó tăng dần
-5. Backend validate schema; lưu `session_questions`; cập nhật `plan_json` và status = in_progress
-6. Redirect Candidate đến Phase 4
+
+**Bước 1 — [AI-GPT-4o] Phân tích JD và xác định competency distribution:**
+1. GPT-4o trích xuất `job_title`, `company_name` từ JD text
+2. Xác định competency distribution theo session_type:
+   - `hr_behavioral`: Communication 40% / Behavioral Maturity 40% / Culture Fit 20%
+   - `technical`: Problem-solving 50% / Technical Depth 40% / Culture Fit 10%
+   - `mixed`: phân bổ đều 5 competency (20% mỗi loại)
+
+**Bước 2 — [SYSTEM] Tính ngân sách thời gian và phân bổ per question:**
+3. Tính `time_budget = duration_min - 7` phút (trừ Opening ~2p, Closing ~2p, Reverse Q ~3p)
+4. Tính `base_time = time_budget / num_questions`
+5. Phân bổ `estimated_time_min` theo độ khó: easy = `round(base_time × 0.8)`, medium = `round(base_time × 1.0)`, hard = `round(base_time × 1.3)`; tối thiểu 1 phút/câu
+
+**Bước 3 — [SYSTEM] Lấy câu hỏi từ question_bank (70%):**
+6. Query `question_bank` lấy `ceil(num_questions × 0.7)` câu phù hợp:
+   - WHERE `competency_domain` thuộc competency distribution đã xác định
+   - AND `difficulty` match session difficulty
+   - AND `session_type` compatible
+   - AND id NOT IN (câu Candidate đã gặp trong 30 ngày — SQL JOIN với `session_questions`)
+7. Nếu question_bank không đủ câu (thiếu < ceil(0.7 × num_questions)) → tăng phần LLM-generated bù đắp
+
+**Bước 4 — [AI-GPT-4o] Generate phần còn lại (30%, tối thiểu 1 câu):**
+8. Xây system prompt từ JD, cv_structured, context_pack.rubric, competency gaps chưa được cover bởi bank questions
+9. GPT-4o generate `floor(num_questions × 0.3)` câu (tối thiểu 1 câu) được contextualize theo JD/CV cụ thể
+
+**Bước 5 — [SYSTEM] Tổng hợp, validate và lưu:**
+10. Merge bank questions + LLM-generated questions; sắp xếp theo độ khó tăng dần (easy → medium → hard)
+11. Validate: `sum(estimated_time_min) ≤ time_budget + 2` (buffer 2 phút); nếu vượt → giảm `estimated_time_min` của câu easy trước
+12. Validate schema (mỗi câu có text, competency_domain, difficulty, estimated_time_min); câu nào fail → drop và bổ sung từ question_bank
+13. Lưu `session_questions[]` với đầy đủ `competency_domain` và `estimated_time_min`
+14. Cập nhật `interview_sessions.plan_json` và `status = in_progress`
+15. Redirect Candidate đến Phase 4
 
 **Quy tắc nghiệp vụ:**
-- Toàn bộ Phase 2 + Phase 3 hoàn thành trong ≤ 10s (AC-03-1)
-- `session_type = technical` → câu hỏi là technical; không lẫn HR (AC-03-6)
-- Context Pack xác định rubric chấm điểm dùng trong Phase 5 (Feedback Analyzer)
+- Phase 2 + Phase 3 (UI confirm + question generation) hoàn thành trong ≤ 15s (AC-03-1, relaxed từ 10s để đảm bảo chất lượng)
+- `session_type = technical` → tất cả câu hỏi là technical; không lẫn HR (AC-03-6)
+- 70% câu lấy từ `question_bank`; 30% LLM-generated có context JD/CV
 - Câu hỏi liên quan đến tuổi tác, giới tính, tôn giáo, sức khỏe không được xuất hiện — kiểm thử 20 JD, 0/20 vi phạm (AC-04-9)
+- Fallback nếu Question Generator (LLM) timeout > 15s: lấy toàn bộ 100% từ question_bank nếu đủ câu; nếu không đủ → cancel session (E-03-2)
+- Context Pack xác định rubric chấm điểm dùng trong Phase 8 (Feedback Analyzer batch)
 
 **Use Case(s):** (backend; không có UC riêng — xử lý trong UC-03 Main Flow bước 8–10)
 
@@ -630,40 +658,47 @@ flowchart TD
 
 #### Phase 5 — Main Interview Loop
 
-**Mục tiêu:** Core loop luyện tập — mỗi câu hỏi trải qua chu trình hỏi → trả lời → đào sâu (follow-up) → phản hồi tức thì (Surgical Feedback). Lặp đến hết câu hỏi trong session.
+**Mục tiêu:** Mô phỏng phiên phỏng vấn thực tế — mỗi câu hỏi trải qua chu trình hỏi → trả lời (có giới hạn thời gian) → đào sâu có điều kiện (follow-up). Không có Surgical Feedback trong quá trình phỏng vấn — feedback được tổng hợp batch sau khi kết thúc phiên (Phase 8). Lặp đến hết câu hỏi trong session.
 
-**Actors:** Candidate, AI (Follow-up Engine, Feedback Analyzer), Whisper STT
+**Actors:** Candidate, [AI-Whisper] STT, [AI-GPT-4o] Follow-up Engine (có điều kiện)
 
 **Đầu vào:**
-- session_questions[]
+- session_questions[] (kèm estimated_time_min per question)
 - answer — voice blob (tối đa 25 MB / 5 phút) hoặc text
 
 **Đầu ra / Artifacts:**
-- `user_answers[]`
-- `follow_up_questions[]`
-- `ai_feedbacks[]` (overall_score, model_answer, key_takeaway, voice_summary_json)
-- `annotated_segments[]` (text, level, reason, suggestion, improved_version)
+- `user_answers[]` (transcript, voice metrics, feedback_generated = false)
+- `follow_up_questions[]` (chỉ khi triggered)
 
 **Luồng xử lý** (lặp cho mỗi câu hỏi):
-1. Hiển thị câu hỏi + indicator "Câu X/Total" + timer mềm; TTS đọc nếu cài đặt bật
-2. Silence 15s → AI nhắc "Em cứ thoải mái suy nghĩ..." — chỉ 1 lần/câu (AC-04-11)
-3. Voice path: Candidate ghi âm → Whisper transcribe (≤ 5s) + tính voice metrics (WPM, filler count, pause count) | Text path: Candidate gõ → gửi → lưu transcript; không tính voice metrics
-4. Follow-up Engine đánh giá transcript theo 5 trigger rules; sinh tối đa 2 follow-up nếu triggered
-5. Candidate trả lời follow-up (nếu có); transcript follow-up ghép vào combined_transcript
-6. Feedback Analyzer: tổng hợp combined_transcript + JD + rubric + cv_structured → GPT-4o → Surgical Feedback JSON → validate schema → lưu `ai_feedbacks` + `annotated_segments` (≤ 12s tổng, AC-04-4)
-7. Hiển thị "Đã phân tích" → nút "Câu hỏi tiếp theo"
+1. [SYSTEM] Hiển thị câu hỏi + indicator "Câu X/Total" + countdown timer từ `estimated_time_min × 60s`; TTS đọc nếu cài đặt bật
+2. [SYSTEM] Silence 15s → AI nhắc "Em cứ thoải mái suy nghĩ..." — chỉ 1 lần/câu, không tính vào timer (AC-04-11)
+3. [SYSTEM] Quản lý timer per question:
+   - Khi còn **30 giây**: hiển thị banner cảnh báo "Còn 30 giây, hãy tóm tắt ý chính" (AC-04-16)
+   - Khi timer = 0:
+     - `mode = practice`: hiển thị dialog "Hết giờ dự kiến. Cần thêm thời gian?" với nút "+15s" và "Nộp ngay"; extension chỉ được dùng 1 lần/câu (AC-04-17)
+     - `mode = exam`: tự động submit transcript hiện có và chuyển sang câu tiếp theo (AC-04-17)
+   - Nếu Candidate submit trước khi hết giờ: hủy timer ngay, chuyển sang follow-up trong ≤ 1s (AC-04-18)
+4. [AI-Whisper] Voice path: Candidate ghi âm → Whisper transcribe (≤ 5s) + tính voice metrics (WPM, filler count, pause count) | [SYSTEM] Text path: Candidate gõ → gửi → lưu transcript; không tính voice metrics
+5. [AI-GPT-4o] Follow-up Engine đánh giá transcript theo **4 trigger rules** (chỉ gọi AI khi ít nhất 1 rule triggered); sinh tối đa 2 follow-up/câu chính:
+   - **Rule 1 — Thiếu STAR:** Câu trả lời behavioral thiếu ≥ 1 thành phần Situation/Task/Action/Result → "Bạn có thể nói thêm về [thành phần thiếu] không?"
+   - **Rule 2 — Pronoun dilution:** "chúng tôi"/"nhóm" là chủ ngữ chính, không có "tôi"/"em" → "Cụ thể bạn đã làm gì trong việc này?"
+   - **Rule 3 — Mơ hồ thiếu ví dụ:** Trả lời generic không có tình huống/ví dụ cụ thể → "Bạn có thể cho một ví dụ cụ thể không?"
+   - **Rule 4 — Claim đáng nghi:** Có claim định lượng hoặc thành tích bất thường không có evidence → "Bạn đo lường kết quả đó như thế nào?"
+   - Nếu không trigger rule nào: `skip_follow_up = true`, không gọi AI
+6. Candidate trả lời follow-up (nếu có); transcript follow-up lưu với `parent_question_id`
+7. [SYSTEM] Hiển thị indicator "Câu trả lời đã ghi nhận" → nút "Câu hỏi tiếp theo"
 8. Lặp từ bước 1; hết câu → chuyển Phase 6
 
 **Quy tắc nghiệp vụ:**
-- 5 Follow-up trigger rules: (1) Pronoun dilution — "chúng tôi"/"nhóm" > 70% và không có "tôi"/"em"; (2) Unquantified claim — claim không kèm con số; (3) Missing STAR Result — thiếu kết quả cụ thể; (4) Vague without example — chung chung không ví dụ; (5) Shallow technical — chỉ nêu concept, không giải thích how/why
-- Tối đa 2 follow-up/câu chính
-- mode = exam: không Pause, không Gợi ý; warning 30s cuối (AC-04-12, AC-04-13)
-- mode = practice: Pause và Gợi ý khả dụng
-- Transcript + follow-up lưu DB ngay cả khi Feedback Analyzer timeout (AC-04-6)
-- Segment warning/critical phải có `improved_version` không rỗng (AC-05-2)
+- Không có Surgical Feedback trong Phase 5; `ai_feedbacks` và `annotated_segments` được tạo trong Phase 8
+- Tối đa 2 follow-up/câu chính; không gọi Follow-up Engine nếu không trigger rule nào (tiết kiệm token)
+- mode = exam: không Pause, không Gợi ý; warning 30s còn lại của từng câu (AC-04-12, AC-04-16)
+- mode = practice: Pause và Gợi ý khả dụng; có thể gia hạn 15s khi timer hết (AC-04-17)
+- Transcript + follow-up lưu DB ngay cả khi Follow-up Engine timeout (AC-04-5)
 - Phiên ngắt giữa chừng → status = interrupted; Candidate có thể Resume từ câu dở (AC-04-7)
 
-**Use Case(s):** UC-04 (Main Loop), UC-05 (per-question feedback)
+**Use Case(s):** UC-04 (Main Loop)
 
 ---
 
