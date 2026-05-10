@@ -5,23 +5,10 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| **Phiên bản tài liệu** | 1.1 |
 | **Ngày soạn** | 09/05/2026 |
 | **Trạng thái** | Draft |
 | **Tác giả** | Lê Thành An — MSSV: 20235631 |
-| **Giảng viên hướng dẫn** | Tiến sĩ Cao Tuấn Dũng |
-| **Đơn vị** | Viện Công nghệ Thông tin và Truyền thông (SOICT), ĐHBKHN |
-| **Tài liệu gốc** | SRS_InterviewAI_v1.2.md |
-
----
-
-## LỊCH SỬ PHIÊN BẢN
-
-| Phiên bản | Ngày | Mô tả |
-|---|---|---|
-| 1.0 | 02/05/2026 | Tách từ SRS v1.1: kiến trúc hệ thống, thiết kế AI pipeline, phân tích chi phí, chính sách lưu trữ dữ liệu. |
-| 1.1 | 09/05/2026 | Cập nhật: (1) Chuyển sang NestJS-only backend (bỏ FastAPI service riêng); (2) Thêm C4 diagrams và sequence diagram UC-04; (3) Thêm Security Architecture (S-11/S-12/S-13); (4) Thêm Business Constraints (P-20/P-21); (5) Cập nhật latency SLOs (P-01/P-02); (6) Validator code chuyển sang TypeScript/Zod. |
-
+| **Đơn vị** | Trường Công nghệ Thông tin và Truyền thông (SOICT), ĐHBKHN |
 ---
 
 ## MỤC LỤC
