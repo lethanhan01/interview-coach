@@ -433,10 +433,10 @@ flowchart TD
     P2["[Phase 2] UC-03 + UC-03b\nSession Setup: JD, loại phiên,\npersona, độ khó, mode, thời lượng"]:::actorStep
     P3["[Phase 3] AI Backend\nSinh Interview Plan + rubric\n(chạy ngầm, không có UC riêng)"]:::systemStep
     P4_Opening["[Phase 4] UC-04 — Opening Phase\nAI giới thiệu theo persona\nCâu tự giới thiệu cố định"]:::actorStep
-    P5_Loop["[Phase 5] UC-04 — Main Interview Loop\nCâu hỏi → Trả lời (voice/text)\n→ Follow-up → Surgical Feedback\n(lặp cho từng câu hỏi)"]:::actorStep
+    P5_Loop["[Phase 5] UC-04 — Main Interview Loop\nCâu hỏi → Trả lời (voice/text)\n→ Follow-up có điều kiện (4 rules, tối đa 2/câu) → Ghi nhận\n(lặp lại các bước cho từng câu hỏi)"]:::actorStep
     P6_ReverseQ["[Phase 6] UC-12\nGiai đoạn phỏng vấn ngược\nCandidate đặt câu hỏi cho AI interviewer"]:::actorStep
     P7_Closing["[Phase 7] UC-04 — Closing\nAI kết thúc lịch sự theo persona\nSelf-evaluation tùy chọn (Practice mode)"]:::actorStep
-    P8_Feedback["[Phase 8] UC-05 + UC-06\nComprehensive Feedback Report:\nExecutive Summary, per-question,\nComm Analysis, Competency Heatmap,\nAction Plan"]:::actorStep
+    P8_Feedback["[Phase 8] UC-05 + UC-06\nBatch Surgical Feedback:\nExecutive Summary, per-question Annotated Transcript, Comm Analysis, Competency Heatmap, Action Plan"]:::actorStep
     RewriteDecision{"Muốn luyện lại\ncâu trả lời?"}:::systemStep
     Rewrite["UC-07\nRewrite & Compare"]:::actorStep
     P9_History["UC-08\nXem lịch sử phiên"]:::actorStep
