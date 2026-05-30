@@ -4,9 +4,7 @@
 **Mục đích:** Tổng hợp toàn bộ nghiên cứu người dùng, phân tích thị trường, và định nghĩa vấn đề — làm input chính thức cho SRS.
 **Vị trí trong chuỗi tài liệu:**
 
-```
-Business Case → [📍 Discovery Document] → Stakeholder Requirements → SRS → SAD → Code & Test
-```
+
 
 ---
 
