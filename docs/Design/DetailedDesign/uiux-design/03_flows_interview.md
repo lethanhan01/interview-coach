@@ -41,8 +41,8 @@ Chi tiết: [01_overview.md](01_overview.md), [02_flows_auth_setup.md](02_flows_
 | Component | States | Trigger |
 |-----------|--------|---------|
 | `InterviewerPanel` | question / followup / ended | SSE event |
-| `AISuggestionsPanel` | hidden / loading / visible / error | `followup_ready`, `error` |
-| `IntervieweePanel` | empty / typing / submitted / annotated | answer submit, `feedback_ready` |
+| `AISuggestionsPanel` | hidden / loading / visible / error | `turn.follow_up` |
+| `IntervieweePanel` | empty / typing / submitted / annotated | answer submit, `turn.feedback_ready` |
 | `AnswerInputBar` | text / voice / submitting / disabled | mode toggle, network |
 | `TimerDisplay` | running / paused / warning (<60s) | auto, user pause |
 | `ProgressBar` | N/M | question index change |
@@ -244,13 +244,16 @@ flowchart TD
 
 ### 6.1 Event → UI State Transitions
 
-| Event | Payload | UI Update | State Change |
-|-------|---------|---------|-------------|
-| `question_ready` | `{ questionId, text, questionIndex, totalQuestions }` | InterviewerPanel shows question | `q_ready` |
-| `followup_ready` | `{ followUpId, text, parentAnswerId }` | InterviewerPanel shows follow-up; AISuggestionsPanel shows key points | `fu_ready` |
-| `feedback_ready` | `{ answerId, annotations[], scores }` | IntervieweePanel: highlight spans; ScoreBadge updated | `fb_ready` |
-| `session_ended` | `{ sessionId, reportReady }` | InterviewPage → ReportPage redirect | `s_ended` |
-| `error` | `{ code, message }` | Error banner (`role="alert"`); retry logic | `error` |
+ADR-006 defines 5 SSE event types. InterviewPage listens to 3 of them:
+
+| Event (ADR-006) | Payload | UI Update | State Change |
+|-----------------|---------|-----------|-------------|
+| `session.status` | `{ sessionId, status, questions? }` | InterviewerPanel: show first question | `q_ready` |
+| `turn.follow_up` | `{ followUpId, text, parentAnswerId }` | InterviewerPanel: follow-up; AISuggestionsPanel: key points | `fu_ready` |
+| `turn.feedback_ready` | `{ answerId, annotations[], scores }` | IntervieweePanel: highlight spans; ScoreBadge updated | `fb_ready` |
+
+`report.ready` and `rewrite.done` are not consumed on InterviewPage.  
+Session end is client-initiated (user clicks "Kết thúc" → PATCH session status → client redirects immediately).
 
 ### 6.2 `useSseStream(sessionId)` Hook Lifecycle
 
