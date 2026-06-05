@@ -45,7 +45,9 @@ processors cần ghi vào row của bất kỳ user nào sau khi job queue chạ
 
 ## 3. Table Inventory
 
-15 tables, chia 4 nhóm theo dependency layer:
+**MVP v1:** 12 tables. 3 tables deferred sang v1.1: `rewrite_answers` (UC-07), `progress_snapshots` (UC-13), `placement_test_answers` (UC-11).
+
+12 MVP tables, chia 4 nhóm theo dependency layer:
 
 ### Layer 0 — Lookup (không có FK đến table khác)
 | Table | Mô tả |
@@ -70,36 +72,86 @@ processors cần ghi vào row của bất kỳ user nào sau khi job queue chạ
 | ----- | ----- |
 | `user_answers` | Câu trả lời per turn — voice (transcript + audio URL) hoặc text. FK → session_questions. |
 | `follow_up_questions` | Follow-up được FollowUpProcessor tạo ra. FK → user_answers. |
-| `rewrite_answers` | Rewrite attempts (max 5 per answer, NFR P-21). FK → user_answers. |
-| `ai_feedbacks` | Surgical feedback output. FK nullable: hoặc user_answer_id hoặc rewrite_answer_id. |
+| `rewrite_answers` | **(v1.1 — UC-07)** Rewrite attempts. FK → user_answers. |
+| `ai_feedbacks` | Surgical feedback output. MVP: `user_answer_id NOT NULL`. v1.1: thêm `rewrite_answer_id` nullable. |
 | `annotated_segments` | Từng đoạn highlight trong transcript (good/warning/critical). FK → ai_feedbacks. |
 
 ### Layer 4 — Features & Audit
 | Table | Mô tả |
 | ----- | ----- |
 | `reverse_questions` | Câu hỏi ngược (UC-12), max 3 per session. FK → interview_sessions. |
-| `progress_snapshots` | Snapshot điểm competency sau mỗi session (UC-13 dashboard). FK → users, sessions. |
-| `placement_test_answers` | Bài test định vị (UC-11). FK → users. |
+| `progress_snapshots` | **(v1.1 — UC-13)** Snapshot điểm competency sau mỗi session. FK → users, sessions. |
+| `placement_test_answers` | **(v1.1 — UC-11)** Bài test định vị. FK → users. |
 | `ai_quality_log` | Audit log các AI calls — không có FK (intentional, tránh cascade delete xóa audit trail). |
 
-### Dependency Order cho Migration
+### Dependency Order cho Migration (MVP — 12 tables)
 
 ```
 context_packs → question_bank
              → users → user_profiles
                      → interview_sessions → session_questions → user_answers → follow_up_questions
-                                                                             → rewrite_answers → ai_feedbacks → annotated_segments
-                                                                             → ai_feedbacks
+                                                                             → ai_feedbacks → annotated_segments
                                          → reverse_questions
-                                         → progress_snapshots
-             → placement_test_answers
 ai_quality_log (độc lập)
 ```
 
-Migration phải tạo tables theo thứ tự: `context_packs` → `question_bank` → `users` →
+Migration MVP tạo tables theo thứ tự: `context_packs` → `question_bank` → `users` →
 `user_profiles` → `interview_sessions` → `session_questions` → `user_answers` →
-`rewrite_answers` → `ai_feedbacks` → `annotated_segments` → `follow_up_questions` →
-`reverse_questions` → `progress_snapshots` → `placement_test_answers` → `ai_quality_log`.
+`ai_feedbacks` → `annotated_segments` → `follow_up_questions` → `reverse_questions` →
+`ai_quality_log`.
 
-`rewrite_answers` phải đứng trước `ai_feedbacks` vì `ai_feedbacks` có FK tới cả
-`user_answers` và `rewrite_answers`.
+v1.1 sẽ thêm: `rewrite_answers` (trước `ai_feedbacks`), `progress_snapshots`, `placement_test_answers`,
+và ALTER TABLE `ai_feedbacks` để thêm `rewrite_answer_id` nullable FK.
+
+## 4. Prisma ORM Integration
+
+Backend (NestJS) dùng **Prisma ORM** để tương tác với PostgreSQL. Một số điểm quan trọng:
+
+### Connection & Auth
+
+- Prisma dùng **service role key** trong `DATABASE_URL` → bypass Supabase RLS hoàn toàn.
+- RLS policies vẫn tồn tại trong DB như safety net cho client-side SDK calls, nhưng không được Prisma enforce.
+- **NestJS JWT guard (`AuthGuard`)** là primary authorization layer — mọi request đi qua guard trước khi đến Prisma.
+
+### Cross-Schema FK (auth.users)
+
+- `users.id` phải match `auth.users.id` (Supabase Auth schema, khác PostgreSQL schema).
+- Prisma **không model FK cross-schema** — không dùng `@relation` trỏ sang `auth.users`.
+- FK tồn tại dưới dạng raw SQL trigger `handle_new_auth_user()`: khi user mới được tạo trong `auth.users`, trigger INSERT vào `public.users` tự động.
+- Prisma model `User` không có field `authUser` — chỉ có `id` là UUID.
+
+### Naming Convention
+
+- Prisma model: `PascalCase` (e.g., `User`, `InterviewSession`)
+- Prisma field: `camelCase` (e.g., `userId`, `createdAt`)
+- DB column: `snake_case` via `@map("snake_case")`
+- DB table: `snake_case` via `@@map("table_name")`
+
+### Partial Indexes
+
+Prisma 5.x không thể express `WHERE` clause trong `@@index()`. 5 partial indexes phải đặt trong raw SQL migration files tách biệt (`server/prisma/migrations/raw/`).
+
+Chi tiết model definitions: [09_prisma_schema.md](./09_prisma_schema.md).
+
+## 5. Migration Strategy
+
+### Source of Truth
+
+| Loại thay đổi | Tool | File location |
+| --- | --- | --- |
+| Table/column/relation/index (non-partial) | `prisma migrate dev` | `server/prisma/migrations/` |
+| RLS policies | Raw SQL | `server/prisma/migrations/raw/rls_*.sql` |
+| Triggers (e.g., `handle_new_auth_user`) | Raw SQL | `server/prisma/migrations/raw/triggers_*.sql` |
+| Partial indexes (5 total) | Raw SQL | `server/prisma/migrations/raw/indexes_*.sql` |
+| Seed data (context_packs, question_bank) | Raw SQL | `server/prisma/migrations/raw/seed_*.sql` |
+
+### Apply Order
+
+1. `prisma migrate deploy` — tạo tất cả tables, relations, standard indexes
+2. Apply raw SQL files theo thứ tự: triggers → RLS → partial indexes → seed data
+3. Verify: `prisma db pull` phải không sinh thêm migration mới (schema in sync)
+
+### Rollback
+
+- Prisma migration: `prisma migrate resolve --rolled-back <migration_name>`
+- Raw SQL: mỗi file phải có comment `-- rollback:` ở đầu với câu lệnh reverse tương ứng

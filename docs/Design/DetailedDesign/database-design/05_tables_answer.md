@@ -1,10 +1,10 @@
 # DB Design — Tables: Answer & Feedback
 
-Nhóm này gồm 5 tables thuộc Layer 3. Đây là nhóm phức tạp nhất về dependency:
-`rewrite_answers` phải được CREATE trước `ai_feedbacks` vì `ai_feedbacks` có FK tới cả hai.
+Nhóm này gồm 4 MVP tables thuộc Layer 3. `rewrite_answers` defer sang v1.1 (UC-07).
 
-Migration order bắt buộc trong nhóm này:
-`user_answers` → `follow_up_questions` → `rewrite_answers` → `ai_feedbacks` → `annotated_segments`
+Migration order MVP: `user_answers` → `follow_up_questions` → `ai_feedbacks` → `annotated_segments`
+
+v1.1: thêm `rewrite_answers` trước `ai_feedbacks` và ALTER TABLE `ai_feedbacks` để thêm `rewrite_answer_id`.
 
 ---
 
@@ -110,79 +110,63 @@ CREATE TABLE follow_up_questions (
 
 ---
 
-## rewrite_answers
+## rewrite_answers (v1.1 — UC-07)
 
-Rewrite attempt của candidate cho một `user_answer`. Max 5 attempts per answer (NFR P-21),
-enforce bởi `UNIQUE (user_answer_id, attempt_number)` + CHECK constraint.
+> **v1.1:** Table này không tồn tại trong MVP schema. Tạo khi implement UC-07 (Rewrite & Compare).
 
-`delta_score` được set bởi `RewriteEvalProcessor` sau khi AI chấm điểm rewrite — có thể âm
-nếu rewrite kém hơn bản gốc.
+DDL và thiết kế chi tiết giữ nguyên ở đây để reference khi implement v1.1:
 
 ```sql
-CREATE TABLE rewrite_answers (
-  id                             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_answer_id                 UUID        NOT NULL
-    REFERENCES user_answers(id) ON DELETE CASCADE,
-  attempt_number                 INTEGER     NOT NULL
-    CHECK (attempt_number BETWEEN 1 AND 5),
-  rewrite_mode                   TEXT        NOT NULL
-    CHECK (rewrite_mode IN ('voice', 'text')),
-  rewrite_text                   TEXT        NOT NULL,
-  rewrite_audio_url              TEXT        NULL,
-  rewrite_audio_duration_seconds INTEGER     NULL
-    CHECK (rewrite_audio_duration_seconds BETWEEN 1 AND 300),
-  delta_score                    INTEGER     NULL,
-  created_at                     TIMESTAMPTZ NOT NULL DEFAULT now(),
-
-  UNIQUE (user_answer_id, attempt_number),
-
-  CONSTRAINT chk_rewrite_answers_voice_fields
-    CHECK (rewrite_mode != 'voice' OR rewrite_audio_url IS NOT NULL)
-);
+-- v1.1 only: CREATE TABLE rewrite_answers (
+--   id                             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+--   user_answer_id                 UUID        NOT NULL
+--     REFERENCES user_answers(id) ON DELETE CASCADE,
+--   attempt_number                 INTEGER     NOT NULL
+--     CHECK (attempt_number BETWEEN 1 AND 5),
+--   rewrite_mode                   TEXT        NOT NULL
+--     CHECK (rewrite_mode IN ('voice', 'text')),
+--   rewrite_text                   TEXT        NOT NULL,
+--   rewrite_audio_url              TEXT        NULL,
+--   rewrite_audio_duration_seconds INTEGER     NULL
+--     CHECK (rewrite_audio_duration_seconds BETWEEN 1 AND 300),
+--   delta_score                    INTEGER     NULL,
+--   created_at                     TIMESTAMPTZ NOT NULL DEFAULT now(),
+--   UNIQUE (user_answer_id, attempt_number),
+--   CONSTRAINT chk_rewrite_answers_voice_fields
+--     CHECK (rewrite_mode != 'voice' OR rewrite_audio_url IS NOT NULL)
+-- );
+--
+-- Sau khi tạo rewrite_answers, ALTER TABLE ai_feedbacks:
+-- ADD COLUMN rewrite_answer_id UUID NULL REFERENCES rewrite_answers(id) ON DELETE CASCADE;
+-- ALTER COLUMN user_answer_id DROP NOT NULL;
+-- ADD CONSTRAINT chk_ai_feedbacks_source CHECK (
+--   (user_answer_id IS NOT NULL AND rewrite_answer_id IS NULL) OR
+--   (user_answer_id IS NULL     AND rewrite_answer_id IS NOT NULL)
+-- );
 ```
-
-### Column notes
-
-| Column | Ghi chú |
-| ------ | ------- |
-| `attempt_number` | 1-based. Application layer tính `MAX(attempt_number) + 1` trước INSERT. UNIQUE constraint ngăn race condition. |
-| `delta_score` | `new_score - original_score`. NULL cho đến khi `RewriteEvalProcessor` chạy xong. Range thực tế: -100 đến +100. |
-
-### delta_score display states (HLD §5.3)
-
-| Điều kiện | Label hiển thị |
-| --------- | -------------- |
-| delta_score >= 20 | "Cải thiện rõ rệt" |
-| delta_score > 0 | "Có cải thiện" |
-| delta_score = 0 | "Chưa thay đổi" |
-| delta_score < 0 | "Điểm giảm" |
 
 ---
 
 ## ai_feedbacks
 
-Surgical feedback output từ `FeedbackProcessor` (original answer) hoặc `RewriteEvalProcessor`
-(rewrite). Dùng chung một table với hai nullable FK — CHECK constraint đảm bảo đúng một FK non-null.
+Surgical feedback output từ `FeedbackProcessor`. MVP: chỉ liên kết với `user_answers` (NOT NULL).
+v1.1: thêm `rewrite_answer_id` nullable khi `rewrite_answers` table được tạo.
 
 ```sql
 CREATE TABLE ai_feedbacks (
   id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_answer_id    UUID        NULL
+  user_answer_id    UUID        NOT NULL
     REFERENCES user_answers(id) ON DELETE CASCADE,
-  rewrite_answer_id UUID        NULL
-    REFERENCES rewrite_answers(id) ON DELETE CASCADE,
   overall_score     INTEGER     NOT NULL
     CHECK (overall_score BETWEEN 0 AND 100),
   model_answer      TEXT        NOT NULL,
   key_takeaway      TEXT        NOT NULL,
   prompt_version    TEXT        NOT NULL,
   is_fallback       BOOLEAN     NOT NULL DEFAULT false,
-  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-
-  CONSTRAINT chk_ai_feedbacks_source CHECK (
-    (user_answer_id IS NOT NULL AND rewrite_answer_id IS NULL) OR
-    (user_answer_id IS NULL     AND rewrite_answer_id IS NOT NULL)
-  )
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+  -- v1.1: ADD COLUMN rewrite_answer_id UUID NULL REFERENCES rewrite_answers(id) ON DELETE CASCADE
+  -- v1.1: ALTER COLUMN user_answer_id DROP NOT NULL
+  -- v1.1: ADD CONSTRAINT chk_ai_feedbacks_source CHECK (dual FK)
 );
 ```
 
@@ -193,7 +177,7 @@ CREATE TABLE ai_feedbacks (
 | `overall_score` | 0–100. Aggregate từ rubric dimensions (D1–D6 hoặc TD1–TD5). |
 | `model_answer` | Câu trả lời mẫu từ AI — hiển thị trong UC-06 Surgical Review. |
 | `key_takeaway` | One-liner key insight. Ví dụ: "Thiếu kết quả cụ thể trong STAR story". |
-| `prompt_version` | `surgical-feedback-v1.0`, `rewrite-eval-v1.0`. Dùng để audit và A/B test prompt. |
+| `prompt_version` | MVP: `surgical-feedback-v1.0`. v1.1 thêm `rewrite-eval-v1.0`. Dùng để audit và A/B test prompt. |
 | `is_fallback` | `true` khi AI timeout và FeedbackProcessor dùng fallback prompt đơn giản hơn. |
 
 ### Query pattern — lấy feedback cho một turn
@@ -243,7 +227,7 @@ CREATE TABLE annotated_segments (
 
 | Column | Ghi chú |
 | ------ | ------- |
-| `segment_text` | Exact substring từ `user_answers.answer_text` (hoặc `rewrite_answers.rewrite_text`). |
+| `segment_text` | Exact substring từ `user_answers.answer_text`. v1.1: cũng từ `rewrite_answers.rewrite_text`. |
 | `start_index` / `end_index` | Character offset trong transcript — dùng để render highlight overlay trên UI. |
 | `highlight_level` | `good`: xanh, `warning`: vàng, `critical`: đỏ — map sang color tokens trong SRS §2.5. |
 | `annotation` | Giải thích tại sao đoạn này được đánh dấu. |

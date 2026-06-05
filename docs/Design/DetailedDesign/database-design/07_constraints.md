@@ -39,41 +39,33 @@ CREATE INDEX idx_user_answers_question_id
 ### 1.3 Feedback
 
 ```sql
--- Partial index: chỉ index rows có original answer feedback
+-- Partial index — raw SQL required (Prisma không support WHERE trong @@index)
 CREATE INDEX idx_ai_feedbacks_user_answer_id
   ON ai_feedbacks(user_answer_id)
   WHERE user_answer_id IS NOT NULL;
-
--- Partial index: chỉ index rows có rewrite feedback
-CREATE INDEX idx_ai_feedbacks_rewrite_answer_id
-  ON ai_feedbacks(rewrite_answer_id)
-  WHERE rewrite_answer_id IS NOT NULL;
 
 -- Lấy segments của một feedback (GET /feedback, Surgical Review render)
 CREATE INDEX idx_annotated_segments_feedback_id
   ON annotated_segments(ai_feedback_id);
 ```
 
-Partial index trên `ai_feedbacks` tránh index bloat từ NULL values — mỗi row chỉ vào đúng
-một trong hai indexes.
+> **v1.1:** Thêm `idx_ai_feedbacks_rewrite_answer_id WHERE rewrite_answer_id IS NOT NULL` khi migrate `rewrite_answers`.
 
-### 1.4 Rewrite
+### 1.4 Rewrite (v1.1 — UC-07)
+
+> **v1.1:** Tạo khi `rewrite_answers` table được migrate.
 
 ```sql
--- Lấy tất cả rewrite attempts của một answer (GET /rewrites)
-CREATE INDEX idx_rewrite_answers_user_answer_id
-  ON rewrite_answers(user_answer_id);
+-- v1.1: CREATE INDEX idx_rewrite_answers_user_answer_id ON rewrite_answers(user_answer_id);
 ```
 
-### 1.5 Progress dashboard
+### 1.5 Progress dashboard (v1.1 — UC-13)
+
+> **v1.1:** Tạo khi `progress_snapshots` table được migrate.
 
 ```sql
--- UC-13: trend chart, streak calculation
-CREATE INDEX idx_progress_snapshots_user_id
-  ON progress_snapshots(user_id);
-
-CREATE INDEX idx_progress_snapshots_user_created
-  ON progress_snapshots(user_id, created_at DESC);
+-- v1.1: CREATE INDEX idx_progress_snapshots_user_id ON progress_snapshots(user_id);
+-- v1.1: CREATE INDEX idx_progress_snapshots_user_created ON progress_snapshots(user_id, created_at DESC);
 ```
 
 ### 1.6 AntiRepeat & Question bank
@@ -116,12 +108,12 @@ CREATE INDEX idx_ai_quality_log_job_type_created
 | idx_session_questions_session_id | session_questions | session_id | Load session plan |
 | idx_user_answers_session_id | user_answers | session_id | Report processor |
 | idx_user_answers_question_id | user_answers | question_id | Per-turn lookup |
-| idx_ai_feedbacks_user_answer_id | ai_feedbacks | user_answer_id (partial) | Original feedback |
-| idx_ai_feedbacks_rewrite_answer_id | ai_feedbacks | rewrite_answer_id (partial) | Rewrite feedback |
+| idx_ai_feedbacks_user_answer_id | ai_feedbacks | user_answer_id (partial) | Original feedback — **raw SQL** |
 | idx_annotated_segments_feedback_id | annotated_segments | ai_feedback_id | Surgical review render |
-| idx_rewrite_answers_user_answer_id | rewrite_answers | user_answer_id | Rewrite history |
-| idx_progress_snapshots_user_id | progress_snapshots | user_id | Dashboard |
-| idx_progress_snapshots_user_created | progress_snapshots | (user_id, created_at DESC) | Trend chart |
+| idx_rewrite_answers_user_answer_id | rewrite_answers | user_answer_id | Rewrite history — **v1.1** |
+| idx_ai_feedbacks_rewrite_answer_id | ai_feedbacks | rewrite_answer_id (partial) | Rewrite feedback — **v1.1, raw SQL** |
+| idx_progress_snapshots_user_id | progress_snapshots | user_id | Dashboard — **v1.1** |
+| idx_progress_snapshots_user_created | progress_snapshots | (user_id, created_at DESC) | Trend chart — **v1.1** |
 | idx_session_questions_session_id_text | session_questions | (session_id, question_text) | AntiRepeat check |
 | idx_question_bank_session_type_difficulty | question_bank | (session_type, difficulty) | Seed fallback filter |
 | idx_question_bank_context_pack | question_bank | context_pack_id | Pack filter |
@@ -253,11 +245,11 @@ Tables áp dụng pattern này (SELECT only cho candidate — service role handl
 | `follow_up_questions` | qua `user_answer_id` | Có — via API endpoint |
 | `ai_feedbacks` | qua `user_answer_id` | Không — service role only |
 | `annotated_segments` | qua `ai_feedback_id` | Không — service role only |
-| `rewrite_answers` | qua `user_answer_id` | Có — via API endpoint |
+| `rewrite_answers` | qua `user_answer_id` | Có — via API endpoint — **v1.1** |
 | `reverse_questions` | `session_id` | Có — via API endpoint |
-| `progress_snapshots` | `user_id` | Không — service role only |
+| `progress_snapshots` | `user_id` | Không — service role only — **v1.1** |
 
-`user_answers`, `follow_up_questions`, `rewrite_answers`, `reverse_questions` cần thêm INSERT policy:
+`user_answers`, `follow_up_questions`, `reverse_questions` cần thêm INSERT policy (MVP). v1.1 thêm `rewrite_answers`:
 
 ```sql
 CREATE POLICY "user_answers: insert own"
@@ -309,16 +301,16 @@ Danh sách tất cả CHECK constraints và NFR chúng enforce:
 | `session_questions` | inline | `order_index >= 0` | — |
 | `user_answers` | inline | `audio_duration_seconds BETWEEN 1 AND 300` | P-17 |
 | `user_answers` | `chk_user_answers_voice_fields` | `answer_mode != 'voice' OR audio_file_url IS NOT NULL` | — |
-| `rewrite_answers` | inline | `attempt_number BETWEEN 1 AND 5` | P-21 |
-| `rewrite_answers` | `chk_rewrite_answers_voice_fields` | `rewrite_mode != 'voice' OR rewrite_audio_url IS NOT NULL` | — |
+| `rewrite_answers` | inline | `attempt_number BETWEEN 1 AND 5` | P-21 — **v1.1** |
+| `rewrite_answers` | `chk_rewrite_answers_voice_fields` | `rewrite_mode != 'voice' OR rewrite_audio_url IS NOT NULL` | — **v1.1** |
 | `ai_feedbacks` | inline | `overall_score BETWEEN 0 AND 100` | — |
-| `ai_feedbacks` | `chk_ai_feedbacks_source` | exactly one FK non-null | Design decision |
+| `ai_feedbacks` | `chk_ai_feedbacks_source` | exactly one FK non-null | v1.1 (MVP: user_answer_id NOT NULL, no dual FK) |
 | `annotated_segments` | `chk_annotated_segments_end_index` | `end_index > start_index` | — |
 | `annotated_segments` | `chk_annotated_segments_improved_version` | `highlight_level = 'good' OR improved_version IS NOT NULL` | SRS UC-06 |
 | `reverse_questions` | inline | `char_length(question_text) <= 500` | UC-12 |
 | `reverse_questions` | inline | `order_index BETWEEN 1 AND 3` | UC-12 max 3 |
-| `progress_snapshots` | inline | `overall_score BETWEEN 0 AND 100` | — |
-| `placement_test_answers` | inline | `question_number BETWEEN 1 AND 10` | UC-11 |
+| `progress_snapshots` | inline | `overall_score BETWEEN 0 AND 100` | — **v1.1** |
+| `placement_test_answers` | inline | `question_number BETWEEN 1 AND 10` | UC-11 — **v1.1** |
 | `ai_quality_log` | inline | `latency_ms >= 0` | — |
 | `ai_quality_log` | inline | `model IN ('gpt-4o', 'whisper-1')` | ADR-004 |
 

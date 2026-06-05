@@ -1,6 +1,6 @@
 # DB Design — Tables: Features & Audit
 
-Nhóm này gồm 4 tables thuộc Layer 4. Tất cả đều độc lập với nhau.
+Nhóm này gồm 4 tables thuộc Layer 4. **MVP:** `reverse_questions` + `ai_quality_log`. `progress_snapshots` và `placement_test_answers` defer sang v1.1.
 `ai_quality_log` không có FK — tạo cuối cùng hoặc bất kỳ lúc nào.
 
 ---
@@ -55,7 +55,9 @@ CREATE TABLE reverse_questions (
 
 ---
 
-## progress_snapshots
+## progress_snapshots (v1.1 — UC-13)
+
+> **v1.1:** Table này không tồn tại trong MVP schema. Tạo khi implement UC-13.
 
 Snapshot điểm competency sau mỗi session hoàn thành. Dùng bởi UC-13 Dashboard để vẽ trend chart
 và tính streak. INSERT bởi `ComprehensiveReportProcessor` cùng lúc với UPDATE `interview_sessions`.
@@ -144,7 +146,9 @@ LIMIT 10;
 
 ---
 
-## placement_test_answers
+## placement_test_answers (v1.1 — UC-11)
+
+> **v1.1:** Table này không tồn tại trong MVP schema. Tạo khi implement UC-11.
 
 Kết quả từng câu trả lời trong bài test định vị (UC-11). Mỗi user chỉ có một bộ kết quả
 (UNIQUE constraint per `question_number`). Nếu user làm lại, cần DELETE cũ trước INSERT mới

@@ -9,7 +9,9 @@ này mà không cập nhật file này và tạo ADR nếu cần.
 
 ### DD-01: ai_feedbacks dùng 2 nullable FKs thay vì polymorphic association
 
-**Quyết định**: `ai_feedbacks` có hai FK nullable — `user_answer_id` và `rewrite_answer_id`.
+**MVP simplification**: `rewrite_answers` table defer sang v1.1 (UC-07). MVP schema: `user_answer_id NOT NULL`, không có `rewrite_answer_id`, không có `chk_ai_feedbacks_source`. v1.1 migration ALTER TABLE để restore dual FK design.
+
+**Quyết định gốc (v1.1)**: `ai_feedbacks` có hai FK nullable — `user_answer_id` và `rewrite_answer_id`.
 CHECK constraint đảm bảo đúng một cái non-null.
 
 **Thay vì**: polymorphic `source_type TEXT + source_id UUID` (không có FK constraint).
@@ -109,16 +111,14 @@ dùng `text-embedding-3-small` từ OpenAI. Xem OQ-4 trong HLD §10.3.
 
 ---
 
-### DD-08: rewrite_answers phải CREATE trước ai_feedbacks trong migration
+### DD-08: rewrite_answers phải CREATE trước ai_feedbacks trong migration (v1.1)
 
-**Quyết định**: Migration order bắt buộc: `rewrite_answers` → `ai_feedbacks`.
+**v1.1 only.** MVP không có `rewrite_answers` — `ai_feedbacks` tạo trực tiếp sau `follow_up_questions`.
+
+**Quyết định (v1.1)**: Migration order bắt buộc: `rewrite_answers` → `ai_feedbacks`.
 
 **Lý do**: `ai_feedbacks` có FK `rewrite_answer_id REFERENCES rewrite_answers(id)`. Nếu
 `ai_feedbacks` được CREATE trước, PostgreSQL sẽ báo lỗi `relation "rewrite_answers" does not exist`.
-
-**Ghi chú**: File [05_tables_answer.md](05_tables_answer.md) đã document migration order đúng.
-Khi viết migration script, tuân thủ thứ tự: `user_answers` → `follow_up_questions` →
-`rewrite_answers` → `ai_feedbacks` → `annotated_segments`.
 
 ---
 
@@ -134,6 +134,33 @@ Redis đủ bền vững cho job queue (AOF enabled theo Railway default).
 **Implication**: Nếu Redis mất, jobs trong queue cũng mất — sessions đang ở trạng thái
 `generating` hoặc `generating_report` sẽ stuck. Recovery: cron job kiểm tra sessions stuck
 quá 5 phút và mark `interrupted`. Đây là edge case chấp nhận được ở prototype scope.
+
+---
+
+### DD-10: Prisma ORM dùng service role key — bypass RLS
+
+**Quyết định**: `DATABASE_URL` trong NestJS dùng Supabase **service role key**, không phải anon key.
+
+**Lý do**: Prisma cần ghi vào rows của bất kỳ user nào (BullMQ processors, admin operations). RLS với `auth.uid()` không hoạt động cho service-side writes vì không có user JWT trong context.
+
+**Trade-off**: RLS bị bypass hoàn toàn bởi Prisma. NestJS `AuthGuard` (JWT verify) và `RoleGuard` là primary authorization layer. RLS policies vẫn tồn tại trong DB như safety net cho client-side Supabase SDK calls (nếu có trong tương lai).
+
+**Implementation note**: `auth.users` là cross-schema FK (schema `auth` ≠ schema `public`). Prisma không model FK cross-schema — FK chỉ tồn tại trong raw SQL trigger `handle_new_auth_user()`.
+
+---
+
+### DD-11: Prisma migrate là source of truth — raw SQL cho phần không model được
+
+**Quyết định**: `prisma migrate dev/deploy` quản lý table/column/relation/standard index. Raw SQL files riêng cho: RLS policies, triggers, partial indexes, seed data.
+
+**Lý do**: Prisma 5.x không express `WHERE` clause trong `@@index()` (partial index). RLS policies và triggers không có Prisma equivalent. Tách hai loại này giúp `prisma migrate` và raw SQL có lifecycle độc lập.
+
+**Apply order**:
+1. `prisma migrate deploy` — tạo tables, columns, relations, standard indexes
+2. Raw SQL theo thứ tự: `triggers_*.sql` → `rls_*.sql` → `indexes_partial_*.sql` → `seed_*.sql`
+3. Verify: `prisma db pull` phải không generate migration mới
+
+**File location**: `server/prisma/migrations/raw/` — không managed bởi Prisma, apply thủ công qua Supabase SQL editor hoặc migration script.
 
 ---
 
@@ -209,29 +236,36 @@ Lý do: câu hỏi là IP của product, không public source.
 
 ### 2.3 Migration file naming
 
+**MVP migrations** (Prisma-managed, trong `server/prisma/migrations/`):
 ```
-supabase/migrations/
-├── 20260510000001_create_context_packs.sql
-├── 20260510000002_create_question_bank.sql
-├── 20260510000003_create_users.sql
-├── 20260510000004_create_user_profiles.sql
-├── 20260510000005_create_interview_sessions.sql
-├── 20260510000006_create_session_questions.sql
-├── 20260510000007_create_user_answers.sql
-├── 20260510000008_create_follow_up_questions.sql
-├── 20260510000009_create_rewrite_answers.sql
-├── 20260510000010_create_ai_feedbacks.sql
-├── 20260510000011_create_annotated_segments.sql
-├── 20260510000012_create_reverse_questions.sql
-├── 20260510000013_create_progress_snapshots.sql
-├── 20260510000014_create_placement_test_answers.sql
-├── 20260510000015_create_ai_quality_log.sql
-├── 20260510000016_create_indexes.sql
-├── 20260510000017_create_rls_policies.sql
-├── 20260510000018_create_triggers.sql
-└── 20260510000019_seed_context_packs.sql
+<timestamp>_create_context_packs/migration.sql
+<timestamp>_create_question_bank/migration.sql
+<timestamp>_create_users/migration.sql
+<timestamp>_create_user_profiles/migration.sql
+<timestamp>_create_interview_sessions/migration.sql
+<timestamp>_create_session_questions/migration.sql
+<timestamp>_create_user_answers/migration.sql
+<timestamp>_create_follow_up_questions/migration.sql
+<timestamp>_create_ai_feedbacks/migration.sql
+<timestamp>_create_annotated_segments/migration.sql
+<timestamp>_create_reverse_questions/migration.sql
+<timestamp>_create_ai_quality_log/migration.sql
 ```
 
-Mỗi table một migration file riêng — dễ rollback từng table khi cần.
-`create_triggers.sql` (M018) chứa trigger `on_auth_user_created` — phải sau `create_users.sql`.
-`seed_context_packs.sql` (M019) INSERT 2 rows — phải sau `create_context_packs.sql`.
+**Raw SQL** (`server/prisma/migrations/raw/`):
+```
+triggers_handle_new_auth_user.sql
+rls_all_tables.sql
+indexes_partial_ai_feedbacks.sql
+indexes_partial_question_bank.sql
+seed_context_packs.sql
+```
+
+**v1.1 migrations** (thêm sau):
+```
+<timestamp>_create_rewrite_answers/migration.sql
+<timestamp>_alter_ai_feedbacks_add_rewrite_fk/migration.sql
+<timestamp>_create_progress_snapshots/migration.sql
+<timestamp>_create_placement_test_answers/migration.sql
+<timestamp>_alter_user_profiles_add_cv_columns/migration.sql
+```

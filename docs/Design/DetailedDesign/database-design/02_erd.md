@@ -1,6 +1,6 @@
 # DB Design — Entity Relationship Diagram
 
-Diagram bao gồm tất cả 15 tables với key columns và relationships.
+Diagram bao gồm 12 MVP tables. 3 tables deferred (v1.1): `rewrite_answers`, `progress_snapshots`, `placement_test_answers`.
 
 Ký hiệu quan hệ:
 - `||--||` = one-to-one (bắt buộc cả hai phía)
@@ -53,10 +53,6 @@ erDiagram
         int years_experience
         text default_language
         boolean tts_enabled
-        text placement_level
-        text cv_file_url
-        text cv_parsed_text
-        jsonb cv_structured_json
         timestamptz deleted_at
     }
 
@@ -122,21 +118,9 @@ erDiagram
         text follow_up_answer_text
     }
 
-    rewrite_answers {
-        uuid id PK
-        uuid user_answer_id FK
-        int attempt_number
-        text rewrite_mode
-        text rewrite_text
-        text rewrite_audio_url
-        int rewrite_audio_duration_seconds
-        int delta_score
-    }
-
     ai_feedbacks {
         uuid id PK
         uuid user_answer_id FK
-        uuid rewrite_answer_id FK
         int overall_score
         text model_answer
         text key_takeaway
@@ -167,23 +151,6 @@ erDiagram
         int order_index
     }
 
-    progress_snapshots {
-        uuid id PK
-        uuid user_id FK
-        uuid session_id FK
-        jsonb competency_scores_json
-        int overall_score
-    }
-
-    placement_test_answers {
-        uuid id PK
-        uuid user_id FK
-        int question_number
-        text question_text
-        text candidate_answer
-        boolean is_correct
-    }
-
     ai_quality_log {
         uuid id PK
         uuid session_id
@@ -201,31 +168,23 @@ erDiagram
     context_packs    ||--o{ interview_sessions   : "context_pack_id"
     users            ||--|| user_profiles        : "user_id"
     users            ||--o{ interview_sessions   : "user_id"
-    users            ||--o{ progress_snapshots   : "user_id"
-    users            ||--o{ placement_test_answers : "user_id"
     interview_sessions ||--o{ session_questions  : "session_id"
     interview_sessions ||--o{ user_answers       : "session_id"
     interview_sessions ||--o{ reverse_questions  : "session_id"
-    interview_sessions ||--o{ progress_snapshots : "session_id"
     question_bank    |o--o{ session_questions    : "question_bank_id (nullable)"
     session_questions ||--o{ user_answers        : "question_id"
     user_answers     ||--o{ follow_up_questions  : "user_answer_id"
-    user_answers     ||--o{ rewrite_answers      : "user_answer_id"
-    user_answers     |o--o{ ai_feedbacks         : "user_answer_id (nullable)"
-    rewrite_answers  |o--o{ ai_feedbacks         : "rewrite_answer_id (nullable)"
+    user_answers     ||--o{ ai_feedbacks         : "user_answer_id"
     ai_feedbacks     ||--o{ annotated_segments   : "ai_feedback_id"
 ```
 
 ## Ghi chú quan hệ
 
-### ai_feedbacks — dual nullable FK
+### ai_feedbacks — MVP simplification
 
-`ai_feedbacks` có hai FK nullable: `user_answer_id` và `rewrite_answer_id`. Constraint
-`chk_feedback_source` đảm bảo đúng một trong hai là NOT NULL. Vì thế:
+**MVP:** `user_answer_id NOT NULL` — mọi feedback đều từ `user_answers`. `rewrite_answer_id` và `chk_feedback_source` không tồn tại trong v1 schema.
 
-- Một `user_answer` có tối đa một `ai_feedbacks` row (original feedback)
-- Một `rewrite_answer` có tối đa một `ai_feedbacks` row (rewrite evaluation)
-- `annotated_segments` FK vào `ai_feedbacks.id` — tự động áp dụng cho cả hai trường hợp
+**v1.1:** ALTER TABLE thêm `rewrite_answer_id UUID NULL FK → rewrite_answers(id)`, restore `chk_feedback_source` dual-FK constraint, đổi `user_answer_id` về nullable. Chi tiết trong `08_design_decisions.md` (DD-01).
 
 ### session_questions — nullable question_bank_id
 

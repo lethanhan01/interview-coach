@@ -159,9 +159,10 @@ CREATE TRIGGER on_auth_user_created
 
 ## user_profiles
 
-Thông tin profile của candidate — target role, level, tech stack, CV. One-to-one với `users`.
-Tạo sau khi user hoàn thành UC-02 (Profile Setup). UC-11 (Placement Test) ghi kết quả vào
-`placement_level`.
+Thông tin profile của candidate — target role, level, tech stack. One-to-one với `users`.
+Tạo sau khi user hoàn thành UC-02 (Profile Setup).
+
+> **v1.1:** `placement_level` (UC-11), `cv_file_url`, `cv_parsed_text`, `cv_structured_json` (UC-02 CV upload) defer sang v1.1. ADD COLUMN qua migration sau.
 
 ```sql
 CREATE TABLE user_profiles (
@@ -180,14 +181,14 @@ CREATE TABLE user_profiles (
   default_language      TEXT        NOT NULL DEFAULT 'vi'
     CHECK (default_language IN ('vi', 'en')),
   tts_enabled           BOOLEAN     NOT NULL DEFAULT false,
-  placement_level       TEXT        NULL
-    CHECK (placement_level IN ('intern', 'fresher', 'junior')),
-  cv_file_url           TEXT        NULL,
-  cv_parsed_text        TEXT        NULL,
-  cv_structured_json    JSONB       NULL,
   deleted_at            TIMESTAMPTZ NULL,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+
+  -- v1.1: ADD COLUMN placement_level TEXT NULL CHECK (placement_level IN ('intern', 'fresher', 'junior'));
+  -- v1.1: ADD COLUMN cv_file_url TEXT NULL;
+  -- v1.1: ADD COLUMN cv_parsed_text TEXT NULL;
+  -- v1.1: ADD COLUMN cv_structured_json JSONB NULL;
 );
 ```
 
@@ -197,23 +198,3 @@ CREATE TABLE user_profiles (
 | ------ | ------- |
 | `target_position` | Free text: "Backend Engineer", "iOS Developer". Không normalize — dùng để inject vào AI prompt. |
 | `preferred_tech_stack` | Max 200 chars. Ví dụ: "Node.js, PostgreSQL, Docker". |
-| `placement_level` | NULL cho đến khi UC-11 chạy. Nếu NULL, session setup dùng `target_level` thay thế. |
-| `cv_file_url` | Supabase Storage path: `cv/{user_id}/{filename}.pdf`. Binary không lưu trong DB. |
-| `cv_parsed_text` | Text extracted từ PDF bởi `pdf-parse`. Cache 24h trong Redis key `cv_text:{user_id}`. |
-| `cv_structured_json` | Structured CV: `{name, education[], experience[], skills[], languages[]}`. Set sau khi AI parse CV. |
-
-### cv_structured_json schema
-
-```json
-{
-  "name": "Nguyễn Văn A",
-  "education": [
-    { "school": "ĐHBK Hà Nội", "degree": "Kỹ sư", "major": "CNTT", "gpa": 3.2, "year": 2026 }
-  ],
-  "experience": [
-    { "company": "Startup XYZ", "role": "Backend Intern", "duration_months": 3, "description": "..." }
-  ],
-  "skills": ["Node.js", "PostgreSQL", "Git"],
-  "languages": [{ "lang": "Vietnamese", "level": "native" }, { "lang": "English", "level": "B2" }]
-}
-```
