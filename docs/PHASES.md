@@ -19,8 +19,8 @@ This file tracks phase transitions and handoff artifacts.
   - A4: LLM feedback tiếng Việt có đủ cụ thể và actionable không? (pilot 5 users + HR review)
   - A5: Retention — user có quay lại ≥2 phiên không? (beta test)
 
-## Phase: Requirements Analysis (current)
-- Status: In progress
+## Phase: Requirements Analysis
+- Status: Completed 2026-05-09
 - Started: 2026-05-06
 - Entry criteria met:
   - [x] Problem statement được định nghĩa rõ (Discovery §8)
@@ -47,7 +47,34 @@ This file tracks phase transitions and handoff artifacts.
   - OQ-001: JD length threshold — SRS FR-001 nói "≥50 ký tự" nhưng cần validate với user liệu có đủ không
   - OQ-002: Context Pack switching — user có thể đổi VN↔Western trong cùng một session hay chỉ lúc tạo session?
 
-## Phase: Architectural Design (upcoming)
+## Phase: Architectural Design
+
+- Status: Completed 2026-06-06
+- Started: 2026-05-09
+- Outputs:
+  - docs/Design/ArchitecturalDesign/SAD_InterviewAI_v1.0.md
+  - docs/Design/ArchitecturalDesign/HLD_InterviewAI_v1.0.md
+  - docs/Design/ArchitecturalDesign/ADRs/ (ADR-001 to ADR-008)
+  - docs/Design/DetailedDesign/database-design/ (9 files, 11 MVP tables)
+  - docs/Design/DetailedDesign/api-design/ (6 files, 23 MVP endpoints)
+  - docs/Design/DetailedDesign/uiux-design/ (4 files, 5 MVP routes)
+  - docs/Design/DetailedDesign/lld/ (8 files, 5 NestJS modules)
+- Key decisions:
+  - NestJS-only backend, no FastAPI (ADR-005/D-01)
+  - Supabase for auth + DB + storage (ADR-003)
+  - OpenAI GPT-4o via npm SDK (ADR-004)
+  - SSE + Redis Pub/Sub instead of WebSocket (ADR-006)
+  - BullMQ 5-queue architecture, timeouts locked (ADR-007/D-07)
+  - pgvector deferred to v2 (D-05)
+
+## Phase: Implementation (current)
+
 - Status: Not started
-- Entry criteria: Requirements Analysis exit criteria met
-- ...
+- Entry criteria: Architectural Design exit criteria met (all design docs complete)
+- Target deliverables:
+  - [ ] NestJS server — 5 modules, all endpoints
+  - [ ] Next.js client — 5 MVP routes
+  - [ ] BullMQ workers — 4 processors (RewriteEval v1.1)
+  - [ ] Supabase migrations — 11 tables, RLS policies
+  - [ ] Test coverage >= 80% (unit + integration)
+  - [ ] E2E tests for UC-02/03/04/05/06
