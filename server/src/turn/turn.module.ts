@@ -2,7 +2,10 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { AuthModule } from '../auth/auth.module';
 import { AiModule } from '../ai/ai.module';
-import { FOLLOW_UP_QUEUE, FEEDBACK_QUEUE } from '../common/constants/queue.constants';
+import {
+  FOLLOW_UP_QUEUE,
+  FEEDBACK_QUEUE,
+} from '../common/constants/queue.constants';
 import { TurnController } from './turn.controller';
 import { TurnService } from './turn.service';
 import { WhisperService } from './whisper.service';

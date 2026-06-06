@@ -1,7 +1,7 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { InterviewSession } from '../../generated/prisma/client.js';
+import { InterviewSession } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';

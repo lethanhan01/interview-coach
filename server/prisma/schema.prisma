@@ -1,68 +1,57 @@
-// Prisma schema for InterviewCoach MVP
-// 12 tables — source of truth: docs/Design/DetailedDesign/database-design/
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-// ─── Layer 0: Lookup ──────────────────────────────────────────────────────────
-
 model ContextPack {
-  id             String   @id @db.Text
-  name           String   @db.Text
-  rubricJson     Json     @map("rubric_json") @db.JsonB
-  scoringWeights Json     @map("scoring_weights") @db.JsonB
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  // Relations
-  questionBank      QuestionBank[]
+  id                String             @id
+  name              String
+  rubricJson        Json               @map("rubric_json")
+  scoringWeights    Json               @map("scoring_weights")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   interviewSessions InterviewSession[]
+  questionBank      QuestionBank[]
 
   @@map("context_packs")
 }
 
 model QuestionBank {
-  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  content          String    @db.Text
-  sessionType      String    @map("session_type") @db.Text
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  content          String
+  sessionType      String            @map("session_type")
   difficulty       Int
-  contextPackId    String    @map("context_pack_id") @db.Text
-  subcategory      String    @db.Text
-  competencyDomain String    @map("competency_domain") @db.Text
-  applicableRoles  String[]  @map("applicable_roles")
-  applicableLevels String[]  @map("applicable_levels")
-  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  // Relations
+  contextPackId    String            @map("context_pack_id")
+  subcategory      String
+  competencyDomain String            @map("competency_domain")
+  applicableRoles  String[]          @map("applicable_roles")
+  applicableLevels String[]          @map("applicable_levels")
+  deletedAt        DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   contextPack      ContextPack       @relation(fields: [contextPackId], references: [id])
   sessionQuestions SessionQuestion[]
 
+  @@index([contextPackId], map: "idx_question_bank_context_pack", where: raw("(deleted_at IS NULL)"))
+  @@index([sessionType, difficulty], map: "idx_question_bank_session_type_difficulty", where: raw("(deleted_at IS NULL)"))
   @@map("question_bank")
 }
 
-// ─── Layer 1: Auth ────────────────────────────────────────────────────────────
-
 model User {
-  id               String    @id @db.Uuid
-  email            String    @unique @db.Text
-  role             String    @default("candidate") @db.Text
-  status           String    @default("active") @db.Text
-  profileCompleted Boolean   @default(false) @map("profile_completed")
-  lastLoginAt      DateTime? @map("last_login_at") @db.Timestamptz(6)
-  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  // Relations
-  profile           UserProfile?
+  id                String             @id @db.Uuid
+  email             String             @unique
+  role              String             @default("candidate")
+  status            String             @default("active")
+  profileCompleted  Boolean            @default(false) @map("profile_completed")
+  lastLoginAt       DateTime?          @map("last_login_at") @db.Timestamptz(6)
+  deletedAt         DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   interviewSessions InterviewSession[]
+  profile           UserProfile?
 
   @@map("users")
 }
@@ -70,178 +59,165 @@ model User {
 model UserProfile {
   id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId             String    @unique @map("user_id") @db.Uuid
-  fullName           String    @map("full_name") @db.Text
-  targetPosition     String    @map("target_position") @db.Text
-  targetRoleCategory String    @map("target_role_category") @db.Text
-  targetLevel        String    @map("target_level") @db.Text
-  preferredTechStack String?   @map("preferred_tech_stack") @db.Text
+  fullName           String    @map("full_name")
+  targetPosition     String    @map("target_position")
+  targetRoleCategory String    @map("target_role_category")
+  targetLevel        String    @map("target_level")
+  preferredTechStack String?   @map("preferred_tech_stack")
   yearsExperience    Int       @default(0) @map("years_experience")
-  defaultLanguage    String    @default("vi") @map("default_language") @db.Text
+  defaultLanguage    String    @default("vi") @map("default_language")
   ttsEnabled         Boolean   @default(false) @map("tts_enabled")
   deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_profiles")
 }
 
-// ─── Layer 2: Session ─────────────────────────────────────────────────────────
-
 model InterviewSession {
-  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId                String    @map("user_id") @db.Uuid
-  jobDescription        String    @map("job_description") @db.Text
-  jdSource              String    @map("jd_source") @db.Text
-  jdUrl                 String?   @map("jd_url") @db.Text
-  jobTitle              String?   @map("job_title") @db.Text
-  sessionType           String    @map("session_type") @db.Text
-  numQuestions          Int       @default(5) @map("num_questions")
-  difficulty            String    @default("medium") @db.Text
-  persona               String    @default("neutral_tech_lead") @db.Text
-  mode                  String    @default("practice") @db.Text
-  durationMin           Int       @default(30) @map("duration_min")
-  language              String    @default("vi") @db.Text
-  contextPackId         String    @map("context_pack_id") @db.Text
-  showPrepCard          Boolean   @default(false) @map("show_prep_card")
-  status                String    @default("generating") @db.Text
-  planJson              Json?     @map("plan_json") @db.JsonB
-  openingTranscript     String?   @map("opening_transcript") @db.Text
-  selfEvalJson          Json?     @map("self_eval_json") @db.JsonB
-  overallScore          Int?      @map("overall_score")
-  executiveSummaryJson  Json?     @map("executive_summary_json") @db.JsonB
-  commAnalysisJson      Json?     @map("comm_analysis_json") @db.JsonB
-  competencyHeatmapJson Json?     @map("competency_heatmap_json") @db.JsonB
-  reverseQEvalJson      Json?     @map("reverse_q_eval_json") @db.JsonB
-  actionPlanJson        Json?     @map("action_plan_json") @db.JsonB
-  completedAt           DateTime? @map("completed_at") @db.Timestamptz(6)
-  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                    String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String            @map("user_id") @db.Uuid
+  jobDescription        String            @map("job_description")
+  jdSource              String            @map("jd_source")
+  jdUrl                 String?           @map("jd_url")
+  jobTitle              String?           @map("job_title")
+  sessionType           String            @map("session_type")
+  numQuestions          Int               @default(5) @map("num_questions")
+  difficulty            String            @default("medium")
+  persona               String            @default("neutral_tech_lead")
+  mode                  String            @default("practice")
+  durationMin           Int               @default(30) @map("duration_min")
+  language              String            @default("vi")
+  contextPackId         String            @map("context_pack_id")
+  showPrepCard          Boolean           @default(false) @map("show_prep_card")
+  status                String            @default("generating")
+  planJson              Json?             @map("plan_json")
+  openingTranscript     String?           @map("opening_transcript")
+  selfEvalJson          Json?             @map("self_eval_json")
+  overallScore          Int?              @map("overall_score")
+  executiveSummaryJson  Json?             @map("executive_summary_json")
+  commAnalysisJson      Json?             @map("comm_analysis_json")
+  competencyHeatmapJson Json?             @map("competency_heatmap_json")
+  reverseQEvalJson      Json?             @map("reverse_q_eval_json")
+  actionPlanJson        Json?             @map("action_plan_json")
+  completedAt           DateTime?         @map("completed_at") @db.Timestamptz(6)
+  createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  contextPack           ContextPack       @relation(fields: [contextPackId], references: [id])
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reverseQuestions      ReverseQuestion[]
+  sessionQuestions      SessionQuestion[]
+  userAnswers           UserAnswer[]
 
-  // Relations
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contextPack      ContextPack       @relation(fields: [contextPackId], references: [id])
-  sessionQuestions SessionQuestion[]
-  userAnswers      UserAnswer[]
-  reverseQuestions ReverseQuestion[]
-
+  @@index([createdAt(sort: Desc)], map: "idx_interview_sessions_created_at")
+  @@index([userId, createdAt(sort: Desc)], map: "idx_interview_sessions_user_created")
+  @@index([userId], map: "idx_interview_sessions_user_id")
   @@map("interview_sessions")
 }
 
 model SessionQuestion {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionId        String   @map("session_id") @db.Uuid
-  questionBankId   String?  @map("question_bank_id") @db.Uuid
-  questionText     String   @map("question_text") @db.Text
-  orderIndex       Int      @map("order_index")
-  questionCategory String   @map("question_category") @db.Text
-  competencyDomain String   @map("competency_domain") @db.Text
-  rubricJson       Json     @map("rubric_json") @db.JsonB
-  estimatedTimeMin Int?     @map("estimated_time_min")
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  // Relations
-  session      InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  questionBank QuestionBank?    @relation(fields: [questionBankId], references: [id], onDelete: SetNull)
-  userAnswers  UserAnswer[]
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId        String           @map("session_id") @db.Uuid
+  questionBankId   String?          @map("question_bank_id") @db.Uuid
+  questionText     String           @map("question_text")
+  orderIndex       Int              @map("order_index")
+  questionCategory String           @map("question_category")
+  competencyDomain String           @map("competency_domain")
+  rubricJson       Json             @map("rubric_json")
+  estimatedTimeMin Int?             @map("estimated_time_min")
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  questionBank     QuestionBank?    @relation(fields: [questionBankId], references: [id])
+  session          InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userAnswers      UserAnswer[]
 
   @@unique([sessionId, orderIndex])
+  @@index([sessionId], map: "idx_session_questions_session_id")
+  @@index([sessionId, questionText], map: "idx_session_questions_session_id_text")
   @@map("session_questions")
 }
 
-// ─── Layer 3: Answer & Feedback ───────────────────────────────────────────────
-
 model UserAnswer {
-  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionId            String    @map("session_id") @db.Uuid
-  questionId           String    @map("question_id") @db.Uuid
-  answerMode           String    @map("answer_mode") @db.Text
-  answerText           String    @map("answer_text") @db.Text
-  audioFileUrl         String?   @map("audio_file_url") @db.Text
-  audioDurationSeconds Int?      @map("audio_duration_seconds")
-  audioSizeBytes       Int?      @map("audio_size_bytes")
-  skipped              Boolean   @default(false)
-  voiceMetricsJson     Json?     @map("voice_metrics_json") @db.JsonB
-  feedbackGenerated    Boolean   @default(false) @map("feedback_generated")
-  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId            String            @map("session_id") @db.Uuid
+  questionId           String            @map("question_id") @db.Uuid
+  answerMode           String            @map("answer_mode")
+  answerText           String            @map("answer_text")
+  audioFileUrl         String?           @map("audio_file_url")
+  audioDurationSeconds Int?              @map("audio_duration_seconds")
+  audioSizeBytes       Int?              @map("audio_size_bytes")
+  skipped              Boolean           @default(false)
+  voiceMetricsJson     Json?             @map("voice_metrics_json")
+  feedbackGenerated    Boolean           @default(false) @map("feedback_generated")
+  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  aiFeedback           AiFeedback?
+  followUpQuestion     FollowUpQuestion?
+  question             SessionQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  session              InterviewSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
-  // Relations
-  session          InterviewSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  question         SessionQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  followUpQuestion FollowUpQuestion?
-  aiFeedback       AiFeedback?
-
+  @@index([questionId], map: "idx_user_answers_question_id")
+  @@index([sessionId], map: "idx_user_answers_session_id")
   @@map("user_answers")
 }
 
 model FollowUpQuestion {
-  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userAnswerId       String   @unique @map("user_answer_id") @db.Uuid
-  followUpText       String   @map("follow_up_text") @db.Text
-  triggerRule        String   @map("trigger_rule") @db.Text
-  triggerReason      String?  @map("trigger_reason") @db.Text
-  followUpAnswerText String?  @map("follow_up_answer_text") @db.Text
-  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  // Relations
-  userAnswer UserAnswer @relation(fields: [userAnswerId], references: [id], onDelete: Cascade)
+  id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userAnswerId       String     @unique @map("user_answer_id") @db.Uuid
+  followUpText       String     @map("follow_up_text")
+  triggerRule        String     @map("trigger_rule")
+  triggerReason      String?    @map("trigger_reason")
+  followUpAnswerText String?    @map("follow_up_answer_text")
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  userAnswer         UserAnswer @relation(fields: [userAnswerId], references: [id], onDelete: Cascade)
 
   @@map("follow_up_questions")
 }
 
 model AiFeedback {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userAnswerId  String   @unique @map("user_answer_id") @db.Uuid
-  overallScore  Int      @map("overall_score")
-  modelAnswer   String   @map("model_answer") @db.Text
-  keyTakeaway   String   @map("key_takeaway") @db.Text
-  promptVersion String   @map("prompt_version") @db.Text
-  isFallback    Boolean  @default(false) @map("is_fallback")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  // Relations
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userAnswerId      String             @unique @map("user_answer_id") @db.Uuid
+  overallScore      Int                @map("overall_score")
+  modelAnswer       String             @map("model_answer")
+  keyTakeaway       String             @map("key_takeaway")
+  promptVersion     String             @map("prompt_version")
+  isFallback        Boolean            @default(false) @map("is_fallback")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   userAnswer        UserAnswer         @relation(fields: [userAnswerId], references: [id], onDelete: Cascade)
   annotatedSegments AnnotatedSegment[]
 
+  @@index([userAnswerId], map: "idx_ai_feedbacks_user_answer_id", where: raw("(user_answer_id IS NOT NULL)"))
   @@map("ai_feedbacks")
 }
 
 model AnnotatedSegment {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  aiFeedbackId    String   @map("ai_feedback_id") @db.Uuid
-  segmentText     String   @map("segment_text") @db.Text
-  startIndex      Int      @map("start_index")
-  endIndex        Int      @map("end_index")
-  highlightLevel  String   @map("highlight_level") @db.Text
-  annotation      String   @db.Text
-  suggestion      String?  @db.Text
-  improvedVersion String?  @map("improved_version") @db.Text
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  aiFeedbackId    String     @map("ai_feedback_id") @db.Uuid
+  segmentText     String     @map("segment_text")
+  startIndex      Int        @map("start_index")
+  endIndex        Int        @map("end_index")
+  highlightLevel  String     @map("highlight_level")
+  annotation      String
+  suggestion      String?
+  improvedVersion String?    @map("improved_version")
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  aiFeedback      AiFeedback @relation(fields: [aiFeedbackId], references: [id], onDelete: Cascade)
 
-  // Relations
-  aiFeedback AiFeedback @relation(fields: [aiFeedbackId], references: [id], onDelete: Cascade)
-
+  @@index([aiFeedbackId], map: "idx_annotated_segments_feedback_id")
   @@map("annotated_segments")
 }
 
-// ─── Layer 4: Features & Audit ────────────────────────────────────────────────
-
 model ReverseQuestion {
-  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionId         String   @map("session_id") @db.Uuid
-  questionText      String   @map("question_text") @db.Text
-  answerMode        String   @default("text") @map("answer_mode") @db.Text
-  aiResponse        String   @map("ai_response") @db.Text
-  evaluationLabel   String   @map("evaluation_label") @db.Text
-  evaluationComment String?  @map("evaluation_comment") @db.Text
-  orderIndex        Int      @map("order_index")
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  // Relations
-  session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId         String           @map("session_id") @db.Uuid
+  questionText      String           @map("question_text")
+  answerMode        String           @default("text") @map("answer_mode")
+  aiResponse        String           @map("ai_response")
+  evaluationLabel   String           @map("evaluation_label")
+  evaluationComment String?          @map("evaluation_comment")
+  orderIndex        Int              @map("order_index")
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  session           InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, orderIndex])
   @@map("reverse_questions")
@@ -250,15 +226,17 @@ model ReverseQuestion {
 model AiQualityLog {
   id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sessionId     String?  @map("session_id") @db.Uuid
-  jobType       String   @map("job_type") @db.Text
-  promptVersion String   @map("prompt_version") @db.Text
-  model         String   @db.Text
+  jobType       String   @map("job_type")
+  promptVersion String   @map("prompt_version")
+  model         String
   inputTokens   Int?     @map("input_tokens")
   outputTokens  Int?     @map("output_tokens")
   latencyMs     Int      @map("latency_ms")
   isFallback    Boolean  @default(false) @map("is_fallback")
-  errorCode     String?  @map("error_code") @db.Text
+  errorCode     String?  @map("error_code")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
+  @@index([createdAt(sort: Desc)], map: "idx_ai_quality_log_created_at")
+  @@index([jobType, createdAt(sort: Desc)], map: "idx_ai_quality_log_job_type_created")
   @@map("ai_quality_log")
 }
