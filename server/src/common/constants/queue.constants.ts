@@ -3,3 +3,6 @@ export const FOLLOW_UP_QUEUE = 'follow-up';
 export const FEEDBACK_QUEUE = 'feedback';
 export const REPORT_QUEUE = 'comprehensive-report';
 export const REWRITE_EVAL_QUEUE = 'rewrite-eval';
+
+export const FEEDBACK_JOB_ATTEMPTS = 2; // retry 1 = 2 total attempts (ADR-007)
+export const QUESTION_GEN_JOB_ATTEMPTS = 2; // retry 1 = 2 total attempts (ADR-007)

@@ -1,0 +1,33 @@
+import {
+  IsEnum,
+  IsString,
+  MinLength,
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+  IsArray,
+} from 'class-validator';
+
+export class CreateSessionDto {
+  @IsString()
+  @MinLength(100)
+  jobDescription: string;
+
+  @IsEnum(['hr', 'technical', 'mixed'])
+  sessionType: 'hr' | 'technical' | 'mixed';
+
+  @IsEnum(['VN', 'Western'])
+  contextPack: 'VN' | 'Western';
+
+  @IsOptional()
+  @IsInt()
+  @Min(3)
+  @Max(10)
+  numQuestions?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  targetRoles?: string[];
+}
