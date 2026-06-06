@@ -33,8 +33,11 @@ export class PromptBuilderService {
     return `${baseSystem}\n\nCultural context: ${contextPack.culturalNotes}\nScoring dimensions: ${contextPack.rubricDimensions.join(', ')}.`;
   }
 
-  injectDynamicContext(params: DynamicContextParams): ChatCompletionMessageParam[] {
-    const { systemMessage, jobDescription, question, answer, sessionHistory } = params;
+  injectDynamicContext(
+    params: DynamicContextParams,
+  ): ChatCompletionMessageParam[] {
+    const { systemMessage, jobDescription, question, answer, sessionHistory } =
+      params;
 
     let userContent = `<job_description>\n${jobDescription}\n</job_description>`;
 

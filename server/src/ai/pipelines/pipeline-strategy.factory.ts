@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { HrPipelineService } from './hr.pipeline.service';
 import { TechnicalPipelineService } from './technical.pipeline.service';
 import { MixedPipelineService } from './mixed.pipeline.service';
-import type { InterviewPipeline, SessionType } from './interview-pipeline.interface';
+import type {
+  InterviewPipeline,
+  SessionType,
+} from './interview-pipeline.interface';
 
 @Injectable()
 export class PipelineStrategyFactory {

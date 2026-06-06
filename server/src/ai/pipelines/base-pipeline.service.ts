@@ -13,7 +13,12 @@ import {
   FeedbackInput,
   SurgicalFeedback,
 } from './interview-pipeline.interface';
-import { QuestionsSchema, FollowUpSchema, FeedbackSchema, PROMPT_VERSION } from './pipeline.schemas';
+import {
+  QuestionsSchema,
+  FollowUpSchema,
+  FeedbackSchema,
+  PROMPT_VERSION,
+} from './pipeline.schemas';
 
 export abstract class BasePipelineService implements InterviewPipeline {
   constructor(
@@ -22,9 +27,14 @@ export abstract class BasePipelineService implements InterviewPipeline {
     protected readonly zodValidator: ZodValidatorService,
   ) {}
 
-  async generateQuestions(input: QuestionGenInput): Promise<GeneratedQuestion[]> {
+  async generateQuestions(
+    input: QuestionGenInput,
+  ): Promise<GeneratedQuestion[]> {
     const base = this.promptBuilder.buildBaseSystem('question-generation');
-    const withPack = this.promptBuilder.applyContextPack(base, input.contextPackConfig);
+    const withPack = this.promptBuilder.applyContextPack(
+      base,
+      input.contextPackConfig,
+    );
     const messages = this.promptBuilder.injectDynamicContext({
       systemMessage: withPack,
       jobDescription: input.jobDescriptionText,
@@ -40,7 +50,11 @@ export abstract class BasePipelineService implements InterviewPipeline {
     try {
       parsed = JSON.parse(raw);
     } catch {
-      throw new InterviewAIException(ErrorCode.AI_SERVICE_ERROR, HttpStatus.BAD_GATEWAY, 'Invalid JSON from AI');
+      throw new InterviewAIException(
+        ErrorCode.AI_SERVICE_ERROR,
+        HttpStatus.BAD_GATEWAY,
+        'Invalid JSON from AI',
+      );
     }
     const validated = this.zodValidator.validate(QuestionsSchema, parsed);
     return validated.questions.slice(0, input.totalQuestions).map((q) => ({
@@ -53,7 +67,10 @@ export abstract class BasePipelineService implements InterviewPipeline {
 
   async generateFollowUp(input: FollowUpInput): Promise<FollowUpResult | null> {
     const base = this.promptBuilder.buildBaseSystem('follow-up');
-    const withPack = this.promptBuilder.applyContextPack(base, input.contextPackConfig);
+    const withPack = this.promptBuilder.applyContextPack(
+      base,
+      input.contextPackConfig,
+    );
     const messages = this.promptBuilder.injectDynamicContext({
       systemMessage: withPack,
       jobDescription: '',
@@ -87,7 +104,10 @@ export abstract class BasePipelineService implements InterviewPipeline {
 
   async evaluateAnswer(input: FeedbackInput): Promise<SurgicalFeedback> {
     const base = this.promptBuilder.buildBaseSystem('surgical-feedback');
-    const withPack = this.promptBuilder.applyContextPack(base, input.contextPackConfig);
+    const withPack = this.promptBuilder.applyContextPack(
+      base,
+      input.contextPackConfig,
+    );
     const messages = this.promptBuilder.injectDynamicContext({
       systemMessage: withPack,
       jobDescription: '',
@@ -105,7 +125,11 @@ export abstract class BasePipelineService implements InterviewPipeline {
     try {
       parsed = JSON.parse(raw);
     } catch {
-      throw new InterviewAIException(ErrorCode.AI_SERVICE_ERROR, HttpStatus.BAD_GATEWAY, 'Invalid JSON from AI');
+      throw new InterviewAIException(
+        ErrorCode.AI_SERVICE_ERROR,
+        HttpStatus.BAD_GATEWAY,
+        'Invalid JSON from AI',
+      );
     }
     const validated = this.zodValidator.validate(FeedbackSchema, parsed);
     return {

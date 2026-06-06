@@ -36,16 +36,16 @@ export class AuthController {
       maxAge: COOKIE_MAX_AGE_SECONDS * 1000,
       path: '/auth',
     });
-    return { success: true, data: { accessToken: result.accessToken, expiresIn: result.expiresIn } };
+    return {
+      success: true,
+      data: { accessToken: result.accessToken, expiresIn: result.expiresIn },
+    };
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
-  async logout(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const user = req.user as AuthenticatedUser;
     await this.authService.logout(user.id);
     res.clearCookie(COOKIE_NAME, {

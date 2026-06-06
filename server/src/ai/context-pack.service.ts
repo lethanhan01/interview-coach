@@ -25,15 +25,21 @@ const VN_PACK: ContextPackConfig = {
 
 const WESTERN_PACK: ContextPackConfig = {
   type: 'Western',
-  rubricDimensions: ['clarity', 'structure', 'communication', 'impact', 'leadership'],
+  rubricDimensions: [
+    'clarity',
+    'structure',
+    'communication',
+    'impact',
+    'leadership',
+  ],
   culturalNotes:
     'Western workplace context: emphasize initiative, quantifiable impact, and leadership potential. STAR format preferred.',
   scoringWeights: {
-    clarity: 0.20,
-    structure: 0.20,
-    communication: 0.20,
-    impact: 0.20,
-    leadership: 0.20,
+    clarity: 0.2,
+    structure: 0.2,
+    communication: 0.2,
+    impact: 0.2,
+    leadership: 0.2,
   },
 };
 

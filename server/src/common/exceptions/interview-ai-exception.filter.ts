@@ -34,7 +34,7 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
       message =
         typeof body === 'string'
           ? body
-          : (body as { message?: string }).message ?? exception.message;
+          : ((body as { message?: string }).message ?? exception.message);
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       errorCode = ErrorCode.INTERNAL_ERROR;

@@ -37,14 +37,23 @@ export class OpenAIGateway {
   }
 
   async chatCompletion(params: ChatCompletionParams): Promise<string> {
-    const { messages, model, temperature, maxTokens, responseFormat, timeoutMs } = params;
+    const {
+      messages,
+      model,
+      temperature,
+      maxTokens,
+      responseFormat,
+      timeoutMs,
+    } = params;
     const response = await this.client.chat.completions.create(
       {
         model,
         messages,
         temperature,
         max_tokens: maxTokens,
-        ...(responseFormat === 'json_object' ? { response_format: { type: 'json_object' } } : {}),
+        ...(responseFormat === 'json_object'
+          ? { response_format: { type: 'json_object' } }
+          : {}),
       },
       timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : undefined,
     );
@@ -61,8 +70,22 @@ export class OpenAIGateway {
 
   async transcribe(params: TranscribeParams): Promise<TranscribeResult> {
     const { audioBuffer, mimeType, language, timeoutMs } = params;
-    const ext = mimeType === 'audio/webm' ? 'webm' : mimeType === 'audio/mp4' ? 'mp4' : 'wav';
-    const file = new File([audioBuffer.buffer.slice(audioBuffer.byteOffset, audioBuffer.byteOffset + audioBuffer.byteLength) as ArrayBuffer], `audio.${ext}`, { type: mimeType });
+    const ext =
+      mimeType === 'audio/webm'
+        ? 'webm'
+        : mimeType === 'audio/mp4'
+          ? 'mp4'
+          : 'wav';
+    const file = new File(
+      [
+        audioBuffer.buffer.slice(
+          audioBuffer.byteOffset,
+          audioBuffer.byteOffset + audioBuffer.byteLength,
+        ) as ArrayBuffer,
+      ],
+      `audio.${ext}`,
+      { type: mimeType },
+    );
     const response = await this.client.audio.transcriptions.create(
       {
         file,
@@ -73,7 +96,8 @@ export class OpenAIGateway {
       timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : undefined,
     );
     const responseRecord = response as unknown as Record<string, unknown>;
-    const duration = typeof responseRecord.duration === 'number' ? responseRecord.duration : 0;
+    const duration =
+      typeof responseRecord.duration === 'number' ? responseRecord.duration : 0;
     return {
       text: response.text,
       durationSeconds: duration,
