@@ -29,12 +29,27 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
       message = exception.message;
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
-      errorCode = ErrorCode.VALIDATION_ERROR;
+      switch (status) {
+        case HttpStatus.UNAUTHORIZED:
+          errorCode = ErrorCode.UNAUTHORIZED;
+          break;
+        case HttpStatus.FORBIDDEN:
+          errorCode = ErrorCode.FORBIDDEN;
+          break;
+        case HttpStatus.NOT_FOUND:
+          errorCode = ErrorCode.NOT_FOUND;
+          break;
+        default:
+          errorCode = ErrorCode.VALIDATION_ERROR;
+      }
       const body = exception.getResponse();
-      message =
+      const rawMsg =
         typeof body === 'string'
           ? body
-          : ((body as { message?: string }).message ?? exception.message);
+          : (body as { message?: unknown }).message;
+      message = Array.isArray(rawMsg)
+        ? String(rawMsg[0])
+        : ((rawMsg as string | undefined) ?? exception.message);
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       errorCode = ErrorCode.INTERNAL_ERROR;
