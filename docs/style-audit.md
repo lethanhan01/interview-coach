@@ -209,7 +209,7 @@ Total: 50+ lines with icon violations | 0 corp | 0 ai-tell | 0 hedge
 
 ---
 
-## File: docs/PHASES.md
+## File: CHANGELOG.md (root)
 
 - L6 [icon]: `✅ Completed 2026-05-04` → `Completed 2026-05-04`
 - L23 [icon]: `🚧 In progress` → `In progress`
@@ -328,7 +328,7 @@ judgment as SAD — structural, not decorative. Keep.
 | docs/Discovery_Docs/Checklist_Discovery.md | 27 | 0 | 0 | 0 | 27 |
 | docs/Discovery_Docs/Discovery_Document.md | 50+ | 0 | 0 | 0 | 50+ |
 | docs/Discovery_Docs/Discovery_Document_Template.md | 50+ | 0 | 0 | 0 | 50+ |
-| docs/PHASES.md | 0 (fixed) | 0 | 0 | 0 | 0 |
+| CHANGELOG.md | 0 (fixed) | 0 | 0 | 0 | 0 |
 | docs/SRS/SRS_InterviewAI_Full.md | ~40 | 0 | 0 | 0 | ~40 |
 | docs/SRS/RTM_InterviewAI.md | 0 | 0 | 0 | 0 | 0 |
 | docs/SRS/Checklist_SRS.md | 0 | 0 | 0 | 0 | 0 |
@@ -352,9 +352,9 @@ Icon violations concentrate in three areas:
 2. SRS wireframe sections (SRS_InterviewAI_Full.md L974–L1196) — emoji used to
    represent planned UI affordances in ASCII mockups.
 
-3. Meta/tracking docs (CLAUDE.md, PHASES.md) — emoji used as status markers in
+3. Meta/tracking docs (CLAUDE.md, CHANGELOG.md) — emoji used as status markers in
    tables and section headers.
 
 Highest-priority fixes: CLAUDE.md (project meta-guide, read every session) and
-docs/PHASES.md (phase tracker, actively maintained). Discovery and SRS docs can
+CHANGELOG.md (phase tracker + session log, actively maintained). Discovery and SRS docs can
 be fixed incrementally as they are next touched.

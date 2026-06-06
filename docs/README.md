@@ -39,7 +39,7 @@ InterviewAI là ứng dụng AI Mock Interview — nền tảng luyện phỏng 
 | Tài liệu | Mô tả | Trạng thái |
 |----------|-------|------------|
 | [Test Plan](test-plan/strategy.md) | Chiến lược kiểm thử, phạm vi, môi trường | Hoàn thành |
-| [Phase Log](PHASES.md) | Lịch sử chuyển phase và trạng thái hiện tại | Hoàn thành |
+| [Project Log](../CHANGELOG.md) | Phase milestones + implementation sessions | Hoàn thành |
 
 ## Trình tự đọc
 

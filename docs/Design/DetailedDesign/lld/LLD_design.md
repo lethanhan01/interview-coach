@@ -9,7 +9,7 @@ Tài liệu này là stub index — nội dung chi tiết trong các files con t
 
 5 NestJS modules (MVP): class interfaces, method signatures, DTOs, BullMQ job contracts,
 sequence diagrams cho 3 complex flows, cross-cutting concerns.
-Không bao gồm code implementation — xem docs/PHASES.md (Implementation phase).
+Không bao gồm code implementation — xem CHANGELOG.md §"Implementation" (sub-phase status).
 
 ## Files con
 
