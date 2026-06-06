@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
+import { ErrorCode } from '../common/exceptions/error-code.enum';
 
 interface ChatCompletionParams {
   messages: ChatCompletionMessageParam[];
@@ -46,13 +48,21 @@ export class OpenAIGateway {
       },
       timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : undefined,
     );
-    return response.choices[0]?.message?.content ?? '';
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new InterviewAIException(
+        ErrorCode.AI_SERVICE_ERROR,
+        HttpStatus.BAD_GATEWAY,
+        'OpenAI returned empty response',
+      );
+    }
+    return content;
   }
 
   async transcribe(params: TranscribeParams): Promise<TranscribeResult> {
     const { audioBuffer, mimeType, language, timeoutMs } = params;
     const ext = mimeType === 'audio/webm' ? 'webm' : mimeType === 'audio/mp4' ? 'mp4' : 'wav';
-    const file = new File([audioBuffer], `audio.${ext}`, { type: mimeType });
+    const file = new File([audioBuffer.buffer.slice(audioBuffer.byteOffset, audioBuffer.byteOffset + audioBuffer.byteLength) as ArrayBuffer], `audio.${ext}`, { type: mimeType });
     const response = await this.client.audio.transcriptions.create(
       {
         file,
@@ -62,9 +72,11 @@ export class OpenAIGateway {
       },
       timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : undefined,
     );
+    const responseRecord = response as unknown as Record<string, unknown>;
+    const duration = typeof responseRecord.duration === 'number' ? responseRecord.duration : 0;
     return {
       text: response.text,
-      durationSeconds: (response as unknown as { duration?: number }).duration ?? 0,
+      durationSeconds: duration,
     };
   }
 }
