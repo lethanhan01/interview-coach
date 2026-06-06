@@ -1,6 +1,6 @@
 import { createClient } from './supabase'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001/api/v1'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'
 
 async function request<T>(path: string, options: RequestInit): Promise<T> {
   const supabase = createClient()
@@ -19,7 +19,8 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: response.statusText }))
-    throw new Error((error as { message?: string }).message ?? `Request failed: ${response.status}`)
+    const err = error as { errorCode?: string; message?: string }
+    throw new Error(err.errorCode ?? err.message ?? `Request failed: ${response.status}`)
   }
 
   return response.json() as Promise<T>

@@ -63,7 +63,7 @@ export default function InterviewPage() {
 
   useEffect(() => {
     if (!accessToken) return
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'
     const es = new EventSource(`${apiBase}/sessions/${sessionId}/events?token=${accessToken}`)
     eventSourceRef.current = es
 

@@ -67,6 +67,23 @@ export default function ReportPage() {
       </div>
 
       <div className="flex flex-col gap-6">
+        {report.executiveSummary && Object.keys(report.executiveSummary).length > 0 && (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-5">
+            <h2 className="mb-3 text-base font-semibold text-gray-800">Tóm tắt tổng quan</h2>
+            <dl className="flex flex-col gap-2">
+              {Object.entries(report.executiveSummary).map(([key, value]) => (
+                <div key={key}>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">{key}</dt>
+                  <dd className="mt-0.5 text-sm text-gray-800">
+                    {typeof value === 'string' || typeof value === 'number'
+                      ? String(value)
+                      : JSON.stringify(value)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
         <CompetencyScoreChart scores={report.competencyHeatmap} />
         <ActionPlanCard actionPlan={report.actionPlan} />
         <div>

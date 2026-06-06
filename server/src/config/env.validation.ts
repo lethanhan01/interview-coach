@@ -13,7 +13,7 @@ const EnvSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
-  CLIENT_URL: z.string().default('http://localhost:3001'),
+  CLIENT_URL: z.string().default('http://localhost:5173'),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

@@ -4,15 +4,17 @@ import { useEffect, useState } from 'react'
 import { apiClient } from '@/lib/api-client'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
-interface ProfileData {
+interface GetProfileResponse {
   email: string
-  targetRole: string
-  experienceLevel: string
-  techStack: string[]
+  profile: {
+    targetPosition?: string
+    targetLevel?: string
+    preferredTechStack?: string
+  } | null
 }
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<ProfileData | null>(null)
+  const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -24,12 +26,12 @@ export default function ProfilePage() {
 
   useEffect(() => {
     apiClient
-      .get<ProfileData>('/profile')
+      .get<GetProfileResponse>('/profile')
       .then((data) => {
-        setProfile(data)
-        setTargetRole(data.targetRole ?? '')
-        setExperienceLevel(data.experienceLevel ?? '')
-        setTechStackRaw((data.techStack ?? []).join(', '))
+        setEmail(data.email)
+        setTargetRole(data.profile?.targetPosition ?? '')
+        setExperienceLevel(data.profile?.targetLevel ?? '')
+        setTechStackRaw(data.profile?.preferredTechStack ?? '')
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Không thể tải hồ sơ'))
       .finally(() => setLoading(false))
@@ -41,12 +43,9 @@ export default function ProfilePage() {
     setError(null)
     try {
       await apiClient.patch('/profile', {
-        targetRole: targetRole.trim(),
-        experienceLevel: experienceLevel.trim(),
-        techStack: techStackRaw
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
+        targetPosition: targetRole.trim() || undefined,
+        targetLevel: experienceLevel.trim() || undefined,
+        preferredTechStack: techStackRaw.trim() || undefined,
       })
       setSaved(true)
     } catch (err) {
@@ -71,7 +70,7 @@ export default function ProfilePage() {
       <div className="flex flex-col gap-5">
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
-          <p className="text-sm text-gray-500">{profile?.email}</p>
+          <p className="text-sm text-gray-500">{email}</p>
         </div>
 
         <div>
