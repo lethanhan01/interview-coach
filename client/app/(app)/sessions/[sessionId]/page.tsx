@@ -1,0 +1,172 @@
+'use client'
+
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { apiClient } from '@/lib/api-client'
+import { createClient } from '@/lib/supabase'
+import QuestionCard from '@/components/interview/QuestionCard'
+import TextAnswerInput from '@/components/interview/TextAnswerInput'
+import VoiceRecorder from '@/components/interview/VoiceRecorder'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import ErrorBoundary from '@/components/ui/ErrorBoundary'
+
+interface Question {
+  id: string
+  content: string
+  orderIndex: number
+}
+
+type AnswerMode = 'text' | 'voice'
+
+export default function InterviewPage() {
+  const { sessionId } = useParams<{ sessionId: string }>()
+  const router = useRouter()
+
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [answerMode, setAnswerMode] = useState<AnswerMode>('text')
+  const [followUp, setFollowUp] = useState<string | null>(null)
+  const [sessionEnded, setSessionEnded] = useState(false)
+  const [supabaseUrl, setSupabaseUrl] = useState('')
+  const [accessToken, setAccessToken] = useState('')
+  const eventSourceRef = useRef<EventSource | null>(null)
+
+  useEffect(() => {
+    async function init() {
+      try {
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) { router.push('/login'); return }
+        setAccessToken(session.access_token)
+        setSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '')
+
+        const qs = await apiClient.get<{ questions: Question[] }>(`/sessions/${sessionId}/questions`)
+        setQuestions(qs.questions)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Không thể tải phiên phỏng vấn')
+      } finally {
+        setLoading(false)
+      }
+    }
+    init()
+  }, [sessionId, router])
+
+  useEffect(() => {
+    if (!accessToken) return
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
+    const es = new EventSource(`${apiBase}/sessions/${sessionId}/events`)
+    eventSourceRef.current = es
+
+    es.addEventListener('turn.follow_up', (e) => {
+      const data = JSON.parse((e as MessageEvent).data)
+      setFollowUp(data.questionText ?? null)
+    })
+    es.addEventListener('session.completed', () => {
+      setSessionEnded(true)
+      es.close()
+    })
+    es.onerror = () => es.close()
+
+    return () => es.close()
+  }, [sessionId, accessToken])
+
+  const advance = useCallback(async () => {
+    if (currentIndex + 1 >= questions.length) {
+      await apiClient.patch(`/sessions/${sessionId}/status`, { status: 'completed' })
+      setSessionEnded(true)
+    } else {
+      setFollowUp(null)
+      setCurrentIndex((i) => i + 1)
+    }
+  }, [sessionId, questions.length, currentIndex])
+
+  const submitText = useCallback(async (text: string) => {
+    await apiClient.post(`/sessions/${sessionId}/turns`, {
+      answerMode: 'text',
+      answerText: text,
+      questionId: questions[currentIndex]?.id,
+    })
+    await advance()
+  }, [sessionId, questions, currentIndex, advance])
+
+  const submitVoice = useCallback(async (audioUrl: string, durationSeconds: number, sizeBytes: number) => {
+    await apiClient.post(`/sessions/${sessionId}/turns`, {
+      answerMode: 'voice',
+      audioFileUrl: audioUrl,
+      durationSeconds,
+      sizeBytes,
+      questionId: questions[currentIndex]?.id,
+    })
+    await advance()
+  }, [sessionId, questions, currentIndex, advance])
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-red-600">{error}</div>
+    )
+  }
+
+  if (sessionEnded) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
+        <p className="text-gray-700">Phiên phỏng vấn kết thúc. AI đang phân tích câu trả lời...</p>
+        <button
+          onClick={() => router.push(`/sessions/${sessionId}/report`)}
+          className="rounded-md bg-black px-6 py-2 text-sm font-medium text-white hover:bg-gray-800"
+        >
+          Xem báo cáo
+        </button>
+      </div>
+    )
+  }
+
+  const current = questions[currentIndex]
+
+  return (
+    <ErrorBoundary>
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        {current && (
+          <QuestionCard
+            questionText={followUp ?? current.content}
+            orderIndex={currentIndex}
+            totalQuestions={questions.length}
+          />
+        )}
+
+        <div className="mt-6 flex gap-3">
+          {(['text', 'voice'] as AnswerMode[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => setAnswerMode(m)}
+              className={`rounded-md px-4 py-1.5 text-sm font-medium ${answerMode === m ? 'bg-black text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+            >
+              {m === 'text' ? 'Text' : 'Giọng nói'}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-6">
+          {answerMode === 'text' ? (
+            <TextAnswerInput onSubmit={submitText} />
+          ) : (
+            <VoiceRecorder
+              onSubmit={submitVoice}
+              supabaseUrl={supabaseUrl}
+              accessToken={accessToken}
+            />
+          )}
+        </div>
+      </div>
+    </ErrorBoundary>
+  )
+}
