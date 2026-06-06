@@ -56,3 +56,4 @@ CLAUDE.local.md
 **/CLAUDE.md
 .agents/
 CHANGELOG.md
+skills-lock.json
