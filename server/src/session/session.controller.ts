@@ -34,10 +34,7 @@ export class SessionController {
   }
 
   @Get(':id')
-  async findOne(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  async findOne(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.sessionService.findById(id, req.user.id);
   }
 
@@ -61,8 +58,6 @@ export class SessionController {
 
   @Sse(':id/events')
   streamEvents(@Param('id') id: string): Observable<MessageEvent> {
-    return this.sseService.subscribe(
-      `sse:session:${id}`,
-    ) as unknown as Observable<MessageEvent>;
+    return this.sseService.subscribe(`sse:session:${id}`);
   }
 }

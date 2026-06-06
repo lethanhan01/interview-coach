@@ -3,12 +3,13 @@ import {
   OnModuleDestroy,
   OnModuleInit,
   Logger,
+  MessageEvent,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import Redis from 'ioredis';
 
-export interface SseMessage {
+interface SseMessage {
   event: string;
   data: unknown;
 }
@@ -40,8 +41,8 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
     await this.publisher.publish(channel, payload);
   }
 
-  subscribe(channel: string): Observable<SseMessage> {
-    return new Observable((observer) => {
+  subscribe(channel: string): Observable<MessageEvent> {
+    return new Observable<SseMessage>((observer) => {
       this.subscriber.subscribe(channel, (err) => {
         if (err) {
           observer.error(err);
@@ -67,6 +68,13 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
         this.subscriber.off('message', handler);
         this.subscriber.unsubscribe(channel).catch(() => {});
       };
-    });
+    }).pipe(
+      map(
+        (msg): MessageEvent => ({
+          type: msg.event,
+          data: msg.data as string | object,
+        }),
+      ),
+    );
   }
 }

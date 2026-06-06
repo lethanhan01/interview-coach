@@ -5,7 +5,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
-import { FEEDBACK_QUEUE, FEEDBACK_JOB_ATTEMPTS } from '../../common/constants/queue.constants';
+import {
+  FEEDBACK_QUEUE,
+  FEEDBACK_JOB_ATTEMPTS,
+} from '../../common/constants/queue.constants';
 import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.0';
 import type { SessionType } from '../pipelines/interview-pipeline.interface';
 
@@ -33,10 +36,18 @@ export class FeedbackProcessor extends WorkerHost {
   }
 
   async process(job: Job<FeedbackJobDto>): Promise<void> {
-    const { sessionId, answerId, questionText, answerText, contextPack, sessionType } = job.data;
+    const {
+      sessionId,
+      answerId,
+      questionText,
+      answerText,
+      contextPack,
+      sessionType,
+    } = job.data;
 
     try {
-      const contextPackConfig = this.contextPackService.getContextPack(contextPack);
+      const contextPackConfig =
+        this.contextPackService.getContextPack(contextPack);
       const strategy = this.factory.getStrategy(sessionType);
 
       const feedback = await strategy.evaluateAnswer({
@@ -77,10 +88,14 @@ export class FeedbackProcessor extends WorkerHost {
         data: { feedbackGenerated: true },
       });
 
-      await this.sseService.emit(`sse:session:${sessionId}`, 'turn.feedback_ready', {
-        answerId,
-        hasAnnotations: feedback.annotatedSegments.length > 0,
-      });
+      await this.sseService.emit(
+        `sse:session:${sessionId}`,
+        'turn.feedback_ready',
+        {
+          answerId,
+          hasAnnotations: feedback.annotatedSegments.length > 0,
+        },
+      );
     } catch (error: unknown) {
       const totalAttempts = job.opts.attempts ?? FEEDBACK_JOB_ATTEMPTS;
       const isLastAttempt = job.attemptsMade >= totalAttempts - 1;
@@ -110,14 +125,20 @@ export class FeedbackProcessor extends WorkerHost {
           },
         });
 
-        await this.sseService.emit(`sse:session:${sessionId}`, 'turn.feedback_ready', {
-          answerId,
-          hasAnnotations: false,
-        });
+        await this.sseService.emit(
+          `sse:session:${sessionId}`,
+          'turn.feedback_ready',
+          {
+            answerId,
+            hasAnnotations: false,
+          },
+        );
       } catch (fallbackError: unknown) {
         this.logger.error(
           `FeedbackProcessor fallback insert failed for answer ${answerId}`,
-          fallbackError instanceof Error ? fallbackError.stack : String(fallbackError),
+          fallbackError instanceof Error
+            ? fallbackError.stack
+            : String(fallbackError),
         );
         throw fallbackError;
       }

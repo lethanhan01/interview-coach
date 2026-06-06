@@ -31,11 +31,18 @@ export class QuestionGenerationProcessor extends WorkerHost {
   }
 
   async process(job: Job<QuestionGenerationJobDto>): Promise<void> {
-    const { sessionId, sessionType, jobDescriptionText, targetRoles, contextPack, totalQuestions } =
-      job.data;
+    const {
+      sessionId,
+      sessionType,
+      jobDescriptionText,
+      targetRoles,
+      contextPack,
+      totalQuestions,
+    } = job.data;
 
     try {
-      const contextPackConfig = this.contextPackService.getContextPack(contextPack);
+      const contextPackConfig =
+        this.contextPackService.getContextPack(contextPack);
       const strategy = this.factory.getStrategy(sessionType);
 
       const questions = await strategy.generateQuestions({
@@ -78,7 +85,10 @@ export class QuestionGenerationProcessor extends WorkerHost {
           data: { status: 'error' },
         })
         .catch((updateErr: unknown) => {
-          this.logger.error('Failed to update session status to error', updateErr);
+          this.logger.error(
+            'Failed to update session status to error',
+            updateErr,
+          );
         });
 
       await this.sseService

@@ -32,11 +32,19 @@ export class FollowUpProcessor extends WorkerHost {
   }
 
   async process(job: Job<FollowUpJobDto>): Promise<void> {
-    const { sessionId, turnId, answerId, questionText, answerText, contextPack, sessionType } =
-      job.data;
+    const {
+      sessionId,
+      turnId,
+      answerId,
+      questionText,
+      answerText,
+      contextPack,
+      sessionType,
+    } = job.data;
 
     try {
-      const contextPackConfig = this.contextPackService.getContextPack(contextPack);
+      const contextPackConfig =
+        this.contextPackService.getContextPack(contextPack);
       const strategy = this.factory.getStrategy(sessionType);
 
       const result = await strategy.generateFollowUp({

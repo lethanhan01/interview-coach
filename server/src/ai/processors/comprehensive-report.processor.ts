@@ -42,7 +42,8 @@ export class ComprehensiveReportProcessor extends WorkerHost {
     const aggregatedScore =
       feedbacks.length > 0
         ? Math.round(
-            feedbacks.reduce((sum, f) => sum + f.overallScore, 0) / feedbacks.length,
+            feedbacks.reduce((sum, f) => sum + f.overallScore, 0) /
+              feedbacks.length,
           )
         : 0;
 
@@ -118,7 +119,9 @@ export class ComprehensiveReportProcessor extends WorkerHost {
         },
       });
 
-      await this.sseService.emit(`sse:session:${sessionId}`, 'report.ready', { sessionId });
+      await this.sseService.emit(`sse:session:${sessionId}`, 'report.ready', {
+        sessionId,
+      });
     } catch (error: unknown) {
       this.logger.error(
         `ComprehensiveReportProcessor: DB update failed for session ${sessionId}`,

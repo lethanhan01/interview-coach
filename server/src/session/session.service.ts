@@ -1,7 +1,7 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { InterviewSession } from '@prisma/client';
+import { InterviewSession } from '../../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
@@ -18,7 +18,10 @@ export class SessionService {
     @InjectQueue(QUESTION_GEN_QUEUE) private readonly queue: Queue,
   ) {}
 
-  async create(userId: string, dto: CreateSessionDto): Promise<InterviewSession> {
+  async create(
+    userId: string,
+    dto: CreateSessionDto,
+  ): Promise<InterviewSession> {
     const count = await this.prisma.interviewSession.count({
       where: {
         userId,
@@ -45,21 +48,28 @@ export class SessionService {
       },
     });
 
-    await this.queue.add(
-      'question-generation',
-      {
-        sessionId: session.id,
-        sessionType: dto.sessionType,
-        jobDescriptionText: dto.jobDescription,
-        targetRoles: dto.targetRoles ?? [],
-        contextPack: dto.contextPack,
-        totalQuestions: session.numQuestions,
-      },
-      {
-        attempts: QUESTION_GEN_JOB_ATTEMPTS,
-        backoff: { type: 'fixed', delay: 2000 },
-      },
-    );
+    try {
+      await this.queue.add(
+        'question-generation',
+        {
+          sessionId: session.id,
+          sessionType: dto.sessionType,
+          jobDescriptionText: dto.jobDescription,
+          targetRoles: dto.targetRoles ?? [],
+          contextPack: dto.contextPack,
+          totalQuestions: session.numQuestions,
+        },
+        {
+          attempts: QUESTION_GEN_JOB_ATTEMPTS,
+          backoff: { type: 'fixed', delay: 2000 },
+        },
+      );
+    } catch (error: unknown) {
+      await this.prisma.interviewSession
+        .update({ where: { id: session.id }, data: { status: 'error' } })
+        .catch(() => {});
+      throw error;
+    }
 
     return session;
   }
@@ -77,10 +87,7 @@ export class SessionService {
     }
 
     if (session.userId !== userId) {
-      throw new InterviewAIException(
-        ErrorCode.FORBIDDEN,
-        HttpStatus.FORBIDDEN,
-      );
+      throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
 
     return session;
