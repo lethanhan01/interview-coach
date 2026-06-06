@@ -42,8 +42,16 @@ export default function InterviewPage() {
         setAccessToken(session.access_token)
         setSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '')
 
-        const qs = await apiClient.get<{ questions: Question[] }>(`/sessions/${sessionId}/questions`)
-        setQuestions(qs.questions)
+        async function pollQuestions(): Promise<Question[]> {
+          for (let i = 0; i < 6; i++) {
+            const qs = await apiClient.get<{ questions: Question[] }>(`/sessions/${sessionId}/questions`)
+            if (qs.questions.length > 0) return qs.questions
+            await new Promise(r => setTimeout(r, 5000))
+          }
+          throw new Error('Câu hỏi chưa sẵn sàng sau 30 giây')
+        }
+        const qs = await pollQuestions()
+        setQuestions(qs)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Không thể tải phiên phỏng vấn')
       } finally {
@@ -56,7 +64,7 @@ export default function InterviewPage() {
   useEffect(() => {
     if (!accessToken) return
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
-    const es = new EventSource(`${apiBase}/sessions/${sessionId}/events`)
+    const es = new EventSource(`${apiBase}/sessions/${sessionId}/events?token=${accessToken}`)
     eventSourceRef.current = es
 
     es.addEventListener('turn.follow_up', (e) => {
@@ -95,8 +103,8 @@ export default function InterviewPage() {
     await apiClient.post(`/sessions/${sessionId}/turns`, {
       answerMode: 'voice',
       audioFileUrl: audioUrl,
-      durationSeconds,
-      sizeBytes,
+      audioDurationSeconds: durationSeconds,
+      audioSizeBytes: sizeBytes,
       questionId: questions[currentIndex]?.id,
     })
     await advance()

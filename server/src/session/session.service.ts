@@ -95,6 +95,29 @@ export class SessionService {
     return session;
   }
 
+  async findAll(userId: string): Promise<InterviewSession[]> {
+    return this.prisma.interviewSession.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findQuestions(
+    sessionId: string,
+    userId: string,
+  ): Promise<{ id: string; content: string; orderIndex: number }[]> {
+    await this.findById(sessionId, userId);
+    const questions = await this.prisma.sessionQuestion.findMany({
+      where: { sessionId },
+      orderBy: { orderIndex: 'asc' },
+    });
+    return questions.map((q) => ({
+      id: q.id,
+      content: q.questionText,
+      orderIndex: q.orderIndex,
+    }));
+  }
+
   async updateStatus(
     sessionId: string,
     userId: string,

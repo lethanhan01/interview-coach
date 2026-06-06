@@ -12,13 +12,13 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SseTokenGuard } from '../auth/guards/sse-token.guard';
 import { SessionService } from './session.service';
 import { SseService } from '../common/services/sse.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionStatusDto } from './dto/update-session-status.dto';
 
 @Controller('sessions')
-@UseGuards(JwtAuthGuard)
 export class SessionController {
   constructor(
     private readonly sessionService: SessionService,
@@ -26,6 +26,7 @@ export class SessionController {
   ) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   async create(
     @Body() dto: CreateSessionDto,
     @Req() req: { user: { id: string } },
@@ -33,12 +34,20 @@ export class SessionController {
     return this.sessionService.create(req.user.id, dto);
   }
 
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  async findAll(@Req() req: { user: { id: string } }) {
+    return { sessions: await this.sessionService.findAll(req.user.id) };
+  }
+
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async findOne(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.sessionService.findById(id, req.user.id);
   }
 
   @Get(':id/status')
+  @UseGuards(JwtAuthGuard)
   async getStatus(
     @Param('id') id: string,
     @Req() req: { user: { id: string } },
@@ -47,7 +56,19 @@ export class SessionController {
     return { status: session.status, numQuestions: session.numQuestions };
   }
 
+  @Get(':id/questions')
+  @UseGuards(JwtAuthGuard)
+  async findQuestions(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return {
+      questions: await this.sessionService.findQuestions(id, req.user.id),
+    };
+  }
+
   @Patch(':id/status')
+  @UseGuards(JwtAuthGuard)
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateSessionStatusDto,
@@ -57,6 +78,7 @@ export class SessionController {
   }
 
   @Sse(':id/events')
+  @UseGuards(SseTokenGuard)
   streamEvents(@Param('id') id: string): Observable<MessageEvent> {
     return this.sseService.subscribe(`sse:session:${id}`);
   }

@@ -43,7 +43,7 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
 
   subscribe(channel: string): Observable<MessageEvent> {
     return new Observable<SseMessage>((observer) => {
-      this.subscriber.subscribe(channel, (err) => {
+      void this.subscriber.subscribe(channel, (err) => {
         if (err) {
           observer.error(err);
         }

@@ -1,13 +1,18 @@
+import { createClient } from './supabase'
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001/api/v1'
 
-async function request<T>(path: string, options: RequestInit, accessToken?: string): Promise<T> {
+async function request<T>(path: string, options: RequestInit): Promise<T> {
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   }
 
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers })
@@ -21,12 +26,12 @@ async function request<T>(path: string, options: RequestInit, accessToken?: stri
 }
 
 export const apiClient = {
-  get: <T>(path: string, accessToken?: string) =>
-    request<T>(path, { method: 'GET' }, accessToken),
+  get: <T>(path: string) =>
+    request<T>(path, { method: 'GET' }),
 
-  post: <T>(path: string, body: unknown, accessToken?: string) =>
-    request<T>(path, { method: 'POST', body: JSON.stringify(body) }, accessToken),
+  post: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
 
-  patch: <T>(path: string, body: unknown, accessToken?: string) =>
-    request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }, accessToken),
+  patch: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
 }

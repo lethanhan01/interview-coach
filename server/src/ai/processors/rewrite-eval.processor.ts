@@ -6,6 +6,7 @@ import { ErrorCode } from '../../common/exceptions/error-code.enum';
 
 @Processor(REWRITE_EVAL_QUEUE)
 export class RewriteEvalProcessor extends WorkerHost {
+  // eslint-disable-next-line @typescript-eslint/require-await
   async process(): Promise<void> {
     throw new InterviewAIException(
       ErrorCode.SERVICE_UNAVAILABLE,

@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { SessionController } from './session.controller';
 import { SessionService } from './session.service';
 import { SseService } from '../common/services/sse.service';
+import { SseTokenGuard } from '../auth/guards/sse-token.guard';
 import {
   QUESTION_GEN_QUEUE,
   REPORT_QUEUE,
@@ -14,7 +15,7 @@ import {
     BullModule.registerQueue({ name: REPORT_QUEUE }),
   ],
   controllers: [SessionController],
-  providers: [SessionService, SseService],
+  providers: [SessionService, SseService, SseTokenGuard],
   exports: [SessionService],
 })
 export class SessionModule {}

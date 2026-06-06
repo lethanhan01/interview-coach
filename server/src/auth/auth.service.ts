@@ -1,13 +1,13 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { RefreshResponseDto } from './dto/refresh-response.dto';
 
 @Injectable()
 export class AuthService {
-  private readonly supabase: SupabaseClient;
+  private readonly supabase: ReturnType<typeof createClient>;
 
   constructor(private readonly config: ConfigService) {
     this.supabase = createClient(

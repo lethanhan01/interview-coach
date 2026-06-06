@@ -11,6 +11,7 @@ import { AiModule } from './ai/ai.module';
 import { SessionModule } from './session/session.module';
 import { TurnModule } from './turn/turn.module';
 import { ReportModule } from './report/report.module';
+import { UserModule } from './user/user.module';
 import { validateEnv } from './config/env.validation';
 import { InterviewAIExceptionFilter } from './common/exceptions/interview-ai-exception.filter';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
@@ -34,6 +35,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     SessionModule,
     TurnModule,
     ReportModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [
