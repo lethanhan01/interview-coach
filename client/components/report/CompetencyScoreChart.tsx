@@ -19,6 +19,11 @@ export default function CompetencyScoreChart({ scores }: { scores: Record<string
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
                 <div
+                  role="progressbar"
+                  aria-valuenow={score as number}
+                  aria-valuemin={0}
+                  aria-valuemax={10}
+                  aria-label={`${dimension.replace(/_/g, ' ')}: ${(score as number).toFixed(1)}/10`}
                   className="h-full rounded-full bg-black transition-all"
                   style={{ width: `${pct}%` }}
                 />

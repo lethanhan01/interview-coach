@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '../../../lib/supabase'
+import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 
 export default function LoginPage() {
   const supabase = createClient()
@@ -39,30 +40,41 @@ export default function LoginPage() {
         <p className="mb-6 text-sm text-gray-500">Luyện phỏng vấn với AI — miễn phí</p>
 
         <div className="space-y-3">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black"
-          />
-          <input
-            type="password"
-            placeholder="Mật khẩu"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleEmailAuth()}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black"
-          />
+          <div>
+            <label htmlFor="email" className="sr-only">Email</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="sr-only">Mật khẩu</label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Mật khẩu"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleEmailAuth()}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black"
+            />
+          </div>
 
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && (
+            <p role="alert" className="text-xs text-red-600">{error}</p>
+          )}
 
           <button
             onClick={handleEmailAuth}
             disabled={loading || !email || !password}
-            className="w-full rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
           >
-            {loading ? '...' : mode === 'signin' ? 'Đăng nhập' : 'Tạo tài khoản'}
+            {loading && <LoadingSpinner size="sm" />}
+            {loading ? 'Đang xử lý...' : mode === 'signin' ? 'Đăng nhập' : 'Tạo tài khoản'}
           </button>
         </div>
 

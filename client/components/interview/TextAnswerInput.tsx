@@ -25,7 +25,12 @@ export default function TextAnswerInput({ onSubmit, disabled }: TextAnswerInputP
 
   return (
     <div className="flex flex-col gap-3">
+      <label htmlFor="answer-textarea" className="sr-only">
+        Câu trả lời của bạn
+      </label>
       <textarea
+        id="answer-textarea"
+        aria-label="Câu trả lời của bạn"
         value={text}
         onChange={(e) => setText(e.target.value)}
         disabled={disabled || submitting}

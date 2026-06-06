@@ -18,6 +18,12 @@ const CONTEXT_PACKS: { value: ContextPack; label: string; desc: string }[] = [
   { value: 'Western', label: 'Western', desc: 'STAR method, behavioral focus, phong cách công ty nước ngoài' },
 ]
 
+const STEP_LABELS: Record<Step, string> = {
+  1: 'Job Description',
+  2: 'Cấu hình',
+  3: 'Xác nhận',
+}
+
 export default function SetupPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
@@ -52,12 +58,43 @@ export default function SetupPage() {
       <div className="mb-8 flex items-center gap-2">
         {([1, 2, 3] as Step[]).map((s) => (
           <div key={s} className="flex items-center gap-2">
-            <div
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium ${s === step ? 'bg-black text-white' : s < step ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-400'}`}
-            >
-              {s}
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
+                  s === step
+                    ? 'bg-black text-white'
+                    : s < step
+                      ? 'bg-gray-800 text-white'
+                      : 'bg-gray-100 text-gray-400'
+                }`}
+              >
+                {s < step ? (
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path
+                      d="M2 6l3 3 5-5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ) : (
+                  s
+                )}
+              </div>
+              <span
+                className={`hidden text-xs sm:block ${
+                  s === step ? 'font-medium text-gray-900' : 'text-gray-400'
+                }`}
+              >
+                {STEP_LABELS[s]}
+              </span>
             </div>
-            {s < 3 && <div className={`h-px w-12 ${s < step ? 'bg-gray-800' : 'bg-gray-200'}`} />}
+            {s < 3 && (
+              <div
+                className={`mb-4 h-px w-10 ${s < step ? 'bg-gray-800' : 'bg-gray-200'}`}
+              />
+            )}
           </div>
         ))}
       </div>

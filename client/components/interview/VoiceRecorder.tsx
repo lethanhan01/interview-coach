@@ -65,9 +65,12 @@ export default function VoiceRecorder({ onSubmit, supabaseUrl, accessToken, disa
 
   return (
     <div className="flex flex-col items-center gap-4">
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-red-600">{error}</p>
+      )}
       {state === 'idle' && (
         <button
+          aria-label="Bắt đầu ghi âm"
           onClick={startRecording}
           disabled={disabled}
           className="rounded-full bg-red-600 px-8 py-3 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
@@ -77,10 +80,11 @@ export default function VoiceRecorder({ onSubmit, supabaseUrl, accessToken, disa
       )}
       {state === 'recording' && (
         <button
+          aria-label="Dừng ghi âm"
           onClick={stopRecording}
           className="flex items-center gap-2 rounded-full bg-gray-800 px-8 py-3 text-sm font-medium text-white hover:bg-black"
         >
-          <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+          <span aria-hidden="true" className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
           Dừng ghi âm
         </button>
       )}
