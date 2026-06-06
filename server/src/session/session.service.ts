@@ -8,6 +8,7 @@ import { InterviewAIException } from '../common/exceptions/interview-ai.exceptio
 import {
   QUESTION_GEN_QUEUE,
   QUESTION_GEN_JOB_ATTEMPTS,
+  REPORT_QUEUE,
 } from '../common/constants/queue.constants';
 import { CreateSessionDto } from './dto/create-session.dto';
 
@@ -16,6 +17,7 @@ export class SessionService {
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue(QUESTION_GEN_QUEUE) private readonly queue: Queue,
+    @InjectQueue(REPORT_QUEUE) private readonly reportQueue: Queue,
   ) {}
 
   async create(
@@ -98,14 +100,35 @@ export class SessionService {
     userId: string,
     status: 'active' | 'completed',
   ): Promise<InterviewSession> {
-    await this.findById(sessionId, userId);
+    const session = await this.findById(sessionId, userId);
 
-    return this.prisma.interviewSession.update({
+    const updated = await this.prisma.interviewSession.update({
       where: { id: sessionId },
       data: {
         status,
         ...(status === 'completed' ? { completedAt: new Date() } : {}),
       },
     });
+
+    if (status === 'completed') {
+      const answers = await this.prisma.userAnswer.findMany({
+        where: { sessionId },
+        select: { id: true },
+      });
+      const turnIds = answers.map((a) => a.id);
+
+      await this.reportQueue.add(
+        'comprehensive-report',
+        {
+          sessionId,
+          sessionType: session.sessionType,
+          contextPack: session.contextPackId as 'VN' | 'Western',
+          turnIds,
+        },
+        { attempts: 2, backoff: { type: 'fixed', delay: 2000 } },
+      );
+    }
+
+    return updated;
   }
 }

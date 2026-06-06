@@ -48,6 +48,6 @@ import {
     ComprehensiveReportProcessor,
     RewriteEvalProcessor,
   ],
-  exports: [PipelineStrategyFactory, ContextPackService],
+  exports: [PipelineStrategyFactory, ContextPackService, OpenAIGateway],
 })
 export class AiModule {}

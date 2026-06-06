@@ -9,6 +9,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { AiModule } from './ai/ai.module';
 import { SessionModule } from './session/session.module';
+import { TurnModule } from './turn/turn.module';
+import { ReportModule } from './report/report.module';
 import { validateEnv } from './config/env.validation';
 import { InterviewAIExceptionFilter } from './common/exceptions/interview-ai-exception.filter';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
@@ -30,6 +32,8 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     AuthModule,
     AiModule,
     SessionModule,
+    TurnModule,
+    ReportModule,
   ],
   controllers: [AppController],
   providers: [
