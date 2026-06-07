@@ -21,14 +21,22 @@ export default function VoiceRecorder({ onSubmit, supabaseUrl, accessToken, disa
 
   async function startRecording() {
     setError(null)
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
-    chunksRef.current = []
-    recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data) }
-    recorder.start()
-    mediaRecorderRef.current = recorder
-    startTimeRef.current = Date.now()
-    setState('recording')
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      chunksRef.current = []
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+      recorder.start()
+      mediaRecorderRef.current = recorder
+      startTimeRef.current = Date.now()
+      setState('recording')
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'NotAllowedError') {
+        setError('Trình duyệt chưa cấp quyền microphone. Vui lòng cho phép và thử lại.')
+      } else {
+        setError('Không thể khởi động microphone. Vui lòng kiểm tra thiết bị.')
+      }
+    }
   }
 
   async function stopRecording() {

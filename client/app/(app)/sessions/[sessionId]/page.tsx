@@ -9,6 +9,7 @@ import TextAnswerInput from '@/components/interview/TextAnswerInput'
 import VoiceRecorder from '@/components/interview/VoiceRecorder'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
+import Button from '@/components/ui/Button'
 
 interface Question {
   id: string
@@ -128,12 +129,9 @@ export default function InterviewPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <p className="text-gray-700">Phiên phỏng vấn kết thúc. AI đang phân tích câu trả lời...</p>
-        <button
-          onClick={() => router.push(`/sessions/${sessionId}/report`)}
-          className="rounded-md bg-black px-6 py-2 text-sm font-medium text-white hover:bg-gray-800"
-        >
+        <Button onClick={() => router.push(`/sessions/${sessionId}/report`)}>
           Xem báo cáo
-        </button>
+        </Button>
       </div>
     )
   }
@@ -153,13 +151,13 @@ export default function InterviewPage() {
 
         <div className="mt-6 flex gap-3">
           {(['text', 'voice'] as AnswerMode[]).map((m) => (
-            <button
+            <Button
               key={m}
+              variant={answerMode === m ? 'primary' : 'secondary'}
               onClick={() => setAnswerMode(m)}
-              className={`rounded-md px-4 py-1.5 text-sm font-medium ${answerMode === m ? 'bg-black text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'}`}
             >
               {m === 'text' ? 'Text' : 'Giọng nói'}
-            </button>
+            </Button>
           ))}
         </div>
 

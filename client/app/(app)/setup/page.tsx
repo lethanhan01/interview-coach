@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import type { SessionType, ContextPack } from '@/lib/types'
+import Button from '@/components/ui/Button'
 
 type Step = 1 | 2 | 3
 
@@ -103,7 +104,11 @@ export default function SetupPage() {
         <div className="flex flex-col gap-4">
           <h1 className="text-xl font-semibold text-gray-900">Dán Job Description</h1>
           <p className="text-sm text-gray-500">Tối thiểu 100 ký tự để AI tạo câu hỏi phù hợp.</p>
+          <label htmlFor="jd-input" className="sr-only">
+            Nội dung Job Description
+          </label>
           <textarea
+            id="jd-input"
             value={jd}
             onChange={(e) => setJd(e.target.value)}
             rows={12}
@@ -114,13 +119,9 @@ export default function SetupPage() {
             <span className={`text-xs ${jdValid ? 'text-green-600' : 'text-gray-400'}`}>
               {jd.trim().length} / 100 ký tự
             </span>
-            <button
-              onClick={() => setStep(2)}
-              disabled={!jdValid}
-              className="rounded-md bg-black px-6 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
-            >
+            <Button onClick={() => setStep(2)} disabled={!jdValid}>
               Tiếp theo
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -171,15 +172,12 @@ export default function SetupPage() {
           </div>
 
           <div className="flex justify-between">
-            <button onClick={() => setStep(1)} className="text-sm text-gray-500 hover:text-gray-800">
+            <Button variant="ghost" onClick={() => setStep(1)}>
               Quay lại
-            </button>
-            <button
-              onClick={() => setStep(3)}
-              className="rounded-md bg-black px-6 py-2 text-sm font-medium text-white hover:bg-gray-800"
-            >
+            </Button>
+            <Button onClick={() => setStep(3)}>
               Tiếp theo
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -209,16 +207,12 @@ export default function SetupPage() {
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <div className="flex justify-between">
-            <button onClick={() => setStep(2)} className="text-sm text-gray-500 hover:text-gray-800">
+            <Button variant="ghost" onClick={() => setStep(2)}>
               Quay lại
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="rounded-md bg-black px-6 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
-            >
-              {submitting ? 'Đang tạo...' : 'Bắt đầu phỏng vấn'}
-            </button>
+            </Button>
+            <Button onClick={handleSubmit} loading={submitting}>
+              Bắt đầu phỏng vấn
+            </Button>
           </div>
         </div>
       )}
