@@ -8,9 +8,17 @@ export const createMockPrismaService = () => ({
   },
   sessionQuestion: {
     findMany: jest.fn(),
+    findFirst: jest.fn(),
   },
   userAnswer: {
+    create: jest.fn(),
     findMany: jest.fn(),
+  },
+  user: {
+    findUnique: jest.fn(),
+  },
+  userProfile: {
+    upsert: jest.fn(),
   },
 });
 
@@ -23,4 +31,39 @@ export const createMockConfigService = (
 ) => ({
   getOrThrow: jest.fn((key: string) => overrides[key] ?? `mock-${key}`),
   get: jest.fn((key: string) => overrides[key] ?? `mock-${key}`),
+});
+
+export const createMockWhisperService = () => ({
+  transcribe: jest.fn(),
+});
+
+export const createMockVoiceMetricsService = () => ({
+  calculate: jest.fn(),
+});
+
+export const createMockFollowUpCoordinatorService = () => ({
+  shouldGenerateFollowUp: jest.fn(),
+});
+
+export const createMockReportService = () => ({
+  getReport: jest.fn(),
+  enqueueReport: jest.fn(),
+});
+
+export const createMockSessionService = () => ({
+  create: jest.fn(),
+  findById: jest.fn(),
+  findAll: jest.fn(),
+  findQuestions: jest.fn(),
+  updateStatus: jest.fn(),
+});
+
+export const createMockSseService = () => ({
+  emit: jest.fn(),
+  subscribe: jest.fn(),
+});
+
+export const createMockAuthService = () => ({
+  refreshToken: jest.fn(),
+  logout: jest.fn(),
 });
