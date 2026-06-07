@@ -94,13 +94,99 @@ Sub-phase status:
 | Phase P7 | Done | Supabase auth, middleware, api-client |
 | Phase P8 | Done | 5 pages, 8 components |
 | Phase P8-FIX | Done | 7 bugs fixed, 4 ESLint resolved |
-| Phase P9 | Not started | Unit + integration tests (80% coverage target) |
+| Phase P8-FOLLOWUP | Done | 5 UI/UX fixes: mic error handling, WCAG label, Button adoption, E2E setup |
+| Phase P9-A | Done | 7 spec files, 53 tests, core services 90–100% coverage |
+| Phase P9 | In progress | Unit + integration tests (80% overall target) |
 
 ---
 
 ## Implementation Sessions
 
 Ghi lại chi tiết từng session làm việc, thứ tự thời gian ngược.
+
+---
+
+## 2026-06-07 — Phase P9-A: NestJS Unit Tests
+
+**Branch:** `feat/mvp`
+
+### Những gì đã hoàn thành
+
+7 spec files, 53 tests, 8 suites — tất cả pass.
+
+**Files created:**
+
+- `server/src/test-utils/mock-factories.ts` — createMockPrismaService, createMockQueue, createMockConfigService
+- `server/src/turn/voice-metrics.service.spec.ts` — 8 tests, 100% coverage
+- `server/src/turn/follow-up-coordinator.service.spec.ts` — 6 tests, 100% coverage
+- `server/src/common/exceptions/interview-ai.exception.spec.ts` — 6 tests, 100% coverage
+- `server/src/common/exceptions/interview-ai-exception.filter.spec.ts` — 5 tests, 90.62% coverage
+- `server/src/auth/auth.service.spec.ts` — 7 tests, 100% coverage (fix: inline jest.fn() in mock factory + access via createClient.mock.results[0].value)
+- `server/src/session/session.service.spec.ts` — 13 tests, 90.24% coverage
+- `server/src/report/report.service.spec.ts` — 8 tests, 96.42% coverage
+
+**Coverage tổng:** 22.27% statements (thấp vì controllers/modules/AI processors chưa có test — P9-B)
+
+---
+
+## 2026-06-07 — UI/UX Follow-up (5 Tasks)
+
+**Branch:** `feat/mvp`
+**Commits:** `ab36206` (Tasks 1–3), `b4d457c` (Task 5)
+
+### Chi tiết
+
+**Task 1 — Bug: VoiceRecorder error handling** (`ab36206`)
+
+- `client/components/interview/VoiceRecorder.tsx`: Wrap `navigator.mediaDevices.getUserMedia()` trong try/catch. `NotAllowedError` → message tiếng Việt cụ thể. Các lỗi khác → fallback message.
+
+**Task 2 — Bug: Setup wizard JD textarea label** (`ab36206`)
+
+- `client/app/(app)/setup/page.tsx`: Thêm `<label htmlFor="jd-input" className="sr-only">Nội dung Job Description</label>` và `id="jd-input"` cho textarea. Fix WCAG 1.3.1.
+
+**Task 3 — Refactor: Button.tsx adoption** (`ab36206`)
+
+- `client/app/(app)/setup/page.tsx`: 5 inline buttons → `<Button variant="primary|ghost">`. Submit button dùng `loading={submitting}`.
+- `client/app/(app)/sessions/[sessionId]/page.tsx`: mode toggle + "Xem báo cáo" → `<Button variant>`.
+
+**Task 4 — Verification: Responsive step labels** (no commit)
+
+- Code review `setup/page.tsx` xác nhận `hidden sm:block` đúng pattern cho mobile. Không cần sửa code.
+
+**Task 5 — E2E: Playwright setup + 4 spec files** (`b4d457c`)
+
+- `client/playwright.config.ts`: testDir `./e2e`, baseURL `http://localhost:5173`, `webServer` với `reuseExistingServer: !process.env.CI`.
+- `client/package.json`: thêm `@playwright/test ^1.60.0`, scripts `test:e2e` và `test:e2e:ui`.
+- `client/e2e/login.spec.ts`: 3 tests — form hiển thị, loading state, error alert.
+- `client/e2e/setup-wizard.spec.ts`: 4 tests — JD validation, step navigation, submit redirect.
+- `client/e2e/sessions-list.spec.ts`: 4 tests — empty state, status badges, active link, completed link.
+- `client/e2e/interview.spec.ts`: 4 tests — question load, mode toggle, POST /turns, session end CTA.
+
+### Trạng thái
+
+| Phần | Trạng thái | Ghi chú |
+|------|------------|---------|
+| `VoiceRecorder.tsx` | Done | try/catch + tiếng Việt error messages |
+| `setup/page.tsx` | Done | WCAG label + Button adoption |
+| `sessions/[sessionId]/page.tsx` | Done | Button adoption |
+| E2E: login | Done | 3 tests, mock `POST /auth/v1/token` |
+| E2E: setup-wizard | Done | 4 tests, mock `POST /api/v1/sessions` |
+| E2E: sessions-list | Done | 4 tests, mock `GET /api/v1/sessions` |
+| E2E: interview | Done | 4 tests, mock questions + SSE |
+| E2E trong CI | Chưa verify | Middleware auth là server-side — cần Supabase env vars thực |
+
+### Bước tiếp theo
+
+- **Phase P9:** Unit + integration tests (80% coverage target). Ưu tiên: NestJS service/controller tests, Prisma integration tests.
+- **E2E CI:** Cấu hình Supabase env vars trong CI để E2E tests pass đầy đủ khi middleware redirect được bypass đúng cách.
+
+### Quyết định quan trọng
+
+**`page.route()` chỉ intercept browser-side requests:** Next.js middleware gọi `supabase.auth.getUser()` từ server process — không thể mock bằng `page.route()`. Tests mock `**/auth/v1/user**` cho browser-level auth calls. Passing đầy đủ trong CI yêu cầu Supabase instance thực hoặc env vars.
+
+**SSE mock dùng empty body:** `page.route()` fulfill với `contentType: 'text/event-stream'` và `body: ''`. `EventSource` không bị lỗi nhưng không nhận event nào. Tests verify UI state với static mock questions thay vì streaming behavior.
+
+**Không cần `fixtures/auth.ts`:** `page.route()` pattern đơn giản hơn Playwright auth fixtures cho use case này. Mỗi spec file tự mock trong `beforeEach`.
 
 ---
 
