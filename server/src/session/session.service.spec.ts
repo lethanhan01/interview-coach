@@ -252,4 +252,54 @@ describe('SessionService', () => {
       expect(mockReportQueue.add).not.toHaveBeenCalled();
     });
   });
+
+  describe('findQuestions', () => {
+    it('trả về danh sách câu hỏi đã map khi session tồn tại và đúng owner', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Giới thiệu bản thân?',
+          orderIndex: 1,
+          sessionId: 'session-123',
+        },
+        {
+          id: 'q-2',
+          questionText: 'Điểm mạnh của bạn?',
+          orderIndex: 2,
+          sessionId: 'session-123',
+        },
+      ]);
+
+      const result = await service.findQuestions('session-123', 'user-abc');
+
+      expect(result).toEqual([
+        { id: 'q-1', content: 'Giới thiệu bản thân?', orderIndex: 1 },
+        { id: 'q-2', content: 'Điểm mạnh của bạn?', orderIndex: 2 },
+      ]);
+      expect(mockPrisma.sessionQuestion.findMany).toHaveBeenCalledWith({
+        where: { sessionId: 'session-123' },
+        orderBy: { orderIndex: 'asc' },
+      });
+    });
+
+    it('ném SESSION_NOT_FOUND khi session không tồn tại', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.findQuestions('nonexistent', 'user-abc'),
+      ).rejects.toThrow(InterviewAIException);
+    });
+
+    it('ném FORBIDDEN khi user không phải owner', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        userId: 'other-user',
+      });
+
+      await expect(
+        service.findQuestions('session-123', 'user-abc'),
+      ).rejects.toThrow(InterviewAIException);
+    });
+  });
 });
