@@ -58,7 +58,9 @@ describe('AuthController', () => {
     });
 
     it('ném lỗi khi authService.refreshToken ném lỗi', async () => {
-      mockAuthService.refreshToken.mockRejectedValue(new Error('Token expired'));
+      mockAuthService.refreshToken.mockRejectedValue(
+        new Error('Token expired'),
+      );
       const req = { user: { refreshToken: 'bad-token' } } as any;
       const res = mockRes();
 

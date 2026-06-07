@@ -9,6 +9,10 @@ export const createMockPrismaService = () => ({
   sessionQuestion: {
     findMany: jest.fn(),
     findFirst: jest.fn(),
+    createMany: jest.fn(),
+  },
+  followUpQuestion: {
+    create: jest.fn(),
   },
   userAnswer: {
     create: jest.fn(),
@@ -66,4 +70,36 @@ export const createMockSseService = () => ({
 export const createMockAuthService = () => ({
   refreshToken: jest.fn(),
   logout: jest.fn(),
+});
+
+export const createMockTurnService = () => ({
+  submitAnswer: jest.fn(),
+});
+
+export const createMockUserService = () => ({
+  getProfile: jest.fn(),
+  upsertProfile: jest.fn(),
+});
+
+export const createMockOpenAIGateway = () => ({
+  chatCompletion: jest.fn(),
+  transcribe: jest.fn(),
+});
+
+export const createMockPromptBuilderService = () => ({
+  buildBaseSystem: jest.fn(),
+  applyContextPack: jest.fn(),
+  injectDynamicContext: jest.fn(),
+});
+
+export const createMockZodValidatorService = () => ({
+  validate: jest.fn(),
+});
+
+export const createMockContextPackService = () => ({
+  getContextPack: jest.fn(),
+});
+
+export const createMockPipelineStrategyFactory = () => ({
+  getStrategy: jest.fn(),
 });

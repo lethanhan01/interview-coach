@@ -78,7 +78,10 @@ describe('TurnService', () => {
           provide: FollowUpCoordinatorService,
           useValue: mockFollowUpCoordinator,
         },
-        { provide: getQueueToken(FOLLOW_UP_QUEUE), useValue: mockFollowUpQueue },
+        {
+          provide: getQueueToken(FOLLOW_UP_QUEUE),
+          useValue: mockFollowUpQueue,
+        },
         { provide: getQueueToken(FEEDBACK_QUEUE), useValue: mockFeedbackQueue },
       ],
     }).compile();
