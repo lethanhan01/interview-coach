@@ -47,7 +47,10 @@ describe('InterviewAIExceptionFilter', () => {
 
   it('xử lý HttpException 401 — map sang UNAUTHORIZED error code', () => {
     const res = mockResponse();
-    const exception = new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    const exception = new HttpException(
+      'Unauthorized',
+      HttpStatus.UNAUTHORIZED,
+    );
 
     filter.catch(exception, mockHost(res) as never);
 

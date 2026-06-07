@@ -155,9 +155,9 @@ describe('SessionService', () => {
     it('throw SESSION_NOT_FOUND (404) khi session không tồn tại', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.findById('bad-id', 'user-abc'),
-      ).rejects.toThrow(InterviewAIException);
+      await expect(service.findById('bad-id', 'user-abc')).rejects.toThrow(
+        InterviewAIException,
+      );
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
       try {

@@ -18,7 +18,9 @@ export const createMockQueue = () => ({
   add: jest.fn(),
 });
 
-export const createMockConfigService = (overrides: Record<string, string> = {}) => ({
+export const createMockConfigService = (
+  overrides: Record<string, string> = {},
+) => ({
   getOrThrow: jest.fn((key: string) => overrides[key] ?? `mock-${key}`),
   get: jest.fn((key: string) => overrides[key] ?? `mock-${key}`),
 });

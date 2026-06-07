@@ -109,23 +109,73 @@ Ghi lại chi tiết từng session làm việc, thứ tự thời gian ngược
 ## 2026-06-07 — Phase P9-A: NestJS Unit Tests
 
 **Branch:** `feat/mvp`
+**Commit:** `e688ad0`
 
 ### Những gì đã hoàn thành
 
-7 spec files, 53 tests, 8 suites — tất cả pass.
+8 suites, 53 tests — tất cả pass. Không có flaky test.
 
 **Files created:**
 
-- `server/src/test-utils/mock-factories.ts` — createMockPrismaService, createMockQueue, createMockConfigService
-- `server/src/turn/voice-metrics.service.spec.ts` — 8 tests, 100% coverage
-- `server/src/turn/follow-up-coordinator.service.spec.ts` — 6 tests, 100% coverage
-- `server/src/common/exceptions/interview-ai.exception.spec.ts` — 6 tests, 100% coverage
-- `server/src/common/exceptions/interview-ai-exception.filter.spec.ts` — 5 tests, 90.62% coverage
-- `server/src/auth/auth.service.spec.ts` — 7 tests, 100% coverage (fix: inline jest.fn() in mock factory + access via createClient.mock.results[0].value)
-- `server/src/session/session.service.spec.ts` — 13 tests, 90.24% coverage
-- `server/src/report/report.service.spec.ts` — 8 tests, 96.42% coverage
+- `server/src/test-utils/mock-factories.ts` — shared mock builders: createMockPrismaService, createMockQueue, createMockConfigService
+- `server/src/turn/voice-metrics.service.spec.ts` — 8 tests (WPM calculation, filler word detection, edge cases)
+- `server/src/turn/follow-up-coordinator.service.spec.ts` — 6 tests (boundary: text length <50, orderIndex >= totalQuestions)
+- `server/src/common/exceptions/interview-ai.exception.spec.ts` — 6 tests (errorCode, HTTP status, response body shape)
+- `server/src/common/exceptions/interview-ai-exception.filter.spec.ts` — 5 tests (InterviewAIException, HttpException 401/403, unknown Error, path + timestamp)
+- `server/src/auth/auth.service.spec.ts` — 7 tests (refreshToken success/error/null-session, logout success/error)
+- `server/src/session/session.service.spec.ts` — 13 tests (create with rate limit, queue enqueue, findById ownership, findAll, updateStatus + report trigger)
+- `server/src/report/report.service.spec.ts` — 8 tests (getReport: ownership, REPORT_NOT_READY, transcript shape; enqueueReport: queue params)
 
-**Coverage tổng:** 22.27% statements (thấp vì controllers/modules/AI processors chưa có test — P9-B)
+### Trạng thái coverage theo file
+
+| File | Stmts | Branch | Lines | Ghi chú |
+| ------ | ------- | -------- | ------- | --------- |
+| `voice-metrics.service.ts` | 100% | 100% | 100% | Done |
+| `follow-up-coordinator.service.ts` | 100% | 100% | 100% | Done |
+| `interview-ai.exception.ts` | 100% | 100% | 100% | Done |
+| `interview-ai-exception.filter.ts` | 90.62% | 62.5% | 90% | Lines 40–43 uncovered (NestJS HttpException default branch) |
+| `auth.service.ts` | 100% | 91.66% | 100% | Branch 12 uncovered (minor) |
+| `session.service.ts` | 90.24% | 84.61% | 91.89% | Lines 109–114 uncovered (getQuestions method, chưa test) |
+| `report.service.ts` | 96.42% | 82.14% | 100% | Lines 17, 75, 91 uncovered (DI token paths) |
+| `auth.controller.ts` | 0% | 0% | 0% | P9-B |
+| `session.controller.ts` | 0% | 0% | 0% | P9-B |
+| `report.controller.ts` | 0% | 0% | 0% | P9-B |
+| `turn.service.ts` | 0% | 0% | 0% | P9-B (phức tạp nhất) |
+| AI processors (5 files) | 0% | 0% | 0% | P9-B hoặc P9-C |
+
+**Coverage tổng overall:** 22.27% statements — thấp vì controllers/modules/processors chưa có test.
+
+### Quyết định quan trọng
+
+#### 1. jest.mock() hoisting — pattern cho Supabase client
+
+AuthService tạo Supabase client trong constructor: `this.supabase = createClient(...)`. Vấn đề: nếu khai báo `const mockRefreshSession = jest.fn()` ở module level rồi reference trong mock factory, biến này nằm trong TDZ (Temporal Dead Zone) khi Jest hoist `jest.mock()` lên trước tất cả imports.
+
+Giải pháp đúng: mock factory chỉ dùng inline `jest.fn()`, không reference biến ngoài. Sau `module.compile()` (trigger constructor → `createClient()` được gọi), lấy mock references qua `(createClient as jest.Mock).mock.results[0].value`.
+
+`jest.hoisted()` không dùng được — ts-jest trong project này không resolve `jest` namespace tại call site của `jest.hoisted()`.
+
+#### 2. Mock factory functions thay vì object literals
+
+Dùng factory functions (`createMockPrismaService()`) để mỗi test suite nhận instance riêng, tránh state leak giữa các `describe` blocks. `jest.clearAllMocks()` reset call counts nhưng không reset mock implementations — factory pattern đảm bảo isolation hoàn toàn.
+
+#### 3. Services-first thay vì controllers-first
+
+Business logic nằm ở services. Controllers chỉ là thin delegation layer. Cover services trước đạt coverage thực chất hơn; controller tests cộng thêm % nhưng không tăng confidence nhiều. Chiến lược này phù hợp cho MVP timeline ngắn.
+
+### Bước tiếp theo (P9-B)
+
+Để đạt 80% overall, cần cover thêm:
+
+| File | Độ phức tạp | Mock cần thêm |
+| ------ | ------------- | --------------- |
+| `turn/turn.service.ts` | Cao | WhisperService + 2 queues (follow-up + feedback) + PrismaService |
+| `user/user.service.ts` | Thấp | PrismaService |
+| `ai/prompt-builder.service.ts` | Thấp | Pure functions, không cần DI |
+| `ai/zod-validator.service.ts` | Thấp | Pure functions |
+| `session.service.ts` getQuestions | Thấp | Bổ sung vào spec đã có |
+| Controllers (auth, session, report, user) | Trung bình | Mock service + guard bypass |
+| `common/services/sse.service.ts` | Trung bình | Mock ioredis |
 
 ---
 

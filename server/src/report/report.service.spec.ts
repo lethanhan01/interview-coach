@@ -45,7 +45,9 @@ describe('ReportService', () => {
 
   describe('getReport', () => {
     it('trả về report đầy đủ khi session hợp lệ và report sẵn sàng', async () => {
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(COMPLETED_SESSION);
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
       mockPrisma.sessionQuestion.findMany.mockResolvedValue([]);
 
       const result = await service.getReport('session-123', 'user-abc');
@@ -57,9 +59,9 @@ describe('ReportService', () => {
     it('throw SESSION_NOT_FOUND (404) khi session không tồn tại', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.getReport('bad-id', 'user-abc'),
-      ).rejects.toThrow(InterviewAIException);
+      await expect(service.getReport('bad-id', 'user-abc')).rejects.toThrow(
+        InterviewAIException,
+      );
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
       try {
@@ -75,13 +77,17 @@ describe('ReportService', () => {
     });
 
     it('throw FORBIDDEN (403) khi user không phải chủ sở hữu', async () => {
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(COMPLETED_SESSION);
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
 
       await expect(
         service.getReport('session-123', 'other-user'),
       ).rejects.toThrow(InterviewAIException);
 
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(COMPLETED_SESSION);
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
       try {
         await service.getReport('session-123', 'other-user');
       } catch (e) {
@@ -113,7 +119,9 @@ describe('ReportService', () => {
     });
 
     it('transcript rỗng khi không có questions', async () => {
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(COMPLETED_SESSION);
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
       mockPrisma.sessionQuestion.findMany.mockResolvedValue([]);
 
       const result = await service.getReport('session-123', 'user-abc');
@@ -121,7 +129,9 @@ describe('ReportService', () => {
     });
 
     it('transcript có đúng số items theo số questions', async () => {
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(COMPLETED_SESSION);
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
       mockPrisma.sessionQuestion.findMany.mockResolvedValue([
         {
           id: 'q-1',
