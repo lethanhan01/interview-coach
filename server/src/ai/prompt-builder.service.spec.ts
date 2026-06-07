@@ -1,0 +1,102 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { PromptBuilderService } from './prompt-builder.service';
+
+describe('PromptBuilderService', () => {
+  let service: PromptBuilderService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [PromptBuilderService],
+    }).compile();
+    service = module.get<PromptBuilderService>(PromptBuilderService);
+  });
+
+  describe('buildBaseSystem', () => {
+    it('trả về string không rỗng cho question-generation', () => {
+      const result = service.buildBaseSystem('question-generation');
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('trả về string không rỗng cho follow-up', () => {
+      expect(service.buildBaseSystem('follow-up').length).toBeGreaterThan(0);
+    });
+
+    it('trả về string không rỗng cho surgical-feedback', () => {
+      expect(
+        service.buildBaseSystem('surgical-feedback').length,
+      ).toBeGreaterThan(0);
+    });
+
+    it('trả về string không rỗng cho comprehensive-report', () => {
+      expect(
+        service.buildBaseSystem('comprehensive-report').length,
+      ).toBeGreaterThan(0);
+    });
+  });
+
+  describe('applyContextPack', () => {
+    it('chèn cultural notes và rubric dimensions vào base system', () => {
+      const base = 'base prompt';
+      const contextPack = {
+        culturalNotes: 'Tôn trọng cấp trên',
+        rubricDimensions: ['communication', 'technical'],
+      } as any;
+
+      const result = service.applyContextPack(base, contextPack);
+
+      expect(result).toContain('base prompt');
+      expect(result).toContain('Tôn trọng cấp trên');
+    });
+  });
+
+  describe('injectDynamicContext', () => {
+    it('trả về [system, user] với job description', () => {
+      const messages = service.injectDynamicContext({
+        systemMessage: 'sys-prompt',
+        jobDescription: 'phần mềm engineer',
+      });
+
+      expect(messages).toHaveLength(2);
+      expect(messages[0]).toEqual({ role: 'system', content: 'sys-prompt' });
+      expect(messages[1].role).toBe('user');
+      expect(messages[1].content as string).toContain('phần mềm engineer');
+    });
+
+    it('bao gồm question và answer khi được cung cấp', () => {
+      const messages = service.injectDynamicContext({
+        systemMessage: 'sys',
+        jobDescription: 'jd',
+        question: 'Giới thiệu bản thân?',
+        answer: 'Tôi là developer',
+      });
+      const content = messages[1].content as string;
+
+      expect(content).toContain('Giới thiệu bản thân?');
+      expect(content).toContain('Tôi là developer');
+    });
+
+    it('bao gồm session_history khi sessionHistory không rỗng', () => {
+      const messages = service.injectDynamicContext({
+        systemMessage: 'sys',
+        jobDescription: 'jd',
+        sessionHistory: [{ question: 'Q1', answer: 'A1' }],
+      });
+      const content = messages[1].content as string;
+
+      expect(content).toContain('Q1');
+      expect(content).toContain('A1');
+    });
+
+    it('bỏ qua session_history khi sessionHistory là mảng rỗng', () => {
+      const messages = service.injectDynamicContext({
+        systemMessage: 'sys',
+        jobDescription: 'jd',
+        sessionHistory: [],
+      });
+
+      expect(messages).toHaveLength(2);
+      expect(messages[1].content as string).not.toContain('<session_history>');
+    });
+  });
+});
