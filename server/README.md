@@ -21,28 +21,20 @@
 
 # InterviewCoach Backend
 
-Backend NestJS cho InterviewCoach. API mặc định chạy tại:
+Backend NestJS cho InterviewCoach.
 
-```text
-http://localhost:3000/api/v1
-```
+- API local: `http://localhost:3000/api/v1`
+- Frontend local: `http://localhost:5173`
 
-Frontend local được phép truy cập từ:
+## 1. Chuẩn bị lần đầu
 
-```text
-http://localhost:5173
-```
-
-## Yêu cầu
+Cần có:
 
 - Node.js và npm
-- PostgreSQL/Supabase đã được cấu hình
-- Docker Desktop để chạy backend/Redis bằng Docker Compose hoặc Redis local
-- File `server/.env` có đầy đủ biến môi trường
+- Docker Desktop
+- PostgreSQL/Supabase đã cấu hình
 
-## Cài đặt lần đầu
-
-Chạy từ thư mục gốc của repository:
+Từ thư mục gốc repository, chạy:
 
 ```powershell
 cd server
@@ -50,7 +42,7 @@ npm install
 Copy-Item .env.example .env
 ```
 
-Điền các biến bắt buộc trong `.env`:
+Mở `server/.env` và điền các biến còn trống:
 
 ```dotenv
 SUPABASE_URL=
@@ -62,194 +54,81 @@ DATABASE_URL=
 DIRECT_URL=
 
 OPENAI_API_KEY=
+```
 
+Giữ nguyên các giá trị local này nếu không có nhu cầu đổi port:
+
+```dotenv
 REDIS_HOST=localhost
 REDIS_PORT=6379
-
 PORT=3000
 NODE_ENV=development
 CLIENT_URL=http://localhost:5173
 ```
 
-### Chế độ bỏ qua đăng nhập khi phát triển
-
-Để frontend và backend bỏ qua Supabase Auth ở local:
+Nếu muốn bỏ qua đăng nhập Supabase khi phát triển local:
 
 ```dotenv
 AUTH_ENABLED=false
 MOCK_USER_ID=<UUID-cua-user-co-san-trong-public.users>
 ```
 
-`MOCK_USER_ID` bắt buộc phải là UUID của một user thực sự tồn tại trong database.
-Không dùng các chuỗi như `dev-user-1`, vì cột `user_id` trong PostgreSQL có kiểu
-`UUID`.
+`MOCK_USER_ID` phải là UUID của một user thật trong database.
 
-Trong production:
+## 2. Chạy backend bằng Docker Compose
 
-```dotenv
-AUTH_ENABLED=true
-```
+Đây là cách gọn nhất vì Docker Compose tự chạy Redis kèm backend.
 
-## Chạy bằng Docker Compose
-
-Mở Docker Desktop, rồi chạy từ thư mục gốc repository:
+Mở Docker Desktop, sau đó chạy từ thư mục gốc repository:
 
 ```powershell
 docker compose up --build server
 ```
 
-Lệnh này sẽ tự khởi động Redis nội bộ và backend NestJS. API vẫn được publish ra:
+Khi thấy log `Nest application successfully started`, backend đã chạy tại:
 
 ```text
 http://localhost:3000/api/v1
 ```
 
-Compose đọc biến môi trường từ `server/.env`, nhưng tự override `REDIS_HOST=redis`
-cho backend trong Docker network. Vì vậy bạn vẫn có thể giữ `REDIS_HOST=localhost`
-trong `.env` để chạy backend trực tiếp bằng npm.
-
-Dừng server Docker:
+Dừng backend:
 
 ```powershell
 docker compose down
 ```
 
-## Khởi động Redis
+## 3. Chạy backend trực tiếp bằng npm
 
-Chỉ cần phần này khi bạn chạy backend trực tiếp bằng `npm run start:dev`.
-Backend sử dụng Redis cho BullMQ và SSE. Hãy mở Docker Desktop trước, sau đó chạy:
+Dùng cách này khi muốn backend tự reload khi sửa code.
+
+Mở Docker Desktop và bật Redis:
 
 ```powershell
 docker start interviewcoach-redis
 ```
 
-Nếu container chưa tồn tại:
+Nếu Redis container chưa tồn tại:
 
 ```powershell
 docker run --name interviewcoach-redis -p 6379:6379 -d redis:7-alpine
 ```
 
-Kiểm tra Redis:
-
-```powershell
-docker ps --filter "name=interviewcoach-redis"
-Test-NetConnection localhost -Port 6379
-```
-
-`TcpTestSucceeded` phải là `True`.
-
-## Dừng process backend cũ
-
-Trước khi chạy backend, dừng toàn bộ process đang giữ port `3000`:
-
-```powershell
-$backendPids = @(
-  Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue |
-    Select-Object -ExpandProperty OwningProcess -Unique
-)
-
-foreach ($backendPid in $backendPids) {
-  Stop-Process -Id $backendPid -Force
-}
-```
-
-Xác nhận port đã trống:
-
-```powershell
-Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue
-```
-
-Không có output nghĩa là port đã trống.
-
-Không nên dùng:
-
-```powershell
-Stop-Process -Name node -Force
-```
-
-Lệnh trên sẽ dừng tất cả ứng dụng Node.js, bao gồm cả frontend đang chạy trên
-port `5173`.
-
-## Chạy backend
-
-### Cách nhanh bằng Docker
-
-Mở PowerShell tại thư mục gốc repository:
-
-```powershell
-docker compose up --build server
-```
-
-### Chạy trực tiếp bằng npm
-
-#### Quy trình đầy đủ cho local development
-
-Mở PowerShell tại thư mục gốc repository:
+Chạy backend:
 
 ```powershell
 cd server
-```
-
-1. Dừng backend cũ:
-
-```powershell
-$backendPids = @(
-  Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue |
-    Select-Object -ExpandProperty OwningProcess -Unique
-)
-
-foreach ($backendPid in $backendPids) {
-  Stop-Process -Id $backendPid -Force
-}
-```
-
-2. Khởi động Redis:
-
-```powershell
-docker start interviewcoach-redis
-```
-
-Nếu Docker báo không tìm thấy container:
-
-```powershell
-docker run --name interviewcoach-redis -p 6379:6379 -d redis:7-alpine
-```
-
-3. Kiểm tra Prisma:
-
-```powershell
-npx prisma validate
-```
-
-4. Chạy backend ở watch mode:
-
-```powershell
 npm run start:dev
 ```
 
-Đây là lệnh khuyến nghị khi phát triển. NestJS sẽ tự compile lại khi source code
-thay đổi.
+Khi thấy log `Nest application successfully started`, backend đã sẵn sàng.
 
-Khi thành công, terminal hiển thị:
+Dừng backend đang chạy trong terminal:
 
 ```text
-Nest application successfully started
+Ctrl+C
 ```
 
-#### Chạy không có watch mode
-
-```powershell
-npm start
-```
-
-#### Chạy production build
-
-```powershell
-npm run build
-npm run start:prod
-```
-
-## Kiểm tra backend
+## 4. Kiểm tra nhanh
 
 Kiểm tra port:
 
@@ -257,133 +136,56 @@ Kiểm tra port:
 Test-NetConnection localhost -Port 3000
 ```
 
-Kiểm tra API root:
+Gọi API root:
 
 ```powershell
 Invoke-WebRequest http://localhost:3000/api/v1
 ```
 
-Kiểm tra danh sách session trong local auth bypass:
+## 5. Lỗi thường gặp
 
-```powershell
-Invoke-RestMethod `
-  -Uri http://localhost:3000/api/v1/sessions `
-  -Headers @{ Authorization = "Bearer dev-mock-token" }
-```
+### Port 3000 đang bị chiếm
 
-## Dừng backend
-
-Nếu backend đang chạy trực tiếp trong terminal, nhấn:
-
-```text
-Ctrl+C
-```
-
-Nếu terminal đã đóng nhưng process vẫn còn:
-
-```powershell
-$backendPids = @(
-  Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue |
-    Select-Object -ExpandProperty OwningProcess -Unique
-)
-
-foreach ($backendPid in $backendPids) {
-  Stop-Process -Id $backendPid -Force
-}
-```
-
-## Lỗi thường gặp
-
-### `EADDRINUSE: address already in use :::3000`
-
-Đã có process khác sử dụng port `3000`.
-
-Xem PID:
+Xem process đang dùng port:
 
 ```powershell
 Get-NetTCPConnection -LocalPort 3000 -State Listen |
   Select-Object LocalAddress, LocalPort, OwningProcess
 ```
 
-Dừng process:
+Dừng process đó:
 
 ```powershell
 Stop-Process -Id <PID> -Force
 ```
 
-Sau đó chạy lại:
+Sau đó chạy lại backend.
 
-```powershell
-npm run start:dev
-```
+### Redis chưa chạy
 
-Nếu đang chạy bằng Docker Compose:
-
-```powershell
-docker compose up --build server
-```
-
-### `ECONNREFUSED 127.0.0.1:6379`
-
-Redis chưa chạy khi backend được chạy trực tiếp bằng npm. Mở Docker Desktop rồi chạy:
+Nếu chạy bằng npm và gặp lỗi `ECONNREFUSED 127.0.0.1:6379`, bật Redis:
 
 ```powershell
 docker start interviewcoach-redis
 ```
 
-Nếu chạy bằng Docker Compose, Redis được bật tự động:
-
-```powershell
-docker compose up --build server
-```
+Nếu chạy bằng Docker Compose, Redis được bật tự động.
 
 ### API trả `401 Unauthorized`
 
-Kiểm tra cặp cấu hình local:
+Nếu đang phát triển local và muốn bỏ qua đăng nhập, kiểm tra lại:
 
 ```dotenv
 AUTH_ENABLED=false
 MOCK_USER_ID=<UUID-hop-le>
 ```
 
-Sau khi sửa `.env`, phải dừng và chạy lại backend.
+Sau khi sửa `.env`, dừng backend rồi chạy lại.
 
-### Prisma báo UUID không hợp lệ
-
-Ví dụ:
-
-```text
-invalid input syntax for type uuid
-```
-
-`MOCK_USER_ID` không phải UUID hợp lệ hoặc không khớp user trong database.
-
-## Kiểm tra chất lượng
+## 6. Lệnh hữu ích
 
 ```powershell
-# Unit tests
 npm test
-
-# Toàn bộ test chạy tuần tự
-npm test -- --runInBand
-
-# Build
 npm run build
-
-# Validate Prisma schema
 npx prisma validate
 ```
-
-## Scripts
-
-| Lệnh | Mục đích |
-| --- | --- |
-| `npm run start:dev` | Chạy development với watch mode |
-| `npm start` | Chạy development không có watch mode |
-| `npm run build` | Compile source vào `dist/` |
-| `npm run start:prod` | Chạy production build từ `dist/` |
-| `npm test` | Chạy unit tests |
-| `npm run test:e2e` | Chạy end-to-end tests |
-| `npm run test:cov` | Chạy tests và xuất coverage |
-| `npm run lint` | Chạy ESLint và tự sửa lỗi có thể sửa |
-| `npm run seed` | Seed dữ liệu mẫu |
