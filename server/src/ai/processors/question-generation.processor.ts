@@ -79,25 +79,95 @@ export class QuestionGenerationProcessor extends WorkerHost {
         error instanceof Error ? error.stack : String(error),
       );
 
-      await this.prisma.interviewSession
-        .update({
-          where: { id: sessionId },
-          data: { status: 'error' },
-        })
-        .catch((updateErr: unknown) => {
-          this.logger.error(
-            'Failed to update session status to error',
-            updateErr,
-          );
-        });
-
-      await this.sseService
-        .emit(`sse:session:${sessionId}`, 'session.status', { status: 'error' })
-        .catch((sseErr: unknown) => {
-          this.logger.error('Failed to emit error SSE', sseErr);
-        });
-
-      throw error;
+      try {
+        await this.fallbackFromQuestionBank(
+          sessionId,
+          sessionType,
+          contextPack,
+          totalQuestions,
+        );
+        await this.sseService.emit(
+          `sse:session:${sessionId}`,
+          'session.status',
+          { status: 'ready', sessionId },
+        );
+      } catch (fallbackError: unknown) {
+        this.logger.error(
+          'Fallback from question_bank also failed',
+          fallbackError,
+        );
+        await this.prisma.interviewSession
+          .update({ where: { id: sessionId }, data: { status: 'error' } })
+          .catch(() => {});
+        await this.sseService
+          .emit(`sse:session:${sessionId}`, 'session.status', {
+            status: 'error',
+          })
+          .catch(() => {});
+      }
     }
+  }
+
+  private async fallbackFromQuestionBank(
+    sessionId: string,
+    sessionType: string,
+    contextPack: string,
+    totalQuestions: number,
+  ): Promise<void> {
+    const candidates = await this.prisma.questionBank.findMany({
+      where: { sessionType, contextPackId: contextPack, deletedAt: null },
+      orderBy: [{ difficulty: 'asc' }],
+      take: totalQuestions * 3,
+    });
+
+    if (candidates.length === 0) {
+      throw new Error(
+        `No fallback questions available for ${sessionType}/${contextPack}`,
+      );
+    }
+
+    const selected = this.selectWithDifficultySpread(candidates, totalQuestions);
+
+    await this.prisma.sessionQuestion.createMany({
+      data: selected.map((q, i) => ({
+        sessionId,
+        questionBankId: q.id,
+        questionText: q.content,
+        orderIndex: i + 1,
+        questionCategory: q.competencyDomain.startsWith('TD')
+          ? 'technical'
+          : 'behavioral',
+        competencyDomain: q.competencyDomain,
+        rubricJson: {},
+        estimatedTimeMin: 5,
+      })),
+    });
+
+    await this.prisma.interviewSession.update({
+      where: { id: sessionId },
+      data: { status: 'ready' },
+    });
+  }
+
+  private selectWithDifficultySpread<T extends { difficulty: number }>(
+    items: T[],
+    count: number,
+  ): T[] {
+    const easy = items.filter((q) => q.difficulty <= 2);
+    const medium = items.filter((q) => q.difficulty === 3);
+    const hard = items.filter((q) => q.difficulty >= 4);
+
+    const easyCount = Math.round(count * 0.3);
+    const hardCount = Math.round(count * 0.2);
+    const mediumCount = count - easyCount - hardCount;
+
+    const pick = <U>(arr: U[], n: number): U[] =>
+      arr.slice(0, Math.min(n, arr.length));
+
+    return [
+      ...pick(easy, easyCount),
+      ...pick(medium, mediumCount),
+      ...pick(hard, hardCount),
+    ].slice(0, count);
   }
 }
