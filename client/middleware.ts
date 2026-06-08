@@ -4,6 +4,10 @@ import { NextResponse, type NextRequest } from 'next/server'
 const PROTECTED_PATHS = ['/setup', '/sessions', '/profile']
 
 export async function middleware(request: NextRequest) {
+  if (process.env.NEXT_PUBLIC_SKIP_AUTH === 'true') {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(

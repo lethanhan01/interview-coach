@@ -3,16 +3,19 @@ import { createClient } from './supabase'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'
 
 async function request<T>(path: string, options: RequestInit): Promise<T> {
-  const supabase = createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   }
 
-  if (session?.access_token) {
-    headers['Authorization'] = `Bearer ${session.access_token}`
+  if (process.env.NEXT_PUBLIC_SKIP_AUTH === 'true') {
+    headers['Authorization'] = 'Bearer dev-mock-token'
+  } else {
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`
+    }
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers })

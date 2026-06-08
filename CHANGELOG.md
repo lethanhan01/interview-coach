@@ -99,6 +99,7 @@ Sub-phase status:
 | Phase P9-B | Done | 6 spec files mới, 121 tests total, 81.22% statements coverage |
 | Phase P9 | Done | Unit tests — 81.22% statements (target ≥80% đạt) |
 | Phase P9-FIX | Done | 9 bugs fixed (schema/seed/mock/processor); 4 commits; 4 processor tests pass |
+| Phase DEV-BYPASS | Done | Auth bypass via env vars (AUTH_ENABLED, NEXT_PUBLIC_SKIP_AUTH) |
 
 ---
 
