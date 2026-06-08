@@ -1,10 +1,11 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
   provider = "postgresql"
+  url = "DATABASE_URL"
+  directUrl = "DIRECT_URL"
 }
 
 model ContextPack {
