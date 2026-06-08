@@ -11,6 +11,13 @@ import {
   AnnotatedSegmentDto,
 } from './dto/report-response.dto';
 
+function toRecord(value: unknown): Record<string, unknown> {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
+}
+
 @Injectable()
 export class ReportService {
   constructor(
@@ -89,12 +96,9 @@ export class ReportService {
     return {
       sessionId,
       overallScore: session.overallScore ?? 0,
-      executiveSummary: session.executiveSummaryJson as Record<string, unknown>,
-      competencyHeatmap: session.competencyHeatmapJson as Record<
-        string,
-        unknown
-      >,
-      actionPlan: session.actionPlanJson as Record<string, unknown>,
+      executiveSummary: toRecord(session.executiveSummaryJson),
+      competencyHeatmap: toRecord(session.competencyHeatmapJson),
+      actionPlan: toRecord(session.actionPlanJson),
       transcript,
     };
   }

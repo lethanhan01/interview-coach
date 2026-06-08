@@ -12,8 +12,10 @@ export class SseTokenGuard implements CanActivate {
       .switchToHttp()
       .getRequest<Request & { user?: { id: string } }>();
 
-    if (process.env.AUTH_ENABLED === 'false') {
-      req.user = { id: process.env.MOCK_USER_ID ?? 'dev-user-1' };
+    if (this.configService.get<string>('AUTH_ENABLED') === 'false') {
+      req.user = {
+        id: this.configService.getOrThrow<string>('MOCK_USER_ID'),
+      };
       return true;
     }
 

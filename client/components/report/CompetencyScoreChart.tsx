@@ -1,5 +1,9 @@
-export default function CompetencyScoreChart({ scores }: { scores: Record<string, unknown> }) {
-  const entries = Object.entries(scores).filter(([, v]) => typeof v === 'number')
+export default function CompetencyScoreChart({
+  scores,
+}: {
+  scores?: Record<string, unknown> | null
+}) {
+  const entries = Object.entries(scores ?? {}).filter(([, v]) => typeof v === 'number')
 
   if (!entries.length) return null
 

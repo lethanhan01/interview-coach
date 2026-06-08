@@ -128,6 +128,20 @@ describe('ReportService', () => {
       expect(result.transcript).toHaveLength(0);
     });
 
+    it('chuẩn hóa các JSON object phụ bị null thành object rỗng', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        competencyHeatmapJson: null,
+        actionPlanJson: null,
+      });
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.competencyHeatmap).toEqual({});
+      expect(result.actionPlan).toEqual({});
+    });
+
     it('transcript có đúng số items theo số questions', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(
         COMPLETED_SESSION,

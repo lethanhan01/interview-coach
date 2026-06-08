@@ -1,5 +1,9 @@
-export default function ActionPlanCard({ actionPlan }: { actionPlan: Record<string, unknown> }) {
-  const entries = Object.entries(actionPlan)
+export default function ActionPlanCard({
+  actionPlan,
+}: {
+  actionPlan?: Record<string, unknown> | null
+}) {
+  const entries = Object.entries(actionPlan ?? {})
 
   if (!entries.length) return null
 
