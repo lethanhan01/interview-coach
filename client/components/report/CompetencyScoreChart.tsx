@@ -14,7 +14,7 @@ export default function CompetencyScoreChart({
       </h3>
       <div className="flex flex-col gap-3">
         {entries.map(([dimension, score]) => {
-          const pct = Math.min(100, Math.max(0, ((score as number) / 10) * 100))
+          const pct = Math.min(100, Math.max(0, score as number))
           return (
             <div key={dimension}>
               <div className="mb-1 flex items-center justify-between text-sm">
@@ -26,8 +26,8 @@ export default function CompetencyScoreChart({
                   role="progressbar"
                   aria-valuenow={score as number}
                   aria-valuemin={0}
-                  aria-valuemax={10}
-                  aria-label={`${dimension.replace(/_/g, ' ')}: ${(score as number).toFixed(1)}/10`}
+                  aria-valuemax={100}
+                  aria-label={`${dimension.replace(/_/g, ' ')}: ${(score as number).toFixed(1)}/100`}
                   className="h-full rounded-full bg-black transition-all"
                   style={{ width: `${pct}%` }}
                 />

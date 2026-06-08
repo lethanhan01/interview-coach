@@ -2,6 +2,8 @@
 -- Applied manually via Supabase Dashboard SQL editor or migration tool.
 -- Source: docs/Design/DetailedDesign/database-design/03_tables_auth.md §context_packs
 
+BEGIN;
+
 INSERT INTO context_packs (id, name, rubric_json, scoring_weights) VALUES
 (
   'VN',
@@ -52,4 +54,30 @@ INSERT INTO context_packs (id, name, rubric_json, scoring_weights) VALUES
     "behavioral_weight": 0.45,
     "technical_weight":  0.55
   }'
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  rubric_json = EXCLUDED.rubric_json,
+  scoring_weights = EXCLUDED.scoring_weights;
+
+-- Normalize databases created before context-pack IDs were standardized.
+UPDATE interview_sessions
+SET context_pack_id = 'VN'
+WHERE context_pack_id = 'vn';
+
+UPDATE interview_sessions
+SET context_pack_id = 'Western'
+WHERE context_pack_id = 'western';
+
+UPDATE question_bank
+SET context_pack_id = 'VN'
+WHERE context_pack_id = 'vn';
+
+UPDATE question_bank
+SET context_pack_id = 'Western'
+WHERE context_pack_id = 'western';
+
+DELETE FROM context_packs
+WHERE id IN ('vn', 'western');
+
+COMMIT;

@@ -1,8 +1,9 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { InterviewSession } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { ReferenceDataService } from '../prisma/reference-data.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import {
@@ -14,8 +15,11 @@ import { CreateSessionDto } from './dto/create-session.dto';
 
 @Injectable()
 export class SessionService {
+  private readonly logger = new Logger(SessionService.name);
+
   constructor(
     private readonly prisma: PrismaService,
+    private readonly referenceData: ReferenceDataService,
     @InjectQueue(QUESTION_GEN_QUEUE) private readonly queue: Queue,
     @InjectQueue(REPORT_QUEUE) private readonly reportQueue: Queue,
   ) {}
@@ -35,6 +39,16 @@ export class SessionService {
       throw new InterviewAIException(
         ErrorCode.SESSION_LIMIT_EXCEEDED,
         HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    try {
+      await this.referenceData.ensureContextPack(dto.contextPack);
+    } catch {
+      throw new InterviewAIException(
+        ErrorCode.SERVICE_UNAVAILABLE,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        'Không thể khởi tạo cấu hình phỏng vấn. Vui lòng thử lại sau.',
       );
     }
 
@@ -67,10 +81,18 @@ export class SessionService {
         },
       );
     } catch (error: unknown) {
+      this.logger.error(
+        `Unable to enqueue question generation for session ${session.id}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       await this.prisma.interviewSession
         .update({ where: { id: session.id }, data: { status: 'error' } })
         .catch(() => {});
-      throw error;
+      throw new InterviewAIException(
+        ErrorCode.SERVICE_UNAVAILABLE,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        'Dịch vụ tạo câu hỏi tạm thời không khả dụng. Vui lòng thử lại sau.',
+      );
     }
 
     return session;

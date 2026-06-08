@@ -23,7 +23,7 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: response.statusText }))
     const err = error as { errorCode?: string; message?: string }
-    throw new Error(err.errorCode ?? err.message ?? `Request failed: ${response.status}`)
+    throw new Error(err.message ?? err.errorCode ?? `Request failed: ${response.status}`)
   }
 
   return response.json() as Promise<T>

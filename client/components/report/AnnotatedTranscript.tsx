@@ -32,7 +32,17 @@ function renderHighlightedText(text: string, segments: AnnotatedSegment[]) {
   return <>{parts}</>
 }
 
-export default function AnnotatedTranscript({ items }: { items: TranscriptItem[] }) {
+const RUBRIC_DIMENSIONS: Record<'VN' | 'Western', string> = {
+  VN: 'clarity · structure · communication · culture_fit (25% mỗi tiêu chí)',
+  Western: 'clarity · structure · communication · impact · leadership (20% mỗi tiêu chí)',
+}
+
+interface AnnotatedTranscriptProps {
+  items: TranscriptItem[]
+  contextPackId?: 'VN' | 'Western'
+}
+
+export default function AnnotatedTranscript({ items, contextPackId }: AnnotatedTranscriptProps) {
   return (
     <div className="flex flex-col gap-8">
       {items.map((item) => (
@@ -42,9 +52,15 @@ export default function AnnotatedTranscript({ items }: { items: TranscriptItem[]
               Câu {item.orderIndex + 1}
             </p>
             <span className="text-xs font-semibold text-brand">
-              {item.overallScore.toFixed(1)} / 10
+              {item.overallScore.toFixed(1)} / 100
             </span>
           </div>
+
+          {contextPackId && (
+            <p className="mb-3 text-xs text-gray-400">
+              Tiêu chí đánh giá: {RUBRIC_DIMENSIONS[contextPackId]}
+            </p>
+          )}
 
           <p className="mb-4 font-medium text-gray-900">{item.questionText}</p>
 

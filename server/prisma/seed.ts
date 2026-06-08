@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { CONTEXT_PACK_DATA } from '../src/prisma/context-pack.data';
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env['DATABASE_URL'] }),
@@ -17,62 +18,40 @@ const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 });
 
 async function seedContextPacks() {
-  const existing = await prisma.contextPack.findMany();
-  if (existing.length >= 2) {
-    console.log('context_packs: already seeded, skipping');
-    return;
-  }
+  await prisma.$transaction(async (tx) => {
+    for (const pack of CONTEXT_PACK_DATA) {
+      await tx.contextPack.upsert({
+        where: { id: pack.id },
+        create: {
+          id: pack.id,
+          name: pack.name,
+          rubricJson: pack.rubricJson,
+          scoringWeights: pack.scoringWeights,
+        },
+        update: {
+          name: pack.name,
+          rubricJson: pack.rubricJson,
+          scoringWeights: pack.scoringWeights,
+        },
+      });
+    }
 
-  await prisma.contextPack.createMany({
-    data: [
-      {
-        id: 'VN',
-        name: 'Vietnam Context Pack',
-        rubricJson: {
-          behavioral: {
-            D1: { name: 'Giao tiếp & Trình bày', weight: 0.2 },
-            D2: { name: 'Tư duy & Giải quyết vấn đề', weight: 0.2 },
-            D3: { name: 'Làm việc nhóm', weight: 0.15 },
-            D4: { name: 'Thái độ & Động lực', weight: 0.2 },
-            D5: { name: 'Phù hợp văn hóa', weight: 0.15 },
-            D6: { name: 'Tự nhận thức', weight: 0.1 },
-          },
-          technical: {
-            TD1: { name: 'Kiến thức nền tảng', weight: 0.25 },
-            TD2: { name: 'Khả năng áp dụng thực tế', weight: 0.25 },
-            TD3: { name: 'Tư duy hệ thống', weight: 0.2 },
-            TD4: { name: 'Code quality & Best practices', weight: 0.2 },
-            TD5: { name: 'Debug & Problem-solving', weight: 0.1 },
-          },
-        },
-        scoringWeights: { behavioral_weight: 0.5, technical_weight: 0.5 },
-      },
-      {
-        id: 'Western',
-        name: 'Western Context Pack',
-        rubricJson: {
-          behavioral: {
-            D1: { name: 'Communication & Presentation', weight: 0.2 },
-            D2: { name: 'Critical Thinking', weight: 0.2 },
-            D3: { name: 'Collaboration & Teamwork', weight: 0.15 },
-            D4: { name: 'Leadership & Initiative', weight: 0.2 },
-            D5: { name: 'Culture Fit & Values', weight: 0.15 },
-            D6: { name: 'Self-Awareness & Growth', weight: 0.1 },
-          },
-          technical: {
-            TD1: { name: 'Foundational Knowledge', weight: 0.2 },
-            TD2: { name: 'Practical Application', weight: 0.25 },
-            TD3: { name: 'Systems Thinking', weight: 0.2 },
-            TD4: { name: 'Code Quality & Best Practices', weight: 0.2 },
-            TD5: { name: 'Debug & Problem-solving', weight: 0.15 },
-          },
-        },
-        scoringWeights: { behavioral_weight: 0.45, technical_weight: 0.55 },
-      },
-    ],
-    skipDuplicates: true,
+    for (const pack of CONTEXT_PACK_DATA) {
+      for (const legacyId of pack.legacyIds) {
+        await tx.interviewSession.updateMany({
+          where: { contextPackId: legacyId },
+          data: { contextPackId: pack.id },
+        });
+        await tx.questionBank.updateMany({
+          where: { contextPackId: legacyId },
+          data: { contextPackId: pack.id },
+        });
+        await tx.contextPack.deleteMany({ where: { id: legacyId } });
+      }
+    }
   });
-  console.log('context_packs: seeded');
+
+  console.log('context_packs: canonical IDs ensured');
 }
 
 async function getOrCreateDemoUser(): Promise<string> {

@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { SessionService } from './session.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { ReferenceDataService } from '../prisma/reference-data.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import {
@@ -43,16 +44,21 @@ describe('SessionService', () => {
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockQuestionQueue: ReturnType<typeof createMockQueue>;
   let mockReportQueue: ReturnType<typeof createMockQueue>;
+  let mockReferenceData: { ensureContextPack: jest.Mock };
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
     mockQuestionQueue = createMockQueue();
     mockReportQueue = createMockQueue();
+    mockReferenceData = {
+      ensureContextPack: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SessionService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: ReferenceDataService, useValue: mockReferenceData },
         {
           provide: getQueueToken(QUESTION_GEN_QUEUE),
           useValue: mockQuestionQueue,
@@ -83,6 +89,7 @@ describe('SessionService', () => {
         }),
       );
       expect(result).toEqual(BASE_SESSION);
+      expect(mockReferenceData.ensureContextPack).toHaveBeenCalledWith('VN');
     });
 
     it('enqueue question-generation job sau khi tạo', async () => {
@@ -138,10 +145,24 @@ describe('SessionService', () => {
         status: 'error',
       });
 
-      await expect(service.create('user-abc', CREATE_DTO)).rejects.toThrow();
+      await expect(service.create('user-abc', CREATE_DTO)).rejects.toMatchObject(
+        { errorCode: ErrorCode.SERVICE_UNAVAILABLE },
+      );
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { status: 'error' } }),
       );
+    });
+
+    it('trả SERVICE_UNAVAILABLE khi context pack không thể đồng bộ', async () => {
+      mockPrisma.interviewSession.count.mockResolvedValue(0);
+      mockReferenceData.ensureContextPack.mockRejectedValue(
+        new Error('Database unavailable'),
+      );
+
+      await expect(service.create('user-abc', CREATE_DTO)).rejects.toMatchObject(
+        { errorCode: ErrorCode.SERVICE_UNAVAILABLE },
+      );
+      expect(mockPrisma.interviewSession.create).not.toHaveBeenCalled();
     });
   });
 

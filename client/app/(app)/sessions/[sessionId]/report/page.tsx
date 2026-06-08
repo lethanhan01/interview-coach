@@ -8,14 +8,15 @@ import AnnotatedTranscript from '@/components/report/AnnotatedTranscript'
 import ActionPlanCard from '@/components/report/ActionPlanCard'
 import CompetencyScoreChart from '@/components/report/CompetencyScoreChart'
 import SessionMetadataCard from '@/components/report/SessionMetadataCard'
+import ScoringMethodCard from '@/components/report/ScoringMethodCard'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 const POLL_INTERVAL_MS = 5000
 
 const EXECUTIVE_SUMMARY_LABELS: Record<string, string> = {
-  strengths: 'Điểm mạnh',
-  improvements: 'Điểm cần cải thiện',
-  overallAssessment: 'Nhận xét tổng quan',
+  overallScore: 'Điểm tổng',
+  totalTurns: 'Số câu trả lời',
+  summary: 'Tóm tắt',
 }
 
 function renderSummaryValue(value: unknown): React.ReactNode {
@@ -96,16 +97,19 @@ export default function ReportPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
+      <h1 className="mb-6 text-2xl font-bold text-gray-900">Báo cáo phỏng vấn</h1>
+
       <div className="mb-8 rounded-2xl bg-brand p-6 text-white">
-        <p className="mb-1 text-sm text-brand-200">Báo cáo phỏng vấn</p>
+        <p className="mb-1 text-sm text-brand-200">Điểm đánh giá tổng</p>
         <p className="text-5xl font-bold">
           {report.overallScore.toFixed(1)}
-          <span className="ml-1 text-2xl text-brand-200">/ 10</span>
+          <span className="ml-1 text-2xl text-brand-200">/ 100</span>
         </p>
       </div>
 
       <div className="flex flex-col gap-6">
         {session && <SessionMetadataCard session={session} />}
+        {session?.contextPackId && <ScoringMethodCard contextPackId={session.contextPackId} />}
 
         {report.executiveSummary && Object.keys(report.executiveSummary).length > 0 && (
           <div className="rounded-2xl border border-brand-200 bg-brand-50 p-5">
@@ -128,7 +132,7 @@ export default function ReportPage() {
 
         <div>
           <h2 className="mb-4 text-base font-semibold text-ink">Transcript có chú thích</h2>
-          <AnnotatedTranscript items={report.transcript} />
+          <AnnotatedTranscript items={report.transcript} contextPackId={session?.contextPackId} />
         </div>
       </div>
     </div>
