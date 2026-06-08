@@ -55,7 +55,7 @@ describe('QuestionGenerationProcessor', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  it('tạo questions, cập nhật session status=ready và emit SSE khi thành công', async () => {
+  it('tạo questions, cập nhật session status=active và emit SSE khi thành công', async () => {
     const generatedQuestions = [
       {
         text: 'Giới thiệu bản thân?',
@@ -96,12 +96,12 @@ describe('QuestionGenerationProcessor', () => {
     });
     expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
       where: { id: 'session-123' },
-      data: { status: 'ready' },
+      data: { status: 'active' },
     });
     expect(mockSse.emit).toHaveBeenCalledWith(
       'sse:session:session-123',
       'session.status',
-      { status: 'ready', sessionId: 'session-123' },
+      { status: 'active', sessionId: 'session-123' },
     );
   });
 
@@ -159,12 +159,12 @@ describe('QuestionGenerationProcessor', () => {
       );
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
         where: { id: 'session-123' },
-        data: { status: 'ready' },
+        data: { status: 'active' },
       });
       expect(mockSse.emit).toHaveBeenCalledWith(
         'sse:session:session-123',
         'session.status',
-        { status: 'ready', sessionId: 'session-123' },
+        { status: 'active', sessionId: 'session-123' },
       );
     });
 

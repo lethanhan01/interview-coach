@@ -133,10 +133,10 @@ describe('TurnService', () => {
       }
     });
 
-    it('ném SESSION_NOT_ACTIVE (403) khi session không ở trạng thái active', async () => {
+    it('ném SESSION_NOT_ACTIVE (403) khi session đã completed', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...BASE_SESSION,
-        status: 'generating',
+        status: 'completed',
       });
 
       await expect(
@@ -145,7 +145,7 @@ describe('TurnService', () => {
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...BASE_SESSION,
-        status: 'generating',
+        status: 'completed',
       });
       try {
         await service.submitAnswer('session-123', 'user-abc', TEXT_DTO);
@@ -171,6 +171,62 @@ describe('TurnService', () => {
       } catch (e) {
         expect((e as InterviewAIException).errorCode).toBe(ErrorCode.NOT_FOUND);
       }
+    });
+
+    it('chấp nhận session ready cũ, chuyển sang active rồi tạo answer', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'ready',
+      });
+      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.interviewSession.update.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'active',
+      });
+      mockPrisma.userAnswer.create.mockResolvedValue(BASE_ANSWER);
+      mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(false);
+      mockFeedbackQueue.add.mockResolvedValue({});
+
+      const result = await service.submitAnswer(
+        'session-123',
+        'user-abc',
+        TEXT_DTO,
+      );
+
+      expect(result.answerId).toBe('answer-1');
+      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
+        where: { id: 'session-123' },
+        data: { status: 'active' },
+      });
+      expect(mockPrisma.userAnswer.create).toHaveBeenCalled();
+    });
+
+    it('chấp nhận session generating có question, chuyển sang active rồi tạo answer', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'generating',
+      });
+      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.interviewSession.update.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'active',
+      });
+      mockPrisma.userAnswer.create.mockResolvedValue(BASE_ANSWER);
+      mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(false);
+      mockFeedbackQueue.add.mockResolvedValue({});
+
+      const result = await service.submitAnswer(
+        'session-123',
+        'user-abc',
+        TEXT_DTO,
+      );
+
+      expect(result.answerId).toBe('answer-1');
+      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
+        where: { id: 'session-123' },
+        data: { status: 'active' },
+      });
+      expect(mockPrisma.userAnswer.create).toHaveBeenCalled();
     });
 
     it('text mode: tạo answer, enqueue feedback, không enqueue follow-up khi shouldGenerateFollowUp=false', async () => {

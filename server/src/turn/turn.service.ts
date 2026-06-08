@@ -46,7 +46,7 @@ export class TurnService {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
 
-    if (session.status !== 'active') {
+    if (!['active', 'ready', 'generating'].includes(session.status)) {
       throw new InterviewAIException(
         ErrorCode.SESSION_NOT_ACTIVE,
         HttpStatus.FORBIDDEN,
@@ -59,6 +59,13 @@ export class TurnService {
 
     if (!question) {
       throw new InterviewAIException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
+    if (session.status !== 'active') {
+      await this.prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: { status: 'active' },
+      });
     }
 
     let answerText: string;

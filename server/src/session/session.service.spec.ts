@@ -276,7 +276,10 @@ describe('SessionService', () => {
 
   describe('findQuestions', () => {
     it('trả về danh sách câu hỏi đã map khi session tồn tại và đúng owner', async () => {
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'active',
+      });
       mockPrisma.sessionQuestion.findMany.mockResolvedValue([
         {
           id: 'q-1',
@@ -301,6 +304,59 @@ describe('SessionService', () => {
       expect(mockPrisma.sessionQuestion.findMany).toHaveBeenCalledWith({
         where: { sessionId: 'session-123' },
         orderBy: { orderIndex: 'asc' },
+      });
+      expect(mockPrisma.interviewSession.update).not.toHaveBeenCalled();
+    });
+
+    it('tự chuyển session ready sang active khi đã có câu hỏi', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'ready',
+      });
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Giới thiệu bản thân?',
+          orderIndex: 1,
+          sessionId: 'session-123',
+        },
+      ]);
+      mockPrisma.interviewSession.update.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'active',
+      });
+
+      await service.findQuestions('session-123', 'user-abc');
+
+      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
+        where: { id: 'session-123' },
+        data: { status: 'active' },
+      });
+    });
+
+    it('tự chuyển session generating sang active khi đã có câu hỏi', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'generating',
+      });
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Giới thiệu bản thân?',
+          orderIndex: 1,
+          sessionId: 'session-123',
+        },
+      ]);
+      mockPrisma.interviewSession.update.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'active',
+      });
+
+      await service.findQuestions('session-123', 'user-abc');
+
+      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
+        where: { id: 'session-123' },
+        data: { status: 'active' },
       });
     });
 

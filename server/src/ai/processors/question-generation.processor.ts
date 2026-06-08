@@ -66,11 +66,11 @@ export class QuestionGenerationProcessor extends WorkerHost {
 
       await this.prisma.interviewSession.update({
         where: { id: sessionId },
-        data: { status: 'ready' },
+        data: { status: 'active' },
       });
 
       await this.sseService.emit(`sse:session:${sessionId}`, 'session.status', {
-        status: 'ready',
+        status: 'active',
         sessionId,
       });
     } catch (error: unknown) {
@@ -89,7 +89,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
         await this.sseService.emit(
           `sse:session:${sessionId}`,
           'session.status',
-          { status: 'ready', sessionId },
+          { status: 'active', sessionId },
         );
       } catch (fallbackError: unknown) {
         this.logger.error(
@@ -145,7 +145,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
 
     await this.prisma.interviewSession.update({
       where: { id: sessionId },
-      data: { status: 'ready' },
+      data: { status: 'active' },
     });
   }
 

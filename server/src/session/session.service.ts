@@ -128,11 +128,22 @@ export class SessionService {
     sessionId: string,
     userId: string,
   ): Promise<{ id: string; content: string; orderIndex: number }[]> {
-    await this.findById(sessionId, userId);
+    const session = await this.findById(sessionId, userId);
     const questions = await this.prisma.sessionQuestion.findMany({
       where: { sessionId },
       orderBy: { orderIndex: 'asc' },
     });
+
+    if (
+      questions.length > 0 &&
+      ['generating', 'ready'].includes(session.status)
+    ) {
+      await this.prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: { status: 'active' },
+      });
+    }
+
     return questions.map((q) => ({
       id: q.id,
       content: q.questionText,

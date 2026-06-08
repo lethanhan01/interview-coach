@@ -15,6 +15,7 @@ const SESSION_TYPE_LABELS: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   active: 'Đang phỏng vấn',
+  ready: 'Sẵn sàng',
   completed: 'Hoàn thành',
   generating: 'Đang tạo...',
   error: 'Lỗi',
@@ -24,6 +25,7 @@ type BadgeVariant = 'brand' | 'success' | 'warning' | 'danger' | 'default'
 
 const STATUS_VARIANTS: Record<string, BadgeVariant> = {
   active: 'brand',
+  ready: 'brand',
   completed: 'success',
   generating: 'warning',
   error: 'danger',
@@ -135,12 +137,12 @@ export default function SessionsPage() {
                     Xem báo cáo
                   </Link>
                 )}
-                {s.status === 'active' && (
+                {(s.status === 'active' || s.status === 'ready') && (
                   <Link
                     href={`/sessions/${s.id}`}
                     className="flex-1 text-center rounded-full bg-brand text-white px-3 py-1.5 text-xs font-medium hover:bg-brand-light shadow-btn transition-all"
                   >
-                    Tiếp tục
+                    {s.status === 'ready' ? 'Bắt đầu' : 'Tiếp tục'}
                   </Link>
                 )}
               </div>

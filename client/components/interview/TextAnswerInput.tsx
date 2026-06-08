@@ -11,13 +11,17 @@ interface TextAnswerInputProps {
 export default function TextAnswerInput({ onSubmit, disabled }: TextAnswerInputProps) {
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit() {
     if (!text.trim() || submitting) return
     setSubmitting(true)
+    setError(null)
     try {
       await onSubmit(text.trim())
       setText('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể gửi câu trả lời')
     } finally {
       setSubmitting(false)
     }
@@ -32,12 +36,20 @@ export default function TextAnswerInput({ onSubmit, disabled }: TextAnswerInputP
         id="answer-textarea"
         aria-label="Câu trả lời của bạn"
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          setText(e.target.value)
+          setError(null)
+        }}
         disabled={disabled || submitting}
         placeholder="Nhập câu trả lời của bạn..."
         rows={6}
         className="w-full resize-none rounded-xl border border-border p-3 text-sm text-ink placeholder:text-ink-faint focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none disabled:opacity-50"
       />
+      {error && (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      )}
       <Button
         onClick={handleSubmit}
         disabled={!text.trim() || disabled || submitting}
