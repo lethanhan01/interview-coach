@@ -22,7 +22,7 @@ describe('QuestionGenerationProcessor', () => {
 
   const BASE_JOB_DATA = {
     sessionId: 'session-123',
-    sessionType: 'HR' as const,
+    sessionType: 'hr' as const,
     jobDescriptionText: 'Backend developer tại công ty ABC.',
     targetRoles: ['Backend Developer'],
     contextPack: 'VN' as const,
@@ -79,6 +79,7 @@ describe('QuestionGenerationProcessor', () => {
 
     await processor.process(makeJob());
 
+    expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
     expect(mockPrisma.sessionQuestion.createMany).toHaveBeenCalledWith({
       data: [
         expect.objectContaining({

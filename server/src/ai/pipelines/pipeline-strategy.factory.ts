@@ -17,12 +17,14 @@ export class PipelineStrategyFactory {
 
   getStrategy(sessionType: SessionType): InterviewPipeline {
     switch (sessionType) {
-      case 'HR':
+      case 'hr':
         return this.hr;
-      case 'Technical':
+      case 'technical':
         return this.technical;
-      case 'Mixed':
+      case 'mixed':
         return this.mixed;
+      default:
+        throw new Error(`Unsupported session type: ${String(sessionType)}`);
     }
   }
 }

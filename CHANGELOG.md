@@ -100,12 +100,51 @@ Sub-phase status:
 | Phase P9 | Done | Unit tests — 81.22% statements (target ≥80% đạt) |
 | Phase P9-FIX | Done | 9 bugs fixed (schema/seed/mock/processor); 4 commits; 4 processor tests pass |
 | Phase DEV-BYPASS | Done | Auth bypass via env vars (AUTH_ENABLED, NEXT_PUBLIC_SKIP_AUTH) |
+| Phase P8-REPORT-FIX | Done | 3 UI issues fixed: score scale 0-100, scoring methodology card, model answer prompt v1.1 |
 
 ---
 
 ## Implementation Sessions
 
 Ghi lại chi tiết từng session làm việc, thứ tự thời gian ngược.
+
+---
+
+## 2026-06-08 — Phase P8-REPORT-FIX: Report Page UI Fixes
+
+**Branch:** `feat/mvp`  
+**Commit:** `cc71211` — fix: score scale 0-100, add scoring methodology card, rubric per question
+
+**Những gì đã hoàn thành:**
+
+Issue 1 — Score scale & labels:
+
+- `client/app/(app)/sessions/[sessionId]/report/page.tsx`: thêm `<h1>Báo cáo phỏng vấn</h1>` làm tiêu đề trang; hero card label → "Điểm đánh giá tổng"; scale → `/ 100`; fix `EXECUTIVE_SUMMARY_LABELS` map đúng backend keys (`overallScore`, `totalTurns`, `summary`)
+- `client/components/report/CompetencyScoreChart.tsx`: fix pct calc (bỏ `/ 10 * 100`); `aria-valuemax` → 100; aria-label → `/100`
+- `client/components/report/AnnotatedTranscript.tsx`: badge điểm per-question → `/ 100`; thêm prop `contextPackId?`; hiển thị rubric dimensions per question
+
+Issue 2 — Scoring methodology:
+
+- `client/components/report/ScoringMethodCard.tsx`: tạo mới — card "Phương pháp chấm điểm" với công thức + weight bars cho VN (4 × 25%) và Western (5 × 20%)
+- `client/app/(app)/sessions/[sessionId]/report/page.tsx`: import + render `ScoringMethodCard` sau `SessionMetadataCard`; truyền `contextPackId` xuống `AnnotatedTranscript`
+
+Issue 3 — Model answer quality:
+
+- `server/src/ai/prompts/surgical-feedback-v1.1.ts`: tạo mới — version config `surgical-feedback-v1.1`
+- `server/src/ai/prompt-builder.service.ts`: bổ sung chỉ dẫn CRITICAL cho `model_answer`: phải là câu trả lời mẫu hoàn chỉnh 3–5 câu, không phải danh sách gợi ý
+- `server/src/ai/pipelines/pipeline.schemas.ts`: `PROMPT_VERSION` → `'surgical-feedback-v1.1'`
+- `server/src/ai/processors/feedback.processor.ts`: import từ `surgical-feedback-v1.1`
+
+**Trạng thái hiện tại:**
+
+| Component | Trạng thái | Ghi chú |
+|-----------|-----------|---------|
+| Report page — score scale | Done | Toàn bộ UI dùng thang 0–100, không còn `/10` ở bất cứ đâu |
+| Report page — page title | Done | `<h1>Báo cáo phỏng vấn</h1>` là H1; hero label = "Điểm đánh giá tổng" |
+| ScoringMethodCard | Done | VN 4 × 25%, Western 5 × 20%; weight bars; công thức trung bình cộng |
+| AnnotatedTranscript rubric | Done | Hiển thị rubric dimensions per question khi `contextPackId` có giá trị |
+| CompetencyScoreChart | Done | Bar width đúng tỉ lệ 0–100 |
+| Backend prompt v1.1 | Done | `model_answer` chỉ dẫn rõ — cải thiện áp dụng cho session mới |
 
 ---
 

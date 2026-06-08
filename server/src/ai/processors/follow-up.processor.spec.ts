@@ -26,7 +26,7 @@ describe('FollowUpProcessor', () => {
     questionText: 'Giới thiệu bản thân?',
     answerText: 'Tôi là developer.',
     contextPack: 'VN' as const,
-    sessionType: 'HR' as const,
+    sessionType: 'hr' as const,
   };
 
   const makeJob = (data = BASE_JOB_DATA) =>
@@ -67,6 +67,7 @@ describe('FollowUpProcessor', () => {
 
     await processor.process(makeJob());
 
+    expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
     expect(mockPrisma.followUpQuestion.create).toHaveBeenCalledWith({
       data: {
         userAnswerId: 'answer-1',

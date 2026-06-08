@@ -42,7 +42,7 @@ describe('SessionController', () => {
 
   describe('POST /sessions', () => {
     it('gọi sessionService.create với userId và dto, trả về session', async () => {
-      const dto = { jobDescription: 'jd', sessionType: 'HR' } as any;
+      const dto = { jobDescription: 'jd', sessionType: 'hr' } as any;
       const created = { id: 'session-1', status: 'generating' };
       mockSessionService.create.mockResolvedValue(created);
 

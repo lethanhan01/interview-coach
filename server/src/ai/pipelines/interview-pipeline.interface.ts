@@ -1,6 +1,6 @@
 import type { ContextPackConfig } from '../context-pack.service';
 
-export type SessionType = 'HR' | 'Technical' | 'Mixed';
+export type SessionType = 'hr' | 'technical' | 'mixed';
 
 export interface QuestionGenInput {
   sessionType: SessionType;

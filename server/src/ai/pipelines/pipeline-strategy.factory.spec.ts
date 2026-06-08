@@ -24,16 +24,22 @@ describe('PipelineStrategyFactory', () => {
   });
 
   describe('getStrategy', () => {
-    it('trả về HrPipelineService cho sessionType HR', () => {
-      expect(factory.getStrategy('HR')).toBe(mockHr);
+    it('trả về HrPipelineService cho sessionType hr', () => {
+      expect(factory.getStrategy('hr')).toBe(mockHr);
     });
 
-    it('trả về TechnicalPipelineService cho sessionType Technical', () => {
-      expect(factory.getStrategy('Technical')).toBe(mockTechnical);
+    it('trả về TechnicalPipelineService cho sessionType technical', () => {
+      expect(factory.getStrategy('technical')).toBe(mockTechnical);
     });
 
-    it('trả về MixedPipelineService cho sessionType Mixed', () => {
-      expect(factory.getStrategy('Mixed')).toBe(mockMixed);
+    it('trả về MixedPipelineService cho sessionType mixed', () => {
+      expect(factory.getStrategy('mixed')).toBe(mockMixed);
+    });
+
+    it('ném lỗi rõ ràng nếu nhận sessionType không được hỗ trợ', () => {
+      expect(() => factory.getStrategy('HR' as never)).toThrow(
+        'Unsupported session type: HR',
+      );
     });
   });
 });
