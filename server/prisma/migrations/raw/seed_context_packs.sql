@@ -4,7 +4,7 @@
 
 INSERT INTO context_packs (id, name, rubric_json, scoring_weights) VALUES
 (
-  'vn',
+  'VN',
   'Vietnam Context Pack',
   '{
     "behavioral": {
@@ -29,7 +29,7 @@ INSERT INTO context_packs (id, name, rubric_json, scoring_weights) VALUES
   }'
 ),
 (
-  'western',
+  'Western',
   'Western Context Pack',
   '{
     "behavioral": {
