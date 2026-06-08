@@ -9,6 +9,7 @@ export interface Session {
   contextPackId: ContextPack
   status: SessionStatus
   numQuestions: number
+  durationMin?: number
   jobDescription: string
   createdAt: string
   completedAt?: string

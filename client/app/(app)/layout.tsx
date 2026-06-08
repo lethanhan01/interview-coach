@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '../../lib/supabase-server'
-import LogoutButton from '@/components/ui/LogoutButton'
 import NavLinks from '@/components/ui/NavLinks'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -37,9 +36,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
           <div className="flex items-center gap-1">
             <NavLinks />
-            <div className="ml-2 pl-2 border-l border-border">
-              <LogoutButton />
-            </div>
           </div>
         </div>
       </header>
