@@ -13,16 +13,19 @@ export default function NavLinks() {
   const pathname = usePathname()
 
   return (
-    <div className="flex items-center gap-6">
+    <div className="flex items-center gap-1">
       {NAV_LINKS.map(({ href, label }) => {
         const active = pathname === href || pathname.startsWith(href + '/')
         return (
           <Link
             key={href}
             href={href}
-            className={`text-sm transition-colors ${
-              active ? 'font-semibold text-gray-900' : 'text-gray-500 hover:text-gray-900'
-            }`}
+            className={[
+              'px-3 py-1.5 text-sm rounded-lg transition-colors',
+              active
+                ? 'font-semibold text-brand bg-brand-50'
+                : 'text-ink-muted hover:text-brand hover:bg-brand-50',
+            ].join(' ')}
             aria-current={active ? 'page' : undefined}
           >
             {label}

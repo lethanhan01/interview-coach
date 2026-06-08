@@ -8,10 +8,10 @@ import Button from '@/components/ui/Button'
 
 type Step = 1 | 2 | 3
 
-const SESSION_TYPES: { value: SessionType; label: string }[] = [
-  { value: 'hr', label: 'HR / Behavioral' },
-  { value: 'technical', label: 'Technical' },
-  { value: 'mixed', label: 'Mixed' },
+const SESSION_TYPES: { value: SessionType; label: string; description: string }[] = [
+  { value: 'hr', label: 'HR / Behavioral', description: 'Câu hỏi về kinh nghiệm, soft skills, và tình huống' },
+  { value: 'technical', label: 'Technical', description: 'Câu hỏi kỹ thuật chuyên sâu theo JD' },
+  { value: 'mixed', label: 'Mixed', description: 'Kết hợp cả HR và Technical' },
 ]
 
 const CONTEXT_PACKS: { value: ContextPack; label: string; desc: string }[] = [
@@ -55,19 +55,21 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12">
-      <div className="mb-8 flex items-center gap-2">
+    <div className="mx-auto max-w-2xl">
+      {/* Stepper */}
+      <div className="mb-10 flex items-start gap-2">
         {([1, 2, 3] as Step[]).map((s) => (
           <div key={s} className="flex items-center gap-2">
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-1.5">
               <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
+                className={[
+                  'flex size-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-150',
                   s === step
-                    ? 'bg-black text-white'
+                    ? 'bg-brand text-white ring-4 ring-brand-200'
                     : s < step
-                      ? 'bg-gray-800 text-white'
-                      : 'bg-gray-100 text-gray-400'
-                }`}
+                      ? 'bg-brand text-white'
+                      : 'bg-border text-ink-faint',
+                ].join(' ')}
               >
                 {s < step ? (
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -84,26 +86,33 @@ export default function SetupPage() {
                 )}
               </div>
               <span
-                className={`hidden text-xs sm:block ${
-                  s === step ? 'font-medium text-gray-900' : 'text-gray-400'
-                }`}
+                className={[
+                  'hidden text-xs sm:block',
+                  s === step ? 'font-medium text-ink' : 'text-ink-faint',
+                ].join(' ')}
               >
                 {STEP_LABELS[s]}
               </span>
             </div>
             {s < 3 && (
               <div
-                className={`mb-4 h-px w-10 ${s < step ? 'bg-gray-800' : 'bg-gray-200'}`}
+                className={[
+                  'mb-4 h-px w-10 transition-all duration-150',
+                  s < step ? 'bg-brand' : 'bg-border',
+                ].join(' ')}
               />
             )}
           </div>
         ))}
       </div>
 
+      {/* Step 1 — Job Description */}
       {step === 1 && (
-        <div className="flex flex-col gap-4">
-          <h1 className="text-xl font-semibold text-gray-900">Dán Job Description</h1>
-          <p className="text-sm text-gray-500">Tối thiểu 100 ký tự để AI tạo câu hỏi phù hợp.</p>
+        <div className="flex flex-col gap-5">
+          <div>
+            <h1 className="text-xl font-semibold text-ink">Dán Job Description</h1>
+            <p className="mt-1 text-sm text-ink-muted">Tối thiểu 100 ký tự để AI tạo câu hỏi phù hợp.</p>
+          </div>
           <label htmlFor="jd-input" className="sr-only">
             Nội dung Job Description
           </label>
@@ -113,10 +122,10 @@ export default function SetupPage() {
             onChange={(e) => setJd(e.target.value)}
             rows={12}
             placeholder="Dán nội dung JD vào đây..."
-            className="w-full resize-none rounded-lg border border-gray-300 p-3 text-sm focus:border-black focus:outline-none"
+            className="w-full resize-none rounded-xl border border-border bg-surface p-4 text-sm text-ink placeholder:text-ink-faint outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand"
           />
           <div className="flex items-center justify-between">
-            <span className={`text-xs ${jdValid ? 'text-green-600' : 'text-gray-400'}`}>
+            <span className={`text-xs ${jdValid ? 'text-success' : 'text-ink-faint'}`}>
               {jd.trim().length} / 100 ký tự
             </span>
             <Button onClick={() => setStep(2)} disabled={!jdValid}>
@@ -126,47 +135,67 @@ export default function SetupPage() {
         </div>
       )}
 
+      {/* Step 2 — Configuration */}
       {step === 2 && (
-        <div className="flex flex-col gap-6">
-          <h1 className="text-xl font-semibold text-gray-900">Chọn loại phỏng vấn</h1>
+        <div className="flex flex-col gap-7">
+          <div>
+            <h1 className="text-xl font-semibold text-ink">Chọn loại phỏng vấn</h1>
+          </div>
 
           <div>
-            <p className="mb-2 text-sm font-medium text-gray-700">Loại phỏng vấn</p>
-            <div className="flex flex-col gap-2">
+            <p className="mb-3 text-sm font-medium text-ink">Loại phỏng vấn</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {SESSION_TYPES.map((t) => (
-                <label key={t.value} className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50">
-                  <input
-                    type="radio"
-                    name="sessionType"
-                    value={t.value}
-                    checked={sessionType === t.value}
-                    onChange={() => setSessionType(t.value)}
-                    className="accent-black"
-                  />
-                  <span className="text-sm text-gray-800">{t.label}</span>
-                </label>
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setSessionType(t.value)}
+                  className={[
+                    'rounded-xl border-2 p-4 text-left transition-all duration-150',
+                    sessionType === t.value
+                      ? 'border-brand bg-brand-50 shadow-card'
+                      : 'border-border bg-surface hover:border-brand-muted',
+                  ].join(' ')}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm font-medium text-ink">{t.label}</span>
+                    {sessionType === t.value && (
+                      <span className="size-4 rounded-full bg-brand flex items-center justify-center shrink-0">
+                        <span className="size-1.5 rounded-full bg-white" />
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-ink-muted leading-relaxed">{t.description}</p>
+                </button>
               ))}
             </div>
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-medium text-gray-700">Context Pack</p>
-            <div className="flex flex-col gap-2">
+            <p className="mb-3 text-sm font-medium text-ink">Context Pack</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {CONTEXT_PACKS.map((cp) => (
-                <label key={cp.value} className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50">
-                  <input
-                    type="radio"
-                    name="contextPack"
-                    value={cp.value}
-                    checked={contextPack === cp.value}
-                    onChange={() => setContextPack(cp.value)}
-                    className="mt-0.5 accent-black"
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{cp.label}</p>
-                    <p className="text-xs text-gray-500">{cp.desc}</p>
+                <button
+                  key={cp.value}
+                  type="button"
+                  onClick={() => setContextPack(cp.value)}
+                  className={[
+                    'rounded-xl border-2 p-4 text-left transition-all duration-150',
+                    contextPack === cp.value
+                      ? 'border-brand bg-brand-50 shadow-card'
+                      : 'border-border bg-surface hover:border-brand-muted',
+                  ].join(' ')}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm font-medium text-ink">{cp.label}</span>
+                    {contextPack === cp.value && (
+                      <span className="size-4 rounded-full bg-brand flex items-center justify-center shrink-0">
+                        <span className="size-1.5 rounded-full bg-white" />
+                      </span>
+                    )}
                   </div>
-                </label>
+                  <p className="text-xs text-ink-muted leading-relaxed">{cp.desc}</p>
+                </button>
               ))}
             </div>
           </div>
@@ -182,29 +211,34 @@ export default function SetupPage() {
         </div>
       )}
 
+      {/* Step 3 — Confirm */}
       {step === 3 && (
         <div className="flex flex-col gap-6">
-          <h1 className="text-xl font-semibold text-gray-900">Xác nhận</h1>
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
-            <div className="flex justify-between py-1.5">
-              <span className="text-gray-500">Loại phỏng vấn</span>
-              <span className="font-medium capitalize text-gray-900">{sessionType}</span>
+          <div>
+            <h1 className="text-xl font-semibold text-ink">Xác nhận</h1>
+            <p className="mt-1 text-sm text-ink-muted">Kiểm tra lại trước khi bắt đầu phiên phỏng vấn.</p>
+          </div>
+
+          <div className="rounded-2xl border border-brand-200 bg-brand-50 p-5 text-sm">
+            <div className="flex justify-between py-2 border-b border-brand-200/50">
+              <span className="text-ink-muted">Loại phỏng vấn</span>
+              <span className="font-medium text-ink capitalize">{sessionType}</span>
             </div>
-            <div className="flex justify-between py-1.5">
-              <span className="text-gray-500">Context Pack</span>
-              <span className="font-medium text-gray-900">{contextPack}</span>
+            <div className="flex justify-between py-2 border-b border-brand-200/50">
+              <span className="text-ink-muted">Context Pack</span>
+              <span className="font-medium text-ink">{contextPack}</span>
             </div>
-            <div className="flex justify-between py-1.5">
-              <span className="text-gray-500">Số câu hỏi</span>
-              <span className="font-medium text-gray-900">{numQuestions}</span>
+            <div className="flex justify-between py-2 border-b border-brand-200/50">
+              <span className="text-ink-muted">Số câu hỏi</span>
+              <span className="font-medium text-ink">{numQuestions}</span>
             </div>
-            <div className="flex justify-between py-1.5">
-              <span className="text-gray-500">JD</span>
-              <span className="max-w-xs truncate font-medium text-gray-900">{jd.slice(0, 60)}...</span>
+            <div className="flex justify-between py-2 gap-4">
+              <span className="text-ink-muted shrink-0">JD</span>
+              <span className="max-w-xs truncate font-medium text-ink text-right">{jd.slice(0, 60)}...</span>
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
 
           <div className="flex justify-between">
             <Button variant="ghost" onClick={() => setStep(2)}>

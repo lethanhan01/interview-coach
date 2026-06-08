@@ -522,3 +522,37 @@ Business logic nằm ở services. Controllers chỉ là thin delegation layer. 
 **UserModule tách riêng khỏi AuthModule:** Profile logic không thuộc authentication.
 
 **Voice field name là server DTO chuẩn:** `audioDurationSeconds`/`audioSizeBytes` match DB column. Client đổi, không phải server.
+
+---
+
+## 2026-06-08 — UI/UX Redesign — Purple Design System
+
+### Hoàn thành
+
+**Design System (globals.css + UI primitives)**
+- `client/app/globals.css`: `@theme {}` brand token block — `--color-brand: #6B3FA0`, surface/ink/border scale, `--shadow-card/btn/glow`
+- `client/components/ui/Button.tsx`: pill-shaped (`rounded-full`), variants primary/secondary/ghost/danger, `loading` spinner prop, hover scale
+- `client/components/ui/Card.tsx`: `rounded-2xl shadow-card border border-border`, optional `hover` lift
+- `client/components/ui/Badge.tsx`: variants default/brand/success/warning/danger
+- `client/components/ui/Input.tsx`: forwardRef, `rounded-xl focus:ring-brand`
+- `client/components/ui/Textarea.tsx`: forwardRef, charCount/maxChars support
+- lucide-react installed
+
+**Layout & Public Pages**
+- `client/app/(app)/layout.tsx`: glassmorphism sticky header (`backdrop-blur-md bg-surface-overlay`)
+- `client/app/page.tsx`: server component with Supabase auth check → landing page for unauthenticated, redirect for authed
+- `client/components/landing/`: HeroSection, FeaturesSection, CtaSection
+
+**App Pages**
+- `client/app/(auth)/login/page.tsx`: centered card, brand inputs
+- `client/app/(app)/sessions/page.tsx`: card grid, Badge status variants, branded empty state
+- `client/app/(app)/setup/page.tsx`: inline Stepper + CardRadio components, Textarea for JD, Button component
+- `client/app/(app)/sessions/[sessionId]/page.tsx`: QuestionCard brand-50, TextAnswerInput brand textarea + Button
+- `client/app/(app)/sessions/[sessionId]/report/page.tsx`: brand score card header, executive summary card
+- `client/app/(app)/profile/page.tsx`: card layout, avatar initials, brand inputs, Button component
+
+### Không thay đổi
+
+- Không thay đổi API calls, state management, SSE logic
+- Không thay đổi backend
+- Report sub-components (AnnotatedTranscript, ActionPlanCard, CompetencyScoreChart) — chưa restyle (nằm ngoài scope session này)

@@ -41,16 +41,16 @@ export default function ReportPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
+      <div className="flex flex-col items-center justify-center gap-3 py-20">
         <LoadingSpinner size="lg" />
-        <p className="text-sm text-gray-500">AI đang tạo báo cáo, vui lòng chờ...</p>
+        <p className="text-sm text-ink-muted">AI đang tạo báo cáo, vui lòng chờ...</p>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-red-600">{error}</div>
+      <div className="flex items-center justify-center py-20 text-sm text-danger">{error}</div>
     )
   }
 
@@ -58,23 +58,23 @@ export default function ReportPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Báo cáo phỏng vấn</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Điểm tổng:{' '}
-          <span className="font-medium text-gray-900">{report.overallScore.toFixed(1)} / 10</span>
+      <div className="mb-8 rounded-2xl bg-brand p-6 text-white">
+        <p className="mb-1 text-sm text-brand-200">Báo cáo phỏng vấn</p>
+        <p className="text-5xl font-bold">
+          {report.overallScore.toFixed(1)}
+          <span className="ml-1 text-2xl text-brand-200">/ 10</span>
         </p>
       </div>
 
       <div className="flex flex-col gap-6">
         {report.executiveSummary && Object.keys(report.executiveSummary).length > 0 && (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-5">
-            <h2 className="mb-3 text-base font-semibold text-gray-800">Tóm tắt tổng quan</h2>
+          <div className="rounded-2xl border border-brand-200 bg-brand-50 p-5">
+            <h2 className="mb-3 text-base font-semibold text-ink">Tóm tắt tổng quan</h2>
             <dl className="flex flex-col gap-2">
               {Object.entries(report.executiveSummary).map(([key, value]) => (
                 <div key={key}>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">{key}</dt>
-                  <dd className="mt-0.5 text-sm text-gray-800">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-ink-faint">{key}</dt>
+                  <dd className="mt-0.5 text-sm text-ink">
                     {typeof value === 'string' || typeof value === 'number'
                       ? String(value)
                       : JSON.stringify(value)}
@@ -87,7 +87,7 @@ export default function ReportPage() {
         <CompetencyScoreChart scores={report.competencyHeatmap} />
         <ActionPlanCard actionPlan={report.actionPlan} />
         <div>
-          <h2 className="mb-4 text-base font-semibold text-gray-800">Transcript có chú thích</h2>
+          <h2 className="mb-4 text-base font-semibold text-ink">Transcript có chú thích</h2>
           <AnnotatedTranscript items={report.transcript} />
         </div>
       </div>

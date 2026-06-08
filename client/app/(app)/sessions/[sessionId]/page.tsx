@@ -113,7 +113,7 @@ export default function InterviewPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <LoadingSpinner size="lg" />
       </div>
     )
@@ -121,14 +121,18 @@ export default function InterviewPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-red-600">{error}</div>
+      <div className="flex items-center justify-center py-20 text-sm text-danger">{error}</div>
     )
   }
 
   if (sessionEnded) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <p className="text-gray-700">Phiên phỏng vấn kết thúc. AI đang phân tích câu trả lời...</p>
+      <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
+        <div className="size-16 rounded-2xl bg-brand-50 flex items-center justify-center mb-2">
+          <span className="size-8 rounded-full bg-brand-200" />
+        </div>
+        <p className="text-base font-medium text-ink">Phiên phỏng vấn kết thúc</p>
+        <p className="text-sm text-ink-muted">AI đang phân tích câu trả lời của bạn...</p>
         <Button onClick={() => router.push(`/sessions/${sessionId}/report`)}>
           Xem báo cáo
         </Button>

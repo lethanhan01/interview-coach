@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import LoadingSpinner from '../ui/LoadingSpinner'
+import Button from '../ui/Button'
 
 interface TextAnswerInputProps {
   onSubmit: (text: string) => Promise<void>
@@ -36,16 +36,17 @@ export default function TextAnswerInput({ onSubmit, disabled }: TextAnswerInputP
         disabled={disabled || submitting}
         placeholder="Nhập câu trả lời của bạn..."
         rows={6}
-        className="w-full resize-none rounded-lg border border-gray-300 p-3 text-sm focus:border-black focus:outline-none disabled:opacity-50"
+        className="w-full resize-none rounded-xl border border-border p-3 text-sm text-ink placeholder:text-ink-faint focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none disabled:opacity-50"
       />
-      <button
+      <Button
         onClick={handleSubmit}
         disabled={!text.trim() || disabled || submitting}
-        className="flex items-center justify-center gap-2 self-end rounded-md bg-black px-5 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+        loading={submitting}
+        size="sm"
+        className="self-end"
       >
-        {submitting && <LoadingSpinner size="sm" />}
         Gửi câu trả lời
-      </button>
+      </Button>
     </div>
   )
 }

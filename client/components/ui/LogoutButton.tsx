@@ -15,7 +15,7 @@ export default function LogoutButton() {
   return (
     <button
       onClick={handleLogout}
-      className="text-sm text-gray-500 hover:text-gray-900"
+      className="px-3 py-1.5 text-sm text-ink-muted hover:text-brand rounded-lg hover:bg-brand-50 transition-colors"
     >
       Đăng xuất
     </button>

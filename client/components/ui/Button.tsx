@@ -1,37 +1,57 @@
-import { ButtonHTMLAttributes, ReactNode } from 'react'
-import LoadingSpinner from './LoadingSpinner'
+import { ButtonHTMLAttributes, forwardRef } from 'react'
+
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
+type Size = 'sm' | 'md' | 'lg'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost'
+  variant?: Variant
+  size?: Size
   loading?: boolean
-  children: ReactNode
 }
 
-export default function Button({
-  variant = 'primary',
-  loading = false,
-  disabled,
-  children,
-  className = '',
-  ...props
-}: ButtonProps) {
-  const base =
-    'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
-  const variants: Record<string, string> = {
-    primary: 'bg-black px-4 py-2 text-white hover:bg-gray-800',
-    secondary: 'border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50',
-    ghost: 'text-gray-500 hover:text-gray-900',
+const variantClasses: Record<Variant, string> = {
+  primary:
+    'bg-brand text-white shadow-btn hover:bg-brand-light hover:shadow-glow active:bg-brand-dark',
+  secondary:
+    'bg-brand-50 text-brand border border-brand-200 hover:bg-brand-100 active:bg-brand-200',
+  ghost: 'bg-transparent text-brand hover:bg-brand-50 active:bg-brand-100',
+  danger: 'bg-danger text-white hover:opacity-90 active:opacity-100',
+}
+
+const sizeClasses: Record<Size, string> = {
+  sm: 'px-4 py-1.5 text-sm',
+  md: 'px-6 py-2.5 text-sm',
+  lg: 'px-8 py-3 text-base',
+}
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant = 'primary', size = 'md', loading, disabled, className = '', children, ...props }, ref) => {
+    return (
+      <button
+        ref={ref}
+        disabled={disabled || loading}
+        className={[
+          'inline-flex items-center justify-center gap-2 font-medium rounded-full',
+          'transition-all duration-150',
+          'hover:scale-[1.02] active:scale-[0.98]',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
+          'disabled:opacity-50 disabled:pointer-events-none',
+          variantClasses[variant],
+          sizeClasses[size],
+          className,
+        ].join(' ')}
+        {...props}
+      >
+        {loading && (
+          <span className="size-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+        )}
+        {children}
+      </button>
+    )
   }
+)
 
-  return (
-    <button
-      disabled={disabled || loading}
-      aria-disabled={disabled || loading}
-      className={`${base} ${variants[variant]} ${className}`}
-      {...props}
-    >
-      {loading && <LoadingSpinner size="sm" />}
-      {children}
-    </button>
-  )
-}
+Button.displayName = 'Button'
+
+export default Button
+export { Button }

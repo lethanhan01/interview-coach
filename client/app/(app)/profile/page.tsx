@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { apiClient } from '@/lib/api-client'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import Button from '@/components/ui/Button'
 
 interface GetProfileResponse {
   email: string
@@ -57,68 +57,69 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <LoadingSpinner size="lg" />
+      <div className="flex items-center justify-center py-20">
+        <div className="size-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-12">
-      <h1 className="mb-6 text-xl font-semibold text-gray-900">Hồ sơ</h1>
+    <div className="max-w-2xl">
+      <h1 className="mb-6 text-2xl font-bold text-ink">Hồ sơ</h1>
 
-      <div className="flex flex-col gap-5">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
-          <p className="text-sm text-gray-500">{email}</p>
+      <div className="rounded-2xl border border-border bg-surface p-6 shadow-card">
+        <div className="flex flex-col gap-5">
+          <div className="flex items-center gap-4 border-b border-border pb-5">
+            <div className="flex size-12 items-center justify-center rounded-full bg-brand-100">
+              <span className="text-lg font-bold text-brand">{(email[0] ?? 'U').toUpperCase()}</span>
+            </div>
+            <p className="text-sm font-medium text-ink">{email}</p>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-ink">Vị trí mục tiêu</label>
+            <input
+              value={targetRole}
+              onChange={(e) => setTargetRole(e.target.value)}
+              placeholder="Frontend Developer"
+              className="w-full rounded-xl border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-ink">Kinh nghiệm</label>
+            <select
+              value={experienceLevel}
+              onChange={(e) => setExperienceLevel(e.target.value)}
+              className="w-full rounded-xl border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none"
+            >
+              <option value="">Chọn mức kinh nghiệm</option>
+              <option value="fresher">Fresher (0–6 tháng)</option>
+              <option value="junior">Junior (6–12 tháng)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-ink">
+              Tech stack (cách nhau bởi dấu phẩy)
+            </label>
+            <input
+              value={techStackRaw}
+              onChange={(e) => setTechStackRaw(e.target.value)}
+              placeholder="React, TypeScript, Node.js"
+              className="w-full rounded-xl border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none"
+            />
+          </div>
+
+          {error && <p className="text-sm text-danger">{error}</p>}
+          {saved && <p className="text-sm text-success">Đã lưu thành công.</p>}
+
+          <div className="border-t border-border pt-2">
+            <Button onClick={handleSave} disabled={saving} loading={saving} className="self-end">
+              Lưu thay đổi
+            </Button>
+          </div>
         </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Vị trí mục tiêu</label>
-          <input
-            value={targetRole}
-            onChange={(e) => setTargetRole(e.target.value)}
-            placeholder="Frontend Developer"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Kinh nghiệm</label>
-          <select
-            value={experienceLevel}
-            onChange={(e) => setExperienceLevel(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
-          >
-            <option value="">Chọn mức kinh nghiệm</option>
-            <option value="fresher">Fresher (0–6 tháng)</option>
-            <option value="junior">Junior (6–12 tháng)</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Tech stack (cách nhau bởi dấu phẩy)
-          </label>
-          <input
-            value={techStackRaw}
-            onChange={(e) => setTechStackRaw(e.target.value)}
-            placeholder="React, TypeScript, Node.js"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
-          />
-        </div>
-
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {saved && <p className="text-sm text-green-600">Đã lưu thành công.</p>}
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center justify-center gap-2 self-end rounded-md bg-black px-6 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
-        >
-          {saving && <LoadingSpinner size="sm" />}
-          Lưu
-        </button>
       </div>
     </div>
   )

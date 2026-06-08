@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
 import type { Session } from '@/lib/types'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { Badge } from '@/components/ui/Badge'
 
 const SESSION_TYPE_LABELS: Record<string, string> = {
   hr: 'HR / Behavioral',
@@ -19,11 +20,13 @@ const STATUS_LABELS: Record<string, string> = {
   error: 'Lỗi',
 }
 
-const STATUS_CLASSES: Record<string, string> = {
-  active: 'bg-blue-50 text-blue-700',
-  completed: 'bg-green-50 text-green-700',
-  generating: 'bg-yellow-50 text-yellow-700',
-  error: 'bg-red-50 text-red-700',
+type BadgeVariant = 'brand' | 'success' | 'warning' | 'danger' | 'default'
+
+const STATUS_VARIANTS: Record<string, BadgeVariant> = {
+  active: 'brand',
+  completed: 'success',
+  generating: 'warning',
+  error: 'danger',
 }
 
 function formatDate(iso: string): string {
@@ -49,7 +52,7 @@ export default function SessionsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
     )
@@ -57,78 +60,77 @@ export default function SessionsPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-red-600">{error}</div>
-    )
-  }
-
-  if (!sessions.length) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
-        <p className="text-base font-medium text-gray-900">Chưa có phiên phỏng vấn nào</p>
-        <p className="max-w-sm text-sm text-gray-500">
-          Dán Job Description và bắt đầu luyện tập ngay để nhận phản hồi từ AI.
-        </p>
-        <Link
-          href="/setup"
-          className="rounded-md bg-black px-6 py-2 text-sm font-medium text-white hover:bg-gray-800"
-        >
-          Bắt đầu phỏng vấn
-        </Link>
-      </div>
+      <div className="flex min-h-[60vh] items-center justify-center text-sm text-danger">{error}</div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Lịch sử phỏng vấn</h1>
+    <div>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-ink">Phiên phỏng vấn</h1>
+          <p className="text-sm text-ink-muted mt-1">{sessions.length} phiên</p>
+        </div>
         <Link
           href="/setup"
-          className="rounded-md bg-black px-4 py-1.5 text-sm font-medium text-white hover:bg-gray-800"
+          className="px-5 py-2.5 text-sm font-medium text-white bg-brand rounded-full shadow-btn hover:bg-brand-light hover:shadow-glow transition-all duration-150 hover:scale-[1.02]"
         >
-          Phỏng vấn mới
+          Tạo phiên mới
         </Link>
       </div>
 
-      <div className="flex flex-col gap-3">
-        {sessions.map((s) => (
-          <div
-            key={s.id}
-            className="rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-sm"
+      {sessions.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+          <div className="size-16 rounded-2xl bg-brand-50 flex items-center justify-center">
+            <span className="size-8 rounded-full bg-brand-200" />
+          </div>
+          <p className="text-lg font-medium text-ink">Chưa có phiên phỏng vấn nào</p>
+          <p className="text-sm text-ink-muted max-w-sm">
+            Dán Job Description và bắt đầu luyện tập ngay để nhận phản hồi từ AI.
+          </p>
+          <Link
+            href="/setup"
+            className="mt-2 px-6 py-2.5 text-sm font-medium text-white bg-brand rounded-full shadow-btn hover:bg-brand-light transition-all"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium text-gray-900">
-                  {SESSION_TYPE_LABELS[s.sessionType] ?? s.sessionType}
-                </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                      STATUS_CLASSES[s.status] ?? 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    {STATUS_LABELS[s.status] ?? s.status}
-                  </span>
-                  {s.contextPackId && (
-                    <span className="text-xs text-gray-400">{s.contextPackId}</span>
-                  )}
-                  {s.createdAt && (
-                    <span className="text-xs text-gray-400">{formatDate(s.createdAt)}</span>
-                  )}
-                </div>
-                {s.status === 'completed' && s.overallScore != null && (
-                  <p className="text-xs text-gray-500">
-                    Điểm tổng:{' '}
-                    <span className="font-semibold text-gray-900">{s.overallScore}/10</span>
-                  </p>
+            Bắt đầu phỏng vấn
+          </Link>
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sessions.map((s) => (
+            <div
+              key={s.id}
+              className="bg-surface rounded-2xl shadow-card border border-border p-5 transition-all duration-150 hover:shadow-glow hover:-translate-y-0.5"
+            >
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <Badge variant={STATUS_VARIANTS[s.status] ?? 'default'}>
+                  {STATUS_LABELS[s.status] ?? s.status}
+                </Badge>
+                {s.createdAt && (
+                  <span className="text-xs text-ink-faint">{formatDate(s.createdAt)}</span>
                 )}
               </div>
 
-              <div className="flex-shrink-0">
+              <p className="text-sm font-medium text-ink mb-2">
+                {SESSION_TYPE_LABELS[s.sessionType] ?? s.sessionType}
+              </p>
+
+              {s.contextPackId && (
+                <Badge variant="default" className="mb-3">{s.contextPackId}</Badge>
+              )}
+
+              {s.status === 'completed' && s.overallScore != null && (
+                <p className="text-xs text-ink-muted mb-3">
+                  Điểm tổng:{' '}
+                  <span className="font-semibold text-ink">{s.overallScore}/10</span>
+                </p>
+              )}
+
+              <div className="flex gap-2 mt-4 pt-3 border-t border-border">
                 {s.status === 'completed' && (
                   <Link
                     href={`/sessions/${s.id}/report`}
-                    className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    className="flex-1 text-center rounded-full border border-brand text-brand px-3 py-1.5 text-xs font-medium hover:bg-brand-50 transition-colors"
                   >
                     Xem báo cáo
                   </Link>
@@ -136,16 +138,16 @@ export default function SessionsPage() {
                 {s.status === 'active' && (
                   <Link
                     href={`/sessions/${s.id}`}
-                    className="rounded-md bg-black px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800"
+                    className="flex-1 text-center rounded-full bg-brand text-white px-3 py-1.5 text-xs font-medium hover:bg-brand-light shadow-btn transition-all"
                   >
                     Tiếp tục
                   </Link>
                 )}
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
