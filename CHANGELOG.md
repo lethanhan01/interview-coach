@@ -98,12 +98,89 @@ Sub-phase status:
 | Phase P9-A | Done | 7 spec files, 53 tests, core services 90–100% coverage |
 | Phase P9-B | Done | 6 spec files mới, 121 tests total, 81.22% statements coverage |
 | Phase P9 | Done | Unit tests — 81.22% statements (target ≥80% đạt) |
+| Phase P9-FIX | Done | 9 bugs fixed (schema/seed/mock/processor); 4 commits; 4 processor tests pass |
 
 ---
 
 ## Implementation Sessions
 
 Ghi lại chi tiết từng session làm việc, thứ tự thời gian ngược.
+
+---
+
+## 2026-06-08 — Phase P9-FIX: DB/Seed Fixes + Question Bank Fallback
+
+**Branch:** `feat/mvp`
+
+### Commits
+
+| Hash | Message |
+|------|---------|
+| `51b0702` | fix(prisma): correct datasource url and ContextPack IDs to uppercase |
+| `e41b577` | fix(seed): normalize ContextPack IDs, fix enum values, add seedQuestionBank |
+| `8a7b17c` | test(mock): add questionBank mock to createMockPrismaService |
+| `007caf6` | feat(ai): add question_bank fallback to QuestionGenerationProcessor |
+
+### Những gì đã hoàn thành
+
+9 bugs từ Phase P9-B audit được fix toàn bộ:
+
+| # | File | Bug | Severity |
+|---|------|-----|----------|
+| 1 | seed_context_packs.sql, seed.ts | ContextPack IDs `'vn'`/`'western'` phải là `'VN'`/`'Western'` — FK violation trên mọi POST /sessions | CRITICAL |
+| 2 | seed.ts | `jdSource: 'manual'` → `'paste'` (2 chỗ) | Medium |
+| 3 | seed.ts | `highlightLevel: 'weak'` → `'warning'` (4 chỗ) | Medium |
+| 4 | seed.ts | `sessionType: 'behavioral'` → `'hr'` (1 chỗ) | Medium |
+| 5 | schema.prisma | Thiếu `url = env("DATABASE_URL")` trong datasource block | Medium |
+| 6 | schema.prisma | `previewFeatures = ["partialIndexes"]` — không hợp lệ trong phiên bản Prisma này | Low |
+| 7 | mock-factories.ts | Thiếu `questionBank` model mock trong `createMockPrismaService()` | Medium |
+| 8 | seed.ts | `question_bank` table: 0 rows — DB design yêu cầu tối thiểu 90 | High |
+| 9 | question-generation.processor.ts | Không có fallback khi AI generation thất bại | High |
+
+**Thêm mới:**
+- `seedQuestionBank()` trong `server/prisma/seed.ts`: 90 câu hỏi, 6 cặp (hr/technical/mixed × VN/Western), 15 câu/cặp. Idempotency guard: `if (count >= 90) return`.
+- `createMockQuestionBank()` factory + `questionBank` model mock trong `server/src/test-utils/mock-factories.ts`.
+- `fallbackFromQuestionBank()` + `selectWithDifficultySpread()` trong `QuestionGenerationProcessor`.
+- 4 tests cho processor (2 cũ rewritten + 2 fallback mới): AI success, AI+fallback cả hai thất bại, fallback thành công từ question_bank, fallback với 0 kết quả.
+
+### Trạng thái hiện tại
+
+| Component | Trạng thái | Ghi chú |
+|-----------|-----------|---------|
+| schema.prisma | Done | Chỉ còn `url = env("DATABASE_URL")`, không có previewFeatures |
+| seed_context_packs.sql | Done | IDs uppercase: `'VN'`, `'Western'` |
+| seed.ts — enum fixes | Done | jdSource/highlightLevel/sessionType đúng enum |
+| seed.ts — seedQuestionBank | Done | 90 câu hỏi, idempotent |
+| mock-factories.ts | Done | questionBank model mock + createMockQuestionBank() |
+| question-generation.processor.ts | Done | Fallback path hoàn chỉnh, non-rethrow |
+| question-generation.processor.spec.ts | Done | 4 tests pass |
+| Test suite tổng | Unchanged | 81.22% statements — không regression |
+
+### Quyết định quan trọng
+
+**1. previewFeatures bị xóa hoàn toàn** — `"partialIndexes"` không phải valid preview feature trong Prisma version này; `"driverAdapters"` đã deprecated và không cần khai báo. Datasource block chỉ cần `url = env("DATABASE_URL")`.
+
+**2. Fallback set status `'ready'`, không phải `'active'`** — `'ready'` là terminal state cho cả AI success lẫn fallback success. Session chỉ chuyển sang `'active'` khi user bắt đầu interview. Processor không nên tự set `'active'`.
+
+**3. process() outer catch không re-throw** — BullMQ sẽ retry job nếu processor throws. Với fallback inline, re-throw sẽ gây retry loop vô ích. Thay vào đó: catch → fallback → nếu fallback cũng fail thì set status `'error'` và swallow. Session ở trạng thái `'error'` là tín hiệu rõ ràng cho client.
+
+**4. Idempotency guard bằng count >= 90** — Dùng count thay vì upsert để đơn giản. 90 là tổng cứng từ thiết kế (6 pairs × 15). Nếu chạy seed lần hai, guard skip toàn bộ function.
+
+**5. Difficulty spread 30/50/20** — easy (≤2): 30%, medium (=3): 50%, hard (≥4): 20%. Phù hợp với target audience là fresher — không quá khó ngay từ đầu.
+
+### Bước tiếp theo
+
+```bash
+# 1. Verify test suite không regression
+cd server && npm run test:cov
+
+# 2. Verify seed idempotent (chạy 2 lần, lần 2 phải log "already seeded, skipping")
+cd server && npx ts-node prisma/seed.ts
+cd server && npx ts-node prisma/seed.ts
+
+# 3. Verify Prisma client generate sạch
+cd server && npx prisma generate
+```
 
 ---
 
