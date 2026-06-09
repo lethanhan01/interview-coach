@@ -1,13 +1,6 @@
-import {
-  Injectable,
-  Logger,
-  OnApplicationBootstrap,
-} from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
-import {
-  CONTEXT_PACK_DATA,
-  ContextPackId,
-} from './context-pack.data';
+import { CONTEXT_PACK_DATA, ContextPackId } from './context-pack.data';
 
 @Injectable()
 export class ReferenceDataService implements OnApplicationBootstrap {
@@ -50,38 +43,25 @@ export class ReferenceDataService implements OnApplicationBootstrap {
   }
 
   async ensureContextPacks(): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      for (const pack of CONTEXT_PACK_DATA) {
-        await tx.contextPack.upsert({
-          where: { id: pack.id },
-          create: {
-            id: pack.id,
-            name: pack.name,
-            rubricJson: pack.rubricJson,
-            scoringWeights: pack.scoringWeights,
-          },
-          update: {
-            name: pack.name,
-            rubricJson: pack.rubricJson,
-            scoringWeights: pack.scoringWeights,
-          },
+    for (const pack of CONTEXT_PACK_DATA) {
+      await this.ensureContextPack(pack.id);
+    }
+
+    for (const pack of CONTEXT_PACK_DATA) {
+      for (const legacyId of pack.legacyIds) {
+        await this.prisma.interviewSession.updateMany({
+          where: { contextPackId: legacyId },
+          data: { contextPackId: pack.id },
+        });
+        await this.prisma.questionBank.updateMany({
+          where: { contextPackId: legacyId },
+          data: { contextPackId: pack.id },
+        });
+        await this.prisma.contextPack.deleteMany({
+          where: { id: legacyId },
         });
       }
-
-      for (const pack of CONTEXT_PACK_DATA) {
-        for (const legacyId of pack.legacyIds) {
-          await tx.interviewSession.updateMany({
-            where: { contextPackId: legacyId },
-            data: { contextPackId: pack.id },
-          });
-          await tx.questionBank.updateMany({
-            where: { contextPackId: legacyId },
-            data: { contextPackId: pack.id },
-          });
-          await tx.contextPack.deleteMany({ where: { id: legacyId } });
-        }
-      }
-    });
+    }
 
     this.logger.log('Context pack reference data is ready');
   }

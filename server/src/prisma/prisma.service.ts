@@ -10,8 +10,17 @@ export class PrismaService
   constructor() {
     const adapter = new PrismaPg({
       connectionString: process.env['DATABASE_URL'],
+      max: 5,
+      connectionTimeoutMillis: 10_000,
+      idleTimeoutMillis: 30_000,
     });
-    super({ adapter });
+    super({
+      adapter,
+      transactionOptions: {
+        maxWait: 10_000,
+        timeout: 15_000,
+      },
+    });
   }
 
   async onModuleInit() {
