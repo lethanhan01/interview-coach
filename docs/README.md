@@ -30,7 +30,7 @@ InterviewAI là ứng dụng AI Mock Interview — nền tảng luyện phỏng 
 | Tài liệu | Mô tả | Trạng thái |
 |----------|-------|------------|
 | [Database Design](Design/DetailedDesign/database-design/) | Schema 15 bảng, DDL, RLS, indexes, 9 quyết định thiết kế DB | Hoàn thành |
-| [API Design](Design/DetailedDesign/api-design/) | Đặc tả 23 MVP endpoints (6 files): auth, session, answer, report, profile + v1.1 placeholders | Hoàn thành |
+| [API Design](Design/DetailedDesign/api-design/) | Đặc tả code-aligned cho 14 API backend: health, auth, session/SSE, turn, report và profile; kèm inventory đối chiếu | Hoàn thành |
 | [UI/UX Design](Design/DetailedDesign/uiux-design/) | Sitemap, 5 MVP routes, design tokens, user flows (auth/interview/report), annotated transcript interaction | Hoàn thành |
 | [LLD](Design/DetailedDesign/lld/LLD_design.md) | Class interfaces, DTOs, BullMQ contracts, sequence diagrams — 5 NestJS modules (7 files) | Hoàn thành |
 

@@ -1,152 +1,118 @@
-# API Design — Overview
+# API Design - Overview
 
-Reference: [HLD §7](../../ArchitecturalDesign/HLD_InterviewAI_v1.0.md) · [ADR-002](../../ArchitecturalDesign/ADRs/ADR-002_nestjs-backend-framework.md) · [ADR-003](../../ArchitecturalDesign/ADRs/ADR-003_supabase-database-auth.md) · [ADR-006](../../ArchitecturalDesign/ADRs/ADR-006_sse-redis-pubsub.md)
+Reference: [API_design.md](API_design.md)
 
 ## 1. Base URL
 
-```
-Production:  https://api.interviewcoach.vn/api/v1
+```text
 Development: http://localhost:3000/api/v1
+Production:  <server-origin>/api/v1
 ```
 
-All endpoints are prefixed with `/api/v1`.
+`server/src/main.ts` đặt global prefix là `api/v1`. Domain production không được hard-code trong backend.
 
 ## 2. Authentication
 
-Two token types:
+| Loại API | Credential |
+|----------|------------|
+| API được bảo vệ | Header `Authorization: Bearer <Supabase JWT>` |
+| Refresh token | Cookie `refresh_token` |
+| SSE | Query parameter `token=<Supabase JWT>` |
+| Health check | Không yêu cầu |
 
-- **Access token**: Supabase JWT, short-lived (1h). Sent as `Authorization: Bearer <token>` header on every protected request.
-- **Refresh token**: Long-lived. Stored in `HttpOnly; Secure; SameSite=Strict` cookie. Used exclusively at `POST /auth/refresh`.
+JWT dùng thuật toán `HS256`, được kiểm tra chữ ký và thời hạn. Khi `AUTH_ENABLED=false`, guard dùng mock user từ biến môi trường phục vụ development.
 
-Auth levels referenced in endpoint tables (files 02–06):
+## 3. Request validation
 
-| Level | Credential | Notes |
-|-------|-----------|-------|
-| No | — | Public endpoint |
-| Bearer | `Authorization: Bearer <jwt>` | Standard protected routes |
-| HttpOnly Cookie | Cookie header (browser-managed) | POST /auth/refresh only |
-| Bearer + Admin | Bearer + role check | Admin routes (v1.1) |
+Global `ValidationPipe` bật:
 
-`JwtAuthGuard` (NestJS) verifies token signature and expiry. Supabase RLS enforces data ownership at DB layer — NestJS does not add manual `WHERE user_id = ?` filters.
+- `whitelist: true`: trường không khai báo trong DTO bị loại khỏi request body.
+- `transform: true`: NestJS thực hiện transform theo metadata có sẵn.
+- DTO validation thất bại trả HTTP `400` với `errorCode = VALIDATION_ERROR`.
 
-## 3. Response Envelope
+## 4. Success response
 
-All responses use a consistent envelope:
+Backend hiện chưa có success envelope chung:
 
-```typescript
-// Success
-{ success: true, data: T, meta?: { total: number, page: number, limit: number } }
+- Hầu hết API trả raw object hoặc object wrapper riêng của controller.
+- `POST /api/v1/auth/refresh` trả `{ success: true, data: {...} }`.
+- `POST /api/v1/auth/logout` trả `204 No Content`.
+- `GET /api/v1` trả plain text.
 
-// Error
-{ success: false, error: { code: string, message: string, details?: unknown } }
-```
+Mỗi endpoint bên dưới mô tả đúng response thực tế thay vì áp dụng một envelope giả định.
 
-`meta` is present only on paginated list responses. `details` is present only when the server can provide structured validation context (e.g., which field failed).
+## 5. Error response
 
-## 4. HTTP Status Codes
-
-| Code | When used |
-|------|-----------|
-| 200 | Successful GET, PATCH |
-| 201 | Successful POST (resource created) |
-| 400 | Malformed request or missing required field |
-| 401 | Missing or invalid JWT |
-| 403 | Valid JWT but insufficient permission (wrong user or non-admin role) |
-| 404 | Resource does not exist |
-| 409 | Conflict (e.g., duplicate resource) |
-| 422 | Validation error — field value fails business rule |
-| 429 | Rate limit exceeded |
-| 500 | Unexpected server error |
-
-## 5. Error Codes
-
-Standard error codes used across all endpoints. The `code` field in the error envelope is always one of:
-
-| Code | Status | Trigger |
-|------|--------|---------|
-| `UNAUTHORIZED` | 401 | Missing or expired JWT |
-| `FORBIDDEN` | 403 | Authenticated but not authorized for this resource |
-| `NOT_FOUND` | 404 | Resource does not exist |
-| `VALIDATION_ERROR` | 422 | Field value fails business rule (generic) |
-| `JD_TOO_SHORT` | 422 | JD input < 100 characters (NFR AS-04) |
-| `AUDIO_TOO_LONG` | 422 | Audio answer > 5 minutes (NFR P-17) |
-| `SESSION_LIMIT_EXCEEDED` | 429 | Max 10 sessions/24h per user (NFR S-12) |
-| `RATE_LIMIT_EXCEEDED` | 429 | Per-user rate limit hit (NFR S-11) |
-| `INTERNAL_ERROR` | 500 | Unexpected server error |
-
-## 6. Rate Limiting
-
-Two limits enforced (NFR S-11, S-12):
-
-- **Global per-user**: 60 requests / 60 seconds. Enforced via `@Throttle(60, 60)` applied globally to AI-touching controllers (ADR-002).
-- **Session creation**: max 10 new sessions / 24h per user. Application-layer `SELECT COUNT` check in `SessionService.create()` before INSERT.
-
-Every response from rate-limited routes includes:
-
-```
-X-RateLimit-Limit: 60
-X-RateLimit-Remaining: 45
-X-RateLimit-Reset: 1718000000
-Retry-After: 15
-```
-
-`Retry-After` is present only on 429 responses. Value is seconds until reset.
-
-On 429 (S-11):
+Mọi lỗi HTTP được `InterviewAIExceptionFilter` chuẩn hóa:
 
 ```json
 {
   "success": false,
-  "error": {
-    "code": "RATE_LIMIT_EXCEEDED",
-    "message": "Quá nhiều yêu cầu. Vui lòng chờ 1 phút."
-  }
+  "errorCode": "SESSION_NOT_FOUND",
+  "message": "SESSION_NOT_FOUND",
+  "path": "/api/v1/sessions/00000000-0000-0000-0000-000000000000",
+  "timestamp": "2026-06-09T12:00:00.000Z"
 }
 ```
 
-On 429 (S-12, session creation only):
+| Trường | Kiểu | Chú thích |
+|--------|------|-----------|
+| `success` | boolean | Luôn là `false` đối với error response. |
+| `errorCode` | string | Mã lỗi ổn định để client xử lý. |
+| `message` | string | Thông báo lỗi; có thể là tiếng Việt, tiếng Anh hoặc chính mã lỗi. |
+| `path` | string | URL path đã gây lỗi. |
+| `timestamp` | string | Thời điểm phát sinh lỗi theo ISO 8601 UTC. |
 
-```json
-{
-  "success": false,
-  "error": {
-    "code": "SESSION_LIMIT_EXCEEDED",
-    "message": "Bạn đã tạo 10 phiên hôm nay. Thử lại sau 24 giờ."
-  }
-}
+Các lỗi dùng chung:
+
+| HTTP | `errorCode` | Khi xảy ra |
+|------|-------------|------------|
+| 400 | `VALIDATION_ERROR` | Request body không vượt qua DTO validation. |
+| 401 | `UNAUTHORIZED` | Thiếu, sai hoặc hết hạn Bearer JWT/refresh cookie. |
+| 403 | `FORBIDDEN` | User không sở hữu resource hoặc guard từ chối request. |
+| 404 | `NOT_FOUND` | Resource chung không tồn tại. |
+| 500 | `INTERNAL_ERROR` | Lỗi không được xử lý riêng. |
+
+## 6. Headers và content type
+
+- JSON request/response: `application/json`.
+- SSE response: `text/event-stream`.
+- Mọi response có header `X-Request-ID`. Backend dùng giá trị client gửi trong `X-Request-ID`, hoặc tự sinh UUID.
+- Cookie `refresh_token` dùng `HttpOnly`, `SameSite=Strict`; `Secure` chỉ bật khi `NODE_ENV=production`.
+
+## 7. Rate limiting
+
+- `ThrottlerModule` được cấu hình `100` request trong `60` giây, nhưng code hiện tại chưa đăng ký `ThrottlerGuard`; vì vậy giới hạn này **chưa được thực thi**.
+- `POST /api/v1/sessions` có giới hạn nghiệp vụ đang được thực thi: tối đa `10` session trong `24` giờ cho mỗi user.
+
+## GET /api/v1
+
+**Endpoint URL**
+
+`GET /api/v1`
+
+**Purpose**
+
+Kiểm tra backend đang hoạt động ở mức cơ bản.
+
+**Authentication**
+
+Không yêu cầu.
+
+**Request body**
+
+Không có.
+
+**Response body - 200 OK**
+
+```text
+Hello World!
 ```
 
-## 7. SSE (Server-Sent Events)
+Response là plain text; không có trường JSON.
 
-`GET /api/v1/sessions/:id/events` returns `Content-Type: text/event-stream`. Auth: Bearer.
+**Errors**
 
-Five event types (HLD §5.3, ADR-006):
-
-| Event | Emitted when |
-|-------|-------------|
-| `session.status` | QuestionGenerationJob completes or fails |
-| `turn.follow_up` | FollowUpJob completes |
-| `turn.feedback_ready` | FeedbackJob completes |
-| `report.ready` | ComprehensiveReportJob completes |
-| `rewrite.done` | RewriteEvalJob completes (v1.1) |
-
-Redis pub/sub channel per session: `sse:session:{session_id}`. All NestJS replicas subscribe via ioredis — no sticky session required on Railway. `SseService` maintains `Map<session_id, Subject<MessageEvent>>`; on Redis message, it looks up the subject and calls `next()`.
-
-Client must send `Last-Event-ID` header for reconnect support.
-
-## 8. Content Types
-
-| Direction | Content-Type |
-|-----------|-------------|
-| JSON request body | `application/json` |
-| Audio upload | `multipart/form-data` |
-| SSE stream | `text/event-stream` |
-| JSON response | `application/json` |
-
-## 9. Versioning
-
-Current version: `v1`. Version is in the URL path (`/api/v1/...`). No header-based or query-param versioning.
-
-Breaking changes require a new path version (`/api/v2/...`), not a flag or negotiation header.
-
-v1.1 endpoints (deferred) are noted per file as `> v1.1:` blocks. They share the same conventions defined here.
+| HTTP | `errorCode` | Khi xảy ra |
+|------|-------------|------------|
+| 500 | `INTERNAL_ERROR` | Lỗi ngoài dự kiến trong server. |

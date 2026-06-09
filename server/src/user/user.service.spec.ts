@@ -67,13 +67,21 @@ describe('UserService', () => {
 
   describe('upsertProfile', () => {
     it('gọi prisma.userProfile.upsert với params đúng và trả về profile', async () => {
-      const dto = { fullName: 'Nguyen Van A', targetPosition: 'Backend Dev' };
+      const dto = {
+        fullName: 'Nguyen Van A',
+        targetPosition: 'Backend Dev',
+        technicalSkills: [{ name: 'TypeScript' }],
+        certifications: [],
+        awards: [],
+      };
       const upsertedProfile = { userId: 'user-123', ...dto };
+      const updatedUser = { ...BASE_USER, profile: upsertedProfile };
       mockPrisma.userProfile.upsert.mockResolvedValue(upsertedProfile);
+      mockPrisma.user.findUnique.mockResolvedValue(updatedUser);
 
       const result = await service.upsertProfile('user-123', dto as any);
 
-      expect(result).toEqual(upsertedProfile);
+      expect(result).toEqual(updatedUser);
       expect(mockPrisma.userProfile.upsert).toHaveBeenCalledWith({
         where: { userId: 'user-123' },
         create: expect.objectContaining({ userId: 'user-123' }),

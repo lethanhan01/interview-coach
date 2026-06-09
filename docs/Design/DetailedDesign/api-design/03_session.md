@@ -1,184 +1,387 @@
-# API Design — Session Endpoints
+# API Design - Interview Sessions
 
-References: [01_overview.md](./01_overview.md) | HLD §7.2 | ADR-006 | ADR-007
+Reference: [01_overview.md](01_overview.md)
 
-## Endpoint Summary
+## Endpoint summary
 
-| Method | Path | Auth | MVP | Purpose |
-|--------|------|------|-----|---------|
-| POST | /api/v1/sessions | Bearer | Yes | Create session, enqueue QuestionGenerationJob |
-| GET | /api/v1/sessions | Bearer | No (v1.1) | List sessions (UC-08, deferred) |
-| GET | /api/v1/sessions/:id | Bearer | Yes | Get session detail |
-| GET | /api/v1/sessions/:id/status | Bearer | Yes | Poll generation status |
-| PATCH | /api/v1/sessions/:id/status | Bearer | Yes | Update session status (end early) |
-| GET | /api/v1/sessions/:id/events | Bearer | Yes | SSE stream for real-time job events |
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/v1/sessions` | Tạo session |
+| GET | `/api/v1/sessions` | Lấy lịch sử session |
+| GET | `/api/v1/sessions/:id` | Lấy chi tiết session |
+| GET | `/api/v1/sessions/:id/status` | Lấy trạng thái rút gọn |
+| GET | `/api/v1/sessions/:id/questions` | Lấy câu hỏi |
+| PATCH | `/api/v1/sessions/:id/status` | Cập nhật trạng thái |
+| GET | `/api/v1/sessions/:id/events` | Mở SSE stream |
 
----
+Trừ SSE, tất cả endpoint trong file này yêu cầu Bearer JWT.
 
-### POST /api/v1/sessions
+## Shared response: InterviewSession
 
-**Auth**: Bearer
-**MVP**: Yes
+`POST /sessions`, `GET /sessions/:id` và `PATCH /sessions/:id/status` trả trực tiếp object sau. `GET /sessions` trả mảng các object cùng schema.
 
-**Purpose**: Create a new interview session and enqueue QuestionGenerationJob.
+| Trường | Kiểu | Chú thích |
+|--------|------|-----------|
+| `id` | string | UUID của session. |
+| `userId` | string | UUID user sở hữu session. |
+| `jobDescription` | string | Nội dung mô tả công việc dùng để sinh câu hỏi. |
+| `jdSource` | string | Nguồn JD; API tạo session hiện gán `paste`. |
+| `jdUrl` | string \| null | URL JD nếu có; API hiện không gán. |
+| `jobTitle` | string \| null | Tên vị trí được suy ra/lưu nếu có. |
+| `sessionType` | string | Loại phỏng vấn: `hr`, `technical` hoặc `mixed`. |
+| `numQuestions` | number | Số câu hỏi của session. |
+| `difficulty` | string | Độ khó; mặc định DB là `medium`. |
+| `persona` | string | Persona người phỏng vấn; mặc định `neutral_tech_lead`. |
+| `mode` | string | Chế độ session; mặc định `practice`. |
+| `durationMin` | number | Thời lượng dự kiến theo phút; mặc định `30`. |
+| `language` | string | Ngôn ngữ session; mặc định `vi`. |
+| `contextPackId` | string | Context pack: `VN` hoặc `Western`. |
+| `showPrepCard` | boolean | Có hiển thị thẻ chuẩn bị hay không. |
+| `status` | string | Trạng thái hiện tại, ví dụ `generating`, `active`, `completed`, `error`. |
+| `planJson` | object/array/value \| null | Kế hoạch câu hỏi do hệ thống lưu, nếu có. |
+| `openingTranscript` | string \| null | Transcript phần mở đầu, nếu có. |
+| `selfEvalJson` | object/array/value \| null | Dữ liệu tự đánh giá, nếu có. |
+| `overallScore` | number \| null | Điểm tổng sau khi report được tạo. |
+| `executiveSummaryJson` | object/array/value \| null | Tóm tắt điều hành của report. |
+| `commAnalysisJson` | object/array/value \| null | Phân tích giao tiếp. |
+| `competencyHeatmapJson` | object/array/value \| null | Dữ liệu heatmap năng lực. |
+| `reverseQEvalJson` | object/array/value \| null | Đánh giá câu hỏi ngược, nếu có. |
+| `actionPlanJson` | object/array/value \| null | Kế hoạch cải thiện. |
+| `completedAt` | string \| null | Thời điểm hoàn tất theo ISO 8601. |
+| `createdAt` | string | Thời điểm tạo theo ISO 8601. |
+| `updatedAt` | string | Thời điểm cập nhật theo ISO 8601. |
 
-**Request**
+## POST /api/v1/sessions
+
+**Endpoint URL**
+
+`POST /api/v1/sessions`
+
+**Purpose**
+
+Tạo một phiên phỏng vấn mới và đưa job sinh câu hỏi vào BullMQ.
+
+**Authentication**
+
+Bearer JWT.
+
+**Request body**
+
 ```json
 {
-  "job_description": "string (min 100 chars)",
-  "session_type": "hr | technical | mixed",
-  "context_pack": "VN | Western",
-  "total_questions": 5
+  "jobDescription": "Mô tả công việc dài ít nhất 100 ký tự...",
+  "sessionType": "technical",
+  "contextPack": "VN",
+  "numQuestions": 5,
+  "targetRoles": ["Backend Developer"]
 }
 ```
-`total_questions` default: 5. Range: 3–10.
 
-**Response**
-201:
-```json
-{ "success": true, "data": { "session": { "id": "uuid", "status": "pending", "session_type": "hr", "context_pack": "VN", "current_question_index": 0, "total_questions": 5, "created_at": "2026-06-05T00:00:00Z" } } }
-```
+| Trường | Kiểu | Bắt buộc | Chú thích |
+|--------|------|----------|-----------|
+| `jobDescription` | string | Có | JD dùng để sinh câu hỏi; tối thiểu 100 ký tự. |
+| `sessionType` | string | Có | Một trong `hr`, `technical`, `mixed`. |
+| `contextPack` | string | Có | Một trong `VN`, `Western`. |
+| `numQuestions` | integer | Không | Số câu hỏi, từ 3 đến 10; mặc định `5`. |
+| `targetRoles` | string[] | Không | Danh sách vai trò mục tiêu truyền cho job sinh câu hỏi; không được lưu trực tiếp vào session. |
 
-**Errors**
-| Code | Status | When |
-|------|--------|------|
-| `JD_TOO_SHORT` | 422 | `job_description` < 100 characters (NFR AS-04) |
-| `VALIDATION_ERROR` | 422 | `session_type` or `context_pack` value not in enum |
-| `SESSION_LIMIT_EXCEEDED` | 429 | User created 10+ sessions in last 24h (NFR S-12) |
+**Response body - 201 Created**
 
-**Notes**
-Session `status` is `pending` on creation. QuestionGenerationJob runs async with 15s timeout and 1 retry (ADR-007). Client polls `GET /sessions/:id/status` or subscribes to `GET /sessions/:id/events` to detect when status becomes `ready`.
+Trả trực tiếp một `InterviewSession`. Khi tạo thành công:
 
----
+- `status` là `generating`.
+- `jdSource` là `paste`.
+- `numQuestions` là giá trị request hoặc `5`.
 
-### GET /api/v1/sessions
-
-**Auth**: Bearer
-**MVP**: No (v1.1)
-
-> **v1.1:** This endpoint is deferred. UC-08 (session history) is not in MVP scope.
-
----
-
-### GET /api/v1/sessions/:id
-
-**Auth**: Bearer
-**MVP**: Yes
-
-**Purpose**: Get session detail.
-
-**Request**
-Path param: `id` (UUID)
-
-**Response**
-200:
-```json
-{ "success": true, "data": { "session": { "id": "uuid", "status": "active", "session_type": "technical", "context_pack": "VN", "job_description": "...", "current_question_index": 2, "total_questions": 5, "created_at": "2026-06-05T00:00:00Z", "updated_at": "2026-06-05T00:05:00Z" } } }
-```
+Xem chú thích toàn bộ trường tại [Shared response: InterviewSession](#shared-response-interviewsession).
 
 **Errors**
-| Code | Status | When |
-|------|--------|------|
-| `NOT_FOUND` | 404 | Session does not exist |
-| `FORBIDDEN` | 403 | Session belongs to another user |
 
----
+| HTTP | `errorCode` | Khi xảy ra |
+|------|-------------|------------|
+| 400 | `VALIDATION_ERROR` | Thiếu trường, JD dưới 100 ký tự, enum sai, hoặc `numQuestions` ngoài 3-10. |
+| 401 | `UNAUTHORIZED` | Bearer token thiếu, sai hoặc hết hạn. |
+| 429 | `SESSION_LIMIT_EXCEEDED` | User đã tạo ít nhất 10 session trong 24 giờ gần nhất. |
+| 503 | `SERVICE_UNAVAILABLE` | Không khởi tạo được context pack hoặc không enqueue được job sinh câu hỏi. |
+| 500 | `INTERNAL_ERROR` | Lỗi DB hoặc lỗi ngoài dự kiến. |
 
-### GET /api/v1/sessions/:id/status
+## GET /api/v1/sessions
 
-**Auth**: Bearer
-**MVP**: Yes
+**Endpoint URL**
 
-**Purpose**: Poll generation status — alternative to SSE for clients that do not support EventSource.
+`GET /api/v1/sessions`
 
-**Request**
-Path param: `id` (UUID)
+**Purpose**
 
-**Response**
-200:
+Lấy toàn bộ session của user hiện tại, sắp xếp mới nhất trước.
+
+**Authentication**
+
+Bearer JWT.
+
+**Request body**
+
+Không có.
+
+**Response body - 200 OK**
+
 ```json
-{ "success": true, "data": { "session_id": "uuid", "status": "ready", "current_question_index": 0, "total_questions": 5 } }
+{
+  "sessions": []
+}
 ```
+
+| Trường | Kiểu | Chú thích |
+|--------|------|-----------|
+| `sessions` | InterviewSession[] | Danh sách session theo `createdAt` giảm dần; mảng rỗng nếu chưa có session. |
+
+Mỗi phần tử dùng schema [InterviewSession](#shared-response-interviewsession).
 
 **Errors**
-| Code | Status | When |
-|------|--------|------|
-| `NOT_FOUND` | 404 | Session does not exist |
-| `FORBIDDEN` | 403 | Session belongs to another user |
 
----
+| HTTP | `errorCode` | Khi xảy ra |
+|------|-------------|------------|
+| 401 | `UNAUTHORIZED` | Bearer token thiếu, sai hoặc hết hạn. |
+| 500 | `INTERNAL_ERROR` | Lỗi DB hoặc lỗi ngoài dự kiến. |
 
-### PATCH /api/v1/sessions/:id/status
+## GET /api/v1/sessions/:id
 
-**Auth**: Bearer
-**MVP**: Yes
+**Endpoint URL**
 
-**Purpose**: Update session status — allows user to end session early.
+`GET /api/v1/sessions/:id`
 
-**Request**
-Path param: `id` (UUID)
-```json
-{ "status": "completed" }
-```
-Valid transition: `active → completed` only.
+**Purpose**
 
-**Response**
-200:
-```json
-{ "success": true, "data": { "session": { "id": "uuid", "status": "completed", "updated_at": "2026-06-05T01:00:00Z" } } }
-```
+Lấy đầy đủ dữ liệu của một session thuộc user hiện tại.
+
+**Authentication**
+
+Bearer JWT.
+
+**Path parameters**
+
+| Tên | Kiểu | Chú thích |
+|-----|------|-----------|
+| `id` | string | UUID session. Controller chưa validate định dạng UUID trước khi query. |
+
+**Request body**
+
+Không có.
+
+**Response body - 200 OK**
+
+Trả trực tiếp một [InterviewSession](#shared-response-interviewsession).
 
 **Errors**
-| Code | Status | When |
-|------|--------|------|
-| `NOT_FOUND` | 404 | Session does not exist |
-| `FORBIDDEN` | 403 | Session belongs to another user |
-| `VALIDATION_ERROR` | 422 | Status transition not allowed |
 
----
+| HTTP | `errorCode` | Khi xảy ra |
+|------|-------------|------------|
+| 401 | `UNAUTHORIZED` | Bearer token thiếu, sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Session tồn tại nhưng thuộc user khác. |
+| 404 | `SESSION_NOT_FOUND` | Không tìm thấy session. |
+| 500 | `INTERNAL_ERROR` | Lỗi ngoài dự kiến. |
 
-### GET /api/v1/sessions/:id/events
+## GET /api/v1/sessions/:id/status
 
-**Auth**: Bearer
-**MVP**: Yes
+**Endpoint URL**
 
-**Purpose**: SSE stream — delivers real-time job completion events to the client.
+`GET /api/v1/sessions/:id/status`
 
-**Request**
-Path param: `id` (UUID)
+**Purpose**
+
+Lấy trạng thái rút gọn để client poll mà không tải toàn bộ session.
+
+**Authentication**
+
+Bearer JWT.
+
+**Path parameters**
+
+| Tên | Kiểu | Chú thích |
+|-----|------|-----------|
+| `id` | string | UUID session. |
+
+**Request body**
+
+Không có.
+
+**Response body - 200 OK**
+
+```json
+{
+  "status": "active",
+  "numQuestions": 5
+}
 ```
-Accept: text/event-stream
-Last-Event-ID: <last-received-event-id>
+
+| Trường | Kiểu | Chú thích |
+|--------|------|-----------|
+| `status` | string | Trạng thái hiện tại của session. |
+| `numQuestions` | number | Tổng số câu hỏi được cấu hình. |
+
+**Errors**
+
+| HTTP | `errorCode` | Khi xảy ra |
+|------|-------------|------------|
+| 401 | `UNAUTHORIZED` | Bearer token thiếu, sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Session thuộc user khác. |
+| 404 | `SESSION_NOT_FOUND` | Không tìm thấy session. |
+| 500 | `INTERNAL_ERROR` | Lỗi ngoài dự kiến. |
+
+## GET /api/v1/sessions/:id/questions
+
+**Endpoint URL**
+
+`GET /api/v1/sessions/:id/questions`
+
+**Purpose**
+
+Lấy danh sách câu hỏi đã được sinh cho session theo đúng thứ tự phỏng vấn.
+
+**Authentication**
+
+Bearer JWT.
+
+**Path parameters**
+
+| Tên | Kiểu | Chú thích |
+|-----|------|-----------|
+| `id` | string | UUID session. |
+
+**Request body**
+
+Không có.
+
+**Response body - 200 OK**
+
+```json
+{
+  "questions": [
+    {
+      "id": "question-uuid",
+      "content": "Hãy giới thiệu về kinh nghiệm gần nhất của bạn.",
+      "orderIndex": 1
+    }
+  ]
+}
 ```
 
-**Response**
-`Content-Type: text/event-stream`
+| Trường | Kiểu | Chú thích |
+|--------|------|-----------|
+| `questions` | object[] | Danh sách câu hỏi tăng dần theo `orderIndex`; mảng rỗng nếu chưa sinh xong. |
+| `questions[].id` | string | UUID câu hỏi. |
+| `questions[].content` | string | Nội dung câu hỏi, map từ `questionText` trong DB. |
+| `questions[].orderIndex` | number | Thứ tự câu hỏi, bắt đầu từ 1 trong job hiện tại. |
 
-Event shapes:
+Nếu đã có câu hỏi và session đang là `generating` hoặc `ready`, service cập nhật session sang `active`.
+
+**Errors**
+
+| HTTP | `errorCode` | Khi xảy ra |
+|------|-------------|------------|
+| 401 | `UNAUTHORIZED` | Bearer token thiếu, sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Session thuộc user khác. |
+| 404 | `SESSION_NOT_FOUND` | Không tìm thấy session. |
+| 500 | `INTERNAL_ERROR` | Lỗi DB hoặc lỗi ngoài dự kiến. |
+
+## PATCH /api/v1/sessions/:id/status
+
+**Endpoint URL**
+
+`PATCH /api/v1/sessions/:id/status`
+
+**Purpose**
+
+Đặt session sang `active` hoặc `completed`; khi hoàn tất, backend enqueue job tạo báo cáo tổng hợp.
+
+**Authentication**
+
+Bearer JWT.
+
+**Path parameters**
+
+| Tên | Kiểu | Chú thích |
+|-----|------|-----------|
+| `id` | string | UUID session. |
+
+**Request body**
+
+```json
+{
+  "status": "completed"
+}
 ```
-event: session.status
-id: <uuid>
-data: {"status":"ready","current_question_index":0,"total_questions":5}
 
-event: turn.follow_up
-id: <uuid>
-data: {"turn_id":"uuid","follow_up_question":"Can you elaborate on that?"}
+| Trường | Kiểu | Bắt buộc | Chú thích |
+|--------|------|----------|-----------|
+| `status` | string | Có | Chỉ nhận `active` hoặc `completed`. Code hiện chưa kiểm tra state transition cũ -> mới. |
 
+**Response body - 200 OK**
+
+Trả trực tiếp [InterviewSession](#shared-response-interviewsession) sau khi cập nhật. Với `completed`, `completedAt` được đặt thành thời điểm hiện tại.
+
+**Errors**
+
+| HTTP | `errorCode` | Khi xảy ra |
+|------|-------------|------------|
+| 400 | `VALIDATION_ERROR` | Thiếu `status` hoặc giá trị không phải `active`/`completed`. |
+| 401 | `UNAUTHORIZED` | Bearer token thiếu, sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Session thuộc user khác. |
+| 404 | `SESSION_NOT_FOUND` | Không tìm thấy session. |
+| 500 | `INTERNAL_ERROR` | Lỗi cập nhật DB hoặc enqueue report job. |
+
+## GET /api/v1/sessions/:id/events
+
+**Endpoint URL**
+
+`GET /api/v1/sessions/:id/events?token=<jwt>`
+
+**Purpose**
+
+Mở kết nối Server-Sent Events để nhận trạng thái xử lý bất đồng bộ của session theo thời gian thực.
+
+**Authentication**
+
+Supabase JWT trong query parameter `token`. `EventSource` không cần tự gắn Authorization header.
+
+**Path và query parameters**
+
+| Tên | Kiểu | Bắt buộc | Chú thích |
+|-----|------|----------|-----------|
+| `id` | string | Có | UUID session, đồng thời xác định Redis channel `sse:session:{id}`. |
+| `token` | string | Có | Supabase JWT hợp lệ. |
+
+**Request body**
+
+Không có.
+
+**Response body - 200 OK**
+
+`Content-Type: text/event-stream`. Stream có các event:
+
+| Event | Payload fields | Chú thích |
+|-------|----------------|-----------|
+| `session.status` | `status`: `active` hoặc `error`; `sessionId`: string có thể vắng khi lỗi | Kết quả job sinh câu hỏi. |
+| `turn.follow_up` | `turnId`: string; `followUpText`: string | Câu hỏi phụ đã được sinh cho answer. |
+| `turn.feedback_ready` | `answerId`: string; `hasAnnotations`: boolean | Feedback đã sẵn sàng; cho biết có annotated segments hay không. |
+| `report.ready` | `sessionId`: string | Báo cáo tổng hợp đã được lưu. |
+
+Ví dụ:
+
+```text
 event: turn.feedback_ready
-id: <uuid>
-data: {"turn_id":"uuid","feedback_summary":"Good structure, add more specifics."}
-
-event: report.ready
-id: <uuid>
-data: {"session_id":"uuid","report_id":"uuid"}
-
-event: error
-id: <uuid>
-data: {"code":"INTERNAL_ERROR","message":"Question generation timed out."}
+data: {"answerId":"answer-uuid","hasAnnotations":true}
 ```
 
-**Notes**
-- Redis pub/sub channel: `sse:session:{session_id}` (ADR-006). All NestJS replicas subscribe — no sticky sessions required.
-- Keep-alive: server emits `: keep-alive\n\n` every 15s (SSE comment, no event name).
-- Client must send `Last-Event-ID` header on reconnect; server replays missed events from Redis stream if available.
-- `rewrite.done` event exists but is v1.1 only.
+Code hiện tại không phát event ID, không replay event đã lỡ và không gửi keep-alive định kỳ.
+
+**Errors**
+
+| HTTP | `errorCode` | Khi xảy ra |
+|------|-------------|------------|
+| 403 | `FORBIDDEN` | Thiếu `token`, token sai hoặc hết hạn; `SseTokenGuard` trả `false`. |
+| 500 | `INTERNAL_ERROR` | Lỗi khi thiết lập stream trước khi response bắt đầu. |
+
+**Security note**
+
+Controller hiện chỉ xác thực token, chưa kiểm tra session tồn tại hoặc session có thuộc user trong token hay không. Đây là hành vi code hiện tại, không phải đảm bảo ownership.

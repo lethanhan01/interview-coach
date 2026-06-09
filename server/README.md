@@ -120,6 +120,10 @@ cd server
 npm run start:dev
 ```
 
+Các lệnh `start`, `start:dev`, và `start:debug` tự chạy `npm run db:sync`
+trước khi khởi động Nest. Bước này generate Prisma Client và đồng bộ các thay đổi
+schema an toàn vào database; thay đổi có nguy cơ mất dữ liệu sẽ bị Prisma chặn.
+
 Khi thấy log `Nest application successfully started`, backend đã sẵn sàng.
 
 Dừng backend đang chạy trong terminal:

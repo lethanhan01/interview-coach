@@ -1,194 +1,103 @@
-# API Design — Auth
+# API Design - Authentication
 
-Reference: [01_overview.md](01_overview.md) · [HLD §7.1](../../ArchitecturalDesign/HLD_InterviewAI_v1.0.md) · [ADR-003](../../ArchitecturalDesign/ADRs/ADR-003_supabase-database-auth.md)
+Reference: [01_overview.md](01_overview.md)
 
-## Endpoints
+## Endpoint summary
 
-| Method | Path | Auth | MVP |
-|--------|------|------|-----|
-| GET | /api/v1/auth/google | No | Yes |
-| GET | /api/v1/auth/google/callback | No | Yes |
-| POST | /api/v1/auth/refresh | HttpOnly Cookie | Yes |
-| POST | /api/v1/auth/logout | Bearer | Yes |
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| POST | `/api/v1/auth/refresh` | Cookie `refresh_token` |
+| POST | `/api/v1/auth/logout` | Bearer JWT |
 
----
+Backend hiện tại không expose `GET /auth/google` hoặc OAuth callback. Client thực hiện luồng đăng nhập qua Supabase; backend chỉ xử lý refresh và logout.
 
-### GET /api/v1/auth/google
+## POST /api/v1/auth/refresh
 
-**Auth**: No  
-**MVP**: Yes
+**Endpoint URL**
 
-**Purpose**: Initiate Google OAuth flow — redirects browser to Google consent page.
+`POST /api/v1/auth/refresh`
 
-**Request**
+**Purpose**
 
-No headers, query params, or body required.
+Đổi refresh token hợp lệ lấy access token mới, đồng thời rotate refresh token trong cookie.
 
-**Response**
+**Authentication**
 
-```
-HTTP 302 Found
-Location: https://accounts.google.com/o/oauth2/v2/auth?...
-Set-Cookie: state=<csrf-token>; HttpOnly; Secure; SameSite=Strict
+Cookie:
+
+```http
+Cookie: refresh_token=<token>
 ```
 
-This endpoint never returns a JSON body. The browser follows the redirect.
+**Request body**
 
-**Notes**
+Không có. Token được đọc từ cookie `refresh_token`.
 
-- `state` cookie is set server-side to mitigate CSRF during OAuth handshake.
-- Redirect target is built by NestJS Passport `AuthGuard('google')` using `GOOGLE_CALLBACK_URL` env var.
-
----
-
-### GET /api/v1/auth/google/callback
-
-**Auth**: No (Google provides `code` + `state`; Passport validates)  
-**MVP**: Yes
-
-**Purpose**: Receive OAuth callback from Google, upsert user in Supabase, issue tokens, redirect to app.
-
-**Request**
-
-Query params (provided by Google, not client-controlled):
-
-| Param | Type | Description |
-|-------|------|-------------|
-| code | string | Authorization code from Google |
-| state | string | Anti-CSRF token matching the cookie set in `/auth/google` |
-
-No request body.
-
-**Response — success (new user)**
-
-```
-HTTP 302 Found
-Location: https://interviewcoach.vn/onboarding?access_token=<jwt>
-Set-Cookie: refreshToken=<token>; HttpOnly; Secure; SameSite=Strict; Max-Age=604800
-```
-
-**Response — success (existing user)**
-
-```
-HTTP 302 Found
-Location: https://interviewcoach.vn/sessions/new?access_token=<jwt>
-Set-Cookie: refreshToken=<token>; HttpOnly; Secure; SameSite=Strict; Max-Age=604800
-```
-
-**Response — error**
-
-```
-HTTP 302 Found
-Location: https://interviewcoach.vn/auth/error?reason=<code>
-```
-
-Possible `reason` values:
-
-| reason | When |
-|--------|------|
-| `oauth_failed` | Google returned an error or code exchange failed |
-| `state_mismatch` | `state` param does not match the cookie (CSRF) |
-| `upsert_failed` | Supabase user upsert failed |
-
-**Notes**
-
-- Access token is a Supabase JWT, expiry 1h. It is passed as a query param so the SPA can store it in memory — not localStorage.
-- `refreshToken` cookie max-age is 7 days (604800 seconds).
-- User is classified as "new" when the Supabase user record was created during this callback (no prior session).
-
----
-
-### POST /api/v1/auth/refresh
-
-**Auth**: HttpOnly Cookie (`refreshToken`)  
-**MVP**: Yes
-
-**Purpose**: Exchange a valid refresh token for a new access token. Rotates the refresh token.
-
-**Request**
-
-No body. The refresh token is read from the `refreshToken` cookie automatically by the browser.
-
-**Response — 200 OK**
+**Response body - 200 OK**
 
 ```json
 {
   "success": true,
   "data": {
-    "access_token": "<jwt>",
-    "expires_in": 3600
+    "accessToken": "<jwt>",
+    "expiresIn": 3600
   }
 }
 ```
 
-A new `refreshToken` cookie is issued. The previous refresh token is invalidated in Supabase.
+| Trường | Kiểu | Chú thích |
+|--------|------|-----------|
+| `success` | boolean | Luôn là `true` khi refresh thành công. |
+| `data.accessToken` | string | Supabase access token mới dùng cho Bearer authentication. |
+| `data.expiresIn` | number | Số giây còn hiệu lực của access token. |
 
-```
-Set-Cookie: refreshToken=<new-token>; HttpOnly; Secure; SameSite=Strict; Max-Age=604800
+Response đặt lại cookie:
+
+```http
+Set-Cookie: refresh_token=<new-token>; HttpOnly; SameSite=Strict; Max-Age=604800; Path=/auth
 ```
 
-**Response — 401 Unauthorized**
+`Secure` chỉ có trong production.
 
-```json
-{
-  "success": false,
-  "error": {
-    "code": "UNAUTHORIZED",
-    "message": "Refresh token expired or invalid."
-  }
-}
-```
+Lưu ý: controller hiện đặt `Path=/auth`, trong khi URL có global prefix là `/api/v1/auth/refresh`. Nếu không có reverse proxy rewrite path, trình duyệt sẽ không gửi cookie này tới route refresh.
 
 **Errors**
 
-| Code | HTTP | When |
-|------|------|------|
-| UNAUTHORIZED | 401 | Cookie absent, expired, or revoked |
-| INTERNAL_ERROR | 500 | Supabase token rotation failed |
+| HTTP | `errorCode` | Khi xảy ra |
+|------|-------------|------------|
+| 401 | `UNAUTHORIZED` | Không có cookie `refresh_token`. Message: `Missing refresh token`. |
+| 401 | `TOKEN_EXPIRED` | Refresh token sai, hết hạn hoặc Supabase không trả session. |
+| 500 | `INTERNAL_ERROR` | Lỗi ngoài dự kiến khi gọi Supabase. |
 
-**Notes**
+## POST /api/v1/auth/logout
 
-- Client should call this endpoint proactively before the access token expires (e.g., ~55 minutes into the 1h window).
-- On 401, the client must redirect the user to `/auth/google` to re-authenticate.
+**Endpoint URL**
 
----
+`POST /api/v1/auth/logout`
 
-### POST /api/v1/auth/logout
+**Purpose**
 
-**Auth**: Bearer  
-**MVP**: Yes
+Đăng xuất user hiện tại khỏi Supabase và xóa refresh token cookie trên trình duyệt.
 
-**Purpose**: Revoke the active Supabase session and clear the refresh token cookie.
+**Authentication**
 
-**Request**
-
-```
+```http
 Authorization: Bearer <access_token>
 ```
 
-No body.
+**Request body**
 
-**Response — 200 OK**
+Không có.
 
-```json
-{
-  "success": true,
-  "data": null
-}
-```
+**Response body - 204 No Content**
 
-```
-Set-Cookie: refreshToken=; HttpOnly; Secure; SameSite=Strict; Max-Age=0
-```
+Không có response body.
+
+Response xóa cookie `refresh_token` với `Path=/auth`.
 
 **Errors**
 
-| Code | HTTP | When |
-|------|------|------|
-| UNAUTHORIZED | 401 | Bearer token missing or malformed |
-
-**Notes**
-
-- Returns 200 even if the JWT is already expired — logout is best-effort.
-- Calls `supabase.auth.signOut()` server-side to revoke the session in Supabase.
-- Cookie is cleared by setting `Max-Age=0`.
+| HTTP | `errorCode` | Khi xảy ra |
+|------|-------------|------------|
+| 401 | `UNAUTHORIZED` | Bearer token thiếu, sai chữ ký hoặc hết hạn. |
+| 500 | `INTERNAL_ERROR` | Supabase sign-out thất bại. Message: `Logout failed`. |

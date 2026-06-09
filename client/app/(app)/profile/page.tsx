@@ -33,7 +33,7 @@ export default function ProfilePage() {
       .finally(() => setLoading(false))
   }, [])
 
-  async function patchProfile(patch: Record<string, unknown>) {
+  async function patchProfile<T extends object>(patch: T) {
     const updated = await apiClient.patch<GetProfileResponse>('/profile', patch)
     setData(updated)
   }

@@ -1,231 +1,90 @@
+# API Design - Turns and Answers
 
-# API Design — Turns (Answers)
+Reference: [01_overview.md](01_overview.md)
 
-Reference: [01_overview.md](01_overview.md) · [HLD §7.3](../../ArchitecturalDesign/HLD_InterviewAI_v1.0.md) · [ADR-007](../../ArchitecturalDesign/ADRs/ADR-007_bullmq-job-queue.md)
+Backend hiện tại chỉ expose một API turn.
 
-## Endpoints
+## POST /api/v1/sessions/:sessionId/turns
 
-| Method | Path | Auth | MVP |
-|--------|------|------|-----|
-| POST | /api/v1/sessions/:id/turns | Bearer | Yes |
-| GET | /api/v1/sessions/:id/turns/:turnId | Bearer | Yes |
-| POST | /api/v1/sessions/:id/turns/:turnId/followup | Bearer | Yes |
-| GET | /api/v1/sessions/:id/turns/:turnId/feedback | Bearer | Yes |
+**Endpoint URL**
 
----
+`POST /api/v1/sessions/:sessionId/turns`
 
-### POST /api/v1/sessions/:id/turns
+**Purpose**
 
-**Auth**: Bearer
-**MVP**: Yes
+Lưu câu trả lời dạng text hoặc voice cho một câu hỏi, sau đó enqueue job sinh follow-up và feedback.
 
-**Purpose**: Submit an answer (voice audio or plain text) to the current question. Enqueues FollowUpJob and FeedbackJob.
+**Authentication**
 
-**Request**
+Bearer JWT.
 
-Two submission modes — mutually exclusive.
+**Path parameters**
 
-**Mode A — Voice upload** (`Content-Type: multipart/form-data`):
-```
-audio: <audio file>   (max 25 MB, max 5 min — NFR P-17)
-```
-Server transcribes audio via Whisper API and sets `answer_text` from the transcript.
+| Tên | Kiểu | Chú thích |
+|-----|------|-----------|
+| `sessionId` | string | UUID session nhận câu trả lời. |
 
-**Mode B — Text** (`Content-Type: application/json`):
-```json
-{ "answer_text": "string (required, non-empty)" }
-```
+**Request body**
 
-**Response**
+Request luôn là `application/json`. Voice mode nhận URL file audio, không nhận multipart upload.
 
-201:
 ```json
 {
-  "success": true,
-  "data": {
-    "turn": {
-      "id": "uuid",
-      "session_id": "uuid",
-      "question_index": 1,
-      "question_text": "Tell me about yourself.",
-      "answer_text": "I am a software engineer with two years of experience.",
-      "audio_url": null,
-      "follow_up_question": null,
-      "follow_up_answer": null,
-      "feedback": null,
-      "created_at": "2026-06-05T00:10:00Z"
-    }
-  }
+  "questionId": "question-uuid",
+  "answerMode": "text",
+  "answerText": "Nội dung trả lời...",
+  "audioFileUrl": "https://example.com/answer.webm",
+  "audioDurationSeconds": 90,
+  "audioSizeBytes": 1250000
 }
 ```
 
-`follow_up_question` and `feedback` are `null` on creation. They are populated asynchronously — client listens on `GET /sessions/:id/events` for `turn.follow_up` and `turn.feedback_ready` events.
+| Trường | Kiểu | Bắt buộc | Chú thích |
+|--------|------|----------|-----------|
+| `questionId` | string | Có | ID câu hỏi; câu hỏi phải thuộc `sessionId`. |
+| `answerMode` | string | Có | `text` hoặc `voice`. |
+| `answerText` | string | Khi `answerMode=text` | Nội dung trả lời text. DTO hiện chỉ kiểm tra kiểu string, không kiểm tra chuỗi rỗng. |
+| `audioFileUrl` | string URL | Khi `answerMode=voice` | URL công khai/backend có thể fetch để gửi sang Whisper. |
+| `audioDurationSeconds` | integer | Không | Thời lượng audio do client cung cấp, tối thiểu 0; nếu thiếu sẽ dùng duration từ Whisper. |
+| `audioSizeBytes` | integer | Không | Kích thước audio do client báo, tối thiểu 0; chỉ dùng để lưu metadata. |
 
-**Errors**
+Trong text mode, `audioFileUrl` không được service sử dụng để transcribe. Trong voice mode, `answerText` gửi kèm không được dùng; transcript từ Whisper là nội dung được lưu.
 
-| Code | Status | When |
-|------|--------|------|
-| `NOT_FOUND` | 404 | Session does not exist |
-| `FORBIDDEN` | 403 | Session belongs to another user |
-| `VALIDATION_ERROR` | 422 | Session `status` is not `active`, or both `audio` and `answer_text` provided |
-| `AUDIO_TOO_LONG` | 422 | Audio duration > 5 minutes (NFR P-17) |
+**Response body - 201 Created**
 
-**Notes**
-
-- Advances `session.current_question_index` by 1.
-- Jobs enqueued: FollowUpJob (8s timeout, 0 retries) + FeedbackJob (15s timeout, 1 retry) — ADR-007.
-- If this turn is the last question (`question_index == total_questions - 1`), session `status` is set to `completed` and ComprehensiveReportJob is enqueued (30s timeout, 1 retry).
-
----
-
-### GET /api/v1/sessions/:id/turns/:turnId
-
-**Auth**: Bearer
-**MVP**: Yes
-
-**Purpose**: Get full turn detail including question, answer, follow-up, and surgical feedback.
-
-**Request**
-
-Path params: `id` (session UUID), `turnId` (turn UUID)
-
-**Response**
-
-200:
 ```json
 {
-  "success": true,
-  "data": {
-    "turn": {
-      "id": "uuid",
-      "session_id": "uuid",
-      "question_index": 1,
-      "question_text": "Tell me about yourself.",
-      "answer_text": "I am a software engineer with two years of experience.",
-      "audio_url": "https://storage.supabase.co/object/public/audio/uuid.webm",
-      "follow_up_question": "Can you give a specific example of a challenge you overcame?",
-      "follow_up_answer": "Yes, at my internship we reduced API latency by 40%.",
-      "feedback": {
-        "overall_score": 72,
-        "highlights": [
-          {
-            "text": "I am a software engineer with two years of experience",
-            "type": "strength",
-            "comment": "Clear opening with relevant context."
-          },
-          {
-            "text": "basically just did coding tasks",
-            "type": "weakness",
-            "comment": "Vague — specify your role and measurable impact."
-          }
-        ],
-        "suggestions": [
-          "Add a concrete achievement with metrics.",
-          "Use the STAR format for the follow-up answer."
-        ]
-      },
-      "created_at": "2026-06-05T00:10:00Z",
-      "updated_at": "2026-06-05T00:11:30Z"
-    }
-  }
+  "answerId": "answer-uuid",
+  "followUpQueued": true,
+  "feedbackQueued": true
 }
 ```
 
-`follow_up_question` and `feedback` may be `null` if async jobs have not completed yet.
+| Trường | Kiểu | Chú thích |
+|--------|------|-----------|
+| `answerId` | string | UUID của `UserAnswer` vừa tạo. |
+| `followUpQueued` | boolean | `true` nếu câu trả lời dài ít nhất 50 ký tự và chưa phải câu cuối. |
+| `feedbackQueued` | boolean | Luôn là `true` khi API trả thành công. |
+
+Nếu session đang là `ready` hoặc `generating`, service chuyển session sang `active` trước khi lưu answer.
 
 **Errors**
 
-| Code | Status | When |
-|------|--------|------|
-| `NOT_FOUND` | 404 | Turn or session does not exist |
-| `FORBIDDEN` | 403 | Session belongs to another user |
+| HTTP | `errorCode` | Khi xảy ra |
+|------|-------------|------------|
+| 400 | `VALIDATION_ERROR` | Request body sai kiểu, thiếu trường theo mode, URL audio sai hoặc số metadata âm. |
+| 401 | `UNAUTHORIZED` | Bearer token thiếu, sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Session thuộc user khác. |
+| 403 | `SESSION_NOT_ACTIVE` | Session không ở một trong `active`, `ready`, `generating`. |
+| 404 | `SESSION_NOT_FOUND` | Không tìm thấy session. |
+| 404 | `NOT_FOUND` | `questionId` không tồn tại trong session. |
+| 413 | `AUDIO_TOO_LARGE` | File tải từ `audioFileUrl` lớn hơn 10 MiB. |
+| 500 | `INTERNAL_ERROR` | Fetch/transcribe audio thất bại, lỗi DB hoặc lỗi enqueue job. |
 
----
+## API turn chưa có
 
-### POST /api/v1/sessions/:id/turns/:turnId/followup
+Các API sau từng xuất hiện trong design cũ nhưng không có controller:
 
-**Auth**: Bearer
-**MVP**: Yes
-
-**Purpose**: Submit an answer to the follow-up question generated by FollowUpJob.
-
-**Request**
-
-Path params: `id` (session UUID), `turnId` (turn UUID)
-
-```json
-{ "follow_up_answer": "string (required, non-empty)" }
-```
-
-**Response**
-
-200:
-```json
-{
-  "success": true,
-  "data": {
-    "turn": {
-      "id": "uuid",
-      "follow_up_answer": "At my internship we reduced API latency by 40% by switching to connection pooling."
-    }
-  }
-}
-```
-
-**Errors**
-
-| Code | Status | When |
-|------|--------|------|
-| `NOT_FOUND` | 404 | Turn or session does not exist |
-| `FORBIDDEN` | 403 | Session belongs to another user |
-| `VALIDATION_ERROR` | 422 | `follow_up_question` is still `null` (FollowUpJob not yet complete), or `follow_up_answer` already submitted |
-
----
-
-### GET /api/v1/sessions/:id/turns/:turnId/feedback
-
-**Auth**: Bearer
-**MVP**: Yes
-
-**Purpose**: Get surgical feedback for a specific turn.
-
-**Request**
-
-Path params: `id` (session UUID), `turnId` (turn UUID)
-
-**Response**
-
-200 — feedback ready:
-```json
-{
-  "success": true,
-  "data": {
-    "feedback": {
-      "turn_id": "uuid",
-      "overall_score": 72,
-      "highlights": [
-        {
-          "text": "I am a software engineer with two years of experience",
-          "type": "strength",
-          "comment": "Clear opening with relevant context."
-        }
-      ],
-      "suggestions": [
-        "Add a concrete achievement with metrics."
-      ]
-    }
-  }
-}
-```
-
-200 — FeedbackJob not yet complete:
-```json
-{ "success": true, "data": { "feedback": null } }
-```
-
-**Errors**
-
-| Code | Status | When |
-|------|--------|------|
-| `NOT_FOUND` | 404 | Turn or session does not exist |
-| `FORBIDDEN` | 403 | Session belongs to another user |
+- `GET /api/v1/sessions/:id/turns/:turnId`
+- `POST /api/v1/sessions/:id/turns/:turnId/followup`
+- `GET /api/v1/sessions/:id/turns/:turnId/feedback`
