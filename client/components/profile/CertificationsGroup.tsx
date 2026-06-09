@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { PencilLine } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import type { CertificationEntry, AwardEntry } from '@/lib/types'
 
@@ -74,7 +75,10 @@ export default function CertificationsGroup({ data, onSave }: Props) {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-semibold text-ink">Chứng chỉ & Giải thưởng</h2>
         {!isEditing && (
-          <Button variant="ghost" size="sm" onClick={handleEdit}>Chỉnh sửa</Button>
+          <Button variant="ghost" size="sm" onClick={handleEdit}>
+            <PencilLine className="h-4 w-4" aria-hidden="true" />
+            Chỉnh sửa
+          </Button>
         )}
       </div>
 

@@ -5,44 +5,125 @@ import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import type { SessionType, ContextPack } from '@/lib/types'
 import Button from '@/components/ui/Button'
+import JdForm from '@/components/setup/JdForm'
+import ConfigForm from '@/components/setup/ConfigForm'
+import ConfirmStep from '@/components/setup/ConfirmStep'
+
+// ── Constants & Types ─────────────────────────────────────────────────────────
+
+export const DURATION_OPTIONS = [
+  { value: 30 as const, label: '30 phút', numQuestions: 5 },
+  { value: 60 as const, label: '1 tiếng', numQuestions: 8 },
+  { value: 90 as const, label: '1 tiếng rưỡi', numQuestions: 10 },
+]
+
+export const INTERVIEWER_STYLES = [
+  {
+    value: 'friendly' as const,
+    label: 'Thân thiện & Nhẹ nhàng',
+    description: 'Người phỏng vấn cởi mở, tạo không khí thoải mái, phù hợp cho fresher',
+  },
+  {
+    value: 'professional' as const,
+    label: 'Chuyên nghiệp & Trung lập',
+    description: 'Phong cách chuẩn mực, tập trung vào năng lực thực tế',
+  },
+  {
+    value: 'challenging' as const,
+    label: 'Thách thức & Áp lực',
+    description: 'Câu hỏi khó, đào sâu, mô phỏng phỏng vấn công ty lớn / nước ngoài',
+  },
+] as const
+
+export type InterviewDuration = 30 | 60 | 90
+export type InterviewerStyle = 'friendly' | 'professional' | 'challenging'
+
+export interface JdFormData {
+  company: string
+  website: string
+  position: string
+  headcount: string
+  location: string
+  requirements: string
+  jobContent: string
+  techStack: string[]
+  benefits: string
+  salary: string
+  bonus: string
+}
+
+export const EMPTY_JD: JdFormData = {
+  company: '',
+  website: '',
+  position: '',
+  headcount: '',
+  location: '',
+  requirements: '',
+  jobContent: '',
+  techStack: [],
+  benefits: '',
+  salary: '',
+  bonus: '',
+}
+
+export function isJdValid(form: JdFormData): boolean {
+  return (
+    form.company.trim().length > 0 &&
+    form.position.trim().length > 0 &&
+    form.requirements.trim().length >= 30 &&
+    form.jobContent.trim().length >= 30
+  )
+}
+
+export function serializeJd(form: JdFormData, style: InterviewerStyle): string {
+  const lines: string[] = [
+    `Tên công ty: ${form.company}`,
+    form.website ? `Website: ${form.website}` : '',
+    `Vị trí tuyển dụng: ${form.position}`,
+    form.headcount ? `Số lượng tuyển: ${form.headcount}` : '',
+    form.location ? `Địa điểm làm việc: ${form.location}` : '',
+    '',
+    'Yêu cầu:',
+    form.requirements,
+    '',
+    'Nội dung công việc:',
+    form.jobContent,
+    form.techStack.length > 0 ? `\nTech Stack: ${form.techStack.join(', ')}` : '',
+    form.benefits ? `\nQuyền lợi:\n${form.benefits}` : '',
+    form.salary ? `\nLương: ${form.salary}` : '',
+    form.bonus ? `\nThưởng: ${form.bonus}` : '',
+    `\nPhong cách phỏng vấn: ${INTERVIEWER_STYLES.find((s) => s.value === style)!.label}`,
+  ]
+  return lines.filter(Boolean).join('\n')
+}
+
+// ── Stepper ───────────────────────────────────────────────────────────────────
 
 type Step = 1 | 2 | 3
+const STEP_LABELS: Record<Step, string> = { 1: 'Job Description', 2: 'Cấu hình', 3: 'Xác nhận' }
 
-const SESSION_TYPES: { value: SessionType; label: string; description: string }[] = [
-  { value: 'hr', label: 'HR / Behavioral', description: 'Câu hỏi về kinh nghiệm, soft skills, và tình huống' },
-  { value: 'technical', label: 'Technical', description: 'Câu hỏi kỹ thuật chuyên sâu theo JD' },
-  { value: 'mixed', label: 'Mixed', description: 'Kết hợp cả HR và Technical' },
-]
-
-const CONTEXT_PACKS: { value: ContextPack; label: string; desc: string }[] = [
-  { value: 'VN', label: 'Việt Nam', desc: 'Phong cách phỏng vấn Việt Nam, rubric phù hợp văn hóa địa phương' },
-  { value: 'Western', label: 'Western', desc: 'STAR method, behavioral focus, phong cách công ty nước ngoài' },
-]
-
-const STEP_LABELS: Record<Step, string> = {
-  1: 'Job Description',
-  2: 'Cấu hình',
-  3: 'Xác nhận',
-}
+// ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SetupPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
-  const [jd, setJd] = useState('')
+  const [jd, setJd] = useState<JdFormData>(EMPTY_JD)
   const [sessionType, setSessionType] = useState<SessionType>('hr')
   const [contextPack, setContextPack] = useState<ContextPack>('VN')
-  const [numQuestions] = useState(5)
+  const [duration, setDuration] = useState<InterviewDuration>(30)
+  const [interviewerStyle, setInterviewerStyle] = useState<InterviewerStyle>('professional')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const jdValid = jd.trim().length >= 100
+  const numQuestions = DURATION_OPTIONS.find((d) => d.value === duration)!.numQuestions
 
   async function handleSubmit() {
     setError(null)
     setSubmitting(true)
     try {
+      const jobDescription = serializeJd(jd, interviewerStyle)
       const data = await apiClient.post<{ id: string }>('/sessions', {
-        jobDescription: jd.trim(),
+        jobDescription,
         sessionType,
         contextPack,
         numQuestions,
@@ -106,107 +187,43 @@ export default function SetupPage() {
         ))}
       </div>
 
-      {/* Step 1 — Job Description */}
+      {/* Step 1 — Job Description Form */}
       {step === 1 && (
         <div className="flex flex-col gap-5">
           <div>
-            <h1 className="text-xl font-semibold text-ink">Dán Job Description</h1>
-            <p className="mt-1 text-sm text-ink-muted">Tối thiểu 100 ký tự để AI tạo câu hỏi phù hợp.</p>
+            <h1 className="text-xl font-semibold text-ink">Thông tin Job Description</h1>
+            <p className="mt-1 text-sm text-ink-muted">
+              Điền thông tin JD để AI tạo câu hỏi phỏng vấn phù hợp nhất.
+            </p>
           </div>
-          <label htmlFor="jd-input" className="sr-only">
-            Nội dung Job Description
-          </label>
-          <textarea
-            id="jd-input"
-            value={jd}
-            onChange={(e) => setJd(e.target.value)}
-            rows={12}
-            placeholder="Dán nội dung JD vào đây..."
-            className="w-full resize-none rounded-xl border border-border bg-surface p-4 text-sm text-ink placeholder:text-ink-faint outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand"
-          />
-          <div className="flex items-center justify-between">
-            <span className={`text-xs ${jdValid ? 'text-success' : 'text-ink-faint'}`}>
-              {jd.trim().length} / 100 ký tự
-            </span>
-            <Button onClick={() => setStep(2)} disabled={!jdValid}>
+          <JdForm value={jd} onChange={setJd} />
+          <div className="flex justify-end">
+            <Button onClick={() => setStep(2)} disabled={!isJdValid(jd)}>
               Tiếp theo
             </Button>
           </div>
         </div>
       )}
 
-      {/* Step 2 — Configuration */}
+      {/* Step 2 — Config */}
       {step === 2 && (
         <div className="flex flex-col gap-7">
-          <div>
-            <h1 className="text-xl font-semibold text-ink">Chọn loại phỏng vấn</h1>
-          </div>
-
-          <div>
-            <p className="mb-3 text-sm font-medium text-ink">Loại phỏng vấn</p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {SESSION_TYPES.map((t) => (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => setSessionType(t.value)}
-                  className={[
-                    'rounded-xl border-2 p-4 text-left transition-all duration-150',
-                    sessionType === t.value
-                      ? 'border-brand bg-brand-50 shadow-card'
-                      : 'border-border bg-surface hover:border-brand-muted',
-                  ].join(' ')}
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-sm font-medium text-ink">{t.label}</span>
-                    {sessionType === t.value && (
-                      <span className="size-4 rounded-full bg-brand flex items-center justify-center shrink-0">
-                        <span className="size-1.5 rounded-full bg-white" />
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-ink-muted leading-relaxed">{t.description}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <p className="mb-3 text-sm font-medium text-ink">Context Pack</p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {CONTEXT_PACKS.map((cp) => (
-                <button
-                  key={cp.value}
-                  type="button"
-                  onClick={() => setContextPack(cp.value)}
-                  className={[
-                    'rounded-xl border-2 p-4 text-left transition-all duration-150',
-                    contextPack === cp.value
-                      ? 'border-brand bg-brand-50 shadow-card'
-                      : 'border-border bg-surface hover:border-brand-muted',
-                  ].join(' ')}
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-sm font-medium text-ink">{cp.label}</span>
-                    {contextPack === cp.value && (
-                      <span className="size-4 rounded-full bg-brand flex items-center justify-center shrink-0">
-                        <span className="size-1.5 rounded-full bg-white" />
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-ink-muted leading-relaxed">{cp.desc}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
+          <h1 className="text-xl font-semibold text-ink">Cấu hình phiên phỏng vấn</h1>
+          <ConfigForm
+            sessionType={sessionType}
+            setSessionType={setSessionType}
+            contextPack={contextPack}
+            setContextPack={setContextPack}
+            duration={duration}
+            setDuration={setDuration}
+            interviewerStyle={interviewerStyle}
+            setInterviewerStyle={setInterviewerStyle}
+          />
           <div className="flex justify-between">
             <Button variant="ghost" onClick={() => setStep(1)}>
               Quay lại
             </Button>
-            <Button onClick={() => setStep(3)}>
-              Tiếp theo
-            </Button>
+            <Button onClick={() => setStep(3)}>Tiếp theo</Button>
           </div>
         </div>
       )}
@@ -218,28 +235,14 @@ export default function SetupPage() {
             <h1 className="text-xl font-semibold text-ink">Xác nhận</h1>
             <p className="mt-1 text-sm text-ink-muted">Kiểm tra lại trước khi bắt đầu phiên phỏng vấn.</p>
           </div>
-
-          <div className="rounded-2xl border border-brand-200 bg-brand-50 p-5 text-sm">
-            <div className="flex justify-between py-2 border-b border-brand-200/50">
-              <span className="text-ink-muted">Loại phỏng vấn</span>
-              <span className="font-medium text-ink capitalize">{sessionType}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-brand-200/50">
-              <span className="text-ink-muted">Context Pack</span>
-              <span className="font-medium text-ink">{contextPack}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-brand-200/50">
-              <span className="text-ink-muted">Số câu hỏi</span>
-              <span className="font-medium text-ink">{numQuestions}</span>
-            </div>
-            <div className="flex justify-between py-2 gap-4">
-              <span className="text-ink-muted shrink-0">JD</span>
-              <span className="max-w-xs truncate font-medium text-ink text-right">{jd.slice(0, 60)}...</span>
-            </div>
-          </div>
-
-          {error && <p className="text-sm text-danger">{error}</p>}
-
+          <ConfirmStep
+            jd={jd}
+            sessionType={sessionType}
+            contextPack={contextPack}
+            duration={duration}
+            interviewerStyle={interviewerStyle}
+            error={error}
+          />
           <div className="flex justify-between">
             <Button variant="ghost" onClick={() => setStep(2)}>
               Quay lại

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { PencilLine } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import type { ProjectEntry, TechnicalSkillEntry } from '@/lib/types'
 
@@ -95,6 +96,7 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
         <h2 className="text-base font-semibold text-ink">Dự án cá nhân</h2>
         {!isEditing && (
           <Button variant="ghost" onClick={handleEdit} className="text-sm">
+            <PencilLine className="h-4 w-4" aria-hidden="true" />
             Chỉnh sửa
           </Button>
         )}

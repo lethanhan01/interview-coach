@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { PencilLine } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { EDUCATION_DEGREE_OPTIONS } from './constants'
 import type { EducationEntry } from '@/lib/types'
@@ -66,6 +67,7 @@ export default function EducationGroup({ data, onSave }: Props) {
         <h2 className="text-base font-semibold text-ink">Trình độ học vấn</h2>
         {!isEditing && (
           <Button variant="ghost" onClick={handleEdit} className="text-sm">
+            <PencilLine className="h-4 w-4" aria-hidden="true" />
             Chỉnh sửa
           </Button>
         )}
