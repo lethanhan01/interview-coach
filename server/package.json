@@ -7,7 +7,9 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "db:sync": "prisma generate && prisma db push",
+    "db:prepare-user-answer-unique": "ts-node prisma/prepare-user-answer-unique.ts",
+    "db:test-user-answer-migration": "ts-node prisma/test-user-answer-deduplication-copy.ts",
+    "db:sync": "prisma generate && npm run db:prepare-user-answer-unique && prisma db push",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "prestart": "npm run db:sync",
     "start": "nest start",

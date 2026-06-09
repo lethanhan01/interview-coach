@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { PencilLine } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import ProfileEmptyState from './ProfileEmptyState'
+import ProfileSection from './ProfileSection'
 import type { CertificationEntry, AwardEntry } from '@/lib/types'
 
 interface CertGroupData {
@@ -71,22 +73,20 @@ export default function CertificationsGroup({ data, onSave }: Props) {
   const languageCerts = currentCerts.filter(c => c.type === 'language')
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-5 shadow-card">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-ink">Chứng chỉ & Giải thưởng</h2>
-        {!isEditing && (
-          <Button variant="ghost" size="sm" onClick={handleEdit}>
-            <PencilLine className="h-4 w-4" aria-hidden="true" />
-            Chỉnh sửa
-          </Button>
-        )}
-      </div>
-
+    <ProfileSection
+      title="Chứng chỉ & Giải thưởng"
+      action={!isEditing ? (
+        <Button variant="ghost" size="sm" onClick={handleEdit}>
+          <PencilLine className="h-4 w-4" aria-hidden="true" />
+          Chỉnh sửa
+        </Button>
+      ) : undefined}
+    >
       {/* Professional certs */}
       <div className="mb-5">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">Chứng chỉ chuyên môn</p>
         {professionalCerts.length === 0 && !isEditing && (
-          <p className="text-xs italic text-ink-muted/60">Chưa thêm</p>
+          <ProfileEmptyState message="Chưa thêm" className="text-xs" />
         )}
         {professionalCerts.map(c => (
           <div key={c.id} className="mb-3 rounded-xl border border-border bg-canvas p-3">
@@ -123,7 +123,7 @@ export default function CertificationsGroup({ data, onSave }: Props) {
       <div className="mb-5">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">Chứng chỉ ngoại ngữ</p>
         {languageCerts.length === 0 && !isEditing && (
-          <p className="text-xs italic text-ink-muted/60">Chưa thêm</p>
+          <ProfileEmptyState message="Chưa thêm" className="text-xs" />
         )}
         {languageCerts.map(c => (
           <div key={c.id} className="mb-3 rounded-xl border border-border bg-canvas p-3">
@@ -163,7 +163,7 @@ export default function CertificationsGroup({ data, onSave }: Props) {
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">Giải thưởng</p>
         {currentAwards.length === 0 && !isEditing && (
-          <p className="text-xs italic text-ink-muted/60">Chưa thêm</p>
+          <ProfileEmptyState message="Chưa thêm" className="text-xs" />
         )}
         {currentAwards.map(a => (
           <div key={a.id} className="mb-3 rounded-xl border border-border bg-canvas p-3">
@@ -209,6 +209,6 @@ export default function CertificationsGroup({ data, onSave }: Props) {
           </div>
         </>
       )}
-    </div>
+    </ProfileSection>
   )
 }

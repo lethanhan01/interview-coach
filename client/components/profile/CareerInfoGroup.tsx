@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { PencilLine } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import ProfileSection from './ProfileSection'
+import ProfileField from './ProfileField'
 import {
   TARGET_POSITION_OPTIONS,
   EXPERIENCE_LEVEL_OPTIONS,
@@ -65,24 +67,22 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-6 shadow-card">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-ink">Định hướng nghề nghiệp</h2>
-        {!isEditing && (
-          <Button variant="ghost" onClick={handleEdit} className="text-sm">
-            <PencilLine className="h-4 w-4" aria-hidden="true" />
-            Chỉnh sửa
-          </Button>
-        )}
-      </div>
-
+    <ProfileSection
+      title="Định hướng nghề nghiệp"
+      action={!isEditing ? (
+        <Button variant="ghost" size="sm" onClick={handleEdit}>
+          <PencilLine className="h-4 w-4" aria-hidden="true" />
+          Chỉnh sửa
+        </Button>
+      ) : undefined}
+    >
       {!isEditing ? (
         <dl className="flex flex-col gap-3 text-sm">
-          <ReadField
+          <ProfileField
             label="Vị trí mục tiêu"
             value={data.targetPosition ? TARGET_POSITION_LABEL[data.targetPosition] : undefined}
           />
-          <ReadField
+          <ProfileField
             label="Mức kinh nghiệm"
             value={data.targetLevel ? EXPERIENCE_LABEL[data.targetLevel] : undefined}
           />
@@ -130,15 +130,6 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-function ReadField({ label, value }: { label: string; value?: string }) {
-  return (
-    <div>
-      <dt className="text-xs font-medium text-ink-muted">{label}</dt>
-      <dd className="mt-0.5 text-sm text-ink">{value || '—'}</dd>
-    </div>
+    </ProfileSection>
   )
 }

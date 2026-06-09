@@ -23,6 +23,18 @@ test.beforeEach(async ({ page }) => {
     })
   })
 
+  await page.route(`**/api/v1/sessions/${SESSION_ID}/status`, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ status: 'active', numQuestions: MOCK_QUESTIONS.length }),
+      })
+      return
+    }
+    await route.fallback()
+  })
+
   await page.route(`**/api/v1/sessions/${SESSION_ID}/events**`, async (route) => {
     await route.fulfill({
       status: 200,
@@ -74,15 +86,42 @@ test('text mode: submit answer gọi POST /turns', async ({ page }) => {
   await expect.poll(() => turnCalled).toBe(true)
 })
 
-test('khi session kết thúc, hiện nút "Xem báo cáo"', async ({ page }) => {
+test('khi session kết thúc, chuyển sang trang chờ báo cáo', async ({ page }) => {
   await page.route(`**/api/v1/sessions/${SESSION_ID}/status`, async (route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(
+        route.request().method() === 'GET'
+          ? { status: 'active', numQuestions: MOCK_QUESTIONS.length }
+          : { status: 'completing' },
+      ),
+    })
   })
   await page.route(`**/api/v1/sessions/${SESSION_ID}/turns`, async (route) => {
     await route.fulfill({
       status: 201,
       contentType: 'application/json',
       body: JSON.stringify({ id: 'turn-1' }),
+    })
+  })
+  await page.route(`**/api/v1/sessions/${SESSION_ID}/report`, async (route) => {
+    await route.fulfill({
+      status: 404,
+      contentType: 'application/json',
+      body: JSON.stringify({ errorCode: 'REPORT_NOT_READY', message: 'REPORT_NOT_READY' }),
+    })
+  })
+  await page.route(`**/api/v1/sessions/${SESSION_ID}`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: SESSION_ID,
+        status: 'completing',
+        sessionType: 'hr',
+        contextPackId: 'VN',
+      }),
     })
   })
 
@@ -98,5 +137,6 @@ test('khi session kết thúc, hiện nút "Xem báo cáo"', async ({ page }) =>
     }
   }
 
-  await expect(page.getByRole('button', { name: 'Xem báo cáo' })).toBeVisible({ timeout: 5000 })
+  await expect(page).toHaveURL(`/sessions/${SESSION_ID}/report`)
+  await expect(page.getByText('AI đang tạo báo cáo, vui lòng chờ...')).toBeVisible()
 })

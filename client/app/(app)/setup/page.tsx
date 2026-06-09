@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import type { SessionType, ContextPack } from '@/lib/types'
@@ -66,6 +66,35 @@ export const EMPTY_JD: JdFormData = {
   bonus: '',
 }
 
+export const POSITION_OPTIONS = [
+  'Frontend Developer',
+  'Backend Developer',
+  'Full-stack Developer',
+  'Mobile Developer (iOS)',
+  'Mobile Developer (Android)',
+  'Flutter Developer',
+  'DevOps Engineer',
+  'Cloud Engineer',
+  'Data Analyst',
+  'Data Engineer',
+  'AI/ML Engineer',
+  'QA/Tester',
+  'UI/UX Designer',
+  'Business Analyst',
+  'Product Manager',
+]
+
+export const BONUS_OPTIONS = [
+  'Tháng 13 (1 lần/năm)',
+  '2 lần/năm',
+  'Hàng quý',
+  'Theo KPI',
+  'Linh hoạt',
+  'Không có',
+]
+
+const JD_DRAFT_KEY = 'interviewcoach_jd_draft'
+
 export function isJdValid(form: JdFormData): boolean {
   return (
     form.company.trim().length > 0 &&
@@ -107,13 +136,45 @@ const STEP_LABELS: Record<Step, string> = { 1: 'Job Description', 2: 'Cấu hìn
 export default function SetupPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
-  const [jd, setJd] = useState<JdFormData>(EMPTY_JD)
+  const [jd, setJd] = useState<JdFormData>(() => {
+    if (typeof window === 'undefined') return EMPTY_JD
+    try {
+      const saved = localStorage.getItem(JD_DRAFT_KEY)
+      if (saved) return JSON.parse(saved) as JdFormData
+    } catch {
+      // ignore malformed data
+    }
+    return EMPTY_JD
+  })
   const [sessionType, setSessionType] = useState<SessionType>('hr')
   const [contextPack, setContextPack] = useState<ContextPack>('VN')
   const [duration, setDuration] = useState<InterviewDuration>(30)
   const [interviewerStyle, setInterviewerStyle] = useState<InterviewerStyle>('professional')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const jdHasContent =
+    jd.company.trim().length > 0 ||
+    jd.position.trim().length > 0 ||
+    jd.requirements.trim().length > 0 ||
+    jd.jobContent.trim().length > 0
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(JD_DRAFT_KEY, JSON.stringify(jd))
+    } catch {
+      // ignore storage errors
+    }
+  }, [jd])
+
+  function resetJd() {
+    setJd(EMPTY_JD)
+    try {
+      localStorage.removeItem(JD_DRAFT_KEY)
+    } catch {
+      // ignore
+    }
+  }
 
   const numQuestions = DURATION_OPTIONS.find((d) => d.value === duration)!.numQuestions
 
@@ -197,7 +258,14 @@ export default function SetupPage() {
             </p>
           </div>
           <JdForm value={jd} onChange={setJd} />
-          <div className="flex justify-end">
+          <div className="flex items-center justify-between">
+            {jdHasContent ? (
+              <Button variant="ghost" onClick={resetJd}>
+                Đặt lại
+              </Button>
+            ) : (
+              <span />
+            )}
             <Button onClick={() => setStep(2)} disabled={!isJdValid(jd)}>
               Tiếp theo
             </Button>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { Plus } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
 import type { Session } from '@/lib/types'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -16,6 +17,7 @@ const SESSION_TYPE_LABELS: Record<string, string> = {
 const STATUS_LABELS: Record<string, string> = {
   active: 'Đang phỏng vấn',
   ready: 'Sẵn sàng',
+  completing: 'Đang tạo báo cáo',
   completed: 'Hoàn thành',
   generating: 'Đang tạo...',
   error: 'Lỗi',
@@ -26,6 +28,7 @@ type BadgeVariant = 'brand' | 'success' | 'warning' | 'danger' | 'default'
 const STATUS_VARIANTS: Record<string, BadgeVariant> = {
   active: 'brand',
   ready: 'brand',
+  completing: 'warning',
   completed: 'success',
   generating: 'warning',
   error: 'danger',
@@ -68,41 +71,53 @@ export default function SessionsPage() {
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">Phiên phỏng vấn</h1>
-          <p className="text-sm text-ink-muted mt-1">{sessions.length} phiên</p>
-        </div>
+      <div className="mb-8 rounded-3xl border border-border bg-surface p-6 shadow-card">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
+              Phiên phỏng vấn
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold text-ink">Quản lý phiên phỏng vấn</h1>
+              <Badge variant="brand">{sessions.length} phiên</Badge>
+            </div>
+            <p className="mt-2 text-sm text-ink-muted">
+              Tạo phiên mới, tiếp tục phiên đang chạy hoặc xem báo cáo đã hoàn thành.
+            </p>
+          </div>
         <Link
           href="/setup"
-          className="px-5 py-2.5 text-sm font-medium text-white bg-brand rounded-full shadow-btn hover:bg-brand-light hover:shadow-glow transition-all duration-150 hover:scale-[1.02]"
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-btn transition-all duration-150 hover:scale-[1.02] hover:bg-brand-light hover:shadow-glow"
         >
+          <Plus className="h-4 w-4" aria-hidden="true" />
           Tạo phiên mới
         </Link>
+        </div>
       </div>
 
       {sessions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-          <div className="size-16 rounded-2xl bg-brand-50 flex items-center justify-center">
-            <span className="size-8 rounded-full bg-brand-200" />
+        <div className="rounded-3xl border border-border bg-surface p-10 text-center shadow-card">
+          <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-brand-50">
+            <Plus className="size-7 text-brand" aria-hidden="true" />
           </div>
-          <p className="text-lg font-medium text-ink">Chưa có phiên phỏng vấn nào</p>
-          <p className="text-sm text-ink-muted max-w-sm">
+          <p className="mt-5 text-lg font-semibold text-ink">Chưa có phiên phỏng vấn nào</p>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-ink-muted">
             Dán Job Description và bắt đầu luyện tập ngay để nhận phản hồi từ AI.
           </p>
           <Link
             href="/setup"
-            className="mt-2 px-6 py-2.5 text-sm font-medium text-white bg-brand rounded-full shadow-btn hover:bg-brand-light transition-all"
+            className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white shadow-btn transition-all duration-150 hover:scale-[1.02] hover:bg-brand-light hover:shadow-glow"
           >
+            <Plus className="h-4 w-4" aria-hidden="true" />
             Bắt đầu phỏng vấn
           </Link>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sessions.map((s) => (
             <div
               key={s.id}
-              className="bg-surface rounded-2xl shadow-card border border-border p-5 transition-all duration-150 hover:shadow-glow hover:-translate-y-0.5"
+              className="flex h-full flex-col rounded-2xl border border-border bg-surface p-5 shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-glow"
             >
               <div className="flex items-start justify-between gap-2 mb-3">
                 <Badge variant={STATUS_VARIANTS[s.status] ?? 'default'}>
@@ -128,19 +143,27 @@ export default function SessionsPage() {
                 </p>
               )}
 
-              <div className="flex gap-2 mt-4 pt-3 border-t border-border">
+              <div className="mt-auto flex gap-2 border-t border-border pt-3">
                 {s.status === 'completed' && (
                   <Link
                     href={`/sessions/${s.id}/report`}
-                    className="flex-1 text-center rounded-full border border-brand text-brand px-3 py-1.5 text-xs font-medium hover:bg-brand-50 transition-colors"
+                    className="flex-1 rounded-full border border-brand px-3 py-1.5 text-center text-xs font-medium text-brand transition-colors hover:bg-brand-50"
                   >
                     Xem báo cáo
+                  </Link>
+                )}
+                {s.status === 'completing' && (
+                  <Link
+                    href={`/sessions/${s.id}/report`}
+                    className="flex-1 rounded-full border border-brand px-3 py-1.5 text-center text-xs font-medium text-brand transition-colors hover:bg-brand-50"
+                  >
+                    Theo dõi báo cáo
                   </Link>
                 )}
                 {(s.status === 'active' || s.status === 'ready') && (
                   <Link
                     href={`/sessions/${s.id}`}
-                    className="flex-1 text-center rounded-full bg-brand text-white px-3 py-1.5 text-xs font-medium hover:bg-brand-light shadow-btn transition-all"
+                    className="flex-1 rounded-full bg-brand px-3 py-1.5 text-center text-xs font-medium text-white shadow-btn transition-all hover:bg-brand-light"
                   >
                     {s.status === 'ready' ? 'Bắt đầu' : 'Tiếp tục'}
                   </Link>

@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { PencilLine } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import ProfileSection from './ProfileSection'
+import ProfileField from './ProfileField'
 import { EDUCATION_DEGREE_OPTIONS } from './constants'
 import type { EducationEntry } from '@/lib/types'
 
@@ -62,27 +64,25 @@ export default function EducationGroup({ data, onSave }: Props) {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-6 shadow-card">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-ink">Trình độ học vấn</h2>
-        {!isEditing && (
-          <Button variant="ghost" onClick={handleEdit} className="text-sm">
-            <PencilLine className="h-4 w-4" aria-hidden="true" />
-            Chỉnh sửa
-          </Button>
-        )}
-      </div>
-
+    <ProfileSection
+      title="Trình độ học vấn"
+      action={!isEditing ? (
+        <Button variant="ghost" size="sm" onClick={handleEdit}>
+          <PencilLine className="h-4 w-4" aria-hidden="true" />
+          Chỉnh sửa
+        </Button>
+      ) : undefined}
+    >
       {!isEditing ? (
         <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-          <ReadField
+          <ProfileField
             label="Trình độ"
             value={data?.degree ? DEGREE_LABEL[data.degree] : undefined}
           />
-          <ReadField label="Trường" value={data?.school} />
-          <ReadField label="Ngành học" value={data?.major} />
-          <ReadField label="GPA / CPA" value={data?.gpa} />
-          <ReadField label="Năm tốt nghiệp" value={data?.graduationYear} />
+          <ProfileField label="Trường" value={data?.school} />
+          <ProfileField label="Ngành học" value={data?.major} />
+          <ProfileField label="GPA / CPA" value={data?.gpa} />
+          <ProfileField label="Năm tốt nghiệp" value={data?.graduationYear} />
         </dl>
       ) : (
         <div className="flex flex-col gap-4">
@@ -145,16 +145,7 @@ export default function EducationGroup({ data, onSave }: Props) {
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-function ReadField({ label, value }: { label: string; value?: string }) {
-  return (
-    <div>
-      <dt className="text-xs font-medium text-ink-muted">{label}</dt>
-      <dd className="mt-0.5 text-sm text-ink">{value || '—'}</dd>
-    </div>
+    </ProfileSection>
   )
 }
 

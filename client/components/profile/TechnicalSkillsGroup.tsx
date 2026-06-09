@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { PencilLine } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import ProfileEmptyState from './ProfileEmptyState'
+import ProfileSection from './ProfileSection'
 import { TECH_CATEGORIES, TECH_OPTIONS } from './constants'
 import type { TechCategory } from './constants'
 import type { TechnicalSkillEntry } from '@/lib/types'
@@ -59,17 +62,15 @@ export default function TechnicalSkillsGroup({ data, onSave }: Props) {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-5 shadow-card">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-ink">Kỹ năng chuyên môn</h2>
-        {!isEditing && (
-          <Button variant="ghost" size="sm" onClick={handleEdit}>
-            <PencilLine className="h-4 w-4" aria-hidden="true" />
-            Chỉnh sửa
-          </Button>
-        )}
-      </div>
-
+    <ProfileSection
+      title="Kỹ năng chuyên môn"
+      action={!isEditing ? (
+        <Button variant="ghost" size="sm" onClick={handleEdit}>
+          <PencilLine className="h-4 w-4" aria-hidden="true" />
+          Chỉnh sửa
+        </Button>
+      ) : undefined}
+    >
       {TECH_CATEGORIES.map(({ key, label }) => {
         const displayEntries = (isEditing ? entries : data).filter(e => e.category === key)
         const s = addState[key] ?? { name: '', usagePeriod: '' }
@@ -81,10 +82,10 @@ export default function TechnicalSkillsGroup({ data, onSave }: Props) {
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">{label}</p>
             <div className="mb-2 flex flex-wrap gap-2">
               {displayEntries.length === 0 && !isEditing && (
-                <span className="text-xs italic text-ink-muted/60">Chưa thêm</span>
+                <ProfileEmptyState message="Chưa thêm" className="text-xs" />
               )}
               {displayEntries.map(e => (
-                <span key={e.id} className="flex items-center gap-1 rounded-full border border-border bg-canvas px-3 py-1 text-xs text-ink">
+                <Badge key={e.id} variant="default" className="px-2.5 py-0.5">
                   {e.name}
                   <span className="text-ink-muted">· {e.usagePeriod}th</span>
                   {isEditing && (
@@ -96,7 +97,7 @@ export default function TechnicalSkillsGroup({ data, onSave }: Props) {
                       ×
                     </button>
                   )}
-                </span>
+                </Badge>
               ))}
             </div>
             {isEditing && available.length > 0 && (
@@ -133,6 +134,6 @@ export default function TechnicalSkillsGroup({ data, onSave }: Props) {
           </div>
         </>
       )}
-    </div>
+    </ProfileSection>
   )
 }

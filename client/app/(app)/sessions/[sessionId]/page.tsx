@@ -10,6 +10,7 @@ import VoiceRecorder from '@/components/interview/VoiceRecorder'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
 import Button from '@/components/ui/Button'
+import type { SessionStatus } from '@/lib/types'
 
 interface Question {
   id: string
@@ -29,7 +30,7 @@ export default function InterviewPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answerMode, setAnswerMode] = useState<AnswerMode>('text')
   const [followUp, setFollowUp] = useState<string | null>(null)
-  const [sessionEnded, setSessionEnded] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
   const [supabaseUrl, setSupabaseUrl] = useState('')
   const [accessToken, setAccessToken] = useState('')
   const eventSourceRef = useRef<EventSource | null>(null)
@@ -42,6 +43,14 @@ export default function InterviewPage() {
         if (!session) { router.push('/login'); return }
         setAccessToken(session.access_token)
         setSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '')
+
+        const currentSession = await apiClient.get<{ status: SessionStatus }>(
+          `/sessions/${sessionId}/status`,
+        )
+        if (currentSession.status === 'completing' || currentSession.status === 'completed') {
+          router.replace(`/sessions/${sessionId}/report`)
+          return
+        }
 
         async function pollQuestions(): Promise<Question[]> {
           for (let i = 0; i < 6; i++) {
@@ -72,10 +81,13 @@ export default function InterviewPage() {
       const data = JSON.parse((e as MessageEvent).data)
       setFollowUp(data.questionText ?? null)
     })
-    es.addEventListener('session.completed', () => {
-      setSessionEnded(true)
+    const openReport = () => {
+      setIsCompleting(true)
+      router.replace(`/sessions/${sessionId}/report`)
       es.close()
-    })
+    }
+    es.addEventListener('report.ready', openReport)
+    es.addEventListener('session.completed', openReport)
     es.onerror = () => es.close()
 
     return () => es.close()
@@ -83,13 +95,17 @@ export default function InterviewPage() {
 
   const advance = useCallback(async () => {
     if (currentIndex + 1 >= questions.length) {
-      await apiClient.patch(`/sessions/${sessionId}/status`, { status: 'completed' })
-      setSessionEnded(true)
+      setIsCompleting(true)
+      await apiClient.patch<{ status: SessionStatus }>(
+        `/sessions/${sessionId}/status`,
+        { status: 'completed' },
+      )
+      router.replace(`/sessions/${sessionId}/report`)
     } else {
       setFollowUp(null)
       setCurrentIndex((i) => i + 1)
     }
-  }, [sessionId, questions.length, currentIndex])
+  }, [sessionId, questions.length, currentIndex, router])
 
   const submitText = useCallback(async (text: string) => {
     await apiClient.post(`/sessions/${sessionId}/turns`, {
@@ -125,17 +141,12 @@ export default function InterviewPage() {
     )
   }
 
-  if (sessionEnded) {
+  if (isCompleting) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
-        <div className="size-16 rounded-2xl bg-brand-50 flex items-center justify-center mb-2">
-          <span className="size-8 rounded-full bg-brand-200" />
-        </div>
-        <p className="text-base font-medium text-ink">Phiên phỏng vấn kết thúc</p>
-        <p className="text-sm text-ink-muted">AI đang phân tích câu trả lời của bạn...</p>
-        <Button onClick={() => router.push(`/sessions/${sessionId}/report`)}>
-          Xem báo cáo
-        </Button>
+      <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+        <LoadingSpinner size="lg" />
+        <p className="text-base font-medium text-ink">Đang hoàn tất phiên phỏng vấn</p>
+        <p className="text-sm text-ink-muted">AI đang tạo báo cáo, vui lòng chờ...</p>
       </div>
     )
   }

@@ -1,4 +1,10 @@
-export type SessionStatus = 'generating' | 'ready' | 'active' | 'completed' | 'error'
+export type SessionStatus =
+  | 'generating'
+  | 'ready'
+  | 'active'
+  | 'completing'
+  | 'completed'
+  | 'error'
 export type SessionType = 'hr' | 'technical' | 'mixed'
 export type ContextPack = 'VN' | 'Western'
 

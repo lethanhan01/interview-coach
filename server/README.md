@@ -121,8 +121,13 @@ npm run start:dev
 ```
 
 Các lệnh `start`, `start:dev`, và `start:debug` tự chạy `npm run db:sync`
-trước khi khởi động Nest. Bước này generate Prisma Client và đồng bộ các thay đổi
-schema an toàn vào database; thay đổi có nguy cơ mất dữ liệu sẽ bị Prisma chặn.
+trước khi khởi động Nest. Bước này generate Prisma Client, hợp nhất các
+`user_answers` lịch sử bị trùng, tạo unique constraint, rồi mới chạy
+`prisma db push`.
+
+Trong lúc hợp nhất, migration giữ lại feedback tốt nhất, chuyển toàn bộ
+annotation sang feedback đó và bảo toàn follow-up trước khi xóa answer thừa.
+Toàn bộ bước chuẩn bị chạy trong một transaction có khóa ghi.
 
 Khi thấy log `Nest application successfully started`, backend đã sẵn sàng.
 
@@ -193,3 +198,20 @@ npm test
 npm run build
 npx prisma validate
 ```
+
+## 7. Migration production
+
+Chạy từ thư mục `server` với `DIRECT_URL` trỏ đến kết nối PostgreSQL trực tiếp:
+
+```powershell
+npm run db:test-user-answer-migration
+npm run db:sync
+```
+
+Lệnh test tạo một schema tạm, sao chép dữ liệu thật của `user_answers`,
+`ai_feedbacks`, `annotated_segments` và `follow_up_questions`, chèn một nhóm
+duplicate, chạy migration rồi kiểm tra quan hệ và unique constraint. Schema tạm
+luôn được xóa khi kết thúc.
+
+Không chạy `prisma db push` trực tiếp cho thay đổi unique này. Dùng
+`npm run db:sync` để bước deduplicate hoàn tất trước khi Prisma đối chiếu schema.

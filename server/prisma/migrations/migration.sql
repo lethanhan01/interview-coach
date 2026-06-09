@@ -340,24 +340,22 @@ ALTER TABLE public.user_profiles
 
 -- -----------------------------------------------------------------------------
 -- 6. user_answers: idempotency constraint
---    Deduplicate historical rows before adding UNIQUE constraint.
+--    This must be prepared before prisma db push.
 -- -----------------------------------------------------------------------------
 
-WITH ranked_answers AS (
-  SELECT
-    id,
-    ROW_NUMBER() OVER (
-      PARTITION BY session_id, question_id
-      ORDER BY feedback_generated DESC, created_at ASC, id ASC
-    ) AS duplicate_rank
-  FROM user_answers
-)
-DELETE FROM user_answers
-WHERE id IN (
-  SELECT id FROM ranked_answers WHERE duplicate_rank > 1
-);
-
-ALTER TABLE user_answers
-  ADD CONSTRAINT user_answers_session_id_question_id_key
-  UNIQUE (session_id, question_id);
-
+-- Run `npm run db:prepare-user-answer-unique` before `prisma db push`.
+-- The preparation migration preserves feedback, annotations, and follow-ups
+-- while consolidating duplicate answers.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'user_answers'::regclass
+      AND conname = 'user_answers_session_id_question_id_key'
+  ) THEN
+    RAISE EXCEPTION
+      'Run npm run db:prepare-user-answer-unique before applying this migration';
+  END IF;
+END
+$$;

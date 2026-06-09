@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { PencilLine } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import ProfileEmptyState from './ProfileEmptyState'
+import ProfileSection from './ProfileSection'
 import type { WorkExperienceEntry, TechnicalSkillEntry } from '@/lib/types'
 
 interface Props {
@@ -91,20 +94,18 @@ export default function WorkExperienceGroup({ data, availableTechs, onSave }: Pr
   const displayList = data ?? []
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-6 shadow-card">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-ink">Kinh nghiệm làm việc</h2>
-        {!isEditing && (
-          <Button variant="ghost" onClick={handleEdit} className="text-sm">
-            <PencilLine className="h-4 w-4" aria-hidden="true" />
-            Chỉnh sửa
-          </Button>
-        )}
-      </div>
-
+    <ProfileSection
+      title="Kinh nghiệm làm việc"
+      action={!isEditing ? (
+        <Button variant="ghost" size="sm" onClick={handleEdit}>
+          <PencilLine className="h-4 w-4" aria-hidden="true" />
+          Chỉnh sửa
+        </Button>
+      ) : undefined}
+    >
       {!isEditing ? (
         displayList.length === 0 ? (
-          <p className="text-sm text-ink-muted">Chưa có thông tin</p>
+          <ProfileEmptyState message="Chưa có thông tin" />
         ) : (
           <div className="flex flex-col gap-4">
             {displayList.map((entry) => (
@@ -116,14 +117,11 @@ export default function WorkExperienceGroup({ data, availableTechs, onSave }: Pr
                   {entry.isCurrent ? 'Hiện tại' : entry.endDate || '—'}
                 </p>
                 {entry.techStack && entry.techStack.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
+                  <div className="mt-2 flex flex-wrap gap-1.5">
                     {entry.techStack.map((t) => (
-                      <span
-                        key={t}
-                        className="rounded-full border border-border bg-canvas px-2 py-0.5 text-xs text-ink-muted"
-                      >
+                      <Badge key={t} variant="default">
                         {t}
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 )}
@@ -209,9 +207,10 @@ export default function WorkExperienceGroup({ data, availableTechs, onSave }: Pr
                 <div className="sm:col-span-2">
                   <p className="mb-1.5 text-sm font-medium text-ink">Tech stack</p>
                   {availableTechs.length === 0 ? (
-                    <p className="text-xs italic text-ink-muted/60">
-                      Thêm kỹ năng ở mục Kỹ năng chuyên môn trước
-                    </p>
+                    <ProfileEmptyState
+                      message="Thêm kỹ năng ở mục Kỹ năng chuyên môn trước"
+                      className="text-xs"
+                    />
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
                       {availableTechs.map((tech) => {
@@ -253,7 +252,7 @@ export default function WorkExperienceGroup({ data, availableTechs, onSave }: Pr
           </div>
         </div>
       )}
-    </div>
+    </ProfileSection>
   )
 }
 
