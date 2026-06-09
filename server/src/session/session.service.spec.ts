@@ -4,15 +4,14 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { SessionService } from './session.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReferenceDataService } from '../prisma/reference-data.service';
+import { ReportService } from '../report/report.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import {
-  QUESTION_GEN_QUEUE,
-  REPORT_QUEUE,
-} from '../common/constants/queue.constants';
+import { QUESTION_GEN_QUEUE } from '../common/constants/queue.constants';
 import {
   createMockPrismaService,
   createMockQueue,
+  createMockReportService,
 } from '../test-utils/mock-factories';
 
 const BASE_SESSION = {
@@ -43,13 +42,13 @@ describe('SessionService', () => {
   let service: SessionService;
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockQuestionQueue: ReturnType<typeof createMockQueue>;
-  let mockReportQueue: ReturnType<typeof createMockQueue>;
+  let mockReportService: ReturnType<typeof createMockReportService>;
   let mockReferenceData: { ensureContextPack: jest.Mock };
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
     mockQuestionQueue = createMockQueue();
-    mockReportQueue = createMockQueue();
+    mockReportService = createMockReportService();
     mockReferenceData = {
       ensureContextPack: jest.fn().mockResolvedValue(undefined),
     };
@@ -63,7 +62,7 @@ describe('SessionService', () => {
           provide: getQueueToken(QUESTION_GEN_QUEUE),
           useValue: mockQuestionQueue,
         },
-        { provide: getQueueToken(REPORT_QUEUE), useValue: mockReportQueue },
+        { provide: ReportService, useValue: mockReportService },
       ],
     }).compile();
 
@@ -145,9 +144,9 @@ describe('SessionService', () => {
         status: 'error',
       });
 
-      await expect(service.create('user-abc', CREATE_DTO)).rejects.toMatchObject(
-        { errorCode: ErrorCode.SERVICE_UNAVAILABLE },
-      );
+      await expect(
+        service.create('user-abc', CREATE_DTO),
+      ).rejects.toMatchObject({ errorCode: ErrorCode.SERVICE_UNAVAILABLE });
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { status: 'error' } }),
       );
@@ -159,9 +158,9 @@ describe('SessionService', () => {
         new Error('Database unavailable'),
       );
 
-      await expect(service.create('user-abc', CREATE_DTO)).rejects.toMatchObject(
-        { errorCode: ErrorCode.SERVICE_UNAVAILABLE },
-      );
+      await expect(
+        service.create('user-abc', CREATE_DTO),
+      ).rejects.toMatchObject({ errorCode: ErrorCode.SERVICE_UNAVAILABLE });
       expect(mockPrisma.interviewSession.create).not.toHaveBeenCalled();
     });
   });
@@ -237,6 +236,7 @@ describe('SessionService', () => {
     it('cập nhật status → active thành công', async () => {
       const updated = { ...BASE_SESSION, status: 'active' };
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+      mockPrisma.sessionQuestion.count.mockResolvedValue(5);
       mockPrisma.interviewSession.update.mockResolvedValue(updated);
 
       const result = await service.updateStatus(
@@ -245,32 +245,108 @@ describe('SessionService', () => {
         'active',
       );
       expect(result.status).toBe('active');
+      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
+        where: { id: 'session-123' },
+        data: { status: 'active', completedAt: null },
+      });
     });
 
-    it('enqueue comprehensive-report khi status → completed', async () => {
-      const updated = { ...BASE_SESSION, status: 'completed' };
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+    it('chuyển active → completing và gọi ReportService khi đủ answer', async () => {
+      const activeSession = { ...BASE_SESSION, status: 'active' };
+      const updated = { ...BASE_SESSION, status: 'completing' };
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(activeSession);
+      mockPrisma.sessionQuestion.count.mockResolvedValue(5);
+      mockPrisma.userAnswer.count.mockResolvedValue(5);
       mockPrisma.interviewSession.update.mockResolvedValue(updated);
-      mockPrisma.userAnswer.findMany.mockResolvedValue([{ id: 'ans-1' }]);
-      mockReportQueue.add.mockResolvedValue({});
+      mockReportService.enqueueReport.mockResolvedValue(undefined);
 
-      await service.updateStatus('session-123', 'user-abc', 'completed');
+      const result = await service.updateStatus(
+        'session-123',
+        'user-abc',
+        'completed',
+      );
 
-      expect(mockReportQueue.add).toHaveBeenCalledWith(
-        'comprehensive-report',
-        expect.objectContaining({ sessionId: 'session-123' }),
-        expect.any(Object),
+      expect(result.status).toBe('completing');
+      expect(mockReportService.enqueueReport).toHaveBeenCalledWith(
+        'session-123',
+        'hr',
+        'VN',
       );
     });
 
     it('KHÔNG enqueue report khi status → active', async () => {
       const updated = { ...BASE_SESSION, status: 'active' };
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+      mockPrisma.sessionQuestion.count.mockResolvedValue(5);
       mockPrisma.interviewSession.update.mockResolvedValue(updated);
 
       await service.updateStatus('session-123', 'user-abc', 'active');
 
-      expect(mockReportQueue.add).not.toHaveBeenCalled();
+      expect(mockReportService.enqueueReport).not.toHaveBeenCalled();
+    });
+
+    it('từ chối generating → completed', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+
+      await expect(
+        service.updateStatus('session-123', 'user-abc', 'completed'),
+      ).rejects.toMatchObject({
+        errorCode: ErrorCode.INVALID_SESSION_TRANSITION,
+      });
+    });
+
+    it('từ chối completed → active và giữ completedAt', async () => {
+      const completedAt = new Date();
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'completed',
+        completedAt,
+      });
+
+      await expect(
+        service.updateStatus('session-123', 'user-abc', 'active'),
+      ).rejects.toMatchObject({
+        errorCode: ErrorCode.INVALID_SESSION_TRANSITION,
+      });
+      expect(mockPrisma.interviewSession.update).not.toHaveBeenCalled();
+    });
+
+    it('không hoàn thành session khi chưa trả lời đủ câu hỏi', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'active',
+      });
+      mockPrisma.sessionQuestion.count.mockResolvedValue(5);
+      mockPrisma.userAnswer.count.mockResolvedValue(4);
+
+      await expect(
+        service.updateStatus('session-123', 'user-abc', 'completed'),
+      ).rejects.toMatchObject({ errorCode: ErrorCode.SESSION_INCOMPLETE });
+      expect(mockReportService.enqueueReport).not.toHaveBeenCalled();
+    });
+
+    it('completed lặp lại không enqueue thêm report', async () => {
+      const completed = { ...BASE_SESSION, status: 'completed' };
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(completed);
+
+      const result = await service.updateStatus(
+        'session-123',
+        'user-abc',
+        'completed',
+      );
+
+      expect(result).toBe(completed);
+      expect(mockReportService.enqueueReport).not.toHaveBeenCalled();
+    });
+
+    it('khôi phục completing bằng cách đảm bảo report job tồn tại', async () => {
+      const completing = { ...BASE_SESSION, status: 'completing' };
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(completing);
+      mockReportService.enqueueReport.mockResolvedValue(undefined);
+
+      await service.updateStatus('session-123', 'user-abc', 'completed');
+
+      expect(mockReportService.enqueueReport).toHaveBeenCalledTimes(1);
     });
   });
 

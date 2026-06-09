@@ -71,6 +71,20 @@ Backend `surgical-feedback-v1.1`: `model_answer` phai la cau tra loi mau 3-5 cau
 - `process()` outer catch khong re-throw — set `'error'` va swallow, tranh BullMQ retry loop.
 - seedQuestionBank: idempotency guard `count >= 90`, 6 pairs x 15, difficulty 30/50/20.
 
+### 2026-06-09 — MVP Hardening
+
+Idempotency, SSRF protection, session state machine corrections:
+
+- `UserAnswer` `@@unique([sessionId, questionId])` — dedup CTE migration + `upsert` với `update: {}` trong `TurnService`.
+- `WhisperService`: HTTPS-only, IP block, allowlist (`SUPABASE_URL` + `AUDIO_ALLOWED_HOSTS`), 15s timeout, streaming size check.
+- `SessionService.updateStatus`: `completing` intermediate state; rollback về `'active'` nếu enqueue thất bại; `SESSION_INCOMPLETE` validation (answerCount >= questionCount).
+- `ReportService.enqueueReport`: bỏ tham số `turnIds` (tự fetch), idempotent job ID `report-${sessionId}`, retry nếu job `failed`.
+- `FeedbackProcessor`: `upsert` thay `create`, `deleteMany` segments trước `createMany` — cho phép re-run idempotent.
+- `ComprehensiveReportProcessor`: validate `feedbacks.length === expectedFeedbackCount` trước khi proceed.
+- `CommonModule` global: `SseService` provided once, không cần inject per-module.
+- Global `ThrottlerGuard` qua `APP_GUARD`.
+- `migration.sql` gộp: triggers + RLS + indexes + seed + schema changes vào 1 file.
+
 ---
 
 ## Architectural Decisions (Active Reference)

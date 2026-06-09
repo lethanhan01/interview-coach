@@ -4,6 +4,8 @@ import {
   IsOptional,
   IsInt,
   Min,
+  Max,
+  MaxLength,
   ValidateIf,
   IsUrl,
 } from 'class-validator';
@@ -20,7 +22,12 @@ export class SubmitAnswerDto {
   answerText?: string;
 
   @ValidateIf((o: SubmitAnswerDto) => o.answerMode === 'voice')
-  @IsUrl()
+  @IsUrl({
+    protocols: ['https'],
+    require_protocol: true,
+    require_valid_protocol: true,
+  })
+  @MaxLength(2048)
   audioFileUrl?: string;
 
   @IsOptional()
@@ -31,5 +38,6 @@ export class SubmitAnswerDto {
   @IsOptional()
   @IsInt()
   @Min(0)
+  @Max(10 * 1024 * 1024)
   audioSizeBytes?: number;
 }

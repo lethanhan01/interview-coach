@@ -38,6 +38,15 @@ export class ComprehensiveReportProcessor extends WorkerHost {
     const feedbacks = await this.prisma.aiFeedback.findMany({
       where: { userAnswerId: { in: turnIds } },
     });
+    const expectedFeedbackCount = new Set(turnIds).size;
+    if (
+      expectedFeedbackCount === 0 ||
+      feedbacks.length !== expectedFeedbackCount
+    ) {
+      throw new Error(
+        `Report input is not ready for session ${sessionId}: ${feedbacks.length}/${expectedFeedbackCount} feedbacks`,
+      );
+    }
 
     const aggregatedScore =
       feedbacks.length > 0
@@ -118,10 +127,6 @@ export class ComprehensiveReportProcessor extends WorkerHost {
           completedAt: new Date(),
         },
       });
-
-      await this.sseService.emit(`sse:session:${sessionId}`, 'report.ready', {
-        sessionId,
-      });
     } catch (error: unknown) {
       this.logger.error(
         `ComprehensiveReportProcessor: DB update failed for session ${sessionId}`,
@@ -129,5 +134,14 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       );
       throw error;
     }
+
+    await this.sseService
+      .emit(`sse:session:${sessionId}`, 'report.ready', { sessionId })
+      .catch((error: unknown) => {
+        this.logger.warn(
+          `ComprehensiveReportProcessor: unable to emit report.ready for session ${sessionId}`,
+          error instanceof Error ? error.message : String(error),
+        );
+      });
   }
 }

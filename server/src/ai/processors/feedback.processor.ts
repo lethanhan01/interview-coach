@@ -57,44 +57,54 @@ export class FeedbackProcessor extends WorkerHost {
         contextPackConfig,
       });
 
-      const aiFeedback = await this.prisma.aiFeedback.create({
-        data: {
-          userAnswerId: answerId,
-          overallScore: feedback.overallScore,
-          modelAnswer: feedback.modelAnswer,
-          keyTakeaway: feedback.keyTakeaway,
-          promptVersion: SURGICAL_FEEDBACK_PROMPT_CONFIG.version,
-          isFallback: false,
-        },
-      });
-
-      if (feedback.annotatedSegments.length > 0) {
-        await this.prisma.annotatedSegment.createMany({
-          data: feedback.annotatedSegments.map((seg) => ({
-            aiFeedbackId: aiFeedback.id,
-            segmentText: seg.segmentText,
-            startIndex: seg.startIndex,
-            endIndex: seg.endIndex,
-            highlightLevel: seg.highlightLevel,
-            annotation: seg.annotation,
-            suggestion: seg.suggestion ?? null,
-            improvedVersion: seg.improvedVersion ?? null,
-          })),
+      await this.prisma.$transaction(async (tx) => {
+        const aiFeedback = await tx.aiFeedback.upsert({
+          where: { userAnswerId: answerId },
+          create: {
+            userAnswerId: answerId,
+            overallScore: feedback.overallScore,
+            modelAnswer: feedback.modelAnswer,
+            keyTakeaway: feedback.keyTakeaway,
+            promptVersion: SURGICAL_FEEDBACK_PROMPT_CONFIG.version,
+            isFallback: false,
+          },
+          update: {
+            overallScore: feedback.overallScore,
+            modelAnswer: feedback.modelAnswer,
+            keyTakeaway: feedback.keyTakeaway,
+            promptVersion: SURGICAL_FEEDBACK_PROMPT_CONFIG.version,
+            isFallback: false,
+          },
         });
-      }
 
-      await this.prisma.userAnswer.update({
-        where: { id: answerId },
-        data: { feedbackGenerated: true },
+        await tx.annotatedSegment.deleteMany({
+          where: { aiFeedbackId: aiFeedback.id },
+        });
+        if (feedback.annotatedSegments.length > 0) {
+          await tx.annotatedSegment.createMany({
+            data: feedback.annotatedSegments.map((seg) => ({
+              aiFeedbackId: aiFeedback.id,
+              segmentText: seg.segmentText,
+              startIndex: seg.startIndex,
+              endIndex: seg.endIndex,
+              highlightLevel: seg.highlightLevel,
+              annotation: seg.annotation,
+              suggestion: seg.suggestion ?? null,
+              improvedVersion: seg.improvedVersion ?? null,
+            })),
+          });
+        }
+
+        await tx.userAnswer.update({
+          where: { id: answerId },
+          data: { feedbackGenerated: true },
+        });
       });
 
-      await this.sseService.emit(
-        `sse:session:${sessionId}`,
-        'turn.feedback_ready',
-        {
-          answerId,
-          hasAnnotations: feedback.annotatedSegments.length > 0,
-        },
+      await this.emitFeedbackReady(
+        sessionId,
+        answerId,
+        feedback.annotatedSegments.length > 0,
       );
     } catch (error: unknown) {
       const totalAttempts = job.opts.attempts ?? FEEDBACK_JOB_ATTEMPTS;
@@ -114,25 +124,39 @@ export class FeedbackProcessor extends WorkerHost {
       );
 
       try {
-        await this.prisma.aiFeedback.create({
-          data: {
-            userAnswerId: answerId,
-            overallScore: 0,
-            modelAnswer: '',
-            keyTakeaway: 'Feedback generation failed',
-            promptVersion: SURGICAL_FEEDBACK_PROMPT_CONFIG.version,
-            isFallback: true,
-          },
+        const hasAnnotations = await this.prisma.$transaction(async (tx) => {
+          const existingFeedback = await tx.aiFeedback.findUnique({
+            where: { userAnswerId: answerId },
+            include: { _count: { select: { annotatedSegments: true } } },
+          });
+          if (existingFeedback) {
+            await tx.userAnswer.update({
+              where: { id: answerId },
+              data: { feedbackGenerated: true },
+            });
+            return existingFeedback._count.annotatedSegments > 0;
+          }
+
+          await tx.aiFeedback.upsert({
+            where: { userAnswerId: answerId },
+            create: {
+              userAnswerId: answerId,
+              overallScore: 0,
+              modelAnswer: '',
+              keyTakeaway: 'Feedback generation failed',
+              promptVersion: SURGICAL_FEEDBACK_PROMPT_CONFIG.version,
+              isFallback: true,
+            },
+            update: {},
+          });
+          await tx.userAnswer.update({
+            where: { id: answerId },
+            data: { feedbackGenerated: true },
+          });
+          return false;
         });
 
-        await this.sseService.emit(
-          `sse:session:${sessionId}`,
-          'turn.feedback_ready',
-          {
-            answerId,
-            hasAnnotations: false,
-          },
-        );
+        await this.emitFeedbackReady(sessionId, answerId, hasAnnotations);
       } catch (fallbackError: unknown) {
         this.logger.error(
           `FeedbackProcessor fallback insert failed for answer ${answerId}`,
@@ -143,5 +167,23 @@ export class FeedbackProcessor extends WorkerHost {
         throw fallbackError;
       }
     }
+  }
+
+  private async emitFeedbackReady(
+    sessionId: string,
+    answerId: string,
+    hasAnnotations: boolean,
+  ): Promise<void> {
+    await this.sseService
+      .emit(`sse:session:${sessionId}`, 'turn.feedback_ready', {
+        answerId,
+        hasAnnotations,
+      })
+      .catch((error: unknown) => {
+        this.logger.warn(
+          `Unable to emit feedback_ready for answer ${answerId}`,
+          error instanceof Error ? error.message : String(error),
+        );
+      });
   }
 }

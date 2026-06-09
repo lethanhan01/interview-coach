@@ -9,9 +9,9 @@ import { InterviewAIException } from '../common/exceptions/interview-ai.exceptio
 import {
   QUESTION_GEN_QUEUE,
   QUESTION_GEN_JOB_ATTEMPTS,
-  REPORT_QUEUE,
 } from '../common/constants/queue.constants';
 import { CreateSessionDto } from './dto/create-session.dto';
+import { ReportService } from '../report/report.service';
 
 @Injectable()
 export class SessionService {
@@ -21,7 +21,7 @@ export class SessionService {
     private readonly prisma: PrismaService,
     private readonly referenceData: ReferenceDataService,
     @InjectQueue(QUESTION_GEN_QUEUE) private readonly queue: Queue,
-    @InjectQueue(REPORT_QUEUE) private readonly reportQueue: Queue,
+    private readonly reportService: ReportService,
   ) {}
 
   async create(
@@ -158,33 +158,89 @@ export class SessionService {
   ): Promise<InterviewSession> {
     const session = await this.findById(sessionId, userId);
 
+    if (status === 'active') {
+      if (session.status === 'active') return session;
+      if (!['generating', 'ready'].includes(session.status)) {
+        throw this.invalidTransition(session.status, status);
+      }
+
+      const questionCount = await this.prisma.sessionQuestion.count({
+        where: { sessionId },
+      });
+      if (questionCount === 0) {
+        throw this.invalidTransition(session.status, status);
+      }
+
+      return this.prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: { status: 'active', completedAt: null },
+      });
+    }
+
+    if (session.status === 'completed') return session;
+    if (session.status === 'completing') {
+      await this.reportService.enqueueReport(
+        sessionId,
+        session.sessionType,
+        session.contextPackId as 'VN' | 'Western',
+      );
+      return session;
+    }
+    if (session.status !== 'active') {
+      throw this.invalidTransition(session.status, status);
+    }
+
+    const [questionCount, answerCount] = await Promise.all([
+      this.prisma.sessionQuestion.count({ where: { sessionId } }),
+      this.prisma.userAnswer.count({ where: { sessionId } }),
+    ]);
+
+    if (questionCount === 0 || answerCount < questionCount) {
+      throw new InterviewAIException(
+        ErrorCode.SESSION_INCOMPLETE,
+        HttpStatus.CONFLICT,
+        'Hãy trả lời đầy đủ các câu hỏi trước khi hoàn thành phỏng vấn.',
+      );
+    }
+
     const updated = await this.prisma.interviewSession.update({
       where: { id: sessionId },
-      data: {
-        status,
-        ...(status === 'completed' ? { completedAt: new Date() } : {}),
-      },
+      data: { status: 'completing', completedAt: null },
     });
 
-    if (status === 'completed') {
-      const answers = await this.prisma.userAnswer.findMany({
-        where: { sessionId },
-        select: { id: true },
-      });
-      const turnIds = answers.map((a) => a.id);
+    try {
+      await this.reportService.enqueueReport(
+        sessionId,
+        session.sessionType,
+        session.contextPackId as 'VN' | 'Western',
+      );
+    } catch (error: unknown) {
+      await this.prisma.interviewSession
+        .updateMany({
+          where: { id: sessionId, status: 'completing' },
+          data: { status: 'active' },
+        })
+        .catch(() => {});
 
-      await this.reportQueue.add(
-        'comprehensive-report',
-        {
-          sessionId,
-          sessionType: session.sessionType,
-          contextPack: session.contextPackId as 'VN' | 'Western',
-          turnIds,
-        },
-        { attempts: 2, backoff: { type: 'fixed', delay: 2000 } },
+      if (error instanceof InterviewAIException) throw error;
+      throw new InterviewAIException(
+        ErrorCode.SERVICE_UNAVAILABLE,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        'Không thể xếp hàng tạo báo cáo. Vui lòng thử lại.',
       );
     }
 
     return updated;
+  }
+
+  private invalidTransition(
+    currentStatus: string,
+    nextStatus: string,
+  ): InterviewAIException {
+    return new InterviewAIException(
+      ErrorCode.INVALID_SESSION_TRANSITION,
+      HttpStatus.CONFLICT,
+      `Không thể chuyển trạng thái phỏng vấn từ ${currentStatus} sang ${nextStatus}.`,
+    );
   }
 }

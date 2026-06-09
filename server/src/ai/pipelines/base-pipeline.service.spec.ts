@@ -49,8 +49,10 @@ describe('BasePipelineService (via HrPipelineService)', () => {
 
   describe('generateQuestions', () => {
     const questionInput = {
+      sessionType: 'hr' as const,
       contextPackConfig: mockContextPack,
       jobDescriptionText: 'Backend developer với 2 năm kinh nghiệm',
+      targetRoles: ['Backend Developer'],
       totalQuestions: 2,
     };
 
@@ -124,6 +126,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
 
   describe('generateFollowUp', () => {
     const followUpInput = {
+      sessionType: 'hr' as const,
       contextPackConfig: mockContextPack,
       questionText: 'Điểm mạnh của bạn là gì?',
       answerText: 'Tôi học nhanh.',
@@ -166,6 +169,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
 
   describe('evaluateAnswer', () => {
     const feedbackInput = {
+      sessionType: 'hr' as const,
       contextPackConfig: mockContextPack,
       questionText: 'Giới thiệu bản thân?',
       answerText: 'Tôi là developer với 2 năm kinh nghiệm.',
@@ -206,6 +210,17 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         annotation: 'Rõ ràng',
         suggestion: undefined,
         improvedVersion: undefined,
+      });
+    });
+
+    it('từ chối session type không thuộc strategy hiện tại', async () => {
+      await expect(
+        service.evaluateAnswer({
+          ...feedbackInput,
+          sessionType: 'technical',
+        }),
+      ).rejects.toMatchObject({
+        errorCode: ErrorCode.INVALID_SESSION_TYPE,
       });
     });
   });

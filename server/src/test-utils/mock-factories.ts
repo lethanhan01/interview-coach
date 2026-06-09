@@ -47,18 +47,24 @@ export const createMockPrismaService = () => ({
     findUnique: jest.fn(),
     findMany: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   },
   sessionQuestion: {
     findMany: jest.fn(),
     findFirst: jest.fn(),
     createMany: jest.fn(),
+    count: jest.fn(),
   },
   followUpQuestion: {
     create: jest.fn(),
   },
   userAnswer: {
     create: jest.fn(),
+    findUnique: jest.fn().mockResolvedValue(null),
     findMany: jest.fn(),
+    upsert: jest.fn(),
+    update: jest.fn(),
+    count: jest.fn(),
   },
   user: {
     findUnique: jest.fn(),
@@ -70,6 +76,7 @@ export const createMockPrismaService = () => ({
 
 export const createMockQueue = () => ({
   add: jest.fn(),
+  getJob: jest.fn().mockResolvedValue(null),
 });
 
 export const createMockConfigService = (

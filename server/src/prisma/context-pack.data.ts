@@ -8,6 +8,7 @@ export interface ContextPackData {
   id: ContextPackId;
   legacyIds: string[];
   name: string;
+  culturalNotes: string;
   rubricJson: Prisma.InputJsonObject;
   scoringWeights: Prisma.InputJsonObject;
 }
@@ -17,6 +18,8 @@ export const CONTEXT_PACK_DATA: ContextPackData[] = [
     id: 'VN',
     legacyIds: ['vn'],
     name: 'Vietnam Context Pack',
+    culturalNotes:
+      'Vietnamese workplace context: emphasize teamwork, respect for hierarchy, and practical problem-solving. Use Vietnamese cultural references when appropriate.',
     rubricJson: {
       behavioral: {
         D1: { name: 'Giao tiếp & Trình bày', weight: 0.2 },
@@ -43,6 +46,8 @@ export const CONTEXT_PACK_DATA: ContextPackData[] = [
     id: 'Western',
     legacyIds: ['western'],
     name: 'Western Context Pack',
+    culturalNotes:
+      'Western workplace context: emphasize initiative, quantifiable impact, and leadership potential. STAR format preferred.',
     rubricJson: {
       behavioral: {
         D1: { name: 'Communication & Presentation', weight: 0.2 },

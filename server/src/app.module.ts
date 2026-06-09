@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bullmq';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -15,6 +15,7 @@ import { UserModule } from './user/user.module';
 import { validateEnv } from './config/env.validation';
 import { InterviewAIExceptionFilter } from './common/exceptions/interview-ai-exception.filter';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
       }),
       inject: [ConfigService],
     }),
+    CommonModule,
     PrismaModule,
     AuthModule,
     AiModule,
@@ -41,6 +43,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
   providers: [
     AppService,
     { provide: APP_FILTER, useClass: InterviewAIExceptionFilter },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule implements NestModule {

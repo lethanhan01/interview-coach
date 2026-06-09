@@ -170,6 +170,7 @@ model UserAnswer {
 
   @@index([questionId], map: "idx_user_answers_question_id")
   @@index([sessionId], map: "idx_user_answers_session_id")
+  @@unique([sessionId, questionId])
   @@map("user_answers")
 }
 

@@ -6,6 +6,10 @@ import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { REPORT_QUEUE } from '../common/constants/queue.constants';
 import {
+  REPORT_JOB_ATTEMPTS,
+  REPORT_JOB_RETRY_DELAY_MS,
+} from '../common/constants/queue.constants';
+import {
   ReportResponseDto,
   TranscriptItemDto,
   AnnotatedSegmentDto,
@@ -107,12 +111,38 @@ export class ReportService {
     sessionId: string,
     sessionType: string,
     contextPack: 'VN' | 'Western',
-    turnIds: string[],
   ): Promise<void> {
+    const answers = await this.prisma.userAnswer.findMany({
+      where: { sessionId },
+      select: { id: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    const turnIds = answers.map((answer) => answer.id);
+    if (turnIds.length === 0) {
+      throw new InterviewAIException(
+        ErrorCode.SESSION_INCOMPLETE,
+        HttpStatus.CONFLICT,
+        'Không thể tạo báo cáo khi chưa có câu trả lời.',
+      );
+    }
+
+    const jobId = `report-${sessionId}`;
+    const existingJob = await this.reportQueue.getJob(jobId);
+    if (existingJob) {
+      if ((await existingJob.getState()) === 'failed') {
+        await existingJob.retry();
+      }
+      return;
+    }
+
     await this.reportQueue.add(
       'comprehensive-report',
       { sessionId, sessionType, contextPack, turnIds },
-      { attempts: 2, backoff: { type: 'fixed', delay: 2000 } },
+      {
+        jobId,
+        attempts: REPORT_JOB_ATTEMPTS,
+        backoff: { type: 'fixed', delay: REPORT_JOB_RETRY_DELAY_MS },
+      },
     );
   }
 }

@@ -10,6 +10,7 @@ const EnvSchema = z
     OPENAI_API_KEY: z.string().min(1),
     REDIS_HOST: z.string().default('localhost'),
     REDIS_PORT: z.coerce.number().default(6379),
+    AUDIO_ALLOWED_HOSTS: z.string().optional(),
     PORT: z.coerce.number().default(3000),
     AUTH_ENABLED: z.enum(['true', 'false']).default('true'),
     MOCK_USER_ID: z.string().uuid().optional(),
@@ -23,7 +24,8 @@ const EnvSchema = z
       ctx.addIssue({
         code: 'custom',
         path: ['MOCK_USER_ID'],
-        message: 'MOCK_USER_ID must be a valid existing user UUID when auth is disabled',
+        message:
+          'MOCK_USER_ID must be a valid existing user UUID when auth is disabled',
       });
     }
   });

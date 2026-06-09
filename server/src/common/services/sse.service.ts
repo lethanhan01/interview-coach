@@ -17,8 +17,9 @@ interface SseMessage {
 @Injectable()
 export class SseService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(SseService.name);
-  private publisher: Redis;
-  private subscriber: Redis;
+  private publisher!: Redis;
+  private subscriber!: Redis;
+  private readonly channelSubscribers = new Map<string, number>();
 
   constructor(private readonly config: ConfigService) {}
 
@@ -32,8 +33,7 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    await this.publisher.quit();
-    await this.subscriber.quit();
+    await Promise.all([this.publisher.quit(), this.subscriber.quit()]);
   }
 
   async emit(channel: string, event: string, data: unknown): Promise<void> {
@@ -43,11 +43,14 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
 
   subscribe(channel: string): Observable<MessageEvent> {
     return new Observable<SseMessage>((observer) => {
-      void this.subscriber.subscribe(channel, (err) => {
-        if (err) {
-          observer.error(err);
-        }
-      });
+      const subscriberCount = this.channelSubscribers.get(channel) ?? 0;
+      this.channelSubscribers.set(channel, subscriberCount + 1);
+
+      if (subscriberCount === 0) {
+        void this.subscriber.subscribe(channel, (err) => {
+          if (err) observer.error(err);
+        });
+      }
 
       const handler = (receivedChannel: string, message: string) => {
         if (receivedChannel === channel) {
@@ -66,7 +69,14 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
 
       return () => {
         this.subscriber.off('message', handler);
-        this.subscriber.unsubscribe(channel).catch(() => {});
+        const remainingSubscribers =
+          (this.channelSubscribers.get(channel) ?? 1) - 1;
+        if (remainingSubscribers <= 0) {
+          this.channelSubscribers.delete(channel);
+          this.subscriber.unsubscribe(channel).catch(() => {});
+        } else {
+          this.channelSubscribers.set(channel, remainingSubscribers);
+        }
       };
     }).pipe(
       map(

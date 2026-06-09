@@ -16,18 +16,19 @@ describe('ContextPackService', () => {
     it('trả về VN config với rubricDimensions và culturalNotes phù hợp văn hóa Việt Nam', () => {
       const pack = service.getContextPack('VN');
 
-      expect(pack.rubricDimensions).toContain('clarity');
-      expect(pack.rubricDimensions).toContain('communication');
+      expect(pack.rubricDimensions).toContain('Giao tiếp & Trình bày');
+      expect(pack.scoringWeights).toEqual({
+        behavioral_weight: 0.5,
+        technical_weight: 0.5,
+      });
       expect(pack.culturalNotes).toContain('Vietnamese');
     });
 
     it('trả về Western config với rubricDimensions bao gồm impact hoặc leadership', () => {
       const pack = service.getContextPack('Western');
 
-      const hasWesternDimension =
-        pack.rubricDimensions.includes('impact') ||
-        pack.rubricDimensions.includes('leadership');
-      expect(hasWesternDimension).toBe(true);
+      expect(pack.rubricDimensions).toContain('Leadership & Initiative');
+      expect(pack.scoringWeights.technical_weight).toBe(0.55);
       expect(pack.culturalNotes).toContain('Western');
     });
   });

@@ -169,12 +169,13 @@ describe('ReportService', () => {
 
   describe('enqueueReport', () => {
     it('gọi reportQueue.add với đúng job name và params', async () => {
+      mockPrisma.userAnswer.findMany.mockResolvedValue([
+        { id: 'ans-1' },
+        { id: 'ans-2' },
+      ]);
       mockReportQueue.add.mockResolvedValue({});
 
-      await service.enqueueReport('session-123', 'hr', 'VN', [
-        'ans-1',
-        'ans-2',
-      ]);
+      await service.enqueueReport('session-123', 'hr', 'VN');
 
       expect(mockReportQueue.add).toHaveBeenCalledWith(
         'comprehensive-report',
@@ -184,8 +185,30 @@ describe('ReportService', () => {
           contextPack: 'VN',
           turnIds: ['ans-1', 'ans-2'],
         },
-        expect.any(Object),
+        expect.objectContaining({ jobId: 'report-session-123' }),
       );
+    });
+
+    it('không tạo job mới khi job report của session đã tồn tại', async () => {
+      const existingJob = {
+        getState: jest.fn().mockResolvedValue('waiting'),
+        retry: jest.fn(),
+      };
+      mockPrisma.userAnswer.findMany.mockResolvedValue([{ id: 'ans-1' }]);
+      mockReportQueue.getJob.mockResolvedValue(existingJob);
+
+      await service.enqueueReport('session-123', 'hr', 'VN');
+
+      expect(mockReportQueue.add).not.toHaveBeenCalled();
+      expect(existingJob.retry).not.toHaveBeenCalled();
+    });
+
+    it('từ chối enqueue report khi session chưa có answer', async () => {
+      mockPrisma.userAnswer.findMany.mockResolvedValue([]);
+
+      await expect(
+        service.enqueueReport('session-123', 'hr', 'VN'),
+      ).rejects.toMatchObject({ errorCode: ErrorCode.SESSION_INCOMPLETE });
     });
   });
 });

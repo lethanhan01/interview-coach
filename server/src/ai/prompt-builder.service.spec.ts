@@ -76,6 +76,20 @@ describe('PromptBuilderService', () => {
       expect(content).toContain('Tôi là developer');
     });
 
+    it('bao gồm session type và target roles khi được cung cấp', () => {
+      const messages = service.injectDynamicContext({
+        systemMessage: 'sys',
+        jobDescription: 'jd',
+        sessionType: 'technical',
+        targetRoles: ['Backend Engineer', 'Platform Engineer'],
+      });
+      const content = messages[1].content as string;
+
+      expect(content).toContain('<session_type>technical</session_type>');
+      expect(content).toContain('Backend Engineer');
+      expect(content).toContain('Platform Engineer');
+    });
+
     it('bao gồm session_history khi sessionHistory không rỗng', () => {
       const messages = service.injectDynamicContext({
         systemMessage: 'sys',

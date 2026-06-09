@@ -13,7 +13,6 @@ import { FollowUpProcessor } from './processors/follow-up.processor';
 import { FeedbackProcessor } from './processors/feedback.processor';
 import { ComprehensiveReportProcessor } from './processors/comprehensive-report.processor';
 import { RewriteEvalProcessor } from './processors/rewrite-eval.processor';
-import { SseService } from '../common/services/sse.service';
 import {
   QUESTION_GEN_QUEUE,
   FOLLOW_UP_QUEUE,
@@ -41,7 +40,6 @@ import {
     TechnicalPipelineService,
     MixedPipelineService,
     PipelineStrategyFactory,
-    SseService,
     QuestionGenerationProcessor,
     FollowUpProcessor,
     FeedbackProcessor,
