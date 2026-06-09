@@ -34,10 +34,18 @@ describe('TurnController', () => {
         answerMode: 'text',
         answerText: 'Tôi là backend developer.',
       } as any;
-      const turnResult = { answerId: 'answer-1', followUpQueued: false, feedbackQueued: true };
+      const turnResult = {
+        answerId: 'answer-1',
+        followUpQueued: false,
+        feedbackQueued: true,
+      };
       mockTurnService.submitAnswer.mockResolvedValue(turnResult);
 
-      const result = await controller.submitAnswer('session-123', dto, mockReq());
+      const result = await controller.submitAnswer(
+        'session-123',
+        dto,
+        mockReq(),
+      );
 
       expect(result).toEqual(turnResult);
       expect(mockTurnService.submitAnswer).toHaveBeenCalledWith(
@@ -48,8 +56,14 @@ describe('TurnController', () => {
     });
 
     it('propagate exception khi turnService.submitAnswer ném lỗi', async () => {
-      mockTurnService.submitAnswer.mockRejectedValue(new Error('Session not found'));
-      const dto = { questionId: 'q-1', answerMode: 'text', answerText: 'text' } as any;
+      mockTurnService.submitAnswer.mockRejectedValue(
+        new Error('Session not found'),
+      );
+      const dto = {
+        questionId: 'q-1',
+        answerMode: 'text',
+        answerText: 'text',
+      } as any;
 
       await expect(
         controller.submitAnswer('session-123', dto, mockReq()),

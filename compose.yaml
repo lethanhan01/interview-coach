@@ -12,30 +12,30 @@ services:
       timeout: 3s
       retries: 10
 
-  server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile.dev
-    env_file:
-      - ./server/.env
-    environment:
-      NODE_ENV: development
-      PORT: 3000
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      CHOKIDAR_USEPOLLING: "true"
-      TSC_WATCHFILE: UseFsEventsWithFallbackDynamicPolling
-      TSC_WATCHDIRECTORY: DynamicPriorityPolling
-      WATCHPACK_POLLING: "true"
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./server:/app
-      - server-node-modules:/app/node_modules
-    depends_on:
-      redis:
-        condition: service_healthy
-    command: sh -c "npx prisma generate && npm run start:dev"
+  # server:  # disabled during local NestJS dev — run manually with: npm run start:dev
+  #   build:
+  #     context: ./server
+  #     dockerfile: Dockerfile.dev
+  #   env_file:
+  #     - ./server/.env
+  #   environment:
+  #     NODE_ENV: development
+  #     PORT: 3000
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     CHOKIDAR_USEPOLLING: "true"
+  #     TSC_WATCHFILE: UseFsEventsWithFallbackDynamicPolling
+  #     TSC_WATCHDIRECTORY: DynamicPriorityPolling
+  #     WATCHPACK_POLLING: "true"
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./server:/app
+  #     - server-node-modules:/app/node_modules
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #   command: sh -c "npx prisma generate && npm run start:dev"
 
 volumes:
   redis-data:

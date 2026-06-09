@@ -46,10 +46,13 @@ describe('SseTokenGuard', () => {
 
   it('trả về true và set req.user khi token hợp lệ', () => {
     mockJwtVerify.mockReturnValue({ sub: 'user-uuid-456' });
-    const req = { query: { token: 'valid.jwt.token' }, user: undefined as unknown };
-    const ctx = ({
+    const req = {
+      query: { token: 'valid.jwt.token' },
+      user: undefined as unknown,
+    };
+    const ctx = {
       switchToHttp: () => ({ getRequest: () => req }),
-    }) as unknown as ExecutionContext;
+    } as unknown as ExecutionContext;
 
     const result = guard.canActivate(ctx);
 

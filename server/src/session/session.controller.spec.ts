@@ -15,8 +15,7 @@ describe('SessionController', () => {
   let mockSessionService: ReturnType<typeof createMockSessionService>;
   let mockSseService: ReturnType<typeof createMockSseService>;
 
-  const mockReq = (userId = 'user-abc') =>
-    ({ user: { id: userId } }) as any;
+  const mockReq = (userId = 'user-abc') => ({ user: { id: userId } }) as any;
 
   beforeEach(async () => {
     mockSessionService = createMockSessionService();

@@ -8,8 +8,7 @@ describe('UserController', () => {
   let controller: UserController;
   let mockUserService: ReturnType<typeof createMockUserService>;
 
-  const mockReq = (userId = 'user-abc') =>
-    ({ user: { id: userId } }) as any;
+  const mockReq = (userId = 'user-abc') => ({ user: { id: userId } }) as any;
 
   beforeEach(async () => {
     mockUserService = createMockUserService();
@@ -48,21 +47,29 @@ describe('UserController', () => {
 
   describe('PATCH /profile', () => {
     it('gọi userService.upsertProfile với userId và dto', async () => {
-      const dto = { fullName: 'Nguyen Van A', targetPosition: 'Backend Dev' } as any;
+      const dto = {
+        fullName: 'Nguyen Van A',
+        targetPosition: 'Backend Dev',
+      } as any;
       const updatedProfile = { userId: 'user-abc', ...dto };
       mockUserService.upsertProfile.mockResolvedValue(updatedProfile);
 
       const result = await controller.updateProfile(dto, mockReq());
 
       expect(result).toEqual(updatedProfile);
-      expect(mockUserService.upsertProfile).toHaveBeenCalledWith('user-abc', dto);
+      expect(mockUserService.upsertProfile).toHaveBeenCalledWith(
+        'user-abc',
+        dto,
+      );
     });
 
     it('propagate exception khi userService.upsertProfile ném lỗi', async () => {
       const dto = { fullName: 'An' } as any;
       mockUserService.upsertProfile.mockRejectedValue(new Error('DB error'));
 
-      await expect(controller.updateProfile(dto, mockReq())).rejects.toThrow('DB error');
+      await expect(controller.updateProfile(dto, mockReq())).rejects.toThrow(
+        'DB error',
+      );
     });
   });
 });

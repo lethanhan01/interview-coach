@@ -1,7 +1,41 @@
+# Dependencies (sẽ được cài lại trong image)
 node_modules
+
+# Build output (builder stage sẽ tạo lại)
 dist
+
+# Test & coverage
 coverage
-generated
+*.test.ts
+*.spec.ts
+test/
+
+# Logs
 *.log
+logs/
+
+# Environment files (không bao giờ đưa vào image)
 .env
 .env.*
+.env.local
+.env.*.local
+
+# Dev tools
+.eslintrc*
+eslint.config.*
+.prettierrc*
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Docker
+Dockerfile*
+.dockerignore
+
+# Prisma generated (sẽ được generate lại)
+generated/

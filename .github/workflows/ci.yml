@@ -91,7 +91,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: ./server
-          file: ./server/Dockerfile.dev
+          file: ./server/Dockerfile
           push: false
           tags: interviewcoach-server:${{ github.sha }}
           cache-from: type=gha,scope=server

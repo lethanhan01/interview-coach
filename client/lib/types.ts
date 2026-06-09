@@ -52,3 +52,51 @@ export interface Report {
   actionPlan: Record<string, unknown>
   transcript: TranscriptItem[]
 }
+
+export interface EducationEntry {
+  degree: string
+  school: string
+  major: string
+  gpa: string
+  graduationYear: string
+}
+
+export interface WorkExperienceEntry {
+  id: string
+  company: string
+  position: string
+  startDate: string
+  endDate: string
+  isCurrent: boolean
+  description: string
+}
+
+export interface ProjectEntry {
+  id: string
+  name: string
+  description: string
+  techStack: string
+  url: string
+}
+
+export interface GetProfileResponse {
+  id: string
+  email: string
+  profile: {
+    fullName?: string
+    dateOfBirth?: string
+    gender?: string
+    phone?: string
+    hometown?: string
+    nationality?: string
+    personality?: string
+    targetPosition?: string
+    targetRoleCategory?: string
+    targetLevel?: string
+    preferredTechStack?: string
+    yearsExperience?: number
+    education?: EducationEntry
+    workExperience?: WorkExperienceEntry[]
+    projects?: ProjectEntry[]
+  } | null
+}

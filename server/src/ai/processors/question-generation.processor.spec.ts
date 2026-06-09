@@ -107,7 +107,9 @@ describe('QuestionGenerationProcessor', () => {
 
   it('cập nhật session status=error và emit SSE error khi AI và fallback đều thất bại', async () => {
     const mockStrategy = {
-      generateQuestions: jest.fn().mockRejectedValue(new Error('OpenAI timeout')),
+      generateQuestions: jest
+        .fn()
+        .mockRejectedValue(new Error('OpenAI timeout')),
     };
     mockContextPack.getContextPack.mockReturnValue({} as any);
     mockFactory.getStrategy.mockReturnValue(mockStrategy);

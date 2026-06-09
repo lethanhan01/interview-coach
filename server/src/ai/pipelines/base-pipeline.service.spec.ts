@@ -57,8 +57,18 @@ describe('BasePipelineService (via HrPipelineService)', () => {
     it('trả về mảng GeneratedQuestion khi chatCompletion và validate thành công', async () => {
       const rawQuestions = {
         questions: [
-          { text: 'Giới thiệu bản thân?', category: 'hr', competency_domain: 'communication', difficulty: 1 },
-          { text: 'Điểm mạnh của bạn?', category: 'hr', competency_domain: 'self_awareness', difficulty: 2 },
+          {
+            text: 'Giới thiệu bản thân?',
+            category: 'hr',
+            competency_domain: 'communication',
+            difficulty: 1,
+          },
+          {
+            text: 'Điểm mạnh của bạn?',
+            category: 'hr',
+            competency_domain: 'self_awareness',
+            difficulty: 2,
+          },
         ],
       };
       mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawQuestions));
@@ -86,13 +96,19 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       try {
         await service.generateQuestions(questionInput);
       } catch (e) {
-        expect((e as InterviewAIException).errorCode).toBe(ErrorCode.AI_SERVICE_ERROR);
-        expect((e as InterviewAIException).getStatus()).toBe(HttpStatus.BAD_GATEWAY);
+        expect((e as InterviewAIException).errorCode).toBe(
+          ErrorCode.AI_SERVICE_ERROR,
+        );
+        expect((e as InterviewAIException).getStatus()).toBe(
+          HttpStatus.BAD_GATEWAY,
+        );
       }
     });
 
     it('propagate exception khi zodValidator.validate ném lỗi', async () => {
-      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify({ questions: [] }));
+      mockOpenAI.chatCompletion.mockResolvedValue(
+        JSON.stringify({ questions: [] }),
+      );
       mockZodValidator.validate.mockImplementation(() => {
         throw new InterviewAIException(
           ErrorCode.SCHEMA_VALIDATION_ERROR,
@@ -115,7 +131,10 @@ describe('BasePipelineService (via HrPipelineService)', () => {
 
     it('trả về { followUpText, triggerReason } khi JSON hợp lệ với FollowUpSchema', async () => {
       mockOpenAI.chatCompletion.mockResolvedValue(
-        JSON.stringify({ follow_up: 'Bạn có thể cho ví dụ cụ thể không?', trigger_reason: 'incomplete_answer' }),
+        JSON.stringify({
+          follow_up: 'Bạn có thể cho ví dụ cụ thể không?',
+          trigger_reason: 'incomplete_answer',
+        }),
       );
 
       const result = await service.generateFollowUp(followUpInput);

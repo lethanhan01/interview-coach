@@ -126,7 +126,10 @@ export class QuestionGenerationProcessor extends WorkerHost {
       );
     }
 
-    const selected = this.selectWithDifficultySpread(candidates, totalQuestions);
+    const selected = this.selectWithDifficultySpread(
+      candidates,
+      totalQuestions,
+    );
 
     await this.prisma.sessionQuestion.createMany({
       data: selected.map((q, i) => ({

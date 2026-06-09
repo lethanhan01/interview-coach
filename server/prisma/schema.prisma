@@ -59,14 +59,23 @@ model User {
 model UserProfile {
   id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId             String    @unique @map("user_id") @db.Uuid
-  fullName           String    @map("full_name")
-  targetPosition     String    @map("target_position")
-  targetRoleCategory String    @map("target_role_category")
-  targetLevel        String    @map("target_level")
+  fullName           String?   @map("full_name")
+  targetPosition     String?   @map("target_position")
+  targetRoleCategory String?   @map("target_role_category")
+  targetLevel        String?   @map("target_level")
   preferredTechStack String?   @map("preferred_tech_stack")
   yearsExperience    Int       @default(0) @map("years_experience")
   defaultLanguage    String    @default("vi") @map("default_language")
   ttsEnabled         Boolean   @default(false) @map("tts_enabled")
+  dateOfBirth        DateTime? @map("date_of_birth") @db.Date
+  gender             String?
+  phone              String?
+  hometown           String?
+  nationality        String?
+  personality        String?
+  education          Json?
+  workExperience     Json?     @map("work_experience")
+  projects           Json?
   deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)

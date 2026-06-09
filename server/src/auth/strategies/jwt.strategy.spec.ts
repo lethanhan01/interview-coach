@@ -32,7 +32,10 @@ describe('JwtStrategy', () => {
 
       const result = strategy.validate(payload as any);
 
-      expect(result).toEqual({ id: 'user-uuid-123', email: 'test@example.com' });
+      expect(result).toEqual({
+        id: 'user-uuid-123',
+        email: 'test@example.com',
+      });
     });
   });
 });

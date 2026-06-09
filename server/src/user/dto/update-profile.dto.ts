@@ -1,4 +1,12 @@
-import { IsString, IsInt, IsBoolean, IsOptional, Min } from 'class-validator';
+import {
+  IsString,
+  IsInt,
+  IsBoolean,
+  IsOptional,
+  IsObject,
+  IsArray,
+  Min,
+} from 'class-validator';
 
 export class UpdateProfileDto {
   @IsString()
@@ -33,4 +41,40 @@ export class UpdateProfileDto {
   @IsBoolean()
   @IsOptional()
   ttsEnabled?: boolean;
+
+  @IsString()
+  @IsOptional()
+  dateOfBirth?: string;
+
+  @IsString()
+  @IsOptional()
+  gender?: string;
+
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @IsString()
+  @IsOptional()
+  hometown?: string;
+
+  @IsString()
+  @IsOptional()
+  nationality?: string;
+
+  @IsString()
+  @IsOptional()
+  personality?: string;
+
+  @IsObject()
+  @IsOptional()
+  education?: Record<string, unknown>;
+
+  @IsArray()
+  @IsOptional()
+  workExperience?: Record<string, unknown>[];
+
+  @IsArray()
+  @IsOptional()
+  projects?: Record<string, unknown>[];
 }
