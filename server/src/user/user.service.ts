@@ -20,12 +20,24 @@ export class UserService {
   }
 
   async upsertProfile(userId: string, dto: UpdateProfileDto) {
-    return this.prisma.userProfile.upsert({
+    const updateData = {
+      ...dto,
+      ...(dto.dateOfBirth !== undefined
+        ? { dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : null }
+        : {}),
+    };
+
+    await this.prisma.userProfile.upsert({
       where: { userId },
-      create: { ...dto, userId } as Parameters<
-        typeof this.prisma.userProfile.create
+      create: {
+        ...(updateData as Record<string, unknown>),
+        userId,
+      } as Parameters<typeof this.prisma.userProfile.create>[0]['data'],
+      update: updateData as Parameters<
+        typeof this.prisma.userProfile.update
       >[0]['data'],
-      update: { ...dto },
     });
+
+    return this.getProfile(userId);
   }
 }

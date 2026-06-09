@@ -76,6 +76,9 @@ model UserProfile {
   education          Json?
   workExperience     Json?     @map("work_experience")
   projects           Json?
+  technicalSkills    Json?     @map("technical_skills")
+  certifications     Json?
+  awards             Json?
   deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)

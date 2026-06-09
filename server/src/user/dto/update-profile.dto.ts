@@ -77,4 +77,16 @@ export class UpdateProfileDto {
   @IsArray()
   @IsOptional()
   projects?: Record<string, unknown>[];
+
+  @IsArray()
+  @IsOptional()
+  technicalSkills?: Record<string, unknown>[];
+
+  @IsArray()
+  @IsOptional()
+  certifications?: Record<string, unknown>[];
+
+  @IsArray()
+  @IsOptional()
+  awards?: Record<string, unknown>[];
 }

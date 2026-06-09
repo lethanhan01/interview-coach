@@ -5,14 +5,12 @@ import Button from '@/components/ui/Button'
 import {
   TARGET_POSITION_OPTIONS,
   EXPERIENCE_LEVEL_OPTIONS,
-  TECH_STACK_OPTIONS,
 } from './constants'
 
 interface CareerInfoData {
   targetPosition?: string
   targetRoleCategory?: string
   targetLevel?: string
-  preferredTechStack?: string
 }
 
 interface Props {
@@ -35,10 +33,6 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
   const [form, setForm] = useState<CareerInfoData>(data)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const selectedTech = new Set(
-    (form.preferredTechStack ?? '').split(',').map((s) => s.trim()).filter(Boolean),
-  )
 
   function handleEdit() {
     setForm(data)
@@ -69,21 +63,6 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  function toggleTech(tech: string) {
-    const next = new Set(selectedTech)
-    if (next.has(tech)) {
-      next.delete(tech)
-    } else {
-      next.add(tech)
-    }
-    setForm((prev) => ({ ...prev, preferredTechStack: Array.from(next).join(', ') }))
-  }
-
-  const displayTech = (data.preferredTechStack ?? '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-
   return (
     <div className="rounded-2xl border border-border bg-surface p-6 shadow-card">
       <div className="mb-4 flex items-center justify-between">
@@ -105,23 +84,6 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
             label="Mức kinh nghiệm"
             value={data.targetLevel ? EXPERIENCE_LABEL[data.targetLevel] : undefined}
           />
-          <div>
-            <dt className="text-xs font-medium text-ink-muted">Tech stack</dt>
-            <dd className="mt-1 flex flex-wrap gap-1.5">
-              {displayTech.length > 0 ? (
-                displayTech.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-medium text-brand"
-                  >
-                    {t}
-                  </span>
-                ))
-              ) : (
-                <span className="text-sm text-ink">—</span>
-              )}
-            </dd>
-          </div>
         </dl>
       ) : (
         <div className="flex flex-col gap-4">
@@ -153,36 +115,6 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
                 </option>
               ))}
             </select>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-ink">Tech stack</label>
-            <div className="flex flex-col gap-3">
-              {Object.entries(TECH_STACK_OPTIONS).map(([group, techs]) => (
-                <div key={group}>
-                  <p className="mb-1.5 text-xs font-medium text-ink-muted">{group}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {techs.map((tech) => {
-                      const active = selectedTech.has(tech)
-                      return (
-                        <button
-                          key={tech}
-                          type="button"
-                          onClick={() => toggleTech(tech)}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                            active
-                              ? 'border-brand bg-brand text-white'
-                              : 'border-border bg-surface text-ink hover:border-brand hover:text-brand'
-                          }`}
-                        >
-                          {tech}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
 
           {error && <p className="text-sm text-danger">{error}</p>}

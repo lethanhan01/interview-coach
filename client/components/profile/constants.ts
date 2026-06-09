@@ -71,3 +71,33 @@ export const TECH_STACK_OPTIONS: Record<string, string[]> = {
   Database: ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'Supabase', 'Firebase'],
   DevOps: ['Docker', 'Kubernetes', 'AWS', 'GCP', 'Azure', 'CI/CD', 'Nginx'],
 }
+
+export const TECH_CATEGORIES = [
+  { key: 'language' as const, label: 'Ngôn ngữ lập trình' },
+  { key: 'framework' as const, label: 'Framework / Library' },
+  { key: 'os' as const, label: 'Hệ điều hành' },
+  { key: 'database' as const, label: 'Cơ sở dữ liệu' },
+  { key: 'platform' as const, label: 'Platform / Cloud' },
+  { key: 'devtool' as const, label: 'Dev Management Tools' },
+] as const
+
+export type TechCategory = (typeof TECH_CATEGORIES)[number]['key']
+
+export const TECH_OPTIONS: Record<TechCategory, string[]> = {
+  language: ['JavaScript', 'TypeScript', 'Python', 'Java', 'Go', 'Rust', 'C', 'C++', 'C#', 'PHP', 'Ruby', 'Swift', 'Kotlin', 'Dart'],
+  framework: ['React', 'Next.js', 'Vue.js', 'Nuxt.js', 'Angular', 'NestJS', 'Express', 'Fastify', 'Django', 'FastAPI', 'Flask', 'Spring Boot', 'Laravel', 'Flutter', 'React Native', 'Svelte'],
+  os: ['Linux', 'Ubuntu', 'Debian', 'CentOS', 'macOS', 'Windows'],
+  database: ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'SQLite', 'Supabase', 'Firebase', 'DynamoDB', 'Elasticsearch'],
+  platform: ['AWS', 'Google Cloud', 'Azure', 'Vercel', 'Netlify', 'Railway', 'Heroku', 'DigitalOcean', 'Docker', 'Kubernetes'],
+  devtool: ['Git', 'GitHub', 'GitLab', 'Jira', 'Confluence', 'Notion', 'Slack', 'Jenkins', 'GitHub Actions', 'CircleCI', 'Trello'],
+}
+
+export const LANGUAGE_FRAMEWORK_MAP: Record<string, string[]> = {
+  JavaScript: ['React', 'Next.js', 'Vue.js', 'Nuxt.js', 'Angular', 'Express', 'Fastify', 'NestJS', 'Svelte'],
+  TypeScript: ['React', 'Next.js', 'Vue.js', 'Nuxt.js', 'Angular', 'NestJS', 'Express', 'Fastify'],
+  Python: ['Django', 'FastAPI', 'Flask'],
+  Java: ['Spring Boot'],
+  PHP: ['Laravel'],
+  Dart: ['Flutter'],
+  Kotlin: ['React Native'],
+}

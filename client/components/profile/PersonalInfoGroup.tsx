@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Button from '@/components/ui/Button'
-import { GENDER_OPTIONS, NATIONALITY_OPTIONS, PERSONALITY_OPTIONS } from './constants'
+import { GENDER_OPTIONS, NATIONALITY_OPTIONS } from './constants'
 
 interface PersonalInfoData {
   fullName?: string
@@ -11,7 +11,6 @@ interface PersonalInfoData {
   phone?: string
   hometown?: string
   nationality?: string
-  personality?: string
 }
 
 interface Props {
@@ -25,10 +24,6 @@ const GENDER_LABEL: Record<string, string> = Object.fromEntries(
 const NATIONALITY_LABEL: Record<string, string> = Object.fromEntries(
   NATIONALITY_OPTIONS.filter((o) => o.value).map((o) => [o.value, o.label]),
 )
-const PERSONALITY_LABEL: Record<string, string> = Object.fromEntries(
-  PERSONALITY_OPTIONS.filter((o) => o.value).map((o) => [o.value, o.label]),
-)
-
 const FIELD_CLASS =
   'w-full rounded-xl border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
 
@@ -90,7 +85,6 @@ export default function PersonalInfoGroup({ data, onSave }: Props) {
           <ReadField label="Số điện thoại" value={data.phone} />
           <ReadField label="Quê quán" value={data.hometown} />
           <ReadField label="Quốc tịch" value={data.nationality ? NATIONALITY_LABEL[data.nationality] : undefined} />
-          <ReadField label="Tính cách" value={data.personality ? PERSONALITY_LABEL[data.personality] : undefined} />
         </dl>
       ) : (
         <div className="flex flex-col gap-4">
@@ -147,19 +141,6 @@ export default function PersonalInfoGroup({ data, onSave }: Props) {
                 className={FIELD_CLASS}
               >
                 {NATIONALITY_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Tính cách">
-              <select
-                value={form.personality ?? ''}
-                onChange={(e) => set('personality', e.target.value)}
-                className={FIELD_CLASS}
-              >
-                {PERSONALITY_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>

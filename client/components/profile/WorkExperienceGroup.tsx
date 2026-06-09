@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import Button from '@/components/ui/Button'
-import type { WorkExperienceEntry } from '@/lib/types'
+import type { WorkExperienceEntry, TechnicalSkillEntry } from '@/lib/types'
 
 interface Props {
   data: WorkExperienceEntry[] | undefined
+  availableTechs: TechnicalSkillEntry[]
   onSave: (data: WorkExperienceEntry[]) => Promise<void>
 }
 
@@ -16,16 +17,17 @@ const EMPTY_ENTRY: Omit<WorkExperienceEntry, 'id'> = {
   endDate: '',
   isCurrent: false,
   description: '',
+  techStack: [],
 }
 
 const FIELD_CLASS =
   'w-full rounded-xl border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
 
 function newEntry(): WorkExperienceEntry {
-  return { ...EMPTY_ENTRY, id: crypto.randomUUID() }
+  return { ...EMPTY_ENTRY, id: crypto.randomUUID(), techStack: [] }
 }
 
-export default function WorkExperienceGroup({ data, onSave }: Props) {
+export default function WorkExperienceGroup({ data, availableTechs, onSave }: Props) {
   const [isEditing, setIsEditing] = useState(false)
   const [form, setForm] = useState<WorkExperienceEntry[]>(data ?? [])
   const [saving, setSaving] = useState(false)
@@ -59,6 +61,21 @@ export default function WorkExperienceGroup({ data, onSave }: Props) {
   function setEntry(id: string, field: keyof WorkExperienceEntry, value: string | boolean) {
     setForm((prev) =>
       prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
+    )
+  }
+
+  function toggleEntryTech(entryId: string, techName: string) {
+    setForm((prev) =>
+      prev.map((e) => {
+        if (e.id !== entryId) return e
+        const stack = e.techStack ?? []
+        return {
+          ...e,
+          techStack: stack.includes(techName)
+            ? stack.filter((t) => t !== techName)
+            : [...stack, techName],
+        }
+      }),
     )
   }
 
@@ -96,6 +113,18 @@ export default function WorkExperienceGroup({ data, onSave }: Props) {
                   {entry.startDate || '—'} →{' '}
                   {entry.isCurrent ? 'Hiện tại' : entry.endDate || '—'}
                 </p>
+                {entry.techStack && entry.techStack.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {entry.techStack.map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-full border border-border bg-canvas px-2 py-0.5 text-xs text-ink-muted"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {entry.description && (
                   <p className="mt-2 text-sm text-ink">{entry.description}</p>
                 )}
@@ -136,7 +165,7 @@ export default function WorkExperienceGroup({ data, onSave }: Props) {
                 </Field>
                 <Field label="Ngày bắt đầu">
                   <input
-                    type="month"
+                    type="date"
                     value={entry.startDate}
                     onChange={(e) => setEntry(entry.id, 'startDate', e.target.value)}
                     className={FIELD_CLASS}
@@ -144,7 +173,7 @@ export default function WorkExperienceGroup({ data, onSave }: Props) {
                 </Field>
                 <Field label="Ngày kết thúc">
                   <input
-                    type="month"
+                    type="date"
                     value={entry.endDate}
                     disabled={entry.isCurrent}
                     onChange={(e) => setEntry(entry.id, 'endDate', e.target.value)}
@@ -175,6 +204,34 @@ export default function WorkExperienceGroup({ data, onSave }: Props) {
                     className={FIELD_CLASS}
                   />
                 </Field>
+                <div className="sm:col-span-2">
+                  <p className="mb-1.5 text-sm font-medium text-ink">Tech stack</p>
+                  {availableTechs.length === 0 ? (
+                    <p className="text-xs italic text-ink-muted/60">
+                      Thêm kỹ năng ở mục Kỹ năng chuyên môn trước
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {availableTechs.map((tech) => {
+                        const selected = (entry.techStack ?? []).includes(tech.name)
+                        return (
+                          <button
+                            key={tech.id}
+                            type="button"
+                            onClick={() => toggleEntryTech(entry.id, tech.name)}
+                            className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
+                              selected
+                                ? 'border-brand bg-brand/10 text-brand'
+                                : 'border-border bg-canvas text-ink-muted hover:border-brand'
+                            }`}
+                          >
+                            {tech.name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}

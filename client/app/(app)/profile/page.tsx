@@ -7,12 +7,18 @@ import type {
   EducationEntry,
   WorkExperienceEntry,
   ProjectEntry,
+  TechnicalSkillEntry,
+  CertificationEntry,
+  AwardEntry,
 } from '@/lib/types'
 import PersonalInfoGroup from '@/components/profile/PersonalInfoGroup'
+import PersonalityGroup from '@/components/profile/PersonalityGroup'
 import CareerInfoGroup from '@/components/profile/CareerInfoGroup'
+import TechnicalSkillsGroup from '@/components/profile/TechnicalSkillsGroup'
 import EducationGroup from '@/components/profile/EducationGroup'
 import WorkExperienceGroup from '@/components/profile/WorkExperienceGroup'
 import ProjectsGroup from '@/components/profile/ProjectsGroup'
+import CertificationsGroup from '@/components/profile/CertificationsGroup'
 
 export default function ProfilePage() {
   const [data, setData] = useState<GetProfileResponse | null>(null)
@@ -49,6 +55,7 @@ export default function ProfilePage() {
   }
 
   const profile = data?.profile ?? null
+  const technicalSkills = (profile?.technicalSkills as TechnicalSkillEntry[] | undefined) ?? []
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -73,8 +80,12 @@ export default function ProfilePage() {
             phone: profile?.phone,
             hometown: profile?.hometown,
             nationality: profile?.nationality,
-            personality: profile?.personality,
           }}
+          onSave={(patch) => patchProfile(patch)}
+        />
+
+        <PersonalityGroup
+          data={{ personality: profile?.personality }}
           onSave={(patch) => patchProfile(patch)}
         />
 
@@ -83,8 +94,12 @@ export default function ProfilePage() {
             targetPosition: profile?.targetPosition,
             targetRoleCategory: profile?.targetRoleCategory,
             targetLevel: profile?.targetLevel,
-            preferredTechStack: profile?.preferredTechStack,
           }}
+          onSave={(patch) => patchProfile(patch)}
+        />
+
+        <TechnicalSkillsGroup
+          data={technicalSkills}
           onSave={(patch) => patchProfile(patch)}
         />
 
@@ -95,12 +110,22 @@ export default function ProfilePage() {
 
         <WorkExperienceGroup
           data={profile?.workExperience}
+          availableTechs={technicalSkills}
           onSave={(we: WorkExperienceEntry[]) => patchProfile({ workExperience: we })}
         />
 
         <ProjectsGroup
           data={profile?.projects}
+          availableTechs={technicalSkills}
           onSave={(proj: ProjectEntry[]) => patchProfile({ projects: proj })}
+        />
+
+        <CertificationsGroup
+          data={{
+            certifications: (profile?.certifications as CertificationEntry[] | undefined) ?? [],
+            awards: (profile?.awards as AwardEntry[] | undefined) ?? [],
+          }}
+          onSave={(patch) => patchProfile(patch)}
         />
       </div>
     </div>

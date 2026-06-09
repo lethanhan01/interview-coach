@@ -69,14 +69,43 @@ export interface WorkExperienceEntry {
   endDate: string
   isCurrent: boolean
   description: string
+  techStack: string[]
 }
 
 export interface ProjectEntry {
   id: string
   name: string
   description: string
-  techStack: string
+  techStack: string[]
   url: string
+  startDate: string
+  endDate: string
+  isCurrent: boolean
+}
+
+export interface TechnicalSkillEntry {
+  id: string
+  category: 'language' | 'framework' | 'os' | 'database' | 'platform' | 'devtool'
+  name: string
+  usagePeriod: number
+}
+
+export interface CertificationEntry {
+  id: string
+  type: 'professional' | 'language'
+  name: string
+  issuer: string
+  issueDate: string
+  expiryDate?: string
+  score?: string
+}
+
+export interface AwardEntry {
+  id: string
+  name: string
+  organization: string
+  date: string
+  description: string
 }
 
 export interface GetProfileResponse {
@@ -98,5 +127,8 @@ export interface GetProfileResponse {
     education?: EducationEntry
     workExperience?: WorkExperienceEntry[]
     projects?: ProjectEntry[]
+    technicalSkills?: TechnicalSkillEntry[]
+    certifications?: CertificationEntry[]
+    awards?: AwardEntry[]
   } | null
 }
