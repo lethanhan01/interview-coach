@@ -76,7 +76,7 @@ export class TranscriptionProcessor extends WorkerHost {
 
     if (!question) {
       this.logger.warn(
-        `Question not found for answer ${answerId} in session ${sessionId}, skipping follow-up`,
+        `Question not found for answer ${answerId} in session ${sessionId}, enqueueing feedback with empty question text and skipping follow-up`,
       );
       await this.enqueueFeedback(answerId, sessionId, '', answerText, contextPack, sessionType);
       await this.emitTranscriptionReady(sessionId, answerId);

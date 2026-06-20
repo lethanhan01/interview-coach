@@ -70,6 +70,49 @@ export class TurnService {
 
     // Voice path: create placeholder answer and enqueue transcription async
     if (dto.answerMode === 'voice' && dto.audioFileUrl) {
+      const existingVoiceAnswer = await this.prisma.userAnswer.findUnique({
+        where: {
+          sessionId_questionId: { sessionId, questionId: dto.questionId },
+        },
+      });
+
+      if (existingVoiceAnswer) {
+        if (existingVoiceAnswer.transcriptionStatus === 'done') {
+          return {
+            answerId: existingVoiceAnswer.id,
+            followUpQueued: false,
+            feedbackQueued: true,
+            transcriptionPending: false,
+          };
+        }
+        // transcriptionStatus is 'pending' or null — re-enqueue for dedup
+        const contextPackRetry = session.contextPackId as 'VN' | 'Western';
+        const sessionTypeRetry = session.sessionType;
+        await this.transcriptionQueue.add(
+          'transcription',
+          {
+            sessionId,
+            answerId: existingVoiceAnswer.id,
+            audioFileUrl: dto.audioFileUrl,
+            audioDurationSeconds: dto.audioDurationSeconds,
+            audioSizeBytes: dto.audioSizeBytes,
+            contextPack: contextPackRetry,
+            sessionType: sessionTypeRetry,
+          },
+          {
+            jobId: `transcription-${existingVoiceAnswer.id}`,
+            attempts: TRANSCRIPTION_JOB_ATTEMPTS,
+            backoff: { type: 'fixed', delay: 3000 },
+          },
+        );
+        return {
+          answerId: existingVoiceAnswer.id,
+          followUpQueued: false,
+          feedbackQueued: false,
+          transcriptionPending: true,
+        };
+      }
+
       const answer = await this.prisma.userAnswer.upsert({
         where: {
           sessionId_questionId: { sessionId, questionId: dto.questionId },

@@ -373,5 +373,73 @@ describe('TurnService', () => {
         expect.objectContaining({ jobId: 'feedback-answer-1' }),
       );
     });
+
+    it('voice retry: transcription đã done → return feedbackQueued=true, không tạo record mới, không re-enqueue', async () => {
+      const VOICE_DTO = {
+        questionId: 'q-1',
+        answerMode: 'voice' as const,
+        audioFileUrl: 'https://example.com/audio.mp3',
+      };
+
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.userAnswer.findUnique.mockResolvedValue({
+        ...BASE_ANSWER,
+        answerMode: 'voice',
+        transcriptionStatus: 'done',
+      });
+
+      const result = await service.submitAnswer('session-123', 'user-abc', VOICE_DTO);
+
+      expect(result).toEqual({
+        answerId: 'answer-1',
+        followUpQueued: false,
+        feedbackQueued: true,
+        transcriptionPending: false,
+      });
+      expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
+      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+      expect(mockFollowUpQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('voice retry: transcription còn pending → re-enqueue transcription, return transcriptionPending=true', async () => {
+      const VOICE_DTO = {
+        questionId: 'q-1',
+        answerMode: 'voice' as const,
+        audioFileUrl: 'https://example.com/audio.mp3',
+      };
+
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.userAnswer.findUnique.mockResolvedValue({
+        ...BASE_ANSWER,
+        answerMode: 'voice',
+        transcriptionStatus: 'pending',
+      });
+      mockTranscriptionQueue.add.mockResolvedValue({});
+
+      const result = await service.submitAnswer('session-123', 'user-abc', VOICE_DTO);
+
+      expect(result).toEqual({
+        answerId: 'answer-1',
+        followUpQueued: false,
+        feedbackQueued: false,
+        transcriptionPending: true,
+      });
+      expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
+      expect(mockTranscriptionQueue.add).toHaveBeenCalledWith(
+        'transcription',
+        expect.objectContaining({
+          sessionId: 'session-123',
+          answerId: 'answer-1',
+          audioFileUrl: 'https://example.com/audio.mp3',
+        }),
+        expect.objectContaining({
+          jobId: 'transcription-answer-1',
+          attempts: TRANSCRIPTION_JOB_ATTEMPTS,
+        }),
+      );
+    });
   });
 });
