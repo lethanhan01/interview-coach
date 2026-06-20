@@ -37,6 +37,8 @@ Audit của `server/prisma/seed/` — thực hiện 2026-06-20.
 
 **Status**: Fixed ✓
 
+**Implemented 2026-06-20**: Thêm `segAt()` helper vào `_helpers.ts` (tính startIndex bằng `indexOf()`, throw nếu không tìm thấy). Thay toàn bộ 20 hardcoded `{ segmentText, startIndex, endIndex, ... }` literals trong `03-sessions.ts` bằng `segAt(answerText, segmentText, opts)`. Bổ sung import `segAt` và extract mỗi `answerText` ra biến riêng (`a1Text`, `s2q1Text`, ...) để dùng làm argument. Chạy `npm run format` + `npm run lint` — clean.
+
 ---
 
 ## Issue 2 — MEDIUM: QuestionBank idempotency guard count-based
@@ -48,6 +50,8 @@ Guard hiện tại: `if (count >= 90) return`. Nếu bank có < 90 rows (seed b�
 **Fix**: Thay count guard bằng existence check trên content của câu hỏi đầu tiên.
 
 **Status**: Fixed ✓
+
+**Implemented 2026-06-20**: Thay `count >= 90` bằng `findFirst({ where: { content: QUESTIONS[0].content } })`. Guard giờ là idempotent thực sự — không bị ảnh hưởng bởi seed bị gián đoạn.
 
 ---
 
@@ -61,6 +65,8 @@ Guard hiện tại: `if (count >= 90) return`. Nếu bank có < 90 rows (seed b�
 
 **Status**: Fixed ✓
 
+**Implemented 2026-06-20**: Xóa `[SEED-Sx]` khỏi tất cả 7 JD strings, viết lại thành 3–4 câu với tên công ty, tech stack và mức lương cụ thể. Thêm `planJson: { _seed: 'SEED-Sx' }` vào data block của mỗi `interviewSession.create`. Đổi `alreadySeeded()` query từ `jobDescription: { contains: marker }` sang `planJson: { path: ['_seed'], equals: marker }`.
+
 ---
 
 ## Issue 4 — MEDIUM: AiQualityLog không có sessionId
@@ -73,6 +79,8 @@ Toàn bộ 12 entries có `sessionId = null`. Analytics query join quality log v
 
 **Status**: Fixed ✓
 
+**Implemented 2026-06-20**: Mỗi `seedSX` đổi return type sang `Promise<string>`, trả về `session.id` (hoặc `''` khi đã seeded). `seedSessions` trả về `Record<string, string>`. `seedAiQualityLog` nhận `sessionIds` param và map 12 entries qua `SESSION_MAP`. `index.ts` truyền `sessionIds` từ `seedSessions` xuống `seedAiQualityLog`.
+
 ---
 
 ## Issue 5 — LOW: audioFileUrl là fake domain
@@ -84,3 +92,93 @@ Toàn bộ 12 entries có `sessionId = null`. Analytics query join quality log v
 **Decision**: Giữ nguyên. Mục đích là demonstrate audio-mode metadata (duration, size, voiceMetrics). URL không bị fetch trong seed và allowlist check chỉ chạy ở API layer. Không có real audio file để dùng.
 
 **Status**: Accepted as-is.
+
+---
+
+## Tiến độ thực hiện
+
+**Cập nhật lần cuối**: 2026-06-20
+
+### Tóm tắt
+
+| Issue | Mức độ | Trạng thái |
+|-------|--------|------------|
+| Issue 1 — startIndex/endIndex sai | CRITICAL | Hoàn thành |
+| Issue 2 — QuestionBank count guard | MEDIUM | Hoàn thành |
+| Issue 3 — JD prefix + idempotency | MEDIUM | Hoàn thành |
+| Issue 4 — AiQualityLog thiếu sessionId | MEDIUM | Hoàn thành |
+| Issue 5 — audioFileUrl fake domain | LOW | Accepted as-is |
+
+### Issue 1 — HOÀN THÀNH
+
+**Thực hiện**: `segAt()` đã có sẵn trong `_helpers.ts` (được implement trước audit). Thay toàn bộ 20 hardcoded `{ segmentText, startIndex, endIndex }` literals trong `03-sessions.ts` bằng `segAt(answerText, segmentText, opts)`. Mỗi answer text được extract ra biến riêng (`a1Text`, `s2q1Text`, ...) để dùng làm argument cho cả `answerText:` và `segAt()`. Xóa `const a1` unused trong seedS1. Chạy `npm run format` + `npm run lint` — clean.
+
+**Kết quả**: `03-sessions.ts` không còn hardcoded index nào. Mọi segment sẽ throw tại seed time nếu text không khớp, thay vì insert dữ liệu sai im lặng.
+
+### Issue 2 — CHƯA LÀM
+
+**File**: `seed/02-question-bank.ts`
+
+**Việc cần làm**: Thay `const count = await prisma.questionBank.count(); if (count >= 90) return;` bằng:
+
+```ts
+const existing = await prisma.questionBank.findFirst({
+  where: { content: QUESTIONS[0].content },
+  select: { id: true },
+});
+if (existing) {
+  console.log('question_bank: already seeded, skipping');
+  return;
+}
+```
+
+**Lý do**: `QuestionBank` không có unique constraint trên `content`, nên `skipDuplicates: true` trong `createMany` không có tác dụng. Count guard cũng không bảo vệ được nếu seed bị gián đoạn (< 90 rows). Existence check trên content của câu hỏi đầu tiên là idempotent thực sự.
+
+### Issue 3 — CHƯA LÀM
+
+**File**: `seed/03-sessions.ts`
+
+**Việc cần làm** (3 phần):
+
+1. **Xóa `[SEED-Sx]` prefix** khỏi tất cả 7 JD strings trong `JDS` object — thay bằng JD thực tế 3-4 câu với context công ty, tech stack cụ thể, mức lương.
+
+2. **Thêm `planJson: { _seed: 'SEED-Sx' }` vào mỗi `interviewSession.create`** — dùng làm idempotency marker thay cho JD text.
+
+3. **Đổi `alreadySeeded()`** từ `where: { userId, jobDescription: { contains: marker } }` sang `where: { userId, planJson: { path: ['_seed'], equals: marker } }`. Để giữ đơn giản, function giữ nguyên tên và signature — chỉ đổi query bên trong.
+
+**Quyết định**: Không đổi `alreadySeeded` thành `getExistingSessionId` (từng plan) vì Issue 4 có thể giải quyết bằng cách khác (xem dưới). Giữ return type `boolean`.
+
+### Issue 4 — CHƯA LÀM
+
+**File**: `seed/04-ai-quality-log.ts`, `seed/index.ts`
+
+**Việc cần làm**:
+
+1. `seedSessions(prisma, userId)` trả về `Record<string, string>` — map `'s1' | 's2' | ... | 's7'` → session ID.
+
+2. Mỗi `seedSX` function trả về `string` (session ID từ `prisma.interviewSession.create`) thay vì `void`. Với S5 (không create được vì status `generating` không có session trả về có ý nghĩa) — trả về ID bình thường.
+
+3. `seedAiQualityLog(prisma, sessionIds: Record<string, string>)` — gán `sessionId` theo mapping:
+
+| Entry | jobType | Session |
+|-------|---------|---------|
+| 0 | question-gen | s1 |
+| 1 | question-gen | s3 |
+| 2 | answer-feedback | s1 |
+| 3 | answer-feedback | s3 |
+| 4 | answer-feedback | s6 |
+| 5 | answer-feedback (fallback) | s7 |
+| 6 | session-summary | s1 |
+| 7 | session-summary | s3 |
+| 8 | follow-up-gen | s6 |
+| 9 | question-gen (OPENAI_TIMEOUT) | s5 |
+| 10 | opening-transcript | s6 |
+| 11 | comm-analysis | s1 |
+
+4. `index.ts`: `const sessionIds = await seedSessions(prisma, userId); await seedAiQualityLog(prisma, sessionIds);`
+
+### Bước tiếp theo
+
+1. Issue 2 — nhỏ, 5-10 dòng thay đổi trong `02-question-bank.ts`
+2. Issue 3 — viết lại JDs + đổi idempotency query trong `03-sessions.ts`
+3. Issue 4 — đổi return type `seedSessions`, cập nhật `04-ai-quality-log.ts` và `index.ts`

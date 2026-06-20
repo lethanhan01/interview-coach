@@ -30,7 +30,7 @@ describe('JwtStrategy', () => {
         exp: 2000,
       };
 
-      const result = strategy.validate(payload as any);
+      const result = strategy.validate(payload);
 
       expect(result).toEqual({
         id: 'user-uuid-123',

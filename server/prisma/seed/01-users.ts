@@ -32,7 +32,9 @@ export async function getOrCreateDemoUser(
     for (let i = 0; i < 5; i++) {
       publicUser = await prisma.user.findUnique({ where: { id: userId } });
       if (publicUser) break;
-      console.log(`Waiting for auth trigger to sync user (attempt ${i + 1}/5)...`);
+      console.log(
+        `Waiting for auth trigger to sync user (attempt ${i + 1}/5)...`,
+      );
       await new Promise((r) => setTimeout(r, 1000));
     }
   }

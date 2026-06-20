@@ -52,7 +52,12 @@ export function segAt(
   if (startIndex === -1) {
     throw new Error(`Seed error: segment "${segmentText}" not found in answer`);
   }
-  return { segmentText, startIndex, endIndex: startIndex + segmentText.length, ...rest };
+  return {
+    segmentText,
+    startIndex,
+    endIndex: startIndex + segmentText.length,
+    ...rest,
+  };
 }
 
 export async function createAnswerWithFeedback(
@@ -69,8 +74,11 @@ export async function createAnswerWithFeedback(
       audioFileUrl: opts.audioFileUrl,
       audioDurationSeconds: opts.audioDurationSeconds,
       audioSizeBytes: opts.audioSizeBytes,
-      voiceMetricsJson: opts.voiceMetricsJson as Record<string, string | number | boolean | null | object>,
-      feedbackGenerated: opts.feedbackGenerated ?? (opts.feedback !== undefined),
+      voiceMetricsJson: opts.voiceMetricsJson as Record<
+        string,
+        string | number | boolean | null | object
+      >,
+      feedbackGenerated: opts.feedbackGenerated ?? opts.feedback !== undefined,
     },
   });
 

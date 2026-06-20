@@ -32,7 +32,7 @@ export class UserService {
       create: {
         ...(updateData as Record<string, unknown>),
         userId,
-      } as Parameters<typeof this.prisma.userProfile.create>[0]['data'],
+      },
       update: updateData as Parameters<
         typeof this.prisma.userProfile.update
       >[0]['data'],

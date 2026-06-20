@@ -79,7 +79,7 @@ describe('UserService', () => {
       mockPrisma.userProfile.upsert.mockResolvedValue(upsertedProfile);
       mockPrisma.user.findUnique.mockResolvedValue(updatedUser);
 
-      const result = await service.upsertProfile('user-123', dto as any);
+      const result = await service.upsertProfile('user-123', dto);
 
       expect(result).toEqual(updatedUser);
       expect(mockPrisma.userProfile.upsert).toHaveBeenCalledWith({

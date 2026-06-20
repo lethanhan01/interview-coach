@@ -14,8 +14,8 @@ async function main(): Promise<void> {
   await seedUserProfile(prisma, userId);
 
   await seedQuestionBank(prisma);
-  await seedSessions(prisma, userId);
-  await seedAiQualityLog(prisma);
+  const sessionIds = await seedSessions(prisma, userId);
+  await seedAiQualityLog(prisma, sessionIds);
 
   console.log('=== Seed complete ===');
 }

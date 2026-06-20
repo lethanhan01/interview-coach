@@ -183,8 +183,8 @@ describe('Session completion flow (integration)', () => {
     const turnService = new TurnService(
       prisma as any,
       { transcribe: jest.fn() } as any,
-      { calculate: jest.fn() } as any,
-      { shouldGenerateFollowUp: jest.fn(() => false) } as any,
+      { calculate: jest.fn() },
+      { shouldGenerateFollowUp: jest.fn(() => false) },
       { add: jest.fn() } as any,
       feedbackQueue as any,
     );
