@@ -1561,8 +1561,8 @@ Không có TBD, TODO, hay "implement later" trong plan này.
 | 4 — Event-driven report | DONE | 8962241 | 170 pass | review clean |
 | 5 — reportQuality field | DONE | 3670a05..09b52b7 | 18 pass | review clean |
 | 6 — Async transcription | DONE | faf1226..7afa718 | 179 pass | review clean |
-| 6 Minors — Cleanup Task 6 | DONE | pending commit | 179 pass | 3 minors fixed (xem bên dưới) |
-| 7 — Dead code cleanup | PENDING | — | — | bước tiếp theo |
+| 6 Minors — Cleanup Task 6 | DONE | 6fe713e | 179 pass | 3 minors fixed (xem bên dưới) |
+| 7 — Dead code cleanup | DONE | 67554ff | 178 pass | DROP TABLE reverse_questions, DROP COLUMN reverse_q_eval_json |
 
 **Cập nhật lần cuối:** 2026-06-21
 
