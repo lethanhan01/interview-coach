@@ -109,11 +109,8 @@ export class ReportService {
     const storedExecutiveSummary = toRecord(session.executiveSummaryJson);
 
     const hasSomeFallback = transcript.some((item) => item.isFallback);
-    const hasSomeEvaluated = transcript.some(
-      (item) => !item.isFallback && item.overallScore !== null,
-    );
     let reportQuality: 'full' | 'partial' | 'unavailable';
-    if (hasSomeFallback && hasSomeEvaluated) {
+    if (hasSomeFallback && hasEvaluatedFeedback) {
       reportQuality = 'partial';
     } else if (hasSomeFallback) {
       reportQuality = 'unavailable';
