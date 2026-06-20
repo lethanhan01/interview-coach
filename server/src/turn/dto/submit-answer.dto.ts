@@ -6,6 +6,7 @@ import {
   Min,
   Max,
   MaxLength,
+  MinLength,
   ValidateIf,
   IsUrl,
 } from 'class-validator';
@@ -19,6 +20,7 @@ export class SubmitAnswerDto {
 
   @ValidateIf((o: SubmitAnswerDto) => o.answerMode === 'text')
   @IsString()
+  @MinLength(10)
   answerText?: string;
 
   @ValidateIf((o: SubmitAnswerDto) => o.answerMode === 'voice')
