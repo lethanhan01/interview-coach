@@ -99,14 +99,20 @@ describe('FollowUpProcessor', () => {
     expect(mockSse.emit).not.toHaveBeenCalled();
   });
 
-  it('không re-throw khi generateFollowUp ném lỗi (silent skip)', async () => {
+  it('không re-throw khi generateFollowUp ném lỗi ở last attempt (silent skip)', async () => {
     const mockStrategy = {
       generateFollowUp: jest.fn().mockRejectedValue(new Error('AI error')),
     };
     mockContextPack.getContextPack.mockReturnValue({} as any);
     mockFactory.getStrategy.mockReturnValue(mockStrategy);
 
-    await expect(processor.process(makeJob())).resolves.toBeUndefined();
+    const job = {
+      data: BASE_JOB_DATA,
+      attemptsMade: 1,   // last attempt (attempts=2, index 1)
+      opts: { attempts: 2 },
+    } as unknown as Job<typeof BASE_JOB_DATA>;
+
+    await expect(processor.process(job)).resolves.toBeUndefined();
     expect(mockPrisma.followUpQuestion.create).not.toHaveBeenCalled();
   });
 
@@ -133,5 +139,40 @@ describe('FollowUpProcessor', () => {
     );
     expect(errorSpy).not.toHaveBeenCalled();
     expect(mockPrisma.followUpQuestion.create).not.toHaveBeenCalled();
+  });
+
+  describe('error handling', () => {
+    it('re-throw lỗi transient khi chưa phải last attempt để trigger retry', async () => {
+      const transientError = new Error('Connection timeout');
+      mockContextPack.getContextPack.mockReturnValue({} as any);
+      mockFactory.getStrategy.mockReturnValue({
+        generateFollowUp: jest.fn().mockRejectedValue(transientError),
+      });
+
+      const job = {
+        data: BASE_JOB_DATA,
+        attemptsMade: 0,        // attempt đầu tiên, còn attempt thứ 2
+        opts: { attempts: 2 },
+      } as unknown as Job<typeof BASE_JOB_DATA>;
+
+      await expect(processor.process(job)).rejects.toThrow('Connection timeout');
+    });
+
+    it('không throw khi đã đạt last attempt (graceful degradation)', async () => {
+      const error = new Error('AI service error');
+      mockContextPack.getContextPack.mockReturnValue({} as any);
+      mockFactory.getStrategy.mockReturnValue({
+        generateFollowUp: jest.fn().mockRejectedValue(error),
+      });
+
+      const job = {
+        data: BASE_JOB_DATA,
+        attemptsMade: 1,        // last attempt (attempts=2, index 1)
+        opts: { attempts: 2 },
+      } as unknown as Job<typeof BASE_JOB_DATA>;
+
+      await expect(processor.process(job)).resolves.toBeUndefined();
+      expect(mockPrisma.followUpQuestion.create).not.toHaveBeenCalled();
+    });
   });
 });

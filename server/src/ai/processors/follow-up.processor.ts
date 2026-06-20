@@ -5,7 +5,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
-import { FOLLOW_UP_QUEUE } from '../../common/constants/queue.constants';
+import {
+  FOLLOW_UP_QUEUE,
+  FOLLOW_UP_JOB_ATTEMPTS,
+} from '../../common/constants/queue.constants';
 import type { SessionType } from '../pipelines/interview-pipeline.interface';
 import { isAIQuotaExceeded } from '../ai-error.utils';
 
@@ -80,11 +83,21 @@ export class FollowUpProcessor extends WorkerHost {
         return;
       }
 
-      this.logger.error(
-        `FollowUpProcessor failed for session ${sessionId} turn ${turnId}`,
-        error instanceof Error ? error.stack : String(error),
+      const totalAttempts = job.opts.attempts ?? FOLLOW_UP_JOB_ATTEMPTS;
+      const isLastAttempt = job.attemptsMade >= totalAttempts - 1;
+
+      if (!isLastAttempt) {
+        this.logger.warn(
+          `FollowUpProcessor attempt ${job.attemptsMade + 1}/${totalAttempts} failed for turn ${turnId}, retrying`,
+          error instanceof Error ? error.message : String(error),
+        );
+        throw error;
+      }
+
+      this.logger.warn(
+        `Follow-up skipped after ${totalAttempts} attempts for session ${sessionId} turn ${turnId}`,
+        error instanceof Error ? error.message : String(error),
       );
-      // retry 0 — silently skip, do not re-throw
     }
   }
 }

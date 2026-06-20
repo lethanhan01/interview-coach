@@ -8,6 +8,7 @@ import {
   FOLLOW_UP_QUEUE,
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
+  FOLLOW_UP_JOB_ATTEMPTS,
 } from '../common/constants/queue.constants';
 import { WhisperService } from './whisper.service';
 import { VoiceMetricsService } from './voice-metrics.service';
@@ -135,7 +136,8 @@ export class TurnService {
     if (followUpEnabled) {
       await this.followUpQueue.add('follow-up', jobBase, {
         jobId: `follow-up-${answer.id}`,
-        attempts: 1,
+        attempts: FOLLOW_UP_JOB_ATTEMPTS,
+        backoff: { type: 'fixed', delay: 2000 },
       });
     }
 
