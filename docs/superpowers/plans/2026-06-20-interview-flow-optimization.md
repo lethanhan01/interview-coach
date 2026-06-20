@@ -1563,8 +1563,50 @@ Không có TBD, TODO, hay "implement later" trong plan này.
 | 6 — Async transcription | DONE | faf1226..7afa718 | 179 pass | review clean |
 | 6 Minors — Cleanup Task 6 | DONE | 6fe713e | 179 pass | 3 minors fixed (xem bên dưới) |
 | 7 — Dead code cleanup | DONE | 67554ff | 178 pass | DROP TABLE reverse_questions, DROP COLUMN reverse_q_eval_json |
+| Post-review fixes | DONE | — | 181 pass | TranscriptionProcessor failure handling + TurnService 'failed' status check |
 
 **Cập nhật lần cuối:** 2026-06-21
+
+---
+
+### Trạng thái hiện tại — Sau code review (2026-06-21)
+
+**Verdict: FIXED** — sẵn sàng merge sau khi verify lần cuối.
+
+Code review toàn bộ plan (base `0dadb5b` → head `def90c0`) trả về 2 Important issues đã được xử lý và 2 Minor issues không blocking.
+
+#### Important — Phải fix trước merge
+
+**1. `TranscriptionProcessor` không có failure handling**
+
+File: `server/src/ai/processors/transcription.processor.ts`
+
+Khi Whisper throw và exhausts 2 retries, job chết không để lại side effect. `transcriptionStatus` vẫn `'pending'`, không có feedback nào được enqueue, `enqueueIfAllFeedbacksReady` không bao giờ chạy. Session kẹt ở `completing` vĩnh viễn, không có recovery path.
+
+Fix: wrap `process()` body trong try/catch. Catch block kiểm tra `job.attemptsMade >= (job.opts.attempts ?? TRANSCRIPTION_JOB_ATTEMPTS) - 1`. Nếu last attempt: set `transcriptionStatus: 'failed'` trên `UserAnswer`, insert fallback feedback (pattern giống `FeedbackProcessor` fallback path), gọi `reportService.enqueueIfAllFeedbacksReady(...)` để unblock report. Nếu không phải last attempt: re-throw để BullMQ retry.
+
+**2. Voice retry trả về `transcriptionPending: true` vĩnh viễn khi job đã failed**
+
+File: `server/src/turn/turn.service.ts:88-115`
+
+Khi job exhausted 2 attempts, BullMQ `add` với cùng `jobId` là no-op. Endpoint tiếp tục trả `transcriptionPending: true` dù job đã chết. Client không có cách biết trạng thái thực và không có recovery.
+
+Fix phụ thuộc fix #1: sau khi TranscriptionProcessor set `transcriptionStatus: 'failed'`, turn.service kiểm tra field này trong retry path — `'failed'` → trả response phù hợp thay vì `transcriptionPending: true`.
+
+#### Minor — Ghi nhận, không blocking
+
+- Duplicate payload construction ở 2 voice branches trong `turn.service.ts`. Extract helper sau.
+- `REPORT_JOB_ATTEMPTS` 20 → 3 chưa có note trong HLD §5 / ADR-007.
+
+---
+
+### Bước tiếp theo
+
+1. Fix `TranscriptionProcessor` — thêm try/catch với last-attempt logic, insert fallback feedback, gọi `enqueueIfAllFeedbacksReady`.
+2. Fix `TurnService` voice retry — kiểm tra `transcriptionStatus === 'failed'` để trả response đúng.
+3. Chạy toàn bộ test suite sau khi fix.
+4. Cập nhật `server/src/turn/CLAUDE.md` để sync với voice async flow hiện tại.
+5. Merge vào main.
 
 ---
 
@@ -1596,18 +1638,6 @@ Review phát hiện: khi client retry `POST /turns` voice sau khi transcription 
 
 ---
 
-### Bước tiếp theo — Task 7: Dead code cleanup
+~~### Bước tiếp theo — Task 7: Dead code cleanup~~
 
-Gồm 8 bước, có 2 thao tác destructive cần chú ý:
-
-**Các thay đổi code (an toàn):**
-- Xóa `server/src/ai/processors/rewrite-eval.processor.ts`
-- Xóa `server/src/ai/processors/rewrite-eval.processor.spec.ts`
-- Xóa `REWRITE_EVAL_QUEUE` khỏi `queue.constants.ts`
-- Xóa `RewriteEvalProcessor` import + provider khỏi `ai.module.ts`
-
-**Migration destructive (cần xác nhận trước khi chạy trên shared DB):**
-- DROP COLUMN `reverse_q_eval_json` khỏi bảng `interview_sessions`
-- DROP TABLE `reverse_questions`
-
-Lưu ý tương tự Task 6: `prisma migrate dev` có thể bị block do DB drift — chuẩn bị dùng `prisma db execute` với SQL thủ công nếu cần.
+~~Task 7 đã hoàn thành (commit 67554ff). Xem phần "Trạng thái hiện tại" để biết bước tiếp theo.~~

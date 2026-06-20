@@ -175,6 +175,24 @@ describe('TurnService', () => {
       }
     });
 
+    it('ném INVALID_SESSION_TYPE và không enqueue khi dữ liệu DB nằm ngoài contract', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        sessionType: 'HR',
+      });
+
+      await expect(
+        service.submitAnswer('session-123', 'user-abc', TEXT_DTO),
+      ).rejects.toMatchObject({
+        errorCode: ErrorCode.INVALID_SESSION_TYPE,
+      });
+
+      expect(mockPrisma.sessionQuestion.findFirst).not.toHaveBeenCalled();
+      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+      expect(mockFollowUpQueue.add).not.toHaveBeenCalled();
+    });
+
     it('ném NOT_FOUND (404) khi question không tồn tại trong session', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
       mockPrisma.sessionQuestion.findFirst.mockResolvedValue(null);
@@ -440,6 +458,33 @@ describe('TurnService', () => {
           attempts: TRANSCRIPTION_JOB_ATTEMPTS,
         }),
       );
+    });
+
+    it('voice retry: transcription failed → return transcriptionPending=false, feedbackQueued=false, không re-enqueue', async () => {
+      const VOICE_DTO = {
+        questionId: 'q-1',
+        answerMode: 'voice' as const,
+        audioFileUrl: 'https://example.com/audio.mp3',
+      };
+
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.userAnswer.findUnique.mockResolvedValue({
+        ...BASE_ANSWER,
+        answerMode: 'voice',
+        transcriptionStatus: 'failed',
+      });
+
+      const result = await service.submitAnswer('session-123', 'user-abc', VOICE_DTO);
+
+      expect(result).toEqual({
+        answerId: 'answer-1',
+        followUpQueued: false,
+        feedbackQueued: false,
+        transcriptionPending: false,
+      });
+      expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
+      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
     });
   });
 });

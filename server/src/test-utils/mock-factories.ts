@@ -30,6 +30,7 @@ export const createMockQuestionBank = (
 });
 
 export const createMockPrismaService = () => ({
+  $transaction: jest.fn(),
   questionBank: {
     findMany: jest.fn().mockResolvedValue([]),
     findUnique: jest.fn().mockResolvedValue(null),
@@ -65,6 +66,10 @@ export const createMockPrismaService = () => ({
     upsert: jest.fn(),
     update: jest.fn(),
     count: jest.fn(),
+  },
+  aiFeedback: {
+    upsert: jest.fn().mockResolvedValue({ id: 'feedback-1' }),
+    findUnique: jest.fn().mockResolvedValue(null),
   },
   user: {
     findUnique: jest.fn(),

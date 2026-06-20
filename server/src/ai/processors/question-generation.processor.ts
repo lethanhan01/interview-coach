@@ -6,7 +6,11 @@ import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
 import { QUESTION_GEN_QUEUE } from '../../common/constants/queue.constants';
-import type { SessionType } from '../pipelines/interview-pipeline.interface';
+import type {
+  GeneratedQuestion,
+  SessionType,
+} from '../pipelines/interview-pipeline.interface';
+import { isAIQuotaExceeded } from '../ai-error.utils';
 
 interface QuestionGenerationJobDto {
   sessionId: string;
@@ -40,19 +44,58 @@ export class QuestionGenerationProcessor extends WorkerHost {
       totalQuestions,
     } = job.data;
 
+    let questions: GeneratedQuestion[];
     try {
       const contextPackConfig =
         this.contextPackService.getContextPack(contextPack);
       const strategy = this.factory.getStrategy(sessionType);
-
-      const questions = await strategy.generateQuestions({
+      questions = await strategy.generateQuestions({
         sessionType,
         jobDescriptionText,
         targetRoles,
         contextPackConfig,
         totalQuestions,
       });
+      questions = questions.slice(0, totalQuestions);
+      if (questions.length < totalQuestions) {
+        throw new Error(
+          `AI returned only ${questions.length}/${totalQuestions} questions`,
+        );
+      }
+    } catch (error: unknown) {
+      if (isAIQuotaExceeded(error)) {
+        this.logger.warn(
+          `OpenAI quota exhausted for session ${sessionId}; using question_bank fallback`,
+        );
+      } else {
+        this.logger.error(
+          `AI question generation failed for session ${sessionId}; using question_bank fallback`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      }
 
+      try {
+        await this.fallbackFromQuestionBank(
+          sessionId,
+          sessionType,
+          contextPack,
+          totalQuestions,
+        );
+        await this.emitActive(sessionId);
+        return;
+      } catch (fallbackError: unknown) {
+        this.logger.error(
+          `Question generation and question_bank fallback both failed for session ${sessionId}`,
+          fallbackError instanceof Error
+            ? fallbackError.stack
+            : String(fallbackError),
+        );
+        await this.markSessionError(sessionId);
+        throw fallbackError;
+      }
+    }
+
+    try {
       await this.prisma.sessionQuestion.createMany({
         data: questions.map((q, index) => ({
           sessionId,
@@ -62,50 +105,25 @@ export class QuestionGenerationProcessor extends WorkerHost {
           competencyDomain: q.competencyDomain,
           rubricJson: {},
         })),
+        skipDuplicates: true,
       });
 
       await this.prisma.interviewSession.update({
         where: { id: sessionId },
         data: { status: 'active' },
       });
-
-      await this.sseService.emit(`sse:session:${sessionId}`, 'session.status', {
-        status: 'active',
-        sessionId,
-      });
-    } catch (error: unknown) {
+    } catch (persistenceError: unknown) {
       this.logger.error(
-        `QuestionGenerationProcessor failed for session ${sessionId}`,
-        error instanceof Error ? error.stack : String(error),
+        `Unable to persist generated questions for session ${sessionId}`,
+        persistenceError instanceof Error
+          ? persistenceError.stack
+          : String(persistenceError),
       );
-
-      try {
-        await this.fallbackFromQuestionBank(
-          sessionId,
-          sessionType,
-          contextPack,
-          totalQuestions,
-        );
-        await this.sseService.emit(
-          `sse:session:${sessionId}`,
-          'session.status',
-          { status: 'active', sessionId },
-        );
-      } catch (fallbackError: unknown) {
-        this.logger.error(
-          'Fallback from question_bank also failed',
-          fallbackError,
-        );
-        await this.prisma.interviewSession
-          .update({ where: { id: sessionId }, data: { status: 'error' } })
-          .catch(() => {});
-        await this.sseService
-          .emit(`sse:session:${sessionId}`, 'session.status', {
-            status: 'error',
-          })
-          .catch(() => {});
-      }
+      await this.markSessionError(sessionId);
+      throw persistenceError;
     }
+
+    await this.emitActive(sessionId);
   }
 
   private async fallbackFromQuestionBank(
@@ -131,6 +149,12 @@ export class QuestionGenerationProcessor extends WorkerHost {
       totalQuestions,
     );
 
+    if (selected.length < totalQuestions) {
+      throw new Error(
+        `Only ${selected.length}/${totalQuestions} fallback questions available for ${sessionType}/${contextPack}`,
+      );
+    }
+
     await this.prisma.sessionQuestion.createMany({
       data: selected.map((q, i) => ({
         sessionId,
@@ -144,6 +168,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
         rubricJson: {},
         estimatedTimeMin: 5,
       })),
+      skipDuplicates: true,
     });
 
     await this.prisma.interviewSession.update({
@@ -167,10 +192,50 @@ export class QuestionGenerationProcessor extends WorkerHost {
     const pick = <U>(arr: U[], n: number): U[] =>
       arr.slice(0, Math.min(n, arr.length));
 
-    return [
+    const selected = [
       ...pick(easy, easyCount),
       ...pick(medium, mediumCount),
       ...pick(hard, hardCount),
-    ].slice(0, count);
+    ];
+
+    if (selected.length < count) {
+      const selectedItems = new Set(selected);
+      for (const item of items) {
+        if (!selectedItems.has(item)) {
+          selected.push(item);
+          selectedItems.add(item);
+        }
+        if (selected.length === count) break;
+      }
+    }
+
+    return selected.slice(0, count);
+  }
+
+  private async emitActive(sessionId: string): Promise<void> {
+    await this.sseService
+      .emit(`sse:session:${sessionId}`, 'session.status', {
+        status: 'active',
+        sessionId,
+      })
+      .catch((error: unknown) => {
+        this.logger.warn(
+          `Unable to emit active status for session ${sessionId}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      });
+  }
+
+  private async markSessionError(sessionId: string): Promise<void> {
+    await this.prisma.interviewSession
+      .update({ where: { id: sessionId }, data: { status: 'error' } })
+      .catch(() => {});
+    await this.sseService
+      .emit(`sse:session:${sessionId}`, 'session.status', {
+        status: 'error',
+        sessionId,
+      })
+      .catch(() => {});
   }
 }

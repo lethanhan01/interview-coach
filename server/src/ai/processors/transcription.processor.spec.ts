@@ -19,8 +19,11 @@ import {
   createMockWhisperService,
   createMockVoiceMetricsService,
   createMockFollowUpCoordinatorService,
+  createMockReportService,
   createMockQueue,
 } from '../../test-utils/mock-factories';
+import { ReportService } from '../../report/report.service';
+import { FALLBACK_FEEDBACK_MESSAGE } from '../fallback-content';
 
 const BASE_JOB_DATA = {
   sessionId: 'session-123',
@@ -39,6 +42,7 @@ describe('TranscriptionProcessor', () => {
   let mockWhisper: ReturnType<typeof createMockWhisperService>;
   let mockVoiceMetrics: ReturnType<typeof createMockVoiceMetricsService>;
   let mockFollowUpCoordinator: ReturnType<typeof createMockFollowUpCoordinatorService>;
+  let mockReportService: ReturnType<typeof createMockReportService>;
   let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
   let mockFollowUpQueue: ReturnType<typeof createMockQueue>;
 
@@ -48,6 +52,7 @@ describe('TranscriptionProcessor', () => {
     mockWhisper = createMockWhisperService();
     mockVoiceMetrics = createMockVoiceMetricsService();
     mockFollowUpCoordinator = createMockFollowUpCoordinatorService();
+    mockReportService = createMockReportService();
     mockFeedbackQueue = createMockQueue();
     mockFollowUpQueue = createMockQueue();
 
@@ -59,6 +64,7 @@ describe('TranscriptionProcessor', () => {
         { provide: WhisperService, useValue: mockWhisper },
         { provide: VoiceMetricsService, useValue: mockVoiceMetrics },
         { provide: FollowUpCoordinatorService, useValue: mockFollowUpCoordinator },
+        { provide: ReportService, useValue: mockReportService },
         { provide: getQueueToken(FEEDBACK_QUEUE), useValue: mockFeedbackQueue },
         { provide: getQueueToken(FOLLOW_UP_QUEUE), useValue: mockFollowUpQueue },
       ],
@@ -175,5 +181,75 @@ describe('TranscriptionProcessor', () => {
       expect.objectContaining({ answerId: 'answer-1' }),
     );
     expect(mockFollowUpQueue.add).not.toHaveBeenCalled();
+  });
+
+  describe('error handling', () => {
+    it('re-throw error khi chưa phải last attempt', async () => {
+      const err = new Error('Whisper timeout');
+      mockWhisper.transcribe.mockRejectedValue(err);
+
+      const job = {
+        data: BASE_JOB_DATA,
+        attemptsMade: 0,
+        opts: { attempts: 2 },
+      } as unknown as Job<typeof BASE_JOB_DATA>;
+
+      await expect(processor.process(job)).rejects.toThrow('Whisper timeout');
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('last attempt: insert fallback aiFeedback, set transcriptionStatus=failed, call enqueueIfAllFeedbacksReady, emit SSE', async () => {
+      const err = new Error('Whisper quota exceeded');
+      mockWhisper.transcribe.mockRejectedValue(err);
+
+      const txMock = {
+        aiFeedback: { upsert: jest.fn().mockResolvedValue(undefined) },
+        userAnswer: { update: jest.fn().mockResolvedValue(undefined) },
+      };
+      mockPrisma.$transaction.mockImplementation(
+        (cb: (tx: typeof txMock) => Promise<void>) => cb(txMock),
+      );
+      mockReportService.enqueueIfAllFeedbacksReady.mockResolvedValue(undefined);
+      mockSse.emit.mockResolvedValue(undefined);
+
+      const job = {
+        data: BASE_JOB_DATA,
+        attemptsMade: 1,
+        opts: { attempts: 2 },
+      } as unknown as Job<typeof BASE_JOB_DATA>;
+
+      await processor.process(job);
+
+      expect(txMock.aiFeedback.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userAnswerId: 'answer-1' },
+          create: expect.objectContaining({
+            userAnswerId: 'answer-1',
+            isFallback: true,
+            keyTakeaway: FALLBACK_FEEDBACK_MESSAGE,
+            promptVersion: 'transcription-failed',
+          }),
+        }),
+      );
+      expect(txMock.userAnswer.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'answer-1' },
+          data: expect.objectContaining({
+            transcriptionStatus: 'failed',
+            feedbackGenerated: true,
+          }),
+        }),
+      );
+      expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
+        'session-123',
+        'hr',
+        'VN',
+      );
+      expect(mockSse.emit).toHaveBeenCalledWith(
+        'sse:session:session-123',
+        'turn.transcription_ready',
+        expect.objectContaining({ answerId: 'answer-1' }),
+      );
+    });
   });
 });

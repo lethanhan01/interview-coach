@@ -12,6 +12,9 @@ import {
   createMockQuestionBank,
 } from '../../test-utils/mock-factories';
 import type { Job } from 'bullmq';
+import { HttpStatus } from '@nestjs/common';
+import { InterviewAIException } from '../../common/exceptions/interview-ai.exception';
+import { ErrorCode } from '../../common/exceptions/error-code.enum';
 
 describe('QuestionGenerationProcessor', () => {
   let processor: QuestionGenerationProcessor;
@@ -77,7 +80,9 @@ describe('QuestionGenerationProcessor', () => {
     mockPrisma.interviewSession.update.mockResolvedValue({} as any);
     mockSse.emit.mockResolvedValue(undefined);
 
-    await processor.process(makeJob());
+    await processor.process(
+      makeJob({ ...BASE_JOB_DATA, totalQuestions: generatedQuestions.length }),
+    );
 
     expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
     expect(mockPrisma.sessionQuestion.createMany).toHaveBeenCalledWith({
@@ -93,6 +98,7 @@ describe('QuestionGenerationProcessor', () => {
           orderIndex: 2,
         }),
       ],
+      skipDuplicates: true,
     });
     expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
       where: { id: 'session-123' },
@@ -117,7 +123,9 @@ describe('QuestionGenerationProcessor', () => {
     mockSse.emit.mockResolvedValue(undefined);
     // questionBank.findMany defaults to [] from factory — triggers fallback error path
 
-    await processor.process(makeJob());
+    await expect(processor.process(makeJob())).rejects.toThrow(
+      'No fallback questions available',
+    );
 
     expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
       where: { id: 'session-123' },
@@ -126,16 +134,42 @@ describe('QuestionGenerationProcessor', () => {
     expect(mockSse.emit).toHaveBeenCalledWith(
       'sse:session:session-123',
       'session.status',
-      { status: 'error' },
+      { status: 'error', sessionId: 'session-123' },
     );
+  });
+
+  it('không chuyển session sang error hoặc chạy fallback lần hai khi SSE emit thất bại', async () => {
+    const generatedQuestions = Array.from({ length: 5 }, (_, index) => ({
+      text: `Câu hỏi ${index + 1}`,
+      category: 'behavioral',
+      competencyDomain: 'communication',
+    }));
+    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockFactory.getStrategy.mockReturnValue({
+      generateQuestions: jest.fn().mockResolvedValue(generatedQuestions),
+    });
+    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+    mockPrisma.interviewSession.update.mockResolvedValue({} as any);
+    mockSse.emit.mockRejectedValue(new Error('Redis unavailable'));
+
+    await expect(processor.process(makeJob())).resolves.toBeUndefined();
+
+    expect(mockPrisma.questionBank.findMany).not.toHaveBeenCalled();
+    expect(mockPrisma.interviewSession.update).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
+      where: { id: 'session-123' },
+      data: { status: 'active' },
+    });
   });
 
   describe('fallback path (AI failure)', () => {
     it('tạo SessionQuestion từ question_bank khi AI thất bại', async () => {
       const mockQuestions = [
         createMockQuestionBank({ id: 'qb-1', difficulty: 2 }),
-        createMockQuestionBank({ id: 'qb-2', difficulty: 3 }),
-        createMockQuestionBank({ id: 'qb-3', difficulty: 4 }),
+        createMockQuestionBank({ id: 'qb-2', difficulty: 2 }),
+        createMockQuestionBank({ id: 'qb-3', difficulty: 3 }),
+        createMockQuestionBank({ id: 'qb-4', difficulty: 3 }),
+        createMockQuestionBank({ id: 'qb-5', difficulty: 4 }),
       ];
       const mockStrategy = {
         generateQuestions: jest.fn().mockRejectedValue(new Error('AI timeout')),
@@ -143,21 +177,30 @@ describe('QuestionGenerationProcessor', () => {
       mockContextPack.getContextPack.mockReturnValue({} as any);
       mockFactory.getStrategy.mockReturnValue(mockStrategy);
       mockPrisma.questionBank.findMany.mockResolvedValue(mockQuestions);
-      mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 3 });
+      mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
       mockPrisma.interviewSession.update.mockResolvedValue({} as any);
       mockSse.emit.mockResolvedValue(undefined);
 
       await processor.process(makeJob());
 
-      expect(mockPrisma.sessionQuestion.createMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.arrayContaining([
-            expect.objectContaining({
-              sessionId: 'session-123',
-              questionBankId: 'qb-1',
-            }),
-          ]),
-        }),
+      const createCalls = mockPrisma.sessionQuestion.createMany.mock
+        .calls as unknown as Array<
+        [
+          {
+            skipDuplicates: boolean;
+            data: Array<{ sessionId: string; questionBankId: string }>;
+          },
+        ]
+      >;
+      const fallbackCreate = createCalls[0][0];
+      expect(fallbackCreate.skipDuplicates).toBe(true);
+      expect(fallbackCreate.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            sessionId: 'session-123',
+            questionBankId: 'qb-1',
+          }),
+        ]),
       );
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
         where: { id: 'session-123' },
@@ -170,6 +213,52 @@ describe('QuestionGenerationProcessor', () => {
       );
     });
 
+    it('dùng fallback ngay, không retry OpenAI khi quota đã hết', async () => {
+      const quotaError = new InterviewAIException(
+        ErrorCode.AI_QUOTA_EXCEEDED,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        'OpenAI quota exhausted',
+      );
+      const mockQuestions = Array.from({ length: 5 }, (_, index) =>
+        createMockQuestionBank({
+          id: `qb-${index + 1}`,
+          difficulty: 2,
+        }),
+      );
+      const generateQuestions = jest.fn().mockRejectedValue(quotaError);
+      mockContextPack.getContextPack.mockReturnValue({} as any);
+      mockFactory.getStrategy.mockReturnValue({ generateQuestions });
+      mockPrisma.questionBank.findMany.mockResolvedValue(mockQuestions);
+      mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+      mockPrisma.interviewSession.update.mockResolvedValue({} as any);
+      mockSse.emit.mockResolvedValue(undefined);
+
+      await expect(processor.process(makeJob())).resolves.toBeUndefined();
+
+      expect(generateQuestions).toHaveBeenCalledTimes(1);
+      const createCalls = mockPrisma.sessionQuestion.createMany.mock
+        .calls as unknown as Array<
+        [
+          {
+            skipDuplicates: boolean;
+            data: Array<{ questionBankId: string }>;
+          },
+        ]
+      >;
+      const fallbackCreate = createCalls[0][0];
+      expect(fallbackCreate.skipDuplicates).toBe(true);
+      expect(fallbackCreate.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ questionBankId: 'qb-1' }),
+          expect.objectContaining({ questionBankId: 'qb-5' }),
+        ]),
+      );
+      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
+        where: { id: 'session-123' },
+        data: { status: 'active' },
+      });
+    });
+
     it('set session status=error khi question_bank trả về 0 kết quả', async () => {
       const mockStrategy = {
         generateQuestions: jest.fn().mockRejectedValue(new Error('AI timeout')),
@@ -180,7 +269,9 @@ describe('QuestionGenerationProcessor', () => {
       mockSse.emit.mockResolvedValue(undefined);
       // questionBank.findMany defaults to [] from factory
 
-      await processor.process(makeJob());
+      await expect(processor.process(makeJob())).rejects.toThrow(
+        'No fallback questions available',
+      );
 
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
         where: { id: 'session-123' },

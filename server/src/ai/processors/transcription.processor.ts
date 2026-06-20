@@ -1,20 +1,23 @@
 import { Logger } from '@nestjs/common';
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { InjectQueue } from '@nestjs/bullmq';
+import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
 import { WhisperService } from '../../turn/whisper.service';
 import { VoiceMetricsService } from '../../turn/voice-metrics.service';
 import { FollowUpCoordinatorService } from '../../turn/follow-up-coordinator.service';
+import { ReportService } from '../../report/report.service';
 import {
   TRANSCRIPTION_QUEUE,
+  TRANSCRIPTION_JOB_ATTEMPTS,
   FEEDBACK_QUEUE,
   FOLLOW_UP_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
   FOLLOW_UP_JOB_ATTEMPTS,
 } from '../../common/constants/queue.constants';
 import type { SessionType } from '../pipelines/interview-pipeline.interface';
+import { FALLBACK_FEEDBACK_MESSAGE } from '../fallback-content';
 
 export interface TranscriptionJobDto {
   sessionId: string;
@@ -36,6 +39,7 @@ export class TranscriptionProcessor extends WorkerHost {
     private readonly whisperService: WhisperService,
     private readonly voiceMetricsService: VoiceMetricsService,
     private readonly followUpCoordinatorService: FollowUpCoordinatorService,
+    private readonly reportService: ReportService,
     @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
     @InjectQueue(FOLLOW_UP_QUEUE) private readonly followUpQueue: Queue,
   ) {
@@ -52,73 +56,139 @@ export class TranscriptionProcessor extends WorkerHost {
       sessionType,
     } = job.data;
 
-    const transcription = await this.whisperService.transcribe(audioFileUrl);
-    const answerText = transcription.text;
-    const durationSeconds = hintDuration ?? transcription.durationSeconds;
-    const voiceMetricsJson = this.voiceMetricsService.calculate(
-      answerText,
-      durationSeconds,
-    );
-
-    const answer = await this.prisma.userAnswer.update({
-      where: { id: answerId },
-      data: {
+    try {
+      const transcription = await this.whisperService.transcribe(audioFileUrl);
+      const answerText = transcription.text;
+      const durationSeconds = hintDuration ?? transcription.durationSeconds;
+      const voiceMetricsJson = this.voiceMetricsService.calculate(
         answerText,
-        audioDurationSeconds: durationSeconds,
-        voiceMetricsJson,
-        transcriptionStatus: 'done',
-      },
-    });
-
-    const question = await this.prisma.sessionQuestion.findFirst({
-      where: { id: answer.questionId, sessionId },
-    });
-
-    if (!question) {
-      this.logger.warn(
-        `Question not found for answer ${answerId} in session ${sessionId}, enqueueing feedback with empty question text and skipping follow-up`,
+        durationSeconds,
       );
-      await this.enqueueFeedback(answerId, sessionId, '', answerText, contextPack, sessionType);
-      await this.emitTranscriptionReady(sessionId, answerId);
-      return;
-    }
 
-    const session = await this.prisma.interviewSession.findUnique({
-      where: { id: sessionId },
-      select: { numQuestions: true },
-    });
+      const answer = await this.prisma.userAnswer.update({
+        where: { id: answerId },
+        data: {
+          answerText,
+          audioDurationSeconds: durationSeconds,
+          voiceMetricsJson:
+            voiceMetricsJson as unknown as Prisma.InputJsonValue,
+          transcriptionStatus: 'done',
+        },
+      });
 
-    const jobBase = {
-      sessionId,
-      turnId: answerId,
-      answerId,
-      questionText: question.questionText,
-      answerText,
-      contextPack,
-      sessionType,
-    };
+      const question = await this.prisma.sessionQuestion.findFirst({
+        where: { id: answer.questionId, sessionId },
+      });
 
-    const followUpEnabled = this.followUpCoordinatorService.shouldGenerateFollowUp(
-      answerText,
-      question.orderIndex,
-      session?.numQuestions ?? 0,
-    );
+      if (!question) {
+        this.logger.warn(
+          `Question not found for answer ${answerId} in session ${sessionId}, enqueueing feedback with empty question text and skipping follow-up`,
+        );
+        await this.enqueueFeedback(
+          answerId,
+          sessionId,
+          '',
+          answerText,
+          contextPack,
+          sessionType,
+        );
+        await this.emitTranscriptionReady(sessionId, answerId);
+        return;
+      }
 
-    if (followUpEnabled) {
-      await this.followUpQueue.add('follow-up', jobBase, {
-        jobId: `follow-up-${answerId}`,
-        attempts: FOLLOW_UP_JOB_ATTEMPTS,
+      const session = await this.prisma.interviewSession.findUnique({
+        where: { id: sessionId },
+        select: { numQuestions: true },
+      });
+
+      const jobBase = {
+        sessionId,
+        turnId: answerId,
+        answerId,
+        questionText: question.questionText,
+        answerText,
+        contextPack,
+        sessionType,
+      };
+
+      const followUpEnabled =
+        this.followUpCoordinatorService.shouldGenerateFollowUp(
+          answerText,
+          question.orderIndex,
+          session?.numQuestions ?? 0,
+        );
+
+      if (followUpEnabled) {
+        await this.followUpQueue.add('follow-up', jobBase, {
+          jobId: `follow-up-${answerId}`,
+          attempts: FOLLOW_UP_JOB_ATTEMPTS,
+          backoff: { type: 'fixed', delay: 2000 },
+        });
+      }
+
+      await this.feedbackQueue.add('feedback', jobBase, {
+        jobId: `feedback-${answerId}`,
+        attempts: FEEDBACK_JOB_ATTEMPTS,
         backoff: { type: 'fixed', delay: 2000 },
       });
+
+      await this.emitTranscriptionReady(sessionId, answerId);
+    } catch (error: unknown) {
+      const totalAttempts = job.opts.attempts ?? TRANSCRIPTION_JOB_ATTEMPTS;
+      const isLastAttempt = job.attemptsMade >= totalAttempts - 1;
+
+      if (!isLastAttempt) {
+        this.logger.warn(
+          `TranscriptionProcessor attempt ${job.attemptsMade + 1}/${totalAttempts} failed for answer ${answerId}, retrying`,
+          error instanceof Error ? error.message : JSON.stringify(error),
+        );
+        throw error;
+      }
+
+      this.logger.error(
+        `TranscriptionProcessor failed after ${totalAttempts} attempts for session ${sessionId} answer ${answerId}`,
+        error instanceof Error ? error.stack : JSON.stringify(error),
+      );
+
+      try {
+        await this.prisma.$transaction(async (tx) => {
+          await tx.aiFeedback.upsert({
+            where: { userAnswerId: answerId },
+            create: {
+              userAnswerId: answerId,
+              overallScore: 0,
+              modelAnswer: '',
+              keyTakeaway: FALLBACK_FEEDBACK_MESSAGE,
+              promptVersion: 'transcription-failed',
+              isFallback: true,
+            },
+            update: {},
+          });
+          await tx.userAnswer.update({
+            where: { id: answerId },
+            data: { transcriptionStatus: 'failed', feedbackGenerated: true },
+          });
+        });
+
+        await this.reportService
+          .enqueueIfAllFeedbacksReady(sessionId, sessionType, contextPack)
+          .catch((err: unknown) => {
+            this.logger.warn(
+              `Failed to check report readiness after transcription failure for session ${sessionId}`,
+              err instanceof Error ? err.message : JSON.stringify(err),
+            );
+          });
+
+        await this.emitTranscriptionReady(sessionId, answerId);
+      } catch (fallbackError: unknown) {
+        this.logger.error(
+          `TranscriptionProcessor fallback failed for answer ${answerId}`,
+          fallbackError instanceof Error
+            ? fallbackError.stack
+            : JSON.stringify(fallbackError),
+        );
+      }
     }
-
-    await this.feedbackQueue.add('feedback', jobBase, {
-      jobId: `feedback-${answerId}`,
-      attempts: FEEDBACK_JOB_ATTEMPTS,
-      backoff: { type: 'fixed', delay: 2000 },
-    });
-
-    await this.emitTranscriptionReady(sessionId, answerId);
   }
 
   private async enqueueFeedback(
@@ -131,18 +201,35 @@ export class TranscriptionProcessor extends WorkerHost {
   ): Promise<void> {
     await this.feedbackQueue.add(
       'feedback',
-      { sessionId, turnId: answerId, answerId, questionText, answerText, contextPack, sessionType },
-      { jobId: `feedback-${answerId}`, attempts: FEEDBACK_JOB_ATTEMPTS, backoff: { type: 'fixed', delay: 2000 } },
+      {
+        sessionId,
+        turnId: answerId,
+        answerId,
+        questionText,
+        answerText,
+        contextPack,
+        sessionType,
+      },
+      {
+        jobId: `feedback-${answerId}`,
+        attempts: FEEDBACK_JOB_ATTEMPTS,
+        backoff: { type: 'fixed', delay: 2000 },
+      },
     );
   }
 
-  private async emitTranscriptionReady(sessionId: string, answerId: string): Promise<void> {
+  private async emitTranscriptionReady(
+    sessionId: string,
+    answerId: string,
+  ): Promise<void> {
     await this.sseService
-      .emit(`sse:session:${sessionId}`, 'turn.transcription_ready', { answerId })
+      .emit(`sse:session:${sessionId}`, 'turn.transcription_ready', {
+        answerId,
+      })
       .catch((err: unknown) => {
         this.logger.warn(
           `Unable to emit transcription_ready for answer ${answerId}`,
-          err instanceof Error ? err.message : String(err),
+          err instanceof Error ? err.message : JSON.stringify(err),
         );
       });
   }

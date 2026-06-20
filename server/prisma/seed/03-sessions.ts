@@ -660,7 +660,7 @@ async function seedS5(prisma: PrismaClient, userId: string): Promise<string> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// S6 — completed · VN · mixed · audio + skip + follow-up + reverse question
+// S6 — completed · VN · mixed · audio + skip + follow-up
 // ═══════════════════════════════════════════════════════════════════════════
 async function seedS6(prisma: PrismaClient, userId: string): Promise<string> {
   if (await alreadySeeded(prisma, userId, 'SEED-S6')) return '';
@@ -711,12 +711,6 @@ async function seedS6(prisma: PrismaClient, userId: string): Promise<string> {
         TD3: 70,
         TD4: 68,
         TD5: 75,
-      },
-      reverseQEvalJson: {
-        asked: 1,
-        quality: 'good',
-        evaluation:
-          'Câu hỏi thể hiện sự chuẩn bị và quan tâm đến culture công ty.',
       },
       actionPlanJson: {
         immediate: [
@@ -817,24 +811,8 @@ async function seedS6(prisma: PrismaClient, userId: string): Promise<string> {
     },
   });
 
-  // Reverse question — candidate asked interviewer
-  await prisma.reverseQuestion.create({
-    data: {
-      sessionId: session.id,
-      questionText:
-        'Team sử dụng quy trình Agile như thế nào? Sprint length bao nhiêu ngày và có retrospective không?',
-      answerMode: 'text',
-      orderIndex: 0,
-      aiResponse:
-        'Đây là câu hỏi rất tốt! Chúng tôi dùng Scrum với 2-week sprint, có daily standup, sprint review và retrospective. Bạn sẽ được pair với một senior developer trong 3 tháng đầu.',
-      evaluationLabel: 'excellent',
-      evaluationComment:
-        'Câu hỏi thể hiện sự quan tâm đến process và culture — dấu hiệu của ứng viên có tư duy team player.',
-    },
-  });
-
   console.log(
-    'sessions: S6 seeded (completed·VN·mixed·audio+skip+followup+reverseQ)',
+    'sessions: S6 seeded (completed·VN·mixed·audio+skip+followup)',
   );
   return session.id;
 }

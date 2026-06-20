@@ -85,8 +85,6 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       })),
     };
 
-    const reverseQEval = {};
-
     let actionPlan: { items: string[] } = FALLBACK_ACTION_PLAN;
 
     if (evaluatedFeedbacks.length > 0) {
@@ -145,7 +143,6 @@ export class ComprehensiveReportProcessor extends WorkerHost {
           executiveSummaryJson: executiveSummary,
           commAnalysisJson: commAnalysis,
           competencyHeatmapJson: competencyHeatmap,
-          reverseQEvalJson: reverseQEval,
           actionPlanJson: actionPlan,
           overallScore: aggregatedScore,
           status: 'completed',

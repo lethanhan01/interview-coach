@@ -1,6 +1,12 @@
 import type { ContextPackConfig } from '../context-pack.service';
 
-export type SessionType = 'hr' | 'technical' | 'mixed';
+export const SESSION_TYPES = ['hr', 'technical', 'mixed'] as const;
+
+export type SessionType = (typeof SESSION_TYPES)[number];
+
+export function isSessionType(value: string): value is SessionType {
+  return (SESSION_TYPES as readonly string[]).includes(value);
+}
 
 export interface QuestionGenInput {
   sessionType: SessionType;

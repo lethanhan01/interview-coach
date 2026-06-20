@@ -16,6 +16,7 @@ import { FollowUpCoordinatorService } from './follow-up-coordinator.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
 import type { TranscriptionJobDto } from '../ai/processors/transcription.processor';
+import { isSessionType } from '../ai/pipelines/interview-pipeline.interface';
 
 @Injectable()
 export class TurnService {
@@ -54,6 +55,15 @@ export class TurnService {
       );
     }
 
+    const sessionType = session.sessionType;
+    if (!isSessionType(sessionType)) {
+      throw new InterviewAIException(
+        ErrorCode.INVALID_SESSION_TYPE,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        `Unsupported stored session type: ${sessionType}`,
+      );
+    }
+
     const question = await this.prisma.sessionQuestion.findFirst({
       where: { id: dto.questionId, sessionId },
     });
@@ -86,9 +96,16 @@ export class TurnService {
             transcriptionPending: false,
           };
         }
+        if (existingVoiceAnswer.transcriptionStatus === 'failed') {
+          return {
+            answerId: existingVoiceAnswer.id,
+            followUpQueued: false,
+            feedbackQueued: false,
+            transcriptionPending: false,
+          };
+        }
         // transcriptionStatus is 'pending' or null — re-enqueue for dedup
         const contextPackRetry = session.contextPackId as 'VN' | 'Western';
-        const sessionTypeRetry = session.sessionType;
         const retryPayload: TranscriptionJobDto = {
           sessionId,
           answerId: existingVoiceAnswer.id,
@@ -96,7 +113,7 @@ export class TurnService {
           audioDurationSeconds: dto.audioDurationSeconds,
           audioSizeBytes: dto.audioSizeBytes,
           contextPack: contextPackRetry,
-          sessionType: sessionTypeRetry,
+          sessionType,
         };
         await this.transcriptionQueue.add(
           'transcription',
@@ -133,7 +150,6 @@ export class TurnService {
       });
 
       const contextPack = session.contextPackId as 'VN' | 'Western';
-      const sessionType = session.sessionType;
       const transcriptionPayload: TranscriptionJobDto = {
         sessionId,
         answerId: answer.id,
@@ -191,7 +207,6 @@ export class TurnService {
     }
 
     const contextPack = session.contextPackId as 'VN' | 'Western';
-    const sessionType = session.sessionType;
     const jobBase = {
       sessionId,
       turnId: answer.id,
