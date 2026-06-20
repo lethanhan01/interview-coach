@@ -8,6 +8,8 @@ import { OpenAIGateway } from '../openai.gateway';
 import { REPORT_QUEUE } from '../../common/constants/queue.constants';
 import { COMPREHENSIVE_REPORT_PROMPT_CONFIG } from '../prompts/comprehensive-report-v1.0';
 import type { SessionType } from '../pipelines/interview-pipeline.interface';
+import { isAIQuotaExceeded } from '../ai-error.utils';
+import { FALLBACK_ACTION_PLAN } from '../fallback-content';
 
 interface ComprehensiveReportJobDto {
   sessionId: string;
@@ -48,69 +50,92 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       );
     }
 
+    const evaluatedFeedbacks = feedbacks.filter(
+      (feedback) => !feedback.isFallback,
+    );
     const aggregatedScore =
-      feedbacks.length > 0
+      evaluatedFeedbacks.length > 0
         ? Math.round(
-            feedbacks.reduce((sum, f) => sum + f.overallScore, 0) /
-              feedbacks.length,
+            evaluatedFeedbacks.reduce((sum, f) => sum + f.overallScore, 0) /
+              evaluatedFeedbacks.length,
           )
-        : 0;
+        : null;
 
     const executiveSummary = {
       overallScore: aggregatedScore,
       totalTurns: turnIds.length,
-      summary: `Interview completed with ${feedbacks.length} evaluated answers. Overall score: ${aggregatedScore}/100.`,
+      evaluatedTurns: evaluatedFeedbacks.length,
+      fallbackTurns: feedbacks.length - evaluatedFeedbacks.length,
+      summary:
+        aggregatedScore === null
+          ? 'AI scoring was unavailable. Your answers were saved and can be evaluated again after the AI service is restored.'
+          : `Interview completed with ${evaluatedFeedbacks.length} evaluated answers. Overall score: ${aggregatedScore}/100.`,
     };
 
     const commAnalysis = {
       feedbackCount: feedbacks.length,
+      evaluatedFeedbackCount: evaluatedFeedbacks.length,
+      fallbackFeedbackCount: feedbacks.length - evaluatedFeedbacks.length,
     };
 
     const competencyHeatmap = {
       scores: feedbacks.map((f) => ({
         answerId: f.userAnswerId,
-        score: f.overallScore,
+        score: f.isFallback ? null : f.overallScore,
       })),
     };
 
     const reverseQEval = {};
 
-    let actionPlan: { items: string[] } | null = null;
+    let actionPlan: { items: string[] } = FALLBACK_ACTION_PLAN;
 
-    try {
-      const feedbackSummaries = feedbacks
-        .map(
-          (f, i) =>
-            `Answer ${i + 1}: score=${f.overallScore}, takeaway="${f.keyTakeaway}"`,
-        )
-        .join('\n');
+    if (evaluatedFeedbacks.length > 0) {
+      try {
+        const feedbackSummaries = evaluatedFeedbacks
+          .map(
+            (f, i) =>
+              `Answer ${i + 1}: score=${f.overallScore}, takeaway="${f.keyTakeaway}"`,
+          )
+          .join('\n');
 
-      const raw = await this.openai.chatCompletion({
-        model: COMPREHENSIVE_REPORT_PROMPT_CONFIG.model,
-        temperature: COMPREHENSIVE_REPORT_PROMPT_CONFIG.temperature,
-        maxTokens: COMPREHENSIVE_REPORT_PROMPT_CONFIG.maxTokens,
-        responseFormat: 'json_object',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are an interview coach. Based on the feedback summaries, generate a concise action plan with 3-5 specific improvement items. Respond with JSON: { "items": ["item1", "item2", ...] }',
-          },
-          {
-            role: 'user',
-            content: `Feedback summaries:\n${feedbackSummaries}`,
-          },
-        ],
-      });
+        const raw = await this.openai.chatCompletion({
+          model: COMPREHENSIVE_REPORT_PROMPT_CONFIG.model,
+          temperature: COMPREHENSIVE_REPORT_PROMPT_CONFIG.temperature,
+          maxTokens: COMPREHENSIVE_REPORT_PROMPT_CONFIG.maxTokens,
+          responseFormat: 'json_object',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are an interview coach. Based on the feedback summaries, generate a concise action plan with 3-5 specific improvement items. Respond with JSON: { "items": ["item1", "item2", ...] }',
+            },
+            {
+              role: 'user',
+              content: `Feedback summaries:\n${feedbackSummaries}`,
+            },
+          ],
+        });
 
-      const parsed = JSON.parse(raw) as unknown;
-      actionPlan = actionPlanSchema.parse(parsed);
-    } catch (openaiError: unknown) {
-      this.logger.error(
-        `ComprehensiveReportProcessor: OpenAI call failed for session ${sessionId}`,
-        openaiError instanceof Error ? openaiError.stack : String(openaiError),
+        const parsed = JSON.parse(raw) as unknown;
+        actionPlan = actionPlanSchema.parse(parsed);
+      } catch (openaiError: unknown) {
+        if (isAIQuotaExceeded(openaiError)) {
+          this.logger.warn(
+            `Comprehensive report for session ${sessionId} is using a fallback action plan: OpenAI quota exhausted`,
+          );
+        } else {
+          this.logger.error(
+            `ComprehensiveReportProcessor: OpenAI call failed for session ${sessionId}`,
+            openaiError instanceof Error
+              ? openaiError.stack
+              : String(openaiError),
+          );
+        }
+      }
+    } else {
+      this.logger.warn(
+        `Comprehensive report for session ${sessionId} has no AI-evaluated feedback; skipping the action-plan API call`,
       );
-      // fallback: actionPlan remains null
     }
 
     try {
@@ -121,7 +146,7 @@ export class ComprehensiveReportProcessor extends WorkerHost {
           commAnalysisJson: commAnalysis,
           competencyHeatmapJson: competencyHeatmap,
           reverseQEvalJson: reverseQEval,
-          actionPlanJson: actionPlan ?? {},
+          actionPlanJson: actionPlan,
           overallScore: aggregatedScore,
           status: 'completed',
           completedAt: new Date(),

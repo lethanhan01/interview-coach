@@ -165,6 +165,41 @@ describe('ReportService', () => {
       expect(result.transcript).toHaveLength(2);
       expect(result.transcript[0].questionText).toBe('Tell me about yourself');
     });
+
+    it('trả score=null thay vì 0 khi toàn bộ feedback là fallback', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        overallScore: 0,
+        actionPlanJson: {},
+      });
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Tell me about yourself',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              answerText: 'I am a developer.',
+              aiFeedback: {
+                overallScore: 0,
+                modelAnswer: '',
+                keyTakeaway: 'AI unavailable',
+                isFallback: true,
+                annotatedSegments: [],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.overallScore).toBeNull();
+      expect(result.transcript[0].overallScore).toBeNull();
+      expect(result.transcript[0].isFallback).toBe(true);
+      expect(result.executiveSummary.overallScore).toBeNull();
+      expect(result.actionPlan.items).toHaveLength(3);
+    });
   });
 
   describe('enqueueReport', () => {

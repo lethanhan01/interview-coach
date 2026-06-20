@@ -46,14 +46,23 @@ export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError(null)
     apiClient
       .get<{ sessions: Session[] }>('/sessions')
-      .then((data) => setSessions(data.sessions ?? []))
-      .catch((err) => setError(err instanceof Error ? err.message : 'Không thể tải danh sách'))
-      .finally(() => setLoading(false))
-  }, [])
+      .then((data) => { if (!cancelled) setSessions(data.sessions ?? []) })
+      .catch((err) => {
+        if (cancelled) return
+        const msg = err instanceof Error ? err.message : 'Không thể tải danh sách'
+        setError(msg === 'Failed to fetch' ? 'Không thể kết nối đến server. Kiểm tra server có đang chạy không.' : msg)
+      })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [retryCount])
 
   if (loading) {
     return (
@@ -65,7 +74,15 @@ export default function SessionsPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-sm text-danger">{error}</div>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+        <p className="text-sm text-danger">{error}</p>
+        <button
+          onClick={() => setRetryCount((c) => c + 1)}
+          className="rounded-full border border-brand px-4 py-1.5 text-sm font-medium text-brand transition-colors hover:bg-brand-50"
+        >
+          Thử lại
+        </button>
+      </div>
     )
   }
 

@@ -14,6 +14,7 @@ import {
   TranscriptItemDto,
   AnnotatedSegmentDto,
 } from './dto/report-response.dto';
+import { FALLBACK_ACTION_PLAN } from '../ai/fallback-content';
 
 function toRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -90,19 +91,41 @@ export class ReportService {
         questionText: q.questionText,
         orderIndex: q.orderIndex,
         answerText: answer?.answerText ?? '',
-        overallScore: feedback?.overallScore ?? 0,
+        overallScore:
+          feedback && !feedback.isFallback ? feedback.overallScore : null,
         modelAnswer: feedback?.modelAnswer ?? '',
         keyTakeaway: feedback?.keyTakeaway ?? '',
+        isFallback: feedback?.isFallback ?? false,
         segments,
       };
     });
 
+    const hasEvaluatedFeedback = transcript.some(
+      (item) => !item.isFallback && item.overallScore !== null,
+    );
+    const allFeedbackIsFallback =
+      transcript.some((item) => item.isFallback) && !hasEvaluatedFeedback;
+    const storedActionPlan = toRecord(session.actionPlanJson);
+    const storedExecutiveSummary = toRecord(session.executiveSummaryJson);
+
     return {
       sessionId,
-      overallScore: session.overallScore ?? 0,
-      executiveSummary: toRecord(session.executiveSummaryJson),
+      overallScore: allFeedbackIsFallback ? null : session.overallScore,
+      executiveSummary: allFeedbackIsFallback
+        ? {
+            ...storedExecutiveSummary,
+            overallScore: null,
+            evaluatedTurns: 0,
+            fallbackTurns: transcript.length,
+            summary:
+              'AI scoring was unavailable. Your answers were saved and can be evaluated again after the AI service is restored.',
+          }
+        : storedExecutiveSummary,
       competencyHeatmap: toRecord(session.competencyHeatmapJson),
-      actionPlan: toRecord(session.actionPlanJson),
+      actionPlan:
+        allFeedbackIsFallback && Object.keys(storedActionPlan).length === 0
+          ? FALLBACK_ACTION_PLAN
+          : storedActionPlan,
       transcript,
     };
   }

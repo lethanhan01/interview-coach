@@ -10,7 +10,8 @@ import VoiceRecorder from '@/components/interview/VoiceRecorder'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
 import Button from '@/components/ui/Button'
-import type { SessionStatus } from '@/lib/types'
+import CountdownTimer from '@/components/interview/CountdownTimer'
+import type { Session, SessionStatus } from '@/lib/types'
 
 interface Question {
   id: string
@@ -33,24 +34,31 @@ export default function InterviewPage() {
   const [isCompleting, setIsCompleting] = useState(false)
   const [supabaseUrl, setSupabaseUrl] = useState('')
   const [accessToken, setAccessToken] = useState('')
+  const [durationMin, setDurationMin] = useState<number>(30)
+  const [questionsReady, setQuestionsReady] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
 
   useEffect(() => {
     async function init() {
       try {
-        const supabase = createClient()
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) { router.push('/login'); return }
-        setAccessToken(session.access_token)
-        setSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '')
+        const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
+        if (skipAuth) {
+          setAccessToken('dev-mock-token')
+          setSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '')
+        } else {
+          const supabase = createClient()
+          const { data: { session } } = await supabase.auth.getSession()
+          if (!session) { router.push('/login'); return }
+          setAccessToken(session.access_token)
+          setSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '')
+        }
 
-        const currentSession = await apiClient.get<{ status: SessionStatus }>(
-          `/sessions/${sessionId}/status`,
-        )
+        const currentSession = await apiClient.get<Session>(`/sessions/${sessionId}`)
         if (currentSession.status === 'completing' || currentSession.status === 'completed') {
           router.replace(`/sessions/${sessionId}/report`)
           return
         }
+        if (currentSession.durationMin) setDurationMin(currentSession.durationMin)
 
         async function pollQuestions(): Promise<Question[]> {
           for (let i = 0; i < 6; i++) {
@@ -62,6 +70,7 @@ export default function InterviewPage() {
         }
         const qs = await pollQuestions()
         setQuestions(qs)
+        setQuestionsReady(true)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Không thể tải phiên phỏng vấn')
       } finally {
@@ -156,6 +165,10 @@ export default function InterviewPage() {
   return (
     <ErrorBoundary>
       <div className="mx-auto max-w-2xl px-4 py-10">
+        <div className="mb-4 flex justify-end">
+          <CountdownTimer durationMin={durationMin} active={questionsReady} />
+        </div>
+
         {current && (
           <QuestionCard
             questionText={followUp ?? current.content}

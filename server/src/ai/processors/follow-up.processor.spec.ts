@@ -11,6 +11,9 @@ import {
   createMockPipelineStrategyFactory,
 } from '../../test-utils/mock-factories';
 import type { Job } from 'bullmq';
+import { HttpStatus } from '@nestjs/common';
+import { InterviewAIException } from '../../common/exceptions/interview-ai.exception';
+import { ErrorCode } from '../../common/exceptions/error-code.enum';
 
 describe('FollowUpProcessor', () => {
   let processor: FollowUpProcessor;
@@ -104,6 +107,31 @@ describe('FollowUpProcessor', () => {
     mockFactory.getStrategy.mockReturnValue(mockStrategy);
 
     await expect(processor.process(makeJob())).resolves.toBeUndefined();
+    expect(mockPrisma.followUpQuestion.create).not.toHaveBeenCalled();
+  });
+
+  it('coi quota hết là degraded mode và bỏ qua follow-up không cần stack ERROR', async () => {
+    const mockStrategy = {
+      generateFollowUp: jest
+        .fn()
+        .mockRejectedValue(
+          new InterviewAIException(
+            ErrorCode.AI_QUOTA_EXCEEDED,
+            HttpStatus.SERVICE_UNAVAILABLE,
+          ),
+        ),
+    };
+    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockFactory.getStrategy.mockReturnValue(mockStrategy);
+    const warnSpy = jest.spyOn((processor as any).logger, 'warn');
+    const errorSpy = jest.spyOn((processor as any).logger, 'error');
+
+    await expect(processor.process(makeJob())).resolves.toBeUndefined();
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('OpenAI quota exhausted'),
+    );
+    expect(errorSpy).not.toHaveBeenCalled();
     expect(mockPrisma.followUpQuestion.create).not.toHaveBeenCalled();
   });
 });

@@ -1,58 +1,71 @@
-import { TranscriptItem, AnnotatedSegment } from '@/lib/types'
+import { TranscriptItem, AnnotatedSegment } from "@/lib/types";
 
 function renderHighlightedText(text: string, segments: AnnotatedSegment[]) {
-  if (!segments.length) return <span>{text}</span>
+  if (!segments.length) return <span>{text}</span>;
 
-  const sorted = [...segments].sort((a, b) => a.startIndex - b.startIndex)
-  const parts: React.ReactNode[] = []
-  let cursor = 0
+  const sorted = [...segments].sort((a, b) => a.startIndex - b.startIndex);
+  const parts: React.ReactNode[] = [];
+  let cursor = 0;
 
   for (const seg of sorted) {
     if (seg.startIndex > cursor) {
-      parts.push(<span key={`plain-${cursor}`}>{text.slice(cursor, seg.startIndex)}</span>)
+      parts.push(
+        <span key={`plain-${cursor}`}>
+          {text.slice(cursor, seg.startIndex)}
+        </span>,
+      );
     }
-    const isStrength = seg.highlightLevel === 'strength'
+    const isStrength = seg.highlightLevel === "strength";
     // px-0.5 intentionally omitted — inline padding on <mark> breaks surrounding character spacing
     parts.push(
       <mark
         key={seg.id}
         title={seg.annotation}
-        className={`rounded ${isStrength ? 'bg-green-100 text-green-900' : 'bg-orange-100 text-orange-900'}`}
+        className={`rounded ${isStrength ? "bg-green-100 text-green-900" : "bg-orange-100 text-orange-900"}`}
       >
         {text.slice(seg.startIndex, seg.endIndex)}
-      </mark>
-    )
-    cursor = seg.endIndex
+      </mark>,
+    );
+    cursor = seg.endIndex;
   }
 
   if (cursor < text.length) {
-    parts.push(<span key="plain-end">{text.slice(cursor)}</span>)
+    parts.push(<span key="plain-end">{text.slice(cursor)}</span>);
   }
 
-  return <>{parts}</>
+  return <>{parts}</>;
 }
 
-const RUBRIC_DIMENSIONS: Record<'VN' | 'Western', string> = {
-  VN: 'clarity · structure · communication · culture_fit (25% mỗi tiêu chí)',
-  Western: 'clarity · structure · communication · impact · leadership (20% mỗi tiêu chí)',
-}
+const RUBRIC_DIMENSIONS: Record<"VN" | "Western", string> = {
+  VN: "clarity · structure · communication · culture_fit (25% mỗi tiêu chí)",
+  Western:
+    "clarity · structure · communication · impact · leadership (20% mỗi tiêu chí)",
+};
 
 interface AnnotatedTranscriptProps {
-  items: TranscriptItem[]
-  contextPackId?: 'VN' | 'Western'
+  items: TranscriptItem[];
+  contextPackId?: "VN" | "Western";
 }
 
-export default function AnnotatedTranscript({ items, contextPackId }: AnnotatedTranscriptProps) {
+export default function AnnotatedTranscript({
+  items,
+  contextPackId,
+}: AnnotatedTranscriptProps) {
   return (
     <div className="flex flex-col gap-8">
       {items.map((item) => (
-        <div key={item.orderIndex} className="rounded-lg border border-gray-200 bg-white p-6">
+        <div
+          key={item.orderIndex}
+          className="rounded-lg border border-gray-200 bg-white p-6"
+        >
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
               Câu {item.orderIndex + 1}
             </p>
             <span className="text-xs font-semibold text-brand">
-              {item.overallScore.toFixed(1)} / 100
+              {item.overallScore === null
+                ? "Chưa thể chấm"
+                : `${item.overallScore.toFixed(1)} / 100`}
             </span>
           </div>
 
@@ -81,13 +94,17 @@ export default function AnnotatedTranscript({ items, contextPackId }: AnnotatedT
                 <li key={seg.id} className="flex gap-2 text-sm">
                   <span
                     className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
-                      seg.highlightLevel === 'strength' ? 'bg-green-500' : 'bg-orange-400'
+                      seg.highlightLevel === "strength"
+                        ? "bg-green-500"
+                        : "bg-orange-400"
                     }`}
                   />
                   <div className="flex flex-col gap-0.5">
                     <span className="text-gray-700">{seg.annotation}</span>
                     {seg.suggestion && (
-                      <span className="text-xs text-gray-400">Gợi ý: {seg.suggestion}</span>
+                      <span className="text-xs text-gray-400">
+                        Gợi ý: {seg.suggestion}
+                      </span>
                     )}
                   </div>
                 </li>
@@ -108,5 +125,5 @@ export default function AnnotatedTranscript({ items, contextPackId }: AnnotatedT
         </div>
       ))}
     </div>
-  )
+  );
 }

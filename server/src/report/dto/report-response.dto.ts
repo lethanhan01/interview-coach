@@ -12,15 +12,16 @@ export class TranscriptItemDto {
   questionText: string;
   orderIndex: number;
   answerText: string;
-  overallScore: number;
+  overallScore: number | null;
   modelAnswer: string;
   keyTakeaway: string;
+  isFallback: boolean;
   segments: AnnotatedSegmentDto[];
 }
 
 export class ReportResponseDto {
   sessionId: string;
-  overallScore: number;
+  overallScore: number | null;
   executiveSummary: Record<string, unknown>;
   competencyHeatmap: Record<string, unknown>;
   actionPlan: Record<string, unknown>;

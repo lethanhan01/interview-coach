@@ -7,6 +7,7 @@ import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
 import { FOLLOW_UP_QUEUE } from '../../common/constants/queue.constants';
 import type { SessionType } from '../pipelines/interview-pipeline.interface';
+import { isAIQuotaExceeded } from '../ai-error.utils';
 
 interface FollowUpJobDto {
   sessionId: string;
@@ -72,6 +73,13 @@ export class FollowUpProcessor extends WorkerHost {
         followUpText: result.followUpText,
       });
     } catch (error: unknown) {
+      if (isAIQuotaExceeded(error)) {
+        this.logger.warn(
+          `Follow-up skipped for session ${sessionId} turn ${turnId}: OpenAI quota exhausted`,
+        );
+        return;
+      }
+
       this.logger.error(
         `FollowUpProcessor failed for session ${sessionId} turn ${turnId}`,
         error instanceof Error ? error.stack : String(error),

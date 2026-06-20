@@ -13,14 +13,16 @@ interface FeedbackRow {
   userAnswerId: string;
   overallScore: number;
   keyTakeaway: string;
+  isFallback?: boolean;
 }
 
 interface SessionUpdateArgs {
   where: { id: string };
   data: {
     status: string;
-    overallScore: number;
+    overallScore: number | null;
     completedAt: Date;
+    actionPlanJson: { items: string[] };
   };
 }
 
@@ -110,5 +112,37 @@ describe('ComprehensiveReportProcessor', () => {
     expect(updateArgs.data.status).toBe('completed');
     expect(updateArgs.data.overallScore).toBe(70);
     expect(updateArgs.data.completedAt).toBeInstanceOf(Date);
+  });
+
+  it('không gọi OpenAI và không ghi điểm 0 giả khi toàn bộ feedback là fallback', async () => {
+    prisma.aiFeedback.findMany.mockResolvedValue([
+      {
+        userAnswerId: 'answer-1',
+        overallScore: 80,
+        keyTakeaway: 'Good',
+        isFallback: true,
+      },
+      {
+        userAnswerId: 'answer-2',
+        overallScore: 60,
+        keyTakeaway: 'Improve structure',
+        isFallback: true,
+      },
+    ]);
+    prisma.interviewSession.update.mockResolvedValue({});
+    const warnSpy = jest.spyOn((processor as any).logger, 'warn');
+    const errorSpy = jest.spyOn((processor as any).logger, 'error');
+
+    await expect(processor.process(job)).resolves.toBeUndefined();
+
+    const updateArgs = prisma.interviewSession.update.mock.calls[0][0];
+    expect(updateArgs.data.status).toBe('completed');
+    expect(updateArgs.data.overallScore).toBeNull();
+    expect(updateArgs.data.actionPlanJson.items).toHaveLength(3);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('skipping the action-plan API call'),
+    );
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(mockOpenAI.chatCompletion).not.toHaveBeenCalled();
   });
 });

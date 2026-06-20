@@ -11,6 +11,8 @@ import {
 } from '../../common/constants/queue.constants';
 import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.1';
 import type { SessionType } from '../pipelines/interview-pipeline.interface';
+import { isAIQuotaExceeded } from '../ai-error.utils';
+import { FALLBACK_FEEDBACK_MESSAGE } from '../fallback-content';
 
 interface FeedbackJobDto {
   sessionId: string;
@@ -107,10 +109,11 @@ export class FeedbackProcessor extends WorkerHost {
         feedback.annotatedSegments.length > 0,
       );
     } catch (error: unknown) {
+      const isQuotaError = isAIQuotaExceeded(error);
       const totalAttempts = job.opts.attempts ?? FEEDBACK_JOB_ATTEMPTS;
       const isLastAttempt = job.attemptsMade >= totalAttempts - 1;
 
-      if (!isLastAttempt) {
+      if (!isLastAttempt && !isQuotaError) {
         this.logger.warn(
           `FeedbackProcessor attempt ${job.attemptsMade + 1}/${totalAttempts} failed for answer ${answerId}, retrying`,
           error instanceof Error ? error.message : String(error),
@@ -118,10 +121,16 @@ export class FeedbackProcessor extends WorkerHost {
         throw error;
       }
 
-      this.logger.error(
-        `FeedbackProcessor failed after all ${totalAttempts} attempts for session ${sessionId} answer ${answerId}`,
-        error instanceof Error ? error.stack : String(error),
-      );
+      if (isQuotaError) {
+        this.logger.warn(
+          `Using fallback feedback for session ${sessionId} answer ${answerId}: OpenAI quota exhausted`,
+        );
+      } else {
+        this.logger.error(
+          `FeedbackProcessor failed after ${totalAttempts} attempts for session ${sessionId} answer ${answerId}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      }
 
       try {
         const hasAnnotations = await this.prisma.$transaction(async (tx) => {
@@ -143,7 +152,7 @@ export class FeedbackProcessor extends WorkerHost {
               userAnswerId: answerId,
               overallScore: 0,
               modelAnswer: '',
-              keyTakeaway: 'Feedback generation failed',
+              keyTakeaway: FALLBACK_FEEDBACK_MESSAGE,
               promptVersion: SURGICAL_FEEDBACK_PROMPT_CONFIG.version,
               isFallback: true,
             },

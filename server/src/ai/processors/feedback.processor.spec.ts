@@ -10,6 +10,9 @@ import {
   createMockPipelineStrategyFactory,
   createMockSseService,
 } from '../../test-utils/mock-factories';
+import { HttpStatus } from '@nestjs/common';
+import { InterviewAIException } from '../../common/exceptions/interview-ai.exception';
+import { ErrorCode } from '../../common/exceptions/error-code.enum';
 
 interface ExistingFeedback {
   id: string;
@@ -179,5 +182,34 @@ describe('FeedbackProcessor', () => {
       'turn.feedback_ready',
       { answerId: 'answer-1', hasAnnotations: true },
     );
+  });
+
+  it('không retry quota error và ghi fallback feedback ngay ở lần đầu', async () => {
+    strategy.evaluateAnswer.mockRejectedValue(
+      new InterviewAIException(
+        ErrorCode.AI_QUOTA_EXCEEDED,
+        HttpStatus.SERVICE_UNAVAILABLE,
+      ),
+    );
+    const warnSpy = jest.spyOn((processor as any).logger, 'warn');
+    const errorSpy = jest.spyOn((processor as any).logger, 'error');
+
+    await expect(processor.process(makeJob(0))).resolves.toBeUndefined();
+
+    const fallbackArgs = tx.aiFeedback.upsert.mock.calls[0][0];
+    expect(fallbackArgs.create).toEqual(
+      expect.objectContaining({
+        isFallback: true,
+        keyTakeaway: expect.stringContaining('tạm thời chưa khả dụng'),
+      }),
+    );
+    expect(tx.userAnswer.update).toHaveBeenCalledWith({
+      where: { id: 'answer-1' },
+      data: { feedbackGenerated: true },
+    });
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('OpenAI quota exhausted'),
+    );
+    expect(errorSpy).not.toHaveBeenCalled();
   });
 });
