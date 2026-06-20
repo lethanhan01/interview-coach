@@ -111,14 +111,12 @@ model InterviewSession {
   executiveSummaryJson  Json?             @map("executive_summary_json")
   commAnalysisJson      Json?             @map("comm_analysis_json")
   competencyHeatmapJson Json?             @map("competency_heatmap_json")
-  reverseQEvalJson      Json?             @map("reverse_q_eval_json")
   actionPlanJson        Json?             @map("action_plan_json")
   completedAt           DateTime?         @map("completed_at") @db.Timestamptz(6)
   createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   contextPack           ContextPack       @relation(fields: [contextPackId], references: [id])
   user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reverseQuestions      ReverseQuestion[]
   sessionQuestions      SessionQuestion[]
   userAnswers           UserAnswer[]
 
@@ -219,22 +217,6 @@ model AnnotatedSegment {
 
   @@index([aiFeedbackId], map: "idx_annotated_segments_feedback_id")
   @@map("annotated_segments")
-}
-
-model ReverseQuestion {
-  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionId         String           @map("session_id") @db.Uuid
-  questionText      String           @map("question_text")
-  answerMode        String           @default("text") @map("answer_mode")
-  aiResponse        String           @map("ai_response")
-  evaluationLabel   String           @map("evaluation_label")
-  evaluationComment String?          @map("evaluation_comment")
-  orderIndex        Int              @map("order_index")
-  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  session           InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  @@unique([sessionId, orderIndex])
-  @@map("reverse_questions")
 }
 
 model AiQualityLog {

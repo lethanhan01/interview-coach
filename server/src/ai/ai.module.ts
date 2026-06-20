@@ -12,7 +12,6 @@ import { QuestionGenerationProcessor } from './processors/question-generation.pr
 import { FollowUpProcessor } from './processors/follow-up.processor';
 import { FeedbackProcessor } from './processors/feedback.processor';
 import { ComprehensiveReportProcessor } from './processors/comprehensive-report.processor';
-import { RewriteEvalProcessor } from './processors/rewrite-eval.processor';
 import { TranscriptionProcessor } from './processors/transcription.processor';
 import { WhisperService } from '../turn/whisper.service';
 import { VoiceMetricsService } from '../turn/voice-metrics.service';
@@ -23,7 +22,6 @@ import {
   FOLLOW_UP_QUEUE,
   FEEDBACK_QUEUE,
   REPORT_QUEUE,
-  REWRITE_EVAL_QUEUE,
   TRANSCRIPTION_QUEUE,
 } from '../common/constants/queue.constants';
 
@@ -35,7 +33,6 @@ import {
       { name: FOLLOW_UP_QUEUE },
       { name: FEEDBACK_QUEUE },
       { name: REPORT_QUEUE },
-      { name: REWRITE_EVAL_QUEUE },
       { name: TRANSCRIPTION_QUEUE },
     ),
   ],
@@ -52,7 +49,6 @@ import {
     FollowUpProcessor,
     FeedbackProcessor,
     ComprehensiveReportProcessor,
-    RewriteEvalProcessor,
     TranscriptionProcessor,
     WhisperService,
     VoiceMetricsService,
