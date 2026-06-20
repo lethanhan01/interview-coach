@@ -46,7 +46,7 @@ export class TurnService {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
 
-    if (!['active', 'ready', 'generating'].includes(session.status)) {
+    if (!['active', 'ready'].includes(session.status)) {
       throw new InterviewAIException(
         ErrorCode.SESSION_NOT_ACTIVE,
         HttpStatus.FORBIDDEN,

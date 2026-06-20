@@ -742,7 +742,6 @@ async function seedS6(prisma: PrismaClient, userId: string): Promise<string> {
     questionId: sqIds[0],
     answerText: s6q1Text,
     answerMode: 'audio',
-    audioFileUrl: 'https://storage.example.com/seed/audio-s6-q1.webm',
     audioDurationSeconds: 42,
     audioSizeBytes: 210000,
     voiceMetricsJson: {
