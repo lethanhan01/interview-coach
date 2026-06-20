@@ -160,6 +160,7 @@ model UserAnswer {
   audioSizeBytes       Int?              @map("audio_size_bytes")
   skipped              Boolean           @default(false)
   voiceMetricsJson     Json?             @map("voice_metrics_json")
+  transcriptionStatus  String?           @map("transcription_status")
   feedbackGenerated    Boolean           @default(false) @map("feedback_generated")
   createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)

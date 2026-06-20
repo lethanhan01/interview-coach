@@ -3,34 +3,31 @@ import { HttpStatus } from '@nestjs/common';
 import { getQueueToken } from '@nestjs/bullmq';
 import { TurnService } from './turn.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { WhisperService } from './whisper.service';
-import { VoiceMetricsService } from './voice-metrics.service';
 import { FollowUpCoordinatorService } from './follow-up-coordinator.service';
 import {
   FOLLOW_UP_QUEUE,
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
+  TRANSCRIPTION_QUEUE,
+  TRANSCRIPTION_JOB_ATTEMPTS,
 } from '../common/constants/queue.constants';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import {
   createMockPrismaService,
   createMockQueue,
-  createMockWhisperService,
-  createMockVoiceMetricsService,
   createMockFollowUpCoordinatorService,
 } from '../test-utils/mock-factories';
 
 describe('TurnService', () => {
   let service: TurnService;
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
-  let mockWhisper: ReturnType<typeof createMockWhisperService>;
-  let mockVoiceMetrics: ReturnType<typeof createMockVoiceMetricsService>;
   let mockFollowUpCoordinator: ReturnType<
     typeof createMockFollowUpCoordinatorService
   >;
   let mockFollowUpQueue: ReturnType<typeof createMockQueue>;
   let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
+  let mockTranscriptionQueue: ReturnType<typeof createMockQueue>;
 
   const BASE_SESSION = {
     id: 'session-123',
@@ -63,18 +60,15 @@ describe('TurnService', () => {
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
-    mockWhisper = createMockWhisperService();
-    mockVoiceMetrics = createMockVoiceMetricsService();
     mockFollowUpCoordinator = createMockFollowUpCoordinatorService();
     mockFollowUpQueue = createMockQueue();
     mockFeedbackQueue = createMockQueue();
+    mockTranscriptionQueue = createMockQueue();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TurnService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: WhisperService, useValue: mockWhisper },
-        { provide: VoiceMetricsService, useValue: mockVoiceMetrics },
         {
           provide: FollowUpCoordinatorService,
           useValue: mockFollowUpCoordinator,
@@ -84,6 +78,7 @@ describe('TurnService', () => {
           useValue: mockFollowUpQueue,
         },
         { provide: getQueueToken(FEEDBACK_QUEUE), useValue: mockFeedbackQueue },
+        { provide: getQueueToken(TRANSCRIPTION_QUEUE), useValue: mockTranscriptionQueue },
       ],
     }).compile();
 
@@ -207,6 +202,7 @@ describe('TurnService', () => {
         ...BASE_SESSION,
         status: 'active',
       });
+      mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
       mockPrisma.userAnswer.upsert.mockResolvedValue(BASE_ANSWER);
       mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(false);
       mockFeedbackQueue.add.mockResolvedValue({});
@@ -228,6 +224,7 @@ describe('TurnService', () => {
     it('text mode: tạo answer, enqueue feedback, không enqueue follow-up khi shouldGenerateFollowUp=false', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
       mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
       mockPrisma.userAnswer.upsert.mockResolvedValue(BASE_ANSWER);
       mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(false);
       mockFeedbackQueue.add.mockResolvedValue({});
@@ -242,6 +239,7 @@ describe('TurnService', () => {
         answerId: 'answer-1',
         followUpQueued: false,
         feedbackQueued: true,
+        transcriptionPending: false,
       });
       expect(mockFollowUpQueue.add).not.toHaveBeenCalled();
       expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
@@ -255,12 +253,13 @@ describe('TurnService', () => {
           attempts: FEEDBACK_JOB_ATTEMPTS,
         }),
       );
-      expect(mockWhisper.transcribe).not.toHaveBeenCalled();
+      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
     });
 
     it('text mode: enqueue follow-up khi shouldGenerateFollowUp=true', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
       mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
       mockPrisma.userAnswer.upsert.mockResolvedValue(BASE_ANSWER);
       mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(true);
       mockFollowUpQueue.add.mockResolvedValue({});
@@ -273,6 +272,7 @@ describe('TurnService', () => {
       );
 
       expect(result.followUpQueued).toBe(true);
+      expect(result.transcriptionPending).toBe(false);
       expect(mockFollowUpQueue.add).toHaveBeenCalledWith(
         'follow-up',
         expect.objectContaining({ sessionId: 'session-123' }),
@@ -280,7 +280,7 @@ describe('TurnService', () => {
       );
     });
 
-    it('voice mode: gọi whisper.transcribe, tính voice metrics, lưu transcription', async () => {
+    it('voice mode: enqueue transcription job, không gọi Whisper trực tiếp, return transcriptionPending=true', async () => {
       const voiceDto = {
         questionId: 'q-1',
         answerMode: 'voice' as const,
@@ -291,35 +291,68 @@ describe('TurnService', () => {
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
       mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
-      mockWhisper.transcribe.mockResolvedValue({
-        text: 'Tôi là backend developer.',
-        durationSeconds: 43,
-      });
-      mockVoiceMetrics.calculate.mockReturnValue({ wpm: 120, fillerCount: 1 });
       mockPrisma.userAnswer.upsert.mockResolvedValue({
         ...BASE_ANSWER,
-        answerText: 'Tôi là backend developer.',
+        answerText: '',
+        audioFileUrl: 'https://storage.example.com/audio.webm',
       });
-      mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(false);
-      mockFeedbackQueue.add.mockResolvedValue({});
+      mockTranscriptionQueue.add.mockResolvedValue({});
+
+      const result = await service.submitAnswer('session-123', 'user-abc', voiceDto);
+
+      expect(result).toEqual({
+        answerId: 'answer-1',
+        followUpQueued: false,
+        feedbackQueued: false,
+        transcriptionPending: true,
+      });
+      expect(mockTranscriptionQueue.add).toHaveBeenCalledWith(
+        'transcription',
+        expect.objectContaining({
+          sessionId: 'session-123',
+          answerId: 'answer-1',
+          audioFileUrl: 'https://storage.example.com/audio.webm',
+        }),
+        expect.objectContaining({
+          jobId: 'transcription-answer-1',
+          attempts: TRANSCRIPTION_JOB_ATTEMPTS,
+        }),
+      );
+      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+      expect(mockFollowUpQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('voice mode: lưu answer với transcriptionStatus=pending và answerText rỗng', async () => {
+      const voiceDto = {
+        questionId: 'q-1',
+        answerMode: 'voice' as const,
+        audioFileUrl: 'https://storage.example.com/audio.webm',
+        audioDurationSeconds: 45,
+        audioSizeBytes: 102400,
+      };
+
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.userAnswer.upsert.mockResolvedValue({
+        ...BASE_ANSWER,
+        answerText: '',
+      });
+      mockTranscriptionQueue.add.mockResolvedValue({});
 
       await service.submitAnswer('session-123', 'user-abc', voiceDto);
 
-      expect(mockWhisper.transcribe).toHaveBeenCalledWith(
-        'https://storage.example.com/audio.webm',
-      );
-      expect(mockVoiceMetrics.calculate).toHaveBeenCalled();
       expect(mockPrisma.userAnswer.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           create: expect.objectContaining({
-            answerText: 'Tôi là backend developer.',
+            answerText: '',
             audioFileUrl: 'https://storage.example.com/audio.webm',
+            transcriptionStatus: 'pending',
           }),
         }),
       );
     });
 
-    it('retry dùng lại answer hiện có và không transcribe hoặc tạo record lần nữa', async () => {
+    it('retry dùng lại answer hiện có và không tạo record lần nữa', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
       mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
       mockPrisma.userAnswer.findUnique.mockResolvedValue(BASE_ANSWER);
@@ -334,7 +367,6 @@ describe('TurnService', () => {
 
       expect(result.answerId).toBe('answer-1');
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
-      expect(mockWhisper.transcribe).not.toHaveBeenCalled();
       expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
         'feedback',
         expect.objectContaining({ answerId: 'answer-1' }),

@@ -9,9 +9,9 @@ import {
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
   FOLLOW_UP_JOB_ATTEMPTS,
+  TRANSCRIPTION_QUEUE,
+  TRANSCRIPTION_JOB_ATTEMPTS,
 } from '../common/constants/queue.constants';
-import { WhisperService } from './whisper.service';
-import { VoiceMetricsService } from './voice-metrics.service';
 import { FollowUpCoordinatorService } from './follow-up-coordinator.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
@@ -20,11 +20,10 @@ import { TurnResponseDto } from './dto/turn-response.dto';
 export class TurnService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly whisperService: WhisperService,
-    private readonly voiceMetricsService: VoiceMetricsService,
     private readonly followUpCoordinatorService: FollowUpCoordinatorService,
     @InjectQueue(FOLLOW_UP_QUEUE) private readonly followUpQueue: Queue,
     @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
+    @InjectQueue(TRANSCRIPTION_QUEUE) private readonly transcriptionQueue: Queue,
   ) {}
 
   async submitAnswer(
@@ -69,6 +68,55 @@ export class TurnService {
       });
     }
 
+    // Voice path: create placeholder answer and enqueue transcription async
+    if (dto.answerMode === 'voice' && dto.audioFileUrl) {
+      const answer = await this.prisma.userAnswer.upsert({
+        where: {
+          sessionId_questionId: { sessionId, questionId: dto.questionId },
+        },
+        create: {
+          sessionId,
+          questionId: dto.questionId,
+          answerMode: dto.answerMode,
+          answerText: '',
+          audioFileUrl: dto.audioFileUrl,
+          audioDurationSeconds: dto.audioDurationSeconds,
+          audioSizeBytes: dto.audioSizeBytes,
+          transcriptionStatus: 'pending',
+        },
+        update: {},
+      });
+
+      const contextPack = session.contextPackId as 'VN' | 'Western';
+      const sessionType = session.sessionType;
+
+      await this.transcriptionQueue.add(
+        'transcription',
+        {
+          sessionId,
+          answerId: answer.id,
+          audioFileUrl: dto.audioFileUrl,
+          audioDurationSeconds: dto.audioDurationSeconds,
+          audioSizeBytes: dto.audioSizeBytes,
+          contextPack,
+          sessionType,
+        },
+        {
+          jobId: `transcription-${answer.id}`,
+          attempts: TRANSCRIPTION_JOB_ATTEMPTS,
+          backoff: { type: 'fixed', delay: 3000 },
+        },
+      );
+
+      return {
+        answerId: answer.id,
+        followUpQueued: false,
+        feedbackQueued: false,
+        transcriptionPending: true,
+      };
+    }
+
+    // Text path: process synchronously
     const existingAnswer = await this.prisma.userAnswer.findUnique({
       where: {
         sessionId_questionId: { sessionId, questionId: dto.questionId },
@@ -77,24 +125,7 @@ export class TurnService {
     let answer = existingAnswer;
 
     if (!answer) {
-      let answerText: string;
-      let audioDurationSeconds: number | undefined;
-      let voiceMetricsJson: object | undefined;
-
-      if (dto.answerMode === 'voice' && dto.audioFileUrl) {
-        const transcription = await this.whisperService.transcribe(
-          dto.audioFileUrl,
-        );
-        answerText = transcription.text;
-        audioDurationSeconds =
-          dto.audioDurationSeconds ?? transcription.durationSeconds;
-        voiceMetricsJson = this.voiceMetricsService.calculate(
-          answerText,
-          transcription.durationSeconds,
-        );
-      } else {
-        answerText = dto.answerText ?? '';
-      }
+      const answerText = dto.answerText ?? '';
 
       answer = await this.prisma.userAnswer.upsert({
         where: {
@@ -106,9 +137,8 @@ export class TurnService {
           answerMode: dto.answerMode,
           answerText,
           audioFileUrl: dto.audioFileUrl,
-          audioDurationSeconds,
+          audioDurationSeconds: dto.audioDurationSeconds,
           audioSizeBytes: dto.audioSizeBytes,
-          voiceMetricsJson,
         },
         update: {},
       });
@@ -151,6 +181,7 @@ export class TurnService {
       answerId: answer.id,
       followUpQueued: followUpEnabled,
       feedbackQueued: true,
+      transcriptionPending: false,
     };
   }
 }
