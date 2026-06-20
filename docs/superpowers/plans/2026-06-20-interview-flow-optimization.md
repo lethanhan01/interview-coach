@@ -1548,3 +1548,66 @@ Không có TBD, TODO, hay "implement later" trong plan này.
 - `TRANSCRIPTION_QUEUE`, `TRANSCRIPTION_JOB_ATTEMPTS` khai báo ở Task 6 step 1, dùng ở steps 7-8
 - `enqueueIfAllFeedbacksReady` signature: `(sessionId: string, sessionType: string, contextPack: 'VN' | 'Western') => Promise<void>` — nhất quán ở Tasks 4 và mock-factories
 - `reportQuality: 'full' | 'partial' | 'unavailable'` — nhất quán ở Tasks 5 DTO và service
+
+---
+
+## Tiến độ Thực hiện
+
+| Task | Trạng thái | Commit | Tests | Ghi chú |
+|------|-----------|--------|-------|---------|
+| 1 — MinLength validation | DONE | 08d22a0 | 4 pass | review clean |
+| 2 — Chặn 'generating' | DONE | fb92f89 | 10 pass | review clean |
+| 3 — Follow-up retry | DONE | 00178a1 | 6 pass | review clean |
+| 4 — Event-driven report | DONE | 8962241 | 170 pass | review clean |
+| 5 — reportQuality field | DONE | 3670a05..09b52b7 | 18 pass | review clean |
+| 6 — Async transcription | DONE | faf1226..7afa718 | 179 pass | review clean |
+| 6 Minors — Cleanup Task 6 | DONE | pending commit | 179 pass | 3 minors fixed (xem bên dưới) |
+| 7 — Dead code cleanup | PENDING | — | — | bước tiếp theo |
+
+**Cập nhật lần cuối:** 2026-06-21
+
+---
+
+### Chi tiết Task 6 Minors — Đã fix
+
+Ba vấn đề nhỏ từ review Task 6 đã được xử lý:
+
+1. **FIXED** — Xóa `WhisperService` và `VoiceMetricsService` khỏi `TurnModule.providers`. Hai service này chỉ dùng trong `TranscriptionProcessor` (AiModule), không cần khai báo lại trong TurnModule.
+
+2. **FIXED** — Export `TranscriptionJobDto` interface từ `transcription.processor.ts` (thêm `export`). `TurnService` import và dùng type này để annotate hai payload objects (retry path và new-answer path), tránh duplicate shape definition.
+
+3. **FIXED** — Migration `20260621000000_add_transcription_status/migration.sql` đã đổi về chuẩn `ADD COLUMN`. Migration trước đó chưa được Prisma track (`prisma migrate status` trả về "not yet applied"). Đã chạy `prisma migrate resolve --applied 20260621000000_add_transcription_status` để track với checksum chuẩn. `prisma migrate status` xác nhận "Database schema is up to date".
+
+---
+
+### Quyết định quan trọng trong quá trình thực hiện
+
+**Task 4 — Thay đổi trigger report từ SessionService sang FeedbackProcessor:**
+
+SessionService ban đầu enqueue report ngay khi user PATCH `completed`. Điều này tạo race condition vì feedback jobs có thể chưa xong. Giải pháp: thêm `enqueueIfAllFeedbacksReady()` vào `ReportService`, gọi sau mỗi feedback completion (cả success lẫn fallback path). Method này check `session.status === 'completing'` và so sánh `feedbackGenerated` count trước khi enqueue — đảm bảo report chỉ được tạo một lần sau khi tất cả feedbacks xong. `REPORT_JOB_ATTEMPTS` giảm từ 20 xuống 3 vì không còn cần retry để chờ feedbacks.
+
+**Task 6 — Circular dependency giữa AiModule và TurnModule:**
+
+`TranscriptionProcessor` cần `WhisperService` và `VoiceMetricsService` từ `TurnModule`. Nhưng `TurnModule` đã import `AiModule`, nên không thể import ngược lại. Giải pháp: thêm `WhisperService` và `VoiceMetricsService` trực tiếp vào `AiModule.providers` (dual-instantiation — cả hai service là stateless nên không có side effect). `FollowUpCoordinatorService` giữ nguyên trong `TurnModule` vì `TurnService` vẫn dùng nó cho text-mode follow-up logic.
+
+**Task 6 — Voice retry idempotency:**
+
+Review phát hiện: khi client retry `POST /turns` voice sau khi transcription đã xong nhưng HTTP response bị mất, response trả về `transcriptionPending: true` (sai). Fix thêm: check `existingAnswer.transcriptionStatus === 'done'` → trả về `{ transcriptionPending: false, feedbackQueued: true }` ngay, không enqueue lại. Nếu `'pending'`, re-enqueue vào `transcriptionQueue` (BullMQ dedup qua `jobId` xử lý safe).
+
+---
+
+### Bước tiếp theo — Task 7: Dead code cleanup
+
+Gồm 8 bước, có 2 thao tác destructive cần chú ý:
+
+**Các thay đổi code (an toàn):**
+- Xóa `server/src/ai/processors/rewrite-eval.processor.ts`
+- Xóa `server/src/ai/processors/rewrite-eval.processor.spec.ts`
+- Xóa `REWRITE_EVAL_QUEUE` khỏi `queue.constants.ts`
+- Xóa `RewriteEvalProcessor` import + provider khỏi `ai.module.ts`
+
+**Migration destructive (cần xác nhận trước khi chạy trên shared DB):**
+- DROP COLUMN `reverse_q_eval_json` khỏi bảng `interview_sessions`
+- DROP TABLE `reverse_questions`
+
+Lưu ý tương tự Task 6: `prisma migrate dev` có thể bị block do DB drift — chuẩn bị dùng `prisma db execute` với SQL thủ công nếu cần.
