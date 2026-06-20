@@ -5,9 +5,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
+import { ReportService } from '../../report/report.service';
 import {
   createMockContextPackService,
   createMockPipelineStrategyFactory,
+  createMockReportService,
   createMockSseService,
 } from '../../test-utils/mock-factories';
 import { HttpStatus } from '@nestjs/common';
@@ -64,6 +66,7 @@ describe('FeedbackProcessor', () => {
   let mockSse: ReturnType<typeof createMockSseService>;
   let mockContextPack: ReturnType<typeof createMockContextPackService>;
   let mockFactory: ReturnType<typeof createMockPipelineStrategyFactory>;
+  let mockReportService: ReturnType<typeof createMockReportService>;
   let strategy: { evaluateAnswer: jest.Mock };
 
   const jobData = {
@@ -103,6 +106,7 @@ describe('FeedbackProcessor', () => {
     mockSse = createMockSseService();
     mockContextPack = createMockContextPackService();
     mockFactory = createMockPipelineStrategyFactory();
+    mockReportService = createMockReportService();
     strategy = {
       evaluateAnswer: jest.fn().mockResolvedValue({
         overallScore: 80,
@@ -130,6 +134,7 @@ describe('FeedbackProcessor', () => {
         { provide: SseService, useValue: mockSse },
         { provide: ContextPackService, useValue: mockContextPack },
         { provide: PipelineStrategyFactory, useValue: mockFactory },
+        { provide: ReportService, useValue: mockReportService },
       ],
     }).compile();
 
@@ -211,5 +216,47 @@ describe('FeedbackProcessor', () => {
       expect.stringContaining('OpenAI quota exhausted'),
     );
     expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it('gọi enqueueIfAllFeedbacksReady sau khi feedback thành công', async () => {
+    const mockStrategy = {
+      evaluateAnswer: jest.fn().mockResolvedValue({
+        overallScore: 80,
+        modelAnswer: 'Model answer',
+        keyTakeaway: 'Key point',
+        promptVersion: 'v1.1',
+        annotatedSegments: [],
+      }),
+    };
+    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockFactory.getStrategy.mockReturnValue(mockStrategy);
+    prisma.$transaction.mockImplementation(async (cb) => cb(tx));
+    tx.aiFeedback.upsert.mockResolvedValue({ id: 'fb-1' });
+    tx.annotatedSegment.deleteMany.mockResolvedValue({ count: 0 });
+    tx.annotatedSegment.createMany.mockResolvedValue({ count: 0 });
+    tx.userAnswer.update.mockResolvedValue({});
+    mockSse.emit.mockResolvedValue(undefined);
+
+    const job = {
+      data: {
+        sessionId: 'session-123',
+        turnId: 'turn-1',
+        answerId: 'answer-1',
+        questionText: 'Tell me about yourself?',
+        answerText: 'I am a developer.',
+        contextPack: 'VN' as const,
+        sessionType: 'hr' as const,
+      },
+      attemptsMade: 0,
+      opts: { attempts: 2 },
+    } as unknown as Job<any>;
+
+    await processor.process(job);
+
+    expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
+      'session-123',
+      'hr',
+      'VN',
+    );
   });
 });

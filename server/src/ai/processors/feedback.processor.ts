@@ -5,6 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
+import { ReportService } from '../../report/report.service';
 import {
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
@@ -33,6 +34,7 @@ export class FeedbackProcessor extends WorkerHost {
     private readonly sseService: SseService,
     private readonly contextPackService: ContextPackService,
     private readonly factory: PipelineStrategyFactory,
+    private readonly reportService: ReportService,
   ) {
     super();
   }
@@ -108,6 +110,14 @@ export class FeedbackProcessor extends WorkerHost {
         answerId,
         feedback.annotatedSegments.length > 0,
       );
+      await this.reportService
+        .enqueueIfAllFeedbacksReady(sessionId, sessionType, contextPack)
+        .catch((err: unknown) => {
+          this.logger.warn(
+            `Failed to check report readiness for session ${sessionId}`,
+            err instanceof Error ? err.message : String(err),
+          );
+        });
     } catch (error: unknown) {
       const isQuotaError = isAIQuotaExceeded(error);
       const totalAttempts = job.opts.attempts ?? FEEDBACK_JOB_ATTEMPTS;
@@ -166,6 +176,14 @@ export class FeedbackProcessor extends WorkerHost {
         });
 
         await this.emitFeedbackReady(sessionId, answerId, hasAnnotations);
+        await this.reportService
+          .enqueueIfAllFeedbacksReady(sessionId, sessionType, contextPack)
+          .catch((err: unknown) => {
+            this.logger.warn(
+              `Failed to check report readiness for session ${sessionId}`,
+              err instanceof Error ? err.message : String(err),
+            );
+          });
       } catch (fallbackError: unknown) {
         this.logger.error(
           `FeedbackProcessor fallback insert failed for answer ${answerId}`,

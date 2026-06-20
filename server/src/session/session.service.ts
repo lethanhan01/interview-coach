@@ -179,7 +179,7 @@ export class SessionService {
 
     if (session.status === 'completed') return session;
     if (session.status === 'completing') {
-      await this.reportService.enqueueReport(
+      await this.reportService.enqueueIfAllFeedbacksReady(
         sessionId,
         session.sessionType,
         session.contextPackId as 'VN' | 'Western',
@@ -209,7 +209,7 @@ export class SessionService {
     });
 
     try {
-      await this.reportService.enqueueReport(
+      await this.reportService.enqueueIfAllFeedbacksReady(
         sessionId,
         session.sessionType,
         session.contextPackId as 'VN' | 'Western',

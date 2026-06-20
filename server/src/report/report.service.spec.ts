@@ -246,4 +246,64 @@ describe('ReportService', () => {
       ).rejects.toMatchObject({ errorCode: ErrorCode.SESSION_INCOMPLETE });
     });
   });
+
+  describe('enqueueIfAllFeedbacksReady', () => {
+    it('không enqueue khi session status không phải completing', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        status: 'active',
+      });
+
+      await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
+
+      expect(mockReportQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('không enqueue khi chưa đủ feedbacks', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        status: 'completing',
+      });
+      mockPrisma.userAnswer.count
+        .mockResolvedValueOnce(3)  // total
+        .mockResolvedValueOnce(2); // done
+
+      await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
+
+      expect(mockReportQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('enqueue report khi tất cả feedbacks đã xong và status là completing', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        status: 'completing',
+      });
+      mockPrisma.userAnswer.count
+        .mockResolvedValueOnce(3)  // total
+        .mockResolvedValueOnce(3); // done
+      mockPrisma.userAnswer.findMany.mockResolvedValue([
+        { id: 'a-1' },
+        { id: 'a-2' },
+        { id: 'a-3' },
+      ]);
+      mockReportQueue.getJob.mockResolvedValue(null);
+      mockReportQueue.add.mockResolvedValue({} as any);
+
+      await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
+
+      expect(mockReportQueue.add).toHaveBeenCalledWith(
+        'comprehensive-report',
+        expect.objectContaining({ sessionId: 'session-123' }),
+        expect.objectContaining({ jobId: 'report-session-123' }),
+      );
+    });
+
+    it('không enqueue khi session không tồn tại', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
+
+      await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
+
+      expect(mockReportQueue.add).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -258,7 +258,7 @@ describe('SessionService', () => {
       mockPrisma.sessionQuestion.count.mockResolvedValue(5);
       mockPrisma.userAnswer.count.mockResolvedValue(5);
       mockPrisma.interviewSession.update.mockResolvedValue(updated);
-      mockReportService.enqueueReport.mockResolvedValue(undefined);
+      mockReportService.enqueueIfAllFeedbacksReady.mockResolvedValue(undefined);
 
       const result = await service.updateStatus(
         'session-123',
@@ -267,7 +267,7 @@ describe('SessionService', () => {
       );
 
       expect(result.status).toBe('completing');
-      expect(mockReportService.enqueueReport).toHaveBeenCalledWith(
+      expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
         'session-123',
         'hr',
         'VN',
@@ -282,7 +282,7 @@ describe('SessionService', () => {
 
       await service.updateStatus('session-123', 'user-abc', 'active');
 
-      expect(mockReportService.enqueueReport).not.toHaveBeenCalled();
+      expect(mockReportService.enqueueIfAllFeedbacksReady).not.toHaveBeenCalled();
     });
 
     it('từ chối generating → completed', async () => {
@@ -322,7 +322,7 @@ describe('SessionService', () => {
       await expect(
         service.updateStatus('session-123', 'user-abc', 'completed'),
       ).rejects.toMatchObject({ errorCode: ErrorCode.SESSION_INCOMPLETE });
-      expect(mockReportService.enqueueReport).not.toHaveBeenCalled();
+      expect(mockReportService.enqueueIfAllFeedbacksReady).not.toHaveBeenCalled();
     });
 
     it('completed lặp lại không enqueue thêm report', async () => {
@@ -336,17 +336,17 @@ describe('SessionService', () => {
       );
 
       expect(result).toBe(completed);
-      expect(mockReportService.enqueueReport).not.toHaveBeenCalled();
+      expect(mockReportService.enqueueIfAllFeedbacksReady).not.toHaveBeenCalled();
     });
 
     it('khôi phục completing bằng cách đảm bảo report job tồn tại', async () => {
       const completing = { ...BASE_SESSION, status: 'completing' };
       mockPrisma.interviewSession.findUnique.mockResolvedValue(completing);
-      mockReportService.enqueueReport.mockResolvedValue(undefined);
+      mockReportService.enqueueIfAllFeedbacksReady.mockResolvedValue(undefined);
 
       await service.updateStatus('session-123', 'user-abc', 'completed');
 
-      expect(mockReportService.enqueueReport).toHaveBeenCalledTimes(1);
+      expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledTimes(1);
     });
   });
 

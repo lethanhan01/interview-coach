@@ -168,4 +168,28 @@ export class ReportService {
       },
     );
   }
+
+  async enqueueIfAllFeedbacksReady(
+    sessionId: string,
+    sessionType: string,
+    contextPack: 'VN' | 'Western',
+  ): Promise<void> {
+    const session = await this.prisma.interviewSession.findUnique({
+      where: { id: sessionId },
+      select: { status: true },
+    });
+
+    if (session?.status !== 'completing') return;
+
+    const [totalAnswers, completedFeedbacks] = await Promise.all([
+      this.prisma.userAnswer.count({ where: { sessionId } }),
+      this.prisma.userAnswer.count({
+        where: { sessionId, feedbackGenerated: true },
+      }),
+    ]);
+
+    if (totalAnswers === 0 || completedFeedbacks < totalAnswers) return;
+
+    await this.enqueueReport(sessionId, sessionType, contextPack);
+  }
 }

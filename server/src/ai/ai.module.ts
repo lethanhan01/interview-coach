@@ -13,6 +13,7 @@ import { FollowUpProcessor } from './processors/follow-up.processor';
 import { FeedbackProcessor } from './processors/feedback.processor';
 import { ComprehensiveReportProcessor } from './processors/comprehensive-report.processor';
 import { RewriteEvalProcessor } from './processors/rewrite-eval.processor';
+import { ReportModule } from '../report/report.module';
 import {
   QUESTION_GEN_QUEUE,
   FOLLOW_UP_QUEUE,
@@ -23,6 +24,7 @@ import {
 
 @Module({
   imports: [
+    ReportModule,
     BullModule.registerQueue(
       { name: QUESTION_GEN_QUEUE },
       { name: FOLLOW_UP_QUEUE },

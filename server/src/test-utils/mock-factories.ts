@@ -100,7 +100,8 @@ export const createMockFollowUpCoordinatorService = () => ({
 
 export const createMockReportService = () => ({
   getReport: jest.fn(),
-  enqueueReport: jest.fn(),
+  enqueueReport: jest.fn().mockResolvedValue(undefined),
+  enqueueIfAllFeedbacksReady: jest.fn().mockResolvedValue(undefined),
 });
 
 export const createMockSessionService = () => ({
