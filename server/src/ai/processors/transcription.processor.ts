@@ -16,7 +16,7 @@ import {
 } from '../../common/constants/queue.constants';
 import type { SessionType } from '../pipelines/interview-pipeline.interface';
 
-interface TranscriptionJobDto {
+export interface TranscriptionJobDto {
   sessionId: string;
   answerId: string;
   audioFileUrl: string;

@@ -1,2 +1,2 @@
--- AlterTable: add transcription_status column to user_answers
-ALTER TABLE "user_answers" ADD COLUMN IF NOT EXISTS "transcription_status" TEXT;
+-- AlterTable
+ALTER TABLE "user_answers" ADD COLUMN "transcription_status" TEXT;

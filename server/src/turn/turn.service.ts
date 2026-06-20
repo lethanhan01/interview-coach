@@ -15,6 +15,7 @@ import {
 import { FollowUpCoordinatorService } from './follow-up-coordinator.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
+import type { TranscriptionJobDto } from '../ai/processors/transcription.processor';
 
 @Injectable()
 export class TurnService {
@@ -88,17 +89,18 @@ export class TurnService {
         // transcriptionStatus is 'pending' or null — re-enqueue for dedup
         const contextPackRetry = session.contextPackId as 'VN' | 'Western';
         const sessionTypeRetry = session.sessionType;
+        const retryPayload: TranscriptionJobDto = {
+          sessionId,
+          answerId: existingVoiceAnswer.id,
+          audioFileUrl: dto.audioFileUrl,
+          audioDurationSeconds: dto.audioDurationSeconds,
+          audioSizeBytes: dto.audioSizeBytes,
+          contextPack: contextPackRetry,
+          sessionType: sessionTypeRetry,
+        };
         await this.transcriptionQueue.add(
           'transcription',
-          {
-            sessionId,
-            answerId: existingVoiceAnswer.id,
-            audioFileUrl: dto.audioFileUrl,
-            audioDurationSeconds: dto.audioDurationSeconds,
-            audioSizeBytes: dto.audioSizeBytes,
-            contextPack: contextPackRetry,
-            sessionType: sessionTypeRetry,
-          },
+          retryPayload,
           {
             jobId: `transcription-${existingVoiceAnswer.id}`,
             attempts: TRANSCRIPTION_JOB_ATTEMPTS,
@@ -132,18 +134,19 @@ export class TurnService {
 
       const contextPack = session.contextPackId as 'VN' | 'Western';
       const sessionType = session.sessionType;
+      const transcriptionPayload: TranscriptionJobDto = {
+        sessionId,
+        answerId: answer.id,
+        audioFileUrl: dto.audioFileUrl,
+        audioDurationSeconds: dto.audioDurationSeconds,
+        audioSizeBytes: dto.audioSizeBytes,
+        contextPack,
+        sessionType,
+      };
 
       await this.transcriptionQueue.add(
         'transcription',
-        {
-          sessionId,
-          answerId: answer.id,
-          audioFileUrl: dto.audioFileUrl,
-          audioDurationSeconds: dto.audioDurationSeconds,
-          audioSizeBytes: dto.audioSizeBytes,
-          contextPack,
-          sessionType,
-        },
+        transcriptionPayload,
         {
           jobId: `transcription-${answer.id}`,
           attempts: TRANSCRIPTION_JOB_ATTEMPTS,
