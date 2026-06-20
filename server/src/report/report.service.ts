@@ -108,8 +108,22 @@ export class ReportService {
     const storedActionPlan = toRecord(session.actionPlanJson);
     const storedExecutiveSummary = toRecord(session.executiveSummaryJson);
 
+    const hasSomeFallback = transcript.some((item) => item.isFallback);
+    const hasSomeEvaluated = transcript.some(
+      (item) => !item.isFallback && item.overallScore !== null,
+    );
+    let reportQuality: 'full' | 'partial' | 'unavailable';
+    if (hasSomeFallback && hasSomeEvaluated) {
+      reportQuality = 'partial';
+    } else if (hasSomeFallback) {
+      reportQuality = 'unavailable';
+    } else {
+      reportQuality = 'full';
+    }
+
     return {
       sessionId,
+      reportQuality,
       overallScore: allFeedbackIsFallback ? null : session.overallScore,
       executiveSummary: allFeedbackIsFallback
         ? {

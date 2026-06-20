@@ -166,6 +166,92 @@ describe('ReportService', () => {
       expect(result.transcript[0].questionText).toBe('Tell me about yourself');
     });
 
+    it('trả về reportQuality=full khi không có fallback feedbacks', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(COMPLETED_SESSION);
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Question 1',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              answerText: 'Answer',
+              aiFeedback: {
+                overallScore: 80,
+                modelAnswer: 'Model',
+                keyTakeaway: 'Key',
+                isFallback: false,
+                annotatedSegments: [],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.reportQuality).toBe('full');
+    });
+
+    it('trả về reportQuality=unavailable khi tất cả feedbacks là fallback', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(COMPLETED_SESSION);
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Question 1',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              answerText: 'Answer',
+              aiFeedback: {
+                overallScore: 0,
+                modelAnswer: '',
+                keyTakeaway: 'AI unavailable',
+                isFallback: true,
+                annotatedSegments: [],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.reportQuality).toBe('unavailable');
+    });
+
+    it('trả về reportQuality=partial khi một phần feedbacks là fallback', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(COMPLETED_SESSION);
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Q1',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              answerText: 'A1',
+              aiFeedback: { overallScore: 80, modelAnswer: 'M', keyTakeaway: 'K', isFallback: false, annotatedSegments: [] },
+            },
+          ],
+        },
+        {
+          id: 'q-2',
+          questionText: 'Q2',
+          orderIndex: 2,
+          userAnswers: [
+            {
+              answerText: 'A2',
+              aiFeedback: { overallScore: 0, modelAnswer: '', keyTakeaway: 'AI unavailable', isFallback: true, annotatedSegments: [] },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.reportQuality).toBe('partial');
+    });
+
     it('trả score=null thay vì 0 khi toàn bộ feedback là fallback', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...COMPLETED_SESSION,
