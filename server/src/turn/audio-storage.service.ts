@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'node:crypto';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
+import { WhisperService } from './whisper.service';
 
 const AUDIO_BUCKET = 'interview-audio';
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
@@ -22,13 +23,18 @@ export interface UploadedAudioFile {
 export interface AudioUploadResult {
   audioFileUrl: string;
   audioSizeBytes: number;
+  transcript: string;
+  transcriptDurationSeconds: number;
 }
 
 @Injectable()
 export class AudioStorageService {
   private readonly storage: ReturnType<typeof createClient>['storage'];
 
-  constructor(config: ConfigService) {
+  constructor(
+    config: ConfigService,
+    private readonly whisperService: WhisperService,
+  ) {
     this.storage = createClient(
       config.getOrThrow<string>('SUPABASE_URL'),
       config.getOrThrow<string>('SUPABASE_SERVICE_ROLE_KEY'),
@@ -91,9 +97,13 @@ export class AudioStorageService {
     }
 
     const { data } = this.storage.from(AUDIO_BUCKET).getPublicUrl(objectPath);
+    const transcription = await this.whisperService.transcribe(data.publicUrl);
+
     return {
       audioFileUrl: data.publicUrl,
       audioSizeBytes: file.size,
+      transcript: transcription.text,
+      transcriptDurationSeconds: transcription.durationSeconds,
     };
   }
 }

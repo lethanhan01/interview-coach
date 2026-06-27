@@ -118,12 +118,12 @@ Tách CV data khỏi `user_profiles` sang bảng `resumes` riêng; chỉ tách s
 
 ### 2026-06-27 — T13: Tách bảng session_reports (SR-07)
 
-Tách 4 JSON columns khỏi `interview_sessions` sang bảng `session_reports` chuẩn hóa:
+Tách report payload khỏi `interview_sessions` sang bảng `session_reports` chuẩn hóa:
 
 - Schema: xóa `planJson`, `selfEvalJson`, `executiveSummaryJson`, `commAnalysisJson`, `competencyHeatmapJson`, `actionPlanJson`. Thêm model `SessionReport` (unique `(session_id, report_type, version)`). `InterviewSession → SessionReport (1:n)`.
 - `ComprehensiveReportProcessor`: thay `interviewSession.update(JSON cols)` bằng `$transaction([4x sessionReport.upsert, interviewSession.update])` — idempotent cho BullMQ retry.
 - `ReportService.getReport`: `findUnique` + `include: { sessionReports: true }`; đọc content từ rows thay vì columns; check `REPORT_NOT_READY` qua `find(executive_summary)`.
-- `migration.sql §9`: DDL + index + RLS cho `session_reports`. Apply sau `db push`.
+- `migration.sql §9`: DDL + index + guarded backfill từ các JSON columns cũ nếu còn tồn tại + RLS cho `session_reports`. Apply sau `db push`.
 - Tests: spec cập nhật toàn bộ — bỏ JSON column mocks, thêm `sessionReport.upsert` mock + `$transaction` mock.
 - DB: `db push --accept-data-loss` drop 6 JSON columns + tạo `session_reports`; RLS apply.
 

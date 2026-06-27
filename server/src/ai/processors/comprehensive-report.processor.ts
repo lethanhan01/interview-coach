@@ -136,6 +136,11 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       );
     }
 
+    const reportMetadata = {
+      generatedByModel: COMPREHENSIVE_REPORT_PROMPT_CONFIG.model,
+      promptVersion: COMPREHENSIVE_REPORT_PROMPT_CONFIG.version,
+    };
+
     try {
       await this.prisma.$transaction([
         this.prisma.sessionReport.upsert({
@@ -151,8 +156,9 @@ export class ComprehensiveReportProcessor extends WorkerHost {
             reportType: 'executive_summary',
             version: 1,
             contentJson: executiveSummary,
+            ...reportMetadata,
           },
-          update: { contentJson: executiveSummary },
+          update: { contentJson: executiveSummary, ...reportMetadata },
         }),
         this.prisma.sessionReport.upsert({
           where: {
@@ -167,8 +173,9 @@ export class ComprehensiveReportProcessor extends WorkerHost {
             reportType: 'comm_analysis',
             version: 1,
             contentJson: commAnalysis,
+            ...reportMetadata,
           },
-          update: { contentJson: commAnalysis },
+          update: { contentJson: commAnalysis, ...reportMetadata },
         }),
         this.prisma.sessionReport.upsert({
           where: {
@@ -183,8 +190,9 @@ export class ComprehensiveReportProcessor extends WorkerHost {
             reportType: 'competency_heatmap',
             version: 1,
             contentJson: competencyHeatmap,
+            ...reportMetadata,
           },
-          update: { contentJson: competencyHeatmap },
+          update: { contentJson: competencyHeatmap, ...reportMetadata },
         }),
         this.prisma.sessionReport.upsert({
           where: {
@@ -199,8 +207,9 @@ export class ComprehensiveReportProcessor extends WorkerHost {
             reportType: 'action_plan',
             version: 1,
             contentJson: actionPlan,
+            ...reportMetadata,
           },
-          update: { contentJson: actionPlan },
+          update: { contentJson: actionPlan, ...reportMetadata },
         }),
         this.prisma.interviewSession.update({
           where: { id: sessionId },

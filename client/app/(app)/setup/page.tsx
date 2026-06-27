@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import type {
   ContextPack,
@@ -14,6 +14,7 @@ import JdForm from '@/components/setup/JdForm'
 import ConfigForm from '@/components/setup/ConfigForm'
 import ConfirmStep from '@/components/setup/ConfirmStep'
 import SavedJdPicker from '@/components/setup/SavedJdPicker'
+import { ArrowLeft } from 'lucide-react'
 
 // ── Constants & Types ─────────────────────────────────────────────────────────
 
@@ -176,8 +177,25 @@ const STEP_LABELS: Record<1 | 2 | 3, string> = { 1: 'Job Description', 2: 'Cấu
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
+function SetupPageLoading() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="size-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+    </div>
+  )
+}
+
 export default function SetupPage() {
+  return (
+    <Suspense fallback={<SetupPageLoading />}>
+      <SetupPageContent />
+    </Suspense>
+  )
+}
+
+function SetupPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [step, setStep] = useState<Step>(0)
   const [jdPickerReady, setJdPickerReady] = useState(false)
   const [jd, setJd] = useState<JdFormData>(() => {
@@ -215,14 +233,29 @@ export default function SetupPage() {
 
   useEffect(() => {
     let cancelled = false
+    const jdId = searchParams.get('jdId')
+    const isNew = searchParams.get('new') === '1'
+
     apiClient
       .get<{ items: SavedJobDescription[] }>('/saved-job-descriptions')
       .then((data) => {
         if (!cancelled) {
           const items = data.items ?? []
           setSavedJobDescriptions(items)
-          // Nếu không có JD nào đã lưu → skip step 0, vào thẳng step 1
-          if (items.length === 0) setStep(1)
+
+          if (jdId) {
+            // Đến từ jd-library với JD cụ thể → pre-fill và vào step 1
+            const match = items.find((i) => i.id === jdId)
+            if (match) {
+              setJd(savedJobDescriptionToForm(match))
+              setSelectedSavedJobDescriptionId(match.id)
+            }
+            setStep(1)
+          } else if (isNew || items.length === 0) {
+            // Tạo mới hoặc chưa có JD nào → vào thẳng step 1
+            setStep(1)
+          }
+          // else: có JD, không có param → hiện picker (step 0)
           setJdPickerReady(true)
         }
       })
@@ -236,6 +269,7 @@ export default function SetupPage() {
     return () => {
       cancelled = true
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function updateJd(data: JdFormData) {
@@ -299,11 +333,7 @@ export default function SetupPage() {
 
   // Hiện loading spinner khi đang fetch danh sách JD (chỉ ở step 0)
   if (step === 0 && !jdPickerReady) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="size-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
-      </div>
-    )
+    return <SetupPageLoading />
   }
 
   return (
@@ -319,54 +349,66 @@ export default function SetupPage() {
 
       {/* Stepper — only shown from step 1 onwards */}
       {step >= 1 && (
-        <div className="mb-10 flex items-start gap-2">
-          {([1, 2, 3] as (1 | 2 | 3)[]).map((s) => (
-            <div key={s} className="flex items-center gap-2">
-              <div className="flex flex-col items-center gap-1.5">
-                <div
-                  className={[
-                    'flex size-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-150',
-                    s === step
-                      ? 'bg-brand text-white ring-4 ring-brand-200'
-                      : s < step
-                        ? 'bg-brand text-white'
-                        : 'bg-border text-ink-faint',
-                  ].join(' ')}
-                >
-                  {s < step ? (
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                      <path
-                        d="M2 6l3 3 5-5"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  ) : (
-                    s
-                  )}
+        <>
+          {/* Back to JD library */}
+          <button
+            type="button"
+            onClick={() => router.push('/jd-library')}
+            className="mb-6 flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-brand"
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            Thư viện JD
+          </button>
+
+          <div className="mb-10 flex items-start gap-2">
+            {([1, 2, 3] as (1 | 2 | 3)[]).map((s) => (
+              <div key={s} className="flex items-center gap-2">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div
+                    className={[
+                      'flex size-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-150',
+                      s === step
+                        ? 'bg-brand text-white ring-4 ring-brand-200'
+                        : s < step
+                          ? 'bg-brand text-white'
+                          : 'bg-border text-ink-faint',
+                    ].join(' ')}
+                  >
+                    {s < step ? (
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <path
+                          d="M2 6l3 3 5-5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    ) : (
+                      s
+                    )}
+                  </div>
+                  <span
+                    className={[
+                      'hidden text-xs sm:block',
+                      s === step ? 'font-medium text-ink' : 'text-ink-faint',
+                    ].join(' ')}
+                  >
+                    {STEP_LABELS[s]}
+                  </span>
                 </div>
-                <span
-                  className={[
-                    'hidden text-xs sm:block',
-                    s === step ? 'font-medium text-ink' : 'text-ink-faint',
-                  ].join(' ')}
-                >
-                  {STEP_LABELS[s]}
-                </span>
+                {s < 3 && (
+                  <div
+                    className={[
+                      'mb-4 h-px w-10 transition-all duration-150',
+                      s < step ? 'bg-brand' : 'bg-border',
+                    ].join(' ')}
+                  />
+                )}
               </div>
-              {s < 3 && (
-                <div
-                  className={[
-                    'mb-4 h-px w-10 transition-all duration-150',
-                    s < step ? 'bg-brand' : 'bg-border',
-                  ].join(' ')}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Step 1 — Job Description Form */}

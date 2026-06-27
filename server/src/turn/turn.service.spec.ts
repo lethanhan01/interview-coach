@@ -5,6 +5,7 @@ import { TurnService } from './turn.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { FollowUpCoordinatorService } from './follow-up-coordinator.service';
 import { AudioStorageService } from './audio-storage.service';
+import { VoiceMetricsService } from './voice-metrics.service';
 import {
   FOLLOW_UP_QUEUE,
   FEEDBACK_QUEUE,
@@ -18,6 +19,7 @@ import {
   createMockPrismaService,
   createMockQueue,
   createMockFollowUpCoordinatorService,
+  createMockVoiceMetricsService,
 } from '../test-utils/mock-factories';
 
 describe('TurnService', () => {
@@ -29,6 +31,10 @@ describe('TurnService', () => {
   let mockFollowUpQueue: ReturnType<typeof createMockQueue>;
   let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
   let mockTranscriptionQueue: ReturnType<typeof createMockQueue>;
+  let mockAudioStorage: {
+    uploadInterviewAudio: jest.Mock;
+  };
+  let mockVoiceMetrics: ReturnType<typeof createMockVoiceMetricsService>;
 
   const BASE_SESSION = {
     id: 'session-123',
@@ -65,6 +71,15 @@ describe('TurnService', () => {
     mockFollowUpQueue = createMockQueue();
     mockFeedbackQueue = createMockQueue();
     mockTranscriptionQueue = createMockQueue();
+    mockAudioStorage = {
+      uploadInterviewAudio: jest.fn(),
+    };
+    mockVoiceMetrics = createMockVoiceMetricsService();
+    mockVoiceMetrics.calculate.mockReturnValue({
+      wpm: 120,
+      fillerWordCount: 1,
+      fillerWords: ['um'],
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -76,7 +91,11 @@ describe('TurnService', () => {
         },
         {
           provide: AudioStorageService,
-          useValue: { upload: jest.fn() },
+          useValue: mockAudioStorage,
+        },
+        {
+          provide: VoiceMetricsService,
+          useValue: mockVoiceMetrics,
         },
         {
           provide: getQueueToken(FOLLOW_UP_QUEUE),
@@ -91,6 +110,62 @@ describe('TurnService', () => {
   });
 
   afterEach(() => jest.clearAllMocks());
+
+  describe('uploadAudio', () => {
+    const AUDIO_FILE = {
+      buffer: Buffer.from([1, 2, 3]),
+      mimetype: 'audio/webm',
+      size: 3,
+    };
+
+    it('ném SESSION_NOT_FOUND khi session không tồn tại', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.uploadAudio('session-123', 'user-abc', AUDIO_FILE),
+      ).rejects.toMatchObject({
+        errorCode: ErrorCode.SESSION_NOT_FOUND,
+      });
+
+      expect(mockAudioStorage.uploadInterviewAudio).not.toHaveBeenCalled();
+    });
+
+    it('ném FORBIDDEN khi user không phải owner', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        userId: 'other-user',
+      });
+
+      await expect(
+        service.uploadAudio('session-123', 'user-abc', AUDIO_FILE),
+      ).rejects.toMatchObject({
+        errorCode: ErrorCode.FORBIDDEN,
+      });
+
+      expect(mockAudioStorage.uploadInterviewAudio).not.toHaveBeenCalled();
+    });
+
+    it('ủy quyền upload audio cho AudioStorageService khi session thuộc user', async () => {
+      const uploadResult = {
+        audioFileUrl:
+          'https://project.supabase.co/storage/v1/object/public/interview-audio/u/s/audio.webm',
+        audioSizeBytes: 3,
+      };
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        userId: 'user-abc',
+      });
+      mockAudioStorage.uploadInterviewAudio.mockResolvedValue(uploadResult);
+
+      await expect(
+        service.uploadAudio('session-123', 'user-abc', AUDIO_FILE),
+      ).resolves.toEqual(uploadResult);
+
+      expect(mockAudioStorage.uploadInterviewAudio).toHaveBeenCalledWith({
+        sessionId: 'session-123',
+        userId: 'user-abc',
+        file: AUDIO_FILE,
+      });
+    });
+  });
 
   describe('submitAnswer', () => {
     it('ném SESSION_NOT_FOUND (404) khi session không tồn tại', async () => {
@@ -372,6 +447,71 @@ describe('TurnService', () => {
             transcriptionStatus: 'pending',
           }),
         }),
+      );
+    });
+
+    it('voice mode với transcript đã chỉnh: lưu answerText, đánh dấu done và enqueue feedback ngay', async () => {
+      const editedTranscript =
+        'Tôi là developer backend, có kinh nghiệm xây dựng API NestJS.';
+      const voiceDto = {
+        questionId: 'q-1',
+        answerMode: 'voice' as const,
+        answerText: editedTranscript,
+        audioFileUrl: 'https://storage.example.com/audio.webm',
+        audioDurationSeconds: 30,
+        audioSizeBytes: 102400,
+      };
+
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.userAnswer.upsert.mockResolvedValue({
+        ...BASE_ANSWER,
+        answerMode: 'voice',
+        answerText: editedTranscript,
+        audioFileUrl: 'https://storage.example.com/audio.webm',
+        transcriptionStatus: 'done',
+      });
+      mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(false);
+      mockFeedbackQueue.add.mockResolvedValue({});
+
+      const result = await service.submitAnswer(
+        'session-123',
+        'user-abc',
+        voiceDto,
+      );
+
+      expect(result).toEqual({
+        answerId: 'answer-1',
+        followUpQueued: false,
+        feedbackQueued: true,
+        transcriptionPending: false,
+      });
+      expect(mockPrisma.userAnswer.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            answerMode: 'voice',
+            answerText: editedTranscript,
+            audioFileUrl: 'https://storage.example.com/audio.webm',
+            transcriptionStatus: 'done',
+            voiceMetricsJson: {
+              wpm: 120,
+              fillerWordCount: 1,
+              fillerWords: ['um'],
+            },
+          }),
+        }),
+      );
+      expect(mockVoiceMetrics.calculate).toHaveBeenCalledWith(
+        editedTranscript,
+        30,
+      );
+      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+      expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
+        'feedback',
+        expect.objectContaining({
+          answerText: editedTranscript,
+        }),
+        expect.objectContaining({ jobId: 'feedback-answer-1' }),
       );
     });
 

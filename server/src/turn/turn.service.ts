@@ -1,6 +1,7 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
@@ -20,6 +21,7 @@ import {
   type AudioUploadResult,
   type UploadedAudioFile,
 } from './audio-storage.service';
+import { VoiceMetricsService } from './voice-metrics.service';
 import type { TranscriptionJobDto } from '../ai/processors/transcription.processor';
 import { isSessionType } from '../ai/pipelines/interview-pipeline.interface';
 
@@ -29,6 +31,7 @@ export class TurnService {
     private readonly prisma: PrismaService,
     private readonly followUpCoordinatorService: FollowUpCoordinatorService,
     private readonly audioStorageService: AudioStorageService,
+    private readonly voiceMetricsService: VoiceMetricsService,
     @InjectQueue(FOLLOW_UP_QUEUE) private readonly followUpQueue: Queue,
     @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
     @InjectQueue(TRANSCRIPTION_QUEUE) private readonly transcriptionQueue: Queue,
@@ -113,8 +116,10 @@ export class TurnService {
       });
     }
 
-    // Voice path: create placeholder answer and enqueue transcription async
-    if (dto.answerMode === 'voice' && dto.audioFileUrl) {
+    const providedTranscript = dto.answerText?.trim();
+
+    // Voice fallback path: legacy clients can still submit audio-only answers.
+    if (dto.answerMode === 'voice' && dto.audioFileUrl && !providedTranscript) {
       const existingVoiceAnswer = await this.prisma.userAnswer.findUnique({
         where: {
           sessionId_questionId: { sessionId, questionId: dto.questionId },
@@ -212,7 +217,7 @@ export class TurnService {
       };
     }
 
-    // Text path: process synchronously
+    // Text and edited voice-transcript path: process synchronously.
     const existingAnswer = await this.prisma.userAnswer.findUnique({
       where: {
         sessionId_questionId: { sessionId, questionId: dto.questionId },
@@ -221,7 +226,14 @@ export class TurnService {
     let answer = existingAnswer;
 
     if (!answer) {
-      const answerText = dto.answerText ?? '';
+      const answerText = dto.answerText?.trim() ?? '';
+      const voiceMetrics =
+        dto.answerMode === 'voice'
+          ? this.voiceMetricsService.calculate(
+              answerText,
+              dto.audioDurationSeconds ?? 0,
+            )
+          : undefined;
 
       answer = await this.prisma.userAnswer.upsert({
         where: {
@@ -235,6 +247,11 @@ export class TurnService {
           audioFileUrl: dto.audioFileUrl,
           audioDurationSeconds: dto.audioDurationSeconds,
           audioSizeBytes: dto.audioSizeBytes,
+          transcriptionStatus:
+            dto.answerMode === 'voice' ? 'done' : undefined,
+          voiceMetricsJson: voiceMetrics
+            ? (voiceMetrics as unknown as Prisma.InputJsonValue)
+            : undefined,
         },
         update: {},
       });

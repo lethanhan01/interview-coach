@@ -6,7 +6,7 @@
 **Engine:** PostgreSQL 15 via Supabase  
 **ORM:** Prisma 5 (`previewFeatures: ["partialIndexes"]`)  
 **Migration tool:** `prisma db push` — không có migration SQL files (xem D2)  
-**Tables in schema:** 12
+**Tables in schema:** 15
 
 ---
 
@@ -18,24 +18,27 @@
 | D2 | Migration tool | `prisma migrate dev` (tạo migration files) | `prisma db push` (không có SQL migration files) |
 | D3 | `question_usage` table | Không có trong thiết kế gốc | Đã tạo (T2/T3) — usage tracking cho question_bank |
 | D4 | `question_bank` fields | 9 data columns | 13 data columns — thêm: `tags`, `estimated_time_min`, `translations`, `content_json` |
-| D5 | `user_profiles` fields | 13 columns | 25 columns — thêm nhiều profile fields chi tiết |
+| D5 | `user_profiles` fields | 13 columns | 14 columns — giữ profile phỏng vấn; 5 PII fields đã bỏ ở T10, 6 CV fields đã tách sang `resumes` ở T12 |
 | D6 | `reverse_questions` | MVP (Layer 4) | Chưa implement — không có trong schema.prisma |
 | D7 | Partial indexes | Raw SQL files riêng | Inline trong schema.prisma qua `where: raw(...)` (Prisma 5 GA) |
 | D8 | `QuestionUsage` indexes | `sort: Desc` trong plan | Đã bỏ `sort: Desc` — Prisma IDE extension báo lỗi |
+| D9 | Report JSON columns | 6 JSONB columns trên `interview_sessions` | Đã tách sang `session_reports` ở T13 |
 
 ---
 
 ## Relations Overview
 
 ```
-context_packs ──< question_bank ──< session_questions >── interview_sessions
+context_packs ──< question_bank ──< session_questions >── interview_sessions ──< session_reports
                         │                                        │
                         └──< question_usage             user_answers ──── ai_feedbacks ──< annotated_segments
                                                               │
                                                     follow_up_questions
 
 users ──── user_profiles
+  └──< resumes
   └──< interview_sessions
+  └──< saved_job_descriptions
 
 ai_quality_log  (không có FK — độc lập)
 ```
@@ -49,7 +52,11 @@ Prisma relation fields (không phải DB columns):
 | QuestionBank | SessionQuestion[] | 1:n | SET NULL (FK nullable) |
 | QuestionBank | QuestionUsage[] | 1:n | Cascade |
 | User | UserProfile? | 1:1 | Cascade |
+| User | Resume[] | 1:n | Cascade |
 | User | InterviewSession[] | 1:n | Cascade |
+| User | SavedJobDescription[] | 1:n | Cascade |
+| SavedJobDescription | InterviewSession[] | 1:n | SetNull |
+| InterviewSession | SessionReport[] | 1:n | Cascade |
 | InterviewSession | SessionQuestion[] | 1:n | Cascade |
 | InterviewSession | UserAnswer[] | 1:n | Cascade |
 | SessionQuestion | UserAnswer[] | 1:n | Cascade |
@@ -151,7 +158,7 @@ Populate: trigger `handle_new_auth_user()` INSERT khi Supabase Auth tạo user m
 
 ### user_profiles
 Prisma model: `UserProfile`  
-One-to-one với users. *D5: 20 columns. 5 field PII thuần (date_of_birth, gender, phone, hometown, nationality) đã bỏ ở T10 (SR-03) — không dùng cho phỏng vấn, giảm phạm vi PII (NĐ 13/2023).*
+One-to-one với users. *D5: 14 columns. 5 field PII thuần (date_of_birth, gender, phone, hometown, nationality) đã bỏ ở T10 (SR-03). 6 field CV structured đã tách sang `resumes.parsed_json` ở T12 (SR-02).*
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
@@ -166,26 +173,43 @@ One-to-one với users. *D5: 20 columns. 5 field PII thuần (date_of_birth, gen
 | default_language | TEXT | 'vi' | NO | |
 | tts_enabled | BOOLEAN | false | NO | |
 | personality | TEXT | — | YES | *Ngoài design docs* |
-| education | JSONB | — | YES | *Ngoài design docs* |
-| work_experience | JSONB | — | YES | *Ngoài design docs* |
-| projects | JSONB | — | YES | *Ngoài design docs* |
-| technical_skills | JSONB | — | YES | *Ngoài design docs* |
-| certifications | JSONB | — | YES | *Ngoài design docs* |
-| awards | JSONB | — | YES | *Ngoài design docs* |
 | deleted_at | TIMESTAMPTZ | — | YES | Soft delete |
 | created_at | TIMESTAMPTZ | now() | NO | |
 | updated_at | TIMESTAMPTZ | now() | NO | Auto-update |
 
 ---
 
-### interview_sessions
-Prisma model: `InterviewSession`  
-Session config + report JSON columns (denormalized từ processors).
+### resumes
+Prisma model: `Resume`  
+Structured CV/profile evidence tách khỏi `user_profiles`. API profile hiện vẫn giữ contract phẳng: service merge resume active vào response profile và tách các field CV khi update.
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
 | user_id | UUID FK | — | NO | → users.id ON DELETE CASCADE |
+| file_url | TEXT | — | YES | Reserved cho T12b upload |
+| original_filename | TEXT | — | YES | Reserved cho T12b upload |
+| parsed_text | TEXT | — | YES | Reserved cho parser |
+| parsed_json | JSONB | — | YES | `education`, `workExperience`, `projects`, `technicalSkills`, `certifications`, `awards` |
+| language | TEXT | 'vi' | NO | |
+| parser_version | TEXT | — | YES | `manual` cho profile form hiện tại |
+| active | BOOLEAN | true | NO | Resume đang dùng |
+| created_at | TIMESTAMPTZ | now() | NO | |
+
+Indexes:
+- `resumes_user_id_active_idx` on `(user_id, active)`
+
+---
+
+### interview_sessions
+Prisma model: `InterviewSession`  
+Session config + lifecycle state. Report payload đã tách sang `session_reports` ở T13; `interview_sessions` chỉ giữ `overall_score` và `completed_at` cho lookup nhanh.
+
+| Column | DB Type | Default | Nullable | Notes |
+|--------|---------|---------|----------|-------|
+| id | UUID PK | gen_random_uuid() | NO | |
+| user_id | UUID FK | — | NO | → users.id ON DELETE CASCADE |
+| saved_job_description_id | UUID FK | — | YES | → saved_job_descriptions.id ON DELETE SET NULL |
 | job_description | TEXT | — | NO | |
 | jd_source | TEXT | — | NO | |
 | jd_url | TEXT | — | YES | |
@@ -200,22 +224,38 @@ Session config + report JSON columns (denormalized từ processors).
 | context_pack_id | TEXT FK | — | NO | → context_packs.id |
 | show_prep_card | BOOLEAN | false | NO | |
 | status | TEXT | 'generating' | NO | |
-| plan_json | JSONB | — | YES | Session plan từ QuestionGenerationProcessor |
 | opening_transcript | TEXT | — | YES | |
-| self_eval_json | JSONB | — | YES | |
 | overall_score | INT | — | YES | |
-| executive_summary_json | JSONB | — | YES | |
-| comm_analysis_json | JSONB | — | YES | |
-| competency_heatmap_json | JSONB | — | YES | |
-| action_plan_json | JSONB | — | YES | |
 | completed_at | TIMESTAMPTZ | — | YES | |
 | created_at | TIMESTAMPTZ | now() | NO | |
 | updated_at | TIMESTAMPTZ | now() | NO | Auto-update |
 
 Indexes:
 - `idx_interview_sessions_created_at` on `(created_at DESC)`
+- `idx_interview_sessions_saved_jd` on `(saved_job_description_id)`
 - `idx_interview_sessions_user_created` on `(user_id, created_at DESC)`
 - `idx_interview_sessions_user_id` on `(user_id)`
+
+---
+
+### session_reports
+Prisma model: `SessionReport`  
+Normalized report storage. Comprehensive report processor writes one row per report part and version; report service reads these rows and assembles the API response.
+
+| Column | DB Type | Default | Nullable | Notes |
+|--------|---------|---------|----------|-------|
+| id | UUID PK | gen_random_uuid() | NO | |
+| session_id | UUID FK | — | NO | → interview_sessions.id ON DELETE CASCADE |
+| report_type | TEXT | — | NO | `executive_summary`, `comm_analysis`, `competency_heatmap`, `action_plan` |
+| version | INT | 1 | NO | |
+| content_json | JSONB | — | NO | Payload của report part |
+| generated_by_model | TEXT | — | YES | Reserved for model attribution |
+| prompt_version | TEXT | — | YES | Reserved for prompt versioning |
+| created_at | TIMESTAMPTZ | now() | NO | |
+
+Unique: `(session_id, report_type, version)`.  
+Indexes:
+- `session_reports_session_id_idx` on `(session_id)`
 
 ---
 

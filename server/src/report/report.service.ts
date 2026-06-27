@@ -23,6 +23,15 @@ function toRecord(value: unknown): Record<string, unknown> {
   return {};
 }
 
+function findLatestReport<T extends { reportType: string; version: number }>(
+  reports: T[],
+  reportType: string,
+): T | undefined {
+  return reports
+    .filter((report) => report.reportType === reportType)
+    .sort((a, b) => b.version - a.version)[0];
+}
+
 @Injectable()
 export class ReportService {
   constructor(
@@ -50,8 +59,9 @@ export class ReportService {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
 
-    const executiveSummaryReport = session.sessionReports.find(
-      (r) => r.reportType === 'executive_summary',
+    const executiveSummaryReport = findLatestReport(
+      session.sessionReports,
+      'executive_summary',
     );
     if (!executiveSummaryReport) {
       throw new InterviewAIException(
@@ -110,8 +120,7 @@ export class ReportService {
     const allFeedbackIsFallback =
       transcript.some((item) => item.isFallback) && !hasEvaluatedFeedback;
     const storedActionPlan = toRecord(
-      session.sessionReports.find((r) => r.reportType === 'action_plan')
-        ?.contentJson,
+      findLatestReport(session.sessionReports, 'action_plan')?.contentJson,
     );
     const storedExecutiveSummary = toRecord(executiveSummaryReport.contentJson);
 
@@ -140,7 +149,7 @@ export class ReportService {
           }
         : storedExecutiveSummary,
       competencyHeatmap: toRecord(
-        session.sessionReports.find((r) => r.reportType === 'competency_heatmap')
+        findLatestReport(session.sessionReports, 'competency_heatmap')
           ?.contentJson,
       ),
       actionPlan:

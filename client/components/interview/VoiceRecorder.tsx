@@ -2,39 +2,48 @@
 
 import { useState, useRef } from 'react'
 import LoadingSpinner from '../ui/LoadingSpinner'
-
-const AUDIO_BUCKET = 'interview-audio'
+import Button from '../ui/Button'
+import { apiClient } from '@/lib/api-client'
 
 interface VoiceRecorderProps {
-  onSubmit: (audioUrl: string, durationSeconds: number, sizeBytes: number) => Promise<void>
-  supabaseUrl: string
-  accessToken: string
+  onSubmit: (
+    audioUrl: string,
+    durationSeconds: number,
+    sizeBytes: number,
+    transcript: string,
+  ) => Promise<void>
+  sessionId: string
   disabled?: boolean
 }
 
-type RecordState = 'idle' | 'recording' | 'uploading'
+type RecordState = 'idle' | 'recording' | 'transcribing' | 'submitting'
 
-async function readStorageError(response: Response): Promise<string> {
-  const raw = await response.text().catch(() => '')
-  if (!raw) return response.statusText || `HTTP ${response.status}`
-
-  try {
-    const parsed = JSON.parse(raw) as { message?: string; error?: string }
-    return parsed.message ?? parsed.error ?? raw
-  } catch {
-    return raw
-  }
+interface AudioUploadResponse {
+  audioFileUrl: string
+  audioSizeBytes: number
+  transcript: string
+  transcriptDurationSeconds?: number
 }
 
-export default function VoiceRecorder({ onSubmit, supabaseUrl, accessToken, disabled }: VoiceRecorderProps) {
+interface VoiceDraft {
+  audioUrl: string
+  durationSeconds: number
+  sizeBytes: number
+}
+
+export default function VoiceRecorder({ onSubmit, sessionId, disabled }: VoiceRecorderProps) {
   const [state, setState] = useState<RecordState>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [draft, setDraft] = useState<VoiceDraft | null>(null)
+  const [transcript, setTranscript] = useState('')
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const startTimeRef = useRef<number>(0)
 
   async function startRecording() {
     setError(null)
+    setDraft(null)
+    setTranscript('')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
@@ -63,36 +72,24 @@ export default function VoiceRecorder({ onSubmit, supabaseUrl, accessToken, disa
       recorder.stream.getTracks().forEach((t) => t.stop())
     })
 
-    setState('uploading')
+    setState('transcribing')
     const durationSeconds = Math.round((Date.now() - startTimeRef.current) / 1000)
     const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
 
     try {
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error('Thiếu cấu hình Supabase Storage cho ghi âm.')
-      }
-      if (!accessToken || accessToken === 'dev-mock-token') {
-        throw new Error('Ghi âm cần phiên đăng nhập Supabase thật. Tắt chế độ bỏ qua đăng nhập rồi thử lại.')
-      }
-
       const filename = `audio-${crypto.randomUUID()}.webm`
-      const uploadUrl = `${supabaseUrl}/storage/v1/object/${AUDIO_BUCKET}/${filename}`
-      const uploadRes = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          apikey: supabaseAnonKey,
-          'Content-Type': 'audio/webm',
-        },
-        body: blob,
+      const formData = new FormData()
+      formData.append('file', blob, filename)
+      const upload = await apiClient.postForm<AudioUploadResponse>(
+        `/sessions/${sessionId}/turns/audio`,
+        formData,
+      )
+      setDraft({
+        audioUrl: upload.audioFileUrl,
+        durationSeconds: durationSeconds || upload.transcriptDurationSeconds || 0,
+        sizeBytes: upload.audioSizeBytes,
       })
-      if (!uploadRes.ok) {
-        const detail = await readStorageError(uploadRes)
-        throw new Error(`Upload audio thất bại (${uploadRes.status}): ${detail}`)
-      }
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/${AUDIO_BUCKET}/${filename}`
-      await onSubmit(publicUrl, durationSeconds, blob.size)
+      setTranscript(upload.transcript)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Lỗi không xác định')
     } finally {
@@ -100,12 +97,82 @@ export default function VoiceRecorder({ onSubmit, supabaseUrl, accessToken, disa
     }
   }
 
+  async function submitTranscript() {
+    if (!draft || state === 'submitting') return
+    const finalTranscript = transcript.trim()
+    if (finalTranscript.length < 10) {
+      setError('Câu trả lời cần tối thiểu 10 ký tự.')
+      return
+    }
+
+    setState('submitting')
+    setError(null)
+    try {
+      await onSubmit(
+        draft.audioUrl,
+        draft.durationSeconds,
+        draft.sizeBytes,
+        finalTranscript,
+      )
+      setDraft(null)
+      setTranscript('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể gửi câu trả lời')
+    } finally {
+      setState('idle')
+    }
+  }
+
+  function resetDraft() {
+    setDraft(null)
+    setTranscript('')
+    setError(null)
+  }
+
   return (
     <div className="flex flex-col items-center gap-4">
       {error && (
         <p role="alert" className="text-sm text-red-600">{error}</p>
       )}
-      {state === 'idle' && (
+      {draft ? (
+        <div className="flex w-full flex-col gap-3">
+          <label htmlFor="voice-transcript" className="text-sm font-medium text-ink">
+            Nội dung câu trả lời
+          </label>
+          <textarea
+            id="voice-transcript"
+            aria-label="Transcript câu trả lời"
+            value={transcript}
+            onChange={(e) => {
+              setTranscript(e.target.value)
+              setError(null)
+            }}
+            disabled={disabled || state === 'submitting'}
+            rows={6}
+            className="w-full resize-none rounded-xl border border-border p-3 text-sm text-ink placeholder:text-ink-faint focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none disabled:opacity-50"
+          />
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={resetDraft}
+              disabled={disabled || state === 'submitting'}
+            >
+              Ghi âm lại
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={submitTranscript}
+              disabled={!transcript.trim() || disabled}
+              loading={state === 'submitting'}
+            >
+              Gửi câu trả lời
+            </Button>
+          </div>
+        </div>
+      ) : state === 'idle' && (
         <button
           aria-label="Bắt đầu ghi âm"
           onClick={startRecording}
@@ -125,10 +192,10 @@ export default function VoiceRecorder({ onSubmit, supabaseUrl, accessToken, disa
           Dừng ghi âm
         </button>
       )}
-      {state === 'uploading' && (
+      {state === 'transcribing' && (
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <LoadingSpinner size="sm" />
-          Đang tải lên...
+          Đang chuyển giọng nói thành văn bản...
         </div>
       )}
     </div>

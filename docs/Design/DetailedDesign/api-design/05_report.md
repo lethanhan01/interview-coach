@@ -31,6 +31,7 @@ Không có.
 ```json
 {
   "sessionId": "session-uuid",
+  "reportQuality": "full",
   "overallScore": 75,
   "executiveSummary": {
     "overallScore": 75,
@@ -77,9 +78,10 @@ Không có.
 | Trường | Kiểu | Chú thích |
 |--------|------|-----------|
 | `sessionId` | string | UUID session. |
-| `overallScore` | number | Điểm tổng; trả `0` nếu DB chưa có điểm. |
+| `reportQuality` | string | `full`, `partial`, hoặc `unavailable` tùy feedback có fallback hay không. |
+| `overallScore` | number \| null | Điểm tổng; `null` khi toàn bộ feedback là fallback/unavailable. |
 | `executiveSummary` | object | Tóm tắt tổng quan; `{}` nếu dữ liệu DB không phải object. |
-| `executiveSummary.overallScore` | number | Điểm trung bình các feedback trong processor hiện tại. |
+| `executiveSummary.overallScore` | number \| null | Điểm trung bình các feedback được AI chấm trong processor hiện tại. |
 | `executiveSummary.totalTurns` | number | Tổng số answer được đưa vào report job. |
 | `executiveSummary.summary` | string | Câu tóm tắt kết quả phỏng vấn. |
 | `competencyHeatmap` | object | Dữ liệu heatmap; `{}` nếu chưa có object hợp lệ. |
@@ -95,9 +97,10 @@ Không có.
 | `transcript[].questionText` | string | Nội dung câu hỏi. |
 | `transcript[].orderIndex` | number | Thứ tự câu hỏi. |
 | `transcript[].answerText` | string | Nội dung answer đầu tiên; chuỗi rỗng nếu chưa trả lời. |
-| `transcript[].overallScore` | number | Điểm feedback; `0` nếu chưa có feedback. |
+| `transcript[].overallScore` | number \| null | Điểm feedback; `null` nếu feedback là fallback hoặc chưa có điểm thật. |
 | `transcript[].modelAnswer` | string | Câu trả lời mẫu; chuỗi rỗng nếu chưa có. |
 | `transcript[].keyTakeaway` | string | Nhận xét quan trọng nhất; chuỗi rỗng nếu chưa có. |
+| `transcript[].isFallback` | boolean | `true` nếu feedback được ghi do AI unavailable thay vì chấm thật. |
 | `transcript[].segments` | object[] | Các đoạn được annotate; mảng rỗng nếu không có. |
 | `segments[].id` | string | UUID annotated segment. |
 | `segments[].segmentText` | string | Đoạn text được đánh dấu. |
@@ -114,7 +117,7 @@ Không có.
 | 401 | `UNAUTHORIZED` | Bearer token thiếu, sai hoặc hết hạn. |
 | 403 | `FORBIDDEN` | Session thuộc user khác. |
 | 404 | `SESSION_NOT_FOUND` | Không tìm thấy session. |
-| 404 | `REPORT_NOT_READY` | `executiveSummaryJson` chưa có; report chưa sẵn sàng. |
+| 404 | `REPORT_NOT_READY` | Chưa có row `session_reports.report_type = 'executive_summary'`; report chưa sẵn sàng. |
 | 500 | `INTERNAL_ERROR` | Lỗi DB hoặc lỗi ngoài dự kiến. |
 
 Client có thể chờ event SSE `report.ready` trước khi gọi endpoint này.

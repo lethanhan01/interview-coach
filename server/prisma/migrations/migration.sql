@@ -466,44 +466,6 @@ ALTER TABLE users
 --    makes it a no-op once the old columns are gone.
 -- -----------------------------------------------------------------------------
 
--- -----------------------------------------------------------------------------
--- 9. T13 / SR-07: session_reports table
---    Normalized report storage — 4 report types per session as separate rows.
---    Replaces 6 JSON columns on interview_sessions (dropped via prisma db push).
---    Idempotent: CREATE TABLE IF NOT EXISTS + DROP POLICY IF EXISTS.
--- -----------------------------------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS "session_reports" (
-  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-  "session_id" UUID NOT NULL,
-  "report_type" TEXT NOT NULL,
-  "version" INTEGER NOT NULL DEFAULT 1,
-  "content_json" JSONB NOT NULL,
-  "generated_by_model" TEXT,
-  "prompt_version" TEXT,
-  "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
-  CONSTRAINT "session_reports_pkey" PRIMARY KEY ("id"),
-  CONSTRAINT "session_reports_session_id_fkey" FOREIGN KEY ("session_id")
-    REFERENCES "interview_sessions"("id") ON DELETE CASCADE,
-  CONSTRAINT "session_reports_session_id_report_type_version_key"
-    UNIQUE ("session_id", "report_type", "version")
-);
-
-CREATE INDEX IF NOT EXISTS "session_reports_session_id_idx"
-  ON "session_reports"("session_id");
-
--- RLS
-ALTER TABLE "session_reports" ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Users can read own session reports" ON "session_reports";
-CREATE POLICY "Users can read own session reports" ON "session_reports"
-  FOR SELECT USING (
-    session_id IN (
-      SELECT id FROM interview_sessions WHERE user_id = auth.uid()
-    )
-  );
-
-
 DO $$
 BEGIN
   IF EXISTS (
@@ -534,3 +496,96 @@ BEGIN
   END IF;
 END
 $$;
+
+-- -----------------------------------------------------------------------------
+-- 9. T13 / SR-07: session_reports table
+--    Normalized report storage — 4 report types per session as separate rows.
+--    Replaces 6 JSON columns on interview_sessions (dropped via prisma db push).
+--    Idempotent: CREATE TABLE IF NOT EXISTS + guarded backfill + DROP POLICY IF EXISTS.
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS "session_reports" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "session_id" UUID NOT NULL,
+  "report_type" TEXT NOT NULL,
+  "version" INTEGER NOT NULL DEFAULT 1,
+  "content_json" JSONB NOT NULL,
+  "generated_by_model" TEXT,
+  "prompt_version" TEXT,
+  "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  CONSTRAINT "session_reports_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "session_reports_session_id_fkey" FOREIGN KEY ("session_id")
+    REFERENCES "interview_sessions"("id") ON DELETE CASCADE,
+  CONSTRAINT "session_reports_session_id_report_type_version_key"
+    UNIQUE ("session_id", "report_type", "version")
+);
+
+CREATE INDEX IF NOT EXISTS "session_reports_session_id_idx"
+  ON "session_reports"("session_id");
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'interview_sessions'
+      AND column_name = 'executive_summary_json'
+  ) THEN
+    INSERT INTO session_reports (session_id, report_type, version, content_json)
+    SELECT id, 'executive_summary', 1, executive_summary_json
+    FROM interview_sessions
+    WHERE executive_summary_json IS NOT NULL
+    ON CONFLICT (session_id, report_type, version)
+      DO UPDATE SET content_json = EXCLUDED.content_json;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'interview_sessions'
+      AND column_name = 'comm_analysis_json'
+  ) THEN
+    INSERT INTO session_reports (session_id, report_type, version, content_json)
+    SELECT id, 'comm_analysis', 1, comm_analysis_json
+    FROM interview_sessions
+    WHERE comm_analysis_json IS NOT NULL
+    ON CONFLICT (session_id, report_type, version)
+      DO UPDATE SET content_json = EXCLUDED.content_json;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'interview_sessions'
+      AND column_name = 'competency_heatmap_json'
+  ) THEN
+    INSERT INTO session_reports (session_id, report_type, version, content_json)
+    SELECT id, 'competency_heatmap', 1, competency_heatmap_json
+    FROM interview_sessions
+    WHERE competency_heatmap_json IS NOT NULL
+    ON CONFLICT (session_id, report_type, version)
+      DO UPDATE SET content_json = EXCLUDED.content_json;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'interview_sessions'
+      AND column_name = 'action_plan_json'
+  ) THEN
+    INSERT INTO session_reports (session_id, report_type, version, content_json)
+    SELECT id, 'action_plan', 1, action_plan_json
+    FROM interview_sessions
+    WHERE action_plan_json IS NOT NULL
+    ON CONFLICT (session_id, report_type, version)
+      DO UPDATE SET content_json = EXCLUDED.content_json;
+  END IF;
+END
+$$;
+
+-- RLS
+ALTER TABLE "session_reports" ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can read own session reports" ON "session_reports";
+CREATE POLICY "Users can read own session reports" ON "session_reports"
+  FOR SELECT USING (
+    session_id IN (
+      SELECT id FROM interview_sessions WHERE user_id = auth.uid()
+    )
+  );

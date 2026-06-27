@@ -27,6 +27,37 @@ describe('TurnController', () => {
 
   afterEach(() => jest.clearAllMocks());
 
+  describe('POST /sessions/:sessionId/turns/audio', () => {
+    it('gọi turnService.uploadAudio với sessionId, userId, file và trả về URL', async () => {
+      const file = {
+        buffer: Buffer.from([1, 2, 3]),
+        mimetype: 'audio/webm',
+        size: 3,
+      };
+      const uploadResult = {
+        audioFileUrl:
+          'https://project.supabase.co/storage/v1/object/public/interview-audio/u/s/audio.webm',
+        audioSizeBytes: 3,
+        transcript: 'Tôi là backend developer.',
+        transcriptDurationSeconds: 2,
+      };
+      mockTurnService.uploadAudio.mockResolvedValue(uploadResult);
+
+      const result = await controller.uploadAudio(
+        'session-123',
+        file,
+        mockReq(),
+      );
+
+      expect(result).toEqual(uploadResult);
+      expect(mockTurnService.uploadAudio).toHaveBeenCalledWith(
+        'session-123',
+        'user-abc',
+        file,
+      );
+    });
+  });
+
   describe('POST /sessions/:sessionId/turns', () => {
     it('gọi turnService.submitAnswer với sessionId, userId, dto và trả về kết quả', async () => {
       const dto = {

@@ -18,7 +18,10 @@ export class SubmitAnswerDto {
   @IsEnum(['text', 'voice'])
   answerMode: 'text' | 'voice';
 
-  @ValidateIf((o: SubmitAnswerDto) => o.answerMode === 'text')
+  @ValidateIf(
+    (o: SubmitAnswerDto) =>
+      o.answerMode === 'text' || o.answerText !== undefined,
+  )
   @IsString()
   @MinLength(10)
   answerText?: string;

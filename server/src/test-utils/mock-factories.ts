@@ -145,6 +145,7 @@ export const createMockAuthService = () => ({
 
 export const createMockTurnService = () => ({
   submitAnswer: jest.fn(),
+  uploadAudio: jest.fn(),
 });
 
 export const createMockUserService = () => ({

@@ -176,10 +176,10 @@ Scope B: chỉ tách bảng + migrate JSONB. API contract giữ phẳng (DTO/cli
 
 **Skills:** `supabase`, `feature-dev` (report module).
 
-- [ ] Thêm model `SessionReport` (xem snippet SR-07).
-- [ ] Refactor report processors ghi vào `session_reports` thay vì 6 JSON columns trên `interview_sessions`.
-- [ ] Migrate report cũ; deprecate/drop 6 cột JSON sau khi migrate.
-- [ ] Cập nhật `report.service.ts`, `report-response.dto.ts`, CLAUDE.md, CHANGELOG.
+- [x] Thêm model `SessionReport` (xem snippet SR-07).
+- [x] Refactor report processors ghi vào `session_reports` thay vì 6 JSON columns trên `interview_sessions`.
+- [x] Migrate report cũ; deprecate/drop 6 cột JSON sau khi migrate. (`migration.sql` §9 có guarded backfill nếu cột cũ còn tồn tại; schema hiện không còn 6 cột JSON)
+- [x] Cập nhật `report.service.ts`, `report-response.dto.ts`, CLAUDE.md, CHANGELOG.
 
 ## Phase C — v2 (ACTIVE sprint này — quyết định user 2026-06-27; trước đó là backlog v2)
 

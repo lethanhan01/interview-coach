@@ -37,7 +37,6 @@ export default function InterviewPage() {
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('generating')
   const [statusAction, setStatusAction] = useState<SessionStatusAction | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
-  const [supabaseUrl, setSupabaseUrl] = useState('')
   const [accessToken, setAccessToken] = useState('')
   const [durationMin, setDurationMin] = useState<number>(30)
   const [questionsReady, setQuestionsReady] = useState(false)
@@ -49,13 +48,11 @@ export default function InterviewPage() {
         const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
         if (skipAuth) {
           setAccessToken('dev-mock-token')
-          setSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '')
         } else {
           const supabase = createClient()
           const { data: { session } } = await supabase.auth.getSession()
           if (!session) { router.push('/login'); return }
           setAccessToken(session.access_token)
-          setSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '')
         }
 
         const currentSession = await apiClient.get<Session>(`/sessions/${sessionId}`)
@@ -162,9 +159,15 @@ export default function InterviewPage() {
     await advance()
   }, [sessionId, questions, currentIndex, advance])
 
-  const submitVoice = useCallback(async (audioUrl: string, durationSeconds: number, sizeBytes: number) => {
+  const submitVoice = useCallback(async (
+    audioUrl: string,
+    durationSeconds: number,
+    sizeBytes: number,
+    transcript: string,
+  ) => {
     await apiClient.post(`/sessions/${sessionId}/turns`, {
       answerMode: 'voice',
+      answerText: transcript,
       audioFileUrl: audioUrl,
       audioDurationSeconds: durationSeconds,
       audioSizeBytes: sizeBytes,
@@ -308,8 +311,7 @@ export default function InterviewPage() {
           ) : (
             <VoiceRecorder
               onSubmit={submitVoice}
-              supabaseUrl={supabaseUrl}
-              accessToken={accessToken}
+              sessionId={sessionId}
             />
           )}
         </div>
