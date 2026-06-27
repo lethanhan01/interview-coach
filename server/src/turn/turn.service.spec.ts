@@ -3,11 +3,9 @@ import { HttpStatus } from '@nestjs/common';
 import { getQueueToken } from '@nestjs/bullmq';
 import { TurnService } from './turn.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { FollowUpCoordinatorService } from './follow-up-coordinator.service';
 import { AudioStorageService } from './audio-storage.service';
 import { VoiceMetricsService } from './voice-metrics.service';
 import {
-  FOLLOW_UP_QUEUE,
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
   TRANSCRIPTION_QUEUE,
@@ -18,17 +16,12 @@ import { ErrorCode } from '../common/exceptions/error-code.enum';
 import {
   createMockPrismaService,
   createMockQueue,
-  createMockFollowUpCoordinatorService,
   createMockVoiceMetricsService,
 } from '../test-utils/mock-factories';
 
 describe('TurnService', () => {
   let service: TurnService;
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
-  let mockFollowUpCoordinator: ReturnType<
-    typeof createMockFollowUpCoordinatorService
-  >;
-  let mockFollowUpQueue: ReturnType<typeof createMockQueue>;
   let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
   let mockTranscriptionQueue: ReturnType<typeof createMockQueue>;
   let mockAudioStorage: {
@@ -67,8 +60,6 @@ describe('TurnService', () => {
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
-    mockFollowUpCoordinator = createMockFollowUpCoordinatorService();
-    mockFollowUpQueue = createMockQueue();
     mockFeedbackQueue = createMockQueue();
     mockTranscriptionQueue = createMockQueue();
     mockAudioStorage = {
@@ -86,20 +77,12 @@ describe('TurnService', () => {
         TurnService,
         { provide: PrismaService, useValue: mockPrisma },
         {
-          provide: FollowUpCoordinatorService,
-          useValue: mockFollowUpCoordinator,
-        },
-        {
           provide: AudioStorageService,
           useValue: mockAudioStorage,
         },
         {
           provide: VoiceMetricsService,
           useValue: mockVoiceMetrics,
-        },
-        {
-          provide: getQueueToken(FOLLOW_UP_QUEUE),
-          useValue: mockFollowUpQueue,
         },
         { provide: getQueueToken(FEEDBACK_QUEUE), useValue: mockFeedbackQueue },
         { provide: getQueueToken(TRANSCRIPTION_QUEUE), useValue: mockTranscriptionQueue },
@@ -270,7 +253,6 @@ describe('TurnService', () => {
       expect(mockPrisma.sessionQuestion.findFirst).not.toHaveBeenCalled();
       expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
       expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
-      expect(mockFollowUpQueue.add).not.toHaveBeenCalled();
     });
 
     it('ném NOT_FOUND (404) khi question không tồn tại trong session', async () => {
@@ -302,7 +284,6 @@ describe('TurnService', () => {
       });
       mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
       mockPrisma.userAnswer.upsert.mockResolvedValue(BASE_ANSWER);
-      mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(false);
       mockFeedbackQueue.add.mockResolvedValue({});
 
       const result = await service.submitAnswer(
@@ -319,12 +300,11 @@ describe('TurnService', () => {
       expect(mockPrisma.userAnswer.upsert).toHaveBeenCalled();
     });
 
-    it('text mode: tạo answer, enqueue feedback, không enqueue follow-up khi shouldGenerateFollowUp=false', async () => {
+    it('text mode: tạo answer, enqueue feedback', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
       mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
       mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
       mockPrisma.userAnswer.upsert.mockResolvedValue(BASE_ANSWER);
-      mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(false);
       mockFeedbackQueue.add.mockResolvedValue({});
 
       const result = await service.submitAnswer(
@@ -335,11 +315,9 @@ describe('TurnService', () => {
 
       expect(result).toEqual({
         answerId: 'answer-1',
-        followUpQueued: false,
         feedbackQueued: true,
         transcriptionPending: false,
       });
-      expect(mockFollowUpQueue.add).not.toHaveBeenCalled();
       expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
         'feedback',
         expect.objectContaining({
@@ -352,30 +330,6 @@ describe('TurnService', () => {
         }),
       );
       expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
-    });
-
-    it('text mode: enqueue follow-up khi shouldGenerateFollowUp=true', async () => {
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
-      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
-      mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
-      mockPrisma.userAnswer.upsert.mockResolvedValue(BASE_ANSWER);
-      mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(true);
-      mockFollowUpQueue.add.mockResolvedValue({});
-      mockFeedbackQueue.add.mockResolvedValue({});
-
-      const result = await service.submitAnswer(
-        'session-123',
-        'user-abc',
-        TEXT_DTO,
-      );
-
-      expect(result.followUpQueued).toBe(true);
-      expect(result.transcriptionPending).toBe(false);
-      expect(mockFollowUpQueue.add).toHaveBeenCalledWith(
-        'follow-up',
-        expect.objectContaining({ sessionId: 'session-123' }),
-        expect.objectContaining({ jobId: 'follow-up-answer-1' }),
-      );
     });
 
     it('voice mode: enqueue transcription job, không gọi Whisper trực tiếp, return transcriptionPending=true', async () => {
@@ -400,7 +354,6 @@ describe('TurnService', () => {
 
       expect(result).toEqual({
         answerId: 'answer-1',
-        followUpQueued: false,
         feedbackQueued: false,
         transcriptionPending: true,
       });
@@ -417,7 +370,6 @@ describe('TurnService', () => {
         }),
       );
       expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
-      expect(mockFollowUpQueue.add).not.toHaveBeenCalled();
     });
 
     it('voice mode: lưu answer với transcriptionStatus=pending và answerText rỗng', async () => {
@@ -471,7 +423,6 @@ describe('TurnService', () => {
         audioFileUrl: 'https://storage.example.com/audio.webm',
         transcriptionStatus: 'done',
       });
-      mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(false);
       mockFeedbackQueue.add.mockResolvedValue({});
 
       const result = await service.submitAnswer(
@@ -482,7 +433,6 @@ describe('TurnService', () => {
 
       expect(result).toEqual({
         answerId: 'answer-1',
-        followUpQueued: false,
         feedbackQueued: true,
         transcriptionPending: false,
       });
@@ -519,7 +469,6 @@ describe('TurnService', () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
       mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
       mockPrisma.userAnswer.findUnique.mockResolvedValue(BASE_ANSWER);
-      mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(false);
       mockFeedbackQueue.add.mockResolvedValue({});
 
       const result = await service.submitAnswer(
@@ -556,14 +505,12 @@ describe('TurnService', () => {
 
       expect(result).toEqual({
         answerId: 'answer-1',
-        followUpQueued: false,
         feedbackQueued: true,
         transcriptionPending: false,
       });
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
       expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
       expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
-      expect(mockFollowUpQueue.add).not.toHaveBeenCalled();
     });
 
     it('voice retry: transcription còn pending → re-enqueue transcription, return transcriptionPending=true', async () => {
@@ -586,7 +533,6 @@ describe('TurnService', () => {
 
       expect(result).toEqual({
         answerId: 'answer-1',
-        followUpQueued: false,
         feedbackQueued: false,
         transcriptionPending: true,
       });
@@ -624,7 +570,6 @@ describe('TurnService', () => {
 
       expect(result).toEqual({
         answerId: 'answer-1',
-        followUpQueued: false,
         feedbackQueued: false,
         transcriptionPending: false,
       });

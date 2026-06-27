@@ -33,14 +33,6 @@ interface AnswerOpts {
   feedback?: FeedbackData;
 }
 
-interface FollowUpOpts {
-  userAnswerId: string;
-  followUpText: string;
-  triggerRule: string;
-  triggerReason?: string;
-  followUpAnswerText?: string;
-}
-
 /** Compute startIndex/endIndex by locating segmentText inside answerText.
  *  Throws at seed time if the segment is not found — prevents silent bad data. */
 export function segAt(
@@ -107,19 +99,4 @@ export async function createAnswerWithFeedback(
   }
 
   return answer.id;
-}
-
-export async function createFollowUp(
-  prisma: PrismaClient,
-  opts: FollowUpOpts,
-): Promise<void> {
-  await prisma.followUpQuestion.create({
-    data: {
-      userAnswerId: opts.userAnswerId,
-      followUpText: opts.followUpText,
-      triggerRule: opts.triggerRule,
-      triggerReason: opts.triggerReason,
-      followUpAnswerText: opts.followUpAnswerText,
-    },
-  });
 }

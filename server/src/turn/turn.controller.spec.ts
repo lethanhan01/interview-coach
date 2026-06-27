@@ -67,7 +67,6 @@ describe('TurnController', () => {
       } as any;
       const turnResult = {
         answerId: 'answer-1',
-        followUpQueued: false,
         feedbackQueued: true,
       };
       mockTurnService.submitAnswer.mockResolvedValue(turnResult);

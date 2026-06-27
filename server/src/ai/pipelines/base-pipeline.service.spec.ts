@@ -124,49 +124,6 @@ describe('BasePipelineService (via HrPipelineService)', () => {
     });
   });
 
-  describe('generateFollowUp', () => {
-    const followUpInput = {
-      sessionType: 'hr' as const,
-      contextPackConfig: mockContextPack,
-      questionText: 'Điểm mạnh của bạn là gì?',
-      answerText: 'Tôi học nhanh.',
-    };
-
-    it('trả về { followUpText, triggerReason } khi JSON hợp lệ với FollowUpSchema', async () => {
-      mockOpenAI.chatCompletion.mockResolvedValue(
-        JSON.stringify({
-          follow_up: 'Bạn có thể cho ví dụ cụ thể không?',
-          trigger_reason: 'incomplete_answer',
-        }),
-      );
-
-      const result = await service.generateFollowUp(followUpInput);
-
-      expect(result).toEqual({
-        followUpText: 'Bạn có thể cho ví dụ cụ thể không?',
-        triggerReason: 'incomplete_answer',
-      });
-    });
-
-    it('trả về null khi JSON không khớp FollowUpSchema', async () => {
-      mockOpenAI.chatCompletion.mockResolvedValue(
-        JSON.stringify({ some_other_field: 'value' }),
-      );
-
-      const result = await service.generateFollowUp(followUpInput);
-
-      expect(result).toBeNull();
-    });
-
-    it('ném AI_SERVICE_ERROR khi chatCompletion trả về JSON không hợp lệ', async () => {
-      mockOpenAI.chatCompletion.mockResolvedValue('>>> INVALID <<<');
-
-      await expect(service.generateFollowUp(followUpInput)).rejects.toThrow(
-        InterviewAIException,
-      );
-    });
-  });
-
   describe('evaluateAnswer', () => {
     const feedbackInput = {
       sessionType: 'hr' as const,

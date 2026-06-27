@@ -6,19 +6,15 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
 import { WhisperService } from '../../turn/whisper.service';
 import { VoiceMetricsService } from '../../turn/voice-metrics.service';
-import { FollowUpCoordinatorService } from '../../turn/follow-up-coordinator.service';
 import {
   FEEDBACK_QUEUE,
-  FOLLOW_UP_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
-  FOLLOW_UP_JOB_ATTEMPTS,
 } from '../../common/constants/queue.constants';
 import {
   createMockPrismaService,
   createMockSseService,
   createMockWhisperService,
   createMockVoiceMetricsService,
-  createMockFollowUpCoordinatorService,
   createMockReportService,
   createMockQueue,
 } from '../../test-utils/mock-factories';
@@ -41,20 +37,16 @@ describe('TranscriptionProcessor', () => {
   let mockSse: ReturnType<typeof createMockSseService>;
   let mockWhisper: ReturnType<typeof createMockWhisperService>;
   let mockVoiceMetrics: ReturnType<typeof createMockVoiceMetricsService>;
-  let mockFollowUpCoordinator: ReturnType<typeof createMockFollowUpCoordinatorService>;
   let mockReportService: ReturnType<typeof createMockReportService>;
   let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
-  let mockFollowUpQueue: ReturnType<typeof createMockQueue>;
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
     mockSse = createMockSseService();
     mockWhisper = createMockWhisperService();
     mockVoiceMetrics = createMockVoiceMetricsService();
-    mockFollowUpCoordinator = createMockFollowUpCoordinatorService();
     mockReportService = createMockReportService();
     mockFeedbackQueue = createMockQueue();
-    mockFollowUpQueue = createMockQueue();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -63,10 +55,8 @@ describe('TranscriptionProcessor', () => {
         { provide: SseService, useValue: mockSse },
         { provide: WhisperService, useValue: mockWhisper },
         { provide: VoiceMetricsService, useValue: mockVoiceMetrics },
-        { provide: FollowUpCoordinatorService, useValue: mockFollowUpCoordinator },
         { provide: ReportService, useValue: mockReportService },
         { provide: getQueueToken(FEEDBACK_QUEUE), useValue: mockFeedbackQueue },
-        { provide: getQueueToken(FOLLOW_UP_QUEUE), useValue: mockFollowUpQueue },
       ],
     }).compile();
 
@@ -90,11 +80,6 @@ describe('TranscriptionProcessor', () => {
       orderIndex: 1,
       sessionId: 'session-123',
     });
-    mockPrisma.interviewSession.findUnique.mockResolvedValue({
-      id: 'session-123',
-      numQuestions: 5,
-    });
-    mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(false);
     mockSse.emit.mockResolvedValue(undefined);
     mockFeedbackQueue.add.mockResolvedValue({} as any);
 
@@ -123,41 +108,6 @@ describe('TranscriptionProcessor', () => {
     );
   });
 
-  it('enqueue follow-up khi shouldGenerateFollowUp=true', async () => {
-    mockWhisper.transcribe.mockResolvedValue({ text: 'A detailed answer about my background.', durationSeconds: 60 });
-    mockVoiceMetrics.calculate.mockReturnValue({ wpm: 130, fillerWordCount: 1 });
-    mockPrisma.userAnswer.update.mockResolvedValue({
-      id: 'answer-1',
-      sessionId: 'session-123',
-      questionId: 'q-1',
-      answerText: 'A detailed answer about my background.',
-    });
-    mockPrisma.sessionQuestion.findFirst.mockResolvedValue({
-      id: 'q-1',
-      questionText: 'Tell me about yourself?',
-      orderIndex: 1,
-      sessionId: 'session-123',
-    });
-    mockPrisma.interviewSession.findUnique.mockResolvedValue({
-      id: 'session-123',
-      numQuestions: 5,
-    });
-    mockFollowUpCoordinator.shouldGenerateFollowUp.mockReturnValue(true);
-    mockSse.emit.mockResolvedValue(undefined);
-    mockFeedbackQueue.add.mockResolvedValue({} as any);
-    mockFollowUpQueue.add.mockResolvedValue({} as any);
-
-    const job = { data: BASE_JOB_DATA, attemptsMade: 0, opts: { attempts: 2 } } as unknown as Job<typeof BASE_JOB_DATA>;
-    await processor.process(job);
-
-    expect(mockFollowUpQueue.add).toHaveBeenCalledWith(
-      'follow-up',
-      expect.objectContaining({ answerId: 'answer-1' }),
-      expect.objectContaining({ jobId: 'follow-up-answer-1', attempts: FOLLOW_UP_JOB_ATTEMPTS }),
-    );
-    expect(mockFeedbackQueue.add).toHaveBeenCalled();
-  });
-
   it('vẫn enqueue feedback và emit SSE khi question không tìm thấy', async () => {
     mockWhisper.transcribe.mockResolvedValue({ text: 'Some answer text here.', durationSeconds: 30 });
     mockVoiceMetrics.calculate.mockReturnValue({ wpm: 100, fillerWordCount: 0 });
@@ -180,7 +130,6 @@ describe('TranscriptionProcessor', () => {
       'turn.transcription_ready',
       expect.objectContaining({ answerId: 'answer-1' }),
     );
-    expect(mockFollowUpQueue.add).not.toHaveBeenCalled();
   });
 
   describe('error handling', () => {

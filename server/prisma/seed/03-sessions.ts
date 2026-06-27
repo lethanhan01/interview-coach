@@ -1,5 +1,5 @@
 import type { PrismaClient, QuestionBank } from '@prisma/client';
-import { createAnswerWithFeedback, createFollowUp, segAt } from './_helpers';
+import { createAnswerWithFeedback, segAt } from './_helpers';
 
 // ─── Job descriptions (one per session) ─────────────────────────────────────
 
@@ -147,10 +147,10 @@ async function seedS1(prisma: PrismaClient, userId: string): Promise<string> {
     },
   });
 
-  // Q2: text answer, medium score, follow-up
+  // Q2: text answer, medium score
   const a2Text =
     'Tôi nghĩ việc học công nghệ mới quan trọng vì ngành IT thay đổi rất nhanh. Tôi hay đọc documentation và làm theo tutorial rồi build project nhỏ để thực hành.';
-  const a2 = await createAnswerWithFeedback(prisma, {
+  await createAnswerWithFeedback(prisma, {
     sessionId: session.id,
     questionId: sqIds[1],
     answerText: a2Text,
@@ -173,16 +173,6 @@ async function seedS1(prisma: PrismaClient, userId: string): Promise<string> {
         }),
       ],
     },
-  });
-
-  await createFollowUp(prisma, {
-    userAnswerId: a2,
-    followUpText:
-      'Bạn vừa đề cập đến việc tự học qua project nhỏ. Hãy kể về một project cụ thể bạn đã build để học một công nghệ mới — công nghệ đó là gì và bạn đã học được điều gì?',
-    triggerRule: 'vague_answer',
-    triggerReason: 'Ứng viên đề cập tự học nhưng không nêu ví dụ cụ thể nào.',
-    followUpAnswerText:
-      'Tôi đã tự học NestJS bằng cách build một REST API cho hệ thống blog đơn giản. Tôi học được cách dùng dependency injection, Guards và interceptors trong NestJS.',
   });
 
   // Q3: text, higher score
@@ -566,10 +556,10 @@ async function seedS6(prisma: PrismaClient, userId: string): Promise<string> {
     qs.map((q, i) => createSQ(prisma, session.id, q, i)),
   );
 
-  // Q1: audio answer với voice metrics + follow-up được trả lời
+  // Q1: audio answer với voice metrics
   const s6q1Text =
     'Tôi thường sử dụng Git flow với các branch feature, develop và main. Khi bắt đầu task, tôi tạo branch mới từ develop, code xong thì tạo pull request và yêu cầu code review từ teammate.';
-  const a1 = await createAnswerWithFeedback(prisma, {
+  await createAnswerWithFeedback(prisma, {
     sessionId: session.id,
     questionId: sqIds[0],
     answerText: s6q1Text,
@@ -600,17 +590,6 @@ async function seedS6(prisma: PrismaClient, userId: string): Promise<string> {
         }),
       ],
     },
-  });
-
-  await createFollowUp(prisma, {
-    userAnswerId: a1,
-    followUpText:
-      'Khi nhận được review comments từ teammate, bạn xử lý thế nào nếu bạn không đồng ý với comment đó?',
-    triggerRule: 'depth_probe',
-    triggerReason:
-      'Ứng viên đề cập code review nhưng chưa nói đến cách xử lý conflict trong review.',
-    followUpAnswerText:
-      'Tôi sẽ giải thích lý do kỹ thuật của mình trong comment, nếu vẫn không đồng ý thì đề nghị discuss trực tiếp để hiểu nhau hơn. Quyết định cuối theo senior hoặc team lead.',
   });
 
   // Q2: skipped answer

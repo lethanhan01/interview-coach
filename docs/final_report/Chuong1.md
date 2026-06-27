@@ -2,13 +2,11 @@
 
 ## 1.1 Giới Thiệu Đề Tài
 
-> Cần bổ sung: giới thiệu ngắn gọn về InterviewAI. Nêu rõ đây là ứng dụng web hỗ trợ sinh viên năm cuối và fresher CNTT luyện phỏng vấn thông qua mô phỏng phiên phỏng vấn, nhận câu hỏi theo JD/ngữ cảnh, trả lời bằng text/voice và nhận feedback chi tiết.
+Đề tài AI Mock Interview là một ứng dụng web hỗ trợ sinh viên năm cuối và ứng viên fresher ngành Công nghệ thông tin luyện phỏng vấn bằng AI. Hệ thống hướng đến việc mô phỏng một phiên phỏng vấn gần với thực tế, trong đó người dùng có thể nhận câu hỏi dựa trên JD, vị trí ứng tuyển hoặc những thông tin đã chuẩn bị dựa trên CV cá nhân, sau đó trả lời bằng văn bản hoặc giọng nói và nhận phản hồi chi tiết từ AI.
 
-Nội dung nên có:
+Vấn đề chính mà đề tài hướng đến là nhiều sinh viên có thể tìm được câu hỏi phỏng vấn mẫu, nhưng lại khó tự đánh giá câu trả lời của mình. Người học thường không biết câu trả lời đã đúng trọng tâm, đủ ý và thuyết phục hay chưa. Vì vậy, AI mock interview được sinh ra nhằm giúp người dùng luyện tập chủ động hơn, nhận phản hồi cụ thể hơn và chuẩn bị tốt hơn cho các buổi phỏng vấn thực tế.
 
-- Tên đề tài và phạm vi GR1.
-- Vấn đề trung tâm: người học biết câu hỏi phỏng vấn nhưng khó tự đánh giá chất lượng câu trả lời.
-- Giá trị mong muốn: luyện tập on-demand, có feedback cụ thể, phù hợp bối cảnh sinh viên CNTT Việt Nam.
+Đề tài hướng đến giá trị thực tiễn là hỗ trợ sinh viên CNTT Việt Nam và ứng viên fresher rèn luyện kỹ năng trình bày, tư duy trả lời và khả năng giới thiệu dự án cá nhân trước khi bắt đầu buổi phỏng vấn thật
 
 ## 1.2 Bối Cảnh Bài Toán
 
@@ -60,15 +58,11 @@ Sau mỗi lần luyện tập, hệ thống có thể đưa ra nhận xét về 
 Đề tài hướng tới đối tượng chính là sinh viên IT mới ra trường hoặc fresher mới gia nhập thị trường lao động vì đối tượng này thường có nhiều dự án nhưng chưa biết cách trình bày dự án sao cho chuyên nghiệp.  
 AI Mock Interview của em có thể giúp người dùng luyện trả lời các câu hỏi như: 
 
-Bạn đã làm gì trong dự án này?  
-
-Vì sao bạn chọn công nghệ đó?  
-
-Bạn gặp khó khăn gì và giải quyết thế nào?  
-
-Hệ thống của bạn có kiến trúc ra sao?  
-
-Nếu có thêm thời gian, bạn sẽ cải thiện gì?  
+- Bạn đã làm gì trong dự án này?  
+- Vì sao bạn chọn công nghệ đó?  
+- Bạn gặp khó khăn gì và giải quyết thế nào?  
+- Hệ thống của bạn có kiến trúc ra sao?  
+- Nếu có thêm thời gian, bạn sẽ cải thiện gì?  
 
 Đây là những câu hỏi rất thường gặp nhưng nhiều sinh viên chưa chuẩn bị kỹ. 
 
@@ -102,22 +96,7 @@ Lưu ý:
 
 > Cần bổ sung: một câu mục tiêu tổng quát, ví dụ xây dựng prototype ứng dụng web InterviewAI hỗ trợ sinh viên CNTT luyện phỏng vấn và nhận feedback chi tiết dựa trên câu trả lời.
 
-
-## 1.8 Nhiệm Vụ Nghiên Cứu Và Triển Khai
-
-> Cần bổ sung: chuyển mục tiêu thành các nhiệm vụ có thể thực hiện.
-
-Gợi ý nhóm nhiệm vụ:
-
-1. Nghiên cứu bài toán và người dùng.
-2. Khảo sát sản phẩm/cách tiếp cận liên quan.
-3. Nghiên cứu cơ sở lý thuyết về phỏng vấn, feedback, LLM, STT và thiết kế web app.
-4. Phân tích yêu cầu chức năng/phi chức năng.
-5. Thiết kế kiến trúc và cơ sở dữ liệu.
-6. Triển khai backend, frontend và tích hợp AI.
-7. Kiểm thử, đánh giá và tổng hợp kết quả.
-
-## 1.9 Phạm Vi Nghiên Cứu
+## 1.8 Nhiệm Vụ và Phạm Vi Nghiên Cứu
 
 > Cần bổ sung: xác định các chức năng nằm trong GR1. Nên đối chiếu `docs/Design/MVP_Scope.md` và code hiện tại.
 
@@ -130,7 +109,7 @@ Gợi ý phạm vi:
 - Tạo feedback và báo cáo tổng hợp.
 - Giao diện luồng chính và kiểm thử cơ bản.
 
-## 1.10 Lộ Trình GR1 - GR2 - Đồ Án Tốt Nghiệp
+## 1.9 Lộ Trình GR1 - GR2 - Đồ Án Tốt Nghiệp
 
 
 | Giai đoạn | Mục tiêu chính |

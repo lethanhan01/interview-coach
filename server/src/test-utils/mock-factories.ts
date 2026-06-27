@@ -115,10 +115,6 @@ export const createMockVoiceMetricsService = () => ({
   calculate: jest.fn(),
 });
 
-export const createMockFollowUpCoordinatorService = () => ({
-  shouldGenerateFollowUp: jest.fn(),
-});
-
 export const createMockReportService = () => ({
   getReport: jest.fn(),
   enqueueReport: jest.fn().mockResolvedValue(undefined),

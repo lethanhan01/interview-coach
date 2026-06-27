@@ -228,7 +228,6 @@ model UserAnswer {
   createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   aiFeedback           AiFeedback?
-  followUpQuestion     FollowUpQuestion?
   question             SessionQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
   session              InterviewSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
@@ -236,19 +235,6 @@ model UserAnswer {
   @@index([questionId], map: "idx_user_answers_question_id")
   @@index([sessionId], map: "idx_user_answers_session_id")
   @@map("user_answers")
-}
-
-model FollowUpQuestion {
-  id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userAnswerId       String     @unique @map("user_answer_id") @db.Uuid
-  followUpText       String     @map("follow_up_text")
-  triggerRule        String     @map("trigger_rule")
-  triggerReason      String?    @map("trigger_reason")
-  followUpAnswerText String?    @map("follow_up_answer_text")
-  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  userAnswer         UserAnswer @relation(fields: [userAnswerId], references: [id], onDelete: Cascade)
-
-  @@map("follow_up_questions")
 }
 
 model AiFeedback {

@@ -18,10 +18,6 @@ describe('PromptBuilderService', () => {
       expect(result.length).toBeGreaterThan(0);
     });
 
-    it('trả về string không rỗng cho follow-up', () => {
-      expect(service.buildBaseSystem('follow-up').length).toBeGreaterThan(0);
-    });
-
     it('trả về string không rỗng cho surgical-feedback', () => {
       expect(
         service.buildBaseSystem('surgical-feedback').length,

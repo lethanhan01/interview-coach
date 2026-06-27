@@ -2,7 +2,7 @@
 
 **Branch:** `feat/mvp`  
 **Plan file:** `C:\Users\An\.claude\plans\2026-06-28-remove-follow-up-question.md`  
-**Status:** In progress — Tasks 1–2 complete, Task 3 là bước tiếp theo
+**Status:** In progress — Tasks 1–5 complete, Task 6 là bước tiếp theo
 
 ---
 
@@ -20,9 +20,9 @@ Xóa hoàn toàn tính năng follow-up question khỏi server và client. Không
 |------|-----------|------------|---------|
 | Task 1 — AI layer | DONE | build pass | Unstaged (chưa commit) |
 | Task 2 — Turn & Transcription | DONE | build pass | Unstaged (chưa commit) |
-| Task 3 — Tests | Chưa bắt đầu | — | Bước tiếp theo |
-| Task 4 — DB schema + migration | Chưa bắt đầu | — | Cần DB connection |
-| Task 5 — Seed cleanup | Chưa bắt đầu | — | — |
+| Task 3 — Tests | DONE | 33 suites, 185 tests pass | Unstaged (chưa commit) |
+| Task 4 — DB schema + migration | DONE | build pass | Migration applied (prisma db execute) |
+| Task 5 — Seed cleanup | DONE | build pass | Unstaged (chưa commit) |
 | Task 6 — Client-side | Chưa bắt đầu | — | — |
 | Task 7 — CLAUDE.md sync | Chưa bắt đầu | — | — |
 
@@ -50,23 +50,26 @@ Xóa hoàn toàn tính năng follow-up question khỏi server và client. Không
 - [x] `npm run build` pass hoàn toàn
 - [ ] Commit: `chore: remove follow-up from turn service and transcription processor`
 
-### Task 3 — Cập nhật tests (TIẾP THEO)
-- [ ] Sửa `mock-factories.ts` — xóa createMockFollowUpCoordinatorService
-- [ ] Sửa `turn.service.spec.ts` — xóa 2 follow-up test cases + mocks
-- [ ] Sửa `turn.controller.spec.ts` — xóa followUpQueued từ mock result
-- [ ] `npm run test` pass
+### Task 3 — Cập nhật tests ✓ DONE
+- [x] Sửa `mock-factories.ts` — xóa createMockFollowUpCoordinatorService
+- [x] Sửa `turn.service.spec.ts` — xóa follow-up test cases + mocks
+- [x] Sửa `turn.controller.spec.ts` — xóa followUpQueued từ mock result
+- [x] Sửa `base-pipeline.service.spec.ts` — xóa describe('generateFollowUp')
+- [x] Sửa `prompt-builder.service.spec.ts` — xóa test buildBaseSystem('follow-up')
+- [x] Sửa `transcription.processor.spec.ts` — xóa toàn bộ follow-up mocks + test
+- [x] `npm run test` pass — 33 suites, 185 tests
 - [ ] Commit: `chore: remove follow-up test utilities and assertions`
 
-### Task 4 — DB schema + migration
-- [ ] Sửa `schema.prisma` — xóa FollowUpQuestion model + relation trên UserAnswer
-- [ ] Chạy `npx prisma migrate dev --name drop_follow_up_questions`
-- [ ] `npx prisma generate` + `npm run build` pass
+### Task 4 — DB schema + migration ✓ DONE
+- [x] Sửa `schema.prisma` — xóa FollowUpQuestion model + relation trên UserAnswer
+- [x] Tạo migration file thủ công `20260628000000_drop_follow_up_questions/migration.sql` (shadow DB có pre-existing issue nên dùng `prisma db execute` thay `migrate dev`)
+- [x] `npx prisma generate` + `npm run build` pass
 - [ ] Commit: `chore: drop follow_up_questions table from schema and migration`
 
-### Task 5 — Seed cleanup
-- [ ] Sửa `_helpers.ts` — xóa createFollowUp + FollowUpOpts
-- [ ] Sửa `03-sessions.ts` — xóa 2 lần gọi createFollowUp
-- [ ] `npm run build` pass
+### Task 5 — Seed cleanup ✓ DONE
+- [x] Sửa `_helpers.ts` — xóa createFollowUp + FollowUpOpts
+- [x] Sửa `03-sessions.ts` — xóa 2 lần gọi createFollowUp + biến a1/a2 capture
+- [x] `npm run build` pass
 - [ ] Commit: `chore: remove follow-up seed data helpers`
 
 ### Task 6 — Client-side
