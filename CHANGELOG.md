@@ -85,6 +85,58 @@ Idempotency, SSRF protection, session state machine corrections:
 - Global `ThrottlerGuard` qua `APP_GUARD`.
 - `migration.sql` gộp: triggers + RLS + indexes + seed + schema changes vào 1 file.
 
+### 2026-06-27 — Schema Evolution T10: Bỏ PII bloat user_profiles (SR-03)
+
+Bỏ 5 field PII thuần khỏi `UserProfile` — không dùng cho phỏng vấn, giảm phạm vi PII (NĐ 13/2023):
+
+- Schema: xóa `dateOfBirth`, `gender`, `phone`, `hometown`, `nationality`. Giữ `personality` (input cho prompt generation).
+- `db push --accept-data-loss` (chỉ seed data, an toàn) + `prisma generate`.
+- DTO `update-profile.dto.ts`, `user.service.ts` (bỏ xử lý đặc biệt `dateOfBirth`), seed `01-users.ts`.
+- Client: `PersonalInfoGroup.tsx` chỉ còn `fullName`; `types.ts`, `constants.ts` (bỏ GENDER/NATIONALITY options).
+- Docs: `08_profile.md`, `07_backend_api_inventory.md`, `Database.md` (D5), `server/CLAUDE.md`, `client/lib/CLAUDE.md`.
+
+### 2026-06-27 — Schema Evolution T11 Phần 2: CHECK constraints (SR-05)
+
+Reactivate từ backlog (quyết định user). CHECK constraint ở DB layer làm defense-in-depth, chỉ áp cột tập giá trị ổn định đã verify:
+
+- `migration.sql` §7: `chk_interview_sessions_session_type` ∈ `{hr,technical,mixed}`; `chk_users_role` ∈ `{candidate,admin}`. Idempotent (`DROP IF EXISTS` + `ADD`), apply thủ công sau `db push`.
+- Loại khỏi scope: `users.status` (chỉ `active`), `interview_sessions.status` (8 giá trị, có `ready` mà trace D3 thiếu) — rủi ro drift cao, giữ ở application layer.
+- ADR-008 mới: quy trình apply raw SQL ngoài `prisma db push`.
+- Docs: `Database.md` Constraints summary.
+
+### 2026-06-27 — Schema Evolution T12 (scope B): Tách bảng `resumes` (SR-02)
+
+Tách CV data khỏi `user_profiles` sang bảng `resumes` riêng; chỉ tách schema + migrate JSONB. CV upload + parser + link `resume_id` defer sang T12b.
+
+- Schema: thêm model `Resume` (parsed_json, parser_version, active, language, fileUrl?...), `User → Resume (1:n)`. `UserProfile` mất 6 cột CV (`education`, `workExperience`, `projects`, `technicalSkills`, `certifications`, `awards`).
+- API contract giữ phẳng (flat-API, D5): `getProfile` merge `parsed_json` của resume active ngược vào `profile`; `upsertProfile` tách field CV → upsert một `Resume` thủ công (`parser_version='manual'`, merge từng phần). DTO/client/types không đổi.
+- `migration.sql`: §5 bỏ (cột CV chuyển sang resumes); thêm RLS cho `resumes` (read/insert/update own, update có cả USING + WITH CHECK); §8 backfill DO block guarded (copy JSONB từ user_profiles sang resumes trước khi drop cột).
+- Seed `01-users.ts`: tách `resume.create` độc lập với guard `userProfile` (fix bug coupled guard — reseed sau khi tách bảng vẫn tạo resume).
+- Tests: `user.service.spec.ts` 10/10, full suite 198/198 pass. `prisma validate`/`generate` OK, tsc sạch cho file T12.
+- Docs: `server/CLAUDE.md` (models + §User Module), `schema-design-review.md` SR-02, plan checkboxes.
+- Migration đã chạy (DB chỉ seed/demo): `db push --accept-data-loss` drop 6 cột CV + tạo bảng `resumes`; RLS resumes apply (`db execute`); reseed tạo demo resume. §8 backfill no-op (skip vì reseed).
+
+### 2026-06-27 — T13: Tách bảng session_reports (SR-07)
+
+Tách 4 JSON columns khỏi `interview_sessions` sang bảng `session_reports` chuẩn hóa:
+
+- Schema: xóa `planJson`, `selfEvalJson`, `executiveSummaryJson`, `commAnalysisJson`, `competencyHeatmapJson`, `actionPlanJson`. Thêm model `SessionReport` (unique `(session_id, report_type, version)`). `InterviewSession → SessionReport (1:n)`.
+- `ComprehensiveReportProcessor`: thay `interviewSession.update(JSON cols)` bằng `$transaction([4x sessionReport.upsert, interviewSession.update])` — idempotent cho BullMQ retry.
+- `ReportService.getReport`: `findUnique` + `include: { sessionReports: true }`; đọc content từ rows thay vì columns; check `REPORT_NOT_READY` qua `find(executive_summary)`.
+- `migration.sql §9`: DDL + index + RLS cho `session_reports`. Apply sau `db push`.
+- Tests: spec cập nhật toàn bộ — bỏ JSON column mocks, thêm `sessionReport.upsert` mock + `$transaction` mock.
+- DB: `db push --accept-data-loss` drop 6 JSON columns + tạo `session_reports`; RLS apply.
+
+### 2026-06-27 — Xử lý 5 điểm chú ý trước T13
+
+Dọn các điểm tồn đọng trước khi sang T13 (tách session_reports):
+
+- Fix 4 lỗi tsc pre-existing ở `test/session-completion-flow.e2e-spec.ts`: `TurnService` (6→5 args, bỏ transcribe/calculate stale, reorder), `FeedbackProcessor` (+reportService 5th arg), 2 cast `Job<any>` qua `unknown`. e2e pass.
+- Hardened toàn bộ `server/prisma/migrations/migration.sql` idempotent: §1 trigger `DROP TRIGGER IF EXISTS`, §2 mỗi policy `DROP POLICY IF EXISTS`, §3 `CREATE INDEX IF NOT EXISTS`. Re-run an toàn sau mỗi `db push`.
+- Thêm script `npm run db:apply-sql` (`prisma db execute --file ...`, Prisma 7 đọc datasource từ `prisma.config.ts`).
+- **CHECK constraints §7 đã APPLY lên Supabase**: blocker 1 legacy row `session_type='behavioral'` → remap `→'hr'` (user xác nhận, reversible); thêm UPDATE normalize vào §4. Verify 2 constraints tồn tại.
+- ADR-008: cập nhật quy trình apply (`db:apply-sql`), ghi nhận file idempotent toàn bộ.
+
 ---
 
 ## Architectural Decisions (Active Reference)

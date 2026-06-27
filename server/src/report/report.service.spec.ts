@@ -15,10 +15,21 @@ const COMPLETED_SESSION = {
   id: 'session-123',
   userId: 'user-abc',
   overallScore: 75,
-  executiveSummaryJson: { summary: 'Good performance' },
-  competencyHeatmapJson: { clarity: 80 },
-  actionPlanJson: { actions: [] },
   status: 'completed',
+  sessionReports: [
+    {
+      reportType: 'executive_summary',
+      version: 1,
+      contentJson: { summary: 'Good performance' },
+    },
+    {
+      reportType: 'competency_heatmap',
+      version: 1,
+      contentJson: { clarity: 80 },
+    },
+    { reportType: 'action_plan', version: 1, contentJson: { actions: [] } },
+    { reportType: 'comm_analysis', version: 1, contentJson: {} },
+  ],
 };
 
 describe('ReportService', () => {
@@ -95,10 +106,10 @@ describe('ReportService', () => {
       }
     });
 
-    it('throw REPORT_NOT_READY khi executiveSummaryJson là null', async () => {
+    it('throw REPORT_NOT_READY khi chưa có executive_summary report', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...COMPLETED_SESSION,
-        executiveSummaryJson: null,
+        sessionReports: [],
       });
 
       await expect(
@@ -107,7 +118,7 @@ describe('ReportService', () => {
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...COMPLETED_SESSION,
-        executiveSummaryJson: null,
+        sessionReports: [],
       });
       try {
         await service.getReport('session-123', 'user-abc');
@@ -128,11 +139,16 @@ describe('ReportService', () => {
       expect(result.transcript).toHaveLength(0);
     });
 
-    it('chuẩn hóa các JSON object phụ bị null thành object rỗng', async () => {
+    it('chuẩn hóa các JSON object phụ bị null thành object rỗng khi thiếu rows', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...COMPLETED_SESSION,
-        competencyHeatmapJson: null,
-        actionPlanJson: null,
+        sessionReports: [
+          {
+            reportType: 'executive_summary',
+            version: 1,
+            contentJson: { summary: 'Good performance' },
+          },
+        ],
       });
       mockPrisma.sessionQuestion.findMany.mockResolvedValue([]);
 
@@ -256,7 +272,14 @@ describe('ReportService', () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...COMPLETED_SESSION,
         overallScore: 0,
-        actionPlanJson: {},
+        sessionReports: [
+          {
+            reportType: 'executive_summary',
+            version: 1,
+            contentJson: { summary: 'Good performance' },
+          },
+          { reportType: 'action_plan', version: 1, contentJson: {} },
+        ],
       });
       mockPrisma.sessionQuestion.findMany.mockResolvedValue([
         {

@@ -23,6 +23,21 @@ test.beforeEach(async ({ page }) => {
     })
   })
 
+  await page.route(`**/api/v1/sessions/${SESSION_ID}`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: SESSION_ID,
+        status: 'active',
+        sessionType: 'hr',
+        contextPackId: 'VN',
+        numQuestions: MOCK_QUESTIONS.length,
+        durationMin: 30,
+      }),
+    })
+  })
+
   await page.route(`**/api/v1/sessions/${SESSION_ID}/status`, async (route) => {
     if (route.request().method() === 'GET') {
       await route.fulfill({
@@ -86,6 +101,27 @@ test('text mode: submit answer gọi POST /turns', async ({ page }) => {
   await expect.poll(() => turnCalled).toBe(true)
 })
 
+test('có thể tạm dừng phiên phỏng vấn đang chạy', async ({ page }) => {
+  await page.route(`**/api/v1/sessions/${SESSION_ID}/status`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: SESSION_ID,
+        status: 'paused',
+        sessionType: 'hr',
+        contextPackId: 'VN',
+      }),
+    })
+  })
+
+  await page.goto(`/sessions/${SESSION_ID}`)
+  await expect(page.getByText(MOCK_QUESTIONS[0].content)).toBeVisible({ timeout: 10000 })
+  await page.getByRole('button', { name: 'Tạm dừng' }).click()
+
+  await expect(page.getByText('Phiên phỏng vấn đang tạm dừng')).toBeVisible()
+})
+
 test('khi session kết thúc, chuyển sang trang chờ báo cáo', async ({ page }) => {
   await page.route(`**/api/v1/sessions/${SESSION_ID}/status`, async (route) => {
     await route.fulfill({
@@ -118,7 +154,7 @@ test('khi session kết thúc, chuyển sang trang chờ báo cáo', async ({ pa
       contentType: 'application/json',
       body: JSON.stringify({
         id: SESSION_ID,
-        status: 'completing',
+        status: 'active',
         sessionType: 'hr',
         contextPackId: 'VN',
       }),

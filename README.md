@@ -1,10 +1,6 @@
-Interview-AI Coach
+# Interview-AI Coach
 
-## Chạy backend bằng Docker
+Hướng dẫn chạy backend nằm trong [server/README.md](server/README.md).
 
-```powershell
-docker compose up --build server
-```
-
-Backend chạy tại `http://localhost:3000/api/v1`. Redis sẽ được Docker Compose
-tự khởi động cho backend.
+Luồng local hiện tại: bật Redis bằng Docker Compose, chạy NestJS bằng npm trong
+thư mục `server`, rồi kiểm tra bằng `/health` và `/api/v1`.

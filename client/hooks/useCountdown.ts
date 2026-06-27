@@ -7,20 +7,32 @@ interface CountdownResult {
 }
 
 export function useCountdown(totalSeconds: number, active: boolean): CountdownResult {
-  const [remainingSeconds, setRemainingSeconds] = useState(totalSeconds)
+  const [countdown, setCountdown] = useState({
+    totalSeconds,
+    remainingSeconds: totalSeconds,
+  })
   const startTimeRef = useRef<number | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const remainingSeconds =
+    countdown.totalSeconds === totalSeconds
+      ? countdown.remainingSeconds
+      : totalSeconds
+  const remainingRef = useRef(remainingSeconds)
+
+  useEffect(() => {
+    remainingRef.current = remainingSeconds
+  }, [remainingSeconds])
 
   useEffect(() => {
     if (!active || totalSeconds <= 0) return
 
+    const startingRemaining = remainingRef.current
     startTimeRef.current = Date.now()
-    setRemainingSeconds(totalSeconds)
 
     intervalRef.current = setInterval(() => {
       const elapsed = Math.floor((Date.now() - (startTimeRef.current ?? Date.now())) / 1000)
-      const remaining = Math.max(0, totalSeconds - elapsed)
-      setRemainingSeconds(remaining)
+      const remaining = Math.max(0, startingRemaining - elapsed)
+      setCountdown({ totalSeconds, remainingSeconds: remaining })
       if (remaining === 0 && intervalRef.current) {
         clearInterval(intervalRef.current)
       }

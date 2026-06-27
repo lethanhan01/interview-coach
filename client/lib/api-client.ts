@@ -3,10 +3,9 @@ import { createClient } from './supabase'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'
 
 async function request<T>(path: string, options: RequestInit): Promise<T> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
-  }
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
+  const headers: Record<string, string> = { ...(options.headers as Record<string, string>) }
+  if (!isFormData) headers['Content-Type'] = 'application/json'
 
   if (process.env.NEXT_PUBLIC_SKIP_AUTH === 'true') {
     headers['Authorization'] = 'Bearer dev-mock-token'
@@ -35,6 +34,9 @@ export const apiClient = {
 
   post: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+
+  postForm: <T>(path: string, body: FormData) =>
+    request<T>(path, { method: 'POST', body }),
 
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),

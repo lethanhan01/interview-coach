@@ -3,11 +3,17 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
-import type { SessionType, ContextPack } from '@/lib/types'
+import type {
+  ContextPack,
+  SaveJobDescriptionPayload,
+  SavedJobDescription,
+  SessionType,
+} from '@/lib/types'
 import Button from '@/components/ui/Button'
 import JdForm from '@/components/setup/JdForm'
 import ConfigForm from '@/components/setup/ConfigForm'
 import ConfirmStep from '@/components/setup/ConfirmStep'
+import SavedJdPicker from '@/components/setup/SavedJdPicker'
 
 // ── Constants & Types ─────────────────────────────────────────────────────────
 
@@ -126,16 +132,54 @@ export function serializeJd(form: JdFormData, style: InterviewerStyle): string {
   return lines.filter(Boolean).join('\n')
 }
 
+function optional(value: string): string | undefined {
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+function toSavedJobDescriptionPayload(form: JdFormData): SaveJobDescriptionPayload {
+  return {
+    companyName: form.company.trim(),
+    companyWebsite: optional(form.website),
+    jobTitle: form.position.trim(),
+    headcount: optional(form.headcount),
+    location: optional(form.location),
+    requirements: form.requirements.trim(),
+    jobContent: form.jobContent.trim(),
+    techStack: form.techStack,
+    benefits: optional(form.benefits),
+    salary: optional(form.salary),
+    bonus: optional(form.bonus),
+  }
+}
+
+function savedJobDescriptionToForm(item: SavedJobDescription): JdFormData {
+  return {
+    company: item.companyName,
+    website: item.companyWebsite ?? '',
+    position: item.jobTitle,
+    headcount: item.headcount ?? '',
+    location: item.location ?? '',
+    requirements: item.requirements,
+    jobContent: item.jobContent,
+    techStack: item.techStack ?? [],
+    benefits: item.benefits ?? '',
+    salary: item.salary ?? '',
+    bonus: item.bonus ?? '',
+  }
+}
+
 // ── Stepper ───────────────────────────────────────────────────────────────────
 
-type Step = 1 | 2 | 3
-const STEP_LABELS: Record<Step, string> = { 1: 'Job Description', 2: 'Cấu hình', 3: 'Xác nhận' }
+type Step = 0 | 1 | 2 | 3
+const STEP_LABELS: Record<1 | 2 | 3, string> = { 1: 'Job Description', 2: 'Cấu hình', 3: 'Xác nhận' }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SetupPage() {
   const router = useRouter()
-  const [step, setStep] = useState<Step>(1)
+  const [step, setStep] = useState<Step>(0)
+  const [jdPickerReady, setJdPickerReady] = useState(false)
   const [jd, setJd] = useState<JdFormData>(() => {
     if (typeof window === 'undefined') return EMPTY_JD
     try {
@@ -150,6 +194,8 @@ export default function SetupPage() {
   const [contextPack, setContextPack] = useState<ContextPack>('VN')
   const [duration, setDuration] = useState<InterviewDuration>(30)
   const [interviewerStyle, setInterviewerStyle] = useState<InterviewerStyle>('professional')
+  const [savedJobDescriptions, setSavedJobDescriptions] = useState<SavedJobDescription[]>([])
+  const [selectedSavedJobDescriptionId, setSelectedSavedJobDescriptionId] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -167,8 +213,57 @@ export default function SetupPage() {
     }
   }, [jd])
 
+  useEffect(() => {
+    let cancelled = false
+    apiClient
+      .get<{ items: SavedJobDescription[] }>('/saved-job-descriptions')
+      .then((data) => {
+        if (!cancelled) {
+          const items = data.items ?? []
+          setSavedJobDescriptions(items)
+          // Nếu không có JD nào đã lưu → skip step 0, vào thẳng step 1
+          if (items.length === 0) setStep(1)
+          setJdPickerReady(true)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSavedJobDescriptions([])
+          setStep(1)
+          setJdPickerReady(true)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  function updateJd(data: JdFormData) {
+    setJd(data)
+    setSelectedSavedJobDescriptionId('')
+  }
+
+  function selectSavedJobDescription(id: string) {
+    setSelectedSavedJobDescriptionId(id)
+    const item = savedJobDescriptions.find((saved) => saved.id === id)
+    if (item) setJd(savedJobDescriptionToForm(item))
+  }
+
+  function handlePickerSelect(item: SavedJobDescription) {
+    setJd(savedJobDescriptionToForm(item))
+    setSelectedSavedJobDescriptionId(item.id)
+    setStep(1)
+  }
+
+  function handlePickerNew() {
+    setJd(EMPTY_JD)
+    setSelectedSavedJobDescriptionId('')
+    setStep(1)
+  }
+
   function resetJd() {
     setJd(EMPTY_JD)
+    setSelectedSavedJobDescriptionId('')
     try {
       localStorage.removeItem(JD_DRAFT_KEY)
     } catch {
@@ -183,11 +278,17 @@ export default function SetupPage() {
     setSubmitting(true)
     try {
       const jobDescription = serializeJd(jd, interviewerStyle)
+      const savedJobDescription = await apiClient.post<SavedJobDescription>(
+        '/saved-job-descriptions',
+        toSavedJobDescriptionPayload(jd),
+      )
       const data = await apiClient.post<{ id: string }>('/sessions', {
         jobDescription,
         sessionType,
         contextPack,
         numQuestions,
+        targetRoles: [jd.position],
+        savedJobDescriptionId: savedJobDescription.id,
       })
       router.push(`/sessions/${data.id}`)
     } catch (err) {
@@ -196,57 +297,77 @@ export default function SetupPage() {
     }
   }
 
+  // Hiện loading spinner khi đang fetch danh sách JD (chỉ ở step 0)
+  if (step === 0 && !jdPickerReady) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="size-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-2xl">
-      {/* Stepper */}
-      <div className="mb-10 flex items-start gap-2">
-        {([1, 2, 3] as Step[]).map((s) => (
-          <div key={s} className="flex items-center gap-2">
-            <div className="flex flex-col items-center gap-1.5">
-              <div
-                className={[
-                  'flex size-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-150',
-                  s === step
-                    ? 'bg-brand text-white ring-4 ring-brand-200'
-                    : s < step
-                      ? 'bg-brand text-white'
-                      : 'bg-border text-ink-faint',
-                ].join(' ')}
-              >
-                {s < step ? (
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                    <path
-                      d="M2 6l3 3 5-5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                ) : (
-                  s
-                )}
+      {/* Step 0 — Saved JD Picker (no stepper) */}
+      {step === 0 && (
+        <SavedJdPicker
+          items={savedJobDescriptions}
+          onSelect={handlePickerSelect}
+          onNew={handlePickerNew}
+        />
+      )}
+
+      {/* Stepper — only shown from step 1 onwards */}
+      {step >= 1 && (
+        <div className="mb-10 flex items-start gap-2">
+          {([1, 2, 3] as (1 | 2 | 3)[]).map((s) => (
+            <div key={s} className="flex items-center gap-2">
+              <div className="flex flex-col items-center gap-1.5">
+                <div
+                  className={[
+                    'flex size-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-150',
+                    s === step
+                      ? 'bg-brand text-white ring-4 ring-brand-200'
+                      : s < step
+                        ? 'bg-brand text-white'
+                        : 'bg-border text-ink-faint',
+                  ].join(' ')}
+                >
+                  {s < step ? (
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <path
+                        d="M2 6l3 3 5-5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  ) : (
+                    s
+                  )}
+                </div>
+                <span
+                  className={[
+                    'hidden text-xs sm:block',
+                    s === step ? 'font-medium text-ink' : 'text-ink-faint',
+                  ].join(' ')}
+                >
+                  {STEP_LABELS[s]}
+                </span>
               </div>
-              <span
-                className={[
-                  'hidden text-xs sm:block',
-                  s === step ? 'font-medium text-ink' : 'text-ink-faint',
-                ].join(' ')}
-              >
-                {STEP_LABELS[s]}
-              </span>
+              {s < 3 && (
+                <div
+                  className={[
+                    'mb-4 h-px w-10 transition-all duration-150',
+                    s < step ? 'bg-brand' : 'bg-border',
+                  ].join(' ')}
+                />
+              )}
             </div>
-            {s < 3 && (
-              <div
-                className={[
-                  'mb-4 h-px w-10 transition-all duration-150',
-                  s < step ? 'bg-brand' : 'bg-border',
-                ].join(' ')}
-              />
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Step 1 — Job Description Form */}
       {step === 1 && (
@@ -257,9 +378,19 @@ export default function SetupPage() {
               Điền thông tin JD để AI tạo câu hỏi phỏng vấn phù hợp nhất.
             </p>
           </div>
-          <JdForm value={jd} onChange={setJd} />
+          <JdForm
+            value={jd}
+            onChange={updateJd}
+            savedJobDescriptions={savedJobDescriptions}
+            selectedSavedJobDescriptionId={selectedSavedJobDescriptionId}
+            onSelectSavedJobDescription={selectSavedJobDescription}
+          />
           <div className="flex items-center justify-between">
-            {jdHasContent ? (
+            {savedJobDescriptions.length > 0 ? (
+              <Button variant="ghost" onClick={() => setStep(0)}>
+                Quay lại
+              </Button>
+            ) : jdHasContent ? (
               <Button variant="ghost" onClick={resetJd}>
                 Đặt lại
               </Button>

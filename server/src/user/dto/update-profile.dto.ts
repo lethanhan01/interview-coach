@@ -44,26 +44,6 @@ export class UpdateProfileDto {
 
   @IsString()
   @IsOptional()
-  dateOfBirth?: string;
-
-  @IsString()
-  @IsOptional()
-  gender?: string;
-
-  @IsString()
-  @IsOptional()
-  phone?: string;
-
-  @IsString()
-  @IsOptional()
-  hometown?: string;
-
-  @IsString()
-  @IsOptional()
-  nationality?: string;
-
-  @IsString()
-  @IsOptional()
   personality?: string;
 
   @IsObject()

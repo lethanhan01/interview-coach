@@ -77,7 +77,7 @@ describe('QuestionGenerationProcessor', () => {
     mockContextPack.getContextPack.mockReturnValue({} as any);
     mockFactory.getStrategy.mockReturnValue(mockStrategy);
     mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 2 });
-    mockPrisma.interviewSession.update.mockResolvedValue({} as any);
+    mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
     mockSse.emit.mockResolvedValue(undefined);
 
     await processor.process(
@@ -100,8 +100,11 @@ describe('QuestionGenerationProcessor', () => {
       ],
       skipDuplicates: true,
     });
-    expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
-      where: { id: 'session-123' },
+    expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'session-123',
+        status: { notIn: ['paused', 'canceled'] },
+      },
       data: { status: 'active' },
     });
     expect(mockSse.emit).toHaveBeenCalledWith(
@@ -149,17 +152,45 @@ describe('QuestionGenerationProcessor', () => {
       generateQuestions: jest.fn().mockResolvedValue(generatedQuestions),
     });
     mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
-    mockPrisma.interviewSession.update.mockResolvedValue({} as any);
+    mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
     mockSse.emit.mockRejectedValue(new Error('Redis unavailable'));
 
     await expect(processor.process(makeJob())).resolves.toBeUndefined();
 
     expect(mockPrisma.questionBank.findMany).not.toHaveBeenCalled();
-    expect(mockPrisma.interviewSession.update).toHaveBeenCalledTimes(1);
-    expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
-      where: { id: 'session-123' },
+    expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'session-123',
+        status: { notIn: ['paused', 'canceled'] },
+      },
       data: { status: 'active' },
     });
+  });
+
+  it('không emit active nếu session đã bị tạm dừng trước khi worker hoàn tất', async () => {
+    const generatedQuestions = Array.from({ length: 5 }, (_, index) => ({
+      text: `Câu hỏi ${index + 1}`,
+      category: 'behavioral',
+      competencyDomain: 'communication',
+    }));
+    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockFactory.getStrategy.mockReturnValue({
+      generateQuestions: jest.fn().mockResolvedValue(generatedQuestions),
+    });
+    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+    mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(processor.process(makeJob())).resolves.toBeUndefined();
+
+    expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'session-123',
+        status: { notIn: ['paused', 'canceled'] },
+      },
+      data: { status: 'active' },
+    });
+    expect(mockSse.emit).not.toHaveBeenCalled();
   });
 
   describe('fallback path (AI failure)', () => {
@@ -178,7 +209,7 @@ describe('QuestionGenerationProcessor', () => {
       mockFactory.getStrategy.mockReturnValue(mockStrategy);
       mockPrisma.questionBank.findMany.mockResolvedValue(mockQuestions);
       mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
-      mockPrisma.interviewSession.update.mockResolvedValue({} as any);
+      mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
       mockSse.emit.mockResolvedValue(undefined);
 
       await processor.process(makeJob());
@@ -202,8 +233,11 @@ describe('QuestionGenerationProcessor', () => {
           }),
         ]),
       );
-      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
-        where: { id: 'session-123' },
+      expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: 'session-123',
+          status: { notIn: ['paused', 'canceled'] },
+        },
         data: { status: 'active' },
       });
       expect(mockSse.emit).toHaveBeenCalledWith(
@@ -230,7 +264,7 @@ describe('QuestionGenerationProcessor', () => {
       mockFactory.getStrategy.mockReturnValue({ generateQuestions });
       mockPrisma.questionBank.findMany.mockResolvedValue(mockQuestions);
       mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
-      mockPrisma.interviewSession.update.mockResolvedValue({} as any);
+      mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
       mockSse.emit.mockResolvedValue(undefined);
 
       await expect(processor.process(makeJob())).resolves.toBeUndefined();
@@ -253,8 +287,11 @@ describe('QuestionGenerationProcessor', () => {
           expect.objectContaining({ questionBankId: 'qb-5' }),
         ]),
       );
-      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
-        where: { id: 'session-123' },
+      expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: 'session-123',
+          status: { notIn: ['paused', 'canceled'] },
+        },
         data: { status: 'active' },
       });
     });

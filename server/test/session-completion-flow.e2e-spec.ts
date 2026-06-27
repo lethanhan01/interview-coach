@@ -182,11 +182,10 @@ describe('Session completion flow (integration)', () => {
     const reportService = new ReportService(prisma as any, reportQueue as any);
     const turnService = new TurnService(
       prisma as any,
-      { transcribe: jest.fn() } as any,
-      { calculate: jest.fn() },
       { shouldGenerateFollowUp: jest.fn(() => false) },
       { add: jest.fn() } as any,
       feedbackQueue as any,
+      { add: jest.fn() } as any,
     );
     const feedbackProcessor = new FeedbackProcessor(
       prisma as any,
@@ -210,6 +209,7 @@ describe('Session completion flow (integration)', () => {
           })),
         })),
       } as any,
+      reportService as any,
     );
     const sessionService = new SessionService(
       prisma as any,
@@ -240,7 +240,7 @@ describe('Session completion flow (integration)', () => {
       data: feedbackJobs[0].data,
       attemptsMade: 0,
       opts: feedbackJobs[0].opts,
-    } as Job<any>);
+    } as unknown as Job<any>);
 
     expect(answers.get(turn.answerId)?.feedbackGenerated).toBe(true);
     expect(feedbacks.get(turn.answerId)?.overallScore).toBe(84);
@@ -259,7 +259,7 @@ describe('Session completion flow (integration)', () => {
       data: reportJobs[0].data,
       attemptsMade: 0,
       opts: reportJobs[0].opts,
-    } as Job<any>);
+    } as unknown as Job<any>);
 
     expect(session.status).toBe('completed');
     expect(session.overallScore).toBe(84);

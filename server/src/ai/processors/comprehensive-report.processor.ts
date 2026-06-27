@@ -137,18 +137,80 @@ export class ComprehensiveReportProcessor extends WorkerHost {
     }
 
     try {
-      await this.prisma.interviewSession.update({
-        where: { id: sessionId },
-        data: {
-          executiveSummaryJson: executiveSummary,
-          commAnalysisJson: commAnalysis,
-          competencyHeatmapJson: competencyHeatmap,
-          actionPlanJson: actionPlan,
-          overallScore: aggregatedScore,
-          status: 'completed',
-          completedAt: new Date(),
-        },
-      });
+      await this.prisma.$transaction([
+        this.prisma.sessionReport.upsert({
+          where: {
+            sessionId_reportType_version: {
+              sessionId,
+              reportType: 'executive_summary',
+              version: 1,
+            },
+          },
+          create: {
+            sessionId,
+            reportType: 'executive_summary',
+            version: 1,
+            contentJson: executiveSummary,
+          },
+          update: { contentJson: executiveSummary },
+        }),
+        this.prisma.sessionReport.upsert({
+          where: {
+            sessionId_reportType_version: {
+              sessionId,
+              reportType: 'comm_analysis',
+              version: 1,
+            },
+          },
+          create: {
+            sessionId,
+            reportType: 'comm_analysis',
+            version: 1,
+            contentJson: commAnalysis,
+          },
+          update: { contentJson: commAnalysis },
+        }),
+        this.prisma.sessionReport.upsert({
+          where: {
+            sessionId_reportType_version: {
+              sessionId,
+              reportType: 'competency_heatmap',
+              version: 1,
+            },
+          },
+          create: {
+            sessionId,
+            reportType: 'competency_heatmap',
+            version: 1,
+            contentJson: competencyHeatmap,
+          },
+          update: { contentJson: competencyHeatmap },
+        }),
+        this.prisma.sessionReport.upsert({
+          where: {
+            sessionId_reportType_version: {
+              sessionId,
+              reportType: 'action_plan',
+              version: 1,
+            },
+          },
+          create: {
+            sessionId,
+            reportType: 'action_plan',
+            version: 1,
+            contentJson: actionPlan,
+          },
+          update: { contentJson: actionPlan },
+        }),
+        this.prisma.interviewSession.update({
+          where: { id: sessionId },
+          data: {
+            overallScore: aggregatedScore,
+            status: 'completed',
+            completedAt: new Date(),
+          },
+        }),
+      ]);
     } catch (error: unknown) {
       this.logger.error(
         `ComprehensiveReportProcessor: DB update failed for session ${sessionId}`,

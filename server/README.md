@@ -1,30 +1,24 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-
 # InterviewCoach Backend
 
 Backend NestJS cho InterviewCoach.
 
 - API local: `http://localhost:3000/api/v1`
+- Health check: `http://localhost:3000/health`
 - Frontend local: `http://localhost:5173`
+
+## Quy trình chạy server
+
+Luồng chạy đã được tách thành 4 phần:
+
+| Phần | Lệnh chính | Mục đích |
+| --- | --- | --- |
+| Infra local | `npm run infra:up` | Bật Redis bằng Docker Compose |
+| DB/schema | `npm run db:sync` | Generate Prisma, chuẩn bị unique `user_answers`, rồi `prisma db push` |
+| Server runtime | `npm run start:dev` | Chạy NestJS watch mode |
+| Kiểm tra runtime | `npm run verify:runtime` | Gọi `/api/v1` và `/health` |
+
+`start`, `start:dev`, `start:debug`, và `build` chỉ tự chạy
+`npm run prisma:generate`. Các lệnh này không tự chạy `db:sync`.
 
 ## 1. Chuẩn bị lần đầu
 
@@ -34,15 +28,14 @@ Cần có:
 - Docker Desktop
 - PostgreSQL/Supabase đã cấu hình
 
-Từ thư mục gốc repository, chạy:
+Từ thư mục `server`:
 
 ```powershell
-cd server
 npm install
 Copy-Item .env.example .env
 ```
 
-Mở `server/.env` và điền các biến còn trống:
+Mở `server/.env` và điền các biến bắt buộc:
 
 ```dotenv
 SUPABASE_URL=
@@ -56,7 +49,7 @@ DIRECT_URL=
 OPENAI_API_KEY=
 ```
 
-Giữ nguyên các giá trị local này nếu không có nhu cầu đổi port:
+Giữ các giá trị local này nếu không cần đổi port:
 
 ```dotenv
 REDIS_HOST=localhost
@@ -75,143 +68,197 @@ MOCK_USER_ID=<UUID-cua-user-co-san-trong-public.users>
 
 `MOCK_USER_ID` phải là UUID của một user thật trong database.
 
-## 2. Chạy backend bằng Docker Compose
+## 2. Chạy local bằng npm
 
-Đây là cách gọn nhất vì Docker Compose tự chạy Redis kèm backend.
-
-Mở Docker Desktop, sau đó chạy từ thư mục gốc repository:
+Mở Docker Desktop, sau đó chạy từ thư mục `server`:
 
 ```powershell
-docker compose up --build server
-```
-
-Khi thấy log `Nest application successfully started`, backend đã chạy tại:
-
-```text
-http://localhost:3000/api/v1
-```
-
-Dừng backend:
-
-```powershell
-docker compose down
-```
-
-## 3. Chạy backend trực tiếp bằng npm
-
-Dùng cách này khi muốn backend tự reload khi sửa code.
-
-Mở Docker Desktop và bật Redis:
-
-```powershell
-docker start interviewcoach-redis
-```
-
-Nếu Redis container chưa tồn tại:
-
-```powershell
-docker run --name interviewcoach-redis -p 6379:6379 -d redis:7-alpine
-```
-
-Chạy backend:
-
-```powershell
-cd server
+npm run infra:up
 npm run start:dev
 ```
 
-Các lệnh `start`, `start:dev`, và `start:debug` tự chạy `npm run db:sync`
-trước khi khởi động Nest. Bước này generate Prisma Client, hợp nhất các
-`user_answers` lịch sử bị trùng, tạo unique constraint, rồi mới chạy
-`prisma db push`.
-
-Trong lúc hợp nhất, migration giữ lại feedback tốt nhất, chuyển toàn bộ
-annotation sang feedback đó và bảo toàn follow-up trước khi xóa answer thừa.
-Toàn bộ bước chuẩn bị chạy trong một transaction có khóa ghi.
-
-Khi thấy log `Nest application successfully started`, backend đã sẵn sàng.
-
-Dừng backend đang chạy trong terminal:
-
-```text
-Ctrl+C
-```
-
-## 4. Kiểm tra nhanh
-
-Kiểm tra port:
+Hoặc dùng một lệnh tiện ích:
 
 ```powershell
-Test-NetConnection localhost -Port 3000
+npm run dev:local
 ```
 
-Gọi API root:
+Khi thấy log `Nest application successfully started`, server đã listen trên
+`http://localhost:3000`.
+
+Mở terminal khác để kiểm tra:
 
 ```powershell
-Invoke-WebRequest http://localhost:3000/api/v1
+npm run verify:runtime
 ```
 
-## 5. Lỗi thường gặp
+Lệnh verify gọi:
 
-### Port 3000 đang bị chiếm
+- `GET http://localhost:3000/api/v1`
+- `GET http://localhost:3000/health`
 
-Xem process đang dùng port:
+`/health` kiểm tra app, Prisma/database, và Redis. Nếu DB hoặc Redis chưa sẵn
+sàng, response sẽ có `status: "degraded"` và `verify:runtime` sẽ fail.
+
+## 3. Khi nào chạy DB sync
+
+Không chạy `db:sync` như một phần mặc định của `start:dev`.
+
+Chỉ chạy khi cần đồng bộ schema/data, ví dụ:
+
+- vừa thay đổi Prisma schema
+- database local thiếu constraint hoặc column mới
+- cần chạy bước chuẩn bị unique `user_answers`
+- trước khi xác nhận migration production liên quan `user_answers`
+
+Chạy từ thư mục `server`:
 
 ```powershell
-Get-NetTCPConnection -LocalPort 3000 -State Listen |
-  Select-Object LocalAddress, LocalPort, OwningProcess
+npm run db:sync
 ```
 
-Dừng process đó:
+Lệnh này thực hiện:
 
-```powershell
-Stop-Process -Id <PID> -Force
-```
+1. `prisma generate`
+2. `npm run db:prepare-user-answer-unique`
+3. `prisma db push`
 
-Sau đó chạy lại backend.
-
-### Redis chưa chạy
-
-Nếu chạy bằng npm và gặp lỗi `ECONNREFUSED 127.0.0.1:6379`, bật Redis:
-
-```powershell
-docker start interviewcoach-redis
-```
-
-Nếu chạy bằng Docker Compose, Redis được bật tự động.
-
-### API trả `401 Unauthorized`
-
-Nếu đang phát triển local và muốn bỏ qua đăng nhập, kiểm tra lại:
-
-```dotenv
-AUTH_ENABLED=false
-MOCK_USER_ID=<UUID-hop-le>
-```
-
-Sau khi sửa `.env`, dừng backend rồi chạy lại.
-
-## 6. Lệnh hữu ích
-
-```powershell
-npm test
-npm run build
-npx prisma validate
-```
-
-## 7. Migration production
-
-Chạy từ thư mục `server` với `DIRECT_URL` trỏ đến kết nối PostgreSQL trực tiếp:
+Với production hoặc dữ liệu quan trọng, chạy kiểm thử migration trước:
 
 ```powershell
 npm run db:test-user-answer-migration
 npm run db:sync
 ```
 
-Lệnh test tạo một schema tạm, sao chép dữ liệu thật của `user_answers`,
-`ai_feedbacks`, `annotated_segments` và `follow_up_questions`, chèn một nhóm
-duplicate, chạy migration rồi kiểm tra quan hệ và unique constraint. Schema tạm
-luôn được xóa khi kết thúc.
+Script test tạo schema tạm, sao chép dữ liệu thật của `user_answers`,
+`ai_feedbacks`, `annotated_segments`, và `follow_up_questions`, sau đó kiểm tra
+dedupe, quan hệ, và unique constraint. Schema tạm được xóa khi kết thúc.
 
-Không chạy `prisma db push` trực tiếp cho thay đổi unique này. Dùng
-`npm run db:sync` để bước deduplicate hoàn tất trước khi Prisma đối chiếu schema.
+## 4. Chạy production build
+
+Từ thư mục `server`:
+
+```powershell
+npm run build
+npm run start:prod
+```
+
+`npm run build` tự chạy `prisma generate` trước khi build Nest. Sau build,
+entrypoint production phải nằm ở:
+
+```text
+server/dist/main.js
+```
+
+Kiểm tra runtime sau khi start:
+
+```powershell
+npm run verify:runtime
+```
+
+## 5. Docker Compose hiện tại
+
+`compose.yaml` hiện được dùng để chạy Redis local. Backend NestJS chạy bằng npm
+trong thư mục `server`.
+
+Các lệnh npm đã bọc sẵn Compose file ở repo root:
+
+```powershell
+npm run infra:up
+npm run infra:down
+```
+
+Không dùng `docker compose up --build server` ở trạng thái hiện tại, vì service
+`server` đang bị tắt trong `compose.yaml`.
+
+## 6. Dừng server
+
+Dừng NestJS trong terminal đang chạy:
+
+```text
+Ctrl+C
+```
+
+Dừng Redis Compose:
+
+```powershell
+npm run infra:down
+```
+
+Nếu port `3000` đang bị chiếm, xem process:
+
+```powershell
+Get-NetTCPConnection -LocalPort 3000 -State Listen |
+  Select-Object LocalAddress, LocalPort, OwningProcess
+```
+
+Dừng đúng process đang giữ port:
+
+```powershell
+Stop-Process -Id <PID> -Force
+```
+
+## 7. Lệnh hữu ích
+
+```powershell
+npm run db:validate
+npm run prisma:generate
+npm run build
+npm test
+npm run verify:runtime
+```
+
+## 8. Lỗi thường gặp
+
+### Redis chưa chạy
+
+Dấu hiệu thường gặp:
+
+```text
+ECONNREFUSED 127.0.0.1:6379
+```
+
+Xử lý:
+
+```powershell
+npm run infra:up
+```
+
+Nếu bạn đang có Redis container cũ tên `interviewcoach-redis`, hãy đảm bảo
+không có container khác giữ port `6379` trước khi chạy Compose.
+
+### `/health` trả `degraded`
+
+Gọi trực tiếp để xem dependency nào lỗi:
+
+```powershell
+Invoke-RestMethod http://localhost:3000/health
+```
+
+- `services.db.status = "down"`: kiểm tra `DATABASE_URL`, Supabase/PostgreSQL,
+  Prisma schema, hoặc chạy `npm run db:validate`.
+- `services.redis.status = "down"`: kiểm tra Docker Desktop và
+  `npm run infra:up`.
+
+### API trả `401 Unauthorized`
+
+Nếu đang phát triển local và muốn bỏ qua đăng nhập, kiểm tra:
+
+```dotenv
+AUTH_ENABLED=false
+MOCK_USER_ID=<UUID-hop-le>
+```
+
+Sau khi sửa `.env`, dừng server rồi chạy lại.
+
+### Prisma Client lệch schema
+
+Nếu gặp lỗi kiểu missing column hoặc stale field sau khi đổi schema:
+
+```powershell
+npm run prisma:generate
+npm run build
+```
+
+Nếu database thật chưa đồng bộ schema, chạy `npm run db:sync` có chủ ý sau khi
+đã đọc phần DB sync ở trên.

@@ -35,6 +35,17 @@ const MOCK_COMPLETING: Session = {
   createdAt: '2026-06-07T09:00:00.000Z',
 }
 
+const MOCK_PAUSED: Session = {
+  id: 'sess-paused',
+  userId: 'u1',
+  sessionType: 'mixed',
+  contextPackId: 'VN',
+  status: 'paused',
+  numQuestions: 5,
+  jobDescription: 'Fullstack Engineer at Paused Co',
+  createdAt: '2026-06-07T11:00:00.000Z',
+}
+
 test.beforeEach(async ({ page }) => {
   await page.route('**/auth/v1/user**', async (route) => {
     await route.fulfill({
@@ -64,14 +75,15 @@ test('hiển thị danh sách session với status badge đúng', async ({ page 
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ sessions: [MOCK_ACTIVE, MOCK_COMPLETING, MOCK_COMPLETED] }),
+      body: JSON.stringify({ sessions: [MOCK_ACTIVE, MOCK_PAUSED, MOCK_COMPLETING, MOCK_COMPLETED] }),
     })
   })
 
   await page.goto('/sessions')
   await expect(page.getByText('Đang phỏng vấn')).toBeVisible()
+  await expect(page.getByText('Tạm dừng')).toBeVisible()
   await expect(page.getByText('Đang tạo báo cáo')).toBeVisible()
-  await expect(page.getByText('Hoàn thành')).toBeVisible()
+  await expect(page.getByText('Hoàn thành', { exact: true })).toBeVisible()
 })
 
 test('session active có link "Tiếp tục" đến interview page', async ({ page }) => {
@@ -86,6 +98,20 @@ test('session active có link "Tiếp tục" đến interview page', async ({ pa
   await page.goto('/sessions')
   const link = page.getByRole('link', { name: 'Tiếp tục' })
   await expect(link).toHaveAttribute('href', `/sessions/${MOCK_ACTIVE.id}`)
+})
+
+test('session paused có link "Tiếp tục" đến interview page', async ({ page }) => {
+  await page.route('**/api/v1/sessions', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ sessions: [MOCK_PAUSED] }),
+    })
+  })
+
+  await page.goto('/sessions')
+  const link = page.getByRole('link', { name: 'Tiếp tục' })
+  await expect(link).toHaveAttribute('href', `/sessions/${MOCK_PAUSED.id}`)
 })
 
 test('session completed có link "Xem báo cáo" đến report page', async ({ page }) => {

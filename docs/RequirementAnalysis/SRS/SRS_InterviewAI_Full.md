@@ -534,7 +534,7 @@ flowchart TD
 
 **Đầu vào:**
 - job_description (100–5000 ký tự), jd_source (paste / pdf / url)
-- session_type (hr_behavioral / technical / mixed)
+- session_type (hr / technical / mixed)
 - num_questions (3, 5, hoặc 7), difficulty (easy / medium / hard)
 - persona (friendly_hr / neutral_tech_lead / strict_senior / senior_manager)
 - mode (practice / exam), duration_min (15 / 30 / 45 / 60)
@@ -584,7 +584,7 @@ flowchart TD
 **Bước 1 — [AI-GPT-4o] Phân tích JD và xác định competency distribution:**
 1. GPT-4o trích xuất `job_title`, `company_name` từ JD text
 2. Xác định competency distribution theo session_type:
-   - `hr_behavioral`: Communication 40% / Behavioral Maturity 40% / Culture Fit 20%
+   - `hr`: Communication 40% / Behavioral Maturity 40% / Culture Fit 20%
    - `technical`: Problem-solving 50% / Technical Depth 40% / Culture Fit 10%
    - `mixed`: phân bổ đều 5 competency (20% mỗi loại)
 
@@ -1036,7 +1036,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | `job_description` | JD dùng để sinh câu hỏi và đánh giá câu trả lời | Có | Text | 100–5.000 ký tự | Không có | `interview_sessions` / AI Engine |
 | `jd_source` | Cách cung cấp JD | Có | Enum | `paste`, `pdf`, `url` | `paste` | Frontend state |
 | `jd_url` | URL của JD (chỉ khi `jd_source = url`) | Điều kiện | URL | URL hợp lệ, reachable | Không có | Frontend / crawler |
-| `session_type` | Loại phỏng vấn | Có | Enum | `hr_behavioral`, `technical`, `mixed` (v1.0 enabled); `live_coding`, `system_design`, `mock_final` (future — disabled trong v1.0) | `hr_behavioral` | `interview_sessions` |
+| `session_type` | Loại phỏng vấn | Có | Enum | `hr`, `technical`, `mixed` (v1.0 enabled); `live_coding`, `system_design`, `mock_final` (future — disabled trong v1.0) | `hr` | `interview_sessions` |
 | `num_questions` | Số câu hỏi trong phiên | Có | Enum/Number | 3, 5 hoặc 7 | 5 | `interview_sessions` |
 | `difficulty` | Độ khó câu hỏi | Có | Enum | `easy`, `medium`, `hard` | `medium` (hoặc từ `placement_level` nếu có) | `interview_sessions` |
 | `persona` | Persona AI interviewer | Có | Enum | `friendly_hr`, `neutral_tech_lead`, `strict_senior`, `senior_manager` | `neutral_tech_lead` | `interview_sessions` |

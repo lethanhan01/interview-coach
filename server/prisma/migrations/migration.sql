@@ -1,7 +1,9 @@
 -- =============================================================================
 -- InterviewCoach — Consolidated migration
--- Apply once against a Supabase project that already has the base schema
--- created via `prisma db push`. Execute as a superuser or service role.
+-- Apply against a Supabase project that already has the base schema created
+-- via `prisma db push`. Execute as a superuser or service role.
+-- Fully idempotent (DROP IF EXISTS / IF NOT EXISTS / ON CONFLICT) — safe to
+-- re-run after every push. Run via `npm run db:apply-sql`.
 -- =============================================================================
 
 
@@ -19,6 +21,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_auth_user();
@@ -28,21 +31,47 @@ CREATE TRIGGER on_auth_user_created
 -- 2. RLS policies
 -- -----------------------------------------------------------------------------
 
+-- Supabase Storage: interview audio bucket for voice answers.
+-- The bucket must exist before the browser can upload audio/webm blobs.
+INSERT INTO storage.buckets (id, name, "public", file_size_limit, allowed_mime_types)
+VALUES (
+  'interview-audio',
+  'interview-audio',
+  true,
+  10485760,
+  ARRAY['audio/webm', 'audio/mp4', 'audio/wav']::text[]
+)
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  "public" = EXCLUDED."public",
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+DROP POLICY IF EXISTS "interview_audio: authenticated upload" ON storage.objects;
+CREATE POLICY "interview_audio: authenticated upload"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'interview-audio');
+
 -- question_bank
 ALTER TABLE question_bank ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "question_bank: read all" ON question_bank;
 CREATE POLICY "question_bank: read all"
   ON question_bank FOR SELECT
   USING (deleted_at IS NULL);
 
+DROP POLICY IF EXISTS "question_bank: admin insert" ON question_bank;
 CREATE POLICY "question_bank: admin insert"
   ON question_bank FOR INSERT
   WITH CHECK ((SELECT role FROM users WHERE id = auth.uid()) = 'admin');
 
+DROP POLICY IF EXISTS "question_bank: admin update" ON question_bank;
 CREATE POLICY "question_bank: admin update"
   ON question_bank FOR UPDATE
   USING ((SELECT role FROM users WHERE id = auth.uid()) = 'admin');
 
+DROP POLICY IF EXISTS "question_bank: admin delete" ON question_bank;
 CREATE POLICY "question_bank: admin delete"
   ON question_bank FOR DELETE
   USING ((SELECT role FROM users WHERE id = auth.uid()) = 'admin');
@@ -50,18 +79,22 @@ CREATE POLICY "question_bank: admin delete"
 -- users
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "users: read own" ON users;
 CREATE POLICY "users: read own"
   ON users FOR SELECT
   USING (id = auth.uid());
 
+DROP POLICY IF EXISTS "users: update own" ON users;
 CREATE POLICY "users: update own"
   ON users FOR UPDATE
   USING (id = auth.uid());
 
+DROP POLICY IF EXISTS "users: admin read all" ON users;
 CREATE POLICY "users: admin read all"
   ON users FOR SELECT
   USING ((SELECT role FROM users WHERE id = auth.uid()) = 'admin');
 
+DROP POLICY IF EXISTS "users: admin update status" ON users;
 CREATE POLICY "users: admin update status"
   ON users FOR UPDATE
   USING ((SELECT role FROM users WHERE id = auth.uid()) = 'admin');
@@ -69,29 +102,54 @@ CREATE POLICY "users: admin update status"
 -- user_profiles
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "user_profiles: read own" ON user_profiles;
 CREATE POLICY "user_profiles: read own"
   ON user_profiles FOR SELECT
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "user_profiles: insert own" ON user_profiles;
 CREATE POLICY "user_profiles: insert own"
   ON user_profiles FOR INSERT
   WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "user_profiles: update own" ON user_profiles;
 CREATE POLICY "user_profiles: update own"
   ON user_profiles FOR UPDATE
   USING (user_id = auth.uid());
 
+-- resumes (T12 / SR-02) — CV data tách khỏi user_profiles
+ALTER TABLE resumes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "resumes: read own" ON resumes;
+CREATE POLICY "resumes: read own"
+  ON resumes FOR SELECT
+  USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "resumes: insert own" ON resumes;
+CREATE POLICY "resumes: insert own"
+  ON resumes FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "resumes: update own" ON resumes;
+CREATE POLICY "resumes: update own"
+  ON resumes FOR UPDATE
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
 -- interview_sessions
 ALTER TABLE interview_sessions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "interview_sessions: read own" ON interview_sessions;
 CREATE POLICY "interview_sessions: read own"
   ON interview_sessions FOR SELECT
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "interview_sessions: insert own" ON interview_sessions;
 CREATE POLICY "interview_sessions: insert own"
   ON interview_sessions FOR INSERT
   WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "interview_sessions: update own" ON interview_sessions;
 CREATE POLICY "interview_sessions: update own"
   ON interview_sessions FOR UPDATE
   USING (user_id = auth.uid());
@@ -99,6 +157,7 @@ CREATE POLICY "interview_sessions: update own"
 -- session_questions (candidate read-only; INSERT/UPDATE by service role only)
 ALTER TABLE session_questions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "session_questions: read own" ON session_questions;
 CREATE POLICY "session_questions: read own"
   ON session_questions FOR SELECT
   USING (
@@ -110,6 +169,7 @@ CREATE POLICY "session_questions: read own"
 -- user_answers
 ALTER TABLE user_answers ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "user_answers: read own" ON user_answers;
 CREATE POLICY "user_answers: read own"
   ON user_answers FOR SELECT
   USING (
@@ -118,6 +178,7 @@ CREATE POLICY "user_answers: read own"
     )
   );
 
+DROP POLICY IF EXISTS "user_answers: insert own" ON user_answers;
 CREATE POLICY "user_answers: insert own"
   ON user_answers FOR INSERT
   WITH CHECK (
@@ -129,6 +190,7 @@ CREATE POLICY "user_answers: insert own"
 -- follow_up_questions
 ALTER TABLE follow_up_questions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "follow_up_questions: read own" ON follow_up_questions;
 CREATE POLICY "follow_up_questions: read own"
   ON follow_up_questions FOR SELECT
   USING (
@@ -139,6 +201,7 @@ CREATE POLICY "follow_up_questions: read own"
     )
   );
 
+DROP POLICY IF EXISTS "follow_up_questions: insert own" ON follow_up_questions;
 CREATE POLICY "follow_up_questions: insert own"
   ON follow_up_questions FOR INSERT
   WITH CHECK (
@@ -152,6 +215,7 @@ CREATE POLICY "follow_up_questions: insert own"
 -- ai_feedbacks (candidate read only; INSERT by service role only)
 ALTER TABLE ai_feedbacks ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "ai_feedbacks: read own" ON ai_feedbacks;
 CREATE POLICY "ai_feedbacks: read own"
   ON ai_feedbacks FOR SELECT
   USING (
@@ -165,6 +229,7 @@ CREATE POLICY "ai_feedbacks: read own"
 -- annotated_segments (candidate read only; INSERT by service role only)
 ALTER TABLE annotated_segments ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "annotated_segments: read own" ON annotated_segments;
 CREATE POLICY "annotated_segments: read own"
   ON annotated_segments FOR SELECT
   USING (
@@ -179,6 +244,7 @@ CREATE POLICY "annotated_segments: read own"
 -- reverse_questions
 ALTER TABLE reverse_questions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "reverse_questions: read own" ON reverse_questions;
 CREATE POLICY "reverse_questions: read own"
   ON reverse_questions FOR SELECT
   USING (
@@ -187,6 +253,7 @@ CREATE POLICY "reverse_questions: read own"
     )
   );
 
+DROP POLICY IF EXISTS "reverse_questions: insert own" ON reverse_questions;
 CREATE POLICY "reverse_questions: insert own"
   ON reverse_questions FOR INSERT
   WITH CHECK (
@@ -198,6 +265,7 @@ CREATE POLICY "reverse_questions: insert own"
 -- ai_quality_log (admin read only; no candidate access)
 ALTER TABLE ai_quality_log ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "ai_quality_log: admin read" ON ai_quality_log;
 CREATE POLICY "ai_quality_log: admin read"
   ON ai_quality_log FOR SELECT
   USING ((SELECT role FROM users WHERE id = auth.uid()) = 'admin');
@@ -209,50 +277,50 @@ CREATE POLICY "ai_quality_log: admin read"
 -- -----------------------------------------------------------------------------
 
 -- Session lookup
-CREATE INDEX idx_interview_sessions_user_id
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_user_id
   ON interview_sessions(user_id);
 
-CREATE INDEX idx_interview_sessions_created_at
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_created_at
   ON interview_sessions(created_at DESC);
 
-CREATE INDEX idx_interview_sessions_user_created
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_user_created
   ON interview_sessions(user_id, created_at DESC);
 
 -- Turn data
-CREATE INDEX idx_session_questions_session_id
+CREATE INDEX IF NOT EXISTS idx_session_questions_session_id
   ON session_questions(session_id);
 
-CREATE INDEX idx_user_answers_session_id
+CREATE INDEX IF NOT EXISTS idx_user_answers_session_id
   ON user_answers(session_id);
 
-CREATE INDEX idx_user_answers_question_id
+CREATE INDEX IF NOT EXISTS idx_user_answers_question_id
   ON user_answers(question_id);
 
 -- Feedback
-CREATE INDEX idx_ai_feedbacks_user_answer_id
+CREATE INDEX IF NOT EXISTS idx_ai_feedbacks_user_answer_id
   ON ai_feedbacks(user_answer_id)
   WHERE user_answer_id IS NOT NULL;
 
-CREATE INDEX idx_annotated_segments_feedback_id
+CREATE INDEX IF NOT EXISTS idx_annotated_segments_feedback_id
   ON annotated_segments(ai_feedback_id);
 
 -- AntiRepeat & Question bank
-CREATE INDEX idx_session_questions_session_id_text
+CREATE INDEX IF NOT EXISTS idx_session_questions_session_id_text
   ON session_questions(session_id, question_text);
 
-CREATE INDEX idx_question_bank_session_type_difficulty
+CREATE INDEX IF NOT EXISTS idx_question_bank_session_type_difficulty
   ON question_bank(session_type, difficulty)
   WHERE deleted_at IS NULL;
 
-CREATE INDEX idx_question_bank_context_pack
+CREATE INDEX IF NOT EXISTS idx_question_bank_context_pack
   ON question_bank(context_pack_id)
   WHERE deleted_at IS NULL;
 
 -- Audit log
-CREATE INDEX idx_ai_quality_log_created_at
+CREATE INDEX IF NOT EXISTS idx_ai_quality_log_created_at
   ON ai_quality_log(created_at DESC);
 
-CREATE INDEX idx_ai_quality_log_job_type_created
+CREATE INDEX IF NOT EXISTS idx_ai_quality_log_job_type_created
   ON ai_quality_log(job_type, created_at DESC);
 
 
@@ -321,6 +389,8 @@ ON CONFLICT (id) DO UPDATE SET
 -- Normalize IDs created before standardization
 UPDATE interview_sessions SET context_pack_id = 'VN'      WHERE context_pack_id = 'vn';
 UPDATE interview_sessions SET context_pack_id = 'Western' WHERE context_pack_id = 'western';
+-- Normalize legacy session_type before §7 CHECK (behavioral interview = hr).
+UPDATE interview_sessions SET session_type = 'hr' WHERE session_type = 'behavioral';
 UPDATE question_bank      SET context_pack_id = 'VN'      WHERE context_pack_id = 'vn';
 UPDATE question_bank      SET context_pack_id = 'Western' WHERE context_pack_id = 'western';
 DELETE FROM context_packs WHERE id IN ('vn', 'western');
@@ -329,13 +399,11 @@ COMMIT;
 
 
 -- -----------------------------------------------------------------------------
--- 5. user_profiles: add portfolio columns
+-- 5. (removed in T12 / SR-02) — portfolio columns moved out of user_profiles
+--    into the `resumes` table. CV fields (education, work_experience, projects,
+--    technical_skills, certifications, awards) now live in resumes.parsed_json.
+--    See §8 for resumes RLS and the T12 data-migration note.
 -- -----------------------------------------------------------------------------
-
-ALTER TABLE public.user_profiles
-  ADD COLUMN IF NOT EXISTS technical_skills JSONB,
-  ADD COLUMN IF NOT EXISTS certifications JSONB,
-  ADD COLUMN IF NOT EXISTS awards JSONB;
 
 
 -- -----------------------------------------------------------------------------
@@ -356,6 +424,113 @@ BEGIN
   ) THEN
     RAISE EXCEPTION
       'Run npm run db:prepare-user-answer-unique before applying this migration';
+  END IF;
+END
+$$;
+
+
+-- -----------------------------------------------------------------------------
+-- 7. CHECK constraints (enum-like columns)
+--    Prisma cannot express CHECK — apply here after every `prisma db push`.
+--    DROP IF EXISTS + ADD = idempotent, safe to re-run. See ADR-008.
+--    Scope limited to columns with a stable, verified value set:
+--      - interview_sessions.session_type (matches CreateSessionDto + seed)
+--      - users.role                      (candidate = default, admin = RLS policies)
+--    Deliberately excluded (volatile / single-value sets, high drift risk):
+--      users.status, interview_sessions.status — enforced at application layer.
+-- -----------------------------------------------------------------------------
+
+ALTER TABLE interview_sessions
+  DROP CONSTRAINT IF EXISTS chk_interview_sessions_session_type;
+ALTER TABLE interview_sessions
+  ADD CONSTRAINT chk_interview_sessions_session_type
+  CHECK (session_type IN ('hr', 'technical', 'mixed'));
+
+ALTER TABLE users
+  DROP CONSTRAINT IF EXISTS chk_users_role;
+ALTER TABLE users
+  ADD CONSTRAINT chk_users_role
+  CHECK (role IN ('candidate', 'admin'));
+
+
+-- -----------------------------------------------------------------------------
+-- 8. T12 / SR-02: backfill resumes from user_profiles JSONB columns.
+--    Run order matters — the db push workflow drops the 6 old CV columns:
+--      1. Make the `resumes` table exist alongside the old columns. Easiest:
+--         create it manually with the DDL Prisma would generate, OR keep the
+--         old columns in schema for one push, then remove them on the next.
+--      2. Run THIS block while BOTH `resumes` and the old user_profiles columns
+--         exist — it copies CV data into resumes.parsed_json.
+--      3. Then `prisma db push --accept-data-loss` drops the 6 old columns.
+--    Idempotent: skips users that already have an active resume; the outer IF
+--    makes it a no-op once the old columns are gone.
+-- -----------------------------------------------------------------------------
+
+-- -----------------------------------------------------------------------------
+-- 9. T13 / SR-07: session_reports table
+--    Normalized report storage — 4 report types per session as separate rows.
+--    Replaces 6 JSON columns on interview_sessions (dropped via prisma db push).
+--    Idempotent: CREATE TABLE IF NOT EXISTS + DROP POLICY IF EXISTS.
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS "session_reports" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "session_id" UUID NOT NULL,
+  "report_type" TEXT NOT NULL,
+  "version" INTEGER NOT NULL DEFAULT 1,
+  "content_json" JSONB NOT NULL,
+  "generated_by_model" TEXT,
+  "prompt_version" TEXT,
+  "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  CONSTRAINT "session_reports_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "session_reports_session_id_fkey" FOREIGN KEY ("session_id")
+    REFERENCES "interview_sessions"("id") ON DELETE CASCADE,
+  CONSTRAINT "session_reports_session_id_report_type_version_key"
+    UNIQUE ("session_id", "report_type", "version")
+);
+
+CREATE INDEX IF NOT EXISTS "session_reports_session_id_idx"
+  ON "session_reports"("session_id");
+
+-- RLS
+ALTER TABLE "session_reports" ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can read own session reports" ON "session_reports";
+CREATE POLICY "Users can read own session reports" ON "session_reports"
+  FOR SELECT USING (
+    session_id IN (
+      SELECT id FROM interview_sessions WHERE user_id = auth.uid()
+    )
+  );
+
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'user_profiles'
+      AND column_name = 'education'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'resumes'
+  ) THEN
+    INSERT INTO resumes (user_id, parser_version, active, parsed_json)
+    SELECT up.user_id, 'manual', true,
+      jsonb_strip_nulls(jsonb_build_object(
+        'education',       up.education,
+        'workExperience',  up.work_experience,
+        'projects',        up.projects,
+        'technicalSkills', up.technical_skills,
+        'certifications',  up.certifications,
+        'awards',          up.awards
+      ))
+    FROM user_profiles up
+    WHERE NOT EXISTS (
+      SELECT 1 FROM resumes r WHERE r.user_id = up.user_id AND r.active
+    )
+    AND (up.education IS NOT NULL OR up.work_experience IS NOT NULL
+      OR up.projects IS NOT NULL OR up.technical_skills IS NOT NULL
+      OR up.certifications IS NOT NULL OR up.awards IS NOT NULL);
   END IF;
 END
 $$;

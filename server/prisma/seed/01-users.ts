@@ -62,49 +62,66 @@ export async function seedUserProfile(
   const existing = await prisma.userProfile.findUnique({ where: { userId } });
   if (existing) {
     console.log('user profile: already exists, skipping');
+  } else {
+    await prisma.userProfile.create({
+      data: {
+        userId,
+        fullName: 'Nguyễn Văn Demo',
+        targetPosition: 'Junior Backend Developer',
+        targetRoleCategory: 'backend',
+        targetLevel: 'junior',
+        preferredTechStack: 'Node.js, NestJS, PostgreSQL',
+        yearsExperience: 0,
+        defaultLanguage: 'vi',
+        ttsEnabled: false,
+      },
+    });
+    console.log('user profile: created');
+  }
+
+  // CV fields đã tách khỏi user_profiles sang resumes.parsed_json (SR-02).
+  // Guard độc lập với profile — reseed sau khi tách bảng vẫn tạo resume.
+  const existingResume = await prisma.resume.findFirst({
+    where: { userId, active: true },
+  });
+  if (existingResume) {
+    console.log('user resume: already exists, skipping');
     return;
   }
 
-  await prisma.userProfile.create({
+  await prisma.resume.create({
     data: {
       userId,
-      fullName: 'Nguyễn Văn Demo',
-      targetPosition: 'Junior Backend Developer',
-      targetRoleCategory: 'backend',
-      targetLevel: 'junior',
-      preferredTechStack: 'Node.js, NestJS, PostgreSQL',
-      yearsExperience: 0,
-      defaultLanguage: 'vi',
-      ttsEnabled: false,
-      gender: 'male',
-      phone: '0912345678',
-      hometown: 'Hà Nội',
-      nationality: 'Việt Nam',
-      education: [
-        {
-          school: 'Đại học Bách Khoa Hà Nội',
-          major: 'Công nghệ thông tin',
-          graduationYear: 2025,
-          gpa: 3.2,
+      parserVersion: 'manual',
+      active: true,
+      parsedJson: {
+        education: [
+          {
+            school: 'Đại học Bách Khoa Hà Nội',
+            major: 'Công nghệ thông tin',
+            graduationYear: 2025,
+            gpa: 3.2,
+          },
+        ],
+        workExperience: [],
+        projects: [
+          {
+            name: 'Interview Coach',
+            description:
+              'Hệ thống luyện phỏng vấn AI cho sinh viên IT Việt Nam',
+            techStack: ['NestJS', 'Next.js', 'PostgreSQL', 'OpenAI'],
+            role: 'Backend Developer',
+            duration: '4 tháng',
+          },
+        ],
+        technicalSkills: {
+          languages: ['JavaScript', 'TypeScript', 'Java'],
+          frameworks: ['NestJS', 'React', 'Next.js'],
+          databases: ['PostgreSQL', 'Redis'],
+          tools: ['Git', 'Docker', 'Postman'],
         },
-      ],
-      workExperience: [],
-      projects: [
-        {
-          name: 'Interview Coach',
-          description: 'Hệ thống luyện phỏng vấn AI cho sinh viên IT Việt Nam',
-          techStack: ['NestJS', 'Next.js', 'PostgreSQL', 'OpenAI'],
-          role: 'Backend Developer',
-          duration: '4 tháng',
-        },
-      ],
-      technicalSkills: {
-        languages: ['JavaScript', 'TypeScript', 'Java'],
-        frameworks: ['NestJS', 'React', 'Next.js'],
-        databases: ['PostgreSQL', 'Redis'],
-        tools: ['Git', 'Docker', 'Postman'],
       },
     },
   });
-  console.log('user profile: created');
+  console.log('user resume: created');
 }

@@ -16,9 +16,11 @@ const SESSION_TYPE_LABELS: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   active: 'Đang phỏng vấn',
+  paused: 'Tạm dừng',
   ready: 'Sẵn sàng',
   completing: 'Đang tạo báo cáo',
   completed: 'Hoàn thành',
+  canceled: 'Đã hủy',
   generating: 'Đang tạo...',
   error: 'Lỗi',
 }
@@ -27,9 +29,11 @@ type BadgeVariant = 'brand' | 'success' | 'warning' | 'danger' | 'default'
 
 const STATUS_VARIANTS: Record<string, BadgeVariant> = {
   active: 'brand',
+  paused: 'warning',
   ready: 'brand',
   completing: 'warning',
   completed: 'success',
+  canceled: 'danger',
   generating: 'warning',
   error: 'danger',
 }
@@ -50,8 +54,6 @@ export default function SessionsPage() {
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError(null)
     apiClient
       .get<{ sessions: Session[] }>('/sessions')
       .then((data) => { if (!cancelled) setSessions(data.sessions ?? []) })
@@ -63,6 +65,12 @@ export default function SessionsPage() {
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [retryCount])
+
+  function retryLoad() {
+    setLoading(true)
+    setError(null)
+    setRetryCount((c) => c + 1)
+  }
 
   if (loading) {
     return (
@@ -77,7 +85,7 @@ export default function SessionsPage() {
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
         <p className="text-sm text-danger">{error}</p>
         <button
-          onClick={() => setRetryCount((c) => c + 1)}
+          onClick={retryLoad}
           className="rounded-full border border-brand px-4 py-1.5 text-sm font-medium text-brand transition-colors hover:bg-brand-50"
         >
           Thử lại
@@ -177,7 +185,7 @@ export default function SessionsPage() {
                     Theo dõi báo cáo
                   </Link>
                 )}
-                {(s.status === 'active' || s.status === 'ready') && (
+                {(s.status === 'active' || s.status === 'ready' || s.status === 'paused') && (
                   <Link
                     href={`/sessions/${s.id}`}
                     className="flex-1 rounded-full bg-brand px-3 py-1.5 text-center text-xs font-medium text-white shadow-btn transition-all hover:bg-brand-light"

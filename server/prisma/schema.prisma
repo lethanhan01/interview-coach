@@ -29,29 +29,49 @@ model QuestionBank {
   competencyDomain String            @map("competency_domain")
   applicableRoles  String[]          @map("applicable_roles")
   applicableLevels String[]          @map("applicable_levels")
+  tags             String[]          @default([]) @map("tags")
+  estimatedTimeMin Int?              @map("estimated_time_min")
+  translations     Json?
+  contentJson      Json?             @map("content_json")
   deletedAt        DateTime?         @map("deleted_at") @db.Timestamptz(6)
   createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   contextPack      ContextPack       @relation(fields: [contextPackId], references: [id])
   sessionQuestions SessionQuestion[]
+  questionUsages   QuestionUsage[]
 
   @@index([contextPackId], map: "idx_question_bank_context_pack", where: raw("(deleted_at IS NULL)"))
   @@index([sessionType, difficulty], map: "idx_question_bank_session_type_difficulty", where: raw("(deleted_at IS NULL)"))
   @@map("question_bank")
 }
 
+model QuestionUsage {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionBankId String       @map("question_bank_id") @db.Uuid
+  sessionId      String?      @map("session_id") @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  usedAt         DateTime     @default(now()) @map("used_at") @db.Timestamptz(6)
+  questionBank   QuestionBank @relation(fields: [questionBankId], references: [id], onDelete: Cascade)
+
+  @@index([questionBankId, usedAt], map: "idx_question_usage_bank_used")
+  @@index([userId, usedAt], map: "idx_question_usage_user_used")
+  @@map("question_usage")
+}
+
 model User {
-  id                String             @id @db.Uuid
-  email             String             @unique
-  role              String             @default("candidate")
-  status            String             @default("active")
-  profileCompleted  Boolean            @default(false) @map("profile_completed")
-  lastLoginAt       DateTime?          @map("last_login_at") @db.Timestamptz(6)
-  deletedAt         DateTime?          @map("deleted_at") @db.Timestamptz(6)
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  interviewSessions InterviewSession[]
-  profile           UserProfile?
+  id                   String                @id @db.Uuid
+  email                String                @unique
+  role                 String                @default("candidate")
+  status               String                @default("active")
+  profileCompleted     Boolean               @default(false) @map("profile_completed")
+  lastLoginAt          DateTime?             @map("last_login_at") @db.Timestamptz(6)
+  deletedAt            DateTime?             @map("deleted_at") @db.Timestamptz(6)
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  interviewSessions    InterviewSession[]
+  savedJobDescriptions SavedJobDescription[]
+  profile              UserProfile?
+  resumes              Resume[]
 
   @@map("users")
 }
@@ -67,18 +87,7 @@ model UserProfile {
   yearsExperience    Int       @default(0) @map("years_experience")
   defaultLanguage    String    @default("vi") @map("default_language")
   ttsEnabled         Boolean   @default(false) @map("tts_enabled")
-  dateOfBirth        DateTime? @map("date_of_birth") @db.Date
-  gender             String?
-  phone              String?
-  hometown           String?
-  nationality        String?
   personality        String?
-  education          Json?
-  workExperience     Json?     @map("work_experience")
-  projects           Json?
-  technicalSkills    Json?     @map("technical_skills")
-  certifications     Json?
-  awards             Json?
   deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -87,43 +96,99 @@ model UserProfile {
   @@map("user_profiles")
 }
 
+model Resume {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  fileUrl          String?  @map("file_url")
+  originalFilename String?  @map("original_filename")
+  parsedText       String?  @map("parsed_text")
+  parsedJson       Json?    @map("parsed_json")
+  language         String   @default("vi")
+  parserVersion    String?  @map("parser_version")
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, active])
+  @@map("resumes")
+}
+
+model SessionReport {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId        String           @map("session_id") @db.Uuid
+  reportType       String           @map("report_type")
+  version          Int              @default(1)
+  contentJson      Json             @map("content_json")
+  generatedByModel String?          @map("generated_by_model")
+  promptVersion    String?          @map("prompt_version")
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  session          InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, reportType, version])
+  @@map("session_reports")
+}
+
 model InterviewSession {
-  id                    String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId                String            @map("user_id") @db.Uuid
-  jobDescription        String            @map("job_description")
-  jdSource              String            @map("jd_source")
-  jdUrl                 String?           @map("jd_url")
-  jobTitle              String?           @map("job_title")
-  sessionType           String            @map("session_type")
-  numQuestions          Int               @default(5) @map("num_questions")
-  difficulty            String            @default("medium")
-  persona               String            @default("neutral_tech_lead")
-  mode                  String            @default("practice")
-  durationMin           Int               @default(30) @map("duration_min")
-  language              String            @default("vi")
-  contextPackId         String            @map("context_pack_id")
-  showPrepCard          Boolean           @default(false) @map("show_prep_card")
-  status                String            @default("generating")
-  planJson              Json?             @map("plan_json")
-  openingTranscript     String?           @map("opening_transcript")
-  selfEvalJson          Json?             @map("self_eval_json")
-  overallScore          Int?              @map("overall_score")
-  executiveSummaryJson  Json?             @map("executive_summary_json")
-  commAnalysisJson      Json?             @map("comm_analysis_json")
-  competencyHeatmapJson Json?             @map("competency_heatmap_json")
-  actionPlanJson        Json?             @map("action_plan_json")
-  completedAt           DateTime?         @map("completed_at") @db.Timestamptz(6)
-  createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  contextPack           ContextPack       @relation(fields: [contextPackId], references: [id])
-  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String               @map("user_id") @db.Uuid
+  savedJobDescriptionId String?              @map("saved_job_description_id") @db.Uuid
+  jobDescription        String               @map("job_description")
+  jdSource              String               @map("jd_source")
+  jdUrl                 String?              @map("jd_url")
+  jobTitle              String?              @map("job_title")
+  sessionType           String               @map("session_type")
+  numQuestions          Int                  @default(5) @map("num_questions")
+  difficulty            String               @default("medium")
+  persona               String               @default("neutral_tech_lead")
+  mode                  String               @default("practice")
+  durationMin           Int                  @default(30) @map("duration_min")
+  language              String               @default("vi")
+  contextPackId         String               @map("context_pack_id")
+  showPrepCard          Boolean              @default(false) @map("show_prep_card")
+  status                String               @default("generating")
+  openingTranscript     String?              @map("opening_transcript")
+  overallScore          Int?                 @map("overall_score")
+  completedAt           DateTime?            @map("completed_at") @db.Timestamptz(6)
+  createdAt             DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  contextPack           ContextPack          @relation(fields: [contextPackId], references: [id])
+  savedJobDescription   SavedJobDescription? @relation(fields: [savedJobDescriptionId], references: [id], onDelete: SetNull)
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessionQuestions      SessionQuestion[]
   userAnswers           UserAnswer[]
+  sessionReports        SessionReport[]
 
   @@index([createdAt(sort: Desc)], map: "idx_interview_sessions_created_at")
+  @@index([savedJobDescriptionId], map: "idx_interview_sessions_saved_jd")
   @@index([userId, createdAt(sort: Desc)], map: "idx_interview_sessions_user_created")
   @@index([userId], map: "idx_interview_sessions_user_id")
   @@map("interview_sessions")
+}
+
+model SavedJobDescription {
+  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String             @map("user_id") @db.Uuid
+  companyName    String             @map("company_name")
+  companyWebsite String?            @map("company_website")
+  jobTitle       String             @map("job_title")
+  headcount      String?
+  location       String?
+  requirements   String
+  jobContent     String             @map("job_content")
+  techStack      String[]           @default([]) @map("tech_stack")
+  benefits       String?
+  salary         String?
+  bonus          String?
+  lastUsedAt     DateTime?          @map("last_used_at") @db.Timestamptz(6)
+  deletedAt      DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions       InterviewSession[]
+
+  @@index([userId, updatedAt(sort: Desc)], map: "idx_saved_job_descriptions_user_updated")
+  @@index([userId, companyName, jobTitle], map: "idx_saved_job_descriptions_user_company_title")
+  @@map("saved_job_descriptions")
 }
 
 model SessionQuestion {
@@ -167,9 +232,9 @@ model UserAnswer {
   question             SessionQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
   session              InterviewSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  @@unique([sessionId, questionId])
   @@index([questionId], map: "idx_user_answers_question_id")
   @@index([sessionId], map: "idx_user_answers_session_id")
-  @@unique([sessionId, questionId])
   @@map("user_answers")
 }
 

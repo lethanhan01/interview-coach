@@ -12,10 +12,12 @@ import { SessionModule } from './session/session.module';
 import { TurnModule } from './turn/turn.module';
 import { ReportModule } from './report/report.module';
 import { UserModule } from './user/user.module';
+import { SavedJobDescriptionModule } from './saved-job-description/saved-job-description.module';
 import { validateEnv } from './config/env.validation';
 import { InterviewAIExceptionFilter } from './common/exceptions/interview-ai-exception.filter';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { CommonModule } from './common/common.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -31,6 +33,7 @@ import { CommonModule } from './common/common.module';
       inject: [ConfigService],
     }),
     CommonModule,
+    HealthModule,
     PrismaModule,
     AuthModule,
     AiModule,
@@ -38,6 +41,7 @@ import { CommonModule } from './common/common.module';
     TurnModule,
     ReportModule,
     UserModule,
+    SavedJobDescriptionModule,
   ],
   controllers: [AppController],
   providers: [

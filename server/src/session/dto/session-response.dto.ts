@@ -3,6 +3,7 @@ export class SessionResponseDto {
   status: string;
   sessionType: string;
   contextPackId: string;
+  savedJobDescriptionId?: string | null;
   numQuestions: number;
   jobDescription?: string;
   createdAt: Date;

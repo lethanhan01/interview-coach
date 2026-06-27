@@ -6,10 +6,14 @@ import { Textarea } from '@/components/ui/Textarea'
 import { TECH_STACK_OPTIONS } from '@/components/profile/constants'
 import type { JdFormData } from '@/app/(app)/setup/page'
 import { POSITION_OPTIONS, BONUS_OPTIONS } from '@/app/(app)/setup/page'
+import type { SavedJobDescription } from '@/lib/types'
 
 interface JdFormProps {
   value: JdFormData
   onChange: (data: JdFormData) => void
+  savedJobDescriptions?: SavedJobDescription[]
+  selectedSavedJobDescriptionId?: string
+  onSelectSavedJobDescription?: (id: string) => void
 }
 
 const selectCls =
@@ -30,7 +34,13 @@ function SelectField({
   )
 }
 
-export default function JdForm({ value, onChange }: JdFormProps) {
+export default function JdForm({
+  value,
+  onChange,
+  savedJobDescriptions = [],
+  selectedSavedJobDescriptionId = '',
+  onSelectSavedJobDescription,
+}: JdFormProps) {
   const set = (field: keyof JdFormData, val: string) => onChange({ ...value, [field]: val })
 
   const toggleTech = (tech: string) =>
@@ -50,6 +60,7 @@ export default function JdForm({ value, onChange }: JdFormProps) {
     value.jobContent.trim().length > 0 && value.jobContent.trim().length < 30
       ? 'Tối thiểu 30 ký tự'
       : undefined
+
 
   return (
     <div className="flex flex-col gap-4">

@@ -2,8 +2,10 @@ export type SessionStatus =
   | "generating"
   | "ready"
   | "active"
+  | "paused"
   | "completing"
   | "completed"
+  | "canceled"
   | "error";
 export type SessionType = "hr" | "technical" | "mixed";
 export type ContextPack = "VN" | "Western";
@@ -13,6 +15,7 @@ export interface Session {
   userId: string;
   sessionType: SessionType;
   contextPackId: ContextPack;
+  savedJobDescriptionId?: string | null;
   status: SessionStatus;
   numQuestions: number;
   durationMin?: number;
@@ -28,6 +31,40 @@ export interface CreateSessionPayload {
   contextPack: ContextPack;
   numQuestions?: number;
   targetRoles?: string[];
+  savedJobDescriptionId?: string;
+}
+
+export interface SavedJobDescription {
+  id: string;
+  userId: string;
+  companyName: string;
+  companyWebsite?: string | null;
+  jobTitle: string;
+  headcount?: string | null;
+  location?: string | null;
+  requirements: string;
+  jobContent: string;
+  techStack: string[];
+  benefits?: string | null;
+  salary?: string | null;
+  bonus?: string | null;
+  lastUsedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SaveJobDescriptionPayload {
+  companyName: string;
+  companyWebsite?: string;
+  jobTitle: string;
+  headcount?: string;
+  location?: string;
+  requirements: string;
+  jobContent: string;
+  techStack?: string[];
+  benefits?: string;
+  salary?: string;
+  bonus?: string;
 }
 
 export interface AnnotatedSegment {
@@ -126,11 +163,6 @@ export interface GetProfileResponse {
   email: string;
   profile: {
     fullName?: string;
-    dateOfBirth?: string;
-    gender?: string;
-    phone?: string;
-    hometown?: string;
-    nationality?: string;
     personality?: string;
     targetPosition?: string;
     targetRoleCategory?: string;

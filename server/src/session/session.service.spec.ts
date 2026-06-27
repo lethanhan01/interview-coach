@@ -17,6 +17,7 @@ import {
 const BASE_SESSION = {
   id: 'session-123',
   userId: 'user-abc',
+  savedJobDescriptionId: null,
   jobDescription: 'a'.repeat(100),
   sessionType: 'hr' as const,
   contextPackId: 'VN',
@@ -24,9 +25,6 @@ const BASE_SESSION = {
   numQuestions: 5,
   createdAt: new Date(),
   overallScore: null,
-  executiveSummaryJson: null,
-  competencyHeatmapJson: null,
-  actionPlanJson: null,
   completedAt: null,
   jdSource: 'paste',
 };
@@ -163,6 +161,63 @@ describe('SessionService', () => {
       ).rejects.toMatchObject({ errorCode: ErrorCode.SERVICE_UNAVAILABLE });
       expect(mockPrisma.interviewSession.create).not.toHaveBeenCalled();
     });
+
+    it('liên kết session với JD đã lưu thuộc user', async () => {
+      mockPrisma.interviewSession.count.mockResolvedValue(0);
+      mockPrisma.savedJobDescription.findFirst.mockResolvedValue({
+        id: 'saved-jd-1',
+        userId: 'user-abc',
+      });
+      mockPrisma.savedJobDescription.update.mockResolvedValue({});
+      mockPrisma.interviewSession.create.mockResolvedValue({
+        ...BASE_SESSION,
+        savedJobDescriptionId: 'saved-jd-1',
+        jdSource: 'saved',
+        jobTitle: 'Backend Developer',
+      });
+      mockQuestionQueue.add.mockResolvedValue({});
+
+      await service.create('user-abc', {
+        ...CREATE_DTO,
+        savedJobDescriptionId: 'saved-jd-1',
+        targetRoles: ['Backend Developer'],
+      });
+
+      expect(mockPrisma.savedJobDescription.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: 'saved-jd-1',
+          userId: 'user-abc',
+          deletedAt: null,
+        },
+      });
+      expect(mockPrisma.savedJobDescription.update).toHaveBeenCalledWith({
+        where: { id: 'saved-jd-1' },
+        data: { lastUsedAt: expect.any(Date) },
+      });
+      expect(mockPrisma.interviewSession.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            savedJobDescriptionId: 'saved-jd-1',
+            jdSource: 'saved',
+            jobTitle: 'Backend Developer',
+          }),
+        }),
+      );
+    });
+
+    it('từ chối savedJobDescriptionId không thuộc user', async () => {
+      mockPrisma.interviewSession.count.mockResolvedValue(0);
+      mockPrisma.savedJobDescription.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.create('user-abc', {
+          ...CREATE_DTO,
+          savedJobDescriptionId: 'saved-jd-1',
+        }),
+      ).rejects.toMatchObject({ errorCode: ErrorCode.NOT_FOUND });
+      expect(mockPrisma.interviewSession.create).not.toHaveBeenCalled();
+      expect(mockQuestionQueue.add).not.toHaveBeenCalled();
+    });
   });
 
   describe('findById', () => {
@@ -283,6 +338,78 @@ describe('SessionService', () => {
       await service.updateStatus('session-123', 'user-abc', 'active');
 
       expect(mockReportService.enqueueIfAllFeedbacksReady).not.toHaveBeenCalled();
+    });
+
+    it('tạm dừng session active', async () => {
+      const activeSession = { ...BASE_SESSION, status: 'active' };
+      const pausedSession = { ...BASE_SESSION, status: 'paused' };
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(activeSession);
+      mockPrisma.interviewSession.update.mockResolvedValue(pausedSession);
+
+      const result = await service.updateStatus(
+        'session-123',
+        'user-abc',
+        'paused',
+      );
+
+      expect(result.status).toBe('paused');
+      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
+        where: { id: 'session-123' },
+        data: { status: 'paused', completedAt: null },
+      });
+    });
+
+    it('resume session paused về active khi đã có câu hỏi', async () => {
+      const pausedSession = { ...BASE_SESSION, status: 'paused' };
+      const activeSession = { ...BASE_SESSION, status: 'active' };
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(pausedSession);
+      mockPrisma.sessionQuestion.count.mockResolvedValue(5);
+      mockPrisma.interviewSession.update.mockResolvedValue(activeSession);
+
+      const result = await service.updateStatus(
+        'session-123',
+        'user-abc',
+        'active',
+      );
+
+      expect(result.status).toBe('active');
+      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
+        where: { id: 'session-123' },
+        data: { status: 'active', completedAt: null },
+      });
+    });
+
+    it('hủy session active', async () => {
+      const activeSession = { ...BASE_SESSION, status: 'active' };
+      const canceledSession = { ...BASE_SESSION, status: 'canceled' };
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(activeSession);
+      mockPrisma.interviewSession.update.mockResolvedValue(canceledSession);
+
+      const result = await service.updateStatus(
+        'session-123',
+        'user-abc',
+        'canceled',
+      );
+
+      expect(result.status).toBe('canceled');
+      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
+        where: { id: 'session-123' },
+        data: { status: 'canceled', completedAt: null },
+      });
+    });
+
+    it('không cho hủy session đã hoàn thành', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'completed',
+      });
+
+      await expect(
+        service.updateStatus('session-123', 'user-abc', 'canceled'),
+      ).rejects.toMatchObject({
+        errorCode: ErrorCode.INVALID_SESSION_TRANSITION,
+      });
+      expect(mockPrisma.interviewSession.update).not.toHaveBeenCalled();
     });
 
     it('từ chối generating → completed', async () => {

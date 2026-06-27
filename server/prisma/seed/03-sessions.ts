@@ -78,7 +78,7 @@ async function alreadySeeded(
   marker: string,
 ): Promise<boolean> {
   const s = await prisma.interviewSession.findFirst({
-    where: { userId, planJson: { path: ['_seed'], equals: marker } },
+    where: { userId, openingTranscript: { contains: marker } },
     select: { id: true },
   });
   return s !== null;
@@ -94,7 +94,6 @@ async function seedS1(prisma: PrismaClient, userId: string): Promise<string> {
     data: {
       userId,
       jobDescription: JDS.s1,
-      planJson: { _seed: 'SEED-S1' },
       jdSource: 'paste',
       jobTitle: 'Junior Backend Developer',
       sessionType: 'mixed',
@@ -106,62 +105,9 @@ async function seedS1(prisma: PrismaClient, userId: string): Promise<string> {
       status: 'completed',
       showPrepCard: true,
       openingTranscript:
-        'Xin chào! Tôi là AI Interviewer. Hôm nay chúng ta sẽ thực hiện buổi phỏng vấn thử cho vị trí Junior Backend Developer. Bạn có khoảng 30 phút. Hãy thoải mái và trả lời thật tự nhiên nhé.',
+        'Xin chào! Tôi là AI Interviewer. Hôm nay chúng ta sẽ thực hiện buổi phỏng vấn thử cho vị trí Junior Backend Developer. Bạn có khoảng 30 phút. Hãy thoải mái và trả lời thật tự nhiên nhé. [SEED-S1]',
       overallScore: 72,
       completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      selfEvalJson: {
-        confidence: 3,
-        clarity: 4,
-        depth: 3,
-        overall: 3,
-        notes:
-          'Câu hỏi về REST API trả lời tốt, cần cải thiện phần ví dụ thực tế.',
-      },
-      executiveSummaryJson: {
-        headline:
-          'Ứng viên có nền tảng kỹ thuật tốt, cần phát triển kỹ năng trình bày.',
-        strengths: ['Kiến thức REST API vững', 'Thái độ học hỏi tích cực'],
-        improvements: [
-          'Cần đưa ví dụ cụ thể hơn',
-          'Cần cấu trúc câu trả lời rõ ràng hơn',
-        ],
-        overallVerdict: 'Tiềm năng tốt, cần luyện tập thêm.',
-      },
-      commAnalysisJson: {
-        clarityScore: 70,
-        structureScore: 68,
-        concisenessScore: 75,
-        vocabularyRichness: 72,
-        fillerWordCount: 12,
-        avgSentenceLength: 18,
-      },
-      competencyHeatmapJson: {
-        D1: 65,
-        D2: 78,
-        D3: 70,
-        D4: 80,
-        D5: 72,
-        D6: 68,
-        TD1: 75,
-        TD2: 70,
-        TD3: 65,
-        TD4: 72,
-        TD5: 68,
-      },
-      actionPlanJson: {
-        immediate: [
-          'Luyện tập cấu trúc câu trả lời theo STAR',
-          'Chuẩn bị 3 ví dụ dự án cụ thể kèm số liệu',
-        ],
-        shortTerm: [
-          'Xây dựng thêm 1 project cá nhân với NestJS',
-          'Học thêm về system design cơ bản',
-        ],
-        resources: [
-          'Sách "Clean Code" - Robert C. Martin',
-          'Khóa học System Design Primer trên GitHub',
-        ],
-      },
     },
   });
 
@@ -281,7 +227,6 @@ async function seedS2(prisma: PrismaClient, userId: string): Promise<string> {
     data: {
       userId,
       jobDescription: JDS.s2,
-      planJson: { _seed: 'SEED-S2' },
       jdSource: 'paste',
       jobTitle: 'Junior Frontend Developer',
       sessionType: 'hr',
@@ -292,38 +237,9 @@ async function seedS2(prisma: PrismaClient, userId: string): Promise<string> {
       contextPackId: 'VN',
       status: 'completed',
       showPrepCard: false,
+      openingTranscript: '[SEED-S2]',
       overallScore: 65,
       completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      selfEvalJson: {
-        confidence: 2,
-        clarity: 3,
-        depth: 2,
-        overall: 2,
-        notes: 'Cảm thấy hơi căng thẳng, cần luyện tập thêm.',
-      },
-      executiveSummaryJson: {
-        headline:
-          'Ứng viên có thái độ tốt nhưng cần cải thiện kỹ năng trình bày.',
-        strengths: ['Thái độ cầu tiến', 'Trung thực về điểm yếu'],
-        improvements: ['Cần dùng STAR framework', 'Ví dụ còn chung chung'],
-        overallVerdict: 'Cần luyện tập thêm trước khi phỏng vấn thật.',
-      },
-      competencyHeatmapJson: {
-        D1: 60,
-        D2: 65,
-        D3: 68,
-        D4: 72,
-        D5: 65,
-        D6: 60,
-      },
-      actionPlanJson: {
-        immediate: [
-          'Học STAR framework và thực hành với 5 câu hỏi behavioral',
-          'Ghi lại 3 câu chuyện từ dự án thực tế',
-        ],
-        shortTerm: ['Mock interview với bạn bè 2 lần/tuần'],
-        resources: ['Guide STAR interview method trên Indeed.com'],
-      },
     },
   });
 
@@ -394,7 +310,6 @@ async function seedS3(prisma: PrismaClient, userId: string): Promise<string> {
     data: {
       userId,
       jobDescription: JDS.s3,
-      planJson: { _seed: 'SEED-S3' },
       jdSource: 'paste',
       jobTitle: 'Junior Full-Stack Developer',
       sessionType: 'technical',
@@ -405,47 +320,9 @@ async function seedS3(prisma: PrismaClient, userId: string): Promise<string> {
       contextPackId: 'Western',
       status: 'completed',
       showPrepCard: true,
+      openingTranscript: '[SEED-S3]',
       overallScore: 88,
       completedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      selfEvalJson: {
-        confidence: 5,
-        clarity: 4,
-        depth: 5,
-        overall: 5,
-        notes:
-          'Felt very prepared. The system design question was challenging but I think I covered the key points.',
-      },
-      executiveSummaryJson: {
-        headline:
-          'Strong technical candidate with solid foundational knowledge and practical experience.',
-        strengths: [
-          'Deep REST API understanding',
-          'Clear debugging methodology',
-          'Excellent system design thinking',
-        ],
-        improvements: [
-          'Minor: could mention observability/monitoring in system design',
-        ],
-        overallVerdict:
-          'Ready for technical interviews at junior to mid level.',
-      },
-      competencyHeatmapJson: {
-        TD1: 90,
-        TD2: 88,
-        TD3: 85,
-        TD4: 88,
-        TD5: 90,
-      },
-      actionPlanJson: {
-        immediate: ['Practice one system design question per day for 2 weeks'],
-        shortTerm: [
-          'Add observability and monitoring to your system design answers',
-        ],
-        resources: [
-          'System Design Interview by Alex Xu',
-          'Designing Data-Intensive Applications',
-        ],
-      },
     },
   });
 
@@ -556,7 +433,6 @@ async function seedS4(prisma: PrismaClient, userId: string): Promise<string> {
     data: {
       userId,
       jobDescription: JDS.s4,
-      planJson: { _seed: 'SEED-S4' },
       jdSource: 'paste',
       jobTitle: 'Junior Software Engineer',
       sessionType: 'hr',
@@ -568,7 +444,7 @@ async function seedS4(prisma: PrismaClient, userId: string): Promise<string> {
       status: 'active',
       showPrepCard: false,
       openingTranscript:
-        'Xin chào! Chúng ta bắt đầu buổi phỏng vấn HR nhé. Tôi sẽ hỏi bạn 4 câu hỏi về kinh nghiệm và kỹ năng.',
+        'Xin chào! Chúng ta bắt đầu buổi phỏng vấn HR nhé. Tôi sẽ hỏi bạn 4 câu hỏi về kinh nghiệm và kỹ năng. [SEED-S4]',
     },
   });
 
@@ -641,7 +517,6 @@ async function seedS5(prisma: PrismaClient, userId: string): Promise<string> {
     data: {
       userId,
       jobDescription: JDS.s5,
-      planJson: { _seed: 'SEED-S5' },
       jdSource: 'paste',
       jobTitle: 'Backend Intern',
       sessionType: 'mixed',
@@ -652,6 +527,7 @@ async function seedS5(prisma: PrismaClient, userId: string): Promise<string> {
       contextPackId: 'VN',
       status: 'generating',
       showPrepCard: false,
+      openingTranscript: '[SEED-S5]',
     },
   });
 
@@ -669,7 +545,6 @@ async function seedS6(prisma: PrismaClient, userId: string): Promise<string> {
     data: {
       userId,
       jobDescription: JDS.s6,
-      planJson: { _seed: 'SEED-S6' },
       jdSource: 'paste',
       jobTitle: 'Junior Mobile Developer',
       sessionType: 'mixed',
@@ -680,46 +555,9 @@ async function seedS6(prisma: PrismaClient, userId: string): Promise<string> {
       contextPackId: 'VN',
       status: 'completed',
       showPrepCard: true,
+      openingTranscript: '[SEED-S6]',
       overallScore: 74,
       completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      selfEvalJson: {
-        confidence: 3,
-        clarity: 3,
-        depth: 3,
-        overall: 3,
-        notes: 'Câu trả lời audio bị run giọng một chút, cần luyện tập thêm.',
-      },
-      executiveSummaryJson: {
-        headline:
-          'Ứng viên có kỹ năng kỹ thuật tốt, thể hiện tốt qua câu trả lời đầu tiên.',
-        strengths: ['Hiểu rõ Git workflow', 'Thái độ thành thật'],
-        improvements: [
-          'Cần tự tin hơn khi trả lời audio',
-          'Không nên bỏ qua câu hỏi',
-        ],
-        overallVerdict: 'Tiềm năng, cần cải thiện phong cách trình bày.',
-      },
-      competencyHeatmapJson: {
-        D1: 72,
-        D2: 78,
-        D3: 70,
-        D4: 76,
-        D5: 68,
-        D6: 74,
-        TD1: 75,
-        TD2: 72,
-        TD3: 70,
-        TD4: 68,
-        TD5: 75,
-      },
-      actionPlanJson: {
-        immediate: [
-          'Luyện nói to câu trả lời 5 phút mỗi ngày',
-          'Không bỏ câu hỏi — nếu không biết, nói ra suy nghĩ ban đầu',
-        ],
-        shortTerm: ['Mock interview có ghi âm để review'],
-        resources: ['Ứng dụng luyện nói: Speeko'],
-      },
     },
   });
 
@@ -827,7 +665,6 @@ async function seedS7(prisma: PrismaClient, userId: string): Promise<string> {
     data: {
       userId,
       jobDescription: JDS.s7,
-      planJson: { _seed: 'SEED-S7' },
       jdSource: 'paste',
       jobTitle: 'Junior DevOps Engineer',
       sessionType: 'mixed',
@@ -838,65 +675,9 @@ async function seedS7(prisma: PrismaClient, userId: string): Promise<string> {
       contextPackId: 'Western',
       status: 'completed',
       showPrepCard: false,
+      openingTranscript: '[SEED-S7]',
       overallScore: 42,
       completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-      selfEvalJson: {
-        confidence: 1,
-        clarity: 2,
-        depth: 1,
-        overall: 1,
-        notes:
-          'Felt completely unprepared. Need much more practice before actual interviews.',
-      },
-      executiveSummaryJson: {
-        headline:
-          'Significant preparation needed before interviewing at this level.',
-        strengths: ['Honest about knowledge gaps'],
-        improvements: [
-          'Study STAR method and practice behavioral questions',
-          'Build stronger technical foundation before applying',
-          'Prepare specific examples from past projects',
-        ],
-        overallVerdict:
-          'Not ready for this role. Recommend 2-3 months of targeted preparation.',
-      },
-      commAnalysisJson: {
-        clarityScore: 38,
-        structureScore: 30,
-        concisenessScore: 45,
-        vocabularyRichness: 40,
-        fillerWordCount: 28,
-        avgSentenceLength: 9,
-      },
-      competencyHeatmapJson: {
-        D1: 35,
-        D2: 45,
-        D3: 40,
-        D4: 50,
-        D5: 42,
-        D6: 38,
-        TD1: 40,
-        TD2: 38,
-        TD3: 35,
-        TD4: 45,
-        TD5: 42,
-      },
-      actionPlanJson: {
-        immediate: [
-          'Spend 1 hour daily on interview prep for 60 days',
-          'Study STAR method — write 5 complete stories',
-          'Build a simple DevOps project: Docker + CI/CD pipeline',
-        ],
-        shortTerm: [
-          'Complete a Linux fundamentals course',
-          'Get familiar with at least one cloud provider (AWS/GCP free tier)',
-        ],
-        resources: [
-          'The DevOps Handbook',
-          'Linux Journey (linuxjourney.com)',
-          'AWS Free Tier + Cloud Practitioner exam',
-        ],
-      },
     },
   });
 

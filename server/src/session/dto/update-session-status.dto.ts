@@ -1,6 +1,15 @@
-import { IsEnum } from 'class-validator';
+import { IsIn } from 'class-validator';
+
+export const SESSION_STATUS_UPDATES = [
+  'active',
+  'paused',
+  'canceled',
+  'completed',
+] as const;
+
+export type SessionStatusUpdate = (typeof SESSION_STATUS_UPDATES)[number];
 
 export class UpdateSessionStatusDto {
-  @IsEnum(['active', 'completed'])
-  status: 'active' | 'completed';
+  @IsIn(SESSION_STATUS_UPDATES)
+  status: SessionStatusUpdate;
 }

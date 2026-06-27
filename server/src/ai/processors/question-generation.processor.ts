@@ -81,7 +81,9 @@ export class QuestionGenerationProcessor extends WorkerHost {
           contextPack,
           totalQuestions,
         );
-        await this.emitActive(sessionId);
+        if (await this.markActiveUnlessStopped(sessionId)) {
+          await this.emitActive(sessionId);
+        }
         return;
       } catch (fallbackError: unknown) {
         this.logger.error(
@@ -108,10 +110,9 @@ export class QuestionGenerationProcessor extends WorkerHost {
         skipDuplicates: true,
       });
 
-      await this.prisma.interviewSession.update({
-        where: { id: sessionId },
-        data: { status: 'active' },
-      });
+      if (await this.markActiveUnlessStopped(sessionId)) {
+        await this.emitActive(sessionId);
+      }
     } catch (persistenceError: unknown) {
       this.logger.error(
         `Unable to persist generated questions for session ${sessionId}`,
@@ -122,8 +123,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
       await this.markSessionError(sessionId);
       throw persistenceError;
     }
-
-    await this.emitActive(sessionId);
   }
 
   private async fallbackFromQuestionBank(
@@ -171,10 +170,18 @@ export class QuestionGenerationProcessor extends WorkerHost {
       skipDuplicates: true,
     });
 
-    await this.prisma.interviewSession.update({
-      where: { id: sessionId },
+  }
+
+  private async markActiveUnlessStopped(sessionId: string): Promise<boolean> {
+    const result = await this.prisma.interviewSession.updateMany({
+      where: {
+        id: sessionId,
+        status: { notIn: ['paused', 'canceled'] },
+      },
       data: { status: 'active' },
     });
+
+    return result.count > 0;
   }
 
   private selectWithDifficultySpread<T extends { difficulty: number }>(

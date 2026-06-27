@@ -15,6 +15,11 @@ import {
 import { FollowUpCoordinatorService } from './follow-up-coordinator.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
+import {
+  AudioStorageService,
+  type AudioUploadResult,
+  type UploadedAudioFile,
+} from './audio-storage.service';
 import type { TranscriptionJobDto } from '../ai/processors/transcription.processor';
 import { isSessionType } from '../ai/pipelines/interview-pipeline.interface';
 
@@ -23,10 +28,39 @@ export class TurnService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly followUpCoordinatorService: FollowUpCoordinatorService,
+    private readonly audioStorageService: AudioStorageService,
     @InjectQueue(FOLLOW_UP_QUEUE) private readonly followUpQueue: Queue,
     @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
     @InjectQueue(TRANSCRIPTION_QUEUE) private readonly transcriptionQueue: Queue,
   ) {}
+
+  async uploadAudio(
+    sessionId: string,
+    userId: string,
+    file?: UploadedAudioFile,
+  ): Promise<AudioUploadResult> {
+    const session = await this.prisma.interviewSession.findUnique({
+      where: { id: sessionId },
+      select: { userId: true },
+    });
+
+    if (!session) {
+      throw new InterviewAIException(
+        ErrorCode.SESSION_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (session.userId !== userId) {
+      throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
+    }
+
+    return this.audioStorageService.uploadInterviewAudio({
+      sessionId,
+      userId,
+      file,
+    });
+  }
 
   async submitAnswer(
     sessionId: string,

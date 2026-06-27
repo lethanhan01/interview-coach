@@ -3,6 +3,8 @@
 import { useState, useRef } from 'react'
 import LoadingSpinner from '../ui/LoadingSpinner'
 
+const AUDIO_BUCKET = 'interview-audio'
+
 interface VoiceRecorderProps {
   onSubmit: (audioUrl: string, durationSeconds: number, sizeBytes: number) => Promise<void>
   supabaseUrl: string
@@ -11,6 +13,18 @@ interface VoiceRecorderProps {
 }
 
 type RecordState = 'idle' | 'recording' | 'uploading'
+
+async function readStorageError(response: Response): Promise<string> {
+  const raw = await response.text().catch(() => '')
+  if (!raw) return response.statusText || `HTTP ${response.status}`
+
+  try {
+    const parsed = JSON.parse(raw) as { message?: string; error?: string }
+    return parsed.message ?? parsed.error ?? raw
+  } catch {
+    return raw
+  }
+}
 
 export default function VoiceRecorder({ onSubmit, supabaseUrl, accessToken, disabled }: VoiceRecorderProps) {
   const [state, setState] = useState<RecordState>('idle')
@@ -54,15 +68,30 @@ export default function VoiceRecorder({ onSubmit, supabaseUrl, accessToken, disa
     const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
 
     try {
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Thiếu cấu hình Supabase Storage cho ghi âm.')
+      }
+      if (!accessToken || accessToken === 'dev-mock-token') {
+        throw new Error('Ghi âm cần phiên đăng nhập Supabase thật. Tắt chế độ bỏ qua đăng nhập rồi thử lại.')
+      }
+
       const filename = `audio-${crypto.randomUUID()}.webm`
-      const uploadUrl = `${supabaseUrl}/storage/v1/object/interview-audio/${filename}`
+      const uploadUrl = `${supabaseUrl}/storage/v1/object/${AUDIO_BUCKET}/${filename}`
       const uploadRes = await fetch(uploadUrl, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'audio/webm' },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          apikey: supabaseAnonKey,
+          'Content-Type': 'audio/webm',
+        },
         body: blob,
       })
-      if (!uploadRes.ok) throw new Error('Upload thất bại')
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/interview-audio/${filename}`
+      if (!uploadRes.ok) {
+        const detail = await readStorageError(uploadRes)
+        throw new Error(`Upload audio thất bại (${uploadRes.status}): ${detail}`)
+      }
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/${AUDIO_BUCKET}/${filename}`
       await onSubmit(publicUrl, durationSeconds, blob.size)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Lỗi không xác định')

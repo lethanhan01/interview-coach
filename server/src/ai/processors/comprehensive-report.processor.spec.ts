@@ -22,7 +22,6 @@ interface SessionUpdateArgs {
     status: string;
     overallScore: number | null;
     completedAt: Date;
-    actionPlanJson: { items: string[] };
   };
 }
 
@@ -35,6 +34,10 @@ interface PrismaMock {
       (args: SessionUpdateArgs) => Promise<Record<string, never>>
     >;
   };
+  sessionReport: {
+    upsert: jest.MockedFunction<(args: unknown) => Promise<Record<string, never>>>;
+  };
+  $transaction: jest.MockedFunction<(ops: Promise<unknown>[]) => Promise<unknown[]>>;
 }
 
 describe('ComprehensiveReportProcessor', () => {
@@ -55,6 +58,10 @@ describe('ComprehensiveReportProcessor', () => {
     prisma = {
       aiFeedback: { findMany: jest.fn() },
       interviewSession: { update: jest.fn() },
+      sessionReport: { upsert: jest.fn() },
+      $transaction: jest
+        .fn()
+        .mockImplementation((ops: Promise<unknown>[]) => Promise.all(ops)),
     };
     mockSse = createMockSseService();
     mockOpenAI = createMockOpenAIGateway();
@@ -87,7 +94,7 @@ describe('ComprehensiveReportProcessor', () => {
     await expect(processor.process(job)).rejects.toThrow('1/2 feedbacks');
 
     expect(mockOpenAI.chatCompletion).not.toHaveBeenCalled();
-    expect(prisma.interviewSession.update).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it('chỉ chuyển session sang completed khi đủ feedback', async () => {
@@ -103,10 +110,12 @@ describe('ComprehensiveReportProcessor', () => {
         keyTakeaway: 'Improve structure',
       },
     ]);
+    prisma.sessionReport.upsert.mockResolvedValue({});
     prisma.interviewSession.update.mockResolvedValue({});
 
     await processor.process(job);
 
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     const updateArgs = prisma.interviewSession.update.mock.calls[0][0];
     expect(updateArgs.where).toEqual({ id: 'session-123' });
     expect(updateArgs.data.status).toBe('completed');
@@ -129,16 +138,22 @@ describe('ComprehensiveReportProcessor', () => {
         isFallback: true,
       },
     ]);
+    prisma.sessionReport.upsert.mockResolvedValue({});
     prisma.interviewSession.update.mockResolvedValue({});
     const warnSpy = jest.spyOn((processor as any).logger, 'warn');
     const errorSpy = jest.spyOn((processor as any).logger, 'error');
 
     await expect(processor.process(job)).resolves.toBeUndefined();
 
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     const updateArgs = prisma.interviewSession.update.mock.calls[0][0];
     expect(updateArgs.data.status).toBe('completed');
     expect(updateArgs.data.overallScore).toBeNull();
-    expect(updateArgs.data.actionPlanJson.items).toHaveLength(3);
+    // action_plan upsert called with FALLBACK_ACTION_PLAN (3 items)
+    const actionPlanCall = prisma.sessionReport.upsert.mock.calls.find(
+      (call) => (call[0] as any).create.reportType === 'action_plan',
+    );
+    expect((actionPlanCall?.[0] as any).create.contentJson.items).toHaveLength(3);
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('skipping the action-plan API call'),
     );

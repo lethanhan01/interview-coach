@@ -42,11 +42,6 @@ Cả hai endpoint yêu cầu Bearer JWT và trả trực tiếp Prisma `User` k�
 | `yearsExperience` | number | Số năm kinh nghiệm; mặc định `0`. |
 | `defaultLanguage` | string | Ngôn ngữ mặc định; mặc định `vi`. |
 | `ttsEnabled` | boolean | Trạng thái bật text-to-speech. |
-| `dateOfBirth` | string \| null | Ngày sinh, serialized theo ISO 8601. |
-| `gender` | string \| null | Giới tính do user cung cấp. |
-| `phone` | string \| null | Số điện thoại. |
-| `hometown` | string \| null | Quê quán. |
-| `nationality` | string \| null | Quốc tịch. |
 | `personality` | string \| null | Mô tả tính cách. |
 | `education` | object \| null | Dữ liệu học vấn dạng JSON. |
 | `workExperience` | array \| null | Danh sách kinh nghiệm làm việc dạng JSON. |
@@ -131,11 +126,6 @@ Tất cả trường đều optional. Trường không gửi sẽ không bị th
 | `yearsExperience` | integer | Số năm kinh nghiệm, tối thiểu 0. |
 | `defaultLanguage` | string | Ngôn ngữ mặc định; DTO chưa giới hạn enum. |
 | `ttsEnabled` | boolean | Bật/tắt text-to-speech. |
-| `dateOfBirth` | string | Chuỗi ngày; nên dùng `YYYY-MM-DD`. Chuỗi rỗng được lưu thành `null`. |
-| `gender` | string | Giới tính. |
-| `phone` | string | Số điện thoại. |
-| `hometown` | string | Quê quán. |
-| `nationality` | string | Quốc tịch. |
 | `personality` | string | Mô tả tính cách. |
 | `education` | object | Dữ liệu học vấn JSON; cấu trúc con chưa được DTO validate. |
 | `workExperience` | array | Kinh nghiệm làm việc; phần tử chưa được DTO validate. |
@@ -167,7 +157,7 @@ Trả trực tiếp `UserWithProfile` sau upsert. Xem toàn bộ trường tại
 | 400 | `VALIDATION_ERROR` | Trường sai kiểu, `yearsExperience` âm, hoặc trường JSON không đúng object/array yêu cầu. |
 | 401 | `UNAUTHORIZED` | Bearer token thiếu, sai hoặc hết hạn. |
 | 404 | `NOT_FOUND` | Upsert xong nhưng không tìm thấy user để trả response. |
-| 500 | `INTERNAL_ERROR` | Ngày không parse được, lỗi ràng buộc DB hoặc lỗi ngoài dự kiến. |
+| 500 | `INTERNAL_ERROR` | Lỗi ràng buộc DB hoặc lỗi ngoài dự kiến. |
 
 ## API profile chưa có
 

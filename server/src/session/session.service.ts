@@ -11,6 +11,7 @@ import {
   QUESTION_GEN_JOB_ATTEMPTS,
 } from '../common/constants/queue.constants';
 import { CreateSessionDto } from './dto/create-session.dto';
+import { SessionStatusUpdate } from './dto/update-session-status.dto';
 import { ReportService } from '../report/report.service';
 
 @Injectable()
@@ -52,11 +53,18 @@ export class SessionService {
       );
     }
 
+    const savedJobDescriptionId = await this.resolveSavedJobDescriptionId(
+      userId,
+      dto.savedJobDescriptionId,
+    );
+
     const session = await this.prisma.interviewSession.create({
       data: {
         userId,
+        savedJobDescriptionId,
         jobDescription: dto.jobDescription,
-        jdSource: 'paste',
+        jdSource: savedJobDescriptionId ? 'saved' : 'paste',
+        jobTitle: dto.targetRoles?.[0],
         sessionType: dto.sessionType,
         numQuestions: dto.numQuestions ?? 5,
         contextPackId: dto.contextPack,
@@ -154,13 +162,13 @@ export class SessionService {
   async updateStatus(
     sessionId: string,
     userId: string,
-    status: 'active' | 'completed',
+    status: SessionStatusUpdate,
   ): Promise<InterviewSession> {
     const session = await this.findById(sessionId, userId);
 
     if (status === 'active') {
       if (session.status === 'active') return session;
-      if (!['generating', 'ready'].includes(session.status)) {
+      if (!['generating', 'ready', 'paused'].includes(session.status)) {
         throw this.invalidTransition(session.status, status);
       }
 
@@ -174,6 +182,30 @@ export class SessionService {
       return this.prisma.interviewSession.update({
         where: { id: sessionId },
         data: { status: 'active', completedAt: null },
+      });
+    }
+
+    if (status === 'paused') {
+      if (session.status === 'paused') return session;
+      if (!['active', 'ready'].includes(session.status)) {
+        throw this.invalidTransition(session.status, status);
+      }
+
+      return this.prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: { status: 'paused', completedAt: null },
+      });
+    }
+
+    if (status === 'canceled') {
+      if (session.status === 'canceled') return session;
+      if (['completed', 'completing'].includes(session.status)) {
+        throw this.invalidTransition(session.status, status);
+      }
+
+      return this.prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: { status: 'canceled', completedAt: null },
       });
     }
 
@@ -242,5 +274,32 @@ export class SessionService {
       HttpStatus.CONFLICT,
       `Không thể chuyển trạng thái phỏng vấn từ ${currentStatus} sang ${nextStatus}.`,
     );
+  }
+
+  private async resolveSavedJobDescriptionId(
+    userId: string,
+    savedJobDescriptionId?: string,
+  ): Promise<string | undefined> {
+    if (!savedJobDescriptionId) return undefined;
+
+    const savedJobDescription =
+      await this.prisma.savedJobDescription.findFirst({
+        where: {
+          id: savedJobDescriptionId,
+          userId,
+          deletedAt: null,
+        },
+      });
+
+    if (!savedJobDescription) {
+      throw new InterviewAIException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
+    await this.prisma.savedJobDescription.update({
+      where: { id: savedJobDescriptionId },
+      data: { lastUsedAt: new Date() },
+    });
+
+    return savedJobDescriptionId;
   }
 }

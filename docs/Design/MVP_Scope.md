@@ -36,7 +36,7 @@ Core value proposition: paste JD → thực hiện phỏng vấn AI → nhận s
 - Page: `/onboarding` — wizard 1 bước, điền trước khi tạo session đầu tiên.
 
 **UC-03 — Cấu hình phiên phỏng vấn**
-- Input: JD text (100–5.000 ký tự), session type (`hr_behavioral`/`technical`/`mixed`), question count (3–7, default 5), context pack (`vn`/`western`).
+- Input: JD text (100–5.000 ký tự), session type (`hr`/`technical`/`mixed`), question count (3–7, default 5), context pack (`vn`/`western`).
 - Session types `live_coding`/`system_design`/`mock_final` hiển thị badge "Sắp ra mắt", disabled.
 - Sau submit: tạo `interview_sessions` row → enqueue `QuestionGenerationJob` → redirect `/sessions/[id]/interview`.
 - Giới hạn: max 10 sessions mới/24h per user (NFR S-12).

@@ -55,7 +55,21 @@ export default function ProfilePage() {
   }
 
   const profile = data?.profile ?? null
-  const technicalSkills = (profile?.technicalSkills as TechnicalSkillEntry[] | undefined) ?? []
+
+  /** Đảm bảo mọi entry có `id` — data cũ từ parsedJson có thể thiếu id. */
+  function normalizeWithId<T extends { id?: string }>(arr: unknown): T[] {
+    if (!Array.isArray(arr)) return []
+    return arr.map((e) => ({
+      ...(e as T),
+      id: (e as T).id || crypto.randomUUID(),
+    }))
+  }
+
+  const technicalSkills = Array.isArray(profile?.technicalSkills)
+    ? (profile.technicalSkills as TechnicalSkillEntry[])
+    : []
+  const workExperience = normalizeWithId<WorkExperienceEntry>(profile?.workExperience)
+  const projects = normalizeWithId<ProjectEntry>(profile?.projects)
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -73,14 +87,7 @@ export default function ProfilePage() {
 
       <div className="flex flex-col gap-4">
         <PersonalInfoGroup
-          data={{
-            fullName: profile?.fullName,
-            dateOfBirth: profile?.dateOfBirth,
-            gender: profile?.gender,
-            phone: profile?.phone,
-            hometown: profile?.hometown,
-            nationality: profile?.nationality,
-          }}
+          data={{ fullName: profile?.fullName }}
           onSave={(patch) => patchProfile(patch)}
         />
 
@@ -109,13 +116,13 @@ export default function ProfilePage() {
         />
 
         <WorkExperienceGroup
-          data={profile?.workExperience}
+          data={workExperience}
           availableTechs={technicalSkills}
           onSave={(we: WorkExperienceEntry[]) => patchProfile({ workExperience: we })}
         />
 
         <ProjectsGroup
-          data={profile?.projects}
+          data={projects}
           availableTechs={technicalSkills}
           onSave={(proj: ProjectEntry[]) => patchProfile({ projects: proj })}
         />

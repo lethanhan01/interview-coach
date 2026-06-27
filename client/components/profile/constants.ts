@@ -1,23 +1,3 @@
-export const GENDER_OPTIONS = [
-  { value: '', label: 'Chọn giới tính' },
-  { value: 'male', label: 'Nam' },
-  { value: 'female', label: 'Nữ' },
-  { value: 'other', label: 'Khác' },
-]
-
-export const NATIONALITY_OPTIONS = [
-  { value: '', label: 'Chọn quốc tịch' },
-  { value: 'VN', label: 'Việt Nam' },
-  { value: 'US', label: 'Hoa Kỳ' },
-  { value: 'SG', label: 'Singapore' },
-  { value: 'JP', label: 'Nhật Bản' },
-  { value: 'KR', label: 'Hàn Quốc' },
-  { value: 'AU', label: 'Úc' },
-  { value: 'GB', label: 'Anh' },
-  { value: 'DE', label: 'Đức' },
-  { value: 'other', label: 'Khác' },
-]
-
 export const PERSONALITY_OPTIONS = [
   { value: '', label: 'Chọn tính cách' },
   { value: 'introvert', label: 'Hướng nội (Introvert)' },

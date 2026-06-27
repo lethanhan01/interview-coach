@@ -4,6 +4,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { TurnService } from './turn.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { FollowUpCoordinatorService } from './follow-up-coordinator.service';
+import { AudioStorageService } from './audio-storage.service';
 import {
   FOLLOW_UP_QUEUE,
   FEEDBACK_QUEUE,
@@ -72,6 +73,10 @@ describe('TurnService', () => {
         {
           provide: FollowUpCoordinatorService,
           useValue: mockFollowUpCoordinator,
+        },
+        {
+          provide: AudioStorageService,
+          useValue: { upload: jest.fn() },
         },
         {
           provide: getQueueToken(FOLLOW_UP_QUEUE),

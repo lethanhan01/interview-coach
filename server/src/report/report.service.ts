@@ -36,6 +36,7 @@ export class ReportService {
   ): Promise<ReportResponseDto> {
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
+      include: { sessionReports: true },
     });
 
     if (!session) {
@@ -49,7 +50,10 @@ export class ReportService {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
 
-    if (!session.executiveSummaryJson) {
+    const executiveSummaryReport = session.sessionReports.find(
+      (r) => r.reportType === 'executive_summary',
+    );
+    if (!executiveSummaryReport) {
       throw new InterviewAIException(
         ErrorCode.REPORT_NOT_READY,
         HttpStatus.NOT_FOUND,
@@ -105,8 +109,11 @@ export class ReportService {
     );
     const allFeedbackIsFallback =
       transcript.some((item) => item.isFallback) && !hasEvaluatedFeedback;
-    const storedActionPlan = toRecord(session.actionPlanJson);
-    const storedExecutiveSummary = toRecord(session.executiveSummaryJson);
+    const storedActionPlan = toRecord(
+      session.sessionReports.find((r) => r.reportType === 'action_plan')
+        ?.contentJson,
+    );
+    const storedExecutiveSummary = toRecord(executiveSummaryReport.contentJson);
 
     const hasSomeFallback = transcript.some((item) => item.isFallback);
     let reportQuality: 'full' | 'partial' | 'unavailable';
@@ -132,7 +139,10 @@ export class ReportService {
               'AI scoring was unavailable. Your answers were saved and can be evaluated again after the AI service is restored.',
           }
         : storedExecutiveSummary,
-      competencyHeatmap: toRecord(session.competencyHeatmapJson),
+      competencyHeatmap: toRecord(
+        session.sessionReports.find((r) => r.reportType === 'competency_heatmap')
+          ?.contentJson,
+      ),
       actionPlan:
         allFeedbackIsFallback && Object.keys(storedActionPlan).length === 0
           ? FALLBACK_ACTION_PLAN

@@ -48,7 +48,7 @@ export const createMockPrismaService = () => ({
     findUnique: jest.fn(),
     findMany: jest.fn(),
     update: jest.fn(),
-    updateMany: jest.fn(),
+    updateMany: jest.fn().mockResolvedValue({ count: 1 }),
   },
   sessionQuestion: {
     findMany: jest.fn(),
@@ -76,6 +76,22 @@ export const createMockPrismaService = () => ({
   },
   userProfile: {
     upsert: jest.fn(),
+  },
+  resume: {
+    findFirst: jest.fn().mockResolvedValue(null),
+    create: jest.fn(),
+    update: jest.fn(),
+  },
+  savedJobDescription: {
+    findMany: jest.fn(),
+    findFirst: jest.fn().mockResolvedValue(null),
+    create: jest.fn(),
+    update: jest.fn(),
+  },
+  sessionReport: {
+    upsert: jest.fn(),
+    findMany: jest.fn().mockResolvedValue([]),
+    findFirst: jest.fn().mockResolvedValue(null),
   },
 });
 

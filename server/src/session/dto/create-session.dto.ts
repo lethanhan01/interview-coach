@@ -7,6 +7,7 @@ import {
   Min,
   Max,
   IsArray,
+  IsUUID,
 } from 'class-validator';
 
 export class CreateSessionDto {
@@ -30,4 +31,8 @@ export class CreateSessionDto {
   @IsArray()
   @IsString({ each: true })
   targetRoles?: string[];
+
+  @IsOptional()
+  @IsUUID()
+  savedJobDescriptionId?: string;
 }

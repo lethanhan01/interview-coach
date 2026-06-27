@@ -10,6 +10,7 @@ import {
 import { TurnController } from './turn.controller';
 import { TurnService } from './turn.service';
 import { FollowUpCoordinatorService } from './follow-up-coordinator.service';
+import { AudioStorageService } from './audio-storage.service';
 
 @Module({
   imports: [
@@ -20,6 +21,6 @@ import { FollowUpCoordinatorService } from './follow-up-coordinator.service';
     BullModule.registerQueue({ name: TRANSCRIPTION_QUEUE }),
   ],
   controllers: [TurnController],
-  providers: [TurnService, FollowUpCoordinatorService],
+  providers: [TurnService, FollowUpCoordinatorService, AudioStorageService],
 })
 export class TurnModule {}

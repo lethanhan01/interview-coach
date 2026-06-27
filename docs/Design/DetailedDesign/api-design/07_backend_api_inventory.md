@@ -88,4 +88,3 @@ Các endpoint sau không có controller tại thời điểm rà soát và khôn
 - SSE không có event ID, replay hay keep-alive.
 - `PATCH /sessions/:id/status` chưa validate state transition.
 - Success response chưa có envelope thống nhất.
-- `dateOfBirth` chỉ được kiểm tra là string, chưa validate định dạng ngày ở DTO.
