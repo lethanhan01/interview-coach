@@ -13,11 +13,6 @@ export const QuestionsSchema = z.object({
   ),
 });
 
-export const FollowUpSchema = z.object({
-  follow_up: z.string(),
-  trigger_reason: z.string(),
-});
-
 export const FeedbackSchema = z.object({
   overall_score: z.number().int().min(1).max(100),
   model_answer: z.string(),

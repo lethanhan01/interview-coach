@@ -8,15 +8,12 @@ import {
   InterviewPipeline,
   QuestionGenInput,
   GeneratedQuestion,
-  FollowUpInput,
-  FollowUpResult,
   FeedbackInput,
   SurgicalFeedback,
   SessionType,
 } from './interview-pipeline.interface';
 import {
   QuestionsSchema,
-  FollowUpSchema,
   FeedbackSchema,
   PROMPT_VERSION,
 } from './pipeline.schemas';
@@ -70,45 +67,6 @@ export abstract class BasePipelineService implements InterviewPipeline {
       competencyDomain: q.competency_domain,
       difficulty: q.difficulty,
     }));
-  }
-
-  async generateFollowUp(input: FollowUpInput): Promise<FollowUpResult | null> {
-    const base = this.promptBuilder.buildBaseSystem('follow-up');
-    const withStrategy = this.applyStrategy(base, input.sessionType);
-    const withPack = this.promptBuilder.applyContextPack(
-      withStrategy,
-      input.contextPackConfig,
-    );
-    const messages = this.promptBuilder.injectDynamicContext({
-      systemMessage: withPack,
-      jobDescription: '',
-      sessionType: input.sessionType,
-      question: input.questionText,
-      answer: input.answerText,
-    });
-    const raw = await this.openai.chatCompletion({
-      messages,
-      model: 'gpt-4o',
-      temperature: 0.7,
-      maxTokens: 150,
-      responseFormat: 'json_object',
-    });
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      throw new InterviewAIException(
-        ErrorCode.AI_SERVICE_ERROR,
-        HttpStatus.BAD_GATEWAY,
-        'Invalid JSON from AI in follow-up generation',
-      );
-    }
-    const result = FollowUpSchema.safeParse(parsed);
-    if (!result.success) return null;
-    return {
-      followUpText: result.data.follow_up,
-      triggerReason: result.data.trigger_reason,
-    };
   }
 
   async evaluateAnswer(input: FeedbackInput): Promise<SurgicalFeedback> {

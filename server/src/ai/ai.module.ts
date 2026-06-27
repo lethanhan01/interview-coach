@@ -9,17 +9,14 @@ import { TechnicalPipelineService } from './pipelines/technical.pipeline.service
 import { MixedPipelineService } from './pipelines/mixed.pipeline.service';
 import { PipelineStrategyFactory } from './pipelines/pipeline-strategy.factory';
 import { QuestionGenerationProcessor } from './processors/question-generation.processor';
-import { FollowUpProcessor } from './processors/follow-up.processor';
 import { FeedbackProcessor } from './processors/feedback.processor';
 import { ComprehensiveReportProcessor } from './processors/comprehensive-report.processor';
 import { TranscriptionProcessor } from './processors/transcription.processor';
 import { WhisperService } from '../turn/whisper.service';
 import { VoiceMetricsService } from '../turn/voice-metrics.service';
-import { FollowUpCoordinatorService } from '../turn/follow-up-coordinator.service';
 import { ReportModule } from '../report/report.module';
 import {
   QUESTION_GEN_QUEUE,
-  FOLLOW_UP_QUEUE,
   FEEDBACK_QUEUE,
   REPORT_QUEUE,
   TRANSCRIPTION_QUEUE,
@@ -30,7 +27,6 @@ import {
     ReportModule,
     BullModule.registerQueue(
       { name: QUESTION_GEN_QUEUE },
-      { name: FOLLOW_UP_QUEUE },
       { name: FEEDBACK_QUEUE },
       { name: REPORT_QUEUE },
       { name: TRANSCRIPTION_QUEUE },
@@ -46,13 +42,11 @@ import {
     MixedPipelineService,
     PipelineStrategyFactory,
     QuestionGenerationProcessor,
-    FollowUpProcessor,
     FeedbackProcessor,
     ComprehensiveReportProcessor,
     TranscriptionProcessor,
     WhisperService,
     VoiceMetricsService,
-    FollowUpCoordinatorService,
   ],
   exports: [PipelineStrategyFactory, ContextPackService, OpenAIGateway],
 })

@@ -23,18 +23,6 @@ export interface GeneratedQuestion {
   difficulty: number;
 }
 
-export interface FollowUpInput {
-  sessionType: SessionType;
-  questionText: string;
-  answerText: string;
-  contextPackConfig: ContextPackConfig;
-}
-
-export interface FollowUpResult {
-  followUpText: string;
-  triggerReason: string;
-}
-
 export interface FeedbackInput {
   sessionType: SessionType;
   questionText: string;
@@ -62,6 +50,5 @@ export interface SurgicalFeedback {
 
 export interface InterviewPipeline {
   generateQuestions(input: QuestionGenInput): Promise<GeneratedQuestion[]>;
-  generateFollowUp(input: FollowUpInput): Promise<FollowUpResult | null>;
   evaluateAnswer(input: FeedbackInput): Promise<SurgicalFeedback>;
 }

@@ -6,14 +6,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import {
-  FOLLOW_UP_QUEUE,
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
-  FOLLOW_UP_JOB_ATTEMPTS,
   TRANSCRIPTION_QUEUE,
   TRANSCRIPTION_JOB_ATTEMPTS,
 } from '../common/constants/queue.constants';
-import { FollowUpCoordinatorService } from './follow-up-coordinator.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
 import {
@@ -29,10 +26,8 @@ import { isSessionType } from '../ai/pipelines/interview-pipeline.interface';
 export class TurnService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly followUpCoordinatorService: FollowUpCoordinatorService,
     private readonly audioStorageService: AudioStorageService,
     private readonly voiceMetricsService: VoiceMetricsService,
-    @InjectQueue(FOLLOW_UP_QUEUE) private readonly followUpQueue: Queue,
     @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
     @InjectQueue(TRANSCRIPTION_QUEUE) private readonly transcriptionQueue: Queue,
   ) {}
@@ -130,7 +125,6 @@ export class TurnService {
         if (existingVoiceAnswer.transcriptionStatus === 'done') {
           return {
             answerId: existingVoiceAnswer.id,
-            followUpQueued: false,
             feedbackQueued: true,
             transcriptionPending: false,
           };
@@ -138,7 +132,6 @@ export class TurnService {
         if (existingVoiceAnswer.transcriptionStatus === 'failed') {
           return {
             answerId: existingVoiceAnswer.id,
-            followUpQueued: false,
             feedbackQueued: false,
             transcriptionPending: false,
           };
@@ -165,7 +158,6 @@ export class TurnService {
         );
         return {
           answerId: existingVoiceAnswer.id,
-          followUpQueued: false,
           feedbackQueued: false,
           transcriptionPending: true,
         };
@@ -211,7 +203,6 @@ export class TurnService {
 
       return {
         answerId: answer.id,
-        followUpQueued: false,
         feedbackQueued: false,
         transcriptionPending: true,
       };
@@ -268,21 +259,6 @@ export class TurnService {
       sessionType,
     };
 
-    const followUpEnabled =
-      this.followUpCoordinatorService.shouldGenerateFollowUp(
-        answer.answerText,
-        question.orderIndex,
-        session.numQuestions,
-      );
-
-    if (followUpEnabled) {
-      await this.followUpQueue.add('follow-up', jobBase, {
-        jobId: `follow-up-${answer.id}`,
-        attempts: FOLLOW_UP_JOB_ATTEMPTS,
-        backoff: { type: 'fixed', delay: 2000 },
-      });
-    }
-
     await this.feedbackQueue.add('feedback', jobBase, {
       jobId: `feedback-${answer.id}`,
       attempts: FEEDBACK_JOB_ATTEMPTS,
@@ -291,7 +267,6 @@ export class TurnService {
 
     return {
       answerId: answer.id,
-      followUpQueued: followUpEnabled,
       feedbackQueued: true,
       transcriptionPending: false,
     };

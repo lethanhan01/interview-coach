@@ -12,15 +12,20 @@ Nội dung nên có:
 
 ## 1.2 Bối Cảnh Bài Toán
 
-> Cần bổ sung: trình bày bối cảnh thị trường lao động CNTT, áp lực cạnh tranh của sinh viên/fresher, xu hướng phỏng vấn online và nhu cầu luyện tập phỏng vấn có phản hồi chất lượng.
+Trong quá trình tìm kiếm việc làm, đặc biệt với sinh viên IT mới ra trường, fresher hoặc người mới chuyển ngành, phỏng vấn là một bước rất quan trọng nhưng cũng gây nhiều khó khăn. Ứng viên không chỉ cần có kiến thức chuyên môn mà còn phải biết cách trình bày kinh nghiệm, giải thích dự án, trả lời câu hỏi tình huống và thể hiện thái độ phù hợp với vị trí ứng tuyển. 
 
-Gợi ý nội dung:
+Tuy nhiên, nhiều ứng viên thường gặp các vấn đề như: 
 
-- Nhu cầu việc làm và năng lực phỏng vấn của sinh viên/fresher CNTT.
-- Hạn chế của các cách luyện tập hiện tại: tự đọc câu hỏi, tự nói trước gương, hỏi bạn bè, dùng chatbot chung chung.
-- Ranh giới bài toán: không giải quyết toàn bộ quá trình tìm việc, tập trung vào kỹ năng trả lời phỏng vấn và nhận feedback.
+- Không biết nhà tuyển dụng thường hỏi những câu hỏi nào.  
+- Thiếu kinh nghiệm trả lời phỏng vấn thực tế.  
+- Khó tự đánh giá câu trả lời của bản thân.  
+- Không có người luyện tập thường xuyên.  
+- Không nhận được phản hồi cụ thể sau mỗi lần luyện phỏng vấn.  
+- Chưa biết cách cải thiện kỹ năng giao tiếp, tư duy logic và trình bày dự án.  
 
-Nguồn nên đối chiếu: `docs/RequirementAnalysis/discovery-docs/Discovery_Document.md`, `docs/RequirementAnalysis/Business_Requirements_Document.md`.
+Trong khi đó, các buổi mock interview truyền thống thường phụ thuộc vào mentor, giáo viên hoặc người có kinh nghiệm. Hình thức này có chất lượng tốt nhưng khó tổ chức thường xuyên, tốn thời gian và không phải ứng viên nào cũng có điều kiện tiếp cận. 
+
+Vì vậy, việc xây dựng một hệ thống AI Mock Interview có khả năng mô phỏng buổi phỏng vấn, đặt câu hỏi phù hợp, ghi nhận câu trả lời và đưa ra phản hồi tự động là một hướng tiếp cận có ý nghĩa trong bối cảnh hiện nay. 
 
 ## 1.3 Bối Cảnh Nghiên Cứu Và Công Nghệ
 
@@ -34,15 +39,41 @@ Gợi ý nội dung:
 - Các thách thức: độ tin cậy của AI, hallucination, bảo mật dữ liệu cá nhân, chi phí API, chất lượng feedback.
 
 ## 1.4 Tính Cấp Thiết Và Ý Nghĩa Thực Tiễn
+Hiện nay, nhu cầu luyện phỏng vấn ngày càng cao, đặc biệt trong lĩnh vực công nghệ thông tin. Sinh viên IT mới ra trường thường có kiến thức nền tảng nhưng thiếu kỹ năng thể hiện năng lực trong buổi phỏng vấn. Ngoài ra, khoảng cách giữa học tập và phỏng vấn thực tế vẫn còn lớn. Trong trường học, sinh viên thường học về lập trình, cơ sở dữ liệu, thuật toán, thiết kế hệ thống, nhưng ít có cơ hội luyện tập cách trình bày hoặc giải thích kiến thức đó trong một cuộc phỏng vấn thật. 
 
-> Cần bổ sung: giải thích vì sao bài toán quan trọng và có ý nghĩa, gắn với nhóm người dùng mục tiêu là sinh viên năm cuối/fresher CNTT Việt Nam.
+Đồng thời, phỏng vấn không chỉ kiểm tra kiến thức mà còn đánh giá cách tư duy và giao tiếp. Một ứng viên có thể biết câu trả lời nhưng nếu trình bày thiếu mạch lạc, không có ví dụ cụ thể hoặc không giải thích được dự án của mình thì vẫn có thể bị đánh giá thấp. 
 
-Nội dung nên có:
+Hơn nữa, việc luyện tập cần được thực hiện thường xuyên. Kỹ năng phỏng vấn không thể cải thiện chỉ sau một lần luyện tập. Ứng viên cần được hỏi nhiều dạng câu hỏi, trả lời nhiều lần, nhận phản hồi và theo dõi sự tiến bộ. 
 
-- Lợi ích với sinh viên: luyện tập thường xuyên, nhận phản hồi cụ thể, giảm lo lắng khi phỏng vấn.
-- Lợi ích với cơ sở đào tạo: có công cụ hỗ trợ kỹ năng nghề nghiệp.
-- Lợi ích với nhà tuyển dụng: ứng viên có khả năng trình bày câu trả lời cấu trúc và rõ ràng hơn.
-- Ý nghĩa kỹ thuật: kết hợp web app, AI pipeline, hàng đợi xử lý bất đồng bộ và đánh giá feedback.
+Hệ thống giúp ứng viên có môi trường luyện phỏng vấn linh hoạt, có thể luyện tập mọi lúc mà không cần phụ thuộc vào mentor hoặc người phỏng vấn thật. Người dùng có thể luyện các dạng phỏng vấn khác nhau như: 
+
+- Phỏng vấn giới thiệu bản thân.  
+- Phỏng vấn hành vi.  
+- Phỏng vấn kỹ thuật.  
+- Phỏng vấn dự án cá nhân.  
+- Phỏng vấn theo vị trí ứng tuyển.  
+- Phỏng vấn bằng tiếng Việt, tiếng Anh hoặc tiếng Nhật nếu hệ thống hỗ trợ đa ngôn ngữ 
+
+Sau mỗi lần luyện tập, hệ thống có thể đưa ra nhận xét về nội dung câu trả lời, cách trình bày, mức độ đầy đủ, điểm mạnh, điểm yếu và gợi ý cải thiện 
+
+ 
+Đề tài hướng tới đối tượng chính là sinh viên IT mới ra trường hoặc fresher mới gia nhập thị trường lao động vì đối tượng này thường có nhiều dự án nhưng chưa biết cách trình bày dự án sao cho chuyên nghiệp.  
+AI Mock Interview của em có thể giúp người dùng luyện trả lời các câu hỏi như: 
+
+Bạn đã làm gì trong dự án này?  
+
+Vì sao bạn chọn công nghệ đó?  
+
+Bạn gặp khó khăn gì và giải quyết thế nào?  
+
+Hệ thống của bạn có kiến trúc ra sao?  
+
+Nếu có thêm thời gian, bạn sẽ cải thiện gì?  
+
+Đây là những câu hỏi rất thường gặp nhưng nhiều sinh viên chưa chuẩn bị kỹ. 
+
+ 
+Vì vậy, xây dựng hệ thống AI Mock Interview là cần thiết để hỗ trợ người dùng có sự chuẩn bị tốt hơn trước khi bước vào thị trường lao động. 
 
 ## 1.5 Khoảng Trống Hiện Tại Và Tính Mới Của Đề Tài
 
@@ -69,22 +100,8 @@ Lưu ý:
 
 ## 1.7 Mục Tiêu Của Đề Tài
 
-### 1.7.1 Mục Tiêu Tổng Quát
-
 > Cần bổ sung: một câu mục tiêu tổng quát, ví dụ xây dựng prototype ứng dụng web InterviewAI hỗ trợ sinh viên CNTT luyện phỏng vấn và nhận feedback chi tiết dựa trên câu trả lời.
 
-### 1.7.2 Mục Tiêu Cụ Thể Trong GR1
-
-> Cần bổ sung: liệt kê 4-7 mục tiêu cụ thể, có thể đo được.
-
-Gợi ý:
-
-- Khảo sát nhu cầu người dùng và các sản phẩm liên quan.
-- Phân tích yêu cầu và xác định phạm vi MVP/GR1.
-- Thiết kế kiến trúc tổng thể, cơ sở dữ liệu, API và luồng AI pipeline.
-- Xây dựng prototype gồm các luồng cốt lõi: cấu hình phiên, sinh câu hỏi, trả lời, feedback/báo cáo.
-- Thiết lập kiểm thử cơ bản cho backend/frontend và kiểm tra vận hành local.
-- Đánh giá hạn chế và đề xuất hướng phát triển cho GR2/Đồ án tốt nghiệp.
 
 ## 1.8 Nhiệm Vụ Nghiên Cứu Và Triển Khai
 
@@ -100,17 +117,7 @@ Gợi ý nhóm nhiệm vụ:
 6. Triển khai backend, frontend và tích hợp AI.
 7. Kiểm thử, đánh giá và tổng hợp kết quả.
 
-## 1.9 Đối Tượng Và Phạm Vi Nghiên Cứu
-
-### 1.9.1 Đối Tượng Người Dùng
-
-> Cần bổ sung: mô tả nhóm người dùng mục tiêu: sinh viên năm cuối CNTT, fresher 0-12 tháng kinh nghiệm, người cần luyện phỏng vấn HR/technical/mixed.
-
-### 1.9.2 Đối Tượng Nghiên Cứu Kỹ Thuật
-
-> Cần bổ sung: nêu các thành phần kỹ thuật được nghiên cứu: ứng dụng web, backend API, cơ sở dữ liệu, AI pipeline, question generation, feedback generation, SSE, job queue.
-
-### 1.9.3 Phạm Vi Trong GR1
+## 1.9 Phạm Vi Nghiên Cứu
 
 > Cần bổ sung: xác định các chức năng nằm trong GR1. Nên đối chiếu `docs/Design/MVP_Scope.md` và code hiện tại.
 
@@ -123,53 +130,13 @@ Gợi ý phạm vi:
 - Tạo feedback và báo cáo tổng hợp.
 - Giao diện luồng chính và kiểm thử cơ bản.
 
-### 1.9.4 Ngoài Phạm Vi Trong GR1
+## 1.10 Lộ Trình GR1 - GR2 - Đồ Án Tốt Nghiệp
 
-> Cần bổ sung: nêu rõ các phần để sang GR2/Đồ án tốt nghiệp để báo cáo có ranh giới rõ ràng.
 
-Gợi ý ngoài phạm vi:
-
-- Live coding editor hoàn chỉnh.
-- System design canvas.
-- Marketplace mentor/peer interview.
-- Mobile native app.
-- Analytics/gamification đầy đủ.
-- Pilot với số lượng lớn người dùng.
-
-## 1.10 Phương Pháp Thực Hiện
-
-> Cần bổ sung: trình bày phương pháp nghiên cứu và phát triển.
-
-Gợi ý:
-
-- Nghiên cứu tài liệu và secondary research.
-- Khảo sát sản phẩm tương tự và phân tích đối thủ.
-- Phân tích yêu cầu theo use case/user story.
-- Thiết kế hệ thống theo kiến trúc module.
-- Phát triển lặp: backend, frontend, tích hợp AI, kiểm thử.
-- Đánh giá prototype bằng test case, smoke test, quan sát giao diện và một số ví dụ kết quả AI.
-
-## 1.11 Lộ Trình GR1 - GR2 - Đồ Án Tốt Nghiệp
-
-> Cần bổ sung: mô tả lộ trình dự kiến, không cần quá chi tiết. Mục đích là cho thấy GR1 là bước nền tảng hướng tới đồ án tốt nghiệp.
-
-| Giai đoạn | Mục tiêu chính | Kết quả dự kiến |
-| --- | --- | --- |
-| GR1 | Xác định bài toán, khảo sát, thiết kế và xây dựng prototype cốt lõi | Tài liệu yêu cầu/thực tế/thiết kế, prototype luồng phỏng vấn và feedback cơ bản |
-| GR2 | Hoàn thiện tính năng, nâng cao chất lượng AI, bổ sung kiểm thử và trải nghiệm người dùng | Sản phẩm ổn định hơn, báo cáo đánh giá sâu hơn, có demo đầy đủ |
-| Đồ án tốt nghiệp | Hoàn chỉnh hệ thống, đánh giá với người dùng thực tế, tối ưu triển khai và bảo mật | Hệ thống hoàn thiện, kết quả thực nghiệm, tài liệu vận hành và báo cáo bảo vệ |
-
-## 1.12 Bố Cục Báo Cáo
-
-> Cần bổ sung: tóm tắt nội dung từng chương sau khi các chương đã ổn định.
-
-Gợi ý:
-
-- Chương 1 đặt vấn đề, mục tiêu, phạm vi và lộ trình.
-- Chương 2 trình bày khảo sát thực tế, sản phẩm liên quan và yêu cầu rút ra.
-- Chương 3 trình bày cơ sở lý thuyết và công nghệ nền tảng.
-- Chương 4 trình bày phân tích, thiết kế và cách xây dựng sản phẩm GR1.
-- Chương 5 trình bày kết quả, kiểm thử, đánh giá, hạn chế.
-- Phần kết luận tổng hợp đóng góp và hướng phát triển.
+| Giai đoạn | Mục tiêu chính |
+| --- | --- |
+| GR1 | Xác định bài toán, khảo sát, thiết kế và xây dựng prototype cốt lõi, demo được 1-2 tính năng quan trọng của sản phẩm |
+| GR2 | Hoàn thiện tính năng, nâng cao chất lượng AI, bổ sung kiểm thử và trải nghiệm người dùng |
+| Đồ án tốt nghiệp | Hoàn chỉnh hệ thống, đánh giá với người dùng thực tế, tối ưu triển khai và bảo mật |
 
 ---

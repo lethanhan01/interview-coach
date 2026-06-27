@@ -6,15 +6,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
 import { WhisperService } from '../../turn/whisper.service';
 import { VoiceMetricsService } from '../../turn/voice-metrics.service';
-import { FollowUpCoordinatorService } from '../../turn/follow-up-coordinator.service';
 import { ReportService } from '../../report/report.service';
 import {
   TRANSCRIPTION_QUEUE,
   TRANSCRIPTION_JOB_ATTEMPTS,
   FEEDBACK_QUEUE,
-  FOLLOW_UP_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
-  FOLLOW_UP_JOB_ATTEMPTS,
 } from '../../common/constants/queue.constants';
 import type { SessionType } from '../pipelines/interview-pipeline.interface';
 import { FALLBACK_FEEDBACK_MESSAGE } from '../fallback-content';
@@ -38,10 +35,8 @@ export class TranscriptionProcessor extends WorkerHost {
     private readonly sseService: SseService,
     private readonly whisperService: WhisperService,
     private readonly voiceMetricsService: VoiceMetricsService,
-    private readonly followUpCoordinatorService: FollowUpCoordinatorService,
     private readonly reportService: ReportService,
     @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
-    @InjectQueue(FOLLOW_UP_QUEUE) private readonly followUpQueue: Queue,
   ) {
     super();
   }
@@ -96,11 +91,6 @@ export class TranscriptionProcessor extends WorkerHost {
         return;
       }
 
-      const session = await this.prisma.interviewSession.findUnique({
-        where: { id: sessionId },
-        select: { numQuestions: true },
-      });
-
       const jobBase = {
         sessionId,
         turnId: answerId,
@@ -110,21 +100,6 @@ export class TranscriptionProcessor extends WorkerHost {
         contextPack,
         sessionType,
       };
-
-      const followUpEnabled =
-        this.followUpCoordinatorService.shouldGenerateFollowUp(
-          answerText,
-          question.orderIndex,
-          session?.numQuestions ?? 0,
-        );
-
-      if (followUpEnabled) {
-        await this.followUpQueue.add('follow-up', jobBase, {
-          jobId: `follow-up-${answerId}`,
-          attempts: FOLLOW_UP_JOB_ATTEMPTS,
-          backoff: { type: 'fixed', delay: 2000 },
-        });
-      }
 
       await this.feedbackQueue.add('feedback', jobBase, {
         jobId: `feedback-${answerId}`,
