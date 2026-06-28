@@ -41,6 +41,8 @@ describe('PromptBuilderService', () => {
       expect(result).toContain('start_index');
       expect(result).toContain('end_index');
       expect(result).toContain('never use null');
+      expect(result).toContain('Write all generated feedback fields in Vietnamese');
+      expect(result).toContain('exact verbatim quote copied from the candidate answer');
     });
   });
 
@@ -157,6 +159,27 @@ describe('PromptBuilderService', () => {
 
       expect(content).not.toContain('<question>');
       expect(content).not.toContain('<answer>');
+    });
+
+    it('inject <num_questions> khi numQuestions được cung cấp', () => {
+      const messages = service.injectDynamicContext({
+        systemMessage: 'sys',
+        jobDescription: 'jd',
+        numQuestions: 3,
+      });
+      const content = messages[1].content as string;
+
+      expect(content).toContain('<num_questions>3</num_questions>');
+    });
+
+    it('không thêm <num_questions> khi numQuestions không được cung cấp', () => {
+      const messages = service.injectDynamicContext({
+        systemMessage: 'sys',
+        jobDescription: 'jd',
+      });
+      const content = messages[1].content as string;
+
+      expect(content).not.toContain('<num_questions>');
     });
   });
 });

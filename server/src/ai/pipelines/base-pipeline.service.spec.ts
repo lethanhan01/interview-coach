@@ -128,6 +128,33 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       );
     });
 
+    it('truyền numQuestions vào injectDynamicContext theo totalQuestions của input', async () => {
+      const rawQuestions = {
+        questions: [
+          {
+            text: 'Q1',
+            category: 'hr',
+            competency_domain: 'comm',
+            difficulty: 1,
+          },
+          {
+            text: 'Q2',
+            category: 'hr',
+            competency_domain: 'self',
+            difficulty: 2,
+          },
+        ],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawQuestions));
+      mockZodValidator.validate.mockReturnValue(rawQuestions);
+
+      await service.generateQuestions(questionInput);
+
+      expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
+        expect.objectContaining({ numQuestions: questionInput.totalQuestions }),
+      );
+    });
+
     it('ném AI_SERVICE_ERROR khi chatCompletion trả về JSON không hợp lệ', async () => {
       mockOpenAI.chatCompletion.mockResolvedValue('không phải JSON {{');
 

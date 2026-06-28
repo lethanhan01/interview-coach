@@ -161,7 +161,7 @@ export default function ReportPage() {
 
         <div>
           <h2 className="mb-4 text-base font-semibold text-ink">
-            Transcript có chú thích
+            Phân tích từng câu trả lời
           </h2>
           <AnnotatedTranscript
             items={report.transcript ?? []}

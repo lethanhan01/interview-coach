@@ -47,6 +47,7 @@ export abstract class BasePipelineService implements InterviewPipeline {
       jobDescription: input.jobDescriptionText,
       sessionType: input.sessionType,
       targetRoles: input.targetRoles,
+      numQuestions: input.totalQuestions,
     });
     const raw = await this.openai.chatCompletion({
       messages,

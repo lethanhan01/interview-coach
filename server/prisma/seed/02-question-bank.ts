@@ -1768,8 +1768,9 @@ const SEED_QUESTIONS = [
 ];
 
 export async function seedQuestionBank(prisma: PrismaClient): Promise<void> {
+  // Count only canonical seed rows (not kaggle rows) to avoid false skip
   const activeCount = await prisma.questionBank.count({
-    where: { deletedAt: null },
+    where: { deletedAt: null, contentJson: { path: ['source'], equals: 'seed' } },
   });
 
   if (activeCount >= SEED_QUESTIONS.length) {
@@ -1779,7 +1780,7 @@ export async function seedQuestionBank(prisma: PrismaClient): Promise<void> {
 
   if (activeCount > 0) {
     await prisma.questionBank.updateMany({
-      where: { deletedAt: null },
+      where: { deletedAt: null, contentJson: { path: ['source'], equals: 'seed' } },
       data: { deletedAt: new Date() },
     });
   }
