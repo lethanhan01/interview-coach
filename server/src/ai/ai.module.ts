@@ -15,6 +15,7 @@ import { TranscriptionProcessor } from './processors/transcription.processor';
 import { WhisperService } from '../turn/whisper.service';
 import { VoiceMetricsService } from '../turn/voice-metrics.service';
 import { ReportModule } from '../report/report.module';
+import { QuestionBankModule } from '../question-bank/question-bank.module';
 import {
   QUESTION_GEN_QUEUE,
   FEEDBACK_QUEUE,
@@ -25,6 +26,7 @@ import {
 @Module({
   imports: [
     ReportModule,
+    QuestionBankModule,
     BullModule.registerQueue(
       { name: QUESTION_GEN_QUEUE },
       { name: FEEDBACK_QUEUE },

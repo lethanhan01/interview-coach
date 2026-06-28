@@ -97,7 +97,6 @@ export class ComprehensiveReportProcessor extends WorkerHost {
           .join('\n');
 
         const raw = await this.openai.chatCompletion({
-          model: COMPREHENSIVE_REPORT_PROMPT_CONFIG.model,
           temperature: COMPREHENSIVE_REPORT_PROMPT_CONFIG.temperature,
           maxTokens: COMPREHENSIVE_REPORT_PROMPT_CONFIG.maxTokens,
           responseFormat: 'json_object',
@@ -119,11 +118,11 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       } catch (openaiError: unknown) {
         if (isAIQuotaExceeded(openaiError)) {
           this.logger.warn(
-            `Comprehensive report for session ${sessionId} is using a fallback action plan: OpenAI quota exhausted`,
+            `Comprehensive report for session ${sessionId} is using a fallback action plan: AI provider quota exhausted`,
           );
         } else {
           this.logger.error(
-            `ComprehensiveReportProcessor: OpenAI call failed for session ${sessionId}`,
+            `ComprehensiveReportProcessor: AI provider call failed for session ${sessionId}`,
             openaiError instanceof Error
               ? openaiError.stack
               : String(openaiError),
@@ -137,7 +136,7 @@ export class ComprehensiveReportProcessor extends WorkerHost {
     }
 
     const reportMetadata = {
-      generatedByModel: COMPREHENSIVE_REPORT_PROMPT_CONFIG.model,
+      generatedByModel: this.openai.getChatModel(),
       promptVersion: COMPREHENSIVE_REPORT_PROMPT_CONFIG.version,
     };
 

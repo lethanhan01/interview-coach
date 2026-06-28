@@ -3,39 +3,27 @@ import { ConfigService } from '@nestjs/config';
 import { ExecutionContext } from '@nestjs/common';
 import { SseTokenGuard } from './sse-token.guard';
 import { createMockConfigService } from '../../test-utils/mock-factories';
-
-jest.mock('jsonwebtoken', () => ({
-  __esModule: true,
-  default: {
-    verify: jest.fn(),
-  },
-}));
-
-import jwt from 'jsonwebtoken';
+import { PrismaService } from '../../prisma/prisma.service';
 
 describe('SseTokenGuard', () => {
   let guard: SseTokenGuard;
-  const mockJwtVerify = jwt.verify as jest.Mock;
-
-  const makeContext = (query: Record<string, string> = {}): ExecutionContext =>
-    ({
-      switchToHttp: () => ({
-        getRequest: () => ({
-          query,
-          user: undefined as unknown,
-        }),
-      }),
-    }) as unknown as ExecutionContext;
+  let mockPrisma: { user: { upsert: jest.Mock } };
 
   beforeEach(async () => {
     const mockConfig = createMockConfigService({
-      SUPABASE_JWT_SECRET: 'test-secret',
+      MOCK_USER_ID: '110235ac-6613-4ef3-bdff-715f4cd5d7fc',
     });
+    mockPrisma = {
+      user: {
+        upsert: jest.fn().mockResolvedValue({}),
+      },
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SseTokenGuard,
         { provide: ConfigService, useValue: mockConfig },
+        { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
 
@@ -44,39 +32,19 @@ describe('SseTokenGuard', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  it('trả về true và set req.user khi token hợp lệ', () => {
-    mockJwtVerify.mockReturnValue({ sub: 'user-uuid-456' });
+  it('luôn cho qua và set demo user cho MVP', async () => {
     const req = {
-      query: { token: 'valid.jwt.token' },
+      query: {},
       user: undefined as unknown,
     };
     const ctx = {
       switchToHttp: () => ({ getRequest: () => req }),
     } as unknown as ExecutionContext;
 
-    const result = guard.canActivate(ctx);
-
-    expect(result).toBe(true);
-    expect((req.user as { id: string }).id).toBe('user-uuid-456');
-  });
-
-  it('trả về false khi không có token trong query', () => {
-    const ctx = makeContext({});
-
-    const result = guard.canActivate(ctx);
-
-    expect(result).toBe(false);
-    expect(mockJwtVerify).not.toHaveBeenCalled();
-  });
-
-  it('trả về false khi jwt.verify ném lỗi (token hết hạn hoặc không hợp lệ)', () => {
-    mockJwtVerify.mockImplementation(() => {
-      throw new Error('jwt expired');
-    });
-    const ctx = makeContext({ token: 'expired.jwt.token' });
-
-    const result = guard.canActivate(ctx);
-
-    expect(result).toBe(false);
+    await expect(guard.canActivate(ctx)).resolves.toBe(true);
+    expect((req.user as { id: string }).id).toBe(
+      '110235ac-6613-4ef3-bdff-715f4cd5d7fc',
+    );
+    expect(mockPrisma.user.upsert).toHaveBeenCalled();
   });
 });

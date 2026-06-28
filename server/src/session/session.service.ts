@@ -1,5 +1,6 @@
 import { Injectable, HttpStatus, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
+import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
 import { InterviewSession } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -17,30 +18,46 @@ import { ReportService } from '../report/report.service';
 @Injectable()
 export class SessionService {
   private readonly logger = new Logger(SessionService.name);
+  private readonly sessionCreationLimitPer24h: number;
+  private readonly countedLimitStatuses = {
+    notIn: ['error', 'canceled'],
+  };
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly referenceData: ReferenceDataService,
     @InjectQueue(QUESTION_GEN_QUEUE) private readonly queue: Queue,
     private readonly reportService: ReportService,
-  ) {}
+    config: ConfigService,
+  ) {
+    const configuredLimit = Number(
+      config.get<number | string>('SESSION_CREATION_LIMIT_PER_24H') ?? 10,
+    );
+    this.sessionCreationLimitPer24h = Number.isFinite(configuredLimit)
+      ? Math.max(0, Math.trunc(configuredLimit))
+      : 10;
+  }
 
   async create(
     userId: string,
     dto: CreateSessionDto,
   ): Promise<InterviewSession> {
-    const count = await this.prisma.interviewSession.count({
-      where: {
-        userId,
-        createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-      },
-    });
+    if (this.sessionCreationLimitPer24h > 0) {
+      const count = await this.prisma.interviewSession.count({
+        where: {
+          userId,
+          createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+          status: this.countedLimitStatuses,
+        },
+      });
 
-    if (count >= 10) {
-      throw new InterviewAIException(
-        ErrorCode.SESSION_LIMIT_EXCEEDED,
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
+      if (count >= this.sessionCreationLimitPer24h) {
+        throw new InterviewAIException(
+          ErrorCode.SESSION_LIMIT_EXCEEDED,
+          HttpStatus.TOO_MANY_REQUESTS,
+          `Bạn đã tạo ${this.sessionCreationLimitPer24h} phiên phỏng vấn trong 24 giờ qua. Hãy tiếp tục phiên cũ hoặc thử lại sau.`,
+        );
+      }
     }
 
     try {
@@ -77,10 +94,12 @@ export class SessionService {
         'question-generation',
         {
           sessionId: session.id,
+          userId,
           sessionType: dto.sessionType,
           jobDescriptionText: dto.jobDescription,
           targetRoles: dto.targetRoles ?? [],
           contextPack: dto.contextPack,
+          language: session.language,
           totalQuestions: session.numQuestions,
         },
         {
@@ -282,14 +301,15 @@ export class SessionService {
   ): Promise<string | undefined> {
     if (!savedJobDescriptionId) return undefined;
 
-    const savedJobDescription =
-      await this.prisma.savedJobDescription.findFirst({
+    const savedJobDescription = await this.prisma.savedJobDescription.findFirst(
+      {
         where: {
           id: savedJobDescriptionId,
           userId,
           deletedAt: null,
         },
-      });
+      },
+    );
 
     if (!savedJobDescription) {
       throw new InterviewAIException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND);

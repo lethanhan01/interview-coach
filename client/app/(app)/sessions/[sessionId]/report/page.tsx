@@ -114,7 +114,7 @@ export default function ReportPage() {
 
       <div className="mb-8 rounded-2xl bg-brand p-6 text-white">
         <p className="mb-1 text-sm text-brand-200">Điểm đánh giá tổng</p>
-        {report.overallScore === null ? (
+        {report.overallScore == null ? (
           <div>
             <p className="text-2xl font-bold">Chưa thể chấm điểm</p>
             <p className="mt-2 text-sm text-brand-100">
@@ -163,7 +163,7 @@ export default function ReportPage() {
             Transcript có chú thích
           </h2>
           <AnnotatedTranscript
-            items={report.transcript}
+            items={report.transcript ?? []}
             contextPackId={session?.contextPackId}
           />
         </div>

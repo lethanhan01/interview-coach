@@ -6,6 +6,7 @@ import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
 import { QUESTION_GEN_QUEUE } from '../../common/constants/queue.constants';
+import { QuestionBankService } from '../../question-bank/question-bank.service';
 import type {
   GeneratedQuestion,
   SessionType,
@@ -14,10 +15,12 @@ import { isAIQuotaExceeded } from '../ai-error.utils';
 
 interface QuestionGenerationJobDto {
   sessionId: string;
+  userId: string;
   sessionType: SessionType;
   jobDescriptionText: string;
   targetRoles: string[];
   contextPack: 'VN' | 'Western';
+  language: string;
   totalQuestions: number;
 }
 
@@ -30,6 +33,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
     private readonly sseService: SseService,
     private readonly contextPackService: ContextPackService,
     private readonly factory: PipelineStrategyFactory,
+    private readonly questionBankService: QuestionBankService,
   ) {
     super();
   }
@@ -37,10 +41,12 @@ export class QuestionGenerationProcessor extends WorkerHost {
   async process(job: Job<QuestionGenerationJobDto>): Promise<void> {
     const {
       sessionId,
+      userId,
       sessionType,
       jobDescriptionText,
       targetRoles,
       contextPack,
+      language,
       totalQuestions,
     } = job.data;
 
@@ -65,7 +71,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
     } catch (error: unknown) {
       if (isAIQuotaExceeded(error)) {
         this.logger.warn(
-          `OpenAI quota exhausted for session ${sessionId}; using question_bank fallback`,
+          `AI provider quota exhausted for session ${sessionId}; using question_bank fallback`,
         );
       } else {
         this.logger.error(
@@ -77,8 +83,10 @@ export class QuestionGenerationProcessor extends WorkerHost {
       try {
         await this.fallbackFromQuestionBank(
           sessionId,
+          userId,
           sessionType,
           contextPack,
+          language,
           totalQuestions,
         );
         if (await this.markActiveUnlessStopped(sessionId)) {
@@ -127,49 +135,42 @@ export class QuestionGenerationProcessor extends WorkerHost {
 
   private async fallbackFromQuestionBank(
     sessionId: string,
+    userId: string,
     sessionType: string,
     contextPack: string,
+    language: string,
     totalQuestions: number,
   ): Promise<void> {
-    const candidates = await this.prisma.questionBank.findMany({
-      where: { sessionType, contextPackId: contextPack, deletedAt: null },
-      orderBy: [{ difficulty: 'asc' }],
-      take: totalQuestions * 3,
-    });
-
-    if (candidates.length === 0) {
-      throw new Error(
-        `No fallback questions available for ${sessionType}/${contextPack}`,
-      );
-    }
-
-    const selected = this.selectWithDifficultySpread(
-      candidates,
+    const selected = await this.questionBankService.selectFallbackQuestions(
+      sessionType,
+      contextPack,
       totalQuestions,
+      language,
     );
-
-    if (selected.length < totalQuestions) {
-      throw new Error(
-        `Only ${selected.length}/${totalQuestions} fallback questions available for ${sessionType}/${contextPack}`,
-      );
-    }
 
     await this.prisma.sessionQuestion.createMany({
       data: selected.map((q, i) => ({
         sessionId,
-        questionBankId: q.id,
-        questionText: q.content,
+        questionBankId: q.questionBankId,
+        questionText: q.text,
         orderIndex: i + 1,
-        questionCategory: q.competencyDomain.startsWith('TD')
-          ? 'technical'
-          : 'behavioral',
+        questionCategory: q.questionCategory,
         competencyDomain: q.competencyDomain,
         rubricJson: {},
-        estimatedTimeMin: 5,
+        estimatedTimeMin: q.estimatedTimeMin,
       })),
       skipDuplicates: true,
     });
 
+    await Promise.all(
+      selected.map((question) =>
+        this.questionBankService.recordUsage(
+          question.questionBankId,
+          sessionId,
+          userId,
+        ),
+      ),
+    );
   }
 
   private async markActiveUnlessStopped(sessionId: string): Promise<boolean> {
@@ -182,41 +183,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
     });
 
     return result.count > 0;
-  }
-
-  private selectWithDifficultySpread<T extends { difficulty: number }>(
-    items: T[],
-    count: number,
-  ): T[] {
-    const easy = items.filter((q) => q.difficulty <= 2);
-    const medium = items.filter((q) => q.difficulty === 3);
-    const hard = items.filter((q) => q.difficulty >= 4);
-
-    const easyCount = Math.round(count * 0.3);
-    const hardCount = Math.round(count * 0.2);
-    const mediumCount = count - easyCount - hardCount;
-
-    const pick = <U>(arr: U[], n: number): U[] =>
-      arr.slice(0, Math.min(n, arr.length));
-
-    const selected = [
-      ...pick(easy, easyCount),
-      ...pick(medium, mediumCount),
-      ...pick(hard, hardCount),
-    ];
-
-    if (selected.length < count) {
-      const selectedItems = new Set(selected);
-      for (const item of items) {
-        if (!selectedItems.has(item)) {
-          selected.push(item);
-          selectedItems.add(item);
-        }
-        if (selected.length === count) break;
-      }
-    }
-
-    return selected.slice(0, count);
   }
 
   private async emitActive(sessionId: string): Promise<void> {

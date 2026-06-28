@@ -1,35 +1,30 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
-import jwt from 'jsonwebtoken';
+import { PrismaService } from '../../prisma/prisma.service';
+import { ensureMvpUser, getMvpUserId } from '../mvp-auth';
 
 @Injectable()
 export class SseTokenGuard implements CanActivate {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context
       .switchToHttp()
       .getRequest<Request & { user?: { id: string } }>();
 
-    if (this.configService.get<string>('AUTH_ENABLED') === 'false') {
-      req.user = {
-        id: this.configService.getOrThrow<string>('MOCK_USER_ID'),
-      };
-      return true;
-    }
+    return this.activateMvpUser(req);
+  }
 
-    const token = req.query['token'] as string | undefined;
-    if (!token) return false;
-    try {
-      const secret = this.configService.getOrThrow<string>(
-        'SUPABASE_JWT_SECRET',
-      );
-      const payload = jwt.verify(token, secret) as { sub: string };
-      req.user = { id: payload.sub };
-      return true;
-    } catch {
-      return false;
-    }
+  private async activateMvpUser(
+    req: Request & { user?: { id: string } },
+  ): Promise<boolean> {
+    const userId = getMvpUserId(this.configService);
+    await ensureMvpUser(this.prisma, userId);
+    req.user = { id: userId };
+    return true;
   }
 }

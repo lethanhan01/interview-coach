@@ -1,6 +1,31 @@
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 
-const QUESTIONS = [
+type RawQuestion = {
+  content: string;
+  sessionType: string;
+  difficulty: number;
+  contextPackId: 'VN' | 'Western';
+  subcategory: string;
+  competencyDomain: string;
+  applicableRoles: string[];
+  applicableLevels: string[];
+};
+
+type LocalizedQuestion = Omit<RawQuestion, 'content'> & {
+  enContent: string;
+  viContent: string;
+};
+
+type SeedQuestion = RawQuestion & {
+  tags: string[];
+  estimatedTimeMin: number;
+  translations: Prisma.InputJsonObject;
+  contentJson: Prisma.InputJsonObject;
+};
+
+const QUESTION_PAIR_SIZE = 15;
+
+const QUESTIONS: RawQuestion[] = [
   // ── Pair A: hr × VN (15 câu) ────────────────────────────────────────────
   {
     content: 'Hãy giới thiệu về bản thân bạn trong 2 phút.',
@@ -984,20 +1009,508 @@ const QUESTIONS = [
   },
 ];
 
+const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
+  {
+    enContent:
+      'Explain how React useState updates are scheduled and why reading state immediately after setState can be misleading.',
+    viContent:
+      'Giải thích cách React useState lên lịch cập nhật và vì sao đọc state ngay sau setState có thể gây hiểu nhầm.',
+    sessionType: 'technical',
+    difficulty: 2,
+    contextPackId: 'VN',
+    subcategory: 'react-hooks',
+    competencyDomain: 'TD1',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'What problems does useEffect solve, and what common mistakes cause unnecessary re-renders or stale data?',
+    viContent:
+      'useEffect giải quyết vấn đề gì, và những lỗi phổ biến nào gây re-render không cần thiết hoặc dữ liệu cũ?',
+    sessionType: 'technical',
+    difficulty: 3,
+    contextPackId: 'VN',
+    subcategory: 'react-hooks',
+    competencyDomain: 'TD4',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'Describe when you would use useMemo or useCallback in a React component. Give one case where using them is not worth it.',
+    viContent:
+      'Mô tả khi nào bạn dùng useMemo hoặc useCallback trong React component. Nêu một trường hợp không đáng dùng chúng.',
+    sessionType: 'technical',
+    difficulty: 3,
+    contextPackId: 'VN',
+    subcategory: 'react-performance',
+    competencyDomain: 'TD5',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['mid', 'senior'],
+  },
+  {
+    enContent:
+      'How would you structure state between local component state, URL state, and server state in a dashboard page?',
+    viContent:
+      'Bạn sẽ tổ chức state giữa local component state, URL state và server state như thế nào trong một trang dashboard?',
+    sessionType: 'technical',
+    difficulty: 4,
+    contextPackId: 'VN',
+    subcategory: 'frontend-architecture',
+    competencyDomain: 'TD3',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['mid', 'senior'],
+  },
+  {
+    enContent:
+      'Explain the difference between controlled and uncontrolled form inputs in React. When would you choose each?',
+    viContent:
+      'Giải thích sự khác nhau giữa controlled và uncontrolled form input trong React. Khi nào bạn chọn từng cách?',
+    sessionType: 'technical',
+    difficulty: 2,
+    contextPackId: 'VN',
+    subcategory: 'forms',
+    competencyDomain: 'TD1',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'What is CSS specificity, and how do you debug a style rule that is not being applied?',
+    viContent:
+      'CSS specificity là gì, và bạn debug một style rule không được áp dụng như thế nào?',
+    sessionType: 'technical',
+    difficulty: 2,
+    contextPackId: 'VN',
+    subcategory: 'css',
+    competencyDomain: 'TD5',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'Compare Flexbox and CSS Grid. Give an example layout where each one is the better choice.',
+    viContent:
+      'So sánh Flexbox và CSS Grid. Cho ví dụ layout mà mỗi công cụ là lựa chọn tốt hơn.',
+    sessionType: 'technical',
+    difficulty: 2,
+    contextPackId: 'VN',
+    subcategory: 'css-layout',
+    competencyDomain: 'TD1',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'How do you make a web page responsive without relying on fixed pixel widths everywhere?',
+    viContent:
+      'Bạn làm một trang web responsive như thế nào mà không phụ thuộc vào fixed pixel width ở mọi nơi?',
+    sessionType: 'technical',
+    difficulty: 3,
+    contextPackId: 'VN',
+    subcategory: 'responsive-design',
+    competencyDomain: 'TD4',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'Explain event bubbling and event delegation in the browser. How can delegation improve performance?',
+    viContent:
+      'Giải thích event bubbling và event delegation trong browser. Delegation có thể cải thiện performance như thế nào?',
+    sessionType: 'technical',
+    difficulty: 3,
+    contextPackId: 'VN',
+    subcategory: 'browser-events',
+    competencyDomain: 'TD1',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'What happens in the JavaScript event loop when a Promise resolves and a setTimeout callback is also waiting?',
+    viContent:
+      'Điều gì xảy ra trong JavaScript event loop khi một Promise resolve và một callback setTimeout cũng đang chờ?',
+    sessionType: 'technical',
+    difficulty: 4,
+    contextPackId: 'VN',
+    subcategory: 'javascript-runtime',
+    competencyDomain: 'TD1',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['mid', 'senior'],
+  },
+  {
+    enContent:
+      'How would you reduce initial load time for a React application used by candidates on slower mobile networks?',
+    viContent:
+      'Bạn sẽ giảm thời gian tải ban đầu cho một ứng dụng React mà ứng viên dùng trên mạng di động chậm như thế nào?',
+    sessionType: 'technical',
+    difficulty: 4,
+    contextPackId: 'VN',
+    subcategory: 'frontend-performance',
+    competencyDomain: 'TD5',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['mid', 'senior'],
+  },
+  {
+    enContent:
+      'What accessibility checks do you perform before shipping a form-heavy page?',
+    viContent:
+      'Bạn kiểm tra accessibility gì trước khi release một trang có nhiều form?',
+    sessionType: 'technical',
+    difficulty: 3,
+    contextPackId: 'VN',
+    subcategory: 'accessibility',
+    competencyDomain: 'TD4',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid', 'senior'],
+  },
+  {
+    enContent:
+      'Design a reusable modal component. What API, focus behavior, and cleanup details would you consider?',
+    viContent:
+      'Thiết kế một modal component tái sử dụng. Bạn cân nhắc API, focus behavior và cleanup như thế nào?',
+    sessionType: 'technical',
+    difficulty: 4,
+    contextPackId: 'VN',
+    subcategory: 'component-design',
+    competencyDomain: 'TD3',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['mid', 'senior'],
+  },
+  {
+    enContent:
+      'How do you test a React component that fetches data and has loading, error, and success states?',
+    viContent:
+      'Bạn test một React component fetch data và có loading, error, success states như thế nào?',
+    sessionType: 'technical',
+    difficulty: 3,
+    contextPackId: 'VN',
+    subcategory: 'frontend-testing',
+    competencyDomain: 'TD4',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'Walk through how you would debug a production-only hydration mismatch in a Next.js page.',
+    viContent:
+      'Trình bày cách bạn debug một hydration mismatch chỉ xuất hiện trên production trong Next.js.',
+    sessionType: 'technical',
+    difficulty: 5,
+    contextPackId: 'VN',
+    subcategory: 'nextjs-debugging',
+    competencyDomain: 'TD5',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['mid', 'senior'],
+  },
+  {
+    enContent:
+      'Explain how React useState updates are scheduled and why reading state immediately after setState can be misleading.',
+    viContent:
+      'Giải thích cách React useState lên lịch cập nhật và vì sao đọc state ngay sau setState có thể gây hiểu nhầm.',
+    sessionType: 'technical',
+    difficulty: 2,
+    contextPackId: 'Western',
+    subcategory: 'react-hooks',
+    competencyDomain: 'TD1',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'What problems does useEffect solve, and what common mistakes cause unnecessary re-renders or stale data?',
+    viContent:
+      'useEffect giải quyết vấn đề gì, và những lỗi phổ biến nào gây re-render không cần thiết hoặc dữ liệu cũ?',
+    sessionType: 'technical',
+    difficulty: 3,
+    contextPackId: 'Western',
+    subcategory: 'react-hooks',
+    competencyDomain: 'TD4',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'Describe when you would use useMemo or useCallback in a React component. Give one case where using them is not worth it.',
+    viContent:
+      'Mô tả khi nào bạn dùng useMemo hoặc useCallback trong React component. Nêu một trường hợp không đáng dùng chúng.',
+    sessionType: 'technical',
+    difficulty: 3,
+    contextPackId: 'Western',
+    subcategory: 'react-performance',
+    competencyDomain: 'TD5',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['mid', 'senior'],
+  },
+  {
+    enContent:
+      'How would you structure state between local component state, URL state, and server state in a dashboard page?',
+    viContent:
+      'Bạn sẽ tổ chức state giữa local component state, URL state và server state như thế nào trong một trang dashboard?',
+    sessionType: 'technical',
+    difficulty: 4,
+    contextPackId: 'Western',
+    subcategory: 'frontend-architecture',
+    competencyDomain: 'TD3',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['mid', 'senior'],
+  },
+  {
+    enContent:
+      'Explain the difference between controlled and uncontrolled form inputs in React. When would you choose each?',
+    viContent:
+      'Giải thích sự khác nhau giữa controlled và uncontrolled form input trong React. Khi nào bạn chọn từng cách?',
+    sessionType: 'technical',
+    difficulty: 2,
+    contextPackId: 'Western',
+    subcategory: 'forms',
+    competencyDomain: 'TD1',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'What is CSS specificity, and how do you debug a style rule that is not being applied?',
+    viContent:
+      'CSS specificity là gì, và bạn debug một style rule không được áp dụng như thế nào?',
+    sessionType: 'technical',
+    difficulty: 2,
+    contextPackId: 'Western',
+    subcategory: 'css',
+    competencyDomain: 'TD5',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'Compare Flexbox and CSS Grid. Give an example layout where each one is the better choice.',
+    viContent:
+      'So sánh Flexbox và CSS Grid. Cho ví dụ layout mà mỗi công cụ là lựa chọn tốt hơn.',
+    sessionType: 'technical',
+    difficulty: 2,
+    contextPackId: 'Western',
+    subcategory: 'css-layout',
+    competencyDomain: 'TD1',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'How do you make a web page responsive without relying on fixed pixel widths everywhere?',
+    viContent:
+      'Bạn làm một trang web responsive như thế nào mà không phụ thuộc vào fixed pixel width ở mọi nơi?',
+    sessionType: 'technical',
+    difficulty: 3,
+    contextPackId: 'Western',
+    subcategory: 'responsive-design',
+    competencyDomain: 'TD4',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'Explain event bubbling and event delegation in the browser. How can delegation improve performance?',
+    viContent:
+      'Giải thích event bubbling và event delegation trong browser. Delegation có thể cải thiện performance như thế nào?',
+    sessionType: 'technical',
+    difficulty: 3,
+    contextPackId: 'Western',
+    subcategory: 'browser-events',
+    competencyDomain: 'TD1',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'What happens in the JavaScript event loop when a Promise resolves and a setTimeout callback is also waiting?',
+    viContent:
+      'Điều gì xảy ra trong JavaScript event loop khi một Promise resolve và một callback setTimeout cũng đang chờ?',
+    sessionType: 'technical',
+    difficulty: 4,
+    contextPackId: 'Western',
+    subcategory: 'javascript-runtime',
+    competencyDomain: 'TD1',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['mid', 'senior'],
+  },
+  {
+    enContent:
+      'How would you reduce initial load time for a React application used by candidates on slower mobile networks?',
+    viContent:
+      'Bạn sẽ giảm thời gian tải ban đầu cho một ứng dụng React mà ứng viên dùng trên mạng di động chậm như thế nào?',
+    sessionType: 'technical',
+    difficulty: 4,
+    contextPackId: 'Western',
+    subcategory: 'frontend-performance',
+    competencyDomain: 'TD5',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['mid', 'senior'],
+  },
+  {
+    enContent:
+      'What accessibility checks do you perform before shipping a form-heavy page?',
+    viContent:
+      'Bạn kiểm tra accessibility gì trước khi release một trang có nhiều form?',
+    sessionType: 'technical',
+    difficulty: 3,
+    contextPackId: 'Western',
+    subcategory: 'accessibility',
+    competencyDomain: 'TD4',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid', 'senior'],
+  },
+  {
+    enContent:
+      'Design a reusable modal component. What API, focus behavior, and cleanup details would you consider?',
+    viContent:
+      'Thiết kế một modal component tái sử dụng. Bạn cân nhắc API, focus behavior và cleanup như thế nào?',
+    sessionType: 'technical',
+    difficulty: 4,
+    contextPackId: 'Western',
+    subcategory: 'component-design',
+    competencyDomain: 'TD3',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['mid', 'senior'],
+  },
+  {
+    enContent:
+      'How do you test a React component that fetches data and has loading, error, and success states?',
+    viContent:
+      'Bạn test một React component fetch data và có loading, error, success states như thế nào?',
+    sessionType: 'technical',
+    difficulty: 3,
+    contextPackId: 'Western',
+    subcategory: 'frontend-testing',
+    competencyDomain: 'TD4',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['junior', 'mid'],
+  },
+  {
+    enContent:
+      'Walk through how you would debug a production-only hydration mismatch in a Next.js page.',
+    viContent:
+      'Trình bày cách bạn debug một hydration mismatch chỉ xuất hiện trên production trong Next.js.',
+    sessionType: 'technical',
+    difficulty: 5,
+    contextPackId: 'Western',
+    subcategory: 'nextjs-debugging',
+    competencyDomain: 'TD5',
+    applicableRoles: ['frontend', 'fullstack'],
+    applicableLevels: ['mid', 'senior'],
+  },
+];
+
+function estimateTimeMin(difficulty: number): number {
+  if (difficulty <= 2) return 3;
+  if (difficulty === 3) return 5;
+  return 7;
+}
+
+function buildTags(question: RawQuestion): string[] {
+  return Array.from(
+    new Set([
+      question.sessionType,
+      question.contextPackId.toLowerCase(),
+      question.subcategory,
+      question.competencyDomain.toLowerCase(),
+      ...question.applicableRoles,
+      ...question.applicableLevels,
+    ]),
+  );
+}
+
+function toSeedQuestion(
+  question: RawQuestion,
+  enContent: string,
+  viContent: string,
+): SeedQuestion {
+  return {
+    ...question,
+    content: enContent,
+    tags: buildTags(question),
+    estimatedTimeMin: estimateTimeMin(question.difficulty),
+    translations: {
+      en: enContent,
+      vi: viContent,
+    },
+    contentJson: {
+      source: 'seed',
+      en: enContent,
+      vi: viContent,
+    },
+  };
+}
+
+function enrichExistingQuestions(questions: RawQuestion[]): SeedQuestion[] {
+  const result: SeedQuestion[] = [];
+
+  for (
+    let index = 0;
+    index < questions.length;
+    index += QUESTION_PAIR_SIZE * 2
+  ) {
+    const vnQuestions = questions.slice(index, index + QUESTION_PAIR_SIZE);
+    const westernQuestions = questions.slice(
+      index + QUESTION_PAIR_SIZE,
+      index + QUESTION_PAIR_SIZE * 2,
+    );
+
+    for (let offset = 0; offset < QUESTION_PAIR_SIZE; offset += 1) {
+      const vnQuestion = vnQuestions[offset];
+      const westernQuestion = westernQuestions[offset];
+
+      result.push(
+        toSeedQuestion(vnQuestion, westernQuestion.content, vnQuestion.content),
+      );
+      result.push(
+        toSeedQuestion(
+          westernQuestion,
+          westernQuestion.content,
+          vnQuestion.content,
+        ),
+      );
+    }
+  }
+
+  return result;
+}
+
+function enrichFrontendQuestions(
+  questions: LocalizedQuestion[],
+): SeedQuestion[] {
+  return questions.map(({ enContent, viContent, ...question }) =>
+    toSeedQuestion({ ...question, content: enContent }, enContent, viContent),
+  );
+}
+
+const SEED_QUESTIONS = [
+  ...enrichExistingQuestions(QUESTIONS),
+  ...enrichFrontendQuestions(FRONTEND_QUESTIONS),
+];
+
 export async function seedQuestionBank(prisma: PrismaClient): Promise<void> {
-  const existing = await prisma.questionBank.findFirst({
-    where: { content: QUESTIONS[0].content },
-    select: { id: true },
+  const activeCount = await prisma.questionBank.count({
+    where: { deletedAt: null },
   });
-  if (existing) {
+
+  if (activeCount >= SEED_QUESTIONS.length) {
     console.log('question_bank: already seeded, skipping');
     return;
   }
 
+  if (activeCount > 0) {
+    await prisma.questionBank.updateMany({
+      where: { deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+  }
+
   await prisma.questionBank.createMany({
-    data: QUESTIONS,
+    data: SEED_QUESTIONS,
     skipDuplicates: true,
   });
 
-  console.log(`question_bank: seeded ${QUESTIONS.length} questions`);
+  console.log(`question_bank: seeded ${SEED_QUESTIONS.length} questions`);
 }

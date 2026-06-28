@@ -50,7 +50,7 @@ describe('ReportController', () => {
       mockReportService.getReport.mockRejectedValue(
         new InterviewAIException(
           ErrorCode.REPORT_NOT_READY,
-          HttpStatus.ACCEPTED,
+          HttpStatus.NOT_FOUND,
         ),
       );
 

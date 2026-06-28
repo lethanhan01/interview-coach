@@ -2,6 +2,7 @@ import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { SessionService } from './session.service';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReferenceDataService } from '../prisma/reference-data.service';
 import { ReportService } from '../report/report.service';
@@ -10,6 +11,7 @@ import { InterviewAIException } from '../common/exceptions/interview-ai.exceptio
 import { QUESTION_GEN_QUEUE } from '../common/constants/queue.constants';
 import {
   createMockPrismaService,
+  createMockConfigService,
   createMockQueue,
   createMockReportService,
 } from '../test-utils/mock-factories';
@@ -21,6 +23,7 @@ const BASE_SESSION = {
   jobDescription: 'a'.repeat(100),
   sessionType: 'hr' as const,
   contextPackId: 'VN',
+  language: 'vi',
   status: 'generating',
   numQuestions: 5,
   createdAt: new Date(),
@@ -42,6 +45,7 @@ describe('SessionService', () => {
   let mockQuestionQueue: ReturnType<typeof createMockQueue>;
   let mockReportService: ReturnType<typeof createMockReportService>;
   let mockReferenceData: { ensureContextPack: jest.Mock };
+  let mockConfig: ReturnType<typeof createMockConfigService>;
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
@@ -50,6 +54,9 @@ describe('SessionService', () => {
     mockReferenceData = {
       ensureContextPack: jest.fn().mockResolvedValue(undefined),
     };
+    mockConfig = createMockConfigService({
+      SESSION_CREATION_LIMIT_PER_24H: 10,
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -61,6 +68,7 @@ describe('SessionService', () => {
           useValue: mockQuestionQueue,
         },
         { provide: ReportService, useValue: mockReportService },
+        { provide: ConfigService, useValue: mockConfig },
       ],
     }).compile();
 
@@ -77,6 +85,13 @@ describe('SessionService', () => {
 
       const result = await service.create('user-abc', CREATE_DTO);
 
+      expect(mockPrisma.interviewSession.count).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-abc',
+          createdAt: { gte: expect.any(Date) },
+          status: { notIn: ['error', 'canceled'] },
+        },
+      });
       expect(mockPrisma.interviewSession.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -98,7 +113,11 @@ describe('SessionService', () => {
 
       expect(mockQuestionQueue.add).toHaveBeenCalledWith(
         'question-generation',
-        expect.objectContaining({ sessionId: 'session-123' }),
+        expect.objectContaining({
+          sessionId: 'session-123',
+          userId: 'user-abc',
+          language: 'vi',
+        }),
         expect.any(Object),
       );
     });
@@ -120,6 +139,9 @@ describe('SessionService', () => {
         expect((e as InterviewAIException).getStatus()).toBe(
           HttpStatus.TOO_MANY_REQUESTS,
         );
+        expect((e as InterviewAIException).message).toContain(
+          'Bạn đã tạo 10 phiên phỏng vấn',
+        );
       }
     });
 
@@ -131,6 +153,32 @@ describe('SessionService', () => {
       await expect(
         service.create('user-abc', CREATE_DTO),
       ).resolves.toBeDefined();
+    });
+
+    it('bỏ qua giới hạn tạo session khi SESSION_CREATION_LIMIT_PER_24H = 0', async () => {
+      mockConfig.get.mockReturnValue(0);
+      const noLimitModule = await Test.createTestingModule({
+        providers: [
+          SessionService,
+          { provide: PrismaService, useValue: mockPrisma },
+          { provide: ReferenceDataService, useValue: mockReferenceData },
+          {
+            provide: getQueueToken(QUESTION_GEN_QUEUE),
+            useValue: mockQuestionQueue,
+          },
+          { provide: ReportService, useValue: mockReportService },
+          { provide: ConfigService, useValue: mockConfig },
+        ],
+      }).compile();
+      const noLimitService = noLimitModule.get<SessionService>(SessionService);
+      mockPrisma.interviewSession.create.mockResolvedValue(BASE_SESSION);
+      mockQuestionQueue.add.mockResolvedValue({});
+
+      await expect(
+        noLimitService.create('user-abc', CREATE_DTO),
+      ).resolves.toBeDefined();
+
+      expect(mockPrisma.interviewSession.count).not.toHaveBeenCalled();
     });
 
     it('đặt session status = error khi enqueue thất bại', async () => {
@@ -337,7 +385,9 @@ describe('SessionService', () => {
 
       await service.updateStatus('session-123', 'user-abc', 'active');
 
-      expect(mockReportService.enqueueIfAllFeedbacksReady).not.toHaveBeenCalled();
+      expect(
+        mockReportService.enqueueIfAllFeedbacksReady,
+      ).not.toHaveBeenCalled();
     });
 
     it('tạm dừng session active', async () => {
@@ -449,7 +499,9 @@ describe('SessionService', () => {
       await expect(
         service.updateStatus('session-123', 'user-abc', 'completed'),
       ).rejects.toMatchObject({ errorCode: ErrorCode.SESSION_INCOMPLETE });
-      expect(mockReportService.enqueueIfAllFeedbacksReady).not.toHaveBeenCalled();
+      expect(
+        mockReportService.enqueueIfAllFeedbacksReady,
+      ).not.toHaveBeenCalled();
     });
 
     it('completed lặp lại không enqueue thêm report', async () => {
@@ -463,7 +515,9 @@ describe('SessionService', () => {
       );
 
       expect(result).toBe(completed);
-      expect(mockReportService.enqueueIfAllFeedbacksReady).not.toHaveBeenCalled();
+      expect(
+        mockReportService.enqueueIfAllFeedbacksReady,
+      ).not.toHaveBeenCalled();
     });
 
     it('khôi phục completing bằng cách đảm bảo report job tồn tại', async () => {
@@ -473,7 +527,9 @@ describe('SessionService', () => {
 
       await service.updateStatus('session-123', 'user-abc', 'completed');
 
-      expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledTimes(1);
+      expect(
+        mockReportService.enqueueIfAllFeedbacksReady,
+      ).toHaveBeenCalledTimes(1);
     });
   });
 

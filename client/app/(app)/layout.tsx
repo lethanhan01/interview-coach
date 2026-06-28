@@ -1,27 +1,8 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { createServerSupabaseClient } from '../../lib/supabase-server'
 import NavLinks from '@/components/ui/NavLinks'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  let accessToken = ''
-
-  if (process.env.NEXT_PUBLIC_SKIP_AUTH !== 'true') {
-    const supabase = await createServerSupabaseClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      redirect('/login')
-    }
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    accessToken = session?.access_token ?? ''
-  }
+  const accessToken = 'dev-mock-token'
 
   return (
     <div className="min-h-screen bg-surface-raised">

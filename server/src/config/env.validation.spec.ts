@@ -7,7 +7,6 @@ describe('validateEnv', () => {
     SUPABASE_SERVICE_ROLE_KEY: 'service-role-key-value',
     SUPABASE_JWT_SECRET: 'jwt-secret-value',
     DATABASE_URL: 'postgresql://localhost:5432/test',
-    OPENAI_API_KEY: 'sk-test-key',
   };
 
   it('parse thành công và trả về default values khi các optional field bị thiếu', () => {
@@ -17,10 +16,16 @@ describe('validateEnv', () => {
     expect(result.REDIS_HOST).toBe('localhost');
     expect(result.REDIS_PORT).toBe(6379);
     expect(result.PORT).toBe(3000);
-    expect(result.AUTH_ENABLED).toBe('true');
+    expect(result.SESSION_CREATION_LIMIT_PER_24H).toBe(10);
+    expect(result.AUTH_ENABLED).toBe('false');
     expect(result.MOCK_USER_ID).toBeUndefined();
     expect(result.NODE_ENV).toBe('development');
     expect(result.CLIENT_URL).toBe('http://localhost:5173');
+    expect(result.OPENAI_API_KEY).toBe('lm-studio');
+    expect(result.OPENAI_BASE_URL).toBe('http://127.0.0.1:1234/v1');
+    expect(result.OPENAI_CHAT_MODEL).toBe('google/gemma-4-e4b');
+    expect(result.OPENAI_JSON_MODE).toBe('false');
+    expect(result.OPENAI_TIMEOUT_MS).toBe(30000);
   });
 
   it('giữ lại cấu hình tắt auth cho local dev', () => {
@@ -35,18 +40,38 @@ describe('validateEnv', () => {
     expect(result.MOCK_USER_ID).toBe(mockUserId);
   });
 
-  it('ném lỗi khi tắt auth nhưng MOCK_USER_ID không phải UUID', () => {
+  it('ném lỗi khi MOCK_USER_ID không phải UUID', () => {
     expect(() =>
       validateEnv({
         ...VALID_ENV,
-        AUTH_ENABLED: 'false',
         MOCK_USER_ID: 'dev-user-1',
       }),
     ).toThrow();
   });
 
-  it('ném lỗi khi thiếu required field OPENAI_API_KEY', () => {
-    const { OPENAI_API_KEY: _omit, ...missingKey } = VALID_ENV;
-    expect(() => validateEnv(missingKey)).toThrow();
+  it('giữ lại cấu hình local OpenAI-compatible khi được khai báo', () => {
+    const result = validateEnv({
+      ...VALID_ENV,
+      OPENAI_API_KEY: 'local-key',
+      OPENAI_BASE_URL: 'http://127.0.0.1:1234/v1',
+      OPENAI_CHAT_MODEL: 'google/gemma-4-e4b',
+      OPENAI_JSON_MODE: 'true',
+      OPENAI_TIMEOUT_MS: '45000',
+    });
+
+    expect(result.OPENAI_API_KEY).toBe('local-key');
+    expect(result.OPENAI_BASE_URL).toBe('http://127.0.0.1:1234/v1');
+    expect(result.OPENAI_CHAT_MODEL).toBe('google/gemma-4-e4b');
+    expect(result.OPENAI_JSON_MODE).toBe('true');
+    expect(result.OPENAI_TIMEOUT_MS).toBe(45000);
+  });
+
+  it('cho phép tắt giới hạn tạo session trong local dev bằng giá trị 0', () => {
+    const result = validateEnv({
+      ...VALID_ENV,
+      SESSION_CREATION_LIMIT_PER_24H: '0',
+    });
+
+    expect(result.SESSION_CREATION_LIMIT_PER_24H).toBe(0);
   });
 });

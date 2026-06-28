@@ -1,22 +1,28 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AuthGuard } from '@nestjs/passport';
+import { PrismaService } from '../../prisma/prisma.service';
+import { ensureMvpUser, getMvpUserId } from '../mvp-auth';
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {
-  constructor(private readonly configService: ConfigService) {
-    super();
+export class JwtAuthGuard implements CanActivate {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  canActivate(context: ExecutionContext): Promise<boolean> {
+    return this.activateMvpUser(context);
   }
 
-  canActivate(context: ExecutionContext) {
-    if (this.configService.get<string>('AUTH_ENABLED') === 'false') {
-      const req = context.switchToHttp().getRequest();
-      req.user = {
-        id: this.configService.getOrThrow<string>('MOCK_USER_ID'),
-        email: 'dev@example.com',
-      };
-      return true;
-    }
-    return super.canActivate(context);
+  private async activateMvpUser(context: ExecutionContext): Promise<boolean> {
+    const userId = getMvpUserId(this.configService);
+    await ensureMvpUser(this.prisma, userId);
+
+    const req = context.switchToHttp().getRequest();
+    req.user = {
+      id: userId,
+      email: `mvp-${userId}@interviewcoach.local`,
+    };
+    return true;
   }
 }

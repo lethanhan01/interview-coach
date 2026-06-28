@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, PauseCircle, PlayCircle, XCircle } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
-import { createClient } from '@/lib/supabase'
 import QuestionCard from '@/components/interview/QuestionCard'
 import TextAnswerInput from '@/components/interview/TextAnswerInput'
 import VoiceRecorder from '@/components/interview/VoiceRecorder'
@@ -32,7 +31,6 @@ export default function InterviewPage() {
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answerMode, setAnswerMode] = useState<AnswerMode>('text')
-  const [followUp, setFollowUp] = useState<string | null>(null)
   const [isCompleting, setIsCompleting] = useState(false)
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('generating')
   const [statusAction, setStatusAction] = useState<SessionStatusAction | null>(null)
@@ -45,15 +43,7 @@ export default function InterviewPage() {
   useEffect(() => {
     async function init() {
       try {
-        const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
-        if (skipAuth) {
-          setAccessToken('dev-mock-token')
-        } else {
-          const supabase = createClient()
-          const { data: { session } } = await supabase.auth.getSession()
-          if (!session) { router.push('/login'); return }
-          setAccessToken(session.access_token)
-        }
+        setAccessToken('dev-mock-token')
 
         const currentSession = await apiClient.get<Session>(`/sessions/${sessionId}`)
         setSessionStatus(currentSession.status)
@@ -93,10 +83,6 @@ export default function InterviewPage() {
     const es = new EventSource(`${apiBase}/sessions/${sessionId}/events?token=${accessToken}`)
     eventSourceRef.current = es
 
-    es.addEventListener('turn.follow_up', (e) => {
-      const data = JSON.parse((e as MessageEvent).data)
-      setFollowUp(data.questionText ?? null)
-    })
     es.addEventListener('session.status', (e) => {
       const data = JSON.parse((e as MessageEvent).data) as { status?: SessionStatus }
       if (data.status) setSessionStatus(data.status)
@@ -145,7 +131,6 @@ export default function InterviewPage() {
       )
       router.replace(`/sessions/${sessionId}/report`)
     } else {
-      setFollowUp(null)
       setCurrentIndex((i) => i + 1)
     }
   }, [sessionId, questions.length, currentIndex, router])
@@ -287,7 +272,7 @@ export default function InterviewPage() {
 
         {current && (
           <QuestionCard
-            questionText={followUp ?? current.content}
+            questionText={current.content}
             orderIndex={currentIndex}
             totalQuestions={questions.length}
           />

@@ -47,6 +47,16 @@ Phase milestones và implementation sessions. Giới hạn: 200 dòng — xem .c
 
 ## Recent Sessions
 
+### 2026-06-28 — Question Bank T4-T8: 120 câu fallback đa ngôn ngữ
+
+Question Bank fallback chuyển từ query inline trong worker sang module riêng:
+
+- Seed `02-question-bank.ts`: canonical 120 active rows, gồm 90 câu cũ enrich `translations/tags/estimatedTimeMin/contentJson` + 30 câu frontend React/CSS/browser JS. `content` lưu EN, display theo `translations`.
+- `SessionService`: enqueue question-generation payload có `userId` + `language: session.language`.
+- `QuestionBankService`: select fallback theo `sessionType/contextPack`, spread độ khó 30/50/20, resolve text theo language, record `question_usage`.
+- `QuestionGenerationProcessor`: inject service, persist fallback `session_questions`, record usage sau persist; bỏ helper fallback query inline.
+- Docs/tests: thêm `src/question-bank/CLAUDE.md`, cập nhật `server/CLAUDE.md`, focused specs cho service/processor/session.
+
 ### 2026-06-08 — UI/UX Redesign — Purple Design System
 
 Design system: `--color-brand: #6B3FA0`, Button/Card/Badge/Input/Textarea primitives, lucide-react.
@@ -136,6 +146,15 @@ Dọn các điểm tồn đọng trước khi sang T13 (tách session_reports):
 - Thêm script `npm run db:apply-sql` (`prisma db execute --file ...`, Prisma 7 đọc datasource từ `prisma.config.ts`).
 - **CHECK constraints §7 đã APPLY lên Supabase**: blocker 1 legacy row `session_type='behavioral'` → remap `→'hr'` (user xác nhận, reversible); thêm UPDATE normalize vào §4. Verify 2 constraints tồn tại.
 - ADR-008: cập nhật quy trình apply (`db:apply-sql`), ghi nhận file idempotent toàn bộ.
+
+### 2026-06-28 — Fix AI JSON failures + REPORT_NOT_READY 404
+
+Ba lỗi trong session `2dafce71` (FeedbackProcessor "Invalid JSON", QuestionGen empty response, GET report 404 sai ngữ nghĩa):
+
+- `server/.env`: bật `OPENAI_JSON_MODE=true` → gateway gửi `response_format: { type: 'json_object' }` tới LM Studio, buộc grammar-based JSON output.
+- `OpenAIGateway`: thêm `extractJsonContent()` private — strip markdown code fences (` ```json...``` `) và extract `{...}` từ prose nếu model wrap JSON. Cover tất cả callers (BasePipeline, ComprehensiveReportProcessor) mà không đụng callers.
+- `ReportService`: `REPORT_NOT_READY` throw `HttpStatus.ACCEPTED (202)` thay vì `NOT_FOUND (404)` — đúng ngữ nghĩa HTTP (202 = đang xử lý, 404 = không tồn tại). Client không bị ảnh hưởng vì check `err.message.includes("REPORT_NOT_READY")`.
+- Tests: 3 test JSON extraction mới (strip fence, giữ plain JSON, extract từ prose) + update test REPORT_NOT_READY verify `getStatus() === 202`. Full suite: 187/187 pass.
 
 ---
 

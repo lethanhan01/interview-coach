@@ -1,155 +1,117 @@
 Chương 2. Khảo Sát Thực Tế Và Các Nghiên Cứu Liên Quan
 
-## 2.1 Mục Tiêu Khảo Sát
+## 2.1 Khảo Sát Các Hệ Thống, Sản Phẩm Liên Quan
 
-> Cần bổ sung: nêu mục tiêu khảo sát là hiểu nhu cầu luyện phỏng vấn của sinh viên/fresher CNTT, đánh giá cách các sản phẩm hiện có giải quyết bài toán, và rút ra yêu cầu cho InterviewAI.
+Phần này khảo sát bốn sản phẩm tiêu biểu trong thị trường luyện phỏng vấn và một baseline thực tế (chatbot tổng quát). Các sản phẩm được chọn đại diện cho các hướng tiếp cận khác nhau: AI copilot real-time (Final Round AI), peer-to-peer mock interview (Pramp/Exponent), speech coaching (Yoodli), human mock interview (interviewing.io), và tự học qua chatbot tổng quát (ChatGPT). Kết quả khảo sát làm cơ sở xác định khoảng trống thị trường và định vị InterviewAI.
 
-## 2.2 Phương Pháp Khảo Sát
+## 2.2 Đánh Giá Từng Sản Phẩm Tiêu Biểu
 
-> Cần bổ sung: mô tả các phương pháp đã/dự kiến sử dụng.
+### 2.2.1 Final Round AI
 
-| Phương pháp | Mục đích | Đối tượng/nguồn | Kết quả cần rút ra |
-| --- | --- | --- | --- |
-| Secondary research | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Competitive analysis | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| User interview/survey | Cần bổ sung nếu có | Cần bổ sung | Cần bổ sung |
+**Đối tượng:** Tech professionals (English-speaking) trong giai đoạn job search. Không phù hợp fresher vì tool giả định người dùng đã có đủ kiến thức để tự đánh giá gợi ý AI.
 
-## 2.3 Khảo Sát Người Dùng Mục Tiêu
+**Tính năng chính:** Live Interview Assistant — hiển thị gợi ý real-time trong khi đang phỏng vấn thật (AI nghe transcript và đề xuất key points, STAR examples, industry insights). Mock Interview với 4 loại (General, Coding Copilot, HireVue, Phone Interview). Stealth Mode để ẩn overlay AI khỏi screen share trong video interview.
 
-### 2.3.1 Chân Dung Người Dùng
+**Ưu điểm:** JD + Resume context đầy đủ (7 input fields); mock interview feedback có STAR alignment, điểm mạnh/yếu, sample answers cải thiện; on-demand, không cần schedule.
 
-> Cần bổ sung: trình bày 1-3 persona chính, ví dụ sinh viên năm cuối CNTT, fresher đã tìm việc vài tháng, người pivot sang tech.
+**Hạn chế:** $60–$150/tháng — ngoài tầm với sinh viên; chỉ English; không có surgical feedback (không highlight đoạn cụ thể trong câu trả lời của user); suggestions trong live mode mang tính generic, không phân tích sâu câu trả lời thực tế của người dùng.
 
-| Persona | Bối cảnh | Mục tiêu | Khó khăn chính | Nhu cầu với hệ thống |
-| --- | --- | --- | --- | --- |
-| Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung |
+**Vấn đề đạo đức:** Final Round AI được thiết kế và marketing rõ ràng để dùng trong buổi phỏng vấn thật — đặc biệt Stealth Mode để tránh bị phát hiện. Nhiều nhà tuyển dụng và công ty coi đây là gian lận và cấm sử dụng. Công cụ không giúp người dùng thực sự cải thiện kỹ năng vì người dùng đọc gợi ý thay vì tự suy nghĩ.
 
-Nguồn nên đối chiếu: `docs/RequirementAnalysis/discovery-docs/Discovery_Document.md`.
+**Bài học cho InterviewAI:** Phân biệt rõ công cụ luyện tập (hợp lệ, InterviewAI) với công cụ real-time cheating (không hợp lệ, Final Round AI). Pattern sample answer cải thiện có giá trị học tập cao và đáng tích hợp vào surgical feedback.
 
-### 2.3.2 Hành Trình Luyện Phỏng Vấn Hiện Tại
+### 2.2.2 Pramp/Exponent
 
-> Cần bổ sung: mô tả current journey từ lúc người dùng tìm JD, đọc câu hỏi mẫu, tập trả lời, nhận feedback, đi phỏng vấn thật. Đánh dấu các pain point.
+**Đối tượng:** Software engineers chuẩn bị cho tech interview (coding, system design, behavioral). Exponent mua lại Pramp năm 2021. Phù hợp người đã có nền tảng kỹ thuật và muốn luyện với người thật.
 
-Hình gợi ý:
+**Tính năng chính:** Peer-to-peer mock interview qua video; shared code editor tích hợp cho coding interview; hỗ trợ coding, system design, behavioral và PM interviews; cả hai bên đều được luyện (vừa đóng vai interviewer lẫn interviewee).
 
-- Hình 2.x: Current-state journey của sinh viên/fresher khi luyện phỏng vấn.
-- Hình 2.y: Future-state journey khi sử dụng InterviewAI.
+**Ưu điểm:** Free (5 credits/tháng) — phù hợp sinh viên về tài chính; feedback từ người thật có giá trị thực tế; luyện thêm được kỹ năng đặt câu hỏi khi đóng vai interviewer.
 
-### 2.3.3 Các Khó Khăn Và Nhu Cầu Chính
+**Hạn chế:** Không on-demand — cần scheduling và phụ thuộc availability của partner; không có AI feedback; chất lượng feedback biến động lớn tùy partner được ghép cặp.
+**Bài học cho InterviewAI:** On-demand + AI feedback giải quyết hai điểm yếu lớn nhất của Pramp đó là người dùng không cần tìm partner, không cần đặt lịch, nhận feedback nhất quán về chất lượng.
 
-> Cần bổ sung: tổng hợp pain point thành các nhóm.
+### 2.2.3 Yoodli
 
-Gợi ý:
+**Đối tượng:** General speakers muốn cải thiện kỹ năng giao tiếp và public speaking. Không chuyên về technical interview content.
 
-- Thiếu feedback có chuyên môn.
-- Không biết câu trả lời thiếu cấu trúc hay thiếu ví dụ.
-- Khó luyện phỏng vấn bằng tiếng Việt với rubric phù hợp.
-- Chi phí cao hoặc cần sắp lịch với người khác.
-- Thiếu công cụ theo dõi tiến bộ sau mỗi lần luyện tập.
+**Tính năng chính:** Real-time feedback về filler words, pacing, clarity, tone; AI roleplay với personas khác nhau (behavioral, technical, panel); speech analysis sau mỗi session; available 24/7, không cần scheduling.
 
-## 2.4 Khảo Sát Quy Trình Phỏng Vấn Fresher CNTT
+**Ưu điểm:** Tốt nhất trong nhóm về delivery coaching; on-demand; interface đơn giản, dễ dùng; giá $8/tháng tương đối hợp lý so với các tool khác.
 
-> Cần bổ sung: trình bày các dạng phỏng vấn thường gặp và tiêu chí đánh giá ứng viên fresher.
+**Hạn chế:** Feedback tập trung vào "how you say it" thay vì "what you say" — không đánh giá nội dung câu trả lời phỏng vấn; không có JD-based questions; không có follow-up contextual; chỉ English; free tier chỉ 5 sessions lifetime. User reviews: *"Good for delivery coaching but won't help you craft better answers"* (Prospeo.io).
 
-Nội dung nên có:
+**Bài học cho InterviewAI:** Kết hợp content feedback (khoảng trống của Yoodli) với delivery feedback (điểm mạnh của Yoodli) tạo giá trị vượt trội. InterviewAI ưu tiên content feedback vì đây là gap lớn hơn với fresher VN trong giai đoạn GR1.
 
-- Các vòng phỏng vấn: HR, technical, mixed/cultural fit.
-- Các dạng câu hỏi: tự giới thiệu, hành vi/STAR, kiến thức nền tảng, giải quyết vấn đề, câu hỏi về dự án.
-- Tiêu chí đánh giá: độ rõ ràng, cấu trúc, tính chính xác kỹ thuật, khả năng giao tiếp, phù hợp văn hóa, thái độ học hỏi.
+### 2.2.4 interviewing.io
 
-## 2.5 Khảo Sát Các Hệ Thống, Sản Phẩm Liên Quan
+**Đối tượng:** Senior engineers nhắm vào FAANG-level companies. Không phù hợp fresher — cả về pricing lẫn level phỏng vấn.
 
-> Cần bổ sung: giới thiệu ngắn gọn các sản phẩm/cách tiếp cận đã khảo sát.
+**Tính năng chính:** Mock interview ẩn danh với engineers thật từ Google, Facebook, Amazon; feedback chi tiết từ người có kinh nghiệm tại top companies; cơ hội được refer nếu perform tốt.
 
-Các sản phẩm gợi ý:
+**Ưu điểm:** Chất lượng feedback cao nhất trong danh sách — từ người thực chiến tại top companies; feedback cụ thể và có chiều sâu; có thể chuyển thành cơ hội việc làm thật.
 
-- Final Round AI.
-- Pramp/Exponent.
-- Yoodli.
-- interviewing.io.
-- Các nền tảng/lớp coaching trong nước nếu có.
-- ChatGPT hoặc chatbot tổng quát như một baseline cách người dùng tự học.
+**Hạn chế:** $225–$300/session — hoàn toàn ngoài tầm với sinh viên Việt Nam; không on-demand (cần booking trước); chỉ English; level dành cho senior engineers, không phù hợp fresher thiếu kinh nghiệm.
 
-Nguồn nên đối chiếu: `docs/RequirementAnalysis/competitive-analysis/01_overview.md`, `02_product_deep_dives.md`, `03_positioning_matrix.md`.
+**Bài học cho InterviewAI:** Đây là ví dụ điển hình về khoảng trống thị trường — AI có thể cung cấp feedback gần chất lượng human expert ở mức giá accessible. InterviewAI nhắm đúng phân khúc mà interviewing.io không phục vụ được: fresher VN, miễn phí, hỗ trợ tiếng Việt.
 
-## 2.6 Tiêu Chí So Sánh
+### 2.2.5 Chatbot Tổng Quát Và Cách Tự Học Hiện Nay
 
-> Cần bổ sung: nêu bộ tiêu chí dùng để so sánh sản phẩm. Tiêu chí nên gắn với quyết định thiết kế InterviewAI.
+**Thực trạng:** Nhiều sinh viên Việt Nam hiện tự luyện bằng cách dùng ChatGPT: paste JD, yêu cầu AI sinh câu hỏi, trả lời, rồi xin feedback. Đây là cách tiếp cận phổ biến nhất vì không tốn tiền và linh hoạt về ngôn ngữ.
 
-| Tiêu chí | Ý nghĩa với bài toán | Cách đánh giá |
-| --- | --- | --- |
-| Hỗ trợ tiếng Việt | Cần bổ sung | Có/không, chất lượng hỗ trợ |
-| On-demand | Cần bổ sung | Có cần sắp lịch hay không |
-| Feedback nội dung | Cần bổ sung | Có đánh giá câu trả lời hay chỉ delivery |
-| Feedback cụ thể theo đoạn | Cần bổ sung | Có highlight/annotation hay không |
-| Cá nhân hóa theo JD/CV | Cần bổ sung | Có dùng context người dùng hay không |
-| Chi phí | Cần bổ sung | Phù hợp sinh viên hay không |
-| Đạo đức sử dụng | Cần bổ sung | Luyện tập hay hỗ trợ gian lận trong phỏng vấn thật |
-| Bảo mật dữ liệu | Cần bổ sung | Có công bố chính sách/kiểm soát dữ liệu hay không |
+**Ưu điểm:** Hoàn toàn miễn phí; linh hoạt về chủ đề và ngôn ngữ (hỗ trợ tiếng Việt tốt); không cần cài đặt; có thể dùng ngay với JD bất kỳ.
 
-## 2.7 Đánh Giá Từng Sản Phẩm Tiêu Biểu
+**Hạn chế:** Không có workflow luyện phỏng vấn có cấu trúc — người dùng phải tự thiết kế quy trình; không có rubric nhất quán (mỗi lần feedback có thể theo tiêu chí khác nhau tùy cách prompt); không có lưu vết tiến bộ qua các phiên; không có follow-up contextual tự động dựa trên câu trả lời vừa nói; feedback thường chung chung, không highlight đoạn cụ thể trong câu trả lời.
 
-### 2.7.1 Final Round AI
+**Bài học cho InterviewAI:** ChatGPT là đối thủ cạnh tranh thực tế lớn nhất vì tính tiếp cận (miễn phí, tiếng Việt). InterviewAI phải vượt trội hơn bằng: workflow có cấu trúc rõ ràng (JD → câu hỏi → trả lời → surgical feedback), rubric nhất quán theo context pack VN/Western, và giao diện chuyên biệt tối ưu cho luyện phỏng vấn.
 
-> Cần bổ sung: tóm tắt đối tượng người dùng, tính năng chính, ưu điểm, hạn chế, bài học cho InterviewAI. Chú ý phân biệt giữa công cụ luyện tập và công cụ hỗ trợ real-time trong phỏng vấn thật.
-
-### 2.7.2 Pramp/Exponent
-
-> Cần bổ sung: tóm tắt mô hình peer-to-peer mock interview, ưu điểm về thực hành với người thật, hạn chế về scheduling và độ ổn định chất lượng feedback.
-
-### 2.7.3 Yoodli
-
-> Cần bổ sung: tóm tắt điểm mạnh về delivery/speech coaching, hạn chế về feedback nội dung câu trả lời phỏng vấn technical/HR.
-
-### 2.7.4 interviewing.io
-
-> Cần bổ sung: tóm tắt chất lượng phỏng vấn với engineer thật, hạn chế về chi phí và tính phù hợp với sinh viên/fresher Việt Nam.
-
-### 2.7.5 Chatbot Tổng Quát Và Cách Tự Học Hiện Nay
-
-> Cần bổ sung: đánh giá việc dùng ChatGPT/chatbot tổng quát để tự tạo câu hỏi và xin feedback. Ưu điểm là linh hoạt, hạn chế là thiếu quy trình, thiếu rubric, thiếu lưu vết tiến bộ và feedback có thể chung chung.
-
-## 2.8 Ma Trận So Sánh Và Định Vị Sản Phẩm
-
-> Cần bổ sung: đưa bảng so sánh tổng hợp. Có thể rút gọn từ tài liệu competitive analysis.
+## 2.3 Ma Trận So Sánh Và Định Vị Sản Phẩm
 
 | Sản phẩm | Đối tượng | Tiếng Việt | On-demand | Feedback nội dung | Feedback theo đoạn | Chi phí | Nhận xét |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Final Round AI | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Pramp | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Yoodli | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| interviewing.io | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| InterviewAI | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung |
+| Final Round AI | Tech professionals (EN) | Không | Có | Một phần (generic) | Không | $60–$150/tháng | Real-time cheating tool; không phù hợp mục tiêu học tập |
+| Pramp | Software engineers | Không | Không | Peer review (biến động) | Không | Miễn phí (5 credits/tháng) | Cần schedule; chất lượng feedback phụ thuộc partner |
+| Yoodli | General speakers | Không | Có | Không (chỉ delivery) | Không | $0–$20/tháng | Tốt cho cách nói; không đánh giá nội dung câu trả lời |
+| interviewing.io | Senior engineers (FAANG) | Không | Không | Có (human expert) | Không | $225–$300/session | Chất lượng cao nhất; quá đắt và không phù hợp fresher VN |
+| InterviewAI | Fresher CNTT VN | Có | Có | Có (AI, rubric VN/Western) | Có | Miễn phí | Practice-only; surgical feedback; ngữ cảnh phỏng vấn VN |
 
-Hình gợi ý:
+Ghi chú:
+- Final Round AI "Feedback nội dung — Một phần": mock interview có STAR alignment score nhưng live mode suggestions generic theo câu hỏi nghe được, không phân tích sâu câu trả lời của user.
+- Pramp "Feedback nội dung — Peer review": hoàn toàn phụ thuộc chất lượng partner, không có AI.
+- interviewing.io "On-demand — Không": phải booking trước, phụ thuộc lịch của interviewer.
 
-- Hình 2.x: Ma trận định vị theo hai trục `mức độ cá nhân hóa/nội dung` và `khả năng tiếp cận với sinh viên Việt Nam`.
+Hình 2.x: Ma trận định vị theo hai trục `mức độ cá nhân hóa/nội dung` và `khả năng tiếp cận với sinh viên Việt Nam` — InterviewAI là sản phẩm duy nhất nằm ở góc phần tư "cá nhân hóa cao, tiếp cận tốt".
 
-## 2.9 Kết Luận Khảo Sát Và Yêu Cầu Rút Ra
+## 2.4 Kết Luận Khảo Sát Và Yêu Cầu Rút Ra
 
-> Cần bổ sung: kết nối khảo sát với quyết định sản phẩm. Phần này là cầu nối sang yêu cầu và thiết kế.
+Khảo sát 4 sản phẩm thương mại và 1 baseline chatbot cho thấy toàn bộ thị trường hiện tại bỏ trống một phân khúc cụ thể: fresher CNTT Việt Nam cần luyện phỏng vấn on-demand với feedback chất lượng về nội dung, ở mức chi phí phù hợp sinh viên. Sáu khoảng trống được xác định:
 
-Gợi ý kết luận:
+- Khoảng trống ngôn ngữ: 0/4 sản phẩm thương mại hỗ trợ tiếng Việt. Fresher VN với English trung bình không thể tận dụng hiệu quả các tool hiện có.
+- Khoảng trống văn hóa: 100% rubric đánh giá theo Western culture. Phong cách phỏng vấn VN có đặc thù riêng về cách xưng hô, mức độ self-promotion, và cấu trúc câu trả lời.
+- Khoảng trống chi phí: Các tool chất lượng đều có paywall $20–$300. Sinh viên VN với thu nhập 0–5 triệu/tháng không đủ khả năng chi trả bền vững.
+- Khoảng trống feedback nội dung: Yoodli chỉ feedback delivery; Pramp chỉ peer review; Final Round AI generic. Không sản phẩm nào cung cấp surgical feedback — highlight cụ thể đoạn nào trong câu trả lời có vấn đề và tại sao.
+- Khoảng trống cá nhân hóa: Đa số không personalize theo JD + CV cụ thể. Câu hỏi và feedback generic cho mọi user, không phản ánh vị trí đang apply.
+- Khoảng trống tiếp cận: Không có sản phẩm nào vừa free, vừa on-demand, vừa không cần scheduling.
 
-- Sản phẩm cần hỗ trợ tiếng Việt và ngữ cảnh phỏng vấn Việt Nam.
-- Cần có workflow luyện phỏng vấn rõ ràng từ JD -> câu hỏi -> trả lời -> feedback.
-- Feedback cần cụ thể, có rubric, có giải thích và gợi ý hành động.
-- Cần có cơ chế fallback khi AI lỗi/hết quota để prototype vẫn dùng được.
+Các yêu cầu sản phẩm rút ra từ khảo sát:
+
+- Sản phẩm cần hỗ trợ tiếng Việt và ngữ cảnh phỏng vấn Việt Nam, bao gồm context pack VN với rubric phù hợp văn hóa.
+- Cần có workflow luyện phỏng vấn rõ ràng từ JD → sinh câu hỏi → trả lời → feedback.
+- Feedback cần cụ thể, có rubric nhất quán, có gợi ý hành động theo từng đoạn câu trả lời.
+- Sản phẩm phải miễn phí hoàn toàn để phù hợp đối tượng sinh viên.
+- Cần có cơ chế fallback khi AI lỗi hoặc hết quota để prototype vẫn dùng được.
 - Cần bảo vệ dữ liệu người dùng và hạn chế lưu trữ PII không cần thiết.
 
-## 2.10 Phạm Vi Tính Năng Cơ Bản Cho GR1 Sau Khảo Sát
+## 2.5 Phạm Vi Tính Năng Cơ Bản Cho GR1 Sau Khảo Sát
 
-> Cần bổ sung: liệt kê phạm vi GR1 đã chọn sau khi khảo sát.
+Dựa trên khảo sát và ràng buộc phạm vi GR1 (thời gian một học kỳ, nhóm nhỏ), các tính năng được phân loại như sau:
 
 | Nhóm tính năng | Trong GR1 | Để sau GR1 | Lý do |
 | --- | --- | --- | --- |
-| Hồ sơ người dùng | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Cấu hình phiên phỏng vấn | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Sinh câu hỏi | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Trả lời text/voice | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Feedback/báo cáo | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Rewrite & Compare | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Progress dashboard | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Admin/question bank | Cần bổ sung | Cần bổ sung | Cần bổ sung |
+| Hồ sơ luyện tập (CV) | Đăng ký, đăng nhập, quản lý hồ sơ luyện tập và CV | Phân tích CV tự động, cài đặt nâng cao | Hồ sơ và CV là prerequisite để cá nhân hóa câu hỏi theo kinh nghiệm người dùng |
+| Cấu hình phiên phỏng vấn | JD, loại phỏng vấn, thời gian phỏng vấn, context pack (VN/Western) | Thêm fields: tone, answer length | 4 fields đủ để cá nhân hóa; fields bổ sung thêm sau khi có feedback từ người dùng thực tế |
+| Sinh câu hỏi | Sinh từ JD kết hợp ngân hàng câu hỏi của hệ thống | Giao diện admin quản lý ngân hàng câu hỏi | Question bank làm phong phú câu hỏi sinh ra; admin UI để quản lý question bank thêm vào sau |
+| Trả lời text/voice | Cả hai mode | — | Voice là differentiator chính; text là fallback; cả hai cần thiết để đáp ứng đa dạng người dùng |
+| Feedback/báo cáo | Surgical feedback theo đoạn + báo cáo tổng hợp phiên | So sánh tiến bộ qua nhiều phiên | Surgical feedback là core differentiator; benchmark tiến bộ cần tích lũy đủ session data |
 
 ---

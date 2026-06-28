@@ -13,57 +13,9 @@ Luồng chính gợi ý:
 5. Hệ thống sinh feedback/report.
 6. Người dùng xem nhận xét và action plan.
 
-## 4.2 Đối Tượng Sử Dụng Và Kịch Bản Sử Dụng
-
-> Cần bổ sung: nêu role của hệ thống, tối thiểu có Candidate. Nếu có Admin trong thiết kế nhưng chưa trong GR1, ghi rõ trạng thái.
-
-| Tác nhân | Mô tả | Kịch bản chính | Trạng thái trong GR1 |
-| --- | --- | --- | --- |
-| Candidate | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Admin | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| AI Engine | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-
 ## 4.3 Yêu Cầu Chức Năng Trong GR1
 
-> Cần bổ sung: rút gọn từ SRS và MVP scope. Chỉ giữ các yêu cầu thực sự liên quan GR1.
 
-| Mã yêu cầu | Tên yêu cầu | Mô tả ngắn | Độ ưu tiên | Trạng thái GR1 |
-| --- | --- | --- | --- | --- |
-| FR-01 | Quản lý hồ sơ cơ bản | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| FR-02 | Cấu hình phiên phỏng vấn | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| FR-03 | Sinh câu hỏi phỏng vấn | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| FR-04 | Trả lời câu hỏi | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| FR-05 | Sinh feedback | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| FR-06 | Xem báo cáo | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| FR-07 | Lưu lịch sử phiên | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-
-## 4.4 Yêu Cầu Phi Chức Năng
-
-> Cần bổ sung: nêu các yêu cầu về hiệu năng, bảo mật, khả dụng, khả bảo trì, chất lượng AI, an toàn nội dung.
-
-| Nhóm NFR | Yêu cầu | Cách đáp ứng trong GR1 | Cách đánh giá |
-| --- | --- | --- | --- |
-| Hiệu năng | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Bảo mật | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Độ tin cậy | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Bảo trì | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Chất lượng AI | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Riêng tư dữ liệu | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-
-## 4.5 Phạm Vi MVP/GR1 Và Các Chức Năng Để Sau
-
-> Cần bổ sung: đưa bảng IN/OUT để tránh báo cáo mở rộng quá mức đã làm. Nên đối chiếu `docs/Design/MVP_Scope.md`, code hiện tại trong `client/` và `server/`.
-
-| Hạng mục | Trong GR1 | Để GR2/Đồ án tốt nghiệp | Ghi chú |
-| --- | --- | --- | --- |
-| Session setup | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Question generation | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Interview turn | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Feedback/report | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Voice recording/transcription | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Reverse questions | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Rewrite & Compare | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Progress dashboard | Cần bổ sung | Cần bổ sung | Cần bổ sung |
 
 ## 4.6 Kiến Trúc Tổng Thể Hệ Thống
 
@@ -99,7 +51,7 @@ Nội dung cần nêu:
 
 ## 4.8 Thiết Kế Giao Diện Frontend
 
-> Cần bổ sung: mô tả các route/page/component chính. Nên có ảnh màn hình sau khi demo ổn định.
+> Phần này chỉ cần nói rõ các màn hình được thiết kế ra sao, luồng màn hình thế nào
 
 | Route | Mục đích | Component chính | Trạng thái GR1 |
 | --- | --- | --- | --- |
@@ -113,10 +65,8 @@ Nội dung cần nêu:
 
 Nội dung nên có:
 
-- Nguyên tắc UI/UX.
 - Luồng thao tác của người dùng.
-- Trạng thái loading/error/empty.
-- Responsive nếu có.
+- Danh sách các màn hình
 
 Nguồn nên đối chiếu: `docs/Design/DetailedDesign/uiux-design/` và `client/app/`, `client/components/`.
 
@@ -141,22 +91,6 @@ Nội dung cần nêu:
 
 Nguồn nên đối chiếu: `server/prisma/schema.prisma` và `docs/Design/DetailedDesign/database-design/Database.md`.
 
-## 4.10 Thiết Kế API
-
-> Cần bổ sung: tổng hợp các API backend expose, không cần chép đầy đủ request/response nếu đã có phụ lục.
-
-| Nhóm API | Endpoint tiêu biểu | Chức năng | Ghi chú |
-| --- | --- | --- | --- |
-| Health | `GET /api/v1/health` | Cần bổ sung | Cần bổ sung |
-| Auth | `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout` | Cần bổ sung | Cần bổ sung |
-| Profile | `GET/PATCH /api/v1/profile` | Cần bổ sung | Cần bổ sung |
-| Session | `POST/GET /api/v1/sessions` | Cần bổ sung | Cần bổ sung |
-| Session events | `GET /api/v1/sessions/:id/events` | Cần bổ sung | SSE |
-| Turn/answer | `POST /api/v1/sessions/:sessionId/turns` | Cần bổ sung | Cần bổ sung |
-| Report | `GET /api/v1/sessions/:sessionId/report` | Cần bổ sung | Cần bổ sung |
-| Saved JD | `GET/POST /api/v1/saved-job-descriptions` | Cần bổ sung | Cần bổ sung |
-
-Nguồn nên đối chiếu: `docs/Design/DetailedDesign/api-design/API_design.md`, `server/src/*/*.controller.ts`.
 
 ## 4.11 Thiết Kế AI Pipeline
 
@@ -165,10 +99,6 @@ Nguồn nên đối chiếu: `docs/Design/DetailedDesign/api-design/API_design.m
 ### 4.11.1 Question Generation
 
 > Cần bổ sung: mô tả cách hệ thống tạo câu hỏi từ JD, loại session, context pack, question bank/fallback.
-
-### 4.11.2 Follow-up Generation
-
-> Cần bổ sung: nếu có implement, mô tả điều kiện tạo câu hỏi phụ, giới hạn số follow-up và vai trò trong phỏng vấn.
 
 ### 4.11.3 Feedback Generation
 
@@ -206,23 +136,6 @@ Nguồn nên đối chiếu: `docs/Design/ArchitecturalDesign/SAD_InterviewAI_v1
 ### 4.12.4 Luồng Xử Lý Lỗi
 
 > Cần bổ sung: mô tả các lỗi dự kiến: lỗi network, validation, AI quota, Redis/queue, transcription, session state drift. Nêu rõ cách hiển thị cho người dùng.
-
-## 4.13 Tổ Chức Mã Nguồn
-
-> Cần bổ sung: mô tả cấu trúc repo để người đọc hiểu cách triển khai.
-
-| Thư mục/tệp | Vai trò |
-| --- | --- |
-| `client/` | Ứng dụng frontend Next.js |
-| `client/app/` | Routes/pages theo App Router |
-| `client/components/` | Component UI, profile, interview, report, setup |
-| `server/` | Ứng dụng backend NestJS |
-| `server/src/` | Source code module backend |
-| `server/prisma/` | Prisma schema, seed, migration/db scripts |
-| `docs/RequirementAnalysis/` | Tài liệu yêu cầu, SRS, user stories |
-| `docs/Design/` | Tài liệu thiết kế kiến trúc, UI/UX, API, DB, LLD |
-| `docs/test-plan/` | Chiến lược kiểm thử |
-| `compose.yaml` | Dịch vụ hạ tầng local, ví dụ Redis |
 
 ## 4.14 Cách Thức Xây Dựng Và Triển Khai Local
 

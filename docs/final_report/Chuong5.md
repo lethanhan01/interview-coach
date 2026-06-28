@@ -62,44 +62,6 @@ Kịch bản gợi ý:
 | 1 | Cần bổ sung | Cần bổ sung | Cần bổ sung |
 | 2 | Cần bổ sung | Cần bổ sung | Cần bổ sung |
 
-## 5.5 Kết Quả Kiểm Thử
-
-### 5.5.1 Kiểm Thử Backend
-
-> Cần bổ sung: tổng hợp số lượng test, nhóm test, kết quả pass/fail, lệnh chạy test. Nếu chưa có kết quả cuối, để placeholder và cập nhật sau.
-
-| Nhóm test | Tệp/Phạm vi | Số test | Kết quả | Ghi chú |
-| --- | --- | --- | --- | --- |
-| Unit service | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Processor AI | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Controller/API | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| E2E backend | Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-
-### 5.5.2 Kiểm Thử Frontend
-
-> Cần bổ sung: mô tả lint/build/e2e Playwright nếu có. Chèn ảnh kết quả test nếu phù hợp.
-
-### 5.5.3 Kiểm Thử Tích Hợp Và Smoke Test
-
-> Cần bổ sung: mô tả kiểm tra Redis, backend health, API root, tạo session, submit answer, report ready.
-
-| Smoke check | Cách kiểm tra | Kết quả mong đợi | Kết quả thực tế |
-| --- | --- | --- | --- |
-| Backend health | `GET /api/v1/health` | Cần bổ sung | Cần bổ sung |
-| API root | `GET /api/v1` | Cần bổ sung | Cần bổ sung |
-| Redis | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Session flow | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-
-### 5.5.4 Kiểm Thử Chất Lượng AI
-
-> Cần bổ sung: mô tả cách đánh giá output AI. Nên tách test schema/format với đánh giá nội dung.
-
-Gợi ý:
-
-- Test output có đúng schema JSON.
-- Test fallback khi API lỗi/hết quota.
-- Đánh giá thủ công một số câu trả lời mẫu.
-- Đánh giá mức độ cụ thể/hữu ích của feedback.
 
 ## 5.6 Đánh Giá Mức Độ Đáp Ứng Yêu Cầu
 
@@ -113,16 +75,6 @@ Gợi ý:
 
 Nguồn nên đối chiếu: `docs/RequirementAnalysis/SRS/SRS_InterviewAI_Full.md`, `docs/RequirementAnalysis/SRS/RTM_InterviewAI.md`.
 
-## 5.7 Đánh Giá Giao Diện Và Trải Nghiệm Người Dùng
-
-> Cần bổ sung: đánh giá UI theo các tiêu chí: dễ hiểu, rõ luồng thao tác, trạng thái loading/error, tính nhất quán, khả năng responsive, accessibility cơ bản.
-
-Nếu có user feedback:
-
-- Mô tả đối tượng tham gia.
-- Kịch bản dùng thử.
-- Câu hỏi đánh giá.
-- Kết quả tổng hợp và nhận xét.
 
 ## 5.8 Đánh Giá Hiệu Năng Và Độ Ổn Định
 
@@ -135,20 +87,6 @@ Nếu có user feedback:
 | Thời gian tạo feedback | Cần bổ sung | Cần bổ sung | Cần bổ sung |
 | Thời gian tạo report | Cần bổ sung | Cần bổ sung | Cần bổ sung |
 | Khả năng fallback | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-
-## 5.9 Đánh Giá Bảo Mật Và Quyền Riêng Tư
-
-> Cần bổ sung: nêu các cơ chế đã áp dụng và các phần còn hạn chế.
-
-Nội dung nên có:
-
-- Xác thực và authorization.
-- Validation request/DTO.
-- Rate limit nếu có.
-- Xử lý token/cookie.
-- Dữ liệu cá nhân nào được lưu.
-- RLS/Supabase nếu có áp dụng.
-- Các rủi ro còn lại và cách giảm thiểu.
 
 ## 5.10 Đánh Giá Chất Lượng AI Feedback
 
@@ -182,18 +120,6 @@ Gợi ý hạn chế:
 - Voice analysis có thể mới ở mức transcription/metadata, chưa đánh giá delivery đầy đủ.
 - Triển khai local/prototype, chưa tối ưu production.
 - Chi phí/hạn mức API ảnh hưởng khả năng demo liên tục.
-
-## 5.13 Bài Học Kinh Nghiệm
-
-> Cần bổ sung: tổng kết kiến thức và kinh nghiệm thu được trong GR1.
-
-Gợi ý:
-
-- Kinh nghiệm phân tích yêu cầu và thu hẹp MVP.
-- Kinh nghiệm thiết kế AI pipeline có fallback.
-- Kinh nghiệm đồng bộ schema, backend, frontend và tài liệu.
-- Kinh nghiệm kiểm thử các luồng bất đồng bộ.
-- Kinh nghiệm cân bằng chất lượng AI, chi phí và trải nghiệm người dùng.
 
 ## 5.14 Tổng Kết Chương
 

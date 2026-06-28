@@ -9,6 +9,10 @@ export const createMockQuestionBank = (
     competencyDomain: string;
     applicableRoles: string[];
     applicableLevels: string[];
+    tags: string[];
+    estimatedTimeMin: number | null;
+    translations: Record<string, string> | null;
+    contentJson: Record<string, unknown> | null;
     deletedAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
@@ -23,6 +27,13 @@ export const createMockQuestionBank = (
   competencyDomain: 'D4',
   applicableRoles: ['all'],
   applicableLevels: ['junior', 'mid'],
+  tags: ['hr', 'self-introduction'],
+  estimatedTimeMin: 5,
+  translations: {
+    en: 'Tell me about yourself.',
+    vi: 'Hãy giới thiệu về bản thân bạn.',
+  },
+  contentJson: null,
   deletedAt: null,
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
@@ -40,6 +51,10 @@ export const createMockPrismaService = () => ({
     update: jest.fn().mockResolvedValue(createMockQuestionBank()),
     upsert: jest.fn().mockResolvedValue(createMockQuestionBank()),
     delete: jest.fn().mockResolvedValue(createMockQuestionBank()),
+    count: jest.fn().mockResolvedValue(0),
+  },
+  questionUsage: {
+    create: jest.fn().mockResolvedValue({ id: 'usage-1' }),
     count: jest.fn().mockResolvedValue(0),
   },
   interviewSession: {
@@ -101,7 +116,7 @@ export const createMockQueue = () => ({
 });
 
 export const createMockConfigService = (
-  overrides: Record<string, string> = {},
+  overrides: Record<string, string | number | boolean> = {},
 ) => ({
   getOrThrow: jest.fn((key: string) => overrides[key] ?? `mock-${key}`),
   get: jest.fn((key: string) => overrides[key] ?? `mock-${key}`),
@@ -151,7 +166,13 @@ export const createMockUserService = () => ({
 
 export const createMockOpenAIGateway = () => ({
   chatCompletion: jest.fn(),
+  getChatModel: jest.fn().mockReturnValue('google/gemma-4-e4b'),
   transcribe: jest.fn(),
+});
+
+export const createMockQuestionBankService = () => ({
+  selectFallbackQuestions: jest.fn().mockResolvedValue([]),
+  recordUsage: jest.fn().mockResolvedValue(undefined),
 });
 
 export const createMockPromptBuilderService = () => ({

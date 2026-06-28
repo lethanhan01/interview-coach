@@ -24,7 +24,7 @@ export function HeroSection() {
 
           <div className="flex items-center gap-3">
             <Link
-              href="/login"
+              href="/sessions"
               className="px-8 py-3 text-base font-medium text-white bg-brand rounded-full shadow-btn hover:bg-brand-light hover:shadow-glow transition-all duration-150 hover:scale-[1.02]"
             >
               Bắt đầu miễn phí

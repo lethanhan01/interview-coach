@@ -45,10 +45,10 @@ export abstract class BasePipelineService implements InterviewPipeline {
     });
     const raw = await this.openai.chatCompletion({
       messages,
-      model: 'gpt-4o',
       temperature: 0.8,
       maxTokens: 600,
       responseFormat: 'json_object',
+      task: 'question-generation',
     });
     let parsed: unknown;
     try {
@@ -85,10 +85,10 @@ export abstract class BasePipelineService implements InterviewPipeline {
     });
     const raw = await this.openai.chatCompletion({
       messages,
-      model: 'gpt-4o',
       temperature: 0.3,
       maxTokens: 1500,
       responseFormat: 'json_object',
+      task: 'feedback',
     });
     let parsed: unknown;
     try {

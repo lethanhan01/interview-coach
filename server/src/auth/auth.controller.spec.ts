@@ -34,64 +34,34 @@ describe('AuthController', () => {
   afterEach(() => jest.clearAllMocks());
 
   describe('POST /auth/refresh', () => {
-    it('trả về accessToken và set refresh_token cookie khi thành công', async () => {
-      mockAuthService.refreshToken.mockResolvedValue({
-        accessToken: 'new-access-token',
-        refreshToken: 'new-refresh-token',
-        expiresIn: 3600,
-      });
-
-      const req = { user: { refreshToken: 'old-refresh-token' } } as any;
+    it('trả về token mock và set refresh_token cookie cho MVP', () => {
       const res = mockRes();
 
-      const result = await controller.refresh(req, res);
+      const result = controller.refresh(res);
 
       expect(result).toEqual({
         success: true,
-        data: { accessToken: 'new-access-token', expiresIn: 3600 },
+        data: { accessToken: 'dev-mock-token', expiresIn: 3600 },
       });
       expect(res.cookie).toHaveBeenCalledWith(
         'refresh_token',
-        'new-refresh-token',
+        'mvp-refresh-token',
         expect.objectContaining({ httpOnly: true }),
       );
-    });
-
-    it('ném lỗi khi authService.refreshToken ném lỗi', async () => {
-      mockAuthService.refreshToken.mockRejectedValue(
-        new Error('Token expired'),
-      );
-      const req = { user: { refreshToken: 'bad-token' } } as any;
-      const res = mockRes();
-
-      await expect(controller.refresh(req, res)).rejects.toThrow(
-        'Token expired',
-      );
+      expect(mockAuthService.refreshToken).not.toHaveBeenCalled();
     });
   });
 
   describe('POST /auth/logout', () => {
-    it('gọi authService.logout và xoá cookie khi thành công', async () => {
-      mockAuthService.logout.mockResolvedValue(undefined);
-      const req = { user: { id: 'user-123', email: 'a@b.com' } } as any;
+    it('xoá cookie mà không gọi Supabase cho MVP', () => {
       const res = mockRes();
 
-      await controller.logout(req, res);
+      controller.logout(res);
 
-      expect(mockAuthService.logout).toHaveBeenCalledWith('user-123');
+      expect(mockAuthService.logout).not.toHaveBeenCalled();
       expect(res.clearCookie).toHaveBeenCalledWith(
         'refresh_token',
         expect.objectContaining({ httpOnly: true }),
-      );
-    });
-
-    it('ném lỗi khi authService.logout ném lỗi', async () => {
-      mockAuthService.logout.mockRejectedValue(new Error('Logout failed'));
-      const req = { user: { id: 'user-123', email: 'a@b.com' } } as any;
-      const res = mockRes();
-
-      await expect(controller.logout(req, res)).rejects.toThrow(
-        'Logout failed',
       );
     });
   });

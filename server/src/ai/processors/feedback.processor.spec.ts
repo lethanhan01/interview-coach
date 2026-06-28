@@ -213,9 +213,30 @@ describe('FeedbackProcessor', () => {
       data: { feedbackGenerated: true },
     });
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('OpenAI quota exhausted'),
+      expect.stringContaining('AI provider quota exhausted'),
     );
     expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it('không retry AI_TIMEOUT và ghi fallback ngay ở lần đầu', async () => {
+    strategy.evaluateAnswer.mockRejectedValue(
+      new InterviewAIException(
+        ErrorCode.AI_TIMEOUT,
+        HttpStatus.GATEWAY_TIMEOUT,
+        'AI provider request timed out',
+      ),
+    );
+
+    await expect(processor.process(makeJob(0))).resolves.toBeUndefined();
+
+    const fallbackArgs = tx.aiFeedback.upsert.mock.calls[0][0];
+    expect(fallbackArgs.create).toEqual(
+      expect.objectContaining({ isFallback: true }),
+    );
+    expect(tx.userAnswer.update).toHaveBeenCalledWith({
+      where: { id: 'answer-1' },
+      data: { feedbackGenerated: true },
+    });
   });
 
   it('gọi enqueueIfAllFeedbacksReady sau khi feedback thành công', async () => {

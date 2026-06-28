@@ -106,7 +106,7 @@ describe('ReportService', () => {
       }
     });
 
-    it('throw REPORT_NOT_READY khi chưa có executive_summary report', async () => {
+    it('throw REPORT_NOT_READY (202) khi chưa có executive_summary report', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...COMPLETED_SESSION,
         sessionReports: [],
@@ -125,6 +125,9 @@ describe('ReportService', () => {
       } catch (e) {
         expect((e as InterviewAIException).errorCode).toBe(
           ErrorCode.REPORT_NOT_READY,
+        );
+        expect((e as InterviewAIException).getStatus()).toBe(
+          HttpStatus.NOT_FOUND,
         );
       }
     });

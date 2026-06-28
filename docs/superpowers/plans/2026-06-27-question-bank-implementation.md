@@ -59,20 +59,20 @@
 
 **File**: `server/prisma/seed/02-question-bank.ts`
 
-- [ ] Dịch 45 câu VN pack sang tiếng Anh (content field), giữ VN cultural framing
-- [ ] Thêm `translations: { en: '...', vi: '...' }` cho TẤT CẢ 90 câu
-- [ ] Thêm `tags: string[]` và `estimatedTimeMin: number` cho tất cả câu
-- [ ] Thêm 30 câu frontend: React hooks, CSS, JavaScript browser — split VN×15 + Western×15
-- [ ] Cập nhật idempotency check từ `count >= 90` thành `count >= 120`
+- [x] Dịch 45 câu VN pack sang tiếng Anh (content field), giữ VN cultural framing
+- [x] Thêm `translations: { en: '...', vi: '...' }` cho TẤT CẢ 90 câu
+- [x] Thêm `tags: string[]` và `estimatedTimeMin: number` cho tất cả câu
+- [x] Thêm 30 câu frontend: React hooks, CSS, JavaScript browser — split VN×15 + Western×15
+- [x] Cập nhật idempotency check từ `count >= 90` thành `count >= 120`
 
-Tổng: **120 câu** — hr×VN=15, hr×Western=15, technical×VN=20, technical×Western=20, mixed×VN=15, mixed×Western=15
+Tổng: **120 câu** — hr×VN=15, hr×Western=15, technical×VN=30, technical×Western=30, mixed×VN=15, mixed×Western=15
 
 ---
 
 ## Task 5: Thêm language vào job payload
 
-- [ ] `server/src/session/session.service.ts`: thêm `language: session.language` vào BullMQ enqueue payload
-- [ ] `server/src/ai/processors/question-generation.processor.ts`: thêm `language: string` vào `QuestionGenerationJobDto`
+- [x] `server/src/session/session.service.ts`: thêm `language: session.language` vào BullMQ enqueue payload
+- [x] `server/src/ai/processors/question-generation.processor.ts`: thêm `language: string` vào `QuestionGenerationJobDto`
 
 ---
 
@@ -80,11 +80,11 @@ Tổng: **120 câu** — hr×VN=15, hr×Western=15, technical×VN=20, technical�
 
 **Files mới**: `server/src/question-bank/question-bank.service.ts`, `server/src/question-bank/question-bank.module.ts`
 
-- [ ] `selectFallbackQuestions(sessionType, contextPackId, count, language)` — query + difficulty spread
-- [ ] `recordUsage(questionBankId, sessionId, userId)` — insert vào `question_usage`
-- [ ] `private resolveText(question, language)` — translations[lang] ?? content
-- [ ] `private selectWithDifficultySpread(items, count)` — moved từ processor (30/50/20)
-- [ ] QuestionBankModule: providers + exports, không import PrismaModule (global)
+- [x] `selectFallbackQuestions(sessionType, contextPackId, count, language)` — query + difficulty spread
+- [x] `recordUsage(questionBankId, sessionId, userId)` — insert vào `question_usage`
+- [x] `private resolveText(question, language)` — translations[lang] ?? content
+- [x] `private selectWithDifficultySpread(items, count)` — moved từ processor (30/50/20)
+- [x] QuestionBankModule: providers + exports, không import PrismaModule (global)
 
 ---
 
@@ -92,39 +92,39 @@ Tổng: **120 câu** — hr×VN=15, hr×Western=15, technical×VN=20, technical�
 
 **File**: `server/src/ai/processors/question-generation.processor.ts`
 
-- [ ] Inject `QuestionBankService`
-- [ ] Replace fallback Prisma query với `questionBankService.selectFallbackQuestions(..., language)`
-- [ ] Gọi `questionBankService.recordUsage(...)` sau khi persist session questions
-- [ ] Xóa `selectWithDifficultySpread()` private method
+- [x] Inject `QuestionBankService`
+- [x] Replace fallback Prisma query với `questionBankService.selectFallbackQuestions(..., language)`
+- [x] Gọi `questionBankService.recordUsage(...)` sau khi persist session questions
+- [x] Xóa `selectWithDifficultySpread()` private method
 
 **File**: `server/src/ai/ai.module.ts`
 
-- [ ] Import `QuestionBankModule`
+- [x] Import `QuestionBankModule`
 
 ---
 
 ## Task 8: Cập nhật CLAUDE.md + CHANGELOG
 
-- [ ] Tạo `server/src/question-bank/CLAUDE.md`
-- [ ] Cập nhật `server/CLAUDE.md` §Module Index — thêm row QuestionBank
-- [ ] Cập nhật `CHANGELOG.md`
+- [x] Tạo `server/src/question-bank/CLAUDE.md`
+- [x] Cập nhật `server/CLAUDE.md` §Module Index — thêm row QuestionBank
+- [x] Cập nhật `CHANGELOG.md`
 
 ---
 
 ## Task 9: Chạy seed + verify
 
-- [ ] `cd server && npm run seed`
-- [ ] Verify 120 rows trong `question_bank`, `deleted_at IS NULL`, `translations IS NOT NULL`
-- [ ] Verify distribution: 6 pairs đúng count
-- [ ] Verify `question_usage` table tồn tại (0 rows)
-- [ ] Fallback smoke test: `OPENAI_API_KEY=invalid`, tạo session, kiểm tra questions trả về
+- [x] `cd server && npm run seed`
+- [x] Verify 120 rows trong `question_bank`, `deleted_at IS NULL`, `translations IS NOT NULL`
+- [x] Verify distribution: 6 pairs đúng count
+- [x] Verify `question_usage` table tồn tại (0 rows)
+- [x] Fallback smoke test: `OPENAI_API_KEY=invalid`, tạo session, kiểm tra questions trả về
 
 ---
 
 # Schema Evolution Tasks
 
 > Nguồn: [schema-design-review.md](../../Design/DetailedDesign/database-design/schema-design-review.md) — 8 vấn đề thiết kế DB raised 2026-06-27, đã phân loại theo phase.
-> **Thứ tự ưu tiên (cập nhật 2026-06-27, quyết định user):** hoàn thành TOÀN BỘ Schema Evolution trước Question Bank. T10–T11 done. Thứ tự còn lại: T12 → T13 → T14 → T15 → T16 → rồi Question Bank T4–T9. Phase B/C được kéo vào active sprint (không còn backlog).
+> **Thứ tự ưu tiên (cập nhật 2026-06-28, quyết định user):** tạm dừng Schema Evolution T14–T16, quay lại Question Bank từ T4. T10–T13 done; T14–T16 giữ pending. Thứ tự hiện tại: Question Bank T4 → T5 → T6 → T7 → T8 → T9.
 > **Lưu ý chung về schema change:** dự án dùng `prisma db push` (không `migrate dev`) → drop column sẽ **mất dữ liệu**; CHECK constraint không express được trong Prisma, cần raw SQL ngoài quy trình push. Mọi schema change đụng "design complete" phase → ghi nhận là discovered gap, cân nhắc ADR.
 
 ## Phase A — MVP Hardening (làm ngay sau question bank)

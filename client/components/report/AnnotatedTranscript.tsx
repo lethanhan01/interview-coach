@@ -63,7 +63,7 @@ export default function AnnotatedTranscript({
               Câu {item.orderIndex + 1}
             </p>
             <span className="text-xs font-semibold text-brand">
-              {item.overallScore === null
+              {item.overallScore == null
                 ? "Chưa thể chấm"
                 : `${item.overallScore.toFixed(1)} / 100`}
             </span>

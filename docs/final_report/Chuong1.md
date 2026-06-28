@@ -2,7 +2,7 @@
 
 ## 1.1 Giới Thiệu Đề Tài
 
-Đề tài AI Mock Interview là một ứng dụng web hỗ trợ sinh viên năm cuối và ứng viên fresher ngành Công nghệ thông tin luyện phỏng vấn bằng AI. Hệ thống hướng đến việc mô phỏng một phiên phỏng vấn gần với thực tế, trong đó người dùng có thể nhận câu hỏi dựa trên JD, vị trí ứng tuyển hoặc những thông tin đã chuẩn bị dựa trên CV cá nhân, sau đó trả lời bằng văn bản hoặc giọng nói và nhận phản hồi chi tiết từ AI.
+Đề tài AI Mock Interview là một ứng dụng web hỗ trợ sinh viên năm cuối và ứng viên fresher ngành Công nghệ thông tin luyện phỏng vấn bằng AI. Hệ thống hướng đến việc mô phỏng một phiên phỏng vấn gần với thực tế, trong đó người dùng có thể nhận câu hỏi dựa trên JD, vị trí ứng tuyển hoặc những thông tin đã chuẩn bị dựa trên CV cá nhân, sau đó nhận phản hồi chi tiết và gợi ý cách trả lời phù hợp từ AI.
 
 Vấn đề chính mà đề tài hướng đến là nhiều sinh viên có thể tìm được câu hỏi phỏng vấn mẫu, nhưng lại khó tự đánh giá câu trả lời của mình. Người học thường không biết câu trả lời đã đúng trọng tâm, đủ ý và thuyết phục hay chưa. Vì vậy, AI mock interview được sinh ra nhằm giúp người dùng luyện tập chủ động hơn, nhận phản hồi cụ thể hơn và chuẩn bị tốt hơn cho các buổi phỏng vấn thực tế.
 
@@ -71,43 +71,55 @@ Vì vậy, xây dựng hệ thống AI Mock Interview là cần thiết để h�
 
 ## 1.5 Khoảng Trống Hiện Tại Và Tính Mới Của Đề Tài
 
-> Cần bổ sung: nêu những khoảng trống mà các sản phẩm hiện có chưa đáp ứng tốt, từ đó làm rõ điểm mới hoặc điểm khác biệt của đề tài trong phạm vi GR1.
+Tính mới của đề tài AI Mock Interview nằm ở việc kết hợp AI với quy trình luyện phỏng vấn có cấu trúc, thay vì chỉ cung cấp danh sách câu hỏi hoặc chatbot hỏi đáp thông thường.
 
-Gợi ý điểm khác biệt:
+Cá nhân hóa nội dung phỏng vấn
+Hệ thống có thể tạo câu hỏi dựa trên:
 
-- Vietnamese-first: hỗ trợ người dùng Việt Nam và ngữ cảnh phỏng vấn Việt Nam.
-- Feedback theo nội dung câu trả lời, không chỉ đánh giá tốc độ nói/filler words.
-- Surgical feedback: highlight đoạn câu trả lời cần cải thiện và đưa gợi ý cụ thể.
-- On-demand: người dùng có thể luyện mà không cần sắp lịch với mentor/peer.
-- Có context pack và question bank để hỗ trợ khi AI bị lỗi hoặc hết quota.
+1. Job Descriptions
+2. Trình độ của người dùng
+3. CV cá nhân và Dự án đã thực hiện
+4. Ngôn ngữ phỏng vấn mong muốn
+5. Hình thức/Loại hình phỏng vấn
 
-Nguồn nên đối chiếu: `docs/RequirementAnalysis/competitive-analysis/competitive_analysis.md`, `docs/RequirementAnalysis/competitive-analysis/03_positioning_matrix.md`.
+Ví dụ, cùng là vị trí Backend Developer, nhưng sinh viên dùng NestJS, Prisma, Supabase sẽ nhận được câu hỏi khác với người dùng Spring Boot và MySQL.
+
+Mô phỏng quy trình phỏng vấn thực tế
+
+Hệ thống không chỉ hỏi một câu đơn lẻ mà có thể tổ chức buổi phỏng vấn theo các phần:
+
+1. Giới thiệu bản thân.
+2. Câu hỏi về kinh nghiệm / dự án.
+3. Câu hỏi kỹ thuật.
+4. Câu hỏi tình huống.
+5. Câu hỏi về định hướng nghề nghiệp.
+6. Tổng kết và đánh giá.
+
+Điều này giúp người dùng làm quen với áp lực và cấu trúc của một buổi phỏng vấn thật.
 
 ## 1.6 Lý Do Chọn Đề Tài
 
-> Cần bổ sung: viết theo góc nhìn cá nhân của sinh viên. Trình bày mong muốn theo đuổi đề tài, mối liên hệ với ngành học, động lực giải quyết một vấn đề thực tế cho sinh viên CNTT, và mong muốn rèn luyện năng lực xây dựng hệ thống web/AI hoàn chỉnh.
+Em chọn đề tài AI mock interview vì bản thân từng có cơ hội hỗ trợ bạn bè luyện mock interview trong quá trình chuẩn bị phỏng vấn. Qua quá trình đó, em nhận thấy nhiều sinh viên không thiếu kiến thức, nhưng lại gặp khó khăn khi phải trình bày câu trả lời sao cho rõ ràng, đúng trọng tâm và thuyết phục. Việc luyện tập với người khác có thể đem lại hiệu quả tốt, nhưng không phải lúc nào cũng dễ thực hiện thường xuyên.
 
-Lưu ý:
+Từ trải nghiệm này, em có hứng thú với việc xây dựng một phần mềm có thể hỗ trợ người học luyện phỏng vấn một cách chủ động hơn. Hệ thống không chỉ đặt câu hỏi, mà còn có thể ghi nhận câu trả lời, đưa ra nhận xét và gợi ý cải thiện hoặc có thể hỏi thêm để làm rõ câu trả lời của ứng viên giống như 1 HR thật. Đây là một bài toán vừa gần gũi với nhu cầu thực tế của sinh viên Công nghệ thông tin, vừa phù hợp với định hướng học tập và phát triển của em.
 
-- Tránh viết quá cảm tính hoặc chung chung.
-- Không khẳng định sản phẩm đã giải quyết triệt để mọi vấn đề khi GR1 mới ở mức prototype/MVP.
+Bên cạnh đó, đề tài cũng giúp em vận dụng các kiến thức đã học về phát triển ứng dụng web, thiết kế cơ sở dữ liệu, xây dựng backend API và tích hợp trí tuệ nhân tạo vào một sản phẩm hoàn chỉnh hơn. Vì vậy, em quyết định lựa chọn AI mock interview làm đề tài để vừa giải quyết một vấn đề thực tế, vừa rèn luyện năng lực xây dựng hệ thống phần mềm có ứng dụng AI.
 
 ## 1.7 Mục Tiêu Của Đề Tài
 
-> Cần bổ sung: một câu mục tiêu tổng quát, ví dụ xây dựng prototype ứng dụng web InterviewAI hỗ trợ sinh viên CNTT luyện phỏng vấn và nhận feedback chi tiết dựa trên câu trả lời.
+Mục tiêu của đề tài AI mock Interview là xây dựng một ứng dụng web hỗ trợ sinh viên năm cuối và ứng viên fresher ngành Công nghệ thông tin luyện phỏng vấn bằng trí tuệ nhân tạo.
+
+Hệ thống hướng đến việc giúp người dùng luyện tập phỏng vấn một cách chủ động thông qua các chức năng như tạo câu hỏi theo vị trí ứng tuyển hoặc JD, cho phép người dùng trả lời bằng văn bản hoặc giọng nói, sau đó nhận phản hồi và gợi ý cải thiện từ AI.
 
 ## 1.8 Nhiệm Vụ và Phạm Vi Nghiên Cứu
 
-> Cần bổ sung: xác định các chức năng nằm trong GR1. Nên đối chiếu `docs/Design/MVP_Scope.md` và code hiện tại.
 
-Gợi ý phạm vi:
-
-- Hồ sơ người dùng cơ bản.
-- Cấu hình phiên phỏng vấn từ JD, loại session và context pack.
-- Sinh danh sách câu hỏi phỏng vấn.
-- Trả lời câu hỏi bằng text/voice tùy theo khả năng hiện có.
-- Tạo feedback và báo cáo tổng hợp.
-- Giao diện luồng chính và kiểm thử cơ bản.
+Ở GR1, phạm vi phát triển hiện tại của em gồm có các tính năng như sau:
+- Quản lí Hồ sơ luyện tập (CV) của người dùng.
+- Cấu hình phiên phỏng vấn từ JD, loại phỏng vấn, thời gian phỏng vấn và context pack.
+- Sinh danh sách câu hỏi phỏng vấn dựa trên các thông tin cấu hình phỏng vấn kết hợp với Ngân hàng câu hỏi của hệ thống.
+- Thực hiện phiên phỏng vấn AI thông qua việc trả lời câu hỏi bằng text/voice.
+- Tạo feedback và báo cáo tổng hợp chi tiết sau mỗi phiên phỏng vấn của người dùng
 
 ## 1.9 Lộ Trình GR1 - GR2 - Đồ Án Tốt Nghiệp
 

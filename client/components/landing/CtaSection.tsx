@@ -10,7 +10,7 @@ export function CtaSection() {
           Tạo tài khoản miễn phí và bắt đầu phiên phỏng vấn đầu tiên ngay hôm nay.
         </p>
         <Link
-          href="/login"
+          href="/sessions"
           className="inline-flex px-8 py-3 text-base font-medium text-brand bg-white rounded-full hover:bg-brand-50 transition-all duration-150 hover:scale-[1.02] shadow-lg"
         >
           Đăng ký miễn phí
