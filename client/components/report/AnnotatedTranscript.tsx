@@ -101,7 +101,9 @@ export default function AnnotatedTranscript({
                 Câu {item.orderIndex + 1}
               </p>
               <span className="text-xs font-semibold text-brand">
-                {item.overallScore == null
+                {item.skipped
+                  ? "Đã bỏ qua"
+                  : item.overallScore == null
                   ? "Chưa thể chấm"
                   : `${item.overallScore.toFixed(1)} / 100`}
               </span>
@@ -117,18 +119,24 @@ export default function AnnotatedTranscript({
               {item.questionText}
             </p>
 
-            <div className="mb-4 rounded bg-gray-50 p-4 text-sm leading-relaxed text-gray-800">
-              {item.answerText}
-            </div>
+            {item.skipped ? (
+              <div className="mb-4 rounded border border-blue-100 bg-blue-50 p-4 text-sm leading-relaxed text-blue-800">
+                Đã bỏ qua câu hỏi này
+              </div>
+            ) : (
+              <div className="mb-4 rounded bg-gray-50 p-4 text-sm leading-relaxed text-gray-800">
+                {item.answerText}
+              </div>
+            )}
 
-            {item.keyTakeaway && (
+            {!item.skipped && item.keyTakeaway && (
               <div className="mb-4 rounded-lg border-l-2 border-brand bg-brand-50 px-4 py-2.5 text-sm text-ink">
                 <span className="font-medium">Điểm chú ý: </span>
                 {item.keyTakeaway}
               </div>
             )}
 
-            {item.segments.length > 0 && (
+            {!item.skipped && item.segments.length > 0 && (
               <div className="mb-4 flex flex-col gap-4">
                 <FeedbackSection
                   title="Ưu điểm trong câu trả lời"

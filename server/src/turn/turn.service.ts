@@ -113,6 +113,44 @@ export class TurnService {
 
     const providedTranscript = dto.answerText?.trim();
 
+    if (dto.skipQuestion) {
+      const existingAnswer = await this.prisma.userAnswer.findUnique({
+        where: {
+          sessionId_questionId: { sessionId, questionId: dto.questionId },
+        },
+      });
+
+      if (existingAnswer) {
+        return {
+          answerId: existingAnswer.id,
+          feedbackQueued: !existingAnswer.skipped,
+          transcriptionPending:
+            existingAnswer.transcriptionStatus === 'pending',
+        };
+      }
+
+      const answer = await this.prisma.userAnswer.upsert({
+        where: {
+          sessionId_questionId: { sessionId, questionId: dto.questionId },
+        },
+        create: {
+          sessionId,
+          questionId: dto.questionId,
+          answerMode: 'text',
+          answerText: '',
+          skipped: true,
+          feedbackGenerated: false,
+        },
+        update: {},
+      });
+
+      return {
+        answerId: answer.id,
+        feedbackQueued: false,
+        transcriptionPending: false,
+      };
+    }
+
     // Voice fallback path: legacy clients can still submit audio-only answers.
     if (dto.answerMode === 'voice' && dto.audioFileUrl && !providedTranscript) {
       const existingVoiceAnswer = await this.prisma.userAnswer.findUnique({
@@ -173,6 +211,7 @@ export class TurnService {
           questionId: dto.questionId,
           answerMode: dto.answerMode,
           answerText: '',
+          skipped: false,
           audioFileUrl: dto.audioFileUrl,
           audioDurationSeconds: dto.audioDurationSeconds,
           audioSizeBytes: dto.audioSizeBytes,
@@ -237,6 +276,7 @@ export class TurnService {
           questionId: dto.questionId,
           answerMode: dto.answerMode,
           answerText,
+          skipped: false,
           audioFileUrl: dto.audioFileUrl,
           audioDurationSeconds: dto.audioDurationSeconds,
           audioSizeBytes: dto.audioSizeBytes,

@@ -27,6 +27,23 @@ const actionPlanSchema = z.object({
   items: z.array(z.string()),
 });
 
+const skippedAnswerSchema = z.object({
+  answers: z.array(
+    z.object({
+      answerId: z.string(),
+      modelAnswer: z.string(),
+    }),
+  ),
+});
+
+function fallbackSkippedModelAnswer(questionText: string, language: 'vi' | 'en') {
+  if (language === 'vi') {
+    return `Một câu trả lời tốt nên trả lời trực tiếp câu hỏi "${questionText}", nêu bối cảnh ngắn gọn, đưa ra hành động cụ thể của bạn và kết thúc bằng kết quả hoặc bài học rõ ràng.`;
+  }
+
+  return `A strong answer should directly address "${questionText}", briefly set the context, describe your specific actions, and close with a clear result or lesson learned.`;
+}
+
 @Processor(REPORT_QUEUE)
 export class ComprehensiveReportProcessor extends WorkerHost {
   private readonly logger = new Logger(ComprehensiveReportProcessor.name);
@@ -43,14 +60,28 @@ export class ComprehensiveReportProcessor extends WorkerHost {
     const { sessionId, turnIds } = job.data;
     const language = resolveOutputLanguage(job.data.language);
 
-    const feedbacks = await this.prisma.aiFeedback.findMany({
-      where: { userAnswerId: { in: turnIds } },
+    const answers = await this.prisma.userAnswer.findMany({
+      where: { id: { in: turnIds } },
+      select: {
+        id: true,
+        skipped: true,
+        question: { select: { questionText: true, orderIndex: true } },
+      },
+      orderBy: { createdAt: 'asc' },
     });
-    const expectedFeedbackCount = new Set(turnIds).size;
-    if (
-      expectedFeedbackCount === 0 ||
-      feedbacks.length !== expectedFeedbackCount
-    ) {
+    const skippedAnswers = answers.filter((answer) => answer.skipped);
+    const skippedAnswerIds = new Set(
+      skippedAnswers.map((answer) => answer.id),
+    );
+    const answeredTurnIds = turnIds.filter(
+      (turnId) => !skippedAnswerIds.has(turnId),
+    );
+
+    const feedbacks = await this.prisma.aiFeedback.findMany({
+      where: { userAnswerId: { in: answeredTurnIds } },
+    });
+    const expectedFeedbackCount = new Set(answeredTurnIds).size;
+    if (feedbacks.length !== expectedFeedbackCount) {
       throw new Error(
         `Report input is not ready for session ${sessionId}: ${feedbacks.length}/${expectedFeedbackCount} feedbacks`,
       );
@@ -72,9 +103,14 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       totalTurns: turnIds.length,
       evaluatedTurns: evaluatedFeedbacks.length,
       fallbackTurns: feedbacks.length - evaluatedFeedbacks.length,
+      skippedTurns: skippedAnswers.length,
       summary:
         aggregatedScore === null
-          ? getFallbackReportSummary(language)
+          ? skippedAnswers.length > 0 && feedbacks.length === 0
+            ? language === 'vi'
+              ? `Phiên phỏng vấn đã hoàn thành với ${skippedAnswers.length} câu hỏi được bỏ qua. Chưa có câu trả lời nào đủ dữ liệu để chấm điểm.`
+              : `Interview completed with ${skippedAnswers.length} skipped questions. There are no answer submissions available for scoring.`
+            : getFallbackReportSummary(language)
           : language === 'vi'
             ? `Phiên phỏng vấn đã hoàn thành với ${evaluatedFeedbacks.length} câu trả lời được đánh giá. Điểm tổng quan: ${aggregatedScore}/100.`
             : `Interview completed with ${evaluatedFeedbacks.length} evaluated answers. Overall score: ${aggregatedScore}/100.`,
@@ -84,6 +120,7 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       feedbackCount: feedbacks.length,
       evaluatedFeedbackCount: evaluatedFeedbacks.length,
       fallbackFeedbackCount: feedbacks.length - evaluatedFeedbacks.length,
+      skippedFeedbackCount: skippedAnswers.length,
     };
 
     const competencyHeatmap = {
@@ -92,6 +129,73 @@ export class ComprehensiveReportProcessor extends WorkerHost {
         score: f.isFallback ? null : f.overallScore,
       })),
     };
+
+    let skippedModelAnswers: {
+      answers: { answerId: string; modelAnswer: string }[];
+    } = {
+      answers: skippedAnswers.map((answer) => ({
+        answerId: answer.id,
+        modelAnswer: fallbackSkippedModelAnswer(
+          answer.question.questionText,
+          language,
+        ),
+      })),
+    };
+
+    if (skippedAnswers.length > 0) {
+      try {
+        const questionList = skippedAnswers
+          .map(
+            (answer, index) =>
+              `${index + 1}. answerId=${answer.id}\nQuestion: ${answer.question.questionText}`,
+          )
+          .join('\n\n');
+
+        const raw = await this.openai.chatCompletion({
+          temperature: COMPREHENSIVE_REPORT_PROMPT_CONFIG.temperature,
+          maxTokens: COMPREHENSIVE_REPORT_PROMPT_CONFIG.maxTokens,
+          responseFormat: 'json_object',
+          messages: [
+            {
+              role: 'system',
+              content: [
+                'You are an interview coach. Generate one concise but concrete suggested candidate answer for each skipped interview question.',
+                getLanguageInstruction(language),
+                'Respond with JSON only: { "answers": [{ "answerId": "...", "modelAnswer": "..." }] }',
+              ].join(' '),
+            },
+            {
+              role: 'user',
+              content: `Skipped questions:\n${questionList}`,
+            },
+          ],
+        });
+
+        const parsed = skippedAnswerSchema.parse(JSON.parse(raw) as unknown);
+        const parsedById = new Map(
+          parsed.answers.map((answer) => [answer.answerId, answer.modelAnswer]),
+        );
+        skippedModelAnswers = {
+          answers: skippedModelAnswers.answers.map((answer) => ({
+            answerId: answer.answerId,
+            modelAnswer: parsedById.get(answer.answerId) ?? answer.modelAnswer,
+          })),
+        };
+      } catch (openaiError: unknown) {
+        if (isAIQuotaExceeded(openaiError)) {
+          this.logger.warn(
+            `Comprehensive report for session ${sessionId} is using fallback skipped-answer suggestions: AI provider quota exhausted`,
+          );
+        } else {
+          this.logger.error(
+            `ComprehensiveReportProcessor: skipped-answer generation failed for session ${sessionId}`,
+            openaiError instanceof Error
+              ? openaiError.stack
+              : String(openaiError),
+          );
+        }
+      }
+    }
 
     let actionPlan: { items: string[] } = getFallbackActionPlan(language);
 
@@ -220,6 +324,23 @@ export class ComprehensiveReportProcessor extends WorkerHost {
             ...reportMetadata,
           },
           update: { contentJson: actionPlan, ...reportMetadata },
+        }),
+        this.prisma.sessionReport.upsert({
+          where: {
+            sessionId_reportType_version: {
+              sessionId,
+              reportType: 'skipped_answers',
+              version: 1,
+            },
+          },
+          create: {
+            sessionId,
+            reportType: 'skipped_answers',
+            version: 1,
+            contentJson: skippedModelAnswers,
+            ...reportMetadata,
+          },
+          update: { contentJson: skippedModelAnswers, ...reportMetadata },
         }),
         this.prisma.interviewSession.update({
           where: { id: sessionId },

@@ -24,6 +24,17 @@ describe('SubmitAnswerDto', () => {
       expect(errors.some((e) => e.property === 'answerText')).toBe(true);
     });
 
+    it('chấp nhận answerText rỗng khi skipQuestion=true', async () => {
+      const dto = plainToInstance(SubmitAnswerDto, {
+        questionId: 'q-1',
+        answerMode: 'text',
+        answerText: '',
+        skipQuestion: true,
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
     it('chấp nhận answerText đủ 10 ký tự', async () => {
       const dto = plainToInstance(SubmitAnswerDto, {
         questionId: 'q-1',

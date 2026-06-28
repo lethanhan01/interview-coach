@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import type { SavedJobDescription } from '@/lib/types'
-import { Building2, MapPin, Clock, Plus, ChevronRight, Trash2 } from 'lucide-react'
+import { Building2, MapPin, Clock, Plus, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 

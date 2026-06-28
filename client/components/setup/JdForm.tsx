@@ -1,5 +1,7 @@
 'use client'
 
+import { useMemo, useState } from 'react'
+import { X } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
@@ -37,10 +39,8 @@ function SelectField({
 export default function JdForm({
   value,
   onChange,
-  savedJobDescriptions = [],
-  selectedSavedJobDescriptionId = '',
-  onSelectSavedJobDescription,
 }: JdFormProps) {
+  const [techQuery, setTechQuery] = useState('')
   const set = (field: keyof JdFormData, val: string) => onChange({ ...value, [field]: val })
 
   const toggleTech = (tech: string) =>
@@ -50,6 +50,26 @@ export default function JdForm({
         ? value.techStack.filter((t) => t !== tech)
         : [...value.techStack, tech],
     })
+
+  const removeTech = (tech: string) =>
+    onChange({
+      ...value,
+      techStack: value.techStack.filter((t) => t !== tech),
+    })
+
+  const normalizedTechQuery = techQuery.trim().toLowerCase()
+  const filteredTechGroups = useMemo(
+    () =>
+      Object.entries(TECH_STACK_OPTIONS)
+        .map(([category, techs]) => [
+          category,
+          normalizedTechQuery
+            ? techs.filter((tech) => tech.toLowerCase().includes(normalizedTechQuery))
+            : techs,
+        ] as const)
+        .filter(([, techs]) => techs.length > 0),
+    [normalizedTechQuery],
+  )
 
   const reqHint =
     value.requirements.trim().length > 0 && value.requirements.trim().length < 30
@@ -135,30 +155,71 @@ export default function JdForm({
           <div>
             <p className="mb-1.5 text-sm font-medium text-ink">Tech Stack</p>
             <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4">
-              {Object.entries(TECH_STACK_OPTIONS).map(([category, techs]) => (
-                <div key={category}>
-                  <p className="mb-2 text-xs font-medium text-ink-muted">{category}</p>
+              <Input
+                type="search"
+                label="Tìm kiếm tech stack"
+                value={techQuery}
+                onChange={(e) => setTechQuery(e.target.value)}
+                placeholder="VD: PyTorch, Terraform, Playwright..."
+              />
+
+              {value.techStack.length > 0 && (
+                <div>
+                  <p className="mb-2 text-xs font-medium text-ink-muted">
+                    Đã chọn ({value.techStack.length})
+                  </p>
                   <div className="flex flex-wrap gap-2">
-                    {techs.map((tech) => (
+                    {value.techStack.map((tech) => (
                       <button
                         key={tech}
                         type="button"
-                        onClick={() => toggleTech(tech)}
-                        className={[
-                          'rounded-full border px-3 py-1 text-xs transition-colors',
-                          value.techStack.includes(tech)
-                            ? 'border-brand bg-brand-50 text-brand'
-                            : 'border-border text-ink-muted hover:border-brand-muted',
-                        ].join(' ')}
+                        onClick={() => removeTech(tech)}
+                        aria-label={`Bỏ chọn ${tech}`}
+                        className="inline-flex max-w-full items-center gap-1 rounded-full border border-brand bg-brand-50 px-3 py-1 text-left text-xs text-brand transition-colors hover:bg-surface-raised"
                       >
-                        {tech}
+                        <span className="min-w-0 break-words">{tech}</span>
+                        <X className="size-3 shrink-0" aria-hidden="true" />
                       </button>
                     ))}
                   </div>
                 </div>
-              ))}
+              )}
+
+              {filteredTechGroups.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-ink-muted">
+                  Không tìm thấy tech stack phù hợp.
+                </p>
+              ) : (
+                filteredTechGroups.map(([category, techs]) => (
+                  <div key={category}>
+                    <p className="mb-2 text-xs font-medium text-ink-muted">{category}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {techs.map((tech) => {
+                        const selected = value.techStack.includes(tech)
+                        return (
+                          <button
+                            key={tech}
+                            type="button"
+                            onClick={() => toggleTech(tech)}
+                            aria-pressed={selected}
+                            className={[
+                              'max-w-full rounded-full border px-3 py-1 text-left text-xs transition-colors',
+                              'whitespace-normal break-words',
+                              selected
+                                ? 'border-brand bg-brand-50 text-brand'
+                                : 'border-border text-ink-muted hover:border-brand-muted',
+                            ].join(' ')}
+                          >
+                            {tech}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))
+              )}
               {value.techStack.length > 0 && (
-                <p className="text-xs text-ink-muted">Đã chọn: {value.techStack.join(', ')}</p>
+                <p className="text-xs text-ink-muted">Tech stack sẽ lưu: {value.techStack.join(', ')}</p>
               )}
             </div>
           </div>

@@ -114,8 +114,9 @@ export default function ReportPage() {
           <div>
             <p className="text-2xl font-bold">Chưa thể chấm điểm</p>
             <p className="mt-2 text-sm text-brand-100">
-              Dịch vụ AI tạm thời chưa khả dụng. Câu trả lời của bạn vẫn đã được
-              lưu.
+              {report.reportQuality === 'not_scorable'
+                ? 'Phiên này chưa có câu trả lời nào để chấm điểm.'
+                : 'Dịch vụ AI tạm thời chưa khả dụng. Câu trả lời của bạn vẫn đã được lưu.'}
             </p>
           </div>
         ) : (
@@ -130,6 +131,11 @@ export default function ReportPage() {
         {report.reportQuality === 'partial' && (
           <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
             Một số câu trả lời không được AI chấm điểm tự động. Điểm tổng chỉ tính trên các câu đã đánh giá được.
+          </div>
+        )}
+        {report.reportQuality === 'not_scorable' && (
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            Bạn đã bỏ qua tất cả câu hỏi, nên báo cáo chỉ hiển thị câu trả lời đề xuất để tham khảo.
           </div>
         )}
         {session && <SessionMetadataCard session={session} />}

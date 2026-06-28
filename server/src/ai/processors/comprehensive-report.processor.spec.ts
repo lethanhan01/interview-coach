@@ -26,6 +26,13 @@ interface SessionUpdateArgs {
 }
 
 interface PrismaMock {
+  userAnswer: {
+    findMany: jest.MockedFunction<() => Promise<Array<{
+      id: string;
+      skipped: boolean;
+      question: { questionText: string; orderIndex: number };
+    }>>>;
+  };
   aiFeedback: {
     findMany: jest.MockedFunction<() => Promise<FeedbackRow[]>>;
   };
@@ -57,6 +64,20 @@ describe('ComprehensiveReportProcessor', () => {
 
   beforeEach(async () => {
     prisma = {
+      userAnswer: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'answer-1',
+            skipped: false,
+            question: { questionText: 'Question 1', orderIndex: 1 },
+          },
+          {
+            id: 'answer-2',
+            skipped: false,
+            question: { questionText: 'Question 2', orderIndex: 2 },
+          },
+        ]),
+      },
       aiFeedback: { findMany: jest.fn() },
       interviewSession: { update: jest.fn() },
       sessionReport: { upsert: jest.fn() },
@@ -226,5 +247,108 @@ describe('ComprehensiveReportProcessor', () => {
     expect((actionPlanCall?.[0] as any).create.contentJson.items[0]).toBe(
       'Rewrite each answer using the STAR structure.',
     );
+  });
+
+  it('mixed answered/skipped: chỉ chờ feedback câu đã trả lời và lưu suggested answer cho câu skipped', async () => {
+    prisma.userAnswer.findMany.mockResolvedValue([
+      {
+        id: 'answer-1',
+        skipped: false,
+        question: { questionText: 'Tell me about yourself.', orderIndex: 1 },
+      },
+      {
+        id: 'answer-2',
+        skipped: true,
+        question: { questionText: 'Why should we hire you?', orderIndex: 2 },
+      },
+    ]);
+    prisma.aiFeedback.findMany.mockResolvedValue([
+      {
+        userAnswerId: 'answer-1',
+        overallScore: 80,
+        keyTakeaway: 'Good structure',
+        isFallback: false,
+      },
+    ]);
+    prisma.sessionReport.upsert.mockResolvedValue({});
+    prisma.interviewSession.update.mockResolvedValue({});
+    mockOpenAI.chatCompletion
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          answers: [
+            {
+              answerId: 'answer-2',
+              modelAnswer: 'Bạn nên nêu các điểm mạnh phù hợp vị trí.',
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify({ items: ['Luyện thêm ví dụ STAR.'] }),
+      );
+
+    await processor.process(job);
+
+    expect(prisma.aiFeedback.findMany).toHaveBeenCalledWith({
+      where: { userAnswerId: { in: ['answer-1'] } },
+    });
+    const updateArgs = prisma.interviewSession.update.mock.calls[0][0];
+    expect(updateArgs.data.overallScore).toBe(80);
+    const skippedAnswersCall = prisma.sessionReport.upsert.mock.calls.find(
+      (call) => (call[0] as any).create.reportType === 'skipped_answers',
+    );
+    expect((skippedAnswersCall?.[0] as any).create.contentJson.answers).toEqual([
+      {
+        answerId: 'answer-2',
+        modelAnswer: 'Bạn nên nêu các điểm mạnh phù hợp vị trí.',
+      },
+    ]);
+  });
+
+  it('skipped-only: không yêu cầu feedback, score=null và vẫn lưu suggested answers', async () => {
+    prisma.userAnswer.findMany.mockResolvedValue([
+      {
+        id: 'answer-1',
+        skipped: true,
+        question: { questionText: 'Tell me about yourself.', orderIndex: 1 },
+      },
+      {
+        id: 'answer-2',
+        skipped: true,
+        question: { questionText: 'Why should we hire you?', orderIndex: 2 },
+      },
+    ]);
+    prisma.aiFeedback.findMany.mockResolvedValue([]);
+    prisma.sessionReport.upsert.mockResolvedValue({});
+    prisma.interviewSession.update.mockResolvedValue({});
+    mockOpenAI.chatCompletion.mockResolvedValueOnce(
+      JSON.stringify({
+        answers: [
+          { answerId: 'answer-1', modelAnswer: 'Suggested answer 1' },
+          { answerId: 'answer-2', modelAnswer: 'Suggested answer 2' },
+        ],
+      }),
+    );
+
+    await processor.process(job);
+
+    expect(prisma.aiFeedback.findMany).toHaveBeenCalledWith({
+      where: { userAnswerId: { in: [] } },
+    });
+    const updateArgs = prisma.interviewSession.update.mock.calls[0][0];
+    expect(updateArgs.data.overallScore).toBeNull();
+    const executiveSummaryCall = prisma.sessionReport.upsert.mock.calls.find(
+      (call) => (call[0] as any).create.reportType === 'executive_summary',
+    );
+    expect((executiveSummaryCall?.[0] as any).create.contentJson).toEqual(
+      expect.objectContaining({
+        evaluatedTurns: 0,
+        skippedTurns: 2,
+      }),
+    );
+    const skippedAnswersCall = prisma.sessionReport.upsert.mock.calls.find(
+      (call) => (call[0] as any).create.reportType === 'skipped_answers',
+    );
+    expect((skippedAnswersCall?.[0] as any).create.contentJson.answers).toHaveLength(2);
   });
 });

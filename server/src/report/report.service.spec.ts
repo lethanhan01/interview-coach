@@ -316,6 +316,62 @@ describe('ReportService', () => {
       expect(result.executiveSummary.overallScore).toBeNull();
       expect(result.actionPlan.items).toHaveLength(3);
     });
+
+    it('trả reportQuality=not_scorable và modelAnswer cho phiên chỉ có câu skipped', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        overallScore: null,
+        sessionReports: [
+          {
+            reportType: 'executive_summary',
+            version: 1,
+            contentJson: { summary: 'Skipped session', overallScore: null },
+          },
+          {
+            reportType: 'skipped_answers',
+            version: 1,
+            contentJson: {
+              answers: [
+                {
+                  answerId: 'answer-skip-1',
+                  modelAnswer: 'Câu trả lời đề xuất cho câu bị bỏ qua.',
+                },
+              ],
+            },
+          },
+        ],
+      });
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Question 1',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              id: 'answer-skip-1',
+              answerText: '',
+              skipped: true,
+              aiFeedback: null,
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.reportQuality).toBe('not_scorable');
+      expect(result.overallScore).toBeNull();
+      expect(result.transcript[0]).toEqual(
+        expect.objectContaining({
+          skipped: true,
+          answerText: '',
+          overallScore: null,
+          modelAnswer: 'Câu trả lời đề xuất cho câu bị bỏ qua.',
+          keyTakeaway: '',
+          segments: [],
+        }),
+      );
+    });
   });
 
   describe('enqueueReport', () => {
@@ -418,7 +474,7 @@ describe('ReportService', () => {
       });
       mockPrisma.userAnswer.count
         .mockResolvedValueOnce(3)  // total
-        .mockResolvedValueOnce(2); // done
+        .mockResolvedValueOnce(2); // pending non-skipped feedbacks
 
       await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
 
@@ -447,7 +503,7 @@ describe('ReportService', () => {
       });
       mockPrisma.userAnswer.count
         .mockResolvedValueOnce(3)  // total
-        .mockResolvedValueOnce(3); // done
+        .mockResolvedValueOnce(0); // pending non-skipped feedbacks
       mockPrisma.userAnswer.findMany.mockResolvedValue([
         { id: 'a-1' },
         { id: 'a-2' },
@@ -461,6 +517,33 @@ describe('ReportService', () => {
       expect(mockReportQueue.add).toHaveBeenCalledWith(
         'comprehensive-report',
         expect.objectContaining({ sessionId: 'session-123', language: 'vi' }),
+        expect.objectContaining({ jobId: 'report-session-123' }),
+      );
+    });
+
+    it('enqueue khi chỉ còn câu skipped chưa có feedback', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        status: 'completing',
+      });
+      mockPrisma.userAnswer.count
+        .mockResolvedValueOnce(3)
+        .mockResolvedValueOnce(0);
+      mockPrisma.userAnswer.findMany.mockResolvedValue([
+        { id: 'answered-1' },
+        { id: 'skipped-1' },
+        { id: 'skipped-2' },
+      ]);
+      mockReportQueue.getJob.mockResolvedValue(null);
+      mockReportQueue.add.mockResolvedValue({} as any);
+
+      await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
+
+      expect(mockReportQueue.add).toHaveBeenCalledWith(
+        'comprehensive-report',
+        expect.objectContaining({
+          turnIds: ['answered-1', 'skipped-1', 'skipped-2'],
+        }),
         expect.objectContaining({ jobId: 'report-session-123' }),
       );
     });

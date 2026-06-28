@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, PauseCircle, PlayCircle, XCircle } from 'lucide-react'
+import { ArrowLeft, PauseCircle, PlayCircle, SkipForward, XCircle } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
 import QuestionCard from '@/components/interview/QuestionCard'
 import TextAnswerInput from '@/components/interview/TextAnswerInput'
@@ -34,12 +34,14 @@ export default function InterviewPage() {
   const [isCompleting, setIsCompleting] = useState(false)
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('generating')
   const [statusAction, setStatusAction] = useState<SessionStatusAction | null>(null)
+  const [turnSubmitting, setTurnSubmitting] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [accessToken, setAccessToken] = useState('')
   const [durationMin, setDurationMin] = useState<number>(30)
   const [questionsReady, setQuestionsReady] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
   const questionsReadyRef = useRef(false)
+  const turnSubmittingRef = useRef(false)
 
   useEffect(() => {
     questionsReadyRef.current = questionsReady
@@ -159,12 +161,20 @@ export default function InterviewPage() {
   }, [sessionId, questions.length, currentIndex, router])
 
   const submitText = useCallback(async (text: string) => {
-    await apiClient.post(`/sessions/${sessionId}/turns`, {
-      answerMode: 'text',
-      answerText: text,
-      questionId: questions[currentIndex]?.id,
-    })
-    await advance()
+    if (turnSubmittingRef.current) return
+    turnSubmittingRef.current = true
+    setTurnSubmitting(true)
+    try {
+      await apiClient.post(`/sessions/${sessionId}/turns`, {
+        answerMode: 'text',
+        answerText: text,
+        questionId: questions[currentIndex]?.id,
+      })
+      await advance()
+    } finally {
+      turnSubmittingRef.current = false
+      setTurnSubmitting(false)
+    }
   }, [sessionId, questions, currentIndex, advance])
 
   const submitVoice = useCallback(async (
@@ -173,15 +183,44 @@ export default function InterviewPage() {
     sizeBytes: number,
     transcript: string,
   ) => {
-    await apiClient.post(`/sessions/${sessionId}/turns`, {
-      answerMode: 'voice',
-      answerText: transcript,
-      audioFileUrl: audioUrl,
-      audioDurationSeconds: durationSeconds,
-      audioSizeBytes: sizeBytes,
-      questionId: questions[currentIndex]?.id,
-    })
-    await advance()
+    if (turnSubmittingRef.current) return
+    turnSubmittingRef.current = true
+    setTurnSubmitting(true)
+    try {
+      await apiClient.post(`/sessions/${sessionId}/turns`, {
+        answerMode: 'voice',
+        answerText: transcript,
+        audioFileUrl: audioUrl,
+        audioDurationSeconds: durationSeconds,
+        audioSizeBytes: sizeBytes,
+        questionId: questions[currentIndex]?.id,
+      })
+      await advance()
+    } finally {
+      turnSubmittingRef.current = false
+      setTurnSubmitting(false)
+    }
+  }, [sessionId, questions, currentIndex, advance])
+
+  const skipCurrentQuestion = useCallback(async () => {
+    if (turnSubmittingRef.current) return
+    turnSubmittingRef.current = true
+    setTurnSubmitting(true)
+    setActionError(null)
+    try {
+      await apiClient.post(`/sessions/${sessionId}/turns`, {
+        answerMode: 'text',
+        answerText: '',
+        skipQuestion: true,
+        questionId: questions[currentIndex]?.id,
+      })
+      await advance()
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Không thể bỏ qua câu hỏi')
+    } finally {
+      turnSubmittingRef.current = false
+      setTurnSubmitting(false)
+    }
   }, [sessionId, questions, currentIndex, advance])
 
   if (loading) {
@@ -315,13 +354,31 @@ export default function InterviewPage() {
 
         <div className="mt-6">
           {answerMode === 'text' ? (
-            <TextAnswerInput onSubmit={submitText} />
+            <TextAnswerInput
+              key={current?.id}
+              onSubmit={submitText}
+              disabled={turnSubmitting}
+            />
           ) : (
             <VoiceRecorder
+              key={current?.id}
               onSubmit={submitVoice}
               sessionId={sessionId}
+              disabled={turnSubmitting}
             />
           )}
+        </div>
+        <div className="mt-4 flex justify-end">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={skipCurrentQuestion}
+            disabled={turnSubmitting || !current}
+            loading={turnSubmitting}
+          >
+            <SkipForward className="size-4" aria-hidden="true" />
+            Bỏ qua
+          </Button>
         </div>
       </div>
     </ErrorBoundary>

@@ -81,9 +81,11 @@ export interface AnnotatedSegment {
 }
 
 export interface TranscriptItem {
+  answerId?: string;
   questionText: string;
   orderIndex: number;
   answerText: string;
+  skipped: boolean;
   overallScore: number | null;
   modelAnswer: string;
   keyTakeaway: string;
@@ -93,7 +95,7 @@ export interface TranscriptItem {
 
 export interface Report {
   sessionId: string;
-  reportQuality: 'full' | 'partial' | 'unavailable';
+  reportQuality: 'full' | 'partial' | 'unavailable' | 'not_scorable';
   overallScore: number | null;
   executiveSummary: Record<string, unknown>;
   competencyHeatmap: Record<string, unknown>;

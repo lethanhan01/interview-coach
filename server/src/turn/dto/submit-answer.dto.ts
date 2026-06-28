@@ -9,6 +9,7 @@ import {
   MinLength,
   ValidateIf,
   IsUrl,
+  IsBoolean,
 } from 'class-validator';
 
 export class SubmitAnswerDto {
@@ -20,11 +21,16 @@ export class SubmitAnswerDto {
 
   @ValidateIf(
     (o: SubmitAnswerDto) =>
-      o.answerMode === 'text' || o.answerText !== undefined,
+      !o.skipQuestion &&
+      (o.answerMode === 'text' || o.answerText !== undefined),
   )
   @IsString()
   @MinLength(10)
   answerText?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  skipQuestion?: boolean;
 
   @ValidateIf((o: SubmitAnswerDto) => o.answerMode === 'voice')
   @IsUrl({

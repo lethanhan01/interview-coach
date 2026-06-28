@@ -36,6 +36,23 @@ function findLatestReport<T extends { reportType: string; version: number }>(
     .sort((a, b) => b.version - a.version)[0];
 }
 
+function toSkippedModelAnswerMap(
+  value: unknown,
+): Map<string, string> {
+  const answers = toRecord(value).answers;
+  if (!Array.isArray(answers)) return new Map();
+
+  return new Map(
+    answers.flatMap((answer) => {
+      const item = toRecord(answer);
+      return typeof item.answerId === 'string' &&
+        typeof item.modelAnswer === 'string'
+        ? [[item.answerId, item.modelAnswer] as const]
+        : [];
+    }),
+  );
+}
+
 @Injectable()
 export class ReportService {
   constructor(
@@ -106,31 +123,58 @@ export class ReportService {
         })) ?? [];
 
       return {
+        answerId: answer?.id,
         questionText: q.questionText,
         orderIndex: q.orderIndex,
         answerText: answer?.answerText ?? '',
+        skipped: answer?.skipped ?? false,
         overallScore:
-          feedback && !feedback.isFallback ? feedback.overallScore : null,
-        modelAnswer: feedback?.modelAnswer ?? '',
-        keyTakeaway: feedback?.keyTakeaway ?? '',
-        isFallback: feedback?.isFallback ?? false,
-        segments,
+          answer?.skipped || !feedback || feedback.isFallback
+            ? null
+            : feedback.overallScore,
+        modelAnswer: answer?.skipped ? '' : (feedback?.modelAnswer ?? ''),
+        keyTakeaway: answer?.skipped ? '' : (feedback?.keyTakeaway ?? ''),
+        isFallback: answer?.skipped ? false : (feedback?.isFallback ?? false),
+        segments: answer?.skipped ? [] : segments,
       };
     });
 
-    const hasEvaluatedFeedback = transcript.some(
-      (item) => !item.isFallback && item.overallScore !== null,
-    );
-    const allFeedbackIsFallback =
-      transcript.some((item) => item.isFallback) && !hasEvaluatedFeedback;
     const storedActionPlan = toRecord(
       findLatestReport(session.sessionReports, 'action_plan')?.contentJson,
     );
     const storedExecutiveSummary = toRecord(executiveSummaryReport.contentJson);
+    const skippedModelAnswers = toSkippedModelAnswerMap(
+      findLatestReport(session.sessionReports, 'skipped_answers')?.contentJson,
+    );
 
-    const hasSomeFallback = transcript.some((item) => item.isFallback);
-    let reportQuality: 'full' | 'partial' | 'unavailable';
-    if (hasSomeFallback && hasEvaluatedFeedback) {
+    const transcriptWithSkippedAnswers = transcript.map((item) =>
+      item.skipped
+        ? {
+            ...item,
+            modelAnswer:
+              (item.answerId
+                ? skippedModelAnswers.get(item.answerId)
+                : undefined) ?? item.modelAnswer,
+          }
+        : item,
+    );
+    const nonSkippedTranscript = transcriptWithSkippedAnswers.filter(
+      (item) => !item.skipped,
+    );
+    const hasEvaluatedFeedback = nonSkippedTranscript.some(
+      (item) => !item.isFallback && item.overallScore !== null,
+    );
+    const hasSomeFallback = nonSkippedTranscript.some(
+      (item) => item.isFallback,
+    );
+    const allFeedbackIsFallback = hasSomeFallback && !hasEvaluatedFeedback;
+    let reportQuality: 'full' | 'partial' | 'unavailable' | 'not_scorable';
+    if (
+      transcriptWithSkippedAnswers.length > 0 &&
+      nonSkippedTranscript.length === 0
+    ) {
+      reportQuality = 'not_scorable';
+    } else if (hasSomeFallback && hasEvaluatedFeedback) {
       reportQuality = 'partial';
     } else if (hasSomeFallback) {
       reportQuality = 'unavailable';
@@ -147,7 +191,7 @@ export class ReportService {
             ...storedExecutiveSummary,
             overallScore: null,
             evaluatedTurns: 0,
-            fallbackTurns: transcript.length,
+            fallbackTurns: nonSkippedTranscript.length,
             summary: getFallbackReportSummary(session.language),
           }
         : storedExecutiveSummary,
@@ -159,7 +203,7 @@ export class ReportService {
         allFeedbackIsFallback && Object.keys(storedActionPlan).length === 0
           ? getFallbackActionPlan(session.language)
           : storedActionPlan,
-      transcript,
+      transcript: transcriptWithSkippedAnswers,
     };
   }
 
@@ -217,14 +261,14 @@ export class ReportService {
 
     if (session?.status !== 'completing') return;
 
-    const [totalAnswers, completedFeedbacks] = await Promise.all([
+    const [totalAnswers, pendingFeedbacks] = await Promise.all([
       this.prisma.userAnswer.count({ where: { sessionId } }),
       this.prisma.userAnswer.count({
-        where: { sessionId, feedbackGenerated: true },
+        where: { sessionId, skipped: false, feedbackGenerated: false },
       }),
     ]);
 
-    if (totalAnswers === 0 || completedFeedbacks < totalAnswers) return;
+    if (totalAnswers === 0 || pendingFeedbacks > 0) return;
 
     await this.enqueueReport(
       sessionId,

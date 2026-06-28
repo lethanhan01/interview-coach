@@ -346,6 +346,95 @@ describe('TurnService', () => {
       expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
     });
 
+    it('skipQuestion: tạo skipped answer rỗng và không enqueue feedback/transcription', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
+      mockPrisma.userAnswer.upsert.mockResolvedValue({
+        ...BASE_ANSWER,
+        answerText: '',
+        skipped: true,
+      });
+
+      const result = await service.submitAnswer('session-123', 'user-abc', {
+        questionId: 'q-1',
+        answerMode: 'text',
+        answerText: '',
+        skipQuestion: true,
+      });
+
+      expect(result).toEqual({
+        answerId: 'answer-1',
+        feedbackQueued: false,
+        transcriptionPending: false,
+      });
+      expect(mockPrisma.userAnswer.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            answerMode: 'text',
+            answerText: '',
+            skipped: true,
+            feedbackGenerated: false,
+          }),
+        }),
+      );
+      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('skipQuestion retry: dùng lại skipped answer hiện có và không enqueue', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.userAnswer.findUnique.mockResolvedValue({
+        ...BASE_ANSWER,
+        answerText: '',
+        skipped: true,
+        transcriptionStatus: null,
+      });
+
+      const result = await service.submitAnswer('session-123', 'user-abc', {
+        questionId: 'q-1',
+        answerMode: 'text',
+        answerText: '',
+        skipQuestion: true,
+      });
+
+      expect(result).toEqual({
+        answerId: 'answer-1',
+        feedbackQueued: false,
+        transcriptionPending: false,
+      });
+      expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
+      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('skipQuestion không ghi đè câu trả lời thật đã tồn tại', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.userAnswer.findUnique.mockResolvedValue({
+        ...BASE_ANSWER,
+        skipped: false,
+        transcriptionStatus: null,
+      });
+
+      const result = await service.submitAnswer('session-123', 'user-abc', {
+        questionId: 'q-1',
+        answerMode: 'text',
+        answerText: '',
+        skipQuestion: true,
+      });
+
+      expect(result).toEqual({
+        answerId: 'answer-1',
+        feedbackQueued: true,
+        transcriptionPending: false,
+      });
+      expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
+      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+    });
+
     it('feedback payload dùng questionText/contextPack/sessionType từ DB cho technical Western session', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...BASE_SESSION,
