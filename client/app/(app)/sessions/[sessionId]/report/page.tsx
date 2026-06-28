@@ -139,8 +139,11 @@ export default function ReportPage() {
           </div>
         )}
         {session && <SessionMetadataCard session={session} />}
-        {session?.contextPackId && (
-          <ScoringMethodCard contextPackId={session.contextPackId} />
+        {session?.contextPackId && session?.sessionType && (
+          <ScoringMethodCard
+            contextPackId={session.contextPackId}
+            sessionType={session.sessionType}
+          />
         )}
 
         {report.executiveSummary &&
@@ -172,6 +175,7 @@ export default function ReportPage() {
           <AnnotatedTranscript
             items={report.transcript ?? []}
             contextPackId={session?.contextPackId}
+            sessionType={session?.sessionType}
           />
         </div>
       </div>
