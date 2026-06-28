@@ -1,4 +1,4 @@
-import { HttpStatus } from '@nestjs/common';
+import { HttpStatus, Logger } from '@nestjs/common';
 import { OpenAIGateway } from '../openai.gateway';
 import { PromptBuilderService } from '../prompt-builder.service';
 import { ZodValidatorService } from '../zod-validator.service';
@@ -21,6 +21,7 @@ import {
 export abstract class BasePipelineService implements InterviewPipeline {
   protected abstract readonly supportedSessionType: SessionType;
   protected abstract readonly strategyInstructions: string;
+  protected readonly logger = new Logger(BasePipelineService.name);
 
   constructor(
     protected readonly openai: OpenAIGateway,
@@ -90,32 +91,39 @@ export abstract class BasePipelineService implements InterviewPipeline {
       responseFormat: 'json_object',
       task: 'feedback',
     });
+    this.logger.debug(`[feedback] raw response (first 500 chars): ${raw.slice(0, 500)}`);
     let parsed: unknown;
     try {
       parsed = JSON.parse(raw);
-    } catch {
+    } catch (err) {
+      this.logger.error(`[feedback] JSON parse failed. raw: ${raw.slice(0, 500)}`, err);
       throw new InterviewAIException(
         ErrorCode.AI_SERVICE_ERROR,
         HttpStatus.BAD_GATEWAY,
         'Invalid JSON from AI',
       );
     }
-    const validated = this.zodValidator.validate(FeedbackSchema, parsed);
-    return {
-      overallScore: validated.overall_score,
-      modelAnswer: validated.model_answer,
-      keyTakeaway: validated.key_takeaway,
-      promptVersion: PROMPT_VERSION,
-      annotatedSegments: validated.annotated_segments.map((s) => ({
-        segmentText: s.segment_text,
-        startIndex: s.start_index,
-        endIndex: s.end_index,
-        highlightLevel: s.highlight_level,
-        annotation: s.annotation,
-        suggestion: s.suggestion,
-        improvedVersion: s.improved_version,
-      })),
-    };
+    try {
+      const validated = this.zodValidator.validate(FeedbackSchema, parsed);
+      return {
+        overallScore: validated.overall_score,
+        modelAnswer: validated.model_answer,
+        keyTakeaway: validated.key_takeaway,
+        promptVersion: PROMPT_VERSION,
+        annotatedSegments: validated.annotated_segments.map((s) => ({
+          segmentText: s.segment_text,
+          startIndex: s.start_index,
+          endIndex: s.end_index,
+          highlightLevel: s.highlight_level,
+          annotation: s.annotation,
+          suggestion: s.suggestion,
+          improvedVersion: s.improved_version,
+        })),
+      };
+    } catch (err) {
+      this.logger.error(`[feedback] Zod validation failed. parsed: ${JSON.stringify(parsed).slice(0, 500)}`, err);
+      throw err;
+    }
   }
 
   private applyStrategy(

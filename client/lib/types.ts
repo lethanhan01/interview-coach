@@ -90,6 +90,7 @@ export interface TranscriptItem {
 
 export interface Report {
   sessionId: string;
+  reportQuality: 'full' | 'partial' | 'unavailable';
   overallScore: number | null;
   executiveSummary: Record<string, unknown>;
   competencyHeatmap: Record<string, unknown>;

@@ -66,7 +66,7 @@ export class ReportService {
     if (!executiveSummaryReport) {
       throw new InterviewAIException(
         ErrorCode.REPORT_NOT_READY,
-        HttpStatus.NOT_FOUND,
+        HttpStatus.ACCEPTED,
       );
     }
 

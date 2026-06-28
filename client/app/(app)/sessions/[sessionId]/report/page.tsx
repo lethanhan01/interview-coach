@@ -131,6 +131,11 @@ export default function ReportPage() {
       </div>
 
       <div className="flex flex-col gap-6">
+        {report.reportQuality === 'partial' && (
+          <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+            Một số câu trả lời không được AI chấm điểm tự động. Điểm tổng chỉ tính trên các câu đã đánh giá được.
+          </div>
+        )}
         {session && <SessionMetadataCard session={session} />}
         {session?.contextPackId && (
           <ScoringMethodCard contextPackId={session.contextPackId} />
