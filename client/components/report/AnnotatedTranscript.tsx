@@ -1,5 +1,4 @@
-import { TranscriptItem, AnnotatedSegment } from "@/lib/types";
-import type { SessionType } from "@/lib/types";
+import { TranscriptItem, AnnotatedSegment, type SessionType } from "@/lib/types";
 import { getRubricHint } from "@/lib/rubric-config";
 
 function isStrengthSegment(segment: AnnotatedSegment) {

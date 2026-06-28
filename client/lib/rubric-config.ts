@@ -1,3 +1,6 @@
+// MIRROR of server/src/prisma/context-pack.data.ts — rubric data hard-code client-side.
+// Nếu sửa rubric/weights ở server (rubricJson, scoringWeights), PHẢI sync tay file này.
+// Không có cơ chế tự phát hiện lệch — đã verify khớp tại 2026-06-29.
 import type { ContextPack, SessionType } from '@/lib/types'
 
 export interface RubricDimension {
