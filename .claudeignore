@@ -37,3 +37,5 @@ docs/Design/DiscoveryPhase/Discovery_Document.md
 
 # Static assets (no code)
 client/public/
+data/*
+!data/scripts/

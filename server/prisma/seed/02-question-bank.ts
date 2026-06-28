@@ -682,7 +682,7 @@ const QUESTIONS: RawQuestion[] = [
   // ── Pair E: mixed × VN (15 câu) ─────────────────────────────────────────
   {
     content: 'Hãy giới thiệu bản thân và một project kỹ thuật bạn tự hào nhất.',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 1,
     contextPackId: 'VN',
     subcategory: 'self-introduction',
@@ -692,7 +692,7 @@ const QUESTIONS: RawQuestion[] = [
   },
   {
     content: 'Bạn biết gì về Git? Mô tả quy trình từ code đến push lên remote.',
-    sessionType: 'mixed',
+    sessionType: 'technical',
     difficulty: 2,
     contextPackId: 'VN',
     subcategory: 'version-control',
@@ -702,7 +702,7 @@ const QUESTIONS: RawQuestion[] = [
   },
   {
     content: 'Gặp vấn đề không biết giải quyết trong code, bạn làm gì?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 2,
     contextPackId: 'VN',
     subcategory: 'problem-solving',
@@ -712,7 +712,7 @@ const QUESTIONS: RawQuestion[] = [
   },
   {
     content: 'Bạn nghĩ gì về việc làm thêm giờ khi project cần?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 2,
     contextPackId: 'VN',
     subcategory: 'culture-fit',
@@ -723,7 +723,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Bạn tự đánh giá kỹ năng giao tiếp của mình thế nào? Cho ví dụ cụ thể.',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 2,
     contextPackId: 'VN',
     subcategory: 'communication',
@@ -734,7 +734,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Điều gì khiến bạn muốn theo đuổi sự nghiệp trong ngành IT và vì sao lại chọn vai trò này?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'VN',
     subcategory: 'motivation',
@@ -745,7 +745,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Bạn đã xây dựng project nào ấn tượng nhất? Mô tả các quyết định kỹ thuật quan trọng.',
-    sessionType: 'mixed',
+    sessionType: 'technical',
     difficulty: 3,
     contextPackId: 'VN',
     subcategory: 'technical-experience',
@@ -756,7 +756,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Kể về một lần bạn phải học công nghệ mới trong thời gian ngắn. Cách tiếp cận và kết quả?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'VN',
     subcategory: 'learning-agility',
@@ -767,7 +767,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Bạn hiểu CI/CD là gì? Tại sao nó quan trọng và bạn đã dùng nó chưa?',
-    sessionType: 'mixed',
+    sessionType: 'technical',
     difficulty: 3,
     contextPackId: 'VN',
     subcategory: 'devops-awareness',
@@ -778,7 +778,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Bạn làm gì để giữ code sạch và dễ bảo trì khi làm việc theo nhóm?',
-    sessionType: 'mixed',
+    sessionType: 'technical',
     difficulty: 3,
     contextPackId: 'VN',
     subcategory: 'code-quality',
@@ -789,7 +789,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Mô tả trải nghiệm làm việc nhóm kỹ thuật của bạn. Bạn thường đóng vai trò gì?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'VN',
     subcategory: 'teamwork',
@@ -800,7 +800,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'So với yêu cầu của vị trí này, bạn thấy mình đang thiếu kỹ năng gì? Kế hoạch bù đắp của bạn là gì?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'VN',
     subcategory: 'self-awareness',
@@ -811,7 +811,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Nếu phát hiện đồng nghiệp mắc lỗi nghiêm trọng gần deadline release, bạn xử lý thế nào?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 4,
     contextPackId: 'VN',
     subcategory: 'integrity',
@@ -822,7 +822,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Design một REST API đơn giản cho hệ thống quản lý task. Nêu endpoints chính, HTTP methods, và data model.',
-    sessionType: 'mixed',
+    sessionType: 'technical',
     difficulty: 4,
     contextPackId: 'VN',
     subcategory: 'api-design',
@@ -833,7 +833,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Kể về một project nhóm thất bại hoặc gặp khó khăn lớn. Bạn đóng góp gì, lỗi ở đâu, bài học bạn rút ra?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 5,
     contextPackId: 'VN',
     subcategory: 'reflection',
@@ -845,7 +845,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Introduce yourself and walk me through your most impressive technical project.',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 1,
     contextPackId: 'Western',
     subcategory: 'self-introduction',
@@ -856,7 +856,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Tell me about your experience with Git. Describe your workflow from coding to pushing to remote.',
-    sessionType: 'mixed',
+    sessionType: 'technical',
     difficulty: 2,
     contextPackId: 'Western',
     subcategory: 'version-control',
@@ -867,7 +867,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'When you hit a blocker on a coding problem you cannot solve, what do you do?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 2,
     contextPackId: 'Western',
     subcategory: 'problem-solving',
@@ -878,7 +878,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'How do you feel about working overtime when a project demands it?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 2,
     contextPackId: 'Western',
     subcategory: 'culture-fit',
@@ -889,7 +889,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'How would you rate your communication skills and why? Give a specific example.',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 2,
     contextPackId: 'Western',
     subcategory: 'communication',
@@ -900,7 +900,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'What drew you to a career in software engineering, and why this specific role?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'Western',
     subcategory: 'motivation',
@@ -911,7 +911,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       "What's the most impressive project you've built? Describe the key technical decisions you made.",
-    sessionType: 'mixed',
+    sessionType: 'technical',
     difficulty: 3,
     contextPackId: 'Western',
     subcategory: 'technical-experience',
@@ -922,7 +922,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Tell me about a time you had to learn a new technology quickly. How did you approach it and what was the result?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'Western',
     subcategory: 'learning-agility',
@@ -933,7 +933,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'What do you know about CI/CD? Why is it important and have you used it in your projects?',
-    sessionType: 'mixed',
+    sessionType: 'technical',
     difficulty: 3,
     contextPackId: 'Western',
     subcategory: 'devops-awareness',
@@ -944,7 +944,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'What do you do to keep code clean and maintainable when working on a team?',
-    sessionType: 'mixed',
+    sessionType: 'technical',
     difficulty: 3,
     contextPackId: 'Western',
     subcategory: 'code-quality',
@@ -955,7 +955,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Describe your experience working in technical teams. What role do you typically play?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'Western',
     subcategory: 'teamwork',
@@ -966,7 +966,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Compared to the requirements of this role, what skills do you think you are lacking? What is your plan to address the gaps?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'Western',
     subcategory: 'self-awareness',
@@ -977,7 +977,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'If you discovered a teammate made a serious mistake close to a release deadline, how would you handle it?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 4,
     contextPackId: 'Western',
     subcategory: 'integrity',
@@ -988,7 +988,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Design a simple REST API for a task management system. Describe the main endpoints, HTTP methods, and data model.',
-    sessionType: 'mixed',
+    sessionType: 'technical',
     difficulty: 4,
     contextPackId: 'Western',
     subcategory: 'api-design',
@@ -999,7 +999,7 @@ const QUESTIONS: RawQuestion[] = [
   {
     content:
       'Tell me about a team project that failed or faced major challenges. What was your contribution, where did things go wrong, and what did you learn?',
-    sessionType: 'mixed',
+    sessionType: 'hr',
     difficulty: 5,
     contextPackId: 'Western',
     subcategory: 'reflection',

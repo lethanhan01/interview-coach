@@ -56,3 +56,6 @@ CLAUDE.local.md
 **/CLAUDE.md
 .agents/
 skills-lock.json
+
+data/*
+!data/scripts/

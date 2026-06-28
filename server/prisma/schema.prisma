@@ -19,10 +19,15 @@ model ContextPack {
   @@map("context_packs")
 }
 
+enum QuestionSessionType {
+  hr
+  technical
+}
+
 model QuestionBank {
-  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   content          String
-  sessionType      String            @map("session_type")
+  sessionType      QuestionSessionType @map("session_type")
   difficulty       Int
   contextPackId    String            @map("context_pack_id")
   subcategory      String

@@ -8,6 +8,8 @@ export function isSessionType(value: string): value is SessionType {
   return (SESSION_TYPES as readonly string[]).includes(value);
 }
 
+export type QuestionBankSessionType = 'hr' | 'technical';
+
 export interface QuestionGenInput {
   sessionType: SessionType;
   jobDescriptionText: string;

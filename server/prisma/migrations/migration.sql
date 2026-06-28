@@ -568,3 +568,39 @@ CREATE POLICY "Users can read own session reports" ON "session_reports"
       SELECT id FROM interview_sessions WHERE user_id = auth.uid()
     )
   );
+
+
+-- =============================================================================
+-- 10. Convert question_bank.session_type 'mixed' → 'hr' or 'technical',
+--     then change column type to QuestionSessionType enum.
+--     Idempotent: each step is guarded.
+-- =============================================================================
+
+-- Step 1: Convert any remaining 'mixed' values (idempotent via WHERE)
+UPDATE question_bank
+SET session_type = CASE
+  WHEN competency_domain LIKE 'TD%' THEN 'technical'
+  ELSE 'hr'
+END
+WHERE session_type = 'mixed';
+
+-- Step 2: Create enum type (idempotent)
+DO $$ BEGIN
+  CREATE TYPE "QuestionSessionType" AS ENUM ('hr', 'technical');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Step 3: Change column type to enum (idempotent — guard on current column type)
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'question_bank'
+      AND column_name = 'session_type'
+      AND data_type = 'text'
+  ) THEN
+    ALTER TABLE "question_bank"
+      ALTER COLUMN "session_type" TYPE "QuestionSessionType"
+      USING "session_type"::"QuestionSessionType";
+  END IF;
+END $$;

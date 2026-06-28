@@ -41,6 +41,26 @@ async function pickQuestions(
   take: number,
   skip = 0,
 ): Promise<QuestionBank[]> {
+  if (sessionType === 'mixed') {
+    const hrTake = Math.ceil(take / 2);
+    const techTake = Math.floor(take / 2);
+    const [hrQuestions, techQuestions] = await Promise.all([
+      prisma.questionBank.findMany({
+        where: { sessionType: 'hr', contextPackId },
+        orderBy: [{ difficulty: 'asc' }, { content: 'asc' }],
+        take: hrTake,
+        skip,
+      }),
+      prisma.questionBank.findMany({
+        where: { sessionType: 'technical', contextPackId },
+        orderBy: [{ difficulty: 'asc' }, { content: 'asc' }],
+        take: techTake,
+        skip,
+      }),
+    ]);
+    return [...hrQuestions, ...techQuestions];
+  }
+
   return prisma.questionBank.findMany({
     where: { sessionType, contextPackId },
     orderBy: [{ difficulty: 'asc' }, { content: 'asc' }],
