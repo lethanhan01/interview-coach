@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import type { ContextPackConfig } from './context-pack.service';
+import type { SessionType } from './pipelines/interview-pipeline.interface';
 
 export type PromptTask =
   | 'question-generation'
@@ -73,6 +74,68 @@ export class PromptBuilderService {
 
   applyContextPack(baseSystem: string, contextPack: ContextPackConfig): string {
     return `${baseSystem}\n\nCultural context: ${contextPack.culturalNotes}\nScoring dimensions: ${contextPack.rubricDimensions.join(', ')}.`;
+  }
+
+  applyContextPackForEvaluation(
+    baseSystem: string,
+    contextPack: ContextPackConfig,
+    sessionType: SessionType,
+  ): string {
+    const {
+      culturalNotes,
+      behavioralDimensions,
+      technicalDimensions,
+      scoringWeights,
+    } = contextPack;
+    let scoringSection: string;
+
+    if (sessionType === 'hr') {
+      const dimLines = behavioralDimensions
+        .map((d) => `  - ${d.id} ${d.name} (weight: ${d.weight})`)
+        .join('\n');
+      scoringSection = [
+        `Session type: HR (behavioral only).`,
+        `Score ONLY on these behavioral dimensions:`,
+        dimLines,
+        `Scoring formula: overall_score = weighted average of behavioral dimension scores (weights sum to 1.0).`,
+        `Do NOT apply any technical criteria.`,
+      ].join('\n');
+    } else if (sessionType === 'technical') {
+      const dimLines = technicalDimensions
+        .map((d) => `  - ${d.id} ${d.name} (weight: ${d.weight})`)
+        .join('\n');
+      scoringSection = [
+        `Session type: Technical (technical only).`,
+        `Score ONLY on these technical dimensions:`,
+        dimLines,
+        `Scoring formula: overall_score = weighted average of technical dimension scores (weights sum to 1.0).`,
+        `Do NOT apply any behavioral criteria.`,
+      ].join('\n');
+    } else {
+      const bWeight = scoringWeights['behavioral_weight'] ?? 0.5;
+      const tWeight = scoringWeights['technical_weight'] ?? 0.5;
+      const bLines = behavioralDimensions
+        .map(
+          (d) => `  - ${d.id} ${d.name} (within-category weight: ${d.weight})`,
+        )
+        .join('\n');
+      const tLines = technicalDimensions
+        .map(
+          (d) => `  - ${d.id} ${d.name} (within-category weight: ${d.weight})`,
+        )
+        .join('\n');
+      scoringSection = [
+        `Session type: Mixed (behavioral + technical).`,
+        `Behavioral dimensions (session weight: ${bWeight}):`,
+        bLines,
+        `Technical dimensions (session weight: ${tWeight}):`,
+        tLines,
+        `Scoring formula: overall_score = round(behavioral_score × ${bWeight} + technical_score × ${tWeight}).`,
+        `behavioral_score = weighted average of behavioral dimensions; technical_score = weighted average of technical dimensions.`,
+      ].join('\n');
+    }
+
+    return `${baseSystem}\n\nCultural context: ${culturalNotes}\n${scoringSection}`;
   }
 
   injectDynamicContext(

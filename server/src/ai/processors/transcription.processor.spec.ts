@@ -67,8 +67,14 @@ describe('TranscriptionProcessor', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('transcribe audio, cập nhật answer, enqueue feedback, emit SSE', async () => {
-    mockWhisper.transcribe.mockResolvedValue({ text: 'Transcribed text', durationSeconds: 60 });
-    mockVoiceMetrics.calculate.mockReturnValue({ wpm: 120, fillerWordCount: 2 });
+    mockWhisper.transcribe.mockResolvedValue({
+      text: 'Transcribed text',
+      durationSeconds: 60,
+    });
+    mockVoiceMetrics.calculate.mockReturnValue({
+      wpm: 120,
+      fillerWordCount: 2,
+    });
     mockPrisma.userAnswer.update.mockResolvedValue({
       id: 'answer-1',
       sessionId: 'session-123',
@@ -84,10 +90,16 @@ describe('TranscriptionProcessor', () => {
     mockSse.emit.mockResolvedValue(undefined);
     mockFeedbackQueue.add.mockResolvedValue({} as any);
 
-    const job = { data: BASE_JOB_DATA, attemptsMade: 0, opts: { attempts: 2 } } as unknown as Job<typeof BASE_JOB_DATA>;
+    const job = {
+      data: BASE_JOB_DATA,
+      attemptsMade: 0,
+      opts: { attempts: 2 },
+    } as unknown as Job<typeof BASE_JOB_DATA>;
     await processor.process(job);
 
-    expect(mockWhisper.transcribe).toHaveBeenCalledWith('https://example.com/audio.mp3');
+    expect(mockWhisper.transcribe).toHaveBeenCalledWith(
+      'https://example.com/audio.mp3',
+    );
     expect(mockPrisma.userAnswer.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'answer-1' },
@@ -100,7 +112,10 @@ describe('TranscriptionProcessor', () => {
     expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
       'feedback',
       expect.objectContaining({ answerId: 'answer-1', language: 'vi' }),
-      expect.objectContaining({ jobId: 'feedback-answer-1', attempts: FEEDBACK_JOB_ATTEMPTS }),
+      expect.objectContaining({
+        jobId: 'feedback-answer-1',
+        attempts: FEEDBACK_JOB_ATTEMPTS,
+      }),
     );
     expect(mockSse.emit).toHaveBeenCalledWith(
       'sse:session:session-123',
@@ -110,8 +125,14 @@ describe('TranscriptionProcessor', () => {
   });
 
   it('vẫn enqueue feedback và emit SSE khi question không tìm thấy', async () => {
-    mockWhisper.transcribe.mockResolvedValue({ text: 'Some answer text here.', durationSeconds: 30 });
-    mockVoiceMetrics.calculate.mockReturnValue({ wpm: 100, fillerWordCount: 0 });
+    mockWhisper.transcribe.mockResolvedValue({
+      text: 'Some answer text here.',
+      durationSeconds: 30,
+    });
+    mockVoiceMetrics.calculate.mockReturnValue({
+      wpm: 100,
+      fillerWordCount: 0,
+    });
     mockPrisma.userAnswer.update.mockResolvedValue({
       id: 'answer-1',
       sessionId: 'session-123',
@@ -122,7 +143,11 @@ describe('TranscriptionProcessor', () => {
     mockSse.emit.mockResolvedValue(undefined);
     mockFeedbackQueue.add.mockResolvedValue({} as any);
 
-    const job = { data: BASE_JOB_DATA, attemptsMade: 0, opts: { attempts: 2 } } as unknown as Job<typeof BASE_JOB_DATA>;
+    const job = {
+      data: BASE_JOB_DATA,
+      attemptsMade: 0,
+      opts: { attempts: 2 },
+    } as unknown as Job<typeof BASE_JOB_DATA>;
     await processor.process(job);
 
     expect(mockFeedbackQueue.add).toHaveBeenCalled();

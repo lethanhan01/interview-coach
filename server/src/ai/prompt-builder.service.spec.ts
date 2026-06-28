@@ -73,6 +73,93 @@ describe('PromptBuilderService', () => {
     });
   });
 
+  describe('applyContextPackForEvaluation', () => {
+    const behavioralDimensions = [
+      { id: 'D1', name: 'Communication', weight: 0.2 },
+      { id: 'D2', name: 'Teamwork', weight: 0.8 },
+    ];
+    const technicalDimensions = [
+      { id: 'TD1', name: 'Fundamentals', weight: 0.5 },
+      { id: 'TD2', name: 'Application', weight: 0.5 },
+    ];
+    const contextPack = {
+      culturalNotes: 'Team-first culture',
+      rubricDimensions: [
+        'Communication',
+        'Teamwork',
+        'Fundamentals',
+        'Application',
+      ],
+      behavioralDimensions,
+      technicalDimensions,
+      scoringWeights: { behavioral_weight: 0.45, technical_weight: 0.55 },
+    } as any;
+
+    it('HR: chứa behavioral dimensions, không có technical', () => {
+      const result = service.applyContextPackForEvaluation(
+        'base',
+        contextPack,
+        'hr',
+      );
+
+      expect(result).toContain('HR (behavioral only)');
+      expect(result).toContain('D1 Communication');
+      expect(result).toContain('D2 Teamwork');
+      expect(result).not.toContain('TD1');
+      expect(result).not.toContain('TD2');
+      expect(result).toContain('Do NOT apply any technical criteria');
+    });
+
+    it('Technical: chứa technical dimensions, không có behavioral', () => {
+      const result = service.applyContextPackForEvaluation(
+        'base',
+        contextPack,
+        'technical',
+      );
+
+      expect(result).toContain('Technical (technical only)');
+      expect(result).toContain('TD1 Fundamentals');
+      expect(result).toContain('TD2 Application');
+      expect(result).not.toContain('D1 Communication');
+      expect(result).toContain('Do NOT apply any behavioral criteria');
+    });
+
+    it('Mixed: chứa cả hai bộ dimensions với session-level weights', () => {
+      const result = service.applyContextPackForEvaluation(
+        'base',
+        contextPack,
+        'mixed',
+      );
+
+      expect(result).toContain('Mixed (behavioral + technical)');
+      expect(result).toContain('D1 Communication');
+      expect(result).toContain('TD1 Fundamentals');
+      expect(result).toContain('session weight: 0.45');
+      expect(result).toContain('session weight: 0.55');
+      expect(result).toContain('Scoring formula:');
+    });
+
+    it('mọi session type đều chứa cultural notes', () => {
+      (['hr', 'technical', 'mixed'] as const).forEach((sessionType) => {
+        const result = service.applyContextPackForEvaluation(
+          'base',
+          contextPack,
+          sessionType,
+        );
+        expect(result).toContain('Team-first culture');
+      });
+    });
+
+    it('output chứa base prompt', () => {
+      const result = service.applyContextPackForEvaluation(
+        'my-base-prompt',
+        contextPack,
+        'hr',
+      );
+      expect(result).toContain('my-base-prompt');
+    });
+  });
+
   describe('injectDynamicContext', () => {
     it('trả về [system, user] với job description', () => {
       const messages = service.injectDynamicContext({
@@ -145,8 +232,12 @@ describe('PromptBuilderService', () => {
       });
       const content = messages[1].content as string;
 
-      expect(content).toContain('<question>\nTell me about a challenge\n</question>');
-      expect(content).toContain('<answer>\nI solved a performance issue by adding pagination\n</answer>');
+      expect(content).toContain(
+        '<question>\nTell me about a challenge\n</question>',
+      );
+      expect(content).toContain(
+        '<answer>\nI solved a performance issue by adding pagination\n</answer>',
+      );
     });
 
     it('không thêm <question> hay <answer> khi thiếu hai trường này', () => {

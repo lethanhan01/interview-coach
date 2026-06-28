@@ -55,7 +55,8 @@ export class SavedJobDescriptionService {
       location: trimOptional(dto.location),
       requirements: dto.requirements.trim(),
       jobContent: dto.jobContent.trim(),
-      techStack: dto.techStack?.map((item) => item.trim()).filter(Boolean) ?? [],
+      techStack:
+        dto.techStack?.map((item) => item.trim()).filter(Boolean) ?? [],
       benefits: trimOptional(dto.benefits),
       salary: trimOptional(dto.salary),
       bonus: trimOptional(dto.bonus),

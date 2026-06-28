@@ -107,9 +107,16 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
           'Giao tiếp & Trình bày',
           'Tư duy & Giải quyết vấn đề',
         ],
+        behavioralDimensions: [
+          { id: 'D1', name: 'Giao tiếp & Trình bày', weight: 0.2 },
+          { id: 'D2', name: 'Tư duy & Giải quyết vấn đề', weight: 0.2 },
+        ],
+        technicalDimensions: [
+          { id: 'TD1', name: 'Kiến thức nền tảng', weight: 0.25 },
+        ],
         culturalNotes:
           'Vietnamese workplace context: emphasize teamwork and practical problem-solving.',
-        scoringWeights: {},
+        scoringWeights: { behavioral_weight: 0.5, technical_weight: 0.5 },
       }),
     };
 

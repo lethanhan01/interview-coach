@@ -190,7 +190,9 @@ describe('ReportService', () => {
     });
 
     it('trả về reportQuality=full khi không có fallback feedbacks', async () => {
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(COMPLETED_SESSION);
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
       mockPrisma.sessionQuestion.findMany.mockResolvedValue([
         {
           id: 'q-1',
@@ -217,7 +219,9 @@ describe('ReportService', () => {
     });
 
     it('trả về reportQuality=unavailable khi tất cả feedbacks là fallback', async () => {
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(COMPLETED_SESSION);
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
       mockPrisma.sessionQuestion.findMany.mockResolvedValue([
         {
           id: 'q-1',
@@ -244,7 +248,9 @@ describe('ReportService', () => {
     });
 
     it('trả về reportQuality=partial khi một phần feedbacks là fallback', async () => {
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(COMPLETED_SESSION);
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
       mockPrisma.sessionQuestion.findMany.mockResolvedValue([
         {
           id: 'q-1',
@@ -253,7 +259,13 @@ describe('ReportService', () => {
           userAnswers: [
             {
               answerText: 'A1',
-              aiFeedback: { overallScore: 80, modelAnswer: 'M', keyTakeaway: 'K', isFallback: false, annotatedSegments: [] },
+              aiFeedback: {
+                overallScore: 80,
+                modelAnswer: 'M',
+                keyTakeaway: 'K',
+                isFallback: false,
+                annotatedSegments: [],
+              },
             },
           ],
         },
@@ -264,7 +276,13 @@ describe('ReportService', () => {
           userAnswers: [
             {
               answerText: 'A2',
-              aiFeedback: { overallScore: 0, modelAnswer: '', keyTakeaway: 'AI unavailable', isFallback: true, annotatedSegments: [] },
+              aiFeedback: {
+                overallScore: 0,
+                modelAnswer: '',
+                keyTakeaway: 'AI unavailable',
+                isFallback: true,
+                annotatedSegments: [],
+              },
             },
           ],
         },
@@ -473,7 +491,7 @@ describe('ReportService', () => {
         status: 'completing',
       });
       mockPrisma.userAnswer.count
-        .mockResolvedValueOnce(3)  // total
+        .mockResolvedValueOnce(3) // total
         .mockResolvedValueOnce(2); // pending non-skipped feedbacks
 
       await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
@@ -502,7 +520,7 @@ describe('ReportService', () => {
         status: 'completing',
       });
       mockPrisma.userAnswer.count
-        .mockResolvedValueOnce(3)  // total
+        .mockResolvedValueOnce(3) // total
         .mockResolvedValueOnce(0); // pending non-skipped feedbacks
       mockPrisma.userAnswer.findMany.mockResolvedValue([
         { id: 'a-1' },

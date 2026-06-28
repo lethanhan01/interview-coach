@@ -10,7 +10,8 @@ const BASE_DTO = {
   headcount: '2 người',
   location: 'Hà Nội',
   requirements: 'Có kinh nghiệm Node.js, SQL và thiết kế API RESTful.',
-  jobContent: 'Xây dựng backend service, tích hợp database và tối ưu hiệu năng.',
+  jobContent:
+    'Xây dựng backend service, tích hợp database và tối ưu hiệu năng.',
   techStack: ['Node.js', 'PostgreSQL'],
   benefits: 'Bảo hiểm sức khỏe, đào tạo nội bộ',
   salary: '20-30 triệu',

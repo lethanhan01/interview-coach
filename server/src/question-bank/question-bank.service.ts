@@ -34,7 +34,11 @@ export class QuestionBankService {
     }
 
     const candidates = await this.prisma.questionBank.findMany({
-      where: { sessionType: sessionType as QuestionSessionType, contextPackId, deletedAt: null },
+      where: {
+        sessionType: sessionType as QuestionSessionType,
+        contextPackId,
+        deletedAt: null,
+      },
       orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
       take: count * 3,
     });

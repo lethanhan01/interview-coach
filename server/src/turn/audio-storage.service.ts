@@ -79,14 +79,12 @@ export class AudioStorageService {
     }
 
     const objectPath = `${userId}/${sessionId}/audio-${randomUUID()}.${extension}`;
-    const { error } = await this.storage.from(AUDIO_BUCKET).upload(
-      objectPath,
-      file.buffer,
-      {
+    const { error } = await this.storage
+      .from(AUDIO_BUCKET)
+      .upload(objectPath, file.buffer, {
         contentType: mimeType,
         upsert: false,
-      },
-    );
+      });
 
     if (error) {
       throw new InterviewAIException(

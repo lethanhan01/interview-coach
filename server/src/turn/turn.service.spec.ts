@@ -86,7 +86,10 @@ describe('TurnService', () => {
           useValue: mockVoiceMetrics,
         },
         { provide: getQueueToken(FEEDBACK_QUEUE), useValue: mockFeedbackQueue },
-        { provide: getQueueToken(TRANSCRIPTION_QUEUE), useValue: mockTranscriptionQueue },
+        {
+          provide: getQueueToken(TRANSCRIPTION_QUEUE),
+          useValue: mockTranscriptionQueue,
+        },
       ],
     }).compile();
 
@@ -494,7 +497,11 @@ describe('TurnService', () => {
       });
       mockTranscriptionQueue.add.mockResolvedValue({});
 
-      const result = await service.submitAnswer('session-123', 'user-abc', voiceDto);
+      const result = await service.submitAnswer(
+        'session-123',
+        'user-abc',
+        voiceDto,
+      );
 
       expect(result).toEqual({
         answerId: 'answer-1',
@@ -647,7 +654,11 @@ describe('TurnService', () => {
         transcriptionStatus: 'done',
       });
 
-      const result = await service.submitAnswer('session-123', 'user-abc', VOICE_DTO);
+      const result = await service.submitAnswer(
+        'session-123',
+        'user-abc',
+        VOICE_DTO,
+      );
 
       expect(result).toEqual({
         answerId: 'answer-1',
@@ -675,7 +686,11 @@ describe('TurnService', () => {
       });
       mockTranscriptionQueue.add.mockResolvedValue({});
 
-      const result = await service.submitAnswer('session-123', 'user-abc', VOICE_DTO);
+      const result = await service.submitAnswer(
+        'session-123',
+        'user-abc',
+        VOICE_DTO,
+      );
 
       expect(result).toEqual({
         answerId: 'answer-1',
@@ -713,7 +728,11 @@ describe('TurnService', () => {
         transcriptionStatus: 'failed',
       });
 
-      const result = await service.submitAnswer('session-123', 'user-abc', VOICE_DTO);
+      const result = await service.submitAnswer(
+        'session-123',
+        'user-abc',
+        VOICE_DTO,
+      );
 
       expect(result).toEqual({
         answerId: 'answer-1',

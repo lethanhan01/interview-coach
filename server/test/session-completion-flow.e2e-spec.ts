@@ -209,7 +209,7 @@ describe('Session completion flow (integration)', () => {
           })),
         })),
       } as any,
-      reportService as any,
+      reportService,
     );
     const sessionService = new SessionService(
       prisma as any,

@@ -13,7 +13,10 @@ import {
   getFallbackActionPlan,
   getFallbackReportSummary,
 } from '../fallback-content';
-import { getLanguageInstruction, resolveOutputLanguage } from '../output-language';
+import {
+  getLanguageInstruction,
+  resolveOutputLanguage,
+} from '../output-language';
 
 interface ComprehensiveReportJobDto {
   sessionId: string;
@@ -36,7 +39,10 @@ const skippedAnswerSchema = z.object({
   ),
 });
 
-function fallbackSkippedModelAnswer(questionText: string, language: 'vi' | 'en') {
+function fallbackSkippedModelAnswer(
+  questionText: string,
+  language: 'vi' | 'en',
+) {
   if (language === 'vi') {
     return `Một câu trả lời tốt nên trả lời trực tiếp câu hỏi "${questionText}", nêu bối cảnh ngắn gọn, đưa ra hành động cụ thể của bạn và kết thúc bằng kết quả hoặc bài học rõ ràng.`;
   }
@@ -70,9 +76,7 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       orderBy: { createdAt: 'asc' },
     });
     const skippedAnswers = answers.filter((answer) => answer.skipped);
-    const skippedAnswerIds = new Set(
-      skippedAnswers.map((answer) => answer.id),
-    );
+    const skippedAnswerIds = new Set(skippedAnswers.map((answer) => answer.id));
     const answeredTurnIds = turnIds.filter(
       (turnId) => !skippedAnswerIds.has(turnId),
     );

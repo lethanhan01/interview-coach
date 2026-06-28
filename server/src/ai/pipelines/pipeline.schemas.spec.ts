@@ -4,7 +4,8 @@ describe('FeedbackSchema', () => {
   it('normalizes null optional annotated segment text fields to undefined', () => {
     const parsed = FeedbackSchema.parse({
       overall_score: 82,
-      model_answer: 'A stronger answer would give a concise situation, action, and measurable result.',
+      model_answer:
+        'A stronger answer would give a concise situation, action, and measurable result.',
       key_takeaway: 'The answer is understandable but needs sharper evidence.',
       annotated_segments: [
         {

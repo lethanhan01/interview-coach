@@ -27,11 +27,15 @@ interface SessionUpdateArgs {
 
 interface PrismaMock {
   userAnswer: {
-    findMany: jest.MockedFunction<() => Promise<Array<{
-      id: string;
-      skipped: boolean;
-      question: { questionText: string; orderIndex: number };
-    }>>>;
+    findMany: jest.MockedFunction<
+      () => Promise<
+        Array<{
+          id: string;
+          skipped: boolean;
+          question: { questionText: string; orderIndex: number };
+        }>
+      >
+    >;
   };
   aiFeedback: {
     findMany: jest.MockedFunction<() => Promise<FeedbackRow[]>>;
@@ -42,9 +46,13 @@ interface PrismaMock {
     >;
   };
   sessionReport: {
-    upsert: jest.MockedFunction<(args: unknown) => Promise<Record<string, never>>>;
+    upsert: jest.MockedFunction<
+      (args: unknown) => Promise<Record<string, never>>
+    >;
   };
-  $transaction: jest.MockedFunction<(ops: Promise<unknown>[]) => Promise<unknown[]>>;
+  $transaction: jest.MockedFunction<
+    (ops: Promise<unknown>[]) => Promise<unknown[]>
+  >;
 }
 
 describe('ComprehensiveReportProcessor', () => {
@@ -208,7 +216,9 @@ describe('ComprehensiveReportProcessor', () => {
     const actionPlanCall = prisma.sessionReport.upsert.mock.calls.find(
       (call) => (call[0] as any).create.reportType === 'action_plan',
     );
-    expect((actionPlanCall?.[0] as any).create.contentJson.items).toHaveLength(3);
+    expect((actionPlanCall?.[0] as any).create.contentJson.items).toHaveLength(
+      3,
+    );
     expect((actionPlanCall?.[0] as any).create.contentJson.items[0]).toContain(
       'Viết lại',
     );
@@ -297,12 +307,14 @@ describe('ComprehensiveReportProcessor', () => {
     const skippedAnswersCall = prisma.sessionReport.upsert.mock.calls.find(
       (call) => (call[0] as any).create.reportType === 'skipped_answers',
     );
-    expect((skippedAnswersCall?.[0] as any).create.contentJson.answers).toEqual([
-      {
-        answerId: 'answer-2',
-        modelAnswer: 'Bạn nên nêu các điểm mạnh phù hợp vị trí.',
-      },
-    ]);
+    expect((skippedAnswersCall?.[0] as any).create.contentJson.answers).toEqual(
+      [
+        {
+          answerId: 'answer-2',
+          modelAnswer: 'Bạn nên nêu các điểm mạnh phù hợp vị trí.',
+        },
+      ],
+    );
   });
 
   it('skipped-only: không yêu cầu feedback, score=null và vẫn lưu suggested answers', async () => {
@@ -349,6 +361,8 @@ describe('ComprehensiveReportProcessor', () => {
     const skippedAnswersCall = prisma.sessionReport.upsert.mock.calls.find(
       (call) => (call[0] as any).create.reportType === 'skipped_answers',
     );
-    expect((skippedAnswersCall?.[0] as any).create.contentJson.answers).toHaveLength(2);
+    expect(
+      (skippedAnswersCall?.[0] as any).create.contentJson.answers,
+    ).toHaveLength(2);
   });
 });

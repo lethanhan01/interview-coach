@@ -131,8 +131,11 @@ export class QuestionGenerationProcessor extends WorkerHost {
     }
 
     try {
-      const merged = this.mergeQuestions(aiQuestions, qbQuestions, totalQuestions)
-        .map((row) => ({ ...row, sessionId }));
+      const merged = this.mergeQuestions(
+        aiQuestions,
+        qbQuestions,
+        totalQuestions,
+      ).map((row) => ({ ...row, sessionId }));
       const result = await this.prisma.sessionQuestion.createMany({
         data: merged,
         skipDuplicates: true,
@@ -144,7 +147,11 @@ export class QuestionGenerationProcessor extends WorkerHost {
       if (qbQuestions.length > 0) {
         await Promise.all(
           qbQuestions.map((q) =>
-            this.questionBankService.recordUsage(q.questionBankId, sessionId, userId),
+            this.questionBankService.recordUsage(
+              q.questionBankId,
+              sessionId,
+              userId,
+            ),
           ),
         );
       }
@@ -179,7 +186,10 @@ export class QuestionGenerationProcessor extends WorkerHost {
   }> {
     // AI questions appear every AI_QUESTION_EVERY_N positions (positions 5, 10, 15, ...)
     const aiPositions = new Set(
-      Array.from({ length: aiQuestions.length }, (_, i) => (i + 1) * AI_QUESTION_EVERY_N),
+      Array.from(
+        { length: aiQuestions.length },
+        (_, i) => (i + 1) * AI_QUESTION_EVERY_N,
+      ),
     );
 
     const rows: ReturnType<typeof this.mergeQuestions> = [];

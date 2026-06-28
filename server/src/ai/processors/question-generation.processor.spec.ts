@@ -87,7 +87,11 @@ describe('QuestionGenerationProcessor', () => {
 
   it('tạo 5 questions hybrid (QB pos 1-4, AI pos 5), cập nhật status=active và emit SSE', async () => {
     // totalQuestions=5 → aiCount=1, qbCount=4
-    const aiQuestion = { text: 'Điểm mạnh là gì?', category: 'behavioral', competencyDomain: 'communication' };
+    const aiQuestion = {
+      text: 'Điểm mạnh là gì?',
+      category: 'behavioral',
+      competencyDomain: 'communication',
+    };
     const qbResult = makeFallbackQuestions(4);
     const mockStrategy = {
       generateQuestions: jest.fn().mockResolvedValue([aiQuestion]),
@@ -102,14 +106,34 @@ describe('QuestionGenerationProcessor', () => {
     await processor.process(makeJob()); // totalQuestions=5
 
     expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
-    expect(mockQuestionBankService.selectFallbackQuestions).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
+    expect(
+      mockQuestionBankService.selectFallbackQuestions,
+    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
     const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
     expect(createArgs.data).toHaveLength(5);
     // QB questions at pos 1-4
-    expect(createArgs.data[0]).toEqual(expect.objectContaining({ sessionId: 'session-123', questionBankId: 'qb-1', orderIndex: 1 }));
-    expect(createArgs.data[3]).toEqual(expect.objectContaining({ sessionId: 'session-123', questionBankId: 'qb-4', orderIndex: 4 }));
+    expect(createArgs.data[0]).toEqual(
+      expect.objectContaining({
+        sessionId: 'session-123',
+        questionBankId: 'qb-1',
+        orderIndex: 1,
+      }),
+    );
+    expect(createArgs.data[3]).toEqual(
+      expect.objectContaining({
+        sessionId: 'session-123',
+        questionBankId: 'qb-4',
+        orderIndex: 4,
+      }),
+    );
     // AI question at pos 5, no questionBankId
-    expect(createArgs.data[4]).toEqual(expect.objectContaining({ sessionId: 'session-123', questionText: 'Điểm mạnh là gì?', orderIndex: 5 }));
+    expect(createArgs.data[4]).toEqual(
+      expect.objectContaining({
+        sessionId: 'session-123',
+        questionText: 'Điểm mạnh là gì?',
+        orderIndex: 5,
+      }),
+    );
     expect(createArgs.data[4]).not.toHaveProperty('questionBankId');
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
       where: {
@@ -133,7 +157,9 @@ describe('QuestionGenerationProcessor', () => {
     mockFactory.getStrategy.mockReturnValue({
       generateQuestions: jest.fn().mockResolvedValue(generatedQuestions),
     });
-    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(makeFallbackQuestions(4));
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+      makeFallbackQuestions(4),
+    );
     mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
     mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
     mockSse.emit.mockResolvedValue(undefined);
@@ -142,10 +168,12 @@ describe('QuestionGenerationProcessor', () => {
 
     const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
     expect(createArgs.data).toHaveLength(5);
-    expect(createArgs.data.map((q: { orderIndex: number }) => q.orderIndex)).toEqual([
-      1, 2, 3, 4, 5,
-    ]);
-    expect(mockQuestionBankService.selectFallbackQuestions).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
+    expect(
+      createArgs.data.map((q: { orderIndex: number }) => q.orderIndex),
+    ).toEqual([1, 2, 3, 4, 5]);
+    expect(
+      mockQuestionBankService.selectFallbackQuestions,
+    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
     expect(mockQuestionBankService.recordUsage).toHaveBeenCalledTimes(4);
   });
 
@@ -210,7 +238,9 @@ describe('QuestionGenerationProcessor', () => {
     mockFactory.getStrategy.mockReturnValue({
       generateQuestions: jest.fn().mockResolvedValue(makeGeneratedQuestions(1)),
     });
-    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(makeFallbackQuestions(4));
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+      makeFallbackQuestions(4),
+    );
     mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
     mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
     mockSse.emit.mockRejectedValue(new Error('Redis unavailable'));
@@ -218,8 +248,12 @@ describe('QuestionGenerationProcessor', () => {
     await expect(processor.process(makeJob())).resolves.toBeUndefined();
 
     // QB called once for hybrid qbCount=4 — not zero, not twice (no second fallback)
-    expect(mockQuestionBankService.selectFallbackQuestions).toHaveBeenCalledTimes(1);
-    expect(mockQuestionBankService.selectFallbackQuestions).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
+    expect(
+      mockQuestionBankService.selectFallbackQuestions,
+    ).toHaveBeenCalledTimes(1);
+    expect(
+      mockQuestionBankService.selectFallbackQuestions,
+    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledTimes(1);
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
       where: {
@@ -294,12 +328,9 @@ describe('QuestionGenerationProcessor', () => {
     await expect(processor.process(makeJob())).resolves.toBeUndefined();
 
     expect(generateQuestions).toHaveBeenCalledTimes(1);
-    expect(mockQuestionBankService.selectFallbackQuestions).toHaveBeenCalledWith(
-      'hr',
-      'VN',
-      5,
-      'vi',
-    );
+    expect(
+      mockQuestionBankService.selectFallbackQuestions,
+    ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi');
     expect(mockPrisma.sessionQuestion.createMany).toHaveBeenCalledTimes(1);
   });
 

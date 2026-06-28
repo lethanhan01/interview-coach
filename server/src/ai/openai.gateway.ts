@@ -223,8 +223,7 @@ export class OpenAIGateway {
       | undefined;
     const choice = responseRecord?.choices?.[0];
     const message = choice?.message;
-    const content =
-      typeof message?.content === 'string' ? message.content : '';
+    const content = typeof message?.content === 'string' ? message.content : '';
     const finishReason =
       typeof choice?.finish_reason === 'string'
         ? choice.finish_reason
@@ -236,7 +235,9 @@ export class OpenAIGateway {
     return { content, finishReason, reasoningContentLength };
   }
 
-  private emptyResponseException(metadata: ChoiceMetadata): InterviewAIException {
+  private emptyResponseException(
+    metadata: ChoiceMetadata,
+  ): InterviewAIException {
     return new InterviewAIException(
       ErrorCode.AI_EMPTY_RESPONSE,
       HttpStatus.BAD_GATEWAY,

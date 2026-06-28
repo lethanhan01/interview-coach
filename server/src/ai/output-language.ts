@@ -1,6 +1,8 @@
 export type OutputLanguage = 'vi' | 'en';
 
-export function resolveOutputLanguage(language?: string | null): OutputLanguage {
+export function resolveOutputLanguage(
+  language?: string | null,
+): OutputLanguage {
   return language === 'en' ? 'en' : 'vi';
 }
 

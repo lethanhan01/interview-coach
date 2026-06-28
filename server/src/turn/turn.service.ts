@@ -29,7 +29,8 @@ export class TurnService {
     private readonly audioStorageService: AudioStorageService,
     private readonly voiceMetricsService: VoiceMetricsService,
     @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
-    @InjectQueue(TRANSCRIPTION_QUEUE) private readonly transcriptionQueue: Queue,
+    @InjectQueue(TRANSCRIPTION_QUEUE)
+    private readonly transcriptionQueue: Queue,
   ) {}
 
   async uploadAudio(
@@ -186,15 +187,11 @@ export class TurnService {
           sessionType,
           language: session.language as 'vi' | 'en',
         };
-        await this.transcriptionQueue.add(
-          'transcription',
-          retryPayload,
-          {
-            jobId: `transcription-${existingVoiceAnswer.id}`,
-            attempts: TRANSCRIPTION_JOB_ATTEMPTS,
-            backoff: { type: 'fixed', delay: 3000 },
-          },
-        );
+        await this.transcriptionQueue.add('transcription', retryPayload, {
+          jobId: `transcription-${existingVoiceAnswer.id}`,
+          attempts: TRANSCRIPTION_JOB_ATTEMPTS,
+          backoff: { type: 'fixed', delay: 3000 },
+        });
         return {
           answerId: existingVoiceAnswer.id,
           feedbackQueued: false,
@@ -232,15 +229,11 @@ export class TurnService {
         language: session.language as 'vi' | 'en',
       };
 
-      await this.transcriptionQueue.add(
-        'transcription',
-        transcriptionPayload,
-        {
-          jobId: `transcription-${answer.id}`,
-          attempts: TRANSCRIPTION_JOB_ATTEMPTS,
-          backoff: { type: 'fixed', delay: 3000 },
-        },
-      );
+      await this.transcriptionQueue.add('transcription', transcriptionPayload, {
+        jobId: `transcription-${answer.id}`,
+        attempts: TRANSCRIPTION_JOB_ATTEMPTS,
+        backoff: { type: 'fixed', delay: 3000 },
+      });
 
       return {
         answerId: answer.id,
@@ -280,8 +273,7 @@ export class TurnService {
           audioFileUrl: dto.audioFileUrl,
           audioDurationSeconds: dto.audioDurationSeconds,
           audioSizeBytes: dto.audioSizeBytes,
-          transcriptionStatus:
-            dto.answerMode === 'voice' ? 'done' : undefined,
+          transcriptionStatus: dto.answerMode === 'voice' ? 'done' : undefined,
           voiceMetricsJson: voiceMetrics
             ? (voiceMetrics as unknown as Prisma.InputJsonValue)
             : undefined,

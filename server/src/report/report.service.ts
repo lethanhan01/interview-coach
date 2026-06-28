@@ -36,9 +36,7 @@ function findLatestReport<T extends { reportType: string; version: number }>(
     .sort((a, b) => b.version - a.version)[0];
 }
 
-function toSkippedModelAnswerMap(
-  value: unknown,
-): Map<string, string> {
+function toSkippedModelAnswerMap(value: unknown): Map<string, string> {
   const answers = toRecord(value).answers;
   if (!Array.isArray(answers)) return new Map();
 
@@ -239,7 +237,13 @@ export class ReportService {
 
     await this.reportQueue.add(
       'comprehensive-report',
-      { sessionId, sessionType, contextPack, language: outputLanguage, turnIds },
+      {
+        sessionId,
+        sessionType,
+        contextPack,
+        language: outputLanguage,
+        turnIds,
+      },
       {
         jobId,
         attempts: REPORT_JOB_ATTEMPTS,

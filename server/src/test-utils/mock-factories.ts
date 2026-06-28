@@ -178,6 +178,7 @@ export const createMockQuestionBankService = () => ({
 export const createMockPromptBuilderService = () => ({
   buildBaseSystem: jest.fn(),
   applyContextPack: jest.fn(),
+  applyContextPackForEvaluation: jest.fn(),
   injectDynamicContext: jest.fn(),
 });
 

@@ -35,6 +35,9 @@ describe('BasePipelineService (via HrPipelineService)', () => {
 
     mockPromptBuilder.buildBaseSystem.mockReturnValue('sys-prompt');
     mockPromptBuilder.applyContextPack.mockReturnValue('sys-prompt-with-pack');
+    mockPromptBuilder.applyContextPackForEvaluation.mockReturnValue(
+      'sys-prompt-with-pack',
+    );
     mockPromptBuilder.injectDynamicContext.mockReturnValue([
       { role: 'system', content: 'sys' },
       { role: 'user', content: 'user context' },
@@ -270,7 +273,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       );
     });
 
-    it('chain buildBaseSystem → applyContextPack → injectDynamicContext với question và answer', async () => {
+    it('chain buildBaseSystem → applyContextPackForEvaluation → injectDynamicContext với question và answer', async () => {
       const rawFeedback = {
         overall_score: 75,
         model_answer: 'A.',
@@ -285,14 +288,21 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       expect(mockPromptBuilder.buildBaseSystem).toHaveBeenCalledWith(
         'surgical-feedback',
       );
-      expect(mockPromptBuilder.applyContextPack).toHaveBeenCalledWith(
+      expect(
+        mockPromptBuilder.applyContextPackForEvaluation,
+      ).toHaveBeenCalledWith(
         expect.stringContaining('Output language: Vietnamese.'),
         mockContextPack,
+        'hr',
       );
-      expect(mockPromptBuilder.applyContextPack).toHaveBeenCalledWith(
+      expect(
+        mockPromptBuilder.applyContextPackForEvaluation,
+      ).toHaveBeenCalledWith(
         expect.stringContaining('Interview strategy:'),
         mockContextPack,
+        'hr',
       );
+      expect(mockPromptBuilder.applyContextPack).not.toHaveBeenCalled();
       expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
         expect.objectContaining({
           jobDescription: '',
@@ -315,9 +325,12 @@ describe('BasePipelineService (via HrPipelineService)', () => {
 
       await service.evaluateAnswer({ ...feedbackInput, language: 'en' });
 
-      expect(mockPromptBuilder.applyContextPack).toHaveBeenCalledWith(
+      expect(
+        mockPromptBuilder.applyContextPackForEvaluation,
+      ).toHaveBeenCalledWith(
         expect.stringContaining('Output language: English.'),
         mockContextPack,
+        'hr',
       );
     });
 
