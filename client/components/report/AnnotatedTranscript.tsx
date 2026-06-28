@@ -1,10 +1,6 @@
 import { TranscriptItem, AnnotatedSegment } from "@/lib/types";
-
-const RUBRIC_DIMENSIONS: Record<"VN" | "Western", string> = {
-  VN: "clarity · structure · communication · culture_fit (25% mỗi tiêu chí)",
-  Western:
-    "clarity · structure · communication · impact · leadership (20% mỗi tiêu chí)",
-};
+import type { SessionType } from "@/lib/types";
+import { getRubricHint } from "@/lib/rubric-config";
 
 function isStrengthSegment(segment: AnnotatedSegment) {
   const level = segment.highlightLevel.toLowerCase();
@@ -77,11 +73,13 @@ function FeedbackSection({
 interface AnnotatedTranscriptProps {
   items: TranscriptItem[];
   contextPackId?: "VN" | "Western";
+  sessionType?: SessionType;
 }
 
 export default function AnnotatedTranscript({
   items,
   contextPackId,
+  sessionType,
 }: AnnotatedTranscriptProps) {
   return (
     <div className="flex flex-col gap-8">
@@ -109,9 +107,9 @@ export default function AnnotatedTranscript({
               </span>
             </div>
 
-            {contextPackId && (
+            {contextPackId && sessionType && (
               <p className="mb-3 text-xs text-gray-400">
-                Tiêu chí đánh giá: {RUBRIC_DIMENSIONS[contextPackId]}
+                Tiêu chí đánh giá: {getRubricHint(contextPackId, sessionType)}
               </p>
             )}
 
