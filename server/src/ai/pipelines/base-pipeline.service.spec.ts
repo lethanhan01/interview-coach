@@ -180,5 +180,104 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         errorCode: ErrorCode.INVALID_SESSION_TYPE,
       });
     });
+
+    it('gọi chatCompletion với temperature 0.3, maxTokens 1500, task feedback, responseFormat json_object', async () => {
+      const rawFeedback = {
+        overall_score: 75,
+        model_answer: 'Strong answer.',
+        key_takeaway: 'Good use of STAR.',
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      await service.evaluateAnswer(feedbackInput);
+
+      expect(mockOpenAI.chatCompletion).toHaveBeenCalledWith(
+        expect.objectContaining({
+          temperature: 0.3,
+          maxTokens: 1500,
+          task: 'feedback',
+          responseFormat: 'json_object',
+        }),
+      );
+    });
+
+    it('chain buildBaseSystem → applyContextPack → injectDynamicContext với question và answer', async () => {
+      const rawFeedback = {
+        overall_score: 75,
+        model_answer: 'A.',
+        key_takeaway: 'B.',
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      await service.evaluateAnswer(feedbackInput);
+
+      expect(mockPromptBuilder.buildBaseSystem).toHaveBeenCalledWith('surgical-feedback');
+      expect(mockPromptBuilder.applyContextPack).toHaveBeenCalledWith(
+        expect.any(String),
+        mockContextPack,
+      );
+      expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          question: feedbackInput.questionText,
+          answer: feedbackInput.answerText,
+          sessionType: feedbackInput.sessionType,
+        }),
+      );
+    });
+
+    it('logger.error được gọi khi zodValidator.validate ném lỗi rồi re-throw', async () => {
+      const rawFeedback = { overall_score: 'bad' };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      const validationError = new InterviewAIException(
+        ErrorCode.SCHEMA_VALIDATION_ERROR,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+      mockZodValidator.validate.mockImplementation(() => {
+        throw validationError;
+      });
+      const errorSpy = jest.spyOn((service as any).logger, 'error');
+
+      await expect(service.evaluateAnswer(feedbackInput)).rejects.toThrow(validationError);
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[feedback] Zod validation failed'),
+        expect.anything(),
+      );
+    });
+
+    it('logger.debug được gọi với raw response sau khi chatCompletion thành công', async () => {
+      const rawFeedback = {
+        overall_score: 80,
+        model_answer: 'Good.',
+        key_takeaway: 'OK.',
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+      const debugSpy = jest.spyOn((service as any).logger, 'debug');
+
+      await service.evaluateAnswer(feedbackInput);
+
+      expect(debugSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[feedback] raw response'),
+      );
+    });
+
+    it('logger.error được gọi khi JSON.parse fail rồi ném AI_SERVICE_ERROR', async () => {
+      mockOpenAI.chatCompletion.mockResolvedValue('not-json {{');
+      const errorSpy = jest.spyOn((service as any).logger, 'error');
+
+      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject({
+        errorCode: ErrorCode.AI_SERVICE_ERROR,
+      });
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[feedback] JSON parse failed'),
+        expect.anything(),
+      );
+    });
   });
 });

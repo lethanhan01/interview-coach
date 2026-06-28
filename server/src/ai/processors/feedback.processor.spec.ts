@@ -239,6 +239,46 @@ describe('FeedbackProcessor', () => {
     });
   });
 
+  it('getStrategy được gọi với sessionType từ job data', async () => {
+    await processor.process(makeJob());
+
+    expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
+  });
+
+  it('evaluateAnswer được gọi với đúng FeedbackInput: sessionType, questionText, answerText', async () => {
+    await processor.process(makeJob());
+
+    expect(strategy.evaluateAnswer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionType: 'hr',
+        questionText: 'Giới thiệu bản thân?',
+        answerText: 'Tôi là backend developer.',
+      }),
+    );
+  });
+
+  it('SSE turn.feedback_ready phát với channel sse:session:{sessionId} và hasAnnotations đúng', async () => {
+    await processor.process(makeJob());
+
+    expect(mockSse.emit).toHaveBeenCalledWith(
+      'sse:session:session-123',
+      'turn.feedback_ready',
+      { answerId: 'answer-1', hasAnnotations: true },
+    );
+  });
+
+  it('technical session type: getStrategy nhận technical', async () => {
+    const technicalJob = {
+      data: { ...jobData, sessionType: 'technical' as const },
+      attemptsMade: 0,
+      opts: { attempts: 2 },
+    } as Job<typeof jobData>;
+
+    await processor.process(technicalJob);
+
+    expect(mockFactory.getStrategy).toHaveBeenCalledWith('technical');
+  });
+
   it('gọi enqueueIfAllFeedbacksReady sau khi feedback thành công', async () => {
     const mockStrategy = {
       evaluateAnswer: jest.fn().mockResolvedValue({

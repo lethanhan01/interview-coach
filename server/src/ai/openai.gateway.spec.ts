@@ -143,3 +143,66 @@ describe('OpenAIGateway — JSON extraction', () => {
     expect(() => JSON.parse(result)).not.toThrow();
   });
 });
+
+describe('OpenAIGateway — empty response và task-specific timeout', () => {
+  const params = {
+    temperature: 0,
+    maxTokens: 10,
+    messages: [{ role: 'user' as const, content: 'hello' }],
+  };
+  const config = {
+    get: jest.fn((key: string) => {
+      const values: Record<string, string | undefined> = {
+        OPENAI_API_KEY: 'test-key',
+        OPENAI_BASE_URL: 'http://127.0.0.1:1234/v1',
+        OPENAI_CHAT_MODEL: 'google/gemma-4-e4b',
+        OPENAI_JSON_MODE: 'false',
+        OPENAI_TIMEOUT_MS: '30000',
+        OPENAI_FEEDBACK_TIMEOUT_MS: '300000',
+        OPENAI_QUESTION_TIMEOUT_MS: '120000',
+      };
+      return values[key];
+    }),
+  };
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('ném AI_EMPTY_RESPONSE khi model trả về content rỗng', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: '' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(params)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_EMPTY_RESPONSE,
+    });
+  });
+
+  it('ném AI_EMPTY_RESPONSE khi choices là mảng rỗng', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({ choices: [] });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(params)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_EMPTY_RESPONSE,
+    });
+  });
+
+  it('task feedback dùng OPENAI_FEEDBACK_TIMEOUT_MS (300s) cho AbortSignal', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const mockSignal = { aborted: false } as unknown as AbortSignal;
+    const timeoutSpy = jest
+      .spyOn(AbortSignal, 'timeout')
+      .mockReturnValue(mockSignal);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: '{"ok":true}' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await gateway.chatCompletion({ ...params, task: 'feedback' });
+
+    expect(timeoutSpy).toHaveBeenCalledWith(300000);
+    timeoutSpy.mockRestore();
+  });
+});

@@ -1,0 +1,216 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import type { Job } from 'bullmq';
+import { FeedbackProcessor } from './feedback.processor';
+import { HrPipelineService } from '../pipelines/hr.pipeline.service';
+import { TechnicalPipelineService } from '../pipelines/technical.pipeline.service';
+import { MixedPipelineService } from '../pipelines/mixed.pipeline.service';
+import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
+import { PromptBuilderService } from '../prompt-builder.service';
+import { ZodValidatorService } from '../zod-validator.service';
+import { OpenAIGateway } from '../openai.gateway';
+import { ContextPackService } from '../context-pack.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { SseService } from '../../common/services/sse.service';
+import { ReportService } from '../../report/report.service';
+import {
+  createMockReportService,
+  createMockSseService,
+} from '../../test-utils/mock-factories';
+
+const VALID_FEEDBACK_JSON = JSON.stringify({
+  overall_score: 78,
+  model_answer:
+    'In my project, I identified the performance bottleneck by profiling the database queries and implemented pagination to reduce load time significantly.',
+  key_takeaway: 'Good technical depth, but needs more concrete metrics.',
+  annotated_segments: [
+    {
+      segment_text: 'pagination',
+      start_index: 10,
+      end_index: 20,
+      highlight_level: 'strength',
+      annotation: 'Correct solution identified.',
+    },
+  ],
+});
+
+describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', () => {
+  let processor: FeedbackProcessor;
+  let mockOpenAI: { chatCompletion: jest.Mock; transcribe: jest.Mock; getChatModel: jest.Mock };
+  let tx: {
+    aiFeedback: {
+      findUnique: jest.Mock;
+      upsert: jest.Mock;
+    };
+    annotatedSegment: {
+      deleteMany: jest.Mock;
+      createMany: jest.Mock;
+    };
+    userAnswer: {
+      update: jest.Mock;
+    };
+  };
+  let mockPrisma: { $transaction: jest.Mock };
+  let mockSse: ReturnType<typeof createMockSseService>;
+  let mockReportService: ReturnType<typeof createMockReportService>;
+
+  const makeJob = (sessionType: 'hr' | 'technical' | 'mixed' = 'hr') =>
+    ({
+      data: {
+        sessionId: 'int-session-1',
+        turnId: 'int-answer-1',
+        answerId: 'int-answer-1',
+        questionText: 'Tell me about a technical challenge you solved.',
+        answerText: 'I solved a performance issue by implementing pagination.',
+        contextPack: 'VN' as const,
+        sessionType,
+      },
+      attemptsMade: 0,
+      opts: { attempts: 2 },
+    }) as unknown as Job<any>;
+
+  beforeEach(async () => {
+    mockOpenAI = {
+      chatCompletion: jest.fn().mockResolvedValue(VALID_FEEDBACK_JSON),
+      transcribe: jest.fn(),
+      getChatModel: jest.fn().mockReturnValue('google/gemma-4-e4b'),
+    };
+
+    tx = {
+      aiFeedback: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        upsert: jest.fn().mockResolvedValue({ id: 'fb-int-1' }),
+      },
+      annotatedSegment: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        createMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+      userAnswer: {
+        update: jest.fn().mockResolvedValue({}),
+      },
+    };
+    mockPrisma = {
+      $transaction: jest.fn((callback: any) => callback(tx)),
+    };
+    mockSse = createMockSseService();
+    mockSse.emit.mockResolvedValue(undefined);
+    mockReportService = createMockReportService();
+
+    const mockContextPackService = {
+      getContextPack: jest.fn().mockReturnValue({
+        type: 'VN' as const,
+        rubricDimensions: ['Giao tiếp & Trình bày', 'Tư duy & Giải quyết vấn đề'],
+        culturalNotes:
+          'Vietnamese workplace context: emphasize teamwork and practical problem-solving.',
+        scoringWeights: {},
+      }),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        FeedbackProcessor,
+        HrPipelineService,
+        TechnicalPipelineService,
+        MixedPipelineService,
+        PipelineStrategyFactory,
+        PromptBuilderService,
+        ZodValidatorService,
+        { provide: OpenAIGateway, useValue: mockOpenAI },
+        { provide: ContextPackService, useValue: mockContextPackService },
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: SseService, useValue: mockSse },
+        { provide: ReportService, useValue: mockReportService },
+      ],
+    }).compile();
+
+    processor = module.get(FeedbackProcessor);
+  });
+
+  afterEach(() => jest.clearAllMocks());
+
+  it('hr flow: chatCompletion nhận messages có system prompt và question/answer', async () => {
+    await processor.process(makeJob('hr'));
+
+    expect(mockOpenAI.chatCompletion).toHaveBeenCalledTimes(1);
+    const callArgs = mockOpenAI.chatCompletion.mock.calls[0][0];
+    expect(callArgs.temperature).toBe(0.3);
+    expect(callArgs.maxTokens).toBe(1500);
+    expect(callArgs.task).toBe('feedback');
+    expect(callArgs.responseFormat).toBe('json_object');
+
+    const systemMsg = callArgs.messages[0];
+    const userMsg = callArgs.messages[1];
+    expect(systemMsg.role).toBe('system');
+    expect(systemMsg.content).toContain('CRITICAL: model_answer');
+    expect(userMsg.role).toBe('user');
+    expect(userMsg.content).toContain('Tell me about a technical challenge you solved.');
+    expect(userMsg.content).toContain('I solved a performance issue by implementing pagination.');
+  });
+
+  it('hr flow: system prompt chứa cultural notes từ context pack', async () => {
+    await processor.process(makeJob('hr'));
+
+    const callArgs = mockOpenAI.chatCompletion.mock.calls[0][0];
+    const systemContent = callArgs.messages[0].content as string;
+    expect(systemContent).toContain('Vietnamese workplace context');
+    expect(systemContent).toContain('Giao tiếp & Trình bày');
+  });
+
+  it('hr flow: DB transaction upserts feedback với isFallback false và overallScore đúng', async () => {
+    await processor.process(makeJob('hr'));
+
+    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(tx.aiFeedback.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userAnswerId: 'int-answer-1' },
+        create: expect.objectContaining({ isFallback: false, overallScore: 78 }),
+      }),
+    );
+    expect(tx.annotatedSegment.deleteMany).toHaveBeenCalledWith({
+      where: { aiFeedbackId: 'fb-int-1' },
+    });
+    expect(tx.annotatedSegment.createMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('hr flow: SSE turn.feedback_ready emitted sau DB write', async () => {
+    await processor.process(makeJob('hr'));
+
+    expect(mockSse.emit).toHaveBeenCalledWith(
+      'sse:session:int-session-1',
+      'turn.feedback_ready',
+      expect.objectContaining({ answerId: 'int-answer-1' }),
+    );
+  });
+
+  it('technical flow: system prompt chứa strategy instructions cho technical', async () => {
+    await processor.process(makeJob('technical'));
+
+    const callArgs = mockOpenAI.chatCompletion.mock.calls[0][0];
+    const systemContent = callArgs.messages[0].content as string;
+    expect(systemContent).toContain('technical depth');
+  });
+
+  it('mixed flow: mixed session type route đến MixedPipelineService thành công', async () => {
+    await processor.process(makeJob('mixed'));
+
+    expect(mockOpenAI.chatCompletion).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('fallback: khi LLM trả về JSON không hợp lệ ở lần cuối thì ghi isFallback=true', async () => {
+    mockOpenAI.chatCompletion.mockResolvedValue('not valid json {{{{');
+
+    const lastAttemptJob = {
+      ...makeJob('hr'),
+      attemptsMade: 1,
+    } as unknown as Job<any>;
+
+    await expect(processor.process(lastAttemptJob)).resolves.toBeUndefined();
+
+    const upsertArgs = tx.aiFeedback.upsert.mock.calls[0][0];
+    expect(upsertArgs.create.isFallback).toBe(true);
+    expect(tx.userAnswer.update).toHaveBeenCalledWith({
+      where: { id: 'int-answer-1' },
+      data: { feedbackGenerated: true },
+    });
+  });
+});

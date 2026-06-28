@@ -127,7 +127,7 @@ describe('ReportService', () => {
           ErrorCode.REPORT_NOT_READY,
         );
         expect((e as InterviewAIException).getStatus()).toBe(
-          HttpStatus.NOT_FOUND,
+          HttpStatus.ACCEPTED,
         );
       }
     });
