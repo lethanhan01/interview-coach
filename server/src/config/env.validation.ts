@@ -14,6 +14,7 @@ const EnvSchema = z
     OPENAI_TIMEOUT_MS: z.coerce.number().positive().default(30_000),
     OPENAI_FEEDBACK_TIMEOUT_MS: z.coerce.number().positive().default(300_000),
     OPENAI_QUESTION_TIMEOUT_MS: z.coerce.number().positive().default(120_000),
+    OPENAI_QUESTION_MAX_TOKENS: z.coerce.number().int().positive().default(2_400),
     REDIS_HOST: z.string().default('localhost'),
     REDIS_PORT: z.coerce.number().default(6379),
     AUDIO_ALLOWED_HOSTS: z.string().optional(),

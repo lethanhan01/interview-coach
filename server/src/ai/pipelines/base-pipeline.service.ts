@@ -1,4 +1,5 @@
 import { HttpStatus, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { OpenAIGateway } from '../openai.gateway';
 import { PromptBuilderService } from '../prompt-builder.service';
 import { ZodValidatorService } from '../zod-validator.service';
@@ -18,6 +19,7 @@ import {
   PROMPT_VERSION,
 } from './pipeline.schemas';
 import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.1';
+import { QUESTION_GEN_PROMPT_CONFIG } from '../prompts/question-gen-v1.0';
 
 export abstract class BasePipelineService implements InterviewPipeline {
   protected abstract readonly supportedSessionType: SessionType;
@@ -28,6 +30,7 @@ export abstract class BasePipelineService implements InterviewPipeline {
     protected readonly openai: OpenAIGateway,
     protected readonly promptBuilder: PromptBuilderService,
     protected readonly zodValidator: ZodValidatorService,
+    protected readonly config: ConfigService,
   ) {}
 
   async generateQuestions(
@@ -47,8 +50,8 @@ export abstract class BasePipelineService implements InterviewPipeline {
     });
     const raw = await this.openai.chatCompletion({
       messages,
-      temperature: 0.8,
-      maxTokens: 600,
+      temperature: QUESTION_GEN_PROMPT_CONFIG.temperature,
+      maxTokens: this.getQuestionMaxTokens(),
       responseFormat: 'json_object',
       task: 'question-generation',
     });
@@ -146,5 +149,16 @@ export abstract class BasePipelineService implements InterviewPipeline {
     }
 
     return `${baseSystem}\n\nInterview strategy: ${this.strategyInstructions}`;
+  }
+
+  private getQuestionMaxTokens(): number {
+    const configured = Number(
+      this.config.get('OPENAI_QUESTION_MAX_TOKENS') ??
+        QUESTION_GEN_PROMPT_CONFIG.maxTokens,
+    );
+
+    return Number.isFinite(configured) && configured > 0
+      ? configured
+      : QUESTION_GEN_PROMPT_CONFIG.maxTokens;
   }
 }

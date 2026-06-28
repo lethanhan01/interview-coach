@@ -5,12 +5,14 @@ import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
 import { QuestionBankService } from '../../question-bank/question-bank.service';
+import { OpenAIGateway } from '../openai.gateway';
 import {
   createMockPrismaService,
   createMockSseService,
   createMockContextPackService,
   createMockPipelineStrategyFactory,
   createMockQuestionBankService,
+  createMockOpenAIGateway,
 } from '../../test-utils/mock-factories';
 import type { Job } from 'bullmq';
 import { HttpStatus } from '@nestjs/common';
@@ -24,6 +26,7 @@ describe('QuestionGenerationProcessor', () => {
   let mockContextPack: ReturnType<typeof createMockContextPackService>;
   let mockFactory: ReturnType<typeof createMockPipelineStrategyFactory>;
   let mockQuestionBankService: ReturnType<typeof createMockQuestionBankService>;
+  let mockOpenAI: ReturnType<typeof createMockOpenAIGateway>;
 
   const BASE_JOB_DATA = {
     sessionId: 'session-123',
@@ -61,6 +64,7 @@ describe('QuestionGenerationProcessor', () => {
     mockContextPack = createMockContextPackService();
     mockFactory = createMockPipelineStrategyFactory();
     mockQuestionBankService = createMockQuestionBankService();
+    mockOpenAI = createMockOpenAIGateway();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -70,6 +74,7 @@ describe('QuestionGenerationProcessor', () => {
         { provide: ContextPackService, useValue: mockContextPack },
         { provide: PipelineStrategyFactory, useValue: mockFactory },
         { provide: QuestionBankService, useValue: mockQuestionBankService },
+        { provide: OpenAIGateway, useValue: mockOpenAI },
       ],
     }).compile();
 
@@ -122,6 +127,9 @@ describe('QuestionGenerationProcessor', () => {
       ],
       skipDuplicates: true,
     });
+    const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
+    expect(createArgs.data[0]).not.toHaveProperty('questionBankId');
+    expect(createArgs.data[1]).not.toHaveProperty('questionBankId');
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
       where: {
         id: 'session-123',

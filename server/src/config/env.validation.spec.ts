@@ -26,6 +26,7 @@ describe('validateEnv', () => {
     expect(result.OPENAI_CHAT_MODEL).toBe('google/gemma-4-e4b');
     expect(result.OPENAI_JSON_MODE).toBe('false');
     expect(result.OPENAI_TIMEOUT_MS).toBe(30000);
+    expect(result.OPENAI_QUESTION_MAX_TOKENS).toBe(2400);
   });
 
   it('giữ lại cấu hình tắt auth cho local dev', () => {
@@ -57,6 +58,7 @@ describe('validateEnv', () => {
       OPENAI_CHAT_MODEL: 'google/gemma-4-e4b',
       OPENAI_JSON_MODE: 'true',
       OPENAI_TIMEOUT_MS: '45000',
+      OPENAI_QUESTION_MAX_TOKENS: '3600',
     });
 
     expect(result.OPENAI_API_KEY).toBe('local-key');
@@ -64,6 +66,7 @@ describe('validateEnv', () => {
     expect(result.OPENAI_CHAT_MODEL).toBe('google/gemma-4-e4b');
     expect(result.OPENAI_JSON_MODE).toBe('true');
     expect(result.OPENAI_TIMEOUT_MS).toBe(45000);
+    expect(result.OPENAI_QUESTION_MAX_TOKENS).toBe(3600);
   });
 
   it('cho phép tắt giới hạn tạo session trong local dev bằng giá trị 0', () => {

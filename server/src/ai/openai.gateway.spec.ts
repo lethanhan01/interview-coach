@@ -143,6 +143,19 @@ describe('OpenAIGateway — JSON extraction', () => {
     expect(() => JSON.parse(result)).not.toThrow();
   });
 
+  it('ném AI_SERVICE_ERROR rõ ràng khi responseFormat json_object nhưng output không phải JSON', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: 'not-json {{' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(jsonParams)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_SERVICE_ERROR,
+      message: expect.stringContaining('invalid or truncated JSON'),
+    });
+  });
+
   it('gửi response_format json_object khi OPENAI_JSON_MODE=true', async () => {
     const jsonModeConfig = {
       get: jest.fn((key: string) => {
@@ -216,6 +229,75 @@ describe('OpenAIGateway — empty response và task-specific timeout', () => {
     await expect(gateway.chatCompletion(params)).rejects.toMatchObject({
       errorCode: ErrorCode.AI_EMPTY_RESPONSE,
     });
+  });
+
+  it('retry đúng 1 lần với max_tokens=3600 khi question-generation bị content rỗng do finish_reason=length', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest
+      .fn()
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            finish_reason: 'length',
+            message: {
+              content: '',
+              reasoning_content: 'thinking without final JSON',
+            },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            finish_reason: 'stop',
+            message: { content: '{"questions":[]}' },
+          },
+        ],
+      });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(
+      gateway.chatCompletion({
+        ...params,
+        maxTokens: 2400,
+        responseFormat: 'json_object',
+        task: 'question-generation',
+      }),
+    ).resolves.toBe('{"questions":[]}');
+
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(create.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ max_tokens: 2400 }),
+    );
+    expect(create.mock.calls[1][0]).toEqual(
+      expect.objectContaining({ max_tokens: 3600 }),
+    );
+  });
+
+  it('sau retry truncated vẫn ném AI_EMPTY_RESPONSE nếu content cuối cùng rỗng', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [
+        {
+          finish_reason: 'length',
+          message: { content: '', reasoning_content: 'still thinking' },
+        },
+      ],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(
+      gateway.chatCompletion({
+        ...params,
+        maxTokens: 2400,
+        responseFormat: 'json_object',
+        task: 'question-generation',
+      }),
+    ).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_EMPTY_RESPONSE,
+      message: expect.stringContaining('empty final content'),
+    });
+    expect(create).toHaveBeenCalledTimes(2);
   });
 
   it('task feedback dùng OPENAI_FEEDBACK_TIMEOUT_MS (300s) cho AbortSignal', async () => {

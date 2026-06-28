@@ -18,7 +18,21 @@ interface DynamicContextParams {
 }
 
 const BASE_PROMPTS: Record<PromptTask, string> = {
-  'question-generation': `You are an expert interviewer. Generate relevant, thoughtful interview questions based on the job description and interview strategy. Return valid JSON with a "questions" array. Each question must have: "text" (string), "category" (string), "competency_domain" (string), "difficulty" (1-3 integer).`,
+  'question-generation': `You are an expert interviewer. Generate relevant, thoughtful interview questions based on the job description and interview strategy.
+
+Return ONLY a compact valid JSON object with exactly this shape, no markdown fences, no explanation, no analysis, no prose before or after the JSON:
+{
+  "questions": [
+    {
+      "text": "<one interview question>",
+      "category": "<short category>",
+      "competency_domain": "<short competency domain>",
+      "difficulty": <integer 1-3>
+    }
+  ]
+}
+
+Write the final JSON directly in the assistant message content.`,
   'surgical-feedback': `You are an expert interview coach. Evaluate the candidate's answer and provide surgical, actionable feedback.
 
 CRITICAL: model_answer must be a complete, concrete example answer of 3-4 concise sentences written as if a strong candidate is actually speaking. It must directly answer the question using specific details, demonstrate best practices, and read like a real spoken response — NOT a list of improvement tips, NOT meta-advice about what to say.

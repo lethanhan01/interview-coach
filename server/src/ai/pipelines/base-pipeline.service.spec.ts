@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { HrPipelineService } from './hr.pipeline.service';
 import { OpenAIGateway } from '../openai.gateway';
 import { PromptBuilderService } from '../prompt-builder.service';
@@ -18,6 +19,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
   let mockOpenAI: ReturnType<typeof createMockOpenAIGateway>;
   let mockPromptBuilder: ReturnType<typeof createMockPromptBuilderService>;
   let mockZodValidator: ReturnType<typeof createMockZodValidatorService>;
+  let mockConfig: { get: jest.Mock };
 
   const mockContextPack = {} as any;
 
@@ -25,6 +27,11 @@ describe('BasePipelineService (via HrPipelineService)', () => {
     mockOpenAI = createMockOpenAIGateway();
     mockPromptBuilder = createMockPromptBuilderService();
     mockZodValidator = createMockZodValidatorService();
+    mockConfig = {
+      get: jest.fn((key: string) =>
+        key === 'OPENAI_QUESTION_MAX_TOKENS' ? '2400' : undefined,
+      ),
+    };
 
     mockPromptBuilder.buildBaseSystem.mockReturnValue('sys-prompt');
     mockPromptBuilder.applyContextPack.mockReturnValue('sys-prompt-with-pack');
@@ -39,6 +46,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         { provide: OpenAIGateway, useValue: mockOpenAI },
         { provide: PromptBuilderService, useValue: mockPromptBuilder },
         { provide: ZodValidatorService, useValue: mockZodValidator },
+        { provide: ConfigService, useValue: mockConfig },
       ],
     }).compile();
 
@@ -86,6 +94,38 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         difficulty: 1,
       });
       expect(mockZodValidator.validate).toHaveBeenCalledTimes(1);
+    });
+
+    it('gọi chatCompletion với temperature 0.4 và maxTokens từ OPENAI_QUESTION_MAX_TOKENS', async () => {
+      const rawQuestions = {
+        questions: [
+          {
+            text: 'Bạn phối hợp với frontend như thế nào?',
+            category: 'behavioral',
+            competency_domain: 'collaboration',
+            difficulty: 2,
+          },
+          {
+            text: 'Khi deadline gấp bạn xử lý ra sao?',
+            category: 'behavioral',
+            competency_domain: 'ownership',
+            difficulty: 2,
+          },
+        ],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawQuestions));
+      mockZodValidator.validate.mockReturnValue(rawQuestions);
+
+      await service.generateQuestions(questionInput);
+
+      expect(mockOpenAI.chatCompletion).toHaveBeenCalledWith(
+        expect.objectContaining({
+          temperature: 0.4,
+          maxTokens: 2400,
+          task: 'question-generation',
+          responseFormat: 'json_object',
+        }),
+      );
     });
 
     it('ném AI_SERVICE_ERROR khi chatCompletion trả về JSON không hợp lệ', async () => {

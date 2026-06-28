@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import type { Job } from 'bullmq';
 import { FeedbackProcessor } from './feedback.processor';
 import { HrPipelineService } from '../pipelines/hr.pipeline.service';
@@ -112,6 +113,8 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
       }),
     };
 
+    const mockConfig = { get: jest.fn().mockReturnValue(undefined) };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FeedbackProcessor,
@@ -126,6 +129,7 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
         { provide: PrismaService, useValue: mockPrisma },
         { provide: SseService, useValue: mockSse },
         { provide: ReportService, useValue: mockReportService },
+        { provide: ConfigService, useValue: mockConfig },
       ],
     }).compile();
 

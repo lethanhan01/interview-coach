@@ -30,6 +30,13 @@ interface TranscribeResult {
 // Retry delays for transient rate limits only (not quota exhaustion)
 const RATE_LIMIT_RETRY_DELAYS_MS = [1000, 2000];
 const QUOTA_COOLDOWN_MS = 60_000;
+const QUESTION_TRUNCATED_RETRY_MAX_TOKENS = 3600;
+
+interface ChoiceMetadata {
+  content: string;
+  finishReason: string;
+  reasoningContentLength: number;
+}
 
 @Injectable()
 export class OpenAIGateway {
@@ -191,6 +198,52 @@ export class OpenAIGateway {
     return raw;
   }
 
+  private parseJsonContent(raw: string): string {
+    const extracted = this.extractJsonContent(raw);
+    try {
+      JSON.parse(extracted);
+      return extracted;
+    } catch {
+      throw new InterviewAIException(
+        ErrorCode.AI_SERVICE_ERROR,
+        HttpStatus.BAD_GATEWAY,
+        'AI provider returned invalid or truncated JSON response',
+      );
+    }
+  }
+
+  private getChoiceMetadata(response: unknown): ChoiceMetadata {
+    const responseRecord = response as
+      | {
+          choices?: Array<{
+            finish_reason?: unknown;
+            message?: Record<string, unknown>;
+          }>;
+        }
+      | undefined;
+    const choice = responseRecord?.choices?.[0];
+    const message = choice?.message;
+    const content =
+      typeof message?.content === 'string' ? message.content : '';
+    const finishReason =
+      typeof choice?.finish_reason === 'string'
+        ? choice.finish_reason
+        : 'unknown';
+    const reasoningContent = message?.reasoning_content;
+    const reasoningContentLength =
+      typeof reasoningContent === 'string' ? reasoningContent.length : 0;
+
+    return { content, finishReason, reasoningContentLength };
+  }
+
+  private emptyResponseException(metadata: ChoiceMetadata): InterviewAIException {
+    return new InterviewAIException(
+      ErrorCode.AI_EMPTY_RESPONSE,
+      HttpStatus.BAD_GATEWAY,
+      `AI provider returned empty final content (finish_reason=${metadata.finishReason}, reasoning_content_length=${metadata.reasoningContentLength})`,
+    );
+  }
+
   async chatCompletion(params: ChatCompletionParams): Promise<string> {
     const {
       messages,
@@ -215,31 +268,52 @@ export class OpenAIGateway {
     }
 
     return this.withRetry(async () => {
-      const response = await this.chatClient.chat.completions.create(
-        {
-          model,
-          messages,
-          temperature,
-          max_tokens: maxTokens,
-          ...(responseFormat === 'json_object' && this.jsonModeEnabled
-            ? { response_format: { type: 'json_object' } }
-            : {}),
-        },
-        requestTimeoutMs
-          ? { signal: AbortSignal.timeout(requestTimeoutMs) }
-          : undefined,
-      );
-      const content = response.choices[0]?.message?.content;
-      if (!content) {
-        throw new InterviewAIException(
-          ErrorCode.AI_EMPTY_RESPONSE,
-          HttpStatus.BAD_GATEWAY,
-          'AI provider returned empty response',
+      const createCompletion = (tokens: number) =>
+        this.chatClient.chat.completions.create(
+          {
+            model,
+            messages,
+            temperature,
+            max_tokens: tokens,
+            ...(responseFormat === 'json_object' && this.jsonModeEnabled
+              ? { response_format: { type: 'json_object' } }
+              : {}),
+          },
+          requestTimeoutMs
+            ? { signal: AbortSignal.timeout(requestTimeoutMs) }
+            : undefined,
         );
+
+      let effectiveMaxTokens = maxTokens;
+      let response = await createCompletion(effectiveMaxTokens);
+      let metadata = this.getChoiceMetadata(response);
+
+      if (
+        task === 'question-generation' &&
+        !metadata.content &&
+        metadata.finishReason === 'length'
+      ) {
+        effectiveMaxTokens = Math.max(
+          maxTokens,
+          QUESTION_TRUNCATED_RETRY_MAX_TOKENS,
+        );
+        this.logger.warn(
+          `AI question generation returned empty final content with finish_reason=length; retrying once with max_tokens=${effectiveMaxTokens} (model=${model}, reasoning_content_length=${metadata.reasoningContentLength})`,
+        );
+        response = await createCompletion(effectiveMaxTokens);
+        metadata = this.getChoiceMetadata(response);
       }
+
+      if (!metadata.content) {
+        this.logger.warn(
+          `AI provider returned empty final content (task=${task ?? 'unknown'}, model=${model}, max_tokens=${effectiveMaxTokens}, finish_reason=${metadata.finishReason}, reasoning_content_length=${metadata.reasoningContentLength})`,
+        );
+        throw this.emptyResponseException(metadata);
+      }
+
       return responseFormat === 'json_object'
-        ? this.extractJsonContent(content)
-        : content;
+        ? this.parseJsonContent(metadata.content)
+        : metadata.content;
     });
   }
 

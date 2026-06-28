@@ -7,6 +7,7 @@ import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
 import { QUESTION_GEN_QUEUE } from '../../common/constants/queue.constants';
 import { QuestionBankService } from '../../question-bank/question-bank.service';
+import { OpenAIGateway } from '../openai.gateway';
 import type {
   GeneratedQuestion,
   SessionType,
@@ -34,6 +35,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
     private readonly contextPackService: ContextPackService,
     private readonly factory: PipelineStrategyFactory,
     private readonly questionBankService: QuestionBankService,
+    private readonly openai: OpenAIGateway,
   ) {
     super();
   }
@@ -106,7 +108,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
     }
 
     try {
-      await this.prisma.sessionQuestion.createMany({
+      const result = await this.prisma.sessionQuestion.createMany({
         data: questions.map((q, index) => ({
           sessionId,
           questionText: q.text,
@@ -117,6 +119,9 @@ export class QuestionGenerationProcessor extends WorkerHost {
         })),
         skipDuplicates: true,
       });
+      this.logger.log(
+        `AI question generation persisted for session ${sessionId}: source=ai count=${result.count}/${questions.length} model=${this.openai.getChatModel()}`,
+      );
 
       if (await this.markActiveUnlessStopped(sessionId)) {
         await this.emitActive(sessionId);

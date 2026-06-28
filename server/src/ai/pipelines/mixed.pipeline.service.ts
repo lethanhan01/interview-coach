@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { OpenAIGateway } from '../openai.gateway';
 import { PromptBuilderService } from '../prompt-builder.service';
 import { ZodValidatorService } from '../zod-validator.service';
@@ -14,7 +15,8 @@ export class MixedPipelineService extends BasePipelineService {
     openai: OpenAIGateway,
     promptBuilder: PromptBuilderService,
     zodValidator: ZodValidatorService,
+    config: ConfigService,
   ) {
-    super(openai, promptBuilder, zodValidator);
+    super(openai, promptBuilder, zodValidator, config);
   }
 }
