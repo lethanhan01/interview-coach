@@ -96,6 +96,7 @@ describe('SessionService', () => {
         expect.objectContaining({
           data: expect.objectContaining({
             userId: 'user-abc',
+            language: 'vi',
             status: 'generating',
           }),
         }),
@@ -127,6 +128,28 @@ describe('SessionService', () => {
           attempts: 2,
           backoff: { type: 'fixed', delay: 2000 },
         },
+      );
+    });
+
+    it('lưu language=en khi client chọn tiếng Anh', async () => {
+      mockPrisma.interviewSession.count.mockResolvedValue(0);
+      mockPrisma.interviewSession.create.mockResolvedValue({
+        ...BASE_SESSION,
+        language: 'en',
+      });
+      mockQuestionQueue.add.mockResolvedValue({});
+
+      await service.create('user-abc', { ...CREATE_DTO, language: 'en' });
+
+      expect(mockPrisma.interviewSession.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ language: 'en' }),
+        }),
+      );
+      expect(mockQuestionQueue.add).toHaveBeenCalledWith(
+        'question-generation',
+        expect.objectContaining({ language: 'en' }),
+        expect.any(Object),
       );
     });
 
@@ -382,6 +405,7 @@ describe('SessionService', () => {
         'session-123',
         'hr',
         'VN',
+        'vi',
       );
     });
 
@@ -538,6 +562,12 @@ describe('SessionService', () => {
       expect(
         mockReportService.enqueueIfAllFeedbacksReady,
       ).toHaveBeenCalledTimes(1);
+      expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
+        'session-123',
+        'hr',
+        'VN',
+        'vi',
+      );
     });
   });
 

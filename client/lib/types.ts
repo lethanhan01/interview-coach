@@ -9,12 +9,14 @@ export type SessionStatus =
   | "error";
 export type SessionType = "hr" | "technical" | "mixed";
 export type ContextPack = "VN" | "Western";
+export type OutputLanguage = "vi" | "en";
 
 export interface Session {
   id: string;
   userId: string;
   sessionType: SessionType;
   contextPackId: ContextPack;
+  language?: OutputLanguage;
   savedJobDescriptionId?: string | null;
   status: SessionStatus;
   numQuestions: number;
@@ -29,6 +31,7 @@ export interface CreateSessionPayload {
   jobDescription: string;
   sessionType: SessionType;
   contextPack: ContextPack;
+  language?: OutputLanguage;
   numQuestions?: number;
   targetRoles?: string[];
   savedJobDescriptionId?: string;

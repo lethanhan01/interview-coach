@@ -9,12 +9,17 @@ import { REPORT_QUEUE } from '../../common/constants/queue.constants';
 import { COMPREHENSIVE_REPORT_PROMPT_CONFIG } from '../prompts/comprehensive-report-v1.0';
 import type { SessionType } from '../pipelines/interview-pipeline.interface';
 import { isAIQuotaExceeded } from '../ai-error.utils';
-import { FALLBACK_ACTION_PLAN } from '../fallback-content';
+import {
+  getFallbackActionPlan,
+  getFallbackReportSummary,
+} from '../fallback-content';
+import { getLanguageInstruction, resolveOutputLanguage } from '../output-language';
 
 interface ComprehensiveReportJobDto {
   sessionId: string;
   sessionType: SessionType;
   contextPack: 'VN' | 'Western';
+  language?: 'vi' | 'en';
   turnIds: string[];
 }
 
@@ -36,6 +41,7 @@ export class ComprehensiveReportProcessor extends WorkerHost {
 
   async process(job: Job<ComprehensiveReportJobDto>): Promise<void> {
     const { sessionId, turnIds } = job.data;
+    const language = resolveOutputLanguage(job.data.language);
 
     const feedbacks = await this.prisma.aiFeedback.findMany({
       where: { userAnswerId: { in: turnIds } },
@@ -68,8 +74,10 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       fallbackTurns: feedbacks.length - evaluatedFeedbacks.length,
       summary:
         aggregatedScore === null
-          ? 'AI scoring was unavailable. Your answers were saved and can be evaluated again after the AI service is restored.'
-          : `Interview completed with ${evaluatedFeedbacks.length} evaluated answers. Overall score: ${aggregatedScore}/100.`,
+          ? getFallbackReportSummary(language)
+          : language === 'vi'
+            ? `Phiên phỏng vấn đã hoàn thành với ${evaluatedFeedbacks.length} câu trả lời được đánh giá. Điểm tổng quan: ${aggregatedScore}/100.`
+            : `Interview completed with ${evaluatedFeedbacks.length} evaluated answers. Overall score: ${aggregatedScore}/100.`,
     };
 
     const commAnalysis = {
@@ -85,7 +93,7 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       })),
     };
 
-    let actionPlan: { items: string[] } = FALLBACK_ACTION_PLAN;
+    let actionPlan: { items: string[] } = getFallbackActionPlan(language);
 
     if (evaluatedFeedbacks.length > 0) {
       try {
@@ -103,8 +111,11 @@ export class ComprehensiveReportProcessor extends WorkerHost {
           messages: [
             {
               role: 'system',
-              content:
-                'You are an interview coach. Based on the feedback summaries, generate a concise action plan with 3-5 specific improvement items. Respond with JSON: { "items": ["item1", "item2", ...] }',
+              content: [
+                'You are an interview coach. Based on the feedback summaries, generate a concise action plan with 3-5 specific improvement items.',
+                getLanguageInstruction(language),
+                'Respond with JSON only: { "items": ["item1", "item2", ...] }',
+              ].join(' '),
             },
             {
               role: 'user',

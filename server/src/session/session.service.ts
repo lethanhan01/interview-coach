@@ -14,6 +14,7 @@ import {
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SessionStatusUpdate } from './dto/update-session-status.dto';
 import { ReportService } from '../report/report.service';
+import { resolveOutputLanguage } from '../ai/output-language';
 
 @Injectable()
 export class SessionService {
@@ -75,6 +76,8 @@ export class SessionService {
       dto.savedJobDescriptionId,
     );
 
+    const language = resolveOutputLanguage(dto.language);
+
     const session = await this.prisma.interviewSession.create({
       data: {
         userId,
@@ -84,6 +87,7 @@ export class SessionService {
         jobTitle: dto.targetRoles?.[0],
         sessionType: dto.sessionType,
         numQuestions: dto.numQuestions ?? 5,
+        language,
         contextPackId: dto.contextPack,
         status: 'generating',
       },
@@ -234,6 +238,7 @@ export class SessionService {
         sessionId,
         session.sessionType,
         session.contextPackId as 'VN' | 'Western',
+        session.language,
       );
       return session;
     }
@@ -264,6 +269,7 @@ export class SessionService {
         sessionId,
         session.sessionType,
         session.contextPackId as 'VN' | 'Western',
+        session.language,
       );
     } catch (error: unknown) {
       await this.prisma.interviewSession

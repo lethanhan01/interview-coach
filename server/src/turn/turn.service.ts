@@ -146,6 +146,7 @@ export class TurnService {
           audioSizeBytes: dto.audioSizeBytes,
           contextPack: contextPackRetry,
           sessionType,
+          language: session.language as 'vi' | 'en',
         };
         await this.transcriptionQueue.add(
           'transcription',
@@ -189,6 +190,7 @@ export class TurnService {
         audioSizeBytes: dto.audioSizeBytes,
         contextPack,
         sessionType,
+        language: session.language as 'vi' | 'en',
       };
 
       await this.transcriptionQueue.add(
@@ -257,6 +259,7 @@ export class TurnService {
       answerText: answer.answerText,
       contextPack,
       sessionType,
+      language: session.language as 'vi' | 'en',
     };
 
     await this.feedbackQueue.add('feedback', jobBase, {

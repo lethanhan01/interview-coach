@@ -7,6 +7,7 @@ describe('CreateSessionDto', () => {
     jobDescription: 'a'.repeat(100),
     sessionType: 'hr',
     contextPack: 'VN',
+    language: 'vi',
     numQuestions: 5,
     targetRoles: ['Backend Developer'],
   };
@@ -24,6 +25,7 @@ describe('CreateSessionDto', () => {
     ['numQuestions trên 45', { numQuestions: 46 }],
     ['sessionType sai enum', { sessionType: 'culture' }],
     ['contextPack sai enum', { contextPack: 'APAC' }],
+    ['language sai enum', { language: 'fr' }],
   ])('QG-02: reject %s', async (_label, override) => {
     const errors = await validatePayload({ ...validPayload, ...override });
 

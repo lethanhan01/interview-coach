@@ -77,6 +77,7 @@ describe('FeedbackProcessor', () => {
     answerText: 'Tôi là backend developer.',
     contextPack: 'VN' as const,
     sessionType: 'hr' as const,
+    language: 'vi' as const,
   };
 
   const makeJob = (attemptsMade = 0) =>
@@ -242,6 +243,7 @@ describe('FeedbackProcessor', () => {
       'session-123',
       'hr',
       'VN',
+      'vi',
     );
   });
 
@@ -305,6 +307,7 @@ describe('FeedbackProcessor', () => {
         sessionType: 'hr',
         questionText: 'Giới thiệu bản thân?',
         answerText: 'Tôi là backend developer.',
+        language: 'vi',
       }),
     );
   });
@@ -359,6 +362,7 @@ describe('FeedbackProcessor', () => {
         answerText: 'I am a developer.',
         contextPack: 'VN' as const,
         sessionType: 'hr' as const,
+        language: 'vi' as const,
       },
       attemptsMade: 0,
       opts: { attempts: 2 },
@@ -370,6 +374,7 @@ describe('FeedbackProcessor', () => {
       'session-123',
       'hr',
       'VN',
+      'vi',
     );
   });
 
@@ -387,6 +392,7 @@ describe('FeedbackProcessor', () => {
       'session-123',
       'hr',
       'VN',
+      'vi',
     );
   });
 

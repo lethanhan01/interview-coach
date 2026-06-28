@@ -35,6 +35,7 @@ describe('TurnService', () => {
     status: 'active',
     sessionType: 'hr',
     contextPackId: 'VN',
+    language: 'vi',
     numQuestions: 5,
   };
 
@@ -334,6 +335,7 @@ describe('TurnService', () => {
           answerText: 'Tôi là developer với 2 năm kinh nghiệm.',
           contextPack: 'VN',
           sessionType: 'hr',
+          language: 'vi',
         }),
         expect.objectContaining({
           jobId: 'feedback-answer-1',
@@ -376,6 +378,7 @@ describe('TurnService', () => {
           answerText: 'I chose pagination because it reduced memory usage.',
           contextPack: 'Western',
           sessionType: 'technical',
+          language: 'vi',
         },
         expect.objectContaining({
           jobId: 'feedback-answer-1',
@@ -415,6 +418,7 @@ describe('TurnService', () => {
           sessionId: 'session-123',
           answerId: 'answer-1',
           audioFileUrl: 'https://storage.example.com/audio.webm',
+          language: 'vi',
         }),
         expect.objectContaining({
           jobId: 'transcription-answer-1',
@@ -512,6 +516,7 @@ describe('TurnService', () => {
         'feedback',
         expect.objectContaining({
           answerText: editedTranscript,
+          language: 'vi',
         }),
         expect.objectContaining({ jobId: 'feedback-answer-1' }),
       );
@@ -533,7 +538,7 @@ describe('TurnService', () => {
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
       expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
         'feedback',
-        expect.objectContaining({ answerId: 'answer-1' }),
+        expect.objectContaining({ answerId: 'answer-1', language: 'vi' }),
         expect.objectContaining({ jobId: 'feedback-answer-1' }),
       );
     });
@@ -595,6 +600,7 @@ describe('TurnService', () => {
           sessionId: 'session-123',
           answerId: 'answer-1',
           audioFileUrl: 'https://example.com/audio.mp3',
+          language: 'vi',
         }),
         expect.objectContaining({
           jobId: 'transcription-answer-1',

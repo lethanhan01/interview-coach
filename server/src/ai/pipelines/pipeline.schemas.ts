@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const PROMPT_VERSION = 'surgical-feedback-v1.1';
+export const PROMPT_VERSION = 'surgical-feedback-v1.2';
 
 export const QuestionsSchema = z.object({
   questions: z.array(

@@ -286,6 +286,10 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         'surgical-feedback',
       );
       expect(mockPromptBuilder.applyContextPack).toHaveBeenCalledWith(
+        expect.stringContaining('Output language: Vietnamese.'),
+        mockContextPack,
+      );
+      expect(mockPromptBuilder.applyContextPack).toHaveBeenCalledWith(
         expect.stringContaining('Interview strategy:'),
         mockContextPack,
       );
@@ -296,6 +300,24 @@ describe('BasePipelineService (via HrPipelineService)', () => {
           answer: feedbackInput.answerText,
           sessionType: feedbackInput.sessionType,
         }),
+      );
+    });
+
+    it('dùng English language instruction khi FeedbackInput.language=en', async () => {
+      const rawFeedback = {
+        overall_score: 75,
+        model_answer: 'A.',
+        key_takeaway: 'B.',
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      await service.evaluateAnswer({ ...feedbackInput, language: 'en' });
+
+      expect(mockPromptBuilder.applyContextPack).toHaveBeenCalledWith(
+        expect.stringContaining('Output language: English.'),
+        mockContextPack,
       );
     });
 

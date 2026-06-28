@@ -4,6 +4,8 @@ export default function ActionPlanCard({
   actionPlan?: Record<string, unknown> | null
 }) {
   const entries = Object.entries(actionPlan ?? {})
+  const getLabel = (key: string) =>
+    key === 'items' ? 'Việc cần làm' : key.replace(/_/g, ' ')
 
   if (!entries.length) return null
 
@@ -15,8 +17,8 @@ export default function ActionPlanCard({
       <div className="flex flex-col gap-4">
         {entries.map(([key, value]) => (
           <div key={key}>
-            <p className="mb-1 text-sm font-medium capitalize text-gray-800">
-              {key.replace(/_/g, ' ')}
+            <p className="mb-1 text-sm font-medium text-gray-800">
+              {getLabel(key)}
             </p>
             {Array.isArray(value) ? (
               <ul className="flex flex-col gap-1 pl-4">

@@ -50,6 +50,7 @@ describe('ComprehensiveReportProcessor', () => {
     sessionId: 'session-123',
     sessionType: 'hr' as const,
     contextPack: 'VN' as const,
+    language: 'vi' as const,
     turnIds: ['answer-1', 'answer-2'],
   };
   const job = { data: jobData } as Job<typeof jobData>;
@@ -123,6 +124,39 @@ describe('ComprehensiveReportProcessor', () => {
     expect(updateArgs.data.completedAt).toBeInstanceOf(Date);
   });
 
+  it('prompt action plan yêu cầu output tiếng Việt khi language=vi', async () => {
+    prisma.aiFeedback.findMany.mockResolvedValue([
+      {
+        userAnswerId: 'answer-1',
+        overallScore: 80,
+        keyTakeaway: 'Cần thêm ví dụ cụ thể',
+      },
+      {
+        userAnswerId: 'answer-2',
+        overallScore: 60,
+        keyTakeaway: 'Cần trình bày mạch lạc hơn',
+      },
+    ]);
+    prisma.sessionReport.upsert.mockResolvedValue({});
+    prisma.interviewSession.update.mockResolvedValue({});
+    mockOpenAI.chatCompletion.mockResolvedValue(
+      JSON.stringify({ items: ['Luyện câu trả lời theo cấu trúc STAR.'] }),
+    );
+
+    await processor.process(job);
+
+    expect(mockOpenAI.chatCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'system',
+            content: expect.stringContaining('Output language: Vietnamese.'),
+          }),
+        ]),
+      }),
+    );
+  });
+
   it('không gọi OpenAI và không ghi điểm 0 giả khi toàn bộ feedback là fallback', async () => {
     prisma.aiFeedback.findMany.mockResolvedValue([
       {
@@ -149,15 +183,48 @@ describe('ComprehensiveReportProcessor', () => {
     const updateArgs = prisma.interviewSession.update.mock.calls[0][0];
     expect(updateArgs.data.status).toBe('completed');
     expect(updateArgs.data.overallScore).toBeNull();
-    // action_plan upsert called with FALLBACK_ACTION_PLAN (3 items)
+    // action_plan upsert called with localized fallback action plan (3 items)
     const actionPlanCall = prisma.sessionReport.upsert.mock.calls.find(
       (call) => (call[0] as any).create.reportType === 'action_plan',
     );
     expect((actionPlanCall?.[0] as any).create.contentJson.items).toHaveLength(3);
+    expect((actionPlanCall?.[0] as any).create.contentJson.items[0]).toContain(
+      'Viết lại',
+    );
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('skipping the action-plan API call'),
     );
     expect(errorSpy).not.toHaveBeenCalled();
     expect(mockOpenAI.chatCompletion).not.toHaveBeenCalled();
+  });
+
+  it('fallback action plan trả tiếng Anh khi language=en', async () => {
+    prisma.aiFeedback.findMany.mockResolvedValue([
+      {
+        userAnswerId: 'answer-1',
+        overallScore: 80,
+        keyTakeaway: 'Good',
+        isFallback: true,
+      },
+      {
+        userAnswerId: 'answer-2',
+        overallScore: 60,
+        keyTakeaway: 'Improve structure',
+        isFallback: true,
+      },
+    ]);
+    prisma.sessionReport.upsert.mockResolvedValue({});
+    prisma.interviewSession.update.mockResolvedValue({});
+
+    await processor.process({
+      data: { ...jobData, language: 'en' },
+    } as Job<any>);
+
+    const actionPlanCall = prisma.sessionReport.upsert.mock.calls.find(
+      (call) => (call[0] as any).create.reportType === 'action_plan',
+    );
+    expect((actionPlanCall?.[0] as any).create.contentJson.items[0]).toBe(
+      'Rewrite each answer using the STAR structure.',
+    );
   });
 });

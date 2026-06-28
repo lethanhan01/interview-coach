@@ -14,7 +14,11 @@ import {
   TranscriptItemDto,
   AnnotatedSegmentDto,
 } from './dto/report-response.dto';
-import { FALLBACK_ACTION_PLAN } from '../ai/fallback-content';
+import {
+  getFallbackActionPlan,
+  getFallbackReportSummary,
+} from '../ai/fallback-content';
+import { resolveOutputLanguage } from '../ai/output-language';
 
 function toRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -144,8 +148,7 @@ export class ReportService {
             overallScore: null,
             evaluatedTurns: 0,
             fallbackTurns: transcript.length,
-            summary:
-              'AI scoring was unavailable. Your answers were saved and can be evaluated again after the AI service is restored.',
+            summary: getFallbackReportSummary(session.language),
           }
         : storedExecutiveSummary,
       competencyHeatmap: toRecord(
@@ -154,7 +157,7 @@ export class ReportService {
       ),
       actionPlan:
         allFeedbackIsFallback && Object.keys(storedActionPlan).length === 0
-          ? FALLBACK_ACTION_PLAN
+          ? getFallbackActionPlan(session.language)
           : storedActionPlan,
       transcript,
     };
@@ -164,7 +167,9 @@ export class ReportService {
     sessionId: string,
     sessionType: string,
     contextPack: 'VN' | 'Western',
+    language?: string,
   ): Promise<void> {
+    const outputLanguage = resolveOutputLanguage(language);
     const answers = await this.prisma.userAnswer.findMany({
       where: { sessionId },
       select: { id: true },
@@ -190,7 +195,7 @@ export class ReportService {
 
     await this.reportQueue.add(
       'comprehensive-report',
-      { sessionId, sessionType, contextPack, turnIds },
+      { sessionId, sessionType, contextPack, language: outputLanguage, turnIds },
       {
         jobId,
         attempts: REPORT_JOB_ATTEMPTS,
@@ -203,10 +208,11 @@ export class ReportService {
     sessionId: string,
     sessionType: string,
     contextPack: 'VN' | 'Western',
+    language?: string,
   ): Promise<void> {
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
-      select: { status: true },
+      select: { status: true, language: true },
     });
 
     if (session?.status !== 'completing') return;
@@ -220,6 +226,11 @@ export class ReportService {
 
     if (totalAnswers === 0 || completedFeedbacks < totalAnswers) return;
 
-    await this.enqueueReport(sessionId, sessionType, contextPack);
+    await this.enqueueReport(
+      sessionId,
+      sessionType,
+      contextPack,
+      language ?? session.language,
+    );
   }
 }

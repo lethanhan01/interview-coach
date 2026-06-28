@@ -22,6 +22,10 @@ export class CreateSessionDto {
   contextPack: 'VN' | 'Western';
 
   @IsOptional()
+  @IsEnum(['vi', 'en'])
+  language?: 'vi' | 'en';
+
+  @IsOptional()
   @IsInt()
   @Min(3)
   @Max(45)

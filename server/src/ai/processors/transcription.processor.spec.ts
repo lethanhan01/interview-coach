@@ -29,6 +29,7 @@ const BASE_JOB_DATA = {
   audioSizeBytes: 1024,
   contextPack: 'VN' as const,
   sessionType: 'hr' as const,
+  language: 'vi' as const,
 };
 
 describe('TranscriptionProcessor', () => {
@@ -98,7 +99,7 @@ describe('TranscriptionProcessor', () => {
     );
     expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
       'feedback',
-      expect.objectContaining({ answerId: 'answer-1' }),
+      expect.objectContaining({ answerId: 'answer-1', language: 'vi' }),
       expect.objectContaining({ jobId: 'feedback-answer-1', attempts: FEEDBACK_JOB_ATTEMPTS }),
     );
     expect(mockSse.emit).toHaveBeenCalledWith(
@@ -193,6 +194,7 @@ describe('TranscriptionProcessor', () => {
         'session-123',
         'hr',
         'VN',
+        'vi',
       );
       expect(mockSse.emit).toHaveBeenCalledWith(
         'sse:session:session-123',

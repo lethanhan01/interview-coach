@@ -1,4 +1,5 @@
 import type { ContextPackConfig } from '../context-pack.service';
+import type { OutputLanguage } from '../output-language';
 
 export const SESSION_TYPES = ['hr', 'technical', 'mixed'] as const;
 
@@ -30,6 +31,7 @@ export interface FeedbackInput {
   questionText: string;
   answerText: string;
   contextPackConfig: ContextPackConfig;
+  language?: OutputLanguage;
 }
 
 export interface AnnotatedSegmentResult {

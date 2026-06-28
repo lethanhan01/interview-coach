@@ -17,7 +17,9 @@ import {
   isAIQuotaExceeded,
   isAIFallbackEligible,
 } from '../ai-error.utils';
-import { FALLBACK_FEEDBACK_MESSAGE } from '../fallback-content';
+import { getFallbackFeedbackMessage } from '../fallback-content';
+import type { OutputLanguage } from '../output-language';
+import { resolveOutputLanguage } from '../output-language';
 
 interface FeedbackJobDto {
   sessionId: string;
@@ -27,6 +29,7 @@ interface FeedbackJobDto {
   answerText: string;
   contextPack: 'VN' | 'Western';
   sessionType: SessionType;
+  language?: OutputLanguage;
 }
 
 const REPORT_READINESS_LOCAL_ATTEMPTS = 2;
@@ -54,6 +57,7 @@ export class FeedbackProcessor extends WorkerHost {
       contextPack,
       sessionType,
     } = job.data;
+    const language = resolveOutputLanguage(job.data.language);
 
     let hasAnnotations = false;
 
@@ -67,6 +71,7 @@ export class FeedbackProcessor extends WorkerHost {
         questionText,
         answerText,
         contextPackConfig,
+        language,
       });
 
       await this.prisma.$transaction(async (tx) => {
@@ -162,7 +167,7 @@ export class FeedbackProcessor extends WorkerHost {
               userAnswerId: answerId,
               overallScore: 0,
               modelAnswer: '',
-              keyTakeaway: FALLBACK_FEEDBACK_MESSAGE,
+              keyTakeaway: getFallbackFeedbackMessage(language),
               promptVersion: SURGICAL_FEEDBACK_PROMPT_CONFIG.version,
               isFallback: true,
             },
@@ -186,7 +191,12 @@ export class FeedbackProcessor extends WorkerHost {
     }
 
     await this.emitFeedbackReady(sessionId, answerId, hasAnnotations);
-    await this.enqueueReportWhenReady(sessionId, sessionType, contextPack);
+    await this.enqueueReportWhenReady(
+      sessionId,
+      sessionType,
+      contextPack,
+      language,
+    );
   }
 
   private async emitFeedbackReady(
@@ -211,6 +221,7 @@ export class FeedbackProcessor extends WorkerHost {
     sessionId: string,
     sessionType: SessionType,
     contextPack: 'VN' | 'Western',
+    language: OutputLanguage,
   ): Promise<void> {
     let lastError: unknown;
     for (
@@ -223,6 +234,7 @@ export class FeedbackProcessor extends WorkerHost {
           sessionId,
           sessionType,
           contextPack,
+          language,
         );
         return;
       } catch (error: unknown) {

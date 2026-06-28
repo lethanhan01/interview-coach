@@ -19,6 +19,7 @@ import {
   PROMPT_VERSION,
 } from './pipeline.schemas';
 import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.1';
+import { getLanguageInstruction } from '../output-language';
 import { QUESTION_GEN_PROMPT_CONFIG } from '../prompts/question-gen-v1.0';
 
 export abstract class BasePipelineService implements InterviewPipeline {
@@ -77,7 +78,8 @@ export abstract class BasePipelineService implements InterviewPipeline {
 
   async evaluateAnswer(input: FeedbackInput): Promise<SurgicalFeedback> {
     const base = this.promptBuilder.buildBaseSystem('surgical-feedback');
-    const withStrategy = this.applyStrategy(base, input.sessionType);
+    const withLanguage = `${base}\n\n${getLanguageInstruction(input.language)}`;
+    const withStrategy = this.applyStrategy(withLanguage, input.sessionType);
     const withPack = this.promptBuilder.applyContextPack(
       withStrategy,
       input.contextPackConfig,

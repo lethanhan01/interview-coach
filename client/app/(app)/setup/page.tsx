@@ -320,6 +320,7 @@ function SetupPageContent() {
         jobDescription,
         sessionType,
         contextPack,
+        language: 'vi',
         numQuestions,
         targetRoles: [jd.position],
         savedJobDescriptionId: savedJobDescription.id,

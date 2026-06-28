@@ -14,7 +14,9 @@ import {
   FEEDBACK_JOB_ATTEMPTS,
 } from '../../common/constants/queue.constants';
 import type { SessionType } from '../pipelines/interview-pipeline.interface';
-import { FALLBACK_FEEDBACK_MESSAGE } from '../fallback-content';
+import { getFallbackFeedbackMessage } from '../fallback-content';
+import type { OutputLanguage } from '../output-language';
+import { resolveOutputLanguage } from '../output-language';
 
 export interface TranscriptionJobDto {
   sessionId: string;
@@ -24,6 +26,7 @@ export interface TranscriptionJobDto {
   audioSizeBytes?: number;
   contextPack: 'VN' | 'Western';
   sessionType: SessionType;
+  language?: OutputLanguage;
 }
 
 @Processor(TRANSCRIPTION_QUEUE)
@@ -50,6 +53,7 @@ export class TranscriptionProcessor extends WorkerHost {
       contextPack,
       sessionType,
     } = job.data;
+    const language = resolveOutputLanguage(job.data.language);
 
     try {
       const transcription = await this.whisperService.transcribe(audioFileUrl);
@@ -86,6 +90,7 @@ export class TranscriptionProcessor extends WorkerHost {
           answerText,
           contextPack,
           sessionType,
+          language,
         );
         await this.emitTranscriptionReady(sessionId, answerId);
         return;
@@ -99,6 +104,7 @@ export class TranscriptionProcessor extends WorkerHost {
         answerText,
         contextPack,
         sessionType,
+        language,
       };
 
       await this.feedbackQueue.add('feedback', jobBase, {
@@ -133,7 +139,7 @@ export class TranscriptionProcessor extends WorkerHost {
               userAnswerId: answerId,
               overallScore: 0,
               modelAnswer: '',
-              keyTakeaway: FALLBACK_FEEDBACK_MESSAGE,
+              keyTakeaway: getFallbackFeedbackMessage(language),
               promptVersion: 'transcription-failed',
               isFallback: true,
             },
@@ -146,7 +152,12 @@ export class TranscriptionProcessor extends WorkerHost {
         });
 
         await this.reportService
-          .enqueueIfAllFeedbacksReady(sessionId, sessionType, contextPack)
+          .enqueueIfAllFeedbacksReady(
+            sessionId,
+            sessionType,
+            contextPack,
+            language,
+          )
           .catch((err: unknown) => {
             this.logger.warn(
               `Failed to check report readiness after transcription failure for session ${sessionId}`,
@@ -173,6 +184,7 @@ export class TranscriptionProcessor extends WorkerHost {
     answerText: string,
     contextPack: 'VN' | 'Western',
     sessionType: SessionType,
+    language: OutputLanguage,
   ): Promise<void> {
     await this.feedbackQueue.add(
       'feedback',
@@ -184,6 +196,7 @@ export class TranscriptionProcessor extends WorkerHost {
         answerText,
         contextPack,
         sessionType,
+        language,
       },
       {
         jobId: `feedback-${answerId}`,

@@ -36,8 +36,6 @@ Return ONLY a compact valid JSON object with exactly this shape, no markdown fen
 Write the final JSON directly in the assistant message content.`,
   'surgical-feedback': `You are an expert interview coach. Evaluate the candidate's answer and provide surgical, actionable feedback.
 
-Write all generated feedback fields in Vietnamese: model_answer, key_takeaway, annotation, suggestion, and improved_version. Keep segment_text as an exact verbatim quote copied from the candidate answer, preserving the candidate's original language, spelling, and punctuation.
-
 CRITICAL: model_answer must be a complete, concrete example answer of 3-4 concise sentences written as if a strong candidate is actually speaking. It must directly answer the question using specific details, demonstrate best practices, and read like a real spoken response — NOT a list of improvement tips, NOT meta-advice about what to say.
 
 Return ONLY a compact valid JSON object with exactly this structure — no extra text, no markdown fences. Include at most 2 annotated_segments. For optional fields, either provide a string or omit the field entirely; never use null:

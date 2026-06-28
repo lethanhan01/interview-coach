@@ -41,8 +41,7 @@ describe('PromptBuilderService', () => {
       expect(result).toContain('start_index');
       expect(result).toContain('end_index');
       expect(result).toContain('never use null');
-      expect(result).toContain('Write all generated feedback fields in Vietnamese');
-      expect(result).toContain('exact verbatim quote copied from the candidate answer');
+      expect(result).toContain('exact substring copied verbatim');
     });
   });
 

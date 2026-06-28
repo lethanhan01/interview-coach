@@ -334,6 +334,7 @@ describe('ReportService', () => {
           sessionId: 'session-123',
           sessionType: 'hr',
           contextPack: 'VN',
+          language: 'vi',
           turnIds: ['ans-1', 'ans-2'],
         },
         expect.objectContaining({ jobId: 'report-session-123' }),
@@ -374,6 +375,19 @@ describe('ReportService', () => {
 
       expect(existingJob.retry).toHaveBeenCalledTimes(1);
       expect(mockReportQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('đưa language=en vào report job khi được truyền', async () => {
+      mockPrisma.userAnswer.findMany.mockResolvedValue([{ id: 'ans-1' }]);
+      mockReportQueue.add.mockResolvedValue({});
+
+      await service.enqueueReport('session-123', 'hr', 'Western', 'en');
+
+      expect(mockReportQueue.add).toHaveBeenCalledWith(
+        'comprehensive-report',
+        expect.objectContaining({ language: 'en' }),
+        expect.objectContaining({ jobId: 'report-session-123' }),
+      );
     });
 
     it('từ chối enqueue report khi session chưa có answer', async () => {
@@ -446,7 +460,7 @@ describe('ReportService', () => {
 
       expect(mockReportQueue.add).toHaveBeenCalledWith(
         'comprehensive-report',
-        expect.objectContaining({ sessionId: 'session-123' }),
+        expect.objectContaining({ sessionId: 'session-123', language: 'vi' }),
         expect.objectContaining({ jobId: 'report-session-123' }),
       );
     });
