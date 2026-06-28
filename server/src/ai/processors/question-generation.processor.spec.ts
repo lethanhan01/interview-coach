@@ -85,51 +85,32 @@ describe('QuestionGenerationProcessor', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  it('tạo questions, cập nhật session status=active và emit SSE khi thành công', async () => {
-    const generatedQuestions = [
-      {
-        text: 'Giới thiệu bản thân?',
-        category: 'intro',
-        competencyDomain: 'communication',
-      },
-      {
-        text: 'Điểm mạnh là gì?',
-        category: 'behavioral',
-        competencyDomain: 'self-awareness',
-      },
-    ];
+  it('tạo 5 questions hybrid (QB pos 1-4, AI pos 5), cập nhật status=active và emit SSE', async () => {
+    // totalQuestions=5 → aiCount=1, qbCount=4
+    const aiQuestion = { text: 'Điểm mạnh là gì?', category: 'behavioral', competencyDomain: 'communication' };
+    const qbResult = makeFallbackQuestions(4);
     const mockStrategy = {
-      generateQuestions: jest.fn().mockResolvedValue(generatedQuestions),
+      generateQuestions: jest.fn().mockResolvedValue([aiQuestion]),
     };
     mockContextPack.getContextPack.mockReturnValue({} as any);
     mockFactory.getStrategy.mockReturnValue(mockStrategy);
-    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 2 });
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(qbResult);
+    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
     mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
     mockSse.emit.mockResolvedValue(undefined);
 
-    await processor.process(
-      makeJob({ ...BASE_JOB_DATA, totalQuestions: generatedQuestions.length }),
-    );
+    await processor.process(makeJob()); // totalQuestions=5
 
     expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
-    expect(mockPrisma.sessionQuestion.createMany).toHaveBeenCalledWith({
-      data: [
-        expect.objectContaining({
-          sessionId: 'session-123',
-          questionText: 'Giới thiệu bản thân?',
-          orderIndex: 1,
-        }),
-        expect.objectContaining({
-          sessionId: 'session-123',
-          questionText: 'Điểm mạnh là gì?',
-          orderIndex: 2,
-        }),
-      ],
-      skipDuplicates: true,
-    });
+    expect(mockQuestionBankService.selectFallbackQuestions).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
     const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
-    expect(createArgs.data[0]).not.toHaveProperty('questionBankId');
-    expect(createArgs.data[1]).not.toHaveProperty('questionBankId');
+    expect(createArgs.data).toHaveLength(5);
+    // QB questions at pos 1-4
+    expect(createArgs.data[0]).toEqual(expect.objectContaining({ sessionId: 'session-123', questionBankId: 'qb-1', orderIndex: 1 }));
+    expect(createArgs.data[3]).toEqual(expect.objectContaining({ sessionId: 'session-123', questionBankId: 'qb-4', orderIndex: 4 }));
+    // AI question at pos 5, no questionBankId
+    expect(createArgs.data[4]).toEqual(expect.objectContaining({ sessionId: 'session-123', questionText: 'Điểm mạnh là gì?', orderIndex: 5 }));
+    expect(createArgs.data[4]).not.toHaveProperty('questionBankId');
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
       where: {
         id: 'session-123',
@@ -142,15 +123,17 @@ describe('QuestionGenerationProcessor', () => {
       'session.status',
       { status: 'active', sessionId: 'session-123' },
     );
-    expect(mockQuestionBankService.recordUsage).not.toHaveBeenCalled();
+    expect(mockQuestionBankService.recordUsage).toHaveBeenCalledTimes(4);
   });
 
-  it('QG-04: chỉ lưu đúng totalQuestions khi AI trả dư câu hỏi', async () => {
+  it('QG-04: chỉ lấy aiCount câu từ AI khi AI trả dư; tổng vẫn bằng totalQuestions', async () => {
+    // totalQuestions=5 → aiCount=1; AI returns 7 but gets sliced to 1
     const generatedQuestions = makeGeneratedQuestions(7);
     mockContextPack.getContextPack.mockReturnValue({} as any);
     mockFactory.getStrategy.mockReturnValue({
       generateQuestions: jest.fn().mockResolvedValue(generatedQuestions),
     });
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(makeFallbackQuestions(4));
     mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
     mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
     mockSse.emit.mockResolvedValue(undefined);
@@ -162,16 +145,15 @@ describe('QuestionGenerationProcessor', () => {
     expect(createArgs.data.map((q: { orderIndex: number }) => q.orderIndex)).toEqual([
       1, 2, 3, 4, 5,
     ]);
-    expect(
-      mockQuestionBankService.selectFallbackQuestions,
-    ).not.toHaveBeenCalled();
-    expect(mockQuestionBankService.recordUsage).not.toHaveBeenCalled();
+    expect(mockQuestionBankService.selectFallbackQuestions).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
+    expect(mockQuestionBankService.recordUsage).toHaveBeenCalledTimes(4);
   });
 
-  it('QG-05: dùng fallback khi AI trả thiếu số câu yêu cầu', async () => {
+  it('QG-05: dùng fallback khi AI trả 0 câu (ít hơn aiCount=1)', async () => {
+    // totalQuestions=5 → aiCount=1; AI returns 0 → 0 < 1 → fallback all-QB
     mockContextPack.getContextPack.mockReturnValue({} as any);
     mockFactory.getStrategy.mockReturnValue({
-      generateQuestions: jest.fn().mockResolvedValue(makeGeneratedQuestions(3)),
+      generateQuestions: jest.fn().mockResolvedValue([]),
     });
     mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
       makeFallbackQuestions(5),
@@ -223,24 +205,21 @@ describe('QuestionGenerationProcessor', () => {
   });
 
   it('không chuyển session sang error hoặc chạy fallback lần hai khi SSE emit thất bại', async () => {
-    const generatedQuestions = Array.from({ length: 5 }, (_, index) => ({
-      text: `Câu hỏi ${index + 1}`,
-      category: 'behavioral',
-      competencyDomain: 'communication',
-    }));
+    // totalQuestions=5 → aiCount=1, qbCount=4; QB called once (hybrid), not twice
     mockContextPack.getContextPack.mockReturnValue({} as any);
     mockFactory.getStrategy.mockReturnValue({
-      generateQuestions: jest.fn().mockResolvedValue(generatedQuestions),
+      generateQuestions: jest.fn().mockResolvedValue(makeGeneratedQuestions(1)),
     });
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(makeFallbackQuestions(4));
     mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
     mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
     mockSse.emit.mockRejectedValue(new Error('Redis unavailable'));
 
     await expect(processor.process(makeJob())).resolves.toBeUndefined();
 
-    expect(
-      mockQuestionBankService.selectFallbackQuestions,
-    ).not.toHaveBeenCalled();
+    // QB called once for hybrid qbCount=4 — not zero, not twice (no second fallback)
+    expect(mockQuestionBankService.selectFallbackQuestions).toHaveBeenCalledTimes(1);
+    expect(mockQuestionBankService.selectFallbackQuestions).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledTimes(1);
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
       where: {

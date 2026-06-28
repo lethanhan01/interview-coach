@@ -19,9 +19,9 @@ import { ArrowLeft } from 'lucide-react'
 // ── Constants & Types ─────────────────────────────────────────────────────────
 
 export const DURATION_OPTIONS = [
-  { value: 30 as const, label: '30 phút', numQuestions: 5 },
-  { value: 60 as const, label: '1 tiếng', numQuestions: 8 },
-  { value: 90 as const, label: '1 tiếng rưỡi', numQuestions: 10 },
+  { value: 30 as const, label: '30 phút', numQuestions: 15 },
+  { value: 60 as const, label: '1 tiếng', numQuestions: 30 },
+  { value: 90 as const, label: '1 tiếng rưỡi', numQuestions: 45 },
 ]
 
 export const INTERVIEWER_STYLES = [

@@ -7,12 +7,16 @@ import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
 import { QUESTION_GEN_QUEUE } from '../../common/constants/queue.constants';
 import { QuestionBankService } from '../../question-bank/question-bank.service';
+import type { FallbackQuestion } from '../../question-bank/question-bank.service';
 import { OpenAIGateway } from '../openai.gateway';
 import type {
   GeneratedQuestion,
   SessionType,
 } from '../pipelines/interview-pipeline.interface';
 import { describeAIError, isAIFallbackEligible } from '../ai-error.utils';
+
+// AI generates 1 out of every 5 questions; the rest come from the question bank.
+const AI_QUESTION_EVERY_N = 5;
 
 interface QuestionGenerationJobDto {
   sessionId: string;
@@ -52,22 +56,25 @@ export class QuestionGenerationProcessor extends WorkerHost {
       totalQuestions,
     } = job.data;
 
-    let questions: GeneratedQuestion[];
+    const aiCount = Math.round(totalQuestions / AI_QUESTION_EVERY_N);
+    const qbCount = totalQuestions - aiCount;
+
+    let aiQuestions: GeneratedQuestion[];
     try {
       const contextPackConfig =
         this.contextPackService.getContextPack(contextPack);
       const strategy = this.factory.getStrategy(sessionType);
-      questions = await strategy.generateQuestions({
+      aiQuestions = await strategy.generateQuestions({
         sessionType,
         jobDescriptionText,
         targetRoles,
         contextPackConfig,
-        totalQuestions,
+        totalQuestions: aiCount,
       });
-      questions = questions.slice(0, totalQuestions);
-      if (questions.length < totalQuestions) {
+      aiQuestions = aiQuestions.slice(0, aiCount);
+      if (aiQuestions.length < aiCount) {
         throw new Error(
-          `AI returned only ${questions.length}/${totalQuestions} questions`,
+          `AI returned only ${aiQuestions.length}/${aiCount} questions`,
         );
       }
     } catch (error: unknown) {
@@ -107,21 +114,40 @@ export class QuestionGenerationProcessor extends WorkerHost {
       }
     }
 
+    let qbQuestions: FallbackQuestion[];
     try {
+      qbQuestions = await this.questionBankService.selectFallbackQuestions(
+        sessionType,
+        contextPack,
+        qbCount,
+        language,
+      );
+    } catch (qbError: unknown) {
+      this.logger.error(
+        `Question bank fetch failed for session ${sessionId}; using AI-only questions`,
+        qbError instanceof Error ? qbError.stack : String(qbError),
+      );
+      qbQuestions = [];
+    }
+
+    try {
+      const merged = this.mergeQuestions(aiQuestions, qbQuestions, totalQuestions)
+        .map((row) => ({ ...row, sessionId }));
       const result = await this.prisma.sessionQuestion.createMany({
-        data: questions.map((q, index) => ({
-          sessionId,
-          questionText: q.text,
-          orderIndex: index + 1,
-          questionCategory: q.category,
-          competencyDomain: q.competencyDomain,
-          rubricJson: {},
-        })),
+        data: merged,
         skipDuplicates: true,
       });
       this.logger.log(
-        `AI question generation persisted for session ${sessionId}: source=ai count=${result.count}/${questions.length} model=${this.openai.getChatModel()}`,
+        `Hybrid question generation persisted for session ${sessionId}: ai=${aiCount} qb=${qbQuestions.length} total=${result.count} model=${this.openai.getChatModel()}`,
       );
+
+      if (qbQuestions.length > 0) {
+        await Promise.all(
+          qbQuestions.map((q) =>
+            this.questionBankService.recordUsage(q.questionBankId, sessionId, userId),
+          ),
+        );
+      }
 
       if (await this.markActiveUnlessStopped(sessionId)) {
         await this.emitActive(sessionId);
@@ -136,6 +162,55 @@ export class QuestionGenerationProcessor extends WorkerHost {
       await this.markSessionError(sessionId);
       throw persistenceError;
     }
+  }
+
+  private mergeQuestions(
+    aiQuestions: GeneratedQuestion[],
+    qbQuestions: FallbackQuestion[],
+    total: number,
+  ): Array<{
+    questionBankId?: string;
+    questionText: string;
+    orderIndex: number;
+    questionCategory: string;
+    competencyDomain: string;
+    rubricJson: object;
+    estimatedTimeMin?: number;
+  }> {
+    // AI questions appear every AI_QUESTION_EVERY_N positions (positions 5, 10, 15, ...)
+    const aiPositions = new Set(
+      Array.from({ length: aiQuestions.length }, (_, i) => (i + 1) * AI_QUESTION_EVERY_N),
+    );
+
+    const rows: ReturnType<typeof this.mergeQuestions> = [];
+    let aiIdx = 0;
+    let qbIdx = 0;
+
+    for (let pos = 1; pos <= total; pos++) {
+      if (aiPositions.has(pos) && aiIdx < aiQuestions.length) {
+        const q = aiQuestions[aiIdx++];
+        rows.push({
+          questionText: q.text,
+          orderIndex: pos,
+          questionCategory: q.category,
+          competencyDomain: q.competencyDomain,
+          rubricJson: {},
+        });
+      } else if (qbIdx < qbQuestions.length) {
+        const q = qbQuestions[qbIdx++];
+        rows.push({
+          questionBankId: q.questionBankId,
+          questionText: q.text,
+          orderIndex: pos,
+          questionCategory: q.questionCategory,
+          competencyDomain: q.competencyDomain,
+          rubricJson: {},
+          estimatedTimeMin: q.estimatedTimeMin,
+        });
+      }
+    }
+
+    return rows;
   }
 
   private async fallbackFromQuestionBank(

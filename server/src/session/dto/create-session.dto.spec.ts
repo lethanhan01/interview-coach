@@ -21,7 +21,7 @@ describe('CreateSessionDto', () => {
   it.each([
     ['JD dưới 100 ký tự', { jobDescription: 'short jd' }],
     ['numQuestions dưới 3', { numQuestions: 2 }],
-    ['numQuestions trên 10', { numQuestions: 11 }],
+    ['numQuestions trên 45', { numQuestions: 46 }],
     ['sessionType sai enum', { sessionType: 'culture' }],
     ['contextPack sai enum', { contextPack: 'APAC' }],
   ])('QG-02: reject %s', async (_label, override) => {

@@ -24,7 +24,7 @@ export class CreateSessionDto {
   @IsOptional()
   @IsInt()
   @Min(3)
-  @Max(10)
+  @Max(45)
   numQuestions?: number;
 
   @IsOptional()

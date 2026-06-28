@@ -156,6 +156,16 @@ Ba lỗi trong session `2dafce71` (FeedbackProcessor "Invalid JSON", QuestionGen
 - `ReportService`: `REPORT_NOT_READY` throw `HttpStatus.ACCEPTED (202)` thay vì `NOT_FOUND (404)` — đúng ngữ nghĩa HTTP (202 = đang xử lý, 404 = không tồn tại). Client không bị ảnh hưởng vì check `err.message.includes("REPORT_NOT_READY")`.
 - Tests: 3 test JSON extraction mới (strip fence, giữ plain JSON, extract từ prose) + update test REPORT_NOT_READY verify `getStatus() === 202`. Full suite: 187/187 pass.
 
+### 2026-06-28 — Hybrid question generation (AI 20% + QB 80%)
+
+Tăng số câu hỏi per session và kết hợp nguồn AI + question bank:
+
+- Durations: 30 min → 15 câu, 60 min → 30 câu, 90 min → 45 câu. Tỷ lệ cố định: AI = total/5, QB = total × 4/5.
+- `QuestionGenerationProcessor`: hybrid flow — AI generates `aiCount` câu, QB fills `qbCount` câu; `mergeQuestions()` đặt AI tại positions 5, 10, 15, ... QB điền tất cả vị trí còn lại. Fallback all-QB khi AI fail giữ nguyên.
+- `CreateSessionDto`: `@Max(10)` → `@Max(45)`.
+- `DURATION_OPTIONS` client: `numQuestions` 5/8/10 → 15/30/45.
+- Seed `02-question-bank.ts`: +25 câu hr×VN + technical×VN (tổng: hr×VN ~30, technical×VN ~40) để đảm bảo đủ cho 90-min session (36 QB needed).
+
 ---
 
 ## Architectural Decisions (Active Reference)
