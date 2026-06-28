@@ -85,7 +85,6 @@ Trong text mode, `audioFileUrl` không được service sử dụng để transc
 ```json
 {
   "answerId": "answer-uuid",
-  "followUpQueued": true,
   "feedbackQueued": true,
   "transcriptionPending": false
 }
@@ -94,7 +93,6 @@ Trong text mode, `audioFileUrl` không được service sử dụng để transc
 | Trường | Kiểu | Chú thích |
 |--------|------|-----------|
 | `answerId` | string | UUID của `UserAnswer` vừa tạo. |
-| `followUpQueued` | boolean | `true` nếu câu trả lời dài ít nhất 50 ký tự và chưa phải câu cuối. |
 | `feedbackQueued` | boolean | `true` nếu feedback job đã được enqueue. Voice mode có transcript đã chỉnh sửa enqueue feedback ngay. |
 | `transcriptionPending` | boolean | `true` nếu voice answer audio-only đã lưu placeholder và đang chờ transcription worker. |
 

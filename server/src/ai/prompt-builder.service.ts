@@ -21,12 +21,12 @@ const BASE_PROMPTS: Record<PromptTask, string> = {
   'question-generation': `You are an expert interviewer. Generate relevant, thoughtful interview questions based on the job description and interview strategy. Return valid JSON with a "questions" array. Each question must have: "text" (string), "category" (string), "competency_domain" (string), "difficulty" (1-3 integer).`,
   'surgical-feedback': `You are an expert interview coach. Evaluate the candidate's answer and provide surgical, actionable feedback.
 
-CRITICAL: model_answer must be a complete, concrete example answer of 3-5 sentences written as if a strong candidate is actually speaking. It must directly answer the question using specific details, demonstrate best practices, and read like a real spoken response — NOT a list of improvement tips, NOT meta-advice about what to say.
+CRITICAL: model_answer must be a complete, concrete example answer of 3-4 concise sentences written as if a strong candidate is actually speaking. It must directly answer the question using specific details, demonstrate best practices, and read like a real spoken response — NOT a list of improvement tips, NOT meta-advice about what to say.
 
-Return ONLY a valid JSON object with exactly this structure — no extra text, no markdown fences:
+Return ONLY a compact valid JSON object with exactly this structure — no extra text, no markdown fences. Include at most 2 annotated_segments. For optional fields, either provide a string or omit the field entirely; never use null:
 {
   "overall_score": <integer 1-100>,
-  "model_answer": "<complete 3-5 sentence example answer spoken as a candidate>",
+  "model_answer": "<complete 3-4 sentence example answer spoken as a candidate>",
   "key_takeaway": "<one concise insight about the answer quality>",
   "annotated_segments": [
     {

@@ -35,7 +35,11 @@ const VALID_FEEDBACK_JSON = JSON.stringify({
 
 describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', () => {
   let processor: FeedbackProcessor;
-  let mockOpenAI: { chatCompletion: jest.Mock; transcribe: jest.Mock; getChatModel: jest.Mock };
+  let mockOpenAI: {
+    chatCompletion: jest.Mock;
+    transcribe: jest.Mock;
+    getChatModel: jest.Mock;
+  };
   let tx: {
     aiFeedback: {
       findUnique: jest.Mock;
@@ -98,7 +102,10 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
     const mockContextPackService = {
       getContextPack: jest.fn().mockReturnValue({
         type: 'VN' as const,
-        rubricDimensions: ['Giao tiếp & Trình bày', 'Tư duy & Giải quyết vấn đề'],
+        rubricDimensions: [
+          'Giao tiếp & Trình bày',
+          'Tư duy & Giải quyết vấn đề',
+        ],
         culturalNotes:
           'Vietnamese workplace context: emphasize teamwork and practical problem-solving.',
         scoringWeights: {},
@@ -133,7 +140,7 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
     expect(mockOpenAI.chatCompletion).toHaveBeenCalledTimes(1);
     const callArgs = mockOpenAI.chatCompletion.mock.calls[0][0];
     expect(callArgs.temperature).toBe(0.3);
-    expect(callArgs.maxTokens).toBe(1500);
+    expect(callArgs.maxTokens).toBe(3000);
     expect(callArgs.task).toBe('feedback');
     expect(callArgs.responseFormat).toBe('json_object');
 
@@ -142,8 +149,15 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
     expect(systemMsg.role).toBe('system');
     expect(systemMsg.content).toContain('CRITICAL: model_answer');
     expect(userMsg.role).toBe('user');
-    expect(userMsg.content).toContain('Tell me about a technical challenge you solved.');
-    expect(userMsg.content).toContain('I solved a performance issue by implementing pagination.');
+    expect(userMsg.content).toContain(
+      '<job_description>\n\n</job_description>',
+    );
+    expect(userMsg.content).toContain(
+      'Tell me about a technical challenge you solved.',
+    );
+    expect(userMsg.content).toContain(
+      'I solved a performance issue by implementing pagination.',
+    );
   });
 
   it('hr flow: system prompt chứa cultural notes từ context pack', async () => {
@@ -162,13 +176,53 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
     expect(tx.aiFeedback.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userAnswerId: 'int-answer-1' },
-        create: expect.objectContaining({ isFallback: false, overallScore: 78 }),
+        create: expect.objectContaining({
+          isFallback: false,
+          overallScore: 78,
+        }),
       }),
     );
     expect(tx.annotatedSegment.deleteMany).toHaveBeenCalledWith({
       where: { aiFeedbackId: 'fb-int-1' },
     });
     expect(tx.annotatedSegment.createMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('feedback flow: optional annotated segment fields null không bị ghi fallback', async () => {
+    mockOpenAI.chatCompletion.mockResolvedValue(
+      JSON.stringify({
+        overall_score: 80,
+        model_answer:
+          'I found the bottleneck through profiling, then added pagination and measured the latency reduction. I also aligned the change with the team before rolling it out.',
+        key_takeaway: 'Good direction, with room for clearer metrics.',
+        annotated_segments: [
+          {
+            segment_text: 'implementing pagination',
+            start_index: 36,
+            end_index: 59,
+            highlight_level: 'strength',
+            annotation: 'Specific technical action.',
+            suggestion: null,
+            improved_version: null,
+          },
+        ],
+      }),
+    );
+
+    await processor.process(makeJob('technical'));
+
+    const upsertArgs = tx.aiFeedback.upsert.mock.calls[0][0];
+    expect(upsertArgs.create).toEqual(
+      expect.objectContaining({ isFallback: false, overallScore: 80 }),
+    );
+    expect(tx.annotatedSegment.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          suggestion: null,
+          improvedVersion: null,
+        }),
+      ],
+    });
   });
 
   it('hr flow: SSE turn.feedback_ready emitted sau DB write', async () => {
@@ -208,6 +262,40 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
 
     const upsertArgs = tx.aiFeedback.upsert.mock.calls[0][0];
     expect(upsertArgs.create.isFallback).toBe(true);
+    expect(tx.userAnswer.update).toHaveBeenCalledWith({
+      where: { id: 'int-answer-1' },
+      data: { feedbackGenerated: true },
+    });
+  });
+
+  it('fallback: khi LLM trả JSON sai FeedbackSchema ở lần cuối thì ghi isFallback=true', async () => {
+    mockOpenAI.chatCompletion.mockResolvedValue(
+      JSON.stringify({
+        overall_score: 101,
+        model_answer: 'Score is out of range.',
+        key_takeaway: 'Invalid score should fail schema validation.',
+        annotated_segments: [
+          {
+            segment_text: 'pagination',
+            start_index: 0,
+            end_index: 10,
+            highlight_level: 'neutral',
+            annotation: 'Invalid highlight level.',
+          },
+        ],
+      }),
+    );
+
+    const lastAttemptJob = {
+      ...makeJob('technical'),
+      attemptsMade: 1,
+    } as unknown as Job<any>;
+
+    await expect(processor.process(lastAttemptJob)).resolves.toBeUndefined();
+
+    const upsertArgs = tx.aiFeedback.upsert.mock.calls[0][0];
+    expect(upsertArgs.create.isFallback).toBe(true);
+    expect(tx.annotatedSegment.createMany).not.toHaveBeenCalled();
     expect(tx.userAnswer.update).toHaveBeenCalledWith({
       where: { id: 'int-answer-1' },
       data: { feedbackGenerated: true },

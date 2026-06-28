@@ -5,7 +5,11 @@ import { ReportService } from './report.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import { REPORT_QUEUE } from '../common/constants/queue.constants';
+import {
+  REPORT_JOB_ATTEMPTS,
+  REPORT_JOB_RETRY_DELAY_MS,
+  REPORT_QUEUE,
+} from '../common/constants/queue.constants';
 import {
   createMockPrismaService,
   createMockQueue,
@@ -334,6 +338,14 @@ describe('ReportService', () => {
         },
         expect.objectContaining({ jobId: 'report-session-123' }),
       );
+      expect(mockReportQueue.add).toHaveBeenCalledWith(
+        'comprehensive-report',
+        expect.any(Object),
+        expect.objectContaining({
+          attempts: REPORT_JOB_ATTEMPTS,
+          backoff: { type: 'fixed', delay: REPORT_JOB_RETRY_DELAY_MS },
+        }),
+      );
     });
 
     it('không tạo job mới khi job report của session đã tồn tại', async () => {
@@ -348,6 +360,20 @@ describe('ReportService', () => {
 
       expect(mockReportQueue.add).not.toHaveBeenCalled();
       expect(existingJob.retry).not.toHaveBeenCalled();
+    });
+
+    it('retry job report đã failed thay vì tạo job trùng', async () => {
+      const existingJob = {
+        getState: jest.fn().mockResolvedValue('failed'),
+        retry: jest.fn().mockResolvedValue(undefined),
+      };
+      mockPrisma.userAnswer.findMany.mockResolvedValue([{ id: 'ans-1' }]);
+      mockReportQueue.getJob.mockResolvedValue(existingJob);
+
+      await service.enqueueReport('session-123', 'mixed', 'Western');
+
+      expect(existingJob.retry).toHaveBeenCalledTimes(1);
+      expect(mockReportQueue.add).not.toHaveBeenCalled();
     });
 
     it('từ chối enqueue report khi session chưa có answer', async () => {
@@ -382,6 +408,21 @@ describe('ReportService', () => {
 
       await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
 
+      expect(mockReportQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('không enqueue khi session completing nhưng chưa có answer nào', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        status: 'completing',
+      });
+      mockPrisma.userAnswer.count
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(0);
+
+      await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
+
+      expect(mockPrisma.userAnswer.findMany).not.toHaveBeenCalled();
       expect(mockReportQueue.add).not.toHaveBeenCalled();
     });
 

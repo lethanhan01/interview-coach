@@ -40,6 +40,7 @@ describe('PromptBuilderService', () => {
       expect(result).toContain('segment_text');
       expect(result).toContain('start_index');
       expect(result).toContain('end_index');
+      expect(result).toContain('never use null');
     });
   });
 

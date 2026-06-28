@@ -12,7 +12,11 @@ import {
 } from '../../common/constants/queue.constants';
 import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.1';
 import type { SessionType } from '../pipelines/interview-pipeline.interface';
-import { isAIQuotaExceeded, isAIFallbackEligible } from '../ai-error.utils';
+import {
+  describeAIError,
+  isAIQuotaExceeded,
+  isAIFallbackEligible,
+} from '../ai-error.utils';
 import { FALLBACK_FEEDBACK_MESSAGE } from '../fallback-content';
 
 interface FeedbackJobDto {
@@ -24,6 +28,8 @@ interface FeedbackJobDto {
   contextPack: 'VN' | 'Western';
   sessionType: SessionType;
 }
+
+const REPORT_READINESS_LOCAL_ATTEMPTS = 2;
 
 @Processor(FEEDBACK_QUEUE)
 export class FeedbackProcessor extends WorkerHost {
@@ -48,6 +54,8 @@ export class FeedbackProcessor extends WorkerHost {
       contextPack,
       sessionType,
     } = job.data;
+
+    let hasAnnotations = false;
 
     try {
       const contextPackConfig =
@@ -105,19 +113,7 @@ export class FeedbackProcessor extends WorkerHost {
         });
       });
 
-      await this.emitFeedbackReady(
-        sessionId,
-        answerId,
-        feedback.annotatedSegments.length > 0,
-      );
-      await this.reportService
-        .enqueueIfAllFeedbacksReady(sessionId, sessionType, contextPack)
-        .catch((err: unknown) => {
-          this.logger.warn(
-            `Failed to check report readiness for session ${sessionId}`,
-            err instanceof Error ? err.message : String(err),
-          );
-        });
+      hasAnnotations = feedback.annotatedSegments.length > 0;
     } catch (error: unknown) {
       const isQuotaError = isAIQuotaExceeded(error);
       const totalAttempts = job.opts.attempts ?? FEEDBACK_JOB_ATTEMPTS;
@@ -135,6 +131,10 @@ export class FeedbackProcessor extends WorkerHost {
         this.logger.warn(
           `Using fallback feedback for session ${sessionId} answer ${answerId}: AI provider quota exhausted`,
         );
+      } else if (isAIFallbackEligible(error)) {
+        this.logger.warn(
+          `Using fallback feedback for session ${sessionId} answer ${answerId}: ${describeAIError(error)}`,
+        );
       } else {
         this.logger.error(
           `FeedbackProcessor failed after ${totalAttempts} attempts for session ${sessionId} answer ${answerId}`,
@@ -143,7 +143,7 @@ export class FeedbackProcessor extends WorkerHost {
       }
 
       try {
-        const hasAnnotations = await this.prisma.$transaction(async (tx) => {
+        hasAnnotations = await this.prisma.$transaction(async (tx) => {
           const existingFeedback = await tx.aiFeedback.findUnique({
             where: { userAnswerId: answerId },
             include: { _count: { select: { annotatedSegments: true } } },
@@ -174,16 +174,6 @@ export class FeedbackProcessor extends WorkerHost {
           });
           return false;
         });
-
-        await this.emitFeedbackReady(sessionId, answerId, hasAnnotations);
-        await this.reportService
-          .enqueueIfAllFeedbacksReady(sessionId, sessionType, contextPack)
-          .catch((err: unknown) => {
-            this.logger.warn(
-              `Failed to check report readiness for session ${sessionId}`,
-              err instanceof Error ? err.message : String(err),
-            );
-          });
       } catch (fallbackError: unknown) {
         this.logger.error(
           `FeedbackProcessor fallback insert failed for answer ${answerId}`,
@@ -194,6 +184,9 @@ export class FeedbackProcessor extends WorkerHost {
         throw fallbackError;
       }
     }
+
+    await this.emitFeedbackReady(sessionId, answerId, hasAnnotations);
+    await this.enqueueReportWhenReady(sessionId, sessionType, contextPack);
   }
 
   private async emitFeedbackReady(
@@ -212,5 +205,35 @@ export class FeedbackProcessor extends WorkerHost {
           error instanceof Error ? error.message : String(error),
         );
       });
+  }
+
+  private async enqueueReportWhenReady(
+    sessionId: string,
+    sessionType: SessionType,
+    contextPack: 'VN' | 'Western',
+  ): Promise<void> {
+    let lastError: unknown;
+    for (
+      let attempt = 1;
+      attempt <= REPORT_READINESS_LOCAL_ATTEMPTS;
+      attempt++
+    ) {
+      try {
+        await this.reportService.enqueueIfAllFeedbacksReady(
+          sessionId,
+          sessionType,
+          contextPack,
+        );
+        return;
+      } catch (error: unknown) {
+        lastError = error;
+        this.logger.warn(
+          `Failed to check report readiness for session ${sessionId} (attempt ${attempt}/${REPORT_READINESS_LOCAL_ATTEMPTS})`,
+          error instanceof Error ? error.message : String(error),
+        );
+      }
+    }
+
+    throw lastError;
   }
 }

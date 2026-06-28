@@ -1,18 +1,20 @@
 # Backend API Inventory
 
-Đối chiếu tại ngày 2026-06-09 với:
+Đối chiếu tại ngày 2026-06-28 với:
 
 - `server/src/app.controller.ts`
 - `server/src/auth/auth.controller.ts`
+- `server/src/health/health.controller.ts`
 - `server/src/session/session.controller.ts`
 - `server/src/turn/turn.controller.ts`
 - `server/src/report/report.controller.ts`
 - `server/src/user/user.controller.ts`
+- `server/src/saved-job-description/saved-job-description.controller.ts`
 - Các DTO, service, exception filter và `server/prisma/schema.prisma`
 
 ## Kết quả rà soát
 
-Backend expose **14 API**. Sau khi cập nhật, cả 14 API đều có:
+Backend expose **18 API**. Sau khi cập nhật, cả 18 API đều có:
 
 1. Endpoint URL.
 2. Purpose bằng tiếng Việt.
@@ -38,6 +40,10 @@ Backend expose **14 API**. Sau khi cập nhật, cả 14 API đều có:
 | 12 | `GET /api/v1/sessions/:sessionId/report` | Đủ | Đủ | Đủ | Đủ | Đủ | [05_report.md](05_report.md) |
 | 13 | `GET /api/v1/profile` | Đủ | Đủ | Đủ | Đủ | Đủ | [08_profile.md](08_profile.md) |
 | 14 | `PATCH /api/v1/profile` | Đủ | Đủ | Đủ | Đủ | Đủ | [08_profile.md](08_profile.md) |
+| 15 | `GET /api/v1/health` | Đủ | Đủ | Đủ | Đủ | Đủ | [01_overview.md](01_overview.md) |
+| 16 | `POST /api/v1/sessions/:sessionId/turns/audio` | Đủ | Đủ | Đủ | Đủ | Đủ | [04_answer.md](04_answer.md) |
+| 17 | `GET /api/v1/saved-job-descriptions` | Đủ | Đủ | Đủ | Đủ | Đủ | [09_saved_job_description.md](09_saved_job_description.md) |
+| 18 | `POST /api/v1/saved-job-descriptions` | Đủ | Đủ | Đủ | Đủ | Đủ | [09_saved_job_description.md](09_saved_job_description.md) |
 
 ## Response contract thực tế
 

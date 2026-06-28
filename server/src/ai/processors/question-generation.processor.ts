@@ -11,7 +11,7 @@ import type {
   GeneratedQuestion,
   SessionType,
 } from '../pipelines/interview-pipeline.interface';
-import { isAIQuotaExceeded } from '../ai-error.utils';
+import { describeAIError, isAIFallbackEligible } from '../ai-error.utils';
 
 interface QuestionGenerationJobDto {
   sessionId: string;
@@ -69,9 +69,9 @@ export class QuestionGenerationProcessor extends WorkerHost {
         );
       }
     } catch (error: unknown) {
-      if (isAIQuotaExceeded(error)) {
+      if (isAIFallbackEligible(error)) {
         this.logger.warn(
-          `AI provider quota exhausted for session ${sessionId}; using question_bank fallback`,
+          `AI question generation unavailable for session ${sessionId}; using question_bank fallback: ${describeAIError(error)}`,
         );
       } else {
         this.logger.error(

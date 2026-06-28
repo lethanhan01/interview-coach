@@ -142,6 +142,35 @@ describe('OpenAIGateway — JSON extraction', () => {
     expect(result).toBe('{"score":70}');
     expect(() => JSON.parse(result)).not.toThrow();
   });
+
+  it('gửi response_format json_object khi OPENAI_JSON_MODE=true', async () => {
+    const jsonModeConfig = {
+      get: jest.fn((key: string) => {
+        const values: Record<string, string> = {
+          OPENAI_API_KEY: 'test-key',
+          OPENAI_BASE_URL: 'http://127.0.0.1:1234/v1',
+          OPENAI_CHAT_MODEL: 'google/gemma-4-e4b',
+          OPENAI_JSON_MODE: 'true',
+          OPENAI_TIMEOUT_MS: '30000',
+        };
+        return values[key];
+      }),
+    };
+    const gateway = new OpenAIGateway(jsonModeConfig as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: '{"score":85}' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await gateway.chatCompletion(jsonParams);
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        response_format: { type: 'json_object' },
+      }),
+      expect.any(Object),
+    );
+  });
 });
 
 describe('OpenAIGateway — empty response và task-specific timeout', () => {

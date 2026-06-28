@@ -116,3 +116,53 @@ Response là plain text; không có trường JSON.
 | HTTP | `errorCode` | Khi xảy ra |
 |------|-------------|------------|
 | 500 | `INTERNAL_ERROR` | Lỗi ngoài dự kiến trong server. |
+
+## GET /api/v1/health
+
+**Endpoint URL**
+
+`GET /api/v1/health`
+
+**Purpose**
+
+Kiểm tra trạng thái các dependency của backend: PostgreSQL (qua Prisma) và Redis. Dùng để monitor hệ thống; không liên quan đến nghiệp vụ người dùng.
+
+**Authentication**
+
+Không yêu cầu.
+
+**Request body**
+
+Không có.
+
+**Response body - 200 OK**
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-06-28T12:00:00.000Z",
+  "services": {
+    "db": { "status": "up", "latencyMs": 4 },
+    "redis": { "status": "up", "latencyMs": 2 }
+  }
+}
+```
+
+| Trường | Kiểu | Chú thích |
+|--------|------|-----------|
+| `status` | string | `"ok"` nếu cả db và redis đều `"up"`, ngược lại `"degraded"`. |
+| `timestamp` | string | Thời điểm check theo ISO 8601 UTC. |
+| `services.db.status` | string | `"up"` hoặc `"down"`. |
+| `services.db.latencyMs` | number | Thời gian `SELECT 1` tính bằng millisecond. |
+| `services.db.error` | string | Có mặt khi `status = "down"`, chứa message lỗi. |
+| `services.redis.status` | string | `"up"` hoặc `"down"`. |
+| `services.redis.latencyMs` | number | Thời gian PING tính bằng millisecond. |
+| `services.redis.error` | string | Có mặt khi `status = "down"`, chứa message lỗi. |
+
+Endpoint luôn trả `200` kể cả khi một dependency `"down"` — phân biệt qua trường `status`.
+
+**Errors**
+
+| HTTP | `errorCode` | Khi xảy ra |
+|------|-------------|------------|
+| 500 | `INTERNAL_ERROR` | Lỗi không dự kiến trong handler. |

@@ -51,11 +51,17 @@ export default function ReportPage() {
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
 
+    const sessionPromise = apiClient
+      .get<Session>(`/sessions/${sessionId}`)
+      .then((data) => setSession(data))
+      .catch(() => {});
+
     async function fetchReport() {
       try {
         const data = await apiClient.get<Report>(
           `/sessions/${sessionId}/report`,
         );
+        await sessionPromise;
         setReport(data);
         setLoading(false);
       } catch (err: unknown) {
@@ -70,17 +76,7 @@ export default function ReportPage() {
       }
     }
 
-    async function fetchSession() {
-      try {
-        const data = await apiClient.get<Session>(`/sessions/${sessionId}`);
-        setSession(data);
-      } catch {
-        // Session metadata is supplementary — silently ignore errors
-      }
-    }
-
     fetchReport();
-    fetchSession();
 
     return () => clearTimeout(timer);
   }, [sessionId]);

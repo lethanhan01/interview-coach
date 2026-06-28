@@ -6,6 +6,7 @@ const FALLBACK_ELIGIBLE_AI_ERRORS = new Set<ErrorCode>([
   ErrorCode.AI_RATE_LIMIT,
   ErrorCode.AI_TIMEOUT,
   ErrorCode.AI_EMPTY_RESPONSE,
+  ErrorCode.SCHEMA_VALIDATION_ERROR,
 ]);
 
 export function isAIQuotaExceeded(error: unknown): boolean {

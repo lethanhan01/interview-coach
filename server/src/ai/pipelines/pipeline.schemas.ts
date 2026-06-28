@@ -13,6 +13,11 @@ export const QuestionsSchema = z.object({
   ),
 });
 
+const OptionalFeedbackTextSchema = z.preprocess(
+  (value) => (value === null ? undefined : value),
+  z.string().optional(),
+);
+
 export const FeedbackSchema = z.object({
   overall_score: z.number().int().min(1).max(100),
   model_answer: z.string(),
@@ -24,8 +29,8 @@ export const FeedbackSchema = z.object({
       end_index: z.number().int(),
       highlight_level: z.enum(['strength', 'improvement']),
       annotation: z.string(),
-      suggestion: z.string().optional(),
-      improved_version: z.string().optional(),
+      suggestion: OptionalFeedbackTextSchema,
+      improved_version: OptionalFeedbackTextSchema,
     }),
   ),
 });

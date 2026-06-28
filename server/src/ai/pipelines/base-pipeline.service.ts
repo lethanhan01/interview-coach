@@ -17,6 +17,7 @@ import {
   FeedbackSchema,
   PROMPT_VERSION,
 } from './pipeline.schemas';
+import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.1';
 
 export abstract class BasePipelineService implements InterviewPipeline {
   protected abstract readonly supportedSessionType: SessionType;
@@ -86,20 +87,23 @@ export abstract class BasePipelineService implements InterviewPipeline {
     });
     const raw = await this.openai.chatCompletion({
       messages,
-      temperature: 0.3,
-      maxTokens: 1500,
+      temperature: SURGICAL_FEEDBACK_PROMPT_CONFIG.temperature,
+      maxTokens: SURGICAL_FEEDBACK_PROMPT_CONFIG.maxTokens,
       responseFormat: 'json_object',
       task: 'feedback',
     });
-    this.logger.debug(`[feedback] raw response (first 500 chars): ${raw.slice(0, 500)}`);
+    this.logger.debug(`[feedback] raw response length: ${raw.length}`);
     let parsed: unknown;
     try {
       parsed = JSON.parse(raw);
     } catch (err) {
-      this.logger.error(`[feedback] JSON parse failed. raw: ${raw.slice(0, 500)}`, err);
+      this.logger.warn(
+        `[feedback] JSON parse failed. rawLength=${raw.length}`,
+        err,
+      );
       throw new InterviewAIException(
-        ErrorCode.AI_SERVICE_ERROR,
-        HttpStatus.BAD_GATEWAY,
+        ErrorCode.SCHEMA_VALIDATION_ERROR,
+        HttpStatus.UNPROCESSABLE_ENTITY,
         'Invalid JSON from AI',
       );
     }
@@ -121,7 +125,10 @@ export abstract class BasePipelineService implements InterviewPipeline {
         })),
       };
     } catch (err) {
-      this.logger.error(`[feedback] Zod validation failed. parsed: ${JSON.stringify(parsed).slice(0, 500)}`, err);
+      this.logger.warn(
+        `[feedback] Zod validation failed. rawLength=${raw.length}`,
+        err,
+      );
       throw err;
     }
   }

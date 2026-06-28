@@ -181,7 +181,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       });
     });
 
-    it('gọi chatCompletion với temperature 0.3, maxTokens 1500, task feedback, responseFormat json_object', async () => {
+    it('gọi chatCompletion với temperature 0.3, maxTokens 3000, task feedback, responseFormat json_object', async () => {
       const rawFeedback = {
         overall_score: 75,
         model_answer: 'Strong answer.',
@@ -196,7 +196,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       expect(mockOpenAI.chatCompletion).toHaveBeenCalledWith(
         expect.objectContaining({
           temperature: 0.3,
-          maxTokens: 1500,
+          maxTokens: 3000,
           task: 'feedback',
           responseFormat: 'json_object',
         }),
@@ -215,13 +215,16 @@ describe('BasePipelineService (via HrPipelineService)', () => {
 
       await service.evaluateAnswer(feedbackInput);
 
-      expect(mockPromptBuilder.buildBaseSystem).toHaveBeenCalledWith('surgical-feedback');
+      expect(mockPromptBuilder.buildBaseSystem).toHaveBeenCalledWith(
+        'surgical-feedback',
+      );
       expect(mockPromptBuilder.applyContextPack).toHaveBeenCalledWith(
-        expect.any(String),
+        expect.stringContaining('Interview strategy:'),
         mockContextPack,
       );
       expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
         expect.objectContaining({
+          jobDescription: '',
           question: feedbackInput.questionText,
           answer: feedbackInput.answerText,
           sessionType: feedbackInput.sessionType,
@@ -229,7 +232,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       );
     });
 
-    it('logger.error được gọi khi zodValidator.validate ném lỗi rồi re-throw', async () => {
+    it('logger.warn được gọi khi zodValidator.validate ném lỗi rồi re-throw', async () => {
       const rawFeedback = { overall_score: 'bad' };
       mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
       const validationError = new InterviewAIException(
@@ -239,14 +242,17 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       mockZodValidator.validate.mockImplementation(() => {
         throw validationError;
       });
-      const errorSpy = jest.spyOn((service as any).logger, 'error');
+      const warnSpy = jest.spyOn((service as any).logger, 'warn');
 
-      await expect(service.evaluateAnswer(feedbackInput)).rejects.toThrow(validationError);
+      await expect(service.evaluateAnswer(feedbackInput)).rejects.toThrow(
+        validationError,
+      );
 
-      expect(errorSpy).toHaveBeenCalledWith(
+      expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining('[feedback] Zod validation failed'),
         expect.anything(),
       );
+      expect(warnSpy.mock.calls[0][0]).not.toContain('"overall_score":"bad"');
     });
 
     it('logger.debug được gọi với raw response sau khi chatCompletion thành công', async () => {
@@ -263,19 +269,22 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       await service.evaluateAnswer(feedbackInput);
 
       expect(debugSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[feedback] raw response'),
+        expect.stringContaining('[feedback] raw response length:'),
       );
+      expect(debugSpy.mock.calls[0][0]).not.toContain('Good.');
     });
 
-    it('logger.error được gọi khi JSON.parse fail rồi ném AI_SERVICE_ERROR', async () => {
+    it('logger.warn được gọi khi JSON.parse fail rồi ném SCHEMA_VALIDATION_ERROR', async () => {
       mockOpenAI.chatCompletion.mockResolvedValue('not-json {{');
-      const errorSpy = jest.spyOn((service as any).logger, 'error');
+      const warnSpy = jest.spyOn((service as any).logger, 'warn');
 
-      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject({
-        errorCode: ErrorCode.AI_SERVICE_ERROR,
-      });
-      expect(errorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[feedback] JSON parse failed'),
+      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject(
+        {
+          errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR,
+        },
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[feedback] JSON parse failed. rawLength=11'),
         expect.anything(),
       );
     });

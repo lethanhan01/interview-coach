@@ -202,6 +202,9 @@ describe('TurnService', () => {
         service.submitAnswer('session-123', 'user-abc', TEXT_DTO),
       ).rejects.toThrow(InterviewAIException);
 
+      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...BASE_SESSION,
         status: 'completed',
@@ -224,6 +227,9 @@ describe('TurnService', () => {
       await expect(
         service.submitAnswer('session-123', 'user-abc', TEXT_DTO),
       ).rejects.toThrow(InterviewAIException);
+
+      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...BASE_SESSION,
@@ -322,14 +328,60 @@ describe('TurnService', () => {
         'feedback',
         expect.objectContaining({
           sessionId: 'session-123',
+          turnId: 'answer-1',
           answerId: 'answer-1',
+          questionText: 'Giới thiệu bản thân?',
+          answerText: 'Tôi là developer với 2 năm kinh nghiệm.',
+          contextPack: 'VN',
+          sessionType: 'hr',
         }),
+        expect.objectContaining({
+          jobId: 'feedback-answer-1',
+          attempts: FEEDBACK_JOB_ATTEMPTS,
+          backoff: { type: 'fixed', delay: 2000 },
+        }),
+      );
+      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('feedback payload dùng questionText/contextPack/sessionType từ DB cho technical Western session', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        sessionType: 'technical',
+        contextPackId: 'Western',
+      });
+      mockPrisma.sessionQuestion.findFirst.mockResolvedValue({
+        ...BASE_QUESTION,
+        questionText: 'Explain a system design trade-off.',
+      });
+      mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
+      mockPrisma.userAnswer.upsert.mockResolvedValue({
+        ...BASE_ANSWER,
+        answerText: 'I chose pagination because it reduced memory usage.',
+      });
+      mockFeedbackQueue.add.mockResolvedValue({});
+
+      await service.submitAnswer('session-123', 'user-abc', {
+        ...TEXT_DTO,
+        answerText: 'Client text should only be stored before enqueue.',
+      });
+
+      expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
+        'feedback',
+        {
+          sessionId: 'session-123',
+          turnId: 'answer-1',
+          answerId: 'answer-1',
+          questionText: 'Explain a system design trade-off.',
+          answerText: 'I chose pagination because it reduced memory usage.',
+          contextPack: 'Western',
+          sessionType: 'technical',
+        },
         expect.objectContaining({
           jobId: 'feedback-answer-1',
           attempts: FEEDBACK_JOB_ATTEMPTS,
         }),
       );
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
     });
 
     it('voice mode: enqueue transcription job, không gọi Whisper trực tiếp, return transcriptionPending=true', async () => {

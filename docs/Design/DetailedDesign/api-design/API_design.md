@@ -1,6 +1,6 @@
 # API Design - InterviewAI
 
-Tài liệu trong thư mục này được đối chiếu với controller, DTO, service và Prisma schema trong `server/src` tại ngày 2026-06-09.
+Tài liệu trong thư mục này được đối chiếu với controller, DTO, service và Prisma schema trong `server/src` tại ngày 2026-06-28.
 
 Base path thực tế: `/api/v1`.
 
@@ -8,14 +8,15 @@ Base path thực tế: `/api/v1`.
 
 | Nhóm | Tài liệu | Số API |
 |------|----------|--------|
-| Health check và quy ước chung | [01_overview.md](01_overview.md) | 1 |
+| Health check và quy ước chung | [01_overview.md](01_overview.md) | 2 |
 | Authentication | [02_auth.md](02_auth.md) | 2 |
 | Interview session và SSE | [03_session.md](03_session.md) | 7 |
-| Turn/answer | [04_answer.md](04_answer.md) | 1 |
+| Turn/answer | [04_answer.md](04_answer.md) | 2 |
 | Report | [05_report.md](05_report.md) | 1 |
 | Profile | [08_profile.md](08_profile.md) | 2 |
+| Saved job descriptions | [09_saved_job_description.md](09_saved_job_description.md) | 2 |
 
-Tổng cộng: **14 API**.
+Tổng cộng: **18 API**.
 
 Ma trận đối chiếu controller và trạng thái tài liệu nằm tại [07_backend_api_inventory.md](07_backend_api_inventory.md).
 

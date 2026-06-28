@@ -158,6 +158,16 @@ describe('FeedbackProcessor', () => {
     });
   });
 
+  it('ghi DB transaction xong rồi mới emit SSE feedback_ready', async () => {
+    await processor.process(makeJob());
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(mockSse.emit).toHaveBeenCalledTimes(1);
+    expect(prisma.$transaction.mock.invocationCallOrder[0]).toBeLessThan(
+      mockSse.emit.mock.invocationCallOrder[0],
+    );
+  });
+
   it('không retry hoặc ghi fallback chỉ vì SSE phát thất bại', async () => {
     mockSse.emit.mockRejectedValue(new Error('Redis unavailable'));
 
@@ -165,6 +175,18 @@ describe('FeedbackProcessor', () => {
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.aiFeedback.upsert).toHaveBeenCalledTimes(1);
+  });
+
+  it('lỗi thường ở attempt đầu thì throw để BullMQ retry, chưa ghi fallback', async () => {
+    strategy.evaluateAnswer.mockRejectedValue(new Error('AI unavailable'));
+
+    await expect(processor.process(makeJob(0))).rejects.toThrow(
+      'AI unavailable',
+    );
+
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(mockSse.emit).not.toHaveBeenCalled();
+    expect(mockReportService.enqueueIfAllFeedbacksReady).not.toHaveBeenCalled();
   });
 
   it('ở lần cuối giữ nguyên feedback đã tồn tại thay vì đụng unique constraint', async () => {
@@ -216,6 +238,11 @@ describe('FeedbackProcessor', () => {
       expect.stringContaining('AI provider quota exhausted'),
     );
     expect(errorSpy).not.toHaveBeenCalled();
+    expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
+      'session-123',
+      'hr',
+      'VN',
+    );
   });
 
   it('không retry AI_TIMEOUT và ghi fallback ngay ở lần đầu', async () => {
@@ -237,6 +264,31 @@ describe('FeedbackProcessor', () => {
       where: { id: 'answer-1' },
       data: { feedbackGenerated: true },
     });
+  });
+
+  it('không retry output AI sai schema và ghi fallback ngay ở lần đầu', async () => {
+    strategy.evaluateAnswer.mockRejectedValue(
+      new InterviewAIException(
+        ErrorCode.SCHEMA_VALIDATION_ERROR,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        'Invalid JSON from AI',
+      ),
+    );
+    const warnSpy = jest.spyOn((processor as any).logger, 'warn');
+
+    await expect(processor.process(makeJob(0))).resolves.toBeUndefined();
+
+    const fallbackArgs = tx.aiFeedback.upsert.mock.calls[0][0];
+    expect(fallbackArgs.create).toEqual(
+      expect.objectContaining({ isFallback: true }),
+    );
+    expect(tx.userAnswer.update).toHaveBeenCalledWith({
+      where: { id: 'answer-1' },
+      data: { feedbackGenerated: true },
+    });
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Using fallback feedback'),
+    );
   });
 
   it('getStrategy được gọi với sessionType từ job data', async () => {
@@ -318,6 +370,46 @@ describe('FeedbackProcessor', () => {
       'session-123',
       'hr',
       'VN',
+    );
+  });
+
+  it('retry cục bộ report readiness một lần rồi thành công nếu lần đầu lỗi', async () => {
+    mockReportService.enqueueIfAllFeedbacksReady
+      .mockRejectedValueOnce(new Error('Redis queue hiccup'))
+      .mockResolvedValueOnce(undefined);
+
+    await expect(processor.process(makeJob())).resolves.toBeUndefined();
+
+    expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledTimes(
+      2,
+    );
+    expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
+      'session-123',
+      'hr',
+      'VN',
+    );
+  });
+
+  it('throw sau khi report readiness lỗi liên tiếp để BullMQ retry job, tránh session kẹt completing', async () => {
+    mockReportService.enqueueIfAllFeedbacksReady.mockRejectedValue(
+      new Error('Report queue unavailable'),
+    );
+
+    await expect(processor.process(makeJob())).rejects.toThrow(
+      'Report queue unavailable',
+    );
+
+    expect(tx.userAnswer.update).toHaveBeenCalledWith({
+      where: { id: 'answer-1' },
+      data: { feedbackGenerated: true },
+    });
+    expect(mockSse.emit).toHaveBeenCalledWith(
+      'sse:session:session-123',
+      'turn.feedback_ready',
+      { answerId: 'answer-1', hasAnnotations: true },
+    );
+    expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledTimes(
+      2,
     );
   });
 });
