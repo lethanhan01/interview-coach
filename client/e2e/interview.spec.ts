@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 const SESSION_ID = 'sess-abc'
 const MOCK_QUESTIONS = [
-  { id: 'q1', content: 'Hãy giới thiệu về bản thân bạn.', orderIndex: 0 },
-  { id: 'q2', content: 'Điểm mạnh của bạn là gì?', orderIndex: 1 },
+  { id: 'q1', content: 'Hãy giới thiệu về bản thân bạn.', orderIndex: 1 },
+  { id: 'q2', content: 'Điểm mạnh của bạn là gì?', orderIndex: 2 },
 ]
 
 test.beforeEach(async ({ page }) => {
@@ -63,6 +63,137 @@ test.beforeEach(async ({ page }) => {
 test('câu hỏi đầu tiên hiển thị sau khi load', async ({ page }) => {
   await page.goto(`/sessions/${SESSION_ID}`)
   await expect(page.getByText(MOCK_QUESTIONS[0].content)).toBeVisible({ timeout: 10000 })
+})
+
+test('QG-17: frontend polling tiếp tục khi /questions tạm thời rỗng', async ({ page }) => {
+  await page.addInitScript(() => {
+    const originalSetTimeout = window.setTimeout
+    window.setTimeout = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) =>
+      originalSetTimeout(handler, Math.min(timeout ?? 0, 20), ...args)) as typeof window.setTimeout
+  })
+
+  let questionCalls = 0
+  await page.route(`**/api/v1/sessions/${SESSION_ID}/questions`, async (route) => {
+    questionCalls += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        questions: questionCalls < 3 ? [] : MOCK_QUESTIONS,
+      }),
+    })
+  })
+
+  await page.goto(`/sessions/${SESSION_ID}`)
+
+  await expect(page.getByText(MOCK_QUESTIONS[0].content)).toBeVisible({ timeout: 10000 })
+  expect(questionCalls).toBeGreaterThanOrEqual(3)
+})
+
+async function installMockEventSource(page: Page) {
+  await page.addInitScript(() => {
+    const sources: Array<{
+      listeners: Record<string, Array<(event: MessageEvent) => void>>
+      emit: (type: string, data: unknown) => void
+      close: () => void
+    }> = []
+
+    class MockEventSource {
+      listeners: Record<string, Array<(event: MessageEvent) => void>> = {}
+
+      constructor() {
+        sources.push(this)
+      }
+
+      addEventListener(type: string, listener: EventListener) {
+        this.listeners[type] ??= []
+        this.listeners[type].push(listener as (event: MessageEvent) => void)
+      }
+
+      emit(type: string, data: unknown) {
+        const event = new MessageEvent(type, { data: JSON.stringify(data) })
+        for (const listener of this.listeners[type] ?? []) listener(event)
+      }
+
+      close() {}
+    }
+
+    ;(window as typeof window & { __mockEventSources?: typeof sources }).__mockEventSources = sources
+    ;(window as typeof window & { EventSource: typeof EventSource }).EventSource =
+      MockEventSource as unknown as typeof EventSource
+  })
+}
+
+test('QG-18: SSE active trigger refetch questions khi polling chưa thấy câu hỏi', async ({ page }) => {
+  await page.addInitScript(() => {
+    const originalSetTimeout = window.setTimeout
+    window.setTimeout = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) =>
+      originalSetTimeout(handler, Math.min(timeout ?? 0, 20), ...args)) as typeof window.setTimeout
+  })
+  await installMockEventSource(page)
+
+  let exposeQuestions = false
+  await page.route(`**/api/v1/sessions/${SESSION_ID}/questions`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ questions: exposeQuestions ? MOCK_QUESTIONS : [] }),
+    })
+  })
+
+  await page.goto(`/sessions/${SESSION_ID}`)
+  await expect.poll(
+    () => page.evaluate(() => (
+      window as typeof window & { __mockEventSources?: unknown[] }
+    ).__mockEventSources?.length ?? 0),
+  ).toBeGreaterThan(0)
+
+  exposeQuestions = true
+  await page.evaluate((sessionId) => {
+    const source = (
+      window as typeof window & {
+        __mockEventSources: Array<{ emit: (type: string, data: unknown) => void }>
+      }
+    ).__mockEventSources[0]
+    source.emit('session.status', { status: 'active', sessionId })
+  }, SESSION_ID)
+
+  await expect(page.getByText(MOCK_QUESTIONS[0].content)).toBeVisible({ timeout: 10000 })
+})
+
+test('QG-19: SSE error hiển thị lỗi rõ ràng thay vì chờ polling timeout', async ({ page }) => {
+  await page.addInitScript(() => {
+    const originalSetTimeout = window.setTimeout
+    window.setTimeout = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) =>
+      originalSetTimeout(handler, Math.min(timeout ?? 0, 20), ...args)) as typeof window.setTimeout
+  })
+  await installMockEventSource(page)
+
+  await page.route(`**/api/v1/sessions/${SESSION_ID}/questions`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ questions: [] }),
+    })
+  })
+
+  await page.goto(`/sessions/${SESSION_ID}`)
+  await expect.poll(
+    () => page.evaluate(() => (
+      window as typeof window & { __mockEventSources?: unknown[] }
+    ).__mockEventSources?.length ?? 0),
+  ).toBeGreaterThan(0)
+
+  await page.evaluate((sessionId) => {
+    const source = (
+      window as typeof window & {
+        __mockEventSources: Array<{ emit: (type: string, data: unknown) => void }>
+      }
+    ).__mockEventSources[0]
+    source.emit('session.status', { status: 'error', sessionId })
+  }, SESSION_ID)
+
+  await expect(page.getByText('Không thể tạo câu hỏi cho phiên phỏng vấn này. Vui lòng thử tạo phiên mới.')).toBeVisible()
 })
 
 test('mode toggle giữa Text và Giọng nói', async ({ page }) => {

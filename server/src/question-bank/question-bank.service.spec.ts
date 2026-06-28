@@ -1,5 +1,8 @@
 import { QuestionBankService } from './question-bank.service';
-import { createMockPrismaService } from '../test-utils/mock-factories';
+import {
+  createMockPrismaService,
+  createMockQuestionBank,
+} from '../test-utils/mock-factories';
 
 describe('QuestionBankService', () => {
   let service: QuestionBankService;
@@ -90,6 +93,81 @@ describe('QuestionBankService', () => {
         text: 'Stored content',
         estimatedTimeMin: 5,
       }),
+    );
+  });
+
+  it('QG-10: query fallback chỉ theo sessionType, contextPack và non-deleted rows', async () => {
+    mockPrisma.questionBank.findMany.mockResolvedValue([
+      createMockQuestionBank({
+        id: 'technical-vn-1',
+        sessionType: 'technical',
+        contextPackId: 'VN',
+        difficulty: 2,
+      }),
+    ]);
+
+    await service.selectFallbackQuestions('technical', 'VN', 1, 'vi');
+
+    expect(mockPrisma.questionBank.findMany).toHaveBeenCalledWith({
+      where: { sessionType: 'technical', contextPackId: 'VN', deletedAt: null },
+      orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
+      take: 3,
+    });
+  });
+
+  it('QG-11: chọn 2 easy, 2 medium, 1 hard với count=5 theo Math.round hiện tại', async () => {
+    mockPrisma.questionBank.findMany.mockResolvedValue([
+      createMockQuestionBank({ id: 'easy-1', difficulty: 1 }),
+      createMockQuestionBank({ id: 'easy-2', difficulty: 2 }),
+      createMockQuestionBank({ id: 'easy-3', difficulty: 2 }),
+      createMockQuestionBank({ id: 'medium-1', difficulty: 3 }),
+      createMockQuestionBank({ id: 'medium-2', difficulty: 3 }),
+      createMockQuestionBank({ id: 'medium-3', difficulty: 3 }),
+      createMockQuestionBank({ id: 'hard-1', difficulty: 4 }),
+      createMockQuestionBank({ id: 'hard-2', difficulty: 5 }),
+    ]);
+
+    const result = await service.selectFallbackQuestions(
+      'technical',
+      'VN',
+      5,
+      'vi',
+    );
+
+    expect(result.map((question) => question.questionBankId)).toEqual([
+      'easy-1',
+      'easy-2',
+      'medium-1',
+      'medium-2',
+      'hard-1',
+    ]);
+  });
+
+  it('QG-12: trả cùng thứ tự khi fallback chạy lặp với cùng dữ liệu', async () => {
+    const candidates = [
+      createMockQuestionBank({ id: 'easy-1', difficulty: 1 }),
+      createMockQuestionBank({ id: 'easy-2', difficulty: 2 }),
+      createMockQuestionBank({ id: 'medium-1', difficulty: 3 }),
+      createMockQuestionBank({ id: 'medium-2', difficulty: 3 }),
+      createMockQuestionBank({ id: 'hard-1', difficulty: 4 }),
+    ];
+    mockPrisma.questionBank.findMany.mockResolvedValue(candidates);
+
+    const first = await service.selectFallbackQuestions(
+      'technical',
+      'VN',
+      5,
+      'vi',
+    );
+    const second = await service.selectFallbackQuestions(
+      'technical',
+      'VN',
+      5,
+      'vi',
+    );
+
+    expect(second.map((question) => question.questionBankId)).toEqual(
+      first.map((question) => question.questionBankId),
     );
   });
 

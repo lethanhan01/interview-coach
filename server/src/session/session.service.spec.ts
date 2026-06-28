@@ -113,12 +113,20 @@ describe('SessionService', () => {
 
       expect(mockQuestionQueue.add).toHaveBeenCalledWith(
         'question-generation',
-        expect.objectContaining({
+        {
           sessionId: 'session-123',
           userId: 'user-abc',
+          sessionType: 'hr',
+          jobDescriptionText: CREATE_DTO.jobDescription,
+          targetRoles: [],
+          contextPack: 'VN',
           language: 'vi',
-        }),
-        expect.any(Object),
+          totalQuestions: 5,
+        },
+        {
+          attempts: 2,
+          backoff: { type: 'fixed', delay: 2000 },
+        },
       );
     });
 

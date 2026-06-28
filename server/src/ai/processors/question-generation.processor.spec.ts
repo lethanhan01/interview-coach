@@ -39,6 +39,22 @@ describe('QuestionGenerationProcessor', () => {
   const makeJob = (data = BASE_JOB_DATA) =>
     ({ data }) as Job<typeof BASE_JOB_DATA>;
 
+  const makeGeneratedQuestions = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({
+      text: `AI question ${index + 1}`,
+      category: 'behavioral',
+      competencyDomain: 'communication',
+    }));
+
+  const makeFallbackQuestions = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({
+      questionBankId: `qb-${index + 1}`,
+      text: `Fallback question ${index + 1}`,
+      questionCategory: 'behavioral',
+      competencyDomain: 'D4',
+      estimatedTimeMin: 5,
+    }));
+
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
     mockSse = createMockSseService();
@@ -109,7 +125,7 @@ describe('QuestionGenerationProcessor', () => {
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
       where: {
         id: 'session-123',
-        status: { notIn: ['paused', 'canceled'] },
+        status: { in: ['generating', 'ready'] },
       },
       data: { status: 'active' },
     });
@@ -118,6 +134,55 @@ describe('QuestionGenerationProcessor', () => {
       'session.status',
       { status: 'active', sessionId: 'session-123' },
     );
+    expect(mockQuestionBankService.recordUsage).not.toHaveBeenCalled();
+  });
+
+  it('QG-04: chỉ lưu đúng totalQuestions khi AI trả dư câu hỏi', async () => {
+    const generatedQuestions = makeGeneratedQuestions(7);
+    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockFactory.getStrategy.mockReturnValue({
+      generateQuestions: jest.fn().mockResolvedValue(generatedQuestions),
+    });
+    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+    mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
+    mockSse.emit.mockResolvedValue(undefined);
+
+    await expect(processor.process(makeJob())).resolves.toBeUndefined();
+
+    const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
+    expect(createArgs.data).toHaveLength(5);
+    expect(createArgs.data.map((q: { orderIndex: number }) => q.orderIndex)).toEqual([
+      1, 2, 3, 4, 5,
+    ]);
+    expect(
+      mockQuestionBankService.selectFallbackQuestions,
+    ).not.toHaveBeenCalled();
+    expect(mockQuestionBankService.recordUsage).not.toHaveBeenCalled();
+  });
+
+  it('QG-05: dùng fallback khi AI trả thiếu số câu yêu cầu', async () => {
+    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockFactory.getStrategy.mockReturnValue({
+      generateQuestions: jest.fn().mockResolvedValue(makeGeneratedQuestions(3)),
+    });
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+      makeFallbackQuestions(5),
+    );
+    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+    mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
+    mockSse.emit.mockResolvedValue(undefined);
+
+    await expect(processor.process(makeJob())).resolves.toBeUndefined();
+
+    const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
+    expect(createArgs.data).toHaveLength(5);
+    expect(createArgs.data[0]).toEqual(
+      expect.objectContaining({
+        questionBankId: 'qb-1',
+        questionText: 'Fallback question 1',
+      }),
+    );
+    expect(mockQuestionBankService.recordUsage).toHaveBeenCalledTimes(5);
   });
 
   it('cập nhật session status=error và emit SSE error khi AI và fallback đều thất bại', async () => {
@@ -172,7 +237,7 @@ describe('QuestionGenerationProcessor', () => {
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
       where: {
         id: 'session-123',
-        status: { notIn: ['paused', 'canceled'] },
+        status: { in: ['generating', 'ready'] },
       },
       data: { status: 'active' },
     });
@@ -196,11 +261,59 @@ describe('QuestionGenerationProcessor', () => {
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
       where: {
         id: 'session-123',
-        status: { notIn: ['paused', 'canceled'] },
+        status: { in: ['generating', 'ready'] },
       },
       data: { status: 'active' },
     });
     expect(mockSse.emit).not.toHaveBeenCalled();
+  });
+
+  it('QG-15: không emit active khi session không còn eligible để active', async () => {
+    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockFactory.getStrategy.mockReturnValue({
+      generateQuestions: jest.fn().mockResolvedValue(makeGeneratedQuestions(5)),
+    });
+    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+    mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(processor.process(makeJob())).resolves.toBeUndefined();
+
+    expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'session-123',
+        status: { in: ['generating', 'ready'] },
+      },
+      data: { status: 'active' },
+    });
+    expect(mockSse.emit).not.toHaveBeenCalled();
+  });
+
+  it('QG-08: ghi nhận hành vi hiện tại là AI_SERVICE_ERROR vẫn fallback ngay', async () => {
+    const aiServiceError = new InterviewAIException(
+      ErrorCode.AI_SERVICE_ERROR,
+      HttpStatus.BAD_GATEWAY,
+      'AI provider API error 500',
+    );
+    const generateQuestions = jest.fn().mockRejectedValue(aiServiceError);
+    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockFactory.getStrategy.mockReturnValue({ generateQuestions });
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+      makeFallbackQuestions(5),
+    );
+    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+    mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
+    mockSse.emit.mockResolvedValue(undefined);
+
+    await expect(processor.process(makeJob())).resolves.toBeUndefined();
+
+    expect(generateQuestions).toHaveBeenCalledTimes(1);
+    expect(mockQuestionBankService.selectFallbackQuestions).toHaveBeenCalledWith(
+      'hr',
+      'VN',
+      5,
+      'vi',
+    );
+    expect(mockPrisma.sessionQuestion.createMany).toHaveBeenCalledTimes(1);
   });
 
   describe('fallback path (AI failure)', () => {
@@ -257,7 +370,7 @@ describe('QuestionGenerationProcessor', () => {
       expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
         where: {
           id: 'session-123',
-          status: { notIn: ['paused', 'canceled'] },
+          status: { in: ['generating', 'ready'] },
         },
         data: { status: 'active' },
       });
@@ -314,10 +427,41 @@ describe('QuestionGenerationProcessor', () => {
       expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
         where: {
           id: 'session-123',
-          status: { notIn: ['paused', 'canceled'] },
+          status: { in: ['generating', 'ready'] },
         },
         data: { status: 'active' },
       });
+    });
+
+    it.each([
+      ErrorCode.AI_QUOTA_EXCEEDED,
+      ErrorCode.AI_RATE_LIMIT,
+      ErrorCode.AI_TIMEOUT,
+      ErrorCode.AI_EMPTY_RESPONSE,
+      ErrorCode.SCHEMA_VALIDATION_ERROR,
+    ])('QG-07: dùng fallback ngay với %s', async (errorCode) => {
+      const aiError = new InterviewAIException(
+        errorCode,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        `AI error ${errorCode}`,
+      );
+      const generateQuestions = jest.fn().mockRejectedValue(aiError);
+      mockContextPack.getContextPack.mockReturnValue({} as any);
+      mockFactory.getStrategy.mockReturnValue({ generateQuestions });
+      mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+        makeFallbackQuestions(5),
+      );
+      mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+      mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
+      mockSse.emit.mockResolvedValue(undefined);
+
+      await expect(processor.process(makeJob())).resolves.toBeUndefined();
+
+      expect(generateQuestions).toHaveBeenCalledTimes(1);
+      expect(
+        mockQuestionBankService.selectFallbackQuestions,
+      ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi');
+      expect(mockQuestionBankService.recordUsage).toHaveBeenCalledTimes(5);
     });
 
     it('set session status=error khi question_bank trả về 0 kết quả', async () => {

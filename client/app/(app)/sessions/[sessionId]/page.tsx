@@ -39,6 +39,22 @@ export default function InterviewPage() {
   const [durationMin, setDurationMin] = useState<number>(30)
   const [questionsReady, setQuestionsReady] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
+  const questionsReadyRef = useRef(false)
+
+  useEffect(() => {
+    questionsReadyRef.current = questionsReady
+  }, [questionsReady])
+
+  const loadReadyQuestions = useCallback(async (): Promise<boolean> => {
+    const qs = await apiClient.get<{ questions: Question[] }>(`/sessions/${sessionId}/questions`)
+    if (qs.questions.length === 0) return false
+
+    setQuestions(qs.questions)
+    setQuestionsReady(true)
+    setError(null)
+    setLoading(false)
+    return true
+  }, [sessionId])
 
   useEffect(() => {
     async function init() {
@@ -56,15 +72,12 @@ export default function InterviewPage() {
 
         async function pollQuestions(): Promise<Question[]> {
           for (let i = 0; i < 6; i++) {
-            const qs = await apiClient.get<{ questions: Question[] }>(`/sessions/${sessionId}/questions`)
-            if (qs.questions.length > 0) return qs.questions
+            if (await loadReadyQuestions()) return []
             await new Promise(r => setTimeout(r, 5000))
           }
           throw new Error('Câu hỏi chưa sẵn sàng sau 30 giây')
         }
-        const qs = await pollQuestions()
-        setQuestions(qs)
-        setQuestionsReady(true)
+        await pollQuestions()
         if (currentSession.status === 'generating' || currentSession.status === 'ready') {
           setSessionStatus('active')
         }
@@ -75,7 +88,7 @@ export default function InterviewPage() {
       }
     }
     init()
-  }, [sessionId, router])
+  }, [sessionId, router, loadReadyQuestions])
 
   useEffect(() => {
     if (!accessToken) return
@@ -85,7 +98,17 @@ export default function InterviewPage() {
 
     es.addEventListener('session.status', (e) => {
       const data = JSON.parse((e as MessageEvent).data) as { status?: SessionStatus }
-      if (data.status) setSessionStatus(data.status)
+      if (!data.status) return
+      setSessionStatus(data.status)
+      if (data.status === 'active' && !questionsReadyRef.current) {
+        void loadReadyQuestions()
+      }
+      if (data.status === 'error') {
+        setError('Không thể tạo câu hỏi cho phiên phỏng vấn này. Vui lòng thử tạo phiên mới.')
+        setLoading(false)
+        setQuestionsReady(false)
+        es.close()
+      }
     })
     const openReport = () => {
       setIsCompleting(true)
@@ -97,7 +120,7 @@ export default function InterviewPage() {
     es.onerror = () => es.close()
 
     return () => es.close()
-  }, [sessionId, accessToken, router])
+  }, [sessionId, accessToken, router, loadReadyQuestions])
 
   const updateSessionStatus = useCallback(async (status: SessionStatusAction) => {
     setActionError(null)

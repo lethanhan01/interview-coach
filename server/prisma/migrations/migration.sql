@@ -187,30 +187,23 @@ CREATE POLICY "user_answers: insert own"
     )
   );
 
--- follow_up_questions
-ALTER TABLE follow_up_questions ENABLE ROW LEVEL SECURITY;
+-- saved_job_descriptions
+ALTER TABLE saved_job_descriptions ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "follow_up_questions: read own" ON follow_up_questions;
-CREATE POLICY "follow_up_questions: read own"
-  ON follow_up_questions FOR SELECT
-  USING (
-    user_answer_id IN (
-      SELECT ua.id FROM user_answers ua
-      JOIN interview_sessions s ON ua.session_id = s.id
-      WHERE s.user_id = auth.uid()
-    )
-  );
+DROP POLICY IF EXISTS "saved_job_descriptions: read own" ON saved_job_descriptions;
+CREATE POLICY "saved_job_descriptions: read own"
+  ON saved_job_descriptions FOR SELECT
+  USING (user_id = auth.uid() AND deleted_at IS NULL);
 
-DROP POLICY IF EXISTS "follow_up_questions: insert own" ON follow_up_questions;
-CREATE POLICY "follow_up_questions: insert own"
-  ON follow_up_questions FOR INSERT
-  WITH CHECK (
-    user_answer_id IN (
-      SELECT ua.id FROM user_answers ua
-      JOIN interview_sessions s ON ua.session_id = s.id
-      WHERE s.user_id = auth.uid()
-    )
-  );
+DROP POLICY IF EXISTS "saved_job_descriptions: insert own" ON saved_job_descriptions;
+CREATE POLICY "saved_job_descriptions: insert own"
+  ON saved_job_descriptions FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "saved_job_descriptions: update own" ON saved_job_descriptions;
+CREATE POLICY "saved_job_descriptions: update own"
+  ON saved_job_descriptions FOR UPDATE
+  USING (user_id = auth.uid());
 
 -- ai_feedbacks (candidate read only; INSERT by service role only)
 ALTER TABLE ai_feedbacks ENABLE ROW LEVEL SECURITY;
@@ -238,27 +231,6 @@ CREATE POLICY "annotated_segments: read own"
       JOIN user_answers ua ON f.user_answer_id = ua.id
       JOIN interview_sessions s ON ua.session_id = s.id
       WHERE s.user_id = auth.uid()
-    )
-  );
-
--- reverse_questions
-ALTER TABLE reverse_questions ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "reverse_questions: read own" ON reverse_questions;
-CREATE POLICY "reverse_questions: read own"
-  ON reverse_questions FOR SELECT
-  USING (
-    session_id IN (
-      SELECT id FROM interview_sessions WHERE user_id = auth.uid()
-    )
-  );
-
-DROP POLICY IF EXISTS "reverse_questions: insert own" ON reverse_questions;
-CREATE POLICY "reverse_questions: insert own"
-  ON reverse_questions FOR INSERT
-  WITH CHECK (
-    session_id IN (
-      SELECT id FROM interview_sessions WHERE user_id = auth.uid()
     )
   );
 
@@ -322,6 +294,16 @@ CREATE INDEX IF NOT EXISTS idx_ai_quality_log_created_at
 
 CREATE INDEX IF NOT EXISTS idx_ai_quality_log_job_type_created
   ON ai_quality_log(job_type, created_at DESC);
+
+-- saved_job_descriptions
+CREATE INDEX IF NOT EXISTS idx_saved_job_descriptions_user_updated
+  ON saved_job_descriptions(user_id, updated_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_saved_job_descriptions_user_company_title
+  ON saved_job_descriptions(user_id, company_name, job_title);
+
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_saved_jd
+  ON interview_sessions(saved_job_description_id);
 
 
 -- -----------------------------------------------------------------------------
@@ -408,12 +390,8 @@ COMMIT;
 
 -- -----------------------------------------------------------------------------
 -- 6. user_answers: idempotency constraint
---    This must be prepared before prisma db push.
 -- -----------------------------------------------------------------------------
 
--- Run `npm run db:prepare-user-answer-unique` before `prisma db push`.
--- The preparation migration preserves feedback, annotations, and follow-ups
--- while consolidating duplicate answers.
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -422,8 +400,9 @@ BEGIN
     WHERE conrelid = 'user_answers'::regclass
       AND conname = 'user_answers_session_id_question_id_key'
   ) THEN
-    RAISE EXCEPTION
-      'Run npm run db:prepare-user-answer-unique before applying this migration';
+    ALTER TABLE user_answers
+      ADD CONSTRAINT user_answers_session_id_question_id_key
+      UNIQUE (session_id, question_id);
   END IF;
 END
 $$;

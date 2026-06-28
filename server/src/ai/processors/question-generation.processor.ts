@@ -177,7 +177,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
     const result = await this.prisma.interviewSession.updateMany({
       where: {
         id: sessionId,
-        status: { notIn: ['paused', 'canceled'] },
+        status: { in: ['generating', 'ready'] },
       },
       data: { status: 'active' },
     });

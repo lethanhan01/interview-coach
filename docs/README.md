@@ -41,6 +41,13 @@ InterviewAI là ứng dụng AI Mock Interview — nền tảng luyện phỏng 
 | [Test Plan](test-plan/strategy.md) | Chiến lược kiểm thử, phạm vi, môi trường | Hoàn thành |
 | [Project Log](../CHANGELOG.md) | Phase milestones + implementation sessions | Hoàn thành |
 
+### Luồng xử lý (Flow docs)
+
+| Tài liệu | Mô tả | Trạng thái |
+|----------|-------|------------|
+| [Interview Flow](interview-flow.md) | Tổng quan 7 bước từ tạo session đến hiển thị báo cáo (M) | Hoàn thành |
+| [Question Generation Flow](question-generation-flow.md) | Chi tiết kỹ thuật Bước 2: BullMQ worker, Question Bank fallback, lưu DB, SSE (M) | Hoàn thành |
+
 ## Trình tự đọc
 
 **Người mới vào dự án:**
