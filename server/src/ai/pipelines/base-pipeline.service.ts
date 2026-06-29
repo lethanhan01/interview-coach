@@ -137,7 +137,10 @@ export abstract class BasePipelineService implements InterviewPipeline {
               ...input.contextPackConfig.behavioralDimensions,
               ...input.contextPackConfig.technicalDimensions,
             ];
-    const selected = resolveAppliedDimensions(validated.applied_dimensions, allowedDims);
+    const selected = resolveAppliedDimensions(
+      validated.applied_dimensions,
+      allowedDims,
+    );
 
     if (selected.length === 0) {
       this.logger.warn(

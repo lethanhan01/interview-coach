@@ -30,14 +30,26 @@ function resolveOne(
   // Branch 1: exact ID
   const exact = allowedDims.find((d) => d.id === raw);
   if (exact) {
-    return { id: exact.id, name: exact.name, baseWeight: exact.weight, score: entry.score, matchBranch: 'exact' };
+    return {
+      id: exact.id,
+      name: exact.name,
+      baseWeight: exact.weight,
+      score: entry.score,
+      matchBranch: 'exact',
+    };
   }
 
   // Branch 2: normalized ID (case-insensitive, whitespace/dash stripped)
   const normRaw = normalizeKey(raw);
   const byNormId = allowedDims.find((d) => normalizeKey(d.id) === normRaw);
   if (byNormId) {
-    return { id: byNormId.id, name: byNormId.name, baseWeight: byNormId.weight, score: entry.score, matchBranch: 'normId' };
+    return {
+      id: byNormId.id,
+      name: byNormId.name,
+      baseWeight: byNormId.weight,
+      score: entry.score,
+      matchBranch: 'normId',
+    };
   }
 
   // Branch 3: extract code token via regex (e.g. "D1: Giao tiếp", "TD2 - some desc")
@@ -46,14 +58,26 @@ function resolveOne(
     const token = normalizeKey(codeMatch[0]);
     const byCode = allowedDims.find((d) => normalizeKey(d.id) === token);
     if (byCode) {
-      return { id: byCode.id, name: byCode.name, baseWeight: byCode.weight, score: entry.score, matchBranch: 'code' };
+      return {
+        id: byCode.id,
+        name: byCode.name,
+        baseWeight: byCode.weight,
+        score: entry.score,
+        matchBranch: 'code',
+      };
     }
   }
 
   // Branch 4: match by normalized dimension name (gemma returned full name instead of ID)
   const byName = allowedDims.find((d) => normalizeKey(d.name) === normRaw);
   if (byName) {
-    return { id: byName.id, name: byName.name, baseWeight: byName.weight, score: entry.score, matchBranch: 'name' };
+    return {
+      id: byName.id,
+      name: byName.name,
+      baseWeight: byName.weight,
+      score: entry.score,
+      matchBranch: 'name',
+    };
   }
 
   return null;

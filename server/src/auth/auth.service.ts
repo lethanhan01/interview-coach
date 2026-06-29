@@ -3,15 +3,15 @@ import { RefreshResponseDto } from './dto/refresh-response.dto';
 
 @Injectable()
 export class AuthService {
-  async refreshToken(): Promise<RefreshResponseDto> {
-    return {
+  refreshToken(): Promise<RefreshResponseDto> {
+    return Promise.resolve({
       accessToken: 'dev-mock-token',
       refreshToken: 'mvp-refresh-token',
       expiresIn: 3600,
-    };
+    });
   }
 
-  async logout(): Promise<void> {
-    return undefined;
+  logout(): Promise<void> {
+    return Promise.resolve();
   }
 }

@@ -10,6 +10,12 @@ import { Request, Response } from 'express';
 import { ErrorCode } from './error-code.enum';
 import { InterviewAIException } from './interview-ai.exception';
 
+const httpExceptionCodeByStatus: Partial<Record<number, ErrorCode>> = {
+  [HttpStatus.UNAUTHORIZED]: ErrorCode.UNAUTHORIZED,
+  [HttpStatus.FORBIDDEN]: ErrorCode.FORBIDDEN,
+  [HttpStatus.NOT_FOUND]: ErrorCode.NOT_FOUND,
+};
+
 @Catch()
 export class InterviewAIExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(InterviewAIExceptionFilter.name);
@@ -29,19 +35,8 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
       message = exception.message;
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
-      switch (status) {
-        case HttpStatus.UNAUTHORIZED:
-          errorCode = ErrorCode.UNAUTHORIZED;
-          break;
-        case HttpStatus.FORBIDDEN:
-          errorCode = ErrorCode.FORBIDDEN;
-          break;
-        case HttpStatus.NOT_FOUND:
-          errorCode = ErrorCode.NOT_FOUND;
-          break;
-        default:
-          errorCode = ErrorCode.VALIDATION_ERROR;
-      }
+      errorCode =
+        httpExceptionCodeByStatus[status] ?? ErrorCode.VALIDATION_ERROR;
       const body = exception.getResponse();
       const rawMsg =
         typeof body === 'string'

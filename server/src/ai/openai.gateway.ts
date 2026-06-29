@@ -179,21 +179,27 @@ export class OpenAIGateway {
     try {
       JSON.parse(trimmed);
       return trimmed;
-    } catch {}
+    } catch {
+      // Keep scanning for fenced or embedded JSON below.
+    }
     const blockMatch = /```(?:json)?\s*\n?([\s\S]*?)\n?```/.exec(trimmed);
     if (blockMatch) {
       const inner = blockMatch[1].trim();
       try {
         JSON.parse(inner);
         return inner;
-      } catch {}
+      } catch {
+        // Fenced content was not pure JSON; try embedded object extraction.
+      }
     }
     const objMatch = /(\{[\s\S]*\})/.exec(trimmed);
     if (objMatch) {
       try {
         JSON.parse(objMatch[1]);
         return objMatch[1];
-      } catch {}
+      } catch {
+        // Fall back to the raw content so the caller can classify the error.
+      }
     }
     return raw;
   }

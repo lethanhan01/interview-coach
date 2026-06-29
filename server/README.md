@@ -1,43 +1,33 @@
-# InterviewCoach Backend
+# InterviewCoach — Backend
 
-Backend NestJS cho InterviewCoach.
+NestJS 11, TypeScript 5.7, Prisma, BullMQ, Redis, Supabase (PostgreSQL + Auth).
 
-- API local: `http://localhost:3000/api/v1`
-- Health check: `http://localhost:3000/health`
-- Frontend local: `http://localhost:5173`
+API: `http://localhost:3000/api/v1`  
+Health check: `http://localhost:3000/health`
 
-## Quy trình chạy server
+---
 
-Luồng chạy đã được tách thành 4 phần:
+## Yêu cầu
 
-| Phần | Lệnh chính | Mục đích |
-| --- | --- | --- |
-| Infra local | `npm run infra:up` | Bật Redis bằng Docker Compose |
-| DB/schema | `npm run db:sync` | Generate Prisma, chuẩn bị unique `user_answers`, rồi `prisma db push` |
-| Server runtime | `npm run start:dev` | Chạy NestJS watch mode |
-| Kiểm tra runtime | `npm run verify:runtime` | Gọi `/api/v1` và `/health` |
+- Node.js >= 20
+- Docker Desktop (để chạy Redis)
+- Tài khoản Supabase với PostgreSQL đã cấu hình
+- OpenAI API key
 
-`start`, `start:dev`, `start:debug`, và `build` chỉ tự chạy
-`npm run prisma:generate`. Các lệnh này không tự chạy `db:sync`.
+---
 
-## 1. Chuẩn bị lần đầu
+## Cài đặt lần đầu
 
-Cần có:
-
-- Node.js và npm
-- Docker Desktop
-- PostgreSQL/Supabase đã cấu hình
-
-Từ thư mục `server`:
+Từ thư mục `server/`:
 
 ```powershell
 npm install
 Copy-Item .env.example .env
 ```
 
-Mở `server/.env` và điền các biến bắt buộc:
+Mở `.env` và điền các biến bắt buộc:
 
-```dotenv
+```env
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
@@ -49,9 +39,9 @@ DIRECT_URL=
 OPENAI_API_KEY=
 ```
 
-Giữ các giá trị local này nếu không cần đổi port:
+Giữ nguyên các giá trị mặc định nếu không đổi port:
 
-```dotenv
+```env
 REDIS_HOST=localhost
 REDIS_PORT=6379
 PORT=3000
@@ -59,206 +49,171 @@ NODE_ENV=development
 CLIENT_URL=http://localhost:5173
 ```
 
-Nếu muốn bỏ qua đăng nhập Supabase khi phát triển local:
+---
 
-```dotenv
-AUTH_ENABLED=false
-MOCK_USER_ID=<UUID-cua-user-co-san-trong-public.users>
-```
+## Chạy local
 
-`MOCK_USER_ID` phải là UUID của một user thật trong database.
-
-## 2. Chạy local bằng npm
-
-Mở Docker Desktop, sau đó chạy từ thư mục `server`:
+Mở Docker Desktop, sau đó từ thư mục `server/`:
 
 ```powershell
 npm run infra:up
 npm run start:dev
 ```
 
-Hoặc dùng một lệnh tiện ích:
+Hoặc dùng lệnh gộp:
 
 ```powershell
 npm run dev:local
 ```
 
-Khi thấy log `Nest application successfully started`, server đã listen trên
-`http://localhost:3000`.
+Khi thấy `Nest application successfully started` trong log, server đã sẵn sàng.
 
-Mở terminal khác để kiểm tra:
+Kiểm tra:
 
 ```powershell
 npm run verify:runtime
 ```
 
-Lệnh verify gọi:
+Lệnh này gọi `GET /api/v1` và `GET /health`. Nếu DB hoặc Redis chưa sẵn sàng, `/health` trả `status: "degraded"` và lệnh verify sẽ fail.
 
-- `GET http://localhost:3000/api/v1`
-- `GET http://localhost:3000/health`
+---
 
-`/health` kiểm tra app, Prisma/database, và Redis. Nếu DB hoặc Redis chưa sẵn
-sàng, response sẽ có `status: "degraded"` và `verify:runtime` sẽ fail.
+## Bỏ qua đăng nhập khi dev local
 
-## 3. Khi nào chạy DB sync
+Thêm vào `.env`:
 
-Không chạy `db:sync` như một phần mặc định của `start:dev`.
+```env
+AUTH_ENABLED=false
+MOCK_USER_ID=<UUID-của-user-có-sẵn-trong-public.users>
+```
 
-Chỉ chạy khi cần đồng bộ schema/data, ví dụ:
+`MOCK_USER_ID` phải là UUID thật trong database, không được bịa.
 
-- vừa thay đổi Prisma schema
-- database local thiếu constraint hoặc column mới
-- cần chạy bước chuẩn bị unique `user_answers`
-- trước khi xác nhận migration production liên quan `user_answers`
+Khi bật, `JwtAuthGuard` và `SseTokenGuard` inject mock user thay vì verify JWT — không gọi Supabase.
 
-Chạy từ thư mục `server`:
+> **Không bật trong production.** Set `AUTH_ENABLED=true` hoặc xóa var trước khi deploy.
+
+---
+
+## Các lệnh thường dùng
+
+| Lệnh | Mục đích |
+|------|----------|
+| `npm run start:dev` | Chạy NestJS watch mode |
+| `npm run dev:local` | `infra:up` + `start:dev` gộp |
+| `npm run infra:up` | Bật Redis bằng Docker Compose |
+| `npm run infra:down` | Tắt Redis |
+| `npm run verify:runtime` | Kiểm tra `/api/v1` và `/health` |
+| `npm run test` | Chạy unit tests |
+| `npm run test:cov` | Unit tests + coverage report |
+| `npm run test:e2e` | E2E tests |
+| `npm run build` | Compile sang `dist/` |
+| `npm run start:prod` | Chạy production build |
+| `npm run lint` | ESLint --fix |
+| `npm run format` | Prettier --write |
+| `npm run prisma:generate` | Tạo lại Prisma Client |
+| `npm run db:validate` | Validate Prisma schema |
+| `npm run seed` | Seed dữ liệu mẫu (question bank, ...) |
+
+---
+
+## Đồng bộ database schema (`db:sync`)
+
+> **Không chạy thường xuyên.** Lệnh này thay đổi schema database thật — chỉ chạy khi có lý do cụ thể.
+
+Chạy khi:
+- Vừa thay đổi `prisma/schema.prisma`
+- Database local thiếu constraint hoặc column mới
+- Cần chuẩn bị unique constraint cho `user_answers`
 
 ```powershell
 npm run db:sync
 ```
 
-Lệnh này thực hiện:
+Lệnh thực hiện: `prisma generate` → `db:prepare-user-answer-unique` → `prisma db push`.
 
-1. `prisma generate`
-2. `npm run db:prepare-user-answer-unique`
-3. `prisma db push`
-
-Với production hoặc dữ liệu quan trọng, chạy kiểm thử migration trước:
+Với production hoặc dữ liệu quan trọng, chạy kiểm tra trước:
 
 ```powershell
 npm run db:test-user-answer-migration
 npm run db:sync
 ```
 
-Script test tạo schema tạm, sao chép dữ liệu thật của `user_answers`,
-`ai_feedbacks`, `annotated_segments`, và `follow_up_questions`, sau đó kiểm tra
-dedupe, quan hệ, và unique constraint. Schema tạm được xóa khi kết thúc.
+Script test tạo schema tạm, sao chép dữ liệu thật, kiểm tra dedupe và constraint, rồi xóa schema tạm.
 
-## 4. Chạy production build
+---
 
-Từ thư mục `server`:
+## Chạy production build
 
 ```powershell
 npm run build
 npm run start:prod
 ```
 
-`npm run build` tự chạy `prisma generate` trước khi build Nest. Sau build,
-entrypoint production phải nằm ở:
+`npm run build` tự chạy `prisma generate` trước khi compile. Entrypoint production: `server/dist/main.js`.
 
-```text
-server/dist/main.js
-```
-
-Kiểm tra runtime sau khi start:
+Kiểm tra sau khi start:
 
 ```powershell
 npm run verify:runtime
 ```
 
-## 5. Docker Compose hiện tại
+---
 
-`compose.yaml` hiện được dùng để chạy Redis local. Backend NestJS chạy bằng npm
-trong thư mục `server`.
+## Docker Compose
 
-Các lệnh npm đã bọc sẵn Compose file ở repo root:
+`compose.yaml` (ở root repo) hiện chỉ dùng để chạy Redis. Backend NestJS chạy bằng npm trực tiếp.
 
-```powershell
-npm run infra:up
-npm run infra:down
-```
+> **Không chạy** `docker compose up --build server` — service `server` đang bị tắt trong `compose.yaml`.
 
-Không dùng `docker compose up --build server` ở trạng thái hiện tại, vì service
-`server` đang bị tắt trong `compose.yaml`.
+---
 
-## 6. Dừng server
+## Dừng server
 
-Dừng NestJS trong terminal đang chạy:
+Dừng NestJS: `Ctrl+C` trong terminal đang chạy.
 
-```text
-Ctrl+C
-```
-
-Dừng Redis Compose:
+Dừng Redis:
 
 ```powershell
 npm run infra:down
 ```
 
-Nếu port `3000` đang bị chiếm, xem process:
+Port 3000 bị chiếm:
 
 ```powershell
-Get-NetTCPConnection -LocalPort 3000 -State Listen |
-  Select-Object LocalAddress, LocalPort, OwningProcess
-```
+# Xem process nào giữ port
+Get-NetTCPConnection -LocalPort 3000 -State Listen | Select-Object LocalAddress, LocalPort, OwningProcess
 
-Dừng đúng process đang giữ port:
-
-```powershell
+# Dừng process (thay <PID> bằng số thực tế)
 Stop-Process -Id <PID> -Force
 ```
 
-## 7. Lệnh hữu ích
+---
 
-```powershell
-npm run db:validate
-npm run prisma:generate
-npm run build
-npm test
-npm run verify:runtime
-```
+## Lỗi thường gặp
 
-## 8. Lỗi thường gặp
+**`ECONNREFUSED 127.0.0.1:6379`**
 
-### Redis chưa chạy
+Redis chưa chạy. Kiểm tra Docker Desktop đã mở, rồi chạy `npm run infra:up`.
 
-Dấu hiệu thường gặp:
-
-```text
-ECONNREFUSED 127.0.0.1:6379
-```
-
-Xử lý:
-
-```powershell
-npm run infra:up
-```
-
-Nếu bạn đang có Redis container cũ tên `interviewcoach-redis`, hãy đảm bảo
-không có container khác giữ port `6379` trước khi chạy Compose.
-
-### `/health` trả `degraded`
-
-Gọi trực tiếp để xem dependency nào lỗi:
+**`/health` trả `degraded`**
 
 ```powershell
 Invoke-RestMethod http://localhost:3000/health
 ```
 
-- `services.db.status = "down"`: kiểm tra `DATABASE_URL`, Supabase/PostgreSQL,
-  Prisma schema, hoặc chạy `npm run db:validate`.
-- `services.redis.status = "down"`: kiểm tra Docker Desktop và
-  `npm run infra:up`.
+- `services.db.status = "down"`: kiểm tra `DATABASE_URL`, kết nối Supabase, rồi thử `npm run db:validate`.
+- `services.redis.status = "down"`: kiểm tra Docker Desktop và chạy `npm run infra:up`.
 
-### API trả `401 Unauthorized`
+**`401 Unauthorized`**
 
-Nếu đang phát triển local và muốn bỏ qua đăng nhập, kiểm tra:
+Nếu đang dev local, kiểm tra `AUTH_ENABLED=false` và `MOCK_USER_ID` đã điền. Sau khi sửa `.env`, khởi động lại server.
 
-```dotenv
-AUTH_ENABLED=false
-MOCK_USER_ID=<UUID-hop-le>
-```
-
-Sau khi sửa `.env`, dừng server rồi chạy lại.
-
-### Prisma Client lệch schema
-
-Nếu gặp lỗi kiểu missing column hoặc stale field sau khi đổi schema:
+**Prisma lỗi missing column hoặc stale field**
 
 ```powershell
 npm run prisma:generate
 npm run build
 ```
 
-Nếu database thật chưa đồng bộ schema, chạy `npm run db:sync` có chủ ý sau khi
-đã đọc phần DB sync ở trên.
+Nếu database thật chưa đồng bộ schema, chạy `npm run db:sync` (đọc phần cảnh báo ở trên trước).

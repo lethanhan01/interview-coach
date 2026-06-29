@@ -3,6 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ensureMvpUser, getMvpUserId } from '../mvp-auth';
 
+interface AuthenticatedRequest {
+  user?: {
+    id: string;
+    email: string;
+  };
+}
+
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
@@ -18,7 +25,7 @@ export class JwtAuthGuard implements CanActivate {
     const userId = getMvpUserId(this.configService);
     await ensureMvpUser(this.prisma, userId);
 
-    const req = context.switchToHttp().getRequest();
+    const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
     req.user = {
       id: userId,
       email: `mvp-${userId}@interviewcoach.local`,

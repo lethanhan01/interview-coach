@@ -20,7 +20,7 @@ export function FeaturesSection() {
   return (
     <section className="py-16 max-w-5xl mx-auto px-4 sm:px-6">
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-ink mb-3">Tại sao chọn InterviewAI?</h2>
+        <h2 className="text-3xl font-bold text-ink mb-3">Tại sao chọn AI Mock Interview?</h2>
         <p className="text-ink-muted">Được thiết kế riêng cho thị trường tuyển dụng IT Việt Nam</p>
       </div>
 

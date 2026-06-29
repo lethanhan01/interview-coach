@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "InterviewAI — Luyện phỏng vấn với AI",
+  title: "AI Mock Interview — Luyện phỏng vấn với AI",
   description:
     "Nền tảng luyện phỏng vấn AI cho sinh viên CNTT Việt Nam. Paste Job Description, trả lời câu hỏi, nhận phản hồi chi tiết.",
 };

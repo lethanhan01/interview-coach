@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             href="/sessions"
             className="font-semibold text-base text-brand tracking-tight hover:text-brand-light transition-colors"
           >
-            InterviewAI
+            AI Mock Interview
           </Link>
 
           <div className="flex items-center gap-1">

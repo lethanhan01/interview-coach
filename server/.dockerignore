@@ -1,41 +1,66 @@
-# Dependencies (sẽ được cài lại trong image)
+# =====================================================================
+# .dockerignore — server/
+# Prevents files from entering Docker build context.
+# Applies to ALL stages in Dockerfile.
+# =====================================================================
+
+# Dependencies — npm ci installs fresh in each stage
 node_modules
 
-# Build output (builder stage sẽ tạo lại)
+# Build artifacts — builder stage compiles its own dist
 dist
 
-# Test & coverage
+# Test output
 coverage
-*.test.ts
-*.spec.ts
-test/
 
-# Logs
-*.log
-logs/
-
-# Environment files (không bao giờ đưa vào image)
+# ---- SECRETS — MUST NEVER enter the image ----
 .env
 .env.*
-.env.local
-.env.*.local
+*.env
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
 
-# Dev tools
-.eslintrc*
-eslint.config.*
-.prettierrc*
+# Test files — tsconfig.build.json excludes them from compilation anyway
+test/
+**/*.spec.ts
+**/*.e2e-spec.ts
+
+# Docker meta — circular: no need to copy into build context
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+compose.yaml
 
 # Git
 .git
 .gitignore
+.gitattributes
 
-# IDE
+# IDE & editor
 .vscode
 .idea
+*.swp
+*.swo
+.editorconfig
 
-# Docker
-Dockerfile*
-.dockerignore
+# OS artifacts
+.DS_Store
+Thumbs.db
+**/.DS_Store
 
-# Prisma generated (sẽ được generate lại)
-generated/
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Dev scripts không cần ở runtime
+scripts/
+
+# Documentation
+docs/
+*.md
+README*
+CHANGELOG*
