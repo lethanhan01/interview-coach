@@ -62,7 +62,7 @@ async function pickQuestions(
   }
 
   return prisma.questionBank.findMany({
-    where: { sessionType, contextPackId },
+    where: { sessionType: sessionType as 'hr' | 'technical', contextPackId },
     orderBy: [{ difficulty: 'asc' }, { content: 'asc' }],
     take,
     skip,

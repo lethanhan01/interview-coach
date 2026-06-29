@@ -1,8 +1,8 @@
-import type { Prisma, PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient, QuestionSessionType } from '@prisma/client';
 
 type RawQuestion = {
   content: string;
-  sessionType: string;
+  sessionType: QuestionSessionType;
   difficulty: number;
   contextPackId: 'VN' | 'Western';
   subcategory: string;

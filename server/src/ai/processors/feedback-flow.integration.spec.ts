@@ -19,7 +19,10 @@ import {
 } from '../../test-utils/mock-factories';
 
 const VALID_FEEDBACK_JSON = JSON.stringify({
-  overall_score: 78,
+  applied_dimensions: [
+    { id: 'D1', score: 78 },
+    { id: 'D2', score: 78 },
+  ],
   model_answer:
     'In my project, I identified the performance bottleneck by profiling the database queries and implemented pagination to reduce load time significantly.',
   key_takeaway: 'Good technical depth, but needs more concrete metrics.',
@@ -202,7 +205,7 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
   it('feedback flow: optional annotated segment fields null không bị ghi fallback', async () => {
     mockOpenAI.chatCompletion.mockResolvedValue(
       JSON.stringify({
-        overall_score: 80,
+        applied_dimensions: [{ id: 'TD1', score: 80 }],
         model_answer:
           'I found the bottleneck through profiling, then added pagination and measured the latency reduction. I also aligned the change with the team before rolling it out.',
         key_takeaway: 'Good direction, with room for clearer metrics.',

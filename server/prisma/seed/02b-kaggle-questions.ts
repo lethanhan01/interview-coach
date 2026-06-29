@@ -1,10 +1,10 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import type { Prisma, PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient, QuestionSessionType } from '@prisma/client';
 
 type KaggleQuestion = {
   content: string;
-  sessionType: string;
+  sessionType: QuestionSessionType;
   difficulty: number;
   contextPackId: string;
   subcategory: string;

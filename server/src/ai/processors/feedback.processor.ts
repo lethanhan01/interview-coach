@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
@@ -92,15 +93,19 @@ export class FeedbackProcessor extends WorkerHost {
             overallScore: feedback.overallScore,
             modelAnswer: feedback.modelAnswer,
             keyTakeaway: feedback.keyTakeaway,
-            promptVersion: SURGICAL_FEEDBACK_PROMPT_CONFIG.version,
+            promptVersion: feedback.promptVersion,
             isFallback: false,
+            dimensionScores:
+              feedback.appliedDimensions as unknown as Prisma.InputJsonValue,
           },
           update: {
             overallScore: feedback.overallScore,
             modelAnswer: feedback.modelAnswer,
             keyTakeaway: feedback.keyTakeaway,
-            promptVersion: SURGICAL_FEEDBACK_PROMPT_CONFIG.version,
+            promptVersion: feedback.promptVersion,
             isFallback: false,
+            dimensionScores:
+              feedback.appliedDimensions as unknown as Prisma.InputJsonValue,
           },
         });
 
