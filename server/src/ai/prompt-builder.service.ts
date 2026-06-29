@@ -41,7 +41,9 @@ CRITICAL: model_answer must be a complete, concrete example answer of 3-4 concis
 
 Return ONLY a compact valid JSON object with exactly this structure — no extra text, no markdown fences. Include at most 2 annotated_segments. For optional fields, either provide a string or omit the field entirely; never use null:
 {
-  "overall_score": <integer 1-100>,
+  "applied_dimensions": [
+    { "id": "<dimension id exactly as listed in the system instructions>", "score": <integer 1-100> }
+  ],
   "model_answer": "<complete 3-4 sentence example answer spoken as a candidate>",
   "key_takeaway": "<one concise insight about the answer quality>",
   "annotated_segments": [
@@ -81,57 +83,47 @@ export class PromptBuilderService {
     contextPack: ContextPackConfig,
     sessionType: SessionType,
   ): string {
-    const {
-      culturalNotes,
-      behavioralDimensions,
-      technicalDimensions,
-      scoringWeights,
-    } = contextPack;
-    let scoringSection: string;
+    const { culturalNotes, behavioralDimensions, technicalDimensions } =
+      contextPack;
+    const lines = (dims: { id: string; name: string }[]) =>
+      dims.map((d) => `  - ${d.id} ${d.name}`).join('\n');
 
+    const selectionRules = [
+      `From the candidate dimensions below, select ONLY the ones THIS question actually evaluates and ignore the rest.`,
+      `Score each selected dimension from 1 to 100.`,
+      `Return them in "applied_dimensions" as objects { "id", "score" } using the ids exactly as listed.`,
+      `Do NOT invent ids outside the list. Do NOT output any weight or overall score — the system computes those.`,
+    ];
+
+    let scoringSection: string;
     if (sessionType === 'hr') {
-      const dimLines = behavioralDimensions
-        .map((d) => `  - ${d.id} ${d.name} (weight: ${d.weight})`)
-        .join('\n');
       scoringSection = [
         `Session type: HR (behavioral only).`,
-        `Score ONLY on these behavioral dimensions:`,
-        dimLines,
-        `Scoring formula: overall_score = weighted average of behavioral dimension scores (weights sum to 1.0).`,
+        `Candidate dimensions (maximum set that could apply):`,
+        lines(behavioralDimensions),
+        ...selectionRules,
         `Do NOT apply any technical criteria.`,
+        `Example: a self-introduction question usually evaluates communication and self-awareness, not teamwork under pressure.`,
       ].join('\n');
     } else if (sessionType === 'technical') {
-      const dimLines = technicalDimensions
-        .map((d) => `  - ${d.id} ${d.name} (weight: ${d.weight})`)
-        .join('\n');
       scoringSection = [
         `Session type: Technical (technical only).`,
-        `Score ONLY on these technical dimensions:`,
-        dimLines,
-        `Scoring formula: overall_score = weighted average of technical dimension scores (weights sum to 1.0).`,
+        `Candidate dimensions (maximum set that could apply):`,
+        lines(technicalDimensions),
+        ...selectionRules,
         `Do NOT apply any behavioral criteria.`,
+        `Example: a pure definition question ("What is a closure?") usually evaluates only foundational knowledge and practical application, not debugging or systems thinking.`,
       ].join('\n');
     } else {
-      const bWeight = scoringWeights['behavioral_weight'] ?? 0.5;
-      const tWeight = scoringWeights['technical_weight'] ?? 0.5;
-      const bLines = behavioralDimensions
-        .map(
-          (d) => `  - ${d.id} ${d.name} (within-category weight: ${d.weight})`,
-        )
-        .join('\n');
-      const tLines = technicalDimensions
-        .map(
-          (d) => `  - ${d.id} ${d.name} (within-category weight: ${d.weight})`,
-        )
-        .join('\n');
       scoringSection = [
         `Session type: Mixed (behavioral + technical).`,
-        `Behavioral dimensions (session weight: ${bWeight}):`,
-        bLines,
-        `Technical dimensions (session weight: ${tWeight}):`,
-        tLines,
-        `Scoring formula: overall_score = round(behavioral_score × ${bWeight} + technical_score × ${tWeight}).`,
-        `behavioral_score = weighted average of behavioral dimensions; technical_score = weighted average of technical dimensions.`,
+        `Candidate behavioral dimensions:`,
+        lines(behavioralDimensions),
+        `Candidate technical dimensions:`,
+        lines(technicalDimensions),
+        ...selectionRules,
+        `A question may evaluate behavioral dimensions, technical dimensions, or both — include only those it truly tests.`,
+        `Example: "Tell me about a bug you fixed" may evaluate debugging plus communication, but not coding-style depth.`,
       ].join('\n');
     }
 

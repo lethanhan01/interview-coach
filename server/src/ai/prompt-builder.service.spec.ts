@@ -34,7 +34,7 @@ describe('PromptBuilderService', () => {
       const result = service.buildBaseSystem('surgical-feedback');
 
       expect(result).toContain('CRITICAL: model_answer');
-      expect(result).toContain('overall_score');
+      expect(result).toContain('applied_dimensions');
       expect(result).toContain('annotated_segments');
       expect(result).toContain('highlight_level');
       expect(result).toContain('segment_text');
@@ -134,9 +134,8 @@ describe('PromptBuilderService', () => {
       expect(result).toContain('Mixed (behavioral + technical)');
       expect(result).toContain('D1 Communication');
       expect(result).toContain('TD1 Fundamentals');
-      expect(result).toContain('session weight: 0.45');
-      expect(result).toContain('session weight: 0.55');
-      expect(result).toContain('Scoring formula:');
+      expect(result).toContain('applied_dimensions');
+      expect(result).not.toContain('session weight');
     });
 
     it('mọi session type đều chứa cultural notes', () => {
@@ -157,6 +156,18 @@ describe('PromptBuilderService', () => {
         'hr',
       );
       expect(result).toContain('my-base-prompt');
+    });
+
+    it('mọi session type chỉ thị chọn tập con tiêu chí, không tính sẵn overall', () => {
+      (['hr', 'technical', 'mixed'] as const).forEach((sessionType) => {
+        const result = service.applyContextPackForEvaluation(
+          'base',
+          contextPack,
+          sessionType,
+        );
+        expect(result).toContain('select ONLY');
+        expect(result).not.toContain('weights sum to 1.0');
+      });
     });
   });
 
