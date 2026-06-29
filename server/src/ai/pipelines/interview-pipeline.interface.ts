@@ -44,11 +44,19 @@ export interface AnnotatedSegmentResult {
   improvedVersion?: string;
 }
 
+export interface AppliedDimension {
+  id: string;
+  name: string;
+  score: number; // 1-100
+  weight: number; // base weight đã chuẩn hóa, tổng ≈ 1.0
+}
+
 export interface SurgicalFeedback {
   overallScore: number; // 1-100
   modelAnswer: string;
   keyTakeaway: string;
   promptVersion: string;
+  appliedDimensions: AppliedDimension[];
   annotatedSegments: AnnotatedSegmentResult[];
 }
 

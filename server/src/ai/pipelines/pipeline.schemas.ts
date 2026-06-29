@@ -19,7 +19,14 @@ const OptionalFeedbackTextSchema = z.preprocess(
 );
 
 export const FeedbackSchema = z.object({
-  overall_score: z.number().int().min(1).max(100),
+  applied_dimensions: z
+    .array(
+      z.object({
+        id: z.string(),
+        score: z.number().int().min(1).max(100),
+      }),
+    )
+    .min(1),
   model_answer: z.string(),
   key_takeaway: z.string(),
   annotated_segments: z.array(

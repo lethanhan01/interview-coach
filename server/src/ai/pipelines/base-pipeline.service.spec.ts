@@ -21,7 +21,16 @@ describe('BasePipelineService (via HrPipelineService)', () => {
   let mockZodValidator: ReturnType<typeof createMockZodValidatorService>;
   let mockConfig: { get: jest.Mock };
 
-  const mockContextPack = {} as any;
+  const mockContextPack = {
+    behavioralDimensions: [
+      { id: 'D1', name: 'Communication', weight: 0.2 },
+      { id: 'D2', name: 'Teamwork', weight: 0.2 },
+    ],
+    technicalDimensions: [
+      { id: 'TD1', name: 'Fundamentals', weight: 0.25 },
+      { id: 'TD2', name: 'Application', weight: 0.25 },
+    ],
+  } as any;
 
   beforeEach(async () => {
     mockOpenAI = createMockOpenAIGateway();
@@ -202,42 +211,64 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       answerText: 'Tôi là developer với 2 năm kinh nghiệm.',
     };
 
-    it('trả về SurgicalFeedback với annotatedSegments khi thành công', async () => {
+    it('tính overallScore từ score×weight chuẩn hóa và trả appliedDimensions', async () => {
       const rawFeedback = {
-        overall_score: 82,
         model_answer: 'Câu trả lời tốt hơn...',
         key_takeaway: 'Cần thêm ví dụ cụ thể',
-        annotated_segments: [
-          {
-            segment_text: '2 năm kinh nghiệm',
-            start_index: 0,
-            end_index: 17,
-            highlight_level: 'strength' as const,
-            annotation: 'Rõ ràng',
-            suggestion: undefined,
-            improved_version: undefined,
-          },
+        applied_dimensions: [
+          { id: 'D1', score: 80 },
+          { id: 'D2', score: 60 },
         ],
+        annotated_segments: [],
       };
       mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
       mockZodValidator.validate.mockReturnValue(rawFeedback);
 
       const result = await service.evaluateAnswer(feedbackInput);
 
-      expect(result.overallScore).toBe(82);
-      expect(result.modelAnswer).toBe('Câu trả lời tốt hơn...');
-      expect(result.keyTakeaway).toBe('Cần thêm ví dụ cụ thể');
+      // base weight D1=0.2, D2=0.2 → chuẩn hóa 0.5/0.5 → 80*0.5 + 60*0.5 = 70
+      expect(result.overallScore).toBe(70);
+      expect(result.appliedDimensions).toEqual([
+        { id: 'D1', name: 'Communication', score: 80, weight: 0.5 },
+        { id: 'D2', name: 'Teamwork', score: 60, weight: 0.5 },
+      ]);
       expect(result.promptVersion).toBe(PROMPT_VERSION);
-      expect(result.annotatedSegments).toHaveLength(1);
-      expect(result.annotatedSegments[0]).toEqual({
-        segmentText: '2 năm kinh nghiệm',
-        startIndex: 0,
-        endIndex: 17,
-        highlightLevel: 'strength',
-        annotation: 'Rõ ràng',
-        suggestion: undefined,
-        improvedVersion: undefined,
-      });
+    });
+
+    it('loại id không thuộc rubric của sessionType rồi chuẩn hóa lại', async () => {
+      const rawFeedback = {
+        model_answer: 'x',
+        key_takeaway: 'y',
+        applied_dimensions: [
+          { id: 'D1', score: 90 },
+          { id: 'TD1', score: 10 }, // không hợp lệ với sessionType 'hr' → bị loại
+        ],
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      const result = await service.evaluateAnswer(feedbackInput);
+
+      expect(result.appliedDimensions).toEqual([
+        { id: 'D1', name: 'Communication', score: 90, weight: 1 },
+      ]);
+      expect(result.overallScore).toBe(90);
+    });
+
+    it('throw SCHEMA_VALIDATION_ERROR khi không còn dimension hợp lệ', async () => {
+      const rawFeedback = {
+        model_answer: 'x',
+        key_takeaway: 'y',
+        applied_dimensions: [{ id: 'ZZ', score: 50 }],
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject(
+        { errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR },
+      );
     });
 
     it('từ chối session type không thuộc strategy hiện tại', async () => {
@@ -253,7 +284,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
 
     it('gọi chatCompletion với temperature 0.3, maxTokens 3000, task feedback, responseFormat json_object', async () => {
       const rawFeedback = {
-        overall_score: 75,
+        applied_dimensions: [{ id: 'D1', score: 75 }],
         model_answer: 'Strong answer.',
         key_takeaway: 'Good use of STAR.',
         annotated_segments: [],
@@ -275,7 +306,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
 
     it('chain buildBaseSystem → applyContextPackForEvaluation → injectDynamicContext với question và answer', async () => {
       const rawFeedback = {
-        overall_score: 75,
+        applied_dimensions: [{ id: 'D1', score: 75 }],
         model_answer: 'A.',
         key_takeaway: 'B.',
         annotated_segments: [],
@@ -315,7 +346,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
 
     it('dùng English language instruction khi FeedbackInput.language=en', async () => {
       const rawFeedback = {
-        overall_score: 75,
+        applied_dimensions: [{ id: 'D1', score: 75 }],
         model_answer: 'A.',
         key_takeaway: 'B.',
         annotated_segments: [],
@@ -359,7 +390,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
 
     it('logger.debug được gọi với raw response sau khi chatCompletion thành công', async () => {
       const rawFeedback = {
-        overall_score: 80,
+        applied_dimensions: [{ id: 'D1', score: 80 }],
         model_answer: 'Good.',
         key_takeaway: 'OK.',
         annotated_segments: [],

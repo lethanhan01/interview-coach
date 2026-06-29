@@ -12,6 +12,7 @@ import {
   FeedbackInput,
   SurgicalFeedback,
   SessionType,
+  AppliedDimension,
 } from './interview-pipeline.interface';
 import {
   QuestionsSchema,
@@ -116,11 +117,54 @@ export abstract class BasePipelineService implements InterviewPipeline {
     }
     try {
       const validated = this.zodValidator.validate(FeedbackSchema, parsed);
+
+      const allowedDims =
+        input.sessionType === 'hr'
+          ? input.contextPackConfig.behavioralDimensions
+          : input.sessionType === 'technical'
+            ? input.contextPackConfig.technicalDimensions
+            : [
+                ...input.contextPackConfig.behavioralDimensions,
+                ...input.contextPackConfig.technicalDimensions,
+              ];
+      const allowedById = new Map(allowedDims.map((d) => [d.id, d]));
+
+      const selected = validated.applied_dimensions
+        .map((d) => {
+          const dim = allowedById.get(d.id);
+          return dim
+            ? { id: dim.id, name: dim.name, baseWeight: dim.weight, score: d.score }
+            : null;
+        })
+        .filter((d): d is NonNullable<typeof d> => d !== null);
+
+      if (selected.length === 0) {
+        throw new InterviewAIException(
+          ErrorCode.SCHEMA_VALIDATION_ERROR,
+          HttpStatus.UNPROCESSABLE_ENTITY,
+          'AI returned no valid scoring dimensions',
+        );
+      }
+
+      const baseSum = selected.reduce((s, d) => s + d.baseWeight, 0);
+      const appliedDimensions: AppliedDimension[] = selected.map((d) => ({
+        id: d.id,
+        name: d.name,
+        score: d.score,
+        weight: baseSum > 0 ? d.baseWeight / baseSum : 1 / selected.length,
+      }));
+      const weighted = appliedDimensions.reduce(
+        (s, d) => s + d.score * d.weight,
+        0,
+      );
+      const overallScore = Math.min(100, Math.max(1, Math.round(weighted)));
+
       return {
-        overallScore: validated.overall_score,
+        overallScore,
         modelAnswer: validated.model_answer,
         keyTakeaway: validated.key_takeaway,
         promptVersion: PROMPT_VERSION,
+        appliedDimensions,
         annotatedSegments: validated.annotated_segments.map((s) => ({
           segmentText: s.segment_text,
           startIndex: s.start_index,
