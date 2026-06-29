@@ -48,6 +48,12 @@ InterviewAI là ứng dụng AI Mock Interview — nền tảng luyện phỏng 
 | [Interview Flow](interview-flow.md) | Tổng quan 7 bước từ tạo session đến hiển thị báo cáo (M) | Hoàn thành |
 | [Question Generation Flow](question-generation-flow.md) | Chi tiết kỹ thuật Bước 2: BullMQ worker, Question Bank fallback, lưu DB, SSE (M) | Hoàn thành |
 
+### Kế hoạch triển khai (Implementation plans)
+
+| Tài liệu | Mô tả | Trạng thái |
+|----------|-------|------------|
+| [Chấm điểm linh hoạt per-question](superpowers/plans/chamdiemlinhhoat.md) | Plan chấm điểm linh hoạt theo tiêu chí áp dụng được cho từng câu hỏi (M) | Planning |
+
 ## Trình tự đọc
 
 **Người mới vào dự án:**
