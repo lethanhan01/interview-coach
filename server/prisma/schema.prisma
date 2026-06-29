@@ -250,6 +250,7 @@ model AiFeedback {
   keyTakeaway       String             @map("key_takeaway")
   promptVersion     String             @map("prompt_version")
   isFallback        Boolean            @default(false) @map("is_fallback")
+  dimensionScores   Json?              @map("dimension_scores")
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   userAnswer        UserAnswer         @relation(fields: [userAnswerId], references: [id], onDelete: Cascade)
   annotatedSegments AnnotatedSegment[]
