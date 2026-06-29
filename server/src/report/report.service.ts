@@ -135,6 +135,12 @@ export class ReportService {
         keyTakeaway: answer?.skipped ? '' : (feedback?.keyTakeaway ?? ''),
         isFallback: answer?.skipped ? false : (feedback?.isFallback ?? false),
         segments: answer?.skipped ? [] : segments,
+        appliedDimensions:
+          answer?.skipped || !feedback || feedback.isFallback
+            ? undefined
+            : ((feedback.dimensionScores as
+                | { id: string; name: string; score: number; weight: number }[]
+                | null) ?? undefined),
       };
     });
 

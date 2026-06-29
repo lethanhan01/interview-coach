@@ -390,6 +390,82 @@ describe('ReportService', () => {
         }),
       );
     });
+
+    it('appliedDimensions: có giá trị ở câu thường, undefined ở fallback và skip', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Normal Q',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              id: 'a-1',
+              answerText: 'Good answer',
+              skipped: false,
+              aiFeedback: {
+                overallScore: 80,
+                modelAnswer: 'Model',
+                keyTakeaway: 'Key',
+                isFallback: false,
+                annotatedSegments: [],
+                dimensionScores: [
+                  { id: 'TD1', name: 'Fundamentals', score: 90, weight: 0.6 },
+                  { id: 'TD2', name: 'Application', score: 70, weight: 0.4 },
+                ],
+              },
+            },
+          ],
+        },
+        {
+          id: 'q-2',
+          questionText: 'Fallback Q',
+          orderIndex: 2,
+          userAnswers: [
+            {
+              id: 'a-2',
+              answerText: 'Bad connection',
+              skipped: false,
+              aiFeedback: {
+                overallScore: 0,
+                modelAnswer: '',
+                keyTakeaway: 'AI unavailable',
+                isFallback: true,
+                annotatedSegments: [],
+                dimensionScores: null,
+              },
+            },
+          ],
+        },
+        {
+          id: 'q-3',
+          questionText: 'Skip Q',
+          orderIndex: 3,
+          userAnswers: [
+            {
+              id: 'a-3',
+              answerText: '',
+              skipped: true,
+              aiFeedback: null,
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+      const normalItem = result.transcript[0];
+      const fallbackItem = result.transcript[1];
+      const skippedItem = result.transcript[2];
+
+      expect(normalItem.appliedDimensions).toEqual([
+        { id: 'TD1', name: 'Fundamentals', score: 90, weight: 0.6 },
+        { id: 'TD2', name: 'Application', score: 70, weight: 0.4 },
+      ]);
+      expect(fallbackItem.appliedDimensions).toBeUndefined();
+      expect(skippedItem.appliedDimensions).toBeUndefined();
+    });
   });
 
   describe('getFeedbackProgress', () => {

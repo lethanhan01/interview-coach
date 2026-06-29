@@ -19,6 +19,12 @@ export class TranscriptItemDto {
   keyTakeaway: string;
   isFallback: boolean;
   segments: AnnotatedSegmentDto[];
+  appliedDimensions?: {
+    id: string;
+    name: string;
+    score: number;
+    weight: number;
+  }[];
 }
 
 export class ReportResponseDto {
