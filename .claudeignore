@@ -39,3 +39,5 @@ docs/Design/DiscoveryPhase/Discovery_Document.md
 client/public/
 data/*
 !data/scripts/
+
+.claudeognore
