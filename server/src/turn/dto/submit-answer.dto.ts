@@ -1,0 +1,54 @@
+import {
+  IsEnum,
+  IsString,
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+  MaxLength,
+  MinLength,
+  ValidateIf,
+  IsUrl,
+  IsBoolean,
+} from 'class-validator';
+
+export class SubmitAnswerDto {
+  @IsString()
+  questionId: string;
+
+  @IsEnum(['text', 'voice'])
+  answerMode: 'text' | 'voice';
+
+  @ValidateIf(
+    (o: SubmitAnswerDto) =>
+      !o.skipQuestion &&
+      (o.answerMode === 'text' || o.answerText !== undefined),
+  )
+  @IsString()
+  @MinLength(10)
+  answerText?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  skipQuestion?: boolean;
+
+  @ValidateIf((o: SubmitAnswerDto) => o.answerMode === 'voice')
+  @IsUrl({
+    protocols: ['https'],
+    require_protocol: true,
+    require_valid_protocol: true,
+  })
+  @MaxLength(2048)
+  audioFileUrl?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  audioDurationSeconds?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10 * 1024 * 1024)
+  audioSizeBytes?: number;
+}

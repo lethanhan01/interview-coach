@@ -1,0 +1,43 @@
+# Build artifacts
+dist/
+.next/
+build/
+*.js.map
+
+# Dependencies
+node_modules/
+
+# Test coverage
+coverage/
+
+# Logs
+*.log
+logs/
+
+# Raw SQL migration files (read prisma/schema.prisma instead)
+server/prisma/migrations/raw/
+
+# Large template doc (1100+ lines, only needed for doc generation tasks)
+docs/Design/DiscoveryPhase/Discovery_Document_Template.md
+
+# Supabase local dev artifacts
+supabase/.branches/
+supabase/.temp/
+
+# Lock files (large JSON, no code signal)
+package-lock.json
+client/package-lock.json
+server/package-lock.json
+
+# Jest snapshots (only needed for snapshot-specific debugging)
+**/*.snap
+
+# Raw discovery doc (1200+ lines stakeholder notes, rarely needed in implementation)
+docs/Design/DiscoveryPhase/Discovery_Document.md
+
+# Static assets (no code)
+client/public/
+data/*
+!data/scripts/
+
+.claudeognore

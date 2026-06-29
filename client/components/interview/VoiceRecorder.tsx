@@ -1,0 +1,203 @@
+'use client'
+
+import { useState, useRef } from 'react'
+import LoadingSpinner from '../ui/LoadingSpinner'
+import Button from '../ui/Button'
+import { apiClient } from '@/lib/api-client'
+
+interface VoiceRecorderProps {
+  onSubmit: (
+    audioUrl: string,
+    durationSeconds: number,
+    sizeBytes: number,
+    transcript: string,
+  ) => Promise<void>
+  sessionId: string
+  disabled?: boolean
+}
+
+type RecordState = 'idle' | 'recording' | 'transcribing' | 'submitting'
+
+interface AudioUploadResponse {
+  audioFileUrl: string
+  audioSizeBytes: number
+  transcript: string
+  transcriptDurationSeconds?: number
+}
+
+interface VoiceDraft {
+  audioUrl: string
+  durationSeconds: number
+  sizeBytes: number
+}
+
+export default function VoiceRecorder({ onSubmit, sessionId, disabled }: VoiceRecorderProps) {
+  const [state, setState] = useState<RecordState>('idle')
+  const [error, setError] = useState<string | null>(null)
+  const [draft, setDraft] = useState<VoiceDraft | null>(null)
+  const [transcript, setTranscript] = useState('')
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const startTimeRef = useRef<number>(0)
+
+  async function startRecording() {
+    setError(null)
+    setDraft(null)
+    setTranscript('')
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      chunksRef.current = []
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+      recorder.start()
+      mediaRecorderRef.current = recorder
+      startTimeRef.current = Date.now()
+      setState('recording')
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'NotAllowedError') {
+        setError('Trình duyệt chưa cấp quyền microphone. Vui lòng cho phép và thử lại.')
+      } else {
+        setError('Không thể khởi động microphone. Vui lòng kiểm tra thiết bị.')
+      }
+    }
+  }
+
+  async function stopRecording() {
+    const recorder = mediaRecorderRef.current
+    if (!recorder) return
+
+    await new Promise<void>((resolve) => {
+      recorder.onstop = () => resolve()
+      recorder.stop()
+      recorder.stream.getTracks().forEach((t) => t.stop())
+    })
+
+    setState('transcribing')
+    const durationSeconds = Math.round((Date.now() - startTimeRef.current) / 1000)
+    const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+
+    try {
+      const filename = `audio-${crypto.randomUUID()}.webm`
+      const formData = new FormData()
+      formData.append('file', blob, filename)
+      const upload = await apiClient.postForm<AudioUploadResponse>(
+        `/sessions/${sessionId}/turns/audio`,
+        formData,
+      )
+      setDraft({
+        audioUrl: upload.audioFileUrl,
+        durationSeconds: durationSeconds || upload.transcriptDurationSeconds || 0,
+        sizeBytes: upload.audioSizeBytes,
+      })
+      setTranscript(upload.transcript)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Lỗi không xác định')
+    } finally {
+      setState('idle')
+    }
+  }
+
+  async function submitTranscript() {
+    if (!draft || state === 'submitting') return
+    const finalTranscript = transcript.trim()
+    if (finalTranscript.length < 10) {
+      setError('Câu trả lời cần tối thiểu 10 ký tự.')
+      return
+    }
+
+    setState('submitting')
+    setError(null)
+    try {
+      await onSubmit(
+        draft.audioUrl,
+        draft.durationSeconds,
+        draft.sizeBytes,
+        finalTranscript,
+      )
+      setDraft(null)
+      setTranscript('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể gửi câu trả lời')
+    } finally {
+      setState('idle')
+    }
+  }
+
+  function resetDraft() {
+    setDraft(null)
+    setTranscript('')
+    setError(null)
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      {error && (
+        <p role="alert" className="text-sm text-red-600">{error}</p>
+      )}
+      {draft ? (
+        <div className="flex w-full flex-col gap-3">
+          <label htmlFor="voice-transcript" className="text-sm font-medium text-ink">
+            Nội dung câu trả lời
+          </label>
+          <textarea
+            id="voice-transcript"
+            aria-label="Transcript câu trả lời"
+            value={transcript}
+            onChange={(e) => {
+              setTranscript(e.target.value)
+              setError(null)
+            }}
+            disabled={disabled || state === 'submitting'}
+            rows={6}
+            className="w-full resize-none rounded-xl border border-border p-3 text-sm text-ink placeholder:text-ink-faint focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none disabled:opacity-50"
+          />
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={resetDraft}
+              disabled={disabled || state === 'submitting'}
+            >
+              Ghi âm lại
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={submitTranscript}
+              disabled={!transcript.trim() || disabled}
+              loading={state === 'submitting'}
+            >
+              Gửi câu trả lời
+            </Button>
+          </div>
+        </div>
+      ) : state === 'idle' && (
+        <button
+          aria-label="Bắt đầu ghi âm"
+          onClick={startRecording}
+          disabled={disabled}
+          className="rounded-full bg-red-600 px-8 py-3 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+        >
+          Bắt đầu ghi âm
+        </button>
+      )}
+      {state === 'recording' && (
+        <button
+          aria-label="Dừng ghi âm"
+          onClick={stopRecording}
+          className="flex items-center gap-2 rounded-full bg-gray-800 px-8 py-3 text-sm font-medium text-white hover:bg-black"
+        >
+          <span aria-hidden="true" className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+          Dừng ghi âm
+        </button>
+      )}
+      {state === 'transcribing' && (
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <LoadingSpinner size="sm" />
+          Đang chuyển giọng nói thành văn bản...
+        </div>
+      )}
+    </div>
+  )
+}

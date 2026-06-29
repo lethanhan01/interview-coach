@@ -49,7 +49,7 @@ Tài liệu này mô tả 5 flows:
 2. Session Setup & Question Generation (UC-03)
 3. Interview Turn — Main Loop (UC-04)
 4. Comprehensive Report Generation (UC-05)
-5. Rewrite & Compare (UC-07)
+5. Rewrite & Compare (UC-07) — **v1.1, deferred**
 
 Ngoài phạm vi HLD (có tài liệu riêng):
 
@@ -92,7 +92,7 @@ Ngoài phạm vi HLD (có tài liệu riêng):
 | Controller | `SessionController` |
 | Services | `SessionService`, `QuestionComposerService`, `AntiRepeatService`, `SessionPlanValidator` |
 | Trách nhiệm | CRUD `interview_sessions`; enforce S-12 (count check trước INSERT); enqueue `QuestionGenerationJob`; validate session plan (coverage, difficulty distribution, time budget); resume interrupted session |
-| External | Bull Queue (enqueue), Supabase DB |
+| External | BullMQ (enqueue), Supabase DB |
 
 #### 2.1.3 TurnModule
 
@@ -101,7 +101,7 @@ Ngoài phạm vi HLD (có tài liệu riêng):
 | Controller | `TurnController` |
 | Services | `TurnService`, `WhisperService`, `VoiceMetricsService`, `FollowUpCoordinatorService` |
 | Trách nhiệm | Nhận audio blob multipart; gọi Whisper STT (P-04 SLO ≤5s, sync path); tính voice metrics (WPM, filler_count, pause_count); upload audio → Cloudflare R2; enqueue `FollowUpJob` và `FeedbackJob`; enforce P-16 (≤25MB), P-17 (≤5 phút), P-21 (≤5 rewrites) |
-| External | OpenAI Whisper-1, Cloudflare R2, Bull Queue, Supabase DB |
+| External | OpenAI Whisper-1, Cloudflare R2, BullMQ, Supabase DB |
 
 #### 2.1.4 AIModule
 
@@ -159,7 +159,9 @@ classDiagram
 | Trách nhiệm | Aggregate tất cả `ai_feedbacks` của session; tính session-level overall_score; build 5-section report (Executive Summary, Comm Analysis, Competency Heatmap, Reverse Q Eval, Action Plan); lưu `progress_snapshots` cho UC-13 |
 | External | OpenAI GPT-4o (via AIModule — Action Plan generation), Supabase DB |
 
-#### 2.1.6 AdminModule
+#### 2.1.6 AdminModule (v1.1 — UC-09/UC-10 deferred)
+
+> **v1.1:** AdminModule và toàn bộ admin functionality defer sang v1.1.
 
 | Item | Detail |
 | --- | --- |
@@ -174,7 +176,7 @@ classDiagram
 | --- | --- | --- | --- | --- |
 | AuthModule | AuthController | GoogleStrategy, JwtStrategy, AuthService | — | Google OAuth, Supabase Auth, Redis |
 | SessionModule | SessionController | SessionService, QuestionComposerService, AntiRepeatService, SessionPlanValidator | — | Bull Queue, Supabase DB |
-| TurnModule | TurnController | TurnService, WhisperService, VoiceMetricsService, FollowUpCoordinatorService | — | OpenAI Whisper-1, Cloudflare R2, Bull Queue, Supabase DB |
+| TurnModule | TurnController | TurnService, WhisperService, VoiceMetricsService, FollowUpCoordinatorService | — | OpenAI Whisper-1, Cloudflare R2, BullMQ, Supabase DB |
 | AIModule | — | OpenAIGateway, PromptBuilderService, ContextPackService, 4 AI Services, 3 Pipeline Services, PipelineStrategyFactory, ZodValidatorService | FollowUpProcessor, FeedbackProcessor, RewriteEvalProcessor, QuestionGenerationProcessor | OpenAI GPT-4o, Redis |
 | ReportModule | ReportController | ReportService, ComprehensiveReportBuilder, ReverseQEvaluatorService, ProgressSnapshotService | ComprehensiveReportProcessor | OpenAI GPT-4o (via AIModule), Supabase DB |
 | AdminModule | AdminController | UserAdminService, QuestionBankService | — | Supabase DB |
@@ -192,10 +194,10 @@ classDiagram
 | `/sessions/new` | `SessionSetupWizard` | UC-03, UC-03b | Yes |
 | `/sessions/[id]/interview` | `InterviewPage` | UC-04, UC-12 | Yes |
 | `/sessions/[id]/report` | `ReportPage` | UC-05, UC-06 | Yes |
-| `/sessions/[id]/rewrite/[questionId]` | `RewritePage` | UC-07 | Yes |
-| `/progress` | `ProgressDashboardPage` | UC-13 | Yes |
-| `/admin/users` | `AdminUsersPage` | UC-09 | Admin |
-| `/admin/questions` | `AdminQuestionsPage` | UC-10 | Admin |
+| `/sessions/[id]/rewrite/[questionId]` (v1.1) | `RewritePage` | UC-07 | Yes |
+| `/progress` (v1.1) | `ProgressDashboardPage` | UC-13 | Yes |
+| `/admin/users` (v1.1) | `AdminUsersPage` | UC-09 | Admin |
+| `/admin/questions` (v1.1) | `AdminQuestionsPage` | UC-10 | Admin |
 
 #### 2.2.2 Key Components (có business logic)
 
@@ -230,11 +232,11 @@ classDiagram
 
 | Component | Technology | Provider | Vai trò |
 | --- | --- | --- | --- |
-| Frontend Host | Next.js 14 SSR | Vercel | Serve pages, edge caching, zero-config deploy |
-| Backend Runtime | NestJS 10, Node.js 20 | Railway | API + AI orchestration, Docker container |
-| Job Queue | Bull 4.x | Railway (co-located với backend) | Async AI jobs, retry, timeout |
-| Cache + Rate Limit | Redis 7.x | Railway (co-located) | Bull backend, rate limit counters, CV text cache |
-| Primary Database | PostgreSQL 15 + pgvector 0.7 | Supabase | Tất cả relational data |
+| Frontend Host | Next.js 16 (App Router) | Vercel | Serve pages, edge caching, zero-config deploy |
+| Backend Runtime | NestJS 11.0.1, Node.js 20 | Railway | API + AI orchestration, Docker container |
+| Job Queue | BullMQ | Railway (co-located với backend) | Async AI jobs, retry, timeout |
+| Cache + Rate Limit | Redis 7.x | Railway (co-located) | BullMQ backend, rate limit counters, SSE Pub/Sub |
+| Primary Database | PostgreSQL 15 | Supabase | Tất cả relational data |
 | Auth Provider | Supabase Auth | Supabase | JWT issuance, Google OAuth, session store |
 | CV Storage | Supabase Storage | Supabase | CV PDF files với RLS |
 | Audio Storage | Cloudflare R2 | Cloudflare | Audio blobs, 30-day retention |
@@ -456,12 +458,14 @@ SLO AC-05-1 (≤8s): Steps 1-4 là local aggregation (DB read, không AI call) �
 
 ### 3.5 Flow 5 — Rewrite & Compare (UC-07)
 
+> **v1.1 (UC-07):** Tính năng Rewrite & Compare defer sang v1.1.
+
 ```mermaid
 sequenceDiagram
     participant B as Browser
     participant N as Next.js
     participant NJ as NestJS TurnModule
-    participant Q as Bull Queue
+    participant Q as BullMQ
     participant NJA as NestJS AIModule
     participant O as OpenAI GPT-4o
     participant DB as PostgreSQL
@@ -518,13 +522,13 @@ Từ lần attempt 3 trở đi, cột bên trái hiển thị lần có overall_
 | UC-04 Interview | JwtGuard | SessionService (status) | PRIMARY | PRIMARY (FollowUp, Feedback, Pipeline) | — | — |
 | UC-05 AI Feedback | — | — | — | PRIMARY (FeedbackAnalyzer, Zod) | PRIMARY (ReportBuilder) | — |
 | UC-06 View Feedback | JwtGuard | — | — | — | PRIMARY (ReportController) | — |
-| UC-07 Rewrite | JwtGuard | — | PRIMARY (rewrite count check, Whisper) | PRIMARY (RewriteEvaluator) | — | — |
+| UC-07 Rewrite (v1.1) | JwtGuard | — | PRIMARY (rewrite count check, Whisper) | PRIMARY (RewriteEvaluator) | — | — |
 | UC-08 History | JwtGuard | PRIMARY (list) | — | — | — | — |
-| UC-09 Admin Users | JwtGuard + RoleGuard | — | — | — | — | PRIMARY |
-| UC-10 Question Bank | JwtGuard + RoleGuard | — | — | — | — | PRIMARY |
-| UC-11 Placement Test | JwtGuard | — | — | PRIMARY (QuestionGenerator variant) | — | — |
+| UC-09 Admin Users (v1.1) | JwtGuard + RoleGuard | — | — | — | — | PRIMARY |
+| UC-10 Question Bank (v1.1) | JwtGuard + RoleGuard | — | — | — | — | PRIMARY |
+| UC-11 Placement Test (v1.1) | JwtGuard | — | — | PRIMARY (QuestionGenerator variant) | — | — |
 | UC-12 Reverse Q | JwtGuard | — | TurnService (voice) | PRIMARY (FollowUpEngine in-character) | ReverseQEvaluator | — |
-| UC-13 Dashboard | JwtGuard | — | — | — | PRIMARY (ProgressSnapshot) | — |
+| UC-13 Dashboard (v1.1) | JwtGuard | — | — | — | PRIMARY (ProgressSnapshot) | — |
 
 ### 4.2 UC × Next.js Page/Component
 
@@ -536,13 +540,13 @@ Từ lần attempt 3 trở đi, cột bên trái hiển thị lần có overall_
 | UC-04 | `/sessions/[id]/interview` | `InterviewPhaseController`, `AudioRecorder`, `FollowUpPanel`, `SSEListener` |
 | UC-05 | (background) | `SSEListener` nhận `report.ready` |
 | UC-06 | `/sessions/[id]/report` | `ReportPage`, `TranscriptAnnotator`, `CompetencyHeatmap`, `ActionPlanList` |
-| UC-07 | `/sessions/[id]/rewrite/[questionId]` | `RewritePage`, `RewriteComparePanel`, `AudioRecorder` |
+| UC-07 (v1.1) | `/sessions/[id]/rewrite/[questionId]` | `RewritePage`, `RewriteComparePanel`, `AudioRecorder` |
 | UC-08 | `/dashboard` | `SessionHistoryList`, `SessionCard` |
-| UC-09 | `/admin/users` | `AdminUsersPage`, `UserTable` |
-| UC-10 | `/admin/questions` | `AdminQuestionsPage`, `QuestionForm` |
-| UC-11 | `/onboarding` (embedded) | `PlacementTestPanel` |
+| UC-09 (v1.1) | `/admin/users` | `AdminUsersPage`, `UserTable` |
+| UC-10 (v1.1) | `/admin/questions` | `AdminQuestionsPage`, `QuestionForm` |
+| UC-11 (v1.1) | `/onboarding` (embedded) | `PlacementTestPanel` |
 | UC-12 | `/sessions/[id]/interview` | `ReverseQuestionPanel` (sub-state trong `InterviewPhaseController`) |
-| UC-13 | `/progress` | `ProgressDashboardPage`, `CompetencyHeatmap`, `StreakCounter`, `RecommendationCard` |
+| UC-13 (v1.1) | `/progress` | `ProgressDashboardPage`, `CompetencyHeatmap`, `StreakCounter`, `RecommendationCard` |
 
 ---
 
@@ -683,7 +687,7 @@ Multi-instance delivery (ADR-006): `SseService` không dùng in-memory `Subject`
 | 429 | `RATE_LIMIT_EXCEEDED` | S-11 | "Quá nhiều yêu cầu. Vui lòng chờ 1 phút." |
 | 429 | `REWRITE_LIMIT_EXCEEDED` | P-21 | "Bạn đã thử lại tối đa 5 lần cho câu hỏi này." |
 | 500 | `AI_SERVICE_ERROR` | OpenAI fail sau retry | "Dịch vụ AI tạm thời không khả dụng. Câu trả lời của bạn đã được lưu." |
-| 503 | `SERVICE_UNAVAILABLE` | Bull Queue không khả dụng | "Hệ thống đang tải. Vui lòng thử lại sau." |
+| 503 | `SERVICE_UNAVAILABLE` | BullMQ không khả dụng | "Hệ thống đang tải. Vui lòng thử lại sau." |
 
 Response format thống nhất: `{statusCode, errorCode, message, timestamp}`. Stack trace không bao giờ expose ra client.
 
@@ -734,7 +738,7 @@ User input trong Layer 3 luôn được wrap: `<job_description>…</job_descrip
 | Question Generator | `question-gen-v1.0` | 0.8 | ≤ 1,500 | ≤ 600 | Question Bank seed |
 | Follow-up Engine | `followup-v1.0` | 0.7 | ≤ 900 | ≤ 150 | `skip_follow_up: true` |
 | Feedback Analyzer | `surgical-feedback-v1.0` | 0.3 | ≤ 2,000 | ≤ 1,500 | Fallback text feedback |
-| Rewrite Evaluator | `rewrite-eval-v1.0` | 0.3 | ≤ 2,500 | ≤ 1,500 | Lưu transcript, không show comparison |
+| Rewrite Evaluator (v1.1) | `rewrite-eval-v1.0` | 0.3 | ≤ 2,500 | ≤ 1,500 | Lưu transcript, không show comparison — v1.1 only (UC-07) |
 
 Prompt versioning: version string ghi vào `ai_quality_log.prompt_version` mỗi AI call. Khi update prompt: bump version string, ghi changelog vào `docs/Design/prompt-changelog.md`.
 
@@ -802,7 +806,9 @@ Chỉ liệt kê method + path + auth + description. Full request/response schem
 | POST | `/api/v1/sessions/:id/turns/:turnId/followup` | Bearer | Submit follow-up answer |
 | GET | `/api/v1/sessions/:id/turns/:turnId/feedback` | Bearer | Get surgical feedback for a turn |
 
-### 7.4 Rewrites
+### 7.4 Rewrites (v1.1 — UC-07 deferred)
+
+> **v1.1:** Toàn bộ rewrite endpoints defer sang v1.1.
 
 | Method | Path | Auth | Description |
 | --- | --- | --- | --- |
@@ -815,12 +821,14 @@ Chỉ liệt kê method + path + auth + description. Full request/response schem
 | Method | Path | Auth | Description |
 | --- | --- | --- | --- |
 | GET | `/api/v1/sessions/:id/report` | Bearer | Get comprehensive report (UC-06) |
-| GET | `/api/v1/progress` | Bearer | Get progress data: snapshots, streak (UC-13) |
+| GET | `/api/v1/progress` | Bearer | Get progress data: snapshots, streak (UC-13) — **v1.1** |
 | GET | `/api/v1/profile` | Bearer | Get user profile |
 | PUT | `/api/v1/profile` | Bearer | Update profile — target role, level, stack (UC-02) |
 | POST | `/api/v1/profile/cv` | Bearer | Upload CV PDF, multipart (UC-02) |
 
-### 7.6 Placement Test
+### 7.6 Placement Test (v1.1 — UC-11 deferred)
+
+> **v1.1:** Placement test endpoints defer sang v1.1.
 
 | Method | Path | Auth | Description |
 | --- | --- | --- | --- |
@@ -834,7 +842,9 @@ Chỉ liệt kê method + path + auth + description. Full request/response schem
 | POST | `/api/v1/sessions/:id/reverse-questions` | Bearer | Submit candidate question + get AI in-character response (UC-12) |
 | GET | `/api/v1/sessions/:id/reverse-questions` | Bearer | Get all reverse Q records for session |
 
-### 7.8 Admin
+### 7.8 Admin (v1.1 — UC-09/UC-10 deferred)
+
+> **v1.1:** Toàn bộ admin endpoints defer sang v1.1.
 
 | Method | Path | Auth | Description |
 | --- | --- | --- | --- |

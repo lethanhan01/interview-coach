@@ -21,6 +21,7 @@ InterviewAI là ứng dụng AI Mock Interview — nền tảng luyện phỏng 
 |----------|-------|------------|
 | [SAD](Design/ArchitecturalDesign/SAD_InterviewAI_v1.0.md) | Kiến trúc tổng thể, tech stack, thiết kế AI pipeline | Hoàn thành |
 | [HLD](Design/ArchitecturalDesign/HLD_InterviewAI_v1.0.md) | Thiết kế cấp cao — 5 luồng dữ liệu, ~35 API endpoints | Hoàn thành |
+| [MVP Scope](Design/MVP_Scope.md) | Quick reference IN/OUT cho MVP — 5 UCs, 11 tables, 5 routes, NFR implementation | Hoàn thành |
 | [ADR-001 → ADR-007](Design/ArchitecturalDesign/ADRs/) | 7 quyết định kiến trúc quan trọng (Next.js, NestJS, Supabase, v.v.) | Hoàn thành |
 | [Session Type Spec](Design/ArchitecturalDesign/interview_ai_coach_session_type_spec.md) | Đặc tả 3 loại phỏng vấn: HR, Technical, Mixed | Hoàn thành |
 
@@ -29,16 +30,29 @@ InterviewAI là ứng dụng AI Mock Interview — nền tảng luyện phỏng 
 | Tài liệu | Mô tả | Trạng thái |
 |----------|-------|------------|
 | [Database Design](Design/DetailedDesign/database-design/) | Schema 15 bảng, DDL, RLS, indexes, 9 quyết định thiết kế DB | Hoàn thành |
-| API Design | Đặc tả ~35 endpoints, DTOs, error codes | Chưa tạo |
-| UI/UX Design | Sitemap, user flows, wireframes, design tokens | Chưa tạo |
-| LLD | Thiết kế chi tiết từng module NestJS và Next.js | Chưa tạo |
+| [API Design](Design/DetailedDesign/api-design/) | Đặc tả code-aligned cho 14 API backend: health, auth, session/SSE, turn, report và profile; kèm inventory đối chiếu | Hoàn thành |
+| [UI/UX Design](Design/DetailedDesign/uiux-design/) | Sitemap, 5 MVP routes, design tokens, user flows (auth/interview/report), annotated transcript interaction | Hoàn thành |
+| [LLD](Design/DetailedDesign/lld/LLD_design.md) | Class interfaces, DTOs, BullMQ contracts, sequence diagrams — 5 NestJS modules (7 files) | Hoàn thành |
 
 ### Kiểm thử và vận hành
 
 | Tài liệu | Mô tả | Trạng thái |
 |----------|-------|------------|
 | [Test Plan](test-plan/strategy.md) | Chiến lược kiểm thử, phạm vi, môi trường | Hoàn thành |
-| [Phase Log](PHASES.md) | Lịch sử chuyển phase và trạng thái hiện tại | Hoàn thành |
+| [Project Log](../CHANGELOG.md) | Phase milestones + implementation sessions | Hoàn thành |
+
+### Luồng xử lý (Flow docs)
+
+| Tài liệu | Mô tả | Trạng thái |
+|----------|-------|------------|
+| [Interview Flow](interview-flow.md) | Tổng quan 7 bước từ tạo session đến hiển thị báo cáo (M) | Hoàn thành |
+| [Question Generation Flow](question-generation-flow.md) | Chi tiết kỹ thuật Bước 2: BullMQ worker, Question Bank fallback, lưu DB, SSE (M) | Hoàn thành |
+
+### Kế hoạch triển khai (Implementation plans)
+
+| Tài liệu | Mô tả | Trạng thái |
+|----------|-------|------------|
+| [Chấm điểm linh hoạt per-question](superpowers/plans/chamdiemlinhhoat.md) | Plan chấm điểm linh hoạt theo tiêu chí áp dụng được cho từng câu hỏi (M) | Planning |
 
 ## Trình tự đọc
 

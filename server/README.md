@@ -1,98 +1,219 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# InterviewCoach — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+NestJS 11, TypeScript 5.7, Prisma, BullMQ, Redis, Supabase (PostgreSQL + Auth).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+API: `http://localhost:3000/api/v1`  
+Health check: `http://localhost:3000/health`
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Yêu cầu
 
-## Project setup
+- Node.js >= 20
+- Docker Desktop (để chạy Redis)
+- Tài khoản Supabase với PostgreSQL đã cấu hình
+- OpenAI API key
 
-```bash
-$ npm install
+---
+
+## Cài đặt lần đầu
+
+Từ thư mục `server/`:
+
+```powershell
+npm install
+Copy-Item .env.example .env
 ```
 
-## Compile and run the project
+Mở `.env` và điền các biến bắt buộc:
 
-```bash
-# development
-$ npm run start
+```env
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_JWT_SECRET=
 
-# watch mode
-$ npm run start:dev
+DATABASE_URL=
+DIRECT_URL=
 
-# production mode
-$ npm run start:prod
+OPENAI_API_KEY=
 ```
 
-## Run tests
+Giữ nguyên các giá trị mặc định nếu không đổi port:
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```env
+REDIS_HOST=localhost
+REDIS_PORT=6379
+PORT=3000
+NODE_ENV=development
+CLIENT_URL=http://localhost:5173
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Chạy local
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Mở Docker Desktop, sau đó từ thư mục `server/`:
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```powershell
+npm run infra:up
+npm run start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Hoặc dùng lệnh gộp:
 
-## Resources
+```powershell
+npm run dev:local
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+Khi thấy `Nest application successfully started` trong log, server đã sẵn sàng.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Kiểm tra:
 
-## Support
+```powershell
+npm run verify:runtime
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Lệnh này gọi `GET /api/v1` và `GET /health`. Nếu DB hoặc Redis chưa sẵn sàng, `/health` trả `status: "degraded"` và lệnh verify sẽ fail.
 
-## Stay in touch
+---
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Bỏ qua đăng nhập khi dev local
 
-## License
+Thêm vào `.env`:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```env
+AUTH_ENABLED=false
+MOCK_USER_ID=<UUID-của-user-có-sẵn-trong-public.users>
+```
+
+`MOCK_USER_ID` phải là UUID thật trong database, không được bịa.
+
+Khi bật, `JwtAuthGuard` và `SseTokenGuard` inject mock user thay vì verify JWT — không gọi Supabase.
+
+> **Không bật trong production.** Set `AUTH_ENABLED=true` hoặc xóa var trước khi deploy.
+
+---
+
+## Các lệnh thường dùng
+
+| Lệnh | Mục đích |
+|------|----------|
+| `npm run start:dev` | Chạy NestJS watch mode |
+| `npm run dev:local` | `infra:up` + `start:dev` gộp |
+| `npm run infra:up` | Bật Redis bằng Docker Compose |
+| `npm run infra:down` | Tắt Redis |
+| `npm run verify:runtime` | Kiểm tra `/api/v1` và `/health` |
+| `npm run test` | Chạy unit tests |
+| `npm run test:cov` | Unit tests + coverage report |
+| `npm run test:e2e` | E2E tests |
+| `npm run build` | Compile sang `dist/` |
+| `npm run start:prod` | Chạy production build |
+| `npm run lint` | ESLint --fix |
+| `npm run format` | Prettier --write |
+| `npm run prisma:generate` | Tạo lại Prisma Client |
+| `npm run db:validate` | Validate Prisma schema |
+| `npm run seed` | Seed dữ liệu mẫu (question bank, ...) |
+
+---
+
+## Đồng bộ database schema (`db:sync`)
+
+> **Không chạy thường xuyên.** Lệnh này thay đổi schema database thật — chỉ chạy khi có lý do cụ thể.
+
+Chạy khi:
+- Vừa thay đổi `prisma/schema.prisma`
+- Database local thiếu constraint hoặc column mới
+- Cần chuẩn bị unique constraint cho `user_answers`
+
+```powershell
+npm run db:sync
+```
+
+Lệnh thực hiện: `prisma generate` → `db:prepare-user-answer-unique` → `prisma db push`.
+
+Với production hoặc dữ liệu quan trọng, chạy kiểm tra trước:
+
+```powershell
+npm run db:test-user-answer-migration
+npm run db:sync
+```
+
+Script test tạo schema tạm, sao chép dữ liệu thật, kiểm tra dedupe và constraint, rồi xóa schema tạm.
+
+---
+
+## Chạy production build
+
+```powershell
+npm run build
+npm run start:prod
+```
+
+`npm run build` tự chạy `prisma generate` trước khi compile. Entrypoint production: `server/dist/main.js`.
+
+Kiểm tra sau khi start:
+
+```powershell
+npm run verify:runtime
+```
+
+---
+
+## Docker Compose
+
+`compose.yaml` (ở root repo) hiện chỉ dùng để chạy Redis. Backend NestJS chạy bằng npm trực tiếp.
+
+> **Không chạy** `docker compose up --build server` — service `server` đang bị tắt trong `compose.yaml`.
+
+---
+
+## Dừng server
+
+Dừng NestJS: `Ctrl+C` trong terminal đang chạy.
+
+Dừng Redis:
+
+```powershell
+npm run infra:down
+```
+
+Port 3000 bị chiếm:
+
+```powershell
+# Xem process nào giữ port
+Get-NetTCPConnection -LocalPort 3000 -State Listen | Select-Object LocalAddress, LocalPort, OwningProcess
+
+# Dừng process (thay <PID> bằng số thực tế)
+Stop-Process -Id <PID> -Force
+```
+
+---
+
+## Lỗi thường gặp
+
+**`ECONNREFUSED 127.0.0.1:6379`**
+
+Redis chưa chạy. Kiểm tra Docker Desktop đã mở, rồi chạy `npm run infra:up`.
+
+**`/health` trả `degraded`**
+
+```powershell
+Invoke-RestMethod http://localhost:3000/health
+```
+
+- `services.db.status = "down"`: kiểm tra `DATABASE_URL`, kết nối Supabase, rồi thử `npm run db:validate`.
+- `services.redis.status = "down"`: kiểm tra Docker Desktop và chạy `npm run infra:up`.
+
+**`401 Unauthorized`**
+
+Nếu đang dev local, kiểm tra `AUTH_ENABLED=false` và `MOCK_USER_ID` đã điền. Sau khi sửa `.env`, khởi động lại server.
+
+**Prisma lỗi missing column hoặc stale field**
+
+```powershell
+npm run prisma:generate
+npm run build
+```
+
+Nếu database thật chưa đồng bộ schema, chạy `npm run db:sync` (đọc phần cảnh báo ở trên trước).

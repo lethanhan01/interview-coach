@@ -1,0 +1,71 @@
+# =====================================================================
+# .dockerignore — server/
+# Prevents files from entering Docker build context.
+# Applies to ALL stages in Dockerfile.
+# =====================================================================
+
+# Dependencies — npm ci installs fresh in each stage
+node_modules
+
+# Build artifacts — builder stage compiles its own dist
+dist
+
+# Test output
+coverage
+.cache
+.turbo
+.next
+
+# ---- SECRETS — MUST NEVER enter the image ----
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+
+# Test files — tsconfig.build.json excludes them from compilation anyway
+test/
+**/*.spec.ts
+**/*.e2e-spec.ts
+
+# Docker meta — circular: no need to copy into build context
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+compose.yaml
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE & editor
+.vscode
+.idea
+*.swp
+*.swo
+.editorconfig
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+**/.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# Dev scripts không cần ở runtime
+scripts/
+
+# Documentation
+docs/
+*.md
+README*
+CHANGELOG*

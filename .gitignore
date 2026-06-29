@@ -55,3 +55,13 @@ CLAUDE.local.md
 .claude/
 **/CLAUDE.md
 .agents/
+skills-lock.json
+
+data/*
+!data/scripts/
+
+docs/superpowers/*
+
+scripts/*
+
+skills-lock.json

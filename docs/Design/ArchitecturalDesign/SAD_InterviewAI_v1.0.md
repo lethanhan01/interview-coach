@@ -44,7 +44,7 @@
 
 ## 1.1 Tổng quan kiến trúc triển khai
 
-Hệ thống dùng single backend service (NestJS) đảm nhận toàn bộ business logic, Auth, Session management, và AI Pipeline orchestration. Frontend (Next.js 14) giao tiếp với NestJS qua REST API (Bearer JWT). AI calls được thực hiện trực tiếp từ NestJS tới OpenAI API qua `openai` npm SDK — không có Python service riêng.
+Hệ thống dùng single backend service (NestJS) đảm nhận toàn bộ business logic, Auth, Session management, và AI Pipeline orchestration. Frontend (Next.js 16) giao tiếp với NestJS qua REST API (Bearer JWT). AI calls được thực hiện trực tiếp từ NestJS tới OpenAI API qua `openai` npm SDK — không có Python service riêng.
 
 Quyết định kiến trúc này được ghi nhận tại ADR-005. Tóm tắt lý do: project chỉ dùng OpenAI API (không cần local inference), không có Python-only ML lib nào trong SRS scope, và 1 service đơn giản hơn đáng kể cho deployment của graduation project.
 
@@ -56,7 +56,7 @@ flowchart TB
 
     subgraph system["InterviewAI System"]
         direction LR
-        web["Next.js 14\nFrontend"]
+        web["Next.js 16\nFrontend"]
         api["NestJS\nBackend + AI"]
     end
 
@@ -80,19 +80,19 @@ flowchart LR
     candidate["Candidate"]
 
     subgraph frontend["Frontend — Vercel"]
-        next["Next.js 14\nSSR + PWA\nWeb Audio API\nTypeScript / React"]
+        next["Next.js 16\nApp Router + PWA\nWeb Audio API\nTypeScript / React"]
     end
 
     subgraph backend["Backend — Railway"]
         nestjs["NestJS\nAuthModule · SessionModule\nTurnModule · AIModule\nReportModule\nTypeScript"]
-        queue["Bull Queue\n+ Redis 7.x\nasync AI jobs"]
+        queue["BullMQ\n+ Redis 7.x\nasync AI jobs"]
     end
 
     subgraph data["Data — Supabase Cloud"]
-        pg["PostgreSQL 15\n+ pgvector 0.7"]
+        pg["PostgreSQL 15"]
     end
 
-    openai_c["OpenAI API\nGPT-4o · Whisper-1\ntext-embedding-3-small"]
+    openai_c["OpenAI API\nGPT-4o · Whisper-1"]
     r2_c["Cloudflare R2\nAudio (30-day retention)"]
 
     candidate -->|"Browser"| next
@@ -110,7 +110,7 @@ sequenceDiagram
     participant C as Candidate (Browser)
     participant W as Next.js
     participant N as NestJS
-    participant Q as Bull Queue
+    participant Q as BullMQ
     participant O as OpenAI API
     participant S as Supabase
 
@@ -141,25 +141,24 @@ sequenceDiagram
 
 | Layer | Công nghệ | Phiên bản | Mục đích | Tính linh hoạt |
 |---|---|---|---|---|
-| **Frontend** | Next.js | 14.x | Web app chính, SSR, PWA | Cố định |
-| | Tailwind CSS | 3.x | UI styling | Có thể thay bằng CSS Modules |
+| **Frontend** | Next.js | 16.2.6 | Web app chính, App Router, PWA | Cố định |
+| | Tailwind CSS | 4.x | UI styling | Có thể thay bằng CSS Modules |
 | | Recharts | 2.x | Biểu đồ nhỏ (nếu cần) | Thay được bằng Chart.js |
 | | React Query | 5.x | Data fetching và caching | Cố định |
 | | Web Audio API | Native | Ghi âm từ microphone | Browser API — không thay |
 | | Web Speech API | Native | TTS đọc câu hỏi (optional) | Browser API — không thay |
-| **Backend** | NestJS | 10.x | REST API: Auth, Session CRUD, AI Pipeline orchestration | Có thể thay bằng Express |
-| | TypeScript | 5.x | Type safety; type sharing với Next.js frontend | Cố định |
+| **Backend** | NestJS | 11.0.1 | REST API: Auth, Session CRUD, AI Pipeline orchestration | Có thể thay bằng Express |
+| | TypeScript | 5.7.3 | Type safety; type sharing với Next.js frontend | Cố định |
 | | openai SDK | 4.x (npm) | OpenAI API client: GPT-4o, Whisper, Embeddings | Cố định khi dùng OpenAI |
 | | pdf-parse | 1.x (npm) | Parse CV PDF text extraction | Thay được bằng pdfjs-dist |
-| **Queue** | Bull | 4.x | Job queue cho async AI tasks (feedback generation) | Có thể thay bằng BullMQ |
-| | Redis | 7.x | Queue backend | Cố định khi dùng Bull |
+| **Queue** | BullMQ | Latest | Job queue cho async AI tasks (5 job types) | Cố định (ADR-007) |
+| | Redis | 7.x | Queue backend + SSE Pub/Sub | Cố định |
 | **Database** | PostgreSQL | 15.x | Relational database chính | Qua Supabase |
-| | Supabase | Latest | Auth + DB + Storage + pgvector | Có thể self-host |
-| | pgvector | 0.7.x | Vector search cho JD embedding | Extension của PostgreSQL |
+| | Supabase | Latest | Auth + DB + Storage | Có thể self-host |
 | **Storage** | Cloudflare R2 | — | Lưu audio recording người dùng | Thay được bằng S3 |
 | **AI Provider** | OpenAI GPT-4o | gpt-4o | Question Gen, Follow-up, Feedback | Thay được bằng Gemini Pro |
 | | OpenAI Whisper | whisper-1 | Speech-to-Text | Thay được bằng Deepgram |
-| | text-embedding-3-small | — | JD embedding (nếu dùng RAG) | Optional |
+| | text-embedding-3-small | — | JD embedding cho semantic anti-repeat (v1.1 — pgvector deferred) | Optional |
 | **Deploy** | Vercel | — | Frontend hosting | Thay được bằng Netlify |
 | | Railway | — | Backend hosting | Thay được bằng Render, VPS |
 | | Docker | 24.x | Containerization | Cố định cho production |
@@ -175,8 +174,8 @@ sequenceDiagram
 | **GPT-4o** | JSON mode đảm bảo output schema chuẩn; chất lượng feedback tiếng Việt vượt trội; stable API với uptime cao. |
 | **Whisper API** | Độ chính xác cao nhất cho tiếng Việt trong các STT model hiện có; API đơn giản; latency ~1–2 giây. |
 | **NestJS (AI Pipeline)** | openai npm SDK type-safe và đủ cho API-only usage (không cần Python ecosystem khi không có local inference). Single service giảm deployment complexity. Type sharing với Next.js qua monorepo. |
-| **Supabase** | Cung cấp đồng thời Auth, PostgreSQL, pgvector và Storage — giảm số service cần quản lý. Free tier đủ cho prototype. |
-| **Next.js 14** | App Router hỗ trợ SSR tốt cho SEO; Web Audio API tích hợp tự nhiên trong browser; ecosystem React phong phú. |
+| **Supabase** | Cung cấp đồng thời Auth, PostgreSQL và Storage — giảm số service cần quản lý. Free tier đủ cho prototype. pgvector defer sang v1.1 (D-05). |
+| **Next.js 16** | App Router hỗ trợ SSR tốt cho SEO; Web Audio API tích hợp tự nhiên trong browser; ecosystem React phong phú. |
 
 ---
 
@@ -191,9 +190,9 @@ sequenceDiagram
 | Question Generator | OpenAI | `gpt-4o` | JSON mode đảm bảo output có cấu trúc; chất lượng câu hỏi phong phú, bám sát JD. |
 | Follow-up Engine | OpenAI | `gpt-4o` | Yêu cầu hiểu ngữ cảnh sâu để phân tích transcript và sinh câu hỏi contextual. GPT-4o vượt trội so với mini model trong tác vụ này. |
 | Feedback Analyzer | OpenAI | `gpt-4o` | Tác vụ phức tạp nhất — phân tích từng đoạn, so sánh rubric, sinh `improved_version`. Không thể dùng model nhỏ hơn. |
-| Rewrite Evaluator | OpenAI | `gpt-4o` | Cần so sánh 2 transcript và tính Delta Score chính xác. |
+| Rewrite Evaluator (v1.1) | OpenAI | `gpt-4o` | Cần so sánh 2 transcript và tính Delta Score chính xác. (v1.1 — UC-07 deferred) |
 | Speech-to-Text | OpenAI | `whisper-1` | Độ chính xác cao nhất cho tiếng Việt trong số các STT API hiện có. Latency thấp (~1–2 giây cho audio 1 phút). |
-| JD Embedding (optional) | OpenAI | `text-embedding-3-small` | Chi phí thấp ($0.02/1M tokens); đủ chất lượng cho semantic search trong Question Bank. |
+| JD Embedding (v1.1) | OpenAI | `text-embedding-3-small` | Chi phí thấp ($0.02/1M tokens); đủ chất lượng cho semantic search trong Question Bank. (v1.1 — pgvector deferred) |
 | Question Generator (fallback) | OpenAI | `gpt-4o-mini` | Dùng khi Question Generator chính bị rate limit; chi phí thấp hơn 94%; chất lượng đủ cho câu hỏi seed. |
 
 ### 2.1.2 Phiên bản và tính ổn định
@@ -442,6 +441,8 @@ Phân tích và trả về JSON Surgical Feedback theo schema.
 ---
 
 ### 2.2.5 Prompt 4 — Rewrite Evaluator
+
+> **v1.1 (UC-07):** Tính năng Rewrite & Compare defer sang v1.1. Section này được giữ lại để reference thiết kế tương lai.
 
 **Version:** `rewrite-eval-v1.0` | **Kích hoạt bởi:** UC-07
 
@@ -734,6 +735,8 @@ function validateFeedbackSchema(data: unknown): { valid: boolean; error?: string
 
 ### 2.3.4 Schema 4 — Rewrite Evaluator Output
 
+> **v1.1 (UC-07):** Defer sang v1.1.
+
 ```json
 {
   "overall_score": 79,
@@ -899,7 +902,7 @@ Bảng dưới đây xác định giới hạn token cho từng lần gọi API,
 | — Composite transcript | | ~600 | | | |
 | — JD context | | ~500 | | | |
 | — CV context (optional) | | ~300 | | | |
-| **Rewrite Evaluator** | GPT-4o | ≤ 2,500 | ≤ 1,500 | ≤ 4,000 | ~$0.0213 |
+| **Rewrite Evaluator (v1.1)** | GPT-4o | ≤ 2,500 | ≤ 1,500 | ≤ 4,000 | ~$0.0213 |
 | — Như Feedback Analyzer | | ~2,000 | | | |
 | — Old transcript + summary | | ~500 | | | |
 | **Whisper (STT)** | whisper-1 | N/A | N/A | ~1 phút audio | $0.006/phút |
@@ -914,8 +917,8 @@ Bảng dưới đây xác định giới hạn token cho từng lần gọi API,
 | Whisper (follow-up, ~1 phút/câu) | 4 câu × 1 phút | $0.006/phút | $0.0240 |
 | Feedback Analyzer | 5 câu | $0.0200 | $0.1000 |
 | **Tổng — Phiên cơ bản** | | | **~$0.21** |
-| Rewrite Evaluator (nếu Rewrite 2 câu) | 2 lần | $0.0213 | $0.0426 |
-| **Tổng — Phiên đầy đủ (với Rewrite)** | | | **~$0.25** |
+| Rewrite Evaluator (v1.1 — nếu Rewrite 2 câu) | 2 lần | $0.0213 | $0.0426 |
+| **Tổng — Phiên đầy đủ với Rewrite (v1.1)** | | | **~$0.25** |
 
 ## 3.3 Chi phí ước tính theo quy mô người dùng
 
@@ -1000,7 +1003,7 @@ Khi Candidate yêu cầu xóa tài khoản:
 
 ```text
 /
-├── frontend/           # Next.js 14 App (SSR + PWA)
+├── frontend/           # Next.js 16 App (App Router + PWA)
 ├── backend/            # NestJS — Auth, Session CRUD, AI Pipeline orchestration
 │   ├── src/
 │   │   ├── auth/       # AuthModule: GoogleStrategy, JwtGuard
@@ -1008,7 +1011,7 @@ Khi Candidate yêu cầu xóa tài khoản:
 │   │   ├── turn/       # TurnModule: answer submission, Whisper STT
 │   │   ├── ai/         # AIModule: OpenAI gateway, prompt builder, Zod validators
 │   │   └── report/     # ReportModule: comprehensive report generation
-│   └── package.json    # includes openai, zod, bull, supabase-js
+│   └── package.json    # includes openai, zod, bullmq, supabase-js
 └── docs/               # SRS, SAD, ADR, HLD, design docs
 ```
 
@@ -1127,7 +1130,7 @@ NestJS không cần implement authorization check riêng — RLS là enforcement
 | --- | --- | --- | --- |
 | Max sessions per user per 24h | 10 | S-12 | Application layer (SessionService) |
 | Max questions per session | 7 | P-20 | Application layer (TurnService) |
-| Max rewrite attempts per question | 5 | P-21 | Application layer (RewriteService) |
+| Max rewrite attempts per question (v1.1) | 5 | P-21 | Application layer (RewriteService) — v1.1 only (UC-07) |
 | Max audio duration per answer | 5 phút | P-17 | Frontend: MediaRecorder stop; Backend: Whisper cắt tại 5 phút |
 | Max audio file size per answer | 25 MB | P-16 | Multipart upload validation trong NestJS |
 | Max JD length | 5,000 ký tự | P-18 | Input validation trước khi lưu session |
