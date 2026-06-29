@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { apiClient, getAccessToken } from "@/lib/api-client";
 import type { FeedbackProgress, Report, Session } from "@/lib/types";
 import AnnotatedTranscript from "@/components/report/AnnotatedTranscript";
-import ActionPlanCard from "@/components/report/ActionPlanCard";
 import CompetencyScoreChart from "@/components/report/CompetencyScoreChart";
 import SessionMetadataCard from "@/components/report/SessionMetadataCard";
 import ScoringMethodCard from "@/components/report/ScoringMethodCard";
@@ -290,7 +289,6 @@ export default function ReportPage() {
           )}
 
         <CompetencyScoreChart scores={report.competencyHeatmap} />
-        <ActionPlanCard actionPlan={report.actionPlan} />
 
         <div>
           <h2 className="mb-4 text-base font-semibold text-ink">

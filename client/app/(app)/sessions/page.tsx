@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, Clock } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
 import type { Session } from '@/lib/types'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -38,12 +38,40 @@ const STATUS_VARIANTS: Record<string, BadgeVariant> = {
   error: 'danger',
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('vi-VN', {
+function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
+}
+
+function getCompanyName(jobDescription: string): string | undefined {
+  const line = jobDescription.split(/\r?\n/).find((l) => l.trim().startsWith('Tên công ty:'))
+  if (!line) return undefined
+  return line.slice(line.indexOf(':') + 1).trim() || undefined
+}
+
+function scoreContainerClass(pct: number): string {
+  if (pct >= 70) return 'bg-green-50 text-green-700'
+  if (pct >= 50) return 'bg-amber-50 text-amber-700'
+  return 'bg-red-50 text-red-700'
+}
+
+function ScoreDisplay({ score }: Readonly<{ score: number }>) {
+  const pct = Math.min(100, Math.max(0, score))
+
+  return (
+    <div className={`rounded-xl px-4 py-3 ${scoreContainerClass(pct)}`}>
+      <p className="mb-1 text-xs font-medium opacity-60">Điểm tổng</p>
+      <div className="flex items-baseline gap-1">
+        <span className="text-2xl font-bold leading-none tabular-nums">{score}</span>
+        <span className="text-sm opacity-50">/100</span>
+      </div>
+    </div>
+  )
 }
 
 export default function SessionsPage() {
@@ -60,7 +88,11 @@ export default function SessionsPage() {
       .catch((err) => {
         if (cancelled) return
         const msg = err instanceof Error ? err.message : 'Không thể tải danh sách'
-        setError(msg === 'Failed to fetch' ? 'Không thể kết nối đến server. Kiểm tra server có đang chạy không.' : msg)
+        setError(
+          msg === 'Failed to fetch'
+            ? 'Không thể kết nối đến server. Kiểm tra server có đang chạy không.'
+            : msg,
+        )
       })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
@@ -110,13 +142,13 @@ export default function SessionsPage() {
               Tạo phiên mới, tiếp tục phiên đang chạy hoặc xem báo cáo đã hoàn thành.
             </p>
           </div>
-        <Link
-          href="/setup"
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-btn transition-all duration-150 hover:scale-[1.02] hover:bg-brand-light hover:shadow-glow"
-        >
-          <Plus className="h-4 w-4" aria-hidden="true" />
-          Tạo phiên mới
-        </Link>
+          <Link
+            href="/setup"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-btn transition-all duration-150 hover:scale-[1.02] hover:bg-brand-light hover:shadow-glow"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Tạo phiên mới
+          </Link>
         </div>
       </div>
 
@@ -139,63 +171,88 @@ export default function SessionsPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sessions.map((s) => (
-            <div
-              key={s.id}
-              className="flex h-full flex-col rounded-2xl border border-border bg-surface p-5 shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-glow"
-            >
-              <div className="flex items-start justify-between gap-2 mb-3">
-                <Badge variant={STATUS_VARIANTS[s.status] ?? 'default'}>
-                  {STATUS_LABELS[s.status] ?? s.status}
-                </Badge>
-                {s.createdAt && (
-                  <span className="text-xs text-ink-faint">{formatDate(s.createdAt)}</span>
-                )}
+          {sessions.map((s) => {
+            const company = getCompanyName(s.jobDescription)
+            return (
+              <div
+                key={s.id}
+                className="flex h-full flex-col rounded-2xl border border-border bg-surface shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-glow"
+              >
+                <div className="flex flex-1 flex-col gap-4 p-5">
+                  {/* Status badge + date/time */}
+                  <div className="flex items-start justify-between gap-2">
+                    <Badge variant={STATUS_VARIANTS[s.status] ?? 'default'}>
+                      {STATUS_LABELS[s.status] ?? s.status}
+                    </Badge>
+                    {s.createdAt && (
+                      <span className="shrink-0 text-xs text-ink-faint">
+                        {formatDateTime(s.createdAt)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Job title + company */}
+                  <div>
+                    <p className="text-sm font-semibold leading-snug text-ink">
+                      {s.jobTitle || '—'}
+                    </p>
+                    {company && (
+                      <p className="mt-0.5 text-xs text-ink-muted">{company}</p>
+                    )}
+                  </div>
+
+                  {/* Metadata chips: interview type, context pack, duration */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium text-ink-muted">
+                      {SESSION_TYPE_LABELS[s.sessionType] ?? s.sessionType}
+                    </span>
+                    <span className="rounded-md border border-border px-2 py-0.5 text-xs text-ink-muted">
+                      {s.contextPackId}
+                    </span>
+                    {s.durationMin != null && (
+                      <span className="flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-xs text-ink-muted">
+                        <Clock className="h-3 w-3" aria-hidden="true" />
+                        {s.durationMin} phút
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Score — completed sessions only */}
+                  {s.status === 'completed' && s.overallScore != null && (
+                    <ScoreDisplay score={s.overallScore} />
+                  )}
+
+                  {/* Action button */}
+                  <div className="mt-auto border-t border-border pt-3">
+                    {s.status === 'completed' && (
+                      <Link
+                        href={`/sessions/${s.id}/report`}
+                        className="block w-full rounded-full bg-brand px-3 py-2 text-center text-xs font-semibold text-white shadow-btn transition-all hover:bg-brand-light"
+                      >
+                        Xem báo cáo
+                      </Link>
+                    )}
+                    {s.status === 'completing' && (
+                      <Link
+                        href={`/sessions/${s.id}/report`}
+                        className="block w-full rounded-full border border-brand px-3 py-2 text-center text-xs font-medium text-brand transition-colors hover:bg-brand-50"
+                      >
+                        Theo dõi báo cáo
+                      </Link>
+                    )}
+                    {(s.status === 'active' || s.status === 'ready' || s.status === 'paused') && (
+                      <Link
+                        href={`/sessions/${s.id}`}
+                        className="block w-full rounded-full bg-brand px-3 py-2 text-center text-xs font-semibold text-white shadow-btn transition-all hover:bg-brand-light"
+                      >
+                        {s.status === 'ready' ? 'Bắt đầu' : 'Tiếp tục'}
+                      </Link>
+                    )}
+                  </div>
+                </div>
               </div>
-
-              <p className="text-sm font-medium text-ink mb-2">
-                {SESSION_TYPE_LABELS[s.sessionType] ?? s.sessionType}
-              </p>
-
-              {s.contextPackId && (
-                <Badge variant="default" className="mb-3">{s.contextPackId}</Badge>
-              )}
-
-              {s.status === 'completed' && s.overallScore != null && (
-                <p className="text-xs text-ink-muted mb-3">
-                  Điểm tổng:{' '}
-                  <span className="font-semibold text-ink">{s.overallScore}/100</span>
-                </p>
-              )}
-
-              <div className="mt-auto flex gap-2 border-t border-border pt-3">
-                {s.status === 'completed' && (
-                  <Link
-                    href={`/sessions/${s.id}/report`}
-                    className="flex-1 rounded-full border border-brand px-3 py-1.5 text-center text-xs font-medium text-brand transition-colors hover:bg-brand-50"
-                  >
-                    Xem báo cáo
-                  </Link>
-                )}
-                {s.status === 'completing' && (
-                  <Link
-                    href={`/sessions/${s.id}/report`}
-                    className="flex-1 rounded-full border border-brand px-3 py-1.5 text-center text-xs font-medium text-brand transition-colors hover:bg-brand-50"
-                  >
-                    Theo dõi báo cáo
-                  </Link>
-                )}
-                {(s.status === 'active' || s.status === 'ready' || s.status === 'paused') && (
-                  <Link
-                    href={`/sessions/${s.id}`}
-                    className="flex-1 rounded-full bg-brand px-3 py-1.5 text-center text-xs font-medium text-white shadow-btn transition-all hover:bg-brand-light"
-                  >
-                    {s.status === 'ready' ? 'Bắt đầu' : 'Tiếp tục'}
-                  </Link>
-                )}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
