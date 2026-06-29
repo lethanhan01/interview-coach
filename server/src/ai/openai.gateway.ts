@@ -198,16 +198,28 @@ export class OpenAIGateway {
     return raw;
   }
 
-  private parseJsonContent(raw: string): string {
-    const extracted = this.extractJsonContent(raw);
+  private parseJsonContent(metadata: ChoiceMetadata): string {
+    const extracted = this.extractJsonContent(metadata.content);
     try {
       JSON.parse(extracted);
       return extracted;
     } catch {
+      const truncated = metadata.finishReason === 'length';
+      this.logger.warn(
+        `AI provider returned ${
+          truncated ? 'truncated' : 'invalid'
+        } JSON (finish_reason=${metadata.finishReason}, content_length=${
+          metadata.content.length
+        }, reasoning_content_length=${
+          metadata.reasoningContentLength
+        }): ${metadata.content.slice(0, 300)}`,
+      );
       throw new InterviewAIException(
-        ErrorCode.AI_SERVICE_ERROR,
+        ErrorCode.AI_INVALID_JSON,
         HttpStatus.BAD_GATEWAY,
-        'AI provider returned invalid or truncated JSON response',
+        `AI provider returned ${
+          truncated ? 'truncated' : 'invalid'
+        } JSON response`,
       );
     }
   }
@@ -313,7 +325,7 @@ export class OpenAIGateway {
       }
 
       return responseFormat === 'json_object'
-        ? this.parseJsonContent(metadata.content)
+        ? this.parseJsonContent(metadata)
         : metadata.content;
     });
   }

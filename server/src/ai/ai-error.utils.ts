@@ -6,6 +6,7 @@ const FALLBACK_ELIGIBLE_AI_ERRORS = new Set<ErrorCode>([
   ErrorCode.AI_RATE_LIMIT,
   ErrorCode.AI_TIMEOUT,
   ErrorCode.AI_EMPTY_RESPONSE,
+  ErrorCode.AI_INVALID_JSON,
   ErrorCode.SCHEMA_VALIDATION_ERROR,
 ]);
 

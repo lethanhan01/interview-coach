@@ -8,7 +8,11 @@ import { OpenAIGateway } from '../openai.gateway';
 import { REPORT_QUEUE } from '../../common/constants/queue.constants';
 import { COMPREHENSIVE_REPORT_PROMPT_CONFIG } from '../prompts/comprehensive-report-v1.0';
 import type { SessionType } from '../pipelines/interview-pipeline.interface';
-import { isAIQuotaExceeded } from '../ai-error.utils';
+import {
+  describeAIError,
+  isAIFallbackEligible,
+  isAIQuotaExceeded,
+} from '../ai-error.utils';
 import {
   getFallbackActionPlan,
   getFallbackReportSummary,
@@ -190,6 +194,10 @@ export class ComprehensiveReportProcessor extends WorkerHost {
           this.logger.warn(
             `Comprehensive report for session ${sessionId} is using fallback skipped-answer suggestions: AI provider quota exhausted`,
           );
+        } else if (isAIFallbackEligible(openaiError)) {
+          this.logger.warn(
+            `Comprehensive report for session ${sessionId} is using fallback skipped-answer suggestions: ${describeAIError(openaiError)}`,
+          );
         } else {
           this.logger.error(
             `ComprehensiveReportProcessor: skipped-answer generation failed for session ${sessionId}`,
@@ -238,6 +246,10 @@ export class ComprehensiveReportProcessor extends WorkerHost {
         if (isAIQuotaExceeded(openaiError)) {
           this.logger.warn(
             `Comprehensive report for session ${sessionId} is using a fallback action plan: AI provider quota exhausted`,
+          );
+        } else if (isAIFallbackEligible(openaiError)) {
+          this.logger.warn(
+            `Comprehensive report for session ${sessionId} is using a fallback action plan: ${describeAIError(openaiError)}`,
           );
         } else {
           this.logger.error(

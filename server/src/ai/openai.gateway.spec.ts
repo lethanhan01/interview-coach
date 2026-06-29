@@ -143,7 +143,7 @@ describe('OpenAIGateway — JSON extraction', () => {
     expect(() => JSON.parse(result)).not.toThrow();
   });
 
-  it('ném AI_SERVICE_ERROR rõ ràng khi responseFormat json_object nhưng output không phải JSON', async () => {
+  it('ném AI_INVALID_JSON rõ ràng khi responseFormat json_object nhưng output không phải JSON', async () => {
     const gateway = new OpenAIGateway(config as any);
     const create = jest.fn().mockResolvedValue({
       choices: [{ message: { content: 'not-json {{' } }],
@@ -151,8 +151,23 @@ describe('OpenAIGateway — JSON extraction', () => {
     (gateway as any).chatClient.chat.completions.create = create;
 
     await expect(gateway.chatCompletion(jsonParams)).rejects.toMatchObject({
-      errorCode: ErrorCode.AI_SERVICE_ERROR,
-      message: expect.stringContaining('invalid or truncated JSON'),
+      errorCode: ErrorCode.AI_INVALID_JSON,
+      message: expect.stringContaining('invalid JSON'),
+    });
+  });
+
+  it('ném AI_INVALID_JSON với message "truncated" khi finish_reason=length', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [
+        { finish_reason: 'length', message: { content: '{"items":["a' } },
+      ],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(jsonParams)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_INVALID_JSON,
+      message: expect.stringContaining('truncated JSON'),
     });
   });
 
