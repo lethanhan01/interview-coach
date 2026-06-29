@@ -33,7 +33,8 @@ RUN npx prisma generate
 # Copy source và compile TypeScript → dist/.
 # Đặt cuối: đây là layer thay đổi thường xuyên nhất.
 COPY . .
-RUN npm run build
+RUN npm run build \
+    && find dist node_modules/.prisma -type f \( -name "*.d.ts" -o -name "*.map" -o -name "*.tsbuildinfo" \) -delete
 
 # =====================================================================
 
@@ -64,18 +65,20 @@ ENV NODE_ENV=production \
 
 # Install production dependencies TRƯỚC khi copy code.
 # Layer này cache lâu nhất — chỉ rebuild khi package.json / package-lock.json thay đổi.
+# --legacy-peer-deps: tránh npm auto-install peerOptional của @prisma/client.
+# --omit=optional: bỏ các gói devOptional còn lại trong lockfile
+#   (prisma CLI, typescript, effect, @electric-sql/pglite, ...).
+# --ignore-scripts: không chạy postinstall generate; Prisma client đã generate ở builder.
 # npm cache clean --force: xóa cache trong CÙNG layer để không inflate image size.
 COPY package*.json ./
-RUN npm ci --omit=dev \
-    && npm cache clean --force
+RUN npm ci --omit=dev --omit=optional --ignore-scripts --legacy-peer-deps \
+    && npm cache clean --force \
+    && find node_modules -type f \( -name "*.d.ts" -o -name "*.map" -o -name "*.tsbuildinfo" \) -delete
 
 # Copy pre-generated Prisma client từ builder.
 # Cùng base image (node:20.19.2-alpine3.22) → binary engine tương thích.
 # Không cần prisma CLI ở runtime → không cần đưa prisma (devDep) vào production image.
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-
-# schema.prisma: cần nếu chạy `prisma migrate deploy` trong container entrypoint.
-COPY prisma/schema.prisma ./prisma/schema.prisma
 
 # Compiled application — layer thay đổi thường xuyên nhất, đặt cuối cùng.
 # dist owned by root, nestjs user chỉ cần read access (Node.js không ghi vào dist).
