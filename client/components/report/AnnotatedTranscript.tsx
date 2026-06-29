@@ -95,7 +95,7 @@ export default function AnnotatedTranscript({
           >
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                Câu {item.orderIndex + 1}
+                Câu {item.orderIndex}
               </p>
               <span className="text-xs font-semibold text-brand">
                 {item.skipped

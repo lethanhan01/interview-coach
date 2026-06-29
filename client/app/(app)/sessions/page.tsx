@@ -164,7 +164,7 @@ export default function SessionsPage() {
               {s.status === 'completed' && s.overallScore != null && (
                 <p className="text-xs text-ink-muted mb-3">
                   Điểm tổng:{' '}
-                  <span className="font-semibold text-ink">{s.overallScore}/10</span>
+                  <span className="font-semibold text-ink">{s.overallScore}/100</span>
                 </p>
               )}
 

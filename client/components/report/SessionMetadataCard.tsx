@@ -21,16 +21,6 @@ function formatDateTime(iso: string): string {
   })
 }
 
-function formatDuration(createdAt: string, completedAt?: string, durationMin?: number): string {
-  if (completedAt) {
-    const ms = new Date(completedAt).getTime() - new Date(createdAt).getTime()
-    const minutes = Math.round(ms / 60000)
-    return `${minutes} phút`
-  }
-  if (durationMin !== undefined) return `${durationMin} phút`
-  return '—'
-}
-
 function MetaRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -57,13 +47,12 @@ export default function SessionMetadataCard({ session }: SessionMetadataCardProp
         <MetaRow label="Thời điểm" value={formatDateTime(session.createdAt)} />
         <MetaRow label="Loại phỏng vấn" value={SESSION_TYPE_LABELS[session.sessionType]} />
         <MetaRow label="Context Pack" value={CONTEXT_PACK_LABELS[session.contextPackId]} />
-        <MetaRow label="Số câu hỏi" value={`${session.numQuestions} câu`} />
         <MetaRow
-          label="Thời gian thực hiện"
-          value={formatDuration(session.createdAt, session.completedAt, session.durationMin)}
+          label="Thời lượng"
+          value={session.durationMin == null ? '—' : `${session.durationMin} phút`}
         />
-        <MetaRow label="Vị trí mục tiêu" value="—" />
-        <MetaRow label="Kinh nghiệm" value="—" />
+        <MetaRow label="Số câu hỏi" value={`${session.numQuestions} câu`} />
+        <MetaRow label="Vị trí mục tiêu" value={session.jobTitle ?? '—'} />
       </div>
       <div className="mt-4 border-t border-gray-100 pt-4">
         <MetaRow label="Mô tả công việc (JD)" value={jdPreview} />

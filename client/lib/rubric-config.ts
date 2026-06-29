@@ -73,8 +73,9 @@ export function getRubricCategories(
   sessionType: SessionType,
 ): RubricCategory[] {
   const config = RUBRIC_DATA[contextPackId]
-  if (sessionType === 'hr') return [config.behavioral]
-  if (sessionType === 'technical') return [config.technical]
+  // Single-type session: that category carries 100% of the score.
+  if (sessionType === 'hr') return [{ ...config.behavioral, categoryWeightPct: 100 }]
+  if (sessionType === 'technical') return [{ ...config.technical, categoryWeightPct: 100 }]
   return [config.behavioral, config.technical]
 }
 

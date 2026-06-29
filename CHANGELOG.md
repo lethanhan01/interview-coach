@@ -47,6 +47,13 @@ Phase milestones và implementation sessions. Giới hạn: 200 dòng — xem .c
 
 ## Recent Sessions
 
+### 2026-06-29 — Report UI fixes (4 bugs)
+
+- `AnnotatedTranscript`: bỏ `orderIndex + 1` — orderIndex đã 1-based, số câu hỏi bị lệch +1.
+- `/sessions` list: điểm tổng `/10` → `/100`.
+- `rubric-config.getRubricCategories`: single-type session (`hr`/`technical`) override `categoryWeightPct: 100` thay vì 50 (badge ScoringMethodCard hiển thị sai trọng số tiêu chí).
+- `SessionMetadataCard`: "Thời gian thực hiện" (elapsed) → "Thời lượng" (durationMin cấu hình); "Vị trí mục tiêu" lấy từ `session.jobTitle`; bỏ row "Kinh nghiệm". Thêm `jobTitle?: string | null` vào `Session` type (lib/types.ts) — GET /sessions/:id đã trả raw Prisma object.
+
 ### 2026-06-28 — Question Bank T4-T8: 120 câu fallback đa ngôn ngữ
 
 Question Bank fallback chuyển từ query inline trong worker sang module riêng:

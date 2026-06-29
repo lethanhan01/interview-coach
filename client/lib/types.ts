@@ -14,6 +14,7 @@ export type OutputLanguage = "vi" | "en";
 export interface Session {
   id: string;
   userId: string;
+  jobTitle?: string | null;
   sessionType: SessionType;
   contextPackId: ContextPack;
   language?: OutputLanguage;
