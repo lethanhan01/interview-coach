@@ -475,5 +475,53 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       const warnMessages = warnSpy.mock.calls.map((c) => String(c[0]));
       expect(warnMessages.some((m) => m.includes('Zod validation failed'))).toBe(true);
     });
+
+    it('gemma trả id sai casing "d1" → vẫn resolve D1, isFallback không xảy ra', async () => {
+      const rawFeedback = {
+        model_answer: 'Answer.',
+        key_takeaway: 'Good.',
+        applied_dimensions: [{ id: 'd1', score: 80 }],
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      const result = await service.evaluateAnswer(feedbackInput);
+
+      expect(result.appliedDimensions).toHaveLength(1);
+      expect(result.appliedDimensions[0]).toMatchObject({ id: 'D1', name: 'Communication', score: 80 });
+      expect(result.overallScore).toBe(80);
+    });
+
+    it('gemma trả tên dimension "Teamwork" → vẫn resolve D2', async () => {
+      const rawFeedback = {
+        model_answer: 'Answer.',
+        key_takeaway: 'Good.',
+        applied_dimensions: [{ id: 'd1', score: 80 }, { id: 'Teamwork', score: 60 }],
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      const result = await service.evaluateAnswer(feedbackInput);
+
+      expect(result.appliedDimensions).toHaveLength(2);
+      expect(result.appliedDimensions.map((d) => d.id)).toEqual(['D1', 'D2']);
+    });
+
+    it('dimension không match sau normalize → vẫn throw SCHEMA_VALIDATION_ERROR', async () => {
+      const rawFeedback = {
+        model_answer: 'x',
+        key_takeaway: 'y',
+        applied_dimensions: [{ id: 'TOTALLY_BOGUS', score: 50 }],
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject({
+        errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR,
+      });
+    });
   });
 });

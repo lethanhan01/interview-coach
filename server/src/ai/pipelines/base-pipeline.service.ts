@@ -23,6 +23,7 @@ import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1
 import { getLanguageInstruction } from '../output-language';
 import { QUESTION_GEN_PROMPT_CONFIG } from '../prompts/question-gen-v1.0';
 import { z } from 'zod';
+import { resolveAppliedDimensions } from './dimension-matcher';
 
 export abstract class BasePipelineService implements InterviewPipeline {
   protected abstract readonly supportedSessionType: SessionType;
@@ -136,21 +137,13 @@ export abstract class BasePipelineService implements InterviewPipeline {
               ...input.contextPackConfig.behavioralDimensions,
               ...input.contextPackConfig.technicalDimensions,
             ];
-    const allowedById = new Map(allowedDims.map((d) => [d.id, d]));
+    const selected = resolveAppliedDimensions(validated.applied_dimensions, allowedDims);
 
-    const selected = validated.applied_dimensions
-      .map((d) => {
-        const dim = allowedById.get(d.id);
-        return dim
-          ? {
-              id: dim.id,
-              name: dim.name,
-              baseWeight: dim.weight,
-              score: d.score,
-            }
-          : null;
-      })
-      .filter((d): d is NonNullable<typeof d> => d !== null);
+    selected
+      .filter((d) => d.matchBranch === 'substring')
+      .forEach((d) =>
+        this.logger.debug(`[feedback] Fuzzy dimension match (substring): resolved=${d.id}`),
+      );
 
     if (selected.length === 0) {
       this.logger.warn(
