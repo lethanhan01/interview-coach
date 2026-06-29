@@ -50,15 +50,16 @@ export default function ScoringMethodCard({ contextPackId, sessionType }: Scorin
       <h2 className="mb-4 text-base font-semibold text-gray-900">Phương pháp chấm điểm</h2>
 
       <p className="mb-4 text-sm text-gray-600">
-        Điểm tổng = trung bình cộng điểm từng câu trả lời. Mỗi câu được chấm trên thang 1–100 bởi
-        AI dựa trên các tiêu chí dưới đây:
+        Điểm tổng = trung bình cộng điểm từng câu trả lời. Mỗi câu chỉ chấm trên các tiêu chí phù
+        hợp với câu hỏi đó; trọng số được chuẩn hóa lại theo tập tiêu chí áp dụng. Bảng dưới là
+        tập tiêu chí tối đa có thể áp dụng.
       </p>
 
       {isMixed && (
         <p className="mb-4 rounded-lg bg-brand-50 px-4 py-2.5 text-sm text-ink">
-          <span className="font-medium">Công thức: </span>
-          Điểm = (Điểm hành vi × {categories[0].categoryWeightPct}%) + (Điểm kỹ thuật ×{' '}
-          {categories[1].categoryWeightPct}%)
+          <span className="font-medium">Lưu ý:</span>{' '}
+          Câu hành vi và câu kỹ thuật được chấm trên tập tiêu chí tương ứng; điểm tổng phiên là
+          trung bình cộng toàn bộ câu.
         </p>
       )}
 

@@ -106,10 +106,34 @@ export default function AnnotatedTranscript({
               </span>
             </div>
 
-            {contextPackId && sessionType && (
-              <p className="mb-3 text-xs text-gray-400">
-                Tiêu chí đánh giá: {getRubricHint(contextPackId, sessionType)}
-              </p>
+            {item.appliedDimensions && item.appliedDimensions.length > 0 ? (
+              <div className="mb-3">
+                <p className="mb-1.5 text-xs font-medium text-gray-400">Tiêu chí áp dụng</p>
+                <div className="flex flex-col gap-1.5">
+                  {item.appliedDimensions.map((dim) => (
+                    <div key={dim.id} className="flex items-center gap-3">
+                      <div className="w-44 shrink-0 truncate text-xs text-gray-600">{dim.name}</div>
+                      <div className="flex-1">
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                          <div
+                            className="h-full rounded-full bg-brand"
+                            style={{ width: `${Math.min(100, Math.max(0, dim.score))}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className="w-28 text-right text-xs text-gray-500">
+                        {dim.score}/100 ({Math.round(dim.weight * 100)}%)
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              contextPackId && sessionType && (
+                <p className="mb-3 text-xs text-gray-400">
+                  Tiêu chí đánh giá: {getRubricHint(contextPackId, sessionType)}
+                </p>
+              )
             )}
 
             <p className="mb-4 font-medium text-gray-900">

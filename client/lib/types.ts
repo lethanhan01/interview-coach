@@ -92,6 +92,12 @@ export interface TranscriptItem {
   keyTakeaway: string;
   isFallback: boolean;
   segments: AnnotatedSegment[];
+  appliedDimensions?: {
+    id: string;
+    name: string;
+    score: number;
+    weight: number;
+  }[];
 }
 
 export interface Report {
