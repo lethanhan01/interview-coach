@@ -18,7 +18,7 @@ import {
   FeedbackSchema,
   PROMPT_VERSION,
 } from './pipeline.schemas';
-import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.2';
+import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.4';
 import { getLanguageInstruction } from '../output-language';
 import { QUESTION_GEN_PROMPT_CONFIG } from '../prompts/question-gen-v1.0';
 
