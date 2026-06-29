@@ -133,7 +133,12 @@ export abstract class BasePipelineService implements InterviewPipeline {
         .map((d) => {
           const dim = allowedById.get(d.id);
           return dim
-            ? { id: dim.id, name: dim.name, baseWeight: dim.weight, score: d.score }
+            ? {
+                id: dim.id,
+                name: dim.name,
+                baseWeight: dim.weight,
+                score: d.score,
+              }
             : null;
         })
         .filter((d): d is NonNullable<typeof d> => d !== null);

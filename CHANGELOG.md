@@ -47,6 +47,12 @@ Phase milestones và implementation sessions. Giới hạn: 200 dòng — xem .c
 
 ## Recent Sessions
 
+### 2026-06-29 — Task 3: Prompt text — LLM chọn tập con tiêu chí, trả applied_dimensions
+
+- `BASE_PROMPTS['surgical-feedback']`: thay `"overall_score": <integer>` bằng `"applied_dimensions": [{ "id", "score" }]` trong JSON template. LLM không còn tính overall score — code tính ở Task 2.
+- `applyContextPackForEvaluation`: viết lại toàn bộ — bỏ `scoringWeights`/weight display/`Scoring formula:`; thêm `selectionRules` khuyến khích LLM chọn tập con thực sự áp dụng theo câu hỏi cụ thể; format dimension lines không còn hiển thị weight.
+- Tests: 21/21 pass. Commit: `83dbc6d`.
+
 ### 2026-06-29 — Report UI fixes (4 bugs)
 
 - `AnnotatedTranscript`: bỏ `orderIndex + 1` — orderIndex đã 1-based, số câu hỏi bị lệch +1.
