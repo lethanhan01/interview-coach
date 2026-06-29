@@ -421,5 +421,59 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         expect.anything(),
       );
     });
+
+    it('KHÔNG log "Zod validation failed" khi Zod pass nhưng dimension không match', async () => {
+      const rawFeedback = {
+        model_answer: 'x',
+        key_takeaway: 'y',
+        applied_dimensions: [{ id: 'ZZ', score: 50 }],
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      const warnSpy = jest.spyOn((service as any).logger, 'warn');
+      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject({
+        errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR,
+      });
+      const warnMessages = warnSpy.mock.calls.map((c) => String(c[0]));
+      expect(warnMessages.some((m) => m.includes('Zod validation failed'))).toBe(false);
+    });
+
+    it('log "No scoring dimensions matched" kèm returnedIds khi dimension fail', async () => {
+      const rawFeedback = {
+        model_answer: 'x',
+        key_takeaway: 'y',
+        applied_dimensions: [{ id: 'WRONG_ID', score: 50 }],
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      const warnSpy = jest.spyOn((service as any).logger, 'warn');
+      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject({
+        errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR,
+      });
+      const warnMessages = warnSpy.mock.calls.map((c) => String(c[0]));
+      expect(warnMessages.some((m) => m.includes('returnedIds='))).toBe(true);
+      expect(warnMessages.some((m) => m.includes('No scoring dimensions matched'))).toBe(true);
+    });
+
+    it('log "Zod validation failed" khi Zod thật sự throw', async () => {
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify({ bad: 'data' }));
+      const zodError = new InterviewAIException(
+        ErrorCode.SCHEMA_VALIDATION_ERROR,
+        422,
+        'bad schema',
+      );
+      mockZodValidator.validate.mockImplementation(() => {
+        throw zodError;
+      });
+
+      const warnSpy = jest.spyOn((service as any).logger, 'warn');
+      await expect(service.evaluateAnswer(feedbackInput)).rejects.toThrow();
+      const warnMessages = warnSpy.mock.calls.map((c) => String(c[0]));
+      expect(warnMessages.some((m) => m.includes('Zod validation failed'))).toBe(true);
+    });
   });
 });

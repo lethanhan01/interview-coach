@@ -22,6 +22,7 @@ import {
 import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.4';
 import { getLanguageInstruction } from '../output-language';
 import { QUESTION_GEN_PROMPT_CONFIG } from '../prompts/question-gen-v1.0';
+import { z } from 'zod';
 
 export abstract class BasePipelineService implements InterviewPipeline {
   protected abstract readonly supportedSessionType: SessionType;
@@ -115,71 +116,9 @@ export abstract class BasePipelineService implements InterviewPipeline {
         'Invalid JSON from AI',
       );
     }
+    let validated: z.infer<typeof FeedbackSchema>;
     try {
-      const validated = this.zodValidator.validate(FeedbackSchema, parsed);
-
-      const allowedDims =
-        input.sessionType === 'hr'
-          ? input.contextPackConfig.behavioralDimensions
-          : input.sessionType === 'technical'
-            ? input.contextPackConfig.technicalDimensions
-            : [
-                ...input.contextPackConfig.behavioralDimensions,
-                ...input.contextPackConfig.technicalDimensions,
-              ];
-      const allowedById = new Map(allowedDims.map((d) => [d.id, d]));
-
-      const selected = validated.applied_dimensions
-        .map((d) => {
-          const dim = allowedById.get(d.id);
-          return dim
-            ? {
-                id: dim.id,
-                name: dim.name,
-                baseWeight: dim.weight,
-                score: d.score,
-              }
-            : null;
-        })
-        .filter((d): d is NonNullable<typeof d> => d !== null);
-
-      if (selected.length === 0) {
-        throw new InterviewAIException(
-          ErrorCode.SCHEMA_VALIDATION_ERROR,
-          HttpStatus.UNPROCESSABLE_ENTITY,
-          'AI returned no valid scoring dimensions',
-        );
-      }
-
-      const baseSum = selected.reduce((s, d) => s + d.baseWeight, 0);
-      const appliedDimensions: AppliedDimension[] = selected.map((d) => ({
-        id: d.id,
-        name: d.name,
-        score: d.score,
-        weight: baseSum > 0 ? d.baseWeight / baseSum : 1 / selected.length,
-      }));
-      const weighted = appliedDimensions.reduce(
-        (s, d) => s + d.score * d.weight,
-        0,
-      );
-      const overallScore = Math.min(100, Math.max(1, Math.round(weighted)));
-
-      return {
-        overallScore,
-        modelAnswer: validated.model_answer,
-        keyTakeaway: validated.key_takeaway,
-        promptVersion: PROMPT_VERSION,
-        appliedDimensions,
-        annotatedSegments: validated.annotated_segments.map((s) => ({
-          segmentText: s.segment_text,
-          startIndex: s.start_index,
-          endIndex: s.end_index,
-          highlightLevel: s.highlight_level,
-          annotation: s.annotation,
-          suggestion: s.suggestion,
-          improvedVersion: s.improved_version,
-        })),
-      };
+      validated = this.zodValidator.validate(FeedbackSchema, parsed);
     } catch (err) {
       this.logger.warn(
         `[feedback] Zod validation failed. rawLength=${raw.length}`,
@@ -187,6 +126,74 @@ export abstract class BasePipelineService implements InterviewPipeline {
       );
       throw err;
     }
+
+    const allowedDims =
+      input.sessionType === 'hr'
+        ? input.contextPackConfig.behavioralDimensions
+        : input.sessionType === 'technical'
+          ? input.contextPackConfig.technicalDimensions
+          : [
+              ...input.contextPackConfig.behavioralDimensions,
+              ...input.contextPackConfig.technicalDimensions,
+            ];
+    const allowedById = new Map(allowedDims.map((d) => [d.id, d]));
+
+    const selected = validated.applied_dimensions
+      .map((d) => {
+        const dim = allowedById.get(d.id);
+        return dim
+          ? {
+              id: dim.id,
+              name: dim.name,
+              baseWeight: dim.weight,
+              score: d.score,
+            }
+          : null;
+      })
+      .filter((d): d is NonNullable<typeof d> => d !== null);
+
+    if (selected.length === 0) {
+      this.logger.warn(
+        `[feedback] No scoring dimensions matched. ` +
+          `returnedIds=${JSON.stringify(validated.applied_dimensions.map((d) => d.id))} ` +
+          `allowedIds=${JSON.stringify(allowedDims.map((d) => d.id))} rawLength=${raw.length}`,
+      );
+      throw new InterviewAIException(
+        ErrorCode.SCHEMA_VALIDATION_ERROR,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        'AI returned no valid scoring dimensions',
+      );
+    }
+
+    const baseSum = selected.reduce((s, d) => s + d.baseWeight, 0);
+    const appliedDimensions: AppliedDimension[] = selected.map((d) => ({
+      id: d.id,
+      name: d.name,
+      score: d.score,
+      weight: baseSum > 0 ? d.baseWeight / baseSum : 1 / selected.length,
+    }));
+    const weighted = appliedDimensions.reduce(
+      (s, d) => s + d.score * d.weight,
+      0,
+    );
+    const overallScore = Math.min(100, Math.max(1, Math.round(weighted)));
+
+    return {
+      overallScore,
+      modelAnswer: validated.model_answer,
+      keyTakeaway: validated.key_takeaway,
+      promptVersion: PROMPT_VERSION,
+      appliedDimensions,
+      annotatedSegments: validated.annotated_segments.map((s) => ({
+        segmentText: s.segment_text,
+        startIndex: s.start_index,
+        endIndex: s.end_index,
+        highlightLevel: s.highlight_level,
+        annotation: s.annotation,
+        suggestion: s.suggestion,
+        improvedVersion: s.improved_version,
+      })),
+    };
   }
 
   private applyStrategy(
