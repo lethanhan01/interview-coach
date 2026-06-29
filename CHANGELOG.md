@@ -47,11 +47,16 @@ Phase milestones và implementation sessions. Giới hạn: 200 dòng — xem .c
 
 ## Recent Sessions
 
-### 2026-06-29 — Task 3: Prompt text — LLM chọn tập con tiêu chí, trả applied_dimensions
+### 2026-06-29 — Chấm điểm linh hoạt per-question (Task 1-8 hoàn thành)
 
-- `BASE_PROMPTS['surgical-feedback']`: thay `"overall_score": <integer>` bằng `"applied_dimensions": [{ "id", "score" }]` trong JSON template. LLM không còn tính overall score — code tính ở Task 2.
-- `applyContextPackForEvaluation`: viết lại toàn bộ — bỏ `scoringWeights`/weight display/`Scoring formula:`; thêm `selectionRules` khuyến khích LLM chọn tập con thực sự áp dụng theo câu hỏi cụ thể; format dimension lines không còn hiển thị weight.
-- Tests: 21/21 pass. Commit: `83dbc6d`.
+Mỗi câu chỉ chấm trên tập tiêu chí câu hỏi thực sự đánh giá được (không phải toàn bộ rubric). Plan: `docs/superpowers/plans/chamdiemlinhhoat.md`.
+
+- LLM chỉ trả `applied_dimensions: { id, score }[]`; **code** tra name+base weight từ rubric theo `sessionType`, loại id lạ, chuẩn hóa weight, tính `overallScore = clamp(round(Σ score×weight), 1, 100)`. Throw `SCHEMA_VALIDATION_ERROR` nếu 0 dimension hợp lệ.
+- `FeedbackSchema` bỏ `overall_score`, thêm `applied_dimensions`; `SurgicalFeedback` thêm `appliedDimensions`. Prompt unify → `surgical-feedback-v1.4`.
+- Persist: cột nullable `ai_feedbacks.dimension_scores` (JSONB, migration `20260629084143`). Fallback + feedback cũ = null → backward-compat.
+- Report API: `TranscriptItemDto.appliedDimensions?`. Client `AnnotatedTranscript` render breakdown thực tế, fallback `getRubricHint` cho câu null.
+- Spec §2.7 pattern-weights hiện thực ở runtime bằng LLM dynamic selection — gap đã biết: runtime chưa lưu pattern câu hỏi (`SessionQuestion` chỉ có category/competency/difficulty) nên không map cứng pattern→weight được.
+- Commits: `eb67de0`, `f58052e`, `6044015`, `83dbc6d`, `4b57fb7`, `7443273`, `91b4a41`, `bf18daf` + docs sync.
 
 ### 2026-06-29 — Report UI fixes (4 bugs)
 
