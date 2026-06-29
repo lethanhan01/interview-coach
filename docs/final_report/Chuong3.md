@@ -1,70 +1,58 @@
 # Chương 3. Cơ Sở Lý Thuyết Và Công Nghệ Nền Tảng
 
-## 3.1 Tổng Quan Bài Toán AI Mock Interview Coach
+## 3.1 Tổng Quan Bài Toán AI Mock Interview
 
-InterviewAI là hệ thống luyện phỏng vấn xin việc dựa trên trí tuệ nhân tạo, được thiết kế để phục vụ sinh viên năm cuối và fresher CNTT Việt Nam. Hệ thống mô phỏng một buổi phỏng vấn thực tế: người dùng cung cấp thông tin về vị trí ứng tuyển, trả lời câu hỏi bằng văn bản hoặc giọng nói, và nhận phản hồi chi tiết từ AI sau mỗi câu trả lời.
+AI Mock Interview là bài toán xây dựng một hệ thống luyện phỏng vấn xin việc có sự hỗ trợ của trí tuệ nhân tạo. Thay vì chỉ cung cấp danh sách câu hỏi mẫu, hệ thống tổ chức một quy trình luyện tập gần với một buổi phỏng vấn thực tế: người dùng cung cấp thông tin về vị trí ứng tuyển, hệ thống tạo câu hỏi phù hợp, người dùng trả lời bằng văn bản hoặc giọng nói, sau đó nhận phản hồi và báo cáo tổng hợp.
 
-### 3.1.1 Luồng dữ liệu tổng quan
+Trong phạm vi đề tài InterviewAI, đối tượng chính là sinh viên năm cuối và ứng viên fresher ngành Công nghệ thông tin tại Việt Nam. Đây là nhóm người dùng thường có kiến thức nền tảng và dự án học tập, nhưng chưa có nhiều kinh nghiệm trình bày năng lực trong phỏng vấn. Vì vậy, hệ thống không chỉ kiểm tra "biết hay không biết", mà còn giúp người dùng luyện cách giải thích dự án, trình bày lựa chọn kỹ thuật, trả lời câu hỏi hành vi và tự nhìn lại điểm cần cải thiện [3.2-S5].
 
-**Đầu vào (Input)**
+Đầu vào chính của bài toán gồm:
 
-| Dữ liệu đầu vào | Nguồn | Vai trò trong hệ thống |
-| --- | --- | --- |
-| Job Description (JD) | Người dùng nhập thủ công | Cơ sở để AI sinh câu hỏi phù hợp với vị trí ứng tuyển |
-| Cấu hình phiên phỏng vấn | Người dùng chọn trước khi bắt đầu | Xác định loại phỏng vấn (HR / Technical / Mixed), ngôn ngữ phản hồi, bộ rubric chấm điểm (Context Pack: VN hoặc Western) |
-| Câu trả lời văn bản | Người dùng nhập qua giao diện | Được gửi trực tiếp đến pipeline đánh giá |
-| Câu trả lời giọng nói | Người dùng ghi âm qua trình duyệt | Được chuyển thành văn bản qua Speech-to-Text trước khi đánh giá |
+- Job Description (JD) hoặc mô tả vị trí ứng tuyển.
+- Loại phiên phỏng vấn: HR/Behavioral, Technical hoặc Mixed.
+- Hồ sơ luyện tập của người dùng, bao gồm thông tin học vấn, kỹ năng, kinh nghiệm và dự án đã làm.
+- Ngôn ngữ và ngữ cảnh phỏng vấn, ví dụ context pack Việt Nam hoặc Western.
 
-**Xử lý (Processing)**
+Đầu ra chính của hệ thống gồm:
 
-Hệ thống thực hiện bốn tác vụ chính, tất cả đều chạy bất đồng bộ qua hàng đợi BullMQ:
+- Danh sách câu hỏi phỏng vấn phù hợp với JD và loại phiên.
+- Bản ghi câu trả lời của người dùng dưới dạng text hoặc transcript từ giọng nói.
+- Feedback chi tiết cho từng câu trả lời, bao gồm điểm mạnh, điểm yếu và gợi ý cải thiện.
+- Báo cáo tổng hợp sau phiên, giúp người dùng thấy xu hướng năng lực và kế hoạch luyện tập tiếp theo.
 
-1. **Sinh câu hỏi**: Khi phiên được tạo, hệ thống kết hợp hai nguồn — AI sinh 1 trong 5 câu dựa trên JD, phần còn lại lấy từ question bank sẵn có. Cách tiếp cận lai này đảm bảo câu hỏi vừa cá nhân hóa theo JD vừa ổn định về chất lượng.
+Về bản chất, AI Mock Interview là sự kết hợp của ba nhóm bài toán: phỏng vấn tuyển dụng, hệ thống luyện tập có phản hồi và xử lý ngôn ngữ tự nhiên. Phần phỏng vấn tuyển dụng giúp xác định loại câu hỏi và tiêu chí đánh giá. Phần luyện tập có phản hồi giúp người dùng cải thiện qua nhiều lần thực hành. Phần AI/NLP giúp hệ thống phân tích câu trả lời tự nhiên, sinh nhận xét và cá nhân hóa nội dung theo ngữ cảnh.
 
-2. **Chuyển giọng nói thành văn bản**: Câu trả lời giọng nói được tải lên Supabase Storage, sau đó TranscriptionProcessor gọi OpenAI Whisper API để phiên âm thành văn bản.
-
-3. **Đánh giá câu trả lời và sinh Surgical Feedback**: Với mỗi câu trả lời, FeedbackProcessor gọi LLM với câu hỏi, câu trả lời nguyên văn, và rubric chấm điểm. LLM trả về điểm số tổng hợp (1–100), câu trả lời mẫu, nhận xét tổng quát, và danh sách các đoạn được highlight trong câu trả lời gốc kèm chú thích cụ thể.
-
-4. **Tổng hợp báo cáo phiên**: Khi người dùng kết thúc phiên, ComprehensiveReportProcessor tổng hợp tất cả feedbacks thành báo cáo gồm 4 phần: tóm tắt tổng quan, phân tích giao tiếp, heatmap năng lực theo domain, và kế hoạch hành động.
-
-**Đầu ra (Output)**
-
-| Đầu ra | Thời điểm xuất hiện | Nội dung |
-| --- | --- | --- |
-| Danh sách câu hỏi | Ngay sau khi tạo phiên | Câu hỏi có thứ tự, phân loại theo competency domain và độ khó |
-| Surgical Feedback theo câu | Sau khi nộp từng câu trả lời | Điểm số, câu trả lời mẫu, nhận xét tổng quát, đoạn highlight kèm gợi ý cải thiện |
-| Báo cáo tổng hợp | Sau khi kết thúc phiên | Executive summary, phân tích giao tiếp, heatmap năng lực, kế hoạch hành động |
-| Lịch sử phiên | Lưu trữ lâu dài | Danh sách phiên đã luyện, điểm số, ngày thực hiện |
-
-### 3.1.2 Đặc điểm kỹ thuật nổi bật
-
-Hệ thống được thiết kế theo kiến trúc event-driven: mỗi hành động của người dùng (tạo phiên, nộp câu trả lời, kết thúc phiên) enqueue một job vào BullMQ. Giao diện người dùng nhận cập nhật trạng thái qua Server-Sent Events thay vì polling. Toàn bộ đầu ra của AI được kiểm soát qua JSON schema validation để đảm bảo tính nhất quán.
+Một yêu cầu quan trọng của bài toán là hệ thống phải phục vụ mục tiêu học tập, không phải hỗ trợ gian lận trong buổi phỏng vấn thật. InterviewAI được thiết kế để người dùng luyện tập trước phỏng vấn, nhận phản hồi sau câu trả lời và tự cải thiện kỹ năng. Hệ thống không hướng đến việc cung cấp đáp án real-time trong một buổi phỏng vấn thật.
 
 ## 3.2 Cơ sở lý thuyết về phỏng vấn tuyển dụng và Mock Interview
 
 ### 3.2.1 Tổng quan về phỏng vấn tuyển dụng trong ngành Công nghệ thông tin
 
-Phần này giới thiệu khái niệm phỏng vấn tuyển dụng và vai trò của phỏng vấn trong quá trình đánh giá ứng viên CNTT. Trong lĩnh vực này, phỏng vấn không chỉ kiểm tra kiến thức chuyên môn mà còn đánh giá khả năng tư duy, giao tiếp, giải quyết vấn đề, làm việc nhóm và mức độ phù hợp với môi trường làm việc.
+Phỏng vấn tuyển dụng là cuộc trao đổi giữa ứng viên và đại diện nhà tuyển dụng sau khi ứng viên đã nộp hồ sơ. Theo University of Michigan Career Center, người phỏng vấn đặt câu hỏi về kinh nghiệm và chuyên môn của ứng viên để đánh giá mức độ liên quan với vị trí hoặc chương trình ứng tuyển [3.2-S1]. Như vậy, phỏng vấn không chỉ là hoạt động hỏi đáp, mà là một phương pháp thu thập bằng chứng về năng lực, kinh nghiệm và mức độ phù hợp của ứng viên.
 
-Nội dung chính:
+Trong tuyển dụng hiện đại, đặc biệt với các vị trí cần kỹ năng rõ ràng, phỏng vấn thường được tổ chức theo hướng có cấu trúc. U.S. Office of Personnel Management (OPM) định nghĩa structured interview là phương pháp đánh giá năng lực liên quan đến công việc thông qua câu hỏi về hành vi trong quá khứ hoặc cách xử lý tình huống giả định. OPM cũng nhấn mạnh rằng phỏng vấn có cấu trúc giúp ứng viên có cơ hội trả lời công bằng hơn vì cùng được hỏi các câu hỏi đã xác định trước và được đánh giá bằng cùng thang điểm [3.2-S2].
 
-* Khái niệm phỏng vấn tuyển dụng.
-* Vai trò của phỏng vấn trong tuyển dụng CNTT.
-* Đặc điểm của phỏng vấn đối với sinh viên năm cuối và fresher.
-* Sự khác biệt giữa đánh giá kiến thức kỹ thuật và đánh giá hành vi, thái độ.
+Đối với ngành Công nghệ thông tin, phỏng vấn tuyển dụng thường có phạm vi rộng hơn nhiều ngành khác. Ứng viên có thể phải giải thích kiến thức lập trình, cơ sở dữ liệu, API, thuật toán, hệ thống, bảo mật, testing, đồng thời vẫn phải thể hiện khả năng giao tiếp và làm việc nhóm. Harvard FAS Mignone Center for Career Success mô tả phỏng vấn cho vai trò kỹ thuật như software engineer, data scientist hoặc product manager thường bao gồm cả đánh giá kỹ thuật và câu hỏi hành vi; câu hỏi kỹ thuật có thể ở dạng coding challenge, brain teaser hoặc product case scenario [3.2-S3].
+
+Với sinh viên năm cuối và fresher CNTT, phỏng vấn còn có một đặc điểm riêng: ứng viên thường chưa có nhiều kinh nghiệm đi làm chính thức. Vì vậy, nhà tuyển dụng thường khai thác dự án học tập, đồ án, internship, hoạt động nhóm, kinh nghiệm tự học và khả năng giải thích quyết định kỹ thuật. Các năng lực như giao tiếp, tư duy phản biện, teamwork, professionalism và khả năng sử dụng công nghệ cũng là các năng lực nghề nghiệp quan trọng mà NACE đưa vào khung career readiness cho sinh viên tốt nghiệp đại học [3.2-S4].
+
+Từ đó, có thể xem phỏng vấn CNTT là hoạt động đánh giá đồng thời hai nhóm năng lực:
+
+- Năng lực kỹ thuật: kiến thức chuyên môn, tư duy giải quyết vấn đề, khả năng thiết kế và triển khai giải pháp.
+- Năng lực hành vi: giao tiếp, thái độ học hỏi, làm việc nhóm, trách nhiệm, khả năng tự nhìn nhận và phù hợp với môi trường làm việc.
 
 ---
 
 ### 3.2.2. Các loại hình phỏng vấn chính trong tuyển dụng CNTT
 
-Phần này giới thiệu hai loại phỏng vấn chính mà đề tài tập trung hỗ trợ: **Technical Interview** và **Behavioral Interview**.
+Trong thực tế tuyển dụng CNTT có nhiều hình thức phỏng vấn như screening call, HR interview, technical interview, live coding, system design, behavioral interview, culture fit interview hoặc final interview. Tuy nhiên, trong phạm vi đề tài InterviewAI, hai nhóm quan trọng nhất cần được mô hình hóa là **Technical Interview** và **Behavioral Interview**. Hai nhóm này bao phủ phần lớn nội dung mà sinh viên và fresher thường gặp khi ứng tuyển vị trí lập trình viên, tester, backend, frontend hoặc fullstack.
 
-| Loại phỏng vấn       | Mục đích chính                                                       | Nội dung đánh giá                                                |
-| -------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Technical Interview  | Đánh giá kiến thức chuyên môn và khả năng giải quyết vấn đề kỹ thuật | Lập trình, database, API, thuật toán, hệ thống, dự án            |
-| Behavioral Interview | Đánh giá thái độ, kỹ năng mềm và cách ứng viên xử lý tình huống      | Giao tiếp, teamwork, trách nhiệm, tư duy học hỏi, xử lý khó khăn |
+| Loại phỏng vấn | Mục đích chính | Nội dung đánh giá | Ví dụ câu hỏi |
+| --- | --- | --- | --- |
+| Technical Interview | Đánh giá kiến thức chuyên môn và quá trình giải quyết vấn đề kỹ thuật | Lập trình, database, API, thuật toán, kiến trúc, testing, bảo mật, dự án cá nhân | "JWT hoạt động như thế nào?", "Vì sao bạn thiết kế database như vậy?" |
+| Behavioral Interview | Đánh giá hành vi, thái độ và cách ứng viên xử lý tình huống | Giao tiếp, teamwork, trách nhiệm, xử lý khó khăn, học hỏi, mục tiêu nghề nghiệp | "Hãy kể về một lần bạn gặp khó khăn trong dự án nhóm." |
 
-Hai loại phỏng vấn này có mục tiêu khác nhau nên quy trình, nhóm câu hỏi và tiêu chí đánh giá cũng cần được phân tích riêng.
+Hai loại phỏng vấn này có mục tiêu khác nhau nên cách trả lời tốt cũng khác nhau. Technical Interview yêu cầu câu trả lời chính xác, có logic kỹ thuật và có khả năng giải thích lựa chọn. Behavioral Interview yêu cầu câu trả lời cụ thể, có bối cảnh, thể hiện vai trò cá nhân và bài học rút ra. Vì vậy, hệ thống InterviewAI cần tách rõ loại câu hỏi, rubric đánh giá và cách sinh feedback cho từng nhóm.
 
 ---
 
@@ -72,9 +60,9 @@ Hai loại phỏng vấn này có mục tiêu khác nhau nên quy trình, nhóm 
 
 #### a. Khái niệm và mục đích
 
-Technical Interview là hình thức phỏng vấn tập trung vào năng lực chuyên môn của ứng viên. Với ứng viên CNTT, nội dung thường xoay quanh kiến thức lập trình, cơ sở dữ liệu, thuật toán, framework, thiết kế hệ thống và các dự án đã thực hiện.
+Technical Interview là hình thức phỏng vấn tập trung vào năng lực chuyên môn của ứng viên. University of Michigan Career Center mô tả technical interview là dạng phỏng vấn phổ biến trong STEM/Software, dùng để đánh giá kiến thức chuyên ngành và quá trình giải quyết vấn đề [3.2-S1]. Với ứng viên CNTT, nội dung thường xoay quanh lập trình, cơ sở dữ liệu, API, thuật toán, framework, thiết kế hệ thống, testing, bảo mật và các dự án đã thực hiện.
 
-Mục đích chính là đánh giá xem ứng viên có đủ kiến thức nền tảng, khả năng tư duy kỹ thuật và năng lực giải quyết vấn đề phù hợp với vị trí ứng tuyển hay không.
+Mục đích của Technical Interview không chỉ là kiểm tra đáp án đúng hay sai. Nhà tuyển dụng còn quan tâm đến cách ứng viên phân tích vấn đề, đặt giả định, giải thích trade-off, xử lý lỗi và bảo vệ lựa chọn kỹ thuật. Với fresher, một câu trả lời tốt không nhất thiết phải quá nâng cao, nhưng cần cho thấy ứng viên hiểu phần mình đã làm và có khả năng học thêm khi gặp giới hạn.
 
 #### b. Quy trình cơ bản của Technical Interview
 
@@ -85,7 +73,10 @@ Một buổi Technical Interview thường có quy trình như sau:
 3. Ứng viên trình bày một hoặc một số dự án đã thực hiện.
 4. Người phỏng vấn đặt câu hỏi chuyên sâu về kiến trúc, database, API, authentication, testing hoặc xử lý lỗi trong dự án.
 5. Có thể có câu hỏi giải quyết vấn đề, thuật toán hoặc tình huống kỹ thuật.
-6. Người phỏng vấn đánh giá cách ứng viên tư duy, giải thích và bảo vệ lựa chọn kỹ thuật.
+6. Ứng viên giải thích cách tiếp cận, nêu giả định, phân tích ưu nhược điểm và thừa nhận giới hạn nếu chưa biết.
+7. Người phỏng vấn đánh giá độ đúng kỹ thuật, cách tư duy và khả năng giao tiếp kỹ thuật.
+
+Không phải mọi công ty đều dùng đầy đủ các bước trên. Với fresher, nhiều buổi phỏng vấn tập trung nhiều hơn vào dự án học tập, kiến thức nền tảng và khả năng giải thích code đã viết. Với vị trí khó hơn, phỏng vấn có thể bổ sung live coding, system design hoặc bài tập take-home.
 
 #### c. Các nhóm câu hỏi thường gặp trong Technical Interview
 
@@ -98,6 +89,8 @@ Một buổi Technical Interview thường có quy trình như sau:
 * Câu hỏi về bảo mật, authentication, authorization.
 * Câu hỏi về testing, debugging và xử lý lỗi.
 * Câu hỏi về dự án cá nhân hoặc dự án học tập.
+* Câu hỏi về trade-off khi chọn công nghệ hoặc cách triển khai.
+* Câu hỏi về khả năng đọc hiểu, bảo trì và cải thiện code.
 
 Ví dụ:
 
@@ -106,17 +99,22 @@ Ví dụ:
 * JWT hoạt động như thế nào?
 * Bạn thiết kế database cho hệ thống này ra sao?
 * Trong dự án, bạn gặp lỗi kỹ thuật nào và đã xử lý thế nào?
+* Nếu hệ thống có nhiều người dùng hơn, bạn sẽ tối ưu phần nào trước?
+* Bạn đã test chức năng này như thế nào?
 
 #### d. Tiêu chí đánh giá trong Technical Interview
 
-| Tiêu chí                     | Ý nghĩa                                     |
-| ---------------------------- | ------------------------------------------- |
-| Kiến thức chuyên môn         | Ứng viên hiểu đúng các khái niệm kỹ thuật   |
-| Tư duy giải quyết vấn đề     | Biết phân tích vấn đề và đưa ra hướng xử lý |
-| Khả năng giải thích kỹ thuật | Trình bày rõ ràng, dễ hiểu                  |
-| Kinh nghiệm dự án            | Hiểu rõ vai trò và phần việc đã làm         |
-| Tính logic                   | Câu trả lời có cấu trúc và hợp lý           |
-| Khả năng học hỏi             | Biết nhìn nhận hạn chế và hướng cải thiện   |
+| Tiêu chí | Ý nghĩa |
+| --- | --- |
+| Kiến thức chuyên môn | Hiểu đúng khái niệm kỹ thuật, không chỉ nhớ thuật ngữ |
+| Tư duy giải quyết vấn đề | Biết chia nhỏ vấn đề, nêu giả định và chọn hướng xử lý hợp lý |
+| Khả năng giải thích kỹ thuật | Trình bày rõ ràng, có ví dụ, tránh trả lời quá chung chung |
+| Kinh nghiệm dự án | Nắm được vai trò cá nhân, kiến trúc, dữ liệu, API và lỗi đã xử lý |
+| Tính logic | Câu trả lời có trình tự, không nhảy ý hoặc mâu thuẫn |
+| Nhận thức về trade-off | Biết giải thích vì sao chọn một công nghệ/cách làm thay vì lựa chọn khác |
+| Khả năng học hỏi | Biết thừa nhận phần chưa chắc và nêu cách kiểm chứng hoặc tìm hiểu thêm |
+
+Đối với InterviewAI, các tiêu chí này là cơ sở để xây dựng rubric cho câu hỏi kỹ thuật. Feedback của hệ thống cần chỉ ra cụ thể: câu trả lời sai ở kiến thức nào, thiếu bước giải thích nào, hoặc cần bổ sung ví dụ dự án nào để thuyết phục hơn.
 
 ---
 
@@ -124,7 +122,7 @@ Ví dụ:
 
 #### a. Khái niệm và mục đích
 
-Behavioral Interview là hình thức phỏng vấn tập trung vào hành vi, thái độ và cách ứng viên xử lý các tình huống trong học tập hoặc công việc. Nhà tuyển dụng thường dựa vào những trải nghiệm trong quá khứ để đánh giá cách ứng viên có thể phản ứng trong tương lai.
+Behavioral Interview là hình thức phỏng vấn tập trung vào hành vi, thái độ và cách ứng viên xử lý tình huống trong học tập hoặc công việc. University of Michigan Career Center mô tả behavioral interview là dạng phỏng vấn đánh giá kinh nghiệm quá khứ thông qua storytelling, thường bắt đầu bằng các câu như "Tell me about a time when..." [3.2-S1]. Cách tiếp cận này phù hợp với quan điểm của structured interview: câu hỏi có thể yêu cầu ứng viên kể lại hành vi trong quá khứ hoặc nêu cách xử lý một tình huống giả định liên quan đến công việc [3.2-S2].
 
 Đối với sinh viên và fresher, Behavioral Interview thường không yêu cầu kinh nghiệm làm việc nhiều, mà tập trung vào dự án học tập, làm việc nhóm, xử lý mâu thuẫn, vượt qua khó khăn và tinh thần học hỏi.
 
@@ -161,15 +159,16 @@ Ví dụ:
 
 #### d. Tiêu chí đánh giá trong Behavioral Interview
 
-| Tiêu chí              | Ý nghĩa                                   |
-| --------------------- | ----------------------------------------- |
-| Đúng trọng tâm        | Trả lời đúng câu hỏi, không lan man       |
-| Ví dụ cụ thể          | Có tình huống thực tế để minh họa         |
-| Vai trò cá nhân       | Nêu rõ bản thân đã làm gì                 |
-| Khả năng tự nhìn nhận | Biết đánh giá điểm mạnh, điểm yếu         |
-| Kỹ năng giao tiếp     | Diễn đạt rõ ràng, tự nhiên                |
-| Thái độ học hỏi       | Thể hiện tinh thần cầu tiến               |
-| Mức độ phù hợp        | Phù hợp với vị trí và môi trường làm việc |
+| Tiêu chí | Ý nghĩa |
+| --- | --- |
+| Đúng trọng tâm | Trả lời đúng câu hỏi, không chuyển sang câu chuyện khác |
+| Ví dụ cụ thể | Có tình huống thực tế, có bối cảnh rõ ràng |
+| Vai trò cá nhân | Nêu rõ bản thân đã làm gì, tránh chỉ nói "nhóm em" |
+| Hành động rõ ràng | Mô tả được bước xử lý cụ thể, không chỉ nói chung chung |
+| Kết quả và bài học | Có kết quả, tác động hoặc điều rút ra sau tình huống |
+| Kỹ năng giao tiếp | Diễn đạt rõ ràng, có trình tự và dễ theo dõi |
+| Thái độ học hỏi | Thể hiện tinh thần cầu tiến và biết nhận trách nhiệm |
+| Mức độ phù hợp | Liên hệ được trải nghiệm với vị trí và môi trường ứng tuyển |
 
 Trong Behavioral Interview, ứng viên thường nên trả lời theo cấu trúc **STAR**:
 
@@ -178,28 +177,31 @@ Trong Behavioral Interview, ứng viên thường nên trả lời theo cấu tr
 * Action: Hành động
 * Result: Kết quả
 
-Cấu trúc này giúp câu trả lời rõ ràng, có dẫn chứng và dễ đánh giá hơn.
+University of Michigan Career Center mô tả STAR là cách trả lời có cấu trúc cho câu hỏi hành vi bằng việc trình bày Situation, Task, Action và Result của tình huống được kể [3.2-S1]. Với sinh viên, STAR giúp tránh hai lỗi phổ biến: kể chuyện lan man và không nêu rõ vai trò cá nhân. Trong InterviewAI, STAR là một cơ sở quan trọng để hệ thống phát hiện câu trả lời thiếu bối cảnh, thiếu hành động hoặc thiếu kết quả.
 
 ---
 
 ### 3.2.5. So sánh Technical Interview và Behavioral Interview
 
-Phần này giúp làm rõ sự khác biệt giữa hai loại phỏng vấn, từ đó giải thích vì sao hệ thống InterviewAI cần hỗ trợ các kiểu câu hỏi và tiêu chí đánh giá khác nhau.
+Technical Interview và Behavioral Interview đều nhằm đánh giá mức độ phù hợp của ứng viên, nhưng tập trung vào các loại bằng chứng khác nhau. Technical Interview chủ yếu dùng bằng chứng về kiến thức, cách giải quyết vấn đề và kinh nghiệm kỹ thuật. Behavioral Interview chủ yếu dùng bằng chứng về hành vi, thái độ, cách giao tiếp và khả năng phản ứng trong tình huống.
 
-| Nội dung                  | Technical Interview                                  | Behavioral Interview                                      |
-| ------------------------- | ---------------------------------------------------- | --------------------------------------------------------- |
-| Mục tiêu                  | Đánh giá năng lực kỹ thuật                           | Đánh giá thái độ, hành vi và kỹ năng mềm                  |
-| Trọng tâm                 | Kiến thức, tư duy kỹ thuật, dự án                    | Tình huống, cách ứng xử, kinh nghiệm cá nhân              |
-| Câu hỏi thường gặp        | API, database, framework, thuật toán, kiến trúc      | Teamwork, khó khăn, mâu thuẫn, điểm mạnh, mục tiêu        |
-| Cách trả lời tốt          | Chính xác, logic, có ví dụ kỹ thuật                  | Cụ thể, chân thật, có cấu trúc STAR                       |
-| Tiêu chí đánh giá         | Độ đúng kỹ thuật, khả năng phân tích, giải thích     | Sự rõ ràng, thái độ, vai trò cá nhân, bài học rút ra      |
-| Vai trò trong InterviewAI | Tạo câu hỏi kỹ thuật và đánh giá nội dung chuyên môn | Tạo câu hỏi hành vi và đánh giá cách trình bày/tình huống |
+| Nội dung | Technical Interview | Behavioral Interview |
+| --- | --- | --- |
+| Mục tiêu | Đánh giá năng lực kỹ thuật | Đánh giá hành vi, thái độ và kỹ năng mềm |
+| Trọng tâm | Kiến thức, tư duy kỹ thuật, dự án, trade-off | Tình huống, cách ứng xử, vai trò cá nhân, bài học |
+| Câu hỏi thường gặp | API, database, framework, thuật toán, kiến trúc, testing | Teamwork, khó khăn, mâu thuẫn, điểm mạnh, mục tiêu |
+| Cách trả lời tốt | Chính xác, logic, có ví dụ kỹ thuật, biết giải thích lý do | Cụ thể, chân thật, có cấu trúc STAR |
+| Tiêu chí đánh giá | Độ đúng kỹ thuật, khả năng phân tích, giải thích và bảo vệ lựa chọn | Sự rõ ràng, thái độ, trách nhiệm, vai trò cá nhân, kết quả |
+| Rủi ro khi trả lời kém | Nói sai khái niệm, không hiểu dự án, không nêu được trade-off | Kể chuyện lan man, thiếu ví dụ, không nêu hành động/kết quả |
+| Vai trò trong InterviewAI | Sinh câu hỏi kỹ thuật và đánh giá nội dung chuyên môn | Sinh câu hỏi hành vi và đánh giá cấu trúc/trải nghiệm |
+
+Sự khác biệt này cho thấy một hệ thống luyện phỏng vấn không nên dùng một rubric chung cho mọi câu hỏi. Nếu dùng cùng tiêu chí cho cả câu hỏi kỹ thuật và hành vi, feedback có thể thiếu chính xác. Ví dụ, một câu hỏi về JWT cần đánh giá kiến thức authentication và security; trong khi một câu hỏi về mâu thuẫn nhóm cần đánh giá cách ứng viên nêu bối cảnh, vai trò cá nhân, hành động và kết quả.
 
 ---
 
 ### 3.2.6. Khó khăn của sinh viên và fresher trong từng loại phỏng vấn
 
-Phần này phân tích vấn đề thực tế mà người dùng mục tiêu thường gặp.
+Sinh viên và fresher thường gặp khó khăn không phải vì hoàn toàn thiếu năng lực, mà vì chưa quen biến kinh nghiệm học tập thành câu trả lời phỏng vấn có cấu trúc. Trong môi trường học, người học thường quen nộp code, báo cáo hoặc demo sản phẩm. Trong phỏng vấn, họ phải giải thích ngắn gọn: vấn đề là gì, bản thân đã làm gì, tại sao chọn cách đó và kết quả ra sao.
 
 Với Technical Interview, sinh viên và fresher thường gặp khó khăn như:
 
@@ -208,6 +210,9 @@ Với Technical Interview, sinh viên và fresher thường gặp khó khăn nh�
 * Không nêu được lý do chọn công nghệ.
 * Thiếu kinh nghiệm xử lý câu hỏi chuyên sâu.
 * Dễ trả lời chung chung, thiếu ví dụ cụ thể.
+* Lẫn lộn giữa phần mình làm và phần do framework/thư viện hỗ trợ.
+* Chưa quen nói về trade-off, bảo mật, testing và khả năng mở rộng.
+* Ngại thừa nhận phần chưa biết nên dễ trả lời đoán.
 
 Với Behavioral Interview, các khó khăn thường gặp là:
 
@@ -216,19 +221,31 @@ Với Behavioral Interview, các khó khăn thường gặp là:
 * Không nêu rõ vai trò cá nhân.
 * Khó trình bày điểm yếu hoặc thất bại một cách tích cực.
 * Chưa biết liên hệ kinh nghiệm cá nhân với vị trí ứng tuyển.
+* Thiếu kết quả cụ thể nên câu trả lời chưa thuyết phục.
+* Dùng nhiều câu "chúng em đã..." nhưng không làm rõ đóng góp cá nhân.
+* Chưa quen phản ánh bài học rút ra sau một lỗi hoặc khó khăn.
+
+Các khó khăn này liên quan trực tiếp đến các năng lực nghề nghiệp mà NACE nêu trong khung career readiness, đặc biệt là communication, critical thinking, teamwork, professionalism và technology [3.2-S4]. Vì vậy, hệ thống luyện phỏng vấn cần giúp người dùng cải thiện cả nội dung chuyên môn và cách trình bày, không chỉ chấm điểm đúng/sai.
 
 ---
 
 ### 3.2.7. Mock Interview và vai trò trong luyện phỏng vấn
 
-Mock Interview là hình thức phỏng vấn giả lập, giúp ứng viên luyện tập trước khi tham gia phỏng vấn thật. Người luyện có thể làm quen với câu hỏi, áp lực phỏng vấn, cách trình bày và cách phản hồi sau khi nhận góp ý.
+Mock Interview là hình thức phỏng vấn giả lập, giúp ứng viên luyện tập trước khi tham gia phỏng vấn thật. University of Michigan Career Center mô tả mock interviewing như một buổi "dress rehearsal" kèm phản hồi ngay sau đó [3.2-S1]. Harvard FAS cũng liệt kê mock interview và công cụ luyện phỏng vấn ảo có AI feedback như một nhóm tài nguyên chuẩn bị technical interview [3.2-S3].
 
 Mock Interview có thể được chia theo mục tiêu luyện tập:
 
 * Mock Technical Interview: luyện trả lời câu hỏi kỹ thuật, giải thích dự án, xử lý vấn đề chuyên môn.
 * Mock Behavioral Interview: luyện trả lời câu hỏi hành vi, tình huống, giới thiệu bản thân và trình bày kinh nghiệm cá nhân.
+* Mock Mixed Interview: kết hợp câu hỏi kỹ thuật, hành vi và tình huống để mô phỏng buổi phỏng vấn tổng hợp.
 
-Giá trị chính của Mock Interview không chỉ nằm ở việc luyện câu hỏi, mà còn ở việc nhận feedback để biết câu trả lời còn thiếu gì và cần cải thiện ở đâu.
+Giá trị chính của Mock Interview không chỉ nằm ở việc "gặp trước" câu hỏi. Quan trọng hơn, người luyện được đặt vào bối cảnh phải trả lời thành tiếng hoặc viết câu trả lời đầy đủ, sau đó nhận phản hồi để biết câu trả lời còn thiếu gì. Với sinh viên CNTT, mock interview giúp luyện ba kỹ năng cốt lõi:
+
+- Chuyển kiến thức kỹ thuật thành lời giải thích dễ hiểu.
+- Chuyển kinh nghiệm học tập/dự án thành bằng chứng năng lực.
+- Nhận diện lỗi trả lời lặp lại qua nhiều lần luyện, ví dụ thiếu kết quả, thiếu ví dụ hoặc trình bày quá dài.
+
+Trong hệ thống AI Mock Interview, AI đóng vai trò hỗ trợ quá trình này bằng cách tạo môi trường luyện tập on-demand, phản hồi nhất quán theo rubric và lưu lại lịch sử phiên để người dùng theo dõi sự tiến bộ.
 
 ---
 
@@ -242,14 +259,17 @@ Mock Interview truyền thống thường đem lại hiệu quả tốt khi có 
 * Khó cá nhân hóa theo nhiều JD hoặc vị trí ứng tuyển.
 * Khó lưu lại lịch sử luyện tập và theo dõi tiến bộ.
 * Sinh viên không phải lúc nào cũng có người hỗ trợ luyện phỏng vấn.
+* Người hướng dẫn có thể mạnh ở một mảng nhất định nhưng không bao phủ hết nhiều JD/công nghệ khác nhau.
+* Sinh viên có thể ngại luyện nhiều lần vì sợ làm phiền người khác hoặc sợ bị đánh giá.
+* Feedback sau buổi luyện có thể bị mất nếu không được ghi lại thành dữ liệu có cấu trúc.
 
-Vì vậy, cần có một công cụ hỗ trợ giúp người học có thể luyện tập chủ động hơn, đặc biệt trong giai đoạn chuẩn bị ban đầu.
+Các hạn chế trên không có nghĩa mock interview truyền thống không còn giá trị. Ngược lại, luyện với mentor hoặc người có kinh nghiệm vẫn rất hữu ích. Tuy nhiên, với nhóm sinh viên cần luyện thường xuyên, cần thử nhiều JD và cần phản hồi lặp lại, một hệ thống AI Mock Interview có thể bổ sung tốt cho hình thức truyền thống. Hệ thống giúp người dùng luyện nhiều lần trước khi tìm đến mentor, nhờ đó buổi luyện với người thật cũng hiệu quả hơn.
 
 ---
 
 ### 3.2.9. Ứng dụng vào hệ thống InterviewAI
 
-Từ cơ sở lý thuyết trên, hệ thống InterviewAI cần hỗ trợ hai hướng luyện phỏng vấn chính: Technical Interview và Behavioral Interview.
+Từ cơ sở lý thuyết trên, hệ thống InterviewAI được thiết kế xoay quanh hai hướng luyện phỏng vấn chính: Technical Interview và Behavioral Interview. Ngoài ra, hệ thống hỗ trợ Mixed Interview để mô phỏng buổi phỏng vấn tổng hợp, trong đó ứng viên vừa phải trả lời câu hỏi kỹ thuật vừa phải thể hiện cách giao tiếp và xử lý tình huống [3.2-S5].
 
 Với Technical Interview, hệ thống có thể:
 
@@ -257,6 +277,7 @@ Với Technical Interview, hệ thống có thể:
 * Hỏi về công nghệ, dự án, database, API, testing, bảo mật.
 * Đánh giá mức độ đúng kỹ thuật, logic và khả năng giải thích.
 * Gợi ý cách trả lời rõ ràng và đầy đủ hơn.
+* Nhắc người dùng bổ sung trade-off, ví dụ thực tế hoặc phần đã trực tiếp triển khai.
 
 Với Behavioral Interview, hệ thống có thể:
 
@@ -264,6 +285,29 @@ Với Behavioral Interview, hệ thống có thể:
 * Gợi ý người dùng trả lời theo cấu trúc STAR.
 * Đánh giá mức độ cụ thể, vai trò cá nhân, cách trình bày và bài học rút ra.
 * Đưa ra feedback giúp câu trả lời tự nhiên và thuyết phục hơn.
+* Phát hiện câu trả lời thiếu Situation, Task, Action hoặc Result.
+
+Trong thiết kế của InterviewAI, các lý thuyết này được ánh xạ thành các thành phần cụ thể:
+
+| Cơ sở lý thuyết | Ứng dụng trong InterviewAI |
+| --- | --- |
+| Structured interview | Câu hỏi và rubric được chuẩn hóa theo loại phiên, giúp feedback nhất quán hơn |
+| Technical Interview | Session type `technical`, ngân hàng câu hỏi kỹ thuật, rubric đánh giá technical depth |
+| Behavioral Interview | Session type `hr`, câu hỏi tình huống, context pack có quy tắc STAR |
+| Mock Interview | Quy trình luyện tập theo phiên: cấu hình JD -> nhận câu hỏi -> trả lời -> nhận feedback -> xem báo cáo |
+| Career readiness | Feedback không chỉ chấm kiến thức mà còn chạm đến giao tiếp, teamwork, professionalism và khả năng học hỏi |
+
+Về mặt trải nghiệm người dùng, InterviewAI cần đảm bảo người dùng không chỉ nhận điểm số mà còn hiểu mình cần sửa gì. Vì vậy, hệ thống tập trung vào feedback cụ thể theo từng câu trả lời, annotated transcript và báo cáo tổng hợp. Cách làm này phù hợp với mục tiêu của mock interview: luyện tập, nhận phản hồi và cải thiện qua nhiều lần.
+
+---
+
+*Nguồn tham khảo cho mục 3.1-3.2:*
+
+*[3.2-S1] University of Michigan Career Center. "Interviewing Resources." https://careercenter.umich.edu/content/interviewing-resources*
+*[3.2-S2] U.S. Office of Personnel Management. "Structured Interviews." https://www.opm.gov/policy-data-oversight/assessment-and-selection/structured-interviews/*
+*[3.2-S3] Harvard FAS Mignone Center for Career Success. "Technical Interviews." https://careerservices.fas.harvard.edu/resources/technical-interviews/*
+*[3.2-S4] National Association of Colleges and Employers (NACE). "What is Career Readiness?" https://www.naceweb.org/career-readiness/competencies/career-readiness-defined*
+*[3.2-S5] InterviewAI internal design docs: `docs/Design/MVP_Scope.md`, `docs/Design/ArchitecturalDesign/interview_ai_coach_session_type_spec.md`, `docs/RequirementAnalysis/user-stories/US-005_context-pack.md`.*
 
 ## 3.3 Xử Lý Ngôn Ngữ Tự Nhiên Và Mô Hình Ngôn Ngữ Lớn
 
