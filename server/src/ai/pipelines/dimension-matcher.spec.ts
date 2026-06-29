@@ -113,25 +113,6 @@ describe('resolveAppliedDimensions', () => {
     });
   });
 
-  describe('Branch 5 — substring fallback', () => {
-    it('"giao tiep" (partial VN name) → D1 qua substring', () => {
-      const result = resolveAppliedDimensions(
-        [{ id: 'giao tiep', score: 75 }],
-        VN_BEHAVIORAL,
-      );
-      expect(result[0]).toMatchObject({ id: 'D1', matchBranch: 'substring' });
-    });
-
-    it('"kien thuc" → TD1 qua substring', () => {
-      const result = resolveAppliedDimensions(
-        [{ id: 'kien thuc', score: 70 }],
-        VN_TECHNICAL,
-      );
-      expect(result[0]?.matchBranch).toBe('substring');
-      expect(result[0]?.id).toBe('TD1');
-    });
-  });
-
   describe('Session type filtering', () => {
     it('TD1 với HR dims → [] (technical không có trong behavioral)', () => {
       const result = resolveAppliedDimensions([{ id: 'TD1', score: 80 }], VN_BEHAVIORAL);
@@ -176,8 +157,6 @@ describe('resolveAppliedDimensions', () => {
     });
 
     it('id inventé "communication" không khớp tên VN → []', () => {
-      // normalizeKey("communication")="communication"; D1 name normalizes to "giaotieptrinhbay"
-      // không có substring overlap → no match
       expect(
         resolveAppliedDimensions([{ id: 'communication', score: 80 }], VN_BEHAVIORAL),
       ).toHaveLength(0);

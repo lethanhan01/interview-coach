@@ -5,7 +5,7 @@ export interface MatchedDimension {
   name: string;
   baseWeight: number;
   score: number;
-  matchBranch: 'exact' | 'normId' | 'code' | 'name' | 'substring';
+  matchBranch: 'exact' | 'normId' | 'code' | 'name';
 }
 
 // Regex bắt code token dạng D1, TD2, D-1 (T?D để phân biệt TD1 vs D1)
@@ -54,22 +54,6 @@ function resolveOne(
   const byName = allowedDims.find((d) => normalizeKey(d.name) === normRaw);
   if (byName) {
     return { id: byName.id, name: byName.name, baseWeight: byName.weight, score: entry.score, matchBranch: 'name' };
-  }
-
-  // Branch 5: substring fallback — only if normalized name >= 4 chars (reduces false positives)
-  const bySubstring = allowedDims.find((d) => {
-    const normName = normalizeKey(d.name);
-    if (normName.length < 4) return false;
-    return normRaw.includes(normName) || normName.includes(normRaw);
-  });
-  if (bySubstring) {
-    return {
-      id: bySubstring.id,
-      name: bySubstring.name,
-      baseWeight: bySubstring.weight,
-      score: entry.score,
-      matchBranch: 'substring',
-    };
   }
 
   return null;

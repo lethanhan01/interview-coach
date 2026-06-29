@@ -139,12 +139,6 @@ export abstract class BasePipelineService implements InterviewPipeline {
             ];
     const selected = resolveAppliedDimensions(validated.applied_dimensions, allowedDims);
 
-    selected
-      .filter((d) => d.matchBranch === 'substring')
-      .forEach((d) =>
-        this.logger.debug(`[feedback] Fuzzy dimension match (substring): resolved=${d.id}`),
-      );
-
     if (selected.length === 0) {
       this.logger.warn(
         `[feedback] No scoring dimensions matched. ` +
