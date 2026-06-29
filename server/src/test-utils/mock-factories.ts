@@ -132,6 +132,17 @@ export const createMockVoiceMetricsService = () => ({
 
 export const createMockReportService = () => ({
   getReport: jest.fn(),
+  getFeedbackProgress: jest.fn().mockResolvedValue({
+    sessionId: 'session-123',
+    status: 'completing',
+    totalQuestions: 1,
+    answeredQuestions: 1,
+    skippedQuestions: 0,
+    feedbackRequired: 1,
+    feedbackCompleted: 1,
+    feedbackPending: 0,
+    reportReady: false,
+  }),
   enqueueReport: jest.fn().mockResolvedValue(undefined),
   enqueueIfAllFeedbacksReady: jest.fn().mockResolvedValue(undefined),
 });

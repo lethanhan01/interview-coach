@@ -96,12 +96,24 @@ export interface TranscriptItem {
 
 export interface Report {
   sessionId: string;
-  reportQuality: 'full' | 'partial' | 'unavailable' | 'not_scorable';
+  reportQuality: "full" | "partial" | "unavailable" | "not_scorable";
   overallScore: number | null;
   executiveSummary: Record<string, unknown>;
   competencyHeatmap: Record<string, unknown>;
   actionPlan: Record<string, unknown>;
   transcript: TranscriptItem[];
+}
+
+export interface FeedbackProgress {
+  sessionId: string;
+  status: SessionStatus;
+  totalQuestions: number;
+  answeredQuestions: number;
+  skippedQuestions: number;
+  feedbackRequired: number;
+  feedbackCompleted: number;
+  feedbackPending: number;
+  reportReady: boolean;
 }
 
 export interface EducationEntry {

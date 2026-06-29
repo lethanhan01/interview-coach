@@ -33,8 +33,18 @@ interface FeedbackJobDto {
 }
 
 const REPORT_READINESS_LOCAL_ATTEMPTS = 2;
+const DEFAULT_FEEDBACK_WORKER_CONCURRENCY = 2;
 
-@Processor(FEEDBACK_QUEUE)
+function parseFeedbackWorkerConcurrency(): number {
+  const raw = process.env.FEEDBACK_WORKER_CONCURRENCY;
+  const parsed = raw === undefined ? NaN : Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return DEFAULT_FEEDBACK_WORKER_CONCURRENCY;
+  }
+  return parsed;
+}
+
+@Processor(FEEDBACK_QUEUE, { concurrency: parseFeedbackWorkerConcurrency() })
 export class FeedbackProcessor extends WorkerHost {
   private readonly logger = new Logger(FeedbackProcessor.name);
 
@@ -191,6 +201,7 @@ export class FeedbackProcessor extends WorkerHost {
     }
 
     await this.emitFeedbackReady(sessionId, answerId, hasAnnotations);
+    await this.emitFeedbackProgress(sessionId);
     await this.enqueueReportWhenReady(
       sessionId,
       sessionType,
@@ -215,6 +226,22 @@ export class FeedbackProcessor extends WorkerHost {
           error instanceof Error ? error.message : String(error),
         );
       });
+  }
+
+  private async emitFeedbackProgress(sessionId: string): Promise<void> {
+    try {
+      const progress = await this.reportService.getFeedbackProgress(sessionId);
+      await this.sseService.emit(
+        `sse:session:${sessionId}`,
+        'session.feedback_progress',
+        progress,
+      );
+    } catch (error: unknown) {
+      this.logger.warn(
+        `Unable to emit feedback_progress for session ${sessionId}`,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
   }
 
   private async enqueueReportWhenReady(

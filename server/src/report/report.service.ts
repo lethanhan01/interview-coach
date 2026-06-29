@@ -14,6 +14,7 @@ import {
   TranscriptItemDto,
   AnnotatedSegmentDto,
 } from './dto/report-response.dto';
+import { FeedbackProgressDto } from './dto/feedback-progress.dto';
 import {
   getFallbackActionPlan,
   getFallbackReportSummary,
@@ -202,6 +203,66 @@ export class ReportService {
           ? getFallbackActionPlan(session.language)
           : storedActionPlan,
       transcript: transcriptWithSkippedAnswers,
+    };
+  }
+
+  async getFeedbackProgress(
+    sessionId: string,
+    userId?: string,
+  ): Promise<FeedbackProgressDto> {
+    const session = await this.prisma.interviewSession.findUnique({
+      where: { id: sessionId },
+      select: {
+        id: true,
+        userId: true,
+        status: true,
+        sessionReports: {
+          where: { reportType: 'executive_summary' },
+          select: { id: true },
+          take: 1,
+        },
+      },
+    });
+
+    if (!session) {
+      throw new InterviewAIException(
+        ErrorCode.SESSION_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (userId && session.userId !== userId) {
+      throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
+    }
+
+    const [
+      totalQuestions,
+      answeredQuestions,
+      skippedQuestions,
+      feedbackCompleted,
+    ] = await Promise.all([
+      this.prisma.sessionQuestion.count({ where: { sessionId } }),
+      this.prisma.userAnswer.count({ where: { sessionId } }),
+      this.prisma.userAnswer.count({ where: { sessionId, skipped: true } }),
+      this.prisma.userAnswer.count({
+        where: { sessionId, skipped: false, feedbackGenerated: true },
+      }),
+    ]);
+
+    const feedbackRequired = Math.max(0, answeredQuestions - skippedQuestions);
+    const feedbackPending = Math.max(0, feedbackRequired - feedbackCompleted);
+
+    return {
+      sessionId,
+      status: session.status,
+      totalQuestions,
+      answeredQuestions,
+      skippedQuestions,
+      feedbackRequired,
+      feedbackCompleted,
+      feedbackPending,
+      reportReady:
+        session.status === 'completed' && session.sessionReports.length > 0,
     };
   }
 

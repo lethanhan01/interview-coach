@@ -66,11 +66,11 @@ export class OpenAIGateway {
     );
     this.feedbackTimeoutMs = Number(
       config.get('OPENAI_FEEDBACK_TIMEOUT_MS') ??
-        Math.max(this.defaultTimeoutMs, 300_000),
+        Math.max(this.defaultTimeoutMs, 180_000),
     );
     this.reportTimeoutMs = Number(
       config.get('OPENAI_REPORT_TIMEOUT_MS') ??
-        Math.max(this.defaultTimeoutMs, 60_000),
+        Math.max(this.defaultTimeoutMs, 180_000),
     );
 
     this.chatClient = new OpenAI({

@@ -3,9 +3,11 @@ import { of } from 'rxjs';
 import { SessionController } from './session.controller';
 import { SessionService } from './session.service';
 import { SseService } from '../common/services/sse.service';
+import { ReportService } from '../report/report.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SseTokenGuard } from '../auth/guards/sse-token.guard';
 import {
+  createMockReportService,
   createMockSessionService,
   createMockSseService,
 } from '../test-utils/mock-factories';
@@ -13,18 +15,21 @@ import {
 describe('SessionController', () => {
   let controller: SessionController;
   let mockSessionService: ReturnType<typeof createMockSessionService>;
+  let mockReportService: ReturnType<typeof createMockReportService>;
   let mockSseService: ReturnType<typeof createMockSseService>;
 
   const mockReq = (userId = 'user-abc') => ({ user: { id: userId } }) as any;
 
   beforeEach(async () => {
     mockSessionService = createMockSessionService();
+    mockReportService = createMockReportService();
     mockSseService = createMockSseService();
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SessionController],
       providers: [
         { provide: SessionService, useValue: mockSessionService },
+        { provide: ReportService, useValue: mockReportService },
         { provide: SseService, useValue: mockSseService },
       ],
     })
@@ -102,6 +107,34 @@ describe('SessionController', () => {
 
       expect(result).toEqual({ questions });
       expect(mockSessionService.findQuestions).toHaveBeenCalledWith(
+        'session-1',
+        'user-abc',
+      );
+    });
+  });
+
+  describe('GET /sessions/:id/feedback-progress', () => {
+    it('trả về progress và kiểm ownership qua userId', async () => {
+      const progress = {
+        sessionId: 'session-1',
+        status: 'completing',
+        totalQuestions: 5,
+        answeredQuestions: 5,
+        skippedQuestions: 1,
+        feedbackRequired: 4,
+        feedbackCompleted: 2,
+        feedbackPending: 2,
+        reportReady: false,
+      };
+      mockReportService.getFeedbackProgress.mockResolvedValue(progress);
+
+      const result = await controller.getFeedbackProgress(
+        'session-1',
+        mockReq(),
+      );
+
+      expect(result).toEqual(progress);
+      expect(mockReportService.getFeedbackProgress).toHaveBeenCalledWith(
         'session-1',
         'user-abc',
       );

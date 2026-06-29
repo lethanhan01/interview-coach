@@ -7,9 +7,14 @@
  *   model    = google/gemma-4-e4b (đọc từ OPENAI_CHAT_MODEL nếu set)
  */
 
-const BASE_URL = process.argv[2] ?? process.env.OPENAI_BASE_URL ?? 'http://127.0.0.1:1234/v1';
-const MODEL = process.argv[3] ?? process.env.OPENAI_CHAT_MODEL ?? 'google/gemma-4-e4b';
-const TIMEOUT_MS = parseInt(process.env.OPENAI_FEEDBACK_TIMEOUT_MS ?? '300000', 10);
+const BASE_URL =
+  process.argv[2] ?? process.env.OPENAI_BASE_URL ?? 'http://127.0.0.1:1234/v1';
+const MODEL =
+  process.argv[3] ?? process.env.OPENAI_CHAT_MODEL ?? 'google/gemma-4-e4b';
+const TIMEOUT_MS = parseInt(
+  process.env.OPENAI_FEEDBACK_TIMEOUT_MS ?? '180000',
+  10,
+);
 
 // --- Exact system prompt từ PromptBuilderService + TechnicalPipelineService + ContextPackService (VN) ---
 // Replicates: buildBaseSystem('surgical-feedback') → applyStrategy('technical') → applyContextPack(VN)
@@ -109,15 +114,24 @@ const messages = [
 
 function extractJson(raw) {
   const trimmed = raw.trim();
-  try { JSON.parse(trimmed); return trimmed; } catch {}
+  try {
+    JSON.parse(trimmed);
+    return trimmed;
+  } catch {}
   const blockMatch = /```(?:json)?\s*\n?([\s\S]*?)\n?```/.exec(trimmed);
   if (blockMatch) {
     const inner = blockMatch[1].trim();
-    try { JSON.parse(inner); return inner; } catch {}
+    try {
+      JSON.parse(inner);
+      return inner;
+    } catch {}
   }
   const objMatch = /(\{[\s\S]*\})/.exec(trimmed);
   if (objMatch) {
-    try { JSON.parse(objMatch[1]); return objMatch[1]; } catch {}
+    try {
+      JSON.parse(objMatch[1]);
+      return objMatch[1];
+    } catch {}
   }
   return raw;
 }
@@ -127,7 +141,9 @@ async function run() {
   console.log(`  base_url : ${BASE_URL}`);
   console.log(`  model    : ${MODEL}`);
   console.log(`  timeout  : ${TIMEOUT_MS / 1000}s`);
-  console.log(`  prompt tokens (estimate): ~${Math.round((SYSTEM_PROMPT.length + USER_CONTENT.length) / 4)} tokens`);
+  console.log(
+    `  prompt tokens (estimate): ~${Math.round((SYSTEM_PROMPT.length + USER_CONTENT.length) / 4)} tokens`,
+  );
   console.log('');
 
   // Kiểm tra server còn sống không
@@ -136,18 +152,28 @@ async function run() {
       signal: AbortSignal.timeout(5000),
     });
     if (!healthRes.ok) {
-      console.error(`[ERROR] GET ${BASE_URL}/models returned ${healthRes.status}`);
+      console.error(
+        `[ERROR] GET ${BASE_URL}/models returned ${healthRes.status}`,
+      );
       process.exit(1);
     }
     const models = await healthRes.json();
     const loaded = models.data?.map((m) => m.id) ?? [];
-    console.log(`[OK] LM Studio reachable. Loaded models: ${loaded.join(', ') || '(none)'}`);
+    console.log(
+      `[OK] LM Studio reachable. Loaded models: ${loaded.join(', ') || '(none)'}`,
+    );
     if (loaded.length > 0 && !loaded.includes(MODEL)) {
-      console.warn(`[WARN] Model "${MODEL}" not in loaded list. Proceeding anyway.`);
+      console.warn(
+        `[WARN] Model "${MODEL}" not in loaded list. Proceeding anyway.`,
+      );
     }
   } catch (err) {
-    console.error(`[ERROR] Cannot reach LM Studio at ${BASE_URL}: ${err.message}`);
-    console.error(`        Make sure LM Studio is running and the model is loaded.`);
+    console.error(
+      `[ERROR] Cannot reach LM Studio at ${BASE_URL}: ${err.message}`,
+    );
+    console.error(
+      `        Make sure LM Studio is running and the model is loaded.`,
+    );
     process.exit(1);
   }
 
@@ -158,7 +184,10 @@ async function run() {
   try {
     const res = await fetch(`${BASE_URL}/chat/completions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer lm-studio' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer lm-studio',
+      },
       body: JSON.stringify({
         model: MODEL,
         messages,
@@ -181,14 +210,20 @@ async function run() {
     raw = data.choices?.[0]?.message?.content ?? '';
 
     console.log(`[OK] Response received in ${elapsed}ms`);
-    console.log(`     finish_reason : ${data.choices?.[0]?.finish_reason ?? 'unknown'}`);
+    console.log(
+      `     finish_reason : ${data.choices?.[0]?.finish_reason ?? 'unknown'}`,
+    );
     if (data.usage) {
-      console.log(`     tokens        : prompt=${data.usage.prompt_tokens} completion=${data.usage.completion_tokens} total=${data.usage.total_tokens}`);
+      console.log(
+        `     tokens        : prompt=${data.usage.prompt_tokens} completion=${data.usage.completion_tokens} total=${data.usage.total_tokens}`,
+      );
     }
   } catch (err) {
     const elapsed = Date.now() - start;
     if (err.name === 'TimeoutError' || err.name === 'AbortError') {
-      console.error(`[ERROR] Request timed out after ${elapsed}ms (limit ${TIMEOUT_MS / 1000}s)`);
+      console.error(
+        `[ERROR] Request timed out after ${elapsed}ms (limit ${TIMEOUT_MS / 1000}s)`,
+      );
     } else {
       console.error(`[ERROR] Fetch failed after ${elapsed}ms: ${err.message}`);
     }
@@ -216,29 +251,45 @@ async function run() {
     issues.push('overall_score missing or not a number');
   } else {
     if (!Number.isInteger(parsed.overall_score))
-      issues.push(`overall_score must be integer, got: ${parsed.overall_score}`);
+      issues.push(
+        `overall_score must be integer, got: ${parsed.overall_score}`,
+      );
     if (parsed.overall_score < 1 || parsed.overall_score > 100)
-      issues.push(`overall_score out of range [1-100]: ${parsed.overall_score}`);
+      issues.push(
+        `overall_score out of range [1-100]: ${parsed.overall_score}`,
+      );
   }
-  if (typeof parsed.model_answer !== 'string' || parsed.model_answer.trim() === '') issues.push('model_answer missing or empty');
-  if (typeof parsed.key_takeaway !== 'string') issues.push('key_takeaway missing');
+  if (
+    typeof parsed.model_answer !== 'string' ||
+    parsed.model_answer.trim() === ''
+  )
+    issues.push('model_answer missing or empty');
+  if (typeof parsed.key_takeaway !== 'string')
+    issues.push('key_takeaway missing');
   if (!Array.isArray(parsed.annotated_segments)) {
     issues.push('annotated_segments missing or not array');
   } else {
     for (const [i, seg] of parsed.annotated_segments.entries()) {
-      if (typeof seg.segment_text !== 'string') issues.push(`segment[${i}].segment_text missing`);
+      if (typeof seg.segment_text !== 'string')
+        issues.push(`segment[${i}].segment_text missing`);
       if (typeof seg.start_index !== 'number') {
         issues.push(`segment[${i}].start_index missing`);
       } else if (!Number.isInteger(seg.start_index)) {
-        issues.push(`segment[${i}].start_index must be integer, got: ${seg.start_index}`);
+        issues.push(
+          `segment[${i}].start_index must be integer, got: ${seg.start_index}`,
+        );
       }
       if (typeof seg.end_index !== 'number') {
         issues.push(`segment[${i}].end_index missing`);
       } else if (!Number.isInteger(seg.end_index)) {
-        issues.push(`segment[${i}].end_index must be integer, got: ${seg.end_index}`);
+        issues.push(
+          `segment[${i}].end_index must be integer, got: ${seg.end_index}`,
+        );
       }
       if (!['strength', 'improvement'].includes(seg.highlight_level))
-        issues.push(`segment[${i}].highlight_level invalid: "${seg.highlight_level}" (must be "strength" or "improvement")`);
+        issues.push(
+          `segment[${i}].highlight_level invalid: "${seg.highlight_level}" (must be "strength" or "improvement")`,
+        );
     }
   }
 
@@ -254,10 +305,14 @@ async function run() {
   console.log(`  overall_score      : ${parsed.overall_score}`);
   console.log(`  key_takeaway       : ${parsed.key_takeaway}`);
   console.log(`  model_answer       : ${parsed.model_answer.slice(0, 120)}...`);
-  console.log(`  annotated_segments : ${parsed.annotated_segments.length} segments`);
+  console.log(
+    `  annotated_segments : ${parsed.annotated_segments.length} segments`,
+  );
   for (const [i, seg] of parsed.annotated_segments.entries()) {
     const textPreview = seg.segment_text.slice(0, 60).replace(/\n/g, ' ');
-    console.log(`    [${i}] ${seg.highlight_level.padEnd(11)} [${seg.start_index}–${seg.end_index}] "${textPreview}..."`);
+    console.log(
+      `    [${i}] ${seg.highlight_level.padEnd(11)} [${seg.start_index}–${seg.end_index}] "${textPreview}..."`,
+    );
   }
   console.log(`\n[PASS] All checks passed.`);
 }

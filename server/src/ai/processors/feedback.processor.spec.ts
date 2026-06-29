@@ -163,7 +163,7 @@ describe('FeedbackProcessor', () => {
     await processor.process(makeJob());
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(mockSse.emit).toHaveBeenCalledTimes(1);
+    expect(mockSse.emit).toHaveBeenCalledTimes(2);
     expect(prisma.$transaction.mock.invocationCallOrder[0]).toBeLessThan(
       mockSse.emit.mock.invocationCallOrder[0],
     );
@@ -320,6 +320,39 @@ describe('FeedbackProcessor', () => {
       'turn.feedback_ready',
       { answerId: 'answer-1', hasAnnotations: true },
     );
+  });
+
+  it('SSE session.feedback_progress phát sau feedback_ready với payload progress hiện tại', async () => {
+    const progress = {
+      sessionId: 'session-123',
+      status: 'completing',
+      totalQuestions: 5,
+      answeredQuestions: 5,
+      skippedQuestions: 1,
+      feedbackRequired: 4,
+      feedbackCompleted: 3,
+      feedbackPending: 1,
+      reportReady: false,
+    };
+    mockReportService.getFeedbackProgress.mockResolvedValue(progress);
+
+    await processor.process(makeJob());
+
+    expect(mockReportService.getFeedbackProgress).toHaveBeenCalledWith(
+      'session-123',
+    );
+    expect(mockSse.emit).toHaveBeenNthCalledWith(
+      2,
+      'sse:session:session-123',
+      'session.feedback_progress',
+      progress,
+    );
+  });
+
+  it('FeedbackProcessor cấu hình concurrency mặc định là 2', () => {
+    expect(
+      Reflect.getMetadata('bullmq:worker_metadata', FeedbackProcessor),
+    ).toEqual(expect.objectContaining({ concurrency: 2 }));
   });
 
   it('technical session type: getStrategy nhận technical', async () => {

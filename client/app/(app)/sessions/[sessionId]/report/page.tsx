@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { apiClient } from "@/lib/api-client";
-import type { Report, Session } from "@/lib/types";
+import { apiClient, getAccessToken } from "@/lib/api-client";
+import type { FeedbackProgress, Report, Session } from "@/lib/types";
 import AnnotatedTranscript from "@/components/report/AnnotatedTranscript";
 import ActionPlanCard from "@/components/report/ActionPlanCard";
 import CompetencyScoreChart from "@/components/report/CompetencyScoreChart";
@@ -11,7 +11,8 @@ import SessionMetadataCard from "@/components/report/SessionMetadataCard";
 import ScoringMethodCard from "@/components/report/ScoringMethodCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
-const POLL_INTERVAL_MS = 5000;
+const REPORT_POLL_INTERVAL_MS = 5000;
+const PROGRESS_POLL_INTERVAL_MS = 2000;
 
 const EXECUTIVE_SUMMARY_LABELS: Record<string, string> = {
   overallScore: "Điểm tổng",
@@ -45,15 +46,62 @@ export default function ReportPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [report, setReport] = useState<Report | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [progress, setProgress] = useState<FeedbackProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const reportLoadedRef = useRef(false);
+
+  const applyProgress = useCallback((next: FeedbackProgress) => {
+    setProgress((prev) => {
+      if (!prev) return next;
+      const feedbackCompleted = Math.max(
+        prev.feedbackCompleted,
+        next.feedbackCompleted,
+      );
+      const feedbackRequired = Math.max(
+        prev.feedbackRequired,
+        next.feedbackRequired,
+      );
+      return {
+        ...next,
+        answeredQuestions: Math.max(
+          prev.answeredQuestions,
+          next.answeredQuestions,
+        ),
+        skippedQuestions: Math.max(
+          prev.skippedQuestions,
+          next.skippedQuestions,
+        ),
+        feedbackRequired,
+        feedbackCompleted,
+        feedbackPending: Math.max(0, feedbackRequired - feedbackCompleted),
+        reportReady: prev.reportReady || next.reportReady,
+      };
+    });
+  }, []);
+
+  const progressPercent = useMemo(() => {
+    if (!progress) return 0;
+    if (progress.feedbackRequired === 0) return 100;
+    return Math.min(
+      100,
+      Math.round(
+        (progress.feedbackCompleted / progress.feedbackRequired) * 100,
+      ),
+    );
+  }, [progress]);
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
+    let canceled = false;
+    let reportTimer: ReturnType<typeof setTimeout> | undefined;
+    let progressTimer: ReturnType<typeof setTimeout> | undefined;
+    let eventSource: EventSource | undefined;
 
     const sessionPromise = apiClient
       .get<Session>(`/sessions/${sessionId}`)
-      .then((data) => setSession(data))
+      .then((data) => {
+        if (!canceled) setSession(data);
+      })
       .catch(() => {});
 
     async function fetchReport() {
@@ -61,12 +109,18 @@ export default function ReportPage() {
         const data = await apiClient.get<Report>(
           `/sessions/${sessionId}/report`,
         );
+        if (canceled) return;
         await sessionPromise;
+        reportLoadedRef.current = true;
         setReport(data);
         setLoading(false);
+        setError(null);
+        if (reportTimer) clearTimeout(reportTimer);
+        if (progressTimer) clearTimeout(progressTimer);
       } catch (err: unknown) {
+        if (canceled) return;
         if (err instanceof Error && err.message.includes("REPORT_NOT_READY")) {
-          timer = setTimeout(fetchReport, POLL_INTERVAL_MS);
+          reportTimer = setTimeout(fetchReport, REPORT_POLL_INTERVAL_MS);
         } else {
           setError(
             err instanceof Error ? err.message : "Không thể tải báo cáo",
@@ -76,18 +130,86 @@ export default function ReportPage() {
       }
     }
 
-    fetchReport();
+    async function fetchProgress() {
+      try {
+        const data = await apiClient.get<FeedbackProgress>(
+          `/sessions/${sessionId}/feedback-progress`,
+        );
+        if (canceled || reportLoadedRef.current) return;
+        applyProgress(data);
+        if (data.reportReady) {
+          void fetchReport();
+          return;
+        }
+      } catch {
+        // Progress is best-effort; report polling/SSE still handles readiness.
+      } finally {
+        if (!canceled && !reportLoadedRef.current) {
+          progressTimer = setTimeout(fetchProgress, PROGRESS_POLL_INTERVAL_MS);
+        }
+      }
+    }
 
-    return () => clearTimeout(timer);
-  }, [sessionId]);
+    async function subscribeToProgress() {
+      const accessToken = await getAccessToken();
+      if (canceled || !accessToken) return;
+      const apiBase =
+        process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api/v1";
+      eventSource = new EventSource(
+        `${apiBase}/sessions/${sessionId}/events?token=${accessToken}`,
+      );
+      eventSource.addEventListener("session.feedback_progress", (event) => {
+        const data = JSON.parse(
+          (event as MessageEvent).data,
+        ) as FeedbackProgress;
+        applyProgress(data);
+        if (data.reportReady) void fetchReport();
+      });
+      eventSource.addEventListener("report.ready", () => {
+        void fetchReport();
+      });
+      eventSource.onerror = () => eventSource?.close();
+    }
+
+    fetchReport();
+    fetchProgress();
+    void subscribeToProgress();
+
+    return () => {
+      canceled = true;
+      if (reportTimer) clearTimeout(reportTimer);
+      if (progressTimer) clearTimeout(progressTimer);
+      eventSource?.close();
+      reportLoadedRef.current = false;
+    };
+  }, [applyProgress, sessionId]);
 
   if (loading) {
+    const feedbackRequired = progress?.feedbackRequired ?? 0;
+    const feedbackCompleted = progress?.feedbackCompleted ?? 0;
+    const feedbackPending = progress?.feedbackPending ?? 0;
+    const progressLabel = progress
+      ? `Đã chấm ${feedbackCompleted}/${feedbackRequired} câu trả lời`
+      : "Đang kiểm tra tiến trình chấm điểm...";
+    const detailLabel = progress
+      ? feedbackPending > 0
+        ? `Còn ${feedbackPending} câu đang xử lý`
+        : "Đang tổng hợp báo cáo..."
+      : "AI đang chuẩn bị dữ liệu báo cáo.";
+
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-20">
+      <div className="mx-auto flex max-w-md flex-col items-center justify-center gap-4 px-4 py-20 text-center">
         <LoadingSpinner size="lg" />
-        <p className="text-sm text-ink-muted">
-          AI đang tạo báo cáo, vui lòng chờ...
-        </p>
+        <div className="w-full">
+          <p className="text-sm font-semibold text-ink">{progressLabel}</p>
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-brand-100">
+            <div
+              className="h-full rounded-full bg-brand transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <p className="mt-2 text-sm text-ink-muted">{detailLabel}</p>
+        </div>
       </div>
     );
   }
@@ -114,9 +236,9 @@ export default function ReportPage() {
           <div>
             <p className="text-2xl font-bold">Chưa thể chấm điểm</p>
             <p className="mt-2 text-sm text-brand-100">
-              {report.reportQuality === 'not_scorable'
-                ? 'Phiên này chưa có câu trả lời nào để chấm điểm.'
-                : 'Dịch vụ AI tạm thời chưa khả dụng. Câu trả lời của bạn vẫn đã được lưu.'}
+              {report.reportQuality === "not_scorable"
+                ? "Phiên này chưa có câu trả lời nào để chấm điểm."
+                : "Dịch vụ AI tạm thời chưa khả dụng. Câu trả lời của bạn vẫn đã được lưu."}
             </p>
           </div>
         ) : (
@@ -128,14 +250,16 @@ export default function ReportPage() {
       </div>
 
       <div className="flex flex-col gap-6">
-        {report.reportQuality === 'partial' && (
+        {report.reportQuality === "partial" && (
           <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
-            Một số câu trả lời không được AI chấm điểm tự động. Điểm tổng chỉ tính trên các câu đã đánh giá được.
+            Một số câu trả lời không được AI chấm điểm tự động. Điểm tổng chỉ
+            tính trên các câu đã đánh giá được.
           </div>
         )}
-        {report.reportQuality === 'not_scorable' && (
+        {report.reportQuality === "not_scorable" && (
           <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-            Bạn đã bỏ qua tất cả câu hỏi, nên báo cáo chỉ hiển thị câu trả lời đề xuất để tham khảo.
+            Bạn đã bỏ qua tất cả câu hỏi, nên báo cáo chỉ hiển thị câu trả lời
+            đề xuất để tham khảo.
           </div>
         )}
         {session && <SessionMetadataCard session={session} />}

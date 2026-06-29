@@ -215,7 +215,8 @@ describe('OpenAIGateway — empty response và task-specific timeout', () => {
         OPENAI_CHAT_MODEL: 'google/gemma-4-e4b',
         OPENAI_JSON_MODE: 'false',
         OPENAI_TIMEOUT_MS: '30000',
-        OPENAI_FEEDBACK_TIMEOUT_MS: '300000',
+        OPENAI_FEEDBACK_TIMEOUT_MS: '180000',
+        OPENAI_REPORT_TIMEOUT_MS: '180000',
         OPENAI_QUESTION_TIMEOUT_MS: '120000',
       };
       return values[key];
@@ -315,7 +316,7 @@ describe('OpenAIGateway — empty response và task-specific timeout', () => {
     expect(create).toHaveBeenCalledTimes(2);
   });
 
-  it('task feedback dùng OPENAI_FEEDBACK_TIMEOUT_MS (300s) cho AbortSignal', async () => {
+  it('task feedback dùng OPENAI_FEEDBACK_TIMEOUT_MS (180s) cho AbortSignal', async () => {
     const gateway = new OpenAIGateway(config as any);
     const mockSignal = { aborted: false } as unknown as AbortSignal;
     const timeoutSpy = jest
@@ -328,7 +329,24 @@ describe('OpenAIGateway — empty response và task-specific timeout', () => {
 
     await gateway.chatCompletion({ ...params, task: 'feedback' });
 
-    expect(timeoutSpy).toHaveBeenCalledWith(300000);
+    expect(timeoutSpy).toHaveBeenCalledWith(180000);
+    timeoutSpy.mockRestore();
+  });
+
+  it('task report dùng OPENAI_REPORT_TIMEOUT_MS (180s) cho AbortSignal', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const mockSignal = { aborted: false } as unknown as AbortSignal;
+    const timeoutSpy = jest
+      .spyOn(AbortSignal, 'timeout')
+      .mockReturnValue(mockSignal);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: '{"ok":true}' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await gateway.chatCompletion({ ...params, task: 'report' });
+
+    expect(timeoutSpy).toHaveBeenCalledWith(180000);
     timeoutSpy.mockRestore();
   });
 });
