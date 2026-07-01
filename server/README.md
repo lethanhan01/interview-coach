@@ -162,9 +162,9 @@ npm run verify:runtime
 
 ## Docker Compose
 
-`compose.yaml` (ở root repo) hiện chỉ dùng để chạy Redis. Backend NestJS chạy bằng npm trực tiếp.
+`docker-compose.yml` trong thư mục `server/` hiện chỉ dùng để chạy Redis. Backend NestJS chạy bằng npm trực tiếp.
 
-> **Không chạy** `docker compose up --build server` — service `server` đang bị tắt trong `compose.yaml`.
+> **Không chạy** `docker compose up --build server` — file Compose này không khai báo service `server`.
 
 ---
 
