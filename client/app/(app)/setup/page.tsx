@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import type {
   ContextPack,
+  OutputLanguage,
   SaveJobDescriptionPayload,
   SavedJobDescription,
   SessionType,
@@ -166,6 +167,10 @@ function toSavedJobDescriptionPayload(form: JdFormData): SaveJobDescriptionPaylo
     salary: optional(form.salary),
     bonus: optional(form.bonus),
   }
+}
+
+function resolveSessionLanguage(contextPack: ContextPack): OutputLanguage {
+  return contextPack === 'Western' ? 'en' : 'vi'
 }
 
 function savedJobDescriptionToForm(item: SavedJobDescription): JdFormData {
@@ -334,7 +339,7 @@ function SetupPageContent() {
         jobDescription,
         sessionType,
         contextPack,
-        language: 'vi',
+        language: resolveSessionLanguage(contextPack),
         numQuestions,
         targetRoles: [jd.position],
         savedJobDescriptionId: savedJobDescription.id,

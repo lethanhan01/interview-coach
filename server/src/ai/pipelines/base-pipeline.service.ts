@@ -46,8 +46,9 @@ export abstract class BasePipelineService implements InterviewPipeline {
       withStrategy,
       input.contextPackConfig,
     );
+    const withLanguage = `${withPack}\n\n${getLanguageInstruction(input.language)}`;
     const messages = this.promptBuilder.injectDynamicContext({
-      systemMessage: withPack,
+      systemMessage: withLanguage,
       jobDescription: input.jobDescriptionText,
       sessionType: input.sessionType,
       targetRoles: input.targetRoles,

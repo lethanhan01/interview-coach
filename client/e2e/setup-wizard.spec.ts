@@ -99,6 +99,22 @@ test('submit bước 3 redirect sang /sessions/:id', async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(`/sessions/${MOCK_SESSION_ID}`))
 })
 
+test('chọn Western gửi language=en khi tạo session', async ({ page }) => {
+  await page.goto('/setup')
+
+  await fillValidJd(page)
+  await page.getByRole('button', { name: 'Tiếp theo' }).click()
+  await page.getByRole('button', { name: 'Western' }).click()
+  await page.getByRole('button', { name: 'Tiếp theo' }).click()
+  await page.getByRole('button', { name: 'Bắt đầu phỏng vấn' }).click()
+
+  await expect.poll(() => sessionPayload).not.toBeNull()
+  expect(sessionPayload).toMatchObject({
+    contextPack: 'Western',
+    language: 'en',
+  })
+})
+
 test('có thể tìm kiếm, chọn và lưu các tech stack mới trong JD', async ({ page }) => {
   await page.goto('/setup')
 

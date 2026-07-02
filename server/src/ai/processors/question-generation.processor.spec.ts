@@ -106,6 +106,9 @@ describe('QuestionGenerationProcessor', () => {
     await processor.process(makeJob()); // totalQuestions=5
 
     expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
+    expect(mockStrategy.generateQuestions).toHaveBeenCalledWith(
+      expect.objectContaining({ language: 'vi' }),
+    );
     expect(
       mockQuestionBankService.selectFallbackQuestions,
     ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
@@ -148,6 +151,42 @@ describe('QuestionGenerationProcessor', () => {
       { status: 'active', sessionId: 'session-123' },
     );
     expect(mockQuestionBankService.recordUsage).toHaveBeenCalledTimes(4);
+  });
+
+  it('truyền language=en vào AI strategy và Question Bank khi session dùng Western', async () => {
+    const mockStrategy = {
+      generateQuestions: jest.fn().mockResolvedValue([
+        {
+          text: 'Tell me about a time you handled a conflict.',
+          category: 'behavioral',
+          competencyDomain: 'D4',
+        },
+      ]),
+    };
+    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockFactory.getStrategy.mockReturnValue(mockStrategy);
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+      makeFallbackQuestions(4),
+    );
+    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+    mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
+    mockSse.emit.mockResolvedValue(undefined);
+
+    await processor.process(
+      makeJob({
+        ...BASE_JOB_DATA,
+        contextPack: 'Western',
+        language: 'en',
+      } as any),
+    );
+
+    expect(mockContextPack.getContextPack).toHaveBeenCalledWith('Western');
+    expect(mockStrategy.generateQuestions).toHaveBeenCalledWith(
+      expect.objectContaining({ language: 'en' }),
+    );
+    expect(
+      mockQuestionBankService.selectFallbackQuestions,
+    ).toHaveBeenCalledWith('hr', 'Western', 4, 'en');
   });
 
   it('QG-04: chỉ lấy aiCount câu từ AI khi AI trả dư; tổng vẫn bằng totalQuestions', async () => {

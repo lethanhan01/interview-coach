@@ -16,6 +16,7 @@ export interface QuestionGenInput {
   jobDescriptionText: string;
   targetRoles: string[];
   contextPackConfig: ContextPackConfig;
+  language?: OutputLanguage;
   totalQuestions: number;
 }
 

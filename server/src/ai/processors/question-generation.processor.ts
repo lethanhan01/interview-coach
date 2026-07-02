@@ -9,6 +9,7 @@ import { QUESTION_GEN_QUEUE } from '../../common/constants/queue.constants';
 import { QuestionBankService } from '../../question-bank/question-bank.service';
 import type { FallbackQuestion } from '../../question-bank/question-bank.service';
 import { OpenAIGateway } from '../openai.gateway';
+import { resolveOutputLanguage } from '../output-language';
 import type {
   GeneratedQuestion,
   SessionType,
@@ -55,6 +56,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
       language,
       totalQuestions,
     } = job.data;
+    const outputLanguage = resolveOutputLanguage(language);
 
     const aiCount = Math.round(totalQuestions / AI_QUESTION_EVERY_N);
     const qbCount = totalQuestions - aiCount;
@@ -69,6 +71,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
         jobDescriptionText,
         targetRoles,
         contextPackConfig,
+        language: outputLanguage,
         totalQuestions: aiCount,
       });
       aiQuestions = aiQuestions.slice(0, aiCount);
@@ -95,7 +98,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
           userId,
           sessionType,
           contextPack,
-          language,
+          outputLanguage,
           totalQuestions,
         );
         if (await this.markActiveUnlessStopped(sessionId)) {
@@ -120,7 +123,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
         sessionType,
         contextPack,
         qbCount,
-        language,
+        outputLanguage,
       );
     } catch (qbError: unknown) {
       this.logger.error(
