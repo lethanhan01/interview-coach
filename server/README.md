@@ -113,33 +113,42 @@ Khi bật, `JwtAuthGuard` và `SseTokenGuard` inject mock user thay vì verify J
 | `npm run format` | Prettier --write |
 | `npm run prisma:generate` | Tạo lại Prisma Client |
 | `npm run db:validate` | Validate Prisma schema |
+| `npm run db:verify:pre` | Kiểm tra anomaly trước khi siết constraint/index raw SQL |
+| `npm run db:verify` | Kiểm tra RLS/policies/trigger/constraint/index sau khi apply raw SQL |
+| `npm run db:prepare-db-push-raw-sql` | Tạm gỡ raw constraint mà Prisma `db push` không quản lý, trước khi apply lại bằng `db:apply-sql` |
+| `npm run db:sync:full` | Flow đầy đủ: validate → verify pre → generate → prepare → db push → apply raw SQL → verify |
 | `npm run seed` | Seed dữ liệu mẫu (question bank, ...) |
 
 ---
 
-## Đồng bộ database schema (`db:sync`)
+## Đồng bộ database schema (`db:sync:full`)
 
 > **Không chạy thường xuyên.** Lệnh này thay đổi schema database thật — chỉ chạy khi có lý do cụ thể.
 
 Chạy khi:
 - Vừa thay đổi `prisma/schema.prisma`
-- Database local thiếu constraint hoặc column mới
+- Database local thiếu constraint, trigger, RLS policy, index hoặc column mới
 - Cần chuẩn bị unique constraint cho `user_answers`
+- Cần apply lại raw SQL trong `prisma/migrations/migration.sql` sau `prisma db push`
 
 ```powershell
-npm run db:sync
+npm run db:sync:full
 ```
 
-Lệnh thực hiện: `prisma generate` → `db:prepare-user-answer-unique` → `prisma db push`.
+Lệnh thực hiện: `db:validate` → `db:verify:pre` → `prisma generate` → `db:prepare-user-answer-unique` → `db:prepare-db-push-raw-sql` → `prisma db push` → `db:apply-sql` → `db:verify`.
 
-Với production hoặc dữ liệu quan trọng, chạy kiểm tra trước:
+`db:verify:pre` phải pass trước khi apply constraint mới. Các anomaly chặn migration gồm answer lệch session-question, session trỏ saved JD khác user, nhiều active resume cùng user, orphan soft refs trong `question_usage`, và dữ liệu vi phạm CHECK/range.
+
+Với production hoặc dữ liệu quan trọng, chạy thêm bài test copy trước khi sync:
 
 ```powershell
 npm run db:test-user-answer-migration
-npm run db:sync
+npm run db:sync:full
 ```
 
 Script test tạo schema tạm, sao chép dữ liệu thật, kiểm tra dedupe và constraint, rồi xóa schema tạm.
+
+`npm run db:sync` trỏ thẳng tới `db:sync:full` để tránh quên raw SQL. Nếu cần debug riêng phần Prisma, dùng `npm run db:sync:prisma`, nhưng phải chạy `npm run db:apply-sql && npm run db:verify` ngay sau đó.
 
 ---
 

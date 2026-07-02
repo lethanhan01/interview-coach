@@ -305,6 +305,11 @@ CREATE INDEX IF NOT EXISTS idx_saved_job_descriptions_user_company_title
 CREATE INDEX IF NOT EXISTS idx_interview_sessions_saved_jd
   ON interview_sessions(saved_job_description_id);
 
+-- resumes
+CREATE UNIQUE INDEX IF NOT EXISTS idx_resumes_one_active_per_user
+  ON resumes(user_id)
+  WHERE active = true;
+
 
 -- -----------------------------------------------------------------------------
 -- 4. Seed: context_packs
@@ -400,23 +405,88 @@ BEGIN
     WHERE conrelid = 'user_answers'::regclass
       AND conname = 'user_answers_session_id_question_id_key'
   ) THEN
-    ALTER TABLE user_answers
-      ADD CONSTRAINT user_answers_session_id_question_id_key
-      UNIQUE (session_id, question_id);
+    IF to_regclass('public.user_answers_session_id_question_id_key') IS NOT NULL THEN
+      ALTER TABLE user_answers
+        ADD CONSTRAINT user_answers_session_id_question_id_key
+        UNIQUE USING INDEX user_answers_session_id_question_id_key;
+    ELSE
+      ALTER TABLE user_answers
+        ADD CONSTRAINT user_answers_session_id_question_id_key
+        UNIQUE (session_id, question_id);
+    END IF;
   END IF;
 END
 $$;
 
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'session_questions'::regclass
+      AND conname = 'session_questions_id_session_id_key'
+  ) THEN
+    ALTER TABLE session_questions
+      ADD CONSTRAINT session_questions_id_session_id_key
+      UNIQUE (id, session_id);
+  END IF;
+END
+$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'user_answers'::regclass
+      AND conname = 'user_answers_question_session_match_fkey'
+  ) THEN
+    ALTER TABLE user_answers
+      ADD CONSTRAINT user_answers_question_session_match_fkey
+      FOREIGN KEY (question_id, session_id)
+      REFERENCES session_questions(id, session_id)
+      ON DELETE CASCADE
+      ON UPDATE CASCADE;
+  END IF;
+END
+$$;
+
+CREATE OR REPLACE FUNCTION enforce_session_saved_jd_owner()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.saved_job_description_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM saved_job_descriptions sjd
+    WHERE sjd.id = NEW.saved_job_description_id
+      AND sjd.user_id = NEW.user_id
+  ) THEN
+    RAISE EXCEPTION
+      'interview_sessions.saved_job_description_id must reference a saved_job_descriptions row owned by the same user'
+      USING ERRCODE = '23514';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_interview_sessions_saved_jd_owner
+  ON interview_sessions;
+CREATE TRIGGER trg_interview_sessions_saved_jd_owner
+  BEFORE INSERT OR UPDATE OF user_id, saved_job_description_id
+  ON interview_sessions
+  FOR EACH ROW
+  EXECUTE FUNCTION enforce_session_saved_jd_owner();
+
 
 -- -----------------------------------------------------------------------------
--- 7. CHECK constraints (enum-like columns)
+-- 7. CHECK constraints
 --    Prisma cannot express CHECK — apply here after every `prisma db push`.
 --    DROP IF EXISTS + ADD = idempotent, safe to re-run. See ADR-008.
---    Scope limited to columns with a stable, verified value set:
---      - interview_sessions.session_type (matches CreateSessionDto + seed)
---      - users.role                      (candidate = default, admin = RLS policies)
---    Deliberately excluded (volatile / single-value sets, high drift risk):
---      users.status, interview_sessions.status — enforced at application layer.
+--    Scope is limited to values/ranges currently written by code and seed data.
 -- -----------------------------------------------------------------------------
 
 ALTER TABLE interview_sessions
@@ -430,6 +500,89 @@ ALTER TABLE users
 ALTER TABLE users
   ADD CONSTRAINT chk_users_role
   CHECK (role IN ('candidate', 'admin'));
+
+ALTER TABLE interview_sessions
+  DROP CONSTRAINT IF EXISTS chk_interview_sessions_status;
+ALTER TABLE interview_sessions
+  ADD CONSTRAINT chk_interview_sessions_status
+  CHECK (status IN (
+    'generating',
+    'active',
+    'paused',
+    'canceled',
+    'completing',
+    'completed',
+    'error'
+  ));
+
+ALTER TABLE interview_sessions
+  DROP CONSTRAINT IF EXISTS chk_interview_sessions_num_questions;
+ALTER TABLE interview_sessions
+  ADD CONSTRAINT chk_interview_sessions_num_questions
+  CHECK (num_questions BETWEEN 3 AND 45);
+
+ALTER TABLE interview_sessions
+  DROP CONSTRAINT IF EXISTS chk_interview_sessions_duration_min;
+ALTER TABLE interview_sessions
+  ADD CONSTRAINT chk_interview_sessions_duration_min
+  CHECK (duration_min > 0);
+
+ALTER TABLE interview_sessions
+  DROP CONSTRAINT IF EXISTS chk_interview_sessions_overall_score;
+ALTER TABLE interview_sessions
+  ADD CONSTRAINT chk_interview_sessions_overall_score
+  CHECK (overall_score IS NULL OR overall_score BETWEEN 0 AND 100);
+
+ALTER TABLE question_bank
+  DROP CONSTRAINT IF EXISTS chk_question_bank_difficulty;
+ALTER TABLE question_bank
+  ADD CONSTRAINT chk_question_bank_difficulty
+  CHECK (difficulty BETWEEN 1 AND 5);
+
+ALTER TABLE question_bank
+  DROP CONSTRAINT IF EXISTS chk_question_bank_estimated_time_min;
+ALTER TABLE question_bank
+  ADD CONSTRAINT chk_question_bank_estimated_time_min
+  CHECK (estimated_time_min IS NULL OR estimated_time_min > 0);
+
+ALTER TABLE user_answers
+  DROP CONSTRAINT IF EXISTS chk_user_answers_answer_mode;
+ALTER TABLE user_answers
+  ADD CONSTRAINT chk_user_answers_answer_mode
+  CHECK (answer_mode IN ('text', 'voice'));
+
+ALTER TABLE user_answers
+  DROP CONSTRAINT IF EXISTS chk_user_answers_transcription_status;
+ALTER TABLE user_answers
+  ADD CONSTRAINT chk_user_answers_transcription_status
+  CHECK (
+    transcription_status IS NULL
+    OR transcription_status IN ('pending', 'done', 'failed')
+  );
+
+ALTER TABLE user_answers
+  DROP CONSTRAINT IF EXISTS chk_user_answers_audio_duration_seconds;
+ALTER TABLE user_answers
+  ADD CONSTRAINT chk_user_answers_audio_duration_seconds
+  CHECK (audio_duration_seconds IS NULL OR audio_duration_seconds >= 0);
+
+ALTER TABLE user_answers
+  DROP CONSTRAINT IF EXISTS chk_user_answers_audio_size_bytes;
+ALTER TABLE user_answers
+  ADD CONSTRAINT chk_user_answers_audio_size_bytes
+  CHECK (audio_size_bytes IS NULL OR audio_size_bytes >= 0);
+
+ALTER TABLE ai_feedbacks
+  DROP CONSTRAINT IF EXISTS chk_ai_feedbacks_overall_score;
+ALTER TABLE ai_feedbacks
+  ADD CONSTRAINT chk_ai_feedbacks_overall_score
+  CHECK (overall_score BETWEEN 0 AND 100);
+
+ALTER TABLE annotated_segments
+  DROP CONSTRAINT IF EXISTS chk_annotated_segments_offsets;
+ALTER TABLE annotated_segments
+  ADD CONSTRAINT chk_annotated_segments_offsets
+  CHECK (start_index >= 0 AND end_index >= start_index);
 
 
 -- -----------------------------------------------------------------------------
@@ -501,6 +654,18 @@ CREATE TABLE IF NOT EXISTS "session_reports" (
 
 CREATE INDEX IF NOT EXISTS "session_reports_session_id_idx"
   ON "session_reports"("session_id");
+
+ALTER TABLE session_reports
+  DROP CONSTRAINT IF EXISTS chk_session_reports_report_type;
+ALTER TABLE session_reports
+  ADD CONSTRAINT chk_session_reports_report_type
+  CHECK (report_type IN (
+    'executive_summary',
+    'comm_analysis',
+    'competency_heatmap',
+    'action_plan',
+    'skipped_answers'
+  ));
 
 DO $$
 BEGIN
@@ -576,19 +741,19 @@ CREATE POLICY "Users can read own session reports" ON "session_reports"
 --     Idempotent: each step is guarded.
 -- =============================================================================
 
--- Step 1: Convert any remaining 'mixed' values (idempotent via WHERE)
-UPDATE question_bank
-SET session_type = CASE
-  WHEN competency_domain LIKE 'TD%' THEN 'technical'
-  ELSE 'hr'
-END
-WHERE session_type = 'mixed';
-
--- Step 2: Create enum type (idempotent)
+-- Step 1: Create enum type (idempotent)
 DO $$ BEGIN
   CREATE TYPE "QuestionSessionType" AS ENUM ('hr', 'technical');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
+
+-- Step 2: Convert any remaining 'mixed' values (idempotent via WHERE)
+UPDATE question_bank
+SET session_type = (CASE
+  WHEN competency_domain LIKE 'TD%' THEN 'technical'
+  ELSE 'hr'
+END)::"QuestionSessionType"
+WHERE session_type::text = 'mixed';
 
 -- Step 3: Change column type to enum (idempotent — guard on current column type)
 DO $$ BEGIN

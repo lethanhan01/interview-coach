@@ -1,6 +1,6 @@
 # Database — Current State Snapshot
 
-> Source of truth: `server/prisma/schema.prisma`. Last sync: 2026-06-27.
+> Source of truth: `server/prisma/schema.prisma` + raw SQL in `server/prisma/migrations/migration.sql`. Last reviewed: 2026-07-03.
 > Design docs (01–08) phản ánh intent thiết kế ban đầu; file này phản ánh trạng thái thực tế đã được apply lên DB.
 
 **Engine:** PostgreSQL 15 via Supabase  
@@ -15,12 +15,12 @@
 | # | Điểm khác biệt | Design doc nói | Schema thực tế |
 |---|---------------|----------------|----------------|
 | D1 | `session_type` enum | `hr_behavioral \| technical \| mixed` | `hr \| technical \| mixed` |
-| D2 | Migration tool | `prisma migrate dev` (tạo migration files) | `prisma db push` (không có SQL migration files) |
+| D2 | Migration tool | `prisma migrate dev` (tạo migration files) | `prisma db push` + `db:apply-sql` qua `db:sync:full` |
 | D3 | `question_usage` table | Không có trong thiết kế gốc | Đã tạo (T2/T3) — usage tracking cho question_bank |
 | D4 | `question_bank` fields | 9 data columns | 13 data columns — thêm: `tags`, `estimated_time_min`, `translations`, `content_json` |
 | D5 | `user_profiles` fields | 13 columns | 14 columns — giữ profile phỏng vấn; 5 PII fields đã bỏ ở T10, 6 CV fields đã tách sang `resumes` ở T12 |
 | D6 | `reverse_questions` | MVP (Layer 4) | Chưa implement — không có trong schema.prisma |
-| D7 | Partial indexes | Raw SQL files riêng | Inline trong schema.prisma qua `where: raw(...)` (Prisma 5 GA) |
+| D7 | Partial indexes | Raw SQL files riêng | Prisma schema cho một số partial index; raw SQL cho `resumes(user_id) WHERE active = true` |
 | D8 | `QuestionUsage` indexes | `sort: Desc` trong plan | Đã bỏ `sort: Desc` — Prisma IDE extension báo lỗi |
 | D9 | Report JSON columns | 6 JSONB columns trên `interview_sessions` | Đã tách sang `session_reports` ở T13 |
 
@@ -33,7 +33,7 @@ context_packs ──< question_bank ──< session_questions >── interview_
                         │                                        │
                         └──< question_usage             user_answers ──── ai_feedbacks ──< annotated_segments
                                                               │
-                                                    follow_up_questions
+                                                    (follow-up chưa implement)
 
 users ──── user_profiles
   └──< resumes
@@ -125,8 +125,8 @@ Prisma model: `QuestionUsage`
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
 | question_bank_id | UUID FK | — | NO | → question_bank.id ON DELETE CASCADE |
-| session_id | UUID | — | YES | Soft ref — không có FK constraint |
-| user_id | UUID | — | NO | Không có FK constraint (intentional) |
+| session_id | UUID | — | YES | Soft ref — không có FK constraint; `db:verify` phát hiện orphan |
+| user_id | UUID | — | NO | Soft ref intentional; `db:verify` phát hiện orphan |
 | used_at | TIMESTAMPTZ | now() | NO | |
 
 Indexes (sort: Desc bị bỏ — *D8*):
@@ -198,6 +198,7 @@ Structured CV/profile evidence tách khỏi `user_profiles`. API profile hiện 
 
 Indexes:
 - `resumes_user_id_active_idx` on `(user_id, active)`
+- `idx_resumes_one_active_per_user` partial unique on `(user_id)` WHERE `active = true`
 
 ---
 
@@ -209,7 +210,7 @@ Session config + lifecycle state. Report payload đã tách sang `session_report
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
 | user_id | UUID FK | — | NO | → users.id ON DELETE CASCADE |
-| saved_job_description_id | UUID FK | — | YES | → saved_job_descriptions.id ON DELETE SET NULL |
+| saved_job_description_id | UUID FK | — | YES | → saved_job_descriptions.id ON DELETE SET NULL; trigger đảm bảo JD cùng `user_id` |
 | job_description | TEXT | — | NO | |
 | jd_source | TEXT | — | NO | |
 | jd_url | TEXT | — | YES | |
@@ -223,9 +224,9 @@ Session config + lifecycle state. Report payload đã tách sang `session_report
 | language | TEXT | 'vi' | NO | |
 | context_pack_id | TEXT FK | — | NO | → context_packs.id |
 | show_prep_card | BOOLEAN | false | NO | |
-| status | TEXT | 'generating' | NO | |
+| status | TEXT | 'generating' | NO | CHECK ∈ `{generating, active, paused, canceled, completing, completed, error}` |
 | opening_transcript | TEXT | — | YES | |
-| overall_score | INT | — | YES | |
+| overall_score | INT | — | YES | CHECK NULL hoặc 0–100 |
 | completed_at | TIMESTAMPTZ | — | YES | |
 | created_at | TIMESTAMPTZ | now() | NO | |
 | updated_at | TIMESTAMPTZ | now() | NO | Auto-update |
@@ -246,7 +247,7 @@ Normalized report storage. Comprehensive report processor writes one row per rep
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
 | session_id | UUID FK | — | NO | → interview_sessions.id ON DELETE CASCADE |
-| report_type | TEXT | — | NO | `executive_summary`, `comm_analysis`, `competency_heatmap`, `action_plan` |
+| report_type | TEXT | — | NO | CHECK ∈ `{executive_summary, comm_analysis, competency_heatmap, action_plan, skipped_answers}` |
 | version | INT | 1 | NO | |
 | content_json | JSONB | — | NO | Payload của report part |
 | generated_by_model | TEXT | — | YES | Reserved for model attribution |
@@ -291,20 +292,20 @@ Câu trả lời per turn — voice (transcript + audio URL) hoặc text. Append
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
 | session_id | UUID FK | — | NO | → interview_sessions.id ON DELETE CASCADE |
-| question_id | UUID FK | — | NO | → session_questions.id ON DELETE CASCADE |
-| answer_mode | TEXT | — | NO | `'voice' \| 'text'` |
+| question_id | UUID FK | — | NO | → session_questions.id ON DELETE CASCADE; composite FK `(question_id, session_id)` đảm bảo question cùng session |
+| answer_mode | TEXT | — | NO | CHECK ∈ `{voice, text}` |
 | answer_text | TEXT | — | NO | Transcript hoặc direct text |
 | audio_file_url | TEXT | — | YES | |
 | audio_duration_seconds | INT | — | YES | |
 | audio_size_bytes | INT | — | YES | |
 | skipped | BOOLEAN | false | NO | |
 | voice_metrics_json | JSONB | — | YES | |
-| transcription_status | TEXT | — | YES | Trạng thái STT (mới thêm) |
+| transcription_status | TEXT | — | YES | CHECK NULL hoặc ∈ `{pending, done, failed}` |
 | feedback_generated | BOOLEAN | false | NO | |
 | created_at | TIMESTAMPTZ | now() | NO | |
 | updated_at | TIMESTAMPTZ | now() | NO | Auto-update |
 
-Unique: `(session_id, question_id)`.  
+Unique: `(session_id, question_id)`. DB cũng có unique `(session_questions.id, session_questions.session_id)` để hỗ trợ composite FK.  
 Indexes:
 - `idx_user_answers_question_id` on `(question_id)`
 - `idx_user_answers_session_id` on `(session_id)`
@@ -335,7 +336,7 @@ Surgical feedback output. Một-một với user_answers.
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
 | user_answer_id | UUID UNIQUE FK | — | NO | → user_answers.id ON DELETE CASCADE |
-| overall_score | INT | — | NO | |
+| overall_score | INT | — | NO | CHECK 0–100 |
 | model_answer | TEXT | — | NO | |
 | key_takeaway | TEXT | — | NO | |
 | prompt_version | TEXT | — | NO | |
@@ -355,9 +356,9 @@ Từng đoạn highlight trong transcript.
 | id | UUID PK | gen_random_uuid() | NO | |
 | ai_feedback_id | UUID FK | — | NO | → ai_feedbacks.id ON DELETE CASCADE |
 | segment_text | TEXT | — | NO | |
-| start_index | INT | — | NO | Char offset trong answer_text |
-| end_index | INT | — | NO | |
-| highlight_level | TEXT | — | NO | `'good' \| 'warning' \| 'critical'` |
+| start_index | INT | — | NO | Char offset trong answer_text; CHECK ≥ 0 |
+| end_index | INT | — | NO | CHECK `end_index >= start_index` |
+| highlight_level | TEXT | — | NO | Pipeline hiện ghi `strength` hoặc `improvement`; chưa CHECK vì text hiển thị có thể đổi |
 | annotation | TEXT | — | NO | |
 | suggestion | TEXT | — | YES | |
 | improved_version | TEXT | — | YES | |
@@ -411,9 +412,9 @@ Indexes (có `sort: Desc` — pre-existing, khác với QuestionUsage *D8*):
 |---------|--------|
 | Soft delete (`deleted_at`) | `users`, `user_profiles`, `question_bank` |
 | Cascade delete | Tất cả child tables theo chuỗi answer → feedback → segments |
-| No FK (intentional) | `ai_quality_log.session_id`, `question_usage.user_id`, `question_usage.session_id` |
+| No FK (intentional) | `ai_quality_log.session_id`, `question_usage.user_id`, `question_usage.session_id` — kiểm soát bằng `npm run db:verify` |
 | `updated_at` (auto via `@updatedAt`) | `users`, `user_profiles`, `interview_sessions`, `question_bank`, `user_answers` |
 | Partial indexes (`WHERE deleted_at IS NULL`) | `question_bank` (2 indexes) |
-| Partial index (`WHERE col IS NOT NULL`) | `ai_feedbacks` (1 index) |
-| CHECK constraints (raw SQL, `migration.sql` §7) | `interview_sessions.session_type` ∈ `{hr,technical,mixed}`; `users.role` ∈ `{candidate,admin}` — Prisma không express CHECK, apply thủ công sau `db push` (ADR-008) |
-| Enforce ở application layer (không CHECK) | `users.status`, `interview_sessions.status` — tập giá trị biến động/đơn trị, validate qua DTO + `ValidationPipe` |
+| Partial indexes | `ai_feedbacks(user_answer_id) WHERE user_answer_id IS NOT NULL`; `resumes(user_id) WHERE active = true` UNIQUE |
+| Cross-row integrity outside Prisma schema | `user_answers(question_id, session_id)` composite FK; `interview_sessions.saved_job_description_id` same-user trigger |
+| CHECK constraints (raw SQL, `migration.sql` §7) | role/status/type/range/score/audio/report/offset constraints — apply thủ công sau `db push` (ADR-008) |

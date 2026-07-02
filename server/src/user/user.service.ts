@@ -88,15 +88,11 @@ export class UserService {
     });
 
     if (existing) {
-      const merged = {
-        ...(existing.parsedJson as Record<string, unknown> | null),
-        ...patch,
-      };
-      await this.prisma.resume.update({
-        where: { id: existing.id },
-        data: { parsedJson: merged as Prisma.InputJsonObject },
-      });
-    } else {
+      await this.updateResumeJson(existing.id, existing.parsedJson, patch);
+      return;
+    }
+
+    try {
       await this.prisma.resume.create({
         data: {
           userId,
@@ -105,7 +101,39 @@ export class UserService {
           active: true,
         },
       });
+    } catch (error: unknown) {
+      if (!this.isUniqueConstraintError(error)) throw error;
+
+      const activeResume = await this.prisma.resume.findFirst({
+        where: { userId, active: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (!activeResume) throw error;
+
+      await this.updateResumeJson(activeResume.id, activeResume.parsedJson, patch);
     }
+  }
+
+  private async updateResumeJson(
+    id: string,
+    parsedJson: Prisma.JsonValue,
+    patch: Record<string, unknown>,
+  ) {
+    const merged = {
+      ...(parsedJson as Record<string, unknown> | null),
+      ...patch,
+    };
+    await this.prisma.resume.update({
+      where: { id },
+      data: { parsedJson: merged as Prisma.InputJsonObject },
+    });
+  }
+
+  private isUniqueConstraintError(error: unknown) {
+    return (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    );
   }
 
   /** Trải parsed_json của resume active vào object profile, bỏ mảng resumes khỏi response. */
