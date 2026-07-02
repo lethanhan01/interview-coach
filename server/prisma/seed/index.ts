@@ -3,8 +3,6 @@ import { seedContextPacks } from './00-context-packs';
 import { getOrCreateDemoUser, seedUserProfile } from './01-users';
 import { seedQuestionBank } from './02-question-bank';
 import { seedKaggleQuestions } from './02b-kaggle-questions';
-import { seedSessions } from './03-sessions';
-import { seedAiQualityLog } from './04-ai-quality-log';
 import { seedSavedJobDescriptions } from './05-saved-job-descriptions';
 
 async function main(): Promise<void> {
@@ -17,8 +15,6 @@ async function main(): Promise<void> {
 
   await seedQuestionBank(prisma);
   await seedKaggleQuestions(prisma);
-  const sessionIds = await seedSessions(prisma, userId);
-  await seedAiQualityLog(prisma, sessionIds);
   await seedSavedJobDescriptions(prisma, userId);
 
   console.log('=== Seed complete ===');
