@@ -16,6 +16,9 @@ import { SessionStatusUpdate } from './dto/update-session-status.dto';
 import { ReportService } from '../report/report.service';
 import { resolveOutputLanguage } from '../ai/output-language';
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 @Injectable()
 export class SessionService {
   private readonly logger = new Logger(SessionService.name);
@@ -128,6 +131,13 @@ export class SessionService {
   }
 
   async findById(sessionId: string, userId: string): Promise<InterviewSession> {
+    if (!UUID_PATTERN.test(sessionId)) {
+      throw new InterviewAIException(
+        ErrorCode.SESSION_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
     });

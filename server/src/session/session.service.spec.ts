@@ -17,7 +17,7 @@ import {
 } from '../test-utils/mock-factories';
 
 const BASE_SESSION = {
-  id: 'session-123',
+  id: '11111111-1111-4111-8111-111111111111',
   userId: 'user-abc',
   savedJobDescriptionId: null,
   jobDescription: 'a'.repeat(100),
@@ -114,7 +114,7 @@ describe('SessionService', () => {
       expect(mockQuestionQueue.add).toHaveBeenCalledWith(
         'question-generation',
         {
-          sessionId: 'session-123',
+          sessionId: '11111111-1111-4111-8111-111111111111',
           sessionType: 'hr',
           jobDescriptionText: CREATE_DTO.jobDescription,
           targetRoles: [],
@@ -298,20 +298,26 @@ describe('SessionService', () => {
   describe('findById', () => {
     it('trả về session khi tồn tại và user là chủ sở hữu', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
-      const result = await service.findById('session-123', 'user-abc');
+      const result = await service.findById(
+        '11111111-1111-4111-8111-111111111111',
+        'user-abc',
+      );
       expect(result).toEqual(BASE_SESSION);
     });
 
     it('throw SESSION_NOT_FOUND (404) khi session không tồn tại', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
 
-      await expect(service.findById('bad-id', 'user-abc')).rejects.toThrow(
-        InterviewAIException,
-      );
+      await expect(
+        service.findById('33333333-3333-4333-8333-333333333333', 'user-abc'),
+      ).rejects.toThrow(InterviewAIException);
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
       try {
-        await service.findById('bad-id', 'user-abc');
+        await service.findById(
+          '33333333-3333-4333-8333-333333333333',
+          'user-abc',
+        );
       } catch (e) {
         expect((e as InterviewAIException).errorCode).toBe(
           ErrorCode.SESSION_NOT_FOUND,
@@ -322,16 +328,28 @@ describe('SessionService', () => {
       }
     });
 
+    it('throw SESSION_NOT_FOUND (404) và không gọi Prisma khi session id không phải UUID', async () => {
+      await expect(
+        service.findById('session-abc123', 'user-abc'),
+      ).rejects.toMatchObject({
+        errorCode: ErrorCode.SESSION_NOT_FOUND,
+      });
+      expect(mockPrisma.interviewSession.findUnique).not.toHaveBeenCalled();
+    });
+
     it('throw FORBIDDEN (403) khi user không phải chủ sở hữu', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
 
       await expect(
-        service.findById('session-123', 'other-user'),
+        service.findById('11111111-1111-4111-8111-111111111111', 'other-user'),
       ).rejects.toThrow(InterviewAIException);
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
       try {
-        await service.findById('session-123', 'other-user');
+        await service.findById(
+          '11111111-1111-4111-8111-111111111111',
+          'other-user',
+        );
       } catch (e) {
         expect((e as InterviewAIException).errorCode).toBe(ErrorCode.FORBIDDEN);
         expect((e as InterviewAIException).getStatus()).toBe(
@@ -343,7 +361,10 @@ describe('SessionService', () => {
 
   describe('findAll', () => {
     it('trả về danh sách sessions theo createdAt desc', async () => {
-      const sessions = [BASE_SESSION, { ...BASE_SESSION, id: 'session-456' }];
+      const sessions = [
+        BASE_SESSION,
+        { ...BASE_SESSION, id: '22222222-2222-4222-8222-222222222222' },
+      ];
       mockPrisma.interviewSession.findMany.mockResolvedValue(sessions);
 
       const result = await service.findAll('user-abc');
@@ -370,13 +391,13 @@ describe('SessionService', () => {
       mockPrisma.interviewSession.update.mockResolvedValue(updated);
 
       const result = await service.updateStatus(
-        'session-123',
+        '11111111-1111-4111-8111-111111111111',
         'user-abc',
         'active',
       );
       expect(result.status).toBe('active');
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
-        where: { id: 'session-123' },
+        where: { id: '11111111-1111-4111-8111-111111111111' },
         data: { status: 'active', completedAt: null },
       });
     });
@@ -391,14 +412,14 @@ describe('SessionService', () => {
       mockReportService.enqueueIfAllFeedbacksReady.mockResolvedValue(undefined);
 
       const result = await service.updateStatus(
-        'session-123',
+        '11111111-1111-4111-8111-111111111111',
         'user-abc',
         'completed',
       );
 
       expect(result.status).toBe('completing');
       expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
-        'session-123',
+        '11111111-1111-4111-8111-111111111111',
         'hr',
         'VN',
         'vi',
@@ -411,7 +432,11 @@ describe('SessionService', () => {
       mockPrisma.sessionQuestion.count.mockResolvedValue(5);
       mockPrisma.interviewSession.update.mockResolvedValue(updated);
 
-      await service.updateStatus('session-123', 'user-abc', 'active');
+      await service.updateStatus(
+        '11111111-1111-4111-8111-111111111111',
+        'user-abc',
+        'active',
+      );
 
       expect(
         mockReportService.enqueueIfAllFeedbacksReady,
@@ -425,14 +450,14 @@ describe('SessionService', () => {
       mockPrisma.interviewSession.update.mockResolvedValue(pausedSession);
 
       const result = await service.updateStatus(
-        'session-123',
+        '11111111-1111-4111-8111-111111111111',
         'user-abc',
         'paused',
       );
 
       expect(result.status).toBe('paused');
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
-        where: { id: 'session-123' },
+        where: { id: '11111111-1111-4111-8111-111111111111' },
         data: { status: 'paused', completedAt: null },
       });
     });
@@ -445,14 +470,14 @@ describe('SessionService', () => {
       mockPrisma.interviewSession.update.mockResolvedValue(activeSession);
 
       const result = await service.updateStatus(
-        'session-123',
+        '11111111-1111-4111-8111-111111111111',
         'user-abc',
         'active',
       );
 
       expect(result.status).toBe('active');
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
-        where: { id: 'session-123' },
+        where: { id: '11111111-1111-4111-8111-111111111111' },
         data: { status: 'active', completedAt: null },
       });
     });
@@ -464,14 +489,14 @@ describe('SessionService', () => {
       mockPrisma.interviewSession.update.mockResolvedValue(canceledSession);
 
       const result = await service.updateStatus(
-        'session-123',
+        '11111111-1111-4111-8111-111111111111',
         'user-abc',
         'canceled',
       );
 
       expect(result.status).toBe('canceled');
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
-        where: { id: 'session-123' },
+        where: { id: '11111111-1111-4111-8111-111111111111' },
         data: { status: 'canceled', completedAt: null },
       });
     });
@@ -483,7 +508,11 @@ describe('SessionService', () => {
       });
 
       await expect(
-        service.updateStatus('session-123', 'user-abc', 'canceled'),
+        service.updateStatus(
+          '11111111-1111-4111-8111-111111111111',
+          'user-abc',
+          'canceled',
+        ),
       ).rejects.toMatchObject({
         errorCode: ErrorCode.INVALID_SESSION_TRANSITION,
       });
@@ -494,7 +523,11 @@ describe('SessionService', () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
 
       await expect(
-        service.updateStatus('session-123', 'user-abc', 'completed'),
+        service.updateStatus(
+          '11111111-1111-4111-8111-111111111111',
+          'user-abc',
+          'completed',
+        ),
       ).rejects.toMatchObject({
         errorCode: ErrorCode.INVALID_SESSION_TRANSITION,
       });
@@ -509,7 +542,11 @@ describe('SessionService', () => {
       });
 
       await expect(
-        service.updateStatus('session-123', 'user-abc', 'active'),
+        service.updateStatus(
+          '11111111-1111-4111-8111-111111111111',
+          'user-abc',
+          'active',
+        ),
       ).rejects.toMatchObject({
         errorCode: ErrorCode.INVALID_SESSION_TRANSITION,
       });
@@ -525,7 +562,11 @@ describe('SessionService', () => {
       mockPrisma.userAnswer.count.mockResolvedValue(4);
 
       await expect(
-        service.updateStatus('session-123', 'user-abc', 'completed'),
+        service.updateStatus(
+          '11111111-1111-4111-8111-111111111111',
+          'user-abc',
+          'completed',
+        ),
       ).rejects.toMatchObject({ errorCode: ErrorCode.SESSION_INCOMPLETE });
       expect(
         mockReportService.enqueueIfAllFeedbacksReady,
@@ -537,7 +578,7 @@ describe('SessionService', () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(completed);
 
       const result = await service.updateStatus(
-        'session-123',
+        '11111111-1111-4111-8111-111111111111',
         'user-abc',
         'completed',
       );
@@ -553,13 +594,17 @@ describe('SessionService', () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(completing);
       mockReportService.enqueueIfAllFeedbacksReady.mockResolvedValue(undefined);
 
-      await service.updateStatus('session-123', 'user-abc', 'completed');
+      await service.updateStatus(
+        '11111111-1111-4111-8111-111111111111',
+        'user-abc',
+        'completed',
+      );
 
       expect(
         mockReportService.enqueueIfAllFeedbacksReady,
       ).toHaveBeenCalledTimes(1);
       expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
-        'session-123',
+        '11111111-1111-4111-8111-111111111111',
         'hr',
         'VN',
         'vi',
@@ -578,24 +623,27 @@ describe('SessionService', () => {
           id: 'q-1',
           questionText: 'Giới thiệu bản thân?',
           orderIndex: 1,
-          sessionId: 'session-123',
+          sessionId: '11111111-1111-4111-8111-111111111111',
         },
         {
           id: 'q-2',
           questionText: 'Điểm mạnh của bạn?',
           orderIndex: 2,
-          sessionId: 'session-123',
+          sessionId: '11111111-1111-4111-8111-111111111111',
         },
       ]);
 
-      const result = await service.findQuestions('session-123', 'user-abc');
+      const result = await service.findQuestions(
+        '11111111-1111-4111-8111-111111111111',
+        'user-abc',
+      );
 
       expect(result).toEqual([
         { id: 'q-1', content: 'Giới thiệu bản thân?', orderIndex: 1 },
         { id: 'q-2', content: 'Điểm mạnh của bạn?', orderIndex: 2 },
       ]);
       expect(mockPrisma.sessionQuestion.findMany).toHaveBeenCalledWith({
-        where: { sessionId: 'session-123' },
+        where: { sessionId: '11111111-1111-4111-8111-111111111111' },
         orderBy: { orderIndex: 'asc' },
       });
       expect(mockPrisma.interviewSession.update).not.toHaveBeenCalled();
@@ -611,7 +659,7 @@ describe('SessionService', () => {
           id: 'q-1',
           questionText: 'Giới thiệu bản thân?',
           orderIndex: 1,
-          sessionId: 'session-123',
+          sessionId: '11111111-1111-4111-8111-111111111111',
         },
       ]);
       mockPrisma.interviewSession.update.mockResolvedValue({
@@ -619,10 +667,13 @@ describe('SessionService', () => {
         status: 'active',
       });
 
-      await service.findQuestions('session-123', 'user-abc');
+      await service.findQuestions(
+        '11111111-1111-4111-8111-111111111111',
+        'user-abc',
+      );
 
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
-        where: { id: 'session-123' },
+        where: { id: '11111111-1111-4111-8111-111111111111' },
         data: { status: 'active' },
       });
     });
@@ -637,7 +688,7 @@ describe('SessionService', () => {
           id: 'q-1',
           questionText: 'Giới thiệu bản thân?',
           orderIndex: 1,
-          sessionId: 'session-123',
+          sessionId: '11111111-1111-4111-8111-111111111111',
         },
       ]);
       mockPrisma.interviewSession.update.mockResolvedValue({
@@ -645,10 +696,13 @@ describe('SessionService', () => {
         status: 'active',
       });
 
-      await service.findQuestions('session-123', 'user-abc');
+      await service.findQuestions(
+        '11111111-1111-4111-8111-111111111111',
+        'user-abc',
+      );
 
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
-        where: { id: 'session-123' },
+        where: { id: '11111111-1111-4111-8111-111111111111' },
         data: { status: 'active' },
       });
     });
@@ -657,7 +711,10 @@ describe('SessionService', () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.findQuestions('nonexistent', 'user-abc'),
+        service.findQuestions(
+          '33333333-3333-4333-8333-333333333333',
+          'user-abc',
+        ),
       ).rejects.toThrow(InterviewAIException);
     });
 
@@ -668,7 +725,10 @@ describe('SessionService', () => {
       });
 
       await expect(
-        service.findQuestions('session-123', 'user-abc'),
+        service.findQuestions(
+          '11111111-1111-4111-8111-111111111111',
+          'user-abc',
+        ),
       ).rejects.toThrow(InterviewAIException);
     });
   });
