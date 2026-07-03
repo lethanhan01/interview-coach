@@ -15,6 +15,7 @@
     "db:test-user-answer-migration": "ts-node prisma/test-user-answer-deduplication-copy.ts",
     "db:verify:pre": "ts-node prisma/verify-db-hardening.ts --phase=pre",
     "db:verify": "ts-node prisma/verify-db-hardening.ts --phase=post",
+    "db:cleanup-ai-question-metadata": "ts-node prisma/cleanup-ai-question-metadata.ts",
     "db:test-constraints": "ts-node prisma/test-db-hardening-constraints.ts",
     "db:sync": "npm run db:sync:full",
     "db:sync:prisma": "prisma generate && npm run db:prepare-user-answer-unique && npm run db:prepare-db-push-raw-sql && prisma db push",

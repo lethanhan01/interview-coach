@@ -51,6 +51,8 @@ describe('PromptBuilderService', () => {
       const contextPack = {
         culturalNotes: 'Tôn trọng cấp trên',
         rubricDimensions: ['communication', 'technical'],
+        behavioralDimensions: [{ id: 'D1', name: 'Communication' }],
+        technicalDimensions: [{ id: 'TD1', name: 'Fundamentals' }],
       } as any;
 
       const result = service.applyContextPack(base, contextPack);
@@ -59,17 +61,21 @@ describe('PromptBuilderService', () => {
       expect(result).toContain('Tôn trọng cấp trên');
     });
 
-    it('output chứa prefix đúng "Cultural context:" và "Scoring dimensions:"', () => {
+    it('output chứa metadata contract và allowed rubric IDs', () => {
       const base = 'base-system';
       const contextPack = {
         culturalNotes: 'Teamwork culture',
         rubricDimensions: ['dim1', 'dim2', 'dim3'],
+        behavioralDimensions: [{ id: 'D1', name: 'Communication' }],
+        technicalDimensions: [{ id: 'TD1', name: 'Fundamentals' }],
       } as any;
 
       const result = service.applyContextPack(base, contextPack);
 
       expect(result).toContain('Cultural context: Teamwork culture');
-      expect(result).toContain('Scoring dimensions: dim1, dim2, dim3.');
+      expect(result).toContain('Question metadata contract');
+      expect(result).toContain('D1=Communication');
+      expect(result).toContain('TD1=Fundamentals');
     });
   });
 
@@ -195,6 +201,22 @@ describe('PromptBuilderService', () => {
 
       expect(content).toContain('Giới thiệu bản thân?');
       expect(content).toContain('Tôi là developer');
+    });
+
+    it('bao gồm question_metadata khi feedback cung cấp category/domain', () => {
+      const messages = service.injectDynamicContext({
+        systemMessage: 'sys',
+        jobDescription: '',
+        question: 'Tell me about a challenge',
+        questionCategory: 'behavioral',
+        competencyDomain: 'D2',
+        answer: 'I handled an incident calmly.',
+      });
+      const content = messages[1].content as string;
+
+      expect(content).toContain('<question_metadata>');
+      expect(content).toContain('category=behavioral');
+      expect(content).toContain('competency_domain=D2');
     });
 
     it('bao gồm session type và target roles khi được cung cấp', () => {

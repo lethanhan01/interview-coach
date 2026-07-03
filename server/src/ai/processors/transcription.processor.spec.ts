@@ -84,6 +84,8 @@ describe('TranscriptionProcessor', () => {
     mockPrisma.sessionQuestion.findFirst.mockResolvedValue({
       id: 'q-1',
       questionText: 'Tell me about yourself?',
+      questionCategory: 'behavioral',
+      competencyDomain: 'D1',
       orderIndex: 1,
       sessionId: 'session-123',
     });
@@ -111,7 +113,13 @@ describe('TranscriptionProcessor', () => {
     );
     expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
       'feedback',
-      expect.objectContaining({ answerId: 'answer-1', language: 'vi' }),
+      expect.objectContaining({
+        answerId: 'answer-1',
+        questionId: 'q-1',
+        questionCategory: 'behavioral',
+        competencyDomain: 'D1',
+        language: 'vi',
+      }),
       expect.objectContaining({
         jobId: 'feedback-answer-1',
         attempts: FEEDBACK_JOB_ATTEMPTS,

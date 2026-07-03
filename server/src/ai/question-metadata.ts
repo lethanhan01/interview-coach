@@ -1,0 +1,170 @@
+import type { ContextPackConfig, RubricDimensionEntry } from './context-pack.service';
+import type { SessionType } from './pipelines/interview-pipeline.interface';
+
+export type QuestionCategory = 'behavioral' | 'technical';
+
+export interface NormalizedQuestionMetadata {
+  questionCategory: QuestionCategory;
+  competencyDomain: string;
+  matchBranch: 'exact' | 'normId' | 'code' | 'name' | 'heuristic';
+}
+
+const CODE_REGEX = /\bT?D\s*\d+\b/i;
+
+function normalizeKey(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function categoryFromDomain(domain: string): QuestionCategory {
+  return domain.startsWith('TD') ? 'technical' : 'behavioral';
+}
+
+export function isDomainAllowedForSession(
+  domain: string,
+  sessionType: SessionType,
+): boolean {
+  if (sessionType === 'hr') return domain.startsWith('D');
+  if (sessionType === 'technical') return domain.startsWith('TD');
+  return domain.startsWith('D') || domain.startsWith('TD');
+}
+
+function allowedDimensionsForSession(
+  contextPack: ContextPackConfig,
+  sessionType: SessionType,
+): RubricDimensionEntry[] {
+  if (sessionType === 'hr') return contextPack.behavioralDimensions;
+  if (sessionType === 'technical') return contextPack.technicalDimensions;
+  return [...contextPack.behavioralDimensions, ...contextPack.technicalDimensions];
+}
+
+function resolveDomain(
+  rawDomain: string,
+  allowedDims: RubricDimensionEntry[],
+): Omit<NormalizedQuestionMetadata, 'questionCategory'> | null {
+  const exact = allowedDims.find((d) => d.id === rawDomain);
+  if (exact) return { competencyDomain: exact.id, matchBranch: 'exact' };
+
+  const normRaw = normalizeKey(rawDomain);
+  const byNormId = allowedDims.find((d) => normalizeKey(d.id) === normRaw);
+  if (byNormId) return { competencyDomain: byNormId.id, matchBranch: 'normId' };
+
+  const codeMatch = CODE_REGEX.exec(rawDomain);
+  if (codeMatch) {
+    const token = normalizeKey(codeMatch[0]);
+    const byCode = allowedDims.find((d) => normalizeKey(d.id) === token);
+    if (byCode) return { competencyDomain: byCode.id, matchBranch: 'code' };
+  }
+
+  const byName = allowedDims.find((d) => normalizeKey(d.name) === normRaw);
+  if (byName) return { competencyDomain: byName.id, matchBranch: 'name' };
+
+  return null;
+}
+
+export function normalizeGeneratedQuestionMetadata(
+  input: {
+    category?: string;
+    competencyDomain: string;
+  },
+  contextPack: ContextPackConfig,
+  sessionType: SessionType,
+): NormalizedQuestionMetadata | null {
+  const allowedDims = allowedDimensionsForSession(contextPack, sessionType);
+  const resolved = resolveDomain(input.competencyDomain, allowedDims);
+  if (!resolved) return null;
+  if (!isDomainAllowedForSession(resolved.competencyDomain, sessionType)) {
+    return null;
+  }
+
+  return {
+    questionCategory: categoryFromDomain(resolved.competencyDomain),
+    ...resolved,
+  };
+}
+
+function heuristicDomain(questionText: string, sessionType: SessionType): string {
+  const text = normalizeKey(questionText);
+
+  if (sessionType === 'technical') {
+  if (/(debug|troubleshoot|incident|production|reliability|bug|loi|suco)/.test(text)) {
+      return 'TD5';
+    }
+    if (/(codequality|bestpractice|clean|refactor|maintain|chatluongcode)/.test(text)) {
+      return 'TD4';
+    }
+    if (/(systemdesign|scale|scalability|architecture|distributed|tuduyhethong)/.test(text)) {
+      return 'TD3';
+    }
+    if (/(practical|application|fullstack|database|backend|frontend|implement|khanangapdungthucte)/.test(text)) {
+      return 'TD2';
+    }
+    return 'TD1';
+  }
+
+  if (/(incident|oncall|problem|solve|resilience|pressure|production|debug|suco|apluc|giaiquyetvande)/.test(text)) {
+    return 'D2';
+  }
+  if (/(selfaware|growth|learn|feedback|weakness|tuhoc|hochoi|nhanthuc|tunhanthuc)/.test(text)) {
+    return 'D6';
+  }
+  if (/(leadership|mentor|ownership|initiative|decision|trachnhiem|lanhdao)/.test(text)) {
+    return 'D4';
+  }
+  if (/(collaboration|team|conflict|coworker|lamviecnhom|xungdot|hoptac)/.test(text)) {
+    return 'D3';
+  }
+  if (/(culture|motivation|values|company|dongluc|phuhop|phuhopvanhoa)/.test(text)) {
+    return 'D5';
+  }
+  return 'D1';
+}
+
+export function normalizeQuestionMetadataForCleanup(
+  input: {
+    category?: string;
+    competencyDomain: string;
+    questionText: string;
+  },
+  contextPack: ContextPackConfig,
+  sessionType: SessionType,
+): NormalizedQuestionMetadata {
+  const strict = normalizeGeneratedQuestionMetadata(input, contextPack, sessionType);
+  if (strict) return strict;
+
+  const heuristic = heuristicDomain(
+    `${input.questionText} ${input.category ?? ''} ${input.competencyDomain}`,
+    sessionType,
+  );
+  return {
+    questionCategory: categoryFromDomain(heuristic),
+    competencyDomain: heuristic,
+    matchBranch: 'heuristic',
+  };
+}
+
+export function calculateEstimatedTimeMin(input: {
+  durationMin: number;
+  numQuestions: number;
+  difficulty: number;
+}): number {
+  const numQuestions = Math.max(1, Math.trunc(input.numQuestions));
+  const durationMin = Number.isFinite(input.durationMin)
+    ? Math.trunc(input.durationMin)
+    : numQuestions + 7;
+  const timeBudget = Math.max(durationMin - 7, numQuestions);
+  const baseTime = timeBudget / numQuestions;
+  const multiplier = input.difficulty <= 1 ? 0.8 : input.difficulty >= 3 ? 1.3 : 1;
+
+  return Math.max(1, Math.round(baseTime * multiplier));
+}
+
+export function sanitizeDifficulty(value: number): 1 | 2 | 3 {
+  if (value <= 1) return 1;
+  if (value >= 3) return 3;
+  return 2;
+}

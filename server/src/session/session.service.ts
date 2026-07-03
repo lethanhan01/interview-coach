@@ -106,6 +106,7 @@ export class SessionService {
           contextPack: dto.contextPack,
           language: session.language,
           totalQuestions: session.numQuestions,
+          durationMin: session.durationMin,
         },
         {
           attempts: QUESTION_GEN_JOB_ATTEMPTS,

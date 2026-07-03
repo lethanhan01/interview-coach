@@ -279,6 +279,37 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       expect(result.overallScore).toBe(90);
     });
 
+    it('lọc applied_dimensions theo competencyDomain của câu hỏi khi có metadata', async () => {
+      const rawFeedback = {
+        model_answer: 'x',
+        key_takeaway: 'y',
+        applied_dimensions: [
+          { id: 'D1', score: 90 },
+          { id: 'D2', score: 10 },
+        ],
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      const result = await service.evaluateAnswer({
+        ...feedbackInput,
+        questionCategory: 'behavioral',
+        competencyDomain: 'D1',
+      });
+
+      expect(result.appliedDimensions).toEqual([
+        { id: 'D1', name: 'Communication', score: 90, weight: 1 },
+      ]);
+      expect(result.overallScore).toBe(90);
+      expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          questionCategory: 'behavioral',
+          competencyDomain: 'D1',
+        }),
+      );
+    });
+
     it('throw SCHEMA_VALIDATION_ERROR khi không còn dimension hợp lệ', async () => {
       const rawFeedback = {
         model_answer: 'x',

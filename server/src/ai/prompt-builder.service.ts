@@ -15,6 +15,8 @@ interface DynamicContextParams {
   targetRoles?: string[];
   numQuestions?: number;
   question?: string;
+  questionCategory?: string;
+  competencyDomain?: string;
   answer?: string;
   sessionHistory?: Array<{ question: string; answer: string }>;
 }
@@ -27,12 +29,14 @@ Return ONLY a compact valid JSON object with exactly this shape, no markdown fen
   "questions": [
     {
       "text": "<one interview question>",
-      "category": "<short category>",
-      "competency_domain": "<short competency domain>",
+      "category": "behavioral",
+      "competency_domain": "D1",
       "difficulty": <integer 1-3>
     }
   ]
 }
+
+Use "category" exactly as "behavioral" or "technical". Use "competency_domain" exactly as one allowed rubric ID (for example D1 or TD3), never a dimension name or free-form phrase.
 
 Write the final JSON directly in the assistant message content.`,
   'surgical-feedback': `You are an expert interview coach. Evaluate the candidate's answer and provide surgical, actionable feedback.
@@ -75,7 +79,21 @@ export class PromptBuilderService {
   }
 
   applyContextPack(baseSystem: string, contextPack: ContextPackConfig): string {
-    return `${baseSystem}\n\nCultural context: ${contextPack.culturalNotes}\nScoring dimensions: ${contextPack.rubricDimensions.join(', ')}.`;
+    const behavioral = contextPack.behavioralDimensions
+      .map((d) => `${d.id}=${d.name}`)
+      .join(', ');
+    const technical = contextPack.technicalDimensions
+      .map((d) => `${d.id}=${d.name}`)
+      .join(', ');
+
+    return [
+      baseSystem,
+      `Cultural context: ${contextPack.culturalNotes}`,
+      `Question metadata contract: category must be exactly "behavioral" or "technical". competency_domain must be exactly one allowed ID, not a label or phrase.`,
+      `Behavioral IDs: ${behavioral}.`,
+      `Technical IDs: ${technical}.`,
+      `For HR sessions, use only behavioral/D* IDs. For Technical sessions, use only technical/TD* IDs. For Mixed sessions, choose one best-fitting allowed ID per question.`,
+    ].join('\n\n');
   }
 
   applyContextPackForEvaluation(
@@ -140,6 +158,8 @@ export class PromptBuilderService {
       targetRoles,
       numQuestions,
       question,
+      questionCategory,
+      competencyDomain,
       answer,
       sessionHistory,
     } = params;
@@ -160,6 +180,17 @@ export class PromptBuilderService {
 
     if (question) {
       userContent += `\n\n<question>\n${question}\n</question>`;
+    }
+
+    if (questionCategory || competencyDomain) {
+      userContent += `\n\n<question_metadata>`;
+      if (questionCategory) {
+        userContent += `\ncategory=${questionCategory}`;
+      }
+      if (competencyDomain) {
+        userContent += `\ncompetency_domain=${competencyDomain}`;
+      }
+      userContent += `\n</question_metadata>`;
     }
 
     if (answer) {

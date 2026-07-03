@@ -29,7 +29,10 @@ export interface GeneratedQuestion {
 
 export interface FeedbackInput {
   sessionType: SessionType;
+  questionId?: string;
   questionText: string;
+  questionCategory?: 'behavioral' | 'technical';
+  competencyDomain?: string;
   answerText: string;
   contextPackConfig: ContextPackConfig;
   language?: OutputLanguage;

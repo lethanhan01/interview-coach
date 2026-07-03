@@ -89,11 +89,16 @@ export abstract class BasePipelineService implements InterviewPipeline {
       input.contextPackConfig,
       input.sessionType,
     );
+    const withQuestionMetadata = input.competencyDomain
+      ? `${withPack}\n\nTarget question metadata: category=${input.questionCategory ?? 'unknown'}, competency_domain=${input.competencyDomain}. Prefer this exact competency_domain when it is listed in the allowed dimensions. Do not score dimensions outside this question domain.`
+      : withPack;
     const messages = this.promptBuilder.injectDynamicContext({
-      systemMessage: withPack,
+      systemMessage: withQuestionMetadata,
       jobDescription: '',
       sessionType: input.sessionType,
       question: input.questionText,
+      questionCategory: input.questionCategory,
+      competencyDomain: input.competencyDomain,
       answer: input.answerText,
     });
     const raw = await this.openai.chatCompletion({
@@ -129,7 +134,7 @@ export abstract class BasePipelineService implements InterviewPipeline {
       throw err;
     }
 
-    const allowedDims =
+    const sessionAllowedDims =
       input.sessionType === 'hr'
         ? input.contextPackConfig.behavioralDimensions
         : input.sessionType === 'technical'
@@ -138,6 +143,10 @@ export abstract class BasePipelineService implements InterviewPipeline {
               ...input.contextPackConfig.behavioralDimensions,
               ...input.contextPackConfig.technicalDimensions,
             ];
+    const targetDim = input.competencyDomain
+      ? sessionAllowedDims.find((d) => d.id === input.competencyDomain)
+      : undefined;
+    const allowedDims = targetDim ? [targetDim] : sessionAllowedDims;
     const selected = resolveAppliedDimensions(
       validated.applied_dimensions,
       allowedDims,
