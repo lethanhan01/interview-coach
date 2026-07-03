@@ -17,6 +17,19 @@ type KaggleQuestion = {
   contentJson: Prisma.InputJsonObject;
 };
 
+function toQuestionBankRow(question: KaggleQuestion) {
+  return {
+    content: question.content,
+    sessionType: question.sessionType,
+    difficulty: question.difficulty,
+    contextPackId: question.contextPackId,
+    competencyDomain: question.competencyDomain,
+    estimatedTimeMin: question.estimatedTimeMin,
+    translations: question.translations,
+    contentJson: question.contentJson,
+  };
+}
+
 function loadQuestions(): KaggleQuestion[] {
   const filePath = join(__dirname, 'data', 'kaggle-questions.json');
   const raw = readFileSync(filePath, 'utf-8');
@@ -49,7 +62,7 @@ export async function seedKaggleQuestions(prisma: PrismaClient): Promise<void> {
   }
 
   await prisma.questionBank.createMany({
-    data: questions,
+    data: questions.map(toQuestionBankRow),
     skipDuplicates: true,
   });
 

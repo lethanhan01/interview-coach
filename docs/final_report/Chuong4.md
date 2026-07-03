@@ -81,7 +81,6 @@ Nguồn nên đối chiếu: `docs/Design/DetailedDesign/uiux-design/` và `clie
 | Session | `interview_sessions`, `saved_job_descriptions`, `session_questions` | Cần bổ sung |
 | Answer | `user_answers`, `follow_up_questions` | Cần bổ sung |
 | Feedback/report | `ai_feedbacks`, `annotated_segments`, report JSON fields | Cần bổ sung |
-| Audit | `ai_quality_log` | Cần bổ sung |
 
 Nội dung cần nêu:
 
@@ -170,4 +169,3 @@ Nguồn nên đối chiếu: `README.md`, `server/README.md`, `client/README.md`
 > Cần bổ sung: tóm tắt sản phẩm GR1 đã được phân tích và thiết kế như thế nào, nhấn mạnh các thành phần chính sẽ được đánh giá ở Chương 5.
 
 ---
- 

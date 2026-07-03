@@ -28,7 +28,53 @@ CREATE TRIGGER on_auth_user_created
 
 
 -- -----------------------------------------------------------------------------
--- 2. RLS policies
+-- 2. Retired tables
+-- -----------------------------------------------------------------------------
+
+-- AI quality logging is deferred; remove the unused empty audit table from the
+-- current schema. Recreate it in a future migration if observability is added.
+DROP TABLE IF EXISTS ai_quality_log;
+
+-- Question usage was write-only audit data. Remove it until repeat avoidance
+-- becomes real product behavior backed by selection logic.
+DROP TABLE IF EXISTS question_usage;
+
+ALTER TABLE question_bank
+  DROP COLUMN IF EXISTS subcategory,
+  DROP COLUMN IF EXISTS applicable_roles,
+  DROP COLUMN IF EXISTS applicable_levels,
+  DROP COLUMN IF EXISTS tags;
+
+ALTER TABLE users
+  DROP COLUMN IF EXISTS profile_completed,
+  DROP COLUMN IF EXISTS last_login_at,
+  DROP COLUMN IF EXISTS deleted_at;
+
+ALTER TABLE user_profiles
+  DROP COLUMN IF EXISTS years_experience,
+  DROP COLUMN IF EXISTS default_language,
+  DROP COLUMN IF EXISTS tts_enabled,
+  DROP COLUMN IF EXISTS deleted_at;
+
+ALTER TABLE resumes
+  DROP COLUMN IF EXISTS file_url,
+  DROP COLUMN IF EXISTS original_filename,
+  DROP COLUMN IF EXISTS parsed_text,
+  DROP COLUMN IF EXISTS language,
+  DROP COLUMN IF EXISTS parser_version;
+
+ALTER TABLE interview_sessions
+  DROP COLUMN IF EXISTS jd_source,
+  DROP COLUMN IF EXISTS jd_url,
+  DROP COLUMN IF EXISTS difficulty,
+  DROP COLUMN IF EXISTS persona,
+  DROP COLUMN IF EXISTS mode,
+  DROP COLUMN IF EXISTS show_prep_card,
+  DROP COLUMN IF EXISTS opening_transcript;
+
+
+-- -----------------------------------------------------------------------------
+-- 3. RLS policies
 -- -----------------------------------------------------------------------------
 
 -- Supabase Storage: interview audio bucket for voice answers.
@@ -234,17 +280,8 @@ CREATE POLICY "annotated_segments: read own"
     )
   );
 
--- ai_quality_log (admin read only; no candidate access)
-ALTER TABLE ai_quality_log ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "ai_quality_log: admin read" ON ai_quality_log;
-CREATE POLICY "ai_quality_log: admin read"
-  ON ai_quality_log FOR SELECT
-  USING ((SELECT role FROM users WHERE id = auth.uid()) = 'admin');
-
-
 -- -----------------------------------------------------------------------------
--- 3. Indexes
+-- 4. Indexes
 --    Partial indexes use raw SQL — Prisma @@index does not support WHERE clauses.
 -- -----------------------------------------------------------------------------
 
@@ -287,13 +324,6 @@ CREATE INDEX IF NOT EXISTS idx_question_bank_session_type_difficulty
 CREATE INDEX IF NOT EXISTS idx_question_bank_context_pack
   ON question_bank(context_pack_id)
   WHERE deleted_at IS NULL;
-
--- Audit log
-CREATE INDEX IF NOT EXISTS idx_ai_quality_log_created_at
-  ON ai_quality_log(created_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_ai_quality_log_job_type_created
-  ON ai_quality_log(job_type, created_at DESC);
 
 -- saved_job_descriptions
 CREATE INDEX IF NOT EXISTS idx_saved_job_descriptions_user_updated
@@ -608,8 +638,8 @@ BEGIN
     SELECT 1 FROM information_schema.tables
     WHERE table_schema = 'public' AND table_name = 'resumes'
   ) THEN
-    INSERT INTO resumes (user_id, parser_version, active, parsed_json)
-    SELECT up.user_id, 'manual', true,
+    INSERT INTO resumes (user_id, active, parsed_json)
+    SELECT up.user_id, true,
       jsonb_strip_nulls(jsonb_build_object(
         'education',       up.education,
         'workExperience',  up.work_experience,

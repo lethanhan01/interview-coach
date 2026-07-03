@@ -16,7 +16,6 @@ describe('UserService', () => {
     email: 'test@example.com',
     role: 'user',
     status: 'active',
-    profileCompleted: false,
     createdAt: new Date(),
     profile: null,
     resumes: [],
@@ -47,7 +46,6 @@ describe('UserService', () => {
         email: 'test@example.com',
         role: 'user',
         status: 'active',
-        profileCompleted: false,
         createdAt: BASE_USER.createdAt,
         profile: null,
       });
@@ -153,7 +151,6 @@ describe('UserService', () => {
         data: {
           userId: 'user-123',
           parsedJson: dto,
-          parserVersion: 'manual',
           active: true,
         },
       });

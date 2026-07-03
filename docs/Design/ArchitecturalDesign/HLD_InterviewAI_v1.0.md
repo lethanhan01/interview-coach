@@ -706,12 +706,14 @@ Prompt injection prevention: mọi user input (JD, transcript, CV text) wrap tro
 | Event | Level | Destination | Không log |
 | --- | --- | --- | --- |
 | AI job enqueue/dequeue | INFO | Railway logs | — |
-| AI call success (model, tokens, latency) | INFO | `ai_quality_log` table | Prompt content, transcript |
-| AI schema validation fail | ERROR | Sentry + `ai_quality_log` (is_fallback=true) | — |
-| AI fallback triggered | WARNING | `ai_quality_log` | — |
+| AI call success (model, latency) | INFO | Railway logs | Prompt content, transcript |
+| AI schema validation fail | ERROR | Sentry + Railway logs | Prompt content, transcript |
+| AI fallback triggered | WARNING | Railway logs | Prompt content, transcript |
 | Rate limit hit (S-11/S-12/S-13) | WARNING | Railway logs | User content |
 | Unhandled exception | ERROR | Sentry | PII, transcript, CV |
 | Session start/complete/interrupted | INFO | Railway logs | — |
+
+Structured DB-backed AI call audit is deferred; recreate `ai_quality_log` in a future schema change if token/latency analytics becomes required.
 
 ---
 
@@ -740,7 +742,7 @@ User input trong Layer 3 luôn được wrap: `<job_description>…</job_descrip
 | Feedback Analyzer | `surgical-feedback-v1.0` | 0.3 | ≤ 2,000 | ≤ 1,500 | Fallback text feedback |
 | Rewrite Evaluator (v1.1) | `rewrite-eval-v1.0` | 0.3 | ≤ 2,500 | ≤ 1,500 | Lưu transcript, không show comparison — v1.1 only (UC-07) |
 
-Prompt versioning: version string ghi vào `ai_quality_log.prompt_version` mỗi AI call. Khi update prompt: bump version string, ghi changelog vào `docs/Design/prompt-changelog.md`.
+Prompt versioning: current runtime persists prompt metadata in feedback/report records where needed. Per-call prompt version history is deferred with the future AI quality audit store.
 
 ### 6.3 3 Session Type Pipelines
 

@@ -21,7 +21,6 @@ const AI_QUESTION_EVERY_N = 5;
 
 interface QuestionGenerationJobDto {
   sessionId: string;
-  userId: string;
   sessionType: SessionType;
   jobDescriptionText: string;
   targetRoles: string[];
@@ -48,7 +47,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
   async process(job: Job<QuestionGenerationJobDto>): Promise<void> {
     const {
       sessionId,
-      userId,
       sessionType,
       jobDescriptionText,
       targetRoles,
@@ -95,7 +93,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
       try {
         await this.fallbackFromQuestionBank(
           sessionId,
-          userId,
           sessionType,
           contextPack,
           outputLanguage,
@@ -146,18 +143,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
       this.logger.log(
         `Hybrid question generation persisted for session ${sessionId}: ai=${aiCount} qb=${qbQuestions.length} total=${result.count} model=${this.openai.getChatModel()}`,
       );
-
-      if (qbQuestions.length > 0) {
-        await Promise.all(
-          qbQuestions.map((q) =>
-            this.questionBankService.recordUsage(
-              q.questionBankId,
-              sessionId,
-              userId,
-            ),
-          ),
-        );
-      }
 
       if (await this.markActiveUnlessStopped(sessionId)) {
         await this.emitActive(sessionId);
@@ -228,7 +213,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
 
   private async fallbackFromQuestionBank(
     sessionId: string,
-    userId: string,
     sessionType: string,
     contextPack: string,
     language: string,
@@ -255,15 +239,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
       skipDuplicates: true,
     });
 
-    await Promise.all(
-      selected.map((question) =>
-        this.questionBankService.recordUsage(
-          question.questionBankId,
-          sessionId,
-          userId,
-        ),
-      ),
-    );
   }
 
   private async markActiveUnlessStopped(sessionId: string): Promise<boolean> {

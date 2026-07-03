@@ -29,10 +29,10 @@ async function main() {
     await expectReject(
       'interview_sessions rejects saved JD owned by another user',
       `INSERT INTO interview_sessions (
-         id, user_id, saved_job_description_id, job_description, jd_source,
+         id, user_id, saved_job_description_id, job_description,
          session_type, context_pack_id
        )
-       VALUES ($1, $2, $3, 'x', 'saved', 'hr', $4)`,
+       VALUES ($1, $2, $3, 'x', 'hr', $4)`,
       [randomUUID(), ids.userA, ids.savedJdB, ids.contextPack],
     );
 
@@ -101,10 +101,10 @@ async function main() {
     await expectReject(
       'interview_sessions rejects invalid status and range',
       `INSERT INTO interview_sessions (
-         id, user_id, job_description, jd_source, session_type,
+         id, user_id, job_description, session_type,
          context_pack_id, status, num_questions
        )
-       VALUES ($1, $2, 'x', 'paste', 'hr', $3, 'ready', 2)`,
+       VALUES ($1, $2, 'x', 'hr', $3, 'ready', 2)`,
       [randomUUID(), ids.userA, ids.contextPack],
     );
 
@@ -150,11 +150,11 @@ async function createFixture() {
 
   await client.query(
     `INSERT INTO interview_sessions (
-       id, user_id, job_description, jd_source, session_type, context_pack_id
+       id, user_id, job_description, session_type, context_pack_id
      )
      VALUES
-       ($1, $2, 'x', 'paste', 'hr', $5),
-       ($3, $4, 'x', 'paste', 'hr', $5)`,
+       ($1, $2, 'x', 'hr', $5),
+       ($3, $4, 'x', 'hr', $5)`,
     [sessionA, userA, sessionB, userA, contextPack],
   );
 

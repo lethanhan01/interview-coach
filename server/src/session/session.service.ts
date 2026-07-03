@@ -83,7 +83,6 @@ export class SessionService {
         userId,
         savedJobDescriptionId,
         jobDescription: dto.jobDescription,
-        jdSource: savedJobDescriptionId ? 'saved' : 'paste',
         jobTitle: dto.targetRoles?.[0],
         sessionType: dto.sessionType,
         numQuestions: dto.numQuestions ?? 5,
@@ -98,7 +97,6 @@ export class SessionService {
         'question-generation',
         {
           sessionId: session.id,
-          userId,
           sessionType: dto.sessionType,
           jobDescriptionText: dto.jobDescription,
           targetRoles: dto.targetRoles ?? [],

@@ -119,20 +119,6 @@ export class QuestionBankService {
     }));
   }
 
-  async recordUsage(
-    questionBankId: string,
-    sessionId: string,
-    userId: string,
-  ): Promise<void> {
-    await this.prisma.questionUsage.create({
-      data: {
-        questionBankId,
-        sessionId,
-        userId,
-      },
-    });
-  }
-
   private resolveText(question: QuestionBankRow, language: string): string {
     const translations = question.translations;
 

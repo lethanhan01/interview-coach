@@ -206,15 +206,4 @@ describe('QuestionBankService', () => {
     );
   });
 
-  it('ghi usage cho question bank', async () => {
-    await service.recordUsage('qb-1', 'session-1', 'user-1');
-
-    expect(mockPrisma.questionUsage.create).toHaveBeenCalledWith({
-      data: {
-        questionBankId: 'qb-1',
-        sessionId: 'session-1',
-        userId: 'user-1',
-      },
-    });
-  });
 });

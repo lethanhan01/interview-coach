@@ -1,11 +1,8 @@
 import {
   IsString,
-  IsInt,
-  IsBoolean,
   IsOptional,
   IsObject,
   IsArray,
-  Min,
 } from 'class-validator';
 
 export class UpdateProfileDto {
@@ -28,19 +25,6 @@ export class UpdateProfileDto {
   @IsString()
   @IsOptional()
   preferredTechStack?: string;
-
-  @IsInt()
-  @Min(0)
-  @IsOptional()
-  yearsExperience?: number;
-
-  @IsString()
-  @IsOptional()
-  defaultLanguage?: string;
-
-  @IsBoolean()
-  @IsOptional()
-  ttsEnabled?: boolean;
 
   @IsString()
   @IsOptional()

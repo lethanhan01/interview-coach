@@ -137,7 +137,7 @@ npm run db:sync:full
 
 Lệnh thực hiện: `db:validate` → `db:verify:pre` → `prisma generate` → `db:prepare-user-answer-unique` → `db:prepare-db-push-raw-sql` → `prisma db push` → `db:apply-sql` → `db:verify`.
 
-`db:verify:pre` phải pass trước khi apply constraint mới. Các anomaly chặn migration gồm answer lệch session-question, session trỏ saved JD khác user, nhiều active resume cùng user, orphan soft refs trong `question_usage`, và dữ liệu vi phạm CHECK/range.
+`db:verify:pre` phải pass trước khi apply constraint mới. Các anomaly chặn migration gồm answer lệch session-question, session trỏ saved JD khác user, nhiều active resume cùng user, và dữ liệu vi phạm CHECK/range.
 
 Với production hoặc dữ liệu quan trọng, chạy thêm bài test copy trước khi sync:
 

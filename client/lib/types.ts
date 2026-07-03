@@ -193,7 +193,6 @@ export interface GetProfileResponse {
     targetRoleCategory?: string;
     targetLevel?: string;
     preferredTechStack?: string;
-    yearsExperience?: number;
     education?: EducationEntry;
     workExperience?: WorkExperienceEntry[];
     projects?: ProjectEntry[];

@@ -30,7 +30,6 @@ describe('QuestionGenerationProcessor', () => {
 
   const BASE_JOB_DATA = {
     sessionId: 'session-123',
-    userId: 'user-abc',
     sessionType: 'hr' as const,
     jobDescriptionText: 'Backend developer tại công ty ABC.',
     targetRoles: ['Backend Developer'],
@@ -150,7 +149,6 @@ describe('QuestionGenerationProcessor', () => {
       'session.status',
       { status: 'active', sessionId: 'session-123' },
     );
-    expect(mockQuestionBankService.recordUsage).toHaveBeenCalledTimes(4);
   });
 
   it('truyền language=en vào AI strategy và Question Bank khi session dùng Western', async () => {
@@ -213,7 +211,6 @@ describe('QuestionGenerationProcessor', () => {
     expect(
       mockQuestionBankService.selectFallbackQuestions,
     ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
-    expect(mockQuestionBankService.recordUsage).toHaveBeenCalledTimes(4);
   });
 
   it('QG-05: dùng fallback khi AI trả 0 câu (ít hơn aiCount=1)', async () => {
@@ -239,7 +236,6 @@ describe('QuestionGenerationProcessor', () => {
         questionText: 'Fallback question 1',
       }),
     );
-    expect(mockQuestionBankService.recordUsage).toHaveBeenCalledTimes(5);
   });
 
   it('cập nhật session status=error và emit SSE error khi AI và fallback đều thất bại', async () => {
@@ -419,11 +415,6 @@ describe('QuestionGenerationProcessor', () => {
       expect(
         mockQuestionBankService.selectFallbackQuestions,
       ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi');
-      expect(mockQuestionBankService.recordUsage).toHaveBeenCalledWith(
-        'qb-1',
-        'session-123',
-        'user-abc',
-      );
       expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
         where: {
           id: 'session-123',
@@ -518,7 +509,6 @@ describe('QuestionGenerationProcessor', () => {
       expect(
         mockQuestionBankService.selectFallbackQuestions,
       ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi');
-      expect(mockQuestionBankService.recordUsage).toHaveBeenCalledTimes(5);
     });
 
     it('set session status=error khi question_bank trả về 0 kết quả', async () => {

@@ -733,11 +733,10 @@ Chuỗi quan hệ chính của hệ thống: `InterviewSession` → `SessionQues
 - `AnnotatedSegment`: danh sách đoạn được highlight trong câu trả lời — vị trí ký tự, loại (strength/improvement), annotation, gợi ý cải thiện.
 - `SessionReport`: báo cáo tổng hợp phiên — 4 loại độc lập (`executive_summary`, `comm_analysis`, `competency_heatmap`, `action_plan`), lưu dưới dạng JSONB.
 
-**Nhóm question bank và AI quality log**
+**Nhóm question bank**
 
 - `QuestionBank`: kho câu hỏi dự phòng phân loại theo session type, competency domain và độ khó (1–5).
 - `QuestionUsage`: theo dõi câu hỏi nào đã được hiển thị cho người dùng nào, tránh lặp lại.
-- `AiQualityLog`: ghi lại mỗi lần gọi AI — model, số token, latency, có dùng fallback không. Phục vụ monitoring và phân tích chi phí.
 
 ### 3.8.4 Quan hệ trung tâm
 

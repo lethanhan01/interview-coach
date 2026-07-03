@@ -44,7 +44,6 @@ const expectedPolicies = [
   ['public', 'saved_job_descriptions', 'saved_job_descriptions: update own'],
   ['public', 'ai_feedbacks', 'ai_feedbacks: read own'],
   ['public', 'annotated_segments', 'annotated_segments: read own'],
-  ['public', 'ai_quality_log', 'ai_quality_log: admin read'],
   ['public', 'session_reports', 'Users can read own session reports'],
 ];
 
@@ -59,7 +58,6 @@ const expectedRlsTables = [
   'saved_job_descriptions',
   'ai_feedbacks',
   'annotated_segments',
-  'ai_quality_log',
   'session_reports',
 ];
 
@@ -97,11 +95,37 @@ const expectedIndexes = [
   ['annotated_segments', 'idx_annotated_segments_feedback_id'],
   ['question_bank', 'idx_question_bank_context_pack'],
   ['question_bank', 'idx_question_bank_session_type_difficulty'],
-  ['question_usage', 'idx_question_usage_bank_used'],
-  ['question_usage', 'idx_question_usage_user_used'],
   ['saved_job_descriptions', 'idx_saved_job_descriptions_user_updated'],
   ['saved_job_descriptions', 'idx_saved_job_descriptions_user_company_title'],
   ['resumes', 'idx_resumes_one_active_per_user'],
+];
+
+const retiredTables = ['ai_quality_log', 'question_usage'];
+
+const retiredColumns = [
+  ['question_bank', 'subcategory'],
+  ['question_bank', 'applicable_roles'],
+  ['question_bank', 'applicable_levels'],
+  ['question_bank', 'tags'],
+  ['users', 'profile_completed'],
+  ['users', 'last_login_at'],
+  ['users', 'deleted_at'],
+  ['user_profiles', 'years_experience'],
+  ['user_profiles', 'default_language'],
+  ['user_profiles', 'tts_enabled'],
+  ['user_profiles', 'deleted_at'],
+  ['resumes', 'file_url'],
+  ['resumes', 'original_filename'],
+  ['resumes', 'parsed_text'],
+  ['resumes', 'language'],
+  ['resumes', 'parser_version'],
+  ['interview_sessions', 'jd_source'],
+  ['interview_sessions', 'jd_url'],
+  ['interview_sessions', 'difficulty'],
+  ['interview_sessions', 'persona'],
+  ['interview_sessions', 'mode'],
+  ['interview_sessions', 'show_prep_card'],
+  ['interview_sessions', 'opening_transcript'],
 ];
 
 async function main() {
@@ -151,21 +175,6 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
          GROUP BY user_id
          HAVING count(*) > 1
        ) dup`,
-    ],
-    [
-      'anomaly:question_usage_orphan_session_soft_ref',
-      `SELECT count(*)::int AS count
-       FROM question_usage qu
-       LEFT JOIN interview_sessions s ON s.id = qu.session_id
-       WHERE qu.session_id IS NOT NULL
-         AND s.id IS NULL`,
-    ],
-    [
-      'anomaly:question_usage_orphan_user_soft_ref',
-      `SELECT count(*)::int AS count
-       FROM question_usage qu
-       LEFT JOIN users u ON u.id = qu.user_id
-       WHERE u.id IS NULL`,
     ],
     [
       'anomaly:invalid_interview_session_status',
@@ -306,6 +315,37 @@ async function runCatalogChecks(): Promise<CheckResult[]> {
       name: `index:${table}:${index}`,
       ok: exists,
       detail: exists ? 'present' : 'missing',
+    });
+  }
+
+  for (const table of retiredTables) {
+    const exists = await existsBySql(
+      `SELECT 1
+       FROM information_schema.tables
+       WHERE table_schema = 'public'
+         AND table_name = $1`,
+      [table],
+    );
+    results.push({
+      name: `retired_table_absent:${table}`,
+      ok: !exists,
+      detail: exists ? 'present' : 'absent',
+    });
+  }
+
+  for (const [table, column] of retiredColumns) {
+    const exists = await existsBySql(
+      `SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = 'public'
+         AND table_name = $1
+         AND column_name = $2`,
+      [table, column],
+    );
+    results.push({
+      name: `retired_column_absent:${table}.${column}`,
+      ok: !exists,
+      detail: exists ? 'present' : 'absent',
     });
   }
 

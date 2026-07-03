@@ -47,7 +47,6 @@ export async function getOrCreateDemoUser(
         email: DEMO_EMAIL,
         role: 'candidate',
         status: 'active',
-        profileCompleted: false,
       },
     });
   }
@@ -71,9 +70,6 @@ export async function seedUserProfile(
         targetRoleCategory: 'backend',
         targetLevel: 'junior',
         preferredTechStack: 'Node.js, NestJS, PostgreSQL',
-        yearsExperience: 0,
-        defaultLanguage: 'vi',
-        ttsEnabled: false,
       },
     });
     console.log('user profile: created');
@@ -92,7 +88,6 @@ export async function seedUserProfile(
   await prisma.resume.create({
     data: {
       userId,
-      parserVersion: 'manual',
       active: true,
       parsedJson: {
         education: [

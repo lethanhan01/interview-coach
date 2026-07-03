@@ -20,14 +20,12 @@ export async function ensureMvpUser(
     where: { id: userId },
     update: {
       status: 'active',
-      deletedAt: null,
     },
     create: {
       id: userId,
       email: `mvp-${userId}@interviewcoach.local`,
       role: 'candidate',
       status: 'active',
-      profileCompleted: true,
     },
   });
 }

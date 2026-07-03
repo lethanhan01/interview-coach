@@ -30,11 +30,7 @@ model QuestionBank {
   sessionType      QuestionSessionType @map("session_type")
   difficulty       Int
   contextPackId    String            @map("context_pack_id")
-  subcategory      String
   competencyDomain String            @map("competency_domain")
-  applicableRoles  String[]          @map("applicable_roles")
-  applicableLevels String[]          @map("applicable_levels")
-  tags             String[]          @default([]) @map("tags")
   estimatedTimeMin Int?              @map("estimated_time_min")
   translations     Json?
   contentJson      Json?             @map("content_json")
@@ -43,24 +39,10 @@ model QuestionBank {
   updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   contextPack      ContextPack       @relation(fields: [contextPackId], references: [id])
   sessionQuestions SessionQuestion[]
-  questionUsages   QuestionUsage[]
 
   @@index([contextPackId], map: "idx_question_bank_context_pack", where: raw("(deleted_at IS NULL)"))
   @@index([sessionType, difficulty], map: "idx_question_bank_session_type_difficulty", where: raw("(deleted_at IS NULL)"))
   @@map("question_bank")
-}
-
-model QuestionUsage {
-  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  questionBankId String       @map("question_bank_id") @db.Uuid
-  sessionId      String?      @map("session_id") @db.Uuid
-  userId         String       @map("user_id") @db.Uuid
-  usedAt         DateTime     @default(now()) @map("used_at") @db.Timestamptz(6)
-  questionBank   QuestionBank @relation(fields: [questionBankId], references: [id], onDelete: Cascade)
-
-  @@index([questionBankId, usedAt], map: "idx_question_usage_bank_used")
-  @@index([userId, usedAt], map: "idx_question_usage_user_used")
-  @@map("question_usage")
 }
 
 model User {
@@ -68,9 +50,6 @@ model User {
   email                String                @unique
   role                 String                @default("candidate")
   status               String                @default("active")
-  profileCompleted     Boolean               @default(false) @map("profile_completed")
-  lastLoginAt          DateTime?             @map("last_login_at") @db.Timestamptz(6)
-  deletedAt            DateTime?             @map("deleted_at") @db.Timestamptz(6)
   createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   interviewSessions    InterviewSession[]
@@ -89,11 +68,7 @@ model UserProfile {
   targetRoleCategory String?   @map("target_role_category")
   targetLevel        String?   @map("target_level")
   preferredTechStack String?   @map("preferred_tech_stack")
-  yearsExperience    Int       @default(0) @map("years_experience")
-  defaultLanguage    String    @default("vi") @map("default_language")
-  ttsEnabled         Boolean   @default(false) @map("tts_enabled")
   personality        String?
-  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -104,12 +79,7 @@ model UserProfile {
 model Resume {
   id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId           String   @map("user_id") @db.Uuid
-  fileUrl          String?  @map("file_url")
-  originalFilename String?  @map("original_filename")
-  parsedText       String?  @map("parsed_text")
   parsedJson       Json?    @map("parsed_json")
-  language         String   @default("vi")
-  parserVersion    String?  @map("parser_version")
   active           Boolean  @default(true)
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -138,20 +108,13 @@ model InterviewSession {
   userId                String               @map("user_id") @db.Uuid
   savedJobDescriptionId String?              @map("saved_job_description_id") @db.Uuid
   jobDescription        String               @map("job_description")
-  jdSource              String               @map("jd_source")
-  jdUrl                 String?              @map("jd_url")
   jobTitle              String?              @map("job_title")
   sessionType           String               @map("session_type")
   numQuestions          Int                  @default(5) @map("num_questions")
-  difficulty            String               @default("medium")
-  persona               String               @default("neutral_tech_lead")
-  mode                  String               @default("practice")
   durationMin           Int                  @default(30) @map("duration_min")
   language              String               @default("vi")
   contextPackId         String               @map("context_pack_id")
-  showPrepCard          Boolean              @default(false) @map("show_prep_card")
   status                String               @default("generating")
-  openingTranscript     String?              @map("opening_transcript")
   overallScore          Int?                 @map("overall_score")
   completedAt           DateTime?            @map("completed_at") @db.Timestamptz(6)
   createdAt             DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -274,22 +237,4 @@ model AnnotatedSegment {
 
   @@index([aiFeedbackId], map: "idx_annotated_segments_feedback_id")
   @@map("annotated_segments")
-}
-
-model AiQualityLog {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionId     String?  @map("session_id") @db.Uuid
-  jobType       String   @map("job_type")
-  promptVersion String   @map("prompt_version")
-  model         String
-  inputTokens   Int?     @map("input_tokens")
-  outputTokens  Int?     @map("output_tokens")
-  latencyMs     Int      @map("latency_ms")
-  isFallback    Boolean  @default(false) @map("is_fallback")
-  errorCode     String?  @map("error_code")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  @@index([createdAt(sort: Desc)], map: "idx_ai_quality_log_created_at")
-  @@index([jobType, createdAt(sort: Desc)], map: "idx_ai_quality_log_job_type_created")
-  @@map("ai_quality_log")
 }

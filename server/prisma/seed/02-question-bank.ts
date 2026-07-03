@@ -16,8 +16,12 @@ type LocalizedQuestion = Omit<RawQuestion, 'content'> & {
   viContent: string;
 };
 
-type SeedQuestion = RawQuestion & {
-  tags: string[];
+type SeedQuestion = {
+  content: string;
+  sessionType: QuestionSessionType;
+  difficulty: number;
+  contextPackId: 'VN' | 'Western';
+  competencyDomain: string;
   estimatedTimeMin: number;
   translations: Prisma.InputJsonObject;
   contentJson: Prisma.InputJsonObject;
@@ -1685,28 +1689,17 @@ function estimateTimeMin(difficulty: number): number {
   return 7;
 }
 
-function buildTags(question: RawQuestion): string[] {
-  return Array.from(
-    new Set([
-      question.sessionType,
-      question.contextPackId.toLowerCase(),
-      question.subcategory,
-      question.competencyDomain.toLowerCase(),
-      ...question.applicableRoles,
-      ...question.applicableLevels,
-    ]),
-  );
-}
-
 function toSeedQuestion(
   question: RawQuestion,
   enContent: string,
   viContent: string,
 ): SeedQuestion {
   return {
-    ...question,
     content: enContent,
-    tags: buildTags(question),
+    sessionType: question.sessionType,
+    difficulty: question.difficulty,
+    contextPackId: question.contextPackId,
+    competencyDomain: question.competencyDomain,
     estimatedTimeMin: estimateTimeMin(question.difficulty),
     translations: {
       en: enContent,

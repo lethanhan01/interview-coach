@@ -62,8 +62,8 @@ Ràng buộc với `migration.sql`:
 
 - Mọi statement phải **idempotent** — re-run an toàn. Toàn bộ file đã hardened: trigger dùng `DROP TRIGGER IF EXISTS` + `CREATE`; RLS policy dùng `DROP POLICY IF EXISTS` + `CREATE`; index dùng `CREATE INDEX IF NOT EXISTS`; CHECK constraint dùng `DROP CONSTRAINT IF EXISTS` + `ADD`; seed dùng `ON CONFLICT`. Chạy `npm run db:apply-sql` lại sau mỗi `db push` không gây lỗi.
 - Vì Prisma `db push` có thể cố drop raw composite constraint không có trong `schema.prisma`, `db:sync:full` chạy `db:prepare-db-push-raw-sql` trước `db push` để tạm gỡ `user_answers_question_session_match_fkey` và `session_questions_id_session_id_key`; `db:apply-sql` thêm lại ngay sau đó.
-- `db:verify:pre` phải pass trước khi apply raw SQL. Các anomaly chặn migration gồm `user_answers` lệch session/question, `interview_sessions.saved_job_description_id` khác user, duplicate active resume, orphan soft refs trong `question_usage`, và dữ liệu đang vi phạm CHECK/range.
-- `question_usage.session_id` và `question_usage.user_id` là soft audit refs có chủ đích. Không thêm FK để tránh đổi delete semantics; thay vào đó `db:verify` kiểm tra orphan count.
+- `db:verify:pre` phải pass trước khi apply raw SQL. Các anomaly chặn migration gồm `user_answers` lệch session/question, `interview_sessions.saved_job_description_id` khác user, duplicate active resume, và dữ liệu đang vi phạm CHECK/range.
+- `question_usage` đã retired vì chỉ có write-path audit, chưa có read-path repeat avoidance. Nếu cần chống lặp thật sự, thêm lại bằng schema mới kèm selection logic và verification tương ứng.
 - CHECK constraint chỉ áp cho cột có tập giá trị/range ổn định trong code hiện tại:
   - `users.role` ∈ `{candidate, admin}`
   - `interview_sessions.session_type` ∈ `{hr, technical, mixed}`

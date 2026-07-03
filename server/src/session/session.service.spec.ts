@@ -29,7 +29,6 @@ const BASE_SESSION = {
   createdAt: new Date(),
   overallScore: null,
   completedAt: null,
-  jdSource: 'paste',
 };
 
 const CREATE_DTO = {
@@ -116,7 +115,6 @@ describe('SessionService', () => {
         'question-generation',
         {
           sessionId: 'session-123',
-          userId: 'user-abc',
           sessionType: 'hr',
           jobDescriptionText: CREATE_DTO.jobDescription,
           targetRoles: [],
@@ -251,7 +249,6 @@ describe('SessionService', () => {
       mockPrisma.interviewSession.create.mockResolvedValue({
         ...BASE_SESSION,
         savedJobDescriptionId: 'saved-jd-1',
-        jdSource: 'saved',
         jobTitle: 'Backend Developer',
       });
       mockQuestionQueue.add.mockResolvedValue({});
@@ -277,7 +274,6 @@ describe('SessionService', () => {
         expect.objectContaining({
           data: expect.objectContaining({
             savedJobDescriptionId: 'saved-jd-1',
-            jdSource: 'saved',
             jobTitle: 'Backend Developer',
           }),
         }),

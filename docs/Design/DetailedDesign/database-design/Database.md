@@ -6,7 +6,7 @@
 **Engine:** PostgreSQL 15 via Supabase  
 **ORM:** Prisma 5 (`previewFeatures: ["partialIndexes"]`)  
 **Migration tool:** `prisma db push` — không có migration SQL files (xem D2)  
-**Tables in schema:** 15
+**Tables in schema:** 12
 
 ---
 
@@ -16,12 +16,12 @@
 |---|---------------|----------------|----------------|
 | D1 | `session_type` enum | `hr_behavioral \| technical \| mixed` | `hr \| technical \| mixed` |
 | D2 | Migration tool | `prisma migrate dev` (tạo migration files) | `prisma db push` + `db:apply-sql` qua `db:sync:full` |
-| D3 | `question_usage` table | Không có trong thiết kế gốc | Đã tạo (T2/T3) — usage tracking cho question_bank |
-| D4 | `question_bank` fields | 9 data columns | 13 data columns — thêm: `tags`, `estimated_time_min`, `translations`, `content_json` |
-| D5 | `user_profiles` fields | 13 columns | 14 columns — giữ profile phỏng vấn; 5 PII fields đã bỏ ở T10, 6 CV fields đã tách sang `resumes` ở T12 |
+| D3 | `question_usage` table | Không có trong thiết kế gốc | Retired — từng chỉ ghi audit, chưa có repeat-avoidance runtime |
+| D4 | `question_bank` fields | 9 data columns | 9 data columns — giữ runtime fields + `estimated_time_min`, `translations`, `content_json`; bỏ metadata filter chưa dùng |
+| D5 | `user_profiles` fields | 13 columns | 10 columns — giữ profile phỏng vấn đang dùng; CV structured đã tách sang `resumes.parsed_json` |
 | D6 | `reverse_questions` | MVP (Layer 4) | Chưa implement — không có trong schema.prisma |
 | D7 | Partial indexes | Raw SQL files riêng | Prisma schema cho một số partial index; raw SQL cho `resumes(user_id) WHERE active = true` |
-| D8 | `QuestionUsage` indexes | `sort: Desc` trong plan | Đã bỏ `sort: Desc` — Prisma IDE extension báo lỗi |
+| D8 | `QuestionUsage` indexes | `sort: Desc` trong plan | Retired cùng `question_usage` |
 | D9 | Report JSON columns | 6 JSONB columns trên `interview_sessions` | Đã tách sang `session_reports` ở T13 |
 
 ---
@@ -30,17 +30,13 @@
 
 ```
 context_packs ──< question_bank ──< session_questions >── interview_sessions ──< session_reports
-                        │                                        │
-                        └──< question_usage             user_answers ──── ai_feedbacks ──< annotated_segments
-                                                              │
-                                                    (follow-up chưa implement)
+                                                                 │
+                                                     user_answers ──── ai_feedbacks ──< annotated_segments
 
 users ──── user_profiles
   └──< resumes
   └──< interview_sessions
   └──< saved_job_descriptions
-
-ai_quality_log  (không có FK — độc lập)
 ```
 
 Prisma relation fields (không phải DB columns):
@@ -50,7 +46,6 @@ Prisma relation fields (không phải DB columns):
 | ContextPack | QuestionBank[] | 1:n | default (Restrict) |
 | ContextPack | InterviewSession[] | 1:n | default |
 | QuestionBank | SessionQuestion[] | 1:n | SET NULL (FK nullable) |
-| QuestionBank | QuestionUsage[] | 1:n | Cascade |
 | User | UserProfile? | 1:1 | Cascade |
 | User | Resume[] | 1:n | Cascade |
 | User | InterviewSession[] | 1:n | Cascade |
@@ -97,14 +92,10 @@ Fallback questions khi AI generation fail. Soft-delete via `deleted_at`.
 | session_type | TEXT | — | NO | `'hr' \| 'technical' \| 'mixed'` — *D1* |
 | difficulty | INT | — | NO | Scale 1–5 |
 | context_pack_id | TEXT FK | — | NO | → context_packs.id |
-| subcategory | TEXT | — | NO | Ví dụ: `teamwork`, `data_structures` |
 | competency_domain | TEXT | — | NO | `D1`–`D6` (HR), `TD1`–`TD5` (Technical) |
-| applicable_roles | TEXT[] | '{}' | NO | |
-| applicable_levels | TEXT[] | '{}' | NO | |
-| tags | TEXT[] | '{}' | NO | *D4 — mới* |
 | estimated_time_min | INT | — | YES | *D4 — mới* |
 | translations | JSONB | — | YES | *D4 — mới* — `{ vi?: string, en?: string }` |
-| content_json | JSONB | — | YES | *D4 — mới* — structured version |
+| content_json | JSONB | — | YES | *D4 — mới* — seed provenance/source tracking |
 | deleted_at | TIMESTAMPTZ | — | YES | Soft delete |
 | created_at | TIMESTAMPTZ | now() | NO | |
 | updated_at | TIMESTAMPTZ | now() | NO | Auto-update via Prisma `@updatedAt` |
@@ -114,26 +105,6 @@ Indexes (partial — `WHERE deleted_at IS NULL`):
 - `idx_question_bank_session_type_difficulty` on `(session_type, difficulty)`
 
 Seed target: 120 rows (sau T4) — phân bố 6 pairs `(session_type × context_pack)` × 20.
-
----
-
-### question_usage
-Prisma model: `QuestionUsage`  
-*D3 — không có trong design docs gốc.* Mỗi row = một lần question_bank row được chọn dùng trong session.
-
-| Column | DB Type | Default | Nullable | Notes |
-|--------|---------|---------|----------|-------|
-| id | UUID PK | gen_random_uuid() | NO | |
-| question_bank_id | UUID FK | — | NO | → question_bank.id ON DELETE CASCADE |
-| session_id | UUID | — | YES | Soft ref — không có FK constraint; `db:verify` phát hiện orphan |
-| user_id | UUID | — | NO | Soft ref intentional; `db:verify` phát hiện orphan |
-| used_at | TIMESTAMPTZ | now() | NO | |
-
-Indexes (sort: Desc bị bỏ — *D8*):
-- `idx_question_usage_bank_used` on `(question_bank_id, used_at)`
-- `idx_question_usage_user_used` on `(user_id, used_at)`
-
----
 
 ### users
 Prisma model: `User`  
@@ -145,9 +116,6 @@ Extension của Supabase `auth.users`. `id` lấy từ Supabase Auth UUID — kh
 | email | TEXT UNIQUE | — | NO | |
 | role | TEXT | 'candidate' | NO | |
 | status | TEXT | 'active' | NO | |
-| profile_completed | BOOLEAN | false | NO | |
-| last_login_at | TIMESTAMPTZ | — | YES | |
-| deleted_at | TIMESTAMPTZ | — | YES | Soft delete |
 | created_at | TIMESTAMPTZ | now() | NO | |
 | updated_at | TIMESTAMPTZ | now() | NO | Auto-update |
 
@@ -158,7 +126,7 @@ Populate: trigger `handle_new_auth_user()` INSERT khi Supabase Auth tạo user m
 
 ### user_profiles
 Prisma model: `UserProfile`  
-One-to-one với users. *D5: 14 columns. 5 field PII thuần (date_of_birth, gender, phone, hometown, nationality) đã bỏ ở T10 (SR-03). 6 field CV structured đã tách sang `resumes.parsed_json` ở T12 (SR-02).*
+One-to-one với users. Field CV structured đã tách sang `resumes.parsed_json`; các field profile dự phòng/write-only đã retired.
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
@@ -169,11 +137,7 @@ One-to-one với users. *D5: 14 columns. 5 field PII thuần (date_of_birth, gen
 | target_role_category | TEXT | — | YES | |
 | target_level | TEXT | — | YES | |
 | preferred_tech_stack | TEXT | — | YES | |
-| years_experience | INT | 0 | NO | |
-| default_language | TEXT | 'vi' | NO | |
-| tts_enabled | BOOLEAN | false | NO | |
 | personality | TEXT | — | YES | *Ngoài design docs* |
-| deleted_at | TIMESTAMPTZ | — | YES | Soft delete |
 | created_at | TIMESTAMPTZ | now() | NO | |
 | updated_at | TIMESTAMPTZ | now() | NO | Auto-update |
 
@@ -187,12 +151,7 @@ Structured CV/profile evidence tách khỏi `user_profiles`. API profile hiện 
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
 | user_id | UUID FK | — | NO | → users.id ON DELETE CASCADE |
-| file_url | TEXT | — | YES | Reserved cho T12b upload |
-| original_filename | TEXT | — | YES | Reserved cho T12b upload |
-| parsed_text | TEXT | — | YES | Reserved cho parser |
 | parsed_json | JSONB | — | YES | `education`, `workExperience`, `projects`, `technicalSkills`, `certifications`, `awards` |
-| language | TEXT | 'vi' | NO | |
-| parser_version | TEXT | — | YES | `manual` cho profile form hiện tại |
 | active | BOOLEAN | true | NO | Resume đang dùng |
 | created_at | TIMESTAMPTZ | now() | NO | |
 
@@ -212,20 +171,13 @@ Session config + lifecycle state. Report payload đã tách sang `session_report
 | user_id | UUID FK | — | NO | → users.id ON DELETE CASCADE |
 | saved_job_description_id | UUID FK | — | YES | → saved_job_descriptions.id ON DELETE SET NULL; trigger đảm bảo JD cùng `user_id` |
 | job_description | TEXT | — | NO | |
-| jd_source | TEXT | — | NO | |
-| jd_url | TEXT | — | YES | |
 | job_title | TEXT | — | YES | |
 | session_type | TEXT | — | NO | `'hr' \| 'technical' \| 'mixed'` |
 | num_questions | INT | 5 | NO | |
-| difficulty | TEXT | 'medium' | NO | |
-| persona | TEXT | 'neutral_tech_lead' | NO | |
-| mode | TEXT | 'practice' | NO | |
 | duration_min | INT | 30 | NO | |
 | language | TEXT | 'vi' | NO | |
 | context_pack_id | TEXT FK | — | NO | → context_packs.id |
-| show_prep_card | BOOLEAN | false | NO | |
 | status | TEXT | 'generating' | NO | CHECK ∈ `{generating, active, paused, canceled, completing, completed, error}` |
-| opening_transcript | TEXT | — | YES | |
 | overall_score | INT | — | YES | CHECK NULL hoặc 0–100 |
 | completed_at | TIMESTAMPTZ | — | YES | |
 | created_at | TIMESTAMPTZ | now() | NO | |
@@ -369,40 +321,18 @@ Indexes:
 
 ---
 
-### ai_quality_log
-Prisma model: `AiQualityLog`  
-Audit log cho mọi AI API call từ BullMQ processors. Không có FK — intentional (audit trail không bị cascade delete).
-
-| Column | DB Type | Default | Nullable | Notes |
-|--------|---------|---------|----------|-------|
-| id | UUID PK | gen_random_uuid() | NO | |
-| session_id | UUID | — | YES | Soft ref — không có FK constraint |
-| job_type | TEXT | — | NO | |
-| prompt_version | TEXT | — | NO | |
-| model | TEXT | — | NO | |
-| input_tokens | INT | — | YES | NULL nếu call failed |
-| output_tokens | INT | — | YES | NULL nếu call failed |
-| latency_ms | INT | — | NO | |
-| is_fallback | BOOLEAN | false | NO | |
-| error_code | TEXT | — | YES | |
-| created_at | TIMESTAMPTZ | now() | NO | |
-
-Indexes (có `sort: Desc` — pre-existing, khác với QuestionUsage *D8*):
-- `idx_ai_quality_log_created_at` on `(created_at DESC)`
-- `idx_ai_quality_log_job_type_created` on `(job_type, created_at DESC)`
-
----
-
 ## Deferred Tables (Not in Schema)
 
 | Table | Prisma Model | Scope | Linked UC | Status |
 |-------|-------------|-------|-----------|--------|
 | `reverse_questions` | — | MVP *D6* | UC-12 | Chưa implement |
+| `ai_quality_log` | — | Future observability | Monitoring | Defer — recreate when AI quality analytics is needed |
+| `question_usage` | — | Future repeat avoidance | Question generation | Retired — recreate with read-path selection logic if needed |
 | `rewrite_answers` | — | v1.1 | UC-07 | Defer |
 | `progress_snapshots` | — | v1.1 | UC-13 | Defer |
 | `placement_test_answers` | — | v1.1 | UC-11 | Defer |
 
-`reverse_questions` là table duy nhất được thiết kế là MVP nhưng chưa có trong schema.
+`reverse_questions` là table duy nhất được thiết kế là MVP nhưng chưa có trong schema. `ai_quality_log` và `question_usage` từng là bảng audit dự kiến nhưng đã được loại khỏi schema hiện tại vì chưa có code runtime đọc tạo behavior người dùng.
 
 ---
 
@@ -410,9 +340,8 @@ Indexes (có `sort: Desc` — pre-existing, khác với QuestionUsage *D8*):
 
 | Pattern | Tables |
 |---------|--------|
-| Soft delete (`deleted_at`) | `users`, `user_profiles`, `question_bank` |
+| Soft delete (`deleted_at`) | `question_bank`, `saved_job_descriptions` |
 | Cascade delete | Tất cả child tables theo chuỗi answer → feedback → segments |
-| No FK (intentional) | `ai_quality_log.session_id`, `question_usage.user_id`, `question_usage.session_id` — kiểm soát bằng `npm run db:verify` |
 | `updated_at` (auto via `@updatedAt`) | `users`, `user_profiles`, `interview_sessions`, `question_bank`, `user_answers` |
 | Partial indexes (`WHERE deleted_at IS NULL`) | `question_bank` (2 indexes) |
 | Partial indexes | `ai_feedbacks(user_answer_id) WHERE user_answer_id IS NOT NULL`; `resumes(user_id) WHERE active = true` UNIQUE |
