@@ -8,6 +8,7 @@ import type {
   OutputLanguage,
   SaveJobDescriptionPayload,
   SavedJobDescription,
+  Session,
   SessionType,
 } from '@/lib/types'
 import Button from '@/components/ui/Button'
@@ -153,6 +154,69 @@ export function getJdLevelLabel(level: string): string {
   return JD_LEVEL_OPTIONS.find((option) => option.value === level)?.label ?? level
 }
 
+function normalizeJdLevel(value: unknown): string {
+  const raw = text(value).trim()
+  if (!raw) return ''
+
+  const normalizeToken = (token: string) =>
+    token
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s*\/\s*/g, ' / ')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+  const normalized = normalizeToken(raw)
+
+  for (const option of JD_LEVEL_OPTIONS) {
+    const candidates = [
+      option.value,
+      option.label,
+      ...option.label.split('/').map((part) => part.trim()),
+    ]
+
+    if (candidates.some((candidate) => normalizeToken(candidate) === normalized)) {
+      return option.value
+    }
+  }
+
+  const aliases: Record<string, JdLevel> = {
+    'entry level': 'intern',
+    entrylevel: 'intern',
+    fresher: 'fresher',
+    intern: 'intern',
+    internship: 'intern',
+    'junior 1y': 'junior',
+    'junior 1 year': 'junior',
+    'junior 2y': 'junior',
+    'junior 2 years': 'junior',
+    'junior developer': 'junior',
+    lead: 'lead',
+    'lead principal': 'lead',
+    middle: 'middle',
+    'middle level': 'middle',
+    'middle developer': 'middle',
+    mid: 'middle',
+    'mid level': 'middle',
+    'midlevel': 'middle',
+    principal: 'lead',
+    'principal engineer': 'lead',
+    senior: 'senior',
+    'senior developer': 'senior',
+    'thuc tap sinh': 'intern',
+    fresh: 'fresher',
+  }
+
+  return aliases[normalized] ?? ''
+}
+
+function extractSerializedJdLevel(jobDescription: string): string {
+  const match = jobDescription.match(/^Level yêu cầu:\s*(.+)$/im)
+  return normalizeJdLevel(match?.[1])
+}
+
 export function serializeJd(form: JdFormData): string {
   const lines: string[] = [
     `Tên công ty: ${form.company}`,
@@ -201,12 +265,42 @@ function resolveSessionLanguage(contextPack: ContextPack): OutputLanguage {
   return contextPack === 'Western' ? 'en' : 'vi'
 }
 
-function savedJobDescriptionToForm(item: SavedJobDescription): JdFormData {
+function resolveSavedJobDescriptionLevel(
+  item: SavedJobDescription,
+  sessions: Session[] = [],
+): string {
+  const savedLevel = normalizeJdLevel(item.level)
+  if (savedLevel) return savedLevel
+
+  return sessions
+    .filter((session) => session.savedJobDescriptionId === item.id)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
+    .map((session) => extractSerializedJdLevel(session.jobDescription))
+    .find(Boolean) ?? ''
+}
+
+function hydrateSavedJobDescriptionLevels(
+  items: SavedJobDescription[],
+  sessions: Session[],
+): SavedJobDescription[] {
+  return items.map((item) => {
+    const level = resolveSavedJobDescriptionLevel(item, sessions)
+    return level && level !== item.level ? { ...item, level } : item
+  })
+}
+
+function savedJobDescriptionToForm(
+  item: SavedJobDescription,
+  sessions: Session[] = [],
+): JdFormData {
   return normalizeJdFormData({
     company: item.companyName,
     website: item.companyWebsite,
     position: item.jobTitle,
-    level: item.level,
+    level: resolveSavedJobDescriptionLevel(item, sessions),
     headcount: item.headcount,
     location: item.location,
     requirements: item.requirements,
@@ -284,18 +378,35 @@ function SetupPageContent() {
     const jdId = searchParams.get('jdId')
     const isNew = searchParams.get('new') === '1'
 
-    apiClient
-      .get<{ items: SavedJobDescription[] }>('/saved-job-descriptions')
-      .then((data) => {
+    async function loadSavedJobDescriptions() {
+      try {
+        const data = await apiClient.get<{ items: SavedJobDescription[] }>(
+          '/saved-job-descriptions',
+        )
         if (!cancelled) {
-          const items = data.items ?? []
+          let items = data.items ?? []
+          let sessions: Session[] = []
+
+          if (items.some((item) => !normalizeJdLevel(item.level))) {
+            try {
+              const sessionData = await apiClient.get<{ sessions: Session[] }>(
+                '/sessions',
+              )
+              sessions = sessionData.sessions ?? []
+              items = hydrateSavedJobDescriptionLevels(items, sessions)
+            } catch {
+              // Best-effort fallback for legacy JD records saved before level existed.
+            }
+          }
+
+          if (cancelled) return
           setSavedJobDescriptions(items)
 
           if (jdId) {
             // Đến từ jd-library với JD cụ thể → pre-fill và vào step 1
             const match = items.find((i) => i.id === jdId)
             if (match) {
-              setJd(savedJobDescriptionToForm(match))
+              setJd(savedJobDescriptionToForm(match, sessions))
               setSelectedSavedJobDescriptionId(match.id)
             }
             setStep(1)
@@ -306,14 +417,17 @@ function SetupPageContent() {
           // else: có JD, không có param → hiện picker (step 0)
           setJdPickerReady(true)
         }
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) {
           setSavedJobDescriptions([])
           setStep(1)
           setJdPickerReady(true)
         }
-      })
+      }
+    }
+
+    void loadSavedJobDescriptions()
+
     return () => {
       cancelled = true
     }
