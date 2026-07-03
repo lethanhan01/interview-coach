@@ -111,6 +111,7 @@ CREATE TABLE "saved_job_descriptions" (
     "company_name" TEXT NOT NULL,
     "company_website" TEXT,
     "job_title" TEXT NOT NULL,
+    "level" TEXT,
     "headcount" TEXT,
     "location" TEXT,
     "requirements" TEXT NOT NULL,

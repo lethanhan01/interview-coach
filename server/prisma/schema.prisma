@@ -139,6 +139,7 @@ model SavedJobDescription {
   companyName    String             @map("company_name")
   companyWebsite String?            @map("company_website")
   jobTitle       String             @map("job_title")
+  level          String?
   headcount      String?
   location       String?
   requirements   String

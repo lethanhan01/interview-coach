@@ -9,8 +9,9 @@ let sessionPayload: Record<string, unknown> | null = null
 
 async function fillValidJd(page: Page) {
   await page.getByLabel('Tên công ty').fill('FPT Software')
-  await page.locator('select').first().selectOption('Frontend Developer')
-  await page.getByLabel('Yêu cầu').fill(VALID_REQUIREMENTS)
+  await page.getByLabel('Vị trí').selectOption('Frontend Developer')
+  await page.getByLabel('Level yêu cầu').selectOption('junior')
+  await page.getByLabel('Yêu cầu', { exact: true }).fill(VALID_REQUIREMENTS)
   await page.getByLabel('Nội dung công việc').fill(VALID_JOB_CONTENT)
 }
 
@@ -61,8 +62,15 @@ test('nút Tiếp theo disabled khi JD chưa đủ thông tin bắt buộc', asy
   await expect(nextBtn).toBeDisabled()
 
   await page.getByLabel('Tên công ty').fill('FPT Software')
-  await page.getByLabel('Yêu cầu').fill('x'.repeat(30))
+  await page.getByLabel('Yêu cầu', { exact: true }).fill('x'.repeat(30))
   await expect(nextBtn).toBeDisabled()
+
+  await page.getByLabel('Vị trí').selectOption('Frontend Developer')
+  await page.getByLabel('Nội dung công việc').fill('x'.repeat(30))
+  await expect(nextBtn).toBeDisabled()
+
+  await page.getByLabel('Level yêu cầu').selectOption('fresher')
+  await expect(nextBtn).toBeEnabled()
 })
 
 test('nút Tiếp theo enabled khi JD hợp lệ', async ({ page }) => {
@@ -141,9 +149,11 @@ test('có thể tìm kiếm, chọn và lưu các tech stack mới trong JD', as
   await expect(page).toHaveURL(new RegExp(`/sessions/${MOCK_SESSION_ID}`))
 
   expect(savedJobDescriptionPayload).toMatchObject({
+    level: 'junior',
     techStack: ['PyTorch', 'Playwright', 'Terraform', 'OWASP'],
   })
   expect(String(sessionPayload?.jobDescription)).toContain('Tech Stack: PyTorch, Playwright, Terraform, OWASP')
+  expect(String(sessionPayload?.jobDescription)).toContain('Level yêu cầu: Junior')
 })
 
 test('chuẩn hóa draft JD cũ thiếu field để input luôn controlled', async ({ page }) => {
@@ -164,7 +174,8 @@ test('chuẩn hóa draft JD cũ thiếu field để input luôn controlled', asy
 
   await page.goto('/setup')
   await page.getByLabel('Website công ty').fill('https://fptsoftware.com')
-  await page.locator('select').first().selectOption('Frontend Developer')
+  await page.getByLabel('Vị trí').selectOption('Frontend Developer')
+  await page.getByLabel('Level yêu cầu').selectOption('junior')
   await page.getByLabel('Số lượng tuyển').fill('2 người')
   await page.getByLabel('Địa điểm làm việc').fill('Hà Nội')
   await page.getByLabel('Lương').fill('20-30 triệu VNĐ')

@@ -12,6 +12,7 @@ export async function seedSavedJobDescriptions(
       companyName: 'FPT Software',
       companyWebsite: 'https://fptsoftware.com',
       jobTitle: 'Backend Developer',
+      level: 'middle',
       headcount: '2',
       location: 'Hà Nội',
       requirements:
@@ -28,6 +29,7 @@ export async function seedSavedJobDescriptions(
       companyName: 'Shopee Vietnam',
       companyWebsite: 'https://shopee.vn',
       jobTitle: 'Frontend Developer',
+      level: 'junior',
       headcount: '3',
       location: 'TP. Hồ Chí Minh',
       requirements:
@@ -44,6 +46,7 @@ export async function seedSavedJobDescriptions(
       companyName: 'VNG Corporation',
       companyWebsite: 'https://vng.com.vn',
       jobTitle: 'Full-stack Developer',
+      level: 'senior',
       headcount: '1',
       location: 'TP. Hồ Chí Minh',
       requirements:

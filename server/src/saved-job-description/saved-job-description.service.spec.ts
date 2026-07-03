@@ -7,6 +7,7 @@ const BASE_DTO = {
   companyName: 'FPT Software',
   companyWebsite: 'https://fptsoftware.com',
   jobTitle: 'Backend Developer',
+  level: 'middle',
   headcount: '2 người',
   location: 'Hà Nội',
   requirements: 'Có kinh nghiệm Node.js, SQL và thiết kế API RESTful.',
@@ -67,6 +68,7 @@ describe('SavedJobDescriptionService', () => {
         userId: 'user-abc',
         companyName: 'FPT Software',
         jobTitle: 'Backend Developer',
+        level: 'middle',
         techStack: ['Node.js', 'PostgreSQL'],
         lastUsedAt: expect.any(Date),
       }),
@@ -92,6 +94,7 @@ describe('SavedJobDescriptionService', () => {
     expect(mockPrisma.savedJobDescription.update).toHaveBeenCalledWith({
       where: { id: 'saved-1' },
       data: expect.objectContaining({
+        level: 'middle',
         salary: '25-35 triệu',
         lastUsedAt: expect.any(Date),
       }),

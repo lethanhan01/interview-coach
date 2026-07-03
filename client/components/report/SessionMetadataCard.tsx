@@ -44,6 +44,7 @@ function TextBlock({ label, value }: { label: string; value?: string }) {
 interface ParsedJobDescription {
   companyName?: string
   jobTitle?: string
+  level?: string
   headcount?: string
   requirements?: string
   jobContent?: string
@@ -95,6 +96,7 @@ function parseJobDescription(jobDescription: string): ParsedJobDescription {
   return {
     companyName: getInlineValue('Tên công ty'),
     jobTitle: getInlineValue('Vị trí tuyển dụng'),
+    level: getInlineValue('Level yêu cầu'),
     headcount: getInlineValue('Số lượng tuyển'),
     requirements: getSectionValue('Yêu cầu'),
     jobContent: getSectionValue('Nội dung công việc'),
@@ -148,6 +150,7 @@ export default function SessionMetadataCard({ session }: SessionMetadataCardProp
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
           <MetaRow label="Tên công ty" value={jobDescription.companyName ?? '—'} />
           <MetaRow label="Vị trí tuyển dụng" value={jobDescription.jobTitle ?? session.jobTitle ?? '—'} />
+          <MetaRow label="Level yêu cầu" value={jobDescription.level ?? '—'} />
           <MetaRow label="Số lượng tuyển" value={jobDescription.headcount ?? '—'} />
           <MetaRow label="Tech stack" value={techStackValue} />
         </div>

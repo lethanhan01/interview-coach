@@ -51,6 +51,7 @@ export class SavedJobDescriptionService {
       companyName: dto.companyName.trim(),
       companyWebsite: trimOptional(dto.companyWebsite),
       jobTitle: dto.jobTitle.trim(),
+      level: dto.level.trim(),
       headcount: trimOptional(dto.headcount),
       location: trimOptional(dto.location),
       requirements: dto.requirements.trim(),

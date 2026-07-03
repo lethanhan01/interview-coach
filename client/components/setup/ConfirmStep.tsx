@@ -1,6 +1,6 @@
 import type { SessionType, ContextPack } from '@/lib/types'
-import type { JdFormData, InterviewDuration, InterviewerStyle } from '@/app/(app)/setup/page'
-import { DURATION_OPTIONS, INTERVIEWER_STYLES } from '@/app/(app)/setup/page'
+import type { JdFormData, InterviewDuration } from '@/app/(app)/setup/page'
+import { DURATION_OPTIONS, getJdLevelLabel } from '@/app/(app)/setup/page'
 
 const SESSION_TYPE_LABELS: Record<SessionType, string> = {
   hr: 'HR / Behavioral',
@@ -36,7 +36,6 @@ interface ConfirmStepProps {
   sessionType: SessionType
   contextPack: ContextPack
   duration: InterviewDuration
-  interviewerStyle: InterviewerStyle
   error: string | null
 }
 
@@ -45,11 +44,9 @@ export default function ConfirmStep({
   sessionType,
   contextPack,
   duration,
-  interviewerStyle,
   error,
 }: ConfirmStepProps) {
   const durationOpt = DURATION_OPTIONS.find((d) => d.value === duration)!
-  const styleOpt = INTERVIEWER_STYLES.find((s) => s.value === interviewerStyle)!
 
   return (
     <div className="flex flex-col gap-5">
@@ -57,6 +54,7 @@ export default function ConfirmStep({
         <Row label="Tên công ty" value={jd.company} />
         {jd.website && <Row label="Website" value={jd.website} />}
         <Row label="Vị trí tuyển dụng" value={jd.position} />
+        <Row label="Level yêu cầu" value={getJdLevelLabel(jd.level)} />
         {jd.headcount && <Row label="Số lượng tuyển" value={jd.headcount} />}
         {jd.location && <Row label="Địa điểm" value={jd.location} />}
         {jd.techStack.length > 0 && <Row label="Tech Stack" value={jd.techStack.join(', ')} />}
@@ -77,7 +75,6 @@ export default function ConfirmStep({
         <Row label="Context Pack" value={CONTEXT_PACK_LABELS[contextPack]} />
         <Row label="Thời gian phỏng vấn" value={durationOpt.label} />
         <Row label="Số câu hỏi dự kiến" value={`${durationOpt.numQuestions} câu`} />
-        <Row label="Phong cách người phỏng vấn" value={styleOpt.label} />
       </Section>
 
       {error && <p className="text-sm text-danger">{error}</p>}

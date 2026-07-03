@@ -72,6 +72,9 @@ ALTER TABLE interview_sessions
   DROP COLUMN IF EXISTS show_prep_card,
   DROP COLUMN IF EXISTS opening_transcript;
 
+ALTER TABLE saved_job_descriptions
+  ADD COLUMN IF NOT EXISTS level TEXT;
+
 
 -- -----------------------------------------------------------------------------
 -- 3. RLS policies

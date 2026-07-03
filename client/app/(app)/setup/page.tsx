@@ -25,31 +25,23 @@ export const DURATION_OPTIONS = [
   { value: 90 as const, label: '1 tiếng rưỡi', numQuestions: 45 },
 ]
 
-export const INTERVIEWER_STYLES = [
-  {
-    value: 'friendly' as const,
-    label: 'Thân thiện & Nhẹ nhàng',
-    description: 'Người phỏng vấn cởi mở, tạo không khí thoải mái, phù hợp cho fresher',
-  },
-  {
-    value: 'professional' as const,
-    label: 'Chuyên nghiệp & Trung lập',
-    description: 'Phong cách chuẩn mực, tập trung vào năng lực thực tế',
-  },
-  {
-    value: 'challenging' as const,
-    label: 'Thách thức & Áp lực',
-    description: 'Câu hỏi khó, đào sâu, mô phỏng phỏng vấn công ty lớn / nước ngoài',
-  },
+export const JD_LEVEL_OPTIONS = [
+  { value: 'intern' as const, label: 'Intern / Thực tập sinh' },
+  { value: 'fresher' as const, label: 'Fresher' },
+  { value: 'junior' as const, label: 'Junior' },
+  { value: 'middle' as const, label: 'Middle' },
+  { value: 'senior' as const, label: 'Senior' },
+  { value: 'lead' as const, label: 'Lead / Principal' },
 ] as const
 
 export type InterviewDuration = 30 | 60 | 90
-export type InterviewerStyle = 'friendly' | 'professional' | 'challenging'
+export type JdLevel = (typeof JD_LEVEL_OPTIONS)[number]['value']
 
 export interface JdFormData {
   company: string
   website: string
   position: string
+  level: string
   headcount: string
   location: string
   requirements: string
@@ -64,6 +56,7 @@ export const EMPTY_JD: JdFormData = {
   company: '',
   website: '',
   position: '',
+  level: '',
   headcount: '',
   location: '',
   requirements: '',
@@ -91,6 +84,7 @@ function normalizeJdFormData(
     company: text(value?.company),
     website: text(value?.website),
     position: text(value?.position),
+    level: text(value?.level),
     headcount: text(value?.headcount),
     location: text(value?.location),
     requirements: text(value?.requirements),
@@ -149,16 +143,22 @@ export function isJdValid(form: JdFormData): boolean {
   return (
     form.company.trim().length > 0 &&
     form.position.trim().length > 0 &&
+    form.level.trim().length > 0 &&
     form.requirements.trim().length >= 30 &&
     form.jobContent.trim().length >= 30
   )
 }
 
-export function serializeJd(form: JdFormData, style: InterviewerStyle): string {
+export function getJdLevelLabel(level: string): string {
+  return JD_LEVEL_OPTIONS.find((option) => option.value === level)?.label ?? level
+}
+
+export function serializeJd(form: JdFormData): string {
   const lines: string[] = [
     `Tên công ty: ${form.company}`,
     form.website ? `Website: ${form.website}` : '',
     `Vị trí tuyển dụng: ${form.position}`,
+    `Level yêu cầu: ${getJdLevelLabel(form.level)}`,
     form.headcount ? `Số lượng tuyển: ${form.headcount}` : '',
     form.location ? `Địa điểm làm việc: ${form.location}` : '',
     '',
@@ -171,7 +171,6 @@ export function serializeJd(form: JdFormData, style: InterviewerStyle): string {
     form.benefits ? `\nQuyền lợi:\n${form.benefits}` : '',
     form.salary ? `\nLương: ${form.salary}` : '',
     form.bonus ? `\nThưởng: ${form.bonus}` : '',
-    `\nPhong cách phỏng vấn: ${INTERVIEWER_STYLES.find((s) => s.value === style)!.label}`,
   ]
   return lines.filter(Boolean).join('\n')
 }
@@ -186,6 +185,7 @@ function toSavedJobDescriptionPayload(form: JdFormData): SaveJobDescriptionPaylo
     companyName: form.company.trim(),
     companyWebsite: optional(form.website),
     jobTitle: form.position.trim(),
+    level: form.level.trim(),
     headcount: optional(form.headcount),
     location: optional(form.location),
     requirements: form.requirements.trim(),
@@ -206,6 +206,7 @@ function savedJobDescriptionToForm(item: SavedJobDescription): JdFormData {
     company: item.companyName,
     website: item.companyWebsite,
     position: item.jobTitle,
+    level: item.level,
     headcount: item.headcount,
     location: item.location,
     requirements: item.requirements,
@@ -258,7 +259,6 @@ function SetupPageContent() {
   const [sessionType, setSessionType] = useState<SessionType>('hr')
   const [contextPack, setContextPack] = useState<ContextPack>('VN')
   const [duration, setDuration] = useState<InterviewDuration>(30)
-  const [interviewerStyle, setInterviewerStyle] = useState<InterviewerStyle>('professional')
   const [savedJobDescriptions, setSavedJobDescriptions] = useState<SavedJobDescription[]>([])
   const [selectedSavedJobDescriptionId, setSelectedSavedJobDescriptionId] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -267,6 +267,7 @@ function SetupPageContent() {
   const jdHasContent =
     jd.company.trim().length > 0 ||
     jd.position.trim().length > 0 ||
+    jd.level.trim().length > 0 ||
     jd.requirements.trim().length > 0 ||
     jd.jobContent.trim().length > 0
 
@@ -358,7 +359,7 @@ function SetupPageContent() {
     setError(null)
     setSubmitting(true)
     try {
-      const jobDescription = serializeJd(jd, interviewerStyle)
+      const jobDescription = serializeJd(jd)
       const savedJobDescription = await apiClient.post<SavedJobDescription>(
         '/saved-job-descriptions',
         toSavedJobDescriptionPayload(jd),
@@ -505,8 +506,6 @@ function SetupPageContent() {
             setContextPack={setContextPack}
             duration={duration}
             setDuration={setDuration}
-            interviewerStyle={interviewerStyle}
-            setInterviewerStyle={setInterviewerStyle}
           />
           <div className="flex justify-between">
             <Button variant="ghost" onClick={() => setStep(1)}>
@@ -529,7 +528,6 @@ function SetupPageContent() {
             sessionType={sessionType}
             contextPack={contextPack}
             duration={duration}
-            interviewerStyle={interviewerStyle}
             error={error}
           />
           <div className="flex justify-between">
