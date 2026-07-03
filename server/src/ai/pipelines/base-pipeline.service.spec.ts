@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HrPipelineService } from './hr.pipeline.service';
+import { MixedPipelineService } from './mixed.pipeline.service';
 import { OpenAIGateway } from '../openai.gateway';
 import { PromptBuilderService } from '../prompt-builder.service';
 import { ZodValidatorService } from '../zod-validator.service';
@@ -16,6 +17,7 @@ import {
 
 describe('BasePipelineService (via HrPipelineService)', () => {
   let service: HrPipelineService;
+  let mixedService: MixedPipelineService;
   let mockOpenAI: ReturnType<typeof createMockOpenAIGateway>;
   let mockPromptBuilder: ReturnType<typeof createMockPromptBuilderService>;
   let mockZodValidator: ReturnType<typeof createMockZodValidatorService>;
@@ -55,6 +57,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HrPipelineService,
+        MixedPipelineService,
         { provide: OpenAIGateway, useValue: mockOpenAI },
         { provide: PromptBuilderService, useValue: mockPromptBuilder },
         { provide: ZodValidatorService, useValue: mockZodValidator },
@@ -63,6 +66,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
     }).compile();
 
     service = module.get<HrPipelineService>(HrPipelineService);
+    mixedService = module.get<MixedPipelineService>(MixedPipelineService);
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -379,6 +383,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         expect.stringContaining('Output language: Vietnamese.'),
         mockContextPack,
         'hr',
+        { competencyDomain: undefined },
       );
       expect(
         mockPromptBuilder.applyContextPackForEvaluation,
@@ -386,6 +391,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         expect.stringContaining('Interview strategy:'),
         mockContextPack,
         'hr',
+        { competencyDomain: undefined },
       );
       expect(mockPromptBuilder.applyContextPack).not.toHaveBeenCalled();
       expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
@@ -416,6 +422,69 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         expect.stringContaining('Output language: English.'),
         mockContextPack,
         'hr',
+        { competencyDomain: undefined },
+      );
+    });
+
+    it('system prompt chứa rule chỉ trả đúng competencyDomain khi có metadata', async () => {
+      const rawFeedback = {
+        applied_dimensions: [{ id: 'D1', score: 75 }],
+        model_answer: 'A.',
+        key_takeaway: 'B.',
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      await service.evaluateAnswer({
+        ...feedbackInput,
+        questionCategory: 'behavioral',
+        competencyDomain: 'D1',
+      });
+
+      expect(mockPromptBuilder.applyContextPackForEvaluation).toHaveBeenCalledWith(
+        expect.any(String),
+        mockContextPack,
+        'hr',
+        { competencyDomain: 'D1' },
+      );
+      expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          systemMessage: expect.stringContaining(
+            'applied_dimensions must contain only this exact competency_domain',
+          ),
+        }),
+      );
+    });
+
+    it('mixed + competencyDomain=TD2 lọc bỏ D* và chỉ giữ target domain', async () => {
+      const rawFeedback = {
+        applied_dimensions: [
+          { id: 'D1', score: 20 },
+          { id: 'TD2', score: 90 },
+        ],
+        model_answer: 'A.',
+        key_takeaway: 'B.',
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      const result = await mixedService.evaluateAnswer({
+        ...feedbackInput,
+        sessionType: 'mixed',
+        questionCategory: 'technical',
+        competencyDomain: 'TD2',
+      });
+
+      expect(result.appliedDimensions).toEqual([
+        { id: 'TD2', name: 'Application', score: 90, weight: 1 },
+      ]);
+      expect(mockPromptBuilder.applyContextPackForEvaluation).toHaveBeenCalledWith(
+        expect.any(String),
+        mockContextPack,
+        'mixed',
+        { competencyDomain: 'TD2' },
       );
     });
 

@@ -87,26 +87,29 @@ export function normalizeGeneratedQuestionMetadata(
   };
 }
 
-function heuristicDomain(questionText: string, sessionType: SessionType): string {
+function heuristicTechnicalDomain(questionText: string): string | null {
   const text = normalizeKey(questionText);
 
-  if (sessionType === 'technical') {
   if (/(debug|troubleshoot|incident|production|reliability|bug|loi|suco)/.test(text)) {
-      return 'TD5';
-    }
-    if (/(codequality|bestpractice|clean|refactor|maintain|chatluongcode)/.test(text)) {
-      return 'TD4';
-    }
-    if (/(systemdesign|scale|scalability|architecture|distributed|tuduyhethong)/.test(text)) {
-      return 'TD3';
-    }
-    if (/(practical|application|fullstack|database|backend|frontend|implement|khanangapdungthucte)/.test(text)) {
-      return 'TD2';
-    }
-    return 'TD1';
+    return 'TD5';
+  }
+  if (/(codequality|bestpractice|clean|refactor|maintain|chatluongcode)/.test(text)) {
+    return 'TD4';
+  }
+  if (/(systemdesign|scale|scalability|architecture|distributed|tuduyhethong)/.test(text)) {
+    return 'TD3';
+  }
+  if (/(practical|application|fullstack|database|backend|frontend|implement|khanangapdungthucte)/.test(text)) {
+    return 'TD2';
   }
 
-  if (/(incident|oncall|problem|solve|resilience|pressure|production|debug|suco|apluc|giaiquyetvande)/.test(text)) {
+  return 'TD1';
+}
+
+function heuristicBehavioralDomain(questionText: string): string | null {
+  const text = normalizeKey(questionText);
+
+  if (/(incident|oncall|problem|solve|resilience|pressure|suco|apluc|giaiquyetvande)/.test(text)) {
     return 'D2';
   }
   if (/(selfaware|growth|learn|feedback|weakness|tuhoc|hochoi|nhanthuc|tunhanthuc)/.test(text)) {
@@ -121,7 +124,25 @@ function heuristicDomain(questionText: string, sessionType: SessionType): string
   if (/(culture|motivation|values|company|dongluc|phuhop|phuhopvanhoa)/.test(text)) {
     return 'D5';
   }
+
   return 'D1';
+}
+
+function heuristicDomain(questionText: string, sessionType: SessionType): string | null {
+  if (sessionType === 'technical') {
+    return heuristicTechnicalDomain(questionText) ?? 'TD1';
+  }
+
+  if (sessionType === 'hr') {
+    return heuristicBehavioralDomain(questionText) ?? 'D1';
+  }
+
+  const technical = heuristicTechnicalDomain(questionText);
+  const behavioral = heuristicBehavioralDomain(questionText);
+
+  if (technical && !behavioral) return technical;
+  if (behavioral && !technical) return behavioral;
+  return null;
 }
 
 export function normalizeQuestionMetadataForCleanup(
@@ -132,14 +153,17 @@ export function normalizeQuestionMetadataForCleanup(
   },
   contextPack: ContextPackConfig,
   sessionType: SessionType,
-): NormalizedQuestionMetadata {
+): NormalizedQuestionMetadata | null {
   const strict = normalizeGeneratedQuestionMetadata(input, contextPack, sessionType);
   if (strict) return strict;
 
-  const heuristic = heuristicDomain(
-    `${input.questionText} ${input.category ?? ''} ${input.competencyDomain}`,
-    sessionType,
-  );
+  const heuristicInput =
+    sessionType === 'mixed'
+      ? input.questionText
+      : `${input.questionText} ${input.category ?? ''} ${input.competencyDomain}`;
+  const heuristic = heuristicDomain(heuristicInput, sessionType);
+  if (!heuristic) return null;
+
   return {
     questionCategory: categoryFromDomain(heuristic),
     competencyDomain: heuristic,

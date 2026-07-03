@@ -1,6 +1,7 @@
 import {
   calculateEstimatedTimeMin,
   normalizeGeneratedQuestionMetadata,
+  normalizeQuestionMetadataForCleanup,
 } from './question-metadata';
 import type { ContextPackConfig } from './context-pack.service';
 
@@ -8,10 +9,16 @@ const contextPack = {
   behavioralDimensions: [
     { id: 'D1', name: 'Communication & Presentation', weight: 0.2 },
     { id: 'D2', name: 'Critical Thinking', weight: 0.2 },
+    { id: 'D3', name: 'Collaboration & Teamwork', weight: 0.15 },
+    { id: 'D4', name: 'Leadership & Initiative', weight: 0.2 },
+    { id: 'D5', name: 'Culture Fit & Values', weight: 0.15 },
     { id: 'D6', name: 'Self-Awareness & Growth', weight: 0.1 },
   ],
   technicalDimensions: [
     { id: 'TD1', name: 'Foundational Knowledge', weight: 0.2 },
+    { id: 'TD2', name: 'Practical Application', weight: 0.25 },
+    { id: 'TD3', name: 'Systems Thinking', weight: 0.2 },
+    { id: 'TD4', name: 'Code Quality & Best Practices', weight: 0.2 },
     { id: 'TD5', name: 'Debug & Problem-solving', weight: 0.15 },
   ],
 } as ContextPackConfig;
@@ -97,5 +104,117 @@ describe('question metadata helpers', () => {
         difficulty: 3,
       }),
     ).toBe(6);
+  });
+
+  it('cleanup mixed map technical text rõ ràng về TD5', () => {
+    expect(
+      normalizeQuestionMetadataForCleanup(
+        {
+          category: 'behavioral',
+          competencyDomain: 'unknown',
+          questionText: 'Walk through how you debug a production reliability issue.',
+        },
+        contextPack,
+        'mixed',
+      ),
+    ).toEqual({
+      questionCategory: 'technical',
+      competencyDomain: 'TD5',
+      matchBranch: 'heuristic',
+    });
+  });
+
+  it('cleanup mixed map behavioral text rõ ràng về D4 hoặc D3', () => {
+    expect(
+      normalizeQuestionMetadataForCleanup(
+        {
+          category: 'technical',
+          competencyDomain: 'unknown',
+          questionText: 'Describe a time you showed leadership and ownership.',
+        },
+        contextPack,
+        'mixed',
+      ),
+    ).toEqual({
+      questionCategory: 'behavioral',
+      competencyDomain: 'D4',
+      matchBranch: 'heuristic',
+    });
+
+    expect(
+      normalizeQuestionMetadataForCleanup(
+        {
+          category: 'technical',
+          competencyDomain: 'unknown',
+          questionText: 'Tell me about collaboration with a teammate.',
+        },
+        contextPack,
+        'mixed',
+      ),
+    ).toEqual({
+      questionCategory: 'behavioral',
+      competencyDomain: 'D3',
+      matchBranch: 'heuristic',
+    });
+  });
+
+  it('cleanup mixed ambiguous hoặc conflict không strict-map thì trả null', () => {
+    expect(
+      normalizeQuestionMetadataForCleanup(
+        {
+          category: 'behavioral',
+          competencyDomain: 'unknown',
+          questionText: 'Tell me about a production incident you solved under pressure.',
+        },
+        contextPack,
+        'mixed',
+      ),
+    ).toBeNull();
+
+    expect(
+      normalizeQuestionMetadataForCleanup(
+        {
+          category: 'behavioral',
+          competencyDomain: 'unknown',
+          questionText: 'Tell me about yourself.',
+        },
+        contextPack,
+        'mixed',
+      ),
+    ).toBeNull();
+  });
+
+  it('cleanup HR và Technical vẫn giữ fallback D1/TD1', () => {
+    expect(
+      normalizeQuestionMetadataForCleanup(
+        {
+          category: 'unknown',
+          competencyDomain: 'unknown',
+          questionText: 'Tell me about yourself.',
+        },
+        contextPack,
+        'hr',
+      ),
+    ).toEqual({
+      questionCategory: 'behavioral',
+      competencyDomain: 'D1',
+      matchBranch: 'heuristic',
+    });
+
+    expect(
+      normalizeQuestionMetadataForCleanup(
+        {
+          category: 'unknown',
+          competencyDomain: 'unknown',
+          questionText: 'Explain a concept.',
+        },
+        contextPack,
+        'technical',
+      ),
+    ).toEqual({
+      questionCategory: 'technical',
+      competencyDomain: 'TD1',
+      matchBranch: 'heuristic',
+    });
   });
 });

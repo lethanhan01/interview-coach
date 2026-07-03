@@ -100,6 +100,7 @@ export class PromptBuilderService {
     baseSystem: string,
     contextPack: ContextPackConfig,
     sessionType: SessionType,
+    options: { competencyDomain?: string } = {},
   ): string {
     const { culturalNotes, behavioralDimensions, technicalDimensions } =
       contextPack;
@@ -133,6 +134,9 @@ export class PromptBuilderService {
         `Example: a pure definition question ("What is a closure?") usually evaluates only foundational knowledge and practical application, not debugging or systems thinking.`,
       ].join('\n');
     } else {
+      const targetDomainRule = options.competencyDomain
+        ? `Target competency_domain is ${options.competencyDomain}. Return exactly this one ID in "applied_dimensions"; do not include behavioral or technical dimensions outside the target.`
+        : `A question may evaluate behavioral dimensions, technical dimensions, or both — include only those it truly tests.`;
       scoringSection = [
         `Session type: Mixed (behavioral + technical).`,
         `Candidate behavioral dimensions:`,
@@ -140,7 +144,7 @@ export class PromptBuilderService {
         `Candidate technical dimensions:`,
         lines(technicalDimensions),
         ...selectionRules,
-        `A question may evaluate behavioral dimensions, technical dimensions, or both — include only those it truly tests.`,
+        targetDomainRule,
         `Example: "Tell me about a bug you fixed" may evaluate debugging plus communication, but not coding-style depth.`,
       ].join('\n');
     }

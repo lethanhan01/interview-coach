@@ -1,56 +1,14 @@
 import 'dotenv/config';
 import { Client } from 'pg';
 import { ContextPackService } from '../src/ai/context-pack.service';
+import type { CleanupRow } from '../src/ai/question-metadata-cleanup-planner';
 import {
-  calculateEstimatedTimeMin,
-  normalizeQuestionMetadataForCleanup,
-} from '../src/ai/question-metadata';
-import type { SessionType } from '../src/ai/pipelines/interview-pipeline.interface';
-
-type Row = {
-  id: string;
-  session_id: string;
-  question_text: string;
-  order_index: number;
-  question_category: string;
-  competency_domain: string;
-  estimated_time_min: number | null;
-  session_type: string;
-  context_pack_id: string;
-  duration_min: number;
-  num_questions: number;
-};
-
-type PlannedUpdate = {
-  row: Row;
-  nextCategory: 'behavioral' | 'technical';
-  nextDomain: string;
-  nextTime: number;
-  matchBranch: string;
-  changed: boolean;
-};
-
-const VALID_CATEGORIES = new Set(['behavioral', 'technical']);
-const VALID_DOMAINS = new Set([
-  'D1',
-  'D2',
-  'D3',
-  'D4',
-  'D5',
-  'D6',
-  'TD1',
-  'TD2',
-  'TD3',
-  'TD4',
-  'TD5',
-]);
+  planQuestionMetadataCleanup,
+  summarizeQuestionMetadataCleanup,
+} from '../src/ai/question-metadata-cleanup-planner';
 
 function parseApply(): boolean {
   return process.argv.includes('--apply');
-}
-
-function isSessionType(value: string): value is SessionType {
-  return value === 'hr' || value === 'technical' || value === 'mixed';
 }
 
 async function main(): Promise<void> {
@@ -65,7 +23,7 @@ async function main(): Promise<void> {
   await client.connect();
 
   try {
-    const result = await client.query<Row>(`
+    const result = await client.query<CleanupRow>(`
       SELECT
         sq.id,
         sq.session_id,
@@ -84,58 +42,16 @@ async function main(): Promise<void> {
       ORDER BY s.created_at, sq.session_id, sq.order_index
     `);
 
-    const planned = result.rows.map<PlannedUpdate>((row) => {
-      if (!isSessionType(row.session_type)) {
-        throw new Error(`Unsupported session_type ${row.session_type} for ${row.id}`);
-      }
-
-      const contextPack = contextPackService.getContextPack(
-        row.context_pack_id as 'VN' | 'Western',
-      );
-      const normalized = normalizeQuestionMetadataForCleanup(
-        {
-          category: row.question_category,
-          competencyDomain: row.competency_domain,
-          questionText: row.question_text,
-        },
-        contextPack,
-        row.session_type,
-      );
-      const nextTime =
-        row.estimated_time_min && row.estimated_time_min > 0
-          ? row.estimated_time_min
-          : calculateEstimatedTimeMin({
-              durationMin: row.duration_min,
-              numQuestions: row.num_questions,
-              difficulty: 2,
-            });
-
-      return {
-        row,
-        nextCategory: normalized.questionCategory,
-        nextDomain: normalized.competencyDomain,
-        nextTime,
-        matchBranch: normalized.matchBranch,
-        changed:
-          row.question_category !== normalized.questionCategory ||
-          row.competency_domain !== normalized.competencyDomain ||
-          row.estimated_time_min !== nextTime,
-      };
-    });
-
-    const summary = {
-      mode: apply ? 'apply' : 'dry-run',
-      aiRows: result.rows.length,
-      nullTime: result.rows.filter((row) => row.estimated_time_min === null).length,
-      badCategory: result.rows.filter(
-        (row) => !VALID_CATEGORIES.has(row.question_category),
-      ).length,
-      badDomain: result.rows.filter((row) => !VALID_DOMAINS.has(row.competency_domain))
-        .length,
-      plannedChanges: planned.filter((item) => item.changed).length,
-      heuristicMappings: planned.filter((item) => item.matchBranch === 'heuristic')
-        .length,
-    };
+    const { planned, unmappedRows } = planQuestionMetadataCleanup(
+      result.rows,
+      contextPackService,
+    );
+    const summary = summarizeQuestionMetadataCleanup(
+      result.rows,
+      planned,
+      unmappedRows,
+      apply,
+    );
 
     console.log(JSON.stringify(summary, null, 2));
     for (const item of planned.filter((entry) => entry.changed)) {
@@ -154,8 +70,25 @@ async function main(): Promise<void> {
         }),
       );
     }
+    for (const item of unmappedRows) {
+      console.log(
+        JSON.stringify({
+          sessionId: item.row.session_id,
+          questionId: item.row.id,
+          orderIndex: item.row.order_index,
+          category: item.row.question_category,
+          domain: item.row.competency_domain,
+          reason: item.reason,
+        }),
+      );
+    }
 
     if (!apply) return;
+    if (unmappedRows.length > 0) {
+      throw new Error(
+        `Refusing to apply cleanup with ${unmappedRows.length} unmapped rows.`,
+      );
+    }
 
     await client.query('BEGIN');
     try {

@@ -88,9 +88,10 @@ export abstract class BasePipelineService implements InterviewPipeline {
       withStrategy,
       input.contextPackConfig,
       input.sessionType,
+      { competencyDomain: input.competencyDomain },
     );
     const withQuestionMetadata = input.competencyDomain
-      ? `${withPack}\n\nTarget question metadata: category=${input.questionCategory ?? 'unknown'}, competency_domain=${input.competencyDomain}. Prefer this exact competency_domain when it is listed in the allowed dimensions. Do not score dimensions outside this question domain.`
+      ? `${withPack}\n\nTarget question metadata: category=${input.questionCategory ?? 'unknown'}, competency_domain=${input.competencyDomain}. applied_dimensions must contain only this exact competency_domain when it is listed in the allowed dimensions. Do not score dimensions outside this question domain.`
       : withPack;
     const messages = this.promptBuilder.injectDynamicContext({
       systemMessage: withQuestionMetadata,

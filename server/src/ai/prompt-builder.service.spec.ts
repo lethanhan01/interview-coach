@@ -144,6 +144,21 @@ describe('PromptBuilderService', () => {
       expect(result).not.toContain('session weight');
     });
 
+    it('Mixed có target competencyDomain thì không mời model chấm cả hai nhóm', () => {
+      const result = service.applyContextPackForEvaluation(
+        'base',
+        contextPack,
+        'mixed',
+        { competencyDomain: 'TD2' },
+      );
+
+      expect(result).toContain('Target competency_domain is TD2');
+      expect(result).toContain('Return exactly this one ID in "applied_dimensions"');
+      expect(result).not.toContain(
+        'A question may evaluate behavioral dimensions, technical dimensions, or both',
+      );
+    });
+
     it('mọi session type đều chứa cultural notes', () => {
       (['hr', 'technical', 'mixed'] as const).forEach((sessionType) => {
         const result = service.applyContextPackForEvaluation(
