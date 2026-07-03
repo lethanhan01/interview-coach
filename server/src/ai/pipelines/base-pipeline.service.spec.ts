@@ -167,6 +167,29 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       );
     });
 
+    it('gắn English language instruction vào prompt sinh câu hỏi khi language=en', async () => {
+      const rawQuestions = {
+        questions: [
+          {
+            text: 'Tell me about your most relevant backend project.',
+            category: 'behavioral',
+            competency_domain: 'communication',
+            difficulty: 2,
+          },
+        ],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawQuestions));
+      mockZodValidator.validate.mockReturnValue(rawQuestions);
+
+      await service.generateQuestions({ ...questionInput, language: 'en' });
+
+      expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          systemMessage: expect.stringContaining('Output language: English.'),
+        }),
+      );
+    });
+
     it('ném AI_SERVICE_ERROR khi chatCompletion trả về JSON không hợp lệ', async () => {
       mockOpenAI.chatCompletion.mockResolvedValue('không phải JSON {{');
 

@@ -44,6 +44,7 @@ export interface SavedJobDescription {
   companyName: string;
   companyWebsite?: string | null;
   jobTitle: string;
+  level?: string | null;
   headcount?: string | null;
   location?: string | null;
   requirements: string;
@@ -61,6 +62,7 @@ export interface SaveJobDescriptionPayload {
   companyName: string;
   companyWebsite?: string;
   jobTitle: string;
+  level: string;
   headcount?: string;
   location?: string;
   requirements: string;
@@ -193,7 +195,6 @@ export interface GetProfileResponse {
     targetRoleCategory?: string;
     targetLevel?: string;
     preferredTechStack?: string;
-    yearsExperience?: number;
     education?: EducationEntry;
     workExperience?: WorkExperienceEntry[];
     projects?: ProjectEntry[];

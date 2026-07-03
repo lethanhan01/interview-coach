@@ -115,6 +115,41 @@ describe('QuestionBankService', () => {
     });
   });
 
+  it('trả câu hỏi tiếng Anh khi chọn Western với language=en', async () => {
+    mockPrisma.questionBank.findMany.mockResolvedValue([
+      {
+        id: 'western-1',
+        content: 'Tell me about a time you handled stakeholder conflict.',
+        difficulty: 3,
+        competencyDomain: 'D4',
+        estimatedTimeMin: 5,
+        translations: {
+          en: 'Tell me about a time you handled stakeholder conflict.',
+          vi: 'Hãy kể về một lần bạn xử lý xung đột với stakeholder.',
+        },
+      },
+    ]);
+
+    const result = await service.selectFallbackQuestions(
+      'hr',
+      'Western',
+      1,
+      'en',
+    );
+
+    expect(mockPrisma.questionBank.findMany).toHaveBeenCalledWith({
+      where: { sessionType: 'hr', contextPackId: 'Western', deletedAt: null },
+      orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
+      take: 3,
+    });
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        questionBankId: 'western-1',
+        text: 'Tell me about a time you handled stakeholder conflict.',
+      }),
+    );
+  });
+
   it('QG-11: chọn 2 easy, 2 medium, 1 hard với count=5 theo Math.round hiện tại', async () => {
     mockPrisma.questionBank.findMany.mockResolvedValue([
       createMockQuestionBank({ id: 'easy-1', difficulty: 1 }),
@@ -171,15 +206,4 @@ describe('QuestionBankService', () => {
     );
   });
 
-  it('ghi usage cho question bank', async () => {
-    await service.recordUsage('qb-1', 'session-1', 'user-1');
-
-    expect(mockPrisma.questionUsage.create).toHaveBeenCalledWith({
-      data: {
-        questionBankId: 'qb-1',
-        sessionId: 'session-1',
-        userId: 'user-1',
-      },
-    });
-  });
 });

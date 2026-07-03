@@ -5,10 +5,14 @@ import { X } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
-import { TECH_STACK_OPTIONS } from '@/components/profile/constants'
 import type { JdFormData } from '@/app/(app)/setup/page'
-import { POSITION_OPTIONS, BONUS_OPTIONS } from '@/app/(app)/setup/page'
 import type { SavedJobDescription } from '@/lib/types'
+import {
+  BONUS_OPTIONS,
+  JD_LEVEL_OPTIONS,
+  POSITION_OPTIONS,
+  TECH_STACK_OPTIONS,
+} from '@/lib/interview-options'
 
 interface JdFormProps {
   value: JdFormData
@@ -23,14 +27,16 @@ const selectCls =
 
 function SelectField({
   label,
+  htmlFor,
   children,
 }: {
   label: string
+  htmlFor?: string
   children: React.ReactNode
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-ink">{label}</label>
+      <label htmlFor={htmlFor} className="text-sm font-medium text-ink">{label}</label>
       {children}
     </div>
   )
@@ -106,17 +112,37 @@ export default function JdForm({
       {/* Vị trí tuyển dụng */}
       <Card>
         <h2 className="mb-4 text-base font-semibold text-ink">Vị trí tuyển dụng</h2>
-        <select
-          value={value.position}
-          onChange={(e) => set('position', e.target.value)}
-          className={selectCls}
-        >
-          <option value="">Chọn vị trí...</option>
-          {POSITION_OPTIONS.map((pos) => (
-            <option key={pos} value={pos}>{pos}</option>
-          ))}
-        </select>
+        <SelectField label="Vị trí" htmlFor="jd-position">
+          <select
+            id="jd-position"
+            value={value.position}
+            onChange={(e) => set('position', e.target.value)}
+            className={selectCls}
+            required
+          >
+            <option value="">Chọn vị trí...</option>
+            {POSITION_OPTIONS.map((pos) => (
+              <option key={pos} value={pos}>{pos}</option>
+            ))}
+          </select>
+        </SelectField>
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <SelectField label="Level yêu cầu" htmlFor="jd-level">
+            <select
+              id="jd-level"
+              value={value.level}
+              onChange={(e) => set('level', e.target.value)}
+              className={selectCls}
+              required
+            >
+              <option value="">Chọn level...</option>
+              {JD_LEVEL_OPTIONS.map((level) => (
+                <option key={level.value} value={level.value}>
+                  {level.label}
+                </option>
+              ))}
+            </select>
+          </SelectField>
           <Input
             label="Số lượng tuyển"
             value={value.headcount}
@@ -236,8 +262,9 @@ export default function JdForm({
             onChange={(e) => set('salary', e.target.value)}
             placeholder="VD: 15-25 triệu VNĐ"
           />
-          <SelectField label="Thưởng">
+          <SelectField label="Thưởng" htmlFor="jd-bonus">
             <select
+              id="jd-bonus"
               value={value.bonus}
               onChange={(e) => set('bonus', e.target.value)}
               className={selectCls}

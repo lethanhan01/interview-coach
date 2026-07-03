@@ -33,7 +33,6 @@ describe('UserController', () => {
         email: 'test@example.com',
         role: 'user',
         status: 'active',
-        profileCompleted: false,
         profile: null,
       };
       mockUserService.getProfile.mockResolvedValue(userWithProfile);

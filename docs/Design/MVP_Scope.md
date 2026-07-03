@@ -80,11 +80,12 @@ Core value proposition: paste JD → thực hiện phỏng vấn AI → nhận s
 | 3 — Answer | `follow_up_questions` | FollowUpProcessor output |
 | 3 — Feedback | `ai_feedbacks` | MVP: `user_answer_id NOT NULL`, không có `rewrite_answer_id` |
 | 3 — Feedback | `annotated_segments` | Highlight segments (good/warning/critical) |
-| 4 — Audit | `ai_quality_log` | AI call audit, không có FK (intentional) |
 
 Ghi chú `ai_feedbacks`: MVP schema khác v1.1 schema trong DB design file — `user_answer_id NOT NULL`, không có `rewrite_answer_id`, không có `chk_ai_feedbacks_source` CHECK constraint. Xem [DD-01](DetailedDesign/database-design/08_design_decisions.md).
 
 ### Tables và Changes OUT (v1.1)
+
+- `ai_quality_log`: defer; recreate later if AI call observability/token analytics becomes required.
 
 | Item | Loại | Liên quan |
 | ---- | ---- | --------- |

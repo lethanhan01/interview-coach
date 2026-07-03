@@ -30,13 +30,10 @@ async function main() {
         AS TABLE public.ai_feedbacks WITH NO DATA;
       CREATE TABLE ${schema}.annotated_segments
         AS TABLE public.annotated_segments WITH NO DATA;
-      CREATE TABLE ${schema}.follow_up_questions
-        AS TABLE public.follow_up_questions WITH NO DATA;
 
       ALTER TABLE ${schema}.user_answers ADD PRIMARY KEY (id);
       ALTER TABLE ${schema}.ai_feedbacks ADD PRIMARY KEY (id);
       ALTER TABLE ${schema}.annotated_segments ADD PRIMARY KEY (id);
-      ALTER TABLE ${schema}.follow_up_questions ADD PRIMARY KEY (id);
 
       ALTER TABLE ${schema}.ai_feedbacks
         ADD CONSTRAINT ai_feedbacks_user_answer_id_key UNIQUE (user_answer_id),
@@ -49,13 +46,6 @@ async function main() {
           FOREIGN KEY (ai_feedback_id)
           REFERENCES ${schema}.ai_feedbacks(id)
           ON DELETE CASCADE;
-      ALTER TABLE ${schema}.follow_up_questions
-        ADD CONSTRAINT follow_up_questions_user_answer_id_key
-          UNIQUE (user_answer_id),
-        ADD CONSTRAINT follow_up_questions_user_answer_id_fkey
-          FOREIGN KEY (user_answer_id)
-          REFERENCES ${schema}.user_answers(id)
-          ON DELETE CASCADE;
 
       INSERT INTO ${schema}.user_answers
         SELECT * FROM public.user_answers;
@@ -63,8 +53,6 @@ async function main() {
         SELECT * FROM public.ai_feedbacks;
       INSERT INTO ${schema}.annotated_segments
         SELECT * FROM public.annotated_segments;
-      INSERT INTO ${schema}.follow_up_questions
-        SELECT * FROM public.follow_up_questions;
     `);
 
     const seedResult = await client.query<{
@@ -197,49 +185,21 @@ async function main() {
       `,
       [duplicateFeedbackId, seed.feedback_id],
     );
-    await client.query(
-      `
-        INSERT INTO ${schema}.follow_up_questions (
-          id,
-          user_answer_id,
-          follow_up_text,
-          trigger_rule,
-          trigger_reason,
-          follow_up_answer_text,
-          created_at
-        )
-        VALUES (
-          gen_random_uuid(),
-          $1,
-          'Migration test follow-up',
-          'migration_test',
-          'Verify relation preservation',
-          'Preserved answer',
-          now()
-        );
-      `,
-      [duplicateAnswerId],
-    );
-
     const beforeResult = await client.query<{
       answers: number;
       feedbacks: number;
       annotations: number;
-      follow_ups: number;
     }>(
       `
         SELECT
           COUNT(DISTINCT answer.id)::INTEGER AS answers,
           COUNT(DISTINCT feedback.id)::INTEGER AS feedbacks,
-          COUNT(DISTINCT segment.id)::INTEGER AS annotations,
-          COUNT(DISTINCT follow_up.id)::INTEGER AS follow_ups
+          COUNT(DISTINCT segment.id)::INTEGER AS annotations
         FROM ${schema}.user_answers answer
         LEFT JOIN ${schema}.ai_feedbacks feedback
           ON feedback.user_answer_id = answer.id
         LEFT JOIN ${schema}.annotated_segments segment
           ON segment.ai_feedback_id = feedback.id
-        LEFT JOIN ${schema}.follow_up_questions follow_up
-          ON follow_up.user_answer_id = answer.id
         WHERE answer.session_id = $1
           AND answer.question_id = $2
       `,
@@ -249,7 +209,7 @@ async function main() {
 
     await client.query(`SET search_path TO ${schema}, public`);
     const migrationSql = readFileSync(
-      join(process.cwd(), 'prisma', 'migrations', 'deduplicate-user-answers.sql'),
+      join(process.cwd(), 'prisma', 'deduplicate-user-answers.sql'),
       'utf8',
     );
     await client.query(migrationSql);
@@ -258,7 +218,6 @@ async function main() {
       answers: number;
       feedbacks: number;
       annotations: number;
-      follow_ups: number;
       orphan_feedbacks: number;
       orphan_annotations: number;
     }>(
@@ -287,13 +246,6 @@ async function main() {
           ) AS annotations,
           (
             SELECT COUNT(*)::INTEGER
-            FROM ${schema}.follow_up_questions follow_up
-            JOIN ${schema}.user_answers answer
-              ON answer.id = follow_up.user_answer_id
-            WHERE answer.session_id = $1 AND answer.question_id = $2
-          ) AS follow_ups,
-          (
-            SELECT COUNT(*)::INTEGER
             FROM ${schema}.ai_feedbacks feedback
             LEFT JOIN ${schema}.user_answers answer
               ON answer.id = feedback.user_answer_id
@@ -318,7 +270,6 @@ async function main() {
       after.answers !== 1 ||
       after.feedbacks !== 1 ||
       after.annotations !== before.annotations ||
-      after.follow_ups !== before.follow_ups ||
       after.orphan_feedbacks !== 0 ||
       after.orphan_annotations !== 0
     ) {
@@ -372,8 +323,7 @@ async function main() {
       `Migration copy test passed in ${schemaName}: ` +
         `${before.answers}->${after.answers} answers, ` +
         `${before.feedbacks}->${after.feedbacks} feedbacks, ` +
-        `${after.annotations}/${before.annotations} annotations preserved, ` +
-        `${after.follow_ups}/${before.follow_ups} follow-ups preserved.`,
+        `${after.annotations}/${before.annotations} annotations preserved.`,
     );
   } finally {
     await client.query('SET search_path TO public').catch(() => undefined);

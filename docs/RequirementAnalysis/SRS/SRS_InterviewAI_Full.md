@@ -1449,7 +1449,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 |---|---|---|---|---|---|---|
 | `session_id` | Phiên cần xem feedback | Có | UUID/ID | Thuộc Candidate hiện tại | Không có | `interview_sessions` |
 | `question_id` | Câu hỏi được chọn trong phiên | Không | UUID/ID | Thuộc session hiện tại | Câu hỏi đầu tiên | UI state / query param |
-| `feedback_rating` | Đánh giá hữu ích/chưa hữu ích | Không | Enum | `useful` hoặc `not_useful` | Không có | `ai_quality_log` |
+| `feedback_rating` | Đánh giá hữu ích/chưa hữu ích | Không | Enum | `useful` hoặc `not_useful` | Không có | Deferred — future feedback-quality store |
 
 **Main Flow:**
 
@@ -1474,7 +1474,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 
 8. Candidate đọc annotation; có thể đóng popup bằng cách click ra ngoài.
 9. Candidate xem **Model Answer** ở cuối trang.
-10. *(Tùy chọn)* Candidate nhấn **+1 Hữu ích** hoặc **-1 Chưa hữu ích** để đánh giá chất lượng feedback của câu hỏi này. Hệ thống lưu vào `ai_quality_log` (xem vòng lặp cải thiện tại 4.7.2). Mỗi câu hỏi được đánh giá 1 lần; có thể thay đổi trong vòng 5 phút sau khi nhấn.
+10. *(Deferred)* Candidate đánh giá chất lượng feedback bằng **+1 Hữu ích** hoặc **-1 Chưa hữu ích** khi feedback-quality store được bổ sung lại.
 11. Candidate nhấn **"Luyện lại câu này"** → kích hoạt UC-07.
 12. Candidate nhấn tab câu hỏi khác → quay lại bước 4 với câu hỏi mới.
 13. Sau khi xem xong tất cả câu hỏi, Candidate cuộn xuống **Section Communication Analysis**:
@@ -1489,7 +1489,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 
 - **AF-06-A**: Feedback được sinh theo Fallback (không có segment annotation) → Hiển thị tab "Nhận xét chung" thay vì Annotated Transcript; text comment hiện ở vị trí transcript; không có màu highlight.
 - **AF-06-B**: Voice metrics khả dụng → Hiển thị badge nhỏ trong Communication Analysis: `95 WPM · 4 filler words`.
-- **AF-06-C**: Candidate đã đánh giá +1/-1 và muốn thay đổi trong 5 phút → Nhấn lại nút → Hệ thống cập nhật `ai_quality_log` với giá trị mới; nút được highlight để cho thấy lựa chọn hiện tại.
+- **AF-06-C**: Deferred feedback rating → chỉ áp dụng khi bổ sung lại feedback-quality store.
 - **AF-06-D**: `reverse_q_eval_json = null` (Candidate không làm UC-12 hoặc UC-12 bị bỏ qua) → Section Reverse Questions Evaluation ẩn hoàn toàn; không hiển thị placeholder hay lỗi.
 - **AF-06-E**: Candidate nhấn vào đề xuất session type trong Action Plan → hệ thống chuyển đến UC-03 với `session_type` và `difficulty` được pre-fill theo gợi ý.
 

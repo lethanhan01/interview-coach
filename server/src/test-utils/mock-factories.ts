@@ -53,10 +53,6 @@ export const createMockPrismaService = () => ({
     delete: jest.fn().mockResolvedValue(createMockQuestionBank()),
     count: jest.fn().mockResolvedValue(0),
   },
-  questionUsage: {
-    create: jest.fn().mockResolvedValue({ id: 'usage-1' }),
-    count: jest.fn().mockResolvedValue(0),
-  },
   interviewSession: {
     count: jest.fn(),
     create: jest.fn(),
@@ -183,7 +179,6 @@ export const createMockOpenAIGateway = () => ({
 
 export const createMockQuestionBankService = () => ({
   selectFallbackQuestions: jest.fn().mockResolvedValue([]),
-  recordUsage: jest.fn().mockResolvedValue(undefined),
 });
 
 export const createMockPromptBuilderService = () => ({

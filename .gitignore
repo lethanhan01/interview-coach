@@ -65,3 +65,6 @@ docs/superpowers/*
 scripts/*
 
 skills-lock.json
+
+.codex
+.superpowers/*

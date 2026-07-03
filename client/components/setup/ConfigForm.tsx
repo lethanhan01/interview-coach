@@ -1,8 +1,8 @@
 'use client'
 
 import type { SessionType, ContextPack } from '@/lib/types'
-import type { InterviewDuration, InterviewerStyle } from '@/app/(app)/setup/page'
-import { DURATION_OPTIONS, INTERVIEWER_STYLES } from '@/app/(app)/setup/page'
+import type { InterviewDuration } from '@/app/(app)/setup/page'
+import { DURATION_OPTIONS } from '@/app/(app)/setup/page'
 
 const SESSION_TYPES: { value: SessionType; label: string; description: string }[] = [
   { value: 'hr', label: 'HR / Behavioral', description: 'Câu hỏi về kinh nghiệm, soft skills, và tình huống' },
@@ -58,8 +58,6 @@ interface ConfigFormProps {
   setContextPack: (v: ContextPack) => void
   duration: InterviewDuration
   setDuration: (v: InterviewDuration) => void
-  interviewerStyle: InterviewerStyle
-  setInterviewerStyle: (v: InterviewerStyle) => void
 }
 
 export default function ConfigForm({
@@ -69,8 +67,6 @@ export default function ConfigForm({
   setContextPack,
   duration,
   setDuration,
-  interviewerStyle,
-  setInterviewerStyle,
 }: ConfigFormProps) {
   return (
     <div className="flex flex-col gap-7">
@@ -122,21 +118,6 @@ export default function ConfigForm({
         </div>
       </div>
 
-      <div>
-        <p className="mb-3 text-sm font-medium text-ink">Phong cách người phỏng vấn</p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {INTERVIEWER_STYLES.map((s) => (
-            <SelectCard
-              key={s.value}
-              value={s.value as InterviewerStyle}
-              current={interviewerStyle}
-              onSelect={setInterviewerStyle}
-              label={s.label}
-              sublabel={s.description}
-            />
-          ))}
-        </div>
-      </div>
     </div>
   )
 }

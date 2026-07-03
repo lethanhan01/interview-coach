@@ -22,6 +22,11 @@ export class SaveJobDescriptionDto {
   @MaxLength(160)
   jobTitle: string;
 
+  @IsString()
+  @MinLength(1)
+  @MaxLength(40)
+  level: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(80)

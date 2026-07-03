@@ -19,11 +19,7 @@ CREATE TABLE "question_bank" (
     "session_type" "QuestionSessionType" NOT NULL,
     "difficulty" INTEGER NOT NULL,
     "context_pack_id" TEXT NOT NULL,
-    "subcategory" TEXT NOT NULL,
     "competency_domain" TEXT NOT NULL,
-    "applicable_roles" TEXT[],
-    "applicable_levels" TEXT[],
-    "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "estimated_time_min" INTEGER,
     "translations" JSONB,
     "content_json" JSONB,
@@ -35,25 +31,11 @@ CREATE TABLE "question_bank" (
 );
 
 -- CreateTable
-CREATE TABLE "question_usage" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "question_bank_id" UUID NOT NULL,
-    "session_id" UUID,
-    "user_id" UUID NOT NULL,
-    "used_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "question_usage_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "users" (
     "id" UUID NOT NULL,
     "email" TEXT NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'candidate',
     "status" TEXT NOT NULL DEFAULT 'active',
-    "profile_completed" BOOLEAN NOT NULL DEFAULT false,
-    "last_login_at" TIMESTAMPTZ(6),
-    "deleted_at" TIMESTAMPTZ(6),
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -69,11 +51,7 @@ CREATE TABLE "user_profiles" (
     "target_role_category" TEXT,
     "target_level" TEXT,
     "preferred_tech_stack" TEXT,
-    "years_experience" INTEGER NOT NULL DEFAULT 0,
-    "default_language" TEXT NOT NULL DEFAULT 'vi',
-    "tts_enabled" BOOLEAN NOT NULL DEFAULT false,
     "personality" TEXT,
-    "deleted_at" TIMESTAMPTZ(6),
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -84,12 +62,7 @@ CREATE TABLE "user_profiles" (
 CREATE TABLE "resumes" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "user_id" UUID NOT NULL,
-    "file_url" TEXT,
-    "original_filename" TEXT,
-    "parsed_text" TEXT,
     "parsed_json" JSONB,
-    "language" TEXT NOT NULL DEFAULT 'vi',
-    "parser_version" TEXT,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -116,20 +89,13 @@ CREATE TABLE "interview_sessions" (
     "user_id" UUID NOT NULL,
     "saved_job_description_id" UUID,
     "job_description" TEXT NOT NULL,
-    "jd_source" TEXT NOT NULL,
-    "jd_url" TEXT,
     "job_title" TEXT,
     "session_type" TEXT NOT NULL,
     "num_questions" INTEGER NOT NULL DEFAULT 5,
-    "difficulty" TEXT NOT NULL DEFAULT 'medium',
-    "persona" TEXT NOT NULL DEFAULT 'neutral_tech_lead',
-    "mode" TEXT NOT NULL DEFAULT 'practice',
     "duration_min" INTEGER NOT NULL DEFAULT 30,
     "language" TEXT NOT NULL DEFAULT 'vi',
     "context_pack_id" TEXT NOT NULL,
-    "show_prep_card" BOOLEAN NOT NULL DEFAULT false,
     "status" TEXT NOT NULL DEFAULT 'generating',
-    "opening_transcript" TEXT,
     "overall_score" INTEGER,
     "completed_at" TIMESTAMPTZ(6),
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -145,6 +111,7 @@ CREATE TABLE "saved_job_descriptions" (
     "company_name" TEXT NOT NULL,
     "company_website" TEXT,
     "job_title" TEXT NOT NULL,
+    "level" TEXT,
     "headcount" TEXT,
     "location" TEXT,
     "requirements" TEXT NOT NULL,
@@ -228,34 +195,11 @@ CREATE TABLE "annotated_segments" (
     CONSTRAINT "annotated_segments_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "ai_quality_log" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "session_id" UUID,
-    "job_type" TEXT NOT NULL,
-    "prompt_version" TEXT NOT NULL,
-    "model" TEXT NOT NULL,
-    "input_tokens" INTEGER,
-    "output_tokens" INTEGER,
-    "latency_ms" INTEGER NOT NULL,
-    "is_fallback" BOOLEAN NOT NULL DEFAULT false,
-    "error_code" TEXT,
-    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "ai_quality_log_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE INDEX "idx_question_bank_context_pack" ON "question_bank"("context_pack_id") WHERE (deleted_at IS NULL);
 
 -- CreateIndex
 CREATE INDEX "idx_question_bank_session_type_difficulty" ON "question_bank"("session_type", "difficulty") WHERE (deleted_at IS NULL);
-
--- CreateIndex
-CREATE INDEX "idx_question_usage_bank_used" ON "question_usage"("question_bank_id", "used_at");
-
--- CreateIndex
-CREATE INDEX "idx_question_usage_user_used" ON "question_usage"("user_id", "used_at");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
@@ -314,17 +258,8 @@ CREATE INDEX "idx_ai_feedbacks_user_answer_id" ON "ai_feedbacks"("user_answer_id
 -- CreateIndex
 CREATE INDEX "idx_annotated_segments_feedback_id" ON "annotated_segments"("ai_feedback_id");
 
--- CreateIndex
-CREATE INDEX "idx_ai_quality_log_created_at" ON "ai_quality_log"("created_at" DESC);
-
--- CreateIndex
-CREATE INDEX "idx_ai_quality_log_job_type_created" ON "ai_quality_log"("job_type", "created_at" DESC);
-
 -- AddForeignKey
 ALTER TABLE "question_bank" ADD CONSTRAINT "question_bank_context_pack_id_fkey" FOREIGN KEY ("context_pack_id") REFERENCES "context_packs"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "question_usage" ADD CONSTRAINT "question_usage_question_bank_id_fkey" FOREIGN KEY ("question_bank_id") REFERENCES "question_bank"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "user_profiles" ADD CONSTRAINT "user_profiles_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -52,7 +52,7 @@ async function main() {
 
     const before = await getDuplicateStats(client);
     const migrationSql = readFileSync(
-      join(process.cwd(), 'prisma', 'migrations', 'deduplicate-user-answers.sql'),
+      join(process.cwd(), 'prisma', 'deduplicate-user-answers.sql'),
       'utf8',
     );
 

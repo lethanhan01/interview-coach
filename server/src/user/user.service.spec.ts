@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { createMockPrismaService } from '../test-utils/mock-factories';
+import { Prisma } from '@prisma/client';
 
 describe('UserService', () => {
   let service: UserService;
@@ -15,7 +16,6 @@ describe('UserService', () => {
     email: 'test@example.com',
     role: 'user',
     status: 'active',
-    profileCompleted: false,
     createdAt: new Date(),
     profile: null,
     resumes: [],
@@ -46,7 +46,6 @@ describe('UserService', () => {
         email: 'test@example.com',
         role: 'user',
         status: 'active',
-        profileCompleted: false,
         createdAt: BASE_USER.createdAt,
         profile: null,
       });
@@ -152,7 +151,6 @@ describe('UserService', () => {
         data: {
           userId: 'user-123',
           parsedJson: dto,
-          parserVersion: 'manual',
           active: true,
         },
       });
@@ -180,6 +178,38 @@ describe('UserService', () => {
         },
       });
       expect(mockPrisma.resume.create).not.toHaveBeenCalled();
+    });
+
+    it('bắt race khi tạo resume active và merge vào row thắng unique constraint', async () => {
+      const dto = { technicalSkills: [{ name: 'TypeScript' }] };
+      const uniqueError = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on active resume',
+        {
+          code: 'P2002',
+          clientVersion: 'test',
+        },
+      );
+      mockPrisma.userProfile.upsert.mockResolvedValue({});
+      mockPrisma.resume.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 'resume-winner',
+          parsedJson: { education: [{ school: 'HUST' }] },
+        });
+      mockPrisma.resume.create.mockRejectedValue(uniqueError);
+      mockPrisma.user.findUnique.mockResolvedValue(BASE_USER);
+
+      await service.upsertProfile('user-123', dto);
+
+      expect(mockPrisma.resume.update).toHaveBeenCalledWith({
+        where: { id: 'resume-winner' },
+        data: {
+          parsedJson: {
+            education: [{ school: 'HUST' }],
+            technicalSkills: [{ name: 'TypeScript' }],
+          },
+        },
+      });
     });
 
     it('không đụng tới resume khi dto chỉ chứa field profile thuần', async () => {

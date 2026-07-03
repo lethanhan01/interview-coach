@@ -3,6 +3,7 @@
 import { Building2, MapPin, Clock, Plus, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import type { SavedJobDescription } from '@/lib/types'
+import { getJdLevelLabel } from '@/lib/interview-options'
 
 interface Props {
   items: SavedJobDescription[]
@@ -92,6 +93,11 @@ export default function SavedJdPicker({ items, onSelect, onNew }: Props) {
 
                   {/* Meta: location + date */}
                   <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {item.level && (
+                      <span className="text-xs font-medium text-brand">
+                        {getJdLevelLabel(item.level)}
+                      </span>
+                    )}
                     {item.location && (
                       <span className="flex items-center gap-1 text-xs text-ink-faint">
                         <MapPin className="size-3" aria-hidden="true" />

@@ -9,6 +9,7 @@ import { QUESTION_GEN_QUEUE } from '../../common/constants/queue.constants';
 import { QuestionBankService } from '../../question-bank/question-bank.service';
 import type { FallbackQuestion } from '../../question-bank/question-bank.service';
 import { OpenAIGateway } from '../openai.gateway';
+import { resolveOutputLanguage } from '../output-language';
 import type {
   GeneratedQuestion,
   SessionType,
@@ -20,7 +21,6 @@ const AI_QUESTION_EVERY_N = 5;
 
 interface QuestionGenerationJobDto {
   sessionId: string;
-  userId: string;
   sessionType: SessionType;
   jobDescriptionText: string;
   targetRoles: string[];
@@ -47,7 +47,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
   async process(job: Job<QuestionGenerationJobDto>): Promise<void> {
     const {
       sessionId,
-      userId,
       sessionType,
       jobDescriptionText,
       targetRoles,
@@ -55,6 +54,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
       language,
       totalQuestions,
     } = job.data;
+    const outputLanguage = resolveOutputLanguage(language);
 
     const aiCount = Math.round(totalQuestions / AI_QUESTION_EVERY_N);
     const qbCount = totalQuestions - aiCount;
@@ -69,6 +69,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
         jobDescriptionText,
         targetRoles,
         contextPackConfig,
+        language: outputLanguage,
         totalQuestions: aiCount,
       });
       aiQuestions = aiQuestions.slice(0, aiCount);
@@ -92,10 +93,9 @@ export class QuestionGenerationProcessor extends WorkerHost {
       try {
         await this.fallbackFromQuestionBank(
           sessionId,
-          userId,
           sessionType,
           contextPack,
-          language,
+          outputLanguage,
           totalQuestions,
         );
         if (await this.markActiveUnlessStopped(sessionId)) {
@@ -120,7 +120,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
         sessionType,
         contextPack,
         qbCount,
-        language,
+        outputLanguage,
       );
     } catch (qbError: unknown) {
       this.logger.error(
@@ -143,18 +143,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
       this.logger.log(
         `Hybrid question generation persisted for session ${sessionId}: ai=${aiCount} qb=${qbQuestions.length} total=${result.count} model=${this.openai.getChatModel()}`,
       );
-
-      if (qbQuestions.length > 0) {
-        await Promise.all(
-          qbQuestions.map((q) =>
-            this.questionBankService.recordUsage(
-              q.questionBankId,
-              sessionId,
-              userId,
-            ),
-          ),
-        );
-      }
 
       if (await this.markActiveUnlessStopped(sessionId)) {
         await this.emitActive(sessionId);
@@ -184,11 +172,14 @@ export class QuestionGenerationProcessor extends WorkerHost {
     rubricJson: object;
     estimatedTimeMin?: number;
   }> {
-    // AI questions appear every AI_QUESTION_EVERY_N positions (positions 5, 10, 15, ...)
+    // AI questions appear every AI_QUESTION_EVERY_N positions when possible.
+    // Short sessions still need every generated question to land inside total.
     const aiPositions = new Set(
-      Array.from(
-        { length: aiQuestions.length },
-        (_, i) => (i + 1) * AI_QUESTION_EVERY_N,
+      Array.from({ length: aiQuestions.length }, (_, i) =>
+        Math.min(
+          (i + 1) * AI_QUESTION_EVERY_N,
+          total - (aiQuestions.length - i - 1),
+        ),
       ),
     );
 
@@ -225,7 +216,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
 
   private async fallbackFromQuestionBank(
     sessionId: string,
-    userId: string,
     sessionType: string,
     contextPack: string,
     language: string,
@@ -251,16 +241,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
       })),
       skipDuplicates: true,
     });
-
-    await Promise.all(
-      selected.map((question) =>
-        this.questionBankService.recordUsage(
-          question.questionBankId,
-          sessionId,
-          userId,
-        ),
-      ),
-    );
   }
 
   private async markActiveUnlessStopped(sessionId: string): Promise<boolean> {

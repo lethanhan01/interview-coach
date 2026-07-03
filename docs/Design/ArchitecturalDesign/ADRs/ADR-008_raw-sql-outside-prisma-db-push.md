@@ -19,12 +19,14 @@ Một số object DB không biểu diễn được bằng Prisma schema và bị
 
 - RLS policies + `ENABLE ROW LEVEL SECURITY`
 - Auth sync trigger (`auth.users` → `public.users`)
-- Partial indexes (`WHERE deleted_at IS NULL`)
-- **CHECK constraints** (discovered gap — task T11/SR-05)
+- Partial/filtered indexes không express an toàn bằng Prisma trong mọi trường hợp (`WHERE deleted_at IS NULL`, `WHERE active = true`)
+- Composite FK/constraint bổ sung để đảm bảo `user_answers.question_id` thuộc đúng `session_id`
+- Trigger same-user cho `interview_sessions.saved_job_description_id`
+- **CHECK constraints** (role/status/type/range/score/audio/report/offset)
 
 Các object này đã được gom sẵn trong `server/prisma/migrations/migration.sql` và apply thủ công sau `db push`. Khi thêm CHECK constraint (SR-05), gap trở nên rõ ràng: `db push` không tạo, không giữ, và sẽ không cảnh báo khi constraint biến mất sau một lần push trên môi trường mới.
 
-Vấn đề cốt lõi: không có cơ chế tự động đảm bảo raw SQL được apply sau mỗi `db push`. Quên một lần = drift (RLS tắt, CHECK mất, trigger không chạy) mà schema Prisma vẫn "hợp lệ".
+Vấn đề cốt lõi: nếu raw SQL không được apply sau mỗi `db push`, DB có thể drift (RLS tắt, CHECK mất, trigger không chạy, partial unique index thiếu) mà schema Prisma vẫn "hợp lệ". Vì vậy `db:sync:full` trở thành đường chuẩn thay cho chạy rời từng bước.
 
 Các lựa chọn:
 
@@ -39,36 +41,54 @@ Quy trình apply (bắt buộc theo thứ tự):
 
 ```bash
 cd server
-npm run db:prepare-user-answer-unique   # chỉ khi DB có duplicate user_answers cần consolidate
-npx prisma db push                      # sync columns/tables/Prisma-expressible indexes
+npm run db:validate                     # validate schema.prisma
+npm run db:verify:pre                   # anomaly gate trước khi thêm constraint/index
 npx prisma generate                     # rebuild client
-npm run db:apply-sql                    # apply migration.sql (prisma db execute, đọc datasource từ prisma.config.ts)
+npm run db:prepare-user-answer-unique   # consolidate duplicate user_answers nếu có
+npm run db:prepare-db-push-raw-sql      # tạm gỡ raw constraint Prisma db push không quản lý
+npx prisma db push                      # sync columns/tables/Prisma-expressible indexes
+npm run db:apply-sql                    # apply migration.sql (RLS/policies/trigger/CHECK/raw indexes)
+npm run db:verify                       # catalog + anomaly verification sau apply
 # tương đương thủ công: psql "$DATABASE_URL" -f prisma/migrations/migration.sql (service role / superuser)
+```
+
+Script gộp:
+
+```bash
+npm run db:sync:full
 ```
 
 Ràng buộc với `migration.sql`:
 
 - Mọi statement phải **idempotent** — re-run an toàn. Toàn bộ file đã hardened: trigger dùng `DROP TRIGGER IF EXISTS` + `CREATE`; RLS policy dùng `DROP POLICY IF EXISTS` + `CREATE`; index dùng `CREATE INDEX IF NOT EXISTS`; CHECK constraint dùng `DROP CONSTRAINT IF EXISTS` + `ADD`; seed dùng `ON CONFLICT`. Chạy `npm run db:apply-sql` lại sau mỗi `db push` không gây lỗi.
-- CHECK constraint chỉ áp cho cột có **tập giá trị ổn định, đã verify**:
-  - `interview_sessions.session_type` ∈ `{hr, technical, mixed}` — khớp `CreateSessionDto` + seed.
-  - `users.role` ∈ `{candidate, admin}` — candidate là default schema, admin tham chiếu trong RLS policies.
-- **Không** áp CHECK cho cột tập giá trị biến động/đơn trị (`users.status` chỉ có `active`; `interview_sessions.status` 8 giá trị hay thay đổi khi thêm flow) — enforce ở application layer qua DTO + `ValidationPipe`.
+- Vì Prisma `db push` có thể cố drop raw composite constraint không có trong `schema.prisma`, `db:sync:full` chạy `db:prepare-db-push-raw-sql` trước `db push` để tạm gỡ `user_answers_question_session_match_fkey` và `session_questions_id_session_id_key`; `db:apply-sql` thêm lại ngay sau đó.
+- `db:verify:pre` phải pass trước khi apply raw SQL. Các anomaly chặn migration gồm `user_answers` lệch session/question, `interview_sessions.saved_job_description_id` khác user, duplicate active resume, và dữ liệu đang vi phạm CHECK/range.
+- `question_usage` đã retired vì chỉ có write-path audit, chưa có read-path repeat avoidance. Nếu cần chống lặp thật sự, thêm lại bằng schema mới kèm selection logic và verification tương ứng.
+- CHECK constraint chỉ áp cho cột có tập giá trị/range ổn định trong code hiện tại:
+  - `users.role` ∈ `{candidate, admin}`
+  - `interview_sessions.session_type` ∈ `{hr, technical, mixed}`
+  - `interview_sessions.status` ∈ `{generating, active, paused, canceled, completing, completed, error}`
+  - `user_answers.answer_mode` ∈ `{text, voice}`
+  - `user_answers.transcription_status` NULL hoặc ∈ `{pending, done, failed}`
+  - `session_reports.report_type` ∈ `{executive_summary, comm_analysis, competency_heatmap, action_plan, skipped_answers}`
+  - score/range/audio metadata/annotated segment offsets trong khoảng hợp lệ.
+- Không CHECK các tập giá trị chưa có source-of-truth ổn định, ví dụ `annotated_segments.highlight_level`.
 
 ## Consequences
 
 **Positive:**
 
-- Raw SQL tập trung một file, có thứ tự apply rõ ràng, document trong ADR.
+- Raw SQL tập trung một file, có thứ tự apply rõ ràng và có script `db:sync:full`.
 - Idempotent → re-run sau mỗi `db push` không gây lỗi.
-- CHECK constraint là defense-in-depth ở DB layer cho hai cột rủi ro thấp, bổ sung cho DTO validation.
+- CHECK/trigger/composite FK/partial unique index là defense-in-depth ở DB layer, bổ sung cho DTO/service validation.
 
 **Negative:**
 
-- **Apply thủ công = rủi ro drift**: quên chạy `migration.sql` sau `db push` → RLS/CHECK/trigger biến mất. Không có cơ chế tự động phát hiện. Đây là tradeoff chính được chấp nhận cho development.
+- **Apply thủ công = rủi ro drift** nếu bỏ qua `db:sync:full`: quên chạy `migration.sql` sau `db push` → RLS/CHECK/trigger/raw index biến mất. `db:verify` giảm rủi ro phát hiện drift nhưng không thay thế migration workflow đầy đủ.
 - Không có audit trail SQL dạng incremental migration — `db push` không tạo migration file.
 - Mở rộng tập giá trị CHECK (vd thêm role mới) phải sửa cả `migration.sql` lẫn application code, dễ lệch nếu chỉ sửa một nơi.
 
 **Điều kiện revise:**
 
 - Trước khi deploy production: chuyển sang Option A (proper migration workflow với baseline) để loại bỏ bước apply thủ công và có audit trail. Lúc đó CHECK constraint nằm trong migration files, ADR này được superseded.
-- Nếu tập giá trị `users.status` / `interview_sessions.status` ổn định lại (ngừng thêm flow mới) → cân nhắc mở rộng scope CHECK.
+- Nếu thêm giá trị status/report/answer mode mới, phải sửa application code, `migration.sql`, `verify-db-hardening.ts`, `test-db-hardening-constraints.ts`, và docs cùng lúc.

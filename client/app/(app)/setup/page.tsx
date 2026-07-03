@@ -5,8 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import type {
   ContextPack,
+  OutputLanguage,
   SaveJobDescriptionPayload,
   SavedJobDescription,
+  Session,
   SessionType,
 } from '@/lib/types'
 import Button from '@/components/ui/Button'
@@ -15,6 +17,10 @@ import ConfigForm from '@/components/setup/ConfigForm'
 import ConfirmStep from '@/components/setup/ConfirmStep'
 import SavedJdPicker from '@/components/setup/SavedJdPicker'
 import { ArrowLeft } from 'lucide-react'
+import {
+  getJdLevelLabel,
+  normalizeJdLevel,
+} from '@/lib/interview-options'
 
 // ── Constants & Types ─────────────────────────────────────────────────────────
 
@@ -24,31 +30,13 @@ export const DURATION_OPTIONS = [
   { value: 90 as const, label: '1 tiếng rưỡi', numQuestions: 45 },
 ]
 
-export const INTERVIEWER_STYLES = [
-  {
-    value: 'friendly' as const,
-    label: 'Thân thiện & Nhẹ nhàng',
-    description: 'Người phỏng vấn cởi mở, tạo không khí thoải mái, phù hợp cho fresher',
-  },
-  {
-    value: 'professional' as const,
-    label: 'Chuyên nghiệp & Trung lập',
-    description: 'Phong cách chuẩn mực, tập trung vào năng lực thực tế',
-  },
-  {
-    value: 'challenging' as const,
-    label: 'Thách thức & Áp lực',
-    description: 'Câu hỏi khó, đào sâu, mô phỏng phỏng vấn công ty lớn / nước ngoài',
-  },
-] as const
-
 export type InterviewDuration = 30 | 60 | 90
-export type InterviewerStyle = 'friendly' | 'professional' | 'challenging'
 
 export interface JdFormData {
   company: string
   website: string
   position: string
+  level: string
   headcount: string
   location: string
   requirements: string
@@ -63,6 +51,7 @@ export const EMPTY_JD: JdFormData = {
   company: '',
   website: '',
   position: '',
+  level: '',
   headcount: '',
   location: '',
   requirements: '',
@@ -73,46 +62,34 @@ export const EMPTY_JD: JdFormData = {
   bonus: '',
 }
 
-export const POSITION_OPTIONS = [
-  'Frontend Developer',
-  'Backend Developer',
-  'Full-stack Developer',
-  'Mobile Developer (iOS)',
-  'Mobile Developer (Android)',
-  'Flutter Developer',
-  'DevOps Engineer',
-  'Site Reliability Engineer',
-  'Cloud Engineer',
-  'Security Engineer',
-  'Data Analyst',
-  'Data Engineer',
-  'Data Scientist',
-  'AI/ML Engineer',
-  'AI Engineer',
-  'MLOps Engineer',
-  'Database Administrator',
-  'System Administrator',
-  'QA/Tester',
-  'Game Developer',
-  'Embedded Engineer',
-  'UI/UX Designer',
-  'Business Analyst',
-  'Product Manager',
-  'Project Manager',
-  'Scrum Master',
-  'Solution Architect',
-  'ERP/CRM Consultant',
-  'Technical Writer',
-]
+function text(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  return String(value)
+}
 
-export const BONUS_OPTIONS = [
-  'Tháng 13 (1 lần/năm)',
-  '2 lần/năm',
-  'Hàng quý',
-  'Theo KPI',
-  'Linh hoạt',
-  'Không có',
-]
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((item): item is string => typeof item === 'string')
+}
+
+function normalizeJdFormData(
+  value: Partial<Record<keyof JdFormData, unknown>> | null | undefined,
+): JdFormData {
+  return {
+    company: text(value?.company),
+    website: text(value?.website),
+    position: text(value?.position),
+    level: text(value?.level),
+    headcount: text(value?.headcount),
+    location: text(value?.location),
+    requirements: text(value?.requirements),
+    jobContent: text(value?.jobContent),
+    techStack: stringArray(value?.techStack),
+    benefits: text(value?.benefits),
+    salary: text(value?.salary),
+    bonus: text(value?.bonus),
+  }
+}
 
 const JD_DRAFT_KEY = 'interviewcoach_jd_draft'
 
@@ -120,16 +97,23 @@ export function isJdValid(form: JdFormData): boolean {
   return (
     form.company.trim().length > 0 &&
     form.position.trim().length > 0 &&
+    form.level.trim().length > 0 &&
     form.requirements.trim().length >= 30 &&
     form.jobContent.trim().length >= 30
   )
 }
 
-export function serializeJd(form: JdFormData, style: InterviewerStyle): string {
+function extractSerializedJdLevel(jobDescription: string): string {
+  const match = jobDescription.match(/^Level yêu cầu:\s*(.+)$/im)
+  return normalizeJdLevel(match?.[1])
+}
+
+export function serializeJd(form: JdFormData): string {
   const lines: string[] = [
     `Tên công ty: ${form.company}`,
     form.website ? `Website: ${form.website}` : '',
     `Vị trí tuyển dụng: ${form.position}`,
+    `Level yêu cầu: ${getJdLevelLabel(form.level)}`,
     form.headcount ? `Số lượng tuyển: ${form.headcount}` : '',
     form.location ? `Địa điểm làm việc: ${form.location}` : '',
     '',
@@ -142,7 +126,6 @@ export function serializeJd(form: JdFormData, style: InterviewerStyle): string {
     form.benefits ? `\nQuyền lợi:\n${form.benefits}` : '',
     form.salary ? `\nLương: ${form.salary}` : '',
     form.bonus ? `\nThưởng: ${form.bonus}` : '',
-    `\nPhong cách phỏng vấn: ${INTERVIEWER_STYLES.find((s) => s.value === style)!.label}`,
   ]
   return lines.filter(Boolean).join('\n')
 }
@@ -157,6 +140,7 @@ function toSavedJobDescriptionPayload(form: JdFormData): SaveJobDescriptionPaylo
     companyName: form.company.trim(),
     companyWebsite: optional(form.website),
     jobTitle: form.position.trim(),
+    level: form.level.trim(),
     headcount: optional(form.headcount),
     location: optional(form.location),
     requirements: form.requirements.trim(),
@@ -168,20 +152,55 @@ function toSavedJobDescriptionPayload(form: JdFormData): SaveJobDescriptionPaylo
   }
 }
 
-function savedJobDescriptionToForm(item: SavedJobDescription): JdFormData {
-  return {
+function resolveSessionLanguage(contextPack: ContextPack): OutputLanguage {
+  return contextPack === 'Western' ? 'en' : 'vi'
+}
+
+function resolveSavedJobDescriptionLevel(
+  item: SavedJobDescription,
+  sessions: Session[] = [],
+): string {
+  const savedLevel = normalizeJdLevel(item.level)
+  if (savedLevel) return savedLevel
+
+  return sessions
+    .filter((session) => session.savedJobDescriptionId === item.id)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
+    .map((session) => extractSerializedJdLevel(session.jobDescription))
+    .find(Boolean) ?? ''
+}
+
+function hydrateSavedJobDescriptionLevels(
+  items: SavedJobDescription[],
+  sessions: Session[],
+): SavedJobDescription[] {
+  return items.map((item) => {
+    const level = resolveSavedJobDescriptionLevel(item, sessions)
+    return level && level !== item.level ? { ...item, level } : item
+  })
+}
+
+function savedJobDescriptionToForm(
+  item: SavedJobDescription,
+  sessions: Session[] = [],
+): JdFormData {
+  return normalizeJdFormData({
     company: item.companyName,
-    website: item.companyWebsite ?? '',
+    website: item.companyWebsite,
     position: item.jobTitle,
-    headcount: item.headcount ?? '',
-    location: item.location ?? '',
+    level: resolveSavedJobDescriptionLevel(item, sessions),
+    headcount: item.headcount,
+    location: item.location,
     requirements: item.requirements,
     jobContent: item.jobContent,
-    techStack: item.techStack ?? [],
-    benefits: item.benefits ?? '',
-    salary: item.salary ?? '',
-    bonus: item.bonus ?? '',
-  }
+    techStack: item.techStack,
+    benefits: item.benefits,
+    salary: item.salary,
+    bonus: item.bonus,
+  })
 }
 
 // ── Stepper ───────────────────────────────────────────────────────────────────
@@ -216,7 +235,7 @@ function SetupPageContent() {
     if (typeof window === 'undefined') return EMPTY_JD
     try {
       const saved = localStorage.getItem(JD_DRAFT_KEY)
-      if (saved) return JSON.parse(saved) as JdFormData
+      if (saved) return normalizeJdFormData(JSON.parse(saved) as Partial<JdFormData>)
     } catch {
       // ignore malformed data
     }
@@ -225,7 +244,6 @@ function SetupPageContent() {
   const [sessionType, setSessionType] = useState<SessionType>('hr')
   const [contextPack, setContextPack] = useState<ContextPack>('VN')
   const [duration, setDuration] = useState<InterviewDuration>(30)
-  const [interviewerStyle, setInterviewerStyle] = useState<InterviewerStyle>('professional')
   const [savedJobDescriptions, setSavedJobDescriptions] = useState<SavedJobDescription[]>([])
   const [selectedSavedJobDescriptionId, setSelectedSavedJobDescriptionId] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -234,6 +252,7 @@ function SetupPageContent() {
   const jdHasContent =
     jd.company.trim().length > 0 ||
     jd.position.trim().length > 0 ||
+    jd.level.trim().length > 0 ||
     jd.requirements.trim().length > 0 ||
     jd.jobContent.trim().length > 0
 
@@ -250,18 +269,35 @@ function SetupPageContent() {
     const jdId = searchParams.get('jdId')
     const isNew = searchParams.get('new') === '1'
 
-    apiClient
-      .get<{ items: SavedJobDescription[] }>('/saved-job-descriptions')
-      .then((data) => {
+    async function loadSavedJobDescriptions() {
+      try {
+        const data = await apiClient.get<{ items: SavedJobDescription[] }>(
+          '/saved-job-descriptions',
+        )
         if (!cancelled) {
-          const items = data.items ?? []
+          let items = data.items ?? []
+          let sessions: Session[] = []
+
+          if (items.some((item) => !normalizeJdLevel(item.level))) {
+            try {
+              const sessionData = await apiClient.get<{ sessions: Session[] }>(
+                '/sessions',
+              )
+              sessions = sessionData.sessions ?? []
+              items = hydrateSavedJobDescriptionLevels(items, sessions)
+            } catch {
+              // Best-effort fallback for legacy JD records saved before level existed.
+            }
+          }
+
+          if (cancelled) return
           setSavedJobDescriptions(items)
 
           if (jdId) {
             // Đến từ jd-library với JD cụ thể → pre-fill và vào step 1
             const match = items.find((i) => i.id === jdId)
             if (match) {
-              setJd(savedJobDescriptionToForm(match))
+              setJd(savedJobDescriptionToForm(match, sessions))
               setSelectedSavedJobDescriptionId(match.id)
             }
             setStep(1)
@@ -272,14 +308,17 @@ function SetupPageContent() {
           // else: có JD, không có param → hiện picker (step 0)
           setJdPickerReady(true)
         }
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) {
           setSavedJobDescriptions([])
           setStep(1)
           setJdPickerReady(true)
         }
-      })
+      }
+    }
+
+    void loadSavedJobDescriptions()
+
     return () => {
       cancelled = true
     }
@@ -287,7 +326,7 @@ function SetupPageContent() {
   }, [])
 
   function updateJd(data: JdFormData) {
-    setJd(data)
+    setJd(normalizeJdFormData(data))
     setSelectedSavedJobDescriptionId('')
   }
 
@@ -325,7 +364,7 @@ function SetupPageContent() {
     setError(null)
     setSubmitting(true)
     try {
-      const jobDescription = serializeJd(jd, interviewerStyle)
+      const jobDescription = serializeJd(jd)
       const savedJobDescription = await apiClient.post<SavedJobDescription>(
         '/saved-job-descriptions',
         toSavedJobDescriptionPayload(jd),
@@ -334,7 +373,7 @@ function SetupPageContent() {
         jobDescription,
         sessionType,
         contextPack,
-        language: 'vi',
+        language: resolveSessionLanguage(contextPack),
         numQuestions,
         targetRoles: [jd.position],
         savedJobDescriptionId: savedJobDescription.id,
@@ -472,8 +511,6 @@ function SetupPageContent() {
             setContextPack={setContextPack}
             duration={duration}
             setDuration={setDuration}
-            interviewerStyle={interviewerStyle}
-            setInterviewerStyle={setInterviewerStyle}
           />
           <div className="flex justify-between">
             <Button variant="ghost" onClick={() => setStep(1)}>
@@ -496,7 +533,6 @@ function SetupPageContent() {
             sessionType={sessionType}
             contextPack={contextPack}
             duration={duration}
-            interviewerStyle={interviewerStyle}
             error={error}
           />
           <div className="flex justify-between">
