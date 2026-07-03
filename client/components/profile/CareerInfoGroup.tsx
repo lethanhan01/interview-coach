@@ -6,9 +6,12 @@ import Button from '@/components/ui/Button'
 import ProfileSection from './ProfileSection'
 import ProfileField from './ProfileField'
 import {
-  TARGET_POSITION_OPTIONS,
-  EXPERIENCE_LEVEL_OPTIONS,
-} from './constants'
+  getJdLevelLabel,
+  JD_LEVEL_OPTIONS,
+  normalizeJdLevel,
+  normalizePosition,
+  POSITION_OPTIONS,
+} from '@/lib/interview-options'
 
 interface CareerInfoData {
   targetPosition?: string
@@ -21,30 +24,49 @@ interface Props {
   onSave: (data: CareerInfoData) => Promise<void>
 }
 
-const TARGET_POSITION_LABEL: Record<string, string> = Object.fromEntries(
-  TARGET_POSITION_OPTIONS.filter((o) => o.value).map((o) => [o.value, o.label]),
-)
-const EXPERIENCE_LABEL: Record<string, string> = Object.fromEntries(
-  EXPERIENCE_LEVEL_OPTIONS.filter((o) => o.value).map((o) => [o.value, o.label]),
-)
-
 const FIELD_CLASS =
   'w-full rounded-xl border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
 
+function normalizeCareerInfo(data: CareerInfoData): CareerInfoData {
+  return {
+    ...data,
+    targetPosition: normalizePosition(data.targetPosition),
+    targetLevel: normalizeCareerLevel(data.targetLevel),
+  }
+}
+
+function normalizeCareerLevel(value?: string) {
+  const normalized = normalizeJdLevel(value)
+  if (normalized) return normalized
+  return value?.trim() ?? ''
+}
+
+function buildPositionOptions(value?: string) {
+  const normalized = normalizePosition(value)
+  const fallback = normalized && !POSITION_OPTIONS.includes(normalized) ? normalized : ''
+  return { normalized, fallback }
+}
+
+function buildLevelOptions(value?: string) {
+  const normalized = normalizeCareerLevel(value)
+  const known = JD_LEVEL_OPTIONS.some((option) => option.value === normalized)
+  return { normalized, fallback: normalized && !known ? normalized : '' }
+}
+
 export default function CareerInfoGroup({ data, onSave }: Props) {
   const [isEditing, setIsEditing] = useState(false)
-  const [form, setForm] = useState<CareerInfoData>(data)
+  const [form, setForm] = useState<CareerInfoData>(() => normalizeCareerInfo(data))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   function handleEdit() {
-    setForm(data)
+    setForm(normalizeCareerInfo(data))
     setError(null)
     setIsEditing(true)
   }
 
   function handleCancel() {
-    setForm(data)
+    setForm(normalizeCareerInfo(data))
     setError(null)
     setIsEditing(false)
   }
@@ -53,7 +75,9 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
     setSaving(true)
     setError(null)
     try {
-      await onSave(form)
+      const normalized = normalizeCareerInfo(form)
+      await onSave(normalized)
+      setForm(normalized)
       setIsEditing(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Lưu thất bại')
@@ -65,6 +89,11 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
   function set(field: keyof CareerInfoData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
+
+  const displayPosition = normalizePosition(data.targetPosition)
+  const displayLevel = normalizeCareerLevel(data.targetLevel)
+  const positionOptions = buildPositionOptions(form.targetPosition)
+  const levelOptions = buildLevelOptions(form.targetLevel)
 
   return (
     <ProfileSection
@@ -80,11 +109,11 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
         <dl className="flex flex-col gap-3 text-sm">
           <ProfileField
             label="Vị trí mục tiêu"
-            value={data.targetPosition ? TARGET_POSITION_LABEL[data.targetPosition] : undefined}
+            value={displayPosition || undefined}
           />
           <ProfileField
             label="Mức kinh nghiệm"
-            value={data.targetLevel ? EXPERIENCE_LABEL[data.targetLevel] : undefined}
+            value={displayLevel ? getJdLevelLabel(displayLevel) : undefined}
           />
         </dl>
       ) : (
@@ -92,13 +121,19 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
           <div>
             <label className="mb-1 block text-sm font-medium text-ink">Vị trí mục tiêu</label>
             <select
-              value={form.targetPosition ?? ''}
+              value={positionOptions.normalized}
               onChange={(e) => set('targetPosition', e.target.value)}
               className={FIELD_CLASS}
             >
-              {TARGET_POSITION_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
+              <option value="">Chọn vị trí mục tiêu</option>
+              {positionOptions.fallback && (
+                <option value={positionOptions.fallback}>
+                  Giá trị hiện tại: {positionOptions.fallback}
+                </option>
+              )}
+              {POSITION_OPTIONS.map((position) => (
+                <option key={position} value={position}>
+                  {position}
                 </option>
               ))}
             </select>
@@ -107,11 +142,17 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
           <div>
             <label className="mb-1 block text-sm font-medium text-ink">Mức kinh nghiệm</label>
             <select
-              value={form.targetLevel ?? ''}
+              value={levelOptions.normalized}
               onChange={(e) => set('targetLevel', e.target.value)}
               className={FIELD_CLASS}
             >
-              {EXPERIENCE_LEVEL_OPTIONS.map((o) => (
+              <option value="">Chọn mức kinh nghiệm</option>
+              {levelOptions.fallback && (
+                <option value={levelOptions.fallback}>
+                  Giá trị hiện tại: {levelOptions.fallback}
+                </option>
+              )}
+              {JD_LEVEL_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>

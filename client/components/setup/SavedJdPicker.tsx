@@ -3,7 +3,7 @@
 import { Building2, MapPin, Clock, Plus, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import type { SavedJobDescription } from '@/lib/types'
-import { getJdLevelLabel } from '@/app/(app)/setup/page'
+import { getJdLevelLabel } from '@/lib/interview-options'
 
 interface Props {
   items: SavedJobDescription[]

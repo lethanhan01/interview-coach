@@ -17,6 +17,10 @@ import ConfigForm from '@/components/setup/ConfigForm'
 import ConfirmStep from '@/components/setup/ConfirmStep'
 import SavedJdPicker from '@/components/setup/SavedJdPicker'
 import { ArrowLeft } from 'lucide-react'
+import {
+  getJdLevelLabel,
+  normalizeJdLevel,
+} from '@/lib/interview-options'
 
 // ── Constants & Types ─────────────────────────────────────────────────────────
 
@@ -26,17 +30,7 @@ export const DURATION_OPTIONS = [
   { value: 90 as const, label: '1 tiếng rưỡi', numQuestions: 45 },
 ]
 
-export const JD_LEVEL_OPTIONS = [
-  { value: 'intern' as const, label: 'Intern / Thực tập sinh' },
-  { value: 'fresher' as const, label: 'Fresher' },
-  { value: 'junior' as const, label: 'Junior' },
-  { value: 'middle' as const, label: 'Middle' },
-  { value: 'senior' as const, label: 'Senior' },
-  { value: 'lead' as const, label: 'Lead / Principal' },
-] as const
-
 export type InterviewDuration = 30 | 60 | 90
-export type JdLevel = (typeof JD_LEVEL_OPTIONS)[number]['value']
 
 export interface JdFormData {
   company: string
@@ -97,47 +91,6 @@ function normalizeJdFormData(
   }
 }
 
-export const POSITION_OPTIONS = [
-  'Frontend Developer',
-  'Backend Developer',
-  'Full-stack Developer',
-  'Mobile Developer (iOS)',
-  'Mobile Developer (Android)',
-  'Flutter Developer',
-  'DevOps Engineer',
-  'Site Reliability Engineer',
-  'Cloud Engineer',
-  'Security Engineer',
-  'Data Analyst',
-  'Data Engineer',
-  'Data Scientist',
-  'AI/ML Engineer',
-  'AI Engineer',
-  'MLOps Engineer',
-  'Database Administrator',
-  'System Administrator',
-  'QA/Tester',
-  'Game Developer',
-  'Embedded Engineer',
-  'UI/UX Designer',
-  'Business Analyst',
-  'Product Manager',
-  'Project Manager',
-  'Scrum Master',
-  'Solution Architect',
-  'ERP/CRM Consultant',
-  'Technical Writer',
-]
-
-export const BONUS_OPTIONS = [
-  'Tháng 13 (1 lần/năm)',
-  '2 lần/năm',
-  'Hàng quý',
-  'Theo KPI',
-  'Linh hoạt',
-  'Không có',
-]
-
 const JD_DRAFT_KEY = 'interviewcoach_jd_draft'
 
 export function isJdValid(form: JdFormData): boolean {
@@ -148,68 +101,6 @@ export function isJdValid(form: JdFormData): boolean {
     form.requirements.trim().length >= 30 &&
     form.jobContent.trim().length >= 30
   )
-}
-
-export function getJdLevelLabel(level: string): string {
-  return JD_LEVEL_OPTIONS.find((option) => option.value === level)?.label ?? level
-}
-
-function normalizeJdLevel(value: unknown): string {
-  const raw = text(value).trim()
-  if (!raw) return ''
-
-  const normalizeToken = (token: string) =>
-    token
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[_-]+/g, ' ')
-      .replace(/\s*\/\s*/g, ' / ')
-      .replace(/\s+/g, ' ')
-      .trim()
-
-  const normalized = normalizeToken(raw)
-
-  for (const option of JD_LEVEL_OPTIONS) {
-    const candidates = [
-      option.value,
-      option.label,
-      ...option.label.split('/').map((part) => part.trim()),
-    ]
-
-    if (candidates.some((candidate) => normalizeToken(candidate) === normalized)) {
-      return option.value
-    }
-  }
-
-  const aliases: Record<string, JdLevel> = {
-    'entry level': 'intern',
-    entrylevel: 'intern',
-    fresher: 'fresher',
-    intern: 'intern',
-    internship: 'intern',
-    'junior 1y': 'junior',
-    'junior 1 year': 'junior',
-    'junior 2y': 'junior',
-    'junior 2 years': 'junior',
-    'junior developer': 'junior',
-    lead: 'lead',
-    'lead principal': 'lead',
-    middle: 'middle',
-    'middle level': 'middle',
-    'middle developer': 'middle',
-    mid: 'middle',
-    'mid level': 'middle',
-    'midlevel': 'middle',
-    principal: 'lead',
-    'principal engineer': 'lead',
-    senior: 'senior',
-    'senior developer': 'senior',
-    'thuc tap sinh': 'intern',
-    fresh: 'fresher',
-  }
-
-  return aliases[normalized] ?? ''
 }
 
 function extractSerializedJdLevel(jobDescription: string): string {
