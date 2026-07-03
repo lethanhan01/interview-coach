@@ -175,13 +175,11 @@ export class QuestionGenerationProcessor extends WorkerHost {
     // AI questions appear every AI_QUESTION_EVERY_N positions when possible.
     // Short sessions still need every generated question to land inside total.
     const aiPositions = new Set(
-      Array.from(
-        { length: aiQuestions.length },
-        (_, i) =>
-          Math.min(
-            (i + 1) * AI_QUESTION_EVERY_N,
-            total - (aiQuestions.length - i - 1),
-          ),
+      Array.from({ length: aiQuestions.length }, (_, i) =>
+        Math.min(
+          (i + 1) * AI_QUESTION_EVERY_N,
+          total - (aiQuestions.length - i - 1),
+        ),
       ),
     );
 
@@ -243,7 +241,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
       })),
       skipDuplicates: true,
     });
-
   }
 
   private async markActiveUnlessStopped(sessionId: string): Promise<boolean> {

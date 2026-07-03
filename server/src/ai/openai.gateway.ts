@@ -88,7 +88,9 @@ export class OpenAIGateway {
     return this.chatModel;
   }
 
-  private isQuotaExceeded(error: APIError): boolean {
+  private isQuotaExceeded(error: unknown): boolean {
+    if (!(error instanceof APIError)) return false;
+
     const body = error.error as Record<string, unknown> | undefined;
     return (
       body?.code === 'insufficient_quota' ||

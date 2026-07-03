@@ -109,7 +109,11 @@ export class UserService {
       });
       if (!activeResume) throw error;
 
-      await this.updateResumeJson(activeResume.id, activeResume.parsedJson, patch);
+      await this.updateResumeJson(
+        activeResume.id,
+        activeResume.parsedJson,
+        patch,
+      );
     }
   }
 
