@@ -70,14 +70,14 @@ Prisma model: `ContextPack`
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
-| id | TEXT PK | — | NO | Enum values: `'vn'`, `'western'` |
+| id | TEXT PK | — | NO | Canonical values: `'VN'`, `'Western'`; legacy `'vn'`/`'western'` are normalized at bootstrap |
 | name | TEXT | — | NO | |
 | rubric_json | JSONB | — | NO | Competency rubric per pack |
 | scoring_weights | JSONB | — | NO | |
 | created_at | TIMESTAMPTZ | now() | NO | |
 
 Indexes: none.  
-Seed: 2 rows (`vn`, `western`) — FK target, phải có trước mọi table khác.
+Seed: 2 rows (`VN`, `Western`) — FK target, phải có trước mọi table khác.
 
 ---
 

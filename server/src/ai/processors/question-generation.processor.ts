@@ -172,11 +172,16 @@ export class QuestionGenerationProcessor extends WorkerHost {
     rubricJson: object;
     estimatedTimeMin?: number;
   }> {
-    // AI questions appear every AI_QUESTION_EVERY_N positions (positions 5, 10, 15, ...)
+    // AI questions appear every AI_QUESTION_EVERY_N positions when possible.
+    // Short sessions still need every generated question to land inside total.
     const aiPositions = new Set(
       Array.from(
         { length: aiQuestions.length },
-        (_, i) => (i + 1) * AI_QUESTION_EVERY_N,
+        (_, i) =>
+          Math.min(
+            (i + 1) * AI_QUESTION_EVERY_N,
+            total - (aiQuestions.length - i - 1),
+          ),
       ),
     );
 

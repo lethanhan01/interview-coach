@@ -213,6 +213,43 @@ describe('QuestionGenerationProcessor', () => {
     ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
   });
 
+  it('đặt AI question vào vị trí hợp lệ khi phiên ngắn hơn chu kỳ 5 câu', async () => {
+    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockFactory.getStrategy.mockReturnValue({
+      generateQuestions: jest.fn().mockResolvedValue(makeGeneratedQuestions(1)),
+    });
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+      makeFallbackQuestions(2),
+    );
+    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 3 });
+    mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
+    mockSse.emit.mockResolvedValue(undefined);
+
+    await expect(
+      processor.process(
+        makeJob({ ...BASE_JOB_DATA, totalQuestions: 3 } as any),
+      ),
+    ).resolves.toBeUndefined();
+
+    const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
+    expect(createArgs.data).toHaveLength(3);
+    expect(
+      createArgs.data.map(
+        (q: { orderIndex: number; questionText: string }) => ({
+          orderIndex: q.orderIndex,
+          questionText: q.questionText,
+        }),
+      ),
+    ).toEqual([
+      { orderIndex: 1, questionText: 'Fallback question 1' },
+      { orderIndex: 2, questionText: 'Fallback question 2' },
+      { orderIndex: 3, questionText: 'AI question 1' },
+    ]);
+    expect(
+      mockQuestionBankService.selectFallbackQuestions,
+    ).toHaveBeenCalledWith('hr', 'VN', 2, 'vi');
+  });
+
   it('QG-05: dùng fallback khi AI trả 0 câu (ít hơn aiCount=1)', async () => {
     // totalQuestions=5 → aiCount=1; AI returns 0 → 0 < 1 → fallback all-QB
     mockContextPack.getContextPack.mockReturnValue({} as any);
