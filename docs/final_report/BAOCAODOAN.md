@@ -1,6 +1,6 @@
 # BÁO CÁO ĐỒ ÁN GR1
 
-# Đề tài: InterviewAI - Hệ thống AI Mock Interview Coach cho sinh viên CNTT Việt Nam
+# Đề tài: AI Mock Interview - Hệ thống AI Mock Interview Coach cho sinh viên CNTT Việt Nam
 
 > Ghi chú sử dụng khung: các đoạn bắt đầu bằng `Cần bổ sung:` là ghi chú nội dung cần viết sau này. Khi hoàn thiện báo cáo, thay các ghi chú này bằng nội dung văn phong học thuật, số liệu, hình ảnh, bảng biểu và trích dẫn phù hợp.
 
@@ -12,7 +12,7 @@
 
 | Mục | Nội dung |
 | --- | --- |
-| Tên đề tài | InterviewAI - Hệ thống AI Mock Interview Coach cho sinh viên CNTT Việt Nam |
+| Tên đề tài | AI Mock Interview - Hệ thống AI Mock Interview Coach cho sinh viên CNTT Việt Nam |
 | Học phần | Đồ án GR1 |
 | Sinh viên thực hiện | Cần bổ sung: họ tên, MSSV, lớp |
 | Giảng viên hướng dẫn | Cần bổ sung: họ tên, học hàm/học vị nếu có |
@@ -93,7 +93,7 @@ Gợi ý:
 
 - Tổng hợp bài toán luyện phỏng vấn cho sinh viên/fresher CNTT Việt Nam.
 - Phân tích sản phẩm liên quan và xác định khoảng trống.
-- Đề xuất thiết kế InterviewAI với workflow JD -> interview -> surgical feedback.
+- Đề xuất thiết kế AI Mock Interview với workflow JD -> interview -> surgical feedback.
 - Xây dựng prototype web app với frontend, backend, database, AI pipeline.
 - Thiết lập tài liệu yêu cầu/thiết kế/kiểm thử làm nền tảng cho giai đoạn sau.
 

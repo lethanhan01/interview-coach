@@ -4,7 +4,7 @@
 
 AI Mock Interview là bài toán xây dựng một hệ thống luyện phỏng vấn xin việc có sự hỗ trợ của trí tuệ nhân tạo. Thay vì chỉ cung cấp danh sách câu hỏi mẫu, hệ thống tổ chức một quy trình luyện tập gần với một buổi phỏng vấn thực tế: người dùng cung cấp thông tin về vị trí ứng tuyển, hệ thống tạo câu hỏi phù hợp, người dùng trả lời bằng văn bản hoặc giọng nói, sau đó nhận phản hồi và báo cáo tổng hợp.
 
-Trong phạm vi đề tài InterviewAI, đối tượng chính là sinh viên năm cuối và ứng viên fresher ngành Công nghệ thông tin tại Việt Nam. Đây là nhóm người dùng thường có kiến thức nền tảng và dự án học tập, nhưng chưa có nhiều kinh nghiệm trình bày năng lực trong phỏng vấn. Vì vậy, hệ thống không chỉ kiểm tra "biết hay không biết", mà còn giúp người dùng luyện cách giải thích dự án, trình bày lựa chọn kỹ thuật, trả lời câu hỏi hành vi và tự nhìn lại điểm cần cải thiện [3.2-S5].
+Trong phạm vi đề tài AI Mock Interview, đối tượng chính là sinh viên năm cuối và ứng viên fresher ngành Công nghệ thông tin tại Việt Nam. Đây là nhóm người dùng thường có kiến thức nền tảng và dự án học tập, nhưng chưa có nhiều kinh nghiệm trình bày năng lực trong phỏng vấn. Vì vậy, hệ thống không chỉ kiểm tra "biết hay không biết", mà còn giúp người dùng luyện cách giải thích dự án, trình bày lựa chọn kỹ thuật, trả lời câu hỏi hành vi và tự nhìn lại điểm cần cải thiện [3.2-S5].
 
 Đầu vào chính của bài toán gồm:
 
@@ -22,7 +22,7 @@ Trong phạm vi đề tài InterviewAI, đối tượng chính là sinh viên n�
 
 Về bản chất, AI Mock Interview là sự kết hợp của ba nhóm bài toán: phỏng vấn tuyển dụng, hệ thống luyện tập có phản hồi và xử lý ngôn ngữ tự nhiên. Phần phỏng vấn tuyển dụng giúp xác định loại câu hỏi và tiêu chí đánh giá. Phần luyện tập có phản hồi giúp người dùng cải thiện qua nhiều lần thực hành. Phần AI/NLP giúp hệ thống phân tích câu trả lời tự nhiên, sinh nhận xét và cá nhân hóa nội dung theo ngữ cảnh.
 
-Một yêu cầu quan trọng của bài toán là hệ thống phải phục vụ mục tiêu học tập, không phải hỗ trợ gian lận trong buổi phỏng vấn thật. InterviewAI được thiết kế để người dùng luyện tập trước phỏng vấn, nhận phản hồi sau câu trả lời và tự cải thiện kỹ năng. Hệ thống không hướng đến việc cung cấp đáp án real-time trong một buổi phỏng vấn thật.
+Một yêu cầu quan trọng của bài toán là hệ thống phải phục vụ mục tiêu học tập, không phải hỗ trợ gian lận trong buổi phỏng vấn thật. AI Mock Interview được thiết kế để người dùng luyện tập trước phỏng vấn, nhận phản hồi sau câu trả lời và tự cải thiện kỹ năng. Hệ thống không hướng đến việc cung cấp đáp án real-time trong một buổi phỏng vấn thật.
 
 ## 3.2 Cơ sở lý thuyết về phỏng vấn tuyển dụng và Mock Interview
 
@@ -45,14 +45,14 @@ Từ đó, có thể xem phỏng vấn CNTT là hoạt động đánh giá đồ
 
 ### 3.2.2. Các loại hình phỏng vấn chính trong tuyển dụng CNTT
 
-Trong thực tế tuyển dụng CNTT có nhiều hình thức phỏng vấn như screening call, HR interview, technical interview, live coding, system design, behavioral interview, culture fit interview hoặc final interview. Tuy nhiên, trong phạm vi đề tài InterviewAI, hai nhóm quan trọng nhất cần được mô hình hóa là **Technical Interview** và **Behavioral Interview**. Hai nhóm này bao phủ phần lớn nội dung mà sinh viên và fresher thường gặp khi ứng tuyển vị trí lập trình viên, tester, backend, frontend hoặc fullstack.
+Trong thực tế tuyển dụng CNTT có nhiều hình thức phỏng vấn như screening call, HR interview, technical interview, live coding, system design, behavioral interview, culture fit interview hoặc final interview. Tuy nhiên, trong phạm vi đề tài AI Mock Interview, hai nhóm quan trọng nhất cần được mô hình hóa là **Technical Interview** và **Behavioral Interview**. Hai nhóm này bao phủ phần lớn nội dung mà sinh viên và fresher thường gặp khi ứng tuyển vị trí lập trình viên, tester, backend, frontend hoặc fullstack.
 
 | Loại phỏng vấn | Mục đích chính | Nội dung đánh giá | Ví dụ câu hỏi |
 | --- | --- | --- | --- |
 | Technical Interview | Đánh giá kiến thức chuyên môn và quá trình giải quyết vấn đề kỹ thuật | Lập trình, database, API, thuật toán, kiến trúc, testing, bảo mật, dự án cá nhân | "JWT hoạt động như thế nào?", "Vì sao bạn thiết kế database như vậy?" |
 | Behavioral Interview | Đánh giá hành vi, thái độ và cách ứng viên xử lý tình huống | Giao tiếp, teamwork, trách nhiệm, xử lý khó khăn, học hỏi, mục tiêu nghề nghiệp | "Hãy kể về một lần bạn gặp khó khăn trong dự án nhóm." |
 
-Hai loại phỏng vấn này có mục tiêu khác nhau nên cách trả lời tốt cũng khác nhau. Technical Interview yêu cầu câu trả lời chính xác, có logic kỹ thuật và có khả năng giải thích lựa chọn. Behavioral Interview yêu cầu câu trả lời cụ thể, có bối cảnh, thể hiện vai trò cá nhân và bài học rút ra. Vì vậy, hệ thống InterviewAI cần tách rõ loại câu hỏi, rubric đánh giá và cách sinh feedback cho từng nhóm.
+Hai loại phỏng vấn này có mục tiêu khác nhau nên cách trả lời tốt cũng khác nhau. Technical Interview yêu cầu câu trả lời chính xác, có logic kỹ thuật và có khả năng giải thích lựa chọn. Behavioral Interview yêu cầu câu trả lời cụ thể, có bối cảnh, thể hiện vai trò cá nhân và bài học rút ra. Vì vậy, hệ thống AI Mock Interview cần tách rõ loại câu hỏi, rubric đánh giá và cách sinh feedback cho từng nhóm.
 
 ---
 
@@ -114,7 +114,7 @@ Ví dụ:
 | Nhận thức về trade-off | Biết giải thích vì sao chọn một công nghệ/cách làm thay vì lựa chọn khác |
 | Khả năng học hỏi | Biết thừa nhận phần chưa chắc và nêu cách kiểm chứng hoặc tìm hiểu thêm |
 
-Đối với InterviewAI, các tiêu chí này là cơ sở để xây dựng rubric cho câu hỏi kỹ thuật. Feedback của hệ thống cần chỉ ra cụ thể: câu trả lời sai ở kiến thức nào, thiếu bước giải thích nào, hoặc cần bổ sung ví dụ dự án nào để thuyết phục hơn.
+Đối với AI Mock Interview, các tiêu chí này là cơ sở để xây dựng rubric cho câu hỏi kỹ thuật. Feedback của hệ thống cần chỉ ra cụ thể: câu trả lời sai ở kiến thức nào, thiếu bước giải thích nào, hoặc cần bổ sung ví dụ dự án nào để thuyết phục hơn.
 
 ---
 
@@ -177,7 +177,7 @@ Trong Behavioral Interview, ứng viên thường nên trả lời theo cấu tr
 * Action: Hành động
 * Result: Kết quả
 
-University of Michigan Career Center mô tả STAR là cách trả lời có cấu trúc cho câu hỏi hành vi bằng việc trình bày Situation, Task, Action và Result của tình huống được kể [3.2-S1]. Với sinh viên, STAR giúp tránh hai lỗi phổ biến: kể chuyện lan man và không nêu rõ vai trò cá nhân. Trong InterviewAI, STAR là một cơ sở quan trọng để hệ thống phát hiện câu trả lời thiếu bối cảnh, thiếu hành động hoặc thiếu kết quả.
+University of Michigan Career Center mô tả STAR là cách trả lời có cấu trúc cho câu hỏi hành vi bằng việc trình bày Situation, Task, Action và Result của tình huống được kể [3.2-S1]. Với sinh viên, STAR giúp tránh hai lỗi phổ biến: kể chuyện lan man và không nêu rõ vai trò cá nhân. Trong AI Mock Interview, STAR là một cơ sở quan trọng để hệ thống phát hiện câu trả lời thiếu bối cảnh, thiếu hành động hoặc thiếu kết quả.
 
 ---
 
@@ -193,7 +193,7 @@ Technical Interview và Behavioral Interview đều nhằm đánh giá mức đ�
 | Cách trả lời tốt | Chính xác, logic, có ví dụ kỹ thuật, biết giải thích lý do | Cụ thể, chân thật, có cấu trúc STAR |
 | Tiêu chí đánh giá | Độ đúng kỹ thuật, khả năng phân tích, giải thích và bảo vệ lựa chọn | Sự rõ ràng, thái độ, trách nhiệm, vai trò cá nhân, kết quả |
 | Rủi ro khi trả lời kém | Nói sai khái niệm, không hiểu dự án, không nêu được trade-off | Kể chuyện lan man, thiếu ví dụ, không nêu hành động/kết quả |
-| Vai trò trong InterviewAI | Sinh câu hỏi kỹ thuật và đánh giá nội dung chuyên môn | Sinh câu hỏi hành vi và đánh giá cấu trúc/trải nghiệm |
+| Vai trò trong AI Mock Interview | Sinh câu hỏi kỹ thuật và đánh giá nội dung chuyên môn | Sinh câu hỏi hành vi và đánh giá cấu trúc/trải nghiệm |
 
 Sự khác biệt này cho thấy một hệ thống luyện phỏng vấn không nên dùng một rubric chung cho mọi câu hỏi. Nếu dùng cùng tiêu chí cho cả câu hỏi kỹ thuật và hành vi, feedback có thể thiếu chính xác. Ví dụ, một câu hỏi về JWT cần đánh giá kiến thức authentication và security; trong khi một câu hỏi về mâu thuẫn nhóm cần đánh giá cách ứng viên nêu bối cảnh, vai trò cá nhân, hành động và kết quả.
 
@@ -267,9 +267,9 @@ Các hạn chế trên không có nghĩa mock interview truyền thống không 
 
 ---
 
-### 3.2.9. Ứng dụng vào hệ thống InterviewAI
+### 3.2.9. Ứng dụng vào hệ thống AI Mock Interview
 
-Từ cơ sở lý thuyết trên, hệ thống InterviewAI được thiết kế xoay quanh hai hướng luyện phỏng vấn chính: Technical Interview và Behavioral Interview. Ngoài ra, hệ thống hỗ trợ Mixed Interview để mô phỏng buổi phỏng vấn tổng hợp, trong đó ứng viên vừa phải trả lời câu hỏi kỹ thuật vừa phải thể hiện cách giao tiếp và xử lý tình huống [3.2-S5].
+Từ cơ sở lý thuyết trên, hệ thống AI Mock Interview được thiết kế xoay quanh hai hướng luyện phỏng vấn chính: Technical Interview và Behavioral Interview. Ngoài ra, hệ thống hỗ trợ Mixed Interview để mô phỏng buổi phỏng vấn tổng hợp, trong đó ứng viên vừa phải trả lời câu hỏi kỹ thuật vừa phải thể hiện cách giao tiếp và xử lý tình huống [3.2-S5].
 
 Với Technical Interview, hệ thống có thể:
 
@@ -287,9 +287,9 @@ Với Behavioral Interview, hệ thống có thể:
 * Đưa ra feedback giúp câu trả lời tự nhiên và thuyết phục hơn.
 * Phát hiện câu trả lời thiếu Situation, Task, Action hoặc Result.
 
-Trong thiết kế của InterviewAI, các lý thuyết này được ánh xạ thành các thành phần cụ thể:
+Trong thiết kế của AI Mock Interview, các lý thuyết này được ánh xạ thành các thành phần cụ thể:
 
-| Cơ sở lý thuyết | Ứng dụng trong InterviewAI |
+| Cơ sở lý thuyết | Ứng dụng trong AI Mock Interview |
 | --- | --- |
 | Structured interview | Câu hỏi và rubric được chuẩn hóa theo loại phiên, giúp feedback nhất quán hơn |
 | Technical Interview | Session type `technical`, ngân hàng câu hỏi kỹ thuật, rubric đánh giá technical depth |
@@ -297,7 +297,7 @@ Trong thiết kế của InterviewAI, các lý thuyết này được ánh xạ 
 | Mock Interview | Quy trình luyện tập theo phiên: cấu hình JD -> nhận câu hỏi -> trả lời -> nhận feedback -> xem báo cáo |
 | Career readiness | Feedback không chỉ chấm kiến thức mà còn chạm đến giao tiếp, teamwork, professionalism và khả năng học hỏi |
 
-Về mặt trải nghiệm người dùng, InterviewAI cần đảm bảo người dùng không chỉ nhận điểm số mà còn hiểu mình cần sửa gì. Vì vậy, hệ thống tập trung vào feedback cụ thể theo từng câu trả lời, annotated transcript và báo cáo tổng hợp. Cách làm này phù hợp với mục tiêu của mock interview: luyện tập, nhận phản hồi và cải thiện qua nhiều lần.
+Về mặt trải nghiệm người dùng, AI Mock Interview cần đảm bảo người dùng không chỉ nhận điểm số mà còn hiểu mình cần sửa gì. Vì vậy, hệ thống tập trung vào feedback cụ thể theo từng câu trả lời, annotated transcript và báo cáo tổng hợp. Cách làm này phù hợp với mục tiêu của mock interview: luyện tập, nhận phản hồi và cải thiện qua nhiều lần.
 
 ---
 
@@ -307,7 +307,7 @@ Về mặt trải nghiệm người dùng, InterviewAI cần đảm bảo ngư�
 *[3.2-S2] U.S. Office of Personnel Management. "Structured Interviews." https://www.opm.gov/policy-data-oversight/assessment-and-selection/structured-interviews/*
 *[3.2-S3] Harvard FAS Mignone Center for Career Success. "Technical Interviews." https://careerservices.fas.harvard.edu/resources/technical-interviews/*
 *[3.2-S4] National Association of Colleges and Employers (NACE). "What is Career Readiness?" https://www.naceweb.org/career-readiness/competencies/career-readiness-defined*
-*[3.2-S5] InterviewAI internal design docs: `docs/Design/MVP_Scope.md`, `docs/Design/ArchitecturalDesign/interview_ai_coach_session_type_spec.md`, `docs/RequirementAnalysis/user-stories/US-005_context-pack.md`.*
+*[3.2-S5] AI Mock Interview internal design docs: `docs/Design/MVP_Scope.md`, `docs/Design/ArchitecturalDesign/interview_ai_coach_session_type_spec.md`, `docs/RequirementAnalysis/user-stories/US-005_context-pack.md`.*
 
 ## 3.3 Xử Lý Ngôn Ngữ Tự Nhiên Và Mô Hình Ngôn Ngữ Lớn
 
@@ -321,9 +321,9 @@ Về kiến trúc, LLM dựa trên mạng nơ-ron transformer — "neural networ
 
 Theo tài liệu chính thức của OpenAI, "GPT models are trained to understand natural and formal language" và "can be used across a great variety of tasks including content or code generation, summarization, conversation, creative writing, and more." [2] Một đặc điểm kỹ thuật quan trọng là mô hình xử lý văn bản theo đơn vị token — "1 token is approximately 4 characters or 0.75 words for English text" [2] — thay vì từng từ hay ký tự riêng lẻ.
 
-Trong InterviewAI, GPT-4o (OpenAI) được sử dụng là mô hình chính thông qua Chat Completions API, với tham số cấu hình khác nhau cho từng loại tác vụ (temperature, max_tokens).
+Trong AI Mock Interview, GPT-4o (OpenAI) được sử dụng là mô hình chính thông qua Chat Completions API, với tham số cấu hình khác nhau cho từng loại tác vụ (temperature, max_tokens).
 
-#### b. Ứng dụng LLM trong hệ thống InterviewAI
+#### b. Ứng dụng LLM trong hệ thống AI Mock Interview
 
 LLM đóng vai trò trung tâm trong bốn tác vụ chính của hệ thống:
 
@@ -355,7 +355,7 @@ Chat Completions API của OpenAI tổ chức cuộc hội thoại theo ba vai (
 
 Theo tài liệu OpenAI, "Developer messages provide the system's rules and business logic like a function definition, while user messages provide inputs and configuration to which the developer message instructions are applied, like arguments to a function." [6]
 
-#### b. Cấu trúc prompt trong InterviewAI
+#### b. Cấu trúc prompt trong AI Mock Interview
 
 Mỗi lần gọi AI trong hệ thống cấu trúc prompt theo bốn thành phần:
 
@@ -435,7 +435,7 @@ OpenAI phân biệt hai chế độ:
 - **JSON mode** (`response_format: { type: "json_object" }`): đảm bảo đầu ra là JSON hợp lệ, nhưng không đảm bảo schema cụ thể.
 - **Structured Outputs** (`response_format: { type: "json_schema", json_schema: {...} }`): đảm bảo đầu ra khớp chính xác với JSON Schema được cung cấp.
 
-#### c. Chiến lược kiểm soát đầu ra trong InterviewAI
+#### c. Chiến lược kiểm soát đầu ra trong AI Mock Interview
 
 Hệ thống áp dụng ba lớp kiểm soát:
 
@@ -475,11 +475,11 @@ const SurgicalFeedbackSchema = z.object({
 
 Speech-to-Text (STT) là công nghệ chuyển đổi tín hiệu âm thanh giọng nói thành văn bản. Trong bối cảnh phỏng vấn, câu trả lời bằng giọng nói là dạng tự nhiên nhất — người dùng không cần gõ phím, có thể tập trung vào nội dung trình bày.
 
-OpenAI cung cấp Whisper — hệ thống nhận dạng giọng nói tự động (Automatic Speech Recognition — ASR) được mô tả trên blog chính thức là "trained on 680,000 hours of multilingual and multitask supervised data collected from the web." [8] Quy mô dữ liệu huấn luyện này giúp Whisper đạt độ chính xác cao trên nhiều ngôn ngữ, bao gồm tiếng Việt và tiếng Anh — hai ngôn ngữ mà InterviewAI hỗ trợ.
+OpenAI cung cấp Whisper — hệ thống nhận dạng giọng nói tự động (Automatic Speech Recognition — ASR) được mô tả trên blog chính thức là "trained on 680,000 hours of multilingual and multitask supervised data collected from the web." [8] Quy mô dữ liệu huấn luyện này giúp Whisper đạt độ chính xác cao trên nhiều ngôn ngữ, bao gồm tiếng Việt và tiếng Anh — hai ngôn ngữ mà AI Mock Interview hỗ trợ.
 
 Theo tài liệu Audio API của OpenAI, "The Audio API provides two speech to text endpoints: transcriptions and translations" [9] và hỗ trợ các định dạng file âm thanh phổ biến: "mp3, mp4, mpeg, mpga, m4a, wav, and webm." [9]
 
-### 3.4.2 Tích hợp trong InterviewAI
+### 3.4.2 Tích hợp trong AI Mock Interview
 
 Luồng xử lý câu trả lời giọng nói trong hệ thống:
 
@@ -503,7 +503,7 @@ Trong phiên bản GR1, hệ thống đã triển khai đầy đủ tính năng 
 
 ### 3.5.1 Khái niệm Surgical Feedback
 
-Surgical Feedback là cơ chế phản hồi cốt lõi của InterviewAI, lấy tên từ tính chính xác của nó: thay vì nhận xét tổng quát ("câu trả lời còn thiếu ví dụ"), hệ thống chỉ ra đúng đoạn văn bản cụ thể trong câu trả lời của ứng viên cần cải thiện hoặc đáng ghi nhận.
+Surgical Feedback là cơ chế phản hồi cốt lõi của AI Mock Interview, lấy tên từ tính chính xác của nó: thay vì nhận xét tổng quát ("câu trả lời còn thiếu ví dụ"), hệ thống chỉ ra đúng đoạn văn bản cụ thể trong câu trả lời của ứng viên cần cải thiện hoặc đáng ghi nhận.
 
 Cách tiếp cận này giải quyết hạn chế của feedback truyền thống trong mock interview — người hướng dẫn thường đưa ra nhận xét chung chung do thiếu thời gian hoặc không phân tích kỹ từng câu trả lời. Bằng cách highlight chính xác vị trí ký tự (`start_index`, `end_index`) trong câu trả lời gốc, người dùng hiểu ngay đoạn nào cần sửa và sửa thế nào, không cần suy đoán.
 
@@ -534,7 +534,7 @@ Mỗi đoạn highlight có thể click để xem annotation chi tiết và phi�
 
 Next.js là framework xây dựng ứng dụng web dựa trên React. Theo tài liệu chính thức, "Next.js is a React framework for building full-stack web applications." [10] Next.js bổ sung cho React các khả năng cần thiết cho ứng dụng production: routing, data fetching, caching, và tối ưu hiệu năng — theo mô tả: "You can use React to build your UI, then incrementally adopt Next.js features to solve common application requirements such as routing, data fetching, and caching - all while improving the developer and end-user experience." [10]
 
-InterviewAI sử dụng Next.js 16.2 với React 19 và TypeScript 5.7.
+AI Mock Interview sử dụng Next.js 16.2 với React 19 và TypeScript 5.7.
 
 #### b. App Router
 
@@ -542,7 +542,7 @@ App Router là hệ thống routing mới của Next.js, được mô tả là "
 
 Theo tài liệu Next.js, "By default, layouts and pages are Server Components, which lets you fetch data and render parts of your UI on the server, optionally cache the result, and stream it to the client." [11] Khi cần tương tác hoặc truy cập browser API, "you can use Client Components to layer in functionality." [11]
 
-Trong InterviewAI, sự phân tách Server/Client Component được áp dụng theo nguyên tắc: trang danh sách phiên và trang báo cáo là Server Components (fetch dữ liệu ở server, giảm waterfall request); AudioRecorder và giao diện interview real-time là Client Components (cần Web Audio API và state management).
+Trong AI Mock Interview, sự phân tách Server/Client Component được áp dụng theo nguyên tắc: trang danh sách phiên và trang báo cáo là Server Components (fetch dữ liệu ở server, giảm waterfall request); AudioRecorder và giao diện interview real-time là Client Components (cần Web Audio API và state management).
 
 #### c. TypeScript và Tailwind CSS v4
 
@@ -560,15 +560,15 @@ Tailwind CSS v4 với utility-first approach cho phép styling trực tiếp tro
 
 Theo tài liệu chính thức, "Nest is a framework for building efficient, scalable Node.js server-side applications. It uses progressive JavaScript, is built with and fully supports TypeScript [...] and combines elements of OOP (Object Oriented Programming), FP (Functional Programming), and FRP (Functional Reactive Programming)." [12]
 
-Lý do chính NestJS được chọn cho InterviewAI là vấn đề kiến trúc mà framework giải quyết: "Node.js [...] none of them effectively solve the main problem of — Architecture. Nest provides an out-of-the-box application architecture which allows developers and teams to create highly testable, scalable, loosely coupled, and easily maintainable applications. The architecture is heavily inspired by Angular." [12]
+Lý do chính NestJS được chọn cho AI Mock Interview là vấn đề kiến trúc mà framework giải quyết: "Node.js [...] none of them effectively solve the main problem of — Architecture. Nest provides an out-of-the-box application architecture which allows developers and teams to create highly testable, scalable, loosely coupled, and easily maintainable applications. The architecture is heavily inspired by Angular." [12]
 
-InterviewAI sử dụng NestJS 11 với TypeScript 5.7.
+AI Mock Interview sử dụng NestJS 11 với TypeScript 5.7.
 
 #### b. Ba thành phần kiến trúc cốt lõi
 
 **Module**
 
-Theo NestJS docs, "A module is a class annotated with the @Module() decorator. The @Module() decorator provides metadata that Nest uses to organize the application structure." [13] Mỗi module đóng gói một domain nghiệp vụ. InterviewAI có 8 module chính: AuthModule, SessionModule, TurnModule, AiModule, ReportModule, QuestionBankModule, UserModule, CommonModule.
+Theo NestJS docs, "A module is a class annotated with the @Module() decorator. The @Module() decorator provides metadata that Nest uses to organize the application structure." [13] Mỗi module đóng gói một domain nghiệp vụ. AI Mock Interview có 8 module chính: AuthModule, SessionModule, TurnModule, AiModule, ReportModule, QuestionBankModule, UserModule, CommonModule.
 
 **Controller**
 
@@ -580,7 +580,7 @@ Theo NestJS docs, "A module is a class annotated with the @Module() decorator. T
 
 Khai báo service là injectable: `@Injectable()` decorator "declares the [class] as a class that can be managed by the Nest IoC container." [15]
 
-#### c. Các cơ chế bổ sung trong InterviewAI
+#### c. Các cơ chế bổ sung trong AI Mock Interview
 
 **ValidationPipe**: Pipe toàn cục validate DTO đầu vào bằng `class-validator` decorators trước khi request đến controller. Request không hợp lệ (thiếu trường, sai kiểu) bị từ chối với HTTP 400 trước khi đến business logic.
 
@@ -598,7 +598,7 @@ Khai báo service là injectable: `@Injectable()` decorator "declares the [class
 
 #### a. REST API cho request/response đồng bộ
 
-REST (Representational State Transfer) là kiến trúc API dựa trên HTTP, phù hợp cho các thao tác CRUD có kết quả ngay lập tức. InterviewAI dùng REST cho:
+REST (Representational State Transfer) là kiến trúc API dựa trên HTTP, phù hợp cho các thao tác CRUD có kết quả ngay lập tức. AI Mock Interview dùng REST cho:
 
 - Tạo phiên phỏng vấn (`POST /api/v1/sessions`)
 - Nộp câu trả lời (`POST /api/v1/turns`)
@@ -628,7 +628,7 @@ So sánh SSE và WebSocket:
 | Browser API | `EventSource` | `WebSocket` |
 | Kiểu dữ liệu | Text only | Text + Binary |
 
-#### c. Ứng dụng SSE trong InterviewAI
+#### c. Ứng dụng SSE trong AI Mock Interview
 
 SSE được dùng cho hai trường hợp cần cập nhật trạng thái từ server:
 
@@ -645,7 +645,7 @@ Lý do chọn SSE thay vì WebSocket: giao tiếp chỉ cần một chiều (ser
 
 ### 3.7.1 Tại sao cần xử lý bất đồng bộ
 
-Các tác vụ AI trong InterviewAI có đặc điểm chung: thời gian thực thi không xác định, phụ thuộc vào mạng và mô hình bên ngoài, và có thể thất bại tạm thời (rate limit, timeout).
+Các tác vụ AI trong AI Mock Interview có đặc điểm chung: thời gian thực thi không xác định, phụ thuộc vào mạng và mô hình bên ngoài, và có thể thất bại tạm thời (rate limit, timeout).
 
 Thời gian thực thi ước tính cho từng tác vụ:
 
@@ -668,9 +668,9 @@ Theo tài liệu chính thức, "BullMQ is a Node.js library that implements a f
 
 BullMQ sử dụng Redis làm backend lưu trữ job. Redis đảm bảo tính bền vững: ngay cả khi server NestJS restart, job chưa xử lý vẫn còn trong queue và sẽ được tiếp tục. Về Worker, tài liệu BullMQ mô tả: "Workers are instances capable of processing jobs. More specifically, a worker is equivalent to a 'message' receiver in a traditional message queue." [17]
 
-### 3.7.3 Cấu hình hàng đợi trong InterviewAI
+### 3.7.3 Cấu hình hàng đợi trong AI Mock Interview
 
-InterviewAI có 4 queue độc lập:
+AI Mock Interview có 4 queue độc lập:
 
 | Queue | Trigger | Processor | Số lần retry tối đa |
 | --- | --- | --- | --- |
@@ -701,7 +701,7 @@ Khi tất cả retry thất bại, hệ thống dùng fallback:
 
 ### 3.8.1 PostgreSQL và Supabase
 
-InterviewAI sử dụng PostgreSQL 15 làm hệ quản trị cơ sở dữ liệu quan hệ, được host trên Supabase. Supabase cung cấp PostgreSQL như một dịch vụ (Database-as-a-Service) kèm authentication JWT và object storage — giúp giảm effort infrastructure trong giai đoạn prototype.
+AI Mock Interview sử dụng PostgreSQL 15 làm hệ quản trị cơ sở dữ liệu quan hệ, được host trên Supabase. Supabase cung cấp PostgreSQL như một dịch vụ (Database-as-a-Service) kèm authentication JWT và object storage — giúp giảm effort infrastructure trong giai đoạn prototype.
 
 PostgreSQL được chọn vì hỗ trợ JSONB native (lưu rubricJson, contentJson, voiceMetricsJson dưới dạng JSON có thể query), ACID transactions đảm bảo tính nhất quán khi nhiều processor cùng cập nhật session, và partial indexes (được dùng qua `previewFeatures = ["partialIndexes"]` trong Prisma schema).
 
@@ -711,7 +711,7 @@ Theo tài liệu chính thức, "Prisma ORM is open-source and consists of: Pris
 
 Đặc điểm quan trọng nhất: "Prisma Client is Prisma ORM's generated, type-safe query builder for Node.js [...] It is tailored to your schema, fully typed, and designed to make common database work feel like ordinary application code." [18] Mỗi khi schema thay đổi, Prisma tái sinh TypeScript types tương ứng — mọi query sai cấu trúc được phát hiện tại compile time thay vì runtime.
 
-InterviewAI dùng `prisma db push` thay vì `prisma migrate dev` để đồng bộ schema vào database (theo ADR-008). Phương pháp này phù hợp với giai đoạn phát triển nhanh khi schema còn thay đổi thường xuyên.
+AI Mock Interview dùng `prisma db push` thay vì `prisma migrate dev` để đồng bộ schema vào database (theo ADR-008). Phương pháp này phù hợp với giai đoạn phát triển nhanh khi schema còn thay đổi thường xuyên.
 
 ### 3.8.3 Các nhóm bảng chính
 

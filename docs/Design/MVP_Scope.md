@@ -134,20 +134,7 @@ Ghi chú `ai_feedbacks`: MVP schema khác v1.1 schema trong DB design file — `
 
 ---
 
-## 5. Key NFR cho Implementation
 
-NFR ảnh hưởng scope hoặc logic implementation — nếu không biết sẽ implement sai.
-
-| NFR | Giá trị | Enforcement |
-| --- | ------- | ----------- |
-| S-12 | Max 10 sessions mới/24h per user | `SessionService.create()` COUNT check trước INSERT |
-| P-17 | Max 5 phút audio/answer | `AudioRecorder` hard-stop + `TurnService` validate duration |
-| AS-04 | JD min 100 ký tự | `SessionSetupWizard` validation + API trả 422 |
-| S-11 | 60 req/min per user | `@Throttle` trên các controllers gọi AI |
-
-Đầy đủ NFR xem SRS §3.3 — 8 nhóm, 40 requirements.
-
----
 
 ## 6. Deferred Backlog v1.1
 

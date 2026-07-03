@@ -2,7 +2,7 @@ Chương 2. Khảo Sát Thực Tế Và Các Nghiên Cứu Liên Quan
 
 ## 2.1 Khảo Sát Các Hệ Thống, Sản Phẩm Liên Quan
 
-Phần này khảo sát bốn sản phẩm tiêu biểu trong thị trường luyện phỏng vấn và một baseline thực tế (chatbot tổng quát). Các sản phẩm được chọn đại diện cho các hướng tiếp cận khác nhau: AI copilot real-time (Final Round AI), peer-to-peer mock interview (Pramp/Exponent), speech coaching (Yoodli), human mock interview (interviewing.io), và tự học qua chatbot tổng quát (ChatGPT). Kết quả khảo sát làm cơ sở xác định khoảng trống thị trường và định vị InterviewAI.
+Phần này khảo sát bốn sản phẩm tiêu biểu trong thị trường luyện phỏng vấn và một baseline thực tế (chatbot tổng quát). Các sản phẩm được chọn đại diện cho các hướng tiếp cận khác nhau: AI copilot real-time (Final Round AI), peer-to-peer mock interview (Pramp/Exponent), speech coaching (Yoodli), human mock interview (interviewing.io), và tự học qua chatbot tổng quát (ChatGPT). Kết quả khảo sát làm cơ sở xác định khoảng trống thị trường và định vị AI Mock Interview.
 
 ## 2.2 Đánh Giá Từng Sản Phẩm Tiêu Biểu
 
@@ -18,7 +18,7 @@ Phần này khảo sát bốn sản phẩm tiêu biểu trong thị trường lu
 
 **Vấn đề đạo đức:** Final Round AI được thiết kế và marketing rõ ràng để dùng trong buổi phỏng vấn thật — đặc biệt Stealth Mode để tránh bị phát hiện. Nhiều nhà tuyển dụng và công ty coi đây là gian lận và cấm sử dụng. Công cụ không giúp người dùng thực sự cải thiện kỹ năng vì người dùng đọc gợi ý thay vì tự suy nghĩ.
 
-**Bài học cho InterviewAI:** Phân biệt rõ công cụ luyện tập (hợp lệ, InterviewAI) với công cụ real-time cheating (không hợp lệ, Final Round AI). Pattern sample answer cải thiện có giá trị học tập cao và đáng tích hợp vào surgical feedback.
+**Bài học cho AI Mock Interview:** Phân biệt rõ công cụ luyện tập (hợp lệ, AI Mock Interview) với công cụ real-time cheating (không hợp lệ, Final Round AI). Pattern sample answer cải thiện có giá trị học tập cao và đáng tích hợp vào surgical feedback.
 
 ### 2.2.2 Pramp/Exponent
 
@@ -29,7 +29,7 @@ Phần này khảo sát bốn sản phẩm tiêu biểu trong thị trường lu
 **Ưu điểm:** Free (5 credits/tháng) — phù hợp sinh viên về tài chính; feedback từ người thật có giá trị thực tế; luyện thêm được kỹ năng đặt câu hỏi khi đóng vai interviewer.
 
 **Hạn chế:** Không on-demand — cần scheduling và phụ thuộc availability của partner; không có AI feedback; chất lượng feedback biến động lớn tùy partner được ghép cặp.
-**Bài học cho InterviewAI:** On-demand + AI feedback giải quyết hai điểm yếu lớn nhất của Pramp đó là người dùng không cần tìm partner, không cần đặt lịch, nhận feedback nhất quán về chất lượng.
+**Bài học cho AI Mock Interview:** On-demand + AI feedback giải quyết hai điểm yếu lớn nhất của Pramp đó là người dùng không cần tìm partner, không cần đặt lịch, nhận feedback nhất quán về chất lượng.
 
 ### 2.2.3 Yoodli
 
@@ -41,7 +41,7 @@ Phần này khảo sát bốn sản phẩm tiêu biểu trong thị trường lu
 
 **Hạn chế:** Feedback tập trung vào "how you say it" thay vì "what you say" — không đánh giá nội dung câu trả lời phỏng vấn; không có JD-based questions; không có follow-up contextual; chỉ English; free tier chỉ 5 sessions lifetime. User reviews: *"Good for delivery coaching but won't help you craft better answers"* (Prospeo.io).
 
-**Bài học cho InterviewAI:** Kết hợp content feedback (khoảng trống của Yoodli) với delivery feedback (điểm mạnh của Yoodli) tạo giá trị vượt trội. InterviewAI ưu tiên content feedback vì đây là gap lớn hơn với fresher VN trong giai đoạn GR1.
+**Bài học cho AI Mock Interview:** Kết hợp content feedback (khoảng trống của Yoodli) với delivery feedback (điểm mạnh của Yoodli) tạo giá trị vượt trội. AI Mock Interview ưu tiên content feedback vì đây là gap lớn hơn với fresher VN trong giai đoạn GR1.
 
 ### 2.2.4 interviewing.io
 
@@ -53,7 +53,7 @@ Phần này khảo sát bốn sản phẩm tiêu biểu trong thị trường lu
 
 **Hạn chế:** $225–$300/session — hoàn toàn ngoài tầm với sinh viên Việt Nam; không on-demand (cần booking trước); chỉ English; level dành cho senior engineers, không phù hợp fresher thiếu kinh nghiệm.
 
-**Bài học cho InterviewAI:** Đây là ví dụ điển hình về khoảng trống thị trường — AI có thể cung cấp feedback gần chất lượng human expert ở mức giá accessible. InterviewAI nhắm đúng phân khúc mà interviewing.io không phục vụ được: fresher VN, miễn phí, hỗ trợ tiếng Việt.
+**Bài học cho AI Mock Interview:** Đây là ví dụ điển hình về khoảng trống thị trường — AI có thể cung cấp feedback gần chất lượng human expert ở mức giá accessible. AI Mock Interview nhắm đúng phân khúc mà interviewing.io không phục vụ được: fresher VN, miễn phí, hỗ trợ tiếng Việt.
 
 ### 2.2.5 Chatbot Tổng Quát Và Cách Tự Học Hiện Nay
 
@@ -63,7 +63,7 @@ Phần này khảo sát bốn sản phẩm tiêu biểu trong thị trường lu
 
 **Hạn chế:** Không có workflow luyện phỏng vấn có cấu trúc — người dùng phải tự thiết kế quy trình; không có rubric nhất quán (mỗi lần feedback có thể theo tiêu chí khác nhau tùy cách prompt); không có lưu vết tiến bộ qua các phiên; không có follow-up contextual tự động dựa trên câu trả lời vừa nói; feedback thường chung chung, không highlight đoạn cụ thể trong câu trả lời.
 
-**Bài học cho InterviewAI:** ChatGPT là đối thủ cạnh tranh thực tế lớn nhất vì tính tiếp cận (miễn phí, tiếng Việt). InterviewAI phải vượt trội hơn bằng: workflow có cấu trúc rõ ràng (JD → câu hỏi → trả lời → surgical feedback), rubric nhất quán theo context pack VN/Western, và giao diện chuyên biệt tối ưu cho luyện phỏng vấn.
+**Bài học cho AI Mock Interview:** ChatGPT là đối thủ cạnh tranh thực tế lớn nhất vì tính tiếp cận (miễn phí, tiếng Việt). AI Mock Interview phải vượt trội hơn bằng: workflow có cấu trúc rõ ràng (JD → câu hỏi → trả lời → surgical feedback), rubric nhất quán theo context pack VN/Western, và giao diện chuyên biệt tối ưu cho luyện phỏng vấn.
 
 ## 2.3 Ma Trận So Sánh Và Định Vị Sản Phẩm
 
@@ -73,14 +73,14 @@ Phần này khảo sát bốn sản phẩm tiêu biểu trong thị trường lu
 | Pramp | Software engineers | Không | Không | Peer review (biến động) | Không | Miễn phí (5 credits/tháng) | Cần schedule; chất lượng feedback phụ thuộc partner |
 | Yoodli | General speakers | Không | Có | Không (chỉ delivery) | Không | $0–$20/tháng | Tốt cho cách nói; không đánh giá nội dung câu trả lời |
 | interviewing.io | Senior engineers (FAANG) | Không | Không | Có (human expert) | Không | $225–$300/session | Chất lượng cao nhất; quá đắt và không phù hợp fresher VN |
-| InterviewAI | Fresher CNTT VN | Có | Có | Có (AI, rubric VN/Western) | Có | Miễn phí | Practice-only; surgical feedback; ngữ cảnh phỏng vấn VN |
+| AI Mock Interview | Fresher CNTT VN | Có | Có | Có (AI, rubric VN/Western) | Có | Miễn phí | Practice-only; surgical feedback; ngữ cảnh phỏng vấn VN |
 
 Ghi chú:
 - Final Round AI "Feedback nội dung — Một phần": mock interview có STAR alignment score nhưng live mode suggestions generic theo câu hỏi nghe được, không phân tích sâu câu trả lời của user.
 - Pramp "Feedback nội dung — Peer review": hoàn toàn phụ thuộc chất lượng partner, không có AI.
 - interviewing.io "On-demand — Không": phải booking trước, phụ thuộc lịch của interviewer.
 
-Hình 2.x: Ma trận định vị theo hai trục `mức độ cá nhân hóa/nội dung` và `khả năng tiếp cận với sinh viên Việt Nam` — InterviewAI là sản phẩm duy nhất nằm ở góc phần tư "cá nhân hóa cao, tiếp cận tốt".
+Hình 2.x: Ma trận định vị theo hai trục `mức độ cá nhân hóa/nội dung` và `khả năng tiếp cận với sinh viên Việt Nam` — AI Mock Interview là sản phẩm duy nhất nằm ở góc phần tư "cá nhân hóa cao, tiếp cận tốt".
 
 ## 2.4 Kết Luận Khảo Sát Và Yêu Cầu Rút Ra
 
