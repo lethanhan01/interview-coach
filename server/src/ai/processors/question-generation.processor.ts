@@ -15,6 +15,12 @@ import type {
   SessionType,
 } from '../pipelines/interview-pipeline.interface';
 import { describeAIError, isAIFallbackEligible } from '../ai-error.utils';
+import {
+  calculateEstimatedTimeMin,
+  normalizeGeneratedQuestionMetadata,
+  sanitizeDifficulty,
+} from '../question-metadata';
+import type { ContextPackConfig } from '../context-pack.service';
 
 // AI generates 1 out of every 5 questions; the rest come from the question bank.
 const AI_QUESTION_EVERY_N = 5;
@@ -27,7 +33,25 @@ interface QuestionGenerationJobDto {
   contextPack: 'VN' | 'Western';
   language: string;
   totalQuestions: number;
+  durationMin: number;
 }
+
+type MergedQuestionRow = {
+  questionBankId?: string;
+  questionText: string;
+  orderIndex: number;
+  questionCategory: string;
+  competencyDomain: string;
+  rubricJson: object;
+  estimatedTimeMin: number;
+};
+
+type NormalizedGeneratedQuestion = GeneratedQuestion & {
+  questionCategory: 'behavioral' | 'technical';
+  competencyDomain: string;
+  difficulty: 1 | 2 | 3;
+  estimatedTimeMin: number;
+};
 
 @Processor(QUESTION_GEN_QUEUE)
 export class QuestionGenerationProcessor extends WorkerHost {
@@ -53,18 +77,18 @@ export class QuestionGenerationProcessor extends WorkerHost {
       contextPack,
       language,
       totalQuestions,
+      durationMin,
     } = job.data;
     const outputLanguage = resolveOutputLanguage(language);
 
     const aiCount = Math.round(totalQuestions / AI_QUESTION_EVERY_N);
-    const qbCount = totalQuestions - aiCount;
 
-    let aiQuestions: GeneratedQuestion[];
+    let aiQuestions: NormalizedGeneratedQuestion[];
     try {
       const contextPackConfig =
         this.contextPackService.getContextPack(contextPack);
       const strategy = this.factory.getStrategy(sessionType);
-      aiQuestions = await strategy.generateQuestions({
+      const rawAiQuestions = await strategy.generateQuestions({
         sessionType,
         jobDescriptionText,
         targetRoles,
@@ -72,12 +96,14 @@ export class QuestionGenerationProcessor extends WorkerHost {
         language: outputLanguage,
         totalQuestions: aiCount,
       });
-      aiQuestions = aiQuestions.slice(0, aiCount);
-      if (aiQuestions.length < aiCount) {
-        throw new Error(
-          `AI returned only ${aiQuestions.length}/${aiCount} questions`,
-        );
-      }
+      aiQuestions = this.normalizeAiQuestions(
+        rawAiQuestions,
+        contextPackConfig,
+        sessionType,
+        durationMin,
+        totalQuestions,
+        aiCount,
+      );
     } catch (error: unknown) {
       if (isAIFallbackEligible(error)) {
         this.logger.warn(
@@ -96,6 +122,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
           sessionType,
           contextPack,
           outputLanguage,
+          durationMin,
           totalQuestions,
         );
         if (await this.markActiveUnlessStopped(sessionId)) {
@@ -114,6 +141,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
       }
     }
 
+    const qbCount = totalQuestions - aiQuestions.length;
     let qbQuestions: FallbackQuestion[];
     try {
       qbQuestions = await this.questionBankService.selectFallbackQuestions(
@@ -135,7 +163,13 @@ export class QuestionGenerationProcessor extends WorkerHost {
         aiQuestions,
         qbQuestions,
         totalQuestions,
+        durationMin,
       ).map((row) => ({ ...row, sessionId }));
+      if (merged.length < totalQuestions) {
+        throw new Error(
+          `Only ${merged.length}/${totalQuestions} questions available after metadata validation`,
+        );
+      }
       const result = await this.prisma.sessionQuestion.createMany({
         data: merged,
         skipDuplicates: true,
@@ -160,18 +194,11 @@ export class QuestionGenerationProcessor extends WorkerHost {
   }
 
   private mergeQuestions(
-    aiQuestions: GeneratedQuestion[],
+    aiQuestions: NormalizedGeneratedQuestion[],
     qbQuestions: FallbackQuestion[],
     total: number,
-  ): Array<{
-    questionBankId?: string;
-    questionText: string;
-    orderIndex: number;
-    questionCategory: string;
-    competencyDomain: string;
-    rubricJson: object;
-    estimatedTimeMin?: number;
-  }> {
+    durationMin: number,
+  ): MergedQuestionRow[] {
     // AI questions appear every AI_QUESTION_EVERY_N positions when possible.
     // Short sessions still need every generated question to land inside total.
     const aiPositions = new Set(
@@ -183,7 +210,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
       ),
     );
 
-    const rows: ReturnType<typeof this.mergeQuestions> = [];
+    const rows: MergedQuestionRow[] = [];
     let aiIdx = 0;
     let qbIdx = 0;
 
@@ -193,20 +220,31 @@ export class QuestionGenerationProcessor extends WorkerHost {
         rows.push({
           questionText: q.text,
           orderIndex: pos,
-          questionCategory: q.category,
-          competencyDomain: q.competencyDomain,
-          rubricJson: {},
-        });
-      } else if (qbIdx < qbQuestions.length) {
-        const q = qbQuestions[qbIdx++];
-        rows.push({
-          questionBankId: q.questionBankId,
-          questionText: q.text,
-          orderIndex: pos,
           questionCategory: q.questionCategory,
           competencyDomain: q.competencyDomain,
           rubricJson: {},
           estimatedTimeMin: q.estimatedTimeMin,
+        });
+      } else if (qbIdx < qbQuestions.length) {
+        const q = qbQuestions[qbIdx++];
+        const fallbackDifficulty =
+          q.estimatedTimeMin > 0
+            ? q.estimatedTimeMin
+            : calculateEstimatedTimeMin({
+                durationMin,
+                numQuestions: total,
+                difficulty: 2,
+              });
+        rows.push({
+          questionBankId: q.questionBankId,
+          questionText: q.text,
+          orderIndex: pos,
+          questionCategory: q.competencyDomain.startsWith('TD')
+            ? 'technical'
+            : 'behavioral',
+          competencyDomain: q.competencyDomain,
+          rubricJson: {},
+          estimatedTimeMin: fallbackDifficulty,
         });
       }
     }
@@ -219,6 +257,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
     sessionType: string,
     contextPack: string,
     language: string,
+    durationMin: number,
     totalQuestions: number,
   ): Promise<void> {
     const selected = await this.questionBankService.selectFallbackQuestions(
@@ -237,10 +276,62 @@ export class QuestionGenerationProcessor extends WorkerHost {
         questionCategory: q.questionCategory,
         competencyDomain: q.competencyDomain,
         rubricJson: {},
-        estimatedTimeMin: q.estimatedTimeMin,
+        estimatedTimeMin:
+          q.estimatedTimeMin > 0
+            ? q.estimatedTimeMin
+            : calculateEstimatedTimeMin({
+                durationMin,
+                numQuestions: totalQuestions,
+                difficulty: 2,
+              }),
       })),
       skipDuplicates: true,
     });
+  }
+
+  private normalizeAiQuestions(
+    questions: GeneratedQuestion[],
+    contextPackConfig: ContextPackConfig,
+    sessionType: SessionType,
+    durationMin: number,
+    totalQuestions: number,
+    maxCount: number,
+  ): NormalizedGeneratedQuestion[] {
+    const normalized: NormalizedGeneratedQuestion[] = [];
+
+    for (const question of questions) {
+      if (normalized.length >= maxCount) break;
+      const metadata = normalizeGeneratedQuestionMetadata(
+        {
+          category: question.category,
+          competencyDomain: question.competencyDomain,
+        },
+        contextPackConfig,
+        sessionType,
+      );
+      if (!metadata) {
+        this.logger.warn(
+          `Dropping AI question with invalid metadata: category=${question.category} competencyDomain=${question.competencyDomain}`,
+        );
+        continue;
+      }
+
+      const difficulty = sanitizeDifficulty(question.difficulty);
+      normalized.push({
+        ...question,
+        category: metadata.questionCategory,
+        questionCategory: metadata.questionCategory,
+        competencyDomain: metadata.competencyDomain,
+        difficulty,
+        estimatedTimeMin: calculateEstimatedTimeMin({
+          durationMin,
+          numQuestions: totalQuestions,
+          difficulty,
+        }),
+      });
+    }
+
+    return normalized;
   }
 
   private async markActiveUnlessStopped(sessionId: string): Promise<boolean> {

@@ -26,6 +26,7 @@ const BASE_SESSION = {
   language: 'vi',
   status: 'generating',
   numQuestions: 5,
+  durationMin: 30,
   createdAt: new Date(),
   overallScore: null,
   completedAt: null,
@@ -121,6 +122,7 @@ describe('SessionService', () => {
           contextPack: 'VN',
           language: 'vi',
           totalQuestions: 5,
+          durationMin: 30,
         },
         {
           attempts: 2,

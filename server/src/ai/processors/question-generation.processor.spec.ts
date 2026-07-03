@@ -36,6 +36,25 @@ describe('QuestionGenerationProcessor', () => {
     contextPack: 'VN' as const,
     language: 'vi',
     totalQuestions: 5,
+    durationMin: 30,
+  };
+
+  const MOCK_CONTEXT_PACK = {
+    behavioralDimensions: [
+      { id: 'D1', name: 'Communication', weight: 0.2 },
+      { id: 'D2', name: 'Critical Thinking', weight: 0.2 },
+      { id: 'D3', name: 'Collaboration & Teamwork', weight: 0.15 },
+      { id: 'D4', name: 'Leadership & Initiative', weight: 0.2 },
+      { id: 'D5', name: 'Culture Fit & Values', weight: 0.15 },
+      { id: 'D6', name: 'Self-Awareness & Growth', weight: 0.1 },
+    ],
+    technicalDimensions: [
+      { id: 'TD1', name: 'Foundational Knowledge', weight: 0.2 },
+      { id: 'TD2', name: 'Practical Application', weight: 0.25 },
+      { id: 'TD3', name: 'Systems Thinking', weight: 0.2 },
+      { id: 'TD4', name: 'Code Quality & Best Practices', weight: 0.2 },
+      { id: 'TD5', name: 'Debug & Problem-solving', weight: 0.15 },
+    ],
   };
 
   const makeJob = (data = BASE_JOB_DATA) =>
@@ -45,7 +64,8 @@ describe('QuestionGenerationProcessor', () => {
     Array.from({ length: count }, (_, index) => ({
       text: `AI question ${index + 1}`,
       category: 'behavioral',
-      competencyDomain: 'communication',
+      competencyDomain: 'D1',
+      difficulty: 2,
     }));
 
   const makeFallbackQuestions = (count: number) =>
@@ -89,13 +109,14 @@ describe('QuestionGenerationProcessor', () => {
     const aiQuestion = {
       text: 'Điểm mạnh là gì?',
       category: 'behavioral',
-      competencyDomain: 'communication',
+      competencyDomain: 'D1',
+      difficulty: 2,
     };
     const qbResult = makeFallbackQuestions(4);
     const mockStrategy = {
       generateQuestions: jest.fn().mockResolvedValue([aiQuestion]),
     };
-    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
     mockFactory.getStrategy.mockReturnValue(mockStrategy);
     mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(qbResult);
     mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
@@ -134,6 +155,9 @@ describe('QuestionGenerationProcessor', () => {
         sessionId: 'session-123',
         questionText: 'Điểm mạnh là gì?',
         orderIndex: 5,
+        questionCategory: 'behavioral',
+        competencyDomain: 'D1',
+        estimatedTimeMin: 5,
       }),
     );
     expect(createArgs.data[4]).not.toHaveProperty('questionBankId');
@@ -158,10 +182,11 @@ describe('QuestionGenerationProcessor', () => {
           text: 'Tell me about a time you handled a conflict.',
           category: 'behavioral',
           competencyDomain: 'D4',
+          difficulty: 2,
         },
       ]),
     };
-    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
     mockFactory.getStrategy.mockReturnValue(mockStrategy);
     mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
       makeFallbackQuestions(4),
@@ -187,10 +212,78 @@ describe('QuestionGenerationProcessor', () => {
     ).toHaveBeenCalledWith('hr', 'Western', 4, 'en');
   });
 
+  it('normalize AI free-form rubric name trước khi persist', async () => {
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
+    mockFactory.getStrategy.mockReturnValue({
+      generateQuestions: jest.fn().mockResolvedValue([
+        {
+          text: 'Tell me about a time you learned from feedback.',
+          category: 'Self-Awareness & Growth',
+          competencyDomain: 'Self-Awareness & Growth',
+          difficulty: 2,
+        },
+      ]),
+    });
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+      makeFallbackQuestions(4),
+    );
+    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+    mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
+    mockSse.emit.mockResolvedValue(undefined);
+
+    await processor.process(
+      makeJob({ ...BASE_JOB_DATA, contextPack: 'Western' } as any),
+    );
+
+    const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
+    expect(createArgs.data[4]).toEqual(
+      expect.objectContaining({
+        questionText: 'Tell me about a time you learned from feedback.',
+        questionCategory: 'behavioral',
+        competencyDomain: 'D6',
+        estimatedTimeMin: 5,
+      }),
+    );
+  });
+
+  it('drop AI question sai domain sessionType và bù đủ bằng question_bank', async () => {
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
+    mockFactory.getStrategy.mockReturnValue({
+      generateQuestions: jest.fn().mockResolvedValue([
+        {
+          text: 'Explain a production debugging workflow.',
+          category: 'technical',
+          competencyDomain: 'TD5',
+          difficulty: 2,
+        },
+      ]),
+    });
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+      makeFallbackQuestions(5),
+    );
+    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+    mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
+    mockSse.emit.mockResolvedValue(undefined);
+
+    await processor.process(makeJob());
+
+    expect(
+      mockQuestionBankService.selectFallbackQuestions,
+    ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi');
+    const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
+    expect(createArgs.data).toHaveLength(5);
+    expect(
+      createArgs.data.some(
+        (q: { questionText: string }) =>
+          q.questionText === 'Explain a production debugging workflow.',
+      ),
+    ).toBe(false);
+  });
+
   it('QG-04: chỉ lấy aiCount câu từ AI khi AI trả dư; tổng vẫn bằng totalQuestions', async () => {
     // totalQuestions=5 → aiCount=1; AI returns 7 but gets sliced to 1
     const generatedQuestions = makeGeneratedQuestions(7);
-    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
     mockFactory.getStrategy.mockReturnValue({
       generateQuestions: jest.fn().mockResolvedValue(generatedQuestions),
     });
@@ -214,7 +307,7 @@ describe('QuestionGenerationProcessor', () => {
   });
 
   it('đặt AI question vào vị trí hợp lệ khi phiên ngắn hơn chu kỳ 5 câu', async () => {
-    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
     mockFactory.getStrategy.mockReturnValue({
       generateQuestions: jest.fn().mockResolvedValue(makeGeneratedQuestions(1)),
     });
@@ -227,7 +320,7 @@ describe('QuestionGenerationProcessor', () => {
 
     await expect(
       processor.process(
-        makeJob({ ...BASE_JOB_DATA, totalQuestions: 3 } as any),
+        makeJob({ ...BASE_JOB_DATA, totalQuestions: 3, durationMin: 30 } as any),
       ),
     ).resolves.toBeUndefined();
 
@@ -252,7 +345,7 @@ describe('QuestionGenerationProcessor', () => {
 
   it('QG-05: dùng fallback khi AI trả 0 câu (ít hơn aiCount=1)', async () => {
     // totalQuestions=5 → aiCount=1; AI returns 0 → 0 < 1 → fallback all-QB
-    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
     mockFactory.getStrategy.mockReturnValue({
       generateQuestions: jest.fn().mockResolvedValue([]),
     });
@@ -281,7 +374,7 @@ describe('QuestionGenerationProcessor', () => {
         .fn()
         .mockRejectedValue(new Error('OpenAI timeout')),
     };
-    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
     mockFactory.getStrategy.mockReturnValue(mockStrategy);
     mockPrisma.interviewSession.update.mockResolvedValue({} as any);
     mockSse.emit.mockResolvedValue(undefined);
@@ -306,7 +399,7 @@ describe('QuestionGenerationProcessor', () => {
 
   it('không chuyển session sang error hoặc chạy fallback lần hai khi SSE emit thất bại', async () => {
     // totalQuestions=5 → aiCount=1, qbCount=4; QB called once (hybrid), not twice
-    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
     mockFactory.getStrategy.mockReturnValue({
       generateQuestions: jest.fn().mockResolvedValue(makeGeneratedQuestions(1)),
     });
@@ -340,12 +433,16 @@ describe('QuestionGenerationProcessor', () => {
     const generatedQuestions = Array.from({ length: 5 }, (_, index) => ({
       text: `Câu hỏi ${index + 1}`,
       category: 'behavioral',
-      competencyDomain: 'communication',
+      competencyDomain: 'D1',
+      difficulty: 2,
     }));
-    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
     mockFactory.getStrategy.mockReturnValue({
       generateQuestions: jest.fn().mockResolvedValue(generatedQuestions),
     });
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+      makeFallbackQuestions(4),
+    );
     mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
     mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 0 });
 
@@ -362,10 +459,13 @@ describe('QuestionGenerationProcessor', () => {
   });
 
   it('QG-15: không emit active khi session không còn eligible để active', async () => {
-    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
     mockFactory.getStrategy.mockReturnValue({
       generateQuestions: jest.fn().mockResolvedValue(makeGeneratedQuestions(5)),
     });
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+      makeFallbackQuestions(4),
+    );
     mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
     mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 0 });
 
@@ -388,7 +488,7 @@ describe('QuestionGenerationProcessor', () => {
       'AI provider API error 500',
     );
     const generateQuestions = jest.fn().mockRejectedValue(aiServiceError);
-    mockContextPack.getContextPack.mockReturnValue({} as any);
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
     mockFactory.getStrategy.mockReturnValue({ generateQuestions });
     mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
       makeFallbackQuestions(5),
@@ -418,7 +518,7 @@ describe('QuestionGenerationProcessor', () => {
       const mockStrategy = {
         generateQuestions: jest.fn().mockRejectedValue(new Error('AI timeout')),
       };
-      mockContextPack.getContextPack.mockReturnValue({} as any);
+      mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
       mockFactory.getStrategy.mockReturnValue(mockStrategy);
       mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
         mockQuestions,
@@ -480,7 +580,7 @@ describe('QuestionGenerationProcessor', () => {
         estimatedTimeMin: 5,
       }));
       const generateQuestions = jest.fn().mockRejectedValue(quotaError);
-      mockContextPack.getContextPack.mockReturnValue({} as any);
+      mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
       mockFactory.getStrategy.mockReturnValue({ generateQuestions });
       mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
         mockQuestions,
@@ -531,7 +631,7 @@ describe('QuestionGenerationProcessor', () => {
         `AI error ${errorCode}`,
       );
       const generateQuestions = jest.fn().mockRejectedValue(aiError);
-      mockContextPack.getContextPack.mockReturnValue({} as any);
+      mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
       mockFactory.getStrategy.mockReturnValue({ generateQuestions });
       mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
         makeFallbackQuestions(5),
@@ -552,7 +652,7 @@ describe('QuestionGenerationProcessor', () => {
       const mockStrategy = {
         generateQuestions: jest.fn().mockRejectedValue(new Error('AI timeout')),
       };
-      mockContextPack.getContextPack.mockReturnValue({} as any);
+      mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
       mockFactory.getStrategy.mockReturnValue(mockStrategy);
       mockPrisma.interviewSession.update.mockResolvedValue({} as any);
       mockSse.emit.mockResolvedValue(undefined);

@@ -26,7 +26,10 @@ interface FeedbackJobDto {
   sessionId: string;
   turnId: string;
   answerId: string;
+  questionId?: string;
   questionText: string;
+  questionCategory?: 'behavioral' | 'technical';
+  competencyDomain?: string;
   answerText: string;
   contextPack: 'VN' | 'Western';
   sessionType: SessionType;
@@ -63,7 +66,10 @@ export class FeedbackProcessor extends WorkerHost {
     const {
       sessionId,
       answerId,
+      questionId,
       questionText,
+      questionCategory,
+      competencyDomain,
       answerText,
       contextPack,
       sessionType,
@@ -79,7 +85,10 @@ export class FeedbackProcessor extends WorkerHost {
 
       const feedback = await strategy.evaluateAnswer({
         sessionType,
+        questionId,
         questionText,
+        questionCategory,
+        competencyDomain,
         answerText,
         contextPackConfig,
         language,

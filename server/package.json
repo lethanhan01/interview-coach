@@ -15,6 +15,7 @@
     "db:test-user-answer-migration": "ts-node prisma/test-user-answer-deduplication-copy.ts",
     "db:verify:pre": "ts-node prisma/verify-db-hardening.ts --phase=pre",
     "db:verify": "ts-node prisma/verify-db-hardening.ts --phase=post",
+    "db:cleanup-ai-question-metadata": "ts-node prisma/cleanup-ai-question-metadata.ts",
     "db:test-constraints": "ts-node prisma/test-db-hardening-constraints.ts",
     "db:sync": "npm run db:sync:full",
     "db:sync:prisma": "prisma generate && npm run db:prepare-user-answer-unique && npm run db:prepare-db-push-raw-sql && prisma db push",
@@ -64,6 +65,7 @@
     "pg": "^8.21.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "ws": "^8.21.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -78,6 +80,7 @@
     "@types/node": "^24.0.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^7.0.0",
+    "@types/ws": "^8.18.1",
     "dotenv": "^17.4.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",

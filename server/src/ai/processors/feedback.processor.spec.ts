@@ -73,7 +73,10 @@ describe('FeedbackProcessor', () => {
     sessionId: 'session-123',
     turnId: 'answer-1',
     answerId: 'answer-1',
+    questionId: 'q-1',
     questionText: 'Giới thiệu bản thân?',
+    questionCategory: 'behavioral' as const,
+    competencyDomain: 'D1',
     answerText: 'Tôi là backend developer.',
     contextPack: 'VN' as const,
     sessionType: 'hr' as const,
@@ -332,7 +335,10 @@ describe('FeedbackProcessor', () => {
     expect(strategy.evaluateAnswer).toHaveBeenCalledWith(
       expect.objectContaining({
         sessionType: 'hr',
+        questionId: 'q-1',
         questionText: 'Giới thiệu bản thân?',
+        questionCategory: 'behavioral',
+        competencyDomain: 'D1',
         answerText: 'Tôi là backend developer.',
         language: 'vi',
       }),
