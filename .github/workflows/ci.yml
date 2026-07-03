@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   client:
     name: Client
@@ -88,11 +92,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
+      - name: Prepare server image name
+        id: image
+        shell: bash
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}/interviewcoach-server" >> "$GITHUB_OUTPUT"
+
       - name: Extract server image metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: interviewcoach-server
+          images: ${{ steps.image.outputs.name }}
           tags: |
             type=sha,prefix=sha-,format=long
             type=ref,event=branch
@@ -112,11 +121,31 @@ jobs:
           cache-to: type=gha,mode=max,scope=server
 
       - name: Inspect server Docker image
-        run: docker image inspect interviewcoach-server:sha-${{ github.sha }}
+        run: docker image inspect ${{ steps.image.outputs.name }}:sha-${{ github.sha }}
 
       - name: Smoke test server Docker image artifacts
         run: >
           docker run --rm
           --entrypoint node
-          interviewcoach-server:sha-${{ github.sha }}
+          ${{ steps.image.outputs.name }}:sha-${{ github.sha }}
           -e "const fs = require('node:fs'); fs.accessSync('/app/dist/main.js'); fs.accessSync('/app/node_modules/.prisma/client/index.js'); if (process.env.NODE_ENV !== 'production') process.exit(1); if (process.getuid && process.getuid() === 0) process.exit(1); console.log('Server image artifact smoke OK');"
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish server Docker image
+        if: github.event_name == 'push'
+        shell: bash
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          while IFS= read -r tag; do
+            if [ -n "$tag" ]; then
+              docker push "$tag"
+            fi
+          done <<< "$TAGS"
