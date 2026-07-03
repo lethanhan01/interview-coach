@@ -74,6 +74,34 @@ export const EMPTY_JD: JdFormData = {
   bonus: '',
 }
 
+function text(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  return String(value)
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((item): item is string => typeof item === 'string')
+}
+
+function normalizeJdFormData(
+  value: Partial<Record<keyof JdFormData, unknown>> | null | undefined,
+): JdFormData {
+  return {
+    company: text(value?.company),
+    website: text(value?.website),
+    position: text(value?.position),
+    headcount: text(value?.headcount),
+    location: text(value?.location),
+    requirements: text(value?.requirements),
+    jobContent: text(value?.jobContent),
+    techStack: stringArray(value?.techStack),
+    benefits: text(value?.benefits),
+    salary: text(value?.salary),
+    bonus: text(value?.bonus),
+  }
+}
+
 export const POSITION_OPTIONS = [
   'Frontend Developer',
   'Backend Developer',
@@ -174,19 +202,19 @@ function resolveSessionLanguage(contextPack: ContextPack): OutputLanguage {
 }
 
 function savedJobDescriptionToForm(item: SavedJobDescription): JdFormData {
-  return {
+  return normalizeJdFormData({
     company: item.companyName,
-    website: item.companyWebsite ?? '',
+    website: item.companyWebsite,
     position: item.jobTitle,
-    headcount: item.headcount ?? '',
-    location: item.location ?? '',
+    headcount: item.headcount,
+    location: item.location,
     requirements: item.requirements,
     jobContent: item.jobContent,
-    techStack: item.techStack ?? [],
-    benefits: item.benefits ?? '',
-    salary: item.salary ?? '',
-    bonus: item.bonus ?? '',
-  }
+    techStack: item.techStack,
+    benefits: item.benefits,
+    salary: item.salary,
+    bonus: item.bonus,
+  })
 }
 
 // ── Stepper ───────────────────────────────────────────────────────────────────
@@ -221,7 +249,7 @@ function SetupPageContent() {
     if (typeof window === 'undefined') return EMPTY_JD
     try {
       const saved = localStorage.getItem(JD_DRAFT_KEY)
-      if (saved) return JSON.parse(saved) as JdFormData
+      if (saved) return normalizeJdFormData(JSON.parse(saved) as Partial<JdFormData>)
     } catch {
       // ignore malformed data
     }
@@ -292,7 +320,7 @@ function SetupPageContent() {
   }, [])
 
   function updateJd(data: JdFormData) {
-    setJd(data)
+    setJd(normalizeJdFormData(data))
     setSelectedSavedJobDescriptionId('')
   }
 

@@ -145,3 +145,32 @@ test('có thể tìm kiếm, chọn và lưu các tech stack mới trong JD', as
   })
   expect(String(sessionPayload?.jobDescription)).toContain('Tech Stack: PyTorch, Playwright, Terraform, OWASP')
 })
+
+test('chuẩn hóa draft JD cũ thiếu field để input luôn controlled', async ({ page }) => {
+  const consoleErrors: string[] = []
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') consoleErrors.push(msg.text())
+  })
+
+  await page.addInitScript(
+    ({ requirements, jobContent }) => {
+      window.localStorage.setItem(
+        'interviewcoach_jd_draft',
+        JSON.stringify({ company: 'FPT Software', requirements, jobContent }),
+      )
+    },
+    { requirements: VALID_REQUIREMENTS, jobContent: VALID_JOB_CONTENT },
+  )
+
+  await page.goto('/setup')
+  await page.getByLabel('Website công ty').fill('https://fptsoftware.com')
+  await page.locator('select').first().selectOption('Frontend Developer')
+  await page.getByLabel('Số lượng tuyển').fill('2 người')
+  await page.getByLabel('Địa điểm làm việc').fill('Hà Nội')
+  await page.getByLabel('Lương').fill('20-30 triệu VNĐ')
+  await page.getByLabel('Quyền lợi nhân viên').fill('Bảo hiểm sức khỏe')
+
+  expect(consoleErrors.join('\n')).not.toContain(
+    'A component is changing an uncontrolled input to be controlled',
+  )
+})

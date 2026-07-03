@@ -9,7 +9,7 @@ import { EDUCATION_DEGREE_OPTIONS } from './constants'
 import type { EducationEntry } from '@/lib/types'
 
 interface Props {
-  data: EducationEntry | undefined
+  data: Partial<EducationEntry> | null | undefined
   onSave: (data: EducationEntry) => Promise<void>
 }
 
@@ -17,31 +17,38 @@ const DEGREE_LABEL: Record<string, string> = Object.fromEntries(
   EDUCATION_DEGREE_OPTIONS.filter((o) => o.value).map((o) => [o.value, o.label]),
 )
 
-const EMPTY: EducationEntry = {
-  degree: '',
-  school: '',
-  major: '',
-  gpa: '',
-  graduationYear: '',
-}
-
 const FIELD_CLASS =
   'w-full rounded-xl border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
 
+function toText(value: unknown) {
+  if (value === null || value === undefined) return ''
+  return String(value)
+}
+
+function normalizeEducation(data: Partial<EducationEntry> | null | undefined): EducationEntry {
+  return {
+    degree: toText(data?.degree),
+    school: toText(data?.school),
+    major: toText(data?.major),
+    gpa: toText(data?.gpa),
+    graduationYear: toText(data?.graduationYear),
+  }
+}
+
 export default function EducationGroup({ data, onSave }: Props) {
   const [isEditing, setIsEditing] = useState(false)
-  const [form, setForm] = useState<EducationEntry>(data ?? EMPTY)
+  const [form, setForm] = useState<EducationEntry>(() => normalizeEducation(data))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   function handleEdit() {
-    setForm(data ?? EMPTY)
+    setForm(normalizeEducation(data))
     setError(null)
     setIsEditing(true)
   }
 
   function handleCancel() {
-    setForm(data ?? EMPTY)
+    setForm(normalizeEducation(data))
     setError(null)
     setIsEditing(false)
   }
