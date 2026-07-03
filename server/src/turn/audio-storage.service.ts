@@ -1,13 +1,17 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient } from '@supabase/supabase-js';
+import type { WebSocketLikeConstructor } from '@supabase/supabase-js';
 import { randomUUID } from 'node:crypto';
+import WebSocket from 'ws';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { WhisperService } from './whisper.service';
 
 const AUDIO_BUCKET = 'interview-audio';
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+const SUPABASE_REALTIME_TRANSPORT =
+  WebSocket as unknown as WebSocketLikeConstructor;
 const SUPPORTED_AUDIO_TYPES = new Map([
   ['audio/webm', 'webm'],
   ['audio/mp4', 'mp4'],
@@ -42,6 +46,9 @@ export class AudioStorageService {
         auth: {
           persistSession: false,
           autoRefreshToken: false,
+        },
+        realtime: {
+          transport: SUPABASE_REALTIME_TRANSPORT,
         },
       },
     ).storage;
