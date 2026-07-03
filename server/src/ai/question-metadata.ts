@@ -1,4 +1,7 @@
-import type { ContextPackConfig, RubricDimensionEntry } from './context-pack.service';
+import type {
+  ContextPackConfig,
+  RubricDimensionEntry,
+} from './context-pack.service';
 import type { SessionType } from './pipelines/interview-pipeline.interface';
 
 export type QuestionCategory = 'behavioral' | 'technical';
@@ -39,7 +42,10 @@ function allowedDimensionsForSession(
 ): RubricDimensionEntry[] {
   if (sessionType === 'hr') return contextPack.behavioralDimensions;
   if (sessionType === 'technical') return contextPack.technicalDimensions;
-  return [...contextPack.behavioralDimensions, ...contextPack.technicalDimensions];
+  return [
+    ...contextPack.behavioralDimensions,
+    ...contextPack.technicalDimensions,
+  ];
 }
 
 function resolveDomain(
@@ -90,16 +96,32 @@ export function normalizeGeneratedQuestionMetadata(
 function heuristicTechnicalDomain(questionText: string): string | null {
   const text = normalizeKey(questionText);
 
-  if (/(debug|troubleshoot|incident|production|reliability|bug|loi|suco)/.test(text)) {
+  if (
+    /(debug|troubleshoot|incident|production|reliability|bug|loi|suco)/.test(
+      text,
+    )
+  ) {
     return 'TD5';
   }
-  if (/(codequality|bestpractice|clean|refactor|maintain|chatluongcode)/.test(text)) {
+  if (
+    /(codequality|bestpractice|clean|refactor|maintain|chatluongcode)/.test(
+      text,
+    )
+  ) {
     return 'TD4';
   }
-  if (/(systemdesign|scale|scalability|architecture|distributed|tuduyhethong)/.test(text)) {
+  if (
+    /(systemdesign|scale|scalability|architecture|distributed|tuduyhethong)/.test(
+      text,
+    )
+  ) {
     return 'TD3';
   }
-  if (/(practical|application|fullstack|database|backend|frontend|implement|khanangapdungthucte)/.test(text)) {
+  if (
+    /(practical|application|fullstack|database|backend|frontend|implement|khanangapdungthucte)/.test(
+      text,
+    )
+  ) {
     return 'TD2';
   }
 
@@ -109,26 +131,47 @@ function heuristicTechnicalDomain(questionText: string): string | null {
 function heuristicBehavioralDomain(questionText: string): string | null {
   const text = normalizeKey(questionText);
 
-  if (/(incident|oncall|problem|solve|resilience|pressure|suco|apluc|giaiquyetvande)/.test(text)) {
+  if (
+    /(incident|oncall|problem|solve|resilience|pressure|suco|apluc|giaiquyetvande)/.test(
+      text,
+    )
+  ) {
     return 'D2';
   }
-  if (/(selfaware|growth|learn|feedback|weakness|tuhoc|hochoi|nhanthuc|tunhanthuc)/.test(text)) {
+  if (
+    /(selfaware|growth|learn|feedback|weakness|tuhoc|hochoi|nhanthuc|tunhanthuc)/.test(
+      text,
+    )
+  ) {
     return 'D6';
   }
-  if (/(leadership|mentor|ownership|initiative|decision|trachnhiem|lanhdao)/.test(text)) {
+  if (
+    /(leadership|mentor|ownership|initiative|decision|trachnhiem|lanhdao)/.test(
+      text,
+    )
+  ) {
     return 'D4';
   }
-  if (/(collaboration|team|conflict|coworker|lamviecnhom|xungdot|hoptac)/.test(text)) {
+  if (
+    /(collaboration|team|conflict|coworker|lamviecnhom|xungdot|hoptac)/.test(
+      text,
+    )
+  ) {
     return 'D3';
   }
-  if (/(culture|motivation|values|company|dongluc|phuhop|phuhopvanhoa)/.test(text)) {
+  if (
+    /(culture|motivation|values|company|dongluc|phuhop|phuhopvanhoa)/.test(text)
+  ) {
     return 'D5';
   }
 
   return 'D1';
 }
 
-function heuristicDomain(questionText: string, sessionType: SessionType): string | null {
+function heuristicDomain(
+  questionText: string,
+  sessionType: SessionType,
+): string | null {
   if (sessionType === 'technical') {
     return heuristicTechnicalDomain(questionText) ?? 'TD1';
   }
@@ -154,7 +197,11 @@ export function normalizeQuestionMetadataForCleanup(
   contextPack: ContextPackConfig,
   sessionType: SessionType,
 ): NormalizedQuestionMetadata | null {
-  const strict = normalizeGeneratedQuestionMetadata(input, contextPack, sessionType);
+  const strict = normalizeGeneratedQuestionMetadata(
+    input,
+    contextPack,
+    sessionType,
+  );
   if (strict) return strict;
 
   const heuristicInput =
@@ -182,7 +229,8 @@ export function calculateEstimatedTimeMin(input: {
     : numQuestions + 7;
   const timeBudget = Math.max(durationMin - 7, numQuestions);
   const baseTime = timeBudget / numQuestions;
-  const multiplier = input.difficulty <= 1 ? 0.8 : input.difficulty >= 3 ? 1.3 : 1;
+  const multiplier =
+    input.difficulty <= 1 ? 0.8 : input.difficulty >= 3 ? 1.3 : 1;
 
   return Math.max(1, Math.round(baseTime * multiplier));
 }

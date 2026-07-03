@@ -273,18 +273,18 @@ export class QuestionGenerationProcessor extends WorkerHost {
         questionBankId: q.questionBankId,
         questionText: q.text,
         orderIndex: i + 1,
-          questionCategory: q.questionCategory,
-          competencyDomain: q.competencyDomain,
-          rubricJson: {},
-          estimatedTimeMin:
-            q.estimatedTimeMin > 0
-              ? q.estimatedTimeMin
-              : calculateEstimatedTimeMin({
-                  durationMin,
-                  numQuestions: totalQuestions,
-                  difficulty: 2,
-                }),
-        })),
+        questionCategory: q.questionCategory,
+        competencyDomain: q.competencyDomain,
+        rubricJson: {},
+        estimatedTimeMin:
+          q.estimatedTimeMin > 0
+            ? q.estimatedTimeMin
+            : calculateEstimatedTimeMin({
+                durationMin,
+                numQuestions: totalQuestions,
+                difficulty: 2,
+              }),
+      })),
       skipDuplicates: true,
     });
   }

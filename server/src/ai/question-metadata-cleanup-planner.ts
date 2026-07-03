@@ -64,7 +64,9 @@ export function planQuestionMetadataCleanup(
 
   for (const row of rows) {
     if (!isSessionType(row.session_type)) {
-      throw new Error(`Unsupported session_type ${row.session_type} for ${row.id}`);
+      throw new Error(
+        `Unsupported session_type ${row.session_type} for ${row.id}`,
+      );
     }
 
     const contextPack = contextPackService.getContextPack(
@@ -127,8 +129,9 @@ export function summarizeQuestionMetadataCleanup(
       (row) => !VALID_COMPETENCY_DOMAINS.has(row.competency_domain),
     ).length,
     plannedChanges: planned.filter((item) => item.changed).length,
-    heuristicMappings: planned.filter((item) => item.matchBranch === 'heuristic')
-      .length,
+    heuristicMappings: planned.filter(
+      (item) => item.matchBranch === 'heuristic',
+    ).length,
     unmappedRows: unmappedRows.length,
   };
 }
