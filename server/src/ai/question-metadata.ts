@@ -93,7 +93,13 @@ export function normalizeGeneratedQuestionMetadata(
   };
 }
 
-function heuristicTechnicalDomain(questionText: string): string | null {
+interface HeuristicMatch {
+  domain: string;
+  /** true nếu ít nhất một keyword thực sự match; false nếu chỉ là fallback mặc định */
+  isExplicit: boolean;
+}
+
+function heuristicTechnicalDomain(questionText: string): HeuristicMatch {
   const text = normalizeKey(questionText);
 
   if (
@@ -101,34 +107,41 @@ function heuristicTechnicalDomain(questionText: string): string | null {
       text,
     )
   ) {
-    return 'TD5';
+    return { domain: 'TD5', isExplicit: true };
   }
   if (
     /(codequality|bestpractice|clean|refactor|maintain|chatluongcode)/.test(
       text,
     )
   ) {
-    return 'TD4';
+    return { domain: 'TD4', isExplicit: true };
   }
   if (
     /(systemdesign|scale|scalability|architecture|distributed|tuduyhethong)/.test(
       text,
     )
   ) {
-    return 'TD3';
+    return { domain: 'TD3', isExplicit: true };
   }
   if (
     /(practical|application|fullstack|database|backend|frontend|implement|khanangapdungthucte)/.test(
       text,
     )
   ) {
-    return 'TD2';
+    return { domain: 'TD2', isExplicit: true };
+  }
+  if (
+    /(concept|explain|fundamental|basic|theory|knowledge|algorithm|datastructure|foundation|kienthuc|coban)/.test(
+      text,
+    )
+  ) {
+    return { domain: 'TD1', isExplicit: true };
   }
 
-  return 'TD1';
+  return { domain: 'TD1', isExplicit: false };
 }
 
-function heuristicBehavioralDomain(questionText: string): string | null {
+function heuristicBehavioralDomain(questionText: string): HeuristicMatch {
   const text = normalizeKey(questionText);
 
   if (
@@ -136,36 +149,43 @@ function heuristicBehavioralDomain(questionText: string): string | null {
       text,
     )
   ) {
-    return 'D2';
+    return { domain: 'D2', isExplicit: true };
   }
   if (
     /(selfaware|growth|learn|feedback|weakness|tuhoc|hochoi|nhanthuc|tunhanthuc)/.test(
       text,
     )
   ) {
-    return 'D6';
+    return { domain: 'D6', isExplicit: true };
   }
   if (
     /(leadership|mentor|ownership|initiative|decision|trachnhiem|lanhdao)/.test(
       text,
     )
   ) {
-    return 'D4';
+    return { domain: 'D4', isExplicit: true };
   }
   if (
     /(collaboration|team|conflict|coworker|lamviecnhom|xungdot|hoptac)/.test(
       text,
     )
   ) {
-    return 'D3';
+    return { domain: 'D3', isExplicit: true };
   }
   if (
     /(culture|motivation|values|company|dongluc|phuhop|phuhopvanhoa)/.test(text)
   ) {
-    return 'D5';
+    return { domain: 'D5', isExplicit: true };
+  }
+  if (
+    /(communicate|present|articulate|express|giaotiep|trinhbay|noichinh)/.test(
+      text,
+    )
+  ) {
+    return { domain: 'D1', isExplicit: true };
   }
 
-  return 'D1';
+  return { domain: 'D1', isExplicit: false };
 }
 
 function heuristicDomain(
@@ -173,18 +193,21 @@ function heuristicDomain(
   sessionType: SessionType,
 ): string | null {
   if (sessionType === 'technical') {
-    return heuristicTechnicalDomain(questionText) ?? 'TD1';
+    return heuristicTechnicalDomain(questionText).domain;
   }
 
   if (sessionType === 'hr') {
-    return heuristicBehavioralDomain(questionText) ?? 'D1';
+    return heuristicBehavioralDomain(questionText).domain;
   }
 
+  // mixed: dùng isExplicit để phân biệt keyword match thực sự vs fallback mặc định
   const technical = heuristicTechnicalDomain(questionText);
   const behavioral = heuristicBehavioralDomain(questionText);
 
-  if (technical && !behavioral) return technical;
-  if (behavioral && !technical) return behavioral;
+  // Chỉ một bên explicit match rõ ràng → chọn bên đó
+  if (technical.isExplicit && !behavioral.isExplicit) return technical.domain;
+  if (behavioral.isExplicit && !technical.isExplicit) return behavioral.domain;
+  // Cả hai explicit (conflict) hoặc cả hai chỉ là fallback (không đủ tín hiệu) → null
   return null;
 }
 
