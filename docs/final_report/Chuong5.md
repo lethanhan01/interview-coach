@@ -55,7 +55,7 @@ Kịch bản gợi ý:
 4. Hệ thống tạo session và sinh câu hỏi.
 5. Người dùng trả lời từng câu.
 6. Hệ thống sinh feedback/report.
-7. Người dùng xem annotated transcript, điểm/nhận xét/action plan.
+7. Người dùng xem nội dung câu trả lời, điểm/nhận xét/action plan.
 
 | Bước | Hành động | Kết quả mong đợi | Kết quả thực tế |
 | --- | --- | --- | --- |
@@ -117,7 +117,7 @@ Gợi ý hạn chế:
 - Chất lượng AI phụ thuộc vào provider và prompt.
 - Chưa đánh giá với số lượng lớn người dùng thực.
 - Một số tính năng như rewrite, progress dashboard, reverse questions, admin có thể chưa hoàn thiện.
-- Voice analysis có thể mới ở mức transcription/metadata, chưa đánh giá delivery đầy đủ.
+- Chưa phát triển tính năng trả lời bằng giọng nói, phiên âm hoặc phân tích cách trình bày.
 - Triển khai local/prototype, chưa tối ưu production.
 - Chi phí/hạn mức API ảnh hưởng khả năng demo liên tục.
 
@@ -126,4 +126,3 @@ Gợi ý hạn chế:
 > Cần bổ sung: tóm tắt kết quả đạt được, mức độ đáp ứng mục tiêu GR1 và những nội dung sẽ tiếp tục phát triển.
 
 ---
- 

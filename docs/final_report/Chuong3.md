@@ -2,7 +2,7 @@
 
 ## 3.1 Tổng Quan Bài Toán AI Mock Interview
 
-AI Mock Interview là bài toán xây dựng một hệ thống luyện phỏng vấn xin việc có sự hỗ trợ của trí tuệ nhân tạo. Thay vì chỉ cung cấp danh sách câu hỏi mẫu, hệ thống tổ chức một quy trình luyện tập gần với một buổi phỏng vấn thực tế: người dùng cung cấp thông tin về vị trí ứng tuyển, hệ thống tạo câu hỏi phù hợp, người dùng trả lời bằng văn bản hoặc giọng nói, sau đó nhận phản hồi và báo cáo tổng hợp.
+AI Mock Interview là bài toán xây dựng một hệ thống luyện phỏng vấn xin việc có sự hỗ trợ của trí tuệ nhân tạo. Thay vì chỉ cung cấp danh sách câu hỏi mẫu, hệ thống tổ chức một quy trình luyện tập gần với một buổi phỏng vấn thực tế: người dùng cung cấp thông tin về vị trí ứng tuyển, hệ thống tạo câu hỏi phù hợp, người dùng trả lời bằng văn bản, sau đó nhận phản hồi và báo cáo tổng hợp.
 
 Trong phạm vi đề tài AI Mock Interview, đối tượng chính là sinh viên năm cuối và ứng viên fresher ngành Công nghệ thông tin tại Việt Nam. Đây là nhóm người dùng thường có kiến thức nền tảng và dự án học tập, nhưng chưa có nhiều kinh nghiệm trình bày năng lực trong phỏng vấn. Vì vậy, hệ thống không chỉ kiểm tra "biết hay không biết", mà còn giúp người dùng luyện cách giải thích dự án, trình bày lựa chọn kỹ thuật, trả lời câu hỏi hành vi và tự nhìn lại điểm cần cải thiện [3.2-S5].
 
@@ -16,7 +16,7 @@ Trong phạm vi đề tài AI Mock Interview, đối tượng chính là sinh vi
 Đầu ra chính của hệ thống gồm:
 
 - Danh sách câu hỏi phỏng vấn phù hợp với JD và loại phiên.
-- Bản ghi câu trả lời của người dùng dưới dạng text hoặc transcript từ giọng nói.
+- Bản ghi câu trả lời văn bản của người dùng.
 - Feedback chi tiết cho từng câu trả lời, bao gồm điểm mạnh, điểm yếu và gợi ý cải thiện.
 - Báo cáo tổng hợp sau phiên, giúp người dùng thấy xu hướng năng lực và kế hoạch luyện tập tiếp theo.
 
@@ -297,7 +297,7 @@ Trong thiết kế của AI Mock Interview, các lý thuyết này được ánh
 | Mock Interview | Quy trình luyện tập theo phiên: cấu hình JD -> nhận câu hỏi -> trả lời -> nhận feedback -> xem báo cáo |
 | Career readiness | Feedback không chỉ chấm kiến thức mà còn chạm đến giao tiếp, teamwork, professionalism và khả năng học hỏi |
 
-Về mặt trải nghiệm người dùng, AI Mock Interview cần đảm bảo người dùng không chỉ nhận điểm số mà còn hiểu mình cần sửa gì. Vì vậy, hệ thống tập trung vào feedback cụ thể theo từng câu trả lời, annotated transcript và báo cáo tổng hợp. Cách làm này phù hợp với mục tiêu của mock interview: luyện tập, nhận phản hồi và cải thiện qua nhiều lần.
+Về mặt trải nghiệm người dùng, AI Mock Interview cần đảm bảo người dùng không chỉ nhận điểm số mà còn hiểu mình cần sửa gì. Vì vậy, hệ thống tập trung vào feedback cụ thể theo từng câu trả lời, phản hồi theo đoạn và báo cáo tổng hợp. Cách làm này phù hợp với mục tiêu của mock interview: luyện tập, nhận phản hồi và cải thiện qua nhiều lần.
 
 ---
 
@@ -469,35 +469,30 @@ const SurgicalFeedbackSchema = z.object({
 ---
 *[7] OpenAI. "Structured Outputs." https://developers.openai.com/api/docs/guides/structured-outputs*
 
-## 3.4 Speech-to-Text Và Phân Tích Câu Trả Lời Bằng Giọng Nói
+## 3.4 Xử Lý Câu Trả Lời Văn Bản Và Phạm Vi Giọng Nói
 
-### 3.4.1 Cơ sở lý thuyết Speech-to-Text
+### 3.4.1 Cơ sở xử lý câu trả lời văn bản
 
-Speech-to-Text (STT) là công nghệ chuyển đổi tín hiệu âm thanh giọng nói thành văn bản. Trong bối cảnh phỏng vấn, câu trả lời bằng giọng nói là dạng tự nhiên nhất — người dùng không cần gõ phím, có thể tập trung vào nội dung trình bày.
+Trong phạm vi hiện tại, AI Mock Interview xử lý câu trả lời của người dùng dưới dạng văn bản. Cách tiếp cận này giúp hệ thống tập trung vào nội dung cốt lõi của bài toán: người dùng trả lời câu hỏi, backend lưu câu trả lời, AI phân tích mức độ đúng trọng tâm và báo cáo tổng hợp kết quả sau phiên.
 
-OpenAI cung cấp Whisper — hệ thống nhận dạng giọng nói tự động (Automatic Speech Recognition — ASR) được mô tả trên blog chính thức là "trained on 680,000 hours of multilingual and multitask supervised data collected from the web." [8] Quy mô dữ liệu huấn luyện này giúp Whisper đạt độ chính xác cao trên nhiều ngôn ngữ, bao gồm tiếng Việt và tiếng Anh — hai ngôn ngữ mà AI Mock Interview hỗ trợ.
+Câu trả lời văn bản cũng phù hợp với giai đoạn GR1 vì giảm rủi ro phụ thuộc vào microphone, định dạng audio, tốc độ upload, chất lượng phiên âm và chi phí API nhận dạng giọng nói. Khi đầu vào đã là văn bản, pipeline feedback có thể kiểm soát tốt hơn các bước validate độ dài, lưu dữ liệu, xếp job phản hồi và hiển thị báo cáo.
 
-Theo tài liệu Audio API của OpenAI, "The Audio API provides two speech to text endpoints: transcriptions and translations" [9] và hỗ trợ các định dạng file âm thanh phổ biến: "mp3, mp4, mpeg, mpga, m4a, wav, and webm." [9]
+### 3.4.2 Luồng xử lý trong AI Mock Interview
 
-### 3.4.2 Tích hợp trong AI Mock Interview
+Luồng xử lý câu trả lời trong hệ thống:
 
-Luồng xử lý câu trả lời giọng nói trong hệ thống:
+1. Người dùng nhập câu trả lời văn bản trên màn hình phỏng vấn.
+2. Frontend gửi `answerText` cùng thông tin phiên và câu hỏi về backend.
+3. Backend kiểm tra phiên, câu hỏi, quyền sở hữu và độ hợp lệ của câu trả lời.
+4. Câu trả lời được lưu vào `UserAnswer`.
+5. Backend xếp job vào queue `feedback` để tạo nhận xét bất đồng bộ.
+6. Khi feedback hoàn thành, hệ thống cập nhật trạng thái và cho phép báo cáo tổng hợp sử dụng dữ liệu này.
 
-1. Người dùng ghi âm câu trả lời qua trình duyệt (Web Audio API), file được lưu ở định dạng WebM.
-2. File audio được tải lên Supabase Storage. URL file, thời lượng (giây) và kích thước (byte) được lưu vào bản ghi `UserAnswer`.
-3. Một job được enqueue vào queue `transcription` với thông tin session, question và URL file.
-4. `TranscriptionProcessor` xử lý job: tải file từ URL, gọi OpenAI Whisper API (`whisper-1`), nhận văn bản phiên âm.
-5. Văn bản phiên âm được lưu vào `UserAnswer.answerText`. Flag `feedbackGenerated = false` kích hoạt một job tiếp theo trong queue `feedback`.
+Việc tách bước gửi câu trả lời và bước sinh feedback giúp giao diện không bị chặn bởi thời gian xử lý AI. Người dùng có thể tiếp tục theo dõi trạng thái xử lý thay vì phải chờ một request HTTP kéo dài.
 
-Việc tách transcription và feedback thành hai job độc lập cho phép retry từng bước nếu một trong hai thất bại, không ảnh hưởng đến bước còn lại.
+### 3.4.3 Phạm vi giọng nói trong GR1
 
-### 3.4.3 Phạm vi triển khai trong GR1
-
-Trong phiên bản GR1, hệ thống đã triển khai đầy đủ tính năng ghi âm, upload và phiên âm giọng nói. Các chỉ số giọng nói mở rộng — tốc độ nói (words per minute), tỷ lệ khoảng lặng, tần suất filler words (ừm, ừ, like) — được dự kiến cho phiên bản tiếp theo. Dữ liệu thô (audio duration, file size) đã được thu thập sẵn qua trường `voiceMetricsJson` trong schema, chuẩn bị cho việc tích hợp các chỉ số này trong tương lai.
-
----
-*[8] OpenAI. "Introducing Whisper." https://openai.com/index/whisper/*
-*[9] OpenAI. "Speech to Text — Audio API." https://developers.openai.com/api/docs/guides/speech-to-text*
+Tính năng trả lời bằng giọng nói chưa thuộc phạm vi triển khai hiện tại của hệ thống. Vì vậy, báo cáo GR1 không xem ghi âm, upload audio, speech-to-text, transcription queue hoặc voice metrics là chức năng đã hoàn thành. Các nội dung này chỉ nên được đặt ở hướng phát triển tương lai nếu nhóm tiếp tục mở rộng sản phẩm sang luyện nói.
 
 ## 3.5 Feedback Tự Động Và Surgical Feedback
 
@@ -517,9 +512,9 @@ Cách tiếp cận này giải quyết hạn chế của feedback truyền thố
 | Đoạn được annotate (`annotated_segments`) | Highlight đoạn văn cụ thể trong câu trả lời gốc, phân loại là điểm mạnh (strength) hoặc cần cải thiện (improvement), kèm giải thích và gợi ý viết lại | Câu trả lời nguyên văn (để xác định offset ký tự chính xác) | Tối đa 2 đoạn; mỗi đoạn gồm `segment_text`, `start_index`, `end_index`, `highlight_level`, `annotation`, và tùy chọn `suggestion` + `improved_version` |
 | Kế hoạch hành động (`action_plan`) | Danh sách hành động cụ thể người dùng có thể thực hiện để cải thiện kỹ năng phỏng vấn, tổng hợp từ toàn bộ phiên | Tất cả feedbacks trong session và điểm trung bình theo competency domain | Danh sách 3–5 hành động có thể thực hiện ngay, không phải lời khuyên chung chung |
 
-### 3.5.3 Annotated Transcript
+### 3.5.3 Phản hồi theo đoạn trong câu trả lời
 
-Tính năng annotated transcript hiển thị câu trả lời của ứng viên với các đoạn được highlight bằng màu sắc:
+Tính năng phản hồi theo đoạn hiển thị câu trả lời của ứng viên với các đoạn được đánh dấu bằng màu sắc:
 
 - Màu xanh lá (`strength`): đoạn trả lời tốt, đúng trọng tâm, có ví dụ cụ thể.
 - Màu vàng/cam (`improvement`): đoạn cần cải thiện — có thể là quá chung chung, thiếu ví dụ, hoặc không trả lời đúng câu hỏi.
@@ -542,7 +537,7 @@ App Router là hệ thống routing mới của Next.js, được mô tả là "
 
 Theo tài liệu Next.js, "By default, layouts and pages are Server Components, which lets you fetch data and render parts of your UI on the server, optionally cache the result, and stream it to the client." [11] Khi cần tương tác hoặc truy cập browser API, "you can use Client Components to layer in functionality." [11]
 
-Trong AI Mock Interview, sự phân tách Server/Client Component được áp dụng theo nguyên tắc: trang danh sách phiên và trang báo cáo là Server Components (fetch dữ liệu ở server, giảm waterfall request); AudioRecorder và giao diện interview real-time là Client Components (cần Web Audio API và state management).
+Trong AI Mock Interview, sự phân tách Server/Client Component được áp dụng theo nguyên tắc: trang danh sách phiên và trang báo cáo là Server Components (fetch dữ liệu ở server, giảm waterfall request); giao diện phỏng vấn và form nhập câu trả lời là Client Components vì cần state management và tương tác trực tiếp với người dùng.
 
 #### c. TypeScript và Tailwind CSS v4
 
@@ -652,7 +647,6 @@ Thời gian thực thi ước tính cho từng tác vụ:
 | Tác vụ | Thời gian tối thiểu | Thời gian tối đa |
 | --- | --- | --- |
 | Sinh câu hỏi | 30 giây | 2 phút |
-| Phiên âm giọng nói | 15 giây | 1 phút |
 | Sinh Surgical Feedback | 15 giây | 5 phút |
 | Sinh báo cáo tổng hợp | 30 giây | 1 phút |
 
@@ -670,13 +664,12 @@ BullMQ sử dụng Redis làm backend lưu trữ job. Redis đảm bảo tính b
 
 ### 3.7.3 Cấu hình hàng đợi trong AI Mock Interview
 
-AI Mock Interview có 4 queue độc lập:
+AI Mock Interview có 3 queue độc lập trong phạm vi hiện tại:
 
 | Queue | Trigger | Processor | Số lần retry tối đa |
 | --- | --- | --- | --- |
 | `question-generation` | POST /sessions (tạo phiên mới) | `QuestionGenerationProcessor` | 2 |
-| `transcription` | POST /turns với audio | `TranscriptionProcessor` | 2 |
-| `feedback` | Sau khi có answer text (trực tiếp hoặc từ transcription) | `FeedbackProcessor` | 2 |
+| `feedback` | Sau khi có answer text | `FeedbackProcessor` | 2 |
 | `comprehensive-report` | PATCH session status = completed | `ComprehensiveReportProcessor` | 3 |
 
 Tất cả queue kết nối vào Redis qua cấu hình toàn cục trong `BullModule.forRootAsync()`, lấy host/port từ environment variables `REDIS_HOST` và `REDIS_PORT`.
@@ -703,7 +696,7 @@ Khi tất cả retry thất bại, hệ thống dùng fallback:
 
 AI Mock Interview sử dụng PostgreSQL 15 làm hệ quản trị cơ sở dữ liệu quan hệ, được host trên Supabase. Supabase cung cấp PostgreSQL như một dịch vụ (Database-as-a-Service) kèm authentication JWT và object storage — giúp giảm effort infrastructure trong giai đoạn prototype.
 
-PostgreSQL được chọn vì hỗ trợ JSONB native (lưu rubricJson, contentJson, voiceMetricsJson dưới dạng JSON có thể query), ACID transactions đảm bảo tính nhất quán khi nhiều processor cùng cập nhật session, và partial indexes (được dùng qua `previewFeatures = ["partialIndexes"]` trong Prisma schema).
+PostgreSQL được chọn vì hỗ trợ JSONB native (lưu rubricJson, contentJson và các cấu trúc báo cáo dạng JSON có thể query), ACID transactions đảm bảo tính nhất quán khi nhiều processor cùng cập nhật session, và partial indexes (được dùng qua `previewFeatures = ["partialIndexes"]` trong Prisma schema).
 
 ### 3.8.2 Prisma ORM
 
@@ -725,7 +718,7 @@ Chuỗi quan hệ chính của hệ thống: `InterviewSession` → `SessionQues
 
 - `InterviewSession`: metadata phiên — loại phỏng vấn (`hr` / `technical` / `mixed`), JD, ngôn ngữ, context pack, trạng thái (`generating` / `active` / `completed` / `error`), điểm tổng phiên.
 - `SessionQuestion`: câu hỏi trong phiên — nội dung, thứ tự, competency domain, rubric chấm điểm. Trường `questionBankId` null nếu câu hỏi được AI sinh ra, không null nếu lấy từ question bank.
-- `UserAnswer`: câu trả lời của ứng viên — chế độ (`text` / `voice`), nội dung văn bản, URL audio, trạng thái phiên âm.
+- `UserAnswer`: câu trả lời văn bản của ứng viên, trạng thái bỏ qua và trạng thái feedback.
 
 **Nhóm feedback và báo cáo**
 

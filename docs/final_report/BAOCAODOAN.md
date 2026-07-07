@@ -33,7 +33,7 @@
 
 > Cần bổ sung: tóm tắt 250-400 từ về bài toán, đối tượng người dùng, cách tiếp cận, sản phẩm GR1 đã xây dựng, kết quả chính và hướng phát triển. Nên viết sau cùng khi các chương đã hoàn thiện.
 
-Từ khóa gợi ý: AI mock interview, luyện phỏng vấn, fresher CNTT, surgical feedback, large language model, speech-to-text, Next.js, NestJS, Supabase, Prisma, BullMQ, Redis.
+Từ khóa gợi ý: AI mock interview, luyện phỏng vấn, fresher CNTT, surgical feedback, large language model, Next.js, NestJS, Supabase, Prisma, BullMQ, Redis.
 
 ## Abstract
 
@@ -57,8 +57,6 @@ Từ khóa gợi ý: AI mock interview, luyện phỏng vấn, fresher CNTT, sur
 | --- | --- | --- |
 | AI | Artificial Intelligence | Trí tuệ nhân tạo |
 | LLM | Large Language Model | Mô hình ngôn ngữ lớn |
-| STT | Speech-to-Text | Chuyển giọng nói thành văn bản |
-| TTS | Text-to-Speech | Chuyển văn bản thành giọng nói, nếu có sử dụng |
 | JD | Job Description | Mô tả công việc |
 | CV | Curriculum Vitae | Hồ sơ ứng viên |
 | MVP | Minimum Viable Product | Sản phẩm khả dụng tối thiểu |
@@ -109,7 +107,7 @@ Gợi ý:
 
 1. Hoàn thiện và ổn định luồng phỏng vấn end-to-end.
 2. Nâng cao chất lượng question bank và rubric cho từng loại session.
-3. Bổ sung/hoàn thiện voice analysis, transcription và delivery feedback.
+3. Nghiên cứu bổ sung trả lời bằng giọng nói, phiên âm và phản hồi về cách trình bày ở giai đoạn sau nếu phạm vi cho phép.
 4. Phát triển rewrite & compare, reverse questions, progress dashboard.
 5. Bổ sung admin/question bank management nếu cần.
 6. Cải thiện bảo mật, quyền riêng tư và rate limiting.
@@ -147,7 +145,7 @@ Gợi ý:
 
 ## Tài Liệu Ngoài
 
-> Cần bổ sung: các báo cáo thị trường, tài liệu về HR-tech, tài liệu OpenAI/Whisper, tài liệu Next.js/NestJS/Prisma/Supabase/BullMQ/Redis, bài viết hoặc paper liên quan. Chỉ đưa vào những nguồn đã đọc và có trích dẫn trong báo cáo.
+> Cần bổ sung: các báo cáo thị trường, tài liệu về HR-tech, tài liệu Next.js/NestJS/Prisma/Supabase/BullMQ/Redis, bài viết hoặc paper liên quan. Chỉ đưa vào những nguồn đã đọc và có trích dẫn trong báo cáo.
 
 | STT | Tài liệu | Loại nguồn | Dùng ở mục nào | Ghi chú |
 | --- | --- | --- | --- | --- |

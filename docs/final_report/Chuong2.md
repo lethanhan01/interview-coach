@@ -1,117 +1,89 @@
 Chương 2. Khảo Sát Thực Tế Và Các Nghiên Cứu Liên Quan
 
-## 2.1 Khảo Sát Các Hệ Thống, Sản Phẩm Liên Quan
+## 2.1 Mục Tiêu Và Phương Pháp Khảo Sát
 
-Phần này khảo sát bốn sản phẩm tiêu biểu trong thị trường luyện phỏng vấn và một baseline thực tế (chatbot tổng quát). Các sản phẩm được chọn đại diện cho các hướng tiếp cận khác nhau: AI copilot real-time (Final Round AI), peer-to-peer mock interview (Pramp/Exponent), speech coaching (Yoodli), human mock interview (interviewing.io), và tự học qua chatbot tổng quát (ChatGPT). Kết quả khảo sát làm cơ sở xác định khoảng trống thị trường và định vị AI Mock Interview.
+Chương này khảo sát các sản phẩm đã tồn tại trên thị trường nhằm làm rõ bối cảnh thực tế của bài toán luyện phỏng vấn có hỗ trợ AI. Mục tiêu của khảo sát không phải liệt kê càng nhiều công cụ càng tốt, mà là chọn các đại diện tiêu biểu cho những cách luyện phỏng vấn đang được người học và ứng viên sử dụng: công cụ AI hỗ trợ phỏng vấn theo thời gian thực, nền tảng luyện với người ngang hàng, công cụ luyện giao tiếp bằng AI, dịch vụ mock interview với chuyên gia thật và chatbot tổng quát.
 
-## 2.2 Đánh Giá Từng Sản Phẩm Tiêu Biểu
+Các sản phẩm được khảo sát gồm Final Round AI, Pramp/Exponent Practice, Yoodli, interviewing.io và ChatGPT. Đây đều là sản phẩm hoặc nền tảng đang hoạt động công khai tại thời điểm rà soát ngày 06/07/2026. Nguồn dữ liệu chính là trang giới thiệu, trang giá, trang hỏi đáp và tài liệu công khai của chính sản phẩm. Với các số liệu như số người dùng, số phiên phỏng vấn, giá dịch vụ hoặc mức sử dụng trong doanh nghiệp, chương này chỉ sử dụng khi có nguồn công khai kèm theo. Những số liệu do sản phẩm tự công bố được trình bày đúng là số liệu tự công bố, không xem như kết quả kiểm định độc lập.
 
-### 2.2.1 Final Round AI
+Việc khảo sát được đặt trong bối cảnh sinh viên năm cuối và ứng viên fresher ngành Công nghệ thông tin tại Việt Nam. Theo TopDev, thị trường IT Việt Nam cần bổ sung ít nhất 500.000 lao động công nghệ đến năm 2025, trong khi mức lương lập trình viên năm 2024 được báo cáo dao động khoảng 1.100 đến 3.000 USD mỗi tháng tùy kỹ năng và kinh nghiệm [2-S1]. Các số liệu này cho thấy cơ hội việc làm công nghệ vẫn lớn, nhưng cũng đặt ra yêu cầu rõ hơn về năng lực trình bày, giải thích kinh nghiệm và vượt qua phỏng vấn. Vì vậy, khi đánh giá sản phẩm liên quan, chương này tập trung vào sáu tiêu chí: đối tượng người dùng, khả năng dùng theo nhu cầu, chi phí, mức độ cá nhân hóa theo vị trí ứng tuyển, chất lượng phản hồi sau câu trả lời và mức phù hợp với bối cảnh sinh viên CNTT Việt Nam.
 
-**Đối tượng:** Tech professionals (English-speaking) trong giai đoạn job search. Không phù hợp fresher vì tool giả định người dùng đã có đủ kiến thức để tự đánh giá gợi ý AI.
+## 2.2 Khảo Sát Các Sản Phẩm Liên Quan
 
-**Tính năng chính:** Live Interview Assistant — hiển thị gợi ý real-time trong khi đang phỏng vấn thật (AI nghe transcript và đề xuất key points, STAR examples, industry insights). Mock Interview với 4 loại (General, Coding Copilot, HireVue, Phone Interview). Stealth Mode để ẩn overlay AI khỏi screen share trong video interview.
+| Sản phẩm | Trải nghiệm và tính năng chính theo nguồn công khai | Số liệu, chi phí và bằng chứng cụ thể | Giá trị thực tế | Hạn chế so với bài toán AI Mock Interview |
+| --- | --- | --- | --- | --- |
+| Final Round AI | Final Round AI định vị là trợ lý phỏng vấn AI theo thời gian thực. Trang chủ mô tả sản phẩm có thể nghe ngữ cảnh trong buổi phỏng vấn, đưa gợi ý trả lời ngay khi phỏng vấn đang diễn ra, đồng thời có mock interview và báo cáo sau phỏng vấn. Sản phẩm nhấn mạnh chế độ chạy kín khi chia sẻ màn hình và khả năng đưa câu trả lời theo hồ sơ, vai trò ứng tuyển và thông tin công việc [2-S2]. | Final Round AI tự công bố có hơn 10 triệu người dùng toàn cầu, hơn 10.000 việc làm được bảo đảm bởi người dùng, hỗ trợ nhiều nền tảng phỏng vấn như Google Meet, Zoom, Microsoft Teams, LeetCode, HackerRank và CoderPad, đồng thời nêu rằng gói trả phí bắt đầu từ 25 USD/tháng [2-S2]. | Sản phẩm cho thấy nhu cầu thật đối với công cụ luyện phỏng vấn và hỗ trợ trả lời. Điểm mạnh rõ nhất là tốc độ phản hồi, khả năng bám theo ngữ cảnh hồ sơ/công việc và báo cáo sau phiên. | Hướng sử dụng theo thời gian thực trong phỏng vấn thật tạo rủi ro đạo đức và phụ thuộc quy định của từng nhà tuyển dụng. Trang sản phẩm nhấn mạnh tính ẩn và khó bị phát hiện, trong khi mục tiêu của đề tài là luyện tập trước phỏng vấn, không hỗ trợ ứng viên đọc gợi ý trong buổi phỏng vấn thật. Ngoài ra, dù sản phẩm có hỗ trợ đa ngôn ngữ ở mức phiên âm/hỗ trợ, nguồn công khai không thể hiện một rubric riêng cho sinh viên CNTT Việt Nam. |
+| Pramp/Exponent Practice | Pramp là nền tảng luyện phỏng vấn trực tiếp với người ngang hàng, hiện được vận hành trong hệ sinh thái Exponent Practice. Người dùng chọn thời gian và chủ đề luyện tập, hệ thống ghép cặp với một peer phù hợp; hai bên phỏng vấn nhau qua môi trường cộng tác có video, sau đó cùng đưa phản hồi [2-S3]. | Trang Pramp ghi rõ từ tháng 07/2024, tất cả phiên Pramp mới được tổ chức trên Exponent Practice và vẫn miễn phí. Trang này cũng mô tả một phiên luyện tập thường kéo dài 30-45 phút, hỗ trợ các mảng như cấu trúc dữ liệu và thuật toán, quản lý sản phẩm, behavioral, system design, frontend và data science [2-S3]. | Giá trị lớn nhất của Pramp/Exponent là trải nghiệm gần phỏng vấn thật vì có người đối diện, có áp lực giao tiếp và có cơ hội đóng cả hai vai: người được phỏng vấn và người phỏng vấn. | Điểm yếu nằm ở tính phụ thuộc lịch rảnh và chất lượng peer. Người dùng không thể chắc chắn lúc nào cũng có người phù hợp, phản hồi có thể khác nhau mạnh giữa các phiên và nền tảng không cung cấp phản hồi AI nhất quán theo cùng một rubric. Với sinh viên Việt Nam, rào cản ngôn ngữ và việc không có ngữ cảnh tuyển dụng Việt Nam cũng làm giảm mức phù hợp. |
+| Yoodli | Yoodli là nền tảng AI roleplay và communication coaching. Trang chủ mô tả người dùng có thể luyện nói riêng tư, nhận huấn luyện theo thời gian thực và dùng cho nhiều tình huống như sales, public speaking, manager training, job interviews và pitch certification [2-S4]. | Trang giá của Yoodli ghi gói Starter có 5 phiên lifetime, Pro giá 8 USD/tháng khi thanh toán năm với tối đa 10 roleplay mỗi tuần, Advanced giá 20 USD/tháng khi thanh toán năm với roleplay không giới hạn. Trang này cũng nêu Team/Enterprise có roleplay tùy chỉnh, dashboard nhóm, SSO, tích hợp LMS/HRIS và giá theo quy mô [2-S5]. Trang chủ nêu một case Google Cloud dùng Yoodli cho hơn 15.000 nhân viên với 92% CSAT; phần cuối trang giá nêu 95% enterprise retention [2-S4][2-S5]. | Yoodli mạnh ở coaching cách nói: luyện phản xạ giao tiếp, diễn đạt, roleplay và nhận phản hồi nhanh. Đây là nhóm năng lực quan trọng trong phỏng vấn vì ứng viên không chỉ cần nội dung đúng mà còn cần trình bày rõ. | Yoodli không phải công cụ chuyên cho phỏng vấn kỹ thuật CNTT. Trọng tâm chính là kỹ năng giao tiếp và roleplay doanh nghiệp, vì vậy sản phẩm không giải quyết sâu các yêu cầu như sinh câu hỏi từ JD kỹ thuật, đánh giá câu trả lời theo kiến thức dự án, nhận diện thiếu trade-off kỹ thuật hoặc dùng rubric phỏng vấn Việt Nam/Western cho fresher CNTT. |
+| interviewing.io | interviewing.io cung cấp mock interview ẩn danh với kỹ sư Senior, Staff hoặc Principal từ các công ty công nghệ lớn. Trang chủ nêu các buổi luyện tập tập trung vào coding, system design, machine learning, behavioral và các chủ đề kỹ thuật khác; sau phiên, người dùng nhận phản hồi chi tiết từ người đã từng tham gia phỏng vấn tuyển dụng [2-S6]. | interviewing.io tự công bố người dùng đã nhận hơn 50 tỷ USD giá trị offer, trang replay nêu nền tảng đã tổ chức 100.000 mock interview và giúp 10.000 kỹ sư có việc làm tại các công ty tốt. FAQ cho biết premium interview bắt đầu từ 179 USD, giá thay đổi theo chủ đề và yêu cầu interviewer từ công ty cụ thể [2-S6]. | Đây là nhóm sản phẩm có chất lượng phản hồi thực tế cao vì người phản hồi là kỹ sư có kinh nghiệm phỏng vấn thật. Tính ẩn danh cũng giúp người dùng giảm áp lực về danh tính và tập trung vào năng lực phỏng vấn. | Chi phí 179 USD trở lên cho mỗi phiên là rất cao với sinh viên Việt Nam. Sản phẩm cũng hướng mạnh đến ứng viên kỹ thuật theo chuẩn các công ty công nghệ lớn, thường phù hợp hơn với người đã có nền tảng tốt và chuẩn bị cho phỏng vấn quốc tế. Tính theo nhu cầu tức thời cũng bị giới hạn vì người dùng phải đặt lịch với interviewer. |
+| ChatGPT | ChatGPT là chatbot tổng quát có thể được dùng để tự luyện phỏng vấn bằng cách nhập JD, hồ sơ cá nhân, yêu cầu sinh câu hỏi, trả lời và xin góp ý. Trang giá của ChatGPT cho thấy có gói miễn phí với giới hạn về tin nhắn, upload, tạo ảnh, nghiên cứu sâu, bộ nhớ và ngữ cảnh; các gói trả phí mở rộng quyền truy cập, ngữ cảnh, voice, upload và các tính năng nâng cao [2-S7]. | ChatGPT không phải sản phẩm mock interview chuyên biệt, nhưng có khả năng truy cập rộng, hỗ trợ web/iOS/Android, có voice ở gói miễn phí và các gói cao hơn có mức truy cập mở rộng [2-S7]. | Với sinh viên, đây là baseline thực tế nhất vì dễ dùng, linh hoạt, hỗ trợ tiếng Việt tốt và có thể tạo câu hỏi cho nhiều vị trí khác nhau nếu người dùng biết prompt. | Hạn chế chính là thiếu quy trình luyện tập cố định. Người dùng phải tự thiết kế phiên phỏng vấn, tự nhắc tiêu chí chấm, tự lưu kết quả và tự bảo đảm feedback nhất quán giữa các lần luyện. Vì không có cấu trúc phiên, báo cáo, rubric cố định và lịch sử chuyên biệt, chất lượng luyện tập phụ thuộc nhiều vào kỹ năng đặt yêu cầu của người dùng. |
 
-**Ưu điểm:** JD + Resume context đầy đủ (7 input fields); mock interview feedback có STAR alignment, điểm mạnh/yếu, sample answers cải thiện; on-demand, không cần schedule.
+## 2.3 Phân Tích Từng Nhóm Sản Phẩm
 
-**Hạn chế:** $60–$150/tháng — ngoài tầm với sinh viên; chỉ English; không có surgical feedback (không highlight đoạn cụ thể trong câu trả lời của user); suggestions trong live mode mang tính generic, không phân tích sâu câu trả lời thực tế của người dùng.
+Final Round AI đại diện cho nhóm công cụ trợ lý phỏng vấn AI theo thời gian thực. Sản phẩm này chứng minh rằng thị trường có nhu cầu rất lớn đối với việc dùng AI để xử lý áp lực phỏng vấn, thể hiện qua các số liệu tự công bố như hơn 10 triệu người dùng và gói trả phí bắt đầu từ 25 USD/tháng [2-S2]. Tuy nhiên, cách định vị là trợ lý theo thời gian thực và khó bị phát hiện cho thấy sản phẩm không chỉ phục vụ luyện tập mà còn có thể được dùng trong phỏng vấn thật. Đây là ranh giới mà AI Mock Interview không đi theo. Đề tài chọn hướng chỉ phục vụ luyện tập: người dùng luyện trước, trả lời trong hệ thống, nhận phản hồi sau câu trả lời và xem báo cáo sau phiên. Cách tiếp cận này phù hợp hơn với mục tiêu giáo dục và giảm rủi ro phụ thuộc vào gợi ý khi phỏng vấn thật.
 
-**Vấn đề đạo đức:** Final Round AI được thiết kế và marketing rõ ràng để dùng trong buổi phỏng vấn thật — đặc biệt Stealth Mode để tránh bị phát hiện. Nhiều nhà tuyển dụng và công ty coi đây là gian lận và cấm sử dụng. Công cụ không giúp người dùng thực sự cải thiện kỹ năng vì người dùng đọc gợi ý thay vì tự suy nghĩ.
+Pramp/Exponent Practice đại diện cho mô hình luyện với người ngang hàng. Đây là một mô hình có giá trị vì ứng viên được luyện trong tình huống có người thật, có giao tiếp hai chiều và có phản hồi sau phiên. Trang Pramp mô tả rõ quy trình ghép cặp, phỏng vấn qua môi trường cộng tác và mỗi bên đưa feedback cho nhau trong phiên 30-45 phút [2-S3]. Tuy nhiên, mô hình này khó đáp ứng nhu cầu luyện nhiều lần, bất cứ lúc nào, đặc biệt với sinh viên muốn luyện nhanh trước một buổi phỏng vấn hoặc muốn thử nhiều JD khác nhau. Chất lượng phản hồi cũng không ổn định vì phụ thuộc vào kinh nghiệm và sự nghiêm túc của peer.
 
-**Bài học cho AI Mock Interview:** Phân biệt rõ công cụ luyện tập (hợp lệ, AI Mock Interview) với công cụ real-time cheating (không hợp lệ, Final Round AI). Pattern sample answer cải thiện có giá trị học tập cao và đáng tích hợp vào surgical feedback.
+Yoodli cho thấy một hướng tiếp cận khác: tập trung vào giao tiếp, diễn đạt và luyện roleplay. Sản phẩm này có nhiều bằng chứng sử dụng thực tế ở doanh nghiệp, ví dụ case Google Cloud triển khai cho hơn 15.000 nhân viên với 92% CSAT [2-S4]. Điều này cho thấy AI coaching có thể mở rộng trên quy mô lớn và tạo trải nghiệm luyện tập riêng tư. Tuy vậy, đối với đề tài AI Mock Interview, Yoodli vẫn chưa giải quyết phần cốt lõi là đánh giá nội dung câu trả lời phỏng vấn CNTT. Một fresher backend không chỉ cần nói trôi chảy, mà còn cần giải thích đúng dự án, lựa chọn kỹ thuật, giới hạn giải pháp và bài học sau lỗi. Vì vậy, AI Mock Interview có thể học từ Yoodli ở trải nghiệm luyện nói, nhưng trọng tâm GR1 vẫn là phản hồi nội dung và phản hồi theo đoạn.
 
-### 2.2.2 Pramp/Exponent
+interviewing.io là ví dụ rõ nhất cho giá trị của phản hồi chuyên gia. Nền tảng này có lợi thế mà AI khó thay thế hoàn toàn: người phỏng vấn là kỹ sư có kinh nghiệm tuyển dụng, hiểu áp lực phỏng vấn thật và có thể góp ý sâu về cách giải quyết vấn đề. Tuy nhiên, mức giá bắt đầu từ 179 USD mỗi phiên khiến mô hình này khó tiếp cận với sinh viên Việt Nam [2-S6]. Từ góc nhìn đề tài, khoảng trống không nằm ở việc phủ nhận giá trị của mentor hoặc interviewer thật, mà nằm ở việc cung cấp một công cụ luyện tập rẻ hơn, dùng được nhiều lần, giúp người học chuẩn bị trước khi tìm đến người hướng dẫn thật.
 
-**Đối tượng:** Software engineers chuẩn bị cho tech interview (coding, system design, behavioral). Exponent mua lại Pramp năm 2021. Phù hợp người đã có nền tảng kỹ thuật và muốn luyện với người thật.
+ChatGPT là đối thủ thay thế thực tế vì người dùng có thể tự tạo quy trình luyện phỏng vấn bằng yêu cầu hội thoại. Điểm mạnh của ChatGPT là linh hoạt, có gói miễn phí và có thể xử lý tiếng Việt trong hội thoại. Tuy nhiên, chính sự linh hoạt này cũng là hạn chế: mỗi người dùng sẽ tự tạo một quy trình khác nhau, tiêu chí chấm có thể thay đổi sau mỗi lần hỏi và kết quả không tự động được tổ chức thành phiên luyện tập, câu hỏi, câu trả lời, phản hồi và báo cáo. AI Mock Interview cần vượt lên baseline này bằng trải nghiệm có cấu trúc, không phải chỉ bằng việc gọi AI.
 
-**Tính năng chính:** Peer-to-peer mock interview qua video; shared code editor tích hợp cho coding interview; hỗ trợ coding, system design, behavioral và PM interviews; cả hai bên đều được luyện (vừa đóng vai interviewer lẫn interviewee).
+## 2.4 Ma Trận So Sánh Và Định Vị AI Mock Interview
 
-**Ưu điểm:** Free (5 credits/tháng) — phù hợp sinh viên về tài chính; feedback từ người thật có giá trị thực tế; luyện thêm được kỹ năng đặt câu hỏi khi đóng vai interviewer.
+| Tiêu chí | Final Round AI | Pramp/Exponent Practice | Yoodli | interviewing.io | ChatGPT | AI Mock Interview trong GR1 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Đối tượng chính | Ứng viên đi phỏng vấn, đặc biệt người cần hỗ trợ AI trong prep và live interview | Ứng viên công nghệ muốn luyện với peer | Người cần cải thiện giao tiếp, roleplay, public speaking, interview prep | Kỹ sư phần mềm luyện phỏng vấn kỹ thuật với chuyên gia | Người dùng phổ thông tự học bằng chatbot | Sinh viên năm cuối và fresher CNTT Việt Nam |
+| Trải nghiệm chính | AI đưa gợi ý theo thời gian thực, mock interview, báo cáo sau phiên | Ghép cặp peer, phỏng vấn qua video/cộng tác, nhận phản hồi từ peer | AI roleplay và coaching giao tiếp | Mock interview ẩn danh với kỹ sư giàu kinh nghiệm | Tự nhập yêu cầu, tự điều phối hội thoại | Tạo phiên từ JD, trả lời bằng văn bản, nhận phản hồi và báo cáo |
+| On-demand | Có với AI, live support phụ thuộc buổi phỏng vấn thật | Không hoàn toàn vì cần ghép lịch peer | Có | Không hoàn toàn vì cần đặt lịch interviewer | Có | Có |
+| Cá nhân hóa theo JD/hồ sơ | Có theo resume, role và job details [2-S2] | Không phải trọng tâm | Có thể tùy chỉnh roleplay, nhưng không chuyên cho JD kỹ thuật | Có thể tùy phiên với interviewer | Có nếu người dùng nhập đủ prompt | Có theo JD, loại phiên, hồ sơ luyện tập cơ bản và context pack |
+| Phản hồi nội dung phỏng vấn CNTT | Có nhưng sản phẩm nhấn mạnh cả live answer support | Phụ thuộc peer | Không phải trọng tâm chính | Có, từ chuyên gia thật | Có thể có nhưng không ổn định theo rubric | Có, tập trung vào câu trả lời và báo cáo sau phiên |
+| Phản hồi theo đoạn cụ thể | Không thấy cam kết công khai tương đương annotated feedback theo đoạn trong câu trả lời | Không có cơ chế chuẩn hóa | Không phải trọng tâm phỏng vấn CNTT | Có thể được chuyên gia chỉ ra trong phiên, nhưng không phải dữ liệu có cấu trúc cho mọi phiên | Chỉ có nếu người dùng yêu cầu rõ | Có, thông qua phản hồi theo đoạn trên nội dung câu trả lời trong phạm vi GR1 |
+| Hỗ trợ bối cảnh Việt Nam | Có hỗ trợ đa ngôn ngữ ở một số mức, nhưng không thấy rubric riêng cho fresher CNTT Việt Nam | Không thấy định vị cho thị trường Việt Nam | Không thấy định vị riêng cho fresher CNTT Việt Nam | Không thấy định vị cho thị trường Việt Nam | Có thể dùng tiếng Việt nhưng không có quy trình phỏng vấn Việt Nam mặc định | Có context pack VN/Western theo thiết kế đề tài |
+| Chi phí tiếp cận | Có gói miễn phí, trả phí từ 25 USD/tháng [2-S2] | Miễn phí theo trang Pramp [2-S3] | Starter 5 phiên lifetime, Pro 8 USD/tháng, Advanced 20 USD/tháng khi thanh toán năm [2-S5] | Premium interview từ 179 USD/phiên [2-S6] | Có gói miễn phí, gói trả phí mở rộng giới hạn [2-S7] | Miễn phí trong phạm vi prototype GR1 |
+| Ranh giới đạo đức | Có rủi ro vì hỗ trợ ẩn trong live interview | Phù hợp luyện tập | Phù hợp luyện tập | Phù hợp luyện tập | Phụ thuộc cách người dùng sử dụng | Chỉ phục vụ luyện tập trước phỏng vấn |
 
-**Hạn chế:** Không on-demand — cần scheduling và phụ thuộc availability của partner; không có AI feedback; chất lượng feedback biến động lớn tùy partner được ghép cặp.
-**Bài học cho AI Mock Interview:** On-demand + AI feedback giải quyết hai điểm yếu lớn nhất của Pramp đó là người dùng không cần tìm partner, không cần đặt lịch, nhận feedback nhất quán về chất lượng.
+Từ ma trận trên, AI Mock Interview được định vị không phải là sản phẩm thay thế hoàn toàn chuyên gia phỏng vấn hay chatbot tổng quát, mà là một hệ thống luyện phỏng vấn có cấu trúc cho một nhóm người dùng cụ thể. Hệ thống chọn phân khúc hẹp hơn nhưng rõ hơn: sinh viên năm cuối và fresher CNTT Việt Nam cần luyện nhiều lần với chi phí thấp, có thể nhập JD cụ thể, trả lời bằng văn bản, nhận phản hồi theo từng câu trả lời và xem báo cáo sau phiên.
 
-### 2.2.3 Yoodli
+## 2.5 Khoảng Trống Thị Trường Và Yêu Cầu Rút Ra
 
-**Đối tượng:** General speakers muốn cải thiện kỹ năng giao tiếp và public speaking. Không chuyên về technical interview content.
+Khảo sát cho thấy thị trường hiện có nhiều giải pháp luyện phỏng vấn, nhưng mỗi nhóm giải quyết một phần khác nhau của bài toán. Final Round AI mạnh ở hỗ trợ nhanh và cá nhân hóa theo hồ sơ/công việc, nhưng đi gần ranh giới hỗ trợ trong phỏng vấn thật. Pramp/Exponent mạnh ở trải nghiệm người thật, nhưng phụ thuộc lịch và chất lượng peer. Yoodli mạnh ở giao tiếp, nhưng không chuyên cho nội dung kỹ thuật CNTT. interviewing.io có phản hồi chuyên gia, nhưng chi phí cao. ChatGPT dễ tiếp cận, nhưng thiếu quy trình và tiêu chí ổn định. Khoảng trống còn lại là một công cụ luyện tập có cấu trúc, dùng được theo nhu cầu, phù hợp sinh viên Việt Nam, hỗ trợ tiếng Việt và có phản hồi đủ cụ thể để người học biết sửa gì sau mỗi câu trả lời.
 
-**Tính năng chính:** Real-time feedback về filler words, pacing, clarity, tone; AI roleplay với personas khác nhau (behavioral, technical, panel); speech analysis sau mỗi session; available 24/7, không cần scheduling.
+| Khoảng trống rút ra từ khảo sát | Ý nghĩa đối với người dùng mục tiêu | Yêu cầu thiết kế cho AI Mock Interview |
+| --- | --- | --- |
+| Thiếu công cụ chuyên cho fresher CNTT Việt Nam | Sinh viên có thể có dự án và kiến thức nền, nhưng chưa quen giải thích bằng ngôn ngữ phỏng vấn | Hệ thống cần tập trung vào vị trí fresher/intern/junior CNTT, không thiết kế theo chuẩn senior hoặc FAANG-only |
+| Chi phí mock interview chuyên gia cao | Một phiên 179 USD trở lên vượt xa khả năng luyện thường xuyên của đa số sinh viên | Prototype GR1 cần miễn phí và cho phép luyện nhiều phiên trong giới hạn hệ thống |
+| Luyện với người thật khó lặp lại thường xuyên | Người học cần thử nhiều JD, nhiều câu hỏi và nhiều cách trả lời trước khi tự tin | Hệ thống cần hoạt động on-demand, không phụ thuộc lịch peer hoặc mentor |
+| Chatbot tổng quát thiếu quy trình | Người dùng phải tự nhập yêu cầu, tự lưu, tự đặt tiêu chí chấm và tự tổng hợp kết quả | Hệ thống cần tổ chức theo phiên gồm cấu hình, câu hỏi, câu trả lời, phản hồi và báo cáo |
+| Phản hồi chung chung khó hành động | Nhận xét như “cần nói rõ hơn” không chỉ ra câu nào thiếu, vì sao thiếu và nên sửa thế nào | Phản hồi cần chỉ ra điểm mạnh, điểm thiếu và gợi ý cải thiện theo từng phần của câu trả lời |
+| Công cụ quốc tế chưa có rubric bối cảnh Việt Nam | Cách trả lời phù hợp bối cảnh Việt Nam và bối cảnh quốc tế có thể khác nhau về mức độ nhấn mạnh cá nhân, teamwork và cấu trúc STAR | Hệ thống cần có lựa chọn context pack VN/Western để điều chỉnh tiêu chí đánh giá |
+| Công cụ hỗ trợ live interview có rủi ro đạo đức | Người học có thể phụ thuộc vào gợi ý trong phỏng vấn thật thay vì cải thiện năng lực | AI Mock Interview chỉ phục vụ luyện tập trước phỏng vấn và phản hồi sau câu trả lời |
 
-**Ưu điểm:** Tốt nhất trong nhóm về delivery coaching; on-demand; interface đơn giản, dễ dùng; giá $8/tháng tương đối hợp lý so với các tool khác.
+Trong phạm vi GR1, các yêu cầu rút ra được giới hạn để phù hợp thời gian triển khai. Hệ thống cần cho phép người dùng tạo hồ sơ luyện tập cơ bản, cấu hình phiên bằng JD, loại phỏng vấn, số câu hỏi và context pack; sinh câu hỏi phù hợp; cho phép trả lời bằng văn bản; tạo câu hỏi follow-up trong phạm vi kiểm soát; sinh phản hồi theo đoạn và báo cáo tổng hợp sau phiên. Những tính năng như phân tích CV tự động, trả lời bằng giọng nói, dashboard tiến bộ dài hạn, reverse questions, quản trị ngân hàng câu hỏi qua giao diện và đánh giá cách trình bày nâng cao được để sau GR1 vì không phải điều kiện tối thiểu để chứng minh giá trị cốt lõi của vòng luyện tập từ JD, đến trả lời, rồi nhận phản hồi [2-S8].
 
-**Hạn chế:** Feedback tập trung vào "how you say it" thay vì "what you say" — không đánh giá nội dung câu trả lời phỏng vấn; không có JD-based questions; không có follow-up contextual; chỉ English; free tier chỉ 5 sessions lifetime. User reviews: *"Good for delivery coaching but won't help you craft better answers"* (Prospeo.io).
+## 2.6 Kết Luận Chương
 
-**Bài học cho AI Mock Interview:** Kết hợp content feedback (khoảng trống của Yoodli) với delivery feedback (điểm mạnh của Yoodli) tạo giá trị vượt trội. AI Mock Interview ưu tiên content feedback vì đây là gap lớn hơn với fresher VN trong giai đoạn GR1.
+Chương 2 cho thấy đề tài AI Mock Interview có cơ sở thực tế rõ ràng. Các sản phẩm đã tồn tại chứng minh nhu cầu luyện phỏng vấn, nhu cầu phản hồi nhanh và nhu cầu luyện giao tiếp là có thật. Tuy nhiên, chưa có sản phẩm nào trong nhóm khảo sát đồng thời đáp ứng đầy đủ các điều kiện phù hợp với sinh viên CNTT Việt Nam: chi phí thấp, dùng theo nhu cầu, hỗ trợ tiếng Việt và bối cảnh Việt Nam, cá nhân hóa theo JD, phản hồi nội dung cụ thể, có báo cáo sau phiên và không hỗ trợ gian lận trong phỏng vấn thật.
 
-### 2.2.4 interviewing.io
-
-**Đối tượng:** Senior engineers nhắm vào FAANG-level companies. Không phù hợp fresher — cả về pricing lẫn level phỏng vấn.
-
-**Tính năng chính:** Mock interview ẩn danh với engineers thật từ Google, Facebook, Amazon; feedback chi tiết từ người có kinh nghiệm tại top companies; cơ hội được refer nếu perform tốt.
-
-**Ưu điểm:** Chất lượng feedback cao nhất trong danh sách — từ người thực chiến tại top companies; feedback cụ thể và có chiều sâu; có thể chuyển thành cơ hội việc làm thật.
-
-**Hạn chế:** $225–$300/session — hoàn toàn ngoài tầm với sinh viên Việt Nam; không on-demand (cần booking trước); chỉ English; level dành cho senior engineers, không phù hợp fresher thiếu kinh nghiệm.
-
-**Bài học cho AI Mock Interview:** Đây là ví dụ điển hình về khoảng trống thị trường — AI có thể cung cấp feedback gần chất lượng human expert ở mức giá accessible. AI Mock Interview nhắm đúng phân khúc mà interviewing.io không phục vụ được: fresher VN, miễn phí, hỗ trợ tiếng Việt.
-
-### 2.2.5 Chatbot Tổng Quát Và Cách Tự Học Hiện Nay
-
-**Thực trạng:** Nhiều sinh viên Việt Nam hiện tự luyện bằng cách dùng ChatGPT: paste JD, yêu cầu AI sinh câu hỏi, trả lời, rồi xin feedback. Đây là cách tiếp cận phổ biến nhất vì không tốn tiền và linh hoạt về ngôn ngữ.
-
-**Ưu điểm:** Hoàn toàn miễn phí; linh hoạt về chủ đề và ngôn ngữ (hỗ trợ tiếng Việt tốt); không cần cài đặt; có thể dùng ngay với JD bất kỳ.
-
-**Hạn chế:** Không có workflow luyện phỏng vấn có cấu trúc — người dùng phải tự thiết kế quy trình; không có rubric nhất quán (mỗi lần feedback có thể theo tiêu chí khác nhau tùy cách prompt); không có lưu vết tiến bộ qua các phiên; không có follow-up contextual tự động dựa trên câu trả lời vừa nói; feedback thường chung chung, không highlight đoạn cụ thể trong câu trả lời.
-
-**Bài học cho AI Mock Interview:** ChatGPT là đối thủ cạnh tranh thực tế lớn nhất vì tính tiếp cận (miễn phí, tiếng Việt). AI Mock Interview phải vượt trội hơn bằng: workflow có cấu trúc rõ ràng (JD → câu hỏi → trả lời → surgical feedback), rubric nhất quán theo context pack VN/Western, và giao diện chuyên biệt tối ưu cho luyện phỏng vấn.
-
-## 2.3 Ma Trận So Sánh Và Định Vị Sản Phẩm
-
-| Sản phẩm | Đối tượng | Tiếng Việt | On-demand | Feedback nội dung | Feedback theo đoạn | Chi phí | Nhận xét |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Final Round AI | Tech professionals (EN) | Không | Có | Một phần (generic) | Không | $60–$150/tháng | Real-time cheating tool; không phù hợp mục tiêu học tập |
-| Pramp | Software engineers | Không | Không | Peer review (biến động) | Không | Miễn phí (5 credits/tháng) | Cần schedule; chất lượng feedback phụ thuộc partner |
-| Yoodli | General speakers | Không | Có | Không (chỉ delivery) | Không | $0–$20/tháng | Tốt cho cách nói; không đánh giá nội dung câu trả lời |
-| interviewing.io | Senior engineers (FAANG) | Không | Không | Có (human expert) | Không | $225–$300/session | Chất lượng cao nhất; quá đắt và không phù hợp fresher VN |
-| AI Mock Interview | Fresher CNTT VN | Có | Có | Có (AI, rubric VN/Western) | Có | Miễn phí | Practice-only; surgical feedback; ngữ cảnh phỏng vấn VN |
-
-Ghi chú:
-- Final Round AI "Feedback nội dung — Một phần": mock interview có STAR alignment score nhưng live mode suggestions generic theo câu hỏi nghe được, không phân tích sâu câu trả lời của user.
-- Pramp "Feedback nội dung — Peer review": hoàn toàn phụ thuộc chất lượng partner, không có AI.
-- interviewing.io "On-demand — Không": phải booking trước, phụ thuộc lịch của interviewer.
-
-Hình 2.x: Ma trận định vị theo hai trục `mức độ cá nhân hóa/nội dung` và `khả năng tiếp cận với sinh viên Việt Nam` — AI Mock Interview là sản phẩm duy nhất nằm ở góc phần tư "cá nhân hóa cao, tiếp cận tốt".
-
-## 2.4 Kết Luận Khảo Sát Và Yêu Cầu Rút Ra
-
-Khảo sát 4 sản phẩm thương mại và 1 baseline chatbot cho thấy toàn bộ thị trường hiện tại bỏ trống một phân khúc cụ thể: fresher CNTT Việt Nam cần luyện phỏng vấn on-demand với feedback chất lượng về nội dung, ở mức chi phí phù hợp sinh viên. Sáu khoảng trống được xác định:
-
-- Khoảng trống ngôn ngữ: 0/4 sản phẩm thương mại hỗ trợ tiếng Việt. Fresher VN với English trung bình không thể tận dụng hiệu quả các tool hiện có.
-- Khoảng trống văn hóa: 100% rubric đánh giá theo Western culture. Phong cách phỏng vấn VN có đặc thù riêng về cách xưng hô, mức độ self-promotion, và cấu trúc câu trả lời.
-- Khoảng trống chi phí: Các tool chất lượng đều có paywall $20–$300. Sinh viên VN với thu nhập 0–5 triệu/tháng không đủ khả năng chi trả bền vững.
-- Khoảng trống feedback nội dung: Yoodli chỉ feedback delivery; Pramp chỉ peer review; Final Round AI generic. Không sản phẩm nào cung cấp surgical feedback — highlight cụ thể đoạn nào trong câu trả lời có vấn đề và tại sao.
-- Khoảng trống cá nhân hóa: Đa số không personalize theo JD + CV cụ thể. Câu hỏi và feedback generic cho mọi user, không phản ánh vị trí đang apply.
-- Khoảng trống tiếp cận: Không có sản phẩm nào vừa free, vừa on-demand, vừa không cần scheduling.
-
-Các yêu cầu sản phẩm rút ra từ khảo sát:
-
-- Sản phẩm cần hỗ trợ tiếng Việt và ngữ cảnh phỏng vấn Việt Nam, bao gồm context pack VN với rubric phù hợp văn hóa.
-- Cần có workflow luyện phỏng vấn rõ ràng từ JD → sinh câu hỏi → trả lời → feedback.
-- Feedback cần cụ thể, có rubric nhất quán, có gợi ý hành động theo từng đoạn câu trả lời.
-- Sản phẩm phải miễn phí hoàn toàn để phù hợp đối tượng sinh viên.
-- Cần có cơ chế fallback khi AI lỗi hoặc hết quota để prototype vẫn dùng được.
-- Cần bảo vệ dữ liệu người dùng và hạn chế lưu trữ PII không cần thiết.
-
-## 2.5 Phạm Vi Tính Năng Cơ Bản Cho GR1 Sau Khảo Sát
-
-Dựa trên khảo sát và ràng buộc phạm vi GR1 (thời gian một học kỳ, nhóm nhỏ), các tính năng được phân loại như sau:
-
-| Nhóm tính năng | Trong GR1 | Để sau GR1 | Lý do |
-| --- | --- | --- | --- |
-| Hồ sơ luyện tập (CV) | Đăng ký, đăng nhập, quản lý hồ sơ luyện tập và CV | Phân tích CV tự động, cài đặt nâng cao | Hồ sơ và CV là prerequisite để cá nhân hóa câu hỏi theo kinh nghiệm người dùng |
-| Cấu hình phiên phỏng vấn | JD, loại phỏng vấn, thời gian phỏng vấn, context pack (VN/Western) | Thêm fields: tone, answer length | 4 fields đủ để cá nhân hóa; fields bổ sung thêm sau khi có feedback từ người dùng thực tế |
-| Sinh câu hỏi | Sinh từ JD kết hợp ngân hàng câu hỏi của hệ thống | Giao diện admin quản lý ngân hàng câu hỏi | Question bank làm phong phú câu hỏi sinh ra; admin UI để quản lý question bank thêm vào sau |
-| Trả lời text/voice | Cả hai mode | — | Voice là differentiator chính; text là fallback; cả hai cần thiết để đáp ứng đa dạng người dùng |
-| Feedback/báo cáo | Surgical feedback theo đoạn + báo cáo tổng hợp phiên | So sánh tiến bộ qua nhiều phiên | Surgical feedback là core differentiator; benchmark tiến bộ cần tích lũy đủ session data |
+Từ kết quả khảo sát, AI Mock Interview được định vị là công cụ luyện tập trước phỏng vấn, không phải công cụ trả lời thay trong phỏng vấn thật. Giá trị chính của hệ thống nằm ở quy trình có cấu trúc và phản hồi có thể hành động: người dùng nhập ngữ cảnh ứng tuyển, trả lời như trong một phiên luyện tập, nhận nhận xét theo từng câu trả lời và xem báo cáo tổng hợp để biết cần cải thiện điều gì. Đây là cơ sở trực tiếp cho phần cơ sở lý thuyết, phân tích yêu cầu và thiết kế hệ thống ở các chương tiếp theo.
 
 ---
+
+*Nguồn tham khảo cho Chương 2:*
+
+*[2-S1] TopDev. "Ra mắt Báo cáo Thị trường IT Việt Nam 2024-2025: Cơ hội, Thách thức và Động lực Mới cho Ngành Công nghệ." https://topdev.vn/blog/bao-cao-thi-truong-it-viet-nam-2024/*
+
+*[2-S2] Final Round AI. "Final Round AI - #1 AI Interview Assistant." https://www.finalroundai.com/*
+
+*[2-S3] Pramp. "Practice Mock Interviews & Coding Problems - Land Top Jobs." https://www.pramp.com/*
+
+*[2-S4] Yoodli. "AI Roleplay Platform for Communication Coaching." https://yoodli.ai/*
+
+*[2-S5] Yoodli. "Pricing & Plans." https://yoodli.ai/pricing*
+
+*[2-S6] interviewing.io. "Anonymous Coding & Technical Interview Prep for Software Engineers"; "FAQ"; "Mock Technical Interviews." https://interviewing.io/ ; https://interviewing.io/faq ; https://interviewing.io/mocks*
+
+*[2-S7] OpenAI. "ChatGPT Plans." https://chatgpt.com/pricing/*
+
+*[2-S8] AI Mock Interview internal design docs: `docs/Design/MVP_Scope.md`, `docs/RequirementAnalysis/user-stories/US-005_context-pack.md`.*

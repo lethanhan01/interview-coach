@@ -4,7 +4,7 @@
 
 Trong giai đoạn GR1, sản phẩm AI Mock Interview được xây dựng dưới dạng prototype web app phục vụ luyện phỏng vấn cho sinh viên và ứng viên fresher ngành Công nghệ thông tin. Trọng tâm của sản phẩm là mô phỏng một phiên phỏng vấn có cấu trúc: người dùng cung cấp Job Description, chọn loại phỏng vấn, trả lời từng câu hỏi, sau đó nhận phản hồi và báo cáo tổng hợp.
 
-Prototype hiện tại không chỉ dừng ở mức nhập câu hỏi và nhận câu trả lời từ chatbot. Hệ thống đã có luồng sản phẩm tương đối đầy đủ gồm quản lý hồ sơ, thư viện Job Description, tạo phiên phỏng vấn, sinh câu hỏi, trả lời bằng văn bản hoặc giọng nói, xử lý feedback bất đồng bộ và hiển thị báo cáo sau phiên. Các phần này được triển khai bằng frontend Next.js, backend NestJS, PostgreSQL/Supabase, Redis/BullMQ và AI provider tương thích OpenAI.
+Prototype hiện tại không chỉ dừng ở mức nhập câu hỏi và nhận câu trả lời từ chatbot. Hệ thống đã có luồng sản phẩm tương đối đầy đủ gồm quản lý hồ sơ, thư viện Job Description, tạo phiên phỏng vấn, sinh câu hỏi, trả lời bằng văn bản, xử lý feedback bất đồng bộ và hiển thị báo cáo sau phiên. Các phần này được triển khai bằng frontend Next.js, backend NestJS, PostgreSQL/Supabase, Redis/BullMQ và AI provider tương thích OpenAI.
 
 ### 4.1.1 Mục tiêu sản phẩm trong GR1
 
@@ -13,7 +13,7 @@ Mục tiêu chính của GR1 là xây dựng được một prototype có thể 
 - Lưu và tái sử dụng Job Description.
 - Cấu hình loại phỏng vấn, context pack và thời lượng phiên.
 - Sinh danh sách câu hỏi dựa trên JD và ngân hàng câu hỏi.
-- Cho phép trả lời từng câu bằng text hoặc voice.
+- Cho phép trả lời từng câu bằng văn bản.
 - Tạo feedback cho từng câu trả lời.
 - Tạo báo cáo tổng hợp sau khi hoàn thành phiên.
 - Hiển thị trạng thái đang xử lý để người dùng không phải đoán hệ thống đang làm gì.
@@ -48,7 +48,7 @@ Luồng này phản ánh đúng hướng xây dựng hiện tại của mã ngu�
 
 Giá trị cốt lõi của sản phẩm trong GR1 nằm ở việc nối được ba phần: dữ liệu đầu vào từ JD, quá trình luyện tập theo phiên và phản hồi sau khi trả lời. Nhờ đó, người dùng không chỉ đọc câu hỏi mẫu mà còn có một quy trình luyện tập gần với phỏng vấn thật.
 
-Điểm đáng chú ý của prototype là các tác vụ AI không được xử lý trực tiếp trong request ngắn của trình duyệt. Những phần có thể mất thời gian như sinh câu hỏi, phiên âm, chấm câu trả lời và tổng hợp báo cáo được đưa vào hàng đợi nền. Frontend nhận trạng thái qua API, polling nhẹ và SSE, nhờ đó người dùng vẫn nhìn thấy tiến trình thay vì chỉ chờ trong trạng thái không rõ ràng.
+Điểm đáng chú ý của prototype là các tác vụ AI không được xử lý trực tiếp trong request ngắn của trình duyệt. Những phần có thể mất thời gian như sinh câu hỏi, chấm câu trả lời và tổng hợp báo cáo được đưa vào hàng đợi nền. Frontend nhận trạng thái qua API, polling nhẹ và SSE, nhờ đó người dùng vẫn nhìn thấy tiến trình thay vì chỉ chờ trong trạng thái không rõ ràng.
 
 ## 4.3 Yêu Cầu Chức Năng Trong GR1
 
@@ -61,14 +61,13 @@ Các yêu cầu chức năng trong GR1 được xác định theo luồng sử d
 | Cấu hình phiên phỏng vấn | Người dùng chọn loại phỏng vấn, context pack, thời lượng và số lượng câu hỏi tương ứng. | Đã có trong trang `/setup`. |
 | Tạo phiên phỏng vấn | Hệ thống tạo bản ghi phiên, lưu cấu hình và xếp hàng sinh câu hỏi. | Đã có API tạo phiên và queue sinh câu hỏi. |
 | Sinh câu hỏi | Hệ thống kết hợp AI và question bank để tạo danh sách câu hỏi theo phiên. Nếu AI lỗi, hệ thống cố gắng dùng question bank để phiên vẫn chạy được. | Đã có processor sinh câu hỏi và dịch vụ question bank. |
-| Thực hiện phỏng vấn | Người dùng trả lời từng câu bằng text hoặc voice, có thể tạm dừng, tiếp tục, hủy hoặc bỏ qua câu hỏi. | Đã có màn hình `/sessions/[id]` và API gửi câu trả lời. |
-| Xử lý voice | Người dùng ghi âm, hệ thống upload audio, tạo transcript và cho phép chỉnh transcript trước khi gửi câu trả lời. | Đã có component ghi âm và API upload audio. |
+| Thực hiện phỏng vấn | Người dùng trả lời từng câu bằng văn bản, có thể tạm dừng, tiếp tục, hủy hoặc bỏ qua câu hỏi. | Đã có màn hình `/sessions/[id]` và API gửi câu trả lời. |
 | Feedback từng câu | Hệ thống chấm câu trả lời, sinh câu trả lời mẫu, nhận xét chính và các đoạn cần chú ý. | Đã có feedback queue, bảng lưu feedback và giao diện báo cáo. |
-| Báo cáo tổng hợp | Hệ thống tổng hợp điểm, tóm tắt, mức chất lượng báo cáo, heatmap năng lực và transcript từng câu. | Đã có API report và màn hình report. |
+| Báo cáo tổng hợp | Hệ thống tổng hợp điểm, tóm tắt, mức chất lượng báo cáo, heatmap năng lực và nội dung từng câu trả lời. | Đã có API report và màn hình report. |
 | Theo dõi tiến trình | Khi chờ câu hỏi, feedback hoặc report, frontend hiển thị trạng thái bằng loading, polling và SSE. | Đã có SSE cho trạng thái phiên, tiến trình feedback và report ready. |
 | Xử lý lỗi cơ bản | Hệ thống trả lỗi có cấu trúc, giới hạn tạo phiên, kiểm tra input và fallback khi AI không khả dụng. | Đã có validation, exception filter, fallback và trạng thái lỗi. |
 
-Trong phạm vi GR1, một số phần như xác thực production, đánh giá voice delivery chuyên sâu, dashboard tiến bộ dài hạn và quản trị hệ thống chưa phải trọng tâm chính. Mã nguồn hiện tại ưu tiên luồng luyện phỏng vấn và báo cáo sau phiên.
+Trong phạm vi GR1, một số phần như xác thực production, trả lời bằng giọng nói, dashboard tiến bộ dài hạn và quản trị hệ thống chưa phải trọng tâm chính. Mã nguồn hiện tại ưu tiên luồng luyện phỏng vấn bằng văn bản và báo cáo sau phiên.
 
 ## 4.6 Kiến Trúc Tổng Thể Hệ Thống
 
@@ -113,7 +112,7 @@ flowchart TB
     end
 
     subgraph External[Hệ thống bên ngoài]
-        AiProvider[Chat/Audio AI Provider]
+        AiProvider[Chat AI Provider]
         SupabaseAuth[Supabase Auth]
     end
 
@@ -146,9 +145,9 @@ Backend được tổ chức theo module nghiệp vụ của NestJS. Mỗi modul
 | AuthModule | Guard JWT, refresh guard, controller auth | Kiểm tra token truy cập API, hỗ trợ refresh/logout và chế độ mock auth khi phát triển local. | `server/src/auth/` |
 | UserModule/Profile | Profile controller, profile service, DTO cập nhật hồ sơ | Đọc và cập nhật hồ sơ luyện tập của người dùng. Dữ liệu hồ sơ được dùng để mô tả năng lực và định hướng của ứng viên. | `server/src/user/` |
 | SessionModule | Session controller, service tạo/cập nhật phiên, SSE endpoint | Tạo phiên phỏng vấn, quản lý trạng thái phiên, lấy câu hỏi, lấy tiến trình feedback và cung cấp luồng sự kiện theo phiên. | `server/src/session/` |
-| TurnModule | Turn controller, service nộp câu trả lời, audio storage, voice metrics, whisper service | Nhận câu trả lời text/voice, upload audio, lưu answer, xếp job phiên âm hoặc feedback và hỗ trợ bỏ qua câu hỏi. | `server/src/turn/` |
-| AIModule | AI gateway, prompt builder, context pack, validator, pipeline, processors | Gọi AI provider, sinh câu hỏi, chấm câu trả lời, phiên âm, tổng hợp báo cáo, validate output và fallback khi AI lỗi. | `server/src/ai/` |
-| ReportModule | Report controller, report service, DTO report | Đọc báo cáo, ghép transcript với feedback, tính chất lượng báo cáo và xếp job tổng hợp khi đủ dữ liệu. | `server/src/report/` |
+| TurnModule | Turn controller, service nộp câu trả lời | Nhận câu trả lời văn bản, lưu answer, xếp job feedback và hỗ trợ bỏ qua câu hỏi. | `server/src/turn/` |
+| AIModule | AI gateway, prompt builder, context pack, validator, pipeline, processors | Gọi AI provider, sinh câu hỏi, chấm câu trả lời, tổng hợp báo cáo, validate output và fallback khi AI lỗi. | `server/src/ai/` |
+| ReportModule | Report controller, report service, DTO report | Đọc báo cáo, ghép câu trả lời với feedback, tính chất lượng báo cáo và xếp job tổng hợp khi đủ dữ liệu. | `server/src/report/` |
 | HealthModule | Health controller | Kiểm tra trạng thái backend, database và Redis để phục vụ kiểm tra runtime local. | `server/src/health/` |
 | SavedJobDescriptionModule | Controller/service lưu JD | Lưu, lấy danh sách và tái sử dụng Job Description của người dùng khi tạo phiên mới. | `server/src/saved-job-description/` |
 | PrismaModule | Prisma service, reference data service | Cung cấp kết nối database và đảm bảo dữ liệu tham chiếu như context pack tồn tại khi tạo phiên. | `server/src/prisma/` |
@@ -367,23 +366,19 @@ Một lần đánh giá câu trả lời nhận các dữ liệu chính:
 - Câu trả lời của ứng viên.
 - Loại phiên: HR, Technical hoặc Mixed.
 - Context pack và ngôn ngữ đầu ra.
-- Thông tin audio và voice metrics nếu câu trả lời đến từ giọng nói.
 
 Backend không chỉ gửi câu hỏi và câu trả lời cho AI. Hệ thống còn gửi kèm metadata của câu hỏi và context pack để AI biết chính xác câu trả lời cần được chấm theo tiêu chí nào.
 
 #### b. Tiếp nhận câu trả lời
 
-Khi người dùng gửi câu trả lời, backend xử lý theo ba nhánh:
+Khi người dùng gửi câu trả lời, backend xử lý theo hai nhánh:
 
 | Trường hợp | Cách xử lý |
 | --- | --- |
-| Trả lời bằng text | Lưu câu trả lời, xếp job feedback ngay. |
-| Trả lời bằng voice đã có transcript | Lưu audio metadata, transcript, tính voice metrics cơ bản, xếp job feedback. |
+| Trả lời bằng văn bản | Lưu câu trả lời, xếp job feedback ngay. |
 | Bỏ qua câu hỏi | Lưu trạng thái bỏ qua, không xếp job feedback chấm điểm. |
 
 Mỗi câu hỏi trong một phiên chỉ được phép có một câu trả lời. Ràng buộc này giúp tránh việc người dùng gửi trùng câu trả lời khi click nhiều lần hoặc khi request bị retry.
-
-Với voice, frontend hiện ghi âm, upload audio và lấy transcript trước khi gửi câu trả lời cuối cùng. Người dùng có thể sửa transcript nếu cần. Backend vẫn có nhánh dự phòng cho trường hợp audio-only: hệ thống xếp job phiên âm, sau khi có transcript thì mới xếp job feedback.
 
 #### c. Luồng xử lý feedback từng câu
 
@@ -466,7 +461,7 @@ Kết quả AI phải có các nhóm dữ liệu sau:
 | Nhận xét chính | Một câu tóm tắt điểm đáng chú ý nhất về câu trả lời. |
 | Đoạn nhận xét cụ thể | Tối đa 2 đoạn trích từ câu trả lời gốc, gồm vị trí, loại điểm mạnh/cần cải thiện, nhận xét và gợi ý sửa nếu có. |
 
-Các đoạn trích phải sao chép nguyên văn từ câu trả lời của ứng viên. Backend lưu cả nội dung đoạn trích và vị trí ký tự. Khi hiển thị báo cáo, giao diện ưu tiên dùng đoạn trích đã lưu để tránh phụ thuộc quá nhiều vào offset nếu transcript hoặc ngôn ngữ hiển thị có sai lệch.
+Các đoạn trích phải sao chép nguyên văn từ câu trả lời của ứng viên. Backend lưu cả nội dung đoạn trích và vị trí ký tự. Khi hiển thị báo cáo, giao diện ưu tiên dùng đoạn trích đã lưu để tránh phụ thuộc quá nhiều vào offset nếu nội dung câu trả lời hoặc ngôn ngữ hiển thị có sai lệch.
 
 #### f. Validate schema và lọc tiêu chí chấm
 
@@ -589,7 +584,7 @@ Nếu người dùng bỏ qua câu hỏi, backend lưu câu trả lời rỗng k
 #### k. Pseudocode thuật toán đánh giá câu trả lời
 
 ```text
-Input: sessionId, questionId, answerText, answerMode, audio metadata, skip flag
+Input: sessionId, questionId, answerText, skip flag
 
 1. Kiểm tra session tồn tại và thuộc về người dùng.
 2. Kiểm tra session đang ở trạng thái có thể trả lời.
@@ -598,26 +593,22 @@ Input: sessionId, questionId, answerText, answerMode, audio metadata, skip flag
    4.1. Lưu answer với skipped = true.
    4.2. Không xếp job feedback.
    4.3. Trả kết quả cho frontend.
-5. Nếu là voice chưa có transcript:
-   5.1. Lưu answer ở trạng thái chờ phiên âm.
-   5.2. Xếp job transcription.
-   5.3. Khi transcription xong, quay lại bước feedback.
-6. Nếu là text hoặc voice đã có transcript:
-   6.1. Lưu answer và metadata cần thiết.
-   6.2. Xếp job feedback.
-7. Feedback worker lấy context pack và pipeline theo session type.
-8. Tạo prompt gồm câu hỏi, câu trả lời, metadata câu hỏi, rubric và ngôn ngữ.
-9. Gọi AI để lấy feedback JSON.
-10. Parse JSON và validate schema.
-11. Lọc tiêu chí chấm theo rubric và competency domain của câu hỏi.
-12. Nếu không còn tiêu chí hợp lệ, ghi fallback feedback.
-13. Nếu hợp lệ:
-    13.1. Chuẩn hóa trọng số tiêu chí.
-    13.2. Tính điểm tổng theo trọng số.
-    13.3. Lưu feedback và annotated segments.
-14. Đánh dấu answer đã có feedback.
-15. Phát sự kiện feedback ready và feedback progress.
-16. Nếu phiên đang completing và mọi feedback đã sẵn sàng, xếp job tạo report.
+5. Nếu là câu trả lời văn bản:
+   5.1. Lưu answer và metadata cần thiết.
+   5.2. Xếp job feedback.
+6. Feedback worker lấy context pack và pipeline theo session type.
+7. Tạo prompt gồm câu hỏi, câu trả lời, metadata câu hỏi, rubric và ngôn ngữ.
+8. Gọi AI để lấy feedback JSON.
+9. Parse JSON và validate schema.
+10. Lọc tiêu chí chấm theo rubric và competency domain của câu hỏi.
+11. Nếu không còn tiêu chí hợp lệ, ghi fallback feedback.
+12. Nếu hợp lệ:
+    12.1. Chuẩn hóa trọng số tiêu chí.
+    12.2. Tính điểm tổng theo trọng số.
+    12.3. Lưu feedback và annotated segments.
+13. Đánh dấu answer đã có feedback.
+14. Phát sự kiện feedback ready và feedback progress.
+15. Nếu phiên đang completing và mọi feedback đã sẵn sàng, xếp job tạo report.
 ```
 
 ## 4.8 Thiết Kế Giao Diện Frontend
@@ -632,8 +623,8 @@ Frontend dùng Next.js App Router. Các route chính nằm trong `client/app`, c
 | `/setup` hoặc `/sessions/new` | Tạo phiên mới qua các bước: chọn/nhập JD, cấu hình phiên, xác nhận và bắt đầu. | Saved JD picker, JD form, config form, confirm step | Đã có luồng nhiều bước. |
 | `/jd-library` | Hiển thị danh sách JD đã lưu và cho phép chọn lại để tạo phiên mới. | JD library page | Đã có, hỗ trợ luồng setup. |
 | `/sessions` | Danh sách phiên, trạng thái phiên, điểm tổng nếu đã hoàn thành và hành động tiếp tục/xem báo cáo. | Sessions page | Đã có. |
-| `/sessions/[id]` | Màn hình thực hiện phỏng vấn: câu hỏi hiện tại, nhập text/voice, tạm dừng, hủy, bỏ qua, đếm thời gian. | Question card, text input, voice recorder, countdown timer | Đã có. |
-| `/sessions/[id]/report` | Màn hình chờ và xem báo cáo: tiến trình feedback, điểm tổng, metadata phiên, tiêu chí chấm, transcript và câu trả lời đề xuất. | Report page, metadata card, scoring method card, competency chart, transcript | Đã có. |
+| `/sessions/[id]` | Màn hình thực hiện phỏng vấn: câu hỏi hiện tại, nhập câu trả lời văn bản, tạm dừng, hủy, bỏ qua, đếm thời gian. | Question card, text input, countdown timer | Đã có. |
+| `/sessions/[id]/report` | Màn hình chờ và xem báo cáo: tiến trình feedback, điểm tổng, metadata phiên, tiêu chí chấm, nội dung câu trả lời và câu trả lời đề xuất. | Report page, metadata card, scoring method card, competency chart, answer review | Đã có. |
 
 ### 4.8.1 Luồng màn hình chính
 
@@ -664,7 +655,7 @@ Frontend kiểm tra một số điều kiện cơ bản trước khi cho đi ti�
 
 ### 4.8.3 Thiết kế màn hình phỏng vấn
 
-Màn hình phỏng vấn hiển thị từng câu hỏi theo thứ tự. Người dùng có thể chọn trả lời bằng văn bản hoặc giọng nói. Với giọng nói, trình duyệt ghi âm bằng microphone, upload audio lên backend, nhận transcript và cho phép người dùng kiểm tra lại nội dung trước khi gửi. Cách làm này giảm rủi ro transcript sai nhưng người dùng không biết.
+Màn hình phỏng vấn hiển thị từng câu hỏi theo thứ tự. Người dùng nhập câu trả lời bằng văn bản và gửi trực tiếp để backend lưu answer, sau đó xếp job feedback. Phạm vi hiện tại chưa phát triển ghi âm, upload audio hoặc phiên âm giọng nói.
 
 Màn hình cũng có các trạng thái thao tác quan trọng: tạm dừng, tiếp tục, hủy phiên, bỏ qua câu hỏi và hoàn tất phiên. Khi câu hỏi chưa sẵn sàng, frontend chờ trong trạng thái loading và lắng nghe sự kiện từ backend.
 
@@ -683,7 +674,7 @@ Cơ sở dữ liệu hiện tại dùng PostgreSQL qua Prisma. Các bảng đư�
 | Lookup/question | `context_packs`, `question_bank` | Lưu cấu hình rubric/context và ngân hàng câu hỏi dùng cho sinh câu hỏi hoặc fallback. |
 | User/profile | `users`, `user_profiles`, `resumes` | Lưu người dùng, hồ sơ mở rộng và resume đã parse nếu có. |
 | Session | `interview_sessions`, `saved_job_descriptions`, `session_questions` | Lưu phiên phỏng vấn, JD đã lưu và danh sách câu hỏi thuộc từng phiên. |
-| Answer | `user_answers` | Lưu câu trả lời của người dùng, trạng thái skip, thông tin audio, transcript và trạng thái feedback. |
+| Answer | `user_answers` | Lưu câu trả lời của người dùng, trạng thái skip và trạng thái feedback. |
 | Feedback/report | `ai_feedbacks`, `annotated_segments`, `session_reports` | Lưu feedback từng câu, các đoạn nhận xét cụ thể và báo cáo tổng hợp theo từng loại nội dung. |
 
 ### 4.9.1 ERD rút gọn
@@ -727,11 +718,11 @@ Một số ràng buộc đáng chú ý trong schema hiện tại:
 - Nhiều quan hệ dùng cascade delete để dữ liệu con của phiên hoặc người dùng không bị mồ côi.
 - Một số bảng có `deleted_at` để hỗ trợ soft delete, ví dụ question bank và saved job description.
 
-Schema thực tế cũng có các trường phục vụ trạng thái vận hành như trạng thái phiên, trạng thái phiên âm, cờ feedback đã tạo, cờ fallback và chất lượng báo cáo. Đây là các trường cần thiết vì hệ thống có nhiều job bất đồng bộ; không thể chỉ dựa vào dữ liệu cuối cùng mà cần biết từng bước đã xử lý đến đâu.
+Schema thực tế cũng có các trường phục vụ trạng thái vận hành như trạng thái phiên, cờ feedback đã tạo, cờ fallback và chất lượng báo cáo. Đây là các trường cần thiết vì hệ thống có nhiều job bất đồng bộ; không thể chỉ dựa vào dữ liệu cuối cùng mà cần biết từng bước đã xử lý đến đâu.
 
 ## 4.11 Thiết Kế AI Pipeline
 
-AI pipeline là phần trọng tâm kỹ thuật của sản phẩm. Pipeline hiện tại gồm bốn luồng chính: sinh câu hỏi, phiên âm giọng nói, sinh feedback từng câu và tổng hợp báo cáo. Các tác vụ này được đưa vào hàng đợi để tránh chặn request từ frontend.
+AI pipeline là phần trọng tâm kỹ thuật của sản phẩm. Pipeline hiện tại gồm ba luồng chính: sinh câu hỏi, sinh feedback từng câu và tổng hợp báo cáo. Các tác vụ này được đưa vào hàng đợi để tránh chặn request từ frontend.
 
 ```mermaid
 flowchart TD
@@ -742,10 +733,7 @@ flowchart TD
     D --> F[Lưu câu hỏi và mở phiên]
     E --> F
     F --> G[Người dùng trả lời]
-    G --> H{Text hay voice?}
-    H -->|Text| I[Job feedback]
-    H -->|Voice| J[Upload audio và tạo transcript]
-    J --> I
+    G --> I[Job feedback]
     I --> K[Lưu feedback từng câu]
     K --> L{Đủ feedback để tạo report?}
     L -->|Có| M[Job report]
@@ -786,7 +774,7 @@ sequenceDiagram
 
 ### 4.11.3 Feedback Generation
 
-Sau khi người dùng gửi câu trả lời, backend lưu answer và đưa job feedback vào queue. Với câu trả lời text, feedback có thể được xếp hàng ngay. Với câu trả lời voice, audio được upload trước; transcript được tạo hoặc người dùng chỉnh lại transcript rồi mới gửi nội dung cuối cùng để chấm.
+Sau khi người dùng gửi câu trả lời văn bản, backend lưu answer và đưa job feedback vào queue.
 
 Feedback từng câu gồm các phần chính:
 
@@ -818,7 +806,6 @@ Vì hệ thống phụ thuộc vào AI provider, degraded mode là phần bắt 
 
 - Nếu AI sinh câu hỏi lỗi, hệ thống dùng question bank để tạo câu hỏi.
 - Nếu AI feedback lỗi hoặc hết quota, hệ thống lưu feedback fallback và không tính điểm đó như điểm thật.
-- Nếu phiên âm voice thất bại, hệ thống đánh dấu transcription failed, ghi fallback feedback và tiếp tục kiểm tra điều kiện tạo report.
 - Nếu report không đủ dữ liệu chấm, hệ thống trả về chất lượng báo cáo phù hợp như không thể chấm hoặc chỉ một phần.
 - Nếu provider trả JSON rỗng, JSON sai hoặc response bị cắt, hệ thống phân loại thành lỗi AI output thay vì lưu dữ liệu không hợp lệ.
 - Nếu quota AI hết, gateway đặt thời gian cooldown ngắn để tránh retry liên tục.
@@ -859,7 +846,7 @@ Backend kiểm tra các điều kiện như JD đủ dài, loại phiên hợp l
 
 Khi vào trang phỏng vấn, frontend lấy thông tin phiên. Nếu phiên đang tổng hợp hoặc đã hoàn thành, người dùng được chuyển sang trang báo cáo. Nếu phiên còn đang sinh câu hỏi, frontend chờ câu hỏi qua polling ngắn và SSE. Khi câu hỏi đã có, backend chuyển phiên sang trạng thái active.
 
-Trong lúc phỏng vấn, người dùng trả lời từng câu theo thứ tự. Câu trả lời text được gửi trực tiếp. Câu trả lời voice được ghi âm, upload, chuyển thành transcript, sau đó người dùng có thể xem lại transcript trước khi gửi. Người dùng cũng có thể bỏ qua câu hỏi; câu bị bỏ qua vẫn được ghi nhận để phiên hoàn thành đúng số câu, nhưng không sinh feedback chấm điểm.
+Trong lúc phỏng vấn, người dùng trả lời từng câu theo thứ tự bằng văn bản. Người dùng cũng có thể bỏ qua câu hỏi; câu bị bỏ qua vẫn được ghi nhận để phiên hoàn thành đúng số câu, nhưng không sinh feedback chấm điểm.
 
 ```mermaid
 flowchart TD
@@ -867,11 +854,8 @@ flowchart TD
     B -->|Chưa| C[Chờ trạng thái active]
     B -->|Rồi| D[Hiển thị câu hiện tại]
     C --> D
-    D --> E{Người dùng chọn cách trả lời}
-    E -->|Text| F[Gửi câu trả lời văn bản]
-    E -->|Voice| G[Ghi âm và tạo transcript]
-    G --> H[Người dùng kiểm tra transcript]
-    H --> F
+    D --> E{Người dùng thao tác}
+    E -->|Trả lời| F[Gửi câu trả lời văn bản]
     E -->|Bỏ qua| I[Ghi nhận câu bỏ qua]
     F --> J[Xếp job feedback]
     I --> K[Chuyển câu tiếp theo]
@@ -998,7 +982,7 @@ Chất lượng của prototype được kiểm soát ở nhiều lớp: kiểu 
 | Biện pháp | Áp dụng ở đâu | Mục đích |
 | --- | --- | --- |
 | TypeScript | Client/server | Phát hiện lỗi kiểu dữ liệu khi phát triển, đồng bộ kiểu dữ liệu API và component. |
-| DTO validation | Backend API | Từ chối request thiếu trường, sai loại phiên, JD quá ngắn, câu trả lời quá ngắn hoặc audio metadata không hợp lệ. |
+| DTO validation | Backend API | Từ chối request thiếu trường, sai loại phiên, JD quá ngắn hoặc câu trả lời quá ngắn. |
 | Zod validation | AI output | Kiểm tra JSON từ AI trước khi lưu, tránh lưu output thiếu trường hoặc sai schema. |
 | Unit test | Services/processors | Kiểm tra logic tạo phiên, nộp câu trả lời, fallback, report readiness, profile, question bank và các processor AI. |
 | E2E test | Client luồng chính | Kiểm tra các luồng người dùng quan trọng ở mức trình duyệt khi cần. |
