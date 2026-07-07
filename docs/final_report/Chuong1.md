@@ -82,21 +82,13 @@ Việc luyện tập với người khác có hiệu quả, nhưng không phải
 
 Ngoài ra, đề tài có phạm vi đủ gần với nhu cầu thật để kiểm chứng bằng demo. Người dùng có thể tạo hồ sơ, cấu hình phiên, nhận câu hỏi, trả lời, xem feedback và báo cáo. Đây là chuỗi chức năng có thể quan sát trực tiếp, không chỉ dừng ở mô hình lý thuyết. Vì vậy, AI Mock Interview được lựa chọn như một đề tài vừa có ý nghĩa thực tiễn, vừa phù hợp để rèn luyện năng lực xây dựng hệ thống phần mềm.
 
-## 1.7 Mục Tiêu Của Đề Tài
+## 1.8 Mục Tiêu, Nhiệm Vụ Và Phạm Vi Nghiên Cứu
 
-Mục tiêu tổng quát của đề tài là xây dựng một ứng dụng web hỗ trợ sinh viên năm cuối và ứng viên fresher ngành Công nghệ thông tin luyện phỏng vấn bằng trí tuệ nhân tạo theo một quy trình có cấu trúc, có phản hồi và có báo cáo sau phiên.
+Mục tiêu tổng quát của đề tài là xây dựng một ứng dụng web hỗ trợ sinh viên năm cuối và ứng viên fresher ngành Công nghệ thông tin luyện phỏng vấn bằng trí tuệ nhân tạo theo một quy trình có cấu trúc, có phản hồi và có báo cáo sau phiên. Trong phạm vi GR1, đề tài tập trung vào việc xây dựng một prototype có thể demo được luồng luyện phỏng vấn chính từ lúc người dùng chuẩn bị hồ sơ đến lúc nhận báo cáo sau phiên.
 
-Mục tiêu chức năng của hệ thống tập trung vào các tính năng đã triển khai trong phạm vi GR1. Trước hết, hệ thống cho phép người dùng đăng ký, đăng nhập và quản lý hồ sơ luyện tập, bao gồm các thông tin giúp cá nhân hóa nội dung phỏng vấn như kỹ năng, kinh nghiệm, học vấn hoặc dự án đã thực hiện. Tiếp theo, hệ thống cho phép người dùng cấu hình phiên phỏng vấn dựa trên mô tả công việc, loại phỏng vấn, thời lượng và ngữ cảnh phỏng vấn. Các thông tin này được sử dụng để định hướng câu hỏi và tiêu chí phản hồi.
+Về phạm vi người dùng, hệ thống hướng đến sinh viên năm cuối và ứng viên fresher ngành Công nghệ thông tin. Về phạm vi loại phỏng vấn, sản phẩm tập trung vào phỏng vấn kỹ thuật, phỏng vấn hành vi và phiên phỏng vấn tổng hợp. Về phạm vi chức năng, nhiệm vụ chính của hệ thống là cho phép người dùng quản lý hồ sơ luyện tập, cấu hình phiên từ mô tả công việc, nhận danh sách câu hỏi phù hợp, trả lời bằng văn bản, nhận phản hồi tự động cho từng câu trả lời và xem báo cáo tổng hợp sau phiên.
 
-Hệ thống cần sinh danh sách câu hỏi phù hợp với vị trí ứng tuyển và loại phiên phỏng vấn. Câu hỏi có thể khai thác từ ngân hàng câu hỏi có sẵn kết hợp với khả năng tạo nội dung của AI để đảm bảo vừa ổn định, vừa có mức độ cá nhân hóa theo ngữ cảnh. Sau khi phiên bắt đầu, người dùng trả lời bằng văn bản để hệ thống tiếp tục phân tích và lưu trữ.
-
-Một mục tiêu quan trọng khác là tạo phản hồi tự động cho từng câu trả lời. Phản hồi cần chỉ ra điểm mạnh, điểm còn thiếu, gợi ý cải thiện và cung cấp ví dụ trả lời tốt hơn khi phù hợp. Sau khi phiên kết thúc, hệ thống tạo báo cáo tổng hợp để người dùng nhìn lại chất lượng trả lời, các năng lực cần cải thiện và định hướng luyện tập tiếp theo. Trong toàn bộ quy trình, hệ thống cần xử lý các tác vụ AI theo cơ chế bất đồng bộ để tránh chặn trải nghiệm người dùng khi tác vụ sinh câu hỏi, tạo feedback hoặc tạo báo cáo mất nhiều thời gian.
-
-Mục tiêu chất lượng của đề tài là tạo ra một prototype có thể demo được luồng luyện phỏng vấn từ đầu đến cuối, giao diện dễ sử dụng, dữ liệu phiên được lưu lại có cấu trúc và phản hồi đủ cụ thể để người dùng có thể hành động. Hệ thống không đặt mục tiêu thay thế nhà tuyển dụng hoặc mentor, mà đóng vai trò công cụ luyện tập trước phỏng vấn thật.
-
-## 1.8 Nhiệm Vụ Và Phạm Vi Nghiên Cứu
-
-Trong phạm vi GR1, đề tài tập trung vào việc xây dựng một prototype có thể chạy được luồng luyện phỏng vấn chính từ lúc người dùng chuẩn bị hồ sơ đến lúc nhận báo cáo sau phiên. Phạm vi người dùng chính là sinh viên năm cuối và ứng viên fresher ngành Công nghệ thông tin. Phạm vi loại phỏng vấn tập trung vào phỏng vấn kỹ thuật, phỏng vấn hành vi và phiên phỏng vấn tổng hợp.
+Mục tiêu chất lượng của đề tài là tạo ra một prototype có giao diện dễ sử dụng, dữ liệu phiên được lưu lại có cấu trúc, phản hồi đủ cụ thể để người dùng có thể hành động và các tác vụ AI được xử lý bất đồng bộ để tránh chặn trải nghiệm người dùng. Hệ thống không đặt mục tiêu thay thế nhà tuyển dụng hoặc mentor, mà đóng vai trò công cụ luyện tập trước phỏng vấn thật.
 
 | Nhóm tính năng | Phạm vi đã phát triển trong GR1 | Mục đích trong hệ thống |
 | --- | --- | --- |
@@ -114,7 +106,7 @@ Về giới hạn, hệ thống không được thiết kế để hỗ trợ �
 
 ## 1.9 Lộ Trình GR1 - GR2 - Đồ Án Tốt Nghiệp
 
-Lộ trình phát triển sau GR1 được chia thành hai giai đoạn tiếp theo. GR2 tập trung hoàn thiện chất lượng sản phẩm, cải thiện trải nghiệm người dùng và bổ sung các tính năng còn để mở. Đồ án tốt nghiệp hướng đến phiên bản hoàn chỉnh hơn, có thể đánh giá với người dùng thực tế và xem xét các vấn đề triển khai dài hạn.
+Lộ trình phát triển sau GR1 được chia thành hai giai đoạn tiếp theo. GR2 tập trung hoàn thiện chất lượng sản phẩm, cải thiện trải nghiệm người dùng và bổ sung các tính năng còn để mở. Đồ án tốt nghiệp hướng đến phiên bản hoàn chỉnh hơn, có thể đánh giá với người dùng thực tế và xem xét các vấn đề triển khai dài hạn. Một định hướng mở rộng quan trọng là ứng dụng Retrieval-Augmented Generation (RAG) để tăng khả năng cá nhân hóa khi sinh câu hỏi và phản hồi: thay vì chỉ dựa vào mô tả công việc trong phiên hiện tại, hệ thống có thể truy xuất thêm ngữ cảnh phù hợp từ hồ sơ người dùng, CV, dự án, ngân hàng câu hỏi, rubric đánh giá và lịch sử luyện tập trước khi gọi mô hình AI.
 
 Bảng 1.x trình bày các tính năng dự kiến bổ sung và hoàn thiện trong giai đoạn GR2.
 
@@ -123,6 +115,7 @@ Bảng 1.x trình bày các tính năng dự kiến bổ sung và hoàn thiện 
 | Tài khoản và hồ sơ luyện tập | Bổ sung nhập CV thuận tiện hơn, chuẩn hóa thông tin kỹ năng/dự án và cải thiện trải nghiệm cập nhật hồ sơ. |
 | Cấu hình phiên phỏng vấn | Bổ sung các tùy chọn như mức độ khó, phong cách phỏng vấn, độ dài câu trả lời mong muốn và mục tiêu luyện tập cụ thể. |
 | Sinh câu hỏi phỏng vấn | Mở rộng ngân hàng câu hỏi, cải thiện độ đa dạng câu hỏi và bổ sung công cụ quản trị nội dung câu hỏi. |
+| Cá nhân hóa bằng RAG | Khảo sát và thử nghiệm cơ chế truy xuất ngữ cảnh liên quan đến vị trí ứng tuyển, kỹ năng, dự án, CV và rubric đánh giá để bổ sung vào prompt sinh câu hỏi. Trong GR2, RAG nên được triển khai ở mức hỗ trợ sinh câu hỏi, có fallback về luồng hiện tại khi không tìm được ngữ cảnh phù hợp. |
 | Thực hiện phiên phỏng vấn | Cải thiện giao diện trả lời văn bản, bổ sung chế độ nháp/chỉnh sửa câu trả lời và cân nhắc voice input nếu phạm vi GR2 cho phép. |
 | Phản hồi cho từng câu trả lời | Tinh chỉnh tiêu chí đánh giá theo từng loại phỏng vấn, cải thiện chất lượng tiếng Việt và giảm phản hồi quá chung chung. |
 | Báo cáo tổng hợp sau phiên | Cải thiện bố cục báo cáo, bổ sung so sánh giữa các phiên và làm rõ mức độ tiến bộ theo từng nhóm năng lực. |
@@ -137,6 +130,7 @@ Bảng 1.x trình bày định hướng hoàn thiện hệ thống trong giai đ
 | Tài khoản và hồ sơ luyện tập | Hướng đến hồ sơ năng lực đầy đủ hơn, có thể phân tích CV tự động và gợi ý điểm cần chuẩn bị trước phỏng vấn. |
 | Cấu hình phiên phỏng vấn | Cho phép tạo kế hoạch luyện tập cá nhân hóa theo mục tiêu nghề nghiệp, lịch sử phiên và vị trí ứng tuyển. |
 | Sinh câu hỏi phỏng vấn | Đánh giá chất lượng câu hỏi bằng dữ liệu người dùng thực tế và tối ưu khả năng cá nhân hóa theo từng nhóm vị trí. |
+| Cá nhân hóa bằng RAG | Hoàn thiện kho tri thức phục vụ luyện phỏng vấn, bao gồm hồ sơ người dùng, CV, dự án, câu hỏi đã dùng, phản hồi cũ và tiêu chí đánh giá. Hệ thống có thể dùng RAG để tạo câu hỏi bám sát hơn với kinh nghiệm thật của người dùng, giảm câu hỏi chung chung và hỗ trợ giải thích nguồn ngữ cảnh được dùng khi cần kiểm chứng. |
 | Thực hiện phiên phỏng vấn | Xây dựng trải nghiệm luyện nói đầy đủ hơn, có phân tích cách diễn đạt và so sánh tiến bộ qua nhiều lần luyện. |
 | Phản hồi cho từng câu trả lời | Đánh giá độ hữu ích của phản hồi với người dùng thật và tối ưu để phản hồi ngày càng cụ thể, dễ hành động hơn. |
 | Báo cáo tổng hợp sau phiên | Xây dựng hệ thống theo dõi tiến bộ dài hạn, gợi ý kế hoạch luyện tập tiếp theo dựa trên lịch sử của người dùng. |
