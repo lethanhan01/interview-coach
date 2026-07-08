@@ -367,192 +367,539 @@ Về mặt trải nghiệm người dùng, AI Mock Interview cần đảm bảo 
 
 ## 3.3 Mô Hình Ngôn Ngữ Lớn Và Kỹ Thuật Điều Khiển Đầu Ra AI
 
-### 3.3.1 Mô hình ngôn ngữ lớn trong bài toán phỏng vấn thử
+### 3.3.1 Mô hình ngôn ngữ lớn và OpenAI-compatible API
 
-Mô hình ngôn ngữ lớn (Large Language Model - LLM) là nhóm mô hình học máy được huấn luyện trên lượng lớn dữ liệu văn bản để xử lý và sinh ngôn ngữ tự nhiên. Nhờ khả năng nhận diện ngữ cảnh, tổng hợp thông tin và tạo câu trả lời theo yêu cầu, LLM phù hợp với các bài toán cần phân tích nội dung tự do như câu trả lời phỏng vấn, mô tả công việc và phản hồi luyện tập [1][2].
+#### Lý thuyết
 
-Trong hệ thống AI Mock Interview, LLM không được dùng như một thành phần thay thế toàn bộ quy trình phỏng vấn của con người. Vai trò của nó là hỗ trợ các tác vụ ngôn ngữ: tạo câu hỏi luyện tập theo bối cảnh, đánh giá câu trả lời dựa trên tiêu chí có sẵn, viết nhận xét cải thiện và tổng hợp báo cáo sau phiên. Các tác vụ này đều có điểm chung là đầu vào thường là văn bản tự do, khó xử lý hiệu quả bằng các luật cố định.
+Mô hình ngôn ngữ lớn (Large Language Model - LLM) là nhóm mô hình AI có khả năng xử lý và sinh văn bản tự nhiên dựa trên ngữ cảnh đầu vào. Trong các API sinh văn bản hiện nay, ứng dụng thường gửi yêu cầu dưới dạng một chuỗi thông điệp, trong đó có chỉ dẫn hệ thống, dữ liệu người dùng và yêu cầu đầu ra. Tài liệu OpenAI mô tả text generation là năng lực tạo phản hồi từ đầu vào văn bản hoặc đa phương thức, đồng thời cho phép nhà phát triển điều khiển mô hình bằng chỉ dẫn, ngữ cảnh và tham số sinh kết quả [3.3-S1].
 
-Hệ thống sử dụng hướng tiếp cận tương thích với Chat Completions của OpenAI. Điều này có nghĩa là phần backend gửi yêu cầu dưới dạng các thông điệp hội thoại, kèm chỉ dẫn và dữ liệu ngữ cảnh, sau đó nhận lại kết quả dạng văn bản hoặc JSON. Mô hình cụ thể được cấu hình qua môi trường chạy, giúp hệ thống có thể dùng nhà cung cấp OpenAI hoặc một dịch vụ tương thích trong quá trình phát triển [2][3-T1].
+OpenAI-compatible API là cách gọi những dịch vụ cung cấp giao diện tương thích với API của OpenAI. Về mặt ứng dụng, điều này giúp backend giữ cùng một cách gửi thông điệp và nhận kết quả, trong khi nhà cung cấp hoặc mô hình cụ thể có thể được thay đổi bằng cấu hình triển khai. Cần lưu ý rằng mức độ tương thích giữa các nhà cung cấp có thể khác nhau, đặc biệt ở các tính năng như JSON mode, structured output hoặc audio transcription. Nếu một tính năng không được nhà cung cấp xác nhận chính thức, báo cáo chỉ nên mô tả ở mức hệ thống có cơ chế cấu hình và kiểm tra bổ sung, không khẳng định tương thích hoàn toàn.
+
+#### Ứng dụng trong hệ thống
+
+Trong AI Mock Interview, LLM được dùng cho các tác vụ cốt lõi có đầu vào là ngôn ngữ tự nhiên: sinh câu hỏi theo mô tả công việc, đánh giá câu trả lời, tạo phản hồi cải thiện và tổng hợp báo cáo sau phiên. Người dùng có thể nhập mô tả vị trí ứng tuyển, chọn loại phiên phỏng vấn và trả lời bằng văn bản; backend chuyển các dữ liệu này thành yêu cầu gửi tới mô hình, sau đó xử lý kết quả để lưu vào cơ sở dữ liệu và hiển thị trên giao diện. Ở phía chat completion, backend hỗ trợ cấu hình OpenAI-compatible base URL; riêng speech-to-text hiện được gọi qua client audio của OpenAI trong luồng voice mode [3.3-T1].
+
+LLM không được dùng như một hệ thống ra quyết định tuyển dụng, mà đóng vai trò trợ lý luyện tập. Kết quả AI được đặt trong luồng nghiệp vụ có kiểm soát: câu hỏi được gắn với phiên phỏng vấn, phản hồi được gắn với câu trả lời, báo cáo được tạo sau khi có đủ dữ liệu phiên, và khi dịch vụ AI gặp lỗi hệ thống có thể dùng nội dung dự phòng để phiên luyện tập không bị gián đoạn hoàn toàn [3.3-T1].
+
+#### Lý do chọn
+
+LLM phù hợp với bài toán phỏng vấn thử vì dữ liệu chính của hệ thống là văn bản tự do. Nếu chỉ dùng luật cố định, hệ thống khó đánh giá một câu trả lời có nhiều cách diễn đạt khác nhau, khó tạo nhận xét theo ngữ cảnh và khó sinh câu hỏi mới từ từng mô tả công việc. LLM giúp hệ thống xử lý linh hoạt hơn các trường hợp như câu trả lời thiếu ví dụ, trả lời lan man, chưa liên hệ với vị trí ứng tuyển hoặc cần gợi ý cách diễn đạt tốt hơn.
+
+So với việc xây dựng mô hình NLP riêng, sử dụng API LLM giúp giảm đáng kể chi phí dữ liệu huấn luyện, hạ tầng tính toán và thời gian phát triển. So với danh sách câu hỏi cố định, LLM hỗ trợ cá nhân hóa theo vị trí, cấp độ và loại phỏng vấn. Cách dùng OpenAI-compatible API cũng phù hợp với năng lực nhóm phát triển vì nhóm có thể tập trung vào thiết kế luồng luyện tập, kiểm soát đầu ra và giao diện phản hồi thay vì tự vận hành mô hình nền tảng.
 
 ### 3.3.2 Prompt engineering
 
-Prompt engineering là kỹ thuật viết chỉ dẫn cho mô hình để đầu ra bám sát mục tiêu của ứng dụng. Với LLM, cùng một dữ liệu đầu vào có thể tạo ra nhiều kiểu phản hồi khác nhau. Vì vậy, prompt cần nêu rõ vai trò của mô hình, nhiệm vụ cần thực hiện, ngữ cảnh được cung cấp, tiêu chí đánh giá và định dạng đầu ra mong muốn [3].
+#### Lý thuyết
 
-Trong AI Mock Interview, prompt được dùng để giữ cho phản hồi của AI nhất quán với mục tiêu luyện phỏng vấn. Ví dụ, khi tạo câu hỏi, prompt cần làm rõ loại phiên phỏng vấn, vị trí ứng tuyển, cấp độ ứng viên và tiêu chí năng lực cần đánh giá. Khi tạo nhận xét, prompt cần nhấn mạnh rằng phản hồi phải cụ thể, có thể hành động được và phù hợp với câu hỏi ban đầu.
+Prompt engineering là kỹ thuật thiết kế chỉ dẫn cho mô hình để đầu ra bám sát nhiệm vụ của ứng dụng. Tài liệu OpenAI khuyến nghị nhà phát triển cung cấp hướng dẫn rõ ràng, chia nhiệm vụ phức tạp thành các bước hợp lý, đưa ngữ cảnh cần thiết và nêu định dạng đầu ra mong muốn khi cần kết quả có cấu trúc [3.3-S2]. Trong ứng dụng dùng LLM, prompt không chỉ là câu hỏi gửi cho mô hình, mà là phần mô tả vai trò, mục tiêu, dữ liệu đầu vào, tiêu chí đánh giá và ràng buộc đầu ra.
 
-Một điểm quan trọng là prompt trong hệ thống được quản lý theo mục đích sử dụng. Các prompt cho sinh câu hỏi, đánh giá câu trả lời và tổng hợp báo cáo được tách riêng, vì mỗi tác vụ có dữ liệu đầu vào và tiêu chí đầu ra khác nhau. Cách tổ chức này giúp việc điều chỉnh chất lượng AI rõ ràng hơn: khi cần cải thiện một tác vụ, nhóm phát triển có thể tập trung vào prompt của tác vụ đó thay vì thay đổi toàn bộ hệ thống [3-T1].
+Một prompt tốt cần giảm mơ hồ. Ví dụ, nếu chỉ yêu cầu "đánh giá câu trả lời", mô hình có thể trả lời bằng nhận xét chung. Nếu prompt nêu rõ loại phỏng vấn, tiêu chí đánh giá, mức điểm, cách viết nhận xét và định dạng trả về, kết quả sẽ dễ dùng hơn trong hệ thống phần mềm. Tuy nhiên, prompt không thay thế hoàn toàn kiểm thử và kiểm tra dữ liệu ở backend, vì mô hình vẫn có thể trả về kết quả thiếu hoặc sai cấu trúc.
 
-### 3.3.3 Kiểm soát đầu ra bằng JSON và schema
+#### Ứng dụng trong hệ thống
 
-Nếu chỉ yêu cầu LLM trả lời tự do, kết quả có thể đúng về nội dung nhưng khó xử lý bằng chương trình. Ứng dụng cần biết điểm số nằm ở đâu, phần nhận xét nằm ở đâu, danh sách gợi ý có cấu trúc như thế nào và trường nào là bắt buộc. Vì vậy, hệ thống cần cơ chế kiểm soát đầu ra thay vì chỉ dựa vào văn bản tự nhiên.
+Trong AI Mock Interview, prompt được tách theo từng tác vụ: sinh câu hỏi, phản hồi từng câu trả lời và tổng hợp báo cáo. Mỗi nhóm prompt nhận dữ liệu khác nhau. Sinh câu hỏi cần mô tả công việc, loại phiên và số lượng câu hỏi. Phản hồi câu trả lời cần câu hỏi, câu trả lời của ứng viên, loại năng lực đang đánh giá và rubric tương ứng. Báo cáo cần dữ liệu tổng hợp của phiên để nhận xét điểm mạnh, điểm yếu và hướng cải thiện.
 
-OpenAI cung cấp các cơ chế như JSON mode và Structured Outputs để định hướng mô hình trả về dữ liệu có cấu trúc. JSON mode giúp đầu ra là JSON hợp lệ, còn Structured Outputs hướng đến việc ràng buộc đầu ra theo schema cụ thể [4]. Trong dự án hiện tại, hệ thống sử dụng hướng tiếp cận JSON có kiểm tra bổ sung ở backend: AI được yêu cầu trả về JSON, sau đó kết quả được phân tích và kiểm tra lại trước khi lưu hoặc hiển thị.
+Hệ thống cũng đưa ngữ cảnh văn hóa và nhóm năng lực vào prompt để phản hồi phù hợp hơn với người dùng mục tiêu. Với phiên kỹ thuật, prompt ưu tiên tiêu chí chuyên môn và khả năng giải thích lựa chọn kỹ thuật. Với phiên hành vi, prompt ưu tiên bối cảnh, hành động cá nhân, kết quả và bài học. Cách tách prompt theo nhiệm vụ giúp nhóm phát triển điều chỉnh chất lượng từng luồng mà không phải thay đổi toàn bộ pipeline AI [3.3-T1].
 
-Lớp kiểm tra này có vai trò quan trọng trong hệ thống phỏng vấn thử. Nếu AI trả về thiếu trường, sai kiểu dữ liệu hoặc cấu trúc không đúng, backend có thể phát hiện và chuyển sang nội dung dự phòng thay vì để lỗi lan ra giao diện. Nhờ đó, các tác vụ như sinh câu hỏi, tạo feedback và tạo báo cáo có tính ổn định cao hơn khi phụ thuộc vào mô hình bên ngoài [3-T1].
+#### Lý do chọn
+
+Prompt engineering được chọn vì đây là lớp điều khiển phù hợp nhất trong giai đoạn GR1. Hệ thống cần thay đổi hành vi AI theo loại phiên, vị trí ứng tuyển và mục tiêu feedback, nhưng chưa có nhu cầu hoặc nguồn lực để huấn luyện mô hình riêng. Việc quản lý prompt theo tác vụ giúp tăng khả năng bảo trì: khi feedback còn chung chung, nhóm có thể sửa prompt phản hồi; khi câu hỏi chưa đúng loại phỏng vấn, nhóm có thể sửa prompt sinh câu hỏi.
+
+So với fine-tuning, prompt engineering có chi phí thấp hơn, triển khai nhanh hơn và dễ thử nghiệm hơn. So với hard-code câu trả lời mẫu, prompt cho phép hệ thống phản ứng với nội dung người dùng nhập vào. Nhược điểm là chất lượng vẫn phụ thuộc vào mô hình và có thể dao động, vì vậy hệ thống cần kết hợp prompt với kiểm tra JSON, schema, fallback và lưu vết phiên bản prompt.
+
+### 3.3.3 Kiểm soát đầu ra bằng JSON, structured output và schema
+
+#### Lý thuyết
+
+Khi ứng dụng cần xử lý kết quả AI bằng chương trình, đầu ra dạng văn bản tự do thường không đủ ổn định. OpenAI cung cấp JSON mode để khuyến khích mô hình trả về JSON hợp lệ và Structured Outputs để ràng buộc đầu ra theo JSON Schema trong các trường hợp được hỗ trợ [3.3-S3]. Điểm khác biệt quan trọng là JSON hợp lệ chưa chắc đã đúng cấu trúc nghiệp vụ. Một phản hồi có thể là JSON đúng cú pháp nhưng vẫn thiếu trường, sai kiểu dữ liệu hoặc chứa giá trị ngoài miền cho phép.
+
+Vì vậy, trong ứng dụng thực tế, kiểm soát đầu ra nên gồm nhiều lớp: yêu cầu mô hình trả về dữ liệu có cấu trúc, phân tích JSON ở backend, kiểm tra schema và có phương án xử lý khi kết quả không đạt yêu cầu. Đây là cách tiếp cận thận trọng vì LLM là thành phần xác suất, không phải hàm xử lý luôn trả về cùng một kết quả.
+
+#### Ứng dụng trong hệ thống
+
+AI Mock Interview yêu cầu đầu ra có cấu trúc cho nhiều tác vụ. Khi sinh câu hỏi, hệ thống cần danh sách câu hỏi, loại câu hỏi, nhóm năng lực và độ khó. Khi tạo feedback, hệ thống cần điểm theo tiêu chí, câu trả lời mẫu, nhận xét chính và các đoạn được đánh dấu. Khi tạo báo cáo, hệ thống cần nội dung có thể lưu, hiển thị và tổng hợp theo các phần rõ ràng.
+
+Backend yêu cầu AI trả về JSON, sau đó phân tích và kiểm tra kết quả trước khi lưu hoặc hiển thị. Nếu kết quả thiếu dữ liệu, sai kiểu hoặc không thể phân tích, hệ thống có thể chuyển sang nội dung dự phòng hoặc báo lỗi có kiểm soát. Cơ chế này đặc biệt quan trọng với báo cáo và điểm số, vì giao diện người dùng không nên phải xử lý trực tiếp các phản hồi AI không ổn định [3.3-T1].
+
+#### Lý do chọn
+
+Kiểm soát đầu ra bằng JSON và schema phù hợp vì hệ thống không chỉ hiển thị văn bản AI, mà còn lưu dữ liệu, tính điểm, vẽ biểu đồ và theo dõi tiến độ phiên. Nếu dùng văn bản tự do, backend phải suy đoán vị trí điểm số hoặc nhận xét, dễ gây lỗi và khó kiểm thử. JSON giúp dữ liệu đi qua các lớp backend, cơ sở dữ liệu và frontend theo hợp đồng rõ ràng hơn.
+
+So với việc chỉ yêu cầu mô hình "trả lời theo mẫu", schema validation an toàn hơn vì hệ thống có thể phát hiện sai lệch trước khi người dùng nhìn thấy. So với phụ thuộc hoàn toàn vào Structured Outputs, cách kiểm tra bổ sung ở backend linh hoạt hơn với môi trường dùng API tương thích, nơi một số tính năng chính thức của OpenAI có thể chưa được hỗ trợ đầy đủ.
 
 ---
-*[1] Elastic. "What is a Large Language Model?" https://www.elastic.co/what-is/large-language-models*
-*[2] OpenAI. "Text generation." https://developers.openai.com/api/docs/guides/text*
-*[3] OpenAI. "Prompt Engineering." https://developers.openai.com/api/docs/guides/prompt-engineering*
-*[4] OpenAI. "Structured Outputs." https://developers.openai.com/api/docs/guides/structured-outputs*
-*[3-T1] AI Mock Interview implementation sources: `client/package.json`, `server/package.json`, `server/src/config/env.validation.ts`, `server/src/ai/openai.gateway.ts`, `server/src/ai/prompt-builder.service.ts`, `server/src/ai/pipelines/pipeline.schemas.ts`.*
+*Nguồn tham khảo mục 3.3:*
+*[3.3-S1] OpenAI. "Text generation." https://developers.openai.com/api/docs/guides/text*
+*[3.3-S2] OpenAI. "Prompt engineering." https://developers.openai.com/api/docs/guides/prompt-engineering*
+*[3.3-S3] OpenAI. "Structured Outputs." https://developers.openai.com/api/docs/guides/structured-outputs*
+*[3.3-T1] AI Mock Interview implementation sources: `server/package.json`, `server/src/config/env.validation.ts`, `server/src/ai/openai.gateway.ts`, `server/src/ai/prompt-builder.service.ts`, `server/src/ai/pipelines/pipeline.schemas.ts`, `server/src/ai/processors`.*
 
 ## 3.4 Công Nghệ Xử Lý Ngôn Ngữ Trong Hệ Thống AI Mock Interview
 
 ### 3.4.1 Xử lý câu trả lời dạng văn bản
 
-Trong phạm vi Chương 3, xử lý ngôn ngữ cần được hiểu là nền tảng công nghệ cho việc tiếp nhận, biểu diễn và đánh giá câu trả lời bằng văn bản. Đầu vào chính của hệ thống là câu trả lời tự nhiên của người dùng, không phải lựa chọn trắc nghiệm hay biểu mẫu cố định. Vì vậy, hệ thống cần một lớp AI có khả năng hiểu nội dung, ý định, mức độ đầy đủ và cách trình bày của câu trả lời.
+#### Lý thuyết
 
-Cách tiếp cận text-first phù hợp với mục tiêu GR1 vì trọng tâm của đề tài là luyện tư duy trả lời phỏng vấn và nhận phản hồi. Văn bản giúp hệ thống kiểm soát rõ hơn các phần như câu hỏi, câu trả lời, tiêu chí đánh giá, điểm số và báo cáo. Đây cũng là dạng dữ liệu phù hợp để lưu lịch sử phiên, so sánh kết quả giữa các lần luyện tập và tổng hợp nhận xét sau phiên.
+Xử lý ngôn ngữ trong phạm vi hệ thống này tập trung vào việc tiếp nhận, biểu diễn và đánh giá câu trả lời tự nhiên của người dùng. Khác với câu hỏi trắc nghiệm, câu trả lời phỏng vấn có thể dài, thiếu cấu trúc, dùng nhiều cách diễn đạt khác nhau và chứa cả thông tin chuyên môn lẫn cách trình bày. LLM phù hợp với dạng dữ liệu này vì API sinh văn bản có thể nhận ngữ cảnh, chỉ dẫn và nội dung người dùng để tạo phản hồi dựa trên nhiệm vụ cụ thể [3.4-S1].
+
+Tuy nhiên, xử lý ngôn ngữ bằng LLM không đồng nghĩa với việc hệ thống hiểu câu trả lời giống con người. Kết quả cần được đặt trong phạm vi luyện tập, có tiêu chí đánh giá rõ ràng và có bước kiểm tra đầu ra. Vì vậy, báo cáo chỉ nên xem LLM là công nghệ hỗ trợ phân tích và sinh phản hồi, không khẳng định hệ thống có khả năng đánh giá tuyển dụng thay cho chuyên gia.
+
+#### Ứng dụng trong hệ thống
+
+Trong AI Mock Interview, đầu vào chính của phiên luyện tập là văn bản: mô tả công việc, cấu hình phiên, câu hỏi và câu trả lời của ứng viên. Backend đưa câu hỏi, câu trả lời và rubric vào yêu cầu AI để tạo feedback. Kết quả sau đó được lưu cùng phiên phỏng vấn và dùng để hiển thị nhận xét, câu trả lời mẫu, đoạn cần cải thiện và báo cáo tổng hợp.
+
+Cách tiếp cận text-first giúp hệ thống giữ được một luồng xử lý thống nhất. Dù người dùng trả lời trực tiếp bằng văn bản hay trả lời bằng giọng nói rồi chuyển thành transcript, phần đánh giá chính vẫn dựa trên nội dung văn bản cuối cùng. Điều này giúp hệ thống lưu lịch sử phiên, so sánh câu trả lời và tạo báo cáo mà không phụ thuộc hoàn toàn vào dữ liệu âm thanh.
+
+#### Lý do chọn
+
+Text-first phù hợp với mục tiêu GR1 vì trọng tâm của đề tài là luyện cách trả lời phỏng vấn và nhận phản hồi có thể đọc lại. Văn bản dễ lưu trữ, dễ kiểm tra, dễ hiển thị trên giao diện và phù hợp với việc tạo báo cáo sau phiên. Với nhóm sinh viên và fresher, phản hồi bằng văn bản cũng giúp người dùng xem lại lỗi diễn đạt, thiếu ý hoặc thiếu ví dụ cụ thể sau khi luyện tập.
+
+So với việc ưu tiên xử lý giọng nói ngay từ đầu, xử lý văn bản có chi phí triển khai thấp hơn và ít phụ thuộc vào chất lượng micro, môi trường ghi âm hoặc lỗi nhận dạng giọng nói. Voice mode vẫn có giá trị cho trải nghiệm phỏng vấn gần thực tế hơn, nhưng văn bản là lớp dữ liệu ổn định hơn để hệ thống đánh giá và tổng hợp trong phạm vi hiện tại.
 
 ### 3.4.2 Token, ngữ cảnh và giới hạn đầu vào
 
-LLM không xử lý văn bản theo đúng cách con người nhìn thấy từng câu hay từng từ. Mô hình thường chia văn bản thành các đơn vị nhỏ hơn gọi là token. Vì vậy, khi đưa mô tả công việc, câu hỏi, câu trả lời và rubric vào cùng một yêu cầu, hệ thống phải quan tâm đến độ dài ngữ cảnh và lượng nội dung cần gửi cho mô hình [2].
+#### Lý thuyết
 
-Trong AI Mock Interview, dữ liệu đưa vào AI được chọn theo mục tiêu của từng tác vụ. Với sinh câu hỏi, phần quan trọng là mô tả công việc, loại phỏng vấn và tiêu chí năng lực. Với đánh giá câu trả lời, phần quan trọng là câu hỏi, câu trả lời của ứng viên và rubric. Với báo cáo tổng hợp, hệ thống cần dùng kết quả của cả phiên ở mức vừa đủ để tạo nhận xét có ý nghĩa. Cách chọn ngữ cảnh này giúp giảm nhiễu và tránh gửi quá nhiều dữ liệu không cần thiết cho mô hình.
+LLM thường không xử lý văn bản theo từng từ như cách người đọc nhìn thấy, mà chia dữ liệu thành các đơn vị gọi là token. Tài liệu OpenAI về text generation và prompt engineering nhấn mạnh việc cung cấp ngữ cảnh phù hợp cho mô hình, đồng thời tránh đưa quá nhiều thông tin không cần thiết vì điều này làm tăng chi phí, độ trễ và nguy cơ mô hình tập trung sai trọng tâm [3.4-S1][3.4-S2].
+
+Khái niệm ngữ cảnh trong LLM bao gồm dữ liệu đầu vào mà mô hình được phép dùng để tạo phản hồi. Với một tác vụ phỏng vấn thử, ngữ cảnh có thể gồm mô tả công việc, loại phiên, câu hỏi, câu trả lời, rubric và lịch sử một phần của phiên. Nếu ngữ cảnh thiếu, phản hồi dễ chung chung. Nếu ngữ cảnh quá rộng, phản hồi có thể bị nhiễu hoặc vượt giới hạn đầu vào của mô hình.
+
+#### Ứng dụng trong hệ thống
+
+AI Mock Interview chọn dữ liệu gửi vào AI theo từng mục tiêu. Khi sinh câu hỏi, phần quan trọng là mô tả công việc, loại phỏng vấn, số lượng câu hỏi và nhóm năng lực cần đánh giá. Khi chấm câu trả lời, hệ thống ưu tiên câu hỏi hiện tại, câu trả lời của người dùng và rubric liên quan. Khi tạo báo cáo, hệ thống dùng dữ liệu tổng hợp của phiên ở mức đủ để nhận xét, thay vì gửi toàn bộ dữ liệu không cần thiết.
+
+Việc chọn ngữ cảnh còn giúp phân tách trách nhiệm giữa các tác vụ AI. Sinh câu hỏi không cần toàn bộ chi tiết báo cáo; chấm câu trả lời không cần tái tạo toàn bộ lịch sử người dùng nếu câu hỏi hiện tại đã đủ ngữ cảnh; báo cáo sau phiên cần dữ liệu tổng hợp hơn là từng chi tiết kỹ thuật nhỏ. Cách tổ chức này giúp giảm lỗi, giảm chi phí gọi AI và giữ phản hồi tập trung vào mục tiêu luyện tập [3.4-T1].
+
+#### Lý do chọn
+
+Quản lý token và ngữ cảnh phù hợp với hệ thống vì các phiên phỏng vấn có thể khác nhau về độ dài, số câu hỏi và nội dung mô tả công việc. Nếu gửi toàn bộ dữ liệu vào mọi yêu cầu AI, hệ thống sẽ tốn chi phí hơn và khó kiểm soát chất lượng phản hồi. Nếu gửi quá ít dữ liệu, AI có thể tạo nhận xét chung chung, không gắn với câu trả lời thực tế.
+
+So với một pipeline chỉ ghép tất cả dữ liệu vào prompt, cách chọn ngữ cảnh theo tác vụ dễ bảo trì hơn. Nhóm phát triển có thể điều chỉnh riêng dữ liệu cho sinh câu hỏi, feedback hoặc báo cáo. Điều này cũng giúp hệ thống mở rộng sau này, ví dụ bổ sung hồ sơ ứng viên hoặc dữ liệu luyện tập trước đó, mà không làm mọi prompt trở nên quá dài.
 
 ### 3.4.3 Rubric và ngôn ngữ đầu ra
 
-Rubric là cơ sở để phản hồi của AI không chỉ dựa trên cảm nhận chung. Trong hệ thống, rubric giúp xác định những tiêu chí cần đánh giá, ví dụ mức độ đúng trọng tâm, tính cụ thể, logic trình bày, ví dụ minh họa hoặc khả năng liên hệ với vị trí ứng tuyển. Khi có rubric, cùng một câu trả lời có thể được đánh giá theo tiêu chí rõ ràng hơn.
+#### Lý thuyết
 
-Hệ thống cũng hỗ trợ định hướng ngôn ngữ đầu ra để phản hồi phù hợp với người dùng. Với bối cảnh sinh viên và fresher tại Việt Nam, phản hồi bằng tiếng Việt rõ ràng, trực tiếp và có ví dụ cụ thể giúp người dùng dễ hiểu điểm cần sửa hơn so với phản hồi chung chung. Đây là lý do phần xử lý ngôn ngữ không chỉ quan tâm đến việc AI "hiểu" câu trả lời, mà còn quan tâm đến cách AI diễn đạt kết quả cho người học.
+Rubric là tập tiêu chí dùng để đánh giá một câu trả lời theo các khía cạnh cụ thể. Trong hệ thống có LLM, rubric giúp chuyển yêu cầu "nhận xét câu trả lời" thành một nhiệm vụ có tiêu chí rõ ràng hơn. Prompt engineering khuyến nghị cung cấp tiêu chí, ví dụ và định dạng đầu ra để mô hình tạo phản hồi phù hợp với mục tiêu của ứng dụng [3.4-S2].
 
-### 3.4.4 Giới hạn giọng nói trong phạm vi Chương 3
+Ngôn ngữ đầu ra cũng là một phần của xử lý ngôn ngữ. Cùng một đánh giá có thể được viết bằng nhiều phong cách khác nhau. Với ứng dụng luyện tập, phản hồi cần dễ hiểu, cụ thể và có khả năng hành động. Nếu phản hồi dùng ngôn ngữ quá chung chung hoặc quá kỹ thuật, người dùng khó biết cần sửa gì trong lần trả lời tiếp theo.
 
-Trả lời bằng giọng nói là một hướng mở rộng tự nhiên của hệ thống phỏng vấn thử, vì phỏng vấn thực tế thường diễn ra bằng lời nói. Tuy nhiên, trong Chương 3 này, giọng nói không được trình bày như công nghệ trọng tâm của GR1. Các công nghệ như ghi âm, lưu trữ tệp âm thanh, nhận dạng giọng nói hoặc phân tích tốc độ nói chỉ nên được xem là hướng phát triển tiếp theo nếu hệ thống mở rộng sang luyện nói.
+#### Ứng dụng trong hệ thống
 
-Với phạm vi hiện tại của phần cơ sở công nghệ, trọng tâm vẫn là xử lý câu trả lời văn bản, LLM, prompt, kiểm soát đầu ra và hạ tầng web phục vụ quá trình luyện phỏng vấn.
+AI Mock Interview dùng rubric theo loại phiên và context pack để định hướng việc đánh giá. Với câu hỏi hành vi, hệ thống quan tâm đến bối cảnh, nhiệm vụ, hành động, kết quả, mức độ tự nhận thức và khả năng liên hệ với vị trí ứng tuyển. Với câu hỏi kỹ thuật, hệ thống quan tâm đến độ chính xác, khả năng giải thích, ví dụ thực tế, tư duy xử lý vấn đề và trade-off kỹ thuật.
+
+Hệ thống cũng định hướng phản hồi bằng tiếng Việt cho nhóm người dùng chính là sinh viên và fresher tại Việt Nam. Phản hồi không chỉ nêu điểm số, mà còn chỉ ra ý mạnh, điểm cần cải thiện và gợi ý cách trả lời tốt hơn. Nhờ vậy, chức năng feedback và báo cáo phục vụ mục tiêu học tập thay vì chỉ đóng vai trò chấm điểm [3.4-T1].
+
+#### Lý do chọn
+
+Rubric được chọn vì nó giúp phản hồi của AI nhất quán hơn giữa các phiên. Nếu không có rubric, mô hình có thể đánh giá dựa trên cảm nhận chung, dẫn đến cùng một câu trả lời nhưng nhận xét khác nhau theo từng lần gọi. Rubric cũng giúp hệ thống giải thích điểm số tốt hơn, vì người dùng biết câu trả lời đang thiếu ở tiêu chí nào.
+
+So với phản hồi tự do, phản hồi theo rubric phù hợp hơn với báo cáo học thuật và sản phẩm luyện tập. So với chỉ hiển thị điểm số, nhận xét theo rubric có giá trị thực tế hơn vì người dùng nhận được hướng sửa cụ thể. Việc dùng tiếng Việt làm ngôn ngữ phản hồi chính cũng phù hợp với đối tượng sử dụng, trong khi vẫn có thể mở rộng sang ngôn ngữ khác nếu hệ thống cần phục vụ bối cảnh quốc tế.
+
+### 3.4.4 Ghi âm, speech-to-text và giới hạn của voice mode
+
+#### Lý thuyết
+
+Voice mode trong ứng dụng web thường gồm hai phần: ghi âm ở trình duyệt và chuyển âm thanh thành văn bản. MediaRecorder là API của trình duyệt cho phép ghi lại dữ liệu âm thanh hoặc video từ thiết bị người dùng [3.4-S3]. Speech-to-text là quá trình chuyển dữ liệu âm thanh thành transcript. Tài liệu OpenAI mô tả speech-to-text như nhóm API nhận file âm thanh và trả về văn bản được nhận dạng [3.4-S4].
+
+Speech-to-text giúp hệ thống nhận câu trả lời nói ở dạng có thể xử lý tiếp bằng LLM. Tuy nhiên, transcript có thể bị ảnh hưởng bởi chất lượng âm thanh, tiếng ồn, phát âm, ngôn ngữ trộn lẫn và giới hạn của mô hình nhận dạng. Vì vậy, nếu transcript được dùng để chấm câu trả lời, hệ thống nên cho người dùng kiểm tra hoặc chỉnh sửa trước khi nộp chính thức.
+
+#### Ứng dụng trong hệ thống
+
+AI Mock Interview có hỗ trợ luồng trả lời bằng giọng nói ở mức phục vụ luyện tập. Trình duyệt ghi âm câu trả lời, gửi tệp âm thanh lên backend, backend lưu tệp qua dịch vụ lưu trữ và gọi speech-to-text để tạo transcript nháp. Người dùng có thể xem lại hoặc chỉnh sửa transcript trước khi gửi câu trả lời để hệ thống chấm. Sau bước này, nội dung văn bản vẫn là dữ liệu chính dùng cho feedback và báo cáo [3.4-T2].
+
+Voice mode vì vậy không thay thế text-first pipeline, mà bổ sung một cách nhập câu trả lời gần với phỏng vấn thật hơn. Các thông tin như đường dẫn tệp âm thanh, thời lượng và trạng thái nhận dạng được lưu như metadata hỗ trợ. Phần đánh giá chính vẫn dựa trên transcript và rubric, giúp hệ thống giữ cùng một pipeline feedback cho cả text mode và voice mode.
+
+#### Lý do chọn
+
+Voice mode phù hợp vì phỏng vấn thực tế thường diễn ra bằng lời nói. Việc cho phép ghi âm giúp người dùng luyện phản xạ trả lời, sau đó đọc lại transcript để phát hiện câu trả lời thiếu mạch lạc hoặc diễn đạt chưa tốt. Đây là lợi ích mà text-only khó mô phỏng đầy đủ.
+
+Tuy nhiên, voice mode được triển khai như phần hỗ trợ thay vì công nghệ lõi của chấm điểm. Cách này giúp hệ thống cân bằng giữa trải nghiệm và độ ổn định: người dùng có thể luyện nói, nhưng backend vẫn xử lý nội dung cuối cùng ở dạng văn bản. So với việc phân tích trực tiếp giọng nói để chấm điểm toàn diện, cách dùng speech-to-text đơn giản hơn, ít rủi ro hơn và phù hợp hơn với phạm vi GR1.
+
+---
+*Nguồn tham khảo mục 3.4:*
+*[3.4-S1] OpenAI. "Text generation." https://developers.openai.com/api/docs/guides/text*
+*[3.4-S2] OpenAI. "Prompt engineering." https://developers.openai.com/api/docs/guides/prompt-engineering*
+*[3.4-S3] MDN Web Docs. "MediaRecorder." https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder*
+*[3.4-S4] OpenAI. "Speech to text." https://developers.openai.com/api/docs/guides/speech-to-text*
+*[3.4-T1] AI Mock Interview implementation sources: `server/src/ai/prompt-builder.service.ts`, `server/src/ai/context-pack.service.ts`, `server/src/ai/pipelines`, `server/src/turn`, `server/src/report`.*
+*[3.4-T2] Voice mode implementation sources: `client/components/interview/VoiceRecorder.tsx`, `server/src/turn/whisper.service.ts`, `server/src/ai/processors/transcription.processor.ts`, `server/prisma/schema.prisma`.*
 
 ## 3.5 Công Nghệ Frontend Cho Ứng Dụng Web
 
 ### 3.5.1 Next.js và React
 
-Frontend của AI Mock Interview được xây dựng bằng Next.js 16.2 và React 19.2. Next.js là framework dựa trên React, cung cấp các khả năng cần thiết cho ứng dụng web hiện đại như routing, rendering phía server, tối ưu tải trang và tổ chức mã nguồn theo cấu trúc ứng dụng [5]. React đảm nhiệm phần xây dựng giao diện theo component, giúp các màn hình như cấu hình phiên, trả lời phỏng vấn, xem lịch sử và đọc báo cáo có thể được chia nhỏ thành các phần dễ quản lý.
+#### Lý thuyết
 
-Next.js phù hợp với dự án vì hệ thống vừa có các trang cần tương tác mạnh, vừa có các trang cần tải dữ liệu rõ ràng từ backend. Ví dụ, màn hình phỏng vấn cần phản ứng với thao tác của người dùng, trong khi trang báo cáo cần hiển thị dữ liệu đã tổng hợp một cách ổn định. Việc dùng cùng một nền tảng frontend giúp trải nghiệm người dùng nhất quán từ lúc tạo phiên đến lúc xem kết quả.
+React là thư viện JavaScript dùng để xây dựng giao diện theo component. Tài liệu React mô tả component là các phần giao diện có thể tái sử dụng, giúp chia màn hình phức tạp thành những khối nhỏ hơn và dễ quản lý hơn [3.5-S1]. Next.js là framework dựa trên React, cung cấp các khả năng ở cấp ứng dụng như routing, rendering, cải thiện quá trình tải trang và tổ chức dự án web [3.5-S2].
+
+Sự kết hợp giữa React và Next.js phù hợp với ứng dụng web có nhiều màn hình và trạng thái giao diện. React giúp xây dựng các thành phần như form, thẻ câu hỏi, bộ đếm thời gian và trang báo cáo. Next.js cung cấp cấu trúc ứng dụng, cơ chế định tuyến và cách tổ chức frontend theo các trang rõ ràng.
+
+#### Ứng dụng trong hệ thống
+
+Frontend của AI Mock Interview được xây dựng bằng Next.js 16.2 và React 19.2. Các màn hình chính gồm trang thiết lập phiên, thư viện mô tả công việc, hồ sơ người dùng, danh sách phiên, màn hình trả lời phỏng vấn và trang báo cáo. Những màn hình này có nhiều trạng thái khác nhau: nhập dữ liệu, tải câu hỏi, đếm thời gian, gửi câu trả lời, chờ feedback và đọc báo cáo.
+
+React giúp tách giao diện thành các component có trách nhiệm rõ ràng, ví dụ nhóm nhập cấu hình, hiển thị câu hỏi, nhập câu trả lời văn bản, ghi âm và hiển thị biểu đồ báo cáo. Next.js giúp tổ chức các trang theo luồng sử dụng của sản phẩm, từ đăng nhập, thiết lập phiên, thực hiện phỏng vấn đến xem kết quả [3.5-T1].
+
+#### Lý do chọn
+
+Next.js và React phù hợp vì hệ thống cần một giao diện web tương tác, dễ mở rộng và dễ bảo trì. Luồng phỏng vấn không phải trang tĩnh: người dùng nhập dữ liệu, gửi câu trả lời, nhận cập nhật trạng thái và xem báo cáo sau khi xử lý nền hoàn tất. Component hóa giúp nhóm phát triển sửa từng phần giao diện mà không ảnh hưởng toàn bộ ứng dụng.
+
+So với xây dựng bằng HTML, CSS và JavaScript thuần, React giúp quản lý trạng thái giao diện tốt hơn. So với một framework frontend ít phổ biến hơn, Next.js có tài liệu chính thức đầy đủ, hệ sinh thái lớn và phù hợp với năng lực phát triển của nhóm. Việc dùng cùng nền tảng React cho nhiều màn hình cũng giúp trải nghiệm người dùng nhất quán hơn.
 
 ### 3.5.2 App Router và phân tách Server/Client Components
 
-App Router của Next.js tổ chức định tuyến dựa trên cấu trúc thư mục trong ứng dụng. Cách này giúp mỗi trang, layout và nhóm route có vị trí rõ ràng. Tài liệu Next.js cũng phân biệt Server Components và Client Components: phần không cần tương tác trực tiếp với trình duyệt có thể xử lý ở server, còn phần cần trạng thái giao diện, sự kiện người dùng hoặc API trình duyệt sẽ chạy ở client [6].
+#### Lý thuyết
 
-Trong AI Mock Interview, cách phân tách này phù hợp với đặc điểm của từng màn hình. Các trang đọc dữ liệu như danh sách phiên hoặc báo cáo có thể ưu tiên tải dữ liệu ổn định. Các phần như form cấu hình, màn hình trả lời và trạng thái chờ kết quả cần tương tác trực tiếp nên được xử lý ở phía client. Nhờ đó, giao diện vừa giữ được tính phản hồi nhanh, vừa không phải dồn toàn bộ logic vào trình duyệt.
+App Router là cơ chế định tuyến của Next.js dựa trên cấu trúc thư mục trong ứng dụng. Tài liệu Next.js mô tả Server Components và Client Components là hai cách tổ chức component theo nơi xử lý: Server Components phù hợp với phần không cần tương tác trực tiếp trên trình duyệt, còn Client Components dùng cho phần cần state, event handler hoặc API trình duyệt [3.5-S3].
+
+Phân tách này giúp ứng dụng tránh đưa toàn bộ logic lên trình duyệt. Những phần chỉ cần đọc dữ liệu hoặc dựng giao diện ổn định có thể xử lý ở phía server. Những phần cần thao tác người dùng, ghi âm, bộ đếm thời gian hoặc cập nhật trạng thái thời gian thực sẽ chạy ở client.
+
+#### Ứng dụng trong hệ thống
+
+Trong AI Mock Interview, các trang như danh sách phiên, trang báo cáo và layout ứng dụng có thể tận dụng cấu trúc App Router để tổ chức đường dẫn rõ ràng. Các phần tương tác mạnh như form thiết lập, màn hình trả lời, ghi âm, kết nối nhận cập nhật trạng thái và xử lý token truy cập cần chạy ở client vì phụ thuộc vào sự kiện người dùng hoặc API của trình duyệt.
+
+Cách phân tách này giúp giao diện phù hợp với đặc điểm từng màn hình. Trang báo cáo ưu tiên hiển thị dữ liệu đã tổng hợp một cách ổn định. Màn hình phỏng vấn cần phản ứng nhanh với thao tác nhập câu trả lời, bộ đếm thời gian và trạng thái phiên. Màn hình ghi âm cần truy cập thiết bị âm thanh của trình duyệt, nên thuộc phần client [3.5-T1].
+
+#### Lý do chọn
+
+App Router được chọn vì nó giúp cấu trúc frontend bám sát luồng nghiệp vụ: đăng nhập, thiết lập phiên, luyện phỏng vấn, xem lịch sử và xem báo cáo. Điều này giúp người phát triển dễ tìm đúng màn hình cần sửa, đồng thời giảm khả năng trộn lẫn logic của các trang khác nhau.
+
+So với mô hình chỉ dùng client-side rendering, phân tách Server/Client Components giúp ứng dụng xử lý phù hợp hơn giữa các trang ít tương tác và các phần cần chạy trực tiếp trên trình duyệt. So với việc tự xây dựng router, App Router là cơ chế có sẵn trong Next.js, giảm mã hạ tầng và phù hợp với dự án cần tập trung vào chức năng luyện phỏng vấn.
 
 ### 3.5.3 TypeScript và Tailwind CSS
 
-TypeScript được sử dụng ở cả frontend và backend để giảm lỗi kiểu dữ liệu. Với một hệ thống có nhiều dữ liệu trao đổi như phiên phỏng vấn, câu hỏi, câu trả lời, feedback và báo cáo, kiểm tra kiểu tĩnh giúp phát hiện sớm các sai lệch giữa giao diện và API trong quá trình phát triển.
+#### Lý thuyết
 
-Tailwind CSS v4 được dùng để xây dựng giao diện theo hướng utility-first. Thay vì tạo nhiều lớp CSS riêng cho từng thành phần, lập trình viên có thể dùng các lớp tiện ích để mô tả khoảng cách, màu sắc, bố cục và trạng thái ngay trong component. Cách này phù hợp với giai đoạn phát triển nhanh của dự án, đồng thời vẫn giữ được tính nhất quán về giao diện nếu các quy ước thiết kế được dùng thống nhất [3-T2].
+TypeScript là ngôn ngữ mở rộng JavaScript bằng hệ thống kiểu tĩnh. Tài liệu TypeScript mô tả mục tiêu của TypeScript là bổ sung kiểu dữ liệu để phát hiện lỗi sớm hơn trong quá trình phát triển, đồng thời vẫn biên dịch về JavaScript để chạy trên môi trường web hoặc Node.js [3.5-S4].
+
+Tailwind CSS là framework CSS theo hướng utility-first. Thay vì viết nhiều lớp CSS riêng cho từng thành phần, nhà phát triển sử dụng các lớp tiện ích để mô tả khoảng cách, màu sắc, kích thước, bố cục và trạng thái giao diện ngay trong component [3.5-S5]. Cách này phù hợp với ứng dụng có nhiều màn hình cần giao diện nhất quán nhưng vẫn cần phát triển nhanh.
+
+#### Ứng dụng trong hệ thống
+
+AI Mock Interview dùng TypeScript ở frontend và backend để giảm sai lệch khi trao đổi dữ liệu. Các kiểu dữ liệu liên quan đến phiên, câu hỏi, câu trả lời, feedback và báo cáo giúp frontend hiểu cấu trúc dữ liệu nhận từ API. Khi cấu trúc dữ liệu thay đổi, TypeScript hỗ trợ phát hiện lỗi tại thời điểm phát triển thay vì chỉ phát hiện khi người dùng thao tác.
+
+Tailwind CSS được dùng để xây dựng giao diện các form, thẻ thông tin, nút thao tác, vùng nhập câu trả lời, trạng thái tải và trang báo cáo. Với một ứng dụng có nhiều màn hình nghiệp vụ, utility class giúp nhóm phát triển duy trì khoảng cách, màu sắc và trạng thái giao diện nhất quán hơn mà không cần tạo quá nhiều file CSS riêng [3.5-T1].
+
+#### Lý do chọn
+
+TypeScript phù hợp vì hệ thống có nhiều hợp đồng dữ liệu giữa frontend và backend. Nếu dùng JavaScript thuần, các lỗi như thiếu trường, sai kiểu hoặc thay đổi cấu trúc response dễ chỉ xuất hiện khi chạy ứng dụng. TypeScript giúp giảm rủi ro này, đặc biệt với các màn hình báo cáo và feedback có cấu trúc dữ liệu nhiều lớp.
+
+Tailwind CSS phù hợp với giai đoạn phát triển sản phẩm vì tốc độ triển khai nhanh và dễ giữ thống nhất giao diện. So với CSS viết tay hoàn toàn, Tailwind giảm số lượng quy ước riêng mà nhóm phải tự duy trì. So với thư viện giao diện đóng gói sẵn, Tailwind linh hoạt hơn khi cần thiết kế các màn hình đặc thù như phỏng vấn, ghi âm và báo cáo năng lực.
 
 ---
-*[5] Next.js. "What is Next.js?" https://nextjs.org/docs*
-*[6] Next.js. "Server and Client Components." https://nextjs.org/docs/app/getting-started/server-and-client-components*
-*[3-T2] Frontend implementation sources: `client/package.json`, `client/app`, `client/components`, `client/lib/types.ts`.*
+*Nguồn tham khảo mục 3.5:*
+*[3.5-S1] React. "Describing the UI." https://react.dev/learn/describing-the-ui*
+*[3.5-S2] Next.js. "Docs." https://nextjs.org/docs*
+*[3.5-S3] Next.js. "Server and Client Components." https://nextjs.org/docs/app/getting-started/server-and-client-components*
+*[3.5-S4] TypeScript. "Documentation." https://www.typescriptlang.org/docs/*
+*[3.5-S5] Tailwind CSS. "Styling with utility classes." https://tailwindcss.com/docs/styling-with-utility-classes*
+*[3.5-T1] Frontend implementation sources: `client/package.json`, `client/app`, `client/components`, `client/lib/api-client.ts`, `client/lib/types.ts`, `client/lib/supabase.ts`.*
 
 ## 3.6 Công Nghệ Backend Và Giao Tiếp API
 
 ### 3.6.1 NestJS
 
-Backend của AI Mock Interview được xây dựng bằng NestJS 11. NestJS là framework Node.js hỗ trợ TypeScript và cung cấp kiến trúc ứng dụng có tổ chức, phù hợp với các hệ thống có nhiều module, nhiều luồng dữ liệu và nhiều lớp xử lý [7].
+#### Lý thuyết
 
-NestJS phù hợp với dự án vì backend không chỉ trả về dữ liệu đơn giản. Hệ thống cần xác thực người dùng, quản lý phiên phỏng vấn, nhận câu trả lời, gọi AI, tạo báo cáo, xử lý hàng đợi và gửi cập nhật trạng thái. Nếu không có cấu trúc rõ ràng, các phần này dễ bị trộn lẫn. NestJS giúp chia hệ thống thành các nhóm chức năng, mỗi nhóm có trách nhiệm riêng và có thể kiểm thử độc lập hơn.
+NestJS là framework Node.js dùng để xây dựng ứng dụng server-side. Tài liệu NestJS mô tả framework này hỗ trợ TypeScript, kết hợp các nguyên tắc lập trình hướng đối tượng, lập trình hàm và lập trình phản ứng, đồng thời cung cấp kiến trúc ứng dụng có tổ chức [3.6-S1]. NestJS chạy trên các HTTP server framework phổ biến như Express hoặc Fastify, nhưng cung cấp một lớp kiến trúc cao hơn để tổ chức module, controller, provider và các cơ chế cross-cutting.
+
+Điểm quan trọng của NestJS không chỉ là xử lý HTTP request, mà là cách framework chuẩn hóa cấu trúc backend. Với hệ thống có nhiều nhóm chức năng, kiến trúc module giúp tách trách nhiệm và giảm tình trạng tất cả logic nằm trong một file hoặc một lớp xử lý lớn.
+
+#### Ứng dụng trong hệ thống
+
+Backend của AI Mock Interview được xây dựng bằng NestJS 11. Các chức năng chính được chia thành các nhóm như xác thực, phiên phỏng vấn, câu trả lời, AI processing, báo cáo, người dùng, mô tả công việc đã lưu, health check và hạ tầng dùng chung. Backend cũng cấu hình validation toàn cục, CORS, cookie parsing, tiền tố API và bộ lọc lỗi thống nhất [3.6-T1].
+
+NestJS đóng vai trò trung tâm kết nối các công nghệ khác: cơ sở dữ liệu qua Prisma, hàng đợi qua BullMQ, Redis cho queue và SSE, Supabase cho xác thực/lưu trữ và API AI cho sinh nội dung. Nhờ cấu trúc module, các luồng như tạo phiên, gửi câu trả lời, xử lý feedback và tạo báo cáo được tổ chức theo nghiệp vụ thay vì trộn trực tiếp vào tầng HTTP.
+
+#### Lý do chọn
+
+NestJS phù hợp vì backend của hệ thống có nhiều luồng xử lý liên quan nhau. Một request tạo phiên có thể dẫn tới tạo dữ liệu phiên, đưa job vào hàng đợi, sinh câu hỏi và cập nhật trạng thái cho frontend. Một câu trả lời có thể dẫn tới lưu dữ liệu, xử lý feedback, kiểm tra điều kiện tạo báo cáo và phát sự kiện trạng thái. Các luồng này cần cấu trúc rõ ràng để dễ kiểm thử và bảo trì.
+
+So với Express thuần, NestJS cung cấp sẵn kiến trúc module, dependency injection, guard, pipe và filter, giảm khối lượng mã hạ tầng nhóm phải tự thiết kế. So với framework quá tối giản, NestJS phù hợp hơn với dự án có nhiều tích hợp và cần mở rộng sau GR1. Chi phí đánh đổi là framework có nhiều khái niệm hơn, nhưng điều này chấp nhận được vì dự án cần một backend có tổ chức.
 
 ### 3.6.2 Module, controller, service và dependency injection
 
-Ba khái niệm quan trọng trong NestJS là module, controller và service. Module dùng để gom các thành phần cùng phạm vi trách nhiệm. Controller tiếp nhận request từ client và trả response. Service chứa phần xử lý chính và có thể được tái sử dụng bởi nhiều controller hoặc thành phần khác [8][9][10].
+#### Lý thuyết
 
-Dependency injection là cơ chế giúp một thành phần nhận các phụ thuộc cần thiết mà không phải tự khởi tạo trực tiếp. Với AI Mock Interview, điều này giúp backend dễ thay thế hoặc kiểm thử các phần như truy cập cơ sở dữ liệu, gọi AI, gửi sự kiện trạng thái và xử lý hàng đợi. Đây là lý do NestJS phù hợp với hệ thống có nhiều tích hợp như Prisma, BullMQ, Redis, Supabase và OpenAI-compatible API [3-T3].
+Trong NestJS, module là đơn vị tổ chức các thành phần có liên quan. Tài liệu NestJS mô tả module là lớp được đánh dấu bằng decorator để framework dùng metadata tổ chức cấu trúc ứng dụng [3.6-S2]. Controller chịu trách nhiệm tiếp nhận request và trả response [3.6-S3]. Provider, thường là service, chứa logic có thể được inject vào controller hoặc provider khác [3.6-S4].
+
+Dependency injection là cơ chế để một thành phần nhận phụ thuộc từ framework thay vì tự khởi tạo trực tiếp. Cơ chế này giúp giảm phụ thuộc cứng giữa các lớp và giúp kiểm thử dễ hơn, vì khi test có thể thay thế phụ thuộc thật bằng bản giả lập.
+
+#### Ứng dụng trong hệ thống
+
+AI Mock Interview dùng module để gom các nhóm chức năng theo miền nghiệp vụ. Controller tiếp nhận yêu cầu như tạo phiên, lấy danh sách phiên, gửi câu trả lời, tải báo cáo hoặc cập nhật hồ sơ. Service xử lý nghiệp vụ như kiểm tra quyền sở hữu phiên, truy vấn dữ liệu, đưa tác vụ vào hàng đợi, gọi AI hoặc tổng hợp báo cáo.
+
+Dependency injection được dùng để kết nối các thành phần như service truy cập cơ sở dữ liệu, service phát sự kiện trạng thái, hàng đợi xử lý nền và lớp tích hợp AI. Nhờ đó, khi viết test, hệ thống có thể giả lập phụ thuộc bên ngoài thay vì gọi cơ sở dữ liệu, Redis hoặc API AI thật. Điều này đặc biệt quan trọng với hệ thống AI vì các dịch vụ bên ngoài có độ trễ, chi phí và khả năng lỗi cao hơn xử lý nội bộ [3.6-T1].
+
+#### Lý do chọn
+
+Mô hình module-controller-service phù hợp vì hệ thống cần phân biệt rõ tầng API và tầng nghiệp vụ. Nếu controller chứa quá nhiều logic, backend sẽ khó kiểm thử và khó thay đổi khi yêu cầu sản phẩm thay đổi. Nếu service tự khởi tạo phụ thuộc, hệ thống sẽ khó thay thế thành phần AI, queue hoặc database trong môi trường test.
+
+So với tổ chức mã nguồn theo file rời rạc, module của NestJS tạo ra ranh giới dễ hiểu hơn. So với tự viết cơ chế dependency injection, dùng cơ chế có sẵn của NestJS giảm rủi ro thiết kế sai và phù hợp với hệ sinh thái NestJS.
 
 ### 3.6.3 Validation, guard và exception filter
 
-Backend cần kiểm soát dữ liệu đầu vào trước khi xử lý. Validation giúp từ chối sớm các request thiếu trường, sai kiểu dữ liệu hoặc không đúng ràng buộc. Guard giúp kiểm tra quyền truy cập, ví dụ chỉ người dùng hợp lệ mới được thao tác với phiên của mình. Exception filter giúp chuẩn hóa lỗi trả về để frontend có thể hiển thị thông báo ổn định thay vì phụ thuộc vào lỗi kỹ thuật thô.
+#### Lý thuyết
 
-Các cơ chế này là nền tảng của backend chứ không phải logic nghiệp vụ riêng lẻ. Chúng giúp hệ thống an toàn hơn, dễ bảo trì hơn và giảm khả năng một lỗi nhỏ ở dữ liệu đầu vào làm hỏng toàn bộ luồng luyện phỏng vấn.
+Validation là quá trình kiểm tra dữ liệu đầu vào trước khi xử lý nghiệp vụ. NestJS cung cấp validation pipe để chuyển đổi và kiểm tra request dựa trên DTO, giúp từ chối sớm dữ liệu thiếu trường hoặc sai kiểu [3.6-S5]. Guard là cơ chế quyết định một request có được tiếp tục xử lý hay không, thường dùng cho xác thực và phân quyền. Exception filter giúp bắt lỗi và chuẩn hóa response lỗi thay vì để lỗi kỹ thuật thô đi thẳng ra client.
+
+Các cơ chế này thuộc nhóm cross-cutting concerns, nghĩa là chúng không phải một nghiệp vụ riêng lẻ nhưng ảnh hưởng đến toàn bộ hệ thống. Nếu thiếu validation, guard và xử lý lỗi thống nhất, backend dễ phát sinh lỗi khó hiểu, response không nhất quán và rủi ro truy cập sai dữ liệu.
+
+#### Ứng dụng trong hệ thống
+
+AI Mock Interview dùng validation để kiểm soát dữ liệu như cấu hình phiên, câu trả lời, URL âm thanh và thông tin hồ sơ. Guard được dùng để bảo vệ API yêu cầu người dùng hợp lệ, đồng thời có cơ chế riêng cho kết nối SSE vì EventSource không gửi header xác thực theo cách giống request thông thường. Exception filter chuẩn hóa lỗi nghiệp vụ để frontend nhận được mã lỗi và thông điệp ổn định [3.6-T1].
+
+Trong luồng phỏng vấn, các cơ chế này giúp ngăn nhiều lỗi từ sớm. Ví dụ, người dùng không hợp lệ không được truy cập phiên của người khác; request thiếu dữ liệu không được đưa vào hàng đợi AI; lỗi từ AI, cơ sở dữ liệu hoặc Redis được chuyển thành response có cấu trúc thay vì làm giao diện nhận lỗi không dự đoán được.
+
+#### Lý do chọn
+
+Validation, guard và exception filter phù hợp vì hệ thống xử lý dữ liệu người dùng và gọi nhiều dịch vụ bên ngoài. Một lỗi đầu vào nhỏ có thể dẫn tới lỗi hàng đợi, lỗi cơ sở dữ liệu hoặc lỗi AI nếu không được chặn ở biên hệ thống. Chuẩn hóa lỗi cũng giúp frontend hiển thị trạng thái rõ ràng hơn, đặc biệt trong các luồng chờ sinh câu hỏi hoặc tạo báo cáo.
+
+So với kiểm tra thủ công rải rác trong từng controller, cơ chế toàn cục của NestJS giúp giảm lặp lại và dễ bảo trì hơn. So với chỉ dựa vào kiểm tra ở frontend, validation ở backend an toàn hơn vì backend là nơi bảo vệ dữ liệu thật và xử lý nghiệp vụ chính.
 
 ### 3.6.4 REST API và Server-Sent Events
 
-REST API được dùng cho các thao tác request-response thông thường, ví dụ tạo phiên, lấy dữ liệu phiên, gửi câu trả lời hoặc tải báo cáo. Mô hình này phù hợp khi client gửi một yêu cầu rõ ràng và nhận một kết quả phản hồi sau đó.
+#### Lý thuyết
 
-Tuy nhiên, một số kết quả trong hệ thống không có ngay lập tức vì phụ thuộc vào AI hoặc xử lý nền. Với các trường hợp cần báo cho client biết trạng thái mới, hệ thống sử dụng Server-Sent Events (SSE). SSE là cơ chế cho phép server đẩy sự kiện một chiều đến trình duyệt qua kết nối HTTP đang mở [11]. So với WebSocket, SSE đơn giản hơn khi hệ thống chỉ cần gửi cập nhật từ server về client, chẳng hạn thông báo phiên đã sẵn sàng hoặc báo cáo đã tạo xong.
+REST API phù hợp với mô hình request-response: client gửi một yêu cầu rõ ràng và server trả về kết quả. Đây là cách giao tiếp phổ biến cho các thao tác như tạo dữ liệu, lấy dữ liệu, cập nhật trạng thái hoặc gửi biểu mẫu. Tuy nhiên, một số tác vụ không hoàn thành ngay trong một request, đặc biệt khi phụ thuộc vào xử lý nền hoặc dịch vụ AI.
+
+Server-Sent Events (SSE) là cơ chế cho phép server gửi sự kiện một chiều về trình duyệt qua kết nối HTTP đang mở [3.6-S6]. Trên trình duyệt, EventSource là API dùng để mở kết nối SSE và nhận sự kiện từ server [3.6-S7]. SSE phù hợp khi ứng dụng chủ yếu cần server đẩy trạng thái về client, không cần giao tiếp hai chiều liên tục như WebSocket.
+
+#### Ứng dụng trong hệ thống
+
+AI Mock Interview dùng REST API cho các thao tác chính: đăng nhập/refresh, tạo phiên, lấy câu hỏi, gửi câu trả lời, upload audio, lấy báo cáo và quản lý hồ sơ. Các thao tác này có điểm bắt đầu và kết quả rõ ràng, nên phù hợp với request-response.
+
+SSE được dùng cho các trạng thái phát sinh sau khi backend xử lý nền, ví dụ phiên đã có câu hỏi, feedback đã sẵn sàng, transcript đã tạo xong hoặc báo cáo đã hoàn thành. Frontend mở kết nối theo phiên để nhận sự kiện và cập nhật giao diện mà không yêu cầu người dùng tải lại trang. Backend dùng Redis Pub/Sub để phát sự kiện đến kênh tương ứng với phiên, sau đó SSE chuyển sự kiện về client [3.6-T2].
+
+#### Lý do chọn
+
+Kết hợp REST API và SSE phù hợp vì hệ thống có cả thao tác tức thời và thao tác nền. REST API giữ cho các hành động như gửi câu trả lời hoặc lấy báo cáo rõ ràng, dễ kiểm thử và dễ tài liệu hóa. SSE giải quyết phần cập nhật trạng thái khi AI hoặc worker xử lý lâu hơn thời gian người dùng mong đợi.
+
+So với polling liên tục, SSE giảm số lần client phải hỏi lại server và giúp giao diện phản hồi tự nhiên hơn. So với WebSocket, SSE đơn giản hơn cho nhu cầu hiện tại vì hệ thống chủ yếu gửi trạng thái từ server về client. Nếu sau này cần giao tiếp hai chiều thời gian thực phức tạp hơn, WebSocket có thể được xem xét, nhưng trong phạm vi hiện tại SSE là lựa chọn vừa đủ.
 
 ---
-*[7] NestJS. "Introduction." https://docs.nestjs.com/*
-*[8] NestJS. "Modules." https://docs.nestjs.com/modules*
-*[9] NestJS. "Controllers." https://docs.nestjs.com/controllers*
-*[10] NestJS. "Providers." https://docs.nestjs.com/providers*
-*[11] MDN Web Docs. "Server-sent events." https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events*
-*[3-T3] Backend implementation sources: `server/package.json`, `server/src/app.module.ts`, `server/src/main.ts`, `server/src/common`, `server/src/auth`, `server/src/session`, `server/src/turn`, `server/src/report`.*
+*Nguồn tham khảo mục 3.6:*
+*[3.6-S1] NestJS. "Introduction." https://docs.nestjs.com/*
+*[3.6-S2] NestJS. "Modules." https://docs.nestjs.com/modules*
+*[3.6-S3] NestJS. "Controllers." https://docs.nestjs.com/controllers*
+*[3.6-S4] NestJS. "Providers." https://docs.nestjs.com/providers*
+*[3.6-S5] NestJS. "Validation." https://docs.nestjs.com/techniques/validation*
+*[3.6-S6] MDN Web Docs. "Server-sent events." https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events*
+*[3.6-S7] MDN Web Docs. "EventSource." https://developer.mozilla.org/en-US/docs/Web/API/EventSource*
+*[3.6-T1] Backend implementation sources: `server/package.json`, `server/src/app.module.ts`, `server/src/main.ts`, `server/src/common`, `server/src/auth`, `server/src/session`, `server/src/turn`, `server/src/report`.*
+*[3.6-T2] SSE implementation sources: `server/src/common/services/sse.service.ts`, `server/src/session/session.controller.ts`, `client/app/(app)/sessions/[sessionId]/page.tsx`, `client/app/(app)/sessions/[sessionId]/report/page.tsx`.*
 
 ## 3.7 Công Nghệ Xử Lý Bất Đồng Bộ Và Cập Nhật Trạng Thái
 
-### 3.7.1 Nhu cầu xử lý bất đồng bộ
+### 3.7.1 Xử lý bất đồng bộ cho tác vụ AI
 
-Các tác vụ liên quan đến AI thường có thời gian xử lý không ổn định. Thời gian này phụ thuộc vào độ dài đầu vào, mô hình được dùng, tình trạng mạng và giới hạn của nhà cung cấp AI. Nếu giữ request HTTP mở cho đến khi AI trả về, người dùng có thể gặp timeout hoặc giao diện bị chờ lâu.
+#### Lý thuyết
 
-Vì vậy, hệ thống cần xử lý bất đồng bộ cho các tác vụ nặng. Request ban đầu chỉ cần ghi nhận yêu cầu và trả về trạng thái phù hợp; phần xử lý AI được chuyển sang hàng đợi nền. Khi có kết quả, hệ thống cập nhật trạng thái và gửi thông báo cho client. Cách tiếp cận này giúp giao diện phản hồi nhanh hơn và backend kiểm soát lỗi tốt hơn.
+Xử lý bất đồng bộ là cách tách những tác vụ kéo dài khỏi request HTTP trực tiếp. Với tác vụ AI, thời gian xử lý có thể thay đổi theo độ dài đầu vào, mô hình được dùng, tình trạng mạng và giới hạn của nhà cung cấp. Nếu giữ request mở cho đến khi AI trả về, người dùng có thể gặp timeout, giao diện bị chờ lâu và backend khó kiểm soát lỗi.
+
+Trong kiến trúc có hàng đợi, request ban đầu chỉ ghi nhận yêu cầu và đưa job vào queue. Worker xử lý job ở nền, sau đó cập nhật cơ sở dữ liệu hoặc phát sự kiện trạng thái. Cách này giúp hệ thống phản hồi nhanh hơn ở biên API và tách phần xử lý nặng ra khỏi luồng request-response.
+
+#### Ứng dụng trong hệ thống
+
+AI Mock Interview dùng xử lý bất đồng bộ cho các tác vụ như sinh câu hỏi, tạo feedback từng câu trả lời, chuyển âm thanh thành transcript và tạo báo cáo tổng hợp. Khi người dùng tạo phiên hoặc gửi câu trả lời, backend không nhất thiết phải chờ toàn bộ AI xử lý xong trong cùng một request. Thay vào đó, hệ thống lưu trạng thái, đưa tác vụ vào hàng đợi và cập nhật giao diện khi kết quả sẵn sàng [3.7-T1].
+
+Cách này phù hợp với trải nghiệm người dùng của hệ thống. Người dùng có thể thấy phiên đang tạo câu hỏi, feedback đang được xử lý hoặc báo cáo đang được tổng hợp. Khi worker hoàn thành, trạng thái được lưu và sự kiện được gửi về frontend để cập nhật màn hình.
+
+#### Lý do chọn
+
+Xử lý bất đồng bộ được chọn vì các tác vụ AI có độ trễ không ổn định và có thể thất bại vì lý do ngoài hệ thống, như quota hoặc lỗi mạng. Nếu xử lý đồng bộ trong request, một lỗi AI có thể làm hỏng toàn bộ thao tác của người dùng và làm API khó đáp ứng ổn định.
+
+So với cách xử lý đồng bộ đơn giản, hàng đợi giúp hệ thống chịu lỗi tốt hơn và dễ thêm retry, backoff hoặc fallback. So với việc yêu cầu người dùng tự bấm lại khi lỗi, xử lý nền giúp trải nghiệm mượt hơn và giảm thao tác thủ công. Đây là lựa chọn quan trọng với ứng dụng AI, nơi độ ổn định của sản phẩm không thể phụ thuộc hoàn toàn vào thời gian phản hồi của mô hình.
 
 ### 3.7.2 BullMQ và Redis
 
-AI Mock Interview sử dụng BullMQ 5 làm thư viện hàng đợi trên nền Redis. Theo tài liệu BullMQ, thư viện này được thiết kế cho hệ thống hàng đợi nhanh, có khả năng xử lý job phân tán và hỗ trợ các tính năng như retry, delayed jobs, concurrency và phục hồi sau lỗi tiến trình [12].
+#### Lý thuyết
 
-Redis đóng vai trò lưu trạng thái hàng đợi và job. Khi backend thêm một tác vụ vào hàng đợi, worker có thể lấy job đó để xử lý ở nền. Cách này phù hợp với các tác vụ như sinh câu hỏi, tạo feedback, tạo báo cáo hoặc các bước xử lý kéo dài khác. Điểm quan trọng trong Chương 3 là công nghệ hàng đợi giúp tách request ngắn của người dùng khỏi công việc nền có thời gian xử lý dài, không phải mô tả từng bước xử lý nội bộ.
+BullMQ là thư viện hàng đợi cho Node.js, được xây dựng trên Redis. Tài liệu BullMQ mô tả thư viện này dùng để tạo queue, thêm job, xử lý job bằng worker và hỗ trợ các tính năng như retry, delayed jobs, concurrency và quản lý trạng thái job [3.7-S1]. Redis là kho dữ liệu in-memory thường được dùng cho cache, hàng đợi, pub/sub và các cấu trúc dữ liệu tốc độ cao [3.7-S2].
+
+Trong mô hình BullMQ, Redis giữ trạng thái queue và job. Producer thêm job vào queue, worker lấy job ra xử lý, và hệ thống có thể theo dõi trạng thái job như chờ, đang chạy, hoàn thành hoặc thất bại. Điều này phù hợp với các tác vụ nền cần độ tin cậy cao hơn một lời gọi hàm trực tiếp.
+
+#### Ứng dụng trong hệ thống
+
+AI Mock Interview sử dụng BullMQ 5 trên Redis để quản lý các queue liên quan đến AI. Các queue phục vụ sinh câu hỏi, feedback, báo cáo và transcription. Với câu trả lời văn bản hoặc voice transcript đã được người dùng xác nhận, backend enqueue job feedback; với đường voice audio-only hoặc retry transcription, backend enqueue job transcription để worker gọi speech-to-text, lưu transcript và tiếp tục enqueue feedback [3.7-T1].
+
+Redis còn được dùng cho Pub/Sub trong luồng SSE. Vì BullMQ đã cần Redis làm hạ tầng hàng đợi, hệ thống tận dụng cùng loại hạ tầng này để truyền sự kiện trạng thái giữa worker và kết nối SSE. Cần phân biệt hai vai trò này: BullMQ dùng Redis để lưu và điều phối job; SSE dùng Redis Pub/Sub để phát sự kiện cập nhật đến đúng phiên [3.7-T2].
+
+#### Lý do chọn
+
+BullMQ và Redis phù hợp vì hệ thống cần xử lý nhiều tác vụ nền có thể thất bại tạm thời. BullMQ cung cấp sẵn mô hình queue, worker, retry và cấu hình số lần thử lại, giúp nhóm không phải tự xây dựng cơ chế điều phối job. Redis có tốc độ cao và là backend được BullMQ hỗ trợ trực tiếp.
+
+So với lưu job thủ công trong PostgreSQL rồi tự viết worker polling, BullMQ giảm đáng kể mã hạ tầng và có sẵn các khái niệm phù hợp với job nền. So với dùng một hệ thống message broker phức tạp hơn, Redis/BullMQ nhẹ hơn và phù hợp với quy mô GR1. Nếu hệ thống mở rộng lớn hơn nhiều, có thể cần đánh giá lại hạ tầng queue, nhưng hiện tại BullMQ đáp ứng tốt nhu cầu sinh câu hỏi, feedback và báo cáo.
 
 ### 3.7.3 Retry, backoff và fallback
 
-Một lợi ích chính của hàng đợi là khả năng thử lại khi lỗi tạm thời xảy ra. Ví dụ, lỗi mạng hoặc giới hạn tốc độ từ dịch vụ bên ngoài có thể được xử lý bằng retry và backoff. Thay vì bắt người dùng gửi lại thao tác thủ công, hệ thống có thể tự thử lại trong giới hạn đã cấu hình.
+#### Lý thuyết
 
-Fallback là lớp bảo vệ cuối cùng khi một tác vụ AI không thể hoàn thành như mong muốn. Trong hệ thống phỏng vấn thử, fallback giúp giảm rủi ro một lỗi từ dịch vụ AI làm ngắt toàn bộ phiên luyện tập. Ví dụ, hệ thống có thể dùng nội dung dự phòng hoặc câu hỏi có sẵn để tiếp tục trải nghiệm ở mức chấp nhận được. Đây là một quyết định kỹ thuật quan trọng vì ứng dụng AI cần tính ổn định, không chỉ cần chất lượng đầu ra tốt trong điều kiện lý tưởng [3-T4].
+Retry là cơ chế thử lại khi tác vụ thất bại. Backoff là cách tăng hoặc điều chỉnh khoảng thời gian giữa các lần thử lại để tránh gửi yêu cầu liên tục vào dịch vụ đang lỗi hoặc đang giới hạn tốc độ. Trong hệ thống dùng dịch vụ bên ngoài, retry phù hợp với lỗi tạm thời như mạng chập chờn hoặc rate limit ngắn hạn. Tuy nhiên, không phải lỗi nào cũng nên retry. Ví dụ, lỗi hết quota thường cần chuyển sang trạng thái suy giảm hoặc fallback thay vì lặp lại vô ích.
+
+Fallback là phương án dự phòng khi hệ thống không thể hoàn thành tác vụ theo cách lý tưởng. Với ứng dụng AI, fallback có thể là câu hỏi có sẵn, phản hồi mặc định hoặc báo cáo giới hạn. Fallback không nhằm thay thế chất lượng AI, mà nhằm giữ luồng sử dụng không bị sập hoàn toàn.
+
+#### Ứng dụng trong hệ thống
+
+AI Mock Interview dùng retry và fallback trong các luồng phụ thuộc vào AI. Khi lỗi có khả năng tạm thời, job có thể được thử lại theo cấu hình. Khi nhà cung cấp AI không thể trả kết quả hợp lệ hoặc gặp tình trạng không nên retry, hệ thống chuyển sang nội dung dự phòng để người dùng vẫn có thể tiếp tục phiên ở mức chấp nhận được [3.7-T1].
+
+Ví dụ, trong sinh câu hỏi, hệ thống có thể dùng kho câu hỏi để hỗ trợ khi AI không tạo được đủ câu hỏi. Trong feedback hoặc báo cáo, hệ thống có thể lưu trạng thái fallback để giao diện hiển thị rõ rằng kết quả không phải đánh giá AI đầy đủ. Cách xử lý này giúp phân biệt lỗi kỹ thuật với trải nghiệm người dùng, đồng thời tránh để một lỗi từ dịch vụ bên ngoài làm mất toàn bộ phiên luyện tập.
+
+#### Lý do chọn
+
+Retry, backoff và fallback phù hợp vì hệ thống AI không thể giả định dịch vụ bên ngoài luôn ổn định. Người dùng vẫn cần một trải nghiệm có kiểm soát khi gặp lỗi mạng, timeout, JSON sai định dạng hoặc quota AI. Nếu không có fallback, hệ thống dễ rơi vào trạng thái phiên lỗi và người dùng phải bắt đầu lại.
+
+So với chỉ báo lỗi ngay khi AI thất bại, fallback giúp sản phẩm hữu dụng hơn trong điều kiện không lý tưởng. So với retry không giới hạn, retry có kiểm soát an toàn hơn vì tránh lặp lại tác vụ tốn chi phí và làm tăng tải hệ thống. Cách này phù hợp với mục tiêu của ứng dụng luyện tập: ưu tiên trải nghiệm ổn định, minh bạch và có thể phục hồi.
 
 ### 3.7.4 Kết hợp hàng đợi và cập nhật trạng thái
 
-Hàng đợi giải quyết phần xử lý nền, còn SSE giải quyết phần thông báo trạng thái cho giao diện. Hai công nghệ này bổ sung cho nhau: BullMQ và Redis giúp backend xử lý tác vụ dài ở nền; SSE giúp frontend biết khi nào trạng thái phiên hoặc báo cáo đã thay đổi. Nhờ đó, người dùng không cần liên tục tải lại trang để kiểm tra kết quả.
+#### Lý thuyết
+
+Hàng đợi và cập nhật trạng thái giải quyết hai vấn đề khác nhau. Hàng đợi xử lý phần công việc nền, còn cơ chế cập nhật trạng thái giúp frontend biết khi nào kết quả đã thay đổi. Nếu chỉ có hàng đợi mà không có cập nhật trạng thái, người dùng phải tải lại hoặc hệ thống phải polling liên tục. Nếu chỉ có SSE mà không có queue, tác vụ dài vẫn có thể làm request chính bị chờ lâu.
+
+Mô hình thường gặp là request tạo job, worker xử lý job, cơ sở dữ liệu lưu kết quả, sau đó server phát sự kiện để client cập nhật giao diện. SSE là một lựa chọn phù hợp khi luồng cập nhật chủ yếu đi từ server về client [3.7-S3].
+
+#### Ứng dụng trong hệ thống
+
+Trong AI Mock Interview, BullMQ xử lý tác vụ nền, Redis lưu và điều phối job, Redis Pub/Sub truyền sự kiện nội bộ, còn SSE đưa sự kiện đến trình duyệt. Khi câu hỏi đã sẵn sàng, feedback hoàn tất, transcript tạo xong hoặc báo cáo đã được sinh, frontend nhận sự kiện và cập nhật màn hình tương ứng [3.7-T2].
+
+Cách kết hợp này giúp trải nghiệm phỏng vấn rõ ràng hơn. Người dùng không phải tự đoán liệu hệ thống đang xử lý hay đã bị lỗi. Giao diện có thể hiển thị trạng thái chờ, tiến độ feedback hoặc trạng thái báo cáo, trong khi backend vẫn giữ công việc nặng ở worker nền.
+
+#### Lý do chọn
+
+Kết hợp queue và SSE phù hợp vì hệ thống có nhiều trạng thái chuyển tiếp. Một phiên có thể đang sinh câu hỏi, đang chờ câu trả lời, đang xử lý feedback, đang tạo báo cáo hoặc đã hoàn tất. Nếu không cập nhật trạng thái kịp thời, người dùng sẽ có cảm giác hệ thống bị treo dù backend vẫn đang xử lý.
+
+So với polling, SSE giúp giảm request lặp lại và phản hồi gần thời gian thực hơn. So với WebSocket, SSE đơn giản hơn cho nhu cầu gửi trạng thái một chiều. Việc dùng Redis cho cả BullMQ và Pub/Sub cũng giảm số loại hạ tầng phải vận hành trong phạm vi dự án.
 
 ---
-*[12] BullMQ. "What is BullMQ." https://docs.bullmq.io/*
-*[3-T4] Async processing implementation sources: `server/package.json`, `server/src/common/constants/queue.constants.ts`, `server/src/ai/ai.module.ts`, `server/src/ai/processors`, `server/src/common/services/sse.service.ts`.*
+*Nguồn tham khảo mục 3.7:*
+*[3.7-S1] BullMQ. "What is BullMQ." https://docs.bullmq.io/*
+*[3.7-S2] Redis. "Develop with Redis." https://redis.io/docs/latest/develop/*
+*[3.7-S3] MDN Web Docs. "Server-sent events." https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events*
+*[3.7-T1] Async processing implementation sources: `server/package.json`, `server/src/ai/ai.module.ts`, `server/src/ai/processors`, `server/src/common/constants/queue.constants.ts`, `server/src/question-bank`.*
+*[3.7-T2] Status update implementation sources: `server/src/common/services/sse.service.ts`, `docs/Design/ArchitecturalDesign/ADRs/ADR-006_sse-redis-pubsub.md`, `docs/Design/ArchitecturalDesign/ADRs/ADR-007_bullmq-upgrade.md`.*
 
 ## 3.8 Công Nghệ Lưu Trữ Dữ Liệu Và Truy Cập Cơ Sở Dữ Liệu
 
 ### 3.8.1 PostgreSQL và Supabase
 
-AI Mock Interview sử dụng PostgreSQL làm hệ quản trị cơ sở dữ liệu quan hệ, được triển khai thông qua Supabase. Supabase cung cấp nền tảng backend-as-a-service trên PostgreSQL, kèm các thành phần như xác thực, lưu trữ và công cụ quản trị dữ liệu [13].
+#### Lý thuyết
 
-PostgreSQL phù hợp với hệ thống vì dữ liệu của dự án có nhiều quan hệ rõ ràng: người dùng, hồ sơ, phiên phỏng vấn, câu hỏi, câu trả lời, feedback và báo cáo. Cơ sở dữ liệu quan hệ giúp biểu diễn các liên kết này chặt chẽ hơn so với chỉ lưu dữ liệu rời rạc. Ngoài ra, PostgreSQL hỗ trợ kiểu JSON/JSONB, phù hợp với các phần dữ liệu bán cấu trúc như rubric, nội dung báo cáo hoặc điểm theo nhóm năng lực [14].
+PostgreSQL là hệ quản trị cơ sở dữ liệu quan hệ mã nguồn mở. Trong mô hình quan hệ, dữ liệu được tổ chức thành bảng, quan hệ, khóa và ràng buộc, phù hợp với các hệ thống cần bảo đảm tính nhất quán giữa nhiều nhóm dữ liệu. Supabase cung cấp mỗi dự án một cơ sở dữ liệu PostgreSQL đầy đủ, kèm các thành phần như Auth, Storage, Realtime, công cụ quản trị, backup và extension [3.8-S1].
+
+Supabase không phải một lớp dữ liệu tách khỏi PostgreSQL, mà xây dựng nhiều dịch vụ xung quanh PostgreSQL. Điều này có nghĩa ứng dụng vẫn có thể dùng các khả năng quen thuộc của PostgreSQL như bảng, quan hệ, ràng buộc, chỉ mục và SQL, đồng thời tận dụng dịch vụ được quản lý để giảm công vận hành.
+
+#### Ứng dụng trong hệ thống
+
+AI Mock Interview sử dụng PostgreSQL qua Supabase để lưu dữ liệu người dùng, hồ sơ, mô tả công việc đã lưu, phiên phỏng vấn, câu hỏi, câu trả lời, feedback, báo cáo và kho câu hỏi. Supabase cũng được dùng trong luồng xác thực và lưu trữ tệp âm thanh cho voice mode. Backend truy cập dữ liệu nghiệp vụ thông qua Prisma, còn frontend dùng Supabase client cho các phần liên quan đến phiên đăng nhập [3.8-T1].
+
+Dữ liệu của hệ thống có nhiều quan hệ rõ ràng. Một người dùng có thể có nhiều phiên phỏng vấn; một phiên có nhiều câu hỏi; mỗi câu hỏi có thể có câu trả lời; câu trả lời có feedback; phiên có báo cáo tổng hợp. Cơ sở dữ liệu quan hệ giúp biểu diễn các liên kết này chặt chẽ hơn so với lưu tài liệu rời rạc.
+
+#### Lý do chọn
+
+PostgreSQL phù hợp vì hệ thống cần nhất quán dữ liệu giữa nhiều bảng. Nếu dùng cơ sở dữ liệu document-only, việc bảo đảm quan hệ giữa người dùng, phiên, câu hỏi, câu trả lời và báo cáo sẽ phụ thuộc nhiều hơn vào logic ứng dụng. PostgreSQL cung cấp ràng buộc, khóa ngoại, transaction và chỉ mục, phù hợp với dữ liệu có quan hệ rõ.
+
+Supabase phù hợp với giai đoạn phát triển vì giảm chi phí vận hành PostgreSQL, Auth và Storage. So với tự triển khai PostgreSQL, Supabase giúp nhóm tập trung vào chức năng phỏng vấn thử. So với Firebase/Firestore, PostgreSQL phù hợp hơn với dữ liệu quan hệ của dự án và dễ kết hợp với Prisma. Điểm cần lưu ý là Supabase tạo một mức phụ thuộc vào nền tảng, nhưng trong phạm vi GR1 lợi ích về tốc độ triển khai và tích hợp lớn hơn rủi ro này.
 
 ### 3.8.2 Prisma ORM
 
-Prisma ORM 7.8 được dùng làm lớp truy cập cơ sở dữ liệu trong backend. Prisma cung cấp Prisma Client, một bộ truy vấn được sinh tự động từ schema và có kiểm tra kiểu cho TypeScript [15]. Điều này giúp lập trình viên thao tác với dữ liệu an toàn hơn, vì nhiều sai lệch về tên trường hoặc kiểu dữ liệu có thể được phát hiện trong quá trình phát triển.
+#### Lý thuyết
 
-Trong dự án, Prisma đóng vai trò cầu nối giữa NestJS và PostgreSQL. Schema Prisma mô tả các bảng, quan hệ, chỉ mục và một số ràng buộc dữ liệu. Từ schema đó, backend có thể truy vấn dữ liệu theo cách rõ ràng hơn so với viết toàn bộ SQL thủ công. Với một hệ thống có nhiều nhóm dữ liệu như phỏng vấn, feedback và báo cáo, Prisma giúp giảm lỗi lặp lại và giữ mô hình dữ liệu nhất quán hơn [3-T5].
+Prisma ORM là công cụ truy cập cơ sở dữ liệu cho ứng dụng TypeScript và JavaScript. Tài liệu Prisma mô tả Prisma ORM gồm Prisma Schema, Prisma Client và các công cụ hỗ trợ làm việc với cơ sở dữ liệu [3.8-S2]. Prisma Client là client truy vấn được sinh tự động, có kiểm tra kiểu và dựa trên schema của ứng dụng [3.8-S3].
+
+Prisma Schema mô tả datasource, generator, model, quan hệ và một số thuộc tính dữ liệu [3.8-S4]. Từ schema này, Prisma tạo client để backend truy vấn cơ sở dữ liệu bằng API TypeScript thay vì viết SQL thủ công cho mọi thao tác. Tuy nhiên, Prisma không thay thế hoàn toàn SQL, đặc biệt với các ràng buộc hoặc đặc tính nâng cao của PostgreSQL.
+
+#### Ứng dụng trong hệ thống
+
+Trong AI Mock Interview, Prisma là lớp truy cập dữ liệu chính của backend. Schema Prisma mô tả các nhóm dữ liệu như người dùng, hồ sơ, mô tả công việc, phiên phỏng vấn, câu hỏi phiên, câu trả lời, feedback, đoạn nhận xét, báo cáo và kho câu hỏi. Backend dùng Prisma để tạo, đọc, cập nhật và liên kết dữ liệu trong các luồng nghiệp vụ [3.8-T2].
+
+Prisma cũng giúp backend TypeScript làm việc với dữ liệu nhất quán hơn. Khi schema thay đổi, client được sinh lại để phản ánh cấu trúc mới. Điều này giảm rủi ro sai tên trường hoặc sai kiểu dữ liệu trong quá trình phát triển, nhất là với các bảng có nhiều quan hệ như phiên, câu hỏi, câu trả lời và feedback.
+
+#### Lý do chọn
+
+Prisma phù hợp vì nhóm phát triển dùng TypeScript ở backend và cần thao tác với cơ sở dữ liệu quan hệ có nhiều bảng. Prisma giúp mã truy cập dữ liệu dễ đọc hơn so với viết SQL thủ công ở mọi nơi, đồng thời vẫn cho phép dùng SQL bổ sung khi cần tận dụng khả năng riêng của PostgreSQL.
+
+So với viết toàn bộ SQL bằng thư viện truy vấn thấp hơn, Prisma giảm lỗi lặp lại và tăng khả năng kiểm tra kiểu. So với một ORM truyền thống nhiều cấu hình runtime, Prisma có schema rõ ràng và client sinh tự động, phù hợp với dự án cần phát triển nhanh. Nhược điểm là một số ràng buộc nâng cao không được biểu diễn đầy đủ trong Prisma, nên hệ thống cần bổ sung quy trình SQL riêng cho phần đó.
 
 ### 3.8.3 JSONB, giao dịch và ràng buộc dữ liệu
 
-Không phải mọi dữ liệu trong hệ thống đều có cấu trúc cố định hoàn toàn. Rubric, điểm theo năng lực, nội dung báo cáo và một số metadata có thể thay đổi theo loại phiên hoặc phiên bản prompt. PostgreSQL JSONB phù hợp với các phần này vì cho phép lưu dữ liệu dạng JSON trong cơ sở dữ liệu quan hệ, đồng thời vẫn giữ được các bảng và quan hệ chính của hệ thống [14].
+#### Lý thuyết
 
-Bên cạnh JSONB, hệ thống cũng cần giao dịch và ràng buộc dữ liệu để bảo vệ tính nhất quán. Ví dụ, một câu trả lời cần gắn với đúng phiên và đúng câu hỏi; một báo cáo cần thuộc về một phiên cụ thể; điểm số và trạng thái cần nằm trong phạm vi hợp lệ. Các ràng buộc này giúp cơ sở dữ liệu trở thành lớp bảo vệ bổ sung, không chỉ dựa vào kiểm tra ở backend.
+PostgreSQL hỗ trợ hai kiểu dữ liệu JSON là `json` và `jsonb`. Tài liệu PostgreSQL nêu rằng `jsonb` lưu dữ liệu ở dạng nhị phân đã phân rã, giúp xử lý hiệu quả hơn và hỗ trợ indexing, trong khi `json` giữ bản sao văn bản đầu vào [3.8-S5]. JSONB phù hợp với dữ liệu bán cấu trúc, nghĩa là dữ liệu vẫn thuộc một bản ghi quan hệ nhưng phần nội dung bên trong có thể thay đổi linh hoạt.
 
-### 3.8.4 Đồng bộ schema và phần SQL bổ sung
+Transaction là cơ chế nhóm nhiều thao tác cơ sở dữ liệu thành một đơn vị nhất quán. PostgreSQL cho phép commit toàn bộ khi thành công hoặc rollback khi có lỗi [3.8-S6]. Constraint là ràng buộc dữ liệu ở tầng cơ sở dữ liệu, ví dụ khóa chính, khóa ngoại, unique, check và not null, giúp bảo vệ tính hợp lệ của dữ liệu ngay cả khi lỗi xảy ra ở tầng ứng dụng [3.8-S7].
 
-Trong giai đoạn phát triển hiện tại, dự án dùng Prisma để đồng bộ phần schema chính với cơ sở dữ liệu. Tuy nhiên, một số ràng buộc nâng cao của PostgreSQL không phải lúc nào cũng được biểu diễn đầy đủ bằng Prisma. Vì vậy, dự án có thêm quy trình áp dụng SQL bổ sung cho các thành phần như chính sách bảo vệ dữ liệu, trigger, ràng buộc kiểm tra và chỉ mục đặc thù [3-T6].
+#### Ứng dụng trong hệ thống
 
-Điểm cần nhấn mạnh ở Chương 3 là đây là lựa chọn công nghệ để cân bằng giữa tốc độ phát triển và an toàn dữ liệu. Prisma giúp mô hình dữ liệu dễ đọc, dễ dùng trong TypeScript; SQL bổ sung giúp tận dụng các khả năng mạnh của PostgreSQL khi cần bảo vệ dữ liệu ở tầng cơ sở dữ liệu.
+AI Mock Interview dùng JSON/JSONB cho các dữ liệu có cấu trúc linh hoạt như rubric, điểm theo năng lực, nội dung báo cáo, bản dịch câu hỏi, metadata hồ sơ và thông tin phụ trợ của câu trả lời. Những dữ liệu này có thể khác nhau theo loại phiên, context pack hoặc phiên bản prompt, nên không phải lúc nào cũng phù hợp để tách thành nhiều cột cố định.
+
+Transaction và ràng buộc dữ liệu được dùng để bảo vệ tính nhất quán giữa các thực thể chính. Ví dụ, câu trả lời phải gắn với đúng phiên và đúng câu hỏi; feedback phải gắn với câu trả lời; báo cáo phải thuộc về phiên; một số trạng thái, điểm số hoặc kiểu dữ liệu cần nằm trong miền hợp lệ. Các ràng buộc này giúp cơ sở dữ liệu trở thành lớp bảo vệ bổ sung cho backend [3.8-T2].
+
+#### Lý do chọn
+
+JSONB phù hợp vì hệ thống AI thường có dữ liệu thay đổi theo phiên bản prompt hoặc rubric. Nếu ép toàn bộ dữ liệu AI thành cột cố định, schema sẽ nhanh chóng phức tạp và khó thay đổi. Nếu lưu toàn bộ dữ liệu trong document không quan hệ, hệ thống lại mất lợi thế của PostgreSQL trong quản lý quan hệ phiên, câu hỏi, câu trả lời và báo cáo.
+
+Transaction và constraint phù hợp vì dữ liệu phỏng vấn có liên kết chặt chẽ. So với chỉ kiểm tra ở service backend, ràng buộc ở database an toàn hơn vì vẫn bảo vệ dữ liệu khi có bug ứng dụng, retry job hoặc nhiều request gần nhau. Cách kết hợp bảng quan hệ với JSONB giúp hệ thống cân bằng giữa tính nhất quán và độ linh hoạt.
+
+### 3.8.4 Đồng bộ Prisma schema và phần SQL bổ sung
+
+#### Lý thuyết
+
+Prisma Schema là nguồn mô tả model và quan hệ ở tầng ứng dụng, còn SQL là ngôn ngữ gốc để định nghĩa và điều chỉnh nhiều đặc tính của PostgreSQL. Trong thực tế, không phải mọi khả năng của PostgreSQL đều được biểu diễn đầy đủ hoặc thuận tiện bằng Prisma Schema. Vì vậy, một số dự án kết hợp ORM cho phần mô hình chính với SQL bổ sung cho ràng buộc nâng cao, trigger, policy hoặc index đặc thù.
+
+Cách kết hợp này yêu cầu quy trình đồng bộ rõ ràng. Nếu Prisma schema và SQL bổ sung không được áp dụng cùng nhau, cơ sở dữ liệu thật có thể lệch khỏi mô hình ứng dụng. Khi đó backend có thể gặp lỗi truy vấn, thiếu cột, thiếu ràng buộc hoặc hành vi khác môi trường phát triển.
+
+#### Ứng dụng trong hệ thống
+
+AI Mock Interview dùng Prisma để quản lý phần schema chính và có thêm SQL bổ sung cho các ràng buộc hoặc hardening ở tầng PostgreSQL. Repo có script kiểm tra và áp dụng SQL sau khi đồng bộ Prisma, đồng thời có tài liệu kiến trúc ghi nhận quyết định dùng raw SQL ngoài phạm vi Prisma push [3.8-T3].
+
+SQL bổ sung phục vụ các yêu cầu như bảo vệ dữ liệu, bổ sung ràng buộc kiểm tra, trigger, chỉ mục đặc thù và các quy tắc không thuận tiện khi chỉ dùng Prisma. Trong Chương 3, điểm quan trọng là công nghệ lưu trữ không chỉ gồm ORM, mà còn gồm quy trình vận hành để cơ sở dữ liệu thật giữ đúng các ràng buộc mà hệ thống cần.
+
+#### Lý do chọn
+
+Kết hợp Prisma schema và SQL bổ sung phù hợp vì dự án cần cả tốc độ phát triển lẫn an toàn dữ liệu. Prisma giúp backend TypeScript thao tác dữ liệu thuận tiện; SQL bổ sung giúp tận dụng khả năng đầy đủ của PostgreSQL khi cần ràng buộc nâng cao. Nếu chỉ dùng Prisma, một số bảo vệ dữ liệu có thể phải dồn lên service code. Nếu chỉ dùng SQL thủ công, tốc độ phát triển và kiểm tra kiểu ở backend sẽ giảm.
+
+So với bỏ qua các ràng buộc nâng cao để đơn giản hóa triển khai, quy trình SQL bổ sung giúp hệ thống bền hơn khi có retry, job nền hoặc lỗi ứng dụng. Chi phí đánh đổi là nhóm phải duy trì quy trình đồng bộ cẩn thận, nhưng đây là chi phí hợp lý với hệ thống có dữ liệu phiên phỏng vấn, feedback và báo cáo liên kết chặt chẽ.
 
 ### 3.8.5 Các nhóm dữ liệu chính trong hệ thống
 
-Ở mức tổng quan công nghệ, dữ liệu của AI Mock Interview có thể chia thành bốn nhóm chính:
+#### Lý thuyết
+
+Trong thiết kế cơ sở dữ liệu, việc chia dữ liệu thành các nhóm theo miền nghiệp vụ giúp mô hình dễ hiểu hơn. Với cơ sở dữ liệu quan hệ, mỗi nhóm dữ liệu có thể được biểu diễn bằng một hoặc nhiều bảng, liên kết bằng khóa và ràng buộc. Cách tổ chức này giúp hệ thống truy vấn, bảo vệ và mở rộng dữ liệu theo từng chức năng.
+
+Việc phân nhóm dữ liệu ở Chương 3 chỉ nhằm giải thích vai trò công nghệ lưu trữ. Thiết kế chi tiết từng bảng, quan hệ, index và luồng truy vấn thuộc phạm vi Chương 4 hoặc tài liệu thiết kế cơ sở dữ liệu.
+
+#### Ứng dụng trong hệ thống
+
+Ở mức tổng quan, dữ liệu của AI Mock Interview có thể chia thành các nhóm sau:
 
 | Nhóm dữ liệu | Vai trò trong hệ thống |
 | --- | --- |
-| Người dùng và hồ sơ | Lưu thông tin tài khoản, hồ sơ cá nhân và định hướng nghề nghiệp |
-| Phiên phỏng vấn | Lưu cấu hình phiên, loại phỏng vấn, câu hỏi và câu trả lời |
-| Feedback và báo cáo | Lưu kết quả đánh giá, nhận xét, điểm số và nội dung tổng hợp sau phiên |
-| Kho câu hỏi | Lưu câu hỏi có sẵn để hỗ trợ sinh câu hỏi và đảm bảo hệ thống có phương án dự phòng |
+| Người dùng và hồ sơ | Lưu tài khoản, hồ sơ cá nhân, định hướng nghề nghiệp và thông tin phục vụ cá nhân hóa phiên luyện tập |
+| Mô tả công việc | Lưu JD người dùng nhập hoặc lưu lại để tái sử dụng khi tạo phiên phỏng vấn |
+| Phiên phỏng vấn | Lưu cấu hình phiên, loại phỏng vấn, context pack, trạng thái và thông tin tổng quan của phiên |
+| Câu hỏi và câu trả lời | Lưu câu hỏi trong phiên, thứ tự câu hỏi, câu trả lời văn bản hoặc transcript và metadata liên quan |
+| Feedback và báo cáo | Lưu điểm số, nhận xét, đoạn cần cải thiện, câu trả lời mẫu và báo cáo tổng hợp sau phiên |
+| Kho câu hỏi | Lưu câu hỏi có sẵn để hỗ trợ sinh câu hỏi và làm phương án dự phòng khi AI không tạo được kết quả phù hợp |
 
-Cách chia này chỉ nhằm giải thích nền tảng lưu trữ dữ liệu. Thiết kế chi tiết từng bảng, quan hệ và thuật toán chọn dữ liệu phù hợp hơn với Chương 4, nơi trình bày kiến trúc và thiết kế triển khai của hệ thống.
+Các nhóm này được lưu trên PostgreSQL và truy cập qua Prisma ở backend. Một số nội dung linh hoạt như rubric, điểm theo năng lực hoặc nội dung báo cáo được lưu bằng JSON/JSONB để dễ thích ứng với nhiều loại phiên [3.8-T2].
+
+#### Lý do chọn
+
+Cách phân nhóm dữ liệu này phù hợp vì luồng nghiệp vụ của hệ thống xoay quanh phiên phỏng vấn. Người dùng tạo phiên từ mô tả công việc, hệ thống sinh câu hỏi, người dùng trả lời, AI tạo feedback và cuối cùng hệ thống tổng hợp báo cáo. Nếu dữ liệu không được nhóm rõ ràng, việc truy xuất lịch sử phiên, hiển thị báo cáo hoặc kiểm tra tiến độ feedback sẽ khó bảo trì.
+
+So với lưu mọi thứ trong một bảng lớn hoặc một JSON document duy nhất, phân nhóm theo quan hệ giúp dữ liệu dễ truy vấn và kiểm soát hơn. So với mô hình quá chi tiết ngay từ đầu, cách chia nhóm ở mức vừa đủ giúp Chương 3 giải thích nền tảng công nghệ mà không lặp lại thiết kế chi tiết của Chương 4.
 
 ---
-*[13] Supabase. "Database." https://supabase.com/docs/guides/database/overview*
-*[14] PostgreSQL. "JSON Types." https://www.postgresql.org/docs/current/datatype-json.html*
-*[15] Prisma. "Prisma ORM." https://www.prisma.io/docs/orm*
-*[3-T5] Database implementation sources: `server/prisma/schema.prisma`, `server/prisma.config.ts`, `server/src/prisma`, `server/package.json`.*
-*[3-T6] Raw SQL synchronization sources: `docs/Design/ArchitecturalDesign/ADRs/ADR-008_raw-sql-outside-prisma-db-push.md`, `server/prisma/migrations/migration.sql`, `server/prisma/verify-db-hardening.ts`.*
+*Nguồn tham khảo mục 3.8:*
+*[3.8-S1] Supabase. "Database." https://supabase.com/docs/guides/database/overview*
+*[3.8-S2] Prisma. "What is Prisma ORM?" https://www.prisma.io/docs/orm*
+*[3.8-S3] Prisma. "Introduction to Prisma Client." https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/introduction*
+*[3.8-S4] Prisma. "Prisma schema." https://www.prisma.io/docs/orm/prisma-schema/overview*
+*[3.8-S5] PostgreSQL. "JSON Types." https://www.postgresql.org/docs/current/datatype-json.html*
+*[3.8-S6] PostgreSQL. "Transactions." https://www.postgresql.org/docs/current/tutorial-transactions.html*
+*[3.8-S7] PostgreSQL. "Constraints." https://www.postgresql.org/docs/current/ddl-constraints.html*
+*[3.8-T1] Supabase and database implementation sources: `client/lib/supabase.ts`, `client/lib/supabase-server.ts`, `server/src/auth`, `server/src/turn/audio-storage.service.ts`, `server/prisma/schema.prisma`.*
+*[3.8-T2] Prisma data model sources: `server/prisma/schema.prisma`, `server/prisma.config.ts`, `server/src/prisma/prisma.service.ts`, `server/package.json`.*
+*[3.8-T3] Raw SQL synchronization sources: `docs/Design/ArchitecturalDesign/ADRs/ADR-008_raw-sql-outside-prisma-db-push.md`, `server/prisma/migrations/migration.sql`, `server/prisma/verify-db-hardening.ts`, `server/package.json`.*
