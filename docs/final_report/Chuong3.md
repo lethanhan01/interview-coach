@@ -45,7 +45,24 @@ Từ đó, có thể xem phỏng vấn CNTT là hoạt động đánh giá đồ
 
 ### 3.2.2. Các loại hình phỏng vấn chính trong tuyển dụng CNTT
 
-Trong thực tế tuyển dụng CNTT có nhiều hình thức phỏng vấn như screening call, HR interview, technical interview, live coding, system design, behavioral interview, culture fit interview hoặc final interview. Tuy nhiên, trong phạm vi đề tài AI Mock Interview, hai nhóm quan trọng nhất cần được mô hình hóa là **Technical Interview** và **Behavioral Interview**. Hai nhóm này bao phủ phần lớn nội dung mà sinh viên và fresher thường gặp khi ứng tuyển vị trí lập trình viên, tester, backend, frontend hoặc fullstack.
+Trong thực tế tuyển dụng CNTT, quy trình phỏng vấn không chỉ gồm một buổi hỏi đáp chung. Tùy công ty, cấp độ ứng viên và vị trí ứng tuyển, nhà tuyển dụng có thể kết hợp nhiều vòng như screening call, HR interview, technical knowledge interview, live coding, system design, take-home assignment, portfolio/project review, behavioral interview, culture fit interview hoặc final interview. Các vòng này có thể được tách riêng ở công ty lớn, hoặc được gộp thành một buổi combined screening ở startup và doanh nghiệp vừa/nhỏ.
+
+Nếu xét theo nhóm vị trí trong ngành CNTT, các hình thức phỏng vấn thường gặp có thể khái quát như sau:
+
+| Nhóm vị trí | Loại phỏng vấn thường gặp | Nội dung đánh giá chính |
+| --- | --- | --- |
+| Backend, Frontend, Fullstack, Mobile | Technical knowledge, coding/live coding, review dự án, behavioral | Ngôn ngữ lập trình, framework, API, database, UI, debugging, testing, khả năng giải thích lựa chọn kỹ thuật |
+| Data Analyst, Data Engineer, AI/ML Engineer | SQL/Python test, data case, ML/system scenario, technical knowledge, behavioral | Xử lý dữ liệu, thống kê, pipeline, mô hình học máy, đánh giá kết quả, diễn giải insight |
+| QA/Tester/Automation Test | Technical knowledge, test case design, bug analysis, automation scenario, behavioral | Tư duy kiểm thử, thiết kế test case, phân loại lỗi, công cụ automation, giao tiếp với developer/product |
+| DevOps/Cloud/SRE | Technical knowledge, system operation scenario, troubleshooting, system design cơ bản, behavioral | Linux, network, CI/CD, container, cloud, monitoring, incident handling, reliability |
+| Security Engineer | Technical knowledge, security scenario, threat modeling, incident response, behavioral | Web security, authentication, authorization, vulnerability analysis, risk awareness |
+| Product Manager, Business Analyst | Product/case interview, requirement analysis, stakeholder scenario, behavioral | Tư duy sản phẩm, phân tích yêu cầu, ưu tiên backlog, giao tiếp với kỹ thuật và nghiệp vụ |
+| UI/UX Designer | Portfolio review, design critique, product case, behavioral | Quy trình thiết kế, user research, wireframe/prototype, usability, khả năng bảo vệ quyết định thiết kế |
+| Intern/Fresher CNTT nói chung | HR/behavioral, technical fundamentals, project review, mixed interview | Nền tảng chuyên môn, dự án học tập, khả năng học hỏi, teamwork, động lực và mức độ phù hợp với vị trí |
+
+Như vậy, nếu mô tả đầy đủ thực tế tuyển dụng CNTT thì cần thừa nhận nhiều dạng phỏng vấn khác nhau. Tuy nhiên, trong phạm vi đề tài AI Mock Interview, hệ thống không hướng đến mô phỏng toàn bộ mọi vòng phỏng vấn nói trên. Trọng tâm của đề tài là mô phỏng hai loại phỏng vấn cốt lõi: **Technical Interview** và **Behavioral Interview**. Đây là hai nhóm có tính nền tảng, xuất hiện trong hầu hết các quy trình tuyển dụng CNTT và phù hợp nhất với mục tiêu luyện tập cho sinh viên, fresher thông qua câu hỏi - câu trả lời - feedback bằng ngôn ngữ tự nhiên [3.2-S5].
+
+Các dạng như live coding, system design chuyên sâu, take-home assignment, portfolio review hoặc product case có thể xuất hiện trong tuyển dụng thực tế, nhưng chưa phải phạm vi mô phỏng chính của đề tài. Trong hệ thống hiện tại, phiên **Mixed Interview** được hiểu là phiên kết hợp câu hỏi kỹ thuật và hành vi trong cùng một buổi luyện tập, không phải một loại phỏng vấn độc lập ngang hàng với Technical và Behavioral [3.2-S5].
 
 | Loại phỏng vấn | Mục đích chính | Nội dung đánh giá | Ví dụ câu hỏi |
 | --- | --- | --- | --- |
@@ -64,6 +81,8 @@ Technical Interview là hình thức phỏng vấn tập trung vào năng lực 
 
 Mục đích của Technical Interview không chỉ là kiểm tra đáp án đúng hay sai. Nhà tuyển dụng còn quan tâm đến cách ứng viên phân tích vấn đề, đặt giả định, giải thích trade-off, xử lý lỗi và bảo vệ lựa chọn kỹ thuật. Với fresher, một câu trả lời tốt không nhất thiết phải quá nâng cao, nhưng cần cho thấy ứng viên hiểu phần mình đã làm và có khả năng học thêm khi gặp giới hạn.
 
+Trong ngành CNTT, Technical Interview có thể xuất hiện dưới nhiều biến thể. Với vị trí backend, câu hỏi thường tập trung vào API, cơ sở dữ liệu, authentication, transaction, caching và thiết kế service. Với frontend, trọng tâm chuyển sang HTML/CSS/JavaScript, framework, state management, hiệu năng giao diện và giao tiếp với API. Với mobile, câu hỏi thường xoay quanh vòng đời ứng dụng, lưu trữ cục bộ, networking, permission và tối ưu tài nguyên. Với data/AI, nội dung thường gồm SQL, Python, thống kê, pipeline dữ liệu, machine learning và cách đánh giá mô hình. Với QA/Tester, DevOps hoặc Security, câu hỏi kỹ thuật sẽ nghiêng về test case, automation, CI/CD, cloud, monitoring, network hoặc bảo mật. Vì vậy, Technical Interview cần được hiểu là một nhóm phỏng vấn chuyên môn theo vai trò, không phải một bộ câu hỏi cố định dùng chung cho mọi vị trí.
+
 #### b. Quy trình cơ bản của Technical Interview
 
 Một buổi Technical Interview thường có quy trình như sau:
@@ -78,29 +97,42 @@ Một buổi Technical Interview thường có quy trình như sau:
 
 Không phải mọi công ty đều dùng đầy đủ các bước trên. Với fresher, nhiều buổi phỏng vấn tập trung nhiều hơn vào dự án học tập, kiến thức nền tảng và khả năng giải thích code đã viết. Với vị trí khó hơn, phỏng vấn có thể bổ sung live coding, system design hoặc bài tập take-home.
 
+Trong phạm vi AI Mock Interview, Technical Interview được mô phỏng chủ yếu ở dạng hỏi đáp kiến thức, giải thích dự án, phân tích tình huống kỹ thuật và phản biện trade-off. Hệ thống hiện tại chưa đặt trọng tâm vào live coding có editor, system design chuyên sâu với sơ đồ kiến trúc, hoặc chấm bài take-home như một quy trình riêng. Cách giới hạn này phù hợp với mục tiêu luyện tập bằng hội thoại và feedback văn bản cho sinh viên/fresher [3.2-S5].
+
 #### c. Các nhóm câu hỏi thường gặp trong Technical Interview
 
-* Câu hỏi về ngôn ngữ lập trình.
-* Câu hỏi về cơ sở dữ liệu.
-* Câu hỏi về API và backend.
-* Câu hỏi về frontend nếu ứng tuyển vị trí frontend/fullstack.
-* Câu hỏi về thuật toán và cấu trúc dữ liệu.
-* Câu hỏi về kiến trúc hệ thống.
-* Câu hỏi về bảo mật, authentication, authorization.
-* Câu hỏi về testing, debugging và xử lý lỗi.
-* Câu hỏi về dự án cá nhân hoặc dự án học tập.
-* Câu hỏi về trade-off khi chọn công nghệ hoặc cách triển khai.
-* Câu hỏi về khả năng đọc hiểu, bảo trì và cải thiện code.
+Các câu hỏi trong Technical Interview không nên chỉ được chia theo tên công nghệ cụ thể như backend, frontend, database hay framework. Cách chia đó dễ đúng với một vị trí nhất định nhưng không đủ tổng quát khi hệ thống cần hỗ trợ nhiều vai trò, nhiều mức kinh nghiệm và nhiều mô tả công việc khác nhau. Một cách phân loại phù hợp hơn là xem câu hỏi kỹ thuật theo hai lớp: lớp nội dung chuyên môn được hỏi và lớp năng lực tư duy mà câu hỏi muốn đánh giá.
 
-Ví dụ:
+Xét theo nội dung chuyên môn, câu hỏi kỹ thuật thường bao phủ các nhóm sau. Các nhóm này được tách theo trọng tâm đánh giá chính, nhờ đó có thể áp dụng cho nhiều vị trí như backend, frontend, mobile, data/AI, QA, DevOps hoặc security mà không phụ thuộc vào một công nghệ cụ thể.
 
-* Vì sao bạn chọn NestJS cho backend?
-* REST API là gì?
-* JWT hoạt động như thế nào?
-* Bạn thiết kế database cho hệ thống này ra sao?
-* Trong dự án, bạn gặp lỗi kỹ thuật nào và đã xử lý thế nào?
-* Nếu hệ thống có nhiều người dùng hơn, bạn sẽ tối ưu phần nào trước?
-* Bạn đã test chức năng này như thế nào?
+| Nhóm nội dung | Trọng tâm chính | Ranh giới phân biệt |
+| --- | --- | --- |
+| Nền tảng kỹ thuật | Kiểm tra nguyên lý, khái niệm và kiến thức cốt lõi mà ứng viên cần có để làm việc trong vai trò đã chọn | Tập trung vào kiến thức nền như ngôn ngữ lập trình, cấu trúc dữ liệu, hệ điều hành, mạng, HTTP, OOP, concurrency; chưa đi vào framework hay cách thiết kế một chức năng cụ thể |
+| Công nghệ và công cụ theo vị trí | Kiểm tra mức độ hiểu và sử dụng công cụ, framework, nền tảng hoặc thư viện đặc thù của công việc | Tập trung vào cách dùng React/Vue, NestJS/Spring, Android/iOS SDK, Docker, cloud service, test automation tool, ML framework; khác với nhóm nền tảng vì câu hỏi gắn với công cụ cụ thể |
+| Thiết kế và triển khai chức năng | Kiểm tra cách ứng viên chuyển một yêu cầu thành cấu trúc xử lý, luồng nghiệp vụ và mã nguồn có thể chạy được | Tập trung vào API behavior, UI flow, service flow, component/module, validation logic, job xử lý; không lấy dữ liệu, bảo mật hay hiệu năng làm trọng tâm chính trừ khi chúng là ràng buộc của chức năng |
+| Dữ liệu và tích hợp hệ thống | Kiểm tra cách ứng viên mô hình hóa, lưu trữ, trao đổi và đồng bộ dữ liệu giữa các thành phần | Tập trung vào SQL/NoSQL, schema, transaction, cache, message queue, API contract, third-party integration, data validation; khác với nhóm thiết kế chức năng vì trọng tâm là trạng thái dữ liệu và giao tiếp giữa hệ thống |
+| Kiểm thử, debugging và bảo trì | Kiểm tra khả năng chứng minh phần mềm chạy đúng, tìm nguyên nhân lỗi và giữ mã nguồn dễ phát triển lâu dài | Tập trung vào test case, unit/integration test, debugging, logging phục vụ tìm lỗi, refactoring, code review, maintainability, documentation; khác với nhóm vận hành vì trọng tâm là độ đúng và khả năng bảo trì ở mức code/module |
+| Hiệu năng, khả năng mở rộng và vận hành tin cậy | Kiểm tra khả năng phân tích giới hạn khi hệ thống chạy trong điều kiện thực tế và đề xuất cải thiện phù hợp | Tập trung vào latency, throughput, memory, scalability, availability, monitoring, fault tolerance, resource optimization; khác với nhóm kiểm thử vì trọng tâm là hành vi của hệ thống khi có tải, sự cố hoặc yêu cầu vận hành |
+| Bảo mật và an toàn hệ thống | Kiểm tra nhận thức về rủi ro bảo mật, quyền truy cập và cách giảm thiểu rủi ro trong thiết kế cũng như triển khai | Tập trung vào authentication, authorization, input validation, secrets, permission, secure coding, privacy; được tách riêng vì tiêu chí đánh giá là kiểm soát rủi ro, không chỉ làm chức năng chạy đúng |
+
+Kinh nghiệm dự án, lý do chọn công nghệ và bài học kỹ thuật không được xem là một nhóm nội dung tách biệt hoàn toàn, vì chúng có thể xuất hiện trong mọi nhóm trên. Ví dụ, người phỏng vấn có thể hỏi ứng viên về nền tảng kỹ thuật thông qua một dự án đã làm, hỏi về bảo mật thông qua cách ứng viên xử lý phân quyền, hoặc hỏi về hiệu năng thông qua một lỗi chậm hệ thống từng gặp. Vì vậy, phần dự án nên được hiểu là nguồn bằng chứng để kiểm tra mức độ hiểu thật, vai trò cá nhân và khả năng ra quyết định kỹ thuật của ứng viên.
+
+Xét theo dạng năng lực được đánh giá, cùng một nhóm nội dung có thể được hỏi bằng nhiều dạng câu hỏi khác nhau:
+
+| Dạng câu hỏi | Mục tiêu đánh giá | Ví dụ ngắn |
+| --- | --- | --- |
+| Khái niệm và định nghĩa | Kiểm tra ứng viên có hiểu đúng thuật ngữ, nguyên lý và giới hạn của khái niệm hay không | "REST API là gì?" |
+| Cơ chế hoạt động | Kiểm tra khả năng giải thích một quy trình kỹ thuật từ đầu đến cuối | "JWT được tạo, gửi và xác thực như thế nào?" |
+| So sánh và trade-off | Kiểm tra khả năng phân biệt phương án, nêu ưu nhược điểm và chọn giải pháp theo bối cảnh | "Khi nào nên dùng cache, khi nào không nên?" |
+| Thiết kế giải pháp | Kiểm tra khả năng đề xuất cấu trúc xử lý cho một yêu cầu mới | "Bạn thiết kế chức năng đặt lịch phỏng vấn như thế nào?" |
+| Tình huống và áp dụng thực tế | Kiểm tra khả năng áp dụng kiến thức vào một bối cảnh cụ thể | "Nếu API phản hồi chậm, bạn kiểm tra từ đâu?" |
+| Debugging và xử lý sự cố | Kiểm tra tư duy khoanh vùng lỗi, đọc tín hiệu hệ thống và lựa chọn bước xử lý | "Một request trả về 401 dù token còn hạn, bạn xử lý thế nào?" |
+| Review và cải thiện | Kiểm tra khả năng đọc hiểu, đánh giá và nâng cấp một thiết kế hoặc đoạn mã đã có | "Bạn sẽ refactor đoạn xử lý này theo hướng nào?" |
+| Project deep-dive | Kiểm tra mức độ thật sự hiểu dự án, vai trò cá nhân và bài học kỹ thuật | "Trong dự án, phần nào do bạn trực tiếp thiết kế?" |
+
+Do đó, cùng một câu hỏi kỹ thuật có thể nằm ở giao điểm của hai lớp phân loại. Ví dụ, câu hỏi "Vì sao bạn chọn PostgreSQL thay vì MongoDB cho chức năng này?" thuộc nhóm nội dung dữ liệu, đồng thời là dạng so sánh và trade-off. Câu hỏi "Nếu màn hình tải dữ liệu quá chậm, bạn kiểm tra những bước nào?" có thể thuộc frontend, mobile hoặc fullstack tùy vị trí, nhưng về bản chất là dạng tình huống kết hợp debugging và hiệu năng.
+
+Mức độ khó của câu hỏi cũng thay đổi theo level. Với intern hoặc fresher, câu hỏi thường tập trung vào khái niệm nền tảng, thao tác triển khai đơn giản, dự án học tập và khả năng giải thích phần mình đã làm. Với junior/middle, câu hỏi bắt đầu yêu cầu áp dụng trong tình huống thực tế, debugging, testing, đọc hiểu code và phân tích trade-off ở phạm vi module hoặc tính năng. Với senior trở lên, trọng tâm thường chuyển sang thiết kế hệ thống, khả năng mở rộng, độ tin cậy, bảo mật, vận hành, mentoring và quyết định kỹ thuật có ảnh hưởng đến nhiều thành phần.
 
 #### d. Tiêu chí đánh giá trong Technical Interview
 
@@ -112,7 +144,11 @@ Ví dụ:
 | Kinh nghiệm dự án | Nắm được vai trò cá nhân, kiến trúc, dữ liệu, API và lỗi đã xử lý |
 | Tính logic | Câu trả lời có trình tự, không nhảy ý hoặc mâu thuẫn |
 | Nhận thức về trade-off | Biết giải thích vì sao chọn một công nghệ/cách làm thay vì lựa chọn khác |
+| Khả năng áp dụng thực tế | Biết liên hệ khái niệm với dự án, bug, dữ liệu, người dùng hoặc ràng buộc triển khai |
+| Chất lượng kỹ thuật | Có ý thức về clean code, testing, bảo mật, hiệu năng và khả năng bảo trì |
 | Khả năng học hỏi | Biết thừa nhận phần chưa chắc và nêu cách kiểm chứng hoặc tìm hiểu thêm |
+
+Một câu trả lời kỹ thuật tốt thường nên đi theo trình tự: nêu khái niệm chính, giải thích cơ chế hoặc luồng xử lý, đưa ví dụ từ dự án hoặc tình huống thực tế, phân tích trade-off nếu có, sau đó kết luận ngắn gọn. Với câu hỏi debugging, ứng viên nên trình bày các bước kiểm tra theo thứ tự từ triệu chứng, giả thuyết, cách xác minh, nguyên nhân có thể xảy ra đến hướng khắc phục. Với câu hỏi thiết kế hoặc tối ưu, ứng viên nên nêu giả định, ràng buộc, phương án chọn, phương án thay thế và lý do đánh đổi.
 
 Đối với AI Mock Interview, các tiêu chí này là cơ sở để xây dựng rubric cho câu hỏi kỹ thuật. Feedback của hệ thống cần chỉ ra cụ thể: câu trả lời sai ở kiến thức nào, thiếu bước giải thích nào, hoặc cần bổ sung ví dụ dự án nào để thuyết phục hơn.
 
@@ -125,6 +161,8 @@ Ví dụ:
 Behavioral Interview là hình thức phỏng vấn tập trung vào hành vi, thái độ và cách ứng viên xử lý tình huống trong học tập hoặc công việc. University of Michigan Career Center mô tả behavioral interview là dạng phỏng vấn đánh giá kinh nghiệm quá khứ thông qua storytelling, thường bắt đầu bằng các câu như "Tell me about a time when..." [3.2-S1]. Cách tiếp cận này phù hợp với quan điểm của structured interview: câu hỏi có thể yêu cầu ứng viên kể lại hành vi trong quá khứ hoặc nêu cách xử lý một tình huống giả định liên quan đến công việc [3.2-S2].
 
 Đối với sinh viên và fresher, Behavioral Interview thường không yêu cầu kinh nghiệm làm việc nhiều, mà tập trung vào dự án học tập, làm việc nhóm, xử lý mâu thuẫn, vượt qua khó khăn và tinh thần học hỏi.
+
+Behavioral Interview khác với câu hỏi "kể chung về bản thân" ở chỗ người phỏng vấn cần bằng chứng hành vi cụ thể. Một câu trả lời thuyết phục không chỉ nói ứng viên "có trách nhiệm" hoặc "làm việc nhóm tốt", mà phải chỉ ra một tình huống thật, vai trò cá nhân, hành động đã thực hiện, kết quả và điều rút ra. Vì vậy, loại phỏng vấn này liên quan trực tiếp đến các năng lực career readiness như communication, critical thinking, teamwork, professionalism, leadership và self-development [3.2-S4].
 
 #### b. Quy trình cơ bản của Behavioral Interview
 
@@ -146,6 +184,10 @@ Một buổi Behavioral Interview thường có quy trình như sau:
 * Câu hỏi về khó khăn trong dự án.
 * Câu hỏi về áp lực thời gian.
 * Câu hỏi về thất bại hoặc lỗi sai đã từng gặp.
+* Câu hỏi về chủ động nhận trách nhiệm hoặc đề xuất cải tiến.
+* Câu hỏi về học công nghệ mới hoặc thích nghi với thay đổi.
+* Câu hỏi về giao tiếp với người không cùng chuyên môn.
+* Câu hỏi về tình huống đạo đức, cam kết hoặc lựa chọn khó.
 * Câu hỏi về mục tiêu nghề nghiệp.
 * Câu hỏi về lý do ứng tuyển.
 
@@ -166,8 +208,10 @@ Ví dụ:
 | Vai trò cá nhân | Nêu rõ bản thân đã làm gì, tránh chỉ nói "nhóm em" |
 | Hành động rõ ràng | Mô tả được bước xử lý cụ thể, không chỉ nói chung chung |
 | Kết quả và bài học | Có kết quả, tác động hoặc điều rút ra sau tình huống |
+| Tính xác thực | Câu chuyện hợp lý, có chi tiết thật, không chỉ là khẩu hiệu hoặc tuyên bố chung |
 | Kỹ năng giao tiếp | Diễn đạt rõ ràng, có trình tự và dễ theo dõi |
 | Thái độ học hỏi | Thể hiện tinh thần cầu tiến và biết nhận trách nhiệm |
+| Tự nhận thức | Nhìn ra điểm mạnh, điểm yếu, giới hạn và cách cải thiện của bản thân |
 | Mức độ phù hợp | Liên hệ được trải nghiệm với vị trí và môi trường ứng tuyển |
 
 Trong Behavioral Interview, ứng viên thường nên trả lời theo cấu trúc **STAR**:
@@ -178,6 +222,18 @@ Trong Behavioral Interview, ứng viên thường nên trả lời theo cấu tr
 * Result: Kết quả
 
 University of Michigan Career Center mô tả STAR là cách trả lời có cấu trúc cho câu hỏi hành vi bằng việc trình bày Situation, Task, Action và Result của tình huống được kể [3.2-S1]. Với sinh viên, STAR giúp tránh hai lỗi phổ biến: kể chuyện lan man và không nêu rõ vai trò cá nhân. Trong AI Mock Interview, STAR là một cơ sở quan trọng để hệ thống phát hiện câu trả lời thiếu bối cảnh, thiếu hành động hoặc thiếu kết quả.
+
+Ngoài STAR, có thể dùng một số cấu trúc rút gọn hoặc biến thể tùy loại câu hỏi:
+
+| Cấu trúc | Thành phần | Khi nên dùng | Lưu ý đánh giá |
+| --- | --- | --- | --- |
+| STAR | Situation - Task - Action - Result | Câu hỏi hành vi yêu cầu kể lại một trải nghiệm cụ thể | Phù hợp nhất với teamwork, conflict, failure, pressure, leadership |
+| STAR-L | Situation - Task - Action - Result - Learning | Câu hỏi về thất bại, lỗi sai, khó khăn hoặc trải nghiệm chưa thành công | Nhấn mạnh bài học và cách cải thiện sau tình huống |
+| CAR | Context/Challenge - Action - Result | Câu hỏi cần trả lời ngắn hơn nhưng vẫn có bối cảnh, hành động, kết quả | Tránh bỏ mất vai trò cá nhân trong phần Action |
+| PAR | Problem - Action - Result | Câu hỏi về xử lý vấn đề, bug, deadline hoặc mâu thuẫn cụ thể | Phù hợp khi tình huống không cần giải thích dài |
+| PREP | Point - Reason - Example - Point | Câu hỏi về điểm mạnh, điểm yếu, quan điểm hoặc lý do ứng tuyển | Cần có ví dụ thật; không thay thế STAR cho câu hỏi kể trải nghiệm |
+
+Các cấu trúc trên đều phục vụ cùng một mục tiêu: giúp câu trả lời có bằng chứng cụ thể, có trình tự và thể hiện được đóng góp cá nhân. Với sinh viên/fresher, STAR và STAR-L nên được ưu tiên cho phần lớn câu hỏi hành vi; CAR/PAR phù hợp khi cần trả lời ngắn; PREP phù hợp hơn với câu hỏi tự nhận thức hoặc động lực ứng tuyển. Trong hệ thống AI Mock Interview, feedback hành vi có thể dựa vào các cấu trúc này để chỉ ra câu trả lời đang thiếu bối cảnh, thiếu hành động cá nhân, thiếu kết quả, thiếu bài học hoặc thiếu liên hệ với vị trí ứng tuyển [3.2-S5].
 
 ---
 
@@ -231,7 +287,7 @@ Các khó khăn này liên quan trực tiếp đến các năng lực nghề ngh
 
 ### 3.2.7. Mock Interview và vai trò trong luyện phỏng vấn
 
-Mock Interview là hình thức phỏng vấn giả lập, giúp ứng viên luyện tập trước khi tham gia phỏng vấn thật. University of Michigan Career Center mô tả mock interviewing như một buổi "dress rehearsal" kèm phản hồi ngay sau đó [3.2-S1]. Harvard FAS cũng liệt kê mock interview và công cụ luyện phỏng vấn ảo có AI feedback như một nhóm tài nguyên chuẩn bị technical interview [3.2-S3].
+Mock Interview là hình thức phỏng vấn giả lập, trong đó ứng viên luyện tập với bối cảnh, câu hỏi và cách trả lời gần giống một buổi phỏng vấn thật. Điểm quan trọng của hình thức này không chỉ là tạo cơ hội thử trả lời trước, mà còn tạo một vòng luyện tập có phản hồi: người học trả lời, nhận nhận xét, điều chỉnh cách trình bày, rồi tiếp tục luyện ở những lần sau. Vì vậy, mock interview có thể được xem như bước diễn tập trước phỏng vấn chính thức, đặc biệt hữu ích khi ứng viên cần chuẩn bị cho cả câu hỏi kỹ thuật lẫn câu hỏi hành vi [3.2-S1][3.2-S3].
 
 Mock Interview có thể được chia theo mục tiêu luyện tập:
 
@@ -239,13 +295,13 @@ Mock Interview có thể được chia theo mục tiêu luyện tập:
 * Mock Behavioral Interview: luyện trả lời câu hỏi hành vi, tình huống, giới thiệu bản thân và trình bày kinh nghiệm cá nhân.
 * Mock Mixed Interview: kết hợp câu hỏi kỹ thuật, hành vi và tình huống để mô phỏng buổi phỏng vấn tổng hợp.
 
-Giá trị chính của Mock Interview không chỉ nằm ở việc "gặp trước" câu hỏi. Quan trọng hơn, người luyện được đặt vào bối cảnh phải trả lời thành tiếng hoặc viết câu trả lời đầy đủ, sau đó nhận phản hồi để biết câu trả lời còn thiếu gì. Với sinh viên CNTT, mock interview giúp luyện ba kỹ năng cốt lõi:
+Giá trị chính của Mock Interview không nằm ở việc học thuộc một tập câu hỏi mẫu. Quan trọng hơn, người luyện được đặt vào áp lực phải diễn đạt suy nghĩ thành câu trả lời hoàn chỉnh, sau đó nhìn lại câu trả lời đó qua phản hồi cụ thể. Với sinh viên CNTT và ứng viên fresher, quá trình này giúp rèn luyện ba năng lực cốt lõi:
 
 - Chuyển kiến thức kỹ thuật thành lời giải thích dễ hiểu.
 - Chuyển kinh nghiệm học tập/dự án thành bằng chứng năng lực.
-- Nhận diện lỗi trả lời lặp lại qua nhiều lần luyện, ví dụ thiếu kết quả, thiếu ví dụ hoặc trình bày quá dài.
+- Nhận diện lỗi trả lời lặp lại qua nhiều lần luyện, ví dụ thiếu kết quả, thiếu ví dụ, trả lời lan man hoặc chưa liên hệ với vị trí ứng tuyển.
 
-Trong hệ thống AI Mock Interview, AI đóng vai trò hỗ trợ quá trình này bằng cách tạo môi trường luyện tập on-demand, phản hồi nhất quán theo rubric và lưu lại lịch sử phiên để người dùng theo dõi sự tiến bộ.
+Trong hệ thống AI Mock Interview, vai trò của AI là mở rộng quá trình luyện tập này thành một môi trường có thể sử dụng theo nhu cầu. Hệ thống sinh câu hỏi theo JD và loại phiên, ghi nhận câu trả lời, đưa ra feedback theo rubric, sau đó tổng hợp kết quả để người dùng nhìn thấy điểm mạnh, điểm yếu và hướng cải thiện. Nhờ đó, người dùng có thể luyện nhiều lần với các bối cảnh khác nhau trước khi bước vào phỏng vấn thật hoặc trước khi luyện sâu hơn với mentor/người có kinh nghiệm [3.2-S5].
 
 ---
 
@@ -307,457 +363,196 @@ Về mặt trải nghiệm người dùng, AI Mock Interview cần đảm bảo 
 *[3.2-S2] U.S. Office of Personnel Management. "Structured Interviews." https://www.opm.gov/policy-data-oversight/assessment-and-selection/structured-interviews/*
 *[3.2-S3] Harvard FAS Mignone Center for Career Success. "Technical Interviews." https://careerservices.fas.harvard.edu/resources/technical-interviews/*
 *[3.2-S4] National Association of Colleges and Employers (NACE). "What is Career Readiness?" https://www.naceweb.org/career-readiness/competencies/career-readiness-defined*
-*[3.2-S5] AI Mock Interview internal design docs: `docs/Design/MVP_Scope.md`, `docs/Design/ArchitecturalDesign/interview_ai_coach_session_type_spec.md`, `docs/RequirementAnalysis/user-stories/US-005_context-pack.md`.*
+*[3.2-S5] AI Mock Interview internal design and implementation sources: `docs/Design/ArchitecturalDesign/interview_ai_coach_session_type_spec.md`, `server/prisma/schema.prisma`, `server/src/ai/pipelines/interview-pipeline.interface.ts`.*
 
-## 3.3 Xử Lý Ngôn Ngữ Tự Nhiên Và Mô Hình Ngôn Ngữ Lớn
+## 3.3 Mô Hình Ngôn Ngữ Lớn Và Kỹ Thuật Điều Khiển Đầu Ra AI
 
-### 3.3.1 Khái Niệm LLM Và Ứng Dụng Trong Phân Tích Câu Trả Lời
+### 3.3.1 Mô hình ngôn ngữ lớn trong bài toán phỏng vấn thử
 
-#### a. Khái niệm Mô hình Ngôn ngữ Lớn
+Mô hình ngôn ngữ lớn (Large Language Model - LLM) là nhóm mô hình học máy được huấn luyện trên lượng lớn dữ liệu văn bản để xử lý và sinh ngôn ngữ tự nhiên. Nhờ khả năng nhận diện ngữ cảnh, tổng hợp thông tin và tạo câu trả lời theo yêu cầu, LLM phù hợp với các bài toán cần phân tích nội dung tự do như câu trả lời phỏng vấn, mô tả công việc và phản hồi luyện tập [1][2].
 
-Mô hình ngôn ngữ lớn (Large Language Model — LLM) là một loại mô hình học sâu được huấn luyện trên tập dữ liệu văn bản khổng lồ để thực hiện các tác vụ xử lý ngôn ngữ tự nhiên. Theo Elastic, "A large language model (LLM) is a model trained using deep learning algorithms and capable of a broad range of natural language processing (NLP) tasks, such as sentiment analysis, conversational question answering, text translation, classification, and generation." [1]
+Trong hệ thống AI Mock Interview, LLM không được dùng như một thành phần thay thế toàn bộ quy trình phỏng vấn của con người. Vai trò của nó là hỗ trợ các tác vụ ngôn ngữ: tạo câu hỏi luyện tập theo bối cảnh, đánh giá câu trả lời dựa trên tiêu chí có sẵn, viết nhận xét cải thiện và tổng hợp báo cáo sau phiên. Các tác vụ này đều có điểm chung là đầu vào thường là văn bản tự do, khó xử lý hiệu quả bằng các luật cố định.
 
-Về kiến trúc, LLM dựa trên mạng nơ-ron transformer — "neural networks designed to detect dependencies between different parts of a sequence of data, regardless of their distance from each other." [1] Cơ chế attention cho phép mô hình đặt trọng số vào các phần của văn bản đầu vào có liên quan nhất đến ngữ cảnh hiện tại, từ đó hiểu được các mối quan hệ xa trong đoạn văn dài mà các kiến trúc trước đó (RNN, LSTM) gặp khó khăn.
+Hệ thống sử dụng hướng tiếp cận tương thích với Chat Completions của OpenAI. Điều này có nghĩa là phần backend gửi yêu cầu dưới dạng các thông điệp hội thoại, kèm chỉ dẫn và dữ liệu ngữ cảnh, sau đó nhận lại kết quả dạng văn bản hoặc JSON. Mô hình cụ thể được cấu hình qua môi trường chạy, giúp hệ thống có thể dùng nhà cung cấp OpenAI hoặc một dịch vụ tương thích trong quá trình phát triển [2][3-T1].
 
-Theo tài liệu chính thức của OpenAI, "GPT models are trained to understand natural and formal language" và "can be used across a great variety of tasks including content or code generation, summarization, conversation, creative writing, and more." [2] Một đặc điểm kỹ thuật quan trọng là mô hình xử lý văn bản theo đơn vị token — "1 token is approximately 4 characters or 0.75 words for English text" [2] — thay vì từng từ hay ký tự riêng lẻ.
+### 3.3.2 Prompt engineering
 
-Trong AI Mock Interview, GPT-4o (OpenAI) được sử dụng là mô hình chính thông qua Chat Completions API, với tham số cấu hình khác nhau cho từng loại tác vụ (temperature, max_tokens).
+Prompt engineering là kỹ thuật viết chỉ dẫn cho mô hình để đầu ra bám sát mục tiêu của ứng dụng. Với LLM, cùng một dữ liệu đầu vào có thể tạo ra nhiều kiểu phản hồi khác nhau. Vì vậy, prompt cần nêu rõ vai trò của mô hình, nhiệm vụ cần thực hiện, ngữ cảnh được cung cấp, tiêu chí đánh giá và định dạng đầu ra mong muốn [3].
 
-#### b. Ứng dụng LLM trong hệ thống AI Mock Interview
+Trong AI Mock Interview, prompt được dùng để giữ cho phản hồi của AI nhất quán với mục tiêu luyện phỏng vấn. Ví dụ, khi tạo câu hỏi, prompt cần làm rõ loại phiên phỏng vấn, vị trí ứng tuyển, cấp độ ứng viên và tiêu chí năng lực cần đánh giá. Khi tạo nhận xét, prompt cần nhấn mạnh rằng phản hồi phải cụ thể, có thể hành động được và phù hợp với câu hỏi ban đầu.
 
-LLM đóng vai trò trung tâm trong bốn tác vụ chính của hệ thống:
+Một điểm quan trọng là prompt trong hệ thống được quản lý theo mục đích sử dụng. Các prompt cho sinh câu hỏi, đánh giá câu trả lời và tổng hợp báo cáo được tách riêng, vì mỗi tác vụ có dữ liệu đầu vào và tiêu chí đầu ra khác nhau. Cách tổ chức này giúp việc điều chỉnh chất lượng AI rõ ràng hơn: khi cần cải thiện một tác vụ, nhóm phát triển có thể tập trung vào prompt của tác vụ đó thay vì thay đổi toàn bộ hệ thống [3-T1].
 
-**Sinh câu hỏi phỏng vấn**: Dựa trên nội dung JD và loại phỏng vấn được chọn (HR / Technical / Mixed), LLM phân tích các yêu cầu công việc, xác định các năng lực cần đánh giá, và sinh ra câu hỏi phù hợp với từng competency domain. Mô hình có khả năng hiểu ngữ cảnh đủ để phân biệt câu hỏi cho vị trí Backend Developer với Frontend Developer, hay cho fresher với mid-level engineer.
+### 3.3.3 Kiểm soát đầu ra bằng JSON và schema
 
-**Đánh giá câu trả lời**: LLM nhận đầu vào là câu hỏi, câu trả lời của ứng viên, và rubric chấm điểm theo context pack. Khả năng hiểu ngữ nghĩa cho phép mô hình đánh giá câu trả lời không chỉ theo nghĩa từ ngữ mà còn theo chất lượng lập luận, tính đầy đủ của nội dung và cấu trúc trình bày.
+Nếu chỉ yêu cầu LLM trả lời tự do, kết quả có thể đúng về nội dung nhưng khó xử lý bằng chương trình. Ứng dụng cần biết điểm số nằm ở đâu, phần nhận xét nằm ở đâu, danh sách gợi ý có cấu trúc như thế nào và trường nào là bắt buộc. Vì vậy, hệ thống cần cơ chế kiểm soát đầu ra thay vì chỉ dựa vào văn bản tự nhiên.
 
-**Sinh Surgical Feedback**: Đây là tác vụ phức tạp nhất — LLM cần xác định các đoạn văn bản cụ thể trong câu trả lời (theo vị trí ký tự `start_index`, `end_index`), phân loại mỗi đoạn là điểm mạnh hay điểm cần cải thiện, và viết gợi ý cải thiện cụ thể kèm phiên bản cải viết.
+OpenAI cung cấp các cơ chế như JSON mode và Structured Outputs để định hướng mô hình trả về dữ liệu có cấu trúc. JSON mode giúp đầu ra là JSON hợp lệ, còn Structured Outputs hướng đến việc ràng buộc đầu ra theo schema cụ thể [4]. Trong dự án hiện tại, hệ thống sử dụng hướng tiếp cận JSON có kiểm tra bổ sung ở backend: AI được yêu cầu trả về JSON, sau đó kết quả được phân tích và kiểm tra lại trước khi lưu hoặc hiển thị.
 
-**Tổng hợp báo cáo**: Sau khi thu thập feedback từ tất cả câu trả lời trong phiên, LLM tổng hợp thành kế hoạch hành động dài hạn phù hợp với điểm yếu cụ thể của từng người dùng.
+Lớp kiểm tra này có vai trò quan trọng trong hệ thống phỏng vấn thử. Nếu AI trả về thiếu trường, sai kiểu dữ liệu hoặc cấu trúc không đúng, backend có thể phát hiện và chuyển sang nội dung dự phòng thay vì để lỗi lan ra giao diện. Nhờ đó, các tác vụ như sinh câu hỏi, tạo feedback và tạo báo cáo có tính ổn định cao hơn khi phụ thuộc vào mô hình bên ngoài [3-T1].
 
 ---
 *[1] Elastic. "What is a Large Language Model?" https://www.elastic.co/what-is/large-language-models*
-*[2] OpenAI. "API Concepts." https://developers.openai.com/api/docs/concepts*
-
-### 3.3.2 Prompt Engineering
-
-#### a. Khái niệm
-
-Theo tài liệu chính thức của OpenAI, "Prompt engineering is the process of writing effective instructions for a model, such that it consistently generates content that meets your requirements." [3] Đây là kỹ năng thiết kế đầu vào cho LLM để mô hình tạo ra đầu ra đúng ý muốn — không phải lập trình truyền thống mà là điều hướng hành vi của mô hình thông qua ngôn ngữ tự nhiên.
-
-Microsoft Azure mô tả bản chất thực tế của công việc này: "In practice, the prompt acts to help the model complete the desired task, but it's more of an art than a science, often requiring experience and intuition to craft a successful prompt." [4]
-
-Chat Completions API của OpenAI tổ chức cuộc hội thoại theo ba vai (roles):
-
-- **system**: "Provides context and instructions for how the model should behave" [5]
-- **user**: "Represents messages from the person interacting with the model" [5]
-- **assistant**: "Messages sent by the model in response to user messages" [5]
-
-Theo tài liệu OpenAI, "Developer messages provide the system's rules and business logic like a function definition, while user messages provide inputs and configuration to which the developer message instructions are applied, like arguments to a function." [6]
-
-#### b. Cấu trúc prompt trong AI Mock Interview
-
-Mỗi lần gọi AI trong hệ thống cấu trúc prompt theo bốn thành phần:
-
-**1. System prompt (định nghĩa vai trò và ràng buộc đầu ra)**
-
-System prompt thiết lập danh tính và quy tắc hành vi của mô hình. Ví dụ từ `prompt-builder.service.ts` — system prompt cho sinh câu hỏi:
-
-```
-You are an expert interviewer. Generate relevant, thoughtful interview questions
-based on the job description and interview strategy.
-
-Return ONLY a compact valid JSON object with exactly this shape, no markdown
-fences, no explanation, no analysis, no prose before or after the JSON.
-```
-
-System prompt cho Surgical Feedback bổ sung ràng buộc cụ thể hơn về chất lượng đầu ra:
-
-```
-You are an expert interview coach. Evaluate the candidate's answer and provide
-surgical, actionable feedback.
-
-CRITICAL: model_answer must be a complete, concrete example answer of 3-4
-concise sentences written as if a strong candidate is actually speaking. It
-must directly answer the question using specific details, demonstrate best
-practices, and read like a real spoken response — NOT a list of improvement
-tips, NOT meta-advice about what to say.
-```
-
-**2. Output schema (đặc tả cấu trúc JSON bắt buộc)**
-
-Schema được nhúng trực tiếp vào prompt thay vì dùng riêng, buộc mô hình tuân thủ cấu trúc cụ thể. Ví dụ schema cho Surgical Feedback:
-
-```json
-{
-  "overall_score": <integer 1-100>,
-  "model_answer": "<complete 3-4 sentence example answer>",
-  "key_takeaway": "<one concise insight>",
-  "annotated_segments": [
-    {
-      "segment_text": "<exact substring from candidate answer>",
-      "start_index": <integer>,
-      "end_index": <integer>,
-      "highlight_level": "strength" | "improvement",
-      "annotation": "<why>",
-      "suggestion": "<optional>",
-      "improved_version": "<optional>"
-    }
-  ]
-}
-```
-
-**3. Context (dữ liệu runtime được inject)**
-
-Context được truyền qua user message và thay đổi theo từng request: nội dung JD, loại phỏng vấn, câu hỏi cụ thể, câu trả lời của ứng viên, và context pack (rubric VN hoặc Western).
-
-**4. Versioning prompt**
-
-Prompt config được tách thành các file riêng theo quy ước `<purpose>-v<major>.<minor>.ts` (ví dụ: `surgical-feedback-v1.1.ts`). Mỗi file lưu version, temperature và max_tokens. Khi cần thay đổi hành vi, tạo file version mới thay vì sửa file cũ — đảm bảo khả năng rollback và theo dõi lịch sử thay đổi. Phiên bản hiện tại: `question-gen-v1.0`, `surgical-feedback-v1.1`, `comprehensive-report-v1.0`.
-
----
+*[2] OpenAI. "Text generation." https://developers.openai.com/api/docs/guides/text*
 *[3] OpenAI. "Prompt Engineering." https://developers.openai.com/api/docs/guides/prompt-engineering*
-*[4] Microsoft Azure. "Prompt Engineering Techniques." https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/prompt-engineering*
-*[5] OpenAI. "Chat Completions API Reference." https://developers.openai.com/api/docs/api-reference/chat*
-*[6] OpenAI. "Prompt Guidance." https://developers.openai.com/api/docs/guides/prompt-guidance*
+*[4] OpenAI. "Structured Outputs." https://developers.openai.com/api/docs/guides/structured-outputs*
+*[3-T1] AI Mock Interview implementation sources: `client/package.json`, `server/package.json`, `server/src/config/env.validation.ts`, `server/src/ai/openai.gateway.ts`, `server/src/ai/prompt-builder.service.ts`, `server/src/ai/pipelines/pipeline.schemas.ts`.*
 
-### 3.3.3 Structured Output Và Kiểm Soát Kết Quả AI
+## 3.4 Công Nghệ Xử Lý Ngôn Ngữ Trong Hệ Thống AI Mock Interview
 
-#### a. Vấn đề với đầu ra tự do của LLM
+### 3.4.1 Xử lý câu trả lời dạng văn bản
 
-LLM về bản chất sinh ra văn bản tự do — mô hình không có cơ chế bảo đảm nội sinh nào buộc đầu ra phải theo cấu trúc cụ thể. Khi ứng dụng cần xử lý đầu ra của AI theo chương trình (parse JSON, truy cập các trường cụ thể), đầu ra không nhất quán gây ra lỗi runtime. Các vấn đề thường gặp: thiếu trường bắt buộc, sai kiểu dữ liệu, giá trị enum không hợp lệ, hoặc mô hình trả về văn bản giải thích thay vì JSON thuần.
+Trong phạm vi Chương 3, xử lý ngôn ngữ cần được hiểu là nền tảng công nghệ cho việc tiếp nhận, biểu diễn và đánh giá câu trả lời bằng văn bản. Đầu vào chính của hệ thống là câu trả lời tự nhiên của người dùng, không phải lựa chọn trắc nghiệm hay biểu mẫu cố định. Vì vậy, hệ thống cần một lớp AI có khả năng hiểu nội dung, ý định, mức độ đầy đủ và cách trình bày của câu trả lời.
 
-#### b. Structured Outputs
+Cách tiếp cận text-first phù hợp với mục tiêu GR1 vì trọng tâm của đề tài là luyện tư duy trả lời phỏng vấn và nhận phản hồi. Văn bản giúp hệ thống kiểm soát rõ hơn các phần như câu hỏi, câu trả lời, tiêu chí đánh giá, điểm số và báo cáo. Đây cũng là dạng dữ liệu phù hợp để lưu lịch sử phiên, so sánh kết quả giữa các lần luyện tập và tổng hợp nhận xét sau phiên.
 
-Theo tài liệu chính thức của OpenAI, Structured Outputs đảm bảo "the model will always generate responses that adhere to your supplied JSON Schema." [7] Lợi ích trực tiếp: "No need to validate or retry incorrectly formatted responses" và "No need for strongly worded prompts to achieve consistent formatting." [7]
+### 3.4.2 Token, ngữ cảnh và giới hạn đầu vào
 
-OpenAI phân biệt hai chế độ:
-- **JSON mode** (`response_format: { type: "json_object" }`): đảm bảo đầu ra là JSON hợp lệ, nhưng không đảm bảo schema cụ thể.
-- **Structured Outputs** (`response_format: { type: "json_schema", json_schema: {...} }`): đảm bảo đầu ra khớp chính xác với JSON Schema được cung cấp.
+LLM không xử lý văn bản theo đúng cách con người nhìn thấy từng câu hay từng từ. Mô hình thường chia văn bản thành các đơn vị nhỏ hơn gọi là token. Vì vậy, khi đưa mô tả công việc, câu hỏi, câu trả lời và rubric vào cùng một yêu cầu, hệ thống phải quan tâm đến độ dài ngữ cảnh và lượng nội dung cần gửi cho mô hình [2].
 
-#### c. Chiến lược kiểm soát đầu ra trong AI Mock Interview
+Trong AI Mock Interview, dữ liệu đưa vào AI được chọn theo mục tiêu của từng tác vụ. Với sinh câu hỏi, phần quan trọng là mô tả công việc, loại phỏng vấn và tiêu chí năng lực. Với đánh giá câu trả lời, phần quan trọng là câu hỏi, câu trả lời của ứng viên và rubric. Với báo cáo tổng hợp, hệ thống cần dùng kết quả của cả phiên ở mức vừa đủ để tạo nhận xét có ý nghĩa. Cách chọn ngữ cảnh này giúp giảm nhiễu và tránh gửi quá nhiều dữ liệu không cần thiết cho mô hình.
 
-Hệ thống áp dụng ba lớp kiểm soát:
+### 3.4.3 Rubric và ngôn ngữ đầu ra
 
-**Lớp 1 — Schema trong prompt**: Cấu trúc JSON được mô tả chi tiết ngay trong system prompt, kèm ghi chú về kiểu dữ liệu (integer, string) và ràng buộc (ví dụ: `overall_score` từ 1–100, `highlight_level` chỉ nhận `"strength"` hoặc `"improvement"`). Phương pháp này hoạt động tốt với các model mạnh như GPT-4o.
+Rubric là cơ sở để phản hồi của AI không chỉ dựa trên cảm nhận chung. Trong hệ thống, rubric giúp xác định những tiêu chí cần đánh giá, ví dụ mức độ đúng trọng tâm, tính cụ thể, logic trình bày, ví dụ minh họa hoặc khả năng liên hệ với vị trí ứng tuyển. Khi có rubric, cùng một câu trả lời có thể được đánh giá theo tiêu chí rõ ràng hơn.
 
-**Lớp 2 — JSON extraction fallback trong OpenAIGateway**: Trước khi validate, `OpenAIGateway` thử trích xuất JSON từ đầu ra thô theo nhiều pattern: code block có markdown fence (```json ... ```), object literal đứng độc lập, hoặc raw string. Đây là lớp bảo vệ khi model bao quanh JSON bằng văn bản giải thích.
+Hệ thống cũng hỗ trợ định hướng ngôn ngữ đầu ra để phản hồi phù hợp với người dùng. Với bối cảnh sinh viên và fresher tại Việt Nam, phản hồi bằng tiếng Việt rõ ràng, trực tiếp và có ví dụ cụ thể giúp người dùng dễ hiểu điểm cần sửa hơn so với phản hồi chung chung. Đây là lý do phần xử lý ngôn ngữ không chỉ quan tâm đến việc AI "hiểu" câu trả lời, mà còn quan tâm đến cách AI diễn đạt kết quả cho người học.
 
-**Lớp 3 — Runtime validation bằng Zod**: `ZodValidatorService` validate object đã parse theo Zod schema được định nghĩa trong `pipeline.schemas.ts`. Nếu validation thất bại (thiếu trường, sai kiểu), hệ thống không crash mà chuyển sang sử dụng fallback content được định nghĩa trước trong `fallback-content.ts`.
+### 3.4.4 Giới hạn giọng nói trong phạm vi Chương 3
 
-Ví dụ Zod schema cho Surgical Feedback:
+Trả lời bằng giọng nói là một hướng mở rộng tự nhiên của hệ thống phỏng vấn thử, vì phỏng vấn thực tế thường diễn ra bằng lời nói. Tuy nhiên, trong Chương 3 này, giọng nói không được trình bày như công nghệ trọng tâm của GR1. Các công nghệ như ghi âm, lưu trữ tệp âm thanh, nhận dạng giọng nói hoặc phân tích tốc độ nói chỉ nên được xem là hướng phát triển tiếp theo nếu hệ thống mở rộng sang luyện nói.
 
-```typescript
-const AnnotatedSegmentSchema = z.object({
-  segment_text: z.string(),
-  start_index: z.number().int(),
-  end_index: z.number().int(),
-  highlight_level: z.enum(['strength', 'improvement']),
-  annotation: z.string(),
-  suggestion: z.string().optional(),
-  improved_version: z.string().optional(),
-});
+Với phạm vi hiện tại của phần cơ sở công nghệ, trọng tâm vẫn là xử lý câu trả lời văn bản, LLM, prompt, kiểm soát đầu ra và hạ tầng web phục vụ quá trình luyện phỏng vấn.
 
-const SurgicalFeedbackSchema = z.object({
-  overall_score: z.number().int().min(1).max(100),
-  model_answer: z.string(),
-  key_takeaway: z.string(),
-  annotated_segments: z.array(AnnotatedSegmentSchema).max(2),
-});
-```
+## 3.5 Công Nghệ Frontend Cho Ứng Dụng Web
 
----
-*[7] OpenAI. "Structured Outputs." https://developers.openai.com/api/docs/guides/structured-outputs*
+### 3.5.1 Next.js và React
 
-## 3.4 Xử Lý Câu Trả Lời Văn Bản Và Phạm Vi Giọng Nói
+Frontend của AI Mock Interview được xây dựng bằng Next.js 16.2 và React 19.2. Next.js là framework dựa trên React, cung cấp các khả năng cần thiết cho ứng dụng web hiện đại như routing, rendering phía server, tối ưu tải trang và tổ chức mã nguồn theo cấu trúc ứng dụng [5]. React đảm nhiệm phần xây dựng giao diện theo component, giúp các màn hình như cấu hình phiên, trả lời phỏng vấn, xem lịch sử và đọc báo cáo có thể được chia nhỏ thành các phần dễ quản lý.
 
-### 3.4.1 Cơ sở xử lý câu trả lời văn bản
+Next.js phù hợp với dự án vì hệ thống vừa có các trang cần tương tác mạnh, vừa có các trang cần tải dữ liệu rõ ràng từ backend. Ví dụ, màn hình phỏng vấn cần phản ứng với thao tác của người dùng, trong khi trang báo cáo cần hiển thị dữ liệu đã tổng hợp một cách ổn định. Việc dùng cùng một nền tảng frontend giúp trải nghiệm người dùng nhất quán từ lúc tạo phiên đến lúc xem kết quả.
 
-Trong phạm vi hiện tại, AI Mock Interview xử lý câu trả lời của người dùng dưới dạng văn bản. Cách tiếp cận này giúp hệ thống tập trung vào nội dung cốt lõi của bài toán: người dùng trả lời câu hỏi, backend lưu câu trả lời, AI phân tích mức độ đúng trọng tâm và báo cáo tổng hợp kết quả sau phiên.
+### 3.5.2 App Router và phân tách Server/Client Components
 
-Câu trả lời văn bản cũng phù hợp với giai đoạn GR1 vì giảm rủi ro phụ thuộc vào microphone, định dạng audio, tốc độ upload, chất lượng phiên âm và chi phí API nhận dạng giọng nói. Khi đầu vào đã là văn bản, pipeline feedback có thể kiểm soát tốt hơn các bước validate độ dài, lưu dữ liệu, xếp job phản hồi và hiển thị báo cáo.
+App Router của Next.js tổ chức định tuyến dựa trên cấu trúc thư mục trong ứng dụng. Cách này giúp mỗi trang, layout và nhóm route có vị trí rõ ràng. Tài liệu Next.js cũng phân biệt Server Components và Client Components: phần không cần tương tác trực tiếp với trình duyệt có thể xử lý ở server, còn phần cần trạng thái giao diện, sự kiện người dùng hoặc API trình duyệt sẽ chạy ở client [6].
 
-### 3.4.2 Luồng xử lý trong AI Mock Interview
+Trong AI Mock Interview, cách phân tách này phù hợp với đặc điểm của từng màn hình. Các trang đọc dữ liệu như danh sách phiên hoặc báo cáo có thể ưu tiên tải dữ liệu ổn định. Các phần như form cấu hình, màn hình trả lời và trạng thái chờ kết quả cần tương tác trực tiếp nên được xử lý ở phía client. Nhờ đó, giao diện vừa giữ được tính phản hồi nhanh, vừa không phải dồn toàn bộ logic vào trình duyệt.
 
-Luồng xử lý câu trả lời trong hệ thống:
+### 3.5.3 TypeScript và Tailwind CSS
 
-1. Người dùng nhập câu trả lời văn bản trên màn hình phỏng vấn.
-2. Frontend gửi `answerText` cùng thông tin phiên và câu hỏi về backend.
-3. Backend kiểm tra phiên, câu hỏi, quyền sở hữu và độ hợp lệ của câu trả lời.
-4. Câu trả lời được lưu vào `UserAnswer`.
-5. Backend xếp job vào queue `feedback` để tạo nhận xét bất đồng bộ.
-6. Khi feedback hoàn thành, hệ thống cập nhật trạng thái và cho phép báo cáo tổng hợp sử dụng dữ liệu này.
+TypeScript được sử dụng ở cả frontend và backend để giảm lỗi kiểu dữ liệu. Với một hệ thống có nhiều dữ liệu trao đổi như phiên phỏng vấn, câu hỏi, câu trả lời, feedback và báo cáo, kiểm tra kiểu tĩnh giúp phát hiện sớm các sai lệch giữa giao diện và API trong quá trình phát triển.
 
-Việc tách bước gửi câu trả lời và bước sinh feedback giúp giao diện không bị chặn bởi thời gian xử lý AI. Người dùng có thể tiếp tục theo dõi trạng thái xử lý thay vì phải chờ một request HTTP kéo dài.
-
-### 3.4.3 Phạm vi giọng nói trong GR1
-
-Tính năng trả lời bằng giọng nói chưa thuộc phạm vi triển khai hiện tại của hệ thống. Vì vậy, báo cáo GR1 không xem ghi âm, upload audio, speech-to-text, transcription queue hoặc voice metrics là chức năng đã hoàn thành. Các nội dung này chỉ nên được đặt ở hướng phát triển tương lai nếu nhóm tiếp tục mở rộng sản phẩm sang luyện nói.
-
-## 3.5 Feedback Tự Động Và Surgical Feedback
-
-### 3.5.1 Khái niệm Surgical Feedback
-
-Surgical Feedback là cơ chế phản hồi cốt lõi của AI Mock Interview, lấy tên từ tính chính xác của nó: thay vì nhận xét tổng quát ("câu trả lời còn thiếu ví dụ"), hệ thống chỉ ra đúng đoạn văn bản cụ thể trong câu trả lời của ứng viên cần cải thiện hoặc đáng ghi nhận.
-
-Cách tiếp cận này giải quyết hạn chế của feedback truyền thống trong mock interview — người hướng dẫn thường đưa ra nhận xét chung chung do thiếu thời gian hoặc không phân tích kỹ từng câu trả lời. Bằng cách highlight chính xác vị trí ký tự (`start_index`, `end_index`) trong câu trả lời gốc, người dùng hiểu ngay đoạn nào cần sửa và sửa thế nào, không cần suy đoán.
-
-### 3.5.2 Các thành phần của Surgical Feedback
-
-| Thành phần feedback | Ý nghĩa | Dữ liệu đầu vào | Đầu ra mong đợi |
-| --- | --- | --- | --- |
-| Điểm tổng (`overall_score`) | Điểm số tổng hợp chất lượng câu trả lời, cho phép so sánh giữa các câu và theo dõi tiến bộ qua thời gian | Câu hỏi, câu trả lời nguyên văn, rubric chấm điểm theo context pack (VN hoặc Western) | Số nguyên từ 1 đến 100 |
-| Câu trả lời mẫu (`model_answer`) | Ví dụ cụ thể về câu trả lời tốt, viết như lời một ứng viên thực sự đang trả lời, không phải gợi ý trừu tượng | Câu hỏi, loại phỏng vấn, vị trí ứng tuyển từ JD | Đoạn văn 3–4 câu, viết ở ngôi thứ nhất, có nội dung cụ thể và thực tế (không phải danh sách gạch đầu dòng hay meta-advice) |
-| Nhận xét tổng quát (`key_takeaway`) | Điểm mấu chốt nhất về chất lượng câu trả lời — điều người dùng cần nhớ nhất | Câu trả lời và điểm tổng | Một câu nhận xét súc tích, chỉ ra vấn đề hoặc điểm mạnh nổi bật nhất |
-| Đoạn được annotate (`annotated_segments`) | Highlight đoạn văn cụ thể trong câu trả lời gốc, phân loại là điểm mạnh (strength) hoặc cần cải thiện (improvement), kèm giải thích và gợi ý viết lại | Câu trả lời nguyên văn (để xác định offset ký tự chính xác) | Tối đa 2 đoạn; mỗi đoạn gồm `segment_text`, `start_index`, `end_index`, `highlight_level`, `annotation`, và tùy chọn `suggestion` + `improved_version` |
-| Kế hoạch hành động (`action_plan`) | Danh sách hành động cụ thể người dùng có thể thực hiện để cải thiện kỹ năng phỏng vấn, tổng hợp từ toàn bộ phiên | Tất cả feedbacks trong session và điểm trung bình theo competency domain | Danh sách 3–5 hành động có thể thực hiện ngay, không phải lời khuyên chung chung |
-
-### 3.5.3 Phản hồi theo đoạn trong câu trả lời
-
-Tính năng phản hồi theo đoạn hiển thị câu trả lời của ứng viên với các đoạn được đánh dấu bằng màu sắc:
-
-- Màu xanh lá (`strength`): đoạn trả lời tốt, đúng trọng tâm, có ví dụ cụ thể.
-- Màu vàng/cam (`improvement`): đoạn cần cải thiện — có thể là quá chung chung, thiếu ví dụ, hoặc không trả lời đúng câu hỏi.
-
-Mỗi đoạn highlight có thể click để xem annotation chi tiết và phiên bản được cải viết (`improved_version`). Cách trình bày này giúp người dùng thấy ngay sự tương phản giữa cách mình viết và cách tốt hơn mà không cần đọc toàn bộ nhận xét từng dòng.
-
-## 3.6 Kiến Trúc Ứng Dụng Web Hiện Đại
-
-### 3.6.1 Frontend Với Next.js Và React
-
-#### a. Tổng quan về Next.js
-
-Next.js là framework xây dựng ứng dụng web dựa trên React. Theo tài liệu chính thức, "Next.js is a React framework for building full-stack web applications." [10] Next.js bổ sung cho React các khả năng cần thiết cho ứng dụng production: routing, data fetching, caching, và tối ưu hiệu năng — theo mô tả: "You can use React to build your UI, then incrementally adopt Next.js features to solve common application requirements such as routing, data fetching, and caching - all while improving the developer and end-user experience." [10]
-
-AI Mock Interview sử dụng Next.js 16.2 với React 19 và TypeScript 5.7.
-
-#### b. App Router
-
-App Router là hệ thống routing mới của Next.js, được mô tả là "a file-system based router that uses React's latest features such as Server Components, Suspense, and Server Functions." [11] Routing dựa trên cấu trúc thư mục: mỗi thư mục trong `app/` ánh xạ thành một route URL, không cần cấu hình thêm.
-
-Theo tài liệu Next.js, "By default, layouts and pages are Server Components, which lets you fetch data and render parts of your UI on the server, optionally cache the result, and stream it to the client." [11] Khi cần tương tác hoặc truy cập browser API, "you can use Client Components to layer in functionality." [11]
-
-Trong AI Mock Interview, sự phân tách Server/Client Component được áp dụng theo nguyên tắc: trang danh sách phiên và trang báo cáo là Server Components (fetch dữ liệu ở server, giảm waterfall request); giao diện phỏng vấn và form nhập câu trả lời là Client Components vì cần state management và tương tác trực tiếp với người dùng.
-
-#### c. TypeScript và Tailwind CSS v4
-
-TypeScript cung cấp kiểm tra kiểu tĩnh tại compile time: kiểu dữ liệu của API response được định nghĩa trong `client/lib/types.ts` và được dùng xuyên suốt tất cả component. Lỗi sai kiểu dữ liệu được phát hiện sớm thay vì ở runtime.
-
-Tailwind CSS v4 với utility-first approach cho phép styling trực tiếp trong JSX mà không cần tạo file CSS riêng, giảm context switching khi phát triển component.
+Tailwind CSS v4 được dùng để xây dựng giao diện theo hướng utility-first. Thay vì tạo nhiều lớp CSS riêng cho từng thành phần, lập trình viên có thể dùng các lớp tiện ích để mô tả khoảng cách, màu sắc, bố cục và trạng thái ngay trong component. Cách này phù hợp với giai đoạn phát triển nhanh của dự án, đồng thời vẫn giữ được tính nhất quán về giao diện nếu các quy ước thiết kế được dùng thống nhất [3-T2].
 
 ---
-*[10] Next.js. "React Foundations." https://nextjs.org/learn/react-foundations/what-is-react-and-nextjs*
-*[11] Next.js. "App Router Getting Started." https://nextjs.org/docs/app/getting-started*
+*[5] Next.js. "What is Next.js?" https://nextjs.org/docs*
+*[6] Next.js. "Server and Client Components." https://nextjs.org/docs/app/getting-started/server-and-client-components*
+*[3-T2] Frontend implementation sources: `client/package.json`, `client/app`, `client/components`, `client/lib/types.ts`.*
 
-### 3.6.2 Backend Với NestJS
+## 3.6 Công Nghệ Backend Và Giao Tiếp API
 
-#### a. Tổng quan về NestJS
+### 3.6.1 NestJS
 
-Theo tài liệu chính thức, "Nest is a framework for building efficient, scalable Node.js server-side applications. It uses progressive JavaScript, is built with and fully supports TypeScript [...] and combines elements of OOP (Object Oriented Programming), FP (Functional Programming), and FRP (Functional Reactive Programming)." [12]
+Backend của AI Mock Interview được xây dựng bằng NestJS 11. NestJS là framework Node.js hỗ trợ TypeScript và cung cấp kiến trúc ứng dụng có tổ chức, phù hợp với các hệ thống có nhiều module, nhiều luồng dữ liệu và nhiều lớp xử lý [7].
 
-Lý do chính NestJS được chọn cho AI Mock Interview là vấn đề kiến trúc mà framework giải quyết: "Node.js [...] none of them effectively solve the main problem of — Architecture. Nest provides an out-of-the-box application architecture which allows developers and teams to create highly testable, scalable, loosely coupled, and easily maintainable applications. The architecture is heavily inspired by Angular." [12]
+NestJS phù hợp với dự án vì backend không chỉ trả về dữ liệu đơn giản. Hệ thống cần xác thực người dùng, quản lý phiên phỏng vấn, nhận câu trả lời, gọi AI, tạo báo cáo, xử lý hàng đợi và gửi cập nhật trạng thái. Nếu không có cấu trúc rõ ràng, các phần này dễ bị trộn lẫn. NestJS giúp chia hệ thống thành các nhóm chức năng, mỗi nhóm có trách nhiệm riêng và có thể kiểm thử độc lập hơn.
 
-AI Mock Interview sử dụng NestJS 11 với TypeScript 5.7.
+### 3.6.2 Module, controller, service và dependency injection
 
-#### b. Ba thành phần kiến trúc cốt lõi
+Ba khái niệm quan trọng trong NestJS là module, controller và service. Module dùng để gom các thành phần cùng phạm vi trách nhiệm. Controller tiếp nhận request từ client và trả response. Service chứa phần xử lý chính và có thể được tái sử dụng bởi nhiều controller hoặc thành phần khác [8][9][10].
 
-**Module**
+Dependency injection là cơ chế giúp một thành phần nhận các phụ thuộc cần thiết mà không phải tự khởi tạo trực tiếp. Với AI Mock Interview, điều này giúp backend dễ thay thế hoặc kiểm thử các phần như truy cập cơ sở dữ liệu, gọi AI, gửi sự kiện trạng thái và xử lý hàng đợi. Đây là lý do NestJS phù hợp với hệ thống có nhiều tích hợp như Prisma, BullMQ, Redis, Supabase và OpenAI-compatible API [3-T3].
 
-Theo NestJS docs, "A module is a class annotated with the @Module() decorator. The @Module() decorator provides metadata that Nest uses to organize the application structure." [13] Mỗi module đóng gói một domain nghiệp vụ. AI Mock Interview có 8 module chính: AuthModule, SessionModule, TurnModule, AiModule, ReportModule, QuestionBankModule, UserModule, CommonModule.
+### 3.6.3 Validation, guard và exception filter
 
-**Controller**
+Backend cần kiểm soát dữ liệu đầu vào trước khi xử lý. Validation giúp từ chối sớm các request thiếu trường, sai kiểu dữ liệu hoặc không đúng ràng buộc. Guard giúp kiểm tra quyền truy cập, ví dụ chỉ người dùng hợp lệ mới được thao tác với phiên của mình. Exception filter giúp chuẩn hóa lỗi trả về để frontend có thể hiển thị thông báo ổn định thay vì phụ thuộc vào lỗi kỹ thuật thô.
 
-"Controllers are responsible for handling incoming requests and returning responses to the client." [14] Controller định nghĩa route handler bằng decorators (`@Get`, `@Post`, `@Patch`), áp dụng Guard để xác thực, và ủy thác logic nghiệp vụ sang Service. Controller không chứa business logic.
+Các cơ chế này là nền tảng của backend chứ không phải logic nghiệp vụ riêng lẻ. Chúng giúp hệ thống an toàn hơn, dễ bảo trì hơn và giảm khả năng một lỗi nhỏ ở dữ liệu đầu vào làm hỏng toàn bộ luồng luyện phỏng vấn.
 
-**Provider (Service)**
+### 3.6.4 REST API và Server-Sent Events
 
-"Providers are a fundamental concept in Nest. [...] The main idea of a provider is that it can be injected as a dependency; this means objects can create various relationships with each other." [15] Dependency injection được NestJS runtime quản lý: "Nest will either create an instance of [CatsService], cache it, and return it, or if one is already cached, return the existing instance." [15] Theo đó mọi service đều là singleton trong phạm vi module.
+REST API được dùng cho các thao tác request-response thông thường, ví dụ tạo phiên, lấy dữ liệu phiên, gửi câu trả lời hoặc tải báo cáo. Mô hình này phù hợp khi client gửi một yêu cầu rõ ràng và nhận một kết quả phản hồi sau đó.
 
-Khai báo service là injectable: `@Injectable()` decorator "declares the [class] as a class that can be managed by the Nest IoC container." [15]
-
-#### c. Các cơ chế bổ sung trong AI Mock Interview
-
-**ValidationPipe**: Pipe toàn cục validate DTO đầu vào bằng `class-validator` decorators trước khi request đến controller. Request không hợp lệ (thiếu trường, sai kiểu) bị từ chối với HTTP 400 trước khi đến business logic.
-
-**Exception Filter**: Global exception filter bắt tất cả exception trong ứng dụng và trả về response chuẩn hóa với `ErrorCode` enum. Mỗi loại lỗi domain (session không tồn tại, quota AI hết, file quá lớn) có code riêng, giúp client xử lý lỗi có cấu trúc thay vì chỉ dựa vào HTTP status code.
-
-**Guards**: JWT Guard xác thực token trên mọi endpoint được bảo vệ. Admin Guard giới hạn quyền truy cập một số endpoint quản trị. Guard chạy trước controller, request bị từ chối với HTTP 401/403 nếu không pass.
+Tuy nhiên, một số kết quả trong hệ thống không có ngay lập tức vì phụ thuộc vào AI hoặc xử lý nền. Với các trường hợp cần báo cho client biết trạng thái mới, hệ thống sử dụng Server-Sent Events (SSE). SSE là cơ chế cho phép server đẩy sự kiện một chiều đến trình duyệt qua kết nối HTTP đang mở [11]. So với WebSocket, SSE đơn giản hơn khi hệ thống chỉ cần gửi cập nhật từ server về client, chẳng hạn thông báo phiên đã sẵn sàng hoặc báo cáo đã tạo xong.
 
 ---
-*[12] NestJS. "Introduction." https://docs.nestjs.com/*
-*[13] NestJS. "Modules." https://docs.nestjs.com/modules*
-*[14] NestJS. "Controllers." https://docs.nestjs.com/controllers*
-*[15] NestJS. "Providers." https://docs.nestjs.com/providers*
+*[7] NestJS. "Introduction." https://docs.nestjs.com/*
+*[8] NestJS. "Modules." https://docs.nestjs.com/modules*
+*[9] NestJS. "Controllers." https://docs.nestjs.com/controllers*
+*[10] NestJS. "Providers." https://docs.nestjs.com/providers*
+*[11] MDN Web Docs. "Server-sent events." https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events*
+*[3-T3] Backend implementation sources: `server/package.json`, `server/src/app.module.ts`, `server/src/main.ts`, `server/src/common`, `server/src/auth`, `server/src/session`, `server/src/turn`, `server/src/report`.*
 
-### 3.6.3 REST API Và Server-Sent Events
+## 3.7 Công Nghệ Xử Lý Bất Đồng Bộ Và Cập Nhật Trạng Thái
 
-#### a. REST API cho request/response đồng bộ
+### 3.7.1 Nhu cầu xử lý bất đồng bộ
 
-REST (Representational State Transfer) là kiến trúc API dựa trên HTTP, phù hợp cho các thao tác CRUD có kết quả ngay lập tức. AI Mock Interview dùng REST cho:
+Các tác vụ liên quan đến AI thường có thời gian xử lý không ổn định. Thời gian này phụ thuộc vào độ dài đầu vào, mô hình được dùng, tình trạng mạng và giới hạn của nhà cung cấp AI. Nếu giữ request HTTP mở cho đến khi AI trả về, người dùng có thể gặp timeout hoặc giao diện bị chờ lâu.
 
-- Tạo phiên phỏng vấn (`POST /api/v1/sessions`)
-- Nộp câu trả lời (`POST /api/v1/turns`)
-- Lấy danh sách phiên, chi tiết báo cáo, lịch sử câu hỏi
-
-Mỗi request HTTP trả về response hoàn chỉnh trong một roundtrip. Phù hợp khi dữ liệu có sẵn ngay hoặc thao tác hoàn thành nhanh.
-
-#### b. Server-Sent Events cho cập nhật trạng thái
-
-SSE là cơ chế truyền dữ liệu một chiều từ server đến client qua kết nối HTTP duy trì lâu dài. Theo MDN Web Docs, "Traditionally, a web page has to send a request to the server to receive new data; that is, the page requests data from the server. With server-sent events, it's possible for a server to send new data to a web page at any time, by pushing messages to the web page. These incoming messages can be treated as Events + data inside the web page." [16]
-
-W3C đã chuẩn hóa SSE thành Recommendation vào năm 2015. Giao thức dựa trên HTTP với MIME type `text/event-stream`; mỗi event là một khối text theo format:
-
-```
-event: session_status
-data: {"status":"active","sessionId":"abc123"}
-
-```
-
-So sánh SSE và WebSocket:
-
-| Thuộc tính | SSE | WebSocket |
-| --- | --- | --- |
-| Chiều truyền | Một chiều (server → client) | Hai chiều |
-| Protocol | HTTP thông thường | WS/WSS (protocol riêng) |
-| Tự động reconnect | Có (built-in trong EventSource API) | Phải tự implement |
-| Browser API | `EventSource` | `WebSocket` |
-| Kiểu dữ liệu | Text only | Text + Binary |
-
-#### c. Ứng dụng SSE trong AI Mock Interview
-
-SSE được dùng cho hai trường hợp cần cập nhật trạng thái từ server:
-
-**Session status update**: Sau khi tạo phiên, client subscribe vào `/api/v1/sessions/:id/events`. Khi `QuestionGenerationProcessor` hoàn thành (trạng thái `generating` → `active`), server publish event qua Redis Pub/Sub. `SseService` nhận event từ Redis và forward đến client đang subscribe. Client nhận được event thì điều hướng đến trang phỏng vấn tự động mà không cần reload trang.
-
-**Report generation completion**: Tương tự, khi `ComprehensiveReportProcessor` hoàn thành, client đang đợi trên trang report nhận event và hiển thị báo cáo mà không cần polling.
-
-Lý do chọn SSE thay vì WebSocket: giao tiếp chỉ cần một chiều (server → client), SSE đơn giản hơn, không cần upgrade protocol, và tự động reconnect khi mất kết nối.
-
----
-*[16] MDN Web Docs. "Server-sent events." https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events*
-
-## 3.7 Xử Lý Bất Đồng Bộ Với Hàng Đợi
-
-### 3.7.1 Tại sao cần xử lý bất đồng bộ
-
-Các tác vụ AI trong AI Mock Interview có đặc điểm chung: thời gian thực thi không xác định, phụ thuộc vào mạng và mô hình bên ngoài, và có thể thất bại tạm thời (rate limit, timeout).
-
-Thời gian thực thi ước tính cho từng tác vụ:
-
-| Tác vụ | Thời gian tối thiểu | Thời gian tối đa |
-| --- | --- | --- |
-| Sinh câu hỏi | 30 giây | 2 phút |
-| Sinh Surgical Feedback | 15 giây | 5 phút |
-| Sinh báo cáo tổng hợp | 30 giây | 1 phút |
-
-Nếu xử lý đồng bộ (block HTTP request cho đến khi AI trả về), hệ thống gặp hai vấn đề:
-- **Timeout**: Server và browser đều có timeout mặc định (30 giây); các tác vụ dài hơn sẽ bị cắt giữa chừng.
-- **Không có retry**: Nếu AI trả về lỗi tạm thời (rate limit, network), không có cơ chế thử lại tự động.
-
-Xử lý bất đồng bộ qua hàng đợi giải quyết cả hai vấn đề: HTTP request trả về ngay (202 Accepted), tác vụ nặng được xử lý nền, kết quả được đẩy đến client khi sẵn sàng.
+Vì vậy, hệ thống cần xử lý bất đồng bộ cho các tác vụ nặng. Request ban đầu chỉ cần ghi nhận yêu cầu và trả về trạng thái phù hợp; phần xử lý AI được chuyển sang hàng đợi nền. Khi có kết quả, hệ thống cập nhật trạng thái và gửi thông báo cho client. Cách tiếp cận này giúp giao diện phản hồi nhanh hơn và backend kiểm soát lỗi tốt hơn.
 
 ### 3.7.2 BullMQ và Redis
 
-Theo tài liệu chính thức, "BullMQ is a Node.js library that implements a fast and robust queue system built on top of Redis that helps in resolving many modern age micro-services architectures." [17]
+AI Mock Interview sử dụng BullMQ 5 làm thư viện hàng đợi trên nền Redis. Theo tài liệu BullMQ, thư viện này được thiết kế cho hệ thống hàng đợi nhanh, có khả năng xử lý job phân tán và hỗ trợ các tính năng như retry, delayed jobs, concurrency và phục hồi sau lỗi tiến trình [12].
 
-BullMQ sử dụng Redis làm backend lưu trữ job. Redis đảm bảo tính bền vững: ngay cả khi server NestJS restart, job chưa xử lý vẫn còn trong queue và sẽ được tiếp tục. Về Worker, tài liệu BullMQ mô tả: "Workers are instances capable of processing jobs. More specifically, a worker is equivalent to a 'message' receiver in a traditional message queue." [17]
+Redis đóng vai trò lưu trạng thái hàng đợi và job. Khi backend thêm một tác vụ vào hàng đợi, worker có thể lấy job đó để xử lý ở nền. Cách này phù hợp với các tác vụ như sinh câu hỏi, tạo feedback, tạo báo cáo hoặc các bước xử lý kéo dài khác. Điểm quan trọng trong Chương 3 là công nghệ hàng đợi giúp tách request ngắn của người dùng khỏi công việc nền có thời gian xử lý dài, không phải mô tả từng bước xử lý nội bộ.
 
-### 3.7.3 Cấu hình hàng đợi trong AI Mock Interview
+### 3.7.3 Retry, backoff và fallback
 
-AI Mock Interview có 3 queue độc lập trong phạm vi hiện tại:
+Một lợi ích chính của hàng đợi là khả năng thử lại khi lỗi tạm thời xảy ra. Ví dụ, lỗi mạng hoặc giới hạn tốc độ từ dịch vụ bên ngoài có thể được xử lý bằng retry và backoff. Thay vì bắt người dùng gửi lại thao tác thủ công, hệ thống có thể tự thử lại trong giới hạn đã cấu hình.
 
-| Queue | Trigger | Processor | Số lần retry tối đa |
-| --- | --- | --- | --- |
-| `question-generation` | POST /sessions (tạo phiên mới) | `QuestionGenerationProcessor` | 2 |
-| `feedback` | Sau khi có answer text | `FeedbackProcessor` | 2 |
-| `comprehensive-report` | PATCH session status = completed | `ComprehensiveReportProcessor` | 3 |
+Fallback là lớp bảo vệ cuối cùng khi một tác vụ AI không thể hoàn thành như mong muốn. Trong hệ thống phỏng vấn thử, fallback giúp giảm rủi ro một lỗi từ dịch vụ AI làm ngắt toàn bộ phiên luyện tập. Ví dụ, hệ thống có thể dùng nội dung dự phòng hoặc câu hỏi có sẵn để tiếp tục trải nghiệm ở mức chấp nhận được. Đây là một quyết định kỹ thuật quan trọng vì ứng dụng AI cần tính ổn định, không chỉ cần chất lượng đầu ra tốt trong điều kiện lý tưởng [3-T4].
 
-Tất cả queue kết nối vào Redis qua cấu hình toàn cục trong `BullModule.forRootAsync()`, lấy host/port từ environment variables `REDIS_HOST` và `REDIS_PORT`.
+### 3.7.4 Kết hợp hàng đợi và cập nhật trạng thái
 
-### 3.7.4 Cơ chế retry và fallback
-
-Khi một job thất bại (processor throw exception), BullMQ tự động retry theo số lần được cấu hình. Nếu vượt quá số lần retry, job chuyển sang trạng thái `failed`.
-
-Hệ thống xử lý hai loại lỗi AI:
-- **Rate limit tạm thời**: Processor nhận biết lỗi 429 từ OpenAI và retry với exponential backoff (1 giây, 2 giây).
-- **Quota hết**: `OpenAIGateway` đặt cooldown 60 giây; trong thời gian này mọi request AI đều bị từ chối ngay, tránh lãng phí retry.
-
-Khi tất cả retry thất bại, hệ thống dùng fallback:
-- Sinh câu hỏi thất bại → lấy câu hỏi từ question bank
-- Sinh feedback thất bại → lưu pre-written feedback message từ `fallback-content.ts`
-- Sinh report thất bại → báo lỗi qua SSE event
+Hàng đợi giải quyết phần xử lý nền, còn SSE giải quyết phần thông báo trạng thái cho giao diện. Hai công nghệ này bổ sung cho nhau: BullMQ và Redis giúp backend xử lý tác vụ dài ở nền; SSE giúp frontend biết khi nào trạng thái phiên hoặc báo cáo đã thay đổi. Nhờ đó, người dùng không cần liên tục tải lại trang để kiểm tra kết quả.
 
 ---
-*[17] BullMQ. "Introduction." https://docs.bullmq.io/guide/introduction*
+*[12] BullMQ. "What is BullMQ." https://docs.bullmq.io/*
+*[3-T4] Async processing implementation sources: `server/package.json`, `server/src/common/constants/queue.constants.ts`, `server/src/ai/ai.module.ts`, `server/src/ai/processors`, `server/src/common/services/sse.service.ts`.*
 
-## 3.8 Cơ Sở Dữ Liệu Và ORM
+## 3.8 Công Nghệ Lưu Trữ Dữ Liệu Và Truy Cập Cơ Sở Dữ Liệu
 
 ### 3.8.1 PostgreSQL và Supabase
 
-AI Mock Interview sử dụng PostgreSQL 15 làm hệ quản trị cơ sở dữ liệu quan hệ, được host trên Supabase. Supabase cung cấp PostgreSQL như một dịch vụ (Database-as-a-Service) kèm authentication JWT và object storage — giúp giảm effort infrastructure trong giai đoạn prototype.
+AI Mock Interview sử dụng PostgreSQL làm hệ quản trị cơ sở dữ liệu quan hệ, được triển khai thông qua Supabase. Supabase cung cấp nền tảng backend-as-a-service trên PostgreSQL, kèm các thành phần như xác thực, lưu trữ và công cụ quản trị dữ liệu [13].
 
-PostgreSQL được chọn vì hỗ trợ JSONB native (lưu rubricJson, contentJson và các cấu trúc báo cáo dạng JSON có thể query), ACID transactions đảm bảo tính nhất quán khi nhiều processor cùng cập nhật session, và partial indexes (được dùng qua `previewFeatures = ["partialIndexes"]` trong Prisma schema).
+PostgreSQL phù hợp với hệ thống vì dữ liệu của dự án có nhiều quan hệ rõ ràng: người dùng, hồ sơ, phiên phỏng vấn, câu hỏi, câu trả lời, feedback và báo cáo. Cơ sở dữ liệu quan hệ giúp biểu diễn các liên kết này chặt chẽ hơn so với chỉ lưu dữ liệu rời rạc. Ngoài ra, PostgreSQL hỗ trợ kiểu JSON/JSONB, phù hợp với các phần dữ liệu bán cấu trúc như rubric, nội dung báo cáo hoặc điểm theo nhóm năng lực [14].
 
 ### 3.8.2 Prisma ORM
 
-Theo tài liệu chính thức, "Prisma ORM is open-source and consists of: Prisma Client: Auto-generated, type-safe ORM interface · Prisma Migrate: Database migration system · Prisma Studio: GUI to view and edit your data." [18]
+Prisma ORM 7.8 được dùng làm lớp truy cập cơ sở dữ liệu trong backend. Prisma cung cấp Prisma Client, một bộ truy vấn được sinh tự động từ schema và có kiểm tra kiểu cho TypeScript [15]. Điều này giúp lập trình viên thao tác với dữ liệu an toàn hơn, vì nhiều sai lệch về tên trường hoặc kiểu dữ liệu có thể được phát hiện trong quá trình phát triển.
 
-Đặc điểm quan trọng nhất: "Prisma Client is Prisma ORM's generated, type-safe query builder for Node.js [...] It is tailored to your schema, fully typed, and designed to make common database work feel like ordinary application code." [18] Mỗi khi schema thay đổi, Prisma tái sinh TypeScript types tương ứng — mọi query sai cấu trúc được phát hiện tại compile time thay vì runtime.
+Trong dự án, Prisma đóng vai trò cầu nối giữa NestJS và PostgreSQL. Schema Prisma mô tả các bảng, quan hệ, chỉ mục và một số ràng buộc dữ liệu. Từ schema đó, backend có thể truy vấn dữ liệu theo cách rõ ràng hơn so với viết toàn bộ SQL thủ công. Với một hệ thống có nhiều nhóm dữ liệu như phỏng vấn, feedback và báo cáo, Prisma giúp giảm lỗi lặp lại và giữ mô hình dữ liệu nhất quán hơn [3-T5].
 
-AI Mock Interview dùng `prisma db push` thay vì `prisma migrate dev` để đồng bộ schema vào database (theo ADR-008). Phương pháp này phù hợp với giai đoạn phát triển nhanh khi schema còn thay đổi thường xuyên.
+### 3.8.3 JSONB, giao dịch và ràng buộc dữ liệu
 
-### 3.8.3 Các nhóm bảng chính
+Không phải mọi dữ liệu trong hệ thống đều có cấu trúc cố định hoàn toàn. Rubric, điểm theo năng lực, nội dung báo cáo và một số metadata có thể thay đổi theo loại phiên hoặc phiên bản prompt. PostgreSQL JSONB phù hợp với các phần này vì cho phép lưu dữ liệu dạng JSON trong cơ sở dữ liệu quan hệ, đồng thời vẫn giữ được các bảng và quan hệ chính của hệ thống [14].
 
-**Nhóm người dùng**
+Bên cạnh JSONB, hệ thống cũng cần giao dịch và ràng buộc dữ liệu để bảo vệ tính nhất quán. Ví dụ, một câu trả lời cần gắn với đúng phiên và đúng câu hỏi; một báo cáo cần thuộc về một phiên cụ thể; điểm số và trạng thái cần nằm trong phạm vi hợp lệ. Các ràng buộc này giúp cơ sở dữ liệu trở thành lớp bảo vệ bổ sung, không chỉ dựa vào kiểm tra ở backend.
 
-`UserProfile` lưu thông tin mở rộng của người dùng (tên, mục tiêu nghề nghiệp) ngoài dữ liệu authentication do Supabase Auth quản lý.
+### 3.8.4 Đồng bộ schema và phần SQL bổ sung
 
-**Nhóm phiên phỏng vấn**
+Trong giai đoạn phát triển hiện tại, dự án dùng Prisma để đồng bộ phần schema chính với cơ sở dữ liệu. Tuy nhiên, một số ràng buộc nâng cao của PostgreSQL không phải lúc nào cũng được biểu diễn đầy đủ bằng Prisma. Vì vậy, dự án có thêm quy trình áp dụng SQL bổ sung cho các thành phần như chính sách bảo vệ dữ liệu, trigger, ràng buộc kiểm tra và chỉ mục đặc thù [3-T6].
 
-Chuỗi quan hệ chính của hệ thống: `InterviewSession` → `SessionQuestion[]` → `UserAnswer`.
+Điểm cần nhấn mạnh ở Chương 3 là đây là lựa chọn công nghệ để cân bằng giữa tốc độ phát triển và an toàn dữ liệu. Prisma giúp mô hình dữ liệu dễ đọc, dễ dùng trong TypeScript; SQL bổ sung giúp tận dụng các khả năng mạnh của PostgreSQL khi cần bảo vệ dữ liệu ở tầng cơ sở dữ liệu.
 
-- `InterviewSession`: metadata phiên — loại phỏng vấn (`hr` / `technical` / `mixed`), JD, ngôn ngữ, context pack, trạng thái (`generating` / `active` / `completed` / `error`), điểm tổng phiên.
-- `SessionQuestion`: câu hỏi trong phiên — nội dung, thứ tự, competency domain, rubric chấm điểm. Trường `questionBankId` null nếu câu hỏi được AI sinh ra, không null nếu lấy từ question bank.
-- `UserAnswer`: câu trả lời văn bản của ứng viên, trạng thái bỏ qua và trạng thái feedback.
+### 3.8.5 Các nhóm dữ liệu chính trong hệ thống
 
-**Nhóm feedback và báo cáo**
+Ở mức tổng quan công nghệ, dữ liệu của AI Mock Interview có thể chia thành bốn nhóm chính:
 
-- `AiFeedback`: kết quả đánh giá của AI cho mỗi `UserAnswer` — điểm số, câu trả lời mẫu, nhận xét tổng quát, version prompt đã dùng, cờ fallback.
-- `AnnotatedSegment`: danh sách đoạn được highlight trong câu trả lời — vị trí ký tự, loại (strength/improvement), annotation, gợi ý cải thiện.
-- `SessionReport`: báo cáo tổng hợp phiên — 4 loại độc lập (`executive_summary`, `comm_analysis`, `competency_heatmap`, `action_plan`), lưu dưới dạng JSONB.
+| Nhóm dữ liệu | Vai trò trong hệ thống |
+| --- | --- |
+| Người dùng và hồ sơ | Lưu thông tin tài khoản, hồ sơ cá nhân và định hướng nghề nghiệp |
+| Phiên phỏng vấn | Lưu cấu hình phiên, loại phỏng vấn, câu hỏi và câu trả lời |
+| Feedback và báo cáo | Lưu kết quả đánh giá, nhận xét, điểm số và nội dung tổng hợp sau phiên |
+| Kho câu hỏi | Lưu câu hỏi có sẵn để hỗ trợ sinh câu hỏi và đảm bảo hệ thống có phương án dự phòng |
 
-**Nhóm question bank**
-
-- `QuestionBank`: kho câu hỏi dự phòng phân loại theo session type, competency domain và độ khó (1–5).
-- `QuestionUsage`: theo dõi câu hỏi nào đã được hiển thị cho người dùng nào, tránh lặp lại.
-
-### 3.8.4 Quan hệ trung tâm
-
-```
-InterviewSession (1) ──> SessionQuestion[] (n)
-                                │
-                                ▼
-                         UserAnswer (0..1)
-                                │
-                    ┌──────────┘
-                    ▼
-              AiFeedback (0..1)
-                    │
-                    ▼
-           AnnotatedSegment[] (0..n)
-
-InterviewSession (1) ──> SessionReport[] (n)
-```
-
-Quan hệ `UserAnswer` → `AiFeedback` có unique constraint, đảm bảo mỗi câu trả lời chỉ có một feedback. Quan hệ `AiFeedback` → `AnnotatedSegment` là one-to-many, tối đa 2 đoạn trong thực tế (giới hạn ở prompt).
-
-### 3.8.5 Question Bank và chiến lược fallback
-
-Question bank đóng vai trò hai lớp:
-1. **Hybrid generation**: 4 trong 5 câu hỏi được lấy từ bank theo competency domain phù hợp với JD — nhanh hơn và ổn định hơn so với AI sinh toàn bộ.
-2. **Fallback hoàn toàn**: Khi AI generation thất bại sau tất cả retry, toàn bộ câu hỏi lấy từ bank, phiên vẫn hoạt động bình thường.
-
-`QuestionUsage` tracking ngăn người dùng gặp lại câu hỏi đã làm trong phiên trước, dù lấy từ cùng một bank.
+Cách chia này chỉ nhằm giải thích nền tảng lưu trữ dữ liệu. Thiết kế chi tiết từng bảng, quan hệ và thuật toán chọn dữ liệu phù hợp hơn với Chương 4, nơi trình bày kiến trúc và thiết kế triển khai của hệ thống.
 
 ---
-*[18] Prisma. "What is Prisma ORM?" https://www.prisma.io/docs/orm*
+*[13] Supabase. "Database." https://supabase.com/docs/guides/database/overview*
+*[14] PostgreSQL. "JSON Types." https://www.postgresql.org/docs/current/datatype-json.html*
+*[15] Prisma. "Prisma ORM." https://www.prisma.io/docs/orm*
+*[3-T5] Database implementation sources: `server/prisma/schema.prisma`, `server/prisma.config.ts`, `server/src/prisma`, `server/package.json`.*
+*[3-T6] Raw SQL synchronization sources: `docs/Design/ArchitecturalDesign/ADRs/ADR-008_raw-sql-outside-prisma-db-push.md`, `server/prisma/migrations/migration.sql`, `server/prisma/verify-db-hardening.ts`.*
