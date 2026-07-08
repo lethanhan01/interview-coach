@@ -16,7 +16,7 @@
 
 ## 5.2 Kết Quả Chức Năng Đạt Được Trong GR1
 
-> Cần bổ sung: tổng hợp các chức năng đã hoàn thành, đang hoàn thiện và chưa thực hiện. Cần đối chiếu code/demo thực tế, không chỉ dựa vào thiết kế.
+> Cần bổ sung: tổng hợp ảnh chụp các chức năng đã hoàn thành. Cần đối chiếu code/demo thực tế, không chỉ dựa vào thiết kế.
 
 | Chức năng | Kết quả hiện tại | Minh chứng | Đánh giá |
 | --- | --- | --- | --- |
@@ -63,50 +63,6 @@ Kịch bản gợi ý:
 | 2 | Cần bổ sung | Cần bổ sung | Cần bổ sung |
 
 
-## 5.6 Đánh Giá Mức Độ Đáp Ứng Yêu Cầu
-
-> Cần bổ sung: lập ma trận đối chiếu yêu cầu - kết quả.
-
-| Yêu cầu | Mô tả | Kết quả thực hiện | Mức độ đáp ứng | Minh chứng |
-| --- | --- | --- | --- | --- |
-| FR-01 | Cần bổ sung | Cần bổ sung | Đạt/Một phần/Chưa đạt | Cần bổ sung |
-| FR-02 | Cần bổ sung | Cần bổ sung | Đạt/Một phần/Chưa đạt | Cần bổ sung |
-| NFR-01 | Cần bổ sung | Cần bổ sung | Đạt/Một phần/Chưa đạt | Cần bổ sung |
-
-Nguồn nên đối chiếu: `docs/RequirementAnalysis/SRS/SRS_InterviewAI_Full.md`, `docs/RequirementAnalysis/SRS/RTM_InterviewAI.md`.
-
-
-## 5.8 Đánh Giá Hiệu Năng Và Độ Ổn Định
-
-> Cần bổ sung: nếu có đo đạc, trình bày latency tạo câu hỏi/feedback/report, thời gian load trang, khả năng xử lý job bất đồng bộ, độ ổn định Redis/SSE.
-
-| Tiêu chí | Mục tiêu | Kết quả đo được | Nhận xét |
-| --- | --- | --- | --- |
-| Thời gian tạo session | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Thời gian sinh câu hỏi | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Thời gian tạo feedback | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Thời gian tạo report | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-| Khả năng fallback | Cần bổ sung | Cần bổ sung | Cần bổ sung |
-
-## 5.10 Đánh Giá Chất Lượng AI Feedback
-
-> Cần bổ sung: đánh giá feedback theo tiêu chí thực dụng thay vì chỉ nói AI "tốt".
-
-| Tiêu chí | Mô tả | Cách đánh giá | Kết quả/nhận xét |
-| --- | --- | --- | --- |
-| Tính liên quan | Feedback bám câu hỏi và câu trả lời | Cần bổ sung | Cần bổ sung |
-| Tính cụ thể | Có chỉ ra đoạn cần cải thiện | Cần bổ sung | Cần bổ sung |
-| Tính hành động | Có gợi ý sửa cụ thể | Cần bổ sung | Cần bổ sung |
-| Độ ổn định schema | Output đúng format | Cần bổ sung | Cần bổ sung |
-| An toàn nội dung | Không sinh nội dung không phù hợp | Cần bổ sung | Cần bổ sung |
-
-## 5.11 So Sánh Kết Quả Với Mục Tiêu Ban Đầu
-
-> Cần bổ sung: quay lại các mục tiêu ở Chương 1 và đánh giá mức độ hoàn thành.
-
-| Mục tiêu ban đầu | Kết quả đạt được | Mức độ hoàn thành | Ghi chú |
-| --- | --- | --- | --- |
-| Cần bổ sung | Cần bổ sung | Cần bổ sung | Cần bổ sung |
 
 ## 5.12 Hạn Chế Của Sản Phẩm GR1
 
