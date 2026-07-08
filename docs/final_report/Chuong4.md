@@ -201,21 +201,27 @@ Nếu hồ sơ chưa tồn tại, hệ thống có thể tạo hồ sơ rỗng h
 
 **a. Mục đích của tính năng**
 
-Nhóm tính năng Job Description và cấu hình phiên chuyển mục tiêu luyện tập của người dùng thành một phiên phỏng vấn cụ thể. Người dùng có thể nhập JD mới, chỉnh sửa JD hoặc chọn lại JD đã lưu. Sau đó người dùng chọn loại phỏng vấn, context pack, ngôn ngữ, thời lượng và số lượng câu hỏi.
+Nhóm tính năng Job Description và cấu hình phiên chuyển mục tiêu luyện tập của người dùng thành một phiên phỏng vấn cụ thể. Người dùng có thể nhập JD mới, chỉnh sửa JD hoặc chọn lại JD đã lưu. Sau đó người dùng chọn loại phỏng vấn, context pack, ngôn ngữ và thời lượng hiển thị; frontend dùng thời lượng này để suy ra số lượng câu hỏi gửi lên backend.
 
 Tính năng này là điểm nối giữa dữ liệu người dùng và pipeline sinh câu hỏi. Nếu JD hoặc cấu hình phiên không rõ ràng, câu hỏi sinh ra sẽ thiếu trọng tâm. Vì vậy hệ thống cần kiểm tra dữ liệu ở bước này trước khi tạo phiên.
 
+Về vai trò trong AI Mock Interview, đây là bước biến một nhu cầu luyện tập còn rộng thành một cấu hình có thể xử lý được. Người dùng không chỉ nói rằng mình muốn luyện phỏng vấn, mà còn cung cấp vị trí ứng tuyển, bối cảnh văn hóa phỏng vấn, loại câu hỏi mong muốn và độ dài phiên. Các thông tin này quyết định cách hệ thống chọn rubric, chọn question bank, tạo prompt và trả kết quả bằng ngôn ngữ phù hợp.
+
 **b. Dữ liệu đầu vào**
 
-Dữ liệu đầu vào gồm tên công ty, vị trí ứng tuyển, cấp độ, yêu cầu công việc, mô tả công việc, kỹ năng hoặc tech stack, loại phỏng vấn, context pack, ngôn ngữ đầu ra, thời lượng phiên và số lượng câu hỏi. Nếu người dùng chọn JD đã lưu, request có thêm mã JD để backend kiểm tra quyền sở hữu.
+Dữ liệu đầu vào gồm tên công ty, vị trí ứng tuyển, cấp độ, yêu cầu công việc, mô tả công việc, kỹ năng hoặc tech stack, loại phỏng vấn, context pack, ngôn ngữ đầu ra và số lượng câu hỏi. Nếu người dùng chọn JD đã lưu, request có thêm mã JD để backend kiểm tra quyền sở hữu. Ở frontend, lựa chọn thời lượng được ánh xạ thành số lượng câu hỏi trước khi gửi request tạo phiên.
 
-Các dữ liệu này được lưu vào `saved_job_descriptions` và `interview_sessions`. JD lưu trữ nội dung tuyển dụng, còn phiên phỏng vấn lưu cấu hình vận hành như loại phiên, context pack, số câu hỏi, thời lượng, ngôn ngữ và trạng thái phiên.
+Các dữ liệu này được lưu vào `saved_job_descriptions` và `interview_sessions`. JD lưu trữ nội dung tuyển dụng, còn phiên phỏng vấn lưu cấu hình vận hành như loại phiên, context pack, số câu hỏi, ngôn ngữ và trạng thái phiên. Trường thời lượng trong session được backend dùng khi tính thời gian ước tính cho câu hỏi; ở luồng tạo phiên hiện tại, frontend gửi số câu hỏi đã suy ra từ lựa chọn thời lượng.
+
+Đầu ra trực tiếp của tính năng không phải là danh sách câu hỏi. Kết quả trả về là một phiên phỏng vấn mới có mã phiên, trạng thái ban đầu là đang sinh câu hỏi và các thông tin cấu hình đã được lưu. Danh sách câu hỏi chỉ xuất hiện sau khi worker sinh câu hỏi xử lý xong job nền ở mục 4.5.3.
 
 **c. Luồng xử lý nghiệp vụ**
 
 Người dùng bắt đầu bằng việc nhập JD mới hoặc chọn JD đã lưu. Frontend cho phép người dùng xem lại nội dung quan trọng trước khi tạo phiên. Sau đó người dùng chọn loại phỏng vấn HR/Behavioral, Technical hoặc Mixed, chọn context pack Việt Nam hoặc Western và xác nhận cấu hình phiên.
 
 Backend lưu hoặc cập nhật JD, sau đó tạo bản ghi phiên ở trạng thái chuẩn bị sinh câu hỏi. Request tạo phiên không chờ AI sinh xong toàn bộ câu hỏi. Backend chỉ trả mã phiên cho frontend, còn quá trình sinh câu hỏi được chuyển sang hàng đợi nền và được trình bày chi tiết ở mục 4.5.3.
+
+Luồng nghiệp vụ chính gồm bốn bước. Thứ nhất, người dùng chuẩn bị JD và cấu hình phiên. Thứ hai, frontend chuẩn hóa JD thành văn bản đầy đủ để backend có thể kiểm tra độ dài và lưu snapshot. Thứ ba, backend tạo phiên và xếp job sinh câu hỏi. Thứ tư, frontend chuyển người dùng sang màn hình phỏng vấn, nơi phiên có thể đang ở trạng thái chờ cho đến khi câu hỏi sẵn sàng.
 
 Sơ đồ dưới đây thể hiện ranh giới của tính năng cấu hình phiên: phần này dừng ở việc tạo phiên và xếp tác vụ sinh câu hỏi.
 
@@ -245,17 +251,29 @@ Frontend chia quá trình tạo phiên thành các bước rõ ràng: nhập ho�
 
 Giao diện cần thể hiện các trường bắt buộc, trạng thái đang lưu JD, trạng thái đang tạo phiên và lỗi validation nếu có. Nếu người dùng chọn JD đã lưu, giao diện cần hiển thị lại các thông tin chính như vị trí, công ty, cấp độ và yêu cầu để tránh tạo nhầm phiên.
 
+Ở bước nhập JD, giao diện cho phép người dùng nhập vị trí, level, yêu cầu, nội dung công việc, tech stack và các thông tin tuyển dụng liên quan. Nếu người dùng đi từ thư viện JD, form được điền lại bằng JD đã chọn. Ở bước cấu hình, thời lượng phiên được ánh xạ thành số câu hỏi dự kiến: 30 phút tương ứng 15 câu, 60 phút tương ứng 30 câu và 90 phút tương ứng 45 câu. Ở bước xác nhận, giao diện hiển thị lại công ty, vị trí, level, tech stack, yêu cầu, nội dung công việc, context pack, thời lượng và số câu hỏi trước khi người dùng bắt đầu.
+
+Khi gửi cấu hình, nút bắt đầu chuyển sang trạng thái loading để tránh gửi lặp. Nếu backend trả lỗi, thông báo được giữ trên màn hình xác nhận để người dùng quay lại sửa JD hoặc cấu hình. Nếu tạo phiên thành công, frontend điều hướng sang màn hình phiên phỏng vấn bằng mã phiên vừa nhận.
+
 **e. Thiết kế xử lý backend**
 
 Backend kiểm tra JD đủ dài, loại phiên hợp lệ, context pack tồn tại, số lượng câu hỏi nằm trong giới hạn và JD thuộc về đúng người dùng. Với JD mới, backend lưu nội dung vào bảng JD đã lưu. Với JD cũ, backend chỉ cho phép dùng nếu bản ghi đó thuộc người dùng hiện tại.
 
-Sau khi dữ liệu hợp lệ, backend tạo bản ghi phiên phỏng vấn, gắn phiên với JD và cấu hình đã chọn. Backend đưa job sinh câu hỏi vào queue, kèm các thông tin cần thiết như mã phiên, loại phiên, context pack, ngôn ngữ, số lượng câu hỏi, thời lượng và mã người dùng. Kết quả trả về cho frontend là mã phiên và trạng thái ban đầu, không phải danh sách câu hỏi.
+Sau khi dữ liệu hợp lệ, backend tạo bản ghi phiên phỏng vấn, gắn phiên với JD và cấu hình đã chọn. Backend đưa job sinh câu hỏi vào queue, kèm các thông tin cần thiết như mã phiên, loại phiên, context pack, ngôn ngữ, số lượng câu hỏi và dữ liệu JD. Kết quả trả về cho frontend là mã phiên và trạng thái ban đầu, không phải danh sách câu hỏi.
+
+Ở lớp DTO, backend yêu cầu JD tối thiểu 100 ký tự, loại phiên chỉ thuộc `hr`, `technical` hoặc `mixed`, context pack chỉ thuộc `VN` hoặc `Western`, ngôn ngữ chỉ thuộc `vi` hoặc `en`, số câu hỏi nằm trong khoảng 3 đến 45 và mã JD đã lưu phải có dạng UUID nếu được gửi lên. Sau validation DTO, service còn kiểm tra giới hạn số phiên được tạo trong 24 giờ, bảo đảm context pack tồn tại và chuẩn hóa ngôn ngữ đầu ra.
+
+Nếu request dùng JD đã lưu, backend tìm JD theo đồng thời mã JD, mã người dùng và điều kiện chưa bị xóa mềm. Nếu không tìm thấy, backend trả lỗi thay vì dùng dữ liệu không thuộc người dùng hiện tại. Khi JD hợp lệ, backend cập nhật thời điểm sử dụng gần nhất để thư viện JD phản ánh đúng lịch sử sử dụng.
+
+Khi tạo phiên, backend ghi `jobDescription`, `jobTitle`, `sessionType`, `numQuestions`, `language`, `contextPackId`, `savedJobDescriptionId` nếu có và trạng thái `generating`. Sau đó backend xếp job `question-generation` với payload gồm mã phiên, loại phiên, JD dạng văn bản, danh sách vị trí mục tiêu, context pack, ngôn ngữ, tổng số câu hỏi và thời lượng đang lưu trên session. Job có cơ chế retry với backoff cố định để giảm rủi ro lỗi tạm thời ở hàng đợi hoặc worker.
 
 **f. Xử lý lỗi và fallback**
 
 Nếu JD thiếu nội dung quan trọng, số lượng câu hỏi không hợp lệ, context pack không tồn tại hoặc người dùng cố dùng JD không thuộc quyền sở hữu của mình, backend từ chối tạo phiên và trả lỗi rõ ràng. Frontend giữ người dùng ở màn hình cấu hình để chỉnh sửa.
 
 Nếu phiên đã tạo nhưng job sinh câu hỏi chưa hoàn tất, frontend chuyển sang trạng thái chờ thay vì coi đây là lỗi. Nếu queue hoặc backend không thể nhận job, hệ thống không nên hiển thị phiên như đã sẵn sàng; phiên cần được đánh dấu trạng thái phù hợp để người dùng biết phải thử lại hoặc quay về cấu hình.
+
+Trường hợp queue không nhận được job sau khi session đã được ghi, backend cập nhật phiên sang trạng thái lỗi và trả thông báo dịch vụ tạo câu hỏi tạm thời không khả dụng. Cách xử lý này tránh việc người dùng nhìn thấy một phiên đang chờ nhưng thực tế không có worker nào sẽ sinh câu hỏi cho phiên đó.
 
 ### 4.5.3 Sinh câu hỏi phỏng vấn
 
@@ -294,15 +312,17 @@ flowchart TD
 
 Dữ liệu đầu vào chính là nội dung Job Description do người dùng nhập hoặc chọn từ JD đã lưu. Nội dung này cung cấp vị trí ứng tuyển, yêu cầu công việc, kỹ năng liên quan và bối cảnh để hệ thống tạo câu hỏi phù hợp hơn với mục tiêu luyện tập.
 
-Người dùng cũng chọn loại phỏng vấn, gồm HR/Behavioral, Technical hoặc Mixed. Loại phỏng vấn quyết định trọng tâm câu hỏi: hành vi, kỹ thuật hoặc kết hợp cả hai. Ngoài ra, cấu hình phiên còn có số lượng câu hỏi, thời lượng phiên, ngôn ngữ hiển thị, context pack Việt Nam hoặc Western và cấp độ/phân bố độ khó được hệ thống áp dụng khi chọn câu hỏi.
+Người dùng cũng chọn loại phỏng vấn, gồm HR/Behavioral, Technical hoặc Mixed. Loại phỏng vấn quyết định trọng tâm câu hỏi: hành vi, kỹ thuật hoặc kết hợp cả hai. Ngoài ra, cấu hình phiên còn có số lượng câu hỏi, ngôn ngữ hiển thị, context pack Việt Nam hoặc Western và thời lượng đang lưu trên session để hệ thống ước tính thời gian cho từng câu.
 
 Nếu người dùng đã có hồ sơ cá nhân hoặc hồ sơ nghề nghiệp trong hệ thống, dữ liệu này có thể được dùng làm ngữ cảnh bổ sung. Phần có căn cứ rõ trong luồng hiện tại vẫn là JD, loại phiên, ngôn ngữ, context pack, số lượng câu hỏi, thời lượng phiên, mã người dùng và mã JD đã lưu nếu có.
+
+Đầu ra của tính năng là danh sách câu hỏi đã được lưu trong `session_questions`. Mỗi câu có nội dung câu hỏi, thứ tự trong phiên, loại câu hỏi, competency domain, thời lượng ước tính và liên kết đến question bank nếu câu đó lấy từ ngân hàng câu hỏi. Sau khi danh sách đủ số lượng, trạng thái phiên được chuyển sang sẵn sàng để frontend tải câu hỏi.
 
 **c. Luồng xử lý nghiệp vụ**
 
 Luồng bắt đầu khi người dùng hoàn tất cấu hình phiên và gửi yêu cầu tạo phiên phỏng vấn. Frontend gửi dữ liệu cấu hình lên backend. Backend tạo bản ghi phiên ở trạng thái đang sinh câu hỏi, sau đó đưa tác vụ sinh câu hỏi vào hàng đợi nền. Việc đưa vào hàng đợi giúp request tạo phiên trả về nhanh hơn, vì quá trình sinh câu hỏi có thể phải gọi AI, đọc question bank và ghi nhiều bản ghi vào database.
 
-Khi worker xử lý tác vụ, hệ thống đọc thông tin phiên, JD, loại phỏng vấn, context pack, ngôn ngữ và số câu cần tạo. Với chiến lược hiện tại, hệ thống dùng mô hình hybrid: cứ khoảng 5 câu hỏi trong phiên thì có 1 câu do AI sinh, phần còn lại được lấy từ question bank. Ví dụ, phiên 15 câu sẽ có khoảng 3 câu AI và 12 câu từ question bank.
+Khi worker xử lý tác vụ, hệ thống đọc thông tin phiên, JD, loại phỏng vấn, context pack, ngôn ngữ, thời lượng đang lưu trên session và số câu cần tạo. Với chiến lược hiện tại, hệ thống dùng mô hình hybrid: cứ khoảng 5 câu hỏi trong phiên thì có 1 câu do AI sinh, phần còn lại được lấy từ question bank. Ví dụ, phiên 15 câu sẽ có khoảng 3 câu AI và 12 câu từ question bank.
 
 Sau khi có câu hỏi AI và câu hỏi từ question bank, backend chuẩn hóa metadata, kiểm tra số lượng, trộn câu hỏi theo thứ tự và lưu danh sách cuối cùng. Nếu danh sách hợp lệ và đủ số câu, phiên được chuyển sang trạng thái sẵn sàng. Frontend nhận trạng thái mới qua cơ chế cập nhật trạng thái và tải danh sách câu hỏi để bắt đầu phỏng vấn.
 
@@ -352,6 +372,8 @@ sequenceDiagram
 Khi người dùng gửi yêu cầu tạo phiên, giao diện chuyển sang trạng thái đang xử lý. Trạng thái này thể hiện rằng hệ thống đã nhận cấu hình và đang chuẩn bị câu hỏi. Trong thời gian chờ, frontend không cần hiển thị từng bước xử lý nội bộ, nhưng cần cho người dùng biết phiên chưa sẵn sàng để trả lời.
 
 Nếu backend trả lỗi do dữ liệu đầu vào không hợp lệ, giao diện hiển thị thông báo lỗi gần khu vực cấu hình để người dùng sửa lại. Nếu phiên đã được tạo nhưng câu hỏi chưa sẵn sàng, màn hình phỏng vấn hiển thị trạng thái chờ và tiếp tục theo dõi trạng thái phiên. Khi phiên chuyển sang trạng thái sẵn sàng, frontend tải danh sách câu hỏi và hiển thị câu hỏi đầu tiên theo thứ tự.
+
+Frontend theo dõi trạng thái sinh câu hỏi qua API trạng thái phiên và sự kiện trạng thái phiên. Khi nhận trạng thái `active`, frontend đọc danh sách câu hỏi theo thứ tự. Khi nhận trạng thái lỗi, giao diện dừng chờ và thông báo rằng phiên không thể bắt đầu ở trạng thái hiện tại.
 
 **e. Thiết kế xử lý backend**
 
@@ -406,11 +428,17 @@ Backend Developer
 
 Sau khi AI trả kết quả, backend không lưu ngay. Kết quả phải đi qua các bước parse JSON, kiểm tra schema, chuẩn hóa loại câu hỏi, chuẩn hóa competency domain theo context pack và loại phiên, loại bỏ câu hỏi có domain không thuộc phiên hiện tại, chuẩn hóa độ khó về mức 1, 2 hoặc 3 và tính thời lượng ước tính cho từng câu. Nếu AI trả về tên tiêu chí thay vì mã tiêu chí, backend có cơ chế khớp theo mã gốc, mã đã chuẩn hóa, mã được trích ra từ chuỗi hoặc tên tiêu chí đã chuẩn hóa. Nếu vẫn không khớp, câu hỏi đó bị loại bỏ.
 
+AI service được gọi với yêu cầu trả về JSON object. Backend parse JSON, validate bằng schema câu hỏi và chỉ lấy tối đa đúng số câu AI cần sinh. Các trường AI trả về được xem là dữ liệu chưa tin cậy. Vì vậy hệ thống không lưu trực tiếp `category`, `competency_domain` hoặc `difficulty` nếu chúng không khớp với context pack và loại phiên hiện tại.
+
 Đối với phần question bank, backend lọc câu hỏi theo loại phiên, context pack và ngôn ngữ. Với phiên Mixed, hệ thống chia tương đối giữa câu hỏi HR và Technical. Backend không lấy đúng bằng số lượng cần ngay từ đầu mà lấy một tập ứng viên lớn hơn, khoảng gấp 3 lần số câu cần lấy, rồi chọn theo phân bố độ khó. Logic hiện tại ưu tiên khoảng 30% câu dễ, 50% câu trung bình và 20% câu khó; nếu nhóm nào không đủ, hệ thống lấy thêm từ các câu còn lại để đạt đủ số lượng.
+
+Question bank chỉ lấy các câu chưa bị xóa mềm và thuộc context pack của phiên. Với ngôn ngữ đầu ra, backend ưu tiên bản dịch theo ngôn ngữ của phiên nếu có; nếu không có bản dịch phù hợp, hệ thống dùng nội dung gốc của câu hỏi. Mỗi câu question bank trả về đã có mã câu hỏi gốc, nội dung, nhóm câu hỏi, competency domain và thời lượng ước tính.
 
 Sau khi có câu hỏi AI và câu hỏi từ question bank, backend trộn chúng thành danh sách cuối cùng. Câu hỏi AI không bị dồn vào đầu phiên mà được đặt cách quãng, ví dụ ở các vị trí khoảng 5, 10, 15 nếu phiên đủ dài. Các vị trí còn lại lấy từ question bank. Mỗi câu hỏi cuối cùng được lưu với mã phiên, mã câu hỏi gốc nếu có, nội dung câu hỏi, thứ tự, loại câu hỏi, competency domain, rubric JSON và thời lượng ước tính.
 
 Thuật toán sinh câu hỏi được đặt ở backend vì đây là bước cần kiểm soát chặt dữ liệu đầu vào, trạng thái phiên, context pack, question bank và khả năng fallback khi AI không ổn định. Frontend chỉ gửi cấu hình phiên; backend mới là nơi quyết định câu hỏi nào được tạo, câu hỏi nào được lấy từ ngân hàng câu hỏi và khi nào phiên được chuyển sang trạng thái sẵn sàng.
+
+Khi lưu danh sách cuối cùng, backend dùng thao tác ghi nhiều bản ghi vào `session_questions` và bỏ qua bản ghi trùng nếu job bị retry. Sau khi ghi đủ số câu, backend chuyển phiên sang `active` và phát sự kiện trạng thái. Nếu ghi không đủ số câu hoặc cả AI và question bank đều không cung cấp được dữ liệu hợp lệ, phiên được chuyển sang `error`.
 
 ```text
 Input: sessionId, sessionType, jobDescription, targetRoles, contextPack, language, totalQuestions, durationMin
@@ -443,6 +471,8 @@ Khi AI provider lỗi, hết quota, timeout hoặc trả dữ liệu không đú
 
 Nếu question bank không đủ câu hỏi phù hợp với loại phiên, context pack hoặc ngôn ngữ, hệ thống cố gắng bù từ các câu còn lại trong phạm vi hợp lệ. Nếu sau bước bù vẫn không đủ số câu tối thiểu để tạo phiên, backend chuyển phiên sang trạng thái lỗi để frontend thông báo cho người dùng thay vì bắt đầu một phiên thiếu dữ liệu.
 
+Nếu AI sinh được một phần câu hỏi nhưng question bank không đủ phần còn lại, backend không bắt đầu phiên với danh sách thiếu. Nếu phát sự kiện SSE thất bại sau khi database đã lưu đủ câu hỏi và phiên đã active, lỗi phát sự kiện chỉ được ghi log; dữ liệu phiên vẫn được giữ vì frontend còn có thể đọc lại trạng thái qua API hoặc polling.
+
 ### 4.5.4 Thực hiện phiên và lưu câu trả lời
 
 **a. Mục đích của tính năng**
@@ -451,17 +481,23 @@ Nhóm tính năng thực hiện phiên cho phép người dùng đi qua danh sá
 
 Tính năng này không quyết định cách chấm điểm. Vai trò của nó là hiển thị câu hỏi đúng thứ tự, ghi nhận câu trả lời một cách nhất quán và chuyển dữ liệu sang bước đánh giá ở mục 4.5.5.
 
+Tính năng này quan trọng vì chất lượng báo cáo phụ thuộc trực tiếp vào dữ liệu câu trả lời. Nếu câu trả lời bị ghi trùng, ghi sai câu hỏi hoặc mất trạng thái bỏ qua, các bước feedback và report phía sau sẽ không còn phản ánh đúng phiên phỏng vấn của người dùng.
+
 **b. Dữ liệu đầu vào**
 
 Dữ liệu đầu vào gồm mã phiên, mã câu hỏi, nội dung câu trả lời của người dùng, trạng thái bỏ qua nếu có và các thông tin ngữ cảnh đã gắn với câu hỏi như loại câu hỏi, competency domain, context pack và ngôn ngữ đầu ra.
 
 Danh sách câu hỏi được đọc từ `session_questions`. Câu trả lời được lưu vào `user_answers`. Nếu người dùng bỏ qua câu hỏi, bản ghi câu trả lời vẫn được tạo với cờ bỏ qua để phiên có thể tiếp tục và báo cáo sau này biết câu nào không có dữ liệu chấm điểm.
 
+Đầu ra của thao tác gửi câu trả lời gồm mã answer đã lưu, cờ cho biết feedback đã được xếp hàng hay chưa và cờ cho biết transcription có đang chờ hay không. Với câu trả lời văn bản bình thường, feedback được xếp hàng. Với câu bỏ qua, feedback không được xếp hàng. Với luồng audio-only còn được hỗ trợ như fallback, hệ thống có thể xếp job transcription trước rồi mới có feedback sau.
+
 **c. Luồng xử lý nghiệp vụ**
 
 Khi người dùng mở phiên, frontend kiểm tra trạng thái phiên. Nếu câu hỏi chưa sẵn sàng, màn hình hiển thị trạng thái chờ và tiếp tục theo dõi cập nhật. Khi phiên đã sẵn sàng, frontend tải danh sách câu hỏi theo thứ tự và hiển thị câu đầu tiên.
 
 Người dùng có thể nhập câu trả lời rồi gửi, hoặc bỏ qua câu hỏi. Với câu trả lời văn bản, backend lưu dữ liệu vào `user_answers` và xếp job feedback. Với câu bị bỏ qua, backend lưu trạng thái bỏ qua nhưng không xếp job feedback. Khi hết danh sách câu hỏi, frontend yêu cầu hoàn tất phiên để hệ thống chuyển sang giai đoạn tổng hợp báo cáo.
+
+Luồng nghiệp vụ cần bảo đảm mỗi câu hỏi chỉ có một kết quả xử lý trong phiên. Nếu người dùng gửi câu trả lời văn bản, câu đó trở thành câu đã trả lời và được đưa vào luồng feedback. Nếu người dùng chọn bỏ qua, câu đó được ghi nhận là skipped và được đưa vào báo cáo như câu không chấm điểm. Nếu người dùng gửi lại cùng một câu do retry mạng hoặc nhấn nút nhiều lần, backend không tạo thêm answer mới.
 
 Sơ đồ dưới đây mô tả luồng chính của một phiên phỏng vấn từ lúc câu hỏi sẵn sàng đến khi phiên chuyển sang trạng thái tổng hợp.
 
@@ -488,17 +524,27 @@ Giao diện phiên phỏng vấn hiển thị một câu hỏi tại một thờ
 
 Khi gửi câu trả lời, frontend cần khóa thao tác gửi lặp trong lúc request đang xử lý. Nếu câu hỏi chưa sẵn sàng hoặc phiên đang chuyển trạng thái, giao diện hiển thị trạng thái chờ. Nếu gửi thất bại, câu trả lời đang nhập cần được giữ lại để người dùng không mất nội dung.
 
+Màn hình phiên cũng có các thao tác điều khiển trạng thái như tạm dừng, tiếp tục, hủy và hoàn tất phiên. Khi người dùng trả lời thành công, giao diện chuyển sang câu tiếp theo. Khi người dùng bỏ qua, giao diện cũng chuyển câu nhưng không hiển thị trạng thái đang chờ chấm điểm cho câu đó. Khi phiên hoàn tất, frontend điều hướng hoặc mở màn hình báo cáo và chờ backend tổng hợp kết quả nếu report chưa sẵn sàng.
+
 **e. Thiết kế xử lý backend**
 
 Backend chỉ nhận câu trả lời khi phiên tồn tại, thuộc đúng người dùng và đang ở trạng thái cho phép phỏng vấn. Backend cũng kiểm tra câu hỏi thuộc đúng phiên để tránh ghi câu trả lời vào sai phiên.
 
 Mỗi câu hỏi trong một phiên chỉ được phép có một câu trả lời hiện hành. Ràng buộc này giúp tránh việc người dùng gửi trùng do nhấn nhiều lần hoặc do request bị retry. Với câu trả lời hợp lệ, backend lưu vào `user_answers`, đánh dấu chưa có feedback và xếp job feedback. Với câu bỏ qua, backend lưu cờ bỏ qua và không xếp job feedback.
 
+DTO gửi câu trả lời yêu cầu mã câu hỏi, chế độ trả lời và nội dung câu trả lời nếu không phải skip. Với câu trả lời văn bản, nội dung phải đủ độ dài tối thiểu để tránh gửi câu quá ngắn không có giá trị đánh giá. Với câu bỏ qua, hệ thống cho phép nội dung rỗng vì bản chất thao tác này là ghi nhận người dùng không trả lời câu hỏi.
+
+Backend đọc phiên, kiểm tra quyền sở hữu, kiểm tra trạng thái phiên chỉ cho phép `active` hoặc `ready`, sau đó đọc câu hỏi theo đồng thời mã câu hỏi và mã phiên. Nếu phiên đang ở trạng thái `ready`, backend có thể chuyển sang `active` khi người dùng bắt đầu trả lời. Khi lưu answer, backend dùng khóa duy nhất theo session và question để bảo đảm idempotency.
+
+Payload feedback được xếp vào queue gồm mã phiên, mã answer, mã câu hỏi, nội dung câu hỏi, loại câu hỏi, competency domain, câu trả lời, context pack, loại phiên và ngôn ngữ. Đây là dữ liệu tối thiểu để feedback worker đánh giá câu trả lời mà không cần tin vào metadata do frontend gửi lại.
+
 **f. Xử lý lỗi và fallback**
 
 Nếu phiên không tồn tại, không thuộc người dùng hiện tại hoặc chưa ở trạng thái có thể phỏng vấn, backend trả lỗi và không ghi câu trả lời. Nếu câu hỏi không thuộc phiên, backend từ chối request để bảo vệ tính toàn vẹn dữ liệu.
 
 Nếu người dùng gửi trùng một câu trả lời, hệ thống dựa vào ràng buộc một câu hỏi một câu trả lời trong phiên để tránh tạo nhiều bản ghi. Nếu người dùng bỏ qua câu hỏi, đây không phải là lỗi. Hệ thống lưu trạng thái bỏ qua, cho phép đi tiếp và để phần báo cáo xử lý câu này theo hướng không chấm điểm.
+
+Nếu người dùng bỏ qua lại một câu đã bỏ qua, backend trả lại answer hiện có và không xếp thêm job. Nếu người dùng cố bỏ qua một câu đã có câu trả lời thật, backend không ghi đè câu trả lời đó bằng skipped answer. Nếu queue feedback gặp vấn đề sau khi answer văn bản đã được lưu, request có thể thất bại; khi người dùng gửi lại, backend có thể dùng answer hiện có và xếp lại job feedback theo cùng mã answer.
 
 ### 4.5.5 Đánh giá và phản hồi từng câu trả lời
 
@@ -508,11 +554,15 @@ Nhóm tính năng đánh giá và phản hồi từng câu trả lời biến d�
 
 Tính năng này phục vụ hai mục tiêu. Thứ nhất, người dùng nhận được phản hồi sau từng turn hoặc trong báo cáo. Thứ hai, hệ thống có dữ liệu chuẩn để tổng hợp báo cáo phiên ở mục 4.5.6.
 
+Đây là nhóm tính năng quan trọng vì AI Mock Interview không chỉ hỏi câu hỏi mà còn phải giúp người dùng hiểu câu trả lời của mình tốt ở đâu và thiếu ở đâu. Nếu feedback không được kiểm soát bằng rubric, hệ thống dễ đưa ra nhận xét chung chung hoặc điểm số không nhất quán giữa các phiên.
+
 **b. Dữ liệu đầu vào**
 
 Dữ liệu đầu vào gồm mã phiên, mã câu hỏi, câu trả lời đã lưu trong `user_answers`, loại phiên, context pack, competency domain, ngôn ngữ đầu ra và rubric tương ứng. Backend không chỉ gửi câu hỏi và câu trả lời cho AI mà còn gửi metadata của câu hỏi để AI biết câu trả lời cần được đánh giá theo tiêu chí nào.
 
 Output mong đợi từ AI gồm danh sách tiêu chí được áp dụng, điểm theo từng tiêu chí, câu trả lời mẫu, nhận xét chính và tối đa hai đoạn nhận xét cụ thể từ câu trả lời gốc. Backend lưu kết quả hợp lệ vào `ai_feedbacks` và lưu các đoạn nhận xét chi tiết để phục vụ màn hình báo cáo.
+
+Đầu ra cuối cùng của backend gồm feedback đã lưu, trạng thái `feedbackGenerated` trên answer, sự kiện `turn.feedback_ready` và tiến trình feedback của phiên. Nếu phiên đang chờ tạo báo cáo, việc một feedback hoàn tất có thể kích hoạt bước kiểm tra để xếp job report.
 
 **c. Luồng xử lý nghiệp vụ**
 
@@ -544,6 +594,8 @@ flowchart TD
 Frontend không cần tự tính điểm hoặc tự diễn giải rubric. Giao diện đọc kết quả feedback đã được backend lưu và hiển thị theo từng câu trả lời. Các thông tin quan trọng gồm điểm nếu có, nhận xét chính, câu trả lời mẫu và đoạn trích được đánh dấu.
 
 Khi feedback chưa sẵn sàng, giao diện thể hiện trạng thái đang xử lý. Nếu feedback là fallback hoặc không thể chấm điểm đáng tin cậy, frontend không hiển thị điểm như một đánh giá thật. Cách hiển thị này giúp người dùng phân biệt giữa câu trả lời được chấm và câu trả lời chưa đủ dữ liệu đánh giá.
+
+Trong màn hình báo cáo, feedback được dùng để dựng transcript có chú thích. Những đoạn được AI đánh dấu có thể hiển thị kèm mức độ như điểm mạnh hoặc điểm cần cải thiện. Nếu feedback chưa có, trang báo cáo tiếp tục hiển thị tiến trình thay vì dựng một báo cáo thiếu dữ liệu.
 
 **e. Thiết kế xử lý backend**
 
@@ -607,6 +659,8 @@ Ví dụ, với context pack Việt Nam, nhóm kỹ thuật có trọng số g�
 
 Điểm tổng của câu trả lời trong ví dụ này là `75/100`. Cách tính này có ý nghĩa vì mỗi câu hỏi chỉ kiểm tra một phần năng lực, không phải toàn bộ rubric. Backend chỉ tính điểm trên các tiêu chí thật sự được câu hỏi đó đánh giá, nhờ vậy điểm của một câu hỏi không bị kéo lệch bởi những tiêu chí không liên quan.
 
+Sau khi tính tổng có trọng số, backend làm tròn điểm và giới hạn kết quả trong thang 1-100. Điều này bảo vệ hệ thống trước các giá trị AI trả về nằm ngoài phạm vi mong đợi sau khi parse và validate.
+
 Sơ đồ dưới đây thể hiện riêng phần tính điểm để làm rõ rằng điểm tổng do backend tính từ tiêu chí hợp lệ, không lấy nguyên văn từ AI.
 
 ```mermaid
@@ -625,11 +679,15 @@ Khi feedback hợp lệ, backend lưu trong một transaction để tránh trạ
 
 Sau khi lưu xong, backend phát sự kiện `turn.feedback_ready` và cập nhật tiến trình feedback của phiên. Nếu phiên đang ở trạng thái tạo báo cáo và tất cả feedback cần thiết đã sẵn sàng, backend xếp job tạo báo cáo tổng hợp.
 
+Nếu feedback được tạo lại do retry job, transaction xóa các annotated segment cũ trước khi ghi segment mới. Cách này giúp một answer chỉ có một feedback hiện hành và danh sách đoạn nhận xét không bị nhân đôi sau các lần retry.
+
 **f. Xử lý lỗi và fallback**
 
 Nếu AI provider lỗi, hết quota, timeout, trả response rỗng, trả JSON không parse được hoặc trả JSON sai schema, backend không lưu output đó như feedback thật. Hệ thống ghi feedback fallback, đánh dấu câu trả lời đã được xử lý và cho phép luồng report tiếp tục.
 
 Nếu output qua được schema nhưng không còn tiêu chí hợp lệ sau khi so khớp với rubric của phiên, backend cũng chuyển sang fallback. Feedback fallback có cờ riêng và không được tính như điểm thật trong báo cáo. Điều này tránh trường hợp người dùng thấy điểm thấp chỉ vì AI trả dữ liệu không đáng tin cậy.
+
+Feedback fallback lưu thông điệp giải thích phù hợp với ngôn ngữ phiên, không tạo annotated segment và đặt cờ `isFallback`. Backend vẫn phát `turn.feedback_ready` để frontend và report không chờ vô hạn, nhưng các bước đọc report sẽ ẩn điểm của feedback fallback.
 
 ```text
 Input: sessionId, userAnswerId, question metadata, contextPack, language
@@ -657,17 +715,23 @@ Nhóm tính năng báo cáo tổng hợp giúp người dùng xem lại kết qu
 
 Lịch sử phiên cho phép người dùng quay lại các phiên đã tạo, tiếp tục phiên chưa hoàn tất hoặc mở lại báo cáo của phiên đã hoàn thành. Đây là phần giúp kết quả luyện tập không bị mất sau khi người dùng rời khỏi màn hình phỏng vấn.
 
+Trong AI Mock Interview, báo cáo là điểm kết thúc của một phiên luyện tập. Nó tổng hợp các feedback rời rạc thành một cái nhìn chung để người dùng biết phiên vừa rồi có bao nhiêu câu được đánh giá, câu nào bị bỏ qua, phần nào cần cải thiện và dữ liệu chấm điểm có đáng tin cậy hay không.
+
 **b. Dữ liệu đầu vào**
 
 Dữ liệu đầu vào của báo cáo gồm phiên phỏng vấn, danh sách câu hỏi trong `session_questions`, câu trả lời trong `user_answers`, feedback trong `ai_feedbacks`, các đoạn nhận xét đã lưu và trạng thái bỏ qua của từng câu. Report processor chỉ dùng feedback đã sẵn sàng để tổng hợp.
 
 Báo cáo được lưu thành nhiều phần trong `session_reports`, gồm tóm tắt tổng quan, phân tích giao tiếp, heatmap năng lực, kế hoạch hành động và câu trả lời đề xuất cho các câu bị bỏ qua. Cách lưu theo từng phần giúp backend đọc lại báo cáo linh hoạt hơn và tránh nhồi toàn bộ kết quả vào một trường duy nhất.
 
+Đầu ra của tính năng gồm trạng thái phiên hoàn thành, điểm tổng nếu có dữ liệu chấm hợp lệ, transcript đã ghép câu hỏi - câu trả lời - feedback, chất lượng báo cáo và các phần báo cáo đã lưu. Chất lượng báo cáo có thể là đầy đủ, một phần, không khả dụng về điểm hoặc không thể chấm nếu toàn bộ phiên chỉ có câu bỏ qua.
+
 **c. Luồng xử lý nghiệp vụ**
 
 Khi người dùng đi hết danh sách câu hỏi và yêu cầu hoàn thành phiên, backend chuyển phiên sang trạng thái `completing`. Backend kiểm tra các câu trả lời không bị bỏ qua đã có feedback hay chưa. Nếu còn feedback chưa sẵn sàng, hệ thống chưa xếp job report và frontend tiếp tục hiển thị trạng thái chờ.
 
 Khi đủ dữ liệu, backend xếp job report. Worker đọc câu hỏi, câu trả lời và feedback, tách câu bị bỏ qua khỏi câu có dữ liệu chấm thật. Điểm tổng của phiên được tính từ các feedback hợp lệ; feedback fallback không được tính như điểm thật. Khi report được ghi thành công, trạng thái phiên chuyển sang hoàn thành và backend phát sự kiện `report.ready`.
+
+Luồng chính có hai cổng kiểm tra. Cổng thứ nhất nằm trước khi xếp report: phiên phải ở trạng thái `completing`, phải có answer và không còn feedback chưa xử lý đối với các câu không bị bỏ qua. Cổng thứ hai nằm trong report worker: số feedback đọc được phải khớp với số answer cần chấm. Nếu hai điều kiện này chưa đạt, hệ thống không tạo báo cáo sớm.
 
 Sơ đồ dưới đây thể hiện quá trình hoàn tất phiên, chờ feedback nếu cần và tải báo cáo sau khi worker ghi dữ liệu.
 
@@ -703,17 +767,31 @@ Khi báo cáo sẵn sàng, frontend hiển thị điểm tổng nếu có dữ l
 
 Trang lịch sử phiên hiển thị danh sách phiên đã tạo, trạng thái của từng phiên và lối vào phù hợp: tiếp tục phiên đang chạy, chờ phiên đang xử lý hoặc mở báo cáo đã hoàn thành.
 
+Khi API trả trạng thái report chưa sẵn sàng, frontend không coi đây là lỗi cuối cùng. Trang báo cáo gọi API tiến trình feedback, hiển thị số câu đã chấm trên tổng số câu cần chấm, số câu còn đang xử lý và thanh tiến trình. Trang cũng lắng nghe sự kiện `session.feedback_progress` và `report.ready`; nếu sự kiện không đến, polling vẫn tiếp tục cập nhật tiến trình.
+
+Khi report có `reportQuality` là một phần hoặc không khả dụng, giao diện cần thể hiện rằng điểm tổng có thể bị ẩn hoặc chỉ phản ánh các câu được chấm hợp lệ. Với câu bị bỏ qua, transcript vẫn giữ câu hỏi và answer trống, nhưng dùng câu trả lời đề xuất nếu backend đã tạo hoặc fallback được lưu.
+
 **e. Thiết kế xử lý backend**
 
 Backend chỉ tạo report khi đủ dữ liệu cần thiết. Điều kiện quan trọng là các câu trả lời không bị bỏ qua phải có feedback hoặc đã được xử lý theo fallback. Các câu bị bỏ qua không làm report bị kẹt vì chúng không cần feedback chấm điểm.
 
 Report processor tổng hợp transcript, điểm phiên, thống kê câu trả lời, danh sách câu fallback và các phần báo cáo. Với phiên có dữ liệu chấm hợp lệ, điểm tổng được tính từ các feedback không phải fallback. Với phiên chỉ có fallback hoặc chỉ có câu bị bỏ qua, backend trả chất lượng báo cáo phù hợp và không tạo điểm số giả.
 
+Report service có API đọc tiến trình, trong đó backend đếm tổng số câu hỏi, tổng số answer, số câu skipped, số feedback cần có, số feedback đã hoàn tất và số feedback còn chờ. Khi đọc report chính, nếu chưa có phần `executive_summary`, backend trả `REPORT_NOT_READY` với trạng thái chấp nhận để frontend tiếp tục chờ.
+
+Khi xếp job report, backend dùng `jobId` theo mã phiên để tránh tạo nhiều job report cho cùng một phiên. Nếu job cũ đã failed, hệ thống có thể retry job đó. Payload report gồm mã phiên, loại phiên, context pack, ngôn ngữ và danh sách turn cần tổng hợp.
+
+Report worker tạo `executive_summary` từ số câu, số câu được đánh giá, số câu fallback, số câu skipped và điểm tổng. `comm_analysis` lưu thống kê feedback. `competency_heatmap` lưu điểm theo answer, trong đó feedback fallback có score null. `action_plan` được tạo từ các tóm tắt feedback hợp lệ; worker yêu cầu AI trả JSON dạng danh sách 3-5 việc cần cải thiện. `skipped_answers` lưu câu trả lời đề xuất cho các câu người dùng bỏ qua.
+
+Các phần báo cáo được ghi bằng upsert trong cùng transaction với việc cập nhật phiên sang `completed`, ghi `overallScore` và `completedAt`. Sau khi transaction thành công, backend phát `report.ready`. Thứ tự này giúp frontend chỉ tải report sau khi dữ liệu đã có trong database.
+
 **f. Xử lý lỗi và fallback**
 
 Nếu frontend yêu cầu report khi worker chưa tạo xong, backend trả trạng thái chưa sẵn sàng để frontend tiếp tục chờ hoặc polling. Đây không phải lỗi nghiệp vụ mà là trạng thái bình thường của luồng bất đồng bộ.
 
 Nếu toàn bộ feedback là fallback hoặc không có câu trả lời có thể chấm, báo cáo hiển thị trạng thái chưa thể chấm điểm thay vì `0/100`. Nếu quá trình tạo câu trả lời đề xuất cho câu bỏ qua gặp lỗi AI, hệ thống vẫn có thể lưu phần báo cáo còn lại và dùng nội dung thay thế phù hợp cho phần câu bị bỏ qua.
+
+Nếu AI không tạo được action plan, backend dùng action plan fallback theo ngôn ngữ phiên. Nếu AI không tạo được câu trả lời đề xuất cho câu skipped, backend dùng câu trả lời mẫu fallback dựa trên nội dung câu hỏi. Nếu số feedback chưa đủ, report worker ném lỗi để job retry thay vì lưu báo cáo thiếu dữ liệu.
 
 ### 4.5.7 Theo dõi tiến trình phiên và xử lý trạng thái đặc biệt
 
@@ -770,58 +848,431 @@ Fallback không có nghĩa là mọi kết quả đều được xem như bình 
 
 ## 4.6 Thiết Kế Cơ Sở Dữ Liệu
 
-Cơ sở dữ liệu hiện tại dùng PostgreSQL qua Prisma. Các bảng được thiết kế xoay quanh một quan hệ trung tâm: một phiên phỏng vấn có nhiều câu hỏi, mỗi câu hỏi có tối đa một câu trả lời của người dùng trong phiên, mỗi câu trả lời có thể có một feedback, và toàn phiên có nhiều bản ghi báo cáo tổng hợp.
+Cơ sở dữ liệu của hệ thống AI Mock Interview được triển khai trên PostgreSQL. Thiết kế dữ liệu xoay quanh phiên phỏng vấn: người dùng tạo phiên từ hồ sơ và Job Description, hệ thống sinh danh sách câu hỏi cho phiên, người dùng trả lời từng câu, AI tạo feedback cho từng câu trả lời và cuối cùng hệ thống tổng hợp báo cáo theo phiên. Các bảng không chỉ lưu dữ liệu đầu ra, mà còn lưu trạng thái xử lý bất đồng bộ để frontend có thể theo dõi tiến trình sinh câu hỏi, chấm câu trả lời và tạo báo cáo.
 
-| Nhóm bảng | Bảng | Vai trò |
-| --- | --- | --- |
-| Lookup/question | `context_packs`, `question_bank` | Lưu cấu hình rubric/context và ngân hàng câu hỏi dùng cho sinh câu hỏi hoặc fallback. |
-| User/profile | `users`, `user_profiles`, `resumes` | Lưu người dùng, hồ sơ mở rộng và resume đã parse nếu có. |
-| Session | `interview_sessions`, `saved_job_descriptions`, `session_questions` | Lưu phiên phỏng vấn, JD đã lưu và danh sách câu hỏi thuộc từng phiên. |
-| Answer | `user_answers` | Lưu câu trả lời của người dùng, trạng thái skip và trạng thái feedback. |
-| Feedback/report | `ai_feedbacks`, `annotated_segments`, `session_reports` | Lưu feedback từng câu, các đoạn nhận xét cụ thể và báo cáo tổng hợp theo từng loại nội dung. |
-
-### 4.6.1 ERD rút gọn
+### 4.6.1 Sơ đồ ERD tổng thể
 
 ```mermaid
 erDiagram
-    User ||--o{ InterviewSession : owns
-    User ||--o| UserProfile : has
-    User ||--o{ SavedJobDescription : saves
-    User ||--o{ Resume : uploads
-    ContextPack ||--o{ InterviewSession : configures
-    ContextPack ||--o{ QuestionBank : groups
-    SavedJobDescription ||--o{ InterviewSession : reused_by
-    InterviewSession ||--o{ SessionQuestion : contains
-    InterviewSession ||--o{ UserAnswer : receives
-    InterviewSession ||--o{ SessionReport : summarizes
-    QuestionBank ||--o{ SessionQuestion : source
-    SessionQuestion ||--o{ UserAnswer : answered_by
-    UserAnswer ||--o| AiFeedback : evaluated_by
-    AiFeedback ||--o{ AnnotatedSegment : explains
+    users ||--o| user_profiles : has
+    users ||--o{ resumes : owns
+    users ||--o{ saved_job_descriptions : saves
+    users ||--o{ interview_sessions : creates
+    context_packs ||--o{ question_bank : groups
+    context_packs ||--o{ interview_sessions : configures
+    saved_job_descriptions ||--o{ interview_sessions : reused_by
+    interview_sessions ||--o{ session_questions : contains
+    question_bank ||--o{ session_questions : source_for
+    interview_sessions ||--o{ user_answers : receives
+    session_questions ||--o| user_answers : answered_by
+    user_answers ||--o| ai_feedbacks : evaluated_by
+    ai_feedbacks ||--o{ annotated_segments : contains
+    interview_sessions ||--o{ session_reports : summarized_by
+
+    users {
+        UUID id PK
+        TEXT email UK
+        TEXT role
+        TEXT status
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
+
+    user_profiles {
+        UUID id PK
+        UUID user_id FK
+        TEXT full_name
+        TEXT target_position
+        TEXT target_role_category
+        TEXT target_level
+        TEXT preferred_tech_stack
+        TEXT personality
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
+
+    resumes {
+        UUID id PK
+        UUID user_id FK
+        JSONB parsed_json
+        BOOLEAN active
+        TIMESTAMPTZ created_at
+    }
+
+    saved_job_descriptions {
+        UUID id PK
+        UUID user_id FK
+        TEXT company_name
+        TEXT company_website
+        TEXT job_title
+        TEXT level
+        TEXT headcount
+        TEXT location
+        TEXT requirements
+        TEXT job_content
+        TEXT_ARRAY tech_stack
+        TEXT benefits
+        TEXT salary
+        TEXT bonus
+        TIMESTAMPTZ last_used_at
+        TIMESTAMPTZ deleted_at
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
+
+    context_packs {
+        TEXT id PK
+        TEXT name
+        JSONB rubric_json
+        JSONB scoring_weights
+        TIMESTAMPTZ created_at
+    }
+
+    question_bank {
+        UUID id PK
+        TEXT content
+        QuestionSessionType session_type
+        INT difficulty
+        TEXT context_pack_id FK
+        TEXT competency_domain
+        INT estimated_time_min
+        JSONB translations
+        JSONB content_json
+        TIMESTAMPTZ deleted_at
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
+
+    interview_sessions {
+        UUID id PK
+        UUID user_id FK
+        UUID saved_job_description_id FK
+        TEXT job_description
+        TEXT job_title
+        TEXT session_type
+        INT num_questions
+        INT duration_min
+        TEXT language
+        TEXT context_pack_id FK
+        TEXT status
+        INT overall_score
+        TIMESTAMPTZ completed_at
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
+
+    session_questions {
+        UUID id PK
+        UUID session_id FK
+        UUID question_bank_id FK
+        TEXT question_text
+        INT order_index
+        TEXT question_category
+        TEXT competency_domain
+        JSONB rubric_json
+        INT estimated_time_min
+        TIMESTAMPTZ created_at
+    }
+
+    user_answers {
+        UUID id PK
+        UUID session_id FK
+        UUID question_id FK
+        TEXT answer_mode
+        TEXT answer_text
+        TEXT audio_file_url
+        INT audio_duration_seconds
+        INT audio_size_bytes
+        BOOLEAN skipped
+        JSONB voice_metrics_json
+        TEXT transcription_status
+        BOOLEAN feedback_generated
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
+
+    ai_feedbacks {
+        UUID id PK
+        UUID user_answer_id FK
+        INT overall_score
+        TEXT model_answer
+        TEXT key_takeaway
+        TEXT prompt_version
+        BOOLEAN is_fallback
+        JSONB dimension_scores
+        TIMESTAMPTZ created_at
+    }
+
+    annotated_segments {
+        UUID id PK
+        UUID ai_feedback_id FK
+        TEXT segment_text
+        INT start_index
+        INT end_index
+        TEXT highlight_level
+        TEXT annotation
+        TEXT suggestion
+        TEXT improved_version
+        TIMESTAMPTZ created_at
+    }
+
+    session_reports {
+        UUID id PK
+        UUID session_id FK
+        TEXT report_type
+        INT version
+        JSONB content_json
+        TEXT generated_by_model
+        TEXT prompt_version
+        TIMESTAMPTZ created_at
+    }
 ```
 
-### 4.6.2 Quan hệ giữa session, câu hỏi, câu trả lời và feedback
+Các bảng có thể chia thành sáu nhóm chính. Nhóm người dùng gồm `users`, `user_profiles` và `resumes`, dùng để lưu tài khoản, hồ sơ ứng viên và dữ liệu CV đã phân tích. Nhóm Job Description và cấu hình gồm `saved_job_descriptions` và `context_packs`, dùng để lưu bối cảnh ứng tuyển, rubric và trọng số chấm điểm. Nhóm phiên phỏng vấn gồm `interview_sessions` và `session_questions`, ghi cấu hình phiên, trạng thái vòng đời và danh sách câu hỏi đã sinh cho từng phiên. Nhóm câu trả lời gồm `user_answers`, lưu câu trả lời văn bản hoặc transcript giọng nói, trạng thái bỏ qua và trạng thái feedback. Nhóm feedback gồm `ai_feedbacks` và `annotated_segments`, lưu điểm, nhận xét, câu trả lời mẫu và các đoạn được chú thích trong câu trả lời. Nhóm báo cáo gồm `session_reports`, lưu từng phần của báo cáo tổng hợp theo loại và phiên bản.
 
-Mỗi phiên phỏng vấn lưu thông tin JD, loại phiên, số lượng câu hỏi, thời lượng, ngôn ngữ, context pack và trạng thái. Sau khi tạo phiên, worker sinh câu hỏi sẽ ghi các câu hỏi vào bảng `session_questions`. Mỗi câu hỏi có thứ tự, nội dung, loại câu hỏi, competency domain và thời lượng ước tính.
+### 4.6.2 Danh sách bảng dữ liệu
 
-Khi người dùng trả lời, hệ thống ghi vào `user_answers`. Ràng buộc quan trọng là trong cùng một phiên, một câu hỏi chỉ có một câu trả lời. Điều này giúp tránh việc gửi trùng do double click hoặc retry từ frontend. Sau đó, feedback cho câu trả lời được lưu vào `ai_feedbacks`, còn các đoạn nhận xét cụ thể được lưu ở `annotated_segments`.
+**Bảng `context_packs`**
 
-Báo cáo tổng hợp không được nhét vào một cột duy nhất của session. Thay vào đó, hệ thống dùng bảng `session_reports`, trong đó mỗi loại báo cáo như tóm tắt tổng quan, phân tích giao tiếp, heatmap năng lực, kế hoạch hành động hoặc câu trả lời đề xuất cho câu bị bỏ qua được lưu thành một bản ghi riêng. Cách này giúp đọc lại từng phần báo cáo linh hoạt hơn và cho phép version hóa.
+Bảng `context_packs` lưu các bộ ngữ cảnh phỏng vấn, rubric và trọng số chấm điểm. Trong hệ thống hiện tại, bảng này là dữ liệu tham chiếu cho cả question bank và phiên phỏng vấn.
 
-### 4.6.3 Các ràng buộc và lựa chọn dữ liệu quan trọng
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `TEXT` | Khóa chính | Có | - | Mã context pack, ví dụ `VN` hoặc `Western`. |
+| `name` | `TEXT` | - | Có | - | Tên hiển thị của context pack. |
+| `rubric_json` | `JSONB` | - | Có | - | Rubric đánh giá năng lực theo context pack. |
+| `scoring_weights` | `JSONB` | - | Có | - | Trọng số dùng khi tính điểm theo rubric. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo bản ghi. |
 
-Một số ràng buộc đáng chú ý trong schema hiện tại:
+**Bảng `question_bank`**
 
-- `users.email` là duy nhất.
-- `user_profiles.user_id` là duy nhất, mỗi người dùng có một hồ sơ mở rộng.
-- `session_questions` có ràng buộc duy nhất theo phiên và thứ tự câu hỏi.
-- `user_answers` có ràng buộc duy nhất theo phiên và câu hỏi.
-- `ai_feedbacks.user_answer_id` là duy nhất, mỗi câu trả lời chỉ có một feedback hiện hành.
-- `session_reports` có ràng buộc duy nhất theo phiên, loại báo cáo và version.
-- Nhiều quan hệ dùng cascade delete để dữ liệu con của phiên hoặc người dùng không bị mồ côi.
-- Một số bảng có `deleted_at` để hỗ trợ soft delete, ví dụ question bank và saved job description.
+Bảng `question_bank` lưu ngân hàng câu hỏi nền để hệ thống chọn câu hỏi cho phiên phỏng vấn hoặc dùng fallback khi AI không sinh được câu hỏi hợp lệ. Câu hỏi có thể được xóa mềm bằng `deleted_at` để không mất lịch sử tham chiếu.
 
-Schema thực tế cũng có các trường phục vụ trạng thái vận hành như trạng thái phiên, cờ feedback đã tạo, cờ fallback và chất lượng báo cáo. Đây là các trường cần thiết vì hệ thống có nhiều job bất đồng bộ; không thể chỉ dựa vào dữ liệu cuối cùng mà cần biết từng bước đã xử lý đến đâu.
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã câu hỏi trong ngân hàng câu hỏi. |
+| `content` | `TEXT` | - | Có | - | Nội dung câu hỏi gốc. |
+| `session_type` | `QuestionSessionType` | Enum `hr`, `technical` | Có | - | Loại câu hỏi trong ngân hàng câu hỏi. |
+| `difficulty` | `INT` | CHECK `difficulty BETWEEN 1 AND 5` | Có | - | Mức độ khó của câu hỏi. |
+| `context_pack_id` | `TEXT` | Khóa ngoại tới `context_packs.id` | Có | - | Context pack mà câu hỏi thuộc về. |
+| `competency_domain` | `TEXT` | - | Có | - | Nhóm năng lực hoặc tiêu chí mà câu hỏi đánh giá. |
+| `estimated_time_min` | `INT` | CHECK `NULL` hoặc `> 0` | Không | - | Thời lượng ước tính cho câu hỏi. |
+| `translations` | `JSONB` | - | Không | - | Bản dịch câu hỏi theo ngôn ngữ nếu có. |
+| `content_json` | `JSONB` | - | Không | - | Metadata hoặc nguồn dữ liệu của câu hỏi. |
+| `deleted_at` | `TIMESTAMPTZ(6)` | Soft delete | Không | - | Thời điểm xóa mềm câu hỏi. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo câu hỏi. |
+| `updated_at` | `TIMESTAMPTZ(6)` | Tự cập nhật khi ghi | Có | `now()` | Thời điểm cập nhật gần nhất. |
+
+**Bảng `users`**
+
+Bảng `users` lưu thông tin người dùng ở mức ứng dụng. Trường `id` tương ứng với UUID từ hệ thống xác thực, còn các trường trong bảng này phục vụ phân quyền và trạng thái tài khoản trong ứng dụng.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | - | Mã người dùng, đồng bộ với hệ thống xác thực. |
+| `email` | `TEXT` | UNIQUE | Có | - | Email đăng nhập, không được trùng. |
+| `role` | `TEXT` | CHECK `role IN ('candidate', 'admin')` | Có | `candidate` | Vai trò của người dùng trong hệ thống. |
+| `status` | `TEXT` | - | Có | `active` | Trạng thái tài khoản. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo người dùng. |
+| `updated_at` | `TIMESTAMPTZ(6)` | Tự cập nhật khi ghi | Có | `now()` | Thời điểm cập nhật gần nhất. |
+
+**Bảng `user_profiles`**
+
+Bảng `user_profiles` lưu hồ sơ mở rộng của ứng viên. Bảng này có quan hệ một-một với `users`, dùng để cá nhân hóa bối cảnh luyện phỏng vấn nhưng không thay thế dữ liệu phiên cụ thể.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã hồ sơ người dùng. |
+| `user_id` | `UUID` | Khóa ngoại tới `users.id`, UNIQUE, ON DELETE CASCADE | Có | - | Người dùng sở hữu hồ sơ; UNIQUE đảm bảo mỗi người dùng chỉ có một hồ sơ. |
+| `full_name` | `TEXT` | - | Không | - | Họ tên đầy đủ của ứng viên. |
+| `target_position` | `TEXT` | - | Không | - | Vị trí mục tiêu. |
+| `target_role_category` | `TEXT` | - | Không | - | Nhóm vai trò nghề nghiệp mục tiêu. |
+| `target_level` | `TEXT` | - | Không | - | Cấp độ mục tiêu, ví dụ intern, fresher hoặc junior. |
+| `preferred_tech_stack` | `TEXT` | - | Không | - | Công nghệ hoặc kỹ năng kỹ thuật ưu tiên. |
+| `personality` | `TEXT` | - | Không | - | Thông tin tính cách hoặc phong cách làm việc nếu có. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo hồ sơ. |
+| `updated_at` | `TIMESTAMPTZ(6)` | Tự cập nhật khi ghi | Có | `now()` | Thời điểm cập nhật hồ sơ gần nhất. |
+
+**Bảng `resumes`**
+
+Bảng `resumes` lưu dữ liệu CV hoặc hồ sơ nghề nghiệp đã được phân tích thành JSON. Thiết kế này tách dữ liệu CV có cấu trúc khỏi bảng hồ sơ người dùng để hồ sơ chính không bị phình to.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã resume. |
+| `user_id` | `UUID` | Khóa ngoại tới `users.id`, ON DELETE CASCADE | Có | - | Người dùng sở hữu resume. |
+| `parsed_json` | `JSONB` | - | Không | - | Dữ liệu CV đã phân tích, ví dụ học vấn, kinh nghiệm, dự án và kỹ năng. |
+| `active` | `BOOLEAN` | Partial unique index `idx_resumes_one_active_per_user` khi `active = true` | Có | `true` | Đánh dấu resume đang được dùng. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo resume. |
+
+**Bảng `saved_job_descriptions`**
+
+Bảng `saved_job_descriptions` lưu các Job Description mà người dùng nhập hoặc muốn dùng lại. Khi tạo phiên, hệ thống có thể tham chiếu đến một JD đã lưu hoặc lưu snapshot nội dung JD vào phiên để bảo toàn bối cảnh phỏng vấn tại thời điểm tạo.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã JD đã lưu. |
+| `user_id` | `UUID` | Khóa ngoại tới `users.id`, ON DELETE CASCADE | Có | - | Người dùng sở hữu JD. |
+| `company_name` | `TEXT` | - | Có | - | Tên công ty. |
+| `company_website` | `TEXT` | - | Không | - | Website công ty nếu có. |
+| `job_title` | `TEXT` | - | Có | - | Tên vị trí ứng tuyển. |
+| `level` | `TEXT` | - | Không | - | Cấp độ tuyển dụng. |
+| `headcount` | `TEXT` | - | Không | - | Số lượng tuyển nếu người dùng nhập. |
+| `location` | `TEXT` | - | Không | - | Địa điểm làm việc. |
+| `requirements` | `TEXT` | - | Có | - | Yêu cầu công việc. |
+| `job_content` | `TEXT` | - | Có | - | Nội dung mô tả công việc. |
+| `tech_stack` | `TEXT[]` | - | Có | `[]` | Danh sách công nghệ hoặc kỹ năng liên quan. |
+| `benefits` | `TEXT` | - | Không | - | Phúc lợi nếu có. |
+| `salary` | `TEXT` | - | Không | - | Thông tin lương nếu có. |
+| `bonus` | `TEXT` | - | Không | - | Thông tin thưởng nếu có. |
+| `last_used_at` | `TIMESTAMPTZ(6)` | - | Không | - | Thời điểm JD được dùng gần nhất để tạo phiên. |
+| `deleted_at` | `TIMESTAMPTZ(6)` | Soft delete | Không | - | Thời điểm xóa mềm JD. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm lưu JD. |
+| `updated_at` | `TIMESTAMPTZ(6)` | Tự cập nhật khi ghi | Có | `now()` | Thời điểm cập nhật JD gần nhất. |
+
+**Bảng `interview_sessions`**
+
+Bảng `interview_sessions` là bảng trung tâm của luồng AI Mock Interview. Mỗi bản ghi biểu diễn một phiên phỏng vấn cụ thể, gồm snapshot JD, loại phiên, số câu hỏi, ngôn ngữ, context pack, điểm tổng và trạng thái xử lý.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã phiên phỏng vấn. |
+| `user_id` | `UUID` | Khóa ngoại tới `users.id`, ON DELETE CASCADE | Có | - | Người dùng tạo phiên. |
+| `saved_job_description_id` | `UUID` | Khóa ngoại tới `saved_job_descriptions.id`, ON DELETE SET NULL; trigger kiểm tra cùng `user_id` | Không | - | JD đã lưu được dùng để tạo phiên nếu có. |
+| `job_description` | `TEXT` | - | Có | - | Snapshot nội dung JD tại thời điểm tạo phiên. |
+| `job_title` | `TEXT` | - | Không | - | Vị trí ứng tuyển của phiên. |
+| `session_type` | `TEXT` | CHECK `session_type IN ('hr', 'technical', 'mixed')` | Có | - | Loại phiên phỏng vấn. |
+| `num_questions` | `INT` | CHECK `num_questions BETWEEN 3 AND 45` | Có | `5` | Số câu hỏi của phiên. |
+| `duration_min` | `INT` | CHECK `duration_min > 0` | Có | `30` | Thời lượng phiên theo phút. |
+| `language` | `TEXT` | - | Có | `vi` | Ngôn ngữ hiển thị hoặc ngôn ngữ trả kết quả. |
+| `context_pack_id` | `TEXT` | Khóa ngoại tới `context_packs.id` | Có | - | Context pack áp dụng cho phiên. |
+| `status` | `TEXT` | CHECK trong tập `generating`, `active`, `paused`, `canceled`, `completing`, `completed`, `error` | Có | `generating` | Trạng thái vòng đời của phiên. |
+| `overall_score` | `INT` | CHECK `NULL` hoặc từ `0` đến `100` | Không | - | Điểm tổng của phiên sau khi có báo cáo hợp lệ. |
+| `completed_at` | `TIMESTAMPTZ(6)` | - | Không | - | Thời điểm phiên hoàn thành. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo phiên. |
+| `updated_at` | `TIMESTAMPTZ(6)` | Tự cập nhật khi ghi | Có | `now()` | Thời điểm cập nhật phiên gần nhất. |
+
+**Bảng `session_questions`**
+
+Bảng `session_questions` lưu danh sách câu hỏi thực tế của từng phiên. Dữ liệu câu hỏi được lưu dạng snapshot để nếu question bank thay đổi sau này, phiên cũ vẫn giữ đúng nội dung đã hỏi.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã câu hỏi trong phiên. |
+| `session_id` | `UUID` | Khóa ngoại tới `interview_sessions.id`, ON DELETE CASCADE | Có | - | Phiên chứa câu hỏi. |
+| `question_bank_id` | `UUID` | Khóa ngoại tới `question_bank.id`, ON DELETE SET NULL | Không | - | Câu hỏi nguồn trong question bank nếu câu hỏi được lấy từ ngân hàng. |
+| `question_text` | `TEXT` | - | Có | - | Nội dung câu hỏi đã hiển thị cho người dùng. |
+| `order_index` | `INT` | UNIQUE cùng `session_id` | Có | - | Thứ tự câu hỏi trong phiên. |
+| `question_category` | `TEXT` | - | Có | - | Nhóm câu hỏi, ví dụ HR hoặc technical. |
+| `competency_domain` | `TEXT` | - | Có | - | Nhóm năng lực được câu hỏi đánh giá. |
+| `rubric_json` | `JSONB` | - | Có | - | Rubric áp dụng cho câu hỏi tại thời điểm sinh. |
+| `estimated_time_min` | `INT` | - | Không | - | Thời gian ước tính cho câu hỏi. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm lưu câu hỏi vào phiên. |
+
+**Bảng `user_answers`**
+
+Bảng `user_answers` lưu câu trả lời của người dùng cho từng câu hỏi trong phiên. Bảng này hỗ trợ cả trả lời văn bản, trả lời giọng nói sau khi có transcript và thao tác bỏ qua câu hỏi.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã câu trả lời. |
+| `session_id` | `UUID` | Khóa ngoại tới `interview_sessions.id`, ON DELETE CASCADE | Có | - | Phiên chứa câu trả lời. |
+| `question_id` | `UUID` | Khóa ngoại tới `session_questions.id`, ON DELETE CASCADE; composite FK `(question_id, session_id)` | Có | - | Câu hỏi được trả lời; composite FK đảm bảo câu hỏi thuộc cùng phiên. |
+| `answer_mode` | `TEXT` | CHECK `answer_mode IN ('text', 'voice')` | Có | - | Hình thức trả lời. |
+| `answer_text` | `TEXT` | - | Có | - | Nội dung trả lời hoặc transcript. |
+| `audio_file_url` | `TEXT` | - | Không | - | Đường dẫn file âm thanh nếu trả lời bằng giọng nói. |
+| `audio_duration_seconds` | `INT` | CHECK `NULL` hoặc `>= 0` | Không | - | Thời lượng audio theo giây. |
+| `audio_size_bytes` | `INT` | CHECK `NULL` hoặc `>= 0` | Không | - | Kích thước file audio. |
+| `skipped` | `BOOLEAN` | - | Có | `false` | Đánh dấu người dùng bỏ qua câu hỏi. |
+| `voice_metrics_json` | `JSONB` | - | Không | - | Chỉ số giọng nói nếu có. |
+| `transcription_status` | `TEXT` | CHECK `NULL` hoặc thuộc `pending`, `done`, `failed` | Không | - | Trạng thái chuyển giọng nói thành văn bản. |
+| `feedback_generated` | `BOOLEAN` | - | Có | `false` | Cho biết feedback cho câu trả lời đã được xử lý hay chưa. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm lưu câu trả lời. |
+| `updated_at` | `TIMESTAMPTZ(6)` | Tự cập nhật khi ghi | Có | `now()` | Thời điểm cập nhật câu trả lời gần nhất. |
+
+**Bảng `ai_feedbacks`**
+
+Bảng `ai_feedbacks` lưu feedback cho từng câu trả lời. Mỗi câu trả lời chỉ có một feedback hiện hành, gồm điểm, câu trả lời mẫu, nhận xét chính, trạng thái fallback và điểm theo từng chiều đánh giá nếu có.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã feedback. |
+| `user_answer_id` | `UUID` | Khóa ngoại tới `user_answers.id`, UNIQUE, ON DELETE CASCADE | Có | - | Câu trả lời được đánh giá. |
+| `overall_score` | `INT` | CHECK `overall_score BETWEEN 0 AND 100` | Có | - | Điểm tổng của câu trả lời. |
+| `model_answer` | `TEXT` | - | Có | - | Câu trả lời mẫu hoặc câu trả lời gợi ý. |
+| `key_takeaway` | `TEXT` | - | Có | - | Nhận xét chính cần người dùng ghi nhớ. |
+| `prompt_version` | `TEXT` | - | Có | - | Phiên bản prompt dùng để tạo feedback. |
+| `is_fallback` | `BOOLEAN` | - | Có | `false` | Đánh dấu feedback fallback khi AI không trả kết quả đáng tin cậy. |
+| `dimension_scores` | `JSONB` | - | Không | - | Điểm chi tiết theo từng tiêu chí hoặc chiều đánh giá. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo feedback. |
+
+**Bảng `annotated_segments`**
+
+Bảng `annotated_segments` lưu các đoạn được chú thích trong câu trả lời. Dữ liệu này giúp báo cáo hiển thị trực tiếp đoạn nào là điểm mạnh, đoạn nào cần cải thiện và gợi ý sửa như thế nào.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã đoạn chú thích. |
+| `ai_feedback_id` | `UUID` | Khóa ngoại tới `ai_feedbacks.id`, ON DELETE CASCADE | Có | - | Feedback chứa đoạn chú thích. |
+| `segment_text` | `TEXT` | - | Có | - | Nội dung đoạn được trích từ câu trả lời. |
+| `start_index` | `INT` | CHECK `start_index >= 0` | Có | - | Vị trí bắt đầu của đoạn trong câu trả lời. |
+| `end_index` | `INT` | CHECK `end_index >= start_index` | Có | - | Vị trí kết thúc của đoạn trong câu trả lời. |
+| `highlight_level` | `TEXT` | - | Có | - | Mức hoặc loại highlight, ví dụ điểm mạnh hoặc điểm cần cải thiện. |
+| `annotation` | `TEXT` | - | Có | - | Nhận xét cho đoạn được highlight. |
+| `suggestion` | `TEXT` | - | Không | - | Gợi ý cải thiện nếu có. |
+| `improved_version` | `TEXT` | - | Không | - | Phiên bản diễn đạt tốt hơn nếu có. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo đoạn chú thích. |
+
+**Bảng `session_reports`**
+
+Bảng `session_reports` lưu báo cáo tổng hợp theo từng phần thay vì nhồi toàn bộ báo cáo vào bảng phiên. Thiết kế này giúp hệ thống đọc, cập nhật và version hóa từng phần báo cáo linh hoạt hơn.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã phần báo cáo. |
+| `session_id` | `UUID` | Khóa ngoại tới `interview_sessions.id`, ON DELETE CASCADE | Có | - | Phiên phỏng vấn được tổng hợp. |
+| `report_type` | `TEXT` | CHECK thuộc `executive_summary`, `comm_analysis`, `competency_heatmap`, `action_plan`, `skipped_answers` | Có | - | Loại phần báo cáo. |
+| `version` | `INT` | UNIQUE cùng `session_id` và `report_type` | Có | `1` | Phiên bản của phần báo cáo. |
+| `content_json` | `JSONB` | - | Có | - | Nội dung JSON của phần báo cáo. |
+| `generated_by_model` | `TEXT` | - | Không | - | Model tạo báo cáo nếu có lưu. |
+| `prompt_version` | `TEXT` | - | Không | - | Phiên bản prompt tạo báo cáo nếu có lưu. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo phần báo cáo. |
+
+### 4.6.3 Quan hệ và ràng buộc dữ liệu quan trọng
+
+Quan hệ giữa `users` và `user_profiles` là quan hệ 1-1. Trường `user_profiles.user_id` vừa là khóa ngoại tới `users.id`, vừa có ràng buộc UNIQUE. Thiết kế này phù hợp vì mỗi tài khoản chỉ cần một hồ sơ ứng viên hiện hành để phục vụ cá nhân hóa phiên phỏng vấn.
+
+Quan hệ giữa `users` và `resumes` là quan hệ 1-n. Một người dùng có thể có nhiều bản ghi resume theo thời gian, nhưng partial unique index `idx_resumes_one_active_per_user` đảm bảo tại một thời điểm chỉ có một resume đang active cho mỗi người dùng. Khi người dùng bị xóa, resume bị xóa theo nhờ ON DELETE CASCADE.
+
+Quan hệ giữa `users` và `saved_job_descriptions` là quan hệ 1-n. Một người dùng có thể lưu nhiều JD để tái sử dụng. Bảng này dùng `deleted_at` để xóa mềm, giúp ẩn JD khỏi luồng sử dụng hiện tại nhưng vẫn giữ dữ liệu lịch sử nếu phiên cũ đã từng tham chiếu.
+
+Quan hệ giữa `users` và `interview_sessions` là quan hệ 1-n. Mỗi phiên phỏng vấn thuộc một người dùng. Các dữ liệu con của phiên như câu hỏi, câu trả lời và báo cáo được xóa cascade khi phiên bị xóa, tránh để lại dữ liệu mồ côi.
+
+Quan hệ giữa `saved_job_descriptions` và `interview_sessions` là quan hệ 1-n nhưng khóa ngoại trong `interview_sessions` có thể để trống. Ràng buộc ON DELETE SET NULL giúp phiên cũ vẫn tồn tại nếu JD đã lưu bị xóa. Ngoài khóa ngoại thông thường, trigger `trg_interview_sessions_saved_jd_owner` kiểm tra `saved_job_description_id` phải trỏ tới JD thuộc cùng `user_id` với phiên, tránh trường hợp một phiên tham chiếu nhầm JD của người dùng khác.
+
+Quan hệ giữa `context_packs` và `question_bank` là quan hệ 1-n. Mỗi câu hỏi trong ngân hàng thuộc một context pack cụ thể để hệ thống chọn câu hỏi và rubric đúng bối cảnh. Quan hệ giữa `context_packs` và `interview_sessions` cũng là 1-n, vì mỗi phiên chỉ dùng một context pack nhưng một context pack có thể được dùng cho nhiều phiên.
+
+Quan hệ giữa `interview_sessions` và `session_questions` là quan hệ 1-n. Ràng buộc UNIQUE `(session_id, order_index)` đảm bảo trong một phiên không có hai câu hỏi cùng thứ tự. Bảng `session_questions` lưu snapshot `question_text` và `rubric_json` để phiên cũ không bị thay đổi khi ngân hàng câu hỏi hoặc rubric gốc được cập nhật.
+
+Quan hệ giữa `question_bank` và `session_questions` là quan hệ 1-n tùy chọn. Trường `session_questions.question_bank_id` có thể `NULL` vì câu hỏi có thể do AI sinh ra và không có nguồn trong question bank. Khi câu hỏi gốc trong question bank không còn tồn tại, khóa ngoại có thể được set null, trong khi snapshot câu hỏi trong phiên vẫn được giữ.
+
+Quan hệ giữa `session_questions` và `user_answers` là quan hệ 1-1 tùy chọn ở góc nhìn nghiệp vụ: một câu hỏi trong phiên có thể chưa có câu trả lời, nhưng khi đã trả lời thì chỉ có tối đa một bản ghi answer. Ràng buộc UNIQUE `(session_id, question_id)` bảo vệ quy tắc này ở mức database. Ngoài ra, composite FK `user_answers(question_id, session_id)` tới `session_questions(id, session_id)` đảm bảo câu trả lời không thể trỏ tới câu hỏi thuộc phiên khác.
+
+Quan hệ giữa `user_answers` và `ai_feedbacks` là quan hệ 1-1. Trường `ai_feedbacks.user_answer_id` có ràng buộc UNIQUE và ON DELETE CASCADE, vì mỗi câu trả lời chỉ có một feedback hiện hành. Nếu feedback được tạo lại do retry, hệ thống cập nhật dữ liệu feedback thay vì tạo nhiều feedback song song cho cùng một câu trả lời.
+
+Quan hệ giữa `ai_feedbacks` và `annotated_segments` là quan hệ 1-n. Một feedback có thể có nhiều đoạn chú thích để chỉ ra các phần cụ thể trong câu trả lời. Ràng buộc CHECK trên `start_index` và `end_index` bảo đảm offset của đoạn chú thích hợp lệ.
+
+Quan hệ giữa `interview_sessions` và `session_reports` là quan hệ 1-n. Bảng `session_reports` dùng UNIQUE `(session_id, report_type, version)` để mỗi phiên chỉ có một bản ghi cho từng loại báo cáo và phiên bản. Cách tách báo cáo theo `report_type` giúp lưu riêng các phần như `executive_summary`, `comm_analysis`, `competency_heatmap`, `action_plan` và `skipped_answers`.
+
+Các ràng buộc quan trọng của thiết kế gồm ba nhóm. Thứ nhất là ràng buộc định danh và chống trùng: `users.email` là duy nhất, `user_profiles.user_id` là duy nhất, `session_questions(session_id, order_index)` là duy nhất, `user_answers(session_id, question_id)` là duy nhất, `ai_feedbacks.user_answer_id` là duy nhất và `session_reports(session_id, report_type, version)` là duy nhất. Các ràng buộc này trực tiếp bảo vệ các quy tắc nghiệp vụ như một email một tài khoản, một hồ sơ cho mỗi người dùng, một câu hỏi chỉ có một vị trí trong phiên và một câu hỏi trong phiên chỉ có một câu trả lời.
+
+Thứ hai là các ràng buộc miền giá trị. `interview_sessions.session_type` chỉ nhận `hr`, `technical` hoặc `mixed`; `interview_sessions.status` chỉ nhận các trạng thái vòng đời hợp lệ; `interview_sessions.num_questions` nằm trong khoảng 3 đến 45; `interview_sessions.overall_score` và `ai_feedbacks.overall_score` nằm trong thang 0-100; `question_bank.difficulty` nằm trong thang 1-5; `user_answers.answer_mode` chỉ nhận `text` hoặc `voice`; `user_answers.transcription_status` chỉ nhận `pending`, `done`, `failed` hoặc `NULL`; các thông số audio không được âm. Các CHECK constraint này giúp dữ liệu xấu không đi sâu vào pipeline bất đồng bộ.
+
+Thứ ba là các ràng buộc xóa và bảo toàn lịch sử. Những dữ liệu phụ thuộc trực tiếp vào người dùng hoặc phiên dùng ON DELETE CASCADE để tránh dữ liệu mồ côi. Ngược lại, một số dữ liệu có giá trị lịch sử được lưu dạng snapshot, chẳng hạn `interview_sessions.job_description`, `session_questions.question_text` và `session_questions.rubric_json`. Đây là lựa chọn thiết kế có chủ ý: phiên phỏng vấn cần phản ánh đúng bối cảnh và câu hỏi tại thời điểm người dùng thực hiện, không bị thay đổi khi JD, question bank hoặc rubric được cập nhật sau này.
+
+Hệ thống cũng dùng soft delete cho `question_bank` và `saved_job_descriptions` thông qua trường `deleted_at`. Với question bank, các index chọn câu hỏi chỉ áp dụng cho bản ghi chưa bị xóa mềm, giúp câu hỏi cũ không được chọn cho phiên mới nhưng vẫn không phá vỡ dữ liệu phiên đã tạo. Với JD đã lưu, xóa mềm giúp người dùng ẩn JD khỏi thư viện mà không ảnh hưởng tới các phiên đã tạo trước đó.
+
+Ngoài các ràng buộc trong bảng, database còn có Row Level Security cho nhiều bảng nghiệp vụ như `question_bank`, `users`, `user_profiles`, `resumes`, `interview_sessions`, `session_questions`, `user_answers`, `saved_job_descriptions`, `ai_feedbacks`, `annotated_segments` và `session_reports`. Các policy này chủ yếu giới hạn người dùng chỉ đọc hoặc ghi dữ liệu thuộc về mình; riêng dữ liệu quản trị như question bank có quyền thao tác dành cho admin. Đây là lớp bảo vệ bổ sung bên cạnh kiểm tra quyền ở backend.
 
 ## 4.7 Môi Trường Xây Dựng Và Triển Khai Local
 
