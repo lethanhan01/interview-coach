@@ -18,11 +18,6 @@ Mục tiêu chính của GR1 là xây dựng được một prototype có thể 
 - Tạo báo cáo tổng hợp sau khi hoàn thành phiên.
 - Hiển thị trạng thái đang xử lý để người dùng không phải đoán hệ thống đang làm gì.
 
-### 4.1.2 Người dùng mục tiêu
-
-Người dùng chính của prototype là sinh viên năm cuối, sinh viên mới ra trường hoặc ứng viên fresher ngành Công nghệ thông tin. Đây là nhóm thường có kiến thức và dự án học tập, nhưng thiếu kinh nghiệm trình bày trong phỏng vấn. Vì vậy, sản phẩm tập trung vào việc giúp người dùng luyện cách giải thích kinh nghiệm, dự án, lựa chọn kỹ thuật và cách xử lý tình huống.
-
-Trong GR1, hệ thống chưa đặt mục tiêu thay thế hoàn toàn người phỏng vấn thật. Vai trò chính của hệ thống là tạo môi trường luyện tập chủ động, cho phép người dùng luyện nhiều lần và nhận phản hồi có cấu trúc.
 
 ### 4.1.3 Luồng sử dụng tổng quát
 
