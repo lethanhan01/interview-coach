@@ -85,7 +85,7 @@ describe('TranscriptionProcessor', () => {
       id: 'q-1',
       questionText: 'Tell me about yourself?',
       questionCategory: 'behavioral',
-      competencyDomain: 'D1',
+      competencyDomains: ['D1', 'D6'],
       orderIndex: 1,
       sessionId: 'session-123',
     });
@@ -117,7 +117,7 @@ describe('TranscriptionProcessor', () => {
         answerId: 'answer-1',
         questionId: 'q-1',
         questionCategory: 'behavioral',
-        competencyDomain: 'D1',
+        competencyDomains: ['D1', 'D6'],
         language: 'vi',
       }),
       expect.objectContaining({

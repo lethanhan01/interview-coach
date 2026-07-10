@@ -206,11 +206,11 @@ async function createFixture() {
 async function createQuestion(sessionId: string, orderIndex: number) {
   const id = randomUUID();
   await client.query(
-    `INSERT INTO session_questions (
-       id, session_id, question_text, order_index,
-       question_category, competency_domain, rubric_json
-     )
-     VALUES ($1, $2, $3, $4, 'general', 'communication', '{}'::jsonb)`,
+     `INSERT INTO session_questions (
+        id, session_id, question_text, order_index,
+        question_category, competency_domains, rubric_json
+      )
+      VALUES ($1, $2, $3, $4, 'general', ARRAY['D1'], '{}'::jsonb)`,
     [id, sessionId, `Constraint question ${orderIndex}`, orderIndex],
   );
   return id;

@@ -16,7 +16,7 @@ interface DynamicContextParams {
   numQuestions?: number;
   question?: string;
   questionCategory?: string;
-  competencyDomain?: string;
+  competencyDomains?: string[];
   answer?: string;
   sessionHistory?: Array<{ question: string; answer: string }>;
 }
@@ -30,13 +30,13 @@ Return ONLY a compact valid JSON object with exactly this shape, no markdown fen
     {
       "text": "<one interview question>",
       "category": "behavioral",
-      "competency_domain": "D1",
+      "competency_domains": ["D1", "D6"],
       "difficulty": <integer 1-3>
     }
   ]
 }
 
-Use "category" exactly as "behavioral" or "technical". Use "competency_domain" exactly as one allowed rubric ID (for example D1 or TD3), never a dimension name or free-form phrase.
+Use "category" exactly as "behavioral" or "technical". Use "competency_domains" as one or more allowed rubric IDs (for example ["D1", "D6"] or ["TD1", "TD2"]), never dimension names or free-form phrases. Keep all IDs in one question within the question category.
 
 Write the final JSON directly in the assistant message content.`,
   'surgical-feedback': `You are an expert interview coach. Evaluate the candidate's answer and provide surgical, actionable feedback.
@@ -89,10 +89,10 @@ export class PromptBuilderService {
     return [
       baseSystem,
       `Cultural context: ${contextPack.culturalNotes}`,
-      `Question metadata contract: category must be exactly "behavioral" or "technical". competency_domain must be exactly one allowed ID, not a label or phrase.`,
+      `Question metadata contract: category must be exactly "behavioral" or "technical". competency_domains must contain one or more allowed IDs, not labels or phrases.`,
       `Behavioral IDs: ${behavioral}.`,
       `Technical IDs: ${technical}.`,
-      `For HR sessions, use only behavioral/D* IDs. For Technical sessions, use only technical/TD* IDs. For Mixed sessions, choose one best-fitting allowed ID per question.`,
+      `For HR sessions, use only behavioral/D* IDs. For Technical sessions, use only technical/TD* IDs. For Mixed sessions, keep each question within its category: behavioral questions use D* IDs and technical questions use TD* IDs.`,
     ].join('\n\n');
   }
 
@@ -100,18 +100,27 @@ export class PromptBuilderService {
     baseSystem: string,
     contextPack: ContextPackConfig,
     sessionType: SessionType,
-    options: { competencyDomain?: string } = {},
+    options: { competencyDomains?: string[] } = {},
   ): string {
     const { culturalNotes, behavioralDimensions, technicalDimensions } =
       contextPack;
     const lines = (dims: { id: string; name: string }[]) =>
       dims.map((d) => `  - ${d.id} ${d.name}`).join('\n');
+    const targetDomains =
+      options.competencyDomains && options.competencyDomains.length > 0
+        ? options.competencyDomains
+        : [];
+    const targetDomainRule =
+      targetDomains.length > 0
+        ? `Question-specific allowed criteria: ${targetDomains.join(', ')}. Return only IDs from this list in "applied_dimensions"; include every listed criterion that this answer provides enough evidence to score.`
+        : undefined;
 
     const selectionRules = [
       `From the candidate dimensions below, select ONLY the ones THIS question actually evaluates and ignore the rest.`,
       `Score each selected dimension from 1 to 100.`,
       `Return them in "applied_dimensions" as objects { "id", "score" } using the ids exactly as listed.`,
       `Do NOT invent ids outside the list. Do NOT output any weight or overall score — the system computes those.`,
+      ...(targetDomainRule ? [targetDomainRule] : []),
     ];
 
     let scoringSection: string;
@@ -134,9 +143,10 @@ export class PromptBuilderService {
         `Example: a pure definition question ("What is a closure?") usually evaluates only foundational knowledge and practical application, not debugging or systems thinking.`,
       ].join('\n');
     } else {
-      const targetDomainRule = options.competencyDomain
-        ? `Target competency_domain is ${options.competencyDomain}. Return exactly this one ID in "applied_dimensions"; do not include behavioral or technical dimensions outside the target.`
-        : `A question may evaluate behavioral dimensions, technical dimensions, or both — include only those it truly tests.`;
+      const mixedRule =
+        targetDomains.length > 0
+          ? `Do not include behavioral or technical dimensions outside the question-specific allowed criteria.`
+          : `A question may evaluate behavioral dimensions, technical dimensions, or both — include only those it truly tests.`;
       scoringSection = [
         `Session type: Mixed (behavioral + technical).`,
         `Candidate behavioral dimensions:`,
@@ -144,7 +154,7 @@ export class PromptBuilderService {
         `Candidate technical dimensions:`,
         lines(technicalDimensions),
         ...selectionRules,
-        targetDomainRule,
+        mixedRule,
         `Example: "Tell me about a bug you fixed" may evaluate debugging plus communication, but not coding-style depth.`,
       ].join('\n');
     }
@@ -163,7 +173,7 @@ export class PromptBuilderService {
       numQuestions,
       question,
       questionCategory,
-      competencyDomain,
+      competencyDomains,
       answer,
       sessionHistory,
     } = params;
@@ -186,13 +196,18 @@ export class PromptBuilderService {
       userContent += `\n\n<question>\n${question}\n</question>`;
     }
 
-    if (questionCategory || competencyDomain) {
+    const metadataDomains =
+      competencyDomains && competencyDomains.length > 0
+        ? competencyDomains
+        : [];
+
+    if (questionCategory || metadataDomains.length > 0) {
       userContent += `\n\n<question_metadata>`;
       if (questionCategory) {
         userContent += `\ncategory=${questionCategory}`;
       }
-      if (competencyDomain) {
-        userContent += `\ncompetency_domain=${competencyDomain}`;
+      if (metadataDomains.length > 0) {
+        userContent += `\ncompetency_domains=${metadataDomains.join(',')}`;
       }
       userContent += `\n</question_metadata>`;
     }

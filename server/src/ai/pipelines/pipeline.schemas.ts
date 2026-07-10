@@ -4,12 +4,20 @@ export const PROMPT_VERSION = 'surgical-feedback-v1.4';
 
 export const QuestionsSchema = z.object({
   questions: z.array(
-    z.object({
+    z
+      .object({
       text: z.string(),
       category: z.string(),
-      competency_domain: z.string(),
+      competency_domain: z.string().optional(),
+      competency_domains: z.array(z.string()).min(1).optional(),
       difficulty: z.number().int().min(1).max(3),
-    }),
+      })
+      .refine(
+        (question) =>
+          question.competency_domains !== undefined ||
+          question.competency_domain !== undefined,
+        { message: 'competency_domains or competency_domain is required' },
+      ),
   ),
 });
 

@@ -64,7 +64,7 @@ describe('QuestionGenerationProcessor', () => {
     Array.from({ length: count }, (_, index) => ({
       text: `AI question ${index + 1}`,
       category: 'behavioral',
-      competencyDomain: 'D1',
+      competencyDomains: ['D1'],
       difficulty: 2,
     }));
 
@@ -73,7 +73,7 @@ describe('QuestionGenerationProcessor', () => {
       questionBankId: `qb-${index + 1}`,
       text: `Fallback question ${index + 1}`,
       questionCategory: 'behavioral',
-      competencyDomain: 'D4',
+      competencyDomains: ['D4'],
       estimatedTimeMin: 5,
     }));
 
@@ -109,7 +109,7 @@ describe('QuestionGenerationProcessor', () => {
     const aiQuestion = {
       text: 'Điểm mạnh là gì?',
       category: 'behavioral',
-      competencyDomain: 'D1',
+      competencyDomains: ['D1'],
       difficulty: 2,
     };
     const qbResult = makeFallbackQuestions(4);
@@ -156,7 +156,7 @@ describe('QuestionGenerationProcessor', () => {
         questionText: 'Điểm mạnh là gì?',
         orderIndex: 5,
         questionCategory: 'behavioral',
-        competencyDomain: 'D1',
+        competencyDomains: ['D1'],
         estimatedTimeMin: 5,
       }),
     );
@@ -181,7 +181,7 @@ describe('QuestionGenerationProcessor', () => {
         {
           text: 'Tell me about a time you handled a conflict.',
           category: 'behavioral',
-          competencyDomain: 'D4',
+          competencyDomains: ['D4'],
           difficulty: 2,
         },
       ]),
@@ -219,7 +219,7 @@ describe('QuestionGenerationProcessor', () => {
         {
           text: 'Tell me about a time you learned from feedback.',
           category: 'Self-Awareness & Growth',
-          competencyDomain: 'Self-Awareness & Growth',
+          competencyDomains: ['Self-Awareness & Growth'],
           difficulty: 2,
         },
       ]),
@@ -240,7 +240,7 @@ describe('QuestionGenerationProcessor', () => {
       expect.objectContaining({
         questionText: 'Tell me about a time you learned from feedback.',
         questionCategory: 'behavioral',
-        competencyDomain: 'D6',
+        competencyDomains: ['D6'],
         estimatedTimeMin: 5,
       }),
     );
@@ -253,7 +253,7 @@ describe('QuestionGenerationProcessor', () => {
         {
           text: 'Explain a production debugging workflow.',
           category: 'technical',
-          competencyDomain: 'TD5',
+          competencyDomains: ['TD5'],
           difficulty: 2,
         },
       ]),
@@ -433,7 +433,7 @@ describe('QuestionGenerationProcessor', () => {
     const generatedQuestions = Array.from({ length: 5 }, (_, index) => ({
       text: `Câu hỏi ${index + 1}`,
       category: 'behavioral',
-      competencyDomain: 'D1',
+      competencyDomains: ['D1'],
       difficulty: 2,
     }));
     mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
@@ -512,7 +512,7 @@ describe('QuestionGenerationProcessor', () => {
         questionBankId: `qb-${index + 1}`,
         text: `Fallback question ${index + 1}`,
         questionCategory: 'behavioral',
-        competencyDomain: 'D4',
+        competencyDomains: ['D4'],
         estimatedTimeMin: 5,
       }));
       const mockStrategy = {
@@ -576,7 +576,7 @@ describe('QuestionGenerationProcessor', () => {
         questionBankId: `qb-${index + 1}`,
         text: `Fallback question ${index + 1}`,
         questionCategory: 'behavioral',
-        competencyDomain: 'D4',
+        competencyDomains: ['D4'],
         estimatedTimeMin: 5,
       }));
       const generateQuestions = jest.fn().mockRejectedValue(quotaError);

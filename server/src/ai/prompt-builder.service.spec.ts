@@ -144,16 +144,16 @@ describe('PromptBuilderService', () => {
       expect(result).not.toContain('session weight');
     });
 
-    it('Mixed có target competencyDomain thì không mời model chấm cả hai nhóm', () => {
+    it('Mixed có target competencyDomains thì không mời model chấm cả hai nhóm', () => {
       const result = service.applyContextPackForEvaluation(
         'base',
         contextPack,
         'mixed',
-        { competencyDomain: 'TD2' },
+        { competencyDomains: ['TD2'] },
       );
 
-      expect(result).toContain('Target competency_domain is TD2');
-      expect(result).toContain('Return exactly this one ID in "applied_dimensions"');
+      expect(result).toContain('Question-specific allowed criteria: TD2');
+      expect(result).toContain('Return only IDs from this list in "applied_dimensions"');
       expect(result).not.toContain(
         'A question may evaluate behavioral dimensions, technical dimensions, or both',
       );
@@ -224,14 +224,14 @@ describe('PromptBuilderService', () => {
         jobDescription: '',
         question: 'Tell me about a challenge',
         questionCategory: 'behavioral',
-        competencyDomain: 'D2',
+        competencyDomains: ['D2'],
         answer: 'I handled an incident calmly.',
       });
       const content = messages[1].content as string;
 
       expect(content).toContain('<question_metadata>');
       expect(content).toContain('category=behavioral');
-      expect(content).toContain('competency_domain=D2');
+      expect(content).toContain('competency_domains=D2');
     });
 
     it('bao gồm session type và target roles khi được cung cấp', () => {

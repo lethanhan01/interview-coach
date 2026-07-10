@@ -103,10 +103,12 @@ const expectedIndexes = [
 const retiredTables = ['ai_quality_log', 'question_usage'];
 
 const retiredColumns = [
+  ['question_bank', 'competency_domain'],
   ['question_bank', 'subcategory'],
   ['question_bank', 'applicable_roles'],
   ['question_bank', 'applicable_levels'],
   ['question_bank', 'tags'],
+  ['session_questions', 'competency_domain'],
   ['users', 'profile_completed'],
   ['users', 'last_login_at'],
   ['users', 'deleted_at'],

@@ -30,7 +30,7 @@ async function main(): Promise<void> {
         sq.question_text,
         sq.order_index,
         sq.question_category,
-        sq.competency_domain,
+        sq.competency_domains,
         sq.estimated_time_min,
         s.session_type,
         s.context_pack_id,
@@ -62,8 +62,8 @@ async function main(): Promise<void> {
           orderIndex: item.row.order_index,
           oldCategory: item.row.question_category,
           newCategory: item.nextCategory,
-          oldDomain: item.row.competency_domain,
-          newDomain: item.nextDomain,
+          oldDomains: item.row.competency_domains,
+          newDomains: item.nextDomains,
           oldTime: item.row.estimated_time_min,
           newTime: item.nextTime,
           matchBranch: item.matchBranch,
@@ -77,7 +77,7 @@ async function main(): Promise<void> {
           questionId: item.row.id,
           orderIndex: item.row.order_index,
           category: item.row.question_category,
-          domain: item.row.competency_domain,
+          domains: item.row.competency_domains,
           reason: item.reason,
         }),
       );
@@ -97,12 +97,17 @@ async function main(): Promise<void> {
           `
           UPDATE session_questions
           SET question_category = $1,
-              competency_domain = $2,
+              competency_domains = $2,
               estimated_time_min = $3
           WHERE id = $4
             AND question_bank_id IS NULL
         `,
-          [item.nextCategory, item.nextDomain, item.nextTime, item.row.id],
+          [
+            item.nextCategory,
+            item.nextDomains,
+            item.nextTime,
+            item.row.id,
+          ],
         );
       }
       await client.query('COMMIT');

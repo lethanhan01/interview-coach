@@ -43,7 +43,7 @@ describe('TurnService', () => {
     id: 'q-1',
     questionText: 'Giới thiệu bản thân?',
     questionCategory: 'behavioral',
-    competencyDomain: 'D1',
+    competencyDomains: ['D1'],
     orderIndex: 1,
     sessionId: 'session-123',
   };
@@ -339,7 +339,7 @@ describe('TurnService', () => {
           questionId: 'q-1',
           questionText: 'Giới thiệu bản thân?',
           questionCategory: 'behavioral',
-          competencyDomain: 'D1',
+          competencyDomains: ['D1'],
           answerText: 'Tôi là developer với 2 năm kinh nghiệm.',
           contextPack: 'VN',
           sessionType: 'hr',
@@ -453,7 +453,7 @@ describe('TurnService', () => {
         ...BASE_QUESTION,
         questionText: 'Explain a system design trade-off.',
         questionCategory: 'technical',
-        competencyDomain: 'TD3',
+        competencyDomains: ['TD3'],
       });
       mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
       mockPrisma.userAnswer.upsert.mockResolvedValue({
@@ -476,7 +476,7 @@ describe('TurnService', () => {
           questionId: 'q-1',
           questionText: 'Explain a system design trade-off.',
           questionCategory: 'technical',
-          competencyDomain: 'TD3',
+          competencyDomains: ['TD3'],
           answerText: 'I chose pagination because it reduced memory usage.',
           contextPack: 'Western',
           sessionType: 'technical',

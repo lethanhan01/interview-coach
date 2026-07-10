@@ -30,8 +30,8 @@ model QuestionBank {
   sessionType      QuestionSessionType @map("session_type")
   difficulty       Int
   contextPackId    String            @map("context_pack_id")
-  competencyDomain String            @map("competency_domain")
-  estimatedTimeMin Int?              @map("estimated_time_min")
+  competencyDomains String[]          @default([]) @map("competency_domains")
+  estimatedTimeMin  Int?              @map("estimated_time_min")
   translations     Json?
   contentJson      Json?             @map("content_json")
   deletedAt        DateTime?         @map("deleted_at") @db.Timestamptz(6)
@@ -168,8 +168,8 @@ model SessionQuestion {
   questionText     String           @map("question_text")
   orderIndex       Int              @map("order_index")
   questionCategory String           @map("question_category")
-  competencyDomain String           @map("competency_domain")
-  rubricJson       Json             @map("rubric_json")
+  competencyDomains String[]         @default([]) @map("competency_domains")
+  rubricJson        Json             @map("rubric_json")
   estimatedTimeMin Int?             @map("estimated_time_min")
   createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   questionBank     QuestionBank?    @relation(fields: [questionBankId], references: [id])

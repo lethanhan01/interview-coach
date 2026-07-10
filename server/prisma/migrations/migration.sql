@@ -788,10 +788,71 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+-- =============================================================================
+-- 11. Add multi-criteria competency metadata.
+--     competency_domains is the only question scoring-domain source of truth.
+-- =============================================================================
+
+ALTER TABLE "question_bank"
+  ADD COLUMN IF NOT EXISTS "competency_domains" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'question_bank'
+      AND column_name = 'competency_domain'
+  ) THEN
+    UPDATE "question_bank"
+    SET "competency_domains" = ARRAY["competency_domain"]
+    WHERE cardinality("competency_domains") = 0
+      AND "competency_domain" IS NOT NULL;
+  END IF;
+END $$;
+
+ALTER TABLE "question_bank"
+  DROP COLUMN IF EXISTS "competency_domain";
+
+DO $$ BEGIN
+  ALTER TABLE "question_bank"
+    ADD CONSTRAINT "question_bank_competency_domains_nonempty"
+    CHECK (cardinality("competency_domains") > 0);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+ALTER TABLE "session_questions"
+  ADD COLUMN IF NOT EXISTS "competency_domains" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'session_questions'
+      AND column_name = 'competency_domain'
+  ) THEN
+    UPDATE "session_questions"
+    SET "competency_domains" = ARRAY["competency_domain"]
+    WHERE cardinality("competency_domains") = 0
+      AND "competency_domain" IS NOT NULL;
+  END IF;
+END $$;
+
+ALTER TABLE "session_questions"
+  DROP COLUMN IF EXISTS "competency_domain";
+
+DO $$ BEGIN
+  ALTER TABLE "session_questions"
+    ADD CONSTRAINT "session_questions_competency_domains_nonempty"
+    CHECK (cardinality("competency_domains") > 0);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 -- Step 2: Convert any remaining 'mixed' values (idempotent via WHERE)
 UPDATE question_bank
 SET session_type = (CASE
-  WHEN competency_domain LIKE 'TD%' THEN 'technical'
+  WHEN competency_domains[1] LIKE 'TD%' THEN 'technical'
   ELSE 'hr'
 END)::"QuestionSessionType"
 WHERE session_type::text = 'mixed';

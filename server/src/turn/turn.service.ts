@@ -290,7 +290,7 @@ export class TurnService {
       questionId: question.id,
       questionText: question.questionText,
       questionCategory: question.questionCategory as 'behavioral' | 'technical',
-      competencyDomain: question.competencyDomain,
+      competencyDomains: question.competencyDomains,
       answerText: answer.answerText,
       contextPack,
       sessionType,

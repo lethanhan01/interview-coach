@@ -11,7 +11,7 @@ export type CleanupRow = {
   question_text: string;
   order_index: number;
   question_category: string;
-  competency_domain: string;
+  competency_domains: string[] | null;
   estimated_time_min: number | null;
   session_type: string;
   context_pack_id: string;
@@ -22,7 +22,7 @@ export type CleanupRow = {
 export type PlannedMetadataUpdate = {
   row: CleanupRow;
   nextCategory: 'behavioral' | 'technical';
-  nextDomain: string;
+  nextDomains: string[];
   nextTime: number;
   matchBranch: string;
   changed: boolean;
@@ -75,7 +75,7 @@ export function planQuestionMetadataCleanup(
     const normalized = normalizeQuestionMetadataForCleanup(
       {
         category: row.question_category,
-        competencyDomain: row.competency_domain,
+        competencyDomains: row.competency_domains ?? undefined,
         questionText: row.question_text,
       },
       contextPack,
@@ -99,12 +99,13 @@ export function planQuestionMetadataCleanup(
     planned.push({
       row,
       nextCategory: normalized.questionCategory,
-      nextDomain: normalized.competencyDomain,
+      nextDomains: normalized.competencyDomains,
       nextTime,
       matchBranch: normalized.matchBranch,
       changed:
         row.question_category !== normalized.questionCategory ||
-        row.competency_domain !== normalized.competencyDomain ||
+        JSON.stringify(row.competency_domains ?? []) !==
+          JSON.stringify(normalized.competencyDomains) ||
         row.estimated_time_min !== nextTime,
     });
   }
@@ -125,8 +126,10 @@ export function summarizeQuestionMetadataCleanup(
     badCategory: rows.filter(
       (row) => !VALID_QUESTION_CATEGORIES.has(row.question_category),
     ).length,
-    badDomain: rows.filter(
-      (row) => !VALID_COMPETENCY_DOMAINS.has(row.competency_domain),
+    badDomain: rows.filter((row) =>
+      (row.competency_domains ?? []).some(
+        (domain) => !VALID_COMPETENCY_DOMAINS.has(domain),
+      ),
     ).length,
     plannedChanges: planned.filter((item) => item.changed).length,
     heuristicMappings: planned.filter(

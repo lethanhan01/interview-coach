@@ -8,7 +8,7 @@ type KaggleQuestion = {
   difficulty: number;
   contextPackId: string;
   subcategory: string;
-  competencyDomain: string;
+  competencyDomains: string[];
   applicableRoles: string[];
   applicableLevels: string[];
   tags: string[];
@@ -23,7 +23,7 @@ function toQuestionBankRow(question: KaggleQuestion) {
     sessionType: question.sessionType,
     difficulty: question.difficulty,
     contextPackId: question.contextPackId,
-    competencyDomain: question.competencyDomain,
+    competencyDomains: question.competencyDomains,
     estimatedTimeMin: question.estimatedTimeMin,
     translations: question.translations,
     contentJson: question.contentJson,

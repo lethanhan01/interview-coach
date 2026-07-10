@@ -5,7 +5,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "general-programming",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -33,7 +32,10 @@
       "modelAnswer": "Compilation translates source code into machine code creating an executable file. Interpretation translates and executes code line by line without an executable.",
       "en": "What is the difference between compilation and interpretation?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Explain the concept of polymorphism.",
@@ -41,7 +43,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "general-programming",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -69,7 +70,10 @@
       "modelAnswer": "Polymorphism allows objects of different classes to be treated as objects of a common superclass, enabling method overriding.",
       "en": "Explain the concept of polymorphism.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Define encapsulation and give an example.",
@@ -77,7 +81,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "general-programming",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -105,7 +108,10 @@
       "modelAnswer": "Encapsulation bundles data and methods in a class, restricting direct data access. Example: class with private data and public methods.",
       "en": "Define encapsulation and give an example.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is an abstract class, and how is it different from an interface?",
@@ -113,7 +119,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "general-programming",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -141,7 +146,10 @@
       "modelAnswer": "An abstract class can't be instantiated and can have abstract and concrete methods. An interface only has method signatures without implementations.",
       "en": "What is an abstract class, and how is it different from an interface?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Describe the principles of Object-Oriented Programming (OOP).",
@@ -149,7 +157,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "general-programming",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -177,7 +184,10 @@
       "modelAnswer": "OOP principles include encapsulation, inheritance, polymorphism, and abstraction, promoting organized and maintainable code.",
       "en": "Describe the principles of Object-Oriented Programming (OOP).",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is the purpose of a constructor?",
@@ -185,7 +195,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "general-programming",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -213,7 +222,10 @@
       "modelAnswer": "A constructor initializes object properties upon class instantiation, ensuring a well-defined state.",
       "en": "What is the purpose of a constructor?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Explain the difference between stack and heap memory.",
@@ -221,7 +233,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "general-programming",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -249,7 +260,10 @@
       "modelAnswer": "Stack memory stores local variables and function calls; heap memory is for dynamic allocation. Stack operates in LIFO, heap managed manually or by garbage collection.",
       "en": "Explain the difference between stack and heap memory.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is a design pattern, and can you name a few?",
@@ -257,7 +271,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "general-programming",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -285,7 +298,10 @@
       "modelAnswer": "Design patterns are solutions to common design problems. Examples: Singleton, Factory, Observer, MVC.",
       "en": "What is a design pattern, and can you name a few?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Define the term \"DRY\" in software development.",
@@ -293,7 +309,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "general-programming",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -321,7 +336,10 @@
       "modelAnswer": "DRY (Don't Repeat Yourself) advocates for avoiding code duplication by reusing existing code.",
       "en": "Define the term \"DRY\" in software development.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is the SOLID principle?",
@@ -329,7 +347,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "general-programming",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -357,7 +374,10 @@
       "modelAnswer": "SOLID represents five design principles for OOP: Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion.",
       "en": "What is the SOLID principle?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is the difference between an array and a linked list?",
@@ -365,7 +385,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "data-structures",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -393,7 +412,10 @@
       "modelAnswer": "An array has fixed size and stores elements in contiguous memory; a linked list consists of nodes with data and references, allowing dynamic size.",
       "en": "What is the difference between an array and a linked list?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Explain the time complexity of an algorithm.",
@@ -401,7 +423,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "data-structures",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -429,7 +450,10 @@
       "modelAnswer": "Time complexity measures the time an algorithm takes relative to its input size, expressed in Big O notation.",
       "en": "Explain the time complexity of an algorithm.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Describe the difference between a binary search tree and a hash table.",
@@ -437,7 +461,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "data-structures",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -465,7 +488,10 @@
       "modelAnswer": "A binary search tree is hierarchical, maintaining order; a hash table maps keys to values for fast retrieval, without maintaining order.",
       "en": "Describe the difference between a binary search tree and a hash table.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is a linked list and how does it work?",
@@ -473,7 +499,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "data-structures",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -501,7 +526,10 @@
       "modelAnswer": "A linked list is a series of nodes each containing data and a reference to the next node, allowing dynamic memory allocation and efficient insertions/deletions.",
       "en": "What is a linked list and how does it work?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Explain the concept of recursion.",
@@ -509,7 +537,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "data-structures",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -537,7 +564,10 @@
       "modelAnswer": "Recursion is when a function calls itself to solve subproblems, with a base case to terminate recursion.",
       "en": "Explain the concept of recursion.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is Big O notation, and why is it important?",
@@ -545,7 +575,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "data-structures",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -573,7 +602,10 @@
       "modelAnswer": "Big O notation describes the upper bound of algorithm time complexity, important for comparing efficiency and growth rates.",
       "en": "What is Big O notation, and why is it important?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "How do you perform a binary search on a sorted array?",
@@ -581,7 +613,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "data-structures",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -609,7 +640,10 @@
       "modelAnswer": "Binary search divides the search interval in half, repeatedly comparing the middle element to the target.",
       "en": "How do you perform a binary search on a sorted array?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Discuss the advantages and disadvantages of different sorting algorithms.",
@@ -617,7 +651,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "data-structures",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -645,7 +678,10 @@
       "modelAnswer": "Sorting algorithms vary in time/space complexity and stability. Quick Sort and Merge Sort are fast but more complex; Insertion and Bubble Sort are simple but slower.",
       "en": "Discuss the advantages and disadvantages of different sorting algorithms.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Explain how a hash table works.",
@@ -653,7 +689,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "data-structures",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -681,7 +716,10 @@
       "modelAnswer": "A hash table uses a hash function to map keys to values in an array, allowing fast O(1) access.",
       "en": "Explain how a hash table works.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is dynamic programming?",
@@ -689,7 +727,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "data-structures",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -717,7 +754,10 @@
       "modelAnswer": "Dynamic programming solves complex problems by dividing them into smaller subproblems, avoiding redundant calculations.",
       "en": "What is dynamic programming?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is the difference between Java and JavaScript?",
@@ -725,7 +765,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "languages-frameworks",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -753,7 +792,10 @@
       "modelAnswer": "Java is a compiled, statically-typed language used for server-side, mobile, and desktop apps. JavaScript is an interpreted, dynamically-typed language for web development.",
       "en": "What is the difference between Java and JavaScript?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Describe the MVC architectural pattern.",
@@ -761,7 +803,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "languages-frameworks",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -789,7 +830,10 @@
       "modelAnswer": "MVC divides an application into Model (data), View (UI), and Controller (input handling), promoting separation of concerns.",
       "en": "Describe the MVC architectural pattern.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is a RESTful API?",
@@ -797,7 +841,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "languages-frameworks",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -825,7 +868,10 @@
       "modelAnswer": "RESTful API is a web service implementation using HTTP methods to perform CRUD operations on resources, adhering to stateless, client-server architecture.",
       "en": "What is a RESTful API?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Explain the use of \"this\" keyword in JavaScript.",
@@ -833,7 +879,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "languages-frameworks",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -861,7 +906,10 @@
       "modelAnswer": "\"this\" in JavaScript refers to the execution context, varying based on function calling, global scope, or event handlers.",
       "en": "Explain the use of \"this\" keyword in JavaScript.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is a closure in programming?",
@@ -869,7 +917,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "languages-frameworks",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -897,7 +944,10 @@
       "modelAnswer": "A closure is a function with access to its outer scope variables even after the outer function has executed.",
       "en": "What is a closure in programming?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What are the differences between Python 2 and Python 3?",
@@ -905,7 +955,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "languages-frameworks",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -933,7 +982,10 @@
       "modelAnswer": "Python 3 has print as a function, true division, Unicode support by default, and different syntax for exceptions, unlike Python 2.",
       "en": "What are the differences between Python 2 and Python 3?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Discuss the role of a package manager like npm or pip.",
@@ -941,7 +993,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "languages-frameworks",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -969,7 +1020,10 @@
       "modelAnswer": "Package managers manage installation, update, and dependency resolution of libraries, simplifying library management in development.",
       "en": "Discuss the role of a package manager like npm or pip.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Explain the concept of multi-threading in Java.",
@@ -977,7 +1031,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "languages-frameworks",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -1005,7 +1058,10 @@
       "modelAnswer": "Multi-threading in Java allows concurrent execution of multiple threads, improving application responsiveness and performance.",
       "en": "Explain the concept of multi-threading in Java.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is a Singleton pattern?",
@@ -1013,7 +1069,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "languages-frameworks",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -1041,7 +1096,10 @@
       "modelAnswer": "Singleton ensures a class has only one instance and provides a global access point to it, useful for shared resources.",
       "en": "What is a Singleton pattern?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is a virtual function in C++?",
@@ -1049,7 +1107,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "languages-frameworks",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -1077,7 +1134,10 @@
       "modelAnswer": "Virtual functions in C++ allow derived classes to override them, enabling runtime polymorphism and dynamic method dispatch.",
       "en": "What is a virtual function in C++?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "What is a database index, and why is it important?",
@@ -1085,7 +1145,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "database-sql",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack",
@@ -1117,7 +1176,10 @@
       "modelAnswer": "A database index speeds up data retrieval, similar to a book's index, improving query performance.",
       "en": "What is a database index, and why is it important?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Explain the differences between SQL and NoSQL databases.",
@@ -1125,7 +1187,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "database-sql",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack",
@@ -1157,7 +1218,10 @@
       "modelAnswer": "SQL databases use structured query language with a predefined schema; NoSQL databases store schema-less data with flexible models.",
       "en": "Explain the differences between SQL and NoSQL databases.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is a foreign key in a database?",
@@ -1165,7 +1229,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "database-sql",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack",
@@ -1197,7 +1260,10 @@
       "modelAnswer": "A foreign key links two tables by referring to the primary key in another table, ensuring referential integrity.",
       "en": "What is a foreign key in a database?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Describe the ACID properties in database transactions.",
@@ -1205,7 +1271,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "database-sql",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack",
@@ -1237,7 +1302,10 @@
       "modelAnswer": "ACID: Atomicity (indivisible transactions), Consistency (consistent state transitions), Isolation (independent transactions), Durability (persisted changes).",
       "en": "Describe the ACID properties in database transactions.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "How do you optimize a SQL query for better performance?",
@@ -1245,7 +1313,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "database-sql",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack",
@@ -1277,7 +1344,10 @@
       "modelAnswer": "Optimize using indexes, efficient SQL, limiting data retrieval, analyzing query performance, and considering denormalization.",
       "en": "How do you optimize a SQL query for better performance?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is normalization in database design?",
@@ -1285,7 +1355,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "database-sql",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack",
@@ -1317,7 +1386,10 @@
       "modelAnswer": "Normalization organizes data into separate tables to reduce redundancy and improve integrity, following normalization forms.",
       "en": "What is normalization in database design?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Explain the difference between INNER JOIN and LEFT JOIN in SQL.",
@@ -1325,7 +1397,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "database-sql",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack",
@@ -1357,7 +1428,10 @@
       "modelAnswer": "INNER JOIN returns matching rows from both tables; LEFT JOIN returns all rows from the left table and matching rows from the right.",
       "en": "Explain the difference between INNER JOIN and LEFT JOIN in SQL.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is a stored procedure, and when would you use one?",
@@ -1365,7 +1439,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "database-sql",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack",
@@ -1397,7 +1470,10 @@
       "modelAnswer": "Stored procedures are precompiled SQL statements for data manipulation and logic, used for repetitive tasks and improving performance.",
       "en": "What is a stored procedure, and when would you use one?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is database denormalization, and when is it appropriate?",
@@ -1405,7 +1481,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "database-sql",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack",
@@ -1437,7 +1512,10 @@
       "modelAnswer": "Denormalization introduces redundancy for performance, useful in read-heavy scenarios at the expense of storage and complexity.",
       "en": "What is database denormalization, and when is it appropriate?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Discuss the advantages and disadvantages of using an ORM tool.",
@@ -1445,7 +1523,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "database-sql",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack",
@@ -1477,7 +1554,10 @@
       "modelAnswer": "ORM simplifies database interactions and is language-agnostic. It can introduce performance overhead and may limit database features.",
       "en": "Discuss the advantages and disadvantages of using an ORM tool.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is the Document Object Model (DOM)?",
@@ -1485,7 +1565,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "web-development",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "all"
     ],
@@ -1513,7 +1592,10 @@
       "modelAnswer": "The DOM is a tree-like representation of a web page's structure, allowing manipulation of content, structure, and style via programming languages.",
       "en": "What is the Document Object Model (DOM)?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Explain the difference between HTTP and HTTPS.",
@@ -1521,7 +1603,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "web-development",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "all"
     ],
@@ -1549,7 +1630,10 @@
       "modelAnswer": "HTTP is an unsecured data transmission protocol; HTTPS is secure, encrypting data in transit using SSL/TLS.",
       "en": "Explain the difference between HTTP and HTTPS.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is CORS (Cross-Origin Resource Sharing)?",
@@ -1557,7 +1641,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "web-development",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "all"
     ],
@@ -1585,7 +1668,10 @@
       "modelAnswer": "CORS is a security measure allowing or restricting resources requested from another domain, managed via HTTP headers.",
       "en": "What is CORS (Cross-Origin Resource Sharing)?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Describe the purpose of a web server like Apache or Nginx.",
@@ -1593,7 +1679,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "web-development",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "all"
     ],
@@ -1621,7 +1706,10 @@
       "modelAnswer": "Web servers handle HTTP requests, serve content, manage security, routing, and can act as reverse proxies for application servers.",
       "en": "Describe the purpose of a web server like Apache or Nginx.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is a cookie, and how does it work?",
@@ -1629,7 +1717,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "web-development",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "all"
     ],
@@ -1657,7 +1744,10 @@
       "modelAnswer": "Cookies are data stored on the user's computer by the web server, sent with HTTP requests for session management, tracking, and storing preferences.",
       "en": "What is a cookie, and how does it work?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is a session in web development?",
@@ -1665,7 +1755,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "web-development",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "all"
     ],
@@ -1693,7 +1782,10 @@
       "modelAnswer": "A session maintains stateful information across multiple HTTP requests, typically for user authentication and data storage.",
       "en": "What is a session in web development?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Explain the concept of responsive web design.",
@@ -1701,7 +1793,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "web-development",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "all"
     ],
@@ -1729,7 +1820,10 @@
       "modelAnswer": "Responsive design ensures web content functions across different devices and screen sizes, using CSS media queries and flexible layouts.",
       "en": "Explain the concept of responsive web design.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Describe the differences between GET and POST requests.",
@@ -1737,7 +1831,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "web-development",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "all"
     ],
@@ -1765,7 +1858,10 @@
       "modelAnswer": "GET requests retrieve data and include parameters in the URL; POST requests send data to the server, encapsulating data in the request body.",
       "en": "Describe the differences between GET and POST requests.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is the importance of SEO in web development?",
@@ -1773,7 +1869,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "web-development",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "all"
     ],
@@ -1801,7 +1896,10 @@
       "modelAnswer": "SEO enhances a website's visibility in search engine results, improving organic traffic and user reach through optimized content and structure.",
       "en": "What is the importance of SEO in web development?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "How does a web browser render a web page?",
@@ -1809,7 +1907,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "web-development",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "all"
     ],
@@ -1837,7 +1934,10 @@
       "modelAnswer": "Browsers parse HTML to create a DOM, fetch resources, build a rendering tree, apply CSS, calculate layout, and paint the page on the screen.",
       "en": "How does a web browser render a web page?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is unit testing, and why is it important?",
@@ -1845,7 +1945,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "testing",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -1873,7 +1972,10 @@
       "modelAnswer": "Unit testing evaluates individual code components, ensuring correctness and facilitating early defect detection.",
       "en": "What is unit testing, and why is it important?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Explain the difference between black-box and white-box testing.",
@@ -1881,7 +1983,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "testing",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -1909,7 +2010,10 @@
       "modelAnswer": "Black-box tests functionality without internal code knowledge; white-box tests internal code logic and structure.",
       "en": "Explain the difference between black-box and white-box testing.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is regression testing?",
@@ -1917,7 +2021,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "testing",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -1945,7 +2048,10 @@
       "modelAnswer": "Regression testing ensures new code changes don't break existing features, maintaining functionality over updates.",
       "en": "What is regression testing?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Describe the purpose of code reviews.",
@@ -1953,7 +2059,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "testing",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -1981,7 +2086,10 @@
       "modelAnswer": "Code reviews identify defects, improve quality, enforce standards, and facilitate knowledge sharing.",
       "en": "Describe the purpose of code reviews.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is continuous integration (CI) and continuous delivery (CD)?",
@@ -1989,7 +2097,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "testing",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2017,7 +2124,10 @@
       "modelAnswer": "CI involves frequent code integration and testing; CD extends CI by deploying changes to production automatically after testing.",
       "en": "What is continuous integration (CI) and continuous delivery (CD)?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Explain the concept of code coverage in testing.",
@@ -2025,7 +2135,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "testing",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2053,7 +2162,10 @@
       "modelAnswer": "Code coverage measures the extent of code tested, assessing test thoroughness and identifying untested areas.",
       "en": "Explain the concept of code coverage in testing.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is a test case and how do you write one?",
@@ -2061,7 +2173,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "testing",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2089,7 +2200,10 @@
       "modelAnswer": "A test case outlines test conditions, inputs, and expected results, structured with objective, steps, and documentation.",
       "en": "What is a test case and how do you write one?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is load testing, and why is it necessary?",
@@ -2097,7 +2211,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "testing",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2125,7 +2238,10 @@
       "modelAnswer": "Load testing evaluates system performance under expected load conditions, identifying bottlenecks and scalability issues.",
       "en": "What is load testing, and why is it necessary?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Describe the differences between manual and automated testing.",
@@ -2133,7 +2249,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "testing",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2161,7 +2276,10 @@
       "modelAnswer": "Manual testing is human-driven; suitable for exploratory and UX testing. Automated testing uses tools for repetitive tasks; suitable for regression and performance testing.",
       "en": "Describe the differences between manual and automated testing.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is a bug tracking system?",
@@ -2169,7 +2287,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "testing",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2197,7 +2314,10 @@
       "modelAnswer": "A bug tracking system logs, manages, and resolves issues in software development, ensuring systematic problem handling.",
       "en": "What is a bug tracking system?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is Git, and how does it work?",
@@ -2205,7 +2325,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "version-control",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2233,7 +2352,10 @@
       "modelAnswer": "Git is a distributed version control system for tracking changes in source code, allowing collaborative work and branch management.",
       "en": "What is Git, and how does it work?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Explain the difference between Git and SVN (Subversion).",
@@ -2241,7 +2363,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "version-control",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2269,7 +2390,10 @@
       "modelAnswer": "Git is distributed, with local repository copies; SVN is centralized, requiring network connectivity for repository access.",
       "en": "Explain the difference between Git and SVN (Subversion).",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is a merge conflict, and how do you resolve it in Git?",
@@ -2277,7 +2401,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "version-control",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2305,7 +2428,10 @@
       "modelAnswer": "Merge conflicts occur when changes in different branches clash. Resolve by manually editing files and committing the result.",
       "en": "What is a merge conflict, and how do you resolve it in Git?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Describe the purpose of branching in version control.",
@@ -2313,7 +2439,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "version-control",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2341,7 +2466,10 @@
       "modelAnswer": "Branching isolates development work without affecting other parts of the repository, aiding in feature development and experimentation.",
       "en": "Describe the purpose of branching in version control.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is a pull request (PR), and how does it work?",
@@ -2349,7 +2477,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "version-control",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2377,7 +2504,10 @@
       "modelAnswer": "A PR is a request to merge code from one branch to another, facilitating code review and discussion before integration.",
       "en": "What is a pull request (PR), and how does it work?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "How do you handle code conflicts in a team project?",
@@ -2385,7 +2515,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "version-control",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2413,7 +2542,10 @@
       "modelAnswer": "Resolve code conflicts through communication, careful review, manual merging, testing, and documenting resolutions.",
       "en": "How do you handle code conflicts in a team project?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is code refactoring, and why is it important?",
@@ -2421,7 +2553,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "version-control",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2449,7 +2580,10 @@
       "modelAnswer": "Refactoring improves code structure and readability without altering functionality, enhancing maintainability and quality.",
       "en": "What is code refactoring, and why is it important?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Explain the role of Git branching strategies like GitFlow.",
@@ -2457,7 +2591,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "version-control",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2485,7 +2618,10 @@
       "modelAnswer": "GitFlow organizes branches and releases, defining naming conventions and branch purposes for structured and organized development.",
       "en": "Explain the role of Git branching strategies like GitFlow.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is Git rebase, and when would you use it?",
@@ -2493,7 +2629,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "version-control",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2521,7 +2656,10 @@
       "modelAnswer": "Git rebase re-applies commits onto another base for a cleaner history. Use with caution to maintain a linear project history.",
       "en": "What is Git rebase, and when would you use it?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Discuss the advantages of distributed version control systems.",
@@ -2529,7 +2667,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "version-control",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2557,7 +2694,10 @@
       "modelAnswer": "Distributed systems allow offline work, flexible branching/merging, faster operations, redundancy, and collaborative workflows.",
       "en": "Discuss the advantages of distributed version control systems.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Describe the concept of microservices architecture.",
@@ -2565,7 +2705,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -2593,7 +2732,10 @@
       "modelAnswer": "Microservices architecture consists of small, independent services communicating via APIs, each responsible for specific functionality, promoting scalability and maintenance.",
       "en": "Describe the concept of microservices architecture.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "What is a load balancer, and why is it used in web applications?",
@@ -2601,7 +2743,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -2629,7 +2770,10 @@
       "modelAnswer": "A load balancer distributes incoming traffic across servers, ensuring resource efficiency, fault tolerance, and high availability.",
       "en": "What is a load balancer, and why is it used in web applications?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Explain the importance of caching in web applications.",
@@ -2637,7 +2781,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -2665,7 +2808,10 @@
       "modelAnswer": "Caching stores frequently accessed data for faster retrieval, reducing backend load, improving performance, and enhancing user experience.",
       "en": "Explain the importance of caching in web applications.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "What is a CDN (Content Delivery Network)?",
@@ -2673,7 +2819,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -2701,7 +2846,10 @@
       "modelAnswer": "A CDN is a network of servers for delivering content efficiently to users based on geographic proximity, reducing latency and load times.",
       "en": "What is a CDN (Content Delivery Network)?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Discuss the pros and cons of monolithic vs. microservices architecture.",
@@ -2709,7 +2857,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -2737,7 +2884,10 @@
       "modelAnswer": "Monolithic is simple but less scalable; microservices offer scalability and flexibility but are complex to manage.",
       "en": "Discuss the pros and cons of monolithic vs. microservices architecture.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "What is a stateless vs. stateful service?",
@@ -2745,7 +2895,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -2773,7 +2922,10 @@
       "modelAnswer": "Stateless services don't retain client data between requests; stateful services maintain client state, useful for sessions and transactions.",
       "en": "What is a stateless vs. stateful service?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Explain the concept of CAP theorem in distributed systems.",
@@ -2781,7 +2933,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -2809,7 +2960,10 @@
       "modelAnswer": "The CAP theorem states that in a distributed system, you cannot simultaneously guarantee Consistency, Availability, and Partition Tolerance at all times.",
       "en": "Explain the concept of CAP theorem in distributed systems.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "How do you ensure data consistency in a distributed database?",
@@ -2817,7 +2971,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -2845,7 +2998,10 @@
       "modelAnswer": "Ensure consistency using strong consistency models, two-phase commits, optimistic concurrency control, and conflict resolution strategies.",
       "en": "How do you ensure data consistency in a distributed database?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Describe the role of a reverse proxy in a web application.",
@@ -2853,7 +3009,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -2881,7 +3036,10 @@
       "modelAnswer": "A reverse proxy routes client requests to appropriate servers, providing load balancing, SSL termination, caching, and security.",
       "en": "Describe the role of a reverse proxy in a web application.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "What is a message broker, and when would you use one?",
@@ -2889,7 +3047,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -2917,7 +3074,10 @@
       "modelAnswer": "A message broker facilitates communication in distributed systems through asynchronous messaging, used in event-driven architectures and high-volume scenarios.",
       "en": "What is a message broker, and when would you use one?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "What is SQL injection, and how can it be prevented?",
@@ -2925,7 +3085,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "security",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2953,7 +3112,10 @@
       "modelAnswer": "SQL injection exploits vulnerabilities to execute malicious SQL. Prevent with parameterized queries, input validation, and least privilege access.",
       "en": "What is SQL injection, and how can it be prevented?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Explain the concept of Cross-Site Scripting (XSS).",
@@ -2961,7 +3123,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "security",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -2989,7 +3150,10 @@
       "modelAnswer": "XSS injects malicious scripts into web apps, executed by users' browsers. Prevent with input validation, output encoding, and CSP.",
       "en": "Explain the concept of Cross-Site Scripting (XSS).",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is two-factor authentication (2FA)?",
@@ -2997,7 +3161,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "security",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -3025,7 +3188,10 @@
       "modelAnswer": "2FA adds extra security by requiring two verification forms: something known (password) and something possessed (device).",
       "en": "What is two-factor authentication (2FA)?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Describe the process of password hashing and salting.",
@@ -3033,7 +3199,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "security",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -3061,7 +3226,10 @@
       "modelAnswer": "Hashing transforms passwords into hashes using algorithms; salting adds randomness, enhancing security against attacks.",
       "en": "Describe the process of password hashing and salting.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is OAuth, and how does it work?",
@@ -3069,7 +3237,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "security",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -3097,7 +3264,10 @@
       "modelAnswer": "OAuth allows third-party app access to user data without exposing credentials, using access tokens for authorization.",
       "en": "What is OAuth, and how does it work?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "How do you protect against session fixation attacks?",
@@ -3105,7 +3275,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "security",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -3133,7 +3302,10 @@
       "modelAnswer": "Protect by regenerating session IDs post-authentication, using unpredictable IDs, and tying IDs to user authentication.",
       "en": "How do you protect against session fixation attacks?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Explain the principles of least privilege and defense in depth.",
@@ -3141,7 +3313,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "security",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -3169,7 +3340,10 @@
       "modelAnswer": "Least privilege limits access rights; defense in depth layers security. Both minimize attack surfaces and provide redundancy.",
       "en": "Explain the principles of least privilege and defense in depth.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is a DDoS (Distributed Denial of Service) attack?",
@@ -3177,7 +3351,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "security",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -3205,7 +3378,10 @@
       "modelAnswer": "A DDoS attack overwhelms a target with traffic, causing unavailability. Mitigate with DDoS protection, rate limiting, and traffic analysis.",
       "en": "What is a DDoS (Distributed Denial of Service) attack?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "How can you secure sensitive data in a mobile app?",
@@ -3213,7 +3389,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "security",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -3241,7 +3416,10 @@
       "modelAnswer": "Secure data by encrypting at rest and in transit, using secure authentication, and following best practices.",
       "en": "How can you secure sensitive data in a mobile app?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Discuss the importance of security in API design.",
@@ -3249,7 +3427,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "security",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -3277,7 +3454,10 @@
       "modelAnswer": "API security is vital to protect data and prevent unauthorized access, using authentication, validation, rate limiting, and encryption.",
       "en": "Discuss the importance of security in API design.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is Docker, and how does it work?",
@@ -3285,7 +3465,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -3314,7 +3493,10 @@
       "modelAnswer": "Docker is a containerization platform packaging applications with dependencies, ensuring consistent environments across systems.",
       "en": "What is Docker, and how does it work?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Explain the concept of container orchestration.",
@@ -3322,7 +3504,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -3351,7 +3532,10 @@
       "modelAnswer": "Container orchestration automates deployment, scaling, and management of containers, optimizing resource use and handling failures.",
       "en": "Explain the concept of container orchestration.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is Kubernetes, and why is it popular in container management?",
@@ -3359,7 +3543,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -3388,7 +3571,10 @@
       "modelAnswer": "Kubernetes is an open-source container orchestration platform automating deployment and management, known for its scalability and community support.",
       "en": "What is Kubernetes, and why is it popular in container management?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Describe the process of continuous integration and continuous delivery (CI/CD).",
@@ -3396,7 +3582,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -3425,7 +3610,10 @@
       "modelAnswer": "CI/CD automates build, test, and deployment processes, delivering code changes rapidly and reliably to production.",
       "en": "Describe the process of continuous integration and continuous delivery (CI/CD).",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is infrastructure as code (IaC)?",
@@ -3433,7 +3621,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -3462,7 +3649,10 @@
       "modelAnswer": "IaC manages infrastructure using code, ensuring consistency, automation, and version control in deployments.",
       "en": "What is infrastructure as code (IaC)?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "How do you monitor the performance of a web application?",
@@ -3470,7 +3660,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -3499,7 +3688,10 @@
       "modelAnswer": "Monitor using tools to collect and analyze data on response times, resource utilization, error rates, and user experience.",
       "en": "How do you monitor the performance of a web application?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Discuss the importance of automated testing in CI/CD pipelines.",
@@ -3507,7 +3699,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -3536,7 +3727,10 @@
       "modelAnswer": "Automated testing in CI/CD ensures code changes are defect-free, enhancing reliability and speeding up delivery.",
       "en": "Discuss the importance of automated testing in CI/CD pipelines.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is Blue-Green deployment, and when would you use it?",
@@ -3544,7 +3738,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -3573,7 +3766,10 @@
       "modelAnswer": "Blue-Green deployment alternates between two production environments for easy rollbacks and minimal downtime during updates.",
       "en": "What is Blue-Green deployment, and when would you use it?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Explain the role of a configuration management tool like Ansible.",
@@ -3581,7 +3777,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -3610,7 +3805,10 @@
       "modelAnswer": "Configuration management tools automate provisioning and management of software and infrastructure, ensuring consistency and efficiency.",
       "en": "Explain the role of a configuration management tool like Ansible.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Describe the benefits of using a cloud platform like AWS, Azure, or Google Cloud.",
@@ -3618,7 +3816,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -3647,7 +3844,10 @@
       "modelAnswer": "Cloud platforms offer scalability, cost-efficiency, global reach, and managed services, reducing operational burdens with security and compliance features.",
       "en": "Describe the benefits of using a cloud platform like AWS, Azure, or Google Cloud.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Explain the concept of 'closure' in JavaScript.",
@@ -3655,7 +3855,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "frontend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "frontend",
       "fullstack"
@@ -3685,7 +3884,10 @@
       "modelAnswer": "A closure is a function that remembers its outer variables and can access them.",
       "en": "Explain the concept of 'closure' in JavaScript.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Describe the use of Docker in a DevOps environment.",
@@ -3693,7 +3895,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -3722,7 +3923,10 @@
       "modelAnswer": "Docker allows for packaging applications in containers, facilitating consistent deployment across different environments.",
       "en": "Describe the use of Docker in a DevOps environment.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "What is a 'race condition' in software development?",
@@ -3730,7 +3934,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "backend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack"
@@ -3760,7 +3963,10 @@
       "modelAnswer": "A race condition occurs when the system's behavior depends on the sequence or timing of other uncontrollable events.",
       "en": "What is a 'race condition' in software development?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "How would you optimize a website's load time?",
@@ -3768,7 +3974,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "frontend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "frontend",
       "fullstack"
@@ -3798,7 +4003,10 @@
       "modelAnswer": "Optimizations can include minimizing HTTP requests, using CDNs, compressing files, caching, etc.",
       "en": "How would you optimize a website's load time?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is the difference between SQL and NoSQL databases?",
@@ -3806,7 +4014,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "backend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack"
@@ -3836,7 +4043,10 @@
       "modelAnswer": "SQL databases are structured, use SQL, and are better for complex queries. NoSQL databases are flexible, scale well, and are good for hierarchical data storage.",
       "en": "What is the difference between SQL and NoSQL databases?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Can you explain the concept of 'state' in React?",
@@ -3844,7 +4054,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "frontend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "frontend",
       "fullstack"
@@ -3874,7 +4083,10 @@
       "modelAnswer": "State in React is an object that holds some information that may change over the lifecycle of the component.",
       "en": "Can you explain the concept of 'state' in React?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is continuous integration in DevOps?",
@@ -3882,7 +4094,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -3911,7 +4122,10 @@
       "modelAnswer": "Continuous integration is the practice of automating the integration of code changes into a software project.",
       "en": "What is continuous integration in DevOps?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "How do you implement a binary search algorithm?",
@@ -3919,7 +4133,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "fullstack",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "frontend",
       "backend",
@@ -3950,7 +4163,10 @@
       "modelAnswer": "Binary search involves repeatedly dividing in half the portion of the list that could contain the item, until you've narrowed the possibilities to just one.",
       "en": "How do you implement a binary search algorithm?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Describe the MVC architecture.",
@@ -3958,7 +4174,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "fullstack",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "frontend",
       "backend",
@@ -3989,7 +4204,10 @@
       "modelAnswer": "MVC architecture stands for Model-View-Controller, separating the application into three interconnected components.",
       "en": "Describe the MVC architecture.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What are microservices and how do they differ from monolithic architectures?",
@@ -3997,7 +4215,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "backend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack"
@@ -4027,7 +4244,10 @@
       "modelAnswer": "Microservices are a software development techniquea variant of the service-oriented architecture architectural style that structures an application as a collection of loosely coupled services. In a monolithic architecture, all components are interconnected and interdependent.",
       "en": "What are microservices and how do they differ from monolithic architectures?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Explain the difference between '==' and '===' in JavaScript.",
@@ -4035,7 +4255,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "frontend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "frontend",
       "fullstack"
@@ -4065,7 +4284,10 @@
       "modelAnswer": "'==' compares values after type conversion, while '===' compares both value and type.",
       "en": "Explain the difference between '==' and '===' in JavaScript.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is Kubernetes and how does it relate to containerization?",
@@ -4073,7 +4295,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -4102,7 +4323,10 @@
       "modelAnswer": "Kubernetes is an open-source platform for automating deployment, scaling, and operations of application containers across clusters of hosts.",
       "en": "What is Kubernetes and how does it relate to containerization?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Describe how you would implement a RESTful API in a back-end application.",
@@ -4110,7 +4334,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "backend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack"
@@ -4140,7 +4363,10 @@
       "modelAnswer": "A RESTful API is implemented by setting up HTTP routes (GET, POST, PUT, DELETE) and handling requests and responses in a stateless manner, often using JSON.",
       "en": "Describe how you would implement a RESTful API in a back-end application.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What are the benefits of server-side rendering vs client-side rendering?",
@@ -4148,7 +4374,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "frontend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "frontend",
       "fullstack"
@@ -4178,7 +4403,10 @@
       "modelAnswer": "Server-side rendering improves initial page load time and SEO, while client-side rendering is good for dynamic websites with less initial loading content.",
       "en": "What are the benefits of server-side rendering vs client-side rendering?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "How do NoSQL databases handle data scaling compared to traditional SQL databases?",
@@ -4186,7 +4414,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "backend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack"
@@ -4216,7 +4443,10 @@
       "modelAnswer": "NoSQL databases are generally more scalable and provide superior performance for large-scale applications due to their flexibility in handling unstructured data.",
       "en": "How do NoSQL databases handle data scaling compared to traditional SQL databases?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Explain the use of hooks in React.",
@@ -4224,7 +4454,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "frontend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "frontend",
       "fullstack"
@@ -4254,7 +4483,10 @@
       "modelAnswer": "Hooks are functions that let you 'hook into' React state and lifecycle features from function components.",
       "en": "Explain the use of hooks in React.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is Infrastructure as Code (IaC) and its significance in DevOps?",
@@ -4262,7 +4494,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -4291,7 +4522,10 @@
       "modelAnswer": "IaC is the management of infrastructure (networks, virtual machines, load balancers, etc.) in a descriptive model, using code, which increases development and deployment speed.",
       "en": "What is Infrastructure as Code (IaC) and its significance in DevOps?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Describe the process of memoization in programming.",
@@ -4299,7 +4533,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "fullstack",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "frontend",
       "backend",
@@ -4330,7 +4563,10 @@
       "modelAnswer": "Memoization is an optimization technique used to speed up programs by storing the results of expensive function calls.",
       "en": "Describe the process of memoization in programming.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What are the advantages of using a microservices architecture?",
@@ -4338,7 +4574,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "backend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack"
@@ -4368,7 +4603,10 @@
       "modelAnswer": "Advantages include easier scalability, flexibility in choosing technology, better fault isolation, and improved continuous deployment.",
       "en": "What are the advantages of using a microservices architecture?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Explain the SOLID principles in software engineering.",
@@ -4376,7 +4614,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "fullstack",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "frontend",
       "backend",
@@ -4407,7 +4644,10 @@
       "modelAnswer": "SOLID stands for Single Responsibility, Open-Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion principles, guiding towards more maintainable, understandable, and flexible software.",
       "en": "Explain the SOLID principles in software engineering.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "What is lazy loading in web development?",
@@ -4415,7 +4655,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "frontend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "frontend",
       "fullstack"
@@ -4445,7 +4684,10 @@
       "modelAnswer": "Lazy loading is a design pattern that delays loading of non-critical resources at page load time, reducing initial load time and page weight.",
       "en": "What is lazy loading in web development?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Discuss the role of a load balancer in a distributed system.",
@@ -4453,7 +4695,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "devops",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "devops",
       "backend"
@@ -4482,7 +4723,10 @@
       "modelAnswer": "A load balancer distributes network or application traffic across multiple servers to enhance responsiveness and availability of applications.",
       "en": "Discuss the role of a load balancer in a distributed system.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "How does indexing improve database query performance?",
@@ -4490,7 +4734,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "backend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack"
@@ -4520,7 +4763,10 @@
       "modelAnswer": "Indexing speeds up data retrieval operations by effectively creating a smaller, faster version of the database table.",
       "en": "How does indexing improve database query performance?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Explain event delegation in JavaScript.",
@@ -4528,7 +4774,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "frontend-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "frontend",
       "fullstack"
@@ -4558,7 +4803,10 @@
       "modelAnswer": "Event delegation refers to the practice of using a single event listener to manage all events of a specific type for child elements.",
       "en": "Explain event delegation in JavaScript.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Design a distributed key-value store.",
@@ -4566,7 +4814,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -4594,7 +4841,10 @@
       "modelAnswer": "Focus on data partitioning, replication for fault tolerance, consistency models, and handling node failures.",
       "en": "Design a distributed key-value store.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Implement a function to check if a binary tree is balanced.",
@@ -4602,7 +4852,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "algorithms",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -4630,7 +4879,10 @@
       "modelAnswer": "Use a recursive function to check the height of each subtree; return false if the difference is more than one.",
       "en": "Implement a function to check if a binary tree is balanced.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Design a URL shortening service like bit.ly.",
@@ -4638,7 +4890,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -4666,7 +4917,10 @@
       "modelAnswer": "Consider efficient hashing, collision resolution, database schema, scalability, and API rate limiting.",
       "en": "Design a URL shortening service like bit.ly.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Design a recommendation system for a large e-commerce platform.",
@@ -4674,7 +4928,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "machine-learning",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "ml-engineer"
     ],
@@ -4702,7 +4955,10 @@
       "modelAnswer": "Use collaborative filtering, content-based filtering, or hybrid methods; consider scalability and real-time processing.",
       "en": "Design a recommendation system for a large e-commerce platform.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Write an algorithm to find the median of a stream of numbers.",
@@ -4710,7 +4966,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "algorithms",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -4738,7 +4993,10 @@
       "modelAnswer": "Use two heaps (max heap for lower half, min heap for upper half) to maintain the median.",
       "en": "Write an algorithm to find the median of a stream of numbers.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Explain the Raft consensus algorithm.",
@@ -4746,7 +5004,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "distributed-systems",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -4774,7 +5031,10 @@
       "modelAnswer": "Discuss leader election, log replication, safety, and how Raft achieves consensus in a distributed system.",
       "en": "Explain the Raft consensus algorithm.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Optimize a global, high-traffic content delivery network.",
@@ -4782,7 +5042,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "networking",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -4810,7 +5069,10 @@
       "modelAnswer": "Use strategies like caching, edge locations, load balancing, and optimizing routing and data compression.",
       "en": "Optimize a global, high-traffic content delivery network.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Design a chat application that can scale to millions of users.",
@@ -4818,7 +5080,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -4846,7 +5107,10 @@
       "modelAnswer": "Consider websocket protocol for real-time communication, efficient message broadcasting, and scalable backend architecture.",
       "en": "Design a chat application that can scale to millions of users.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Implement a garbage collector for a programming language.",
@@ -4854,7 +5118,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "low-level",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -4882,7 +5145,10 @@
       "modelAnswer": "Understand memory management concepts like mark-and-sweep, reference counting, and generational collection.",
       "en": "Implement a garbage collector for a programming language.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Design a scalable notification system for a social network.",
@@ -4890,7 +5156,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -4918,7 +5183,10 @@
       "modelAnswer": "Focus on system architecture, push vs. pull models, handling peak loads, database optimization, and message queuing.",
       "en": "Design a scalable notification system for a social network.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Explain the workings of the TCP protocol for a low-latency network.",
@@ -4926,7 +5194,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "networking",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -4954,7 +5221,10 @@
       "modelAnswer": "Focus on the three-way handshake, congestion control (like TCP Fast Open, and CUBIC), and optimizing for reduced latency.",
       "en": "Explain the workings of the TCP protocol for a low-latency network.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Design and implement a concurrent hash map.",
@@ -4962,7 +5232,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "data-structures",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -4990,7 +5259,10 @@
       "modelAnswer": "Implement with fine-grained locking or lock-free techniques to ensure thread safety and high concurrency.",
       "en": "Design and implement a concurrent hash map.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Find the Kth largest element in a stream of numbers.",
@@ -4998,7 +5270,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "algorithms",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -5026,7 +5297,10 @@
       "modelAnswer": "Utilize a min-heap to keep track of the K largest elements, ensuring efficient insertion and extraction.",
       "en": "Find the Kth largest element in a stream of numbers.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Implement Google's PageRank algorithm.",
@@ -5034,7 +5308,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "algorithms",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -5062,7 +5335,10 @@
       "modelAnswer": "Use graph-based algorithms focusing on eigenvector calculation and iterative approaches.",
       "en": "Implement Google's PageRank algorithm.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Design an API rate limiter for a web service.",
@@ -5070,7 +5346,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -5098,7 +5373,10 @@
       "modelAnswer": "Use token bucket or leaky bucket algorithms, consider distributed storage for scalability.",
       "en": "Design an API rate limiter for a web service.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Optimize database queries for a high-traffic website.",
@@ -5106,7 +5384,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "database-systems",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack",
@@ -5138,7 +5415,10 @@
       "modelAnswer": "Focus on indexing, query optimization, using caching, database sharding, and efficient schema design.",
       "en": "Optimize database queries for a high-traffic website.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Create a secure and scalable authentication system for a web application.",
@@ -5146,7 +5426,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "security",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -5174,7 +5453,10 @@
       "modelAnswer": "Implement OAuth for third-party integrations, use JWT for stateless authentication, and ensure protection against common security vulnerabilities.",
       "en": "Create a secure and scalable authentication system for a web application.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Design a system for efficient storage and retrieval of large-scale time-series data.",
@@ -5182,7 +5464,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "database-systems",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack",
@@ -5214,7 +5495,10 @@
       "modelAnswer": "Optimize for write-heavy loads, use time-based partitioning, efficient indexing, and consider data compression techniques.",
       "en": "Design a system for efficient storage and retrieval of large-scale time-series data.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Explain how a blockchain works and how to implement one.",
@@ -5222,7 +5506,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "distributed-systems",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -5250,7 +5533,10 @@
       "modelAnswer": "Focus on cryptographic hashing, decentralized consensus algorithms (like Proof of Work), and the maintenance of a distributed ledger.",
       "en": "Explain how a blockchain works and how to implement one.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Design an efficient parking lot management system.",
@@ -5258,7 +5544,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -5286,7 +5571,10 @@
       "modelAnswer": "Use object-oriented design principles, focus on efficiently handling different vehicle sizes, and optimizing space usage.",
       "en": "Design an efficient parking lot management system.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Develop a machine learning model to predict stock prices.",
@@ -5294,7 +5582,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "machine-learning",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "ml-engineer"
     ],
@@ -5322,7 +5609,10 @@
       "modelAnswer": "Consider time series analysis, regression models, and reinforcement learning; pay attention to features and data preprocessing.",
       "en": "Develop a machine learning model to predict stock prices.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Write a custom memory allocator for a C++ application.",
@@ -5330,7 +5620,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "low-level",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -5358,7 +5647,10 @@
       "modelAnswer": "Discuss memory pool allocation, handling fragmentation, and optimizing for allocation/deallocation speed.",
       "en": "Write a custom memory allocator for a C++ application.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Design a real-time multiplayer online game architecture.",
@@ -5366,7 +5658,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -5394,7 +5685,10 @@
       "modelAnswer": "Focus on handling high network traffic, efficient state synchronization, latency reduction, and scalability.",
       "en": "Design a real-time multiplayer online game architecture.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Implement a distributed file system.",
@@ -5402,7 +5696,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "distributed-systems",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -5430,7 +5723,10 @@
       "modelAnswer": "Address challenges in data distribution, replication, fault tolerance, consistency, and performance.",
       "en": "Implement a distributed file system.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Optimize a search algorithm for a large dataset in a distributed environment.",
@@ -5438,7 +5734,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "algorithms",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -5466,7 +5761,10 @@
       "modelAnswer": "Implement distributed searching algorithms like MapReduce for scalability and efficiency.",
       "en": "Optimize a search algorithm for a large dataset in a distributed environment.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Design a data pipeline for processing big data in real-time.",
@@ -5474,7 +5772,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "data-engineering",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "data-engineer"
     ],
@@ -5502,7 +5799,10 @@
       "modelAnswer": "Utilize stream processing frameworks (like Apache Kafka, Spark Streaming), ensure fault tolerance, and manage backpressure.",
       "en": "Design a data pipeline for processing big data in real-time.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Build a high-frequency trading system and discuss its components.",
@@ -5510,7 +5810,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -5538,7 +5837,10 @@
       "modelAnswer": "Focus on low latency, high throughput, reliable data feeds, order execution systems, and concurrent algorithms.",
       "en": "Build a high-frequency trading system and discuss its components.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Develop a deep learning model to analyze and interpret medical images.",
@@ -5546,7 +5848,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "machine-learning",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "ml-engineer"
     ],
@@ -5574,7 +5875,10 @@
       "modelAnswer": "Use convolutional neural networks, pay attention to dataset quality and preprocessing, and handle class imbalances.",
       "en": "Develop a deep learning model to analyze and interpret medical images.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Create an AI that can play a complex board game at a competitive level.",
@@ -5582,7 +5886,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "ai-fundamentals",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "ml-engineer"
     ],
@@ -5610,7 +5913,10 @@
       "modelAnswer": "Implement advanced AI techniques like Monte Carlo Tree Search, deep learning, and reinforcement learning.",
       "en": "Create an AI that can play a complex board game at a competitive level.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Design a fraud detection system for online transactions.",
@@ -5618,7 +5924,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "security",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -5646,7 +5951,10 @@
       "modelAnswer": "Use machine learning for anomaly detection, implement rule-based systems for known fraud patterns, ensure real-time processing.",
       "en": "Design a fraud detection system for online transactions.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Implement a distributed graph processing framework.",
@@ -5654,7 +5962,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "distributed-systems",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -5682,7 +5989,10 @@
       "modelAnswer": "Discuss vertex-centric computation, message passing between nodes, and optimizations for large-scale processing.",
       "en": "Implement a distributed graph processing framework.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Design a global video streaming service like Netflix.",
@@ -5690,7 +6000,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -5718,7 +6027,10 @@
       "modelAnswer": "Focus on CDN usage, adaptive bitrate streaming, content caching strategies, and handling peak traffic loads.",
       "en": "Design a global video streaming service like Netflix.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Create a system to efficiently match job seekers with job postings.",
@@ -5726,7 +6038,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "algorithms",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -5754,7 +6065,10 @@
       "modelAnswer": "Use NLP for parsing resumes, implement ranking algorithms, and optimize for search and matching efficiency.",
       "en": "Create a system to efficiently match job seekers with job postings.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Design and implement a large-scale distributed cache system.",
@@ -5762,7 +6076,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "distributed-systems",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -5790,7 +6103,10 @@
       "modelAnswer": "Consider consistency, data partitioning, eviction policies, and fault tolerance in distributed caching.",
       "en": "Design and implement a large-scale distributed cache system.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Optimize network protocols for a satellite communication system.",
@@ -5798,7 +6114,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "networking",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -5826,7 +6141,10 @@
       "modelAnswer": "Address latency, data loss, and bandwidth issues; optimize for long-distance and high-latency networks.",
       "en": "Optimize network protocols for a satellite communication system.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Develop an autonomous vehicle's path planning algorithm.",
@@ -5834,7 +6152,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "algorithms",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -5862,7 +6179,10 @@
       "modelAnswer": "Implement algorithms considering real-time obstacle avoidance, dynamic path adjustments, and efficient routing.",
       "en": "Develop an autonomous vehicle's path planning algorithm.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Design a scalable and reliable messaging system for a large corporation.",
@@ -5870,7 +6190,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -5898,7 +6217,10 @@
       "modelAnswer": "Utilize message queues (like Kafka, RabbitMQ), ensure fault tolerance, and implement load balancing.",
       "en": "Design a scalable and reliable messaging system for a large corporation.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Implement a natural language processing algorithm to understand and answer user queries.",
@@ -5906,7 +6228,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "machine-learning",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "ml-engineer"
     ],
@@ -5934,7 +6255,10 @@
       "modelAnswer": "Use NLP techniques like tokenization, parsing, and deep learning models for understanding and generating responses.",
       "en": "Implement a natural language processing algorithm to understand and answer user queries.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Create an efficient algorithm for real-time anomaly detection in network traffic.",
@@ -5942,7 +6266,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "algorithms",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -5970,7 +6293,10 @@
       "modelAnswer": "Implement statistical models or machine learning algorithms to detect unusual patterns indicative of anomalies.",
       "en": "Create an efficient algorithm for real-time anomaly detection in network traffic.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Design a system to manage and process Internet of Things (IoT) data.",
@@ -5978,7 +6304,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -6006,7 +6331,10 @@
       "modelAnswer": "Focus on handling large-scale data influx, real-time processing, data storage, and analytics.",
       "en": "Design a system to manage and process Internet of Things (IoT) data.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Build a compiler for a new programming language.",
@@ -6014,7 +6342,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "low-level",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -6042,7 +6369,10 @@
       "modelAnswer": "Discuss lexical analysis, parsing, syntax tree generation, semantic analysis, and code generation.",
       "en": "Build a compiler for a new programming language.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Implement a robust text editor with features like auto-complete and syntax highlighting.",
@@ -6050,7 +6380,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "algorithms",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -6078,7 +6407,10 @@
       "modelAnswer": "Consider efficient data structures for text storage (like gap buffers), and algorithms for syntax parsing.",
       "en": "Implement a robust text editor with features like auto-complete and syntax highlighting.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Design a scalable infrastructure for an online advertising platform.",
@@ -6086,7 +6418,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -6114,7 +6445,10 @@
       "modelAnswer": "Focus on handling high-volume traffic, data analytics, ad targeting algorithms, and ensuring low-latency responses.",
       "en": "Design a scalable infrastructure for an online advertising platform.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Develop a machine learning algorithm to detect fake news on social media.",
@@ -6122,7 +6456,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "machine-learning",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "ml-engineer"
     ],
@@ -6150,7 +6483,10 @@
       "modelAnswer": "Use NLP for text analysis, implement classification algorithms, and consider the challenge of unstructured data.",
       "en": "Develop a machine learning algorithm to detect fake news on social media.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Optimize an SQL database for a high-volume financial transaction system.",
@@ -6158,7 +6494,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "database-systems",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "backend",
       "fullstack",
@@ -6190,7 +6525,10 @@
       "modelAnswer": "Focus on transaction isolation levels, indexing strategies, query optimization, and database sharding.",
       "en": "Optimize an SQL database for a high-volume financial transaction system.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Design a cloud-based virtual desktop infrastructure.",
@@ -6198,7 +6536,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -6226,7 +6563,10 @@
       "modelAnswer": "Address virtualization technologies, resource allocation, security, and remote access protocols.",
       "en": "Design a cloud-based virtual desktop infrastructure.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Create a real-time sports analytics system using sensor data.",
@@ -6234,7 +6574,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "data-engineering",
-    "competencyDomain": "TD2",
     "applicableRoles": [
       "data-engineer"
     ],
@@ -6262,7 +6601,10 @@
       "modelAnswer": "Utilize streaming data processing, machine learning for pattern recognition, and efficient data storage solutions.",
       "en": "Create a real-time sports analytics system using sensor data.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD2"
+    ]
   },
   {
     "content": "Implement a quantum algorithm for solving a well-known computational problem.",
@@ -6270,7 +6612,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "algorithms",
-    "competencyDomain": "TD1",
     "applicableRoles": [
       "all"
     ],
@@ -6298,7 +6639,10 @@
       "modelAnswer": "Discuss quantum computing principles, qubit manipulation, and specific algorithms like Grover's or Shor's algorithm.",
       "en": "Implement a quantum algorithm for solving a well-known computational problem.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD1"
+    ]
   },
   {
     "content": "Design a secure mobile payment system for developing countries.",
@@ -6306,7 +6650,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "security",
-    "competencyDomain": "TD4",
     "applicableRoles": [
       "all"
     ],
@@ -6334,7 +6677,10 @@
       "modelAnswer": "Focus on security protocols, offline capabilities, user authentication, and low-resource optimizations.",
       "en": "Design a secure mobile payment system for developing countries.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD4"
+    ]
   },
   {
     "content": "Build a scalable image processing pipeline for a photo-sharing app.",
@@ -6342,7 +6688,6 @@
     "difficulty": 5,
     "contextPackId": "Western",
     "subcategory": "system-design",
-    "competencyDomain": "TD3",
     "applicableRoles": [
       "all"
     ],
@@ -6370,7 +6715,10 @@
       "modelAnswer": "Implement distributed processing, efficient storage, and consider ML techniques for feature extraction.",
       "en": "Build a scalable image processing pipeline for a photo-sharing app.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "TD3"
+    ]
   },
   {
     "content": "Describe a time you failed and what you learned from it.",
@@ -6378,7 +6726,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "adaptability",
-    "competencyDomain": "D6",
     "applicableRoles": [
       "all"
     ],
@@ -6406,7 +6753,10 @@
       "modelAnswer": "I'm always eager to learn and embrace change as a way to improve. For example, I once had to switch to a new tech stack and picked it up quickly",
       "en": "Describe a time you failed and what you learned from it.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D6"
+    ]
   },
   {
     "content": "What's the most significant change you've had to adapt to at work?",
@@ -6414,7 +6764,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "adaptability",
-    "competencyDomain": "D6",
     "applicableRoles": [
       "all"
     ],
@@ -6442,7 +6791,10 @@
       "modelAnswer": "I'm always eager to learn and embrace change as a way to improve. For example, I once had to switch to a new tech stack and picked it up quickly",
       "en": "What's the most significant change you've had to adapt to at work?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D6"
+    ]
   },
   {
     "content": "How do you react to sudden changes in priorities?",
@@ -6450,7 +6802,6 @@
     "difficulty": 4,
     "contextPackId": "Western",
     "subcategory": "adaptability",
-    "competencyDomain": "D6",
     "applicableRoles": [
       "all"
     ],
@@ -6480,7 +6831,10 @@
       "modelAnswer": "I'm always eager to learn and embrace change as a way to improve. For example, I once had to switch to a new tech stack and picked it up quickly",
       "en": "How do you react to sudden changes in priorities?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D6"
+    ]
   },
   {
     "content": "How do you stay updated with industry trends?",
@@ -6488,7 +6842,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "adaptability",
-    "competencyDomain": "D6",
     "applicableRoles": [
       "all"
     ],
@@ -6516,7 +6869,10 @@
       "modelAnswer": "I'm always eager to learn and embrace change as a way to improve. For example, I once had to switch to a new tech stack and picked it up quickly",
       "en": "How do you stay updated with industry trends?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D6"
+    ]
   },
   {
     "content": "Tell me about a time you had to learn something completely new quickly.",
@@ -6524,7 +6880,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "adaptability",
-    "competencyDomain": "D6",
     "applicableRoles": [
       "all"
     ],
@@ -6552,7 +6907,10 @@
       "modelAnswer": "I'm always eager to learn and embrace change as a way to improve. For example, I once had to switch to a new tech stack and picked it up quickly",
       "en": "Tell me about a time you had to learn something completely new quickly.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D6"
+    ]
   },
   {
     "content": "What are your long-term career aspirations?",
@@ -6560,7 +6918,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "career-goals",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -6588,7 +6945,10 @@
       "modelAnswer": "My long-term goal is to grow into a senior role where I can contribute more strategically and mentor others. This role brings me closer to that",
       "en": "What are your long-term career aspirations?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "How does this role fit into your career path?",
@@ -6596,7 +6956,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "career-goals",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -6624,7 +6983,10 @@
       "modelAnswer": "My long-term goal is to grow into a senior role where I can contribute more strategically and mentor others. This role brings me closer to that",
       "en": "How does this role fit into your career path?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "Where do you see yourself in 5 years?",
@@ -6632,7 +6994,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "career-goals",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -6660,7 +7021,10 @@
       "modelAnswer": "My long-term goal is to grow into a senior role where I can contribute more strategically and mentor others. This role brings me closer to that",
       "en": "Where do you see yourself in 5 years?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "What kind of growth opportunities are you looking for?",
@@ -6668,7 +7032,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "career-goals",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -6696,7 +7059,10 @@
       "modelAnswer": "My long-term goal is to grow into a senior role where I can contribute more strategically and mentor others. This role brings me closer to that",
       "en": "What kind of growth opportunities are you looking for?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "What skills do you hope to develop in your next role?",
@@ -6704,7 +7070,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "career-goals",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -6732,7 +7097,10 @@
       "modelAnswer": "My long-term goal is to grow into a senior role where I can contribute more strategically and mentor others. This role brings me closer to that",
       "en": "What skills do you hope to develop in your next role?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "What would you do if you disagreed with your manager?",
@@ -6740,7 +7108,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "conflict-resolution",
-    "competencyDomain": "D3",
     "applicableRoles": [
       "all"
     ],
@@ -6768,7 +7135,10 @@
       "modelAnswer": "When faced with conflict, I approach it calmly and try to understand all perspectives before finding a solution together",
       "en": "What would you do if you disagreed with your manager?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D3"
+    ]
   },
   {
     "content": "Tell me about a conflict you had with a coworker and how you resolved it.",
@@ -6776,7 +7146,6 @@
     "difficulty": 4,
     "contextPackId": "Western",
     "subcategory": "conflict-resolution",
-    "competencyDomain": "D3",
     "applicableRoles": [
       "all"
     ],
@@ -6806,7 +7175,10 @@
       "modelAnswer": "When faced with conflict, I approach it calmly and try to understand all perspectives before finding a solution together",
       "en": "Tell me about a conflict you had with a coworker and how you resolved it.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D3"
+    ]
   },
   {
     "content": "How do you deal with feedback that you disagree with?",
@@ -6814,7 +7186,6 @@
     "difficulty": 4,
     "contextPackId": "Western",
     "subcategory": "conflict-resolution",
-    "competencyDomain": "D3",
     "applicableRoles": [
       "all"
     ],
@@ -6844,7 +7215,10 @@
       "modelAnswer": "When faced with conflict, I approach it calmly and try to understand all perspectives before finding a solution together",
       "en": "How do you deal with feedback that you disagree with?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D3"
+    ]
   },
   {
     "content": "Describe a time you handled a difficult situation professionally.",
@@ -6852,7 +7226,6 @@
     "difficulty": 4,
     "contextPackId": "Western",
     "subcategory": "conflict-resolution",
-    "competencyDomain": "D3",
     "applicableRoles": [
       "all"
     ],
@@ -6882,7 +7255,10 @@
       "modelAnswer": "When faced with conflict, I approach it calmly and try to understand all perspectives before finding a solution together",
       "en": "Describe a time you handled a difficult situation professionally.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D3"
+    ]
   },
   {
     "content": "How do you respond when a teammate isn't pulling their weight?",
@@ -6890,7 +7266,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "conflict-resolution",
-    "competencyDomain": "D3",
     "applicableRoles": [
       "all"
     ],
@@ -6918,7 +7293,10 @@
       "modelAnswer": "When faced with conflict, I approach it calmly and try to understand all perspectives before finding a solution together",
       "en": "How do you respond when a teammate isn't pulling their weight?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D3"
+    ]
   },
   {
     "content": "Describe a time you felt out of place in a workplace culture.",
@@ -6926,7 +7304,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "culture-fit",
-    "competencyDomain": "D5",
     "applicableRoles": [
       "all"
     ],
@@ -6954,7 +7331,10 @@
       "modelAnswer": "I thrive in collaborative, transparent environments where innovation and respect are valued",
       "en": "Describe a time you felt out of place in a workplace culture.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D5"
+    ]
   },
   {
     "content": "How do you align with our company values?",
@@ -6962,7 +7342,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "culture-fit",
-    "competencyDomain": "D5",
     "applicableRoles": [
       "all"
     ],
@@ -6990,7 +7369,10 @@
       "modelAnswer": "I thrive in collaborative, transparent environments where innovation and respect are valued",
       "en": "How do you align with our company values?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D5"
+    ]
   },
   {
     "content": "How do you contribute to a positive team environment?",
@@ -6998,7 +7380,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "culture-fit",
-    "competencyDomain": "D5",
     "applicableRoles": [
       "all"
     ],
@@ -7026,7 +7407,10 @@
       "modelAnswer": "I thrive in collaborative, transparent environments where innovation and respect are valued",
       "en": "How do you contribute to a positive team environment?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D5"
+    ]
   },
   {
     "content": "What type of company culture do you thrive in?",
@@ -7034,7 +7418,6 @@
     "difficulty": 4,
     "contextPackId": "Western",
     "subcategory": "culture-fit",
-    "competencyDomain": "D5",
     "applicableRoles": [
       "all"
     ],
@@ -7064,7 +7447,10 @@
       "modelAnswer": "I thrive in collaborative, transparent environments where innovation and respect are valued",
       "en": "What type of company culture do you thrive in?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D5"
+    ]
   },
   {
     "content": "What are your expectations from leadership in a company?",
@@ -7072,7 +7458,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "culture-fit",
-    "competencyDomain": "D5",
     "applicableRoles": [
       "all"
     ],
@@ -7100,7 +7485,10 @@
       "modelAnswer": "I thrive in collaborative, transparent environments where innovation and respect are valued",
       "en": "What are your expectations from leadership in a company?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D5"
+    ]
   },
   {
     "content": "Tell me about a time you mentored someone.",
@@ -7108,7 +7496,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "leadership",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -7136,7 +7523,10 @@
       "modelAnswer": "I lead by example and encourage open communication and accountability. One time, I led a team through X and we achieved Y",
       "en": "Tell me about a time you mentored someone.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "What makes a good leader in your opinion?",
@@ -7144,7 +7534,6 @@
     "difficulty": 4,
     "contextPackId": "Western",
     "subcategory": "leadership",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -7174,7 +7563,10 @@
       "modelAnswer": "I lead by example and encourage open communication and accountability. One time, I led a team through X and we achieved Y",
       "en": "What makes a good leader in your opinion?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "How do you delegate tasks effectively?",
@@ -7182,7 +7574,6 @@
     "difficulty": 4,
     "contextPackId": "Western",
     "subcategory": "leadership",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -7212,7 +7603,10 @@
       "modelAnswer": "I lead by example and encourage open communication and accountability. One time, I led a team through X and we achieved Y",
       "en": "How do you delegate tasks effectively?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "How do you motivate others in a leadership role?",
@@ -7220,7 +7614,6 @@
     "difficulty": 4,
     "contextPackId": "Western",
     "subcategory": "leadership",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -7250,7 +7643,10 @@
       "modelAnswer": "I lead by example and encourage open communication and accountability. One time, I led a team through X and we achieved Y",
       "en": "How do you motivate others in a leadership role?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "Describe a time you led a project or team.",
@@ -7258,7 +7654,6 @@
     "difficulty": 4,
     "contextPackId": "Western",
     "subcategory": "leadership",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -7288,7 +7683,10 @@
       "modelAnswer": "I lead by example and encourage open communication and accountability. One time, I led a team through X and we achieved Y",
       "en": "Describe a time you led a project or team.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "Tell me about a time you were highly motivated to achieve a goal.",
@@ -7296,7 +7694,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "motivation",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -7324,7 +7721,10 @@
       "modelAnswer": "I'm motivated by challenges and the opportunity to grow both personally and professionally",
       "en": "Tell me about a time you were highly motivated to achieve a goal.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "Why do you want to work at our company?",
@@ -7332,7 +7732,6 @@
     "difficulty": 4,
     "contextPackId": "Western",
     "subcategory": "motivation",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -7362,7 +7761,10 @@
       "modelAnswer": "I'm motivated by challenges and the opportunity to grow both personally and professionally",
       "en": "Why do you want to work at our company?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "What motivates you to come to work every day?",
@@ -7370,7 +7772,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "motivation",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -7398,7 +7799,10 @@
       "modelAnswer": "I'm motivated by challenges and the opportunity to grow both personally and professionally",
       "en": "What motivates you to come to work every day?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "What drives your passion for this field?",
@@ -7406,7 +7810,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "motivation",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -7434,7 +7837,10 @@
       "modelAnswer": "I'm motivated by challenges and the opportunity to grow both personally and professionally",
       "en": "What drives your passion for this field?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "How do you stay motivated during repetitive tasks?",
@@ -7442,7 +7848,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "motivation",
-    "competencyDomain": "D4",
     "applicableRoles": [
       "all"
     ],
@@ -7470,7 +7875,10 @@
       "modelAnswer": "I'm motivated by challenges and the opportunity to grow both personally and professionally",
       "en": "How do you stay motivated during repetitive tasks?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D4"
+    ]
   },
   {
     "content": "How do you build trust with new teammates?",
@@ -7478,7 +7886,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "teamwork",
-    "competencyDomain": "D3",
     "applicableRoles": [
       "all"
     ],
@@ -7506,7 +7913,10 @@
       "modelAnswer": "I believe communication and mutual respect are key to successful collaboration. In one project, we achieved X because of great teamwork",
       "en": "How do you build trust with new teammates?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D3"
+    ]
   },
   {
     "content": "How do you handle disagreements within a team?",
@@ -7514,7 +7924,6 @@
     "difficulty": 2,
     "contextPackId": "Western",
     "subcategory": "teamwork",
-    "competencyDomain": "D3",
     "applicableRoles": [
       "all"
     ],
@@ -7542,7 +7951,10 @@
       "modelAnswer": "I believe communication and mutual respect are key to successful collaboration. In one project, we achieved X because of great teamwork",
       "en": "How do you handle disagreements within a team?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D3"
+    ]
   },
   {
     "content": "Tell me about a time you worked well within a team.",
@@ -7550,7 +7962,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "teamwork",
-    "competencyDomain": "D3",
     "applicableRoles": [
       "all"
     ],
@@ -7578,7 +7989,10 @@
       "modelAnswer": "I believe communication and mutual respect are key to successful collaboration. In one project, we achieved X because of great teamwork",
       "en": "Tell me about a time you worked well within a team.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D3"
+    ]
   },
   {
     "content": "What role do you usually play in group settings?",
@@ -7586,7 +8000,6 @@
     "difficulty": 4,
     "contextPackId": "Western",
     "subcategory": "teamwork",
-    "competencyDomain": "D3",
     "applicableRoles": [
       "all"
     ],
@@ -7616,7 +8029,10 @@
       "modelAnswer": "I believe communication and mutual respect are key to successful collaboration. In one project, we achieved X because of great teamwork",
       "en": "What role do you usually play in group settings?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D3"
+    ]
   },
   {
     "content": "Describe a project where teamwork was essential to success.",
@@ -7624,7 +8040,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "teamwork",
-    "competencyDomain": "D3",
     "applicableRoles": [
       "all"
     ],
@@ -7652,7 +8067,10 @@
       "modelAnswer": "I believe communication and mutual respect are key to successful collaboration. In one project, we achieved X because of great teamwork",
       "en": "Describe a project where teamwork was essential to success.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D3"
+    ]
   },
   {
     "content": "How do you organize and prioritize your daily tasks?",
@@ -7660,7 +8078,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "work-style",
-    "competencyDomain": "D5",
     "applicableRoles": [
       "all"
     ],
@@ -7688,7 +8105,10 @@
       "modelAnswer": "I follow a structured workflow and use tools like Jira/Trello/Notion to manage my tasks efficiently",
       "en": "How do you organize and prioritize your daily tasks?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D5"
+    ]
   },
   {
     "content": "What tools or methods help you stay organized?",
@@ -7696,7 +8116,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "work-style",
-    "competencyDomain": "D5",
     "applicableRoles": [
       "all"
     ],
@@ -7724,7 +8143,10 @@
       "modelAnswer": "I follow a structured workflow and use tools like Jira/Trello/Notion to manage my tasks efficiently",
       "en": "What tools or methods help you stay organized?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D5"
+    ]
   },
   {
     "content": "Do you prefer working independently or in teams? Why?",
@@ -7732,7 +8154,6 @@
     "difficulty": 4,
     "contextPackId": "Western",
     "subcategory": "work-style",
-    "competencyDomain": "D5",
     "applicableRoles": [
       "all"
     ],
@@ -7762,7 +8183,10 @@
       "modelAnswer": "I follow a structured workflow and use tools like Jira/Trello/Notion to manage my tasks efficiently",
       "en": "Do you prefer working independently or in teams? Why?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D5"
+    ]
   },
   {
     "content": "Describe your ideal workday.",
@@ -7770,7 +8194,6 @@
     "difficulty": 3,
     "contextPackId": "Western",
     "subcategory": "work-style",
-    "competencyDomain": "D5",
     "applicableRoles": [
       "all"
     ],
@@ -7798,7 +8221,10 @@
       "modelAnswer": "I follow a structured workflow and use tools like Jira/Trello/Notion to manage my tasks efficiently",
       "en": "Describe your ideal workday.",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D5"
+    ]
   },
   {
     "content": "How do you ensure productivity when working remotely?",
@@ -7806,7 +8232,6 @@
     "difficulty": 4,
     "contextPackId": "Western",
     "subcategory": "work-style",
-    "competencyDomain": "D5",
     "applicableRoles": [
       "all"
     ],
@@ -7836,6 +8261,9 @@
       "modelAnswer": "I follow a structured workflow and use tools like Jira/Trello/Notion to manage my tasks efficiently",
       "en": "How do you ensure productivity when working remotely?",
       "vi": ""
-    }
+    },
+    "competencyDomains": [
+      "D5"
+    ]
   }
 ]

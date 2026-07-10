@@ -6,7 +6,7 @@ type QuestionBankRow = {
   id: string;
   content: string;
   difficulty: number;
-  competencyDomain: string;
+  competencyDomains: string[];
   estimatedTimeMin: number | null;
   translations: Prisma.JsonValue | null;
 };
@@ -15,7 +15,7 @@ export type FallbackQuestion = {
   questionBankId: string;
   text: string;
   questionCategory: string;
-  competencyDomain: string;
+  competencyDomains: string[];
   estimatedTimeMin: number;
 };
 
@@ -60,10 +60,10 @@ export class QuestionBankService {
     return selected.map((question) => ({
       questionBankId: question.id,
       text: this.resolveText(question, language),
-      questionCategory: question.competencyDomain.startsWith('TD')
+      questionCategory: question.competencyDomains[0].startsWith('TD')
         ? 'technical'
         : 'behavioral',
-      competencyDomain: question.competencyDomain,
+      competencyDomains: question.competencyDomains,
       estimatedTimeMin: question.estimatedTimeMin ?? 5,
     }));
   }
@@ -111,10 +111,10 @@ export class QuestionBankService {
     return allSelected.map((question) => ({
       questionBankId: question.id,
       text: this.resolveText(question, language),
-      questionCategory: question.competencyDomain.startsWith('TD')
+      questionCategory: question.competencyDomains[0].startsWith('TD')
         ? 'technical'
         : 'behavioral',
-      competencyDomain: question.competencyDomain,
+      competencyDomains: question.competencyDomains,
       estimatedTimeMin: question.estimatedTimeMin ?? 5,
     }));
   }

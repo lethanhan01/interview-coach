@@ -75,7 +75,9 @@ export abstract class BasePipelineService implements InterviewPipeline {
     return validated.questions.slice(0, input.totalQuestions).map((q) => ({
       text: q.text,
       category: q.category,
-      competencyDomain: q.competency_domain,
+      competencyDomains: (q.competency_domains ?? [q.competency_domain]).filter(
+        (domain): domain is string => Boolean(domain),
+      ),
       difficulty: q.difficulty,
     }));
   }
@@ -88,18 +90,23 @@ export abstract class BasePipelineService implements InterviewPipeline {
       withStrategy,
       input.contextPackConfig,
       input.sessionType,
-      { competencyDomain: input.competencyDomain },
+      { competencyDomains: input.competencyDomains },
     );
-    const withQuestionMetadata = input.competencyDomain
-      ? `${withPack}\n\nTarget question metadata: category=${input.questionCategory ?? 'unknown'}, competency_domain=${input.competencyDomain}. applied_dimensions must contain only this exact competency_domain when it is listed in the allowed dimensions. Do not score dimensions outside this question domain.`
-      : withPack;
+    if (input.competencyDomains.length === 0) {
+      throw new InterviewAIException(
+        ErrorCode.SCHEMA_VALIDATION_ERROR,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        'Question metadata must include at least one competency domain',
+      );
+    }
+    const withQuestionMetadata = `${withPack}\n\nTarget question metadata: category=${input.questionCategory ?? 'unknown'}, competency_domains=${input.competencyDomains.join(', ')}. applied_dimensions must contain only IDs from this list when they are listed in the allowed dimensions. Do not score dimensions outside this question domain.`;
     const messages = this.promptBuilder.injectDynamicContext({
       systemMessage: withQuestionMetadata,
       jobDescription: '',
       sessionType: input.sessionType,
       question: input.questionText,
       questionCategory: input.questionCategory,
-      competencyDomain: input.competencyDomain,
+      competencyDomains: input.competencyDomains,
       answer: input.answerText,
     });
     const raw = await this.openai.chatCompletion({
@@ -144,10 +151,17 @@ export abstract class BasePipelineService implements InterviewPipeline {
               ...input.contextPackConfig.behavioralDimensions,
               ...input.contextPackConfig.technicalDimensions,
             ];
-    const targetDim = input.competencyDomain
-      ? sessionAllowedDims.find((d) => d.id === input.competencyDomain)
-      : undefined;
-    const allowedDims = targetDim ? [targetDim] : sessionAllowedDims;
+    const targetDims = input.competencyDomains
+      .map((domain) => sessionAllowedDims.find((d) => d.id === domain))
+      .filter((d): d is (typeof sessionAllowedDims)[number] => Boolean(d));
+    if (targetDims.length === 0) {
+      throw new InterviewAIException(
+        ErrorCode.SCHEMA_VALIDATION_ERROR,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        'Question metadata contains no valid competency domains for this session',
+      );
+    }
+    const allowedDims = targetDims;
     const selected = resolveAppliedDimensions(
       validated.applied_dimensions,
       allowedDims,

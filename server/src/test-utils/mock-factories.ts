@@ -6,7 +6,7 @@ export const createMockQuestionBank = (
     difficulty: number;
     contextPackId: string;
     subcategory: string;
-    competencyDomain: string;
+    competencyDomains: string[];
     applicableRoles: string[];
     applicableLevels: string[];
     tags: string[];
@@ -24,7 +24,7 @@ export const createMockQuestionBank = (
   difficulty: 2,
   contextPackId: 'VN',
   subcategory: 'self-introduction',
-  competencyDomain: 'D4',
+  competencyDomains: ['D4'],
   applicableRoles: ['all'],
   applicableLevels: ['junior', 'mid'],
   tags: ['hr', 'self-introduction'],

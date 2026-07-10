@@ -23,7 +23,7 @@ export interface QuestionGenInput {
 export interface GeneratedQuestion {
   text: string;
   category: string;
-  competencyDomain: string;
+  competencyDomains: string[];
   difficulty: number;
 }
 
@@ -32,7 +32,7 @@ export interface FeedbackInput {
   questionId?: string;
   questionText: string;
   questionCategory?: 'behavioral' | 'technical';
-  competencyDomain?: string;
+  competencyDomains: string[];
   answerText: string;
   contextPackConfig: ContextPackConfig;
   language?: OutputLanguage;

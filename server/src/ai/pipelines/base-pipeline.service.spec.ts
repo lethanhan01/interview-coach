@@ -106,7 +106,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       expect(result[0]).toEqual({
         text: 'Giới thiệu bản thân?',
         category: 'hr',
-        competencyDomain: 'communication',
+        competencyDomains: ['communication'],
         difficulty: 1,
       });
       expect(mockZodValidator.validate).toHaveBeenCalledTimes(1);
@@ -235,6 +235,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       sessionType: 'hr' as const,
       contextPackConfig: mockContextPack,
       questionText: 'Giới thiệu bản thân?',
+      competencyDomains: ['D1', 'D2'],
       answerText: 'Tôi là developer với 2 năm kinh nghiệm.',
     };
 
@@ -283,7 +284,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       expect(result.overallScore).toBe(90);
     });
 
-    it('lọc applied_dimensions theo competencyDomain của câu hỏi khi có metadata', async () => {
+    it('lọc applied_dimensions theo competencyDomains của câu hỏi khi có metadata', async () => {
       const rawFeedback = {
         model_answer: 'x',
         key_takeaway: 'y',
@@ -299,7 +300,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       const result = await service.evaluateAnswer({
         ...feedbackInput,
         questionCategory: 'behavioral',
-        competencyDomain: 'D1',
+        competencyDomains: ['D1'],
       });
 
       expect(result.appliedDimensions).toEqual([
@@ -309,9 +310,36 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
         expect.objectContaining({
           questionCategory: 'behavioral',
-          competencyDomain: 'D1',
+          competencyDomains: ['D1'],
         }),
       );
+    });
+
+    it('lọc applied_dimensions theo competencyDomains và lưu nhiều dimension hợp lệ', async () => {
+      const rawFeedback = {
+        model_answer: 'x',
+        key_takeaway: 'y',
+        applied_dimensions: [
+          { id: 'D1', score: 90 },
+          { id: 'D2', score: 70 },
+          { id: 'TD1', score: 10 },
+        ],
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      const result = await service.evaluateAnswer({
+        ...feedbackInput,
+        questionCategory: 'behavioral',
+        competencyDomains: ['D1', 'D2'],
+      });
+
+      expect(result.appliedDimensions).toEqual([
+        { id: 'D1', name: 'Communication', score: 90, weight: 0.5 },
+        { id: 'D2', name: 'Teamwork', score: 70, weight: 0.5 },
+      ]);
+      expect(result.overallScore).toBe(80);
     });
 
     it('throw SCHEMA_VALIDATION_ERROR khi không còn dimension hợp lệ', async () => {
@@ -383,7 +411,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         expect.stringContaining('Output language: Vietnamese.'),
         mockContextPack,
         'hr',
-        { competencyDomain: undefined },
+        { competencyDomains: ['D1', 'D2'] },
       );
       expect(
         mockPromptBuilder.applyContextPackForEvaluation,
@@ -391,7 +419,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         expect.stringContaining('Interview strategy:'),
         mockContextPack,
         'hr',
-        { competencyDomain: undefined },
+        { competencyDomains: ['D1', 'D2'] },
       );
       expect(mockPromptBuilder.applyContextPack).not.toHaveBeenCalled();
       expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
@@ -422,11 +450,11 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         expect.stringContaining('Output language: English.'),
         mockContextPack,
         'hr',
-        { competencyDomain: undefined },
+        { competencyDomains: ['D1', 'D2'] },
       );
     });
 
-    it('system prompt chứa rule chỉ trả đúng competencyDomain khi có metadata', async () => {
+    it('system prompt giới hạn applied_dimensions trong competency metadata của câu hỏi', async () => {
       const rawFeedback = {
         applied_dimensions: [{ id: 'D1', score: 75 }],
         model_answer: 'A.',
@@ -439,25 +467,25 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       await service.evaluateAnswer({
         ...feedbackInput,
         questionCategory: 'behavioral',
-        competencyDomain: 'D1',
+        competencyDomains: ['D1'],
       });
 
       expect(mockPromptBuilder.applyContextPackForEvaluation).toHaveBeenCalledWith(
         expect.any(String),
         mockContextPack,
         'hr',
-        { competencyDomain: 'D1' },
+        { competencyDomains: ['D1'] },
       );
       expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
         expect.objectContaining({
           systemMessage: expect.stringContaining(
-            'applied_dimensions must contain only this exact competency_domain',
+            'applied_dimensions must contain only IDs from this list',
           ),
         }),
       );
     });
 
-    it('mixed + competencyDomain=TD2 lọc bỏ D* và chỉ giữ target domain', async () => {
+    it('mixed + competencyDomains=[TD2] lọc bỏ D* và chỉ giữ target domain', async () => {
       const rawFeedback = {
         applied_dimensions: [
           { id: 'D1', score: 20 },
@@ -474,7 +502,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         ...feedbackInput,
         sessionType: 'mixed',
         questionCategory: 'technical',
-        competencyDomain: 'TD2',
+        competencyDomains: ['TD2'],
       });
 
       expect(result.appliedDimensions).toEqual([
@@ -484,7 +512,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         expect.any(String),
         mockContextPack,
         'mixed',
-        { competencyDomain: 'TD2' },
+        { competencyDomains: ['TD2'] },
       );
     });
 

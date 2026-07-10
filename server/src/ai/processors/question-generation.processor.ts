@@ -41,14 +41,14 @@ type MergedQuestionRow = {
   questionText: string;
   orderIndex: number;
   questionCategory: string;
-  competencyDomain: string;
+  competencyDomains: string[];
   rubricJson: object;
   estimatedTimeMin: number;
 };
 
 type NormalizedGeneratedQuestion = GeneratedQuestion & {
   questionCategory: 'behavioral' | 'technical';
-  competencyDomain: string;
+  competencyDomains: string[];
   difficulty: 1 | 2 | 3;
   estimatedTimeMin: number;
 };
@@ -221,7 +221,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
           questionText: q.text,
           orderIndex: pos,
           questionCategory: q.questionCategory,
-          competencyDomain: q.competencyDomain,
+          competencyDomains: q.competencyDomains,
           rubricJson: {},
           estimatedTimeMin: q.estimatedTimeMin,
         });
@@ -239,10 +239,10 @@ export class QuestionGenerationProcessor extends WorkerHost {
           questionBankId: q.questionBankId,
           questionText: q.text,
           orderIndex: pos,
-          questionCategory: q.competencyDomain.startsWith('TD')
+          questionCategory: q.competencyDomains[0].startsWith('TD')
             ? 'technical'
             : 'behavioral',
-          competencyDomain: q.competencyDomain,
+          competencyDomains: q.competencyDomains,
           rubricJson: {},
           estimatedTimeMin: fallbackDifficulty,
         });
@@ -274,7 +274,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
         questionText: q.text,
         orderIndex: i + 1,
         questionCategory: q.questionCategory,
-        competencyDomain: q.competencyDomain,
+        competencyDomains: q.competencyDomains,
         rubricJson: {},
         estimatedTimeMin:
           q.estimatedTimeMin > 0
@@ -304,14 +304,14 @@ export class QuestionGenerationProcessor extends WorkerHost {
       const metadata = normalizeGeneratedQuestionMetadata(
         {
           category: question.category,
-          competencyDomain: question.competencyDomain,
+          competencyDomains: question.competencyDomains,
         },
         contextPackConfig,
         sessionType,
       );
       if (!metadata) {
         this.logger.warn(
-          `Dropping AI question with invalid metadata: category=${question.category} competencyDomain=${question.competencyDomain}`,
+          `Dropping AI question with invalid metadata: category=${question.category} competencyDomains=${JSON.stringify(question.competencyDomains)}`,
         );
         continue;
       }
@@ -321,7 +321,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
         ...question,
         category: metadata.questionCategory,
         questionCategory: metadata.questionCategory,
-        competencyDomain: metadata.competencyDomain,
+        competencyDomains: metadata.competencyDomains,
         difficulty,
         estimatedTimeMin: calculateEstimatedTimeMin({
           durationMin,

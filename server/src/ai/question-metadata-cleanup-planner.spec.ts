@@ -35,7 +35,7 @@ function row(overrides: Partial<CleanupRow>): CleanupRow {
     question_text: 'Tell me about yourself.',
     order_index: 0,
     question_category: 'behavioral',
-    competency_domain: 'unknown',
+    competency_domains: ['unknown'],
     estimated_time_min: 3,
     session_type: 'mixed',
     context_pack_id: 'Western',

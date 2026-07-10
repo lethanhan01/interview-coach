@@ -29,7 +29,7 @@ interface FeedbackJobDto {
   questionId?: string;
   questionText: string;
   questionCategory?: 'behavioral' | 'technical';
-  competencyDomain?: string;
+  competencyDomains: string[];
   answerText: string;
   contextPack: 'VN' | 'Western';
   sessionType: SessionType;
@@ -69,7 +69,7 @@ export class FeedbackProcessor extends WorkerHost {
       questionId,
       questionText,
       questionCategory,
-      competencyDomain,
+      competencyDomains,
       answerText,
       contextPack,
       sessionType,
@@ -88,7 +88,7 @@ export class FeedbackProcessor extends WorkerHost {
         questionId,
         questionText,
         questionCategory,
-        competencyDomain,
+        competencyDomains,
         answerText,
         contextPackConfig,
         language,
