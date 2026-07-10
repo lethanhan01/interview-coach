@@ -339,7 +339,9 @@ test("text mode: submit answer gọi POST /turns", async ({ page }) => {
 });
 
 test("có thể tạm dừng phiên phỏng vấn đang chạy", async ({ page }) => {
+  let pausePayload: { status?: string; remainingSeconds?: number } | undefined;
   await page.route(`**/api/v1/sessions/${SESSION_ID}/status`, async (route) => {
+    pausePayload = route.request().postDataJSON();
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -348,6 +350,7 @@ test("có thể tạm dừng phiên phỏng vấn đang chạy", async ({ page }
         status: "paused",
         sessionType: "hr",
         contextPackId: "VN",
+        remainingSeconds: pausePayload?.remainingSeconds,
       }),
     });
   });
@@ -359,6 +362,9 @@ test("có thể tạm dừng phiên phỏng vấn đang chạy", async ({ page }
   await page.getByRole("button", { name: "Tạm dừng" }).click();
 
   await expect(page.getByText("Phiên phỏng vấn đang tạm dừng")).toBeVisible();
+  expect(pausePayload?.status).toBe("paused");
+  expect(pausePayload?.remainingSeconds).toBeGreaterThan(0);
+  expect(pausePayload?.remainingSeconds).toBeLessThanOrEqual(30 * 60);
 });
 
 test("khi session kết thúc, chuyển sang trang chờ báo cáo", async ({

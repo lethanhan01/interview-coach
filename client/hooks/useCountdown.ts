@@ -6,25 +6,30 @@ interface CountdownResult {
   isExpired: boolean
 }
 
-export function useCountdown(totalSeconds: number, active: boolean): CountdownResult {
+export function useCountdown(
+  initialSeconds: number,
+  active: boolean,
+  onChange?: (remainingSeconds: number) => void,
+): CountdownResult {
   const [countdown, setCountdown] = useState({
-    totalSeconds,
-    remainingSeconds: totalSeconds,
+    initialSeconds,
+    remainingSeconds: initialSeconds,
   })
   const startTimeRef = useRef<number | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const remainingSeconds =
-    countdown.totalSeconds === totalSeconds
+    countdown.initialSeconds === initialSeconds
       ? countdown.remainingSeconds
-      : totalSeconds
+      : initialSeconds
   const remainingRef = useRef(remainingSeconds)
 
   useEffect(() => {
     remainingRef.current = remainingSeconds
-  }, [remainingSeconds])
+    onChange?.(remainingSeconds)
+  }, [remainingSeconds, onChange])
 
   useEffect(() => {
-    if (!active || totalSeconds <= 0) return
+    if (!active || initialSeconds <= 0) return
 
     const startingRemaining = remainingRef.current
     startTimeRef.current = Date.now()
@@ -32,7 +37,7 @@ export function useCountdown(totalSeconds: number, active: boolean): CountdownRe
     intervalRef.current = setInterval(() => {
       const elapsed = Math.floor((Date.now() - (startTimeRef.current ?? Date.now())) / 1000)
       const remaining = Math.max(0, startingRemaining - elapsed)
-      setCountdown({ totalSeconds, remainingSeconds: remaining })
+      setCountdown({ initialSeconds, remainingSeconds: remaining })
       if (remaining === 0 && intervalRef.current) {
         clearInterval(intervalRef.current)
       }
@@ -41,7 +46,7 @@ export function useCountdown(totalSeconds: number, active: boolean): CountdownRe
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-  }, [totalSeconds, active])
+  }, [initialSeconds, active])
 
   return {
     remainingSeconds,

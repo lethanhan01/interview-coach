@@ -455,12 +455,17 @@ describe('SessionService', () => {
         '11111111-1111-4111-8111-111111111111',
         'user-abc',
         'paused',
+        725,
       );
 
       expect(result.status).toBe('paused');
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
         where: { id: '11111111-1111-4111-8111-111111111111' },
-        data: { status: 'paused', completedAt: null },
+        data: {
+          status: 'paused',
+          completedAt: null,
+          remainingSeconds: 725,
+        },
       });
     });
 

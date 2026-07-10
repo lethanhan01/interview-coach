@@ -37,11 +37,16 @@ export default function InterviewPage() {
   const [turnSubmitting, setTurnSubmitting] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [accessToken, setAccessToken] = useState('')
-  const [durationMin, setDurationMin] = useState<number>(30)
+  const [remainingSeconds, setRemainingSeconds] = useState<number>(30 * 60)
   const [questionsReady, setQuestionsReady] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
   const questionsReadyRef = useRef(false)
   const turnSubmittingRef = useRef(false)
+  const remainingSecondsRef = useRef(30 * 60)
+
+  const trackRemainingSeconds = useCallback((seconds: number) => {
+    remainingSecondsRef.current = seconds
+  }, [])
 
   useEffect(() => {
     questionsReadyRef.current = questionsReady
@@ -70,7 +75,10 @@ export default function InterviewPage() {
           return
         }
         if (currentSession.status === 'canceled') return
-        if (currentSession.durationMin) setDurationMin(currentSession.durationMin)
+        const persistedRemaining =
+          currentSession.remainingSeconds ?? (currentSession.durationMin ?? 30) * 60
+        remainingSecondsRef.current = persistedRemaining
+        setRemainingSeconds(persistedRemaining)
 
         async function pollQuestions(): Promise<Question[]> {
           for (let i = 0; i < 6; i++) {
@@ -130,9 +138,15 @@ export default function InterviewPage() {
     try {
       const updated = await apiClient.patch<Session>(
         `/sessions/${sessionId}/status`,
-        { status },
+        status === 'paused'
+          ? { status, remainingSeconds: remainingSecondsRef.current }
+          : { status },
       )
       setSessionStatus(updated.status)
+      if (updated.remainingSeconds != null) {
+        remainingSecondsRef.current = updated.remainingSeconds
+        setRemainingSeconds(updated.remainingSeconds)
+      }
       if (updated.status === 'active') setQuestionsReady(true)
       if (updated.status === 'canceled') eventSourceRef.current?.close()
     } catch (err) {
@@ -328,7 +342,11 @@ export default function InterviewPage() {
               Hủy
             </Button>
           </div>
-          <CountdownTimer durationMin={durationMin} active={questionsReady && sessionStatus === 'active'} />
+          <CountdownTimer
+            initialSeconds={remainingSeconds}
+            active={questionsReady && sessionStatus === 'active'}
+            onChange={trackRemainingSeconds}
+          />
         </div>
         {actionError && <p className="mb-4 text-sm text-danger">{actionError}</p>}
 

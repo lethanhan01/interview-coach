@@ -85,7 +85,12 @@ export class SessionController {
     @Body() dto: UpdateSessionStatusDto,
     @Req() req: { user: { id: string } },
   ) {
-    return this.sessionService.updateStatus(id, req.user.id, dto.status);
+    return this.sessionService.updateStatus(
+      id,
+      req.user.id,
+      dto.status,
+      dto.remainingSeconds,
+    );
   }
 
   @Sse(':id/events')

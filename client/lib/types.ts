@@ -22,6 +22,7 @@ export interface Session {
   status: SessionStatus;
   numQuestions: number;
   durationMin?: number;
+  remainingSeconds?: number | null;
   jobDescription: string;
   createdAt: string;
   completedAt?: string;

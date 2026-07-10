@@ -195,6 +195,7 @@ export class SessionService {
     sessionId: string,
     userId: string,
     status: SessionStatusUpdate,
+    remainingSeconds?: number,
   ): Promise<InterviewSession> {
     const session = await this.findById(sessionId, userId);
 
@@ -225,7 +226,18 @@ export class SessionService {
 
       return this.prisma.interviewSession.update({
         where: { id: sessionId },
-        data: { status: 'paused', completedAt: null },
+        data: {
+          status: 'paused',
+          completedAt: null,
+          ...(remainingSeconds !== undefined
+            ? {
+                remainingSeconds: Math.min(
+                  remainingSeconds,
+                  session.durationMin * 60,
+                ),
+              }
+            : {}),
+        },
       });
     }
 

@@ -561,6 +561,14 @@ ALTER TABLE interview_sessions
   CHECK (duration_min > 0);
 
 ALTER TABLE interview_sessions
+  ADD COLUMN IF NOT EXISTS remaining_seconds INTEGER;
+ALTER TABLE interview_sessions
+  DROP CONSTRAINT IF EXISTS chk_interview_sessions_remaining_seconds;
+ALTER TABLE interview_sessions
+  ADD CONSTRAINT chk_interview_sessions_remaining_seconds
+  CHECK (remaining_seconds IS NULL OR remaining_seconds >= 0);
+
+ALTER TABLE interview_sessions
   DROP CONSTRAINT IF EXISTS chk_interview_sessions_overall_score;
 ALTER TABLE interview_sessions
   ADD CONSTRAINT chk_interview_sessions_overall_score

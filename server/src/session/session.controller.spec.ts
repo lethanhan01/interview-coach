@@ -145,7 +145,7 @@ describe('SessionController', () => {
     it('gọi sessionService.updateStatus với đúng params', async () => {
       const updated = { id: 'session-1', status: 'completed' };
       mockSessionService.updateStatus.mockResolvedValue(updated);
-      const dto = { status: 'completed' } as any;
+      const dto = { status: 'completed', remainingSeconds: 725 } as any;
 
       const result = await controller.updateStatus('session-1', dto, mockReq());
 
@@ -154,6 +154,7 @@ describe('SessionController', () => {
         'session-1',
         'user-abc',
         'completed',
+        725,
       );
     });
   });

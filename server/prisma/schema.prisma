@@ -112,6 +112,7 @@ model InterviewSession {
   sessionType           String               @map("session_type")
   numQuestions          Int                  @default(5) @map("num_questions")
   durationMin           Int                  @default(30) @map("duration_min")
+  remainingSeconds      Int?                 @map("remaining_seconds")
   language              String               @default("vi")
   contextPackId         String               @map("context_pack_id")
   status                String               @default("generating")
