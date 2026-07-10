@@ -483,6 +483,22 @@ Tính năng này không quyết định cách chấm điểm. Vai trò của nó
 
 Tính năng này quan trọng vì chất lượng báo cáo phụ thuộc trực tiếp vào dữ liệu câu trả lời. Nếu câu trả lời bị ghi trùng, ghi sai câu hỏi hoặc mất trạng thái bỏ qua, các bước feedback và report phía sau sẽ không còn phản ánh đúng phiên phỏng vấn của người dùng.
 
+Sơ đồ sau mô tả mục đích của tính năng ở mức tổng quan: biến danh sách câu hỏi đã sẵn sàng thành dữ liệu câu trả lời có thể dùng cho feedback và báo cáo.
+
+```mermaid
+flowchart TD
+    A[Phiên đã có danh sách câu hỏi] --> B[Người dùng trả lời từng câu]
+    B --> C{Thao tác của người dùng}
+    C -->|Gửi câu trả lời| D[Lưu answer trong user_answers]
+    C -->|Bỏ qua câu hỏi| E[Lưu trạng thái skipped]
+    D --> F[Xếp feedback cho câu trả lời]
+    E --> G[Đánh dấu câu không cần chấm điểm]
+    F --> H[Dữ liệu sẵn sàng cho mục 4.5.5]
+    G --> I[Dữ liệu sẵn sàng cho báo cáo skipped]
+    H --> J[Hoàn tất phiên và chuyển sang tổng hợp]
+    I --> J
+```
+
 **b. Dữ liệu đầu vào**
 
 Dữ liệu đầu vào gồm mã phiên, mã câu hỏi, nội dung câu trả lời của người dùng, trạng thái bỏ qua nếu có và các thông tin ngữ cảnh đã gắn với câu hỏi như loại câu hỏi, competency domain, context pack và ngôn ngữ đầu ra.
@@ -499,7 +515,45 @@ Người dùng có thể nhập câu trả lời rồi gửi, hoặc bỏ qua c�
 
 Luồng nghiệp vụ cần bảo đảm mỗi câu hỏi chỉ có một kết quả xử lý trong phiên. Nếu người dùng gửi câu trả lời văn bản, câu đó trở thành câu đã trả lời và được đưa vào luồng feedback. Nếu người dùng chọn bỏ qua, câu đó được ghi nhận là skipped và được đưa vào báo cáo như câu không chấm điểm. Nếu người dùng gửi lại cùng một câu do retry mạng hoặc nhấn nút nhiều lần, backend không tạo thêm answer mới.
 
-Sơ đồ dưới đây mô tả luồng chính của một phiên phỏng vấn từ lúc câu hỏi sẵn sàng đến khi phiên chuyển sang trạng thái tổng hợp.
+Sơ đồ sequence dưới đây làm rõ tương tác giữa người dùng, frontend, backend, database và queue khi một câu trả lời được gửi hoặc một câu hỏi bị bỏ qua.
+
+```mermaid
+sequenceDiagram
+    actor User as Người dùng
+    participant FE as Frontend Interview
+    participant API as Backend API
+    participant DB as Database
+    participant Q as Feedback Queue
+
+    User->>FE: Mở phiên phỏng vấn
+    FE->>API: Tải trạng thái phiên và danh sách câu hỏi
+    API->>DB: Đọc interview_sessions và session_questions
+    DB-->>API: Trả câu hỏi theo thứ tự
+    API-->>FE: Trả dữ liệu phiên
+    FE-->>User: Hiển thị câu hỏi hiện tại
+
+    alt Người dùng gửi câu trả lời
+        User->>FE: Nhập và gửi answer
+        FE->>API: Gửi answer cho câu hỏi hiện tại
+        API->>DB: Kiểm tra phiên, câu hỏi và answer hiện có
+        API->>DB: Ghi hoặc đọc lại user_answers
+        API->>Q: Xếp job feedback nếu answer mới cần chấm
+        API-->>FE: Trả answer id và trạng thái queue
+    else Người dùng bỏ qua câu hỏi
+        User->>FE: Chọn bỏ qua
+        FE->>API: Gửi yêu cầu skip
+        API->>DB: Ghi hoặc đọc lại skipped answer
+        API-->>FE: Trả answer id không xếp feedback
+    end
+
+    FE-->>User: Chuyển sang câu tiếp theo
+    User->>FE: Hoàn tất khi hết câu hỏi
+    FE->>API: Yêu cầu hoàn thành phiên
+    API->>DB: Cập nhật phiên sang completing khi đủ điều kiện
+    API-->>FE: Trả trạng thái chuyển sang báo cáo
+```
+
+Sơ đồ dưới đây mô tả luồng trạng thái của một phiên phỏng vấn từ lúc câu hỏi sẵn sàng đến khi phiên chuyển sang trạng thái tổng hợp.
 
 ```mermaid
 flowchart TD
@@ -556,6 +610,23 @@ Tính năng này phục vụ hai mục tiêu. Thứ nhất, người dùng nhậ
 
 Đây là nhóm tính năng quan trọng vì AI Mock Interview không chỉ hỏi câu hỏi mà còn phải giúp người dùng hiểu câu trả lời của mình tốt ở đâu và thiếu ở đâu. Nếu feedback không được kiểm soát bằng rubric, hệ thống dễ đưa ra nhận xét chung chung hoặc điểm số không nhất quán giữa các phiên.
 
+Sơ đồ sau thể hiện mục đích của tính năng: chuyển answer đã lưu thành feedback có kiểm soát bằng rubric, đồng thời tạo tín hiệu để frontend và report biết câu trả lời đã được xử lý.
+
+```mermaid
+flowchart TD
+    A[Answer đã lưu] --> B[Đọc câu hỏi, metadata và context pack]
+    B --> C[Tạo prompt đánh giá theo rubric]
+    C --> D[AI trả feedback dạng JSON]
+    D --> E{Feedback dùng được?}
+    E -->|Không| F[Lưu fallback feedback]
+    E -->|Có| G[Tính điểm bằng trọng số backend]
+    G --> H[Lưu feedback và annotated segments]
+    F --> I[Đánh dấu feedbackGenerated]
+    H --> I
+    I --> J[Phát turn.feedback_ready]
+    J --> K[Cập nhật tiến trình và phục vụ báo cáo]
+```
+
 **b. Dữ liệu đầu vào**
 
 Dữ liệu đầu vào gồm mã phiên, mã câu hỏi, câu trả lời đã lưu trong `user_answers`, loại phiên, context pack, competency domain, ngôn ngữ đầu ra và rubric tương ứng. Backend không chỉ gửi câu hỏi và câu trả lời cho AI mà còn gửi metadata của câu hỏi để AI biết câu trả lời cần được đánh giá theo tiêu chí nào.
@@ -570,7 +641,40 @@ Sau khi một câu trả lời văn bản được lưu, backend xếp job feedb
 
 Nếu dữ liệu hợp lệ, backend tự tính điểm tổng từ các tiêu chí hợp lệ thay vì lấy trực tiếp điểm tổng từ AI. Sau khi lưu feedback, backend đánh dấu câu trả lời đã có feedback, phát sự kiện `turn.feedback_ready` và cập nhật tiến trình feedback. Nếu phiên đang ở trạng thái tổng hợp và mọi feedback cần thiết đã sẵn sàng, backend xếp job tạo report.
 
-Sơ đồ dưới đây mô tả các bước chính từ lúc answer được lưu đến khi feedback sẵn sàng cho frontend và report.
+Sơ đồ sequence dưới đây làm rõ luồng bất đồng bộ: request gửi câu trả lời không chờ AI chấm xong; feedback được worker xử lý sau đó và thông báo lại qua SSE.
+
+```mermaid
+sequenceDiagram
+    participant API as Backend API
+    participant DB as Database
+    participant Q as Feedback Queue
+    participant Worker as Feedback Worker
+    participant AI as AI Service
+    participant SSE as SSE
+    participant FE as Frontend
+
+    API->>DB: Lưu answer trong user_answers
+    API->>Q: Xếp job feedback
+    API-->>FE: Trả kết quả submit answer
+    Q-->>Worker: Giao job feedback
+    Worker->>DB: Đọc answer, question, session và rubric
+    Worker->>AI: Gửi prompt đánh giá
+    AI-->>Worker: Trả feedback JSON hoặc lỗi
+
+    alt Output hợp lệ
+        Worker->>Worker: Lọc tiêu chí và tính điểm backend
+        Worker->>DB: Lưu ai_feedbacks và annotated_segments
+    else Output không dùng được
+        Worker->>DB: Lưu fallback feedback
+    end
+
+    Worker->>DB: Đánh dấu feedbackGenerated
+    Worker->>SSE: Phát turn.feedback_ready
+    SSE-->>FE: Cập nhật feedback hoặc tiến trình
+    Worker->>DB: Kiểm tra điều kiện tạo report nếu phiên đang completing
+```
+
+Sơ đồ dưới đây mô tả các bước xử lý chính từ lúc answer được lưu đến khi feedback sẵn sàng cho frontend và report.
 
 ```mermaid
 flowchart TD
@@ -717,6 +821,22 @@ Lịch sử phiên cho phép người dùng quay lại các phiên đã tạo, t
 
 Trong AI Mock Interview, báo cáo là điểm kết thúc của một phiên luyện tập. Nó tổng hợp các feedback rời rạc thành một cái nhìn chung để người dùng biết phiên vừa rồi có bao nhiêu câu được đánh giá, câu nào bị bỏ qua, phần nào cần cải thiện và dữ liệu chấm điểm có đáng tin cậy hay không.
 
+Sơ đồ sau thể hiện mục đích của tính năng báo cáo: gom dữ liệu của cả phiên thành kết quả tổng hợp có thể xem lại sau này, đồng thời phân biệt rõ câu được chấm, câu fallback và câu bị bỏ qua.
+
+```mermaid
+    flowchart TD
+        A[Phiên chuyển sang completing] --> B[Kiểm tra feedback của các answer cần chấm]
+        B --> C{Đủ dữ liệu tổng hợp?}
+        C -->|Chưa| D[Hiển thị trạng thái chờ và tiến trình]
+        C -->|Đủ| E[Xếp job tạo báo cáo]
+        E --> F[Worker tổng hợp transcript, điểm và heatmap]
+        F --> G[Phân loại answer hợp lệ, fallback và skipped]
+        G --> H[Lưu các phần trong session_reports]
+        H --> I[Cập nhật phiên completed]
+        I --> J[Người dùng xem báo cáo hoặc lịch sử phiên]
+        D --> B
+```
+
 **b. Dữ liệu đầu vào**
 
 Dữ liệu đầu vào của báo cáo gồm phiên phỏng vấn, danh sách câu hỏi trong `session_questions`, câu trả lời trong `user_answers`, feedback trong `ai_feedbacks`, các đoạn nhận xét đã lưu và trạng thái bỏ qua của từng câu. Report processor chỉ dùng feedback đã sẵn sàng để tổng hợp.
@@ -737,6 +857,7 @@ Sơ đồ dưới đây thể hiện quá trình hoàn tất phiên, chờ feedb
 
 ```mermaid
 sequenceDiagram
+    actor User as Người dùng
     participant FE as Frontend Report
     participant API as Backend API
     participant DB as Database
@@ -744,19 +865,29 @@ sequenceDiagram
     participant Worker as Report Worker
     participant SSE as SSE
 
+    User->>FE: Hoàn tất phiên hoặc mở trang report
     FE->>API: Đánh dấu phiên hoàn thành
     API->>DB: Cập nhật trạng thái completing
     API->>DB: Kiểm tra feedback đã đủ chưa
-    API->>Q: Xếp job report nếu đủ dữ liệu
-    FE->>API: Lấy report
-    API-->>FE: Report not ready nếu chưa có
-    Worker->>DB: Đọc answer và feedback
-    Worker->>DB: Ghi các phần báo cáo
-    Worker->>DB: Cập nhật phiên completed
-    Worker->>SSE: Phát report.ready
-    SSE-->>FE: Tải lại report
+
+    alt Feedback chưa đủ
+        API-->>FE: Trả trạng thái completing
+        FE->>API: Lấy tiến trình feedback hoặc polling report
+        API-->>FE: Report not ready và số feedback còn chờ
+    else Feedback đã đủ
+        API->>Q: Xếp job report
+        API-->>FE: Trả trạng thái đang tổng hợp
+        Q-->>Worker: Giao job report
+        Worker->>DB: Đọc answer, feedback và skipped answer
+        Worker->>DB: Ghi các phần báo cáo
+        Worker->>DB: Cập nhật phiên completed
+        Worker->>SSE: Phát report.ready
+        SSE-->>FE: Báo report đã sẵn sàng
+    end
+
     FE->>API: Lấy nội dung report
     API-->>FE: Trả báo cáo hoàn chỉnh
+    FE-->>User: Hiển thị báo cáo và lưu trong lịch sử
 ```
 
 **d. Thiết kế giao diện frontend**
