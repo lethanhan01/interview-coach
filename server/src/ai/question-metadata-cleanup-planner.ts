@@ -52,13 +52,13 @@ function isSessionType(value: string): value is SessionType {
   return value === 'hr' || value === 'technical' || value === 'mixed';
 }
 
-export function planQuestionMetadataCleanup(
+export async function planQuestionMetadataCleanup(
   rows: CleanupRow[],
   contextPackService: Pick<ContextPackService, 'getContextPack'>,
-): {
+): Promise<{
   planned: PlannedMetadataUpdate[];
   unmappedRows: UnmappedMetadataRow[];
-} {
+}> {
   const planned: PlannedMetadataUpdate[] = [];
   const unmappedRows: UnmappedMetadataRow[] = [];
 
@@ -69,7 +69,7 @@ export function planQuestionMetadataCleanup(
       );
     }
 
-    const contextPack = contextPackService.getContextPack(
+    const contextPack = await contextPackService.getContextPack(
       row.context_pack_id as 'VN' | 'Western',
     );
     const normalized = normalizeQuestionMetadataForCleanup(

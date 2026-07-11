@@ -6,7 +6,7 @@ Reference: [LLD_design.md](LLD_design.md) · [01_overview.md](01_overview.md) ·
 
 ## 1. Module Responsibilities
 
-AIModule contains all AI inference logic. No HTTP controller — only BullMQ processors and supporting services. Decoupled from other modules; SessionModule, TurnModule, and ReportModule communicate via BullMQ queues only.
+AIModule contains AI inference logic, rubric read APIs, BullMQ processors, and supporting services. SessionModule, TurnModule, and ReportModule communicate with AI processors via BullMQ queues; report UI reads active rubric metadata through the module's rubric API.
 
 ```
 SessionModule ──[QUESTION_GEN_QUEUE]──► QuestionGenerationProcessor
@@ -87,20 +87,32 @@ Layer 3 uses XML tags to delimit dynamic data and prevent prompt injection:
 
 ```typescript
 interface ContextPackService {
-  getContextPack(type: ContextPack): ContextPackConfig;
+  getContextPack(
+    type: ContextPack,
+    rubricVersionId?: string | null,
+  ): Promise<ContextPackConfig>;
+
+  getRubricSnapshot(
+    type: ContextPack,
+    rubricVersionId?: string | null,
+  ): Promise<Record<string, unknown>>;
 }
 
 interface ContextPackConfig {
   type: ContextPack;
+  rubricVersionId?: string;
   rubricDimensions: RubricDimension[];
+  behavioralDimensions: RubricDimensionEntry[];
+  technicalDimensions: RubricDimensionEntry[];
   culturalNotes: string;
-  scoringWeights: Record<RubricDimension, number>;
+  scoringWeights: {
+    behavioral_weight: number;
+    technical_weight: number;
+  };
 }
 ```
 
-VN pack dimensions: `clarity`, `structure`, `communication`, `culture_fit`.
-Western pack dimensions: `clarity`, `structure`, `communication`, `impact`, `leadership`.
-Config stored in static JSON constants — no DB read required.
+`ContextPackService` ưu tiên đọc active `rubric_versions` từ DB, map `rubric_categories` và `rubric_criteria` về contract runtime hiện tại. Nếu DB chưa có active version, service fallback về legacy `CONTEXT_PACK_DATA` và log warning. Session mới lưu `interview_sessions.rubric_version_id`; `QuestionGenerationProcessor` dùng version này để tạo `session_questions.rubric_json` snapshot, bảo toàn lịch sử khi rubric gốc publish version mới.
 
 ### 2.4 Pipeline Strategy Pattern
 

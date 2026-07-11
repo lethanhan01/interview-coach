@@ -23,6 +23,7 @@ const BASE_SESSION = {
   jobDescription: 'a'.repeat(100),
   sessionType: 'hr' as const,
   contextPackId: 'VN',
+  rubricVersionId: 'rubric-v1',
   language: 'vi',
   status: 'generating',
   numQuestions: 5,
@@ -44,7 +45,10 @@ describe('SessionService', () => {
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockQuestionQueue: ReturnType<typeof createMockQueue>;
   let mockReportService: ReturnType<typeof createMockReportService>;
-  let mockReferenceData: { ensureContextPack: jest.Mock };
+  let mockReferenceData: {
+    ensureContextPack: jest.Mock;
+    ensureDefaultActiveRubricVersion: jest.Mock;
+  };
   let mockConfig: ReturnType<typeof createMockConfigService>;
 
   beforeEach(async () => {
@@ -53,6 +57,7 @@ describe('SessionService', () => {
     mockReportService = createMockReportService();
     mockReferenceData = {
       ensureContextPack: jest.fn().mockResolvedValue(undefined),
+      ensureDefaultActiveRubricVersion: jest.fn().mockResolvedValue('rubric-v1'),
     };
     mockConfig = createMockConfigService({
       SESSION_CREATION_LIMIT_PER_24H: 10,
@@ -97,6 +102,7 @@ describe('SessionService', () => {
           data: expect.objectContaining({
             userId: 'user-abc',
             language: 'vi',
+            rubricVersionId: 'rubric-v1',
             status: 'generating',
           }),
         }),
@@ -120,6 +126,7 @@ describe('SessionService', () => {
           jobDescriptionText: CREATE_DTO.jobDescription,
           targetRoles: [],
           contextPack: 'VN',
+          rubricVersionId: 'rubric-v1',
           language: 'vi',
           totalQuestions: 5,
           durationMin: 30,

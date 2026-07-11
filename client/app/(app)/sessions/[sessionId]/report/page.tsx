@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiClient, getAccessToken } from "@/lib/api-client";
-import type { FeedbackProgress, Report, Session } from "@/lib/types";
+import type {
+  FeedbackProgress,
+  Report,
+  RubricConfig,
+  Session,
+} from "@/lib/types";
 import AnnotatedTranscript from "@/components/report/AnnotatedTranscript";
 import CompetencyScoreChart from "@/components/report/CompetencyScoreChart";
 import SessionMetadataCard from "@/components/report/SessionMetadataCard";
@@ -85,6 +90,7 @@ export default function ReportPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [report, setReport] = useState<Report | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [rubricConfig, setRubricConfig] = useState<RubricConfig | null>(null);
   const [progress, setProgress] = useState<FeedbackProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,8 +144,16 @@ export default function ReportPage() {
 
     const sessionPromise = apiClient
       .get<Session>(`/sessions/${sessionId}`)
-      .then((data) => {
+      .then(async (data) => {
         if (!canceled) setSession(data);
+        try {
+          const rubric = await apiClient.get<RubricConfig>(
+            `/rubrics/${data.contextPackId}?sessionType=${data.sessionType}`,
+          );
+          if (!canceled) setRubricConfig(rubric);
+        } catch {
+          if (!canceled) setRubricConfig(null);
+        }
       })
       .catch(() => {});
 
@@ -389,6 +403,7 @@ export default function ReportPage() {
           <ScoringMethodCard
             contextPackId={session.contextPackId}
             sessionType={session.sessionType}
+            rubricConfig={rubricConfig}
           />
         )}
 
@@ -402,6 +417,7 @@ export default function ReportPage() {
             items={report.transcript ?? []}
             contextPackId={session?.contextPackId}
             sessionType={session?.sessionType}
+            rubricHint={rubricConfig?.hint}
           />
         </div>
       </div>

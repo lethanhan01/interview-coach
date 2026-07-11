@@ -80,7 +80,7 @@ export class FeedbackProcessor extends WorkerHost {
 
     try {
       const contextPackConfig =
-        this.contextPackService.getContextPack(contextPack);
+        await this.contextPackService.getContextPack(contextPack);
       const strategy = this.factory.getStrategy(sessionType);
 
       const feedback = await strategy.evaluateAnswer({

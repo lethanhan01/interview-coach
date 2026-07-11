@@ -31,6 +31,7 @@ interface QuestionGenerationJobDto {
   jobDescriptionText: string;
   targetRoles: string[];
   contextPack: 'VN' | 'Western';
+  rubricVersionId?: string | null;
   language: string;
   totalQuestions: number;
   durationMin: number;
@@ -75,6 +76,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
       jobDescriptionText,
       targetRoles,
       contextPack,
+      rubricVersionId,
       language,
       totalQuestions,
       durationMin,
@@ -84,9 +86,17 @@ export class QuestionGenerationProcessor extends WorkerHost {
     const aiCount = Math.round(totalQuestions / AI_QUESTION_EVERY_N);
 
     let aiQuestions: NormalizedGeneratedQuestion[];
+    let contextPackConfig: ContextPackConfig;
+    let rubricSnapshot: object;
     try {
-      const contextPackConfig =
-        this.contextPackService.getContextPack(contextPack);
+      contextPackConfig = await this.contextPackService.getContextPack(
+        contextPack,
+        rubricVersionId,
+      );
+      rubricSnapshot = await this.contextPackService.getRubricSnapshot(
+        contextPack,
+        contextPackConfig.rubricVersionId ?? rubricVersionId,
+      );
       const strategy = this.factory.getStrategy(sessionType);
       const rawAiQuestions = await strategy.generateQuestions({
         sessionType,
@@ -121,6 +131,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
           sessionId,
           sessionType,
           contextPack,
+          rubricVersionId,
           outputLanguage,
           durationMin,
           totalQuestions,
@@ -164,6 +175,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
         qbQuestions,
         totalQuestions,
         durationMin,
+        rubricSnapshot,
       ).map((row) => ({ ...row, sessionId }));
       if (merged.length < totalQuestions) {
         throw new Error(
@@ -198,6 +210,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
     qbQuestions: FallbackQuestion[],
     total: number,
     durationMin: number,
+    rubricSnapshot: object,
   ): MergedQuestionRow[] {
     // AI questions appear every AI_QUESTION_EVERY_N positions when possible.
     // Short sessions still need every generated question to land inside total.
@@ -222,7 +235,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
           orderIndex: pos,
           questionCategory: q.questionCategory,
           competencyDomains: q.competencyDomains,
-          rubricJson: {},
+          rubricJson: rubricSnapshot,
           estimatedTimeMin: q.estimatedTimeMin,
         });
       } else if (qbIdx < qbQuestions.length) {
@@ -243,7 +256,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
             ? 'technical'
             : 'behavioral',
           competencyDomains: q.competencyDomains,
-          rubricJson: {},
+          rubricJson: rubricSnapshot,
           estimatedTimeMin: fallbackDifficulty,
         });
       }
@@ -256,10 +269,15 @@ export class QuestionGenerationProcessor extends WorkerHost {
     sessionId: string,
     sessionType: string,
     contextPack: string,
+    rubricVersionId: string | null | undefined,
     language: string,
     durationMin: number,
     totalQuestions: number,
   ): Promise<void> {
+    const rubricSnapshot = await this.contextPackService.getRubricSnapshot(
+      contextPack as 'VN' | 'Western',
+      rubricVersionId,
+    );
     const selected = await this.questionBankService.selectFallbackQuestions(
       sessionType,
       contextPack,
@@ -275,7 +293,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
         orderIndex: i + 1,
         questionCategory: q.questionCategory,
         competencyDomains: q.competencyDomains,
-        rubricJson: {},
+        rubricJson: rubricSnapshot,
         estimatedTimeMin:
           q.estimatedTimeMin > 0
             ? q.estimatedTimeMin

@@ -203,7 +203,10 @@ describe('QuestionGenerationProcessor', () => {
       } as any),
     );
 
-    expect(mockContextPack.getContextPack).toHaveBeenCalledWith('Western');
+    expect(mockContextPack.getContextPack).toHaveBeenCalledWith(
+      'Western',
+      undefined,
+    );
     expect(mockStrategy.generateQuestions).toHaveBeenCalledWith(
       expect.objectContaining({ language: 'en' }),
     );

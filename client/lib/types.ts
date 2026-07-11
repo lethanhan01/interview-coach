@@ -11,6 +11,26 @@ export type SessionType = "hr" | "technical" | "mixed";
 export type ContextPack = "VN" | "Western";
 export type OutputLanguage = "vi" | "en";
 
+export interface RubricDimension {
+  code: string;
+  nameVi: string;
+  weightPct: number;
+}
+
+export interface RubricCategory {
+  label: string;
+  categoryWeightPct: number;
+  dimensions: RubricDimension[];
+}
+
+export interface RubricConfig {
+  contextPackId: ContextPack;
+  rubricVersionId?: string;
+  sessionType: SessionType;
+  categories: RubricCategory[];
+  hint: string;
+}
+
 export interface Session {
   id: string;
   userId: string;

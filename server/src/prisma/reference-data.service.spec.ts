@@ -4,9 +4,28 @@ import { CONTEXT_PACK_DATA } from './context-pack.data';
 describe('ReferenceDataService', () => {
   const createMocks = () => {
     const prisma = {
+      $transaction: jest.fn(async (callback: (tx: unknown) => unknown) =>
+        callback(prisma),
+      ),
       contextPack: {
         upsert: jest.fn().mockResolvedValue({}),
         deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+      rubricVersion: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce({ id: 'rubric-v1' }),
+        create: jest.fn().mockResolvedValue({ id: 'rubric-v1' }),
+        update: jest.fn().mockResolvedValue({ id: 'rubric-v1' }),
+      },
+      rubricCategory: {
+        upsert: jest.fn((args) =>
+          Promise.resolve({ id: `${args.create.categoryKey}-category` }),
+        ),
+      },
+      rubricCriterion: {
+        upsert: jest.fn().mockResolvedValue({}),
       },
       interviewSession: {
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
@@ -26,6 +45,12 @@ describe('ReferenceDataService', () => {
     await service.onApplicationBootstrap();
 
     expect(prisma.contextPack.upsert).toHaveBeenCalledTimes(2);
+    expect(prisma.rubricVersion.findFirst).toHaveBeenCalledWith({
+      where: { contextPackId: 'VN', status: 'active' },
+      select: { id: true },
+    });
+    expect(prisma.rubricCategory.upsert).toHaveBeenCalled();
+    expect(prisma.rubricCriterion.upsert).toHaveBeenCalled();
     expect(prisma.interviewSession.updateMany).toHaveBeenCalledWith({
       where: { contextPackId: 'vn' },
       data: { contextPackId: 'VN' },
@@ -55,8 +80,6 @@ describe('ReferenceDataService', () => {
       },
       update: {
         name: pack?.name,
-        rubricJson: pack?.rubricJson,
-        scoringWeights: pack?.scoringWeights,
       },
     });
   });

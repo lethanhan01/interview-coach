@@ -42,7 +42,7 @@ async function main(): Promise<void> {
       ORDER BY s.created_at, sq.session_id, sq.order_index
     `);
 
-    const { planned, unmappedRows } = planQuestionMetadataCleanup(
+    const { planned, unmappedRows } = await planQuestionMetadataCleanup(
       result.rows,
       contextPackService,
     );

@@ -5,7 +5,7 @@ import {
 } from './question-metadata-cleanup-planner';
 
 const contextPackService = {
-  getContextPack: jest.fn(() => ({
+  getContextPack: jest.fn(async () => ({
     type: 'Western',
     culturalNotes: 'Western',
     scoringWeights: {},
@@ -48,9 +48,9 @@ function row(overrides: Partial<CleanupRow>): CleanupRow {
 describe('question metadata cleanup planner', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('dry-run summary báo unmappedRows', () => {
+  it('dry-run summary báo unmappedRows', async () => {
     const rows = [row({ id: 'ambiguous' })];
-    const { planned, unmappedRows } = planQuestionMetadataCleanup(
+    const { planned, unmappedRows } = await planQuestionMetadataCleanup(
       rows,
       contextPackService,
     );
@@ -66,9 +66,9 @@ describe('question metadata cleanup planner', () => {
     );
   });
 
-  it('apply summary vẫn báo unmappedRows để caller fail trước khi update', () => {
+  it('apply summary vẫn báo unmappedRows để caller fail trước khi update', async () => {
     const rows = [row({ id: 'ambiguous' })];
-    const { planned, unmappedRows } = planQuestionMetadataCleanup(
+    const { planned, unmappedRows } = await planQuestionMetadataCleanup(
       rows,
       contextPackService,
     );

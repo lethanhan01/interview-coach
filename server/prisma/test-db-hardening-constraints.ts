@@ -108,6 +108,33 @@ async function main() {
       [randomUUID(), ids.userA, ids.contextPack],
     );
 
+    await expectReject(
+      'rubric_versions rejects duplicate active version per context pack',
+      `INSERT INTO rubric_versions (
+         id, context_pack_id, version, status, published_at
+       )
+       VALUES ($1, $2, 'v2', 'active', now())`,
+      [randomUUID(), ids.contextPack],
+    );
+
+    await expectReject(
+      'rubric_categories rejects negative weight',
+      `INSERT INTO rubric_categories (
+         id, rubric_version_id, category_key, label, weight, display_order
+       )
+       VALUES ($1, $2, 'invalid', 'Invalid', -0.1, 3)`,
+      [randomUUID(), ids.rubricVersion],
+    );
+
+    await expectReject(
+      'rubric_criteria rejects duplicate code in version',
+      `INSERT INTO rubric_criteria (
+         id, rubric_version_id, rubric_category_id, code, name, weight, display_order
+       )
+       VALUES ($1, $2, $3, 'D1', 'Duplicate', 0.1, 2)`,
+      [randomUUID(), ids.rubricVersion, ids.rubricCategory],
+    );
+
     console.log('DB hardening negative constraints: all rejection checks passed');
   } finally {
     await client.query('ROLLBACK');
@@ -127,6 +154,30 @@ async function createFixture() {
     `INSERT INTO context_packs (id, name, rubric_json, scoring_weights)
      VALUES ($1, 'Constraint Test', '{}'::jsonb, '{}'::jsonb)`,
     [contextPack],
+  );
+
+  const rubricVersion = randomUUID();
+  const rubricCategory = randomUUID();
+  await client.query(
+    `INSERT INTO rubric_versions (
+       id, context_pack_id, version, status, published_at
+     )
+     VALUES ($1, $2, 'v1', 'active', now())`,
+    [rubricVersion, contextPack],
+  );
+  await client.query(
+    `INSERT INTO rubric_categories (
+       id, rubric_version_id, category_key, label, weight, display_order
+     )
+     VALUES ($1, $2, 'behavioral', 'Behavioral', 1, 1)`,
+    [rubricCategory, rubricVersion],
+  );
+  await client.query(
+    `INSERT INTO rubric_criteria (
+       id, rubric_version_id, rubric_category_id, code, name, weight, display_order
+     )
+     VALUES ($1, $2, $3, 'D1', 'Communication', 1, 1)`,
+    [randomUUID(), rubricVersion, rubricCategory],
   );
 
   await client.query(
@@ -190,6 +241,8 @@ async function createFixture() {
 
   return {
     contextPack,
+    rubricVersion,
+    rubricCategory,
     userA,
     sessionA,
     sessionB,

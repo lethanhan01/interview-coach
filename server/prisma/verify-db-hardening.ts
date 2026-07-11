@@ -80,6 +80,10 @@ const expectedConstraints = [
   ['ai_feedbacks', 'chk_ai_feedbacks_overall_score'],
   ['annotated_segments', 'chk_annotated_segments_offsets'],
   ['users', 'chk_users_role'],
+  ['rubric_categories', 'chk_rubric_categories_weight'],
+  ['rubric_categories', 'chk_rubric_categories_display_order'],
+  ['rubric_criteria', 'chk_rubric_criteria_weight'],
+  ['rubric_criteria', 'chk_rubric_criteria_display_order'],
 ];
 
 const expectedIndexes = [
@@ -98,6 +102,15 @@ const expectedIndexes = [
   ['saved_job_descriptions', 'idx_saved_job_descriptions_user_updated'],
   ['saved_job_descriptions', 'idx_saved_job_descriptions_user_company_title'],
   ['resumes', 'idx_resumes_one_active_per_user'],
+  ['rubric_versions', 'idx_rubric_versions_context_pack'],
+  ['rubric_versions', 'idx_rubric_versions_one_active_per_context_pack'],
+  ['rubric_versions', 'rubric_versions_context_pack_version_key'],
+  ['rubric_categories', 'idx_rubric_categories_version'],
+  ['rubric_categories', 'rubric_categories_version_category_key'],
+  ['rubric_criteria', 'idx_rubric_criteria_category'],
+  ['rubric_criteria', 'idx_rubric_criteria_version'],
+  ['rubric_criteria', 'rubric_criteria_version_code_key'],
+  ['interview_sessions', 'idx_interview_sessions_rubric_version'],
 ];
 
 const retiredTables = ['ai_quality_log', 'question_usage'];
@@ -238,6 +251,66 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
     ],
   ];
 
+  if (await rubricTablesExist()) {
+    checks.push(
+      [
+        'anomaly:rubric_duplicate_active_version',
+        `SELECT count(*)::int AS count
+         FROM (
+           SELECT context_pack_id
+           FROM rubric_versions
+           WHERE status = 'active'
+           GROUP BY context_pack_id
+           HAVING count(*) > 1
+         ) dup`,
+      ],
+      [
+        'anomaly:rubric_active_version_missing_categories',
+        `SELECT count(*)::int AS count
+         FROM rubric_versions rv
+         WHERE rv.status = 'active'
+           AND (
+             SELECT count(*)
+             FROM rubric_categories rc
+             WHERE rc.rubric_version_id = rv.id
+               AND rc.category_key IN ('behavioral', 'technical')
+           ) <> 2`,
+      ],
+      [
+        'anomaly:rubric_active_version_missing_criteria',
+        `SELECT count(*)::int AS count
+         FROM rubric_versions rv
+         WHERE rv.status = 'active'
+           AND NOT EXISTS (
+             SELECT 1
+             FROM rubric_criteria rcr
+             WHERE rcr.rubric_version_id = rv.id
+               AND rcr.active = true
+           )`,
+      ],
+      [
+        'anomaly:question_bank_unknown_competency_domains',
+        `SELECT count(*)::int AS count
+         FROM question_bank qb
+         JOIN rubric_versions rv
+           ON rv.context_pack_id = qb.context_pack_id
+          AND rv.status = 'active'
+         WHERE qb.deleted_at IS NULL
+           AND EXISTS (
+             SELECT 1
+             FROM unnest(qb.competency_domains) AS domain(code)
+             WHERE NOT EXISTS (
+               SELECT 1
+               FROM rubric_criteria rcr
+               WHERE rcr.rubric_version_id = rv.id
+                 AND rcr.code = domain.code
+                 AND rcr.active = true
+             )
+           )`,
+      ],
+    );
+  }
+
   const results: CheckResult[] = [];
   for (const [name, sql] of checks) {
     const count = await countRows(sql);
@@ -248,6 +321,15 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
     });
   }
   return results;
+}
+
+async function rubricTablesExist(): Promise<boolean> {
+  return existsBySql(`
+    SELECT 1
+    WHERE to_regclass('public.rubric_versions') IS NOT NULL
+      AND to_regclass('public.rubric_categories') IS NOT NULL
+      AND to_regclass('public.rubric_criteria') IS NOT NULL
+  `);
 }
 
 async function runCatalogChecks(): Promise<CheckResult[]> {

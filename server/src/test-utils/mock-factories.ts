@@ -194,6 +194,7 @@ export const createMockZodValidatorService = () => ({
 
 export const createMockContextPackService = () => ({
   getContextPack: jest.fn(),
+  getRubricSnapshot: jest.fn().mockResolvedValue({}),
 });
 
 export const createMockPipelineStrategyFactory = () => ({

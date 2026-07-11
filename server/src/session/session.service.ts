@@ -78,6 +78,10 @@ export class SessionService {
       userId,
       dto.savedJobDescriptionId,
     );
+    const rubricVersionId =
+      await this.referenceData.ensureDefaultActiveRubricVersion(
+        dto.contextPack,
+      );
 
     const language = resolveOutputLanguage(dto.language);
 
@@ -91,6 +95,7 @@ export class SessionService {
         numQuestions: dto.numQuestions ?? 5,
         language,
         contextPackId: dto.contextPack,
+        rubricVersionId,
         status: 'generating',
       },
     });
@@ -104,6 +109,7 @@ export class SessionService {
           jobDescriptionText: dto.jobDescription,
           targetRoles: dto.targetRoles ?? [],
           contextPack: dto.contextPack,
+          rubricVersionId,
           language: session.language,
           totalQuestions: session.numQuestions,
           durationMin: session.durationMin,

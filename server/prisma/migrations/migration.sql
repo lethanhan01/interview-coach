@@ -402,9 +402,7 @@ INSERT INTO context_packs (id, name, rubric_json, scoring_weights) VALUES
   }'
 )
 ON CONFLICT (id) DO UPDATE SET
-  name = EXCLUDED.name,
-  rubric_json = EXCLUDED.rubric_json,
-  scoring_weights = EXCLUDED.scoring_weights;
+  name = EXCLUDED.name;
 
 -- Normalize IDs created before standardization
 UPDATE interview_sessions SET context_pack_id = 'VN'      WHERE context_pack_id = 'vn';
@@ -416,6 +414,199 @@ UPDATE question_bank      SET context_pack_id = 'Western' WHERE context_pack_id 
 DELETE FROM context_packs WHERE id IN ('vn', 'western');
 
 COMMIT;
+
+-- -----------------------------------------------------------------------------
+-- 4b. Normalized rubric versions
+-- -----------------------------------------------------------------------------
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'RubricVersionStatus') THEN
+    CREATE TYPE "RubricVersionStatus" AS ENUM ('draft', 'active', 'archived');
+  END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS rubric_versions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  context_pack_id TEXT NOT NULL REFERENCES context_packs(id) ON DELETE CASCADE,
+  version TEXT NOT NULL,
+  status "RubricVersionStatus" NOT NULL DEFAULT 'draft',
+  created_at TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  published_at TIMESTAMPTZ(6),
+  CONSTRAINT rubric_versions_context_pack_version_key UNIQUE (context_pack_id, version)
+);
+
+CREATE TABLE IF NOT EXISTS rubric_categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  rubric_version_id UUID NOT NULL REFERENCES rubric_versions(id) ON DELETE CASCADE,
+  category_key TEXT NOT NULL,
+  label TEXT NOT NULL,
+  weight DOUBLE PRECISION NOT NULL,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT rubric_categories_version_category_key UNIQUE (rubric_version_id, category_key)
+);
+
+CREATE TABLE IF NOT EXISTS rubric_criteria (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  rubric_version_id UUID NOT NULL REFERENCES rubric_versions(id) ON DELETE CASCADE,
+  rubric_category_id UUID NOT NULL REFERENCES rubric_categories(id) ON DELETE CASCADE,
+  code TEXT NOT NULL,
+  name TEXT NOT NULL,
+  weight DOUBLE PRECISION NOT NULL,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  active BOOLEAN NOT NULL DEFAULT true,
+  CONSTRAINT rubric_criteria_version_code_key UNIQUE (rubric_version_id, code)
+);
+
+ALTER TABLE interview_sessions
+  ADD COLUMN IF NOT EXISTS rubric_version_id UUID REFERENCES rubric_versions(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_rubric_versions_context_pack
+  ON rubric_versions(context_pack_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rubric_versions_one_active_per_context_pack
+  ON rubric_versions(context_pack_id)
+  WHERE status = 'active';
+
+CREATE INDEX IF NOT EXISTS idx_rubric_categories_version
+  ON rubric_categories(rubric_version_id);
+
+CREATE INDEX IF NOT EXISTS idx_rubric_criteria_category
+  ON rubric_criteria(rubric_category_id);
+
+CREATE INDEX IF NOT EXISTS idx_rubric_criteria_version
+  ON rubric_criteria(rubric_version_id);
+
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_rubric_version
+  ON interview_sessions(rubric_version_id);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_rubric_categories_weight'
+  ) THEN
+    ALTER TABLE rubric_categories
+      ADD CONSTRAINT chk_rubric_categories_weight CHECK (weight >= 0);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_rubric_categories_display_order'
+  ) THEN
+    ALTER TABLE rubric_categories
+      ADD CONSTRAINT chk_rubric_categories_display_order CHECK (display_order >= 0);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_rubric_criteria_weight'
+  ) THEN
+    ALTER TABLE rubric_criteria
+      ADD CONSTRAINT chk_rubric_criteria_weight CHECK (weight >= 0);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_rubric_criteria_display_order'
+  ) THEN
+    ALTER TABLE rubric_criteria
+      ADD CONSTRAINT chk_rubric_criteria_display_order CHECK (display_order >= 0);
+  END IF;
+END $$;
+
+INSERT INTO rubric_versions (context_pack_id, version, status, published_at)
+SELECT 'VN', 'v1', 'active', now()
+WHERE NOT EXISTS (
+  SELECT 1 FROM rubric_versions WHERE context_pack_id = 'VN' AND status = 'active'
+)
+ON CONFLICT (context_pack_id, version) DO NOTHING;
+
+UPDATE rubric_versions
+SET status = 'active', published_at = COALESCE(published_at, now())
+WHERE context_pack_id = 'VN'
+  AND version = 'v1'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM rubric_versions rv
+    WHERE rv.context_pack_id = 'VN'
+      AND rv.status = 'active'
+      AND rv.id <> rubric_versions.id
+  );
+
+INSERT INTO rubric_versions (context_pack_id, version, status, published_at)
+SELECT 'Western', 'v1', 'active', now()
+WHERE NOT EXISTS (
+  SELECT 1 FROM rubric_versions WHERE context_pack_id = 'Western' AND status = 'active'
+)
+ON CONFLICT (context_pack_id, version) DO NOTHING;
+
+UPDATE rubric_versions
+SET status = 'active', published_at = COALESCE(published_at, now())
+WHERE context_pack_id = 'Western'
+  AND version = 'v1'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM rubric_versions rv
+    WHERE rv.context_pack_id = 'Western'
+      AND rv.status = 'active'
+      AND rv.id <> rubric_versions.id
+  );
+
+WITH seeds(context_pack_id, category_key, label, weight, display_order) AS (
+  VALUES
+    ('VN', 'behavioral', 'Tiêu chí hành vi', 0.50, 1),
+    ('VN', 'technical', 'Tiêu chí kỹ thuật', 0.50, 2),
+    ('Western', 'behavioral', 'Tiêu chí hành vi', 0.45, 1),
+    ('Western', 'technical', 'Tiêu chí kỹ thuật', 0.55, 2)
+)
+INSERT INTO rubric_categories (rubric_version_id, category_key, label, weight, display_order)
+SELECT rv.id, seeds.category_key, seeds.label, seeds.weight, seeds.display_order
+FROM seeds
+JOIN rubric_versions rv
+  ON rv.context_pack_id = seeds.context_pack_id
+ AND rv.version = 'v1'
+ON CONFLICT (rubric_version_id, category_key) DO NOTHING;
+
+WITH seeds(context_pack_id, category_key, code, name, weight, display_order) AS (
+  VALUES
+    ('VN', 'behavioral', 'D1', 'Giao tiếp & Trình bày', 0.20, 1),
+    ('VN', 'behavioral', 'D2', 'Tư duy & Giải quyết vấn đề', 0.20, 2),
+    ('VN', 'behavioral', 'D3', 'Làm việc nhóm', 0.15, 3),
+    ('VN', 'behavioral', 'D4', 'Thái độ & Động lực', 0.20, 4),
+    ('VN', 'behavioral', 'D5', 'Phù hợp văn hóa', 0.15, 5),
+    ('VN', 'behavioral', 'D6', 'Tự nhận thức', 0.10, 6),
+    ('VN', 'technical', 'TD1', 'Kiến thức nền tảng', 0.25, 1),
+    ('VN', 'technical', 'TD2', 'Khả năng áp dụng thực tế', 0.25, 2),
+    ('VN', 'technical', 'TD3', 'Tư duy hệ thống', 0.20, 3),
+    ('VN', 'technical', 'TD4', 'Code quality & Best practices', 0.20, 4),
+    ('VN', 'technical', 'TD5', 'Debug & Problem-solving', 0.10, 5),
+    ('Western', 'behavioral', 'D1', 'Communication & Presentation', 0.20, 1),
+    ('Western', 'behavioral', 'D2', 'Critical Thinking', 0.20, 2),
+    ('Western', 'behavioral', 'D3', 'Collaboration & Teamwork', 0.15, 3),
+    ('Western', 'behavioral', 'D4', 'Leadership & Initiative', 0.20, 4),
+    ('Western', 'behavioral', 'D5', 'Culture Fit & Values', 0.15, 5),
+    ('Western', 'behavioral', 'D6', 'Self-Awareness & Growth', 0.10, 6),
+    ('Western', 'technical', 'TD1', 'Foundational Knowledge', 0.20, 1),
+    ('Western', 'technical', 'TD2', 'Practical Application', 0.25, 2),
+    ('Western', 'technical', 'TD3', 'Systems Thinking', 0.20, 3),
+    ('Western', 'technical', 'TD4', 'Code Quality & Best Practices', 0.20, 4),
+    ('Western', 'technical', 'TD5', 'Debug & Problem-solving', 0.15, 5)
+)
+INSERT INTO rubric_criteria (
+  rubric_version_id,
+  rubric_category_id,
+  code,
+  name,
+  weight,
+  display_order,
+  active
+)
+SELECT rv.id, rc.id, seeds.code, seeds.name, seeds.weight, seeds.display_order, true
+FROM seeds
+JOIN rubric_versions rv
+  ON rv.context_pack_id = seeds.context_pack_id
+ AND rv.version = 'v1'
+JOIN rubric_categories rc
+  ON rc.rubric_version_id = rv.id
+ AND rc.category_key = seeds.category_key
+ON CONFLICT (rubric_version_id, code) DO NOTHING;
 
 
 -- -----------------------------------------------------------------------------

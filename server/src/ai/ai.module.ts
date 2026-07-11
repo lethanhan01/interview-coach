@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { OpenAIGateway } from './openai.gateway';
 import { PromptBuilderService } from './prompt-builder.service';
 import { ContextPackService } from './context-pack.service';
+import { RubricController } from './rubric.controller';
 import { ZodValidatorService } from './zod-validator.service';
 import { HrPipelineService } from './pipelines/hr.pipeline.service';
 import { TechnicalPipelineService } from './pipelines/technical.pipeline.service';
@@ -34,6 +35,7 @@ import {
       { name: TRANSCRIPTION_QUEUE },
     ),
   ],
+  controllers: [RubricController],
   providers: [
     OpenAIGateway,
     PromptBuilderService,

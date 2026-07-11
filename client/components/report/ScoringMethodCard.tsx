@@ -1,10 +1,11 @@
-import type { ContextPack, SessionType } from '@/lib/types'
+import type { ContextPack, RubricConfig, SessionType } from '@/lib/types'
 import { getRubricCategories } from '@/lib/rubric-config'
-import type { RubricCategory } from '@/lib/rubric-config'
+import type { RubricCategory } from '@/lib/types'
 
 interface ScoringMethodCardProps {
   contextPackId: ContextPack
   sessionType: SessionType
+  rubricConfig?: RubricConfig | null
 }
 
 const SLICE_COLORS = [
@@ -97,8 +98,13 @@ function CategorySection({ category }: { category: RubricCategory }) {
   )
 }
 
-export default function ScoringMethodCard({ contextPackId, sessionType }: ScoringMethodCardProps) {
-  const categories = getRubricCategories(contextPackId, sessionType)
+export default function ScoringMethodCard({
+  contextPackId,
+  sessionType,
+  rubricConfig,
+}: ScoringMethodCardProps) {
+  const categories =
+    rubricConfig?.categories ?? getRubricCategories(contextPackId, sessionType)
   const isMixed = sessionType === 'mixed'
   const label = sessionTypeLabel(sessionType)
 
