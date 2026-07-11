@@ -56,7 +56,10 @@ function allowedDimensionsForSession(
 function resolveDomain(
   rawDomain: string,
   allowedDims: RubricDimensionEntry[],
-): { domain: string; matchBranch: NormalizedQuestionMetadata['matchBranch'] } | null {
+): {
+  domain: string;
+  matchBranch: NormalizedQuestionMetadata['matchBranch'];
+} | null {
   const exact = allowedDims.find((d) => d.id === rawDomain);
   if (exact) {
     return {
@@ -132,7 +135,8 @@ export function normalizeGeneratedQuestionMetadata(
 
   const requestedCategory =
     sessionType === 'mixed' ? normalizeQuestionCategory(input.category) : null;
-  const primaryCategory = requestedCategory ?? categoryFromDomain(resolvedDomains[0]);
+  const primaryCategory =
+    requestedCategory ?? categoryFromDomain(resolvedDomains[0]);
 
   return {
     questionCategory: primaryCategory,

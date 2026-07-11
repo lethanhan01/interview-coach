@@ -54,9 +54,7 @@ function fallbackSkippedModelAnswer(
   return `A strong answer should directly address "${questionText}", briefly set the context, describe your specific actions, and close with a clear result or lesson learned.`;
 }
 
-function toDimensionScores(
-  value: unknown,
-): { id: string; score: number }[] {
+function toDimensionScores(value: unknown): { id: string; score: number }[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((item) => {
     if (!item || typeof item !== 'object') return [];

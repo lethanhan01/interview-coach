@@ -1,6 +1,9 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ContextPackService, type ContextPackType } from './context-pack.service';
+import {
+  ContextPackService,
+  type ContextPackType,
+} from './context-pack.service';
 import type { SessionType } from './pipelines/interview-pipeline.interface';
 
 @Controller('rubrics')

@@ -13,6 +13,7 @@ export class ReferenceDataService implements OnApplicationBootstrap {
   }
 
   async ensureContextPack(id: ContextPackId): Promise<void> {
+    await Promise.resolve();
     const pack = CONTEXT_PACK_DATA.find((item) => item.id === id);
     if (!pack) {
       throw new Error(`Unsupported context pack: ${id}`);

@@ -59,7 +59,7 @@ export function buildRubricSnapshot(
         ]),
       ),
     ]),
-  ) as Prisma.InputJsonObject;
+  );
 }
 
 export function buildScoringWeights(
