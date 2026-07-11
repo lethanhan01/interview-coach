@@ -7,63 +7,149 @@ interface ScoringMethodCardProps {
   sessionType: SessionType
 }
 
+const SLICE_COLORS = [
+  'var(--color-brand)',
+  'var(--color-success)',
+  'var(--color-warning)',
+  'var(--color-danger)',
+  'var(--color-info)',
+  'var(--color-ink-muted)',
+]
+
+function buildDonutGradient(category: RubricCategory) {
+  let current = 0
+
+  return category.dimensions
+    .map((dim, index) => {
+      const start = current
+      current += dim.weightPct
+      return `${SLICE_COLORS[index % SLICE_COLORS.length]} ${start}% ${current}%`
+    })
+    .join(', ')
+}
+
+function sessionTypeLabel(sessionType: SessionType) {
+  if (sessionType === 'hr') return 'phỏng vấn hành vi'
+  if (sessionType === 'technical') return 'phỏng vấn kỹ thuật'
+  return 'phỏng vấn tổng hợp'
+}
+
 function CategorySection({ category }: { category: RubricCategory }) {
+  const donutGradient = buildDonutGradient(category)
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-700">{category.label}</h3>
+    <section className="rounded-lg border border-border bg-surface-raised p-4">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-ink">{category.label}</h3>
+          <p className="mt-1 text-xs leading-relaxed text-ink-muted">
+            Tỷ trọng bên dưới là tỷ trọng gốc trong nhóm tiêu chí này.
+          </p>
+        </div>
         <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand">
-          {category.categoryWeightPct}% điểm tổng
+          {category.categoryWeightPct}% điểm phiên
         </span>
       </div>
-      <div className="flex flex-col gap-2">
-        {category.dimensions.map((dim) => (
-          <div key={dim.code} className="flex items-center gap-3">
-            <div className="w-52 shrink-0 text-sm text-gray-700">
-              <span className="mr-1.5 text-xs font-medium text-gray-400">{dim.code}</span>
-              {dim.nameVi}
+
+      <div className="grid gap-5 md:grid-cols-[160px_1fr] md:items-center">
+        <div className="mx-auto flex size-36 items-center justify-center rounded-full bg-brand-100 p-3">
+          <div
+            aria-label={`${category.label}: ${category.dimensions
+              .map((dim) => `${dim.nameVi} ${dim.weightPct}%`)
+              .join(', ')}`}
+            className="flex size-full items-center justify-center rounded-full"
+            role="img"
+            style={{ background: `conic-gradient(${donutGradient})` }}
+          >
+            <div className="flex size-20 flex-col items-center justify-center rounded-full bg-surface text-center shadow-card">
+              <span className="text-lg font-semibold text-ink">
+                {category.categoryWeightPct}%
+              </span>
+              <span className="text-[11px] font-medium text-ink-muted">
+                điểm phiên
+              </span>
             </div>
-            <div className="flex-1">
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                <div
-                  className="h-full rounded-full bg-brand"
-                  style={{ width: `${dim.weightPct}%` }}
-                />
+          </div>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          {category.dimensions.map((dim, index) => (
+            <div key={dim.code} className="flex items-start gap-2.5">
+              <span
+                aria-hidden="true"
+                className="mt-1 size-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: SLICE_COLORS[index % SLICE_COLORS.length] }}
+              />
+              <div className="min-w-0">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xs font-medium text-ink-faint">{dim.code}</span>
+                  <span className="text-sm font-medium text-ink">{dim.nameVi}</span>
+                </div>
+                <p className="mt-0.5 text-xs text-ink-muted">
+                  {dim.weightPct}% trong nhóm tiêu chí
+                </p>
               </div>
             </div>
-            <span className="w-10 text-right text-xs font-medium text-gray-500">
-              {dim.weightPct}%
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   )
 }
 
 export default function ScoringMethodCard({ contextPackId, sessionType }: ScoringMethodCardProps) {
   const categories = getRubricCategories(contextPackId, sessionType)
   const isMixed = sessionType === 'mixed'
+  const label = sessionTypeLabel(sessionType)
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h2 className="mb-4 text-base font-semibold text-gray-900">Phương pháp chấm điểm</h2>
+    <div className="rounded-lg border border-border bg-surface p-6">
+      <h2 className="text-base font-semibold text-ink">Phương pháp chấm điểm</h2>
 
-      <p className="mb-4 text-sm text-gray-600">
-        Điểm tổng = trung bình cộng điểm từng câu trả lời. Mỗi câu chỉ chấm trên các tiêu chí phù
-        hợp với câu hỏi đó; trọng số được chuẩn hóa lại theo tập tiêu chí áp dụng. Bảng dưới là
-        tập tiêu chí tối đa có thể áp dụng.
-      </p>
+      <div className="mt-4 rounded-lg border border-brand-200 bg-brand-50 p-4">
+        <p className="text-sm leading-relaxed text-ink">
+          Báo cáo này dùng thang điểm 1-100 cho từng câu trả lời. Với mỗi câu, hệ thống chỉ chọn
+          những tiêu chí thật sự liên quan đến nội dung câu hỏi, chấm điểm từng tiêu chí, rồi tính
+          điểm câu bằng trung bình có trọng số của các tiêu chí đã được chọn.
+        </p>
+      </div>
 
       {isMixed && (
-        <p className="mb-4 rounded-lg bg-brand-50 px-4 py-2.5 text-sm text-ink">
+        <p className="mt-4 rounded-lg bg-surface-raised px-4 py-2.5 text-sm leading-relaxed text-ink">
           <span className="font-medium">Lưu ý:</span>{' '}
-          Câu hành vi và câu kỹ thuật được chấm trên tập tiêu chí tương ứng; điểm tổng phiên là
-          trung bình cộng toàn bộ câu.
+          Phiên tổng hợp có cả tiêu chí hành vi và kỹ thuật. Mỗi câu vẫn được chấm theo đúng nhóm
+          tiêu chí phù hợp với câu đó; điểm tổng phiên là trung bình cộng các câu đã chấm được.
         </p>
       )}
 
-      <div className={`flex flex-col ${isMixed ? 'gap-6' : 'gap-2'}`}>
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-lg border border-border bg-surface-raised p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-ink-faint">Bước 1</p>
+          <p className="mt-1 text-sm font-medium text-ink">Chọn tiêu chí phù hợp</p>
+          <p className="mt-1 text-xs leading-relaxed text-ink-muted">
+            Không phải câu nào cũng dùng toàn bộ rubric; chỉ tiêu chí có bằng chứng trong câu trả
+            lời mới được tính.
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface-raised p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-ink-faint">Bước 2</p>
+          <p className="mt-1 text-sm font-medium text-ink">Chuẩn hóa trọng số</p>
+          <p className="mt-1 text-xs leading-relaxed text-ink-muted">
+            Nếu một câu chỉ dùng vài tiêu chí, trọng số của các tiêu chí đó được quy đổi lại để
+            tổng bằng 100%.
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface-raised p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-ink-faint">Bước 3</p>
+          <p className="mt-1 text-sm font-medium text-ink">Tính điểm tổng</p>
+          <p className="mt-1 text-xs leading-relaxed text-ink-muted">
+            Điểm câu = tổng điểm tiêu chí nhân trọng số đã chuẩn hóa. Điểm phiên {label} = trung
+            bình cộng các câu trả lời đã chấm được.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-col gap-4">
         {categories.map((cat) => (
           <CategorySection key={cat.label} category={cat} />
         ))}
