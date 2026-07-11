@@ -34,7 +34,6 @@ describe('QuestionGenerationProcessor', () => {
     jobDescriptionText: 'Backend developer tại công ty ABC.',
     targetRoles: ['Backend Developer'],
     contextPack: 'VN' as const,
-    rubricVersionId: 'rubric-v1',
     language: 'vi',
     totalQuestions: 5,
     durationMin: 30,
@@ -127,14 +126,8 @@ describe('QuestionGenerationProcessor', () => {
     await processor.process(makeJob()); // totalQuestions=5
 
     expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
-    expect(mockContextPack.getContextPack).toHaveBeenCalledWith(
-      'VN',
-      'rubric-v1',
-    );
-    expect(mockContextPack.getRubricSnapshot).toHaveBeenCalledWith(
-      'VN',
-      'rubric-v1',
-    );
+    expect(mockContextPack.getContextPack).toHaveBeenCalledWith('VN');
+    expect(mockContextPack.getRubricSnapshot).toHaveBeenCalledWith('VN');
     expect(mockStrategy.generateQuestions).toHaveBeenCalledWith(
       expect.objectContaining({ language: 'vi' }),
     );
@@ -213,10 +206,7 @@ describe('QuestionGenerationProcessor', () => {
       } as any),
     );
 
-    expect(mockContextPack.getContextPack).toHaveBeenCalledWith(
-      'Western',
-      'rubric-v1',
-    );
+    expect(mockContextPack.getContextPack).toHaveBeenCalledWith('Western');
     expect(mockStrategy.generateQuestions).toHaveBeenCalledWith(
       expect.objectContaining({ language: 'en' }),
     );
@@ -442,7 +432,7 @@ describe('QuestionGenerationProcessor', () => {
     });
   });
 
-  it('persist session_questions với rubric snapshot lấy theo rubric version của job', async () => {
+  it('persist session_questions với rubric snapshot lấy theo context hiện hành', async () => {
     const rubricSnapshot = {
       behavioral: { D1: { name: 'Communication', weight: 0.2 } },
       technical: {},

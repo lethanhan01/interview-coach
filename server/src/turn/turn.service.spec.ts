@@ -35,7 +35,6 @@ describe('TurnService', () => {
     status: 'active',
     sessionType: 'hr',
     contextPackId: 'VN',
-    rubricVersionId: 'rubric-v1',
     language: 'vi',
     numQuestions: 5,
   };
@@ -343,7 +342,6 @@ describe('TurnService', () => {
           competencyDomains: ['D1'],
           answerText: 'Tôi là developer với 2 năm kinh nghiệm.',
           contextPack: 'VN',
-          rubricVersionId: 'rubric-v1',
           sessionType: 'hr',
           language: 'vi',
         }),
@@ -481,7 +479,6 @@ describe('TurnService', () => {
           competencyDomains: ['TD3'],
           answerText: 'I chose pagination because it reduced memory usage.',
           contextPack: 'Western',
-          rubricVersionId: 'rubric-v1',
           sessionType: 'technical',
           language: 'vi',
         },
@@ -527,7 +524,6 @@ describe('TurnService', () => {
           sessionId: 'session-123',
           answerId: 'answer-1',
           audioFileUrl: 'https://storage.example.com/audio.webm',
-          rubricVersionId: 'rubric-v1',
           language: 'vi',
         }),
         expect.objectContaining({
@@ -718,7 +714,6 @@ describe('TurnService', () => {
           sessionId: 'session-123',
           answerId: 'answer-1',
           audioFileUrl: 'https://example.com/audio.mp3',
-          rubricVersionId: 'rubric-v1',
           language: 'vi',
         }),
         expect.objectContaining({

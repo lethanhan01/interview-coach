@@ -20,7 +20,6 @@ export interface RubricDimensionEntry {
 
 export interface ContextPackConfig {
   type: ContextPackType;
-  rubricVersionId?: string;
   rubricDimensions: RubricDimension[];
   behavioralDimensions: RubricDimensionEntry[];
   technicalDimensions: RubricDimensionEntry[];
@@ -34,41 +33,36 @@ export class ContextPackService {
 
   constructor(@Optional() private readonly prisma?: PrismaService) {}
 
-  async getContextPack(
-    type: ContextPackType,
-    rubricVersionId?: string | null,
-  ): Promise<ContextPackConfig> {
+  async getContextPack(type: ContextPackType): Promise<ContextPackConfig> {
     if (!this.prisma) return this.getLegacyContextPack(type);
 
     try {
-      const version = await this.prisma.rubricVersion.findFirst({
-        where: rubricVersionId
-          ? { id: rubricVersionId, contextPackId: type }
-          : { contextPackId: type, status: 'active' },
+      const categories = await this.prisma.rubricCategory.findMany({
+        where: { contextPackId: type },
+        orderBy: { displayOrder: 'asc' },
         include: {
-          categories: {
+          criteria: {
+            where: { active: true },
             orderBy: { displayOrder: 'asc' },
-            include: {
-              criteria: {
-                where: { active: true },
-                orderBy: { displayOrder: 'asc' },
-              },
-            },
           },
         },
       });
 
-      if (!version) {
+      const hasCompleteRubric =
+        categories.some((category) => category.categoryKey === 'behavioral') &&
+        categories.some((category) => category.categoryKey === 'technical') &&
+        categories.some((category) => category.criteria.length > 0);
+
+      if (!hasCompleteRubric) {
         this.logger.warn(
-          `No ${rubricVersionId ? 'requested' : 'active'} rubric version found for ${type}; falling back to static default rubric data.`,
+          `No complete rubric found for ${type}; falling back to static default rubric data.`,
         );
         return this.getLegacyContextPack(type);
       }
 
       return this.fromRubricCategories(
         type,
-        version.id,
-        version.categories.map((category) => ({
+        categories.map((category) => ({
           key: category.categoryKey as 'behavioral' | 'technical',
           label: category.label,
           weight: category.weight,
@@ -83,7 +77,7 @@ export class ContextPackService {
       );
     } catch (error: unknown) {
       this.logger.warn(
-        `Unable to read rubric version for ${type}; falling back to static default rubric data: ${
+        `Unable to read rubric for ${type}; falling back to static default rubric data: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );
@@ -93,9 +87,8 @@ export class ContextPackService {
 
   async getRubricSnapshot(
     type: ContextPackType,
-    rubricVersionId?: string | null,
   ): Promise<Prisma.InputJsonObject> {
-    const config = await this.getContextPack(type, rubricVersionId);
+    const config = await this.getContextPack(type);
     return buildRubricSnapshot([
       {
         key: 'behavioral',
@@ -132,14 +125,12 @@ export class ContextPackService {
 
     return this.fromRubricCategories(
       pack.id,
-      undefined,
       buildRubricCategoriesFromPack(pack),
     );
   }
 
   private fromRubricCategories(
     type: ContextPackType,
-    rubricVersionId: string | undefined,
     categories: RubricCategorySeed[],
   ): ContextPackConfig {
     const behavioral =
@@ -156,7 +147,6 @@ export class ContextPackService {
 
     return {
       type,
-      rubricVersionId,
       rubricDimensions,
       behavioralDimensions: behavioral.map((criterion) => ({
         id: criterion.code,

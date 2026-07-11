@@ -31,7 +31,6 @@ interface QuestionGenerationJobDto {
   jobDescriptionText: string;
   targetRoles: string[];
   contextPack: 'VN' | 'Western';
-  rubricVersionId?: string | null;
   language: string;
   totalQuestions: number;
   durationMin: number;
@@ -76,7 +75,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
       jobDescriptionText,
       targetRoles,
       contextPack,
-      rubricVersionId,
       language,
       totalQuestions,
       durationMin,
@@ -89,14 +87,10 @@ export class QuestionGenerationProcessor extends WorkerHost {
     let contextPackConfig: ContextPackConfig;
     let rubricSnapshot: object;
     try {
-      contextPackConfig = await this.contextPackService.getContextPack(
-        contextPack,
-        rubricVersionId,
-      );
-      rubricSnapshot = await this.contextPackService.getRubricSnapshot(
-        contextPack,
-        contextPackConfig.rubricVersionId ?? rubricVersionId,
-      );
+      contextPackConfig =
+        await this.contextPackService.getContextPack(contextPack);
+      rubricSnapshot =
+        await this.contextPackService.getRubricSnapshot(contextPack);
       const strategy = this.factory.getStrategy(sessionType);
       const rawAiQuestions = await strategy.generateQuestions({
         sessionType,
@@ -131,7 +125,6 @@ export class QuestionGenerationProcessor extends WorkerHost {
           sessionId,
           sessionType,
           contextPack,
-          rubricVersionId,
           outputLanguage,
           durationMin,
           totalQuestions,
@@ -269,14 +262,12 @@ export class QuestionGenerationProcessor extends WorkerHost {
     sessionId: string,
     sessionType: string,
     contextPack: string,
-    rubricVersionId: string | null | undefined,
     language: string,
     durationMin: number,
     totalQuestions: number,
   ): Promise<void> {
     const rubricSnapshot = await this.contextPackService.getRubricSnapshot(
       contextPack as 'VN' | 'Western',
-      rubricVersionId,
     );
     const selected = await this.questionBankService.selectFallbackQuestions(
       sessionType,

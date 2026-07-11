@@ -726,12 +726,12 @@ Tham chiếu SAD v1.1 §2.2. Tóm tắt để mapping sang components:
 ```mermaid
 flowchart TB
     L1["Layer 1 — Base System Prompt\nbất biến per prompt type\nVai trò AI, ngôn ngữ, JSON schema\nImplemented by: PromptBuilderService"]
-    L2["Layer 2 — Context Pack Overlay\nper session\nVN / Western active rubric version + cultural notes\nImplemented by: ContextPackService"]
+    L2["Layer 2 — Context Pack Overlay\nper session\nVN / Western current rubric + cultural notes\nImplemented by: ContextPackService"]
     L3["Layer 3 — Dynamic User Context\nper turn\njob_description, cv_context, question, user_answer\nImplemented by: PromptBuilderService.buildTurnContext()"]
     L1 --> L2 --> L3
 ```
 
-`ContextPackService` đọc active rubric version từ DB normalized tables (`rubric_versions`, `rubric_categories`, `rubric_criteria`) rồi map về contract prompt/evaluation hiện tại. Khi tạo session, backend lưu `rubric_version_id`; khi sinh câu hỏi, `session_questions.rubric_json` lưu snapshot từ version đó để phiên cũ không đổi nghĩa sau khi rubric mới được publish.
+`ContextPackService` đọc rubric hiện hành từ `rubric_categories.context_pack_id` và `rubric_criteria` rồi map về contract prompt/evaluation hiện tại. Khi sinh câu hỏi, `session_questions.rubric_json` lưu snapshot theo context để phiên cũ không đổi nghĩa nếu rubric gốc được chỉnh sau này.
 
 User input trong Layer 3 luôn được wrap: `<job_description>…</job_description>`, `<user_answer>…</user_answer>` — prompt injection prevention.
 

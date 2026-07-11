@@ -79,7 +79,6 @@ describe('FeedbackProcessor', () => {
     competencyDomains: ['D1', 'D6'],
     answerText: 'Tôi là backend developer.',
     contextPack: 'VN' as const,
-    rubricVersionId: 'rubric-v1',
     sessionType: 'hr' as const,
     language: 'vi' as const,
   };
@@ -330,13 +329,10 @@ describe('FeedbackProcessor', () => {
     expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
   });
 
-  it('đọc ContextPack theo rubricVersionId của session thay vì active hiện tại', async () => {
+  it('đọc ContextPack theo context của session', async () => {
     await processor.process(makeJob());
 
-    expect(mockContextPack.getContextPack).toHaveBeenCalledWith(
-      'VN',
-      'rubric-v1',
-    );
+    expect(mockContextPack.getContextPack).toHaveBeenCalledWith('VN');
   });
 
   it('evaluateAnswer được gọi với đúng FeedbackInput: sessionType, questionText, answerText', async () => {

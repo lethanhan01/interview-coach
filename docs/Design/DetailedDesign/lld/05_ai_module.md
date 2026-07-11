@@ -87,20 +87,13 @@ Layer 3 uses XML tags to delimit dynamic data and prevent prompt injection:
 
 ```typescript
 interface ContextPackService {
-  getContextPack(
-    type: ContextPack,
-    rubricVersionId?: string | null,
-  ): Promise<ContextPackConfig>;
+  getContextPack(type: ContextPack): Promise<ContextPackConfig>;
 
-  getRubricSnapshot(
-    type: ContextPack,
-    rubricVersionId?: string | null,
-  ): Promise<Record<string, unknown>>;
+  getRubricSnapshot(type: ContextPack): Promise<Record<string, unknown>>;
 }
 
 interface ContextPackConfig {
   type: ContextPack;
-  rubricVersionId?: string;
   rubricDimensions: RubricDimension[];
   behavioralDimensions: RubricDimensionEntry[];
   technicalDimensions: RubricDimensionEntry[];
@@ -112,7 +105,7 @@ interface ContextPackConfig {
 }
 ```
 
-`ContextPackService` ưu tiên đọc active `rubric_versions` từ DB, map `rubric_categories` và `rubric_criteria` về contract runtime hiện tại. Nếu DB chưa có active version, service fallback về legacy `CONTEXT_PACK_DATA` và log warning. Session mới lưu `interview_sessions.rubric_version_id`; `QuestionGenerationProcessor` dùng version này để tạo `session_questions.rubric_json` snapshot, bảo toàn lịch sử khi rubric gốc publish version mới.
+`ContextPackService` ưu tiên đọc rubric hiện hành từ `rubric_categories.context_pack_id` và `rubric_criteria` rồi map về contract runtime hiện tại. Nếu DB thiếu rubric cho context, service fallback về `CONTEXT_PACK_DATA` và log warning. `QuestionGenerationProcessor` tạo `session_questions.rubric_json` snapshot theo context để phiên cũ giữ nguyên tiêu chí chấm điểm đã dùng.
 
 ### 2.4 Pipeline Strategy Pattern
 

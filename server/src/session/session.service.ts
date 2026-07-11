@@ -78,19 +78,6 @@ export class SessionService {
       userId,
       dto.savedJobDescriptionId,
     );
-    let rubricVersionId: string;
-    try {
-      rubricVersionId = await this.referenceData.getActiveRubricVersionId(
-        dto.contextPack,
-      );
-    } catch {
-      throw new InterviewAIException(
-        ErrorCode.SERVICE_UNAVAILABLE,
-        HttpStatus.SERVICE_UNAVAILABLE,
-        'Không tìm thấy rubric đang hoạt động cho cấu hình phỏng vấn. Vui lòng đồng bộ dữ liệu rubric và thử lại.',
-      );
-    }
-
     const language = resolveOutputLanguage(dto.language);
 
     const session = await this.prisma.interviewSession.create({
@@ -103,7 +90,6 @@ export class SessionService {
         numQuestions: dto.numQuestions ?? 5,
         language,
         contextPackId: dto.contextPack,
-        rubricVersionId,
         status: 'generating',
       },
     });
@@ -117,7 +103,6 @@ export class SessionService {
           jobDescriptionText: dto.jobDescription,
           targetRoles: dto.targetRoles ?? [],
           contextPack: dto.contextPack,
-          rubricVersionId,
           language: session.language,
           totalQuestions: session.numQuestions,
           durationMin: session.durationMin,

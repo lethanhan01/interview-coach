@@ -23,7 +23,6 @@ const BASE_SESSION = {
   jobDescription: 'a'.repeat(100),
   sessionType: 'hr' as const,
   contextPackId: 'VN',
-  rubricVersionId: 'rubric-v1',
   language: 'vi',
   status: 'generating',
   numQuestions: 5,
@@ -47,7 +46,6 @@ describe('SessionService', () => {
   let mockReportService: ReturnType<typeof createMockReportService>;
   let mockReferenceData: {
     ensureContextPack: jest.Mock;
-    getActiveRubricVersionId: jest.Mock;
   };
   let mockConfig: ReturnType<typeof createMockConfigService>;
 
@@ -57,7 +55,6 @@ describe('SessionService', () => {
     mockReportService = createMockReportService();
     mockReferenceData = {
       ensureContextPack: jest.fn().mockResolvedValue(undefined),
-      getActiveRubricVersionId: jest.fn().mockResolvedValue('rubric-v1'),
     };
     mockConfig = createMockConfigService({
       SESSION_CREATION_LIMIT_PER_24H: 10,
@@ -102,16 +99,12 @@ describe('SessionService', () => {
           data: expect.objectContaining({
             userId: 'user-abc',
             language: 'vi',
-            rubricVersionId: 'rubric-v1',
             status: 'generating',
           }),
         }),
       );
       expect(result).toEqual(BASE_SESSION);
       expect(mockReferenceData.ensureContextPack).toHaveBeenCalledWith('VN');
-      expect(mockReferenceData.getActiveRubricVersionId).toHaveBeenCalledWith(
-        'VN',
-      );
     });
 
     it('enqueue question-generation job sau khi tạo', async () => {
@@ -129,7 +122,6 @@ describe('SessionService', () => {
           jobDescriptionText: CREATE_DTO.jobDescription,
           targetRoles: [],
           contextPack: 'VN',
-          rubricVersionId: 'rubric-v1',
           language: 'vi',
           totalQuestions: 5,
           durationMin: 30,
@@ -249,19 +241,6 @@ describe('SessionService', () => {
         service.create('user-abc', CREATE_DTO),
       ).rejects.toMatchObject({ errorCode: ErrorCode.SERVICE_UNAVAILABLE });
       expect(mockPrisma.interviewSession.create).not.toHaveBeenCalled();
-    });
-
-    it('trả SERVICE_UNAVAILABLE khi chưa có active rubric version', async () => {
-      mockPrisma.interviewSession.count.mockResolvedValue(0);
-      mockReferenceData.getActiveRubricVersionId.mockRejectedValue(
-        new Error('No active rubric version found'),
-      );
-
-      await expect(
-        service.create('user-abc', CREATE_DTO),
-      ).rejects.toMatchObject({ errorCode: ErrorCode.SERVICE_UNAVAILABLE });
-      expect(mockPrisma.interviewSession.create).not.toHaveBeenCalled();
-      expect(mockQuestionQueue.add).not.toHaveBeenCalled();
     });
 
     it('liên kết session với JD đã lưu thuộc user', async () => {

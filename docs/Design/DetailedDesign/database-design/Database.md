@@ -6,7 +6,7 @@
 **Engine:** PostgreSQL 15 via Supabase  
 **ORM:** Prisma 7 (`previewFeatures: ["partialIndexes"]`)  
 **Migration tool:** `prisma db push` — không có migration SQL files (xem D2)  
-**Tables in schema:** 15
+**Tables in schema:** 13
 
 ---
 
@@ -23,17 +23,19 @@
 | D7 | Partial indexes | Raw SQL files riêng | Prisma schema cho một số partial index; raw SQL cho `resumes(user_id) WHERE active = true` |
 | D8 | `QuestionUsage` indexes | `sort: Desc` trong plan | Retired cùng `question_usage` |
 | D9 | Report JSON columns | 6 JSONB columns trên `interview_sessions` | Đã tách sang `session_reports` ở T13 |
-| D10 | Rubric storage | Rubric gốc từng được dự kiến lưu dạng JSON trong context pack | Rubric gốc nằm trong `rubric_versions` / `rubric_categories` / `rubric_criteria`; chỉ `session_questions.rubric_json` giữ snapshot lịch sử |
+| D10 | Rubric storage | Rubric gốc từng được dự kiến lưu dạng JSON trong context pack hoặc versioned rubric | Rubric hiện hành nằm trực tiếp trong `rubric_categories.context_pack_id` và `rubric_criteria`; chỉ `session_questions.rubric_json` giữ snapshot lịch sử |
 
 ---
 
 ## Relations Overview
 
 ```
-context_packs ──< rubric_versions ──< rubric_categories ──< rubric_criteria
-       │                 │
-       ├──< question_bank└──< interview_sessions ──< session_questions ──< user_answers ─── ai_feedbacks ──< annotated_segments
-       │                                             └──< session_reports
+rubric_categories ──< rubric_criteria
+
+question_bank ──< session_questions ──< user_answers ─── ai_feedbacks ──< annotated_segments
+interview_sessions ──< session_questions
+interview_sessions ──< session_reports
+interview_sessions ──< user_answers
 
 users ──── user_profiles
   └──< resumes
@@ -45,12 +47,7 @@ Prisma relation fields (không phải DB columns):
 
 | Từ | Đến | Cardinality | onDelete |
 |----|-----|-------------|----------|
-| ContextPack | QuestionBank[] | 1:n | default (Restrict) |
-| ContextPack | InterviewSession[] | 1:n | default |
-| ContextPack | RubricVersion[] | 1:n | Cascade |
-| RubricVersion | RubricCategory[] | 1:n | Cascade |
-| RubricVersion | RubricCriterion[] | 1:n | Cascade |
-| RubricVersion | InterviewSession[] | 1:n | SetNull |
+| RubricCategory | RubricCriterion[] | 1:n | Cascade |
 | QuestionBank | SessionQuestion[] | 1:n | SET NULL (FK nullable) |
 | User | UserProfile? | 1:1 | Cascade |
 | User | Resume[] | 1:n | Cascade |
@@ -71,51 +68,19 @@ Prisma relation fields (không phải DB columns):
 
 Format: `Column — Type — Default — Nullable — Notes`
 
-### context_packs
-Prisma model: `ContextPack`
-
-| Column | DB Type | Default | Nullable | Notes |
-|--------|---------|---------|----------|-------|
-| id | TEXT PK | — | NO | Canonical values: `'VN'`, `'Western'`; legacy `'vn'`/`'western'` are normalized at bootstrap |
-| name | TEXT | — | NO | |
-| created_at | TIMESTAMPTZ | now() | NO | |
-
-Indexes: none.  
-Seed: 2 rows (`VN`, `Western`) — FK target, phải có trước mọi table khác.
-
----
-
-### rubric_versions
-Prisma model: `RubricVersion`  
-Versioned source of truth cho rubric theo context pack. Mỗi context pack có tối đa một version `active` nhờ partial unique index raw SQL.
-
-| Column | DB Type | Default | Nullable | Notes |
-|--------|---------|---------|----------|-------|
-| id | UUID PK | gen_random_uuid() | NO | |
-| context_pack_id | TEXT FK | — | NO | → context_packs.id ON DELETE CASCADE |
-| version | TEXT | — | NO | Ví dụ `v1` |
-| status | ENUM | `draft` | NO | `draft` \| `active` \| `archived` |
-| created_at | TIMESTAMPTZ | now() | NO | |
-| published_at | TIMESTAMPTZ | — | YES | Set khi publish/activate |
-
-Unique/indexes:
-- `rubric_versions_context_pack_version_key` on `(context_pack_id, version)`
-- `idx_rubric_versions_one_active_per_context_pack` partial unique on `(context_pack_id)` WHERE `status = 'active'`
-- `idx_rubric_versions_context_pack` on `(context_pack_id)`
-
 ### rubric_categories
 Prisma model: `RubricCategory`
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
-| rubric_version_id | UUID FK | — | NO | → rubric_versions.id ON DELETE CASCADE |
+| context_pack_id | TEXT | — | NO | CHECK `VN` hoặc `Western`; cấu hình nghiệp vụ, không còn FK tới `context_packs` |
 | category_key | TEXT | — | NO | `behavioral` hoặc `technical` |
 | label | TEXT | — | NO | Tên hiển thị |
 | weight | DOUBLE | — | NO | Trọng số category trong mixed session |
 | display_order | INT | 0 | NO | CHECK >= 0 |
 
-Unique/indexes: `(rubric_version_id, category_key)`, `idx_rubric_categories_version`.
+Unique/indexes: `(context_pack_id, category_key)`, `idx_rubric_categories_context_pack`.
 
 ### rubric_criteria
 Prisma model: `RubricCriterion`
@@ -123,7 +88,6 @@ Prisma model: `RubricCriterion`
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
-| rubric_version_id | UUID FK | — | NO | → rubric_versions.id ON DELETE CASCADE |
 | rubric_category_id | UUID FK | — | NO | → rubric_categories.id ON DELETE CASCADE |
 | code | TEXT | — | NO | Canonical codes `D1..D6`, `TD1..TD5` |
 | name | TEXT | — | NO | Tên tiêu chí |
@@ -131,7 +95,7 @@ Prisma model: `RubricCriterion`
 | display_order | INT | 0 | NO | CHECK >= 0 |
 | active | BOOLEAN | true | NO | |
 
-Unique/indexes: `(rubric_version_id, code)`, `idx_rubric_criteria_category`, `idx_rubric_criteria_version`.
+Unique/indexes: `(rubric_category_id, code)`, `idx_rubric_criteria_category`.
 
 ---
 
@@ -145,8 +109,8 @@ Fallback questions khi AI generation fail. Soft-delete via `deleted_at`.
 | content | TEXT | — | NO | Câu hỏi chính (ngôn ngữ mặc định) |
 | session_type | TEXT | — | NO | `'hr' \| 'technical' \| 'mixed'` — *D1* |
 | difficulty | INT | — | NO | Scale 1–5 |
-| context_pack_id | TEXT FK | — | NO | → context_packs.id |
-| competency_domains | TEXT[] | `{}` | NO | Một hoặc nhiều rubric codes hợp lệ trong active rubric của context pack |
+| context_pack_id | TEXT | — | NO | CHECK `VN` hoặc `Western` |
+| competency_domains | TEXT[] | `{}` | NO | Một hoặc nhiều rubric codes hợp lệ trong rubric hiện hành của context pack |
 | estimated_time_min | INT | — | YES | *D4 — mới* |
 | translations | JSONB | — | YES | *D4 — mới* — `{ vi?: string, en?: string }` |
 | content_json | JSONB | — | YES | *D4 — mới* — seed provenance/source tracking |
@@ -230,8 +194,7 @@ Session config + lifecycle state. Report payload đã tách sang `session_report
 | num_questions | INT | 5 | NO | |
 | duration_min | INT | 30 | NO | |
 | language | TEXT | 'vi' | NO | |
-| context_pack_id | TEXT FK | — | NO | → context_packs.id |
-| rubric_version_id | UUID FK | — | YES | → rubric_versions.id ON DELETE SET NULL; session mới lưu active version tại thời điểm tạo |
+| context_pack_id | TEXT | — | NO | CHECK `VN` hoặc `Western` |
 | status | TEXT | 'generating' | NO | CHECK ∈ `{generating, active, paused, canceled, completing, completed, error}` |
 | overall_score | INT | — | YES | CHECK NULL hoặc 0–100 |
 | completed_at | TIMESTAMPTZ | — | YES | |
@@ -241,7 +204,6 @@ Session config + lifecycle state. Report payload đã tách sang `session_report
 Indexes:
 - `idx_interview_sessions_created_at` on `(created_at DESC)`
 - `idx_interview_sessions_saved_jd` on `(saved_job_description_id)`
-- `idx_interview_sessions_rubric_version` on `(rubric_version_id)`
 - `idx_interview_sessions_user_created` on `(user_id, created_at DESC)`
 - `idx_interview_sessions_user_id` on `(user_id)`
 

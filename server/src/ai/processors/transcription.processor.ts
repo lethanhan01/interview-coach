@@ -25,7 +25,6 @@ export interface TranscriptionJobDto {
   audioDurationSeconds?: number;
   audioSizeBytes?: number;
   contextPack: 'VN' | 'Western';
-  rubricVersionId?: string | null;
   sessionType: SessionType;
   language?: OutputLanguage;
 }
@@ -52,7 +51,6 @@ export class TranscriptionProcessor extends WorkerHost {
       audioFileUrl,
       audioDurationSeconds: hintDuration,
       contextPack,
-      rubricVersionId,
       sessionType,
     } = job.data;
     const language = resolveOutputLanguage(job.data.language);
@@ -94,7 +92,6 @@ export class TranscriptionProcessor extends WorkerHost {
           [],
           answerText,
           contextPack,
-          rubricVersionId,
           sessionType,
           language,
         );
@@ -114,7 +111,6 @@ export class TranscriptionProcessor extends WorkerHost {
         competencyDomains: question.competencyDomains,
         answerText,
         contextPack,
-        rubricVersionId,
         sessionType,
         language,
       };
@@ -198,7 +194,6 @@ export class TranscriptionProcessor extends WorkerHost {
     competencyDomains: string[],
     answerText: string,
     contextPack: 'VN' | 'Western',
-    rubricVersionId: string | null | undefined,
     sessionType: SessionType,
     language: OutputLanguage,
   ): Promise<void> {
@@ -214,7 +209,6 @@ export class TranscriptionProcessor extends WorkerHost {
         competencyDomains,
         answerText,
         contextPack,
-        rubricVersionId,
         sessionType,
         language,
       },

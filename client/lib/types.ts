@@ -25,7 +25,6 @@ export interface RubricCategory {
 
 export interface RubricConfig {
   contextPackId: ContextPack;
-  rubricVersionId?: string;
   sessionType: SessionType;
   categories: RubricCategory[];
   hint: string;

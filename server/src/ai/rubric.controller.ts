@@ -47,7 +47,6 @@ export class RubricController {
 
     return {
       contextPackId,
-      rubricVersionId: config.rubricVersionId,
       sessionType,
       categories,
       hint: buildRubricHint(categories, sessionType),

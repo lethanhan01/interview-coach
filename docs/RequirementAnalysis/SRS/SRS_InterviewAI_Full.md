@@ -1106,7 +1106,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | **Tác nhân chính** | Candidate |
 | **Tác nhân phụ** | Hệ thống (load Context Pack config) |
 | **Tiền điều kiện** | Đây là Bước 3 trong UC-03; JD đã được nhập; số câu đã được chọn. |
-| **Hậu điều kiện** | `context_pack_id` và active `rubric_version_id` được ghi vào bản ghi phiên; rubric tương ứng được load vào bộ nhớ để sử dụng cho UC-04, UC-05, UC-07. |
+| **Hậu điều kiện** | `context_pack_id` được ghi vào bản ghi phiên; rubric hiện hành theo context được load vào bộ nhớ để sử dụng cho UC-04, UC-05, UC-07. |
 
 **Dữ liệu đầu vào:**
 
@@ -1127,7 +1127,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 2. Candidate đọc mô tả và chọn một trong hai pack.
 3. Hệ thống highlight card được chọn; hiển thị preview 1–2 tiêu chí chấm điểm của pack đó.
 4. Candidate nhấn **"Xác nhận"** (hoặc nhấn "Tiếp tục" để sang Bước 4 của UC-03).
-5. Hệ thống lưu `context_pack_id` vào session config; lấy active rubric version từ `rubric_versions` / `rubric_categories` / `rubric_criteria` theo context pack đã chọn.
+5. Hệ thống lưu `context_pack_id` vào session config; lấy rubric hiện hành từ `rubric_categories` / `rubric_criteria` theo context pack đã chọn.
 
 **Alternative Flow:**
 
@@ -1138,7 +1138,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | Mã lỗi | Tình huống | Xử lý |
 |---|---|---|
 | E-03b-1 | Candidate không chọn pack và nhấn Tiếp tục | Highlight yêu cầu chọn; hiển thị: "Vui lòng chọn một Context Pack trước khi tiếp tục." |
-| E-03b-2 | Không truy xuất được context pack hoặc active rubric version từ DB | Load rubric mặc định (VN) từ file config tĩnh; ghi log lỗi. |
+| E-03b-2 | Không truy xuất được rubric hiện hành theo context từ DB | Load rubric mặc định (VN) từ file config tĩnh; ghi log lỗi. |
 
 **Acceptance Criteria:**
 
@@ -1349,7 +1349,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | **Mô tả tóm tắt** | Backend gọi Feedback Analyzer cho từng câu hỏi, validate và lưu annotation. Sau khi tất cả câu hỏi được xử lý, tổng hợp Comprehensive Feedback Report gồm Executive Summary, Communication Analysis, Competency Heatmap, Reverse Questions Evaluation và Action Plan. |
 | **Tác nhân chính** | Hệ thống (kích hoạt tự động sau mỗi câu trả lời hoàn chỉnh) |
 | **Tác nhân phụ** | AI Engine (Feedback Analyzer), Database |
-| **Tiền điều kiện** | `user_answer` đã được lưu (bao gồm cả follow-up answer nếu có); `context_pack_id` và `rubric_version_id` đã xác định; rubric của phiên đã load. UC-05 được gọi thêm một lần sau khi UC-04 Giai đoạn 5 kết thúc (khi tất cả câu hỏi đã được trả lời) để tổng hợp toàn phiên. |
+| **Tiền điều kiện** | `user_answer` đã được lưu (bao gồm cả follow-up answer nếu có); `context_pack_id` đã xác định; rubric của phiên đã load theo context. UC-05 được gọi thêm một lần sau khi UC-04 Giai đoạn 5 kết thúc (khi tất cả câu hỏi đã được trả lời) để tổng hợp toàn phiên. |
 | **Hậu điều kiện** | Bản ghi `ai_feedbacks` và mảng `annotated_segments` được lưu vào DB per-question; `user_answer.feedback_generated = true`. `interview_sessions.executive_summary_json`, `comm_analysis_json`, `competency_heatmap_json`, `reverse_q_eval_json`, `action_plan_json` được lưu sau khi tổng hợp toàn phiên. |
 
 **Dữ liệu đầu vào:**
@@ -1366,7 +1366,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 2. Backend tổng hợp `FeedbackPayload`:
    - Lấy `original_question.text` từ `session_questions`.
    - Ghép transcript: `combined_transcript = main_answer.transcript + "\n[FOLLOW-UP]: " + follow_up_answer.transcript` (nếu có follow-up).
-   - Lấy `session.jd_text`, `session.context_pack_id`, `session.rubric_version_id` và rubric đã normalize theo version đó.
+   - Lấy `session.jd_text`, `session.context_pack_id` và rubric đã normalize theo context đó.
    - Lấy `user_profiles.cv_structured` (null nếu không có).
 3. Backend gửi `FeedbackPayload` đến FastAPI endpoint `POST /api/ai/feedback`.
 4. FastAPI xây dựng system prompt theo Context Pack (xem AI Spec trong UC-04).

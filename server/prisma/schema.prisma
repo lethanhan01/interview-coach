@@ -7,70 +7,32 @@ datasource db {
   provider = "postgresql"
 }
 
-model ContextPack {
-  id                String             @id
-  name              String
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  interviewSessions InterviewSession[]
-  questionBank      QuestionBank[]
-  rubricVersions    RubricVersion[]
-
-  @@map("context_packs")
-}
-
-enum RubricVersionStatus {
-  draft
-  active
-  archived
-}
-
-model RubricVersion {
-  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contextPackId     String              @map("context_pack_id")
-  version           String
-  status            RubricVersionStatus @default(draft)
-  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  publishedAt       DateTime?           @map("published_at") @db.Timestamptz(6)
-  contextPack       ContextPack         @relation(fields: [contextPackId], references: [id], onDelete: Cascade)
-  categories        RubricCategory[]
-  criteria          RubricCriterion[]
-  interviewSessions InterviewSession[]
-
-  @@unique([contextPackId, version], map: "rubric_versions_context_pack_version_key")
-  @@index([contextPackId], map: "idx_rubric_versions_context_pack")
-  @@map("rubric_versions")
-}
-
 model RubricCategory {
   id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  rubricVersionId String            @map("rubric_version_id") @db.Uuid
+  contextPackId   String            @map("context_pack_id")
   categoryKey     String            @map("category_key")
   label           String
   weight          Float
   displayOrder    Int               @default(0) @map("display_order")
-  rubricVersion   RubricVersion     @relation(fields: [rubricVersionId], references: [id], onDelete: Cascade)
   criteria        RubricCriterion[]
 
-  @@unique([rubricVersionId, categoryKey], map: "rubric_categories_version_category_key")
-  @@index([rubricVersionId], map: "idx_rubric_categories_version")
+  @@unique([contextPackId, categoryKey], map: "rubric_categories_context_category_key")
+  @@index([contextPackId], map: "idx_rubric_categories_context_pack")
   @@map("rubric_categories")
 }
 
 model RubricCriterion {
   id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  rubricVersionId String         @map("rubric_version_id") @db.Uuid
   rubricCategoryId String        @map("rubric_category_id") @db.Uuid
   code            String
   name            String
   weight          Float
   displayOrder    Int            @default(0) @map("display_order")
   active          Boolean        @default(true)
-  rubricVersion   RubricVersion  @relation(fields: [rubricVersionId], references: [id], onDelete: Cascade)
   rubricCategory  RubricCategory @relation(fields: [rubricCategoryId], references: [id], onDelete: Cascade)
 
-  @@unique([rubricVersionId, code], map: "rubric_criteria_version_code_key")
+  @@unique([rubricCategoryId, code], map: "rubric_criteria_category_code_key")
   @@index([rubricCategoryId], map: "idx_rubric_criteria_category")
-  @@index([rubricVersionId], map: "idx_rubric_criteria_version")
   @@map("rubric_criteria")
 }
 
@@ -92,7 +54,6 @@ model QuestionBank {
   deletedAt        DateTime?         @map("deleted_at") @db.Timestamptz(6)
   createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  contextPack      ContextPack       @relation(fields: [contextPackId], references: [id])
   sessionQuestions SessionQuestion[]
 
   @@index([contextPackId], map: "idx_question_bank_context_pack", where: raw("(deleted_at IS NULL)"))
@@ -170,14 +131,11 @@ model InterviewSession {
   remainingSeconds      Int?                 @map("remaining_seconds")
   language              String               @default("vi")
   contextPackId         String               @map("context_pack_id")
-  rubricVersionId       String?              @map("rubric_version_id") @db.Uuid
   status                String               @default("generating")
   overallScore          Int?                 @map("overall_score")
   completedAt           DateTime?            @map("completed_at") @db.Timestamptz(6)
   createdAt             DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  contextPack           ContextPack          @relation(fields: [contextPackId], references: [id])
-  rubricVersion         RubricVersion?       @relation(fields: [rubricVersionId], references: [id], onDelete: SetNull)
   savedJobDescription   SavedJobDescription? @relation(fields: [savedJobDescriptionId], references: [id], onDelete: SetNull)
   user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessionQuestions      SessionQuestion[]
@@ -186,7 +144,6 @@ model InterviewSession {
 
   @@index([createdAt(sort: Desc)], map: "idx_interview_sessions_created_at")
   @@index([savedJobDescriptionId], map: "idx_interview_sessions_saved_jd")
-  @@index([rubricVersionId], map: "idx_interview_sessions_rubric_version")
   @@index([userId, createdAt(sort: Desc)], map: "idx_interview_sessions_user_created")
   @@index([userId], map: "idx_interview_sessions_user_id")
   @@map("interview_sessions")
