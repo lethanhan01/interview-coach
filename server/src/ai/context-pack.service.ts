@@ -60,7 +60,7 @@ export class ContextPackService {
 
       if (!version) {
         this.logger.warn(
-          `No ${rubricVersionId ? 'requested' : 'active'} rubric version found for ${type}; falling back to legacy context-pack data.`,
+          `No ${rubricVersionId ? 'requested' : 'active'} rubric version found for ${type}; falling back to static default rubric data.`,
         );
         return this.getLegacyContextPack(type);
       }
@@ -83,7 +83,7 @@ export class ContextPackService {
       );
     } catch (error: unknown) {
       this.logger.warn(
-        `Unable to read rubric version for ${type}; falling back to legacy context-pack data: ${
+        `Unable to read rubric version for ${type}; falling back to static default rubric data: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );

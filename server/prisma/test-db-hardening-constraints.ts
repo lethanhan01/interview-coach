@@ -178,8 +178,8 @@ async function createFixture() {
   const savedJdB = randomUUID();
 
   await client.query(
-    `INSERT INTO context_packs (id, name, rubric_json, scoring_weights)
-     VALUES ($1, 'Constraint Test', '{}'::jsonb, '{}'::jsonb)`,
+    `INSERT INTO context_packs (id, name)
+     VALUES ($1, 'Constraint Test')`,
     [contextPack],
   );
 

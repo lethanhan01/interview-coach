@@ -72,8 +72,6 @@ describe('ReferenceDataService', () => {
       create: {
         id: 'VN',
         name: pack?.name,
-        rubricJson: pack?.rubricJson,
-        scoringWeights: pack?.scoringWeights,
       },
       update: {
         name: pack?.name,

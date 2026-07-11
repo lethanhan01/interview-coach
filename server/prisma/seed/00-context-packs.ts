@@ -10,8 +10,6 @@ export async function seedContextPacks(prisma: PrismaClient): Promise<void> {
         create: {
           id: pack.id,
           name: pack.name,
-          rubricJson: pack.rubricJson,
-          scoringWeights: pack.scoringWeights,
         },
         update: {
           name: pack.name,

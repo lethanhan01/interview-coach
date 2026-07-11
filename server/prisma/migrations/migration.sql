@@ -348,58 +348,20 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_resumes_one_active_per_user
 -- 4. Seed: context_packs
 -- -----------------------------------------------------------------------------
 
+ALTER TABLE context_packs
+  DROP COLUMN IF EXISTS rubric_json,
+  DROP COLUMN IF EXISTS scoring_weights;
+
 BEGIN;
 
-INSERT INTO context_packs (id, name, rubric_json, scoring_weights) VALUES
+INSERT INTO context_packs (id, name) VALUES
 (
   'VN',
-  'Vietnam Context Pack',
-  '{
-    "behavioral": {
-      "D1": { "name": "Giao tiếp & Trình bày",       "weight": 0.20 },
-      "D2": { "name": "Tư duy & Giải quyết vấn đề",  "weight": 0.20 },
-      "D3": { "name": "Làm việc nhóm",                "weight": 0.15 },
-      "D4": { "name": "Thái độ & Động lực",           "weight": 0.20 },
-      "D5": { "name": "Phù hợp văn hóa",              "weight": 0.15 },
-      "D6": { "name": "Tự nhận thức",                 "weight": 0.10 }
-    },
-    "technical": {
-      "TD1": { "name": "Kiến thức nền tảng",          "weight": 0.25 },
-      "TD2": { "name": "Khả năng áp dụng thực tế",   "weight": 0.25 },
-      "TD3": { "name": "Tư duy hệ thống",             "weight": 0.20 },
-      "TD4": { "name": "Code quality & Best practices","weight": 0.20 },
-      "TD5": { "name": "Debug & Problem-solving",     "weight": 0.10 }
-    }
-  }',
-  '{
-    "behavioral_weight": 0.50,
-    "technical_weight":  0.50
-  }'
+  'Vietnam Context Pack'
 ),
 (
   'Western',
-  'Western Context Pack',
-  '{
-    "behavioral": {
-      "D1": { "name": "Communication & Presentation",  "weight": 0.20 },
-      "D2": { "name": "Critical Thinking",             "weight": 0.20 },
-      "D3": { "name": "Collaboration & Teamwork",      "weight": 0.15 },
-      "D4": { "name": "Leadership & Initiative",       "weight": 0.20 },
-      "D5": { "name": "Culture Fit & Values",          "weight": 0.15 },
-      "D6": { "name": "Self-Awareness & Growth",       "weight": 0.10 }
-    },
-    "technical": {
-      "TD1": { "name": "Foundational Knowledge",       "weight": 0.20 },
-      "TD2": { "name": "Practical Application",        "weight": 0.25 },
-      "TD3": { "name": "Systems Thinking",             "weight": 0.20 },
-      "TD4": { "name": "Code Quality & Best Practices","weight": 0.20 },
-      "TD5": { "name": "Debug & Problem-solving",      "weight": 0.15 }
-    }
-  }',
-  '{
-    "behavioral_weight": 0.45,
-    "technical_weight":  0.55
-  }'
+  'Western Context Pack'
 )
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name;
@@ -483,9 +445,15 @@ CREATE INDEX IF NOT EXISTS idx_interview_sessions_rubric_version
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'chk_rubric_categories_category_key'
+    SELECT 1
+    FROM pg_constraint con
+    JOIN pg_class cls ON cls.oid = con.conrelid
+    JOIN pg_namespace ns ON ns.oid = cls.relnamespace
+    WHERE ns.nspname = 'public'
+      AND cls.relname = 'rubric_categories'
+      AND con.conname = 'chk_rubric_categories_category_key'
   ) THEN
-    ALTER TABLE rubric_categories
+    ALTER TABLE public.rubric_categories
       ADD CONSTRAINT chk_rubric_categories_category_key CHECK (category_key IN ('behavioral', 'technical'));
   END IF;
 

@@ -142,6 +142,8 @@ const retiredColumns = [
   ['interview_sessions', 'mode'],
   ['interview_sessions', 'show_prep_card'],
   ['interview_sessions', 'opening_transcript'],
+  ['context_packs', 'rubric_json'],
+  ['context_packs', 'scoring_weights'],
 ];
 
 async function main() {

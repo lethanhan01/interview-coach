@@ -26,8 +26,6 @@ export class ReferenceDataService implements OnApplicationBootstrap {
         create: {
           id: pack.id,
           name: pack.name,
-          rubricJson: pack.rubricJson,
-          scoringWeights: pack.scoringWeights,
         },
         update: {
           name: pack.name,

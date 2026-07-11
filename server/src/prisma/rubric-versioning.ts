@@ -19,11 +19,11 @@ export interface RubricCategorySeed {
 export function buildRubricCategoriesFromPack(
   pack: ContextPackData,
 ): RubricCategorySeed[] {
-  const rubricJson = pack.rubricJson as Record<
+  const rubricJson = pack.defaultRubricJson as Record<
     RubricCategoryKey,
     Record<string, { name?: unknown; weight?: unknown }>
   >;
-  const scoringWeights = pack.scoringWeights as Record<string, unknown>;
+  const scoringWeights = pack.defaultScoringWeights as Record<string, unknown>;
 
   return [
     {

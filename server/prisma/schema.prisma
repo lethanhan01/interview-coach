@@ -10,8 +10,6 @@ datasource db {
 model ContextPack {
   id                String             @id
   name              String
-  rubricJson        Json               @map("rubric_json")
-  scoringWeights    Json               @map("scoring_weights")
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   interviewSessions InterviewSession[]
   questionBank      QuestionBank[]

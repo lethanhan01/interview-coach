@@ -23,7 +23,7 @@
 | D7 | Partial indexes | Raw SQL files riêng | Prisma schema cho một số partial index; raw SQL cho `resumes(user_id) WHERE active = true` |
 | D8 | `QuestionUsage` indexes | `sort: Desc` trong plan | Retired cùng `question_usage` |
 | D9 | Report JSON columns | 6 JSONB columns trên `interview_sessions` | Đã tách sang `session_reports` ở T13 |
-| D10 | Rubric storage | Rubric gốc nằm trong `context_packs.rubric_json` | Rubric gốc nằm trong `rubric_versions` / `rubric_categories` / `rubric_criteria`; JSON cũ giữ làm legacy/cache |
+| D10 | Rubric storage | Rubric gốc từng được dự kiến lưu dạng JSON trong context pack | Rubric gốc nằm trong `rubric_versions` / `rubric_categories` / `rubric_criteria`; chỉ `session_questions.rubric_json` giữ snapshot lịch sử |
 
 ---
 
@@ -78,8 +78,6 @@ Prisma model: `ContextPack`
 |--------|---------|---------|----------|-------|
 | id | TEXT PK | — | NO | Canonical values: `'VN'`, `'Western'`; legacy `'vn'`/`'western'` are normalized at bootstrap |
 | name | TEXT | — | NO | |
-| rubric_json | JSONB | — | NO | Legacy/cache rubric JSON; normalized source of truth is `rubric_versions` |
-| scoring_weights | JSONB | — | NO | Legacy/cache category weights |
 | created_at | TIMESTAMPTZ | now() | NO | |
 
 Indexes: none.  

@@ -21,6 +21,10 @@ async function main() {
 
       DROP TABLE IF EXISTS question_usage;
 
+      ALTER TABLE context_packs
+        DROP COLUMN IF EXISTS rubric_json,
+        DROP COLUMN IF EXISTS scoring_weights;
+
       ALTER TABLE question_bank
         ADD COLUMN IF NOT EXISTS competency_domains TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
 

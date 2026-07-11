@@ -991,6 +991,11 @@ erDiagram
     users ||--o{ interview_sessions : creates
     context_packs ||--o{ question_bank : groups
     context_packs ||--o{ interview_sessions : configures
+    context_packs ||--o{ rubric_versions : owns
+    rubric_versions ||--o{ rubric_categories : groups
+    rubric_versions ||--o{ rubric_criteria : defines
+    rubric_categories ||--o{ rubric_criteria : contains
+    rubric_versions ||--o{ interview_sessions : selected_by
     saved_job_descriptions ||--o{ interview_sessions : reused_by
     interview_sessions ||--o{ session_questions : contains
     question_bank ||--o{ session_questions : source_for
@@ -1054,9 +1059,36 @@ erDiagram
     context_packs {
         TEXT id PK
         TEXT name
-        JSONB rubric_json
-        JSONB scoring_weights
         TIMESTAMPTZ created_at
+    }
+
+    rubric_versions {
+        UUID id PK
+        TEXT context_pack_id FK
+        TEXT version
+        TEXT status
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ published_at
+    }
+
+    rubric_categories {
+        UUID id PK
+        UUID rubric_version_id FK
+        TEXT category_key
+        TEXT label
+        FLOAT weight
+        INT display_order
+    }
+
+    rubric_criteria {
+        UUID id PK
+        UUID rubric_version_id FK
+        UUID rubric_category_id FK
+        TEXT code
+        TEXT name
+        FLOAT weight
+        INT display_order
+        BOOLEAN active
     }
 
     question_bank {
@@ -1065,7 +1097,7 @@ erDiagram
         QuestionSessionType session_type
         INT difficulty
         TEXT context_pack_id FK
-        TEXT competency_domain
+        TEXT_ARRAY competency_domains
         INT estimated_time_min
         JSONB translations
         JSONB content_json
@@ -1085,6 +1117,7 @@ erDiagram
         INT duration_min
         TEXT language
         TEXT context_pack_id FK
+        UUID rubric_version_id FK
         TEXT status
         INT overall_score
         TIMESTAMPTZ completed_at
@@ -1099,7 +1132,7 @@ erDiagram
         TEXT question_text
         INT order_index
         TEXT question_category
-        TEXT competency_domain
+        TEXT_ARRAY competency_domains
         JSONB rubric_json
         INT estimated_time_min
         TIMESTAMPTZ created_at
@@ -1159,21 +1192,60 @@ erDiagram
     }
 ```
 
-Các bảng có thể chia thành sáu nhóm chính. Nhóm người dùng gồm `users`, `user_profiles` và `resumes`, dùng để lưu tài khoản, hồ sơ ứng viên và dữ liệu CV đã phân tích. Nhóm Job Description và cấu hình gồm `saved_job_descriptions` và `context_packs`, dùng để lưu bối cảnh ứng tuyển, rubric và trọng số chấm điểm. Nhóm phiên phỏng vấn gồm `interview_sessions` và `session_questions`, ghi cấu hình phiên, trạng thái vòng đời và danh sách câu hỏi đã sinh cho từng phiên. Nhóm câu trả lời gồm `user_answers`, lưu câu trả lời văn bản hoặc transcript giọng nói, trạng thái bỏ qua và trạng thái feedback. Nhóm feedback gồm `ai_feedbacks` và `annotated_segments`, lưu điểm, nhận xét, câu trả lời mẫu và các đoạn được chú thích trong câu trả lời. Nhóm báo cáo gồm `session_reports`, lưu từng phần của báo cáo tổng hợp theo loại và phiên bản.
+Các bảng có thể chia thành bảy nhóm chính. Nhóm người dùng gồm `users`, `user_profiles` và `resumes`, dùng để lưu tài khoản, hồ sơ ứng viên và dữ liệu CV đã phân tích. Nhóm Job Description và cấu hình gồm `saved_job_descriptions` và `context_packs`, dùng để lưu bối cảnh ứng tuyển và lựa chọn context pack. Nhóm rubric gồm `rubric_versions`, `rubric_categories` và `rubric_criteria`, là nguồn dữ liệu gốc cho tiêu chí và trọng số chấm điểm. Nhóm phiên phỏng vấn gồm `interview_sessions` và `session_questions`, ghi cấu hình phiên, trạng thái vòng đời và danh sách câu hỏi đã sinh cho từng phiên. Nhóm câu trả lời gồm `user_answers`, lưu câu trả lời văn bản hoặc transcript giọng nói, trạng thái bỏ qua và trạng thái feedback. Nhóm feedback gồm `ai_feedbacks` và `annotated_segments`, lưu điểm, nhận xét, câu trả lời mẫu và các đoạn được chú thích trong câu trả lời. Nhóm báo cáo gồm `session_reports`, lưu từng phần của báo cáo tổng hợp theo loại và phiên bản.
 
 ### 4.6.2 Danh sách bảng dữ liệu
 
 **Bảng `context_packs`**
 
-Bảng `context_packs` lưu các bộ ngữ cảnh phỏng vấn, rubric và trọng số chấm điểm. Trong hệ thống hiện tại, bảng này là dữ liệu tham chiếu cho cả question bank và phiên phỏng vấn.
+Bảng `context_packs` lưu các bộ ngữ cảnh phỏng vấn như Việt Nam hoặc Western. Trong hệ thống hiện tại, bảng này là dữ liệu tham chiếu cho question bank, phiên phỏng vấn và các phiên bản rubric.
 
 | Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
 | ----- | ------------ | --------- | -------- | -------- | ------- |
 | `id` | `TEXT` | Khóa chính | Có | - | Mã context pack, ví dụ `VN` hoặc `Western`. |
 | `name` | `TEXT` | - | Có | - | Tên hiển thị của context pack. |
-| `rubric_json` | `JSONB` | - | Có | - | Rubric đánh giá năng lực theo context pack. |
-| `scoring_weights` | `JSONB` | - | Có | - | Trọng số dùng khi tính điểm theo rubric. |
 | `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo bản ghi. |
+
+**Bảng `rubric_versions`**
+
+Bảng `rubric_versions` lưu các phiên bản rubric theo từng context pack. Mỗi context pack có tối đa một phiên bản đang active để phiên mới có thể gắn đúng bộ tiêu chí tại thời điểm tạo.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã phiên bản rubric. |
+| `context_pack_id` | `TEXT` | Khóa ngoại tới `context_packs.id`, ON DELETE CASCADE | Có | - | Context pack sở hữu rubric version. |
+| `version` | `TEXT` | UNIQUE cùng `context_pack_id` | Có | - | Nhãn phiên bản, ví dụ `v1`. |
+| `status` | `TEXT` | Enum `draft`, `active`, `archived` | Có | `draft` | Trạng thái phiên bản rubric. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo phiên bản. |
+| `published_at` | `TIMESTAMPTZ(6)` | - | Không | - | Thời điểm publish nếu có. |
+
+**Bảng `rubric_categories`**
+
+Bảng `rubric_categories` lưu hai nhóm tiêu chí chính của một rubric version, gồm hành vi và kỹ thuật, kèm trọng số tổng của từng nhóm.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã nhóm rubric. |
+| `rubric_version_id` | `UUID` | Khóa ngoại tới `rubric_versions.id`, ON DELETE CASCADE | Có | - | Rubric version chứa nhóm này. |
+| `category_key` | `TEXT` | CHECK trong tập `behavioral`, `technical` | Có | - | Mã nhóm tiêu chí. |
+| `label` | `TEXT` | - | Có | - | Tên hiển thị của nhóm tiêu chí. |
+| `weight` | `DOUBLE PRECISION` | CHECK `>= 0` | Có | - | Trọng số nhóm. |
+| `display_order` | `INT` | CHECK `>= 0` | Có | `0` | Thứ tự hiển thị. |
+
+**Bảng `rubric_criteria`**
+
+Bảng `rubric_criteria` lưu từng tiêu chí chấm điểm trong một rubric version. Các mã tiêu chí này được dùng để kiểm tra `competency_domains` của câu hỏi và chuẩn hóa điểm feedback.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã tiêu chí rubric. |
+| `rubric_version_id` | `UUID` | Khóa ngoại tới `rubric_versions.id`, ON DELETE CASCADE | Có | - | Rubric version chứa tiêu chí. |
+| `rubric_category_id` | `UUID` | Khóa ngoại tới `rubric_categories.id`, ON DELETE CASCADE | Có | - | Nhóm rubric chứa tiêu chí. |
+| `code` | `TEXT` | UNIQUE cùng `rubric_version_id` | Có | - | Mã tiêu chí, ví dụ `D1` hoặc `TD1`. |
+| `name` | `TEXT` | - | Có | - | Tên tiêu chí. |
+| `weight` | `DOUBLE PRECISION` | CHECK `>= 0` | Có | - | Trọng số tiêu chí. |
+| `display_order` | `INT` | CHECK `>= 0` | Có | `0` | Thứ tự hiển thị. |
+| `active` | `BOOLEAN` | - | Có | `true` | Cho biết tiêu chí còn được dùng khi chấm điểm hay không. |
 
 **Bảng `question_bank`**
 
@@ -1186,7 +1258,7 @@ Bảng `question_bank` lưu ngân hàng câu hỏi nền để hệ thống ch�
 | `session_type` | `QuestionSessionType` | Enum `hr`, `technical` | Có | - | Loại câu hỏi trong ngân hàng câu hỏi. |
 | `difficulty` | `INT` | CHECK `difficulty BETWEEN 1 AND 5` | Có | - | Mức độ khó của câu hỏi. |
 | `context_pack_id` | `TEXT` | Khóa ngoại tới `context_packs.id` | Có | - | Context pack mà câu hỏi thuộc về. |
-| `competency_domain` | `TEXT` | - | Có | - | Nhóm năng lực hoặc tiêu chí mà câu hỏi đánh giá. |
+| `competency_domains` | `TEXT[]` | - | Có | `{}` | Một hoặc nhiều mã tiêu chí mà câu hỏi đánh giá. |
 | `estimated_time_min` | `INT` | CHECK `NULL` hoặc `> 0` | Không | - | Thời lượng ước tính cho câu hỏi. |
 | `translations` | `JSONB` | - | Không | - | Bản dịch câu hỏi theo ngôn ngữ nếu có. |
 | `content_json` | `JSONB` | - | Không | - | Metadata hoặc nguồn dữ liệu của câu hỏi. |
@@ -1277,6 +1349,7 @@ Bảng `interview_sessions` là bảng trung tâm của luồng AI Mock Intervie
 | `duration_min` | `INT` | CHECK `duration_min > 0` | Có | `30` | Thời lượng phiên theo phút. |
 | `language` | `TEXT` | - | Có | `vi` | Ngôn ngữ hiển thị hoặc ngôn ngữ trả kết quả. |
 | `context_pack_id` | `TEXT` | Khóa ngoại tới `context_packs.id` | Có | - | Context pack áp dụng cho phiên. |
+| `rubric_version_id` | `UUID` | Khóa ngoại tới `rubric_versions.id`, ON DELETE SET NULL | Không | - | Phiên bản rubric active tại thời điểm tạo phiên. |
 | `status` | `TEXT` | CHECK trong tập `generating`, `active`, `paused`, `canceled`, `completing`, `completed`, `error` | Có | `generating` | Trạng thái vòng đời của phiên. |
 | `overall_score` | `INT` | CHECK `NULL` hoặc từ `0` đến `100` | Không | - | Điểm tổng của phiên sau khi có báo cáo hợp lệ. |
 | `completed_at` | `TIMESTAMPTZ(6)` | - | Không | - | Thời điểm phiên hoàn thành. |
@@ -1295,7 +1368,7 @@ Bảng `session_questions` lưu danh sách câu hỏi thực tế của từng p
 | `question_text` | `TEXT` | - | Có | - | Nội dung câu hỏi đã hiển thị cho người dùng. |
 | `order_index` | `INT` | UNIQUE cùng `session_id` | Có | - | Thứ tự câu hỏi trong phiên. |
 | `question_category` | `TEXT` | - | Có | - | Nhóm câu hỏi, ví dụ HR hoặc technical. |
-| `competency_domain` | `TEXT` | - | Có | - | Nhóm năng lực được câu hỏi đánh giá. |
+| `competency_domains` | `TEXT[]` | - | Có | `{}` | Một hoặc nhiều mã tiêu chí được câu hỏi đánh giá. |
 | `rubric_json` | `JSONB` | - | Có | - | Rubric áp dụng cho câu hỏi tại thời điểm sinh. |
 | `estimated_time_min` | `INT` | - | Không | - | Thời gian ước tính cho câu hỏi. |
 | `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm lưu câu hỏi vào phiên. |
@@ -1381,7 +1454,7 @@ Quan hệ giữa `users` và `interview_sessions` là quan hệ 1-n. Mỗi phiê
 
 Quan hệ giữa `saved_job_descriptions` và `interview_sessions` là quan hệ 1-n nhưng khóa ngoại trong `interview_sessions` có thể để trống. Ràng buộc ON DELETE SET NULL giúp phiên cũ vẫn tồn tại nếu JD đã lưu bị xóa. Ngoài khóa ngoại thông thường, trigger `trg_interview_sessions_saved_jd_owner` kiểm tra `saved_job_description_id` phải trỏ tới JD thuộc cùng `user_id` với phiên, tránh trường hợp một phiên tham chiếu nhầm JD của người dùng khác.
 
-Quan hệ giữa `context_packs` và `question_bank` là quan hệ 1-n. Mỗi câu hỏi trong ngân hàng thuộc một context pack cụ thể để hệ thống chọn câu hỏi và rubric đúng bối cảnh. Quan hệ giữa `context_packs` và `interview_sessions` cũng là 1-n, vì mỗi phiên chỉ dùng một context pack nhưng một context pack có thể được dùng cho nhiều phiên.
+Quan hệ giữa `context_packs` và `question_bank` là quan hệ 1-n. Mỗi câu hỏi trong ngân hàng thuộc một context pack cụ thể để hệ thống chọn câu hỏi đúng bối cảnh. Quan hệ giữa `context_packs` và `rubric_versions` là quan hệ 1-n; mỗi context pack có thể có nhiều version rubric nhưng chỉ một version active cho phiên mới. Quan hệ giữa `rubric_versions` với `rubric_categories` và `rubric_criteria` là quan hệ 1-n, trong đó category gom nhóm các tiêu chí hành vi hoặc kỹ thuật. Quan hệ giữa `context_packs` và `interview_sessions` cũng là 1-n, còn `interview_sessions.rubric_version_id` ghi lại rubric version active tại thời điểm tạo phiên.
 
 Quan hệ giữa `interview_sessions` và `session_questions` là quan hệ 1-n. Ràng buộc UNIQUE `(session_id, order_index)` đảm bảo trong một phiên không có hai câu hỏi cùng thứ tự. Bảng `session_questions` lưu snapshot `question_text` và `rubric_json` để phiên cũ không bị thay đổi khi ngân hàng câu hỏi hoặc rubric gốc được cập nhật.
 
