@@ -96,6 +96,29 @@ describe('QuestionBankService', () => {
     );
   });
 
+  it('giữ full competencyDomains và lấy questionCategory theo domain đầu tiên', async () => {
+    mockPrisma.questionBank.findMany.mockResolvedValue([
+      {
+        id: 'mixed-technical-primary',
+        content: 'Describe a production bug and how you explained the fix.',
+        difficulty: 3,
+        competencyDomains: ['TD5', 'D1'],
+        estimatedTimeMin: 6,
+        translations: null,
+      },
+    ]);
+
+    const result = await service.selectFallbackQuestions('mixed', 'VN', 1, 'en');
+
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        questionBankId: 'mixed-technical-primary',
+        questionCategory: 'technical',
+        competencyDomains: ['TD5', 'D1'],
+      }),
+    );
+  });
+
   it('QG-10: query fallback chỉ theo sessionType, contextPack và non-deleted rows', async () => {
     mockPrisma.questionBank.findMany.mockResolvedValue([
       createMockQuestionBank({

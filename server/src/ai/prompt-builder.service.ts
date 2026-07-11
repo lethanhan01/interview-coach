@@ -36,7 +36,7 @@ Return ONLY a compact valid JSON object with exactly this shape, no markdown fen
   ]
 }
 
-Use "category" exactly as "behavioral" or "technical". Use "competency_domains" as one or more allowed rubric IDs (for example ["D1", "D6"] or ["TD1", "TD2"]), never dimension names or free-form phrases. Keep all IDs in one question within the question category.
+Use "category" exactly as "behavioral" or "technical" to indicate the question's primary category. Use "competency_domains" as one or more allowed rubric IDs (for example ["D1", "D6"], ["TD1", "TD2"], or in mixed interviews ["TD5", "D1"]), never dimension names or free-form phrases. In HR interviews use only D* IDs; in Technical interviews use only TD* IDs; in Mixed interviews include cross-category IDs only when the question truly gives evidence for both.
 
 Write the final JSON directly in the assistant message content.`,
   'surgical-feedback': `You are an expert interview coach. Evaluate the candidate's answer and provide surgical, actionable feedback.

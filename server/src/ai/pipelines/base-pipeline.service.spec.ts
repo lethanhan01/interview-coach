@@ -516,6 +516,40 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       );
     });
 
+    it('mixed + cross-category competencyDomains chấm cả technical và behavioral target domains', async () => {
+      const rawFeedback = {
+        applied_dimensions: [
+          { id: 'D1', score: 80 },
+          { id: 'TD2', score: 80 },
+          { id: 'TD1', score: 20 },
+        ],
+        model_answer: 'A.',
+        key_takeaway: 'B.',
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      const result = await mixedService.evaluateAnswer({
+        ...feedbackInput,
+        sessionType: 'mixed',
+        questionCategory: 'technical',
+        competencyDomains: ['TD2', 'D1'],
+      });
+
+      expect(result.overallScore).toBe(80);
+      expect(result.appliedDimensions.map((dimension) => dimension.id)).toEqual([
+        'D1',
+        'TD2',
+      ]);
+      expect(mockPromptBuilder.applyContextPackForEvaluation).toHaveBeenCalledWith(
+        expect.any(String),
+        mockContextPack,
+        'mixed',
+        { competencyDomains: ['TD2', 'D1'] },
+      );
+    });
+
     it('logger.warn được gọi khi zodValidator.validate ném lỗi rồi re-throw', async () => {
       const rawFeedback = { overall_score: 'bad' };
       mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));

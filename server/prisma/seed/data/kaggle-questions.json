@@ -110,7 +110,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -148,7 +149,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -186,7 +188,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD4"
     ]
   },
   {
@@ -300,7 +303,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -376,7 +380,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD4"
     ]
   },
   {
@@ -490,7 +495,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD4"
     ]
   },
   {
@@ -870,7 +876,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD2",
+      "TD3"
     ]
   },
   {
@@ -1060,7 +1068,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD5"
     ]
   },
   {
@@ -1178,7 +1187,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1220,7 +1230,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1262,7 +1273,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1346,7 +1358,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD5"
     ]
   },
   {
@@ -1388,7 +1401,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1430,7 +1444,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1472,7 +1487,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1514,7 +1530,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1556,7 +1573,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD5"
     ]
   },
   {
@@ -1594,7 +1612,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1632,7 +1651,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1670,7 +1690,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1746,7 +1767,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1784,7 +1806,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1822,7 +1845,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1860,7 +1884,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1898,7 +1923,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -1974,7 +2000,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -2012,7 +2039,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -2050,7 +2078,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -2126,7 +2155,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1",
+      "TD5"
     ]
   },
   {
@@ -2164,7 +2195,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -2202,7 +2234,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -2240,7 +2273,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -2278,7 +2312,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -2316,7 +2351,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -2354,7 +2390,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1",
+      "TD3"
     ]
   },
   {
@@ -2392,7 +2430,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1",
+      "TD3"
     ]
   },
   {
@@ -2430,7 +2470,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -2506,7 +2547,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -2582,7 +2624,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -2620,7 +2663,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -2658,7 +2702,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -2696,7 +2741,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD3"
     ]
   },
   {
@@ -2734,7 +2780,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -2772,7 +2820,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD1"
     ]
   },
   {
@@ -2810,7 +2859,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD1"
     ]
   },
   {
@@ -2848,7 +2898,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD1"
     ]
   },
   {
@@ -2924,7 +2975,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD1"
     ]
   },
   {
@@ -2962,7 +3014,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD1"
     ]
   },
   {
@@ -3000,7 +3053,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2"
     ]
   },
   {
@@ -3076,7 +3130,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -3114,7 +3170,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -3152,7 +3209,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -3190,7 +3248,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -3228,7 +3287,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -3266,7 +3326,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -3342,7 +3403,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -3380,7 +3442,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1",
+      "TD3"
     ]
   },
   {
@@ -3456,7 +3520,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD2"
     ]
   },
   {
@@ -3495,7 +3560,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -3534,7 +3600,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -3573,7 +3640,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -3612,7 +3680,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD2",
+      "TD3"
     ]
   },
   {
@@ -3651,7 +3721,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -3690,7 +3761,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD3"
     ]
   },
   {
@@ -3729,7 +3801,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD3"
     ]
   },
   {
@@ -3768,7 +3841,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -3807,7 +3882,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -3846,7 +3922,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD3"
     ]
   },
   {
@@ -3886,7 +3963,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -3925,7 +4003,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD3"
     ]
   },
   {
@@ -3965,7 +4044,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4005,7 +4085,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4045,7 +4126,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4085,7 +4167,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4124,7 +4207,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -4165,7 +4249,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4206,7 +4291,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD3"
     ]
   },
   {
@@ -4246,7 +4332,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1",
+      "TD3"
     ]
   },
   {
@@ -4286,7 +4374,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4325,7 +4414,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -4365,7 +4455,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4405,7 +4496,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4445,7 +4537,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4485,7 +4578,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4524,7 +4618,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -4565,7 +4660,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD5"
     ]
   },
   {
@@ -4605,7 +4701,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1",
+      "TD3"
     ]
   },
   {
@@ -4646,7 +4744,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4686,7 +4785,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4725,7 +4825,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD3"
     ]
   },
   {
@@ -4765,7 +4866,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4805,7 +4907,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -4843,7 +4946,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2"
     ]
   },
   {
@@ -4881,7 +4985,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -4919,7 +5024,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2"
     ]
   },
   {
@@ -4957,7 +5063,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD3"
     ]
   },
   {
@@ -4995,7 +5102,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD4"
     ]
   },
   {
@@ -5033,7 +5141,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD1"
     ]
   },
   {
@@ -5071,7 +5180,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD5"
     ]
   },
   {
@@ -5109,7 +5219,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2"
     ]
   },
   {
@@ -5147,7 +5258,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD1"
     ]
   },
   {
@@ -5185,7 +5297,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2",
+      "TD5"
     ]
   },
   {
@@ -5223,7 +5337,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD1"
     ]
   },
   {
@@ -5261,7 +5376,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -5337,7 +5453,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -5375,7 +5492,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -5417,7 +5536,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD3"
     ]
   },
   {
@@ -5455,7 +5575,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD2"
     ]
   },
   {
@@ -5497,7 +5618,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD3"
     ]
   },
   {
@@ -5535,7 +5657,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -5573,7 +5697,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2"
     ]
   },
   {
@@ -5649,7 +5774,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD5"
     ]
   },
   {
@@ -5687,7 +5813,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2"
     ]
   },
   {
@@ -5725,7 +5852,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2",
+      "TD5"
     ]
   },
   {
@@ -5763,7 +5892,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD2",
+      "TD3"
     ]
   },
   {
@@ -5839,7 +5970,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD1"
     ]
   },
   {
@@ -5877,7 +6009,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD4"
     ]
   },
   {
@@ -5915,7 +6048,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -5953,7 +6087,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD2"
     ]
   },
   {
@@ -5991,7 +6126,9 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2",
+      "TD5"
     ]
   },
   {
@@ -6029,7 +6166,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2"
     ]
   },
   {
@@ -6067,7 +6205,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -6105,7 +6244,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2"
     ]
   },
   {
@@ -6143,7 +6283,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD5"
     ]
   },
   {
@@ -6181,7 +6322,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -6219,7 +6361,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2"
     ]
   },
   {
@@ -6257,7 +6400,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -6295,7 +6439,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -6333,7 +6478,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2"
     ]
   },
   {
@@ -6409,7 +6555,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -6447,7 +6594,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD1"
     ]
   },
   {
@@ -6485,7 +6633,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD1"
     ]
   },
   {
@@ -6527,7 +6676,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD3"
     ]
   },
   {
@@ -6565,7 +6715,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2"
     ]
   },
   {
@@ -6603,7 +6754,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD2"
+      "TD2",
+      "TD3"
     ]
   },
   {
@@ -6641,7 +6793,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD1"
+      "TD1",
+      "TD2"
     ]
   },
   {
@@ -6679,7 +6832,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD4"
+      "TD4",
+      "TD2"
     ]
   },
   {
@@ -6717,7 +6871,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "TD3"
+      "TD3",
+      "TD2"
     ]
   },
   {
@@ -6833,7 +6988,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D6"
+      "D6",
+      "D2"
     ]
   },
   {
@@ -7061,7 +7217,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D4"
+      "D4",
+      "D6"
     ]
   },
   {
@@ -7137,7 +7294,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D3"
+      "D3",
+      "D2"
     ]
   },
   {
@@ -7177,7 +7335,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D3"
+      "D3",
+      "D2"
     ]
   },
   {
@@ -7217,7 +7376,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D3"
+      "D3",
+      "D1"
     ]
   },
   {
@@ -7257,7 +7417,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D3"
+      "D3",
+      "D2"
     ]
   },
   {
@@ -7295,7 +7456,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D3"
+      "D3",
+      "D2"
     ]
   },
   {
@@ -7333,7 +7495,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D5"
+      "D5",
+      "D3"
     ]
   },
   {
@@ -7371,7 +7534,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D5"
+      "D5",
+      "D3"
     ]
   },
   {
@@ -7409,7 +7573,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D5"
+      "D5",
+      "D3"
     ]
   },
   {
@@ -7449,7 +7614,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D5"
+      "D5",
+      "D3"
     ]
   },
   {
@@ -7487,7 +7653,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D5"
+      "D5",
+      "D3"
     ]
   },
   {
@@ -7525,7 +7692,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D4"
+      "D4",
+      "D1"
     ]
   },
   {
@@ -7565,7 +7733,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D4"
+      "D4",
+      "D1"
     ]
   },
   {
@@ -7605,7 +7774,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D4"
+      "D4",
+      "D1"
     ]
   },
   {
@@ -7645,7 +7815,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D4"
+      "D4",
+      "D1"
     ]
   },
   {
@@ -7685,7 +7856,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D4"
+      "D4",
+      "D1"
     ]
   },
   {
@@ -7763,7 +7935,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D4"
+      "D4",
+      "D5"
     ]
   },
   {
@@ -7915,7 +8088,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D3"
+      "D3",
+      "D1"
     ]
   },
   {
@@ -7953,7 +8127,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D3"
+      "D3",
+      "D1"
     ]
   },
   {
@@ -7991,7 +8166,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D3"
+      "D3",
+      "D1"
     ]
   },
   {
@@ -8031,7 +8207,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D3"
+      "D3",
+      "D1"
     ]
   },
   {
@@ -8069,7 +8246,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D3"
+      "D3",
+      "D1"
     ]
   },
   {
@@ -8107,7 +8285,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D5"
+      "D5",
+      "D2"
     ]
   },
   {
@@ -8145,7 +8324,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D5"
+      "D5",
+      "D2"
     ]
   },
   {
@@ -8185,7 +8365,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D5"
+      "D5",
+      "D3"
     ]
   },
   {
@@ -8263,7 +8444,8 @@
       "vi": ""
     },
     "competencyDomains": [
-      "D5"
+      "D5",
+      "D3"
     ]
   }
 ]

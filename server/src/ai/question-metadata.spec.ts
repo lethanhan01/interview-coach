@@ -72,7 +72,7 @@ describe('question metadata helpers', () => {
     });
   });
 
-  it('normalize mảng nhiều tiêu chí, bỏ trùng và giữ đúng nhóm trong mixed', () => {
+  it('normalize mảng nhiều tiêu chí, bỏ trùng và giữ cả cross-category domains trong mixed', () => {
     expect(
       normalizeGeneratedQuestionMetadata(
         {
@@ -84,7 +84,7 @@ describe('question metadata helpers', () => {
       ),
     ).toEqual({
       questionCategory: 'technical',
-      competencyDomains: ['TD1', 'TD2'],
+      competencyDomains: ['TD1', 'TD2', 'D1'],
       matchBranch: 'exact',
     });
 
@@ -99,7 +99,7 @@ describe('question metadata helpers', () => {
       ),
     ).toEqual({
       questionCategory: 'behavioral',
-      competencyDomains: ['D2'],
+      competencyDomains: ['TD1', 'D2'],
       matchBranch: 'exact',
     });
   });
@@ -112,7 +112,7 @@ describe('question metadata helpers', () => {
           competencyDomains: ['D1', 'unknown'],
         },
         contextPack,
-        'mixed',
+        'technical',
       ),
     ).toBeNull();
   });

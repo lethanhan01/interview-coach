@@ -133,16 +133,10 @@ export function normalizeGeneratedQuestionMetadata(
   const requestedCategory =
     sessionType === 'mixed' ? normalizeQuestionCategory(input.category) : null;
   const primaryCategory = requestedCategory ?? categoryFromDomain(resolvedDomains[0]);
-  const categoryFilteredDomains = resolvedDomains.filter(
-    (domain) => categoryFromDomain(domain) === primaryCategory,
-  );
-  if (categoryFilteredDomains.length === 0) {
-    return null;
-  }
 
   return {
     questionCategory: primaryCategory,
-    competencyDomains: categoryFilteredDomains,
+    competencyDomains: resolvedDomains,
     matchBranch,
   };
 }
