@@ -99,13 +99,14 @@ describe('SessionController', () => {
   });
 
   describe('GET /sessions/:id/questions', () => {
-    it('trả về { questions: [...] }', async () => {
+    it('trả về questions kèm currentIndex từ service', async () => {
       const questions = [{ id: 'q-1', content: 'Giới thiệu?', orderIndex: 1 }];
-      mockSessionService.findQuestions.mockResolvedValue(questions);
+      const response = { questions, currentIndex: 0 };
+      mockSessionService.findQuestions.mockResolvedValue(response);
 
       const result = await controller.findQuestions('session-1', mockReq());
 
-      expect(result).toEqual({ questions });
+      expect(result).toEqual(response);
       expect(mockSessionService.findQuestions).toHaveBeenCalledWith(
         'session-1',
         'user-abc',

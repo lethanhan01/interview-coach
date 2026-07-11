@@ -17,6 +17,14 @@ interface Question {
   id: string
   content: string
   orderIndex: number
+  answered?: boolean
+  answerId?: string
+  skipped?: boolean
+}
+
+interface QuestionsResponse {
+  questions: Question[]
+  currentIndex?: number
 }
 
 type AnswerMode = 'text' | 'voice'
@@ -53,10 +61,11 @@ export default function InterviewPage() {
   }, [questionsReady])
 
   const loadReadyQuestions = useCallback(async (): Promise<boolean> => {
-    const qs = await apiClient.get<{ questions: Question[] }>(`/sessions/${sessionId}/questions`)
+    const qs = await apiClient.get<QuestionsResponse>(`/sessions/${sessionId}/questions`)
     if (qs.questions.length === 0) return false
 
     setQuestions(qs.questions)
+    setCurrentIndex(Math.min(qs.currentIndex ?? 0, qs.questions.length - 1))
     setQuestionsReady(true)
     setError(null)
     setLoading(false)

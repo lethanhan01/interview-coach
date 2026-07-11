@@ -639,19 +639,41 @@ describe('SessionService', () => {
           sessionId: '11111111-1111-4111-8111-111111111111',
         },
       ]);
+      mockPrisma.userAnswer.findMany.mockResolvedValue([]);
 
       const result = await service.findQuestions(
         '11111111-1111-4111-8111-111111111111',
         'user-abc',
       );
 
-      expect(result).toEqual([
-        { id: 'q-1', content: 'Giới thiệu bản thân?', orderIndex: 1 },
-        { id: 'q-2', content: 'Điểm mạnh của bạn?', orderIndex: 2 },
-      ]);
+      expect(result).toEqual({
+        questions: [
+          {
+            id: 'q-1',
+            content: 'Giới thiệu bản thân?',
+            orderIndex: 1,
+            answered: false,
+            answerId: undefined,
+            skipped: undefined,
+          },
+          {
+            id: 'q-2',
+            content: 'Điểm mạnh của bạn?',
+            orderIndex: 2,
+            answered: false,
+            answerId: undefined,
+            skipped: undefined,
+          },
+        ],
+        currentIndex: 0,
+      });
       expect(mockPrisma.sessionQuestion.findMany).toHaveBeenCalledWith({
         where: { sessionId: '11111111-1111-4111-8111-111111111111' },
         orderBy: { orderIndex: 'asc' },
+      });
+      expect(mockPrisma.userAnswer.findMany).toHaveBeenCalledWith({
+        where: { sessionId: '11111111-1111-4111-8111-111111111111' },
+        select: { id: true, questionId: true, skipped: true },
       });
       expect(mockPrisma.interviewSession.update).not.toHaveBeenCalled();
     });
@@ -669,6 +691,7 @@ describe('SessionService', () => {
           sessionId: '11111111-1111-4111-8111-111111111111',
         },
       ]);
+      mockPrisma.userAnswer.findMany.mockResolvedValue([]);
       mockPrisma.interviewSession.update.mockResolvedValue({
         ...BASE_SESSION,
         status: 'active',
@@ -698,6 +721,7 @@ describe('SessionService', () => {
           sessionId: '11111111-1111-4111-8111-111111111111',
         },
       ]);
+      mockPrisma.userAnswer.findMany.mockResolvedValue([]);
       mockPrisma.interviewSession.update.mockResolvedValue({
         ...BASE_SESSION,
         status: 'active',
@@ -737,6 +761,142 @@ describe('SessionService', () => {
           'user-abc',
         ),
       ).rejects.toThrow(InterviewAIException);
+    });
+
+    it('resume trả currentIndex là câu chưa trả lời đầu tiên', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'paused',
+      });
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Giới thiệu bản thân?',
+          orderIndex: 1,
+          sessionId: '11111111-1111-4111-8111-111111111111',
+        },
+        {
+          id: 'q-2',
+          questionText: 'Điểm mạnh của bạn?',
+          orderIndex: 2,
+          sessionId: '11111111-1111-4111-8111-111111111111',
+        },
+        {
+          id: 'q-3',
+          questionText: 'Bạn xử lý áp lực thế nào?',
+          orderIndex: 3,
+          sessionId: '11111111-1111-4111-8111-111111111111',
+        },
+      ]);
+      mockPrisma.userAnswer.findMany.mockResolvedValue([
+        { id: 'a-1', questionId: 'q-1', skipped: false },
+        { id: 'a-2', questionId: 'q-2', skipped: false },
+      ]);
+
+      const result = await service.findQuestions(
+        '11111111-1111-4111-8111-111111111111',
+        'user-abc',
+      );
+
+      expect(result.currentIndex).toBe(2);
+      expect(result.questions.map((q) => q.answered)).toEqual([
+        true,
+        true,
+        false,
+      ]);
+    });
+
+    it('resume coi skipped answer là đã xử lý', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'paused',
+      });
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Giới thiệu bản thân?',
+          orderIndex: 1,
+          sessionId: '11111111-1111-4111-8111-111111111111',
+        },
+        {
+          id: 'q-2',
+          questionText: 'Điểm mạnh của bạn?',
+          orderIndex: 2,
+          sessionId: '11111111-1111-4111-8111-111111111111',
+        },
+      ]);
+      mockPrisma.userAnswer.findMany.mockResolvedValue([
+        { id: 'a-1', questionId: 'q-1', skipped: true },
+      ]);
+
+      const result = await service.findQuestions(
+        '11111111-1111-4111-8111-111111111111',
+        'user-abc',
+      );
+
+      expect(result.currentIndex).toBe(1);
+      expect(result.questions[0]).toMatchObject({
+        answered: true,
+        answerId: 'a-1',
+        skipped: true,
+      });
+    });
+
+    it('resume session chưa có answer thì currentIndex = 0', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'paused',
+      });
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Giới thiệu bản thân?',
+          orderIndex: 1,
+          sessionId: '11111111-1111-4111-8111-111111111111',
+        },
+      ]);
+      mockPrisma.userAnswer.findMany.mockResolvedValue([]);
+
+      const result = await service.findQuestions(
+        '11111111-1111-4111-8111-111111111111',
+        'user-abc',
+      );
+
+      expect(result.currentIndex).toBe(0);
+      expect(result.questions[0].answered).toBe(false);
+    });
+
+    it('resume session đã trả lời đủ thì không quay về câu đầu', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'active',
+      });
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Giới thiệu bản thân?',
+          orderIndex: 1,
+          sessionId: '11111111-1111-4111-8111-111111111111',
+        },
+        {
+          id: 'q-2',
+          questionText: 'Điểm mạnh của bạn?',
+          orderIndex: 2,
+          sessionId: '11111111-1111-4111-8111-111111111111',
+        },
+      ]);
+      mockPrisma.userAnswer.findMany.mockResolvedValue([
+        { id: 'a-1', questionId: 'q-1', skipped: false },
+        { id: 'a-2', questionId: 'q-2', skipped: false },
+      ]);
+
+      const result = await service.findQuestions(
+        '11111111-1111-4111-8111-111111111111',
+        'user-abc',
+      );
+
+      expect(result.currentIndex).toBe(1);
+      expect(result.questions.every((q) => q.answered)).toBe(true);
     });
   });
 });

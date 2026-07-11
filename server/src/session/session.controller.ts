@@ -64,9 +64,7 @@ export class SessionController {
     @Param('id') id: string,
     @Req() req: { user: { id: string } },
   ) {
-    return {
-      questions: await this.sessionService.findQuestions(id, req.user.id),
-    };
+    return this.sessionService.findQuestions(id, req.user.id);
   }
 
   @Get(':id/feedback-progress')

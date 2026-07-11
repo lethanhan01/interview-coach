@@ -167,12 +167,28 @@ export class SessionService {
   async findQuestions(
     sessionId: string,
     userId: string,
-  ): Promise<{ id: string; content: string; orderIndex: number }[]> {
+  ): Promise<{
+    questions: {
+      id: string;
+      content: string;
+      orderIndex: number;
+      answered: boolean;
+      answerId?: string;
+      skipped?: boolean;
+    }[];
+    currentIndex: number;
+  }> {
     const session = await this.findById(sessionId, userId);
-    const questions = await this.prisma.sessionQuestion.findMany({
-      where: { sessionId },
-      orderBy: { orderIndex: 'asc' },
-    });
+    const [questions, answers] = await Promise.all([
+      this.prisma.sessionQuestion.findMany({
+        where: { sessionId },
+        orderBy: { orderIndex: 'asc' },
+      }),
+      this.prisma.userAnswer.findMany({
+        where: { sessionId },
+        select: { id: true, questionId: true, skipped: true },
+      }),
+    ]);
 
     if (
       questions.length > 0 &&
@@ -184,11 +200,27 @@ export class SessionService {
       });
     }
 
-    return questions.map((q) => ({
-      id: q.id,
-      content: q.questionText,
-      orderIndex: q.orderIndex,
-    }));
+    const answersByQuestionId = new Map(
+      answers.map((answer) => [answer.questionId, answer]),
+    );
+    const mappedQuestions = questions.map((q) => {
+      const answer = answersByQuestionId.get(q.id);
+      return {
+        id: q.id,
+        content: q.questionText,
+        orderIndex: q.orderIndex,
+        answered: Boolean(answer),
+        answerId: answer?.id,
+        skipped: answer?.skipped,
+      };
+    });
+    const firstUnansweredIndex = mappedQuestions.findIndex((q) => !q.answered);
+    const currentIndex =
+      firstUnansweredIndex >= 0
+        ? firstUnansweredIndex
+        : Math.max(0, mappedQuestions.length - 1);
+
+    return { questions: mappedQuestions, currentIndex };
   }
 
   async updateStatus(
