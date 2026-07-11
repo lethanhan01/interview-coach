@@ -28,6 +28,7 @@ const BASE_JOB_DATA = {
   audioDurationSeconds: 60,
   audioSizeBytes: 1024,
   contextPack: 'VN' as const,
+  rubricVersionId: 'rubric-v1',
   sessionType: 'hr' as const,
   language: 'vi' as const,
 };
@@ -118,6 +119,7 @@ describe('TranscriptionProcessor', () => {
         questionId: 'q-1',
         questionCategory: 'behavioral',
         competencyDomains: ['D1', 'D6'],
+        rubricVersionId: 'rubric-v1',
         language: 'vi',
       }),
       expect.objectContaining({
@@ -159,6 +161,15 @@ describe('TranscriptionProcessor', () => {
     await processor.process(job);
 
     expect(mockFeedbackQueue.add).toHaveBeenCalled();
+    expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
+      'feedback',
+      expect.objectContaining({
+        rubricVersionId: 'rubric-v1',
+        questionText: '',
+        competencyDomains: [],
+      }),
+      expect.any(Object),
+    );
     expect(mockSse.emit).toHaveBeenCalledWith(
       'sse:session:session-123',
       'turn.transcription_ready',

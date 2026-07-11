@@ -33,7 +33,6 @@ export class ReferenceDataService implements OnApplicationBootstrap {
           name: pack.name,
         },
       });
-      await this.ensureDefaultActiveRubricVersion(id);
     } catch (error: unknown) {
       this.logger.error(
         `Unable to ensure context pack ${id}`,
@@ -65,6 +64,19 @@ export class ReferenceDataService implements OnApplicationBootstrap {
     }
 
     this.logger.log('Context pack reference data is ready');
+  }
+
+  async getActiveRubricVersionId(id: ContextPackId): Promise<string> {
+    const activeVersion = await this.prisma.rubricVersion.findFirst({
+      where: { contextPackId: id, status: RubricVersionStatus.active },
+      select: { id: true },
+    });
+
+    if (!activeVersion) {
+      throw new Error(`No active rubric version found for context pack ${id}`);
+    }
+
+    return activeVersion.id;
   }
 
   async ensureDefaultActiveRubricVersion(id: ContextPackId): Promise<string> {

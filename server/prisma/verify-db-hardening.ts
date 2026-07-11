@@ -80,6 +80,7 @@ const expectedConstraints = [
   ['ai_feedbacks', 'chk_ai_feedbacks_overall_score'],
   ['annotated_segments', 'chk_annotated_segments_offsets'],
   ['users', 'chk_users_role'],
+  ['rubric_categories', 'chk_rubric_categories_category_key'],
   ['rubric_categories', 'chk_rubric_categories_weight'],
   ['rubric_categories', 'chk_rubric_categories_display_order'],
   ['rubric_criteria', 'chk_rubric_criteria_weight'],

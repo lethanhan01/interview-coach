@@ -78,10 +78,18 @@ export class SessionService {
       userId,
       dto.savedJobDescriptionId,
     );
-    const rubricVersionId =
-      await this.referenceData.ensureDefaultActiveRubricVersion(
+    let rubricVersionId: string;
+    try {
+      rubricVersionId = await this.referenceData.getActiveRubricVersionId(
         dto.contextPack,
       );
+    } catch {
+      throw new InterviewAIException(
+        ErrorCode.SERVICE_UNAVAILABLE,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        'Không tìm thấy rubric đang hoạt động cho cấu hình phỏng vấn. Vui lòng đồng bộ dữ liệu rubric và thử lại.',
+      );
+    }
 
     const language = resolveOutputLanguage(dto.language);
 

@@ -34,6 +34,7 @@ describe('QuestionGenerationProcessor', () => {
     jobDescriptionText: 'Backend developer tại công ty ABC.',
     targetRoles: ['Backend Developer'],
     contextPack: 'VN' as const,
+    rubricVersionId: 'rubric-v1',
     language: 'vi',
     totalQuestions: 5,
     durationMin: 30,
@@ -126,6 +127,14 @@ describe('QuestionGenerationProcessor', () => {
     await processor.process(makeJob()); // totalQuestions=5
 
     expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
+    expect(mockContextPack.getContextPack).toHaveBeenCalledWith(
+      'VN',
+      'rubric-v1',
+    );
+    expect(mockContextPack.getRubricSnapshot).toHaveBeenCalledWith(
+      'VN',
+      'rubric-v1',
+    );
     expect(mockStrategy.generateQuestions).toHaveBeenCalledWith(
       expect.objectContaining({ language: 'vi' }),
     );
@@ -157,6 +166,7 @@ describe('QuestionGenerationProcessor', () => {
         orderIndex: 5,
         questionCategory: 'behavioral',
         competencyDomains: ['D1'],
+        rubricJson: {},
         estimatedTimeMin: 5,
       }),
     );
@@ -205,7 +215,7 @@ describe('QuestionGenerationProcessor', () => {
 
     expect(mockContextPack.getContextPack).toHaveBeenCalledWith(
       'Western',
-      undefined,
+      'rubric-v1',
     );
     expect(mockStrategy.generateQuestions).toHaveBeenCalledWith(
       expect.objectContaining({ language: 'en' }),
@@ -430,6 +440,34 @@ describe('QuestionGenerationProcessor', () => {
       },
       data: { status: 'active' },
     });
+  });
+
+  it('persist session_questions với rubric snapshot lấy theo rubric version của job', async () => {
+    const rubricSnapshot = {
+      behavioral: { D1: { name: 'Communication', weight: 0.2 } },
+      technical: {},
+    };
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
+    mockContextPack.getRubricSnapshot.mockResolvedValue(rubricSnapshot);
+    mockFactory.getStrategy.mockReturnValue({
+      generateQuestions: jest.fn().mockResolvedValue(makeGeneratedQuestions(1)),
+    });
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+      makeFallbackQuestions(4),
+    );
+    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+    mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
+    mockSse.emit.mockResolvedValue(undefined);
+
+    await processor.process(makeJob());
+
+    const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
+    expect(createArgs.data).toHaveLength(5);
+    expect(
+      createArgs.data.every(
+        (row: { rubricJson: object }) => row.rubricJson === rubricSnapshot,
+      ),
+    ).toBe(true);
   });
 
   it('không emit active nếu session đã bị tạm dừng trước khi worker hoàn tất', async () => {

@@ -483,6 +483,13 @@ CREATE INDEX IF NOT EXISTS idx_interview_sessions_rubric_version
 DO $$
 BEGIN
   IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_rubric_categories_category_key'
+  ) THEN
+    ALTER TABLE rubric_categories
+      ADD CONSTRAINT chk_rubric_categories_category_key CHECK (category_key IN ('behavioral', 'technical'));
+  END IF;
+
+  IF NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE conname = 'chk_rubric_categories_weight'
   ) THEN
     ALTER TABLE rubric_categories

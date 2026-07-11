@@ -120,9 +120,27 @@ async function main() {
     await expectReject(
       'rubric_categories rejects negative weight',
       `INSERT INTO rubric_categories (
+       id, rubric_version_id, category_key, label, weight, display_order
+     )
+       VALUES ($1, $2, 'technical', 'Invalid', -0.1, 3)`,
+      [randomUUID(), ids.rubricVersion],
+    );
+
+    await expectReject(
+      'rubric_categories rejects unknown category_key',
+      `INSERT INTO rubric_categories (
          id, rubric_version_id, category_key, label, weight, display_order
        )
-       VALUES ($1, $2, 'invalid', 'Invalid', -0.1, 3)`,
+       VALUES ($1, $2, 'culture', 'Culture', 0.1, 3)`,
+      [randomUUID(), ids.rubricVersion],
+    );
+
+    await expectReject(
+      'rubric_categories rejects negative display_order',
+      `INSERT INTO rubric_categories (
+         id, rubric_version_id, category_key, label, weight, display_order
+       )
+       VALUES ($1, $2, 'technical', 'Technical 2', 0.1, -1)`,
       [randomUUID(), ids.rubricVersion],
     );
 
@@ -132,6 +150,15 @@ async function main() {
          id, rubric_version_id, rubric_category_id, code, name, weight, display_order
        )
        VALUES ($1, $2, $3, 'D1', 'Duplicate', 0.1, 2)`,
+      [randomUUID(), ids.rubricVersion, ids.rubricCategory],
+    );
+
+    await expectReject(
+      'rubric_criteria rejects negative display_order',
+      `INSERT INTO rubric_criteria (
+         id, rubric_version_id, rubric_category_id, code, name, weight, display_order
+       )
+       VALUES ($1, $2, $3, 'D9', 'Invalid Order', 0.1, -1)`,
       [randomUUID(), ids.rubricVersion, ids.rubricCategory],
     );
 

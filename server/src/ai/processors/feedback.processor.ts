@@ -32,6 +32,7 @@ interface FeedbackJobDto {
   competencyDomains: string[];
   answerText: string;
   contextPack: 'VN' | 'Western';
+  rubricVersionId?: string | null;
   sessionType: SessionType;
   language?: OutputLanguage;
 }
@@ -72,6 +73,7 @@ export class FeedbackProcessor extends WorkerHost {
       competencyDomains,
       answerText,
       contextPack,
+      rubricVersionId,
       sessionType,
     } = job.data;
     const language = resolveOutputLanguage(job.data.language);
@@ -80,7 +82,10 @@ export class FeedbackProcessor extends WorkerHost {
 
     try {
       const contextPackConfig =
-        await this.contextPackService.getContextPack(contextPack);
+        await this.contextPackService.getContextPack(
+          contextPack,
+          rubricVersionId,
+        );
       const strategy = this.factory.getStrategy(sessionType);
 
       const feedback = await strategy.evaluateAnswer({

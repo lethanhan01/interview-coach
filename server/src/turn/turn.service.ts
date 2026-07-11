@@ -184,6 +184,7 @@ export class TurnService {
           audioDurationSeconds: dto.audioDurationSeconds,
           audioSizeBytes: dto.audioSizeBytes,
           contextPack: contextPackRetry,
+          rubricVersionId: session.rubricVersionId,
           sessionType,
           language: session.language as 'vi' | 'en',
         };
@@ -225,6 +226,7 @@ export class TurnService {
         audioDurationSeconds: dto.audioDurationSeconds,
         audioSizeBytes: dto.audioSizeBytes,
         contextPack,
+        rubricVersionId: session.rubricVersionId,
         sessionType,
         language: session.language as 'vi' | 'en',
       };
@@ -293,6 +295,7 @@ export class TurnService {
       competencyDomains: question.competencyDomains,
       answerText: answer.answerText,
       contextPack,
+      rubricVersionId: session.rubricVersionId,
       sessionType,
       language: session.language as 'vi' | 'en',
     };

@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
+import { CONTEXT_PACK_DATA } from '../src/prisma/context-pack.data';
 import { ReferenceDataService } from '../src/prisma/reference-data.service';
 
 async function main(): Promise<void> {
@@ -17,6 +18,9 @@ async function main(): Promise<void> {
   try {
     await prisma.$connect();
     await referenceData.ensureContextPacks();
+    for (const pack of CONTEXT_PACK_DATA) {
+      await referenceData.ensureDefaultActiveRubricVersion(pack.id);
+    }
     console.log('rubric_versions: default active versions ensured');
   } finally {
     await prisma.$disconnect();
