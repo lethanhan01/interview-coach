@@ -28,7 +28,7 @@ export default function CompetencyScoreChart({
   return (
     <div className="rounded-lg border border-border bg-surface p-6">
       <h2 className="mb-4 text-base font-semibold text-ink">
-        Năng lực
+        Đánh giá năng lực theo từng tiêu chí
       </h2>
       <div className="flex flex-col gap-2">
         {entries.map(([dimension, score]) => {

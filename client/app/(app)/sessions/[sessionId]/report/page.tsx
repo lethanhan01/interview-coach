@@ -262,12 +262,6 @@ export default function ReportPage() {
           </div>
         )}
         {session && <SessionMetadataCard session={session} />}
-        {session?.contextPackId && session?.sessionType && (
-          <ScoringMethodCard
-            contextPackId={session.contextPackId}
-            sessionType={session.sessionType}
-          />
-        )}
 
         {report.executiveSummary &&
           Object.keys(report.executiveSummary).length > 0 && (
@@ -287,6 +281,13 @@ export default function ReportPage() {
               </dl>
             </div>
           )}
+
+        {session?.contextPackId && session?.sessionType && (
+          <ScoringMethodCard
+            contextPackId={session.contextPackId}
+            sessionType={session.sessionType}
+          />
+        )}
 
         <CompetencyScoreChart scores={report.competencyHeatmap} />
 
