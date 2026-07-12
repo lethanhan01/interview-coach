@@ -8,7 +8,7 @@ type KaggleQuestion = {
   difficulty: number;
   contextPackId: string;
   subcategory: string;
-  competencyDomains: string[];
+  criterionCodes: string[];
   applicableRoles: string[];
   applicableLevels: string[];
   tags: string[];
@@ -23,10 +23,12 @@ function toQuestionBankRow(question: KaggleQuestion) {
     sessionType: question.sessionType,
     difficulty: question.difficulty,
     contextPackId: question.contextPackId,
-    competencyDomains: question.competencyDomains,
     estimatedTimeMin: question.estimatedTimeMin,
     translations: question.translations,
-    contentJson: question.contentJson,
+    contentJson: {
+      ...question.contentJson,
+      criteriaCodes: question.criterionCodes,
+    },
   };
 }
 
@@ -79,7 +81,9 @@ async function syncKaggleQuestionCriteria(
     INSERT INTO question_bank_criteria (question_bank_id, rubric_criterion_id)
     SELECT qb.id, rcr.id
     FROM question_bank qb
-    CROSS JOIN LATERAL unnest(qb.competency_domains) AS domain(code)
+    CROSS JOIN LATERAL jsonb_array_elements_text(
+      COALESCE(qb.content_json->'criteriaCodes', '[]'::jsonb)
+    ) AS domain(code)
     JOIN rubric_categories rc
       ON rc.context_pack_id = qb.context_pack_id
     JOIN rubric_criteria rcr

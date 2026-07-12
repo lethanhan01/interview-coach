@@ -140,11 +140,13 @@ const retiredTypes = ['RubricVersionStatus'];
 
 const retiredColumns = [
   ['question_bank', 'competency_domain'],
+  ['question_bank', 'competency_domains'],
   ['question_bank', 'subcategory'],
   ['question_bank', 'applicable_roles'],
   ['question_bank', 'applicable_levels'],
   ['question_bank', 'tags'],
   ['session_questions', 'competency_domain'],
+  ['session_questions', 'competency_domains'],
   ['users', 'profile_completed'],
   ['users', 'last_login_at'],
   ['users', 'deleted_at'],
@@ -303,25 +305,6 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
                AND rcr.active = true
            )`,
       ],
-      [
-        'anomaly:question_bank_unknown_competency_domains',
-        `SELECT count(*)::int AS count
-         FROM question_bank qb
-         WHERE qb.deleted_at IS NULL
-           AND EXISTS (
-             SELECT 1
-             FROM unnest(qb.competency_domains) AS domain(code)
-             WHERE NOT EXISTS (
-               SELECT 1
-               FROM rubric_criteria rcr
-               JOIN rubric_categories rc
-                 ON rc.id = rcr.rubric_category_id
-               WHERE rc.context_pack_id = qb.context_pack_id
-                 AND rcr.code = domain.code
-                 AND rcr.active = true
-             )
-           )`,
-      ],
     );
   } else if (await versionedRubricTablesExist()) {
     checks.push(
@@ -362,26 +345,6 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
                AND rcr.active = true
            )`,
       ],
-      [
-        'anomaly:question_bank_unknown_competency_domains',
-        `SELECT count(*)::int AS count
-         FROM question_bank qb
-         JOIN rubric_versions rv
-           ON rv.context_pack_id = qb.context_pack_id
-          AND rv.status = 'active'
-         WHERE qb.deleted_at IS NULL
-           AND EXISTS (
-             SELECT 1
-             FROM unnest(qb.competency_domains) AS domain(code)
-             WHERE NOT EXISTS (
-               SELECT 1
-               FROM rubric_criteria rcr
-               WHERE rcr.rubric_version_id = rv.id
-                 AND rcr.code = domain.code
-                 AND rcr.active = true
-             )
-           )`,
-      ],
     );
   }
 
@@ -415,24 +378,6 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
            )`,
       ],
       [
-        'anomaly:question_bank_criteria_cache_mismatch',
-        `SELECT count(*)::int AS count
-         FROM question_bank qb
-         WHERE qb.deleted_at IS NULL
-           AND ARRAY(
-             SELECT DISTINCT domain.code
-             FROM unnest(qb.competency_domains) AS domain(code)
-             ORDER BY domain.code
-           ) <> ARRAY(
-             SELECT rcr.code
-             FROM question_bank_criteria qbc
-             JOIN rubric_criteria rcr
-               ON rcr.id = qbc.rubric_criterion_id
-             WHERE qbc.question_bank_id = qb.id
-             ORDER BY rcr.code
-           )`,
-      ],
-      [
         'anomaly:session_questions_missing_criteria_links',
         `SELECT count(*)::int AS count
          FROM session_questions sq
@@ -457,21 +402,6 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
          JOIN rubric_categories rc
            ON rc.id = rcr.rubric_category_id
          WHERE rc.context_pack_id <> sqc.context_pack_id_snapshot`,
-      ],
-      [
-        'anomaly:session_question_criteria_cache_mismatch',
-        `SELECT count(*)::int AS count
-         FROM session_questions sq
-         WHERE ARRAY(
-           SELECT DISTINCT domain.code
-           FROM unnest(sq.competency_domains) AS domain(code)
-           ORDER BY domain.code
-         ) <> ARRAY(
-           SELECT sqc.criterion_code
-           FROM session_question_criteria sqc
-           WHERE sqc.session_question_id = sq.id
-           ORDER BY sqc.criterion_code
-         )`,
       ],
     );
   }

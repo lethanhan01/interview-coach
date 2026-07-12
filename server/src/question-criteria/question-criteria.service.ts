@@ -25,11 +25,11 @@ type CriterionLink = {
 };
 
 type QuestionWithCriteria = {
-  competencyDomains: string[];
   criteria?: CriterionLink[] | null;
 };
 
 type QuestionBankWithCriteria = QuestionWithCriteria & {
+  id: string;
   contextPackId: string;
 };
 
@@ -40,7 +40,6 @@ type SessionCriterionLink = CriterionLink & {
 };
 
 type SessionQuestionWithCriteria = {
-  competencyDomains: string[];
   criteria?: SessionCriterionLink[] | null;
 };
 
@@ -59,10 +58,6 @@ export type SessionQuestionCriterionCreateInput = {
 export class QuestionCriteriaService {
   constructor(private readonly prisma: PrismaService) {}
 
-  hasQuestionBankCriteria(question: QuestionBankWithCriteria): boolean {
-    return Boolean(question.criteria?.length);
-  }
-
   codesFromQuestionBank(question: QuestionBankWithCriteria): string[] {
     const linked = (question.criteria ?? [])
       .map((link) => link.rubricCriterion)
@@ -76,13 +71,13 @@ export class QuestionCriteriaService {
       .sort(compareCriterionRows)
       .map((criterion) => criterion.code);
 
-    return linked.length > 0
-      ? unique(linked)
-      : unique(question.competencyDomains);
-  }
-
-  hasSessionQuestionCriteria(question: SessionQuestionWithCriteria): boolean {
-    return Boolean(question.criteria?.length);
+    const codes = unique(linked);
+    if (codes.length === 0) {
+      throw new Error(
+        `question_bank ${question.id} has no criteria relation`,
+      );
+    }
+    return codes;
   }
 
   codesFromSessionQuestion(question: SessionQuestionWithCriteria): string[] {
@@ -108,18 +103,20 @@ export class QuestionCriteriaService {
       })
       .map((link) => link.criterionCode);
 
-    return linked.length > 0
-      ? unique(linked)
-      : unique(question.competencyDomains);
+    const codes = unique(linked);
+    if (codes.length === 0) {
+      throw new Error('Session question has no criteria relation');
+    }
+    return codes;
   }
 
   async buildSessionQuestionCriteriaData(input: {
     sessionQuestionId: string;
     contextPackId: string;
-    competencyDomains: string[];
+    criterionCodes: string[];
     rubricJson: Prisma.JsonValue | Prisma.InputJsonValue | object;
   }): Promise<SessionQuestionCriterionCreateInput[]> {
-    const codes = unique(input.competencyDomains);
+    const codes = unique(input.criterionCodes);
     if (codes.length === 0) {
       throw new Error('Session question criteria must include at least one code');
     }

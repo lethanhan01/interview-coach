@@ -33,7 +33,7 @@
       "en": "What is the difference between compilation and interpretation?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -71,7 +71,7 @@
       "en": "Explain the concept of polymorphism.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -109,7 +109,7 @@
       "en": "Define encapsulation and give an example.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD2"
     ]
@@ -148,7 +148,7 @@
       "en": "What is an abstract class, and how is it different from an interface?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD2"
     ]
@@ -187,7 +187,7 @@
       "en": "Describe the principles of Object-Oriented Programming (OOP).",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD4"
     ]
@@ -226,7 +226,7 @@
       "en": "What is the purpose of a constructor?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -264,7 +264,7 @@
       "en": "Explain the difference between stack and heap memory.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -302,7 +302,7 @@
       "en": "What is a design pattern, and can you name a few?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD2"
     ]
@@ -341,7 +341,7 @@
       "en": "Define the term \"DRY\" in software development.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -379,7 +379,7 @@
       "en": "What is the SOLID principle?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD4"
     ]
@@ -418,7 +418,7 @@
       "en": "What is the difference between an array and a linked list?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -456,7 +456,7 @@
       "en": "Explain the time complexity of an algorithm.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -494,7 +494,7 @@
       "en": "Describe the difference between a binary search tree and a hash table.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD4"
     ]
@@ -533,7 +533,7 @@
       "en": "What is a linked list and how does it work?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -571,7 +571,7 @@
       "en": "Explain the concept of recursion.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -609,7 +609,7 @@
       "en": "What is Big O notation, and why is it important?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -647,7 +647,7 @@
       "en": "How do you perform a binary search on a sorted array?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -685,7 +685,7 @@
       "en": "Discuss the advantages and disadvantages of different sorting algorithms.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -723,7 +723,7 @@
       "en": "Explain how a hash table works.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -761,7 +761,7 @@
       "en": "What is dynamic programming?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -799,7 +799,7 @@
       "en": "What is the difference between Java and JavaScript?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -837,7 +837,7 @@
       "en": "Describe the MVC architectural pattern.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -875,7 +875,7 @@
       "en": "What is a RESTful API?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD2",
       "TD3"
@@ -915,7 +915,7 @@
       "en": "Explain the use of \"this\" keyword in JavaScript.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -953,7 +953,7 @@
       "en": "What is a closure in programming?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -991,7 +991,7 @@
       "en": "What are the differences between Python 2 and Python 3?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -1029,7 +1029,7 @@
       "en": "Discuss the role of a package manager like npm or pip.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -1067,7 +1067,7 @@
       "en": "Explain the concept of multi-threading in Java.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD5"
     ]
@@ -1106,7 +1106,7 @@
       "en": "What is a Singleton pattern?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -1144,7 +1144,7 @@
       "en": "What is a virtual function in C++?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -1186,7 +1186,7 @@
       "en": "What is a database index, and why is it important?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1229,7 +1229,7 @@
       "en": "Explain the differences between SQL and NoSQL databases.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1272,7 +1272,7 @@
       "en": "What is a foreign key in a database?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1315,7 +1315,7 @@
       "en": "Describe the ACID properties in database transactions.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2"
     ]
   },
@@ -1357,7 +1357,7 @@
       "en": "How do you optimize a SQL query for better performance?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD5"
     ]
@@ -1400,7 +1400,7 @@
       "en": "What is normalization in database design?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1443,7 +1443,7 @@
       "en": "Explain the difference between INNER JOIN and LEFT JOIN in SQL.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1486,7 +1486,7 @@
       "en": "What is a stored procedure, and when would you use one?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1529,7 +1529,7 @@
       "en": "What is database denormalization, and when is it appropriate?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1572,7 +1572,7 @@
       "en": "Discuss the advantages and disadvantages of using an ORM tool.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD5"
     ]
@@ -1611,7 +1611,7 @@
       "en": "What is the Document Object Model (DOM)?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1650,7 +1650,7 @@
       "en": "Explain the difference between HTTP and HTTPS.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1689,7 +1689,7 @@
       "en": "What is CORS (Cross-Origin Resource Sharing)?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1728,7 +1728,7 @@
       "en": "Describe the purpose of a web server like Apache or Nginx.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2"
     ]
   },
@@ -1766,7 +1766,7 @@
       "en": "What is a cookie, and how does it work?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1805,7 +1805,7 @@
       "en": "What is a session in web development?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1844,7 +1844,7 @@
       "en": "Explain the concept of responsive web design.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1883,7 +1883,7 @@
       "en": "Describe the differences between GET and POST requests.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1922,7 +1922,7 @@
       "en": "What is the importance of SEO in web development?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -1961,7 +1961,7 @@
       "en": "How does a web browser render a web page?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2"
     ]
   },
@@ -1999,7 +1999,7 @@
       "en": "What is unit testing, and why is it important?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -2038,7 +2038,7 @@
       "en": "Explain the difference between black-box and white-box testing.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -2077,7 +2077,7 @@
       "en": "What is regression testing?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -2116,7 +2116,7 @@
       "en": "Describe the purpose of code reviews.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4"
     ]
   },
@@ -2154,7 +2154,7 @@
       "en": "What is continuous integration (CI) and continuous delivery (CD)?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1",
       "TD5"
@@ -2194,7 +2194,7 @@
       "en": "Explain the concept of code coverage in testing.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -2233,7 +2233,7 @@
       "en": "What is a test case and how do you write one?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -2272,7 +2272,7 @@
       "en": "What is load testing, and why is it necessary?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -2311,7 +2311,7 @@
       "en": "Describe the differences between manual and automated testing.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -2350,7 +2350,7 @@
       "en": "What is a bug tracking system?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -2389,7 +2389,7 @@
       "en": "What is Git, and how does it work?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1",
       "TD3"
@@ -2429,7 +2429,7 @@
       "en": "Explain the difference between Git and SVN (Subversion).",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1",
       "TD3"
@@ -2469,7 +2469,7 @@
       "en": "What is a merge conflict, and how do you resolve it in Git?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -2508,7 +2508,7 @@
       "en": "Describe the purpose of branching in version control.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4"
     ]
   },
@@ -2546,7 +2546,7 @@
       "en": "What is a pull request (PR), and how does it work?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -2585,7 +2585,7 @@
       "en": "How do you handle code conflicts in a team project?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4"
     ]
   },
@@ -2623,7 +2623,7 @@
       "en": "What is code refactoring, and why is it important?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -2662,7 +2662,7 @@
       "en": "Explain the role of Git branching strategies like GitFlow.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -2701,7 +2701,7 @@
       "en": "What is Git rebase, and when would you use it?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -2740,7 +2740,7 @@
       "en": "Discuss the advantages of distributed version control systems.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD3"
     ]
@@ -2779,7 +2779,7 @@
       "en": "Describe the concept of microservices architecture.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD1",
       "TD2"
@@ -2819,7 +2819,7 @@
       "en": "What is a load balancer, and why is it used in web applications?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD1"
     ]
@@ -2858,7 +2858,7 @@
       "en": "Explain the importance of caching in web applications.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD1"
     ]
@@ -2897,7 +2897,7 @@
       "en": "What is a CDN (Content Delivery Network)?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD1"
     ]
@@ -2936,7 +2936,7 @@
       "en": "Discuss the pros and cons of monolithic vs. microservices architecture.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3"
     ]
   },
@@ -2974,7 +2974,7 @@
       "en": "What is a stateless vs. stateful service?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD1"
     ]
@@ -3013,7 +3013,7 @@
       "en": "Explain the concept of CAP theorem in distributed systems.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD1"
     ]
@@ -3052,7 +3052,7 @@
       "en": "How do you ensure data consistency in a distributed database?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2"
     ]
@@ -3091,7 +3091,7 @@
       "en": "Describe the role of a reverse proxy in a web application.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3"
     ]
   },
@@ -3129,7 +3129,7 @@
       "en": "What is a message broker, and when would you use one?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD1",
       "TD2"
@@ -3169,7 +3169,7 @@
       "en": "What is SQL injection, and how can it be prevented?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -3208,7 +3208,7 @@
       "en": "Explain the concept of Cross-Site Scripting (XSS).",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -3247,7 +3247,7 @@
       "en": "What is two-factor authentication (2FA)?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -3286,7 +3286,7 @@
       "en": "Describe the process of password hashing and salting.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -3325,7 +3325,7 @@
       "en": "What is OAuth, and how does it work?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -3364,7 +3364,7 @@
       "en": "How do you protect against session fixation attacks?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4"
     ]
   },
@@ -3402,7 +3402,7 @@
       "en": "Explain the principles of least privilege and defense in depth.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -3441,7 +3441,7 @@
       "en": "What is a DDoS (Distributed Denial of Service) attack?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1",
       "TD3"
@@ -3481,7 +3481,7 @@
       "en": "How can you secure sensitive data in a mobile app?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4"
     ]
   },
@@ -3519,7 +3519,7 @@
       "en": "Discuss the importance of security in API design.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD2"
     ]
@@ -3559,7 +3559,7 @@
       "en": "What is Docker, and how does it work?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -3599,7 +3599,7 @@
       "en": "Explain the concept of container orchestration.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -3639,7 +3639,7 @@
       "en": "What is Kubernetes, and why is it popular in container management?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -3679,7 +3679,7 @@
       "en": "Describe the process of continuous integration and continuous delivery (CI/CD).",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD2",
       "TD3"
@@ -3720,7 +3720,7 @@
       "en": "What is infrastructure as code (IaC)?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -3760,7 +3760,7 @@
       "en": "How do you monitor the performance of a web application?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD3"
     ]
@@ -3800,7 +3800,7 @@
       "en": "Discuss the importance of automated testing in CI/CD pipelines.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD3"
     ]
@@ -3840,7 +3840,7 @@
       "en": "What is Blue-Green deployment, and when would you use it?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1",
       "TD2"
@@ -3881,7 +3881,7 @@
       "en": "Explain the role of a configuration management tool like Ansible.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -3921,7 +3921,7 @@
       "en": "Describe the benefits of using a cloud platform like AWS, Azure, or Google Cloud.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD3"
     ]
@@ -3962,7 +3962,7 @@
       "en": "Explain the concept of 'closure' in JavaScript.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4002,7 +4002,7 @@
       "en": "Describe the use of Docker in a DevOps environment.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD3"
     ]
@@ -4043,7 +4043,7 @@
       "en": "What is a 'race condition' in software development?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4084,7 +4084,7 @@
       "en": "How would you optimize a website's load time?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4125,7 +4125,7 @@
       "en": "What is the difference between SQL and NoSQL databases?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4166,7 +4166,7 @@
       "en": "Can you explain the concept of 'state' in React?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4206,7 +4206,7 @@
       "en": "What is continuous integration in DevOps?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -4248,7 +4248,7 @@
       "en": "How do you implement a binary search algorithm?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4290,7 +4290,7 @@
       "en": "Describe the MVC architecture.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD3"
     ]
@@ -4331,7 +4331,7 @@
       "en": "What are microservices and how do they differ from monolithic architectures?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1",
       "TD3"
@@ -4373,7 +4373,7 @@
       "en": "Explain the difference between '==' and '===' in JavaScript.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4413,7 +4413,7 @@
       "en": "What is Kubernetes and how does it relate to containerization?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -4454,7 +4454,7 @@
       "en": "Describe how you would implement a RESTful API in a back-end application.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4495,7 +4495,7 @@
       "en": "What are the benefits of server-side rendering vs client-side rendering?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4536,7 +4536,7 @@
       "en": "How do NoSQL databases handle data scaling compared to traditional SQL databases?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4577,7 +4577,7 @@
       "en": "Explain the use of hooks in React.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4617,7 +4617,7 @@
       "en": "What is Infrastructure as Code (IaC) and its significance in DevOps?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -4659,7 +4659,7 @@
       "en": "Describe the process of memoization in programming.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD5"
     ]
@@ -4700,7 +4700,7 @@
       "en": "What are the advantages of using a microservices architecture?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1",
       "TD3"
@@ -4743,7 +4743,7 @@
       "en": "Explain the SOLID principles in software engineering.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4784,7 +4784,7 @@
       "en": "What is lazy loading in web development?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4824,7 +4824,7 @@
       "en": "Discuss the role of a load balancer in a distributed system.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD3"
     ]
@@ -4865,7 +4865,7 @@
       "en": "How does indexing improve database query performance?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4906,7 +4906,7 @@
       "en": "Explain event delegation in JavaScript.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -4945,7 +4945,7 @@
       "en": "Design a distributed key-value store.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2"
     ]
@@ -4984,7 +4984,7 @@
       "en": "Implement a function to check if a binary tree is balanced.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD2"
     ]
@@ -5023,7 +5023,7 @@
       "en": "Design a URL shortening service like bit.ly.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2"
     ]
@@ -5062,7 +5062,7 @@
       "en": "Design a recommendation system for a large e-commerce platform.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD3"
     ]
@@ -5101,7 +5101,7 @@
       "en": "Write an algorithm to find the median of a stream of numbers.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD4"
     ]
@@ -5140,7 +5140,7 @@
       "en": "Explain the Raft consensus algorithm.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD1"
     ]
@@ -5179,7 +5179,7 @@
       "en": "Optimize a global, high-traffic content delivery network.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD5"
     ]
@@ -5218,7 +5218,7 @@
       "en": "Design a chat application that can scale to millions of users.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2"
     ]
@@ -5257,7 +5257,7 @@
       "en": "Implement a garbage collector for a programming language.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD1"
     ]
@@ -5296,7 +5296,7 @@
       "en": "Design a scalable notification system for a social network.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2",
       "TD5"
@@ -5336,7 +5336,7 @@
       "en": "Explain the workings of the TCP protocol for a low-latency network.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD1"
     ]
@@ -5375,7 +5375,7 @@
       "en": "Design and implement a concurrent hash map.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD2"
     ]
@@ -5414,7 +5414,7 @@
       "en": "Find the Kth largest element in a stream of numbers.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1"
     ]
   },
@@ -5452,7 +5452,7 @@
       "en": "Implement Google's PageRank algorithm.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD2"
     ]
@@ -5491,7 +5491,7 @@
       "en": "Design an API rate limiter for a web service.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD1",
       "TD2"
@@ -5535,7 +5535,7 @@
       "en": "Optimize database queries for a high-traffic website.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD3"
     ]
@@ -5574,7 +5574,7 @@
       "en": "Create a secure and scalable authentication system for a web application.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD2"
     ]
@@ -5617,7 +5617,7 @@
       "en": "Design a system for efficient storage and retrieval of large-scale time-series data.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD3"
     ]
@@ -5656,7 +5656,7 @@
       "en": "Explain how a blockchain works and how to implement one.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD1",
       "TD2"
@@ -5696,7 +5696,7 @@
       "en": "Design an efficient parking lot management system.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2"
     ]
@@ -5735,7 +5735,7 @@
       "en": "Develop a machine learning model to predict stock prices.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2"
     ]
   },
@@ -5773,7 +5773,7 @@
       "en": "Write a custom memory allocator for a C++ application.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD5"
     ]
@@ -5812,7 +5812,7 @@
       "en": "Design a real-time multiplayer online game architecture.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2"
     ]
@@ -5851,7 +5851,7 @@
       "en": "Implement a distributed file system.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2",
       "TD5"
@@ -5891,7 +5891,7 @@
       "en": "Optimize a search algorithm for a large dataset in a distributed environment.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD2",
       "TD3"
@@ -5931,7 +5931,7 @@
       "en": "Design a data pipeline for processing big data in real-time.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2"
     ]
   },
@@ -5969,7 +5969,7 @@
       "en": "Build a high-frequency trading system and discuss its components.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD1"
     ]
@@ -6008,7 +6008,7 @@
       "en": "Develop a deep learning model to analyze and interpret medical images.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD4"
     ]
@@ -6047,7 +6047,7 @@
       "en": "Create an AI that can play a complex board game at a competitive level.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -6086,7 +6086,7 @@
       "en": "Design a fraud detection system for online transactions.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD2"
     ]
@@ -6125,7 +6125,7 @@
       "en": "Implement a distributed graph processing framework.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2",
       "TD5"
@@ -6165,7 +6165,7 @@
       "en": "Design a global video streaming service like Netflix.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2"
     ]
@@ -6204,7 +6204,7 @@
       "en": "Create a system to efficiently match job seekers with job postings.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD2"
     ]
@@ -6243,7 +6243,7 @@
       "en": "Design and implement a large-scale distributed cache system.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2"
     ]
@@ -6282,7 +6282,7 @@
       "en": "Optimize network protocols for a satellite communication system.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD5"
     ]
@@ -6321,7 +6321,7 @@
       "en": "Develop an autonomous vehicle's path planning algorithm.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD2"
     ]
@@ -6360,7 +6360,7 @@
       "en": "Design a scalable and reliable messaging system for a large corporation.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2"
     ]
@@ -6399,7 +6399,7 @@
       "en": "Implement a natural language processing algorithm to understand and answer user queries.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -6438,7 +6438,7 @@
       "en": "Create an efficient algorithm for real-time anomaly detection in network traffic.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD2"
     ]
@@ -6477,7 +6477,7 @@
       "en": "Design a system to manage and process Internet of Things (IoT) data.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2"
     ]
@@ -6516,7 +6516,7 @@
       "en": "Build a compiler for a new programming language.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4"
     ]
   },
@@ -6554,7 +6554,7 @@
       "en": "Implement a robust text editor with features like auto-complete and syntax highlighting.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD2"
     ]
@@ -6593,7 +6593,7 @@
       "en": "Design a scalable infrastructure for an online advertising platform.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD1"
     ]
@@ -6632,7 +6632,7 @@
       "en": "Develop a machine learning algorithm to detect fake news on social media.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD1"
     ]
@@ -6675,7 +6675,7 @@
       "en": "Optimize an SQL database for a high-volume financial transaction system.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD3"
     ]
@@ -6714,7 +6714,7 @@
       "en": "Design a cloud-based virtual desktop infrastructure.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2"
     ]
@@ -6753,7 +6753,7 @@
       "en": "Create a real-time sports analytics system using sensor data.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD2",
       "TD3"
     ]
@@ -6792,7 +6792,7 @@
       "en": "Implement a quantum algorithm for solving a well-known computational problem.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD1",
       "TD2"
     ]
@@ -6831,7 +6831,7 @@
       "en": "Design a secure mobile payment system for developing countries.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD4",
       "TD2"
     ]
@@ -6870,7 +6870,7 @@
       "en": "Build a scalable image processing pipeline for a photo-sharing app.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "TD3",
       "TD2"
     ]
@@ -6909,7 +6909,7 @@
       "en": "Describe a time you failed and what you learned from it.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D6"
     ]
   },
@@ -6947,7 +6947,7 @@
       "en": "What's the most significant change you've had to adapt to at work?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D6"
     ]
   },
@@ -6987,7 +6987,7 @@
       "en": "How do you react to sudden changes in priorities?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D6",
       "D2"
     ]
@@ -7026,7 +7026,7 @@
       "en": "How do you stay updated with industry trends?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D6"
     ]
   },
@@ -7064,7 +7064,7 @@
       "en": "Tell me about a time you had to learn something completely new quickly.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D6"
     ]
   },
@@ -7102,7 +7102,7 @@
       "en": "What are your long-term career aspirations?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4"
     ]
   },
@@ -7140,7 +7140,7 @@
       "en": "How does this role fit into your career path?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4"
     ]
   },
@@ -7178,7 +7178,7 @@
       "en": "Where do you see yourself in 5 years?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4"
     ]
   },
@@ -7216,7 +7216,7 @@
       "en": "What kind of growth opportunities are you looking for?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4",
       "D6"
     ]
@@ -7255,7 +7255,7 @@
       "en": "What skills do you hope to develop in your next role?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4"
     ]
   },
@@ -7293,7 +7293,7 @@
       "en": "What would you do if you disagreed with your manager?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D3",
       "D2"
     ]
@@ -7334,7 +7334,7 @@
       "en": "Tell me about a conflict you had with a coworker and how you resolved it.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D3",
       "D2"
     ]
@@ -7375,7 +7375,7 @@
       "en": "How do you deal with feedback that you disagree with?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D3",
       "D1"
     ]
@@ -7416,7 +7416,7 @@
       "en": "Describe a time you handled a difficult situation professionally.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D3",
       "D2"
     ]
@@ -7455,7 +7455,7 @@
       "en": "How do you respond when a teammate isn't pulling their weight?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D3",
       "D2"
     ]
@@ -7494,7 +7494,7 @@
       "en": "Describe a time you felt out of place in a workplace culture.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D5",
       "D3"
     ]
@@ -7533,7 +7533,7 @@
       "en": "How do you align with our company values?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D5",
       "D3"
     ]
@@ -7572,7 +7572,7 @@
       "en": "How do you contribute to a positive team environment?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D5",
       "D3"
     ]
@@ -7613,7 +7613,7 @@
       "en": "What type of company culture do you thrive in?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D5",
       "D3"
     ]
@@ -7652,7 +7652,7 @@
       "en": "What are your expectations from leadership in a company?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D5",
       "D3"
     ]
@@ -7691,7 +7691,7 @@
       "en": "Tell me about a time you mentored someone.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4",
       "D1"
     ]
@@ -7732,7 +7732,7 @@
       "en": "What makes a good leader in your opinion?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4",
       "D1"
     ]
@@ -7773,7 +7773,7 @@
       "en": "How do you delegate tasks effectively?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4",
       "D1"
     ]
@@ -7814,7 +7814,7 @@
       "en": "How do you motivate others in a leadership role?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4",
       "D1"
     ]
@@ -7855,7 +7855,7 @@
       "en": "Describe a time you led a project or team.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4",
       "D1"
     ]
@@ -7894,7 +7894,7 @@
       "en": "Tell me about a time you were highly motivated to achieve a goal.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4"
     ]
   },
@@ -7934,7 +7934,7 @@
       "en": "Why do you want to work at our company?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4",
       "D5"
     ]
@@ -7973,7 +7973,7 @@
       "en": "What motivates you to come to work every day?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4"
     ]
   },
@@ -8011,7 +8011,7 @@
       "en": "What drives your passion for this field?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4"
     ]
   },
@@ -8049,7 +8049,7 @@
       "en": "How do you stay motivated during repetitive tasks?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D4"
     ]
   },
@@ -8087,7 +8087,7 @@
       "en": "How do you build trust with new teammates?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D3",
       "D1"
     ]
@@ -8126,7 +8126,7 @@
       "en": "How do you handle disagreements within a team?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D3",
       "D1"
     ]
@@ -8165,7 +8165,7 @@
       "en": "Tell me about a time you worked well within a team.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D3",
       "D1"
     ]
@@ -8206,7 +8206,7 @@
       "en": "What role do you usually play in group settings?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D3",
       "D1"
     ]
@@ -8245,7 +8245,7 @@
       "en": "Describe a project where teamwork was essential to success.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D3",
       "D1"
     ]
@@ -8284,7 +8284,7 @@
       "en": "How do you organize and prioritize your daily tasks?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D5",
       "D2"
     ]
@@ -8323,7 +8323,7 @@
       "en": "What tools or methods help you stay organized?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D5",
       "D2"
     ]
@@ -8364,7 +8364,7 @@
       "en": "Do you prefer working independently or in teams? Why?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D5",
       "D3"
     ]
@@ -8403,7 +8403,7 @@
       "en": "Describe your ideal workday.",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D5"
     ]
   },
@@ -8443,7 +8443,7 @@
       "en": "How do you ensure productivity when working remotely?",
       "vi": ""
     },
-    "competencyDomains": [
+    "criterionCodes": [
       "D5",
       "D3"
     ]

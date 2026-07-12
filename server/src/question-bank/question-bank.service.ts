@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { Prisma, QuestionSessionType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
@@ -8,7 +8,6 @@ type QuestionBankRow = {
   content: string;
   difficulty: number;
   contextPackId: string;
-  competencyDomains: string[];
   estimatedTimeMin: number | null;
   translations: Prisma.JsonValue | null;
   criteria?: Array<{
@@ -38,8 +37,6 @@ export type FallbackQuestion = {
 
 @Injectable()
 export class QuestionBankService {
-  private readonly logger = new Logger(QuestionBankService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly questionCriteria: QuestionCriteriaService,
@@ -155,11 +152,6 @@ export class QuestionBankService {
   ): FallbackQuestion {
     const competencyDomains =
       this.questionCriteria.codesFromQuestionBank(question);
-    if (!this.questionCriteria.hasQuestionBankCriteria(question)) {
-      this.logger.warn(
-        `question_bank ${question.id} has no criteria relation; using competency_domains compatibility cache`,
-      );
-    }
 
     return {
       questionBankId: question.id,

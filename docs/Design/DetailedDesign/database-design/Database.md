@@ -31,6 +31,8 @@
 
 ```
 rubric_categories ──< rubric_criteria
+rubric_criteria ──< question_bank_criteria >── question_bank
+rubric_criteria ──< session_question_criteria >── session_questions
 
 question_bank ──< session_questions ──< user_answers ─── ai_feedbacks ──< annotated_segments
 interview_sessions ──< session_questions
@@ -102,10 +104,9 @@ Fallback questions khi AI generation fail. Soft-delete via `deleted_at`.
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
 | content | TEXT | — | NO | Câu hỏi chính (ngôn ngữ mặc định) |
-| session_type | TEXT | — | NO | `'hr' \| 'technical' \| 'mixed'` — *D1* |
+| session_type | ENUM | — | NO | `'hr' \| 'technical'` |
 | difficulty | INT | — | NO | Scale 1–5 |
 | context_pack_id | TEXT | — | NO | CHECK `VN` hoặc `Western` |
-| competency_domains | TEXT[] | `{}` | NO | Một hoặc nhiều rubric codes hợp lệ trong rubric hiện hành của context pack |
 | estimated_time_min | INT | — | YES | *D4 — mới* |
 | translations | JSONB | — | YES | *D4 — mới* — `{ vi?: string, en?: string }` |
 | content_json | JSONB | — | YES | *D4 — mới* — seed provenance/source tracking |
@@ -118,6 +119,20 @@ Indexes (partial — `WHERE deleted_at IS NULL`):
 - `idx_question_bank_session_type_difficulty` on `(session_type, difficulty)`
 
 Seed target: 120 rows (sau T4) — phân bố 6 pairs `(session_type × context_pack)` × 20.
+
+### question_bank_criteria
+Prisma model: `QuestionBankCriterion`  
+Bảng nối xác định các tiêu chí rubric mà một câu hỏi bank có thể đánh giá. Đây là source of truth thay cho cache `question_bank.competency_domains` đã retired.
+
+| Column | DB Type | Default | Nullable | Notes |
+|--------|---------|---------|----------|-------|
+| question_bank_id | UUID FK | — | NO | → question_bank.id ON DELETE CASCADE |
+| rubric_criterion_id | UUID FK | — | NO | → rubric_criteria.id ON DELETE RESTRICT |
+| created_at | TIMESTAMPTZ | now() | NO | |
+
+Primary key: `(question_bank_id, rubric_criterion_id)`.  
+Indexes:
+- `idx_question_bank_criteria_rubric_criterion` on `(rubric_criterion_id)`
 
 ### users
 Prisma model: `User`  
@@ -253,7 +268,6 @@ Câu hỏi per session. `question_bank_id` nullable — AI-generated questions k
 | question_text | TEXT | — | NO | |
 | order_index | INT | — | NO | UNIQUE per session |
 | question_category | TEXT | — | NO | |
-| competency_domains | TEXT[] | `{}` | NO | Một hoặc nhiều rubric codes đã normalize |
 | rubric_json | JSONB | — | NO | Snapshot rubric áp dụng tại thời điểm sinh câu hỏi; không đổi khi rubric gốc publish version mới |
 | estimated_time_min | INT | — | YES | |
 | created_at | TIMESTAMPTZ | now() | NO | |
@@ -262,6 +276,29 @@ Unique: `(session_id, order_index)`.
 Indexes:
 - `idx_session_questions_session_id` on `(session_id)`
 - `idx_session_questions_session_id_text` on `(session_id, question_text)`
+
+---
+
+### session_question_criteria
+Prisma model: `SessionQuestionCriterion`  
+Snapshot tiêu chí theo từng câu hỏi trong session. Bảng này giữ lịch sử chấm điểm ngay cả khi rubric hiện hành đổi hoặc criterion gốc bị xóa.
+
+| Column | DB Type | Default | Nullable | Notes |
+|--------|---------|---------|----------|-------|
+| session_question_id | UUID FK | — | NO | → session_questions.id ON DELETE CASCADE |
+| rubric_criterion_id | UUID FK | — | YES | → rubric_criteria.id ON DELETE SET NULL |
+| context_pack_id_snapshot | TEXT | — | NO | CHECK `VN` hoặc `Western` |
+| criterion_code | TEXT | — | NO | Mã tiêu chí tại thời điểm sinh câu hỏi |
+| criterion_name_snapshot | TEXT | — | NO | Tên tiêu chí snapshot |
+| category_key_snapshot | TEXT | — | NO | CHECK `behavioral` hoặc `technical` |
+| weight_snapshot | DOUBLE | — | NO | CHECK >= 0 |
+| display_order_snapshot | INT | 0 | NO | CHECK >= 0 |
+| created_at | TIMESTAMPTZ | now() | NO | |
+
+Primary key: `(session_question_id, criterion_code)`.  
+Indexes:
+- `idx_session_question_criteria_rubric_criterion` on `(rubric_criterion_id)`
+- `idx_session_question_criteria_criterion_code` on `(criterion_code)`
 
 ---
 

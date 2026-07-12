@@ -92,8 +92,8 @@ describe('QuestionGenerationProcessor', () => {
       Promise.all(operations),
     );
     mockQuestionCriteria.buildSessionQuestionCriteriaData.mockImplementation(
-      async ({ sessionQuestionId, competencyDomains, contextPackId }) =>
-        competencyDomains.map((code, index) => ({
+      async ({ sessionQuestionId, criterionCodes, contextPackId }) =>
+        criterionCodes.map((code, index) => ({
           sessionQuestionId,
           rubricCriterionId: `criterion-${code}`,
           contextPackIdSnapshot: contextPackId,
@@ -181,11 +181,11 @@ describe('QuestionGenerationProcessor', () => {
         questionText: 'Điểm mạnh là gì?',
         orderIndex: 5,
         questionCategory: 'behavioral',
-        competencyDomains: ['D1'],
         rubricJson: {},
         estimatedTimeMin: 5,
       }),
     );
+    expect(createArgs.data[4]).not.toHaveProperty('competencyDomains');
     expect(createArgs.data[4]).not.toHaveProperty('questionBankId');
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
       where: {
@@ -266,10 +266,10 @@ describe('QuestionGenerationProcessor', () => {
       expect.objectContaining({
         questionText: 'Tell me about a time you learned from feedback.',
         questionCategory: 'behavioral',
-        competencyDomains: ['D6'],
         estimatedTimeMin: 5,
       }),
     );
+    expect(createArgs.data[4]).not.toHaveProperty('competencyDomains');
   });
 
   it('drop AI question sai domain sessionType và bù đủ bằng question_bank', async () => {

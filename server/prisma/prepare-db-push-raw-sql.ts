@@ -105,28 +105,6 @@ async function main() {
             RAISE EXCEPTION 'Cannot simplify rubric versions: active rubric versions must have active criteria';
           END IF;
 
-          IF EXISTS (
-            SELECT 1
-            FROM question_bank qb
-            JOIN rubric_versions rv
-              ON rv.context_pack_id = qb.context_pack_id
-             AND rv.status::text = 'active'
-            WHERE qb.deleted_at IS NULL
-              AND EXISTS (
-                SELECT 1
-                FROM unnest(qb.competency_domains) AS domain(code)
-                WHERE NOT EXISTS (
-                  SELECT 1
-                  FROM rubric_criteria rcr
-                  WHERE rcr.rubric_version_id = rv.id
-                    AND rcr.code = domain.code
-                    AND rcr.active = true
-                )
-              )
-          ) THEN
-            RAISE EXCEPTION 'Cannot simplify rubric versions: question_bank.competency_domains must match active criteria';
-          END IF;
-
           ALTER TABLE rubric_categories
             ADD COLUMN IF NOT EXISTS context_pack_id TEXT;
 
@@ -160,8 +138,39 @@ async function main() {
       DROP INDEX IF EXISTS idx_rubric_criteria_version;
       DROP INDEX IF EXISTS idx_interview_sessions_rubric_version;
 
-      ALTER TABLE question_bank
-        ADD COLUMN IF NOT EXISTS competency_domains TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+      DO $$
+      DECLARE
+        missing_links INTEGER;
+      BEGIN
+        IF to_regclass('public.question_bank_criteria') IS NOT NULL THEN
+          SELECT count(*) INTO missing_links
+          FROM question_bank qb
+          WHERE qb.deleted_at IS NULL
+            AND NOT EXISTS (
+              SELECT 1
+              FROM question_bank_criteria qbc
+              WHERE qbc.question_bank_id = qb.id
+            );
+
+          IF missing_links > 0 THEN
+            RAISE EXCEPTION 'Cannot drop question_bank.competency_domains: % active question_bank rows have no criteria relation', missing_links;
+          END IF;
+        END IF;
+
+        IF to_regclass('public.session_question_criteria') IS NOT NULL THEN
+          SELECT count(*) INTO missing_links
+          FROM session_questions sq
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM session_question_criteria sqc
+            WHERE sqc.session_question_id = sq.id
+          );
+
+          IF missing_links > 0 THEN
+            RAISE EXCEPTION 'Cannot drop session_questions.competency_domains: % session_questions rows have no criteria snapshot relation', missing_links;
+          END IF;
+        END IF;
+      END $$;
 
       DO $$
       BEGIN
@@ -172,15 +181,9 @@ async function main() {
             AND table_name = 'question_bank'
             AND column_name = 'competency_domain'
         ) THEN
-          UPDATE question_bank
-          SET competency_domains = ARRAY[competency_domain]
-          WHERE cardinality(competency_domains) = 0
-            AND competency_domain IS NOT NULL;
+          ALTER TABLE question_bank DROP COLUMN competency_domain;
         END IF;
       END $$;
-
-      ALTER TABLE session_questions
-        ADD COLUMN IF NOT EXISTS competency_domains TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
 
       DO $$
       BEGIN
@@ -191,10 +194,7 @@ async function main() {
             AND table_name = 'session_questions'
             AND column_name = 'competency_domain'
         ) THEN
-          UPDATE session_questions
-          SET competency_domains = ARRAY[competency_domain]
-          WHERE cardinality(competency_domains) = 0
-            AND competency_domain IS NOT NULL;
+          ALTER TABLE session_questions DROP COLUMN competency_domain;
         END IF;
       END $$;
 

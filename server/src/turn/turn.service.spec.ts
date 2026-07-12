@@ -46,7 +46,13 @@ describe('TurnService', () => {
     id: 'q-1',
     questionText: 'Giới thiệu bản thân?',
     questionCategory: 'behavioral',
-    competencyDomains: ['D1'],
+    criteria: [
+      {
+        criterionCode: 'D1',
+        categoryKeySnapshot: 'behavioral',
+        displayOrderSnapshot: 1,
+      },
+    ],
     orderIndex: 1,
     sessionId: 'session-123',
   };
@@ -458,7 +464,13 @@ describe('TurnService', () => {
         ...BASE_QUESTION,
         questionText: 'Explain a system design trade-off.',
         questionCategory: 'technical',
-        competencyDomains: ['TD3'],
+        criteria: [
+          {
+            criterionCode: 'TD3',
+            categoryKeySnapshot: 'technical',
+            displayOrderSnapshot: 1,
+          },
+        ],
       });
       mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
       mockPrisma.userAnswer.upsert.mockResolvedValue({

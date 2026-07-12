@@ -323,7 +323,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
           this.questionCriteria.buildSessionQuestionCriteriaData({
             sessionQuestionId: row.id,
             contextPackId: contextPack,
-            competencyDomains: row.competencyDomains,
+            criterionCodes: row.competencyDomains,
             rubricJson: row.rubricJson,
           }),
         ),
@@ -332,7 +332,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
 
     const [questionResult] = await this.prisma.$transaction([
       this.prisma.sessionQuestion.createMany({
-        data: questionRows,
+        data: questionRows.map(({ competencyDomains, ...row }) => row),
         skipDuplicates: true,
       }),
       this.prisma.sessionQuestionCriterion.createMany({

@@ -90,7 +90,18 @@ describe('TranscriptionProcessor', () => {
       id: 'q-1',
       questionText: 'Tell me about yourself?',
       questionCategory: 'behavioral',
-      competencyDomains: ['D1', 'D6'],
+      criteria: [
+        {
+          criterionCode: 'D1',
+          categoryKeySnapshot: 'behavioral',
+          displayOrderSnapshot: 1,
+        },
+        {
+          criterionCode: 'D6',
+          categoryKeySnapshot: 'behavioral',
+          displayOrderSnapshot: 6,
+        },
+      ],
       orderIndex: 1,
       sessionId: 'session-123',
     });

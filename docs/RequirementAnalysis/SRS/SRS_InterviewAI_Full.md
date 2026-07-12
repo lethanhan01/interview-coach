@@ -575,7 +575,7 @@ flowchart TD
 - session_type, difficulty, num_questions, context_pack_id, duration_min
 
 **Đầu ra / Artifacts:**
-- `session_questions[]` sắp xếp theo order_index tăng dần, mỗi record có `estimated_time_min` và `competency_domain`
+- `session_questions[]` sắp xếp theo order_index tăng dần, mỗi record có `estimated_time_min`; tiêu chí đánh giá của từng câu được lưu trong `session_question_criteria`
 - `interview_sessions.plan_json` (cấu trúc xem schema bên dưới)
 - `interview_sessions.status` cập nhật → in_progress
 
@@ -595,7 +595,7 @@ flowchart TD
 
 **Bước 3 — [SYSTEM] Lấy câu hỏi từ question_bank (70%):**
 6. Query `question_bank` lấy `ceil(num_questions × 0.7)` câu phù hợp:
-   - WHERE `competency_domain` thuộc competency distribution đã xác định
+   - JOIN `question_bank_criteria`/`rubric_criteria` để lọc câu hỏi theo các rubric criteria thuộc competency distribution đã xác định
    - AND `difficulty` match session difficulty
    - AND `session_type` compatible
    - AND id NOT IN (câu Candidate đã gặp trong 30 ngày — SQL JOIN với `session_questions`)
@@ -608,8 +608,8 @@ flowchart TD
 **Bước 5 — [SYSTEM] Tổng hợp, validate và lưu:**
 10. Merge bank questions + LLM-generated questions; sắp xếp theo độ khó tăng dần (easy → medium → hard)
 11. Validate: `sum(estimated_time_min) ≤ time_budget + 2` (buffer 2 phút); nếu vượt → giảm `estimated_time_min` của câu easy trước
-12. Validate schema (mỗi câu có text, competency_domain, difficulty, estimated_time_min); câu nào fail → drop và bổ sung từ question_bank
-13. Lưu `session_questions[]` với đầy đủ `competency_domain` và `estimated_time_min`
+12. Validate schema (mỗi câu có text, `competency_domains`/criteria codes, difficulty, estimated_time_min); câu nào fail → drop và bổ sung từ question_bank
+13. Lưu `session_questions[]` với đầy đủ `estimated_time_min`, đồng thời snapshot criteria vào `session_question_criteria`
 14. Cập nhật `interview_sessions.plan_json` và `status = in_progress`
 15. Redirect Candidate đến Phase 4
 

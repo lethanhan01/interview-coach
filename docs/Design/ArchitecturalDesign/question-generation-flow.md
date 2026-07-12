@@ -133,7 +133,7 @@ Output của GPT-4o được parse và validate bằng Zod schema:
     {
       text: string,               // nội dung câu hỏi
       category: string,           // ví dụ: "Teamwork", "Problem Solving"
-      competency_domain: string,  // ví dụ: "collaboration", "technical_depth"
+      competency_domains: string[], // ví dụ: ["D1"], ["TD2"], ["TD2", "D1"]
       difficulty: 1 | 2 | 3       // 1=dễ, 2=trung bình, 3=khó
     },
     // ...
@@ -223,11 +223,12 @@ session_questions
 ├── question_bank_id  UUID? → question_bank  [NULL nếu AI-generated]
 ├── question_text     TEXT   — nội dung câu hỏi
 ├── order_index       INT    — thứ tự 0, 1, 2... (dùng để phân trang)
-├── question_category TEXT   — ví dụ: "Teamwork"
-├── competency_domain TEXT   — ví dụ: "collaboration"
+├── question_category TEXT   — ví dụ: "behavioral" hoặc "technical"
 ├── rubric_json       JSONB  — rubric đánh giá riêng cho câu hỏi này
 └── estimated_time_min INT?  — thời gian dự kiến trả lời
 ```
+
+Tiêu chí đánh giá của từng câu không còn lưu trực tiếp trên `session_questions`; hệ thống ghi snapshot vào `session_question_criteria` gồm `criterion_code`, tên, category, weight và display order tại thời điểm tạo session.
 
 **Điểm quan trọng:**
 

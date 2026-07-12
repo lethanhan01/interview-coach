@@ -243,9 +243,9 @@ async function createFixture() {
 
   await client.query(
     `INSERT INTO question_bank (
-       id, content, session_type, difficulty, context_pack_id, competency_domains
+       id, content, session_type, difficulty, context_pack_id
      )
-     VALUES ($1, 'Constraint bank question', 'hr', 2, $2, ARRAY['D1'])`,
+     VALUES ($1, 'Constraint bank question', 'hr', 2, $2)`,
     [questionBank, contextPack],
   );
 
@@ -351,10 +351,10 @@ async function createQuestion(sessionId: string, orderIndex: number) {
   const id = randomUUID();
   await client.query(
      `INSERT INTO session_questions (
-        id, session_id, question_text, order_index,
-        question_category, competency_domains, rubric_json
-      )
-      VALUES ($1, $2, $3, $4, 'general', ARRAY['D1'], '{}'::jsonb)`,
+         id, session_id, question_text, order_index,
+         question_category, rubric_json
+       )
+       VALUES ($1, $2, $3, $4, 'general', '{}'::jsonb)`,
     [id, sessionId, `Constraint question ${orderIndex}`, orderIndex],
   );
   return id;

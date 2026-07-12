@@ -5,17 +5,27 @@ export const createMockQuestionBank = (
     sessionType: string;
     difficulty: number;
     contextPackId: string;
-    subcategory: string;
-    competencyDomains: string[];
-    applicableRoles: string[];
-    applicableLevels: string[];
-    tags: string[];
     estimatedTimeMin: number | null;
     translations: Record<string, string> | null;
     contentJson: Record<string, unknown> | null;
     deletedAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
+    criteria: Array<{
+      rubricCriterion: {
+        id: string;
+        code: string;
+        name: string;
+        weight: number;
+        displayOrder: number;
+        active: boolean;
+        rubricCategory: {
+          contextPackId: string;
+          categoryKey: string;
+          displayOrder: number;
+        };
+      };
+    }>;
   }> = {},
 ) => ({
   id: 'qb-test-id',
@@ -23,11 +33,6 @@ export const createMockQuestionBank = (
   sessionType: 'hr',
   difficulty: 2,
   contextPackId: 'VN',
-  subcategory: 'self-introduction',
-  competencyDomains: ['D4'],
-  applicableRoles: ['all'],
-  applicableLevels: ['junior', 'mid'],
-  tags: ['hr', 'self-introduction'],
   estimatedTimeMin: 5,
   translations: {
     en: 'Tell me about yourself.',
@@ -37,6 +42,23 @@ export const createMockQuestionBank = (
   deletedAt: null,
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
+  criteria: [
+    {
+      rubricCriterion: {
+        id: 'criterion-D4',
+        code: 'D4',
+        name: 'Communication',
+        weight: 1,
+        displayOrder: 4,
+        active: true,
+        rubricCategory: {
+          contextPackId: 'VN',
+          categoryKey: 'behavioral',
+          displayOrder: 1,
+        },
+      },
+    },
+  ],
   ...overrides,
 });
 
@@ -184,10 +206,12 @@ export const createMockQuestionBankService = () => ({
 });
 
 export const createMockQuestionCriteriaService = () => ({
-  hasQuestionBankCriteria: jest.fn().mockReturnValue(false),
-  codesFromQuestionBank: jest.fn((question) => question.competencyDomains),
-  hasSessionQuestionCriteria: jest.fn().mockReturnValue(false),
-  codesFromSessionQuestion: jest.fn((question) => question.competencyDomains),
+  codesFromQuestionBank: jest.fn((question) =>
+    question.criteria.map((link) => link.rubricCriterion.code),
+  ),
+  codesFromSessionQuestion: jest.fn((question) =>
+    question.criteria.map((link) => link.criterionCode),
+  ),
   buildSessionQuestionCriteriaData: jest.fn().mockResolvedValue([
     {
       sessionQuestionId: 'question-1',

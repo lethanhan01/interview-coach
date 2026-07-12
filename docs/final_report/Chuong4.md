@@ -428,13 +428,13 @@ Backend Developer
 
 Sau khi AI trả kết quả, backend không lưu ngay. Kết quả phải đi qua các bước parse JSON, kiểm tra schema, chuẩn hóa loại câu hỏi, chuẩn hóa competency domain theo context pack và loại phiên, loại bỏ câu hỏi có domain không thuộc phiên hiện tại, chuẩn hóa độ khó về mức 1, 2 hoặc 3 và tính thời lượng ước tính cho từng câu. Nếu AI trả về tên tiêu chí thay vì mã tiêu chí, backend có cơ chế khớp theo mã gốc, mã đã chuẩn hóa, mã được trích ra từ chuỗi hoặc tên tiêu chí đã chuẩn hóa. Nếu vẫn không khớp, câu hỏi đó bị loại bỏ.
 
-AI service được gọi với yêu cầu trả về JSON object. Backend parse JSON, validate bằng schema câu hỏi và chỉ lấy tối đa đúng số câu AI cần sinh. Các trường AI trả về được xem là dữ liệu chưa tin cậy. Vì vậy hệ thống không lưu trực tiếp `category`, `competency_domain` hoặc `difficulty` nếu chúng không khớp với context pack và loại phiên hiện tại.
+AI service được gọi với yêu cầu trả về JSON object. Backend parse JSON, validate bằng schema câu hỏi và chỉ lấy tối đa đúng số câu AI cần sinh. Các trường AI trả về được xem là dữ liệu chưa tin cậy. Vì vậy hệ thống không lưu trực tiếp `category`, danh sách mã tiêu chí hoặc `difficulty` nếu chúng không khớp với context pack và loại phiên hiện tại.
 
 Đối với phần question bank, backend lọc câu hỏi theo loại phiên, context pack và ngôn ngữ. Với phiên Mixed, hệ thống chia tương đối giữa câu hỏi HR và Technical. Backend không lấy đúng bằng số lượng cần ngay từ đầu mà lấy một tập ứng viên lớn hơn, khoảng gấp 3 lần số câu cần lấy, rồi chọn theo phân bố độ khó. Logic hiện tại ưu tiên khoảng 30% câu dễ, 50% câu trung bình và 20% câu khó; nếu nhóm nào không đủ, hệ thống lấy thêm từ các câu còn lại để đạt đủ số lượng.
 
-Question bank chỉ lấy các câu chưa bị xóa mềm và thuộc context pack của phiên. Với ngôn ngữ đầu ra, backend ưu tiên bản dịch theo ngôn ngữ của phiên nếu có; nếu không có bản dịch phù hợp, hệ thống dùng nội dung gốc của câu hỏi. Mỗi câu question bank trả về đã có mã câu hỏi gốc, nội dung, nhóm câu hỏi, competency domain và thời lượng ước tính.
+Question bank chỉ lấy các câu chưa bị xóa mềm và thuộc context pack của phiên. Với ngôn ngữ đầu ra, backend ưu tiên bản dịch theo ngôn ngữ của phiên nếu có; nếu không có bản dịch phù hợp, hệ thống dùng nội dung gốc của câu hỏi. Mỗi câu question bank trả về đã có mã câu hỏi gốc, nội dung, nhóm câu hỏi, danh sách mã tiêu chí lấy từ `question_bank_criteria` và thời lượng ước tính.
 
-Sau khi có câu hỏi AI và câu hỏi từ question bank, backend trộn chúng thành danh sách cuối cùng. Câu hỏi AI không bị dồn vào đầu phiên mà được đặt cách quãng, ví dụ ở các vị trí khoảng 5, 10, 15 nếu phiên đủ dài. Các vị trí còn lại lấy từ question bank. Mỗi câu hỏi cuối cùng được lưu với mã phiên, mã câu hỏi gốc nếu có, nội dung câu hỏi, thứ tự, loại câu hỏi, competency domain, rubric JSON và thời lượng ước tính.
+Sau khi có câu hỏi AI và câu hỏi từ question bank, backend trộn chúng thành danh sách cuối cùng. Câu hỏi AI không bị dồn vào đầu phiên mà được đặt cách quãng, ví dụ ở các vị trí khoảng 5, 10, 15 nếu phiên đủ dài. Các vị trí còn lại lấy từ question bank. Mỗi câu hỏi cuối cùng được lưu với mã phiên, mã câu hỏi gốc nếu có, nội dung câu hỏi, thứ tự, loại câu hỏi, rubric JSON và thời lượng ước tính; các tiêu chí đánh giá được lưu riêng trong `session_question_criteria` để giữ snapshot lịch sử.
 
 Thuật toán sinh câu hỏi được đặt ở backend vì đây là bước cần kiểm soát chặt dữ liệu đầu vào, trạng thái phiên, context pack, question bank và khả năng fallback khi AI không ổn định. Frontend chỉ gửi cấu hình phiên; backend mới là nơi quyết định câu hỏi nào được tạo, câu hỏi nào được lấy từ ngân hàng câu hỏi và khi nào phiên được chuyển sang trạng thái sẵn sàng.
 
@@ -716,7 +716,7 @@ Bạn đã thiết kế database cho dự án như thế nào?
 
 <question_metadata>
 category=technical
-competency_domain=TD2
+competency_domains=TD2
 </question_metadata>
 
 <answer>
@@ -989,9 +989,13 @@ erDiagram
     users ||--o{ saved_job_descriptions : saves
     users ||--o{ interview_sessions : creates
     rubric_categories ||--o{ rubric_criteria : contains
+    rubric_criteria ||--o{ question_bank_criteria : linked_by
+    rubric_criteria ||--o{ session_question_criteria : snapshotted_by
     saved_job_descriptions ||--o{ interview_sessions : reused_by
     interview_sessions ||--o{ session_questions : contains
+    question_bank ||--o{ question_bank_criteria : evaluates
     question_bank ||--o{ session_questions : source_for
+    session_questions ||--o{ session_question_criteria : has_snapshot
     interview_sessions ||--o{ user_answers : receives
     session_questions ||--o| user_answers : answered_by
     user_answers ||--o| ai_feedbacks : evaluated_by
@@ -1068,13 +1072,18 @@ erDiagram
         QuestionSessionType session_type
         INT difficulty
         TEXT context_pack_id
-        TEXT_ARRAY competency_domains
         INT estimated_time_min
         JSONB translations
         JSONB content_json
         TIMESTAMPTZ deleted_at
         TIMESTAMPTZ created_at
         TIMESTAMPTZ updated_at
+    }
+
+    question_bank_criteria {
+        UUID question_bank_id PK, FK
+        UUID rubric_criterion_id PK, FK
+        TIMESTAMPTZ created_at
     }
 
     interview_sessions {
@@ -1102,9 +1111,20 @@ erDiagram
         TEXT question_text
         INT order_index
         TEXT question_category
-        TEXT_ARRAY competency_domains
         JSONB rubric_json
         INT estimated_time_min
+        TIMESTAMPTZ created_at
+    }
+
+    session_question_criteria {
+        UUID session_question_id PK, FK
+        UUID rubric_criterion_id FK
+        TEXT context_pack_id_snapshot
+        TEXT criterion_code PK
+        TEXT criterion_name_snapshot
+        TEXT category_key_snapshot
+        FLOAT weight_snapshot
+        INT display_order_snapshot
         TIMESTAMPTZ created_at
     }
 
@@ -1162,7 +1182,7 @@ erDiagram
     }
 ```
 
-Các bảng có thể chia thành sáu nhóm chính. Nhóm người dùng gồm `users` và `user_profiles`, dùng để lưu tài khoản, hồ sơ ứng viên và dữ liệu CV có cấu trúc. Nhóm Job Description và cấu hình gồm `saved_job_descriptions` cùng các trường cấu hình phiên như `context_pack_id`. Nhóm rubric gồm `rubric_categories` và `rubric_criteria`, là nguồn dữ liệu gốc cho tiêu chí và trọng số chấm điểm hiện hành theo context. Nhóm phiên phỏng vấn gồm `interview_sessions` và `session_questions`, ghi cấu hình phiên, trạng thái vòng đời và danh sách câu hỏi đã sinh cho từng phiên. Nhóm câu trả lời gồm `user_answers`, lưu câu trả lời văn bản hoặc transcript giọng nói, trạng thái bỏ qua và trạng thái feedback. Nhóm feedback gồm `ai_feedbacks` và `annotated_segments`, lưu điểm, nhận xét, câu trả lời mẫu và các đoạn được chú thích trong câu trả lời. Nhóm báo cáo gồm `session_reports`, lưu từng phần của báo cáo tổng hợp theo loại và phiên bản.
+Các bảng có thể chia thành sáu nhóm chính. Nhóm người dùng gồm `users` và `user_profiles`, dùng để lưu tài khoản, hồ sơ ứng viên và dữ liệu CV có cấu trúc. Nhóm Job Description và cấu hình gồm `saved_job_descriptions` cùng các trường cấu hình phiên như `context_pack_id`. Nhóm rubric gồm `rubric_categories`, `rubric_criteria`, `question_bank_criteria` và `session_question_criteria`, là nguồn dữ liệu gốc cho tiêu chí hiện hành và snapshot tiêu chí theo câu hỏi. Nhóm phiên phỏng vấn gồm `interview_sessions` và `session_questions`, ghi cấu hình phiên, trạng thái vòng đời và danh sách câu hỏi đã sinh cho từng phiên. Nhóm câu trả lời gồm `user_answers`, lưu câu trả lời văn bản hoặc transcript giọng nói, trạng thái bỏ qua và trạng thái feedback. Nhóm feedback gồm `ai_feedbacks` và `annotated_segments`, lưu điểm, nhận xét, câu trả lời mẫu và các đoạn được chú thích trong câu trả lời. Nhóm báo cáo gồm `session_reports`, lưu từng phần của báo cáo tổng hợp theo loại và phiên bản.
 
 ### 4.6.2 Danh sách bảng dữ liệu
 
@@ -1181,7 +1201,7 @@ Bảng `rubric_categories` lưu hai nhóm tiêu chí chính của rubric hiện 
 
 **Bảng `rubric_criteria`**
 
-Bảng `rubric_criteria` lưu từng tiêu chí chấm điểm trong một nhóm rubric. Các mã tiêu chí này được dùng để kiểm tra `competency_domains` của câu hỏi và chuẩn hóa điểm feedback.
+Bảng `rubric_criteria` lưu từng tiêu chí chấm điểm trong một nhóm rubric. Các mã tiêu chí này được liên kết với câu hỏi qua `question_bank_criteria` và `session_question_criteria`, sau đó dùng để chuẩn hóa điểm feedback.
 
 | Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
 | ----- | ------------ | --------- | -------- | -------- | ------- |
@@ -1204,13 +1224,22 @@ Bảng `question_bank` lưu ngân hàng câu hỏi nền để hệ thống ch�
 | `session_type` | `QuestionSessionType` | Enum `hr`, `technical` | Có | - | Loại câu hỏi trong ngân hàng câu hỏi. |
 | `difficulty` | `INT` | CHECK `difficulty BETWEEN 1 AND 5` | Có | - | Mức độ khó của câu hỏi. |
 | `context_pack_id` | `TEXT` | CHECK trong tập `VN`, `Western` | Có | - | Context pack mà câu hỏi thuộc về. |
-| `competency_domains` | `TEXT[]` | - | Có | `{}` | Một hoặc nhiều mã tiêu chí mà câu hỏi đánh giá. |
 | `estimated_time_min` | `INT` | CHECK `NULL` hoặc `> 0` | Không | - | Thời lượng ước tính cho câu hỏi. |
 | `translations` | `JSONB` | - | Không | - | Bản dịch câu hỏi theo ngôn ngữ nếu có. |
 | `content_json` | `JSONB` | - | Không | - | Metadata hoặc nguồn dữ liệu của câu hỏi. |
 | `deleted_at` | `TIMESTAMPTZ(6)` | Soft delete | Không | - | Thời điểm xóa mềm câu hỏi. |
 | `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo câu hỏi. |
 | `updated_at` | `TIMESTAMPTZ(6)` | Tự cập nhật khi ghi | Có | `now()` | Thời điểm cập nhật gần nhất. |
+
+**Bảng `question_bank_criteria`**
+
+Bảng `question_bank_criteria` là bảng nối giữa câu hỏi trong ngân hàng và tiêu chí rubric. Đây là nguồn dữ liệu chính để xác định câu hỏi bank đánh giá những tiêu chí nào.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `question_bank_id` | `UUID` | Khóa ngoại tới `question_bank.id`, ON DELETE CASCADE | Có | - | Câu hỏi trong ngân hàng. |
+| `rubric_criterion_id` | `UUID` | Khóa ngoại tới `rubric_criteria.id`, ON DELETE RESTRICT | Có | - | Tiêu chí rubric được câu hỏi đánh giá. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo liên kết. |
 
 **Bảng `users`**
 
@@ -1303,10 +1332,25 @@ Bảng `session_questions` lưu danh sách câu hỏi thực tế của từng p
 | `question_text` | `TEXT` | - | Có | - | Nội dung câu hỏi đã hiển thị cho người dùng. |
 | `order_index` | `INT` | UNIQUE cùng `session_id` | Có | - | Thứ tự câu hỏi trong phiên. |
 | `question_category` | `TEXT` | - | Có | - | Nhóm câu hỏi, ví dụ HR hoặc technical. |
-| `competency_domains` | `TEXT[]` | - | Có | `{}` | Một hoặc nhiều mã tiêu chí được câu hỏi đánh giá. |
 | `rubric_json` | `JSONB` | - | Có | - | Rubric áp dụng cho câu hỏi tại thời điểm sinh. |
 | `estimated_time_min` | `INT` | - | Không | - | Thời gian ước tính cho câu hỏi. |
 | `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm lưu câu hỏi vào phiên. |
+
+**Bảng `session_question_criteria`**
+
+Bảng `session_question_criteria` lưu snapshot tiêu chí cho từng câu hỏi trong phiên. Bảng này giữ lịch sử chấm điểm ổn định kể cả khi rubric hiện hành thay đổi hoặc tiêu chí gốc bị xóa.
+
+| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
+| ----- | ------------ | --------- | -------- | -------- | ------- |
+| `session_question_id` | `UUID` | Khóa ngoại tới `session_questions.id`, ON DELETE CASCADE | Có | - | Câu hỏi trong phiên. |
+| `rubric_criterion_id` | `UUID` | Khóa ngoại tới `rubric_criteria.id`, ON DELETE SET NULL | Không | - | Tiêu chí hiện hành nếu còn tồn tại. |
+| `context_pack_id_snapshot` | `TEXT` | CHECK trong tập `VN`, `Western` | Có | - | Context pack tại thời điểm sinh câu hỏi. |
+| `criterion_code` | `TEXT` | Khóa chính cùng `session_question_id` | Có | - | Mã tiêu chí tại thời điểm sinh câu hỏi. |
+| `criterion_name_snapshot` | `TEXT` | - | Có | - | Tên tiêu chí snapshot. |
+| `category_key_snapshot` | `TEXT` | CHECK trong tập `behavioral`, `technical` | Có | - | Nhóm tiêu chí snapshot. |
+| `weight_snapshot` | `DOUBLE PRECISION` | CHECK `>= 0` | Có | - | Trọng số snapshot. |
+| `display_order_snapshot` | `INT` | CHECK `>= 0` | Có | `0` | Thứ tự hiển thị snapshot. |
+| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo snapshot. |
 
 **Bảng `user_answers`**
 
