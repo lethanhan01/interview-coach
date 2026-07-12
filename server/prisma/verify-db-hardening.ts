@@ -133,6 +133,7 @@ const retiredColumns = [
   ['user_profiles', 'years_experience'],
   ['user_profiles', 'default_language'],
   ['user_profiles', 'tts_enabled'],
+  ['user_profiles', 'preferred_tech_stack'],
   ['user_profiles', 'deleted_at'],
   ['resumes', 'file_url'],
   ['resumes', 'original_filename'],

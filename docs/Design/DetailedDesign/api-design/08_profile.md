@@ -38,7 +38,6 @@ Cả hai endpoint yêu cầu Bearer JWT và trả trực tiếp Prisma `User` k�
 | `targetPosition` | string \| null | Vị trí công việc mục tiêu. |
 | `targetRoleCategory` | string \| null | Nhóm vai trò mục tiêu. |
 | `targetLevel` | string \| null | Cấp bậc mục tiêu. |
-| `preferredTechStack` | string \| null | Tech stack ưu tiên. |
 | `yearsExperience` | number | Số năm kinh nghiệm; mặc định `0`. |
 | `defaultLanguage` | string | Ngôn ngữ mặc định; mặc định `vi`. |
 | `ttsEnabled` | boolean | Trạng thái bật text-to-speech. |
@@ -122,7 +121,6 @@ Tất cả trường đều optional. Trường không gửi sẽ không bị th
 | `targetPosition` | string | Vị trí mục tiêu. |
 | `targetRoleCategory` | string | Nhóm vai trò mục tiêu. |
 | `targetLevel` | string | Cấp bậc mục tiêu. |
-| `preferredTechStack` | string | Tech stack ưu tiên. |
 | `yearsExperience` | integer | Số năm kinh nghiệm, tối thiểu 0. |
 | `defaultLanguage` | string | Ngôn ngữ mặc định; DTO chưa giới hạn enum. |
 | `ttsEnabled` | boolean | Bật/tắt text-to-speech. |

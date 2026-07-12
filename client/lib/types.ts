@@ -214,7 +214,6 @@ export interface GetProfileResponse {
     targetPosition?: string;
     targetRoleCategory?: string;
     targetLevel?: string;
-    preferredTechStack?: string;
     education?: EducationEntry;
     workExperience?: WorkExperienceEntry[];
     projects?: ProjectEntry[];

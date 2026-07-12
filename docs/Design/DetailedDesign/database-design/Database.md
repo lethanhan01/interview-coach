@@ -18,7 +18,7 @@
 | D2 | Migration tool | `prisma migrate dev` (tạo migration files) | `prisma db push` + `db:apply-sql` qua `db:sync:full` |
 | D3 | `question_usage` table | Không có trong thiết kế gốc | Retired — từng chỉ ghi audit, chưa có repeat-avoidance runtime |
 | D4 | `question_bank` fields | 9 data columns | 9 data columns — giữ runtime fields + `estimated_time_min`, `translations`, `content_json`; bỏ metadata filter chưa dùng |
-| D5 | `user_profiles` fields | 13 columns | 10 columns — giữ profile phỏng vấn đang dùng; CV structured đã tách sang `resumes.parsed_json` |
+| D5 | `user_profiles` fields | 13 columns | 9 columns — giữ profile phỏng vấn đang dùng; CV structured đã tách sang `resumes.parsed_json` |
 | D6 | `reverse_questions` | MVP (Layer 4) | Chưa implement — không có trong schema.prisma |
 | D7 | Partial indexes | Raw SQL files riêng | Prisma schema cho một số partial index; raw SQL cho `resumes(user_id) WHERE active = true` |
 | D8 | `QuestionUsage` indexes | `sort: Desc` trong plan | Retired cùng `question_usage` |
@@ -154,7 +154,6 @@ One-to-one với users. Field CV structured đã tách sang `resumes.parsed_json
 | target_position | TEXT | — | YES | |
 | target_role_category | TEXT | — | YES | |
 | target_level | TEXT | — | YES | |
-| preferred_tech_stack | TEXT | — | YES | |
 | personality | TEXT | — | YES | *Ngoài design docs* |
 | created_at | TIMESTAMPTZ | now() | NO | |
 | updated_at | TIMESTAMPTZ | now() | NO | Auto-update |

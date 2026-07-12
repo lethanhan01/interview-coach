@@ -1015,7 +1015,6 @@ erDiagram
         TEXT target_position
         TEXT target_role_category
         TEXT target_level
-        TEXT preferred_tech_stack
         TEXT personality
         TIMESTAMPTZ created_at
         TIMESTAMPTZ updated_at
@@ -1244,7 +1243,6 @@ Bảng `user_profiles` lưu hồ sơ mở rộng của ứng viên. Bảng này 
 | `target_position` | `TEXT` | - | Không | - | Vị trí mục tiêu. |
 | `target_role_category` | `TEXT` | - | Không | - | Nhóm vai trò nghề nghiệp mục tiêu. |
 | `target_level` | `TEXT` | - | Không | - | Cấp độ mục tiêu, ví dụ intern, fresher hoặc junior. |
-| `preferred_tech_stack` | `TEXT` | - | Không | - | Công nghệ hoặc kỹ năng kỹ thuật ưu tiên. |
 | `personality` | `TEXT` | - | Không | - | Thông tin tính cách hoặc phong cách làm việc nếu có. |
 | `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo hồ sơ. |
 | `updated_at` | `TIMESTAMPTZ(6)` | Tự cập nhật khi ghi | Có | `now()` | Thời điểm cập nhật hồ sơ gần nhất. |

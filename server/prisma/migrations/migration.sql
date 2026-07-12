@@ -54,6 +54,7 @@ ALTER TABLE user_profiles
   DROP COLUMN IF EXISTS years_experience,
   DROP COLUMN IF EXISTS default_language,
   DROP COLUMN IF EXISTS tts_enabled,
+  DROP COLUMN IF EXISTS preferred_tech_stack,
   DROP COLUMN IF EXISTS deleted_at;
 
 ALTER TABLE resumes

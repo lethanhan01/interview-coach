@@ -69,7 +69,6 @@ export async function seedUserProfile(
         targetPosition: 'Junior Backend Developer',
         targetRoleCategory: 'backend',
         targetLevel: 'junior',
-        preferredTechStack: 'Node.js, NestJS, PostgreSQL',
       },
     });
     console.log('user profile: created');

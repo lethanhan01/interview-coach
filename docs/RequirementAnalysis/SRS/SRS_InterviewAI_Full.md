@@ -496,7 +496,7 @@ flowchart TD
 
 **Đầu vào:**
 - Google account
-- full_name, target_position, target_role_category (bắt buộc), target_level (bắt buộc), preferred_tech_stack, default_language
+- full_name, target_position, target_role_category (bắt buộc), target_level (bắt buộc), default_language
 - cv_pdf (tùy chọn, tối đa 5 MB)
 
 **Đầu ra / Artifacts:**
@@ -963,7 +963,6 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | `target_position` | Vị trí ứng tuyển mục tiêu | Có | Text | Không rỗng | Không có | `user_profiles` |
 | `target_role_category` | Nhóm vai trò mong muốn | Có | Enum | `backend`, `frontend`, `mobile`, `data`, `ai` | Không có | `user_profiles` |
 | `target_level` | Level mục tiêu | Có | Enum | `intern`, `fresher`, `junior` | Không có | `user_profiles` |
-| `preferred_tech_stack` | Tech stack chính (tự nhập) | Không | Text | Tối đa 200 ký tự | Không có | `user_profiles` |
 | `years_experience` | Số năm kinh nghiệm | Không | Number | Không âm | 0 | `user_profiles` |
 | `default_language` | Ngôn ngữ phỏng vấn mặc định | Có | Enum | `vi` hoặc `en` | `vi` | `user_profiles` |
 | `tts_enabled` | Bật/tắt đọc câu hỏi bằng giọng nói | Không | Boolean | true/false | false | `user_profiles` |
@@ -974,7 +973,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 1. Candidate truy cập trang **Hồ sơ** (Profile).
 2. Hệ thống hiển thị form gồm 2 nhóm trường:
    - **Thông tin cá nhân:** Họ tên, Số năm kinh nghiệm, Ngôn ngữ phỏng vấn mặc định (Tiếng Việt / Tiếng Anh), TTS (toggle bật/tắt, mặc định **tắt** — cài đặt được áp dụng tự động trong UC-04 Giai đoạn 0 và 1).
-   - **Mục tiêu nghề nghiệp:** Vị trí ứng tuyển mục tiêu (text tự do); Nhóm vai trò (Backend / Frontend / Mobile / Data / AI — Enum, bắt buộc); Level mục tiêu (Intern / Fresher / Junior — Enum, bắt buộc); Tech stack chính (text tự do, ≤ 200 ký tự, không bắt buộc).
+   - **Mục tiêu nghề nghiệp:** Vị trí ứng tuyển mục tiêu (text tự do); Nhóm vai trò (Backend / Frontend / Mobile / Data / AI — Enum, bắt buộc); Level mục tiêu (Intern / Fresher / Junior — Enum, bắt buộc).
 3. Candidate điền thông tin và nhấn **"Lưu thông tin"**.
 4. Hệ thống validate dữ liệu và lưu vào bảng `user_profiles`.
 5. Candidate nhấn **"Upload CV (PDF)"** — tùy chọn nhưng được khuyến nghị.

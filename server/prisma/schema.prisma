@@ -83,7 +83,6 @@ model UserProfile {
   targetPosition     String?   @map("target_position")
   targetRoleCategory String?   @map("target_role_category")
   targetLevel        String?   @map("target_level")
-  preferredTechStack String?   @map("preferred_tech_stack")
   personality        String?
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)

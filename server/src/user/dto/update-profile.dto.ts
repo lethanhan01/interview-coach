@@ -19,10 +19,6 @@ export class UpdateProfileDto {
 
   @IsString()
   @IsOptional()
-  preferredTechStack?: string;
-
-  @IsString()
-  @IsOptional()
   personality?: string;
 
   @IsObject()
