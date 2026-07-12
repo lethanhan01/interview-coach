@@ -3,6 +3,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import {
@@ -26,6 +27,7 @@ import { isSessionType } from '../ai/pipelines/interview-pipeline.interface';
 export class TurnService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly questionCriteria: QuestionCriteriaService,
     private readonly audioStorageService: AudioStorageService,
     private readonly voiceMetricsService: VoiceMetricsService,
     @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
@@ -99,6 +101,7 @@ export class TurnService {
 
     const question = await this.prisma.sessionQuestion.findFirst({
       where: { id: dto.questionId, sessionId },
+      include: SESSION_QUESTION_CRITERIA_INCLUDE,
     });
 
     if (!question) {
@@ -283,6 +286,8 @@ export class TurnService {
     }
 
     const contextPack = session.contextPackId as 'VN' | 'Western';
+    const competencyDomains =
+      this.questionCriteria.codesFromSessionQuestion(question);
     const jobBase = {
       sessionId,
       turnId: answer.id,
@@ -290,7 +295,7 @@ export class TurnService {
       questionId: question.id,
       questionText: question.questionText,
       questionCategory: question.questionCategory as 'behavioral' | 'technical',
-      competencyDomains: question.competencyDomains,
+      competencyDomains,
       answerText: answer.answerText,
       contextPack,
       sessionType,
@@ -310,3 +315,13 @@ export class TurnService {
     };
   }
 }
+
+const SESSION_QUESTION_CRITERIA_INCLUDE = {
+  criteria: {
+    include: {
+      rubricCriterion: {
+        include: { rubricCategory: true },
+      },
+    },
+  },
+} satisfies Prisma.SessionQuestionInclude;

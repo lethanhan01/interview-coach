@@ -38,6 +38,8 @@ const expectedPolicies = [
   ['public', 'interview_sessions', 'interview_sessions: insert own'],
   ['public', 'interview_sessions', 'interview_sessions: update own'],
   ['public', 'session_questions', 'session_questions: read own'],
+  ['public', 'question_bank_criteria', 'question_bank_criteria: read active question bank'],
+  ['public', 'session_question_criteria', 'session_question_criteria: read own'],
   ['public', 'user_answers', 'user_answers: read own'],
   ['public', 'user_answers', 'user_answers: insert own'],
   ['public', 'saved_job_descriptions', 'saved_job_descriptions: read own'],
@@ -54,6 +56,8 @@ const expectedRlsTables = [
   'user_profiles',
   'interview_sessions',
   'session_questions',
+  'question_bank_criteria',
+  'session_question_criteria',
   'user_answers',
   'saved_job_descriptions',
   'ai_feedbacks',
@@ -88,6 +92,16 @@ const expectedConstraints = [
   ['rubric_categories', 'chk_rubric_categories_display_order'],
   ['rubric_criteria', 'chk_rubric_criteria_weight'],
   ['rubric_criteria', 'chk_rubric_criteria_display_order'],
+  ['question_bank_criteria', 'question_bank_criteria_pkey'],
+  ['question_bank_criteria', 'question_bank_criteria_question_bank_id_fkey'],
+  ['question_bank_criteria', 'question_bank_criteria_rubric_criterion_id_fkey'],
+  ['session_question_criteria', 'session_question_criteria_pkey'],
+  ['session_question_criteria', 'session_question_criteria_session_question_id_fkey'],
+  ['session_question_criteria', 'session_question_criteria_rubric_criterion_id_fkey'],
+  ['session_question_criteria', 'chk_session_question_criteria_context_pack'],
+  ['session_question_criteria', 'chk_session_question_criteria_category_key'],
+  ['session_question_criteria', 'chk_session_question_criteria_weight'],
+  ['session_question_criteria', 'chk_session_question_criteria_display_order'],
 ];
 
 const expectedIndexes = [
@@ -109,6 +123,9 @@ const expectedIndexes = [
   ['rubric_categories', 'rubric_categories_context_category_key'],
   ['rubric_criteria', 'idx_rubric_criteria_category'],
   ['rubric_criteria', 'rubric_criteria_category_code_key'],
+  ['question_bank_criteria', 'idx_question_bank_criteria_rubric_criterion'],
+  ['session_question_criteria', 'idx_session_question_criteria_rubric_criterion'],
+  ['session_question_criteria', 'idx_session_question_criteria_criterion_code'],
 ];
 
 const retiredTables = [
@@ -368,6 +385,97 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
     );
   }
 
+  if (await criteriaRelationTablesExist()) {
+    checks.push(
+      [
+        'anomaly:question_bank_missing_criteria_links',
+        `SELECT count(*)::int AS count
+         FROM question_bank qb
+         WHERE qb.deleted_at IS NULL
+           AND NOT EXISTS (
+             SELECT 1
+             FROM question_bank_criteria qbc
+             WHERE qbc.question_bank_id = qb.id
+           )`,
+      ],
+      [
+        'anomaly:question_bank_criteria_wrong_context',
+        `SELECT count(*)::int AS count
+         FROM question_bank_criteria qbc
+         JOIN question_bank qb
+           ON qb.id = qbc.question_bank_id
+         JOIN rubric_criteria rcr
+           ON rcr.id = qbc.rubric_criterion_id
+         JOIN rubric_categories rc
+           ON rc.id = rcr.rubric_category_id
+         WHERE qb.deleted_at IS NULL
+           AND (
+             rc.context_pack_id <> qb.context_pack_id
+             OR rcr.active = false
+           )`,
+      ],
+      [
+        'anomaly:question_bank_criteria_cache_mismatch',
+        `SELECT count(*)::int AS count
+         FROM question_bank qb
+         WHERE qb.deleted_at IS NULL
+           AND ARRAY(
+             SELECT DISTINCT domain.code
+             FROM unnest(qb.competency_domains) AS domain(code)
+             ORDER BY domain.code
+           ) <> ARRAY(
+             SELECT rcr.code
+             FROM question_bank_criteria qbc
+             JOIN rubric_criteria rcr
+               ON rcr.id = qbc.rubric_criterion_id
+             WHERE qbc.question_bank_id = qb.id
+             ORDER BY rcr.code
+           )`,
+      ],
+      [
+        'anomaly:session_questions_missing_criteria_links',
+        `SELECT count(*)::int AS count
+         FROM session_questions sq
+         WHERE NOT EXISTS (
+           SELECT 1
+           FROM session_question_criteria sqc
+           WHERE sqc.session_question_id = sq.id
+         )`,
+      ],
+      [
+        'anomaly:session_question_criteria_blank_code',
+        `SELECT count(*)::int AS count
+         FROM session_question_criteria
+         WHERE btrim(criterion_code) = ''`,
+      ],
+      [
+        'anomaly:session_question_criteria_wrong_context',
+        `SELECT count(*)::int AS count
+         FROM session_question_criteria sqc
+         JOIN rubric_criteria rcr
+           ON rcr.id = sqc.rubric_criterion_id
+         JOIN rubric_categories rc
+           ON rc.id = rcr.rubric_category_id
+         WHERE rc.context_pack_id <> sqc.context_pack_id_snapshot`,
+      ],
+      [
+        'anomaly:session_question_criteria_cache_mismatch',
+        `SELECT count(*)::int AS count
+         FROM session_questions sq
+         WHERE ARRAY(
+           SELECT DISTINCT domain.code
+           FROM unnest(sq.competency_domains) AS domain(code)
+           ORDER BY domain.code
+         ) <> ARRAY(
+           SELECT sqc.criterion_code
+           FROM session_question_criteria sqc
+           WHERE sqc.session_question_id = sq.id
+           ORDER BY sqc.criterion_code
+         )`,
+      ],
+    );
+  }
+
   const results: CheckResult[] = [];
   for (const [name, sql] of checks) {
     const count = await countRows(sql);
@@ -408,6 +516,14 @@ async function versionedRubricTablesExist(): Promise<boolean> {
           AND table_name = 'rubric_categories'
           AND column_name = 'rubric_version_id'
       )
+  `);
+}
+
+async function criteriaRelationTablesExist(): Promise<boolean> {
+  return existsBySql(`
+    SELECT 1
+    WHERE to_regclass('public.question_bank_criteria') IS NOT NULL
+      AND to_regclass('public.session_question_criteria') IS NOT NULL
   `);
 }
 

@@ -1000,6 +1000,289 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+-- =============================================================================
+-- 12. Normalize question-to-rubric-criteria relations.
+--     Release 1 keeps competency_domains as a compatibility cache, while the
+--     relation tables become the runtime source of truth.
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS question_bank_criteria (
+  question_bank_id UUID NOT NULL,
+  rubric_criterion_id UUID NOT NULL,
+  created_at TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  CONSTRAINT question_bank_criteria_pkey
+    PRIMARY KEY (question_bank_id, rubric_criterion_id),
+  CONSTRAINT question_bank_criteria_question_bank_id_fkey
+    FOREIGN KEY (question_bank_id)
+    REFERENCES question_bank(id)
+    ON DELETE CASCADE,
+  CONSTRAINT question_bank_criteria_rubric_criterion_id_fkey
+    FOREIGN KEY (rubric_criterion_id)
+    REFERENCES rubric_criteria(id)
+    ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS idx_question_bank_criteria_rubric_criterion
+  ON question_bank_criteria(rubric_criterion_id);
+
+CREATE TABLE IF NOT EXISTS session_question_criteria (
+  session_question_id UUID NOT NULL,
+  rubric_criterion_id UUID NULL,
+  context_pack_id_snapshot TEXT NOT NULL,
+  criterion_code TEXT NOT NULL,
+  criterion_name_snapshot TEXT NOT NULL,
+  category_key_snapshot TEXT NOT NULL,
+  weight_snapshot DOUBLE PRECISION NOT NULL,
+  display_order_snapshot INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  CONSTRAINT session_question_criteria_pkey
+    PRIMARY KEY (session_question_id, criterion_code),
+  CONSTRAINT session_question_criteria_session_question_id_fkey
+    FOREIGN KEY (session_question_id)
+    REFERENCES session_questions(id)
+    ON DELETE CASCADE,
+  CONSTRAINT session_question_criteria_rubric_criterion_id_fkey
+    FOREIGN KEY (rubric_criterion_id)
+    REFERENCES rubric_criteria(id)
+    ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_question_criteria_rubric_criterion
+  ON session_question_criteria(rubric_criterion_id);
+
+CREATE INDEX IF NOT EXISTS idx_session_question_criteria_criterion_code
+  ON session_question_criteria(criterion_code);
+
+ALTER TABLE session_question_criteria
+  DROP CONSTRAINT IF EXISTS chk_session_question_criteria_context_pack;
+ALTER TABLE session_question_criteria
+  ADD CONSTRAINT chk_session_question_criteria_context_pack
+  CHECK (context_pack_id_snapshot IN ('VN', 'Western'));
+
+ALTER TABLE session_question_criteria
+  DROP CONSTRAINT IF EXISTS chk_session_question_criteria_category_key;
+ALTER TABLE session_question_criteria
+  ADD CONSTRAINT chk_session_question_criteria_category_key
+  CHECK (category_key_snapshot IN ('behavioral', 'technical'));
+
+ALTER TABLE session_question_criteria
+  DROP CONSTRAINT IF EXISTS chk_session_question_criteria_weight;
+ALTER TABLE session_question_criteria
+  ADD CONSTRAINT chk_session_question_criteria_weight
+  CHECK (weight_snapshot >= 0);
+
+ALTER TABLE session_question_criteria
+  DROP CONSTRAINT IF EXISTS chk_session_question_criteria_display_order;
+ALTER TABLE session_question_criteria
+  ADD CONSTRAINT chk_session_question_criteria_display_order
+  CHECK (display_order_snapshot >= 0);
+
+DO $$
+DECLARE
+  violation_count INTEGER;
+BEGIN
+  SELECT count(*) INTO violation_count
+  FROM question_bank
+  WHERE deleted_at IS NULL
+    AND cardinality(competency_domains) = 0;
+
+  IF violation_count > 0 THEN
+    RAISE EXCEPTION 'Cannot backfill question_bank_criteria: % active question_bank rows have empty competency_domains', violation_count;
+  END IF;
+
+  SELECT count(*) INTO violation_count
+  FROM question_bank qb
+  CROSS JOIN LATERAL (
+    SELECT count(*) AS total_count, count(DISTINCT code) AS distinct_count
+    FROM unnest(qb.competency_domains) AS domain(code)
+  ) counts
+  WHERE qb.deleted_at IS NULL
+    AND counts.total_count <> counts.distinct_count;
+
+  IF violation_count > 0 THEN
+    RAISE EXCEPTION 'Cannot backfill question_bank_criteria: % active question_bank rows have duplicate competency_domains', violation_count;
+  END IF;
+
+  SELECT count(*) INTO violation_count
+  FROM question_bank qb
+  WHERE qb.deleted_at IS NULL
+    AND EXISTS (
+      SELECT 1
+      FROM unnest(qb.competency_domains) AS domain(code)
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM rubric_categories rc
+        JOIN rubric_criteria rcr
+          ON rcr.rubric_category_id = rc.id
+        WHERE rc.context_pack_id = qb.context_pack_id
+          AND rcr.code = domain.code
+          AND rcr.active = true
+      )
+    );
+
+  IF violation_count > 0 THEN
+    RAISE EXCEPTION 'Cannot backfill question_bank_criteria: % active question_bank rows have unmapped competency_domains', violation_count;
+  END IF;
+
+  SELECT count(*) INTO violation_count
+  FROM session_questions
+  WHERE cardinality(competency_domains) = 0;
+
+  IF violation_count > 0 THEN
+    RAISE EXCEPTION 'Cannot backfill session_question_criteria: % session_questions rows have empty competency_domains', violation_count;
+  END IF;
+
+  SELECT count(*) INTO violation_count
+  FROM session_questions sq
+  CROSS JOIN LATERAL (
+    SELECT count(*) AS total_count, count(DISTINCT code) AS distinct_count
+    FROM unnest(sq.competency_domains) AS domain(code)
+  ) counts
+  WHERE counts.total_count <> counts.distinct_count;
+
+  IF violation_count > 0 THEN
+    RAISE EXCEPTION 'Cannot backfill session_question_criteria: % session_questions rows have duplicate competency_domains', violation_count;
+  END IF;
+
+  SELECT count(*) INTO violation_count
+  FROM session_questions sq
+  JOIN interview_sessions s
+    ON s.id = sq.session_id
+  WHERE EXISTS (
+    SELECT 1
+    FROM unnest(sq.competency_domains) AS domain(code)
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM rubric_categories rc
+      JOIN rubric_criteria rcr
+        ON rcr.rubric_category_id = rc.id
+      WHERE rc.context_pack_id = s.context_pack_id
+        AND rcr.code = domain.code
+        AND rcr.active = true
+    )
+      AND NOT (
+        COALESCE(sq.rubric_json->'behavioral', '{}'::jsonb) ? domain.code
+        OR COALESCE(sq.rubric_json->'technical', '{}'::jsonb) ? domain.code
+      )
+  );
+
+  IF violation_count > 0 THEN
+    RAISE EXCEPTION 'Cannot backfill session_question_criteria: % session_questions rows have criteria missing from current rubric and rubric_json snapshot', violation_count;
+  END IF;
+END $$;
+
+INSERT INTO question_bank_criteria (question_bank_id, rubric_criterion_id)
+SELECT qb.id, rcr.id
+FROM question_bank qb
+CROSS JOIN LATERAL unnest(qb.competency_domains) AS domain(code)
+JOIN rubric_categories rc
+  ON rc.context_pack_id = qb.context_pack_id
+JOIN rubric_criteria rcr
+  ON rcr.rubric_category_id = rc.id
+ AND rcr.code = domain.code
+ AND rcr.active = true
+WHERE qb.deleted_at IS NULL
+ON CONFLICT DO NOTHING;
+
+WITH domain_rows AS (
+  SELECT
+    sq.id AS session_question_id,
+    s.context_pack_id,
+    domain.code,
+    domain.ordinality,
+    CASE
+      WHEN COALESCE(sq.rubric_json->'behavioral', '{}'::jsonb) ? domain.code
+        THEN 'behavioral'
+      WHEN COALESCE(sq.rubric_json->'technical', '{}'::jsonb) ? domain.code
+        THEN 'technical'
+      ELSE NULL
+    END AS snapshot_category,
+    CASE
+      WHEN COALESCE(sq.rubric_json->'behavioral', '{}'::jsonb) ? domain.code
+        THEN sq.rubric_json->'behavioral'->domain.code
+      WHEN COALESCE(sq.rubric_json->'technical', '{}'::jsonb) ? domain.code
+        THEN sq.rubric_json->'technical'->domain.code
+      ELSE NULL
+    END AS snapshot_entry
+  FROM session_questions sq
+  JOIN interview_sessions s
+    ON s.id = sq.session_id
+  CROSS JOIN LATERAL unnest(sq.competency_domains)
+    WITH ORDINALITY AS domain(code, ordinality)
+)
+INSERT INTO session_question_criteria (
+  session_question_id,
+  rubric_criterion_id,
+  context_pack_id_snapshot,
+  criterion_code,
+  criterion_name_snapshot,
+  category_key_snapshot,
+  weight_snapshot,
+  display_order_snapshot
+)
+SELECT
+  domain_rows.session_question_id,
+  rcr.id,
+  domain_rows.context_pack_id,
+  domain_rows.code,
+  COALESCE(
+    NULLIF(domain_rows.snapshot_entry->>'name', ''),
+    rcr.name,
+    domain_rows.code
+  ),
+  COALESCE(rc.category_key, domain_rows.snapshot_category),
+  COALESCE(
+    CASE
+      WHEN jsonb_typeof(domain_rows.snapshot_entry->'weight') = 'number'
+        THEN (domain_rows.snapshot_entry->>'weight')::DOUBLE PRECISION
+      ELSE NULL
+    END,
+    rcr.weight,
+    0
+  ),
+  COALESCE(rcr.display_order, domain_rows.ordinality::INTEGER)
+FROM domain_rows
+LEFT JOIN rubric_categories rc
+  ON rc.context_pack_id = domain_rows.context_pack_id
+LEFT JOIN rubric_criteria rcr
+  ON rcr.rubric_category_id = rc.id
+ AND rcr.code = domain_rows.code
+ AND rcr.active = true
+WHERE rcr.id IS NOT NULL
+   OR domain_rows.snapshot_category IS NOT NULL
+ON CONFLICT DO NOTHING;
+
+ALTER TABLE question_bank_criteria ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "question_bank_criteria: read active question bank"
+  ON question_bank_criteria;
+CREATE POLICY "question_bank_criteria: read active question bank"
+  ON question_bank_criteria FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM question_bank qb
+      WHERE qb.id = question_bank_id
+        AND qb.deleted_at IS NULL
+    )
+  );
+
+ALTER TABLE session_question_criteria ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "session_question_criteria: read own"
+  ON session_question_criteria;
+CREATE POLICY "session_question_criteria: read own"
+  ON session_question_criteria FOR SELECT
+  USING (
+    session_question_id IN (
+      SELECT sq.id
+      FROM session_questions sq
+      JOIN interview_sessions s
+        ON s.id = sq.session_id
+      WHERE s.user_id = auth.uid()
+    )
+  );
+
 -- Step 2: Convert any remaining 'mixed' values (idempotent via WHERE)
 UPDATE question_bank
 SET session_type = (CASE

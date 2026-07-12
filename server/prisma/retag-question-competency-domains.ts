@@ -497,6 +497,11 @@ async function backfillQuestionBank(apply: boolean): Promise<void> {
     );
 
     if (!apply || changes.length === 0) return;
+    const hasCriteriaTable = (
+      await client.query<{ exists: boolean }>(
+        `SELECT to_regclass('public.question_bank_criteria') IS NOT NULL AS exists`,
+      )
+    ).rows[0]?.exists;
     await client.query('BEGIN');
     try {
       for (const item of changes) {
@@ -507,9 +512,33 @@ async function backfillQuestionBank(apply: boolean): Promise<void> {
               updated_at = NOW()
           WHERE id = $2
             AND deleted_at IS NULL
-        `,
+          `,
           [item.nextDomains, item.row.id],
         );
+        if (hasCriteriaTable) {
+          await client.query(
+            `DELETE FROM question_bank_criteria WHERE question_bank_id = $1`,
+            [item.row.id],
+          );
+          await client.query(
+            `
+            INSERT INTO question_bank_criteria (question_bank_id, rubric_criterion_id)
+            SELECT qb.id, rcr.id
+            FROM question_bank qb
+            CROSS JOIN LATERAL unnest(qb.competency_domains) AS domain(code)
+            JOIN rubric_categories rc
+              ON rc.context_pack_id = qb.context_pack_id
+            JOIN rubric_criteria rcr
+              ON rcr.rubric_category_id = rc.id
+             AND rcr.code = domain.code
+             AND rcr.active = true
+            WHERE qb.id = $1
+              AND qb.deleted_at IS NULL
+            ON CONFLICT DO NOTHING
+          `,
+            [item.row.id],
+          );
+        }
       }
       await client.query('COMMIT');
     } catch (error) {

@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
@@ -8,6 +9,7 @@ import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory'
 import { QUESTION_GEN_QUEUE } from '../../common/constants/queue.constants';
 import { QuestionBankService } from '../../question-bank/question-bank.service';
 import type { FallbackQuestion } from '../../question-bank/question-bank.service';
+import { QuestionCriteriaService } from '../../question-criteria/question-criteria.service';
 import { OpenAIGateway } from '../openai.gateway';
 import { resolveOutputLanguage } from '../output-language';
 import type {
@@ -46,6 +48,11 @@ type MergedQuestionRow = {
   estimatedTimeMin: number;
 };
 
+type PersistedQuestionRow = MergedQuestionRow & {
+  id: string;
+  sessionId: string;
+};
+
 type NormalizedGeneratedQuestion = GeneratedQuestion & {
   questionCategory: 'behavioral' | 'technical';
   competencyDomains: string[];
@@ -63,6 +70,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
     private readonly contextPackService: ContextPackService,
     private readonly factory: PipelineStrategyFactory,
     private readonly questionBankService: QuestionBankService,
+    private readonly questionCriteria: QuestionCriteriaService,
     private readonly openai: OpenAIGateway,
   ) {
     super();
@@ -169,18 +177,19 @@ export class QuestionGenerationProcessor extends WorkerHost {
         totalQuestions,
         durationMin,
         rubricSnapshot,
-      ).map((row) => ({ ...row, sessionId }));
+      );
       if (merged.length < totalQuestions) {
         throw new Error(
           `Only ${merged.length}/${totalQuestions} questions available after metadata validation`,
         );
       }
-      const result = await this.prisma.sessionQuestion.createMany({
-        data: merged,
-        skipDuplicates: true,
-      });
+      const result = await this.persistSessionQuestions(
+        sessionId,
+        contextPack,
+        merged,
+      );
       this.logger.log(
-        `Hybrid question generation persisted for session ${sessionId}: ai=${aiCount} qb=${qbQuestions.length} total=${result.count} model=${this.openai.getChatModel()}`,
+        `Hybrid question generation persisted for session ${sessionId}: ai=${aiCount} qb=${qbQuestions.length} total=${result} model=${this.openai.getChatModel()}`,
       );
 
       if (await this.markActiveUnlessStopped(sessionId)) {
@@ -276,9 +285,10 @@ export class QuestionGenerationProcessor extends WorkerHost {
       language,
     );
 
-    await this.prisma.sessionQuestion.createMany({
-      data: selected.map((q, i) => ({
-        sessionId,
+    await this.persistSessionQuestions(
+      sessionId,
+      contextPack as 'VN' | 'Western',
+      selected.map((q, i) => ({
         questionBankId: q.questionBankId,
         questionText: q.text,
         orderIndex: i + 1,
@@ -294,8 +304,44 @@ export class QuestionGenerationProcessor extends WorkerHost {
                 difficulty: 2,
               }),
       })),
-      skipDuplicates: true,
-    });
+    );
+  }
+
+  private async persistSessionQuestions(
+    sessionId: string,
+    contextPack: 'VN' | 'Western',
+    rows: MergedQuestionRow[],
+  ): Promise<number> {
+    const questionRows: PersistedQuestionRow[] = rows.map((row) => ({
+      ...row,
+      id: randomUUID(),
+      sessionId,
+    }));
+    const criteriaData = (
+      await Promise.all(
+        questionRows.map((row) =>
+          this.questionCriteria.buildSessionQuestionCriteriaData({
+            sessionQuestionId: row.id,
+            contextPackId: contextPack,
+            competencyDomains: row.competencyDomains,
+            rubricJson: row.rubricJson,
+          }),
+        ),
+      )
+    ).flat();
+
+    const [questionResult] = await this.prisma.$transaction([
+      this.prisma.sessionQuestion.createMany({
+        data: questionRows,
+        skipDuplicates: true,
+      }),
+      this.prisma.sessionQuestionCriterion.createMany({
+        data: criteriaData,
+        skipDuplicates: true,
+      }),
+    ]);
+
+    return questionResult.count;
   }
 
   private normalizeAiQuestions(

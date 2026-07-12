@@ -4,6 +4,7 @@ import type { Job } from 'bullmq';
 import { TranscriptionProcessor } from './transcription.processor';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
+import { QuestionCriteriaService } from '../../question-criteria/question-criteria.service';
 import { WhisperService } from '../../turn/whisper.service';
 import { VoiceMetricsService } from '../../turn/voice-metrics.service';
 import {
@@ -17,6 +18,7 @@ import {
   createMockVoiceMetricsService,
   createMockReportService,
   createMockQueue,
+  createMockQuestionCriteriaService,
 } from '../../test-utils/mock-factories';
 import { ReportService } from '../../report/report.service';
 import { FALLBACK_FEEDBACK_MESSAGE } from '../fallback-content';
@@ -40,6 +42,7 @@ describe('TranscriptionProcessor', () => {
   let mockVoiceMetrics: ReturnType<typeof createMockVoiceMetricsService>;
   let mockReportService: ReturnType<typeof createMockReportService>;
   let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
+  let mockQuestionCriteria: ReturnType<typeof createMockQuestionCriteriaService>;
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
@@ -48,11 +51,13 @@ describe('TranscriptionProcessor', () => {
     mockVoiceMetrics = createMockVoiceMetricsService();
     mockReportService = createMockReportService();
     mockFeedbackQueue = createMockQueue();
+    mockQuestionCriteria = createMockQuestionCriteriaService();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TranscriptionProcessor,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
         { provide: SseService, useValue: mockSse },
         { provide: WhisperService, useValue: mockWhisper },
         { provide: VoiceMetricsService, useValue: mockVoiceMetrics },

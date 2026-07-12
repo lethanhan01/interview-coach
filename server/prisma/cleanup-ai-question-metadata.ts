@@ -95,6 +95,11 @@ async function main(): Promise<void> {
       );
     }
 
+    const hasCriteriaTable = (
+      await client.query<{ exists: boolean }>(
+        `SELECT to_regclass('public.session_question_criteria') IS NOT NULL AS exists`,
+      )
+    ).rows[0]?.exists;
     await client.query('BEGIN');
     try {
       for (const item of planned.filter((entry) => entry.changed)) {
@@ -114,6 +119,85 @@ async function main(): Promise<void> {
             item.row.id,
           ],
         );
+        if (hasCriteriaTable) {
+          await client.query(
+            `DELETE FROM session_question_criteria WHERE session_question_id = $1`,
+            [item.row.id],
+          );
+          await client.query(
+            `
+            WITH domain_rows AS (
+              SELECT
+                sq.id AS session_question_id,
+                s.context_pack_id,
+                domain.code,
+                domain.ordinality,
+                CASE
+                  WHEN COALESCE(sq.rubric_json->'behavioral', '{}'::jsonb) ? domain.code
+                    THEN 'behavioral'
+                  WHEN COALESCE(sq.rubric_json->'technical', '{}'::jsonb) ? domain.code
+                    THEN 'technical'
+                  ELSE NULL
+                END AS snapshot_category,
+                CASE
+                  WHEN COALESCE(sq.rubric_json->'behavioral', '{}'::jsonb) ? domain.code
+                    THEN sq.rubric_json->'behavioral'->domain.code
+                  WHEN COALESCE(sq.rubric_json->'technical', '{}'::jsonb) ? domain.code
+                    THEN sq.rubric_json->'technical'->domain.code
+                  ELSE NULL
+                END AS snapshot_entry
+              FROM session_questions sq
+              JOIN interview_sessions s
+                ON s.id = sq.session_id
+              CROSS JOIN LATERAL unnest(sq.competency_domains)
+                WITH ORDINALITY AS domain(code, ordinality)
+              WHERE sq.id = $1
+            )
+            INSERT INTO session_question_criteria (
+              session_question_id,
+              rubric_criterion_id,
+              context_pack_id_snapshot,
+              criterion_code,
+              criterion_name_snapshot,
+              category_key_snapshot,
+              weight_snapshot,
+              display_order_snapshot
+            )
+            SELECT
+              domain_rows.session_question_id,
+              rcr.id,
+              domain_rows.context_pack_id,
+              domain_rows.code,
+              COALESCE(
+                NULLIF(domain_rows.snapshot_entry->>'name', ''),
+                rcr.name,
+                domain_rows.code
+              ),
+              COALESCE(rc.category_key, domain_rows.snapshot_category),
+              COALESCE(
+                CASE
+                  WHEN jsonb_typeof(domain_rows.snapshot_entry->'weight') = 'number'
+                    THEN (domain_rows.snapshot_entry->>'weight')::DOUBLE PRECISION
+                  ELSE NULL
+                END,
+                rcr.weight,
+                0
+              ),
+              COALESCE(rcr.display_order, domain_rows.ordinality::INTEGER)
+            FROM domain_rows
+            LEFT JOIN rubric_categories rc
+              ON rc.context_pack_id = domain_rows.context_pack_id
+            LEFT JOIN rubric_criteria rcr
+              ON rcr.rubric_category_id = rc.id
+             AND rcr.code = domain_rows.code
+             AND rcr.active = true
+            WHERE rcr.id IS NOT NULL
+               OR domain_rows.snapshot_category IS NOT NULL
+            ON CONFLICT DO NOTHING
+          `,
+            [item.row.id],
+          );
+        }
       }
       await client.query('COMMIT');
     } catch (error) {

@@ -42,6 +42,10 @@ export const createMockQuestionBank = (
 
 export const createMockPrismaService = () => ({
   $transaction: jest.fn(),
+  isBootstrapDatabaseAvailable: jest.fn().mockReturnValue(true),
+  rubricCriterion: {
+    findMany: jest.fn().mockResolvedValue([]),
+  },
   questionBank: {
     findMany: jest.fn().mockResolvedValue([]),
     findUnique: jest.fn().mockResolvedValue(null),
@@ -66,6 +70,9 @@ export const createMockPrismaService = () => ({
     findFirst: jest.fn(),
     createMany: jest.fn(),
     count: jest.fn(),
+  },
+  sessionQuestionCriterion: {
+    createMany: jest.fn().mockResolvedValue({ count: 0 }),
   },
   followUpQuestion: {
     create: jest.fn(),
@@ -174,6 +181,25 @@ export const createMockOpenAIGateway = () => ({
 
 export const createMockQuestionBankService = () => ({
   selectFallbackQuestions: jest.fn().mockResolvedValue([]),
+});
+
+export const createMockQuestionCriteriaService = () => ({
+  hasQuestionBankCriteria: jest.fn().mockReturnValue(false),
+  codesFromQuestionBank: jest.fn((question) => question.competencyDomains),
+  hasSessionQuestionCriteria: jest.fn().mockReturnValue(false),
+  codesFromSessionQuestion: jest.fn((question) => question.competencyDomains),
+  buildSessionQuestionCriteriaData: jest.fn().mockResolvedValue([
+    {
+      sessionQuestionId: 'question-1',
+      rubricCriterionId: 'criterion-1',
+      contextPackIdSnapshot: 'VN',
+      criterionCode: 'D1',
+      criterionNameSnapshot: 'Communication',
+      categoryKeySnapshot: 'behavioral',
+      weightSnapshot: 1,
+      displayOrderSnapshot: 1,
+    },
+  ]),
 });
 
 export const createMockPromptBuilderService = () => ({

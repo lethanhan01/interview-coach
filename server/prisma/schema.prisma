@@ -30,6 +30,8 @@ model RubricCriterion {
   displayOrder    Int            @default(0) @map("display_order")
   active          Boolean        @default(true)
   rubricCategory  RubricCategory @relation(fields: [rubricCategoryId], references: [id], onDelete: Cascade)
+  questionBankLinks QuestionBankCriterion[]
+  sessionQuestionLinks SessionQuestionCriterion[]
 
   @@unique([rubricCategoryId, code], map: "rubric_criteria_category_code_key")
   @@index([rubricCategoryId], map: "idx_rubric_criteria_category")
@@ -54,11 +56,24 @@ model QuestionBank {
   deletedAt        DateTime?         @map("deleted_at") @db.Timestamptz(6)
   createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  criteria         QuestionBankCriterion[]
   sessionQuestions SessionQuestion[]
 
   @@index([contextPackId], map: "idx_question_bank_context_pack", where: raw("(deleted_at IS NULL)"))
   @@index([sessionType, difficulty], map: "idx_question_bank_session_type_difficulty", where: raw("(deleted_at IS NULL)"))
   @@map("question_bank")
+}
+
+model QuestionBankCriterion {
+  questionBankId    String          @map("question_bank_id") @db.Uuid
+  rubricCriterionId String          @map("rubric_criterion_id") @db.Uuid
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  questionBank      QuestionBank    @relation(fields: [questionBankId], references: [id], onDelete: Cascade, map: "question_bank_criteria_question_bank_id_fkey")
+  rubricCriterion   RubricCriterion @relation(fields: [rubricCriterionId], references: [id], onDelete: Restrict, map: "question_bank_criteria_rubric_criterion_id_fkey")
+
+  @@id([questionBankId, rubricCriterionId], map: "question_bank_criteria_pkey")
+  @@index([rubricCriterionId], map: "idx_question_bank_criteria_rubric_criterion")
+  @@map("question_bank_criteria")
 }
 
 model User {
@@ -176,6 +191,7 @@ model SessionQuestion {
   rubricJson        Json             @map("rubric_json")
   estimatedTimeMin Int?             @map("estimated_time_min")
   createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  criteria         SessionQuestionCriterion[]
   questionBank     QuestionBank?    @relation(fields: [questionBankId], references: [id])
   session          InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   userAnswers      UserAnswer[]
@@ -184,6 +200,25 @@ model SessionQuestion {
   @@index([sessionId], map: "idx_session_questions_session_id")
   @@index([sessionId, questionText], map: "idx_session_questions_session_id_text")
   @@map("session_questions")
+}
+
+model SessionQuestionCriterion {
+  sessionQuestionId       String           @map("session_question_id") @db.Uuid
+  rubricCriterionId       String?          @map("rubric_criterion_id") @db.Uuid
+  contextPackIdSnapshot   String           @map("context_pack_id_snapshot")
+  criterionCode           String           @map("criterion_code")
+  criterionNameSnapshot   String           @map("criterion_name_snapshot")
+  categoryKeySnapshot     String           @map("category_key_snapshot")
+  weightSnapshot          Float            @map("weight_snapshot")
+  displayOrderSnapshot    Int              @default(0) @map("display_order_snapshot")
+  createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  sessionQuestion         SessionQuestion  @relation(fields: [sessionQuestionId], references: [id], onDelete: Cascade, map: "session_question_criteria_session_question_id_fkey")
+  rubricCriterion         RubricCriterion? @relation(fields: [rubricCriterionId], references: [id], onDelete: SetNull, map: "session_question_criteria_rubric_criterion_id_fkey")
+
+  @@id([sessionQuestionId, criterionCode], map: "session_question_criteria_pkey")
+  @@index([rubricCriterionId], map: "idx_session_question_criteria_rubric_criterion")
+  @@index([criterionCode], map: "idx_session_question_criteria_criterion_code")
+  @@map("session_question_criteria")
 }
 
 model UserAnswer {

@@ -3,6 +3,7 @@ import { HttpStatus } from '@nestjs/common';
 import { getQueueToken } from '@nestjs/bullmq';
 import { TurnService } from './turn.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import { AudioStorageService } from './audio-storage.service';
 import { VoiceMetricsService } from './voice-metrics.service';
 import {
@@ -15,6 +16,7 @@ import { InterviewAIException } from '../common/exceptions/interview-ai.exceptio
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import {
   createMockPrismaService,
+  createMockQuestionCriteriaService,
   createMockQueue,
   createMockVoiceMetricsService,
 } from '../test-utils/mock-factories';
@@ -24,6 +26,7 @@ describe('TurnService', () => {
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
   let mockTranscriptionQueue: ReturnType<typeof createMockQueue>;
+  let mockQuestionCriteria: ReturnType<typeof createMockQuestionCriteriaService>;
   let mockAudioStorage: {
     uploadInterviewAudio: jest.Mock;
   };
@@ -65,6 +68,7 @@ describe('TurnService', () => {
     mockPrisma = createMockPrismaService();
     mockFeedbackQueue = createMockQueue();
     mockTranscriptionQueue = createMockQueue();
+    mockQuestionCriteria = createMockQuestionCriteriaService();
     mockAudioStorage = {
       uploadInterviewAudio: jest.fn(),
     };
@@ -79,6 +83,7 @@ describe('TurnService', () => {
       providers: [
         TurnService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
         {
           provide: AudioStorageService,
           useValue: mockAudioStorage,

@@ -1,14 +1,31 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import type { Prisma, QuestionSessionType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 
 type QuestionBankRow = {
   id: string;
   content: string;
   difficulty: number;
+  contextPackId: string;
   competencyDomains: string[];
   estimatedTimeMin: number | null;
   translations: Prisma.JsonValue | null;
+  criteria?: Array<{
+    rubricCriterion?: {
+      id: string;
+      code: string;
+      name: string;
+      weight: number;
+      displayOrder: number;
+      active: boolean;
+      rubricCategory: {
+        contextPackId: string;
+        categoryKey: string;
+        displayOrder: number;
+      };
+    } | null;
+  }>;
 };
 
 export type FallbackQuestion = {
@@ -21,7 +38,12 @@ export type FallbackQuestion = {
 
 @Injectable()
 export class QuestionBankService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(QuestionBankService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly questionCriteria: QuestionCriteriaService,
+  ) {}
 
   async selectFallbackQuestions(
     sessionType: string,
@@ -41,6 +63,7 @@ export class QuestionBankService {
       },
       orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
       take: count * 3,
+      include: QUESTION_BANK_CRITERIA_INCLUDE,
     });
 
     if (candidates.length === 0) {
@@ -57,15 +80,9 @@ export class QuestionBankService {
       );
     }
 
-    return selected.map((question) => ({
-      questionBankId: question.id,
-      text: this.resolveText(question, language),
-      questionCategory: question.competencyDomains[0].startsWith('TD')
-        ? 'technical'
-        : 'behavioral',
-      competencyDomains: question.competencyDomains,
-      estimatedTimeMin: question.estimatedTimeMin ?? 5,
-    }));
+    return selected.map((question) =>
+      this.mapFallbackQuestion(question, language),
+    );
   }
 
   private async selectMixedFallbackQuestions(
@@ -81,11 +98,13 @@ export class QuestionBankService {
         where: { sessionType: 'hr', contextPackId, deletedAt: null },
         orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
         take: hrCount * 3,
+        include: QUESTION_BANK_CRITERIA_INCLUDE,
       }),
       this.prisma.questionBank.findMany({
         where: { sessionType: 'technical', contextPackId, deletedAt: null },
         orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
         take: techCount * 3,
+        include: QUESTION_BANK_CRITERIA_INCLUDE,
       }),
     ]);
 
@@ -108,15 +127,9 @@ export class QuestionBankService {
       );
     }
 
-    return allSelected.map((question) => ({
-      questionBankId: question.id,
-      text: this.resolveText(question, language),
-      questionCategory: question.competencyDomains[0].startsWith('TD')
-        ? 'technical'
-        : 'behavioral',
-      competencyDomains: question.competencyDomains,
-      estimatedTimeMin: question.estimatedTimeMin ?? 5,
-    }));
+    return allSelected.map((question) =>
+      this.mapFallbackQuestion(question, language),
+    );
   }
 
   private resolveText(question: QuestionBankRow, language: string): string {
@@ -134,6 +147,29 @@ export class QuestionBankService {
     }
 
     return question.content;
+  }
+
+  private mapFallbackQuestion(
+    question: QuestionBankRow,
+    language: string,
+  ): FallbackQuestion {
+    const competencyDomains =
+      this.questionCriteria.codesFromQuestionBank(question);
+    if (!this.questionCriteria.hasQuestionBankCriteria(question)) {
+      this.logger.warn(
+        `question_bank ${question.id} has no criteria relation; using competency_domains compatibility cache`,
+      );
+    }
+
+    return {
+      questionBankId: question.id,
+      text: this.resolveText(question, language),
+      questionCategory: competencyDomains[0].startsWith('TD')
+        ? 'technical'
+        : 'behavioral',
+      competencyDomains,
+      estimatedTimeMin: question.estimatedTimeMin ?? 5,
+    };
   }
 
   private selectWithDifficultySpread<T extends { difficulty: number }>(
@@ -171,3 +207,13 @@ export class QuestionBankService {
     return selected.slice(0, count);
   }
 }
+
+const QUESTION_BANK_CRITERIA_INCLUDE = {
+  criteria: {
+    include: {
+      rubricCriterion: {
+        include: { rubricCategory: true },
+      },
+    },
+  },
+} satisfies Prisma.QuestionBankInclude;

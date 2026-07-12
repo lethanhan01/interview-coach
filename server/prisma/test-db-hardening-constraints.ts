@@ -160,6 +160,35 @@ async function main() {
       [randomUUID(), ids.rubricCategory],
     );
 
+    await expectReject(
+      'question_bank_criteria rejects duplicate criterion on same question',
+      `INSERT INTO question_bank_criteria (
+         question_bank_id, rubric_criterion_id
+       )
+       VALUES ($1, $2)`,
+      [ids.questionBank, ids.rubricCriterion],
+    );
+
+    await expectReject(
+      'question_bank_criteria rejects missing rubric criterion FK',
+      `INSERT INTO question_bank_criteria (
+         question_bank_id, rubric_criterion_id
+       )
+       VALUES ($1, $2)`,
+      [ids.questionBank, randomUUID()],
+    );
+
+    await expectCascade(
+      'session_question_criteria cascades when session question is deleted',
+      ids.sessionA,
+    );
+
+    await expectSetNull(
+      'session_question_criteria keeps snapshot and nulls FK when criterion is deleted',
+      ids.sessionA,
+      ids.rubricCategory,
+    );
+
     console.log('DB hardening negative constraints: all rejection checks passed');
   } finally {
     await client.query('ROLLBACK');
@@ -174,15 +203,13 @@ async function createFixture() {
   const sessionA = randomUUID();
   const sessionB = randomUUID();
   const savedJdB = randomUUID();
+  const questionBank = randomUUID();
 
   const rubricCategory = await ensureRubricCategory(contextPack);
-  await client.query(
-    `INSERT INTO rubric_criteria (
-       id, rubric_category_id, code, name, weight, display_order
-     )
-     VALUES ($1, $2, 'D1', 'Communication', 1, 1)
-     ON CONFLICT (rubric_category_id, code) DO NOTHING`,
-    [randomUUID(), rubricCategory],
+  const rubricCriterion = await ensureRubricCriterion(
+    rubricCategory,
+    'D1',
+    'Communication',
   );
 
   await client.query(
@@ -212,6 +239,22 @@ async function createFixture() {
        ($1, $2, 'x', 'hr', $5),
        ($3, $4, 'x', 'hr', $5)`,
     [sessionA, userA, sessionB, userA, contextPack],
+  );
+
+  await client.query(
+    `INSERT INTO question_bank (
+       id, content, session_type, difficulty, context_pack_id, competency_domains
+     )
+     VALUES ($1, 'Constraint bank question', 'hr', 2, $2, ARRAY['D1'])`,
+    [questionBank, contextPack],
+  );
+
+  await client.query(
+    `INSERT INTO question_bank_criteria (
+       question_bank_id, rubric_criterion_id
+     )
+     VALUES ($1, $2)`,
+    [questionBank, rubricCriterion],
   );
 
   const questionB = await createQuestion(sessionB, 1);
@@ -246,11 +289,13 @@ async function createFixture() {
     sessionB,
     savedJdB,
     questionB,
+    questionBank,
     questionAnswerMode,
     questionTranscription,
     questionAudio,
     validAnswer,
     validFeedback,
+    rubricCriterion,
   };
 }
 
@@ -276,6 +321,32 @@ async function ensureRubricCategory(contextPack: string): Promise<string> {
   return id;
 }
 
+async function ensureRubricCriterion(
+  rubricCategory: string,
+  code: string,
+  name: string,
+): Promise<string> {
+  const existing = await client.query<{ id: string }>(
+    `SELECT id
+     FROM rubric_criteria
+     WHERE rubric_category_id = $1
+       AND code = $2
+     LIMIT 1`,
+    [rubricCategory, code],
+  );
+  if (existing.rows[0]?.id) return existing.rows[0].id;
+
+  const id = randomUUID();
+  await client.query(
+    `INSERT INTO rubric_criteria (
+       id, rubric_category_id, code, name, weight, display_order
+     )
+     VALUES ($1, $2, $3, $4, 1, 1)`,
+    [id, rubricCategory, code, name],
+  );
+  return id;
+}
+
 async function createQuestion(sessionId: string, orderIndex: number) {
   const id = randomUUID();
   await client.query(
@@ -287,6 +358,73 @@ async function createQuestion(sessionId: string, orderIndex: number) {
     [id, sessionId, `Constraint question ${orderIndex}`, orderIndex],
   );
   return id;
+}
+
+async function expectCascade(label: string, sessionId: string) {
+  const questionId = await createQuestion(sessionId, 20);
+  await client.query(
+    `INSERT INTO session_question_criteria (
+       session_question_id, context_pack_id_snapshot, criterion_code,
+       criterion_name_snapshot, category_key_snapshot, weight_snapshot,
+       display_order_snapshot
+     )
+     VALUES ($1, 'VN', 'D1', 'Communication', 'behavioral', 1, 1)`,
+    [questionId],
+  );
+
+  await client.query(`DELETE FROM session_questions WHERE id = $1`, [
+    questionId,
+  ]);
+  const result = await client.query<{ count: number }>(
+    `SELECT count(*)::int AS count
+     FROM session_question_criteria
+     WHERE session_question_id = $1`,
+    [questionId],
+  );
+  if (Number(result.rows[0]?.count ?? 0) !== 0) {
+    throw new Error(`Expected cascade did not happen: ${label}`);
+  }
+  console.log(`PASS ${label}`);
+}
+
+async function expectSetNull(
+  label: string,
+  sessionId: string,
+  rubricCategory: string,
+) {
+  const criterionId = randomUUID();
+  const questionId = await createQuestion(sessionId, 21);
+  await client.query(
+    `INSERT INTO rubric_criteria (
+       id, rubric_category_id, code, name, weight, display_order
+     )
+     VALUES ($1, $2, 'D99', 'Temporary Criterion', 0.1, 99)`,
+    [criterionId, rubricCategory],
+  );
+  await client.query(
+    `INSERT INTO session_question_criteria (
+       session_question_id, rubric_criterion_id, context_pack_id_snapshot,
+       criterion_code, criterion_name_snapshot, category_key_snapshot,
+       weight_snapshot, display_order_snapshot
+     )
+     VALUES ($1, $2, 'VN', 'D99', 'Temporary Criterion', 'behavioral', 0.1, 99)`,
+    [questionId, criterionId],
+  );
+
+  await client.query(`DELETE FROM rubric_criteria WHERE id = $1`, [
+    criterionId,
+  ]);
+  const result = await client.query<{ rubric_criterion_id: string | null }>(
+    `SELECT rubric_criterion_id
+     FROM session_question_criteria
+     WHERE session_question_id = $1
+       AND criterion_code = 'D99'`,
+    [questionId],
+  );
+  if (result.rows[0]?.rubric_criterion_id !== null) {
+    throw new Error(`Expected SET NULL did not happen: ${label}`);
+  }
+  console.log(`PASS ${label}`);
 }
 
 async function expectReject(

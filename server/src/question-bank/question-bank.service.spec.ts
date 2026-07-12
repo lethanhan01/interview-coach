@@ -1,4 +1,5 @@
 import { QuestionBankService } from './question-bank.service';
+import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import {
   createMockPrismaService,
   createMockQuestionBank,
@@ -10,7 +11,10 @@ describe('QuestionBankService', () => {
 
   beforeEach(() => {
     mockPrisma = createMockPrismaService();
-    service = new QuestionBankService(mockPrisma as any);
+    service = new QuestionBankService(
+      mockPrisma as any,
+      new QuestionCriteriaService(mockPrisma as any),
+    );
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -21,6 +25,7 @@ describe('QuestionBankService', () => {
         id: 'easy-1',
         content: 'English fallback',
         difficulty: 2,
+        contextPackId: 'VN',
         competencyDomains: ['D4'],
         estimatedTimeMin: 3,
         translations: { en: 'English fallback', vi: 'Câu hỏi tiếng Việt' },
@@ -29,6 +34,7 @@ describe('QuestionBankService', () => {
         id: 'medium-1',
         content: 'Medium fallback',
         difficulty: 3,
+        contextPackId: 'VN',
         competencyDomains: ['TD4'],
         estimatedTimeMin: 5,
         translations: { en: 'Medium fallback', vi: 'Câu kỹ thuật' },
@@ -37,6 +43,7 @@ describe('QuestionBankService', () => {
         id: 'hard-1',
         content: 'Hard fallback',
         difficulty: 4,
+        contextPackId: 'VN',
         competencyDomains: ['TD5'],
         estimatedTimeMin: 7,
         translations: { en: 'Hard fallback', vi: 'Câu khó' },
@@ -54,6 +61,7 @@ describe('QuestionBankService', () => {
       where: { sessionType: 'technical', contextPackId: 'VN', deletedAt: null },
       orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
       take: 9,
+      include: expect.any(Object),
     });
     expect(result).toEqual([
       expect.objectContaining({
@@ -80,6 +88,7 @@ describe('QuestionBankService', () => {
         id: 'qb-1',
         content: 'Stored content',
         difficulty: 2,
+        contextPackId: 'VN',
         competencyDomains: ['D4'],
         estimatedTimeMin: null,
         translations: { en: 'Stored content' },
@@ -102,6 +111,7 @@ describe('QuestionBankService', () => {
         id: 'mixed-technical-primary',
         content: 'Describe a production bug and how you explained the fix.',
         difficulty: 3,
+        contextPackId: 'VN',
         competencyDomains: ['TD5', 'D1'],
         estimatedTimeMin: 6,
         translations: null,
@@ -135,6 +145,7 @@ describe('QuestionBankService', () => {
       where: { sessionType: 'technical', contextPackId: 'VN', deletedAt: null },
       orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
       take: 3,
+      include: expect.any(Object),
     });
   });
 
@@ -144,6 +155,7 @@ describe('QuestionBankService', () => {
         id: 'western-1',
         content: 'Tell me about a time you handled stakeholder conflict.',
         difficulty: 3,
+        contextPackId: 'Western',
         competencyDomains: ['D4'],
         estimatedTimeMin: 5,
         translations: {
@@ -164,6 +176,7 @@ describe('QuestionBankService', () => {
       where: { sessionType: 'hr', contextPackId: 'Western', deletedAt: null },
       orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
       take: 3,
+      include: expect.any(Object),
     });
     expect(result[0]).toEqual(
       expect.objectContaining({
@@ -226,6 +239,51 @@ describe('QuestionBankService', () => {
 
     expect(second.map((question) => question.questionBankId)).toEqual(
       first.map((question) => question.questionBankId),
+    );
+  });
+
+  it('ưu tiên criteria relation thay vì competencyDomains compatibility cache', async () => {
+    mockPrisma.questionBank.findMany.mockResolvedValue([
+      {
+        id: 'relation-first',
+        content: 'Describe a production issue.',
+        difficulty: 3,
+        contextPackId: 'VN',
+        competencyDomains: ['D1'],
+        estimatedTimeMin: 5,
+        translations: null,
+        criteria: [
+          {
+            rubricCriterion: {
+              id: 'criterion-td5',
+              code: 'TD5',
+              name: 'Debug',
+              weight: 0.1,
+              displayOrder: 5,
+              active: true,
+              rubricCategory: {
+                contextPackId: 'VN',
+                categoryKey: 'technical',
+                displayOrder: 2,
+              },
+            },
+          },
+        ],
+      },
+    ]);
+
+    const result = await service.selectFallbackQuestions(
+      'technical',
+      'VN',
+      1,
+      'en',
+    );
+
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        questionCategory: 'technical',
+        competencyDomains: ['TD5'],
+      }),
     );
   });
 

@@ -5,6 +5,7 @@ import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
 import { QuestionBankService } from '../../question-bank/question-bank.service';
+import { QuestionCriteriaService } from '../../question-criteria/question-criteria.service';
 import { OpenAIGateway } from '../openai.gateway';
 import {
   createMockPrismaService,
@@ -12,6 +13,7 @@ import {
   createMockContextPackService,
   createMockPipelineStrategyFactory,
   createMockQuestionBankService,
+  createMockQuestionCriteriaService,
   createMockOpenAIGateway,
 } from '../../test-utils/mock-factories';
 import type { Job } from 'bullmq';
@@ -26,6 +28,7 @@ describe('QuestionGenerationProcessor', () => {
   let mockContextPack: ReturnType<typeof createMockContextPackService>;
   let mockFactory: ReturnType<typeof createMockPipelineStrategyFactory>;
   let mockQuestionBankService: ReturnType<typeof createMockQuestionBankService>;
+  let mockQuestionCriteria: ReturnType<typeof createMockQuestionCriteriaService>;
   let mockOpenAI: ReturnType<typeof createMockOpenAIGateway>;
 
   const BASE_JOB_DATA = {
@@ -83,7 +86,26 @@ describe('QuestionGenerationProcessor', () => {
     mockContextPack = createMockContextPackService();
     mockFactory = createMockPipelineStrategyFactory();
     mockQuestionBankService = createMockQuestionBankService();
+    mockQuestionCriteria = createMockQuestionCriteriaService();
     mockOpenAI = createMockOpenAIGateway();
+    mockPrisma.$transaction.mockImplementation((operations) =>
+      Promise.all(operations),
+    );
+    mockQuestionCriteria.buildSessionQuestionCriteriaData.mockImplementation(
+      async ({ sessionQuestionId, competencyDomains, contextPackId }) =>
+        competencyDomains.map((code, index) => ({
+          sessionQuestionId,
+          rubricCriterionId: `criterion-${code}`,
+          contextPackIdSnapshot: contextPackId,
+          criterionCode: code,
+          criterionNameSnapshot: code,
+          categoryKeySnapshot: code.startsWith('TD')
+            ? 'technical'
+            : 'behavioral',
+          weightSnapshot: 1,
+          displayOrderSnapshot: index + 1,
+        })),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -93,6 +115,7 @@ describe('QuestionGenerationProcessor', () => {
         { provide: ContextPackService, useValue: mockContextPack },
         { provide: PipelineStrategyFactory, useValue: mockFactory },
         { provide: QuestionBankService, useValue: mockQuestionBankService },
+        { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
         { provide: OpenAIGateway, useValue: mockOpenAI },
       ],
     }).compile();

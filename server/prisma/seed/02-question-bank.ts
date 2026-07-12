@@ -1767,6 +1767,7 @@ export async function seedQuestionBank(prisma: PrismaClient): Promise<void> {
   });
 
   if (activeCount >= SEED_QUESTIONS.length) {
+    await syncQuestionBankCriteria(prisma);
     console.log('question_bank: already seeded, skipping');
     return;
   }
@@ -1783,5 +1784,25 @@ export async function seedQuestionBank(prisma: PrismaClient): Promise<void> {
     skipDuplicates: true,
   });
 
+  await syncQuestionBankCriteria(prisma);
+
   console.log(`question_bank: seeded ${SEED_QUESTIONS.length} questions`);
+}
+
+async function syncQuestionBankCriteria(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRaw`
+    INSERT INTO question_bank_criteria (question_bank_id, rubric_criterion_id)
+    SELECT qb.id, rcr.id
+    FROM question_bank qb
+    CROSS JOIN LATERAL unnest(qb.competency_domains) AS domain(code)
+    JOIN rubric_categories rc
+      ON rc.context_pack_id = qb.context_pack_id
+    JOIN rubric_criteria rcr
+      ON rcr.rubric_category_id = rc.id
+     AND rcr.code = domain.code
+     AND rcr.active = true
+    WHERE qb.deleted_at IS NULL
+      AND qb.content_json->>'source' = 'seed'
+    ON CONFLICT DO NOTHING
+  `;
 }

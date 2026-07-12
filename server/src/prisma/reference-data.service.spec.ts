@@ -3,6 +3,7 @@ import { ReferenceDataService } from './reference-data.service';
 describe('ReferenceDataService', () => {
   const createMocks = () => {
     const prisma = {
+      isBootstrapDatabaseAvailable: jest.fn().mockReturnValue(true),
       interviewSession: {
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
