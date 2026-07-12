@@ -91,11 +91,6 @@ export default function ProfilePage() {
           onSave={(patch) => patchProfile(patch)}
         />
 
-        <PersonalityGroup
-          data={{ personality: profile?.personality }}
-          onSave={(patch) => patchProfile(patch)}
-        />
-
         <CareerInfoGroup
           data={{
             targetPosition: profile?.targetPosition,
@@ -105,26 +100,9 @@ export default function ProfilePage() {
           onSave={(patch) => patchProfile(patch)}
         />
 
-        <TechnicalSkillsGroup
-          data={technicalSkills}
-          onSave={(patch) => patchProfile(patch)}
-        />
-
         <EducationGroup
           data={profile?.education}
           onSave={(edu: EducationEntry) => patchProfile({ education: edu })}
-        />
-
-        <WorkExperienceGroup
-          data={workExperience}
-          availableTechs={technicalSkills}
-          onSave={(we: WorkExperienceEntry[]) => patchProfile({ workExperience: we })}
-        />
-
-        <ProjectsGroup
-          data={projects}
-          availableTechs={technicalSkills}
-          onSave={(proj: ProjectEntry[]) => patchProfile({ projects: proj })}
         />
 
         <CertificationsGroup
@@ -134,6 +112,29 @@ export default function ProfilePage() {
           }}
           onSave={(patch) => patchProfile(patch)}
         />
+
+        <TechnicalSkillsGroup
+          data={technicalSkills}
+          onSave={(patch) => patchProfile(patch)}
+        />
+
+        <ProjectsGroup
+          data={projects}
+          availableTechs={technicalSkills}
+          onSave={(proj: ProjectEntry[]) => patchProfile({ projects: proj })}
+        />
+
+        <WorkExperienceGroup
+          data={workExperience}
+          availableTechs={technicalSkills}
+          onSave={(we: WorkExperienceEntry[]) => patchProfile({ workExperience: we })}
+        />
+                
+        <PersonalityGroup
+          data={{ personality: profile?.personality }}
+          onSave={(patch) => patchProfile(patch)}
+        />
+
       </div>
     </div>
   )
