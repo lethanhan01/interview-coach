@@ -4,21 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import type { SavedJobDescription } from '@/lib/types'
+import { formatVietnamRelativeDate } from '@/lib/date-time'
 import { Building2, MapPin, Clock, Plus, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
-
-function formatRelativeDate(dateStr: string): string {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
-  if (diffDays === 0) return 'Hôm nay'
-  if (diffDays === 1) return 'Hôm qua'
-  if (diffDays < 7) return `${diffDays} ngày trước`
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} tuần trước`
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)} tháng trước`
-  return `${Math.floor(diffDays / 365)} năm trước`
-}
 
 const MAX_TECH_SHOWN = 5
 
@@ -100,8 +89,8 @@ export default function JdLibraryPage() {
         <div className="flex flex-col gap-3">
           {items.map((item) => {
             const displayDate = item.lastUsedAt
-              ? `Dùng lần cuối ${formatRelativeDate(item.lastUsedAt)}`
-              : `Tạo ${formatRelativeDate(item.createdAt)}`
+              ? `Dùng lần cuối ${formatVietnamRelativeDate(item.lastUsedAt)}`
+              : `Tạo ${formatVietnamRelativeDate(item.createdAt)}`
             const shownTechs = item.techStack.slice(0, MAX_TECH_SHOWN)
             const extraCount = item.techStack.length - MAX_TECH_SHOWN
 

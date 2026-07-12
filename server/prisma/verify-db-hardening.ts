@@ -1,5 +1,9 @@
 import 'dotenv/config';
 import { Client } from 'pg';
+import {
+  buildPgConnectionConfig,
+  setClientDbTimeZone,
+} from '../src/prisma/db-timezone';
 
 type Phase = 'pre' | 'post';
 
@@ -16,7 +20,7 @@ if (!connectionString) {
   throw new Error('DATABASE_URL or DIRECT_URL is required to verify DB hardening.');
 }
 
-const client = new Client({ connectionString });
+const client = new Client(buildPgConnectionConfig(connectionString));
 
 const expectedPolicies = [
   ['public', 'question_bank', 'question_bank: read all'],
@@ -149,6 +153,7 @@ const retiredColumns = [
 
 async function main() {
   await client.connect();
+  await setClientDbTimeZone(client);
   const results: CheckResult[] = [];
 
   results.push(...(await runAnomalyChecks()));

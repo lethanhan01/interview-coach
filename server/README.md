@@ -35,6 +35,7 @@ SUPABASE_JWT_SECRET=
 
 DATABASE_URL=
 DIRECT_URL=
+DB_TIMEZONE=Asia/Ho_Chi_Minh
 
 OPENAI_API_KEY=
 ```
@@ -116,6 +117,7 @@ Khi bật, `JwtAuthGuard` và `SseTokenGuard` inject mock user thay vì verify J
 | `npm run db:verify:pre` | Kiểm tra anomaly trước khi siết constraint/index raw SQL |
 | `npm run db:verify` | Kiểm tra RLS/policies/trigger/constraint/index sau khi apply raw SQL |
 | `npm run db:prepare-db-push-raw-sql` | Tạm gỡ raw constraint mà Prisma `db push` không quản lý, trước khi apply lại bằng `db:apply-sql` |
+| `npm run db:set-timezone` | Set default timezone của database/role sang `DB_TIMEZONE` cho connection mới |
 | `npm run db:sync:full` | Flow đầy đủ: validate → verify pre → generate → prepare → db push → apply raw SQL → verify |
 | `npm run seed` | Seed dữ liệu mẫu (question bank, ...) |
 
@@ -149,6 +151,18 @@ npm run db:sync:full
 Script test tạo schema tạm, sao chép dữ liệu thật, kiểm tra dedupe và constraint, rồi xóa schema tạm.
 
 `npm run db:sync` trỏ thẳng tới `db:sync:full` để tránh quên raw SQL. Nếu cần debug riêng phần Prisma, dùng `npm run db:sync:prisma`, nhưng phải chạy `npm run db:apply-sql && npm run db:verify` ngay sau đó.
+
+## Timezone database
+
+Backend, seed và các script DB mở Postgres connection với `DB_TIMEZONE`, mặc định `Asia/Ho_Chi_Minh`. API vẫn trả ISO UTC và schema vẫn dùng `TIMESTAMPTZ`; không cộng/trừ dữ liệu cũ.
+
+Sau khi tạo hoặc đổi database, chạy một lần:
+
+```powershell
+npm run db:set-timezone
+```
+
+Lệnh này chạy `ALTER DATABASE` và `ALTER ROLE`, rồi mở connection mới để verify `SHOW TimeZone = Asia/Ho_Chi_Minh`. Nếu DB provider không cho phép `ALTER`, app vẫn dùng timezone qua connection options; khi query thủ công có thể dùng `created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'` để xem giờ Việt Nam.
 
 ---
 

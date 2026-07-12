@@ -2,6 +2,10 @@ import 'dotenv/config';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Client } from 'pg';
+import {
+  buildPgConnectionConfig,
+  setClientDbTimeZone,
+} from '../src/prisma/db-timezone';
 
 function quoteIdentifier(identifier: string): string {
   if (!/^[a-z0-9_]+$/.test(identifier)) {
@@ -16,10 +20,11 @@ async function main() {
     throw new Error('DIRECT_URL or DATABASE_URL is required');
   }
 
-  const client = new Client({ connectionString });
+  const client = new Client(buildPgConnectionConfig(connectionString));
   const schemaName = `migration_test_${Date.now()}`;
   const schema = quoteIdentifier(schemaName);
   await client.connect();
+  await setClientDbTimeZone(client);
 
   try {
     await client.query(`CREATE SCHEMA ${schema}`);

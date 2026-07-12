@@ -2,6 +2,10 @@ import 'dotenv/config';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { Client } from 'pg';
+import {
+  buildPgConnectionConfig,
+  setClientDbTimeZone,
+} from '../src/prisma/db-timezone';
 
 type SessionType = 'hr' | 'technical';
 
@@ -442,12 +446,13 @@ function printAudit(label: string, questions: QuestionLike[]): void {
 }
 
 async function backfillQuestionBank(apply: boolean): Promise<void> {
-  const connectionString = process.env.DATABASE_URL ?? process.env.DIRECT_URL;
+  const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error('DATABASE_URL or DIRECT_URL is required.');
   }
-  const client = new Client({ connectionString });
+  const client = new Client(buildPgConnectionConfig(connectionString));
   await client.connect();
+  await setClientDbTimeZone(client);
   try {
     const result = await client.query<QuestionBankRow>(`
       SELECT id, content, session_type, context_pack_id, competency_domains, translations, content_json

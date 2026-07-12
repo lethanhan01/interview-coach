@@ -12,6 +12,7 @@
     "build": "nest build",
     "db:prepare-user-answer-unique": "ts-node prisma/prepare-user-answer-unique.ts",
     "db:prepare-db-push-raw-sql": "ts-node prisma/prepare-db-push-raw-sql.ts",
+    "db:set-timezone": "ts-node prisma/set-db-timezone.ts",
     "db:test-user-answer-migration": "ts-node prisma/test-user-answer-deduplication-copy.ts",
     "db:verify:pre": "ts-node prisma/verify-db-hardening.ts --phase=pre",
     "db:verify": "ts-node prisma/verify-db-hardening.ts --phase=post",

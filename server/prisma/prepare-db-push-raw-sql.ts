@@ -1,5 +1,9 @@
 import 'dotenv/config';
 import { Client } from 'pg';
+import {
+  buildPgConnectionConfig,
+  setClientDbTimeZone,
+} from '../src/prisma/db-timezone';
 
 const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 
@@ -7,10 +11,11 @@ if (!connectionString) {
   throw new Error('DATABASE_URL or DIRECT_URL is required to prepare db push.');
 }
 
-const client = new Client({ connectionString });
+const client = new Client(buildPgConnectionConfig(connectionString));
 
 async function main() {
   await client.connect();
+  await setClientDbTimeZone(client);
   try {
     await client.query(`
       ALTER TABLE user_answers

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Plus, Clock } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
 import type { Session } from '@/lib/types'
+import { formatVietnamDateTime } from '@/lib/date-time'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Badge } from '@/components/ui/Badge'
 
@@ -36,16 +37,6 @@ const STATUS_VARIANTS: Record<string, BadgeVariant> = {
   canceled: 'danger',
   generating: 'warning',
   error: 'danger',
-}
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
 }
 
 function getCompanyName(jobDescription: string): string | undefined {
@@ -186,7 +177,7 @@ export default function SessionsPage() {
                     </Badge>
                     {s.createdAt && (
                       <span className="shrink-0 text-xs text-ink-faint">
-                        {formatDateTime(s.createdAt)}
+                        {formatVietnamDateTime(s.createdAt)}
                       </span>
                     )}
                   </div>

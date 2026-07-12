@@ -1,6 +1,10 @@
 import 'dotenv/config';
 import { randomUUID } from 'crypto';
 import { Client } from 'pg';
+import {
+  buildPgConnectionConfig,
+  setClientDbTimeZone,
+} from '../src/prisma/db-timezone';
 
 const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 
@@ -8,10 +12,11 @@ if (!connectionString) {
   throw new Error('DATABASE_URL or DIRECT_URL is required to test DB constraints.');
 }
 
-const client = new Client({ connectionString });
+const client = new Client(buildPgConnectionConfig(connectionString));
 
 async function main() {
   await client.connect();
+  await setClientDbTimeZone(client);
   await client.query('BEGIN');
 
   try {

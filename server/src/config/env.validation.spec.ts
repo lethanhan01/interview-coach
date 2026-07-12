@@ -17,6 +17,7 @@ describe('validateEnv', () => {
     expect(result.REDIS_PORT).toBe(6379);
     expect(result.PORT).toBe(3000);
     expect(result.SESSION_CREATION_LIMIT_PER_24H).toBe(10);
+    expect(result.DB_TIMEZONE).toBe('Asia/Ho_Chi_Minh');
     expect(result.AUTH_ENABLED).toBe('false');
     expect(result.MOCK_USER_ID).toBeUndefined();
     expect(result.NODE_ENV).toBe('development');
@@ -85,6 +86,24 @@ describe('validateEnv', () => {
     });
 
     expect(result.SESSION_CREATION_LIMIT_PER_24H).toBe(0);
+  });
+
+  it('cho phép cấu hình DB_TIMEZONE hợp lệ', () => {
+    const result = validateEnv({
+      ...VALID_ENV,
+      DB_TIMEZONE: 'Asia/Ho_Chi_Minh',
+    });
+
+    expect(result.DB_TIMEZONE).toBe('Asia/Ho_Chi_Minh');
+  });
+
+  it('từ chối DB_TIMEZONE rỗng', () => {
+    expect(() =>
+      validateEnv({
+        ...VALID_ENV,
+        DB_TIMEZONE: '',
+      }),
+    ).toThrow();
   });
 
   it('từ chối FEEDBACK_WORKER_CONCURRENCY nhỏ hơn 1', () => {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DEFAULT_DB_TIME_ZONE } from '../prisma/db-timezone';
 
 const EnvSchema = z.object({
   SUPABASE_URL: z.string().url(),
@@ -6,6 +7,12 @@ const EnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   SUPABASE_JWT_SECRET: z.string().min(1).default('mvp-jwt-secret'),
   DATABASE_URL: z.string().min(1),
+  DB_TIMEZONE: z
+    .string()
+    .trim()
+    .min(1)
+    .regex(/^[A-Za-z0-9_/+.-]+$/)
+    .default(DEFAULT_DB_TIME_ZONE),
   OPENAI_API_KEY: z.string().min(1).default('lm-studio'),
   OPENAI_BASE_URL: z.string().url().default('http://127.0.0.1:1234/v1'),
   OPENAI_CHAT_MODEL: z.string().min(1).default('google/gemma-4-e4b'),

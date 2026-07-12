@@ -6,6 +6,10 @@ import {
   planQuestionMetadataCleanup,
   summarizeQuestionMetadataCleanup,
 } from '../src/ai/question-metadata-cleanup-planner';
+import {
+  buildPgConnectionConfig,
+  setClientDbTimeZone,
+} from '../src/prisma/db-timezone';
 
 function parseApply(): boolean {
   return process.argv.includes('--apply');
@@ -13,14 +17,15 @@ function parseApply(): boolean {
 
 async function main(): Promise<void> {
   const apply = parseApply();
-  const connectionString = process.env.DATABASE_URL ?? process.env.DIRECT_URL;
+  const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error('DATABASE_URL or DIRECT_URL is required.');
   }
 
-  const client = new Client({ connectionString });
+  const client = new Client(buildPgConnectionConfig(connectionString));
   const contextPackService = new ContextPackService();
   await client.connect();
+  await setClientDbTimeZone(client);
 
   try {
     const result = await client.query<CleanupRow>(`
