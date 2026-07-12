@@ -31,6 +31,13 @@ describe('validateEnv', () => {
     expect(result.OPENAI_REPORT_TIMEOUT_MS).toBe(180000);
     expect(result.OPENAI_QUESTION_MAX_TOKENS).toBe(2400);
     expect(result.FEEDBACK_WORKER_CONCURRENCY).toBe(2);
+    expect(result.PRISMA_POOL_MAX).toBe(5);
+    expect(result.PRISMA_CONNECTION_TIMEOUT_MS).toBe(30000);
+    expect(result.PRISMA_IDLE_TIMEOUT_MS).toBe(30000);
+    expect(result.PRISMA_TRANSACTION_MAX_WAIT_MS).toBe(15000);
+    expect(result.PRISMA_TRANSACTION_TIMEOUT_MS).toBe(30000);
+    expect(result.PRISMA_CONNECT_RETRIES).toBe(3);
+    expect(result.PRISMA_CONNECT_RETRY_DELAY_MS).toBe(1500);
   });
 
   it('giữ lại cấu hình tắt auth cho local dev', () => {
@@ -97,6 +104,27 @@ describe('validateEnv', () => {
     expect(result.DB_TIMEZONE).toBe('Asia/Ho_Chi_Minh');
   });
 
+  it('cho phép tinh chỉnh pool và retry của Prisma', () => {
+    const result = validateEnv({
+      ...VALID_ENV,
+      PRISMA_POOL_MAX: '8',
+      PRISMA_CONNECTION_TIMEOUT_MS: '45000',
+      PRISMA_IDLE_TIMEOUT_MS: '60000',
+      PRISMA_TRANSACTION_MAX_WAIT_MS: '20000',
+      PRISMA_TRANSACTION_TIMEOUT_MS: '45000',
+      PRISMA_CONNECT_RETRIES: '4',
+      PRISMA_CONNECT_RETRY_DELAY_MS: '2000',
+    });
+
+    expect(result.PRISMA_POOL_MAX).toBe(8);
+    expect(result.PRISMA_CONNECTION_TIMEOUT_MS).toBe(45000);
+    expect(result.PRISMA_IDLE_TIMEOUT_MS).toBe(60000);
+    expect(result.PRISMA_TRANSACTION_MAX_WAIT_MS).toBe(20000);
+    expect(result.PRISMA_TRANSACTION_TIMEOUT_MS).toBe(45000);
+    expect(result.PRISMA_CONNECT_RETRIES).toBe(4);
+    expect(result.PRISMA_CONNECT_RETRY_DELAY_MS).toBe(2000);
+  });
+
   it('từ chối DB_TIMEZONE rỗng', () => {
     expect(() =>
       validateEnv({
@@ -111,6 +139,15 @@ describe('validateEnv', () => {
       validateEnv({
         ...VALID_ENV,
         FEEDBACK_WORKER_CONCURRENCY: '0',
+      }),
+    ).toThrow();
+  });
+
+  it('từ chối cấu hình Prisma timeout không hợp lệ', () => {
+    expect(() =>
+      validateEnv({
+        ...VALID_ENV,
+        PRISMA_CONNECTION_TIMEOUT_MS: '0',
       }),
     ).toThrow();
   });

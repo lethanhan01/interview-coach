@@ -13,6 +13,29 @@ const EnvSchema = z.object({
     .min(1)
     .regex(/^[A-Za-z0-9_/+.-]+$/)
     .default(DEFAULT_DB_TIME_ZONE),
+  PRISMA_POOL_MAX: z.coerce.number().int().positive().default(5),
+  PRISMA_CONNECTION_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(30_000),
+  PRISMA_IDLE_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+  PRISMA_TRANSACTION_MAX_WAIT_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(15_000),
+  PRISMA_TRANSACTION_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(30_000),
+  PRISMA_CONNECT_RETRIES: z.coerce.number().int().positive().default(3),
+  PRISMA_CONNECT_RETRY_DELAY_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(1_500),
   OPENAI_API_KEY: z.string().min(1).default('lm-studio'),
   OPENAI_BASE_URL: z.string().url().default('http://127.0.0.1:1234/v1'),
   OPENAI_CHAT_MODEL: z.string().min(1).default('google/gemma-4-e4b'),

@@ -1,6 +1,10 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import { CONTEXT_PACK_DATA, ContextPackId } from './context-pack.data';
+import {
+  formatDatabaseStartupError,
+  isTransientPrismaConnectionError,
+} from './prisma-connection-error';
 
 @Injectable()
 export class ReferenceDataService implements OnApplicationBootstrap {
@@ -9,7 +13,24 @@ export class ReferenceDataService implements OnApplicationBootstrap {
   constructor(private readonly prisma: PrismaService) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    await this.ensureContextPacks();
+    if (!this.prisma.isBootstrapDatabaseAvailable()) {
+      this.logger.warn(
+        'Skipping context pack legacy-id sync because the database was not reachable during startup.',
+      );
+      return;
+    }
+
+    try {
+      await this.ensureContextPacks();
+    } catch (error) {
+      if (!isTransientPrismaConnectionError(error)) {
+        throw error;
+      }
+
+      this.logger.warn(
+        `Skipping context pack legacy-id sync because the database connection became unavailable: ${formatDatabaseStartupError(error)}`,
+      );
+    }
   }
 
   async ensureContextPack(id: ContextPackId): Promise<void> {
