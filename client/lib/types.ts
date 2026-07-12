@@ -211,9 +211,6 @@ export interface GetProfileResponse {
   profile: {
     fullName?: string;
     personality?: string;
-    targetPosition?: string;
-    targetRoleCategory?: string;
-    targetLevel?: string;
     education?: EducationEntry;
     workExperience?: WorkExperienceEntry[];
     projects?: ProjectEntry[];

@@ -71,36 +71,26 @@ model User {
   interviewSessions    InterviewSession[]
   savedJobDescriptions SavedJobDescription[]
   profile              UserProfile?
-  resumes              Resume[]
 
   @@map("users")
 }
 
 model UserProfile {
-  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId             String    @unique @map("user_id") @db.Uuid
-  fullName           String?   @map("full_name")
-  targetPosition     String?   @map("target_position")
-  targetRoleCategory String?   @map("target_role_category")
-  targetLevel        String?   @map("target_level")
-  personality        String?
-  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String   @unique @map("user_id") @db.Uuid
+  fullName        String?  @map("full_name")
+  personality     String?
+  education       Json?
+  workExperience  Json?    @map("work_experience")
+  projects        Json?
+  technicalSkills Json?    @map("technical_skills")
+  certifications  Json?
+  awards          Json?
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_profiles")
-}
-
-model Resume {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId           String   @map("user_id") @db.Uuid
-  parsedJson       Json?    @map("parsed_json")
-  active           Boolean  @default(true)
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, active])
-  @@map("resumes")
 }
 
 model SessionReport {

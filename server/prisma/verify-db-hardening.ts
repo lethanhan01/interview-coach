@@ -34,9 +34,6 @@ const expectedPolicies = [
   ['public', 'user_profiles', 'user_profiles: read own'],
   ['public', 'user_profiles', 'user_profiles: insert own'],
   ['public', 'user_profiles', 'user_profiles: update own'],
-  ['public', 'resumes', 'resumes: read own'],
-  ['public', 'resumes', 'resumes: insert own'],
-  ['public', 'resumes', 'resumes: update own'],
   ['public', 'interview_sessions', 'interview_sessions: read own'],
   ['public', 'interview_sessions', 'interview_sessions: insert own'],
   ['public', 'interview_sessions', 'interview_sessions: update own'],
@@ -55,7 +52,6 @@ const expectedRlsTables = [
   'question_bank',
   'users',
   'user_profiles',
-  'resumes',
   'interview_sessions',
   'session_questions',
   'user_answers',
@@ -109,14 +105,19 @@ const expectedIndexes = [
   ['question_bank', 'idx_question_bank_session_type_difficulty'],
   ['saved_job_descriptions', 'idx_saved_job_descriptions_user_updated'],
   ['saved_job_descriptions', 'idx_saved_job_descriptions_user_company_title'],
-  ['resumes', 'idx_resumes_one_active_per_user'],
   ['rubric_categories', 'idx_rubric_categories_context_pack'],
   ['rubric_categories', 'rubric_categories_context_category_key'],
   ['rubric_criteria', 'idx_rubric_criteria_category'],
   ['rubric_criteria', 'rubric_criteria_category_code_key'],
 ];
 
-const retiredTables = ['ai_quality_log', 'question_usage', 'context_packs', 'rubric_versions'];
+const retiredTables = [
+  'ai_quality_log',
+  'question_usage',
+  'context_packs',
+  'rubric_versions',
+  'resumes',
+];
 
 const retiredTypes = ['RubricVersionStatus'];
 
@@ -130,16 +131,14 @@ const retiredColumns = [
   ['users', 'profile_completed'],
   ['users', 'last_login_at'],
   ['users', 'deleted_at'],
+  ['user_profiles', 'target_position'],
+  ['user_profiles', 'target_role_category'],
+  ['user_profiles', 'target_level'],
   ['user_profiles', 'years_experience'],
   ['user_profiles', 'default_language'],
   ['user_profiles', 'tts_enabled'],
   ['user_profiles', 'preferred_tech_stack'],
   ['user_profiles', 'deleted_at'],
-  ['resumes', 'file_url'],
-  ['resumes', 'original_filename'],
-  ['resumes', 'parsed_text'],
-  ['resumes', 'language'],
-  ['resumes', 'parser_version'],
   ['interview_sessions', 'jd_source'],
   ['interview_sessions', 'jd_url'],
   ['interview_sessions', 'difficulty'],
@@ -189,17 +188,6 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
          ON sjd.id = s.saved_job_description_id
        WHERE s.saved_job_description_id IS NOT NULL
          AND (sjd.id IS NULL OR sjd.user_id <> s.user_id)`,
-    ],
-    [
-      'anomaly:resumes_duplicate_active_per_user',
-      `SELECT count(*)::int AS count
-       FROM (
-         SELECT user_id
-         FROM resumes
-         WHERE active = true
-         GROUP BY user_id
-         HAVING count(*) > 1
-       ) dup`,
     ],
     [
       'anomaly:invalid_context_pack_ids',

@@ -18,9 +18,9 @@
 | D2 | Migration tool | `prisma migrate dev` (tạo migration files) | `prisma db push` + `db:apply-sql` qua `db:sync:full` |
 | D3 | `question_usage` table | Không có trong thiết kế gốc | Retired — từng chỉ ghi audit, chưa có repeat-avoidance runtime |
 | D4 | `question_bank` fields | 9 data columns | 9 data columns — giữ runtime fields + `estimated_time_min`, `translations`, `content_json`; bỏ metadata filter chưa dùng |
-| D5 | `user_profiles` fields | 13 columns | 9 columns — giữ profile phỏng vấn đang dùng; CV structured đã tách sang `resumes.parsed_json` |
+| D5 | `user_profiles` fields | 13 columns | 12 columns — giữ profile phỏng vấn đang dùng và 6 nhóm CV JSONB trực tiếp trên profile |
 | D6 | `reverse_questions` | MVP (Layer 4) | Chưa implement — không có trong schema.prisma |
-| D7 | Partial indexes | Raw SQL files riêng | Prisma schema cho một số partial index; raw SQL cho `resumes(user_id) WHERE active = true` |
+| D7 | Partial indexes | Raw SQL files riêng | Prisma schema/raw SQL cho partial index còn dùng; `resumes` đã retired |
 | D8 | `QuestionUsage` indexes | `sort: Desc` trong plan | Retired cùng `question_usage` |
 | D9 | Report JSON columns | 6 JSONB columns trên `interview_sessions` | Đã tách sang `session_reports` ở T13 |
 | D10 | Rubric storage | Rubric gốc từng được dự kiến lưu dạng JSON trong context pack hoặc versioned rubric | Rubric hiện hành nằm trực tiếp trong `rubric_categories.context_pack_id` và `rubric_criteria`; chỉ `session_questions.rubric_json` giữ snapshot lịch sử |
@@ -38,7 +38,6 @@ interview_sessions ──< session_reports
 interview_sessions ──< user_answers
 
 users ──── user_profiles
-  └──< resumes
   └──< interview_sessions
   └──< saved_job_descriptions
 ```
@@ -50,7 +49,6 @@ Prisma relation fields (không phải DB columns):
 | RubricCategory | RubricCriterion[] | 1:n | Cascade |
 | QuestionBank | SessionQuestion[] | 1:n | SET NULL (FK nullable) |
 | User | UserProfile? | 1:1 | Cascade |
-| User | Resume[] | 1:n | Cascade |
 | User | InterviewSession[] | 1:n | Cascade |
 | User | SavedJobDescription[] | 1:n | Cascade |
 | SavedJobDescription | InterviewSession[] | 1:n | SetNull |
@@ -71,9 +69,6 @@ Format: `Column — Type — Default — Nullable — Notes`
 ### rubric_categories
 Prisma model: `RubricCategory`
 
-| Column | DB Type | Default | Nullable | Notes |
-|--------|---------|---------|----------|-------|
-| id | UUID PK | gen_random_uuid() | NO | |
 | context_pack_id | TEXT | — | NO | CHECK `VN` hoặc `Western`; cấu hình nghiệp vụ, không còn FK tới `context_packs` |
 | category_key | TEXT | — | NO | `behavioral` hoặc `technical` |
 | label | TEXT | — | NO | Tên hiển thị |
@@ -144,37 +139,54 @@ Populate: trigger `handle_new_auth_user()` INSERT khi Supabase Auth tạo user m
 
 ### user_profiles
 Prisma model: `UserProfile`  
-One-to-one với users. Field CV structured đã tách sang `resumes.parsed_json`; các field profile dự phòng/write-only đã retired.
+One-to-one với users. 6 nhóm CV structured được lưu trực tiếp dưới dạng JSONB; các field profile dự phòng/write-only đã retired.
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
 | user_id | UUID UNIQUE FK | — | NO | → users.id ON DELETE CASCADE |
 | full_name | TEXT | — | YES | |
-| target_position | TEXT | — | YES | |
-| target_role_category | TEXT | — | YES | |
-| target_level | TEXT | — | YES | |
 | personality | TEXT | — | YES | *Ngoài design docs* |
+| education | JSONB | — | YES | Học vấn |
+| work_experience | JSONB | — | YES | Kinh nghiệm làm việc |
+| projects | JSONB | — | YES | Dự án |
+| technical_skills | JSONB | — | YES | Kỹ năng kỹ thuật |
+| certifications | JSONB | — | YES | Chứng chỉ |
+| awards | JSONB | — | YES | Giải thưởng |
 | created_at | TIMESTAMPTZ | now() | NO | |
 | updated_at | TIMESTAMPTZ | now() | NO | Auto-update |
 
 ---
 
-### resumes
-Prisma model: `Resume`  
-Structured CV/profile evidence tách khỏi `user_profiles`. API profile hiện vẫn giữ contract phẳng: service merge resume active vào response profile và tách các field CV khi update.
+
+### saved_job_descriptions
+Prisma model: `SavedJobDescription`
+JD người dùng lưu để tái sử dụng khi tạo phiên phỏng vấn. Bảng này dùng soft delete để ẩn JD khỏi thư viện nhưng không phá vỡ lịch sử phiên đã tạo.
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
 | user_id | UUID FK | — | NO | → users.id ON DELETE CASCADE |
-| parsed_json | JSONB | — | YES | `education`, `workExperience`, `projects`, `technicalSkills`, `certifications`, `awards` |
-| active | BOOLEAN | true | NO | Resume đang dùng |
+| company_name | TEXT | — | NO | |
+| company_website | TEXT | — | YES | |
+| job_title | TEXT | — | NO | |
+| level | TEXT | — | YES | |
+| headcount | TEXT | — | YES | |
+| location | TEXT | — | YES | |
+| requirements | TEXT | — | NO | |
+| job_content | TEXT | — | NO | |
+| tech_stack | TEXT[] | {} | NO | |
+| benefits | TEXT | — | YES | |
+| salary | TEXT | — | YES | |
+| bonus | TEXT | — | YES | |
+| last_used_at | TIMESTAMPTZ | — | YES | |
+| deleted_at | TIMESTAMPTZ | — | YES | Soft delete |
 | created_at | TIMESTAMPTZ | now() | NO | |
+| updated_at | TIMESTAMPTZ | now() | NO | Auto-update |
 
 Indexes:
-- `resumes_user_id_active_idx` on `(user_id, active)`
-- `idx_resumes_one_active_per_user` partial unique on `(user_id)` WHERE `active = true`
+- `idx_saved_job_descriptions_user_updated` on `(user_id, updated_at DESC)`
+- `idx_saved_job_descriptions_user_company_title` on `(user_id, company_name, job_title)`
 
 ---
 
@@ -361,6 +373,6 @@ Indexes:
 | Cascade delete | Tất cả child tables theo chuỗi answer → feedback → segments |
 | `updated_at` (auto via `@updatedAt`) | `users`, `user_profiles`, `interview_sessions`, `question_bank`, `user_answers` |
 | Partial indexes (`WHERE deleted_at IS NULL`) | `question_bank` (2 indexes) |
-| Partial indexes | `ai_feedbacks(user_answer_id) WHERE user_answer_id IS NOT NULL`; `resumes(user_id) WHERE active = true` UNIQUE |
+| Partial indexes | `ai_feedbacks(user_answer_id) WHERE user_answer_id IS NOT NULL` |
 | Cross-row integrity outside Prisma schema | `user_answers(question_id, session_id)` composite FK; `interview_sessions.saved_job_description_id` same-user trigger |
 | CHECK constraints (raw SQL, `migration.sql` §7) | role/status/type/range/score/audio/report/offset constraints — apply thủ công sau `db push` (ADR-008) |

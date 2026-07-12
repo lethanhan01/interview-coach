@@ -39,6 +39,9 @@ DROP TABLE IF EXISTS ai_quality_log;
 -- becomes real product behavior backed by selection logic.
 DROP TABLE IF EXISTS question_usage;
 
+-- Structured CV data now lives directly on user_profiles JSONB columns.
+DROP TABLE IF EXISTS resumes;
+
 ALTER TABLE question_bank
   DROP COLUMN IF EXISTS subcategory,
   DROP COLUMN IF EXISTS applicable_roles,
@@ -51,18 +54,20 @@ ALTER TABLE users
   DROP COLUMN IF EXISTS deleted_at;
 
 ALTER TABLE user_profiles
+  ADD COLUMN IF NOT EXISTS education JSONB,
+  ADD COLUMN IF NOT EXISTS work_experience JSONB,
+  ADD COLUMN IF NOT EXISTS projects JSONB,
+  ADD COLUMN IF NOT EXISTS technical_skills JSONB,
+  ADD COLUMN IF NOT EXISTS certifications JSONB,
+  ADD COLUMN IF NOT EXISTS awards JSONB,
+  DROP COLUMN IF EXISTS target_position,
+  DROP COLUMN IF EXISTS target_role_category,
+  DROP COLUMN IF EXISTS target_level,
   DROP COLUMN IF EXISTS years_experience,
   DROP COLUMN IF EXISTS default_language,
   DROP COLUMN IF EXISTS tts_enabled,
   DROP COLUMN IF EXISTS preferred_tech_stack,
   DROP COLUMN IF EXISTS deleted_at;
-
-ALTER TABLE resumes
-  DROP COLUMN IF EXISTS file_url,
-  DROP COLUMN IF EXISTS original_filename,
-  DROP COLUMN IF EXISTS parsed_text,
-  DROP COLUMN IF EXISTS language,
-  DROP COLUMN IF EXISTS parser_version;
 
 ALTER TABLE interview_sessions
   DROP COLUMN IF EXISTS jd_source,
@@ -166,25 +171,6 @@ DROP POLICY IF EXISTS "user_profiles: update own" ON user_profiles;
 CREATE POLICY "user_profiles: update own"
   ON user_profiles FOR UPDATE
   USING (user_id = auth.uid());
-
--- resumes (T12 / SR-02) — CV data tách khỏi user_profiles
-ALTER TABLE resumes ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "resumes: read own" ON resumes;
-CREATE POLICY "resumes: read own"
-  ON resumes FOR SELECT
-  USING (user_id = auth.uid());
-
-DROP POLICY IF EXISTS "resumes: insert own" ON resumes;
-CREATE POLICY "resumes: insert own"
-  ON resumes FOR INSERT
-  WITH CHECK (user_id = auth.uid());
-
-DROP POLICY IF EXISTS "resumes: update own" ON resumes;
-CREATE POLICY "resumes: update own"
-  ON resumes FOR UPDATE
-  USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
 
 -- interview_sessions
 ALTER TABLE interview_sessions ENABLE ROW LEVEL SECURITY;
@@ -338,12 +324,6 @@ CREATE INDEX IF NOT EXISTS idx_saved_job_descriptions_user_company_title
 
 CREATE INDEX IF NOT EXISTS idx_interview_sessions_saved_jd
   ON interview_sessions(saved_job_description_id);
-
--- resumes
-CREATE UNIQUE INDEX IF NOT EXISTS idx_resumes_one_active_per_user
-  ON resumes(user_id)
-  WHERE active = true;
-
 
 -- -----------------------------------------------------------------------------
 -- 4. Context constants and current rubric tables
@@ -617,10 +597,9 @@ END $$;
 
 
 -- -----------------------------------------------------------------------------
--- 5. (removed in T12 / SR-02) — portfolio columns moved out of user_profiles
---    into the `resumes` table. CV fields (education, work_experience, projects,
---    technical_skills, certifications, awards) now live in resumes.parsed_json.
---    See §8 for resumes RLS and the T12 data-migration note.
+-- 5. Profile CV fields
+--    CV fields (education, work_experience, projects, technical_skills,
+--    certifications, awards) live directly on user_profiles as JSONB columns.
 -- -----------------------------------------------------------------------------
 
 
@@ -841,50 +820,6 @@ ALTER TABLE annotated_segments
   ADD CONSTRAINT chk_annotated_segments_offsets
   CHECK (start_index >= 0 AND end_index >= start_index);
 
-
--- -----------------------------------------------------------------------------
--- 8. T12 / SR-02: backfill resumes from user_profiles JSONB columns.
---    Run order matters — the db push workflow drops the 6 old CV columns:
---      1. Make the `resumes` table exist alongside the old columns. Easiest:
---         create it manually with the DDL Prisma would generate, OR keep the
---         old columns in schema for one push, then remove them on the next.
---      2. Run THIS block while BOTH `resumes` and the old user_profiles columns
---         exist — it copies CV data into resumes.parsed_json.
---      3. Then `prisma db push --accept-data-loss` drops the 6 old columns.
---    Idempotent: skips users that already have an active resume; the outer IF
---    makes it a no-op once the old columns are gone.
--- -----------------------------------------------------------------------------
-
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'user_profiles'
-      AND column_name = 'education'
-  ) AND EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'resumes'
-  ) THEN
-    INSERT INTO resumes (user_id, active, parsed_json)
-    SELECT up.user_id, true,
-      jsonb_strip_nulls(jsonb_build_object(
-        'education',       up.education,
-        'workExperience',  up.work_experience,
-        'projects',        up.projects,
-        'technicalSkills', up.technical_skills,
-        'certifications',  up.certifications,
-        'awards',          up.awards
-      ))
-    FROM user_profiles up
-    WHERE NOT EXISTS (
-      SELECT 1 FROM resumes r WHERE r.user_id = up.user_id AND r.active
-    )
-    AND (up.education IS NOT NULL OR up.work_experience IS NOT NULL
-      OR up.projects IS NOT NULL OR up.technical_skills IS NOT NULL
-      OR up.certifications IS NOT NULL OR up.awards IS NOT NULL);
-  END IF;
-END
-$$;
 
 -- -----------------------------------------------------------------------------
 -- 9. T13 / SR-07: session_reports table

@@ -170,7 +170,7 @@ export default function CertificationsGroup({ data, onSave }: Props) {
             {isEditing ? (
               <div className="flex flex-col gap-2">
                 <input placeholder="Tên giải thưởng" value={a.name} onChange={e => updateAward(a.id, 'name', e.target.value)} className={inputCls} />
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 items-end gap-2">
                   <input placeholder="Tổ chức trao" value={a.organization} onChange={e => updateAward(a.id, 'organization', e.target.value)} className={inputCls} />
                   <div>
                     <label className="mb-1 block text-xs text-ink-muted">Ngày nhận</label>

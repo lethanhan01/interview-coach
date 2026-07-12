@@ -216,13 +216,6 @@ async function main() {
         DROP COLUMN IF EXISTS preferred_tech_stack,
         DROP COLUMN IF EXISTS deleted_at;
 
-      ALTER TABLE resumes
-        DROP COLUMN IF EXISTS file_url,
-        DROP COLUMN IF EXISTS original_filename,
-        DROP COLUMN IF EXISTS parsed_text,
-        DROP COLUMN IF EXISTS language,
-        DROP COLUMN IF EXISTS parser_version;
-
       ALTER TABLE interview_sessions
         DROP COLUMN IF EXISTS jd_source,
         DROP COLUMN IF EXISTS jd_url,

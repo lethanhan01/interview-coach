@@ -181,7 +181,7 @@ sequenceDiagram
 
 **d. Thiết kế giao diện frontend**
 
-Giao diện hồ sơ cần thể hiện các nhóm thông tin theo thứ tự dễ kiểm tra: thông tin cá nhân, mục tiêu nghề nghiệp, kỹ năng, kinh nghiệm, học vấn, dự án, chứng chỉ và CV. Mỗi nhóm nên có trạng thái chỉnh sửa rõ ràng để người dùng biết phần nào đã được lưu.
+Giao diện hồ sơ cần thể hiện các nhóm thông tin theo thứ tự dễ kiểm tra: thông tin cá nhân, học vấn, chứng chỉ, kỹ năng, dự án, kinh nghiệm và tính cách. Mỗi nhóm nên có trạng thái chỉnh sửa rõ ràng để người dùng biết phần nào đã được lưu.
 
 Khi tải dữ liệu, frontend hiển thị trạng thái đang tải thay vì để màn hình trống. Khi cập nhật thành công, giao diện phản hồi bằng trạng thái đã lưu. Nếu backend trả lỗi validation, thông báo lỗi cần nằm gần nhóm dữ liệu liên quan để người dùng sửa đúng vị trí.
 
@@ -189,7 +189,7 @@ Khi tải dữ liệu, frontend hiển thị trạng thái đang tải thay vì 
 
 Backend chịu trách nhiệm xác định người dùng hiện tại, đọc hồ sơ theo mã người dùng và kiểm tra dữ liệu gửi lên. Các API hồ sơ không được tin hoàn toàn vào dữ liệu từ frontend. Những trường dạng danh sách hoặc cấu trúc lồng nhau cần được kiểm tra trước khi lưu để tránh làm hỏng dữ liệu hồ sơ.
 
-Dữ liệu được lưu trong các bảng người dùng, hồ sơ mở rộng và resume. Khi cập nhật, backend chỉ thay đổi dữ liệu thuộc về người dùng hiện tại. Kết quả trả về cho frontend là dữ liệu đã được chuẩn hóa sau khi lưu, không chỉ là bản sao của request.
+Dữ liệu được lưu trong bảng người dùng và hồ sơ mở rộng, trong đó các nhóm CV có cấu trúc nằm trực tiếp trên `user_profiles`. Khi cập nhật, backend chỉ thay đổi dữ liệu thuộc về người dùng hiện tại. Kết quả trả về cho frontend là dữ liệu đã được chuẩn hóa sau khi lưu, không chỉ là bản sao của request.
 
 **f. Xử lý lỗi và fallback**
 
@@ -986,7 +986,6 @@ Cơ sở dữ liệu của hệ thống AI Mock Interview được triển khai 
 ```mermaid
 erDiagram
     users ||--o| user_profiles : has
-    users ||--o{ resumes : owns
     users ||--o{ saved_job_descriptions : saves
     users ||--o{ interview_sessions : creates
     rubric_categories ||--o{ rubric_criteria : contains
@@ -1012,20 +1011,15 @@ erDiagram
         UUID id PK
         UUID user_id FK
         TEXT full_name
-        TEXT target_position
-        TEXT target_role_category
-        TEXT target_level
         TEXT personality
+        JSONB education
+        JSONB work_experience
+        JSONB projects
+        JSONB technical_skills
+        JSONB certifications
+        JSONB awards
         TIMESTAMPTZ created_at
         TIMESTAMPTZ updated_at
-    }
-
-    resumes {
-        UUID id PK
-        UUID user_id FK
-        JSONB parsed_json
-        BOOLEAN active
-        TIMESTAMPTZ created_at
     }
 
     saved_job_descriptions {
@@ -1168,7 +1162,7 @@ erDiagram
     }
 ```
 
-Các bảng có thể chia thành bảy nhóm chính. Nhóm người dùng gồm `users`, `user_profiles` và `resumes`, dùng để lưu tài khoản, hồ sơ ứng viên và dữ liệu CV đã phân tích. Nhóm Job Description và cấu hình gồm `saved_job_descriptions` cùng các trường cấu hình phiên như `context_pack_id`. Nhóm rubric gồm `rubric_categories` và `rubric_criteria`, là nguồn dữ liệu gốc cho tiêu chí và trọng số chấm điểm hiện hành theo context. Nhóm phiên phỏng vấn gồm `interview_sessions` và `session_questions`, ghi cấu hình phiên, trạng thái vòng đời và danh sách câu hỏi đã sinh cho từng phiên. Nhóm câu trả lời gồm `user_answers`, lưu câu trả lời văn bản hoặc transcript giọng nói, trạng thái bỏ qua và trạng thái feedback. Nhóm feedback gồm `ai_feedbacks` và `annotated_segments`, lưu điểm, nhận xét, câu trả lời mẫu và các đoạn được chú thích trong câu trả lời. Nhóm báo cáo gồm `session_reports`, lưu từng phần của báo cáo tổng hợp theo loại và phiên bản.
+Các bảng có thể chia thành sáu nhóm chính. Nhóm người dùng gồm `users` và `user_profiles`, dùng để lưu tài khoản, hồ sơ ứng viên và dữ liệu CV có cấu trúc. Nhóm Job Description và cấu hình gồm `saved_job_descriptions` cùng các trường cấu hình phiên như `context_pack_id`. Nhóm rubric gồm `rubric_categories` và `rubric_criteria`, là nguồn dữ liệu gốc cho tiêu chí và trọng số chấm điểm hiện hành theo context. Nhóm phiên phỏng vấn gồm `interview_sessions` và `session_questions`, ghi cấu hình phiên, trạng thái vòng đời và danh sách câu hỏi đã sinh cho từng phiên. Nhóm câu trả lời gồm `user_answers`, lưu câu trả lời văn bản hoặc transcript giọng nói, trạng thái bỏ qua và trạng thái feedback. Nhóm feedback gồm `ai_feedbacks` và `annotated_segments`, lưu điểm, nhận xét, câu trả lời mẫu và các đoạn được chú thích trong câu trả lời. Nhóm báo cáo gồm `session_reports`, lưu từng phần của báo cáo tổng hợp theo loại và phiên bản.
 
 ### 4.6.2 Danh sách bảng dữ liệu
 
@@ -1233,31 +1227,22 @@ Bảng `users` lưu thông tin người dùng ở mức ứng dụng. Trường 
 
 **Bảng `user_profiles`**
 
-Bảng `user_profiles` lưu hồ sơ mở rộng của ứng viên. Bảng này có quan hệ một-một với `users`, dùng để cá nhân hóa bối cảnh luyện phỏng vấn nhưng không thay thế dữ liệu phiên cụ thể.
+Bảng `user_profiles` lưu hồ sơ mở rộng của ứng viên, bao gồm thông tin cá nhân, tính cách và các nhóm dữ liệu CV có cấu trúc. Bảng này có quan hệ một-một với `users`, dùng để cá nhân hóa bối cảnh luyện phỏng vấn nhưng không thay thế dữ liệu phiên cụ thể.
 
 | Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
 | ----- | ------------ | --------- | -------- | -------- | ------- |
 | `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã hồ sơ người dùng. |
 | `user_id` | `UUID` | Khóa ngoại tới `users.id`, UNIQUE, ON DELETE CASCADE | Có | - | Người dùng sở hữu hồ sơ; UNIQUE đảm bảo mỗi người dùng chỉ có một hồ sơ. |
 | `full_name` | `TEXT` | - | Không | - | Họ tên đầy đủ của ứng viên. |
-| `target_position` | `TEXT` | - | Không | - | Vị trí mục tiêu. |
-| `target_role_category` | `TEXT` | - | Không | - | Nhóm vai trò nghề nghiệp mục tiêu. |
-| `target_level` | `TEXT` | - | Không | - | Cấp độ mục tiêu, ví dụ intern, fresher hoặc junior. |
 | `personality` | `TEXT` | - | Không | - | Thông tin tính cách hoặc phong cách làm việc nếu có. |
+| `education` | `JSONB` | - | Không | - | Dữ liệu học vấn. |
+| `work_experience` | `JSONB` | - | Không | - | Danh sách kinh nghiệm làm việc. |
+| `projects` | `JSONB` | - | Không | - | Danh sách dự án. |
+| `technical_skills` | `JSONB` | - | Không | - | Danh sách kỹ năng kỹ thuật. |
+| `certifications` | `JSONB` | - | Không | - | Danh sách chứng chỉ. |
+| `awards` | `JSONB` | - | Không | - | Danh sách giải thưởng. |
 | `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo hồ sơ. |
 | `updated_at` | `TIMESTAMPTZ(6)` | Tự cập nhật khi ghi | Có | `now()` | Thời điểm cập nhật hồ sơ gần nhất. |
-
-**Bảng `resumes`**
-
-Bảng `resumes` lưu dữ liệu CV hoặc hồ sơ nghề nghiệp đã được phân tích thành JSON. Thiết kế này tách dữ liệu CV có cấu trúc khỏi bảng hồ sơ người dùng để hồ sơ chính không bị phình to.
-
-| Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
-| ----- | ------------ | --------- | -------- | -------- | ------- |
-| `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã resume. |
-| `user_id` | `UUID` | Khóa ngoại tới `users.id`, ON DELETE CASCADE | Có | - | Người dùng sở hữu resume. |
-| `parsed_json` | `JSONB` | - | Không | - | Dữ liệu CV đã phân tích, ví dụ học vấn, kinh nghiệm, dự án và kỹ năng. |
-| `active` | `BOOLEAN` | Partial unique index `idx_resumes_one_active_per_user` khi `active = true` | Có | `true` | Đánh dấu resume đang được dùng. |
-| `created_at` | `TIMESTAMPTZ(6)` | - | Có | `now()` | Thời điểm tạo resume. |
 
 **Bảng `saved_job_descriptions`**
 
@@ -1394,9 +1379,7 @@ Bảng `session_reports` lưu báo cáo tổng hợp theo từng phần thay vì
 
 ### 4.6.3 Quan hệ và ràng buộc dữ liệu quan trọng
 
-Quan hệ giữa `users` và `user_profiles` là quan hệ 1-1. Trường `user_profiles.user_id` vừa là khóa ngoại tới `users.id`, vừa có ràng buộc UNIQUE. Thiết kế này phù hợp vì mỗi tài khoản chỉ cần một hồ sơ ứng viên hiện hành để phục vụ cá nhân hóa phiên phỏng vấn.
-
-Quan hệ giữa `users` và `resumes` là quan hệ 1-n. Một người dùng có thể có nhiều bản ghi resume theo thời gian, nhưng partial unique index `idx_resumes_one_active_per_user` đảm bảo tại một thời điểm chỉ có một resume đang active cho mỗi người dùng. Khi người dùng bị xóa, resume bị xóa theo nhờ ON DELETE CASCADE.
+Quan hệ giữa `users` và `user_profiles` là quan hệ 1-1. Trường `user_profiles.user_id` vừa là khóa ngoại tới `users.id`, vừa có ràng buộc UNIQUE. Thiết kế này phù hợp vì mỗi tài khoản chỉ cần một hồ sơ ứng viên hiện hành để phục vụ cá nhân hóa phiên phỏng vấn, bao gồm cả các nhóm dữ liệu CV có cấu trúc.
 
 Quan hệ giữa `users` và `saved_job_descriptions` là quan hệ 1-n. Một người dùng có thể lưu nhiều JD để tái sử dụng. Bảng này dùng `deleted_at` để xóa mềm, giúp ẩn JD khỏi luồng sử dụng hiện tại nhưng vẫn giữ dữ liệu lịch sử nếu phiên cũ đã từng tham chiếu.
 
@@ -1426,7 +1409,7 @@ Thứ ba là các ràng buộc xóa và bảo toàn lịch sử. Những dữ li
 
 Hệ thống cũng dùng soft delete cho `question_bank` và `saved_job_descriptions` thông qua trường `deleted_at`. Với question bank, các index chọn câu hỏi chỉ áp dụng cho bản ghi chưa bị xóa mềm, giúp câu hỏi cũ không được chọn cho phiên mới nhưng vẫn không phá vỡ dữ liệu phiên đã tạo. Với JD đã lưu, xóa mềm giúp người dùng ẩn JD khỏi thư viện mà không ảnh hưởng tới các phiên đã tạo trước đó.
 
-Ngoài các ràng buộc trong bảng, database còn có Row Level Security cho nhiều bảng nghiệp vụ như `question_bank`, `users`, `user_profiles`, `resumes`, `interview_sessions`, `session_questions`, `user_answers`, `saved_job_descriptions`, `ai_feedbacks`, `annotated_segments` và `session_reports`. Các policy này chủ yếu giới hạn người dùng chỉ đọc hoặc ghi dữ liệu thuộc về mình; riêng dữ liệu quản trị như question bank có quyền thao tác dành cho admin. Đây là lớp bảo vệ bổ sung bên cạnh kiểm tra quyền ở backend.
+Ngoài các ràng buộc trong bảng, database còn có Row Level Security cho nhiều bảng nghiệp vụ như `question_bank`, `users`, `user_profiles`, `interview_sessions`, `session_questions`, `user_answers`, `saved_job_descriptions`, `ai_feedbacks`, `annotated_segments` và `session_reports`. Các policy này chủ yếu giới hạn người dùng chỉ đọc hoặc ghi dữ liệu thuộc về mình; riêng dữ liệu quản trị như question bank có quyền thao tác dành cho admin. Đây là lớp bảo vệ bổ sung bên cạnh kiểm tra quyền ở backend.
 
 ## 4.7 Môi Trường Xây Dựng Và Triển Khai Local
 

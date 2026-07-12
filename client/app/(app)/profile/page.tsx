@@ -13,7 +13,6 @@ import type {
 } from '@/lib/types'
 import PersonalInfoGroup from '@/components/profile/PersonalInfoGroup'
 import PersonalityGroup from '@/components/profile/PersonalityGroup'
-import CareerInfoGroup from '@/components/profile/CareerInfoGroup'
 import TechnicalSkillsGroup from '@/components/profile/TechnicalSkillsGroup'
 import EducationGroup from '@/components/profile/EducationGroup'
 import WorkExperienceGroup from '@/components/profile/WorkExperienceGroup'
@@ -56,7 +55,7 @@ export default function ProfilePage() {
 
   const profile = data?.profile ?? null
 
-  /** Đảm bảo mọi entry có `id` — data cũ từ parsedJson có thể thiếu id. */
+  /** Đảm bảo mọi entry có `id` vì dữ liệu JSON cũ có thể thiếu id. */
   function normalizeWithId<T extends { id?: string }>(arr: unknown): T[] {
     if (!Array.isArray(arr)) return []
     return arr.map((e) => ({
@@ -88,15 +87,6 @@ export default function ProfilePage() {
       <div className="flex flex-col gap-4">
         <PersonalInfoGroup
           data={{ fullName: profile?.fullName }}
-          onSave={(patch) => patchProfile(patch)}
-        />
-
-        <CareerInfoGroup
-          data={{
-            targetPosition: profile?.targetPosition,
-            targetRoleCategory: profile?.targetRoleCategory,
-            targetLevel: profile?.targetLevel,
-          }}
           onSave={(patch) => patchProfile(patch)}
         />
 

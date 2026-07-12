@@ -48,7 +48,7 @@ describe('UserController', () => {
     it('gọi userService.upsertProfile với userId và dto', async () => {
       const dto = {
         fullName: 'Nguyen Van A',
-        targetPosition: 'Backend Dev',
+        technicalSkills: [{ name: 'TypeScript' }],
       } as any;
       const updatedProfile = { userId: 'user-abc', ...dto };
       mockUserService.upsertProfile.mockResolvedValue(updatedProfile);

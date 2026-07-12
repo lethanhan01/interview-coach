@@ -51,13 +51,6 @@ async function main() {
     );
 
     await expectReject(
-      'resumes rejects multiple active rows per user',
-      `INSERT INTO resumes (id, user_id, active, parsed_json)
-       VALUES ($1, $2, true, '{}'::jsonb)`,
-      [randomUUID(), ids.userA],
-    );
-
-    await expectReject(
       'user_answers rejects invalid answer_mode',
       `INSERT INTO user_answers (
          id, session_id, question_id, answer_mode, answer_text
@@ -219,12 +212,6 @@ async function createFixture() {
        ($1, $2, 'x', 'hr', $5),
        ($3, $4, 'x', 'hr', $5)`,
     [sessionA, userA, sessionB, userA, contextPack],
-  );
-
-  await client.query(
-    `INSERT INTO resumes (id, user_id, active, parsed_json)
-     VALUES ($1, $2, true, '{}'::jsonb)`,
-    [randomUUID(), userA],
   );
 
   const questionB = await createQuestion(sessionB, 1);

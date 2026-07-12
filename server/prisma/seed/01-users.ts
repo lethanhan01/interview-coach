@@ -58,64 +58,71 @@ export async function seedUserProfile(
   prisma: PrismaClient,
   userId: string,
 ): Promise<void> {
-  const existing = await prisma.userProfile.findUnique({ where: { userId } });
-  if (existing) {
-    console.log('user profile: already exists, skipping');
-  } else {
-    await prisma.userProfile.create({
-      data: {
-        userId,
-        fullName: 'Nguyễn Văn Demo',
-        targetPosition: 'Junior Backend Developer',
-        targetRoleCategory: 'backend',
-        targetLevel: 'junior',
-      },
-    });
-    console.log('user profile: created');
-  }
-
-  // CV fields đã tách khỏi user_profiles sang resumes.parsed_json (SR-02).
-  // Guard độc lập với profile — reseed sau khi tách bảng vẫn tạo resume.
-  const existingResume = await prisma.resume.findFirst({
-    where: { userId, active: true },
-  });
-  if (existingResume) {
-    console.log('user resume: already exists, skipping');
-    return;
-  }
-
-  await prisma.resume.create({
-    data: {
+  await prisma.userProfile.upsert({
+    where: { userId },
+    create: {
       userId,
-      active: true,
-      parsedJson: {
-        education: [
-          {
-            school: 'Đại học Bách Khoa Hà Nội',
-            major: 'Công nghệ thông tin',
-            graduationYear: 2025,
-            gpa: 3.2,
-          },
-        ],
-        workExperience: [],
-        projects: [
-          {
-            name: 'Interview Coach',
-            description:
-              'Hệ thống luyện phỏng vấn AI cho sinh viên IT Việt Nam',
-            techStack: ['NestJS', 'Next.js', 'PostgreSQL', 'OpenAI'],
-            role: 'Backend Developer',
-            duration: '4 tháng',
-          },
-        ],
-        technicalSkills: {
-          languages: ['JavaScript', 'TypeScript', 'Java'],
-          frameworks: ['NestJS', 'React', 'Next.js'],
-          databases: ['PostgreSQL', 'Redis'],
-          tools: ['Git', 'Docker', 'Postman'],
-        },
+      fullName: 'Nguyễn Văn Demo',
+      education: {
+        degree: 'Kỹ sư',
+        school: 'Đại học Bách Khoa Hà Nội',
+        major: 'Công nghệ thông tin',
+        graduationYear: '2025',
+        gpa: '3.2',
       },
+      workExperience: [],
+      projects: [
+        {
+          id: 'demo-project-interview-coach',
+          name: 'Interview Coach',
+          description: 'Hệ thống luyện phỏng vấn AI cho sinh viên IT Việt Nam',
+          techStack: ['NestJS', 'Next.js', 'PostgreSQL', 'OpenAI'],
+          url: '',
+          startDate: '2026-03',
+          endDate: '2026-07',
+          isCurrent: false,
+        },
+      ],
+      technicalSkills: [
+        { id: 'demo-skill-ts', category: 'language', name: 'TypeScript', usagePeriod: 2 },
+        { id: 'demo-skill-nest', category: 'framework', name: 'NestJS', usagePeriod: 1 },
+        { id: 'demo-skill-next', category: 'framework', name: 'Next.js', usagePeriod: 1 },
+        { id: 'demo-skill-postgres', category: 'database', name: 'PostgreSQL', usagePeriod: 1 },
+      ],
+      certifications: [],
+      awards: [],
+    },
+    update: {
+      fullName: 'Nguyễn Văn Demo',
+      education: {
+        degree: 'Kỹ sư',
+        school: 'Đại học Bách Khoa Hà Nội',
+        major: 'Công nghệ thông tin',
+        graduationYear: '2025',
+        gpa: '3.2',
+      },
+      workExperience: [],
+      projects: [
+        {
+          id: 'demo-project-interview-coach',
+          name: 'Interview Coach',
+          description: 'Hệ thống luyện phỏng vấn AI cho sinh viên IT Việt Nam',
+          techStack: ['NestJS', 'Next.js', 'PostgreSQL', 'OpenAI'],
+          url: '',
+          startDate: '2026-03',
+          endDate: '2026-07',
+          isCurrent: false,
+        },
+      ],
+      technicalSkills: [
+        { id: 'demo-skill-ts', category: 'language', name: 'TypeScript', usagePeriod: 2 },
+        { id: 'demo-skill-nest', category: 'framework', name: 'NestJS', usagePeriod: 1 },
+        { id: 'demo-skill-next', category: 'framework', name: 'Next.js', usagePeriod: 1 },
+        { id: 'demo-skill-postgres', category: 'database', name: 'PostgreSQL', usagePeriod: 1 },
+      ],
+      certifications: [],
+      awards: [],
     },
   });
-  console.log('user resume: created');
+  console.log('user profile: upserted');
 }
