@@ -472,7 +472,7 @@ Khi AI provider lỗi, hết quota, timeout hoặc trả dữ liệu không đú
 Nếu question bank không đủ câu hỏi phù hợp với loại phiên, context pack hoặc ngôn ngữ, hệ thống cố gắng bù từ các câu còn lại trong phạm vi hợp lệ. Nếu sau bước bù vẫn không đủ số câu tối thiểu để tạo phiên, backend chuyển phiên sang trạng thái lỗi để frontend thông báo cho người dùng thay vì bắt đầu một phiên thiếu dữ liệu.
 
 Nếu AI sinh được một phần câu hỏi nhưng question bank không đủ phần còn lại, backend không bắt đầu phiên với danh sách thiếu. Nếu phát sự kiện SSE thất bại sau khi database đã lưu đủ câu hỏi và phiên đã active, lỗi phát sự kiện chỉ được ghi log; dữ liệu phiên vẫn được giữ vì frontend còn có thể đọc lại trạng thái qua API hoặc polling.
-
+ 
 ### 4.5.4 Thực hiện phiên và lưu câu trả lời
 
 **a. Mục đích của tính năng**
@@ -599,7 +599,7 @@ Nếu phiên không tồn tại, không thuộc người dùng hiện tại ho�
 Nếu người dùng gửi trùng một câu trả lời, hệ thống dựa vào ràng buộc một câu hỏi một câu trả lời trong phiên để tránh tạo nhiều bản ghi. Nếu người dùng bỏ qua câu hỏi, đây không phải là lỗi. Hệ thống lưu trạng thái bỏ qua, cho phép đi tiếp và để phần báo cáo xử lý câu này theo hướng không chấm điểm.
 
 Nếu người dùng bỏ qua lại một câu đã bỏ qua, backend trả lại answer hiện có và không xếp thêm job. Nếu người dùng cố bỏ qua một câu đã có câu trả lời thật, backend không ghi đè câu trả lời đó bằng skipped answer. Nếu queue feedback gặp vấn đề sau khi answer văn bản đã được lưu, request có thể thất bại; khi người dùng gửi lại, backend có thể dùng answer hiện có và xếp lại job feedback theo cùng mã answer.
-
+ 
 ### 4.5.5 Đánh giá và phản hồi từng câu trả lời
 
 **a. Mục đích của tính năng**
@@ -923,7 +923,7 @@ Nếu frontend yêu cầu report khi worker chưa tạo xong, backend trả tr�
 Nếu toàn bộ feedback là fallback hoặc không có câu trả lời có thể chấm, báo cáo hiển thị trạng thái chưa thể chấm điểm thay vì `0/100`. Nếu quá trình tạo câu trả lời đề xuất cho câu bỏ qua gặp lỗi AI, hệ thống vẫn có thể lưu phần báo cáo còn lại và dùng nội dung thay thế phù hợp cho phần câu bị bỏ qua.
 
 Nếu AI không tạo được action plan, backend dùng action plan fallback theo ngôn ngữ phiên. Nếu AI không tạo được câu trả lời đề xuất cho câu skipped, backend dùng câu trả lời mẫu fallback dựa trên nội dung câu hỏi. Nếu số feedback chưa đủ, report worker ném lỗi để job retry thay vì lưu báo cáo thiếu dữ liệu.
-
+ 
 ### 4.5.7 Theo dõi tiến trình phiên và xử lý trạng thái đặc biệt
 
 **a. Mục đích của tính năng**

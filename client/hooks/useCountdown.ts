@@ -10,6 +10,7 @@ export function useCountdown(
   initialSeconds: number,
   active: boolean,
   onChange?: (remainingSeconds: number) => void,
+  onExpire?: () => void,
 ): CountdownResult {
   const [countdown, setCountdown] = useState({
     initialSeconds,
@@ -22,11 +23,24 @@ export function useCountdown(
       ? countdown.remainingSeconds
       : initialSeconds
   const remainingRef = useRef(remainingSeconds)
+  const expireNotifiedRef = useRef(false)
 
   useEffect(() => {
     remainingRef.current = remainingSeconds
     onChange?.(remainingSeconds)
   }, [remainingSeconds, onChange])
+
+  useEffect(() => {
+    if (remainingSeconds > 0) {
+      expireNotifiedRef.current = false
+      return
+    }
+
+    if (active && !expireNotifiedRef.current) {
+      expireNotifiedRef.current = true
+      onExpire?.()
+    }
+  }, [active, remainingSeconds, onExpire])
 
   useEffect(() => {
     if (!active || initialSeconds <= 0) return

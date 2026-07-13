@@ -589,6 +589,119 @@ describe('SessionService', () => {
       ).not.toHaveBeenCalled();
     });
 
+    it('timeout-complete tự skip các câu chưa trả lời và chuyển sang completing', async () => {
+      const activeSession = { ...BASE_SESSION, status: 'active' };
+      const updated = {
+        ...BASE_SESSION,
+        status: 'completing',
+        remainingSeconds: 0,
+      };
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(activeSession);
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        { id: 'q-1' },
+        { id: 'q-2' },
+        { id: 'q-3' },
+        { id: 'q-4' },
+        { id: 'q-5' },
+      ]);
+      mockPrisma.userAnswer.findMany.mockResolvedValue([
+        { questionId: 'q-1' },
+        { questionId: 'q-3' },
+      ]);
+      mockPrisma.userAnswer.createMany.mockResolvedValue({ count: 3 });
+      mockPrisma.interviewSession.update.mockResolvedValue(updated);
+
+      const result = await service.updateStatus(
+        '11111111-1111-4111-8111-111111111111',
+        'user-abc',
+        'completed',
+        0,
+        true,
+      );
+
+      expect(result.status).toBe('completing');
+      expect(mockPrisma.userAnswer.createMany).toHaveBeenCalledWith({
+        data: [
+          {
+            sessionId: '11111111-1111-4111-8111-111111111111',
+            questionId: 'q-2',
+            answerMode: 'text',
+            answerText: '',
+            skipped: true,
+            feedbackGenerated: false,
+          },
+          {
+            sessionId: '11111111-1111-4111-8111-111111111111',
+            questionId: 'q-4',
+            answerMode: 'text',
+            answerText: '',
+            skipped: true,
+            feedbackGenerated: false,
+          },
+          {
+            sessionId: '11111111-1111-4111-8111-111111111111',
+            questionId: 'q-5',
+            answerMode: 'text',
+            answerText: '',
+            skipped: true,
+            feedbackGenerated: false,
+          },
+        ],
+        skipDuplicates: true,
+      });
+      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
+        where: { id: '11111111-1111-4111-8111-111111111111' },
+        data: {
+          status: 'completing',
+          completedAt: null,
+          remainingSeconds: 0,
+        },
+      });
+      expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
+        '11111111-1111-4111-8111-111111111111',
+        'hr',
+        'VN',
+        'vi',
+      );
+    });
+
+    it('timeout-complete không ghi đè answer đã tồn tại hoặc tạo duplicate khi gọi lại', async () => {
+      const activeSession = { ...BASE_SESSION, status: 'active' };
+      const updated = {
+        ...BASE_SESSION,
+        status: 'completing',
+        remainingSeconds: 0,
+      };
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(activeSession);
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        { id: 'q-1' },
+        { id: 'q-2' },
+      ]);
+      mockPrisma.userAnswer.findMany.mockResolvedValue([
+        { questionId: 'q-1' },
+        { questionId: 'q-2' },
+      ]);
+      mockPrisma.interviewSession.update.mockResolvedValue(updated);
+
+      await service.updateStatus(
+        '11111111-1111-4111-8111-111111111111',
+        'user-abc',
+        'completed',
+        0,
+        true,
+      );
+
+      expect(mockPrisma.userAnswer.createMany).not.toHaveBeenCalled();
+      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
+        where: { id: '11111111-1111-4111-8111-111111111111' },
+        data: {
+          status: 'completing',
+          completedAt: null,
+          remainingSeconds: 0,
+        },
+      });
+    });
+
     it('completed lặp lại không enqueue thêm report', async () => {
       const completed = { ...BASE_SESSION, status: 'completed' };
       mockPrisma.interviewSession.findUnique.mockResolvedValue(completed);

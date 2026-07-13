@@ -253,6 +253,14 @@ export class TurnService {
     });
     let answer = existingAnswer;
 
+    if (answer?.skipped) {
+      return {
+        answerId: answer.id,
+        feedbackQueued: false,
+        transcriptionPending: false,
+      };
+    }
+
     if (!answer) {
       const answerText = dto.answerText?.trim() ?? '';
       const voiceMetrics =

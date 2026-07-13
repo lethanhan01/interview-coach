@@ -4,6 +4,7 @@ interface CountdownTimerProps {
   initialSeconds: number
   active: boolean
   onChange?: (remainingSeconds: number) => void
+  onExpire?: () => void
 }
 
 function formatTime(seconds: number): string {
@@ -12,11 +13,17 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
-export default function CountdownTimer({ initialSeconds, active, onChange }: CountdownTimerProps) {
+export default function CountdownTimer({
+  initialSeconds,
+  active,
+  onChange,
+  onExpire,
+}: CountdownTimerProps) {
   const { remainingSeconds, isWarning, isExpired } = useCountdown(
     initialSeconds,
     active,
     onChange,
+    onExpire,
   )
 
   const colorClass = isExpired

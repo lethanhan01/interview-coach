@@ -40,6 +40,7 @@ export default function InterviewPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answerMode, setAnswerMode] = useState<AnswerMode>('text')
   const [isCompleting, setIsCompleting] = useState(false)
+  const [isTimeoutCompleting, setIsTimeoutCompleting] = useState(false)
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('generating')
   const [statusAction, setStatusAction] = useState<SessionStatusAction | null>(null)
   const [turnSubmitting, setTurnSubmitting] = useState(false)
@@ -51,6 +52,7 @@ export default function InterviewPage() {
   const questionsReadyRef = useRef(false)
   const turnSubmittingRef = useRef(false)
   const remainingSecondsRef = useRef(30 * 60)
+  const timeoutCompletingRef = useRef(false)
 
   const trackRemainingSeconds = useCallback((seconds: number) => {
     remainingSecondsRef.current = seconds
@@ -183,6 +185,48 @@ export default function InterviewPage() {
     }
   }, [sessionId, questions.length, currentIndex, router])
 
+  const completeByTimeout = useCallback(async () => {
+    if (
+      timeoutCompletingRef.current ||
+      sessionStatus !== 'active' ||
+      !questionsReadyRef.current
+    ) {
+      return
+    }
+
+    timeoutCompletingRef.current = true
+    turnSubmittingRef.current = true
+    remainingSecondsRef.current = 0
+    setRemainingSeconds(0)
+    setTurnSubmitting(true)
+    setIsTimeoutCompleting(true)
+    setIsCompleting(true)
+    setActionError(null)
+
+    try {
+      await apiClient.patch<{ status: SessionStatus }>(
+        `/sessions/${sessionId}/status`,
+        {
+          status: 'completed',
+          autoSkipUnanswered: true,
+          remainingSeconds: 0,
+        },
+      )
+      router.replace(`/sessions/${sessionId}/report`)
+    } catch (err) {
+      timeoutCompletingRef.current = false
+      turnSubmittingRef.current = false
+      setTurnSubmitting(false)
+      setIsTimeoutCompleting(false)
+      setIsCompleting(false)
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : 'Không thể tự động hoàn tất phiên phỏng vấn',
+      )
+    }
+  }, [router, sessionId, sessionStatus])
+
   const submitText = useCallback(async (text: string) => {
     if (turnSubmittingRef.current) return
     turnSubmittingRef.current = true
@@ -264,8 +308,16 @@ export default function InterviewPage() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
         <LoadingSpinner size="lg" />
-        <p className="text-base font-medium text-ink">Đang hoàn tất phiên phỏng vấn</p>
-        <p className="text-sm text-ink-muted">AI đang tạo báo cáo, vui lòng chờ...</p>
+        <p className="text-base font-medium text-ink">
+          {isTimeoutCompleting
+            ? 'Đã hết thời gian, đang hoàn tất phiên phỏng vấn'
+            : 'Đang hoàn tất phiên phỏng vấn'}
+        </p>
+        <p className="text-sm text-ink-muted">
+          {isTimeoutCompleting
+            ? 'Các câu chưa trả lời sẽ được đánh dấu bỏ qua trước khi tạo báo cáo.'
+            : 'AI đang tạo báo cáo, vui lòng chờ...'}
+        </p>
       </div>
     )
   }
@@ -336,7 +388,7 @@ export default function InterviewPage() {
               size="sm"
               onClick={() => updateSessionStatus('paused')}
               loading={statusAction === 'paused'}
-              disabled={!questionsReady}
+              disabled={!questionsReady || isCompleting}
             >
               <PauseCircle className="size-4" aria-hidden="true" />
               Tạm dừng
@@ -346,6 +398,7 @@ export default function InterviewPage() {
               size="sm"
               onClick={cancelSession}
               loading={statusAction === 'canceled'}
+              disabled={isCompleting}
             >
               <XCircle className="size-4" aria-hidden="true" />
               Hủy
@@ -353,8 +406,9 @@ export default function InterviewPage() {
           </div>
           <CountdownTimer
             initialSeconds={remainingSeconds}
-            active={questionsReady && sessionStatus === 'active'}
+            active={questionsReady && sessionStatus === 'active' && !isCompleting}
             onChange={trackRemainingSeconds}
+            onExpire={completeByTimeout}
           />
         </div>
         {actionError && <p className="mb-4 text-sm text-danger">{actionError}</p>}
@@ -373,6 +427,7 @@ export default function InterviewPage() {
               key={m}
               variant={answerMode === m ? 'primary' : 'secondary'}
               onClick={() => setAnswerMode(m)}
+              disabled={turnSubmitting || isCompleting}
             >
               {m === 'text' ? 'Text' : 'Giọng nói'}
             </Button>
@@ -384,14 +439,14 @@ export default function InterviewPage() {
             <TextAnswerInput
               key={current?.id}
               onSubmit={submitText}
-              disabled={turnSubmitting}
+              disabled={turnSubmitting || isCompleting}
             />
           ) : (
             <VoiceRecorder
               key={current?.id}
               onSubmit={submitVoice}
               sessionId={sessionId}
-              disabled={turnSubmitting}
+              disabled={turnSubmitting || isCompleting}
             />
           )}
         </div>
@@ -400,7 +455,7 @@ export default function InterviewPage() {
             variant="secondary"
             size="sm"
             onClick={skipCurrentQuestion}
-            disabled={turnSubmitting || !current}
+            disabled={turnSubmitting || isCompleting || !current}
             loading={turnSubmitting}
           >
             <SkipForward className="size-4" aria-hidden="true" />

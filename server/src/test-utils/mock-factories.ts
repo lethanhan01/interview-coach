@@ -68,8 +68,11 @@ export const createMockQuestionBank = (
   ...overrides,
 });
 
-export const createMockPrismaService = () => ({
-  $transaction: jest.fn(),
+export const createMockPrismaService = () => {
+  const prisma = {
+    $transaction: jest.fn((input) =>
+      typeof input === 'function' ? input(prisma) : Promise.all(input),
+    ),
   isBootstrapDatabaseAvailable: jest.fn().mockReturnValue(true),
   rubricCriterion: {
     findMany: jest.fn().mockResolvedValue([]),
@@ -115,6 +118,7 @@ export const createMockPrismaService = () => ({
   },
   userAnswer: {
     create: jest.fn(),
+    createMany: jest.fn().mockResolvedValue({ count: 0 }),
     findUnique: jest.fn().mockResolvedValue(null),
     findMany: jest.fn(),
     upsert: jest.fn(),
@@ -142,7 +146,9 @@ export const createMockPrismaService = () => ({
     findMany: jest.fn().mockResolvedValue([]),
     findFirst: jest.fn().mockResolvedValue(null),
   },
-});
+  };
+  return prisma;
+};
 
 export const createMockQueue = () => ({
   add: jest.fn(),

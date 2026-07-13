@@ -26,48 +26,156 @@ Phần thực nghiệm được thực hiện trên môi trường chạy local,
 
 ### 5.1.2 Hướng dẫn chạy dự án
 
-Thứ tự chạy local được chia thành backend trước, frontend sau để frontend có thể gọi API tại `http://localhost:3000/api/v1`.
+Phần này mô tả cách chạy hệ thống ở môi trường local trên Windows/PowerShell. Dự án cần chạy theo thứ tự: chuẩn bị môi trường, cấu hình backend, khởi động Redis và backend, sau đó khởi động frontend. Khi chạy thành công, backend phục vụ API tại `http://localhost:3000/api/v1`, còn frontend chạy tại `http://localhost:5173`.
 
-1. Cài đặt dependency cho backend:
+#### a. Chuẩn bị trước khi chạy
+
+Trước khi cài đặt và khởi động dự án, máy chạy cần có các thành phần sau:
+
+1. Cài Node.js phiên bản 20 trở lên và npm phiên bản 10 trở lên.
+2. Cài Docker Desktop để chạy Redis bằng Docker Compose.
+3. Chuẩn bị một Supabase project có PostgreSQL database và thông tin API key.
+4. Chuẩn bị API key hoặc endpoint tương thích OpenAI. Khi chạy local có thể dùng LM Studio hoặc một dịch vụ tương thích OpenAI API.
+5. Mở hai terminal riêng: một terminal cho backend trong thư mục `server/`, một terminal cho frontend trong thư mục `client/`.
+
+#### b. Cài đặt và cấu hình backend
+
+Backend là thành phần cần khởi động trước vì frontend sẽ gọi API từ backend.
+
+1. Di chuyển vào thư mục backend và cài đặt dependency:
 
 ```powershell
 cd server
 npm install
+```
+
+2. Tạo file môi trường từ file mẫu:
+
+```powershell
 Copy-Item .env.example .env
 ```
 
-2. Điền các biến bắt buộc trong `server/.env`, tối thiểu gồm cấu hình Supabase, `DATABASE_URL`, `OPENAI_API_KEY`, Redis và `CLIENT_URL=http://localhost:5173`. Khi chạy demo local có thể đặt `AUTH_ENABLED=false` và cấu hình `MOCK_USER_ID` hợp lệ trong database.
+3. Mở file `server/.env` và điền các biến quan trọng:
 
-3. Khởi động Redis và backend:
+```env
+SUPABASE_URL=<supabase-project-url>
+SUPABASE_ANON_KEY=<supabase-anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<supabase-service-role-key>
+SUPABASE_JWT_SECRET=mvp-jwt-secret
+
+DATABASE_URL=<postgres-connection-string>
+DB_TIMEZONE=Asia/Ho_Chi_Minh
+
+OPENAI_BASE_URL=http://127.0.0.1:1234/v1
+OPENAI_CHAT_MODEL=google/gemma-4-e4b
+OPENAI_API_KEY=lm-studio
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
+PORT=3000
+CLIENT_URL=http://localhost:5173
+AUTH_ENABLED=false
+```
+
+Trong chế độ demo local, `AUTH_ENABLED=false` cho phép backend dùng cơ chế tài khoản MVP thay vì yêu cầu đăng nhập thật qua Supabase Auth. Nếu muốn cố định người dùng demo, có thể thêm `MOCK_USER_ID=<UUID-cua-user-trong-database>`. Giá trị này phải là UUID có thật trong database.
+
+4. Nếu database mới tạo hoặc chưa đồng bộ schema, chạy lệnh đồng bộ từ thư mục `server/`:
+
+```powershell
+npm run db:sync:full
+```
+
+5. Nếu cần dữ liệu mẫu cho quá trình demo, chạy seed:
+
+```powershell
+npm run seed
+```
+
+#### c. Khởi động Redis và backend
+
+1. Đảm bảo Docker Desktop đang chạy.
+
+2. Từ thư mục `server/`, bật Redis:
 
 ```powershell
 npm run infra:up
+```
+
+3. Khởi động backend ở chế độ phát triển:
+
+```powershell
 npm run start:dev
 ```
 
-Backend sẵn sàng khi API chạy ở `http://localhost:3000/api/v1`. Có thể kiểm tra nhanh bằng:
+Backend sẵn sàng khi terminal hiển thị ứng dụng NestJS đã khởi động thành công. Có thể kiểm tra nhanh runtime bằng lệnh:
 
 ```powershell
 npm run verify:runtime
 ```
 
-4. Cài đặt dependency cho frontend:
+Lệnh kiểm tra này gọi `GET /api/v1` và `GET /health`. Nếu kết quả trả về `Runtime OK`, backend, database và Redis đã sẵn sàng cho frontend sử dụng.
+
+#### d. Cài đặt và cấu hình frontend
+
+Sau khi backend đã chạy, mở terminal thứ hai để cấu hình frontend.
+
+1. Di chuyển vào thư mục frontend và cài đặt dependency:
 
 ```powershell
-cd ../client
+cd client
 npm install
-Copy-Item .env.example .env.local
 ```
 
-5. Điền các biến trong `client/.env.local`, gồm `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` và `NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api/v1`. Nếu backend đang chạy chế độ bỏ qua đăng nhập, frontend cần đặt `NEXT_PUBLIC_SKIP_AUTH=true`.
+2. Tạo hoặc mở file `client/.env.local`, sau đó cấu hình địa chỉ API backend:
 
-6. Khởi động frontend:
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api/v1
+```
+
+Biến này giúp frontend gọi đúng backend local. Nếu không khai báo, mã nguồn frontend vẫn dùng giá trị mặc định `http://localhost:3000/api/v1`, tuy nhiên việc khai báo rõ trong `.env.local` giúp môi trường chạy dễ kiểm soát hơn.
+
+#### e. Khởi động frontend và truy cập hệ thống
+
+1. Từ thư mục `client/`, chạy frontend:
 
 ```powershell
 npm run dev
 ```
 
-Ứng dụng frontend chạy tại `http://localhost:5173`.
+2. Mở trình duyệt tại địa chỉ:
+
+```text
+http://localhost:5173
+```
+
+3. Kiểm tra luồng chính của hệ thống:
+
+- Truy cập trang frontend thành công.
+- Cập nhật hoặc kiểm tra hồ sơ người dùng.
+- Nhập JD và cấu hình phiên phỏng vấn.
+- Tạo phiên phỏng vấn mới.
+- Trả lời hoặc bỏ qua câu hỏi.
+- Kết thúc phiên và xem feedback/report khi worker xử lý xong.
+
+#### f. Dừng hệ thống sau khi chạy
+
+1. Dừng frontend và backend bằng `Ctrl+C` trong từng terminal đang chạy.
+
+2. Dừng Redis từ thư mục `server/`:
+
+```powershell
+npm run infra:down
+```
+
+#### g. Một số lỗi thường gặp khi chạy local
+
+| Hiện tượng | Nguyên nhân thường gặp | Cách xử lý |
+| --- | --- | --- |
+| Backend báo lỗi kết nối Redis hoặc `ECONNREFUSED 127.0.0.1:6379`. | Redis chưa chạy hoặc Docker Desktop chưa sẵn sàng. | Mở Docker Desktop, sau đó chạy lại `npm run infra:up` trong thư mục `server/`. |
+| `npm run verify:runtime` báo `/health` ở trạng thái `degraded`. | Database hoặc Redis chưa kết nối được. | Kiểm tra `DATABASE_URL`, trạng thái Supabase, Docker Desktop và Redis. |
+| Frontend không gọi được API. | Backend chưa chạy hoặc `NEXT_PUBLIC_API_BASE_URL` sai. | Kiểm tra backend tại `http://localhost:3000/api/v1` và cấu hình lại `client/.env.local`. |
+| Backend trả `401 Unauthorized` khi demo local. | Cấu hình auth local chưa đúng. | Kiểm tra `AUTH_ENABLED=false` trong `server/.env`, sau đó khởi động lại backend. |
+| Port `3000` hoặc `5173` đã được sử dụng. | Một process khác đang chiếm cổng. | Dừng process đang dùng cổng hoặc đổi port tương ứng trong cấu hình chạy local. |
 
 ### 5.1.3 Phương pháp đánh giá thực nghiệm
 

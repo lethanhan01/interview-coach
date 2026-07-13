@@ -12,12 +12,34 @@ describe('UpdateSessionStatusDto', () => {
     ).resolves.toHaveLength(0);
   });
 
+  it('chấp nhận autoSkipUnanswered khi hoàn thành do hết giờ', async () => {
+    await expect(
+      validatePayload({
+        status: 'completed',
+        remainingSeconds: 0,
+        autoSkipUnanswered: true,
+      }),
+    ).resolves.toHaveLength(0);
+  });
+
   it.each([-1, 1.5, '725'])(
     'từ chối remainingSeconds không hợp lệ: %p',
     async (value) => {
       const errors = await validatePayload({
         status: 'paused',
         remainingSeconds: value,
+      });
+
+      expect(errors).not.toHaveLength(0);
+    },
+  );
+
+  it.each(['true', 1])(
+    'từ chối autoSkipUnanswered không hợp lệ: %p',
+    async (value) => {
+      const errors = await validatePayload({
+        status: 'completed',
+        autoSkipUnanswered: value,
       });
 
       expect(errors).not.toHaveLength(0);

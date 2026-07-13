@@ -1,4 +1,4 @@
-import { IsIn, IsInt, IsOptional, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, Min } from 'class-validator';
 
 export const SESSION_STATUS_UPDATES = [
   'active',
@@ -17,4 +17,8 @@ export class UpdateSessionStatusDto {
   @IsInt()
   @Min(0)
   remainingSeconds?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  autoSkipUnanswered?: boolean;
 }

@@ -232,6 +232,7 @@ export class SessionService {
     userId: string,
     status: SessionStatusUpdate,
     remainingSeconds?: number,
+    autoSkipUnanswered = false,
   ): Promise<InterviewSession> {
     const session = await this.findById(sessionId, userId);
 
@@ -303,23 +304,9 @@ export class SessionService {
       throw this.invalidTransition(session.status, status);
     }
 
-    const [questionCount, answerCount] = await Promise.all([
-      this.prisma.sessionQuestion.count({ where: { sessionId } }),
-      this.prisma.userAnswer.count({ where: { sessionId } }),
-    ]);
-
-    if (questionCount === 0 || answerCount < questionCount) {
-      throw new InterviewAIException(
-        ErrorCode.SESSION_INCOMPLETE,
-        HttpStatus.CONFLICT,
-        'Hãy trả lời đầy đủ các câu hỏi trước khi hoàn thành phỏng vấn.',
-      );
-    }
-
-    const updated = await this.prisma.interviewSession.update({
-      where: { id: sessionId },
-      data: { status: 'completing', completedAt: null },
-    });
+    const updated = autoSkipUnanswered
+      ? await this.completeWithAutoSkippedAnswers(sessionId)
+      : await this.completeAnsweredSession(sessionId);
 
     try {
       await this.reportService.enqueueIfAllFeedbacksReady(
@@ -345,6 +332,84 @@ export class SessionService {
     }
 
     return updated;
+  }
+
+  private async completeAnsweredSession(
+    sessionId: string,
+  ): Promise<InterviewSession> {
+    const [questionCount, answerCount] = await Promise.all([
+      this.prisma.sessionQuestion.count({ where: { sessionId } }),
+      this.prisma.userAnswer.count({ where: { sessionId } }),
+    ]);
+
+    if (questionCount === 0 || answerCount < questionCount) {
+      throw new InterviewAIException(
+        ErrorCode.SESSION_INCOMPLETE,
+        HttpStatus.CONFLICT,
+        'Hãy trả lời đầy đủ các câu hỏi trước khi hoàn thành phỏng vấn.',
+      );
+    }
+
+    return this.prisma.interviewSession.update({
+      where: { id: sessionId },
+      data: { status: 'completing', completedAt: null },
+    });
+  }
+
+  private async completeWithAutoSkippedAnswers(
+    sessionId: string,
+  ): Promise<InterviewSession> {
+    return this.prisma.$transaction(async (tx) => {
+      const [questions, answers] = await Promise.all([
+        tx.sessionQuestion.findMany({
+          where: { sessionId },
+          select: { id: true },
+          orderBy: { orderIndex: 'asc' },
+        }),
+        tx.userAnswer.findMany({
+          where: { sessionId },
+          select: { questionId: true },
+        }),
+      ]);
+
+      if (questions.length === 0) {
+        throw new InterviewAIException(
+          ErrorCode.SESSION_INCOMPLETE,
+          HttpStatus.CONFLICT,
+          'Không thể hoàn thành phỏng vấn khi chưa có câu hỏi.',
+        );
+      }
+
+      const answeredQuestionIds = new Set(
+        answers.map((answer) => answer.questionId),
+      );
+      const unansweredQuestions = questions.filter(
+        (question) => !answeredQuestionIds.has(question.id),
+      );
+
+      if (unansweredQuestions.length > 0) {
+        await tx.userAnswer.createMany({
+          data: unansweredQuestions.map((question) => ({
+            sessionId,
+            questionId: question.id,
+            answerMode: 'text',
+            answerText: '',
+            skipped: true,
+            feedbackGenerated: false,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
+      return tx.interviewSession.update({
+        where: { id: sessionId },
+        data: {
+          status: 'completing',
+          completedAt: null,
+          remainingSeconds: 0,
+        },
+      });
+    });
   }
 
   private invalidTransition(

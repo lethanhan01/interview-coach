@@ -88,6 +88,7 @@ export class SessionController {
       req.user.id,
       dto.status,
       dto.remainingSeconds,
+      dto.autoSkipUnanswered,
     );
   }
 
