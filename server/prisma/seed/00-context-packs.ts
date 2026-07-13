@@ -57,23 +57,33 @@ export async function seedContextPacks(prisma: PrismaClient): Promise<void> {
         });
 
         for (const criterionSeed of categorySeed.criteria) {
-          await tx.rubricCriterion.upsert({
+          const existingCriterion = await tx.rubricCriterion.findFirst({
             where: {
-              rubricVersionId_code: {
+              code: criterionSeed.code,
+              rubricCategory: {
                 rubricVersionId: version.id,
-                code: criterionSeed.code,
               },
             },
-            create: {
-              rubricVersionId: version.id,
+            select: { id: true },
+          });
+
+          if (existingCriterion) {
+            await tx.rubricCriterion.update({
+              where: { id: existingCriterion.id },
+              data: {
+                rubricCategoryId: category.id,
+                name: criterionSeed.name,
+                weight: criterionSeed.weight,
+                displayOrder: criterionSeed.displayOrder,
+              },
+            });
+            continue;
+          }
+
+          await tx.rubricCriterion.create({
+            data: {
               rubricCategoryId: category.id,
               code: criterionSeed.code,
-              name: criterionSeed.name,
-              weight: criterionSeed.weight,
-              displayOrder: criterionSeed.displayOrder,
-            },
-            update: {
-              rubricCategoryId: category.id,
               name: criterionSeed.name,
               weight: criterionSeed.weight,
               displayOrder: criterionSeed.displayOrder,

@@ -17,14 +17,14 @@ type QuestionBankRow = {
       name: string;
       weight: number;
       displayOrder: number;
-      rubricVersionId: string;
       rubricCategory: {
         categoryKey: string;
         displayOrder: number;
-      };
-      rubricVersion: {
-        contextPackId: string;
-        status: string;
+        rubricVersion: {
+          id: string;
+          contextPackId: string;
+          status: string;
+        };
       };
     } | null;
   }>;
@@ -217,7 +217,9 @@ const QUESTION_BANK_CRITERIA_INCLUDE = {
   criteria: {
     include: {
       rubricCriterion: {
-        include: { rubricCategory: true, rubricVersion: true },
+        include: {
+          rubricCategory: { include: { rubricVersion: true } },
+        },
       },
     },
   },

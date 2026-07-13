@@ -54,6 +54,8 @@ async function main() {
       DO $$
       DECLARE
         invalid_contexts INTEGER;
+        mismatch_count INTEGER;
+        duplicate_count INTEGER;
       BEGIN
         SELECT count(*) INTO invalid_contexts
         FROM (
@@ -74,9 +76,6 @@ async function main() {
         END IF;
 
         ALTER TABLE rubric_categories
-          ADD COLUMN IF NOT EXISTS rubric_version_id UUID;
-
-        ALTER TABLE rubric_criteria
           ADD COLUMN IF NOT EXISTS rubric_version_id UUID;
 
         ALTER TABLE interview_sessions
@@ -108,18 +107,44 @@ async function main() {
             AND rc.rubric_version_id IS NULL;
         END IF;
 
-        UPDATE rubric_criteria rcr
-        SET rubric_version_id = rc.rubric_version_id
-        FROM rubric_categories rc
-        WHERE rcr.rubric_category_id = rc.id
-          AND rcr.rubric_version_id IS NULL;
-
         UPDATE interview_sessions s
         SET rubric_version_id = rv.id
         FROM rubric_versions rv
         WHERE s.context_pack_id = rv.context_pack_id
           AND rv.status = 'active'
           AND s.rubric_version_id IS NULL;
+
+        IF EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'rubric_criteria'
+            AND column_name = 'rubric_version_id'
+        ) THEN
+          SELECT count(*) INTO mismatch_count
+          FROM rubric_criteria rcr
+          JOIN rubric_categories rc
+            ON rc.id = rcr.rubric_category_id
+          WHERE rcr.rubric_version_id IS DISTINCT FROM rc.rubric_version_id;
+
+          IF mismatch_count > 0 THEN
+            RAISE EXCEPTION 'Cannot drop rubric_criteria.rubric_version_id: % rows do not match rubric_categories.rubric_version_id', mismatch_count;
+          END IF;
+        END IF;
+
+        SELECT count(*) INTO duplicate_count
+        FROM (
+          SELECT rc.rubric_version_id, rcr.code
+          FROM rubric_criteria rcr
+          JOIN rubric_categories rc
+            ON rc.id = rcr.rubric_category_id
+          GROUP BY rc.rubric_version_id, rcr.code
+          HAVING count(*) > 1
+        ) duplicates;
+
+        IF duplicate_count > 0 THEN
+          RAISE EXCEPTION 'Cannot enforce rubric criterion version-code uniqueness: found % duplicate code groups', duplicate_count;
+        END IF;
 
         IF to_regclass('public.session_question_criteria') IS NOT NULL THEN
           ALTER TABLE session_question_criteria
@@ -138,9 +163,11 @@ async function main() {
             JOIN interview_sessions s
               ON s.id = sq.session_id
             JOIN rubric_criteria rcr
-              ON rcr.rubric_version_id = s.rubric_version_id
+              ON rcr.code = sqc.criterion_code
+            JOIN rubric_categories rc
+              ON rc.id = rcr.rubric_category_id
+             AND rc.rubric_version_id = s.rubric_version_id
             WHERE sqc.session_question_id = sq.id
-              AND rcr.code = sqc.criterion_code
               AND sqc.rubric_criterion_id IS NULL;
           END IF;
         END IF;
@@ -150,7 +177,12 @@ async function main() {
         DROP CONSTRAINT IF EXISTS rubric_categories_context_category_key;
 
       ALTER TABLE rubric_criteria
+        DROP CONSTRAINT IF EXISTS rubric_criteria_rubric_version_id_fkey,
+        DROP CONSTRAINT IF EXISTS rubric_criteria_version_code_key,
         DROP CONSTRAINT IF EXISTS rubric_criteria_category_code_key;
+
+      DROP INDEX IF EXISTS idx_rubric_criteria_version;
+      DROP INDEX IF EXISTS rubric_criteria_version_code_key;
 
       ALTER TABLE interview_sessions
         DROP CONSTRAINT IF EXISTS interview_sessions_context_pack_id_fkey;
@@ -161,11 +193,10 @@ async function main() {
       ALTER TABLE rubric_categories
         DROP CONSTRAINT IF EXISTS rubric_categories_rubric_version_id_fkey;
 
-      ALTER TABLE rubric_criteria
-        DROP CONSTRAINT IF EXISTS rubric_criteria_rubric_version_id_fkey;
-
+      DROP TRIGGER IF EXISTS trg_rubric_criteria_version_code ON rubric_criteria;
       DROP TRIGGER IF EXISTS trg_question_bank_criteria_active_version ON question_bank_criteria;
       DROP TRIGGER IF EXISTS trg_session_question_criteria_session_version ON session_question_criteria;
+      DROP FUNCTION IF EXISTS validate_rubric_criterion_version_code();
       DROP FUNCTION IF EXISTS validate_question_bank_criterion_version();
       DROP FUNCTION IF EXISTS validate_session_question_criterion_version();
 

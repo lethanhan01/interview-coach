@@ -18,14 +18,14 @@ export const createMockQuestionBank = (
         name: string;
         weight: number;
         displayOrder: number;
-        rubricVersionId: string;
         rubricCategory: {
           categoryKey: string;
           displayOrder: number;
-        };
-        rubricVersion: {
-          contextPackId: string;
-          status: string;
+          rubricVersion: {
+            id: string;
+            contextPackId: string;
+            status: string;
+          };
         };
       };
     }>;
@@ -53,14 +53,14 @@ export const createMockQuestionBank = (
         name: 'Communication',
         weight: 1,
         displayOrder: 4,
-        rubricVersionId: 'rubric-version-vn',
         rubricCategory: {
           categoryKey: 'behavioral',
           displayOrder: 1,
-        },
-        rubricVersion: {
-          contextPackId: 'VN',
-          status: 'active',
+          rubricVersion: {
+            id: 'rubric-version-vn',
+            contextPackId: 'VN',
+            status: 'active',
+          },
         },
       },
     },

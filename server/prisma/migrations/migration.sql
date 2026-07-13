@@ -389,9 +389,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_rubric_versions_one_active_per_context_pac
 ALTER TABLE rubric_categories
   ADD COLUMN IF NOT EXISTS rubric_version_id UUID;
 
-ALTER TABLE rubric_criteria
-  ADD COLUMN IF NOT EXISTS rubric_version_id UUID;
-
 ALTER TABLE interview_sessions
   ADD COLUMN IF NOT EXISTS rubric_version_id UUID;
 
@@ -423,12 +420,6 @@ BEGIN
       AND rc.rubric_version_id IS NULL;
   END IF;
 
-  UPDATE rubric_criteria rcr
-  SET rubric_version_id = rc.rubric_version_id
-  FROM rubric_categories rc
-  WHERE rcr.rubric_category_id = rc.id
-    AND rcr.rubric_version_id IS NULL;
-
   UPDATE interview_sessions s
   SET rubric_version_id = rv.id
   FROM rubric_versions rv
@@ -443,13 +434,55 @@ ALTER TABLE interview_sessions
 ALTER TABLE question_bank
   DROP CONSTRAINT IF EXISTS question_bank_context_pack_id_fkey;
 
+DO $$
+DECLARE
+  mismatch_count INTEGER;
+  duplicate_count INTEGER;
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'rubric_criteria'
+      AND column_name = 'rubric_version_id'
+  ) THEN
+    SELECT count(*) INTO mismatch_count
+    FROM rubric_criteria rcr
+    JOIN rubric_categories rc
+      ON rc.id = rcr.rubric_category_id
+    WHERE rcr.rubric_version_id IS DISTINCT FROM rc.rubric_version_id;
+
+    IF mismatch_count > 0 THEN
+      RAISE EXCEPTION 'Cannot drop rubric_criteria.rubric_version_id: % rows do not match rubric_categories.rubric_version_id', mismatch_count;
+    END IF;
+  END IF;
+
+  SELECT count(*) INTO duplicate_count
+  FROM (
+    SELECT rc.rubric_version_id, rcr.code
+    FROM rubric_criteria rcr
+    JOIN rubric_categories rc
+      ON rc.id = rcr.rubric_category_id
+    GROUP BY rc.rubric_version_id, rcr.code
+    HAVING count(*) > 1
+  ) duplicates;
+
+  IF duplicate_count > 0 THEN
+    RAISE EXCEPTION 'Cannot enforce rubric criterion version-code uniqueness: found % duplicate code groups', duplicate_count;
+  END IF;
+END $$;
+
 ALTER TABLE rubric_categories
   DROP CONSTRAINT IF EXISTS rubric_categories_rubric_version_id_fkey,
   DROP CONSTRAINT IF EXISTS rubric_categories_context_category_key;
 
 ALTER TABLE rubric_criteria
   DROP CONSTRAINT IF EXISTS rubric_criteria_rubric_version_id_fkey,
+  DROP CONSTRAINT IF EXISTS rubric_criteria_version_code_key,
   DROP CONSTRAINT IF EXISTS rubric_criteria_category_code_key;
+
+DROP INDEX IF EXISTS idx_rubric_criteria_version;
+DROP INDEX IF EXISTS rubric_criteria_version_code_key;
 
 DROP TABLE IF EXISTS context_packs;
 DROP TYPE IF EXISTS "RubricVersionStatus";
@@ -460,17 +493,51 @@ CREATE INDEX IF NOT EXISTS idx_rubric_categories_version
 CREATE INDEX IF NOT EXISTS idx_rubric_criteria_category
   ON rubric_criteria(rubric_category_id);
 
-CREATE INDEX IF NOT EXISTS idx_rubric_criteria_version
-  ON rubric_criteria(rubric_version_id);
-
 CREATE INDEX IF NOT EXISTS idx_interview_sessions_rubric_version
   ON interview_sessions(rubric_version_id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS rubric_categories_version_category_key
   ON rubric_categories(rubric_version_id, category_key);
 
-CREATE UNIQUE INDEX IF NOT EXISTS rubric_criteria_version_code_key
-  ON rubric_criteria(rubric_version_id, code);
+CREATE UNIQUE INDEX IF NOT EXISTS rubric_criteria_category_code_key
+  ON rubric_criteria(rubric_category_id, code);
+
+ALTER TABLE rubric_criteria
+  DROP COLUMN IF EXISTS rubric_version_id;
+
+CREATE OR REPLACE FUNCTION validate_rubric_criterion_version_code()
+RETURNS trigger AS $$
+DECLARE
+  target_version_id UUID;
+BEGIN
+  SELECT rubric_version_id INTO target_version_id
+  FROM rubric_categories
+  WHERE id = NEW.rubric_category_id;
+
+  IF target_version_id IS NULL THEN
+    RAISE EXCEPTION 'rubric_criteria must reference a category with a rubric version';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM rubric_criteria rcr
+    JOIN rubric_categories rc
+      ON rc.id = rcr.rubric_category_id
+    WHERE rc.rubric_version_id = target_version_id
+      AND rcr.code = NEW.code
+      AND rcr.id <> NEW.id
+  ) THEN
+    RAISE EXCEPTION 'rubric_criteria.code must be unique within a rubric version';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_rubric_criteria_version_code ON rubric_criteria;
+CREATE TRIGGER trg_rubric_criteria_version_code
+BEFORE INSERT OR UPDATE OF rubric_category_id, code ON rubric_criteria
+FOR EACH ROW EXECUTE FUNCTION validate_rubric_criterion_version_code();
 
 WITH seeds(context_pack_id, category_key, label, weight, display_order) AS (
   VALUES
@@ -523,24 +590,57 @@ WITH seeds(context_pack_id, category_key, code, name, weight, display_order) AS 
     ('Western', 'technical', 'TD3', 'Systems Thinking', 0.20, 3),
     ('Western', 'technical', 'TD4', 'Code Quality & Best Practices', 0.20, 4),
     ('Western', 'technical', 'TD5', 'Debug & Problem-solving', 0.15, 5)
+),
+seed_rows AS (
+  SELECT
+    rv.id AS rubric_version_id,
+    rc.id AS rubric_category_id,
+    seeds.code,
+    seeds.name,
+    seeds.weight,
+    seeds.display_order
+  FROM seeds
+  JOIN rubric_versions rv
+    ON rv.context_pack_id = seeds.context_pack_id
+   AND rv.version_key = 'v1'
+  JOIN rubric_categories rc
+    ON rc.rubric_version_id = rv.id
+   AND rc.category_key = seeds.category_key
+),
+updated AS (
+  UPDATE rubric_criteria rcr
+  SET rubric_category_id = seed_rows.rubric_category_id,
+      name = seed_rows.name,
+      weight = seed_rows.weight,
+      display_order = seed_rows.display_order
+  FROM seed_rows, rubric_categories current_rc
+  WHERE current_rc.id = rcr.rubric_category_id
+    AND current_rc.rubric_version_id = seed_rows.rubric_version_id
+    AND rcr.code = seed_rows.code
+  RETURNING rcr.id
 )
 INSERT INTO rubric_criteria (
-  rubric_version_id,
   rubric_category_id,
   code,
   name,
   weight,
   display_order
 )
-SELECT rv.id, rc.id, seeds.code, seeds.name, seeds.weight, seeds.display_order
-FROM seeds
-JOIN rubric_versions rv
-  ON rv.context_pack_id = seeds.context_pack_id
- AND rv.version_key = 'v1'
-JOIN rubric_categories rc
-  ON rc.rubric_version_id = rv.id
- AND rc.category_key = seeds.category_key
-ON CONFLICT (rubric_version_id, code) DO NOTHING;
+SELECT
+  seed_rows.rubric_category_id,
+  seed_rows.code,
+  seed_rows.name,
+  seed_rows.weight,
+  seed_rows.display_order
+FROM seed_rows
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM rubric_criteria rcr
+  JOIN rubric_categories existing_rc
+    ON existing_rc.id = rcr.rubric_category_id
+  WHERE existing_rc.rubric_version_id = seed_rows.rubric_version_id
+    AND rcr.code = seed_rows.code
+);
 
 DO $$
 BEGIN
@@ -1046,8 +1146,10 @@ BEGIN
           WHERE NOT EXISTS (
             SELECT 1
             FROM rubric_versions rv
+            JOIN rubric_categories rc
+              ON rc.rubric_version_id = rv.id
             JOIN rubric_criteria rcr
-              ON rcr.rubric_version_id = rv.id
+              ON rcr.rubric_category_id = rc.id
             WHERE rv.context_pack_id = qb.context_pack_id
               AND rv.status = 'active'
               AND rcr.code = domain.code
@@ -1067,8 +1169,10 @@ BEGIN
       JOIN rubric_versions rv
         ON rv.context_pack_id = qb.context_pack_id
        AND rv.status = 'active'
+      JOIN rubric_categories rc
+        ON rc.rubric_version_id = rv.id
       JOIN rubric_criteria rcr
-        ON rcr.rubric_version_id = rv.id
+        ON rcr.rubric_category_id = rc.id
        AND rcr.code = domain.code
       WHERE qb.deleted_at IS NULL
       ON CONFLICT DO NOTHING
@@ -1111,7 +1215,9 @@ BEGIN
         WHERE NOT EXISTS (
           SELECT 1
           FROM rubric_criteria rcr
-          WHERE rcr.rubric_version_id = s.rubric_version_id
+          JOIN rubric_categories rc
+            ON rc.id = rcr.rubric_category_id
+          WHERE rc.rubric_version_id = s.rubric_version_id
             AND rcr.code = domain.code
         )
       )
@@ -1142,8 +1248,10 @@ BEGIN
         rcr.id
       FROM domain_rows
       JOIN rubric_criteria rcr
-        ON rcr.rubric_version_id = domain_rows.rubric_version_id
-       AND rcr.code = domain_rows.code
+        ON rcr.code = domain_rows.code
+      JOIN rubric_categories rc
+        ON rc.id = rcr.rubric_category_id
+       AND rc.rubric_version_id = domain_rows.rubric_version_id
       ON CONFLICT DO NOTHING
     $legacy$;
   END IF;
@@ -1182,15 +1290,6 @@ ALTER TABLE rubric_categories
   DROP CONSTRAINT IF EXISTS rubric_categories_rubric_version_id_fkey;
 ALTER TABLE rubric_categories
   ADD CONSTRAINT rubric_categories_rubric_version_id_fkey
-  FOREIGN KEY (rubric_version_id)
-  REFERENCES rubric_versions(id)
-  ON DELETE CASCADE;
-
-ALTER TABLE rubric_criteria
-  ALTER COLUMN rubric_version_id SET NOT NULL,
-  DROP CONSTRAINT IF EXISTS rubric_criteria_rubric_version_id_fkey;
-ALTER TABLE rubric_criteria
-  ADD CONSTRAINT rubric_criteria_rubric_version_id_fkey
   FOREIGN KEY (rubric_version_id)
   REFERENCES rubric_versions(id)
   ON DELETE CASCADE;
@@ -1235,8 +1334,10 @@ BEGIN
     FROM question_bank qb
     JOIN rubric_criteria rcr
       ON rcr.id = NEW.rubric_criterion_id
+    JOIN rubric_categories rc
+      ON rc.id = rcr.rubric_category_id
     JOIN rubric_versions rv
-      ON rv.id = rcr.rubric_version_id
+      ON rv.id = rc.rubric_version_id
     WHERE qb.id = NEW.question_bank_id
       AND rv.context_pack_id = qb.context_pack_id
       AND rv.status = 'active'
@@ -1263,8 +1364,10 @@ BEGIN
       ON s.id = sq.session_id
     JOIN rubric_criteria rcr
       ON rcr.id = NEW.rubric_criterion_id
+    JOIN rubric_categories rc
+      ON rc.id = rcr.rubric_category_id
     WHERE sq.id = NEW.session_question_id
-      AND rcr.rubric_version_id = s.rubric_version_id
+      AND rc.rubric_version_id = s.rubric_version_id
   ) THEN
     RAISE EXCEPTION 'session_question_criteria must reference a criterion from the session rubric version';
   END IF;

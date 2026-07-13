@@ -320,7 +320,9 @@ const SESSION_QUESTION_CRITERIA_INCLUDE = {
   criteria: {
     include: {
       rubricCriterion: {
-        include: { rubricCategory: true, rubricVersion: true },
+        include: {
+          rubricCategory: { include: { rubricVersion: true } },
+        },
       },
     },
   },

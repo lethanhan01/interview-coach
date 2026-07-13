@@ -299,14 +299,14 @@ function mockQuestionBankWithCriteria(input: {
         name: code,
         weight: 1,
         displayOrder: index + 1,
-        rubricVersionId: `rubric-version-${input.contextPackId}`,
         rubricCategory: {
           categoryKey: code.startsWith('TD') ? 'technical' : 'behavioral',
           displayOrder: code.startsWith('TD') ? 2 : 1,
-        },
-        rubricVersion: {
-          contextPackId: input.contextPackId,
-          status: 'active',
+          rubricVersion: {
+            id: `rubric-version-${input.contextPackId}`,
+            contextPackId: input.contextPackId,
+            status: 'active',
+          },
         },
       },
     })),

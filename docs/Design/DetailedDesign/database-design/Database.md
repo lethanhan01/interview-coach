@@ -50,7 +50,6 @@ Prisma relation fields (không phải DB columns):
 | Từ | Đến | Cardinality | onDelete |
 |----|-----|-------------|----------|
 | RubricVersion | RubricCategory[] | 1:n | Cascade |
-| RubricVersion | RubricCriterion[] | 1:n | Cascade |
 | RubricVersion | InterviewSession[] | 1:n | Restrict |
 | RubricCategory | RubricCriterion[] | 1:n | Cascade |
 | QuestionBank | SessionQuestion[] | 1:n | SET NULL (FK nullable) |
@@ -104,14 +103,13 @@ Prisma model: `RubricCriterion`
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
-| rubric_version_id | UUID FK | — | NO | → rubric_versions.id ON DELETE CASCADE |
 | rubric_category_id | UUID FK | — | NO | → rubric_categories.id ON DELETE CASCADE |
 | code | TEXT | — | NO | Canonical codes `D1..D6`, `TD1..TD5` |
 | name | TEXT | — | NO | Tên tiêu chí |
 | weight | DOUBLE | — | NO | Trọng số trong category |
 | display_order | INT | 0 | NO | CHECK >= 0 |
 
-Unique/indexes: `(rubric_version_id, code)`, `idx_rubric_criteria_version`, `idx_rubric_criteria_category`.
+Unique/indexes: `(rubric_category_id, code)`, `idx_rubric_criteria_category`. DB trigger `trg_rubric_criteria_version_code` chặn trùng `code` trong cùng rubric version thông qua `rubric_categories.rubric_version_id`.
 
 ---
 
@@ -301,7 +299,7 @@ Indexes:
 
 ### session_question_criteria
 Prisma model: `SessionQuestionCriterion`  
-Liên kết tiêu chí theo từng câu hỏi trong session. Lịch sử rubric được giữ bằng `interview_sessions.rubric_version_id`, nên mỗi row phải trỏ tới criterion thuộc cùng immutable version của session.
+Liên kết tiêu chí theo từng câu hỏi trong session. Lịch sử rubric được giữ bằng `interview_sessions.rubric_version_id`, nên mỗi row phải trỏ tới criterion có category thuộc cùng immutable version của session.
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|

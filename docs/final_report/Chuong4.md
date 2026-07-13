@@ -1070,7 +1070,6 @@ erDiagram
 
     rubric_criteria {
         UUID id PK
-        UUID rubric_version_id FK
         UUID rubric_category_id FK
         TEXT code
         TEXT name
@@ -1221,14 +1220,13 @@ Bảng `rubric_categories` lưu hai nhóm tiêu chí chính của một rubric v
 
 **Bảng `rubric_criteria`**
 
-Bảng `rubric_criteria` lưu từng tiêu chí chấm điểm trong một nhóm rubric. Các mã tiêu chí này được liên kết với câu hỏi qua `question_bank_criteria` và `session_question_criteria`, sau đó dùng để chuẩn hóa điểm feedback.
+Bảng `rubric_criteria` lưu từng tiêu chí chấm điểm trong một nhóm rubric. Version của tiêu chí được suy ra qua `rubric_category_id` tới `rubric_categories.rubric_version_id`, tránh lưu song song hai nguồn version trên cùng một tiêu chí. Các mã tiêu chí này được liên kết với câu hỏi qua `question_bank_criteria` và `session_question_criteria`, sau đó dùng để chuẩn hóa điểm feedback.
 
 | Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
 | ----- | ------------ | --------- | -------- | -------- | ------- |
 | `id` | `UUID` | Khóa chính | Có | `gen_random_uuid()` | Mã tiêu chí rubric. |
-| `rubric_version_id` | `UUID` | Khóa ngoại tới `rubric_versions.id`, ON DELETE CASCADE; UNIQUE cùng `code` | Có | - | Version chứa tiêu chí. |
 | `rubric_category_id` | `UUID` | Khóa ngoại tới `rubric_categories.id`, ON DELETE CASCADE | Có | - | Nhóm rubric chứa tiêu chí. |
-| `code` | `TEXT` | UNIQUE cùng `rubric_version_id` | Có | - | Mã tiêu chí, ví dụ `D1` hoặc `TD1`. |
+| `code` | `TEXT` | UNIQUE cùng `rubric_category_id`; trigger chặn trùng trong cùng version | Có | - | Mã tiêu chí, ví dụ `D1` hoặc `TD1`. |
 | `name` | `TEXT` | - | Có | - | Tên tiêu chí. |
 | `weight` | `DOUBLE PRECISION` | CHECK `>= 0` | Có | - | Trọng số tiêu chí. |
 | `display_order` | `INT` | CHECK `>= 0` | Có | `0` | Thứ tự hiển thị. |
@@ -1358,7 +1356,7 @@ Bảng `session_questions` lưu danh sách câu hỏi thực tế của từng p
 
 **Bảng `session_question_criteria`**
 
-Bảng `session_question_criteria` lưu liên kết tiêu chí cho từng câu hỏi trong phiên. Lịch sử chấm điểm ổn định vì mỗi tiêu chí trỏ tới `rubric_criteria` thuộc `rubric_version_id` đã khóa trên phiên.
+Bảng `session_question_criteria` lưu liên kết tiêu chí cho từng câu hỏi trong phiên. Lịch sử chấm điểm ổn định vì mỗi tiêu chí trỏ tới `rubric_criteria` có category thuộc `rubric_version_id` đã khóa trên phiên.
 
 | Field | Kiểu dữ liệu | Ràng buộc | Bắt buộc | Mặc định | Ý nghĩa |
 | ----- | ------------ | --------- | -------- | -------- | ------- |
@@ -1445,7 +1443,7 @@ Quan hệ giữa `users` và `interview_sessions` là quan hệ 1-n. Mỗi phiê
 
 Quan hệ giữa `saved_job_descriptions` và `interview_sessions` là quan hệ 1-n nhưng khóa ngoại trong `interview_sessions` có thể để trống. Ràng buộc ON DELETE SET NULL giúp phiên cũ vẫn tồn tại nếu JD đã lưu bị xóa. Ngoài khóa ngoại thông thường, trigger `trg_interview_sessions_saved_jd_owner` kiểm tra `saved_job_description_id` phải trỏ tới JD thuộc cùng `user_id` với phiên, tránh trường hợp một phiên tham chiếu nhầm JD của người dùng khác.
 
-`context_pack_id` trong `question_bank`, `interview_sessions` và `rubric_versions` là giá trị cấu hình nghiệp vụ với hai giá trị hợp lệ `VN` và `Western`. Rubric hiện hành được xác định bằng active `rubric_versions` của context pack; mỗi version gom các category hành vi hoặc kỹ thuật trong `rubric_categories` và các tiêu chí trong `rubric_criteria`.
+`context_pack_id` trong `question_bank`, `interview_sessions` và `rubric_versions` là giá trị cấu hình nghiệp vụ với hai giá trị hợp lệ `VN` và `Western`. Rubric hiện hành được xác định bằng active `rubric_versions` của context pack; mỗi version gom các category hành vi hoặc kỹ thuật trong `rubric_categories`, còn các tiêu chí trong `rubric_criteria` thuộc version đó thông qua category.
 
 Quan hệ giữa `interview_sessions` và `session_questions` là quan hệ 1-n. Ràng buộc UNIQUE `(session_id, order_index)` đảm bảo trong một phiên không có hai câu hỏi cùng thứ tự. Bảng `session_questions` lưu snapshot `question_text`; còn lịch sử rubric được giữ bằng `interview_sessions.rubric_version_id` và các liên kết trong `session_question_criteria`.
 

@@ -1857,8 +1857,10 @@ async function syncQuestionBankCriteria(prisma: PrismaClient): Promise<void> {
     JOIN rubric_versions rv
       ON rv.context_pack_id = qb.context_pack_id
      AND rv.status = 'active'
+    JOIN rubric_categories rc
+      ON rc.rubric_version_id = rv.id
     JOIN rubric_criteria rcr
-      ON rcr.rubric_version_id = rv.id
+      ON rcr.rubric_category_id = rc.id
      AND rcr.code = domain.code
     WHERE qb.deleted_at IS NULL
       AND qb.content_json->>'source' = 'seed'

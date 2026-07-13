@@ -4,20 +4,20 @@ import { PrismaService } from '../prisma/prisma.service';
 type RubricCategoryRow = {
   categoryKey: string;
   displayOrder: number;
+  rubricVersion: {
+    id: string;
+    contextPackId: string;
+    status: string;
+  };
 };
 
 type RubricCriterionRow = {
   id: string;
-  rubricVersionId: string;
   code: string;
   name: string;
   weight: number;
   displayOrder: number;
   rubricCategory: RubricCategoryRow;
-  rubricVersion: {
-    contextPackId: string;
-    status: string;
-  };
 };
 
 type CriterionLink = {
@@ -58,9 +58,11 @@ export class QuestionCriteriaService {
         (criterion): criterion is RubricCriterionRow =>
           criterion !== null &&
           criterion !== undefined &&
-          criterion.rubricVersion.contextPackId === question.contextPackId &&
-          criterion.rubricVersion.status === 'active' &&
-          (!rubricVersionId || criterion.rubricVersionId === rubricVersionId),
+          criterion.rubricCategory.rubricVersion.contextPackId ===
+            question.contextPackId &&
+          criterion.rubricCategory.rubricVersion.status === 'active' &&
+          (!rubricVersionId ||
+            criterion.rubricCategory.rubricVersion.id === rubricVersionId),
       )
       .sort(compareCriterionRows)
       .map((criterion) => criterion.code);
@@ -135,10 +137,10 @@ export class QuestionCriteriaService {
   ): Promise<RubricCriterionRow[]> {
     return this.prisma.rubricCriterion.findMany({
       where: {
-        rubricVersionId,
+        rubricCategory: { rubricVersionId },
         code: { in: codes },
       },
-      include: { rubricCategory: true, rubricVersion: true },
+      include: { rubricCategory: { include: { rubricVersion: true } } },
     });
   }
 }

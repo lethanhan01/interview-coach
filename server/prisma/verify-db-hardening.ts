@@ -103,7 +103,6 @@ const expectedConstraints = [
   ['rubric_categories', 'chk_rubric_categories_category_key'],
   ['rubric_categories', 'chk_rubric_categories_weight'],
   ['rubric_categories', 'chk_rubric_categories_display_order'],
-  ['rubric_criteria', 'rubric_criteria_rubric_version_id_fkey'],
   ['rubric_criteria', 'chk_rubric_criteria_weight'],
   ['rubric_criteria', 'chk_rubric_criteria_display_order'],
   ['interview_sessions', 'interview_sessions_rubric_version_id_fkey'],
@@ -141,14 +140,28 @@ const expectedIndexes = [
   ['rubric_categories', 'idx_rubric_categories_version'],
   ['rubric_categories', 'rubric_categories_version_category_key'],
   ['rubric_criteria', 'idx_rubric_criteria_category'],
-  ['rubric_criteria', 'idx_rubric_criteria_version'],
-  ['rubric_criteria', 'rubric_criteria_version_code_key'],
+  ['rubric_criteria', 'rubric_criteria_category_code_key'],
   ['interview_sessions', 'idx_interview_sessions_rubric_version'],
   ['question_bank_criteria', 'idx_question_bank_criteria_rubric_criterion'],
   [
     'session_question_criteria',
     'idx_session_question_criteria_rubric_criterion',
   ],
+];
+
+const expectedTriggers = [
+  ['rubric_criteria', 'trg_rubric_criteria_version_code'],
+  ['question_bank_criteria', 'trg_question_bank_criteria_active_version'],
+  [
+    'session_question_criteria',
+    'trg_session_question_criteria_session_version',
+  ],
+];
+
+const expectedFunctions = [
+  'validate_rubric_criterion_version_code',
+  'validate_question_bank_criterion_version',
+  'validate_session_question_criterion_version',
 ];
 
 const retiredTables = [
@@ -189,6 +202,7 @@ const retiredColumns = [
   ['interview_sessions', 'show_prep_card'],
   ['interview_sessions', 'opening_transcript'],
   ['rubric_categories', 'context_pack_id'],
+  ['rubric_criteria', 'rubric_version_id'],
   ['rubric_criteria', 'active'],
   ['session_question_criteria', 'context_pack_id_snapshot'],
   ['session_question_criteria', 'criterion_code'],
@@ -348,9 +362,23 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
            AND rv.context_pack_id IN ('VN', 'Western')
            AND NOT EXISTS (
               SELECT 1
-              FROM rubric_criteria rcr
-              WHERE rcr.rubric_version_id = rv.id
+              FROM rubric_categories rc
+              JOIN rubric_criteria rcr
+                ON rcr.rubric_category_id = rc.id
+              WHERE rc.rubric_version_id = rv.id
            )`,
+      ],
+      [
+        'anomaly:rubric_duplicate_criterion_code_in_version',
+        `SELECT count(*)::int AS count
+         FROM (
+           SELECT rc.rubric_version_id, rcr.code
+           FROM rubric_criteria rcr
+           JOIN rubric_categories rc
+             ON rc.id = rcr.rubric_category_id
+           GROUP BY rc.rubric_version_id, rcr.code
+           HAVING count(*) > 1
+         ) duplicates`,
       ],
     );
   }
@@ -376,8 +404,10 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
            ON qb.id = qbc.question_bank_id
          JOIN rubric_criteria rcr
            ON rcr.id = qbc.rubric_criterion_id
+         JOIN rubric_categories rc
+           ON rc.id = rcr.rubric_category_id
          JOIN rubric_versions rv
-           ON rv.id = rcr.rubric_version_id
+           ON rv.id = rc.rubric_version_id
          WHERE qb.deleted_at IS NULL
            AND (
              rv.context_pack_id <> qb.context_pack_id
@@ -404,7 +434,9 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
            ON s.id = sq.session_id
          JOIN rubric_criteria rcr
            ON rcr.id = sqc.rubric_criterion_id
-         WHERE rcr.rubric_version_id <> s.rubric_version_id`,
+         JOIN rubric_categories rc
+           ON rc.id = rcr.rubric_category_id
+         WHERE rc.rubric_version_id <> s.rubric_version_id`,
       ],
     );
   }
@@ -510,6 +542,38 @@ async function runCatalogChecks(): Promise<CheckResult[]> {
     );
     results.push({
       name: `index:${table}:${index}`,
+      ok: exists,
+      detail: exists ? 'present' : 'missing',
+    });
+  }
+
+  for (const [table, trigger] of expectedTriggers) {
+    const exists = await existsBySql(
+      `SELECT 1
+       FROM pg_trigger
+       WHERE tgname = $2
+         AND tgrelid = ('public.' || $1)::regclass
+         AND NOT tgisinternal`,
+      [table, trigger],
+    );
+    results.push({
+      name: `trigger:${table}:${trigger}`,
+      ok: exists,
+      detail: exists ? 'present' : 'missing',
+    });
+  }
+
+  for (const fn of expectedFunctions) {
+    const exists = await existsBySql(
+      `SELECT 1
+       FROM pg_proc p
+       JOIN pg_namespace n ON n.oid = p.pronamespace
+       WHERE n.nspname = 'public'
+         AND p.proname = $1`,
+      [fn],
+    );
+    results.push({
+      name: `function:${fn}`,
       ok: exists,
       detail: exists ? 'present' : 'missing',
     });

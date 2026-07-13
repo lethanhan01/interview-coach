@@ -16,7 +16,6 @@ model RubricVersion {
   publishedAt   DateTime           @default(now()) @map("published_at") @db.Timestamptz(6)
   createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   categories    RubricCategory[]
-  criteria      RubricCriterion[]
   sessions      InterviewSession[]
 
   @@unique([contextPackId, versionKey], map: "rubric_versions_context_version_key")
@@ -41,19 +40,16 @@ model RubricCategory {
 
 model RubricCriterion {
   id                   String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  rubricVersionId      String                     @map("rubric_version_id") @db.Uuid
   rubricCategoryId     String                     @map("rubric_category_id") @db.Uuid
   code                 String
   name                 String
   weight               Float
   displayOrder         Int                        @default(0) @map("display_order")
-  rubricVersion        RubricVersion              @relation(fields: [rubricVersionId], references: [id], onDelete: Cascade, map: "rubric_criteria_rubric_version_id_fkey")
   rubricCategory       RubricCategory             @relation(fields: [rubricCategoryId], references: [id], onDelete: Cascade)
   questionBankLinks    QuestionBankCriterion[]
   sessionQuestionLinks SessionQuestionCriterion[]
 
-  @@unique([rubricVersionId, code], map: "rubric_criteria_version_code_key")
-  @@index([rubricVersionId], map: "idx_rubric_criteria_version")
+  @@unique([rubricCategoryId, code], map: "rubric_criteria_category_code_key")
   @@index([rubricCategoryId], map: "idx_rubric_criteria_category")
   @@map("rubric_criteria")
 }

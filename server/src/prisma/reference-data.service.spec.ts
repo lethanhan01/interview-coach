@@ -12,7 +12,9 @@ describe('ReferenceDataService', () => {
             upsert: jest.fn().mockResolvedValue({ id: 'rubric-category-1' }),
           },
           rubricCriterion: {
-            upsert: jest.fn().mockResolvedValue({ id: 'rubric-criterion-1' }),
+            findFirst: jest.fn().mockResolvedValue(null),
+            update: jest.fn().mockResolvedValue({ id: 'rubric-criterion-1' }),
+            create: jest.fn().mockResolvedValue({ id: 'rubric-criterion-1' }),
           },
         }),
       ),
