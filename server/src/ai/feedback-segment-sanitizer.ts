@@ -1,7 +1,7 @@
 export interface FeedbackSegmentLike {
   segmentText: string;
-  startIndex: number;
-  endIndex: number;
+  startIndex?: number;
+  endIndex?: number;
   highlightLevel: string;
   annotation: string;
   suggestion?: string | null;
@@ -18,8 +18,13 @@ export interface SegmentSanitizerIssue {
     | 'ambiguous_quote';
 }
 
+export type SanitizedFeedbackSegment<T extends FeedbackSegmentLike> = T & {
+  startIndex: number;
+  endIndex: number;
+};
+
 export interface SegmentSanitizerResult<T extends FeedbackSegmentLike> {
-  segments: T[];
+  segments: SanitizedFeedbackSegment<T>[];
   issues: SegmentSanitizerIssue[];
 }
 
@@ -36,14 +41,16 @@ function findAllOccurrences(text: string, search: string): number[] {
 }
 
 function hasExactRange(answerText: string, segment: FeedbackSegmentLike) {
+  const { startIndex, endIndex } = segment;
   return (
-    Number.isInteger(segment.startIndex) &&
-    Number.isInteger(segment.endIndex) &&
-    segment.startIndex >= 0 &&
-    segment.endIndex > segment.startIndex &&
-    segment.endIndex <= answerText.length &&
-    answerText.slice(segment.startIndex, segment.endIndex) ===
-      segment.segmentText
+    Number.isInteger(startIndex) &&
+    Number.isInteger(endIndex) &&
+    startIndex !== undefined &&
+    endIndex !== undefined &&
+    startIndex >= 0 &&
+    endIndex > startIndex &&
+    endIndex <= answerText.length &&
+    answerText.slice(startIndex, endIndex) === segment.segmentText
   );
 }
 
@@ -52,7 +59,7 @@ export function sanitizeFeedbackSegments<T extends FeedbackSegmentLike>(
   segments: T[],
 ): SegmentSanitizerResult<T> {
   const cleanAnswerText = answerText ?? '';
-  const sanitized: T[] = [];
+  const sanitized: SanitizedFeedbackSegment<T>[] = [];
   const issues: SegmentSanitizerIssue[] = [];
 
   segments.forEach((segment, index) => {
@@ -64,18 +71,20 @@ export function sanitizeFeedbackSegments<T extends FeedbackSegmentLike>(
 
     const normalizedSegment = { ...segment, segmentText: quote };
     if (hasExactRange(cleanAnswerText, normalizedSegment)) {
-      sanitized.push(normalizedSegment);
+      sanitized.push(normalizedSegment as SanitizedFeedbackSegment<T>);
       return;
     }
 
+    const { startIndex, endIndex } = segment;
     const hasIntegerRange =
-      Number.isInteger(segment.startIndex) &&
-      Number.isInteger(segment.endIndex);
+      Number.isInteger(startIndex) && Number.isInteger(endIndex);
     const hasBoundedRange =
       hasIntegerRange &&
-      segment.startIndex >= 0 &&
-      segment.endIndex > segment.startIndex &&
-      segment.endIndex <= cleanAnswerText.length;
+      startIndex !== undefined &&
+      endIndex !== undefined &&
+      startIndex >= 0 &&
+      endIndex > startIndex &&
+      endIndex <= cleanAnswerText.length;
     const matches = findAllOccurrences(cleanAnswerText, quote);
 
     if (matches.length === 1) {
@@ -84,7 +93,7 @@ export function sanitizeFeedbackSegments<T extends FeedbackSegmentLike>(
         ...normalizedSegment,
         startIndex,
         endIndex: startIndex + quote.length,
-      });
+      } as SanitizedFeedbackSegment<T>);
       issues.push({
         index,
         reason: hasBoundedRange ? 'range_text_mismatch' : 'invalid_range',

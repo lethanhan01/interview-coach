@@ -25,10 +25,13 @@ describe('validateEnv', () => {
     expect(result.OPENAI_API_KEY).toBe('lm-studio');
     expect(result.OPENAI_BASE_URL).toBe('http://127.0.0.1:1234/v1');
     expect(result.OPENAI_CHAT_MODEL).toBe('google/gemma-4-e4b');
+    expect(result.OPENAI_FEEDBACK_MODEL).toBeUndefined();
+    expect(result.OPENAI_REPORT_MODEL).toBeUndefined();
     expect(result.OPENAI_JSON_MODE).toBe('false');
     expect(result.OPENAI_TIMEOUT_MS).toBe(30000);
-    expect(result.OPENAI_FEEDBACK_TIMEOUT_MS).toBe(180000);
-    expect(result.OPENAI_REPORT_TIMEOUT_MS).toBe(180000);
+    expect(result.OPENAI_FEEDBACK_TIMEOUT_MS).toBe(420000);
+    expect(result.OPENAI_REPORT_TIMEOUT_MS).toBe(600000);
+    expect(result.OPENAI_QUESTION_TIMEOUT_MS).toBe(240000);
     expect(result.OPENAI_QUESTION_MAX_TOKENS).toBe(2400);
     expect(result.FEEDBACK_WORKER_CONCURRENCY).toBe(2);
     expect(result.PRISMA_POOL_MAX).toBe(5);
@@ -67,6 +70,8 @@ describe('validateEnv', () => {
       OPENAI_API_KEY: 'local-key',
       OPENAI_BASE_URL: 'http://127.0.0.1:1234/v1',
       OPENAI_CHAT_MODEL: 'google/gemma-4-e4b',
+      OPENAI_FEEDBACK_MODEL: 'qwen-feedback',
+      OPENAI_REPORT_MODEL: 'qwen-report',
       OPENAI_JSON_MODE: 'true',
       OPENAI_TIMEOUT_MS: '45000',
       OPENAI_FEEDBACK_TIMEOUT_MS: '80000',
@@ -78,6 +83,8 @@ describe('validateEnv', () => {
     expect(result.OPENAI_API_KEY).toBe('local-key');
     expect(result.OPENAI_BASE_URL).toBe('http://127.0.0.1:1234/v1');
     expect(result.OPENAI_CHAT_MODEL).toBe('google/gemma-4-e4b');
+    expect(result.OPENAI_FEEDBACK_MODEL).toBe('qwen-feedback');
+    expect(result.OPENAI_REPORT_MODEL).toBe('qwen-report');
     expect(result.OPENAI_JSON_MODE).toBe('true');
     expect(result.OPENAI_TIMEOUT_MS).toBe(45000);
     expect(result.OPENAI_FEEDBACK_TIMEOUT_MS).toBe(80000);

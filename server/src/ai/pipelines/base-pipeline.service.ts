@@ -19,7 +19,7 @@ import {
   FeedbackSchema,
   PROMPT_VERSION,
 } from './pipeline.schemas';
-import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.4';
+import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.5';
 import { getLanguageInstruction } from '../output-language';
 import { QUESTION_GEN_PROMPT_CONFIG } from '../prompts/question-gen-v1.0';
 import { z } from 'zod';
@@ -39,6 +39,21 @@ interface FeedbackParseResult {
 interface BuiltFeedback {
   feedback: SurgicalFeedback;
   segmentIssues: SegmentSanitizerIssue[];
+}
+
+function readAlias(
+  record: Record<string, unknown>,
+  ...keys: string[]
+): unknown {
+  for (const key of keys) {
+    if (record[key] !== undefined) return record[key];
+  }
+  return undefined;
+}
+
+function clampScore(value: unknown): number | unknown {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return value;
+  return Math.min(100, Math.max(0, Math.round(value)));
 }
 
 export abstract class BasePipelineService implements InterviewPipeline {
@@ -160,44 +175,13 @@ export abstract class BasePipelineService implements InterviewPipeline {
       input.answerText,
       firstAttempt.rawLength,
     );
-    if (firstBuilt.segmentIssues.length === 0) {
-      return firstBuilt.feedback;
-    }
-
-    this.logger.warn(
-      `[feedback] Removed invalid annotated segments before retry. ` +
-        `invalidSegments=${firstBuilt.segmentIssues.length} reasons=${this.formatSegmentIssueReasons(firstBuilt.segmentIssues)}`,
-    );
-
-    try {
-      const retryAttempt = await this.requestAndValidateFeedback([
-        ...messages,
-        {
-          role: 'system',
-          content:
-            'Correction: annotated_segments quotes must be copied only from the candidate answer inside <answer>. Do not quote model_answer, the question, job description, or outside knowledge. If no exact candidate-answer quote supports feedback, return annotated_segments as an empty array.',
-        },
-      ]);
-      const retryBuilt = this.buildSurgicalFeedback(
-        retryAttempt.validated,
-        allowedDims,
-        input.answerText,
-        retryAttempt.rawLength,
-      );
-      if (retryBuilt.segmentIssues.length > 0) {
-        this.logger.warn(
-          `[feedback] Retry still returned invalid annotated segments; sanitized result will be persisted. ` +
-            `invalidSegments=${retryBuilt.segmentIssues.length} reasons=${this.formatSegmentIssueReasons(retryBuilt.segmentIssues)}`,
-        );
-      }
-      return retryBuilt.feedback;
-    } catch (err) {
+    if (firstBuilt.segmentIssues.length > 0) {
       this.logger.warn(
-        '[feedback] Segment correction retry failed; using sanitized first feedback result',
-        err instanceof Error ? err.message : String(err),
+        `[feedback] Removed invalid annotated segments; sanitized result will be persisted. ` +
+          `invalidSegments=${firstBuilt.segmentIssues.length} reasons=${this.formatSegmentIssueReasons(firstBuilt.segmentIssues)}`,
       );
-      return firstBuilt.feedback;
     }
+    return firstBuilt.feedback;
   }
 
   private async requestAndValidateFeedback(
@@ -213,7 +197,7 @@ export abstract class BasePipelineService implements InterviewPipeline {
     this.logger.debug(`[feedback] raw response length: ${raw.length}`);
     let parsed: unknown;
     try {
-      parsed = JSON.parse(raw);
+      parsed = this.normalizeFeedbackPayload(JSON.parse(raw) as unknown);
     } catch (err) {
       this.logger.warn(
         `[feedback] JSON parse failed. rawLength=${raw.length}`,
@@ -237,6 +221,67 @@ export abstract class BasePipelineService implements InterviewPipeline {
       );
       throw err;
     }
+  }
+
+  private normalizeFeedbackPayload(payload: unknown): unknown {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return payload;
+    }
+
+    const record = payload as Record<string, unknown>;
+    const appliedRaw = readAlias(
+      record,
+      'applied_dimensions',
+      'appliedDimensions',
+    );
+    const segmentsRaw = readAlias(
+      record,
+      'annotated_segments',
+      'annotatedSegments',
+    );
+
+    return {
+      ...record,
+      applied_dimensions: Array.isArray(appliedRaw)
+        ? appliedRaw.map((item) => {
+            if (!item || typeof item !== 'object' || Array.isArray(item)) {
+              return item;
+            }
+            const dimension = item as Record<string, unknown>;
+            return {
+              ...dimension,
+              id: dimension.id,
+              score: clampScore(dimension.score),
+            };
+          })
+        : appliedRaw,
+      model_answer: readAlias(record, 'model_answer', 'modelAnswer'),
+      key_takeaway: readAlias(record, 'key_takeaway', 'keyTakeaway'),
+      annotated_segments: Array.isArray(segmentsRaw)
+        ? segmentsRaw.map((item) => {
+            if (!item || typeof item !== 'object' || Array.isArray(item)) {
+              return item;
+            }
+            const segment = item as Record<string, unknown>;
+            return {
+              ...segment,
+              segment_text: readAlias(segment, 'segment_text', 'segmentText'),
+              start_index: readAlias(segment, 'start_index', 'startIndex'),
+              end_index: readAlias(segment, 'end_index', 'endIndex'),
+              highlight_level: readAlias(
+                segment,
+                'highlight_level',
+                'highlightLevel',
+              ),
+              improved_version: readAlias(
+                segment,
+                'improved_version',
+                'improvedVersion',
+              ),
+            };
+          })
+        : [],
+    };
   }
 
   private buildSurgicalFeedback(

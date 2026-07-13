@@ -219,13 +219,21 @@ describe('ComprehensiveReportProcessor', () => {
 
     expect(mockOpenAI.chatCompletion).toHaveBeenCalledWith(
       expect.objectContaining({
+        task: 'report',
         messages: expect.arrayContaining([
           expect.objectContaining({
             role: 'system',
             content: expect.stringContaining('Output language: Vietnamese.'),
           }),
+          expect.objectContaining({
+            role: 'user',
+            content: expect.stringContaining('Feedback summaries JSON:'),
+          }),
         ]),
       }),
+    );
+    expect(mockOpenAI.chatCompletion.mock.calls[0][0].messages[1].content).toContain(
+      '"answerId":"answer-1"',
     );
   });
 
@@ -344,8 +352,12 @@ describe('ComprehensiveReportProcessor', () => {
         JSON.stringify({
           answers: [
             {
-              answerId: 'answer-2',
-              modelAnswer: 'Bạn nên nêu các điểm mạnh phù hợp vị trí.',
+              answer_id: 'answer-2',
+              model_answer: 'Bạn nên nêu các điểm mạnh phù hợp vị trí.',
+            },
+            {
+              id: 'unknown-answer',
+              answer: 'Không được nhận vì sai answerId.',
             },
           ],
         }),
@@ -386,6 +398,45 @@ describe('ComprehensiveReportProcessor', () => {
         },
       ],
     );
+    expect(mockOpenAI.chatCompletion.mock.calls[0][0].task).toBe('report');
+    expect(mockOpenAI.chatCompletion.mock.calls[1][0].task).toBe('report');
+  });
+
+  it('normalize action plan từ alias và bổ sung fallback khi item malformed/thiếu', async () => {
+    prisma.aiFeedback.findMany.mockResolvedValue([
+      {
+        userAnswerId: 'answer-1',
+        overallScore: 80,
+        keyTakeaway: 'Good',
+        isFallback: false,
+      },
+      {
+        userAnswerId: 'answer-2',
+        overallScore: 60,
+        keyTakeaway: 'Improve structure',
+        isFallback: false,
+      },
+    ]);
+    prisma.sessionReport.upsert.mockResolvedValue({});
+    prisma.aiFeedback.upsert.mockResolvedValue({});
+    prisma.interviewSession.update.mockResolvedValue({});
+    mockOpenAI.chatCompletion.mockResolvedValue(
+      JSON.stringify({
+        actionPlan: ['Luyện ví dụ STAR rõ hơn.', 123, ''],
+      }),
+    );
+
+    await processor.process(job);
+
+    const actionPlanCall = prisma.sessionReport.upsert.mock.calls.find(
+      (call) => (call[0] as any).create.reportType === 'action_plan',
+    );
+    expect((actionPlanCall?.[0] as any).create.contentJson.items).toEqual([
+      'Luyện ví dụ STAR rõ hơn.',
+      'Viết lại từng câu trả lời theo cấu trúc STAR.',
+      'Bổ sung một ví dụ cụ thể và một kết quả đo lường được cho mỗi câu trả lời.',
+      'Luyện nói lại các câu trả lời yếu nhất trước buổi phỏng vấn tiếp theo.',
+    ]);
   });
 
   it('skipped-only: không yêu cầu feedback AI, score=0 và vẫn lưu suggested answers', async () => {

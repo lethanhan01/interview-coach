@@ -157,7 +157,7 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
 
     expect(mockOpenAI.chatCompletion).toHaveBeenCalledTimes(1);
     const callArgs = mockOpenAI.chatCompletion.mock.calls[0][0];
-    expect(callArgs.temperature).toBe(0.3);
+    expect(callArgs.temperature).toBe(0.2);
     expect(callArgs.maxTokens).toBe(3000);
     expect(callArgs.task).toBe('feedback');
     expect(callArgs.responseFormat).toBe('json_object');

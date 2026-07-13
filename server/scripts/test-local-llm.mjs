@@ -12,7 +12,7 @@ const BASE_URL =
 const MODEL =
   process.argv[3] ?? process.env.OPENAI_CHAT_MODEL ?? 'google/gemma-4-e4b';
 const TIMEOUT_MS = parseInt(
-  process.env.OPENAI_FEEDBACK_TIMEOUT_MS ?? '180000',
+  process.env.OPENAI_FEEDBACK_TIMEOUT_MS ?? '420000',
   10,
 );
 

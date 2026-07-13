@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const PROMPT_VERSION = 'surgical-feedback-v1.4';
+export const PROMPT_VERSION = 'surgical-feedback-v1.5';
 
 export const QuestionsSchema = z.object({
   questions: z.array(
@@ -38,10 +38,10 @@ export const FeedbackSchema = z.object({
   model_answer: z.string(),
   key_takeaway: z.string(),
   annotated_segments: z.array(
-    z.object({
-      segment_text: z.string(),
-      start_index: z.number().int(),
-      end_index: z.number().int(),
+      z.object({
+        segment_text: z.string(),
+        start_index: z.number().int().optional(),
+        end_index: z.number().int().optional(),
       highlight_level: z.enum(['strength', 'improvement']),
       annotation: z.string(),
       suggestion: OptionalFeedbackTextSchema,

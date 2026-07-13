@@ -39,18 +39,19 @@ interface ReportFeedbackInput {
   dimensionScores: unknown;
 }
 
-const actionPlanSchema = z.object({
-  items: z.array(z.string()),
-});
+const actionPlanCandidatesSchema = z
+  .object({
+    items: z.unknown().optional(),
+    actionPlan: z.unknown().optional(),
+    actions: z.unknown().optional(),
+  })
+  .passthrough();
 
-const skippedAnswerSchema = z.object({
-  answers: z.array(
-    z.object({
-      answerId: z.string(),
-      modelAnswer: z.string(),
-    }),
-  ),
-});
+const skippedAnswerCandidatesSchema = z
+  .object({
+    answers: z.array(z.unknown()).optional(),
+  })
+  .passthrough();
 
 function fallbackSkippedModelAnswer(
   questionText: string,
@@ -67,6 +68,100 @@ function skippedKeyTakeaway(language: 'vi' | 'en'): string {
   return language === 'vi'
     ? 'Câu hỏi bị bỏ qua nên hệ thống tự chấm 0 điểm cho các tiêu chí áp dụng.'
     : 'This question was skipped, so the system assigned 0 points for each applied criterion.';
+}
+
+function normalizeActionPlan(
+  raw: unknown,
+  fallback: { items: string[] },
+): { items: string[] } {
+  const rawCandidate = Array.isArray(raw)
+    ? raw
+    : raw && typeof raw === 'object' && !Array.isArray(raw)
+      ? raw
+      : null;
+  if (!rawCandidate) return fallback;
+
+  let candidateItems: unknown[] = [];
+  if (Array.isArray(rawCandidate)) {
+    candidateItems = rawCandidate;
+  } else {
+    const parsed = actionPlanCandidatesSchema.safeParse(rawCandidate);
+    if (!parsed.success) return fallback;
+    const actionPlan = parsed.data.actionPlan;
+    if (Array.isArray(parsed.data.items)) {
+      candidateItems = parsed.data.items;
+    } else if (Array.isArray(actionPlan)) {
+      candidateItems = actionPlan;
+    } else if (
+      actionPlan &&
+      typeof actionPlan === 'object' &&
+      !Array.isArray(actionPlan)
+    ) {
+      const nested = actionPlan as Record<string, unknown>;
+      candidateItems = Array.isArray(nested.items)
+        ? nested.items
+        : Array.isArray(nested.actions)
+          ? nested.actions
+          : [];
+    } else if (Array.isArray(parsed.data.actions)) {
+      candidateItems = parsed.data.actions;
+    }
+  }
+  const items = candidateItems
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const merged: string[] = [];
+  for (const item of [...items, ...fallback.items]) {
+    if (!merged.includes(item)) merged.push(item);
+    if (merged.length === 5) break;
+  }
+
+  return merged.length >= 3 ? { items: merged } : fallback;
+}
+
+function readStringAlias(
+  record: Record<string, unknown>,
+  ...keys: string[]
+): string | undefined {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return undefined;
+}
+
+function normalizeSkippedAnswers(
+  raw: unknown,
+  fallback: { answers: { answerId: string; modelAnswer: string }[] },
+): { answers: { answerId: string; modelAnswer: string }[] } {
+  const parsed = skippedAnswerCandidatesSchema.safeParse(raw);
+  if (!parsed.success || !Array.isArray(parsed.data.answers)) return fallback;
+
+  const allowedIds = new Set(fallback.answers.map((answer) => answer.answerId));
+  const byId = new Map<string, string>();
+  for (const item of parsed.data.answers) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+    const record = item as Record<string, unknown>;
+    const answerId = readStringAlias(record, 'answerId', 'answer_id', 'id');
+    const modelAnswer = readStringAlias(
+      record,
+      'modelAnswer',
+      'model_answer',
+      'answer',
+    );
+    if (answerId && modelAnswer && allowedIds.has(answerId)) {
+      byId.set(answerId, modelAnswer);
+    }
+  }
+
+  return {
+    answers: fallback.answers.map((answer) => ({
+      answerId: answer.answerId,
+      modelAnswer: byId.get(answer.answerId) ?? answer.modelAnswer,
+    })),
+  };
 }
 
 function toDimensionScores(value: unknown): { id: string; score: number }[] {
@@ -273,6 +368,7 @@ export class ComprehensiveReportProcessor extends WorkerHost {
           temperature: COMPREHENSIVE_REPORT_PROMPT_CONFIG.temperature,
           maxTokens: COMPREHENSIVE_REPORT_PROMPT_CONFIG.maxTokens,
           responseFormat: 'json_object',
+          task: 'report',
           messages: [
             {
               role: 'system',
@@ -289,16 +385,10 @@ export class ComprehensiveReportProcessor extends WorkerHost {
           ],
         });
 
-        const parsed = skippedAnswerSchema.parse(JSON.parse(raw) as unknown);
-        const parsedById = new Map(
-          parsed.answers.map((answer) => [answer.answerId, answer.modelAnswer]),
+        skippedModelAnswers = normalizeSkippedAnswers(
+          JSON.parse(raw) as unknown,
+          skippedModelAnswers,
         );
-        skippedModelAnswers = {
-          answers: skippedModelAnswers.answers.map((answer) => ({
-            answerId: answer.answerId,
-            modelAnswer: parsedById.get(answer.answerId) ?? answer.modelAnswer,
-          })),
-        };
       } catch (openaiError: unknown) {
         if (isAIQuotaExceeded(openaiError)) {
           this.logger.warn(
@@ -323,35 +413,37 @@ export class ComprehensiveReportProcessor extends WorkerHost {
 
     if (evaluatedFeedbacks.length > 0) {
       try {
-        const feedbackSummaries = evaluatedFeedbacks
-          .map(
-            (f, i) =>
-              `Answer ${i + 1}: score=${f.overallScore}, takeaway="${f.keyTakeaway}"`,
-          )
-          .join('\n');
+        const feedbackSummaries = evaluatedFeedbacks.map((f, i) => ({
+          answerIndex: i + 1,
+          answerId: f.userAnswerId,
+          score: f.overallScore,
+          keyTakeaway: f.keyTakeaway,
+          isFallback: f.isFallback,
+        }));
 
         const raw = await this.openai.chatCompletion({
           temperature: COMPREHENSIVE_REPORT_PROMPT_CONFIG.temperature,
           maxTokens: COMPREHENSIVE_REPORT_PROMPT_CONFIG.maxTokens,
           responseFormat: 'json_object',
+          task: 'report',
           messages: [
             {
               role: 'system',
               content: [
-                'You are an interview coach. Based on the feedback summaries, generate a concise action plan with 3-5 specific improvement items.',
+                'You are an interview coach. Based on the feedback summaries, generate a concise action plan with 3-5 specific improvement items. Prioritize non-fallback feedback; fallback rows are only context.',
                 getLanguageInstruction(language),
-                'Respond with JSON only: { "items": ["item1", "item2", ...] }',
+                'Respond with JSON only: { "items": ["item1", "item2", ...] }. Do not use markdown.',
               ].join(' '),
             },
             {
               role: 'user',
-              content: `Feedback summaries:\n${feedbackSummaries}`,
+              content: `Feedback summaries JSON:\n${JSON.stringify(feedbackSummaries)}`,
             },
           ],
         });
 
         const parsed = JSON.parse(raw) as unknown;
-        actionPlan = actionPlanSchema.parse(parsed);
+        actionPlan = normalizeActionPlan(parsed, actionPlan);
       } catch (openaiError: unknown) {
         if (isAIQuotaExceeded(openaiError)) {
           this.logger.warn(
@@ -377,7 +469,7 @@ export class ComprehensiveReportProcessor extends WorkerHost {
     }
 
     const reportMetadata = {
-      generatedByModel: this.openai.getChatModel(),
+      generatedByModel: this.openai.getChatModel('report'),
       promptVersion: COMPREHENSIVE_REPORT_PROMPT_CONFIG.version,
     };
 

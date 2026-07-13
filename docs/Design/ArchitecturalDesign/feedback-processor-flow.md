@@ -168,8 +168,8 @@ Trong dự án cuối kỳ nhóm tôi gặp deadline gấp...
 ```ts
 const raw = await this.openai.chatCompletion({
   messages,
-  temperature: 0.3, // thấp — cần kết quả nhất quán, không sáng tạo
-  maxTokens: 1500,
+  temperature: 0.2, // thấp — cần kết quả nhất quán, không sáng tạo
+  maxTokens: 3000,
   responseFormat: "json_object",
   task: "feedback", // quyết định timeout sẽ dùng
 });
@@ -377,7 +377,7 @@ FeedbackProcessor.process(job)
         ├── injectDynamicContext(...)
         │     └── tạo messages = [{ role: 'system', ... }, { role: 'user', ... }]
         │
-        ├── OpenAIGateway.chatCompletion({ messages, temperature: 0.3, maxTokens: 1500 })
+        ├── OpenAIGateway.chatCompletion({ messages, temperature: 0.2, maxTokens: 3000 })
         │     ├── set timeout theo task='feedback' (mặc định 180 giây)
         │     ├── gọi chatClient.chat.completions.create(...)
         │     ├── xử lý rate limit 429: retry 1s → 2s (tối đa 2 lần)

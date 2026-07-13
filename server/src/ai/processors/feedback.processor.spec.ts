@@ -116,7 +116,7 @@ describe('FeedbackProcessor', () => {
         overallScore: 80,
         modelAnswer: 'Một câu trả lời tốt.',
         keyTakeaway: 'Thêm số liệu cụ thể.',
-        promptVersion: 'surgical-feedback-v1.4',
+        promptVersion: 'surgical-feedback-v1.5',
         appliedDimensions: [
           { id: 'D1', name: 'Communication', score: 80, weight: 0.5 },
           { id: 'D2', name: 'Teamwork', score: 60, weight: 0.5 },
@@ -193,7 +193,7 @@ describe('FeedbackProcessor', () => {
       overallScore: 15,
       modelAnswer: 'REST là một kiến trúc phong cách.',
       keyTakeaway: 'Cần phân biệt nghĩa kỹ thuật.',
-      promptVersion: 'surgical-feedback-v1.4',
+      promptVersion: 'surgical-feedback-v1.5',
       appliedDimensions: [
         { id: 'D1', name: 'Communication', score: 15, weight: 1 },
       ],
