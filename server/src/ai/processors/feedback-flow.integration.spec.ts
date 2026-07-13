@@ -69,7 +69,8 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
         answerId: 'int-answer-1',
         questionId: 'int-question-1',
         questionText: 'Tell me about a technical challenge you solved.',
-        questionCategory: sessionType === 'technical' ? 'technical' : 'behavioral',
+        questionCategory:
+          sessionType === 'technical' ? 'technical' : 'behavioral',
         competencyDomains: sessionType === 'technical' ? ['TD1'] : ['D2'],
         answerText: 'I solved a performance issue by implementing pagination.',
         contextPack: 'VN' as const,

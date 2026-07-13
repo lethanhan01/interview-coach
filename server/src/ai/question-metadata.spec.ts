@@ -157,7 +157,8 @@ describe('question metadata helpers', () => {
         {
           category: 'behavioral',
           competencyDomains: ['unknown'],
-          questionText: 'Walk through how you debug a production reliability issue.',
+          questionText:
+            'Walk through how you debug a production reliability issue.',
         },
         contextPack,
         'mixed',
@@ -209,7 +210,8 @@ describe('question metadata helpers', () => {
         {
           category: 'behavioral',
           competencyDomains: ['unknown'],
-          questionText: 'Tell me about a production incident you solved under pressure.',
+          questionText:
+            'Tell me about a production incident you solved under pressure.',
         },
         contextPack,
         'mixed',

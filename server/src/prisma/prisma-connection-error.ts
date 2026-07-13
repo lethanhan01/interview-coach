@@ -50,7 +50,7 @@ function collectErrorSignals(
   }
 
   if (typeof error !== 'object') {
-    return [String(error)];
+    return [formatNonObjectSignal(error)];
   }
 
   const record = error as Record<string, unknown>;
@@ -69,4 +69,24 @@ function collectErrorSignals(
   }
 
   return signals;
+}
+
+function formatNonObjectSignal(error: unknown): string {
+  if (
+    typeof error === 'number' ||
+    typeof error === 'boolean' ||
+    typeof error === 'bigint'
+  ) {
+    return error.toString();
+  }
+
+  if (typeof error === 'function') {
+    return error.name || 'anonymous function';
+  }
+
+  if (typeof error === 'symbol') {
+    return error.description ?? error.toString();
+  }
+
+  return 'unknown non-object value';
 }

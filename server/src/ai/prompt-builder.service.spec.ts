@@ -153,7 +153,9 @@ describe('PromptBuilderService', () => {
       );
 
       expect(result).toContain('Question-specific allowed criteria: TD2');
-      expect(result).toContain('Return only IDs from this list in "applied_dimensions"');
+      expect(result).toContain(
+        'Return only IDs from this list in "applied_dimensions"',
+      );
       expect(result).not.toContain(
         'A question may evaluate behavioral dimensions, technical dimensions, or both',
       );

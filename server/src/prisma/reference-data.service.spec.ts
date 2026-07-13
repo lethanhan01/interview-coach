@@ -3,6 +3,19 @@ import { ReferenceDataService } from './reference-data.service';
 describe('ReferenceDataService', () => {
   const createMocks = () => {
     const prisma = {
+      $transaction: jest.fn(async (callback) =>
+        callback({
+          rubricVersion: {
+            upsert: jest.fn().mockResolvedValue({ id: 'rubric-version-v1' }),
+          },
+          rubricCategory: {
+            upsert: jest.fn().mockResolvedValue({ id: 'rubric-category-1' }),
+          },
+          rubricCriterion: {
+            upsert: jest.fn().mockResolvedValue({ id: 'rubric-criterion-1' }),
+          },
+        }),
+      ),
       isBootstrapDatabaseAvailable: jest.fn().mockReturnValue(true),
       interviewSession: {
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),

@@ -46,6 +46,7 @@ describe('SessionService', () => {
   let mockReportService: ReturnType<typeof createMockReportService>;
   let mockReferenceData: {
     ensureContextPack: jest.Mock;
+    ensureActiveRubricVersion: jest.Mock;
   };
   let mockConfig: ReturnType<typeof createMockConfigService>;
 
@@ -55,6 +56,9 @@ describe('SessionService', () => {
     mockReportService = createMockReportService();
     mockReferenceData = {
       ensureContextPack: jest.fn().mockResolvedValue(undefined),
+      ensureActiveRubricVersion: jest
+        .fn()
+        .mockResolvedValue('rubric-version-vn'),
     };
     mockConfig = createMockConfigService({
       SESSION_CREATION_LIMIT_PER_24H: 10,
@@ -104,7 +108,9 @@ describe('SessionService', () => {
         }),
       );
       expect(result).toEqual(BASE_SESSION);
-      expect(mockReferenceData.ensureContextPack).toHaveBeenCalledWith('VN');
+      expect(mockReferenceData.ensureActiveRubricVersion).toHaveBeenCalledWith(
+        'VN',
+      );
     });
 
     it('enqueue question-generation job sau khi tạo', async () => {
@@ -122,6 +128,7 @@ describe('SessionService', () => {
           jobDescriptionText: CREATE_DTO.jobDescription,
           targetRoles: [],
           contextPack: 'VN',
+          rubricVersionId: 'rubric-version-vn',
           language: 'vi',
           totalQuestions: 5,
           durationMin: 30,
@@ -233,7 +240,7 @@ describe('SessionService', () => {
 
     it('trả SERVICE_UNAVAILABLE khi context pack không thể đồng bộ', async () => {
       mockPrisma.interviewSession.count.mockResolvedValue(0);
-      mockReferenceData.ensureContextPack.mockRejectedValue(
+      mockReferenceData.ensureActiveRubricVersion.mockRejectedValue(
         new Error('Database unavailable'),
       );
 

@@ -470,12 +470,11 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         competencyDomains: ['D1'],
       });
 
-      expect(mockPromptBuilder.applyContextPackForEvaluation).toHaveBeenCalledWith(
-        expect.any(String),
-        mockContextPack,
-        'hr',
-        { competencyDomains: ['D1'] },
-      );
+      expect(
+        mockPromptBuilder.applyContextPackForEvaluation,
+      ).toHaveBeenCalledWith(expect.any(String), mockContextPack, 'hr', {
+        competencyDomains: ['D1'],
+      });
       expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
         expect.objectContaining({
           systemMessage: expect.stringContaining(
@@ -508,12 +507,11 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       expect(result.appliedDimensions).toEqual([
         { id: 'TD2', name: 'Application', score: 90, weight: 1 },
       ]);
-      expect(mockPromptBuilder.applyContextPackForEvaluation).toHaveBeenCalledWith(
-        expect.any(String),
-        mockContextPack,
-        'mixed',
-        { competencyDomains: ['TD2'] },
-      );
+      expect(
+        mockPromptBuilder.applyContextPackForEvaluation,
+      ).toHaveBeenCalledWith(expect.any(String), mockContextPack, 'mixed', {
+        competencyDomains: ['TD2'],
+      });
     });
 
     it('mixed + cross-category competencyDomains chấm cả technical và behavioral target domains', async () => {
@@ -538,16 +536,14 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       });
 
       expect(result.overallScore).toBe(80);
-      expect(result.appliedDimensions.map((dimension) => dimension.id)).toEqual([
-        'D1',
-        'TD2',
-      ]);
-      expect(mockPromptBuilder.applyContextPackForEvaluation).toHaveBeenCalledWith(
-        expect.any(String),
-        mockContextPack,
-        'mixed',
-        { competencyDomains: ['TD2', 'D1'] },
+      expect(result.appliedDimensions.map((dimension) => dimension.id)).toEqual(
+        ['D1', 'TD2'],
       );
+      expect(
+        mockPromptBuilder.applyContextPackForEvaluation,
+      ).toHaveBeenCalledWith(expect.any(String), mockContextPack, 'mixed', {
+        competencyDomains: ['TD2', 'D1'],
+      });
     });
 
     it('logger.warn được gọi khi zodValidator.validate ném lỗi rồi re-throw', async () => {
@@ -618,11 +614,15 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       mockZodValidator.validate.mockReturnValue(rawFeedback);
 
       const warnSpy = jest.spyOn((service as any).logger, 'warn');
-      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject({
-        errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR,
-      });
+      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject(
+        {
+          errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR,
+        },
+      );
       const warnMessages = warnSpy.mock.calls.map((c) => String(c[0]));
-      expect(warnMessages.some((m) => m.includes('Zod validation failed'))).toBe(false);
+      expect(
+        warnMessages.some((m) => m.includes('Zod validation failed')),
+      ).toBe(false);
     });
 
     it('log "No scoring dimensions matched" kèm returnedIds khi dimension fail', async () => {
@@ -636,16 +636,22 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       mockZodValidator.validate.mockReturnValue(rawFeedback);
 
       const warnSpy = jest.spyOn((service as any).logger, 'warn');
-      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject({
-        errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR,
-      });
+      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject(
+        {
+          errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR,
+        },
+      );
       const warnMessages = warnSpy.mock.calls.map((c) => String(c[0]));
       expect(warnMessages.some((m) => m.includes('returnedIds='))).toBe(true);
-      expect(warnMessages.some((m) => m.includes('No scoring dimensions matched'))).toBe(true);
+      expect(
+        warnMessages.some((m) => m.includes('No scoring dimensions matched')),
+      ).toBe(true);
     });
 
     it('log "Zod validation failed" khi Zod thật sự throw', async () => {
-      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify({ bad: 'data' }));
+      mockOpenAI.chatCompletion.mockResolvedValue(
+        JSON.stringify({ bad: 'data' }),
+      );
       const zodError = new InterviewAIException(
         ErrorCode.SCHEMA_VALIDATION_ERROR,
         422,
@@ -658,7 +664,9 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       const warnSpy = jest.spyOn((service as any).logger, 'warn');
       await expect(service.evaluateAnswer(feedbackInput)).rejects.toThrow();
       const warnMessages = warnSpy.mock.calls.map((c) => String(c[0]));
-      expect(warnMessages.some((m) => m.includes('Zod validation failed'))).toBe(true);
+      expect(
+        warnMessages.some((m) => m.includes('Zod validation failed')),
+      ).toBe(true);
     });
 
     it('gemma trả id sai casing "d1" → vẫn resolve D1, isFallback không xảy ra', async () => {
@@ -674,7 +682,11 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       const result = await service.evaluateAnswer(feedbackInput);
 
       expect(result.appliedDimensions).toHaveLength(1);
-      expect(result.appliedDimensions[0]).toMatchObject({ id: 'D1', name: 'Communication', score: 80 });
+      expect(result.appliedDimensions[0]).toMatchObject({
+        id: 'D1',
+        name: 'Communication',
+        score: 80,
+      });
       expect(result.overallScore).toBe(80);
     });
 
@@ -682,7 +694,10 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       const rawFeedback = {
         model_answer: 'Answer.',
         key_takeaway: 'Good.',
-        applied_dimensions: [{ id: 'd1', score: 80 }, { id: 'Teamwork', score: 60 }],
+        applied_dimensions: [
+          { id: 'd1', score: 80 },
+          { id: 'Teamwork', score: 60 },
+        ],
         annotated_segments: [],
       };
       mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
@@ -704,9 +719,11 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
       mockZodValidator.validate.mockReturnValue(rawFeedback);
 
-      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject({
-        errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR,
-      });
+      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject(
+        {
+          errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR,
+        },
+      );
     });
   });
 });

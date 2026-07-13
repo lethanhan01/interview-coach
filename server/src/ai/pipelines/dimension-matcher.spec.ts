@@ -22,7 +22,10 @@ const VN_TECHNICAL: RubricDimensionEntry[] = [
 describe('resolveAppliedDimensions', () => {
   describe('Branch 1 — exact ID match', () => {
     it('khớp "D1" chính xác → trả D1', () => {
-      const result = resolveAppliedDimensions([{ id: 'D1', score: 80 }], VN_BEHAVIORAL);
+      const result = resolveAppliedDimensions(
+        [{ id: 'D1', score: 80 }],
+        VN_BEHAVIORAL,
+      );
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
         id: 'D1',
@@ -34,30 +37,45 @@ describe('resolveAppliedDimensions', () => {
     });
 
     it('khớp "TD1" chính xác với technical dims', () => {
-      const result = resolveAppliedDimensions([{ id: 'TD1', score: 70 }], VN_TECHNICAL);
+      const result = resolveAppliedDimensions(
+        [{ id: 'TD1', score: 70 }],
+        VN_TECHNICAL,
+      );
       expect(result[0]).toMatchObject({ id: 'TD1', matchBranch: 'exact' });
     });
   });
 
   describe('Branch 2 — normalized ID match (case, whitespace, dash)', () => {
     it('"d1" (lowercase) → D1', () => {
-      const result = resolveAppliedDimensions([{ id: 'd1', score: 80 }], VN_BEHAVIORAL);
+      const result = resolveAppliedDimensions(
+        [{ id: 'd1', score: 80 }],
+        VN_BEHAVIORAL,
+      );
       expect(result[0]).toMatchObject({ id: 'D1', matchBranch: 'normId' });
     });
 
     it('"D-1" (có dấu gạch) → D1', () => {
-      const result = resolveAppliedDimensions([{ id: 'D-1', score: 80 }], VN_BEHAVIORAL);
+      const result = resolveAppliedDimensions(
+        [{ id: 'D-1', score: 80 }],
+        VN_BEHAVIORAL,
+      );
       expect(result[0]).toMatchObject({ id: 'D1', matchBranch: 'normId' });
     });
 
     it('" D1 " (có khoảng trắng) → D1', () => {
-      const result = resolveAppliedDimensions([{ id: ' D1 ', score: 80 }], VN_BEHAVIORAL);
+      const result = resolveAppliedDimensions(
+        [{ id: ' D1 ', score: 80 }],
+        VN_BEHAVIORAL,
+      );
       expect(result[0]).toMatchObject({ id: 'D1', matchBranch: 'normId' });
     });
 
     it('"td1" (technical lowercase) → TD1 trong mixed dims', () => {
       const mixed = [...VN_BEHAVIORAL, ...VN_TECHNICAL];
-      const result = resolveAppliedDimensions([{ id: 'td1', score: 70 }], mixed);
+      const result = resolveAppliedDimensions(
+        [{ id: 'td1', score: 70 }],
+        mixed,
+      );
       expect(result[0]).toMatchObject({ id: 'TD1', matchBranch: 'normId' });
     });
   });
@@ -90,7 +108,10 @@ describe('resolveAppliedDimensions', () => {
 
     it('TD1 không nhầm thành D1 — regex T?D ưu tiên bắt T', () => {
       const mixed = [...VN_BEHAVIORAL, ...VN_TECHNICAL];
-      const result = resolveAppliedDimensions([{ id: 'TD1', score: 70 }], mixed);
+      const result = resolveAppliedDimensions(
+        [{ id: 'TD1', score: 70 }],
+        mixed,
+      );
       expect(result[0].id).toBe('TD1');
     });
   });
@@ -115,14 +136,20 @@ describe('resolveAppliedDimensions', () => {
 
   describe('Session type filtering', () => {
     it('TD1 với HR dims → [] (technical không có trong behavioral)', () => {
-      const result = resolveAppliedDimensions([{ id: 'TD1', score: 80 }], VN_BEHAVIORAL);
+      const result = resolveAppliedDimensions(
+        [{ id: 'TD1', score: 80 }],
+        VN_BEHAVIORAL,
+      );
       expect(result).toHaveLength(0);
     });
 
     it('mixed dims → nhận cả D1 (behavioral) và TD1 (technical)', () => {
       const mixed = [...VN_BEHAVIORAL, ...VN_TECHNICAL];
       const result = resolveAppliedDimensions(
-        [{ id: 'D1', score: 80 }, { id: 'TD1', score: 70 }],
+        [
+          { id: 'D1', score: 80 },
+          { id: 'TD1', score: 70 },
+        ],
         mixed,
       );
       expect(result).toHaveLength(2);
@@ -133,7 +160,10 @@ describe('resolveAppliedDimensions', () => {
   describe('Dedup', () => {
     it('duplicate cùng ID: giữ entry đầu tiên (score 80), bỏ entry sau (score 60)', () => {
       const result = resolveAppliedDimensions(
-        [{ id: 'D1', score: 80 }, { id: 'D1', score: 60 }],
+        [
+          { id: 'D1', score: 80 },
+          { id: 'D1', score: 60 },
+        ],
         VN_BEHAVIORAL,
       );
       expect(result).toHaveLength(1);
@@ -142,7 +172,10 @@ describe('resolveAppliedDimensions', () => {
 
     it('duplicate qua normalize ("D1" và "d1"): giữ entry đầu tiên', () => {
       const result = resolveAppliedDimensions(
-        [{ id: 'D1', score: 80 }, { id: 'd1', score: 60 }],
+        [
+          { id: 'D1', score: 80 },
+          { id: 'd1', score: 60 },
+        ],
         VN_BEHAVIORAL,
       );
       expect(result).toHaveLength(1);
@@ -153,12 +186,17 @@ describe('resolveAppliedDimensions', () => {
 
   describe('Edge cases — không bao giờ throw', () => {
     it('id bịa "ZZ" → []', () => {
-      expect(resolveAppliedDimensions([{ id: 'ZZ', score: 50 }], VN_BEHAVIORAL)).toHaveLength(0);
+      expect(
+        resolveAppliedDimensions([{ id: 'ZZ', score: 50 }], VN_BEHAVIORAL),
+      ).toHaveLength(0);
     });
 
     it('id inventé "communication" không khớp tên VN → []', () => {
       expect(
-        resolveAppliedDimensions([{ id: 'communication', score: 80 }], VN_BEHAVIORAL),
+        resolveAppliedDimensions(
+          [{ id: 'communication', score: 80 }],
+          VN_BEHAVIORAL,
+        ),
       ).toHaveLength(0);
     });
 
@@ -167,7 +205,9 @@ describe('resolveAppliedDimensions', () => {
     });
 
     it('allowedDims rỗng → []', () => {
-      expect(resolveAppliedDimensions([{ id: 'D1', score: 80 }], [])).toHaveLength(0);
+      expect(
+        resolveAppliedDimensions([{ id: 'D1', score: 80 }], []),
+      ).toHaveLength(0);
     });
 
     it('id là chuỗi rỗng → không throw', () => {

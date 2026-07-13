@@ -139,7 +139,7 @@ export class QuestionCriteriaService {
         code: { in: codes },
       },
       include: { rubricCategory: true, rubricVersion: true },
-    }) as Promise<RubricCriterionRow[]>;
+    });
   }
 }
 

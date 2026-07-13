@@ -26,7 +26,9 @@ describe('TurnService', () => {
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
   let mockTranscriptionQueue: ReturnType<typeof createMockQueue>;
-  let mockQuestionCriteria: ReturnType<typeof createMockQuestionCriteriaService>;
+  let mockQuestionCriteria: ReturnType<
+    typeof createMockQuestionCriteriaService
+  >;
   let mockAudioStorage: {
     uploadInterviewAudio: jest.Mock;
   };

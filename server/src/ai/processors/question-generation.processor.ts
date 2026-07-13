@@ -325,7 +325,15 @@ export class QuestionGenerationProcessor extends WorkerHost {
 
     const [questionResult] = await this.prisma.$transaction([
       this.prisma.sessionQuestion.createMany({
-        data: questionRows.map(({ competencyDomains, ...row }) => row),
+        data: questionRows.map((row) => ({
+          ...(row.questionBankId ? { questionBankId: row.questionBankId } : {}),
+          questionText: row.questionText,
+          orderIndex: row.orderIndex,
+          questionCategory: row.questionCategory,
+          estimatedTimeMin: row.estimatedTimeMin,
+          id: row.id,
+          sessionId: row.sessionId,
+        })),
         skipDuplicates: true,
       }),
       this.prisma.sessionQuestionCriterion.createMany({

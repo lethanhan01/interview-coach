@@ -42,7 +42,9 @@ describe('TranscriptionProcessor', () => {
   let mockVoiceMetrics: ReturnType<typeof createMockVoiceMetricsService>;
   let mockReportService: ReturnType<typeof createMockReportService>;
   let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
-  let mockQuestionCriteria: ReturnType<typeof createMockQuestionCriteriaService>;
+  let mockQuestionCriteria: ReturnType<
+    typeof createMockQuestionCriteriaService
+  >;
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();

@@ -12,12 +12,15 @@ describe('UpdateSessionStatusDto', () => {
     ).resolves.toHaveLength(0);
   });
 
-  it.each([-1, 1.5, '725'])('từ chối remainingSeconds không hợp lệ: %p', async (value) => {
-    const errors = await validatePayload({
-      status: 'paused',
-      remainingSeconds: value,
-    });
+  it.each([-1, 1.5, '725'])(
+    'từ chối remainingSeconds không hợp lệ: %p',
+    async (value) => {
+      const errors = await validatePayload({
+        status: 'paused',
+        remainingSeconds: value,
+      });
 
-    expect(errors).not.toHaveLength(0);
-  });
+      expect(errors).not.toHaveLength(0);
+    },
+  );
 });
