@@ -102,30 +102,6 @@ export abstract class BasePipelineService implements InterviewPipeline {
     const base = this.promptBuilder.buildBaseSystem('surgical-feedback');
     const withLanguage = `${base}\n\n${getLanguageInstruction(input.language)}`;
     const withStrategy = this.applyStrategy(withLanguage, input.sessionType);
-    const withPack = this.promptBuilder.applyContextPackForEvaluation(
-      withStrategy,
-      input.contextPackConfig,
-      input.sessionType,
-      { competencyDomains: input.competencyDomains },
-    );
-    if (input.competencyDomains.length === 0) {
-      throw new InterviewAIException(
-        ErrorCode.SCHEMA_VALIDATION_ERROR,
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        'Question metadata must include at least one competency domain',
-      );
-    }
-    const withQuestionMetadata = `${withPack}\n\nTarget question metadata: category=${input.questionCategory ?? 'unknown'}, competency_domains=${input.competencyDomains.join(', ')}. applied_dimensions must contain only IDs from this list when they are listed in the allowed dimensions. Do not score dimensions outside this question domain.`;
-    const messages = this.promptBuilder.injectDynamicContext({
-      systemMessage: withQuestionMetadata,
-      jobDescription: '',
-      sessionType: input.sessionType,
-      question: input.questionText,
-      questionCategory: input.questionCategory,
-      competencyDomains: input.competencyDomains,
-      answer: input.answerText,
-    });
-    const firstAttempt = await this.requestAndValidateFeedback(messages);
     const sessionAllowedDims =
       input.sessionType === 'hr'
         ? input.contextPackConfig.behavioralDimensions
@@ -135,9 +111,22 @@ export abstract class BasePipelineService implements InterviewPipeline {
               ...input.contextPackConfig.behavioralDimensions,
               ...input.contextPackConfig.technicalDimensions,
             ];
-    const targetDims = input.competencyDomains
-      .map((domain) => sessionAllowedDims.find((d) => d.id === domain))
-      .filter((d): d is (typeof sessionAllowedDims)[number] => Boolean(d));
+    if (input.competencyDomains.length === 0) {
+      throw new InterviewAIException(
+        ErrorCode.SCHEMA_VALIDATION_ERROR,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        'Question metadata must include at least one competency domain',
+      );
+    }
+    const seenTargetIds = new Set<string>();
+    const targetDims: typeof sessionAllowedDims = [];
+    for (const domain of input.competencyDomains) {
+      const dimension = sessionAllowedDims.find((d) => d.id === domain);
+      if (dimension && !seenTargetIds.has(dimension.id)) {
+        seenTargetIds.add(dimension.id);
+        targetDims.push(dimension);
+      }
+    }
     if (targetDims.length === 0) {
       throw new InterviewAIException(
         ErrorCode.SCHEMA_VALIDATION_ERROR,
@@ -145,6 +134,24 @@ export abstract class BasePipelineService implements InterviewPipeline {
         'Question metadata contains no valid competency domains for this session',
       );
     }
+    const targetDomainIds = targetDims.map((d) => d.id);
+    const withPack = this.promptBuilder.applyContextPackForEvaluation(
+      withStrategy,
+      input.contextPackConfig,
+      input.sessionType,
+      { competencyDomains: targetDomainIds },
+    );
+    const withQuestionMetadata = `${withPack}\n\nTarget question metadata: category=${input.questionCategory ?? 'unknown'}, competency_domains=${targetDomainIds.join(', ')}. applied_dimensions must contain exactly and only IDs from this resolved target list. Do not score dimensions outside this question domain.`;
+    const messages = this.promptBuilder.injectDynamicContext({
+      systemMessage: withQuestionMetadata,
+      jobDescription: '',
+      sessionType: input.sessionType,
+      question: input.questionText,
+      questionCategory: input.questionCategory,
+      competencyDomains: targetDomainIds,
+      answer: input.answerText,
+    });
+    const firstAttempt = await this.requestAndValidateFeedback(messages);
     const allowedDims = targetDims;
 
     const firstBuilt = this.buildSurgicalFeedback(
@@ -248,25 +255,21 @@ export abstract class BasePipelineService implements InterviewPipeline {
           `returnedIds=${JSON.stringify(validated.applied_dimensions.map((d) => d.id))} ` +
           `allowedIds=${JSON.stringify(allowedDims.map((d) => d.id))} rawLength=${rawLength}`,
       );
-      throw new InterviewAIException(
-        ErrorCode.SCHEMA_VALIDATION_ERROR,
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        'AI returned no valid scoring dimensions',
-      );
     }
 
-    const baseSum = selected.reduce((s, d) => s + d.baseWeight, 0);
-    const appliedDimensions: AppliedDimension[] = selected.map((d) => ({
+    const selectedById = new Map(selected.map((d) => [d.id, d]));
+    const baseSum = allowedDims.reduce((s, d) => s + d.weight, 0);
+    const appliedDimensions: AppliedDimension[] = allowedDims.map((d) => ({
       id: d.id,
       name: d.name,
-      score: d.score,
-      weight: baseSum > 0 ? d.baseWeight / baseSum : 1 / selected.length,
+      score: selectedById.get(d.id)?.score ?? 0,
+      weight: baseSum > 0 ? d.weight / baseSum : 1 / allowedDims.length,
     }));
     const weighted = appliedDimensions.reduce(
       (s, d) => s + d.score * d.weight,
       0,
     );
-    const overallScore = Math.min(100, Math.max(1, Math.round(weighted)));
+    const overallScore = Math.min(100, Math.max(0, Math.round(weighted)));
 
     const rawSegments = validated.annotated_segments.map((s) => ({
       segmentText: s.segment_text,

@@ -263,7 +263,48 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       expect(result.promptVersion).toBe(PROMPT_VERSION);
     });
 
-    it('loại id không thuộc rubric của sessionType rồi chuẩn hóa lại', async () => {
+    it('cho phép mọi target criteria score 0 và overallScore bằng 0', async () => {
+      const rawFeedback = {
+        model_answer: 'Câu trả lời mẫu.',
+        key_takeaway: 'Câu trả lời hiện tại chưa có bằng chứng phù hợp.',
+        applied_dimensions: [
+          { id: 'D1', score: 0 },
+          { id: 'D2', score: 0 },
+        ],
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      const result = await service.evaluateAnswer(feedbackInput);
+
+      expect(result.overallScore).toBe(0);
+      expect(result.appliedDimensions).toEqual([
+        { id: 'D1', name: 'Communication', score: 0, weight: 0.5 },
+        { id: 'D2', name: 'Teamwork', score: 0, weight: 0.5 },
+      ]);
+    });
+
+    it('AI bỏ sót target criteria hợp lệ thì criteria đó được điền score 0', async () => {
+      const rawFeedback = {
+        model_answer: 'Câu trả lời mẫu.',
+        key_takeaway: 'Một tiêu chí có bằng chứng, một tiêu chí chưa có.',
+        applied_dimensions: [{ id: 'D1', score: 80 }],
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      const result = await service.evaluateAnswer(feedbackInput);
+
+      expect(result.overallScore).toBe(40);
+      expect(result.appliedDimensions).toEqual([
+        { id: 'D1', name: 'Communication', score: 80, weight: 0.5 },
+        { id: 'D2', name: 'Teamwork', score: 0, weight: 0.5 },
+      ]);
+    });
+
+    it('loại id không thuộc rubric của sessionType rồi điền 0 cho target criteria bị thiếu', async () => {
       const rawFeedback = {
         model_answer: 'x',
         key_takeaway: 'y',
@@ -279,9 +320,10 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       const result = await service.evaluateAnswer(feedbackInput);
 
       expect(result.appliedDimensions).toEqual([
-        { id: 'D1', name: 'Communication', score: 90, weight: 1 },
+        { id: 'D1', name: 'Communication', score: 90, weight: 0.5 },
+        { id: 'D2', name: 'Teamwork', score: 0, weight: 0.5 },
       ]);
-      expect(result.overallScore).toBe(90);
+      expect(result.overallScore).toBe(45);
     });
 
     it('lọc applied_dimensions theo competencyDomains của câu hỏi khi có metadata', async () => {
@@ -342,7 +384,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       expect(result.overallScore).toBe(80);
     });
 
-    it('throw SCHEMA_VALIDATION_ERROR khi không còn dimension hợp lệ', async () => {
+    it('điền score 0 khi AI không trả dimension nào khớp target criteria', async () => {
       const rawFeedback = {
         model_answer: 'x',
         key_takeaway: 'y',
@@ -352,9 +394,90 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
       mockZodValidator.validate.mockReturnValue(rawFeedback);
 
-      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject(
-        { errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR },
+      const result = await service.evaluateAnswer(feedbackInput);
+
+      expect(result.overallScore).toBe(0);
+      expect(result.appliedDimensions).toEqual([
+        { id: 'D1', name: 'Communication', score: 0, weight: 0.5 },
+        { id: 'D2', name: 'Teamwork', score: 0, weight: 0.5 },
+      ]);
+    });
+
+    it('throw SCHEMA_VALIDATION_ERROR khi question metadata không có target criteria hợp lệ', async () => {
+      await expect(
+        service.evaluateAnswer({
+          ...feedbackInput,
+          competencyDomains: ['ZZ'],
+        }),
+      ).rejects.toMatchObject({ errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR });
+      expect(mockOpenAI.chatCompletion).not.toHaveBeenCalled();
+      expect(mockPromptBuilder.applyContextPackForEvaluation).not.toHaveBeenCalled();
+      expect(mockPromptBuilder.injectDynamicContext).not.toHaveBeenCalled();
+    });
+
+    it('bỏ target criteria invalid trước prompt và chỉ tính trên target hợp lệ', async () => {
+      const rawFeedback = {
+        model_answer: 'x',
+        key_takeaway: 'y',
+        applied_dimensions: [{ id: 'D1', score: 80 }],
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      const result = await service.evaluateAnswer({
+        ...feedbackInput,
+        competencyDomains: ['D1', 'ZZ', 'D2'],
+      });
+
+      expect(result.overallScore).toBe(40);
+      expect(result.appliedDimensions).toEqual([
+        { id: 'D1', name: 'Communication', score: 80, weight: 0.5 },
+        { id: 'D2', name: 'Teamwork', score: 0, weight: 0.5 },
+      ]);
+      expect(
+        mockPromptBuilder.applyContextPackForEvaluation,
+      ).toHaveBeenCalledWith(expect.any(String), mockContextPack, 'hr', {
+        competencyDomains: ['D1', 'D2'],
+      });
+      expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          competencyDomains: ['D1', 'D2'],
+        }),
       );
+      const contextArg = mockPromptBuilder.injectDynamicContext.mock.calls[0][0];
+      expect(contextArg.systemMessage).toContain('competency_domains=D1, D2');
+      expect(contextArg.systemMessage).not.toContain('ZZ');
+    });
+
+    it('bỏ trùng target criteria trước prompt và không nhân đôi trọng số', async () => {
+      const rawFeedback = {
+        model_answer: 'x',
+        key_takeaway: 'y',
+        applied_dimensions: [
+          { id: 'D1', score: 80 },
+          { id: 'D2', score: 60 },
+        ],
+        annotated_segments: [],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
+      mockZodValidator.validate.mockReturnValue(rawFeedback);
+
+      const result = await service.evaluateAnswer({
+        ...feedbackInput,
+        competencyDomains: ['D1', 'D1', 'D2'],
+      });
+
+      expect(result.overallScore).toBe(70);
+      expect(result.appliedDimensions).toEqual([
+        { id: 'D1', name: 'Communication', score: 80, weight: 0.5 },
+        { id: 'D2', name: 'Teamwork', score: 60, weight: 0.5 },
+      ]);
+      expect(
+        mockPromptBuilder.applyContextPackForEvaluation,
+      ).toHaveBeenCalledWith(expect.any(String), mockContextPack, 'hr', {
+        competencyDomains: ['D1', 'D2'],
+      });
     });
 
     it('từ chối session type không thuộc strategy hiện tại', async () => {
@@ -478,7 +601,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       expect(mockPromptBuilder.injectDynamicContext).toHaveBeenCalledWith(
         expect.objectContaining({
           systemMessage: expect.stringContaining(
-            'applied_dimensions must contain only IDs from this list',
+            'applied_dimensions must contain exactly and only IDs from this resolved target list',
           ),
         }),
       );
@@ -537,7 +660,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
 
       expect(result.overallScore).toBe(80);
       expect(result.appliedDimensions.map((dimension) => dimension.id)).toEqual(
-        ['D1', 'TD2'],
+        ['TD2', 'D1'],
       );
       expect(
         mockPromptBuilder.applyContextPackForEvaluation,
@@ -640,7 +763,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
           }),
         ]),
       );
-      expect(result.overallScore).toBe(70);
+      expect(result.overallScore).toBe(35);
       expect(result.annotatedSegments).toEqual([
         expect.objectContaining({
           segmentText: 'REST là nghỉ ngơi',
@@ -677,7 +800,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       });
 
       expect(mockOpenAI.chatCompletion).toHaveBeenCalledTimes(2);
-      expect(result.overallScore).toBe(80);
+      expect(result.overallScore).toBe(40);
       expect(result.annotatedSegments).toEqual([]);
     });
 
@@ -707,11 +830,9 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       mockZodValidator.validate.mockReturnValue(rawFeedback);
 
       const warnSpy = jest.spyOn((service as any).logger, 'warn');
-      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject(
-        {
-          errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR,
-        },
-      );
+      const result = await service.evaluateAnswer(feedbackInput);
+
+      expect(result.overallScore).toBe(0);
       const warnMessages = warnSpy.mock.calls.map((c) => String(c[0]));
       expect(
         warnMessages.some((m) => m.includes('Zod validation failed')),
@@ -729,11 +850,9 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       mockZodValidator.validate.mockReturnValue(rawFeedback);
 
       const warnSpy = jest.spyOn((service as any).logger, 'warn');
-      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject(
-        {
-          errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR,
-        },
-      );
+      const result = await service.evaluateAnswer(feedbackInput);
+
+      expect(result.overallScore).toBe(0);
       const warnMessages = warnSpy.mock.calls.map((c) => String(c[0]));
       expect(warnMessages.some((m) => m.includes('returnedIds='))).toBe(true);
       expect(
@@ -774,13 +893,18 @@ describe('BasePipelineService (via HrPipelineService)', () => {
 
       const result = await service.evaluateAnswer(feedbackInput);
 
-      expect(result.appliedDimensions).toHaveLength(1);
+      expect(result.appliedDimensions).toHaveLength(2);
       expect(result.appliedDimensions[0]).toMatchObject({
         id: 'D1',
         name: 'Communication',
         score: 80,
       });
-      expect(result.overallScore).toBe(80);
+      expect(result.appliedDimensions[1]).toMatchObject({
+        id: 'D2',
+        name: 'Teamwork',
+        score: 0,
+      });
+      expect(result.overallScore).toBe(40);
     });
 
     it('gemma trả tên dimension "Teamwork" → vẫn resolve D2', async () => {
@@ -802,7 +926,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       expect(result.appliedDimensions.map((d) => d.id)).toEqual(['D1', 'D2']);
     });
 
-    it('dimension không match sau normalize → vẫn throw SCHEMA_VALIDATION_ERROR', async () => {
+    it('dimension không match sau normalize → vẫn ghi đủ target criteria với score 0', async () => {
       const rawFeedback = {
         model_answer: 'x',
         key_takeaway: 'y',
@@ -812,11 +936,13 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
       mockZodValidator.validate.mockReturnValue(rawFeedback);
 
-      await expect(service.evaluateAnswer(feedbackInput)).rejects.toMatchObject(
-        {
-          errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR,
-        },
-      );
+      const result = await service.evaluateAnswer(feedbackInput);
+
+      expect(result.overallScore).toBe(0);
+      expect(result.appliedDimensions).toEqual([
+        { id: 'D1', name: 'Communication', score: 0, weight: 0.5 },
+        { id: 'D2', name: 'Teamwork', score: 0, weight: 0.5 },
+      ]);
     });
   });
 });

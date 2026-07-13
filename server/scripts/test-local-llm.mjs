@@ -17,15 +17,19 @@ const TIMEOUT_MS = parseInt(
 );
 
 // --- Exact system prompt từ PromptBuilderService + TechnicalPipelineService + ContextPackService (VN) ---
-// Replicates: buildBaseSystem('surgical-feedback') → applyStrategy('technical') → applyContextPack(VN)
+// Replicates: buildBaseSystem('surgical-feedback') → applyStrategy('technical') → applyContextPackForEvaluation(VN)
 const BASE_PROMPT = `You are an expert interview coach. Evaluate the candidate's answer and provide surgical, actionable feedback.
 
-CRITICAL: model_answer must be a complete, concrete example answer of 3-5 sentences written as if a strong candidate is actually speaking. It must directly answer the question using specific details, demonstrate best practices, and read like a real spoken response — NOT a list of improvement tips, NOT meta-advice about what to say.
+CRITICAL: model_answer must be a complete, concrete example answer of 3-4 concise sentences written as if a strong candidate is actually speaking. It must directly answer the question using specific details, demonstrate best practices, and read like a real spoken response — NOT a list of improvement tips, NOT meta-advice about what to say.
 
-Return ONLY a valid JSON object with exactly this structure — no extra text, no markdown fences:
+CRITICAL: annotated_segments must quote ONLY the candidate answer inside <answer>. Never copy text from model_answer, the question, job description, rubric, or outside knowledge into segment_text. If the candidate answer is too short, off-topic, or has no exact quote that supports feedback, return "annotated_segments": [].
+
+Return ONLY a compact valid JSON object with exactly this structure — no extra text, no markdown fences. Include at most 2 annotated_segments. For optional fields, either provide a string or omit the field entirely; never use null:
 {
-  "overall_score": <integer 1-100>,
-  "model_answer": "<complete 3-5 sentence example answer spoken as a candidate>",
+  "applied_dimensions": [
+    { "id": "<dimension id exactly as listed in the system instructions>", "score": <integer 0-100> }
+  ],
+  "model_answer": "<complete 3-4 sentence example answer spoken as a candidate>",
   "key_takeaway": "<one concise insight about the answer quality>",
   "annotated_segments": [
     {
@@ -50,19 +54,12 @@ Return ONLY a valid JSON object with exactly this structure — no extra text, n
 const STRATEGY_INSTRUCTIONS =
   'Focus on technical depth, applied problem-solving, trade-offs, debugging, system design, and engineering quality. Ask for reasoning and concrete implementation decisions.';
 
-// rubricDimensions từ ContextPackService.getContextPack('VN') — behavioral + technical flattened
-const RUBRIC_DIMENSIONS = [
-  'Giao tiếp & Trình bày',
-  'Tư duy & Giải quyết vấn đề',
-  'Làm việc nhóm',
-  'Thái độ & Động lực',
-  'Phù hợp văn hóa',
-  'Tự nhận thức',
-  'Kiến thức nền tảng',
-  'Khả năng áp dụng thực tế',
-  'Tư duy hệ thống',
-  'Code quality & Best practices',
-  'Debug & Problem-solving',
+const TECHNICAL_DIMENSIONS = [
+  { id: 'TD1', name: 'Kiến thức nền tảng' },
+  { id: 'TD2', name: 'Khả năng áp dụng thực tế' },
+  { id: 'TD3', name: 'Tư duy hệ thống' },
+  { id: 'TD4', name: 'Code quality & Best practices' },
+  { id: 'TD5', name: 'Debug & Problem-solving' },
 ];
 
 const CULTURAL_NOTES =
@@ -71,7 +68,16 @@ const CULTURAL_NOTES =
 const SYSTEM_PROMPT =
   BASE_PROMPT +
   `\n\nInterview strategy: ${STRATEGY_INSTRUCTIONS}` +
-  `\n\nCultural context: ${CULTURAL_NOTES}\nScoring dimensions: ${RUBRIC_DIMENSIONS.join(', ')}.`;
+  `\n\nCultural context: ${CULTURAL_NOTES}` +
+  `\nSession type: Technical (technical only).` +
+  `\nCandidate dimensions (maximum set that could apply):` +
+  `\n${TECHNICAL_DIMENSIONS.map((d) => `  - ${d.id} ${d.name}`).join('\n')}` +
+  `\nQuestion-specific allowed criteria: TD2, TD5. This is the complete target set for this question.` +
+  `\nScore every question-specific criterion listed above from 0 to 100.` +
+  `\nReturn exactly and only these IDs in "applied_dimensions"; include every listed criterion.` +
+  `\nUse score 0 when the answer is blank, completely wrong, off-topic, or gives no correct/relevant evidence for that criterion.` +
+  `\nDo NOT invent ids outside the list. Do NOT output any weight or overall score — the system computes those.` +
+  `\nDo NOT apply any behavioral criteria.`;
 
 // --- Sample JD, question, answer (tiếng Anh, realistic fresher scenario) ---
 const JD = `
@@ -105,6 +111,7 @@ const USER_CONTENT =
   `<job_description>\n${JD}\n</job_description>` +
   `\n\n<session_type>technical</session_type>` +
   `\n\n<question>\n${QUESTION}\n</question>` +
+  `\n\n<question_metadata>\ncategory=technical\ncompetency_domains=TD2,TD5\n</question_metadata>` +
   `\n\n<answer>\n${ANSWER}\n</answer>`;
 
 const messages = [
@@ -247,17 +254,30 @@ async function run() {
 
   // Validate cấu trúc cơ bản — mirrors FeedbackSchema Zod rules exactly
   const issues = [];
-  if (typeof parsed.overall_score !== 'number') {
-    issues.push('overall_score missing or not a number');
+  if (!Array.isArray(parsed.applied_dimensions)) {
+    issues.push('applied_dimensions missing or not array');
+  } else if (parsed.applied_dimensions.length === 0) {
+    issues.push('applied_dimensions must contain at least one item');
   } else {
-    if (!Number.isInteger(parsed.overall_score))
-      issues.push(
-        `overall_score must be integer, got: ${parsed.overall_score}`,
-      );
-    if (parsed.overall_score < 1 || parsed.overall_score > 100)
-      issues.push(
-        `overall_score out of range [1-100]: ${parsed.overall_score}`,
-      );
+    for (const [i, dim] of parsed.applied_dimensions.entries()) {
+      if (typeof dim.id !== 'string' || dim.id.trim() === '') {
+        issues.push(`applied_dimensions[${i}].id missing or empty`);
+      }
+      if (typeof dim.score !== 'number') {
+        issues.push(`applied_dimensions[${i}].score missing or not a number`);
+      } else {
+        if (!Number.isInteger(dim.score)) {
+          issues.push(
+            `applied_dimensions[${i}].score must be integer, got: ${dim.score}`,
+          );
+        }
+        if (dim.score < 0 || dim.score > 100) {
+          issues.push(
+            `applied_dimensions[${i}].score out of range [0-100]: ${dim.score}`,
+          );
+        }
+      }
+    }
   }
   if (
     typeof parsed.model_answer !== 'string' ||
@@ -302,7 +322,9 @@ async function run() {
 
   // Tóm tắt kết quả
   console.log(`\n=== Result Summary ===`);
-  console.log(`  overall_score      : ${parsed.overall_score}`);
+  console.log(
+    `  applied_dimensions : ${JSON.stringify(parsed.applied_dimensions)}`,
+  );
   console.log(`  key_takeaway       : ${parsed.key_takeaway}`);
   console.log(`  model_answer       : ${parsed.model_answer.slice(0, 120)}...`);
   console.log(

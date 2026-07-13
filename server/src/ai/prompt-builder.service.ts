@@ -48,7 +48,7 @@ CRITICAL: annotated_segments must quote ONLY the candidate answer inside <answer
 Return ONLY a compact valid JSON object with exactly this structure — no extra text, no markdown fences. Include at most 2 annotated_segments. For optional fields, either provide a string or omit the field entirely; never use null:
 {
   "applied_dimensions": [
-    { "id": "<dimension id exactly as listed in the system instructions>", "score": <integer 1-100> }
+    { "id": "<dimension id exactly as listed in the system instructions>", "score": <integer 0-100> }
   ],
   "model_answer": "<complete 3-4 sentence example answer spoken as a candidate>",
   "key_takeaway": "<one concise insight about the answer quality>",
@@ -112,18 +112,22 @@ export class PromptBuilderService {
       options.competencyDomains && options.competencyDomains.length > 0
         ? options.competencyDomains
         : [];
-    const targetDomainRule =
+    const selectionRules =
       targetDomains.length > 0
-        ? `Question-specific allowed criteria: ${targetDomains.join(', ')}. Return only IDs from this list in "applied_dimensions"; include every listed criterion that this answer provides enough evidence to score.`
-        : undefined;
-
-    const selectionRules = [
-      `From the candidate dimensions below, select ONLY the ones THIS question actually evaluates and ignore the rest.`,
-      `Score each selected dimension from 1 to 100.`,
-      `Return them in "applied_dimensions" as objects { "id", "score" } using the ids exactly as listed.`,
-      `Do NOT invent ids outside the list. Do NOT output any weight or overall score — the system computes those.`,
-      ...(targetDomainRule ? [targetDomainRule] : []),
-    ];
+        ? [
+            `Question-specific allowed criteria: ${targetDomains.join(', ')}. This is the complete target set for this question.`,
+            `Score every question-specific criterion listed above from 0 to 100.`,
+            `Return exactly and only these IDs in "applied_dimensions"; include every listed criterion.`,
+            `Use score 0 when the answer is blank, completely wrong, off-topic, or gives no correct/relevant evidence for that criterion.`,
+            `Do NOT invent ids outside the list. Do NOT output any weight or overall score — the system computes those.`,
+          ]
+        : [
+            `From the candidate dimensions below, select ONLY the ones THIS question actually evaluates and ignore the rest.`,
+            `Score each selected dimension from 0 to 100.`,
+            `A score of 0 is required when the candidate answer is blank, completely wrong, off-topic, or gives no correct/relevant evidence for that criterion.`,
+            `Return them in "applied_dimensions" as objects { "id", "score" } using the ids exactly as listed.`,
+            `Do NOT invent ids outside the list. Do NOT output any weight or overall score — the system computes those.`,
+          ];
 
     let scoringSection: string;
     if (sessionType === 'hr') {

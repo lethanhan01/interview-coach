@@ -31,7 +31,7 @@ export const FeedbackSchema = z.object({
     .array(
       z.object({
         id: z.string(),
-        score: z.number().int().min(1).max(100),
+        score: z.number().int().min(0).max(100),
       }),
     )
     .min(1),

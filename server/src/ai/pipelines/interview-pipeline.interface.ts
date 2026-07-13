@@ -51,12 +51,12 @@ export interface AnnotatedSegmentResult {
 export interface AppliedDimension {
   id: string;
   name: string;
-  score: number; // 1-100
+  score: number; // 0-100
   weight: number; // base weight đã chuẩn hóa, tổng ≈ 1.0
 }
 
 export interface SurgicalFeedback {
-  overallScore: number; // 1-100
+  overallScore: number; // 0-100
   modelAnswer: string;
   keyTakeaway: string;
   promptVersion: string;

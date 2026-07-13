@@ -728,7 +728,7 @@ competency_domains=TD2
 
 Kết quả AI phải có các nhóm dữ liệu gồm tiêu chí được áp dụng, câu trả lời mẫu, nhận xét chính và đoạn nhận xét cụ thể. Các đoạn trích phải sao chép nguyên văn từ câu trả lời của ứng viên. Backend lưu cả nội dung đoạn trích và vị trí ký tự. Khi hiển thị báo cáo, giao diện ưu tiên dùng đoạn trích đã lưu để tránh phụ thuộc quá nhiều vào offset nếu nội dung câu trả lời hoặc ngôn ngữ hiển thị có sai lệch.
 
-Output AI được validate bằng hai lớp: kiểm tra schema và kiểm tra ý nghĩa rubric. Một feedback hợp lệ về mặt schema phải có `applied_dimensions`, `model_answer`, `key_takeaway` và `annotated_segments`; mỗi điểm phải nằm trong khoảng 1-100 và `highlight_level` chỉ được là `strength` hoặc `improvement`. Qua được schema vẫn chưa đủ vì AI có thể trả JSON đúng cấu trúc nhưng mã tiêu chí không thuộc rubric của phiên.
+Output AI được validate bằng hai lớp: kiểm tra schema và kiểm tra ý nghĩa rubric. Một feedback hợp lệ về mặt schema phải có `applied_dimensions`, `model_answer`, `key_takeaway` và `annotated_segments`; mỗi điểm tiêu chí phải nằm trong khoảng 0-100 và `highlight_level` chỉ được là `strength` hoặc `improvement`. Qua được schema vẫn chưa đủ vì AI có thể trả JSON đúng cấu trúc nhưng mã tiêu chí không thuộc rubric của phiên.
 
 Backend xác định danh sách tiêu chí được phép theo ba bước. Thứ nhất, dựa vào loại phiên để lấy tập tiêu chí tối đa: HR chỉ lấy behavioral dimensions, Technical chỉ lấy technical dimensions, Mixed lấy cả hai nhóm. Thứ hai, nếu câu hỏi có competency domain cụ thể và domain đó nằm trong tập tiêu chí của phiên, backend rút tập được phép xuống chỉ còn domain đó. Thứ ba, backend so khớp các tiêu chí AI trả về với tập được phép.
 
@@ -739,9 +739,9 @@ Backend xác định danh sách tiêu chí được phép theo ba bước. Thứ
 | Trích mã trong chuỗi | `TD2 - Practical Application` | Trích token `TD2`. |
 | Khớp theo tên tiêu chí | `Khả năng áp dụng thực tế` | Chuẩn hóa tên và ánh xạ về mã rubric tương ứng. |
 
-Nếu một tiêu chí đã được khớp, backend chỉ lấy một lần để tránh AI trả trùng tiêu chí. Nếu sau toàn bộ quá trình không còn tiêu chí hợp lệ nào, backend xem feedback đó không dùng được và chuyển sang fallback.
+Nếu một tiêu chí đã được khớp, backend chỉ lấy một lần để tránh AI trả trùng tiêu chí. Nếu AI bỏ sót tiêu chí hợp lệ của câu hỏi, backend vẫn lưu tiêu chí đó với `score=0`; chỉ metadata câu hỏi không có tiêu chí hợp lệ trong context pack mới khiến backend xem feedback không dùng được và chuyển sang fallback.
 
-Điểm tổng của một câu trả lời không lấy trực tiếp từ AI. Backend lọc tiêu chí AI trả về theo rubric và competency domain của câu hỏi, chuẩn hóa trọng số của các tiêu chí hợp lệ rồi tự tính điểm tổng theo thang 100:
+Điểm tổng của một câu trả lời không lấy trực tiếp từ AI. Backend lọc tiêu chí AI trả về theo rubric và competency domain của câu hỏi, điền `0` cho tiêu chí hợp lệ bị thiếu, chuẩn hóa trọng số trên toàn bộ tiêu chí hợp lệ của câu hỏi rồi tự tính điểm tổng theo thang 100:
 
 ```text
 Điểm tổng = round(Σ điểm_tiêu_chí * trọng_số_đã_chuẩn_hóa)
@@ -763,7 +763,7 @@ Ví dụ, với context pack Việt Nam, nhóm kỹ thuật có trọng số g�
 
 Điểm tổng của câu trả lời trong ví dụ này là `75/100`. Cách tính này có ý nghĩa vì mỗi câu hỏi chỉ kiểm tra một phần năng lực, không phải toàn bộ rubric. Backend chỉ tính điểm trên các tiêu chí thật sự được câu hỏi đó đánh giá, nhờ vậy điểm của một câu hỏi không bị kéo lệch bởi những tiêu chí không liên quan.
 
-Sau khi tính tổng có trọng số, backend làm tròn điểm và giới hạn kết quả trong thang 1-100. Điều này bảo vệ hệ thống trước các giá trị AI trả về nằm ngoài phạm vi mong đợi sau khi parse và validate.
+Sau khi tính tổng có trọng số, backend làm tròn điểm và giới hạn kết quả trong thang 0-100. Điều này bảo vệ hệ thống trước các giá trị AI trả về nằm ngoài phạm vi mong đợi sau khi parse và validate.
 
 Sơ đồ dưới đây thể hiện riêng phần tính điểm để làm rõ rằng điểm tổng do backend tính từ tiêu chí hợp lệ, không lấy nguyên văn từ AI.
 
@@ -775,7 +775,7 @@ flowchart TD
     C -->|Có| E[Lấy trọng số gốc từ context pack]
     E --> F[Chuẩn hóa trọng số của các tiêu chí được chọn]
     F --> G[Tính tổng điểm có trọng số]
-    G --> H[Làm tròn và giới hạn 1-100]
+    G --> H[Làm tròn và giới hạn 0-100]
     H --> I[Lưu điểm tổng của câu trả lời]
 ```
 
