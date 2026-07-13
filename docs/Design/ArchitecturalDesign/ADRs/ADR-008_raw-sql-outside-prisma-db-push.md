@@ -92,4 +92,4 @@ Ràng buộc với `migration.sql`:
 **Điều kiện revise:**
 
 - Trước khi deploy production: chuyển sang Option A (proper migration workflow với baseline) để loại bỏ bước apply thủ công và có audit trail. Lúc đó CHECK constraint nằm trong migration files, ADR này được superseded.
-- Nếu thêm giá trị status/report/answer mode mới, phải sửa application code, `migration.sql`, `verify-db-hardening.ts`, `test-db-hardening-constraints.ts`, và docs cùng lúc.
+- Nếu thêm giá trị status/report/answer mode mới, phải sửa application code, `migration.sql`, `verify-db-hardening.ts`, và docs cùng lúc.

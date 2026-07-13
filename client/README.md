@@ -1,6 +1,6 @@
 # InterviewCoach — Frontend
 
-Next.js 16 (App Router), React 19, Tailwind CSS v4, Supabase Auth.
+Next.js 16 (App Router), React 19, Tailwind CSS v4.
 
 Chạy ở `http://localhost:5173`.
 
@@ -19,32 +19,13 @@ Từ thư mục `client/`:
 
 ```bash
 npm install
-cp .env.example .env.local
 ```
 
-Mở `.env.local` và điền:
+Tạo `.env.local` và điền:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api/v1
 ```
-
----
-
-## Bỏ qua đăng nhập khi dev local
-
-Thêm vào `.env.local`:
-
-```env
-NEXT_PUBLIC_SKIP_AUTH=true
-```
-
-Khi bật, middleware bỏ qua Supabase session check và `api-client.ts` gửi `Authorization: Bearer dev-mock-token` thay vì fetch JWT thật.
-
-> **Lưu ý:** Phía backend cũng phải bật `AUTH_ENABLED=false` với `MOCK_USER_ID` hợp lệ để hai bên khớp nhau.
-
-> **Không bật trong production.** Xóa hoặc set `NEXT_PUBLIC_SKIP_AUTH=false` trước khi deploy.
 
 ---
 
@@ -73,13 +54,8 @@ File `vercel.json` trong thư mục này đã khai báo sẵn các lệnh trên 
 Thêm các biến môi trường sau trong Vercel Project Settings:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1
-NEXT_PUBLIC_SKIP_AUTH=false
 ```
-
-Nếu deploy theo chế độ MVP bỏ qua đăng nhập, chỉ đặt `NEXT_PUBLIC_SKIP_AUTH=true` khi backend production cũng được cấu hình tương ứng để chấp nhận mock token.
 
 ---
 
@@ -100,7 +76,7 @@ Nếu deploy theo chế độ MVP bỏ qua đăng nhập, chỉ đặt `NEXT_PUB
 ```
 app/
   (auth)/login/        — Trang đăng nhập
-  (auth)/callback/     — Supabase Auth callback
+  (auth)/callback/     — Callback redirect path
   (app)/sessions/      — Danh sách phiên, interview, report
   (app)/setup/         — Tạo phiên mới
   (app)/profile/       — Hồ sơ người dùng
@@ -109,10 +85,8 @@ components/
   report/              — Hiển thị report (heatmap, feedback, summary)
 lib/
   api-client.ts        — HTTP client gọi NestJS backend
-  supabase.ts          — Browser Supabase client
-  supabase-server.ts   — Server Supabase client (Server Components)
   types.ts             — Shared TypeScript types
-middleware.ts          — Route protection (redirect về /login nếu chưa đăng nhập)
+middleware.ts          — Next.js middleware
 ```
 
 ---
@@ -128,13 +102,9 @@ middleware.ts          — Route protection (redirect về /login nếu chưa đ
 
 ## Lỗi thường gặp
 
-**`401 Unauthorized` khi gọi API**
+**Không gọi được API**
 
-Kiểm tra `NEXT_PUBLIC_SKIP_AUTH=true` đã bật và backend đang chạy với `AUTH_ENABLED=false`.
-
-**Trang trắng hoặc redirect loop về `/login`**
-
-Kiểm tra `NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_ANON_KEY` đã điền đúng trong `.env.local`.
+Kiểm tra `NEXT_PUBLIC_API_BASE_URL` trong `.env.local` và backend đang chạy đúng endpoint.
 
 **Port 5173 bị chiếm**
 
