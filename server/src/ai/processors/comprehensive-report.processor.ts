@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Prisma } from '@prisma/client';
 import { Job } from 'bullmq';
 import { z } from 'zod';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -30,6 +31,14 @@ interface ComprehensiveReportJobDto {
   turnIds: string[];
 }
 
+interface ReportFeedbackInput {
+  userAnswerId: string;
+  overallScore: number;
+  keyTakeaway: string;
+  isFallback: boolean;
+  dimensionScores: unknown;
+}
+
 const actionPlanSchema = z.object({
   items: z.array(z.string()),
 });
@@ -52,6 +61,12 @@ function fallbackSkippedModelAnswer(
   }
 
   return `A strong answer should directly address "${questionText}", briefly set the context, describe your specific actions, and close with a clear result or lesson learned.`;
+}
+
+function skippedKeyTakeaway(language: 'vi' | 'en'): string {
+  return language === 'vi'
+    ? 'Câu hỏi bị bỏ qua nên hệ thống tự chấm 0 điểm cho các tiêu chí áp dụng.'
+    : 'This question was skipped, so the system assigned 0 points for each applied criterion.';
 }
 
 function toDimensionScores(value: unknown): { id: string; score: number }[] {
@@ -89,6 +104,37 @@ function buildCompetencyHeatmap(
   );
 }
 
+function buildSkippedDimensionScores(
+  criteria: {
+    criterionCode: string;
+    criterionNameSnapshot: string;
+    categoryKeySnapshot: string;
+    weightSnapshot: number;
+    displayOrderSnapshot: number;
+  }[],
+) {
+  return criteria
+    .slice()
+    .sort((a, b) => {
+      const categoryOrder = a.categoryKeySnapshot.localeCompare(
+        b.categoryKeySnapshot,
+      );
+      if (categoryOrder !== 0) return categoryOrder;
+
+      const displayOrder =
+        a.displayOrderSnapshot - b.displayOrderSnapshot;
+      if (displayOrder !== 0) return displayOrder;
+
+      return a.criterionCode.localeCompare(b.criterionCode);
+    })
+    .map((criterion) => ({
+      id: criterion.criterionCode,
+      name: criterion.criterionNameSnapshot,
+      score: 0,
+      weight: criterion.weightSnapshot,
+    }));
+}
+
 @Processor(REPORT_QUEUE)
 export class ComprehensiveReportProcessor extends WorkerHost {
   private readonly logger = new Logger(ComprehensiveReportProcessor.name);
@@ -110,7 +156,21 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       select: {
         id: true,
         skipped: true,
-        question: { select: { questionText: true, orderIndex: true } },
+        question: {
+          select: {
+            questionText: true,
+            orderIndex: true,
+            criteria: {
+              select: {
+                criterionCode: true,
+                criterionNameSnapshot: true,
+                categoryKeySnapshot: true,
+                weightSnapshot: true,
+                displayOrderSnapshot: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -130,7 +190,19 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       );
     }
 
-    const evaluatedFeedbacks = feedbacks.filter(
+    const syntheticSkippedFeedbacks: ReportFeedbackInput[] =
+      skippedAnswers.map((answer) => ({
+        userAnswerId: answer.id,
+        overallScore: 0,
+        keyTakeaway: skippedKeyTakeaway(language),
+        isFallback: false,
+        dimensionScores: buildSkippedDimensionScores(answer.question.criteria),
+      }));
+    const allFeedbacks: ReportFeedbackInput[] = [
+      ...feedbacks,
+      ...syntheticSkippedFeedbacks,
+    ];
+    const evaluatedFeedbacks = allFeedbacks.filter(
       (feedback) => !feedback.isFallback,
     );
     const aggregatedScore =
@@ -145,28 +217,24 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       overallScore: aggregatedScore,
       totalTurns: turnIds.length,
       evaluatedTurns: evaluatedFeedbacks.length,
-      fallbackTurns: feedbacks.length - evaluatedFeedbacks.length,
+      fallbackTurns: allFeedbacks.length - evaluatedFeedbacks.length,
       skippedTurns: skippedAnswers.length,
       summary:
         aggregatedScore === null
-          ? skippedAnswers.length > 0 && feedbacks.length === 0
-            ? language === 'vi'
-              ? `Phiên phỏng vấn đã hoàn thành với ${skippedAnswers.length} câu hỏi được bỏ qua. Chưa có câu trả lời nào đủ dữ liệu để chấm điểm.`
-              : `Interview completed with ${skippedAnswers.length} skipped questions. There are no answer submissions available for scoring.`
-            : getFallbackReportSummary(language)
+          ? getFallbackReportSummary(language)
           : language === 'vi'
             ? `Phiên phỏng vấn đã hoàn thành với ${evaluatedFeedbacks.length} câu trả lời được đánh giá. Điểm tổng quan: ${aggregatedScore}/100.`
             : `Interview completed with ${evaluatedFeedbacks.length} evaluated answers. Overall score: ${aggregatedScore}/100.`,
     };
 
     const commAnalysis = {
-      feedbackCount: feedbacks.length,
+      feedbackCount: allFeedbacks.length,
       evaluatedFeedbackCount: evaluatedFeedbacks.length,
-      fallbackFeedbackCount: feedbacks.length - evaluatedFeedbacks.length,
+      fallbackFeedbackCount: allFeedbacks.length - evaluatedFeedbacks.length,
       skippedFeedbackCount: skippedAnswers.length,
     };
 
-    const competencyHeatmap = buildCompetencyHeatmap(feedbacks);
+    const competencyHeatmap = buildCompetencyHeatmap(allFeedbacks);
 
     let skippedModelAnswers: {
       answers: { answerId: string; modelAnswer: string }[];
@@ -303,6 +371,30 @@ export class ComprehensiveReportProcessor extends WorkerHost {
 
     try {
       await this.prisma.$transaction([
+        ...syntheticSkippedFeedbacks.map((feedback) =>
+          this.prisma.aiFeedback.upsert({
+            where: { userAnswerId: feedback.userAnswerId },
+            create: {
+              userAnswerId: feedback.userAnswerId,
+              overallScore: feedback.overallScore,
+              modelAnswer: '',
+              keyTakeaway: feedback.keyTakeaway,
+              promptVersion: COMPREHENSIVE_REPORT_PROMPT_CONFIG.version,
+              isFallback: feedback.isFallback,
+              dimensionScores:
+                feedback.dimensionScores as Prisma.InputJsonValue,
+            },
+            update: {
+              overallScore: feedback.overallScore,
+              modelAnswer: '',
+              keyTakeaway: feedback.keyTakeaway,
+              promptVersion: COMPREHENSIVE_REPORT_PROMPT_CONFIG.version,
+              isFallback: feedback.isFallback,
+              dimensionScores:
+                feedback.dimensionScores as Prisma.InputJsonValue,
+            },
+          }),
+        ),
         this.prisma.sessionReport.upsert({
           where: {
             sessionId_reportType_version: {

@@ -128,15 +128,13 @@ export class ReportService {
         answerText: answer?.answerText ?? '',
         skipped: answer?.skipped ?? false,
         overallScore:
-          answer?.skipped || !feedback || feedback.isFallback
-            ? null
-            : feedback.overallScore,
+          !feedback || feedback.isFallback ? null : feedback.overallScore,
         modelAnswer: answer?.skipped ? '' : (feedback?.modelAnswer ?? ''),
         keyTakeaway: answer?.skipped ? '' : (feedback?.keyTakeaway ?? ''),
-        isFallback: answer?.skipped ? false : (feedback?.isFallback ?? false),
+        isFallback: feedback?.isFallback ?? false,
         segments: answer?.skipped ? [] : segments,
         appliedDimensions:
-          answer?.skipped || !feedback || feedback.isFallback
+          !feedback || feedback.isFallback
             ? undefined
             : ((feedback.dimensionScores as
                 | { id: string; name: string; score: number; weight: number }[]
@@ -163,20 +161,18 @@ export class ReportService {
           }
         : item,
     );
-    const nonSkippedTranscript = transcriptWithSkippedAnswers.filter(
-      (item) => !item.skipped,
-    );
-    const hasEvaluatedFeedback = nonSkippedTranscript.some(
+    const hasEvaluatedFeedback = transcriptWithSkippedAnswers.some(
       (item) => !item.isFallback && item.overallScore !== null,
     );
-    const hasSomeFallback = nonSkippedTranscript.some(
+    const hasSomeFallback = transcriptWithSkippedAnswers.some(
       (item) => item.isFallback,
     );
     const allFeedbackIsFallback = hasSomeFallback && !hasEvaluatedFeedback;
     let reportQuality: 'full' | 'partial' | 'unavailable' | 'not_scorable';
     if (
       transcriptWithSkippedAnswers.length > 0 &&
-      nonSkippedTranscript.length === 0
+      !hasEvaluatedFeedback &&
+      !hasSomeFallback
     ) {
       reportQuality = 'not_scorable';
     } else if (hasSomeFallback && hasEvaluatedFeedback) {
@@ -196,7 +192,9 @@ export class ReportService {
             ...storedExecutiveSummary,
             overallScore: null,
             evaluatedTurns: 0,
-            fallbackTurns: nonSkippedTranscript.length,
+            fallbackTurns: transcriptWithSkippedAnswers.filter(
+              (item) => item.isFallback,
+            ).length,
             summary: getFallbackReportSummary(session.language),
           }
         : storedExecutiveSummary,

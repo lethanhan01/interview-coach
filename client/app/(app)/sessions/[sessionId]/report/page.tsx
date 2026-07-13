@@ -48,7 +48,7 @@ function buildOverviewSummary(report: Report): OverviewSummary {
       : "Báo cáo đã được tổng hợp từ các câu trả lời có đủ dữ liệu chấm điểm.";
 
   const scoredAnswers = (report.transcript ?? []).flatMap((item) => {
-    if (item.skipped || item.isFallback || item.overallScore == null) {
+    if (item.isFallback || item.overallScore == null) {
       return [];
     }
     return [
@@ -307,14 +307,14 @@ export default function ReportPage() {
       <div className="flex flex-col gap-6">
         {report.reportQuality === "partial" && (
           <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
-            Một số câu trả lời không được AI chấm điểm tự động. Điểm tổng chỉ
-            tính trên các câu đã đánh giá được.
+            Một số câu trả lời không được AI chấm điểm tự động. Điểm tổng vẫn
+            tính các câu đã bỏ qua là 0 điểm.
           </div>
         )}
         {report.reportQuality === "not_scorable" && (
           <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-            Bạn đã bỏ qua tất cả câu hỏi, nên báo cáo chỉ hiển thị câu trả lời
-            đề xuất để tham khảo.
+            Báo cáo cũ này chưa có dữ liệu điểm cho các câu đã bỏ qua. Các báo
+            cáo mới sẽ tính câu bỏ qua là 0 điểm.
           </div>
         )}
         {session && <SessionMetadataCard session={session} />}

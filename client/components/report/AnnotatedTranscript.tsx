@@ -100,9 +100,7 @@ export default function AnnotatedTranscript({
                 Câu {item.orderIndex}
               </p>
               <span className="text-xs font-semibold text-brand">
-                {item.skipped
-                  ? "Đã bỏ qua"
-                  : item.overallScore == null
+                {item.overallScore == null
                   ? "Chưa thể chấm"
                   : `${item.overallScore.toFixed(1)} / 100`}
               </span>
