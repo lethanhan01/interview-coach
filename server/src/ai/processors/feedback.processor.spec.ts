@@ -188,6 +188,39 @@ describe('FeedbackProcessor', () => {
     );
   });
 
+  it('không persist annotated segment nếu quote không thuộc answerText', async () => {
+    strategy.evaluateAnswer.mockResolvedValue({
+      overallScore: 15,
+      modelAnswer: 'REST là một kiến trúc phong cách.',
+      keyTakeaway: 'Cần phân biệt nghĩa kỹ thuật.',
+      promptVersion: 'surgical-feedback-v1.4',
+      appliedDimensions: [
+        { id: 'D1', name: 'Communication', score: 15, weight: 1 },
+      ],
+      annotatedSegments: [
+        {
+          segmentText: 'REST là một kiến trúc phong cách.',
+          startIndex: 0,
+          endIndex: 34,
+          highlightLevel: 'strength',
+          annotation: 'Định nghĩa đúng.',
+        },
+      ],
+    });
+
+    await processor.process(makeJob());
+
+    expect(tx.annotatedSegment.deleteMany).toHaveBeenCalledWith({
+      where: { aiFeedbackId: 'feedback-1' },
+    });
+    expect(tx.annotatedSegment.createMany).not.toHaveBeenCalled();
+    expect(mockSse.emit).toHaveBeenCalledWith(
+      'sse:session:session-123',
+      'turn.feedback_ready',
+      { answerId: 'answer-1', hasAnnotations: false },
+    );
+  });
+
   it('ghi DB transaction xong rồi mới emit SSE feedback_ready', async () => {
     await processor.process(makeJob());
 

@@ -20,6 +20,7 @@ import {
   getFallbackReportSummary,
 } from '../ai/fallback-content';
 import { resolveOutputLanguage } from '../ai/output-language';
+import { sanitizeFeedbackSegments } from '../ai/feedback-segment-sanitizer';
 
 function toRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -109,8 +110,9 @@ export class ReportService {
     const transcript: TranscriptItemDto[] = questions.map((q) => {
       const answer = q.userAnswers[0];
       const feedback = answer?.aiFeedback;
+      const answerText = answer?.answerText ?? '';
 
-      const segments: AnnotatedSegmentDto[] =
+      const rawSegments: AnnotatedSegmentDto[] =
         feedback?.annotatedSegments.map((s) => ({
           id: s.id,
           segmentText: s.segmentText,
@@ -120,12 +122,14 @@ export class ReportService {
           annotation: s.annotation,
           suggestion: s.suggestion ?? undefined,
         })) ?? [];
+      const segments = sanitizeFeedbackSegments(answerText, rawSegments)
+        .segments;
 
       return {
         answerId: answer?.id,
         questionText: q.questionText,
         orderIndex: q.orderIndex,
-        answerText: answer?.answerText ?? '',
+        answerText,
         skipped: answer?.skipped ?? false,
         overallScore:
           !feedback || feedback.isFallback ? null : feedback.overallScore,

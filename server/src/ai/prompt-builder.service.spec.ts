@@ -42,6 +42,8 @@ describe('PromptBuilderService', () => {
       expect(result).toContain('end_index');
       expect(result).toContain('never use null');
       expect(result).toContain('exact substring copied verbatim');
+      expect(result).toContain('quote ONLY the candidate answer');
+      expect(result).toContain('Never copy text from model_answer');
     });
   });
 

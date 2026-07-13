@@ -588,6 +588,99 @@ describe('BasePipelineService (via HrPipelineService)', () => {
       expect(debugSpy.mock.calls[0][0]).not.toContain('Good.');
     });
 
+    it('sanitize annotatedSegments và retry một lần khi quote không thuộc answerText', async () => {
+      const firstFeedback = {
+        applied_dimensions: [{ id: 'D1', score: 80 }],
+        model_answer: 'REST là một architectural style.',
+        key_takeaway: 'Cần phân biệt REST kỹ thuật.',
+        annotated_segments: [
+          {
+            segment_text: 'REST là một architectural style.',
+            start_index: 0,
+            end_index: 35,
+            highlight_level: 'strength',
+            annotation: 'Định nghĩa đúng REST.',
+          },
+        ],
+      };
+      const retryFeedback = {
+        applied_dimensions: [{ id: 'D1', score: 70 }],
+        model_answer: 'REST là một architectural style.',
+        key_takeaway: 'Câu trả lời còn nhầm nghĩa.',
+        annotated_segments: [
+          {
+            segment_text: 'REST là nghỉ ngơi',
+            start_index: 8,
+            end_index: 24,
+            highlight_level: 'improvement',
+            annotation: 'Đang hiểu theo nghĩa thường.',
+          },
+        ],
+      };
+      mockOpenAI.chatCompletion
+        .mockResolvedValueOnce(JSON.stringify(firstFeedback))
+        .mockResolvedValueOnce(JSON.stringify(retryFeedback));
+      mockZodValidator.validate
+        .mockReturnValueOnce(firstFeedback)
+        .mockReturnValueOnce(retryFeedback);
+
+      const result = await service.evaluateAnswer({
+        ...feedbackInput,
+        answerText: 'Tôi nghĩ REST là nghỉ ngơi.',
+      });
+
+      expect(mockOpenAI.chatCompletion).toHaveBeenCalledTimes(2);
+      expect(mockOpenAI.chatCompletion.mock.calls[1][0].messages).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            role: 'system',
+            content: expect.stringContaining(
+              'quotes must be copied only from the candidate answer',
+            ),
+          }),
+        ]),
+      );
+      expect(result.overallScore).toBe(70);
+      expect(result.annotatedSegments).toEqual([
+        expect.objectContaining({
+          segmentText: 'REST là nghỉ ngơi',
+          startIndex: 9,
+          endIndex: 26,
+          highlightLevel: 'improvement',
+        }),
+      ]);
+    });
+
+    it('nếu retry vẫn trả quote sai thì persist feedback đã bỏ annotatedSegments sai', async () => {
+      const invalidFeedback = {
+        applied_dimensions: [{ id: 'D1', score: 80 }],
+        model_answer: 'REST là một architectural style.',
+        key_takeaway: 'Cần phân biệt REST kỹ thuật.',
+        annotated_segments: [
+          {
+            segment_text: 'REST là một architectural style.',
+            start_index: 0,
+            end_index: 35,
+            highlight_level: 'strength',
+            annotation: 'Định nghĩa đúng REST.',
+          },
+        ],
+      };
+      mockOpenAI.chatCompletion.mockResolvedValue(
+        JSON.stringify(invalidFeedback),
+      );
+      mockZodValidator.validate.mockReturnValue(invalidFeedback);
+
+      const result = await service.evaluateAnswer({
+        ...feedbackInput,
+        answerText: 'Tôi nghĩ REST là nghỉ ngơi.',
+      });
+
+      expect(mockOpenAI.chatCompletion).toHaveBeenCalledTimes(2);
+      expect(result.overallScore).toBe(80);
+      expect(result.annotatedSegments).toEqual([]);
+    });
+
     it('logger.warn được gọi khi JSON.parse fail rồi ném SCHEMA_VALIDATION_ERROR', async () => {
       mockOpenAI.chatCompletion.mockResolvedValue('not-json {{');
       const warnSpy = jest.spyOn((service as any).logger, 'warn');

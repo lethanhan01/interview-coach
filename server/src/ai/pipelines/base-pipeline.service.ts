@@ -24,6 +24,22 @@ import { getLanguageInstruction } from '../output-language';
 import { QUESTION_GEN_PROMPT_CONFIG } from '../prompts/question-gen-v1.0';
 import { z } from 'zod';
 import { resolveAppliedDimensions } from './dimension-matcher';
+import {
+  sanitizeFeedbackSegments,
+  type SegmentSanitizerIssue,
+} from '../feedback-segment-sanitizer';
+
+type ValidatedFeedback = z.infer<typeof FeedbackSchema>;
+
+interface FeedbackParseResult {
+  validated: ValidatedFeedback;
+  rawLength: number;
+}
+
+interface BuiltFeedback {
+  feedback: SurgicalFeedback;
+  segmentIssues: SegmentSanitizerIssue[];
+}
 
 export abstract class BasePipelineService implements InterviewPipeline {
   protected abstract readonly supportedSessionType: SessionType;
@@ -109,6 +125,77 @@ export abstract class BasePipelineService implements InterviewPipeline {
       competencyDomains: input.competencyDomains,
       answer: input.answerText,
     });
+    const firstAttempt = await this.requestAndValidateFeedback(messages);
+    const sessionAllowedDims =
+      input.sessionType === 'hr'
+        ? input.contextPackConfig.behavioralDimensions
+        : input.sessionType === 'technical'
+          ? input.contextPackConfig.technicalDimensions
+          : [
+              ...input.contextPackConfig.behavioralDimensions,
+              ...input.contextPackConfig.technicalDimensions,
+            ];
+    const targetDims = input.competencyDomains
+      .map((domain) => sessionAllowedDims.find((d) => d.id === domain))
+      .filter((d): d is (typeof sessionAllowedDims)[number] => Boolean(d));
+    if (targetDims.length === 0) {
+      throw new InterviewAIException(
+        ErrorCode.SCHEMA_VALIDATION_ERROR,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        'Question metadata contains no valid competency domains for this session',
+      );
+    }
+    const allowedDims = targetDims;
+
+    const firstBuilt = this.buildSurgicalFeedback(
+      firstAttempt.validated,
+      allowedDims,
+      input.answerText,
+      firstAttempt.rawLength,
+    );
+    if (firstBuilt.segmentIssues.length === 0) {
+      return firstBuilt.feedback;
+    }
+
+    this.logger.warn(
+      `[feedback] Removed invalid annotated segments before retry. ` +
+        `invalidSegments=${firstBuilt.segmentIssues.length} reasons=${this.formatSegmentIssueReasons(firstBuilt.segmentIssues)}`,
+    );
+
+    try {
+      const retryAttempt = await this.requestAndValidateFeedback([
+        ...messages,
+        {
+          role: 'system',
+          content:
+            'Correction: annotated_segments quotes must be copied only from the candidate answer inside <answer>. Do not quote model_answer, the question, job description, or outside knowledge. If no exact candidate-answer quote supports feedback, return annotated_segments as an empty array.',
+        },
+      ]);
+      const retryBuilt = this.buildSurgicalFeedback(
+        retryAttempt.validated,
+        allowedDims,
+        input.answerText,
+        retryAttempt.rawLength,
+      );
+      if (retryBuilt.segmentIssues.length > 0) {
+        this.logger.warn(
+          `[feedback] Retry still returned invalid annotated segments; sanitized result will be persisted. ` +
+            `invalidSegments=${retryBuilt.segmentIssues.length} reasons=${this.formatSegmentIssueReasons(retryBuilt.segmentIssues)}`,
+        );
+      }
+      return retryBuilt.feedback;
+    } catch (err) {
+      this.logger.warn(
+        '[feedback] Segment correction retry failed; using sanitized first feedback result',
+        err instanceof Error ? err.message : String(err),
+      );
+      return firstBuilt.feedback;
+    }
+  }
+
+  private async requestAndValidateFeedback(
+    messages: ReturnType<PromptBuilderService['injectDynamicContext']>,
+  ): Promise<FeedbackParseResult> {
     const raw = await this.openai.chatCompletion({
       messages,
       temperature: SURGICAL_FEEDBACK_PROMPT_CONFIG.temperature,
@@ -131,9 +218,11 @@ export abstract class BasePipelineService implements InterviewPipeline {
         'Invalid JSON from AI',
       );
     }
-    let validated: z.infer<typeof FeedbackSchema>;
     try {
-      validated = this.zodValidator.validate(FeedbackSchema, parsed);
+      return {
+        validated: this.zodValidator.validate(FeedbackSchema, parsed),
+        rawLength: raw.length,
+      };
     } catch (err) {
       this.logger.warn(
         `[feedback] Zod validation failed. rawLength=${raw.length}`,
@@ -141,37 +230,23 @@ export abstract class BasePipelineService implements InterviewPipeline {
       );
       throw err;
     }
+  }
 
-    const sessionAllowedDims =
-      input.sessionType === 'hr'
-        ? input.contextPackConfig.behavioralDimensions
-        : input.sessionType === 'technical'
-          ? input.contextPackConfig.technicalDimensions
-          : [
-              ...input.contextPackConfig.behavioralDimensions,
-              ...input.contextPackConfig.technicalDimensions,
-            ];
-    const targetDims = input.competencyDomains
-      .map((domain) => sessionAllowedDims.find((d) => d.id === domain))
-      .filter((d): d is (typeof sessionAllowedDims)[number] => Boolean(d));
-    if (targetDims.length === 0) {
-      throw new InterviewAIException(
-        ErrorCode.SCHEMA_VALIDATION_ERROR,
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        'Question metadata contains no valid competency domains for this session',
-      );
-    }
-    const allowedDims = targetDims;
+  private buildSurgicalFeedback(
+    validated: ValidatedFeedback,
+    allowedDims: { id: string; name: string; weight: number }[],
+    answerText: string,
+    rawLength: number,
+  ): BuiltFeedback {
     const selected = resolveAppliedDimensions(
       validated.applied_dimensions,
       allowedDims,
     );
-
     if (selected.length === 0) {
       this.logger.warn(
         `[feedback] No scoring dimensions matched. ` +
           `returnedIds=${JSON.stringify(validated.applied_dimensions.map((d) => d.id))} ` +
-          `allowedIds=${JSON.stringify(allowedDims.map((d) => d.id))} rawLength=${raw.length}`,
+          `allowedIds=${JSON.stringify(allowedDims.map((d) => d.id))} rawLength=${rawLength}`,
       );
       throw new InterviewAIException(
         ErrorCode.SCHEMA_VALIDATION_ERROR,
@@ -193,22 +268,47 @@ export abstract class BasePipelineService implements InterviewPipeline {
     );
     const overallScore = Math.min(100, Math.max(1, Math.round(weighted)));
 
+    const rawSegments = validated.annotated_segments.map((s) => ({
+      segmentText: s.segment_text,
+      startIndex: s.start_index,
+      endIndex: s.end_index,
+      highlightLevel: s.highlight_level,
+      annotation: s.annotation,
+      suggestion: s.suggestion,
+      improvedVersion: s.improved_version,
+    }));
+    const sanitized = sanitizeFeedbackSegments(answerText, rawSegments);
+
     return {
-      overallScore,
-      modelAnswer: validated.model_answer,
-      keyTakeaway: validated.key_takeaway,
-      promptVersion: PROMPT_VERSION,
-      appliedDimensions,
-      annotatedSegments: validated.annotated_segments.map((s) => ({
-        segmentText: s.segment_text,
-        startIndex: s.start_index,
-        endIndex: s.end_index,
-        highlightLevel: s.highlight_level,
-        annotation: s.annotation,
-        suggestion: s.suggestion,
-        improvedVersion: s.improved_version,
-      })),
+      feedback: {
+        overallScore,
+        modelAnswer: validated.model_answer,
+        keyTakeaway: validated.key_takeaway,
+        promptVersion: PROMPT_VERSION,
+        appliedDimensions,
+        annotatedSegments: sanitized.segments.map((s) => ({
+          segmentText: s.segmentText,
+          startIndex: s.startIndex,
+          endIndex: s.endIndex,
+          highlightLevel: s.highlightLevel,
+          annotation: s.annotation,
+          suggestion: s.suggestion ?? undefined,
+          improvedVersion: s.improvedVersion ?? undefined,
+        })),
+      },
+      segmentIssues: sanitized.issues,
     };
+  }
+
+  private formatSegmentIssueReasons(issues: SegmentSanitizerIssue[]): string {
+    const counts = issues.reduce<Record<string, number>>((acc, issue) => {
+      acc[issue.reason] = (acc[issue.reason] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(counts)
+      .map(([reason, count]) => `${reason}:${count}`)
+      .join(',');
   }
 
   private applyStrategy(

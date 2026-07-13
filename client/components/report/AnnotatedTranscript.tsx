@@ -8,7 +8,9 @@ function isStrengthSegment(segment: AnnotatedSegment) {
 
 function getSegmentQuote(answerText: string, segment: AnnotatedSegment) {
   const explicitQuote = segment.segmentText?.trim();
-  if (explicitQuote) return explicitQuote;
+  if (explicitQuote && answerText.includes(explicitQuote)) {
+    return explicitQuote;
+  }
 
   const hasValidRange =
     Number.isInteger(segment.startIndex) &&

@@ -43,6 +43,8 @@ Write the final JSON directly in the assistant message content.`,
 
 CRITICAL: model_answer must be a complete, concrete example answer of 3-4 concise sentences written as if a strong candidate is actually speaking. It must directly answer the question using specific details, demonstrate best practices, and read like a real spoken response — NOT a list of improvement tips, NOT meta-advice about what to say.
 
+CRITICAL: annotated_segments must quote ONLY the candidate answer inside <answer>. Never copy text from model_answer, the question, job description, rubric, or outside knowledge into segment_text. If the candidate answer is too short, off-topic, or has no exact quote that supports feedback, return "annotated_segments": [].
+
 Return ONLY a compact valid JSON object with exactly this structure — no extra text, no markdown fences. Include at most 2 annotated_segments. For optional fields, either provide a string or omit the field entirely; never use null:
 {
   "applied_dimensions": [

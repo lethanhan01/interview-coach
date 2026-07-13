@@ -494,6 +494,55 @@ describe('ReportService', () => {
         { id: 'D1', name: 'Communication', score: 0, weight: 1 },
       ]);
     });
+
+    it('không trả annotated segment nếu segmentText không thuộc answerText', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-rest',
+          questionText: 'REST là gì?',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              id: '8abade13-5a8f-414c-ad07-7878ed94b01d',
+              answerText: 'Tôi nghĩ REST là nghỉ ngơi.',
+              skipped: false,
+              aiFeedback: {
+                overallScore: 15,
+                modelAnswer: 'REST là một kiến trúc phong cách.',
+                keyTakeaway: 'Cần phân biệt nghĩa kỹ thuật.',
+                isFallback: false,
+                annotatedSegments: [
+                  {
+                    id: 'seg-from-model-answer',
+                    segmentText: 'REST là một kiến trúc phong cách.',
+                    startIndex: 0,
+                    endIndex: 34,
+                    highlightLevel: 'strength',
+                    annotation: 'Định nghĩa đúng.',
+                    suggestion: null,
+                  },
+                ],
+                dimensionScores: [
+                  { id: 'TD1', name: 'Fundamentals', score: 15, weight: 1 },
+                ],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.transcript[0]).toEqual(
+        expect.objectContaining({
+          answerId: '8abade13-5a8f-414c-ad07-7878ed94b01d',
+          segments: [],
+        }),
+      );
+    });
   });
 
   describe('getFeedbackProgress', () => {

@@ -21,6 +21,7 @@ import {
 import { getFallbackFeedbackMessage } from '../fallback-content';
 import type { OutputLanguage } from '../output-language';
 import { resolveOutputLanguage } from '../output-language';
+import { sanitizeFeedbackSegments } from '../feedback-segment-sanitizer';
 
 interface FeedbackJobDto {
   sessionId: string;
@@ -93,6 +94,16 @@ export class FeedbackProcessor extends WorkerHost {
         contextPackConfig,
         language,
       });
+      const sanitizedSegments = sanitizeFeedbackSegments(
+        answerText,
+        feedback.annotatedSegments,
+      );
+      if (sanitizedSegments.issues.length > 0) {
+        this.logger.warn(
+          `FeedbackProcessor removed invalid annotated segments for session ${sessionId} answer ${answerId}: ` +
+            `removed=${sanitizedSegments.issues.length}`,
+        );
+      }
 
       await this.prisma.$transaction(async (tx) => {
         const aiFeedback = await tx.aiFeedback.upsert({
@@ -121,9 +132,9 @@ export class FeedbackProcessor extends WorkerHost {
         await tx.annotatedSegment.deleteMany({
           where: { aiFeedbackId: aiFeedback.id },
         });
-        if (feedback.annotatedSegments.length > 0) {
+        if (sanitizedSegments.segments.length > 0) {
           await tx.annotatedSegment.createMany({
-            data: feedback.annotatedSegments.map((seg) => ({
+            data: sanitizedSegments.segments.map((seg) => ({
               aiFeedbackId: aiFeedback.id,
               segmentText: seg.segmentText,
               startIndex: seg.startIndex,
@@ -142,7 +153,7 @@ export class FeedbackProcessor extends WorkerHost {
         });
       });
 
-      hasAnnotations = feedback.annotatedSegments.length > 0;
+      hasAnnotations = sanitizedSegments.segments.length > 0;
     } catch (error: unknown) {
       const isQuotaError = isAIQuotaExceeded(error);
       const totalAttempts = job.opts.attempts ?? FEEDBACK_JOB_ATTEMPTS;
