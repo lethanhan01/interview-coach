@@ -28,7 +28,9 @@ describe('QuestionGenerationProcessor', () => {
   let mockContextPack: ReturnType<typeof createMockContextPackService>;
   let mockFactory: ReturnType<typeof createMockPipelineStrategyFactory>;
   let mockQuestionBankService: ReturnType<typeof createMockQuestionBankService>;
-  let mockQuestionCriteria: ReturnType<typeof createMockQuestionCriteriaService>;
+  let mockQuestionCriteria: ReturnType<
+    typeof createMockQuestionCriteriaService
+  >;
   let mockOpenAI: ReturnType<typeof createMockOpenAIGateway>;
 
   const BASE_JOB_DATA = {
@@ -37,6 +39,7 @@ describe('QuestionGenerationProcessor', () => {
     jobDescriptionText: 'Backend developer tại công ty ABC.',
     targetRoles: ['Backend Developer'],
     contextPack: 'VN' as const,
+    rubricVersionId: 'rubric-version-vn',
     language: 'vi',
     totalQuestions: 5,
     durationMin: 30,
@@ -92,18 +95,10 @@ describe('QuestionGenerationProcessor', () => {
       Promise.all(operations),
     );
     mockQuestionCriteria.buildSessionQuestionCriteriaData.mockImplementation(
-      async ({ sessionQuestionId, criterionCodes, contextPackId }) =>
-        criterionCodes.map((code, index) => ({
+      async ({ sessionQuestionId, criterionCodes }) =>
+        criterionCodes.map((code) => ({
           sessionQuestionId,
           rubricCriterionId: `criterion-${code}`,
-          contextPackIdSnapshot: contextPackId,
-          criterionCode: code,
-          criterionNameSnapshot: code,
-          categoryKeySnapshot: code.startsWith('TD')
-            ? 'technical'
-            : 'behavioral',
-          weightSnapshot: 1,
-          displayOrderSnapshot: index + 1,
         })),
     );
 
@@ -150,13 +145,13 @@ describe('QuestionGenerationProcessor', () => {
 
     expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
     expect(mockContextPack.getContextPack).toHaveBeenCalledWith('VN');
-    expect(mockContextPack.getRubricSnapshot).toHaveBeenCalledWith('VN');
+    expect(mockContextPack.getRubricSnapshot).not.toHaveBeenCalled();
     expect(mockStrategy.generateQuestions).toHaveBeenCalledWith(
       expect.objectContaining({ language: 'vi' }),
     );
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
+    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi', 'rubric-version-vn');
     const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
     expect(createArgs.data).toHaveLength(5);
     // QB questions at pos 1-4
@@ -181,7 +176,6 @@ describe('QuestionGenerationProcessor', () => {
         questionText: 'Điểm mạnh là gì?',
         orderIndex: 5,
         questionCategory: 'behavioral',
-        rubricJson: {},
         estimatedTimeMin: 5,
       }),
     );
@@ -235,7 +229,7 @@ describe('QuestionGenerationProcessor', () => {
     );
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'Western', 4, 'en');
+    ).toHaveBeenCalledWith('hr', 'Western', 4, 'en', 'rubric-version-vn');
   });
 
   it('normalize AI free-form rubric name trước khi persist', async () => {
@@ -295,7 +289,7 @@ describe('QuestionGenerationProcessor', () => {
 
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi');
+    ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi', 'rubric-version-vn');
     const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
     expect(createArgs.data).toHaveLength(5);
     expect(
@@ -329,7 +323,7 @@ describe('QuestionGenerationProcessor', () => {
     ).toEqual([1, 2, 3, 4, 5]);
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
+    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi', 'rubric-version-vn');
   });
 
   it('đặt AI question vào vị trí hợp lệ khi phiên ngắn hơn chu kỳ 5 câu', async () => {
@@ -346,7 +340,11 @@ describe('QuestionGenerationProcessor', () => {
 
     await expect(
       processor.process(
-        makeJob({ ...BASE_JOB_DATA, totalQuestions: 3, durationMin: 30 } as any),
+        makeJob({
+          ...BASE_JOB_DATA,
+          totalQuestions: 3,
+          durationMin: 30,
+        } as any),
       ),
     ).resolves.toBeUndefined();
 
@@ -366,7 +364,7 @@ describe('QuestionGenerationProcessor', () => {
     ]);
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'VN', 2, 'vi');
+    ).toHaveBeenCalledWith('hr', 'VN', 2, 'vi', 'rubric-version-vn');
   });
 
   it('QG-05: dùng fallback khi AI trả 0 câu (ít hơn aiCount=1)', async () => {
@@ -444,7 +442,7 @@ describe('QuestionGenerationProcessor', () => {
     ).toHaveBeenCalledTimes(1);
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
+    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi', 'rubric-version-vn');
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledTimes(1);
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
       where: {
@@ -455,13 +453,8 @@ describe('QuestionGenerationProcessor', () => {
     });
   });
 
-  it('persist session_questions với rubric snapshot lấy theo context hiện hành', async () => {
-    const rubricSnapshot = {
-      behavioral: { D1: { name: 'Communication', weight: 0.2 } },
-      technical: {},
-    };
+  it('persist session_question_criteria theo rubric version đã khóa của session', async () => {
     mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
-    mockContextPack.getRubricSnapshot.mockResolvedValue(rubricSnapshot);
     mockFactory.getStrategy.mockReturnValue({
       generateQuestions: jest.fn().mockResolvedValue(makeGeneratedQuestions(1)),
     });
@@ -476,11 +469,14 @@ describe('QuestionGenerationProcessor', () => {
 
     const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
     expect(createArgs.data).toHaveLength(5);
+    expect(createArgs.data.every((row: object) => !('rubricJson' in row))).toBe(
+      true,
+    );
     expect(
-      createArgs.data.every(
-        (row: { rubricJson: object }) => row.rubricJson === rubricSnapshot,
-      ),
-    ).toBe(true);
+      mockQuestionCriteria.buildSessionQuestionCriteriaData,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ rubricVersionId: 'rubric-version-vn' }),
+    );
   });
 
   it('không emit active nếu session đã bị tạm dừng trước khi worker hoàn tất', async () => {
@@ -556,7 +552,7 @@ describe('QuestionGenerationProcessor', () => {
     expect(generateQuestions).toHaveBeenCalledTimes(1);
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi');
+    ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi', 'rubric-version-vn');
     expect(mockPrisma.sessionQuestion.createMany).toHaveBeenCalledTimes(1);
   });
 
@@ -605,7 +601,7 @@ describe('QuestionGenerationProcessor', () => {
       );
       expect(
         mockQuestionBankService.selectFallbackQuestions,
-      ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi');
+      ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi', 'rubric-version-vn');
       expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
         where: {
           id: 'session-123',
@@ -699,7 +695,7 @@ describe('QuestionGenerationProcessor', () => {
       expect(generateQuestions).toHaveBeenCalledTimes(1);
       expect(
         mockQuestionBankService.selectFallbackQuestions,
-      ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi');
+      ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi', 'rubric-version-vn');
     });
 
     it('set session status=error khi question_bank trả về 0 kết quả', async () => {

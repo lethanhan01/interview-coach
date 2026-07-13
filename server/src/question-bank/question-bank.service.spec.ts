@@ -118,7 +118,12 @@ describe('QuestionBankService', () => {
       }),
     ]);
 
-    const result = await service.selectFallbackQuestions('mixed', 'VN', 1, 'en');
+    const result = await service.selectFallbackQuestions(
+      'mixed',
+      'VN',
+      1,
+      'en',
+    );
 
     expect(result[0]).toEqual(
       expect.objectContaining({
@@ -269,7 +274,6 @@ describe('QuestionBankService', () => {
       }),
     );
   });
-
 });
 
 function mockQuestionBankWithCriteria(input: {
@@ -295,11 +299,14 @@ function mockQuestionBankWithCriteria(input: {
         name: code,
         weight: 1,
         displayOrder: index + 1,
-        active: true,
+        rubricVersionId: `rubric-version-${input.contextPackId}`,
         rubricCategory: {
-          contextPackId: input.contextPackId,
           categoryKey: code.startsWith('TD') ? 'technical' : 'behavioral',
           displayOrder: code.startsWith('TD') ? 2 : 1,
+        },
+        rubricVersion: {
+          contextPackId: input.contextPackId,
+          status: 'active',
         },
       },
     })),

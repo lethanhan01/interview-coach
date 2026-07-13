@@ -23,14 +23,15 @@
 | D7 | Partial indexes | Raw SQL files riêng | Prisma schema/raw SQL cho partial index còn dùng; `resumes` đã retired |
 | D8 | `QuestionUsage` indexes | `sort: Desc` trong plan | Retired cùng `question_usage` |
 | D9 | Report JSON columns | 6 JSONB columns trên `interview_sessions` | Đã tách sang `session_reports` ở T13 |
-| D10 | Rubric storage | Rubric gốc từng được dự kiến lưu dạng JSON trong context pack hoặc versioned rubric | Rubric hiện hành nằm trực tiếp trong `rubric_categories.context_pack_id` và `rubric_criteria`; chỉ `session_questions.rubric_json` giữ snapshot lịch sử |
+| D10 | Rubric storage | Rubric gốc từng được dự kiến lưu dạng JSON trong context pack hoặc versioned rubric | Rubric hiện hành nằm trong immutable `rubric_versions` active theo `context_pack_id`; session khóa `rubric_version_id` để giữ lịch sử |
 
 ---
 
 ## Relations Overview
 
 ```
-rubric_categories ──< rubric_criteria
+rubric_versions ──< rubric_categories ──< rubric_criteria
+rubric_versions ──< interview_sessions
 rubric_criteria ──< question_bank_criteria >── question_bank
 rubric_criteria ──< session_question_criteria >── session_questions
 
@@ -48,6 +49,9 @@ Prisma relation fields (không phải DB columns):
 
 | Từ | Đến | Cardinality | onDelete |
 |----|-----|-------------|----------|
+| RubricVersion | RubricCategory[] | 1:n | Cascade |
+| RubricVersion | RubricCriterion[] | 1:n | Cascade |
+| RubricVersion | InterviewSession[] | 1:n | Restrict |
 | RubricCategory | RubricCriterion[] | 1:n | Cascade |
 | QuestionBank | SessionQuestion[] | 1:n | SET NULL (FK nullable) |
 | User | UserProfile? | 1:1 | Cascade |
@@ -68,16 +72,31 @@ Prisma relation fields (không phải DB columns):
 
 Format: `Column — Type — Default — Nullable — Notes`
 
+### rubric_versions
+Prisma model: `RubricVersion`
+
+| Column | DB Type | Default | Nullable | Notes |
+|--------|---------|---------|----------|-------|
+| id | UUID PK | gen_random_uuid() | NO | |
+| context_pack_id | TEXT | — | NO | CHECK `VN` hoặc `Western`; business selector ổn định |
+| version_key | TEXT | — | NO | Khóa phiên bản trong từng context |
+| status | TEXT | `active` | NO | `active` hoặc `archived` |
+| checksum | TEXT | — | YES | Dedupe/version integrity |
+| published_at | TIMESTAMPTZ | now() | NO | |
+| created_at | TIMESTAMPTZ | now() | NO | |
+
+Unique/indexes: `(context_pack_id, version_key)`, partial unique active version theo `context_pack_id`, `idx_rubric_versions_context_pack`.
+
 ### rubric_categories
 Prisma model: `RubricCategory`
 
-| context_pack_id | TEXT | — | NO | CHECK `VN` hoặc `Western`; cấu hình nghiệp vụ, không còn FK tới `context_packs` |
+| rubric_version_id | UUID FK | — | NO | → rubric_versions.id ON DELETE CASCADE |
 | category_key | TEXT | — | NO | `behavioral` hoặc `technical` |
 | label | TEXT | — | NO | Tên hiển thị |
 | weight | DOUBLE | — | NO | Trọng số category trong mixed session |
 | display_order | INT | 0 | NO | CHECK >= 0 |
 
-Unique/indexes: `(context_pack_id, category_key)`, `idx_rubric_categories_context_pack`.
+Unique/indexes: `(rubric_version_id, category_key)`, `idx_rubric_categories_version`.
 
 ### rubric_criteria
 Prisma model: `RubricCriterion`
@@ -85,14 +104,14 @@ Prisma model: `RubricCriterion`
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
+| rubric_version_id | UUID FK | — | NO | → rubric_versions.id ON DELETE CASCADE |
 | rubric_category_id | UUID FK | — | NO | → rubric_categories.id ON DELETE CASCADE |
 | code | TEXT | — | NO | Canonical codes `D1..D6`, `TD1..TD5` |
 | name | TEXT | — | NO | Tên tiêu chí |
 | weight | DOUBLE | — | NO | Trọng số trong category |
 | display_order | INT | 0 | NO | CHECK >= 0 |
-| active | BOOLEAN | true | NO | |
 
-Unique/indexes: `(rubric_category_id, code)`, `idx_rubric_criteria_category`.
+Unique/indexes: `(rubric_version_id, code)`, `idx_rubric_criteria_version`, `idx_rubric_criteria_category`.
 
 ---
 
@@ -221,6 +240,7 @@ Session config + lifecycle state. Report payload đã tách sang `session_report
 | duration_min | INT | 30 | NO | |
 | language | TEXT | 'vi' | NO | |
 | context_pack_id | TEXT | — | NO | CHECK `VN` hoặc `Western` |
+| rubric_version_id | UUID FK | — | NO | → rubric_versions.id ON DELETE RESTRICT; khóa immutable rubric version của session |
 | status | TEXT | 'generating' | NO | CHECK ∈ `{generating, active, paused, canceled, completing, completed, error}` |
 | overall_score | INT | — | YES | CHECK NULL hoặc 0–100 |
 | completed_at | TIMESTAMPTZ | — | YES | |
@@ -229,6 +249,7 @@ Session config + lifecycle state. Report payload đã tách sang `session_report
 
 Indexes:
 - `idx_interview_sessions_created_at` on `(created_at DESC)`
+- `idx_interview_sessions_rubric_version` on `(rubric_version_id)`
 - `idx_interview_sessions_saved_jd` on `(saved_job_description_id)`
 - `idx_interview_sessions_user_created` on `(user_id, created_at DESC)`
 - `idx_interview_sessions_user_id` on `(user_id)`
@@ -268,7 +289,6 @@ Câu hỏi per session. `question_bank_id` nullable — AI-generated questions k
 | question_text | TEXT | — | NO | |
 | order_index | INT | — | NO | UNIQUE per session |
 | question_category | TEXT | — | NO | |
-| rubric_json | JSONB | — | NO | Snapshot rubric áp dụng tại thời điểm sinh câu hỏi; không đổi khi rubric gốc publish version mới |
 | estimated_time_min | INT | — | YES | |
 | created_at | TIMESTAMPTZ | now() | NO | |
 
@@ -281,24 +301,17 @@ Indexes:
 
 ### session_question_criteria
 Prisma model: `SessionQuestionCriterion`  
-Snapshot tiêu chí theo từng câu hỏi trong session. Bảng này giữ lịch sử chấm điểm ngay cả khi rubric hiện hành đổi hoặc criterion gốc bị xóa.
+Liên kết tiêu chí theo từng câu hỏi trong session. Lịch sử rubric được giữ bằng `interview_sessions.rubric_version_id`, nên mỗi row phải trỏ tới criterion thuộc cùng immutable version của session.
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
 | session_question_id | UUID FK | — | NO | → session_questions.id ON DELETE CASCADE |
-| rubric_criterion_id | UUID FK | — | YES | → rubric_criteria.id ON DELETE SET NULL |
-| context_pack_id_snapshot | TEXT | — | NO | CHECK `VN` hoặc `Western` |
-| criterion_code | TEXT | — | NO | Mã tiêu chí tại thời điểm sinh câu hỏi |
-| criterion_name_snapshot | TEXT | — | NO | Tên tiêu chí snapshot |
-| category_key_snapshot | TEXT | — | NO | CHECK `behavioral` hoặc `technical` |
-| weight_snapshot | DOUBLE | — | NO | CHECK >= 0 |
-| display_order_snapshot | INT | 0 | NO | CHECK >= 0 |
+| rubric_criterion_id | UUID FK | — | NO | → rubric_criteria.id ON DELETE RESTRICT |
 | created_at | TIMESTAMPTZ | now() | NO | |
 
-Primary key: `(session_question_id, criterion_code)`.  
+Primary key: `(session_question_id, rubric_criterion_id)`.  
 Indexes:
 - `idx_session_question_criteria_rubric_criterion` on `(rubric_criterion_id)`
-- `idx_session_question_criteria_criterion_code` on `(criterion_code)`
 
 ---
 

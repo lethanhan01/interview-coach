@@ -17,7 +17,9 @@ const phase = parsePhase(process.argv);
 const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error('DATABASE_URL or DIRECT_URL is required to verify DB hardening.');
+  throw new Error(
+    'DATABASE_URL or DIRECT_URL is required to verify DB hardening.',
+  );
 }
 
 const client = new Client(buildPgConnectionConfig(connectionString));
@@ -38,8 +40,16 @@ const expectedPolicies = [
   ['public', 'interview_sessions', 'interview_sessions: insert own'],
   ['public', 'interview_sessions', 'interview_sessions: update own'],
   ['public', 'session_questions', 'session_questions: read own'],
-  ['public', 'question_bank_criteria', 'question_bank_criteria: read active question bank'],
-  ['public', 'session_question_criteria', 'session_question_criteria: read own'],
+  [
+    'public',
+    'question_bank_criteria',
+    'question_bank_criteria: read active question bank',
+  ],
+  [
+    'public',
+    'session_question_criteria',
+    'session_question_criteria: read own',
+  ],
   ['public', 'user_answers', 'user_answers: read own'],
   ['public', 'user_answers', 'user_answers: insert own'],
   ['public', 'saved_job_descriptions', 'saved_job_descriptions: read own'],
@@ -86,22 +96,29 @@ const expectedConstraints = [
   ['ai_feedbacks', 'chk_ai_feedbacks_overall_score'],
   ['annotated_segments', 'chk_annotated_segments_offsets'],
   ['users', 'chk_users_role'],
-  ['rubric_categories', 'chk_rubric_categories_context_pack'],
+  ['rubric_versions', 'chk_rubric_versions_context_pack'],
+  ['rubric_versions', 'chk_rubric_versions_status'],
+  ['rubric_versions', 'rubric_versions_context_version_key'],
+  ['rubric_categories', 'rubric_categories_rubric_version_id_fkey'],
   ['rubric_categories', 'chk_rubric_categories_category_key'],
   ['rubric_categories', 'chk_rubric_categories_weight'],
   ['rubric_categories', 'chk_rubric_categories_display_order'],
+  ['rubric_criteria', 'rubric_criteria_rubric_version_id_fkey'],
   ['rubric_criteria', 'chk_rubric_criteria_weight'],
   ['rubric_criteria', 'chk_rubric_criteria_display_order'],
+  ['interview_sessions', 'interview_sessions_rubric_version_id_fkey'],
   ['question_bank_criteria', 'question_bank_criteria_pkey'],
   ['question_bank_criteria', 'question_bank_criteria_question_bank_id_fkey'],
   ['question_bank_criteria', 'question_bank_criteria_rubric_criterion_id_fkey'],
   ['session_question_criteria', 'session_question_criteria_pkey'],
-  ['session_question_criteria', 'session_question_criteria_session_question_id_fkey'],
-  ['session_question_criteria', 'session_question_criteria_rubric_criterion_id_fkey'],
-  ['session_question_criteria', 'chk_session_question_criteria_context_pack'],
-  ['session_question_criteria', 'chk_session_question_criteria_category_key'],
-  ['session_question_criteria', 'chk_session_question_criteria_weight'],
-  ['session_question_criteria', 'chk_session_question_criteria_display_order'],
+  [
+    'session_question_criteria',
+    'session_question_criteria_session_question_id_fkey',
+  ],
+  [
+    'session_question_criteria',
+    'session_question_criteria_rubric_criterion_id_fkey',
+  ],
 ];
 
 const expectedIndexes = [
@@ -119,20 +136,25 @@ const expectedIndexes = [
   ['question_bank', 'idx_question_bank_session_type_difficulty'],
   ['saved_job_descriptions', 'idx_saved_job_descriptions_user_updated'],
   ['saved_job_descriptions', 'idx_saved_job_descriptions_user_company_title'],
-  ['rubric_categories', 'idx_rubric_categories_context_pack'],
-  ['rubric_categories', 'rubric_categories_context_category_key'],
+  ['rubric_versions', 'idx_rubric_versions_context_pack'],
+  ['rubric_versions', 'idx_rubric_versions_one_active_per_context_pack'],
+  ['rubric_categories', 'idx_rubric_categories_version'],
+  ['rubric_categories', 'rubric_categories_version_category_key'],
   ['rubric_criteria', 'idx_rubric_criteria_category'],
-  ['rubric_criteria', 'rubric_criteria_category_code_key'],
+  ['rubric_criteria', 'idx_rubric_criteria_version'],
+  ['rubric_criteria', 'rubric_criteria_version_code_key'],
+  ['interview_sessions', 'idx_interview_sessions_rubric_version'],
   ['question_bank_criteria', 'idx_question_bank_criteria_rubric_criterion'],
-  ['session_question_criteria', 'idx_session_question_criteria_rubric_criterion'],
-  ['session_question_criteria', 'idx_session_question_criteria_criterion_code'],
+  [
+    'session_question_criteria',
+    'idx_session_question_criteria_rubric_criterion',
+  ],
 ];
 
 const retiredTables = [
   'ai_quality_log',
   'question_usage',
   'context_packs',
-  'rubric_versions',
   'resumes',
 ];
 
@@ -147,6 +169,7 @@ const retiredColumns = [
   ['question_bank', 'tags'],
   ['session_questions', 'competency_domain'],
   ['session_questions', 'competency_domains'],
+  ['session_questions', 'rubric_json'],
   ['users', 'profile_completed'],
   ['users', 'last_login_at'],
   ['users', 'deleted_at'],
@@ -165,9 +188,14 @@ const retiredColumns = [
   ['interview_sessions', 'mode'],
   ['interview_sessions', 'show_prep_card'],
   ['interview_sessions', 'opening_transcript'],
-  ['interview_sessions', 'rubric_version_id'],
-  ['rubric_categories', 'rubric_version_id'],
-  ['rubric_criteria', 'rubric_version_id'],
+  ['rubric_categories', 'context_pack_id'],
+  ['rubric_criteria', 'active'],
+  ['session_question_criteria', 'context_pack_id_snapshot'],
+  ['session_question_criteria', 'criterion_code'],
+  ['session_question_criteria', 'criterion_name_snapshot'],
+  ['session_question_criteria', 'category_key_snapshot'],
+  ['session_question_criteria', 'weight_snapshot'],
+  ['session_question_criteria', 'display_order_snapshot'],
 ];
 
 async function main() {
@@ -278,35 +306,9 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
     ],
   ];
 
-  if (await currentRubricTablesExist()) {
-    checks.push(
-      [
-        'anomaly:rubric_missing_context_categories',
-        `SELECT count(*)::int AS count
-         FROM (
-           VALUES ('VN'), ('Western')
-         ) contexts(context_pack_id)
-         WHERE (
-           SELECT count(*)
-           FROM rubric_categories rc
-           WHERE rc.context_pack_id = contexts.context_pack_id
-             AND rc.category_key IN ('behavioral', 'technical')
-         ) <> 2`,
-      ],
-      [
-        'anomaly:rubric_context_missing_criteria',
-        `SELECT count(*)::int AS count
-         FROM rubric_categories rc
-         WHERE rc.context_pack_id IN ('VN', 'Western')
-           AND NOT EXISTS (
-             SELECT 1
-             FROM rubric_criteria rcr
-             WHERE rcr.rubric_category_id = rc.id
-               AND rcr.active = true
-           )`,
-      ],
-    );
-  } else if (await versionedRubricTablesExist()) {
+  const hasVersionedRubricTables = await versionedRubricTablesExist();
+
+  if (hasVersionedRubricTables) {
     checks.push(
       [
         'anomaly:rubric_duplicate_active_version',
@@ -318,6 +320,12 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
            GROUP BY context_pack_id
            HAVING count(*) > 1
          ) dup`,
+      ],
+      [
+        'anomaly:interview_sessions_missing_rubric_version',
+        `SELECT count(*)::int AS count
+         FROM interview_sessions
+         WHERE rubric_version_id IS NULL`,
       ],
       [
         'anomaly:rubric_active_version_missing_categories',
@@ -339,16 +347,15 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
          WHERE rv.status = 'active'
            AND rv.context_pack_id IN ('VN', 'Western')
            AND NOT EXISTS (
-             SELECT 1
-             FROM rubric_criteria rcr
-             WHERE rcr.rubric_version_id = rv.id
-               AND rcr.active = true
+              SELECT 1
+              FROM rubric_criteria rcr
+              WHERE rcr.rubric_version_id = rv.id
            )`,
       ],
     );
   }
 
-  if (await criteriaRelationTablesExist()) {
+  if ((await criteriaRelationTablesExist()) && hasVersionedRubricTables) {
     checks.push(
       [
         'anomaly:question_bank_missing_criteria_links',
@@ -362,19 +369,19 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
            )`,
       ],
       [
-        'anomaly:question_bank_criteria_wrong_context',
+        'anomaly:question_bank_criteria_wrong_active_version',
         `SELECT count(*)::int AS count
          FROM question_bank_criteria qbc
          JOIN question_bank qb
            ON qb.id = qbc.question_bank_id
          JOIN rubric_criteria rcr
            ON rcr.id = qbc.rubric_criterion_id
-         JOIN rubric_categories rc
-           ON rc.id = rcr.rubric_category_id
+         JOIN rubric_versions rv
+           ON rv.id = rcr.rubric_version_id
          WHERE qb.deleted_at IS NULL
            AND (
-             rc.context_pack_id <> qb.context_pack_id
-             OR rcr.active = false
+             rv.context_pack_id <> qb.context_pack_id
+             OR rv.status <> 'active'
            )`,
       ],
       [
@@ -388,20 +395,16 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
          )`,
       ],
       [
-        'anomaly:session_question_criteria_blank_code',
-        `SELECT count(*)::int AS count
-         FROM session_question_criteria
-         WHERE btrim(criterion_code) = ''`,
-      ],
-      [
-        'anomaly:session_question_criteria_wrong_context',
+        'anomaly:session_question_criteria_wrong_session_version',
         `SELECT count(*)::int AS count
          FROM session_question_criteria sqc
+         JOIN session_questions sq
+           ON sq.id = sqc.session_question_id
+         JOIN interview_sessions s
+           ON s.id = sq.session_id
          JOIN rubric_criteria rcr
            ON rcr.id = sqc.rubric_criterion_id
-         JOIN rubric_categories rc
-           ON rc.id = rcr.rubric_category_id
-         WHERE rc.context_pack_id <> sqc.context_pack_id_snapshot`,
+         WHERE rcr.rubric_version_id <> s.rubric_version_id`,
       ],
     );
   }
@@ -416,21 +419,6 @@ async function runAnomalyChecks(): Promise<CheckResult[]> {
     });
   }
   return results;
-}
-
-async function currentRubricTablesExist(): Promise<boolean> {
-  return existsBySql(`
-    SELECT 1
-    WHERE to_regclass('public.rubric_categories') IS NOT NULL
-      AND to_regclass('public.rubric_criteria') IS NOT NULL
-      AND EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_schema = 'public'
-          AND table_name = 'rubric_categories'
-          AND column_name = 'context_pack_id'
-      )
-  `);
 }
 
 async function versionedRubricTablesExist(): Promise<boolean> {
@@ -609,7 +597,10 @@ async function countRows(sql: string): Promise<number> {
   return Number(result.rows[0]?.count ?? 0);
 }
 
-async function existsBySql(sql: string, values: unknown[] = []): Promise<boolean> {
+async function existsBySql(
+  sql: string,
+  values: unknown[] = [],
+): Promise<boolean> {
   const result = await client.query(sql, values);
   if (result.rowCount === 0) return false;
   const first = result.rows[0] as Record<string, unknown>;
@@ -619,7 +610,9 @@ async function existsBySql(sql: string, values: unknown[] = []): Promise<boolean
 
 function printResults(results: CheckResult[]) {
   const failed = results.filter((result) => !result.ok);
-  console.log(`DB hardening verify (${phase}): ${results.length - failed.length}/${results.length} passed`);
+  console.log(
+    `DB hardening verify (${phase}): ${results.length - failed.length}/${results.length} passed`,
+  );
   for (const result of results) {
     const marker = result.ok ? 'PASS' : 'FAIL';
     console.log(`${marker} ${result.name} ${result.detail}`);
@@ -630,7 +623,9 @@ function parsePhase(argv: string[]): Phase {
   const phaseArg = argv.find((arg) => arg.startsWith('--phase='));
   const value = phaseArg?.split('=')[1] ?? 'post';
   if (value === 'pre' || value === 'post') return value;
-  throw new Error(`Unsupported phase "${value}". Use --phase=pre or --phase=post.`);
+  throw new Error(
+    `Unsupported phase "${value}". Use --phase=pre or --phase=post.`,
+  );
 }
 
 void main().catch(async (error: unknown) => {

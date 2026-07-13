@@ -31,10 +31,29 @@ async function main() {
       UPDATE question_bank SET context_pack_id = 'VN' WHERE context_pack_id = 'vn';
       UPDATE question_bank SET context_pack_id = 'Western' WHERE context_pack_id = 'western';
 
+      CREATE TABLE IF NOT EXISTS rubric_versions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        context_pack_id TEXT NOT NULL,
+        version_key TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'active',
+        checksum TEXT,
+        published_at TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+        created_at TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+        CONSTRAINT chk_rubric_versions_context_pack CHECK (context_pack_id IN ('VN', 'Western')),
+        CONSTRAINT chk_rubric_versions_status CHECK (status IN ('active', 'archived')),
+        CONSTRAINT rubric_versions_context_version_key UNIQUE (context_pack_id, version_key)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_rubric_versions_context_pack
+        ON rubric_versions(context_pack_id);
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_rubric_versions_one_active_per_context_pack
+        ON rubric_versions(context_pack_id)
+        WHERE status = 'active';
+
       DO $$
       DECLARE
         invalid_contexts INTEGER;
-        active_contexts INTEGER;
       BEGIN
         SELECT count(*) INTO invalid_contexts
         FROM (
@@ -51,92 +70,104 @@ async function main() {
         END IF;
 
         IF invalid_contexts > 0 THEN
-          RAISE EXCEPTION 'Cannot simplify context packs: found % invalid context_pack_id values', invalid_contexts;
+          RAISE EXCEPTION 'Cannot version rubric context packs: found % invalid context_pack_id values', invalid_contexts;
         END IF;
 
-        IF to_regclass('public.rubric_versions') IS NOT NULL
-           AND EXISTS (
-             SELECT 1 FROM information_schema.columns
-             WHERE table_schema = 'public'
-               AND table_name = 'rubric_categories'
-               AND column_name = 'rubric_version_id'
-           ) THEN
-          SELECT count(*) INTO active_contexts
+        ALTER TABLE rubric_categories
+          ADD COLUMN IF NOT EXISTS rubric_version_id UUID;
+
+        ALTER TABLE rubric_criteria
+          ADD COLUMN IF NOT EXISTS rubric_version_id UUID;
+
+        ALTER TABLE interview_sessions
+          ADD COLUMN IF NOT EXISTS rubric_version_id UUID;
+
+        IF EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'rubric_categories'
+            AND column_name = 'context_pack_id'
+        ) THEN
+          INSERT INTO rubric_versions (context_pack_id, version_key, status, checksum)
+          SELECT context_pack_id, 'v1', 'active', md5(context_pack_id || ':v1')
           FROM (
-            SELECT context_pack_id
-            FROM rubric_versions
-            WHERE status::text = 'active'
-              AND context_pack_id IN ('VN', 'Western')
-            GROUP BY context_pack_id
-            HAVING count(*) = 1
-          ) active;
-
-          IF active_contexts <> 2 THEN
-            RAISE EXCEPTION 'Cannot simplify rubric versions: VN and Western must each have exactly one active rubric version';
-          END IF;
-
-          IF EXISTS (
-            SELECT 1
-            FROM rubric_versions rv
-            WHERE rv.status::text = 'active'
-              AND rv.context_pack_id IN ('VN', 'Western')
-              AND (
-                SELECT count(*)
-                FROM rubric_categories rc
-                WHERE rc.rubric_version_id = rv.id
-                  AND rc.category_key IN ('behavioral', 'technical')
-              ) <> 2
-          ) THEN
-            RAISE EXCEPTION 'Cannot simplify rubric versions: active rubric versions must have behavioral and technical categories';
-          END IF;
-
-          IF EXISTS (
-            SELECT 1
-            FROM rubric_versions rv
-            WHERE rv.status::text = 'active'
-              AND rv.context_pack_id IN ('VN', 'Western')
-              AND NOT EXISTS (
-                SELECT 1
-                FROM rubric_criteria rcr
-                WHERE rcr.rubric_version_id = rv.id
-                  AND rcr.active = true
-              )
-          ) THEN
-            RAISE EXCEPTION 'Cannot simplify rubric versions: active rubric versions must have active criteria';
-          END IF;
-
-          ALTER TABLE rubric_categories
-            ADD COLUMN IF NOT EXISTS context_pack_id TEXT;
+            SELECT DISTINCT context_pack_id
+            FROM rubric_categories
+            WHERE context_pack_id IN ('VN', 'Western')
+          ) contexts
+          ON CONFLICT (context_pack_id, version_key) DO UPDATE
+            SET status = 'active',
+                checksum = COALESCE(rubric_versions.checksum, EXCLUDED.checksum);
 
           UPDATE rubric_categories rc
-          SET context_pack_id = rv.context_pack_id
+          SET rubric_version_id = rv.id
           FROM rubric_versions rv
-          WHERE rc.rubric_version_id = rv.id
-            AND rv.status::text = 'active'
-            AND rc.context_pack_id IS NULL;
+          WHERE rc.context_pack_id = rv.context_pack_id
+            AND rv.status = 'active'
+            AND rc.rubric_version_id IS NULL;
+        END IF;
+
+        UPDATE rubric_criteria rcr
+        SET rubric_version_id = rc.rubric_version_id
+        FROM rubric_categories rc
+        WHERE rcr.rubric_category_id = rc.id
+          AND rcr.rubric_version_id IS NULL;
+
+        UPDATE interview_sessions s
+        SET rubric_version_id = rv.id
+        FROM rubric_versions rv
+        WHERE s.context_pack_id = rv.context_pack_id
+          AND rv.status = 'active'
+          AND s.rubric_version_id IS NULL;
+
+        IF to_regclass('public.session_question_criteria') IS NOT NULL THEN
+          ALTER TABLE session_question_criteria
+            ADD COLUMN IF NOT EXISTS rubric_criterion_id UUID;
+
+          IF EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'session_question_criteria'
+              AND column_name = 'criterion_code'
+          ) THEN
+            UPDATE session_question_criteria sqc
+            SET rubric_criterion_id = rcr.id
+            FROM session_questions sq
+            JOIN interview_sessions s
+              ON s.id = sq.session_id
+            JOIN rubric_criteria rcr
+              ON rcr.rubric_version_id = s.rubric_version_id
+            WHERE sqc.session_question_id = sq.id
+              AND rcr.code = sqc.criterion_code
+              AND sqc.rubric_criterion_id IS NULL;
+          END IF;
         END IF;
       END $$;
 
+      ALTER TABLE rubric_categories
+        DROP CONSTRAINT IF EXISTS rubric_categories_context_category_key;
+
+      ALTER TABLE rubric_criteria
+        DROP CONSTRAINT IF EXISTS rubric_criteria_category_code_key;
+
       ALTER TABLE interview_sessions
-        DROP CONSTRAINT IF EXISTS interview_sessions_context_pack_id_fkey,
-        DROP CONSTRAINT IF EXISTS interview_sessions_rubric_version_id_fkey;
+        DROP CONSTRAINT IF EXISTS interview_sessions_context_pack_id_fkey;
 
       ALTER TABLE question_bank
         DROP CONSTRAINT IF EXISTS question_bank_context_pack_id_fkey;
 
       ALTER TABLE rubric_categories
-        DROP CONSTRAINT IF EXISTS rubric_categories_rubric_version_id_fkey,
-        DROP CONSTRAINT IF EXISTS rubric_categories_version_category_key;
+        DROP CONSTRAINT IF EXISTS rubric_categories_rubric_version_id_fkey;
 
       ALTER TABLE rubric_criteria
-        DROP CONSTRAINT IF EXISTS rubric_criteria_rubric_version_id_fkey,
-        DROP CONSTRAINT IF EXISTS rubric_criteria_version_code_key;
+        DROP CONSTRAINT IF EXISTS rubric_criteria_rubric_version_id_fkey;
 
-      DROP INDEX IF EXISTS idx_rubric_versions_context_pack;
-      DROP INDEX IF EXISTS idx_rubric_versions_one_active_per_context_pack;
-      DROP INDEX IF EXISTS idx_rubric_categories_version;
-      DROP INDEX IF EXISTS idx_rubric_criteria_version;
-      DROP INDEX IF EXISTS idx_interview_sessions_rubric_version;
+      DROP TRIGGER IF EXISTS trg_question_bank_criteria_active_version ON question_bank_criteria;
+      DROP TRIGGER IF EXISTS trg_session_question_criteria_session_version ON session_question_criteria;
+      DROP FUNCTION IF EXISTS validate_question_bank_criterion_version();
+      DROP FUNCTION IF EXISTS validate_session_question_criterion_version();
 
       DO $$
       DECLARE
@@ -168,6 +199,22 @@ async function main() {
 
           IF missing_links > 0 THEN
             RAISE EXCEPTION 'Cannot drop session_questions.competency_domains: % session_questions rows have no criteria snapshot relation', missing_links;
+          END IF;
+
+          IF EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'session_question_criteria'
+              AND column_name = 'rubric_criterion_id'
+          ) THEN
+            SELECT count(*) INTO missing_links
+            FROM session_question_criteria
+            WHERE rubric_criterion_id IS NULL;
+
+            IF missing_links > 0 THEN
+              RAISE EXCEPTION 'Cannot require session_question_criteria.rubric_criterion_id: % rows could not be mapped from the locked session rubric version', missing_links;
+            END IF;
           END IF;
         END IF;
       END $$;
@@ -225,7 +272,9 @@ async function main() {
         DROP COLUMN IF EXISTS show_prep_card,
         DROP COLUMN IF EXISTS opening_transcript;
     `);
-    console.log('Raw SQL constraints and retired schema objects prepared for Prisma db push.');
+    console.log(
+      'Raw SQL constraints and retired schema objects prepared for Prisma db push.',
+    );
   } finally {
     await client.end();
   }

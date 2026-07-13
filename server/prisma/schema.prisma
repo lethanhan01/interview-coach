@@ -7,33 +7,53 @@ datasource db {
   provider = "postgresql"
 }
 
+model RubricVersion {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contextPackId String             @map("context_pack_id")
+  versionKey    String             @map("version_key")
+  status        String             @default("active")
+  checksum      String?
+  publishedAt   DateTime           @default(now()) @map("published_at") @db.Timestamptz(6)
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  categories    RubricCategory[]
+  criteria      RubricCriterion[]
+  sessions      InterviewSession[]
+
+  @@unique([contextPackId, versionKey], map: "rubric_versions_context_version_key")
+  @@index([contextPackId], map: "idx_rubric_versions_context_pack")
+  @@map("rubric_versions")
+}
+
 model RubricCategory {
   id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contextPackId   String            @map("context_pack_id")
+  rubricVersionId String            @map("rubric_version_id") @db.Uuid
   categoryKey     String            @map("category_key")
   label           String
   weight          Float
   displayOrder    Int               @default(0) @map("display_order")
+  rubricVersion   RubricVersion     @relation(fields: [rubricVersionId], references: [id], onDelete: Cascade, map: "rubric_categories_rubric_version_id_fkey")
   criteria        RubricCriterion[]
 
-  @@unique([contextPackId, categoryKey], map: "rubric_categories_context_category_key")
-  @@index([contextPackId], map: "idx_rubric_categories_context_pack")
+  @@unique([rubricVersionId, categoryKey], map: "rubric_categories_version_category_key")
+  @@index([rubricVersionId], map: "idx_rubric_categories_version")
   @@map("rubric_categories")
 }
 
 model RubricCriterion {
-  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  rubricCategoryId String        @map("rubric_category_id") @db.Uuid
-  code            String
-  name            String
-  weight          Float
-  displayOrder    Int            @default(0) @map("display_order")
-  active          Boolean        @default(true)
-  rubricCategory  RubricCategory @relation(fields: [rubricCategoryId], references: [id], onDelete: Cascade)
-  questionBankLinks QuestionBankCriterion[]
+  id                   String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rubricVersionId      String                     @map("rubric_version_id") @db.Uuid
+  rubricCategoryId     String                     @map("rubric_category_id") @db.Uuid
+  code                 String
+  name                 String
+  weight               Float
+  displayOrder         Int                        @default(0) @map("display_order")
+  rubricVersion        RubricVersion              @relation(fields: [rubricVersionId], references: [id], onDelete: Cascade, map: "rubric_criteria_rubric_version_id_fkey")
+  rubricCategory       RubricCategory             @relation(fields: [rubricCategoryId], references: [id], onDelete: Cascade)
+  questionBankLinks    QuestionBankCriterion[]
   sessionQuestionLinks SessionQuestionCriterion[]
 
-  @@unique([rubricCategoryId, code], map: "rubric_criteria_category_code_key")
+  @@unique([rubricVersionId, code], map: "rubric_criteria_version_code_key")
+  @@index([rubricVersionId], map: "idx_rubric_criteria_version")
   @@index([rubricCategoryId], map: "idx_rubric_criteria_category")
   @@map("rubric_criteria")
 }
@@ -44,17 +64,17 @@ enum QuestionSessionType {
 }
 
 model QuestionBank {
-  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id               String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   content          String
-  sessionType      QuestionSessionType @map("session_type")
+  sessionType      QuestionSessionType     @map("session_type")
   difficulty       Int
-  contextPackId    String            @map("context_pack_id")
-  estimatedTimeMin  Int?              @map("estimated_time_min")
+  contextPackId    String                  @map("context_pack_id")
+  estimatedTimeMin Int?                    @map("estimated_time_min")
   translations     Json?
-  contentJson      Json?             @map("content_json")
-  deletedAt        DateTime?         @map("deleted_at") @db.Timestamptz(6)
-  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  contentJson      Json?                   @map("content_json")
+  deletedAt        DateTime?               @map("deleted_at") @db.Timestamptz(6)
+  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   criteria         QuestionBankCriterion[]
   sessionQuestions SessionQuestion[]
 
@@ -134,18 +154,21 @@ model InterviewSession {
   remainingSeconds      Int?                 @map("remaining_seconds")
   language              String               @default("vi")
   contextPackId         String               @map("context_pack_id")
+  rubricVersionId       String               @map("rubric_version_id") @db.Uuid
   status                String               @default("generating")
   overallScore          Int?                 @map("overall_score")
   completedAt           DateTime?            @map("completed_at") @db.Timestamptz(6)
   createdAt             DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   savedJobDescription   SavedJobDescription? @relation(fields: [savedJobDescriptionId], references: [id], onDelete: SetNull)
+  rubricVersion         RubricVersion        @relation(fields: [rubricVersionId], references: [id], onDelete: Restrict, map: "interview_sessions_rubric_version_id_fkey")
   user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessionQuestions      SessionQuestion[]
   userAnswers           UserAnswer[]
   sessionReports        SessionReport[]
 
   @@index([createdAt(sort: Desc)], map: "idx_interview_sessions_created_at")
+  @@index([rubricVersionId], map: "idx_interview_sessions_rubric_version")
   @@index([savedJobDescriptionId], map: "idx_interview_sessions_saved_jd")
   @@index([userId, createdAt(sort: Desc)], map: "idx_interview_sessions_user_created")
   @@index([userId], map: "idx_interview_sessions_user_id")
@@ -180,18 +203,17 @@ model SavedJobDescription {
 }
 
 model SessionQuestion {
-  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionId        String           @map("session_id") @db.Uuid
-  questionBankId   String?          @map("question_bank_id") @db.Uuid
-  questionText     String           @map("question_text")
-  orderIndex       Int              @map("order_index")
-  questionCategory String           @map("question_category")
-  rubricJson        Json             @map("rubric_json")
-  estimatedTimeMin Int?             @map("estimated_time_min")
-  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  id               String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId        String                     @map("session_id") @db.Uuid
+  questionBankId   String?                    @map("question_bank_id") @db.Uuid
+  questionText     String                     @map("question_text")
+  orderIndex       Int                        @map("order_index")
+  questionCategory String                     @map("question_category")
+  estimatedTimeMin Int?                       @map("estimated_time_min")
+  createdAt        DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
   criteria         SessionQuestionCriterion[]
-  questionBank     QuestionBank?    @relation(fields: [questionBankId], references: [id])
-  session          InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionBank     QuestionBank?              @relation(fields: [questionBankId], references: [id])
+  session          InterviewSession           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   userAnswers      UserAnswer[]
 
   @@unique([sessionId, orderIndex])
@@ -201,42 +223,35 @@ model SessionQuestion {
 }
 
 model SessionQuestionCriterion {
-  sessionQuestionId       String           @map("session_question_id") @db.Uuid
-  rubricCriterionId       String?          @map("rubric_criterion_id") @db.Uuid
-  contextPackIdSnapshot   String           @map("context_pack_id_snapshot")
-  criterionCode           String           @map("criterion_code")
-  criterionNameSnapshot   String           @map("criterion_name_snapshot")
-  categoryKeySnapshot     String           @map("category_key_snapshot")
-  weightSnapshot          Float            @map("weight_snapshot")
-  displayOrderSnapshot    Int              @default(0) @map("display_order_snapshot")
-  createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  sessionQuestion         SessionQuestion  @relation(fields: [sessionQuestionId], references: [id], onDelete: Cascade, map: "session_question_criteria_session_question_id_fkey")
-  rubricCriterion         RubricCriterion? @relation(fields: [rubricCriterionId], references: [id], onDelete: SetNull, map: "session_question_criteria_rubric_criterion_id_fkey")
+  sessionQuestionId String          @map("session_question_id") @db.Uuid
+  rubricCriterionId String          @map("rubric_criterion_id") @db.Uuid
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  sessionQuestion   SessionQuestion @relation(fields: [sessionQuestionId], references: [id], onDelete: Cascade, map: "session_question_criteria_session_question_id_fkey")
+  rubricCriterion   RubricCriterion @relation(fields: [rubricCriterionId], references: [id], onDelete: Restrict, map: "session_question_criteria_rubric_criterion_id_fkey")
 
-  @@id([sessionQuestionId, criterionCode], map: "session_question_criteria_pkey")
+  @@id([sessionQuestionId, rubricCriterionId], map: "session_question_criteria_pkey")
   @@index([rubricCriterionId], map: "idx_session_question_criteria_rubric_criterion")
-  @@index([criterionCode], map: "idx_session_question_criteria_criterion_code")
   @@map("session_question_criteria")
 }
 
 model UserAnswer {
-  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionId            String            @map("session_id") @db.Uuid
-  questionId           String            @map("question_id") @db.Uuid
-  answerMode           String            @map("answer_mode")
-  answerText           String            @map("answer_text")
-  audioFileUrl         String?           @map("audio_file_url")
-  audioDurationSeconds Int?              @map("audio_duration_seconds")
-  audioSizeBytes       Int?              @map("audio_size_bytes")
-  skipped              Boolean           @default(false)
-  voiceMetricsJson     Json?             @map("voice_metrics_json")
-  transcriptionStatus  String?           @map("transcription_status")
-  feedbackGenerated    Boolean           @default(false) @map("feedback_generated")
-  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                   String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId            String           @map("session_id") @db.Uuid
+  questionId           String           @map("question_id") @db.Uuid
+  answerMode           String           @map("answer_mode")
+  answerText           String           @map("answer_text")
+  audioFileUrl         String?          @map("audio_file_url")
+  audioDurationSeconds Int?             @map("audio_duration_seconds")
+  audioSizeBytes       Int?             @map("audio_size_bytes")
+  skipped              Boolean          @default(false)
+  voiceMetricsJson     Json?            @map("voice_metrics_json")
+  transcriptionStatus  String?          @map("transcription_status")
+  feedbackGenerated    Boolean          @default(false) @map("feedback_generated")
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   aiFeedback           AiFeedback?
-  question             SessionQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  session              InterviewSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question             SessionQuestion  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  session              InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, questionId])
   @@index([questionId], map: "idx_user_answers_question_id")

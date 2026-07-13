@@ -731,7 +731,7 @@ flowchart TB
     L1 --> L2 --> L3
 ```
 
-`ContextPackService` đọc rubric hiện hành từ `rubric_categories.context_pack_id` và `rubric_criteria` rồi map về contract prompt/evaluation hiện tại. Khi sinh câu hỏi, `session_questions.rubric_json` lưu snapshot theo context để phiên cũ không đổi nghĩa nếu rubric gốc được chỉnh sau này.
+`ContextPackService` đọc active `rubric_versions` theo `context_pack_id`, kèm category/criterion của version đó, rồi map về contract prompt/evaluation hiện tại. Khi tạo session, backend khóa `interview_sessions.rubric_version_id`; khi sinh câu hỏi, `session_question_criteria` trỏ tới criterion IDs thuộc version đã khóa để phiên cũ không đổi nghĩa nếu rubric gốc publish version mới.
 
 User input trong Layer 3 luôn được wrap: `<job_description>…</job_description>`, `<user_answer>…</user_answer>` — prompt injection prevention.
 

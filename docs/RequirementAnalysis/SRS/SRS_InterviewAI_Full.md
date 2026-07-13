@@ -1126,7 +1126,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 2. Candidate đọc mô tả và chọn một trong hai pack.
 3. Hệ thống highlight card được chọn; hiển thị preview 1–2 tiêu chí chấm điểm của pack đó.
 4. Candidate nhấn **"Xác nhận"** (hoặc nhấn "Tiếp tục" để sang Bước 4 của UC-03).
-5. Hệ thống lưu `context_pack_id` vào session config; lấy rubric hiện hành từ `rubric_categories` / `rubric_criteria` theo context pack đã chọn.
+5. Hệ thống lưu `context_pack_id` và khóa `rubric_version_id` vào session config; lấy rubric hiện hành từ active `rubric_versions` theo context pack đã chọn.
 
 **Alternative Flow:**
 
@@ -1252,7 +1252,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
     - `original_question`: câu hỏi gốc
     - `combined_transcript`: transcript câu gốc + transcript follow-up (nếu có), được ghép lại
     - `jd`: Job Description của phiên
-    - `rubric_json`: rubric tương ứng Context Pack đã chọn
+    - `criteria`: danh sách rubric criteria của câu hỏi, lấy qua `session_question_criteria -> rubric_criteria`
     - `cv_structured`: dữ liệu CV của Candidate (null nếu không có)
 19. Backend gọi Feedback Analyzer (xem **AI Spec — Feedback Analyzer** bên dưới).
 20. Backend nhận Surgical Feedback JSON; validate schema (xem Exception Flow E-04-5).

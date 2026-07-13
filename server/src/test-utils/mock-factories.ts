@@ -18,11 +18,14 @@ export const createMockQuestionBank = (
         name: string;
         weight: number;
         displayOrder: number;
-        active: boolean;
+        rubricVersionId: string;
         rubricCategory: {
-          contextPackId: string;
           categoryKey: string;
           displayOrder: number;
+        };
+        rubricVersion: {
+          contextPackId: string;
+          status: string;
         };
       };
     }>;
@@ -50,11 +53,14 @@ export const createMockQuestionBank = (
         name: 'Communication',
         weight: 1,
         displayOrder: 4,
-        active: true,
+        rubricVersionId: 'rubric-version-vn',
         rubricCategory: {
-          contextPackId: 'VN',
           categoryKey: 'behavioral',
           displayOrder: 1,
+        },
+        rubricVersion: {
+          contextPackId: 'VN',
+          status: 'active',
         },
       },
     },
@@ -67,6 +73,14 @@ export const createMockPrismaService = () => ({
   isBootstrapDatabaseAvailable: jest.fn().mockReturnValue(true),
   rubricCriterion: {
     findMany: jest.fn().mockResolvedValue([]),
+  },
+  rubricVersion: {
+    findFirst: jest.fn().mockResolvedValue(null),
+    upsert: jest.fn(),
+  },
+  rubricCategory: {
+    findMany: jest.fn().mockResolvedValue([]),
+    upsert: jest.fn(),
   },
   questionBank: {
     findMany: jest.fn().mockResolvedValue([]),
@@ -210,18 +224,14 @@ export const createMockQuestionCriteriaService = () => ({
     question.criteria.map((link) => link.rubricCriterion.code),
   ),
   codesFromSessionQuestion: jest.fn((question) =>
-    question.criteria.map((link) => link.criterionCode),
+    question.criteria.map(
+      (link) => link.rubricCriterion?.code ?? link.criterionCode,
+    ),
   ),
   buildSessionQuestionCriteriaData: jest.fn().mockResolvedValue([
     {
       sessionQuestionId: 'question-1',
       rubricCriterionId: 'criterion-1',
-      contextPackIdSnapshot: 'VN',
-      criterionCode: 'D1',
-      criterionNameSnapshot: 'Communication',
-      categoryKeySnapshot: 'behavioral',
-      weightSnapshot: 1,
-      displayOrderSnapshot: 1,
     },
   ]),
 });

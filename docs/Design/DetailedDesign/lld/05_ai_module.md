@@ -105,7 +105,7 @@ interface ContextPackConfig {
 }
 ```
 
-`ContextPackService` ưu tiên đọc rubric hiện hành từ `rubric_categories.context_pack_id` và `rubric_criteria` rồi map về contract runtime hiện tại. Nếu DB thiếu rubric cho context, service fallback về `CONTEXT_PACK_DATA` và log warning. `QuestionGenerationProcessor` tạo `session_questions.rubric_json` snapshot theo context để phiên cũ giữ nguyên tiêu chí chấm điểm đã dùng.
+`ContextPackService` ưu tiên đọc active `rubric_versions` theo `context_pack_id`, kèm `rubric_categories` và `rubric_criteria`, rồi map về contract runtime hiện tại. Nếu DB thiếu rubric cho context trong môi trường dev, service fallback về `CONTEXT_PACK_DATA` và log warning. `QuestionGenerationProcessor` dùng `interview_sessions.rubric_version_id` đã khóa khi tạo session để lưu `session_question_criteria` bằng criterion IDs thuộc version đó.
 
 ### 2.4 Pipeline Strategy Pattern
 

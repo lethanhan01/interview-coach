@@ -64,8 +64,11 @@ export class SessionService {
       }
     }
 
+    let rubricVersionId: string;
     try {
-      await this.referenceData.ensureContextPack(dto.contextPack);
+      rubricVersionId = await this.referenceData.ensureActiveRubricVersion(
+        dto.contextPack,
+      );
     } catch {
       throw new InterviewAIException(
         ErrorCode.SERVICE_UNAVAILABLE,
@@ -90,6 +93,7 @@ export class SessionService {
         numQuestions: dto.numQuestions ?? 5,
         language,
         contextPackId: dto.contextPack,
+        rubricVersionId,
         status: 'generating',
       },
     });
@@ -103,6 +107,7 @@ export class SessionService {
           jobDescriptionText: dto.jobDescription,
           targetRoles: dto.targetRoles ?? [],
           contextPack: dto.contextPack,
+          rubricVersionId,
           language: session.language,
           totalQuestions: session.numQuestions,
           durationMin: session.durationMin,

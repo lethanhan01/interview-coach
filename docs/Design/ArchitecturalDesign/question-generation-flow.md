@@ -224,16 +224,15 @@ session_questions
 ├── question_text     TEXT   — nội dung câu hỏi
 ├── order_index       INT    — thứ tự 0, 1, 2... (dùng để phân trang)
 ├── question_category TEXT   — ví dụ: "behavioral" hoặc "technical"
-├── rubric_json       JSONB  — rubric đánh giá riêng cho câu hỏi này
 └── estimated_time_min INT?  — thời gian dự kiến trả lời
 ```
 
-Tiêu chí đánh giá của từng câu không còn lưu trực tiếp trên `session_questions`; hệ thống ghi snapshot vào `session_question_criteria` gồm `criterion_code`, tên, category, weight và display order tại thời điểm tạo session.
+Tiêu chí đánh giá của từng câu không còn lưu trực tiếp trên `session_questions`; hệ thống ghi relation vào `session_question_criteria` gồm `session_question_id` và `rubric_criterion_id`. Mỗi criterion thuộc `rubric_version_id` đã khóa trên `interview_sessions`, nên lịch sử rubric không phụ thuộc vào rubric active hiện tại.
 
 **Điểm quan trọng:**
 
 - `question_bank_id = NULL` khi AI sinh câu hỏi. Record trong `session_questions` chứa toàn bộ nội dung — không cần join ra bảng khác khi hiển thị.
-- `rubric_json` lưu per-question (không dùng chung rubric của context pack). Điều này cho phép câu hỏi Technical và HR trong cùng session Mixed có criteria đánh giá khác nhau.
+- Mixed session vẫn có thể chứa cả câu Behavioral và Technical vì mỗi câu có các criterion links riêng, nhưng tất cả links phải thuộc cùng immutable rubric version của session.
 - `order_index` là integer tuần tự (0-based). Frontend dùng để fetch câu hỏi theo thứ tự và navigate prev/next.
 
 **Sau khi INSERT xong**, worker gọi `markActiveUnlessStopped()`:

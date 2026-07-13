@@ -106,32 +106,37 @@ function buildCompetencyHeatmap(
 
 function buildSkippedDimensionScores(
   criteria: {
-    criterionCode: string;
-    criterionNameSnapshot: string;
-    categoryKeySnapshot: string;
-    weightSnapshot: number;
-    displayOrderSnapshot: number;
+    rubricCriterion: {
+      code: string;
+      name: string;
+      weight: number;
+      displayOrder: number;
+      rubricCategory: {
+        categoryKey: string;
+      };
+    };
   }[],
 ) {
   return criteria
     .slice()
     .sort((a, b) => {
-      const categoryOrder = a.categoryKeySnapshot.localeCompare(
-        b.categoryKeySnapshot,
-      );
+      const categoryOrder =
+        a.rubricCriterion.rubricCategory.categoryKey.localeCompare(
+          b.rubricCriterion.rubricCategory.categoryKey,
+        );
       if (categoryOrder !== 0) return categoryOrder;
 
       const displayOrder =
-        a.displayOrderSnapshot - b.displayOrderSnapshot;
+        a.rubricCriterion.displayOrder - b.rubricCriterion.displayOrder;
       if (displayOrder !== 0) return displayOrder;
 
-      return a.criterionCode.localeCompare(b.criterionCode);
+      return a.rubricCriterion.code.localeCompare(b.rubricCriterion.code);
     })
     .map((criterion) => ({
-      id: criterion.criterionCode,
-      name: criterion.criterionNameSnapshot,
+      id: criterion.rubricCriterion.code,
+      name: criterion.rubricCriterion.name,
       score: 0,
-      weight: criterion.weightSnapshot,
+      weight: criterion.rubricCriterion.weight,
     }));
 }
 
@@ -162,11 +167,17 @@ export class ComprehensiveReportProcessor extends WorkerHost {
             orderIndex: true,
             criteria: {
               select: {
-                criterionCode: true,
-                criterionNameSnapshot: true,
-                categoryKeySnapshot: true,
-                weightSnapshot: true,
-                displayOrderSnapshot: true,
+                rubricCriterion: {
+                  select: {
+                    code: true,
+                    name: true,
+                    weight: true,
+                    displayOrder: true,
+                    rubricCategory: {
+                      select: { categoryKey: true },
+                    },
+                  },
+                },
               },
             },
           },
@@ -190,14 +201,15 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       );
     }
 
-    const syntheticSkippedFeedbacks: ReportFeedbackInput[] =
-      skippedAnswers.map((answer) => ({
+    const syntheticSkippedFeedbacks: ReportFeedbackInput[] = skippedAnswers.map(
+      (answer) => ({
         userAnswerId: answer.id,
         overallScore: 0,
         keyTakeaway: skippedKeyTakeaway(language),
         isFallback: false,
         dimensionScores: buildSkippedDimensionScores(answer.question.criteria),
-      }));
+      }),
+    );
     const allFeedbacks: ReportFeedbackInput[] = [
       ...feedbacks,
       ...syntheticSkippedFeedbacks,

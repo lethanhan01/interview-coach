@@ -343,7 +343,6 @@ UPDATE interview_sessions SET session_type = 'hr' WHERE session_type = 'behavior
 DO $$
 DECLARE
   invalid_contexts INTEGER;
-  active_contexts INTEGER;
 BEGIN
   SELECT count(*) INTO invalid_contexts
   FROM (
@@ -360,122 +359,118 @@ BEGIN
   END IF;
 
   IF invalid_contexts > 0 THEN
-    RAISE EXCEPTION 'Cannot simplify context packs: found % invalid context_pack_id values', invalid_contexts;
+    RAISE EXCEPTION 'Cannot version rubric context packs: found % invalid context_pack_id values', invalid_contexts;
   END IF;
 
-  IF to_regclass('public.rubric_versions') IS NOT NULL
-     AND EXISTS (
-       SELECT 1 FROM information_schema.columns
-       WHERE table_schema = 'public'
-         AND table_name = 'rubric_categories'
-         AND column_name = 'rubric_version_id'
-     ) THEN
-    SELECT count(*) INTO active_contexts
-    FROM (
-      SELECT context_pack_id
-      FROM rubric_versions
-      WHERE status::text = 'active'
-        AND context_pack_id IN ('VN', 'Western')
-      GROUP BY context_pack_id
-      HAVING count(*) = 1
-    ) active;
-
-    IF active_contexts <> 2 THEN
-      RAISE EXCEPTION 'Cannot simplify rubric versions: VN and Western must each have exactly one active rubric version';
-    END IF;
-
-    IF EXISTS (
-      SELECT 1
-      FROM rubric_versions rv
-      WHERE rv.status::text = 'active'
-        AND rv.context_pack_id IN ('VN', 'Western')
-        AND (
-          SELECT count(*)
-          FROM rubric_categories rc
-          WHERE rc.rubric_version_id = rv.id
-            AND rc.category_key IN ('behavioral', 'technical')
-        ) <> 2
-    ) THEN
-      RAISE EXCEPTION 'Cannot simplify rubric versions: active rubric versions must have behavioral and technical categories';
-    END IF;
-
-    IF EXISTS (
-      SELECT 1
-      FROM rubric_versions rv
-      WHERE rv.status::text = 'active'
-        AND rv.context_pack_id IN ('VN', 'Western')
-        AND NOT EXISTS (
-          SELECT 1
-          FROM rubric_criteria rcr
-          WHERE rcr.rubric_version_id = rv.id
-            AND rcr.active = true
-        )
-    ) THEN
-      RAISE EXCEPTION 'Cannot simplify rubric versions: active rubric versions must have active criteria';
-    END IF;
-
-    ALTER TABLE rubric_categories
-      ADD COLUMN IF NOT EXISTS context_pack_id TEXT;
-
-    UPDATE rubric_categories rc
-    SET context_pack_id = rv.context_pack_id
-    FROM rubric_versions rv
-    WHERE rc.rubric_version_id = rv.id
-      AND rv.status::text = 'active'
-      AND rc.context_pack_id IS NULL;
-  END IF;
 END $$;
 
 COMMIT;
 
+CREATE TABLE IF NOT EXISTS rubric_versions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  context_pack_id TEXT NOT NULL,
+  version_key TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  checksum TEXT,
+  published_at TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  created_at TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  CONSTRAINT chk_rubric_versions_context_pack CHECK (context_pack_id IN ('VN', 'Western')),
+  CONSTRAINT chk_rubric_versions_status CHECK (status IN ('active', 'archived')),
+  CONSTRAINT rubric_versions_context_version_key UNIQUE (context_pack_id, version_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_rubric_versions_context_pack
+  ON rubric_versions(context_pack_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rubric_versions_one_active_per_context_pack
+  ON rubric_versions(context_pack_id)
+  WHERE status = 'active';
+
 ALTER TABLE rubric_categories
-  ALTER COLUMN context_pack_id SET NOT NULL;
+  ADD COLUMN IF NOT EXISTS rubric_version_id UUID;
+
+ALTER TABLE rubric_criteria
+  ADD COLUMN IF NOT EXISTS rubric_version_id UUID;
 
 ALTER TABLE interview_sessions
-  DROP CONSTRAINT IF EXISTS interview_sessions_context_pack_id_fkey,
-  DROP CONSTRAINT IF EXISTS interview_sessions_rubric_version_id_fkey;
+  ADD COLUMN IF NOT EXISTS rubric_version_id UUID;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'rubric_categories'
+      AND column_name = 'context_pack_id'
+  ) THEN
+    INSERT INTO rubric_versions (context_pack_id, version_key, status, checksum)
+    SELECT context_pack_id, 'v1', 'active', md5(context_pack_id || ':v1')
+    FROM (
+      SELECT DISTINCT context_pack_id
+      FROM rubric_categories
+      WHERE context_pack_id IN ('VN', 'Western')
+    ) contexts
+    ON CONFLICT (context_pack_id, version_key) DO UPDATE
+      SET status = 'active',
+          checksum = COALESCE(rubric_versions.checksum, EXCLUDED.checksum);
+
+    UPDATE rubric_categories rc
+    SET rubric_version_id = rv.id
+    FROM rubric_versions rv
+    WHERE rc.context_pack_id = rv.context_pack_id
+      AND rv.status = 'active'
+      AND rc.rubric_version_id IS NULL;
+  END IF;
+
+  UPDATE rubric_criteria rcr
+  SET rubric_version_id = rc.rubric_version_id
+  FROM rubric_categories rc
+  WHERE rcr.rubric_category_id = rc.id
+    AND rcr.rubric_version_id IS NULL;
+
+  UPDATE interview_sessions s
+  SET rubric_version_id = rv.id
+  FROM rubric_versions rv
+  WHERE s.context_pack_id = rv.context_pack_id
+    AND rv.status = 'active'
+    AND s.rubric_version_id IS NULL;
+END $$;
+
+ALTER TABLE interview_sessions
+  DROP CONSTRAINT IF EXISTS interview_sessions_context_pack_id_fkey;
 
 ALTER TABLE question_bank
   DROP CONSTRAINT IF EXISTS question_bank_context_pack_id_fkey;
 
 ALTER TABLE rubric_categories
   DROP CONSTRAINT IF EXISTS rubric_categories_rubric_version_id_fkey,
-  DROP CONSTRAINT IF EXISTS rubric_categories_version_category_key;
+  DROP CONSTRAINT IF EXISTS rubric_categories_context_category_key;
 
 ALTER TABLE rubric_criteria
   DROP CONSTRAINT IF EXISTS rubric_criteria_rubric_version_id_fkey,
-  DROP CONSTRAINT IF EXISTS rubric_criteria_version_code_key;
+  DROP CONSTRAINT IF EXISTS rubric_criteria_category_code_key;
 
-DROP INDEX IF EXISTS idx_rubric_versions_context_pack;
-DROP INDEX IF EXISTS idx_rubric_versions_one_active_per_context_pack;
-DROP INDEX IF EXISTS idx_rubric_categories_version;
-DROP INDEX IF EXISTS idx_rubric_criteria_version;
-DROP INDEX IF EXISTS idx_interview_sessions_rubric_version;
-
-ALTER TABLE rubric_criteria
-  DROP COLUMN IF EXISTS rubric_version_id;
-
-ALTER TABLE rubric_categories
-  DROP COLUMN IF EXISTS rubric_version_id;
-
-ALTER TABLE interview_sessions
-  DROP COLUMN IF EXISTS rubric_version_id;
-
-DROP TABLE IF EXISTS rubric_versions;
 DROP TABLE IF EXISTS context_packs;
 DROP TYPE IF EXISTS "RubricVersionStatus";
 
-CREATE INDEX IF NOT EXISTS idx_rubric_categories_context_pack
-  ON rubric_categories(context_pack_id);
+CREATE INDEX IF NOT EXISTS idx_rubric_categories_version
+  ON rubric_categories(rubric_version_id);
 
 CREATE INDEX IF NOT EXISTS idx_rubric_criteria_category
   ON rubric_criteria(rubric_category_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS rubric_categories_context_category_key
-  ON rubric_categories(context_pack_id, category_key);
+CREATE INDEX IF NOT EXISTS idx_rubric_criteria_version
+  ON rubric_criteria(rubric_version_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS rubric_criteria_category_code_key
-  ON rubric_criteria(rubric_category_id, code);
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_rubric_version
+  ON interview_sessions(rubric_version_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS rubric_categories_version_category_key
+  ON rubric_categories(rubric_version_id, category_key);
+
+CREATE UNIQUE INDEX IF NOT EXISTS rubric_criteria_version_code_key
+  ON rubric_criteria(rubric_version_id, code);
 
 WITH seeds(context_pack_id, category_key, label, weight, display_order) AS (
   VALUES
@@ -484,10 +479,25 @@ WITH seeds(context_pack_id, category_key, label, weight, display_order) AS (
     ('Western', 'behavioral', 'Tiêu chí hành vi', 0.45, 1),
     ('Western', 'technical', 'Tiêu chí kỹ thuật', 0.55, 2)
 )
-INSERT INTO rubric_categories (context_pack_id, category_key, label, weight, display_order)
-SELECT context_pack_id, category_key, label, weight, display_order
+INSERT INTO rubric_versions (context_pack_id, version_key, status, checksum)
+SELECT DISTINCT context_pack_id, 'v1', 'active', md5(context_pack_id || ':v1')
 FROM seeds
-ON CONFLICT (context_pack_id, category_key) DO NOTHING;
+ON CONFLICT (context_pack_id, version_key) DO NOTHING;
+
+WITH seeds(context_pack_id, category_key, label, weight, display_order) AS (
+  VALUES
+    ('VN', 'behavioral', 'Tiêu chí hành vi', 0.50, 1),
+    ('VN', 'technical', 'Tiêu chí kỹ thuật', 0.50, 2),
+    ('Western', 'behavioral', 'Tiêu chí hành vi', 0.45, 1),
+    ('Western', 'technical', 'Tiêu chí kỹ thuật', 0.55, 2)
+)
+INSERT INTO rubric_categories (rubric_version_id, category_key, label, weight, display_order)
+SELECT rv.id, seeds.category_key, seeds.label, seeds.weight, seeds.display_order
+FROM seeds
+JOIN rubric_versions rv
+  ON rv.context_pack_id = seeds.context_pack_id
+ AND rv.version_key = 'v1'
+ON CONFLICT (rubric_version_id, category_key) DO NOTHING;
 
 WITH seeds(context_pack_id, category_key, code, name, weight, display_order) AS (
   VALUES
@@ -515,19 +525,22 @@ WITH seeds(context_pack_id, category_key, code, name, weight, display_order) AS 
     ('Western', 'technical', 'TD5', 'Debug & Problem-solving', 0.15, 5)
 )
 INSERT INTO rubric_criteria (
+  rubric_version_id,
   rubric_category_id,
   code,
   name,
   weight,
-  display_order,
-  active
+  display_order
 )
-SELECT rc.id, seeds.code, seeds.name, seeds.weight, seeds.display_order, true
+SELECT rv.id, rc.id, seeds.code, seeds.name, seeds.weight, seeds.display_order
 FROM seeds
+JOIN rubric_versions rv
+  ON rv.context_pack_id = seeds.context_pack_id
+ AND rv.version_key = 'v1'
 JOIN rubric_categories rc
-  ON rc.context_pack_id = seeds.context_pack_id
+  ON rc.rubric_version_id = rv.id
  AND rc.category_key = seeds.category_key
-ON CONFLICT (rubric_category_id, code) DO NOTHING;
+ON CONFLICT (rubric_version_id, code) DO NOTHING;
 
 DO $$
 BEGIN
@@ -693,12 +706,6 @@ ALTER TABLE question_bank
   DROP CONSTRAINT IF EXISTS chk_question_bank_context_pack;
 ALTER TABLE question_bank
   ADD CONSTRAINT chk_question_bank_context_pack
-  CHECK (context_pack_id IN ('VN', 'Western'));
-
-ALTER TABLE rubric_categories
-  DROP CONSTRAINT IF EXISTS chk_rubric_categories_context_pack;
-ALTER TABLE rubric_categories
-  ADD CONSTRAINT chk_rubric_categories_context_pack
   CHECK (context_pack_id IN ('VN', 'Western'));
 
 ALTER TABLE users
@@ -955,16 +962,10 @@ CREATE INDEX IF NOT EXISTS idx_question_bank_criteria_rubric_criterion
 
 CREATE TABLE IF NOT EXISTS session_question_criteria (
   session_question_id UUID NOT NULL,
-  rubric_criterion_id UUID NULL,
-  context_pack_id_snapshot TEXT NOT NULL,
-  criterion_code TEXT NOT NULL,
-  criterion_name_snapshot TEXT NOT NULL,
-  category_key_snapshot TEXT NOT NULL,
-  weight_snapshot DOUBLE PRECISION NOT NULL,
-  display_order_snapshot INTEGER NOT NULL DEFAULT 0,
+  rubric_criterion_id UUID NOT NULL,
   created_at TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
   CONSTRAINT session_question_criteria_pkey
-    PRIMARY KEY (session_question_id, criterion_code),
+    PRIMARY KEY (session_question_id, rubric_criterion_id),
   CONSTRAINT session_question_criteria_session_question_id_fkey
     FOREIGN KEY (session_question_id)
     REFERENCES session_questions(id)
@@ -972,38 +973,19 @@ CREATE TABLE IF NOT EXISTS session_question_criteria (
   CONSTRAINT session_question_criteria_rubric_criterion_id_fkey
     FOREIGN KEY (rubric_criterion_id)
     REFERENCES rubric_criteria(id)
-    ON DELETE SET NULL
+    ON DELETE RESTRICT
 );
 
 CREATE INDEX IF NOT EXISTS idx_session_question_criteria_rubric_criterion
   ON session_question_criteria(rubric_criterion_id);
 
-CREATE INDEX IF NOT EXISTS idx_session_question_criteria_criterion_code
-  ON session_question_criteria(criterion_code);
-
 ALTER TABLE session_question_criteria
-  DROP CONSTRAINT IF EXISTS chk_session_question_criteria_context_pack;
-ALTER TABLE session_question_criteria
-  ADD CONSTRAINT chk_session_question_criteria_context_pack
-  CHECK (context_pack_id_snapshot IN ('VN', 'Western'));
-
-ALTER TABLE session_question_criteria
-  DROP CONSTRAINT IF EXISTS chk_session_question_criteria_category_key;
-ALTER TABLE session_question_criteria
-  ADD CONSTRAINT chk_session_question_criteria_category_key
-  CHECK (category_key_snapshot IN ('behavioral', 'technical'));
-
-ALTER TABLE session_question_criteria
-  DROP CONSTRAINT IF EXISTS chk_session_question_criteria_weight;
-ALTER TABLE session_question_criteria
-  ADD CONSTRAINT chk_session_question_criteria_weight
-  CHECK (weight_snapshot >= 0);
-
-ALTER TABLE session_question_criteria
+  DROP CONSTRAINT IF EXISTS chk_session_question_criteria_context_pack,
+  DROP CONSTRAINT IF EXISTS chk_session_question_criteria_category_key,
+  DROP CONSTRAINT IF EXISTS chk_session_question_criteria_weight,
   DROP CONSTRAINT IF EXISTS chk_session_question_criteria_display_order;
-ALTER TABLE session_question_criteria
-  ADD CONSTRAINT chk_session_question_criteria_display_order
-  CHECK (display_order_snapshot >= 0);
+
+DROP INDEX IF EXISTS idx_session_question_criteria_criterion_code;
 
 DO $$
 DECLARE
@@ -1063,12 +1045,12 @@ BEGIN
           FROM unnest(qb.competency_domains) AS domain(code)
           WHERE NOT EXISTS (
             SELECT 1
-            FROM rubric_categories rc
+            FROM rubric_versions rv
             JOIN rubric_criteria rcr
-              ON rcr.rubric_category_id = rc.id
-            WHERE rc.context_pack_id = qb.context_pack_id
+              ON rcr.rubric_version_id = rv.id
+            WHERE rv.context_pack_id = qb.context_pack_id
+              AND rv.status = 'active'
               AND rcr.code = domain.code
-              AND rcr.active = true
           )
         )
     $legacy$ INTO violation_count;
@@ -1082,12 +1064,12 @@ BEGIN
       SELECT qb.id, rcr.id
       FROM question_bank qb
       CROSS JOIN LATERAL unnest(qb.competency_domains) AS domain(code)
-      JOIN rubric_categories rc
-        ON rc.context_pack_id = qb.context_pack_id
+      JOIN rubric_versions rv
+        ON rv.context_pack_id = qb.context_pack_id
+       AND rv.status = 'active'
       JOIN rubric_criteria rcr
-        ON rcr.rubric_category_id = rc.id
+        ON rcr.rubric_version_id = rv.id
        AND rcr.code = domain.code
-       AND rcr.active = true
       WHERE qb.deleted_at IS NULL
       ON CONFLICT DO NOTHING
     $legacy$;
@@ -1128,91 +1110,40 @@ BEGIN
         FROM unnest(sq.competency_domains) AS domain(code)
         WHERE NOT EXISTS (
           SELECT 1
-          FROM rubric_categories rc
-          JOIN rubric_criteria rcr
-            ON rcr.rubric_category_id = rc.id
-          WHERE rc.context_pack_id = s.context_pack_id
+          FROM rubric_criteria rcr
+          WHERE rcr.rubric_version_id = s.rubric_version_id
             AND rcr.code = domain.code
-            AND rcr.active = true
         )
-          AND NOT (
-            COALESCE(sq.rubric_json->'behavioral', '{}'::jsonb) ? domain.code
-            OR COALESCE(sq.rubric_json->'technical', '{}'::jsonb) ? domain.code
-          )
       )
     $legacy$ INTO violation_count;
 
     IF violation_count > 0 THEN
-      RAISE EXCEPTION 'Cannot backfill session_question_criteria: % session_questions rows have criteria missing from current rubric and rubric_json snapshot', violation_count;
+      RAISE EXCEPTION 'Cannot backfill session_question_criteria: % session_questions rows have criteria missing from the session rubric version', violation_count;
     END IF;
 
     EXECUTE $legacy$
       WITH domain_rows AS (
         SELECT
           sq.id AS session_question_id,
-          s.context_pack_id,
-          domain.code,
-          domain.ordinality,
-          CASE
-            WHEN COALESCE(sq.rubric_json->'behavioral', '{}'::jsonb) ? domain.code
-              THEN 'behavioral'
-            WHEN COALESCE(sq.rubric_json->'technical', '{}'::jsonb) ? domain.code
-              THEN 'technical'
-            ELSE NULL
-          END AS snapshot_category,
-          CASE
-            WHEN COALESCE(sq.rubric_json->'behavioral', '{}'::jsonb) ? domain.code
-              THEN sq.rubric_json->'behavioral'->domain.code
-            WHEN COALESCE(sq.rubric_json->'technical', '{}'::jsonb) ? domain.code
-              THEN sq.rubric_json->'technical'->domain.code
-            ELSE NULL
-          END AS snapshot_entry
+          s.rubric_version_id,
+          domain.code
         FROM session_questions sq
         JOIN interview_sessions s
           ON s.id = sq.session_id
         CROSS JOIN LATERAL unnest(sq.competency_domains)
-          WITH ORDINALITY AS domain(code, ordinality)
+          AS domain(code)
       )
       INSERT INTO session_question_criteria (
         session_question_id,
-        rubric_criterion_id,
-        context_pack_id_snapshot,
-        criterion_code,
-        criterion_name_snapshot,
-        category_key_snapshot,
-        weight_snapshot,
-        display_order_snapshot
+        rubric_criterion_id
       )
       SELECT
         domain_rows.session_question_id,
-        rcr.id,
-        domain_rows.context_pack_id,
-        domain_rows.code,
-        COALESCE(
-          NULLIF(domain_rows.snapshot_entry->>'name', ''),
-          rcr.name,
-          domain_rows.code
-        ),
-        COALESCE(rc.category_key, domain_rows.snapshot_category),
-        COALESCE(
-          CASE
-            WHEN jsonb_typeof(domain_rows.snapshot_entry->'weight') = 'number'
-              THEN (domain_rows.snapshot_entry->>'weight')::DOUBLE PRECISION
-            ELSE NULL
-          END,
-          rcr.weight,
-          0
-        ),
-        COALESCE(rcr.display_order, domain_rows.ordinality::INTEGER)
+        rcr.id
       FROM domain_rows
-      LEFT JOIN rubric_categories rc
-        ON rc.context_pack_id = domain_rows.context_pack_id
-      LEFT JOIN rubric_criteria rcr
-        ON rcr.rubric_category_id = rc.id
+      JOIN rubric_criteria rcr
+        ON rcr.rubric_version_id = domain_rows.rubric_version_id
        AND rcr.code = domain_rows.code
-       AND rcr.active = true
-      WHERE rcr.id IS NOT NULL
-         OR domain_rows.snapshot_category IS NOT NULL
       ON CONFLICT DO NOTHING
     $legacy$;
   END IF;
@@ -1222,7 +1153,130 @@ ALTER TABLE question_bank
   DROP COLUMN IF EXISTS competency_domains;
 
 ALTER TABLE session_questions
-  DROP COLUMN IF EXISTS competency_domains;
+  DROP COLUMN IF EXISTS competency_domains,
+  DROP COLUMN IF EXISTS rubric_json;
+
+ALTER TABLE session_question_criteria
+  DROP COLUMN IF EXISTS context_pack_id_snapshot,
+  DROP COLUMN IF EXISTS criterion_code,
+  DROP COLUMN IF EXISTS criterion_name_snapshot,
+  DROP COLUMN IF EXISTS category_key_snapshot,
+  DROP COLUMN IF EXISTS weight_snapshot,
+  DROP COLUMN IF EXISTS display_order_snapshot;
+
+ALTER TABLE rubric_categories
+  DROP COLUMN IF EXISTS context_pack_id;
+
+ALTER TABLE rubric_criteria
+  DROP COLUMN IF EXISTS active;
+
+ALTER TABLE rubric_versions
+  DROP CONSTRAINT IF EXISTS chk_rubric_versions_context_pack,
+  DROP CONSTRAINT IF EXISTS chk_rubric_versions_status;
+ALTER TABLE rubric_versions
+  ADD CONSTRAINT chk_rubric_versions_context_pack CHECK (context_pack_id IN ('VN', 'Western')),
+  ADD CONSTRAINT chk_rubric_versions_status CHECK (status IN ('active', 'archived'));
+
+ALTER TABLE rubric_categories
+  ALTER COLUMN rubric_version_id SET NOT NULL,
+  DROP CONSTRAINT IF EXISTS rubric_categories_rubric_version_id_fkey;
+ALTER TABLE rubric_categories
+  ADD CONSTRAINT rubric_categories_rubric_version_id_fkey
+  FOREIGN KEY (rubric_version_id)
+  REFERENCES rubric_versions(id)
+  ON DELETE CASCADE;
+
+ALTER TABLE rubric_criteria
+  ALTER COLUMN rubric_version_id SET NOT NULL,
+  DROP CONSTRAINT IF EXISTS rubric_criteria_rubric_version_id_fkey;
+ALTER TABLE rubric_criteria
+  ADD CONSTRAINT rubric_criteria_rubric_version_id_fkey
+  FOREIGN KEY (rubric_version_id)
+  REFERENCES rubric_versions(id)
+  ON DELETE CASCADE;
+
+ALTER TABLE interview_sessions
+  ALTER COLUMN rubric_version_id SET NOT NULL,
+  DROP CONSTRAINT IF EXISTS interview_sessions_rubric_version_id_fkey;
+ALTER TABLE interview_sessions
+  ADD CONSTRAINT interview_sessions_rubric_version_id_fkey
+  FOREIGN KEY (rubric_version_id)
+  REFERENCES rubric_versions(id)
+  ON DELETE RESTRICT;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'session_question_criteria_pkey'
+      AND conrelid = 'public.session_question_criteria'::regclass
+  ) THEN
+    ALTER TABLE session_question_criteria
+      ADD CONSTRAINT session_question_criteria_pkey
+      PRIMARY KEY (session_question_id, rubric_criterion_id);
+  END IF;
+END $$;
+
+ALTER TABLE session_question_criteria
+  ALTER COLUMN rubric_criterion_id SET NOT NULL,
+  DROP CONSTRAINT IF EXISTS session_question_criteria_rubric_criterion_id_fkey;
+ALTER TABLE session_question_criteria
+  ADD CONSTRAINT session_question_criteria_rubric_criterion_id_fkey
+  FOREIGN KEY (rubric_criterion_id)
+  REFERENCES rubric_criteria(id)
+  ON DELETE RESTRICT;
+
+CREATE OR REPLACE FUNCTION validate_question_bank_criterion_version()
+RETURNS trigger AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM question_bank qb
+    JOIN rubric_criteria rcr
+      ON rcr.id = NEW.rubric_criterion_id
+    JOIN rubric_versions rv
+      ON rv.id = rcr.rubric_version_id
+    WHERE qb.id = NEW.question_bank_id
+      AND rv.context_pack_id = qb.context_pack_id
+      AND rv.status = 'active'
+  ) THEN
+    RAISE EXCEPTION 'question_bank_criteria must reference an active criterion for the question context pack';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_question_bank_criteria_active_version ON question_bank_criteria;
+CREATE TRIGGER trg_question_bank_criteria_active_version
+BEFORE INSERT OR UPDATE ON question_bank_criteria
+FOR EACH ROW EXECUTE FUNCTION validate_question_bank_criterion_version();
+
+CREATE OR REPLACE FUNCTION validate_session_question_criterion_version()
+RETURNS trigger AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM session_questions sq
+    JOIN interview_sessions s
+      ON s.id = sq.session_id
+    JOIN rubric_criteria rcr
+      ON rcr.id = NEW.rubric_criterion_id
+    WHERE sq.id = NEW.session_question_id
+      AND rcr.rubric_version_id = s.rubric_version_id
+  ) THEN
+    RAISE EXCEPTION 'session_question_criteria must reference a criterion from the session rubric version';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_session_question_criteria_session_version ON session_question_criteria;
+CREATE TRIGGER trg_session_question_criteria_session_version
+BEFORE INSERT OR UPDATE ON session_question_criteria
+FOR EACH ROW EXECUTE FUNCTION validate_session_question_criterion_version();
 
 ALTER TABLE question_bank_criteria ENABLE ROW LEVEL SECURITY;
 

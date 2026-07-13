@@ -17,11 +17,14 @@ type QuestionBankRow = {
       name: string;
       weight: number;
       displayOrder: number;
-      active: boolean;
+      rubricVersionId: string;
       rubricCategory: {
-        contextPackId: string;
         categoryKey: string;
         displayOrder: number;
+      };
+      rubricVersion: {
+        contextPackId: string;
+        status: string;
       };
     } | null;
   }>;
@@ -47,9 +50,15 @@ export class QuestionBankService {
     contextPackId: string,
     count: number,
     language: string,
+    rubricVersionId?: string,
   ): Promise<FallbackQuestion[]> {
     if (sessionType === 'mixed') {
-      return this.selectMixedFallbackQuestions(contextPackId, count, language);
+      return this.selectMixedFallbackQuestions(
+        contextPackId,
+        count,
+        language,
+        rubricVersionId,
+      );
     }
 
     const candidates = await this.prisma.questionBank.findMany({
@@ -78,7 +87,7 @@ export class QuestionBankService {
     }
 
     return selected.map((question) =>
-      this.mapFallbackQuestion(question, language),
+      this.mapFallbackQuestion(question, language, rubricVersionId),
     );
   }
 
@@ -86,6 +95,7 @@ export class QuestionBankService {
     contextPackId: string,
     count: number,
     language: string,
+    rubricVersionId?: string,
   ): Promise<FallbackQuestion[]> {
     const hrCount = Math.ceil(count / 2);
     const techCount = Math.floor(count / 2);
@@ -125,7 +135,7 @@ export class QuestionBankService {
     }
 
     return allSelected.map((question) =>
-      this.mapFallbackQuestion(question, language),
+      this.mapFallbackQuestion(question, language, rubricVersionId),
     );
   }
 
@@ -149,9 +159,12 @@ export class QuestionBankService {
   private mapFallbackQuestion(
     question: QuestionBankRow,
     language: string,
+    rubricVersionId?: string,
   ): FallbackQuestion {
-    const competencyDomains =
-      this.questionCriteria.codesFromQuestionBank(question);
+    const competencyDomains = this.questionCriteria.codesFromQuestionBank(
+      question,
+      rubricVersionId,
+    );
 
     return {
       questionBankId: question.id,
@@ -204,7 +217,7 @@ const QUESTION_BANK_CRITERIA_INCLUDE = {
   criteria: {
     include: {
       rubricCriterion: {
-        include: { rubricCategory: true },
+        include: { rubricCategory: true, rubricVersion: true },
       },
     },
   },

@@ -9,7 +9,9 @@ import {
 const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error('DATABASE_URL or DIRECT_URL is required to test DB constraints.');
+  throw new Error(
+    'DATABASE_URL or DIRECT_URL is required to test DB constraints.',
+  );
 }
 
 const client = new Client(buildPgConnectionConfig(connectionString));
@@ -34,20 +36,26 @@ async function main() {
     await expectReject(
       'interview_sessions rejects invalid context_pack_id',
       `INSERT INTO interview_sessions (
-         id, user_id, job_description, session_type, context_pack_id
+         id, user_id, job_description, session_type, context_pack_id, rubric_version_id
        )
-       VALUES ($1, $2, 'x', 'hr', 'APAC')`,
-      [randomUUID(), ids.userA],
+       VALUES ($1, $2, 'x', 'hr', 'APAC', $3)`,
+      [randomUUID(), ids.userA, ids.rubricVersion],
     );
 
     await expectReject(
       'interview_sessions rejects saved JD owned by another user',
       `INSERT INTO interview_sessions (
          id, user_id, saved_job_description_id, job_description,
-         session_type, context_pack_id
+         session_type, context_pack_id, rubric_version_id
        )
-       VALUES ($1, $2, $3, 'x', 'hr', $4)`,
-      [randomUUID(), ids.userA, ids.savedJdB, ids.contextPack],
+       VALUES ($1, $2, $3, 'x', 'hr', $4, $5)`,
+      [
+        randomUUID(),
+        ids.userA,
+        ids.savedJdB,
+        ids.contextPack,
+        ids.rubricVersion,
+      ],
     );
 
     await expectReject(
@@ -109,55 +117,55 @@ async function main() {
       'interview_sessions rejects invalid status and range',
       `INSERT INTO interview_sessions (
          id, user_id, job_description, session_type,
-         context_pack_id, status, num_questions
+         context_pack_id, rubric_version_id, status, num_questions
        )
-       VALUES ($1, $2, 'x', 'hr', $3, 'ready', 2)`,
-      [randomUUID(), ids.userA, ids.contextPack],
+       VALUES ($1, $2, 'x', 'hr', $3, $4, 'ready', 2)`,
+      [randomUUID(), ids.userA, ids.contextPack, ids.rubricVersion],
     );
 
     await expectReject(
       'rubric_categories rejects negative weight',
       `INSERT INTO rubric_categories (
-       id, context_pack_id, category_key, label, weight, display_order
+       id, rubric_version_id, category_key, label, weight, display_order
      )
-       VALUES ($1, 'VN', 'technical', 'Invalid', -0.1, 3)`,
-      [randomUUID()],
+       VALUES ($1, $2, 'technical', 'Invalid', -0.1, 3)`,
+      [randomUUID(), ids.rubricVersion],
     );
 
     await expectReject(
       'rubric_categories rejects unknown category_key',
       `INSERT INTO rubric_categories (
-         id, context_pack_id, category_key, label, weight, display_order
+         id, rubric_version_id, category_key, label, weight, display_order
        )
-       VALUES ($1, 'VN', 'culture', 'Culture', 0.1, 3)`,
-      [randomUUID()],
+       VALUES ($1, $2, 'culture', 'Culture', 0.1, 3)`,
+      [randomUUID(), ids.rubricVersion],
     );
 
     await expectReject(
       'rubric_categories rejects negative display_order',
       `INSERT INTO rubric_categories (
-         id, context_pack_id, category_key, label, weight, display_order
+         id, rubric_version_id, category_key, label, weight, display_order
        )
-       VALUES ($1, 'VN', 'technical', 'Technical 2', 0.1, -1)`,
-      [randomUUID()],
+       VALUES ($1, $2, 'technical', 'Technical 2', 0.1, -1)`,
+      [randomUUID(), ids.rubricVersion],
     );
 
     await expectReject(
       'rubric_criteria rejects duplicate code in same category',
       `INSERT INTO rubric_criteria (
-         id, rubric_category_id, code, name, weight, display_order
+         id, rubric_version_id, rubric_category_id, code, name, weight, display_order
        )
-       VALUES ($1, $2, 'D1', 'Duplicate', 0.1, 2)`,
-      [randomUUID(), ids.rubricCategory],
+       VALUES ($1, $2, $3, 'D1', 'Duplicate', 0.1, 2)`,
+      [randomUUID(), ids.rubricVersion, ids.rubricCategory],
     );
 
     await expectReject(
       'rubric_criteria rejects negative display_order',
       `INSERT INTO rubric_criteria (
-         id, rubric_category_id, code, name, weight, display_order
+         id, rubric_version_id, rubric_category_id, code, name, weight, display_order
        )
-       VALUES ($1, $2, 'D9', 'Invalid Order', 0.1, -1)`,
-      [randomUUID(), ids.rubricCategory],
+       VALUES ($1, $2, $3, 'D9', 'Invalid Order', 0.1, -1)`,
+      [randomUUID(), ids.rubricVersion, ids.rubricCategory],
     );
 
     await expectReject(
@@ -183,13 +191,16 @@ async function main() {
       ids.sessionA,
     );
 
-    await expectSetNull(
-      'session_question_criteria keeps snapshot and nulls FK when criterion is deleted',
+    await expectRejectDelete(
+      'session_question_criteria restricts deleting referenced criterion',
       ids.sessionA,
       ids.rubricCategory,
+      ids.rubricVersion,
     );
 
-    console.log('DB hardening negative constraints: all rejection checks passed');
+    console.log(
+      'DB hardening negative constraints: all rejection checks passed',
+    );
   } finally {
     await client.query('ROLLBACK');
     await client.end();
@@ -205,8 +216,10 @@ async function createFixture() {
   const savedJdB = randomUUID();
   const questionBank = randomUUID();
 
-  const rubricCategory = await ensureRubricCategory(contextPack);
+  const rubricVersion = await ensureRubricVersion(contextPack);
+  const rubricCategory = await ensureRubricCategory(rubricVersion);
   const rubricCriterion = await ensureRubricCriterion(
+    rubricVersion,
     rubricCategory,
     'D1',
     'Communication',
@@ -233,12 +246,12 @@ async function createFixture() {
 
   await client.query(
     `INSERT INTO interview_sessions (
-       id, user_id, job_description, session_type, context_pack_id
+      id, user_id, job_description, session_type, context_pack_id, rubric_version_id
      )
      VALUES
-       ($1, $2, 'x', 'hr', $5),
-       ($3, $4, 'x', 'hr', $5)`,
-    [sessionA, userA, sessionB, userA, contextPack],
+       ($1, $2, 'x', 'hr', $5, $6),
+       ($3, $4, 'x', 'hr', $5, $6)`,
+    [sessionA, userA, sessionB, userA, contextPack, rubricVersion],
   );
 
   await client.query(
@@ -296,15 +309,16 @@ async function createFixture() {
     validAnswer,
     validFeedback,
     rubricCriterion,
+    rubricVersion,
   };
 }
 
-async function ensureRubricCategory(contextPack: string): Promise<string> {
+async function ensureRubricVersion(contextPack: string): Promise<string> {
   const existing = await client.query<{ id: string }>(
     `SELECT id
-     FROM rubric_categories
+     FROM rubric_versions
      WHERE context_pack_id = $1
-       AND category_key = 'behavioral'
+       AND status = 'active'
      LIMIT 1`,
     [contextPack],
   );
@@ -312,16 +326,39 @@ async function ensureRubricCategory(contextPack: string): Promise<string> {
 
   const id = randomUUID();
   await client.query(
+    `INSERT INTO rubric_versions (
+       id, context_pack_id, version_key, status, checksum
+     )
+     VALUES ($1, $2, 'constraint-test', 'active', $3)`,
+    [id, contextPack, `constraint-${id}`],
+  );
+  return id;
+}
+
+async function ensureRubricCategory(rubricVersion: string): Promise<string> {
+  const existing = await client.query<{ id: string }>(
+    `SELECT id
+     FROM rubric_categories
+     WHERE rubric_version_id = $1
+       AND category_key = 'behavioral'
+     LIMIT 1`,
+    [rubricVersion],
+  );
+  if (existing.rows[0]?.id) return existing.rows[0].id;
+
+  const id = randomUUID();
+  await client.query(
     `INSERT INTO rubric_categories (
-       id, context_pack_id, category_key, label, weight, display_order
+       id, rubric_version_id, category_key, label, weight, display_order
      )
      VALUES ($1, $2, 'behavioral', 'Behavioral', 1, 1)`,
-    [id, contextPack],
+    [id, rubricVersion],
   );
   return id;
 }
 
 async function ensureRubricCriterion(
+  rubricVersion: string,
   rubricCategory: string,
   code: string,
   name: string,
@@ -329,20 +366,20 @@ async function ensureRubricCriterion(
   const existing = await client.query<{ id: string }>(
     `SELECT id
      FROM rubric_criteria
-     WHERE rubric_category_id = $1
+     WHERE rubric_version_id = $1
        AND code = $2
      LIMIT 1`,
-    [rubricCategory, code],
+    [rubricVersion, code],
   );
   if (existing.rows[0]?.id) return existing.rows[0].id;
 
   const id = randomUUID();
   await client.query(
     `INSERT INTO rubric_criteria (
-       id, rubric_category_id, code, name, weight, display_order
+       id, rubric_version_id, rubric_category_id, code, name, weight, display_order
      )
-     VALUES ($1, $2, $3, $4, 1, 1)`,
-    [id, rubricCategory, code, name],
+     VALUES ($1, $2, $3, $4, $5, 1, 1)`,
+    [id, rubricVersion, rubricCategory, code, name],
   );
   return id;
 }
@@ -350,11 +387,11 @@ async function ensureRubricCriterion(
 async function createQuestion(sessionId: string, orderIndex: number) {
   const id = randomUUID();
   await client.query(
-     `INSERT INTO session_questions (
+    `INSERT INTO session_questions (
          id, session_id, question_text, order_index,
-         question_category, rubric_json
+         question_category
        )
-       VALUES ($1, $2, $3, $4, 'general', '{}'::jsonb)`,
+       VALUES ($1, $2, $3, $4, 'behavioral')`,
     [id, sessionId, `Constraint question ${orderIndex}`, orderIndex],
   );
   return id;
@@ -362,14 +399,22 @@ async function createQuestion(sessionId: string, orderIndex: number) {
 
 async function expectCascade(label: string, sessionId: string) {
   const questionId = await createQuestion(sessionId, 20);
+  const criterion = await client.query<{ id: string }>(
+    `SELECT rcr.id
+     FROM rubric_criteria rcr
+     JOIN interview_sessions s
+       ON s.rubric_version_id = rcr.rubric_version_id
+     WHERE s.id = $1
+       AND rcr.code = 'D1'
+     LIMIT 1`,
+    [sessionId],
+  );
   await client.query(
     `INSERT INTO session_question_criteria (
-       session_question_id, context_pack_id_snapshot, criterion_code,
-       criterion_name_snapshot, category_key_snapshot, weight_snapshot,
-       display_order_snapshot
+       session_question_id, rubric_criterion_id
      )
-     VALUES ($1, 'VN', 'D1', 'Communication', 'behavioral', 1, 1)`,
-    [questionId],
+     VALUES ($1, $2)`,
+    [questionId, criterion.rows[0]?.id],
   );
 
   await client.query(`DELETE FROM session_questions WHERE id = $1`, [
@@ -387,51 +432,35 @@ async function expectCascade(label: string, sessionId: string) {
   console.log(`PASS ${label}`);
 }
 
-async function expectSetNull(
+async function expectRejectDelete(
   label: string,
   sessionId: string,
   rubricCategory: string,
+  rubricVersion: string,
 ) {
   const criterionId = randomUUID();
   const questionId = await createQuestion(sessionId, 21);
   await client.query(
     `INSERT INTO rubric_criteria (
-       id, rubric_category_id, code, name, weight, display_order
+       id, rubric_version_id, rubric_category_id, code, name, weight, display_order
      )
-     VALUES ($1, $2, 'D99', 'Temporary Criterion', 0.1, 99)`,
-    [criterionId, rubricCategory],
+     VALUES ($1, $2, $3, 'D99', 'Temporary Criterion', 0.1, 99)`,
+    [criterionId, rubricVersion, rubricCategory],
   );
   await client.query(
     `INSERT INTO session_question_criteria (
-       session_question_id, rubric_criterion_id, context_pack_id_snapshot,
-       criterion_code, criterion_name_snapshot, category_key_snapshot,
-       weight_snapshot, display_order_snapshot
+       session_question_id, rubric_criterion_id
      )
-     VALUES ($1, $2, 'VN', 'D99', 'Temporary Criterion', 'behavioral', 0.1, 99)`,
+     VALUES ($1, $2)`,
     [questionId, criterionId],
   );
 
-  await client.query(`DELETE FROM rubric_criteria WHERE id = $1`, [
+  await expectReject(label, `DELETE FROM rubric_criteria WHERE id = $1`, [
     criterionId,
   ]);
-  const result = await client.query<{ rubric_criterion_id: string | null }>(
-    `SELECT rubric_criterion_id
-     FROM session_question_criteria
-     WHERE session_question_id = $1
-       AND criterion_code = 'D99'`,
-    [questionId],
-  );
-  if (result.rows[0]?.rubric_criterion_id !== null) {
-    throw new Error(`Expected SET NULL did not happen: ${label}`);
-  }
-  console.log(`PASS ${label}`);
 }
 
-async function expectReject(
-  label: string,
-  sql: string,
-  values: unknown[],
-) {
+async function expectReject(label: string, sql: string, values: unknown[]) {
   const savepoint = `sp_${randomUUID().replace(/-/g, '')}`;
   await client.query(`SAVEPOINT ${savepoint}`);
   try {

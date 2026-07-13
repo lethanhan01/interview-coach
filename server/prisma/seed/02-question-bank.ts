@@ -1406,8 +1406,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
   },
   // ── HR × VN extended (15 câu) ─────────────────────────────────────────────
   {
-    enContent: 'Why did you choose to apply to this company specifically, and what do you know about our products or culture?',
-    viContent: 'Tại sao bạn chọn ứng tuyển vào công ty này, và bạn biết gì về sản phẩm hoặc văn hóa của chúng tôi?',
+    enContent:
+      'Why did you choose to apply to this company specifically, and what do you know about our products or culture?',
+    viContent:
+      'Tại sao bạn chọn ứng tuyển vào công ty này, và bạn biết gì về sản phẩm hoặc văn hóa của chúng tôi?',
     sessionType: 'hr',
     difficulty: 2,
     contextPackId: 'VN',
@@ -1417,8 +1419,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'Where do you see yourself professionally in three to five years, and how does this role fit into that path?',
-    viContent: 'Bạn thấy mình ở đâu về mặt nghề nghiệp trong 3-5 năm tới, và vị trí này phù hợp với lộ trình đó như thế nào?',
+    enContent:
+      'Where do you see yourself professionally in three to five years, and how does this role fit into that path?',
+    viContent:
+      'Bạn thấy mình ở đâu về mặt nghề nghiệp trong 3-5 năm tới, và vị trí này phù hợp với lộ trình đó như thế nào?',
     sessionType: 'hr',
     difficulty: 2,
     contextPackId: 'VN',
@@ -1428,8 +1432,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'Tell me about a time you failed at something. What did you do next and what did you learn?',
-    viContent: 'Kể về một lần bạn thất bại trong công việc hoặc học tập. Bạn đã làm gì tiếp theo và rút ra bài học gì?',
+    enContent:
+      'Tell me about a time you failed at something. What did you do next and what did you learn?',
+    viContent:
+      'Kể về một lần bạn thất bại trong công việc hoặc học tập. Bạn đã làm gì tiếp theo và rút ra bài học gì?',
     sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'VN',
@@ -1439,8 +1445,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'How do you approach working in a team where members are remote or in different time zones?',
-    viContent: 'Bạn tiếp cận việc làm trong nhóm mà các thành viên làm việc từ xa hoặc khác múi giờ như thế nào?',
+    enContent:
+      'How do you approach working in a team where members are remote or in different time zones?',
+    viContent:
+      'Bạn tiếp cận việc làm trong nhóm mà các thành viên làm việc từ xa hoặc khác múi giờ như thế nào?',
     sessionType: 'hr',
     difficulty: 2,
     contextPackId: 'VN',
@@ -1450,8 +1458,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'Describe a situation where you had to learn something entirely new to solve a problem. How did you approach it?',
-    viContent: 'Mô tả tình huống bạn phải học một điều hoàn toàn mới để giải quyết vấn đề. Bạn tiếp cận như thế nào?',
+    enContent:
+      'Describe a situation where you had to learn something entirely new to solve a problem. How did you approach it?',
+    viContent:
+      'Mô tả tình huống bạn phải học một điều hoàn toàn mới để giải quyết vấn đề. Bạn tiếp cận như thế nào?',
     sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'VN',
@@ -1461,8 +1471,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'How do you prioritize when you have multiple tasks with similar urgency? Walk me through your method.',
-    viContent: 'Bạn ưu tiên như thế nào khi có nhiều nhiệm vụ có mức độ khẩn cấp tương đương? Hãy mô tả phương pháp của bạn.',
+    enContent:
+      'How do you prioritize when you have multiple tasks with similar urgency? Walk me through your method.',
+    viContent:
+      'Bạn ưu tiên như thế nào khi có nhiều nhiệm vụ có mức độ khẩn cấp tương đương? Hãy mô tả phương pháp của bạn.',
     sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'VN',
@@ -1472,8 +1484,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'How do you typically give feedback to a teammate whose code or work you think can be improved?',
-    viContent: 'Bạn thường cho phản hồi về code hoặc công việc của đồng đội cần cải thiện như thế nào?',
+    enContent:
+      'How do you typically give feedback to a teammate whose code or work you think can be improved?',
+    viContent:
+      'Bạn thường cho phản hồi về code hoặc công việc của đồng đội cần cải thiện như thế nào?',
     sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'VN',
@@ -1483,8 +1497,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'Describe a time when you had to work with incomplete or ambiguous requirements. What did you do?',
-    viContent: 'Mô tả một lần bạn phải làm việc với yêu cầu không đầy đủ hoặc mơ hồ. Bạn đã xử lý thế nào?',
+    enContent:
+      'Describe a time when you had to work with incomplete or ambiguous requirements. What did you do?',
+    viContent:
+      'Mô tả một lần bạn phải làm việc với yêu cầu không đầy đủ hoặc mơ hồ. Bạn đã xử lý thế nào?',
     sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'VN',
@@ -1494,8 +1510,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'How do you keep your technical skills current? What resources or habits do you use to stay up to date?',
-    viContent: 'Bạn giữ kỹ năng kỹ thuật của mình được cập nhật như thế nào? Bạn dùng tài nguyên hay thói quen gì?',
+    enContent:
+      'How do you keep your technical skills current? What resources or habits do you use to stay up to date?',
+    viContent:
+      'Bạn giữ kỹ năng kỹ thuật của mình được cập nhật như thế nào? Bạn dùng tài nguyên hay thói quen gì?',
     sessionType: 'hr',
     difficulty: 2,
     contextPackId: 'VN',
@@ -1505,8 +1523,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'What would you contribute to the team beyond your assigned technical tasks?',
-    viContent: 'Bạn có thể đóng góp gì cho nhóm ngoài các nhiệm vụ kỹ thuật được giao?',
+    enContent:
+      'What would you contribute to the team beyond your assigned technical tasks?',
+    viContent:
+      'Bạn có thể đóng góp gì cho nhóm ngoài các nhiệm vụ kỹ thuật được giao?',
     sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'VN',
@@ -1516,8 +1536,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'Tell me about a time you received critical feedback. How did you react and what did you change?',
-    viContent: 'Kể về một lần bạn nhận được phản hồi tiêu cực. Bạn phản ứng như thế nào và bạn đã thay đổi gì?',
+    enContent:
+      'Tell me about a time you received critical feedback. How did you react and what did you change?',
+    viContent:
+      'Kể về một lần bạn nhận được phản hồi tiêu cực. Bạn phản ứng như thế nào và bạn đã thay đổi gì?',
     sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'VN',
@@ -1527,8 +1549,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'As a fresher, what unique perspective or energy do you bring to a team of more experienced engineers?',
-    viContent: 'Là fresher, bạn mang lại góc nhìn hay năng lượng gì độc đáo cho nhóm có nhiều kỹ sư kinh nghiệm hơn?',
+    enContent:
+      'As a fresher, what unique perspective or energy do you bring to a team of more experienced engineers?',
+    viContent:
+      'Là fresher, bạn mang lại góc nhìn hay năng lượng gì độc đáo cho nhóm có nhiều kỹ sư kinh nghiệm hơn?',
     sessionType: 'hr',
     difficulty: 2,
     contextPackId: 'VN',
@@ -1538,8 +1562,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior'],
   },
   {
-    enContent: 'Describe the most technically challenging problem you have faced. How did you approach and resolve it?',
-    viContent: 'Mô tả vấn đề kỹ thuật thách thức nhất bạn từng đối mặt. Bạn tiếp cận và giải quyết như thế nào?',
+    enContent:
+      'Describe the most technically challenging problem you have faced. How did you approach and resolve it?',
+    viContent:
+      'Mô tả vấn đề kỹ thuật thách thức nhất bạn từng đối mặt. Bạn tiếp cận và giải quyết như thế nào?',
     sessionType: 'hr',
     difficulty: 4,
     contextPackId: 'VN',
@@ -1549,8 +1575,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'How do you handle situations where your workload is consistently more than you can finish in working hours?',
-    viContent: 'Bạn xử lý như thế nào khi khối lượng công việc thường xuyên vượt quá khả năng hoàn thành trong giờ làm?',
+    enContent:
+      'How do you handle situations where your workload is consistently more than you can finish in working hours?',
+    viContent:
+      'Bạn xử lý như thế nào khi khối lượng công việc thường xuyên vượt quá khả năng hoàn thành trong giờ làm?',
     sessionType: 'hr',
     difficulty: 3,
     contextPackId: 'VN',
@@ -1560,8 +1588,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'What is your approach when you disagree with a decision made by your team lead or manager?',
-    viContent: 'Cách tiếp cận của bạn khi không đồng ý với quyết định của trưởng nhóm hoặc quản lý là gì?',
+    enContent:
+      'What is your approach when you disagree with a decision made by your team lead or manager?',
+    viContent:
+      'Cách tiếp cận của bạn khi không đồng ý với quyết định của trưởng nhóm hoặc quản lý là gì?',
     sessionType: 'hr',
     difficulty: 4,
     contextPackId: 'VN',
@@ -1572,8 +1602,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
   },
   // ── Technical × VN extended (10 câu) ──────────────────────────────────────
   {
-    enContent: 'What is the difference between GET, POST, PUT, and DELETE HTTP methods, and when do you use each?',
-    viContent: 'Sự khác biệt giữa các HTTP method GET, POST, PUT và DELETE là gì, và khi nào bạn dùng từng loại?',
+    enContent:
+      'What is the difference between GET, POST, PUT, and DELETE HTTP methods, and when do you use each?',
+    viContent:
+      'Sự khác biệt giữa các HTTP method GET, POST, PUT và DELETE là gì, và khi nào bạn dùng từng loại?',
     sessionType: 'technical',
     difficulty: 1,
     contextPackId: 'VN',
@@ -1583,8 +1615,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'What makes an API RESTful? Name three constraints that distinguish REST from a plain HTTP API.',
-    viContent: 'Điều gì làm cho một API là RESTful? Nêu ba ràng buộc phân biệt REST với một HTTP API thông thường.',
+    enContent:
+      'What makes an API RESTful? Name three constraints that distinguish REST from a plain HTTP API.',
+    viContent:
+      'Điều gì làm cho một API là RESTful? Nêu ba ràng buộc phân biệt REST với một HTTP API thông thường.',
     sessionType: 'technical',
     difficulty: 2,
     contextPackId: 'VN',
@@ -1594,8 +1628,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'When would you choose a NoSQL database over a relational database? Give a concrete example.',
-    viContent: 'Khi nào bạn chọn NoSQL thay vì cơ sở dữ liệu quan hệ? Cho một ví dụ cụ thể.',
+    enContent:
+      'When would you choose a NoSQL database over a relational database? Give a concrete example.',
+    viContent:
+      'Khi nào bạn chọn NoSQL thay vì cơ sở dữ liệu quan hệ? Cho một ví dụ cụ thể.',
     sessionType: 'technical',
     difficulty: 2,
     contextPackId: 'VN',
@@ -1605,8 +1641,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'Explain what a database index does and describe a case where adding an index would hurt performance.',
-    viContent: 'Giải thích index trong cơ sở dữ liệu làm gì và mô tả một trường hợp thêm index lại làm giảm hiệu năng.',
+    enContent:
+      'Explain what a database index does and describe a case where adding an index would hurt performance.',
+    viContent:
+      'Giải thích index trong cơ sở dữ liệu làm gì và mô tả một trường hợp thêm index lại làm giảm hiệu năng.',
     sessionType: 'technical',
     difficulty: 3,
     contextPackId: 'VN',
@@ -1616,8 +1654,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'Describe a Git branching strategy you have used. How did it help coordinate work in your team?',
-    viContent: 'Mô tả một chiến lược branching Git bạn đã dùng. Nó giúp phối hợp công việc trong nhóm như thế nào?',
+    enContent:
+      'Describe a Git branching strategy you have used. How did it help coordinate work in your team?',
+    viContent:
+      'Mô tả một chiến lược branching Git bạn đã dùng. Nó giúp phối hợp công việc trong nhóm như thế nào?',
     sessionType: 'technical',
     difficulty: 2,
     contextPackId: 'VN',
@@ -1627,8 +1667,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'Explain the difference between callbacks, Promises, and async/await. Why did async/await become preferred?',
-    viContent: 'Giải thích sự khác biệt giữa callback, Promise và async/await. Tại sao async/await trở nên được ưa chuộng hơn?',
+    enContent:
+      'Explain the difference between callbacks, Promises, and async/await. Why did async/await become preferred?',
+    viContent:
+      'Giải thích sự khác biệt giữa callback, Promise và async/await. Tại sao async/await trở nên được ưa chuộng hơn?',
     sessionType: 'technical',
     difficulty: 2,
     contextPackId: 'VN',
@@ -1638,8 +1680,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'Compare JWT-based authentication with session-based authentication. What are the trade-offs of each?',
-    viContent: 'So sánh xác thực dựa trên JWT với xác thực dựa trên session. Đánh đổi của mỗi cách là gì?',
+    enContent:
+      'Compare JWT-based authentication with session-based authentication. What are the trade-offs of each?',
+    viContent:
+      'So sánh xác thực dựa trên JWT với xác thực dựa trên session. Đánh đổi của mỗi cách là gì?',
     sessionType: 'technical',
     difficulty: 3,
     contextPackId: 'VN',
@@ -1649,8 +1693,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'What is Docker, and how does containerizing an application help during development and deployment?',
-    viContent: 'Docker là gì, và container hóa ứng dụng giúp ích như thế nào trong quá trình phát triển và triển khai?',
+    enContent:
+      'What is Docker, and how does containerizing an application help during development and deployment?',
+    viContent:
+      'Docker là gì, và container hóa ứng dụng giúp ích như thế nào trong quá trình phát triển và triển khai?',
     sessionType: 'technical',
     difficulty: 3,
     contextPackId: 'VN',
@@ -1660,8 +1706,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'What is a CI/CD pipeline? Describe each stage and explain why it reduces risk when shipping code.',
-    viContent: 'CI/CD pipeline là gì? Mô tả từng giai đoạn và giải thích vì sao nó giảm rủi ro khi deploy code.',
+    enContent:
+      'What is a CI/CD pipeline? Describe each stage and explain why it reduces risk when shipping code.',
+    viContent:
+      'CI/CD pipeline là gì? Mô tả từng giai đoạn và giải thích vì sao nó giảm rủi ro khi deploy code.',
     sessionType: 'technical',
     difficulty: 3,
     contextPackId: 'VN',
@@ -1671,8 +1719,10 @@ const FRONTEND_QUESTIONS: LocalizedQuestion[] = [
     applicableLevels: ['junior', 'mid'],
   },
   {
-    enContent: 'What is the N+1 query problem in ORMs? How would you detect and fix it in a real application?',
-    viContent: 'Vấn đề N+1 query trong ORM là gì? Bạn sẽ phát hiện và sửa nó như thế nào trong ứng dụng thực tế?',
+    enContent:
+      'What is the N+1 query problem in ORMs? How would you detect and fix it in a real application?',
+    viContent:
+      'Vấn đề N+1 query trong ORM là gì? Bạn sẽ phát hiện và sửa nó như thế nào trong ứng dụng thực tế?',
     sessionType: 'technical',
     difficulty: 4,
     contextPackId: 'VN',
@@ -1764,7 +1814,10 @@ const SEED_QUESTIONS = [
 export async function seedQuestionBank(prisma: PrismaClient): Promise<void> {
   // Count only canonical seed rows (not kaggle rows) to avoid false skip
   const activeCount = await prisma.questionBank.count({
-    where: { deletedAt: null, contentJson: { path: ['source'], equals: 'seed' } },
+    where: {
+      deletedAt: null,
+      contentJson: { path: ['source'], equals: 'seed' },
+    },
   });
 
   if (activeCount >= SEED_QUESTIONS.length) {
@@ -1775,7 +1828,10 @@ export async function seedQuestionBank(prisma: PrismaClient): Promise<void> {
 
   if (activeCount > 0) {
     await prisma.questionBank.updateMany({
-      where: { deletedAt: null, contentJson: { path: ['source'], equals: 'seed' } },
+      where: {
+        deletedAt: null,
+        contentJson: { path: ['source'], equals: 'seed' },
+      },
       data: { deletedAt: new Date() },
     });
   }
@@ -1798,12 +1854,12 @@ async function syncQuestionBankCriteria(prisma: PrismaClient): Promise<void> {
     CROSS JOIN LATERAL jsonb_array_elements_text(
       COALESCE(qb.content_json->'criteriaCodes', '[]'::jsonb)
     ) AS domain(code)
-    JOIN rubric_categories rc
-      ON rc.context_pack_id = qb.context_pack_id
+    JOIN rubric_versions rv
+      ON rv.context_pack_id = qb.context_pack_id
+     AND rv.status = 'active'
     JOIN rubric_criteria rcr
-      ON rcr.rubric_category_id = rc.id
+      ON rcr.rubric_version_id = rv.id
      AND rcr.code = domain.code
-     AND rcr.active = true
     WHERE qb.deleted_at IS NULL
       AND qb.content_json->>'source' = 'seed'
     ON CONFLICT DO NOTHING

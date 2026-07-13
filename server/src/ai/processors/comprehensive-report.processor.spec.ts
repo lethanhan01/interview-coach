@@ -37,11 +37,15 @@ interface PrismaMock {
             questionText: string;
             orderIndex: number;
             criteria: Array<{
-              criterionCode: string;
-              criterionNameSnapshot: string;
-              categoryKeySnapshot: string;
-              weightSnapshot: number;
-              displayOrderSnapshot: number;
+              rubricCriterion: {
+                code: string;
+                name: string;
+                weight: number;
+                displayOrder: number;
+                rubricCategory: {
+                  categoryKey: string;
+                };
+              };
             }>;
           };
         }>
@@ -83,6 +87,21 @@ describe('ComprehensiveReportProcessor', () => {
     turnIds: ['answer-1', 'answer-2'],
   };
   const job = { data: jobData } as Job<typeof jobData>;
+  const criterion = (
+    code: string,
+    name: string,
+    weight: number,
+    displayOrder: number,
+    categoryKey = 'behavioral',
+  ) => ({
+    rubricCriterion: {
+      code,
+      name,
+      weight,
+      displayOrder,
+      rubricCategory: { categoryKey },
+    },
+  });
 
   beforeEach(async () => {
     prisma = {
@@ -303,20 +322,8 @@ describe('ComprehensiveReportProcessor', () => {
           questionText: 'Why should we hire you?',
           orderIndex: 2,
           criteria: [
-            {
-              criterionCode: 'D1',
-              criterionNameSnapshot: 'Communication',
-              categoryKeySnapshot: 'behavioral',
-              weightSnapshot: 0.6,
-              displayOrderSnapshot: 1,
-            },
-            {
-              criterionCode: 'D2',
-              criterionNameSnapshot: 'Problem solving',
-              categoryKeySnapshot: 'behavioral',
-              weightSnapshot: 0.4,
-              displayOrderSnapshot: 2,
-            },
+            criterion('D1', 'Communication', 0.6, 1),
+            criterion('D2', 'Problem solving', 0.4, 2),
           ],
         },
       },
@@ -389,15 +396,7 @@ describe('ComprehensiveReportProcessor', () => {
         question: {
           questionText: 'Tell me about yourself.',
           orderIndex: 1,
-          criteria: [
-            {
-              criterionCode: 'D1',
-              criterionNameSnapshot: 'Communication',
-              categoryKeySnapshot: 'behavioral',
-              weightSnapshot: 1,
-              displayOrderSnapshot: 1,
-            },
-          ],
+          criteria: [criterion('D1', 'Communication', 1, 1)],
         },
       },
       {
@@ -406,15 +405,7 @@ describe('ComprehensiveReportProcessor', () => {
         question: {
           questionText: 'Why should we hire you?',
           orderIndex: 2,
-          criteria: [
-            {
-              criterionCode: 'D2',
-              criterionNameSnapshot: 'Problem solving',
-              categoryKeySnapshot: 'behavioral',
-              weightSnapshot: 1,
-              displayOrderSnapshot: 1,
-            },
-          ],
+          criteria: [criterion('D2', 'Problem solving', 1, 1)],
         },
       },
     ]);

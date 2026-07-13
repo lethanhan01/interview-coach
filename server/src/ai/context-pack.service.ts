@@ -20,6 +20,7 @@ export interface RubricDimensionEntry {
 
 export interface ContextPackConfig {
   type: ContextPackType;
+  rubricVersionId?: string;
   rubricDimensions: RubricDimension[];
   behavioralDimensions: RubricDimensionEntry[];
   technicalDimensions: RubricDimensionEntry[];
@@ -37,17 +38,22 @@ export class ContextPackService {
     if (!this.prisma) return this.getLegacyContextPack(type);
 
     try {
-      const categories = await this.prisma.rubricCategory.findMany({
-        where: { contextPackId: type },
-        orderBy: { displayOrder: 'asc' },
+      const version = await this.prisma.rubricVersion.findFirst({
+        where: { contextPackId: type, status: 'active' },
+        orderBy: { publishedAt: 'desc' },
         include: {
-          criteria: {
-            where: { active: true },
+          categories: {
             orderBy: { displayOrder: 'asc' },
+            include: {
+              criteria: {
+                orderBy: { displayOrder: 'asc' },
+              },
+            },
           },
         },
       });
 
+      const categories = version?.categories ?? [];
       const hasCompleteRubric =
         categories.some((category) => category.categoryKey === 'behavioral') &&
         categories.some((category) => category.categoryKey === 'technical') &&
@@ -74,6 +80,7 @@ export class ContextPackService {
             displayOrder: criterion.displayOrder,
           })),
         })),
+        version?.id,
       );
     } catch (error: unknown) {
       this.logger.warn(
@@ -132,6 +139,7 @@ export class ContextPackService {
   private fromRubricCategories(
     type: ContextPackType,
     categories: RubricCategorySeed[],
+    rubricVersionId?: string,
   ): ContextPackConfig {
     const behavioral =
       categories.find((category) => category.key === 'behavioral')?.criteria ??
@@ -147,6 +155,7 @@ export class ContextPackService {
 
     return {
       type,
+      rubricVersionId,
       rubricDimensions,
       behavioralDimensions: behavioral.map((criterion) => ({
         id: criterion.code,

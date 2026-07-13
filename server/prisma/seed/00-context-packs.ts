@@ -1,20 +1,48 @@
 import type { PrismaClient } from '@prisma/client';
+import { createHash } from 'crypto';
 import { CONTEXT_PACK_DATA } from '../../src/prisma/context-pack.data';
-import { buildRubricCategoriesFromPack } from '../../src/prisma/rubric-versioning';
+import {
+  buildRubricCategoriesFromPack,
+  buildRubricSnapshot,
+} from '../../src/prisma/rubric-versioning';
 
 export async function seedContextPacks(prisma: PrismaClient): Promise<void> {
   await prisma.$transaction(async (tx) => {
     for (const pack of CONTEXT_PACK_DATA) {
-      for (const categorySeed of buildRubricCategoriesFromPack(pack)) {
+      const categories = buildRubricCategoriesFromPack(pack);
+      const checksum = createHash('sha256')
+        .update(JSON.stringify(buildRubricSnapshot(categories)))
+        .digest('hex');
+      const version = await tx.rubricVersion.upsert({
+        where: {
+          contextPackId_versionKey: {
+            contextPackId: pack.id,
+            versionKey: 'v1',
+          },
+        },
+        create: {
+          contextPackId: pack.id,
+          versionKey: 'v1',
+          status: 'active',
+          checksum,
+        },
+        update: {
+          status: 'active',
+          checksum,
+        },
+        select: { id: true },
+      });
+
+      for (const categorySeed of categories) {
         const category = await tx.rubricCategory.upsert({
           where: {
-            contextPackId_categoryKey: {
-              contextPackId: pack.id,
+            rubricVersionId_categoryKey: {
+              rubricVersionId: version.id,
               categoryKey: categorySeed.key,
             },
           },
           create: {
-            contextPackId: pack.id,
+            rubricVersionId: version.id,
             categoryKey: categorySeed.key,
             label: categorySeed.label,
             weight: categorySeed.weight,
@@ -31,24 +59,24 @@ export async function seedContextPacks(prisma: PrismaClient): Promise<void> {
         for (const criterionSeed of categorySeed.criteria) {
           await tx.rubricCriterion.upsert({
             where: {
-              rubricCategoryId_code: {
-                rubricCategoryId: category.id,
+              rubricVersionId_code: {
+                rubricVersionId: version.id,
                 code: criterionSeed.code,
               },
             },
             create: {
+              rubricVersionId: version.id,
               rubricCategoryId: category.id,
               code: criterionSeed.code,
               name: criterionSeed.name,
               weight: criterionSeed.weight,
               displayOrder: criterionSeed.displayOrder,
-              active: true,
             },
             update: {
+              rubricCategoryId: category.id,
               name: criterionSeed.name,
               weight: criterionSeed.weight,
               displayOrder: criterionSeed.displayOrder,
-              active: true,
             },
           });
         }

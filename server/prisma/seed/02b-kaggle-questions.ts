@@ -50,7 +50,9 @@ export async function seedKaggleQuestions(prisma: PrismaClient): Promise<void> {
 
   if (existingCount >= questions.length) {
     await syncKaggleQuestionCriteria(prisma);
-    console.log(`question_bank (kaggle): already seeded ${existingCount} rows, skipping`);
+    console.log(
+      `question_bank (kaggle): already seeded ${existingCount} rows, skipping`,
+    );
     return;
   }
 
@@ -74,9 +76,7 @@ export async function seedKaggleQuestions(prisma: PrismaClient): Promise<void> {
   console.log(`question_bank (kaggle): seeded ${questions.length} questions`);
 }
 
-async function syncKaggleQuestionCriteria(
-  prisma: PrismaClient,
-): Promise<void> {
+async function syncKaggleQuestionCriteria(prisma: PrismaClient): Promise<void> {
   await prisma.$executeRaw`
     INSERT INTO question_bank_criteria (question_bank_id, rubric_criterion_id)
     SELECT qb.id, rcr.id
@@ -84,12 +84,12 @@ async function syncKaggleQuestionCriteria(
     CROSS JOIN LATERAL jsonb_array_elements_text(
       COALESCE(qb.content_json->'criteriaCodes', '[]'::jsonb)
     ) AS domain(code)
-    JOIN rubric_categories rc
-      ON rc.context_pack_id = qb.context_pack_id
+    JOIN rubric_versions rv
+      ON rv.context_pack_id = qb.context_pack_id
+     AND rv.status = 'active'
     JOIN rubric_criteria rcr
-      ON rcr.rubric_category_id = rc.id
+      ON rcr.rubric_version_id = rv.id
      AND rcr.code = domain.code
-     AND rcr.active = true
     WHERE qb.deleted_at IS NULL
       AND qb.content_json->>'source' = 'kaggle'
     ON CONFLICT DO NOTHING

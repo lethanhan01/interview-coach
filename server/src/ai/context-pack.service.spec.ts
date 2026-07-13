@@ -62,50 +62,57 @@ describe('ContextPackService', () => {
   describe('normalized rubric read path', () => {
     it('map rubric_categories/criteria theo context về ContextPackConfig hiện tại', async () => {
       const prisma = {
-        rubricCategory: {
-          findMany: jest.fn().mockResolvedValue([
-            {
-              categoryKey: 'behavioral',
-              label: 'Behavioral',
-              weight: 0.6,
-              displayOrder: 1,
-              criteria: [
-                {
-                  code: 'D2',
-                  name: 'Problem solving',
-                  weight: 0.7,
-                  displayOrder: 1,
-                },
-              ],
-            },
-            {
-              categoryKey: 'technical',
-              label: 'Technical',
-              weight: 0.4,
-              displayOrder: 2,
-              criteria: [
-                {
-                  code: 'TD3',
-                  name: 'Systems thinking',
-                  weight: 1,
-                  displayOrder: 1,
-                },
-              ],
-            },
-          ]),
+        rubricVersion: {
+          findFirst: jest.fn().mockResolvedValue({
+            id: 'rubric-version-vn',
+            categories: [
+              {
+                categoryKey: 'behavioral',
+                label: 'Behavioral',
+                weight: 0.6,
+                displayOrder: 1,
+                criteria: [
+                  {
+                    code: 'D2',
+                    name: 'Problem solving',
+                    weight: 0.7,
+                    displayOrder: 1,
+                  },
+                ],
+              },
+              {
+                categoryKey: 'technical',
+                label: 'Technical',
+                weight: 0.4,
+                displayOrder: 2,
+                criteria: [
+                  {
+                    code: 'TD3',
+                    name: 'Systems thinking',
+                    weight: 1,
+                    displayOrder: 1,
+                  },
+                ],
+              },
+            ],
+          }),
         },
       };
       const dbBackedService = new ContextPackService(prisma as any);
 
       const pack = await dbBackedService.getContextPack('VN');
 
-      expect(prisma.rubricCategory.findMany).toHaveBeenCalledWith({
-        where: { contextPackId: 'VN' },
-        orderBy: { displayOrder: 'asc' },
+      expect(prisma.rubricVersion.findFirst).toHaveBeenCalledWith({
+        where: { contextPackId: 'VN', status: 'active' },
+        orderBy: { publishedAt: 'desc' },
         include: {
-          criteria: {
-            where: { active: true },
+          categories: {
             orderBy: { displayOrder: 'asc' },
+            include: {
+              criteria: {
+                orderBy: { displayOrder: 'asc' },
+              },
+            },
           },
         },
       });
@@ -128,30 +135,33 @@ describe('ContextPackService', () => {
 
     it('getRubricSnapshot dùng rubric hiện hành theo context', async () => {
       const prisma = {
-        rubricCategory: {
-          findMany: jest.fn().mockResolvedValue([
-            {
-              categoryKey: 'behavioral',
-              label: 'Behavioral',
-              weight: 1,
-              displayOrder: 1,
-              criteria: [
-                {
-                  code: 'D1',
-                  name: 'Communication',
-                  weight: 1,
-                  displayOrder: 1,
-                },
-              ],
-            },
-            {
-              categoryKey: 'technical',
-              label: 'Technical',
-              weight: 0,
-              displayOrder: 2,
-              criteria: [],
-            },
-          ]),
+        rubricVersion: {
+          findFirst: jest.fn().mockResolvedValue({
+            id: 'rubric-version-vn',
+            categories: [
+              {
+                categoryKey: 'behavioral',
+                label: 'Behavioral',
+                weight: 1,
+                displayOrder: 1,
+                criteria: [
+                  {
+                    code: 'D1',
+                    name: 'Communication',
+                    weight: 1,
+                    displayOrder: 1,
+                  },
+                ],
+              },
+              {
+                categoryKey: 'technical',
+                label: 'Technical',
+                weight: 0,
+                displayOrder: 2,
+                criteria: [],
+              },
+            ],
+          }),
         },
       };
       const dbBackedService = new ContextPackService(prisma as any);
@@ -160,9 +170,9 @@ describe('ContextPackService', () => {
         behavioral: { D1: { name: 'Communication', weight: 1 } },
         technical: {},
       });
-      expect(prisma.rubricCategory.findMany).toHaveBeenCalledWith(
+      expect(prisma.rubricVersion.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { contextPackId: 'VN' },
+          where: { contextPackId: 'VN', status: 'active' },
         }),
       );
     });
