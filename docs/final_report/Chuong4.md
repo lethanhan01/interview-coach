@@ -477,134 +477,202 @@ Nếu AI sinh được một phần câu hỏi nhưng question bank không đủ
 
 **a. Mục đích của tính năng**
 
-Nhóm tính năng thực hiện phiên cho phép người dùng đi qua danh sách câu hỏi đã được tạo, gửi câu trả lời, bỏ qua câu hỏi khi cần và hoàn tất phiên. Đây là phần tương tác chính của AI Mock Interview vì người dùng luyện tập trực tiếp với từng câu hỏi.
+Tính năng thực hiện phiên cho phép người dùng làm việc với danh sách câu hỏi đã được tạo ở bước trước. Người dùng mở phiên, xem từng câu hỏi, gửi câu trả lời, có thể bỏ qua câu hỏi và cuối cùng chuyển phiên sang giai đoạn tổng hợp báo cáo. Trường hợp hết thời gian phiên cũng được xử lý như một nhánh hoàn tất đặc biệt: các câu chưa được submit sẽ tự động được ghi nhận là bỏ qua trước khi tạo báo cáo.
 
-Tính năng này không quyết định cách chấm điểm. Vai trò của nó là hiển thị câu hỏi đúng thứ tự, ghi nhận câu trả lời một cách nhất quán và chuyển dữ liệu sang bước đánh giá ở mục 4.5.5.
+Trọng tâm của tính năng này không phải là chấm điểm ngay trong request gửi câu trả lời. Backend chỉ cần ghi nhận dữ liệu trả lời đúng phiên, đúng câu hỏi, đúng người dùng và đưa các tác vụ nặng như feedback và report sang hàng đợi xử lý nền. Cách thiết kế này giúp request trả lời nhanh hơn, đồng thời hạn chế lỗi mất dữ liệu khi AI hoặc queue xử lý chậm.
 
-Tính năng này quan trọng vì chất lượng báo cáo phụ thuộc trực tiếp vào dữ liệu câu trả lời. Nếu câu trả lời bị ghi trùng, ghi sai câu hỏi hoặc mất trạng thái bỏ qua, các bước feedback và report phía sau sẽ không còn phản ánh đúng phiên phỏng vấn của người dùng.
+Ba yêu cầu quan trọng của chức năng là:
 
-Sơ đồ sau mô tả mục đích của tính năng ở mức tổng quan: biến danh sách câu hỏi đã sẵn sàng thành dữ liệu câu trả lời có thể dùng cho feedback và báo cáo.
+| Yêu cầu | Ý nghĩa |
+| --- | --- |
+| Đúng chủ sở hữu | Người dùng chỉ được gửi câu trả lời cho phiên của chính mình. |
+| Đúng câu hỏi | Câu trả lời chỉ được ghi nếu `questionId` thuộc về `sessionId` đang xử lý. |
+| Không ghi trùng | Mỗi cặp phiên - câu hỏi chỉ có một bản ghi trong `user_answers`. |
+
+Sơ đồ tổng quát:
 
 ```mermaid
 flowchart TD
-    A[Phiên đã có danh sách câu hỏi] --> B[Người dùng trả lời từng câu]
-    B --> C{Thao tác của người dùng}
-    C -->|Gửi câu trả lời| D[Lưu answer trong user_answers]
-    C -->|Bỏ qua câu hỏi| E[Lưu trạng thái skipped]
-    D --> F[Xếp feedback cho câu trả lời]
-    E --> G[Đánh dấu câu không cần chấm điểm]
-    F --> H[Dữ liệu sẵn sàng cho mục 4.5.5]
-    G --> I[Dữ liệu sẵn sàng cho báo cáo skipped]
-    H --> J[Hoàn tất phiên và chuyển sang tổng hợp]
-    I --> J
+    A[Phiên đã có session_questions] --> B[Frontend tải câu hỏi]
+    B --> C[Người dùng trả lời hoặc bỏ qua]
+    B --> T[Hết thời gian phiên phỏng vấn]
+    C --> D[Backend kiểm tra session, user và question]
+    D --> E[Update và insert user_answers theo sessionId + questionId]
+    T --> U[Auto-skip các câu chưa có answer]
+    U --> K
+    E --> F{Loại câu trả lời}
+    F -->|Text| G[Xếp job feedback]
+    F -->|Skip| I[Không xếp feedback tại bước submit]
+    G --> J[Feedback worker xử lý nền]
+    I --> K[Report xử lý câu skipped ở bước tổng hợp]
+    J --> L[Cập nhật tiến độ feedback]
+    L --> M{Đủ answer và feedback?}
+    K --> M
+    M -->|Có| N[Xếp job report]
 ```
 
-**b. Dữ liệu đầu vào**
+**b. Dữ liệu đầu vào và đầu ra**
 
-Dữ liệu đầu vào gồm mã phiên, mã câu hỏi, nội dung câu trả lời của người dùng, trạng thái bỏ qua nếu có và các thông tin ngữ cảnh đã gắn với câu hỏi như loại câu hỏi, competency domain, context pack và ngôn ngữ đầu ra.
+Frontend gọi các endpoint chính sau trong quá trình thực hiện phiên:
 
-Danh sách câu hỏi được đọc từ `session_questions`. Câu trả lời được lưu vào `user_answers`. Nếu người dùng bỏ qua câu hỏi, bản ghi câu trả lời vẫn được tạo với cờ bỏ qua để phiên có thể tiếp tục và báo cáo sau này biết câu nào không có dữ liệu chấm điểm.
+| Endpoint | Mục đích |
+| --- | --- |
+| `GET /sessions/:id/status` | Kiểm tra trạng thái phiên và số câu hỏi. |
+| `GET /sessions/:id/questions` | Lấy danh sách câu hỏi, trạng thái đã trả lời và vị trí câu hiện tại. |
+| `POST /sessions/:sessionId/turns` | Gửi câu trả lời dạng văn bản hoặc ghi nhận bỏ qua câu hỏi. |
+| `PATCH /sessions/:id/status` | Chuyển trạng thái phiên, ví dụ pause, active, canceled hoặc completed. |
+| `GET /sessions/:id/feedback-progress` | Theo dõi số feedback đã hoàn tất trong lúc chờ báo cáo. |
+| `GET /sessions/:id/events` | Nhận sự kiện SSE như `turn.feedback_ready`, `session.feedback_progress`, `report.ready`. |
 
-Đầu ra của thao tác gửi câu trả lời gồm mã answer đã lưu, cờ cho biết feedback đã được xếp hàng hay chưa và cờ cho biết transcription có đang chờ hay không. Với câu trả lời văn bản bình thường, feedback được xếp hàng. Với câu bỏ qua, feedback không được xếp hàng. Với luồng audio-only còn được hỗ trợ như fallback, hệ thống có thể xếp job transcription trước rồi mới có feedback sau.
+Payload gửi câu trả lời gồm các trường chính:
+
+| Trường | Vai trò |
+| --- | --- |
+| `questionId` | Xác định câu hỏi trong `session_questions`. |
+| `answerMode` | Ở phạm vi hiện tại, luồng được mô tả sử dụng chế độ `text`. |
+| `answerText` | Nội dung câu trả lời văn bản. Nếu không phải skip, trường này phải đủ tối thiểu 10 ký tự. |
+| `skipQuestion` | Đánh dấu người dùng bỏ qua câu hỏi. Khi có cờ này, backend cho phép không có `answerText`. |
+
+Payload chuyển trạng thái phiên dùng trong bước hoàn tất:
+
+| Trường | Vai trò |
+| --- | --- |
+| `status` | Trạng thái đích. Khi hoàn tất phiên, frontend gửi `completed`. |
+| `remainingSeconds` | Số giây còn lại tại thời điểm chuyển trạng thái. Khi hết giờ, giá trị này là `0`. |
+| `autoSkipUnanswered` | Cờ chỉ dùng cho nhánh hết giờ. Khi bằng `true`, backend tự tạo skipped answer cho các câu chưa có answer. |
+
+Kết quả trả về từ `POST /sessions/:sessionId/turns` gồm:
+
+| Trường trả về | Ý nghĩa |
+| --- | --- |
+| `answerId` | Mã bản ghi trong `user_answers`. |
+| `feedbackQueued` | Cho biết feedback đã được xếp hàng hay chưa. |
+
+Các bảng dữ liệu liên quan:
+
+| Bảng | Vai trò trong bước này |
+| --- | --- |
+| `interview_sessions` | Lưu chủ sở hữu, loại phiên, ngôn ngữ, context pack và trạng thái phiên. |
+| `session_questions` | Lưu danh sách câu hỏi đã khóa cho phiên. |
+| `session_question_criteria` | Lưu các tiêu chí rubric gắn với từng câu hỏi để feedback dùng lại. |
+| `user_answers` | Lưu câu trả lời văn bản, trạng thái skip và cờ `feedback_generated`. |
+| `ai_feedbacks` | Được worker feedback tạo sau, không được tạo trực tiếp trong request submit. |
 
 **c. Luồng xử lý nghiệp vụ**
 
-Khi người dùng mở phiên, frontend kiểm tra trạng thái phiên. Nếu câu hỏi chưa sẵn sàng, màn hình hiển thị trạng thái chờ và tiếp tục theo dõi cập nhật. Khi phiên đã sẵn sàng, frontend tải danh sách câu hỏi theo thứ tự và hiển thị câu đầu tiên.
+Khi người dùng mở màn hình phỏng vấn, frontend đọc trạng thái phiên và danh sách câu hỏi. Backend trả danh sách câu hỏi theo `orderIndex`, kèm thông tin câu nào đã có answer. Nếu phiên đã có câu hỏi nhưng vẫn còn trạng thái `generating` hoặc `ready`, backend tự chuyển phiên sang `active`. Cách này giúp phiên cũ hoặc phiên vừa sinh xong không bị kẹt ở trạng thái chờ.
 
-Người dùng có thể nhập câu trả lời rồi gửi, hoặc bỏ qua câu hỏi. Với câu trả lời văn bản, backend lưu dữ liệu vào `user_answers` và xếp job feedback. Với câu bị bỏ qua, backend lưu trạng thái bỏ qua nhưng không xếp job feedback. Khi hết danh sách câu hỏi, frontend yêu cầu hoàn tất phiên để hệ thống chuyển sang giai đoạn tổng hợp báo cáo.
+Backend cũng tính `currentIndex` bằng cách tìm câu đầu tiên chưa có answer. Nếu tất cả câu hỏi đều đã có answer, `currentIndex` trỏ về câu cuối. Nhờ đó khi người dùng reload trang hoặc quay lại phiên, frontend có thể mở đúng vị trí tiếp tục thay vì luôn quay về câu đầu.
 
-Luồng nghiệp vụ cần bảo đảm mỗi câu hỏi chỉ có một kết quả xử lý trong phiên. Nếu người dùng gửi câu trả lời văn bản, câu đó trở thành câu đã trả lời và được đưa vào luồng feedback. Nếu người dùng chọn bỏ qua, câu đó được ghi nhận là skipped và được đưa vào báo cáo như câu không chấm điểm. Nếu người dùng gửi lại cùng một câu do retry mạng hoặc nhấn nút nhiều lần, backend không tạo thêm answer mới.
-
-Sơ đồ sequence dưới đây làm rõ tương tác giữa người dùng, frontend, backend, database và queue khi một câu trả lời được gửi hoặc một câu hỏi bị bỏ qua.
+Luồng gửi một câu trả lời:
 
 ```mermaid
 sequenceDiagram
     actor User as Người dùng
-    participant FE as Frontend Interview
-    participant API as Backend API
+    participant FE as Frontend
+    participant API as TurnController
+    participant SVC as TurnService
     participant DB as Database
-    participant Q as Feedback Queue
+    participant FQ as Feedback Queue
 
-    User->>FE: Mở phiên phỏng vấn
-    FE->>API: Tải trạng thái phiên và danh sách câu hỏi
-    API->>DB: Đọc interview_sessions và session_questions
-    DB-->>API: Trả câu hỏi theo thứ tự
-    API-->>FE: Trả dữ liệu phiên
-    FE-->>User: Hiển thị câu hỏi hiện tại
+    User->>FE: Nhập answer hoặc chọn skip
+    FE->>API: POST /sessions/:sessionId/turns
+    API->>SVC: submitAnswer(sessionId, userId, dto)
+    SVC->>DB: Đọc interview_sessions
+    SVC->>SVC: Kiểm tra session tồn tại, đúng user, status active/ready
+    SVC->>DB: Đọc session_questions theo id + sessionId
+    SVC->>SVC: Nếu status ready thì chuyển sang active
 
-    alt Người dùng gửi câu trả lời
-        User->>FE: Nhập và gửi answer
-        FE->>API: Gửi answer cho câu hỏi hiện tại
-        API->>DB: Kiểm tra phiên, câu hỏi và answer hiện có
-        API->>DB: Ghi hoặc đọc lại user_answers
-        API->>Q: Xếp job feedback nếu answer mới cần chấm
-        API-->>FE: Trả answer id và trạng thái queue
-    else Người dùng bỏ qua câu hỏi
-        User->>FE: Chọn bỏ qua
-        FE->>API: Gửi yêu cầu skip
-        API->>DB: Ghi hoặc đọc lại skipped answer
-        API-->>FE: Trả answer id không xếp feedback
+    alt skipQuestion = true
+        SVC->>DB: Tạo hoặc đọc user_answers skipped
+        SVC-->>FE: feedbackQueued=false
+    else text answer hợp lệ
+        SVC->>DB: Tạo hoặc đọc user_answers
+        SVC->>FQ: add feedback với jobId feedback-answerId
+        SVC-->>FE: feedbackQueued=true
     end
-
-    FE-->>User: Chuyển sang câu tiếp theo
-    User->>FE: Hoàn tất khi hết câu hỏi
-    FE->>API: Yêu cầu hoàn thành phiên
-    API->>DB: Cập nhật phiên sang completing khi đủ điều kiện
-    API-->>FE: Trả trạng thái chuyển sang báo cáo
 ```
 
-Sơ đồ dưới đây mô tả luồng trạng thái của một phiên phỏng vấn từ lúc câu hỏi sẵn sàng đến khi phiên chuyển sang trạng thái tổng hợp.
+Sau khi tất cả câu hỏi đã có answer, frontend gửi yêu cầu chuyển trạng thái phiên sang `completed`. Trong backend, request này không đặt thẳng phiên thành `completed`. `SessionService` kiểm tra số câu hỏi và số answer; nếu đủ, phiên được chuyển sang `completing`. Sau đó `ReportService` chỉ xếp job report khi mọi feedback bắt buộc đã xong. Worker tổng hợp báo cáo mới là nơi chuyển phiên sang `completed`.
+
+Riêng trường hợp timer của phiên về `00:00`, frontend gửi cùng endpoint chuyển trạng thái nhưng kèm `autoSkipUnanswered = true` và `remainingSeconds = 0`. Backend khi đó không trả `SESSION_INCOMPLETE` cho các câu chưa submit. Thay vào đó, service chạy transaction để đọc danh sách `session_questions`, đối chiếu với `user_answers`, tạo các answer rỗng có `skipped = true` cho câu còn thiếu, đặt phiên sang `completing`, rồi kiểm tra điều kiện xếp job report. Các câu đã submit trước đó được giữ nguyên và không bị ghi đè.
+
+Luồng hoàn tất phiên:
 
 ```mermaid
 flowchart TD
-    A[Mở phiên phỏng vấn] --> B{Câu hỏi đã sẵn sàng?}
-    B -->|Chưa| C[Chờ trạng thái active]
-    B -->|Rồi| D[Hiển thị câu hiện tại]
-    C --> D
-    D --> E{Người dùng thao tác}
-    E -->|Trả lời| F[Gửi câu trả lời văn bản]
-    E -->|Bỏ qua| I[Ghi nhận câu bỏ qua]
-    F --> J[Xếp job feedback]
-    I --> K[Chuyển câu tiếp theo]
-    J --> K
-    K --> L{Còn câu hỏi?}
-    L -->|Có| D
-    L -->|Không| M[Chuyển phiên sang completing]
+    A[Frontend yêu cầu completed] --> B{Session hiện tại có active?}
+    B -->|Không| C[Từ chối chuyển trạng thái]
+    B -->|Có| D{autoSkipUnanswered?}
+    D -->|Không| E[Đếm session_questions và user_answers]
+    E --> F{answerCount >= questionCount?}
+    F -->|Không| G[Trả SESSION_INCOMPLETE]
+    F -->|Có| J[Cập nhật status = completing]
+    D -->|Có| H[Tạo skipped answers cho câu chưa submit]
+    H --> I[Cập nhật remainingSeconds = 0]
+    I --> J
+    J --> K[Kiểm tra feedback chưa xong]
+    K --> L{pendingFeedbacks = 0?}
+    L -->|Không| M[Chờ feedback worker gọi lại]
+    L -->|Có| N[Xếp job comprehensive-report]
+    N --> O[Report worker ghi session_reports]
+    O --> P[Cập nhật status = completed]
+    P --> Q[Emit report.ready]
 ```
 
 **d. Thiết kế giao diện frontend**
 
-Giao diện phiên phỏng vấn hiển thị một câu hỏi tại một thời điểm, vị trí hiện tại trong phiên và khu vực nhập câu trả lời. Người dùng cần biết mình đang ở câu thứ mấy, còn bao nhiêu câu và câu hiện tại có thể trả lời hay bỏ qua.
+Giao diện phiên cần hiển thị một câu hỏi tại một thời điểm, vị trí hiện tại, tổng số câu, thời gian còn lại và vùng nhập câu trả lời. Khi người dùng gửi câu trả lời thành công, frontend chuyển sang câu tiếp theo dựa trên danh sách đã tải từ backend.
 
-Khi gửi câu trả lời, frontend cần khóa thao tác gửi lặp trong lúc request đang xử lý. Nếu câu hỏi chưa sẵn sàng hoặc phiên đang chuyển trạng thái, giao diện hiển thị trạng thái chờ. Nếu gửi thất bại, câu trả lời đang nhập cần được giữ lại để người dùng không mất nội dung.
+Frontend không tự quyết định câu hỏi nào đã hoàn thành chỉ bằng trạng thái local. Khi tải lại phiên, frontend dựa vào `GET /sessions/:id/questions`, vì backend trả sẵn `answered`, `answerId`, `skipped` và `currentIndex`. Đây là điểm quan trọng để tránh mất tiến độ khi reload trang hoặc khi người dùng tạm dừng rồi quay lại.
 
-Màn hình phiên cũng có các thao tác điều khiển trạng thái như tạm dừng, tiếp tục, hủy và hoàn tất phiên. Khi người dùng trả lời thành công, giao diện chuyển sang câu tiếp theo. Khi người dùng bỏ qua, giao diện cũng chuyển câu nhưng không hiển thị trạng thái đang chờ chấm điểm cho câu đó. Khi phiên hoàn tất, frontend điều hướng hoặc mở màn hình báo cáo và chờ backend tổng hợp kết quả nếu report chưa sẵn sàng.
+Với câu trả lời văn bản, giao diện gửi trực tiếp `answerText`. Nếu người dùng chọn bỏ qua, giao diện gửi `skipQuestion = true` để backend ghi nhận câu hỏi đã được xử lý nhưng không xếp feedback cho câu đó. Nếu countdown hết thời gian, giao diện khóa thao tác nhập, gửi yêu cầu hoàn tất với `autoSkipUnanswered = true`, hiển thị trạng thái đang hoàn tất phiên và chuyển người dùng sang màn hình chờ báo cáo.
+
+Khi phiên được chuyển sang `completing`, giao diện không nên coi báo cáo đã sẵn sàng ngay. Người dùng cần được đưa sang trạng thái chờ báo cáo, theo dõi `feedback-progress` hoặc SSE. Khi nhận `report.ready`, frontend mới mở báo cáo hoàn chỉnh.
 
 **e. Thiết kế xử lý backend**
 
-Backend chỉ nhận câu trả lời khi phiên tồn tại, thuộc đúng người dùng và đang ở trạng thái cho phép phỏng vấn. Backend cũng kiểm tra câu hỏi thuộc đúng phiên để tránh ghi câu trả lời vào sai phiên.
+Backend được thiết kế theo hướng kiểm tra trước, ghi nhận dữ liệu sau và xử lý các tác vụ nặng ở nền. Khi nhận một câu trả lời, hệ thống không tin hoàn toàn vào dữ liệu từ giao diện. Backend luôn kiểm tra phiên có tồn tại không, người gửi có đúng là chủ phiên không, phiên có đang ở trạng thái cho phép trả lời không và câu hỏi có thật sự thuộc phiên đó không. Nếu một trong các điều kiện này không hợp lệ, hệ thống từ chối yêu cầu và không ghi câu trả lời vào cơ sở dữ liệu.
 
-Mỗi câu hỏi trong một phiên chỉ được phép có một câu trả lời hiện hành. Ràng buộc này giúp tránh việc người dùng gửi trùng do nhấn nhiều lần hoặc do request bị retry. Với câu trả lời hợp lệ, backend lưu vào `user_answers`, đánh dấu chưa có feedback và xếp job feedback. Với câu bỏ qua, backend lưu cờ bỏ qua và không xếp job feedback.
+Khi dữ liệu hợp lệ, backend ghi nhận kết quả xử lý của câu hỏi theo ba trường hợp chính:
 
-DTO gửi câu trả lời yêu cầu mã câu hỏi, chế độ trả lời và nội dung câu trả lời nếu không phải skip. Với câu trả lời văn bản, nội dung phải đủ độ dài tối thiểu để tránh gửi câu quá ngắn không có giá trị đánh giá. Với câu bỏ qua, hệ thống cho phép nội dung rỗng vì bản chất thao tác này là ghi nhận người dùng không trả lời câu hỏi.
+| Trường hợp | Cách xử lý |
+| --- | --- |
+| Người dùng gửi câu trả lời | Hệ thống lưu nội dung câu trả lời, đánh dấu câu này cần được chấm và đưa việc chấm điểm vào hàng đợi nền. |
+| Người dùng chọn bỏ qua | Hệ thống vẫn tạo một bản ghi cho câu hỏi, nhưng đánh dấu là câu bị bỏ qua và không đưa câu đó vào hàng đợi chấm điểm riêng lẻ. |
+| Phiên hết thời gian | Hệ thống tự tìm các câu chưa có câu trả lời, ghi nhận chúng là câu bị bỏ qua, đặt thời gian còn lại bằng 0 và chuyển phiên sang bước tổng hợp báo cáo. |
 
-Backend đọc phiên, kiểm tra quyền sở hữu, kiểm tra trạng thái phiên chỉ cho phép `active` hoặc `ready`, sau đó đọc câu hỏi theo đồng thời mã câu hỏi và mã phiên. Nếu phiên đang ở trạng thái `ready`, backend có thể chuyển sang `active` khi người dùng bắt đầu trả lời. Khi lưu answer, backend dùng khóa duy nhất theo session và question để bảo đảm idempotency.
+Một nguyên tắc quan trọng là mỗi câu hỏi trong một phiên chỉ có một kết quả cuối cùng. Vì vậy, nếu người dùng bấm gửi nhiều lần, trình duyệt gửi lại yêu cầu do lỗi mạng, hoặc phiên hết giờ gần lúc người dùng đang gửi câu trả lời, backend vẫn không tạo nhiều câu trả lời cho cùng một câu hỏi. Câu nào đã được lưu bằng câu trả lời thật sẽ được giữ nguyên. Chỉ những câu chưa có dữ liệu tại thời điểm hết giờ mới được tự động đánh dấu bỏ qua.
 
-Payload feedback được xếp vào queue gồm mã phiên, mã answer, mã câu hỏi, nội dung câu hỏi, loại câu hỏi, competency domain, câu trả lời, context pack, loại phiên và ngôn ngữ. Đây là dữ liệu tối thiểu để feedback worker đánh giá câu trả lời mà không cần tin vào metadata do frontend gửi lại.
+Sau khi lưu câu trả lời thật, backend không chấm điểm ngay trong yêu cầu của người dùng. Thay vào đó, hệ thống đưa tác vụ chấm điểm vào hàng đợi để bộ xử lý nền thực hiện sau. Bộ xử lý này đọc lại câu hỏi, tiêu chí chấm điểm và nội dung câu trả lời từ cơ sở dữ liệu, sau đó gọi AI để tạo nhận xét, điểm số và các đoạn phân tích. Cách làm này giúp dữ liệu dùng để chấm luôn đến từ backend, không phụ thuộc vào thông tin do giao diện tự gửi lên.
+
+Khi một câu trả lời đã được chấm xong, backend cập nhật trạng thái xử lý của câu đó và phát sự kiện tiến trình cho giao diện. Nếu phiên đã chuyển sang giai đoạn tổng hợp báo cáo, backend kiểm tra xem còn câu trả lời nào đang chờ chấm hay không. Báo cáo chỉ được xếp hàng tạo khi phiên đã ở trạng thái tổng hợp, có dữ liệu câu trả lời và mọi câu cần chấm đã được xử lý xong. Các câu bị bỏ qua không làm báo cáo bị kẹt vì chúng không cần chấm riêng ở bước này.
+
+Trong bước tạo báo cáo, các câu bị bỏ qua vẫn được giữ lại trong nội dung xem lại và phần tổng hợp kết quả. Hệ thống tạo dữ liệu đánh giá tổng hợp cho những câu này với điểm `0/100` theo tiêu chí của câu hỏi. Nhờ đó báo cáo thể hiện đầy đủ toàn bộ phiên phỏng vấn, bao gồm cả câu người dùng tự bỏ qua và câu bị tự động bỏ qua khi hết thời gian.
 
 **f. Xử lý lỗi và fallback**
 
-Nếu phiên không tồn tại, không thuộc người dùng hiện tại hoặc chưa ở trạng thái có thể phỏng vấn, backend trả lỗi và không ghi câu trả lời. Nếu câu hỏi không thuộc phiên, backend từ chối request để bảo vệ tính toàn vẹn dữ liệu.
+Các lỗi nghiệp vụ được chặn trước khi ghi dữ liệu. Nếu phiên không tồn tại, không thuộc người dùng hiện tại, chưa ở trạng thái cho phép hoặc câu hỏi không thuộc phiên, backend trả lỗi và không tạo `user_answers`. Đây là lớp bảo vệ tính toàn vẹn dữ liệu quan trọng nhất.
 
-Nếu người dùng gửi trùng một câu trả lời, hệ thống dựa vào ràng buộc một câu hỏi một câu trả lời trong phiên để tránh tạo nhiều bản ghi. Nếu người dùng bỏ qua câu hỏi, đây không phải là lỗi. Hệ thống lưu trạng thái bỏ qua, cho phép đi tiếp và để phần báo cáo xử lý câu này theo hướng không chấm điểm.
+Nếu người dùng gửi lặp cùng một câu hỏi do double click hoặc retry mạng, unique constraint `(session_id, question_id)` bảo vệ ở tầng database. Backend cũng dùng `jobId` ổn định cho queue: `feedback-{answerId}` và `report-{sessionId}`. Nhờ đó retry không dễ tạo nhiều job trùng nghĩa.
 
-Nếu người dùng bỏ qua lại một câu đã bỏ qua, backend trả lại answer hiện có và không xếp thêm job. Nếu người dùng cố bỏ qua một câu đã có câu trả lời thật, backend không ghi đè câu trả lời đó bằng skipped answer. Nếu queue feedback gặp vấn đề sau khi answer văn bản đã được lưu, request có thể thất bại; khi người dùng gửi lại, backend có thể dùng answer hiện có và xếp lại job feedback theo cùng mã answer.
- 
-### 4.5.5 Đánh giá và phản hồi từng câu trả lời
+Nếu queue feedback lỗi ngay sau khi answer đã được lưu, request có thể thất bại. Khi frontend gửi lại, backend đọc lại answer cũ và có thể xếp lại job theo cùng `answerId`. Cách này ưu tiên không mất dữ liệu người dùng trước, sau đó khôi phục xử lý nền bằng retry.
+
+Nếu feedback AI lỗi, worker có cơ chế retry. Ở lần xử lý cuối hoặc khi lỗi đủ điều kiện fallback, backend ghi feedback fallback và vẫn đánh dấu `feedbackGenerated = true`. Nhờ đó phiên có thể tiếp tục đi tới report thay vì bị kẹt vì một câu trả lời không chấm được bằng AI.
+
+Nếu người dùng yêu cầu hoàn tất thủ công khi chưa trả lời đủ số câu hỏi, backend trả `SESSION_INCOMPLETE` và giữ session ở `active`. Đây là nhánh bảo vệ để người dùng không vô tình tạo báo cáo thiếu dữ liệu. Ngược lại, nếu phiên hết thời gian và request có `autoSkipUnanswered = true`, backend xem đây là ngoại lệ hợp lệ của nghiệp vụ: các câu chưa submit được tự động ghi thành skipped answer, `remainingSeconds` được đặt về `0`, phiên chuyển sang `completing` và report pipeline tiếp tục chạy.
+
+Nếu submit câu trả lời và timeout xảy ra gần như đồng thời, unique constraint trên `(session_id, question_id)` quyết định tính nhất quán dữ liệu. Câu trả lời nào đã được ghi trước sẽ được giữ làm answer thật; câu nào chưa có answer tại thời điểm xử lý timeout sẽ được tạo skipped answer. Nếu request submit đến sau khi câu đã bị auto-skip, backend trả lại answer skipped hiện có và không xếp feedback cho câu rỗng.
+
+Nếu session đã ở `completing`, request hoàn tất lặp lại không tạo trạng thái mới mà chỉ kiểm tra lại điều kiện xếp report. Nếu session đã `completed`, backend trả lại session hiện tại.
+
+Tóm lại, thiết kế hiện tại tách rõ ba việc: request submit chỉ lưu answer và xếp queue feedback khi cần; worker feedback xử lý tác vụ AI; report worker chỉ chạy khi phiên đã hoàn tất và feedback đã đủ. Cách tách này làm luồng xử lý dễ kiểm soát hơn, đồng thời giúp hệ thống phục hồi tốt hơn khi có retry hoặc lỗi tạm thời.
+
+## 4.5.5 Đánh giá và phản hồi từng câu trả lời
 
 **a. Mục đích của tính năng**
 
-Nhóm tính năng đánh giá và phản hồi từng câu trả lời biến dữ liệu trả lời của người dùng thành nhận xét có thể hành động. Mỗi câu trả lời được chấm theo rubric phù hợp với loại phiên và competency domain của câu hỏi. Kết quả gồm điểm, nhận xét chính, câu trả lời mẫu và các đoạn trích được đánh dấu trong câu trả lời gốc.
+Nhóm tính năng đánh giá và phản hồi từng câu trả lời biến dữ liệu trả lời của người dùng thành nhận xét có thể hành động. Mỗi câu trả lời được chấm theo rubric phù hợp với loại phiên và một hoặc nhiều tiêu chí đã gắn với câu hỏi. Kết quả gồm điểm, nhận xét chính, câu trả lời mẫu và các đoạn trích được đánh dấu trong câu trả lời gốc.
 
 Tính năng này phục vụ hai mục tiêu. Thứ nhất, người dùng nhận được phản hồi sau từng turn hoặc trong báo cáo. Thứ hai, hệ thống có dữ liệu chuẩn để tổng hợp báo cáo phiên ở mục 4.5.6.
 
@@ -614,7 +682,7 @@ Sơ đồ sau thể hiện mục đích của tính năng: chuyển answer đã 
 
 ```mermaid
 flowchart TD
-    A[Answer đã lưu] --> B[Đọc câu hỏi, metadata và context pack]
+    A[Answer đã lưu] --> B[Đọc câu hỏi, tiêu chí đã khóa và context pack]
     B --> C[Tạo prompt đánh giá theo rubric]
     C --> D[AI trả feedback dạng JSON]
     D --> E{Feedback dùng được?}
@@ -623,23 +691,27 @@ flowchart TD
     G --> H[Lưu feedback và annotated segments]
     F --> I[Đánh dấu feedbackGenerated]
     H --> I
-    I --> J[Phát turn.feedback_ready]
+    I --> J[Phát turn.feedback_ready và session.feedback_progress]
     J --> K[Cập nhật tiến trình và phục vụ báo cáo]
 ```
 
 **b. Dữ liệu đầu vào**
 
-Dữ liệu đầu vào gồm mã phiên, mã câu hỏi, câu trả lời đã lưu trong `user_answers`, loại phiên, context pack, competency domain, ngôn ngữ đầu ra và rubric tương ứng. Backend không chỉ gửi câu hỏi và câu trả lời cho AI mà còn gửi metadata của câu hỏi để AI biết câu trả lời cần được đánh giá theo tiêu chí nào.
+Dữ liệu đầu vào gồm mã phiên, mã câu hỏi, câu trả lời đã lưu trong `user_answers`, loại phiên, context pack, ngôn ngữ đầu ra và danh sách tiêu chí đã được khóa theo từng câu hỏi trong `session_question_criteria`. Backend không lấy tiêu chí chấm điểm từ frontend. Frontend chỉ gửi câu trả lời; backend tự đọc lại câu hỏi, câu trả lời, loại phiên và các tiêu chí của câu hỏi để bảo đảm feedback được chấm theo dữ liệu đã kiểm soát.
 
-Output mong đợi từ AI gồm danh sách tiêu chí được áp dụng, điểm theo từng tiêu chí, câu trả lời mẫu, nhận xét chính và tối đa hai đoạn nhận xét cụ thể từ câu trả lời gốc. Backend lưu kết quả hợp lệ vào `ai_feedbacks` và lưu các đoạn nhận xét chi tiết để phục vụ màn hình báo cáo.
+Output mong đợi từ AI gồm danh sách tiêu chí được áp dụng, điểm theo từng tiêu chí, câu trả lời mẫu, nhận xét chính và tối đa hai đoạn nhận xét cụ thể từ câu trả lời gốc. Các đoạn nhận xét phải trích đúng nội dung trong câu trả lời của ứng viên; nếu vị trí ký tự AI trả về chưa chính xác, backend cố gắng xác định lại vị trí dựa trên đoạn trích, còn đoạn nào không khớp thì bị loại bỏ. Backend lưu kết quả hợp lệ vào `ai_feedbacks` và lưu các đoạn nhận xét chi tiết để phục vụ màn hình báo cáo.
 
-Đầu ra cuối cùng của backend gồm feedback đã lưu, trạng thái `feedbackGenerated` trên answer, sự kiện `turn.feedback_ready` và tiến trình feedback của phiên. Nếu phiên đang chờ tạo báo cáo, việc một feedback hoàn tất có thể kích hoạt bước kiểm tra để xếp job report.
+Đầu ra cuối cùng của backend gồm feedback đã lưu, trạng thái `feedbackGenerated` trên answer, sự kiện `turn.feedback_ready`, sự kiện cập nhật tiến trình feedback và dữ liệu để báo cáo tổng hợp sử dụng. Nếu phiên đang chờ tạo báo cáo, việc một feedback hoàn tất sẽ kích hoạt bước kiểm tra xem đã đủ điều kiện xếp job report hay chưa.
 
 **c. Luồng xử lý nghiệp vụ**
 
-Sau khi một câu trả lời văn bản được lưu, backend xếp job feedback. Worker feedback đọc lại câu hỏi, câu trả lời và cấu hình phiên. Sau đó worker tạo prompt đánh giá, gọi AI service, parse JSON trả về, kiểm tra schema và kiểm tra ý nghĩa rubric.
+Trước khi một câu trả lời được đưa vào luồng feedback, backend kiểm tra phiên có tồn tại, thuộc đúng người dùng, đang ở trạng thái cho phép trả lời và câu hỏi thật sự thuộc phiên đó. Nếu phiên mới ở trạng thái sẵn sàng, backend chuyển phiên sang trạng thái đang thực hiện trước khi lưu câu trả lời. Bước này giúp dữ liệu feedback luôn gắn với một phiên hợp lệ, đúng chủ sở hữu và đúng câu hỏi.
 
-Nếu dữ liệu hợp lệ, backend tự tính điểm tổng từ các tiêu chí hợp lệ thay vì lấy trực tiếp điểm tổng từ AI. Sau khi lưu feedback, backend đánh dấu câu trả lời đã có feedback, phát sự kiện `turn.feedback_ready` và cập nhật tiến trình feedback. Nếu phiên đang ở trạng thái tổng hợp và mọi feedback cần thiết đã sẵn sàng, backend xếp job tạo report.
+Với câu trả lời bị bỏ qua, backend chỉ ghi nhận trạng thái bỏ qua và không xếp job feedback ở bước submit. Với câu trả lời văn bản, backend lưu nội dung đã chuẩn hóa rồi xếp job feedback. Vì phạm vi hiện tại của tài liệu chỉ mô tả luồng trả lời văn bản đã ổn định, các luồng thử nghiệm hoặc chưa hoàn thiện khác chưa được đưa vào phần này.
+
+Sau khi một câu trả lời cần chấm được lưu, backend xếp job feedback với mã job ổn định theo answer. Worker feedback đọc lại câu hỏi, câu trả lời, tiêu chí đã khóa và cấu hình phiên. Sau đó worker tạo prompt đánh giá, gọi AI service, parse JSON trả về, kiểm tra schema và kiểm tra ý nghĩa rubric.
+
+Nếu dữ liệu hợp lệ, backend tự tính điểm tổng từ các tiêu chí hợp lệ thay vì lấy trực tiếp điểm tổng từ AI. Sau khi lưu feedback, backend đánh dấu câu trả lời đã có feedback, phát sự kiện `turn.feedback_ready`, phát sự kiện cập nhật tiến trình feedback và kiểm tra điều kiện tạo báo cáo. Nếu phiên đang ở trạng thái tổng hợp và mọi feedback cần thiết đã sẵn sàng, backend xếp job tạo report. Nếu bước kiểm tra điều kiện tạo báo cáo lỗi tạm thời, worker thử lại cục bộ; nếu vẫn lỗi, job feedback được để cho hàng đợi retry nhằm giảm nguy cơ phiên bị kẹt ở trạng thái chờ báo cáo.
 
 Sơ đồ sequence dưới đây làm rõ luồng bất đồng bộ: request gửi câu trả lời không chờ AI chấm xong; feedback được worker xử lý sau đó và thông báo lại qua SSE.
 
@@ -657,7 +729,7 @@ sequenceDiagram
     API->>Q: Xếp job feedback
     API-->>FE: Trả kết quả submit answer
     Q-->>Worker: Giao job feedback
-    Worker->>DB: Đọc answer, question, session và rubric
+    Worker->>DB: Đọc answer, question, session và tiêu chí đã khóa
     Worker->>AI: Gửi prompt đánh giá
     AI-->>Worker: Trả feedback JSON hoặc lỗi
 
@@ -671,6 +743,7 @@ sequenceDiagram
     Worker->>DB: Đánh dấu feedbackGenerated
     Worker->>SSE: Phát turn.feedback_ready
     SSE-->>FE: Cập nhật feedback hoặc tiến trình
+    Worker->>SSE: Phát session.feedback_progress
     Worker->>DB: Kiểm tra điều kiện tạo report nếu phiên đang completing
 ```
 
@@ -679,18 +752,17 @@ Sơ đồ dưới đây mô tả các bước xử lý chính từ lúc answer �
 ```mermaid
 flowchart TD
     A[Câu trả lời đã lưu trong user_answers] --> B[Xếp job feedback]
-    B --> C[Worker đọc câu hỏi, answer, rubric và context pack]
+    B --> C[Worker đọc câu hỏi, answer, tiêu chí và context pack]
     C --> D[Gọi AI service để đánh giá]
     D --> E{Output hợp lệ?}
     E -->|Không| F[Ghi fallback feedback]
-    E -->|Có| G[Lọc tiêu chí theo rubric và competency domain]
-    G --> H{Còn tiêu chí hợp lệ?}
-    H -->|Không| F
-    H -->|Có| I[Tính điểm tổng bằng trọng số backend]
+    E -->|Có| G[Lọc điểm AI theo tiêu chí đã khóa]
+    G --> H[Điền điểm 0 cho tiêu chí bắt buộc bị thiếu]
+    H --> I[Tính điểm tổng bằng trọng số backend]
     I --> J[Lưu ai_feedbacks và annotated segments]
     F --> K[Đánh dấu feedback đã xử lý]
     J --> K
-    K --> L[Phát turn.feedback_ready]
+    K --> L[Phát feedback_ready và feedback_progress]
 ```
 
 **d. Thiết kế giao diện frontend**
@@ -724,13 +796,30 @@ competency_domains=TD2
 </answer>
 ```
 
-Ở bước này, backend để phần Job Description rỗng trong prompt feedback hiện tại. Lý do là feedback từng câu đang chấm trực tiếp trên câu hỏi, metadata câu hỏi, context pack và câu trả lời. JD đã được dùng mạnh ở bước tạo câu hỏi; đến bước chấm từng câu, hệ thống ưu tiên không đưa thêm ngữ cảnh thừa làm AI đánh giá lan man.
+Ở bước này, backend để phần Job Description rỗng trong prompt feedback hiện tại. Lý do là feedback từng câu đang chấm trực tiếp trên câu hỏi, tiêu chí đã khóa của câu hỏi, context pack và câu trả lời. JD đã được dùng mạnh ở bước tạo câu hỏi; đến bước chấm từng câu, hệ thống ưu tiên không đưa thêm ngữ cảnh thừa làm AI đánh giá lan man.
 
-Kết quả AI phải có các nhóm dữ liệu gồm tiêu chí được áp dụng, câu trả lời mẫu, nhận xét chính và đoạn nhận xét cụ thể. Các đoạn trích phải sao chép nguyên văn từ câu trả lời của ứng viên. Backend lưu cả nội dung đoạn trích và vị trí ký tự. Khi hiển thị báo cáo, giao diện ưu tiên dùng đoạn trích đã lưu để tránh phụ thuộc quá nhiều vào offset nếu nội dung câu trả lời hoặc ngôn ngữ hiển thị có sai lệch.
+Prompt feedback không được tạo từ một đoạn hướng dẫn duy nhất, mà được ghép từ nhiều lớp nhỏ. Cách chia lớp này giúp backend kiểm soát rõ phần nào là quy tắc chung, phần nào phụ thuộc loại phiên, phần nào phụ thuộc bộ tiêu chí và phần nào là dữ liệu cụ thể của câu trả lời đang chấm.
+
+| Lớp prompt | Nội dung được bổ sung | Vai trò trong đánh giá |
+| --- | --- | --- |
+| Lớp nhiệm vụ chung | Yêu cầu AI đóng vai huấn luyện viên phỏng vấn, trả JSON đúng cấu trúc, tạo câu trả lời mẫu, nhận xét chính và đoạn chú thích. | Đặt khuôn dạng đầu ra thống nhất để backend có thể parse, validate và lưu vào cơ sở dữ liệu. |
+| Lớp ngôn ngữ | Chọn ngôn ngữ phản hồi là tiếng Việt hoặc tiếng Anh, đồng thời giữ nguyên văn các đoạn trích từ câu trả lời gốc. | Giúp nhận xét phù hợp với ngôn ngữ phiên nhưng không làm sai lệch phần trích dẫn của ứng viên. |
+| Lớp chiến lược theo loại phiên | HR tập trung vào hành vi, giao tiếp, động lực và văn hóa; Technical tập trung vào chiều sâu kỹ thuật, cách giải quyết vấn đề và đánh đổi; Mixed kết hợp cả hai hướng. | Giúp cùng một cơ chế feedback có thể chấm theo mục tiêu khác nhau của từng loại phiên. |
+| Lớp context pack và rubric | Bổ sung ghi chú ngữ cảnh, danh sách tiêu chí hành vi hoặc kỹ thuật, quy tắc chỉ chấm các tiêu chí được phép và không tự tạo mã tiêu chí mới. | Giới hạn phạm vi chấm điểm theo rubric đã cấu hình, tránh việc AI tự mở rộng tiêu chí ngoài hệ thống. |
+| Lớp metadata của câu hỏi | Chỉ rõ loại câu hỏi và danh sách tiêu chí đã khóa cho câu hỏi hiện tại; yêu cầu AI chỉ trả đúng các mã tiêu chí đó. | Ràng buộc feedback theo đúng nội dung mà câu hỏi muốn đánh giá, đặc biệt khi một phiên có nhiều tiêu chí khác nhau. |
+| Lớp dữ liệu động của turn | Đưa vào câu hỏi và câu trả lời của người dùng trong các thẻ riêng. | Tách dữ liệu cần chấm khỏi phần hướng dẫn, giúp AI hiểu đâu là nội dung phải đánh giá và đâu là quy tắc phải tuân theo. |
+
+Thứ tự ghép prompt cũng có ý nghĩa. Backend tạo quy tắc nền trước, sau đó thêm ngôn ngữ đầu ra, thêm chiến lược theo loại phiên, thêm rubric theo context pack, rồi cuối cùng mới đưa metadata câu hỏi và câu trả lời cụ thể vào user message. Nhờ vậy, dữ liệu của từng turn không làm thay đổi các quy tắc chấm điểm cốt lõi, còn các quy tắc rubric vẫn bao quanh toàn bộ quá trình đánh giá.
+
+Trong lớp rubric, backend cố ý yêu cầu AI không trả trọng số và không tự tính điểm tổng. AI chỉ được trả điểm từng tiêu chí trong khoảng 0-100. Trọng số và điểm tổng được tính lại ở backend sau khi output đã qua kiểm tra. Cách này làm giảm rủi ro AI tự diễn giải sai trọng số hoặc tạo ra một điểm tổng không khớp với rubric của hệ thống.
+
+Ngoài ra, lớp metadata của câu hỏi yêu cầu danh sách tiêu chí trong output phải khớp với danh sách tiêu chí đã được backend xác định cho câu hỏi đó. Nếu câu hỏi chỉ đánh giá `TD2`, AI không được chấm thêm các tiêu chí kỹ thuật khác chỉ vì câu trả lời có nhắc đến nội dung liên quan. Đây là điểm quan trọng để mỗi câu trả lời được đánh giá đúng phạm vi, không bị kéo điểm bởi những tiêu chí mà câu hỏi không đặt ra.
+
+Kết quả AI phải có các nhóm dữ liệu gồm tiêu chí được áp dụng, câu trả lời mẫu, nhận xét chính và đoạn nhận xét cụ thể. Các đoạn trích phải sao chép nguyên văn từ câu trả lời của ứng viên. Backend lưu nội dung đoạn trích và vị trí ký tự sau khi đã kiểm tra lại. Nếu đoạn trích xuất hiện đúng một lần trong câu trả lời nhưng vị trí AI đưa ra bị lệch, backend tự sửa lại vị trí. Nếu đoạn trích rỗng, không tồn tại trong câu trả lời hoặc xuất hiện nhiều lần nên không xác định được vị trí an toàn, backend loại đoạn đó khỏi feedback.
 
 Output AI được validate bằng hai lớp: kiểm tra schema và kiểm tra ý nghĩa rubric. Một feedback hợp lệ về mặt schema phải có `applied_dimensions`, `model_answer`, `key_takeaway` và `annotated_segments`; mỗi điểm tiêu chí phải nằm trong khoảng 0-100 và `highlight_level` chỉ được là `strength` hoặc `improvement`. Qua được schema vẫn chưa đủ vì AI có thể trả JSON đúng cấu trúc nhưng mã tiêu chí không thuộc rubric của phiên.
 
-Backend xác định danh sách tiêu chí được phép theo ba bước. Thứ nhất, dựa vào loại phiên để lấy tập tiêu chí tối đa: HR chỉ lấy behavioral dimensions, Technical chỉ lấy technical dimensions, Mixed lấy cả hai nhóm. Thứ hai, nếu câu hỏi có competency domain cụ thể và domain đó nằm trong tập tiêu chí của phiên, backend rút tập được phép xuống chỉ còn domain đó. Thứ ba, backend so khớp các tiêu chí AI trả về với tập được phép.
+Backend xác định danh sách tiêu chí được phép theo ba bước. Thứ nhất, dựa vào loại phiên để lấy tập tiêu chí tối đa: HR chỉ lấy behavioral dimensions, Technical chỉ lấy technical dimensions, Mixed lấy cả hai nhóm. Thứ hai, backend đọc các mã tiêu chí đã gắn với câu hỏi. Nếu câu hỏi không có tiêu chí hoặc các tiêu chí đó không thuộc tập tiêu chí của phiên, feedback được xem là không đủ cơ sở để chấm và chuyển sang fallback. Thứ ba, backend so khớp các tiêu chí AI trả về với tập tiêu chí đã được phép cho câu hỏi.
 
 | Nhánh khớp | Ví dụ AI trả về | Cách hệ thống hiểu |
 | --- | --- | --- |
@@ -739,9 +828,9 @@ Backend xác định danh sách tiêu chí được phép theo ba bước. Thứ
 | Trích mã trong chuỗi | `TD2 - Practical Application` | Trích token `TD2`. |
 | Khớp theo tên tiêu chí | `Khả năng áp dụng thực tế` | Chuẩn hóa tên và ánh xạ về mã rubric tương ứng. |
 
-Nếu một tiêu chí đã được khớp, backend chỉ lấy một lần để tránh AI trả trùng tiêu chí. Nếu AI bỏ sót tiêu chí hợp lệ của câu hỏi, backend vẫn lưu tiêu chí đó với `score=0`; chỉ metadata câu hỏi không có tiêu chí hợp lệ trong context pack mới khiến backend xem feedback không dùng được và chuyển sang fallback.
+Nếu một tiêu chí đã được khớp, backend chỉ lấy một lần để tránh AI trả trùng tiêu chí. Nếu AI bỏ sót tiêu chí hợp lệ của câu hỏi hoặc trả mã tiêu chí không khớp với danh sách được phép, backend không lấy mã sai đó để chấm. Thay vào đó, hệ thống vẫn lưu các tiêu chí bắt buộc của câu hỏi, nhưng tiêu chí không có điểm hợp lệ sẽ nhận `score=0`. Chỉ trường hợp câu hỏi không có tiêu chí hợp lệ ngay từ metadata đã khóa mới khiến backend xem feedback không đủ cơ sở và chuyển sang fallback.
 
-Điểm tổng của một câu trả lời không lấy trực tiếp từ AI. Backend lọc tiêu chí AI trả về theo rubric và competency domain của câu hỏi, điền `0` cho tiêu chí hợp lệ bị thiếu, chuẩn hóa trọng số trên toàn bộ tiêu chí hợp lệ của câu hỏi rồi tự tính điểm tổng theo thang 100:
+Điểm tổng của một câu trả lời không lấy trực tiếp từ AI. Backend lọc điểm AI trả về theo rubric và các tiêu chí đã gắn với câu hỏi, điền `0` cho tiêu chí hợp lệ bị thiếu, chuẩn hóa trọng số trên toàn bộ tiêu chí hợp lệ của câu hỏi rồi tự tính điểm tổng theo thang 100:
 
 ```text
 Điểm tổng = round(Σ điểm_tiêu_chí * trọng_số_đã_chuẩn_hóa)
@@ -779,19 +868,19 @@ flowchart TD
     H --> I[Lưu điểm tổng của câu trả lời]
 ```
 
-Khi feedback hợp lệ, backend lưu trong một transaction để tránh trạng thái nửa vời: ghi hoặc cập nhật feedback của câu trả lời, xóa các đoạn nhận xét cũ nếu feedback được tạo lại, ghi danh sách đoạn nhận xét mới và đánh dấu câu trả lời đã có feedback. Thông tin feedback được lưu gồm điểm tổng, câu trả lời mẫu, nhận xét chính, phiên bản prompt, cờ fallback, điểm theo tiêu chí và các annotated segment.
+Khi feedback hợp lệ, backend lưu trong một transaction để tránh trạng thái nửa vời: ghi hoặc cập nhật feedback của câu trả lời, xóa các đoạn nhận xét cũ nếu feedback được tạo lại, ghi danh sách đoạn nhận xét mới và đánh dấu câu trả lời đã có feedback. Thông tin feedback được lưu gồm điểm tổng, câu trả lời mẫu, nhận xét chính, phiên bản prompt, cờ fallback, điểm theo tiêu chí và các annotated segment. Việc ghi theo transaction giúp tránh tình huống feedback đã có nhưng answer chưa được đánh dấu hoàn tất, hoặc answer đã hoàn tất nhưng thiếu các đoạn nhận xét cần hiển thị.
 
-Sau khi lưu xong, backend phát sự kiện `turn.feedback_ready` và cập nhật tiến trình feedback của phiên. Nếu phiên đang ở trạng thái tạo báo cáo và tất cả feedback cần thiết đã sẵn sàng, backend xếp job tạo báo cáo tổng hợp.
+Sau khi lưu xong, backend phát sự kiện `turn.feedback_ready` để frontend biết câu trả lời đã có feedback. Payload của sự kiện cho biết answer nào đã sẵn sàng và feedback đó có đoạn chú thích hay không. Ngay sau đó, backend tính lại tiến trình feedback của phiên và phát sự kiện tiến trình để màn hình chờ báo cáo biết còn bao nhiêu câu trả lời chưa xử lý. Nếu phiên đang ở trạng thái tạo báo cáo và tất cả feedback cần thiết đã sẵn sàng, backend xếp job tạo báo cáo tổng hợp.
 
-Nếu feedback được tạo lại do retry job, transaction xóa các annotated segment cũ trước khi ghi segment mới. Cách này giúp một answer chỉ có một feedback hiện hành và danh sách đoạn nhận xét không bị nhân đôi sau các lần retry.
+Nếu feedback được tạo lại do retry job, transaction xóa các annotated segment cũ trước khi ghi segment mới. Cách này giúp một answer chỉ có một feedback hiện hành và danh sách đoạn nhận xét không bị nhân đôi sau các lần retry. Nếu job retry nhưng feedback đã tồn tại từ lần chạy trước, backend ưu tiên giữ feedback hiện có và chỉ bảo đảm answer được đánh dấu đã xử lý.
 
 **f. Xử lý lỗi và fallback**
 
 Nếu AI provider lỗi, hết quota, timeout, trả response rỗng, trả JSON không parse được hoặc trả JSON sai schema, backend không lưu output đó như feedback thật. Hệ thống ghi feedback fallback, đánh dấu câu trả lời đã được xử lý và cho phép luồng report tiếp tục.
 
-Nếu output qua được schema nhưng không còn tiêu chí hợp lệ sau khi so khớp với rubric của phiên, backend cũng chuyển sang fallback. Feedback fallback có cờ riêng và không được tính như điểm thật trong báo cáo. Điều này tránh trường hợp người dùng thấy điểm thấp chỉ vì AI trả dữ liệu không đáng tin cậy.
+Nếu output qua được schema nhưng AI trả sai hoặc thiếu tiêu chí so với danh sách đã khóa cho câu hỏi, backend không tự mở rộng phạm vi chấm. Hệ thống bỏ qua tiêu chí sai và gán `0` cho tiêu chí bắt buộc không có điểm hợp lệ. Cách xử lý này khác với fallback: điểm thấp trong trường hợp này là một kết quả chấm thật theo rubric của câu hỏi, còn fallback chỉ dùng khi dữ liệu nền hoặc kết quả AI không đủ tin cậy để tạo feedback thật.
 
-Feedback fallback lưu thông điệp giải thích phù hợp với ngôn ngữ phiên, không tạo annotated segment và đặt cờ `isFallback`. Backend vẫn phát `turn.feedback_ready` để frontend và report không chờ vô hạn, nhưng các bước đọc report sẽ ẩn điểm của feedback fallback.
+Feedback fallback lưu thông điệp giải thích phù hợp với ngôn ngữ phiên, không tạo annotated segment và đặt cờ `isFallback`. Backend vẫn phát `turn.feedback_ready` và cập nhật tiến trình feedback để frontend và report không chờ vô hạn, nhưng các bước đọc report sẽ ẩn điểm của feedback fallback.
 
 ```text
 Input: sessionId, userAnswerId, question metadata, contextPack, language
@@ -800,12 +889,14 @@ Input: sessionId, userAnswerId, question metadata, contextPack, language
 2. Tạo prompt feedback từ câu hỏi, answer, metadata, rubric và ngôn ngữ.
 3. Gọi AI để lấy feedback JSON.
 4. Parse JSON và validate schema.
-5. Lọc tiêu chí chấm theo rubric và competency domain của câu hỏi.
-6. Nếu không còn tiêu chí hợp lệ, ghi fallback feedback.
+5. Lọc tiêu chí chấm theo rubric và danh sách tiêu chí đã khóa của câu hỏi.
+6. Nếu câu hỏi không có tiêu chí hợp lệ để chấm, ghi fallback feedback.
 7. Nếu hợp lệ:
    7.1. Chuẩn hóa trọng số tiêu chí.
-   7.2. Tính điểm tổng theo trọng số.
-   7.3. Lưu feedback và annotated segments.
+   7.2. Gán 0 cho tiêu chí bắt buộc bị AI bỏ sót hoặc trả sai.
+   7.3. Tính điểm tổng theo trọng số.
+   7.4. Lọc lại các đoạn trích không khớp câu trả lời.
+   7.5. Lưu feedback và annotated segments.
 8. Đánh dấu answer đã có feedback.
 9. Phát sự kiện turn.feedback_ready và cập nhật tiến trình.
 10. Nếu phiên đang completing và mọi feedback đã sẵn sàng, xếp job tạo report.
@@ -829,7 +920,7 @@ Sơ đồ sau thể hiện mục đích của tính năng báo cáo: gom dữ li
         B --> C{Đủ dữ liệu tổng hợp?}
         C -->|Chưa| D[Hiển thị trạng thái chờ và tiến trình]
         C -->|Đủ| E[Xếp job tạo báo cáo]
-        E --> F[Worker tổng hợp transcript, điểm và heatmap]
+        E --> F[Worker tổng hợp answer và điểm]
         F --> G[Phân loại answer hợp lệ, fallback và skipped]
         G --> H[Lưu các phần trong session_reports]
         H --> I[Cập nhật phiên completed]
@@ -839,19 +930,23 @@ Sơ đồ sau thể hiện mục đích của tính năng báo cáo: gom dữ li
 
 **b. Dữ liệu đầu vào**
 
-Dữ liệu đầu vào của báo cáo gồm phiên phỏng vấn, danh sách câu hỏi trong `session_questions`, câu trả lời trong `user_answers`, feedback trong `ai_feedbacks`, các đoạn nhận xét đã lưu và trạng thái bỏ qua của từng câu. Report processor chỉ dùng feedback đã sẵn sàng để tổng hợp.
+Dữ liệu đầu vào của báo cáo gồm phiên phỏng vấn, danh sách câu hỏi trong `session_questions`, câu trả lời trong `user_answers`, feedback trong `ai_feedbacks`, các đoạn nhận xét đã lưu và trạng thái bỏ qua của từng câu. Bộ xử lý báo cáo chỉ dùng feedback đã sẵn sàng để tổng hợp.
 
 Báo cáo được lưu thành nhiều phần trong `session_reports`, gồm tóm tắt tổng quan, phân tích giao tiếp, heatmap năng lực, kế hoạch hành động và câu trả lời đề xuất cho các câu bị bỏ qua. Cách lưu theo từng phần giúp backend đọc lại báo cáo linh hoạt hơn và tránh nhồi toàn bộ kết quả vào một trường duy nhất.
 
-Đầu ra của tính năng gồm trạng thái phiên hoàn thành, điểm tổng nếu có dữ liệu chấm hợp lệ, transcript đã ghép câu hỏi - câu trả lời - feedback, chất lượng báo cáo và các phần báo cáo đã lưu. Chất lượng báo cáo có thể là đầy đủ, một phần, không khả dụng về điểm hoặc không thể chấm nếu toàn bộ phiên chỉ có câu bỏ qua.
+Đầu ra của tính năng gồm trạng thái phiên hoàn thành, điểm tổng nếu có dữ liệu chấm hợp lệ, transcript đã ghép câu hỏi - câu trả lời - feedback, chất lượng báo cáo và các phần báo cáo đã lưu. Với báo cáo mới, câu bị bỏ qua vẫn được ghi nhận trong kết quả tổng hợp và được tính là 0 điểm để phản ánh đúng việc người dùng không trả lời câu hỏi đó. Ngược lại, feedback fallback do AI lỗi chỉ được dùng để giữ luồng hệ thống tiếp tục chạy, không được xem như điểm chấm đáng tin cậy. Chất lượng báo cáo có thể là đầy đủ, một phần, không khả dụng về điểm hoặc không thể chấm nếu phiên cũ không có đủ dữ liệu điểm.
 
 **c. Luồng xử lý nghiệp vụ**
 
 Khi người dùng đi hết danh sách câu hỏi và yêu cầu hoàn thành phiên, backend chuyển phiên sang trạng thái `completing`. Backend kiểm tra các câu trả lời không bị bỏ qua đã có feedback hay chưa. Nếu còn feedback chưa sẵn sàng, hệ thống chưa xếp job report và frontend tiếp tục hiển thị trạng thái chờ.
 
-Khi đủ dữ liệu, backend xếp job report. Worker đọc câu hỏi, câu trả lời và feedback, tách câu bị bỏ qua khỏi câu có dữ liệu chấm thật. Điểm tổng của phiên được tính từ các feedback hợp lệ; feedback fallback không được tính như điểm thật. Khi report được ghi thành công, trạng thái phiên chuyển sang hoàn thành và backend phát sự kiện `report.ready`.
+Trước khi xử lý, backend luôn kiểm tra phiên có tồn tại và có thuộc về người dùng đang đăng nhập hay không. Bước này áp dụng cho cả lịch sử phiên, trang chi tiết phiên, tiến trình feedback và trang báo cáo. Nếu phiên không tồn tại, hệ thống trả lỗi không tìm thấy. Nếu phiên thuộc về người dùng khác, hệ thống từ chối truy cập. Nhờ đó, lịch sử và báo cáo không bị lộ giữa các tài khoản.
 
-Luồng chính có hai cổng kiểm tra. Cổng thứ nhất nằm trước khi xếp report: phiên phải ở trạng thái `completing`, phải có answer và không còn feedback chưa xử lý đối với các câu không bị bỏ qua. Cổng thứ hai nằm trong report worker: số feedback đọc được phải khớp với số answer cần chấm. Nếu hai điều kiện này chưa đạt, hệ thống không tạo báo cáo sớm.
+Khi đủ dữ liệu, backend xếp job tạo báo cáo. Tiến trình tạo báo cáo đọc câu hỏi, câu trả lời và feedback, tách câu bị bỏ qua, feedback thật và feedback fallback. Câu bị bỏ qua được tạo một bản ghi feedback tổng hợp với điểm 0 và các tiêu chí tương ứng để điểm tổng phản ánh đúng số câu người dùng đã bỏ qua. Feedback fallback do lỗi AI được giữ lại trong transcript nhưng không được xem là điểm thật. Khi report được ghi thành công, trạng thái phiên chuyển sang hoàn thành và backend phát sự kiện `report.ready`.
+
+Luồng chính có hai cổng kiểm tra. Cổng thứ nhất nằm trước khi xếp report: phiên phải ở trạng thái `completing`, phải có câu trả lời và không còn feedback chưa xử lý đối với các câu không bị bỏ qua. Cổng thứ hai nằm trong tiến trình tạo báo cáo: số feedback đọc được phải khớp với số câu trả lời cần chấm. Nếu hai điều kiện này chưa đạt, hệ thống không tạo báo cáo sớm.
+
+Quá trình đọc lại báo cáo cũng có một cổng kiểm tra riêng. Backend chỉ trả báo cáo khi phần tóm tắt tổng quan đã được lưu. Nếu phần này chưa có, API trả trạng thái "báo cáo chưa sẵn sàng" thay vì trả một báo cáo rỗng. Frontend dựa vào trạng thái này để tiếp tục polling tiến trình hoặc chờ sự kiện thời gian thực.
 
 Sơ đồ dưới đây thể hiện quá trình hoàn tất phiên, chờ feedback nếu cần và tải báo cáo sau khi worker ghi dữ liệu.
 
@@ -894,36 +989,48 @@ sequenceDiagram
 
 Giao diện báo cáo hiển thị trạng thái chờ khi report chưa sẵn sàng. Trong thời gian này, người dùng cần thấy tiến trình feedback hoặc thông báo rằng hệ thống đang tổng hợp kết quả, thay vì nhìn thấy trang lỗi hoặc báo cáo rỗng.
 
-Khi báo cáo sẵn sàng, frontend hiển thị điểm tổng nếu có dữ liệu chấm đáng tin cậy, thông tin phiên, phương pháp chấm, biểu đồ năng lực và phân tích từng câu trả lời. Với câu bị bỏ qua, báo cáo chỉ hiển thị câu trả lời đề xuất nếu có; không hiển thị điểm mạnh, điểm cần cải thiện hoặc điểm số như một câu đã được chấm.
+Khi báo cáo sẵn sàng, frontend hiển thị điểm tổng nếu có dữ liệu chấm đáng tin cậy, thông tin phiên, phương pháp chấm, biểu đồ năng lực và phân tích từng câu trả lời. Với câu bị bỏ qua, báo cáo hiển thị trạng thái đã bỏ qua, điểm 0 nếu backend đã tạo dữ liệu điểm cho báo cáo mới và câu trả lời đề xuất nếu có. Giao diện không hiển thị các đoạn nhận xét chi tiết như ưu điểm hoặc điểm cần cải thiện, vì người dùng không có nội dung trả lời để phân tích.
 
-Trang lịch sử phiên hiển thị danh sách phiên đã tạo, trạng thái của từng phiên và lối vào phù hợp: tiếp tục phiên đang chạy, chờ phiên đang xử lý hoặc mở báo cáo đã hoàn thành.
+Trang lịch sử phiên hiển thị danh sách phiên đã tạo của riêng người dùng hiện tại, sắp xếp từ mới đến cũ. Mỗi phiên có trạng thái, thời gian tạo, loại phỏng vấn, context pack, thời lượng và điểm tổng nếu phiên đã hoàn thành. Từ trạng thái phiên, giao diện chọn lối vào phù hợp: tiếp tục phiên đang chạy, theo dõi phiên đang tạo báo cáo hoặc mở báo cáo đã hoàn thành.
 
 Khi API trả trạng thái report chưa sẵn sàng, frontend không coi đây là lỗi cuối cùng. Trang báo cáo gọi API tiến trình feedback, hiển thị số câu đã chấm trên tổng số câu cần chấm, số câu còn đang xử lý và thanh tiến trình. Trang cũng lắng nghe sự kiện `session.feedback_progress` và `report.ready`; nếu sự kiện không đến, polling vẫn tiếp tục cập nhật tiến trình.
 
-Khi report có `reportQuality` là một phần hoặc không khả dụng, giao diện cần thể hiện rằng điểm tổng có thể bị ẩn hoặc chỉ phản ánh các câu được chấm hợp lệ. Với câu bị bỏ qua, transcript vẫn giữ câu hỏi và answer trống, nhưng dùng câu trả lời đề xuất nếu backend đã tạo hoặc fallback được lưu.
+Khi report có `reportQuality` là một phần hoặc không khả dụng, giao diện cần thể hiện rằng điểm tổng có thể bị ẩn hoặc chỉ phản ánh các câu được chấm hợp lệ. Với câu bị bỏ qua, transcript vẫn giữ câu hỏi và answer trống, nhưng dùng câu trả lời đề xuất nếu backend đã tạo hoặc fallback được lưu. Với báo cáo cũ chưa có dữ liệu điểm cho câu bỏ qua, giao diện hiển thị thông báo để người dùng hiểu vì sao điểm có thể khác các báo cáo mới.
 
 **e. Thiết kế xử lý backend**
 
 Backend chỉ tạo report khi đủ dữ liệu cần thiết. Điều kiện quan trọng là các câu trả lời không bị bỏ qua phải có feedback hoặc đã được xử lý theo fallback. Các câu bị bỏ qua không làm report bị kẹt vì chúng không cần feedback chấm điểm.
 
-Report processor tổng hợp transcript, điểm phiên, thống kê câu trả lời, danh sách câu fallback và các phần báo cáo. Với phiên có dữ liệu chấm hợp lệ, điểm tổng được tính từ các feedback không phải fallback. Với phiên chỉ có fallback hoặc chỉ có câu bị bỏ qua, backend trả chất lượng báo cáo phù hợp và không tạo điểm số giả.
+Ở bước lấy lịch sử, backend nhận yêu cầu từ người dùng đã đăng nhập, lấy mã người dùng từ phiên xác thực, sau đó chỉ truy vấn các phiên thuộc đúng người dùng đó. Kết quả được sắp xếp theo thời gian tạo giảm dần để phiên mới nhất xuất hiện trước. Backend không cần tính lại báo cáo ở bước này; nó chỉ trả metadata đã lưu của phiên, ví dụ trạng thái hiện tại, điểm tổng nếu đã có và thông tin cấu hình phiên.
 
-Report service có API đọc tiến trình, trong đó backend đếm tổng số câu hỏi, tổng số answer, số câu skipped, số feedback cần có, số feedback đã hoàn tất và số feedback còn chờ. Khi đọc report chính, nếu chưa có phần `executive_summary`, backend trả `REPORT_NOT_READY` với trạng thái chấp nhận để frontend tiếp tục chờ.
+Ở bước hoàn tất phiên, backend xử lý theo trạng thái hiện tại. Nếu phiên đang hoạt động và đã có đủ câu trả lời, hệ thống chuyển phiên sang `completing`. Nếu người dùng hết giờ hoặc chọn tự động bỏ qua câu chưa trả lời, backend tạo thêm các câu trả lời rỗng có đánh dấu bỏ qua, đặt thời gian còn lại về 0 rồi mới chuyển sang `completing`. Nếu phiên đã ở trạng thái `completing`, backend không tạo lại phiên mới mà chỉ kiểm tra lại điều kiện để bảo đảm job report đã được xếp khi dữ liệu đã sẵn sàng.
 
-Khi xếp job report, backend dùng `jobId` theo mã phiên để tránh tạo nhiều job report cho cùng một phiên. Nếu job cũ đã failed, hệ thống có thể retry job đó. Payload report gồm mã phiên, loại phiên, context pack, ngôn ngữ và danh sách turn cần tổng hợp.
+Ở bước kiểm tra điều kiện tạo report, backend đếm tổng số câu trả lời, số câu bị bỏ qua và số feedback đã hoàn tất. Câu bị bỏ qua được loại khỏi yêu cầu phải có feedback thật, vì không có nội dung trả lời để AI chấm. Nếu vẫn còn câu trả lời chưa sinh feedback, backend dừng tại trạng thái chờ. Nếu tất cả điều kiện đã đủ, backend xếp job tạo báo cáo vào hàng đợi và gắn mã job theo mã phiên để tránh tạo nhiều job trùng cho cùng một phiên. Nếu job cũ bị lỗi, hệ thống ưu tiên retry job đó thay vì tạo bản sao mới.
 
-Report worker tạo `executive_summary` từ số câu, số câu được đánh giá, số câu fallback, số câu skipped và điểm tổng. `comm_analysis` lưu thống kê feedback. `competency_heatmap` lưu điểm theo answer, trong đó feedback fallback có score null. `action_plan` được tạo từ các tóm tắt feedback hợp lệ; worker yêu cầu AI trả JSON dạng danh sách 3-5 việc cần cải thiện. `skipped_answers` lưu câu trả lời đề xuất cho các câu người dùng bỏ qua.
+Bộ xử lý báo cáo tổng hợp transcript, điểm phiên, thống kê câu trả lời, danh sách câu fallback và các phần báo cáo. Với phiên có dữ liệu chấm hợp lệ, điểm tổng được tính từ các feedback không phải fallback; trong đó câu bị bỏ qua của báo cáo mới được tính là 0 điểm. Với phiên chỉ có fallback do AI lỗi, backend trả chất lượng báo cáo phù hợp và không tạo điểm số giả.
+
+Backend có API đọc tiến trình, trong đó hệ thống đếm tổng số câu hỏi, tổng số câu trả lời, số câu bị bỏ qua, số feedback cần có, số feedback đã hoàn tất và số feedback còn chờ. Khi đọc report chính, nếu chưa có phần `executive_summary`, backend trả `REPORT_NOT_READY` với trạng thái chấp nhận để frontend tiếp tục chờ.
+
+Khi xếp job report, backend dùng mã job theo mã phiên để tránh tạo nhiều job report cho cùng một phiên. Nếu job cũ đã lỗi, hệ thống có thể chạy lại job đó. Dữ liệu gửi vào hàng đợi gồm mã phiên, loại phiên, context pack, ngôn ngữ và danh sách câu trả lời cần tổng hợp.
+
+Sau khi nhận job, tiến trình tạo báo cáo đọc danh sách câu trả lời theo thứ tự đã lưu, xác định câu nào bị bỏ qua và câu nào cần feedback thật. Tiến trình này kiểm tra số feedback tìm được có khớp với số câu cần chấm hay không. Nếu chưa khớp, hệ thống báo lỗi để hàng đợi chạy lại sau, tránh ghi báo cáo khi dữ liệu còn thiếu.
+
+Tiếp theo, tiến trình tạo báo cáo tạo dữ liệu tổng hợp cho câu bị bỏ qua. Mỗi câu bỏ qua được gán điểm 0, nhận xét ngắn gọn và điểm theo các tiêu chí áp dụng cho câu hỏi đó. Nhờ vậy, báo cáo mới phản ánh rõ tác động của việc bỏ qua câu hỏi thay vì bỏ qua hoàn toàn khỏi điểm trung bình. Đồng thời, hệ thống tạo câu trả lời đề xuất cho các câu này; nếu AI không trả được kết quả, hệ thống dùng câu trả lời mẫu fallback dựa trên nội dung câu hỏi.
+
+Bộ xử lý báo cáo tạo `executive_summary` từ số câu, số câu được đánh giá, số câu fallback, số câu bị bỏ qua và điểm tổng. `comm_analysis` lưu thống kê feedback. `competency_heatmap` lưu điểm theo câu trả lời, trong đó feedback fallback có score null. `action_plan` được tạo từ các tóm tắt feedback hợp lệ; hệ thống yêu cầu AI trả JSON dạng danh sách 3-5 việc cần cải thiện. `skipped_answers` lưu câu trả lời đề xuất cho các câu người dùng bỏ qua.
 
 Các phần báo cáo được ghi bằng upsert trong cùng transaction với việc cập nhật phiên sang `completed`, ghi `overallScore` và `completedAt`. Sau khi transaction thành công, backend phát `report.ready`. Thứ tự này giúp frontend chỉ tải report sau khi dữ liệu đã có trong database.
+
+Khi người dùng mở báo cáo, backend đọc lại phiên, kiểm tra quyền sở hữu, kiểm tra phần tóm tắt đã tồn tại, sau đó dựng transcript từ danh sách câu hỏi theo thứ tự. Với mỗi câu, backend ghép câu hỏi, câu trả lời đầu tiên, feedback, điểm, các đoạn nhận xét đã được làm sạch và tiêu chí đã áp dụng. Với câu bị bỏ qua, backend thay phần câu trả lời bằng trạng thái bỏ qua, bỏ các đoạn nhận xét chi tiết và lấy câu trả lời đề xuất từ phần báo cáo đã lưu. Cuối cùng, backend xác định chất lượng báo cáo: đầy đủ, một phần, không khả dụng do toàn bộ feedback là fallback, hoặc không thể chấm với dữ liệu cũ không có điểm.
 
 **f. Xử lý lỗi và fallback**
 
 Nếu frontend yêu cầu report khi worker chưa tạo xong, backend trả trạng thái chưa sẵn sàng để frontend tiếp tục chờ hoặc polling. Đây không phải lỗi nghiệp vụ mà là trạng thái bình thường của luồng bất đồng bộ.
 
-Nếu toàn bộ feedback là fallback hoặc không có câu trả lời có thể chấm, báo cáo hiển thị trạng thái chưa thể chấm điểm thay vì `0/100`. Nếu quá trình tạo câu trả lời đề xuất cho câu bỏ qua gặp lỗi AI, hệ thống vẫn có thể lưu phần báo cáo còn lại và dùng nội dung thay thế phù hợp cho phần câu bị bỏ qua.
+Nếu toàn bộ feedback là fallback do AI không chấm được câu trả lời, báo cáo hiển thị trạng thái chưa thể chấm điểm thay vì `0/100`. Nếu phiên chỉ có dữ liệu cũ chưa tạo được điểm cho câu bỏ qua, báo cáo được đánh dấu là không thể chấm. Với báo cáo mới, câu bị bỏ qua được tính 0 điểm, nhưng phần phân tích chi tiết vẫn không hiển thị như một câu trả lời bình thường.
 
-Nếu AI không tạo được action plan, backend dùng action plan fallback theo ngôn ngữ phiên. Nếu AI không tạo được câu trả lời đề xuất cho câu skipped, backend dùng câu trả lời mẫu fallback dựa trên nội dung câu hỏi. Nếu số feedback chưa đủ, report worker ném lỗi để job retry thay vì lưu báo cáo thiếu dữ liệu.
- 
+Nếu AI không tạo được action plan, backend dùng action plan fallback theo ngôn ngữ phiên. Nếu AI không tạo được câu trả lời đề xuất cho câu skipped, backend dùng câu trả lời mẫu fallback dựa trên nội dung câu hỏi. Nếu số feedback chưa đủ, tiến trình tạo báo cáo báo lỗi để job chạy lại thay vì lưu báo cáo thiếu dữ liệu.
+
 ### 4.5.7 Theo dõi tiến trình phiên và xử lý trạng thái đặc biệt
 
 **a. Mục đích của tính năng**
@@ -976,6 +1083,7 @@ Degraded mode được xử lý theo từng loại tác vụ. Nếu AI sinh câu
 Hệ thống chuyển sang fallback trong các trường hợp AI provider hết quota, timeout, trả response rỗng, JSON không parse được, JSON đúng cú pháp nhưng sai schema, không có tiêu chí chấm nào khớp với rubric đang áp dụng hoặc provider lỗi sau các lần thử lại. Các lỗi này được xử lý theo hướng bảo toàn dữ liệu đã có và tiếp tục luồng nếu có thể.
 
 Fallback không có nghĩa là mọi kết quả đều được xem như bình thường. Feedback fallback không được tính vào điểm thật. Phiên chỉ có fallback hoặc không có câu trả lời có thể chấm sẽ hiển thị trạng thái chưa thể chấm điểm. Nếu lỗi xảy ra ở queue hoặc database và hệ thống không thể tiếp tục an toàn, backend đánh dấu trạng thái lỗi để frontend dừng chờ và thông báo cho người dùng.
+ 
 
 ## 4.6 Thiết Kế Cơ Sở Dữ Liệu
 
