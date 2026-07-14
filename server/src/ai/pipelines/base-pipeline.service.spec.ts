@@ -411,7 +411,9 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         }),
       ).rejects.toMatchObject({ errorCode: ErrorCode.SCHEMA_VALIDATION_ERROR });
       expect(mockOpenAI.chatCompletion).not.toHaveBeenCalled();
-      expect(mockPromptBuilder.applyContextPackForEvaluation).not.toHaveBeenCalled();
+      expect(
+        mockPromptBuilder.applyContextPackForEvaluation,
+      ).not.toHaveBeenCalled();
       expect(mockPromptBuilder.injectDynamicContext).not.toHaveBeenCalled();
     });
 
@@ -445,7 +447,8 @@ describe('BasePipelineService (via HrPipelineService)', () => {
           competencyDomains: ['D1', 'D2'],
         }),
       );
-      const contextArg = mockPromptBuilder.injectDynamicContext.mock.calls[0][0];
+      const contextArg =
+        mockPromptBuilder.injectDynamicContext.mock.calls[0][0];
       expect(contextArg.systemMessage).toContain('competency_domains=D1, D2');
       expect(contextArg.systemMessage).not.toContain('ZZ');
     });

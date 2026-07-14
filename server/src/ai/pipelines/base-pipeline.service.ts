@@ -51,7 +51,11 @@ function readAlias(
   return undefined;
 }
 
-function clampScore(value: unknown): number | unknown {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function clampScore(value: unknown): unknown {
   if (typeof value !== 'number' || !Number.isFinite(value)) return value;
   return Math.min(100, Math.max(0, Math.round(value)));
 }
@@ -224,11 +228,11 @@ export abstract class BasePipelineService implements InterviewPipeline {
   }
 
   private normalizeFeedbackPayload(payload: unknown): unknown {
-    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    if (!isRecord(payload)) {
       return payload;
     }
 
-    const record = payload as Record<string, unknown>;
+    const record = payload;
     const appliedRaw = readAlias(
       record,
       'applied_dimensions',
@@ -243,38 +247,36 @@ export abstract class BasePipelineService implements InterviewPipeline {
     return {
       ...record,
       applied_dimensions: Array.isArray(appliedRaw)
-        ? appliedRaw.map((item) => {
-            if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        ? (appliedRaw as unknown[]).map((item): unknown => {
+            if (!isRecord(item)) {
               return item;
             }
-            const dimension = item as Record<string, unknown>;
             return {
-              ...dimension,
-              id: dimension.id,
-              score: clampScore(dimension.score),
+              ...item,
+              id: item.id,
+              score: clampScore(item.score),
             };
           })
         : appliedRaw,
       model_answer: readAlias(record, 'model_answer', 'modelAnswer'),
       key_takeaway: readAlias(record, 'key_takeaway', 'keyTakeaway'),
       annotated_segments: Array.isArray(segmentsRaw)
-        ? segmentsRaw.map((item) => {
-            if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        ? (segmentsRaw as unknown[]).map((item): unknown => {
+            if (!isRecord(item)) {
               return item;
             }
-            const segment = item as Record<string, unknown>;
             return {
-              ...segment,
-              segment_text: readAlias(segment, 'segment_text', 'segmentText'),
-              start_index: readAlias(segment, 'start_index', 'startIndex'),
-              end_index: readAlias(segment, 'end_index', 'endIndex'),
+              ...item,
+              segment_text: readAlias(item, 'segment_text', 'segmentText'),
+              start_index: readAlias(item, 'start_index', 'startIndex'),
+              end_index: readAlias(item, 'end_index', 'endIndex'),
               highlight_level: readAlias(
-                segment,
+                item,
                 'highlight_level',
                 'highlightLevel',
               ),
               improved_version: readAlias(
-                segment,
+                item,
                 'improved_version',
                 'improvedVersion',
               ),

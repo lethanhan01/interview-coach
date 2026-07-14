@@ -1,6 +1,10 @@
 import { sanitizeFeedbackSegments } from './feedback-segment-sanitizer';
 
-const makeSegment = (overrides: Partial<Parameters<typeof sanitizeFeedbackSegments>[1][number]> = {}) => ({
+const makeSegment = (
+  overrides: Partial<
+    Parameters<typeof sanitizeFeedbackSegments>[1][number]
+  > = {},
+) => ({
   segmentText: 'backend developer',
   startIndex: 7,
   endIndex: 24,

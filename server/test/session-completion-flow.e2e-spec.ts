@@ -171,13 +171,9 @@ describe('Session completion flow (integration)', () => {
       },
       $transaction: jest.fn(
         async (
-          input:
-            | ((tx: any) => Promise<unknown>)
-            | Array<Promise<unknown>>,
+          input: ((tx: any) => Promise<unknown>) | Array<Promise<unknown>>,
         ) => {
-          return Array.isArray(input)
-            ? Promise.all(input)
-            : input(transaction);
+          return Array.isArray(input) ? Promise.all(input) : input(transaction);
         },
       ),
     };
@@ -212,7 +208,7 @@ describe('Session completion flow (integration)', () => {
       prisma as any,
       { codesFromSessionQuestion: jest.fn(() => ['D4']) } as any,
       { uploadInterviewAudio: jest.fn() } as any,
-      { calculate: jest.fn() } as any,
+      { calculate: jest.fn() },
       feedbackQueue as any,
       { add: jest.fn() } as any,
     );

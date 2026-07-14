@@ -122,8 +122,10 @@ export class ReportService {
           annotation: s.annotation,
           suggestion: s.suggestion ?? undefined,
         })) ?? [];
-      const segments = sanitizeFeedbackSegments(answerText, rawSegments)
-        .segments;
+      const segments = sanitizeFeedbackSegments(
+        answerText,
+        rawSegments,
+      ).segments;
 
       return {
         answerId: answer?.id,

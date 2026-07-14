@@ -417,7 +417,7 @@ export class OpenAIGateway {
           QUESTION_TRUNCATED_RETRY_MAX_TOKENS,
         );
         this.logger.warn(
-            `AI question generation returned empty final content with finish_reason=length; retrying once with max_tokens=${effectiveMaxTokens} (model=${resolvedModel}, reasoning_content_length=${metadata.reasoningContentLength})`,
+          `AI question generation returned empty final content with finish_reason=length; retrying once with max_tokens=${effectiveMaxTokens} (model=${resolvedModel}, reasoning_content_length=${metadata.reasoningContentLength})`,
         );
         response = await createCompletion(effectiveMaxTokens);
         metadata = this.getChoiceMetadata(response);

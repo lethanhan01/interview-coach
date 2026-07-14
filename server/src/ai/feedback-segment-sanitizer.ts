@@ -93,7 +93,7 @@ export function sanitizeFeedbackSegments<T extends FeedbackSegmentLike>(
         ...normalizedSegment,
         startIndex,
         endIndex: startIndex + quote.length,
-      } as SanitizedFeedbackSegment<T>);
+      });
       issues.push({
         index,
         reason: hasBoundedRange ? 'range_text_mismatch' : 'invalid_range',

@@ -38,10 +38,10 @@ export const FeedbackSchema = z.object({
   model_answer: z.string(),
   key_takeaway: z.string(),
   annotated_segments: z.array(
-      z.object({
-        segment_text: z.string(),
-        start_index: z.number().int().optional(),
-        end_index: z.number().int().optional(),
+    z.object({
+      segment_text: z.string(),
+      start_index: z.number().int().optional(),
+      end_index: z.number().int().optional(),
       highlight_level: z.enum(['strength', 'improvement']),
       annotation: z.string(),
       suggestion: OptionalFeedbackTextSchema,

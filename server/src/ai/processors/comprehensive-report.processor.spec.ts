@@ -232,9 +232,9 @@ describe('ComprehensiveReportProcessor', () => {
         ]),
       }),
     );
-    expect(mockOpenAI.chatCompletion.mock.calls[0][0].messages[1].content).toContain(
-      '"answerId":"answer-1"',
-    );
+    expect(
+      mockOpenAI.chatCompletion.mock.calls[0][0].messages[1].content,
+    ).toContain('"answerId":"answer-1"');
   });
 
   it('không gọi OpenAI và không ghi điểm 0 giả khi toàn bộ feedback là fallback', async () => {
