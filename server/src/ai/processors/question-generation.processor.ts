@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
@@ -8,6 +9,7 @@ import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory'
 import { QUESTION_GEN_QUEUE } from '../../common/constants/queue.constants';
 import { QuestionBankService } from '../../question-bank/question-bank.service';
 import type { FallbackQuestion } from '../../question-bank/question-bank.service';
+import { QuestionCriteriaService } from '../../question-criteria/question-criteria.service';
 import { OpenAIGateway } from '../openai.gateway';
 import { resolveOutputLanguage } from '../output-language';
 import type {
@@ -31,6 +33,7 @@ interface QuestionGenerationJobDto {
   jobDescriptionText: string;
   targetRoles: string[];
   contextPack: 'VN' | 'Western';
+  rubricVersionId: string;
   language: string;
   totalQuestions: number;
   durationMin: number;
@@ -41,14 +44,18 @@ type MergedQuestionRow = {
   questionText: string;
   orderIndex: number;
   questionCategory: string;
-  competencyDomain: string;
-  rubricJson: object;
+  competencyDomains: string[];
   estimatedTimeMin: number;
+};
+
+type PersistedQuestionRow = MergedQuestionRow & {
+  id: string;
+  sessionId: string;
 };
 
 type NormalizedGeneratedQuestion = GeneratedQuestion & {
   questionCategory: 'behavioral' | 'technical';
-  competencyDomain: string;
+  competencyDomains: string[];
   difficulty: 1 | 2 | 3;
   estimatedTimeMin: number;
 };
@@ -63,6 +70,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
     private readonly contextPackService: ContextPackService,
     private readonly factory: PipelineStrategyFactory,
     private readonly questionBankService: QuestionBankService,
+    private readonly questionCriteria: QuestionCriteriaService,
     private readonly openai: OpenAIGateway,
   ) {
     super();
@@ -75,6 +83,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
       jobDescriptionText,
       targetRoles,
       contextPack,
+      rubricVersionId,
       language,
       totalQuestions,
       durationMin,
@@ -84,9 +93,10 @@ export class QuestionGenerationProcessor extends WorkerHost {
     const aiCount = Math.round(totalQuestions / AI_QUESTION_EVERY_N);
 
     let aiQuestions: NormalizedGeneratedQuestion[];
+    let contextPackConfig: ContextPackConfig;
     try {
-      const contextPackConfig =
-        this.contextPackService.getContextPack(contextPack);
+      contextPackConfig =
+        await this.contextPackService.getContextPack(contextPack);
       const strategy = this.factory.getStrategy(sessionType);
       const rawAiQuestions = await strategy.generateQuestions({
         sessionType,
@@ -121,6 +131,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
           sessionId,
           sessionType,
           contextPack,
+          rubricVersionId,
           outputLanguage,
           durationMin,
           totalQuestions,
@@ -149,6 +160,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
         contextPack,
         qbCount,
         outputLanguage,
+        rubricVersionId,
       );
     } catch (qbError: unknown) {
       this.logger.error(
@@ -164,18 +176,19 @@ export class QuestionGenerationProcessor extends WorkerHost {
         qbQuestions,
         totalQuestions,
         durationMin,
-      ).map((row) => ({ ...row, sessionId }));
+      );
       if (merged.length < totalQuestions) {
         throw new Error(
           `Only ${merged.length}/${totalQuestions} questions available after metadata validation`,
         );
       }
-      const result = await this.prisma.sessionQuestion.createMany({
-        data: merged,
-        skipDuplicates: true,
-      });
+      const result = await this.persistSessionQuestions(
+        sessionId,
+        rubricVersionId,
+        merged,
+      );
       this.logger.log(
-        `Hybrid question generation persisted for session ${sessionId}: ai=${aiCount} qb=${qbQuestions.length} total=${result.count} model=${this.openai.getChatModel()}`,
+        `Hybrid question generation persisted for session ${sessionId}: ai=${aiCount} qb=${qbQuestions.length} total=${result} model=${this.openai.getChatModel()}`,
       );
 
       if (await this.markActiveUnlessStopped(sessionId)) {
@@ -221,8 +234,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
           questionText: q.text,
           orderIndex: pos,
           questionCategory: q.questionCategory,
-          competencyDomain: q.competencyDomain,
-          rubricJson: {},
+          competencyDomains: q.competencyDomains,
           estimatedTimeMin: q.estimatedTimeMin,
         });
       } else if (qbIdx < qbQuestions.length) {
@@ -239,11 +251,10 @@ export class QuestionGenerationProcessor extends WorkerHost {
           questionBankId: q.questionBankId,
           questionText: q.text,
           orderIndex: pos,
-          questionCategory: q.competencyDomain.startsWith('TD')
+          questionCategory: q.competencyDomains[0].startsWith('TD')
             ? 'technical'
             : 'behavioral',
-          competencyDomain: q.competencyDomain,
-          rubricJson: {},
+          competencyDomains: q.competencyDomains,
           estimatedTimeMin: fallbackDifficulty,
         });
       }
@@ -256,6 +267,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
     sessionId: string,
     sessionType: string,
     contextPack: string,
+    rubricVersionId: string,
     language: string,
     durationMin: number,
     totalQuestions: number,
@@ -265,17 +277,18 @@ export class QuestionGenerationProcessor extends WorkerHost {
       contextPack,
       totalQuestions,
       language,
+      rubricVersionId,
     );
 
-    await this.prisma.sessionQuestion.createMany({
-      data: selected.map((q, i) => ({
-        sessionId,
+    await this.persistSessionQuestions(
+      sessionId,
+      rubricVersionId,
+      selected.map((q, i) => ({
         questionBankId: q.questionBankId,
         questionText: q.text,
         orderIndex: i + 1,
         questionCategory: q.questionCategory,
-        competencyDomain: q.competencyDomain,
-        rubricJson: {},
+        competencyDomains: q.competencyDomains,
         estimatedTimeMin:
           q.estimatedTimeMin > 0
             ? q.estimatedTimeMin
@@ -285,8 +298,51 @@ export class QuestionGenerationProcessor extends WorkerHost {
                 difficulty: 2,
               }),
       })),
-      skipDuplicates: true,
-    });
+    );
+  }
+
+  private async persistSessionQuestions(
+    sessionId: string,
+    rubricVersionId: string,
+    rows: MergedQuestionRow[],
+  ): Promise<number> {
+    const questionRows: PersistedQuestionRow[] = rows.map((row) => ({
+      ...row,
+      id: randomUUID(),
+      sessionId,
+    }));
+    const criteriaData = (
+      await Promise.all(
+        questionRows.map((row) =>
+          this.questionCriteria.buildSessionQuestionCriteriaData({
+            sessionQuestionId: row.id,
+            rubricVersionId,
+            criterionCodes: row.competencyDomains,
+          }),
+        ),
+      )
+    ).flat();
+
+    const [questionResult] = await this.prisma.$transaction([
+      this.prisma.sessionQuestion.createMany({
+        data: questionRows.map((row) => ({
+          ...(row.questionBankId ? { questionBankId: row.questionBankId } : {}),
+          questionText: row.questionText,
+          orderIndex: row.orderIndex,
+          questionCategory: row.questionCategory,
+          estimatedTimeMin: row.estimatedTimeMin,
+          id: row.id,
+          sessionId: row.sessionId,
+        })),
+        skipDuplicates: true,
+      }),
+      this.prisma.sessionQuestionCriterion.createMany({
+        data: criteriaData,
+        skipDuplicates: true,
+      }),
+    ]);
+
+    return questionResult.count;
   }
 
   private normalizeAiQuestions(
@@ -304,14 +360,14 @@ export class QuestionGenerationProcessor extends WorkerHost {
       const metadata = normalizeGeneratedQuestionMetadata(
         {
           category: question.category,
-          competencyDomain: question.competencyDomain,
+          competencyDomains: question.competencyDomains,
         },
         contextPackConfig,
         sessionType,
       );
       if (!metadata) {
         this.logger.warn(
-          `Dropping AI question with invalid metadata: category=${question.category} competencyDomain=${question.competencyDomain}`,
+          `Dropping AI question with invalid metadata: category=${question.category} competencyDomains=${JSON.stringify(question.competencyDomains)}`,
         );
         continue;
       }
@@ -321,7 +377,7 @@ export class QuestionGenerationProcessor extends WorkerHost {
         ...question,
         category: metadata.questionCategory,
         questionCategory: metadata.questionCategory,
-        competencyDomain: metadata.competencyDomain,
+        competencyDomains: metadata.competencyDomains,
         difficulty,
         estimatedTimeMin: calculateEstimatedTimeMin({
           durationMin,

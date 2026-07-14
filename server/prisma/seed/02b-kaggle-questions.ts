@@ -8,7 +8,7 @@ type KaggleQuestion = {
   difficulty: number;
   contextPackId: string;
   subcategory: string;
-  competencyDomain: string;
+  criterionCodes: string[];
   applicableRoles: string[];
   applicableLevels: string[];
   tags: string[];
@@ -23,10 +23,12 @@ function toQuestionBankRow(question: KaggleQuestion) {
     sessionType: question.sessionType,
     difficulty: question.difficulty,
     contextPackId: question.contextPackId,
-    competencyDomain: question.competencyDomain,
     estimatedTimeMin: question.estimatedTimeMin,
     translations: question.translations,
-    contentJson: question.contentJson,
+    contentJson: {
+      ...question.contentJson,
+      criteriaCodes: question.criterionCodes,
+    },
   };
 }
 
@@ -47,7 +49,10 @@ export async function seedKaggleQuestions(prisma: PrismaClient): Promise<void> {
   });
 
   if (existingCount >= questions.length) {
-    console.log(`question_bank (kaggle): already seeded ${existingCount} rows, skipping`);
+    await syncKaggleQuestionCriteria(prisma);
+    console.log(
+      `question_bank (kaggle): already seeded ${existingCount} rows, skipping`,
+    );
     return;
   }
 
@@ -66,5 +71,29 @@ export async function seedKaggleQuestions(prisma: PrismaClient): Promise<void> {
     skipDuplicates: true,
   });
 
+  await syncKaggleQuestionCriteria(prisma);
+
   console.log(`question_bank (kaggle): seeded ${questions.length} questions`);
+}
+
+async function syncKaggleQuestionCriteria(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRaw`
+    INSERT INTO question_bank_criteria (question_bank_id, rubric_criterion_id)
+    SELECT qb.id, rcr.id
+    FROM question_bank qb
+    CROSS JOIN LATERAL jsonb_array_elements_text(
+      COALESCE(qb.content_json->'criteriaCodes', '[]'::jsonb)
+    ) AS domain(code)
+    JOIN rubric_versions rv
+      ON rv.context_pack_id = qb.context_pack_id
+     AND rv.status = 'active'
+    JOIN rubric_categories rc
+      ON rc.rubric_version_id = rv.id
+    JOIN rubric_criteria rcr
+      ON rcr.rubric_category_id = rc.id
+     AND rcr.code = domain.code
+    WHERE qb.deleted_at IS NULL
+      AND qb.content_json->>'source' = 'kaggle'
+    ON CONFLICT DO NOTHING
+  `;
 }

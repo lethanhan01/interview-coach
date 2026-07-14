@@ -11,6 +11,25 @@ export type SessionType = "hr" | "technical" | "mixed";
 export type ContextPack = "VN" | "Western";
 export type OutputLanguage = "vi" | "en";
 
+export interface RubricDimension {
+  code: string;
+  nameVi: string;
+  weightPct: number;
+}
+
+export interface RubricCategory {
+  label: string;
+  categoryWeightPct: number;
+  dimensions: RubricDimension[];
+}
+
+export interface RubricConfig {
+  contextPackId: ContextPack;
+  sessionType: SessionType;
+  categories: RubricCategory[];
+  hint: string;
+}
+
 export interface Session {
   id: string;
   userId: string;
@@ -22,6 +41,7 @@ export interface Session {
   status: SessionStatus;
   numQuestions: number;
   durationMin?: number;
+  remainingSeconds?: number | null;
   jobDescription: string;
   createdAt: string;
   completedAt?: string;
@@ -191,10 +211,6 @@ export interface GetProfileResponse {
   profile: {
     fullName?: string;
     personality?: string;
-    targetPosition?: string;
-    targetRoleCategory?: string;
-    targetLevel?: string;
-    preferredTechStack?: string;
     education?: EducationEntry;
     workExperience?: WorkExperienceEntry[];
     projects?: ProjectEntry[];

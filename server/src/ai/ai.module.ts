@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { OpenAIGateway } from './openai.gateway';
 import { PromptBuilderService } from './prompt-builder.service';
 import { ContextPackService } from './context-pack.service';
+import { RubricController } from './rubric.controller';
 import { ZodValidatorService } from './zod-validator.service';
 import { HrPipelineService } from './pipelines/hr.pipeline.service';
 import { TechnicalPipelineService } from './pipelines/technical.pipeline.service';
@@ -16,6 +17,7 @@ import { WhisperService } from '../turn/whisper.service';
 import { VoiceMetricsService } from '../turn/voice-metrics.service';
 import { ReportModule } from '../report/report.module';
 import { QuestionBankModule } from '../question-bank/question-bank.module';
+import { QuestionCriteriaModule } from '../question-criteria/question-criteria.module';
 import {
   QUESTION_GEN_QUEUE,
   FEEDBACK_QUEUE,
@@ -27,6 +29,7 @@ import {
   imports: [
     ReportModule,
     QuestionBankModule,
+    QuestionCriteriaModule,
     BullModule.registerQueue(
       { name: QUESTION_GEN_QUEUE },
       { name: FEEDBACK_QUEUE },
@@ -34,6 +37,7 @@ import {
       { name: TRANSCRIPTION_QUEUE },
     ),
   ],
+  controllers: [RubricController],
   providers: [
     OpenAIGateway,
     PromptBuilderService,

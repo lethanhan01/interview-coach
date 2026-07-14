@@ -8,7 +8,7 @@ export type QuestionCategory = 'behavioral' | 'technical';
 
 export interface NormalizedQuestionMetadata {
   questionCategory: QuestionCategory;
-  competencyDomain: string;
+  competencyDomains: string[];
   matchBranch: 'exact' | 'normId' | 'code' | 'name' | 'heuristic';
 }
 
@@ -25,6 +25,11 @@ function normalizeKey(value: string): string {
 
 function categoryFromDomain(domain: string): QuestionCategory {
   return domain.startsWith('TD') ? 'technical' : 'behavioral';
+}
+
+function normalizeQuestionCategory(value?: string): QuestionCategory | null {
+  if (value === 'behavioral' || value === 'technical') return value;
+  return null;
 }
 
 export function isDomainAllowedForSession(
@@ -51,23 +56,46 @@ function allowedDimensionsForSession(
 function resolveDomain(
   rawDomain: string,
   allowedDims: RubricDimensionEntry[],
-): Omit<NormalizedQuestionMetadata, 'questionCategory'> | null {
+): {
+  domain: string;
+  matchBranch: NormalizedQuestionMetadata['matchBranch'];
+} | null {
   const exact = allowedDims.find((d) => d.id === rawDomain);
-  if (exact) return { competencyDomain: exact.id, matchBranch: 'exact' };
+  if (exact) {
+    return {
+      domain: exact.id,
+      matchBranch: 'exact',
+    };
+  }
 
   const normRaw = normalizeKey(rawDomain);
   const byNormId = allowedDims.find((d) => normalizeKey(d.id) === normRaw);
-  if (byNormId) return { competencyDomain: byNormId.id, matchBranch: 'normId' };
+  if (byNormId) {
+    return {
+      domain: byNormId.id,
+      matchBranch: 'normId',
+    };
+  }
 
   const codeMatch = CODE_REGEX.exec(rawDomain);
   if (codeMatch) {
     const token = normalizeKey(codeMatch[0]);
     const byCode = allowedDims.find((d) => normalizeKey(d.id) === token);
-    if (byCode) return { competencyDomain: byCode.id, matchBranch: 'code' };
+    if (byCode) {
+      return {
+        domain: byCode.id,
+        matchBranch: 'code',
+      };
+    }
   }
 
   const byName = allowedDims.find((d) => normalizeKey(d.name) === normRaw);
-  if (byName) return { competencyDomain: byName.id, matchBranch: 'name' };
+  if (byName) {
+    return {
+      domain: byName.id,
+      matchBranch: 'name',
+    };
+  }
 
   return null;
 }
@@ -75,21 +103,45 @@ function resolveDomain(
 export function normalizeGeneratedQuestionMetadata(
   input: {
     category?: string;
-    competencyDomain: string;
+    legacyDomain?: string;
+    competencyDomains?: string[];
   },
   contextPack: ContextPackConfig,
   sessionType: SessionType,
 ): NormalizedQuestionMetadata | null {
   const allowedDims = allowedDimensionsForSession(contextPack, sessionType);
-  const resolved = resolveDomain(input.competencyDomain, allowedDims);
-  if (!resolved) return null;
-  if (!isDomainAllowedForSession(resolved.competencyDomain, sessionType)) {
-    return null;
+  const rawDomains =
+    input.competencyDomains && input.competencyDomains.length > 0
+      ? input.competencyDomains
+      : input.legacyDomain
+        ? [input.legacyDomain]
+        : [];
+  const resolvedDomains: string[] = [];
+  let matchBranch: NormalizedQuestionMetadata['matchBranch'] | undefined;
+
+  for (const rawDomain of rawDomains) {
+    const resolved = resolveDomain(rawDomain, allowedDims);
+    if (!resolved) continue;
+    if (!isDomainAllowedForSession(resolved.domain, sessionType)) {
+      continue;
+    }
+    if (!resolvedDomains.includes(resolved.domain)) {
+      resolvedDomains.push(resolved.domain);
+      matchBranch ??= resolved.matchBranch;
+    }
   }
 
+  if (resolvedDomains.length === 0 || !matchBranch) return null;
+
+  const requestedCategory =
+    sessionType === 'mixed' ? normalizeQuestionCategory(input.category) : null;
+  const primaryCategory =
+    requestedCategory ?? categoryFromDomain(resolvedDomains[0]);
+
   return {
-    questionCategory: categoryFromDomain(resolved.competencyDomain),
-    ...resolved,
+    questionCategory: primaryCategory,
+    competencyDomains: resolvedDomains,
+    matchBranch,
   };
 }
 
@@ -214,7 +266,7 @@ function heuristicDomain(
 export function normalizeQuestionMetadataForCleanup(
   input: {
     category?: string;
-    competencyDomain: string;
+    competencyDomains?: string[];
     questionText: string;
   },
   contextPack: ContextPackConfig,
@@ -230,13 +282,13 @@ export function normalizeQuestionMetadataForCleanup(
   const heuristicInput =
     sessionType === 'mixed'
       ? input.questionText
-      : `${input.questionText} ${input.category ?? ''} ${input.competencyDomain}`;
+      : `${input.questionText} ${input.category ?? ''} ${input.competencyDomains?.join(' ') ?? ''}`;
   const heuristic = heuristicDomain(heuristicInput, sessionType);
   if (!heuristic) return null;
 
   return {
     questionCategory: categoryFromDomain(heuristic),
-    competencyDomain: heuristic,
+    competencyDomains: [heuristic],
     matchBranch: 'heuristic',
   };
 }

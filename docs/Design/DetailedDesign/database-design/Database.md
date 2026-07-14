@@ -1,12 +1,12 @@
 # Database — Current State Snapshot
 
-> Source of truth: `server/prisma/schema.prisma` + raw SQL in `server/prisma/migrations/migration.sql`. Last reviewed: 2026-07-03.
+> Source of truth: `server/prisma/schema.prisma` + raw SQL in `server/prisma/migrations/migration.sql`. Last reviewed: 2026-07-11.
 > Design docs (01–08) phản ánh intent thiết kế ban đầu; file này phản ánh trạng thái thực tế đã được apply lên DB.
 
 **Engine:** PostgreSQL 15 via Supabase  
-**ORM:** Prisma 5 (`previewFeatures: ["partialIndexes"]`)  
+**ORM:** Prisma 7 (`previewFeatures: ["partialIndexes"]`)  
 **Migration tool:** `prisma db push` — không có migration SQL files (xem D2)  
-**Tables in schema:** 12
+**Tables in schema:** 13
 
 ---
 
@@ -18,23 +18,29 @@
 | D2 | Migration tool | `prisma migrate dev` (tạo migration files) | `prisma db push` + `db:apply-sql` qua `db:sync:full` |
 | D3 | `question_usage` table | Không có trong thiết kế gốc | Retired — từng chỉ ghi audit, chưa có repeat-avoidance runtime |
 | D4 | `question_bank` fields | 9 data columns | 9 data columns — giữ runtime fields + `estimated_time_min`, `translations`, `content_json`; bỏ metadata filter chưa dùng |
-| D5 | `user_profiles` fields | 13 columns | 10 columns — giữ profile phỏng vấn đang dùng; CV structured đã tách sang `resumes.parsed_json` |
+| D5 | `user_profiles` fields | 13 columns | 12 columns — giữ profile phỏng vấn đang dùng và 6 nhóm CV JSONB trực tiếp trên profile |
 | D6 | `reverse_questions` | MVP (Layer 4) | Chưa implement — không có trong schema.prisma |
-| D7 | Partial indexes | Raw SQL files riêng | Prisma schema cho một số partial index; raw SQL cho `resumes(user_id) WHERE active = true` |
+| D7 | Partial indexes | Raw SQL files riêng | Prisma schema/raw SQL cho partial index còn dùng; `resumes` đã retired |
 | D8 | `QuestionUsage` indexes | `sort: Desc` trong plan | Retired cùng `question_usage` |
 | D9 | Report JSON columns | 6 JSONB columns trên `interview_sessions` | Đã tách sang `session_reports` ở T13 |
+| D10 | Rubric storage | Rubric gốc từng được dự kiến lưu dạng JSON trong context pack hoặc versioned rubric | Rubric hiện hành nằm trong immutable `rubric_versions` active theo `context_pack_id`; session khóa `rubric_version_id` để giữ lịch sử |
 
 ---
 
 ## Relations Overview
 
 ```
-context_packs ──< question_bank ──< session_questions >── interview_sessions ──< session_reports
-                                                                 │
-                                                     user_answers ──── ai_feedbacks ──< annotated_segments
+rubric_versions ──< rubric_categories ──< rubric_criteria
+rubric_versions ──< interview_sessions
+rubric_criteria ──< question_bank_criteria >── question_bank
+rubric_criteria ──< session_question_criteria >── session_questions
+
+question_bank ──< session_questions ──< user_answers ─── ai_feedbacks ──< annotated_segments
+interview_sessions ──< session_questions
+interview_sessions ──< session_reports
+interview_sessions ──< user_answers
 
 users ──── user_profiles
-  └──< resumes
   └──< interview_sessions
   └──< saved_job_descriptions
 ```
@@ -43,11 +49,11 @@ Prisma relation fields (không phải DB columns):
 
 | Từ | Đến | Cardinality | onDelete |
 |----|-----|-------------|----------|
-| ContextPack | QuestionBank[] | 1:n | default (Restrict) |
-| ContextPack | InterviewSession[] | 1:n | default |
+| RubricVersion | RubricCategory[] | 1:n | Cascade |
+| RubricVersion | InterviewSession[] | 1:n | Restrict |
+| RubricCategory | RubricCriterion[] | 1:n | Cascade |
 | QuestionBank | SessionQuestion[] | 1:n | SET NULL (FK nullable) |
 | User | UserProfile? | 1:1 | Cascade |
-| User | Resume[] | 1:n | Cascade |
 | User | InterviewSession[] | 1:n | Cascade |
 | User | SavedJobDescription[] | 1:n | Cascade |
 | SavedJobDescription | InterviewSession[] | 1:n | SetNull |
@@ -65,19 +71,45 @@ Prisma relation fields (không phải DB columns):
 
 Format: `Column — Type — Default — Nullable — Notes`
 
-### context_packs
-Prisma model: `ContextPack`
+### rubric_versions
+Prisma model: `RubricVersion`
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
-| id | TEXT PK | — | NO | Canonical values: `'VN'`, `'Western'`; legacy `'vn'`/`'western'` are normalized at bootstrap |
-| name | TEXT | — | NO | |
-| rubric_json | JSONB | — | NO | Competency rubric per pack |
-| scoring_weights | JSONB | — | NO | |
+| id | UUID PK | gen_random_uuid() | NO | |
+| context_pack_id | TEXT | — | NO | CHECK `VN` hoặc `Western`; business selector ổn định |
+| version_key | TEXT | — | NO | Khóa phiên bản trong từng context |
+| status | TEXT | `active` | NO | `active` hoặc `archived` |
+| checksum | TEXT | — | YES | Dedupe/version integrity |
+| published_at | TIMESTAMPTZ | now() | NO | |
 | created_at | TIMESTAMPTZ | now() | NO | |
 
-Indexes: none.  
-Seed: 2 rows (`VN`, `Western`) — FK target, phải có trước mọi table khác.
+Unique/indexes: `(context_pack_id, version_key)`, partial unique active version theo `context_pack_id`, `idx_rubric_versions_context_pack`.
+
+### rubric_categories
+Prisma model: `RubricCategory`
+
+| rubric_version_id | UUID FK | — | NO | → rubric_versions.id ON DELETE CASCADE |
+| category_key | TEXT | — | NO | `behavioral` hoặc `technical` |
+| label | TEXT | — | NO | Tên hiển thị |
+| weight | DOUBLE | — | NO | Trọng số category trong mixed session |
+| display_order | INT | 0 | NO | CHECK >= 0 |
+
+Unique/indexes: `(rubric_version_id, category_key)`, `idx_rubric_categories_version`.
+
+### rubric_criteria
+Prisma model: `RubricCriterion`
+
+| Column | DB Type | Default | Nullable | Notes |
+|--------|---------|---------|----------|-------|
+| id | UUID PK | gen_random_uuid() | NO | |
+| rubric_category_id | UUID FK | — | NO | → rubric_categories.id ON DELETE CASCADE |
+| code | TEXT | — | NO | Canonical codes `D1..D6`, `TD1..TD5` |
+| name | TEXT | — | NO | Tên tiêu chí |
+| weight | DOUBLE | — | NO | Trọng số trong category |
+| display_order | INT | 0 | NO | CHECK >= 0 |
+
+Unique/indexes: `(rubric_category_id, code)`, `idx_rubric_criteria_category`. DB trigger `trg_rubric_criteria_version_code` chặn trùng `code` trong cùng rubric version thông qua `rubric_categories.rubric_version_id`.
 
 ---
 
@@ -89,10 +121,9 @@ Fallback questions khi AI generation fail. Soft-delete via `deleted_at`.
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
 | content | TEXT | — | NO | Câu hỏi chính (ngôn ngữ mặc định) |
-| session_type | TEXT | — | NO | `'hr' \| 'technical' \| 'mixed'` — *D1* |
+| session_type | ENUM | — | NO | `'hr' \| 'technical'` |
 | difficulty | INT | — | NO | Scale 1–5 |
-| context_pack_id | TEXT FK | — | NO | → context_packs.id |
-| competency_domain | TEXT | — | NO | `D1`–`D6` (HR), `TD1`–`TD5` (Technical) |
+| context_pack_id | TEXT | — | NO | CHECK `VN` hoặc `Western` |
 | estimated_time_min | INT | — | YES | *D4 — mới* |
 | translations | JSONB | — | YES | *D4 — mới* — `{ vi?: string, en?: string }` |
 | content_json | JSONB | — | YES | *D4 — mới* — seed provenance/source tracking |
@@ -105,6 +136,20 @@ Indexes (partial — `WHERE deleted_at IS NULL`):
 - `idx_question_bank_session_type_difficulty` on `(session_type, difficulty)`
 
 Seed target: 120 rows (sau T4) — phân bố 6 pairs `(session_type × context_pack)` × 20.
+
+### question_bank_criteria
+Prisma model: `QuestionBankCriterion`  
+Bảng nối xác định các tiêu chí rubric mà một câu hỏi bank có thể đánh giá. Đây là source of truth thay cho cache `question_bank.competency_domains` đã retired.
+
+| Column | DB Type | Default | Nullable | Notes |
+|--------|---------|---------|----------|-------|
+| question_bank_id | UUID FK | — | NO | → question_bank.id ON DELETE CASCADE |
+| rubric_criterion_id | UUID FK | — | NO | → rubric_criteria.id ON DELETE RESTRICT |
+| created_at | TIMESTAMPTZ | now() | NO | |
+
+Primary key: `(question_bank_id, rubric_criterion_id)`.  
+Indexes:
+- `idx_question_bank_criteria_rubric_criterion` on `(rubric_criterion_id)`
 
 ### users
 Prisma model: `User`  
@@ -126,38 +171,54 @@ Populate: trigger `handle_new_auth_user()` INSERT khi Supabase Auth tạo user m
 
 ### user_profiles
 Prisma model: `UserProfile`  
-One-to-one với users. Field CV structured đã tách sang `resumes.parsed_json`; các field profile dự phòng/write-only đã retired.
+One-to-one với users. 6 nhóm CV structured được lưu trực tiếp dưới dạng JSONB; các field profile dự phòng/write-only đã retired.
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
 | user_id | UUID UNIQUE FK | — | NO | → users.id ON DELETE CASCADE |
 | full_name | TEXT | — | YES | |
-| target_position | TEXT | — | YES | |
-| target_role_category | TEXT | — | YES | |
-| target_level | TEXT | — | YES | |
-| preferred_tech_stack | TEXT | — | YES | |
 | personality | TEXT | — | YES | *Ngoài design docs* |
+| education | JSONB | — | YES | Học vấn |
+| work_experience | JSONB | — | YES | Kinh nghiệm làm việc |
+| projects | JSONB | — | YES | Dự án |
+| technical_skills | JSONB | — | YES | Kỹ năng kỹ thuật |
+| certifications | JSONB | — | YES | Chứng chỉ |
+| awards | JSONB | — | YES | Giải thưởng |
 | created_at | TIMESTAMPTZ | now() | NO | |
 | updated_at | TIMESTAMPTZ | now() | NO | Auto-update |
 
 ---
 
-### resumes
-Prisma model: `Resume`  
-Structured CV/profile evidence tách khỏi `user_profiles`. API profile hiện vẫn giữ contract phẳng: service merge resume active vào response profile và tách các field CV khi update.
+
+### saved_job_descriptions
+Prisma model: `SavedJobDescription`
+JD người dùng lưu để tái sử dụng khi tạo phiên phỏng vấn. Bảng này dùng soft delete để ẩn JD khỏi thư viện nhưng không phá vỡ lịch sử phiên đã tạo.
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
 | user_id | UUID FK | — | NO | → users.id ON DELETE CASCADE |
-| parsed_json | JSONB | — | YES | `education`, `workExperience`, `projects`, `technicalSkills`, `certifications`, `awards` |
-| active | BOOLEAN | true | NO | Resume đang dùng |
+| company_name | TEXT | — | NO | |
+| company_website | TEXT | — | YES | |
+| job_title | TEXT | — | NO | |
+| level | TEXT | — | YES | |
+| headcount | TEXT | — | YES | |
+| location | TEXT | — | YES | |
+| requirements | TEXT | — | NO | |
+| job_content | TEXT | — | NO | |
+| tech_stack | TEXT[] | {} | NO | |
+| benefits | TEXT | — | YES | |
+| salary | TEXT | — | YES | |
+| bonus | TEXT | — | YES | |
+| last_used_at | TIMESTAMPTZ | — | YES | |
+| deleted_at | TIMESTAMPTZ | — | YES | Soft delete |
 | created_at | TIMESTAMPTZ | now() | NO | |
+| updated_at | TIMESTAMPTZ | now() | NO | Auto-update |
 
 Indexes:
-- `resumes_user_id_active_idx` on `(user_id, active)`
-- `idx_resumes_one_active_per_user` partial unique on `(user_id)` WHERE `active = true`
+- `idx_saved_job_descriptions_user_updated` on `(user_id, updated_at DESC)`
+- `idx_saved_job_descriptions_user_company_title` on `(user_id, company_name, job_title)`
 
 ---
 
@@ -176,7 +237,8 @@ Session config + lifecycle state. Report payload đã tách sang `session_report
 | num_questions | INT | 5 | NO | |
 | duration_min | INT | 30 | NO | |
 | language | TEXT | 'vi' | NO | |
-| context_pack_id | TEXT FK | — | NO | → context_packs.id |
+| context_pack_id | TEXT | — | NO | CHECK `VN` hoặc `Western` |
+| rubric_version_id | UUID FK | — | NO | → rubric_versions.id ON DELETE RESTRICT; khóa immutable rubric version của session |
 | status | TEXT | 'generating' | NO | CHECK ∈ `{generating, active, paused, canceled, completing, completed, error}` |
 | overall_score | INT | — | YES | CHECK NULL hoặc 0–100 |
 | completed_at | TIMESTAMPTZ | — | YES | |
@@ -185,6 +247,7 @@ Session config + lifecycle state. Report payload đã tách sang `session_report
 
 Indexes:
 - `idx_interview_sessions_created_at` on `(created_at DESC)`
+- `idx_interview_sessions_rubric_version` on `(rubric_version_id)`
 - `idx_interview_sessions_saved_jd` on `(saved_job_description_id)`
 - `idx_interview_sessions_user_created` on `(user_id, created_at DESC)`
 - `idx_interview_sessions_user_id` on `(user_id)`
@@ -224,8 +287,6 @@ Câu hỏi per session. `question_bank_id` nullable — AI-generated questions k
 | question_text | TEXT | — | NO | |
 | order_index | INT | — | NO | UNIQUE per session |
 | question_category | TEXT | — | NO | |
-| competency_domain | TEXT | — | NO | |
-| rubric_json | JSONB | — | NO | |
 | estimated_time_min | INT | — | YES | |
 | created_at | TIMESTAMPTZ | now() | NO | |
 
@@ -233,6 +294,22 @@ Unique: `(session_id, order_index)`.
 Indexes:
 - `idx_session_questions_session_id` on `(session_id)`
 - `idx_session_questions_session_id_text` on `(session_id, question_text)`
+
+---
+
+### session_question_criteria
+Prisma model: `SessionQuestionCriterion`  
+Liên kết tiêu chí theo từng câu hỏi trong session. Lịch sử rubric được giữ bằng `interview_sessions.rubric_version_id`, nên mỗi row phải trỏ tới criterion có category thuộc cùng immutable version của session.
+
+| Column | DB Type | Default | Nullable | Notes |
+|--------|---------|---------|----------|-------|
+| session_question_id | UUID FK | — | NO | → session_questions.id ON DELETE CASCADE |
+| rubric_criterion_id | UUID FK | — | NO | → rubric_criteria.id ON DELETE RESTRICT |
+| created_at | TIMESTAMPTZ | now() | NO | |
+
+Primary key: `(session_question_id, rubric_criterion_id)`.  
+Indexes:
+- `idx_session_question_criteria_rubric_criterion` on `(rubric_criterion_id)`
 
 ---
 
@@ -344,6 +421,6 @@ Indexes:
 | Cascade delete | Tất cả child tables theo chuỗi answer → feedback → segments |
 | `updated_at` (auto via `@updatedAt`) | `users`, `user_profiles`, `interview_sessions`, `question_bank`, `user_answers` |
 | Partial indexes (`WHERE deleted_at IS NULL`) | `question_bank` (2 indexes) |
-| Partial indexes | `ai_feedbacks(user_answer_id) WHERE user_answer_id IS NOT NULL`; `resumes(user_id) WHERE active = true` UNIQUE |
+| Partial indexes | `ai_feedbacks(user_answer_id) WHERE user_answer_id IS NOT NULL` |
 | Cross-row integrity outside Prisma schema | `user_answers(question_id, session_id)` composite FK; `interview_sessions.saved_job_description_id` same-user trigger |
 | CHECK constraints (raw SQL, `migration.sql` §7) | role/status/type/range/score/audio/report/offset constraints — apply thủ công sau `db push` (ADR-008) |

@@ -5,13 +5,15 @@ import type { ChatCompletionMessageParam } from 'openai/resources/chat/completio
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 
+type ChatTask = 'question-generation' | 'feedback' | 'report';
+
 interface ChatCompletionParams {
   messages: ChatCompletionMessageParam[];
   model?: string;
   temperature: number;
   maxTokens: number;
   responseFormat?: 'json_object';
-  task?: 'question-generation' | 'feedback' | 'report';
+  task?: ChatTask;
   timeoutMs?: number;
 }
 
@@ -38,12 +40,20 @@ interface ChoiceMetadata {
   reasoningContentLength: number;
 }
 
+interface JsonExtractionResult {
+  content: string;
+  source: 'plain' | 'fence' | 'embedded';
+  repairApplied: string[];
+}
+
 @Injectable()
 export class OpenAIGateway {
   private readonly chatClient: OpenAI;
   private readonly audioClient: OpenAI;
   private readonly logger = new Logger(OpenAIGateway.name);
   private readonly chatModel: string;
+  private readonly feedbackModel?: string;
+  private readonly reportModel?: string;
   private readonly jsonModeEnabled: boolean;
   private readonly defaultTimeoutMs: number;
   private readonly questionTimeoutMs: number;
@@ -58,19 +68,21 @@ export class OpenAIGateway {
 
     this.chatModel =
       config.get<string>('OPENAI_CHAT_MODEL') ?? 'google/gemma-4-e4b';
+    this.feedbackModel = config.get<string>('OPENAI_FEEDBACK_MODEL');
+    this.reportModel = config.get<string>('OPENAI_REPORT_MODEL');
     this.jsonModeEnabled = config.get<string>('OPENAI_JSON_MODE') === 'true';
     this.defaultTimeoutMs = Number(config.get('OPENAI_TIMEOUT_MS') ?? 30_000);
     this.questionTimeoutMs = Number(
       config.get('OPENAI_QUESTION_TIMEOUT_MS') ??
-        Math.max(this.defaultTimeoutMs, 120_000),
+        Math.max(this.defaultTimeoutMs, 240_000),
     );
     this.feedbackTimeoutMs = Number(
       config.get('OPENAI_FEEDBACK_TIMEOUT_MS') ??
-        Math.max(this.defaultTimeoutMs, 180_000),
+        Math.max(this.defaultTimeoutMs, 420_000),
     );
     this.reportTimeoutMs = Number(
       config.get('OPENAI_REPORT_TIMEOUT_MS') ??
-        Math.max(this.defaultTimeoutMs, 180_000),
+        Math.max(this.defaultTimeoutMs, 600_000),
     );
 
     this.chatClient = new OpenAI({
@@ -84,8 +96,8 @@ export class OpenAIGateway {
     });
   }
 
-  getChatModel(): string {
-    return this.chatModel;
+  getChatModel(task?: ChatTask): string {
+    return this.resolveModel(task);
   }
 
   private isQuotaExceeded(error: unknown): boolean {
@@ -176,60 +188,145 @@ export class OpenAIGateway {
     );
   }
 
-  private extractJsonContent(raw: string): string {
-    const trimmed = raw.trim();
+  private tryParseJson(value: string): boolean {
     try {
-      JSON.parse(trimmed);
-      return trimmed;
+      JSON.parse(value);
+      return true;
     } catch {
-      // Keep scanning for fenced or embedded JSON below.
+      return false;
     }
-    const blockMatch = /```(?:json)?\s*\n?([\s\S]*?)\n?```/.exec(trimmed);
-    if (blockMatch) {
-      const inner = blockMatch[1].trim();
-      try {
-        JSON.parse(inner);
-        return inner;
-      } catch {
-        // Fenced content was not pure JSON; try embedded object extraction.
-      }
-    }
-    const objMatch = /(\{[\s\S]*\})/.exec(trimmed);
-    if (objMatch) {
-      try {
-        JSON.parse(objMatch[1]);
-        return objMatch[1];
-      } catch {
-        // Fall back to the raw content so the caller can classify the error.
-      }
-    }
-    return raw;
   }
 
-  private parseJsonContent(metadata: ChoiceMetadata): string {
-    const extracted = this.extractJsonContent(metadata.content);
-    try {
-      JSON.parse(extracted);
-      return extracted;
-    } catch {
-      const truncated = metadata.finishReason === 'length';
-      this.logger.warn(
-        `AI provider returned ${
-          truncated ? 'truncated' : 'invalid'
-        } JSON (finish_reason=${metadata.finishReason}, content_length=${
-          metadata.content.length
-        }, reasoning_content_length=${
-          metadata.reasoningContentLength
-        }): ${metadata.content.slice(0, 300)}`,
-      );
-      throw new InterviewAIException(
-        ErrorCode.AI_INVALID_JSON,
-        HttpStatus.BAD_GATEWAY,
-        `AI provider returned ${
-          truncated ? 'truncated' : 'invalid'
-        } JSON response`,
-      );
+  private removeTrailingCommas(value: string): string {
+    return value.replace(/,\s*([}\]])/g, '$1');
+  }
+
+  private repairSingleQuotedJson(value: string): string | null {
+    if (value.includes('"')) return null;
+
+    let changed = false;
+    const repaired = value.replace(
+      /'([^'\\]*(?:\\.[^'\\]*)*)'/g,
+      (_match, inner: string) => {
+        changed = true;
+        return JSON.stringify(
+          inner.replace(/\\'/g, "'").replace(/\\\\/g, '\\'),
+        );
+      },
+    );
+
+    return changed ? repaired : null;
+  }
+
+  private tryNormalizeJsonCandidate(
+    content: string,
+    source: JsonExtractionResult['source'],
+  ): JsonExtractionResult | null {
+    const candidate = content.trim();
+    if (this.tryParseJson(candidate)) {
+      return { content: candidate, source, repairApplied: [] };
     }
+
+    const withoutTrailingCommas = this.removeTrailingCommas(candidate);
+    if (
+      withoutTrailingCommas !== candidate &&
+      this.tryParseJson(withoutTrailingCommas)
+    ) {
+      return {
+        content: withoutTrailingCommas,
+        source,
+        repairApplied: ['trailing_comma'],
+      };
+    }
+
+    for (const singleQuoteCandidate of [candidate, withoutTrailingCommas]) {
+      const repaired = this.repairSingleQuotedJson(singleQuoteCandidate);
+      if (repaired && this.tryParseJson(repaired)) {
+        const repairApplied =
+          singleQuoteCandidate === withoutTrailingCommas &&
+          withoutTrailingCommas !== candidate
+            ? ['trailing_comma', 'single_quotes']
+            : ['single_quotes'];
+        return { content: repaired, source, repairApplied };
+      }
+    }
+
+    return null;
+  }
+
+  private extractJsonContent(raw: string): JsonExtractionResult {
+    const trimmed = raw.trim();
+    const plain = this.tryNormalizeJsonCandidate(trimmed, 'plain');
+    if (plain) {
+      return plain;
+    }
+
+    const blockMatch = /```(?:json)?\s*\n?([\s\S]*?)\n?```/.exec(trimmed);
+    if (blockMatch) {
+      const fenced = this.tryNormalizeJsonCandidate(blockMatch[1], 'fence');
+      if (fenced) {
+        return fenced;
+      }
+    }
+
+    const objMatch = /(\{[\s\S]*\})/.exec(trimmed);
+    if (objMatch) {
+      const embedded = this.tryNormalizeJsonCandidate(objMatch[1], 'embedded');
+      if (embedded) {
+        return embedded;
+      }
+    }
+
+    return { content: raw, source: 'plain', repairApplied: [] };
+  }
+
+  private parseJsonContent(
+    metadata: ChoiceMetadata,
+    context: { task?: ChatTask; model: string },
+  ): string {
+    const extracted = this.extractJsonContent(metadata.content);
+    if (this.tryParseJson(extracted.content)) {
+      this.logger.debug(
+        JSON.stringify({
+          event: 'ai_json_output',
+          task: context.task ?? 'unknown',
+          model: context.model,
+          finishReason: metadata.finishReason,
+          rawLength: metadata.content.length,
+          source: extracted.source,
+          repairApplied: extracted.repairApplied,
+          reasoningContentLength: metadata.reasoningContentLength,
+        }),
+      );
+      return extracted.content;
+    }
+
+    const truncated = metadata.finishReason === 'length';
+    this.logger.warn(
+      JSON.stringify({
+        event: 'ai_invalid_json',
+        task: context.task ?? 'unknown',
+        model: context.model,
+        finishReason: metadata.finishReason,
+        rawLength: metadata.content.length,
+        source: extracted.source,
+        repairApplied: extracted.repairApplied,
+        reasoningContentLength: metadata.reasoningContentLength,
+        kind: truncated ? 'truncated' : 'invalid',
+      }),
+    );
+    throw new InterviewAIException(
+      ErrorCode.AI_INVALID_JSON,
+      HttpStatus.BAD_GATEWAY,
+      `AI provider returned ${truncated ? 'truncated' : 'invalid'} JSON response`,
+    );
+  }
+
+  private resolveModel(task?: ChatTask, explicitModel?: string): string {
+    if (explicitModel) return explicitModel;
+    if (task === 'feedback' && this.feedbackModel) return this.feedbackModel;
+    if (task === 'report' && this.reportModel) return this.reportModel;
+    return this.chatModel;
   }
 
   private getChoiceMetadata(response: unknown): ChoiceMetadata {
@@ -268,13 +365,14 @@ export class OpenAIGateway {
   async chatCompletion(params: ChatCompletionParams): Promise<string> {
     const {
       messages,
-      model = this.chatModel,
+      model,
       temperature,
       maxTokens,
       responseFormat,
       task,
       timeoutMs,
     } = params;
+    const resolvedModel = this.resolveModel(task, model);
     let requestTimeoutMs: number;
     if (timeoutMs !== undefined) {
       requestTimeoutMs = timeoutMs;
@@ -292,7 +390,7 @@ export class OpenAIGateway {
       const createCompletion = (tokens: number) =>
         this.chatClient.chat.completions.create(
           {
-            model,
+            model: resolvedModel,
             messages,
             temperature,
             max_tokens: tokens,
@@ -319,7 +417,7 @@ export class OpenAIGateway {
           QUESTION_TRUNCATED_RETRY_MAX_TOKENS,
         );
         this.logger.warn(
-          `AI question generation returned empty final content with finish_reason=length; retrying once with max_tokens=${effectiveMaxTokens} (model=${model}, reasoning_content_length=${metadata.reasoningContentLength})`,
+          `AI question generation returned empty final content with finish_reason=length; retrying once with max_tokens=${effectiveMaxTokens} (model=${resolvedModel}, reasoning_content_length=${metadata.reasoningContentLength})`,
         );
         response = await createCompletion(effectiveMaxTokens);
         metadata = this.getChoiceMetadata(response);
@@ -327,13 +425,13 @@ export class OpenAIGateway {
 
       if (!metadata.content) {
         this.logger.warn(
-          `AI provider returned empty final content (task=${task ?? 'unknown'}, model=${model}, max_tokens=${effectiveMaxTokens}, finish_reason=${metadata.finishReason}, reasoning_content_length=${metadata.reasoningContentLength})`,
+          `AI provider returned empty final content (task=${task ?? 'unknown'}, model=${resolvedModel}, max_tokens=${effectiveMaxTokens}, finish_reason=${metadata.finishReason}, reasoning_content_length=${metadata.reasoningContentLength})`,
         );
         throw this.emptyResponseException(metadata);
       }
 
       return responseFormat === 'json_object'
-        ? this.parseJsonContent(metadata)
+        ? this.parseJsonContent(metadata, { task, model: resolvedModel })
         : metadata.content;
     });
   }

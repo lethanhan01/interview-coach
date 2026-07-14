@@ -17,6 +17,14 @@ interface Question {
   id: string
   content: string
   orderIndex: number
+  answered?: boolean
+  answerId?: string
+  skipped?: boolean
+}
+
+interface QuestionsResponse {
+  questions: Question[]
+  currentIndex?: number
 }
 
 type AnswerMode = 'text' | 'voice'
@@ -32,26 +40,34 @@ export default function InterviewPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answerMode, setAnswerMode] = useState<AnswerMode>('text')
   const [isCompleting, setIsCompleting] = useState(false)
+  const [isTimeoutCompleting, setIsTimeoutCompleting] = useState(false)
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('generating')
   const [statusAction, setStatusAction] = useState<SessionStatusAction | null>(null)
   const [turnSubmitting, setTurnSubmitting] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [accessToken, setAccessToken] = useState('')
-  const [durationMin, setDurationMin] = useState<number>(30)
+  const [remainingSeconds, setRemainingSeconds] = useState<number>(30 * 60)
   const [questionsReady, setQuestionsReady] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
   const questionsReadyRef = useRef(false)
   const turnSubmittingRef = useRef(false)
+  const remainingSecondsRef = useRef(30 * 60)
+  const timeoutCompletingRef = useRef(false)
+
+  const trackRemainingSeconds = useCallback((seconds: number) => {
+    remainingSecondsRef.current = seconds
+  }, [])
 
   useEffect(() => {
     questionsReadyRef.current = questionsReady
   }, [questionsReady])
 
   const loadReadyQuestions = useCallback(async (): Promise<boolean> => {
-    const qs = await apiClient.get<{ questions: Question[] }>(`/sessions/${sessionId}/questions`)
+    const qs = await apiClient.get<QuestionsResponse>(`/sessions/${sessionId}/questions`)
     if (qs.questions.length === 0) return false
 
     setQuestions(qs.questions)
+    setCurrentIndex(Math.min(qs.currentIndex ?? 0, qs.questions.length - 1))
     setQuestionsReady(true)
     setError(null)
     setLoading(false)
@@ -70,7 +86,10 @@ export default function InterviewPage() {
           return
         }
         if (currentSession.status === 'canceled') return
-        if (currentSession.durationMin) setDurationMin(currentSession.durationMin)
+        const persistedRemaining =
+          currentSession.remainingSeconds ?? (currentSession.durationMin ?? 30) * 60
+        remainingSecondsRef.current = persistedRemaining
+        setRemainingSeconds(persistedRemaining)
 
         async function pollQuestions(): Promise<Question[]> {
           for (let i = 0; i < 6; i++) {
@@ -130,9 +149,15 @@ export default function InterviewPage() {
     try {
       const updated = await apiClient.patch<Session>(
         `/sessions/${sessionId}/status`,
-        { status },
+        status === 'paused'
+          ? { status, remainingSeconds: remainingSecondsRef.current }
+          : { status },
       )
       setSessionStatus(updated.status)
+      if (updated.remainingSeconds != null) {
+        remainingSecondsRef.current = updated.remainingSeconds
+        setRemainingSeconds(updated.remainingSeconds)
+      }
       if (updated.status === 'active') setQuestionsReady(true)
       if (updated.status === 'canceled') eventSourceRef.current?.close()
     } catch (err) {
@@ -159,6 +184,48 @@ export default function InterviewPage() {
       setCurrentIndex((i) => i + 1)
     }
   }, [sessionId, questions.length, currentIndex, router])
+
+  const completeByTimeout = useCallback(async () => {
+    if (
+      timeoutCompletingRef.current ||
+      sessionStatus !== 'active' ||
+      !questionsReadyRef.current
+    ) {
+      return
+    }
+
+    timeoutCompletingRef.current = true
+    turnSubmittingRef.current = true
+    remainingSecondsRef.current = 0
+    setRemainingSeconds(0)
+    setTurnSubmitting(true)
+    setIsTimeoutCompleting(true)
+    setIsCompleting(true)
+    setActionError(null)
+
+    try {
+      await apiClient.patch<{ status: SessionStatus }>(
+        `/sessions/${sessionId}/status`,
+        {
+          status: 'completed',
+          autoSkipUnanswered: true,
+          remainingSeconds: 0,
+        },
+      )
+      router.replace(`/sessions/${sessionId}/report`)
+    } catch (err) {
+      timeoutCompletingRef.current = false
+      turnSubmittingRef.current = false
+      setTurnSubmitting(false)
+      setIsTimeoutCompleting(false)
+      setIsCompleting(false)
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : 'Không thể tự động hoàn tất phiên phỏng vấn',
+      )
+    }
+  }, [router, sessionId, sessionStatus])
 
   const submitText = useCallback(async (text: string) => {
     if (turnSubmittingRef.current) return
@@ -241,8 +308,16 @@ export default function InterviewPage() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
         <LoadingSpinner size="lg" />
-        <p className="text-base font-medium text-ink">Đang hoàn tất phiên phỏng vấn</p>
-        <p className="text-sm text-ink-muted">AI đang tạo báo cáo, vui lòng chờ...</p>
+        <p className="text-base font-medium text-ink">
+          {isTimeoutCompleting
+            ? 'Đã hết thời gian, đang hoàn tất phiên phỏng vấn'
+            : 'Đang hoàn tất phiên phỏng vấn'}
+        </p>
+        <p className="text-sm text-ink-muted">
+          {isTimeoutCompleting
+            ? 'Các câu chưa trả lời sẽ được đánh dấu bỏ qua trước khi tạo báo cáo.'
+            : 'AI đang tạo báo cáo, vui lòng chờ...'}
+        </p>
       </div>
     )
   }
@@ -313,7 +388,7 @@ export default function InterviewPage() {
               size="sm"
               onClick={() => updateSessionStatus('paused')}
               loading={statusAction === 'paused'}
-              disabled={!questionsReady}
+              disabled={!questionsReady || isCompleting}
             >
               <PauseCircle className="size-4" aria-hidden="true" />
               Tạm dừng
@@ -323,12 +398,18 @@ export default function InterviewPage() {
               size="sm"
               onClick={cancelSession}
               loading={statusAction === 'canceled'}
+              disabled={isCompleting}
             >
               <XCircle className="size-4" aria-hidden="true" />
               Hủy
             </Button>
           </div>
-          <CountdownTimer durationMin={durationMin} active={questionsReady && sessionStatus === 'active'} />
+          <CountdownTimer
+            initialSeconds={remainingSeconds}
+            active={questionsReady && sessionStatus === 'active' && !isCompleting}
+            onChange={trackRemainingSeconds}
+            onExpire={completeByTimeout}
+          />
         </div>
         {actionError && <p className="mb-4 text-sm text-danger">{actionError}</p>}
 
@@ -346,6 +427,7 @@ export default function InterviewPage() {
               key={m}
               variant={answerMode === m ? 'primary' : 'secondary'}
               onClick={() => setAnswerMode(m)}
+              disabled={turnSubmitting || isCompleting}
             >
               {m === 'text' ? 'Text' : 'Giọng nói'}
             </Button>
@@ -357,14 +439,14 @@ export default function InterviewPage() {
             <TextAnswerInput
               key={current?.id}
               onSubmit={submitText}
-              disabled={turnSubmitting}
+              disabled={turnSubmitting || isCompleting}
             />
           ) : (
             <VoiceRecorder
               key={current?.id}
               onSubmit={submitVoice}
               sessionId={sessionId}
-              disabled={turnSubmitting}
+              disabled={turnSubmitting || isCompleting}
             />
           )}
         </div>
@@ -373,7 +455,7 @@ export default function InterviewPage() {
             variant="secondary"
             size="sm"
             onClick={skipCurrentQuestion}
-            disabled={turnSubmitting || !current}
+            disabled={turnSubmitting || isCompleting || !current}
             loading={turnSubmitting}
           >
             <SkipForward className="size-4" aria-hidden="true" />

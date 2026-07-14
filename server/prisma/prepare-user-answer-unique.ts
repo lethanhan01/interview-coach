@@ -2,6 +2,10 @@ import 'dotenv/config';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Client } from 'pg';
+import {
+  buildPgConnectionConfig,
+  setClientDbTimeZone,
+} from '../src/prisma/db-timezone';
 
 interface DuplicateStats {
   duplicateGroups: number;
@@ -36,8 +40,9 @@ async function main() {
     throw new Error('DIRECT_URL or DATABASE_URL is required');
   }
 
-  const client = new Client({ connectionString });
+  const client = new Client(buildPgConnectionConfig(connectionString));
   await client.connect();
+  await setClientDbTimeZone(client);
 
   try {
     const tableResult = await client.query<{ table_name: string | null }>(

@@ -1,6 +1,6 @@
 # BÁO CÁO ĐỒ ÁN GR1
 
-# Đề tài: InterviewAI - Hệ thống AI Mock Interview Coach cho sinh viên CNTT Việt Nam
+# Đề tài: AI Mock Interview - Hệ thống AI Mock Interview Coach cho sinh viên CNTT Việt Nam
 
 > Ghi chú sử dụng khung: các đoạn bắt đầu bằng `Cần bổ sung:` là ghi chú nội dung cần viết sau này. Khi hoàn thiện báo cáo, thay các ghi chú này bằng nội dung văn phong học thuật, số liệu, hình ảnh, bảng biểu và trích dẫn phù hợp.
 
@@ -12,7 +12,7 @@
 
 | Mục | Nội dung |
 | --- | --- |
-| Tên đề tài | InterviewAI - Hệ thống AI Mock Interview Coach cho sinh viên CNTT Việt Nam |
+| Tên đề tài | AI Mock Interview - Hệ thống AI Mock Interview Coach cho sinh viên CNTT Việt Nam |
 | Học phần | Đồ án GR1 |
 | Sinh viên thực hiện | Cần bổ sung: họ tên, MSSV, lớp |
 | Giảng viên hướng dẫn | Cần bổ sung: họ tên, học hàm/học vị nếu có |
@@ -33,7 +33,7 @@
 
 > Cần bổ sung: tóm tắt 250-400 từ về bài toán, đối tượng người dùng, cách tiếp cận, sản phẩm GR1 đã xây dựng, kết quả chính và hướng phát triển. Nên viết sau cùng khi các chương đã hoàn thiện.
 
-Từ khóa gợi ý: AI mock interview, luyện phỏng vấn, fresher CNTT, surgical feedback, large language model, speech-to-text, Next.js, NestJS, Supabase, Prisma, BullMQ, Redis.
+Từ khóa gợi ý: AI mock interview, luyện phỏng vấn, fresher CNTT, surgical feedback, large language model, Next.js, NestJS, Supabase, Prisma, BullMQ, Redis.
 
 ## Abstract
 
@@ -57,8 +57,6 @@ Từ khóa gợi ý: AI mock interview, luyện phỏng vấn, fresher CNTT, sur
 | --- | --- | --- |
 | AI | Artificial Intelligence | Trí tuệ nhân tạo |
 | LLM | Large Language Model | Mô hình ngôn ngữ lớn |
-| STT | Speech-to-Text | Chuyển giọng nói thành văn bản |
-| TTS | Text-to-Speech | Chuyển văn bản thành giọng nói, nếu có sử dụng |
 | JD | Job Description | Mô tả công việc |
 | CV | Curriculum Vitae | Hồ sơ ứng viên |
 | MVP | Minimum Viable Product | Sản phẩm khả dụng tối thiểu |
@@ -93,7 +91,7 @@ Gợi ý:
 
 - Tổng hợp bài toán luyện phỏng vấn cho sinh viên/fresher CNTT Việt Nam.
 - Phân tích sản phẩm liên quan và xác định khoảng trống.
-- Đề xuất thiết kế InterviewAI với workflow JD -> interview -> surgical feedback.
+- Đề xuất thiết kế AI Mock Interview với workflow JD -> interview -> surgical feedback.
 - Xây dựng prototype web app với frontend, backend, database, AI pipeline.
 - Thiết lập tài liệu yêu cầu/thiết kế/kiểm thử làm nền tảng cho giai đoạn sau.
 
@@ -109,7 +107,7 @@ Gợi ý:
 
 1. Hoàn thiện và ổn định luồng phỏng vấn end-to-end.
 2. Nâng cao chất lượng question bank và rubric cho từng loại session.
-3. Bổ sung/hoàn thiện voice analysis, transcription và delivery feedback.
+3. Nghiên cứu bổ sung trả lời bằng giọng nói, phiên âm và phản hồi về cách trình bày ở giai đoạn sau nếu phạm vi cho phép.
 4. Phát triển rewrite & compare, reverse questions, progress dashboard.
 5. Bổ sung admin/question bank management nếu cần.
 6. Cải thiện bảo mật, quyền riêng tư và rate limiting.
@@ -147,7 +145,7 @@ Gợi ý:
 
 ## Tài Liệu Ngoài
 
-> Cần bổ sung: các báo cáo thị trường, tài liệu về HR-tech, tài liệu OpenAI/Whisper, tài liệu Next.js/NestJS/Prisma/Supabase/BullMQ/Redis, bài viết hoặc paper liên quan. Chỉ đưa vào những nguồn đã đọc và có trích dẫn trong báo cáo.
+> Cần bổ sung: các báo cáo thị trường, tài liệu về HR-tech, tài liệu Next.js/NestJS/Prisma/Supabase/BullMQ/Redis, bài viết hoặc paper liên quan. Chỉ đưa vào những nguồn đã đọc và có trích dẫn trong báo cáo.
 
 | STT | Tài liệu | Loại nguồn | Dùng ở mục nào | Ghi chú |
 | --- | --- | --- | --- | --- |

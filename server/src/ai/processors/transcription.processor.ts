@@ -4,6 +4,7 @@ import { Job, Queue } from 'bullmq';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
+import { QuestionCriteriaService } from '../../question-criteria/question-criteria.service';
 import { WhisperService } from '../../turn/whisper.service';
 import { VoiceMetricsService } from '../../turn/voice-metrics.service';
 import { ReportService } from '../../report/report.service';
@@ -35,6 +36,7 @@ export class TranscriptionProcessor extends WorkerHost {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly questionCriteria: QuestionCriteriaService,
     private readonly sseService: SseService,
     private readonly whisperService: WhisperService,
     private readonly voiceMetricsService: VoiceMetricsService,
@@ -77,6 +79,7 @@ export class TranscriptionProcessor extends WorkerHost {
 
       const question = await this.prisma.sessionQuestion.findFirst({
         where: { id: answer.questionId, sessionId },
+        include: SESSION_QUESTION_CRITERIA_INCLUDE,
       });
 
       if (!question) {
@@ -89,7 +92,7 @@ export class TranscriptionProcessor extends WorkerHost {
           '',
           undefined,
           undefined,
-          undefined,
+          [],
           answerText,
           contextPack,
           sessionType,
@@ -99,6 +102,8 @@ export class TranscriptionProcessor extends WorkerHost {
         return;
       }
 
+      const competencyDomains =
+        this.questionCriteria.codesFromSessionQuestion(question);
       const jobBase = {
         sessionId,
         turnId: answerId,
@@ -108,7 +113,7 @@ export class TranscriptionProcessor extends WorkerHost {
         questionCategory: question.questionCategory as
           | 'behavioral'
           | 'technical',
-        competencyDomain: question.competencyDomain,
+        competencyDomains,
         answerText,
         contextPack,
         sessionType,
@@ -191,7 +196,7 @@ export class TranscriptionProcessor extends WorkerHost {
     questionText: string,
     questionId: string | undefined,
     questionCategory: 'behavioral' | 'technical' | undefined,
-    competencyDomain: string | undefined,
+    competencyDomains: string[],
     answerText: string,
     contextPack: 'VN' | 'Western',
     sessionType: SessionType,
@@ -206,7 +211,7 @@ export class TranscriptionProcessor extends WorkerHost {
         questionId,
         questionText,
         questionCategory,
-        competencyDomain,
+        competencyDomains,
         answerText,
         contextPack,
         sessionType,
@@ -236,3 +241,15 @@ export class TranscriptionProcessor extends WorkerHost {
       });
   }
 }
+
+const SESSION_QUESTION_CRITERIA_INCLUDE = {
+  criteria: {
+    include: {
+      rubricCriterion: {
+        include: {
+          rubricCategory: { include: { rubricVersion: true } },
+        },
+      },
+    },
+  },
+} satisfies Prisma.SessionQuestionInclude;

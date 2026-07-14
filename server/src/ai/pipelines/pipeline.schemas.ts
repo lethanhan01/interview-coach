@@ -1,15 +1,23 @@
 import { z } from 'zod';
 
-export const PROMPT_VERSION = 'surgical-feedback-v1.4';
+export const PROMPT_VERSION = 'surgical-feedback-v1.5';
 
 export const QuestionsSchema = z.object({
   questions: z.array(
-    z.object({
-      text: z.string(),
-      category: z.string(),
-      competency_domain: z.string(),
-      difficulty: z.number().int().min(1).max(3),
-    }),
+    z
+      .object({
+        text: z.string(),
+        category: z.string(),
+        competency_domain: z.string().optional(),
+        competency_domains: z.array(z.string()).min(1).optional(),
+        difficulty: z.number().int().min(1).max(3),
+      })
+      .refine(
+        (question) =>
+          question.competency_domains !== undefined ||
+          question.competency_domain !== undefined,
+        { message: 'competency_domains or competency_domain is required' },
+      ),
   ),
 });
 
@@ -23,7 +31,7 @@ export const FeedbackSchema = z.object({
     .array(
       z.object({
         id: z.string(),
-        score: z.number().int().min(1).max(100),
+        score: z.number().int().min(0).max(100),
       }),
     )
     .min(1),
@@ -32,8 +40,8 @@ export const FeedbackSchema = z.object({
   annotated_segments: z.array(
     z.object({
       segment_text: z.string(),
-      start_index: z.number().int(),
-      end_index: z.number().int(),
+      start_index: z.number().int().optional(),
+      end_index: z.number().int().optional(),
       highlight_level: z.enum(['strength', 'improvement']),
       annotation: z.string(),
       suggestion: OptionalFeedbackTextSchema,

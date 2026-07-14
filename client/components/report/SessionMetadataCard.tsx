@@ -1,4 +1,5 @@
 import type { Session, SessionType, ContextPack } from '@/lib/types'
+import { formatVietnamDateTime } from '@/lib/date-time'
 
 const SESSION_TYPE_LABELS: Record<SessionType, string> = {
   hr: 'Nhân sự',
@@ -9,16 +10,6 @@ const SESSION_TYPE_LABELS: Record<SessionType, string> = {
 const CONTEXT_PACK_LABELS: Record<ContextPack, string> = {
   VN: 'Việt Nam',
   Western: 'Quốc tế (Western)',
-}
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
 }
 
 function MetaRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -135,7 +126,7 @@ export default function SessionMetadataCard({ session }: SessionMetadataCardProp
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <h2 className="mb-4 text-base font-semibold text-gray-900">Thông tin phiên phỏng vấn</h2>
       <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-        <MetaRow label="Thời điểm" value={formatDateTime(session.createdAt)} />
+        <MetaRow label="Thời điểm" value={formatVietnamDateTime(session.createdAt)} />
         <MetaRow label="Loại phỏng vấn" value={SESSION_TYPE_LABELS[session.sessionType]} />
         <MetaRow label="Context Pack" value={CONTEXT_PACK_LABELS[session.contextPackId]} />
         <MetaRow

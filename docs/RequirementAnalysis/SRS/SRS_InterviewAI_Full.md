@@ -496,7 +496,7 @@ flowchart TD
 
 **Đầu vào:**
 - Google account
-- full_name, target_position, target_role_category (bắt buộc), target_level (bắt buộc), preferred_tech_stack, default_language
+- full_name, target_position, target_role_category (bắt buộc), target_level (bắt buộc), default_language
 - cv_pdf (tùy chọn, tối đa 5 MB)
 
 **Đầu ra / Artifacts:**
@@ -575,7 +575,7 @@ flowchart TD
 - session_type, difficulty, num_questions, context_pack_id, duration_min
 
 **Đầu ra / Artifacts:**
-- `session_questions[]` sắp xếp theo order_index tăng dần, mỗi record có `estimated_time_min` và `competency_domain`
+- `session_questions[]` sắp xếp theo order_index tăng dần, mỗi record có `estimated_time_min`; tiêu chí đánh giá của từng câu được lưu trong `session_question_criteria`
 - `interview_sessions.plan_json` (cấu trúc xem schema bên dưới)
 - `interview_sessions.status` cập nhật → in_progress
 
@@ -595,7 +595,7 @@ flowchart TD
 
 **Bước 3 — [SYSTEM] Lấy câu hỏi từ question_bank (70%):**
 6. Query `question_bank` lấy `ceil(num_questions × 0.7)` câu phù hợp:
-   - WHERE `competency_domain` thuộc competency distribution đã xác định
+   - JOIN `question_bank_criteria`/`rubric_criteria` để lọc câu hỏi theo các rubric criteria thuộc competency distribution đã xác định
    - AND `difficulty` match session difficulty
    - AND `session_type` compatible
    - AND id NOT IN (câu Candidate đã gặp trong 30 ngày — SQL JOIN với `session_questions`)
@@ -608,8 +608,8 @@ flowchart TD
 **Bước 5 — [SYSTEM] Tổng hợp, validate và lưu:**
 10. Merge bank questions + LLM-generated questions; sắp xếp theo độ khó tăng dần (easy → medium → hard)
 11. Validate: `sum(estimated_time_min) ≤ time_budget + 2` (buffer 2 phút); nếu vượt → giảm `estimated_time_min` của câu easy trước
-12. Validate schema (mỗi câu có text, competency_domain, difficulty, estimated_time_min); câu nào fail → drop và bổ sung từ question_bank
-13. Lưu `session_questions[]` với đầy đủ `competency_domain` và `estimated_time_min`
+12. Validate schema (mỗi câu có text, `competency_domains`/criteria codes, difficulty, estimated_time_min); câu nào fail → drop và bổ sung từ question_bank
+13. Lưu `session_questions[]` với đầy đủ `estimated_time_min`, đồng thời snapshot criteria vào `session_question_criteria`
 14. Cập nhật `interview_sessions.plan_json` và `status = in_progress`
 15. Redirect Candidate đến Phase 4
 
@@ -963,7 +963,6 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | `target_position` | Vị trí ứng tuyển mục tiêu | Có | Text | Không rỗng | Không có | `user_profiles` |
 | `target_role_category` | Nhóm vai trò mong muốn | Có | Enum | `backend`, `frontend`, `mobile`, `data`, `ai` | Không có | `user_profiles` |
 | `target_level` | Level mục tiêu | Có | Enum | `intern`, `fresher`, `junior` | Không có | `user_profiles` |
-| `preferred_tech_stack` | Tech stack chính (tự nhập) | Không | Text | Tối đa 200 ký tự | Không có | `user_profiles` |
 | `years_experience` | Số năm kinh nghiệm | Không | Number | Không âm | 0 | `user_profiles` |
 | `default_language` | Ngôn ngữ phỏng vấn mặc định | Có | Enum | `vi` hoặc `en` | `vi` | `user_profiles` |
 | `tts_enabled` | Bật/tắt đọc câu hỏi bằng giọng nói | Không | Boolean | true/false | false | `user_profiles` |
@@ -974,7 +973,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 1. Candidate truy cập trang **Hồ sơ** (Profile).
 2. Hệ thống hiển thị form gồm 2 nhóm trường:
    - **Thông tin cá nhân:** Họ tên, Số năm kinh nghiệm, Ngôn ngữ phỏng vấn mặc định (Tiếng Việt / Tiếng Anh), TTS (toggle bật/tắt, mặc định **tắt** — cài đặt được áp dụng tự động trong UC-04 Giai đoạn 0 và 1).
-   - **Mục tiêu nghề nghiệp:** Vị trí ứng tuyển mục tiêu (text tự do); Nhóm vai trò (Backend / Frontend / Mobile / Data / AI — Enum, bắt buộc); Level mục tiêu (Intern / Fresher / Junior — Enum, bắt buộc); Tech stack chính (text tự do, ≤ 200 ký tự, không bắt buộc).
+   - **Mục tiêu nghề nghiệp:** Vị trí ứng tuyển mục tiêu (text tự do); Nhóm vai trò (Backend / Frontend / Mobile / Data / AI — Enum, bắt buộc); Level mục tiêu (Intern / Fresher / Junior — Enum, bắt buộc).
 3. Candidate điền thông tin và nhấn **"Lưu thông tin"**.
 4. Hệ thống validate dữ liệu và lưu vào bảng `user_profiles`.
 5. Candidate nhấn **"Upload CV (PDF)"** — tùy chọn nhưng được khuyến nghị.
@@ -1106,7 +1105,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | **Tác nhân chính** | Candidate |
 | **Tác nhân phụ** | Hệ thống (load Context Pack config) |
 | **Tiền điều kiện** | Đây là Bước 3 trong UC-03; JD đã được nhập; số câu đã được chọn. |
-| **Hậu điều kiện** | `context_pack_id` được ghi vào bản ghi phiên; rubric JSON tương ứng được load vào bộ nhớ để sử dụng cho UC-04, UC-05, UC-07. |
+| **Hậu điều kiện** | `context_pack_id` được ghi vào bản ghi phiên; rubric hiện hành theo context được load vào bộ nhớ để sử dụng cho UC-04, UC-05, UC-07. |
 
 **Dữ liệu đầu vào:**
 
@@ -1127,7 +1126,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 2. Candidate đọc mô tả và chọn một trong hai pack.
 3. Hệ thống highlight card được chọn; hiển thị preview 1–2 tiêu chí chấm điểm của pack đó.
 4. Candidate nhấn **"Xác nhận"** (hoặc nhấn "Tiếp tục" để sang Bước 4 của UC-03).
-5. Hệ thống lưu `context_pack_id` vào session config; load `rubric_json` từ bảng `context_packs` vào phiên làm việc.
+5. Hệ thống lưu `context_pack_id` và khóa `rubric_version_id` vào session config; lấy rubric hiện hành từ active `rubric_versions` theo context pack đã chọn.
 
 **Alternative Flow:**
 
@@ -1138,7 +1137,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | Mã lỗi | Tình huống | Xử lý |
 |---|---|---|
 | E-03b-1 | Candidate không chọn pack và nhấn Tiếp tục | Highlight yêu cầu chọn; hiển thị: "Vui lòng chọn một Context Pack trước khi tiếp tục." |
-| E-03b-2 | Bảng `context_packs` không truy xuất được từ DB | Load rubric mặc định (VN) từ file config tĩnh; ghi log lỗi. |
+| E-03b-2 | Không truy xuất được rubric hiện hành theo context từ DB | Load rubric mặc định (VN) từ file config tĩnh; ghi log lỗi. |
 
 **Acceptance Criteria:**
 
@@ -1253,7 +1252,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
     - `original_question`: câu hỏi gốc
     - `combined_transcript`: transcript câu gốc + transcript follow-up (nếu có), được ghép lại
     - `jd`: Job Description của phiên
-    - `rubric_json`: rubric tương ứng Context Pack đã chọn
+    - `criteria`: danh sách rubric criteria của câu hỏi, lấy qua `session_question_criteria -> rubric_criteria`
     - `cv_structured`: dữ liệu CV của Candidate (null nếu không có)
 19. Backend gọi Feedback Analyzer (xem **AI Spec — Feedback Analyzer** bên dưới).
 20. Backend nhận Surgical Feedback JSON; validate schema (xem Exception Flow E-04-5).
@@ -1349,7 +1348,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 | **Mô tả tóm tắt** | Backend gọi Feedback Analyzer cho từng câu hỏi, validate và lưu annotation. Sau khi tất cả câu hỏi được xử lý, tổng hợp Comprehensive Feedback Report gồm Executive Summary, Communication Analysis, Competency Heatmap, Reverse Questions Evaluation và Action Plan. |
 | **Tác nhân chính** | Hệ thống (kích hoạt tự động sau mỗi câu trả lời hoàn chỉnh) |
 | **Tác nhân phụ** | AI Engine (Feedback Analyzer), Database |
-| **Tiền điều kiện** | `user_answer` đã được lưu (bao gồm cả follow-up answer nếu có); `context_pack_id` đã xác định; `rubric_json` đã load. UC-05 được gọi thêm một lần sau khi UC-04 Giai đoạn 5 kết thúc (khi tất cả câu hỏi đã được trả lời) để tổng hợp toàn phiên. |
+| **Tiền điều kiện** | `user_answer` đã được lưu (bao gồm cả follow-up answer nếu có); `context_pack_id` đã xác định; rubric của phiên đã load theo context. UC-05 được gọi thêm một lần sau khi UC-04 Giai đoạn 5 kết thúc (khi tất cả câu hỏi đã được trả lời) để tổng hợp toàn phiên. |
 | **Hậu điều kiện** | Bản ghi `ai_feedbacks` và mảng `annotated_segments` được lưu vào DB per-question; `user_answer.feedback_generated = true`. `interview_sessions.executive_summary_json`, `comm_analysis_json`, `competency_heatmap_json`, `reverse_q_eval_json`, `action_plan_json` được lưu sau khi tổng hợp toàn phiên. |
 
 **Dữ liệu đầu vào:**
@@ -1366,7 +1365,7 @@ Mỗi Use Case có dữ liệu nhập từ Candidate/Admin phải bổ sung bả
 2. Backend tổng hợp `FeedbackPayload`:
    - Lấy `original_question.text` từ `session_questions`.
    - Ghép transcript: `combined_transcript = main_answer.transcript + "\n[FOLLOW-UP]: " + follow_up_answer.transcript` (nếu có follow-up).
-   - Lấy `session.jd_text`, `session.context_pack_id`, `context_pack.rubric_json`.
+   - Lấy `session.jd_text`, `session.context_pack_id` và rubric đã normalize theo context đó.
    - Lấy `user_profiles.cv_structured` (null nếu không có).
 3. Backend gửi `FeedbackPayload` đến FastAPI endpoint `POST /api/ai/feedback`.
 4. FastAPI xây dựng system prompt theo Context Pack (xem AI Spec trong UC-04).

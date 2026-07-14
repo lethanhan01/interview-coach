@@ -23,7 +23,7 @@ export interface QuestionGenInput {
 export interface GeneratedQuestion {
   text: string;
   category: string;
-  competencyDomain: string;
+  competencyDomains: string[];
   difficulty: number;
 }
 
@@ -32,7 +32,7 @@ export interface FeedbackInput {
   questionId?: string;
   questionText: string;
   questionCategory?: 'behavioral' | 'technical';
-  competencyDomain?: string;
+  competencyDomains: string[];
   answerText: string;
   contextPackConfig: ContextPackConfig;
   language?: OutputLanguage;
@@ -51,12 +51,12 @@ export interface AnnotatedSegmentResult {
 export interface AppliedDimension {
   id: string;
   name: string;
-  score: number; // 1-100
+  score: number; // 0-100
   weight: number; // base weight đã chuẩn hóa, tổng ≈ 1.0
 }
 
 export interface SurgicalFeedback {
-  overallScore: number; // 1-100
+  overallScore: number; // 0-100
   modelAnswer: string;
   keyTakeaway: string;
   promptVersion: string;

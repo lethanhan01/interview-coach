@@ -1,19 +1,6 @@
-// MIRROR of server/src/prisma/context-pack.data.ts — rubric data hard-code client-side.
-// Nếu sửa rubric/weights ở server (rubricJson, scoringWeights), PHẢI sync tay file này.
-// Không có cơ chế tự phát hiện lệch — đã verify khớp tại 2026-06-29.
-import type { ContextPack, SessionType } from '@/lib/types'
-
-export interface RubricDimension {
-  code: string       // 'D1', 'TD1', ...
-  nameVi: string     // tên tiêu chí
-  weightPct: number  // phần trăm trong-category (integer, e.g. 20)
-}
-
-export interface RubricCategory {
-  label: string
-  categoryWeightPct: number  // phần trăm của điểm tổng
-  dimensions: RubricDimension[]
-}
+// Temporary fallback for report pages while the backend rubric API is unavailable.
+// The backend normalized rubric tables are the source of truth.
+import type { ContextPack, RubricCategory, SessionType } from '@/lib/types'
 
 const RUBRIC_DATA: Record<ContextPack, { behavioral: RubricCategory; technical: RubricCategory }> = {
   VN: {

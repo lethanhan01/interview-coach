@@ -64,9 +64,7 @@ export class SessionController {
     @Param('id') id: string,
     @Req() req: { user: { id: string } },
   ) {
-    return {
-      questions: await this.sessionService.findQuestions(id, req.user.id),
-    };
+    return this.sessionService.findQuestions(id, req.user.id);
   }
 
   @Get(':id/feedback-progress')
@@ -85,7 +83,13 @@ export class SessionController {
     @Body() dto: UpdateSessionStatusDto,
     @Req() req: { user: { id: string } },
   ) {
-    return this.sessionService.updateStatus(id, req.user.id, dto.status);
+    return this.sessionService.updateStatus(
+      id,
+      req.user.id,
+      dto.status,
+      dto.remainingSeconds,
+      dto.autoSkipUnanswered,
+    );
   }
 
   @Sse(':id/events')

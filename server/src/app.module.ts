@@ -1,9 +1,13 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+} from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { AiModule } from './ai/ai.module';
@@ -17,6 +21,14 @@ import { InterviewAIExceptionFilter } from './common/exceptions/interview-ai-exc
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { CommonModule } from './common/common.module';
 import { HealthModule } from './health/health.module';
+
+@Controller()
+class ApiRootController {
+  @Get()
+  getRoot(): string {
+    return 'Hello World!';
+  }
+}
 
 @Module({
   imports: [
@@ -41,11 +53,8 @@ import { HealthModule } from './health/health.module';
     UserModule,
     SavedJobDescriptionModule,
   ],
-  controllers: [AppController],
-  providers: [
-    AppService,
-    { provide: APP_FILTER, useClass: InterviewAIExceptionFilter },
-  ],
+  controllers: [ApiRootController],
+  providers: [{ provide: APP_FILTER, useClass: InterviewAIExceptionFilter }],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -80,6 +80,47 @@ describe('OpenAIGateway', () => {
     );
     expect(gateway.getChatModel()).toBe('google/gemma-4-e4b');
   });
+
+  it('ưu tiên explicit model rồi mới đến task model và chat model', async () => {
+    const taskModelConfig = {
+      get: jest.fn((key: string) => {
+        const values: Record<string, string> = {
+          OPENAI_API_KEY: 'test-key',
+          OPENAI_BASE_URL: 'http://127.0.0.1:1234/v1',
+          OPENAI_CHAT_MODEL: 'base-model',
+          OPENAI_FEEDBACK_MODEL: 'feedback-model',
+          OPENAI_REPORT_MODEL: 'report-model',
+          OPENAI_JSON_MODE: 'false',
+          OPENAI_TIMEOUT_MS: '30000',
+        };
+        return values[key];
+      }),
+    };
+    const gateway = new OpenAIGateway(taskModelConfig as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: 'ok' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await gateway.chatCompletion({ ...params, task: 'feedback' });
+    await gateway.chatCompletion({ ...params, task: 'report' });
+    await gateway.chatCompletion({
+      ...params,
+      task: 'feedback',
+      model: 'explicit-model',
+    });
+
+    expect(create.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ model: 'feedback-model' }),
+    );
+    expect(create.mock.calls[1][0]).toEqual(
+      expect.objectContaining({ model: 'report-model' }),
+    );
+    expect(create.mock.calls[2][0]).toEqual(
+      expect.objectContaining({ model: 'explicit-model' }),
+    );
+    expect(gateway.getChatModel('report' as any)).toBe('report-model');
+  });
 });
 
 describe('OpenAIGateway — JSON extraction', () => {
@@ -141,6 +182,40 @@ describe('OpenAIGateway — JSON extraction', () => {
     const result = await gateway.chatCompletion(jsonParams);
     expect(result).toBe('{"score":70}');
     expect(() => JSON.parse(result)).not.toThrow();
+  });
+
+  it('repair trailing comma an toàn trước khi parse', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: '{"items":["a",],"ok":true,}' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    const result = await gateway.chatCompletion(jsonParams);
+    expect(result).toBe('{"items":["a"],"ok":true}');
+  });
+
+  it('repair single-quoted JSON đơn giản khi không có double quote lẫn bên trong', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: "{'score':85,'comment':'good'}" } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    const result = await gateway.chatCompletion(jsonParams);
+    expect(JSON.parse(result)).toEqual({ score: 85, comment: 'good' });
+  });
+
+  it('không repair single quote không an toàn', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: "{'comment':'candidate's answer'}" } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(jsonParams)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_INVALID_JSON,
+    });
   });
 
   it('ném AI_INVALID_JSON rõ ràng khi responseFormat json_object nhưng output không phải JSON', async () => {
@@ -215,9 +290,9 @@ describe('OpenAIGateway — empty response và task-specific timeout', () => {
         OPENAI_CHAT_MODEL: 'google/gemma-4-e4b',
         OPENAI_JSON_MODE: 'false',
         OPENAI_TIMEOUT_MS: '30000',
-        OPENAI_FEEDBACK_TIMEOUT_MS: '180000',
-        OPENAI_REPORT_TIMEOUT_MS: '180000',
-        OPENAI_QUESTION_TIMEOUT_MS: '120000',
+        OPENAI_FEEDBACK_TIMEOUT_MS: '420000',
+        OPENAI_REPORT_TIMEOUT_MS: '600000',
+        OPENAI_QUESTION_TIMEOUT_MS: '240000',
       };
       return values[key];
     }),
@@ -316,7 +391,7 @@ describe('OpenAIGateway — empty response và task-specific timeout', () => {
     expect(create).toHaveBeenCalledTimes(2);
   });
 
-  it('task feedback dùng OPENAI_FEEDBACK_TIMEOUT_MS (180s) cho AbortSignal', async () => {
+  it('task feedback dùng OPENAI_FEEDBACK_TIMEOUT_MS (420s) cho AbortSignal', async () => {
     const gateway = new OpenAIGateway(config as any);
     const mockSignal = { aborted: false } as unknown as AbortSignal;
     const timeoutSpy = jest
@@ -329,11 +404,11 @@ describe('OpenAIGateway — empty response và task-specific timeout', () => {
 
     await gateway.chatCompletion({ ...params, task: 'feedback' });
 
-    expect(timeoutSpy).toHaveBeenCalledWith(180000);
+    expect(timeoutSpy).toHaveBeenCalledWith(420000);
     timeoutSpy.mockRestore();
   });
 
-  it('task report dùng OPENAI_REPORT_TIMEOUT_MS (180s) cho AbortSignal', async () => {
+  it('task report dùng OPENAI_REPORT_TIMEOUT_MS (600s) cho AbortSignal', async () => {
     const gateway = new OpenAIGateway(config as any);
     const mockSignal = { aborted: false } as unknown as AbortSignal;
     const timeoutSpy = jest
@@ -346,7 +421,7 @@ describe('OpenAIGateway — empty response và task-specific timeout', () => {
 
     await gateway.chatCompletion({ ...params, task: 'report' });
 
-    expect(timeoutSpy).toHaveBeenCalledWith(180000);
+    expect(timeoutSpy).toHaveBeenCalledWith(600000);
     timeoutSpy.mockRestore();
   });
 });

@@ -35,6 +35,9 @@ SUPABASE_JWT_SECRET=
 
 DATABASE_URL=
 DIRECT_URL=
+DB_TIMEZONE=Asia/Ho_Chi_Minh
+PRISMA_CONNECTION_TIMEOUT_MS=30000
+PRISMA_CONNECT_RETRIES=3
 
 OPENAI_API_KEY=
 ```
@@ -97,27 +100,27 @@ Khi bật, `JwtAuthGuard` và `SseTokenGuard` inject mock user thay vì verify J
 
 ## Các lệnh thường dùng
 
-| Lệnh | Mục đích |
-|------|----------|
-| `npm run start:dev` | Chạy NestJS watch mode |
-| `npm run dev:local` | `infra:up` + `start:dev` gộp |
-| `npm run infra:up` | Bật Redis bằng Docker Compose |
-| `npm run infra:down` | Tắt Redis |
-| `npm run verify:runtime` | Kiểm tra `/api/v1` và `/health` |
-| `npm run test` | Chạy unit tests |
-| `npm run test:cov` | Unit tests + coverage report |
-| `npm run test:e2e` | E2E tests |
-| `npm run build` | Compile sang `dist/` |
-| `npm run start:prod` | Chạy production build |
-| `npm run lint` | ESLint --fix |
-| `npm run format` | Prettier --write |
-| `npm run prisma:generate` | Tạo lại Prisma Client |
-| `npm run db:validate` | Validate Prisma schema |
-| `npm run db:verify:pre` | Kiểm tra anomaly trước khi siết constraint/index raw SQL |
-| `npm run db:verify` | Kiểm tra RLS/policies/trigger/constraint/index sau khi apply raw SQL |
+| Lệnh                                 | Mục đích                                                                                         |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `npm run start:dev`                  | Chạy NestJS watch mode                                                                           |
+| `npm run dev:local`                  | `infra:up` + `start:dev` gộp                                                                     |
+| `npm run infra:up`                   | Bật Redis bằng Docker Compose                                                                    |
+| `npm run infra:down`                 | Tắt Redis                                                                                        |
+| `npm run verify:runtime`             | Kiểm tra `/api/v1` và `/health`                                                                  |
+| `npm run test`                       | Chạy unit tests                                                                                  |
+| `npm run test:cov`                   | Unit tests + coverage report                                                                     |
+| `npm run test:e2e`                   | E2E tests                                                                                        |
+| `npm run build`                      | Compile sang `dist/`                                                                             |
+| `npm run start:prod`                 | Chạy production build                                                                            |
+| `npm run lint`                       | ESLint --fix                                                                                     |
+| `npm run format`                     | Prettier --write                                                                                 |
+| `npm run prisma:generate`            | Tạo lại Prisma Client                                                                            |
+| `npm run db:validate`                | Validate Prisma schema                                                                           |
+| `npm run db:verify:pre`              | Kiểm tra anomaly trước khi siết constraint/index raw SQL                                         |
+| `npm run db:verify`                  | Kiểm tra RLS/policies/trigger/constraint/index sau khi apply raw SQL                             |
 | `npm run db:prepare-db-push-raw-sql` | Tạm gỡ raw constraint mà Prisma `db push` không quản lý, trước khi apply lại bằng `db:apply-sql` |
-| `npm run db:sync:full` | Flow đầy đủ: validate → verify pre → generate → prepare → db push → apply raw SQL → verify |
-| `npm run seed` | Seed dữ liệu mẫu (question bank, ...) |
+| `npm run db:sync:full`               | Flow đầy đủ: validate → verify pre → generate → prepare → db push → apply raw SQL → verify       |
+| `npm run seed`                       | Seed dữ liệu mẫu (question bank, ...)                                                            |
 
 ---
 
@@ -126,6 +129,7 @@ Khi bật, `JwtAuthGuard` và `SseTokenGuard` inject mock user thay vì verify J
 > **Không chạy thường xuyên.** Lệnh này thay đổi schema database thật — chỉ chạy khi có lý do cụ thể.
 
 Chạy khi:
+
 - Vừa thay đổi `prisma/schema.prisma`
 - Database local thiếu constraint, trigger, RLS policy, index hoặc column mới
 - Cần chuẩn bị unique constraint cho `user_answers`
@@ -139,16 +143,13 @@ Lệnh thực hiện: `db:validate` → `db:verify:pre` → `prisma generate` �
 
 `db:verify:pre` phải pass trước khi apply constraint mới. Các anomaly chặn migration gồm answer lệch session-question, session trỏ saved JD khác user, nhiều active resume cùng user, và dữ liệu vi phạm CHECK/range.
 
-Với production hoặc dữ liệu quan trọng, chạy thêm bài test copy trước khi sync:
-
-```powershell
-npm run db:test-user-answer-migration
-npm run db:sync:full
-```
-
-Script test tạo schema tạm, sao chép dữ liệu thật, kiểm tra dedupe và constraint, rồi xóa schema tạm.
-
 `npm run db:sync` trỏ thẳng tới `db:sync:full` để tránh quên raw SQL. Nếu cần debug riêng phần Prisma, dùng `npm run db:sync:prisma`, nhưng phải chạy `npm run db:apply-sql && npm run db:verify` ngay sau đó.
+
+## Timezone database
+
+Backend, seed và các script DB mở Postgres connection với `DB_TIMEZONE`, mặc định `Asia/Ho_Chi_Minh`. API vẫn trả ISO UTC và schema vẫn dùng `TIMESTAMPTZ`; không cộng/trừ dữ liệu cũ.
+
+Nếu DB provider không cho phép đổi default timezone, app vẫn dùng timezone qua connection options; khi query thủ công có thể dùng `created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'` để xem giờ Việt Nam.
 
 ---
 
@@ -213,6 +214,10 @@ Invoke-RestMethod http://localhost:3000/health
 
 - `services.db.status = "down"`: kiểm tra `DATABASE_URL`, kết nối Supabase, rồi thử `npm run db:validate`.
 - `services.redis.status = "down"`: kiểm tra Docker Desktop và chạy `npm run infra:up`.
+
+**`Connection terminated due to connection timeout` khi backend khởi động**
+
+Backend sẽ retry Prisma startup check và tiếp tục boot nếu lỗi là timeout kết nối tạm thời; `/health` sẽ báo `services.db.status = "down"` cho tới khi DB hồi phục. Nếu Supabase/connection pool thường xuyên cold-start chậm, tăng `PRISMA_CONNECTION_TIMEOUT_MS`, `PRISMA_TRANSACTION_TIMEOUT_MS`, hoặc `PRISMA_CONNECT_RETRIES` trong `.env`.
 
 **`401 Unauthorized`**
 

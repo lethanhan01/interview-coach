@@ -5,6 +5,7 @@ import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
 import { QuestionBankService } from '../../question-bank/question-bank.service';
+import { QuestionCriteriaService } from '../../question-criteria/question-criteria.service';
 import { OpenAIGateway } from '../openai.gateway';
 import {
   createMockPrismaService,
@@ -12,6 +13,7 @@ import {
   createMockContextPackService,
   createMockPipelineStrategyFactory,
   createMockQuestionBankService,
+  createMockQuestionCriteriaService,
   createMockOpenAIGateway,
 } from '../../test-utils/mock-factories';
 import type { Job } from 'bullmq';
@@ -26,6 +28,9 @@ describe('QuestionGenerationProcessor', () => {
   let mockContextPack: ReturnType<typeof createMockContextPackService>;
   let mockFactory: ReturnType<typeof createMockPipelineStrategyFactory>;
   let mockQuestionBankService: ReturnType<typeof createMockQuestionBankService>;
+  let mockQuestionCriteria: ReturnType<
+    typeof createMockQuestionCriteriaService
+  >;
   let mockOpenAI: ReturnType<typeof createMockOpenAIGateway>;
 
   const BASE_JOB_DATA = {
@@ -34,6 +39,7 @@ describe('QuestionGenerationProcessor', () => {
     jobDescriptionText: 'Backend developer tại công ty ABC.',
     targetRoles: ['Backend Developer'],
     contextPack: 'VN' as const,
+    rubricVersionId: 'rubric-version-vn',
     language: 'vi',
     totalQuestions: 5,
     durationMin: 30,
@@ -64,7 +70,7 @@ describe('QuestionGenerationProcessor', () => {
     Array.from({ length: count }, (_, index) => ({
       text: `AI question ${index + 1}`,
       category: 'behavioral',
-      competencyDomain: 'D1',
+      competencyDomains: ['D1'],
       difficulty: 2,
     }));
 
@@ -73,7 +79,7 @@ describe('QuestionGenerationProcessor', () => {
       questionBankId: `qb-${index + 1}`,
       text: `Fallback question ${index + 1}`,
       questionCategory: 'behavioral',
-      competencyDomain: 'D4',
+      competencyDomains: ['D4'],
       estimatedTimeMin: 5,
     }));
 
@@ -83,7 +89,18 @@ describe('QuestionGenerationProcessor', () => {
     mockContextPack = createMockContextPackService();
     mockFactory = createMockPipelineStrategyFactory();
     mockQuestionBankService = createMockQuestionBankService();
+    mockQuestionCriteria = createMockQuestionCriteriaService();
     mockOpenAI = createMockOpenAIGateway();
+    mockPrisma.$transaction.mockImplementation((operations) =>
+      Promise.all(operations),
+    );
+    mockQuestionCriteria.buildSessionQuestionCriteriaData.mockImplementation(
+      async ({ sessionQuestionId, criterionCodes }) =>
+        criterionCodes.map((code) => ({
+          sessionQuestionId,
+          rubricCriterionId: `criterion-${code}`,
+        })),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -93,6 +110,7 @@ describe('QuestionGenerationProcessor', () => {
         { provide: ContextPackService, useValue: mockContextPack },
         { provide: PipelineStrategyFactory, useValue: mockFactory },
         { provide: QuestionBankService, useValue: mockQuestionBankService },
+        { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
         { provide: OpenAIGateway, useValue: mockOpenAI },
       ],
     }).compile();
@@ -109,7 +127,7 @@ describe('QuestionGenerationProcessor', () => {
     const aiQuestion = {
       text: 'Điểm mạnh là gì?',
       category: 'behavioral',
-      competencyDomain: 'D1',
+      competencyDomains: ['D1'],
       difficulty: 2,
     };
     const qbResult = makeFallbackQuestions(4);
@@ -126,12 +144,14 @@ describe('QuestionGenerationProcessor', () => {
     await processor.process(makeJob()); // totalQuestions=5
 
     expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
+    expect(mockContextPack.getContextPack).toHaveBeenCalledWith('VN');
+    expect(mockContextPack.getRubricSnapshot).not.toHaveBeenCalled();
     expect(mockStrategy.generateQuestions).toHaveBeenCalledWith(
       expect.objectContaining({ language: 'vi' }),
     );
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
+    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi', 'rubric-version-vn');
     const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
     expect(createArgs.data).toHaveLength(5);
     // QB questions at pos 1-4
@@ -156,10 +176,10 @@ describe('QuestionGenerationProcessor', () => {
         questionText: 'Điểm mạnh là gì?',
         orderIndex: 5,
         questionCategory: 'behavioral',
-        competencyDomain: 'D1',
         estimatedTimeMin: 5,
       }),
     );
+    expect(createArgs.data[4]).not.toHaveProperty('competencyDomains');
     expect(createArgs.data[4]).not.toHaveProperty('questionBankId');
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
       where: {
@@ -181,7 +201,7 @@ describe('QuestionGenerationProcessor', () => {
         {
           text: 'Tell me about a time you handled a conflict.',
           category: 'behavioral',
-          competencyDomain: 'D4',
+          competencyDomains: ['D4'],
           difficulty: 2,
         },
       ]),
@@ -209,7 +229,7 @@ describe('QuestionGenerationProcessor', () => {
     );
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'Western', 4, 'en');
+    ).toHaveBeenCalledWith('hr', 'Western', 4, 'en', 'rubric-version-vn');
   });
 
   it('normalize AI free-form rubric name trước khi persist', async () => {
@@ -219,7 +239,7 @@ describe('QuestionGenerationProcessor', () => {
         {
           text: 'Tell me about a time you learned from feedback.',
           category: 'Self-Awareness & Growth',
-          competencyDomain: 'Self-Awareness & Growth',
+          competencyDomains: ['Self-Awareness & Growth'],
           difficulty: 2,
         },
       ]),
@@ -240,10 +260,10 @@ describe('QuestionGenerationProcessor', () => {
       expect.objectContaining({
         questionText: 'Tell me about a time you learned from feedback.',
         questionCategory: 'behavioral',
-        competencyDomain: 'D6',
         estimatedTimeMin: 5,
       }),
     );
+    expect(createArgs.data[4]).not.toHaveProperty('competencyDomains');
   });
 
   it('drop AI question sai domain sessionType và bù đủ bằng question_bank', async () => {
@@ -253,7 +273,7 @@ describe('QuestionGenerationProcessor', () => {
         {
           text: 'Explain a production debugging workflow.',
           category: 'technical',
-          competencyDomain: 'TD5',
+          competencyDomains: ['TD5'],
           difficulty: 2,
         },
       ]),
@@ -269,7 +289,7 @@ describe('QuestionGenerationProcessor', () => {
 
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi');
+    ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi', 'rubric-version-vn');
     const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
     expect(createArgs.data).toHaveLength(5);
     expect(
@@ -303,7 +323,7 @@ describe('QuestionGenerationProcessor', () => {
     ).toEqual([1, 2, 3, 4, 5]);
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
+    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi', 'rubric-version-vn');
   });
 
   it('đặt AI question vào vị trí hợp lệ khi phiên ngắn hơn chu kỳ 5 câu', async () => {
@@ -320,7 +340,11 @@ describe('QuestionGenerationProcessor', () => {
 
     await expect(
       processor.process(
-        makeJob({ ...BASE_JOB_DATA, totalQuestions: 3, durationMin: 30 } as any),
+        makeJob({
+          ...BASE_JOB_DATA,
+          totalQuestions: 3,
+          durationMin: 30,
+        } as any),
       ),
     ).resolves.toBeUndefined();
 
@@ -340,7 +364,7 @@ describe('QuestionGenerationProcessor', () => {
     ]);
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'VN', 2, 'vi');
+    ).toHaveBeenCalledWith('hr', 'VN', 2, 'vi', 'rubric-version-vn');
   });
 
   it('QG-05: dùng fallback khi AI trả 0 câu (ít hơn aiCount=1)', async () => {
@@ -418,7 +442,7 @@ describe('QuestionGenerationProcessor', () => {
     ).toHaveBeenCalledTimes(1);
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi');
+    ).toHaveBeenCalledWith('hr', 'VN', 4, 'vi', 'rubric-version-vn');
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledTimes(1);
     expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
       where: {
@@ -429,11 +453,37 @@ describe('QuestionGenerationProcessor', () => {
     });
   });
 
+  it('persist session_question_criteria theo rubric version đã khóa của session', async () => {
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
+    mockFactory.getStrategy.mockReturnValue({
+      generateQuestions: jest.fn().mockResolvedValue(makeGeneratedQuestions(1)),
+    });
+    mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+      makeFallbackQuestions(4),
+    );
+    mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+    mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
+    mockSse.emit.mockResolvedValue(undefined);
+
+    await processor.process(makeJob());
+
+    const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
+    expect(createArgs.data).toHaveLength(5);
+    expect(createArgs.data.every((row: object) => !('rubricJson' in row))).toBe(
+      true,
+    );
+    expect(
+      mockQuestionCriteria.buildSessionQuestionCriteriaData,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ rubricVersionId: 'rubric-version-vn' }),
+    );
+  });
+
   it('không emit active nếu session đã bị tạm dừng trước khi worker hoàn tất', async () => {
     const generatedQuestions = Array.from({ length: 5 }, (_, index) => ({
       text: `Câu hỏi ${index + 1}`,
       category: 'behavioral',
-      competencyDomain: 'D1',
+      competencyDomains: ['D1'],
       difficulty: 2,
     }));
     mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
@@ -502,7 +552,7 @@ describe('QuestionGenerationProcessor', () => {
     expect(generateQuestions).toHaveBeenCalledTimes(1);
     expect(
       mockQuestionBankService.selectFallbackQuestions,
-    ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi');
+    ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi', 'rubric-version-vn');
     expect(mockPrisma.sessionQuestion.createMany).toHaveBeenCalledTimes(1);
   });
 
@@ -512,7 +562,7 @@ describe('QuestionGenerationProcessor', () => {
         questionBankId: `qb-${index + 1}`,
         text: `Fallback question ${index + 1}`,
         questionCategory: 'behavioral',
-        competencyDomain: 'D4',
+        competencyDomains: ['D4'],
         estimatedTimeMin: 5,
       }));
       const mockStrategy = {
@@ -551,7 +601,7 @@ describe('QuestionGenerationProcessor', () => {
       );
       expect(
         mockQuestionBankService.selectFallbackQuestions,
-      ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi');
+      ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi', 'rubric-version-vn');
       expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
         where: {
           id: 'session-123',
@@ -576,7 +626,7 @@ describe('QuestionGenerationProcessor', () => {
         questionBankId: `qb-${index + 1}`,
         text: `Fallback question ${index + 1}`,
         questionCategory: 'behavioral',
-        competencyDomain: 'D4',
+        competencyDomains: ['D4'],
         estimatedTimeMin: 5,
       }));
       const generateQuestions = jest.fn().mockRejectedValue(quotaError);
@@ -645,7 +695,7 @@ describe('QuestionGenerationProcessor', () => {
       expect(generateQuestions).toHaveBeenCalledTimes(1);
       expect(
         mockQuestionBankService.selectFallbackQuestions,
-      ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi');
+      ).toHaveBeenCalledWith('hr', 'VN', 5, 'vi', 'rubric-version-vn');
     });
 
     it('set session status=error khi question_bank trả về 0 kết quả', async () => {

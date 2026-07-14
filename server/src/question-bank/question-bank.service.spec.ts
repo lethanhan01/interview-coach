@@ -1,4 +1,5 @@
 import { QuestionBankService } from './question-bank.service';
+import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import {
   createMockPrismaService,
   createMockQuestionBank,
@@ -10,37 +11,43 @@ describe('QuestionBankService', () => {
 
   beforeEach(() => {
     mockPrisma = createMockPrismaService();
-    service = new QuestionBankService(mockPrisma as any);
+    service = new QuestionBankService(
+      mockPrisma as any,
+      new QuestionCriteriaService(mockPrisma as any),
+    );
   });
 
   afterEach(() => jest.clearAllMocks());
 
   it('chọn fallback questions theo spread độ khó và resolve text theo language', async () => {
     mockPrisma.questionBank.findMany.mockResolvedValue([
-      {
+      mockQuestionBankWithCriteria({
         id: 'easy-1',
         content: 'English fallback',
         difficulty: 2,
-        competencyDomain: 'D4',
+        contextPackId: 'VN',
+        criterionCodes: ['D4'],
         estimatedTimeMin: 3,
         translations: { en: 'English fallback', vi: 'Câu hỏi tiếng Việt' },
-      },
-      {
+      }),
+      mockQuestionBankWithCriteria({
         id: 'medium-1',
         content: 'Medium fallback',
         difficulty: 3,
-        competencyDomain: 'TD4',
+        contextPackId: 'VN',
+        criterionCodes: ['TD4'],
         estimatedTimeMin: 5,
         translations: { en: 'Medium fallback', vi: 'Câu kỹ thuật' },
-      },
-      {
+      }),
+      mockQuestionBankWithCriteria({
         id: 'hard-1',
         content: 'Hard fallback',
         difficulty: 4,
-        competencyDomain: 'TD5',
+        contextPackId: 'VN',
+        criterionCodes: ['TD5'],
         estimatedTimeMin: 7,
         translations: { en: 'Hard fallback', vi: 'Câu khó' },
-      },
+      }),
     ]);
 
     const result = await service.selectFallbackQuestions(
@@ -54,6 +61,7 @@ describe('QuestionBankService', () => {
       where: { sessionType: 'technical', contextPackId: 'VN', deletedAt: null },
       orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
       take: 9,
+      include: expect.any(Object),
     });
     expect(result).toEqual([
       expect.objectContaining({
@@ -76,14 +84,15 @@ describe('QuestionBankService', () => {
 
   it('fallback về content khi translation không có language tương ứng', async () => {
     mockPrisma.questionBank.findMany.mockResolvedValue([
-      {
+      mockQuestionBankWithCriteria({
         id: 'qb-1',
         content: 'Stored content',
         difficulty: 2,
-        competencyDomain: 'D4',
+        contextPackId: 'VN',
+        criterionCodes: ['D4'],
         estimatedTimeMin: null,
         translations: { en: 'Stored content' },
-      },
+      }),
     ]);
 
     const result = await service.selectFallbackQuestions('hr', 'VN', 1, 'vi');
@@ -92,6 +101,35 @@ describe('QuestionBankService', () => {
       expect.objectContaining({
         text: 'Stored content',
         estimatedTimeMin: 5,
+      }),
+    );
+  });
+
+  it('giữ full competencyDomains và lấy questionCategory theo domain đầu tiên', async () => {
+    mockPrisma.questionBank.findMany.mockResolvedValue([
+      mockQuestionBankWithCriteria({
+        id: 'mixed-technical-primary',
+        content: 'Describe a production bug and how you explained the fix.',
+        difficulty: 3,
+        contextPackId: 'VN',
+        criterionCodes: ['TD5', 'TD1'],
+        estimatedTimeMin: 6,
+        translations: null,
+      }),
+    ]);
+
+    const result = await service.selectFallbackQuestions(
+      'mixed',
+      'VN',
+      1,
+      'en',
+    );
+
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        questionBankId: 'mixed-technical-primary',
+        questionCategory: 'technical',
+        competencyDomains: ['TD5', 'TD1'],
       }),
     );
   });
@@ -112,22 +150,24 @@ describe('QuestionBankService', () => {
       where: { sessionType: 'technical', contextPackId: 'VN', deletedAt: null },
       orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
       take: 3,
+      include: expect.any(Object),
     });
   });
 
   it('trả câu hỏi tiếng Anh khi chọn Western với language=en', async () => {
     mockPrisma.questionBank.findMany.mockResolvedValue([
-      {
+      mockQuestionBankWithCriteria({
         id: 'western-1',
         content: 'Tell me about a time you handled stakeholder conflict.',
         difficulty: 3,
-        competencyDomain: 'D4',
+        contextPackId: 'Western',
+        criterionCodes: ['D4'],
         estimatedTimeMin: 5,
         translations: {
           en: 'Tell me about a time you handled stakeholder conflict.',
           vi: 'Hãy kể về một lần bạn xử lý xung đột với stakeholder.',
         },
-      },
+      }),
     ]);
 
     const result = await service.selectFallbackQuestions(
@@ -141,6 +181,7 @@ describe('QuestionBankService', () => {
       where: { sessionType: 'hr', contextPackId: 'Western', deletedAt: null },
       orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
       take: 3,
+      include: expect.any(Object),
     });
     expect(result[0]).toEqual(
       expect.objectContaining({
@@ -206,4 +247,68 @@ describe('QuestionBankService', () => {
     );
   });
 
+  it('đọc criteria relation làm source of truth', async () => {
+    mockPrisma.questionBank.findMany.mockResolvedValue([
+      mockQuestionBankWithCriteria({
+        id: 'relation-first',
+        content: 'Describe a production issue.',
+        difficulty: 3,
+        contextPackId: 'VN',
+        criterionCodes: ['TD5'],
+        estimatedTimeMin: 5,
+        translations: null,
+      }),
+    ]);
+
+    const result = await service.selectFallbackQuestions(
+      'technical',
+      'VN',
+      1,
+      'en',
+    );
+
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        questionCategory: 'technical',
+        competencyDomains: ['TD5'],
+      }),
+    );
+  });
 });
+
+function mockQuestionBankWithCriteria(input: {
+  id: string;
+  content: string;
+  difficulty: number;
+  contextPackId: string;
+  criterionCodes: string[];
+  estimatedTimeMin: number | null;
+  translations: Record<string, string> | null;
+}) {
+  return {
+    id: input.id,
+    content: input.content,
+    difficulty: input.difficulty,
+    contextPackId: input.contextPackId,
+    estimatedTimeMin: input.estimatedTimeMin,
+    translations: input.translations,
+    criteria: input.criterionCodes.map((code, index) => ({
+      rubricCriterion: {
+        id: `criterion-${code}`,
+        code,
+        name: code,
+        weight: 1,
+        displayOrder: index + 1,
+        rubricCategory: {
+          categoryKey: code.startsWith('TD') ? 'technical' : 'behavioral',
+          displayOrder: code.startsWith('TD') ? 2 : 1,
+          rubricVersion: {
+            id: `rubric-version-${input.contextPackId}`,
+            contextPackId: input.contextPackId,
+            status: 'active',
+          },
+        },
+      },
+    })),
+  };
+}

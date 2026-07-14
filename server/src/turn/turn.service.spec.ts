@@ -3,6 +3,7 @@ import { HttpStatus } from '@nestjs/common';
 import { getQueueToken } from '@nestjs/bullmq';
 import { TurnService } from './turn.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import { AudioStorageService } from './audio-storage.service';
 import { VoiceMetricsService } from './voice-metrics.service';
 import {
@@ -15,6 +16,7 @@ import { InterviewAIException } from '../common/exceptions/interview-ai.exceptio
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import {
   createMockPrismaService,
+  createMockQuestionCriteriaService,
   createMockQueue,
   createMockVoiceMetricsService,
 } from '../test-utils/mock-factories';
@@ -24,6 +26,9 @@ describe('TurnService', () => {
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
   let mockTranscriptionQueue: ReturnType<typeof createMockQueue>;
+  let mockQuestionCriteria: ReturnType<
+    typeof createMockQuestionCriteriaService
+  >;
   let mockAudioStorage: {
     uploadInterviewAudio: jest.Mock;
   };
@@ -43,7 +48,13 @@ describe('TurnService', () => {
     id: 'q-1',
     questionText: 'Giới thiệu bản thân?',
     questionCategory: 'behavioral',
-    competencyDomain: 'D1',
+    criteria: [
+      {
+        criterionCode: 'D1',
+        categoryKeySnapshot: 'behavioral',
+        displayOrderSnapshot: 1,
+      },
+    ],
     orderIndex: 1,
     sessionId: 'session-123',
   };
@@ -65,6 +76,7 @@ describe('TurnService', () => {
     mockPrisma = createMockPrismaService();
     mockFeedbackQueue = createMockQueue();
     mockTranscriptionQueue = createMockQueue();
+    mockQuestionCriteria = createMockQuestionCriteriaService();
     mockAudioStorage = {
       uploadInterviewAudio: jest.fn(),
     };
@@ -79,6 +91,7 @@ describe('TurnService', () => {
       providers: [
         TurnService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
         {
           provide: AudioStorageService,
           useValue: mockAudioStorage,
@@ -339,7 +352,7 @@ describe('TurnService', () => {
           questionId: 'q-1',
           questionText: 'Giới thiệu bản thân?',
           questionCategory: 'behavioral',
-          competencyDomain: 'D1',
+          competencyDomains: ['D1'],
           answerText: 'Tôi là developer với 2 năm kinh nghiệm.',
           contextPack: 'VN',
           sessionType: 'hr',
@@ -443,6 +456,32 @@ describe('TurnService', () => {
       expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
     });
 
+    it('không enqueue feedback nếu submit đến sau khi câu hỏi đã bị skipped', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
+      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.userAnswer.findUnique.mockResolvedValue({
+        ...BASE_ANSWER,
+        answerText: '',
+        skipped: true,
+        transcriptionStatus: null,
+      });
+
+      const result = await service.submitAnswer(
+        'session-123',
+        'user-abc',
+        TEXT_DTO,
+      );
+
+      expect(result).toEqual({
+        answerId: 'answer-1',
+        feedbackQueued: false,
+        transcriptionPending: false,
+      });
+      expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
+      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+    });
+
     it('feedback payload dùng questionText/contextPack/sessionType từ DB cho technical Western session', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...BASE_SESSION,
@@ -453,7 +492,13 @@ describe('TurnService', () => {
         ...BASE_QUESTION,
         questionText: 'Explain a system design trade-off.',
         questionCategory: 'technical',
-        competencyDomain: 'TD3',
+        criteria: [
+          {
+            criterionCode: 'TD3',
+            categoryKeySnapshot: 'technical',
+            displayOrderSnapshot: 1,
+          },
+        ],
       });
       mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
       mockPrisma.userAnswer.upsert.mockResolvedValue({
@@ -476,7 +521,7 @@ describe('TurnService', () => {
           questionId: 'q-1',
           questionText: 'Explain a system design trade-off.',
           questionCategory: 'technical',
-          competencyDomain: 'TD3',
+          competencyDomains: ['TD3'],
           answerText: 'I chose pagination because it reduced memory usage.',
           contextPack: 'Western',
           sessionType: 'technical',

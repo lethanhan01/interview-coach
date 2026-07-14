@@ -92,8 +92,14 @@ export default function CertificationsGroup({ data, onSave }: Props) {
           <div key={c.id} className="mb-3 rounded-xl border border-border bg-canvas p-3">
             {isEditing ? (
               <div className="flex flex-col gap-2">
-                <input placeholder="Tên chứng chỉ" value={c.name} onChange={e => updateCert(c.id, 'name', e.target.value)} className={inputCls} />
-                <input placeholder="Đơn vị cấp" value={c.issuer} onChange={e => updateCert(c.id, 'issuer', e.target.value)} className={inputCls} />
+                <div>
+                  <label className="mb-1 block text-xs text-ink-muted">Tên chứng chỉ</label>
+                  <input placeholder="Tên chứng chỉ" value={c.name} onChange={e => updateCert(c.id, 'name', e.target.value)} className={inputCls} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-ink-muted">Đơn vị cấp</label>
+                  <input placeholder="Đơn vị cấp" value={c.issuer} onChange={e => updateCert(c.id, 'issuer', e.target.value)} className={inputCls} />
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="mb-1 block text-xs text-ink-muted">Ngày cấp</label>
@@ -129,10 +135,19 @@ export default function CertificationsGroup({ data, onSave }: Props) {
           <div key={c.id} className="mb-3 rounded-xl border border-border bg-canvas p-3">
             {isEditing ? (
               <div className="flex flex-col gap-2">
-                <input placeholder="Tên chứng chỉ (IELTS, TOEIC, ...)" value={c.name} onChange={e => updateCert(c.id, 'name', e.target.value)} className={inputCls} />
+                <div>
+                  <label className="mb-1 block text-xs text-ink-muted">Tên chứng chỉ</label>
+                  <input placeholder="Ví dụ: IELTS, TOEIC" value={c.name} onChange={e => updateCert(c.id, 'name', e.target.value)} className={inputCls} />
+                </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <input placeholder="Điểm (ví dụ: 7.0)" value={c.score ?? ''} onChange={e => updateCert(c.id, 'score', e.target.value)} className={inputCls} />
-                  <input placeholder="Đơn vị cấp" value={c.issuer} onChange={e => updateCert(c.id, 'issuer', e.target.value)} className={inputCls} />
+                  <div>
+                    <label className="mb-1 block text-xs text-ink-muted">Điểm</label>
+                    <input placeholder="Ví dụ: 7.0" value={c.score ?? ''} onChange={e => updateCert(c.id, 'score', e.target.value)} className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-ink-muted">Đơn vị cấp</label>
+                    <input placeholder="Đơn vị cấp" value={c.issuer} onChange={e => updateCert(c.id, 'issuer', e.target.value)} className={inputCls} />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
@@ -169,21 +184,30 @@ export default function CertificationsGroup({ data, onSave }: Props) {
           <div key={a.id} className="mb-3 rounded-xl border border-border bg-canvas p-3">
             {isEditing ? (
               <div className="flex flex-col gap-2">
-                <input placeholder="Tên giải thưởng" value={a.name} onChange={e => updateAward(a.id, 'name', e.target.value)} className={inputCls} />
-                <div className="grid grid-cols-2 gap-2">
-                  <input placeholder="Tổ chức trao" value={a.organization} onChange={e => updateAward(a.id, 'organization', e.target.value)} className={inputCls} />
+                <div>
+                  <label className="mb-1 block text-xs text-ink-muted">Tên giải thưởng</label>
+                  <input placeholder="Tên giải thưởng" value={a.name} onChange={e => updateAward(a.id, 'name', e.target.value)} className={inputCls} />
+                </div>
+                <div className="grid grid-cols-2 items-end gap-2">
+                  <div>
+                    <label className="mb-1 block text-xs text-ink-muted">Tổ chức trao</label>
+                    <input placeholder="Tổ chức trao" value={a.organization} onChange={e => updateAward(a.id, 'organization', e.target.value)} className={inputCls} />
+                  </div>
                   <div>
                     <label className="mb-1 block text-xs text-ink-muted">Ngày nhận</label>
                     <input type="date" value={a.date} onChange={e => updateAward(a.id, 'date', e.target.value)} className={inputCls} />
                   </div>
                 </div>
-                <textarea
-                  placeholder="Mô tả (tùy chọn)"
-                  value={a.description}
-                  onChange={e => updateAward(a.id, 'description', e.target.value)}
-                  className={`${inputCls} resize-none`}
-                  rows={2}
-                />
+                <div>
+                  <label className="mb-1 block text-xs text-ink-muted">Mô tả</label>
+                  <textarea
+                    placeholder="Mô tả (tùy chọn)"
+                    value={a.description}
+                    onChange={e => updateAward(a.id, 'description', e.target.value)}
+                    className={`${inputCls} resize-none`}
+                    rows={2}
+                  />
+                </div>
                 <button type="button" onClick={() => setAwards(prev => prev.filter(x => x.id !== a.id))} className="self-start text-xs text-danger hover:underline">Xóa</button>
               </div>
             ) : (

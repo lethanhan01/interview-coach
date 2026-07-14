@@ -69,8 +69,9 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
         answerId: 'int-answer-1',
         questionId: 'int-question-1',
         questionText: 'Tell me about a technical challenge you solved.',
-        questionCategory: sessionType === 'technical' ? 'technical' : 'behavioral',
-        competencyDomain: sessionType === 'technical' ? 'TD1' : 'D2',
+        questionCategory:
+          sessionType === 'technical' ? 'technical' : 'behavioral',
+        competencyDomains: sessionType === 'technical' ? ['TD1'] : ['D2'],
         answerText: 'I solved a performance issue by implementing pagination.',
         contextPack: 'VN' as const,
         sessionType,
@@ -156,7 +157,7 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
 
     expect(mockOpenAI.chatCompletion).toHaveBeenCalledTimes(1);
     const callArgs = mockOpenAI.chatCompletion.mock.calls[0][0];
-    expect(callArgs.temperature).toBe(0.3);
+    expect(callArgs.temperature).toBe(0.2);
     expect(callArgs.maxTokens).toBe(3000);
     expect(callArgs.task).toBe('feedback');
     expect(callArgs.responseFormat).toBe('json_object');

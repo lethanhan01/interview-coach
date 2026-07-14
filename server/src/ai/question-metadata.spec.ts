@@ -27,13 +27,13 @@ describe('question metadata helpers', () => {
   it('giữ nguyên ID đúng và suy ra category behavioral', () => {
     expect(
       normalizeGeneratedQuestionMetadata(
-        { category: 'behavioral', competencyDomain: 'D1' },
+        { category: 'behavioral', competencyDomains: ['D1'] },
         contextPack,
         'hr',
       ),
     ).toEqual({
       questionCategory: 'behavioral',
-      competencyDomain: 'D1',
+      competencyDomains: ['D1'],
       matchBranch: 'exact',
     });
   });
@@ -43,14 +43,14 @@ describe('question metadata helpers', () => {
       normalizeGeneratedQuestionMetadata(
         {
           category: 'Self-Awareness & Growth',
-          competencyDomain: 'Self-Awareness & Growth',
+          competencyDomains: ['Self-Awareness & Growth'],
         },
         contextPack,
         'hr',
       ),
     ).toEqual({
       questionCategory: 'behavioral',
-      competencyDomain: 'D6',
+      competencyDomains: ['D6'],
       matchBranch: 'name',
     });
   });
@@ -60,29 +60,74 @@ describe('question metadata helpers', () => {
       normalizeGeneratedQuestionMetadata(
         {
           category: 'Debugging & Operations',
-          competencyDomain: 'Debug & Problem-solving',
+          competencyDomains: ['Debug & Problem-solving'],
         },
         contextPack,
         'technical',
       ),
     ).toEqual({
       questionCategory: 'technical',
-      competencyDomain: 'TD5',
+      competencyDomains: ['TD5'],
       matchBranch: 'name',
     });
+  });
+
+  it('normalize mảng nhiều tiêu chí, bỏ trùng và giữ cả cross-category domains trong mixed', () => {
+    expect(
+      normalizeGeneratedQuestionMetadata(
+        {
+          category: 'technical',
+          competencyDomains: ['TD1', 'TD2', 'TD1', 'D1', 'unknown'],
+        },
+        contextPack,
+        'mixed',
+      ),
+    ).toEqual({
+      questionCategory: 'technical',
+      competencyDomains: ['TD1', 'TD2', 'D1'],
+      matchBranch: 'exact',
+    });
+
+    expect(
+      normalizeGeneratedQuestionMetadata(
+        {
+          category: 'behavioral',
+          competencyDomains: ['TD1', 'D2'],
+        },
+        contextPack,
+        'mixed',
+      ),
+    ).toEqual({
+      questionCategory: 'behavioral',
+      competencyDomains: ['TD1', 'D2'],
+      matchBranch: 'exact',
+    });
+  });
+
+  it('reject mảng rỗng sau normalize', () => {
+    expect(
+      normalizeGeneratedQuestionMetadata(
+        {
+          category: 'technical',
+          competencyDomains: ['D1', 'unknown'],
+        },
+        contextPack,
+        'technical',
+      ),
+    ).toBeNull();
   });
 
   it('HR reject technical domain và Technical reject behavioral domain', () => {
     expect(
       normalizeGeneratedQuestionMetadata(
-        { category: 'technical', competencyDomain: 'TD1' },
+        { category: 'technical', competencyDomains: ['TD1'] },
         contextPack,
         'hr',
       ),
     ).toBeNull();
     expect(
       normalizeGeneratedQuestionMetadata(
-        { category: 'behavioral', competencyDomain: 'D2' },
+        { category: 'behavioral', competencyDomains: ['D2'] },
         contextPack,
         'technical',
       ),
@@ -111,15 +156,16 @@ describe('question metadata helpers', () => {
       normalizeQuestionMetadataForCleanup(
         {
           category: 'behavioral',
-          competencyDomain: 'unknown',
-          questionText: 'Walk through how you debug a production reliability issue.',
+          competencyDomains: ['unknown'],
+          questionText:
+            'Walk through how you debug a production reliability issue.',
         },
         contextPack,
         'mixed',
       ),
     ).toEqual({
       questionCategory: 'technical',
-      competencyDomain: 'TD5',
+      competencyDomains: ['TD5'],
       matchBranch: 'heuristic',
     });
   });
@@ -129,7 +175,7 @@ describe('question metadata helpers', () => {
       normalizeQuestionMetadataForCleanup(
         {
           category: 'technical',
-          competencyDomain: 'unknown',
+          competencyDomains: ['unknown'],
           questionText: 'Describe a time you showed leadership and ownership.',
         },
         contextPack,
@@ -137,7 +183,7 @@ describe('question metadata helpers', () => {
       ),
     ).toEqual({
       questionCategory: 'behavioral',
-      competencyDomain: 'D4',
+      competencyDomains: ['D4'],
       matchBranch: 'heuristic',
     });
 
@@ -145,7 +191,7 @@ describe('question metadata helpers', () => {
       normalizeQuestionMetadataForCleanup(
         {
           category: 'technical',
-          competencyDomain: 'unknown',
+          competencyDomains: ['unknown'],
           questionText: 'Tell me about collaboration with a teammate.',
         },
         contextPack,
@@ -153,7 +199,7 @@ describe('question metadata helpers', () => {
       ),
     ).toEqual({
       questionCategory: 'behavioral',
-      competencyDomain: 'D3',
+      competencyDomains: ['D3'],
       matchBranch: 'heuristic',
     });
   });
@@ -163,8 +209,9 @@ describe('question metadata helpers', () => {
       normalizeQuestionMetadataForCleanup(
         {
           category: 'behavioral',
-          competencyDomain: 'unknown',
-          questionText: 'Tell me about a production incident you solved under pressure.',
+          competencyDomains: ['unknown'],
+          questionText:
+            'Tell me about a production incident you solved under pressure.',
         },
         contextPack,
         'mixed',
@@ -175,7 +222,7 @@ describe('question metadata helpers', () => {
       normalizeQuestionMetadataForCleanup(
         {
           category: 'behavioral',
-          competencyDomain: 'unknown',
+          competencyDomains: ['unknown'],
           questionText: 'Tell me about yourself.',
         },
         contextPack,
@@ -189,7 +236,7 @@ describe('question metadata helpers', () => {
       normalizeQuestionMetadataForCleanup(
         {
           category: 'unknown',
-          competencyDomain: 'unknown',
+          competencyDomains: ['unknown'],
           questionText: 'Tell me about yourself.',
         },
         contextPack,
@@ -197,7 +244,7 @@ describe('question metadata helpers', () => {
       ),
     ).toEqual({
       questionCategory: 'behavioral',
-      competencyDomain: 'D1',
+      competencyDomains: ['D1'],
       matchBranch: 'heuristic',
     });
 
@@ -205,7 +252,7 @@ describe('question metadata helpers', () => {
       normalizeQuestionMetadataForCleanup(
         {
           category: 'unknown',
-          competencyDomain: 'unknown',
+          competencyDomains: ['unknown'],
           questionText: 'Explain a concept.',
         },
         contextPack,
@@ -213,7 +260,7 @@ describe('question metadata helpers', () => {
       ),
     ).toEqual({
       questionCategory: 'technical',
-      competencyDomain: 'TD1',
+      competencyDomains: ['TD1'],
       matchBranch: 'heuristic',
     });
   });

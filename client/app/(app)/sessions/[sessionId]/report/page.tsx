@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiClient, getAccessToken } from "@/lib/api-client";
-import type { FeedbackProgress, Report, Session } from "@/lib/types";
+import type {
+  FeedbackProgress,
+  Report,
+  RubricConfig,
+  Session,
+} from "@/lib/types";
 import AnnotatedTranscript from "@/components/report/AnnotatedTranscript";
 import CompetencyScoreChart from "@/components/report/CompetencyScoreChart";
 import SessionMetadataCard from "@/components/report/SessionMetadataCard";
@@ -12,39 +17,80 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 const REPORT_POLL_INTERVAL_MS = 5000;
 const PROGRESS_POLL_INTERVAL_MS = 2000;
+const GOOD_ANSWER_THRESHOLD = 70;
+const WEAK_ANSWER_THRESHOLD = 40;
 
-const EXECUTIVE_SUMMARY_LABELS: Record<string, string> = {
-  overallScore: "Điểm tổng",
-  totalTurns: "Số câu trả lời",
-  summary: "Tóm tắt",
+type SummaryAnswerItem = {
+  label: string;
+  score?: number;
+  takeaway?: string;
 };
 
-function renderSummaryValue(value: unknown): React.ReactNode {
-  if (value === null) {
-    return <span className="text-sm text-gray-500">Chưa thể chấm</span>;
-  }
-  if (Array.isArray(value)) {
-    return (
-      <ul className="mt-1.5 flex flex-col gap-1.5 pl-1">
-        {(value as unknown[]).map((item, i) => (
-          <li key={i} className="flex gap-2 text-sm text-gray-900">
-            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
-            <span>{String(item)}</span>
-          </li>
-        ))}
-      </ul>
-    );
-  }
-  if (typeof value === "string" || typeof value === "number") {
-    return <span className="text-sm text-gray-900">{String(value)}</span>;
-  }
-  return <span className="text-sm text-gray-400">{JSON.stringify(value)}</span>;
+type OverviewSummary = {
+  overview: string;
+  goodAnswers: SummaryAnswerItem[];
+  weakAnswers: SummaryAnswerItem[];
+  improvementDirections: string[];
+};
+
+function toStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (item): item is string => typeof item === "string" && item.trim() !== "",
+  );
+}
+
+function buildOverviewSummary(report: Report): OverviewSummary {
+  const overview =
+    typeof report.executiveSummary?.summary === "string" &&
+    report.executiveSummary.summary.trim() !== ""
+      ? report.executiveSummary.summary
+      : "Báo cáo đã được tổng hợp từ các câu trả lời có đủ dữ liệu chấm điểm.";
+
+  const scoredAnswers = (report.transcript ?? []).flatMap((item) => {
+    if (item.isFallback || item.overallScore == null) {
+      return [];
+    }
+    return [
+      {
+        label: `Câu ${item.orderIndex}`,
+        score: item.overallScore,
+        takeaway: item.keyTakeaway?.trim() || undefined,
+      },
+    ];
+  });
+
+  const goodAnswers = scoredAnswers.filter(
+    (item) => item.score >= GOOD_ANSWER_THRESHOLD,
+  );
+  const weakAnswers = scoredAnswers.filter(
+    (item) => item.score < WEAK_ANSWER_THRESHOLD,
+  );
+  const actionPlanItems = toStringList(report.actionPlan?.items);
+  const improvementDirections =
+    actionPlanItems.length > 0
+      ? actionPlanItems
+      : Array.from(
+          new Set(
+            weakAnswers.flatMap((item) =>
+              item.takeaway ? [item.takeaway] : [],
+            ),
+          ),
+        ).slice(0, 3);
+
+  return {
+    overview,
+    goodAnswers,
+    weakAnswers,
+    improvementDirections,
+  };
 }
 
 export default function ReportPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [report, setReport] = useState<Report | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [rubricConfig, setRubricConfig] = useState<RubricConfig | null>(null);
   const [progress, setProgress] = useState<FeedbackProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,8 +144,16 @@ export default function ReportPage() {
 
     const sessionPromise = apiClient
       .get<Session>(`/sessions/${sessionId}`)
-      .then((data) => {
+      .then(async (data) => {
         if (!canceled) setSession(data);
+        try {
+          const rubric = await apiClient.get<RubricConfig>(
+            `/rubrics/${data.contextPackId}?sessionType=${data.sessionType}`,
+          );
+          if (!canceled) setRubricConfig(rubric);
+        } catch {
+          if (!canceled) setRubricConfig(null);
+        }
       })
       .catch(() => {});
 
@@ -223,6 +277,8 @@ export default function ReportPage() {
 
   if (!report) return null;
 
+  const overviewSummary = buildOverviewSummary(report);
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="mb-6 text-2xl font-bold text-gray-900">
@@ -251,42 +307,105 @@ export default function ReportPage() {
       <div className="flex flex-col gap-6">
         {report.reportQuality === "partial" && (
           <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
-            Một số câu trả lời không được AI chấm điểm tự động. Điểm tổng chỉ
-            tính trên các câu đã đánh giá được.
+            Một số câu trả lời không được AI chấm điểm tự động. Điểm tổng vẫn
+            tính các câu đã bỏ qua là 0 điểm.
           </div>
         )}
         {report.reportQuality === "not_scorable" && (
           <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-            Bạn đã bỏ qua tất cả câu hỏi, nên báo cáo chỉ hiển thị câu trả lời
-            đề xuất để tham khảo.
+            Báo cáo cũ này chưa có dữ liệu điểm cho các câu đã bỏ qua. Các báo
+            cáo mới sẽ tính câu bỏ qua là 0 điểm.
           </div>
         )}
         {session && <SessionMetadataCard session={session} />}
+
+        <div className="rounded-2xl border border-brand-200 bg-brand-50 p-5">
+          <h2 className="mb-4 text-base font-semibold text-ink">
+            Tóm tắt tổng quan
+          </h2>
+          <dl className="flex flex-col gap-4">
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-ink-faint">
+                Nhận xét tổng quan
+              </dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {overviewSummary.overview}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-ink-faint">
+                Các câu trả lời tốt
+              </dt>
+              <dd className="mt-1">
+                {overviewSummary.goodAnswers.length > 0 ? (
+                  <ul className="flex flex-col gap-1.5">
+                    {overviewSummary.goodAnswers.map((item) => (
+                      <li key={item.label} className="text-sm text-gray-900">
+                        {item.label} - {item.score}/100
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="text-sm text-gray-500">
+                    Chưa có câu trả lời nào đạt từ {GOOD_ANSWER_THRESHOLD}/100.
+                  </span>
+                )}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-ink-faint">
+                Các câu trả lời không tốt
+              </dt>
+              <dd className="mt-1">
+                {overviewSummary.weakAnswers.length > 0 ? (
+                  <ul className="flex flex-col gap-1.5">
+                    {overviewSummary.weakAnswers.map((item) => (
+                      <li key={item.label} className="text-sm text-gray-900">
+                        {item.label} - {item.score}/100
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="text-sm text-gray-500">
+                    Không có câu trả lời nào dưới {WEAK_ANSWER_THRESHOLD}/100.
+                  </span>
+                )}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-ink-faint">
+                Hướng cần cải thiện
+              </dt>
+              <dd className="mt-1">
+                {overviewSummary.improvementDirections.length > 0 ? (
+                  <ul className="flex flex-col gap-1.5">
+                    {overviewSummary.improvementDirections.map((item) => (
+                      <li key={item} className="flex gap-2 text-sm text-gray-900">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="text-sm text-gray-500">
+                    Chưa có đủ dữ liệu để tổng hợp hướng cải thiện.
+                  </span>
+                )}
+              </dd>
+            </div>
+          </dl>
+        </div>
+
         {session?.contextPackId && session?.sessionType && (
           <ScoringMethodCard
             contextPackId={session.contextPackId}
             sessionType={session.sessionType}
+            rubricConfig={rubricConfig}
           />
         )}
-
-        {report.executiveSummary &&
-          Object.keys(report.executiveSummary).length > 0 && (
-            <div className="rounded-2xl border border-brand-200 bg-brand-50 p-5">
-              <h2 className="mb-4 text-base font-semibold text-ink">
-                Tóm tắt tổng quan
-              </h2>
-              <dl className="flex flex-col gap-4">
-                {Object.entries(report.executiveSummary).map(([key, value]) => (
-                  <div key={key}>
-                    <dt className="text-xs font-medium uppercase tracking-wide text-ink-faint">
-                      {EXECUTIVE_SUMMARY_LABELS[key] ?? key}
-                    </dt>
-                    <dd className="mt-0.5">{renderSummaryValue(value)}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          )}
 
         <CompetencyScoreChart scores={report.competencyHeatmap} />
 
@@ -298,6 +417,7 @@ export default function ReportPage() {
             items={report.transcript ?? []}
             contextPackId={session?.contextPackId}
             sessionType={session?.sessionType}
+            rubricHint={rubricConfig?.hint}
           />
         </div>
       </div>

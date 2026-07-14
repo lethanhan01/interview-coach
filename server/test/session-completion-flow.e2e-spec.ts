@@ -8,8 +8,8 @@ import { ComprehensiveReportProcessor } from '../src/ai/processors/comprehensive
 describe('Session completion flow (integration)', () => {
   it('submit answer -> feedback queue -> completing -> report queue -> completed', async () => {
     const session = {
-      id: 'session-1',
-      userId: 'user-1',
+      id: '11111111-1111-4111-8111-111111111111',
+      userId: '22222222-2222-4222-8222-222222222222',
       status: 'active',
       sessionType: 'hr',
       contextPackId: 'VN',
@@ -18,7 +18,7 @@ describe('Session completion flow (integration)', () => {
       overallScore: null as number | null,
     };
     const question = {
-      id: 'question-1',
+      id: '33333333-3333-4333-8333-333333333333',
       sessionId: session.id,
       questionText: 'Tell me about a difficult project.',
       orderIndex: 0,
@@ -131,9 +131,22 @@ describe('Session completion flow (integration)', () => {
         }),
         update: transaction.userAnswer.update,
         count: jest.fn(async ({ where }: any) => {
-          return [...answers.values()].filter(
-            (answer) => answer.sessionId === where.sessionId,
-          ).length;
+          return [...answers.values()].filter((answer) => {
+            if (answer.sessionId !== where.sessionId) return false;
+            if (
+              where.skipped !== undefined &&
+              answer.skipped !== where.skipped
+            ) {
+              return false;
+            }
+            if (
+              where.feedbackGenerated !== undefined &&
+              answer.feedbackGenerated !== where.feedbackGenerated
+            ) {
+              return false;
+            }
+            return true;
+          }).length;
         }),
         findMany: jest.fn(async ({ where }: any) => {
           return [...answers.values()]
@@ -149,9 +162,20 @@ describe('Session completion flow (integration)', () => {
           );
         }),
       },
-      $transaction: jest.fn(async (callback: (tx: any) => Promise<unknown>) => {
-        return callback(transaction);
-      }),
+      sessionReport: {
+        upsert: jest.fn(async ({ create, update }: any) => ({
+          id: `report-${create.reportType}`,
+          ...create,
+          ...update,
+        })),
+      },
+      $transaction: jest.fn(
+        async (
+          input: ((tx: any) => Promise<unknown>) | Array<Promise<unknown>>,
+        ) => {
+          return Array.isArray(input) ? Promise.all(input) : input(transaction);
+        },
+      ),
     };
 
     const feedbackJobs: Array<{
@@ -182,8 +206,9 @@ describe('Session completion flow (integration)', () => {
     const reportService = new ReportService(prisma as any, reportQueue as any);
     const turnService = new TurnService(
       prisma as any,
-      { shouldGenerateFollowUp: jest.fn(() => false) },
-      { add: jest.fn() } as any,
+      { codesFromSessionQuestion: jest.fn(() => ['D4']) } as any,
+      { uploadInterviewAudio: jest.fn() } as any,
+      { calculate: jest.fn() },
       feedbackQueue as any,
       { add: jest.fn() } as any,
     );
@@ -216,11 +241,13 @@ describe('Session completion flow (integration)', () => {
       { ensureContextPack: jest.fn() } as any,
       { add: jest.fn() } as any,
       reportService,
+      { get: jest.fn(() => 10) } as any,
     );
     const reportProcessor = new ComprehensiveReportProcessor(
       prisma as any,
       sseService as any,
       {
+        getChatModel: jest.fn(() => 'test-report-model'),
         chatCompletion: jest.fn(async () =>
           JSON.stringify({ items: ['Practice concise STAR examples'] }),
         ),

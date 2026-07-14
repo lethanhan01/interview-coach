@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Prisma } from '@prisma/client';
 import { Job } from 'bullmq';
 import { z } from 'zod';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -30,18 +31,27 @@ interface ComprehensiveReportJobDto {
   turnIds: string[];
 }
 
-const actionPlanSchema = z.object({
-  items: z.array(z.string()),
-});
+interface ReportFeedbackInput {
+  userAnswerId: string;
+  overallScore: number;
+  keyTakeaway: string;
+  isFallback: boolean;
+  dimensionScores: unknown;
+}
 
-const skippedAnswerSchema = z.object({
-  answers: z.array(
-    z.object({
-      answerId: z.string(),
-      modelAnswer: z.string(),
-    }),
-  ),
-});
+const actionPlanCandidatesSchema = z
+  .object({
+    items: z.unknown().optional(),
+    actionPlan: z.unknown().optional(),
+    actions: z.unknown().optional(),
+  })
+  .passthrough();
+
+const skippedAnswerCandidatesSchema = z
+  .object({
+    answers: z.array(z.unknown()).optional(),
+  })
+  .passthrough();
 
 function fallbackSkippedModelAnswer(
   questionText: string,
@@ -52,6 +62,177 @@ function fallbackSkippedModelAnswer(
   }
 
   return `A strong answer should directly address "${questionText}", briefly set the context, describe your specific actions, and close with a clear result or lesson learned.`;
+}
+
+function skippedKeyTakeaway(language: 'vi' | 'en'): string {
+  return language === 'vi'
+    ? 'Câu hỏi bị bỏ qua nên hệ thống tự chấm 0 điểm cho các tiêu chí áp dụng.'
+    : 'This question was skipped, so the system assigned 0 points for each applied criterion.';
+}
+
+function normalizeActionPlan(
+  raw: unknown,
+  fallback: { items: string[] },
+): { items: string[] } {
+  const rawCandidate = Array.isArray(raw)
+    ? raw
+    : raw && typeof raw === 'object' && !Array.isArray(raw)
+      ? raw
+      : null;
+  if (!rawCandidate) return fallback;
+
+  let candidateItems: unknown[] = [];
+  if (Array.isArray(rawCandidate)) {
+    candidateItems = rawCandidate;
+  } else {
+    const parsed = actionPlanCandidatesSchema.safeParse(rawCandidate);
+    if (!parsed.success) return fallback;
+    const actionPlan = parsed.data.actionPlan;
+    if (Array.isArray(parsed.data.items)) {
+      candidateItems = parsed.data.items;
+    } else if (Array.isArray(actionPlan)) {
+      candidateItems = actionPlan;
+    } else if (
+      actionPlan &&
+      typeof actionPlan === 'object' &&
+      !Array.isArray(actionPlan)
+    ) {
+      const nested = actionPlan as Record<string, unknown>;
+      candidateItems = Array.isArray(nested.items)
+        ? nested.items
+        : Array.isArray(nested.actions)
+          ? nested.actions
+          : [];
+    } else if (Array.isArray(parsed.data.actions)) {
+      candidateItems = parsed.data.actions;
+    }
+  }
+  const items = candidateItems
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const merged: string[] = [];
+  for (const item of [...items, ...fallback.items]) {
+    if (!merged.includes(item)) merged.push(item);
+    if (merged.length === 5) break;
+  }
+
+  return merged.length >= 3 ? { items: merged } : fallback;
+}
+
+function readStringAlias(
+  record: Record<string, unknown>,
+  ...keys: string[]
+): string | undefined {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return undefined;
+}
+
+function normalizeSkippedAnswers(
+  raw: unknown,
+  fallback: { answers: { answerId: string; modelAnswer: string }[] },
+): { answers: { answerId: string; modelAnswer: string }[] } {
+  const parsed = skippedAnswerCandidatesSchema.safeParse(raw);
+  if (!parsed.success || !Array.isArray(parsed.data.answers)) return fallback;
+
+  const allowedIds = new Set(fallback.answers.map((answer) => answer.answerId));
+  const byId = new Map<string, string>();
+  for (const item of parsed.data.answers) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+    const record = item as Record<string, unknown>;
+    const answerId = readStringAlias(record, 'answerId', 'answer_id', 'id');
+    const modelAnswer = readStringAlias(
+      record,
+      'modelAnswer',
+      'model_answer',
+      'answer',
+    );
+    if (answerId && modelAnswer && allowedIds.has(answerId)) {
+      byId.set(answerId, modelAnswer);
+    }
+  }
+
+  return {
+    answers: fallback.answers.map((answer) => ({
+      answerId: answer.answerId,
+      modelAnswer: byId.get(answer.answerId) ?? answer.modelAnswer,
+    })),
+  };
+}
+
+function toDimensionScores(value: unknown): { id: string; score: number }[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const record = item as Record<string, unknown>;
+    return typeof record.id === 'string' && typeof record.score === 'number'
+      ? [{ id: record.id, score: record.score }]
+      : [];
+  });
+}
+
+function buildCompetencyHeatmap(
+  feedbacks: { isFallback: boolean; dimensionScores: unknown }[],
+): Record<string, number> {
+  const totals = new Map<string, { sum: number; count: number }>();
+
+  for (const feedback of feedbacks) {
+    if (feedback.isFallback) continue;
+    for (const dimension of toDimensionScores(feedback.dimensionScores)) {
+      const current = totals.get(dimension.id) ?? { sum: 0, count: 0 };
+      totals.set(dimension.id, {
+        sum: current.sum + dimension.score,
+        count: current.count + 1,
+      });
+    }
+  }
+
+  return Object.fromEntries(
+    Array.from(totals.entries()).map(([id, total]) => [
+      id,
+      Math.round((total.sum / total.count) * 10) / 10,
+    ]),
+  );
+}
+
+function buildSkippedDimensionScores(
+  criteria: {
+    rubricCriterion: {
+      code: string;
+      name: string;
+      weight: number;
+      displayOrder: number;
+      rubricCategory: {
+        categoryKey: string;
+      };
+    };
+  }[],
+) {
+  return criteria
+    .slice()
+    .sort((a, b) => {
+      const categoryOrder =
+        a.rubricCriterion.rubricCategory.categoryKey.localeCompare(
+          b.rubricCriterion.rubricCategory.categoryKey,
+        );
+      if (categoryOrder !== 0) return categoryOrder;
+
+      const displayOrder =
+        a.rubricCriterion.displayOrder - b.rubricCriterion.displayOrder;
+      if (displayOrder !== 0) return displayOrder;
+
+      return a.rubricCriterion.code.localeCompare(b.rubricCriterion.code);
+    })
+    .map((criterion) => ({
+      id: criterion.rubricCriterion.code,
+      name: criterion.rubricCriterion.name,
+      score: 0,
+      weight: criterion.rubricCriterion.weight,
+    }));
 }
 
 @Processor(REPORT_QUEUE)
@@ -75,7 +256,27 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       select: {
         id: true,
         skipped: true,
-        question: { select: { questionText: true, orderIndex: true } },
+        question: {
+          select: {
+            questionText: true,
+            orderIndex: true,
+            criteria: {
+              select: {
+                rubricCriterion: {
+                  select: {
+                    code: true,
+                    name: true,
+                    weight: true,
+                    displayOrder: true,
+                    rubricCategory: {
+                      select: { categoryKey: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -95,7 +296,20 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       );
     }
 
-    const evaluatedFeedbacks = feedbacks.filter(
+    const syntheticSkippedFeedbacks: ReportFeedbackInput[] = skippedAnswers.map(
+      (answer) => ({
+        userAnswerId: answer.id,
+        overallScore: 0,
+        keyTakeaway: skippedKeyTakeaway(language),
+        isFallback: false,
+        dimensionScores: buildSkippedDimensionScores(answer.question.criteria),
+      }),
+    );
+    const allFeedbacks: ReportFeedbackInput[] = [
+      ...feedbacks,
+      ...syntheticSkippedFeedbacks,
+    ];
+    const evaluatedFeedbacks = allFeedbacks.filter(
       (feedback) => !feedback.isFallback,
     );
     const aggregatedScore =
@@ -110,33 +324,24 @@ export class ComprehensiveReportProcessor extends WorkerHost {
       overallScore: aggregatedScore,
       totalTurns: turnIds.length,
       evaluatedTurns: evaluatedFeedbacks.length,
-      fallbackTurns: feedbacks.length - evaluatedFeedbacks.length,
+      fallbackTurns: allFeedbacks.length - evaluatedFeedbacks.length,
       skippedTurns: skippedAnswers.length,
       summary:
         aggregatedScore === null
-          ? skippedAnswers.length > 0 && feedbacks.length === 0
-            ? language === 'vi'
-              ? `Phiên phỏng vấn đã hoàn thành với ${skippedAnswers.length} câu hỏi được bỏ qua. Chưa có câu trả lời nào đủ dữ liệu để chấm điểm.`
-              : `Interview completed with ${skippedAnswers.length} skipped questions. There are no answer submissions available for scoring.`
-            : getFallbackReportSummary(language)
+          ? getFallbackReportSummary(language)
           : language === 'vi'
             ? `Phiên phỏng vấn đã hoàn thành với ${evaluatedFeedbacks.length} câu trả lời được đánh giá. Điểm tổng quan: ${aggregatedScore}/100.`
             : `Interview completed with ${evaluatedFeedbacks.length} evaluated answers. Overall score: ${aggregatedScore}/100.`,
     };
 
     const commAnalysis = {
-      feedbackCount: feedbacks.length,
+      feedbackCount: allFeedbacks.length,
       evaluatedFeedbackCount: evaluatedFeedbacks.length,
-      fallbackFeedbackCount: feedbacks.length - evaluatedFeedbacks.length,
+      fallbackFeedbackCount: allFeedbacks.length - evaluatedFeedbacks.length,
       skippedFeedbackCount: skippedAnswers.length,
     };
 
-    const competencyHeatmap = {
-      scores: feedbacks.map((f) => ({
-        answerId: f.userAnswerId,
-        score: f.isFallback ? null : f.overallScore,
-      })),
-    };
+    const competencyHeatmap = buildCompetencyHeatmap(allFeedbacks);
 
     let skippedModelAnswers: {
       answers: { answerId: string; modelAnswer: string }[];
@@ -163,6 +368,7 @@ export class ComprehensiveReportProcessor extends WorkerHost {
           temperature: COMPREHENSIVE_REPORT_PROMPT_CONFIG.temperature,
           maxTokens: COMPREHENSIVE_REPORT_PROMPT_CONFIG.maxTokens,
           responseFormat: 'json_object',
+          task: 'report',
           messages: [
             {
               role: 'system',
@@ -179,16 +385,10 @@ export class ComprehensiveReportProcessor extends WorkerHost {
           ],
         });
 
-        const parsed = skippedAnswerSchema.parse(JSON.parse(raw) as unknown);
-        const parsedById = new Map(
-          parsed.answers.map((answer) => [answer.answerId, answer.modelAnswer]),
+        skippedModelAnswers = normalizeSkippedAnswers(
+          JSON.parse(raw) as unknown,
+          skippedModelAnswers,
         );
-        skippedModelAnswers = {
-          answers: skippedModelAnswers.answers.map((answer) => ({
-            answerId: answer.answerId,
-            modelAnswer: parsedById.get(answer.answerId) ?? answer.modelAnswer,
-          })),
-        };
       } catch (openaiError: unknown) {
         if (isAIQuotaExceeded(openaiError)) {
           this.logger.warn(
@@ -213,35 +413,37 @@ export class ComprehensiveReportProcessor extends WorkerHost {
 
     if (evaluatedFeedbacks.length > 0) {
       try {
-        const feedbackSummaries = evaluatedFeedbacks
-          .map(
-            (f, i) =>
-              `Answer ${i + 1}: score=${f.overallScore}, takeaway="${f.keyTakeaway}"`,
-          )
-          .join('\n');
+        const feedbackSummaries = evaluatedFeedbacks.map((f, i) => ({
+          answerIndex: i + 1,
+          answerId: f.userAnswerId,
+          score: f.overallScore,
+          keyTakeaway: f.keyTakeaway,
+          isFallback: f.isFallback,
+        }));
 
         const raw = await this.openai.chatCompletion({
           temperature: COMPREHENSIVE_REPORT_PROMPT_CONFIG.temperature,
           maxTokens: COMPREHENSIVE_REPORT_PROMPT_CONFIG.maxTokens,
           responseFormat: 'json_object',
+          task: 'report',
           messages: [
             {
               role: 'system',
               content: [
-                'You are an interview coach. Based on the feedback summaries, generate a concise action plan with 3-5 specific improvement items.',
+                'You are an interview coach. Based on the feedback summaries, generate a concise action plan with 3-5 specific improvement items. Prioritize non-fallback feedback; fallback rows are only context.',
                 getLanguageInstruction(language),
-                'Respond with JSON only: { "items": ["item1", "item2", ...] }',
+                'Respond with JSON only: { "items": ["item1", "item2", ...] }. Do not use markdown.',
               ].join(' '),
             },
             {
               role: 'user',
-              content: `Feedback summaries:\n${feedbackSummaries}`,
+              content: `Feedback summaries JSON:\n${JSON.stringify(feedbackSummaries)}`,
             },
           ],
         });
 
         const parsed = JSON.parse(raw) as unknown;
-        actionPlan = actionPlanSchema.parse(parsed);
+        actionPlan = normalizeActionPlan(parsed, actionPlan);
       } catch (openaiError: unknown) {
         if (isAIQuotaExceeded(openaiError)) {
           this.logger.warn(
@@ -267,12 +469,36 @@ export class ComprehensiveReportProcessor extends WorkerHost {
     }
 
     const reportMetadata = {
-      generatedByModel: this.openai.getChatModel(),
+      generatedByModel: this.openai.getChatModel('report'),
       promptVersion: COMPREHENSIVE_REPORT_PROMPT_CONFIG.version,
     };
 
     try {
       await this.prisma.$transaction([
+        ...syntheticSkippedFeedbacks.map((feedback) =>
+          this.prisma.aiFeedback.upsert({
+            where: { userAnswerId: feedback.userAnswerId },
+            create: {
+              userAnswerId: feedback.userAnswerId,
+              overallScore: feedback.overallScore,
+              modelAnswer: '',
+              keyTakeaway: feedback.keyTakeaway,
+              promptVersion: COMPREHENSIVE_REPORT_PROMPT_CONFIG.version,
+              isFallback: feedback.isFallback,
+              dimensionScores:
+                feedback.dimensionScores as Prisma.InputJsonValue,
+            },
+            update: {
+              overallScore: feedback.overallScore,
+              modelAnswer: '',
+              keyTakeaway: feedback.keyTakeaway,
+              promptVersion: COMPREHENSIVE_REPORT_PROMPT_CONFIG.version,
+              isFallback: feedback.isFallback,
+              dimensionScores:
+                feedback.dimensionScores as Prisma.InputJsonValue,
+            },
+          }),
+        ),
         this.prisma.sessionReport.upsert({
           where: {
             sessionId_reportType_version: {

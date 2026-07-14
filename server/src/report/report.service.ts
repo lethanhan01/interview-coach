@@ -20,6 +20,7 @@ import {
   getFallbackReportSummary,
 } from '../ai/fallback-content';
 import { resolveOutputLanguage } from '../ai/output-language';
+import { sanitizeFeedbackSegments } from '../ai/feedback-segment-sanitizer';
 
 function toRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -109,8 +110,9 @@ export class ReportService {
     const transcript: TranscriptItemDto[] = questions.map((q) => {
       const answer = q.userAnswers[0];
       const feedback = answer?.aiFeedback;
+      const answerText = answer?.answerText ?? '';
 
-      const segments: AnnotatedSegmentDto[] =
+      const rawSegments: AnnotatedSegmentDto[] =
         feedback?.annotatedSegments.map((s) => ({
           id: s.id,
           segmentText: s.segmentText,
@@ -120,23 +122,25 @@ export class ReportService {
           annotation: s.annotation,
           suggestion: s.suggestion ?? undefined,
         })) ?? [];
+      const segments = sanitizeFeedbackSegments(
+        answerText,
+        rawSegments,
+      ).segments;
 
       return {
         answerId: answer?.id,
         questionText: q.questionText,
         orderIndex: q.orderIndex,
-        answerText: answer?.answerText ?? '',
+        answerText,
         skipped: answer?.skipped ?? false,
         overallScore:
-          answer?.skipped || !feedback || feedback.isFallback
-            ? null
-            : feedback.overallScore,
+          !feedback || feedback.isFallback ? null : feedback.overallScore,
         modelAnswer: answer?.skipped ? '' : (feedback?.modelAnswer ?? ''),
         keyTakeaway: answer?.skipped ? '' : (feedback?.keyTakeaway ?? ''),
-        isFallback: answer?.skipped ? false : (feedback?.isFallback ?? false),
+        isFallback: feedback?.isFallback ?? false,
         segments: answer?.skipped ? [] : segments,
         appliedDimensions:
-          answer?.skipped || !feedback || feedback.isFallback
+          !feedback || feedback.isFallback
             ? undefined
             : ((feedback.dimensionScores as
                 | { id: string; name: string; score: number; weight: number }[]
@@ -163,20 +167,18 @@ export class ReportService {
           }
         : item,
     );
-    const nonSkippedTranscript = transcriptWithSkippedAnswers.filter(
-      (item) => !item.skipped,
-    );
-    const hasEvaluatedFeedback = nonSkippedTranscript.some(
+    const hasEvaluatedFeedback = transcriptWithSkippedAnswers.some(
       (item) => !item.isFallback && item.overallScore !== null,
     );
-    const hasSomeFallback = nonSkippedTranscript.some(
+    const hasSomeFallback = transcriptWithSkippedAnswers.some(
       (item) => item.isFallback,
     );
     const allFeedbackIsFallback = hasSomeFallback && !hasEvaluatedFeedback;
     let reportQuality: 'full' | 'partial' | 'unavailable' | 'not_scorable';
     if (
       transcriptWithSkippedAnswers.length > 0 &&
-      nonSkippedTranscript.length === 0
+      !hasEvaluatedFeedback &&
+      !hasSomeFallback
     ) {
       reportQuality = 'not_scorable';
     } else if (hasSomeFallback && hasEvaluatedFeedback) {
@@ -196,7 +198,9 @@ export class ReportService {
             ...storedExecutiveSummary,
             overallScore: null,
             evaluatedTurns: 0,
-            fallbackTurns: nonSkippedTranscript.length,
+            fallbackTurns: transcriptWithSkippedAnswers.filter(
+              (item) => item.isFallback,
+            ).length,
             summary: getFallbackReportSummary(session.language),
           }
         : storedExecutiveSummary,

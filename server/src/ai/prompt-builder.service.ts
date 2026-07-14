@@ -16,7 +16,7 @@ interface DynamicContextParams {
   numQuestions?: number;
   question?: string;
   questionCategory?: string;
-  competencyDomain?: string;
+  competencyDomains?: string[];
   answer?: string;
   sessionHistory?: Array<{ question: string; answer: string }>;
 }
@@ -30,23 +30,25 @@ Return ONLY a compact valid JSON object with exactly this shape, no markdown fen
     {
       "text": "<one interview question>",
       "category": "behavioral",
-      "competency_domain": "D1",
+      "competency_domains": ["D1", "D6"],
       "difficulty": <integer 1-3>
     }
   ]
 }
 
-Use "category" exactly as "behavioral" or "technical". Use "competency_domain" exactly as one allowed rubric ID (for example D1 or TD3), never a dimension name or free-form phrase.
+Use "category" exactly as "behavioral" or "technical" to indicate the question's primary category. Use "competency_domains" as one or more allowed rubric IDs (for example ["D1", "D6"], ["TD1", "TD2"], or in mixed interviews ["TD5", "D1"]), never dimension names or free-form phrases. In HR interviews use only D* IDs; in Technical interviews use only TD* IDs; in Mixed interviews include cross-category IDs only when the question truly gives evidence for both.
 
 Write the final JSON directly in the assistant message content.`,
   'surgical-feedback': `You are an expert interview coach. Evaluate the candidate's answer and provide surgical, actionable feedback.
 
 CRITICAL: model_answer must be a complete, concrete example answer of 3-4 concise sentences written as if a strong candidate is actually speaking. It must directly answer the question using specific details, demonstrate best practices, and read like a real spoken response — NOT a list of improvement tips, NOT meta-advice about what to say.
 
+CRITICAL: annotated_segments must quote ONLY the candidate answer inside <answer>. Never copy text from model_answer, the question, job description, rubric, or outside knowledge into segment_text. If the candidate answer is too short, off-topic, or has no exact quote that supports feedback, return "annotated_segments": [].
+
 Return ONLY a compact valid JSON object with exactly this structure — no extra text, no markdown fences. Include at most 2 annotated_segments. For optional fields, either provide a string or omit the field entirely; never use null:
 {
   "applied_dimensions": [
-    { "id": "<dimension id exactly as listed in the system instructions>", "score": <integer 1-100> }
+    { "id": "<dimension id exactly as listed in the system instructions>", "score": <integer 0-100> }
   ],
   "model_answer": "<complete 3-4 sentence example answer spoken as a candidate>",
   "key_takeaway": "<one concise insight about the answer quality>",
@@ -89,10 +91,10 @@ export class PromptBuilderService {
     return [
       baseSystem,
       `Cultural context: ${contextPack.culturalNotes}`,
-      `Question metadata contract: category must be exactly "behavioral" or "technical". competency_domain must be exactly one allowed ID, not a label or phrase.`,
+      `Question metadata contract: category must be exactly "behavioral" or "technical". competency_domains must contain one or more allowed IDs, not labels or phrases.`,
       `Behavioral IDs: ${behavioral}.`,
       `Technical IDs: ${technical}.`,
-      `For HR sessions, use only behavioral/D* IDs. For Technical sessions, use only technical/TD* IDs. For Mixed sessions, choose one best-fitting allowed ID per question.`,
+      `For HR sessions, use only behavioral/D* IDs. For Technical sessions, use only technical/TD* IDs. For Mixed sessions, keep each question within its category: behavioral questions use D* IDs and technical questions use TD* IDs.`,
     ].join('\n\n');
   }
 
@@ -100,19 +102,32 @@ export class PromptBuilderService {
     baseSystem: string,
     contextPack: ContextPackConfig,
     sessionType: SessionType,
-    options: { competencyDomain?: string } = {},
+    options: { competencyDomains?: string[] } = {},
   ): string {
     const { culturalNotes, behavioralDimensions, technicalDimensions } =
       contextPack;
     const lines = (dims: { id: string; name: string }[]) =>
       dims.map((d) => `  - ${d.id} ${d.name}`).join('\n');
-
-    const selectionRules = [
-      `From the candidate dimensions below, select ONLY the ones THIS question actually evaluates and ignore the rest.`,
-      `Score each selected dimension from 1 to 100.`,
-      `Return them in "applied_dimensions" as objects { "id", "score" } using the ids exactly as listed.`,
-      `Do NOT invent ids outside the list. Do NOT output any weight or overall score — the system computes those.`,
-    ];
+    const targetDomains =
+      options.competencyDomains && options.competencyDomains.length > 0
+        ? options.competencyDomains
+        : [];
+    const selectionRules =
+      targetDomains.length > 0
+        ? [
+            `Question-specific allowed criteria: ${targetDomains.join(', ')}. This is the complete target set for this question.`,
+            `Score every question-specific criterion listed above from 0 to 100.`,
+            `Return exactly and only these IDs in "applied_dimensions"; include every listed criterion.`,
+            `Use score 0 when the answer is blank, completely wrong, off-topic, or gives no correct/relevant evidence for that criterion.`,
+            `Do NOT invent ids outside the list. Do NOT output any weight or overall score — the system computes those.`,
+          ]
+        : [
+            `From the candidate dimensions below, select ONLY the ones THIS question actually evaluates and ignore the rest.`,
+            `Score each selected dimension from 0 to 100.`,
+            `A score of 0 is required when the candidate answer is blank, completely wrong, off-topic, or gives no correct/relevant evidence for that criterion.`,
+            `Return them in "applied_dimensions" as objects { "id", "score" } using the ids exactly as listed.`,
+            `Do NOT invent ids outside the list. Do NOT output any weight or overall score — the system computes those.`,
+          ];
 
     let scoringSection: string;
     if (sessionType === 'hr') {
@@ -134,9 +149,10 @@ export class PromptBuilderService {
         `Example: a pure definition question ("What is a closure?") usually evaluates only foundational knowledge and practical application, not debugging or systems thinking.`,
       ].join('\n');
     } else {
-      const targetDomainRule = options.competencyDomain
-        ? `Target competency_domain is ${options.competencyDomain}. Return exactly this one ID in "applied_dimensions"; do not include behavioral or technical dimensions outside the target.`
-        : `A question may evaluate behavioral dimensions, technical dimensions, or both — include only those it truly tests.`;
+      const mixedRule =
+        targetDomains.length > 0
+          ? `Do not include behavioral or technical dimensions outside the question-specific allowed criteria.`
+          : `A question may evaluate behavioral dimensions, technical dimensions, or both — include only those it truly tests.`;
       scoringSection = [
         `Session type: Mixed (behavioral + technical).`,
         `Candidate behavioral dimensions:`,
@@ -144,7 +160,7 @@ export class PromptBuilderService {
         `Candidate technical dimensions:`,
         lines(technicalDimensions),
         ...selectionRules,
-        targetDomainRule,
+        mixedRule,
         `Example: "Tell me about a bug you fixed" may evaluate debugging plus communication, but not coding-style depth.`,
       ].join('\n');
     }
@@ -163,7 +179,7 @@ export class PromptBuilderService {
       numQuestions,
       question,
       questionCategory,
-      competencyDomain,
+      competencyDomains,
       answer,
       sessionHistory,
     } = params;
@@ -186,13 +202,18 @@ export class PromptBuilderService {
       userContent += `\n\n<question>\n${question}\n</question>`;
     }
 
-    if (questionCategory || competencyDomain) {
+    const metadataDomains =
+      competencyDomains && competencyDomains.length > 0
+        ? competencyDomains
+        : [];
+
+    if (questionCategory || metadataDomains.length > 0) {
       userContent += `\n\n<question_metadata>`;
       if (questionCategory) {
         userContent += `\ncategory=${questionCategory}`;
       }
-      if (competencyDomain) {
-        userContent += `\ncompetency_domain=${competencyDomain}`;
+      if (metadataDomains.length > 0) {
+        userContent += `\ncompetency_domains=${metadataDomains.join(',')}`;
       }
       userContent += `\n</question_metadata>`;
     }

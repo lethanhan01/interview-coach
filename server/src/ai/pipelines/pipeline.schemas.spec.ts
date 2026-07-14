@@ -26,6 +26,15 @@ describe('FeedbackSchema', () => {
     expect(parsed.annotated_segments[0].improved_version).toBeUndefined();
   });
 
+  it('accepts score 0', () => {
+    const parsed = FeedbackSchema.parse({
+      ...base,
+      applied_dimensions: [{ id: 'TD1', score: 0 }],
+    });
+
+    expect(parsed.applied_dimensions[0]).toEqual({ id: 'TD1', score: 0 });
+  });
+
   it('rejects empty applied_dimensions', () => {
     expect(() =>
       FeedbackSchema.parse({ ...base, applied_dimensions: [] }),
@@ -33,6 +42,12 @@ describe('FeedbackSchema', () => {
   });
 
   it('rejects score out of range', () => {
+    expect(() =>
+      FeedbackSchema.parse({
+        ...base,
+        applied_dimensions: [{ id: 'TD1', score: -1 }],
+      }),
+    ).toThrow();
     expect(() =>
       FeedbackSchema.parse({
         ...base,

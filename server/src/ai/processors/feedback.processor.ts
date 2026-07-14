@@ -11,7 +11,7 @@ import {
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
 } from '../../common/constants/queue.constants';
-import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.4';
+import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.5';
 import type { SessionType } from '../pipelines/interview-pipeline.interface';
 import {
   describeAIError,
@@ -21,6 +21,7 @@ import {
 import { getFallbackFeedbackMessage } from '../fallback-content';
 import type { OutputLanguage } from '../output-language';
 import { resolveOutputLanguage } from '../output-language';
+import { sanitizeFeedbackSegments } from '../feedback-segment-sanitizer';
 
 interface FeedbackJobDto {
   sessionId: string;
@@ -29,7 +30,7 @@ interface FeedbackJobDto {
   questionId?: string;
   questionText: string;
   questionCategory?: 'behavioral' | 'technical';
-  competencyDomain?: string;
+  competencyDomains: string[];
   answerText: string;
   contextPack: 'VN' | 'Western';
   sessionType: SessionType;
@@ -69,7 +70,7 @@ export class FeedbackProcessor extends WorkerHost {
       questionId,
       questionText,
       questionCategory,
-      competencyDomain,
+      competencyDomains,
       answerText,
       contextPack,
       sessionType,
@@ -80,7 +81,7 @@ export class FeedbackProcessor extends WorkerHost {
 
     try {
       const contextPackConfig =
-        this.contextPackService.getContextPack(contextPack);
+        await this.contextPackService.getContextPack(contextPack);
       const strategy = this.factory.getStrategy(sessionType);
 
       const feedback = await strategy.evaluateAnswer({
@@ -88,11 +89,21 @@ export class FeedbackProcessor extends WorkerHost {
         questionId,
         questionText,
         questionCategory,
-        competencyDomain,
+        competencyDomains,
         answerText,
         contextPackConfig,
         language,
       });
+      const sanitizedSegments = sanitizeFeedbackSegments(
+        answerText,
+        feedback.annotatedSegments,
+      );
+      if (sanitizedSegments.issues.length > 0) {
+        this.logger.warn(
+          `FeedbackProcessor removed invalid annotated segments for session ${sessionId} answer ${answerId}: ` +
+            `removed=${sanitizedSegments.issues.length}`,
+        );
+      }
 
       await this.prisma.$transaction(async (tx) => {
         const aiFeedback = await tx.aiFeedback.upsert({
@@ -121,9 +132,9 @@ export class FeedbackProcessor extends WorkerHost {
         await tx.annotatedSegment.deleteMany({
           where: { aiFeedbackId: aiFeedback.id },
         });
-        if (feedback.annotatedSegments.length > 0) {
+        if (sanitizedSegments.segments.length > 0) {
           await tx.annotatedSegment.createMany({
-            data: feedback.annotatedSegments.map((seg) => ({
+            data: sanitizedSegments.segments.map((seg) => ({
               aiFeedbackId: aiFeedback.id,
               segmentText: seg.segmentText,
               startIndex: seg.startIndex,
@@ -142,7 +153,7 @@ export class FeedbackProcessor extends WorkerHost {
         });
       });
 
-      hasAnnotations = feedback.annotatedSegments.length > 0;
+      hasAnnotations = sanitizedSegments.segments.length > 0;
     } catch (error: unknown) {
       const isQuotaError = isAIQuotaExceeded(error);
       const totalAttempts = job.opts.attempts ?? FEEDBACK_JOB_ATTEMPTS;

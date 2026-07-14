@@ -335,15 +335,15 @@ describe('ReportService', () => {
       expect(result.actionPlan.items).toHaveLength(3);
     });
 
-    it('trả reportQuality=not_scorable và modelAnswer cho phiên chỉ có câu skipped', async () => {
+    it('trả score=0 và modelAnswer cho phiên chỉ có câu skipped đã được hệ thống chấm', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...COMPLETED_SESSION,
-        overallScore: null,
+        overallScore: 0,
         sessionReports: [
           {
             reportType: 'executive_summary',
             version: 1,
-            contentJson: { summary: 'Skipped session', overallScore: null },
+            contentJson: { summary: 'Skipped session', overallScore: 0 },
           },
           {
             reportType: 'skipped_answers',
@@ -369,7 +369,21 @@ describe('ReportService', () => {
               id: 'answer-skip-1',
               answerText: '',
               skipped: true,
-              aiFeedback: null,
+              aiFeedback: {
+                overallScore: 0,
+                modelAnswer: '',
+                keyTakeaway: 'Skipped question',
+                isFallback: false,
+                annotatedSegments: [],
+                dimensionScores: [
+                  {
+                    id: 'D1',
+                    name: 'Communication',
+                    score: 0,
+                    weight: 1,
+                  },
+                ],
+              },
             },
           ],
         },
@@ -377,21 +391,24 @@ describe('ReportService', () => {
 
       const result = await service.getReport('session-123', 'user-abc');
 
-      expect(result.reportQuality).toBe('not_scorable');
-      expect(result.overallScore).toBeNull();
+      expect(result.reportQuality).toBe('full');
+      expect(result.overallScore).toBe(0);
       expect(result.transcript[0]).toEqual(
         expect.objectContaining({
           skipped: true,
           answerText: '',
-          overallScore: null,
+          overallScore: 0,
           modelAnswer: 'Câu trả lời đề xuất cho câu bị bỏ qua.',
           keyTakeaway: '',
           segments: [],
+          appliedDimensions: [
+            { id: 'D1', name: 'Communication', score: 0, weight: 1 },
+          ],
         }),
       );
     });
 
-    it('appliedDimensions: có giá trị ở câu thường, undefined ở fallback và skip', async () => {
+    it('appliedDimensions: có giá trị ở câu thường và skip, undefined ở fallback', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(
         COMPLETED_SESSION,
       );
@@ -448,7 +465,16 @@ describe('ReportService', () => {
               id: 'a-3',
               answerText: '',
               skipped: true,
-              aiFeedback: null,
+              aiFeedback: {
+                overallScore: 0,
+                modelAnswer: '',
+                keyTakeaway: 'Skipped question',
+                isFallback: false,
+                annotatedSegments: [],
+                dimensionScores: [
+                  { id: 'D1', name: 'Communication', score: 0, weight: 1 },
+                ],
+              },
             },
           ],
         },
@@ -464,7 +490,58 @@ describe('ReportService', () => {
         { id: 'TD2', name: 'Application', score: 70, weight: 0.4 },
       ]);
       expect(fallbackItem.appliedDimensions).toBeUndefined();
-      expect(skippedItem.appliedDimensions).toBeUndefined();
+      expect(skippedItem.appliedDimensions).toEqual([
+        { id: 'D1', name: 'Communication', score: 0, weight: 1 },
+      ]);
+    });
+
+    it('không trả annotated segment nếu segmentText không thuộc answerText', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-rest',
+          questionText: 'REST là gì?',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              id: '8abade13-5a8f-414c-ad07-7878ed94b01d',
+              answerText: 'Tôi nghĩ REST là nghỉ ngơi.',
+              skipped: false,
+              aiFeedback: {
+                overallScore: 15,
+                modelAnswer: 'REST là một kiến trúc phong cách.',
+                keyTakeaway: 'Cần phân biệt nghĩa kỹ thuật.',
+                isFallback: false,
+                annotatedSegments: [
+                  {
+                    id: 'seg-from-model-answer',
+                    segmentText: 'REST là một kiến trúc phong cách.',
+                    startIndex: 0,
+                    endIndex: 34,
+                    highlightLevel: 'strength',
+                    annotation: 'Định nghĩa đúng.',
+                    suggestion: null,
+                  },
+                ],
+                dimensionScores: [
+                  { id: 'TD1', name: 'Fundamentals', score: 15, weight: 1 },
+                ],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.transcript[0]).toEqual(
+        expect.objectContaining({
+          answerId: '8abade13-5a8f-414c-ad07-7878ed94b01d',
+          segments: [],
+        }),
+      );
     });
   });
 

@@ -6,7 +6,7 @@ Reference: [LLD_design.md](LLD_design.md) · [01_overview.md](01_overview.md) ·
 
 ## 1. Module Responsibilities
 
-AIModule contains all AI inference logic. No HTTP controller — only BullMQ processors and supporting services. Decoupled from other modules; SessionModule, TurnModule, and ReportModule communicate via BullMQ queues only.
+AIModule contains AI inference logic, rubric read APIs, BullMQ processors, and supporting services. SessionModule, TurnModule, and ReportModule communicate with AI processors via BullMQ queues; report UI reads active rubric metadata through the module's rubric API.
 
 ```
 SessionModule ──[QUESTION_GEN_QUEUE]──► QuestionGenerationProcessor
@@ -87,20 +87,25 @@ Layer 3 uses XML tags to delimit dynamic data and prevent prompt injection:
 
 ```typescript
 interface ContextPackService {
-  getContextPack(type: ContextPack): ContextPackConfig;
+  getContextPack(type: ContextPack): Promise<ContextPackConfig>;
+
+  getRubricSnapshot(type: ContextPack): Promise<Record<string, unknown>>;
 }
 
 interface ContextPackConfig {
   type: ContextPack;
   rubricDimensions: RubricDimension[];
+  behavioralDimensions: RubricDimensionEntry[];
+  technicalDimensions: RubricDimensionEntry[];
   culturalNotes: string;
-  scoringWeights: Record<RubricDimension, number>;
+  scoringWeights: {
+    behavioral_weight: number;
+    technical_weight: number;
+  };
 }
 ```
 
-VN pack dimensions: `clarity`, `structure`, `communication`, `culture_fit`.
-Western pack dimensions: `clarity`, `structure`, `communication`, `impact`, `leadership`.
-Config stored in static JSON constants — no DB read required.
+`ContextPackService` ưu tiên đọc active `rubric_versions` theo `context_pack_id`, kèm `rubric_categories` và `rubric_criteria`, rồi map về contract runtime hiện tại. Nếu DB thiếu rubric cho context trong môi trường dev, service fallback về `CONTEXT_PACK_DATA` và log warning. `QuestionGenerationProcessor` dùng `interview_sessions.rubric_version_id` đã khóa khi tạo session để lưu `session_question_criteria` bằng criterion IDs thuộc version đó.
 
 ### 2.4 Pipeline Strategy Pattern
 

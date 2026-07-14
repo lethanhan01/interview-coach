@@ -7,22 +7,6 @@ export class UpdateProfileDto {
 
   @IsString()
   @IsOptional()
-  targetPosition?: string;
-
-  @IsString()
-  @IsOptional()
-  targetRoleCategory?: string;
-
-  @IsString()
-  @IsOptional()
-  targetLevel?: string;
-
-  @IsString()
-  @IsOptional()
-  preferredTechStack?: string;
-
-  @IsString()
-  @IsOptional()
   personality?: string;
 
   @IsObject()

@@ -8,7 +8,9 @@ function isStrengthSegment(segment: AnnotatedSegment) {
 
 function getSegmentQuote(answerText: string, segment: AnnotatedSegment) {
   const explicitQuote = segment.segmentText?.trim();
-  if (explicitQuote) return explicitQuote;
+  if (explicitQuote && answerText.includes(explicitQuote)) {
+    return explicitQuote;
+  }
 
   const hasValidRange =
     Number.isInteger(segment.startIndex) &&
@@ -73,12 +75,14 @@ interface AnnotatedTranscriptProps {
   items: TranscriptItem[];
   contextPackId?: "VN" | "Western";
   sessionType?: SessionType;
+  rubricHint?: string;
 }
 
 export default function AnnotatedTranscript({
   items,
   contextPackId,
   sessionType,
+  rubricHint,
 }: AnnotatedTranscriptProps) {
   return (
     <div className="flex flex-col gap-8">
@@ -98,9 +102,7 @@ export default function AnnotatedTranscript({
                 Câu {item.orderIndex}
               </p>
               <span className="text-xs font-semibold text-brand">
-                {item.skipped
-                  ? "Đã bỏ qua"
-                  : item.overallScore == null
+                {item.overallScore == null
                   ? "Chưa thể chấm"
                   : `${item.overallScore.toFixed(1)} / 100`}
               </span>
@@ -129,9 +131,11 @@ export default function AnnotatedTranscript({
                 </div>
               </div>
             ) : (
-              contextPackId && sessionType && (
+              (rubricHint || (contextPackId && sessionType)) && (
                 <p className="mb-3 text-xs text-gray-400">
-                  Tiêu chí đánh giá: {getRubricHint(contextPackId, sessionType)}
+                  Tiêu chí đánh giá:{' '}
+                  {rubricHint ??
+                    getRubricHint(contextPackId as 'VN' | 'Western', sessionType as SessionType)}
                 </p>
               )
             )}

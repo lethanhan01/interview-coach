@@ -4,6 +4,7 @@ import type { Job } from 'bullmq';
 import { TranscriptionProcessor } from './transcription.processor';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
+import { QuestionCriteriaService } from '../../question-criteria/question-criteria.service';
 import { WhisperService } from '../../turn/whisper.service';
 import { VoiceMetricsService } from '../../turn/voice-metrics.service';
 import {
@@ -17,6 +18,7 @@ import {
   createMockVoiceMetricsService,
   createMockReportService,
   createMockQueue,
+  createMockQuestionCriteriaService,
 } from '../../test-utils/mock-factories';
 import { ReportService } from '../../report/report.service';
 import { FALLBACK_FEEDBACK_MESSAGE } from '../fallback-content';
@@ -40,6 +42,9 @@ describe('TranscriptionProcessor', () => {
   let mockVoiceMetrics: ReturnType<typeof createMockVoiceMetricsService>;
   let mockReportService: ReturnType<typeof createMockReportService>;
   let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
+  let mockQuestionCriteria: ReturnType<
+    typeof createMockQuestionCriteriaService
+  >;
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
@@ -48,11 +53,13 @@ describe('TranscriptionProcessor', () => {
     mockVoiceMetrics = createMockVoiceMetricsService();
     mockReportService = createMockReportService();
     mockFeedbackQueue = createMockQueue();
+    mockQuestionCriteria = createMockQuestionCriteriaService();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TranscriptionProcessor,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
         { provide: SseService, useValue: mockSse },
         { provide: WhisperService, useValue: mockWhisper },
         { provide: VoiceMetricsService, useValue: mockVoiceMetrics },
@@ -85,7 +92,18 @@ describe('TranscriptionProcessor', () => {
       id: 'q-1',
       questionText: 'Tell me about yourself?',
       questionCategory: 'behavioral',
-      competencyDomain: 'D1',
+      criteria: [
+        {
+          criterionCode: 'D1',
+          categoryKeySnapshot: 'behavioral',
+          displayOrderSnapshot: 1,
+        },
+        {
+          criterionCode: 'D6',
+          categoryKeySnapshot: 'behavioral',
+          displayOrderSnapshot: 6,
+        },
+      ],
       orderIndex: 1,
       sessionId: 'session-123',
     });
@@ -117,7 +135,7 @@ describe('TranscriptionProcessor', () => {
         answerId: 'answer-1',
         questionId: 'q-1',
         questionCategory: 'behavioral',
-        competencyDomain: 'D1',
+        competencyDomains: ['D1', 'D6'],
         language: 'vi',
       }),
       expect.objectContaining({
@@ -159,6 +177,14 @@ describe('TranscriptionProcessor', () => {
     await processor.process(job);
 
     expect(mockFeedbackQueue.add).toHaveBeenCalled();
+    expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
+      'feedback',
+      expect.objectContaining({
+        questionText: '',
+        competencyDomains: [],
+      }),
+      expect.any(Object),
+    );
     expect(mockSse.emit).toHaveBeenCalledWith(
       'sse:session:session-123',
       'turn.transcription_ready',

@@ -99,13 +99,14 @@ describe('SessionController', () => {
   });
 
   describe('GET /sessions/:id/questions', () => {
-    it('trả về { questions: [...] }', async () => {
+    it('trả về questions kèm currentIndex từ service', async () => {
       const questions = [{ id: 'q-1', content: 'Giới thiệu?', orderIndex: 1 }];
-      mockSessionService.findQuestions.mockResolvedValue(questions);
+      const response = { questions, currentIndex: 0 };
+      mockSessionService.findQuestions.mockResolvedValue(response);
 
       const result = await controller.findQuestions('session-1', mockReq());
 
-      expect(result).toEqual({ questions });
+      expect(result).toEqual(response);
       expect(mockSessionService.findQuestions).toHaveBeenCalledWith(
         'session-1',
         'user-abc',
@@ -145,7 +146,11 @@ describe('SessionController', () => {
     it('gọi sessionService.updateStatus với đúng params', async () => {
       const updated = { id: 'session-1', status: 'completed' };
       mockSessionService.updateStatus.mockResolvedValue(updated);
-      const dto = { status: 'completed' } as any;
+      const dto = {
+        status: 'completed',
+        remainingSeconds: 0,
+        autoSkipUnanswered: true,
+      } as any;
 
       const result = await controller.updateStatus('session-1', dto, mockReq());
 
@@ -154,6 +159,8 @@ describe('SessionController', () => {
         'session-1',
         'user-abc',
         'completed',
+        0,
+        true,
       );
     });
   });

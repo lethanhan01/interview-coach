@@ -40,8 +40,11 @@ describe('PromptBuilderService', () => {
       expect(result).toContain('segment_text');
       expect(result).toContain('start_index');
       expect(result).toContain('end_index');
+      expect(result).toContain('<integer 0-100>');
       expect(result).toContain('never use null');
       expect(result).toContain('exact substring copied verbatim');
+      expect(result).toContain('quote ONLY the candidate answer');
+      expect(result).toContain('Never copy text from model_answer');
     });
   });
 
@@ -144,16 +147,27 @@ describe('PromptBuilderService', () => {
       expect(result).not.toContain('session weight');
     });
 
-    it('Mixed có target competencyDomain thì không mời model chấm cả hai nhóm', () => {
+    it('Mixed có target competencyDomains thì không mời model chấm cả hai nhóm', () => {
       const result = service.applyContextPackForEvaluation(
         'base',
         contextPack,
         'mixed',
-        { competencyDomain: 'TD2' },
+        { competencyDomains: ['TD2'] },
       );
 
-      expect(result).toContain('Target competency_domain is TD2');
-      expect(result).toContain('Return exactly this one ID in "applied_dimensions"');
+      expect(result).toContain('Question-specific allowed criteria: TD2');
+      expect(result).toContain('complete target set');
+      expect(result).toContain(
+        'Score every question-specific criterion listed above from 0 to 100',
+      );
+      expect(result).toContain(
+        'Return exactly and only these IDs in "applied_dimensions"',
+      );
+      expect(result).toContain('include every listed criterion');
+      expect(result).toContain('Use score 0');
+      expect(result).not.toContain(
+        'select ONLY the ones THIS question actually evaluates',
+      );
       expect(result).not.toContain(
         'A question may evaluate behavioral dimensions, technical dimensions, or both',
       );
@@ -187,6 +201,8 @@ describe('PromptBuilderService', () => {
           sessionType,
         );
         expect(result).toContain('select ONLY');
+        expect(result).toContain('Score each selected dimension from 0 to 100');
+        expect(result).toContain('A score of 0 is required');
         expect(result).not.toContain('weights sum to 1.0');
       });
     });
@@ -224,14 +240,14 @@ describe('PromptBuilderService', () => {
         jobDescription: '',
         question: 'Tell me about a challenge',
         questionCategory: 'behavioral',
-        competencyDomain: 'D2',
+        competencyDomains: ['D2'],
         answer: 'I handled an incident calmly.',
       });
       const content = messages[1].content as string;
 
       expect(content).toContain('<question_metadata>');
       expect(content).toContain('category=behavioral');
-      expect(content).toContain('competency_domain=D2');
+      expect(content).toContain('competency_domains=D2');
     });
 
     it('bao gồm session type và target roles khi được cung cấp', () => {

@@ -97,6 +97,72 @@ test("câu hỏi đầu tiên hiển thị sau khi load", async ({ page }) => {
   });
 });
 
+test("resume phiên đã trả lời một phần mở ở câu chưa trả lời đầu tiên", async ({
+  page,
+}) => {
+  await page.route(
+    `**/api/v1/sessions/${SESSION_ID}/questions`,
+    async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          questions: [
+            { ...MOCK_QUESTIONS[0], answered: true, answerId: "answer-1" },
+            { ...MOCK_QUESTIONS[1], answered: false },
+          ],
+          currentIndex: 1,
+        }),
+      });
+    },
+  );
+
+  let status: "active" | "paused" = "active";
+  await page.route(`**/api/v1/sessions/${SESSION_ID}/status`, async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ status, numQuestions: MOCK_QUESTIONS.length }),
+      });
+      return;
+    }
+
+    const payload = route.request().postDataJSON() as {
+      status: "active" | "paused";
+      remainingSeconds?: number;
+    };
+    status = payload.status;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        id: SESSION_ID,
+        status,
+        sessionType: "hr",
+        contextPackId: "VN",
+        numQuestions: MOCK_QUESTIONS.length,
+        durationMin: 30,
+        remainingSeconds: payload.remainingSeconds ?? 30 * 60,
+      }),
+    });
+  });
+
+  await page.goto(`/sessions/${SESSION_ID}`);
+
+  await expect(page.getByText(MOCK_QUESTIONS[1].content)).toBeVisible({
+    timeout: 10000,
+  });
+  await expect(page.getByText(MOCK_QUESTIONS[0].content)).not.toBeVisible();
+
+  await page.getByRole("button", { name: "Tạm dừng" }).click();
+  await expect(page.getByText("Phiên phỏng vấn đang tạm dừng")).toBeVisible();
+  await page.getByRole("button", { name: "Tiếp tục" }).click();
+
+  await expect(page.getByText(MOCK_QUESTIONS[1].content)).toBeVisible();
+  await expect(page.getByText("Câu 2 / 2")).toBeVisible();
+});
+
 test("QG-17: frontend polling tiếp tục khi /questions tạm thời rỗng", async ({
   page,
 }) => {
@@ -339,7 +405,9 @@ test("text mode: submit answer gọi POST /turns", async ({ page }) => {
 });
 
 test("có thể tạm dừng phiên phỏng vấn đang chạy", async ({ page }) => {
+  let pausePayload: { status?: string; remainingSeconds?: number } | undefined;
   await page.route(`**/api/v1/sessions/${SESSION_ID}/status`, async (route) => {
+    pausePayload = route.request().postDataJSON();
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -348,6 +416,7 @@ test("có thể tạm dừng phiên phỏng vấn đang chạy", async ({ page }
         status: "paused",
         sessionType: "hr",
         contextPackId: "VN",
+        remainingSeconds: pausePayload?.remainingSeconds,
       }),
     });
   });
@@ -359,6 +428,79 @@ test("có thể tạm dừng phiên phỏng vấn đang chạy", async ({ page }
   await page.getByRole("button", { name: "Tạm dừng" }).click();
 
   await expect(page.getByText("Phiên phỏng vấn đang tạm dừng")).toBeVisible();
+  expect(pausePayload?.status).toBe("paused");
+  expect(pausePayload?.remainingSeconds).toBeGreaterThan(0);
+  expect(pausePayload?.remainingSeconds).toBeLessThanOrEqual(30 * 60);
+});
+
+test("hết giờ tự động skip câu chưa trả lời và chuyển sang trang báo cáo", async ({
+  page,
+}) => {
+  let timeoutPayload:
+    | {
+        status?: string;
+        autoSkipUnanswered?: boolean;
+        remainingSeconds?: number;
+      }
+    | undefined;
+
+  await page.route(`**/api/v1/sessions/${SESSION_ID}`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        id: SESSION_ID,
+        status: "active",
+        sessionType: "hr",
+        contextPackId: "VN",
+        numQuestions: MOCK_QUESTIONS.length,
+        durationMin: 30,
+        remainingSeconds: 1,
+      }),
+    });
+  });
+  await page.route(`**/api/v1/sessions/${SESSION_ID}/status`, async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          status: "active",
+          numQuestions: MOCK_QUESTIONS.length,
+        }),
+      });
+      return;
+    }
+
+    timeoutPayload = route.request().postDataJSON();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ id: SESSION_ID, status: "completing" }),
+    });
+  });
+  await page.route(`**/api/v1/sessions/${SESSION_ID}/report`, async (route) => {
+    await route.fulfill({
+      status: 404,
+      contentType: "application/json",
+      body: JSON.stringify({
+        errorCode: "REPORT_NOT_READY",
+        message: "REPORT_NOT_READY",
+      }),
+    });
+  });
+
+  await page.goto(`/sessions/${SESSION_ID}`);
+  await expect(page.getByText(MOCK_QUESTIONS[0].content)).toBeVisible({
+    timeout: 10000,
+  });
+
+  await expect.poll(() => timeoutPayload).toEqual({
+    status: "completed",
+    autoSkipUnanswered: true,
+    remainingSeconds: 0,
+  });
+  await expect(page).toHaveURL(`/sessions/${SESSION_ID}/report`);
 });
 
 test("khi session kết thúc, chuyển sang trang chờ báo cáo", async ({

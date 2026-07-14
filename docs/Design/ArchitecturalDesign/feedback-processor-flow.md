@@ -97,7 +97,9 @@ strong candidate is actually speaking...
 
 Return ONLY a valid JSON object with exactly this structure — no extra text, no markdown fences:
 {
-  "overall_score": <integer 1-100>,
+  "applied_dimensions": [
+    { "id": "<dimension id exactly as listed in the system instructions>", "score": <integer 0-100> }
+  ],
   "model_answer": "<complete 3-5 sentence example answer spoken as a candidate>",
   "key_takeaway": "<one concise insight about the answer quality>",
   "annotated_segments": [...]
@@ -166,8 +168,8 @@ Trong dự án cuối kỳ nhóm tôi gặp deadline gấp...
 ```ts
 const raw = await this.openai.chatCompletion({
   messages,
-  temperature: 0.3, // thấp — cần kết quả nhất quán, không sáng tạo
-  maxTokens: 1500,
+  temperature: 0.2, // thấp — cần kết quả nhất quán, không sáng tạo
+  maxTokens: 3000,
   responseFormat: "json_object",
   task: "feedback", // quyết định timeout sẽ dùng
 });
@@ -194,7 +196,12 @@ const validated = this.zodValidator.validate(FeedbackSchema, parsed);
 
 ```ts
 FeedbackSchema = z.object({
-  overall_score: z.number().int().min(1).max(100),
+  applied_dimensions: z.array(
+    z.object({
+      id: z.string(),
+      score: z.number().int().min(0).max(100),
+    }),
+  ).min(1),
   model_answer: z.string(),
   key_takeaway: z.string(),
   annotated_segments: z.array(
@@ -211,16 +218,17 @@ FeedbackSchema = z.object({
 });
 ```
 
-Nếu AI trả về JSON không khớp schema (thiếu field, sai type, score ngoài 1–100...) → Zod throw → job fail → BullMQ retry lần tiếp theo.
+Nếu AI trả về JSON không khớp schema (thiếu field, sai type, score ngoài 0–100...) → Zod throw → job fail → BullMQ retry lần tiếp theo.
 
-Sau khi validate thành công, map từ snake_case sang camelCase:
+Trước khi gọi AI, backend resolve criteria hợp lệ của câu hỏi từ metadata và context pack. Metadata rỗng hoặc không còn criteria hợp lệ sẽ bị chặn bằng `SCHEMA_VALIDATION_ERROR`; criteria invalid bị bỏ trước khi đưa vào prompt. Sau khi validate output AI thành công, backend lọc `applied_dimensions` theo target criteria đã resolve, điền `score=0` cho criteria hợp lệ bị AI bỏ sót, rồi tự tính `overallScore`:
 
 ```ts
 return {
-  overallScore: validated.overall_score,
+  overallScore: weightedScoreFromResolvedDimensions,
   modelAnswer: validated.model_answer,
   keyTakeaway: validated.key_takeaway,
   promptVersion: "surgical-feedback-v1.1",
+  appliedDimensions,
   annotatedSegments: validated.annotated_segments.map((s) => ({
     segmentText: s.segment_text,
     startIndex: s.start_index,
@@ -369,7 +377,7 @@ FeedbackProcessor.process(job)
         ├── injectDynamicContext(...)
         │     └── tạo messages = [{ role: 'system', ... }, { role: 'user', ... }]
         │
-        ├── OpenAIGateway.chatCompletion({ messages, temperature: 0.3, maxTokens: 1500 })
+        ├── OpenAIGateway.chatCompletion({ messages, temperature: 0.2, maxTokens: 3000 })
         │     ├── set timeout theo task='feedback' (mặc định 180 giây)
         │     ├── gọi chatClient.chat.completions.create(...)
         │     ├── xử lý rate limit 429: retry 1s → 2s (tối đa 2 lần)
@@ -378,7 +386,7 @@ FeedbackProcessor.process(job)
         │
         ├── JSON.parse(raw)
         └── ZodValidatorService.validate(FeedbackSchema, parsed)
-              └── enforce: overall_score int 1-100, annotated_segments shape, ...
+              └── enforce: applied_dimensions score int 0-100, annotated_segments shape, ...
 
   ↓ (kết quả SurgicalFeedback)
 

@@ -1,8 +1,10 @@
 import { useCountdown } from '@/hooks/useCountdown'
 
 interface CountdownTimerProps {
-  durationMin: number
+  initialSeconds: number
   active: boolean
+  onChange?: (remainingSeconds: number) => void
+  onExpire?: () => void
 }
 
 function formatTime(seconds: number): string {
@@ -11,9 +13,18 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
-export default function CountdownTimer({ durationMin, active }: CountdownTimerProps) {
-  const totalSeconds = durationMin * 60
-  const { remainingSeconds, isWarning, isExpired } = useCountdown(totalSeconds, active)
+export default function CountdownTimer({
+  initialSeconds,
+  active,
+  onChange,
+  onExpire,
+}: CountdownTimerProps) {
+  const { remainingSeconds, isWarning, isExpired } = useCountdown(
+    initialSeconds,
+    active,
+    onChange,
+    onExpire,
+  )
 
   const colorClass = isExpired
     ? 'text-danger'

@@ -76,7 +76,7 @@ describe('FeedbackProcessor', () => {
     questionId: 'q-1',
     questionText: 'Giới thiệu bản thân?',
     questionCategory: 'behavioral' as const,
-    competencyDomain: 'D1',
+    competencyDomains: ['D1', 'D6'],
     answerText: 'Tôi là backend developer.',
     contextPack: 'VN' as const,
     sessionType: 'hr' as const,
@@ -116,7 +116,7 @@ describe('FeedbackProcessor', () => {
         overallScore: 80,
         modelAnswer: 'Một câu trả lời tốt.',
         keyTakeaway: 'Thêm số liệu cụ thể.',
-        promptVersion: 'surgical-feedback-v1.4',
+        promptVersion: 'surgical-feedback-v1.5',
         appliedDimensions: [
           { id: 'D1', name: 'Communication', score: 80, weight: 0.5 },
           { id: 'D2', name: 'Teamwork', score: 60, weight: 0.5 },
@@ -185,6 +185,39 @@ describe('FeedbackProcessor', () => {
           ],
         }),
       }),
+    );
+  });
+
+  it('không persist annotated segment nếu quote không thuộc answerText', async () => {
+    strategy.evaluateAnswer.mockResolvedValue({
+      overallScore: 15,
+      modelAnswer: 'REST là một kiến trúc phong cách.',
+      keyTakeaway: 'Cần phân biệt nghĩa kỹ thuật.',
+      promptVersion: 'surgical-feedback-v1.5',
+      appliedDimensions: [
+        { id: 'D1', name: 'Communication', score: 15, weight: 1 },
+      ],
+      annotatedSegments: [
+        {
+          segmentText: 'REST là một kiến trúc phong cách.',
+          startIndex: 0,
+          endIndex: 34,
+          highlightLevel: 'strength',
+          annotation: 'Định nghĩa đúng.',
+        },
+      ],
+    });
+
+    await processor.process(makeJob());
+
+    expect(tx.annotatedSegment.deleteMany).toHaveBeenCalledWith({
+      where: { aiFeedbackId: 'feedback-1' },
+    });
+    expect(tx.annotatedSegment.createMany).not.toHaveBeenCalled();
+    expect(mockSse.emit).toHaveBeenCalledWith(
+      'sse:session:session-123',
+      'turn.feedback_ready',
+      { answerId: 'answer-1', hasAnnotations: false },
     );
   });
 
@@ -329,6 +362,12 @@ describe('FeedbackProcessor', () => {
     expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
   });
 
+  it('đọc ContextPack theo context của session', async () => {
+    await processor.process(makeJob());
+
+    expect(mockContextPack.getContextPack).toHaveBeenCalledWith('VN');
+  });
+
   it('evaluateAnswer được gọi với đúng FeedbackInput: sessionType, questionText, answerText', async () => {
     await processor.process(makeJob());
 
@@ -338,7 +377,7 @@ describe('FeedbackProcessor', () => {
         questionId: 'q-1',
         questionText: 'Giới thiệu bản thân?',
         questionCategory: 'behavioral',
-        competencyDomain: 'D1',
+        competencyDomains: ['D1', 'D6'],
         answerText: 'Tôi là backend developer.',
         language: 'vi',
       }),

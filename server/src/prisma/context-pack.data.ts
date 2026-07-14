@@ -9,8 +9,8 @@ export interface ContextPackData {
   legacyIds: string[];
   name: string;
   culturalNotes: string;
-  rubricJson: Prisma.InputJsonObject;
-  scoringWeights: Prisma.InputJsonObject;
+  defaultRubricJson: Prisma.InputJsonObject;
+  defaultScoringWeights: Prisma.InputJsonObject;
 }
 
 export const CONTEXT_PACK_DATA: ContextPackData[] = [
@@ -20,7 +20,7 @@ export const CONTEXT_PACK_DATA: ContextPackData[] = [
     name: 'Vietnam Context Pack',
     culturalNotes:
       'Vietnamese workplace context: emphasize teamwork, respect for hierarchy, and practical problem-solving. Use Vietnamese cultural references when appropriate.',
-    rubricJson: {
+    defaultRubricJson: {
       behavioral: {
         D1: { name: 'Giao tiếp & Trình bày', weight: 0.2 },
         D2: { name: 'Tư duy & Giải quyết vấn đề', weight: 0.2 },
@@ -37,7 +37,7 @@ export const CONTEXT_PACK_DATA: ContextPackData[] = [
         TD5: { name: 'Debug & Problem-solving', weight: 0.1 },
       },
     },
-    scoringWeights: {
+    defaultScoringWeights: {
       behavioral_weight: 0.5,
       technical_weight: 0.5,
     },
@@ -48,7 +48,7 @@ export const CONTEXT_PACK_DATA: ContextPackData[] = [
     name: 'Western Context Pack',
     culturalNotes:
       'Western workplace context: emphasize initiative, quantifiable impact, and leadership potential. STAR format preferred.',
-    rubricJson: {
+    defaultRubricJson: {
       behavioral: {
         D1: { name: 'Communication & Presentation', weight: 0.2 },
         D2: { name: 'Critical Thinking', weight: 0.2 },
@@ -65,7 +65,7 @@ export const CONTEXT_PACK_DATA: ContextPackData[] = [
         TD5: { name: 'Debug & Problem-solving', weight: 0.15 },
       },
     },
-    scoringWeights: {
+    defaultScoringWeights: {
       behavioral_weight: 0.45,
       technical_weight: 0.55,
     },
