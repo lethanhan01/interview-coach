@@ -5,7 +5,7 @@ import { ReportService } from './report.service';
 import { ReportResponseDto } from './dto/report-response.dto';
 
 interface AuthenticatedRequest extends Request {
-  user: { id: string; email: string };
+  user: { id: string; email: string; emailVerified: boolean };
 }
 
 @Controller('sessions/:sessionId/report')
@@ -18,6 +18,6 @@ export class ReportController {
     @Param('sessionId') sessionId: string,
     @Req() req: AuthenticatedRequest,
   ): Promise<ReportResponseDto> {
-    return this.reportService.getReport(sessionId, req.user.id);
+    return this.reportService.getReport(sessionId, req.user.id, req.user.emailVerified);
   }
 }

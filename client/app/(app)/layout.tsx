@@ -1,9 +1,9 @@
 import Link from 'next/link'
 import NavLinks from '@/components/ui/NavLinks'
+import EmailVerificationBanner from '@/components/auth/EmailVerificationBanner'
+import LogoutButton from '@/components/ui/LogoutButton'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const accessToken = 'dev-mock-token'
-
   return (
     <div className="min-h-screen bg-surface-raised">
       <header className="sticky top-0 z-40 border-b border-border/40 bg-surface-overlay backdrop-blur-md">
@@ -17,11 +17,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
           <div className="flex items-center gap-1">
             <NavLinks />
+            <LogoutButton />
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8" data-access-token={accessToken}>
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        <EmailVerificationBanner />
         {children}
       </main>
     </div>

@@ -21,9 +21,12 @@ Từ thư mục `client/`:
 npm install
 ```
 
-Tạo `.env.local` và điền:
+Tạo `.env.local` và điền (frontend sẽ không khởi động nếu thiếu các biến này):
 
 ```env
+NEXT_PUBLIC_AUTH_ENABLED=true
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api/v1
 ```
 
@@ -54,6 +57,9 @@ File `vercel.json` trong thư mục này đã khai báo sẵn các lệnh trên 
 Thêm các biến môi trường sau trong Vercel Project Settings:
 
 ```env
+NEXT_PUBLIC_AUTH_ENABLED=true
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
 NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1
 ```
 
@@ -68,6 +74,10 @@ NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1
 | `npm run lint` | Chạy ESLint |
 | `npm run test:e2e` | Chạy Playwright E2E tests |
 | `npm run test:e2e:ui` | Playwright với giao diện tương tác |
+
+## Kiểm thử Supabase tích hợp
+
+Tạo Supabase test project riêng, bật **Confirm email**, và thêm `http://localhost:5173/callback` vào Redirect URLs. Để chạy luồng email đăng nhập thật, đặt `E2E_SUPABASE_URL`, `E2E_SUPABASE_PUBLISHABLE_KEY`, `E2E_TEST_EMAIL`, và `E2E_TEST_PASSWORD` trước khi chạy Playwright. Google OAuth cần Google test account không bật 2FA; chỉ lưu các giá trị này trong secrets CI.
 
 ---
 
@@ -86,7 +96,7 @@ components/
 lib/
   api-client.ts        — HTTP client gọi NestJS backend
   types.ts             — Shared TypeScript types
-middleware.ts          — Next.js middleware
+proxy.ts               — Next.js Proxy cho auth và redirect
 ```
 
 ---

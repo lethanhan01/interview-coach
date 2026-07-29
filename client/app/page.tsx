@@ -1,5 +1,7 @@
-import { redirect } from 'next/navigation'
+import { CtaSection } from '@/components/landing/CtaSection'
+import { FeaturesSection } from '@/components/landing/FeaturesSection'
+import { HeroSection } from '@/components/landing/HeroSection'
 
-export default async function HomePage() {
-  redirect('/sessions')
+export default function HomePage() {
+  return <><HeroSection /><FeaturesSection /><CtaSection /></>
 }

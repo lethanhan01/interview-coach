@@ -21,6 +21,7 @@ import { InterviewAIExceptionFilter } from './common/exceptions/interview-ai-exc
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { CommonModule } from './common/common.module';
 import { HealthModule } from './health/health.module';
+import { AdminModule } from './admin/admin.module';
 
 @Controller()
 class ApiRootController {
@@ -52,6 +53,7 @@ class ApiRootController {
     ReportModule,
     UserModule,
     SavedJobDescriptionModule,
+    AdminModule,
   ],
   controllers: [ApiRootController],
   providers: [{ provide: APP_FILTER, useClass: InterviewAIExceptionFilter }],

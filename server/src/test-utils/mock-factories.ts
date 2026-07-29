@@ -201,7 +201,9 @@ export const createMockSseService = () => ({
 });
 
 export const createMockAuthService = () => ({
-  refreshToken: jest.fn(),
+  ensureUser: jest.fn(),
+  getMe: jest.fn(),
+  validateAccessToken: jest.fn(),
   logout: jest.fn(),
 });
 

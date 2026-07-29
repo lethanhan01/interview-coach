@@ -1,5 +1,6 @@
-import { redirect } from 'next/navigation'
+import LoginForm from '@/components/auth/LoginForm'
+import { Suspense } from 'react'
 
 export default function LoginPage() {
-  redirect('/sessions')
+  return <Suspense fallback={null}><LoginForm /></Suspense>
 }

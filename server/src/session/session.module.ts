@@ -5,10 +5,12 @@ import { SessionService } from './session.service';
 import { SseTokenGuard } from '../auth/guards/sse-token.guard';
 import { QUESTION_GEN_QUEUE } from '../common/constants/queue.constants';
 import { ReportModule } from '../report/report.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
     ReportModule,
+    AuthModule,
     BullModule.registerQueue({ name: QUESTION_GEN_QUEUE }),
   ],
   controllers: [SessionController],

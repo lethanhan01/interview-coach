@@ -1,49 +1,58 @@
 import {
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Post,
-  Res,
+  Req,
   UseGuards,
 } from '@nestjs/common';
-import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RefreshGuard } from './guards/refresh.guard';
+import type { AuthenticatedUser } from './dto/authenticated-user.dto';
 
-const COOKIE_NAME = 'refresh_token';
-const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days in seconds
+interface AuthenticatedRequest {
+  user?: AuthenticatedUser;
+}
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('refresh')
+  /**
+   * Returns the current authenticated user's profile including their role.
+   * Used by the client to hydrate auth context after login.
+   */
+  @Get('me')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(RefreshGuard)
-  refresh(@Res({ passthrough: true }) res: Response) {
-    res.cookie(COOKIE_NAME, 'mvp-refresh-token', {
-      httpOnly: true,
-      secure: process.env['NODE_ENV'] === 'production',
-      sameSite: 'strict',
-      maxAge: COOKIE_MAX_AGE_SECONDS * 1000,
-      path: '/auth',
-    });
+  @UseGuards(JwtAuthGuard)
+  async me(@Req() req: AuthenticatedRequest) {
+    const user = req.user!;
+    const dbUser = await this.authService.getMe(user.id);
+    if (!dbUser) {
+      throw new NotFoundException('User not found');
+    }
     return {
       success: true,
-      data: { accessToken: 'dev-mock-token', expiresIn: 3600 },
+      data: {
+        id: dbUser.id,
+        email: dbUser.email,
+        role: dbUser.role,
+        status: dbUser.status,
+        emailVerified: user.emailVerified,
+      },
     };
   }
 
+  /**
+   * Logout endpoint — client should also call supabase.auth.signOut().
+   * This endpoint is kept for any server-side cleanup if needed.
+   */
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
-  logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie(COOKIE_NAME, {
-      httpOnly: true,
-      secure: process.env['NODE_ENV'] === 'production',
-      sameSite: 'strict',
-      path: '/auth',
-    });
+  async logout(): Promise<void> {
+    await this.authService.logout();
   }
 }

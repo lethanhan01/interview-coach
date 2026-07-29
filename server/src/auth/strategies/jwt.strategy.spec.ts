@@ -22,7 +22,7 @@ describe('JwtStrategy', () => {
   });
 
   describe('validate', () => {
-    it('trả về { id, email } từ Supabase JWT payload', () => {
+    it('returns an unauthoritative user placeholder for legacy strategy compatibility', () => {
       const payload = {
         sub: 'user-uuid-123',
         email: 'test@example.com',
@@ -35,6 +35,8 @@ describe('JwtStrategy', () => {
       expect(result).toEqual({
         id: 'user-uuid-123',
         email: 'test@example.com',
+        role: 'user',
+        emailVerified: false,
       });
     });
   });

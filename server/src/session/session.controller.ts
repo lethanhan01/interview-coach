@@ -38,23 +38,23 @@ export class SessionController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async findAll(@Req() req: { user: { id: string } }) {
-    return { sessions: await this.sessionService.findAll(req.user.id) };
+  async findAll(@Req() req: { user: { id: string; emailVerified: boolean } }) {
+    return { sessions: await this.sessionService.findAll(req.user.id, req.user.emailVerified) };
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async findOne(@Param('id') id: string, @Req() req: { user: { id: string } }) {
-    return this.sessionService.findById(id, req.user.id);
+  async findOne(@Param('id') id: string, @Req() req: { user: { id: string; emailVerified: boolean } }) {
+    return this.sessionService.findById(id, req.user.id, req.user.emailVerified);
   }
 
   @Get(':id/status')
   @UseGuards(JwtAuthGuard)
   async getStatus(
     @Param('id') id: string,
-    @Req() req: { user: { id: string } },
+    @Req() req: { user: { id: string; emailVerified: boolean } },
   ) {
-    const session = await this.sessionService.findById(id, req.user.id);
+    const session = await this.sessionService.findById(id, req.user.id, req.user.emailVerified);
     return { status: session.status, numQuestions: session.numQuestions };
   }
 
@@ -62,8 +62,9 @@ export class SessionController {
   @UseGuards(JwtAuthGuard)
   async findQuestions(
     @Param('id') id: string,
-    @Req() req: { user: { id: string } },
+    @Req() req: { user: { id: string; emailVerified: boolean } },
   ) {
+    await this.sessionService.findById(id, req.user.id, req.user.emailVerified);
     return this.sessionService.findQuestions(id, req.user.id);
   }
 
@@ -71,8 +72,9 @@ export class SessionController {
   @UseGuards(JwtAuthGuard)
   async getFeedbackProgress(
     @Param('id') id: string,
-    @Req() req: { user: { id: string } },
+    @Req() req: { user: { id: string; emailVerified: boolean } },
   ) {
+    await this.sessionService.findById(id, req.user.id, req.user.emailVerified);
     return this.reportService.getFeedbackProgress(id, req.user.id);
   }
 

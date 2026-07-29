@@ -5,7 +5,6 @@ const EnvSchema = z.object({
   SUPABASE_URL: z.string().url(),
   SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  SUPABASE_JWT_SECRET: z.string().min(1).default('mvp-jwt-secret'),
   DATABASE_URL: z.string().min(1),
   DB_TIMEZONE: z
     .string()
@@ -55,6 +54,8 @@ const EnvSchema = z.object({
   SESSION_CREATION_LIMIT_PER_24H: z.coerce.number().int().min(0).default(10),
   AUTH_ENABLED: z.enum(['true', 'false']).default('false'),
   MOCK_USER_ID: z.string().uuid().optional(),
+  ADMIN_EMAIL: z.string().email().optional(),
+  ADMIN_PASSWORD: z.string().min(12).optional(),
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),

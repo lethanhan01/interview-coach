@@ -1,12 +1,18 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from '../prisma/prisma.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RefreshGuard } from './guards/refresh.guard';
+import { RolesGuard } from './guards/roles.guard';
 
 @Module({
+  imports: [
+    ConfigModule,
+    PrismaModule,
+  ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard, RefreshGuard],
-  exports: [JwtAuthGuard],
+  providers: [AuthService, JwtAuthGuard, RolesGuard],
+  exports: [JwtAuthGuard, RolesGuard, AuthService],
 })
 export class AuthModule {}

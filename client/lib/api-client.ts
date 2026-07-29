@@ -1,26 +1,17 @@
-import { isAuthSkipped } from "./mvp-auth";
+import { getSupabaseBrowserClient } from './supabase'
+import { getSupabaseConfig } from './supabase-config'
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api/v1";
+const API_BASE_URL = getSupabaseConfig().apiBaseUrl
 
 const API_ERROR_MESSAGES: Record<string, string> = {
   SESSION_LIMIT_EXCEEDED:
     "Bạn đã tạo 10 phiên phỏng vấn trong 24 giờ qua. Hãy tiếp tục phiên cũ hoặc thử lại sau.",
 };
 
-function getBootstrappedAccessToken(): string | undefined {
-  if (typeof document === "undefined") return undefined;
-
-  const appRoot = document.querySelector<HTMLElement>("[data-access-token]");
-  const token = appRoot?.dataset.accessToken?.trim();
-  return token || undefined;
-}
-
 export async function getAccessToken(): Promise<string | undefined> {
-  if (isAuthSkipped()) {
-    return "dev-mock-token";
-  }
-  return getBootstrappedAccessToken();
+  const supabase = getSupabaseBrowserClient()
+  const { data } = await supabase.auth.getSession()
+  return data.session?.access_token
 }
 
 function isErrorBody(
@@ -79,4 +70,6 @@ export const apiClient = {
 
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
+
+  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 };

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
 
 const NAV_LINKS = [
   { href: '/sessions', label: 'Phỏng vấn', match: ['/sessions'] },
@@ -11,10 +12,12 @@ const NAV_LINKS = [
 
 export default function NavLinks() {
   const pathname = usePathname()
+  const { role } = useAuth()
+  const links = role === 'admin' ? [...NAV_LINKS, { href: '/admin/users', label: 'Quản trị', match: ['/admin'] }] : NAV_LINKS
 
   return (
     <div className="flex items-center gap-1">
-      {NAV_LINKS.map(({ href, label, match }) => {
+      {links.map(({ href, label, match }) => {
         const active = match.some((m) => pathname === m || pathname.startsWith(m + '/'))
         return (
           <Link

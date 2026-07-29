@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@prisma/client';
+import { UserRole, type PrismaClient } from '@prisma/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { DEMO_EMAIL, DEMO_PASSWORD } from './_client';
 
@@ -45,13 +45,44 @@ export async function getOrCreateDemoUser(
       data: {
         id: userId,
         email: DEMO_EMAIL,
-        role: 'candidate',
+        role: UserRole.user,
         status: 'active',
       },
     });
   }
 
   return userId;
+}
+
+export async function getOrCreateAdminUser(
+  supabaseAdmin: SupabaseClient,
+  prisma: PrismaClient,
+): Promise<string | undefined> {
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
+  if (!email && !password) return undefined;
+  if (!email || !password) {
+    throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD must be configured together');
+  }
+  const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+  if (listError) throw new Error(`Failed to list admin users: ${listError.message}`);
+  let authUser = listData.users.find((user) => user.email === email);
+  if (!authUser) {
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+    if (error || !data.user) throw new Error(`Failed to create admin user: ${error?.message}`);
+    authUser = data.user;
+  }
+  await prisma.user.upsert({
+    where: { id: authUser.id },
+    create: { id: authUser.id, email, role: UserRole.admin, status: 'active' },
+    update: { email, role: UserRole.admin, status: 'active' },
+  });
+  console.log(`admin user: ready (${authUser.id})`);
+  return authUser.id;
 }
 
 export async function seedUserProfile(

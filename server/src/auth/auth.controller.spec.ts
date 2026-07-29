@@ -2,67 +2,28 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RefreshGuard } from './guards/refresh.guard';
 import { createMockAuthService } from '../test-utils/mock-factories';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let mockAuthService: ReturnType<typeof createMockAuthService>;
-
-  const mockRes = () =>
-    ({
-      cookie: jest.fn(),
-      clearCookie: jest.fn(),
-    }) as any;
+  let auth: ReturnType<typeof createMockAuthService>;
 
   beforeEach(async () => {
-    mockAuthService = createMockAuthService();
-
+    auth = createMockAuthService();
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
-    })
-      .overrideGuard(RefreshGuard)
-      .useValue({ canActivate: () => true })
-      .overrideGuard(JwtAuthGuard)
-      .useValue({ canActivate: () => true })
-      .compile();
-
-    controller = module.get<AuthController>(AuthController);
+      controllers: [AuthController], providers: [{ provide: AuthService, useValue: auth }],
+    }).overrideGuard(JwtAuthGuard).useValue({ canActivate: () => true }).compile();
+    controller = module.get(AuthController);
   });
 
-  afterEach(() => jest.clearAllMocks());
-
-  describe('POST /auth/refresh', () => {
-    it('trả về token mock và set refresh_token cookie cho MVP', () => {
-      const res = mockRes();
-
-      const result = controller.refresh(res);
-
-      expect(result).toEqual({
-        success: true,
-        data: { accessToken: 'dev-mock-token', expiresIn: 3600 },
-      });
-      expect(res.cookie).toHaveBeenCalledWith(
-        'refresh_token',
-        'mvp-refresh-token',
-        expect.objectContaining({ httpOnly: true }),
-      );
-      expect(mockAuthService.refreshToken).not.toHaveBeenCalled();
-    });
+  it('returns the DB role and Supabase verification state from /auth/me', async () => {
+    auth.getMe.mockResolvedValue({ id: 'u1', email: 'user@example.com', role: 'admin', status: 'active' });
+    await expect(controller.me({ user: { id: 'u1', email: 'user@example.com', role: 'admin', emailVerified: false } }))
+      .resolves.toEqual({ success: true, data: { id: 'u1', email: 'user@example.com', role: 'admin', status: 'active', emailVerified: false } });
   });
 
-  describe('POST /auth/logout', () => {
-    it('xoá cookie mà không gọi Supabase cho MVP', () => {
-      const res = mockRes();
-
-      controller.logout(res);
-
-      expect(mockAuthService.logout).not.toHaveBeenCalled();
-      expect(res.clearCookie).toHaveBeenCalledWith(
-        'refresh_token',
-        expect.objectContaining({ httpOnly: true }),
-      );
-    });
+  it('delegates logout cleanup without a mock refresh cookie', async () => {
+    await controller.logout();
+    expect(auth.logout).toHaveBeenCalled();
   });
 });

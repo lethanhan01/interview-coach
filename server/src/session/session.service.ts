@@ -135,7 +135,11 @@ export class SessionService {
     return session;
   }
 
-  async findById(sessionId: string, userId: string): Promise<InterviewSession> {
+  async findById(
+    sessionId: string,
+    userId: string,
+    canAccessHistory = true,
+  ): Promise<InterviewSession> {
     if (!UUID_PATTERN.test(sessionId)) {
       throw new InterviewAIException(
         ErrorCode.SESSION_NOT_FOUND,
@@ -157,13 +161,26 @@ export class SessionService {
     if (session.userId !== userId) {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
+    if (!canAccessHistory && ['completed', 'completing'].includes(session.status)) {
+      throw new InterviewAIException(
+        ErrorCode.EMAIL_NOT_VERIFIED,
+        HttpStatus.FORBIDDEN,
+        'Hãy xác thực email để xem lịch sử và báo cáo phỏng vấn.',
+      );
+    }
 
     return session;
   }
 
-  async findAll(userId: string): Promise<InterviewSession[]> {
+  async findAll(
+    userId: string,
+    canAccessHistory = true,
+  ): Promise<InterviewSession[]> {
     return this.prisma.interviewSession.findMany({
-      where: { userId },
+      where: {
+        userId,
+        ...(canAccessHistory ? {} : { status: { notIn: ['completed', 'completing'] } }),
+      },
       orderBy: { createdAt: 'desc' },
     });
   }

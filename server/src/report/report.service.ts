@@ -63,6 +63,7 @@ export class ReportService {
   async getReport(
     sessionId: string,
     userId: string,
+    canAccessHistory = true,
   ): Promise<ReportResponseDto> {
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
@@ -78,6 +79,13 @@ export class ReportService {
 
     if (session.userId !== userId) {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
+    }
+    if (!canAccessHistory) {
+      throw new InterviewAIException(
+        ErrorCode.EMAIL_NOT_VERIFIED,
+        HttpStatus.FORBIDDEN,
+        'Hãy xác thực email để xem lịch sử và báo cáo phỏng vấn.',
+      );
     }
 
     const executiveSummaryReport = findLatestReport(
