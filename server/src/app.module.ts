@@ -5,7 +5,7 @@ import {
   Module,
   NestModule,
 } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import { PrismaModule } from './prisma/prisma.module';
@@ -22,6 +22,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { CommonModule } from './common/common.module';
 import { HealthModule } from './health/health.module';
 import { AdminModule } from './admin/admin.module';
+import { MaintenanceModeGuard } from './common/guards/maintenance-mode.guard';
 
 @Controller()
 class ApiRootController {
@@ -56,7 +57,10 @@ class ApiRootController {
     AdminModule,
   ],
   controllers: [ApiRootController],
-  providers: [{ provide: APP_FILTER, useClass: InterviewAIExceptionFilter }],
+  providers: [
+    { provide: APP_FILTER, useClass: InterviewAIExceptionFilter },
+    { provide: APP_GUARD, useClass: MaintenanceModeGuard },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -71,6 +71,8 @@ npm run dev:local
 
 Khi thấy `Nest application successfully started` trong log, server đã sẵn sàng.
 
+`start:dev` là lệnh chuẩn cho môi trường local: Nest theo dõi thay đổi trong `src/` và tự biên dịch lại. Không chạy trực tiếp `node dist/main` hoặc `npm run start:prod` song song với lệnh này. Watch mode có thể xoá và tạo lại `dist/` trong lúc biên dịch, khiến tiến trình đang đọc artifact trong `dist/` lỗi tạm thời `Cannot find module './app.module'`.
+
 Kiểm tra:
 
 ```powershell
@@ -111,7 +113,7 @@ Khi bật, `JwtAuthGuard` và `SseTokenGuard` inject mock user thay vì verify J
 | `npm run test:cov`                   | Unit tests + coverage report                                                                     |
 | `npm run test:e2e`                   | E2E tests                                                                                        |
 | `npm run build`                      | Compile sang `dist/`                                                                             |
-| `npm run start:prod`                 | Chạy production build                                                                            |
+| `npm run start:prod`                 | Chạy artifact production đã build; không dùng đồng thời với build hoặc watch mode                |
 | `npm run lint`                       | ESLint --fix                                                                                     |
 | `npm run format`                     | Prettier --write                                                                                 |
 | `npm run prisma:generate`            | Tạo lại Prisma Client                                                                            |
@@ -125,6 +127,16 @@ Khi bật, `JwtAuthGuard` và `SseTokenGuard` inject mock user thay vì verify J
 ---
 
 ## Đồng bộ database schema (`db:sync:full`)
+
+> Production safety: `db:sync*`, `db:apply-sql`, `db:migrate-role`, and `seed` are blocked when `NODE_ENV=production`. Use reviewed migrations and a backup/PITR runbook instead.
+
+## Emergency write freeze
+
+Set `MAINTENANCE_MODE=true` and `WORKERS_ENABLED=false` in the deployed backend environment, then redeploy. Maintenance mode blocks all non-GET/HEAD/OPTIONS API requests with `503 MAINTENANCE_MODE`; disabling workers prevents BullMQ processors from claiming queued jobs after restart. Health checks and read-only investigation remain available. This does not prevent direct database access or Supabase Dashboard changes.
+
+## Recovery comparison
+
+After Supabase restores PITR into a temporary project, set `RECOVERY_DATABASE_URL` to that project's direct Postgres URL and run `npm run recovery:inventory`. The command opens both databases in `READ ONLY` transactions and emits row-count manifests only; it never imports, updates, or deletes data.
 
 > **Không chạy thường xuyên.** Lệnh này thay đổi schema database thật — chỉ chạy khi có lý do cụ thể.
 
@@ -161,6 +173,8 @@ npm run start:prod
 ```
 
 `npm run build` tự chạy `prisma generate` trước khi compile. Entrypoint production: `server/dist/main.js`.
+
+Chỉ chạy `npm run start:prod` sau khi `npm run build` hoàn tất thành công, và không chạy `npm run build` hoặc `npm run start:dev` đồng thời trên cùng thư mục `dist/`. Nếu cần chuyển sang local development, dừng tiến trình production trước rồi dùng `npm run start:dev`.
 
 Kiểm tra sau khi start:
 
