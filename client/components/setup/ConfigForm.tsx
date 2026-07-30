@@ -1,8 +1,8 @@
 'use client'
 
 import type { SessionType, ContextPack } from '@/lib/types'
-import type { InterviewDuration } from '@/app/(app)/setup/page'
-import { DURATION_OPTIONS } from '@/app/(app)/setup/page'
+import type { InterviewDuration } from '@/app/(dashboard)/setup/page'
+import { DURATION_OPTIONS } from '@/app/(dashboard)/setup/page'
 
 const SESSION_TYPES: { value: SessionType; label: string; description: string }[] = [
   { value: 'hr', label: 'HR / Behavioral', description: 'Câu hỏi về kinh nghiệm, soft skills, và tình huống' },

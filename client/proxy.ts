@@ -35,7 +35,7 @@ export async function proxy(request: NextRequest) {
     return redirectWithCookies(login, response)
   }
 
-  if (user && (pathname === '/' || pathname === '/login')) {
+  if (user && pathname === '/login') {
     const destination = new URL(getSafeNext(request.nextUrl.searchParams.get('next')), request.url)
     return redirectWithCookies(destination, response)
   }
