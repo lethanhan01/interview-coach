@@ -29,10 +29,6 @@ const expectedPolicies = [
   ['public', 'question_bank', 'question_bank: admin insert'],
   ['public', 'question_bank', 'question_bank: admin update'],
   ['public', 'question_bank', 'question_bank: admin delete'],
-  ['public', 'users', 'users: read own'],
-  ['public', 'users', 'users: update own'],
-  ['public', 'users', 'users: admin read all'],
-  ['public', 'users', 'users: admin update status'],
   ['public', 'user_profiles', 'user_profiles: read own'],
   ['public', 'user_profiles', 'user_profiles: insert own'],
   ['public', 'user_profiles', 'user_profiles: update own'],
@@ -62,7 +58,6 @@ const expectedPolicies = [
 
 const expectedRlsTables = [
   'question_bank',
-  'users',
   'user_profiles',
   'interview_sessions',
   'session_questions',
@@ -648,8 +643,8 @@ async function runCatalogChecks(): Promise<CheckResult[]> {
     );
     results.push({
       name: 'trigger:auth.users:on_auth_user_created',
-      ok: authTrigger,
-      detail: authTrigger ? 'present' : 'missing',
+       ok: !authTrigger,
+       detail: authTrigger ? 'unexpectedly present' : 'absent',
     });
   }
 

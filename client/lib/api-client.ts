@@ -1,18 +1,9 @@
-import { getSupabaseBrowserClient } from './supabase'
-import { getSupabaseConfig } from './supabase-config'
-
-const API_BASE_URL = getSupabaseConfig().apiBaseUrl
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'
 
 const API_ERROR_MESSAGES: Record<string, string> = {
   SESSION_LIMIT_EXCEEDED:
     "Bạn đã tạo 10 phiên phỏng vấn trong 24 giờ qua. Hãy tiếp tục phiên cũ hoặc thử lại sau.",
 };
-
-export async function getAccessToken(): Promise<string | undefined> {
-  const supabase = getSupabaseBrowserClient()
-  const { data } = await supabase.auth.getSession()
-  return data.session?.access_token
-}
 
 function isErrorBody(
   value: unknown,
@@ -32,15 +23,10 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   };
   if (!isFormData) headers["Content-Type"] = "application/json";
 
-  const accessToken = await getAccessToken();
-  if (!accessToken) {
-    throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-  }
-  headers["Authorization"] = `Bearer ${accessToken}`;
-
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
+    credentials: 'include',
   });
   const body = await response
     .json()

@@ -30,16 +30,5 @@ ALTER TABLE users
 -- Step 7: Restore default
 ALTER TABLE users ALTER COLUMN role SET DEFAULT 'user'::"UserRole";
 
--- Step 8: Recreate RLS policies with enum comparison
-CREATE POLICY "users: admin read all"
-  ON users FOR SELECT
-  USING (
-    (SELECT u.role FROM users u WHERE u.id = auth.uid()) = 'admin'::"UserRole"
-  );
-
-CREATE POLICY "users: admin update status"
-  ON users FOR UPDATE
-  USING (
-    (SELECT u.role FROM users u WHERE u.id = auth.uid()) = 'admin'::"UserRole"
-  );
-
+-- The application now authenticates through the backend and Prisma. Do not
+-- recreate auth.uid()-based policies for public.users.

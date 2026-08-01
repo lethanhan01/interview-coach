@@ -64,6 +64,13 @@ enum UserRole {
   admin
 }
 
+enum AccountStatus {
+  active
+  locked
+  deleted
+  password_reset_required
+}
+
 model QuestionBank {
   id               String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   content          String
@@ -100,7 +107,12 @@ model User {
   id                   String                @id @db.Uuid
   email                String                @unique
   role                 UserRole              @default(user)
-  status               String                @default("active")
+  status               AccountStatus         @default(active)
+  passwordHash         String?               @map("password_hash")
+  passwordUpdatedAt    DateTime?             @map("password_updated_at") @db.Timestamptz(6)
+  tokenVersion         Int                   @default(0) @map("token_version")
+  passwordResetTokenHash String?             @map("password_reset_token_hash")
+  passwordResetExpiresAt DateTime?           @map("password_reset_expires_at") @db.Timestamptz(6)
   createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   interviewSessions    InterviewSession[]

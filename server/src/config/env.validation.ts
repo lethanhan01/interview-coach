@@ -3,8 +3,16 @@ import { DEFAULT_DB_TIME_ZONE } from '../prisma/db-timezone';
 
 const EnvSchema = z.object({
   SUPABASE_URL: z.string().url(),
-  SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  AUTH_JWT_SECRET: z.string().min(32),
+  AUTH_COOKIE_NAME: z.string().min(1).default('interviewcoach_auth'),
+  AUTH_COOKIE_MAX_AGE: z.coerce.number().int().positive().default(86_400),
+  SMTP_HOST: z.string().min(1),
+  SMTP_PORT: z.coerce.number().int().positive(),
+  SMTP_USER: z.string().min(1),
+  SMTP_PASSWORD: z.string().min(1),
+  SMTP_FROM: z.string().email(),
+  PASSWORD_RESET_URL: z.string().url(),
   DATABASE_URL: z.string().min(1),
   DB_TIMEZONE: z
     .string()
@@ -54,8 +62,6 @@ const EnvSchema = z.object({
   PORT: z.coerce.number().default(3000),
   SESSION_CREATION_LIMIT_PER_24H: z.coerce.number().int().min(0).default(10),
   MAINTENANCE_MODE: z.enum(['true', 'false']).default('false'),
-  AUTH_ENABLED: z.enum(['true', 'false']).default('false'),
-  MOCK_USER_ID: z.string().uuid().optional(),
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_PASSWORD: z.string().min(12).optional(),
   NODE_ENV: z

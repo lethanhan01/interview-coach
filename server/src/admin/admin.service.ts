@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
+import { AccountStatus, UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -8,7 +8,7 @@ export class AdminService {
 
   async listUsers(includeDeleted = false) {
     return this.prisma.user.findMany({
-      where: includeDeleted ? {} : { status: { not: 'deleted' } },
+      where: includeDeleted ? {} : { status: { not: AccountStatus.deleted } },
       select: {
         id: true,
         email: true,
@@ -38,15 +38,17 @@ export class AdminService {
     });
   }
 
-  async toggleUserStatus(id: string, actorId: string) {
+  async updateUser(id: string, actorId: string, changes: { role?: UserRole; status?: AccountStatus }) {
     await this.assertAdminCanManage(id, actorId);
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
-
-    const newStatus = user.status === 'active' ? 'locked' : 'active';
+    if (!changes.role && !changes.status) throw new BadRequestException('At least one account field is required');
+    if (changes.status === AccountStatus.password_reset_required) {
+      throw new BadRequestException('Use the password reset flow for this status');
+    }
     return this.prisma.user.update({
       where: { id },
-      data: { status: newStatus },
+      data: { ...changes, tokenVersion: { increment: 1 } },
       select: { id: true, email: true, role: true, status: true },
     });
   }
@@ -54,8 +56,8 @@ export class AdminService {
   async deleteUser(id: string, actorId: string) {
     await this.assertAdminCanManage(id, actorId);
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user || user.status === 'deleted') throw new NotFoundException('User not found');
-    await this.prisma.user.update({ where: { id }, data: { status: 'deleted' } });
+    if (!user || user.status === AccountStatus.deleted) throw new NotFoundException('User not found');
+    await this.prisma.user.update({ where: { id }, data: { status: AccountStatus.deleted, tokenVersion: { increment: 1 } } });
   }
 
   private async assertAdminCanManage(id: string, actorId: string): Promise<void> {
@@ -66,7 +68,7 @@ export class AdminService {
     if (!target) throw new NotFoundException('User not found');
     if (target.role === UserRole.admin) {
       const adminCount = await this.prisma.user.count({
-        where: { role: UserRole.admin, status: { not: 'deleted' } },
+        where: { role: UserRole.admin, status: { not: AccountStatus.deleted } },
       });
       if (adminCount <= 1) {
         throw new BadRequestException('The last active administrator cannot be managed');

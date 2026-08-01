@@ -1,4 +1,4 @@
-import { prisma, supabaseAdmin } from './_client';
+import { prisma } from './_client';
 import { seedContextPacks } from './00-context-packs';
 import { getOrCreateAdminUser, getOrCreateDemoUser, seedUserProfile } from './01-users';
 import { seedQuestionBank } from './02-question-bank';
@@ -10,9 +10,9 @@ async function main(): Promise<void> {
 
   await seedContextPacks(prisma);
 
-  const userId = await getOrCreateDemoUser(supabaseAdmin, prisma);
+  const userId = await getOrCreateDemoUser(prisma);
   await seedUserProfile(prisma, userId);
-  await getOrCreateAdminUser(supabaseAdmin, prisma);
+  await getOrCreateAdminUser(prisma);
 
   await seedQuestionBank(prisma);
   await seedKaggleQuestions(prisma);

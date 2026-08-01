@@ -1,28 +1,21 @@
-import type { ExecutionContext } from '@nestjs/common';
-import { ErrorCode } from '../../common/exceptions/error-code.enum';
+import { ExecutionContext } from '@nestjs/common';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 describe('JwtAuthGuard', () => {
-  const request = { headers: { authorization: 'Bearer access-token' } };
-  const context = {
-    switchToHttp: () => ({ getRequest: () => request }),
-  } as unknown as ExecutionContext;
-
-  it('returns ACCOUNT_INACTIVE for locked and deleted users', async () => {
-    const config = { get: jest.fn().mockReturnValue('true') };
-    const authService = {
-      validateAccessToken: jest.fn().mockResolvedValue({
-        id: '0fca0a4d-279a-4ab0-8981-4c56d4d901da',
-        email: 'locked@example.com',
-        emailVerified: true,
-      }),
-      ensureUser: jest.fn().mockResolvedValue({ status: 'locked' }),
+  it('hydrates the request from the local auth cookie', async () => {
+    const auth = {
+      getCookieName: jest.fn().mockReturnValue('auth'),
+      getAuthenticatedUser: jest.fn().mockResolvedValue({ id: 'u1', email: 'u@example.com', role: 'admin' }),
     };
-    const guard = new JwtAuthGuard(config as never, {} as never, authService as never);
+    const request: Record<string, unknown> = { cookies: { auth: 'token' } };
+    const context = { switchToHttp: () => ({ getRequest: () => request }) } as unknown as ExecutionContext;
+    await expect(new JwtAuthGuard(auth as never).canActivate(context)).resolves.toBe(true);
+    expect(request.user).toEqual({ id: 'u1', email: 'u@example.com', role: 'admin' });
+  });
 
-    await expect(guard.canActivate(context)).rejects.toMatchObject({
-      errorCode: ErrorCode.ACCOUNT_INACTIVE,
-      status: 401,
-    });
+  it('rejects missing cookies', async () => {
+    const auth = { getCookieName: () => 'auth' };
+    const context = { switchToHttp: () => ({ getRequest: () => ({ cookies: {} }) }) } as unknown as ExecutionContext;
+    await expect(new JwtAuthGuard(auth as never).canActivate(context)).rejects.toThrow('Authentication cookie is required');
   });
 });

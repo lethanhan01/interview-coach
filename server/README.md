@@ -29,9 +29,16 @@ Mở `.env` và điền các biến bắt buộc:
 
 ```env
 SUPABASE_URL=
-SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-SUPABASE_JWT_SECRET=
+AUTH_JWT_SECRET=<at-least-32-random-characters>
+AUTH_COOKIE_NAME=interviewcoach_auth
+AUTH_COOKIE_MAX_AGE=86400
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM=
+PASSWORD_RESET_URL=http://localhost:5173/reset-password
 
 DATABASE_URL=
 DIRECT_URL=
@@ -83,20 +90,9 @@ Lệnh này gọi `GET /api/v1` và `GET /health`. Nếu DB hoặc Redis chưa s
 
 ---
 
-## Bỏ qua đăng nhập khi dev local
+## Xác thực local
 
-Thêm vào `.env`:
-
-```env
-AUTH_ENABLED=false
-MOCK_USER_ID=<UUID-của-user-có-sẵn-trong-public.users>
-```
-
-`MOCK_USER_ID` phải là UUID thật trong database, không được bịa.
-
-Khi bật, `JwtAuthGuard` và `SseTokenGuard` inject mock user thay vì verify JWT — không gọi Supabase.
-
-> **Không bật trong production.** Set `AUTH_ENABLED=true` hoặc xóa var trước khi deploy.
+Đăng ký và đăng nhập đi qua backend; cookie JWT được đặt HttpOnly. Chạy `npm run seed` để tạo demo user và admin từ `ADMIN_EMAIL`/`ADMIN_PASSWORD`.
 
 ---
 
@@ -235,7 +231,7 @@ Backend sẽ retry Prisma startup check và tiếp tục boot nếu lỗi là ti
 
 **`401 Unauthorized`**
 
-Nếu đang dev local, kiểm tra `AUTH_ENABLED=false` và `MOCK_USER_ID` đã điền. Sau khi sửa `.env`, khởi động lại server.
+Sau khi sửa cấu hình xác thực hoặc SMTP trong `.env`, khởi động lại server.
 
 **Prisma lỗi missing column hoặc stale field**
 

@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import NavLinks from '@/components/ui/NavLinks'
-import EmailVerificationBanner from '@/components/auth/EmailVerificationBanner'
 import LogoutButton from '@/components/ui/LogoutButton'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -23,7 +22,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        <EmailVerificationBanner />
         {children}
       </main>
     </div>

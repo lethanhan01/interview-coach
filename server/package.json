@@ -17,7 +17,7 @@
     "db:sync": "npm run db:sync:full",
     "db:sync:prisma": "node scripts/deny-production-db-sync.mjs db:sync:prisma && prisma generate && npm run db:prepare-user-answer-unique && npm run db:prepare-db-push-raw-sql && prisma db push --accept-data-loss",
     "db:sync:full": "node scripts/deny-production-db-sync.mjs db:sync:full && npm run db:validate && npm run db:verify:pre && prisma generate && npm run db:prepare-user-answer-unique && npm run db:prepare-db-push-raw-sql && prisma db push --accept-data-loss && npm run db:apply-sql && npm run db:verify",
-    "db:apply-sql": "node scripts/deny-production-db-sync.mjs db:apply-sql && prisma db execute --file ./prisma/migrations/migration.sql",
+    "db:apply-sql": "node scripts/deny-production-db-sync.mjs db:apply-sql && prisma db execute --file ./prisma/migrations/migration.sql && prisma db execute --file ./prisma/migrations/local-auth.sql",
     "db:migrate-role": "node scripts/deny-production-db-sync.mjs db:migrate-role && node prisma/run-role-migration.mjs",
     "recovery:inventory": "node scripts/recovery-inventory.mjs",
     "infra:up": "docker compose -f docker-compose.yml up -d redis",
@@ -39,6 +39,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "node scripts/deny-production-db-sync.mjs seed && ts-node -r tsconfig-paths/register prisma/seed.ts"
+    ,"migrate:local-auth": "node scripts/deny-production-db-sync.mjs migrate:local-auth && ts-node -r tsconfig-paths/register prisma/migrate-local-auth.ts"
   },
   "dependencies": {
     "@nestjs/bullmq": "^11.0.4",
@@ -52,12 +53,14 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@supabase/supabase-js": "^2.107.0",
+    "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.20.0",
     "bullmq": "^5.78.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",
     "ioredis": "^5.11.1",
+    "nodemailer": "^9.0.3",
     "openai": "^6.42.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

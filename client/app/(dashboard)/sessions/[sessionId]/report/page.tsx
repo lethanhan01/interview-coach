@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { apiClient, getAccessToken } from "@/lib/api-client";
+import { apiClient } from "@/lib/api-client";
 import type {
   FeedbackProgress,
   Report,
@@ -204,12 +204,12 @@ export default function ReportPage() {
     }
 
     async function subscribeToProgress() {
-      const accessToken = await getAccessToken();
-      if (canceled || !accessToken) return;
+      if (canceled) return;
       const apiBase =
         process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api/v1";
       eventSource = new EventSource(
-        `${apiBase}/sessions/${sessionId}/events?token=${accessToken}`,
+        `${apiBase}/sessions/${sessionId}/events`,
+        { withCredentials: true },
       );
       eventSource.addEventListener("session.feedback_progress", (event) => {
         const data = JSON.parse(

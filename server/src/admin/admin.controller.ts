@@ -1,5 +1,6 @@
 import {
   Controller,
+  Body,
   Delete,
   Get,
   HttpCode,
@@ -16,6 +17,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { AdminService } from './admin.service';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -40,14 +42,15 @@ export class AdminController {
     return { success: true, data: user };
   }
 
-  /** Lock or unlock a user account */
-  @Patch('users/:id/status')
+  /** Update account role or lifecycle status. */
+  @Patch('users/:id')
   @HttpCode(HttpStatus.OK)
-  async toggleUserStatus(
+  async updateUser(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req: { user: { id: string } },
+    @Body() body: UpdateUserDto,
   ) {
-    const user = await this.adminService.toggleUserStatus(id, req.user.id);
+    const user = await this.adminService.updateUser(id, req.user.id, body);
     return { success: true, data: user };
   }
 

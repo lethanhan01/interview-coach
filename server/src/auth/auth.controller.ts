@@ -1,58 +1,90 @@
-import {
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  NotFoundException,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import type { AuthenticatedUser } from './dto/authenticated-user.dto';
-
-interface AuthenticatedRequest {
-  user?: AuthenticatedUser;
-}
+import {
+  ChangePasswordDto,
+  LoginDto,
+  PasswordResetConfirmDto,
+  PasswordResetRequestDto,
+  RegisterDto,
+} from './dto/local-auth.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  /**
-   * Returns the current authenticated user's profile including their role.
-   * Used by the client to hydrate auth context after login.
-   */
-  @Get('me')
+  @Post('register')
+  async register(@Body() body: RegisterDto, @Res({ passthrough: true }) response: Response) {
+    const result = await this.authService.register(body.email, body.password, body.fullName);
+    this.setCookie(response, result.token);
+    return { success: true, data: this.publicUser(result.user) };
+  }
+
+  @Post('login')
   @HttpCode(HttpStatus.OK)
+  async login(@Body() body: LoginDto, @Res({ passthrough: true }) response: Response) {
+    const result = await this.authService.login(body.email, body.password);
+    this.setCookie(response, result.token);
+    return { success: true, data: this.publicUser(result.user) };
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  logout(@Res({ passthrough: true }) response: Response): void {
+    response.clearCookie(this.authService.getCookieName(), this.cookieOptions());
+  }
+
+  @Get('me')
   @UseGuards(JwtAuthGuard)
-  async me(@Req() req: AuthenticatedRequest) {
-    const user = req.user!;
-    const dbUser = await this.authService.getMe(user.id);
-    if (!dbUser) {
-      throw new NotFoundException('User not found');
-    }
+  async me(@Req() req: { user: { id: string } }) {
+    const user = await this.authService.getMe(req.user.id);
+    return { success: true, data: user && this.publicUser(user) };
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  async changePassword(
+    @Req() req: { user: { id: string } },
+    @Body() body: ChangePasswordDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.changePassword(req.user.id, body.currentPassword, body.newPassword);
+    this.setCookie(response, result.token);
+    return { success: true, data: this.publicUser(result.user) };
+  }
+
+  @Post('password-reset/request')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async requestPasswordReset(@Body() body: PasswordResetRequestDto): Promise<void> {
+    await this.authService.requestPasswordReset(body.email);
+  }
+
+  @Post('password-reset/confirm')
+  async confirmPasswordReset(
+    @Body() body: PasswordResetConfirmDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.resetPassword(body.token, body.newPassword);
+    this.setCookie(response, result.token);
+    return { success: true, data: this.publicUser(result.user) };
+  }
+
+  private setCookie(response: Response, token: string): void {
+    response.cookie(this.authService.getCookieName(), token, this.cookieOptions());
+  }
+
+  private cookieOptions() {
     return {
-      success: true,
-      data: {
-        id: dbUser.id,
-        email: dbUser.email,
-        role: dbUser.role,
-        status: dbUser.status,
-        emailVerified: user.emailVerified,
-      },
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      maxAge: this.authService.getCookieMaxAge() * 1000,
+      path: '/',
     };
   }
 
-  /**
-   * Logout endpoint — client should also call supabase.auth.signOut().
-   * This endpoint is kept for any server-side cleanup if needed.
-   */
-  @Post('logout')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(JwtAuthGuard)
-  async logout(): Promise<void> {
-    await this.authService.logout();
+  private publicUser(user: { id: string; email: string; role: string; status: string }) {
+    return { id: user.id, email: user.email, role: user.role, status: user.status };
   }
 }

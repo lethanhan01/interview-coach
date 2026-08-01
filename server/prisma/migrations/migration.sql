@@ -7,24 +7,8 @@
 -- =============================================================================
 
 
--- -----------------------------------------------------------------------------
--- 1. Auth sync trigger
---    Sync Supabase auth.users → public.users on INSERT
--- -----------------------------------------------------------------------------
-
-CREATE OR REPLACE FUNCTION handle_new_auth_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.users (id, email, created_at, updated_at)
-  VALUES (NEW.id, NEW.email, now(), now());
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_new_auth_user();
+DROP FUNCTION IF EXISTS public.handle_new_auth_user();
 
 
 -- -----------------------------------------------------------------------------
@@ -812,7 +796,7 @@ ALTER TABLE users
   DROP CONSTRAINT IF EXISTS chk_users_role;
 ALTER TABLE users
   ADD CONSTRAINT chk_users_role
-  CHECK (role IN ('candidate', 'admin'));
+  CHECK (role IN ('user', 'admin'));
 
 ALTER TABLE interview_sessions
   DROP CONSTRAINT IF EXISTS chk_interview_sessions_status;
