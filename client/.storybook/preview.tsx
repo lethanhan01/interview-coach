@@ -15,13 +15,17 @@ if (typeof HTMLElement !== 'undefined' && typeof HTMLElement.prototype.focus !==
   }
 }
 
-import type { Preview } from '@storybook/nextjs-vite'
+import type { Preview, Decorator } from '@storybook/nextjs-vite'
 import { withThemeByClassName } from '@storybook/addon-themes'
 import React, { useEffect } from 'react'
 
-const withReducedMotion = (Story: any, context: any) => {
-  const reducedMotion = context.globals.reducedMotion
-
+function ReducedMotionWrapper({
+  reducedMotion,
+  children,
+}: {
+  reducedMotion?: string
+  children: React.ReactNode
+}) {
   useEffect(() => {
     if (reducedMotion === 'reduce') {
       document.documentElement.setAttribute('data-reduced-motion', 'true')
@@ -30,8 +34,14 @@ const withReducedMotion = (Story: any, context: any) => {
     }
   }, [reducedMotion])
 
-  return <Story />
+  return <>{children}</>
 }
+
+const withReducedMotion: Decorator = (Story, context) => (
+  <ReducedMotionWrapper reducedMotion={context.globals.reducedMotion as string | undefined}>
+    <Story />
+  </ReducedMotionWrapper>
+)
 
 const preview: Preview = {
   globalTypes: {

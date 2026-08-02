@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { Toolbar, FilterBar, Pagination, DataTable } from '@/components/patterns/DataPatterns'
 import { Button } from '@/components/ui/Button'
 import { useState } from 'react'

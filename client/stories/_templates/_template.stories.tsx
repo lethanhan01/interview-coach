@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 // import { ComponentName } from '@/components/ui/ComponentName';
 
 // Giả lập ComponentName để tránh lỗi khi template chưa có component thực

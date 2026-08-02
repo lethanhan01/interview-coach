@@ -22,6 +22,8 @@ describe('validateEnv', () => {
   });
 
   it('rejects a short local JWT secret', () => {
-    expect(() => validateEnv({ ...validEnv, AUTH_JWT_SECRET: 'short' })).toThrow();
+    expect(() =>
+      validateEnv({ ...validEnv, AUTH_JWT_SECRET: 'short' }),
+    ).toThrow();
   });
 });

@@ -1,4 +1,4 @@
-import type { Meta } from '@storybook/react'
+import type { Meta } from '@storybook/nextjs-vite'
 import { FormSection, SearchInput } from '@/components/patterns/FormPatterns'
 import { useState } from 'react'
 import { Input } from '@/components/ui/Input'

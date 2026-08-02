@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const apiBase =
@@ -8,15 +8,14 @@ const apiBase =
 
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const [token, setToken] = useState<string | null>(null)
+  const [token] = useState<string | null>(() =>
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('token')
+      : null
+  )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(
-    () => setToken(new URLSearchParams(window.location.search).get('token')),
-    []
-  )
 
   async function submit(event: FormEvent) {
     event.preventDefault()

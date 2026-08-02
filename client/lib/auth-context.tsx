@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 
 type Role = 'candidate' | 'admin'
 type CurrentUser = { id: string; email: string }
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading: true,
   })
 
-  const refresh = async (): Promise<Role | null> => {
+  const refresh = useCallback(async (): Promise<Role | null> => {
     try {
       const response = await fetch(`${apiBase}/auth/me`, {
         credentials: 'include',
@@ -50,12 +50,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setValue({ user: null, role: null, status: null, isLoading: false })
       return null
     }
-  }
+  }, [])
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     void refresh()
-  }, [])
+  }, [refresh])
   return (
     <AuthContext.Provider value={{ ...value, refresh }}>
       {children}

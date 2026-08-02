@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { apiClient } from '@/lib/api-client'
 import { Input } from '@/components/ui/Input'
@@ -43,8 +43,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('')
   const [userToDelete, setUserToDelete] = useState<string | null>(null)
 
-  const load = async () => {
-    setIsLoading(true)
+  const fetchUsers = useCallback(async () => {
     setError('')
     try {
       const result = await apiClient.get<{ data: AdminUser[] }>('/admin/users')
@@ -54,12 +53,18 @@ export default function AdminUsersPage() {
     } finally {
       setIsLoading(false)
     }
+  }, [])
+
+  const load = async () => {
+    setIsLoading(true)
+    await fetchUsers()
   }
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    if (!authLoading && role === 'admin') void load()
-  }, [role, authLoading])
+    if (!authLoading && role === 'admin') {
+      void fetchUsers()
+    }
+  }, [role, authLoading, fetchUsers])
 
   const changeStatus = async (id: string, currentStatus: string) => {
     try {

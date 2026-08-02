@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Menu, User, LogOut } from 'lucide-react'
+import { Menu, User } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { Button } from '@/components/ui/Button'
 import {
@@ -13,7 +13,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,

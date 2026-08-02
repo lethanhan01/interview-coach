@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import LogoutButton from './LogoutButton'
 
 const meta: Meta<typeof LogoutButton> = {

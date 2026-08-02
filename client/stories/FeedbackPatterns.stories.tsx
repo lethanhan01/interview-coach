@@ -1,4 +1,4 @@
-import type { Meta } from '@storybook/react'
+import type { Meta } from '@storybook/nextjs-vite'
 import { LoadingState, EmptyState, ErrorState, AsyncBoundary } from '@/components/patterns/FeedbackPatterns'
 
 const meta: Meta = {

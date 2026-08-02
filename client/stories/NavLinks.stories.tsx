@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import NavLinks from '@/components/layout/NavLinks'
 
 const meta: Meta<typeof NavLinks> = {

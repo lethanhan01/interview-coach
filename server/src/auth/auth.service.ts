@@ -22,14 +22,15 @@ export class AuthService {
   private readonly cookieMaxAge: number;
   private readonly verificationCodeTtlMs: number;
   private readonly authSecret: string;
-  private readonly mailer;
+  private readonly mailer: nodemailer.Transporter;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     config: ConfigService,
   ) {
-    this.cookieName = config.get<string>('AUTH_COOKIE_NAME') ?? 'interviewcoach_auth';
+    this.cookieName =
+      config.get<string>('AUTH_COOKIE_NAME') ?? 'interviewcoach_auth';
     this.cookieMaxAge = config.get<number>('AUTH_COOKIE_MAX_AGE') ?? 86_400;
     this.verificationCodeTtlMs =
       (config.get<number>('PASSWORD_RESET_OTP_TTL_MINUTES') ?? 30) * 60 * 1000;
@@ -87,9 +88,18 @@ export class AuthService {
     }
   }
 
-  async login(email: string, password: string): Promise<{ user: User; token: string }> {
-    const user = await this.prisma.user.findUnique({ where: { email: this.normalizeEmail(email) } });
-    if (!user || !user.passwordHash || !(await verifyPassword(password, user.passwordHash))) {
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{ user: User; token: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: this.normalizeEmail(email) },
+    });
+    if (
+      !user ||
+      !user.passwordHash ||
+      !(await verifyPassword(password, user.passwordHash))
+    ) {
       throw new UnauthorizedException('Invalid email or password');
     }
     if (user.status !== AccountStatus.active) {
@@ -100,10 +110,20 @@ export class AuthService {
 
   async getAuthenticatedUser(token: string): Promise<User> {
     try {
-      const payload = await this.jwtService.verifyAsync<{ sub: string; tokenVersion: number }>(token);
-      if (!payload?.sub || !Number.isInteger(payload.tokenVersion)) throw new Error('Invalid token');
-      const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-      if (!user || user.status !== AccountStatus.active || user.tokenVersion !== payload.tokenVersion) {
+      const payload = await this.jwtService.verifyAsync<{
+        sub: string;
+        tokenVersion: number;
+      }>(token);
+      if (!payload?.sub || !Number.isInteger(payload.tokenVersion))
+        throw new Error('Invalid token');
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+      if (
+        !user ||
+        user.status !== AccountStatus.active ||
+        user.tokenVersion !== payload.tokenVersion
+      ) {
         throw new Error('Invalid account');
       }
       return user;
@@ -112,22 +132,37 @@ export class AuthService {
     }
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{ user: User; token: string }> {
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ user: User; token: string }> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user?.passwordHash || !(await verifyPassword(currentPassword, user.passwordHash))) {
+    if (
+      !user?.passwordHash ||
+      !(await verifyPassword(currentPassword, user.passwordHash))
+    ) {
       throw new UnauthorizedException('Current password is incorrect');
     }
     this.assertPassword(newPassword);
-    const updated = await this.updatePassword(user.id, newPassword, AccountStatus.active);
+    const updated = await this.updatePassword(
+      user.id,
+      newPassword,
+      AccountStatus.active,
+    );
     return { user: updated, token: await this.sign(updated) };
   }
 
   async requestPasswordReset(email: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { email: this.normalizeEmail(email) } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: this.normalizeEmail(email) },
+    });
     if (!user || user.status === AccountStatus.deleted) return;
     const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
     await this.prisma.userVerificationCode.upsert({
-      where: { userId_purpose: { userId: user.id, purpose: PASSWORD_RESET_PURPOSE } },
+      where: {
+        userId_purpose: { userId: user.id, purpose: PASSWORD_RESET_PURPOSE },
+      },
       create: {
         userId: user.id,
         purpose: PASSWORD_RESET_PURPOSE,
@@ -147,16 +182,24 @@ export class AuthService {
     });
   }
 
-  async resetPassword(email: string, code: string, newPassword: string): Promise<{ user: User; token: string }> {
+  async resetPassword(
+    email: string,
+    code: string,
+    newPassword: string,
+  ): Promise<{ user: User; token: string }> {
     this.assertPassword(newPassword);
     const normalizedEmail = this.normalizeEmail(email);
-    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
     if (!user || user.status === AccountStatus.deleted) {
       throw new BadRequestException('Invalid or expired reset code');
     }
 
     const verification = await this.prisma.userVerificationCode.findUnique({
-      where: { userId_purpose: { userId: user.id, purpose: PASSWORD_RESET_PURPOSE } },
+      where: {
+        userId_purpose: { userId: user.id, purpose: PASSWORD_RESET_PURPOSE },
+      },
     });
     if (
       !verification ||
@@ -176,7 +219,9 @@ export class AuthService {
         },
       });
       await tx.userVerificationCode.delete({
-        where: { userId_purpose: { userId: user.id, purpose: PASSWORD_RESET_PURPOSE } },
+        where: {
+          userId_purpose: { userId: user.id, purpose: PASSWORD_RESET_PURPOSE },
+        },
       });
       return nextUser;
     });
@@ -188,7 +233,11 @@ export class AuthService {
     return this.prisma.user.findUnique({ where: { id: userId } });
   }
 
-  private async updatePassword(id: string, password: string, status: AccountStatus): Promise<User> {
+  private async updatePassword(
+    id: string,
+    password: string,
+    status: AccountStatus,
+  ): Promise<User> {
     return this.prisma.user.update({
       where: { id },
       data: {
@@ -211,8 +260,13 @@ export class AuthService {
   }
 
   private assertPassword(password: string): void {
-    if (password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) {
-      throw new BadRequestException(`Password must be ${PASSWORD_MIN_LENGTH}-${PASSWORD_MAX_LENGTH} characters`);
+    if (
+      password.length < PASSWORD_MIN_LENGTH ||
+      password.length > PASSWORD_MAX_LENGTH
+    ) {
+      throw new BadRequestException(
+        `Password must be ${PASSWORD_MIN_LENGTH}-${PASSWORD_MAX_LENGTH} characters`,
+      );
     }
   }
 

@@ -120,9 +120,9 @@ FormField.displayName = 'FormField'
 // FormLabel
 // ---------------------------------------------------------------------------
 
-export interface FormLabelProps extends React.ComponentPropsWithoutRef<
+export type FormLabelProps = React.ComponentPropsWithoutRef<
   typeof Label
-> {}
+>
 
 /**
  * FormLabel — links to the associated control via context-derived `htmlFor`.
@@ -201,7 +201,7 @@ FormControl.displayName = 'FormControl'
 // FormDescription
 // ---------------------------------------------------------------------------
 
-export interface FormDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {}
+export type FormDescriptionProps = React.HTMLAttributes<HTMLParagraphElement>
 
 /**
  * FormDescription — helper text shown below the control.

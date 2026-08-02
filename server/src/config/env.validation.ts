@@ -12,7 +12,11 @@ const EnvSchema = z.object({
   SMTP_USER: z.string().min(1),
   SMTP_PASSWORD: z.string().min(1),
   SMTP_FROM: z.string().email(),
-  PASSWORD_RESET_OTP_TTL_MINUTES: z.coerce.number().int().positive().default(30),
+  PASSWORD_RESET_OTP_TTL_MINUTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(30),
   DATABASE_URL: z.string().min(1),
   DB_TIMEZONE: z
     .string()

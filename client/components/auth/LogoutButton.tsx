@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 
-export interface LogoutButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
+export type LogoutButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>
 
 export default function LogoutButton({ className, ...props }: LogoutButtonProps) {
   return (

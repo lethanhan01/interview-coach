@@ -32,7 +32,7 @@ export default function RegisterClient() {
       } else {
         router.push('/onboarding')
       }
-    } catch (err) {
+    } catch {
       setServerError('Lỗi kết nối đến máy chủ. Vui lòng thử lại sau.')
     } finally {
       setLoading(false)

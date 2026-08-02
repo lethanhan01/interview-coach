@@ -1,4 +1,4 @@
-import type { Meta } from '@storybook/react'
+import type { Meta } from '@storybook/nextjs-vite'
 import { PageContainer, PageHeader, PageSection, ResponsiveStack } from '@/components/patterns/LayoutPatterns'
 import { Button } from '@/components/ui/Button'
 

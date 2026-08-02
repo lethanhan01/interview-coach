@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import TechnicalSkillsGroup from '../../components/profile/TechnicalSkillsGroup'
 
 const meta: Meta<typeof TechnicalSkillsGroup> = {

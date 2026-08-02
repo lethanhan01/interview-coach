@@ -25,14 +25,15 @@ import {
   TRANSCRIPTION_QUEUE,
 } from '../common/constants/queue.constants';
 
-const workerProviders = process.env.WORKERS_ENABLED === 'false'
-  ? []
-  : [
-      QuestionGenerationProcessor,
-      FeedbackProcessor,
-      ComprehensiveReportProcessor,
-      TranscriptionProcessor,
-    ];
+const workerProviders =
+  process.env.WORKERS_ENABLED === 'false'
+    ? []
+    : [
+        QuestionGenerationProcessor,
+        FeedbackProcessor,
+        ComprehensiveReportProcessor,
+        TranscriptionProcessor,
+      ];
 
 @Module({
   imports: [

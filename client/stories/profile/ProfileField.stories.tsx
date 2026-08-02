@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import ProfileField from '../../components/profile/ProfileField'
 
 const meta: Meta<typeof ProfileField> = {

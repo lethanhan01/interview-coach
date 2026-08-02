@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import EducationGroup from '../../components/profile/EducationGroup'
 
 const meta: Meta<typeof EducationGroup> = {

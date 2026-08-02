@@ -161,7 +161,10 @@ export class SessionService {
     if (session.userId !== userId) {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
-    if (!canAccessHistory && ['completed', 'completing'].includes(session.status)) {
+    if (
+      !canAccessHistory &&
+      ['completed', 'completing'].includes(session.status)
+    ) {
       throw new InterviewAIException(
         ErrorCode.EMAIL_NOT_VERIFIED,
         HttpStatus.FORBIDDEN,
@@ -179,7 +182,9 @@ export class SessionService {
     return this.prisma.interviewSession.findMany({
       where: {
         userId,
-        ...(canAccessHistory ? {} : { status: { notIn: ['completed', 'completing'] } }),
+        ...(canAccessHistory
+          ? {}
+          : { status: { notIn: ['completed', 'completing'] } }),
       },
       orderBy: { createdAt: 'desc' },
     });

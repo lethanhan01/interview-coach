@@ -8,9 +8,9 @@ import { cn } from '@/lib/utils'
 // RadioGroup root
 // ---------------------------------------------------------------------------
 
-export interface RadioGroupProps extends React.ComponentPropsWithoutRef<
+export type RadioGroupProps = React.ComponentPropsWithoutRef<
   typeof RadixRadioGroup.Root
-> {}
+>
 
 /**
  * RadioGroup — pure UI primitive.
@@ -44,9 +44,9 @@ RadioGroup.displayName = 'RadioGroup'
 // RadioGroupItem
 // ---------------------------------------------------------------------------
 
-export interface RadioGroupItemProps extends React.ComponentPropsWithoutRef<
+export type RadioGroupItemProps = React.ComponentPropsWithoutRef<
   typeof RadixRadioGroup.Item
-> {}
+>
 
 export function RadioGroupItem({ className, ...props }: RadioGroupItemProps) {
   return (

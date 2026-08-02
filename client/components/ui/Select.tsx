@@ -15,9 +15,9 @@ export const SelectValue = RadixSelect.Value
 // Select (root)
 // ---------------------------------------------------------------------------
 
-export interface SelectProps extends React.ComponentPropsWithoutRef<
+export type SelectProps = React.ComponentPropsWithoutRef<
   typeof RadixSelect.Root
-> {}
+>
 
 /**
  * Select — pure UI primitive.

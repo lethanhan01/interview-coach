@@ -1,5 +1,5 @@
 import * as React from 'react'
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { Toaster } from './Toast'
 import { Button } from './Button'
 import { toast } from 'sonner'

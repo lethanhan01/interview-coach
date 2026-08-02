@@ -1,9 +1,12 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { Sun, Moon, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+
+const emptySubscribe = () => () => {}
+const useIsMounted = () => useSyncExternalStore(emptySubscribe, () => true, () => false)
 
 const THEMES = ['light', 'dark', 'system'] as const
 
@@ -21,12 +24,7 @@ const LABELS = {
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  // Avoid hydration mismatch: only render icon after mount
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useIsMounted()
 
   const currentTheme = (theme as (typeof THEMES)[number]) ?? 'system'
 

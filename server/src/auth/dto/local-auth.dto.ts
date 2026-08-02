@@ -1,28 +1,60 @@
-import { IsEmail, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
-  @IsEmail() email: string;
-  @IsString() @MinLength(12) @MaxLength(128) password: string;
-  @IsString() @MaxLength(100) @Matches(/\S/, { message: 'firstname must not be blank' }) firstname: string;
-  @IsString() @MaxLength(100) @Matches(/\S/, { message: 'lastname must not be blank' }) lastname: string;
+  @ApiProperty({ format: 'email', example: 'user@example.com' })
+  @IsEmail()
+  email: string;
+  @ApiProperty({ minLength: 12, maxLength: 128, format: 'password' })
+  @IsString()
+  @MinLength(12)
+  @MaxLength(128)
+  password: string;
+  @ApiProperty({ maxLength: 100, example: 'An' })
+  @IsString()
+  @MaxLength(100)
+  @Matches(/\S/, { message: 'firstname must not be blank' })
+  firstname: string;
+  @ApiProperty({ maxLength: 100, example: 'Nguyen' })
+  @IsString()
+  @MaxLength(100)
+  @Matches(/\S/, { message: 'lastname must not be blank' })
+  lastname: string;
 }
 
 export class LoginDto {
-  @IsEmail() email: string;
-  @IsString() password: string;
+  @ApiProperty({ format: 'email', example: 'user@example.com' })
+  @IsEmail()
+  email: string;
+  @ApiProperty({ format: 'password' }) @IsString() password: string;
 }
 
 export class ChangePasswordDto {
-  @IsString() currentPassword: string;
-  @IsString() @MinLength(12) @MaxLength(128) newPassword: string;
+  @ApiProperty({ format: 'password' }) @IsString() currentPassword: string;
+  @ApiProperty({ minLength: 12, maxLength: 128, format: 'password' })
+  @IsString()
+  @MinLength(12)
+  @MaxLength(128)
+  newPassword: string;
 }
 
 export class PasswordResetRequestDto {
-  @IsEmail() email: string;
+  @ApiProperty({ format: 'email', example: 'user@example.com' })
+  @IsEmail()
+  email: string;
 }
-
 export class PasswordResetConfirmDto {
-  @IsEmail() email: string;
-  @IsString() code: string;
-  @IsString() @MinLength(12) @MaxLength(128) newPassword: string;
+  @ApiProperty({ format: 'email' }) @IsEmail() email: string;
+  @ApiProperty({ example: '123456' }) @IsString() code: string;
+  @ApiProperty({ minLength: 12, maxLength: 128, format: 'password' })
+  @IsString()
+  @MinLength(12)
+  @MaxLength(128)
+  newPassword: string;
 }

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import ConfirmStep from './ConfirmStep'
 import type { JdFormData } from '@/lib/setup-types'
 

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ChevronLeft, ChevronRight, Menu } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { adminNavigation, candidateNavigation } from '@/config/navigation'
 import { Button } from '@/components/ui/Button'
@@ -13,6 +13,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/Tooltip'
+
+const emptySubscribe = () => () => {}
+const useIsMounted = () => useSyncExternalStore(emptySubscribe, () => true, () => false)
 
 interface AppSidebarProps {
   role: 'admin' | 'candidate'
@@ -30,10 +33,7 @@ export default function AppSidebar({
   const [isCollapsed, setIsCollapsed] = useState(false)
 
   // Prevent hydration mismatch by rendering collapsed state only after mount
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useIsMounted()
 
   if (!mounted) {
     return (

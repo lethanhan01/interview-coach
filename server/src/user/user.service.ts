@@ -40,11 +40,18 @@ export class UserService {
         select: { role: true, firstname: true, lastname: true },
       });
       if (!currentUser) {
-        throw new InterviewAIException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND);
+        throw new InterviewAIException(
+          ErrorCode.NOT_FOUND,
+          HttpStatus.NOT_FOUND,
+        );
       }
       if (currentUser.role === 'candidate') {
-        const firstname = (userData.firstname as string | null | undefined) ?? currentUser.firstname;
-        const lastname = (userData.lastname as string | null | undefined) ?? currentUser.lastname;
+        const firstname =
+          (userData.firstname as string | null | undefined) ??
+          currentUser.firstname;
+        const lastname =
+          (userData.lastname as string | null | undefined) ??
+          currentUser.lastname;
         if (!firstname?.trim() || !lastname?.trim()) {
           throw new InterviewAIException(
             ErrorCode.VALIDATION_ERROR,

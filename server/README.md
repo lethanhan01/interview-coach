@@ -5,6 +5,11 @@ NestJS 11, TypeScript 5.7, Prisma, BullMQ, Redis, Supabase (PostgreSQL + Auth).
 API: `http://localhost:3000/api/v1`  
 Health check: `http://localhost:3000/health`
 
+Swagger/OpenAPI (development and staging): `http://localhost:3000/api/docs`  
+OpenAPI JSON: `http://localhost:3000/api/docs-json`
+
+Mở Swagger cùng origin backend, gọi `POST /auth/login` hoặc `POST /auth/register` trước; cookie JWT HttpOnly sẽ được browser tự gửi cho các endpoint cần xác thực. Swagger bị tắt khi `NODE_ENV=production`. Endpoint SSE nên kiểm thử bằng `EventSource` hoặc `curl`.
+
 ---
 
 ## Yêu cầu

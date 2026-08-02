@@ -17,7 +17,6 @@ import {
   FormField,
   FormLabel,
   FormControl,
-  FormDescription,
 } from '@/components/form'
 
 interface JdFormProps {
