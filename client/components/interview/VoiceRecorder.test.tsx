@@ -19,7 +19,7 @@ beforeEach(() => {
   })
   
   // Setup MediaRecorder mock
-  global.MediaRecorder = mockMediaRecorder as any
+  global.MediaRecorder = mockMediaRecorder as unknown as typeof MediaRecorder
 })
 
 describe('VoiceRecorder', () => {

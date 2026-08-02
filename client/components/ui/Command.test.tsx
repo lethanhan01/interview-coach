@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react'
 import { axe } from 'jest-axe'
 import {
   Command,
-  CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
@@ -16,8 +15,7 @@ import {
 import { vi } from 'vitest'
 
 vi.mock('cmdk', () => {
-  const React = require('react')
-  const CommandPrimitive = React.forwardRef<HTMLDivElement, any>(
+  const CommandPrimitive = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
     ({ children, ...props }, ref) => (
       <div data-testid="cmdk-command" ref={ref} {...props}>
         {children}
@@ -26,14 +24,14 @@ vi.mock('cmdk', () => {
   )
   CommandPrimitive.displayName = 'Command'
 
-  const Input = React.forwardRef<HTMLInputElement, any>(
+  const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
     ({ ...props }, ref) => (
       <input data-testid="cmdk-input" ref={ref} {...props} />
     )
   )
   Input.displayName = 'CommandInput'
 
-  const List = React.forwardRef<HTMLDivElement, any>(
+  const List = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
     ({ children, ...props }, ref) => (
       <div data-testid="cmdk-list" ref={ref} {...props}>
         {children}
@@ -42,7 +40,7 @@ vi.mock('cmdk', () => {
   )
   List.displayName = 'CommandList'
 
-  const Empty = React.forwardRef<HTMLDivElement, any>(
+  const Empty = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
     ({ children, ...props }, ref) => (
       <div data-testid="cmdk-empty" ref={ref} {...props}>
         {children}
@@ -51,7 +49,7 @@ vi.mock('cmdk', () => {
   )
   Empty.displayName = 'CommandEmpty'
 
-  const Group = React.forwardRef<HTMLDivElement, any>(
+  const Group = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement> & { heading?: React.ReactNode }>(
     ({ children, heading, ...props }, ref) => (
       <div data-testid="cmdk-group" ref={ref} {...props}>
         {heading && <div cmdk-group-heading="">{heading}</div>}
@@ -61,7 +59,7 @@ vi.mock('cmdk', () => {
   )
   Group.displayName = 'CommandGroup'
 
-  const Item = React.forwardRef<HTMLDivElement, any>(
+  const Item = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
     ({ children, ...props }, ref) => (
       <div data-testid="cmdk-item" ref={ref} {...props}>
         {children}
@@ -70,7 +68,7 @@ vi.mock('cmdk', () => {
   )
   Item.displayName = 'CommandItem'
 
-  const Separator = React.forwardRef<HTMLHRElement, any>(
+  const Separator = React.forwardRef<HTMLHRElement, React.HTMLAttributes<HTMLHRElement>>(
     ({ ...props }, ref) => (
       <hr data-testid="cmdk-separator" ref={ref} {...props} />
     )
@@ -78,14 +76,22 @@ vi.mock('cmdk', () => {
   Separator.displayName = 'CommandSeparator'
 
   // Attach components to CommandPrimitive
-  ;(CommandPrimitive as any).Input = Input
-  ;(CommandPrimitive as any).List = List
-  ;(CommandPrimitive as any).Empty = Empty
-  ;(CommandPrimitive as any).Group = Group
-  ;(CommandPrimitive as any).Item = Item
-  ;(CommandPrimitive as any).Separator = Separator
+  const command = CommandPrimitive as typeof CommandPrimitive & {
+    Input: typeof Input
+    List: typeof List
+    Empty: typeof Empty
+    Group: typeof Group
+    Item: typeof Item
+    Separator: typeof Separator
+  }
+  command.Input = Input
+  command.List = List
+  command.Empty = Empty
+  command.Group = Group
+  command.Item = Item
+  command.Separator = Separator
 
-  return { Command: CommandPrimitive }
+  return { Command: command }
 })
 
 describe('Command Component', () => {

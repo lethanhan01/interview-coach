@@ -151,7 +151,7 @@ export function RHFFormField<
       rules={rules}
       shouldUnregister={shouldUnregister}
       defaultValue={defaultValue}
-      render={({ fieldState, field: _field }) => (
+      render={({ fieldState }) => (
         <FormField
           name={name}
           isInvalid={!!fieldState.error}

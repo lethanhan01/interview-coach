@@ -9,8 +9,8 @@ import {
 } from './Accordion';
 
 describe('Accordion', () => {
-  const TestAccordion = ({ type = 'single', collapsible = true }: any) => (
-    <Accordion type={type} collapsible={collapsible}>
+  const TestAccordion = ({ type = 'single', collapsible = true }: { type?: 'single' | 'multiple'; collapsible?: boolean }) => (
+    <Accordion type={type} {...(type === 'single' ? { collapsible } : {})}>
       <AccordionItem value="item-1">
         <AccordionTrigger>Item 1</AccordionTrigger>
         <AccordionContent>Content 1</AccordionContent>

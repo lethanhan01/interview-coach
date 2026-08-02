@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -88,7 +88,6 @@ interface CompleteFormProps {
 
 function CompleteForm({ variant }: CompleteFormProps) {
   const [showPassword, setShowPassword] = useState(false)
-  const [bioLength, setBioLength] = useState(0)
   const [submitted, setSubmitted] = useState(false)
 
   const isDisabled = variant === 'disabled'
@@ -235,7 +234,7 @@ function CompleteForm({ variant }: CompleteFormProps) {
             />
           </FormControl>
           <FormDescription>
-            We'll never share your email with anyone else.
+            We&apos;ll never share your email with anyone else.
           </FormDescription>
           <FormMessage>{errors.email?.message}</FormMessage>
         </FormField>
@@ -304,7 +303,6 @@ function CompleteForm({ variant }: CompleteFormProps) {
                   {...field}
                   onChange={(e) => {
                     field.onChange(e)
-                    setBioLength(e.target.value.length)
                   }}
                   readOnly={isReadOnly}
                   disabled={isDisabled}

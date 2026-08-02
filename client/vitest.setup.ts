@@ -22,7 +22,7 @@ if (typeof window.PointerEvent === 'undefined') {
       this.pointerId = props.pointerId || 0
     }
   }
-  window.PointerEvent = PointerEventMock as any
+  window.PointerEvent = PointerEventMock as unknown as typeof PointerEvent
 }
 
 // Mock HTMLElement.prototype.hasPointerCapture for Radix UI

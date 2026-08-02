@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Play, RotateCcw } from 'lucide-react'
+import { Play } from 'lucide-react'
 
 interface MotionItem {
   name: string

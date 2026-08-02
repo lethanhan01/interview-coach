@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { fn } from 'storybook/test'
-import { ArrowRight, Loader2, Mail, Trash2 } from 'lucide-react'
+import { ArrowRight, Mail, Trash2 } from 'lucide-react'
 
 import { Button } from './Button'
 

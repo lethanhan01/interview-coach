@@ -64,7 +64,7 @@ export function Pagination({
     const pages = []
     const showMax = 5
     let start = Math.max(1, currentPage - Math.floor(showMax / 2))
-    let end = Math.min(totalPages, start + showMax - 1)
+    const end = Math.min(totalPages, start + showMax - 1)
 
     if (end - start + 1 < showMax) {
       start = Math.max(1, end - showMax + 1)

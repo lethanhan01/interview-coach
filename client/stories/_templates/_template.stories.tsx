@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import type { HTMLAttributes } from 'react'
 // import { ComponentName } from '@/components/ui/ComponentName';
 
 // Giả lập ComponentName để tránh lỗi khi template chưa có component thực
-const ComponentName = (props: any) => (
+const ComponentName = (props: HTMLAttributes<HTMLDivElement>) => (
   <div {...props}>Placeholder Component</div>
 )
 

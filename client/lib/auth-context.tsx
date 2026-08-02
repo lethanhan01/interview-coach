@@ -53,7 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
-    void refresh()
+    const timeout = window.setTimeout(() => void refresh(), 0)
+    return () => window.clearTimeout(timeout)
   }, [refresh])
   return (
     <AuthContext.Provider value={{ ...value, refresh }}>

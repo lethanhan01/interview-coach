@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { render, screen, act } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { axe } from 'jest-axe'
 import { vi } from 'vitest'
@@ -15,7 +15,11 @@ describe('Combobox Component', () => {
     { value: '2', label: 'Option 2' },
   ]
 
-  const ComboboxWrapper = (props: any) => {
+  const ComboboxWrapper = (
+    props: Omit<React.ComponentProps<typeof Combobox>, 'options'> & {
+      options?: React.ComponentProps<typeof Combobox>['options']
+    }
+  ) => {
     const [val, setVal] = React.useState(props.value || '')
     return <Combobox {...props} value={val} onValueChange={setVal} options={props.options || options} aria-label={props['aria-label'] || 'Combobox'} />
   }

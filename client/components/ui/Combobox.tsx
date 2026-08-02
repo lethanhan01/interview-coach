@@ -78,6 +78,7 @@ export function Combobox({
           type="button"
           role="combobox"
           aria-expanded={open}
+          aria-controls={id ? `${id}-listbox` : undefined}
           aria-haspopup="listbox"
           aria-describedby={ariaProps['aria-describedby']}
           aria-invalid={ariaProps['aria-invalid']}
@@ -107,6 +108,7 @@ export function Combobox({
       </PopoverPrimitive.Trigger>
 
       <PopoverPrimitive.Content
+        id={id ? `${id}-listbox` : undefined}
         className={cn(
           'bg-popover text-popover-foreground z-[var(--z-index-dropdown)] w-[var(--radix-popover-trigger-width)] rounded-xl border p-0 shadow-md outline-none',
           'data-[state=open]:animate-in data-[state=closed]:animate-out',

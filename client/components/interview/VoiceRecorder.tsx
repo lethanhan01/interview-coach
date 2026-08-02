@@ -34,7 +34,6 @@ interface VoiceDraft {
 export default function VoiceRecorder({
   onSubmit,
   onUploadAudio,
-  sessionId: _sessionId,
   disabled,
 }: VoiceRecorderProps) {
   const [state, setState] = useState<RecordState>('idle')

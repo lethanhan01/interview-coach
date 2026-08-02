@@ -70,7 +70,7 @@ describe('Popover', () => {
     )
     
     // Test closed state
-    let results = await axe(container)
+    const results = await axe(container)
     expect(results).toHaveNoViolations()
   })
 })

@@ -62,7 +62,8 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     if (!authLoading && role === 'admin') {
-      void fetchUsers()
+      const timeout = window.setTimeout(() => void fetchUsers(), 0)
+      return () => window.clearTimeout(timeout)
     }
   }, [role, authLoading, fetchUsers])
 
