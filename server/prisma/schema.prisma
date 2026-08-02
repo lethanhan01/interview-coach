@@ -60,7 +60,7 @@ enum QuestionSessionType {
 }
 
 enum UserRole {
-  user
+  candidate
   admin
 }
 
@@ -104,28 +104,41 @@ model QuestionBankCriterion {
 }
 
 model User {
-  id                   String                @id @db.Uuid
-  email                String                @unique
-  role                 UserRole              @default(user)
-  status               AccountStatus         @default(active)
-  passwordHash         String?               @map("password_hash")
-  passwordUpdatedAt    DateTime?             @map("password_updated_at") @db.Timestamptz(6)
-  tokenVersion         Int                   @default(0) @map("token_version")
-  passwordResetTokenHash String?             @map("password_reset_token_hash")
-  passwordResetExpiresAt DateTime?           @map("password_reset_expires_at") @db.Timestamptz(6)
-  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                   String                 @id @db.Uuid
+  email                String                 @unique
+  role                 UserRole               @default(candidate)
+  status               AccountStatus          @default(active)
+  firstname            String?                @map("first_name")
+  lastname             String?                @map("last_name")
+  passwordHash         String                 @map("password_hash")
+  tokenVersion         Int                    @default(0) @map("token_version")
+  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   interviewSessions    InterviewSession[]
   savedJobDescriptions SavedJobDescription[]
   profile              UserProfile?
+  verificationCodes    UserVerificationCode[]
 
   @@map("users")
+}
+
+model UserVerificationCode {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  purpose   String
+  codeHash  String   @map("code_hash")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, purpose], map: "user_verification_codes_user_purpose_key")
+  @@index([expiresAt], map: "idx_user_verification_codes_expires_at")
+  @@map("user_verification_codes")
 }
 
 model UserProfile {
   id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId          String   @unique @map("user_id") @db.Uuid
-  fullName        String?  @map("full_name")
   personality     String?
   education       Json?
   workExperience  Json?    @map("work_experience")

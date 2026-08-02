@@ -1,6 +1,6 @@
 import { prisma } from './_client';
 import { seedContextPacks } from './00-context-packs';
-import { getOrCreateAdminUser, getOrCreateDemoUser, seedUserProfile } from './01-users';
+import { seedDemoUsers, seedUserProfile } from './01-users';
 import { seedQuestionBank } from './02-question-bank';
 import { seedKaggleQuestions } from './02b-kaggle-questions';
 import { seedSavedJobDescriptions } from './05-saved-job-descriptions';
@@ -10,9 +10,8 @@ async function main(): Promise<void> {
 
   await seedContextPacks(prisma);
 
-  const userId = await getOrCreateDemoUser(prisma);
+  const userId = await seedDemoUsers(prisma);
   await seedUserProfile(prisma, userId);
-  await getOrCreateAdminUser(prisma);
 
   await seedQuestionBank(prisma);
   await seedKaggleQuestions(prisma);

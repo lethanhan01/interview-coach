@@ -15,9 +15,13 @@
     "db:verify:pre": "ts-node prisma/verify-db-hardening.ts --phase=pre",
     "db:verify": "ts-node prisma/verify-db-hardening.ts --phase=post",
     "db:sync": "npm run db:sync:full",
+    "db:require-backup": "node scripts/require-db-backup-confirmation.mjs",
+    "db:apply-user-prebackup": "node scripts/deny-production-db-sync.mjs db:apply-user-prebackup && node prisma/run-role-migration.mjs && ts-node -r tsconfig-paths/register prisma/migrate-local-auth.ts",
+    "db:sync:prebackup": "npm run db:apply-user-prebackup",
     "db:sync:prisma": "node scripts/deny-production-db-sync.mjs db:sync:prisma && prisma generate && npm run db:prepare-user-answer-unique && npm run db:prepare-db-push-raw-sql && prisma db push --accept-data-loss",
-    "db:sync:full": "node scripts/deny-production-db-sync.mjs db:sync:full && npm run db:validate && npm run db:verify:pre && prisma generate && npm run db:prepare-user-answer-unique && npm run db:prepare-db-push-raw-sql && prisma db push --accept-data-loss && npm run db:apply-sql && npm run db:verify",
-    "db:apply-sql": "node scripts/deny-production-db-sync.mjs db:apply-sql && prisma db execute --file ./prisma/migrations/migration.sql && prisma db execute --file ./prisma/migrations/local-auth.sql",
+    "db:sync:full": "node scripts/deny-production-db-sync.mjs db:sync:full && npm run db:validate && npm run db:verify:pre && prisma generate && npm run db:prepare-user-answer-unique && npm run db:prepare-db-push-raw-sql && npm run db:require-backup && prisma db push --accept-data-loss && npm run db:apply-sql && npm run db:verify",
+    "db:apply-sql": "node scripts/deny-production-db-sync.mjs db:apply-sql && npm run db:require-backup && prisma db execute --file ./prisma/migrations/migration.sql && prisma db execute --file ./prisma/migrations/local-auth.sql",
+    "db:enforce-user-fields": "node scripts/deny-production-db-sync.mjs db:enforce-user-fields && npm run db:require-backup && prisma db execute --file ./prisma/migrations/enforce-user-required-fields.sql",
     "db:migrate-role": "node scripts/deny-production-db-sync.mjs db:migrate-role && node prisma/run-role-migration.mjs",
     "recovery:inventory": "node scripts/recovery-inventory.mjs",
     "infra:up": "docker compose -f docker-compose.yml up -d redis",
@@ -38,7 +42,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "node scripts/deny-production-db-sync.mjs seed && ts-node -r tsconfig-paths/register prisma/seed.ts"
+    "seed": "node scripts/deny-production-db-sync.mjs seed && ts-node -r tsconfig-paths/register prisma/seed.ts",
+    "seed:demo-users": "node scripts/deny-production-db-sync.mjs seed:demo-users && ts-node -r tsconfig-paths/register prisma/seed-demo-users.ts"
     ,"migrate:local-auth": "node scripts/deny-production-db-sync.mjs migrate:local-auth && ts-node -r tsconfig-paths/register prisma/migrate-local-auth.ts"
   },
   "dependencies": {

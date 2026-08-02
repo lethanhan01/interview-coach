@@ -113,6 +113,7 @@ const expectedConstraints = [
     'session_question_criteria',
     'session_question_criteria_rubric_criterion_id_fkey',
   ],
+  ['user_verification_codes', 'user_verification_codes_user_purpose_key'],
 ];
 
 const expectedIndexes = [
@@ -142,6 +143,7 @@ const expectedIndexes = [
     'session_question_criteria',
     'idx_session_question_criteria_rubric_criterion',
   ],
+  ['user_verification_codes', 'idx_user_verification_codes_expires_at'],
 ];
 
 const expectedTriggers = [
@@ -181,6 +183,10 @@ const retiredColumns = [
   ['users', 'profile_completed'],
   ['users', 'last_login_at'],
   ['users', 'deleted_at'],
+  ['users', 'password_updated_at'],
+  ['users', 'password_reset_token_hash'],
+  ['users', 'password_reset_expires_at'],
+  ['user_profiles', 'full_name'],
   ['user_profiles', 'target_position'],
   ['user_profiles', 'target_role_category'],
   ['user_profiles', 'target_level'],
@@ -630,6 +636,15 @@ async function runCatalogChecks(): Promise<CheckResult[]> {
     name: 'trigger:interview_sessions:trg_interview_sessions_saved_jd_owner',
     ok: savedJdTrigger,
     detail: savedJdTrigger ? 'present' : 'missing',
+  });
+
+  const verificationCodesTable = await existsBySql(
+    `SELECT to_regclass('public.user_verification_codes')`,
+  );
+  results.push({
+    name: 'table:user_verification_codes',
+    ok: verificationCodesTable,
+    detail: verificationCodesTable ? 'present' : 'missing',
   });
 
   const authUsersExists = await existsBySql(`SELECT to_regclass('auth.users')`);

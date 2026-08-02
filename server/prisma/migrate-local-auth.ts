@@ -1,41 +1,70 @@
-import 'dotenv/config';
-import { PrismaClient, AccountStatus } from '@prisma/client';
-import { createHash, randomBytes } from 'node:crypto';
-import nodemailer from 'nodemailer';
-import { createClient } from '@supabase/supabase-js';
+/**
+ * Local migration helper for legacy auth/user-name data.
+ * Run before schema push when existing rows still have `user_profiles.full_name`
+ * or need the verification-code table created without dropping legacy columns.
+ */
+import { Client } from 'pg';
+import dotenv from 'dotenv';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const prisma = new PrismaClient();
-const execute = process.argv.includes('--execute');
-const resetUrl = process.env.PASSWORD_RESET_URL ?? 'http://localhost:5173/reset-password';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: join(__dirname, '../.env') });
 
-function hash(token: string): string {
-  return createHash('sha256').update(token).digest('base64url');
+const client = new Client({ connectionString: process.env.DIRECT_URL });
+
+const statements = [
+  `ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS firstname TEXT,
+    ADD COLUMN IF NOT EXISTS lastname TEXT`,
+  `UPDATE users u
+   SET
+     firstname = CASE
+       WHEN trimmed.full_name IS NULL OR trimmed.full_name = '' THEN NULL
+       ELSE split_part(trimmed.full_name, ' ', 1)
+     END,
+     lastname = CASE
+       WHEN trimmed.full_name IS NULL OR trimmed.full_name = '' THEN NULL
+       WHEN position(' ' in trimmed.full_name) = 0 THEN NULL
+       ELSE nullif(regexp_replace(trimmed.full_name, '^\\S+\\s*', ''), '')
+      END
+   FROM (
+     SELECT user_id, btrim(full_name) AS full_name
+     FROM user_profiles
+     WHERE full_name IS NOT NULL
+   ) trimmed
+   WHERE u.id = trimmed.user_id`,
+  `CREATE TABLE IF NOT EXISTS user_verification_codes (
+     id UUID NOT NULL DEFAULT gen_random_uuid(),
+     user_id UUID NOT NULL,
+     purpose TEXT NOT NULL,
+     code_hash TEXT NOT NULL,
+     expires_at TIMESTAMPTZ(6) NOT NULL,
+     created_at TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+     CONSTRAINT user_verification_codes_pkey PRIMARY KEY (id),
+     CONSTRAINT user_verification_codes_user_id_fkey
+       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+     CONSTRAINT user_verification_codes_user_purpose_key UNIQUE (user_id, purpose)
+   )`,
+  `CREATE INDEX IF NOT EXISTS idx_user_verification_codes_expires_at
+   ON user_verification_codes (expires_at)`,
+];
+
+async function main() {
+  await client.connect();
+  try {
+    for (const stmt of statements) {
+      await client.query(stmt);
+    }
+  } finally {
+    await client.end();
+  }
 }
 
-async function main(): Promise<void> {
-  const users = await prisma.user.findMany({ where: { status: { not: AccountStatus.deleted } }, select: { id: true, email: true } });
-  console.log(`${execute ? 'EXECUTE' : 'DRY RUN'}: ${users.length} account(s) will require a password reset.`);
-  if (!execute) return;
-
-  const mailer = nodemailer.createTransport({
-    host: process.env.SMTP_HOST!, port: Number(process.env.SMTP_PORT ?? 587), secure: Number(process.env.SMTP_PORT) === 465,
-    auth: { user: process.env.SMTP_USER!, pass: process.env.SMTP_PASSWORD! },
-  });
-  for (const user of users) {
-    const token = randomBytes(32).toString('base64url');
-    const url = new URL(resetUrl); url.searchParams.set('token', token);
-    await prisma.user.update({ where: { id: user.id }, data: { status: AccountStatus.password_reset_required, passwordHash: null, passwordResetTokenHash: hash(token), passwordResetExpiresAt: new Date(Date.now() + 30 * 60 * 1000), tokenVersion: { increment: 1 } } });
-    await mailer.sendMail({ from: process.env.SMTP_FROM!, to: user.email, subject: 'Đặt lại mật khẩu InterviewCoach', text: `Đặt lại mật khẩu tại: ${url}` });
-  }
-
-  const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { autoRefreshToken: false, persistSession: false } });
-  const { data, error } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-  if (error) throw error;
-  for (const authUser of data.users) {
-    const result = await supabase.auth.admin.deleteUser(authUser.id);
-    if (result.error) throw result.error;
-  }
-  console.log(`Deleted ${data.users.length} Supabase Auth user(s).`);
-}
-
-main().catch((error) => { console.error(error); process.exitCode = 1; }).finally(() => prisma.$disconnect());
+void main().catch((error: unknown) => {
+  console.error(
+    'Failed to migrate local auth data:',
+    error instanceof Error ? error.message : String(error),
+  );
+  process.exitCode = 1;
+});

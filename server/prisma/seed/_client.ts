@@ -8,4 +8,4 @@ export const prisma = new PrismaClient({
 });
 
 export const DEMO_EMAIL = 'demo@interviewai.dev';
-export const DEMO_PASSWORD = 'Demo@123456!';
+export const DEMO_PASSWORD = 'Demo@123456';

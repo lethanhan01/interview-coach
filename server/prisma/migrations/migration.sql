@@ -796,7 +796,7 @@ ALTER TABLE users
   DROP CONSTRAINT IF EXISTS chk_users_role;
 ALTER TABLE users
   ADD CONSTRAINT chk_users_role
-  CHECK (role IN ('user', 'admin'));
+  CHECK (role IN ('candidate', 'admin'));
 
 ALTER TABLE interview_sessions
   DROP CONSTRAINT IF EXISTS chk_interview_sessions_status;

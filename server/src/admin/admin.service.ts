@@ -12,6 +12,8 @@ export class AdminService {
       select: {
         id: true,
         email: true,
+        firstname: true,
+        lastname: true,
         role: true,
         status: true,
         createdAt: true,
@@ -27,13 +29,13 @@ export class AdminService {
       select: {
         id: true,
         email: true,
+        firstname: true,
+        lastname: true,
         role: true,
         status: true,
         createdAt: true,
         updatedAt: true,
-        profile: {
-          select: { fullName: true },
-        },
+        profile: true,
       },
     });
   }

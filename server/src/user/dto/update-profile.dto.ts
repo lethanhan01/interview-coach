@@ -1,9 +1,15 @@
-import { IsString, IsOptional, IsObject, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsObject, IsArray, MaxLength } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsString()
   @IsOptional()
-  fullName?: string;
+  @MaxLength(100)
+  firstname?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  lastname?: string;
 
   @IsString()
   @IsOptional()

@@ -1,6 +1,6 @@
 /**
- * Manual migration script: Add UserRole enum to PostgreSQL
- * Executes statements one by one (no single transaction) to avoid ALTER TYPE + policy conflicts
+ * Manual migration script: align UserRole values to candidate/admin.
+ * Executes statements one by one (no single transaction) to avoid ALTER TYPE + policy conflicts.
  */
 import { Client } from 'pg';
 import dotenv from 'dotenv';
@@ -16,13 +16,24 @@ const statements = [
   // Step 1: Create UserRole enum if not exists
   `DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'UserRole') THEN
-      CREATE TYPE "UserRole" AS ENUM ('user', 'admin');
+      CREATE TYPE "UserRole" AS ENUM ('candidate', 'admin');
+    END IF;
+  END $$`,
+  `DO $$ BEGIN
+    IF EXISTS (
+      SELECT 1
+      FROM pg_type t
+      JOIN pg_enum e ON e.enumtypid = t.oid
+      WHERE t.typname = 'UserRole'
+        AND e.enumlabel = 'user'
+    ) THEN
+      ALTER TYPE "UserRole" RENAME VALUE 'user' TO 'candidate';
     END IF;
   END $$`,
   // Step 2: Drop old check constraint
   `ALTER TABLE users DROP CONSTRAINT IF EXISTS chk_users_role`,
-  // Step 3: Migrate 'candidate' data to 'user'
-  `UPDATE users SET role = 'user' WHERE role = 'candidate' OR role NOT IN ('user', 'admin')`,
+  // Step 3: Migrate legacy role values to 'candidate'
+  `UPDATE users SET role = 'candidate' WHERE role::text = 'user' OR role::text NOT IN ('candidate', 'admin')`,
   // Step 4: Drop ALL RLS policies referencing users.role (any table)
   `DROP POLICY IF EXISTS "users: admin read all" ON users`,
   `DROP POLICY IF EXISTS "users: admin update status" ON users`,
@@ -36,7 +47,7 @@ const statements = [
   // Step 6: Convert column type to enum
   `ALTER TABLE users ALTER COLUMN role TYPE "UserRole" USING role::"UserRole"`,
   // Step 7: Restore default
-  `ALTER TABLE users ALTER COLUMN role SET DEFAULT 'user'::"UserRole"`,
+  `ALTER TABLE users ALTER COLUMN role SET DEFAULT 'candidate'::"UserRole"`,
   // Step 8: Recreate users RLS policies with enum types
   `CREATE POLICY "users: admin read all"
     ON users FOR SELECT
@@ -76,4 +87,3 @@ try {
 } finally {
   await client.end();
 }
-

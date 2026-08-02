@@ -31,7 +31,9 @@ describe('UserController', () => {
       const userWithProfile = {
         id: 'user-abc',
         email: 'test@example.com',
-        role: 'user',
+        firstname: 'Nguyen',
+        lastname: 'Van A',
+        role: 'candidate',
         status: 'active',
         profile: null,
       };
@@ -47,7 +49,8 @@ describe('UserController', () => {
   describe('PATCH /profile', () => {
     it('gọi userService.upsertProfile với userId và dto', async () => {
       const dto = {
-        fullName: 'Nguyen Van A',
+        firstname: 'Nguyen',
+        lastname: 'Van A',
         technicalSkills: [{ name: 'TypeScript' }],
       } as any;
       const updatedProfile = { userId: 'user-abc', ...dto };
@@ -63,7 +66,7 @@ describe('UserController', () => {
     });
 
     it('propagate exception khi userService.upsertProfile ném lỗi', async () => {
-      const dto = { fullName: 'An' } as any;
+      const dto = { firstname: 'An' } as any;
       mockUserService.upsertProfile.mockRejectedValue(new Error('DB error'));
 
       await expect(controller.updateProfile(dto, mockReq())).rejects.toThrow(

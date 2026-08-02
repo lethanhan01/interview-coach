@@ -9,7 +9,7 @@ const validEnv = {
   SMTP_USER: 'user',
   SMTP_PASSWORD: 'password',
   SMTP_FROM: 'no-reply@example.com',
-  PASSWORD_RESET_URL: 'http://localhost:5173/reset-password',
+  PASSWORD_RESET_OTP_TTL_MINUTES: '30',
   DATABASE_URL: 'postgresql://localhost:5432/test',
 };
 

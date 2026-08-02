@@ -7,19 +7,21 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AccountStatus, UserRole, type User } from '@prisma/client';
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHmac, randomInt, randomUUID } from 'node:crypto';
 import nodemailer from 'nodemailer';
 import { PrismaService } from '../prisma/prisma.service';
 import { hashPassword, verifyPassword } from './password';
 
 const PASSWORD_MIN_LENGTH = 12;
 const PASSWORD_MAX_LENGTH = 128;
+const PASSWORD_RESET_PURPOSE = 'password_reset_otp';
 
 @Injectable()
 export class AuthService {
   private readonly cookieName: string;
   private readonly cookieMaxAge: number;
-  private readonly resetUrl: string;
+  private readonly verificationCodeTtlMs: number;
+  private readonly authSecret: string;
   private readonly mailer;
 
   constructor(
@@ -29,7 +31,9 @@ export class AuthService {
   ) {
     this.cookieName = config.get<string>('AUTH_COOKIE_NAME') ?? 'interviewcoach_auth';
     this.cookieMaxAge = config.get<number>('AUTH_COOKIE_MAX_AGE') ?? 86_400;
-    this.resetUrl = config.getOrThrow<string>('PASSWORD_RESET_URL');
+    this.verificationCodeTtlMs =
+      (config.get<number>('PASSWORD_RESET_OTP_TTL_MINUTES') ?? 30) * 60 * 1000;
+    this.authSecret = config.getOrThrow<string>('AUTH_JWT_SECRET');
     this.mailer = nodemailer.createTransport({
       host: config.getOrThrow<string>('SMTP_HOST'),
       port: config.getOrThrow<number>('SMTP_PORT'),
@@ -49,7 +53,12 @@ export class AuthService {
     return this.cookieMaxAge;
   }
 
-  async register(email: string, password: string, fullName?: string): Promise<{ user: User; token: string }> {
+  async register(
+    email: string,
+    password: string,
+    firstname: string,
+    lastname: string,
+  ): Promise<{ user: User; token: string }> {
     const normalizedEmail = this.normalizeEmail(email);
     this.assertPassword(password);
     const passwordHash = await hashPassword(password);
@@ -60,12 +69,13 @@ export class AuthService {
             id: randomUUID(),
             email: normalizedEmail,
             passwordHash,
-            passwordUpdatedAt: new Date(),
-            role: UserRole.user,
+            firstname,
+            lastname,
+            role: UserRole.candidate,
             status: AccountStatus.active,
           },
         });
-        await tx.userProfile.create({ data: { userId: created.id, fullName } });
+        await tx.userProfile.create({ data: { userId: created.id } });
         return created;
       });
       return { user, token: await this.sign(user) };
@@ -115,35 +125,62 @@ export class AuthService {
   async requestPasswordReset(email: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { email: this.normalizeEmail(email) } });
     if (!user || user.status === AccountStatus.deleted) return;
-    const token = randomBytes(32).toString('base64url');
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordResetTokenHash: this.hashResetToken(token),
-        passwordResetExpiresAt: new Date(Date.now() + 30 * 60 * 1000),
+    const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
+    await this.prisma.userVerificationCode.upsert({
+      where: { userId_purpose: { userId: user.id, purpose: PASSWORD_RESET_PURPOSE } },
+      create: {
+        userId: user.id,
+        purpose: PASSWORD_RESET_PURPOSE,
+        codeHash: this.hashVerificationCode(user.id, code),
+        expiresAt: new Date(Date.now() + this.verificationCodeTtlMs),
+      },
+      update: {
+        codeHash: this.hashVerificationCode(user.id, code),
+        expiresAt: new Date(Date.now() + this.verificationCodeTtlMs),
       },
     });
-    const url = new URL(this.resetUrl);
-    url.searchParams.set('token', token);
     await this.mailer.sendMail({
       from: process.env.SMTP_FROM,
       to: user.email,
-      subject: 'Đặt lại mật khẩu InterviewCoach',
-      text: `Mở liên kết sau trong 30 phút để đặt lại mật khẩu: ${url.toString()}`,
+      subject: 'Mã OTP đặt lại mật khẩu InterviewCoach',
+      text: `Mã OTP của bạn là: ${code}\nMã có hiệu lực trong ${this.verificationCodeTtlMs / 60000} phút.`,
     });
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<{ user: User; token: string }> {
+  async resetPassword(email: string, code: string, newPassword: string): Promise<{ user: User; token: string }> {
     this.assertPassword(newPassword);
-    const user = await this.prisma.user.findFirst({
-      where: {
-        passwordResetTokenHash: this.hashResetToken(token),
-        passwordResetExpiresAt: { gt: new Date() },
-        status: { not: AccountStatus.deleted },
-      },
+    const normalizedEmail = this.normalizeEmail(email);
+    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (!user || user.status === AccountStatus.deleted) {
+      throw new BadRequestException('Invalid or expired reset code');
+    }
+
+    const verification = await this.prisma.userVerificationCode.findUnique({
+      where: { userId_purpose: { userId: user.id, purpose: PASSWORD_RESET_PURPOSE } },
     });
-    if (!user) throw new BadRequestException('Invalid or expired reset link');
-    const updated = await this.updatePassword(user.id, newPassword, AccountStatus.active);
+    if (
+      !verification ||
+      verification.expiresAt <= new Date() ||
+      verification.codeHash !== this.hashVerificationCode(user.id, code)
+    ) {
+      throw new BadRequestException('Invalid or expired reset code');
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const nextUser = await tx.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash: await hashPassword(newPassword),
+          status: AccountStatus.active,
+          tokenVersion: { increment: 1 },
+        },
+      });
+      await tx.userVerificationCode.delete({
+        where: { userId_purpose: { userId: user.id, purpose: PASSWORD_RESET_PURPOSE } },
+      });
+      return nextUser;
+    });
+
     return { user: updated, token: await this.sign(updated) };
   }
 
@@ -156,9 +193,6 @@ export class AuthService {
       where: { id },
       data: {
         passwordHash: await hashPassword(password),
-        passwordUpdatedAt: new Date(),
-        passwordResetTokenHash: null,
-        passwordResetExpiresAt: null,
         status,
         tokenVersion: { increment: 1 },
       },
@@ -182,7 +216,9 @@ export class AuthService {
     }
   }
 
-  private hashResetToken(token: string): string {
-    return createHash('sha256').update(token).digest('base64url');
+  private hashVerificationCode(userId: string, code: string): string {
+    return createHmac('sha256', this.authSecret)
+      .update(`${PASSWORD_RESET_PURPOSE}:${userId}:${code}`)
+      .digest('base64url');
   }
 }

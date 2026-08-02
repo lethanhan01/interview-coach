@@ -130,10 +130,22 @@ export const createMockPrismaService = () => {
       findUnique: jest.fn().mockResolvedValue(null),
     },
     user: {
+      create: jest.fn(),
+      update: jest.fn(),
+      upsert: jest.fn(),
       findUnique: jest.fn(),
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      count: jest.fn(),
     },
     userProfile: {
       upsert: jest.fn(),
+    },
+    userVerificationCode: {
+      upsert: jest.fn(),
+      findUnique: jest.fn(),
+      delete: jest.fn(),
+      deleteMany: jest.fn(),
     },
     savedJobDescription: {
       findMany: jest.fn(),

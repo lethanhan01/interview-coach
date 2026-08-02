@@ -38,7 +38,7 @@ SMTP_PORT=587
 SMTP_USER=
 SMTP_PASSWORD=
 SMTP_FROM=
-PASSWORD_RESET_URL=http://localhost:5173/reset-password
+PASSWORD_RESET_OTP_TTL_MINUTES=30
 
 DATABASE_URL=
 DIRECT_URL=
@@ -117,12 +117,13 @@ Lệnh này gọi `GET /api/v1` và `GET /health`. Nếu DB hoặc Redis chưa s
 | `npm run db:verify:pre`              | Kiểm tra anomaly trước khi siết constraint/index raw SQL                                         |
 | `npm run db:verify`                  | Kiểm tra RLS/policies/trigger/constraint/index sau khi apply raw SQL                             |
 | `npm run db:prepare-db-push-raw-sql` | Tạm gỡ raw constraint mà Prisma `db push` không quản lý, trước khi apply lại bằng `db:apply-sql` |
+| `npm run db:sync:prebackup`          | Pha an toàn: thêm cột/bảng mới và backfill, không drop dữ liệu cũ                                 |
 | `npm run db:sync:full`               | Flow đầy đủ: validate → verify pre → generate → prepare → db push → apply raw SQL → verify       |
 | `npm run seed`                       | Seed dữ liệu mẫu (question bank, ...)                                                            |
 
 ---
 
-## Đồng bộ database schema (`db:sync:full`)
+## Đồng bộ database schema
 
 > Production safety: `db:sync*`, `db:apply-sql`, `db:migrate-role`, and `seed` are blocked when `NODE_ENV=production`. Use reviewed migrations and a backup/PITR runbook instead.
 
@@ -143,9 +144,19 @@ Chạy khi:
 - Cần chuẩn bị unique constraint cho `user_answers`
 - Cần apply lại raw SQL trong `prisma/migrations/migration.sql` sau `prisma db push`
 
+Pha an toàn trước backup:
+
+```powershell
+npm run db:sync:prebackup
+```
+
+Pha cleanup sau khi đã backup DB thật:
+
 ```powershell
 npm run db:sync:full
 ```
+
+Trước khi chạy pha cleanup, set `DB_BACKUP_CONFIRMED=true`.
 
 Lệnh thực hiện: `db:validate` → `db:verify:pre` → `prisma generate` → `db:prepare-user-answer-unique` → `db:prepare-db-push-raw-sql` → `prisma db push` → `db:apply-sql` → `db:verify`.
 

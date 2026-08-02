@@ -1,9 +1,10 @@
-import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterDto {
   @IsEmail() email: string;
   @IsString() @MinLength(12) @MaxLength(128) password: string;
-  @IsOptional() @IsString() @MaxLength(200) fullName?: string;
+  @IsString() @MaxLength(100) @Matches(/\S/, { message: 'firstname must not be blank' }) firstname: string;
+  @IsString() @MaxLength(100) @Matches(/\S/, { message: 'lastname must not be blank' }) lastname: string;
 }
 
 export class LoginDto {
@@ -21,6 +22,7 @@ export class PasswordResetRequestDto {
 }
 
 export class PasswordResetConfirmDto {
-  @IsString() token: string;
+  @IsEmail() email: string;
+  @IsString() code: string;
   @IsString() @MinLength(12) @MaxLength(128) newPassword: string;
 }

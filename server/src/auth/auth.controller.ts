@@ -16,7 +16,7 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() body: RegisterDto, @Res({ passthrough: true }) response: Response) {
-    const result = await this.authService.register(body.email, body.password, body.fullName);
+    const result = await this.authService.register(body.email, body.password, body.firstname, body.lastname);
     this.setCookie(response, result.token);
     return { success: true, data: this.publicUser(result.user) };
   }
@@ -65,7 +65,7 @@ export class AuthController {
     @Body() body: PasswordResetConfirmDto,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const result = await this.authService.resetPassword(body.token, body.newPassword);
+    const result = await this.authService.resetPassword(body.email, body.code, body.newPassword);
     this.setCookie(response, result.token);
     return { success: true, data: this.publicUser(result.user) };
   }
@@ -84,7 +84,21 @@ export class AuthController {
     };
   }
 
-  private publicUser(user: { id: string; email: string; role: string; status: string }) {
-    return { id: user.id, email: user.email, role: user.role, status: user.status };
+  private publicUser(user: {
+    id: string;
+    email: string;
+    role: string;
+    status: string;
+    firstname: string | null;
+    lastname: string | null;
+  }) {
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      firstname: user.firstname,
+      lastname: user.lastname,
+    };
   }
 }

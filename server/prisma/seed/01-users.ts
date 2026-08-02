@@ -3,43 +3,70 @@ import { randomUUID } from 'node:crypto';
 import { hashPassword } from '../../src/auth/password';
 import { DEMO_EMAIL, DEMO_PASSWORD } from './_client';
 
-export async function getOrCreateDemoUser(prisma: PrismaClient): Promise<string> {
-  const passwordHash = await hashPassword(DEMO_PASSWORD);
-  const user = await prisma.user.upsert({
-    where: { email: DEMO_EMAIL },
-    create: {
-      id: randomUUID(), email: DEMO_EMAIL, passwordHash, passwordUpdatedAt: new Date(),
-      role: UserRole.user, status: AccountStatus.active,
-    },
-    update: { status: AccountStatus.active },
-  });
-  return user.id;
-}
+const DEMO_ACCOUNTS = [
+  {
+    email: DEMO_EMAIL,
+    firstname: 'Lê Thành',
+    lastname: 'An',
+    role: UserRole.candidate,
+  },
+  {
+    email: 'hungletai@gmail.com',
+    firstname: 'Admin',
+    lastname: 'đẹp trai',
+    role: UserRole.admin,
+  },
+] as const;
 
-export async function getOrCreateAdminUser(prisma: PrismaClient): Promise<string | undefined> {
-  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  const password = process.env.ADMIN_PASSWORD;
-  if (!email && !password) return undefined;
-  if (!email || !password) throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD must be configured together');
-  const user = await prisma.user.upsert({
-    where: { email },
-    create: {
-      id: randomUUID(), email, passwordHash: await hashPassword(password), passwordUpdatedAt: new Date(),
-      role: UserRole.admin, status: AccountStatus.active,
-    },
-    update: {
-      passwordHash: await hashPassword(password), passwordUpdatedAt: new Date(), role: UserRole.admin,
-      status: AccountStatus.active, tokenVersion: { increment: 1 },
-    },
+export async function seedDemoUsers(prisma: PrismaClient): Promise<string> {
+  const passwordHashes = await Promise.all(DEMO_ACCOUNTS.map(() => hashPassword(DEMO_PASSWORD)));
+
+  return prisma.$transaction(async (tx) => {
+    let demoUserId = '';
+
+    for (const [index, account] of DEMO_ACCOUNTS.entries()) {
+      const user = await tx.user.upsert({
+        where: { email: account.email },
+        create: {
+          id: randomUUID(),
+          email: account.email,
+          firstname: account.firstname,
+          lastname: account.lastname,
+          passwordHash: passwordHashes[index],
+          role: account.role,
+          status: AccountStatus.active,
+        },
+        update: {
+          firstname: account.firstname,
+          lastname: account.lastname,
+          passwordHash: passwordHashes[index],
+          role: account.role,
+          status: AccountStatus.active,
+          tokenVersion: { increment: 1 },
+        },
+      });
+      await tx.userVerificationCode.deleteMany({
+        where: { userId: user.id, purpose: 'password_reset_otp' },
+      });
+      if (account.email === DEMO_EMAIL) demoUserId = user.id;
+    }
+
+    return demoUserId;
   });
-  console.log(`admin user: ready (${user.id})`);
-  return user.id;
 }
 
 export async function seedUserProfile(prisma: PrismaClient, userId: string): Promise<void> {
   await prisma.userProfile.upsert({
     where: { userId },
-    create: { userId, fullName: 'Nguyễn Văn Demo', education: {}, workExperience: [], projects: [], technicalSkills: [], certifications: [], awards: [] },
+    create: {
+      userId,
+      education: {},
+      workExperience: [],
+      projects: [],
+      technicalSkills: [],
+      certifications: [],
+      awards: [],
+    },
     update: {},
   });
 }
