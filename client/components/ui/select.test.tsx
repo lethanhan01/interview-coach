@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './select'
+} from './Select'
 import { axe } from 'jest-axe'
 import { vi, beforeAll } from 'vitest'
 

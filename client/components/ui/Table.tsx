@@ -92,7 +92,7 @@ TableHead.displayName = 'TableHead'
 
 const TableCell = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  React.HTMLAttributes<HTMLDivElement> & { colSpan?: number }
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}

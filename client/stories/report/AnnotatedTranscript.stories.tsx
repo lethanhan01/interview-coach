@@ -8,7 +8,6 @@ const meta: Meta<typeof AnnotatedTranscript> = {
   args: {
     items: [
       {
-        id: '1',
         orderIndex: 1,
         questionText: 'Bạn hãy giới thiệu về bản thân?',
         answerText: 'Tôi là một lập trình viên có 2 năm kinh nghiệm...',
@@ -16,6 +15,7 @@ const meta: Meta<typeof AnnotatedTranscript> = {
         modelAnswer: 'Một câu trả lời tốt nên bắt đầu bằng...',
         keyTakeaway: 'Nên tập trung vào kinh nghiệm liên quan nhất.',
         skipped: false,
+        isFallback: false,
         segments: [
           {
             id: 's1',

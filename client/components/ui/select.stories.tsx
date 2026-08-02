@@ -8,7 +8,7 @@ import {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-} from './select'
+} from './Select'
 
 const meta: Meta<typeof Select> = {
   title: 'UI/Inputs/Select',

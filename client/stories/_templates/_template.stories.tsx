@@ -3,7 +3,14 @@ import type { HTMLAttributes } from 'react'
 // import { ComponentName } from '@/components/ui/ComponentName';
 
 // Giả lập ComponentName để tránh lỗi khi template chưa có component thực
-const ComponentName = (props: HTMLAttributes<HTMLDivElement>) => (
+type ComponentNameProps = HTMLAttributes<HTMLDivElement> & {
+  variant?: string
+  size?: string
+  disabled?: boolean
+  isLoading?: boolean
+}
+
+const ComponentName = (props: ComponentNameProps) => (
   <div {...props}>Placeholder Component</div>
 )
 

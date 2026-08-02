@@ -23,6 +23,9 @@ const frameworks = [
 ]
 
 export const Default: Story = {
+  args: {
+    options: frameworks,
+  },
   render: () => {
     const [value, setValue] = useState('')
     return (
