@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getSafeNext } from '@/lib/auth-redirect'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function LoginForm() {
   const router = useRouter()
@@ -15,14 +16,25 @@ export default function LoginForm() {
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const { refresh } = useAuth()
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setLoading(true); setMessage(null)
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'}/auth/login`, {
       method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }),
     })
     const result = await response.json().catch(() => null)
-    if (!response.ok) setMessage(result?.message ?? 'Không thể đăng nhập')
-    else router.replace(next)
+    if (!response.ok) {
+      setMessage(result?.message ?? 'Không thể đăng nhập')
+    } else {
+      const role = await refresh()
+      const rawNext = searchParams.get('next')
+      // If user had no explicit valid next parameter, redirect based on role
+      if (!rawNext || !rawNext.startsWith('/')) {
+        router.replace(role === 'admin' ? '/admin-dashboard' : '/sessions')
+      } else {
+        router.replace(next)
+      }
+    }
     setLoading(false)
   }
   return <form onSubmit={submit} className="mx-auto mt-16 max-w-md space-y-4 rounded-xl bg-surface p-6 shadow-card">

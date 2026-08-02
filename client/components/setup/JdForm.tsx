@@ -5,7 +5,7 @@ import { X } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
-import type { JdFormData } from '@/app/(dashboard)/setup/page'
+import type { JdFormData } from '@/app/(candidate)/setup/page'
 import type { SavedJobDescription } from '@/lib/types'
 import {
   BONUS_OPTIONS,

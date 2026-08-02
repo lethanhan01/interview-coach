@@ -1,16 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { apiClient } from '@/lib/api-client'
 
 type AdminUser = { id: string; email: string; role: string; status: string; createdAt: string }
 
 export default function AdminUsersPage() {
-  const { role, isLoading } = useAuth(); const router = useRouter(); const [users, setUsers] = useState<AdminUser[]>([]); const [error, setError] = useState('')
+  const { role, isLoading } = useAuth(); const [users, setUsers] = useState<AdminUser[]>([]); const [error, setError] = useState('')
   const load = async () => { try { const result = await apiClient.get<{ data: AdminUser[] }>('/admin/users'); setUsers(result.data) } catch (e) { setError(e instanceof Error ? e.message : 'Không thể tải users') } }
-  useEffect(() => { if (!isLoading && role !== 'admin') router.replace('/sessions'); if (role === 'admin') void load() }, [role, isLoading, router])
+  useEffect(() => { if (!isLoading && role === 'admin') void load() }, [role, isLoading])
   const change = async (id: string, status: string, remove = false) => {
     if (remove && !confirm('Xóa mềm tài khoản này?')) return
     try {

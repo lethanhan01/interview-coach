@@ -1,7 +1,7 @@
 import type { SessionType, ContextPack } from '@/lib/types'
 
-import type { JdFormData, InterviewDuration } from '@/app/(dashboard)/setup/page'
-import { DURATION_OPTIONS } from '@/app/(dashboard)/setup/page'
+import type { JdFormData, InterviewDuration } from '@/app/(candidate)/setup/page'
+import { DURATION_OPTIONS } from '@/app/(candidate)/setup/page'
 import { getJdLevelLabel } from '@/lib/interview-options'
 
 const SESSION_TYPE_LABELS: Record<SessionType, string> = {

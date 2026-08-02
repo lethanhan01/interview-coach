@@ -1,0 +1,32 @@
+import Link from 'next/link'
+import NavLinks from '@/components/ui/NavLinks'
+import LogoutButton from '@/components/ui/LogoutButton'
+import RoleGuard from '@/components/auth/RoleGuard'
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <RoleGuard allowedRole="candidate" fallbackRoute="/admin-dashboard">
+      <div className="min-h-screen bg-surface-raised">
+        <header className="sticky top-0 z-40 border-b border-border/40 bg-surface-overlay backdrop-blur-md">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <Link
+              href="/sessions"
+              className="font-semibold text-base text-brand tracking-tight hover:text-brand-light transition-colors"
+            >
+              AI Mock Interview
+            </Link>
+
+            <div className="flex items-center gap-1">
+              <NavLinks />
+              <LogoutButton />
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+          {children}
+        </main>
+      </div>
+    </RoleGuard>
+  )
+}
