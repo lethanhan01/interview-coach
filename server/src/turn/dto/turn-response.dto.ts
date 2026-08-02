@@ -1,5 +1,6 @@
+import { ApiProperty } from '@nestjs/swagger';
 export class TurnResponseDto {
-  answerId: string;
-  feedbackQueued: boolean;
-  transcriptionPending: boolean;
+  @ApiProperty({ format: 'uuid' }) answerId: string;
+  @ApiProperty() feedbackQueued: boolean;
+  @ApiProperty() transcriptionPending: boolean;
 }

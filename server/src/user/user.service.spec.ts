@@ -13,7 +13,9 @@ describe('UserService', () => {
   const BASE_USER = {
     id: 'user-123',
     email: 'test@example.com',
-    role: 'user',
+    firstname: null,
+    lastname: null,
+    role: 'candidate',
     status: 'active',
     createdAt: new Date(),
     profile: null,
@@ -50,7 +52,6 @@ describe('UserService', () => {
         ...BASE_USER,
         profile: {
           userId: 'user-123',
-          fullName: 'Nguyen Van A',
           education: { school: 'HUST' },
           workExperience: [],
           projects: [],
@@ -88,7 +89,8 @@ describe('UserService', () => {
   describe('upsertProfile', () => {
     it('upsert truc tiep profile va 6 nhom CV vao user_profiles', async () => {
       const dto = {
-        fullName: 'Nguyen Van A',
+        firstname: 'Nguyen',
+        lastname: 'Van A',
         education: { school: 'HUST' },
         technicalSkills: [{ name: 'TypeScript' }],
         certifications: [],
@@ -99,16 +101,32 @@ describe('UserService', () => {
 
       await service.upsertProfile('user-123', dto);
 
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+        data: { firstname: 'Nguyen', lastname: 'Van A' },
+      });
       expect(mockPrisma.userProfile.upsert).toHaveBeenCalledWith({
         where: { userId: 'user-123' },
-        create: { ...dto, userId: 'user-123' },
-        update: dto,
+        create: {
+          education: { school: 'HUST' },
+          technicalSkills: [{ name: 'TypeScript' }],
+          certifications: [],
+          awards: [],
+          userId: 'user-123',
+        },
+        update: {
+          education: { school: 'HUST' },
+          technicalSkills: [{ name: 'TypeScript' }],
+          certifications: [],
+          awards: [],
+        },
       });
     });
 
     it('loai undefined de PATCH tung phan khong ghi de field khong gui', async () => {
       const dto = {
-        fullName: 'Nguyen Van A',
+        firstname: 'Nguyen',
+        lastname: 'Van A',
         education: undefined,
         technicalSkills: [{ name: 'Go' }],
       };
@@ -117,8 +135,11 @@ describe('UserService', () => {
 
       await service.upsertProfile('user-123', dto);
 
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+        data: { firstname: 'Nguyen', lastname: 'Van A' },
+      });
       const expectedPatch = {
-        fullName: 'Nguyen Van A',
         technicalSkills: [{ name: 'Go' }],
       };
       expect(mockPrisma.userProfile.upsert).toHaveBeenCalledWith({

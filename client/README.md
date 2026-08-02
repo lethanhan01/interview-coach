@@ -21,7 +21,7 @@ Từ thư mục `client/`:
 npm install
 ```
 
-Tạo `.env.local` và điền:
+Tạo `.env.local` và điền (frontend sẽ không khởi động nếu thiếu các biến này):
 
 ```env
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api/v1
@@ -61,13 +61,17 @@ NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1
 
 ## Các lệnh thường dùng
 
-| Lệnh | Mục đích |
-|------|----------|
-| `npm run dev` | Chạy dev server (port 5173) |
-| `npm run build` | Build production |
-| `npm run lint` | Chạy ESLint |
-| `npm run test:e2e` | Chạy Playwright E2E tests |
+| Lệnh                  | Mục đích                           |
+| --------------------- | ---------------------------------- |
+| `npm run dev`         | Chạy dev server (port 5173)        |
+| `npm run build`       | Build production                   |
+| `npm run lint`        | Chạy ESLint                        |
+| `npm run test:e2e`    | Chạy Playwright E2E tests          |
 | `npm run test:e2e:ui` | Playwright với giao diện tương tác |
+
+## Kiểm thử xác thực tích hợp
+
+Đặt `E2E_TEST_EMAIL` và `E2E_TEST_PASSWORD` cho một tài khoản đã seed trong `public.users`, rồi chạy Playwright.
 
 ---
 
@@ -76,7 +80,6 @@ NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1
 ```
 app/
   (auth)/login/        — Trang đăng nhập
-  (auth)/callback/     — Callback redirect path
   (app)/sessions/      — Danh sách phiên, interview, report
   (app)/setup/         — Tạo phiên mới
   (app)/profile/       — Hồ sơ người dùng
@@ -86,7 +89,7 @@ components/
 lib/
   api-client.ts        — HTTP client gọi NestJS backend
   types.ts             — Shared TypeScript types
-middleware.ts          — Next.js middleware
+proxy.ts               — Next.js Proxy cho auth và redirect
 ```
 
 ---

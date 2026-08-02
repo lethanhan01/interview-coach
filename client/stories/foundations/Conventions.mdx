@@ -1,0 +1,153 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Foundations/Conventions" />
+
+# UI Component Conventions (Quy chuẩn Sinh & Sáng tạo UI)
+
+Tài liệu này định nghĩa bộ quy tắc bắt buộc áp dụng đối với **Developer** và **AI Assistant** khi tạo mới, tinh chỉnh hoặc tái cấu trúc các giao diện Frontend trong dự án **Interview Coach**.
+
+---
+
+## 1. Tổng quan & Mục đích
+
+Nhằm duy trì tính nhất quán về mặt thị giác, tối ưu hiệu năng của Tailwind CSS JIT Compiler, và tránh nợ kỹ thuật (technical debt), tất cả mã nguồn UI phải tuân thủ nghiêm ngặt **5 bộ quy tắc chuẩn hóa** dưới đây.
+
+---
+
+## 2. Các Quy chuẩn Cốt lõi (Core Rules)
+
+### Quy tắc 1: Component Reusability (Tái sử dụng UI Primitives)
+
+Luôn ưu tiên tái sử dụng các components chung (`@/components/ui/*`) thay vì tự tạo lại các thẻ HTML thuần kèm Tailwind classes lặp đi lặp lại trên nhiều trang.
+
+#### ❌ KHÔNG ĐƯỢC LÀM (DON'T)
+Tự viết thẻ HTML thuần kèm các class định dạng cơ bản ở nhiều trang khác nhau:
+```tsx
+// Trang Candidate Dashboard
+<button className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+  Save
+</button>
+
+// Trang Session Detail (Viết lại lặp đi lặp lại)
+<button className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white">
+  Save
+</button>
+```
+
+#### ✅ NÊN LÀM (DO)
+Tái sử dụng UI Primitive component đã được chuẩn hóa từ `@/components/ui/Button`:
+```tsx
+import { Button } from '@/components/ui/Button'
+
+<Button variant="primary" size="md">
+  Save
+</Button>
+```
+
+---
+
+### Quy tắc 2: Safe Dynamic Styling (An toàn khi xử lý Style động)
+
+Nghiêm cấm việc nối chuỗi dynamic class trong Tailwind CSS. Tailwind JIT compiler sẽ không thể phát hiện các class tạo ra từ việc ghép chuỗi động (`bg-${color}-500`), dẫn đến class bị thiếu khi build sản phẩm.
+
+#### ❌ KHÔNG ĐƯỢC LÀM (DON'T)
+Ghép chuỗi class động trong template literal:
+```tsx
+// ⚠️ Tệp build sẽ KHÔNG bao gồm các class này vì JIT compiler không scan được string interpolation!
+<div className={`bg-${color}-500 text-${color}-900`} />
+```
+
+#### ✅ NÊN LÀM (DO)
+Định nghĩa sẵn Lookup Object chứa class đầy đủ hoặc dùng `cva` (Class Variance Authority):
+```tsx
+const badgeVariants = {
+  success: "bg-success text-success-foreground",
+  warning: "bg-warning text-warning-foreground",
+  destructive: "bg-destructive text-destructive-foreground",
+  info: "bg-primary/10 text-primary",
+} as const;
+
+type BadgeStatus = keyof typeof badgeVariants;
+
+function StatusBadge({ status }: { status: BadgeStatus }) {
+  return <div className={badgeVariants[status]} />;
+}
+```
+
+---
+
+### Quy tắc 3: Design Tokens & No Arbitrary Values (Cấm hardcode Magic Values)
+
+Toàn bộ kích thước, màu sắc, khoảng cách và bo góc phải tuân theo hệ thống Design Tokens (Spacing, Radius, Colors, Typography).
+
+#### ❌ KHÔNG ĐƯỢC LÀM (DON'T)
+Dùng arbitrary bracket values như `h-[43px]`, `rounded-[11px]`, `bg-[#1769ff]` ngẫu nhiên:
+```tsx
+<Button className="h-[43px] rounded-[11px] bg-[#1769ff] p-[13px]" />
+```
+
+#### ✅ NÊN LÀM (DO)
+Dùng tokens tiêu chuẩn qua các props `size`, `variant`:
+```tsx
+<Button size="md" variant="primary" />
+```
+
+#### ⚠️ Quy định về Ngoại lệ (Design Exception Protocol)
+Trường hợp đặc biệt bắt buộc phải sử dụng Arbitrary values (ví dụ: khớp chính xác tỉ lệ khung hình của canvas SVG hoặc iframe bên thứ ba), mã nguồn **bắt buộc phải kèm theo comment giải thích lý do thiết kế**:
+```tsx
+// Design Exception: Cố định kích thước khung xem Audio Visualizer theo thông số SVG
+<div className="h-[180px] w-[320px] shrink-0" />
+```
+
+---
+
+### Quy tắc 4: Component Structure & Class Merging (Cấu trúc & Merge Class)
+
+Tất cả UI components phải hỗ trợ prop `className` và hợp nhất class an toàn bằng utility `cn()` từ `@/lib/utils` (kết hợp `clsx` và `tailwind-merge`).
+
+#### ❌ KHÔNG ĐƯỢC LÀM (DON'T)
+Ghi đè hoặc nối `className` thủ công khiến trùng lặp class CSS:
+```tsx
+function CustomCard({ className }: { className?: string }) {
+  // Trùng lặp class "p-4" và "p-6" nếu className truyền vào có "p-6"
+  return <div className={`p-4 bg-card ${className}`} />;
+}
+```
+
+#### ✅ NÊN LÀM (DO)
+Sử dụng `cn()` để ghi đè class an toàn và đúng thứ tự ưu tiên:
+```tsx
+import { cn } from '@/lib/utils'
+
+function CustomCard({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <div className={cn("rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm", className)}>
+      {children}
+    </div>
+  );
+}
+```
+
+---
+
+### Quy tắc 5: Interactive & Accessibility States (Trạng thái tương tác & Hỗ trợ truy cập)
+
+Các phần tử tương tác (Button, Input, Select, Switch) phải đáp ứng đầy đủ các trạng thái người dùng và hỗ trợ accessibility (WCAG).
+
+#### ✅ NÊN LÀM (DO)
+- **Focus Ring**: Luôn có `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`.
+- **Disabled**: Cấu hình `disabled:opacity-50 disabled:pointer-events-none`.
+- **Loading State**: Trạng thái loading phải kèm hiệu ứng mờ nhạt và khóa bấm `aria-disabled="true"`.
+- **Contrast**: Luôn kiểm tra màu văn bản và màu nền đạt tỉ lệ tương phản tối thiểu 4.5:1.
+
+---
+
+## 3. Checklist Kiểm tra dành cho Developer & AI
+
+Trước khi commit mã nguồn hoặc tạo Pull Request, hãy kiểm tra danh sách sau:
+
+- [ ] 1. Đã kiểm tra thư viện `@/components/ui/` xem có component tương đương chưa trước khi tự viết thẻ HTML thuần?
+- [ ] 2. Không sử dụng string interpolation dạng `` `bg-${val}` `` cho Tailwind classes?
+- [ ] 3. Đã loại bỏ toàn bộ arbitrary values (`px-[...]`, `bg-[#...]`) hoặc đã ghi comment lý do thiết kế nếu là ngoại lệ?
+- [ ] 4. Đã bọc `className` qua utility `cn()`?
+- [ ] 5. Đã hỗ trợ đầy đủ `hover`, `focus-visible`, `disabled` và `dark:` mode?

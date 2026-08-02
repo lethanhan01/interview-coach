@@ -65,7 +65,10 @@ describe('SessionController', () => {
       const result = await controller.findAll(mockReq());
 
       expect(result).toEqual({ sessions });
-      expect(mockSessionService.findAll).toHaveBeenCalledWith('user-abc');
+      expect(mockSessionService.findAll).toHaveBeenCalledWith(
+        'user-abc',
+        undefined,
+      );
     });
   });
 
@@ -80,6 +83,7 @@ describe('SessionController', () => {
       expect(mockSessionService.findById).toHaveBeenCalledWith(
         'session-1',
         'user-abc',
+        undefined,
       );
     });
   });

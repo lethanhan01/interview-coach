@@ -1,0 +1,37 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Design System/Giới thiệu (Introduction)" />
+
+# Kiến trúc Design System
+
+Hệ thống Design System của dự án được xây dựng dựa trên mô hình kiến trúc phân tầng 5 lớp (5-Layer Architecture), phân tách rõ ràng trách nhiệm của từng thành phần. Điều này giúp ngăn chặn tình trạng coupling (phụ thuộc chặt chẽ) giữa logic giao diện và logic nghiệp vụ, đồng thời Storybook đóng vai trò là "Single Source of Truth" (Nguồn chân lý duy nhất).
+
+## 5 Tầng Kiến Trúc
+
+1. **Design Tokens**: Các giá trị thiết kế nguyên thủy (core visual values) dưới dạng biến CSS (`--color-brand`, `--shadow-card`).
+2. **UI Primitives**: Thành phần mức thấp nhất (`Button`, `Input`). Tính tái sử dụng tuyệt đối.
+3. **Common Components**: Thành phần ghép từ UI Primitives (`ConfirmDialog`, `Card`). Không chứa business logic.
+4. **Application Patterns**: Mẫu giao diện lặp lại (`PageHeader`, `DataTable`).
+5. **Feature Components**: (Không lưu trong Storybook) Các thành phần gắn chặt với logic nghiệp vụ.
+
+## Import Conventions (Quy tắc Import)
+
+Luồng phụ thuộc **luôn đi từ trên xuống dưới hoặc nằm trên cùng một tầng**. Tuyệt đối KHÔNG import tầng cao vào tầng thấp hơn.
+
+- `Application Patterns` có thể import `Common`, `Primitives`, `Tokens`.
+- `Common Components` có thể import `Primitives`, `Tokens`.
+- `UI Primitives` chỉ sử dụng `Tokens`.
+
+## Hướng dẫn Phát triển Component Mới
+
+1. **Xác định Tầng (Layer)**: Component của bạn thuộc UI Primitives, hay Common?
+2. **Viết Documentation chuẩn 15 tiêu chí**: Storybook được cấu hình để hiển thị đầy đủ _Khi nào nên dùng_, _Khi nào không nên dùng_, _Accessibility_. Hãy sử dụng `parameters.docs` trong file `*.stories.tsx`.
+3. **Kiểm tra Viewport và Theme**: Sử dụng Toolbar phía trên để test các breakpoints của Tailwind (sm -> 2xl) và Dark Mode.
+
+### Cách đề xuất Variant (Biến thể)
+
+Để thêm một kích thước hoặc màu sắc mới vào Component, hãy tạo PR và đính kèm screenshots/video từ Storybook chứng minh Variant này hoạt động tốt với cả Light/Dark theme.
+
+### Báo lỗi Design System
+
+Nếu phát hiện lỗi giao diện (CSS bị vỡ, sai màu trong Dark theme), hãy tạo Ticket trên hệ thống tracking với tiền tố `[DS-Bug] ComponentName:` kèm link tới Storybook story hiện tại bị lỗi.

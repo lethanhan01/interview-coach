@@ -1,6 +1,9 @@
 import type { SessionType, ContextPack } from '@/lib/types'
-import type { JdFormData, InterviewDuration } from '@/app/(app)/setup/page'
-import { DURATION_OPTIONS } from '@/app/(app)/setup/page'
+import {
+  type JdFormData,
+  type InterviewDuration,
+  DURATION_OPTIONS,
+} from '@/lib/setup-types'
 import { getJdLevelLabel } from '@/lib/interview-options'
 
 const SESSION_TYPE_LABELS: Record<SessionType, string> = {
@@ -16,18 +19,28 @@ const CONTEXT_PACK_LABELS: Record<ContextPack, string> = {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-4 border-b border-brand-200/50 py-2 last:border-0">
-      <span className="shrink-0 text-ink-muted">{label}</span>
-      <span className="text-right font-medium text-ink">{value}</span>
+    <div className="border-brand-200/50 flex justify-between gap-4 border-b py-2 last:border-0">
+      <span className="text-ink-muted shrink-0">{label}</span>
+      <span className="text-ink text-right font-medium">{value}</span>
     </div>
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string
+  children: React.ReactNode
+}) {
   return (
     <div>
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">{title}</p>
-      <div className="rounded-2xl border border-brand-200 bg-brand-50 px-5 text-sm">{children}</div>
+      <p className="text-ink-faint mb-2 text-xs font-semibold uppercase tracking-wide">
+        {title}
+      </p>
+      <div className="border-brand-subtle-border bg-brand-subtle rounded-2xl border overflow-hidden px-5 py-4 text-sm">
+        {children}
+      </div>
     </div>
   )
 }
@@ -58,16 +71,20 @@ export default function ConfirmStep({
         <Row label="Level yêu cầu" value={getJdLevelLabel(jd.level)} />
         {jd.headcount && <Row label="Số lượng tuyển" value={jd.headcount} />}
         {jd.location && <Row label="Địa điểm" value={jd.location} />}
-        {jd.techStack.length > 0 && <Row label="Tech Stack" value={jd.techStack.join(', ')} />}
+        {jd.techStack.length > 0 && (
+          <Row label="Tech Stack" value={jd.techStack.join(', ')} />
+        )}
         {jd.salary && <Row label="Lương" value={jd.salary} />}
         {jd.bonus && <Row label="Thưởng" value={jd.bonus} />}
-        <div className="border-b border-brand-200/50 py-2">
+        <div className="border-brand-200/50 border-b py-2">
           <p className="text-ink-muted">Yêu cầu</p>
-          <p className="mt-1 line-clamp-3 text-sm text-ink">{jd.requirements}</p>
+          <p className="text-ink mt-1 line-clamp-3 text-sm">
+            {jd.requirements}
+          </p>
         </div>
         <div className="py-2">
           <p className="text-ink-muted">Nội dung công việc</p>
-          <p className="mt-1 line-clamp-3 text-sm text-ink">{jd.jobContent}</p>
+          <p className="text-ink mt-1 line-clamp-3 text-sm">{jd.jobContent}</p>
         </div>
       </Section>
 
@@ -75,10 +92,13 @@ export default function ConfirmStep({
         <Row label="Loại phỏng vấn" value={SESSION_TYPE_LABELS[sessionType]} />
         <Row label="Context Pack" value={CONTEXT_PACK_LABELS[contextPack]} />
         <Row label="Thời gian phỏng vấn" value={durationOpt.label} />
-        <Row label="Số câu hỏi dự kiến" value={`${durationOpt.numQuestions} câu`} />
+        <Row
+          label="Số câu hỏi dự kiến"
+          value={`${durationOpt.numQuestions} câu`}
+        />
       </Section>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-danger text-sm">{error}</p>}
     </div>
   )
 }

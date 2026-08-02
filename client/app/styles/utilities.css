@@ -1,0 +1,5 @@
+@layer utilities {
+  .focus-ring {
+    @apply ring-focus ring-offset-background outline-none ring-2 ring-offset-2;
+  }
+}

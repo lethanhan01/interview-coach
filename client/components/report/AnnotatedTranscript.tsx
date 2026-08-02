@@ -1,15 +1,15 @@
-import { TranscriptItem, AnnotatedSegment, type SessionType } from "@/lib/types";
-import { getRubricHint } from "@/lib/rubric-config";
+import { TranscriptItem, AnnotatedSegment, type SessionType } from '@/lib/types'
+import { getRubricHint } from '@/lib/rubric-config'
 
 function isStrengthSegment(segment: AnnotatedSegment) {
-  const level = segment.highlightLevel.toLowerCase();
-  return level === "strength" || level === "good";
+  const level = segment.highlightLevel.toLowerCase()
+  return level === 'strength' || level === 'good'
 }
 
 function getSegmentQuote(answerText: string, segment: AnnotatedSegment) {
-  const explicitQuote = segment.segmentText?.trim();
+  const explicitQuote = segment.segmentText?.trim()
   if (explicitQuote && answerText.includes(explicitQuote)) {
-    return explicitQuote;
+    return explicitQuote
   }
 
   const hasValidRange =
@@ -17,11 +17,11 @@ function getSegmentQuote(answerText: string, segment: AnnotatedSegment) {
     Number.isInteger(segment.endIndex) &&
     segment.startIndex >= 0 &&
     segment.endIndex > segment.startIndex &&
-    segment.endIndex <= answerText.length;
+    segment.endIndex <= answerText.length
 
   return hasValidRange
     ? answerText.slice(segment.startIndex, segment.endIndex).trim()
-    : "";
+    : ''
 }
 
 function FeedbackSection({
@@ -29,18 +29,18 @@ function FeedbackSection({
   segments,
   answerText,
 }: {
-  title: string;
-  segments: AnnotatedSegment[];
-  answerText: string;
+  title: string
+  segments: AnnotatedSegment[]
+  answerText: string
 }) {
-  if (segments.length === 0) return null;
+  if (segments.length === 0) return null
 
   return (
     <section className="flex flex-col gap-2.5">
       <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
       <ul className="flex flex-col gap-3">
         {segments.map((seg) => {
-          const quote = getSegmentQuote(answerText, seg);
+          const quote = getSegmentQuote(answerText, seg)
 
           return (
             <li
@@ -64,18 +64,18 @@ function FeedbackSection({
                 </p>
               )}
             </li>
-          );
+          )
         })}
       </ul>
     </section>
-  );
+  )
 }
 
 interface AnnotatedTranscriptProps {
-  items: TranscriptItem[];
-  contextPackId?: "VN" | "Western";
-  sessionType?: SessionType;
-  rubricHint?: string;
+  items: TranscriptItem[]
+  contextPackId?: 'VN' | 'Western'
+  sessionType?: SessionType
+  rubricHint?: string
 }
 
 export default function AnnotatedTranscript({
@@ -87,10 +87,10 @@ export default function AnnotatedTranscript({
   return (
     <div className="flex flex-col gap-8">
       {items.map((item) => {
-        const strengthSegments = item.segments.filter(isStrengthSegment);
+        const strengthSegments = item.segments.filter(isStrengthSegment)
         const improvementSegments = item.segments.filter(
-          (segment) => !isStrengthSegment(segment),
-        );
+          (segment) => !isStrengthSegment(segment)
+        )
 
         return (
           <div
@@ -101,25 +101,31 @@ export default function AnnotatedTranscript({
               <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                 Câu {item.orderIndex}
               </p>
-              <span className="text-xs font-semibold text-brand">
+              <span className="text-brand text-xs font-semibold">
                 {item.overallScore == null
-                  ? "Chưa thể chấm"
+                  ? 'Chưa thể chấm'
                   : `${item.overallScore.toFixed(1)} / 100`}
               </span>
             </div>
 
             {item.appliedDimensions && item.appliedDimensions.length > 0 ? (
               <div className="mb-3">
-                <p className="mb-1.5 text-xs font-medium text-gray-400">Tiêu chí áp dụng</p>
+                <p className="mb-1.5 text-xs font-medium text-gray-400">
+                  Tiêu chí áp dụng
+                </p>
                 <div className="flex flex-col gap-1.5">
                   {item.appliedDimensions.map((dim) => (
                     <div key={dim.id} className="flex items-center gap-3">
-                      <div className="w-44 shrink-0 truncate text-xs text-gray-600">{dim.name}</div>
+                      <div className="w-44 shrink-0 truncate text-xs text-gray-600">
+                        {dim.name}
+                      </div>
                       <div className="flex-1">
                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
                           <div
-                            className="h-full rounded-full bg-brand"
-                            style={{ width: `${Math.min(100, Math.max(0, dim.score))}%` }}
+                            className="bg-brand h-full rounded-full"
+                            style={{
+                              width: `${Math.min(100, Math.max(0, dim.score))}%`,
+                            }}
                           />
                         </div>
                       </div>
@@ -135,7 +141,10 @@ export default function AnnotatedTranscript({
                 <p className="mb-3 text-xs text-gray-400">
                   Tiêu chí đánh giá:{' '}
                   {rubricHint ??
-                    getRubricHint(contextPackId as 'VN' | 'Western', sessionType as SessionType)}
+                    getRubricHint(
+                      contextPackId as 'VN' | 'Western',
+                      sessionType as SessionType
+                    )}
                 </p>
               )
             )}
@@ -155,7 +164,7 @@ export default function AnnotatedTranscript({
             )}
 
             {!item.skipped && item.keyTakeaway && (
-              <div className="mb-4 rounded-lg border-l-2 border-brand bg-brand-50 px-4 py-2.5 text-sm text-ink">
+              <div className="border-brand bg-brand-subtle text-ink mb-4 rounded-lg border-l-2 px-4 py-2.5 text-sm">
                 <span className="font-medium">Điểm chú ý: </span>
                 {item.keyTakeaway}
               </div>
@@ -178,17 +187,17 @@ export default function AnnotatedTranscript({
 
             {item.modelAnswer && (
               <details className="group">
-                <summary className="cursor-pointer list-none text-xs font-medium uppercase tracking-wide text-brand hover:opacity-80">
+                <summary className="text-brand cursor-pointer list-none text-xs font-medium uppercase tracking-wide hover:opacity-80">
                   Xem câu trả lời đề xuất ▸
                 </summary>
-                <div className="mt-2 rounded bg-brand-50 p-4 text-sm leading-relaxed text-ink">
+                <div className="bg-brand-subtle text-ink mt-2 rounded p-4 text-sm leading-relaxed">
                   {item.modelAnswer}
                 </div>
               </details>
             )}
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 }

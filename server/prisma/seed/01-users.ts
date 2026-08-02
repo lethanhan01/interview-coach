@@ -1,128 +1,72 @@
-import type { PrismaClient } from '@prisma/client';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { AccountStatus, UserRole, type PrismaClient } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
+import { hashPassword } from '../../src/auth/password';
 import { DEMO_EMAIL, DEMO_PASSWORD } from './_client';
 
-export async function getOrCreateDemoUser(
-  supabaseAdmin: SupabaseClient,
-  prisma: PrismaClient,
-): Promise<string> {
-  const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
-  const existing = listData?.users?.find((u) => u.email === DEMO_EMAIL);
+const DEMO_ACCOUNTS = [
+  {
+    email: DEMO_EMAIL,
+    firstname: 'Lê Thành',
+    lastname: 'An',
+    role: UserRole.candidate,
+  },
+  {
+    email: 'hungletai@gmail.com',
+    firstname: 'Admin',
+    lastname: 'đẹp trai',
+    role: UserRole.admin,
+  },
+] as const;
 
-  let userId: string;
-  if (existing) {
-    console.log(`demo user: already exists (${existing.id})`);
-    userId = existing.id;
-  } else {
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email: DEMO_EMAIL,
-      password: DEMO_PASSWORD,
-      email_confirm: true,
-    });
-    if (error || !data.user) {
-      throw new Error(`Failed to create demo user: ${error?.message}`);
+export async function seedDemoUsers(prisma: PrismaClient): Promise<string> {
+  const passwordHashes = await Promise.all(DEMO_ACCOUNTS.map(() => hashPassword(DEMO_PASSWORD)));
+
+  return prisma.$transaction(async (tx) => {
+    let demoUserId = '';
+
+    for (const [index, account] of DEMO_ACCOUNTS.entries()) {
+      const user = await tx.user.upsert({
+        where: { email: account.email },
+        create: {
+          id: randomUUID(),
+          email: account.email,
+          firstname: account.firstname,
+          lastname: account.lastname,
+          passwordHash: passwordHashes[index],
+          role: account.role,
+          status: AccountStatus.active,
+        },
+        update: {
+          firstname: account.firstname,
+          lastname: account.lastname,
+          passwordHash: passwordHashes[index],
+          role: account.role,
+          status: AccountStatus.active,
+          tokenVersion: { increment: 1 },
+        },
+      });
+      await tx.userVerificationCode.deleteMany({
+        where: { userId: user.id, purpose: 'password_reset_otp' },
+      });
+      if (account.email === DEMO_EMAIL) demoUserId = user.id;
     }
-    console.log(`demo user: created (${data.user.id})`);
-    userId = data.user.id;
-    await new Promise((r) => setTimeout(r, 1500));
-  }
 
-  let publicUser = await prisma.user.findUnique({ where: { id: userId } });
-  if (!publicUser) {
-    for (let i = 0; i < 5; i++) {
-      publicUser = await prisma.user.findUnique({ where: { id: userId } });
-      if (publicUser) break;
-      console.log(
-        `Waiting for auth trigger to sync user (attempt ${i + 1}/5)...`,
-      );
-      await new Promise((r) => setTimeout(r, 1000));
-    }
-  }
-
-  if (!publicUser) {
-    console.log('Auth trigger did not fire — inserting user manually');
-    await prisma.user.create({
-      data: {
-        id: userId,
-        email: DEMO_EMAIL,
-        role: 'candidate',
-        status: 'active',
-      },
-    });
-  }
-
-  return userId;
+    return demoUserId;
+  });
 }
 
-export async function seedUserProfile(
-  prisma: PrismaClient,
-  userId: string,
-): Promise<void> {
+export async function seedUserProfile(prisma: PrismaClient, userId: string): Promise<void> {
   await prisma.userProfile.upsert({
     where: { userId },
     create: {
       userId,
-      fullName: 'Nguyễn Văn Demo',
-      education: {
-        degree: 'Kỹ sư',
-        school: 'Đại học Bách Khoa Hà Nội',
-        major: 'Công nghệ thông tin',
-        graduationYear: '2025',
-        gpa: '3.2',
-      },
+      education: {},
       workExperience: [],
-      projects: [
-        {
-          id: 'demo-project-interview-coach',
-          name: 'Interview Coach',
-          description: 'Hệ thống luyện phỏng vấn AI cho sinh viên IT Việt Nam',
-          techStack: ['NestJS', 'Next.js', 'PostgreSQL', 'OpenAI'],
-          url: '',
-          startDate: '2026-03',
-          endDate: '2026-07',
-          isCurrent: false,
-        },
-      ],
-      technicalSkills: [
-        { id: 'demo-skill-ts', category: 'language', name: 'TypeScript', usagePeriod: 2 },
-        { id: 'demo-skill-nest', category: 'framework', name: 'NestJS', usagePeriod: 1 },
-        { id: 'demo-skill-next', category: 'framework', name: 'Next.js', usagePeriod: 1 },
-        { id: 'demo-skill-postgres', category: 'database', name: 'PostgreSQL', usagePeriod: 1 },
-      ],
+      projects: [],
+      technicalSkills: [],
       certifications: [],
       awards: [],
     },
-    update: {
-      fullName: 'Nguyễn Văn Demo',
-      education: {
-        degree: 'Kỹ sư',
-        school: 'Đại học Bách Khoa Hà Nội',
-        major: 'Công nghệ thông tin',
-        graduationYear: '2025',
-        gpa: '3.2',
-      },
-      workExperience: [],
-      projects: [
-        {
-          id: 'demo-project-interview-coach',
-          name: 'Interview Coach',
-          description: 'Hệ thống luyện phỏng vấn AI cho sinh viên IT Việt Nam',
-          techStack: ['NestJS', 'Next.js', 'PostgreSQL', 'OpenAI'],
-          url: '',
-          startDate: '2026-03',
-          endDate: '2026-07',
-          isCurrent: false,
-        },
-      ],
-      technicalSkills: [
-        { id: 'demo-skill-ts', category: 'language', name: 'TypeScript', usagePeriod: 2 },
-        { id: 'demo-skill-nest', category: 'framework', name: 'NestJS', usagePeriod: 1 },
-        { id: 'demo-skill-next', category: 'framework', name: 'Next.js', usagePeriod: 1 },
-        { id: 'demo-skill-postgres', category: 'database', name: 'PostgreSQL', usagePeriod: 1 },
-      ],
-      certifications: [],
-      awards: [],
-    },
+    update: {},
   });
-  console.log('user profile: upserted');
 }

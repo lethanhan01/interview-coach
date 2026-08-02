@@ -5,13 +5,34 @@ import {
   type ContextPackType,
 } from './context-pack.service';
 import type { SessionType } from './pipelines/interview-pipeline.interface';
+import {
+  ApiCookieAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import { ApiCommonErrors } from '../common/swagger/api-error-responses.decorator';
 
 @Controller('rubrics')
+@ApiTags('Rubrics')
+@ApiCookieAuth('cookieAuth')
 export class RubricController {
   constructor(private readonly contextPackService: ContextPackService) {}
 
   @Get(':contextPackId')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get the active scoring rubric for a context pack' })
+  @ApiParam({ name: 'contextPackId', enum: ['VN', 'Western'] })
+  @ApiQuery({
+    name: 'sessionType',
+    required: false,
+    enum: ['hr', 'technical', 'mixed'],
+    example: 'mixed',
+  })
+  @ApiOkResponse({ description: 'Active rubric and weighted dimensions.' })
+  @ApiCommonErrors(400, 401, 404)
   async getActiveRubric(
     @Param('contextPackId') contextPackId: ContextPackType,
     @Query('sessionType') sessionType: SessionType = 'mixed',

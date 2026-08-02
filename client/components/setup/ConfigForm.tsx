@@ -1,18 +1,44 @@
 'use client'
 
 import type { SessionType, ContextPack } from '@/lib/types'
-import type { InterviewDuration } from '@/app/(app)/setup/page'
-import { DURATION_OPTIONS } from '@/app/(app)/setup/page'
+import {
+  type InterviewDuration,
+  DURATION_OPTIONS,
+} from '@/lib/setup-types'
 
-const SESSION_TYPES: { value: SessionType; label: string; description: string }[] = [
-  { value: 'hr', label: 'HR / Behavioral', description: 'Câu hỏi về kinh nghiệm, soft skills, và tình huống' },
-  { value: 'technical', label: 'Technical', description: 'Câu hỏi kỹ thuật chuyên sâu theo JD' },
-  { value: 'mixed', label: 'Mixed (HR + Technical)', description: 'Kết hợp cả HR và Technical' },
+const SESSION_TYPES: {
+  value: SessionType
+  label: string
+  description: string
+}[] = [
+  {
+    value: 'hr',
+    label: 'HR / Behavioral',
+    description: 'Câu hỏi về kinh nghiệm, soft skills, và tình huống',
+  },
+  {
+    value: 'technical',
+    label: 'Technical',
+    description: 'Câu hỏi kỹ thuật chuyên sâu theo JD',
+  },
+  {
+    value: 'mixed',
+    label: 'Mixed (HR + Technical)',
+    description: 'Kết hợp cả HR và Technical',
+  },
 ]
 
 const CONTEXT_PACKS: { value: ContextPack; label: string; desc: string }[] = [
-  { value: 'VN', label: 'Việt Nam', desc: 'Phong cách phỏng vấn Việt Nam, rubric phù hợp văn hóa địa phương' },
-  { value: 'Western', label: 'Western', desc: 'STAR method, behavioral focus, phong cách công ty nước ngoài' },
+  {
+    value: 'VN',
+    label: 'Việt Nam',
+    desc: 'Phong cách phỏng vấn Việt Nam, rubric phù hợp văn hóa địa phương',
+  },
+  {
+    value: 'Western',
+    label: 'Western',
+    desc: 'STAR method, behavioral focus, phong cách công ty nước ngoài',
+  },
 ]
 
 function SelectCard<T extends string | number>({
@@ -35,18 +61,20 @@ function SelectCard<T extends string | number>({
       onClick={() => onSelect(value)}
       className={[
         'rounded-xl border-2 p-4 text-left transition-all duration-150',
-        selected ? 'border-brand bg-brand-50 shadow-card' : 'border-border bg-surface hover:border-brand-muted',
+        selected
+          ? 'border-brand bg-brand-subtle shadow-card'
+          : 'border-border bg-surface hover:border-brand-muted',
       ].join(' ')}
     >
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="text-sm font-medium text-ink">{label}</span>
+        <span className="text-ink text-sm font-medium">{label}</span>
         {selected && (
-          <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-brand">
+          <span className="bg-brand flex size-4 shrink-0 items-center justify-center rounded-full">
             <span className="size-1.5 rounded-full bg-white" />
           </span>
         )}
       </div>
-      <p className="text-xs leading-relaxed text-ink-muted">{sublabel}</p>
+      <p className="text-ink-muted text-xs leading-relaxed">{sublabel}</p>
     </button>
   )
 }
@@ -71,7 +99,7 @@ export default function ConfigForm({
   return (
     <div className="flex flex-col gap-7">
       <div>
-        <p className="mb-3 text-sm font-medium text-ink">Loại phỏng vấn</p>
+        <p className="text-ink mb-3 text-sm font-medium">Loại phỏng vấn</p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {SESSION_TYPES.map((t) => (
             <SelectCard
@@ -87,7 +115,7 @@ export default function ConfigForm({
       </div>
 
       <div>
-        <p className="mb-3 text-sm font-medium text-ink">Context Pack</p>
+        <p className="text-ink mb-3 text-sm font-medium">Context Pack</p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {CONTEXT_PACKS.map((cp) => (
             <SelectCard
@@ -103,7 +131,7 @@ export default function ConfigForm({
       </div>
 
       <div>
-        <p className="mb-3 text-sm font-medium text-ink">Thời gian phỏng vấn</p>
+        <p className="text-ink mb-3 text-sm font-medium">Thời gian phỏng vấn</p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {DURATION_OPTIONS.map((d) => (
             <SelectCard
@@ -117,7 +145,6 @@ export default function ConfigForm({
           ))}
         </div>
       </div>
-
     </div>
   )
 }

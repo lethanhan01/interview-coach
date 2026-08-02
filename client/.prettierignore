@@ -1,0 +1,8 @@
+node_modules/
+.next/
+out/
+build/
+storybook-static/
+coverage/
+test-results/
+.storybook/

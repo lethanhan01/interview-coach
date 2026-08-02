@@ -67,7 +67,9 @@ test('hiển thị empty state khi chưa có phiên nào', async ({ page }) => {
 
   await page.goto('/sessions')
   await expect(page.getByText('Chưa có phiên phỏng vấn nào')).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Bắt đầu phỏng vấn' })).toHaveAttribute('href', '/setup')
+  await expect(
+    page.getByRole('link', { name: 'Bắt đầu phỏng vấn' })
+  ).toHaveAttribute('href', '/setup')
 })
 
 test('hiển thị danh sách session với status badge đúng', async ({ page }) => {
@@ -75,7 +77,9 @@ test('hiển thị danh sách session với status badge đúng', async ({ page 
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ sessions: [MOCK_ACTIVE, MOCK_PAUSED, MOCK_COMPLETING, MOCK_COMPLETED] }),
+      body: JSON.stringify({
+        sessions: [MOCK_ACTIVE, MOCK_PAUSED, MOCK_COMPLETING, MOCK_COMPLETED],
+      }),
     })
   })
 
@@ -86,7 +90,9 @@ test('hiển thị danh sách session với status badge đúng', async ({ page 
   await expect(page.getByText('Hoàn thành', { exact: true })).toBeVisible()
 })
 
-test('session active có link "Tiếp tục" đến interview page', async ({ page }) => {
+test('session active có link "Tiếp tục" đến interview page', async ({
+  page,
+}) => {
   await page.route('**/api/v1/sessions', async (route) => {
     await route.fulfill({
       status: 200,
@@ -100,7 +106,9 @@ test('session active có link "Tiếp tục" đến interview page', async ({ pa
   await expect(link).toHaveAttribute('href', `/sessions/${MOCK_ACTIVE.id}`)
 })
 
-test('session paused có link "Tiếp tục" đến interview page', async ({ page }) => {
+test('session paused có link "Tiếp tục" đến interview page', async ({
+  page,
+}) => {
   await page.route('**/api/v1/sessions', async (route) => {
     await route.fulfill({
       status: 200,
@@ -114,7 +122,9 @@ test('session paused có link "Tiếp tục" đến interview page', async ({ pa
   await expect(link).toHaveAttribute('href', `/sessions/${MOCK_PAUSED.id}`)
 })
 
-test('session completed có link "Xem báo cáo" đến report page', async ({ page }) => {
+test('session completed có link "Xem báo cáo" đến report page', async ({
+  page,
+}) => {
   await page.route('**/api/v1/sessions', async (route) => {
     await route.fulfill({
       status: 200,
@@ -125,10 +135,15 @@ test('session completed có link "Xem báo cáo" đến report page', async ({ p
 
   await page.goto('/sessions')
   const link = page.getByRole('link', { name: 'Xem báo cáo' })
-  await expect(link).toHaveAttribute('href', `/sessions/${MOCK_COMPLETED.id}/report`)
+  await expect(link).toHaveAttribute(
+    'href',
+    `/sessions/${MOCK_COMPLETED.id}/report`
+  )
 })
 
-test('session completing có link theo dõi đến report page', async ({ page }) => {
+test('session completing có link theo dõi đến report page', async ({
+  page,
+}) => {
   await page.route('**/api/v1/sessions', async (route) => {
     await route.fulfill({
       status: 200,
@@ -139,5 +154,8 @@ test('session completing có link theo dõi đến report page', async ({ page }
 
   await page.goto('/sessions')
   const link = page.getByRole('link', { name: 'Theo dõi báo cáo' })
-  await expect(link).toHaveAttribute('href', `/sessions/${MOCK_COMPLETING.id}/report`)
+  await expect(link).toHaveAttribute(
+    'href',
+    `/sessions/${MOCK_COMPLETING.id}/report`
+  )
 })

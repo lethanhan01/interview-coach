@@ -16,7 +16,7 @@ interface Props {
 }
 
 const FIELD_CLASS =
-  'w-full rounded-xl border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
+  'w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
 
 export default function PersonalInfoGroup({ data, onSave }: Props) {
   const [isEditing, setIsEditing] = useState(false)
@@ -56,12 +56,14 @@ export default function PersonalInfoGroup({ data, onSave }: Props) {
   return (
     <ProfileSection
       title="Thông tin cá nhân"
-      action={!isEditing ? (
-        <Button variant="ghost" size="sm" onClick={handleEdit}>
-          <PencilLine className="h-4 w-4" aria-hidden="true" />
-          Chỉnh sửa
-        </Button>
-      ) : undefined}
+      action={
+        !isEditing ? (
+          <Button variant="ghost" size="sm" onClick={handleEdit}>
+            <PencilLine className="h-4 w-4" aria-hidden="true" />
+            Chỉnh sửa
+          </Button>
+        ) : undefined
+      }
     >
       {!isEditing ? (
         <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
@@ -79,7 +81,7 @@ export default function PersonalInfoGroup({ data, onSave }: Props) {
               />
             </Field>
           </div>
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p className="text-danger text-sm">{error}</p>}
           <div className="flex gap-2">
             <Button onClick={handleSave} loading={saving} disabled={saving}>
               Lưu thay đổi
@@ -94,10 +96,16 @@ export default function PersonalInfoGroup({ data, onSave }: Props) {
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-ink">{label}</label>
+      <label className="text-ink mb-1 block text-sm font-medium">{label}</label>
       {children}
     </div>
   )

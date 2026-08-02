@@ -23,7 +23,7 @@ export default function CountdownTimer({
     initialSeconds,
     active,
     onChange,
-    onExpire,
+    onExpire
   )
 
   const colorClass = isExpired
@@ -34,8 +34,10 @@ export default function CountdownTimer({
 
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-xs text-ink-muted">Còn lại</span>
-      <span className={`font-mono text-sm font-medium tabular-nums ${colorClass}`}>
+      <span className="text-ink-muted text-xs">Còn lại</span>
+      <span
+        className={`font-mono text-sm font-medium tabular-nums ${colorClass}`}
+      >
         {formatTime(remainingSeconds)}
       </span>
     </div>

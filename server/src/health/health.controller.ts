@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 type DependencyStatus = 'up' | 'down';
 
@@ -12,6 +13,7 @@ interface DependencyHealth {
 }
 
 @Controller('health')
+@ApiTags('Health')
 export class HealthController {
   constructor(
     private readonly prisma: PrismaService,
@@ -19,6 +21,8 @@ export class HealthController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Check database and Redis health' })
+  @ApiOkResponse({ description: 'Service dependency health.' })
   async check() {
     const [db, redis] = await Promise.all([
       this.checkDatabase(),

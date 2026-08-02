@@ -1,35 +1,28 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../../prisma/prisma.service';
-import { ensureMvpUser, getMvpUserId } from '../mvp-auth';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { AuthService } from '../auth.service';
+import type { AuthenticatedUser } from '../dto/authenticated-user.dto';
 
 interface AuthenticatedRequest {
-  user?: {
-    id: string;
-    email: string;
-  };
+  cookies?: Record<string, string | undefined>;
+  user?: AuthenticatedUser;
 }
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
-  canActivate(context: ExecutionContext): Promise<boolean> {
-    return this.activateMvpUser(context);
-  }
-
-  private async activateMvpUser(context: ExecutionContext): Promise<boolean> {
-    const userId = getMvpUserId(this.configService);
-    await ensureMvpUser(this.prisma, userId);
-
-    const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    req.user = {
-      id: userId,
-      email: `mvp-${userId}@interviewcoach.local`,
-    };
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const token = request.cookies?.[this.authService.getCookieName()];
+    if (!token)
+      throw new UnauthorizedException('Authentication cookie is required');
+    const user = await this.authService.getAuthenticatedUser(token);
+    request.user = { id: user.id, email: user.email, role: user.role };
     return true;
   }
 }

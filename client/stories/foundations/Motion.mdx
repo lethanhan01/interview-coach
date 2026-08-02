@@ -1,0 +1,108 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import MotionDemo from './components/MotionDemo'
+
+<Meta title="Foundations/Motion" />
+
+# Motion & Animation (Chuyển động & Hiệu ứng)
+
+Tài liệu này định nghĩa hệ thống **Motion** (Thời gian và Đường cong chuyển động) dựa trên các tokens khai báo tại `tokens.css` nhằm mang lại phản hồi tương tác mượt mà, tự nhiên và dễ chịu cho người dùng.
+
+---
+
+## 1. Tổng quan & Mục đích (Overview & Purpose)
+
+Chuyển động trong giao diện hướng tới 3 mục tiêu cốt lõi:
+1. **Phản hồi ngay tức thì**: Giúp người dùng biết hành vi nhấp chuột/rê chuột đã được ghi nhận.
+2. **Định hướng không gian**: Giúp người dùng hiểu phần tử từ đâu xuất hiện và biến mất về đâu.
+3. **Accessibility (Khả năng truy cập)**: Tôn trọng cấu hình giảm chuyển động (`prefers-reduced-motion`) của người dùng có nhạy cảm về thị giác.
+
+---
+
+## 2. Minh họa Trực quan & Tương tác (Interactive Preview)
+
+Thử nghiệm tốc độ thời gian (Duration) và các đường cong chuyển động (Easing) dưới đây. Bạn cũng có thể bật giả lập **Reduced Motion** để kiểm tra trải nghiệm khi tắt hiệu ứng:
+
+<MotionDemo />
+
+---
+
+## 3. Bảng Tra cứu Tokens Chi tiết (Token Reference)
+
+### Duration Tokens
+
+| Token Name | Variable Name | Tailwind Class | Thời gian | Ứng dụng tiêu biểu |
+| :--- | :--- | :--- | :--- | :--- |
+| **Fast** | `--animate-duration-fast` | `duration-150` | `150ms` | Hover button, Checkbox toggle, Focus ring, Active state |
+| **Normal** | `--animate-duration-normal` | `duration-300` | `300ms` | Dropdown expand, Tooltip fade, Accordion slide, Tab transition |
+| **Slow** | `--animate-duration-slow` | `duration-500` | `500ms` | Modal dialog pop-up, Page transition, Toast notification exit |
+
+### Easing Tokens
+
+| Token Name | Variable Name | Cubic Bezier Curve | Đặc tính chuyển động |
+| :--- | :--- | :--- | :--- |
+| **Standard** | `--ease-standard` | `cubic-bezier(0.4, 0, 0.2, 1)` | Chuyển động 2 chiều tự nhiên (mặc định cho giao diện) |
+| **Enter** | `--ease-enter` | `cubic-bezier(0, 0, 0.2, 1)` | Giảm tốc (Deceleration) khi phần tử đi vào màn hình |
+| **Exit** | `--ease-exit` | `cubic-bezier(0.4, 0, 1, 1)` | Tăng tốc (Acceleration) khi phần tử đi ra khỏi màn hình |
+
+### Accordion & Component Keyframes
+
+| Animation Token | CSS Rule / Keyframe | Công dụng |
+| :--- | :--- | :--- |
+| `--animate-accordion-down` | `accordion-down 0.2s ease-out` | Mở rộng nội dung Accordion lọt lòng |
+| `--animate-accordion-up` | `accordion-up 0.2s ease-out` | Thu gọn nội dung Accordion |
+
+---
+
+## 4. Hướng dẫn Accessibility & Reduced Motion (Guidelines)
+
+### ♿ Hỗ trợ Prefers-Reduced-Motion
+Hệ thống tự động kích hoạt `data-reduced-motion="true"` khi người dùng cấu hình hệ điều hành ưu tiên giảm chuyển động. 
+
+Khi đó, toàn bộ `transition-duration` và `animation` sẽ được hạ về `0ms` hoặc thành hiệu ứng mờ nhạt đơn giản (`fade-in` 100ms):
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+> [!TIP]
+> Luôn tham chiếu [UI Conventions Document](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/stories/foundations/Conventions.mdx) để tích hợp trạng thái tương tác & motion an toàn cho tất cả UI Components.
+
+---
+
+## 5. Ví dụ Mã nguồn (Code Examples)
+
+```tsx
+import React, { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+
+export const AccordionItem = ({ title, content }: { title: string; content: string }) => {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <div className="border border-border rounded-lg overflow-hidden font-sans">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full p-4 bg-card text-ink flex items-center justify-between font-medium text-sm hover:bg-accent transition-colors duration-150"
+      >
+        <span>{title}</span>
+        <ChevronDown
+          className={`w-4 h-4 text-ink-muted transition-transform duration-300 ease-in-out ${
+            isOpen ? 'rotate-180' : 'rotate-0'
+          }`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="p-4 bg-surface text-ink-muted text-sm border-t border-border animate-in fade-in duration-300">
+          {content}
+        </div>
+      )}
+    </div>
+  )
+}
+```

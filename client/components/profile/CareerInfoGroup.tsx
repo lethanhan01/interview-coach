@@ -25,7 +25,7 @@ interface Props {
 }
 
 const FIELD_CLASS =
-  'w-full rounded-xl border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
+  'w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
 
 function normalizeCareerInfo(data: CareerInfoData): CareerInfoData {
   return {
@@ -43,7 +43,8 @@ function normalizeCareerLevel(value?: string) {
 
 function buildPositionOptions(value?: string) {
   const normalized = normalizePosition(value)
-  const fallback = normalized && !POSITION_OPTIONS.includes(normalized) ? normalized : ''
+  const fallback =
+    normalized && !POSITION_OPTIONS.includes(normalized) ? normalized : ''
   return { normalized, fallback }
 }
 
@@ -55,7 +56,9 @@ function buildLevelOptions(value?: string) {
 
 export default function CareerInfoGroup({ data, onSave }: Props) {
   const [isEditing, setIsEditing] = useState(false)
-  const [form, setForm] = useState<CareerInfoData>(() => normalizeCareerInfo(data))
+  const [form, setForm] = useState<CareerInfoData>(() =>
+    normalizeCareerInfo(data)
+  )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -98,12 +101,14 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
   return (
     <ProfileSection
       title="Định hướng nghề nghiệp"
-      action={!isEditing ? (
-        <Button variant="ghost" size="sm" onClick={handleEdit}>
-          <PencilLine className="h-4 w-4" aria-hidden="true" />
-          Chỉnh sửa
-        </Button>
-      ) : undefined}
+      action={
+        !isEditing ? (
+          <Button variant="ghost" size="sm" onClick={handleEdit}>
+            <PencilLine className="h-4 w-4" aria-hidden="true" />
+            Chỉnh sửa
+          </Button>
+        ) : undefined
+      }
     >
       {!isEditing ? (
         <dl className="flex flex-col gap-3 text-sm">
@@ -119,7 +124,9 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
       ) : (
         <div className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Vị trí mục tiêu</label>
+            <label className="text-ink mb-1 block text-sm font-medium">
+              Vị trí mục tiêu
+            </label>
             <select
               value={positionOptions.normalized}
               onChange={(e) => set('targetPosition', e.target.value)}
@@ -140,7 +147,9 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Mức kinh nghiệm</label>
+            <label className="text-ink mb-1 block text-sm font-medium">
+              Mức kinh nghiệm
+            </label>
             <select
               value={levelOptions.normalized}
               onChange={(e) => set('targetLevel', e.target.value)}
@@ -160,7 +169,7 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
             </select>
           </div>
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p className="text-danger text-sm">{error}</p>}
           <div className="flex gap-2">
             <Button onClick={handleSave} loading={saving} disabled={saving}>
               Lưu thay đổi

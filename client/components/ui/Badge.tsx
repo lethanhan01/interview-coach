@@ -1,30 +1,39 @@
-import { HTMLAttributes } from 'react'
+import { HTMLAttributes, forwardRef } from 'react'
+import { cva, type VariantProps } from 'class-variance-authority'
+import { cn } from '@/lib/utils'
 
-type BadgeVariant = 'default' | 'brand' | 'success' | 'warning' | 'danger'
+const badgeVariants = cva(
+  'focus:ring-brand inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2',
+  {
+    variants: {
+      variant: {
+        default: 'bg-surface-raised text-ink-muted border-border',
+        brand: 'bg-brand-subtle text-brand-subtle-fg border-brand-subtle-border',
+        success: 'bg-success-subtle text-success-subtle-fg border-success-subtle-fg/30',
+        warning: 'bg-warning-subtle text-warning-subtle-fg border-warning-subtle-fg/30',
+        danger: 'bg-danger-subtle text-danger-subtle-fg border-danger-subtle-fg/30',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+)
 
-interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  variant?: BadgeVariant
-}
+export interface BadgeProps
+  extends HTMLAttributes<HTMLSpanElement>, VariantProps<typeof badgeVariants> {}
 
-const variantClasses: Record<BadgeVariant, string> = {
-  default: 'bg-surface-raised text-ink-muted border-border',
-  brand: 'bg-brand-50 text-brand border-brand-200',
-  success: 'bg-success-bg text-success border-success/20',
-  warning: 'bg-warning-bg text-warning border-warning/20',
-  danger: 'bg-danger-bg text-danger border-danger/20',
-}
-
-export function Badge({ variant = 'default', className = '', children, ...props }: BadgeProps) {
-  return (
-    <span
-      className={[
-        'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border',
-        variantClasses[variant],
-        className,
-      ].join(' ')}
-      {...props}
-    >
-      {children}
-    </span>
-  )
-}
+export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
+  ({ className, variant, children, ...props }, ref) => {
+    return (
+      <span
+        ref={ref}
+        className={cn(badgeVariants({ variant }), className)}
+        {...props}
+      >
+        {children}
+      </span>
+    )
+  }
+)
+Badge.displayName = 'Badge'

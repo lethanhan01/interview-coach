@@ -360,9 +360,13 @@ Về mặt trải nghiệm người dùng, AI Mock Interview cần đảm bảo 
 *Nguồn tham khảo cho mục 3.1-3.2:*
 
 *[3.2-S1] University of Michigan Career Center. "Interviewing Resources." https://careercenter.umich.edu/content/interviewing-resources*
+
 *[3.2-S2] U.S. Office of Personnel Management. "Structured Interviews." https://www.opm.gov/policy-data-oversight/assessment-and-selection/structured-interviews/*
+
 *[3.2-S3] Harvard FAS Mignone Center for Career Success. "Technical Interviews." https://careerservices.fas.harvard.edu/resources/technical-interviews/*
+
 *[3.2-S4] National Association of Colleges and Employers (NACE). "What is Career Readiness?" https://www.naceweb.org/career-readiness/competencies/career-readiness-defined*
+
 *[3.2-S5] AI Mock Interview internal design and implementation sources: `docs/Design/ArchitecturalDesign/interview_ai_coach_session_type_spec.md`, `server/prisma/schema.prisma`, `server/src/ai/pipelines/interview-pipeline.interface.ts`.*
 
 ## 3.3 Mô Hình Ngôn Ngữ Lớn Và Kỹ Thuật Điều Khiển Đầu Ra AI
@@ -429,9 +433,13 @@ So với việc chỉ yêu cầu mô hình "trả lời theo mẫu", schema vali
 
 ---
 *Nguồn tham khảo mục 3.3:*
+
 *[3.3-S1] OpenAI. "Text generation." https://developers.openai.com/api/docs/guides/text*
+
 *[3.3-S2] OpenAI. "Prompt engineering." https://developers.openai.com/api/docs/guides/prompt-engineering*
+
 *[3.3-S3] OpenAI. "Structured Outputs." https://developers.openai.com/api/docs/guides/structured-outputs*
+
 *[3.3-T1] AI Mock Interview implementation sources: `server/package.json`, `server/src/config/env.validation.ts`, `server/src/ai/openai.gateway.ts`, `server/src/ai/prompt-builder.service.ts`, `server/src/ai/pipelines/pipeline.schemas.ts`, `server/src/ai/processors`.*
 
 ## 3.4 Công Nghệ Xử Lý Ngôn Ngữ Trong Hệ Thống AI Mock Interview
@@ -518,11 +526,17 @@ Tuy nhiên, voice mode được triển khai như phần hỗ trợ thay vì cô
 
 ---
 *Nguồn tham khảo mục 3.4:*
+
 *[3.4-S1] OpenAI. "Text generation." https://developers.openai.com/api/docs/guides/text*
+
 *[3.4-S2] OpenAI. "Prompt engineering." https://developers.openai.com/api/docs/guides/prompt-engineering*
+
 *[3.4-S3] MDN Web Docs. "MediaRecorder." https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder*
+
 *[3.4-S4] OpenAI. "Speech to text." https://developers.openai.com/api/docs/guides/speech-to-text*
+
 *[3.4-T1] AI Mock Interview implementation sources: `server/src/ai/prompt-builder.service.ts`, `server/src/ai/context-pack.service.ts`, `server/src/ai/pipelines`, `server/src/turn`, `server/src/report`.*
+
 *[3.4-T2] Voice mode implementation sources: `client/components/interview/VoiceRecorder.tsx`, `server/src/turn/whisper.service.ts`, `server/src/ai/processors/transcription.processor.ts`, `server/prisma/schema.prisma`.*
 
 ## 3.5 Công Nghệ Frontend Cho Ứng Dụng Web
@@ -589,11 +603,17 @@ Tailwind CSS phù hợp với giai đoạn phát triển sản phẩm vì tốc 
 
 ---
 *Nguồn tham khảo mục 3.5:*
+
 *[3.5-S1] React. "Describing the UI." https://react.dev/learn/describing-the-ui*
+
 *[3.5-S2] Next.js. "Docs." https://nextjs.org/docs*
+
 *[3.5-S3] Next.js. "Server and Client Components." https://nextjs.org/docs/app/getting-started/server-and-client-components*
+
 *[3.5-S4] TypeScript. "Documentation." https://www.typescriptlang.org/docs/*
+
 *[3.5-S5] Tailwind CSS. "Styling with utility classes." https://tailwindcss.com/docs/styling-with-utility-classes*
+
 *[3.5-T1] Frontend implementation sources: `client/package.json`, `client/app`, `client/components`, `client/lib/api-client.ts`, `client/lib/types.ts`, `client/lib/supabase.ts`.*
 
 ## 3.6 Công Nghệ Backend Và Giao Tiếp API
@@ -680,14 +700,23 @@ So với polling liên tục, SSE giảm số lần client phải hỏi lại se
 
 ---
 *Nguồn tham khảo mục 3.6:*
+
 *[3.6-S1] NestJS. "Introduction." https://docs.nestjs.com/*
+
 *[3.6-S2] NestJS. "Modules." https://docs.nestjs.com/modules*
+
 *[3.6-S3] NestJS. "Controllers." https://docs.nestjs.com/controllers*
+
 *[3.6-S4] NestJS. "Providers." https://docs.nestjs.com/providers*
+
 *[3.6-S5] NestJS. "Validation." https://docs.nestjs.com/techniques/validation*
+
 *[3.6-S6] MDN Web Docs. "Server-sent events." https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events*
+
 *[3.6-S7] MDN Web Docs. "EventSource." https://developer.mozilla.org/en-US/docs/Web/API/EventSource*
+
 *[3.6-T1] Backend implementation sources: `server/package.json`, `server/src/app.module.ts`, `server/src/main.ts`, `server/src/common`, `server/src/auth`, `server/src/session`, `server/src/turn`, `server/src/report`.*
+
 *[3.6-T2] SSE implementation sources: `server/src/common/services/sse.service.ts`, `server/src/session/session.controller.ts`, `client/app/(app)/sessions/[sessionId]/page.tsx`, `client/app/(app)/sessions/[sessionId]/report/page.tsx`.*
 
 ## 3.7 Công Nghệ Xử Lý Bất Đồng Bộ Và Cập Nhật Trạng Thái
@@ -774,10 +803,15 @@ So với polling, SSE giúp giảm request lặp lại và phản hồi gần th
 
 ---
 *Nguồn tham khảo mục 3.7:*
+
 *[3.7-S1] BullMQ. "What is BullMQ." https://docs.bullmq.io/*
+
 *[3.7-S2] Redis. "Develop with Redis." https://redis.io/docs/latest/develop/*
+
 *[3.7-S3] MDN Web Docs. "Server-sent events." https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events*
+
 *[3.7-T1] Async processing implementation sources: `server/package.json`, `server/src/ai/ai.module.ts`, `server/src/ai/processors`, `server/src/common/constants/queue.constants.ts`, `server/src/question-bank`.*
+
 *[3.7-T2] Status update implementation sources: `server/src/common/services/sse.service.ts`, `docs/Design/ArchitecturalDesign/ADRs/ADR-006_sse-redis-pubsub.md`, `docs/Design/ArchitecturalDesign/ADRs/ADR-007_bullmq-upgrade.md`.*
 
 ## 3.8 Công Nghệ Lưu Trữ Dữ Liệu Và Truy Cập Cơ Sở Dữ Liệu
@@ -893,13 +927,23 @@ So với lưu mọi thứ trong một bảng lớn hoặc một JSON document du
 
 ---
 *Nguồn tham khảo mục 3.8:*
+
 *[3.8-S1] Supabase. "Database." https://supabase.com/docs/guides/database/overview*
+
 *[3.8-S2] Prisma. "What is Prisma ORM?" https://www.prisma.io/docs/orm*
+
 *[3.8-S3] Prisma. "Introduction to Prisma Client." https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/introduction*
+
 *[3.8-S4] Prisma. "Prisma schema." https://www.prisma.io/docs/orm/prisma-schema/overview*
+
 *[3.8-S5] PostgreSQL. "JSON Types." https://www.postgresql.org/docs/current/datatype-json.html*
+
 *[3.8-S6] PostgreSQL. "Transactions." https://www.postgresql.org/docs/current/tutorial-transactions.html*
+
 *[3.8-S7] PostgreSQL. "Constraints." https://www.postgresql.org/docs/current/ddl-constraints.html*
+
 *[3.8-T1] Supabase and database implementation sources: `client/lib/supabase.ts`, `client/lib/supabase-server.ts`, `server/src/auth`, `server/src/turn/audio-storage.service.ts`, `server/prisma/schema.prisma`.*
+
 *[3.8-T2] Prisma data model sources: `server/prisma/schema.prisma`, `server/prisma.config.ts`, `server/src/prisma/prisma.service.ts`, `server/package.json`.*
+
 *[3.8-T3] Raw SQL synchronization sources: `docs/Design/ArchitecturalDesign/ADRs/ADR-008_raw-sql-outside-prisma-db-push.md`, `server/prisma/migrations/migration.sql`, `server/prisma/verify-db-hardening.ts`, `server/package.json`.*

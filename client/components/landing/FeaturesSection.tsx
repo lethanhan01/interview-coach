@@ -18,23 +18,29 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section className="py-16 max-w-5xl mx-auto px-4 sm:px-6">
-      <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-ink mb-3">Tại sao chọn AI Mock Interview?</h2>
-        <p className="text-ink-muted">Được thiết kế riêng cho thị trường tuyển dụng IT Việt Nam</p>
+    <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+      <div className="mb-12 text-center">
+        <h2 className="text-ink mb-3 text-3xl font-bold">
+          Tại sao chọn AI Mock Interview?
+        </h2>
+        <p className="text-ink-muted">
+          Được thiết kế riêng cho thị trường tuyển dụng IT Việt Nam
+        </p>
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-6">
+      <div className="grid gap-6 sm:grid-cols-3">
         {features.map((f) => (
           <div
             key={f.title}
-            className="bg-surface rounded-2xl shadow-card border border-border p-6 flex flex-col gap-3"
+            className="bg-surface shadow-card border-border flex flex-col gap-3 rounded-2xl border p-6"
           >
-            <div className="size-10 rounded-xl bg-brand-50 flex items-center justify-center">
-              <span className="size-4 rounded-full bg-brand" />
+            <div className="bg-brand-subtle flex size-10 items-center justify-center rounded-xl">
+              <span className="bg-brand size-4 rounded-full" />
             </div>
-            <h3 className="font-semibold text-ink">{f.title}</h3>
-            <p className="text-sm text-ink-muted leading-relaxed">{f.description}</p>
+            <h3 className="text-ink font-semibold">{f.title}</h3>
+            <p className="text-ink-muted text-sm leading-relaxed">
+              {f.description}
+            </p>
           </div>
         ))}
       </div>

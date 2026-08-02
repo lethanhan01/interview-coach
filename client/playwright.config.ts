@@ -10,5 +10,8 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
+    env: {
+      NEXT_PUBLIC_API_BASE_URL: 'http://localhost:3000/api/v1',
+    },
   },
 })

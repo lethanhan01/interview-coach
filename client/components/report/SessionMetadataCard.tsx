@@ -15,7 +15,9 @@ const CONTEXT_PACK_LABELS: Record<ContextPack, string> = {
 function MetaRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</span>
+      <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
+        {label}
+      </span>
       <span className="text-sm text-gray-900">{value}</span>
     </div>
   )
@@ -24,7 +26,9 @@ function MetaRow({ label, value }: { label: string; value: React.ReactNode }) {
 function TextBlock({ label, value }: { label: string; value?: string }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</span>
+      <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
+        {label}
+      </span>
       <p className="whitespace-pre-line rounded-md bg-gray-50 px-3 py-2 text-sm leading-6 text-gray-900">
         {value || '—'}
       </p>
@@ -104,7 +108,9 @@ interface SessionMetadataCardProps {
   session: Session
 }
 
-export default function SessionMetadataCard({ session }: SessionMetadataCardProps) {
+export default function SessionMetadataCard({
+  session,
+}: SessionMetadataCardProps) {
   const jobDescription = parseJobDescription(session.jobDescription)
   const techStackValue =
     jobDescription.techStack.length > 0 ? (
@@ -124,30 +130,57 @@ export default function SessionMetadataCard({ session }: SessionMetadataCardProp
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h2 className="mb-4 text-base font-semibold text-gray-900">Thông tin phiên phỏng vấn</h2>
+      <h2 className="mb-4 text-base font-semibold text-gray-900">
+        Thông tin phiên phỏng vấn
+      </h2>
       <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-        <MetaRow label="Thời điểm" value={formatVietnamDateTime(session.createdAt)} />
-        <MetaRow label="Loại phỏng vấn" value={SESSION_TYPE_LABELS[session.sessionType]} />
-        <MetaRow label="Context Pack" value={CONTEXT_PACK_LABELS[session.contextPackId]} />
+        <MetaRow
+          label="Thời điểm"
+          value={formatVietnamDateTime(session.createdAt)}
+        />
+        <MetaRow
+          label="Loại phỏng vấn"
+          value={SESSION_TYPE_LABELS[session.sessionType]}
+        />
+        <MetaRow
+          label="Context Pack"
+          value={CONTEXT_PACK_LABELS[session.contextPackId]}
+        />
         <MetaRow
           label="Thời lượng"
-          value={session.durationMin == null ? '—' : `${session.durationMin} phút`}
+          value={
+            session.durationMin == null ? '—' : `${session.durationMin} phút`
+          }
         />
         <MetaRow label="Số câu hỏi" value={`${session.numQuestions} câu`} />
         <MetaRow label="Vị trí mục tiêu" value={session.jobTitle ?? '—'} />
       </div>
       <div className="mt-5 border-t border-gray-100 pt-5">
-        <h3 className="mb-4 text-sm font-semibold text-gray-900">Mô tả công việc (JD)</h3>
+        <h3 className="mb-4 text-sm font-semibold text-gray-900">
+          Mô tả công việc (JD)
+        </h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-          <MetaRow label="Tên công ty" value={jobDescription.companyName ?? '—'} />
-          <MetaRow label="Vị trí tuyển dụng" value={jobDescription.jobTitle ?? session.jobTitle ?? '—'} />
+          <MetaRow
+            label="Tên công ty"
+            value={jobDescription.companyName ?? '—'}
+          />
+          <MetaRow
+            label="Vị trí tuyển dụng"
+            value={jobDescription.jobTitle ?? session.jobTitle ?? '—'}
+          />
           <MetaRow label="Level yêu cầu" value={jobDescription.level ?? '—'} />
-          <MetaRow label="Số lượng tuyển" value={jobDescription.headcount ?? '—'} />
+          <MetaRow
+            label="Số lượng tuyển"
+            value={jobDescription.headcount ?? '—'}
+          />
           <MetaRow label="Tech stack" value={techStackValue} />
         </div>
         <div className="mt-4 grid gap-4">
           <TextBlock label="Yêu cầu" value={jobDescription.requirements} />
-          <TextBlock label="Nội dung công việc" value={jobDescription.jobContent} />
+          <TextBlock
+            label="Nội dung công việc"
+            value={jobDescription.jobContent}
+          />
         </div>
       </div>
     </div>

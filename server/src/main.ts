@@ -1,7 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { RequestMethod, ValidationPipe } from '@nestjs/common';
+import { exec } from 'node:child_process';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
+import { setupSwagger } from './common/swagger/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,6 +16,19 @@ async function bootstrap() {
     credentials: true,
   });
   app.use(cookieParser());
-  await app.listen(process.env.PORT ?? 3000);
+  if (process.env.NODE_ENV !== 'production') setupSwagger(app);
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
+
+  if (process.env.NODE_ENV !== 'production') {
+    const url = `http://localhost:${port}/api/docs`;
+    const command =
+      process.platform === 'win32'
+        ? `start "" "${url}"`
+        : process.platform === 'darwin'
+          ? `open "${url}"`
+          : `xdg-open "${url}"`;
+    exec(command);
+  }
 }
 void bootstrap();

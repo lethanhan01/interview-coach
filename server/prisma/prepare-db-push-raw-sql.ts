@@ -31,6 +31,47 @@ async function main() {
       UPDATE question_bank SET context_pack_id = 'VN' WHERE context_pack_id = 'vn';
       UPDATE question_bank SET context_pack_id = 'Western' WHERE context_pack_id = 'western';
 
+      ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS firstname TEXT,
+        ADD COLUMN IF NOT EXISTS lastname TEXT;
+
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1
+          FROM pg_type t
+          JOIN pg_enum e ON e.enumtypid = t.oid
+          WHERE t.typname = 'UserRole'
+            AND e.enumlabel = 'user'
+        ) THEN
+          ALTER TYPE "UserRole" RENAME VALUE 'user' TO 'candidate';
+        END IF;
+      END $$;
+
+      UPDATE users u
+      SET
+        firstname = CASE
+          WHEN trimmed.full_name IS NULL OR trimmed.full_name = '' THEN NULL
+          ELSE split_part(trimmed.full_name, ' ', 1)
+        END,
+        lastname = CASE
+          WHEN trimmed.full_name IS NULL OR trimmed.full_name = '' THEN NULL
+          WHEN position(' ' in trimmed.full_name) = 0 THEN NULL
+          ELSE nullif(regexp_replace(trimmed.full_name, '^\\S+\\s*', ''), '')
+        END
+      FROM (
+        SELECT
+          user_id,
+          btrim(full_name) AS full_name
+        FROM user_profiles
+        WHERE full_name IS NOT NULL
+      ) trimmed
+      WHERE u.id = trimmed.user_id;
+
+      UPDATE users
+      SET role = 'candidate'
+      WHERE role::text = 'user';
+
       CREATE TABLE IF NOT EXISTS rubric_versions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         context_pack_id TEXT NOT NULL,

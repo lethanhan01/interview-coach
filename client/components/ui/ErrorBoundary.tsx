@@ -23,10 +23,12 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback ?? (
-        <div className="flex min-h-[200px] items-center justify-center text-sm text-gray-500">
-          Đã xảy ra lỗi. Vui lòng tải lại trang.
-        </div>
+      return (
+        this.props.fallback ?? (
+          <div className="flex min-h-[200px] items-center justify-center text-sm text-gray-500">
+            Đã xảy ra lỗi. Vui lòng tải lại trang.
+          </div>
+        )
       )
     }
     return this.props.children

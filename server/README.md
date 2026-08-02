@@ -5,6 +5,11 @@ NestJS 11, TypeScript 5.7, Prisma, BullMQ, Redis, Supabase (PostgreSQL + Auth).
 API: `http://localhost:3000/api/v1`  
 Health check: `http://localhost:3000/health`
 
+Swagger/OpenAPI (development and staging): `http://localhost:3000/api/docs`  
+OpenAPI JSON: `http://localhost:3000/api/docs-json`
+
+Mở Swagger cùng origin backend, gọi `POST /auth/login` hoặc `POST /auth/register` trước; cookie JWT HttpOnly sẽ được browser tự gửi cho các endpoint cần xác thực. Swagger bị tắt khi `NODE_ENV=production`. Endpoint SSE nên kiểm thử bằng `EventSource` hoặc `curl`.
+
 ---
 
 ## Yêu cầu
@@ -29,9 +34,16 @@ Mở `.env` và điền các biến bắt buộc:
 
 ```env
 SUPABASE_URL=
-SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-SUPABASE_JWT_SECRET=
+AUTH_JWT_SECRET=<at-least-32-random-characters>
+AUTH_COOKIE_NAME=interviewcoach_auth
+AUTH_COOKIE_MAX_AGE=86400
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM=
+PASSWORD_RESET_OTP_TTL_MINUTES=30
 
 DATABASE_URL=
 DIRECT_URL=
@@ -71,6 +83,8 @@ npm run dev:local
 
 Khi thấy `Nest application successfully started` trong log, server đã sẵn sàng.
 
+`start:dev` là lệnh chuẩn cho môi trường local: Nest theo dõi thay đổi trong `src/` và tự biên dịch lại. Không chạy trực tiếp `node dist/main` hoặc `npm run start:prod` song song với lệnh này. Watch mode có thể xoá và tạo lại `dist/` trong lúc biên dịch, khiến tiến trình đang đọc artifact trong `dist/` lỗi tạm thời `Cannot find module './app.module'`.
+
 Kiểm tra:
 
 ```powershell
@@ -81,20 +95,9 @@ Lệnh này gọi `GET /api/v1` và `GET /health`. Nếu DB hoặc Redis chưa s
 
 ---
 
-## Bỏ qua đăng nhập khi dev local
+## Xác thực local
 
-Thêm vào `.env`:
-
-```env
-AUTH_ENABLED=false
-MOCK_USER_ID=<UUID-của-user-có-sẵn-trong-public.users>
-```
-
-`MOCK_USER_ID` phải là UUID thật trong database, không được bịa.
-
-Khi bật, `JwtAuthGuard` và `SseTokenGuard` inject mock user thay vì verify JWT — không gọi Supabase.
-
-> **Không bật trong production.** Set `AUTH_ENABLED=true` hoặc xóa var trước khi deploy.
+Đăng ký và đăng nhập đi qua backend; cookie JWT được đặt HttpOnly. Chạy `npm run seed` để tạo demo user và admin từ `ADMIN_EMAIL`/`ADMIN_PASSWORD`.
 
 ---
 
@@ -111,7 +114,7 @@ Khi bật, `JwtAuthGuard` và `SseTokenGuard` inject mock user thay vì verify J
 | `npm run test:cov`                   | Unit tests + coverage report                                                                     |
 | `npm run test:e2e`                   | E2E tests                                                                                        |
 | `npm run build`                      | Compile sang `dist/`                                                                             |
-| `npm run start:prod`                 | Chạy production build                                                                            |
+| `npm run start:prod`                 | Chạy artifact production đã build; không dùng đồng thời với build hoặc watch mode                |
 | `npm run lint`                       | ESLint --fix                                                                                     |
 | `npm run format`                     | Prettier --write                                                                                 |
 | `npm run prisma:generate`            | Tạo lại Prisma Client                                                                            |
@@ -119,12 +122,23 @@ Khi bật, `JwtAuthGuard` và `SseTokenGuard` inject mock user thay vì verify J
 | `npm run db:verify:pre`              | Kiểm tra anomaly trước khi siết constraint/index raw SQL                                         |
 | `npm run db:verify`                  | Kiểm tra RLS/policies/trigger/constraint/index sau khi apply raw SQL                             |
 | `npm run db:prepare-db-push-raw-sql` | Tạm gỡ raw constraint mà Prisma `db push` không quản lý, trước khi apply lại bằng `db:apply-sql` |
+| `npm run db:sync:prebackup`          | Pha an toàn: thêm cột/bảng mới và backfill, không drop dữ liệu cũ                                 |
 | `npm run db:sync:full`               | Flow đầy đủ: validate → verify pre → generate → prepare → db push → apply raw SQL → verify       |
 | `npm run seed`                       | Seed dữ liệu mẫu (question bank, ...)                                                            |
 
 ---
 
-## Đồng bộ database schema (`db:sync:full`)
+## Đồng bộ database schema
+
+> Production safety: `db:sync*`, `db:apply-sql`, `db:migrate-role`, and `seed` are blocked when `NODE_ENV=production`. Use reviewed migrations and a backup/PITR runbook instead.
+
+## Emergency write freeze
+
+Set `MAINTENANCE_MODE=true` and `WORKERS_ENABLED=false` in the deployed backend environment, then redeploy. Maintenance mode blocks all non-GET/HEAD/OPTIONS API requests with `503 MAINTENANCE_MODE`; disabling workers prevents BullMQ processors from claiming queued jobs after restart. Health checks and read-only investigation remain available. This does not prevent direct database access or Supabase Dashboard changes.
+
+## Recovery comparison
+
+After Supabase restores PITR into a temporary project, set `RECOVERY_DATABASE_URL` to that project's direct Postgres URL and run `npm run recovery:inventory`. The command opens both databases in `READ ONLY` transactions and emits row-count manifests only; it never imports, updates, or deletes data.
 
 > **Không chạy thường xuyên.** Lệnh này thay đổi schema database thật — chỉ chạy khi có lý do cụ thể.
 
@@ -135,9 +149,19 @@ Chạy khi:
 - Cần chuẩn bị unique constraint cho `user_answers`
 - Cần apply lại raw SQL trong `prisma/migrations/migration.sql` sau `prisma db push`
 
+Pha an toàn trước backup:
+
+```powershell
+npm run db:sync:prebackup
+```
+
+Pha cleanup sau khi đã backup DB thật:
+
 ```powershell
 npm run db:sync:full
 ```
+
+Trước khi chạy pha cleanup, set `DB_BACKUP_CONFIRMED=true`.
 
 Lệnh thực hiện: `db:validate` → `db:verify:pre` → `prisma generate` → `db:prepare-user-answer-unique` → `db:prepare-db-push-raw-sql` → `prisma db push` → `db:apply-sql` → `db:verify`.
 
@@ -161,6 +185,8 @@ npm run start:prod
 ```
 
 `npm run build` tự chạy `prisma generate` trước khi compile. Entrypoint production: `server/dist/main.js`.
+
+Chỉ chạy `npm run start:prod` sau khi `npm run build` hoàn tất thành công, và không chạy `npm run build` hoặc `npm run start:dev` đồng thời trên cùng thư mục `dist/`. Nếu cần chuyển sang local development, dừng tiến trình production trước rồi dùng `npm run start:dev`.
 
 Kiểm tra sau khi start:
 
@@ -221,7 +247,7 @@ Backend sẽ retry Prisma startup check và tiếp tục boot nếu lỗi là ti
 
 **`401 Unauthorized`**
 
-Nếu đang dev local, kiểm tra `AUTH_ENABLED=false` và `MOCK_USER_ID` đã điền. Sau khi sửa `.env`, khởi động lại server.
+Sau khi sửa cấu hình xác thực hoặc SMTP trong `.env`, khởi động lại server.
 
 **Prisma lỗi missing column hoặc stale field**
 

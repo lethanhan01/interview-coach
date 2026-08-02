@@ -3,9 +3,20 @@ import { DEFAULT_DB_TIME_ZONE } from '../prisma/db-timezone';
 
 const EnvSchema = z.object({
   SUPABASE_URL: z.string().url(),
-  SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  SUPABASE_JWT_SECRET: z.string().min(1).default('mvp-jwt-secret'),
+  AUTH_JWT_SECRET: z.string().min(32),
+  AUTH_COOKIE_NAME: z.string().min(1).default('interviewcoach_auth'),
+  AUTH_COOKIE_MAX_AGE: z.coerce.number().int().positive().default(86_400),
+  SMTP_HOST: z.string().min(1),
+  SMTP_PORT: z.coerce.number().int().positive(),
+  SMTP_USER: z.string().min(1),
+  SMTP_PASSWORD: z.string().min(1),
+  SMTP_FROM: z.string().email(),
+  PASSWORD_RESET_OTP_TTL_MINUTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(30),
   DATABASE_URL: z.string().min(1),
   DB_TIMEZONE: z
     .string()
@@ -48,13 +59,15 @@ const EnvSchema = z.object({
   OPENAI_QUESTION_TIMEOUT_MS: z.coerce.number().positive().default(240_000),
   OPENAI_QUESTION_MAX_TOKENS: z.coerce.number().int().positive().default(2_400),
   FEEDBACK_WORKER_CONCURRENCY: z.coerce.number().int().min(1).default(2),
+  WORKERS_ENABLED: z.enum(['true', 'false']).default('true'),
   REDIS_HOST: z.string().default('localhost'),
   REDIS_PORT: z.coerce.number().default(6379),
   AUDIO_ALLOWED_HOSTS: z.string().optional(),
   PORT: z.coerce.number().default(3000),
   SESSION_CREATION_LIMIT_PER_24H: z.coerce.number().int().min(0).default(10),
-  AUTH_ENABLED: z.enum(['true', 'false']).default('false'),
-  MOCK_USER_ID: z.string().uuid().optional(),
+  MAINTENANCE_MODE: z.enum(['true', 'false']).default('false'),
+  ADMIN_EMAIL: z.string().email().optional(),
+  ADMIN_PASSWORD: z.string().min(12).optional(),
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),

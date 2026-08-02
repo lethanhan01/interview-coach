@@ -13,12 +13,13 @@ export default function ProfileField({
   emptyValue = '—',
   className = '',
 }: ProfileFieldProps) {
-  const displayValue = value === null || value === undefined || value === '' ? emptyValue : value
+  const displayValue =
+    value === null || value === undefined || value === '' ? emptyValue : value
 
   return (
     <div className={className}>
-      <dt className="text-xs font-medium text-ink-muted">{label}</dt>
-      <dd className="mt-0.5 text-sm text-ink">{displayValue}</dd>
+      <dt className="text-ink-muted text-xs font-medium">{label}</dt>
+      <dd className="text-ink mt-0.5 text-sm">{displayValue}</dd>
     </div>
   )
 }

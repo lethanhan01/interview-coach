@@ -22,7 +22,7 @@ export function formatVietnamDateTime(iso: string): string {
 
 export function formatVietnamRelativeDate(
   iso: string,
-  now: Date = new Date(),
+  now: Date = new Date()
 ): string {
   const diffDays = daysBetweenVietnamDates(new Date(iso), now)
 
@@ -39,7 +39,7 @@ function daysBetweenVietnamDates(from: Date, to: Date): number {
   const toDay = getVietnamDateOnlyUtc(to)
   return Math.max(
     0,
-    Math.floor((toDay.getTime() - fromDay.getTime()) / 86_400_000),
+    Math.floor((toDay.getTime() - fromDay.getTime()) / 86_400_000)
   )
 }
 

@@ -10,7 +10,7 @@ export function useCountdown(
   initialSeconds: number,
   active: boolean,
   onChange?: (remainingSeconds: number) => void,
-  onExpire?: () => void,
+  onExpire?: () => void
 ): CountdownResult {
   const [countdown, setCountdown] = useState({
     initialSeconds,
@@ -49,7 +49,9 @@ export function useCountdown(
     startTimeRef.current = Date.now()
 
     intervalRef.current = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - (startTimeRef.current ?? Date.now())) / 1000)
+      const elapsed = Math.floor(
+        (Date.now() - (startTimeRef.current ?? Date.now())) / 1000
+      )
       const remaining = Math.max(0, startingRemaining - elapsed)
       setCountdown({ initialSeconds, remainingSeconds: remaining })
       if (remaining === 0 && intervalRef.current) {

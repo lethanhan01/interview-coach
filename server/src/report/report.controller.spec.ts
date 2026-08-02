@@ -43,6 +43,7 @@ describe('ReportController', () => {
       expect(mockReportService.getReport).toHaveBeenCalledWith(
         'session-123',
         'user-123',
+        undefined,
       );
     });
 

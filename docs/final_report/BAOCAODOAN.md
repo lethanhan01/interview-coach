@@ -31,9 +31,11 @@
 
 ## Tóm Tắt
 
-> Cần bổ sung: tóm tắt 250-400 từ về bài toán, đối tượng người dùng, cách tiếp cận, sản phẩm GR1 đã xây dựng, kết quả chính và hướng phát triển. Nên viết sau cùng khi các chương đã hoàn thiện.
+Đồ án **AI Mock Interview** nhằm hỗ trợ sinh viên CNTT và ứng viên fresher luyện phỏng vấn theo quy trình có cấu trúc, có phản hồi và báo cáo sau phiên. Vấn đề đặt ra là nhiều công cụ hiện có chưa đáp ứng tốt nhu cầu cá nhân hóa theo hồ sơ, mô tả công việc, tiếng Việt và khả năng luyện tập dễ tiếp cận. Phương pháp thực hiện là xây dựng prototype web app cho phép người dùng quản lý hồ sơ, cấu hình phiên từ Job Description, nhận câu hỏi, trả lời bằng văn bản, nhận feedback tự động và xem báo cáo tổng hợp.
 
-Từ khóa gợi ý: AI mock interview, luyện phỏng vấn, fresher CNTT, surgical feedback, large language model, Next.js, NestJS, Supabase, Prisma, BullMQ, Redis.
+Hệ thống được phát triển trên máy tính cá nhân, chạy local với Next.js, NestJS, PostgreSQL/Supabase, Prisma, Redis/BullMQ, Docker và API mô hình ngôn ngữ lớn cho các tác vụ sinh câu hỏi, đánh giá câu trả lời, tạo báo cáo. Kết quả GR1 đáp ứng mục tiêu ở mức prototype: demo được luồng luyện phỏng vấn chính, lưu dữ liệu phiên có cấu trúc và cung cấp phản hồi tham khảo. Đồ án có tính thực tế vì hướng đến nhu cầu chuẩn bị phỏng vấn của sinh viên CNTT Việt Nam, đồng thời có thể mở rộng trong GR2 theo hướng cải thiện chất lượng AI, bổ sung RAG, luyện trả lời bằng giọng nói, theo dõi tiến bộ và đánh giá với người dùng thực. Qua quá trình thực hiện, sinh viên củng cố kỹ năng phân tích yêu cầu, thiết kế hệ thống, lập trình full-stack, tích hợp AI, cơ sở dữ liệu, xử lý bất đồng bộ, kiểm thử và viết tài liệu kỹ thuật.
+
+Từ khóa: AI mock interview, luyện phỏng vấn, fresher CNTT, large language model, Next.js, NestJS, Supabase, Prisma, BullMQ, Redis.
 
 ## Abstract
 
@@ -81,7 +83,15 @@ Từ khóa gợi ý: AI mock interview, luyện phỏng vấn, fresher CNTT, sur
 
 ## 6.1 Kết Luận Chung
 
-> Cần bổ sung: tổng kết ngắn gọn bài toán, cách tiếp cận và kết quả chính của GR1. Nên khẳng định theo đúng mức độ đã làm: đã xây dựng prototype/nền tảng/luồng chính, không nói quá mức là sản phẩm production-ready nếu chưa có bằng chứng.
+Đề tài **AI Mock Interview - Hệ thống AI Mock Interview Coach cho sinh viên CNTT Việt Nam** được thực hiện nhằm giải quyết nhu cầu luyện phỏng vấn có cấu trúc, có phản hồi cụ thể và phù hợp hơn với bối cảnh sinh viên năm cuối, thực tập sinh và ứng viên fresher ngành Công nghệ thông tin. Từ phần đặt vấn đề và khảo sát sản phẩm liên quan, có thể thấy các công cụ hiện có đã chứng minh nhu cầu luyện phỏng vấn là thực tế, nhưng vẫn còn khoảng trống về chi phí tiếp cận, khả năng hỗ trợ tiếng Việt, mức độ cá nhân hóa theo mô tả công việc và hồ sơ, khả năng lưu lại kết quả sau phiên, cũng như ranh giới đạo đức giữa luyện tập trước phỏng vấn và hỗ trợ trả lời trong phỏng vấn thật.
+
+Trong phạm vi GR1, đề tài đã tiếp cận bài toán theo hướng xây dựng một prototype web app có thể demo luồng luyện phỏng vấn chính từ đầu đến cuối. Hệ thống tập trung vào quy trình cốt lõi: người dùng quản lý hồ sơ luyện tập, nhập hoặc sử dụng mô tả công việc, cấu hình phiên phỏng vấn, nhận bộ câu hỏi phù hợp, trả lời từng câu bằng văn bản, nhận phản hồi tự động theo từng câu trả lời và xem báo cáo tổng hợp sau phiên. Cách tiếp cận này phù hợp với mục tiêu của mock interview: không thay thế nhà tuyển dụng hoặc mentor, mà tạo môi trường luyện tập trước phỏng vấn để người học nhìn thấy điểm mạnh, điểm còn thiếu và hướng cải thiện cụ thể.
+
+Về mặt lý thuyết và công nghệ, đề tài đã kết hợp các nền tảng về Technical Interview, Behavioral Interview, Mock Interview, structured interview và career readiness với các công nghệ triển khai hiện đại như Next.js, NestJS, PostgreSQL/Supabase, Prisma, Redis, BullMQ và API mô hình ngôn ngữ lớn. Các tác vụ AI có độ trễ cao như sinh câu hỏi, tạo feedback và sinh báo cáo được thiết kế theo hướng xử lý bất đồng bộ, giúp giao diện không bị phụ thuộc hoàn toàn vào thời gian phản hồi của mô hình. Dữ liệu phiên, câu hỏi, câu trả lời, feedback và báo cáo được tổ chức theo nhóm nghiệp vụ rõ ràng để phục vụ lưu lịch sử và xem lại kết quả.
+
+Kết quả chính của GR1 là hệ thống đã hình thành được nền tảng sản phẩm và kiến trúc cho một công cụ luyện phỏng vấn bằng AI: có luồng cấu hình phiên từ JD, có sinh câu hỏi theo loại phiên, có giao diện trả lời, có cơ chế bỏ qua/tạm dừng/hủy trong phiên, có xử lý feedback và report sau khi kết thúc, đồng thời có khả năng xem lại lịch sử phiên. Các nội dung này cho thấy đề tài đã đáp ứng được mục tiêu quan trọng nhất của giai đoạn GR1 là chứng minh tính khả thi của luồng luyện phỏng vấn có cấu trúc, có ngữ cảnh và có phản hồi tự động.
+
+Tuy vậy, sản phẩm ở GR1 vẫn nên được nhìn nhận đúng mức là một prototype phục vụ nghiên cứu, demo và phát triển tiếp, chưa phải một hệ thống production-ready. Chất lượng phản hồi còn phụ thuộc vào provider AI, prompt và dữ liệu đầu vào; hệ thống chưa được đánh giá trên số lượng lớn người dùng thực; một số tính năng nâng cao như luyện trả lời bằng giọng nói, theo dõi tiến bộ dài hạn, phân tích CV sâu, dashboard tiến trình, quản trị nội dung câu hỏi hoặc tối ưu triển khai production vẫn cần được hoàn thiện trong các giai đoạn sau. Những hạn chế này không làm giảm giá trị của GR1, mà giúp xác định rõ các hướng phát triển tiếp theo cho GR2 và đồ án tốt nghiệp.
 
 ## 6.2 Đóng Góp Chính Của Đề Tài
 

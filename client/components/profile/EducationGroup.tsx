@@ -14,18 +14,20 @@ interface Props {
 }
 
 const DEGREE_LABEL: Record<string, string> = Object.fromEntries(
-  EDUCATION_DEGREE_OPTIONS.filter((o) => o.value).map((o) => [o.value, o.label]),
+  EDUCATION_DEGREE_OPTIONS.filter((o) => o.value).map((o) => [o.value, o.label])
 )
 
 const FIELD_CLASS =
-  'w-full rounded-xl border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
+  'w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
 
 function toText(value: unknown) {
   if (value === null || value === undefined) return ''
   return String(value)
 }
 
-function normalizeEducation(data: Partial<EducationEntry> | null | undefined): EducationEntry {
+function normalizeEducation(
+  data: Partial<EducationEntry> | null | undefined
+): EducationEntry {
   return {
     degree: toText(data?.degree),
     school: toText(data?.school),
@@ -37,7 +39,9 @@ function normalizeEducation(data: Partial<EducationEntry> | null | undefined): E
 
 export default function EducationGroup({ data, onSave }: Props) {
   const [isEditing, setIsEditing] = useState(false)
-  const [form, setForm] = useState<EducationEntry>(() => normalizeEducation(data))
+  const [form, setForm] = useState<EducationEntry>(() =>
+    normalizeEducation(data)
+  )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -73,12 +77,14 @@ export default function EducationGroup({ data, onSave }: Props) {
   return (
     <ProfileSection
       title="Trình độ học vấn"
-      action={!isEditing ? (
-        <Button variant="ghost" size="sm" onClick={handleEdit}>
-          <PencilLine className="h-4 w-4" aria-hidden="true" />
-          Chỉnh sửa
-        </Button>
-      ) : undefined}
+      action={
+        !isEditing ? (
+          <Button variant="ghost" size="sm" onClick={handleEdit}>
+            <PencilLine className="h-4 w-4" aria-hidden="true" />
+            Chỉnh sửa
+          </Button>
+        ) : undefined
+      }
     >
       {!isEditing ? (
         <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
@@ -141,7 +147,7 @@ export default function EducationGroup({ data, onSave }: Props) {
               />
             </Field>
           </div>
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p className="text-danger text-sm">{error}</p>}
           <div className="flex gap-2">
             <Button onClick={handleSave} loading={saving} disabled={saving}>
               Lưu thay đổi
@@ -167,7 +173,7 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <label className="mb-1 block text-sm font-medium text-ink">{label}</label>
+      <label className="text-ink mb-1 block text-sm font-medium">{label}</label>
       {children}
     </div>
   )

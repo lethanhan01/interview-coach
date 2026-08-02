@@ -1,5 +1,10 @@
-import { redirect } from 'next/navigation'
+import LoginClient from '@/app/(auth)/login/LoginClient'
+import { Suspense } from 'react'
 
 export default function LoginPage() {
-  redirect('/sessions')
+  return (
+    <Suspense fallback={null}>
+      <LoginClient />
+    </Suspense>
+  )
 }

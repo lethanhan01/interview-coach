@@ -1,0 +1,82 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import IconGallery from './components/IconGallery'
+
+<Meta title="Foundations/Icons" />
+
+# Icons (Biểu tượng)
+
+Tài liệu này hướng dẫn cách khai báo, quản lý và sử dụng bộ **Icons** trong toàn bộ dự án Interview Coach.
+
+---
+
+## 1. Tổng quan & Thư viện (Overview & Library)
+
+Hệ thống sử dụng thư viện **Lucide React** (`lucide-react`) làm bộ biểu tượng tiêu chuẩn. 
+
+- **Đồng bộ đường nét**: Độ dày đường viền (stroke width) chuẩn **2px**.
+- **Linh hoạt màu sắc**: Nhận màu trực tiếp thông qua CSS `currentColor` (tích hợp tự động với Tailwind text color như `text-ink`, `text-primary`, `text-destructive`).
+- **Hỗ trợ Tree-shaking**: Import trực tiếp từng icon riêng lẻ giúp tối ưu kích thước gói bundle.
+
+---
+
+## 2. Thư viện Icon Tra cứu Trực quan (Interactive Icon Gallery)
+
+Nhập từ khóa để tìm kiếm các icon phổ biến trong hệ thống. Nhấp vào icon để sao chép dòng lệnh import React:
+
+<IconGallery />
+
+---
+
+## 3. Quy chuẩn Kích thước Icon (Size Tokens)
+
+| Kích thước | Class Tailwind | Pixel Value | Trường hợp sử dụng |
+| :--- | :--- | :--- | :--- |
+| **Small (sm)** | `w-4 h-4` | `16px` | Inline icon đi kèm chữ trong Button nhỏ, Input prefix/suffix, Badge, Table action |
+| **Medium (md)** | `w-5 h-5` | `20px` | Navigation menu item, Button cỡ vừa, Section header icon |
+| **Large (lg)** | `w-6 h-6` | `24px` | Action card header, Video/Audio control bar, Feature highlight |
+| **Extra Large (xl)** | `w-8 h-8` đến `w-12 h-12` | `32px - 48px` | Empty state illustration, Modal dialog status icon |
+
+---
+
+## 4. Hướng dẫn Sử dụng & Accessibility (Guidelines)
+
+### ✅ Do (Nên làm)
+- **Kèm theo Aria Label nếu không có chữ**: Nếu nút nhấn chỉ chứa duy nhất icon (Icon-only Button), bắt buộc bổ sung `aria-label` để hỗ trợ screen reader.
+- **Sử dụng `shrink-0`**: Thêm `shrink-0` khi đặt icon kế bên chuỗi văn bản dài để tránh icon bị bóp méo khi xuống dòng.
+- **Tái sử dụng UI Components**: Kết hợp icon với `<Button>`, `<Badge>` chuẩn hóa thay vì tự tạo thẻ HTML (Tuân thủ Quy tắc 1 trong [UI Conventions](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/stories/foundations/Conventions.mdx)).
+
+### ❌ Don't (Không nên làm)
+- **Không tự ý nhúng SVG thô bên ngoài**: Hạn chế copy-paste file `.svg` trực tiếp vào code ngoại trừ Logo thương hiệu.
+
+---
+
+## 5. Ví dụ Mã nguồn (Code Examples)
+
+```tsx
+import React from 'react'
+import { Button } from '@/components/ui/Button'
+import { Mic, MicOff, Video, PhoneOff } from 'lucide-react'
+
+export const InterviewControls = ({ isMuted }: { isMuted: boolean }) => {
+  return (
+    <div className="flex items-center gap-3 p-3 bg-surface-raised text-ink rounded-xl border border-border shadow-md">
+      <Button
+        variant={isMuted ? 'destructive' : 'secondary'}
+        size="md"
+        aria-label={isMuted ? 'Bật micro' : 'Tắt micro'}
+      >
+        {isMuted ? <MicOff className="w-5 h-5 shrink-0" /> : <Mic className="w-5 h-5 shrink-0" />}
+      </Button>
+
+      <Button variant="secondary" size="md" aria-label="Tắt camera">
+        <Video className="w-5 h-5 shrink-0" />
+      </Button>
+
+      <Button variant="destructive" size="md">
+        <PhoneOff className="w-4 h-4 shrink-0 mr-2" />
+        <span>Kết thúc</span>
+      </Button>
+    </div>
+  )
+}
+```

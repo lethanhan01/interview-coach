@@ -5,6 +5,13 @@ interface ProfileEmptyStateProps {
   className?: string
 }
 
-export default function ProfileEmptyState({ message, className = '' }: ProfileEmptyStateProps) {
-  return <p className={["text-sm italic text-ink-muted/60", className].join(' ')}>{message}</p>
+export default function ProfileEmptyState({
+  message,
+  className = '',
+}: ProfileEmptyStateProps) {
+  return (
+    <p className={['text-ink-muted/60 text-sm italic', className].join(' ')}>
+      {message}
+    </p>
+  )
 }
