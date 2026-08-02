@@ -1,0 +1,213 @@
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-fg);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-fg);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-fg);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-foreground: var(--primary-fg);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-foreground: var(--secondary-fg);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-fg);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-fg);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-foreground: var(--destructive-fg);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-fg);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-fg);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-fg);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-focus: var(--focus);
+  --color-disabled: var(--disabled);
+  --color-overlay: var(--overlay);
+
+  /* Extended Semantic Tokens */
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-surface-raised: var(--surface-raised);
+
+  --color-brand: var(--primary);
+  --color-brand-muted: var(--brand-subtle-border);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-subtle-fg: var(--brand-subtle-fg);
+  --color-brand-subtle-border: var(--brand-subtle-border);
+
+  --color-success-subtle: var(--success-subtle);
+  --color-success-subtle-fg: var(--success-subtle-fg);
+
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-subtle-fg: var(--warning-subtle-fg);
+
+  --color-danger-subtle: var(--danger-subtle);
+  --color-danger-subtle-fg: var(--danger-subtle-fg);
+}
+
+@layer base {
+  :root {
+    --bg: var(--color-neutral-50);
+    --fg: var(--color-neutral-900);
+
+    --ink: var(--color-neutral-900);
+    --ink-muted: var(--color-neutral-500);
+    --ink-faint: var(--color-neutral-400);
+
+    --surface: #ffffff;
+    --surface-fg: var(--color-neutral-900);
+    --surface-raised: var(--color-neutral-100);
+
+    --card: #ffffff;
+    --card-fg: var(--color-neutral-900);
+
+    --popover: #ffffff;
+    --popover-fg: var(--color-neutral-900);
+
+    --primary: var(--color-brand-600);
+    --primary-hover: var(--color-brand-700);
+    --primary-active: var(--color-brand-800);
+    --primary-fg: #ffffff;
+
+    --brand-subtle: var(--color-brand-50);
+    --brand-subtle-fg: var(--color-brand-700);
+    --brand-subtle-border: var(--color-brand-200);
+
+    --secondary: var(--color-neutral-100);
+    --secondary-hover: var(--color-neutral-200);
+    --secondary-fg: var(--color-neutral-900);
+
+    --muted: var(--color-neutral-100);
+    --muted-fg: var(--color-neutral-500);
+
+    --accent: var(--color-neutral-100);
+    --accent-fg: var(--color-neutral-900);
+
+    --destructive: var(--color-red-600);
+    --destructive-hover: var(--color-red-700);
+    --destructive-fg: #ffffff;
+
+    --danger-subtle: var(--color-red-50);
+    --danger-subtle-fg: var(--color-red-700);
+
+    --success: var(--color-green-600);
+    --success-fg: #ffffff;
+
+    --success-subtle: var(--color-green-50);
+    --success-subtle-fg: var(--color-green-700);
+
+    --warning: var(--color-amber-500);
+    --warning-fg: var(--color-neutral-950);
+
+    --warning-subtle: var(--color-amber-50);
+    --warning-subtle-fg: var(--color-amber-800);
+
+    --info: var(--color-blue-600);
+    --info-fg: #ffffff;
+
+    --border: var(--color-neutral-200);
+    --border-strong: var(--color-neutral-300);
+
+    --input: var(--color-neutral-200);
+    --ring: var(--color-brand-600);
+    --focus: var(--color-brand-500);
+    --disabled: var(--color-neutral-100);
+
+    --overlay: rgb(0 0 0 / 0.5);
+  }
+
+  .dark {
+    --bg: var(--color-neutral-950);
+    --fg: var(--color-neutral-50);
+
+    --ink: var(--color-neutral-50);
+    --ink-muted: var(--color-neutral-400);
+    --ink-faint: var(--color-neutral-500);
+
+    --surface: var(--color-neutral-900);
+    --surface-fg: var(--color-neutral-50);
+    --surface-raised: var(--color-neutral-800);
+
+    --card: var(--color-neutral-900);
+    --card-fg: var(--color-neutral-50);
+
+    --popover: var(--color-neutral-900);
+    --popover-fg: var(--color-neutral-50);
+
+    --primary: var(--color-brand-500);
+    --primary-hover: var(--color-brand-400);
+    --primary-active: var(--color-brand-300);
+    --primary-fg: #ffffff;
+
+    --brand-subtle: var(--color-brand-950);
+    --brand-subtle-fg: var(--color-brand-300);
+    --brand-subtle-border: var(--color-brand-800);
+
+    --secondary: var(--color-neutral-800);
+    --secondary-hover: var(--color-neutral-700);
+    --secondary-fg: var(--color-neutral-50);
+
+    --muted: var(--color-neutral-800);
+    --muted-fg: var(--color-neutral-400);
+
+    --accent: var(--color-neutral-800);
+    --accent-fg: var(--color-neutral-50);
+
+    --destructive: var(--color-red-500);
+    --destructive-hover: var(--color-red-400);
+    --destructive-fg: #ffffff;
+
+    --danger-subtle: var(--color-red-950);
+    --danger-subtle-fg: var(--color-red-300);
+
+    --success: var(--color-green-500);
+    --success-fg: #ffffff;
+
+    --success-subtle: var(--color-green-950);
+    --success-subtle-fg: var(--color-green-300);
+
+    --warning: var(--color-amber-500);
+    --warning-fg: var(--color-neutral-950);
+
+    --warning-subtle: var(--color-amber-950);
+    --warning-subtle-fg: var(--color-amber-300);
+
+    --info: var(--color-blue-500);
+    --info-fg: #ffffff;
+
+    --border: var(--color-neutral-800);
+    --border-strong: var(--color-neutral-700);
+
+    --input: var(--color-neutral-800);
+    --ring: var(--color-brand-500);
+    --focus: var(--color-brand-400);
+    --disabled: var(--color-neutral-800);
+
+    --overlay: rgb(0 0 0 / 0.7);
+  }
+}

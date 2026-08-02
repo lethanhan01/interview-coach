@@ -42,41 +42,57 @@ export default function PersonalityGroup({ data, onSave }: Props) {
     }
   }
 
-  const personalityLabel = PERSONALITY_OPTIONS.find(o => o.value === data.personality)?.label
+  const personalityLabel = PERSONALITY_OPTIONS.find(
+    (o) => o.value === data.personality
+  )?.label
 
   return (
     <ProfileSection
       title="Tính cách"
-      action={!isEditing ? (
-        <Button variant="ghost" size="sm" onClick={handleEdit}>
-          <PencilLine className="h-4 w-4" aria-hidden="true" />
-          Chỉnh sửa
-        </Button>
-      ) : undefined}
+      action={
+        !isEditing ? (
+          <Button variant="ghost" size="sm" onClick={handleEdit}>
+            <PencilLine className="h-4 w-4" aria-hidden="true" />
+            Chỉnh sửa
+          </Button>
+        ) : undefined
+      }
     >
       {isEditing ? (
         <div className="flex flex-col gap-3">
           <select
             value={form.personality}
-            onChange={e => setForm({ personality: e.target.value })}
-            className="w-full rounded-xl border border-border bg-canvas px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
+            onChange={(e) => setForm({ personality: e.target.value })}
+            className="border-border bg-canvas text-ink focus:border-brand w-full rounded-xl border px-3 py-2 text-sm focus:outline-none"
           >
-            {PERSONALITY_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+            {PERSONALITY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
-          {error && <p className="text-xs text-danger">{error}</p>}
+          {error && <p className="text-danger text-xs">{error}</p>}
           <div className="flex gap-2">
-            <Button variant="primary" size="sm" loading={saving} onClick={handleSave}>Lưu</Button>
-            <Button variant="secondary" size="sm" onClick={handleCancel}>Hủy</Button>
+            <Button
+              variant="primary"
+              size="sm"
+              loading={saving}
+              onClick={handleSave}
+            >
+              Lưu
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleCancel}>
+              Hủy
+            </Button>
           </div>
         </div>
+      ) : personalityLabel ? (
+        <p className="text-ink text-sm">{personalityLabel}</p>
       ) : (
-        personalityLabel ? (
-          <p className="text-sm text-ink">{personalityLabel}</p>
-        ) : (
-          <ProfileEmptyState message="Chưa cập nhật" className="text-sm not-italic" />
-        )
+        <ProfileEmptyState
+          message="Chưa cập nhật"
+          className="text-sm not-italic"
+        />
       )}
     </ProfileSection>
   )

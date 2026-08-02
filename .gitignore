@@ -67,3 +67,5 @@ skills-lock.json
 
 .codex
 .superpowers/*
+*storybook.log
+storybook-static

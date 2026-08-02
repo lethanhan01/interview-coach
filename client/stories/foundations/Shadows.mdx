@@ -1,0 +1,80 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import ShadowBox from './components/ShadowBox'
+
+<Meta title="Foundations/Shadows" />
+
+# Shadows & Elevation (Bóng đổ & Phân tầng)
+
+Tài liệu này định nghĩa hệ thống **Shadows** (Bóng đổ) và cấp độ nổi (**Elevation**) trong giao diện người dùng của Interview Coach dựa trên các biến CSS khai báo tại `tokens.css`.
+
+---
+
+## 1. Tổng quan & Mục đích (Overview & Purpose)
+
+Hệ thống bóng đổ giúp giả lập chiều sâu trục Z (Z-axis elevation), tạo độ phân cấp phân tầng giữa các lớp giao diện như: Nền trang -> Thẻ Card -> Popover/Dropdown -> Modal Dialog.
+
+---
+
+## 2. Minh họa Trực quan & Tương tác (Interactive Preview)
+
+Dưới đây là các cấp độ bóng đổ được sử dụng trong dự án. Bạn có thể xem sự khác biệt giữa các độ nổi từ `shadow-xs` đến `shadow-dialog`:
+
+<ShadowBox />
+
+---
+
+## 3. Bảng Tra cứu Tokens Chi tiết (Token Reference)
+
+| Token Name | CSS Variable | Tailwind Class | Z-index phù hợp | Trường hợp sử dụng |
+| :--- | :--- | :--- | :--- | :--- |
+| **Extra Small** | `--shadow-xs` | `shadow-xs` | `z-0` | Badge nổi nhẹ, card hover nhẹ |
+| **Small** | `--shadow-sm` | `shadow-sm` | `z-0` | Input, Button, Card thông thường |
+| **Medium** | `--shadow-md` | `shadow-md` | `z-10` | Floating Action Button, Hover card nổi hẳn |
+| **Large** | `--shadow-lg` | `shadow-lg` | `z-100` | Sticky Header khi scroll, Floating toolbar |
+| **Popover** | `--shadow-popover` | `shadow-popover` | `z-200` | Dropdown Menu, Select Listbox, Tooltip |
+| **Dialog** | `--shadow-dialog` | `shadow-dialog` | `z-400` | Confirm Modal, Dialog, Sheet Drawer |
+| **Focus** | `--shadow-focus` | `shadow-focus` | `z-10` | Vòng viền Focus hỗ trợ truy cập bàn phím |
+
+---
+
+## 4. Hướng dẫn Sử dụng & Dark Mode (Guidelines)
+
+### ✅ Do (Nên làm)
+- **Tạo phân tầng tự nhiên**: Lớp nổi phía trên phải có shadow lớn hơn lớp ở dưới (VD: Modal dùng `shadow-dialog`, Card nằm bên trong dùng `shadow-sm`).
+- **Dark Mode Adjustment**: Trong Dark Mode, hiệu ứng bóng đổ sẽ giảm độ rõ do nền tối. Cần kết hợp shadow nhẹ với đường viền nhạt `border border-border` để định hình khối.
+- **Focus Ring**: Sử dụng `focus-visible:shadow-focus` hoặc `focus-visible:ring-2 focus-visible:ring-primary` cho các tương tác bàn phím (Tuân thủ Quy tắc 5 trong [UI Conventions](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/stories/foundations/Conventions.mdx)).
+
+### ❌ Don't (Không nên làm)
+- **Không lạm dụng bóng quá đậm**: Tránh dùng `shadow-lg` cho toàn bộ thẻ card bình thường gây rối mắt.
+- **Không quên Focus Ring**: Luôn đảm bảo các phần tử nhấp được (Button, Input) có trạng thái focus rõ ràng.
+
+---
+
+## 5. Ví dụ Mã nguồn (Code Examples)
+
+```tsx
+import React from 'react'
+import { Button } from '@/components/ui/Button'
+
+export const DropdownCard = () => {
+  return (
+    <div className="relative font-sans">
+      {/* Button */}
+      <Button variant="primary" size="md">
+        Tùy chọn phỏng vấn
+      </Button>
+
+      {/* Floating Menu Popover */}
+      <div className="absolute top-12 left-0 w-56 bg-popover text-popover-foreground rounded-lg border border-border shadow-popover p-2 space-y-1 z-dropdown">
+        <div className="px-3 py-2 text-xs font-semibold text-ink-muted">Chọn chế độ</div>
+        <button className="w-full text-left px-3 py-1.5 text-sm rounded-md hover:bg-accent text-ink transition">
+          Phỏng vấn Kỹ thuật (Technical)
+        </button>
+        <button className="w-full text-left px-3 py-1.5 text-sm rounded-md hover:bg-accent text-ink transition">
+          Phỏng vấn Hành vi (Behavioral)
+        </button>
+      </div>
+    </div>
+  )
+}
+```

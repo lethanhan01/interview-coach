@@ -5,7 +5,7 @@ import { X } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
-import type { JdFormData } from '@/app/(candidate)/setup/page'
+import type { JdFormData } from '@/lib/setup-types'
 import type { SavedJobDescription } from '@/lib/types'
 import {
   BONUS_OPTIONS,
@@ -13,6 +13,12 @@ import {
   POSITION_OPTIONS,
   TECH_STACK_OPTIONS,
 } from '@/lib/interview-options'
+import {
+  FormField,
+  FormLabel,
+  FormControl,
+  FormDescription,
+} from '@/components/form'
 
 interface JdFormProps {
   value: JdFormData
@@ -23,7 +29,7 @@ interface JdFormProps {
 }
 
 const selectCls =
-  'w-full px-4 py-2.5 rounded-xl text-sm text-ink bg-surface border border-border outline-none transition-colors focus:ring-2 focus:ring-brand focus:border-brand'
+  'w-full px-4 py-2.5 rounded-lg text-sm text-ink bg-surface border border-border outline-none transition-colors focus:ring-2 focus:ring-brand focus:border-brand'
 
 function SelectField({
   label,
@@ -36,18 +42,18 @@ function SelectField({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={htmlFor} className="text-sm font-medium text-ink">{label}</label>
+      <label htmlFor={htmlFor} className="text-ink text-sm font-medium">
+        {label}
+      </label>
       {children}
     </div>
   )
 }
 
-export default function JdForm({
-  value,
-  onChange,
-}: JdFormProps) {
+export default function JdForm({ value, onChange }: JdFormProps) {
   const [techQuery, setTechQuery] = useState('')
-  const set = (field: keyof JdFormData, val: string) => onChange({ ...value, [field]: val })
+  const set = (field: keyof JdFormData, val: string) =>
+    onChange({ ...value, [field]: val })
 
   const toggleTech = (tech: string) =>
     onChange({
@@ -67,18 +73,24 @@ export default function JdForm({
   const filteredTechGroups = useMemo(
     () =>
       Object.entries(TECH_STACK_OPTIONS)
-        .map(([category, techs]) => [
-          category,
-          normalizedTechQuery
-            ? techs.filter((tech) => tech.toLowerCase().includes(normalizedTechQuery))
-            : techs,
-        ] as const)
+        .map(
+          ([category, techs]) =>
+            [
+              category,
+              normalizedTechQuery
+                ? techs.filter((tech) =>
+                    tech.toLowerCase().includes(normalizedTechQuery)
+                  )
+                : techs,
+            ] as const
+        )
         .filter(([, techs]) => techs.length > 0),
-    [normalizedTechQuery],
+    [normalizedTechQuery]
   )
 
   const reqHint =
-    value.requirements.trim().length > 0 && value.requirements.trim().length < 30
+    value.requirements.trim().length > 0 &&
+    value.requirements.trim().length < 30
       ? 'Tối thiểu 30 ký tự'
       : undefined
 
@@ -87,31 +99,42 @@ export default function JdForm({
       ? 'Tối thiểu 30 ký tự'
       : undefined
 
-
   return (
     <div className="flex flex-col gap-4">
       {/* Thông tin công ty */}
       <Card>
-        <h2 className="mb-4 text-base font-semibold text-ink">Thông tin công ty</h2>
+        <h2 className="text-ink mb-4 text-base font-semibold">
+          Thông tin công ty
+        </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input
-            label="Tên công ty"
-            value={value.company}
-            onChange={(e) => set('company', e.target.value)}
-            placeholder="VD: FPT Software, Shopee..."
-          />
-          <Input
-            label="Website công ty"
-            value={value.website}
-            onChange={(e) => set('website', e.target.value)}
-            placeholder="https://company.com"
-          />
+          <FormField name="company">
+            <FormLabel>Tên công ty</FormLabel>
+            <FormControl>
+              <Input
+                value={value.company}
+                onChange={(e) => set('company', e.target.value)}
+                placeholder="VD: FPT Software, Shopee..."
+              />
+            </FormControl>
+          </FormField>
+          <FormField name="website">
+            <FormLabel>Website công ty</FormLabel>
+            <FormControl>
+              <Input
+                value={value.website}
+                onChange={(e) => set('website', e.target.value)}
+                placeholder="https://company.com"
+              />
+            </FormControl>
+          </FormField>
         </div>
       </Card>
 
       {/* Vị trí tuyển dụng */}
       <Card>
-        <h2 className="mb-4 text-base font-semibold text-ink">Vị trí tuyển dụng</h2>
+        <h2 className="text-ink mb-4 text-base font-semibold">
+          Vị trí tuyển dụng
+        </h2>
         <SelectField label="Vị trí" htmlFor="jd-position">
           <select
             id="jd-position"
@@ -122,7 +145,9 @@ export default function JdForm({
           >
             <option value="">Chọn vị trí...</option>
             {POSITION_OPTIONS.map((pos) => (
-              <option key={pos} value={pos}>{pos}</option>
+              <option key={pos} value={pos}>
+                {pos}
+              </option>
             ))}
           </select>
         </SelectField>
@@ -143,55 +168,82 @@ export default function JdForm({
               ))}
             </select>
           </SelectField>
-          <Input
-            label="Số lượng tuyển"
-            value={value.headcount}
-            onChange={(e) => set('headcount', e.target.value)}
-            placeholder="VD: 2 người"
-          />
-          <Input
-            label="Địa điểm làm việc"
-            value={value.location}
-            onChange={(e) => set('location', e.target.value)}
-            placeholder="VD: Hà Nội / Remote"
-          />
+          <FormField name="headcount">
+            <FormLabel>Số lượng tuyển</FormLabel>
+            <FormControl>
+              <Input
+                value={value.headcount}
+                onChange={(e) => set('headcount', e.target.value)}
+                placeholder="VD: 2 người"
+              />
+            </FormControl>
+          </FormField>
+          <FormField name="location">
+            <FormLabel>Địa điểm làm việc</FormLabel>
+            <FormControl>
+              <Input
+                value={value.location}
+                onChange={(e) => set('location', e.target.value)}
+                placeholder="VD: Hà Nội / Remote"
+              />
+            </FormControl>
+          </FormField>
         </div>
       </Card>
 
       {/* Nội dung & Yêu cầu */}
       <Card>
-        <h2 className="mb-4 text-base font-semibold text-ink">Nội dung & Yêu cầu</h2>
+        <h2 className="text-ink mb-4 text-base font-semibold">
+          Nội dung & Yêu cầu
+        </h2>
         <div className="flex flex-col gap-4">
-          <Textarea
-            label="Yêu cầu"
-            value={value.requirements}
-            onChange={(e) => set('requirements', e.target.value)}
-            rows={5}
-            placeholder="Liệt kê yêu cầu về kinh nghiệm, kỹ năng, bằng cấp..."
-            hint={reqHint}
-          />
-          <Textarea
-            label="Nội dung công việc"
-            value={value.jobContent}
-            onChange={(e) => set('jobContent', e.target.value)}
-            rows={5}
-            placeholder="Mô tả các công việc, nhiệm vụ chính..."
-            hint={jobHint}
-          />
-          <div>
-            <p className="mb-1.5 text-sm font-medium text-ink">Tech Stack</p>
-            <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4">
-              <Input
-                type="search"
-                label="Tìm kiếm tech stack"
-                value={techQuery}
-                onChange={(e) => setTechQuery(e.target.value)}
-                placeholder="VD: PyTorch, Terraform, Playwright..."
+          <FormField name="requirements">
+            <FormLabel>Yêu cầu</FormLabel>
+            <FormControl>
+              <Textarea
+                value={value.requirements}
+                onChange={(e) => set('requirements', e.target.value)}
+                rows={5}
+                placeholder="Liệt kê yêu cầu về kinh nghiệm, kỹ năng, bằng cấp..."
               />
+            </FormControl>
+            {reqHint && (
+              <p className="text-muted-foreground text-xs">{reqHint}</p>
+            )}
+          </FormField>
+          <FormField name="jobContent">
+            <FormLabel>Nội dung công việc</FormLabel>
+            <FormControl>
+              <Textarea
+                value={value.jobContent}
+                onChange={(e) => set('jobContent', e.target.value)}
+                rows={5}
+                placeholder="Mô tả các công việc, nhiệm vụ chính..."
+              />
+            </FormControl>
+            {jobHint && (
+              <p className="text-muted-foreground text-xs">{jobHint}</p>
+            )}
+          </FormField>
+
+          <div>
+            <p className="text-ink mb-1.5 text-sm font-medium">Tech Stack</p>
+            <div className="border-border bg-surface flex flex-col gap-4 rounded-lg border p-4">
+              <FormField name="techQuery">
+                <FormLabel>Tìm kiếm tech stack</FormLabel>
+                <FormControl>
+                  <Input
+                    type="search"
+                    value={techQuery}
+                    onChange={(e) => setTechQuery(e.target.value)}
+                    placeholder="VD: PyTorch, Terraform, Playwright..."
+                  />
+                </FormControl>
+              </FormField>
 
               {value.techStack.length > 0 && (
                 <div>
-                  <p className="mb-2 text-xs font-medium text-ink-muted">
+                  <p className="text-ink-muted mb-2 text-xs font-medium">
                     Đã chọn ({value.techStack.length})
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -201,7 +253,7 @@ export default function JdForm({
                         type="button"
                         onClick={() => removeTech(tech)}
                         aria-label={`Bỏ chọn ${tech}`}
-                        className="inline-flex max-w-full items-center gap-1 rounded-full border border-brand bg-brand-50 px-3 py-1 text-left text-xs text-brand transition-colors hover:bg-surface-raised"
+                        className="border-brand-subtle-border bg-brand-subtle text-brand-subtle-fg hover:bg-surface-raised inline-flex max-w-full items-center gap-1 rounded-full border px-3 py-1 text-left text-xs transition-colors"
                       >
                         <span className="min-w-0 break-words">{tech}</span>
                         <X className="size-3 shrink-0" aria-hidden="true" />
@@ -212,13 +264,15 @@ export default function JdForm({
               )}
 
               {filteredTechGroups.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-ink-muted">
+                <p className="border-border text-ink-muted rounded-lg border border-dashed px-3 py-2 text-xs">
                   Không tìm thấy tech stack phù hợp.
                 </p>
               ) : (
                 filteredTechGroups.map(([category, techs]) => (
                   <div key={category}>
-                    <p className="mb-2 text-xs font-medium text-ink-muted">{category}</p>
+                    <p className="text-ink-muted mb-2 text-xs font-medium">
+                      {category}
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {techs.map((tech) => {
                         const selected = value.techStack.includes(tech)
@@ -232,7 +286,7 @@ export default function JdForm({
                               'max-w-full rounded-full border px-3 py-1 text-left text-xs transition-colors',
                               'whitespace-normal break-words',
                               selected
-                                ? 'border-brand bg-brand-50 text-brand'
+                                ? 'border-brand-subtle-border bg-brand-subtle text-brand-subtle-fg'
                                 : 'border-border text-ink-muted hover:border-brand-muted',
                             ].join(' ')}
                           >
@@ -245,7 +299,9 @@ export default function JdForm({
                 ))
               )}
               {value.techStack.length > 0 && (
-                <p className="text-xs text-ink-muted">Tech stack sẽ lưu: {value.techStack.join(', ')}</p>
+                <p className="text-ink-muted text-xs">
+                  Tech stack sẽ lưu: {value.techStack.join(', ')}
+                </p>
               )}
             </div>
           </div>
@@ -254,14 +310,21 @@ export default function JdForm({
 
       {/* Phúc lợi & Lương */}
       <Card>
-        <h2 className="mb-4 text-base font-semibold text-ink">Phúc lợi & Lương</h2>
+        <h2 className="text-ink mb-4 text-base font-semibold">
+          Phúc lợi & Lương
+        </h2>
         <div className="flex flex-col gap-4">
-          <Input
-            label="Lương"
-            value={value.salary}
-            onChange={(e) => set('salary', e.target.value)}
-            placeholder="VD: 15-25 triệu VNĐ"
-          />
+          <FormField name="salary">
+            <FormLabel>Lương</FormLabel>
+            <FormControl>
+              <Input
+                value={value.salary}
+                onChange={(e) => set('salary', e.target.value)}
+                placeholder="VD: 15-25 triệu VNĐ"
+              />
+            </FormControl>
+          </FormField>
+
           <SelectField label="Thưởng" htmlFor="jd-bonus">
             <select
               id="jd-bonus"
@@ -271,17 +334,23 @@ export default function JdForm({
             >
               <option value="">Chọn hình thức thưởng...</option>
               {BONUS_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
               ))}
             </select>
           </SelectField>
-          <Textarea
-            label="Quyền lợi nhân viên"
-            value={value.benefits}
-            onChange={(e) => set('benefits', e.target.value)}
-            rows={3}
-            placeholder="VD: Bảo hiểm sức khỏe, 12 ngày phép, MacBook..."
-          />
+          <FormField name="benefits">
+            <FormLabel>Quyền lợi nhân viên</FormLabel>
+            <FormControl>
+              <Textarea
+                value={value.benefits}
+                onChange={(e) => set('benefits', e.target.value)}
+                rows={3}
+                placeholder="VD: Bảo hiểm sức khỏe, 12 ngày phép, MacBook..."
+              />
+            </FormControl>
+          </FormField>
         </div>
       </Card>
     </div>

@@ -21,13 +21,15 @@ export default function CompetencyScoreChart({
 }: {
   scores?: Record<string, unknown> | null
 }) {
-  const entries = Object.entries(scores ?? {}).filter(([, v]) => typeof v === 'number')
+  const entries = Object.entries(scores ?? {}).filter(
+    ([, v]) => typeof v === 'number'
+  )
 
   if (!entries.length) return null
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-6">
-      <h2 className="mb-4 text-base font-semibold text-ink">
+    <div className="border-border bg-surface rounded-lg border p-6">
+      <h2 className="text-ink mb-4 text-base font-semibold">
         Đánh giá năng lực theo từng tiêu chí
       </h2>
       <div className="flex flex-col gap-2">
@@ -39,16 +41,18 @@ export default function CompetencyScoreChart({
             <div key={dimension}>
               <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
                 <span className="text-ink">{label}</span>
-                <span className="shrink-0 font-semibold text-brand">{formattedScore}/100</span>
+                <span className="text-brand shrink-0 font-semibold">
+                  {formattedScore}/100
+                </span>
               </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-brand-100">
+              <div className="bg-brand-100 h-1.5 w-full overflow-hidden rounded-full">
                 <div
                   role="progressbar"
                   aria-valuenow={score as number}
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-label={`${label}: ${formattedScore}/100`}
-                  className="h-full rounded-full bg-brand transition-all"
+                  className="bg-brand h-full rounded-full transition-all"
                   style={{ width: `${pct}%` }}
                 />
               </div>

@@ -2,7 +2,13 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, PauseCircle, PlayCircle, SkipForward, XCircle } from 'lucide-react'
+import {
+  ArrowLeft,
+  PauseCircle,
+  PlayCircle,
+  SkipForward,
+  XCircle,
+} from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
 import QuestionCard from '@/components/interview/QuestionCard'
 import TextAnswerInput from '@/components/interview/TextAnswerInput'
@@ -41,8 +47,11 @@ export default function InterviewPage() {
   const [answerMode, setAnswerMode] = useState<AnswerMode>('text')
   const [isCompleting, setIsCompleting] = useState(false)
   const [isTimeoutCompleting, setIsTimeoutCompleting] = useState(false)
-  const [sessionStatus, setSessionStatus] = useState<SessionStatus>('generating')
-  const [statusAction, setStatusAction] = useState<SessionStatusAction | null>(null)
+  const [sessionStatus, setSessionStatus] =
+    useState<SessionStatus>('generating')
+  const [statusAction, setStatusAction] = useState<SessionStatusAction | null>(
+    null
+  )
   const [turnSubmitting, setTurnSubmitting] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [accessToken, setAccessToken] = useState('')
@@ -63,7 +72,9 @@ export default function InterviewPage() {
   }, [questionsReady])
 
   const loadReadyQuestions = useCallback(async (): Promise<boolean> => {
-    const qs = await apiClient.get<QuestionsResponse>(`/sessions/${sessionId}/questions`)
+    const qs = await apiClient.get<QuestionsResponse>(
+      `/sessions/${sessionId}/questions`
+    )
     if (qs.questions.length === 0) return false
 
     setQuestions(qs.questions)
@@ -79,31 +90,42 @@ export default function InterviewPage() {
       try {
         setAccessToken('dev-mock-token')
 
-        const currentSession = await apiClient.get<Session>(`/sessions/${sessionId}`)
+        const currentSession = await apiClient.get<Session>(
+          `/sessions/${sessionId}`
+        )
         setSessionStatus(currentSession.status)
-        if (currentSession.status === 'completing' || currentSession.status === 'completed') {
+        if (
+          currentSession.status === 'completing' ||
+          currentSession.status === 'completed'
+        ) {
           router.replace(`/sessions/${sessionId}/report`)
           return
         }
         if (currentSession.status === 'canceled') return
         const persistedRemaining =
-          currentSession.remainingSeconds ?? (currentSession.durationMin ?? 30) * 60
+          currentSession.remainingSeconds ??
+          (currentSession.durationMin ?? 30) * 60
         remainingSecondsRef.current = persistedRemaining
         setRemainingSeconds(persistedRemaining)
 
         async function pollQuestions(): Promise<Question[]> {
           for (let i = 0; i < 6; i++) {
             if (await loadReadyQuestions()) return []
-            await new Promise(r => setTimeout(r, 5000))
+            await new Promise((r) => setTimeout(r, 5000))
           }
           throw new Error('Câu hỏi chưa sẵn sàng sau 30 giây')
         }
         await pollQuestions()
-        if (currentSession.status === 'generating' || currentSession.status === 'ready') {
+        if (
+          currentSession.status === 'generating' ||
+          currentSession.status === 'ready'
+        ) {
           setSessionStatus('active')
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Không thể tải phiên phỏng vấn')
+        setError(
+          err instanceof Error ? err.message : 'Không thể tải phiên phỏng vấn'
+        )
       } finally {
         setLoading(false)
       }
@@ -113,19 +135,26 @@ export default function InterviewPage() {
 
   useEffect(() => {
     if (!accessToken) return
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'
-    const es = new EventSource(`${apiBase}/sessions/${sessionId}/events?token=${accessToken}`)
+    const apiBase =
+      process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'
+    const es = new EventSource(
+      `${apiBase}/sessions/${sessionId}/events?token=${accessToken}`
+    )
     eventSourceRef.current = es
 
     es.addEventListener('session.status', (e) => {
-      const data = JSON.parse((e as MessageEvent).data) as { status?: SessionStatus }
+      const data = JSON.parse((e as MessageEvent).data) as {
+        status?: SessionStatus
+      }
       if (!data.status) return
       setSessionStatus(data.status)
       if (data.status === 'active' && !questionsReadyRef.current) {
         void loadReadyQuestions()
       }
       if (data.status === 'error') {
-        setError('Không thể tạo câu hỏi cho phiên phỏng vấn này. Vui lòng thử tạo phiên mới.')
+        setError(
+          'Không thể tạo câu hỏi cho phiên phỏng vấn này. Vui lòng thử tạo phiên mới.'
+        )
         setLoading(false)
         setQuestionsReady(false)
         es.close()
@@ -143,29 +172,36 @@ export default function InterviewPage() {
     return () => es.close()
   }, [sessionId, accessToken, router, loadReadyQuestions])
 
-  const updateSessionStatus = useCallback(async (status: SessionStatusAction) => {
-    setActionError(null)
-    setStatusAction(status)
-    try {
-      const updated = await apiClient.patch<Session>(
-        `/sessions/${sessionId}/status`,
-        status === 'paused'
-          ? { status, remainingSeconds: remainingSecondsRef.current }
-          : { status },
-      )
-      setSessionStatus(updated.status)
-      if (updated.remainingSeconds != null) {
-        remainingSecondsRef.current = updated.remainingSeconds
-        setRemainingSeconds(updated.remainingSeconds)
+  const updateSessionStatus = useCallback(
+    async (status: SessionStatusAction) => {
+      setActionError(null)
+      setStatusAction(status)
+      try {
+        const updated = await apiClient.patch<Session>(
+          `/sessions/${sessionId}/status`,
+          status === 'paused'
+            ? { status, remainingSeconds: remainingSecondsRef.current }
+            : { status }
+        )
+        setSessionStatus(updated.status)
+        if (updated.remainingSeconds != null) {
+          remainingSecondsRef.current = updated.remainingSeconds
+          setRemainingSeconds(updated.remainingSeconds)
+        }
+        if (updated.status === 'active') setQuestionsReady(true)
+        if (updated.status === 'canceled') eventSourceRef.current?.close()
+      } catch (err) {
+        setActionError(
+          err instanceof Error
+            ? err.message
+            : 'Không thể cập nhật phiên phỏng vấn'
+        )
+      } finally {
+        setStatusAction(null)
       }
-      if (updated.status === 'active') setQuestionsReady(true)
-      if (updated.status === 'canceled') eventSourceRef.current?.close()
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Không thể cập nhật phiên phỏng vấn')
-    } finally {
-      setStatusAction(null)
-    }
-  }, [sessionId])
+    },
+    [sessionId]
+  )
 
   const cancelSession = useCallback(async () => {
     if (!window.confirm('Hủy phiên phỏng vấn hiện tại?')) return
@@ -177,7 +213,7 @@ export default function InterviewPage() {
       setIsCompleting(true)
       await apiClient.patch<{ status: SessionStatus }>(
         `/sessions/${sessionId}/status`,
-        { status: 'completed' },
+        { status: 'completed' }
       )
       router.replace(`/sessions/${sessionId}/report`)
     } else {
@@ -210,7 +246,7 @@ export default function InterviewPage() {
           status: 'completed',
           autoSkipUnanswered: true,
           remainingSeconds: 0,
-        },
+        }
       )
       router.replace(`/sessions/${sessionId}/report`)
     } catch (err) {
@@ -222,52 +258,58 @@ export default function InterviewPage() {
       setActionError(
         err instanceof Error
           ? err.message
-          : 'Không thể tự động hoàn tất phiên phỏng vấn',
+          : 'Không thể tự động hoàn tất phiên phỏng vấn'
       )
     }
   }, [router, sessionId, sessionStatus])
 
-  const submitText = useCallback(async (text: string) => {
-    if (turnSubmittingRef.current) return
-    turnSubmittingRef.current = true
-    setTurnSubmitting(true)
-    try {
-      await apiClient.post(`/sessions/${sessionId}/turns`, {
-        answerMode: 'text',
-        answerText: text,
-        questionId: questions[currentIndex]?.id,
-      })
-      await advance()
-    } finally {
-      turnSubmittingRef.current = false
-      setTurnSubmitting(false)
-    }
-  }, [sessionId, questions, currentIndex, advance])
+  const submitText = useCallback(
+    async (text: string) => {
+      if (turnSubmittingRef.current) return
+      turnSubmittingRef.current = true
+      setTurnSubmitting(true)
+      try {
+        await apiClient.post(`/sessions/${sessionId}/turns`, {
+          answerMode: 'text',
+          answerText: text,
+          questionId: questions[currentIndex]?.id,
+        })
+        await advance()
+      } finally {
+        turnSubmittingRef.current = false
+        setTurnSubmitting(false)
+      }
+    },
+    [sessionId, questions, currentIndex, advance]
+  )
 
-  const submitVoice = useCallback(async (
-    audioUrl: string,
-    durationSeconds: number,
-    sizeBytes: number,
-    transcript: string,
-  ) => {
-    if (turnSubmittingRef.current) return
-    turnSubmittingRef.current = true
-    setTurnSubmitting(true)
-    try {
-      await apiClient.post(`/sessions/${sessionId}/turns`, {
-        answerMode: 'voice',
-        answerText: transcript,
-        audioFileUrl: audioUrl,
-        audioDurationSeconds: durationSeconds,
-        audioSizeBytes: sizeBytes,
-        questionId: questions[currentIndex]?.id,
-      })
-      await advance()
-    } finally {
-      turnSubmittingRef.current = false
-      setTurnSubmitting(false)
-    }
-  }, [sessionId, questions, currentIndex, advance])
+  const submitVoice = useCallback(
+    async (
+      audioUrl: string,
+      durationSeconds: number,
+      sizeBytes: number,
+      transcript: string
+    ) => {
+      if (turnSubmittingRef.current) return
+      turnSubmittingRef.current = true
+      setTurnSubmitting(true)
+      try {
+        await apiClient.post(`/sessions/${sessionId}/turns`, {
+          answerMode: 'voice',
+          answerText: transcript,
+          audioFileUrl: audioUrl,
+          audioDurationSeconds: durationSeconds,
+          audioSizeBytes: sizeBytes,
+          questionId: questions[currentIndex]?.id,
+        })
+        await advance()
+      } finally {
+        turnSubmittingRef.current = false
+        setTurnSubmitting(false)
+      }
+    },
+    [sessionId, questions, currentIndex, advance]
+  )
 
   const skipCurrentQuestion = useCallback(async () => {
     if (turnSubmittingRef.current) return
@@ -283,7 +325,9 @@ export default function InterviewPage() {
       })
       await advance()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Không thể bỏ qua câu hỏi')
+      setActionError(
+        err instanceof Error ? err.message : 'Không thể bỏ qua câu hỏi'
+      )
     } finally {
       turnSubmittingRef.current = false
       setTurnSubmitting(false)
@@ -300,7 +344,9 @@ export default function InterviewPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center py-20 text-sm text-danger">{error}</div>
+      <div className="text-danger flex items-center justify-center py-20 text-sm">
+        {error}
+      </div>
     )
   }
 
@@ -308,12 +354,12 @@ export default function InterviewPage() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
         <LoadingSpinner size="lg" />
-        <p className="text-base font-medium text-ink">
+        <p className="text-ink text-base font-medium">
           {isTimeoutCompleting
             ? 'Đã hết thời gian, đang hoàn tất phiên phỏng vấn'
             : 'Đang hoàn tất phiên phỏng vấn'}
         </p>
-        <p className="text-sm text-ink-muted">
+        <p className="text-ink-muted text-sm">
           {isTimeoutCompleting
             ? 'Các câu chưa trả lời sẽ được đánh dấu bỏ qua trước khi tạo báo cáo.'
             : 'AI đang tạo báo cáo, vui lòng chờ...'}
@@ -325,14 +371,18 @@ export default function InterviewPage() {
   if (sessionStatus === 'paused') {
     return (
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 px-4 py-20 text-center">
-        <div className="flex size-14 items-center justify-center rounded-full bg-brand-50 text-brand">
+        <div className="bg-brand-subtle text-brand-subtle-fg flex size-14 items-center justify-center rounded-full">
           <PauseCircle className="size-7" aria-hidden="true" />
         </div>
         <div>
-          <p className="text-lg font-semibold text-ink">Phiên phỏng vấn đang tạm dừng</p>
-          <p className="mt-1 text-sm text-ink-muted">Bạn có thể tiếp tục hoặc hủy phiên này.</p>
+          <p className="text-ink text-lg font-semibold">
+            Phiên phỏng vấn đang tạm dừng
+          </p>
+          <p className="text-ink-muted mt-1 text-sm">
+            Bạn có thể tiếp tục hoặc hủy phiên này.
+          </p>
         </div>
-        {actionError && <p className="text-sm text-danger">{actionError}</p>}
+        {actionError && <p className="text-danger text-sm">{actionError}</p>}
         <div className="flex flex-wrap justify-center gap-3">
           <Button
             onClick={() => updateSessionStatus('active')}
@@ -342,7 +392,7 @@ export default function InterviewPage() {
             Tiếp tục
           </Button>
           <Button
-            variant="danger"
+            variant="destructive"
             onClick={cancelSession}
             loading={statusAction === 'canceled'}
           >
@@ -361,12 +411,16 @@ export default function InterviewPage() {
   if (sessionStatus === 'canceled') {
     return (
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 px-4 py-20 text-center">
-        <div className="flex size-14 items-center justify-center rounded-full bg-danger/10 text-danger">
+        <div className="bg-danger/10 text-danger flex size-14 items-center justify-center rounded-full">
           <XCircle className="size-7" aria-hidden="true" />
         </div>
         <div>
-          <p className="text-lg font-semibold text-ink">Phiên phỏng vấn đã hủy</p>
-          <p className="mt-1 text-sm text-ink-muted">Phiên này sẽ không tạo báo cáo đánh giá.</p>
+          <p className="text-ink text-lg font-semibold">
+            Phiên phỏng vấn đã hủy
+          </p>
+          <p className="text-ink-muted mt-1 text-sm">
+            Phiên này sẽ không tạo báo cáo đánh giá.
+          </p>
         </div>
         <Button variant="ghost" onClick={() => router.push('/sessions')}>
           <ArrowLeft className="size-4" aria-hidden="true" />
@@ -394,7 +448,7 @@ export default function InterviewPage() {
               Tạm dừng
             </Button>
             <Button
-              variant="danger"
+              variant="destructive"
               size="sm"
               onClick={cancelSession}
               loading={statusAction === 'canceled'}
@@ -406,12 +460,16 @@ export default function InterviewPage() {
           </div>
           <CountdownTimer
             initialSeconds={remainingSeconds}
-            active={questionsReady && sessionStatus === 'active' && !isCompleting}
+            active={
+              questionsReady && sessionStatus === 'active' && !isCompleting
+            }
             onChange={trackRemainingSeconds}
             onExpire={completeByTimeout}
           />
         </div>
-        {actionError && <p className="mb-4 text-sm text-danger">{actionError}</p>}
+        {actionError && (
+          <p className="text-danger mb-4 text-sm">{actionError}</p>
+        )}
 
         {current && (
           <QuestionCard
@@ -445,6 +503,15 @@ export default function InterviewPage() {
             <VoiceRecorder
               key={current?.id}
               onSubmit={submitVoice}
+              onUploadAudio={async (blob) => {
+                const filename = `audio-${crypto.randomUUID()}.webm`
+                const formData = new FormData()
+                formData.append('file', blob, filename)
+                return apiClient.postForm(
+                  `/sessions/${sessionId}/turns/audio`,
+                  formData
+                )
+              }}
               sessionId={sessionId}
               disabled={turnSubmitting || isCompleting}
             />

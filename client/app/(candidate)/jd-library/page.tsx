@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -21,7 +21,9 @@ export default function JdLibraryPage() {
     apiClient
       .get<{ items: SavedJobDescription[] }>('/saved-job-descriptions')
       .then((data) => setItems(data.items ?? []))
-      .catch((err) => setError(err instanceof Error ? err.message : 'Không thể tải danh sách'))
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : 'Không thể tải danh sách')
+      )
       .finally(() => setLoading(false))
   }, [])
 
@@ -37,7 +39,7 @@ export default function JdLibraryPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="size-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+        <div className="border-brand size-8 animate-spin rounded-full border-2 border-t-transparent" />
       </div>
     )
   }
@@ -45,7 +47,7 @@ export default function JdLibraryPage() {
   if (error) {
     return (
       <div className="mx-auto max-w-2xl py-10">
-        <p className="text-sm text-danger">{error}</p>
+        <p className="text-danger text-sm">{error}</p>
       </div>
     )
   }
@@ -55,8 +57,8 @@ export default function JdLibraryPage() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Job Descriptions</h1>
-          <p className="mt-1 text-sm text-ink-muted">
+          <h1 className="text-ink text-2xl font-bold">Job Descriptions</h1>
+          <p className="text-ink-muted mt-1 text-sm">
             {items.length > 0
               ? `${items.length} JD đã lưu — chọn để bắt đầu phỏng vấn`
               : 'Chưa có JD nào được lưu'}
@@ -70,13 +72,15 @@ export default function JdLibraryPage() {
 
       {items.length === 0 ? (
         /* Empty state */
-        <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-border py-16 text-center">
-          <div className="flex size-14 items-center justify-center rounded-full bg-brand-50 text-brand">
+        <div className="border-border flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed py-16 text-center">
+          <div className="bg-brand-subtle text-brand-subtle-fg flex size-14 items-center justify-center rounded-full">
             <Building2 className="size-7" aria-hidden="true" />
           </div>
           <div>
-            <p className="font-semibold text-ink">Chưa có Job Description nào</p>
-            <p className="mt-1 text-sm text-ink-muted">
+            <p className="text-ink font-semibold">
+              Chưa có Job Description nào
+            </p>
+            <p className="text-ink-muted mt-1 text-sm">
               Tạo phiên phỏng vấn đầu tiên để bắt đầu lưu JD
             </p>
           </div>
@@ -99,35 +103,41 @@ export default function JdLibraryPage() {
                 key={item.id}
                 type="button"
                 onClick={() => handleSelect(item)}
-                className="group w-full rounded-2xl border border-border bg-surface p-5 text-left shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-glow"
+                className="border-border bg-surface shadow-card hover:border-brand/40 hover:shadow-glow group w-full rounded-2xl border p-5 text-left transition-all duration-150 hover:-translate-y-0.5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     {/* Company + position */}
                     <div className="flex items-center gap-2.5">
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand">
+                      <div className="bg-brand-subtle text-brand-subtle-fg flex size-9 shrink-0 items-center justify-center rounded-xl">
                         <Building2 className="size-4" aria-hidden="true" />
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate font-semibold text-ink">{item.companyName}</p>
-                        <p className="truncate text-sm text-ink-muted">{item.jobTitle}</p>
+                        <p className="text-ink truncate font-semibold">
+                          {item.companyName}
+                        </p>
+                        <p className="text-ink-muted truncate text-sm">
+                          {item.jobTitle}
+                        </p>
                       </div>
                     </div>
 
                     {/* Meta */}
                     <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
                       {item.location && (
-                        <span className="flex items-center gap-1 text-xs text-ink-faint">
+                        <span className="text-ink-faint flex items-center gap-1 text-xs">
                           <MapPin className="size-3" aria-hidden="true" />
                           {item.location}
                         </span>
                       )}
-                      <span className="flex items-center gap-1 text-xs text-ink-faint">
+                      <span className="text-ink-faint flex items-center gap-1 text-xs">
                         <Clock className="size-3" aria-hidden="true" />
                         {displayDate}
                       </span>
                       {item.salary && (
-                        <span className="text-xs font-medium text-success">{item.salary}</span>
+                        <span className="text-success text-xs font-medium">
+                          {item.salary}
+                        </span>
                       )}
                     </div>
 
@@ -135,7 +145,11 @@ export default function JdLibraryPage() {
                     {item.techStack.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {shownTechs.map((tech) => (
-                          <Badge key={tech} variant="brand" className="text-[11px]">
+                          <Badge
+                            key={tech}
+                            variant="brand"
+                            className="text-[11px]"
+                          >
                             {tech}
                           </Badge>
                         ))}
@@ -149,7 +163,7 @@ export default function JdLibraryPage() {
                   </div>
 
                   {/* Arrow */}
-                  <ChevronRight className="mt-1 size-5 shrink-0 text-ink-faint transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-brand" />
+                  <ChevronRight className="text-ink-faint group-hover:text-brand mt-1 size-5 shrink-0 transition-all duration-150 group-hover:translate-x-0.5" />
                 </div>
               </button>
             )

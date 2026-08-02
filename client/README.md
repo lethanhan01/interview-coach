@@ -61,12 +61,12 @@ NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1
 
 ## Các lệnh thường dùng
 
-| Lệnh | Mục đích |
-|------|----------|
-| `npm run dev` | Chạy dev server (port 5173) |
-| `npm run build` | Build production |
-| `npm run lint` | Chạy ESLint |
-| `npm run test:e2e` | Chạy Playwright E2E tests |
+| Lệnh                  | Mục đích                           |
+| --------------------- | ---------------------------------- |
+| `npm run dev`         | Chạy dev server (port 5173)        |
+| `npm run build`       | Build production                   |
+| `npm run lint`        | Chạy ESLint                        |
+| `npm run test:e2e`    | Chạy Playwright E2E tests          |
 | `npm run test:e2e:ui` | Playwright với giao diện tương tác |
 
 ## Kiểm thử xác thực tích hợp

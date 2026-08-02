@@ -1,8 +1,10 @@
 import { test, expect, type Page } from '@playwright/test'
 
 const MOCK_SESSION_ID = 'session-abc123'
-const VALID_REQUIREMENTS = 'Có kinh nghiệm React, TypeScript và làm việc với REST API.'
-const VALID_JOB_CONTENT = 'Phát triển giao diện web, phối hợp backend và tối ưu trải nghiệm người dùng.'
+const VALID_REQUIREMENTS =
+  'Có kinh nghiệm React, TypeScript và làm việc với REST API.'
+const VALID_JOB_CONTENT =
+  'Phát triển giao diện web, phối hợp backend và tối ưu trải nghiệm người dùng.'
 
 let savedJobDescriptionPayload: Record<string, unknown> | null = null
 let sessionPayload: Record<string, unknown> | null = null
@@ -34,7 +36,10 @@ test.beforeEach(async ({ page }) => {
       return
     }
 
-    savedJobDescriptionPayload = route.request().postDataJSON() as Record<string, unknown>
+    savedJobDescriptionPayload = route.request().postDataJSON() as Record<
+      string,
+      unknown
+    >
     await route.fulfill({
       status: 201,
       contentType: 'application/json',
@@ -56,7 +61,9 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
-test('nút Tiếp theo disabled khi JD chưa đủ thông tin bắt buộc', async ({ page }) => {
+test('nút Tiếp theo disabled khi JD chưa đủ thông tin bắt buộc', async ({
+  page,
+}) => {
   await page.goto('/setup')
   const nextBtn = page.getByRole('button', { name: 'Tiếp theo' })
   await expect(nextBtn).toBeDisabled()
@@ -123,27 +130,35 @@ test('chọn Western gửi language=en khi tạo session', async ({ page }) => {
   })
 })
 
-test('có thể tìm kiếm, chọn và lưu các tech stack mới trong JD', async ({ page }) => {
+test('có thể tìm kiếm, chọn và lưu các tech stack mới trong JD', async ({
+  page,
+}) => {
   await page.goto('/setup')
 
   await fillValidJd(page)
 
   await selectTech(page, 'PyTorch')
-  await expect(page.getByRole('button', { name: 'Bỏ chọn PyTorch' })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Bỏ chọn PyTorch' })
+  ).toBeVisible()
   await page.getByRole('button', { name: 'Bỏ chọn PyTorch' }).click()
   await expect(page.getByLabel('Tên công ty')).toHaveValue('FPT Software')
 
   await selectTech(page, 'PyTorch')
   await selectTech(page, 'Playwright')
   await selectTech(page, 'Terraform')
-  await expect(page.getByText('Cloud / DevOps / SRE', { exact: true })).toBeVisible()
+  await expect(
+    page.getByText('Cloud / DevOps / SRE', { exact: true })
+  ).toBeVisible()
   await selectTech(page, 'OWASP')
   await expect(page.getByText('Security', { exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'Tiếp theo' }).click()
   await page.getByRole('button', { name: 'Tiếp theo' }).click()
 
-  await expect(page.getByText(/PyTorch.*Playwright.*Terraform.*OWASP/)).toBeVisible()
+  await expect(
+    page.getByText(/PyTorch.*Playwright.*Terraform.*OWASP/)
+  ).toBeVisible()
 
   await page.getByRole('button', { name: 'Bắt đầu phỏng vấn' }).click()
   await expect(page).toHaveURL(new RegExp(`/sessions/${MOCK_SESSION_ID}`))
@@ -152,11 +167,17 @@ test('có thể tìm kiếm, chọn và lưu các tech stack mới trong JD', as
     level: 'junior',
     techStack: ['PyTorch', 'Playwright', 'Terraform', 'OWASP'],
   })
-  expect(String(sessionPayload?.jobDescription)).toContain('Tech Stack: PyTorch, Playwright, Terraform, OWASP')
-  expect(String(sessionPayload?.jobDescription)).toContain('Level yêu cầu: Junior')
+  expect(String(sessionPayload?.jobDescription)).toContain(
+    'Tech Stack: PyTorch, Playwright, Terraform, OWASP'
+  )
+  expect(String(sessionPayload?.jobDescription)).toContain(
+    'Level yêu cầu: Junior'
+  )
 })
 
-test('chuẩn hóa draft JD cũ thiếu field để input luôn controlled', async ({ page }) => {
+test('chuẩn hóa draft JD cũ thiếu field để input luôn controlled', async ({
+  page,
+}) => {
   const consoleErrors: string[] = []
   page.on('console', (msg) => {
     if (msg.type() === 'error') consoleErrors.push(msg.text())
@@ -166,10 +187,10 @@ test('chuẩn hóa draft JD cũ thiếu field để input luôn controlled', asy
     ({ requirements, jobContent }) => {
       window.localStorage.setItem(
         'interviewcoach_jd_draft',
-        JSON.stringify({ company: 'FPT Software', requirements, jobContent }),
+        JSON.stringify({ company: 'FPT Software', requirements, jobContent })
       )
     },
-    { requirements: VALID_REQUIREMENTS, jobContent: VALID_JOB_CONTENT },
+    { requirements: VALID_REQUIREMENTS, jobContent: VALID_JOB_CONTENT }
   )
 
   await page.goto('/setup')
@@ -182,6 +203,6 @@ test('chuẩn hóa draft JD cũ thiếu field để input luôn controlled', asy
   await page.getByLabel('Quyền lợi nhân viên').fill('Bảo hiểm sức khỏe')
 
   expect(consoleErrors.join('\n')).not.toContain(
-    'A component is changing an uncontrolled input to be controlled',
+    'A component is changing an uncontrolled input to be controlled'
   )
 })

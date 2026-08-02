@@ -25,7 +25,7 @@ const EMPTY_ENTRY: Omit<ProjectEntry, 'id'> = {
 }
 
 const FIELD_CLASS =
-  'w-full rounded-xl border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
+  'w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
 
 function newEntry(): ProjectEntry {
   return { ...EMPTY_ENTRY, id: crypto.randomUUID(), techStack: [] }
@@ -62,9 +62,13 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
     }
   }
 
-  function setEntry(id: string, field: keyof ProjectEntry, value: string | boolean) {
+  function setEntry(
+    id: string,
+    field: keyof ProjectEntry,
+    value: string | boolean
+  ) {
     setForm((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
+      prev.map((e) => (e.id === id ? { ...e, [field]: value } : e))
     )
   }
 
@@ -79,7 +83,7 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
             ? stack.filter((t) => t !== techName)
             : [...stack, techName],
         }
-      }),
+      })
     )
   }
 
@@ -96,12 +100,14 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
   return (
     <ProfileSection
       title="Dự án cá nhân"
-      action={!isEditing ? (
-        <Button variant="ghost" size="sm" onClick={handleEdit}>
-          <PencilLine className="h-4 w-4" aria-hidden="true" />
-          Chỉnh sửa
-        </Button>
-      ) : undefined}
+      action={
+        !isEditing ? (
+          <Button variant="ghost" size="sm" onClick={handleEdit}>
+            <PencilLine className="h-4 w-4" aria-hidden="true" />
+            Chỉnh sửa
+          </Button>
+        ) : undefined
+      }
     >
       {!isEditing ? (
         displayList.length === 0 ? (
@@ -109,9 +115,14 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
         ) : (
           <div className="flex flex-col gap-4">
             {displayList.map((entry) => (
-              <div key={entry.id} className="rounded-xl border border-border p-4">
-                <p className="text-sm font-semibold text-ink">{entry.name || '—'}</p>
-                <p className="mt-0.5 text-xs text-ink-muted">
+              <div
+                key={entry.id}
+                className="border-border rounded-xl border p-4"
+              >
+                <p className="text-ink text-sm font-semibold">
+                  {entry.name || '—'}
+                </p>
+                <p className="text-ink-muted mt-0.5 text-xs">
                   {entry.startDate || '—'} →{' '}
                   {entry.isCurrent ? 'Hiện tại' : entry.endDate || '—'}
                 </p>
@@ -125,14 +136,14 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
                   </div>
                 )}
                 {entry.description && (
-                  <p className="mt-2 text-sm text-ink">{entry.description}</p>
+                  <p className="text-ink mt-2 text-sm">{entry.description}</p>
                 )}
                 {entry.url && (
                   <a
                     href={entry.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-1 inline-block text-xs text-brand hover:underline"
+                    className="text-brand mt-1 inline-block text-xs hover:underline"
                   >
                     {entry.url}
                   </a>
@@ -144,13 +155,13 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
       ) : (
         <div className="flex flex-col gap-6">
           {form.map((entry, idx) => (
-            <div key={entry.id} className="rounded-xl border border-border p-4">
+            <div key={entry.id} className="border-border rounded-xl border p-4">
               <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm font-medium text-ink">Dự án #{idx + 1}</p>
+                <p className="text-ink text-sm font-medium">Dự án #{idx + 1}</p>
                 <button
                   type="button"
                   onClick={() => removeEntry(entry.id)}
-                  className="text-xs text-danger hover:underline"
+                  className="text-danger text-xs hover:underline"
                 >
                   Xóa
                 </button>
@@ -169,7 +180,9 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
                     <input
                       type="date"
                       value={entry.startDate}
-                      onChange={(e) => setEntry(entry.id, 'startDate', e.target.value)}
+                      onChange={(e) =>
+                        setEntry(entry.id, 'startDate', e.target.value)
+                      }
                       className={FIELD_CLASS}
                     />
                   </Field>
@@ -178,7 +191,9 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
                       type="date"
                       value={entry.endDate}
                       disabled={entry.isCurrent}
-                      onChange={(e) => setEntry(entry.id, 'endDate', e.target.value)}
+                      onChange={(e) =>
+                        setEntry(entry.id, 'endDate', e.target.value)
+                      }
                       className={`${FIELD_CLASS} disabled:opacity-50`}
                     />
                   </Field>
@@ -188,15 +203,22 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
                     type="checkbox"
                     id={`current-${entry.id}`}
                     checked={entry.isCurrent}
-                    onChange={(e) => setEntry(entry.id, 'isCurrent', e.target.checked)}
-                    className="h-4 w-4 rounded border-border accent-brand"
+                    onChange={(e) =>
+                      setEntry(entry.id, 'isCurrent', e.target.checked)
+                    }
+                    className="border-border accent-brand h-4 w-4 rounded"
                   />
-                  <label htmlFor={`current-${entry.id}`} className="text-sm text-ink">
+                  <label
+                    htmlFor={`current-${entry.id}`}
+                    className="text-ink text-sm"
+                  >
                     Dự án đang thực hiện
                   </label>
                 </div>
                 <div>
-                  <p className="mb-1.5 text-sm font-medium text-ink">Tech stack</p>
+                  <p className="text-ink mb-1.5 text-sm font-medium">
+                    Tech stack
+                  </p>
                   {availableTechs.length === 0 ? (
                     <ProfileEmptyState
                       message="Thêm kỹ năng ở mục Kỹ năng chuyên môn trước"
@@ -205,7 +227,9 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
                       {availableTechs.map((tech) => {
-                        const selected = (entry.techStack ?? []).includes(tech.name)
+                        const selected = (entry.techStack ?? []).includes(
+                          tech.name
+                        )
                         return (
                           <button
                             key={tech.id}
@@ -235,7 +259,9 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
                 <Field label="Mô tả">
                   <textarea
                     value={entry.description}
-                    onChange={(e) => setEntry(entry.id, 'description', e.target.value)}
+                    onChange={(e) =>
+                      setEntry(entry.id, 'description', e.target.value)
+                    }
                     placeholder="Mô tả ngắn về dự án, vai trò, thành tích..."
                     rows={3}
                     className={FIELD_CLASS}
@@ -245,11 +271,15 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
             </div>
           ))}
 
-          <Button variant="ghost" onClick={addEntry} className="self-start text-sm">
+          <Button
+            variant="ghost"
+            onClick={addEntry}
+            className="self-start text-sm"
+          >
             + Thêm dự án
           </Button>
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p className="text-danger text-sm">{error}</p>}
           <div className="flex gap-2">
             <Button onClick={handleSave} loading={saving} disabled={saving}>
               Lưu thay đổi
@@ -264,10 +294,16 @@ export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-ink">{label}</label>
+      <label className="text-ink mb-1 block text-sm font-medium">{label}</label>
       {children}
     </div>
   )

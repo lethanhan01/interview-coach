@@ -8,7 +8,10 @@ interface TextAnswerInputProps {
   disabled?: boolean
 }
 
-export default function TextAnswerInput({ onSubmit, disabled }: TextAnswerInputProps) {
+export default function TextAnswerInput({
+  onSubmit,
+  disabled,
+}: TextAnswerInputProps) {
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -43,10 +46,10 @@ export default function TextAnswerInput({ onSubmit, disabled }: TextAnswerInputP
         disabled={disabled || submitting}
         placeholder="Nhập câu trả lời của bạn..."
         rows={6}
-        className="w-full resize-none rounded-xl border border-border p-3 text-sm text-ink placeholder:text-ink-faint focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none disabled:opacity-50"
+        className="border-border text-ink placeholder:text-ink-faint focus:border-brand focus:ring-brand w-full resize-none rounded-xl border p-3 text-sm focus:outline-none focus:ring-2 disabled:opacity-50"
       />
       {error && (
-        <p role="alert" className="text-sm text-danger">
+        <p role="alert" className="text-danger text-sm">
           {error}
         </p>
       )}

@@ -20,7 +20,9 @@ export default function TechnicalSkillsGroup({ data, onSave }: Props) {
   const [entries, setEntries] = useState<TechnicalSkillEntry[]>(data)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [addState, setAddState] = useState<Record<string, { name: string; usagePeriod: string }>>({})
+  const [addState, setAddState] = useState<
+    Record<string, { name: string; usagePeriod: string }>
+  >({})
 
   function handleEdit() {
     setEntries(data)
@@ -39,13 +41,20 @@ export default function TechnicalSkillsGroup({ data, onSave }: Props) {
     if (!s?.name) return
     const months = parseInt(s.usagePeriod, 10)
     if (isNaN(months) || months < 0) return
-    if (entries.some(e => e.category === category && e.name === s.name)) return
-    setEntries(prev => [...prev, { id: crypto.randomUUID(), category, name: s.name, usagePeriod: months }])
-    setAddState(prev => ({ ...prev, [category]: { name: '', usagePeriod: '' } }))
+    if (entries.some((e) => e.category === category && e.name === s.name))
+      return
+    setEntries((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), category, name: s.name, usagePeriod: months },
+    ])
+    setAddState((prev) => ({
+      ...prev,
+      [category]: { name: '', usagePeriod: '' },
+    }))
   }
 
   function removeEntry(id: string) {
-    setEntries(prev => prev.filter(e => e.id !== id))
+    setEntries((prev) => prev.filter((e) => e.id !== id))
   }
 
   async function handleSave() {
@@ -64,27 +73,35 @@ export default function TechnicalSkillsGroup({ data, onSave }: Props) {
   return (
     <ProfileSection
       title="Kỹ năng chuyên môn"
-      action={!isEditing ? (
-        <Button variant="ghost" size="sm" onClick={handleEdit}>
-          <PencilLine className="h-4 w-4" aria-hidden="true" />
-          Chỉnh sửa
-        </Button>
-      ) : undefined}
+      action={
+        !isEditing ? (
+          <Button variant="ghost" size="sm" onClick={handleEdit}>
+            <PencilLine className="h-4 w-4" aria-hidden="true" />
+            Chỉnh sửa
+          </Button>
+        ) : undefined
+      }
     >
       {TECH_CATEGORIES.map(({ key, label }) => {
-        const displayEntries = (isEditing ? entries : data).filter(e => e.category === key)
+        const displayEntries = (isEditing ? entries : data).filter(
+          (e) => e.category === key
+        )
         const s = addState[key] ?? { name: '', usagePeriod: '' }
-        const usedNames = displayEntries.map(e => e.name)
-        const available = TECH_OPTIONS[key].filter(n => !usedNames.includes(n))
+        const usedNames = displayEntries.map((e) => e.name)
+        const available = TECH_OPTIONS[key].filter(
+          (n) => !usedNames.includes(n)
+        )
 
         return (
           <div key={key} className="mb-5 last:mb-0">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">{label}</p>
+            <p className="text-ink-muted mb-2 text-xs font-semibold uppercase tracking-wide">
+              {label}
+            </p>
             <div className="mb-2 flex flex-wrap gap-2">
               {displayEntries.length === 0 && !isEditing && (
                 <ProfileEmptyState message="Chưa thêm" className="text-xs" />
               )}
-              {displayEntries.map(e => (
+              {displayEntries.map((e) => (
                 <Badge key={e.id} variant="default" className="px-2.5 py-0.5">
                   {e.name}
                   <span className="text-ink-muted">· {e.usagePeriod}th</span>
@@ -92,7 +109,7 @@ export default function TechnicalSkillsGroup({ data, onSave }: Props) {
                     <button
                       type="button"
                       onClick={() => removeEntry(e.id)}
-                      className="ml-1 leading-none text-ink-muted hover:text-danger"
+                      className="text-ink-muted hover:text-danger ml-1 leading-none"
                     >
                       ×
                     </button>
@@ -104,21 +121,41 @@ export default function TechnicalSkillsGroup({ data, onSave }: Props) {
               <div className="flex gap-2">
                 <select
                   value={s.name}
-                  onChange={ev => setAddState(prev => ({ ...prev, [key]: { ...s, name: ev.target.value } }))}
-                  className="flex-1 rounded-xl border border-border bg-canvas px-3 py-1.5 text-sm text-ink focus:border-brand focus:outline-none"
+                  onChange={(ev) =>
+                    setAddState((prev) => ({
+                      ...prev,
+                      [key]: { ...s, name: ev.target.value },
+                    }))
+                  }
+                  className="border-border bg-canvas text-ink focus:border-brand flex-1 rounded-xl border px-3 py-1.5 text-sm focus:outline-none"
                 >
                   <option value="">Chọn...</option>
-                  {available.map(n => <option key={n} value={n}>{n}</option>)}
+                  {available.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
                 </select>
                 <input
                   type="number"
                   min={0}
                   placeholder="Tháng"
                   value={s.usagePeriod}
-                  onChange={ev => setAddState(prev => ({ ...prev, [key]: { ...s, usagePeriod: ev.target.value } }))}
-                  className="w-20 rounded-xl border border-border bg-canvas px-3 py-1.5 text-sm text-ink focus:border-brand focus:outline-none"
+                  onChange={(ev) =>
+                    setAddState((prev) => ({
+                      ...prev,
+                      [key]: { ...s, usagePeriod: ev.target.value },
+                    }))
+                  }
+                  className="border-border bg-canvas text-ink focus:border-brand w-20 rounded-xl border px-3 py-1.5 text-sm focus:outline-none"
                 />
-                <Button variant="secondary" size="sm" onClick={() => addEntry(key)}>Thêm</Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => addEntry(key)}
+                >
+                  Thêm
+                </Button>
               </div>
             )}
           </div>
@@ -127,10 +164,19 @@ export default function TechnicalSkillsGroup({ data, onSave }: Props) {
 
       {isEditing && (
         <>
-          {error && <p className="mb-2 mt-3 text-xs text-danger">{error}</p>}
+          {error && <p className="text-danger mb-2 mt-3 text-xs">{error}</p>}
           <div className="mt-4 flex gap-2">
-            <Button variant="primary" size="sm" loading={saving} onClick={handleSave}>Lưu</Button>
-            <Button variant="secondary" size="sm" onClick={handleCancel}>Hủy</Button>
+            <Button
+              variant="primary"
+              size="sm"
+              loading={saving}
+              onClick={handleSave}
+            >
+              Lưu
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleCancel}>
+              Hủy
+            </Button>
           </div>
         </>
       )}

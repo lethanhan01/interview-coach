@@ -40,7 +40,9 @@ const STATUS_VARIANTS: Record<string, BadgeVariant> = {
 }
 
 function getCompanyName(jobDescription: string): string | undefined {
-  const line = jobDescription.split(/\r?\n/).find((l) => l.trim().startsWith('Tên công ty:'))
+  const line = jobDescription
+    .split(/\r?\n/)
+    .find((l) => l.trim().startsWith('Tên công ty:'))
   if (!line) return undefined
   return line.slice(line.indexOf(':') + 1).trim() || undefined
 }
@@ -58,7 +60,9 @@ function ScoreDisplay({ score }: Readonly<{ score: number }>) {
     <div className={`rounded-xl px-4 py-3 ${scoreContainerClass(pct)}`}>
       <p className="mb-1 text-xs font-medium opacity-60">Điểm tổng</p>
       <div className="flex items-baseline gap-1">
-        <span className="text-2xl font-bold leading-none tabular-nums">{score}</span>
+        <span className="text-2xl font-bold tabular-nums leading-none">
+          {score}
+        </span>
         <span className="text-sm opacity-50">/100</span>
       </div>
     </div>
@@ -75,18 +79,25 @@ export default function SessionsPage() {
     let cancelled = false
     apiClient
       .get<{ sessions: Session[] }>('/sessions')
-      .then((data) => { if (!cancelled) setSessions(data.sessions ?? []) })
+      .then((data) => {
+        if (!cancelled) setSessions(data.sessions ?? [])
+      })
       .catch((err) => {
         if (cancelled) return
-        const msg = err instanceof Error ? err.message : 'Không thể tải danh sách'
+        const msg =
+          err instanceof Error ? err.message : 'Không thể tải danh sách'
         setError(
           msg === 'Failed to fetch'
             ? 'Không thể kết nối đến server. Kiểm tra server có đang chạy không.'
-            : msg,
+            : msg
         )
       })
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [retryCount])
 
   function retryLoad() {
@@ -106,10 +117,10 @@ export default function SessionsPage() {
   if (error) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
-        <p className="text-sm text-danger">{error}</p>
+        <p className="text-danger text-sm">{error}</p>
         <button
           onClick={retryLoad}
-          className="rounded-full border border-brand px-4 py-1.5 text-sm font-medium text-brand transition-colors hover:bg-brand-50"
+          className="border-brand text-brand hover:bg-brand-subtle rounded-full border px-4 py-1.5 text-sm font-medium transition-colors"
         >
           Thử lại
         </button>
@@ -119,23 +130,26 @@ export default function SessionsPage() {
 
   return (
     <div>
-      <div className="mb-8 rounded-3xl border border-border bg-surface p-6 shadow-card">
+      <div className="border-border bg-surface shadow-card mb-8 rounded-3xl border p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
+            <p className="text-ink-muted text-xs font-semibold uppercase tracking-[0.2em]">
               Phiên phỏng vấn
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-bold text-ink">Quản lý phiên phỏng vấn</h1>
+              <h1 className="text-ink text-2xl font-bold">
+                Quản lý phiên phỏng vấn
+              </h1>
               <Badge variant="brand">{sessions.length} phiên</Badge>
             </div>
-            <p className="mt-2 text-sm text-ink-muted">
-              Tạo phiên mới, tiếp tục phiên đang chạy hoặc xem báo cáo đã hoàn thành.
+            <p className="text-ink-muted mt-2 text-sm">
+              Tạo phiên mới, tiếp tục phiên đang chạy hoặc xem báo cáo đã hoàn
+              thành.
             </p>
           </div>
           <Link
             href="/setup"
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-btn transition-all duration-150 hover:scale-[1.02] hover:bg-brand-light hover:shadow-glow"
+            className="bg-brand shadow-btn hover:bg-brand-light hover:shadow-glow inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-white transition-all duration-150 hover:scale-[1.02]"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
             Tạo phiên mới
@@ -144,17 +158,20 @@ export default function SessionsPage() {
       </div>
 
       {sessions.length === 0 ? (
-        <div className="rounded-3xl border border-border bg-surface p-10 text-center shadow-card">
-          <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-brand-50">
-            <Plus className="size-7 text-brand" aria-hidden="true" />
+        <div className="border-border bg-surface shadow-card rounded-3xl border p-10 text-center">
+          <div className="bg-brand-subtle text-brand-subtle-fg mx-auto flex size-16 items-center justify-center rounded-2xl">
+            <Plus className="size-7" aria-hidden="true" />
           </div>
-          <p className="mt-5 text-lg font-semibold text-ink">Chưa có phiên phỏng vấn nào</p>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-ink-muted">
-            Dán Job Description và bắt đầu luyện tập ngay để nhận phản hồi từ AI.
+          <p className="text-ink mt-5 text-lg font-semibold">
+            Chưa có phiên phỏng vấn nào
+          </p>
+          <p className="text-ink-muted mx-auto mt-2 max-w-sm text-sm">
+            Dán Job Description và bắt đầu luyện tập ngay để nhận phản hồi từ
+            AI.
           </p>
           <Link
             href="/setup"
-            className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white shadow-btn transition-all duration-150 hover:scale-[1.02] hover:bg-brand-light hover:shadow-glow"
+            className="bg-brand shadow-btn hover:bg-brand-light hover:shadow-glow mt-5 inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium text-white transition-all duration-150 hover:scale-[1.02]"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
             Bắt đầu phỏng vấn
@@ -167,7 +184,7 @@ export default function SessionsPage() {
             return (
               <div
                 key={s.id}
-                className="flex h-full flex-col rounded-2xl border border-border bg-surface shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-glow"
+                className="border-border bg-surface shadow-card hover:shadow-glow flex h-full flex-col rounded-2xl border transition-all duration-150 hover:-translate-y-0.5"
               >
                 <div className="flex flex-1 flex-col gap-4 p-5">
                   {/* Status badge + date/time */}
@@ -176,7 +193,7 @@ export default function SessionsPage() {
                       {STATUS_LABELS[s.status] ?? s.status}
                     </Badge>
                     {s.createdAt && (
-                      <span className="shrink-0 text-xs text-ink-faint">
+                      <span className="text-ink-faint shrink-0 text-xs">
                         {formatVietnamDateTime(s.createdAt)}
                       </span>
                     )}
@@ -184,24 +201,24 @@ export default function SessionsPage() {
 
                   {/* Job title + company */}
                   <div>
-                    <p className="text-sm font-semibold leading-snug text-ink">
+                    <p className="text-ink text-sm font-semibold leading-snug">
                       {s.jobTitle || '—'}
                     </p>
                     {company && (
-                      <p className="mt-0.5 text-xs text-ink-muted">{company}</p>
+                      <p className="text-ink-muted mt-0.5 text-xs">{company}</p>
                     )}
                   </div>
 
                   {/* Metadata chips: interview type, context pack, duration */}
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium text-ink-muted">
+                    <span className="border-border text-ink-muted rounded-md border px-2 py-0.5 text-xs font-medium">
                       {SESSION_TYPE_LABELS[s.sessionType] ?? s.sessionType}
                     </span>
-                    <span className="rounded-md border border-border px-2 py-0.5 text-xs text-ink-muted">
+                    <span className="border-border text-ink-muted rounded-md border px-2 py-0.5 text-xs">
                       {s.contextPackId}
                     </span>
                     {s.durationMin != null && (
-                      <span className="flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-xs text-ink-muted">
+                      <span className="border-border text-ink-muted flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs">
                         <Clock className="h-3 w-3" aria-hidden="true" />
                         {s.durationMin} phút
                       </span>
@@ -214,11 +231,11 @@ export default function SessionsPage() {
                   )}
 
                   {/* Action button */}
-                  <div className="mt-auto border-t border-border pt-3">
+                  <div className="border-border mt-auto border-t pt-3">
                     {s.status === 'completed' && (
                       <Link
                         href={`/sessions/${s.id}/report`}
-                        className="block w-full rounded-full bg-brand px-3 py-2 text-center text-xs font-semibold text-white shadow-btn transition-all hover:bg-brand-light"
+                        className="bg-brand shadow-btn hover:bg-brand-light block w-full rounded-full px-3 py-2 text-center text-xs font-semibold text-white transition-all"
                       >
                         Xem báo cáo
                       </Link>
@@ -226,15 +243,17 @@ export default function SessionsPage() {
                     {s.status === 'completing' && (
                       <Link
                         href={`/sessions/${s.id}/report`}
-                        className="block w-full rounded-full border border-brand px-3 py-2 text-center text-xs font-medium text-brand transition-colors hover:bg-brand-50"
+                        className="border-brand text-brand hover:bg-brand-subtle block w-full rounded-full border px-3 py-2 text-center text-xs font-medium transition-colors"
                       >
                         Theo dõi báo cáo
                       </Link>
                     )}
-                    {(s.status === 'active' || s.status === 'ready' || s.status === 'paused') && (
+                    {(s.status === 'active' ||
+                      s.status === 'ready' ||
+                      s.status === 'paused') && (
                       <Link
                         href={`/sessions/${s.id}`}
-                        className="block w-full rounded-full bg-brand px-3 py-2 text-center text-xs font-semibold text-white shadow-btn transition-all hover:bg-brand-light"
+                        className="bg-brand shadow-btn hover:bg-brand-light block w-full rounded-full px-3 py-2 text-center text-xs font-semibold text-white transition-all"
                       >
                         {s.status === 'ready' ? 'Bắt đầu' : 'Tiếp tục'}
                       </Link>

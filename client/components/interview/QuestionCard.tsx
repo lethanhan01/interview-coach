@@ -4,13 +4,17 @@ interface QuestionCardProps {
   totalQuestions: number
 }
 
-export default function QuestionCard({ questionText, orderIndex, totalQuestions }: QuestionCardProps) {
+export default function QuestionCard({
+  questionText,
+  orderIndex,
+  totalQuestions,
+}: QuestionCardProps) {
   return (
-    <div className="rounded-2xl border border-brand-200 bg-brand-50 p-5 shadow-card">
-      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-brand">
+    <div className="border-brand-subtle-border bg-brand-subtle shadow-card rounded-2xl border p-5">
+      <p className="text-brand-subtle-fg mb-3 text-xs font-medium uppercase tracking-wide">
         Câu {orderIndex + 1} / {totalQuestions}
       </p>
-      <p className="text-base leading-relaxed text-ink">{questionText}</p>
+      <p className="text-ink text-base leading-relaxed">{questionText}</p>
     </div>
   )
 }

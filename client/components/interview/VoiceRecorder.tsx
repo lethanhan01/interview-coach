@@ -3,16 +3,16 @@
 import { useState, useRef } from 'react'
 import LoadingSpinner from '../ui/LoadingSpinner'
 import Button from '../ui/Button'
-import { apiClient } from '@/lib/api-client'
 
 interface VoiceRecorderProps {
   onSubmit: (
     audioUrl: string,
     durationSeconds: number,
     sizeBytes: number,
-    transcript: string,
+    transcript: string
   ) => Promise<void>
-  sessionId: string
+  onUploadAudio: (blob: Blob) => Promise<AudioUploadResponse>
+  sessionId?: string
   disabled?: boolean
 }
 
@@ -31,7 +31,12 @@ interface VoiceDraft {
   sizeBytes: number
 }
 
-export default function VoiceRecorder({ onSubmit, sessionId, disabled }: VoiceRecorderProps) {
+export default function VoiceRecorder({
+  onSubmit,
+  onUploadAudio,
+  sessionId,
+  disabled,
+}: VoiceRecorderProps) {
   const [state, setState] = useState<RecordState>('idle')
   const [error, setError] = useState<string | null>(null)
   const [draft, setDraft] = useState<VoiceDraft | null>(null)
@@ -48,14 +53,18 @@ export default function VoiceRecorder({ onSubmit, sessionId, disabled }: VoiceRe
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
       chunksRef.current = []
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data)
+      }
       recorder.start()
       mediaRecorderRef.current = recorder
       startTimeRef.current = Date.now()
       setState('recording')
     } catch (err) {
       if (err instanceof DOMException && err.name === 'NotAllowedError') {
-        setError('Trình duyệt chưa cấp quyền microphone. Vui lòng cho phép và thử lại.')
+        setError(
+          'Trình duyệt chưa cấp quyền microphone. Vui lòng cho phép và thử lại.'
+        )
       } else {
         setError('Không thể khởi động microphone. Vui lòng kiểm tra thiết bị.')
       }
@@ -73,20 +82,17 @@ export default function VoiceRecorder({ onSubmit, sessionId, disabled }: VoiceRe
     })
 
     setState('transcribing')
-    const durationSeconds = Math.round((Date.now() - startTimeRef.current) / 1000)
+    const durationSeconds = Math.round(
+      (Date.now() - startTimeRef.current) / 1000
+    )
     const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
 
     try {
-      const filename = `audio-${crypto.randomUUID()}.webm`
-      const formData = new FormData()
-      formData.append('file', blob, filename)
-      const upload = await apiClient.postForm<AudioUploadResponse>(
-        `/sessions/${sessionId}/turns/audio`,
-        formData,
-      )
+      const upload = await onUploadAudio(blob)
       setDraft({
         audioUrl: upload.audioFileUrl,
-        durationSeconds: durationSeconds || upload.transcriptDurationSeconds || 0,
+        durationSeconds:
+          durationSeconds || upload.transcriptDurationSeconds || 0,
         sizeBytes: upload.audioSizeBytes,
       })
       setTranscript(upload.transcript)
@@ -112,7 +118,7 @@ export default function VoiceRecorder({ onSubmit, sessionId, disabled }: VoiceRe
         draft.audioUrl,
         draft.durationSeconds,
         draft.sizeBytes,
-        finalTranscript,
+        finalTranscript
       )
       setDraft(null)
       setTranscript('')
@@ -132,11 +138,16 @@ export default function VoiceRecorder({ onSubmit, sessionId, disabled }: VoiceRe
   return (
     <div className="flex flex-col items-center gap-4">
       {error && (
-        <p role="alert" className="text-sm text-red-600">{error}</p>
+        <p role="alert" className="text-sm text-red-600">
+          {error}
+        </p>
       )}
       {draft ? (
         <div className="flex w-full flex-col gap-3">
-          <label htmlFor="voice-transcript" className="text-sm font-medium text-ink">
+          <label
+            htmlFor="voice-transcript"
+            className="text-ink text-sm font-medium"
+          >
             Nội dung câu trả lời
           </label>
           <textarea
@@ -149,7 +160,7 @@ export default function VoiceRecorder({ onSubmit, sessionId, disabled }: VoiceRe
             }}
             disabled={disabled || state === 'submitting'}
             rows={6}
-            className="w-full resize-none rounded-xl border border-border p-3 text-sm text-ink placeholder:text-ink-faint focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none disabled:opacity-50"
+            className="border-border text-ink placeholder:text-ink-faint focus:border-brand focus:ring-brand w-full resize-none rounded-xl border p-3 text-sm focus:outline-none focus:ring-2 disabled:opacity-50"
           />
           <div className="flex flex-wrap justify-end gap-3">
             <Button
@@ -172,15 +183,17 @@ export default function VoiceRecorder({ onSubmit, sessionId, disabled }: VoiceRe
             </Button>
           </div>
         </div>
-      ) : state === 'idle' && (
-        <button
-          aria-label="Bắt đầu ghi âm"
-          onClick={startRecording}
-          disabled={disabled}
-          className="rounded-full bg-red-600 px-8 py-3 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-        >
-          Bắt đầu ghi âm
-        </button>
+      ) : (
+        state === 'idle' && (
+          <button
+            aria-label="Bắt đầu ghi âm"
+            onClick={startRecording}
+            disabled={disabled}
+            className="rounded-full bg-red-600 px-8 py-3 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            Bắt đầu ghi âm
+          </button>
+        )
       )}
       {state === 'recording' && (
         <button
@@ -188,7 +201,10 @@ export default function VoiceRecorder({ onSubmit, sessionId, disabled }: VoiceRe
           onClick={stopRecording}
           className="flex items-center gap-2 rounded-full bg-gray-800 px-8 py-3 text-sm font-medium text-white hover:bg-black"
         >
-          <span aria-hidden="true" className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+          <span
+            aria-hidden="true"
+            className="h-2 w-2 animate-pulse rounded-full bg-red-500"
+          />
           Dừng ghi âm
         </button>
       )}

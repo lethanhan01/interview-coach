@@ -14,9 +14,18 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(login)
   }
   if (hasSessionCookie && pathname === '/login') {
-    return NextResponse.redirect(new URL(getSafeNext(request.nextUrl.searchParams.get('next')), request.url))
+    return NextResponse.redirect(
+      new URL(
+        getSafeNext(request.nextUrl.searchParams.get('next')),
+        request.url
+      )
+    )
   }
   return NextResponse.next()
 }
 
-export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'] }
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+}

@@ -1,0 +1,66 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Foundations/Introduction" />
+
+# Interview Coach Design System
+
+Chào mừng bạn đến với hệ thống **Interview Coach Design System**. Đây là bộ tài liệu thực thi (Executable Documentation) cung cấp toàn bộ thư viện UI components, Design Tokens và các quy chuẩn giao diện chuẩn hóa cho ứng dụng phỏng vấn thông minh Interview Coach.
+
+---
+
+## 1. Kiến trúc 5 Tầng (5-Layer System Architecture)
+
+Hệ thống được thiết kế phân tầng chặt chẽ dựa trên **Tailwind CSS v4** và **Radix UI Primitives**, nhằm đảm bảo tính tái sử dụng cao, dễ bảo trì và mở rộng:
+
+1. **Design Tokens**: Tầng giá trị nhỏ nhất (Colors, Typography, Spacing, Radius, Shadows, Motion) được khai báo tại `client/app/styles/tokens.css` và `themes.css`.
+2. **UI Primitives**: Các phần tử không định kiểu, đảm bảo khả năng truy cập (Accessible Behavioral Components dựa trên Radix UI).
+3. **Common Components**: Các component giao diện chuẩn hóa tại `@/components/ui/*` (Button, Input, Select, Dialog, Card, Badge).
+4. **Application Patterns**: Các mẫu bố cục kết hợp từ Common Components (`FormPatterns`, `LayoutPatterns`, `FeedbackPatterns`).
+5. **Feature Components**: Các component gắn liền với logic nghiệp vụ phỏng vấn (`JdForm`, `SavedJdPicker`, `AnnotatedTranscript`).
+
+---
+
+## 2. Quy chuẩn Bắt buộc đối với Developer & AI Agent
+
+> [!IMPORTANT]
+> Trước khi tạo mới hoặc chỉnh sửa bất kỳ UI component hay trang frontend nào trong dự án, **Developer** và **AI Assistant** BẮT BUỘC phải đọc và áp dụng nghiêm ngặt bộ 5 quy tắc tại [UI Conventions Document](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/stories/foundations/Conventions.mdx).
+
+---
+
+## 3. Quy chuẩn Import (Import Conventions)
+
+Luôn import trực tiếp các UI component từ đường dẫn Alias `@/components/ui/...` để tận dụng tree-shaking tối ưu:
+
+```tsx
+// ✅ Đúng quy chuẩn:
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Card } from '@/components/ui/Card'
+
+// ❌ Không nên import đường dẫn sâu nội bộ:
+import { Button } from '@/components/ui/Button/Button'
+```
+
+---
+
+## 4. Quy trình Thêm Component mới vào Storybook (Adding a Component)
+
+Khi phát triển hoặc chuẩn hóa một component mới, bắt buộc tuân thủ 4 bước sau:
+
+1. **Copy Template**: Đọc mẫu `_template.mdx` và `_template.stories.tsx` tại `client/stories/_templates/`.
+2. **Đặt file đồng cấp**: Đặt file câu chuyện song song với component (Ví dụ: `client/components/ui/MyComponent/MyComponent.stories.tsx`).
+3. **Độ bao phủ trạng thái (States Coverage)**: Khai báo đầy đủ các biến thể (Variants, Sizes, Disabled, Loading, Invalid, Dark Theme, Responsive).
+4. **Hoàn thiện MDX**: Viết tài liệu hướng dẫn khi nào nên dùng, quy tắc Accessibility và Do/Don't.
+
+---
+
+## 5. Hướng dẫn Mở & Sử dụng Storybook
+
+Chạy lệnh terminal sau tại thư mục `client/` để mở môi trường Storybook tương tác:
+
+```bash
+cd client
+npm run storybook
+```
+
+Màn hình Storybook sẽ được khởi chạy tại địa chỉ `http://localhost:6006`.

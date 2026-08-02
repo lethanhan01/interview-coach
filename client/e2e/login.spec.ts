@@ -8,13 +8,21 @@ test.beforeEach(async ({ page }) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ access_token: 'fake-token', refresh_token: 'fake-refresh-token', expires_in: 3600, token_type: 'bearer', user: { id: 'u1', email: 'valid@example.com' } }),
+        body: JSON.stringify({
+          access_token: 'fake-token',
+          refresh_token: 'fake-refresh-token',
+          expires_in: 3600,
+          token_type: 'bearer',
+          user: { id: 'u1', email: 'valid@example.com' },
+        }),
       })
     } else {
       await route.fulfill({
         status: 400,
         contentType: 'application/json',
-        body: JSON.stringify({ error_description: 'Invalid login credentials' }),
+        body: JSON.stringify({
+          error_description: 'Invalid login credentials',
+        }),
       })
     }
   })
@@ -28,8 +36,14 @@ test('hiển thị form đăng nhập', async ({ page }) => {
 test('nút submit hiện loading khi đang gửi', async ({ page }) => {
   let releaseRequest: (() => void) | undefined
   await page.route('**/auth/v1/token**', async (route) => {
-    await new Promise<void>((resolve) => { releaseRequest = resolve })
-    await route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ error_description: 'Invalid login credentials' }) })
+    await new Promise<void>((resolve) => {
+      releaseRequest = resolve
+    })
+    await route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({ error_description: 'Invalid login credentials' }),
+    })
   })
   await page.goto('/login')
   const emailInput = page.getByRole('textbox', { name: /email/i })

@@ -1,6 +1,34 @@
-export default function LoadingSpinner({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
-  const dim = size === 'sm' ? 'h-4 w-4' : size === 'lg' ? 'h-10 w-10' : 'h-6 w-6'
-  return (
-    <div className={`${dim} animate-spin rounded-full border-2 border-gray-300 border-t-black`} />
-  )
+import { cn } from '@/lib/utils'
+import { Loader2 } from 'lucide-react'
+import { HTMLAttributes, forwardRef } from 'react'
+
+export interface LoadingSpinnerProps extends HTMLAttributes<SVGSVGElement> {
+  size?: 'sm' | 'md' | 'lg' | 'xl'
 }
+
+const sizeClasses = {
+  sm: 'size-4',
+  md: 'size-6',
+  lg: 'size-10',
+  xl: 'size-14',
+}
+
+export const LoadingSpinner = forwardRef<SVGSVGElement, LoadingSpinnerProps>(
+  ({ size = 'md', className, ...props }, ref) => {
+    return (
+      <Loader2
+        ref={ref}
+        className={cn(
+          'text-ink-muted animate-spin',
+          sizeClasses[size],
+          className
+        )}
+        {...props}
+      />
+    )
+  }
+)
+LoadingSpinner.displayName = 'LoadingSpinner'
+
+// Default export for backward compatibility
+export default LoadingSpinner

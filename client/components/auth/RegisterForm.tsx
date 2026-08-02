@@ -1,116 +1,149 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
 import Link from 'next/link'
-import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
+import { Form } from '@/components/ui/form-adapters/rhf-form-field'
+import {
+  FormField,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/form/FormField'
 
-export default function RegisterForm() {
-  const router = useRouter()
-  
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+export const registerSchema = z
+  .object({
+    fullName: z.string().min(1, 'Họ và Tên là bắt buộc'),
+    email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
+    password: z.string().min(12, 'Mật khẩu phải có ít nhất 12 ký tự'),
+    confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Mật khẩu và xác nhận mật khẩu không khớp',
+    path: ['confirmPassword'],
+  })
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault()
-    setLoading(true)
-    setError(null)
+export type RegisterFormData = z.infer<typeof registerSchema>
 
-    if (password !== confirmPassword) {
-      setError('Mật khẩu và xác nhận mật khẩu không khớp.')
-      setLoading(false)
-      return
-    }
+export interface RegisterFormProps {
+  onSubmit: (data: RegisterFormData) => void | Promise<void>
+  loading?: boolean
+  serverError?: string | null
+}
 
-    if (password.length < 12) {
-      setError('Mật khẩu phải có ít nhất 12 ký tự.')
-      setLoading(false)
-      return
-    }
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'}/auth/register`, {
-      method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, fullName }),
-    })
-    const result = await response.json().catch(() => null)
-    if (!response.ok) {
-      setError(result?.message ?? 'Không thể tạo tài khoản')
-    } else {
-      router.push('/onboarding')
-    }
-    
-    setLoading(false)
-  }
+export default function RegisterForm({
+  onSubmit,
+  loading = false,
+  serverError = null,
+}: RegisterFormProps) {
+  const form = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      fullName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  })
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-6 bg-surface-raised">
-      <form onSubmit={submit} className="w-full max-w-md rounded-2xl bg-surface p-8 shadow-card border border-border">
-        <h1 className="text-2xl font-bold text-ink text-center mb-2">Tạo tài khoản</h1>
-        <p className="text-sm text-ink-muted text-center mb-8">Bắt đầu hành trình nâng cao kỹ năng phỏng vấn của bạn</p>
+    <div className="bg-surface-raised flex min-h-[calc(100vh-4rem)] items-center justify-center p-6">
+      <Form
+        form={form}
+        onSubmit={onSubmit}
+        className="bg-surface shadow-card border-border w-full max-w-md rounded-2xl border p-8"
+      >
+        <h1 className="text-ink mb-2 text-center text-2xl font-bold">
+          Tạo tài khoản
+        </h1>
+        <p className="text-ink-muted mb-8 text-center text-sm">
+          Bắt đầu hành trình nâng cao kỹ năng phỏng vấn của bạn
+        </p>
 
-        {error && (
-          <div className="mb-6 rounded-lg bg-danger-bg p-3 text-sm text-danger border border-danger/20 text-center" role="alert">
-            {error}
+        {serverError && (
+          <div
+            className="bg-danger-bg text-danger border-danger/20 mb-6 rounded-lg border p-3 text-center text-sm"
+            role="alert"
+          >
+            {serverError}
           </div>
         )}
 
         <div className="space-y-4">
-          <Input
-            label="Họ và Tên"
-            type="text"
-            required
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Ví dụ: Nguyễn Văn A"
+          <Controller
+            control={form.control}
+            name="fullName"
+            render={({ field, fieldState }) => (
+              <FormField name="fullName" isInvalid={!!fieldState.error} isRequired>
+                <FormLabel>Họ và Tên</FormLabel>
+                <FormControl>
+                  <Input type="text" placeholder="Ví dụ: Nguyễn Văn A" {...field} />
+                </FormControl>
+                <FormMessage>{fieldState.error?.message}</FormMessage>
+              </FormField>
+            )}
           />
 
-          <Input
-            label="Email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Địa chỉ email của bạn"
+          <Controller
+            control={form.control}
+            name="email"
+            render={({ field, fieldState }) => (
+              <FormField name="email" isInvalid={!!fieldState.error} isRequired>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="Địa chỉ email của bạn" {...field} />
+                </FormControl>
+                <FormMessage>{fieldState.error?.message}</FormMessage>
+              </FormField>
+            )}
           />
 
-          <Input
-            label="Mật khẩu"
-            type="password"
-            required
-            minLength={12}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Ít nhất 12 ký tự"
+          <Controller
+            control={form.control}
+            name="password"
+            render={({ field, fieldState }) => (
+              <FormField name="password" isInvalid={!!fieldState.error} isRequired>
+                <FormLabel>Mật khẩu</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="Ít nhất 12 ký tự" {...field} />
+                </FormControl>
+                <FormMessage>{fieldState.error?.message}</FormMessage>
+              </FormField>
+            )}
           />
 
-          <Input
-            label="Xác nhận Mật khẩu"
-            type="password"
-            required
-            minLength={12}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Nhập lại mật khẩu"
+          <Controller
+            control={form.control}
+            name="confirmPassword"
+            render={({ field, fieldState }) => (
+              <FormField name="confirmPassword" isInvalid={!!fieldState.error} isRequired>
+                <FormLabel>Xác nhận Mật khẩu</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="Nhập lại mật khẩu" {...field} />
+                </FormControl>
+                <FormMessage>{fieldState.error?.message}</FormMessage>
+              </FormField>
+            )}
           />
         </div>
 
-        <Button type="submit" loading={loading} className="w-full mt-6">
+        <Button type="submit" loading={loading} disabled={loading} className="mt-6 w-full">
           Đăng ký
         </Button>
 
-        <div className="mt-6 text-center text-sm text-ink-muted">
+        <div className="text-ink-muted mt-6 text-center text-sm">
           Đã có tài khoản?{' '}
-          <Link href="/login" className="font-medium text-brand hover:text-brand-light transition-colors">
+          <Link
+            href="/login"
+            className="text-brand hover:text-brand-light font-medium transition-colors"
+          >
             Đăng nhập ngay
           </Link>
         </div>
-      </form>
+      </Form>
     </div>
   )
 }

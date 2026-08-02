@@ -462,7 +462,9 @@ export function normalizePosition(value: unknown): string {
   if (POSITION_OPTIONS.includes(raw)) return raw
 
   const normalized = normalizeOptionToken(raw)
-  const exact = POSITION_OPTIONS.find((option) => normalizeOptionToken(option) === normalized)
+  const exact = POSITION_OPTIONS.find(
+    (option) => normalizeOptionToken(option) === normalized
+  )
   if (exact) return exact
 
   return LEGACY_POSITION_ALIASES[normalized] ?? raw
@@ -473,7 +475,9 @@ export function getPositionLabel(value: unknown): string {
 }
 
 export function getJdLevelLabel(level: string): string {
-  return JD_LEVEL_OPTIONS.find((option) => option.value === level)?.label ?? level
+  return (
+    JD_LEVEL_OPTIONS.find((option) => option.value === level)?.label ?? level
+  )
 }
 
 export function normalizeJdLevel(value: unknown): string {
@@ -489,7 +493,11 @@ export function normalizeJdLevel(value: unknown): string {
       ...option.label.split('/').map((part) => part.trim()),
     ]
 
-    if (candidates.some((candidate) => normalizeOptionToken(candidate) === normalized)) {
+    if (
+      candidates.some(
+        (candidate) => normalizeOptionToken(candidate) === normalized
+      )
+    ) {
       return option.value
     }
   }

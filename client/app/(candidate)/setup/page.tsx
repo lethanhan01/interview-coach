@@ -11,56 +11,28 @@ import type {
   Session,
   SessionType,
 } from '@/lib/types'
+import {
+  type JdFormData,
+  type InterviewDuration,
+  DURATION_OPTIONS,
+  EMPTY_JD,
+  isJdValid,
+} from '@/lib/setup-types'
 import Button from '@/components/ui/Button'
 import JdForm from '@/components/setup/JdForm'
 import ConfigForm from '@/components/setup/ConfigForm'
 import ConfirmStep from '@/components/setup/ConfirmStep'
 import SavedJdPicker from '@/components/setup/SavedJdPicker'
 import { ArrowLeft } from 'lucide-react'
-import {
-  getJdLevelLabel,
-  normalizeJdLevel,
-} from '@/lib/interview-options'
+import { getJdLevelLabel, normalizeJdLevel } from '@/lib/interview-options'
 
-// ── Constants & Types ─────────────────────────────────────────────────────────
+// ── Constants & Types (re-exported from @/lib/setup-types) ───────────────────
+// The actual definitions live in lib/setup-types.ts so that components/setup/*
+// can import them without depending on the app layer.
+export type { JdFormData, InterviewDuration } from '@/lib/setup-types'
+export { DURATION_OPTIONS, EMPTY_JD, isJdValid } from '@/lib/setup-types'
 
-export const DURATION_OPTIONS = [
-  { value: 30 as const, label: '30 phút', numQuestions: 15 },
-  { value: 60 as const, label: '1 tiếng', numQuestions: 30 },
-  { value: 90 as const, label: '1 tiếng rưỡi', numQuestions: 45 },
-]
-
-export type InterviewDuration = 30 | 60 | 90
-
-export interface JdFormData {
-  company: string
-  website: string
-  position: string
-  level: string
-  headcount: string
-  location: string
-  requirements: string
-  jobContent: string
-  techStack: string[]
-  benefits: string
-  salary: string
-  bonus: string
-}
-
-export const EMPTY_JD: JdFormData = {
-  company: '',
-  website: '',
-  position: '',
-  level: '',
-  headcount: '',
-  location: '',
-  requirements: '',
-  jobContent: '',
-  techStack: [],
-  benefits: '',
-  salary: '',
-  bonus: '',
-}
+// ── Private helpers ───────────────────────────────────────────────────────────
 
 function text(value: unknown): string {
   if (value === null || value === undefined) return ''
@@ -73,7 +45,7 @@ function stringArray(value: unknown): string[] {
 }
 
 function normalizeJdFormData(
-  value: Partial<Record<keyof JdFormData, unknown>> | null | undefined,
+  value: Partial<Record<keyof JdFormData, unknown>> | null | undefined
 ): JdFormData {
   return {
     company: text(value?.company),
@@ -92,16 +64,6 @@ function normalizeJdFormData(
 }
 
 const JD_DRAFT_KEY = 'interviewcoach_jd_draft'
-
-export function isJdValid(form: JdFormData): boolean {
-  return (
-    form.company.trim().length > 0 &&
-    form.position.trim().length > 0 &&
-    form.level.trim().length > 0 &&
-    form.requirements.trim().length >= 30 &&
-    form.jobContent.trim().length >= 30
-  )
-}
 
 function extractSerializedJdLevel(jobDescription: string): string {
   const match = jobDescription.match(/^Level yêu cầu:\s*(.+)$/im)
@@ -122,7 +84,9 @@ export function serializeJd(form: JdFormData): string {
     '',
     'Nội dung công việc:',
     form.jobContent,
-    form.techStack.length > 0 ? `\nTech Stack: ${form.techStack.join(', ')}` : '',
+    form.techStack.length > 0
+      ? `\nTech Stack: ${form.techStack.join(', ')}`
+      : '',
     form.benefits ? `\nQuyền lợi:\n${form.benefits}` : '',
     form.salary ? `\nLương: ${form.salary}` : '',
     form.bonus ? `\nThưởng: ${form.bonus}` : '',
@@ -135,7 +99,9 @@ function optional(value: string): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined
 }
 
-function toSavedJobDescriptionPayload(form: JdFormData): SaveJobDescriptionPayload {
+function toSavedJobDescriptionPayload(
+  form: JdFormData
+): SaveJobDescriptionPayload {
   return {
     companyName: form.company.trim(),
     companyWebsite: optional(form.website),
@@ -158,24 +124,26 @@ function resolveSessionLanguage(contextPack: ContextPack): OutputLanguage {
 
 function resolveSavedJobDescriptionLevel(
   item: SavedJobDescription,
-  sessions: Session[] = [],
+  sessions: Session[] = []
 ): string {
   const savedLevel = normalizeJdLevel(item.level)
   if (savedLevel) return savedLevel
 
-  return sessions
-    .filter((session) => session.savedJobDescriptionId === item.id)
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    )
-    .map((session) => extractSerializedJdLevel(session.jobDescription))
-    .find(Boolean) ?? ''
+  return (
+    sessions
+      .filter((session) => session.savedJobDescriptionId === item.id)
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .map((session) => extractSerializedJdLevel(session.jobDescription))
+      .find(Boolean) ?? ''
+  )
 }
 
 function hydrateSavedJobDescriptionLevels(
   items: SavedJobDescription[],
-  sessions: Session[],
+  sessions: Session[]
 ): SavedJobDescription[] {
   return items.map((item) => {
     const level = resolveSavedJobDescriptionLevel(item, sessions)
@@ -185,7 +153,7 @@ function hydrateSavedJobDescriptionLevels(
 
 function savedJobDescriptionToForm(
   item: SavedJobDescription,
-  sessions: Session[] = [],
+  sessions: Session[] = []
 ): JdFormData {
   return normalizeJdFormData({
     company: item.companyName,
@@ -206,14 +174,18 @@ function savedJobDescriptionToForm(
 // ── Stepper ───────────────────────────────────────────────────────────────────
 
 type Step = 0 | 1 | 2 | 3
-const STEP_LABELS: Record<1 | 2 | 3, string> = { 1: 'Job Description', 2: 'Cấu hình', 3: 'Xác nhận' }
+const STEP_LABELS: Record<1 | 2 | 3, string> = {
+  1: 'Job Description',
+  2: 'Cấu hình',
+  3: 'Xác nhận',
+}
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 function SetupPageLoading() {
   return (
     <div className="flex items-center justify-center py-20">
-      <div className="size-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+      <div className="border-brand size-8 animate-spin rounded-full border-2 border-t-transparent" />
     </div>
   )
 }
@@ -235,7 +207,8 @@ function SetupPageContent() {
     if (typeof window === 'undefined') return EMPTY_JD
     try {
       const saved = localStorage.getItem(JD_DRAFT_KEY)
-      if (saved) return normalizeJdFormData(JSON.parse(saved) as Partial<JdFormData>)
+      if (saved)
+        return normalizeJdFormData(JSON.parse(saved) as Partial<JdFormData>)
     } catch {
       // ignore malformed data
     }
@@ -244,8 +217,11 @@ function SetupPageContent() {
   const [sessionType, setSessionType] = useState<SessionType>('hr')
   const [contextPack, setContextPack] = useState<ContextPack>('VN')
   const [duration, setDuration] = useState<InterviewDuration>(30)
-  const [savedJobDescriptions, setSavedJobDescriptions] = useState<SavedJobDescription[]>([])
-  const [selectedSavedJobDescriptionId, setSelectedSavedJobDescriptionId] = useState('')
+  const [savedJobDescriptions, setSavedJobDescriptions] = useState<
+    SavedJobDescription[]
+  >([])
+  const [selectedSavedJobDescriptionId, setSelectedSavedJobDescriptionId] =
+    useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -272,7 +248,7 @@ function SetupPageContent() {
     async function loadSavedJobDescriptions() {
       try {
         const data = await apiClient.get<{ items: SavedJobDescription[] }>(
-          '/saved-job-descriptions',
+          '/saved-job-descriptions'
         )
         if (!cancelled) {
           let items = data.items ?? []
@@ -281,7 +257,7 @@ function SetupPageContent() {
           if (items.some((item) => !normalizeJdLevel(item.level))) {
             try {
               const sessionData = await apiClient.get<{ sessions: Session[] }>(
-                '/sessions',
+                '/sessions'
               )
               sessions = sessionData.sessions ?? []
               items = hydrateSavedJobDescriptionLevels(items, sessions)
@@ -322,7 +298,7 @@ function SetupPageContent() {
     return () => {
       cancelled = true
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function updateJd(data: JdFormData) {
@@ -358,7 +334,9 @@ function SetupPageContent() {
     }
   }
 
-  const numQuestions = DURATION_OPTIONS.find((d) => d.value === duration)!.numQuestions
+  const numQuestions = DURATION_OPTIONS.find(
+    (d) => d.value === duration
+  )!.numQuestions
 
   async function handleSubmit() {
     setError(null)
@@ -367,7 +345,7 @@ function SetupPageContent() {
       const jobDescription = serializeJd(jd)
       const savedJobDescription = await apiClient.post<SavedJobDescription>(
         '/saved-job-descriptions',
-        toSavedJobDescriptionPayload(jd),
+        toSavedJobDescriptionPayload(jd)
       )
       const data = await apiClient.post<{ id: string }>('/sessions', {
         jobDescription,
@@ -380,7 +358,9 @@ function SetupPageContent() {
       })
       router.push(`/sessions/${data.id}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể tạo phiên phỏng vấn')
+      setError(
+        err instanceof Error ? err.message : 'Không thể tạo phiên phỏng vấn'
+      )
       setSubmitting(false)
     }
   }
@@ -408,7 +388,7 @@ function SetupPageContent() {
           <button
             type="button"
             onClick={() => router.push('/jd-library')}
-            className="mb-6 flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-brand"
+            className="text-ink-muted hover:text-brand mb-6 flex items-center gap-1.5 text-sm transition-colors"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
             Thư viện JD
@@ -422,14 +402,20 @@ function SetupPageContent() {
                     className={[
                       'flex size-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-150',
                       s === step
-                        ? 'bg-brand text-white ring-4 ring-brand-200'
+                        ? 'bg-brand ring-brand-200 text-white ring-4'
                         : s < step
                           ? 'bg-brand text-white'
                           : 'bg-border text-ink-faint',
                     ].join(' ')}
                   >
                     {s < step ? (
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        aria-hidden="true"
+                      >
                         <path
                           d="M2 6l3 3 5-5"
                           stroke="currentColor"
@@ -445,7 +431,7 @@ function SetupPageContent() {
                   <span
                     className={[
                       'hidden text-xs sm:block',
-                      s === step ? 'font-medium text-ink' : 'text-ink-faint',
+                      s === step ? 'text-ink font-medium' : 'text-ink-faint',
                     ].join(' ')}
                   >
                     {STEP_LABELS[s]}
@@ -469,8 +455,10 @@ function SetupPageContent() {
       {step === 1 && (
         <div className="flex flex-col gap-5">
           <div>
-            <h1 className="text-xl font-semibold text-ink">Thông tin Job Description</h1>
-            <p className="mt-1 text-sm text-ink-muted">
+            <h1 className="text-ink text-xl font-semibold">
+              Thông tin Job Description
+            </h1>
+            <p className="text-ink-muted mt-1 text-sm">
               Điền thông tin JD để AI tạo câu hỏi phỏng vấn phù hợp nhất.
             </p>
           </div>
@@ -503,7 +491,9 @@ function SetupPageContent() {
       {/* Step 2 — Config */}
       {step === 2 && (
         <div className="flex flex-col gap-7">
-          <h1 className="text-xl font-semibold text-ink">Cấu hình phiên phỏng vấn</h1>
+          <h1 className="text-ink text-xl font-semibold">
+            Cấu hình phiên phỏng vấn
+          </h1>
           <ConfigForm
             sessionType={sessionType}
             setSessionType={setSessionType}
@@ -525,8 +515,10 @@ function SetupPageContent() {
       {step === 3 && (
         <div className="flex flex-col gap-6">
           <div>
-            <h1 className="text-xl font-semibold text-ink">Xác nhận</h1>
-            <p className="mt-1 text-sm text-ink-muted">Kiểm tra lại trước khi bắt đầu phiên phỏng vấn.</p>
+            <h1 className="text-ink text-xl font-semibold">Xác nhận</h1>
+            <p className="text-ink-muted mt-1 text-sm">
+              Kiểm tra lại trước khi bắt đầu phiên phỏng vấn.
+            </p>
           </div>
           <ConfirmStep
             jd={jd}

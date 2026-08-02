@@ -28,7 +28,9 @@ export default function ProfilePage() {
     apiClient
       .get<GetProfileResponse>('/profile')
       .then(setData)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Không thể tải hồ sơ'))
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : 'Không thể tải hồ sơ')
+      )
       .finally(() => setLoading(false))
   }, [])
 
@@ -40,7 +42,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="size-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+        <div className="border-brand size-8 animate-spin rounded-full border-2 border-t-transparent" />
       </div>
     )
   }
@@ -48,7 +50,7 @@ export default function ProfilePage() {
   if (error) {
     return (
       <div className="mx-auto max-w-3xl py-10">
-        <p className="text-sm text-danger">{error}</p>
+        <p className="text-danger text-sm">{error}</p>
       </div>
     )
   }
@@ -67,21 +69,23 @@ export default function ProfilePage() {
   const technicalSkills = Array.isArray(profile?.technicalSkills)
     ? (profile.technicalSkills as TechnicalSkillEntry[])
     : []
-  const workExperience = normalizeWithId<WorkExperienceEntry>(profile?.workExperience)
+  const workExperience = normalizeWithId<WorkExperienceEntry>(
+    profile?.workExperience
+  )
   const projects = normalizeWithId<ProjectEntry>(profile?.projects)
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-6 text-2xl font-bold text-ink">Hồ sơ</h1>
+      <h1 className="text-ink mb-6 text-2xl font-bold">Hồ sơ</h1>
 
       {/* Email header */}
-      <div className="mb-4 flex items-center gap-4 rounded-2xl border border-border bg-surface p-4 shadow-card">
-        <div className="flex size-10 items-center justify-center rounded-full bg-brand-100">
-          <span className="text-base font-bold text-brand">
+      <div className="border-border bg-surface shadow-card mb-4 flex items-center gap-4 rounded-2xl border p-4">
+        <div className="bg-brand-100 flex size-10 items-center justify-center rounded-full">
+          <span className="text-brand text-base font-bold">
             {(data?.email?.[0] ?? 'U').toUpperCase()}
           </span>
         </div>
-        <p className="text-sm font-medium text-ink">{data?.email}</p>
+        <p className="text-ink text-sm font-medium">{data?.email}</p>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -97,7 +101,9 @@ export default function ProfilePage() {
 
         <CertificationsGroup
           data={{
-            certifications: (profile?.certifications as CertificationEntry[] | undefined) ?? [],
+            certifications:
+              (profile?.certifications as CertificationEntry[] | undefined) ??
+              [],
             awards: (profile?.awards as AwardEntry[] | undefined) ?? [],
           }}
           onSave={(patch) => patchProfile(patch)}
@@ -117,14 +123,15 @@ export default function ProfilePage() {
         <WorkExperienceGroup
           data={workExperience}
           availableTechs={technicalSkills}
-          onSave={(we: WorkExperienceEntry[]) => patchProfile({ workExperience: we })}
+          onSave={(we: WorkExperienceEntry[]) =>
+            patchProfile({ workExperience: we })
+          }
         />
-                
+
         <PersonalityGroup
           data={{ personality: profile?.personality }}
           onSave={(patch) => patchProfile(patch)}
         />
-
       </div>
     </div>
   )

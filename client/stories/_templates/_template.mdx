@@ -1,0 +1,117 @@
+import {
+  Meta,
+  Title,
+  Description,
+  Primary,
+  Controls,
+  Stories,
+  Canvas,
+} from '@storybook/addon-docs/blocks'
+import * as ComponentStories from './_template.stories'
+
+<Meta of={ComponentStories} />
+
+<Title />
+
+## 1. Mục đích
+
+{/* Mô tả ngắn gọn về component này làm gì. Ví dụ: "Button cho phép người dùng thực hiện một hành động hoặc điều hướng." */}
+
+## 2. Khi nào nên dùng
+
+{/* Liệt kê các trường hợp phù hợp để sử dụng component này. */}
+
+- Dùng khi A.
+- Dùng khi B.
+
+## 3. Khi nào KHÔNG nên dùng
+
+{/* Liệt kê các trường hợp dễ bị nhầm lẫn và đề xuất component thay thế. */}
+
+- Không dùng khi X (thay vào đó hãy dùng `OtherComponent`).
+
+## 4. Props
+
+<Controls />
+
+---
+
+## 5. Cấu hình mặc định (Default)
+
+<Primary />
+
+---
+
+## Các trạng thái (States & Variants)
+
+{/* 6. Tất cả variant */}
+
+### 6. Variants
+
+<Canvas of={ComponentStories.Variants} />
+
+{/* 7. Tất cả size */}
+
+### 7. Sizes
+
+<Canvas of={ComponentStories.Sizes} />
+
+{/* 8. Disabled state */}
+
+### 8. Disabled
+
+<Canvas of={ComponentStories.Disabled} />
+
+{/* 9. Loading state (nếu có) */}
+
+### 9. Loading
+
+<Canvas of={ComponentStories.Loading} />
+
+{/* 10. Invalid state (nếu có) */}
+
+### 10. Invalid (Error)
+
+<Canvas of={ComponentStories.Invalid} />
+
+{/* 11. Dark theme (thể hiện tự động qua toolbar, nhưng có thể render cụ thể nếu cần) */}
+
+### 11. Dark Theme Preview
+
+<Canvas of={ComponentStories.DarkTheme} />
+
+{/* 12. Long content (để test text overflow) */}
+
+### 12. Long Content
+
+<Canvas of={ComponentStories.LongContent} />
+
+{/* 13. Responsive behavior */}
+
+### 13. Responsive Behavior
+
+<Canvas of={ComponentStories.Responsive} />
+
+---
+
+## 14. Accessibility Notes (A11y)
+
+{/* Ghi chú về khả năng tiếp cận (ví dụ: cần thêm aria-label khi nào, focus trap hoạt động ra sao). */}
+
+- Hỗ trợ keyboard navigation qua các phím Arrow.
+- Focus visible rõ ràng.
+- `aria-label` bắt buộc nếu icon button không có text.
+
+## 15. Ví dụ Code
+
+```tsx
+import { ComponentName } from '@/components/ui/ComponentName'
+
+export function Example() {
+  return (
+    <ComponentName variant="primary" size="md">
+      Nội dung
+    </ComponentName>
+  )
+}
+```

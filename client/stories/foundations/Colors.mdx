@@ -1,0 +1,84 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import ColorPalette from './components/ColorPalette'
+
+<Meta title="Foundations/Colors" />
+
+# Colors (Màu sắc)
+
+Tài liệu này định nghĩa hệ thống màu sắc toàn diện cho **Interview Coach Design System**. Hệ thống màu được phân tách thành hai tầng chính: **Primitive Palettes** (màu thô cố định) và **Semantic Colors** (màu ngữ nghĩa tự động thích ứng Light/Dark Mode).
+
+---
+
+## 1. Tổng quan & Mục đích (Overview & Purpose)
+
+Hệ thống màu sắc giúp duy trì tính nhất quán về thị giác, nhận diện thương hiệu và đảm bảo trải nghiệm người dùng tối ưu ở cả hai chế độ giao diện Sáng (Light) và Tối (Dark).
+
+- **Primitive Colors**: Các dải màu chuẩn (Slate/Neutral, Brand Blue, Red, Green, Amber, Blue). Khai báo tại `tokens.css`.
+- **Base Semantic Colors**: Các token đại diện cho ý nghĩa chức năng (Primary, Surface, Card, Destructive, Success, Warning, Border,...).
+- **Extended Semantic Colors**: Các token mở rộng phục vụ hiển thị nền nhạt (Subtle status) cho Badge/Alert/Toast và phân cấp văn bản (Ink tokens).
+
+---
+
+## 2. Minh họa Trực quan & Tương tác (Interactive Preview)
+
+Dưới đây là công cụ tra cứu màu trực quan. Bạn có thể xem màu sắc ở cả chế độ Light Mode và Dark Mode, hoặc nhấp chuột vào bất kỳ biến màu nào để sao chép mã biến CSS.
+
+<ColorPalette />
+
+---
+
+## 3. Bảng Tra cứu Base Semantic Tokens
+
+| Token Name | CSS Variable | Tailwind CSS Class | Light Mode | Dark Mode | Công dụng (Usage Purpose) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Background** | `--color-background` | `bg-background` | `#f8fafc` | `#020617` | Nền chính của toàn trang web |
+| **Foreground** | `--color-foreground` | `text-foreground` | `#0f172a` | `#f8fafc` | Màu chữ chuẩn trên trang |
+| **Surface** | `--color-surface` | `bg-surface` | `#ffffff` | `#0f172a` | Nền container, panel |
+| **Card** | `--color-card` | `bg-card` | `#ffffff` | `#0f172a` | Nền của các thẻ Card |
+| **Primary** | `--color-primary` | `bg-primary` / `text-primary` | `#2563eb` | `#3b82f6` | Màu nhấn chính, Button chính, active state |
+| **Secondary** | `--color-secondary` | `bg-secondary` | `#f1f5f9` | `#1e293b` | Nút phụ, tab không active |
+| **Muted** | `--color-muted` | `bg-muted` / `text-muted` | `#f1f5f9` | `#1e293b` | Nền hoặc văn bản nhạt |
+| **Muted Text** | `--color-muted-foreground` | `text-muted-foreground` | `#64748b` | `#94a3b8` | Văn bản ghi chú, phụ đề |
+| **Destructive** | `--color-destructive` | `bg-destructive` | `#dc2626` | `#ef4444` | Hành động nguy hiểm, xóa, lỗi |
+| **Success** | `--color-success` | `bg-success` | `#16a34a` | `#22c55e` | Thông báo thành công |
+| **Warning** | `--color-warning` | `bg-warning` | `#f59e0b` | `#f59e0b` | Cảnh báo chú ý |
+| **Border** | `--color-border` | `border-border` | `#e2e8f0` | `#1e293b` | Đường viền thẻ, input, divider |
+
+---
+
+## 4. Bảng Tra cứu Extended Semantic Tokens
+
+### Status Subtle Variants (Nền nhạt cho Badge / Alert / Toast)
+
+| Token Name | CSS Variable | Tailwind Class | Light Mode | Dark Mode | Công dụng |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Brand Subtle** | `--color-brand-subtle` | `bg-brand-subtle` | `#eff6ff` | `#172554` | Nền Badge/Tag nhãn thương hiệu |
+| **Brand Subtle FG** | `--color-brand-subtle-fg` | `text-brand-subtle-fg` | `#1d4ed8` | `#93c5fd` | Màu chữ trên nền Brand Subtle |
+| **Success Subtle** | `--color-success-subtle` | `bg-success-subtle` | `#f0fdf4` | `#052e16` | Nền Badge thành công / Pass interview |
+| **Success Subtle FG** | `--color-success-subtle-fg` | `text-success-subtle-fg` | `#15803d` | `#86efac` | Màu chữ trên nền Success Subtle |
+| **Warning Subtle** | `--color-warning-subtle` | `bg-warning-subtle` | `#fffbeb` | `#451a03` | Nền Badge cảnh báo / Cần cải thiện |
+| **Warning Subtle FG** | `--color-warning-subtle-fg` | `text-warning-subtle-fg` | `#92400e` | `#fcd34d` | Màu chữ trên nền Warning Subtle |
+| **Danger Subtle** | `--color-danger-subtle` | `bg-danger-subtle` | `#fef2f2` | `#450a0a` | Nền Badge lỗi / Vi phạm tiêu chuẩn |
+| **Danger Subtle FG** | `--color-danger-subtle-fg` | `text-danger-subtle-fg` | `#b91c1c` | `#fca5a5` | Màu chữ trên nền Danger Subtle |
+
+### Text Hierarchy (Ink Tokens)
+
+| Token Name | CSS Variable | Tailwind Class | Light Mode | Dark Mode | Công dụng |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Ink Primary** | `--color-ink` | `text-ink` | `#0f172a` | `#f8fafc` | Tiêu đề chính, văn bản quan trọng |
+| **Ink Muted** | `--color-ink-muted` | `text-ink-muted` | `#64748b` | `#94a3b8` | Phụ đề, ghi chú, thông số thứ cấp |
+| **Ink Faint** | `--color-ink-faint` | `text-ink-faint` | `#cbd5e1` | `#475569` | Placeholder text, icon nhạt không active |
+| **Surface Raised** | `--color-surface-raised` | `bg-surface-raised` | `#f1f5f9` | `#1e293b` | Nền container phân cấp nổi nhẹ |
+
+---
+
+## 5. Hướng dẫn Sử dụng & Accessibility (Guidelines)
+
+### ✅ Do (Nên làm)
+- **Ưu tiên Semantic Tokens**: Luôn dùng `bg-primary`, `bg-brand-subtle`, `text-ink` thay vì ghi cứng mã hex code `#2563eb`.
+- **Đảm bảo độ tương phản (WCAG AA)**: Màu chữ trên nền phải đạt tỉ lệ tối thiểu **4.5:1** cho văn bản thường và **3:1** cho văn bản lớn.
+- **Kết hợp Subtle Pairs**: Luôn đi kèm cặp `bg-[status]-subtle` với `text-[status]-subtle-fg` để đảm bảo độ đọc tốt ở cả Light & Dark mode.
+
+### ❌ Don't (Không nên làm)
+- **Nối chuỗi class động**: Không dùng template string ghép chuỗi class màu dạng `` `bg-${color}-500` `` (Tuân thủ Quy tắc 2 trong [UI Conventions](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/stories/foundations/Conventions.mdx)).
+- **Không tự sáng tạo hex code mới**: Tránh viết inline style `color: #123456` ngoài danh mục token đã duyệt.

@@ -1,0 +1,76 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import SpacingBox from './components/SpacingBox'
+
+<Meta title="Foundations/Spacing" />
+
+# Spacing (Khoảng cách & Lề)
+
+Tài liệu này định nghĩa hệ thống khoảng cách (**Spacing**) chuẩn cho ứng dụng Interview Coach dựa trên **Hệ thống Lưới 8pt (8pt Grid System)** và các **Layout Tokens** cố định trong `tokens.css`.
+
+---
+
+## 1. Tổng quan & Mục đích (Overview & Purpose)
+
+Hệ thống khoảng cách giúp sắp xếp bố cục nhất quán, tạo nhịp điệu thị giác (visual rhythm) và đảm bảo khoảng thở cân đối giữa các phần tử giao diện từ nhỏ (icon, button text) đến lớn (page layout, container).
+
+- **Grid Base**: Sử dụng bội số của **8px** (4px, 8px, 12px, 16px, 24px, 32px, 48px, 64px).
+- **Layout Spacing Tokens**: Quy định kích thước cố định cho Header, Sidebar, Container max-width và Page padding.
+
+---
+
+## 2. Minh họa Trực quan & Tương tác (Interactive Preview)
+
+Dưới đây là các giá trị khoảng cách Layout và thang đo Tailwind Spacing Scale được dựng mô phỏng trực quan:
+
+<SpacingBox />
+
+---
+
+## 3. Bảng Tra cứu Tokens Chi tiết (Token Reference)
+
+### Layout Spacing Tokens
+
+| Token Name | Variable Name | Giá trị Pixel | Giá trị Rem | Công dụng chính |
+| :--- | :--- | :--- | :--- | :--- |
+| **Header Height** | `--spacing-header-height` | `64px` | `4rem` | Chiều cao chuẩn của thanh AppHeader |
+| **Sidebar Width** | `--spacing-sidebar-width` | `256px` | `16rem` | Chiều rộng chuẩn của thanh AppSidebar |
+| **Page Padding Desktop** | `--spacing-page-padding-desktop` | `32px` | `2rem` | Khoảng lề lọt lòng 2 bên trang màn hình lớn |
+| **Page Padding Mobile** | `--spacing-page-padding-mobile` | `16px` | `1rem` | Khoảng lề lọt lòng 2 bên trang màn hình di động |
+| **Content Max Width** | `--spacing-content-max-width` | `1280px` | `80rem` | Giới hạn chiều rộng khu vực nội dung chính |
+
+---
+
+## 4. Hướng dẫn Sử dụng & Quy tắc (Guidelines)
+
+### ✅ Do (Nên làm)
+- **Dùng Flex/Grid gap**: Ưu tiên sử dụng `gap-2`, `gap-3`, `gap-4`, `gap-6` thay vì gán `margin-right` thủ công cho từng item con.
+- **Tuân thủ quy tắc lồng nhau**: Khoảng cách giữa các phần tử bên trong card (`gap-2` hoặc `gap-3`) phải nhỏ hơn khoảng cách giữa các card với nhau (`gap-4` hoặc `gap-6`).
+
+### ❌ Don't (Không nên làm)
+- **Không dùng khoảng cách lẻ**: Tránh viết các class tùy biến như `p-[13px]`, `m-[7px]` hoặc `gap-[19px]` trừ khi có lý do thiết kế được ghi rõ (Tuân thủ Quy tắc 3 trong [UI Conventions](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/stories/foundations/Conventions.mdx)).
+- **Tránh hardcode vị trí tuyệt đối**: Hạn chế dùng `top-[42px]` nếu có thể giải quyết bằng flexbox hoặc grid alignment.
+
+---
+
+## 5. Ví dụ Mã nguồn (Code Examples)
+
+```tsx
+import React from 'react'
+
+export const PageContainer = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Header cố định chiều cao 64px */}
+      <header className="h-16 border-b border-border px-4 md:px-8 flex items-center justify-between bg-card">
+        <span className="font-bold text-ink">Interview Coach</span>
+      </header>
+
+      {/* Main Layout với Sidebar 256px */}
+      <div className="flex">
+        <aside className="w-64 border-r border-border p-4 hidden md:block bg-surface">Sidebar</aside>
+        <main className="flex-1 max-w-[1280px] mx-auto p-4 md:p-8 space-y-6">{children}</main>
+      </div>
+    </div>
+  )
+}
+```

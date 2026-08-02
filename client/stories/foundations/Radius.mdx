@@ -1,0 +1,82 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import RadiusBox from './components/RadiusBox'
+
+<Meta title="Foundations/Radius" />
+
+# Corner Radius (Bo góc)
+
+Tài liệu này định nghĩa tiêu chuẩn bo góc (**Border Radius**) cho tất cả phần tử giao diện trong hệ thống Interview Coach dựa trên các tokens khai báo tại `tokens.css`.
+
+---
+
+## 1. Tổng quan & Mục đích (Overview & Purpose)
+
+Bo góc giúp giao diện trông mềm mại, hiện đại và thân thiện hơn. Việc áp dụng nhất quán bán kính bo góc giúp gắn kết các thành phần lại với nhau theo một ngôn ngữ thiết kế đồng bộ.
+
+- **Thẳng (None - 0px)**: Dùng cho các cạnh tiếp giáp viền màn hình hoặc bảng dữ liệu nối tiếp.
+- **Vừa (Medium - 6px & Large - 8px)**: Mức bo chuẩn cho phần lớn các UI elements (Button, Input, Card).
+- **Tròn hoàn toàn (Full - 9999px)**: Dùng cho nút hình dạng viên thuốc (Pill), Avatar và Status Badge.
+
+---
+
+## 2. Minh họa Trực quan & Tương tác (Interactive Preview)
+
+Dưới đây là hình ảnh minh họa cho các giá trị bán kính bo góc và nguyên tắc bo góc lồng nhau:
+
+<RadiusBox />
+
+---
+
+## 3. Bảng Tra cứu Tokens Chi tiết (Token Reference)
+
+| Token Name | CSS Variable | Tailwind Class | Rem Value | Pixel Value | Ứng dụng tiêu biểu |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **None** | `--radius-none` | `rounded-none` | `0px` | `0px` | Khối viền vuông kề mép màn hình |
+| **Small** | `--radius-sm` | `rounded-sm` | `0.125rem` | `2px` | Checkbox, kề phần tử nhỏ |
+| **Medium** | `--radius-md` | `rounded-md` | `0.375rem` | `6px` | Button chuẩn, Input field, Badge, Tag |
+| **Large** | `--radius-lg` | `rounded-lg` | `0.500rem` | `8px` | Thẻ Card vừa, Dropdown Menu, Tooltip |
+| **Extra Large** | `--radius-xl` | `rounded-xl` | `0.750rem` | `12px` | Thẻ Card lớn, Dialog modal, Sheet container |
+| **Full** | `--radius-full` | `rounded-full` | `9999px` | Circle/Pill | Avatar tròn, Pill Status Tag, Scroll-to-top |
+
+---
+
+## 4. Hướng dẫn Sử dụng & Công thức Lồng nhau (Guidelines & Math)
+
+### 📐 Công thức Bo góc Lồng nhau (Nested Radius Formula)
+Khi đặt một phần tử có bo góc nằm bên trong một container bo góc khác, để khoảng cách khoảng thở giữa 2 đường cong nhìn đồng tâm và tự nhiên, áp dụng công thức:
+
+`R_outer = R_inner + Padding`
+
+- **Ví dụ**: Nếu nút bên trong có `R_inner = 6px` (`rounded-md`), và padding lọt lòng container là `6px`, thì container ngoài nên có `R_outer = 6 + 6 = 12px` (`rounded-xl`).
+
+### ❌ Don't (Không nên làm)
+- **Không tùy tiện hardcode pixel bo góc**: Tránh viết `rounded-[11px]` ngẫu nhiên (Tuân thủ Quy tắc 3 trong [UI Conventions](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/stories/foundations/Conventions.mdx)).
+- **Không kết hợp ngẫu nhiên**: Tránh đặt container outer `rounded-md` (6px) mà phần tử con inner lại dùng `rounded-xl` (12px) gây méo lệch góc nhìn.
+
+---
+
+## 5. Ví dụ Mã nguồn (Code Examples)
+
+```tsx
+import React from 'react'
+import { Badge } from '@/components/ui/Badge'
+
+export const ProfileCard = () => {
+  return (
+    // Outer Container: rounded-xl (12px)
+    <div className="p-4 rounded-xl bg-card border border-border flex items-center gap-4 shadow-sm">
+      {/* Avatar: rounded-full */}
+      <div className="w-12 h-12 rounded-full bg-brand-subtle text-brand-subtle-fg flex items-center justify-center font-bold">
+        AN
+      </div>
+
+      <div className="flex-1 space-y-1">
+        <h4 className="text-sm font-semibold text-ink">Lê Thế Anh</h4>
+        <Badge variant="brand" size="sm">
+          Ứng viên Senior Frontend
+        </Badge>
+      </div>
+    </div>
+  )
+}
+```

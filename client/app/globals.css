@@ -1,59 +1,18 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+@import './styles/tokens.css';
+@import './styles/themes.css';
+@import './styles/utilities.css';
 
-@theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-}
-
-@theme {
-  --color-brand: #6B3FA0;
-  --color-brand-light: #8B5CC8;
-  --color-brand-dark: #4E2D7A;
-  --color-brand-50: #F3EEF9;
-  --color-brand-100: #E4D7F3;
-  --color-brand-200: #C9AFEB;
-  --color-brand-muted: #D4BEF0;
-
-  --color-surface: #FFFFFF;
-  --color-surface-raised: #F8F5FD;
-  --color-surface-overlay: #FFFFFFCC;
-
-  --color-ink: #1A0F2E;
-  --color-ink-muted: #6B6B7B;
-  --color-ink-faint: #9B9BAB;
-
-  --color-border: #E8E0F5;
-  --color-border-strong: #C9AFEB;
-
-  --color-success: #16A34A;
-  --color-success-bg: #F0FDF4;
-  --color-info: #2563EB;
-  --color-info-bg: #EFF6FF;
-  --color-warning: #D97706;
-  --color-warning-bg: #FFFBEB;
-  --color-danger: #DC2626;
-  --color-danger-bg: #FEF2F2;
-
-  --shadow-card: 0 2px 16px 0 rgb(107 63 160 / 0.10);
-  --shadow-btn: 0 4px 14px 0 rgb(107 63 160 / 0.30);
-  --shadow-glow: 0 0 24px 0 rgb(107 63 160 / 0.40);
-}
+@plugin "tailwindcss-animate";
 
 @layer base {
-  :root {
-    --background: #ffffff;
-    --foreground: #1A0F2E;
-  }
-
   * {
     border-color: var(--color-border);
   }
 
   body {
-    background-color: var(--color-surface-raised);
-    color: var(--color-ink);
+    background-color: var(--color-background);
+    color: var(--color-foreground);
     font-family: var(--font-sans), sans-serif;
   }
 }
