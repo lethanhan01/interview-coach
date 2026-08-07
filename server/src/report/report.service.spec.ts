@@ -17,9 +17,11 @@ import {
 
 const COMPLETED_SESSION = {
   id: 'session-123',
-  userId: 'user-abc',
   overallScore: 75,
   status: 'completed',
+  savedJobDescription: {
+    userId: 'user-abc',
+  },
   sessionReports: [
     {
       reportType: 'executive_summary',
@@ -549,7 +551,7 @@ describe('ReportService', () => {
     it('tính progress đúng và không tính skipped answers vào feedbackRequired', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         id: 'session-123',
-        userId: 'user-abc',
+        savedJobDescription: { userId: 'user-abc' },
         status: 'completing',
         sessionReports: [],
       });
@@ -580,7 +582,7 @@ describe('ReportService', () => {
     it('trả pending = 0 khi tất cả câu đã trả lời đều skipped', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         id: 'session-123',
-        userId: 'user-abc',
+        savedJobDescription: { userId: 'user-abc' },
         status: 'completing',
         sessionReports: [],
       });
@@ -603,7 +605,7 @@ describe('ReportService', () => {
     it('reportReady=true khi session completed và đã có executive_summary', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         id: 'session-123',
-        userId: 'user-abc',
+        savedJobDescription: { userId: 'user-abc' },
         status: 'completed',
         sessionReports: [{ id: 'report-1' }],
       });
@@ -624,7 +626,9 @@ describe('ReportService', () => {
     it('throw FORBIDDEN khi user không phải chủ sở hữu', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         id: 'session-123',
-        userId: 'user-abc',
+        savedJobDescription: {
+          userId: 'user-abc',
+        },
         status: 'completing',
         sessionReports: [],
       });

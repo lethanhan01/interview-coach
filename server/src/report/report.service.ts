@@ -67,7 +67,10 @@ export class ReportService {
   ): Promise<ReportResponseDto> {
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
-      include: { sessionReports: true },
+      include: {
+        sessionReports: true,
+        savedJobDescription: { select: { userId: true } },
+      },
     });
 
     if (!session) {
@@ -77,7 +80,7 @@ export class ReportService {
       );
     }
 
-    if (session.userId !== userId) {
+    if (session.savedJobDescription.userId !== userId) {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
     if (!canAccessHistory) {
@@ -232,8 +235,10 @@ export class ReportService {
       where: { id: sessionId },
       select: {
         id: true,
-        userId: true,
         status: true,
+        savedJobDescription: {
+          select: { userId: true },
+        },
         sessionReports: {
           where: { reportType: 'executive_summary' },
           select: { id: true },
@@ -249,7 +254,7 @@ export class ReportService {
       );
     }
 
-    if (userId && session.userId !== userId) {
+    if (userId && session.savedJobDescription.userId !== userId) {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
 
@@ -260,10 +265,16 @@ export class ReportService {
       feedbackCompleted,
     ] = await Promise.all([
       this.prisma.sessionQuestion.count({ where: { sessionId } }),
-      this.prisma.userAnswer.count({ where: { sessionId } }),
-      this.prisma.userAnswer.count({ where: { sessionId, skipped: true } }),
+      this.prisma.userAnswer.count({ where: { question: { sessionId } } }),
       this.prisma.userAnswer.count({
-        where: { sessionId, skipped: false, feedbackGenerated: true },
+        where: { question: { sessionId }, skipped: true },
+      }),
+      this.prisma.userAnswer.count({
+        where: {
+          question: { sessionId },
+          skipped: false,
+          feedbackGenerated: true,
+        },
       }),
     ]);
 
@@ -292,7 +303,7 @@ export class ReportService {
   ): Promise<void> {
     const outputLanguage = resolveOutputLanguage(language);
     const answers = await this.prisma.userAnswer.findMany({
-      where: { sessionId },
+      where: { question: { sessionId } },
       select: { id: true },
       orderBy: { createdAt: 'asc' },
     });
@@ -345,9 +356,13 @@ export class ReportService {
     if (session?.status !== 'completing') return;
 
     const [totalAnswers, pendingFeedbacks] = await Promise.all([
-      this.prisma.userAnswer.count({ where: { sessionId } }),
+      this.prisma.userAnswer.count({ where: { question: { sessionId } } }),
       this.prisma.userAnswer.count({
-        where: { sessionId, skipped: false, feedbackGenerated: false },
+        where: {
+          question: { sessionId },
+          skipped: false,
+          feedbackGenerated: false,
+        },
       }),
     ]);
 

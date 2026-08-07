@@ -49,7 +49,7 @@ export class SessionService {
     if (this.sessionCreationLimitPer24h > 0) {
       const count = await this.prisma.interviewSession.count({
         where: {
-          userId,
+          savedJobDescription: { userId },
           createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
           status: this.countedLimitStatuses,
         },
@@ -85,10 +85,8 @@ export class SessionService {
 
     const session = await this.prisma.interviewSession.create({
       data: {
-        userId,
         savedJobDescriptionId,
         jobDescription: dto.jobDescription,
-        jobTitle: dto.targetRoles?.[0],
         sessionType: dto.sessionType,
         numQuestions: dto.numQuestions ?? 5,
         language,
@@ -149,6 +147,11 @@ export class SessionService {
 
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
+      include: {
+        savedJobDescription: {
+          select: { userId: true },
+        },
+      },
     });
 
     if (!session) {
@@ -158,7 +161,7 @@ export class SessionService {
       );
     }
 
-    if (session.userId !== userId) {
+    if (session.savedJobDescription.userId !== userId) {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
     if (
@@ -181,7 +184,7 @@ export class SessionService {
   ): Promise<InterviewSession[]> {
     return this.prisma.interviewSession.findMany({
       where: {
-        userId,
+        savedJobDescription: { userId },
         ...(canAccessHistory
           ? {}
           : { status: { notIn: ['completed', 'completing'] } }),
@@ -211,7 +214,7 @@ export class SessionService {
         orderBy: { orderIndex: 'asc' },
       }),
       this.prisma.userAnswer.findMany({
-        where: { sessionId },
+        where: { question: { sessionId } },
         select: { id: true, questionId: true, skipped: true },
       }),
     ]);
@@ -361,7 +364,7 @@ export class SessionService {
   ): Promise<InterviewSession> {
     const [questionCount, answerCount] = await Promise.all([
       this.prisma.sessionQuestion.count({ where: { sessionId } }),
-      this.prisma.userAnswer.count({ where: { sessionId } }),
+      this.prisma.userAnswer.count({ where: { question: { sessionId } } }),
     ]);
 
     if (questionCount === 0 || answerCount < questionCount) {
@@ -389,7 +392,7 @@ export class SessionService {
           orderBy: { orderIndex: 'asc' },
         }),
         tx.userAnswer.findMany({
-          where: { sessionId },
+          where: { question: { sessionId } },
           select: { questionId: true },
         }),
       ]);
@@ -412,14 +415,12 @@ export class SessionService {
       if (unansweredQuestions.length > 0) {
         await tx.userAnswer.createMany({
           data: unansweredQuestions.map((question) => ({
-            sessionId,
             questionId: question.id,
             answerMode: 'text',
             answerText: '',
             skipped: true,
             feedbackGenerated: false,
           })),
-          skipDuplicates: true,
         });
       }
 
@@ -447,10 +448,8 @@ export class SessionService {
 
   private async resolveSavedJobDescriptionId(
     userId: string,
-    savedJobDescriptionId?: string,
-  ): Promise<string | undefined> {
-    if (!savedJobDescriptionId) return undefined;
-
+    savedJobDescriptionId: string,
+  ): Promise<string> {
     const savedJobDescription = await this.prisma.savedJobDescription.findFirst(
       {
         where: {

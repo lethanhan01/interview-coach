@@ -149,7 +149,10 @@ export const createMockPrismaService = () => {
     },
     savedJobDescription: {
       findMany: jest.fn(),
-      findFirst: jest.fn().mockResolvedValue(null),
+      findFirst: jest.fn().mockResolvedValue({
+        id: 'sjd-12345678-1234-4234-8234-123456789012',
+        userId: 'user-abc',
+      }),
       create: jest.fn(),
       update: jest.fn(),
     },

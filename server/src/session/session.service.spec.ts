@@ -18,8 +18,7 @@ import {
 
 const BASE_SESSION = {
   id: '11111111-1111-4111-8111-111111111111',
-  userId: 'user-abc',
-  savedJobDescriptionId: null,
+  savedJobDescriptionId: 'sjd-12345678-1234-4234-8234-123456789012',
   jobDescription: 'a'.repeat(100),
   sessionType: 'hr' as const,
   contextPackId: 'VN',
@@ -30,6 +29,9 @@ const BASE_SESSION = {
   createdAt: new Date(),
   overallScore: null,
   completedAt: null,
+  savedJobDescription: {
+    userId: 'user-abc',
+  },
 };
 
 const CREATE_DTO = {
@@ -37,6 +39,7 @@ const CREATE_DTO = {
   sessionType: 'hr' as const,
   contextPack: 'VN' as const,
   numQuestions: 5,
+  savedJobDescriptionId: 'sjd-12345678-1234-4234-8234-123456789012',
 };
 
 describe('SessionService', () => {
@@ -93,7 +96,7 @@ describe('SessionService', () => {
 
       expect(mockPrisma.interviewSession.count).toHaveBeenCalledWith({
         where: {
-          userId: 'user-abc',
+          savedJobDescription: { userId: 'user-abc' },
           createdAt: { gte: expect.any(Date) },
           status: { notIn: ['error', 'canceled'] },
         },
@@ -101,7 +104,7 @@ describe('SessionService', () => {
       expect(mockPrisma.interviewSession.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            userId: 'user-abc',
+            savedJobDescriptionId: 'sjd-12345678-1234-4234-8234-123456789012',
             language: 'vi',
             status: 'generating',
           }),
@@ -285,7 +288,6 @@ describe('SessionService', () => {
         expect.objectContaining({
           data: expect.objectContaining({
             savedJobDescriptionId: 'saved-jd-1',
-            jobTitle: 'Backend Developer',
           }),
         }),
       );
@@ -381,7 +383,7 @@ describe('SessionService', () => {
       const result = await service.findAll('user-abc');
 
       expect(mockPrisma.interviewSession.findMany).toHaveBeenCalledWith({
-        where: { userId: 'user-abc' },
+        where: { savedJobDescription: { userId: 'user-abc' } },
         orderBy: { createdAt: 'desc' },
       });
       expect(result).toHaveLength(2);
@@ -623,7 +625,6 @@ describe('SessionService', () => {
       expect(mockPrisma.userAnswer.createMany).toHaveBeenCalledWith({
         data: [
           {
-            sessionId: '11111111-1111-4111-8111-111111111111',
             questionId: 'q-2',
             answerMode: 'text',
             answerText: '',
@@ -631,7 +632,6 @@ describe('SessionService', () => {
             feedbackGenerated: false,
           },
           {
-            sessionId: '11111111-1111-4111-8111-111111111111',
             questionId: 'q-4',
             answerMode: 'text',
             answerText: '',
@@ -639,7 +639,6 @@ describe('SessionService', () => {
             feedbackGenerated: false,
           },
           {
-            sessionId: '11111111-1111-4111-8111-111111111111',
             questionId: 'q-5',
             answerMode: 'text',
             answerText: '',
@@ -647,7 +646,6 @@ describe('SessionService', () => {
             feedbackGenerated: false,
           },
         ],
-        skipDuplicates: true,
       });
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
         where: { id: '11111111-1111-4111-8111-111111111111' },
@@ -794,7 +792,7 @@ describe('SessionService', () => {
         orderBy: { orderIndex: 'asc' },
       });
       expect(mockPrisma.userAnswer.findMany).toHaveBeenCalledWith({
-        where: { sessionId: '11111111-1111-4111-8111-111111111111' },
+        where: { question: { sessionId: '11111111-1111-4111-8111-111111111111' } },
         select: { id: true, questionId: true, skipped: true },
       });
       expect(mockPrisma.interviewSession.update).not.toHaveBeenCalled();
@@ -874,7 +872,7 @@ describe('SessionService', () => {
     it('ném FORBIDDEN khi user không phải owner', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...BASE_SESSION,
-        userId: 'other-user',
+        savedJobDescription: { userId: 'other-user' },
       });
 
       await expect(
