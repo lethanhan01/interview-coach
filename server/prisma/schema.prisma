@@ -114,7 +114,6 @@ model User {
   tokenVersion         Int                    @default(0) @map("token_version")
   createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  interviewSessions    InterviewSession[]
   savedJobDescriptions SavedJobDescription[]
   profile              UserProfile?
   verificationCodes    UserVerificationCode[]
@@ -169,35 +168,29 @@ model SessionReport {
 }
 
 model InterviewSession {
-  id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId                String               @map("user_id") @db.Uuid
-  savedJobDescriptionId String?              @map("saved_job_description_id") @db.Uuid
-  jobDescription        String               @map("job_description")
-  jobTitle              String?              @map("job_title")
-  sessionType           String               @map("session_type")
-  numQuestions          Int                  @default(5) @map("num_questions")
-  durationMin           Int                  @default(30) @map("duration_min")
-  remainingSeconds      Int?                 @map("remaining_seconds")
-  language              String               @default("vi")
-  contextPackId         String               @map("context_pack_id")
-  rubricVersionId       String               @map("rubric_version_id") @db.Uuid
-  status                String               @default("generating")
-  overallScore          Int?                 @map("overall_score")
-  completedAt           DateTime?            @map("completed_at") @db.Timestamptz(6)
-  createdAt             DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  savedJobDescription   SavedJobDescription? @relation(fields: [savedJobDescriptionId], references: [id], onDelete: SetNull)
-  rubricVersion         RubricVersion        @relation(fields: [rubricVersionId], references: [id], onDelete: Restrict, map: "interview_sessions_rubric_version_id_fkey")
-  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  savedJobDescriptionId String              @map("saved_job_description_id") @db.Uuid
+  jobDescription        String              @map("job_description")
+  sessionType           String              @map("session_type")
+  numQuestions          Int                 @default(5) @map("num_questions")
+  durationMin           Int                 @default(30) @map("duration_min")
+  remainingSeconds      Int?                @map("remaining_seconds")
+  language              String              @default("vi")
+  contextPackId         String              @map("context_pack_id")
+  rubricVersionId       String              @map("rubric_version_id") @db.Uuid
+  status                String              @default("generating")
+  overallScore          Int?                @map("overall_score")
+  completedAt           DateTime?           @map("completed_at") @db.Timestamptz(6)
+  createdAt             DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  savedJobDescription   SavedJobDescription @relation(fields: [savedJobDescriptionId], references: [id], onDelete: Restrict)
+  rubricVersion         RubricVersion       @relation(fields: [rubricVersionId], references: [id], onDelete: Restrict, map: "interview_sessions_rubric_version_id_fkey")
   sessionQuestions      SessionQuestion[]
-  userAnswers           UserAnswer[]
   sessionReports        SessionReport[]
 
   @@index([createdAt(sort: Desc)], map: "idx_interview_sessions_created_at")
   @@index([rubricVersionId], map: "idx_interview_sessions_rubric_version")
   @@index([savedJobDescriptionId], map: "idx_interview_sessions_saved_jd")
-  @@index([userId, createdAt(sort: Desc)], map: "idx_interview_sessions_user_created")
-  @@index([userId], map: "idx_interview_sessions_user_id")
   @@map("interview_sessions")
 }
 
@@ -261,27 +254,23 @@ model SessionQuestionCriterion {
 }
 
 model UserAnswer {
-  id                   String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionId            String           @map("session_id") @db.Uuid
-  questionId           String           @map("question_id") @db.Uuid
-  answerMode           String           @map("answer_mode")
-  answerText           String           @map("answer_text")
-  audioFileUrl         String?          @map("audio_file_url")
-  audioDurationSeconds Int?             @map("audio_duration_seconds")
-  audioSizeBytes       Int?             @map("audio_size_bytes")
-  skipped              Boolean          @default(false)
-  voiceMetricsJson     Json?            @map("voice_metrics_json")
-  transcriptionStatus  String?          @map("transcription_status")
-  feedbackGenerated    Boolean          @default(false) @map("feedback_generated")
-  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionId           String          @unique @map("question_id") @db.Uuid
+  answerMode           String          @map("answer_mode")
+  answerText           String          @map("answer_text")
+  audioFileUrl         String?         @map("audio_file_url")
+  audioDurationSeconds Int?            @map("audio_duration_seconds")
+  audioSizeBytes       Int?            @map("audio_size_bytes")
+  skipped              Boolean         @default(false)
+  voiceMetricsJson     Json?           @map("voice_metrics_json")
+  transcriptionStatus  String?         @map("transcription_status")
+  feedbackGenerated    Boolean         @default(false) @map("feedback_generated")
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   aiFeedback           AiFeedback?
-  question             SessionQuestion  @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  session              InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question             SessionQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  @@unique([sessionId, questionId])
   @@index([questionId], map: "idx_user_answers_question_id")
-  @@index([sessionId], map: "idx_user_answers_session_id")
   @@map("user_answers")
 }
 

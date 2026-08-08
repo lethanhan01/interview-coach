@@ -162,17 +162,29 @@ ALTER TABLE interview_sessions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "interview_sessions: read own" ON interview_sessions;
 CREATE POLICY "interview_sessions: read own"
   ON interview_sessions FOR SELECT
-  USING (user_id = auth.uid());
+  USING (
+    saved_job_description_id IN (
+      SELECT id FROM saved_job_descriptions WHERE user_id = auth.uid()
+    )
+  );
 
 DROP POLICY IF EXISTS "interview_sessions: insert own" ON interview_sessions;
 CREATE POLICY "interview_sessions: insert own"
   ON interview_sessions FOR INSERT
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (
+    saved_job_description_id IN (
+      SELECT id FROM saved_job_descriptions WHERE user_id = auth.uid() AND deleted_at IS NULL
+    )
+  );
 
 DROP POLICY IF EXISTS "interview_sessions: update own" ON interview_sessions;
 CREATE POLICY "interview_sessions: update own"
   ON interview_sessions FOR UPDATE
-  USING (user_id = auth.uid());
+  USING (
+    saved_job_description_id IN (
+      SELECT id FROM saved_job_descriptions WHERE user_id = auth.uid()
+    )
+  );
 
 -- session_questions (candidate read-only; INSERT/UPDATE by service role only)
 ALTER TABLE session_questions ENABLE ROW LEVEL SECURITY;
@@ -182,7 +194,9 @@ CREATE POLICY "session_questions: read own"
   ON session_questions FOR SELECT
   USING (
     session_id IN (
-      SELECT id FROM interview_sessions WHERE user_id = auth.uid()
+      SELECT s.id FROM interview_sessions s
+      JOIN saved_job_descriptions sjd ON sjd.id = s.saved_job_description_id
+      WHERE sjd.user_id = auth.uid()
     )
   );
 
@@ -193,8 +207,11 @@ DROP POLICY IF EXISTS "user_answers: read own" ON user_answers;
 CREATE POLICY "user_answers: read own"
   ON user_answers FOR SELECT
   USING (
-    session_id IN (
-      SELECT id FROM interview_sessions WHERE user_id = auth.uid()
+    question_id IN (
+      SELECT sq.id FROM session_questions sq
+      JOIN interview_sessions s ON s.id = sq.session_id
+      JOIN saved_job_descriptions sjd ON sjd.id = s.saved_job_description_id
+      WHERE sjd.user_id = auth.uid()
     )
   );
 
@@ -202,8 +219,11 @@ DROP POLICY IF EXISTS "user_answers: insert own" ON user_answers;
 CREATE POLICY "user_answers: insert own"
   ON user_answers FOR INSERT
   WITH CHECK (
-    session_id IN (
-      SELECT id FROM interview_sessions WHERE user_id = auth.uid()
+    question_id IN (
+      SELECT sq.id FROM session_questions sq
+      JOIN interview_sessions s ON s.id = sq.session_id
+      JOIN saved_job_descriptions sjd ON sjd.id = s.saved_job_description_id
+      WHERE sjd.user_id = auth.uid()
     )
   );
 
@@ -234,8 +254,10 @@ CREATE POLICY "ai_feedbacks: read own"
   USING (
     user_answer_id IN (
       SELECT ua.id FROM user_answers ua
-      JOIN interview_sessions s ON ua.session_id = s.id
-      WHERE s.user_id = auth.uid()
+      JOIN session_questions sq ON sq.id = ua.question_id
+      JOIN interview_sessions s ON s.id = sq.session_id
+      JOIN saved_job_descriptions sjd ON sjd.id = s.saved_job_description_id
+      WHERE sjd.user_id = auth.uid()
     )
   );
 
@@ -249,8 +271,10 @@ CREATE POLICY "annotated_segments: read own"
     ai_feedback_id IN (
       SELECT f.id FROM ai_feedbacks f
       JOIN user_answers ua ON f.user_answer_id = ua.id
-      JOIN interview_sessions s ON ua.session_id = s.id
-      WHERE s.user_id = auth.uid()
+      JOIN session_questions sq ON sq.id = ua.question_id
+      JOIN interview_sessions s ON s.id = sq.session_id
+      JOIN saved_job_descriptions sjd ON sjd.id = s.saved_job_description_id
+      WHERE sjd.user_id = auth.uid()
     )
   );
 
@@ -991,7 +1015,9 @@ DROP POLICY IF EXISTS "Users can read own session reports" ON "session_reports";
 CREATE POLICY "Users can read own session reports" ON "session_reports"
   FOR SELECT USING (
     session_id IN (
-      SELECT id FROM interview_sessions WHERE user_id = auth.uid()
+      SELECT s.id FROM interview_sessions s
+      JOIN saved_job_descriptions sjd ON sjd.id = s.saved_job_description_id
+      WHERE sjd.user_id = auth.uid()
     )
   );
 
@@ -1390,9 +1416,9 @@ CREATE POLICY "session_question_criteria: read own"
     session_question_id IN (
       SELECT sq.id
       FROM session_questions sq
-      JOIN interview_sessions s
-        ON s.id = sq.session_id
-      WHERE s.user_id = auth.uid()
+      JOIN interview_sessions s ON s.id = sq.session_id
+      JOIN saved_job_descriptions sjd ON sjd.id = s.saved_job_description_id
+      WHERE sjd.user_id = auth.uid()
     )
   );
 

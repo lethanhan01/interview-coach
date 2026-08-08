@@ -38,11 +38,9 @@ rubric_criteria ──< session_question_criteria >── session_questions
 question_bank ──< session_questions ──< user_answers ─── ai_feedbacks ──< annotated_segments
 interview_sessions ──< session_questions
 interview_sessions ──< session_reports
-interview_sessions ──< user_answers
 
 users ──── user_profiles
-  └──< interview_sessions
-  └──< saved_job_descriptions
+  └──< saved_job_descriptions ──< interview_sessions
 ```
 
 Prisma relation fields (không phải DB columns):
@@ -54,12 +52,10 @@ Prisma relation fields (không phải DB columns):
 | RubricCategory | RubricCriterion[] | 1:n | Cascade |
 | QuestionBank | SessionQuestion[] | 1:n | SET NULL (FK nullable) |
 | User | UserProfile? | 1:1 | Cascade |
-| User | InterviewSession[] | 1:n | Cascade |
 | User | SavedJobDescription[] | 1:n | Cascade |
-| SavedJobDescription | InterviewSession[] | 1:n | SetNull |
+| SavedJobDescription | InterviewSession[] | 1:n | Restrict |
 | InterviewSession | SessionReport[] | 1:n | Cascade |
 | InterviewSession | SessionQuestion[] | 1:n | Cascade |
-| InterviewSession | UserAnswer[] | 1:n | Cascade |
 | SessionQuestion | UserAnswer[] | 1:n | Cascade |
 | UserAnswer | AiFeedback? | 1:1 | Cascade |
 | UserAnswer | FollowUpQuestion? | 1:1 | Cascade |
@@ -224,15 +220,13 @@ Indexes:
 
 ### interview_sessions
 Prisma model: `InterviewSession`  
-Session config + lifecycle state. Report payload đã tách sang `session_reports` ở T13; `interview_sessions` chỉ giữ `overall_score` và `completed_at` cho lookup nhanh.
+Session config + lifecycle state. Chuẩn 3NF: sở hữu gián tiếp qua `saved_job_description_id` (`NOT NULL`), không chứa `user_id` và `job_title` dư thừa.
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
-| user_id | UUID FK | — | NO | → users.id ON DELETE CASCADE |
-| saved_job_description_id | UUID FK | — | YES | → saved_job_descriptions.id ON DELETE SET NULL; trigger đảm bảo JD cùng `user_id` |
-| job_description | TEXT | — | NO | |
-| job_title | TEXT | — | YES | |
+| saved_job_description_id | UUID FK | — | NO | → saved_job_descriptions.id ON DELETE RESTRICT; sở hữu session qua saved JD |
+| job_description | TEXT | — | NO | Snapshot immutable lưu tại thời điểm tạo session cho AI pipeline |
 | session_type | TEXT | — | NO | `'hr' \| 'technical' \| 'mixed'` |
 | num_questions | INT | 5 | NO | |
 | duration_min | INT | 30 | NO | |
@@ -249,8 +243,6 @@ Indexes:
 - `idx_interview_sessions_created_at` on `(created_at DESC)`
 - `idx_interview_sessions_rubric_version` on `(rubric_version_id)`
 - `idx_interview_sessions_saved_jd` on `(saved_job_description_id)`
-- `idx_interview_sessions_user_created` on `(user_id, created_at DESC)`
-- `idx_interview_sessions_user_id` on `(user_id)`
 
 ---
 
@@ -315,13 +307,12 @@ Indexes:
 
 ### user_answers
 Prisma model: `UserAnswer`  
-Câu trả lời per turn — voice (transcript + audio URL) hoặc text. Append-only về business logic nhưng có `updated_at` (Prisma `@updatedAt`).
+Câu trả lời per turn — voice (transcript + audio URL) hoặc text. Chuẩn 3NF: không còn `session_id` dư thừa.
 
 | Column | DB Type | Default | Nullable | Notes |
 |--------|---------|---------|----------|-------|
 | id | UUID PK | gen_random_uuid() | NO | |
-| session_id | UUID FK | — | NO | → interview_sessions.id ON DELETE CASCADE |
-| question_id | UUID FK | — | NO | → session_questions.id ON DELETE CASCADE; composite FK `(question_id, session_id)` đảm bảo question cùng session |
+| question_id | UUID UNIQUE FK | — | NO | → session_questions.id ON DELETE CASCADE |
 | answer_mode | TEXT | — | NO | CHECK ∈ `{voice, text}` |
 | answer_text | TEXT | — | NO | Transcript hoặc direct text |
 | audio_file_url | TEXT | — | YES | |
@@ -334,10 +325,9 @@ Câu trả lời per turn — voice (transcript + audio URL) hoặc text. Append
 | created_at | TIMESTAMPTZ | now() | NO | |
 | updated_at | TIMESTAMPTZ | now() | NO | Auto-update |
 
-Unique: `(session_id, question_id)`. DB cũng có unique `(session_questions.id, session_questions.session_id)` để hỗ trợ composite FK.  
+Unique: `(question_id)`.  
 Indexes:
 - `idx_user_answers_question_id` on `(question_id)`
-- `idx_user_answers_session_id` on `(session_id)`
 
 ---
 
@@ -422,5 +412,5 @@ Indexes:
 | `updated_at` (auto via `@updatedAt`) | `users`, `user_profiles`, `interview_sessions`, `question_bank`, `user_answers` |
 | Partial indexes (`WHERE deleted_at IS NULL`) | `question_bank` (2 indexes) |
 | Partial indexes | `ai_feedbacks(user_answer_id) WHERE user_answer_id IS NOT NULL` |
-| Cross-row integrity outside Prisma schema | `user_answers(question_id, session_id)` composite FK; `interview_sessions.saved_job_description_id` same-user trigger |
+| Cross-row integrity outside Prisma schema | RLS policies suy ra ownership từ `saved_job_descriptions.user_id` (không cần trigger vá bất đồng bộ) |
 | CHECK constraints (raw SQL, `migration.sql` §7) | role/status/type/range/score/audio/report/offset constraints — apply thủ công sau `db push` (ADR-008) |

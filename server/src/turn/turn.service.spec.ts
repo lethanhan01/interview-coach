@@ -36,12 +36,14 @@ describe('TurnService', () => {
 
   const BASE_SESSION = {
     id: 'session-123',
-    userId: 'user-abc',
     status: 'active',
     sessionType: 'hr',
     contextPackId: 'VN',
     language: 'vi',
     numQuestions: 5,
+    savedJobDescription: {
+      userId: 'user-abc',
+    },
   };
 
   const BASE_QUESTION = {
@@ -134,7 +136,7 @@ describe('TurnService', () => {
 
     it('ném FORBIDDEN khi user không phải owner', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
-        userId: 'other-user',
+        savedJobDescription: { userId: 'other-user' },
       });
 
       await expect(
@@ -153,7 +155,7 @@ describe('TurnService', () => {
         audioSizeBytes: 3,
       };
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
-        userId: 'user-abc',
+        savedJobDescription: { userId: 'user-abc' },
       });
       mockAudioStorage.uploadInterviewAudio.mockResolvedValue(uploadResult);
 
@@ -202,7 +204,7 @@ describe('TurnService', () => {
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...BASE_SESSION,
-        userId: 'other-user',
+        savedJobDescription: { userId: 'other-user' },
       });
       try {
         await service.submitAnswer('session-123', 'user-abc', TEXT_DTO);

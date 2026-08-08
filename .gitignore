@@ -60,7 +60,7 @@ data/*
 !data/scripts/
 
 docs/superpowers/*
-
+docs/plans/*
 scripts/*
 
 skills-lock.json

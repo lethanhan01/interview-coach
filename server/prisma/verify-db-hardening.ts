@@ -81,9 +81,7 @@ const expectedConstraints = [
   ['question_bank', 'chk_question_bank_context_pack'],
   ['question_bank', 'chk_question_bank_estimated_time_min'],
   ['session_reports', 'chk_session_reports_report_type'],
-  ['session_questions', 'session_questions_id_session_id_key'],
-  ['user_answers', 'user_answers_session_id_question_id_key'],
-  ['user_answers', 'user_answers_question_session_match_fkey'],
+  ['user_answers', 'user_answers_question_id_key'],
   ['user_answers', 'chk_user_answers_answer_mode'],
   ['user_answers', 'chk_user_answers_transcription_status'],
   ['user_answers', 'chk_user_answers_audio_duration_seconds'],
@@ -117,13 +115,10 @@ const expectedConstraints = [
 ];
 
 const expectedIndexes = [
-  ['interview_sessions', 'idx_interview_sessions_user_id'],
   ['interview_sessions', 'idx_interview_sessions_created_at'],
-  ['interview_sessions', 'idx_interview_sessions_user_created'],
   ['interview_sessions', 'idx_interview_sessions_saved_jd'],
   ['session_questions', 'idx_session_questions_session_id'],
   ['session_questions', 'idx_session_questions_session_id_text'],
-  ['user_answers', 'idx_user_answers_session_id'],
   ['user_answers', 'idx_user_answers_question_id'],
   ['ai_feedbacks', 'idx_ai_feedbacks_user_answer_id'],
   ['annotated_segments', 'idx_annotated_segments_feedback_id'],
@@ -197,11 +192,14 @@ const retiredColumns = [
   ['user_profiles', 'deleted_at'],
   ['interview_sessions', 'jd_source'],
   ['interview_sessions', 'jd_url'],
+  ['interview_sessions', 'user_id'],
+  ['interview_sessions', 'job_title'],
   ['interview_sessions', 'difficulty'],
   ['interview_sessions', 'persona'],
   ['interview_sessions', 'mode'],
   ['interview_sessions', 'show_prep_card'],
   ['interview_sessions', 'opening_transcript'],
+  ['user_answers', 'session_id'],
   ['rubric_categories', 'context_pack_id'],
   ['rubric_criteria', 'rubric_version_id'],
   ['rubric_criteria', 'active'],
@@ -235,22 +233,6 @@ async function main() {
 
 async function runAnomalyChecks(): Promise<CheckResult[]> {
   const checks: Array<[string, string]> = [
-    [
-      'anomaly:user_answers_question_session_mismatch',
-      `SELECT count(*)::int AS count
-       FROM user_answers ua
-       JOIN session_questions sq ON sq.id = ua.question_id
-       WHERE sq.session_id <> ua.session_id`,
-    ],
-    [
-      'anomaly:interview_sessions_saved_jd_cross_user',
-      `SELECT count(*)::int AS count
-       FROM interview_sessions s
-       LEFT JOIN saved_job_descriptions sjd
-         ON sjd.id = s.saved_job_description_id
-       WHERE s.saved_job_description_id IS NOT NULL
-         AND (sjd.id IS NULL OR sjd.user_id <> s.user_id)`,
-    ],
     [
       'anomaly:invalid_context_pack_ids',
       `SELECT count(*)::int AS count

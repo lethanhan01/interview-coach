@@ -41,8 +41,7 @@ export class CreateSessionDto {
   @IsArray()
   @IsString({ each: true })
   targetRoles?: string[];
-  @ApiPropertyOptional({ format: 'uuid' })
-  @IsOptional()
+  @ApiProperty({ format: 'uuid' })
   @IsUUID()
-  savedJobDescriptionId?: string;
+  savedJobDescriptionId: string;
 }

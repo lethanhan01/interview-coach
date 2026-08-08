@@ -42,7 +42,7 @@ export class TurnService {
   ): Promise<AudioUploadResult> {
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
-      select: { userId: true },
+      include: { savedJobDescription: { select: { userId: true } } },
     });
 
     if (!session) {
@@ -52,7 +52,7 @@ export class TurnService {
       );
     }
 
-    if (session.userId !== userId) {
+    if (session.savedJobDescription.userId !== userId) {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
 
@@ -70,6 +70,7 @@ export class TurnService {
   ): Promise<TurnResponseDto> {
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
+      include: { savedJobDescription: { select: { userId: true } } },
     });
 
     if (!session) {
@@ -79,7 +80,7 @@ export class TurnService {
       );
     }
 
-    if (session.userId !== userId) {
+    if (session.savedJobDescription.userId !== userId) {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
 
@@ -120,7 +121,7 @@ export class TurnService {
     if (dto.skipQuestion) {
       const existingAnswer = await this.prisma.userAnswer.findUnique({
         where: {
-          sessionId_questionId: { sessionId, questionId: dto.questionId },
+          questionId: dto.questionId,
         },
       });
 
@@ -135,10 +136,9 @@ export class TurnService {
 
       const answer = await this.prisma.userAnswer.upsert({
         where: {
-          sessionId_questionId: { sessionId, questionId: dto.questionId },
+          questionId: dto.questionId,
         },
         create: {
-          sessionId,
           questionId: dto.questionId,
           answerMode: 'text',
           answerText: '',
@@ -159,7 +159,7 @@ export class TurnService {
     if (dto.answerMode === 'voice' && dto.audioFileUrl && !providedTranscript) {
       const existingVoiceAnswer = await this.prisma.userAnswer.findUnique({
         where: {
-          sessionId_questionId: { sessionId, questionId: dto.questionId },
+          questionId: dto.questionId,
         },
       });
 
@@ -204,10 +204,9 @@ export class TurnService {
 
       const answer = await this.prisma.userAnswer.upsert({
         where: {
-          sessionId_questionId: { sessionId, questionId: dto.questionId },
+          questionId: dto.questionId,
         },
         create: {
-          sessionId,
           questionId: dto.questionId,
           answerMode: dto.answerMode,
           answerText: '',
@@ -248,7 +247,7 @@ export class TurnService {
     // Text and edited voice-transcript path: process synchronously.
     const existingAnswer = await this.prisma.userAnswer.findUnique({
       where: {
-        sessionId_questionId: { sessionId, questionId: dto.questionId },
+        questionId: dto.questionId,
       },
     });
     let answer = existingAnswer;
@@ -273,10 +272,9 @@ export class TurnService {
 
       answer = await this.prisma.userAnswer.upsert({
         where: {
-          sessionId_questionId: { sessionId, questionId: dto.questionId },
+          questionId: dto.questionId,
         },
         create: {
-          sessionId,
           questionId: dto.questionId,
           answerMode: dto.answerMode,
           answerText,

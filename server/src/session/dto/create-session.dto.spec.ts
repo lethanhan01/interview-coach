@@ -10,6 +10,7 @@ describe('CreateSessionDto', () => {
     language: 'vi',
     numQuestions: 5,
     targetRoles: ['Backend Developer'],
+    savedJobDescriptionId: '11111111-1111-4111-8111-111111111111',
   };
 
   const validatePayload = (payload: Record<string, unknown>) =>
@@ -26,6 +27,8 @@ describe('CreateSessionDto', () => {
     ['sessionType sai enum', { sessionType: 'culture' }],
     ['contextPack sai enum', { contextPack: 'APAC' }],
     ['language sai enum', { language: 'fr' }],
+    ['thiếu savedJobDescriptionId', { savedJobDescriptionId: undefined }],
+    ['savedJobDescriptionId không phải UUID', { savedJobDescriptionId: 'invalid-uuid' }],
   ])('QG-02: reject %s', async (_label, override) => {
     const errors = await validatePayload({ ...validPayload, ...override });
 
