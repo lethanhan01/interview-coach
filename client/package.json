@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently -k -n \"next,storybook\" -c \"blue,magenta\" \"npm:dev:next\" \"npm:storybook\"",
+    "dev": "npm run dev:next",
     "dev:next": "next dev --port 5173",
+    "dev:all": "concurrently -k -n next,storybook -c blue,magenta npm:dev:next npm:storybook",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
