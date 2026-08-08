@@ -30,6 +30,10 @@
   --color-destructive-hover: var(--destructive-hover);
   --color-destructive-foreground: var(--destructive-fg);
 
+  --color-danger: var(--destructive);
+  --color-danger-hover: var(--destructive-hover);
+  --color-danger-foreground: var(--destructive-fg);
+
   --color-success: var(--success);
   --color-success-foreground: var(--success-fg);
 
