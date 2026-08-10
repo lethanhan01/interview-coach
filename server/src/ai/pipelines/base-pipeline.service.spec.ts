@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EvaluateAnswer } from '../../assessment/evaluate-answer.service';
 import { HrPipelineService } from './hr.pipeline.service';
 import { MixedPipelineService } from './mixed.pipeline.service';
 import { OpenAIGateway } from '../openai.gateway';
@@ -62,6 +63,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
         { provide: PromptBuilderService, useValue: mockPromptBuilder },
         { provide: ZodValidatorService, useValue: mockZodValidator },
         { provide: ConfigService, useValue: mockConfig },
+        EvaluateAnswer,
       ],
     }).compile();
 

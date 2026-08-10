@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import LoadingSpinner from '../ui/LoadingSpinner'
 import Button from '../ui/Button'
 
@@ -41,6 +41,7 @@ export default function VoiceRecorder({
   const [draft, setDraft] = useState<VoiceDraft | null>(null)
   const [transcript, setTranscript] = useState('')
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const startTimeRef = useRef<number>(0)
 
@@ -50,6 +51,7 @@ export default function VoiceRecorder({
     setTranscript('')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      streamRef.current = stream
       const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
       chunksRef.current = []
       recorder.ondataavailable = (e) => {
@@ -77,7 +79,8 @@ export default function VoiceRecorder({
     await new Promise<void>((resolve) => {
       recorder.onstop = () => resolve()
       recorder.stop()
-      recorder.stream.getTracks().forEach((t) => t.stop())
+      streamRef.current?.getTracks().forEach((t) => t.stop())
+      streamRef.current = null
     })
 
     setState('transcribing')
@@ -133,6 +136,15 @@ export default function VoiceRecorder({
     setTranscript('')
     setError(null)
   }
+
+  useEffect(() => {
+    return () => {
+      mediaRecorderRef.current?.stream.getTracks().forEach((t) => t.stop())
+      streamRef.current?.getTracks().forEach((t) => t.stop())
+      mediaRecorderRef.current = null
+      streamRef.current = null
+    }
+  }, [])
 
   return (
     <div className="flex flex-col items-center gap-4">

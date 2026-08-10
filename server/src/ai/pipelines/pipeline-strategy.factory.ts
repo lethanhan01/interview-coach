@@ -9,22 +9,25 @@ import type {
 
 @Injectable()
 export class PipelineStrategyFactory {
+  private readonly strategies: ReadonlyMap<SessionType, InterviewPipeline>;
+
   constructor(
     private readonly hr: HrPipelineService,
     private readonly technical: TechnicalPipelineService,
     private readonly mixed: MixedPipelineService,
-  ) {}
+  ) {
+    this.strategies = new Map(
+      [hr, technical, mixed].map((pipeline) => [
+        pipeline.sessionType,
+        pipeline,
+      ]),
+    );
+  }
 
   getStrategy(sessionType: SessionType): InterviewPipeline {
-    switch (sessionType) {
-      case 'hr':
-        return this.hr;
-      case 'technical':
-        return this.technical;
-      case 'mixed':
-        return this.mixed;
-      default:
-        throw new Error(`Unsupported session type: ${String(sessionType)}`);
-    }
+    const strategy = this.strategies.get(sessionType);
+    if (!strategy)
+      throw new Error(`Unsupported session type: ${String(sessionType)}`);
+    return strategy;
   }
 }

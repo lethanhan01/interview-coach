@@ -1,6 +1,13 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 
 type Role = 'candidate' | 'admin'
 type CurrentUser = { id: string; email: string }
@@ -56,11 +63,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const timeout = window.setTimeout(() => void refresh(), 0)
     return () => window.clearTimeout(timeout)
   }, [refresh])
-  return (
-    <AuthContext.Provider value={{ ...value, refresh }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  const contextValue = useMemo(() => ({ ...value, refresh }), [value, refresh])
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

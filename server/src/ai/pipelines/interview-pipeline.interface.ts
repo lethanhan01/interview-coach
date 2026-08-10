@@ -63,6 +63,7 @@ export interface SurgicalFeedback {
 }
 
 export interface InterviewPipeline {
+  readonly sessionType: SessionType;
   generateQuestions(input: QuestionGenInput): Promise<GeneratedQuestion[]>;
   evaluateAnswer(input: FeedbackInput): Promise<SurgicalFeedback>;
 }

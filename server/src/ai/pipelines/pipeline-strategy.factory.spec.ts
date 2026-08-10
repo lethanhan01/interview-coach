@@ -6,9 +6,11 @@ import { MixedPipelineService } from './mixed.pipeline.service';
 
 describe('PipelineStrategyFactory', () => {
   let factory: PipelineStrategyFactory;
-  const mockHr = {} as HrPipelineService;
-  const mockTechnical = {} as TechnicalPipelineService;
-  const mockMixed = {} as MixedPipelineService;
+  const mockHr = { sessionType: 'hr' } as HrPipelineService;
+  const mockTechnical = {
+    sessionType: 'technical',
+  } as TechnicalPipelineService;
+  const mockMixed = { sessionType: 'mixed' } as MixedPipelineService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

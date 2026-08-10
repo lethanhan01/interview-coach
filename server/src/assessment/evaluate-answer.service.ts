@@ -17,14 +17,22 @@ import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { getLanguageInstruction } from '../ai/output-language';
 import { resolveAppliedDimensions } from './dimension-matcher';
 import { sanitizeFeedbackSegments } from './feedback-segment-sanitizer';
+import { z } from 'zod';
 
-const strategyInstructions = {
+const defaultStrategyInstructions = {
   hr: 'Focus on behavioral evidence, motivation, communication, collaboration, self-awareness, and culture fit. Probe for concrete STAR examples. Avoid deep technical trivia unless the job description explicitly requires it.',
   technical:
     'Focus on technical depth, applied problem-solving, trade-offs, debugging, system design, and engineering quality. Ask for reasoning and concrete implementation decisions.',
   mixed:
     'Balance behavioral evidence with technical depth. Cover communication and collaboration alongside applied problem-solving, trade-offs, and role-specific engineering judgment.',
 } as const;
+
+type ValidatedFeedback = z.infer<typeof FeedbackSchema>;
+
+export interface EvaluationOptions {
+  strategyInstructions?: string;
+  targetOrder?: 'allowed' | 'requested';
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -42,7 +50,7 @@ function clampScore(value: unknown): unknown {
 
 @Injectable()
 export class EvaluateAnswer {
-  private readonly logger = new Logger(EvaluateAnswer.name);
+  readonly logger = new Logger(EvaluateAnswer.name);
 
   constructor(
     private readonly openai: OpenAIGateway,
@@ -50,7 +58,10 @@ export class EvaluateAnswer {
     private readonly zodValidator: ZodValidatorService,
   ) {}
 
-  async execute(input: FeedbackInput): Promise<SurgicalFeedback> {
+  async execute(
+    input: FeedbackInput,
+    options: EvaluationOptions = {},
+  ): Promise<SurgicalFeedback> {
     const allowed =
       input.sessionType === 'hr'
         ? input.contextPackConfig.behavioralDimensions
@@ -67,11 +78,18 @@ export class EvaluateAnswer {
         'Question metadata must include at least one competency domain',
       );
     }
-    const target = allowed.filter(
-      (dimension, index, dimensions) =>
-        input.competencyDomains.includes(dimension.id) &&
-        dimensions.findIndex(({ id }) => id === dimension.id) === index,
-    );
+    const target =
+      options.targetOrder === 'requested'
+        ? input.competencyDomains.flatMap((id, index, domains) =>
+            domains.indexOf(id) === index
+              ? allowed.filter((dimension) => dimension.id === id)
+              : [],
+          )
+        : allowed.filter(
+            (dimension, index, dimensions) =>
+              input.competencyDomains.includes(dimension.id) &&
+              dimensions.findIndex(({ id }) => id === dimension.id) === index,
+          );
     if (target.length === 0) {
       throw new InterviewAIException(
         ErrorCode.SCHEMA_VALIDATION_ERROR,
@@ -82,7 +100,9 @@ export class EvaluateAnswer {
 
     const targetIds = target.map(({ id }) => id);
     const base = this.promptBuilder.buildBaseSystem('surgical-feedback');
-    const strategy = `${base}\n\n${getLanguageInstruction(input.language)}\n\nInterview strategy: ${strategyInstructions[input.sessionType]}`;
+    const strategyInstructions =
+      options.strategyInstructions ?? defaultStrategyInstructions[input.sessionType];
+    const strategy = `${base}\n\n${getLanguageInstruction(input.language)}\n\nInterview strategy: ${strategyInstructions}`;
     const withPack = this.promptBuilder.applyContextPackForEvaluation(
       strategy,
       input.contextPackConfig,
@@ -120,11 +140,27 @@ export class EvaluateAnswer {
         'Invalid JSON from AI',
       );
     }
-    const validated = this.zodValidator.validate(FeedbackSchema, parsed);
+    let validated: ValidatedFeedback;
+    try {
+      validated = this.zodValidator.validate(FeedbackSchema, parsed);
+    } catch (error) {
+      this.logger.warn(
+        `[feedback] Zod validation failed. rawLength=${raw.length}`,
+        error,
+      );
+      throw error;
+    }
     const selected = resolveAppliedDimensions(
       validated.applied_dimensions,
       target,
     );
+    if (selected.length === 0) {
+      this.logger.warn(
+        `[feedback] No scoring dimensions matched. ` +
+          `returnedIds=${JSON.stringify(validated.applied_dimensions.map((d) => d.id))} ` +
+          `allowedIds=${JSON.stringify(target.map((d) => d.id))} rawLength=${raw.length}`,
+      );
+    }
     const selectedById = new Map(
       selected.map((dimension) => [dimension.id, dimension]),
     );

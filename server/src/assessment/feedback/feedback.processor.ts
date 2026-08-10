@@ -22,7 +22,7 @@ import { getFallbackFeedbackMessage } from '../feedback-fallback';
 import type { OutputLanguage } from '../../ai/output-language';
 import { resolveOutputLanguage } from '../../ai/output-language';
 import { sanitizeFeedbackSegments } from '../feedback-segment-sanitizer';
-import { EvaluateAnswer } from '../evaluate-answer.service';
+import { PipelineStrategyFactory } from '../../ai/pipelines/pipeline-strategy.factory';
 
 interface FeedbackJobDto {
   sessionId: string;
@@ -58,7 +58,7 @@ export class FeedbackProcessor extends WorkerHost {
     private readonly prisma: PrismaService,
     private readonly sseService: SseService,
     private readonly contextPackService: ContextPackService,
-    private readonly evaluateAnswer: EvaluateAnswer,
+    private readonly pipelines: PipelineStrategyFactory,
     private readonly reportService: ReportService,
   ) {
     super();
@@ -81,7 +81,7 @@ export class FeedbackProcessor extends WorkerHost {
     let hasAnnotations = false;
 
     try {
-      const feedback = await this.evaluateAnswer.execute({
+      const feedback = await this.pipelines.getStrategy(sessionType).evaluateAnswer({
         sessionType,
         questionId,
         questionText,

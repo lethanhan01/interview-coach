@@ -9,7 +9,6 @@ import {
 import { RubricCatalogService } from './rubric/rubric-catalog.service';
 import { ContextPackService } from './context-pack.service';
 import { FeedbackProcessor } from './feedback/feedback.processor';
-import { EvaluateAnswer } from './evaluate-answer.service';
 import { RubricController } from './rubric.controller';
 import { workersEnabled } from '../runtime/runtime-role';
 
@@ -27,7 +26,6 @@ const workerProviders = workersEnabled() ? [FeedbackProcessor] : [];
   providers: [
     RubricCatalogService,
     ContextPackService,
-    EvaluateAnswer,
     ...workerProviders,
   ],
   controllers: [RubricController],
