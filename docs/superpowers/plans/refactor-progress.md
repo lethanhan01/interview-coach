@@ -5,9 +5,9 @@
 
 ## Trạng thái hiện tại
 
-**Phase đang thực hiện:** Hoàn tất Phase 9 — Infrastructure placement và cross-context cleanup.
+**Phase đang thực hiện:** Hoàn tất Phase 10 — Identity review.
 **Blocker hiện tại:** Chưa có.
-**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 10 — Identity review.
+**Bước tiếp theo:** Roadmap refactor hoàn tất; chờ xác nhận cho một kế hoạch thay đổi sản phẩm/bảo mật riêng nếu cần.
 
 ## Bảng Phase
 
@@ -23,7 +23,7 @@
 | 7 — Session | Hoàn tất | `SessionLifecyclePolicy`, create và status/completion use cases; `SessionService` còn facade cho read/API. | Chờ xác nhận bắt đầu Phase 8. | Build pass; unit 46 suites/402 tests pass; integration và HTTP E2E pass. |
 | 8 — Turn | Hoàn tất | Tách guard/context và submit workflow; `TurnService` còn facade controller/upload. | Chờ xác nhận bắt đầu Phase 9. | Build và full test/integration/E2E pass. |
 | 9 — Infrastructure | Hoàn tất | Prisma và Redis SSE ở `infrastructure/`; importer/test/script cũ đã chuyển; không còn SSE test trùng. | Chờ xác nhận bắt đầu Phase 10. | Không centralize BullMQ khi chưa có duplication thực; bốn feature vẫn là sole worker owner. |
-| 10 — Identity | Chưa bắt đầu | — | Chờ interview pipeline ổn định. | — |
+| 10 — Identity | Hoàn tất | Audit Auth/User/Admin; giữ ba module riêng vì không có shared policy/lifecycle đủ để tạo facade. | Roadmap hoàn tất. | Build pass; unit 47 suites/406 tests pass; integration và HTTP E2E pass. |
 
 ## Quyết định quan trọng
 
@@ -37,6 +37,17 @@
 | 2026-08-10 | Move behavior trước, move folder sau. | Folder-only PR lớn gây noise và che semantic regression. | Mỗi phase có compatibility facade rồi cleanup. |
 
 ## Nhật ký thực hiện
+
+### 2026-08-10 — Phase 10 / Identity review exit criteria đạt
+
+- Phase: 10 — Identity review
+- Trạng thái: Hoàn tất
+- Hoàn thành: map ownership và consumer của Auth (credential, cookie/JWT, password reset/token invalidation), User (self-profile) và Admin (role/status/soft-delete administration). Không có consumer dùng chung `AuthService`/`UserService`/`AdminService` hoặc shared policy/lifecycle ngoài cùng bảng `User`; giữ ba module riêng, không thêm `IdentityModule` facade. Bổ sung characterization test cho cấm self-management, bảo vệ last active admin, và token invalidation khi admin lock/delete account.
+- Contract kiểm tra: không đổi route/cookie/JWT/tokenVersion, `JwtAuthGuard`/`RolesGuard`, profile self-service, role/status/soft-delete rule hoặc Prisma schema. Auth vẫn global như trạng thái cũ; không mở rộng global scope cho code mới.
+- Verification: `npm run build` — pass; `npm test -- --runInBand` — pass (47 suites, 406 tests); `npm run test:integration` — pass (1 suite); `npm run test:e2e` — pass (1 HTTP suite); `git diff --check` — pass.
+- Quyết định: không merge chỉ vì cùng account data; một facade lúc này chỉ tăng tầng DI/import mà không giảm duplication. Giữ boundary: Auth xác thực và session, User chỉ profile của chính chủ, Admin chỉ quản trị account được guard theo role.
+- Rủi ro/rollback: không có thay đổi runtime/module/schema; rollback chỉ là xóa test characterization. Không có email-verification flow trong code hiện tại, nên đây là product/security gap cần kế hoạch riêng thay vì lẫn vào refactor.
+- Bước tiếp theo: roadmap refactor backend hoàn tất; chỉ mở phase mới khi có mục tiêu được phê duyệt riêng.
 
 ### 2026-08-10 — Phase 9 / Infrastructure placement exit criteria đạt
 
