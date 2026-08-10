@@ -40,4 +40,36 @@ describe('AudioObjectStorage', () => {
       }),
     );
   });
+
+  it('characterizes the current public-URL storage contract', async () => {
+    const upload = jest.fn().mockResolvedValue({ error: null });
+    const getPublicUrl = jest.fn().mockReturnValue({
+      data: { publicUrl: 'https://storage.example/interview-audio/audio.webm' },
+    });
+    (createClient as jest.Mock).mockReturnValue({
+      storage: {
+        from: jest.fn().mockReturnValue({ upload, getPublicUrl }),
+      },
+    });
+    const storage = new AudioObjectStorage({
+      getOrThrow: jest.fn(() => 'value'),
+    } as unknown as ConfigService);
+
+    const result = await storage.uploadInterviewAudio({
+      sessionId: 'session-1',
+      userId: 'user-1',
+      file: { buffer: Buffer.from('audio'), mimetype: 'audio/webm', size: 5 },
+    });
+
+    expect(upload).toHaveBeenCalledWith(
+      expect.stringMatching(/^user-1\/session-1\/audio-.+\.webm$/),
+      expect.any(Buffer),
+      { contentType: 'audio/webm', upsert: false },
+    );
+    expect(result).toEqual({
+      audioFileUrl: 'https://storage.example/interview-audio/audio.webm',
+      audioSizeBytes: 5,
+    });
+    expect(getPublicUrl).toHaveBeenCalledTimes(1);
+  });
 });

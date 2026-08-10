@@ -184,4 +184,26 @@ describe('session HTTP contracts', () => {
       .set('Cookie', cookie)
       .expect(400);
   });
+
+  it.failing('does not expose credentials from the profile endpoint', async () => {
+    const email = `profile-contract-${Date.now()}@example.com`;
+    const register = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        email,
+        password: 'profile-contract-password',
+        firstname: 'Profile',
+        lastname: 'Contract',
+      })
+      .expect(201);
+
+    const profile = await request(app.getHttpServer())
+      .get('/api/v1/profile')
+      .set('Cookie', register.headers['set-cookie'][0])
+      .expect(200);
+
+    expect(profile.body).toMatchObject({ id: expect.any(String), email });
+    expect(profile.body).not.toHaveProperty('passwordHash');
+    expect(profile.body).not.toHaveProperty('tokenVersion');
+  });
 });
