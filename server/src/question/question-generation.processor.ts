@@ -9,7 +9,7 @@ import {
   type QuestionGenerationJobDto,
 } from './generate-session-questions.service';
 
-@Processor(QUESTION_GEN_QUEUE)
+@Processor(QUESTION_GEN_QUEUE, { concurrency: 1 })
 export class QuestionGenerationProcessor extends WorkerHost {
   private readonly logger = new Logger(QuestionGenerationProcessor.name);
 

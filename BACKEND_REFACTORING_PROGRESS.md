@@ -2,27 +2,29 @@
 
 **Master plan:** [BACKEND_REFACTORING_MASTER_PLAN.md](./BACKEND_REFACTORING_MASTER_PLAN.md)  
 **Last updated:** 2026-08-10  
-**Current phase:** Phase 2 complete — RF-011 is the next unblocked implementation task
+**Current phase:** Phase 3 partially complete — RF-011 is complete; RF-002/RF-004/RF-006 and RF-010 are deferred from this stage
 **Overall status:** In progress
 
 ## Current snapshot
 
 - RF-001, RF-007, RF-003, RF-005, RF-008 and RF-009 are complete. The Phase 0 baseline is in place; profile responses and session SSE streams now enforce their intended security boundaries; session/report workflow commands are recorded durably with their database transitions and are dispatched/recovered through the outbox.
+- RF-002, RF-004 and RF-006 are deferred from the current refactoring stage; do not implement them without a later explicit decision.
+- RF-011 is complete: API, worker and compatibility runtime roles are explicit; API starts no queue processors, while worker starts the processors and durable outbox reconciler. Queue retry, retention, concurrency and replay procedures are documented.
 - Product decisions on 2026-08-10 retain email verification as a future feature, defer audio transcription as a future feature, and permit duplicate active saved job descriptions with the same user/company/title. These supersede the earlier pending assumptions in the master plan.
 - The earlier “Season 2” roadmap (Phase 0–10) was completed before this master plan was created. Its completed items are useful context and test coverage, but are **not** evidence that any RF-001–RF-017 task below is complete.
 - Working tree was clean when this file was created, before adding this file.
 
 ## Next action
 
-After reviewing RF-009, start **RF-011 — separate runtime roles and formalize queue operations**. In parallel, define the future email-verification feature and obtain the still-pending private-audio migration and rate-limit policies. Keep new work isolated from the unrelated working-tree changes currently affecting the full test baseline.
+After confirmation, start **RF-012 — evaluate only approved lifecycle invariants**; keep the resolved duplicate saved-job-description policy unchanged. RF-013 is also unblocked but should follow as the next observability slice. Keep RF-002, RF-004, RF-006 and RF-010 out of the current stage until explicitly resumed.
 
-## Required decisions before dependent work
+## Deferred decisions for later scope
 
 | Decision | Needed before | Current state |
 | --- | --- | --- |
-| Email verification is retained as a future product feature; decide its rollout and interim access behavior | RF-002 | Product policy confirmed; feature scope/design pending |
-| Private-audio migration window and client compatibility contract | RF-004 | Pending approval; audio transcription (RF-010) is deferred |
-| Rate limits for auth, session creation and audio upload | RF-006 | Pending traffic policy |
+| Email verification is retained as a future product feature; decide its rollout and interim access behavior | RF-002, if resumed | Product policy confirmed; feature scope/design pending |
+| Private-audio migration window and client compatibility contract | RF-004, if resumed | Pending approval; audio transcription (RF-010) is deferred |
+| Rate limits for auth, session creation and audio upload | RF-006, if resumed | Pending traffic policy |
 | Whether active saved job descriptions must be unique by user/company/title | RF-012 | Resolved: duplicates are allowed; do not add that unique index |
 
 ## RF task tracker
@@ -31,18 +33,18 @@ After reviewing RF-009, start **RF-011 — separate runtime roles and formalize 
 | --- | --- | --- | --- |
 | RF-001 | 0 — safeguard | Complete | HTTP/profile regression characterization, public-audio contract, existing lifecycle/SSE/auth coverage, and PostgreSQL+Redis duplicate-dispatch test added; see log. |
 | RF-007 | 0 — boundaries | Complete | Static CI boundary test added; Health controller no longer imports Prisma; Question module no longer re-exports child modules. |
-| RF-002 | 1 — auth | Deferred — future feature | Retain the `emailVerified` requirement. A real verification feature, including its canonical runtime contract and rollout policy, must be scoped before changing the gate. |
+| RF-002 | 1 — auth | Deferred — out of current stage | Retain the `emailVerified` requirement. A real verification feature, including its canonical runtime contract and rollout policy, must be scoped before changing the gate. |
 | RF-003 | 1 — profile | Complete | Explicit public DTO/select/map now returns only profile fields used by the client; credential/internal fields are excluded and covered by unit + HTTP tests. Changes are uncommitted. |
-| RF-004 | 1/3 — media | Blocked by private-audio migration decision | Audio currently uses a public URL as identity. |
+| RF-004 | 1/3 — media | Deferred — out of current stage | Audio currently uses a public URL as identity. |
 | RF-005 | 1 — SSE | Complete | SSE controller now calls the existing session ownership helper before subscribing; owner, cross-user denial, missing-token and invalid-token coverage passes. Changes are uncommitted. |
-| RF-006 | 1 — throttling | Blocked by rate policy | |
+| RF-006 | 1 — throttling | Deferred — out of current stage | |
 | RF-008 | 2 — outbox | Complete | Additive `workflow_outbox` schema and `WorkflowService` command writer now run inside the session creation/completion transaction. PostgreSQL integration coverage verifies rollback and concurrent idempotency. Changes are uncommitted. |
 | RF-009 | 2 — dispatch/recovery | Complete | Outbox dispatcher atomically claims question/report commands, uses deterministic BullMQ job IDs, retries Redis failures with bounded backoff, and reclaims stale processing claims. PostgreSQL+Redis duplicate-dispatch coverage passes. Changes are uncommitted. |
 | RF-010 | 3 — transcription | Deferred — future feature | Do not implement the queued-transcription migration in this refactor until the feature is approved and specified. |
-| RF-011 | 3 — runtime roles | Ready to start | RF-009 is complete. |
+| RF-011 | 3 — runtime roles | Complete | API-only, worker-only and compatibility runtime commands are documented; API has no processors, worker owns dispatch/processing, and all queue policies are explicit. Changes are uncommitted. |
 | RF-012 | 4 — data invariants | Partially resolved | Duplicate active saved job descriptions are intentional; skip the proposed uniqueness constraint. Evaluate lifecycle invariants separately after RF-009. |
 | RF-013 | 4 — correlation | Not started | RF-008 is preferred first. |
-| RF-014 | 4 — operations | Blocked by RF-009 + RF-013 | |
+| RF-014 | 4 — operations | Blocked by RF-013 | RF-009 is complete. |
 | RF-015 | 4 — performance | Blocked by RF-011 + baseline | |
 | RF-016 | 5 — decomposition | Blocked by RF-009 + RF-010 | |
 | RF-017 | 5 — cleanup | Blocked by RF-002/003/004/009/010/012 and observation window | |
@@ -105,6 +107,25 @@ For every completed slice, update its row with the commit/PR, files changed, val
 - Email verification remains a product requirement and will be developed as a future feature. Do not remove the `emailVerified` gate as originally proposed; the feature needs a separate implementation/rollout decision, including what access is expected before a user is verified.
 - Audio transcription is a future feature. Defer RF-010; retain the private-audio migration decision as a separate open item for RF-004.
 - A user may keep multiple active saved job descriptions with the same company and title. Do not deduplicate existing rows or add the proposed partial unique index; only separately approved lifecycle constraints remain in RF-012 scope.
+
+### 2026-08-10 — Test baseline cleanup and scope deferral
+
+- Status: Complete.
+- Changed: marked RF-002, RF-004 and RF-006 as deferred from the current stage; updated FeedbackProcessor unit and integration transaction mocks with the `userAnswer.findUnique()` contract used by fallback persistence; removed two unused `catch` bindings in QuestionBankService.
+- Contract/migration impact: no runtime, HTTP, queue, schema or data migration change.
+- Validation: `npm test -- --runInBand` — pass (50 suites, 413 tests); `npx eslint "src/**/*.ts" --ignore-pattern "**/*.spec.ts"` — pass; `npm run build` — pass; `git diff --check` — pass before this log-only update.
+- Rollback: revert the test/mock, lint-only, and progress-document changes; no DB or deployment rollback is required.
+- Next action: start RF-011; leave RF-002/RF-004/RF-006 deferred.
+
+### 2026-08-10 — RF-011 runtime roles and queue operations
+
+- Status: Complete; changes are in the working tree and not yet committed.
+- Changed: added explicit `api`, `worker` and backward-compatible `all` runtime roles; API bootstraps HTTP without registering queue processors, while worker runs the processors and outbox reconciler without opening HTTP. The dispatcher remains injectable in API services but does not reconcile there. Standardized retry/backoff and completed/failed retention policies for question generation, feedback, report and transcription queues; set one-worker concurrency for question/report/transcription and retained configurable feedback concurrency. Added runtime commands, Docker API default, health role output, environment documentation, a role/queue operations runbook, and role-registration tests.
+- Contract/migration impact: queue names, job names and payloads are unchanged. `GET /health` adds a `role` field. Deployment changes from the former combined default to API-only in the Docker image; deploy a second copy of the same image with `node dist/main --role=worker`. `all` remains available as rollback compatibility.
+- Validation: `npm test -- --runInBand` — pass (51 suites, 420 tests); `npm run test:integration -- --runInBand` — pass (3 suites, 3 tests); `npm run test:e2e -- --runInBand` — pass (1 suite, 2 tests); `npm run build` — pass; `npx eslint "src/**/*.ts" --ignore-pattern "**/*.spec.ts"` — pass; `git diff --check` — pass.
+- Operator replay: failed BullMQ jobs are retained for 30 days or 10,000 jobs. After fixing the cause, locate the job and call `await job.retry()`; outbox commands retain the RF-009 SQL replay procedure. Provider call timeouts remain bounded by the existing `OPENAI_*_TIMEOUT_MS` configuration.
+- Rollback: deploy `node dist/main --role=all` (or the prior combined release); queue names and payloads are stable, and failed jobs/outbox commands remain available for inspection or replay.
+- Next action: after confirmation, start RF-012 lifecycle-invariant evaluation only; do not add the rejected saved-job-description uniqueness constraint.
 
 ### 2026-08-10 — RF-009 outbox dispatch and recovery
 

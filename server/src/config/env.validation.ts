@@ -59,6 +59,7 @@ const EnvSchema = z.object({
   OPENAI_QUESTION_TIMEOUT_MS: z.coerce.number().positive().default(240_000),
   OPENAI_QUESTION_MAX_TOKENS: z.coerce.number().int().positive().default(2_400),
   FEEDBACK_WORKER_CONCURRENCY: z.coerce.number().int().min(1).default(2),
+  RUNTIME_ROLE: z.enum(['api', 'worker', 'all']).default('all'),
   WORKERS_ENABLED: z.enum(['true', 'false']).default('true'),
   REDIS_HOST: z.string().default('localhost'),
   REDIS_PORT: z.coerce.number().default(6379),

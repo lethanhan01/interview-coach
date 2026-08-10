@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
+import { resolveRuntimeRole } from '../runtime/runtime-role';
 
 type DependencyStatus = 'up' | 'down';
 
@@ -25,6 +26,7 @@ export class HealthService {
     ]);
     return {
       status: db.status === 'up' && redis.status === 'up' ? 'ok' : 'degraded',
+      role: resolveRuntimeRole(),
       timestamp: new Date().toISOString(),
       services: { db, redis },
     };

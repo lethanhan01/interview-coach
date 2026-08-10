@@ -5,6 +5,7 @@ import { InterviewModule } from '../interview/interview.module';
 import { QuestionCriteriaModule } from '../question-criteria/question-criteria.module';
 import {
   FEEDBACK_QUEUE,
+  QUEUE_DEFAULT_JOB_OPTIONS,
   TRANSCRIPTION_QUEUE,
 } from '../common/constants/queue.constants';
 import { TurnController } from './turn.controller';
@@ -17,8 +18,14 @@ import { SubmitTurnAnswer } from './submit-turn-answer.service';
     AuthModule,
     InterviewModule,
     QuestionCriteriaModule,
-    BullModule.registerQueue({ name: FEEDBACK_QUEUE }),
-    BullModule.registerQueue({ name: TRANSCRIPTION_QUEUE }),
+    BullModule.registerQueue({
+      name: FEEDBACK_QUEUE,
+      defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[FEEDBACK_QUEUE],
+    }),
+    BullModule.registerQueue({
+      name: TRANSCRIPTION_QUEUE,
+      defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[TRANSCRIPTION_QUEUE],
+    }),
   ],
   controllers: [TurnController],
   providers: [TurnService, TurnAnswerContext, SubmitTurnAnswer],

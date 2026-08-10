@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import {
   QUESTION_GEN_QUEUE,
+  QUEUE_DEFAULT_JOB_OPTIONS,
   REPORT_QUEUE,
 } from '../common/constants/queue.constants';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
@@ -12,8 +13,14 @@ import { WorkflowService } from './workflow.service';
   imports: [
     PrismaModule,
     BullModule.registerQueue(
-      { name: QUESTION_GEN_QUEUE },
-      { name: REPORT_QUEUE },
+      {
+        name: QUESTION_GEN_QUEUE,
+        defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[QUESTION_GEN_QUEUE],
+      },
+      {
+        name: REPORT_QUEUE,
+        defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[REPORT_QUEUE],
+      },
     ),
   ],
   providers: [WorkflowService, WorkflowDispatcher],

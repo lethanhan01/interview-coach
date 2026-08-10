@@ -5,7 +5,7 @@ import { TRANSCRIPTION_QUEUE } from '../common/constants/queue.constants';
 import { TranscribeAnswer } from './transcribe-answer.service';
 import type { TranscriptionJobDto } from './transcription-job.dto';
 
-@Processor(TRANSCRIPTION_QUEUE)
+@Processor(TRANSCRIPTION_QUEUE, { concurrency: 1 })
 export class TranscriptionProcessor extends WorkerHost {
   private readonly logger = new Logger(TranscriptionProcessor.name);
 

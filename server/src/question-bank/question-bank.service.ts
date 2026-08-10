@@ -90,7 +90,7 @@ export class QuestionBankService {
       .map((question) => {
         try {
           return this.mapFallbackQuestion(question, language, rubricVersionId);
-        } catch (error: unknown) {
+        } catch {
           // Question has no valid criteria relation for this context/rubric — skip it
           return null;
         }
@@ -153,7 +153,7 @@ export class QuestionBankService {
       .map((question) => {
         try {
           return this.mapFallbackQuestion(question, language, rubricVersionId);
-        } catch (error: unknown) {
+        } catch {
           return null;
         }
       })

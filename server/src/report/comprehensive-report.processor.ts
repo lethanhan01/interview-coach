@@ -6,7 +6,7 @@ import {
   GenerateComprehensiveReport,
 } from './generate-comprehensive-report.service';
 
-@Processor(REPORT_QUEUE)
+@Processor(REPORT_QUEUE, { concurrency: 1 })
 export class ComprehensiveReportProcessor extends WorkerHost {
   constructor(private readonly generateReport: GenerateComprehensiveReport) {
     super();

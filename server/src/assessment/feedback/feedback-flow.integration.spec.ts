@@ -55,6 +55,7 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
       createMany: jest.Mock;
     };
     userAnswer: {
+      findUnique: jest.Mock;
       update: jest.Mock;
     };
   };
@@ -98,6 +99,7 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
         createMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
       userAnswer: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'int-answer-1' }),
         update: jest.fn().mockResolvedValue({}),
       },
     };

@@ -211,13 +211,6 @@ describe('Session completion flow (integration)', () => {
         return {};
       }),
     };
-    const reportQueue = {
-      getJob: jest.fn(async () => null),
-      add: jest.fn(async (name: string, data: any, opts: any) => {
-        reportJobs.push({ name, data, opts });
-        return {};
-      }),
-    };
     const sseService = { emit: jest.fn(async () => undefined) };
 
     const workflowDispatcher = {

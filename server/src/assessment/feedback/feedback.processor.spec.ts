@@ -46,6 +46,9 @@ interface TransactionMock {
     >;
   };
   userAnswer: {
+    findUnique: jest.MockedFunction<
+      (args: unknown) => Promise<{ id: string } | null>
+    >;
     update: jest.MockedFunction<
       (args: unknown) => Promise<Record<string, never>>
     >;
@@ -102,6 +105,7 @@ describe('FeedbackProcessor', () => {
         createMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
       userAnswer: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'answer-1' }),
         update: jest.fn().mockResolvedValue({}),
       },
     };

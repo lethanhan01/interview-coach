@@ -93,7 +93,7 @@ USER nestjs
 EXPOSE 3000
 
 # HEALTHCHECK dùng Node.js built-in http — không cần curl hay wget.
-# --start-period=30s: NestJS cần time khởi tạo BullMQ workers, Prisma connection pool.
+# --start-period=30s: NestJS cần time khởi tạo API, Prisma pool và Redis producer.
 # Trả về statusCode < 500 → healthy (404 Not Found là OK — server đang chạy).
 # Connection error → unhealthy (server crashed hoặc chưa bind port).
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
@@ -101,4 +101,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 
 # Exec form (JSON array): node process là PID 1, nhận SIGTERM trực tiếp.
 # Không wrap qua /bin/sh → graceful shutdown hoạt động đúng với NestJS lifecycle hooks.
-CMD ["node", "dist/main"]
+# API is the image default. Run the same image with `node dist/main --role=worker`
+# for a worker-only deployment; queue names and payloads remain identical.
+CMD ["node", "dist/main", "--role=api"]

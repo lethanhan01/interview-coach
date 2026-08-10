@@ -6,7 +6,10 @@ import { CreateInterviewSession } from './create-interview-session.service';
 import { ChangeInterviewSessionStatus } from './change-interview-session-status.service';
 import { SessionLifecyclePolicy } from './session-lifecycle.policy';
 import { SseTokenGuard } from '../auth/guards/sse-token.guard';
-import { QUESTION_GEN_QUEUE } from '../common/constants/queue.constants';
+import {
+  QUESTION_GEN_QUEUE,
+  QUEUE_DEFAULT_JOB_OPTIONS,
+} from '../common/constants/queue.constants';
 import { ReportModule } from '../report/report.module';
 import { AuthModule } from '../auth/auth.module';
 import { AssessmentModule } from '../assessment/assessment.module';
@@ -18,7 +21,10 @@ import { WorkflowModule } from '../workflow/workflow.module';
     AuthModule,
     AssessmentModule,
     WorkflowModule,
-    BullModule.registerQueue({ name: QUESTION_GEN_QUEUE }),
+    BullModule.registerQueue({
+      name: QUESTION_GEN_QUEUE,
+      defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[QUESTION_GEN_QUEUE],
+    }),
   ],
   controllers: [SessionController],
   providers: [

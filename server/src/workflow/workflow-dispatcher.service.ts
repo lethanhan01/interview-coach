@@ -15,6 +15,7 @@ import {
   REPORT_QUEUE,
 } from '../common/constants/queue.constants';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
+import { workersEnabled } from '../runtime/runtime-role';
 import { WorkflowCommandType } from './workflow.service';
 
 const DISPATCH_INTERVAL_MS = 30_000;
@@ -45,6 +46,7 @@ export class WorkflowDispatcher
   ) {}
 
   onApplicationBootstrap() {
+    if (!workersEnabled()) return;
     void this.reconcile();
     this.interval = setInterval(
       () => void this.reconcile(),
