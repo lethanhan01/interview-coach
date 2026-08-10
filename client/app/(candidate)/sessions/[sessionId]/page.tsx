@@ -48,7 +48,7 @@ export default function InterviewPage() {
   const [isCompleting, setIsCompleting] = useState(false)
   const [isTimeoutCompleting, setIsTimeoutCompleting] = useState(false)
   const [sessionStatus, setSessionStatus] =
-    useState<SessionStatus>('generating')
+    useState<SessionStatus>('ready')
   const [statusAction, setStatusAction] = useState<SessionStatusAction | null>(
     null
   )
