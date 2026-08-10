@@ -9,6 +9,8 @@ import {
 } from '../common/constants/queue.constants';
 import { TurnController } from './turn.controller';
 import { TurnService } from './turn.service';
+import { TurnAnswerContext } from './turn-answer-context.service';
+import { SubmitTurnAnswer } from './submit-turn-answer.service';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { TurnService } from './turn.service';
   controllers: [TurnController],
   providers: [
     TurnService,
+    TurnAnswerContext,
+    SubmitTurnAnswer,
   ],
 })
 export class TurnModule {}

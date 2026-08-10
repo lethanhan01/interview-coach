@@ -1,5 +1,6 @@
 import type { Job } from 'bullmq';
-import { TurnService } from '../src/turn/turn.service';
+import { SubmitTurnAnswer } from '../src/turn/submit-turn-answer.service';
+import { TurnAnswerContext } from '../src/turn/turn-answer-context.service';
 import { FeedbackProcessor } from '../src/assessment/feedback/feedback.processor';
 import { SessionService } from '../src/session/session.service';
 import { ChangeInterviewSessionStatus } from '../src/session/change-interview-session-status.service';
@@ -209,10 +210,10 @@ describe('Session completion flow (integration)', () => {
     const sseService = { emit: jest.fn(async () => undefined) };
 
     const reportService = new ReportService(prisma as any, reportQueue as any);
-    const turnService = new TurnService(
+    const turnService = new SubmitTurnAnswer(
       prisma as any,
+      new TurnAnswerContext(prisma as any),
       { codesFromSessionQuestion: jest.fn(() => ['D4']) } as any,
-      { uploadInterviewAudio: jest.fn() } as any,
       { calculate: jest.fn() },
       feedbackQueue as any,
       { add: jest.fn() } as any,
@@ -259,7 +260,7 @@ describe('Session completion flow (integration)', () => {
       } as any,
     );
 
-    const turn = await turnService.submitAnswer(session.id, session.userId, {
+    const turn = await turnService.execute(session.id, session.userId, {
       questionId: question.id,
       answerMode: 'text',
       answerText: 'I led a difficult project and improved delivery time.',

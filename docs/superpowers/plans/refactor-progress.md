@@ -5,9 +5,9 @@
 
 ## Trạng thái hiện tại
 
-**Phase đang thực hiện:** Hoàn tất Phase 7 — Session lifecycle.
+**Phase đang thực hiện:** Hoàn tất Phase 8 — Turn/answer workflow.
 **Blocker hiện tại:** Chưa có.
-**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 8 — Turn/answer workflow.
+**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 9 — Infrastructure placement.
 
 ## Bảng Phase
 
@@ -21,7 +21,7 @@
 | 5 — Assessment | Hoàn tất | Assessment sở hữu rubric read/controller, `EvaluateAnswer`, sanitizer/dimension matcher/fallback và sole `feedback` worker. | Chờ xác nhận bắt đầu Phase 6. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
 | 6 — Reporting | Hoàn tất | Reporting sở hữu report read/query, readiness và sole `comprehensive-report` worker; AI chỉ còn OpenAI provider boundary. | Chờ xác nhận bắt đầu Phase 7. | Build pass; unit 45 suites/381 tests pass; integration và HTTP E2E pass. |
 | 7 — Session | Hoàn tất | `SessionLifecyclePolicy`, create và status/completion use cases; `SessionService` còn facade cho read/API. | Chờ xác nhận bắt đầu Phase 8. | Build pass; unit 46 suites/402 tests pass; integration và HTTP E2E pass. |
-| 8 — Turn | Chưa bắt đầu | — | Chờ Phase 4 và 5. | — |
+| 8 — Turn | Hoàn tất | Tách guard/context và submit workflow; `TurnService` còn facade controller/upload. | Chờ xác nhận bắt đầu Phase 9. | Build và full test/integration/E2E pass. |
 | 9 — Infrastructure | Chưa bắt đầu | — | Chờ semantic phases. | — |
 | 10 — Identity | Chưa bắt đầu | — | Chờ interview pipeline ổn định. | — |
 
@@ -37,6 +37,17 @@
 | 2026-08-10 | Move behavior trước, move folder sau. | Folder-only PR lớn gây noise và che semantic regression. | Mỗi phase có compatibility facade rồi cleanup. |
 
 ## Nhật ký thực hiện
+
+### 2026-08-10 — Phase 8 / Turn-answer workflow exit criteria đạt
+
+- Phase: 8 — Turn/answer workflow decomposition
+- Trạng thái: Hoàn tất
+- Hoàn thành: trích `TurnAnswerContext` dùng chung cho ownership/status/question guard và activation; trích `SubmitTurnAnswer` sở hữu text, voice không transcript, voice transcript đã chỉnh, skip và retry transcription. `TurnService` chỉ còn facade cho controller/upload. Đưa `SessionType` validation sang common constant để Turn không import AI pipeline.
+- Contract kiểm tra: giữ REST DTO/status, upsert/dedup theo `questionId`, skip exclusion, session `ready -> active`, feedback/transcription payload/options và job ID `feedback-${answerId}`/`transcription-${answerId}`.
+- Verification: `npm run build` — pass; `npm test -- --runInBand` — pass (46 suites, 402 tests); `npm run test:integration` — pass (1 suite); `npm run test:e2e` — pass (1 HTTP suite); `git diff --check` — pass.
+- Quyết định: giữ một use case `SubmitTurnAnswer` với private path handlers thay vì tạo interface/factory cho từng path; mỗi path vẫn được phủ bởi test facade trực tiếp.
+- Rủi ro/rollback: facade/controller/queue contract không đổi; rollback là đưa delegation trở lại `TurnService`, không đổi schema hay job payload.
+- Bước tiếp theo: chạy full verification, sau đó chờ xác nhận để bắt đầu Phase 9 — Infrastructure placement.
 
 ### 2026-08-10 — Phase 7 / Session lifecycle exit criteria đạt
 

@@ -12,7 +12,7 @@
 | 5 | Assessment và feedback | Hoàn tất | [Phase 5](./06-phase-5-assessment-feedback.md) |
 | 6 | Reporting workflow | Hoàn tất | [Phase 6](./07-phase-6-reporting-workflow.md) |
 | 7 | Session lifecycle | Hoàn tất | [Phase 7](./08-phase-7-session-lifecycle.md) |
-| 8 | Turn/answer workflow | Chưa bắt đầu | [Phase 8](./09-phase-8-turn-answer-workflow.md) |
+| 8 | Turn/answer workflow | Hoàn tất | [Phase 8](./09-phase-8-turn-answer-workflow.md) |
 | 9 | Infrastructure placement | Chưa bắt đầu | [Phase 9](./10-phase-9-infrastructure-cleanup.md) |
 | 10 | Identity review | Chưa bắt đầu | [Phase 10](./11-phase-10-identity-review.md) |
 

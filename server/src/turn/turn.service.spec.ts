@@ -6,6 +6,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import { UploadAndTranscribeAnswerAudio } from '../interview/upload-and-transcribe-answer-audio.service';
 import { VoiceMetricsService } from '../interview/voice-metrics.service';
+import { TurnAnswerContext } from './turn-answer-context.service';
+import { SubmitTurnAnswer } from './submit-turn-answer.service';
 import {
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
@@ -92,6 +94,8 @@ describe('TurnService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TurnService,
+        TurnAnswerContext,
+        SubmitTurnAnswer,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
         {

@@ -1,13 +1,11 @@
 import type { ContextPackConfig } from '../../assessment/context-pack.service';
 import type { OutputLanguage } from '../output-language';
-
-export const SESSION_TYPES = ['hr', 'technical', 'mixed'] as const;
-
-export type SessionType = (typeof SESSION_TYPES)[number];
-
-export function isSessionType(value: string): value is SessionType {
-  return (SESSION_TYPES as readonly string[]).includes(value);
-}
+export {
+  SESSION_TYPES,
+  type SessionType,
+  isSessionType,
+} from '../../common/constants/session.constants';
+import type { SessionType } from '../../common/constants/session.constants';
 
 export type QuestionBankSessionType = 'hr' | 'technical';
 

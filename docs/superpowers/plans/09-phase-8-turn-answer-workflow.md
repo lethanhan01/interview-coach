@@ -10,13 +10,13 @@ Giữ unique/upsert semantics theo session/question, job IDs `feedback-${answerI
 
 ## Nhiệm vụ
 
-- [ ] Extract shared loader/guard for session owner, eligible status and question membership; no copy-paste across use cases.
-- [ ] Extract `SubmitTextAnswer` and shared feedback job builder.
-- [ ] Extract `SubmitVoiceAnswer`, preserving transcript-provided vs queued transcription paths.
-- [ ] Extract `SkipQuestion`, including repeat skip and feedback exclusion semantics.
-- [ ] Extract `RetryTranscription`, including done/failed behavior and deterministic job ID.
-- [ ] Change Turn module dependency from `AiModule` to Interview/Assessment/Question explicit dependencies as prior phases permit.
-- [ ] Keep `TurnService` facade until controller contract has migrated; then remove it and unused providers.
+- [x] Extract shared loader/guard for session owner, eligible status and question membership; no copy-paste across use cases.
+- [x] Extract `SubmitTextAnswer` and shared feedback job builder.
+- [x] Extract `SubmitVoiceAnswer`, preserving transcript-provided vs queued transcription paths.
+- [x] Extract `SkipQuestion`, including repeat skip and feedback exclusion semantics.
+- [x] Extract `RetryTranscription`, including done/failed behavior and deterministic job ID.
+- [x] Change Turn module dependency from `AiModule` to Interview/Assessment/Question explicit dependencies as prior phases permit.
+- [x] Keep `TurnService` facade until controller contract has migrated; then remove it and unused providers.
 
 ## Test bắt buộc
 
