@@ -3,7 +3,11 @@ import { AdminService } from './admin.service';
 import { createMockPrismaService } from '../test-utils/mock-factories';
 
 describe('AdminService', () => {
-  const target = { id: 'target', role: UserRole.candidate, status: AccountStatus.active };
+  const target = {
+    id: 'target',
+    role: UserRole.candidate,
+    status: AccountStatus.active,
+  };
   let prisma: ReturnType<typeof createMockPrismaService>;
   let service: AdminService;
 
@@ -20,20 +24,28 @@ describe('AdminService', () => {
   });
 
   it('protects the last active administrator', async () => {
-    prisma.user.findUnique.mockResolvedValue({ ...target, role: UserRole.admin });
+    prisma.user.findUnique.mockResolvedValue({
+      ...target,
+      role: UserRole.admin,
+    });
     prisma.user.count.mockResolvedValue(1);
 
-    await expect(
-      service.deleteUser('target', 'other-admin'),
-    ).rejects.toThrow('The last active administrator cannot be managed');
+    await expect(service.deleteUser('target', 'other-admin')).rejects.toThrow(
+      'The last active administrator cannot be managed',
+    );
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
   it('invalidates existing sessions when an admin changes account access', async () => {
     prisma.user.findUnique.mockResolvedValue(target);
-    prisma.user.update.mockResolvedValue({ ...target, status: AccountStatus.locked });
+    prisma.user.update.mockResolvedValue({
+      ...target,
+      status: AccountStatus.locked,
+    });
 
-    await service.updateUser('target', 'admin', { status: AccountStatus.locked });
+    await service.updateUser('target', 'admin', {
+      status: AccountStatus.locked,
+    });
 
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'target' },
