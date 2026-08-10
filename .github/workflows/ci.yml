@@ -41,6 +41,29 @@ jobs:
   server:
     name: Server
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: interviewcoach_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd "pg_isready -U postgres -d interviewcoach_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5433:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     defaults:
       run:
         working-directory: server
@@ -67,6 +90,12 @@ jobs:
 
       - run: npm run build
 
+      - name: Prepare isolated test database
+        run: npx prisma db push
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5433/interviewcoach_test?schema=public
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5433/interviewcoach_test?schema=public
+
       - name: Unit tests
         run: npm test -- --runInBand --passWithNoTests
         env:
@@ -81,6 +110,12 @@ jobs:
           REDIS_PORT: '6379'
           PORT: '3000'
           CLIENT_URL: http://localhost:5173
+
+      - name: Integration tests
+        run: npm run test:integration
+
+      - name: HTTP contract tests
+        run: npm run test:e2e
 
   server-container:
     name: Server Docker image

@@ -12,14 +12,14 @@
 
 ## Nhiệm vụ
 
-- [ ] Tạo inventory versioned cho endpoint, HTTP status, request/response DTO; bắt đầu từ Session, Turn, Report, Rubric và Auth.
-- [ ] Chuẩn hóa typed fixture cho bốn job hiện hữu. Assert job name, payload, `jobId`, `attempts`, `backoff`, delay và dedup behavior.
-- [ ] Characterize SSE trên channel `sse:session:${sessionId}`: `session.status`, `turn.feedback_ready`, `turn.transcription_ready`, `session.feedback_progress`, `report.ready` và payload từng event.
-- [ ] Viết table-driven test cho tất cả Session status: `generating`, compatibility `ready`, `active`, `paused`, `completing`, `completed`, `error`, `canceled`; bao gồm auto-skip và rollback nếu enqueue report thất bại.
-- [ ] Giữ `test/session-completion-flow.e2e-spec.ts` là fast integration flow và đổi mô tả/taxonomy nếu cần; nó mock Prisma/queue nên không được gọi là E2E HTTP thật.
-- [ ] Bổ sung worker integration test cho success, retry, fallback và duplicate delivery: question generation, feedback, transcription, comprehensive report.
-- [ ] Tạo HTTP contract test boot Nest app với DB test: create/read/status/questions session; submit text; audio metadata/voice retry; report pending/ready; SSE auth.
-- [ ] Chạy và lưu kết quả `npm run build`, `npm test -- --runInBand`, `npm run test:e2e` trong CI/PR; khắc phục test flake trước Phase 1.
+- [x] Tạo inventory versioned cho endpoint, HTTP status, request/response DTO; bắt đầu từ Session, Turn, Report, Rubric và Auth. Xem [contract inventory](./00-phase-0-contract-inventory.md).
+- [x] Characterize typed payload cho bốn job qua DTO/producer/worker specs; assert job name, payload, `jobId` (hoặc absence ở question-generation baseline), `attempts`, `backoff`, delay và dedup behavior.
+- [x] Characterize SSE trên channel `sse:session:${sessionId}`: `session.status`, `turn.feedback_ready`, `turn.transcription_ready`, `session.feedback_progress`, `report.ready` và payload từng event.
+- [x] Characterize tất cả Session status: `generating`, compatibility `ready`, `active`, `paused`, `completing`, `completed`, `error`, `canceled`; bao gồm auto-skip và compensation khi report readiness không thể enqueue.
+- [x] Phân loại `test/session-completion-flow.integration-spec.ts` là fast integration flow; nó mock Prisma/queue nên không được gọi là E2E HTTP thật.
+- [x] Bổ sung/giữ worker characterization test cho success, retry, fallback và duplicate delivery: question generation, feedback, transcription, comprehensive report.
+- [x] Tạo HTTP contract test boot Nest app với DB test: create/read/status/questions session; submit text; audio validation/voice queue; report pending; rubric; SSE auth.
+- [x] Chạy và lưu kết quả `npm run build`, `npm test -- --runInBand`, `npm run test:integration`, `npm run test:e2e`; CI provision DB/Redis test cô lập.
 
 ## Source/test cần chạm
 

@@ -13,6 +13,9 @@ describe('Session completion flow (integration)', () => {
       status: 'active',
       sessionType: 'hr',
       contextPackId: 'VN',
+      savedJobDescription: {
+        userId: '22222222-2222-4222-8222-222222222222',
+      },
       numQuestions: 1,
       completedAt: null as Date | null,
       overallScore: null as number | null,

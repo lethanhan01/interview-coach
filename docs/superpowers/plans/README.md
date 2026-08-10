@@ -4,7 +4,7 @@
 
 | Thứ tự | Phase | Trạng thái | Tài liệu |
 | --- | --- | --- | --- |
-| 0 | Baseline và safety net | Chưa bắt đầu | [Phase 0](./01-phase-0-safety-net.md) |
+| 0 | Baseline và safety net | Đang thực hiện | [Phase 0](./01-phase-0-safety-net.md) · [Contract inventory](./00-phase-0-contract-inventory.md) |
 | 1 | Rubric Catalog về Assessment | Chưa bắt đầu | [Phase 1](./02-phase-1-rubric-catalog.md) |
 | 2 | Cô lập OpenAI/provider boundary | Chưa bắt đầu | [Phase 2](./03-phase-2-ai-provider-boundary.md) |
 | 3 | Question ownership và worker | Chưa bắt đầu | [Phase 3](./04-phase-3-question-ownership.md) |
@@ -29,3 +29,4 @@ Theo dõi cập nhật sau mỗi PR tại [Refactor progress](./refactor-progres
 
 - [Roadmap tổng và đánh giá kiến trúc](./2026-08-10-server-backend-refactor-roadmap.md)
 - [Tiến độ refactor](./refactor-progress.md)
+- [Contract inventory Phase 0](./00-phase-0-contract-inventory.md)

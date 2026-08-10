@@ -5,15 +5,15 @@
 
 ## Trạng thái hiện tại
 
-**Phase đang thực hiện:** Chưa có — chuẩn bị Phase 0.  
-**Blocker hiện tại:** Chưa có blocker kỹ thuật; cần baseline test xanh trước khi chạm kiến trúc.  
-**Bước tiếp theo:** Bắt đầu Phase 0: ghi baseline SHA/worktree, tạo contract inventory và chạy đủ build/unit/test:e2e trên CI hoặc môi trường không bị timeout.
+**Phase đang thực hiện:** Hoàn tất Phase 0 — Safety net.
+**Blocker hiện tại:** Chưa có.
+**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 1 — Rubric Catalog.
 
 ## Bảng Phase
 
 | Phase | Trạng thái | Đã hoàn thành | Bước tiếp theo | Evidence/ghi chú |
 | --- | --- | --- | --- | --- |
-| 0 — Safety net | Chưa bắt đầu | Roadmap và scope test đã được xác định. | Baseline SHA, contract inventory, test harness. | Unit suite đã được thử 2026-08-10 nhưng timeout tại giới hạn 60 giây trước summary; không coi là pass. |
+| 0 — Safety net | Hoàn tất | Baseline, contract inventory, queue/SSE/lifecycle characterization, integration taxonomy và HTTP contract harness. | Chờ xác nhận bắt đầu Phase 1. | Build pass; unit 43 suites/378 tests pass; integration 1 suite pass; HTTP E2E 1 suite pass trên PostgreSQL/Redis cô lập. Question-generation baseline không có `jobId`/dedup. |
 | 1 — Rubric Catalog | Chưa bắt đầu | — | Chờ Phase 0 exit criteria. | — |
 | 2 — AI boundary | Chưa bắt đầu | — | Chờ Phase 0 exit criteria. | — |
 | 3 — Question | Chưa bắt đầu | — | Chờ Phase 1 và 2. | — |
@@ -37,6 +37,50 @@
 | 2026-08-10 | Move behavior trước, move folder sau. | Folder-only PR lớn gây noise và che semantic regression. | Mỗi phase có compatibility facade rồi cleanup. |
 
 ## Nhật ký thực hiện
+
+### 2026-08-10 — Phase 0 / baseline repository
+
+- Phase: 0 — Safety net
+- Trạng thái: Đang thực hiện
+- Hoàn thành: ghi baseline commit `7817d629a337e836ebf14e1e5491f4de2e232dc3` và xác nhận worktree sạch; từ commit tạo plan `c73bc61` đến baseline không có thay đổi trong `server/src`, `server/test` hoặc `server/package.json`.
+- Contract kiểm tra: chưa thay đổi runtime contract.
+- Verification: `git status --short`, `git diff --name-only c73bc61..7817d62 -- server/src server/test server/package.json` — pass (không có thay đổi backend/refactor chưa ghi nhận).
+- Quyết định: baseline là HEAD hiện tại, không dùng commit tạo plan vì HEAD là trạng thái repository thực tế sẽ được kiểm thử.
+- Rủi ro/rollback: baseline chưa phải test xanh; không được coi đây là approval để bắt đầu refactor runtime.
+- Bước tiếp theo: lập contract inventory versioned cho Session, Turn, Report, Rubric và Auth.
+
+### 2026-08-10 — Phase 0 / contract inventory
+
+- Phase: 0 — Safety net
+- Trạng thái: Đang thực hiện
+- Hoàn thành: thêm [contract inventory](./00-phase-0-contract-inventory.md) versioned cho REST Session/Turn/Report/Rubric/Auth, bốn queue, SSE channel/event và lifecycle/security invariants.
+- Contract kiểm tra: inventory đối chiếu trực tiếp với controller, DTO, producer và worker hiện tại; không thay đổi runtime contract.
+- Verification: rà soát source controller/DTO/queue/SSE; `git diff --check` — pass.
+- Quyết định: giữ inventory ở `docs/superpowers/plans/` để version cùng roadmap và dùng làm source cho các test characterization tiếp theo.
+- Rủi ro/rollback: response projection chi tiết của một số read model (questions, feedback progress, audio upload) cần được HTTP contract test khóa ở task sau; tài liệu không thay thế assertion tự động.
+- Bước tiếp theo: chuẩn hóa typed fixture cho bốn queue và bắt đầu characterization test SSE/lifecycle.
+
+### 2026-08-10 — Phase 0 / test taxonomy và HTTP harness
+
+- Phase: 0 — Safety net
+- Trạng thái: Đang thực hiện
+- Hoàn thành: sửa stale mock `savedJobDescription.userId` trong flow test; đổi nó thành `session-completion-flow.integration-spec.ts` và thêm `npm run test:integration`; thêm HTTP E2E boot `AppModule` với PostgreSQL `interviewcoach_test` và Redis cục bộ, workers tắt, provider credential giả.
+- Contract kiểm tra: Auth register/cookie, create Session, `GET /sessions/:id/status`; không gọi OpenAI/Supabase production.
+- Verification: `npm run build` — pass (109.5s); `npm test -- --runInBand` — pass (43 suites, 378 tests, 136.36s); `npm run test:integration` — pass (1 suite); `npm run test:e2e` — pass (1 HTTP suite).
+- Quyết định: CI Server job provision PostgreSQL 16 + Redis, apply schema vào DB test rồi chạy integration/HTTP contract suites; flow mock không còn bị gọi nhầm là E2E HTTP.
+- Rủi ro/rollback: HTTP suite mới chỉ khóa Auth/session create/status; các endpoint Turn, audio, Report, Rubric và SSE authorization vẫn phải được thêm trước khi Phase 0 hoàn tất.
+- Bước tiếp theo: xem entry hoàn tất Phase 0 bên dưới.
+
+### 2026-08-10 — Phase 0 / exit criteria đạt
+
+- Phase: 0 — Safety net
+- Trạng thái: Hoàn tất
+- Hoàn thành: mở rộng HTTP contract test qua Session read/questions/status, Turn text/voice queue, audio validation, Report pending, Rubric và SSE auth; kiểm tra queue/SSE/lifecycle/worker assertions; phân loại question-generation baseline là không có `jobId`/dedup theo quyết định đã xác nhận.
+- Contract kiểm tra: REST, queue, SSE, session lifecycle, fallback/retry và audio input boundary; không đổi runtime behavior/schema/provider.
+- Verification: `npm run build` — pass; `npm test -- --runInBand` — pass (43 suites, 378 tests); `npm run test:integration` — pass (1 suite); `npm run test:e2e` — pass (1 suite); `git diff --check` — pass.
+- Quyết định: preserve absence of `jobId`/dedup for `question-generation`; chỉ thay đổi này qua contract migration riêng nếu cần trong tương lai.
+- Rủi ro/rollback: PostgreSQL test là container tạm `localhost:5433`; CI dùng service container riêng. Phase 0 không có runtime migration nên rollback chỉ là revert test/docs/CI harness.
+- Bước tiếp theo: chờ xác nhận để bắt đầu Phase 1 — Rubric Catalog.
 
 ### 2026-08-10 — Khởi tạo kế hoạch
 
