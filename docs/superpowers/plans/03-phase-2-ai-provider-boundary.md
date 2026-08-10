@@ -8,14 +8,14 @@
 
 ## Nhiệm vụ
 
-- [ ] Characterize tests cho chat completion và transcription trên `OpenAIGateway`: task model, timeout, 429/quota, invalid/embedded/fenced JSON, trailing comma/single quote, truncation retry, empty response.
-- [ ] Extract `OpenAIChatClient` chỉ chứa OpenAI chat SDK/protocol invocation.
-- [ ] Extract `OpenAITranscriptionClient` chỉ chứa OpenAI audio SDK/protocol invocation.
-- [ ] Move shared provider policy vào facade hoặc shared helper nhỏ; chỉ tách `RetryPolicy`/JSON parser thành class nếu chat và audio thật sự dùng chung hoặc test độc lập cần nó.
-- [ ] Giữ `OpenAIGateway` delegate để caller không phải migrate đồng thời.
-- [ ] Khi caller đầu tiên cần boundary, introduce token/type nhỏ `StructuredLlmClient` và `SpeechToText`; adapter implement token đó.
-- [ ] Đảm bảo prompt building, Zod schemas, fallback semantic và scoring không bị chuyển vào generic provider client.
-- [ ] Migrate một consumer một lần, xóa facade chỉ khi search xác nhận không còn import.
+- [x] Characterize tests cho chat completion và transcription trên `OpenAIGateway`: task model, timeout, 429/quota, invalid/embedded/fenced JSON, trailing comma/single quote, truncation retry, empty response.
+- [x] Extract `OpenAIChatClient` chỉ chứa OpenAI chat SDK/protocol invocation.
+- [x] Extract `OpenAITranscriptionClient` chỉ chứa OpenAI audio SDK/protocol invocation.
+- [x] Giữ shared provider policy trong facade; không tách `RetryPolicy`/JSON parser vì không có reuse độc lập.
+- [x] Giữ `OpenAIGateway` delegate để caller không phải migrate đồng thời.
+- [x] Chưa có caller cần boundary token; không thêm `StructuredLlmClient`/`SpeechToText` trước thời điểm cần thiết.
+- [x] Prompt building, Zod schemas, fallback semantic và scoring vẫn ở feature caller.
+- [x] Không migrate consumer hoặc xóa facade trong phase này vì chưa có importer nào cần thay đổi.
 
 ## Không làm
 

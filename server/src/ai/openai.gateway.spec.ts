@@ -425,3 +425,34 @@ describe('OpenAIGateway — empty response và task-specific timeout', () => {
     timeoutSpy.mockRestore();
   });
 });
+
+describe('OpenAIGateway — transcription boundary', () => {
+  it('giữ nguyên audio request và response mapping qua transcription client', async () => {
+    const config = { get: jest.fn() };
+    const transcriptionClient = {
+      create: jest.fn().mockResolvedValue({ text: 'xin chào', duration: 12.5 }),
+    };
+    const gateway = new OpenAIGateway(
+      config as any,
+      undefined,
+      transcriptionClient as any,
+    );
+    const audioBuffer = Buffer.from('audio');
+
+    await expect(
+      gateway.transcribe({
+        audioBuffer,
+        mimeType: 'audio/webm',
+        language: 'vi',
+        timeoutMs: 12_000,
+      }),
+    ).resolves.toEqual({ text: 'xin chào', durationSeconds: 12.5 });
+
+    expect(transcriptionClient.create).toHaveBeenCalledWith(
+      audioBuffer,
+      'audio/webm',
+      'vi',
+      12_000,
+    );
+  });
+});

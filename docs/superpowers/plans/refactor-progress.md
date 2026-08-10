@@ -5,9 +5,9 @@
 
 ## Trạng thái hiện tại
 
-**Phase đang thực hiện:** Hoàn tất Phase 1 — Rubric Catalog.
+**Phase đang thực hiện:** Hoàn tất Phase 3 — Question ownership.
 **Blocker hiện tại:** Chưa có.
-**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 2 — AI boundary.
+**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 4 — Voice ownership.
 
 ## Bảng Phase
 
@@ -15,8 +15,8 @@
 | --- | --- | --- | --- | --- |
 | 0 — Safety net | Hoàn tất | Baseline, contract inventory, queue/SSE/lifecycle characterization, integration taxonomy và HTTP contract harness. | Chờ xác nhận bắt đầu Phase 1. | Build pass; unit 43 suites/378 tests pass; integration 1 suite pass; HTTP E2E 1 suite pass trên PostgreSQL/Redis cô lập. Question-generation baseline không có `jobId`/dedup. |
 | 1 — Rubric Catalog | Hoàn tất | Assessment sở hữu catalog read/provision code; startup không còn write/migrate catalog. | Chờ xác nhận bắt đầu Phase 2. | Build pass; unit 44 suites/379 tests pass; integration và HTTP E2E pass. |
-| 2 — AI boundary | Chưa bắt đầu | — | Chờ Phase 0 exit criteria. | — |
-| 3 — Question | Chưa bắt đầu | — | Chờ Phase 1 và 2. | — |
+| 2 — AI boundary | Hoàn tất | Tách OpenAI chat/transcription SDK invocation khỏi facade; gateway giữ toàn bộ behavior policy. | Chờ xác nhận bắt đầu Phase 3. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
+| 3 — Question | Hoàn tất | Question là owner của `question-generation` worker và use case generation; AI chỉ còn provider/pipeline boundary. | Chờ xác nhận bắt đầu Phase 4. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
 | 4 — Voice | Chưa bắt đầu | — | Chờ Phase 2. | — |
 | 5 — Assessment | Chưa bắt đầu | — | Chờ Phase 1 và 2. | — |
 | 6 — Reporting | Chưa bắt đầu | — | Chờ Phase 5. | — |
@@ -37,6 +37,28 @@
 | 2026-08-10 | Move behavior trước, move folder sau. | Folder-only PR lớn gây noise và che semantic regression. | Mỗi phase có compatibility facade rồi cleanup. |
 
 ## Nhật ký thực hiện
+
+### 2026-08-10 — Phase 3 / Question ownership exit criteria đạt
+
+- Phase: 3 — Question ownership
+- Trạng thái: Hoàn tất
+- Hoàn thành: thêm `QuestionModule` làm facade cho Question Bank/Criteria và owner duy nhất của queue consumer; tách `GenerateSessionQuestions` chứa hybrid AI-bank generation, metadata normalization, criterion persistence transaction; processor chỉ gọi use case, map lifecycle/retry failure và emit SSE; chuyển `question-metadata` sang Question; `AiModule` không còn đăng ký question worker hay import Question Bank/Criteria.
+- Contract kiểm tra: giữ `question-generation` queue/job payload, fallback AI ↔ bank, `skipDuplicates`, rubric criterion links, session active/error race, SSE `session.status` và HTTP session reads.
+- Verification: `npm run build` — pass; `npm test -- --runInBand` — pass (44 suites, 380 tests); `npm run test:integration` — pass (1 suite); `npm run test:e2e` — pass (1 HTTP suite); `git diff --check` — pass.
+- Quyết định: giữ prompt config question tại AI trong phase này vì `BasePipelineService` còn cùng owner với OpenAI invocation; move config riêng lẻ sẽ tạo vòng `Question -> Ai -> Question`, không mang lại ownership thực tế.
+- Rủi ro/rollback: facade cũ `QuestionBankModule`/`QuestionCriteriaModule` vẫn tồn tại để tương thích; rollback chỉ cần đăng ký processor cũ trở lại `AiModule`, không đổi schema/data/queue payload.
+- Bước tiếp theo: chờ xác nhận để bắt đầu Phase 4 — Voice ownership.
+
+### 2026-08-10 — Phase 2 / AI provider boundary exit criteria đạt
+
+- Phase: 2 — AI boundary
+- Trạng thái: Hoàn tất
+- Hoàn thành: thêm `OpenAIChatClient` và `OpenAITranscriptionClient` chỉ sở hữu OpenAI SDK/protocol invocation; `OpenAIGateway` giữ facade, model/timeout selection, quota/rate-limit retry, truncation retry, JSON repair/logging và response mapping; thêm characterization test cho transcription boundary.
+- Contract kiểm tra: không đổi REST, queue/SSE payload, prompt/Zod/fallback/scoring, model/config/env, retry/timeout hoặc output/error semantics; không migrate caller.
+- Verification: `npm run build` — pass; `npm test -- --runInBand` — pass (44 suites, 380 tests); `npm run test:integration` — pass (1 suite); `npm run test:e2e` — pass (1 HTTP suite); `git diff --check` — pass.
+- Quyết định: chưa thêm `StructuredLlmClient`/`SpeechToText` hoặc generic retry/parser vì chưa có consumer cần chuyển DI và không có reuse độc lập chứng minh lợi ích.
+- Rủi ro/rollback: facade và caller không đổi; rollback chỉ cần bỏ hai adapter mới và khôi phục SDK invocation trong gateway, không ảnh hưởng schema/data/queue.
+- Bước tiếp theo: chờ xác nhận để bắt đầu Phase 3 — Question ownership.
 
 ### 2026-08-10 — Phase 1 / Rubric Catalog exit criteria đạt
 

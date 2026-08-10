@@ -11,6 +11,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { AiModule } from './ai/ai.module';
+import { QuestionModule } from './question/question.module';
 import { SessionModule } from './session/session.module';
 import { TurnModule } from './turn/turn.module';
 import { ReportModule } from './report/report.module';
@@ -49,6 +50,7 @@ class ApiRootController {
     PrismaModule,
     AuthModule,
     AiModule,
+    QuestionModule,
     SessionModule,
     TurnModule,
     ReportModule,

@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { QuestionGenerationProcessor } from './question-generation.processor';
+import { QuestionGenerationProcessor } from '../../question/question-generation.processor';
+import { GenerateSessionQuestions } from '../../question/generate-session-questions.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
@@ -105,6 +106,7 @@ describe('QuestionGenerationProcessor', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         QuestionGenerationProcessor,
+        GenerateSessionQuestions,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: SseService, useValue: mockSse },
         { provide: ContextPackService, useValue: mockContextPack },

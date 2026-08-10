@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { AuthModule } from '../auth/auth.module';
 import { AiModule } from '../ai/ai.module';
-import { QuestionCriteriaModule } from '../question-criteria/question-criteria.module';
+import { QuestionModule } from '../question/question.module';
 import {
   FEEDBACK_QUEUE,
   TRANSCRIPTION_QUEUE,
@@ -17,7 +17,7 @@ import { VoiceMetricsService } from './voice-metrics.service';
   imports: [
     AuthModule,
     AiModule,
-    QuestionCriteriaModule,
+    QuestionModule,
     BullModule.registerQueue({ name: FEEDBACK_QUEUE }),
     BullModule.registerQueue({ name: TRANSCRIPTION_QUEUE }),
   ],

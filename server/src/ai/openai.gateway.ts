@@ -1,9 +1,11 @@
-import { Injectable, HttpStatus, Logger } from '@nestjs/common';
+import { Injectable, HttpStatus, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import OpenAI, { APIError, APIUserAbortError } from 'openai';
+import { APIError, APIUserAbortError } from 'openai';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
+import { OpenAIChatClient } from './openai-chat.client';
+import { OpenAITranscriptionClient } from './openai-transcription.client';
 
 type ChatTask = 'question-generation' | 'feedback' | 'report';
 
@@ -48,8 +50,6 @@ interface JsonExtractionResult {
 
 @Injectable()
 export class OpenAIGateway {
-  private readonly chatClient: OpenAI;
-  private readonly audioClient: OpenAI;
   private readonly logger = new Logger(OpenAIGateway.name);
   private readonly chatModel: string;
   private readonly feedbackModel?: string;
@@ -61,11 +61,13 @@ export class OpenAIGateway {
   private readonly reportTimeoutMs: number;
   private quotaBlockedUntil = 0;
 
-  constructor(config: ConfigService) {
-    const apiKey = config.get<string>('OPENAI_API_KEY') ?? 'lm-studio';
-    const chatBaseURL =
-      config.get<string>('OPENAI_BASE_URL') ?? 'http://127.0.0.1:1234/v1';
-
+  constructor(
+    config: ConfigService,
+    @Inject(OpenAIChatClient)
+    private readonly chatClient = new OpenAIChatClient(config),
+    @Inject(OpenAITranscriptionClient)
+    private readonly transcriptionClient = new OpenAITranscriptionClient(config),
+  ) {
     this.chatModel =
       config.get<string>('OPENAI_CHAT_MODEL') ?? 'google/gemma-4-e4b';
     this.feedbackModel = config.get<string>('OPENAI_FEEDBACK_MODEL');
@@ -85,15 +87,6 @@ export class OpenAIGateway {
         Math.max(this.defaultTimeoutMs, 600_000),
     );
 
-    this.chatClient = new OpenAI({
-      apiKey,
-      baseURL: chatBaseURL,
-      maxRetries: 0, // retries managed here to distinguish quota vs rate limit
-    });
-    this.audioClient = new OpenAI({
-      apiKey,
-      maxRetries: 0, // retries managed here to distinguish quota vs rate limit
-    });
   }
 
   getChatModel(task?: ChatTask): string {
@@ -388,19 +381,18 @@ export class OpenAIGateway {
 
     return this.withRetry(async () => {
       const createCompletion = (tokens: number) =>
-        this.chatClient.chat.completions.create(
+        this.chatClient.create(
           {
             model: resolvedModel,
             messages,
             temperature,
-            max_tokens: tokens,
-            ...(responseFormat === 'json_object' && this.jsonModeEnabled
-              ? { response_format: { type: 'json_object' } }
-              : {}),
+            maxTokens: tokens,
+            responseFormat:
+              responseFormat === 'json_object' && this.jsonModeEnabled
+                ? 'json_object'
+                : undefined,
           },
-          requestTimeoutMs
-            ? { signal: AbortSignal.timeout(requestTimeoutMs) }
-            : undefined,
+          requestTimeoutMs,
         );
 
       let effectiveMaxTokens = maxTokens;
@@ -439,32 +431,12 @@ export class OpenAIGateway {
   async transcribe(params: TranscribeParams): Promise<TranscribeResult> {
     const { audioBuffer, mimeType, language, timeoutMs } = params;
 
-    const ext =
-      mimeType === 'audio/webm'
-        ? 'webm'
-        : mimeType === 'audio/mp4'
-          ? 'mp4'
-          : 'wav';
-
     return this.withRetry(async () => {
-      const file = new File(
-        [
-          audioBuffer.buffer.slice(
-            audioBuffer.byteOffset,
-            audioBuffer.byteOffset + audioBuffer.byteLength,
-          ) as ArrayBuffer,
-        ],
-        `audio.${ext}`,
-        { type: mimeType },
-      );
-      const response = await this.audioClient.audio.transcriptions.create(
-        {
-          file,
-          model: 'whisper-1',
-          language,
-          response_format: 'verbose_json',
-        },
-        timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : undefined,
+      const response = await this.transcriptionClient.create(
+        audioBuffer,
+        mimeType,
+        language,
+        timeoutMs,
       );
       const responseRecord = response as unknown as Record<string, unknown>;
       const duration =
