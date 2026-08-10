@@ -1,10 +1,7 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
-import {
-  CONTEXT_PACK_DATA,
-  ContextPackId,
-} from './rubric/context-pack.data';
-import { PrismaService } from '../prisma/prisma.service';
+import { CONTEXT_PACK_DATA, ContextPackId } from './rubric/context-pack.data';
+import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import {
   buildRubricCategoriesFromPack,
   buildRubricSnapshot,

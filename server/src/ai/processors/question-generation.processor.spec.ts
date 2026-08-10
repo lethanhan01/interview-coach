@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { QuestionGenerationProcessor } from '../../question/question-generation.processor';
 import { GenerateSessionQuestions } from '../../question/generate-session-questions.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { SseService } from '../../common/services/sse.service';
+import { SseService } from '../../infrastructure/realtime/redis/sse.service';
 import { ContextPackService } from '../../assessment/context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
 import { QuestionBankService } from '../../question-bank/question-bank.service';

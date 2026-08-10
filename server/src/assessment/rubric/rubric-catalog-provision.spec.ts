@@ -4,7 +4,9 @@ describe('provisionDefaultRubricCatalog', () => {
   it('provisions the versioned default catalog for a fresh environment', async () => {
     const tx = {
       rubricVersion: { upsert: jest.fn().mockResolvedValue({ id: 'v1' }) },
-      rubricCategory: { upsert: jest.fn().mockResolvedValue({ id: 'category' }) },
+      rubricCategory: {
+        upsert: jest.fn().mockResolvedValue({ id: 'category' }),
+      },
       rubricCriterion: {
         findFirst: jest.fn().mockResolvedValue(null),
         update: jest.fn(),

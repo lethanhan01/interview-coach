@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { ContextPackService } from '../assessment/context-pack.service';
 import type { ContextPackConfig } from '../assessment/context-pack.service';
 import { describeAIError, isAIFallbackEligible } from '../ai/ai-error.utils';
@@ -231,7 +231,11 @@ export class GenerateSessionQuestions {
     rubricVersionId: string,
     rows: MergedQuestionRow[],
   ): Promise<number> {
-    const questions = rows.map((row) => ({ ...row, id: randomUUID(), sessionId }));
+    const questions = rows.map((row) => ({
+      ...row,
+      id: randomUUID(),
+      sessionId,
+    }));
     const criteria = (
       await Promise.all(
         questions.map((question) =>

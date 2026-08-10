@@ -1,8 +1,8 @@
 import {
   Injectable,
   Logger,
-  OnModuleInit,
   OnModuleDestroy,
+  OnModuleInit,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -27,7 +27,6 @@ export class PrismaService
 {
   private readonly logger = new Logger(PrismaService.name);
   private bootstrapDatabaseAvailable = false;
-
   constructor() {
     const adapter = new PrismaPg({
       ...buildPgConnectionConfig(process.env['DATABASE_URL']),
@@ -55,19 +54,15 @@ export class PrismaService
       },
     });
   }
-
   async onModuleInit() {
     await this.connectWithRetry();
   }
-
   async onModuleDestroy() {
     await this.$disconnect();
   }
-
   isBootstrapDatabaseAvailable(): boolean {
     return this.bootstrapDatabaseAvailable;
   }
-
   private async connectWithRetry(): Promise<void> {
     const maxAttempts = readPositiveIntEnv(
       'PRISMA_CONNECT_RETRIES',
@@ -77,8 +72,7 @@ export class PrismaService
       'PRISMA_CONNECT_RETRY_DELAY_MS',
       DEFAULT_CONNECT_RETRY_DELAY_MS,
     );
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1)
       try {
         await this.$connect();
         await this.$queryRaw`SELECT 1`;
@@ -87,48 +81,33 @@ export class PrismaService
       } catch (error) {
         const transient = isTransientPrismaConnectionError(error);
         const formattedError = formatDatabaseStartupError(error);
-
         if (!transient) {
           this.logger.error(
             `Prisma startup check failed with a non-transient database error: ${formattedError}`,
           );
           throw error;
         }
-
         if (attempt === maxAttempts) {
           this.logger.warn(
             `Database is unavailable after ${maxAttempts} startup attempt(s). The API will continue booting and /health will report db=down until the connection recovers. Last error: ${formattedError}`,
           );
           return;
         }
-
         this.logger.warn(
           `Database startup check failed on attempt ${attempt}/${maxAttempts}; retrying in ${retryDelayMs}ms. Error: ${formattedError}`,
         );
         await delay(retryDelayMs);
       }
-    }
   }
 }
-
 function readPositiveIntEnv(name: string, defaultValue: number): number {
   const rawValue = process.env[name];
-
-  if (!rawValue) {
-    return defaultValue;
-  }
-
+  if (!rawValue) return defaultValue;
   const parsed = Number(rawValue);
-
-  if (!Number.isInteger(parsed) || parsed <= 0) {
+  if (!Number.isInteger(parsed) || parsed <= 0)
     throw new Error(`${name} must be a positive integer.`);
-  }
-
   return parsed;
 }
-
 function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

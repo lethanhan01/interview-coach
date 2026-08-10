@@ -8,7 +8,7 @@ import {
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-import { PrismaModule } from './prisma/prisma.module';
+import { PrismaModule } from './infrastructure/database/prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { AiModule } from './ai/ai.module';
 import { AssessmentModule } from './assessment/assessment.module';

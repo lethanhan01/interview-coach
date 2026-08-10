@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 type DependencyStatus = 'up' | 'down';

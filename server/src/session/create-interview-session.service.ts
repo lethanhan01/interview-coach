@@ -10,7 +10,7 @@ import {
   QUESTION_GEN_JOB_ATTEMPTS,
   QUESTION_GEN_QUEUE,
 } from '../common/constants/queue.constants';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { resolveOutputLanguage } from '../ai/output-language';
 import { CreateSessionDto } from './dto/create-session.dto';
 

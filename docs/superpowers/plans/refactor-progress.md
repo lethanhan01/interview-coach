@@ -38,6 +38,17 @@
 
 ## Nhật ký thực hiện
 
+### 2026-08-10 — Bắt đầu Phase 9 / Infrastructure placement
+
+- Phase: 9 — Infrastructure placement và cross-context cleanup
+- Trạng thái: Đang thực hiện
+- Hoàn thành: thêm điểm import hạ tầng cho Prisma (`infrastructure/database/prisma`) và Redis SSE (`infrastructure/realtime/redis`); cập nhật các module global dùng hai điểm này. Giữ các implementation/export cũ tạm thời để migration vẫn reversible.
+- Contract kiểm tra: không đổi Redis/SSE channel-event-payload, Prisma startup/retry/timezone hoặc BullMQ registration.
+- Verification: `npm run build` — pass.
+- Quyết định: không centralize BullMQ registration lúc này: registrations hiện thuộc feature và không có duplication đủ để biện minh một infrastructure module lớn. Không xóa compatibility exports trước static-import audit và test đầy đủ.
+- Rủi ro/rollback: đây chưa phải move hoàn tất; facade cũ còn được importer và test dùng. Rollback đơn giản là trả module imports về path cũ, không có runtime/schema/queue change.
+- Bước tiếp theo: migrate implementation/import còn lại theo lát cơ học, audit cycles/duplicate processor/dead exports rồi chạy full verification.
+
 ### 2026-08-10 — Phase 8 / Turn-answer workflow exit criteria đạt
 
 - Phase: 8 — Turn/answer workflow decomposition

@@ -3,7 +3,10 @@ import { OpenAIGateway } from '../ai/openai.gateway';
 import { PromptBuilderService } from '../ai/prompt-builder.service';
 import { ZodValidatorService } from '../ai/zod-validator.service';
 import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../ai/prompts/surgical-feedback-v1.5';
-import { FeedbackSchema, PROMPT_VERSION } from '../ai/pipelines/pipeline.schemas';
+import {
+  FeedbackSchema,
+  PROMPT_VERSION,
+} from '../ai/pipelines/pipeline.schemas';
 import type {
   AppliedDimension,
   FeedbackInput,
@@ -107,7 +110,10 @@ export class EvaluateAnswer {
     try {
       parsed = this.normalize(JSON.parse(raw));
     } catch (error) {
-      this.logger.warn(`[feedback] JSON parse failed. rawLength=${raw.length}`, error);
+      this.logger.warn(
+        `[feedback] JSON parse failed. rawLength=${raw.length}`,
+        error,
+      );
       throw new InterviewAIException(
         ErrorCode.SCHEMA_VALIDATION_ERROR,
         HttpStatus.UNPROCESSABLE_ENTITY,
@@ -115,9 +121,17 @@ export class EvaluateAnswer {
       );
     }
     const validated = this.zodValidator.validate(FeedbackSchema, parsed);
-    const selected = resolveAppliedDimensions(validated.applied_dimensions, target);
-    const selectedById = new Map(selected.map((dimension) => [dimension.id, dimension]));
-    const baseSum = target.reduce((sum, dimension) => sum + dimension.weight, 0);
+    const selected = resolveAppliedDimensions(
+      validated.applied_dimensions,
+      target,
+    );
+    const selectedById = new Map(
+      selected.map((dimension) => [dimension.id, dimension]),
+    );
+    const baseSum = target.reduce(
+      (sum, dimension) => sum + dimension.weight,
+      0,
+    );
     const appliedDimensions: AppliedDimension[] = target.map((dimension) => ({
       id: dimension.id,
       name: dimension.name,
@@ -137,10 +151,23 @@ export class EvaluateAnswer {
       })),
     );
     if (sanitized.issues.length > 0) {
-      this.logger.warn(`[feedback] Removed invalid annotated segments; invalidSegments=${sanitized.issues.length}`);
+      this.logger.warn(
+        `[feedback] Removed invalid annotated segments; invalidSegments=${sanitized.issues.length}`,
+      );
     }
     return {
-      overallScore: Math.min(100, Math.max(0, Math.round(appliedDimensions.reduce((sum, dimension) => sum + dimension.score * dimension.weight, 0)))),
+      overallScore: Math.min(
+        100,
+        Math.max(
+          0,
+          Math.round(
+            appliedDimensions.reduce(
+              (sum, dimension) => sum + dimension.score * dimension.weight,
+              0,
+            ),
+          ),
+        ),
+      ),
       modelAnswer: validated.model_answer,
       keyTakeaway: validated.key_takeaway,
       promptVersion: PROMPT_VERSION,
@@ -155,27 +182,39 @@ export class EvaluateAnswer {
 
   private normalize(payload: unknown): unknown {
     if (!isRecord(payload)) return payload;
-    const dimensions = alias(payload, 'applied_dimensions', 'appliedDimensions');
+    const dimensions = alias(
+      payload,
+      'applied_dimensions',
+      'appliedDimensions',
+    );
     const segments = alias(payload, 'annotated_segments', 'annotatedSegments');
     return {
       ...payload,
       applied_dimensions: Array.isArray(dimensions)
-        ? dimensions.map((item) =>
+        ? (dimensions as Record<string, unknown>[]).map((item) =>
             isRecord(item) ? { ...item, score: clampScore(item.score) } : item,
           )
         : dimensions,
       model_answer: alias(payload, 'model_answer', 'modelAnswer'),
       key_takeaway: alias(payload, 'key_takeaway', 'keyTakeaway'),
       annotated_segments: Array.isArray(segments)
-        ? segments.map((item) =>
+        ? (segments as Record<string, unknown>[]).map((item) =>
             isRecord(item)
               ? {
                   ...item,
                   segment_text: alias(item, 'segment_text', 'segmentText'),
                   start_index: alias(item, 'start_index', 'startIndex'),
                   end_index: alias(item, 'end_index', 'endIndex'),
-                  highlight_level: alias(item, 'highlight_level', 'highlightLevel'),
-                  improved_version: alias(item, 'improved_version', 'improvedVersion'),
+                  highlight_level: alias(
+                    item,
+                    'highlight_level',
+                    'highlightLevel',
+                  ),
+                  improved_version: alias(
+                    item,
+                    'improved_version',
+                    'improvedVersion',
+                  ),
                 }
               : item,
           )

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import type { Job } from 'bullmq';
 import { FeedbackProcessor } from '../../assessment/feedback/feedback.processor';
 import { PrismaService } from '../../prisma/prisma.service';
-import { SseService } from '../../common/services/sse.service';
+import { SseService } from '../../infrastructure/realtime/redis/sse.service';
 import { ContextPackService } from '../../assessment/context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
 import { EvaluateAnswer } from '../../assessment/evaluate-answer.service';
@@ -143,7 +143,10 @@ describe('FeedbackProcessor', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: SseService, useValue: mockSse },
         { provide: ContextPackService, useValue: mockContextPack },
-        { provide: EvaluateAnswer, useValue: { execute: strategy.evaluateAnswer } },
+        {
+          provide: EvaluateAnswer,
+          useValue: { execute: strategy.evaluateAnswer },
+        },
         { provide: PipelineStrategyFactory, useValue: mockFactory },
         { provide: ReportService, useValue: mockReportService },
       ],

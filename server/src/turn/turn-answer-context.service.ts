@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { isSessionType } from '../common/constants/session.constants';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 
 export const SESSION_QUESTION_CRITERIA_INCLUDE = {
   criteria: {
@@ -27,7 +27,10 @@ export class TurnAnswerContext {
       include: { savedJobDescription: { select: { userId: true } } },
     });
     if (!session) {
-      throw new InterviewAIException(ErrorCode.SESSION_NOT_FOUND, HttpStatus.NOT_FOUND);
+      throw new InterviewAIException(
+        ErrorCode.SESSION_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+      );
     }
     if (session.savedJobDescription.userId !== userId) {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
@@ -38,7 +41,10 @@ export class TurnAnswerContext {
   async load(sessionId: string, userId: string, questionId: string) {
     const session = await this.assertOwner(sessionId, userId);
     if (!['active', 'ready'].includes(session.status)) {
-      throw new InterviewAIException(ErrorCode.SESSION_NOT_ACTIVE, HttpStatus.FORBIDDEN);
+      throw new InterviewAIException(
+        ErrorCode.SESSION_NOT_ACTIVE,
+        HttpStatus.FORBIDDEN,
+      );
     }
     if (!isSessionType(session.sessionType)) {
       throw new InterviewAIException(
@@ -56,7 +62,8 @@ export class TurnAnswerContext {
     }
     if (session.status !== 'active') {
       await this.prisma.interviewSession.update({
-        where: { id: sessionId }, data: { status: 'active' },
+        where: { id: sessionId },
+        data: { status: 'active' },
       });
     }
     return { session, question, sessionType: session.sessionType };

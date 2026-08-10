@@ -12,7 +12,11 @@ const workerProviders =
   process.env.WORKERS_ENABLED === 'false' ? [] : [ComprehensiveReportProcessor];
 
 @Module({
-  imports: [AuthModule, AiModule, BullModule.registerQueue({ name: REPORT_QUEUE })],
+  imports: [
+    AuthModule,
+    AiModule,
+    BullModule.registerQueue({ name: REPORT_QUEUE }),
+  ],
   providers: [ReportService, GenerateComprehensiveReport, ...workerProviders],
   controllers: [ReportController],
   exports: [ReportService],

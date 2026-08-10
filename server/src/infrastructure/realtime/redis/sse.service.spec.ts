@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { SseService } from './sse.service';
 
@@ -19,32 +20,22 @@ jest.mock('ioredis', () => ({
 }));
 
 describe('SseService', () => {
-  beforeEach(() => {
-    (Redis as unknown as jest.Mock).mockClear();
-  });
+  beforeEach(() => (Redis as unknown as jest.Mock).mockClear());
 
   it('chỉ unsubscribe Redis khi subscriber cuối cùng của channel đóng', () => {
-    const config = {
+    const service = new SseService({
       get: jest.fn((key: string) =>
         key === 'REDIS_PORT' ? 6379 : 'localhost',
       ),
-    };
-    const service = new SseService(config);
+    } as unknown as ConfigService);
     service.onModuleInit();
-
     const subscriber = (Redis as unknown as jest.Mock).mock.results[1]
-      .value as {
-      subscribe: jest.Mock;
-      unsubscribe: jest.Mock;
-    };
+      .value as { subscribe: jest.Mock; unsubscribe: jest.Mock };
     const first = service.subscribe('sse:session:1').subscribe();
     const second = service.subscribe('sse:session:1').subscribe();
-
     expect(subscriber.subscribe).toHaveBeenCalledTimes(1);
-
     first.unsubscribe();
     expect(subscriber.unsubscribe).not.toHaveBeenCalled();
-
     second.unsubscribe();
     expect(subscriber.unsubscribe).toHaveBeenCalledWith('sse:session:1');
   });

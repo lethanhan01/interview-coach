@@ -37,36 +37,27 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
   }
 
   async emit(channel: string, event: string, data: unknown): Promise<void> {
-    const payload = JSON.stringify({ event, data });
-    await this.publisher.publish(channel, payload);
+    await this.publisher.publish(channel, JSON.stringify({ event, data }));
   }
 
   subscribe(channel: string): Observable<MessageEvent> {
     return new Observable<SseMessage>((observer) => {
       const subscriberCount = this.channelSubscribers.get(channel) ?? 0;
       this.channelSubscribers.set(channel, subscriberCount + 1);
-
       if (subscriberCount === 0) {
         void this.subscriber.subscribe(channel, (err) => {
           if (err) observer.error(err);
         });
       }
-
       const handler = (receivedChannel: string, message: string) => {
-        if (receivedChannel === channel) {
-          try {
-            const parsed = JSON.parse(message) as SseMessage;
-            observer.next(parsed);
-          } catch {
-            this.logger.warn(
-              `Failed to parse SSE message on channel ${channel}`,
-            );
-          }
+        if (receivedChannel !== channel) return;
+        try {
+          observer.next(JSON.parse(message) as SseMessage);
+        } catch {
+          this.logger.warn(`Failed to parse SSE message on channel ${channel}`);
         }
       };
-
       this.subscriber.on('message', handler);
-
       return () => {
         this.subscriber.off('message', handler);
         const remainingSubscribers =
@@ -74,9 +65,7 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
         if (remainingSubscribers <= 0) {
           this.channelSubscribers.delete(channel);
           this.subscriber.unsubscribe(channel).catch(() => {});
-        } else {
-          this.channelSubscribers.set(channel, remainingSubscribers);
-        }
+        } else this.channelSubscribers.set(channel, remainingSubscribers);
       };
     }).pipe(
       map(

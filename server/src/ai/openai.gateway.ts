@@ -66,7 +66,9 @@ export class OpenAIGateway {
     @Inject(OpenAIChatClient)
     private readonly chatClient = new OpenAIChatClient(config),
     @Inject(OpenAITranscriptionClient)
-    private readonly transcriptionClient = new OpenAITranscriptionClient(config),
+    private readonly transcriptionClient = new OpenAITranscriptionClient(
+      config,
+    ),
   ) {
     this.chatModel =
       config.get<string>('OPENAI_CHAT_MODEL') ?? 'google/gemma-4-e4b';
@@ -86,7 +88,6 @@ export class OpenAIGateway {
       config.get('OPENAI_REPORT_TIMEOUT_MS') ??
         Math.max(this.defaultTimeoutMs, 600_000),
     );
-
   }
 
   getChatModel(task?: ChatTask): string {

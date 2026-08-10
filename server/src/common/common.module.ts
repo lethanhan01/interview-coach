@@ -1,5 +1,5 @@
 import { Global, Module } from '@nestjs/common';
-import { SseService } from './services/sse.service';
+import { SseService } from '../infrastructure/realtime/redis/sse.service';
 
 @Global()
 @Module({

@@ -13,7 +13,11 @@ const workerProviders =
   process.env.WORKERS_ENABLED === 'false' ? [] : [FeedbackProcessor];
 
 @Module({
-  imports: [AiModule, ReportModule, BullModule.registerQueue({ name: FEEDBACK_QUEUE })],
+  imports: [
+    AiModule,
+    ReportModule,
+    BullModule.registerQueue({ name: FEEDBACK_QUEUE }),
+  ],
   providers: [
     RubricCatalogService,
     ContextPackService,

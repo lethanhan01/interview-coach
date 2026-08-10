@@ -26,7 +26,9 @@ describe('session HTTP contracts', () => {
     }).compile();
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     app.use(cookieParser());
     await app.init();
     prisma = app.get(PrismaService);
@@ -56,14 +58,15 @@ describe('session HTTP contracts', () => {
       .expect(201);
 
     expect(register.body).toMatchObject({ success: true, data: { email } });
-    const cookie = register.headers['set-cookie'][0] as string;
+    const cookie = register.headers['set-cookie'][0];
     const user = await prisma.user.findUniqueOrThrow({ where: { email } });
     const savedJob = await prisma.savedJobDescription.create({
       data: {
         userId: user.id,
         companyName: 'Contract Co',
         jobTitle: 'Backend Engineer',
-        requirements: 'TypeScript, PostgreSQL, and practical testing experience.',
+        requirements:
+          'TypeScript, PostgreSQL, and practical testing experience.',
         jobContent: 'Build and maintain backend services.',
       },
     });
@@ -145,7 +148,8 @@ describe('session HTTP contracts', () => {
       .send({
         questionId: firstQuestion.id,
         answerMode: 'text',
-        answerText: 'I isolated the failing dependency and restored traffic safely.',
+        answerText:
+          'I isolated the failing dependency and restored traffic safely.',
       })
       .expect(201);
     expect(textTurn.body).toMatchObject({

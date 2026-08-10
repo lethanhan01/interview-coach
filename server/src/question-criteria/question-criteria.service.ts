@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 
 type RubricCategoryRow = {
   categoryKey: string;
@@ -35,7 +35,10 @@ type QuestionBankWithCriteria = QuestionWithCriteria & {
 
 type SessionCriterionLink = CriterionLink;
 
-type SessionQuestionWithCriteria = {
+export type SessionQuestionWithCriteria = {
+  id: string;
+  questionText: string;
+  questionCategory: string;
   criteria?: SessionCriterionLink[] | null;
 };
 

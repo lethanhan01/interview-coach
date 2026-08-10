@@ -16,8 +16,18 @@ export async function provisionDefaultRubricCatalog(
         .update(JSON.stringify(buildRubricSnapshot(categories)))
         .digest('hex');
       const version = await tx.rubricVersion.upsert({
-        where: { contextPackId_versionKey: { contextPackId: pack.id, versionKey: 'v1' } },
-        create: { contextPackId: pack.id, versionKey: 'v1', status: 'active', checksum },
+        where: {
+          contextPackId_versionKey: {
+            contextPackId: pack.id,
+            versionKey: 'v1',
+          },
+        },
+        create: {
+          contextPackId: pack.id,
+          versionKey: 'v1',
+          status: 'active',
+          checksum,
+        },
         update: { status: 'active', checksum },
         select: { id: true },
       });

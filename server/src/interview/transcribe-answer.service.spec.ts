@@ -3,7 +3,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
 import { TranscribeAnswer } from './transcribe-answer.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { SseService } from '../common/services/sse.service';
+import { SseService } from '../infrastructure/realtime/redis/sse.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import { SpeechToText } from './speech-to-text.service';
 import { VoiceMetricsService } from './voice-metrics.service';

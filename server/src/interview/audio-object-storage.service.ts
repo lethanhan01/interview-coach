@@ -32,9 +32,7 @@ export interface StoredAudioFile {
 export class AudioObjectStorage {
   private readonly storage: ReturnType<typeof createClient>['storage'];
 
-  constructor(
-    config: ConfigService,
-  ) {
+  constructor(config: ConfigService) {
     this.storage = createClient(
       config.getOrThrow<string>('SUPABASE_URL'),
       config.getOrThrow<string>('SUPABASE_SERVICE_ROLE_KEY'),

@@ -14,7 +14,7 @@ import { Observable } from 'rxjs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SseTokenGuard } from '../auth/guards/sse-token.guard';
 import { SessionService } from './session.service';
-import { SseService } from '../common/services/sse.service';
+import { SseService } from '../infrastructure/realtime/redis/sse.service';
 import { ReportService } from '../report/report.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionStatusDto } from './dto/update-session-status.dto';

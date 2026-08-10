@@ -3,8 +3,8 @@ import { Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import type { Prisma } from '@prisma/client';
-import { PrismaService } from '../../prisma/prisma.service';
-import { SseService } from '../../common/services/sse.service';
+import { PrismaService } from '../../infrastructure/database/prisma/prisma.service';
+import { SseService } from '../../infrastructure/realtime/redis/sse.service';
 import { ContextPackService } from '../context-pack.service';
 import { ReportService } from '../../report/report.service';
 import {
@@ -88,7 +88,8 @@ export class FeedbackProcessor extends WorkerHost {
         questionCategory,
         competencyDomains,
         answerText,
-        contextPackConfig: await this.contextPackService.getContextPack(contextPack),
+        contextPackConfig:
+          await this.contextPackService.getContextPack(contextPack),
         language,
       });
       const sanitizedSegments = sanitizeFeedbackSegments(
@@ -231,7 +232,6 @@ export class FeedbackProcessor extends WorkerHost {
       language,
     );
   }
-
 
   private async emitFeedbackReady(
     sessionId: string,

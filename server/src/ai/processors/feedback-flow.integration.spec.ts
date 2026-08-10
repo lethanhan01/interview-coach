@@ -11,7 +11,7 @@ import { ZodValidatorService } from '../zod-validator.service';
 import { OpenAIGateway } from '../openai.gateway';
 import { ContextPackService } from '../../assessment/context-pack.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { SseService } from '../../common/services/sse.service';
+import { SseService } from '../../infrastructure/realtime/redis/sse.service';
 import { ReportService } from '../../report/report.service';
 import { EvaluateAnswer } from '../../assessment/evaluate-answer.service';
 import {

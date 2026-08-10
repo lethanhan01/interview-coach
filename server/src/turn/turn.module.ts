@@ -21,10 +21,6 @@ import { SubmitTurnAnswer } from './submit-turn-answer.service';
     BullModule.registerQueue({ name: TRANSCRIPTION_QUEUE }),
   ],
   controllers: [TurnController],
-  providers: [
-    TurnService,
-    TurnAnswerContext,
-    SubmitTurnAnswer,
-  ],
+  providers: [TurnService, TurnAnswerContext, SubmitTurnAnswer],
 })
 export class TurnModule {}

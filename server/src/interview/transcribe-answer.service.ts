@@ -2,14 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { SseService } from '../common/services/sse.service';
+import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
+import { SseService } from '../infrastructure/realtime/redis/sse.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import { SpeechToText } from './speech-to-text.service';
 import { VoiceMetricsService } from './voice-metrics.service';
 import { ReportService } from '../report/report.service';
 import {
-  TRANSCRIPTION_QUEUE,
   TRANSCRIPTION_JOB_ATTEMPTS,
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,

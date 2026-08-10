@@ -5,7 +5,9 @@ import { GenerateComprehensiveReport } from './generate-comprehensive-report.ser
 describe('ComprehensiveReportProcessor', () => {
   it('delegates the unchanged queue payload to the reporting use case', async () => {
     const execute = jest.fn().mockResolvedValue(undefined);
-    const processor = new ComprehensiveReportProcessor({ execute } as unknown as GenerateComprehensiveReport);
+    const processor = new ComprehensiveReportProcessor({
+      execute,
+    } as unknown as GenerateComprehensiveReport);
     const data = {
       sessionId: 'session-123',
       sessionType: 'hr' as const,

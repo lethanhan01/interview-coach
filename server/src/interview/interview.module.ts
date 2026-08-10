@@ -35,9 +35,6 @@ const workerProviders =
     TranscribeAnswer,
     ...workerProviders,
   ],
-  exports: [
-    UploadAndTranscribeAnswerAudio,
-    VoiceMetricsService,
-  ],
+  exports: [UploadAndTranscribeAnswerAudio, VoiceMetricsService],
 })
 export class InterviewModule {}

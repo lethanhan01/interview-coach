@@ -24,7 +24,9 @@ export class UploadAndTranscribeAnswerAudio {
     file?: UploadedAudioFile;
   }): Promise<AudioUploadResult> {
     const stored = await this.storage.uploadInterviewAudio(params);
-    const transcription = await this.speechToText.transcribe(stored.audioFileUrl);
+    const transcription = await this.speechToText.transcribe(
+      stored.audioFileUrl,
+    );
     return {
       ...stored,
       transcript: transcription.text,

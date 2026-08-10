@@ -9,9 +9,7 @@ import { GenerateSessionQuestions } from './generate-session-questions.service';
 import { QuestionGenerationProcessor } from './question-generation.processor';
 
 const workerProviders =
-  process.env.WORKERS_ENABLED === 'false'
-    ? []
-    : [QuestionGenerationProcessor];
+  process.env.WORKERS_ENABLED === 'false' ? [] : [QuestionGenerationProcessor];
 
 @Module({
   imports: [

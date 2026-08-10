@@ -28,7 +28,10 @@ describe('CreateSessionDto', () => {
     ['contextPack sai enum', { contextPack: 'APAC' }],
     ['language sai enum', { language: 'fr' }],
     ['thiếu savedJobDescriptionId', { savedJobDescriptionId: undefined }],
-    ['savedJobDescriptionId không phải UUID', { savedJobDescriptionId: 'invalid-uuid' }],
+    [
+      'savedJobDescriptionId không phải UUID',
+      { savedJobDescriptionId: 'invalid-uuid' },
+    ],
   ])('QG-02: reject %s', async (_label, override) => {
     const errors = await validatePayload({ ...validPayload, ...override });
 

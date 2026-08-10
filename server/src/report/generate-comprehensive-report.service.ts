@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
-import { PrismaService } from '../prisma/prisma.service';
-import { SseService } from '../common/services/sse.service';
+import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
+import { SseService } from '../infrastructure/realtime/redis/sse.service';
 import { OpenAIGateway } from '../ai/openai.gateway';
 import { COMPREHENSIVE_REPORT_PROMPT_CONFIG } from '../ai/prompts/comprehensive-report-v1.0';
 import type { SessionType } from '../ai/pipelines/interview-pipeline.interface';

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import type { Job } from 'bullmq';
 import { GenerateComprehensiveReport } from './generate-comprehensive-report.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { SseService } from '../common/services/sse.service';
+import { SseService } from '../infrastructure/realtime/redis/sse.service';
 import { OpenAIGateway } from '../ai/openai.gateway';
 import {
   createMockOpenAIGateway,
