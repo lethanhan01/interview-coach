@@ -90,7 +90,7 @@ export default function ProfilePage() {
 
       <div className="flex flex-col gap-4">
         <PersonalInfoGroup
-          data={{ fullName: profile?.fullName }}
+          data={{ firstname: data?.firstname, lastname: data?.lastname }}
           onSave={(patch) => patchProfile(patch)}
         />
 

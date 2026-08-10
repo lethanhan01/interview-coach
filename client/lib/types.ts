@@ -203,8 +203,9 @@ export interface AwardEntry {
 export interface GetProfileResponse {
   id: string
   email: string
+  firstname?: string
+  lastname?: string
   profile: {
-    fullName?: string
     personality?: string
     education?: EducationEntry
     workExperience?: WorkExperienceEntry[]

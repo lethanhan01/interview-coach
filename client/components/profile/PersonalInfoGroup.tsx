@@ -7,7 +7,8 @@ import ProfileSection from './ProfileSection'
 import ProfileField from './ProfileField'
 
 interface PersonalInfoData {
-  fullName?: string
+  firstname?: string
+  lastname?: string
 }
 
 interface Props {
@@ -67,16 +68,27 @@ export default function PersonalInfoGroup({ data, onSave }: Props) {
     >
       {!isEditing ? (
         <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-          <ProfileField label="Họ và tên" value={data.fullName} />
+          <ProfileField
+            label="Họ và tên"
+            value={[data.lastname, data.firstname].filter(Boolean).join(' ') || undefined}
+          />
         </dl>
       ) : (
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Họ và tên">
+            <Field label="Họ">
               <input
-                value={form.fullName ?? ''}
-                onChange={(e) => set('fullName', e.target.value)}
-                placeholder="Nguyễn Văn A"
+                value={form.lastname ?? ''}
+                onChange={(e) => set('lastname', e.target.value)}
+                placeholder="Nguyễn Văn"
+                className={FIELD_CLASS}
+              />
+            </Field>
+            <Field label="Tên">
+              <input
+                value={form.firstname ?? ''}
+                onChange={(e) => set('firstname', e.target.value)}
+                placeholder="A"
                 className={FIELD_CLASS}
               />
             </Field>

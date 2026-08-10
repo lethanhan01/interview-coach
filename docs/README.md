@@ -6,6 +6,8 @@ InterviewAI là ứng dụng AI Mock Interview — nền tảng luyện phỏng 
 
 ### Khám phá và yêu cầu
 
+Hiện tại các  tài liệu đều đã  outdate, chưa cập nhật theo trạng thái mới nhất của dự án nên không tin hoàn toàn vào nguồn này, source of truth duy nhất là mã nguồn tại @service/
+
 | Tài liệu | Mô tả | Trạng thái |
 |----------|-------|------------|
 | [Discovery Document](RequirementAnalysis/discovery-docs/Discovery_Document.md) | Vấn đề cần giải quyết, người dùng mục tiêu, phân tích thị trường | Hoàn thành |

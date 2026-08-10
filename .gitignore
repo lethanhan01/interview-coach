@@ -59,13 +59,11 @@ skills-lock.json
 data/*
 !data/scripts/
 
-docs/superpowers/*
 docs/plans/*
 scripts/*
 
 skills-lock.json
 
 .codex
-.superpowers/*
 *storybook.log
 storybook-static
