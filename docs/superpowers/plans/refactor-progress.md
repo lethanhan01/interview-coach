@@ -5,9 +5,9 @@
 
 ## Trạng thái hiện tại
 
-**Phase đang thực hiện:** Hoàn tất Phase 3 — Question ownership.
+**Phase đang thực hiện:** Hoàn tất Phase 4 — Voice ownership.
 **Blocker hiện tại:** Chưa có.
-**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 4 — Voice ownership.
+**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 5 — Assessment ownership.
 
 ## Bảng Phase
 
@@ -17,8 +17,8 @@
 | 1 — Rubric Catalog | Hoàn tất | Assessment sở hữu catalog read/provision code; startup không còn write/migrate catalog. | Chờ xác nhận bắt đầu Phase 2. | Build pass; unit 44 suites/379 tests pass; integration và HTTP E2E pass. |
 | 2 — AI boundary | Hoàn tất | Tách OpenAI chat/transcription SDK invocation khỏi facade; gateway giữ toàn bộ behavior policy. | Chờ xác nhận bắt đầu Phase 3. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
 | 3 — Question | Hoàn tất | Question là owner của `question-generation` worker và use case generation; AI chỉ còn provider/pipeline boundary. | Chờ xác nhận bắt đầu Phase 4. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
-| 4 — Voice | Chưa bắt đầu | — | Chờ Phase 2. | — |
-| 5 — Assessment | Chưa bắt đầu | — | Chờ Phase 1 và 2. | — |
+| 4 — Voice | Hoàn tất | Interview sở hữu audio storage/STT orchestration và `transcription` worker; AI chỉ giữ OpenAI provider boundary. | Chờ xác nhận bắt đầu Phase 5. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
+| 5 — Assessment | Chưa bắt đầu | — | Chờ xác nhận bắt đầu Phase 5. | Phase 1 và 2 dependencies đã đạt. |
 | 6 — Reporting | Chưa bắt đầu | — | Chờ Phase 5. | — |
 | 7 — Session | Chưa bắt đầu | — | Chờ Phase 1 và 6. | — |
 | 8 — Turn | Chưa bắt đầu | — | Chờ Phase 4 và 5. | — |
@@ -37,6 +37,17 @@
 | 2026-08-10 | Move behavior trước, move folder sau. | Folder-only PR lớn gây noise và che semantic regression. | Mỗi phase có compatibility facade rồi cleanup. |
 
 ## Nhật ký thực hiện
+
+### 2026-08-10 — Phase 4 / Voice ownership exit criteria đạt
+
+- Phase: 4 — Voice ownership
+- Trạng thái: Hoàn tất
+- Hoàn thành: thêm `InterviewModule`; tách `AudioObjectStorage` chỉ upload/return URL+size khỏi `UploadAndTranscribeAnswerAudio`; chuyển STT thành `SpeechToText`, `VoiceMetricsService`, DTO và sole `transcription` consumer vào Interview; trích `TranscribeAnswer` để xử lý persist transcript/metrics, feedback/fallback và SSE. `AiModule` không còn đăng ký transcription worker hoặc provider Voice/Whisper.
+- Contract kiểm tra: giữ response `POST /sessions/:sessionId/turns/audio` (`audioFileUrl`, size, transcript, duration); giữ `transcription-${answerId}`, attempts/backoff, feedback payload, `turn.transcription_ready`, immediate upload transcription và queued/retry transcription paths.
+- Verification: `npm run build` — pass; `npm test -- --runInBand` — pass (44 suites, 380 tests); `npm run test:integration` — pass (1 suite); `npm run test:e2e` — pass (1 HTTP suite); `git diff --check` — pass.
+- Quyết định: tạo `InterviewModule` tối thiểu làm owner cho voice workflow; `TurnService` vẫn là facade HTTP/answer hiện hữu, không đổi API hay tách thêm các use case Phase 8 sớm.
+- Rủi ro/rollback: chỉ một `@Processor(TRANSCRIPTION_QUEUE)` được đăng ký tại Interview; rollback là chuyển provider/processor registration về `AiModule`, không đổi schema, queue payload hoặc data.
+- Bước tiếp theo: chờ xác nhận để bắt đầu Phase 5 — Assessment ownership.
 
 ### 2026-08-10 — Phase 3 / Question ownership exit criteria đạt
 

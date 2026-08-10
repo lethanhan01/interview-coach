@@ -1,7 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { createClient } from '@supabase/supabase-js';
-import { AudioStorageService } from './audio-storage.service';
-import { WhisperService } from './whisper.service';
+import { AudioObjectStorage } from './audio-object-storage.service';
 
 jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(() => ({
@@ -9,7 +8,7 @@ jest.mock('@supabase/supabase-js', () => ({
   })),
 }));
 
-describe('AudioStorageService', () => {
+describe('AudioObjectStorage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -25,9 +24,7 @@ describe('AudioStorageService', () => {
       }),
     } as unknown as ConfigService;
 
-    new AudioStorageService(config, {
-      transcribe: jest.fn(),
-    } as unknown as WhisperService);
+    new AudioObjectStorage(config);
 
     expect(createClient).toHaveBeenCalledWith(
       'https://example.supabase.co',

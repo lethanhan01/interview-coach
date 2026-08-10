@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { TranscriptionProcessor } from './transcription.processor';
-import { PrismaService } from '../../prisma/prisma.service';
-import { SseService } from '../../common/services/sse.service';
-import { QuestionCriteriaService } from '../../question-criteria/question-criteria.service';
-import { WhisperService } from '../../turn/whisper.service';
-import { VoiceMetricsService } from '../../turn/voice-metrics.service';
+import { TranscribeAnswer } from './transcribe-answer.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { SseService } from '../common/services/sse.service';
+import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
+import { SpeechToText } from './speech-to-text.service';
+import { VoiceMetricsService } from './voice-metrics.service';
 import {
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
-} from '../../common/constants/queue.constants';
+} from '../common/constants/queue.constants';
 import {
   createMockPrismaService,
   createMockSseService,
@@ -19,9 +19,9 @@ import {
   createMockReportService,
   createMockQueue,
   createMockQuestionCriteriaService,
-} from '../../test-utils/mock-factories';
-import { ReportService } from '../../report/report.service';
-import { FALLBACK_FEEDBACK_MESSAGE } from '../fallback-content';
+} from '../test-utils/mock-factories';
+import { ReportService } from '../report/report.service';
+import { FALLBACK_FEEDBACK_MESSAGE } from '../ai/fallback-content';
 
 const BASE_JOB_DATA = {
   sessionId: 'session-123',
@@ -34,8 +34,8 @@ const BASE_JOB_DATA = {
   language: 'vi' as const,
 };
 
-describe('TranscriptionProcessor', () => {
-  let processor: TranscriptionProcessor;
+describe('TranscribeAnswer', () => {
+  let processor: TranscribeAnswer;
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockSse: ReturnType<typeof createMockSseService>;
   let mockWhisper: ReturnType<typeof createMockWhisperService>;
@@ -57,18 +57,18 @@ describe('TranscriptionProcessor', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        TranscriptionProcessor,
+        TranscribeAnswer,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
         { provide: SseService, useValue: mockSse },
-        { provide: WhisperService, useValue: mockWhisper },
+        { provide: SpeechToText, useValue: mockWhisper },
         { provide: VoiceMetricsService, useValue: mockVoiceMetrics },
         { provide: ReportService, useValue: mockReportService },
         { provide: getQueueToken(FEEDBACK_QUEUE), useValue: mockFeedbackQueue },
       ],
     }).compile();
 
-    processor = module.get<TranscriptionProcessor>(TranscriptionProcessor);
+    processor = module.get<TranscribeAnswer>(TranscribeAnswer);
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -115,7 +115,7 @@ describe('TranscriptionProcessor', () => {
       attemptsMade: 0,
       opts: { attempts: 2 },
     } as unknown as Job<typeof BASE_JOB_DATA>;
-    await processor.process(job);
+    await processor.execute(job);
 
     expect(mockWhisper.transcribe).toHaveBeenCalledWith(
       'https://example.com/audio.mp3',
@@ -174,7 +174,7 @@ describe('TranscriptionProcessor', () => {
       attemptsMade: 0,
       opts: { attempts: 2 },
     } as unknown as Job<typeof BASE_JOB_DATA>;
-    await processor.process(job);
+    await processor.execute(job);
 
     expect(mockFeedbackQueue.add).toHaveBeenCalled();
     expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
@@ -203,7 +203,7 @@ describe('TranscriptionProcessor', () => {
         opts: { attempts: 2 },
       } as unknown as Job<typeof BASE_JOB_DATA>;
 
-      await expect(processor.process(job)).rejects.toThrow('Whisper timeout');
+      await expect(processor.execute(job)).rejects.toThrow('Whisper timeout');
       expect(mockPrisma.$transaction).not.toHaveBeenCalled();
     });
 
@@ -227,7 +227,7 @@ describe('TranscriptionProcessor', () => {
         opts: { attempts: 2 },
       } as unknown as Job<typeof BASE_JOB_DATA>;
 
-      await processor.process(job);
+      await processor.execute(job);
 
       expect(txMock.aiFeedback.upsert).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -14,13 +14,13 @@ import {
 } from '../common/constants/queue.constants';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
+import type { UploadedAudioFile } from '../interview/audio-object-storage.service';
 import {
-  AudioStorageService,
+  UploadAndTranscribeAnswerAudio,
   type AudioUploadResult,
-  type UploadedAudioFile,
-} from './audio-storage.service';
-import { VoiceMetricsService } from './voice-metrics.service';
-import type { TranscriptionJobDto } from '../ai/processors/transcription.processor';
+} from '../interview/upload-and-transcribe-answer-audio.service';
+import { VoiceMetricsService } from '../interview/voice-metrics.service';
+import type { TranscriptionJobDto } from '../interview/transcription-job.dto';
 import { isSessionType } from '../ai/pipelines/interview-pipeline.interface';
 
 @Injectable()
@@ -28,7 +28,7 @@ export class TurnService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly questionCriteria: QuestionCriteriaService,
-    private readonly audioStorageService: AudioStorageService,
+    private readonly uploadAndTranscribeAudio: UploadAndTranscribeAnswerAudio,
     private readonly voiceMetricsService: VoiceMetricsService,
     @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
     @InjectQueue(TRANSCRIPTION_QUEUE)
@@ -56,7 +56,7 @@ export class TurnService {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
 
-    return this.audioStorageService.uploadInterviewAudio({
+    return this.uploadAndTranscribeAudio.execute({
       sessionId,
       userId,
       file,

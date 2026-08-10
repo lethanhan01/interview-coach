@@ -1,52 +1,40 @@
-import { Logger } from '@nestjs/common';
-import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '../../prisma/prisma.service';
-import { SseService } from '../../common/services/sse.service';
-import { QuestionCriteriaService } from '../../question-criteria/question-criteria.service';
-import { WhisperService } from '../../turn/whisper.service';
-import { VoiceMetricsService } from '../../turn/voice-metrics.service';
-import { ReportService } from '../../report/report.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { SseService } from '../common/services/sse.service';
+import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
+import { SpeechToText } from './speech-to-text.service';
+import { VoiceMetricsService } from './voice-metrics.service';
+import { ReportService } from '../report/report.service';
 import {
   TRANSCRIPTION_QUEUE,
   TRANSCRIPTION_JOB_ATTEMPTS,
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
-} from '../../common/constants/queue.constants';
-import type { SessionType } from '../pipelines/interview-pipeline.interface';
-import { getFallbackFeedbackMessage } from '../fallback-content';
-import type { OutputLanguage } from '../output-language';
-import { resolveOutputLanguage } from '../output-language';
+} from '../common/constants/queue.constants';
+import { getFallbackFeedbackMessage } from '../ai/fallback-content';
+import type { OutputLanguage } from '../ai/output-language';
+import { resolveOutputLanguage } from '../ai/output-language';
+import type { SessionType } from '../ai/pipelines/interview-pipeline.interface';
+import type { TranscriptionJobDto } from './transcription-job.dto';
 
-export interface TranscriptionJobDto {
-  sessionId: string;
-  answerId: string;
-  audioFileUrl: string;
-  audioDurationSeconds?: number;
-  audioSizeBytes?: number;
-  contextPack: 'VN' | 'Western';
-  sessionType: SessionType;
-  language?: OutputLanguage;
-}
-
-@Processor(TRANSCRIPTION_QUEUE)
-export class TranscriptionProcessor extends WorkerHost {
-  private readonly logger = new Logger(TranscriptionProcessor.name);
+@Injectable()
+export class TranscribeAnswer {
+  private readonly logger = new Logger(TranscribeAnswer.name);
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly questionCriteria: QuestionCriteriaService,
     private readonly sseService: SseService,
-    private readonly whisperService: WhisperService,
+    private readonly speechToText: SpeechToText,
     private readonly voiceMetricsService: VoiceMetricsService,
     private readonly reportService: ReportService,
     @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
-  ) {
-    super();
-  }
+  ) {}
 
-  async process(job: Job<TranscriptionJobDto>): Promise<void> {
+  async execute(job: Job<TranscriptionJobDto>): Promise<void> {
     const {
       sessionId,
       answerId,
@@ -58,7 +46,7 @@ export class TranscriptionProcessor extends WorkerHost {
     const language = resolveOutputLanguage(job.data.language);
 
     try {
-      const transcription = await this.whisperService.transcribe(audioFileUrl);
+      const transcription = await this.speechToText.transcribe(audioFileUrl);
       const answerText = transcription.text;
       const durationSeconds = hintDuration ?? transcription.durationSeconds;
       const voiceMetricsJson = this.voiceMetricsService.calculate(

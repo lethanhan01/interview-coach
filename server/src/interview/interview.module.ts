@@ -1,0 +1,43 @@
+import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
+import { AiModule } from '../ai/ai.module';
+import { QuestionCriteriaModule } from '../question-criteria/question-criteria.module';
+import { ReportModule } from '../report/report.module';
+import {
+  FEEDBACK_QUEUE,
+  TRANSCRIPTION_QUEUE,
+} from '../common/constants/queue.constants';
+import { AudioObjectStorage } from './audio-object-storage.service';
+import { SpeechToText } from './speech-to-text.service';
+import { TranscribeAnswer } from './transcribe-answer.service';
+import { TranscriptionProcessor } from './transcription.processor';
+import { UploadAndTranscribeAnswerAudio } from './upload-and-transcribe-answer-audio.service';
+import { VoiceMetricsService } from './voice-metrics.service';
+
+const workerProviders =
+  process.env.WORKERS_ENABLED === 'false' ? [] : [TranscriptionProcessor];
+
+@Module({
+  imports: [
+    AiModule,
+    QuestionCriteriaModule,
+    ReportModule,
+    BullModule.registerQueue(
+      { name: FEEDBACK_QUEUE },
+      { name: TRANSCRIPTION_QUEUE },
+    ),
+  ],
+  providers: [
+    AudioObjectStorage,
+    SpeechToText,
+    UploadAndTranscribeAnswerAudio,
+    VoiceMetricsService,
+    TranscribeAnswer,
+    ...workerProviders,
+  ],
+  exports: [
+    UploadAndTranscribeAnswerAudio,
+    VoiceMetricsService,
+  ],
+})
+export class InterviewModule {}

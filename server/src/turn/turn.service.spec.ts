@@ -4,8 +4,8 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { TurnService } from './turn.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
-import { AudioStorageService } from './audio-storage.service';
-import { VoiceMetricsService } from './voice-metrics.service';
+import { UploadAndTranscribeAnswerAudio } from '../interview/upload-and-transcribe-answer-audio.service';
+import { VoiceMetricsService } from '../interview/voice-metrics.service';
 import {
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
@@ -30,7 +30,7 @@ describe('TurnService', () => {
     typeof createMockQuestionCriteriaService
   >;
   let mockAudioStorage: {
-    uploadInterviewAudio: jest.Mock;
+    execute: jest.Mock;
   };
   let mockVoiceMetrics: ReturnType<typeof createMockVoiceMetricsService>;
 
@@ -80,7 +80,7 @@ describe('TurnService', () => {
     mockTranscriptionQueue = createMockQueue();
     mockQuestionCriteria = createMockQuestionCriteriaService();
     mockAudioStorage = {
-      uploadInterviewAudio: jest.fn(),
+      execute: jest.fn(),
     };
     mockVoiceMetrics = createMockVoiceMetricsService();
     mockVoiceMetrics.calculate.mockReturnValue({
@@ -95,7 +95,7 @@ describe('TurnService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
         {
-          provide: AudioStorageService,
+          provide: UploadAndTranscribeAnswerAudio,
           useValue: mockAudioStorage,
         },
         {
@@ -131,7 +131,7 @@ describe('TurnService', () => {
         errorCode: ErrorCode.SESSION_NOT_FOUND,
       });
 
-      expect(mockAudioStorage.uploadInterviewAudio).not.toHaveBeenCalled();
+      expect(mockAudioStorage.execute).not.toHaveBeenCalled();
     });
 
     it('ném FORBIDDEN khi user không phải owner', async () => {
@@ -145,10 +145,10 @@ describe('TurnService', () => {
         errorCode: ErrorCode.FORBIDDEN,
       });
 
-      expect(mockAudioStorage.uploadInterviewAudio).not.toHaveBeenCalled();
+      expect(mockAudioStorage.execute).not.toHaveBeenCalled();
     });
 
-    it('ủy quyền upload audio cho AudioStorageService khi session thuộc user', async () => {
+    it('ủy quyền upload audio cho use case khi session thuộc user', async () => {
       const uploadResult = {
         audioFileUrl:
           'https://project.supabase.co/storage/v1/object/public/interview-audio/u/s/audio.webm',
@@ -157,13 +157,13 @@ describe('TurnService', () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         savedJobDescription: { userId: 'user-abc' },
       });
-      mockAudioStorage.uploadInterviewAudio.mockResolvedValue(uploadResult);
+      mockAudioStorage.execute.mockResolvedValue(uploadResult);
 
       await expect(
         service.uploadAudio('session-123', 'user-abc', AUDIO_FILE),
       ).resolves.toEqual(uploadResult);
 
-      expect(mockAudioStorage.uploadInterviewAudio).toHaveBeenCalledWith({
+      expect(mockAudioStorage.execute).toHaveBeenCalledWith({
         sessionId: 'session-123',
         userId: 'user-abc',
         file: AUDIO_FILE,

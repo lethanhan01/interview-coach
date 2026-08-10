@@ -19,7 +19,7 @@ interface TranscribeResult {
 }
 
 @Injectable()
-export class WhisperService {
+export class SpeechToText {
   private readonly allowedHosts: Set<string>;
 
   constructor(

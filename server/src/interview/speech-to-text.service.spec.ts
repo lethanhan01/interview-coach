@@ -1,15 +1,15 @@
 import { ConfigService } from '@nestjs/config';
 import { OpenAIGateway } from '../ai/openai.gateway';
-import { WhisperService } from './whisper.service';
+import { SpeechToText } from './speech-to-text.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import {
   createMockConfigService,
   createMockOpenAIGateway,
 } from '../test-utils/mock-factories';
 
-describe('WhisperService', () => {
+describe('SpeechToText', () => {
   const originalFetch = global.fetch;
-  let service: WhisperService;
+  let service: SpeechToText;
   let mockOpenAI: ReturnType<typeof createMockOpenAIGateway>;
   let fetchMock: jest.MockedFunction<typeof fetch>;
 
@@ -19,7 +19,7 @@ describe('WhisperService', () => {
       SUPABASE_URL: 'https://project.supabase.co',
       AUDIO_ALLOWED_HOSTS: '',
     });
-    service = new WhisperService(
+    service = new SpeechToText(
       mockOpenAI as unknown as OpenAIGateway,
       config as unknown as ConfigService,
     );

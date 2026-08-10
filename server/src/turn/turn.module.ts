@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { AuthModule } from '../auth/auth.module';
-import { AiModule } from '../ai/ai.module';
+import { InterviewModule } from '../interview/interview.module';
 import { QuestionModule } from '../question/question.module';
 import {
   FEEDBACK_QUEUE,
@@ -9,14 +9,11 @@ import {
 } from '../common/constants/queue.constants';
 import { TurnController } from './turn.controller';
 import { TurnService } from './turn.service';
-import { AudioStorageService } from './audio-storage.service';
-import { WhisperService } from './whisper.service';
-import { VoiceMetricsService } from './voice-metrics.service';
 
 @Module({
   imports: [
     AuthModule,
-    AiModule,
+    InterviewModule,
     QuestionModule,
     BullModule.registerQueue({ name: FEEDBACK_QUEUE }),
     BullModule.registerQueue({ name: TRANSCRIPTION_QUEUE }),
@@ -24,9 +21,6 @@ import { VoiceMetricsService } from './voice-metrics.service';
   controllers: [TurnController],
   providers: [
     TurnService,
-    AudioStorageService,
-    WhisperService,
-    VoiceMetricsService,
   ],
 })
 export class TurnModule {}

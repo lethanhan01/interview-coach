@@ -13,14 +13,10 @@ import { MixedPipelineService } from './pipelines/mixed.pipeline.service';
 import { PipelineStrategyFactory } from './pipelines/pipeline-strategy.factory';
 import { FeedbackProcessor } from './processors/feedback.processor';
 import { ComprehensiveReportProcessor } from './processors/comprehensive-report.processor';
-import { TranscriptionProcessor } from './processors/transcription.processor';
-import { WhisperService } from '../turn/whisper.service';
-import { VoiceMetricsService } from '../turn/voice-metrics.service';
 import { ReportModule } from '../report/report.module';
 import {
   FEEDBACK_QUEUE,
   REPORT_QUEUE,
-  TRANSCRIPTION_QUEUE,
 } from '../common/constants/queue.constants';
 
 const workerProviders =
@@ -29,7 +25,6 @@ const workerProviders =
     : [
         FeedbackProcessor,
         ComprehensiveReportProcessor,
-        TranscriptionProcessor,
       ];
 
 @Module({
@@ -38,7 +33,6 @@ const workerProviders =
     BullModule.registerQueue(
       { name: FEEDBACK_QUEUE },
       { name: REPORT_QUEUE },
-      { name: TRANSCRIPTION_QUEUE },
     ),
   ],
   controllers: [RubricController],
@@ -54,8 +48,6 @@ const workerProviders =
     MixedPipelineService,
     PipelineStrategyFactory,
     ...workerProviders,
-    WhisperService,
-    VoiceMetricsService,
   ],
   exports: [PipelineStrategyFactory, ContextPackService, OpenAIGateway],
 })
