@@ -10,12 +10,12 @@ Giữ report type/version selection, report quality semantics, `report-${session
 
 ## Nhiệm vụ
 
-- [ ] Split nội bộ `ReportService` thành `GetReport`, `GetFeedbackProgress`, `RequestReportGeneration`, `ReportReadinessPolicy`; có thể là methods/classes nhỏ, giữ facade lúc migrate.
-- [ ] Extract `GenerateComprehensiveReport`: build projection, prompt/input validation, persist all report records, calculate overall score, mark session completed, emit event.
-- [ ] Move report processor/DTO vào Reporting with exactly one consumer for `comprehensive-report`.
-- [ ] Keep readiness direct in-process callback first. Nếu feedback/report split sinh circular dependency, introduce typed `FeedbackCompleted` notification with session/answer idempotency and failure rules documented.
-- [ ] Decide folder rename `report` -> `reporting` only after semantic split; physical rename không phải deliverable độc lập.
-- [ ] Delete old AI processor/provider exports only after consumer and controller tests pass.
+- [x] Split nội bộ `ReportService` thành read/progress facade, request generation và readiness policy methods.
+- [x] Extract `GenerateComprehensiveReport`: build projection, prompt/input validation, persist all report records, calculate overall score, mark session completed, emit event.
+- [x] Move report processor/DTO vào Reporting with exactly one consumer for `comprehensive-report`.
+- [x] Keep readiness direct in-process callback first; không phát sinh circular dependency nên không cần `FeedbackCompleted` notification.
+- [x] Giữ tên thư mục `report`; physical rename không phải deliverable độc lập.
+- [x] Delete old AI processor/provider exports sau khi consumer, controller và integration tests pass.
 
 ## Test bắt buộc
 

@@ -5,9 +5,9 @@
 
 ## Trạng thái hiện tại
 
-**Phase đang thực hiện:** Hoàn tất Phase 5 — Assessment ownership.
+**Phase đang thực hiện:** Hoàn tất Phase 6 — Reporting ownership.
 **Blocker hiện tại:** Chưa có.
-**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 6 — Reporting ownership.
+**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 7 — Session lifecycle.
 
 ## Bảng Phase
 
@@ -19,7 +19,7 @@
 | 3 — Question | Hoàn tất | Question là owner của `question-generation` worker và use case generation; AI chỉ còn provider/pipeline boundary. | Chờ xác nhận bắt đầu Phase 4. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
 | 4 — Voice | Hoàn tất | Interview sở hữu audio storage/STT orchestration và `transcription` worker; AI chỉ giữ OpenAI provider boundary. | Chờ xác nhận bắt đầu Phase 5. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
 | 5 — Assessment | Hoàn tất | Assessment sở hữu rubric read/controller, `EvaluateAnswer`, sanitizer/dimension matcher/fallback và sole `feedback` worker. | Chờ xác nhận bắt đầu Phase 6. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
-| 6 — Reporting | Chưa bắt đầu | — | Chờ Phase 5. | — |
+| 6 — Reporting | Hoàn tất | Reporting sở hữu report read/query, readiness và sole `comprehensive-report` worker; AI chỉ còn OpenAI provider boundary. | Chờ xác nhận bắt đầu Phase 7. | Build pass; unit 45 suites/381 tests pass; integration và HTTP E2E pass. |
 | 7 — Session | Chưa bắt đầu | — | Chờ Phase 1 và 6. | — |
 | 8 — Turn | Chưa bắt đầu | — | Chờ Phase 4 và 5. | — |
 | 9 — Infrastructure | Chưa bắt đầu | — | Chờ semantic phases. | — |
@@ -37,6 +37,17 @@
 | 2026-08-10 | Move behavior trước, move folder sau. | Folder-only PR lớn gây noise và che semantic regression. | Mỗi phase có compatibility facade rồi cleanup. |
 
 ## Nhật ký thực hiện
+
+### 2026-08-10 — Phase 6 / Reporting ownership exit criteria đạt
+
+- Phase: 6 — Reporting workflow
+- Trạng thái: Hoàn tất
+- Hoàn thành: chuyển `ComprehensiveReportProcessor` và payload DTO vào Reporting; trích `GenerateComprehensiveReport` để sở hữu projection, prompt/input validation, five report writes, skipped-answer handling, overall score/session completion và `report.ready`. `ReportService` giữ compatibility facade cho read/progress, request generation và readiness; `AiModule` không còn đăng ký report queue/processor hoặc import Reporting.
+- Contract kiểm tra: giữ `comprehensive-report` queue/job `report-${sessionId}`, payload, attempts/backoff/retry; latest report-version read, pending/partial/full/unavailable quality, skipped-answer model answer, session completion/overall score và SSE `report.ready`.
+- Verification: `npm run build` — pass; `npm test -- --runInBand` — pass (45 suites, 381 tests); `npm run test:integration` — pass (1 suite); `npm run test:e2e` — pass (1 HTTP suite); `git diff --check` — pass.
+- Quyết định: giữ direct in-process `FeedbackProcessor -> ReportService` readiness callback vì Reporting chỉ phụ thuộc AI provider, không tạo module cycle; không thêm event bus/notification. Giữ folder `report`; rename vật lý không tạo ownership mới.
+- Rủi ro/rollback: chỉ một `@Processor(REPORT_QUEUE)` tại Reporting. Rollback là đăng ký lại processor cũ trong `AiModule`, không đổi queue payload, schema hoặc report data.
+- Bước tiếp theo: chờ xác nhận để bắt đầu Phase 7 — Session lifecycle.
 
 ### 2026-08-10 — Phase 5 / Assessment ownership exit criteria đạt
 

@@ -3,7 +3,7 @@ import { TurnService } from '../src/turn/turn.service';
 import { FeedbackProcessor } from '../src/assessment/feedback/feedback.processor';
 import { SessionService } from '../src/session/session.service';
 import { ReportService } from '../src/report/report.service';
-import { ComprehensiveReportProcessor } from '../src/ai/processors/comprehensive-report.processor';
+import { GenerateComprehensiveReport } from '../src/report/generate-comprehensive-report.service';
 
 describe('Session completion flow (integration)', () => {
   it('submit answer -> feedback queue -> completing -> report queue -> completed', async () => {
@@ -244,7 +244,7 @@ describe('Session completion flow (integration)', () => {
       reportService,
       { get: jest.fn(() => 10) } as any,
     );
-    const reportProcessor = new ComprehensiveReportProcessor(
+    const reportGenerator = new GenerateComprehensiveReport(
       prisma as any,
       sseService as any,
       {
@@ -283,11 +283,7 @@ describe('Session completion flow (integration)', () => {
     expect(reportJobs).toHaveLength(1);
     expect(reportJobs[0].data.turnIds).toEqual([turn.answerId]);
 
-    await reportProcessor.process({
-      data: reportJobs[0].data,
-      attemptsMade: 0,
-      opts: reportJobs[0].opts,
-    } as unknown as Job<any>);
+    await reportGenerator.execute(reportJobs[0].data as any);
 
     expect(session.status).toBe('completed');
     expect(session.overallScore).toBe(84);

@@ -1,29 +1,26 @@
-import { Logger } from '@nestjs/common';
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { Job } from 'bullmq';
 import { z } from 'zod';
-import { PrismaService } from '../../prisma/prisma.service';
-import { SseService } from '../../common/services/sse.service';
-import { OpenAIGateway } from '../openai.gateway';
-import { REPORT_QUEUE } from '../../common/constants/queue.constants';
-import { COMPREHENSIVE_REPORT_PROMPT_CONFIG } from '../prompts/comprehensive-report-v1.0';
-import type { SessionType } from '../pipelines/interview-pipeline.interface';
+import { PrismaService } from '../prisma/prisma.service';
+import { SseService } from '../common/services/sse.service';
+import { OpenAIGateway } from '../ai/openai.gateway';
+import { COMPREHENSIVE_REPORT_PROMPT_CONFIG } from '../ai/prompts/comprehensive-report-v1.0';
+import type { SessionType } from '../ai/pipelines/interview-pipeline.interface';
 import {
   describeAIError,
   isAIFallbackEligible,
   isAIQuotaExceeded,
-} from '../ai-error.utils';
+} from '../ai/ai-error.utils';
 import {
   getFallbackActionPlan,
   getFallbackReportSummary,
-} from '../fallback-content';
+} from '../ai/fallback-content';
 import {
   getLanguageInstruction,
   resolveOutputLanguage,
-} from '../output-language';
+} from '../ai/output-language';
 
-interface ComprehensiveReportJobDto {
+export interface ComprehensiveReportJobDto {
   sessionId: string;
   sessionType: SessionType;
   contextPack: 'VN' | 'Western';
@@ -235,21 +232,19 @@ function buildSkippedDimensionScores(
     }));
 }
 
-@Processor(REPORT_QUEUE)
-export class ComprehensiveReportProcessor extends WorkerHost {
-  private readonly logger = new Logger(ComprehensiveReportProcessor.name);
+@Injectable()
+export class GenerateComprehensiveReport {
+  private readonly logger = new Logger(GenerateComprehensiveReport.name);
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly sseService: SseService,
     private readonly openai: OpenAIGateway,
-  ) {
-    super();
-  }
+  ) {}
 
-  async process(job: Job<ComprehensiveReportJobDto>): Promise<void> {
-    const { sessionId, turnIds } = job.data;
-    const language = resolveOutputLanguage(job.data.language);
+  async execute(job: ComprehensiveReportJobDto): Promise<void> {
+    const { sessionId, turnIds } = job;
+    const language = resolveOutputLanguage(job.language);
 
     const answers = await this.prisma.userAnswer.findMany({
       where: { id: { in: turnIds } },
@@ -609,5 +604,9 @@ export class ComprehensiveReportProcessor extends WorkerHost {
           error instanceof Error ? error.message : String(error),
         );
       });
+  }
+
+  process(job: { data: ComprehensiveReportJobDto }): Promise<void> {
+    return this.execute(job.data);
   }
 }

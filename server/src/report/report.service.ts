@@ -301,6 +301,20 @@ export class ReportService {
     contextPack: 'VN' | 'Western',
     language?: string,
   ): Promise<void> {
+    return this.requestReportGeneration(
+      sessionId,
+      sessionType,
+      contextPack,
+      language,
+    );
+  }
+
+  private async requestReportGeneration(
+    sessionId: string,
+    sessionType: string,
+    contextPack: 'VN' | 'Western',
+    language?: string,
+  ): Promise<void> {
     const outputLanguage = resolveOutputLanguage(language);
     const answers = await this.prisma.userAnswer.findMany({
       where: { question: { sessionId } },
@@ -348,6 +362,20 @@ export class ReportService {
     contextPack: 'VN' | 'Western',
     language?: string,
   ): Promise<void> {
+    return this.evaluateReportReadiness(
+      sessionId,
+      sessionType,
+      contextPack,
+      language,
+    );
+  }
+
+  private async evaluateReportReadiness(
+    sessionId: string,
+    sessionType: string,
+    contextPack: 'VN' | 'Western',
+    language?: string,
+  ): Promise<void> {
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
       select: { status: true, language: true },
@@ -368,7 +396,7 @@ export class ReportService {
 
     if (totalAnswers === 0 || pendingFeedbacks > 0) return;
 
-    await this.enqueueReport(
+    await this.requestReportGeneration(
       sessionId,
       sessionType,
       contextPack,

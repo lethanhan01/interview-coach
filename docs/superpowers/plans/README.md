@@ -6,11 +6,11 @@
 | --- | --- | --- | --- |
 | 0 | Baseline và safety net | Hoàn tất | [Phase 0](./01-phase-0-safety-net.md) · [Contract inventory](./00-phase-0-contract-inventory.md) |
 | 1 | Rubric Catalog về Assessment | Hoàn tất | [Phase 1](./02-phase-1-rubric-catalog.md) |
-| 2 | Cô lập OpenAI/provider boundary | Chưa bắt đầu | [Phase 2](./03-phase-2-ai-provider-boundary.md) |
-| 3 | Question ownership và worker | Chưa bắt đầu | [Phase 3](./04-phase-3-question-ownership.md) |
-| 4 | Voice, storage và transcription | Chưa bắt đầu | [Phase 4](./05-phase-4-voice-storage-transcription.md) |
-| 5 | Assessment và feedback | Chưa bắt đầu | [Phase 5](./06-phase-5-assessment-feedback.md) |
-| 6 | Reporting workflow | Chưa bắt đầu | [Phase 6](./07-phase-6-reporting-workflow.md) |
+| 2 | Cô lập OpenAI/provider boundary | Hoàn tất | [Phase 2](./03-phase-2-ai-provider-boundary.md) |
+| 3 | Question ownership và worker | Hoàn tất | [Phase 3](./04-phase-3-question-ownership.md) |
+| 4 | Voice, storage và transcription | Hoàn tất | [Phase 4](./05-phase-4-voice-storage-transcription.md) |
+| 5 | Assessment và feedback | Hoàn tất | [Phase 5](./06-phase-5-assessment-feedback.md) |
+| 6 | Reporting workflow | Hoàn tất | [Phase 6](./07-phase-6-reporting-workflow.md) |
 | 7 | Session lifecycle | Chưa bắt đầu | [Phase 7](./08-phase-7-session-lifecycle.md) |
 | 8 | Turn/answer workflow | Chưa bắt đầu | [Phase 8](./09-phase-8-turn-answer-workflow.md) |
 | 9 | Infrastructure placement | Chưa bắt đầu | [Phase 9](./10-phase-9-infrastructure-cleanup.md) |

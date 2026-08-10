@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import type { Job } from 'bullmq';
-import { ComprehensiveReportProcessor } from './comprehensive-report.processor';
-import { PrismaService } from '../../prisma/prisma.service';
-import { SseService } from '../../common/services/sse.service';
-import { OpenAIGateway } from '../openai.gateway';
+import { GenerateComprehensiveReport } from './generate-comprehensive-report.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { SseService } from '../common/services/sse.service';
+import { OpenAIGateway } from '../ai/openai.gateway';
 import {
   createMockOpenAIGateway,
   createMockSseService,
-} from '../../test-utils/mock-factories';
+} from '../test-utils/mock-factories';
 
 interface FeedbackRow {
   userAnswerId: string;
@@ -73,8 +73,8 @@ interface PrismaMock {
   >;
 }
 
-describe('ComprehensiveReportProcessor', () => {
-  let processor: ComprehensiveReportProcessor;
+describe('GenerateComprehensiveReport', () => {
+  let processor: GenerateComprehensiveReport;
   let prisma: PrismaMock;
   let mockSse: ReturnType<typeof createMockSseService>;
   let mockOpenAI: ReturnType<typeof createMockOpenAIGateway>;
@@ -143,14 +143,14 @@ describe('ComprehensiveReportProcessor', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        ComprehensiveReportProcessor,
+        GenerateComprehensiveReport,
         { provide: PrismaService, useValue: prisma },
         { provide: SseService, useValue: mockSse },
         { provide: OpenAIGateway, useValue: mockOpenAI },
       ],
     }).compile();
 
-    processor = module.get(ComprehensiveReportProcessor);
+    processor = module.get(GenerateComprehensiveReport);
   });
 
   it('ném lỗi để BullMQ retry khi feedback chưa đủ', async () => {
