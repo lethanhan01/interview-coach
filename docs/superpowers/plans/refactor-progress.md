@@ -5,9 +5,9 @@
 
 ## Trạng thái hiện tại
 
-**Phase đang thực hiện:** Hoàn tất Phase 4 — Voice ownership.
+**Phase đang thực hiện:** Hoàn tất Phase 5 — Assessment ownership.
 **Blocker hiện tại:** Chưa có.
-**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 5 — Assessment ownership.
+**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 6 — Reporting ownership.
 
 ## Bảng Phase
 
@@ -18,7 +18,7 @@
 | 2 — AI boundary | Hoàn tất | Tách OpenAI chat/transcription SDK invocation khỏi facade; gateway giữ toàn bộ behavior policy. | Chờ xác nhận bắt đầu Phase 3. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
 | 3 — Question | Hoàn tất | Question là owner của `question-generation` worker và use case generation; AI chỉ còn provider/pipeline boundary. | Chờ xác nhận bắt đầu Phase 4. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
 | 4 — Voice | Hoàn tất | Interview sở hữu audio storage/STT orchestration và `transcription` worker; AI chỉ giữ OpenAI provider boundary. | Chờ xác nhận bắt đầu Phase 5. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
-| 5 — Assessment | Chưa bắt đầu | — | Chờ xác nhận bắt đầu Phase 5. | Phase 1 và 2 dependencies đã đạt. |
+| 5 — Assessment | Hoàn tất | Assessment sở hữu rubric read/controller, `EvaluateAnswer`, sanitizer/dimension matcher/fallback và sole `feedback` worker. | Chờ xác nhận bắt đầu Phase 6. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
 | 6 — Reporting | Chưa bắt đầu | — | Chờ Phase 5. | — |
 | 7 — Session | Chưa bắt đầu | — | Chờ Phase 1 và 6. | — |
 | 8 — Turn | Chưa bắt đầu | — | Chờ Phase 4 và 5. | — |
@@ -37,6 +37,28 @@
 | 2026-08-10 | Move behavior trước, move folder sau. | Folder-only PR lớn gây noise và che semantic regression. | Mỗi phase có compatibility facade rồi cleanup. |
 
 ## Nhật ký thực hiện
+
+### 2026-08-10 — Phase 5 / Assessment ownership exit criteria đạt
+
+- Phase: 5 — Assessment ownership
+- Trạng thái: Hoàn tất
+- Hoàn thành: Assessment sở hữu rubric context read/controller, `EvaluateAnswer`, dimension matcher, segment sanitizer, feedback fallback và sole `feedback` worker. Worker gọi use case rồi persist/fallback, emit SSE và kiểm tra Report readiness; `AiModule` không còn đăng ký feedback queue/processor hoặc rubric/context provider.
+- Contract kiểm tra: giữ `feedback` queue/payload/concurrency/retry, weighted score, dimension validation/normalization, annotation repair, fallback text, `AiFeedback`/`AnnotatedSegment` write shape, SSE `turn.feedback_ready`/`session.feedback_progress` và direct Report readiness call.
+- Verification: `npm run build` — pass; `npm test -- --runInBand` — pass (44 suites, 380 tests); `npm run test:integration` — pass (1 suite); `npm run test:e2e` — pass (1 HTTP suite); `git diff --check` — pass.
+- Quyết định: xóa các compatibility re-export của context pack, feedback worker/sanitizer/dimension matcher và rubric controller sau khi chuyển hết importer. Giữ `BasePipelineService.evaluateAnswer` như code compatibility không còn được feedback worker gọi; chỉ xoá method này khi không còn importer thực.
+- Rủi ro/rollback: chỉ một `@Processor(FEEDBACK_QUEUE)` tại Assessment; rollback là đăng ký lại processor cũ trong `AiModule`, không đổi schema, queue payload hoặc data.
+- Bước tiếp theo: chờ xác nhận để bắt đầu Phase 6 — Reporting ownership.
+
+### 2026-08-10 — Phase 5 / feedback worker và rubric context ownership bắt đầu
+
+- Phase: 5 — Assessment ownership
+- Trạng thái: Đang thực hiện
+- Hoàn thành: chuyển sole `feedback` BullMQ processor và `ContextPackService` registration sang `AssessmentModule`; `AiModule` không còn đăng ký feedback queue/processor hoặc context-pack provider. Giữ compatibility re-export cho các importer cũ trong lúc migration.
+- Contract kiểm tra: không đổi queue name/payload, concurrency, retry/fallback, DB write, SSE hoặc Report readiness flow.
+- Verification: `npm run build` — pass; `npm test -- --runInBand src/ai/processors/feedback.processor.spec.ts src/ai/processors/feedback-flow.integration.spec.ts` — pass (2 suites, 29 tests).
+- Quyết định: chưa đánh dấu phase hoàn tất vì `BasePipelineService.evaluateAnswer` vẫn chứa rubric evaluation; sẽ trích use case trước khi xoá compatibility exports.
+- Rủi ro/rollback: chỉ có một feedback processor được đăng ký tại Assessment; rollback là đăng ký lại processor cũ trong `AiModule`, không đổi schema/data/queue payload.
+- Bước tiếp theo: trích `EvaluateAnswer`, persistence/fallback và assessment utilities khỏi AI pipeline.
 
 ### 2026-08-10 — Phase 4 / Voice ownership exit criteria đạt
 

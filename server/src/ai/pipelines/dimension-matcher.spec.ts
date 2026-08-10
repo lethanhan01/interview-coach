@@ -1,5 +1,5 @@
-import { resolveAppliedDimensions } from './dimension-matcher';
-import type { RubricDimensionEntry } from '../context-pack.service';
+import { resolveAppliedDimensions } from '../../assessment/dimension-matcher';
+import type { RubricDimensionEntry } from '../../assessment/context-pack.service';
 
 // Dimension data thật từ VN pack (context-pack.data.ts)
 const VN_BEHAVIORAL: RubricDimensionEntry[] = [

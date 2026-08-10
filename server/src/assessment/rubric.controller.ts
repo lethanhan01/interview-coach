@@ -4,7 +4,7 @@ import {
   ContextPackService,
   type ContextPackType,
 } from './context-pack.service';
-import type { SessionType } from './pipelines/interview-pipeline.interface';
+import type { SessionType } from '../ai/pipelines/interview-pipeline.interface';
 import {
   ApiCookieAuth,
   ApiOkResponse,

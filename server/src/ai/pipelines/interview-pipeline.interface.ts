@@ -1,4 +1,4 @@
-import type { ContextPackConfig } from '../context-pack.service';
+import type { ContextPackConfig } from '../../assessment/context-pack.service';
 import type { OutputLanguage } from '../output-language';
 
 export const SESSION_TYPES = ['hr', 'technical', 'mixed'] as const;

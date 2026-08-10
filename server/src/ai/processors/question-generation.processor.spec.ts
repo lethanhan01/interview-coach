@@ -3,7 +3,7 @@ import { QuestionGenerationProcessor } from '../../question/question-generation.
 import { GenerateSessionQuestions } from '../../question/generate-session-questions.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
-import { ContextPackService } from '../context-pack.service';
+import { ContextPackService } from '../../assessment/context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
 import { QuestionBankService } from '../../question-bank/question-bank.service';
 import { QuestionCriteriaService } from '../../question-criteria/question-criteria.service';

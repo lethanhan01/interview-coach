@@ -23,11 +23,11 @@ import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1
 import { getLanguageInstruction } from '../output-language';
 import { QUESTION_GEN_PROMPT_CONFIG } from '../prompts/question-gen-v1.0';
 import { z } from 'zod';
-import { resolveAppliedDimensions } from './dimension-matcher';
+import { resolveAppliedDimensions } from '../../assessment/dimension-matcher';
 import {
   sanitizeFeedbackSegments,
   type SegmentSanitizerIssue,
-} from '../feedback-segment-sanitizer';
+} from '../../assessment/feedback-segment-sanitizer';
 
 type ValidatedFeedback = z.infer<typeof FeedbackSchema>;
 

@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
-import { ContextPackService } from '../ai/context-pack.service';
-import type { ContextPackConfig } from '../ai/context-pack.service';
+import { ContextPackService } from '../assessment/context-pack.service';
+import type { ContextPackConfig } from '../assessment/context-pack.service';
 import { describeAIError, isAIFallbackEligible } from '../ai/ai-error.utils';
 import { OpenAIGateway } from '../ai/openai.gateway';
 import { resolveOutputLanguage } from '../ai/output-language';

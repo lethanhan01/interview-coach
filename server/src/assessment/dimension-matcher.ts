@@ -1,4 +1,4 @@
-import type { RubricDimensionEntry } from '../context-pack.service';
+import type { RubricDimensionEntry } from './context-pack.service';
 
 export interface MatchedDimension {
   id: string;

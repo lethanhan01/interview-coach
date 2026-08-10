@@ -3,14 +3,14 @@ import type { Prisma } from '@prisma/client';
 import {
   CONTEXT_PACK_DATA,
   ContextPackId,
-} from '../assessment/rubric/context-pack.data';
+} from './rubric/context-pack.data';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   buildRubricCategoriesFromPack,
   buildRubricSnapshot,
   buildScoringWeights,
   type RubricCategorySeed,
-} from '../assessment/rubric/rubric-versioning';
+} from './rubric/rubric-versioning';
 
 export type ContextPackType = ContextPackId;
 export type RubricDimension = string;

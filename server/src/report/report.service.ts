@@ -20,7 +20,7 @@ import {
   getFallbackReportSummary,
 } from '../ai/fallback-content';
 import { resolveOutputLanguage } from '../ai/output-language';
-import { sanitizeFeedbackSegments } from '../ai/feedback-segment-sanitizer';
+import { sanitizeFeedbackSegments } from '../assessment/feedback-segment-sanitizer';
 
 function toRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === 'object' && !Array.isArray(value)) {

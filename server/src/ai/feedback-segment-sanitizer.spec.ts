@@ -1,4 +1,4 @@
-import { sanitizeFeedbackSegments } from './feedback-segment-sanitizer';
+import { sanitizeFeedbackSegments } from '../assessment/feedback-segment-sanitizer';
 
 const makeSegment = (
   overrides: Partial<

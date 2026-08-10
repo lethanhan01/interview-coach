@@ -1,7 +1,7 @@
 import type {
   ContextPackConfig,
   RubricDimensionEntry,
-} from '../ai/context-pack.service';
+} from '../assessment/context-pack.service';
 import type { SessionType } from '../ai/pipelines/interview-pipeline.interface';
 
 export type QuestionCategory = 'behavioral' | 'technical';

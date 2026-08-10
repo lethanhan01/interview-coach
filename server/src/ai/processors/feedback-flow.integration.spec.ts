@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import type { Job } from 'bullmq';
-import { FeedbackProcessor } from './feedback.processor';
+import { FeedbackProcessor } from '../../assessment/feedback/feedback.processor';
 import { HrPipelineService } from '../pipelines/hr.pipeline.service';
 import { TechnicalPipelineService } from '../pipelines/technical.pipeline.service';
 import { MixedPipelineService } from '../pipelines/mixed.pipeline.service';
@@ -9,10 +9,11 @@ import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory'
 import { PromptBuilderService } from '../prompt-builder.service';
 import { ZodValidatorService } from '../zod-validator.service';
 import { OpenAIGateway } from '../openai.gateway';
-import { ContextPackService } from '../context-pack.service';
+import { ContextPackService } from '../../assessment/context-pack.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
 import { ReportService } from '../../report/report.service';
+import { EvaluateAnswer } from '../../assessment/evaluate-answer.service';
 import {
   createMockReportService,
   createMockSseService,
@@ -132,6 +133,7 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FeedbackProcessor,
+        EvaluateAnswer,
         HrPipelineService,
         TechnicalPipelineService,
         MixedPipelineService,

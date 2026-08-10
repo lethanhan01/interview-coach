@@ -1,10 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import type { Job } from 'bullmq';
-import { FeedbackProcessor } from './feedback.processor';
+import { FeedbackProcessor } from '../../assessment/feedback/feedback.processor';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
-import { ContextPackService } from '../context-pack.service';
+import { ContextPackService } from '../../assessment/context-pack.service';
 import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
+import { EvaluateAnswer } from '../../assessment/evaluate-answer.service';
 import { ReportService } from '../../report/report.service';
 import {
   createMockContextPackService,
@@ -142,6 +143,7 @@ describe('FeedbackProcessor', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: SseService, useValue: mockSse },
         { provide: ContextPackService, useValue: mockContextPack },
+        { provide: EvaluateAnswer, useValue: { execute: strategy.evaluateAnswer } },
         { provide: PipelineStrategyFactory, useValue: mockFactory },
         { provide: ReportService, useValue: mockReportService },
       ],
@@ -356,10 +358,12 @@ describe('FeedbackProcessor', () => {
     );
   });
 
-  it('getStrategy được gọi với sessionType từ job data', async () => {
+  it('EvaluateAnswer nhận sessionType từ job data', async () => {
     await processor.process(makeJob());
 
-    expect(mockFactory.getStrategy).toHaveBeenCalledWith('hr');
+    expect(strategy.evaluateAnswer).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionType: 'hr' }),
+    );
   });
 
   it('đọc ContextPack theo context của session', async () => {
@@ -427,7 +431,7 @@ describe('FeedbackProcessor', () => {
     ).toEqual(expect.objectContaining({ concurrency: 2 }));
   });
 
-  it('technical session type: getStrategy nhận technical', async () => {
+  it('technical session type được truyền sang EvaluateAnswer', async () => {
     const technicalJob = {
       data: { ...jobData, sessionType: 'technical' as const },
       attemptsMade: 0,
@@ -436,7 +440,9 @@ describe('FeedbackProcessor', () => {
 
     await processor.process(technicalJob);
 
-    expect(mockFactory.getStrategy).toHaveBeenCalledWith('technical');
+    expect(strategy.evaluateAnswer).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionType: 'technical' }),
+    );
   });
 
   it('gọi enqueueIfAllFeedbacksReady sau khi feedback thành công', async () => {

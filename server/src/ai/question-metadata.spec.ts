@@ -3,7 +3,7 @@ import {
   normalizeGeneratedQuestionMetadata,
   normalizeQuestionMetadataForCleanup,
 } from '../question/question-metadata';
-import type { ContextPackConfig } from './context-pack.service';
+import type { ContextPackConfig } from '../assessment/context-pack.service';
 
 const contextPack = {
   behavioralDimensions: [

@@ -1,3 +1,4 @@
+// Sanitizes model-produced annotations before Assessment persistence.
 export interface FeedbackSegmentLike {
   segmentText: string;
   startIndex?: number;

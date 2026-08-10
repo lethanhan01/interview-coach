@@ -1,3 +1,4 @@
+// BullMQ adapter for the Assessment feedback workflow.
 import { Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
@@ -5,23 +6,23 @@ import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SseService } from '../../common/services/sse.service';
 import { ContextPackService } from '../context-pack.service';
-import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
 import { ReportService } from '../../report/report.service';
 import {
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
 } from '../../common/constants/queue.constants';
-import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../prompts/surgical-feedback-v1.5';
-import type { SessionType } from '../pipelines/interview-pipeline.interface';
+import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../../ai/prompts/surgical-feedback-v1.5';
+import type { SessionType } from '../../ai/pipelines/interview-pipeline.interface';
 import {
   describeAIError,
   isAIQuotaExceeded,
   isAIFallbackEligible,
-} from '../ai-error.utils';
-import { getFallbackFeedbackMessage } from '../fallback-content';
-import type { OutputLanguage } from '../output-language';
-import { resolveOutputLanguage } from '../output-language';
+} from '../../ai/ai-error.utils';
+import { getFallbackFeedbackMessage } from '../feedback-fallback';
+import type { OutputLanguage } from '../../ai/output-language';
+import { resolveOutputLanguage } from '../../ai/output-language';
 import { sanitizeFeedbackSegments } from '../feedback-segment-sanitizer';
+import { EvaluateAnswer } from '../evaluate-answer.service';
 
 interface FeedbackJobDto {
   sessionId: string;
@@ -57,7 +58,7 @@ export class FeedbackProcessor extends WorkerHost {
     private readonly prisma: PrismaService,
     private readonly sseService: SseService,
     private readonly contextPackService: ContextPackService,
-    private readonly factory: PipelineStrategyFactory,
+    private readonly evaluateAnswer: EvaluateAnswer,
     private readonly reportService: ReportService,
   ) {
     super();
@@ -80,18 +81,14 @@ export class FeedbackProcessor extends WorkerHost {
     let hasAnnotations = false;
 
     try {
-      const contextPackConfig =
-        await this.contextPackService.getContextPack(contextPack);
-      const strategy = this.factory.getStrategy(sessionType);
-
-      const feedback = await strategy.evaluateAnswer({
+      const feedback = await this.evaluateAnswer.execute({
         sessionType,
         questionId,
         questionText,
         questionCategory,
         competencyDomains,
         answerText,
-        contextPackConfig,
+        contextPackConfig: await this.contextPackService.getContextPack(contextPack),
         language,
       });
       const sanitizedSegments = sanitizeFeedbackSegments(
@@ -234,6 +231,7 @@ export class FeedbackProcessor extends WorkerHost {
       language,
     );
   }
+
 
   private async emitFeedbackReady(
     sessionId: string,

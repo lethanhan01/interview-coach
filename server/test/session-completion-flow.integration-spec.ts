@@ -1,6 +1,6 @@
 import type { Job } from 'bullmq';
 import { TurnService } from '../src/turn/turn.service';
-import { FeedbackProcessor } from '../src/ai/processors/feedback.processor';
+import { FeedbackProcessor } from '../src/assessment/feedback/feedback.processor';
 import { SessionService } from '../src/session/session.service';
 import { ReportService } from '../src/report/report.service';
 import { ComprehensiveReportProcessor } from '../src/ai/processors/comprehensive-report.processor';
@@ -220,8 +220,7 @@ describe('Session completion flow (integration)', () => {
       sseService as any,
       { getContextPack: jest.fn(() => ({})) } as any,
       {
-        getStrategy: jest.fn(() => ({
-          evaluateAnswer: jest.fn(async () => ({
+        execute: jest.fn(async () => ({
             overallScore: 84,
             modelAnswer: 'A concise STAR response.',
             keyTakeaway: 'Quantify the result.',
@@ -235,7 +234,6 @@ describe('Session completion flow (integration)', () => {
               },
             ],
           })),
-        })),
       } as any,
       reportService,
     );
