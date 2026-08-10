@@ -1,14 +1,7 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import { REPORT_QUEUE } from '../common/constants/queue.constants';
-import {
-  REPORT_JOB_ATTEMPTS,
-  REPORT_JOB_RETRY_DELAY_MS,
-} from '../common/constants/queue.constants';
 import {
   ReportResponseDto,
   TranscriptItemDto,
@@ -19,8 +12,8 @@ import {
   getFallbackActionPlan,
   getFallbackReportSummary,
 } from '../ai/fallback-content';
-import { resolveOutputLanguage } from '../ai/output-language';
 import { sanitizeFeedbackSegments } from '../assessment/feedback-segment-sanitizer';
+import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
 
 function toRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -57,7 +50,7 @@ function toSkippedModelAnswerMap(value: unknown): Map<string, string> {
 export class ReportService {
   constructor(
     private readonly prisma: PrismaService,
-    @InjectQueue(REPORT_QUEUE) private readonly reportQueue: Queue,
+    private readonly dispatcher: WorkflowDispatcher,
   ) {}
 
   async getReport(
@@ -295,65 +288,8 @@ export class ReportService {
     };
   }
 
-  async enqueueReport(
-    sessionId: string,
-    sessionType: string,
-    contextPack: 'VN' | 'Western',
-    language?: string,
-  ): Promise<void> {
-    return this.requestReportGeneration(
-      sessionId,
-      sessionType,
-      contextPack,
-      language,
-    );
-  }
-
-  private async requestReportGeneration(
-    sessionId: string,
-    sessionType: string,
-    contextPack: 'VN' | 'Western',
-    language?: string,
-  ): Promise<void> {
-    const outputLanguage = resolveOutputLanguage(language);
-    const answers = await this.prisma.userAnswer.findMany({
-      where: { question: { sessionId } },
-      select: { id: true },
-      orderBy: { createdAt: 'asc' },
-    });
-    const turnIds = answers.map((answer) => answer.id);
-    if (turnIds.length === 0) {
-      throw new InterviewAIException(
-        ErrorCode.SESSION_INCOMPLETE,
-        HttpStatus.CONFLICT,
-        'Không thể tạo báo cáo khi chưa có câu trả lời.',
-      );
-    }
-
-    const jobId = `report-${sessionId}`;
-    const existingJob = await this.reportQueue.getJob(jobId);
-    if (existingJob) {
-      if ((await existingJob.getState()) === 'failed') {
-        await existingJob.retry();
-      }
-      return;
-    }
-
-    await this.reportQueue.add(
-      'comprehensive-report',
-      {
-        sessionId,
-        sessionType,
-        contextPack,
-        language: outputLanguage,
-        turnIds,
-      },
-      {
-        jobId,
-        attempts: REPORT_JOB_ATTEMPTS,
-        backoff: { type: 'fixed', delay: REPORT_JOB_RETRY_DELAY_MS },
-      },
-    );
+  async enqueueReport(sessionId: string): Promise<void> {
+    await this.dispatcher.dispatchFor('report-generation', sessionId);
   }
 
   async enqueueIfAllFeedbacksReady(
@@ -376,9 +312,12 @@ export class ReportService {
     contextPack: 'VN' | 'Western',
     language?: string,
   ): Promise<void> {
+    void sessionType;
+    void contextPack;
+    void language;
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
-      select: { status: true, language: true },
+      select: { status: true },
     });
 
     if (session?.status !== 'completing') return;
@@ -396,11 +335,6 @@ export class ReportService {
 
     if (totalAnswers === 0 || pendingFeedbacks > 0) return;
 
-    await this.requestReportGeneration(
-      sessionId,
-      sessionType,
-      contextPack,
-      language ?? session.language,
-    );
+    await this.enqueueReport(sessionId);
   }
 }

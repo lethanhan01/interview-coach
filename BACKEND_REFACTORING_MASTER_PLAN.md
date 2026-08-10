@@ -2,6 +2,8 @@
 
 **Status:** planning only. This document does not authorize implementation, database migration, commit, or API change. It is based on `BACKEND_ARCHITECTURE_ASSESSMENT.md` and a source revalidation on 2026-08-10 of the P0/P1 code paths.
 
+> **Product-decision addendum (2026-08-10):** Retain email verification as a future product feature rather than removing its gate; defer audio transcription as a future feature; and allow multiple active saved job descriptions for the same user/company/title. These decisions supersede any contrary assumption below. RF-002 now requires a separately scoped verification-feature design and rollout decision; RF-010 is deferred; RF-012 must not add the proposed saved-job-description unique index.
+
 ## 1. Executive Summary
 
 | Item | Plan |

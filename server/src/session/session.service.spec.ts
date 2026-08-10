@@ -1,6 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { getQueueToken } from '@nestjs/bullmq';
 import { SessionService } from './session.service';
 import { CreateInterviewSession } from './create-interview-session.service';
 import { ChangeInterviewSessionStatus } from './change-interview-session-status.service';
@@ -8,16 +7,14 @@ import { SessionLifecyclePolicy } from './session-lifecycle.policy';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { RubricCatalogService } from '../assessment/rubric/rubric-catalog.service';
-import { ReportService } from '../report/report.service';
+import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
 import { WorkflowService } from '../workflow/workflow.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import { QUESTION_GEN_QUEUE } from '../common/constants/queue.constants';
 import {
   createMockPrismaService,
   createMockConfigService,
-  createMockQueue,
-  createMockReportService,
+  createMockWorkflowDispatcher,
   createMockWorkflowService,
 } from '../test-utils/mock-factories';
 
@@ -50,9 +47,8 @@ const CREATE_DTO = {
 describe('SessionService', () => {
   let service: SessionService;
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
-  let mockQuestionQueue: ReturnType<typeof createMockQueue>;
-  let mockReportService: ReturnType<typeof createMockReportService>;
   let mockWorkflowService: ReturnType<typeof createMockWorkflowService>;
+  let mockWorkflowDispatcher: ReturnType<typeof createMockWorkflowDispatcher>;
   let mockRubricCatalog: {
     ensureContextPack: jest.Mock;
     ensureActiveRubricVersion: jest.Mock;
@@ -61,9 +57,8 @@ describe('SessionService', () => {
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
-    mockQuestionQueue = createMockQueue();
-    mockReportService = createMockReportService();
     mockWorkflowService = createMockWorkflowService();
+    mockWorkflowDispatcher = createMockWorkflowDispatcher();
     mockRubricCatalog = {
       ensureContextPack: jest.fn().mockResolvedValue(undefined),
       ensureActiveRubricVersion: jest
@@ -82,12 +77,8 @@ describe('SessionService', () => {
         SessionLifecyclePolicy,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: RubricCatalogService, useValue: mockRubricCatalog },
-        {
-          provide: getQueueToken(QUESTION_GEN_QUEUE),
-          useValue: mockQuestionQueue,
-        },
-        { provide: ReportService, useValue: mockReportService },
         { provide: WorkflowService, useValue: mockWorkflowService },
+        { provide: WorkflowDispatcher, useValue: mockWorkflowDispatcher },
         { provide: ConfigService, useValue: mockConfig },
       ],
     }).compile();
@@ -101,7 +92,6 @@ describe('SessionService', () => {
     it('tạo session thành công khi đếm < 10', async () => {
       mockPrisma.interviewSession.count.mockResolvedValue(5);
       mockPrisma.interviewSession.create.mockResolvedValue(BASE_SESSION);
-      mockQuestionQueue.add.mockResolvedValue({});
 
       const result = await service.create('user-abc', CREATE_DTO);
 
@@ -134,30 +124,15 @@ describe('SessionService', () => {
       );
     });
 
-    it('enqueue question-generation job sau khi tạo', async () => {
+    it('yêu cầu dispatcher gửi question-generation sau khi tạo', async () => {
       mockPrisma.interviewSession.count.mockResolvedValue(0);
       mockPrisma.interviewSession.create.mockResolvedValue(BASE_SESSION);
-      mockQuestionQueue.add.mockResolvedValue({});
 
       await service.create('user-abc', CREATE_DTO);
 
-      expect(mockQuestionQueue.add).toHaveBeenCalledWith(
+      expect(mockWorkflowDispatcher.dispatchFor).toHaveBeenCalledWith(
         'question-generation',
-        {
-          sessionId: '11111111-1111-4111-8111-111111111111',
-          sessionType: 'hr',
-          jobDescriptionText: CREATE_DTO.jobDescription,
-          targetRoles: [],
-          contextPack: 'VN',
-          rubricVersionId: 'rubric-version-vn',
-          language: 'vi',
-          totalQuestions: 5,
-          durationMin: 30,
-        },
-        {
-          attempts: 2,
-          backoff: { type: 'fixed', delay: 2000 },
-        },
+        BASE_SESSION.id,
       );
     });
 
@@ -167,7 +142,6 @@ describe('SessionService', () => {
         ...BASE_SESSION,
         language: 'en',
       });
-      mockQuestionQueue.add.mockResolvedValue({});
 
       await service.create('user-abc', { ...CREATE_DTO, language: 'en' });
 
@@ -176,10 +150,9 @@ describe('SessionService', () => {
           data: expect.objectContaining({ language: 'en' }),
         }),
       );
-      expect(mockQuestionQueue.add).toHaveBeenCalledWith(
+      expect(mockWorkflowDispatcher.dispatchFor).toHaveBeenCalledWith(
         'question-generation',
-        expect.objectContaining({ language: 'en' }),
-        expect.any(Object),
+        BASE_SESSION.id,
       );
     });
 
@@ -209,7 +182,6 @@ describe('SessionService', () => {
     it('không throw khi count = 9', async () => {
       mockPrisma.interviewSession.count.mockResolvedValue(9);
       mockPrisma.interviewSession.create.mockResolvedValue(BASE_SESSION);
-      mockQuestionQueue.add.mockResolvedValue({});
 
       await expect(
         service.create('user-abc', CREATE_DTO),
@@ -226,18 +198,13 @@ describe('SessionService', () => {
           SessionLifecyclePolicy,
           { provide: PrismaService, useValue: mockPrisma },
           { provide: RubricCatalogService, useValue: mockRubricCatalog },
-          {
-            provide: getQueueToken(QUESTION_GEN_QUEUE),
-            useValue: mockQuestionQueue,
-          },
-          { provide: ReportService, useValue: mockReportService },
           { provide: WorkflowService, useValue: mockWorkflowService },
+          { provide: WorkflowDispatcher, useValue: mockWorkflowDispatcher },
           { provide: ConfigService, useValue: mockConfig },
         ],
       }).compile();
       const noLimitService = noLimitModule.get<SessionService>(SessionService);
       mockPrisma.interviewSession.create.mockResolvedValue(BASE_SESSION);
-      mockQuestionQueue.add.mockResolvedValue({});
 
       await expect(
         noLimitService.create('user-abc', CREATE_DTO),
@@ -246,21 +213,15 @@ describe('SessionService', () => {
       expect(mockPrisma.interviewSession.count).not.toHaveBeenCalled();
     });
 
-    it('đặt session status = error khi enqueue thất bại', async () => {
+    it('giữ session generating khi dispatcher chưa gửi được job', async () => {
       mockPrisma.interviewSession.count.mockResolvedValue(0);
       mockPrisma.interviewSession.create.mockResolvedValue(BASE_SESSION);
-      mockQuestionQueue.add.mockRejectedValue(new Error('Redis unavailable'));
-      mockPrisma.interviewSession.update.mockResolvedValue({
-        ...BASE_SESSION,
-        status: 'error',
-      });
+      mockWorkflowDispatcher.dispatchFor.mockResolvedValue(undefined);
 
-      await expect(
-        service.create('user-abc', CREATE_DTO),
-      ).rejects.toMatchObject({ errorCode: ErrorCode.SERVICE_UNAVAILABLE });
-      expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { status: 'error' } }),
+      await expect(service.create('user-abc', CREATE_DTO)).resolves.toEqual(
+        BASE_SESSION,
       );
+      expect(mockPrisma.interviewSession.update).not.toHaveBeenCalled();
     });
 
     it('trả SERVICE_UNAVAILABLE khi context pack không thể đồng bộ', async () => {
@@ -287,7 +248,6 @@ describe('SessionService', () => {
         savedJobDescriptionId: 'saved-jd-1',
         jobTitle: 'Backend Developer',
       });
-      mockQuestionQueue.add.mockResolvedValue({});
 
       await service.create('user-abc', {
         ...CREATE_DTO,
@@ -326,7 +286,7 @@ describe('SessionService', () => {
         }),
       ).rejects.toMatchObject({ errorCode: ErrorCode.NOT_FOUND });
       expect(mockPrisma.interviewSession.create).not.toHaveBeenCalled();
-      expect(mockQuestionQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflowDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
   });
 
@@ -437,14 +397,13 @@ describe('SessionService', () => {
       });
     });
 
-    it('chuyển active → completing và gọi ReportService khi đủ answer', async () => {
+    it('chuyển active → completing và gọi dispatcher cho report', async () => {
       const activeSession = { ...BASE_SESSION, status: 'active' };
       const updated = { ...BASE_SESSION, status: 'completing' };
       mockPrisma.interviewSession.findUnique.mockResolvedValue(activeSession);
       mockPrisma.sessionQuestion.count.mockResolvedValue(5);
       mockPrisma.userAnswer.count.mockResolvedValue(5);
       mockPrisma.interviewSession.update.mockResolvedValue(updated);
-      mockReportService.enqueueIfAllFeedbacksReady.mockResolvedValue(undefined);
 
       const result = await service.updateStatus(
         '11111111-1111-4111-8111-111111111111',
@@ -453,11 +412,9 @@ describe('SessionService', () => {
       );
 
       expect(result.status).toBe('completing');
-      expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
+      expect(mockWorkflowDispatcher.dispatchFor).toHaveBeenCalledWith(
+        'report-generation',
         '11111111-1111-4111-8111-111111111111',
-        'hr',
-        'VN',
-        'vi',
       );
       expect(mockWorkflowService.enqueueInTransaction).toHaveBeenCalledWith(
         mockPrisma,
@@ -480,9 +437,7 @@ describe('SessionService', () => {
         'active',
       );
 
-      expect(
-        mockReportService.enqueueIfAllFeedbacksReady,
-      ).not.toHaveBeenCalled();
+      expect(mockWorkflowDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('tạm dừng session active', async () => {
@@ -615,9 +570,7 @@ describe('SessionService', () => {
           'completed',
         ),
       ).rejects.toMatchObject({ errorCode: ErrorCode.SESSION_INCOMPLETE });
-      expect(
-        mockReportService.enqueueIfAllFeedbacksReady,
-      ).not.toHaveBeenCalled();
+      expect(mockWorkflowDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('timeout-complete tự skip các câu chưa trả lời và chuyển sang completing', async () => {
@@ -684,11 +637,9 @@ describe('SessionService', () => {
           remainingSeconds: 0,
         },
       });
-      expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
+      expect(mockWorkflowDispatcher.dispatchFor).toHaveBeenCalledWith(
+        'report-generation',
         '11111111-1111-4111-8111-111111111111',
-        'hr',
-        'VN',
-        'vi',
       );
     });
 
@@ -740,15 +691,12 @@ describe('SessionService', () => {
       );
 
       expect(result).toBe(completed);
-      expect(
-        mockReportService.enqueueIfAllFeedbacksReady,
-      ).not.toHaveBeenCalled();
+      expect(mockWorkflowDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('khôi phục completing bằng cách đảm bảo report job tồn tại', async () => {
       const completing = { ...BASE_SESSION, status: 'completing' };
       mockPrisma.interviewSession.findUnique.mockResolvedValue(completing);
-      mockReportService.enqueueIfAllFeedbacksReady.mockResolvedValue(undefined);
 
       await service.updateStatus(
         '11111111-1111-4111-8111-111111111111',
@@ -756,14 +704,10 @@ describe('SessionService', () => {
         'completed',
       );
 
-      expect(
-        mockReportService.enqueueIfAllFeedbacksReady,
-      ).toHaveBeenCalledTimes(1);
-      expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
+      expect(mockWorkflowDispatcher.dispatchFor).toHaveBeenCalledTimes(1);
+      expect(mockWorkflowDispatcher.dispatchFor).toHaveBeenCalledWith(
+        'report-generation',
         '11111111-1111-4111-8111-111111111111',
-        'hr',
-        'VN',
-        'vi',
       );
     });
   });

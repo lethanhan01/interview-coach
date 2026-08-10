@@ -239,6 +239,10 @@ export const createMockWorkflowService = () => ({
   enqueueInTransaction: jest.fn(),
 });
 
+export const createMockWorkflowDispatcher = () => ({
+  dispatchFor: jest.fn().mockResolvedValue(undefined),
+});
+
 export const createMockOpenAIGateway = () => ({
   chatCompletion: jest.fn(),
   getChatModel: jest.fn().mockReturnValue('google/gemma-4-e4b'),

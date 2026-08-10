@@ -220,7 +220,26 @@ describe('Session completion flow (integration)', () => {
     };
     const sseService = { emit: jest.fn(async () => undefined) };
 
-    const reportService = new ReportService(prisma as any, reportQueue as any);
+    const workflowDispatcher = {
+      dispatchFor: jest.fn(async (commandType: string, sessionId: string) => {
+        if (commandType !== 'report-generation') return;
+        reportJobs.push({
+          name: 'comprehensive-report',
+          data: {
+            sessionId,
+            sessionType: session.sessionType,
+            contextPack: session.contextPackId,
+            language: 'vi',
+            turnIds: [...answers.keys()],
+          },
+          opts: { jobId: `workflow-report-${sessionId}` },
+        });
+      }),
+    };
+    const reportService = new ReportService(
+      prisma as any,
+      workflowDispatcher as any,
+    );
     const turnService = new SubmitTurnAnswer(
       prisma as any,
       new TurnAnswerContext(prisma as any),
@@ -256,9 +275,9 @@ describe('Session completion flow (integration)', () => {
       {} as any,
       new ChangeInterviewSessionStatus(
         prisma as any,
-        reportService,
         new SessionLifecyclePolicy(),
         new WorkflowService(),
+        workflowDispatcher as any,
       ),
     );
     const reportGenerator = new GenerateComprehensiveReport(

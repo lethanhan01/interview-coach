@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Queue } from 'bullmq';
-import { ReportService } from '../src/report/report.service';
+import { WorkflowDispatcher } from '../src/workflow/workflow-dispatcher.service';
+import { WorkflowService } from '../src/workflow/workflow.service';
 import { REPORT_QUEUE } from '../src/common/constants/queue.constants';
 import { provisionDefaultRubricCatalog } from '../src/assessment/rubric/rubric-catalog-provision';
 import { prisma } from '../prisma/seed/_client';
@@ -10,6 +11,7 @@ describe('Report dispatch (PostgreSQL + Redis)', () => {
   let queue: Queue;
   let sessionId: string;
   let answerId: string;
+  let commandId: string;
 
   beforeAll(async () => {
     await provisionDefaultRubricCatalog(prisma);
@@ -58,31 +60,52 @@ describe('Report dispatch (PostgreSQL + Redis)', () => {
         questionId: question.id,
         answerMode: 'text',
         answerText: 'I use idempotent retries and a recovery procedure.',
+        feedbackGenerated: true,
       },
     });
     answerId = answer.id;
+    const command = await prisma.$transaction((tx) =>
+      new WorkflowService().enqueueInTransaction(tx, {
+        commandType: 'report-generation',
+        sessionId,
+        payload: {
+          sessionId,
+          sessionType: 'technical',
+          contextPack: 'VN',
+          language: 'vi',
+        },
+      }),
+    );
+    commandId = command.id;
     queue = new Queue(REPORT_QUEUE, {
       connection: {
         host: process.env.REDIS_HOST,
         port: Number(process.env.REDIS_PORT),
       },
     });
-    await queue.remove(`report-${sessionId}`).catch(() => undefined);
+    await queue.remove(`workflow-${commandId}`).catch(() => undefined);
   });
 
   afterAll(async () => {
-    await queue?.remove(`report-${sessionId}`).catch(() => undefined);
+    await queue?.remove(`workflow-${commandId}`).catch(() => undefined);
     await queue?.close();
+    await prisma.workflowOutbox
+      .delete({ where: { id: commandId } })
+      .catch(() => undefined);
     await prisma.user.delete({ where: { email } }).catch(() => undefined);
     await prisma.$disconnect();
   });
 
-  it('keeps one effective report job when dispatch is requested twice', async () => {
-    const service = new ReportService(prisma as any, queue);
+  it('keeps one effective report job when dispatcher is requested twice', async () => {
+    const dispatcher = new WorkflowDispatcher(
+      prisma as any,
+      { add: jest.fn() } as any,
+      queue,
+    );
 
     await Promise.all([
-      service.enqueueReport(sessionId, 'technical', 'VN', 'vi'),
-      service.enqueueReport(sessionId, 'technical', 'VN', 'vi'),
+      dispatcher.dispatchFor('report-generation', sessionId),
+      dispatcher.dispatchFor('report-generation', sessionId),
     ]);
 
     const jobs = await queue.getJobs([
@@ -92,7 +115,7 @@ describe('Report dispatch (PostgreSQL + Redis)', () => {
       'completed',
       'failed',
     ]);
-    const matching = jobs.filter((job) => job.id === `report-${sessionId}`);
+    const matching = jobs.filter((job) => job.id === `workflow-${commandId}`);
     expect(matching).toHaveLength(1);
     expect(matching[0].data).toMatchObject({
       sessionId,

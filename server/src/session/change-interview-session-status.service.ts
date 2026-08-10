@@ -3,18 +3,18 @@ import { InterviewSession } from '@prisma/client';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
-import { ReportService } from '../report/report.service';
 import { SessionStatusUpdate } from './dto/update-session-status.dto';
 import { SessionLifecyclePolicy } from './session-lifecycle.policy';
+import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
 import { WorkflowService } from '../workflow/workflow.service';
 
 @Injectable()
 export class ChangeInterviewSessionStatus {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly reportService: ReportService,
     private readonly policy: SessionLifecyclePolicy,
     private readonly workflow: WorkflowService,
+    private readonly dispatcher: WorkflowDispatcher,
   ) {}
 
   async execute(
@@ -81,39 +81,15 @@ export class ChangeInterviewSessionStatus {
   ): Promise<InterviewSession> {
     if (session.status === 'completed') return session;
     if (session.status === 'completing') {
-      await this.enqueueReport(session);
+      await this.dispatcher.dispatchFor('report-generation', session.id);
       return session;
     }
     this.policy.assertTransition(session.status, 'completed');
     const updated = autoSkipUnanswered
       ? await this.completeWithAutoSkippedAnswers(session.id)
       : await this.completeAnsweredSession(session.id);
-    try {
-      await this.enqueueReport(session);
-    } catch (error: unknown) {
-      await this.prisma.interviewSession
-        .updateMany({
-          where: { id: session.id, status: 'completing' },
-          data: { status: 'active' },
-        })
-        .catch(() => {});
-      if (error instanceof InterviewAIException) throw error;
-      throw new InterviewAIException(
-        ErrorCode.SERVICE_UNAVAILABLE,
-        HttpStatus.SERVICE_UNAVAILABLE,
-        'Không thể xếp hàng tạo báo cáo. Vui lòng thử lại.',
-      );
-    }
+    await this.dispatcher.dispatchFor('report-generation', session.id);
     return updated;
-  }
-
-  private enqueueReport(session: InterviewSession) {
-    return this.reportService.enqueueIfAllFeedbacksReady(
-      session.id,
-      session.sessionType,
-      session.contextPackId as 'VN' | 'Western',
-      session.language,
-    );
   }
 
   private async completeAnsweredSession(

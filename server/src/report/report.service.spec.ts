@@ -1,18 +1,13 @@
 import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { getQueueToken } from '@nestjs/bullmq';
 import { ReportService } from './report.service';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
+import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import {
-  REPORT_JOB_ATTEMPTS,
-  REPORT_JOB_RETRY_DELAY_MS,
-  REPORT_QUEUE,
-} from '../common/constants/queue.constants';
-import {
   createMockPrismaService,
-  createMockQueue,
+  createMockWorkflowDispatcher,
 } from '../test-utils/mock-factories';
 
 const COMPLETED_SESSION = {
@@ -41,17 +36,17 @@ const COMPLETED_SESSION = {
 describe('ReportService', () => {
   let service: ReportService;
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
-  let mockReportQueue: ReturnType<typeof createMockQueue>;
+  let mockWorkflowDispatcher: ReturnType<typeof createMockWorkflowDispatcher>;
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
-    mockReportQueue = createMockQueue();
+    mockWorkflowDispatcher = createMockWorkflowDispatcher();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReportService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: getQueueToken(REPORT_QUEUE), useValue: mockReportQueue },
+        { provide: WorkflowDispatcher, useValue: mockWorkflowDispatcher },
       ],
     }).compile();
 
@@ -641,83 +636,13 @@ describe('ReportService', () => {
   });
 
   describe('enqueueReport', () => {
-    it('gọi reportQueue.add với đúng job name và params', async () => {
-      mockPrisma.userAnswer.findMany.mockResolvedValue([
-        { id: 'ans-1' },
-        { id: 'ans-2' },
-      ]);
-      mockReportQueue.add.mockResolvedValue({});
+    it('chuyển report command cho workflow dispatcher', async () => {
+      await service.enqueueReport('session-123');
 
-      await service.enqueueReport('session-123', 'hr', 'VN');
-
-      expect(mockReportQueue.add).toHaveBeenCalledWith(
-        'comprehensive-report',
-        {
-          sessionId: 'session-123',
-          sessionType: 'hr',
-          contextPack: 'VN',
-          language: 'vi',
-          turnIds: ['ans-1', 'ans-2'],
-        },
-        expect.objectContaining({ jobId: 'report-session-123' }),
+      expect(mockWorkflowDispatcher.dispatchFor).toHaveBeenCalledWith(
+        'report-generation',
+        'session-123',
       );
-      expect(mockReportQueue.add).toHaveBeenCalledWith(
-        'comprehensive-report',
-        expect.any(Object),
-        expect.objectContaining({
-          attempts: REPORT_JOB_ATTEMPTS,
-          backoff: { type: 'fixed', delay: REPORT_JOB_RETRY_DELAY_MS },
-        }),
-      );
-    });
-
-    it('không tạo job mới khi job report của session đã tồn tại', async () => {
-      const existingJob = {
-        getState: jest.fn().mockResolvedValue('waiting'),
-        retry: jest.fn(),
-      };
-      mockPrisma.userAnswer.findMany.mockResolvedValue([{ id: 'ans-1' }]);
-      mockReportQueue.getJob.mockResolvedValue(existingJob);
-
-      await service.enqueueReport('session-123', 'hr', 'VN');
-
-      expect(mockReportQueue.add).not.toHaveBeenCalled();
-      expect(existingJob.retry).not.toHaveBeenCalled();
-    });
-
-    it('retry job report đã failed thay vì tạo job trùng', async () => {
-      const existingJob = {
-        getState: jest.fn().mockResolvedValue('failed'),
-        retry: jest.fn().mockResolvedValue(undefined),
-      };
-      mockPrisma.userAnswer.findMany.mockResolvedValue([{ id: 'ans-1' }]);
-      mockReportQueue.getJob.mockResolvedValue(existingJob);
-
-      await service.enqueueReport('session-123', 'mixed', 'Western');
-
-      expect(existingJob.retry).toHaveBeenCalledTimes(1);
-      expect(mockReportQueue.add).not.toHaveBeenCalled();
-    });
-
-    it('đưa language=en vào report job khi được truyền', async () => {
-      mockPrisma.userAnswer.findMany.mockResolvedValue([{ id: 'ans-1' }]);
-      mockReportQueue.add.mockResolvedValue({});
-
-      await service.enqueueReport('session-123', 'hr', 'Western', 'en');
-
-      expect(mockReportQueue.add).toHaveBeenCalledWith(
-        'comprehensive-report',
-        expect.objectContaining({ language: 'en' }),
-        expect.objectContaining({ jobId: 'report-session-123' }),
-      );
-    });
-
-    it('từ chối enqueue report khi session chưa có answer', async () => {
-      mockPrisma.userAnswer.findMany.mockResolvedValue([]);
-
-      await expect(
-        service.enqueueReport('session-123', 'hr', 'VN'),
-      ).rejects.toMatchObject({ errorCode: ErrorCode.SESSION_INCOMPLETE });
     });
   });
 
@@ -730,7 +655,7 @@ describe('ReportService', () => {
 
       await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
 
-      expect(mockReportQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflowDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('không enqueue khi chưa đủ feedbacks', async () => {
@@ -744,7 +669,7 @@ describe('ReportService', () => {
 
       await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
 
-      expect(mockReportQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflowDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('không enqueue khi session completing nhưng chưa có answer nào', async () => {
@@ -758,8 +683,7 @@ describe('ReportService', () => {
 
       await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
 
-      expect(mockPrisma.userAnswer.findMany).not.toHaveBeenCalled();
-      expect(mockReportQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflowDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('enqueue report khi tất cả feedbacks đã xong và status là completing', async () => {
@@ -770,20 +694,11 @@ describe('ReportService', () => {
       mockPrisma.userAnswer.count
         .mockResolvedValueOnce(3) // total
         .mockResolvedValueOnce(0); // pending non-skipped feedbacks
-      mockPrisma.userAnswer.findMany.mockResolvedValue([
-        { id: 'a-1' },
-        { id: 'a-2' },
-        { id: 'a-3' },
-      ]);
-      mockReportQueue.getJob.mockResolvedValue(null);
-      mockReportQueue.add.mockResolvedValue({} as any);
-
       await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
 
-      expect(mockReportQueue.add).toHaveBeenCalledWith(
-        'comprehensive-report',
-        expect.objectContaining({ sessionId: 'session-123', language: 'vi' }),
-        expect.objectContaining({ jobId: 'report-session-123' }),
+      expect(mockWorkflowDispatcher.dispatchFor).toHaveBeenCalledWith(
+        'report-generation',
+        'session-123',
       );
     });
 
@@ -795,22 +710,11 @@ describe('ReportService', () => {
       mockPrisma.userAnswer.count
         .mockResolvedValueOnce(3)
         .mockResolvedValueOnce(0);
-      mockPrisma.userAnswer.findMany.mockResolvedValue([
-        { id: 'answered-1' },
-        { id: 'skipped-1' },
-        { id: 'skipped-2' },
-      ]);
-      mockReportQueue.getJob.mockResolvedValue(null);
-      mockReportQueue.add.mockResolvedValue({} as any);
-
       await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
 
-      expect(mockReportQueue.add).toHaveBeenCalledWith(
-        'comprehensive-report',
-        expect.objectContaining({
-          turnIds: ['answered-1', 'skipped-1', 'skipped-2'],
-        }),
-        expect.objectContaining({ jobId: 'report-session-123' }),
+      expect(mockWorkflowDispatcher.dispatchFor).toHaveBeenCalledWith(
+        'report-generation',
+        'session-123',
       );
     });
 
@@ -819,7 +723,7 @@ describe('ReportService', () => {
 
       await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
 
-      expect(mockReportQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflowDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
   });
 });

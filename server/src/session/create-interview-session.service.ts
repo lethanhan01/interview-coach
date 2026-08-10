@@ -1,30 +1,24 @@
-import { Injectable, HttpStatus, Logger } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Queue } from 'bullmq';
 import { InterviewSession } from '@prisma/client';
 import { RubricCatalogService } from '../assessment/rubric/rubric-catalog.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import {
-  QUESTION_GEN_JOB_ATTEMPTS,
-  QUESTION_GEN_QUEUE,
-} from '../common/constants/queue.constants';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { resolveOutputLanguage } from '../ai/output-language';
 import { CreateSessionDto } from './dto/create-session.dto';
+import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
 import { WorkflowService } from '../workflow/workflow.service';
 
 @Injectable()
 export class CreateInterviewSession {
-  private readonly logger = new Logger(CreateInterviewSession.name);
   private readonly sessionCreationLimitPer24h: number;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly rubricCatalog: RubricCatalogService,
-    @InjectQueue(QUESTION_GEN_QUEUE) private readonly queue: Queue,
     private readonly workflow: WorkflowService,
+    private readonly dispatcher: WorkflowDispatcher,
     config: ConfigService,
   ) {
     const configuredLimit = Number(
@@ -104,39 +98,7 @@ export class CreateInterviewSession {
       return created;
     });
 
-    try {
-      await this.queue.add(
-        'question-generation',
-        {
-          sessionId: session.id,
-          sessionType: dto.sessionType,
-          jobDescriptionText: dto.jobDescription,
-          targetRoles: dto.targetRoles ?? [],
-          contextPack: dto.contextPack,
-          rubricVersionId,
-          language: session.language,
-          totalQuestions: session.numQuestions,
-          durationMin: session.durationMin,
-        },
-        {
-          attempts: QUESTION_GEN_JOB_ATTEMPTS,
-          backoff: { type: 'fixed', delay: 2000 },
-        },
-      );
-    } catch (error: unknown) {
-      this.logger.error(
-        `Unable to enqueue question generation for session ${session.id}`,
-        error instanceof Error ? error.stack : String(error),
-      );
-      await this.prisma.interviewSession
-        .update({ where: { id: session.id }, data: { status: 'error' } })
-        .catch(() => {});
-      throw new InterviewAIException(
-        ErrorCode.SERVICE_UNAVAILABLE,
-        HttpStatus.SERVICE_UNAVAILABLE,
-        'Dịch vụ tạo câu hỏi tạm thời không khả dụng. Vui lòng thử lại sau.',
-      );
-    }
+    await this.dispatcher.dispatchFor('question-generation', session.id);
     return session;
   }
 

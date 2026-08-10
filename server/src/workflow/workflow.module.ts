@@ -1,8 +1,22 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
+import {
+  QUESTION_GEN_QUEUE,
+  REPORT_QUEUE,
+} from '../common/constants/queue.constants';
+import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
+import { WorkflowDispatcher } from './workflow-dispatcher.service';
 import { WorkflowService } from './workflow.service';
 
 @Module({
-  providers: [WorkflowService],
-  exports: [WorkflowService],
+  imports: [
+    PrismaModule,
+    BullModule.registerQueue(
+      { name: QUESTION_GEN_QUEUE },
+      { name: REPORT_QUEUE },
+    ),
+  ],
+  providers: [WorkflowService, WorkflowDispatcher],
+  exports: [WorkflowService, WorkflowDispatcher],
 })
 export class WorkflowModule {}
