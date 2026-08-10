@@ -4,11 +4,11 @@ Use this after approval. Do not start a task until its prerequisite and rollback
 
 ## Phase 0 — Safety Net
 
-- [ ] **RF-001 — Characterization tests**
+- [x] **RF-001 — Characterization tests**
   - Prerequisite: none.
   - DoD: CI covers auth/session/report/profile/SSE/audio/outbox-retry critical behavior without a real AI provider.
 
-- [ ] **RF-007 — Boundary rules and narrow exports**
+- [x] **RF-007 — Boundary rules and narrow exports**
   - Prerequisite: none.
   - DoD: CI rejects controller-to-Prisma/Queue and cross-feature internal imports; module bootstrap passes.
 

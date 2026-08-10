@@ -2,18 +2,18 @@
 
 **Master plan:** [BACKEND_REFACTORING_MASTER_PLAN.md](./BACKEND_REFACTORING_MASTER_PLAN.md)  
 **Last updated:** 2026-08-10  
-**Current phase:** Phase 0 — awaiting confirmation to start RF-007  
+**Current phase:** Phase 1 — RF-007 complete; awaiting confirmation for the next task
 **Overall status:** In progress
 
 ## Current snapshot
 
-- The current master plan is explicitly planning-only; no RF task is marked complete in its checklist.
+- RF-001 and RF-007 are complete. The Phase 0 safety and dependency baseline is now in place.
 - The earlier “Season 2” roadmap (Phase 0–10) was completed before this master plan was created. Its completed items are useful context and test coverage, but are **not** evidence that any RF-001–RF-017 task below is complete.
 - Working tree was clean when this file was created, before adding this file.
 
 ## Next action
 
-After confirmation, start **RF-007 — boundary rules and narrow exports**. It may proceed before the Phase 1 fixes and is required before RF-008.
+After confirmation, start **RF-003 — public profile projection**, the next unblocked P0 security task. RF-002 remains pending the email-verification policy decision; RF-005 may follow RF-003.
 
 ## Required decisions before dependent work
 
@@ -29,13 +29,13 @@ After confirmation, start **RF-007 — boundary rules and narrow exports**. It m
 | ID | Phase | Status | Evidence / notes |
 | --- | --- | --- | --- |
 | RF-001 | 0 — safeguard | Complete | HTTP/profile regression characterization, public-audio contract, existing lifecycle/SSE/auth coverage, and PostgreSQL+Redis duplicate-dispatch test added; see log. |
-| RF-007 | 0 — boundaries | Not started | Can proceed alongside RF-001; prerequisite for RF-008. |
-| RF-002 | 1 — auth | Blocked by RF-001 + policy | Remove phantom `emailVerified` contract only after approval. |
-| RF-003 | 1 — profile | Blocked by RF-001 | Profile currently returns Prisma `User`. |
+| RF-007 | 0 — boundaries | Complete | Static CI boundary test added; Health controller no longer imports Prisma; Question module no longer re-exports child modules. |
+| RF-002 | 1 — auth | Blocked by policy | Remove phantom `emailVerified` contract only after approval. |
+| RF-003 | 1 — profile | Not started | Prerequisite met; profile currently returns Prisma `User`. |
 | RF-004 | 1/3 — media | Blocked by RF-001 + migration decision | Audio currently uses a public URL as identity. |
-| RF-005 | 1 — SSE | Blocked by RF-001 | Current SSE route has token auth but no session-owner check. |
-| RF-006 | 1 — throttling | Blocked by RF-001 + rate policy | |
-| RF-008 | 2 — outbox | Blocked by RF-001 + RF-007 | Session creation currently commits DB state before queue publish. |
+| RF-005 | 1 — SSE | Not started | Prerequisite met; current SSE route has token auth but no session-owner check. |
+| RF-006 | 1 — throttling | Blocked by rate policy | |
+| RF-008 | 2 — outbox | Not started | Prerequisites met; session creation currently commits DB state before queue publish. |
 | RF-009 | 2 — dispatch/recovery | Blocked by RF-008 | |
 | RF-010 | 3 — transcription | Blocked by RF-004 + RF-008 | |
 | RF-011 | 3 — runtime roles | Blocked by RF-009 | |
@@ -61,3 +61,13 @@ For every completed slice, update its row with the commit/PR, files changed, val
 - Known regression: the profile secrecy test uses `it.failing` because the current endpoint still returns `passwordHash` and `tokenVersion`. Convert it to a regular passing contract test in RF-003.
 - Rollback: revert the four test/config changes; no runtime or data rollback is required.
 - Next action: wait for confirmation, then start RF-007.
+
+### 2026-08-10 — RF-007 boundary rules and narrow exports
+
+- Status: Complete; changes are in the working tree and not yet committed.
+- Changed: added `server/src/architecture/feature-boundaries.spec.ts`; moved the database/Redis health check from `HealthController` to `HealthService`; removed `QuestionModule` re-exports of `QuestionBankModule` and `QuestionCriteriaModule`; made `TurnModule` import `QuestionCriteriaModule` directly.
+- Contract/migration impact: no API, queue payload, schema, or data migration change. The health endpoint response remains unchanged.
+- Validation: `npx eslint "src/**/*.ts" --ignore-pattern "**/*.spec.ts"` — pass; `npm run build` — pass; `npm test -- --runInBand` — pass (48 suites, 409 tests); `npm run test:integration -- --runInBand` — pass (2 suites, 2 tests); `npm run test:e2e -- --runInBand` — pass (1 suite, 2 tests); `git diff --check` — pass.
+- Boundary rule: CI now rejects controller imports of Prisma, BullMQ/Queue, OpenAI, or Supabase, and rejects new nested cross-feature relative imports. The test documents the small approved legacy contract list that still lacks dedicated public entry points.
+- Rollback: revert the architecture test, health-service extraction, and Question/Turn module import changes together; no data or deployment rollback is required.
+- Next action: wait for confirmation, then start RF-003. RF-002 remains blocked until the email-verification policy is approved.

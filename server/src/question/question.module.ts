@@ -20,6 +20,5 @@ const workerProviders =
     BullModule.registerQueue({ name: QUESTION_GEN_QUEUE }),
   ],
   providers: [GenerateSessionQuestions, ...workerProviders],
-  exports: [QuestionBankModule, QuestionCriteriaModule],
 })
 export class QuestionModule {}
