@@ -6,7 +6,7 @@ import { CreateInterviewSession } from './create-interview-session.service';
 import { ChangeInterviewSessionStatus } from './change-interview-session-status.service';
 import { SessionLifecyclePolicy } from './session-lifecycle.policy';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { RubricCatalogService } from '../assessment/rubric/rubric-catalog.service';
 import { ReportService } from '../report/report.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';

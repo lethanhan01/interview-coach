@@ -3,7 +3,7 @@ import { Client } from 'pg';
 import {
   buildPgConnectionConfig,
   setClientDbTimeZone,
-} from '../src/prisma/db-timezone';
+} from '../src/infrastructure/database/prisma/db-timezone';
 
 type Phase = 'pre' | 'post';
 

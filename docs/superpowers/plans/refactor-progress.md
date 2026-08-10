@@ -5,9 +5,9 @@
 
 ## Trạng thái hiện tại
 
-**Phase đang thực hiện:** Hoàn tất Phase 8 — Turn/answer workflow.
+**Phase đang thực hiện:** Hoàn tất Phase 9 — Infrastructure placement và cross-context cleanup.
 **Blocker hiện tại:** Chưa có.
-**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 9 — Infrastructure placement.
+**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 10 — Identity review.
 
 ## Bảng Phase
 
@@ -22,7 +22,7 @@
 | 6 — Reporting | Hoàn tất | Reporting sở hữu report read/query, readiness và sole `comprehensive-report` worker; AI chỉ còn OpenAI provider boundary. | Chờ xác nhận bắt đầu Phase 7. | Build pass; unit 45 suites/381 tests pass; integration và HTTP E2E pass. |
 | 7 — Session | Hoàn tất | `SessionLifecyclePolicy`, create và status/completion use cases; `SessionService` còn facade cho read/API. | Chờ xác nhận bắt đầu Phase 8. | Build pass; unit 46 suites/402 tests pass; integration và HTTP E2E pass. |
 | 8 — Turn | Hoàn tất | Tách guard/context và submit workflow; `TurnService` còn facade controller/upload. | Chờ xác nhận bắt đầu Phase 9. | Build và full test/integration/E2E pass. |
-| 9 — Infrastructure | Chưa bắt đầu | — | Chờ semantic phases. | — |
+| 9 — Infrastructure | Hoàn tất | Prisma và Redis SSE ở `infrastructure/`; importer/test/script cũ đã chuyển; không còn SSE test trùng. | Chờ xác nhận bắt đầu Phase 10. | Không centralize BullMQ khi chưa có duplication thực; bốn feature vẫn là sole worker owner. |
 | 10 — Identity | Chưa bắt đầu | — | Chờ interview pipeline ổn định. | — |
 
 ## Quyết định quan trọng
@@ -37,6 +37,17 @@
 | 2026-08-10 | Move behavior trước, move folder sau. | Folder-only PR lớn gây noise và che semantic regression. | Mỗi phase có compatibility facade rồi cleanup. |
 
 ## Nhật ký thực hiện
+
+### 2026-08-10 — Phase 9 / Infrastructure placement exit criteria đạt
+
+- Phase: 9 — Infrastructure placement và cross-context cleanup
+- Trạng thái: Hoàn tất
+- Hoàn thành: chốt move Prisma (`database/prisma`) và Redis SSE (`realtime/redis`); chuyển mọi importer test, E2E và Prisma script còn lại; move Prisma connection-error spec cạnh implementation; xóa duplicate SSE spec ở path cũ. Không thêm token/facade hoặc BullMQ infrastructure module vì `SseService` vẫn có một consumer contract và queue registration không có duplication đủ để loại bỏ.
+- Contract kiểm tra: giữ Prisma startup/retry/timezone/error mapping, Redis/SSE channel-event-payload/unsubscribe và worker enablement. Static audit không còn legacy Prisma/SSE import; bốn processor duy nhất còn ở Assessment/Interview/Question/Reporting.
+- Verification: `npm run build` — pass; `npm test -- --runInBand` — pass (46 suites, 402 tests); `npm run test:integration` — pass (1 suite); `npm run test:e2e` — pass (1 HTTP suite); static importer/processor audit — pass; `git diff --check` — pass.
+- Quyết định: giữ direct call `FeedbackProcessor -> ReportService.ensureReportReadiness()` vì report readiness là cùng workflow và đã có deterministic job `report-${sessionId}` cho idempotency/retry. Các side effect độc lập vẫn đi qua queue hiện hữu: session -> question generation, turn/interview -> feedback/transcription, và reporting completion -> SSE; không thêm event bus.
+- Rủi ro/rollback: đây là move cơ học, không đổi schema/queue/SSE/runtime behavior. Rollback là trả importer về path trước đó; không cần migration dữ liệu.
+- Bước tiếp theo: chờ xác nhận để bắt đầu Phase 10 — Identity review.
 
 ### 2026-08-10 — Bắt đầu Phase 9 / Infrastructure placement
 

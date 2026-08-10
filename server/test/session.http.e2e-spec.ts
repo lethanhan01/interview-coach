@@ -5,7 +5,7 @@ import type { INestApplication } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { PrismaService } from '../src/prisma/prisma.service';
+import { PrismaService } from '../src/infrastructure/database/prisma/prisma.service';
 import { provisionDefaultRubricCatalog } from '../src/assessment/rubric/rubric-catalog-provision';
 import { prisma as seedPrisma } from '../prisma/seed/_client';
 

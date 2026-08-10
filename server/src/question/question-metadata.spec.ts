@@ -2,7 +2,7 @@ import {
   calculateEstimatedTimeMin,
   normalizeGeneratedQuestionMetadata,
   normalizeQuestionMetadataForCleanup,
-} from '../question/question-metadata';
+} from './question-metadata';
 import type { ContextPackConfig } from '../assessment/context-pack.service';
 
 const contextPack = {

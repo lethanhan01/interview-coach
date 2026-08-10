@@ -1,19 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import type { Job } from 'bullmq';
-import { FeedbackProcessor } from '../../assessment/feedback/feedback.processor';
-import { HrPipelineService } from '../pipelines/hr.pipeline.service';
-import { TechnicalPipelineService } from '../pipelines/technical.pipeline.service';
-import { MixedPipelineService } from '../pipelines/mixed.pipeline.service';
-import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
-import { PromptBuilderService } from '../prompt-builder.service';
-import { ZodValidatorService } from '../zod-validator.service';
-import { OpenAIGateway } from '../openai.gateway';
-import { ContextPackService } from '../../assessment/context-pack.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { FeedbackProcessor } from './feedback.processor';
+import { HrPipelineService } from '../../ai/pipelines/hr.pipeline.service';
+import { TechnicalPipelineService } from '../../ai/pipelines/technical.pipeline.service';
+import { MixedPipelineService } from '../../ai/pipelines/mixed.pipeline.service';
+import { PipelineStrategyFactory } from '../../ai/pipelines/pipeline-strategy.factory';
+import { PromptBuilderService } from '../../ai/prompt-builder.service';
+import { ZodValidatorService } from '../../ai/zod-validator.service';
+import { OpenAIGateway } from '../../ai/openai.gateway';
+import { ContextPackService } from '../context-pack.service';
+import { PrismaService } from '../../infrastructure/database/prisma/prisma.service';
 import { SseService } from '../../infrastructure/realtime/redis/sse.service';
 import { ReportService } from '../../report/report.service';
-import { EvaluateAnswer } from '../../assessment/evaluate-answer.service';
+import { EvaluateAnswer } from '../evaluate-answer.service';
 import {
   createMockReportService,
   createMockSseService,

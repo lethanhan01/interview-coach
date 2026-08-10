@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { QuestionGenerationProcessor } from '../../question/question-generation.processor';
-import { GenerateSessionQuestions } from '../../question/generate-session-questions.service';
-import { PrismaService } from '../../prisma/prisma.service';
-import { SseService } from '../../infrastructure/realtime/redis/sse.service';
-import { ContextPackService } from '../../assessment/context-pack.service';
-import { PipelineStrategyFactory } from '../pipelines/pipeline-strategy.factory';
-import { QuestionBankService } from '../../question-bank/question-bank.service';
-import { QuestionCriteriaService } from '../../question-criteria/question-criteria.service';
-import { OpenAIGateway } from '../openai.gateway';
+import { QuestionGenerationProcessor } from './question-generation.processor';
+import { GenerateSessionQuestions } from './generate-session-questions.service';
+import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
+import { SseService } from '../infrastructure/realtime/redis/sse.service';
+import { ContextPackService } from '../assessment/context-pack.service';
+import { PipelineStrategyFactory } from '../ai/pipelines/pipeline-strategy.factory';
+import { QuestionBankService } from '../question-bank/question-bank.service';
+import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
+import { OpenAIGateway } from '../ai/openai.gateway';
 import {
   createMockPrismaService,
   createMockSseService,
@@ -16,11 +16,11 @@ import {
   createMockQuestionBankService,
   createMockQuestionCriteriaService,
   createMockOpenAIGateway,
-} from '../../test-utils/mock-factories';
+} from '../test-utils/mock-factories';
 import type { Job } from 'bullmq';
 import { HttpStatus } from '@nestjs/common';
-import { InterviewAIException } from '../../common/exceptions/interview-ai.exception';
-import { ErrorCode } from '../../common/exceptions/error-code.enum';
+import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
+import { ErrorCode } from '../common/exceptions/error-code.enum';
 
 describe('QuestionGenerationProcessor', () => {
   let processor: QuestionGenerationProcessor;

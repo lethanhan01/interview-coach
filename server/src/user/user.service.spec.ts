@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
 import { UserService } from './user.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { createMockPrismaService } from '../test-utils/mock-factories';

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ContextPackService } from '../assessment/context-pack.service';
+import { ContextPackService } from './context-pack.service';
 
 describe('ContextPackService', () => {
   let service: ContextPackService;

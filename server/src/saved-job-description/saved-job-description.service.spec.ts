@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SavedJobDescriptionService } from './saved-job-description.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { createMockPrismaService } from '../test-utils/mock-factories';
 
 const BASE_DTO = {

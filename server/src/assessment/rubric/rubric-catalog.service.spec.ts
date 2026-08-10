@@ -16,11 +16,11 @@ describe('RubricCatalogService', () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
-  it('rejects unsupported context pack ids without querying the catalog', async () => {
+  it('rejects unsupported context pack ids without querying the catalog', () => {
     const prisma = { rubricVersion: { findFirst: jest.fn() } };
     const service = new RubricCatalogService(prisma as never);
 
-    await expect(service.ensureContextPack('APAC' as never)).rejects.toThrow(
+    expect(() => service.ensureContextPack('APAC' as never)).toThrow(
       'Unsupported context pack: APAC',
     );
     expect(prisma.rubricVersion.findFirst).not.toHaveBeenCalled();
