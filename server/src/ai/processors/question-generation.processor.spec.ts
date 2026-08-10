@@ -533,6 +533,34 @@ describe('QuestionGenerationProcessor', () => {
     expect(mockSse.emit).not.toHaveBeenCalled();
   });
 
+  it.each(['canceled', 'error'])(
+    'không hồi sinh session %s khi question worker hoàn tất muộn',
+    async () => {
+      mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
+      mockFactory.getStrategy.mockReturnValue({
+        generateQuestions: jest
+          .fn()
+          .mockResolvedValue(makeGeneratedQuestions(1)),
+      });
+      mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+        makeFallbackQuestions(4),
+      );
+      mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+      mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(processor.process(makeJob())).resolves.toBeUndefined();
+
+      expect(mockPrisma.interviewSession.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: 'session-123',
+          status: { in: ['generating', 'ready'] },
+        },
+        data: { status: 'active' },
+      });
+      expect(mockSse.emit).not.toHaveBeenCalled();
+    },
+  );
+
   it('QG-08: ghi nhận hành vi hiện tại là AI_SERVICE_ERROR vẫn fallback ngay', async () => {
     const aiServiceError = new InterviewAIException(
       ErrorCode.AI_SERVICE_ERROR,

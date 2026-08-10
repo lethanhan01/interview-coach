@@ -1,136 +1,26 @@
-import { Injectable, HttpStatus, Logger } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { ConfigService } from '@nestjs/config';
-import { Queue } from 'bullmq';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { InterviewSession } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { RubricCatalogService } from '../assessment/rubric/rubric-catalog.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import {
-  QUESTION_GEN_QUEUE,
-  QUESTION_GEN_JOB_ATTEMPTS,
-} from '../common/constants/queue.constants';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SessionStatusUpdate } from './dto/update-session-status.dto';
-import { ReportService } from '../report/report.service';
-import { resolveOutputLanguage } from '../ai/output-language';
+import { ChangeInterviewSessionStatus } from './change-interview-session-status.service';
+import { CreateInterviewSession } from './create-interview-session.service';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Injectable()
 export class SessionService {
-  private readonly logger = new Logger(SessionService.name);
-  private readonly sessionCreationLimitPer24h: number;
-  private readonly countedLimitStatuses = {
-    notIn: ['error', 'canceled'],
-  };
-
   constructor(
     private readonly prisma: PrismaService,
-    private readonly rubricCatalog: RubricCatalogService,
-    @InjectQueue(QUESTION_GEN_QUEUE) private readonly queue: Queue,
-    private readonly reportService: ReportService,
-    config: ConfigService,
-  ) {
-    const configuredLimit = Number(
-      config.get<number | string>('SESSION_CREATION_LIMIT_PER_24H') ?? 10,
-    );
-    this.sessionCreationLimitPer24h = Number.isFinite(configuredLimit)
-      ? Math.max(0, Math.trunc(configuredLimit))
-      : 10;
-  }
+    private readonly createInterviewSession: CreateInterviewSession,
+    private readonly changeInterviewSessionStatus: ChangeInterviewSessionStatus,
+  ) {}
 
-  async create(
-    userId: string,
-    dto: CreateSessionDto,
-  ): Promise<InterviewSession> {
-    if (this.sessionCreationLimitPer24h > 0) {
-      const count = await this.prisma.interviewSession.count({
-        where: {
-          savedJobDescription: { userId },
-          createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-          status: this.countedLimitStatuses,
-        },
-      });
-
-      if (count >= this.sessionCreationLimitPer24h) {
-        throw new InterviewAIException(
-          ErrorCode.SESSION_LIMIT_EXCEEDED,
-          HttpStatus.TOO_MANY_REQUESTS,
-          `Bạn đã tạo ${this.sessionCreationLimitPer24h} phiên phỏng vấn trong 24 giờ qua. Hãy tiếp tục phiên cũ hoặc thử lại sau.`,
-        );
-      }
-    }
-
-    let rubricVersionId: string;
-    try {
-      rubricVersionId = await this.rubricCatalog.ensureActiveRubricVersion(
-        dto.contextPack,
-      );
-    } catch {
-      throw new InterviewAIException(
-        ErrorCode.SERVICE_UNAVAILABLE,
-        HttpStatus.SERVICE_UNAVAILABLE,
-        'Không thể khởi tạo cấu hình phỏng vấn. Vui lòng thử lại sau.',
-      );
-    }
-
-    const savedJobDescriptionId = await this.resolveSavedJobDescriptionId(
-      userId,
-      dto.savedJobDescriptionId,
-    );
-    const language = resolveOutputLanguage(dto.language);
-
-    const session = await this.prisma.interviewSession.create({
-      data: {
-        savedJobDescriptionId,
-        jobDescription: dto.jobDescription,
-        sessionType: dto.sessionType,
-        numQuestions: dto.numQuestions ?? 5,
-        language,
-        contextPackId: dto.contextPack,
-        rubricVersionId,
-        status: 'generating',
-      },
-    });
-
-    try {
-      await this.queue.add(
-        'question-generation',
-        {
-          sessionId: session.id,
-          sessionType: dto.sessionType,
-          jobDescriptionText: dto.jobDescription,
-          targetRoles: dto.targetRoles ?? [],
-          contextPack: dto.contextPack,
-          rubricVersionId,
-          language: session.language,
-          totalQuestions: session.numQuestions,
-          durationMin: session.durationMin,
-        },
-        {
-          attempts: QUESTION_GEN_JOB_ATTEMPTS,
-          backoff: { type: 'fixed', delay: 2000 },
-        },
-      );
-    } catch (error: unknown) {
-      this.logger.error(
-        `Unable to enqueue question generation for session ${session.id}`,
-        error instanceof Error ? error.stack : String(error),
-      );
-      await this.prisma.interviewSession
-        .update({ where: { id: session.id }, data: { status: 'error' } })
-        .catch(() => {});
-      throw new InterviewAIException(
-        ErrorCode.SERVICE_UNAVAILABLE,
-        HttpStatus.SERVICE_UNAVAILABLE,
-        'Dịch vụ tạo câu hỏi tạm thời không khả dụng. Vui lòng thử lại sau.',
-      );
-    }
-
-    return session;
+  create(userId: string, dto: CreateSessionDto): Promise<InterviewSession> {
+    return this.createInterviewSession.execute(userId, dto);
   }
 
   async findById(
@@ -144,23 +34,15 @@ export class SessionService {
         HttpStatus.NOT_FOUND,
       );
     }
-
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
-      include: {
-        savedJobDescription: {
-          select: { userId: true },
-        },
-      },
+      include: { savedJobDescription: { select: { userId: true } } },
     });
-
-    if (!session) {
+    if (!session)
       throw new InterviewAIException(
         ErrorCode.SESSION_NOT_FOUND,
         HttpStatus.NOT_FOUND,
       );
-    }
-
     if (session.savedJobDescription.userId !== userId) {
       throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
     }
@@ -174,11 +56,10 @@ export class SessionService {
         'Hãy xác thực email để xem lịch sử và báo cáo phỏng vấn.',
       );
     }
-
     return session;
   }
 
-  async findAll(
+  findAll(
     userId: string,
     canAccessHistory = true,
   ): Promise<InterviewSession[]> {
@@ -193,20 +74,7 @@ export class SessionService {
     });
   }
 
-  async findQuestions(
-    sessionId: string,
-    userId: string,
-  ): Promise<{
-    questions: {
-      id: string;
-      content: string;
-      orderIndex: number;
-      answered: boolean;
-      answerId?: string;
-      skipped?: boolean;
-    }[];
-    currentIndex: number;
-  }> {
+  async findQuestions(sessionId: string, userId: string) {
     const session = await this.findById(sessionId, userId);
     const [questions, answers] = await Promise.all([
       this.prisma.sessionQuestion.findMany({
@@ -218,7 +86,6 @@ export class SessionService {
         select: { id: true, questionId: true, skipped: true },
       }),
     ]);
-
     if (
       questions.length > 0 &&
       ['generating', 'ready'].includes(session.status)
@@ -228,28 +95,30 @@ export class SessionService {
         data: { status: 'active' },
       });
     }
-
     const answersByQuestionId = new Map(
       answers.map((answer) => [answer.questionId, answer]),
     );
-    const mappedQuestions = questions.map((q) => {
-      const answer = answersByQuestionId.get(q.id);
+    const mappedQuestions = questions.map((question) => {
+      const answer = answersByQuestionId.get(question.id);
       return {
-        id: q.id,
-        content: q.questionText,
-        orderIndex: q.orderIndex,
+        id: question.id,
+        content: question.questionText,
+        orderIndex: question.orderIndex,
         answered: Boolean(answer),
         answerId: answer?.id,
         skipped: answer?.skipped,
       };
     });
-    const firstUnansweredIndex = mappedQuestions.findIndex((q) => !q.answered);
-    const currentIndex =
-      firstUnansweredIndex >= 0
-        ? firstUnansweredIndex
-        : Math.max(0, mappedQuestions.length - 1);
-
-    return { questions: mappedQuestions, currentIndex };
+    const firstUnansweredIndex = mappedQuestions.findIndex(
+      (question) => !question.answered,
+    );
+    return {
+      questions: mappedQuestions,
+      currentIndex:
+        firstUnansweredIndex >= 0
+          ? firstUnansweredIndex
+          : Math.max(0, mappedQuestions.length - 1),
+    };
   }
 
   async updateStatus(
@@ -260,215 +129,11 @@ export class SessionService {
     autoSkipUnanswered = false,
   ): Promise<InterviewSession> {
     const session = await this.findById(sessionId, userId);
-
-    if (status === 'active') {
-      if (session.status === 'active') return session;
-      if (!['generating', 'ready', 'paused'].includes(session.status)) {
-        throw this.invalidTransition(session.status, status);
-      }
-
-      const questionCount = await this.prisma.sessionQuestion.count({
-        where: { sessionId },
-      });
-      if (questionCount === 0) {
-        throw this.invalidTransition(session.status, status);
-      }
-
-      return this.prisma.interviewSession.update({
-        where: { id: sessionId },
-        data: { status: 'active', completedAt: null },
-      });
-    }
-
-    if (status === 'paused') {
-      if (session.status === 'paused') return session;
-      if (!['active', 'ready'].includes(session.status)) {
-        throw this.invalidTransition(session.status, status);
-      }
-
-      return this.prisma.interviewSession.update({
-        where: { id: sessionId },
-        data: {
-          status: 'paused',
-          completedAt: null,
-          ...(remainingSeconds !== undefined
-            ? {
-                remainingSeconds: Math.min(
-                  remainingSeconds,
-                  session.durationMin * 60,
-                ),
-              }
-            : {}),
-        },
-      });
-    }
-
-    if (status === 'canceled') {
-      if (session.status === 'canceled') return session;
-      if (['completed', 'completing'].includes(session.status)) {
-        throw this.invalidTransition(session.status, status);
-      }
-
-      return this.prisma.interviewSession.update({
-        where: { id: sessionId },
-        data: { status: 'canceled', completedAt: null },
-      });
-    }
-
-    if (session.status === 'completed') return session;
-    if (session.status === 'completing') {
-      await this.reportService.enqueueIfAllFeedbacksReady(
-        sessionId,
-        session.sessionType,
-        session.contextPackId as 'VN' | 'Western',
-        session.language,
-      );
-      return session;
-    }
-    if (session.status !== 'active') {
-      throw this.invalidTransition(session.status, status);
-    }
-
-    const updated = autoSkipUnanswered
-      ? await this.completeWithAutoSkippedAnswers(sessionId)
-      : await this.completeAnsweredSession(sessionId);
-
-    try {
-      await this.reportService.enqueueIfAllFeedbacksReady(
-        sessionId,
-        session.sessionType,
-        session.contextPackId as 'VN' | 'Western',
-        session.language,
-      );
-    } catch (error: unknown) {
-      await this.prisma.interviewSession
-        .updateMany({
-          where: { id: sessionId, status: 'completing' },
-          data: { status: 'active' },
-        })
-        .catch(() => {});
-
-      if (error instanceof InterviewAIException) throw error;
-      throw new InterviewAIException(
-        ErrorCode.SERVICE_UNAVAILABLE,
-        HttpStatus.SERVICE_UNAVAILABLE,
-        'Không thể xếp hàng tạo báo cáo. Vui lòng thử lại.',
-      );
-    }
-
-    return updated;
-  }
-
-  private async completeAnsweredSession(
-    sessionId: string,
-  ): Promise<InterviewSession> {
-    const [questionCount, answerCount] = await Promise.all([
-      this.prisma.sessionQuestion.count({ where: { sessionId } }),
-      this.prisma.userAnswer.count({ where: { question: { sessionId } } }),
-    ]);
-
-    if (questionCount === 0 || answerCount < questionCount) {
-      throw new InterviewAIException(
-        ErrorCode.SESSION_INCOMPLETE,
-        HttpStatus.CONFLICT,
-        'Hãy trả lời đầy đủ các câu hỏi trước khi hoàn thành phỏng vấn.',
-      );
-    }
-
-    return this.prisma.interviewSession.update({
-      where: { id: sessionId },
-      data: { status: 'completing', completedAt: null },
-    });
-  }
-
-  private async completeWithAutoSkippedAnswers(
-    sessionId: string,
-  ): Promise<InterviewSession> {
-    return this.prisma.$transaction(async (tx) => {
-      const [questions, answers] = await Promise.all([
-        tx.sessionQuestion.findMany({
-          where: { sessionId },
-          select: { id: true },
-          orderBy: { orderIndex: 'asc' },
-        }),
-        tx.userAnswer.findMany({
-          where: { question: { sessionId } },
-          select: { questionId: true },
-        }),
-      ]);
-
-      if (questions.length === 0) {
-        throw new InterviewAIException(
-          ErrorCode.SESSION_INCOMPLETE,
-          HttpStatus.CONFLICT,
-          'Không thể hoàn thành phỏng vấn khi chưa có câu hỏi.',
-        );
-      }
-
-      const answeredQuestionIds = new Set(
-        answers.map((answer) => answer.questionId),
-      );
-      const unansweredQuestions = questions.filter(
-        (question) => !answeredQuestionIds.has(question.id),
-      );
-
-      if (unansweredQuestions.length > 0) {
-        await tx.userAnswer.createMany({
-          data: unansweredQuestions.map((question) => ({
-            questionId: question.id,
-            answerMode: 'text',
-            answerText: '',
-            skipped: true,
-            feedbackGenerated: false,
-          })),
-        });
-      }
-
-      return tx.interviewSession.update({
-        where: { id: sessionId },
-        data: {
-          status: 'completing',
-          completedAt: null,
-          remainingSeconds: 0,
-        },
-      });
-    });
-  }
-
-  private invalidTransition(
-    currentStatus: string,
-    nextStatus: string,
-  ): InterviewAIException {
-    return new InterviewAIException(
-      ErrorCode.INVALID_SESSION_TRANSITION,
-      HttpStatus.CONFLICT,
-      `Không thể chuyển trạng thái phỏng vấn từ ${currentStatus} sang ${nextStatus}.`,
+    return this.changeInterviewSessionStatus.execute(
+      session,
+      status,
+      remainingSeconds,
+      autoSkipUnanswered,
     );
-  }
-
-  private async resolveSavedJobDescriptionId(
-    userId: string,
-    savedJobDescriptionId: string,
-  ): Promise<string> {
-    const savedJobDescription = await this.prisma.savedJobDescription.findFirst(
-      {
-        where: {
-          id: savedJobDescriptionId,
-          userId,
-          deletedAt: null,
-        },
-      },
-    );
-
-    if (!savedJobDescription) {
-      throw new InterviewAIException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND);
-    }
-
-    await this.prisma.savedJobDescription.update({
-      where: { id: savedJobDescriptionId },
-      data: { lastUsedAt: new Date() },
-    });
-
-    return savedJobDescriptionId;
   }
 }

@@ -8,12 +8,12 @@
 
 ## Nhiệm vụ
 
-- [ ] Extract pure `SessionLifecyclePolicy` (allowed transition + precondition), driven by Phase 0 characterization table.
-- [ ] Extract `CreateInterviewSession`: creation limit, saved-JD check, active rubric lookup, persistence, question enqueue and compensation to `error` on enqueue failure.
-- [ ] Extract read paths only when independently useful: `GetInterviewSession`, `ListInterviewSessions`, `GetSessionQuestions`.
-- [ ] Extract `CompleteInterviewSession` and `ChangeInterviewSessionStatus`: answered rule, auto-skip transaction, `completing`, readiness enqueue and rollback to active on failure.
-- [ ] Retain a thin `SessionService` facade until controllers/callers are migrated; remove it after no importer remains.
-- [ ] Check question worker race against active/canceled/error session and report enqueue race against completing session.
+- [x] Extract pure `SessionLifecyclePolicy` (allowed transition + precondition), driven by Phase 0 characterization table.
+- [x] Extract `CreateInterviewSession`: creation limit, saved-JD check, active rubric lookup, persistence, question enqueue and compensation to `error` on enqueue failure.
+- [x] Extract read paths only when independently useful: `GetInterviewSession`, `ListInterviewSessions`, `GetSessionQuestions` — retained in facade because no independent consumer exists.
+- [x] Extract `CompleteInterviewSession` and `ChangeInterviewSessionStatus`: answered rule, auto-skip transaction, `completing`, readiness enqueue and rollback to active on failure.
+- [x] Retain a thin `SessionService` facade until controllers/callers are migrated; remove it after no importer remains.
+- [x] Check question worker race against active/canceled/error session and report enqueue race against completing session.
 
 ## Không làm
 

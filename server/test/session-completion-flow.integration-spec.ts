@@ -2,6 +2,8 @@ import type { Job } from 'bullmq';
 import { TurnService } from '../src/turn/turn.service';
 import { FeedbackProcessor } from '../src/assessment/feedback/feedback.processor';
 import { SessionService } from '../src/session/session.service';
+import { ChangeInterviewSessionStatus } from '../src/session/change-interview-session-status.service';
+import { SessionLifecyclePolicy } from '../src/session/session-lifecycle.policy';
 import { ReportService } from '../src/report/report.service';
 import { GenerateComprehensiveReport } from '../src/report/generate-comprehensive-report.service';
 
@@ -221,28 +223,30 @@ describe('Session completion flow (integration)', () => {
       { getContextPack: jest.fn(() => ({})) } as any,
       {
         execute: jest.fn(async () => ({
-            overallScore: 84,
-            modelAnswer: 'A concise STAR response.',
-            keyTakeaway: 'Quantify the result.',
-            annotatedSegments: [
-              {
-                segmentText: 'difficult project',
-                startIndex: 15,
-                endIndex: 32,
-                highlightLevel: 'strength',
-                annotation: 'Relevant example',
-              },
-            ],
-          })),
+          overallScore: 84,
+          modelAnswer: 'A concise STAR response.',
+          keyTakeaway: 'Quantify the result.',
+          annotatedSegments: [
+            {
+              segmentText: 'difficult project',
+              startIndex: 15,
+              endIndex: 32,
+              highlightLevel: 'strength',
+              annotation: 'Relevant example',
+            },
+          ],
+        })),
       } as any,
       reportService,
     );
     const sessionService = new SessionService(
       prisma as any,
-      { ensureContextPack: jest.fn() } as any,
-      { add: jest.fn() } as any,
-      reportService,
-      { get: jest.fn(() => 10) } as any,
+      {} as any,
+      new ChangeInterviewSessionStatus(
+        prisma as any,
+        reportService,
+        new SessionLifecyclePolicy(),
+      ),
     );
     const reportGenerator = new GenerateComprehensiveReport(
       prisma as any,

@@ -5,9 +5,9 @@
 
 ## Trạng thái hiện tại
 
-**Phase đang thực hiện:** Hoàn tất Phase 6 — Reporting ownership.
+**Phase đang thực hiện:** Hoàn tất Phase 7 — Session lifecycle.
 **Blocker hiện tại:** Chưa có.
-**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 7 — Session lifecycle.
+**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 8 — Turn/answer workflow.
 
 ## Bảng Phase
 
@@ -20,7 +20,7 @@
 | 4 — Voice | Hoàn tất | Interview sở hữu audio storage/STT orchestration và `transcription` worker; AI chỉ giữ OpenAI provider boundary. | Chờ xác nhận bắt đầu Phase 5. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
 | 5 — Assessment | Hoàn tất | Assessment sở hữu rubric read/controller, `EvaluateAnswer`, sanitizer/dimension matcher/fallback và sole `feedback` worker. | Chờ xác nhận bắt đầu Phase 6. | Build pass; unit 44 suites/380 tests pass; integration và HTTP E2E pass. |
 | 6 — Reporting | Hoàn tất | Reporting sở hữu report read/query, readiness và sole `comprehensive-report` worker; AI chỉ còn OpenAI provider boundary. | Chờ xác nhận bắt đầu Phase 7. | Build pass; unit 45 suites/381 tests pass; integration và HTTP E2E pass. |
-| 7 — Session | Chưa bắt đầu | — | Chờ Phase 1 và 6. | — |
+| 7 — Session | Hoàn tất | `SessionLifecyclePolicy`, create và status/completion use cases; `SessionService` còn facade cho read/API. | Chờ xác nhận bắt đầu Phase 8. | Build pass; unit 46 suites/402 tests pass; integration và HTTP E2E pass. |
 | 8 — Turn | Chưa bắt đầu | — | Chờ Phase 4 và 5. | — |
 | 9 — Infrastructure | Chưa bắt đầu | — | Chờ semantic phases. | — |
 | 10 — Identity | Chưa bắt đầu | — | Chờ interview pipeline ổn định. | — |
@@ -37,6 +37,39 @@
 | 2026-08-10 | Move behavior trước, move folder sau. | Folder-only PR lớn gây noise và che semantic regression. | Mỗi phase có compatibility facade rồi cleanup. |
 
 ## Nhật ký thực hiện
+
+### 2026-08-10 — Phase 7 / Session lifecycle exit criteria đạt
+
+- Phase: 7 — Session lifecycle decomposition
+- Trạng thái: Hoàn tất
+- Hoàn thành: trích `SessionLifecyclePolicy`, `CreateInterviewSession` và `ChangeInterviewSessionStatus`; `SessionService` giảm còn facade cho API/read paths và delegation. Giữ read paths tại facade vì controller là consumer duy nhất. Bổ sung table-driven transition tests và race assertion: question worker không revive session `canceled`/`error`; completing replay tiếp tục ensure report enqueue.
+- Contract kiểm tra: giữ string status, REST controller/DTO, creation limit, saved-JD ownership, active rubric lookup, question queue payload/retry/error compensation, completion/auto-skip transaction, report rollback và SSE status contract.
+- Verification: `npm run build` — pass; `npm test -- --runInBand` — pass (46 suites, 402 tests); `npm run test:integration` — pass (1 suite); `npm run test:e2e` — pass (1 HTTP suite); `git diff --check` — pass.
+- Quyết định: không tách thêm read services hoặc thêm state-machine library vì chưa có reuse độc lập; giữ facade thay vì controller inject nhiều use case.
+- Rủi ro/rollback: facade/direct API không đổi; rollback là trả delegation về `SessionService`, không đổi status/schema/queue/SSE payload.
+- Bước tiếp theo: chờ xác nhận để bắt đầu Phase 8 — Turn/answer workflow.
+
+### 2026-08-10 — Bắt đầu Phase 7 / Session lifecycle
+
+- Phase: 7 — Session lifecycle decomposition
+- Trạng thái: Đang thực hiện
+- Hoàn thành: bắt đầu khóa behavior lifecycle bằng test characterization trước khi tách `SessionService`.
+- Contract kiểm tra: giữ nguyên REST, string status, question-generation/report queues, completion rollback và SSE.
+- Verification: chưa chạy; sẽ ghi bằng chứng khi exit criteria đạt.
+- Quyết định: bắt đầu bằng `SessionLifecyclePolicy` thuần; không thêm state-machine library hoặc đổi schema.
+- Rủi ro/rollback: chưa có thay đổi runtime; mọi slice giữ compatibility facade đến khi importer đã chuyển.
+- Bước tiếp theo: xác định transition/precondition hiện hữu và thêm test table-driven.
+
+### 2026-08-10 — Phase 6 / xác nhận verification trước Phase 7
+
+- Phase: 6 — Reporting workflow
+- Trạng thái: Hoàn tất; chờ xác nhận bắt đầu Phase 7.
+- Hoàn thành: kiểm tra lại worktree chuyển ownership Reporting trước khi mở Phase kế tiếp; không thay đổi source/runtime contract.
+- Contract kiểm tra: `comprehensive-report` queue/worker đơn nhất tại Reporting, report read/readiness, session completion/overall score và SSE `report.ready`.
+- Verification: `npm run build` — pass; `npm test -- --runInBand` — pass (45 suites, 381 tests); `npm run test:integration` — pass (1 suite); `npm run test:e2e` — pass (1 HTTP suite); `git diff --check` — pass.
+- Quyết định: không mở Phase 7 cho đến khi có xác nhận; Phase 6 đã được chốt tại commit `2d5cff0`.
+- Rủi ro/rollback: không có thay đổi mới; rollback Phase 6 có thể thực hiện riêng theo commit ownership Reporting.
+- Bước tiếp theo: chờ xác nhận để bắt đầu Phase 7 — Session lifecycle.
 
 ### 2026-08-10 — Phase 6 / Reporting ownership exit criteria đạt
 

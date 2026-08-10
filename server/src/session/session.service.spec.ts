@@ -2,6 +2,9 @@ import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { SessionService } from './session.service';
+import { CreateInterviewSession } from './create-interview-session.service';
+import { ChangeInterviewSessionStatus } from './change-interview-session-status.service';
+import { SessionLifecyclePolicy } from './session-lifecycle.policy';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { RubricCatalogService } from '../assessment/rubric/rubric-catalog.service';
@@ -70,6 +73,9 @@ describe('SessionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SessionService,
+        CreateInterviewSession,
+        ChangeInterviewSessionStatus,
+        SessionLifecyclePolicy,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: RubricCatalogService, useValue: mockRubricCatalog },
         {
@@ -203,6 +209,9 @@ describe('SessionService', () => {
       const noLimitModule = await Test.createTestingModule({
         providers: [
           SessionService,
+          CreateInterviewSession,
+          ChangeInterviewSessionStatus,
+          SessionLifecyclePolicy,
           { provide: PrismaService, useValue: mockPrisma },
           { provide: RubricCatalogService, useValue: mockRubricCatalog },
           {
@@ -792,7 +801,9 @@ describe('SessionService', () => {
         orderBy: { orderIndex: 'asc' },
       });
       expect(mockPrisma.userAnswer.findMany).toHaveBeenCalledWith({
-        where: { question: { sessionId: '11111111-1111-4111-8111-111111111111' } },
+        where: {
+          question: { sessionId: '11111111-1111-4111-8111-111111111111' },
+        },
         select: { id: true, questionId: true, skipped: true },
       });
       expect(mockPrisma.interviewSession.update).not.toHaveBeenCalled();
