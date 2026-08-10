@@ -1,13 +1,16 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
-import { CONTEXT_PACK_DATA, ContextPackId } from '../prisma/context-pack.data';
+import {
+  CONTEXT_PACK_DATA,
+  ContextPackId,
+} from '../assessment/rubric/context-pack.data';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   buildRubricCategoriesFromPack,
   buildRubricSnapshot,
   buildScoringWeights,
   type RubricCategorySeed,
-} from '../prisma/rubric-versioning';
+} from '../assessment/rubric/rubric-versioning';
 
 export type ContextPackType = ContextPackId;
 export type RubricDimension = string;

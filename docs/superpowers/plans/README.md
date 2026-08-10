@@ -4,8 +4,8 @@
 
 | Thứ tự | Phase | Trạng thái | Tài liệu |
 | --- | --- | --- | --- |
-| 0 | Baseline và safety net | Đang thực hiện | [Phase 0](./01-phase-0-safety-net.md) · [Contract inventory](./00-phase-0-contract-inventory.md) |
-| 1 | Rubric Catalog về Assessment | Chưa bắt đầu | [Phase 1](./02-phase-1-rubric-catalog.md) |
+| 0 | Baseline và safety net | Hoàn tất | [Phase 0](./01-phase-0-safety-net.md) · [Contract inventory](./00-phase-0-contract-inventory.md) |
+| 1 | Rubric Catalog về Assessment | Hoàn tất | [Phase 1](./02-phase-1-rubric-catalog.md) |
 | 2 | Cô lập OpenAI/provider boundary | Chưa bắt đầu | [Phase 2](./03-phase-2-ai-provider-boundary.md) |
 | 3 | Question ownership và worker | Chưa bắt đầu | [Phase 3](./04-phase-3-question-ownership.md) |
 | 4 | Voice, storage và transcription | Chưa bắt đầu | [Phase 4](./05-phase-4-voice-storage-transcription.md) |

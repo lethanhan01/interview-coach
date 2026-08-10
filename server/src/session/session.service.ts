@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
 import { InterviewSession } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { ReferenceDataService } from '../prisma/reference-data.service';
+import { RubricCatalogService } from '../assessment/rubric/rubric-catalog.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import {
@@ -29,7 +29,7 @@ export class SessionService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly referenceData: ReferenceDataService,
+    private readonly rubricCatalog: RubricCatalogService,
     @InjectQueue(QUESTION_GEN_QUEUE) private readonly queue: Queue,
     private readonly reportService: ReportService,
     config: ConfigService,
@@ -66,7 +66,7 @@ export class SessionService {
 
     let rubricVersionId: string;
     try {
-      rubricVersionId = await this.referenceData.ensureActiveRubricVersion(
+      rubricVersionId = await this.rubricCatalog.ensureActiveRubricVersion(
         dto.contextPack,
       );
     } catch {

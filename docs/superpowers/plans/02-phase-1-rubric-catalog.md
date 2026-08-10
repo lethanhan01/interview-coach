@@ -11,14 +11,19 @@
 
 ## Nhiệm vụ
 
-- [ ] Tạo `src/assessment/rubric/` và move-by-import `context-pack.data.ts`, `rubric-versioning.ts` trước; không rename toàn bộ tree cùng PR.
-- [ ] Tạo `RubricCatalogService` với read API tương thích cho `ensureActiveRubricVersion` và `ensureContextPack`; giữ facade cũ trong một PR nếu caller chưa migrate.
-- [ ] Tách runtime read active catalog khỏi provision/update default catalog.
-- [ ] Đưa provision vào seed hoặc command rõ ràng, idempotent, versioned; document command cho dev/CI/environment mới.
-- [ ] Chuyển legacy ID normalization thành migration/command one-off có log; không chạy vô điều kiện khi application start.
-- [ ] Migrate imports từ Session, rubric controller, question criteria và pipeline theo từng PR nhỏ.
-- [ ] Bỏ `ReferenceDataService` export khỏi `PrismaModule` sau khi không còn consumer; `PrismaModule` chỉ export Prisma/database helper.
-- [ ] Test restart app không làm mutate catalog, fresh environment provision thành công, existing session vẫn resolve đúng rubric snapshot.
+- [x] Tạo `src/assessment/rubric/` và move-by-import `context-pack.data.ts`, `rubric-versioning.ts`; không rename toàn bộ tree cùng PR.
+- [x] Tạo `RubricCatalogService` với read API tương thích cho `ensureActiveRubricVersion` và `ensureContextPack`; migrate sole runtime caller nên không cần giữ facade cũ.
+- [x] Tách runtime read active catalog khỏi provision/update default catalog.
+- [x] Giữ provision trong `npm run seed`, idempotent và versioned; test HTTP provision catalog rõ ràng trước contract flow.
+- [x] Chuyển legacy ID normalization thành `npm run db:migrate-legacy-context-packs` one-off có log; không chạy khi application start.
+- [x] Migrate Session và AI context-pack imports sang Assessment ownership; rubric controller tiếp tục dùng compatibility API `ContextPackService`.
+- [x] Bỏ `ReferenceDataService` export khỏi `PrismaModule`; module này chỉ export `PrismaService`.
+- [x] Test read path không transaction/write, provision fresh catalog và existing session HTTP flow/snapshot path đều pass.
+
+## Vận hành catalog
+
+- Môi trường mới: chạy `npm run seed` sau khi schema đã được apply để provision catalog mặc định `v1`.
+- Dữ liệu có legacy `vn`/`western`: chạy một lần `npm run db:migrate-legacy-context-packs`; lệnh này ghi log kết quả và không chạy lúc API khởi động.
 
 ## PR slicing
 

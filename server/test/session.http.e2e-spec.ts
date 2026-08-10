@@ -6,12 +6,21 @@ import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { provisionDefaultRubricCatalog } from '../src/assessment/rubric/rubric-catalog-provision';
+import { prisma as seedPrisma } from '../prisma/seed/_client';
 
 describe('session HTTP contracts', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let catalogBeforeBoot: { id: string; checksum: string | null }[];
 
   beforeAll(async () => {
+    await provisionDefaultRubricCatalog(seedPrisma);
+    catalogBeforeBoot = await seedPrisma.rubricVersion.findMany({
+      select: { id: true, checksum: true },
+      orderBy: { id: 'asc' },
+    });
+
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -21,10 +30,17 @@ describe('session HTTP contracts', () => {
     app.use(cookieParser());
     await app.init();
     prisma = app.get(PrismaService);
+    await expect(
+      prisma.rubricVersion.findMany({
+        select: { id: true, checksum: true },
+        orderBy: { id: 'asc' },
+      }),
+    ).resolves.toEqual(catalogBeforeBoot);
   });
 
   afterAll(async () => {
     await app.close();
+    await seedPrisma.$disconnect();
   });
 
   it('keeps the Session, Turn, Report, Rubric, and SSE-auth HTTP contracts', async () => {

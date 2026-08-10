@@ -44,6 +44,7 @@
     "test:integration": "jest --config ./test/jest-integration.json",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "node scripts/deny-production-db-sync.mjs seed && ts-node -r tsconfig-paths/register prisma/seed.ts",
+    "db:migrate-legacy-context-packs": "node scripts/deny-production-db-sync.mjs db:migrate-legacy-context-packs && ts-node -r tsconfig-paths/register prisma/migrate-legacy-context-packs.ts",
     "seed:demo-users": "node scripts/deny-production-db-sync.mjs seed:demo-users && ts-node -r tsconfig-paths/register prisma/seed-demo-users.ts",
     "migrate:local-auth": "node scripts/deny-production-db-sync.mjs migrate:local-auth && ts-node -r tsconfig-paths/register prisma/migrate-local-auth.ts"
   },

@@ -4,7 +4,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { SessionService } from './session.service';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
-import { ReferenceDataService } from '../prisma/reference-data.service';
+import { RubricCatalogService } from '../assessment/rubric/rubric-catalog.service';
 import { ReportService } from '../report/report.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
@@ -47,7 +47,7 @@ describe('SessionService', () => {
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockQuestionQueue: ReturnType<typeof createMockQueue>;
   let mockReportService: ReturnType<typeof createMockReportService>;
-  let mockReferenceData: {
+  let mockRubricCatalog: {
     ensureContextPack: jest.Mock;
     ensureActiveRubricVersion: jest.Mock;
   };
@@ -57,7 +57,7 @@ describe('SessionService', () => {
     mockPrisma = createMockPrismaService();
     mockQuestionQueue = createMockQueue();
     mockReportService = createMockReportService();
-    mockReferenceData = {
+    mockRubricCatalog = {
       ensureContextPack: jest.fn().mockResolvedValue(undefined),
       ensureActiveRubricVersion: jest
         .fn()
@@ -71,7 +71,7 @@ describe('SessionService', () => {
       providers: [
         SessionService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: ReferenceDataService, useValue: mockReferenceData },
+        { provide: RubricCatalogService, useValue: mockRubricCatalog },
         {
           provide: getQueueToken(QUESTION_GEN_QUEUE),
           useValue: mockQuestionQueue,
@@ -111,7 +111,7 @@ describe('SessionService', () => {
         }),
       );
       expect(result).toEqual(BASE_SESSION);
-      expect(mockReferenceData.ensureActiveRubricVersion).toHaveBeenCalledWith(
+      expect(mockRubricCatalog.ensureActiveRubricVersion).toHaveBeenCalledWith(
         'VN',
       );
     });
@@ -204,7 +204,7 @@ describe('SessionService', () => {
         providers: [
           SessionService,
           { provide: PrismaService, useValue: mockPrisma },
-          { provide: ReferenceDataService, useValue: mockReferenceData },
+          { provide: RubricCatalogService, useValue: mockRubricCatalog },
           {
             provide: getQueueToken(QUESTION_GEN_QUEUE),
             useValue: mockQuestionQueue,
@@ -243,7 +243,7 @@ describe('SessionService', () => {
 
     it('trả SERVICE_UNAVAILABLE khi context pack không thể đồng bộ', async () => {
       mockPrisma.interviewSession.count.mockResolvedValue(0);
-      mockReferenceData.ensureActiveRubricVersion.mockRejectedValue(
+      mockRubricCatalog.ensureActiveRubricVersion.mockRejectedValue(
         new Error('Database unavailable'),
       );
 

@@ -5,16 +5,16 @@
 
 ## Trạng thái hiện tại
 
-**Phase đang thực hiện:** Hoàn tất Phase 0 — Safety net.
+**Phase đang thực hiện:** Hoàn tất Phase 1 — Rubric Catalog.
 **Blocker hiện tại:** Chưa có.
-**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 1 — Rubric Catalog.
+**Bước tiếp theo:** Chờ xác nhận để bắt đầu Phase 2 — AI boundary.
 
 ## Bảng Phase
 
 | Phase | Trạng thái | Đã hoàn thành | Bước tiếp theo | Evidence/ghi chú |
 | --- | --- | --- | --- | --- |
 | 0 — Safety net | Hoàn tất | Baseline, contract inventory, queue/SSE/lifecycle characterization, integration taxonomy và HTTP contract harness. | Chờ xác nhận bắt đầu Phase 1. | Build pass; unit 43 suites/378 tests pass; integration 1 suite pass; HTTP E2E 1 suite pass trên PostgreSQL/Redis cô lập. Question-generation baseline không có `jobId`/dedup. |
-| 1 — Rubric Catalog | Chưa bắt đầu | — | Chờ Phase 0 exit criteria. | — |
+| 1 — Rubric Catalog | Hoàn tất | Assessment sở hữu catalog read/provision code; startup không còn write/migrate catalog. | Chờ xác nhận bắt đầu Phase 2. | Build pass; unit 44 suites/379 tests pass; integration và HTTP E2E pass. |
 | 2 — AI boundary | Chưa bắt đầu | — | Chờ Phase 0 exit criteria. | — |
 | 3 — Question | Chưa bắt đầu | — | Chờ Phase 1 và 2. | — |
 | 4 — Voice | Chưa bắt đầu | — | Chờ Phase 2. | — |
@@ -37,6 +37,17 @@
 | 2026-08-10 | Move behavior trước, move folder sau. | Folder-only PR lớn gây noise và che semantic regression. | Mỗi phase có compatibility facade rồi cleanup. |
 
 ## Nhật ký thực hiện
+
+### 2026-08-10 — Phase 1 / Rubric Catalog exit criteria đạt
+
+- Phase: 1 — Rubric Catalog
+- Trạng thái: Hoàn tất
+- Hoàn thành: di chuyển context-pack data/versioning và catalog provision về `src/assessment/rubric/`; `RubricCatalogService` chỉ đọc/validate active version; Session migrate sang Assessment; xoá `ReferenceDataService` khỏi `PrismaModule` và bỏ toàn bộ startup provision/legacy-ID write.
+- Contract kiểm tra: giữ nguyên seeded catalog `v1`, checksum, `rubricVersionId`, criterion link, foreign-key behavior và REST rubric/session response; HTTP E2E provision catalog rõ ràng thay vì dựa vào side effect startup.
+- Verification: `npm run build` — pass; `npm test -- --runInBand` — pass (44 suites, 379 tests); `npm run test:integration` — pass (1 suite); `npm run test:e2e` — pass (1 HTTP suite); `git diff --check` — pass.
+- Quyết định: `npm run seed` là provisioning path idempotent cho environment mới; `npm run db:migrate-legacy-context-packs` là command one-off có log cho `vn`/`western`, không chạy khi app boot.
+- Rủi ro/rollback: environment mới phải chạy seed sau schema apply; rollback có thể tạm restore startup provision, không cần schema/data migration phá hủy.
+- Bước tiếp theo: chờ xác nhận để bắt đầu Phase 2 — AI boundary.
 
 ### 2026-08-10 — Phase 0 / baseline repository
 
