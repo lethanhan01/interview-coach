@@ -120,6 +120,26 @@ describe('session HTTP contracts', () => {
       .get(`/api/v1/sessions/${created.body.id}/events`)
       .expect(401);
 
+    await request(app.getHttpServer())
+      .get(`/api/v1/sessions/${created.body.id}/events`)
+      .set('Cookie', 'interviewcoach_auth=invalid-token')
+      .expect(401);
+
+    const otherUser = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        email: `phase0-other-${Date.now()}@example.com`,
+        password: 'phase0-test-password',
+        firstname: 'Other',
+        lastname: 'User',
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .get(`/api/v1/sessions/${created.body.id}/events`)
+      .set('Cookie', otherUser.headers['set-cookie'][0])
+      .expect(403);
+
     const firstQuestion = await prisma.sessionQuestion.create({
       data: {
         sessionId: created.body.id,
@@ -185,7 +205,7 @@ describe('session HTTP contracts', () => {
       .expect(400);
   });
 
-  it.failing('does not expose credentials from the profile endpoint', async () => {
+  it('does not expose credentials from the profile endpoint', async () => {
     const email = `profile-contract-${Date.now()}@example.com`;
     const register = await request(app.getHttpServer())
       .post('/api/v1/auth/register')

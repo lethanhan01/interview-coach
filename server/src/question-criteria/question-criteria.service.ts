@@ -70,11 +70,7 @@ export class QuestionCriteriaService {
       .sort(compareCriterionRows)
       .map((criterion) => criterion.code);
 
-    const codes = unique(linked);
-    if (codes.length === 0) {
-      throw new Error(`question_bank ${question.id} has no criteria relation`);
-    }
-    return codes;
+    return unique(linked);
   }
 
   codesFromSessionQuestion(question: SessionQuestionWithCriteria): string[] {

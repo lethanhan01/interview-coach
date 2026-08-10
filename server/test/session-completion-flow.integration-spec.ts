@@ -7,6 +7,7 @@ import { ChangeInterviewSessionStatus } from '../src/session/change-interview-se
 import { SessionLifecyclePolicy } from '../src/session/session-lifecycle.policy';
 import { ReportService } from '../src/report/report.service';
 import { GenerateComprehensiveReport } from '../src/report/generate-comprehensive-report.service';
+import { WorkflowService } from '../src/workflow/workflow.service';
 
 describe('Session completion flow (integration)', () => {
   it('submit answer -> feedback queue -> completing -> report queue -> completed', async () => {
@@ -34,6 +35,16 @@ describe('Session completion flow (integration)', () => {
     const annotations: Record<string, unknown>[] = [];
 
     const transaction = {
+      interviewSession: {
+        update: jest.fn(async ({ where, data }: any) => {
+          if (where.id !== session.id) throw new Error('Session not found');
+          Object.assign(session, data);
+          return { ...session };
+        }),
+      },
+      workflowOutbox: {
+        upsert: jest.fn(async ({ create }: any) => create),
+      },
       aiFeedback: {
         findUnique: jest.fn(async ({ where }: any) => {
           return feedbacks.get(where.userAnswerId) ?? null;
@@ -247,6 +258,7 @@ describe('Session completion flow (integration)', () => {
         prisma as any,
         reportService,
         new SessionLifecyclePolicy(),
+        new WorkflowService(),
       ),
     );
     const reportGenerator = new GenerateComprehensiveReport(
@@ -285,6 +297,13 @@ describe('Session completion flow (integration)', () => {
     );
 
     expect(completing.status).toBe('completing');
+    expect(transaction.workflowOutbox.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          idempotencyKey: `report-generation:${session.id}`,
+        },
+      }),
+    );
     expect(reportJobs).toHaveLength(1);
     expect(reportJobs[0].data.turnIds).toEqual([turn.answerId]);
 

@@ -86,9 +86,24 @@ export class QuestionBankService {
       );
     }
 
-    return selected.map((question) =>
-      this.mapFallbackQuestion(question, language, rubricVersionId),
-    );
+    const mapped = selected
+      .map((question) => {
+        try {
+          return this.mapFallbackQuestion(question, language, rubricVersionId);
+        } catch (error: unknown) {
+          // Question has no valid criteria relation for this context/rubric — skip it
+          return null;
+        }
+      })
+      .filter((q): q is FallbackQuestion => q !== null);
+
+    if (mapped.length === 0) {
+      throw new Error(
+        `No fallback questions with valid criteria for ${sessionType}/${contextPackId}`,
+      );
+    }
+
+    return mapped;
   }
 
   private async selectMixedFallbackQuestions(
@@ -134,9 +149,23 @@ export class QuestionBankService {
       );
     }
 
-    return allSelected.map((question) =>
-      this.mapFallbackQuestion(question, language, rubricVersionId),
-    );
+    const mapped = allSelected
+      .map((question) => {
+        try {
+          return this.mapFallbackQuestion(question, language, rubricVersionId);
+        } catch (error: unknown) {
+          return null;
+        }
+      })
+      .filter((q): q is FallbackQuestion => q !== null);
+
+    if (mapped.length === 0) {
+      throw new Error(
+        `No mixed fallback questions with valid criteria for ${contextPackId}`,
+      );
+    }
+
+    return mapped;
   }
 
   private resolveText(question: QuestionBankRow, language: string): string {

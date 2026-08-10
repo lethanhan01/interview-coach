@@ -170,16 +170,29 @@ describe('SessionController', () => {
   });
 
   describe('SSE /sessions/:id/events', () => {
-    it('trả về observable từ sseService.subscribe với channel đúng', () => {
+    it('xác thực ownership trước khi subscribe vào đúng session channel', async () => {
       const observable = of({ data: 'event' });
       mockSseService.subscribe.mockReturnValue(observable);
 
-      const result = controller.streamEvents('session-1');
+      const result = await controller.streamEvents('session-1', mockReq());
 
       expect(result).toBe(observable);
+      expect(mockSessionService.findById).toHaveBeenCalledWith(
+        'session-1',
+        'user-abc',
+      );
       expect(mockSseService.subscribe).toHaveBeenCalledWith(
         'sse:session:session-1',
       );
+    });
+
+    it('không subscribe khi session không thuộc user', async () => {
+      mockSessionService.findById.mockRejectedValue(new Error('FORBIDDEN'));
+
+      await expect(
+        controller.streamEvents('session-1', mockReq('other-user')),
+      ).rejects.toThrow('FORBIDDEN');
+      expect(mockSseService.subscribe).not.toHaveBeenCalled();
     });
   });
 });

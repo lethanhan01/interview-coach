@@ -10,12 +10,14 @@ import { QUESTION_GEN_QUEUE } from '../common/constants/queue.constants';
 import { ReportModule } from '../report/report.module';
 import { AuthModule } from '../auth/auth.module';
 import { AssessmentModule } from '../assessment/assessment.module';
+import { WorkflowModule } from '../workflow/workflow.module';
 
 @Module({
   imports: [
     ReportModule,
     AuthModule,
     AssessmentModule,
+    WorkflowModule,
     BullModule.registerQueue({ name: QUESTION_GEN_QUEUE }),
   ],
   controllers: [SessionController],

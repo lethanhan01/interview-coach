@@ -152,6 +152,25 @@ model UserProfile {
   @@map("user_profiles")
 }
 
+model WorkflowOutbox {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  commandType    String   @map("command_type")
+  aggregateId    String   @map("aggregate_id") @db.Uuid
+  payload        Json
+  idempotencyKey String   @unique @map("idempotency_key")
+  state          String   @default("pending")
+  attempts       Int      @default(0)
+  availableAt    DateTime @default(now()) @map("available_at") @db.Timestamptz(6)
+  processedAt    DateTime? @map("processed_at") @db.Timestamptz(6)
+  errorSummary   String?  @map("error_summary")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([state, availableAt], map: "idx_workflow_outbox_due")
+  @@index([aggregateId], map: "idx_workflow_outbox_aggregate")
+  @@map("workflow_outbox")
+}
+
 model SessionReport {
   id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sessionId        String           @map("session_id") @db.Uuid

@@ -1,4 +1,29 @@
 -- =============================================================================
+-- Workflow outbox: additive durable commands for post-commit queue work.
+-- Dispatcher/cutover follows in RF-009; this table is retained on rollback.
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS workflow_outbox (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  command_type TEXT NOT NULL,
+  aggregate_id UUID NOT NULL,
+  payload JSONB NOT NULL,
+  idempotency_key TEXT NOT NULL UNIQUE,
+  state TEXT NOT NULL DEFAULT 'pending',
+  attempts INTEGER NOT NULL DEFAULT 0,
+  available_at TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  processed_at TIMESTAMPTZ(6),
+  error_summary TEXT,
+  created_at TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ(6) NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_workflow_outbox_due
+  ON workflow_outbox(state, available_at);
+CREATE INDEX IF NOT EXISTS idx_workflow_outbox_aggregate
+  ON workflow_outbox(aggregate_id);
+
+-- =============================================================================
 -- InterviewCoach — Consolidated migration
 -- Apply against a Supabase project that already has the base schema created
 -- via `prisma db push`. Execute as a superuser or service role.

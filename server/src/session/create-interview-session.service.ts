@@ -13,6 +13,7 @@ import {
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { resolveOutputLanguage } from '../ai/output-language';
 import { CreateSessionDto } from './dto/create-session.dto';
+import { WorkflowService } from '../workflow/workflow.service';
 
 @Injectable()
 export class CreateInterviewSession {
@@ -23,6 +24,7 @@ export class CreateInterviewSession {
     private readonly prisma: PrismaService,
     private readonly rubricCatalog: RubricCatalogService,
     @InjectQueue(QUESTION_GEN_QUEUE) private readonly queue: Queue,
+    private readonly workflow: WorkflowService,
     config: ConfigService,
   ) {
     const configuredLimit = Number(
@@ -71,17 +73,35 @@ export class CreateInterviewSession {
       userId,
       dto.savedJobDescriptionId,
     );
-    const session = await this.prisma.interviewSession.create({
-      data: {
-        savedJobDescriptionId,
-        jobDescription: dto.jobDescription,
-        sessionType: dto.sessionType,
-        numQuestions: dto.numQuestions ?? 5,
-        language: resolveOutputLanguage(dto.language),
-        contextPackId: dto.contextPack,
-        rubricVersionId,
-        status: 'generating',
-      },
+    const session = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.interviewSession.create({
+        data: {
+          savedJobDescriptionId,
+          jobDescription: dto.jobDescription,
+          sessionType: dto.sessionType,
+          numQuestions: dto.numQuestions ?? 5,
+          language: resolveOutputLanguage(dto.language),
+          contextPackId: dto.contextPack,
+          rubricVersionId,
+          status: 'generating',
+        },
+      });
+      await this.workflow.enqueueInTransaction(tx, {
+        commandType: 'question-generation',
+        sessionId: created.id,
+        payload: {
+          sessionId: created.id,
+          sessionType: dto.sessionType,
+          jobDescriptionText: dto.jobDescription,
+          targetRoles: dto.targetRoles ?? [],
+          contextPack: dto.contextPack,
+          rubricVersionId,
+          language: created.language,
+          totalQuestions: created.numQuestions,
+          durationMin: created.durationMin,
+        },
+      });
+      return created;
     });
 
     try {

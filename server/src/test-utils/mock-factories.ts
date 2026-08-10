@@ -161,6 +161,9 @@ export const createMockPrismaService = () => {
       findMany: jest.fn().mockResolvedValue([]),
       findFirst: jest.fn().mockResolvedValue(null),
     },
+    workflowOutbox: {
+      upsert: jest.fn(),
+    },
   };
   return prisma;
 };
@@ -230,6 +233,10 @@ export const createMockTurnService = () => ({
 export const createMockUserService = () => ({
   getProfile: jest.fn(),
   upsertProfile: jest.fn(),
+});
+
+export const createMockWorkflowService = () => ({
+  enqueueInTransaction: jest.fn(),
 });
 
 export const createMockOpenAIGateway = () => ({

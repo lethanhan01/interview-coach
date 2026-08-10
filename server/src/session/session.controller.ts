@@ -159,8 +159,12 @@ export class SessionController {
   })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiProduces('text/event-stream')
-  @ApiCommonErrors(401)
-  streamEvents(@Param('id') id: string): Observable<MessageEvent> {
+  @ApiCommonErrors(401, 403, 404)
+  async streamEvents(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string } },
+  ): Promise<Observable<MessageEvent>> {
+    await this.sessionService.findById(id, req.user.id);
     return this.sseService.subscribe(`sse:session:${id}`);
   }
 }

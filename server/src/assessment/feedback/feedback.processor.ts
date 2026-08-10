@@ -194,6 +194,19 @@ export class FeedbackProcessor extends WorkerHost {
             return existingFeedback._count.annotatedSegments > 0;
           }
 
+          // If the UserAnswer row was deleted or never persisted, skip the
+          // foreign-key-constrained upsert to avoid a Prisma constraint error.
+          const answerExists = await tx.userAnswer.findUnique({
+            where: { id: answerId },
+            select: { id: true },
+          });
+          if (!answerExists) {
+            this.logger.warn(
+              `FeedbackProcessor fallback skipped for answer ${answerId}: UserAnswer not found`,
+            );
+            return false;
+          }
+
           await tx.aiFeedback.upsert({
             where: { userAnswerId: answerId },
             create: {

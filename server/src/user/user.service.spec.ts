@@ -13,6 +13,8 @@ describe('UserService', () => {
   const BASE_USER = {
     id: 'user-123',
     email: 'test@example.com',
+    passwordHash: 'secret-hash',
+    tokenVersion: 2,
     firstname: null,
     lastname: null,
     role: 'candidate',
@@ -40,10 +42,34 @@ describe('UserService', () => {
 
       const result = await service.getProfile('user-123');
 
-      expect(result).toEqual(BASE_USER);
+      expect(result).toEqual({
+        id: BASE_USER.id,
+        email: BASE_USER.email,
+        firstname: BASE_USER.firstname,
+        lastname: BASE_USER.lastname,
+        profile: BASE_USER.profile,
+      });
+      expect(result).not.toHaveProperty('passwordHash');
+      expect(result).not.toHaveProperty('tokenVersion');
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: 'user-123' },
-        include: { profile: true },
+        select: {
+          id: true,
+          email: true,
+          firstname: true,
+          lastname: true,
+          profile: {
+            select: {
+              personality: true,
+              education: true,
+              workExperience: true,
+              projects: true,
+              technicalSkills: true,
+              certifications: true,
+              awards: true,
+            },
+          },
+        },
       });
     });
 
@@ -52,6 +78,7 @@ describe('UserService', () => {
         ...BASE_USER,
         profile: {
           userId: 'user-123',
+          personality: null,
           education: { school: 'HUST' },
           workExperience: [],
           projects: [],
@@ -64,7 +91,21 @@ describe('UserService', () => {
 
       const result = await service.getProfile('user-123');
 
-      expect(result).toEqual(userWithProfile);
+      expect(result).toEqual({
+        id: BASE_USER.id,
+        email: BASE_USER.email,
+        firstname: BASE_USER.firstname,
+        lastname: BASE_USER.lastname,
+        profile: {
+          personality: null,
+          education: { school: 'HUST' },
+          workExperience: [],
+          projects: [],
+          technicalSkills: [{ name: 'TypeScript' }],
+          certifications: [],
+          awards: [],
+        },
+      });
     });
 
     it('nem NOT_FOUND (404) khi user khong ton tai', async () => {

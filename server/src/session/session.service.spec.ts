@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { RubricCatalogService } from '../assessment/rubric/rubric-catalog.service';
 import { ReportService } from '../report/report.service';
+import { WorkflowService } from '../workflow/workflow.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { QUESTION_GEN_QUEUE } from '../common/constants/queue.constants';
@@ -17,6 +18,7 @@ import {
   createMockConfigService,
   createMockQueue,
   createMockReportService,
+  createMockWorkflowService,
 } from '../test-utils/mock-factories';
 
 const BASE_SESSION = {
@@ -50,6 +52,7 @@ describe('SessionService', () => {
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockQuestionQueue: ReturnType<typeof createMockQueue>;
   let mockReportService: ReturnType<typeof createMockReportService>;
+  let mockWorkflowService: ReturnType<typeof createMockWorkflowService>;
   let mockRubricCatalog: {
     ensureContextPack: jest.Mock;
     ensureActiveRubricVersion: jest.Mock;
@@ -60,6 +63,7 @@ describe('SessionService', () => {
     mockPrisma = createMockPrismaService();
     mockQuestionQueue = createMockQueue();
     mockReportService = createMockReportService();
+    mockWorkflowService = createMockWorkflowService();
     mockRubricCatalog = {
       ensureContextPack: jest.fn().mockResolvedValue(undefined),
       ensureActiveRubricVersion: jest
@@ -83,6 +87,7 @@ describe('SessionService', () => {
           useValue: mockQuestionQueue,
         },
         { provide: ReportService, useValue: mockReportService },
+        { provide: WorkflowService, useValue: mockWorkflowService },
         { provide: ConfigService, useValue: mockConfig },
       ],
     }).compile();
@@ -119,6 +124,13 @@ describe('SessionService', () => {
       expect(result).toEqual(BASE_SESSION);
       expect(mockRubricCatalog.ensureActiveRubricVersion).toHaveBeenCalledWith(
         'VN',
+      );
+      expect(mockWorkflowService.enqueueInTransaction).toHaveBeenCalledWith(
+        mockPrisma,
+        expect.objectContaining({
+          commandType: 'question-generation',
+          sessionId: BASE_SESSION.id,
+        }),
       );
     });
 
@@ -219,6 +231,7 @@ describe('SessionService', () => {
             useValue: mockQuestionQueue,
           },
           { provide: ReportService, useValue: mockReportService },
+          { provide: WorkflowService, useValue: mockWorkflowService },
           { provide: ConfigService, useValue: mockConfig },
         ],
       }).compile();
@@ -445,6 +458,13 @@ describe('SessionService', () => {
         'hr',
         'VN',
         'vi',
+      );
+      expect(mockWorkflowService.enqueueInTransaction).toHaveBeenCalledWith(
+        mockPrisma,
+        expect.objectContaining({
+          commandType: 'report-generation',
+          sessionId: BASE_SESSION.id,
+        }),
       );
     });
 

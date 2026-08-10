@@ -2,18 +2,18 @@
 
 **Master plan:** [BACKEND_REFACTORING_MASTER_PLAN.md](./BACKEND_REFACTORING_MASTER_PLAN.md)  
 **Last updated:** 2026-08-10  
-**Current phase:** Phase 1 — RF-007 complete; awaiting confirmation for the next task
+**Current phase:** Phase 2 — RF-008 complete; awaiting product decisions for remaining Phase 1 work
 **Overall status:** In progress
 
 ## Current snapshot
 
-- RF-001 and RF-007 are complete. The Phase 0 safety and dependency baseline is now in place.
+- RF-001, RF-007, RF-003, RF-005 and RF-008 are complete. The Phase 0 baseline is in place; profile responses and session SSE streams now enforce their intended security boundaries; session/report workflow commands are now recorded durably with their database transitions.
 - The earlier “Season 2” roadmap (Phase 0–10) was completed before this master plan was created. Its completed items are useful context and test coverage, but are **not** evidence that any RF-001–RF-017 task below is complete.
 - Working tree was clean when this file was created, before adding this file.
 
 ## Next action
 
-After confirmation, start **RF-003 — public profile projection**, the next unblocked P0 security task. RF-002 remains pending the email-verification policy decision; RF-005 may follow RF-003.
+Resolve the pending product decisions for RF-002, RF-004 and RF-006 before completing the remaining Phase 1 security/correctness work. **RF-009 — dispatch and reconcile outbox commands** is the next unblocked implementation task, but should remain isolated from the unrelated working-tree changes currently affecting the full test baseline.
 
 ## Required decisions before dependent work
 
@@ -31,11 +31,11 @@ After confirmation, start **RF-003 — public profile projection**, the next unb
 | RF-001 | 0 — safeguard | Complete | HTTP/profile regression characterization, public-audio contract, existing lifecycle/SSE/auth coverage, and PostgreSQL+Redis duplicate-dispatch test added; see log. |
 | RF-007 | 0 — boundaries | Complete | Static CI boundary test added; Health controller no longer imports Prisma; Question module no longer re-exports child modules. |
 | RF-002 | 1 — auth | Blocked by policy | Remove phantom `emailVerified` contract only after approval. |
-| RF-003 | 1 — profile | Not started | Prerequisite met; profile currently returns Prisma `User`. |
+| RF-003 | 1 — profile | Complete | Explicit public DTO/select/map now returns only profile fields used by the client; credential/internal fields are excluded and covered by unit + HTTP tests. Changes are uncommitted. |
 | RF-004 | 1/3 — media | Blocked by RF-001 + migration decision | Audio currently uses a public URL as identity. |
-| RF-005 | 1 — SSE | Not started | Prerequisite met; current SSE route has token auth but no session-owner check. |
+| RF-005 | 1 — SSE | Complete | SSE controller now calls the existing session ownership helper before subscribing; owner, cross-user denial, missing-token and invalid-token coverage passes. Changes are uncommitted. |
 | RF-006 | 1 — throttling | Blocked by rate policy | |
-| RF-008 | 2 — outbox | Not started | Prerequisites met; session creation currently commits DB state before queue publish. |
+| RF-008 | 2 — outbox | Complete | Additive `workflow_outbox` schema and `WorkflowService` command writer now run inside the session creation/completion transaction. PostgreSQL integration coverage verifies rollback and concurrent idempotency. Changes are uncommitted. |
 | RF-009 | 2 — dispatch/recovery | Blocked by RF-008 | |
 | RF-010 | 3 — transcription | Blocked by RF-004 + RF-008 | |
 | RF-011 | 3 — runtime roles | Blocked by RF-009 | |
@@ -71,3 +71,30 @@ For every completed slice, update its row with the commit/PR, files changed, val
 - Boundary rule: CI now rejects controller imports of Prisma, BullMQ/Queue, OpenAI, or Supabase, and rejects new nested cross-feature relative imports. The test documents the small approved legacy contract list that still lacks dedicated public entry points.
 - Rollback: revert the architecture test, health-service extraction, and Question/Turn module import changes together; no data or deployment rollback is required.
 - Next action: wait for confirmation, then start RF-003. RF-002 remains blocked until the email-verification policy is approved.
+
+### 2026-08-10 — RF-003 public profile projection
+
+- Status: Complete; changes are in the working tree and not yet committed.
+- Changed: added explicit Swagger response DTOs for the public profile contract; changed `UserService.getProfile()` to Prisma-select and map only `id`, `email`, `firstname`, `lastname`, and the client-used profile fields; documented the contract; converted the RF-001 HTTP secrecy regression from `it.failing` to a passing test; strengthened unit coverage against accidental secret/internal-field return.
+- Contract/migration impact: intentional security response contraction for `GET/PATCH /profile`: removes `passwordHash`, `tokenVersion`, role/status/timestamps, profile record identifiers, and other internal relations. The checked client contract uses only the retained fields. No schema or data migration.
+- Validation: `npx eslint "src/**/*.ts" --ignore-pattern "**/*.spec.ts"` — pass; `npm run build` — pass; `npm test -- --runInBand` — pass (48 suites, 409 tests); `npm run test:integration -- --runInBand` — pass (2 suites, 2 tests); `npm run test:e2e -- --runInBand` — pass (1 suite, 2 tests); `git diff --check` — pass.
+- Rollback: revert the User service/DTO/controller/test/documentation changes; no DB or deployment rollback is required.
+- Next action: start RF-005 — apply the existing session ownership check to SSE subscriptions and extend the cross-user HTTP/SSE tests.
+
+### 2026-08-10 — RF-005 SSE ownership authorization
+
+- Status: Complete; changes are in the working tree and not yet committed.
+- Changed: made the session SSE controller verify ownership through the existing `SessionService.findById()` helper before subscribing, and documented the resulting 401/403/404 responses. Added controller coverage that denies a failed ownership check without subscribing and HTTP coverage for cross-user, missing-token and invalid-token denial.
+- Contract/migration impact: no schema, queue, storage or data migration. `GET /sessions/:id/events` now returns the same ownership denial as the Session API instead of opening another user's channel.
+- Validation: `npx jest src/session/session.controller.spec.ts --runInBand` — pass (9 tests); `npm run build` — pass; `npm run test:e2e -- --runInBand` — pass (1 suite, 2 tests); `git diff --check` — pass. Full `npm test -- --runInBand` currently has 5 unrelated failures in uncommitted `FeedbackProcessor` changes (`tx.userAnswer.findUnique` is absent from their test doubles), and `npx eslint "src/**/*.ts" --ignore-pattern "**/*.spec.ts"` currently has 2 unrelated unused-catch-variable errors in uncommitted `QuestionBankService` changes. Integration tests pass (2 suites, 2 tests).
+- Rollback: revert the controller/test changes; no DB or deployment rollback is required.
+- Next action: obtain the pending product decisions for RF-002/RF-004/RF-006; if work proceeds without them, begin RF-008 in an isolated change after reconciling the unrelated working-tree changes.
+
+### 2026-08-10 — RF-008 transactional workflow outbox schema and command contract
+
+- Status: Complete; changes are in the working tree and not yet committed.
+- Changed: added the additive `workflow_outbox` Prisma model and SQL table/indexes; added the small `WorkflowService` transaction command writer with stable per-command/session idempotency keys; made session creation and transition to `completing` record question/report commands in the same transaction as their session state. Existing direct queue publishing remains as the temporary RF-009 cutover path.
+- Contract/migration impact: additive database schema only; no HTTP, client, or queue-payload contract removal. The local PostgreSQL integration database was synchronized with the additive schema using `prisma db push`; production migration remains the checked-in SQL change and has not been applied by this work.
+- Validation: `npm test -- --runInBand workflow/workflow.service.spec.ts session/session.service.spec.ts` — pass (2 suites, 40 tests); `npm run test:integration -- --runInBand` — pass (3 suites, 3 tests), including PostgreSQL rollback and concurrent idempotency coverage; `npm run build` — pass; scoped ESLint for workflow/session production files — pass; `git diff --check` — pass. Full `npm test -- --runInBand` has 5 unrelated existing failures in uncommitted FeedbackProcessor work (`tx.userAnswer.findUnique` is absent from test doubles); 47 suites / 406 tests pass.
+- Rollback: the table is additive. Disable the future dispatcher/cutover path and retain existing direct queue publishing; retain outbox records for recovery and do not drop the table in rollback.
+- Next action: start RF-009 — add a dispatcher/reconciler that claims due commands safely, sends deterministic BullMQ jobs, and leaves Redis failures retryable.

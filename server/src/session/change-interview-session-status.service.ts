@@ -6,6 +6,7 @@ import { PrismaService } from '../infrastructure/database/prisma/prisma.service'
 import { ReportService } from '../report/report.service';
 import { SessionStatusUpdate } from './dto/update-session-status.dto';
 import { SessionLifecyclePolicy } from './session-lifecycle.policy';
+import { WorkflowService } from '../workflow/workflow.service';
 
 @Injectable()
 export class ChangeInterviewSessionStatus {
@@ -13,6 +14,7 @@ export class ChangeInterviewSessionStatus {
     private readonly prisma: PrismaService,
     private readonly reportService: ReportService,
     private readonly policy: SessionLifecyclePolicy,
+    private readonly workflow: WorkflowService,
   ) {}
 
   async execute(
@@ -128,9 +130,13 @@ export class ChangeInterviewSessionStatus {
         'Hãy trả lời đầy đủ các câu hỏi trước khi hoàn thành phỏng vấn.',
       );
     }
-    return this.prisma.interviewSession.update({
-      where: { id: sessionId },
-      data: { status: 'completing', completedAt: null },
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.interviewSession.update({
+        where: { id: sessionId },
+        data: { status: 'completing', completedAt: null },
+      });
+      await this.enqueueReportCommand(tx, updated);
+      return updated;
     });
   }
 
@@ -172,10 +178,28 @@ export class ChangeInterviewSessionStatus {
           })),
         });
       }
-      return tx.interviewSession.update({
+      const updated = await tx.interviewSession.update({
         where: { id: sessionId },
         data: { status: 'completing', completedAt: null, remainingSeconds: 0 },
       });
+      await this.enqueueReportCommand(tx, updated);
+      return updated;
+    });
+  }
+
+  private enqueueReportCommand(
+    tx: Parameters<WorkflowService['enqueueInTransaction']>[0],
+    session: InterviewSession,
+  ) {
+    return this.workflow.enqueueInTransaction(tx, {
+      commandType: 'report-generation',
+      sessionId: session.id,
+      payload: {
+        sessionId: session.id,
+        sessionType: session.sessionType,
+        contextPack: session.contextPackId,
+        language: session.language,
+      },
     });
   }
 }
