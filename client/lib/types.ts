@@ -7,7 +7,7 @@ export type SessionStatus =
   | 'completed'
   | 'canceled'
   | 'error'
-export type SessionType = 'hr' | 'technical' | 'mixed'
+export type SessionType = 'hr' | 'technical'
 export type ContextPack = 'VN' | 'Western'
 export type OutputLanguage = 'vi' | 'en'
 

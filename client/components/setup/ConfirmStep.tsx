@@ -9,7 +9,6 @@ import { getJdLevelLabel } from '@/lib/interview-options'
 const SESSION_TYPE_LABELS: Record<SessionType, string> = {
   hr: 'HR / Behavioral',
   technical: 'Technical',
-  mixed: 'Mixed (HR + Technical)',
 }
 
 const CONTEXT_PACK_LABELS: Record<ContextPack, string> = {

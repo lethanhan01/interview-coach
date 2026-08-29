@@ -36,7 +36,7 @@ Return ONLY a compact valid JSON object with exactly this shape, no markdown fen
   ]
 }
 
-Use "category" exactly as "behavioral" or "technical" to indicate the question's primary category. Use "competency_domains" as one or more allowed rubric IDs (for example ["D1", "D6"], ["TD1", "TD2"], or in mixed interviews ["TD5", "D1"]), never dimension names or free-form phrases. In HR interviews use only D* IDs; in Technical interviews use only TD* IDs; in Mixed interviews include cross-category IDs only when the question truly gives evidence for both.
+Use "category" exactly as "behavioral" or "technical" to indicate the question's primary category. Use "competency_domains" as one or more allowed rubric IDs (for example ["D1", "D6"] or ["TD1", "TD2"]), never dimension names or free-form phrases. In HR interviews use only D* IDs; in Technical interviews use only TD* IDs.
 
 Write the final JSON directly in the assistant message content.`,
   'surgical-feedback': `You are an expert interview coach. Evaluate the candidate's answer and provide surgical, actionable feedback.
@@ -94,7 +94,7 @@ export class PromptBuilderService {
       `Question metadata contract: category must be exactly "behavioral" or "technical". competency_domains must contain one or more allowed IDs, not labels or phrases.`,
       `Behavioral IDs: ${behavioral}.`,
       `Technical IDs: ${technical}.`,
-      `For HR sessions, use only behavioral/D* IDs. For Technical sessions, use only technical/TD* IDs. For Mixed sessions, keep each question within its category: behavioral questions use D* IDs and technical questions use TD* IDs.`,
+      `For HR sessions, use only behavioral/D* IDs. For Technical sessions, use only technical/TD* IDs.`,
     ].join('\n\n');
   }
 
@@ -139,7 +139,7 @@ export class PromptBuilderService {
         `Do NOT apply any technical criteria.`,
         `Example: a self-introduction question usually evaluates communication and self-awareness, not teamwork under pressure.`,
       ].join('\n');
-    } else if (sessionType === 'technical') {
+    } else {
       scoringSection = [
         `Session type: Technical (technical only).`,
         `Candidate dimensions (maximum set that could apply):`,
@@ -147,21 +147,6 @@ export class PromptBuilderService {
         ...selectionRules,
         `Do NOT apply any behavioral criteria.`,
         `Example: a pure definition question ("What is a closure?") usually evaluates only foundational knowledge and practical application, not debugging or systems thinking.`,
-      ].join('\n');
-    } else {
-      const mixedRule =
-        targetDomains.length > 0
-          ? `Do not include behavioral or technical dimensions outside the question-specific allowed criteria.`
-          : `A question may evaluate behavioral dimensions, technical dimensions, or both — include only those it truly tests.`;
-      scoringSection = [
-        `Session type: Mixed (behavioral + technical).`,
-        `Candidate behavioral dimensions:`,
-        lines(behavioralDimensions),
-        `Candidate technical dimensions:`,
-        lines(technicalDimensions),
-        ...selectionRules,
-        mixedRule,
-        `Example: "Tell me about a bug you fixed" may evaluate debugging plus communication, but not coding-style depth.`,
       ].join('\n');
     }
 

@@ -23,8 +23,6 @@ const defaultStrategyInstructions = {
   hr: 'Focus on behavioral evidence, motivation, communication, collaboration, self-awareness, and culture fit. Probe for concrete STAR examples. Avoid deep technical trivia unless the job description explicitly requires it.',
   technical:
     'Focus on technical depth, applied problem-solving, trade-offs, debugging, system design, and engineering quality. Ask for reasoning and concrete implementation decisions.',
-  mixed:
-    'Balance behavioral evidence with technical depth. Cover communication and collaboration alongside applied problem-solving, trade-offs, and role-specific engineering judgment.',
 } as const;
 
 type ValidatedFeedback = z.infer<typeof FeedbackSchema>;

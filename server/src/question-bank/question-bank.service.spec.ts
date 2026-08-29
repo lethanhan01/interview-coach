@@ -108,7 +108,7 @@ describe('QuestionBankService', () => {
   it('giữ full competencyDomains và lấy questionCategory theo domain đầu tiên', async () => {
     mockPrisma.questionBank.findMany.mockResolvedValue([
       mockQuestionBankWithCriteria({
-        id: 'mixed-technical-primary',
+        id: 'technical-primary',
         content: 'Describe a production bug and how you explained the fix.',
         difficulty: 3,
         contextPackId: 'VN',
@@ -119,7 +119,7 @@ describe('QuestionBankService', () => {
     ]);
 
     const result = await service.selectFallbackQuestions(
-      'mixed',
+      'technical',
       'VN',
       1,
       'en',
@@ -127,7 +127,7 @@ describe('QuestionBankService', () => {
 
     expect(result[0]).toEqual(
       expect.objectContaining({
-        questionBankId: 'mixed-technical-primary',
+        questionBankId: 'technical-primary',
         questionCategory: 'technical',
         competencyDomains: ['TD5', 'TD1'],
       }),

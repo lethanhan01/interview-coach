@@ -72,37 +72,6 @@ describe('question metadata helpers', () => {
     });
   });
 
-  it('normalize mảng nhiều tiêu chí, bỏ trùng và giữ cả cross-category domains trong mixed', () => {
-    expect(
-      normalizeGeneratedQuestionMetadata(
-        {
-          category: 'technical',
-          competencyDomains: ['TD1', 'TD2', 'TD1', 'D1', 'unknown'],
-        },
-        contextPack,
-        'mixed',
-      ),
-    ).toEqual({
-      questionCategory: 'technical',
-      competencyDomains: ['TD1', 'TD2', 'D1'],
-      matchBranch: 'exact',
-    });
-
-    expect(
-      normalizeGeneratedQuestionMetadata(
-        {
-          category: 'behavioral',
-          competencyDomains: ['TD1', 'D2'],
-        },
-        contextPack,
-        'mixed',
-      ),
-    ).toEqual({
-      questionCategory: 'behavioral',
-      competencyDomains: ['TD1', 'D2'],
-      matchBranch: 'exact',
-    });
-  });
 
   it('reject mảng rỗng sau normalize', () => {
     expect(
@@ -151,85 +120,6 @@ describe('question metadata helpers', () => {
     ).toBe(6);
   });
 
-  it('cleanup mixed map technical text rõ ràng về TD5', () => {
-    expect(
-      normalizeQuestionMetadataForCleanup(
-        {
-          category: 'behavioral',
-          competencyDomains: ['unknown'],
-          questionText:
-            'Walk through how you debug a production reliability issue.',
-        },
-        contextPack,
-        'mixed',
-      ),
-    ).toEqual({
-      questionCategory: 'technical',
-      competencyDomains: ['TD5'],
-      matchBranch: 'heuristic',
-    });
-  });
-
-  it('cleanup mixed map behavioral text rõ ràng về D4 hoặc D3', () => {
-    expect(
-      normalizeQuestionMetadataForCleanup(
-        {
-          category: 'technical',
-          competencyDomains: ['unknown'],
-          questionText: 'Describe a time you showed leadership and ownership.',
-        },
-        contextPack,
-        'mixed',
-      ),
-    ).toEqual({
-      questionCategory: 'behavioral',
-      competencyDomains: ['D4'],
-      matchBranch: 'heuristic',
-    });
-
-    expect(
-      normalizeQuestionMetadataForCleanup(
-        {
-          category: 'technical',
-          competencyDomains: ['unknown'],
-          questionText: 'Tell me about collaboration with a teammate.',
-        },
-        contextPack,
-        'mixed',
-      ),
-    ).toEqual({
-      questionCategory: 'behavioral',
-      competencyDomains: ['D3'],
-      matchBranch: 'heuristic',
-    });
-  });
-
-  it('cleanup mixed ambiguous hoặc conflict không strict-map thì trả null', () => {
-    expect(
-      normalizeQuestionMetadataForCleanup(
-        {
-          category: 'behavioral',
-          competencyDomains: ['unknown'],
-          questionText:
-            'Tell me about a production incident you solved under pressure.',
-        },
-        contextPack,
-        'mixed',
-      ),
-    ).toBeNull();
-
-    expect(
-      normalizeQuestionMetadataForCleanup(
-        {
-          category: 'behavioral',
-          competencyDomains: ['unknown'],
-          questionText: 'Tell me about yourself.',
-        },
-        contextPack,
-        'mixed',
-      ),
-    ).toBeNull();
-  });
 
   it('cleanup HR và Technical vẫn giữ fallback D1/TD1', () => {
     expect(

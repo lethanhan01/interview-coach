@@ -21,11 +21,6 @@ const SESSION_TYPES: {
     label: 'Technical',
     description: 'Câu hỏi kỹ thuật chuyên sâu theo JD',
   },
-  {
-    value: 'mixed',
-    label: 'Mixed (HR + Technical)',
-    description: 'Kết hợp cả HR và Technical',
-  },
 ]
 
 const CONTEXT_PACKS: { value: ContextPack; label: string; desc: string }[] = [

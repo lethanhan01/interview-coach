@@ -52,15 +52,6 @@ export class QuestionBankService {
     language: string,
     rubricVersionId?: string,
   ): Promise<FallbackQuestion[]> {
-    if (sessionType === 'mixed') {
-      return this.selectMixedFallbackQuestions(
-        contextPackId,
-        count,
-        language,
-        rubricVersionId,
-      );
-    }
-
     const candidates = await this.prisma.questionBank.findMany({
       where: {
         sessionType: sessionType as QuestionSessionType,
@@ -100,68 +91,6 @@ export class QuestionBankService {
     if (mapped.length === 0) {
       throw new Error(
         `No fallback questions with valid criteria for ${sessionType}/${contextPackId}`,
-      );
-    }
-
-    return mapped;
-  }
-
-  private async selectMixedFallbackQuestions(
-    contextPackId: string,
-    count: number,
-    language: string,
-    rubricVersionId?: string,
-  ): Promise<FallbackQuestion[]> {
-    const hrCount = Math.ceil(count / 2);
-    const techCount = Math.floor(count / 2);
-
-    const [hrCandidates, techCandidates] = await Promise.all([
-      this.prisma.questionBank.findMany({
-        where: { sessionType: 'hr', contextPackId, deletedAt: null },
-        orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
-        take: hrCount * 3,
-        include: QUESTION_BANK_CRITERIA_INCLUDE,
-      }),
-      this.prisma.questionBank.findMany({
-        where: { sessionType: 'technical', contextPackId, deletedAt: null },
-        orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
-        take: techCount * 3,
-        include: QUESTION_BANK_CRITERIA_INCLUDE,
-      }),
-    ]);
-
-    if (hrCandidates.length === 0 || techCandidates.length === 0) {
-      throw new Error(
-        `Insufficient fallback questions for mixed/${contextPackId}: hr=${hrCandidates.length}, technical=${techCandidates.length}`,
-      );
-    }
-
-    const hrSelected = this.selectWithDifficultySpread(hrCandidates, hrCount);
-    const techSelected = this.selectWithDifficultySpread(
-      techCandidates,
-      techCount,
-    );
-    const allSelected = [...hrSelected, ...techSelected];
-
-    if (allSelected.length < count) {
-      throw new Error(
-        `Only ${allSelected.length}/${count} mixed fallback questions available for ${contextPackId}`,
-      );
-    }
-
-    const mapped = allSelected
-      .map((question) => {
-        try {
-          return this.mapFallbackQuestion(question, language, rubricVersionId);
-        } catch {
-          return null;
-        }
-      })
-      .filter((q): q is FallbackQuestion => q !== null);
-
-    if (mapped.length === 0) {
-      throw new Error(
-        `No mixed fallback questions with valid criteria for ${contextPackId}`,
       );
     }
 

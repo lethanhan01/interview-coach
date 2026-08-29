@@ -133,7 +133,6 @@
       "!**/seed.ts",
       "!**/prompts/**",
       "!**/pipeline.schemas.ts",
-      "!**/mixed.pipeline.service.ts",
       "!**/technical.pipeline.service.ts"
     ],
     "coverageDirectory": "../coverage",

@@ -20,9 +20,9 @@ export class CreateSessionDto {
   @IsString()
   @MinLength(100)
   jobDescription: string;
-  @ApiProperty({ enum: ['hr', 'technical', 'mixed'] })
-  @IsEnum(['hr', 'technical', 'mixed'])
-  sessionType: 'hr' | 'technical' | 'mixed';
+  @ApiProperty({ enum: ['hr', 'technical'] })
+  @IsEnum(['hr', 'technical'])
+  sessionType: 'hr' | 'technical';
   @ApiProperty({ enum: ['VN', 'Western'] })
   @IsEnum(['VN', 'Western'])
   contextPack: 'VN' | 'Western';

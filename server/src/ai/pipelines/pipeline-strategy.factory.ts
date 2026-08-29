@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HrPipelineService } from './hr.pipeline.service';
 import { TechnicalPipelineService } from './technical.pipeline.service';
-import { MixedPipelineService } from './mixed.pipeline.service';
 import type {
   InterviewPipeline,
   SessionType,
@@ -14,10 +13,9 @@ export class PipelineStrategyFactory {
   constructor(
     private readonly hr: HrPipelineService,
     private readonly technical: TechnicalPipelineService,
-    private readonly mixed: MixedPipelineService,
   ) {
     this.strategies = new Map(
-      [hr, technical, mixed].map((pipeline) => [
+      [hr, technical].map((pipeline) => [
         pipeline.sessionType,
         pipeline,
       ]),

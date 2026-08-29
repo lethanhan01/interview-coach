@@ -101,13 +101,13 @@ describe('ConfirmStep', () => {
     render(
       <ConfirmStep
         jd={FULL_JD}
-        sessionType="mixed"
+        sessionType="technical"
         contextPack="Western"
         duration={90}
         error={null}
       />
     )
-    expect(screen.getByText('Mixed (HR + Technical)')).toBeInTheDocument()
+    expect(screen.getByText('Technical')).toBeInTheDocument()
     expect(screen.getByText('Western')).toBeInTheDocument()
     expect(screen.getByText('1 tiếng rưỡi')).toBeInTheDocument()
     expect(screen.getByText('45 câu')).toBeInTheDocument()

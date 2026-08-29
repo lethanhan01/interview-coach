@@ -133,48 +133,9 @@ describe('PromptBuilderService', () => {
       expect(result).toContain('Do NOT apply any behavioral criteria');
     });
 
-    it('Mixed: chứa cả hai bộ dimensions với session-level weights', () => {
-      const result = service.applyContextPackForEvaluation(
-        'base',
-        contextPack,
-        'mixed',
-      );
-
-      expect(result).toContain('Mixed (behavioral + technical)');
-      expect(result).toContain('D1 Communication');
-      expect(result).toContain('TD1 Fundamentals');
-      expect(result).toContain('applied_dimensions');
-      expect(result).not.toContain('session weight');
-    });
-
-    it('Mixed có target competencyDomains thì không mời model chấm cả hai nhóm', () => {
-      const result = service.applyContextPackForEvaluation(
-        'base',
-        contextPack,
-        'mixed',
-        { competencyDomains: ['TD2'] },
-      );
-
-      expect(result).toContain('Question-specific allowed criteria: TD2');
-      expect(result).toContain('complete target set');
-      expect(result).toContain(
-        'Score every question-specific criterion listed above from 0 to 100',
-      );
-      expect(result).toContain(
-        'Return exactly and only these IDs in "applied_dimensions"',
-      );
-      expect(result).toContain('include every listed criterion');
-      expect(result).toContain('Use score 0');
-      expect(result).not.toContain(
-        'select ONLY the ones THIS question actually evaluates',
-      );
-      expect(result).not.toContain(
-        'A question may evaluate behavioral dimensions, technical dimensions, or both',
-      );
-    });
 
     it('mọi session type đều chứa cultural notes', () => {
-      (['hr', 'technical', 'mixed'] as const).forEach((sessionType) => {
+      (['hr', 'technical'] as const).forEach((sessionType) => {
         const result = service.applyContextPackForEvaluation(
           'base',
           contextPack,
@@ -194,7 +155,7 @@ describe('PromptBuilderService', () => {
     });
 
     it('mọi session type chỉ thị chọn tập con tiêu chí, không tính sẵn overall', () => {
-      (['hr', 'technical', 'mixed'] as const).forEach((sessionType) => {
+      (['hr', 'technical'] as const).forEach((sessionType) => {
         const result = service.applyContextPackForEvaluation(
           'base',
           contextPack,

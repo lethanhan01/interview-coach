@@ -1,4 +1,4 @@
-export const SESSION_TYPES = ['hr', 'technical', 'mixed'] as const;
+export const SESSION_TYPES = ['hr', 'technical'] as const;
 
 export type SessionType = (typeof SESSION_TYPES)[number];
 

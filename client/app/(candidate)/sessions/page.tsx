@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/Badge'
 const SESSION_TYPE_LABELS: Record<string, string> = {
   hr: 'HR / Behavioral',
   technical: 'Technical',
-  mixed: 'Mixed',
 }
 
 const STATUS_LABELS: Record<string, string> = {

@@ -683,7 +683,7 @@ const QUESTIONS: RawQuestion[] = [
     applicableRoles: ['backend', 'fullstack'],
     applicableLevels: ['mid', 'senior'],
   },
-  // ── Pair E: mixed × VN (15 câu) ─────────────────────────────────────────
+  // ── Set E: VN Questions (15 câu) ─────────────────────────────────────────
   {
     content: 'Hãy giới thiệu bản thân và một project kỹ thuật bạn tự hào nhất.',
     sessionType: 'hr',
@@ -845,7 +845,7 @@ const QUESTIONS: RawQuestion[] = [
     applicableRoles: ['all'],
     applicableLevels: ['mid', 'senior'],
   },
-  // ── Pair F: mixed × Western (15 câu) ────────────────────────────────────
+  // ── Set F: Western Questions (15 câu) ────────────────────────────────────
   {
     content:
       'Introduce yourself and walk me through your most impressive technical project.',

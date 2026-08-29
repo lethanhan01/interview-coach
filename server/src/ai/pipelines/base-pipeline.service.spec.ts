@@ -3,7 +3,6 @@ import { HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EvaluateAnswer } from '../../assessment/evaluate-answer.service';
 import { HrPipelineService } from './hr.pipeline.service';
-import { MixedPipelineService } from './mixed.pipeline.service';
 import { OpenAIGateway } from '../openai.gateway';
 import { PromptBuilderService } from '../prompt-builder.service';
 import { ZodValidatorService } from '../zod-validator.service';
@@ -18,7 +17,6 @@ import {
 
 describe('BasePipelineService (via HrPipelineService)', () => {
   let service: HrPipelineService;
-  let mixedService: MixedPipelineService;
   let mockOpenAI: ReturnType<typeof createMockOpenAIGateway>;
   let mockPromptBuilder: ReturnType<typeof createMockPromptBuilderService>;
   let mockZodValidator: ReturnType<typeof createMockZodValidatorService>;
@@ -58,7 +56,6 @@ describe('BasePipelineService (via HrPipelineService)', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HrPipelineService,
-        MixedPipelineService,
         { provide: OpenAIGateway, useValue: mockOpenAI },
         { provide: PromptBuilderService, useValue: mockPromptBuilder },
         { provide: ZodValidatorService, useValue: mockZodValidator },
@@ -68,7 +65,6 @@ describe('BasePipelineService (via HrPipelineService)', () => {
     }).compile();
 
     service = module.get<HrPipelineService>(HrPipelineService);
-    mixedService = module.get<MixedPipelineService>(MixedPipelineService);
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -610,68 +606,6 @@ describe('BasePipelineService (via HrPipelineService)', () => {
           ),
         }),
       );
-    });
-
-    it('mixed + competencyDomains=[TD2] lọc bỏ D* và chỉ giữ target domain', async () => {
-      const rawFeedback = {
-        applied_dimensions: [
-          { id: 'D1', score: 20 },
-          { id: 'TD2', score: 90 },
-        ],
-        model_answer: 'A.',
-        key_takeaway: 'B.',
-        annotated_segments: [],
-      };
-      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
-      mockZodValidator.validate.mockReturnValue(rawFeedback);
-
-      const result = await mixedService.evaluateAnswer({
-        ...feedbackInput,
-        sessionType: 'mixed',
-        questionCategory: 'technical',
-        competencyDomains: ['TD2'],
-      });
-
-      expect(result.appliedDimensions).toEqual([
-        { id: 'TD2', name: 'Application', score: 90, weight: 1 },
-      ]);
-      expect(
-        mockPromptBuilder.applyContextPackForEvaluation,
-      ).toHaveBeenCalledWith(expect.any(String), mockContextPack, 'mixed', {
-        competencyDomains: ['TD2'],
-      });
-    });
-
-    it('mixed + cross-category competencyDomains chấm cả technical và behavioral target domains', async () => {
-      const rawFeedback = {
-        applied_dimensions: [
-          { id: 'D1', score: 80 },
-          { id: 'TD2', score: 80 },
-          { id: 'TD1', score: 20 },
-        ],
-        model_answer: 'A.',
-        key_takeaway: 'B.',
-        annotated_segments: [],
-      };
-      mockOpenAI.chatCompletion.mockResolvedValue(JSON.stringify(rawFeedback));
-      mockZodValidator.validate.mockReturnValue(rawFeedback);
-
-      const result = await mixedService.evaluateAnswer({
-        ...feedbackInput,
-        sessionType: 'mixed',
-        questionCategory: 'technical',
-        competencyDomains: ['TD2', 'D1'],
-      });
-
-      expect(result.overallScore).toBe(80);
-      expect(result.appliedDimensions.map((dimension) => dimension.id)).toEqual(
-        ['TD2', 'D1'],
-      );
-      expect(
-        mockPromptBuilder.applyContextPackForEvaluation,
-      ).toHaveBeenCalledWith(expect.any(String), mockContextPack, 'mixed', {
-        competencyDomains: ['TD2', 'D1'],
-      });
     });
 
     it('logger.warn được gọi khi zodValidator.validate ném lỗi rồi re-throw', async () => {

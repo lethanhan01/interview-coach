@@ -70,11 +70,10 @@ describe('resolveAppliedDimensions', () => {
       expect(result[0]).toMatchObject({ id: 'D1', matchBranch: 'normId' });
     });
 
-    it('"td1" (technical lowercase) → TD1 trong mixed dims', () => {
-      const mixed = [...VN_BEHAVIORAL, ...VN_TECHNICAL];
+    it('"td1" (technical lowercase) → TD1 trong technical dims', () => {
       const result = resolveAppliedDimensions(
         [{ id: 'td1', score: 70 }],
-        mixed,
+        VN_TECHNICAL,
       );
       expect(result[0]).toMatchObject({ id: 'TD1', matchBranch: 'normId' });
     });
@@ -97,20 +96,19 @@ describe('resolveAppliedDimensions', () => {
       expect(result[0]).toMatchObject({ id: 'D1', matchBranch: 'code' });
     });
 
-    it('"TD1: Kiến thức nền tảng" → TD1 trong mixed dims', () => {
-      const mixed = [...VN_BEHAVIORAL, ...VN_TECHNICAL];
+    it('"TD1: Kiến thức nền tảng" → TD1 trong technical dims', () => {
       const result = resolveAppliedDimensions(
         [{ id: 'TD1: Kiến thức nền tảng', score: 70 }],
-        mixed,
+        VN_TECHNICAL,
       );
       expect(result[0]).toMatchObject({ id: 'TD1', matchBranch: 'code' });
     });
 
     it('TD1 không nhầm thành D1 — regex T?D ưu tiên bắt T', () => {
-      const mixed = [...VN_BEHAVIORAL, ...VN_TECHNICAL];
+      const allDims = [...VN_BEHAVIORAL, ...VN_TECHNICAL];
       const result = resolveAppliedDimensions(
         [{ id: 'TD1', score: 70 }],
-        mixed,
+        allDims,
       );
       expect(result[0].id).toBe('TD1');
     });
@@ -143,17 +141,12 @@ describe('resolveAppliedDimensions', () => {
       expect(result).toHaveLength(0);
     });
 
-    it('mixed dims → nhận cả D1 (behavioral) và TD1 (technical)', () => {
-      const mixed = [...VN_BEHAVIORAL, ...VN_TECHNICAL];
+    it('D1 với Technical dims → [] (behavioral không có trong technical)', () => {
       const result = resolveAppliedDimensions(
-        [
-          { id: 'D1', score: 80 },
-          { id: 'TD1', score: 70 },
-        ],
-        mixed,
+        [{ id: 'D1', score: 80 }],
+        VN_TECHNICAL,
       );
-      expect(result).toHaveLength(2);
-      expect(result.map((d) => d.id)).toEqual(['D1', 'TD1']);
+      expect(result).toHaveLength(0);
     });
   });
 

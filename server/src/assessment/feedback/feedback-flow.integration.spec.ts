@@ -4,7 +4,6 @@ import type { Job } from 'bullmq';
 import { FeedbackProcessor } from './feedback.processor';
 import { HrPipelineService } from '../../ai/pipelines/hr.pipeline.service';
 import { TechnicalPipelineService } from '../../ai/pipelines/technical.pipeline.service';
-import { MixedPipelineService } from '../../ai/pipelines/mixed.pipeline.service';
 import { PipelineStrategyFactory } from '../../ai/pipelines/pipeline-strategy.factory';
 import { PromptBuilderService } from '../../ai/prompt-builder.service';
 import { ZodValidatorService } from '../../ai/zod-validator.service';
@@ -63,7 +62,7 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
   let mockSse: ReturnType<typeof createMockSseService>;
   let mockReportService: ReturnType<typeof createMockReportService>;
 
-  const makeJob = (sessionType: 'hr' | 'technical' | 'mixed' = 'hr') =>
+  const makeJob = (sessionType: 'hr' | 'technical' = 'hr') =>
     ({
       data: {
         sessionId: 'int-session-1',
@@ -138,7 +137,6 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
         EvaluateAnswer,
         HrPipelineService,
         TechnicalPipelineService,
-        MixedPipelineService,
         PipelineStrategyFactory,
         PromptBuilderService,
         ZodValidatorService,
@@ -265,12 +263,7 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
     expect(systemContent).toContain('technical depth');
   });
 
-  it('mixed flow: mixed session type route đến MixedPipelineService thành công', async () => {
-    await processor.process(makeJob('mixed'));
 
-    expect(mockOpenAI.chatCompletion).toHaveBeenCalledTimes(1);
-    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-  });
 
   it('fallback: khi LLM trả về JSON không hợp lệ ở lần cuối thì ghi isFallback=true', async () => {
     mockOpenAI.chatCompletion.mockResolvedValue('not valid json {{{{');

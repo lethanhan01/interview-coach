@@ -31,8 +31,7 @@ function buildDonutGradient(category: RubricCategory) {
 
 function sessionTypeLabel(sessionType: SessionType) {
   if (sessionType === 'hr') return 'phỏng vấn hành vi'
-  if (sessionType === 'technical') return 'phỏng vấn kỹ thuật'
-  return 'phỏng vấn tổng hợp'
+  return 'phỏng vấn kỹ thuật'
 }
 
 function CategorySection({ category }: { category: RubricCategory }) {
@@ -111,7 +110,6 @@ export default function ScoringMethodCard({
 }: ScoringMethodCardProps) {
   const categories =
     rubricConfig?.categories ?? getRubricCategories(contextPackId, sessionType)
-  const isMixed = sessionType === 'mixed'
   const label = sessionTypeLabel(sessionType)
 
   return (
@@ -128,15 +126,6 @@ export default function ScoringMethodCard({
           trọng số của các tiêu chí đã được chọn.
         </p>
       </div>
-
-      {isMixed && (
-        <p className="bg-surface-raised text-ink mt-4 rounded-lg px-4 py-2.5 text-sm leading-relaxed">
-          <span className="font-medium">Lưu ý:</span> Phiên tổng hợp có cả tiêu
-          chí hành vi và kỹ thuật. Mỗi câu vẫn được chấm theo đúng nhóm tiêu chí
-          phù hợp với câu đó; điểm tổng phiên là trung bình cộng các câu đã chấm
-          được.
-        </p>
-      )}
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         <div className="border-border bg-surface-raised rounded-lg border p-3">

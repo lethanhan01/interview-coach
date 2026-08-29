@@ -19,7 +19,7 @@ describe('ConfigForm', () => {
     expect(screen.getByText('Loại phỏng vấn')).toBeInTheDocument()
     expect(screen.getByText('HR / Behavioral')).toBeInTheDocument()
     expect(screen.getByText('Technical')).toBeInTheDocument()
-    expect(screen.getByText('Mixed (HR + Technical)')).toBeInTheDocument()
+    expect(screen.queryByText('Mixed (HR + Technical)')).not.toBeInTheDocument()
   })
 
   it('renders context pack section', () => {

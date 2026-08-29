@@ -37,8 +37,7 @@ export function isDomainAllowedForSession(
   sessionType: SessionType,
 ): boolean {
   if (sessionType === 'hr') return domain.startsWith('D');
-  if (sessionType === 'technical') return domain.startsWith('TD');
-  return domain.startsWith('D') || domain.startsWith('TD');
+  return domain.startsWith('TD');
 }
 
 function allowedDimensionsForSession(
@@ -46,11 +45,7 @@ function allowedDimensionsForSession(
   sessionType: SessionType,
 ): RubricDimensionEntry[] {
   if (sessionType === 'hr') return contextPack.behavioralDimensions;
-  if (sessionType === 'technical') return contextPack.technicalDimensions;
-  return [
-    ...contextPack.behavioralDimensions,
-    ...contextPack.technicalDimensions,
-  ];
+  return contextPack.technicalDimensions;
 }
 
 function resolveDomain(
@@ -133,10 +128,7 @@ export function normalizeGeneratedQuestionMetadata(
 
   if (resolvedDomains.length === 0 || !matchBranch) return null;
 
-  const requestedCategory =
-    sessionType === 'mixed' ? normalizeQuestionCategory(input.category) : null;
-  const primaryCategory =
-    requestedCategory ?? categoryFromDomain(resolvedDomains[0]);
+  const primaryCategory = categoryFromDomain(resolvedDomains[0]);
 
   return {
     questionCategory: primaryCategory,
@@ -247,20 +239,7 @@ function heuristicDomain(
   if (sessionType === 'technical') {
     return heuristicTechnicalDomain(questionText).domain;
   }
-
-  if (sessionType === 'hr') {
-    return heuristicBehavioralDomain(questionText).domain;
-  }
-
-  // mixed: dùng isExplicit để phân biệt keyword match thực sự vs fallback mặc định
-  const technical = heuristicTechnicalDomain(questionText);
-  const behavioral = heuristicBehavioralDomain(questionText);
-
-  // Chỉ một bên explicit match rõ ràng → chọn bên đó
-  if (technical.isExplicit && !behavioral.isExplicit) return technical.domain;
-  if (behavioral.isExplicit && !technical.isExplicit) return behavioral.domain;
-  // Cả hai explicit (conflict) hoặc cả hai chỉ là fallback (không đủ tín hiệu) → null
-  return null;
+  return heuristicBehavioralDomain(questionText).domain;
 }
 
 export function normalizeQuestionMetadataForCleanup(
@@ -279,10 +258,7 @@ export function normalizeQuestionMetadataForCleanup(
   );
   if (strict) return strict;
 
-  const heuristicInput =
-    sessionType === 'mixed'
-      ? input.questionText
-      : `${input.questionText} ${input.category ?? ''} ${input.competencyDomains?.join(' ') ?? ''}`;
+  const heuristicInput = `${input.questionText} ${input.category ?? ''} ${input.competencyDomains?.join(' ') ?? ''}`;
   const heuristic = heuristicDomain(heuristicInput, sessionType);
   if (!heuristic) return null;
 

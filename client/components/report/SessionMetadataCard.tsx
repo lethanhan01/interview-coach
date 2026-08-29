@@ -4,7 +4,6 @@ import { formatVietnamDateTime } from '@/lib/date-time'
 const SESSION_TYPE_LABELS: Record<SessionType, string> = {
   hr: 'Nhân sự',
   technical: 'Kỹ thuật',
-  mixed: 'Tổng hợp',
 }
 
 const CONTEXT_PACK_LABELS: Record<ContextPack, string> = {

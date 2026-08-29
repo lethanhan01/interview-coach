@@ -71,7 +71,7 @@ export const MinimalData: Story = {
 export const WithError: Story = {
   args: {
     jd: MOCK_JD,
-    sessionType: 'mixed',
+    sessionType: 'hr',
     contextPack: 'VN',
     duration: 90,
     error: 'Không thể tạo phiên phỏng vấn. Vui lòng thử lại sau.',
