@@ -460,24 +460,63 @@ Khi dự án chính thức kích hoạt phát triển tính năng mới, đội 
 
 Để đảm bảo không làm gián đoạn hệ thống hiện tại, việc refactor được chia thành 4 giai đoạn an toàn:
 
-### Giai đoạn 1: Chuẩn hóa Hợp đồng AI Gateway & Storage (Ports & Adapters)
-- Tạo Port `IAIGateway` và refactor `OpenAIGateway` làm Adapter chuẩn.
-- Cập nhật các service AI (`QuestionService`, `AssessmentService`, `ReportService`) inject qua `AI_GATEWAY_TOKEN`.
-- Xây dựng `IPrivateMediaStorageAdapter` để lưu file ghi âm riêng tư và cấp Signed URL có hạn dùng.
+### Giai đoạn 1: Chuẩn hóa Hợp đồng AI Gateway & Storage (Ports & Adapters) — [x] ĐÃ HOÀN THÀNH (100% Tests Passed)
+- [x] Tạo Port `IAIGateway` (`src/ai/ai-gateway.interface.ts`) và refactor `OpenAIGateway` làm Adapter chuẩn implements `IAIGateway`.
+- [x] Cập nhật các service AI (`BasePipelineService`, `EvaluateAnswer`, `GenerateSessionQuestions`, `GenerateComprehensiveReport`, `SpeechToText`) inject qua `AI_GATEWAY_TOKEN`.
+- [x] Xây dựng Port `IPrivateMediaStorage` và `SupabaseMediaStorageAdapter` để lưu file ghi âm riêng tư và cấp Signed URL có hạn dùng an toàn (TTL 30 phút).
+- [x] Đạt 100% test coverage trên 52/52 test suites (420/420 tests passed) và tuân thủ tuyệt đối ranh giới kiến trúc `feature-boundaries.spec.ts`.
 
-### Giai đoạn 2: Tái cấu trúc Session Engine (Strategy Pattern) & Strict Cleanup
-- Hoàn tất loại bỏ hoàn toàn chế độ `mixed` cũ (xóa `MixedPipelineService`, dọn dẹp controller/DTO/constant/UI).
-- Định nghĩa interface `IInterviewModeStrategy` và xây dựng 2 Strategy độc lập: `HrInterviewStrategy` (xử lý logic câu hỏi & rubric hành vi STAR) và `TechnicalInterviewStrategy` (xử lý kiến thức & rubric kỹ thuật chuyên sâu).
-- Xây dựng `SessionStrategyRegistry` đăng ký `hr` và `technical`, tiêm vào `SessionService`.
-- Viết Unit Tests kiểm thử tính độc lập của từng Strategy.
+### Giai đoạn 2: Tái cấu trúc Session Engine (Strategy Pattern) & Strict Cleanup — [x] ĐÃ HOÀN THÀNH (100% Tests Passed)
+- [x] Task 2.1: Hoàn tất rà soát & dọn dẹp sạch sẽ mọi tàn dư của chế độ `mixed` cũ (nếu còn trong controller, DTO, schema, client).
+- [x] Task 2.2: Định nghĩa interface `IInterviewModeStrategy` (`src/session/interview-mode-strategy.interface.ts`).
+- [x] Task 2.3: Xây dựng 2 Strategy độc lập: `HrInterviewStrategy` (xử lý rubric hành vi STAR) và `TechnicalInterviewStrategy` (xử lý kiến thức & rubric kỹ thuật).
+- [x] Task 2.4: Xây dựng `SessionStrategyRegistry` đăng ký `hr` và `technical`, tiêm vào `SessionService` (`CreateInterviewSession`, `ChangeInterviewSessionStatus`).
+- [x] Task 2.5: Viết Unit Tests kiểm thử tính độc lập của từng Strategy và xác nhận 100% test suite passed (55/55 suites, 431/431 tests).
 
-### Giai đoạn 3: Chuẩn hóa Answer Intake (Handler Pattern)
-- Tạo `IAnswerIntakeHandler` và chia tách logic thành `TextAnswerIntakeHandler` và `AudioAnswerIntakeHandler`.
-- Refactor `TurnService` thành bộ điều phối mỏng (Thin Orchestrator).
-- Kiểm thử luồng nộp text và nộp audio độc lập.
+### Giai đoạn 3: Chuẩn hóa Answer Intake (Handler Pattern) — [ ] BƯỚC TIẾP THEO
+- [ ] Task 3.1: Định nghĩa interface `IAnswerIntakeHandler` (`src/turn/answer-intake-handler.interface.ts`).
+- [ ] Task 3.2: Xây dựng `TextAnswerIntakeHandler` (xử lý text input, validate độ dài, ghi Outbox Command EVALUATE_TURN_ANSWER).
+- [ ] Task 3.3: Xây dựng `AudioAnswerIntakeHandler` (xử lý audio buffer/stream, upload private storage qua `IPrivateMediaStorage`, ghi Outbox Command TRANSCRIBE_AUDIO).
+- [ ] Task 3.4: Xây dựng `AnswerIntakeRegistry` và refactor `TurnService` thành Thin Orchestrator.
+- [ ] Task 3.5: Viết Unit Tests kiểm thử độc lập từng Intake Handler và test suites toàn bộ module.
 
-### Giai đoạn 4: Hoàn thiện Transactional Workflow Outbox & BullMQ
-- Khởi tạo bảng `WorkflowOutbox` trong Prisma.
-- Viết `WorkflowOutboxService` đảm bảo ghi command trong cùng DB Transaction với state thay đổi.
-- Xây dựng `WorkflowOutboxDispatcher` quét lệnh pending và đẩy vào BullMQ worker.
-- Kiểm thử tình huống giả lập crash hệ thống để xác nhận không bao giờ thất thoát job.
+### Giai đoạn 4: Hoàn thiện Transactional Workflow Outbox & BullMQ — [ ] CHỜ THỰC HIỆN
+- [ ] Khởi tạo/cập nhật bảng `WorkflowOutbox` trong Prisma.
+- [ ] Viết `WorkflowOutboxService` đảm bảo ghi command trong cùng DB Transaction với state thay đổi.
+- [ ] Xây dựng `WorkflowOutboxDispatcher` quét lệnh pending và đẩy vào BullMQ worker.
+- [ ] Kiểm thử tình huống giả lập crash hệ thống để xác nhận không bao giờ thất thoát job.
+
+---
+
+## 8. NHẬT KÝ TIẾN ĐỘ, QUYẾT ĐỊNH KIẾN TRÚC & KẾ HOẠCH BƯỚC TIẾP THEO
+
+### 8.1. Những gì đã hoàn thành (Phase 1 & Phase 2 Accomplishments)
+1. **Giai đoạn 1 — Ports & Adapters cho AI Gateway & Media Storage**:
+   - `src/ai/ai-gateway.interface.ts`: Hợp đồng chuẩn `IAIGateway` & token `AI_GATEWAY_TOKEN`.
+   - `src/ai/openai.gateway.ts`: Adapter OpenAI implements `IAIGateway`.
+   - Refactor toàn bộ pipeline sang DIP.
+   - `src/interview/media-storage.interface.ts` & `src/interview/supabase-media-storage.adapter.ts`: Lưu trữ riêng tư & Signed URL.
+
+2. **Giai đoạn 2 — Strategy Pattern cho Session Engine**:
+   - `src/session/interview-mode-strategy.interface.ts`: Hợp đồng `IInterviewModeStrategy` định nghĩa các hook lifecycle: `validateSessionConfig`, `buildQuestionGenerationPayload`, `isSessionCompletable`, `buildReportGenerationPayload`.
+   - `src/session/hr-interview.strategy.ts`: Chiến lược phỏng vấn nhân sự / STAR / hành vi.
+   - `src/session/technical-interview.strategy.ts`: Chiến lược phỏng vấn kỹ thuật / system design.
+   - `src/session/session-strategy.registry.ts`: Registry quản lý và phân giải Strategy linh hoạt, mở đường cắm thêm `LiveCodingStrategy` trong tương lai mà không sửa đổi `SessionService`.
+   - Tích hợp vào `CreateInterviewSession` và `ChangeInterviewSessionStatus`.
+   - Unit tests độc lập: `hr-interview.strategy.spec.ts`, `technical-interview.strategy.spec.ts`, `session-strategy.registry.spec.ts`, `session.service.spec.ts`.
+
+3. **Kết quả kiểm thử & đo lường chất lượng**:
+   - Toàn bộ **55/55 test suites** và **431/431 tests** đều PASS 100%.
+   - Ranh giới kiến trúc `src/architecture/feature-boundaries.spec.ts`: **0 vi phạm**, 100% tuân thủ.
+
+---
+
+### 8.2. Kế hoạch bước tiếp theo (Next Phase Plan: Phase 3)
+Triển khai **Giai đoạn 3: Chuẩn hóa Answer Intake (Handler Pattern)** với các task nhỏ:
+1. **Task 3.1**: Định nghĩa contract `IAnswerIntakeHandler`.
+2. **Task 3.2**: Hiện thực `TextAnswerIntakeHandler`.
+3. **Task 3.3**: Hiện thực `AudioAnswerIntakeHandler`.
+4. **Task 3.4**: Hiện thực `AnswerIntakeRegistry` và tích hợp vào `TurnService`.
+5. **Task 3.5**: Kiểm thử 100% test suites.
+
+

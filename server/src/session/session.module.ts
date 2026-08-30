@@ -15,6 +15,10 @@ import { AuthModule } from '../auth/auth.module';
 import { AssessmentModule } from '../assessment/assessment.module';
 import { WorkflowModule } from '../workflow/workflow.module';
 
+import { HrInterviewStrategy } from './hr-interview.strategy';
+import { TechnicalInterviewStrategy } from './technical-interview.strategy';
+import { SessionStrategyRegistry } from './session-strategy.registry';
+
 @Module({
   imports: [
     ReportModule,
@@ -33,7 +37,10 @@ import { WorkflowModule } from '../workflow/workflow.module';
     ChangeInterviewSessionStatus,
     SessionLifecyclePolicy,
     SseTokenGuard,
+    HrInterviewStrategy,
+    TechnicalInterviewStrategy,
+    SessionStrategyRegistry,
   ],
-  exports: [SessionService],
+  exports: [SessionService, SessionStrategyRegistry],
 })
 export class SessionModule {}

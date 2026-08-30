@@ -7,6 +7,7 @@ import { SessionStatusUpdate } from './dto/update-session-status.dto';
 import { SessionLifecyclePolicy } from './session-lifecycle.policy';
 import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
 import { WorkflowService } from '../workflow/workflow.service';
+import { SessionStrategyRegistry } from './session-strategy.registry';
 
 @Injectable()
 export class ChangeInterviewSessionStatus {
@@ -15,6 +16,7 @@ export class ChangeInterviewSessionStatus {
     private readonly policy: SessionLifecyclePolicy,
     private readonly workflow: WorkflowService,
     private readonly dispatcher: WorkflowDispatcher,
+    private readonly strategyRegistry: SessionStrategyRegistry,
   ) {}
 
   async execute(
@@ -86,20 +88,22 @@ export class ChangeInterviewSessionStatus {
     }
     this.policy.assertTransition(session.status, 'completed');
     const updated = autoSkipUnanswered
-      ? await this.completeWithAutoSkippedAnswers(session.id)
-      : await this.completeAnsweredSession(session.id);
+      ? await this.completeWithAutoSkippedAnswers(session.id, session)
+      : await this.completeAnsweredSession(session.id, session);
     await this.dispatcher.dispatchFor('report-generation', session.id);
     return updated;
   }
 
   private async completeAnsweredSession(
     sessionId: string,
+    session: InterviewSession,
   ): Promise<InterviewSession> {
     const [questionCount, answerCount] = await Promise.all([
       this.prisma.sessionQuestion.count({ where: { sessionId } }),
       this.prisma.userAnswer.count({ where: { question: { sessionId } } }),
     ]);
-    if (questionCount === 0 || answerCount < questionCount) {
+    const strategy = this.strategyRegistry.getStrategy(session.sessionType);
+    if (!strategy.isSessionCompletable(session, answerCount, questionCount)) {
       throw new InterviewAIException(
         ErrorCode.SESSION_INCOMPLETE,
         HttpStatus.CONFLICT,
@@ -118,6 +122,7 @@ export class ChangeInterviewSessionStatus {
 
   private async completeWithAutoSkippedAnswers(
     sessionId: string,
+    session: InterviewSession,
   ): Promise<InterviewSession> {
     return this.prisma.$transaction(async (tx) => {
       const [questions, answers] = await Promise.all([
@@ -167,15 +172,12 @@ export class ChangeInterviewSessionStatus {
     tx: Parameters<WorkflowService['enqueueInTransaction']>[0],
     session: InterviewSession,
   ) {
+    const strategy = this.strategyRegistry.getStrategy(session.sessionType);
+    const payload = strategy.buildReportGenerationPayload(session);
     return this.workflow.enqueueInTransaction(tx, {
       commandType: 'report-generation',
       sessionId: session.id,
-      payload: {
-        sessionId: session.id,
-        sessionType: session.sessionType,
-        contextPack: session.contextPackId,
-        language: session.language,
-      },
+      payload,
     });
   }
 }

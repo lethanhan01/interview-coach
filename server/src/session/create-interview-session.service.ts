@@ -9,6 +9,7 @@ import { resolveOutputLanguage } from '../ai/output-language';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
 import { WorkflowService } from '../workflow/workflow.service';
+import { SessionStrategyRegistry } from './session-strategy.registry';
 
 @Injectable()
 export class CreateInterviewSession {
@@ -19,6 +20,7 @@ export class CreateInterviewSession {
     private readonly rubricCatalog: RubricCatalogService,
     private readonly workflow: WorkflowService,
     private readonly dispatcher: WorkflowDispatcher,
+    private readonly strategyRegistry: SessionStrategyRegistry,
     config: ConfigService,
   ) {
     const configuredLimit = Number(
@@ -50,6 +52,9 @@ export class CreateInterviewSession {
       }
     }
 
+    const strategy = this.strategyRegistry.getStrategy(dto.sessionType);
+    strategy.validateSessionConfig?.(dto);
+
     let rubricVersionId: string;
     try {
       rubricVersionId = await this.rubricCatalog.ensureActiveRubricVersion(
@@ -80,20 +85,15 @@ export class CreateInterviewSession {
           status: 'generating',
         },
       });
+      const payload = strategy.buildQuestionGenerationPayload(
+        created,
+        dto,
+        rubricVersionId,
+      );
       await this.workflow.enqueueInTransaction(tx, {
         commandType: 'question-generation',
         sessionId: created.id,
-        payload: {
-          sessionId: created.id,
-          sessionType: dto.sessionType,
-          jobDescriptionText: dto.jobDescription,
-          targetRoles: dto.targetRoles ?? [],
-          contextPack: dto.contextPack,
-          rubricVersionId,
-          language: created.language,
-          totalQuestions: created.numQuestions,
-          durationMin: created.durationMin,
-        },
+        payload,
       });
       return created;
     });

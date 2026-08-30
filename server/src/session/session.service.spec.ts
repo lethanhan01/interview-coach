@@ -17,6 +17,9 @@ import {
   createMockWorkflowDispatcher,
   createMockWorkflowService,
 } from '../test-utils/mock-factories';
+import { HrInterviewStrategy } from './hr-interview.strategy';
+import { TechnicalInterviewStrategy } from './technical-interview.strategy';
+import { SessionStrategyRegistry } from './session-strategy.registry';
 
 const BASE_SESSION = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -75,6 +78,9 @@ describe('SessionService', () => {
         CreateInterviewSession,
         ChangeInterviewSessionStatus,
         SessionLifecyclePolicy,
+        HrInterviewStrategy,
+        TechnicalInterviewStrategy,
+        SessionStrategyRegistry,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: RubricCatalogService, useValue: mockRubricCatalog },
         { provide: WorkflowService, useValue: mockWorkflowService },
@@ -196,6 +202,9 @@ describe('SessionService', () => {
           CreateInterviewSession,
           ChangeInterviewSessionStatus,
           SessionLifecyclePolicy,
+          HrInterviewStrategy,
+          TechnicalInterviewStrategy,
+          SessionStrategyRegistry,
           { provide: PrismaService, useValue: mockPrisma },
           { provide: RubricCatalogService, useValue: mockRubricCatalog },
           { provide: WorkflowService, useValue: mockWorkflowService },

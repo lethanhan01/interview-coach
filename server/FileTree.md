@@ -69,8 +69,7 @@ Server là ứng dụng NestJS (REST API + SSE) với kiến trúc modular. Yêu
 │   │   │   │                                      # evaluateAnswer(): build eval prompt -> gọi LLM -> validate -> tính score có trọng số -> sanitize segments
 │   │   │   ├── 📄 hr.pipeline.service.ts        # Chiến lược HR: tập trung behavioral, ví dụ STAR, giao tiếp, culture fit
 │   │   │   ├── 📄 technical.pipeline.service.ts # Chiến lược Technical: chiều sâu, giải quyết vấn đề, trade-offs, debugging, system design
-│   │   │   ├── 📄 mixed.pipeline.service.ts     # Chiến lược Mixed: cân bằng behavioral + technical
-│   │   │   ├── 📄 pipeline-strategy.factory.ts  # Factory: map SessionType -> pipeline service (HR/Technical/Mixed)
+│   │   │   ├── 📄 pipeline-strategy.factory.ts  # Factory: map SessionType -> pipeline service (HR/Technical)
 │   │   │   ├── 📄 interview-pipeline.interface.ts # Interface: SessionType, QuestionGenInput, FeedbackInput, GeneratedQuestion, SurgicalFeedback
 │   │   │   ├── 📄 pipeline.schemas.ts           # Zod schemas: QuestionsSchema, FeedbackSchema. PROMPT_VERSION = 'surgical-feedback-v1.5'
 │   │   │   └── 📄 dimension-matcher.ts          # Resolve applied_dimensions từ AI response -> allowed rubric dimensions (4 nhánh matching)
@@ -180,7 +179,7 @@ Server là ứng dụng NestJS (REST API + SSE) với kiến trúc modular. Yêu
 │   │
 │   ├── 📁 session                               # --- SESSION MODULE: Vòng đời interview session ---
 │   │   ├── 📁 dto
-│   │   │   ├── 📄 create-session.dto.ts         # DTO: jobDescription (min 100), sessionType (hr/technical/mixed), contextPack, language, numQuestions (3-45, default 10), targetRoles[]
+│   │   │   ├── 📄 create-session.dto.ts         # DTO: jobDescription (min 100), sessionType (hr/technical), contextPack, language, numQuestions (3-45, default 10), targetRoles[]
 │   │   │   ├── 📄 update-session-status.dto.ts  # DTO: status (active/paused/canceled/completed), remainingSeconds, autoSkipUnanswered
 │   │   │   └── 📄 session-response.dto.ts       # DTO: session fields (id, status, sessionType, contextPackId, numQuestions, etc.)
 │   │   ├── 📄 session.controller.ts             # Prefix: /sessions. POST create, GET list/get/status/questions/feedback-progress, PATCH status, GET SSE events
