@@ -181,9 +181,9 @@ sequenceDiagram
 
 Bản kế hoạch được chia thành **12 phần nhỏ độc lập** để triển khai an toàn và tuần tự:
 
-### [ ] Phần 1: Cấu hình TypeScript Path Aliases (`server/tsconfig.json`)
-- [ ] Bổ sung các alias `@core/*`, `@infra/*`, `@modules/*` vào `server/tsconfig.json`.
-- [ ] Giữ nguyên `@/*` trỏ về `./src/*` để đảm bảo tương thích ngược trong quá trình migrate.
+### [x] Phần 1: Cấu hình TypeScript Path Aliases (`server/tsconfig.json`)
+- [x] Bổ sung các alias `@core/*`, `@infra/*`, `@modules/*` vào `server/tsconfig.json`.
+- [x] Giữ nguyên `@/*` trỏ về `./src/*` để đảm bảo tương thích ngược trong quá trình migrate.
 
 ```json
 {

@@ -135,6 +135,12 @@
       "!**/technical.pipeline.service.ts"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@core/(.*)$": "<rootDir>/core/$1",
+      "^@infra/(.*)$": "<rootDir>/infrastructure/$1",
+      "^@modules/(.*)$": "<rootDir>/modules/$1",
+      "^@/(.*)$": "<rootDir>/$1"
+    }
   }
 }
