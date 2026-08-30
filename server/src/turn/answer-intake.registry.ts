@@ -25,7 +25,7 @@ export class AnswerIntakeRegistry {
     const handler = this.handlers.get(mode);
     if (!handler) {
       throw new InterviewAIException(
-        ErrorCode.BAD_REQUEST,
+        ErrorCode.INVALID_ANSWER_TYPE,
         HttpStatus.BAD_REQUEST,
         `Hình thức trả lời không được hỗ trợ: ${mode}`,
       );
