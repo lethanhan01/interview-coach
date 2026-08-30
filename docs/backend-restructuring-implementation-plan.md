@@ -3,7 +3,7 @@
 > **Tài liệu**: Kế hoạch triển khai tái cấu trúc thư mục và kiến trúc Backend (`server/src`)  
 > **Hệ thống**: Nền tảng AI Mock Interview Coach  
 > **Trạng thái**: Bản kế hoạch phân đoạn chi tiết (Sẵn sàng triển khai theo từng phần nhỏ)  
-> **Mục tiêu**: Tái tổ chức toàn bộ `server/src` từ cấu trúc 22 thư mục phẳng hiện tại thành **3 tầng rõ ràng (Core - Infrastructure - Modules)**, gom nhóm nghiệp vụ thành các **Bounded Contexts** chặt chẽ, loại bỏ sự nhầm lẫn về tên miền (đổi `interview` -> `media`), và cung cấp bản đồ kiến trúc trực quan giúp developer mới nắm bắt hệ thống trong vòng 15 phút.
+> **Mục tiêu**: Tái tổ chức toàn bộ `server/src` từ cấu trúc 22 thư mục phẳng hiện tại thành **3 tầng rõ ràng (Core - Infrastructure - Modules)**, gom nhóm nghiệp vụ phỏng vấn thành **3 Bounded Contexts theo vòng đời chuẩn (Prep - Live - Assessment)**, tách riêng hạ tầng Media STT (`media`), và cung cấp bản đồ kiến trúc trực quan giúp developer mới nắm bắt hệ thống trong vòng 15 phút.
 
 ---
 
@@ -30,7 +30,7 @@ server/src/
 | **1. Đặt tên sai lệch ngữ nghĩa (Misleading Domain Naming)** | Thư mục `src/interview/` thực chất **chỉ chứa logic xử lý file âm thanh và bóc băng Whisper STT** (`speech-to-text.service.ts`, `supabase-media-storage.adapter.ts`, `transcription.processor.ts`). Toàn bộ nghiệp vụ phỏng vấn cốt lõi lại nằm rải rác ở `session/`, `turn/`, `assessment/`, `report/`. | Dev mới bấm ngay vào `interview/` và bối rối vì không thấy luồng phỏng vấn đâu, chỉ thấy code upload audio. |
 | **2. Phân mảnh miền dữ liệu (Domain Fragmentation)** | Miền chuẩn bị câu hỏi bị phân thành 4 thư mục riêng biệt ở root: `question/`, `question-bank/`, `question-criteria/`, `saved-job-description/`. | Khó hình dung bức tranh tổng thể về khâu chuẩn bị phỏng vấn (Preparation phase) vs khâu làm bài (Execution phase). |
 | **3. Trộn lẫn các tầng trách nhiệm (Mixed Architectural Layers)** | 22 thư mục phẳng đặt ngang hàng nhau, không phân biệt đâu là **Hạ tầng (Infrastructure)**, đâu là **Lõi kỹ thuật (Core/Shared)**, và đâu là **Nghiệp vụ ứng dụng (Business Modules)**. | Không biết bắt đầu đọc từ đâu; không phân biệt được đâu là code framework tái sử dụng và đâu là domain logic. |
-| **4. Rải rác luồng xử lý AI & Báo cáo** | Logic AI chia cắt giữa `ai/` (gateway + prompts), `assessment/` (context pack + rubric matcher), `report/` (tổng hợp radar chart), và `interview/` (transcription). | Khó theo dõi toàn bộ Data Flow của 1 lượt phỏng vấn (Intake -> STT -> Assessment -> Report). |
+| **4. Thiếu tách bạch vòng đời phỏng vấn 3 giai đoạn** | Nghiệp vụ phỏng vấn chia cắt giữa `session/`, `turn/`, `assessment/`, `report/` mà không phân định ranh giới giữa: (1) Chuẩn bị, (2) Tiến trình trực tiếp, và (3) Đánh giá - Phản hồi - Báo cáo sau phiên. | Khó theo dõi và mở rộng từng giai đoạn độc lập (ví dụ nâng cấp thuật toán Rubric / Radar Report mà không ảnh hưởng luồng WebSocket/Turn). |
 
 ---
 
@@ -66,19 +66,22 @@ server/src/
 │   │   ├── transcription.processor.ts
 │   │   └── media.module.ts
 │   │
-│   ├── interview-prep/                        ──► [Context: Chuẩn bị & Tài nguyên Phỏng vấn]
+│   ├── interview-prep/                        ──► [Context 1: Chuẩn bị & Tài nguyên Phỏng vấn (Trước)]
 │   │   ├── interview-prep.module.ts           (Aggregator Module)
 │   │   ├── question-generation/               (AI Dynamic Question Generator & BullMQ Processor)
 │   │   ├── question-bank/                     (Curated Question Bank & Catalog)
 │   │   ├── question-criteria/                 (Assessment Rubric Criteria & Evaluation Benchmarks)
 │   │   └── job-description/                   (Saved JD CRUD & Resume Context Parsing)
 │   │
-│   └── interview-core/                        ──► [Context: Tiến trình Phỏng vấn Trực tiếp]
-│       ├── interview-core.module.ts           (Aggregator Module)
-│       ├── session/                           (Session Lifecycle, Mode Strategies: HR / Technical)
-│       ├── turn/                              (Turn Management, Intake Handlers: Text / Voice)
-│       ├── assessment/                        (Turn Evaluation, Rubric Matching, Feedback Sanitizer)
-│       └── report/                            (Radar Scoring, Action Plan, Comprehensive Report)
+│   ├── interview-live/                        ──► [Context 2: Tiến trình Phỏng vấn Trực tiếp (Trong)]
+│   │   ├── interview-live.module.ts           (Aggregator Module)
+│   │   ├── session/                           (Session Lifecycle, Mode Strategies: HR / Technical, Timers)
+│   │   └── turn/                              (Turn Management, Intake Handlers: Text / Voice, Audio Linkage)
+│   │
+│   └── interview-assessment/                  ──► [Context 3: Đánh giá, Phản hồi & Báo cáo (Sau)]
+│       ├── interview-assessment.module.ts     (Aggregator Module)
+│       ├── evaluation/                        (Turn Evaluation, Rubric Scoring, Feedback Sanitizer, Worker)
+│       └── report/                            (Comprehensive Session Report, Radar Scoring Matrix, Action Plan)
 │
 ├── architecture/                              ──► [KIỂM SOÁT RANH GIỚI TỰ ĐỘNG]
 │   └── feature-boundaries.spec.ts             (Automated Boundary Enforcer)
@@ -89,39 +92,45 @@ server/src/
 
 ---
 
-## 3. SƠ ĐỒ LUỒNG DỮ LIỆU ĐỒNG BỘ (DATA FLOW & SEQUENCE DIAGRAM)
+## 3. SƠ ĐỒ LUỒNG DỮ LIỆU VÒNG ĐỜI 3 GIAI ĐOẠN (DATA FLOW & SEQUENCE DIAGRAM)
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User as Ứng viên (Client)
     participant Prep as modules/interview-prep
-    participant Session as modules/interview-core/session
-    participant Turn as modules/interview-core/turn
+    participant Live as modules/interview-live
     participant Media as modules/media
-    participant Assess as modules/interview-core/assessment
-    participant Report as modules/interview-core/report
+    participant Assess as modules/interview-assessment
     participant Outbox as infrastructure/workflow
 
-    User->>Prep: 1. Chọn JD / Bộ câu hỏi ngân hàng
-    User->>Session: 2. Bắt đầu phiên phỏng vấn (Tạo Session)
-    Session->>Outbox: Tạo Outbox Task: Chuẩn bị câu hỏi (AI / Bank)
+    %% GIAI ĐOẠN 1: CHUẨN BỊ (PREPARATION)
+    Note over User,Prep: GIAI ĐOẠN 1: CHUẨN BỊ & THIẾT LẬP (PREPARATION)
+    User->>Prep: 1. Chọn JD / Bộ câu hỏi ngân hàng / Tiêu chí Rubric
+    Prep-->>User: 2. Trả về cấu hình & câu hỏi được chuẩn bị
+
+    %% GIAI ĐOẠN 2: TIẾN TRÌNH TRỰC TIẾP (LIVE INTERVIEW)
+    Note over User,Live: GIAI ĐOẠN 2: PHỎNG VẤN TRỰC TIẾP (LIVE EXECUTION)
+    User->>Live: 3. Khởi tạo phiên phỏng vấn (Create Session)
     
     loop Từng lượt phỏng vấn (Turn 1..N)
-        User->>Turn: 3. Nộp câu trả lời (Text hoặc Audio)
-        alt Trả lời bằng Audio
-            Turn->>Media: Lưu Private Audio & Dispatch Whisper STT
-            Media-->>Turn: Trả về Text bóc băng + Voice Metrics
+        User->>Live: 4. Nộp câu trả lời (Text hoặc Audio)
+        alt Trả lời bằng Âm thanh (Audio Voice)
+            Live->>Media: Lưu Private Audio & Bóc băng Whisper STT
+            Media-->>Live: Trả về Text bóc băng + Voice Metrics
         end
-        Turn->>Outbox: 4. Ghi Outbox Command: Đánh giá câu trả lời
-        Outbox->>Assess: 5. Chấm điểm theo Rubric + Bắt lỗi chi tiết
-        Assess-->>User: 6. Trả về Surgical Feedback & Điểm số lượt đó
+        Live->>Outbox: 5. Ghi Outbox Task: Đánh giá câu trả lời (Evaluate Turn)
+        Outbox->>Assess: 6. [Evaluation] Chấm điểm theo Rubric + Bắt lỗi chi tiết
+        Assess-->>User: 7. Bắn SSE: Surgical Feedback & Điểm số lượt hỏi
     end
 
-    User->>Session: 7. Hoàn tất phỏng vấn
-    Session->>Outbox: 8. Ghi Outbox Command: Tổng hợp báo cáo
-    Outbox->>Report: 9. Tính Radar Matrix & Lộ trình cải thiện (Action Plan)
-    Report-->>User: 10. Xuất Comprehensive Session Report
+    User->>Live: 8. Hoàn tất phỏng vấn (Complete Session)
+    Live->>Outbox: 9. Ghi Outbox Task: Tổng hợp báo cáo toàn phiên
+
+    %% GIAI ĐOẠN 3: ĐÁNH GIÁ & BÁO CÁO (POST-INTERVIEW ASSESSMENT)
+    Note over Live,Assess: GIAI ĐOẠN 3: ĐÁNH GIÁ & BÁO CÁO TỔNG THỂ (ASSESSMENT & REPORT)
+    Outbox->>Assess: 10. [Report] Tổng hợp toàn bộ Turn Feedbacks, tính Radar Scoring & Action Plan
+    Assess-->>User: 11. Bắn SSE 'report.ready' / Client GET /report xuất Comprehensive Report
 ```
 
 ---
@@ -159,17 +168,18 @@ sequenceDiagram
 | `src/question-criteria/*` | `src/modules/interview-prep/question-criteria/*` | `QuestionCriteriaModule`, `QuestionCriteriaService` |
 | `src/saved-job-description/*` | `src/modules/interview-prep/job-description/*` | `JobDescriptionModule`, `SavedJobDescriptionController`, `SavedJobDescriptionService` |
 | *(Mới)* | `src/modules/interview-prep/interview-prep.module.ts` | **Aggregator Module** kết nối 4 module con chuẩn bị phỏng vấn |
-| `src/session/*` | `src/modules/interview-core/session/*` | `SessionModule`, `SessionController`, `SessionService`, Strategies (`hr`, `technical`) |
-| `src/turn/*` | `src/modules/interview-core/turn/*` | `TurnModule`, `TurnController`, `TurnService`, Intake Handlers (`text`, `voice`) |
-| `src/assessment/*` | `src/modules/interview-core/assessment/*` | `AssessmentModule`, `EvaluateAnswerService`, `ContextPackService`, `RubricCatalogService` |
-| `src/report/*` | `src/modules/interview-core/report/*` | `ReportModule`, `ReportController`, `ReportService`, `GenerateComprehensiveReportService` |
-| *(Mới)* | `src/modules/interview-core/interview-core.module.ts` | **Aggregator Module** kết nối 4 module con của phiên phỏng vấn |
+| `src/session/*` | `src/modules/interview-live/session/*` | `SessionModule`, `SessionController`, `SessionService`, Strategies (`hr`, `technical`) |
+| `src/turn/*` | `src/modules/interview-live/turn/*` | `TurnModule`, `TurnController`, `TurnService`, Intake Handlers (`text`, `voice`) |
+| *(Mới)* | `src/modules/interview-live/interview-live.module.ts` | **Aggregator Module** kết nối Session và Turn |
+| `src/assessment/*` | `src/modules/interview-assessment/evaluation/*` | `EvaluationModule`, `EvaluateAnswerService`, `ContextPackService`, `RubricCatalogService`, `FeedbackProcessor` |
+| `src/report/*` | `src/modules/interview-assessment/report/*` | `ReportModule`, `ReportController`, `ReportService`, `GenerateComprehensiveReportService`, `ReportProcessor` |
+| *(Mới)* | `src/modules/interview-assessment/interview-assessment.module.ts` | **Aggregator Module** kết nối Evaluation và Report |
 
 ---
 
 ## 5. KẾ HOẠCH TRIỂN KHAI THEO PHÂN ĐOẠN (PHASED EXECUTION CHECKLIST)
 
-Bản kế hoạch được chia thành **11 phần nhỏ độc lập** để có thể triển khai tuần tự trong các session tiếp theo:
+Bản kế hoạch được chia thành **12 phần nhỏ độc lập** để triển khai an toàn và tuần tự:
 
 ### [ ] Phần 1: Cấu hình TypeScript Path Aliases (`server/tsconfig.json`)
 - [ ] Bổ sung các alias `@core/*`, `@infra/*`, `@modules/*` vào `server/tsconfig.json`.
@@ -238,18 +248,25 @@ Bản kế hoạch được chia thành **11 phần nhỏ độc lập** để c
 
 ---
 
-### [ ] Phần 6: Xây dựng Bounded Context Interview Core (`src/modules/interview-core/`)
-- [ ] Tạo thư mục `src/modules/interview-core/`.
-- [ ] Di chuyển `src/session/` $\rightarrow$ `src/modules/interview-core/session/`.
-- [ ] Di chuyển `src/turn/` $\rightarrow$ `src/modules/interview-core/turn/`.
-- [ ] Di chuyển `src/assessment/` $\rightarrow$ `src/modules/interview-core/assessment/`.
-- [ ] Di chuyển `src/report/` $\rightarrow$ `src/modules/interview-core/report/`.
-- [ ] Tạo Aggregator Module `interview-core.module.ts` kết nối 4 module trên.
-- [ ] Chạy tests của interview-core (`npm test src/modules/interview-core`).
+### [ ] Phần 6: Xây dựng Bounded Context Interview Live (`src/modules/interview-live/`)
+- [ ] Tạo thư mục `src/modules/interview-live/`.
+- [ ] Di chuyển `src/session/` $\rightarrow$ `src/modules/interview-live/session/`.
+- [ ] Di chuyển `src/turn/` $\rightarrow$ `src/modules/interview-live/turn/`.
+- [ ] Tạo Aggregator Module `interview-live.module.ts` kết nối Session và Turn modules.
+- [ ] Chạy tests của interview-live (`npm test src/modules/interview-live`).
 
 ---
 
-### [ ] Phần 7: Di chuyển Identity & Admin Modules
+### [ ] Phần 7: Xây dựng Bounded Context Interview Assessment (`src/modules/interview-assessment/`)
+- [ ] Tạo thư mục `src/modules/interview-assessment/`.
+- [ ] Di chuyển `src/assessment/` $\rightarrow$ `src/modules/interview-assessment/evaluation/`.
+- [ ] Di chuyển `src/report/` $\rightarrow$ `src/modules/interview-assessment/report/`.
+- [ ] Tạo Aggregator Module `interview-assessment.module.ts` kết nối Evaluation và Report modules.
+- [ ] Chạy tests của interview-assessment (`npm test src/modules/interview-assessment`).
+
+---
+
+### [ ] Phần 8: Di chuyển Identity & Admin Modules
 - [ ] Di chuyển `src/auth/` $\rightarrow$ `src/modules/auth/`.
 - [ ] Di chuyển `src/user/` $\rightarrow$ `src/modules/user/`.
 - [ ] Di chuyển `src/admin/` $\rightarrow$ `src/modules/admin/`.
@@ -258,7 +275,7 @@ Bản kế hoạch được chia thành **11 phần nhỏ độc lập** để c
 
 ---
 
-### [ ] Phần 8: Cập nhật Root `AppModule` (`src/app.module.ts`)
+### [ ] Phần 9: Cập nhật Root `AppModule` (`src/app.module.ts`)
 - [ ] Cập nhật lại các import trong `src/app.module.ts` theo cấu trúc gọn gàng:
 
 ```typescript
@@ -284,7 +301,8 @@ import { UserModule } from '@modules/user/user.module';
 import { AdminModule } from '@modules/admin/admin.module';
 import { MediaModule } from '@modules/media/media.module';
 import { InterviewPrepModule } from '@modules/interview-prep/interview-prep.module';
-import { InterviewCoreModule } from '@modules/interview-core/interview-core.module';
+import { InterviewLiveModule } from '@modules/interview-live/interview-live.module';
+import { InterviewAssessmentModule } from '@modules/interview-assessment/interview-assessment.module';
 
 @Module({
   imports: [
@@ -308,7 +326,8 @@ import { InterviewCoreModule } from '@modules/interview-core/interview-core.modu
     WorkflowModule,
     MediaModule,
     InterviewPrepModule,
-    InterviewCoreModule,
+    InterviewLiveModule,
+    InterviewAssessmentModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: InterviewAIExceptionFilter },
@@ -324,7 +343,7 @@ export class AppModule implements NestModule {
 
 ---
 
-### [ ] Phần 9: Cập nhật Automated Boundary Tests (`feature-boundaries.spec.ts`)
+### [ ] Phần 10: Cập nhật Automated Boundary Tests (`feature-boundaries.spec.ts`)
 - [ ] Cập nhật lại danh sách FEATURES và các quy tắc kiểm tra ranh giới kiến trúc trong `src/architecture/feature-boundaries.spec.ts`:
   1. `core/` không phụ thuộc vào `infrastructure/` hoặc `modules/`.
   2. `controllers` trong `modules/` không được import trực tiếp persistence (`@prisma/client`), queue (`bullmq`), hay external SDK (`openai`, `supabase`).
@@ -333,7 +352,7 @@ export class AppModule implements NestModule {
 
 ---
 
-### [ ] Phần 10: Kiểm thử toàn diện & Build Check
+### [ ] Phần 11: Kiểm thử toàn diện & Build Check
 - [ ] Chạy toàn bộ test suites của backend:
   ```bash
   npm test
@@ -346,6 +365,6 @@ export class AppModule implements NestModule {
 
 ---
 
-### [ ] Phần 11: Cập nhật Tài liệu Onboarding & Visual Architecture Guide
+### [ ] Phần 12: Cập nhật Tài liệu Onboarding & Visual Architecture Guide
 - [ ] Cập nhật `server/README.md` với sơ đồ 3 tầng và hướng dẫn cho dev mới.
 - [ ] Cập nhật `server/CLAUDE.md` với quy chuẩn vị trí đặt file mới (Core, Infra, Bounded Contexts).
