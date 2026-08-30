@@ -6,7 +6,7 @@ import {
   QUEUE_DEFAULT_JOB_OPTIONS,
   REPORT_QUEUE,
   TRANSCRIPTION_QUEUE,
-} from '../common/constants/queue.constants';
+} from '@core/common/constants/queue.constants';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { WorkflowDispatcher } from './workflow-dispatcher.service';
 import { WorkflowService } from './workflow.service';

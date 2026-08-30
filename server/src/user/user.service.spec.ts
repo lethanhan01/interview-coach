@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
 import { UserService } from './user.service';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
-import { createMockPrismaService } from '../test-utils/mock-factories';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { createMockPrismaService } from '@core/test-utils/mock-factories';
 
 describe('UserService', () => {
   let service: UserService;

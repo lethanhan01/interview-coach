@@ -17,7 +17,7 @@ import { EvaluateAnswer } from '../evaluate-answer.service';
 import {
   createMockReportService,
   createMockSseService,
-} from '../../test-utils/mock-factories';
+} from '@core/test-utils/mock-factories';
 
 const VALID_FEEDBACK_JSON = JSON.stringify({
   applied_dimensions: [

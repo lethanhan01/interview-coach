@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { IAnswerIntakeHandler } from './answer-intake-handler.interface';
 import { TextAnswerIntakeHandler } from './text-answer-intake.handler';
 import { VoiceAnswerIntakeHandler } from './voice-answer-intake.handler';

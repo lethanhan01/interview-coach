@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DEFAULT_DB_TIME_ZONE } from '../infrastructure/database/prisma/db-timezone';
+import { DEFAULT_DB_TIME_ZONE } from '@infra/database/prisma/db-timezone';
 
 const EnvSchema = z.object({
   SUPABASE_URL: z.string().url(),

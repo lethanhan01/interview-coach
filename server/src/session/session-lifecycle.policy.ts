@@ -1,6 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { SessionStatusUpdate } from './dto/update-session-status.dto';
 
 export class SessionLifecyclePolicy {

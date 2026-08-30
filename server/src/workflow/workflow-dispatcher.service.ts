@@ -17,9 +17,9 @@ import {
   REPORT_QUEUE,
   TRANSCRIPTION_JOB_ATTEMPTS,
   TRANSCRIPTION_QUEUE,
-} from '../common/constants/queue.constants';
+} from '@core/common/constants/queue.constants';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
-import { workersEnabled } from '../runtime/runtime-role';
+import { workersEnabled } from '@core/runtime/runtime-role';
 import { WorkflowCommandType } from './workflow.service';
 
 const DISPATCH_INTERVAL_MS = 30_000;

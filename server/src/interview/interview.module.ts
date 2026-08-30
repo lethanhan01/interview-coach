@@ -7,7 +7,7 @@ import {
   FEEDBACK_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
   TRANSCRIPTION_QUEUE,
-} from '../common/constants/queue.constants';
+} from '@core/common/constants/queue.constants';
 import { AudioObjectStorage } from './audio-object-storage.service';
 import { SupabaseMediaStorageAdapter } from './supabase-media-storage.adapter';
 import { MEDIA_STORAGE_TOKEN } from './media-storage.interface';
@@ -16,7 +16,7 @@ import { TranscribeAnswer } from './transcribe-answer.service';
 import { TranscriptionProcessor } from './transcription.processor';
 import { UploadAndTranscribeAnswerAudio } from './upload-and-transcribe-answer-audio.service';
 import { VoiceMetricsService } from './voice-metrics.service';
-import { workersEnabled } from '../runtime/runtime-role';
+import { workersEnabled } from '@core/runtime/runtime-role';
 
 const workerProviders = workersEnabled() ? [TranscriptionProcessor] : [];
 

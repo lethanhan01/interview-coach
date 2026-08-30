@@ -1,8 +1,8 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { isSessionType } from '../common/constants/session.constants';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
+import { isSessionType } from '@core/common/constants/session.constants';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 
 export const SESSION_QUESTION_CRITERIA_INCLUDE = {

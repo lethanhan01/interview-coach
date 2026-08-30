@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { createClient } from '@supabase/supabase-js';
 import type { WebSocketLikeConstructor } from '@supabase/supabase-js';
 import WebSocket from 'ws';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import {
   type IPrivateMediaStorage,
   type UploadedMediaFile,

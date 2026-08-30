@@ -1,10 +1,10 @@
 import { ConfigService } from '@nestjs/config';
 import { SpeechToText } from './speech-to-text.service';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import {
   createMockConfigService,
   createMockOpenAIGateway,
-} from '../test-utils/mock-factories';
+} from '@core/test-utils/mock-factories';
 
 describe('SpeechToText', () => {
   const originalFetch = global.fetch;

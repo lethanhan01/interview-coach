@@ -3,26 +3,26 @@ import { resolveRuntimeRole } from './runtime-role';
 
 const processorModules = [
   [
-    '../assessment/assessment.module',
-    '../assessment/feedback/feedback.processor',
+    '../../assessment/assessment.module',
+    '../../assessment/feedback/feedback.processor',
     'AssessmentModule',
     'FeedbackProcessor',
   ],
   [
-    '../question/question.module',
-    '../question/question-generation.processor',
+    '../../question/question.module',
+    '../../question/question-generation.processor',
     'QuestionModule',
     'QuestionGenerationProcessor',
   ],
   [
-    '../report/report.module',
-    '../report/comprehensive-report.processor',
+    '../../report/report.module',
+    '../../report/comprehensive-report.processor',
     'ReportModule',
     'ComprehensiveReportProcessor',
   ],
   [
-    '../interview/interview.module',
-    '../interview/transcription.processor',
+    '../../interview/interview.module',
+    '../../interview/transcription.processor',
     'InterviewModule',
     'TranscriptionProcessor',
   ],
@@ -91,7 +91,7 @@ describe('resolveRuntimeRole', () => {
       jest.resetModules();
       const {
         WorkflowDispatcher,
-      } = require('../workflow/workflow-dispatcher.service');
+      } = require('../../workflow/workflow-dispatcher.service');
       const dispatcher = new WorkflowDispatcher({}, {}, {});
       const reconcile = jest.spyOn(dispatcher, 'reconcile');
 

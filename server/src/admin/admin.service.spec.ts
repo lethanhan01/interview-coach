@@ -1,6 +1,6 @@
 import { AccountStatus, UserRole } from '@prisma/client';
 import { AdminService } from './admin.service';
-import { createMockPrismaService } from '../test-utils/mock-factories';
+import { createMockPrismaService } from '@core/test-utils/mock-factories';
 
 describe('AdminService', () => {
   const target = {

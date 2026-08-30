@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { createMockUserService } from '../test-utils/mock-factories';
+import { createMockUserService } from '@core/test-utils/mock-factories';
 
 describe('UserController', () => {
   let controller: UserController;

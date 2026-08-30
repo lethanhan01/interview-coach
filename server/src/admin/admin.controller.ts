@@ -26,7 +26,7 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiCommonErrors } from '../common/swagger/api-error-responses.decorator';
+import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)

@@ -1,8 +1,8 @@
 import { Injectable, HttpStatus, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APIError, APIUserAbortError } from 'openai';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { OpenAIChatClient } from './openai-chat.client';
 import { OpenAITranscriptionClient } from './openai-transcription.client';
 import {

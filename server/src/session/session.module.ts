@@ -9,7 +9,7 @@ import { SseTokenGuard } from '../auth/guards/sse-token.guard';
 import {
   QUESTION_GEN_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
-} from '../common/constants/queue.constants';
+} from '@core/common/constants/queue.constants';
 import { ReportModule } from '../report/report.module';
 import { AuthModule } from '../auth/auth.module';
 import { AssessmentModule } from '../assessment/assessment.module';

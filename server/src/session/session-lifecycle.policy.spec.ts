@@ -1,4 +1,4 @@
-import { ErrorCode } from '../common/exceptions/error-code.enum';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { SessionLifecyclePolicy } from './session-lifecycle.policy';
 
 describe('SessionLifecyclePolicy', () => {

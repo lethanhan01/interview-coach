@@ -27,7 +27,7 @@ import {
   ApiProduces,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiCommonErrors } from '../common/swagger/api-error-responses.decorator';
+import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
 @Controller('sessions')
 @ApiTags('Sessions')

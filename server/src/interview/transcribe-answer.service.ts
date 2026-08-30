@@ -12,7 +12,7 @@ import {
   TRANSCRIPTION_JOB_ATTEMPTS,
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
-} from '../common/constants/queue.constants';
+} from '@core/common/constants/queue.constants';
 import { getFallbackFeedbackMessage } from '../ai/fallback-content';
 import type { OutputLanguage } from '../ai/output-language';
 import { resolveOutputLanguage } from '../ai/output-language';

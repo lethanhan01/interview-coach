@@ -1,5 +1,5 @@
-import { ErrorCode } from '../common/exceptions/error-code.enum';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 
 const FALLBACK_ELIGIBLE_AI_ERRORS = new Set<ErrorCode>([
   ErrorCode.AI_QUOTA_EXCEEDED,

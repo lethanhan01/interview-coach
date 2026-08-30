@@ -19,13 +19,13 @@ import { InterviewModule } from './interview/interview.module';
 import { ReportModule } from './report/report.module';
 import { UserModule } from './user/user.module';
 import { SavedJobDescriptionModule } from './saved-job-description/saved-job-description.module';
-import { validateEnv } from './config/env.validation';
-import { InterviewAIExceptionFilter } from './common/exceptions/interview-ai-exception.filter';
-import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
-import { CommonModule } from './common/common.module';
+import { validateEnv } from '@core/config/env.validation';
+import { InterviewAIExceptionFilter } from '@core/common/exceptions/interview-ai-exception.filter';
+import { RequestIdMiddleware } from '@core/common/middleware/request-id.middleware';
+import { CommonModule } from '@core/common/common.module';
 import { HealthModule } from './health/health.module';
 import { AdminModule } from './admin/admin.module';
-import { MaintenanceModeGuard } from './common/guards/maintenance-mode.guard';
+import { MaintenanceModeGuard } from '@core/common/guards/maintenance-mode.guard';
 
 @Controller()
 class ApiRootController {

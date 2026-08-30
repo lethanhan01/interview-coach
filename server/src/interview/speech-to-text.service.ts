@@ -2,8 +2,8 @@ import { Injectable, HttpStatus, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { isIP } from 'node:net';
 import { AI_GATEWAY_TOKEN, type IAIGateway } from '../ai/ai-gateway.interface';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 const AUDIO_DOWNLOAD_TIMEOUT_MS = 15_000;

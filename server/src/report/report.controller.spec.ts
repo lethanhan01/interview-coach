@@ -3,9 +3,9 @@ import { HttpStatus } from '@nestjs/common';
 import { ReportController } from './report.controller';
 import { ReportService } from './report.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
-import { createMockReportService } from '../test-utils/mock-factories';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { createMockReportService } from '@core/test-utils/mock-factories';
 
 describe('ReportController', () => {
   let controller: ReportController;

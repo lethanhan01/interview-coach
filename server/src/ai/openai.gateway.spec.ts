@@ -1,7 +1,7 @@
 import { APIError, APIUserAbortError } from 'openai';
 import { z } from 'zod';
 import { OpenAIGateway } from './openai.gateway';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 
 describe('OpenAIGateway', () => {
   const params = {

@@ -3,8 +3,8 @@ import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { exec } from 'node:child_process';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
-import { setupSwagger } from './common/swagger/swagger';
-import { resolveRuntimeRole } from './runtime/runtime-role';
+import { setupSwagger } from '@core/common/swagger/swagger';
+import { resolveRuntimeRole } from '@core/runtime/runtime-role';
 
 async function bootstrap() {
   const runtimeRole = resolveRuntimeRole();

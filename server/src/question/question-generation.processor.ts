@@ -3,7 +3,7 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { SseService } from '../infrastructure/realtime/redis/sse.service';
-import { QUESTION_GEN_QUEUE } from '../common/constants/queue.constants';
+import { QUESTION_GEN_QUEUE } from '@core/common/constants/queue.constants';
 import {
   GenerateSessionQuestions,
   type QuestionGenerationJobDto,

@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { TRANSCRIPTION_QUEUE } from '../common/constants/queue.constants';
+import { TRANSCRIPTION_QUEUE } from '@core/common/constants/queue.constants';
 import { TranscribeAnswer } from './transcribe-answer.service';
 import type { TranscriptionJobDto } from './transcription-job.dto';
 

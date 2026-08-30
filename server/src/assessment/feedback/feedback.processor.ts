@@ -10,7 +10,7 @@ import { ReportService } from '../../report/report.service';
 import {
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
-} from '../../common/constants/queue.constants';
+} from '@core/common/constants/queue.constants';
 import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../../ai/prompts/surgical-feedback-v1.5';
 import type { SessionType } from '../../ai/pipelines/interview-pipeline.interface';
 import {

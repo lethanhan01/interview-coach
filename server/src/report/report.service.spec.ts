@@ -3,12 +3,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReportService } from './report.service';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import {
   createMockPrismaService,
   createMockWorkflowDispatcher,
-} from '../test-utils/mock-factories';
+} from '@core/test-utils/mock-factories';
 
 const COMPLETED_SESSION = {
   id: 'session-123',

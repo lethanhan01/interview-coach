@@ -9,7 +9,7 @@ import {
   createMockQuestionCriteriaService,
   createMockWorkflowDispatcher,
   createMockWorkflowService,
-} from '../test-utils/mock-factories';
+} from '@core/test-utils/mock-factories';
 import { AnswerIntakeContext } from './answer-intake-handler.interface';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 

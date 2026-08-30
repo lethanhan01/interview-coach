@@ -8,7 +8,7 @@ import { AI_GATEWAY_TOKEN } from '../ai/ai-gateway.interface';
 import {
   createMockOpenAIGateway,
   createMockSseService,
-} from '../test-utils/mock-factories';
+} from '@core/test-utils/mock-factories';
 
 interface FeedbackRow {
   userAnswerId: string;

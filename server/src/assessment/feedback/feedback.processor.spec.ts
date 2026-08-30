@@ -12,10 +12,10 @@ import {
   createMockPipelineStrategyFactory,
   createMockReportService,
   createMockSseService,
-} from '../../test-utils/mock-factories';
+} from '@core/test-utils/mock-factories';
 import { HttpStatus } from '@nestjs/common';
-import { InterviewAIException } from '../../common/exceptions/interview-ai.exception';
-import { ErrorCode } from '../../common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 
 interface ExistingFeedback {
   id: string;

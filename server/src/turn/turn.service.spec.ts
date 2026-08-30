@@ -9,15 +9,15 @@ import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
 import { WorkflowService } from '../workflow/workflow.service';
 import { TurnAnswerContext } from './turn-answer-context.service';
 import { SubmitTurnAnswer } from './submit-turn-answer.service';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import {
   createMockPrismaService,
   createMockQuestionCriteriaService,
   createMockVoiceMetricsService,
   createMockWorkflowDispatcher,
   createMockWorkflowService,
-} from '../test-utils/mock-factories';
+} from '@core/test-utils/mock-factories';
 
 import { TextAnswerIntakeHandler } from './text-answer-intake.handler';
 import { VoiceAnswerIntakeHandler } from './voice-answer-intake.handler';

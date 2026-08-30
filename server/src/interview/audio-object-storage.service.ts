@@ -1,7 +1,7 @@
 import { Injectable, HttpStatus, Inject } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import {
   MEDIA_STORAGE_TOKEN,
   type IPrivateMediaStorage,

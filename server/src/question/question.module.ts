@@ -5,12 +5,12 @@ import { AssessmentModule } from '../assessment/assessment.module';
 import {
   QUESTION_GEN_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
-} from '../common/constants/queue.constants';
+} from '@core/common/constants/queue.constants';
 import { QuestionBankModule } from '../question-bank/question-bank.module';
 import { QuestionCriteriaModule } from '../question-criteria/question-criteria.module';
 import { GenerateSessionQuestions } from './generate-session-questions.service';
 import { QuestionGenerationProcessor } from './question-generation.processor';
-import { workersEnabled } from '../runtime/runtime-role';
+import { workersEnabled } from '@core/runtime/runtime-role';
 
 const workerProviders = workersEnabled() ? [QuestionGenerationProcessor] : [];
 

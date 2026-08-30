@@ -10,7 +10,7 @@ import {
   createMockReportService,
   createMockSessionService,
   createMockSseService,
-} from '../test-utils/mock-factories';
+} from '@core/test-utils/mock-factories';
 
 describe('SessionController', () => {
   let controller: SessionController;

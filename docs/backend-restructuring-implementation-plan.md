@@ -200,14 +200,14 @@ Bản kế hoạch được chia thành **12 phần nhỏ độc lập** để t
 
 ---
 
-### [ ] Phần 2: Di chuyển & Tổ chức Tầng Core (`src/core/`)
-- [ ] Tạo thư mục `server/src/core/`.
-- [ ] Di chuyển `common/` $\rightarrow$ `src/core/common/`.
-- [ ] Di chuyển `config/` $\rightarrow$ `src/core/config/`.
-- [ ] Di chuyển `runtime/` $\rightarrow$ `src/core/runtime/`.
-- [ ] Di chuyển `types/` $\rightarrow$ `src/core/types/`.
-- [ ] Di chuyển `test-utils/` $\rightarrow$ `src/core/test-utils/`.
-- [ ] Cập nhật các import nội bộ trong `src/core/` và chạy unit tests của core (`npm test src/core`).
+### [x] Phần 2: Di chuyển & Tổ chức Tầng Core (`src/core/`)
+- [x] Tạo thư mục `server/src/core/`.
+- [x] Di chuyển `common/` $\rightarrow$ `src/core/common/`.
+- [x] Di chuyển `config/` $\rightarrow$ `src/core/config/`.
+- [x] Di chuyển `runtime/` $\rightarrow$ `src/core/runtime/`.
+- [x] Di chuyển `types/` $\rightarrow$ `src/core/types/`.
+- [x] Di chuyển `test-utils/` $\rightarrow$ `src/core/test-utils/`.
+- [x] Cập nhật các import nội bộ trong `src/core/` và chạy unit tests của core (`npm test src/core`).
 
 ---
 

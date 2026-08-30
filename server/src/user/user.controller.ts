@@ -9,7 +9,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiCommonErrors } from '../common/swagger/api-error-responses.decorator';
+import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
 @Controller('profile')
 @UseGuards(JwtAuthGuard)

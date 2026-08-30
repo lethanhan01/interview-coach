@@ -1,5 +1,5 @@
 import { AudioObjectStorage } from './audio-object-storage.service';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 
 describe('AudioObjectStorage', () => {
   let mockStorage: {

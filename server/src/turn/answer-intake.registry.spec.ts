@@ -1,6 +1,6 @@
 import { AnswerIntakeRegistry } from './answer-intake.registry';
 import { IAnswerIntakeHandler } from './answer-intake-handler.interface';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 
 describe('AnswerIntakeRegistry', () => {
   let registry: AnswerIntakeRegistry;

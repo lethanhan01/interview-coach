@@ -3,7 +3,7 @@ import { QuestionCriteriaService } from '../question-criteria/question-criteria.
 import {
   createMockPrismaService,
   createMockQuestionBank,
-} from '../test-utils/mock-factories';
+} from '@core/test-utils/mock-factories';
 
 describe('QuestionBankService', () => {
   let service: QuestionBankService;

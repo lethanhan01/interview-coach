@@ -9,14 +9,14 @@ import { PrismaService } from '../infrastructure/database/prisma/prisma.service'
 import { RubricCatalogService } from '../assessment/rubric/rubric-catalog.service';
 import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
 import { WorkflowService } from '../workflow/workflow.service';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import {
   createMockPrismaService,
   createMockConfigService,
   createMockWorkflowDispatcher,
   createMockWorkflowService,
-} from '../test-utils/mock-factories';
+} from '@core/test-utils/mock-factories';
 import { HrInterviewStrategy } from './hr-interview.strategy';
 import { TechnicalInterviewStrategy } from './technical-interview.strategy';
 import { SessionStrategyRegistry } from './session-strategy.registry';

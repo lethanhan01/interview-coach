@@ -1,8 +1,8 @@
 import { HttpStatus, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EvaluateAnswer } from '../../assessment/evaluate-answer.service';
-import { InterviewAIException } from '../../common/exceptions/interview-ai.exception';
-import { ErrorCode } from '../../common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { AI_GATEWAY_TOKEN, type IAIGateway } from '../ai-gateway.interface';
 import { getLanguageInstruction } from '../output-language';
 import { PromptBuilderService } from '../prompt-builder.service';

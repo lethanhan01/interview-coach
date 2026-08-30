@@ -10,7 +10,7 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiCommonErrors } from '../common/swagger/api-error-responses.decorator';
+import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
 interface AuthenticatedRequest extends Request {
   user: { id: string; email: string; emailVerified: boolean };

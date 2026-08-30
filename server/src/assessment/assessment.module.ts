@@ -5,12 +5,12 @@ import { ReportModule } from '../report/report.module';
 import {
   FEEDBACK_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
-} from '../common/constants/queue.constants';
+} from '@core/common/constants/queue.constants';
 import { RubricCatalogService } from './rubric/rubric-catalog.service';
 import { ContextPackService } from './context-pack.service';
 import { FeedbackProcessor } from './feedback/feedback.processor';
 import { RubricController } from './rubric.controller';
-import { workersEnabled } from '../runtime/runtime-role';
+import { workersEnabled } from '@core/runtime/runtime-role';
 
 const workerProviders = workersEnabled() ? [FeedbackProcessor] : [];
 

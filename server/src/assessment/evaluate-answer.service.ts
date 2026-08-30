@@ -12,8 +12,8 @@ import type {
   FeedbackInput,
   SurgicalFeedback,
 } from '../ai/pipelines/interview-pipeline.interface';
-import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
-import { ErrorCode } from '../common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { getLanguageInstruction } from '../ai/output-language';
 import { resolveAppliedDimensions } from './dimension-matcher';
 import { sanitizeFeedbackSegments } from './feedback-segment-sanitizer';

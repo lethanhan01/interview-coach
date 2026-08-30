@@ -10,7 +10,7 @@ import { VoiceMetricsService } from './voice-metrics.service';
 import {
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
-} from '../common/constants/queue.constants';
+} from '@core/common/constants/queue.constants';
 import {
   createMockPrismaService,
   createMockSseService,
@@ -19,7 +19,7 @@ import {
   createMockReportService,
   createMockQueue,
   createMockQuestionCriteriaService,
-} from '../test-utils/mock-factories';
+} from '@core/test-utils/mock-factories';
 import { ReportService } from '../report/report.service';
 import { FALLBACK_FEEDBACK_MESSAGE } from '../ai/fallback-content';
 

@@ -4,8 +4,8 @@ export {
   SESSION_TYPES,
   type SessionType,
   isSessionType,
-} from '../../common/constants/session.constants';
-import type { SessionType } from '../../common/constants/session.constants';
+} from '@core/common/constants/session.constants';
+import type { SessionType } from '@core/common/constants/session.constants';
 
 export type QuestionBankSessionType = 'hr' | 'technical';
 

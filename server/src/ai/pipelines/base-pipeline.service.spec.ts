@@ -7,14 +7,14 @@ import { OpenAIGateway } from '../openai.gateway';
 import { AI_GATEWAY_TOKEN } from '../ai-gateway.interface';
 import { PromptBuilderService } from '../prompt-builder.service';
 import { ZodValidatorService } from '../zod-validator.service';
-import { InterviewAIException } from '../../common/exceptions/interview-ai.exception';
-import { ErrorCode } from '../../common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { PROMPT_VERSION } from './pipeline.schemas';
 import {
   createMockOpenAIGateway,
   createMockPromptBuilderService,
   createMockZodValidatorService,
-} from '../../test-utils/mock-factories';
+} from '@core/test-utils/mock-factories';
 
 describe('BasePipelineService (via HrPipelineService)', () => {
   let service: HrPipelineService;

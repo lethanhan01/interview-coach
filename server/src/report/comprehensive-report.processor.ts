@@ -1,6 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { REPORT_QUEUE } from '../common/constants/queue.constants';
+import { REPORT_QUEUE } from '@core/common/constants/queue.constants';
 import {
   ComprehensiveReportJobDto,
   GenerateComprehensiveReport,

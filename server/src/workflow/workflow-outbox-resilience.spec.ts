@@ -4,7 +4,7 @@ import {
   REPORT_JOB_ATTEMPTS,
   REPORT_JOB_RETRY_DELAY_MS,
   TRANSCRIPTION_JOB_ATTEMPTS,
-} from '../common/constants/queue.constants';
+} from '@core/common/constants/queue.constants';
 
 describe('WorkflowOutboxResilienceSpec', () => {
   let prisma: any;
