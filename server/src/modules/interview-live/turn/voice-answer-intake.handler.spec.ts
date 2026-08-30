@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { VoiceAnswerIntakeHandler } from './voice-answer-intake.handler';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import { QuestionCriteriaService } from '@modules/interview-prep/question-criteria/question-criteria.service';
-import { VoiceMetricsService } from '@modules/media/voice-metrics.service';
+import { PrepFacade } from '@modules/interview-prep/contracts';
+import { MediaFacade } from '@modules/media/contracts';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 import { WorkflowService } from '@infra/workflow/workflow.service';
 import {
@@ -18,10 +18,12 @@ import { SubmitAnswerDto } from './dto/submit-answer.dto';
 describe('VoiceAnswerIntakeHandler', () => {
   let handler: VoiceAnswerIntakeHandler;
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
-  let mockQuestionCriteria: ReturnType<
-    typeof createMockQuestionCriteriaService
-  >;
-  let mockVoiceMetrics: ReturnType<typeof createMockVoiceMetricsService>;
+  let mockPrepFacade: {
+    codesFromSessionQuestion: jest.Mock;
+  };
+  let mockMediaFacade: {
+    calculateVoiceMetrics: jest.Mock;
+  };
   let mockWorkflow: ReturnType<typeof createMockWorkflowService>;
   let mockDispatcher: ReturnType<typeof createMockWorkflowDispatcher>;
 
@@ -48,29 +50,30 @@ describe('VoiceAnswerIntakeHandler', () => {
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
-    mockQuestionCriteria = createMockQuestionCriteriaService();
-    mockVoiceMetrics = createMockVoiceMetricsService();
+    mockPrepFacade = {
+      codesFromSessionQuestion: jest.fn().mockReturnValue(['T1', 'T2']),
+    };
+    mockMediaFacade = {
+      calculateVoiceMetrics: jest.fn().mockReturnValue({
+        wpm: 135,
+        fillerWordCount: 2,
+        fillerWords: ['à', 'ừm'],
+      }),
+    };
     mockWorkflow = createMockWorkflowService();
     mockDispatcher = createMockWorkflowDispatcher();
-
-    mockQuestionCriteria.codesFromSessionQuestion.mockReturnValue(['T1', 'T2']);
-    mockVoiceMetrics.calculate.mockReturnValue({
-      wpm: 135,
-      fillerWordCount: 2,
-      fillerWords: ['à', 'ừm'],
-    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         VoiceAnswerIntakeHandler,
         { provide: PrismaService, useValue: mockPrisma },
         {
-          provide: QuestionCriteriaService,
-          useValue: mockQuestionCriteria,
+          provide: PrepFacade,
+          useValue: mockPrepFacade,
         },
         {
-          provide: VoiceMetricsService,
-          useValue: mockVoiceMetrics,
+          provide: MediaFacade,
+          useValue: mockMediaFacade,
         },
         {
           provide: WorkflowService,
@@ -271,7 +274,7 @@ describe('VoiceAnswerIntakeHandler', () => {
 
       const result = await handler.handle(dto, mockContext);
 
-      expect(mockVoiceMetrics.calculate).toHaveBeenCalledWith(
+      expect(mockMediaFacade.calculateVoiceMetrics).toHaveBeenCalledWith(
         'Tôi thiết kế hệ thống theo Event Driven Architecture.',
         20,
       );

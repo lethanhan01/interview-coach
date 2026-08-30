@@ -12,6 +12,8 @@ import { FeedbackProcessor } from './feedback/feedback.processor';
 import { RubricController } from './rubric.controller';
 import { workersEnabled } from '@core/runtime/runtime-role';
 
+import { AssessmentFacade } from '../contracts/assessment-facade.service';
+
 const workerProviders = workersEnabled() ? [FeedbackProcessor] : [];
 
 @Module({
@@ -23,8 +25,13 @@ const workerProviders = workersEnabled() ? [FeedbackProcessor] : [];
       defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[FEEDBACK_QUEUE],
     }),
   ],
-  providers: [RubricCatalogService, ContextPackService, ...workerProviders],
+  providers: [
+    RubricCatalogService,
+    ContextPackService,
+    AssessmentFacade,
+    ...workerProviders,
+  ],
   controllers: [RubricController],
-  exports: [RubricCatalogService, ContextPackService],
+  exports: [RubricCatalogService, ContextPackService, AssessmentFacade],
 })
 export class EvaluationModule {}

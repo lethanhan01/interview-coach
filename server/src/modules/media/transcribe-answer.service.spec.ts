@@ -4,7 +4,7 @@ import type { Job } from 'bullmq';
 import { TranscribeAnswer } from './transcribe-answer.service';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
-import { QuestionCriteriaService } from '@modules/interview-prep/question-criteria/question-criteria.service';
+import { PrepFacade } from '@modules/interview-prep/contracts';
 import { SpeechToText } from './speech-to-text.service';
 import { VoiceMetricsService } from './voice-metrics.service';
 import {
@@ -16,11 +16,10 @@ import {
   createMockSseService,
   createMockWhisperService,
   createMockVoiceMetricsService,
-  createMockReportService,
   createMockQueue,
   createMockQuestionCriteriaService,
 } from '@core/test-utils/mock-factories';
-import { ReportService } from '@modules/interview-assessment/report/report.service';
+import { AssessmentFacade } from '@modules/interview-assessment/contracts';
 import { FALLBACK_FEEDBACK_MESSAGE } from '@infra/ai/fallback-content';
 
 const BASE_JOB_DATA = {
@@ -39,10 +38,11 @@ describe('TranscribeAnswer', () => {
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockSse: ReturnType<typeof createMockSseService>;
   let mockWhisper: ReturnType<typeof createMockWhisperService>;
-  let mockVoiceMetrics: ReturnType<typeof createMockVoiceMetricsService>;
-  let mockReportService: ReturnType<typeof createMockReportService>;
+  let mockAssessmentFacade: {
+    enqueueIfAllFeedbacksReady: jest.Mock;
+  };
   let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
-  let mockQuestionCriteria: ReturnType<
+  let mockPrepFacade: ReturnType<
     typeof createMockQuestionCriteriaService
   >;
 
@@ -51,19 +51,21 @@ describe('TranscribeAnswer', () => {
     mockSse = createMockSseService();
     mockWhisper = createMockWhisperService();
     mockVoiceMetrics = createMockVoiceMetricsService();
-    mockReportService = createMockReportService();
+    mockAssessmentFacade = {
+      enqueueIfAllFeedbacksReady: jest.fn().mockResolvedValue(undefined),
+    };
     mockFeedbackQueue = createMockQueue();
-    mockQuestionCriteria = createMockQuestionCriteriaService();
+    mockPrepFacade = createMockQuestionCriteriaService();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TranscribeAnswer,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
+        { provide: PrepFacade, useValue: mockPrepFacade },
         { provide: SseService, useValue: mockSse },
         { provide: SpeechToText, useValue: mockWhisper },
         { provide: VoiceMetricsService, useValue: mockVoiceMetrics },
-        { provide: ReportService, useValue: mockReportService },
+        { provide: AssessmentFacade, useValue: mockAssessmentFacade },
         { provide: getQueueToken(FEEDBACK_QUEUE), useValue: mockFeedbackQueue },
       ],
     }).compile();
@@ -218,38 +220,36 @@ describe('TranscribeAnswer', () => {
       mockPrisma.$transaction.mockImplementation(
         (cb: (tx: typeof txMock) => Promise<void>) => cb(txMock),
       );
-      mockReportService.enqueueIfAllFeedbacksReady.mockResolvedValue(undefined);
       mockSse.emit.mockResolvedValue(undefined);
-
       const job = {
         data: BASE_JOB_DATA,
         attemptsMade: 1,
         opts: { attempts: 2 },
       } as unknown as Job<typeof BASE_JOB_DATA>;
+      mockAssessmentFacade.enqueueIfAllFeedbacksReady.mockResolvedValue(undefined);
 
-      await processor.execute(job);
+      await expect(processor.execute(job)).resolves.toBeUndefined();
 
-      expect(txMock.aiFeedback.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { userAnswerId: 'answer-1' },
-          create: expect.objectContaining({
-            userAnswerId: 'answer-1',
-            isFallback: true,
-            keyTakeaway: FALLBACK_FEEDBACK_MESSAGE,
-            promptVersion: 'transcription-failed',
-          }),
-        }),
+      expect(mockWhisper.transcribe).toHaveBeenCalledWith(
+        'https://example.com/audio.mp3',
       );
-      expect(txMock.userAnswer.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: 'answer-1' },
-          data: expect.objectContaining({
-            transcriptionStatus: 'failed',
-            feedbackGenerated: true,
-          }),
-        }),
-      );
-      expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
+      expect(txMock.aiFeedback.upsert).toHaveBeenCalledWith({
+        where: { userAnswerId: 'answer-1' },
+        create: {
+          userAnswerId: 'answer-1',
+          overallScore: 0,
+          modelAnswer: '',
+          keyTakeaway: FALLBACK_FEEDBACK_MESSAGE,
+          promptVersion: 'transcription-failed',
+          isFallback: true,
+        },
+        update: {},
+      });
+      expect(txMock.userAnswer.update).toHaveBeenCalledWith({
+        where: { id: 'answer-1' },
+        data: { transcriptionStatus: 'failed', feedbackGenerated: true },
+      });
+      expect(mockAssessmentFacade.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
         'session-123',
         'hr',
         'VN',

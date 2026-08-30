@@ -15,44 +15,40 @@ const BOUNDED_CONTEXTS = new Set([
 ]);
 
 /**
- * Danh sách whitelist các import xuyên Bounded Context được phê duyệt.
- * Mọi import giữa 2 context khác nhau phải đăng ký tại đây kèm lý do kiến trúc.
+ * Kiểm tra xem một import xuyên Bounded Context có hợp lệ hay không.
+ * Quy tắc:
+ * 1. Module `auth`: Cho phép import guards, decorators, auth.module.
+ * 2. Mọi Bounded Context khác: CHỈ được phép import từ `@modules/<context>/contracts` (hoặc public contract index/file) hoặc các file `.module` để đăng ký DI.
+ * 3. Tuyệt đối CẤM import trực tiếp vào các service/file nội bộ khác của module ngoại lai.
  */
-const APPROVED_CROSS_MODULE_IMPORTS = new Set([
+function isAllowedCrossModuleImport(
+  importPath: string,
+  targetContext: string,
+): boolean {
   // Auth guards & decorators dùng chung toàn hệ thống
-  '@modules/auth/guards/jwt-auth.guard',
-  '@modules/auth/guards/roles.guard',
-  '@modules/auth/guards/sse-token.guard',
-  '@modules/auth/decorators/roles.decorator',
-  '@modules/auth/auth.module',
+  if (targetContext === 'auth') {
+    return (
+      importPath.startsWith('@modules/auth/guards/') ||
+      importPath.startsWith('@modules/auth/decorators/') ||
+      importPath === '@modules/auth/auth.module'
+    );
+  }
 
-  // Interview Live -> Interview Assessment contracts
-  '@modules/interview-assessment/evaluation/rubric/rubric-catalog.service',
-  '@modules/interview-assessment/report/report.service',
-  '@modules/interview-assessment/report/report.module',
-  '@modules/interview-assessment/evaluation/evaluation.module',
+  // Giao tiếp qua Public Contracts
+  if (
+    importPath === `@modules/${targetContext}/contracts` ||
+    importPath.startsWith(`@modules/${targetContext}/contracts/`)
+  ) {
+    return true;
+  }
 
-  // Interview Prep -> Interview Assessment contracts
-  '@modules/interview-assessment/evaluation/context-pack.service',
-  '@modules/interview-assessment/evaluation/evaluation.module',
+  // Import NestJS Module để nạp vào imports: [...]
+  if (importPath.endsWith('.module')) {
+    return true;
+  }
 
-  // Interview Live -> Interview Prep contracts
-  '@modules/interview-prep/question-criteria/question-criteria.service',
-  '@modules/interview-prep/question-criteria/question-criteria.module',
-
-  // Interview Live -> Media contracts
-  '@modules/media/audio-object-storage.service',
-  '@modules/media/upload-and-transcribe-answer-audio.service',
-  '@modules/media/voice-metrics.service',
-  '@modules/media/transcription-job.dto',
-  '@modules/media/media.module',
-
-  // Media -> Interview Prep & Assessment contracts
-  '@modules/interview-prep/question-criteria/question-criteria.service',
-  '@modules/interview-prep/question-criteria/question-criteria.module',
-  '@modules/interview-assessment/report/report.service',
-  '@modules/interview-assessment/report/report.module',
-]);
+  return false;
+}
 
 const IMPORT_PATTERN = /from\s+['"]([^'"]+)['"]/g;
 
@@ -141,7 +137,7 @@ describe('3-Layer Clean Architecture & Bounded Contexts Boundaries', () => {
 
           if (
             isCrossContext &&
-            !APPROVED_CROSS_MODULE_IMPORTS.has(importPath)
+            !isAllowedCrossModuleImport(importPath, targetContext)
           ) {
             violations.push(
               `[${sourceContext}] ${relative(SRC_ROOT, file)} -> ${importPath}`,
@@ -166,7 +162,7 @@ describe('3-Layer Clean Architecture & Bounded Contexts Boundaries', () => {
             const normalizedTarget = `@${targetRel}`;
             if (
               isCrossContext &&
-              !APPROVED_CROSS_MODULE_IMPORTS.has(normalizedTarget)
+              !isAllowedCrossModuleImport(normalizedTarget, targetContext)
             ) {
               violations.push(
                 `[${sourceContext}] ${relative(SRC_ROOT, file)} -> ${importPath} (${targetRel})`,

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TextAnswerIntakeHandler } from './text-answer-intake.handler';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import { QuestionCriteriaService } from '@modules/interview-prep/question-criteria/question-criteria.service';
+import { PrepFacade } from '@modules/interview-prep/contracts';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 import { WorkflowService } from '@infra/workflow/workflow.service';
 import {
@@ -16,9 +16,9 @@ import { SubmitAnswerDto } from './dto/submit-answer.dto';
 describe('TextAnswerIntakeHandler', () => {
   let handler: TextAnswerIntakeHandler;
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
-  let mockQuestionCriteria: ReturnType<
-    typeof createMockQuestionCriteriaService
-  >;
+  let mockPrepFacade: {
+    codesFromSessionQuestion: jest.Mock;
+  };
   let mockWorkflow: ReturnType<typeof createMockWorkflowService>;
   let mockDispatcher: ReturnType<typeof createMockWorkflowDispatcher>;
 
@@ -45,19 +45,19 @@ describe('TextAnswerIntakeHandler', () => {
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
-    mockQuestionCriteria = createMockQuestionCriteriaService();
+    mockPrepFacade = {
+      codesFromSessionQuestion: jest.fn().mockReturnValue(['D1', 'D2']),
+    };
     mockWorkflow = createMockWorkflowService();
     mockDispatcher = createMockWorkflowDispatcher();
-
-    mockQuestionCriteria.codesFromSessionQuestion.mockReturnValue(['D1', 'D2']);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TextAnswerIntakeHandler,
         { provide: PrismaService, useValue: mockPrisma },
         {
-          provide: QuestionCriteriaService,
-          useValue: mockQuestionCriteria,
+          provide: PrepFacade,
+          useValue: mockPrepFacade,
         },
         {
           provide: WorkflowService,

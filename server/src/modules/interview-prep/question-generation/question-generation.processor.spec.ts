@@ -3,7 +3,7 @@ import { QuestionGenerationProcessor } from './question-generation.processor';
 import { GenerateSessionQuestions } from './generate-session-questions.service';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
-import { ContextPackService } from '@modules/interview-assessment/evaluation/context-pack.service';
+import { AssessmentFacade } from '@modules/interview-assessment/contracts';
 import { PipelineStrategyFactory } from '@infra/ai/pipelines/pipeline-strategy.factory';
 import { QuestionBankService } from '../question-bank/question-bank.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
@@ -59,10 +59,16 @@ describe('QuestionGenerationProcessor', () => {
     technicalDimensions: [
       { id: 'TD1', name: 'Foundational Knowledge', weight: 0.2 },
       { id: 'TD2', name: 'Practical Application', weight: 0.25 },
-      { id: 'TD3', name: 'Systems Thinking', weight: 0.2 },
-      { id: 'TD4', name: 'Code Quality & Best Practices', weight: 0.2 },
-      { id: 'TD5', name: 'Debug & Problem-solving', weight: 0.15 },
+      { id: 'TD3', name: 'System Design', weight: 0.2 },
+      { id: 'TD4', name: 'Code Quality', weight: 0.2 },
+      { id: 'TD5', name: 'Troubleshooting & Debugging', weight: 0.15 },
     ],
+    scoringWeights: {
+      behavioral_weight: 0.4,
+      technical_weight: 0.6,
+    },
+    culturalNotes: 'Văn hóa công sở tại Việt Nam.',
+    rubricDimensions: ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'TD1', 'TD2', 'TD3', 'TD4', 'TD5'],
   };
 
   const makeJob = (data = BASE_JOB_DATA) =>
@@ -110,7 +116,7 @@ describe('QuestionGenerationProcessor', () => {
         GenerateSessionQuestions,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: SseService, useValue: mockSse },
-        { provide: ContextPackService, useValue: mockContextPack },
+        { provide: AssessmentFacade, useValue: mockContextPack },
         { provide: PipelineStrategyFactory, useValue: mockFactory },
         { provide: QuestionBankService, useValue: mockQuestionBankService },
         { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },

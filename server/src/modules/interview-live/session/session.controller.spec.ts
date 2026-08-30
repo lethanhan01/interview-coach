@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { SessionController } from './session.controller';
 import { SessionService } from './session.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
-import { ReportService } from '@modules/interview-assessment/report/report.service';
+import { AssessmentFacade } from '@modules/interview-assessment/contracts';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { SseTokenGuard } from '@modules/auth/guards/sse-token.guard';
 import {
@@ -15,21 +15,23 @@ import {
 describe('SessionController', () => {
   let controller: SessionController;
   let mockSessionService: ReturnType<typeof createMockSessionService>;
-  let mockReportService: ReturnType<typeof createMockReportService>;
+  let mockAssessmentFacade: { getFeedbackProgress: jest.Mock };
   let mockSseService: ReturnType<typeof createMockSseService>;
 
   const mockReq = (userId = 'user-abc') => ({ user: { id: userId } }) as any;
 
   beforeEach(async () => {
     mockSessionService = createMockSessionService();
-    mockReportService = createMockReportService();
+    mockAssessmentFacade = {
+      getFeedbackProgress: jest.fn(),
+    };
     mockSseService = createMockSseService();
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SessionController],
       providers: [
         { provide: SessionService, useValue: mockSessionService },
-        { provide: ReportService, useValue: mockReportService },
+        { provide: AssessmentFacade, useValue: mockAssessmentFacade },
         { provide: SseService, useValue: mockSseService },
       ],
     })
@@ -131,7 +133,7 @@ describe('SessionController', () => {
         feedbackPending: 2,
         reportReady: false,
       };
-      mockReportService.getFeedbackProgress.mockResolvedValue(progress);
+      mockAssessmentFacade.getFeedbackProgress.mockResolvedValue(progress);
 
       const result = await controller.getFeedbackProgress(
         'session-1',
@@ -139,7 +141,7 @@ describe('SessionController', () => {
       );
 
       expect(result).toEqual(progress);
-      expect(mockReportService.getFeedbackProgress).toHaveBeenCalledWith(
+      expect(mockAssessmentFacade.getFeedbackProgress).toHaveBeenCalledWith(
         'session-1',
         'user-abc',
       );

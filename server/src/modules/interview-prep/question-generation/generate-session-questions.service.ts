@@ -2,9 +2,9 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import {
-  ContextPackService,
+  AssessmentFacade,
   type ContextPackConfig,
-} from '@modules/interview-assessment/evaluation/context-pack.service';
+} from '@modules/interview-assessment/contracts';
 import {
   describeAIError,
   isAIFallbackEligible,
@@ -64,7 +64,7 @@ export class GenerateSessionQuestions {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly contextPackService: ContextPackService,
+    private readonly assessmentFacade: AssessmentFacade,
     private readonly factory: PipelineStrategyFactory,
     private readonly questionBankService: QuestionBankService,
     private readonly questionCriteria: QuestionCriteriaService,
@@ -79,7 +79,7 @@ export class GenerateSessionQuestions {
     let aiQuestions: NormalizedGeneratedQuestion[];
     let contextPackConfig: ContextPackConfig;
     try {
-      contextPackConfig = await this.contextPackService.getContextPack(
+      contextPackConfig = await this.assessmentFacade.getContextPack(
         job.contextPack,
       );
       const rawQuestions = await this.factory

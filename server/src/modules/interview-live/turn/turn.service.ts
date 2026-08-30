@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { UploadedAudioFile } from '@modules/media/audio-object-storage.service';
 import {
-  UploadAndTranscribeAnswerAudio,
+  MediaFacade,
+  type UploadedAudioFile,
   type AudioUploadResult,
-} from '@modules/media/upload-and-transcribe-answer-audio.service';
+} from '@modules/media/contracts';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
 import { SubmitTurnAnswer } from './submit-turn-answer.service';
@@ -13,7 +13,7 @@ import { TurnAnswerContext } from './turn-answer-context.service';
 export class TurnService {
   constructor(
     private readonly context: TurnAnswerContext,
-    private readonly uploadAndTranscribeAudio: UploadAndTranscribeAnswerAudio,
+    private readonly mediaFacade: MediaFacade,
     private readonly submitTurnAnswer: SubmitTurnAnswer,
   ) {}
 
@@ -23,7 +23,7 @@ export class TurnService {
     file?: UploadedAudioFile,
   ): Promise<AudioUploadResult> {
     await this.context.assertOwner(sessionId, userId);
-    return this.uploadAndTranscribeAudio.execute({ sessionId, userId, file });
+    return this.mediaFacade.uploadAndTranscribeAudio({ sessionId, userId, file });
   }
 
   submitAnswer(

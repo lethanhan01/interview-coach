@@ -2,9 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
 import { TurnService } from './turn.service';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import { QuestionCriteriaService } from '@modules/interview-prep/question-criteria/question-criteria.service';
-import { UploadAndTranscribeAnswerAudio } from '@modules/media/upload-and-transcribe-answer-audio.service';
-import { VoiceMetricsService } from '@modules/media/voice-metrics.service';
+import { PrepFacade } from '@modules/interview-prep/contracts';
+import { MediaFacade } from '@modules/media/contracts';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 import { WorkflowService } from '@infra/workflow/workflow.service';
 import { TurnAnswerContext } from './turn-answer-context.service';
@@ -28,13 +27,13 @@ describe('TurnService', () => {
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockWorkflow: ReturnType<typeof createMockWorkflowService>;
   let mockDispatcher: ReturnType<typeof createMockWorkflowDispatcher>;
-  let mockQuestionCriteria: ReturnType<
-    typeof createMockQuestionCriteriaService
-  >;
-  let mockAudioStorage: {
-    execute: jest.Mock;
+  let mockPrepFacade: {
+    codesFromSessionQuestion: jest.Mock;
   };
-  let mockVoiceMetrics: ReturnType<typeof createMockVoiceMetricsService>;
+  let mockMediaFacade: {
+    uploadAndTranscribeAudio: jest.Mock;
+    calculateVoiceMetrics: jest.Mock;
+  };
 
   const BASE_SESSION = {
     id: 'session-123',
@@ -80,16 +79,21 @@ describe('TurnService', () => {
     mockPrisma = createMockPrismaService();
     mockWorkflow = createMockWorkflowService();
     mockDispatcher = createMockWorkflowDispatcher();
-    mockQuestionCriteria = createMockQuestionCriteriaService();
-    mockAudioStorage = {
-      execute: jest.fn(),
+    mockPrepFacade = {
+      codesFromSessionQuestion: jest.fn((question) =>
+        question.criteria?.map(
+          (link: any) => link.rubricCriterion?.code ?? link.criterionCode,
+        ) ?? [],
+      ),
     };
-    mockVoiceMetrics = createMockVoiceMetricsService();
-    mockVoiceMetrics.calculate.mockReturnValue({
-      wpm: 120,
-      fillerWordCount: 1,
-      fillerWords: ['um'],
-    });
+    mockMediaFacade = {
+      uploadAndTranscribeAudio: jest.fn(),
+      calculateVoiceMetrics: jest.fn().mockReturnValue({
+        wpm: 120,
+        fillerWordCount: 1,
+        fillerWords: ['um'],
+      }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -100,14 +104,10 @@ describe('TurnService', () => {
         AnswerIntakeRegistry,
         SubmitTurnAnswer,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
+        { provide: PrepFacade, useValue: mockPrepFacade },
         {
-          provide: UploadAndTranscribeAnswerAudio,
-          useValue: mockAudioStorage,
-        },
-        {
-          provide: VoiceMetricsService,
-          useValue: mockVoiceMetrics,
+          provide: MediaFacade,
+          useValue: mockMediaFacade,
         },
         { provide: WorkflowService, useValue: mockWorkflow },
         { provide: WorkflowDispatcher, useValue: mockDispatcher },
@@ -135,7 +135,7 @@ describe('TurnService', () => {
         errorCode: ErrorCode.SESSION_NOT_FOUND,
       });
 
-      expect(mockAudioStorage.execute).not.toHaveBeenCalled();
+      expect(mockMediaFacade.uploadAndTranscribeAudio).not.toHaveBeenCalled();
     });
 
     it('ném FORBIDDEN khi user không phải owner', async () => {
@@ -149,7 +149,7 @@ describe('TurnService', () => {
         errorCode: ErrorCode.FORBIDDEN,
       });
 
-      expect(mockAudioStorage.execute).not.toHaveBeenCalled();
+      expect(mockMediaFacade.uploadAndTranscribeAudio).not.toHaveBeenCalled();
     });
 
     it('ủy quyền upload audio cho use case khi session thuộc user', async () => {
@@ -161,13 +161,13 @@ describe('TurnService', () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         savedJobDescription: { userId: 'user-abc' },
       });
-      mockAudioStorage.execute.mockResolvedValue(uploadResult);
+      mockMediaFacade.uploadAndTranscribeAudio.mockResolvedValue(uploadResult);
 
       await expect(
         service.uploadAudio('session-123', 'user-abc', AUDIO_FILE),
       ).resolves.toEqual(uploadResult);
 
-      expect(mockAudioStorage.execute).toHaveBeenCalledWith({
+      expect(mockMediaFacade.uploadAndTranscribeAudio).toHaveBeenCalledWith({
         sessionId: 'session-123',
         userId: 'user-abc',
         file: AUDIO_FILE,
@@ -667,7 +667,7 @@ describe('TurnService', () => {
           }),
         }),
       );
-      expect(mockVoiceMetrics.calculate).toHaveBeenCalledWith(
+      expect(mockMediaFacade.calculateVoiceMetrics).toHaveBeenCalledWith(
         editedTranscript,
         30,
       );

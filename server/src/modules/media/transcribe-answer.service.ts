@@ -4,10 +4,10 @@ import { Job, Queue } from 'bullmq';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
-import { QuestionCriteriaService } from '@modules/interview-prep/question-criteria/question-criteria.service';
+import { PrepFacade } from '@modules/interview-prep/contracts';
 import { SpeechToText } from './speech-to-text.service';
 import { VoiceMetricsService } from './voice-metrics.service';
-import { ReportService } from '@modules/interview-assessment/report/report.service';
+import { AssessmentFacade } from '@modules/interview-assessment/contracts';
 import {
   TRANSCRIPTION_JOB_ATTEMPTS,
   FEEDBACK_QUEUE,
@@ -25,11 +25,11 @@ export class TranscribeAnswer {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly questionCriteria: QuestionCriteriaService,
+    private readonly prepFacade: PrepFacade,
     private readonly sseService: SseService,
     private readonly speechToText: SpeechToText,
     private readonly voiceMetricsService: VoiceMetricsService,
-    private readonly reportService: ReportService,
+    private readonly assessmentFacade: AssessmentFacade,
     @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
   ) {}
 
@@ -90,7 +90,7 @@ export class TranscribeAnswer {
       }
 
       const competencyDomains =
-        this.questionCriteria.codesFromSessionQuestion(question);
+        this.prepFacade.codesFromSessionQuestion(question);
       const jobBase = {
         sessionId,
         turnId: answerId,
@@ -151,7 +151,7 @@ export class TranscribeAnswer {
           });
         });
 
-        await this.reportService
+        await this.assessmentFacade
           .enqueueIfAllFeedbacksReady(
             sessionId,
             sessionType,

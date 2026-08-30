@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import { QuestionCriteriaService } from '@modules/interview-prep/question-criteria/question-criteria.service';
-import { VoiceMetricsService } from '@modules/media/voice-metrics.service';
-import type { TranscriptionJobDto } from '@modules/media/transcription-job.dto';
+import { PrepFacade } from '@modules/interview-prep/contracts';
+import { MediaFacade, type TranscriptionJobDto } from '@modules/media/contracts';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 import { WorkflowService } from '@infra/workflow/workflow.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
@@ -19,8 +18,8 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly questionCriteria: QuestionCriteriaService,
-    private readonly voiceMetrics: VoiceMetricsService,
+    private readonly prepFacade: PrepFacade,
+    private readonly mediaFacade: MediaFacade,
     private readonly workflow: WorkflowService,
     private readonly dispatcher: WorkflowDispatcher,
   ) {}
@@ -140,7 +139,7 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
         });
       });
     } else {
-      const metrics = this.voiceMetrics.calculate(
+      const metrics = this.mediaFacade.calculateVoiceMetrics(
         transcriptText(dto.answerText),
         dto.audioDurationSeconds ?? 0,
       );
@@ -236,7 +235,7 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
       questionId: context.question.id,
       questionText: context.question.questionText,
       questionCategory: context.question.questionCategory,
-      competencyDomains: this.questionCriteria.codesFromSessionQuestion(
+      competencyDomains: this.prepFacade.codesFromSessionQuestion(
         context.question,
       ),
       answerText,

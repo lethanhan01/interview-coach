@@ -6,7 +6,7 @@ import { ChangeInterviewSessionStatus } from './change-interview-session-status.
 import { SessionLifecyclePolicy } from './session-lifecycle.policy';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import { RubricCatalogService } from '@modules/interview-assessment/evaluation/rubric/rubric-catalog.service';
+import { AssessmentFacade } from '@modules/interview-assessment/contracts';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 import { WorkflowService } from '@infra/workflow/workflow.service';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
@@ -52,8 +52,8 @@ describe('SessionService', () => {
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockWorkflowService: ReturnType<typeof createMockWorkflowService>;
   let mockWorkflowDispatcher: ReturnType<typeof createMockWorkflowDispatcher>;
-  let mockRubricCatalog: {
-    ensureContextPack: jest.Mock;
+  let mockAssessmentFacade: {
+    ensureContextPack?: jest.Mock;
     ensureActiveRubricVersion: jest.Mock;
   };
   let mockConfig: ReturnType<typeof createMockConfigService>;
@@ -62,8 +62,7 @@ describe('SessionService', () => {
     mockPrisma = createMockPrismaService();
     mockWorkflowService = createMockWorkflowService();
     mockWorkflowDispatcher = createMockWorkflowDispatcher();
-    mockRubricCatalog = {
-      ensureContextPack: jest.fn().mockResolvedValue(undefined),
+    mockAssessmentFacade = {
       ensureActiveRubricVersion: jest
         .fn()
         .mockResolvedValue('rubric-version-vn'),
@@ -82,7 +81,7 @@ describe('SessionService', () => {
         TechnicalInterviewStrategy,
         SessionStrategyRegistry,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: RubricCatalogService, useValue: mockRubricCatalog },
+        { provide: AssessmentFacade, useValue: mockAssessmentFacade },
         { provide: WorkflowService, useValue: mockWorkflowService },
         { provide: WorkflowDispatcher, useValue: mockWorkflowDispatcher },
         { provide: ConfigService, useValue: mockConfig },
@@ -118,7 +117,7 @@ describe('SessionService', () => {
         }),
       );
       expect(result).toEqual(BASE_SESSION);
-      expect(mockRubricCatalog.ensureActiveRubricVersion).toHaveBeenCalledWith(
+      expect(mockAssessmentFacade.ensureActiveRubricVersion).toHaveBeenCalledWith(
         'VN',
       );
       expect(mockWorkflowService.enqueueInTransaction).toHaveBeenCalledWith(
@@ -206,7 +205,7 @@ describe('SessionService', () => {
           TechnicalInterviewStrategy,
           SessionStrategyRegistry,
           { provide: PrismaService, useValue: mockPrisma },
-          { provide: RubricCatalogService, useValue: mockRubricCatalog },
+          { provide: AssessmentFacade, useValue: mockAssessmentFacade },
           { provide: WorkflowService, useValue: mockWorkflowService },
           { provide: WorkflowDispatcher, useValue: mockWorkflowDispatcher },
           { provide: ConfigService, useValue: mockConfig },
@@ -235,7 +234,7 @@ describe('SessionService', () => {
 
     it('trả SERVICE_UNAVAILABLE khi context pack không thể đồng bộ', async () => {
       mockPrisma.interviewSession.count.mockResolvedValue(0);
-      mockRubricCatalog.ensureActiveRubricVersion.mockRejectedValue(
+      mockAssessmentFacade.ensureActiveRubricVersion.mockRejectedValue(
         new Error('Database unavailable'),
       );
 

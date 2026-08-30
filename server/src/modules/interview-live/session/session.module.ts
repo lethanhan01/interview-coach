@@ -10,7 +10,6 @@ import {
   QUESTION_GEN_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
 } from '@core/common/constants/queue.constants';
-import { ReportModule } from '@modules/interview-assessment/report/report.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { EvaluationModule } from '@modules/interview-assessment/evaluation/evaluation.module';
 import { WorkflowModule } from '@infra/workflow/workflow.module';
@@ -21,7 +20,6 @@ import { SessionStrategyRegistry } from './session-strategy.registry';
 
 @Module({
   imports: [
-    ReportModule,
     AuthModule,
     EvaluationModule,
     WorkflowModule,

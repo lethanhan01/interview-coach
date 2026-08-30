@@ -1,7 +1,7 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { InterviewSession } from '@prisma/client';
-import { RubricCatalogService } from '@modules/interview-assessment/evaluation/rubric/rubric-catalog.service';
+import { AssessmentFacade } from '@modules/interview-assessment/contracts';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
@@ -17,7 +17,7 @@ export class CreateInterviewSession {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly rubricCatalog: RubricCatalogService,
+    private readonly assessmentFacade: AssessmentFacade,
     private readonly workflow: WorkflowService,
     private readonly dispatcher: WorkflowDispatcher,
     private readonly strategyRegistry: SessionStrategyRegistry,
@@ -57,7 +57,7 @@ export class CreateInterviewSession {
 
     let rubricVersionId: string;
     try {
-      rubricVersionId = await this.rubricCatalog.ensureActiveRubricVersion(
+      rubricVersionId = await this.assessmentFacade.ensureActiveRubricVersion(
         dto.contextPack,
       );
     } catch {

@@ -3,7 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { AiModule } from '@infra/ai/ai.module';
 import { StorageModule } from '@infra/storage/storage.module';
 import { QuestionCriteriaModule } from '@modules/interview-prep/question-criteria/question-criteria.module';
-import { ReportModule } from '@modules/interview-assessment/report/report.module';
+import { EvaluationModule } from '@modules/interview-assessment/evaluation/evaluation.module';
 import {
   FEEDBACK_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
@@ -17,6 +17,8 @@ import { UploadAndTranscribeAnswerAudio } from './upload-and-transcribe-answer-a
 import { VoiceMetricsService } from './voice-metrics.service';
 import { workersEnabled } from '@core/runtime/runtime-role';
 
+import { MediaFacade } from './contracts/media-facade.service';
+
 const workerProviders = workersEnabled() ? [TranscriptionProcessor] : [];
 
 @Module({
@@ -24,7 +26,7 @@ const workerProviders = workersEnabled() ? [TranscriptionProcessor] : [];
     AiModule,
     StorageModule,
     QuestionCriteriaModule,
-    ReportModule,
+    EvaluationModule,
     BullModule.registerQueue(
       {
         name: FEEDBACK_QUEUE,
@@ -42,6 +44,7 @@ const workerProviders = workersEnabled() ? [TranscriptionProcessor] : [];
     UploadAndTranscribeAnswerAudio,
     VoiceMetricsService,
     TranscribeAnswer,
+    MediaFacade,
     ...workerProviders,
   ],
   exports: [
@@ -49,6 +52,7 @@ const workerProviders = workersEnabled() ? [TranscriptionProcessor] : [];
     AudioObjectStorage,
     UploadAndTranscribeAnswerAudio,
     VoiceMetricsService,
+    MediaFacade,
   ],
 })
 export class MediaModule {}

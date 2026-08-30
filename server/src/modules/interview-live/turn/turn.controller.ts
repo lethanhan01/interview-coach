@@ -15,8 +15,10 @@ import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { TurnService } from './turn.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
-import type { UploadedAudioFile } from '@modules/media/audio-object-storage.service';
-import type { AudioUploadResult } from '@modules/media/upload-and-transcribe-answer-audio.service';
+import type {
+  UploadedAudioFile,
+  AudioUploadResult,
+} from '@modules/media/contracts';
 import {
   ApiBody,
   ApiConsumes,
