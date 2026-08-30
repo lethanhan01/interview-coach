@@ -9,6 +9,8 @@ import {
   TRANSCRIPTION_QUEUE,
 } from '../common/constants/queue.constants';
 import { AudioObjectStorage } from './audio-object-storage.service';
+import { SupabaseMediaStorageAdapter } from './supabase-media-storage.adapter';
+import { MEDIA_STORAGE_TOKEN } from './media-storage.interface';
 import { SpeechToText } from './speech-to-text.service';
 import { TranscribeAnswer } from './transcribe-answer.service';
 import { TranscriptionProcessor } from './transcription.processor';
@@ -35,6 +37,10 @@ const workerProviders = workersEnabled() ? [TranscriptionProcessor] : [];
     ),
   ],
   providers: [
+    {
+      provide: MEDIA_STORAGE_TOKEN,
+      useClass: SupabaseMediaStorageAdapter,
+    },
     AudioObjectStorage,
     SpeechToText,
     UploadAndTranscribeAnswerAudio,
@@ -42,6 +48,11 @@ const workerProviders = workersEnabled() ? [TranscriptionProcessor] : [];
     TranscribeAnswer,
     ...workerProviders,
   ],
-  exports: [UploadAndTranscribeAnswerAudio, VoiceMetricsService],
+  exports: [
+    MEDIA_STORAGE_TOKEN,
+    AudioObjectStorage,
+    UploadAndTranscribeAnswerAudio,
+    VoiceMetricsService,
+  ],
 })
 export class InterviewModule {}

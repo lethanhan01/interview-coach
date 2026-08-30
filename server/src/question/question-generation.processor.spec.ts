@@ -8,6 +8,7 @@ import { PipelineStrategyFactory } from '../ai/pipelines/pipeline-strategy.facto
 import { QuestionBankService } from '../question-bank/question-bank.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import { OpenAIGateway } from '../ai/openai.gateway';
+import { AI_GATEWAY_TOKEN } from '../ai/ai-gateway.interface';
 import {
   createMockPrismaService,
   createMockSseService,
@@ -113,6 +114,7 @@ describe('QuestionGenerationProcessor', () => {
         { provide: PipelineStrategyFactory, useValue: mockFactory },
         { provide: QuestionBankService, useValue: mockQuestionBankService },
         { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
+        { provide: AI_GATEWAY_TOKEN, useValue: mockOpenAI },
         { provide: OpenAIGateway, useValue: mockOpenAI },
       ],
     }).compile();

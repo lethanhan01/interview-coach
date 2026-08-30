@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EvaluateAnswer } from '../../assessment/evaluate-answer.service';
-import { OpenAIGateway } from '../openai.gateway';
+import { AI_GATEWAY_TOKEN, type IAIGateway } from '../ai-gateway.interface';
 import { PromptBuilderService } from '../prompt-builder.service';
 import { ZodValidatorService } from '../zod-validator.service';
 import { BasePipelineService } from './base-pipeline.service';
@@ -13,7 +13,8 @@ export class TechnicalPipelineService extends BasePipelineService {
     'Focus on technical depth, applied problem-solving, trade-offs, debugging, system design, and engineering quality. Ask for reasoning and concrete implementation decisions.';
 
   constructor(
-    openai: OpenAIGateway,
+    @Inject(AI_GATEWAY_TOKEN)
+    openai: IAIGateway,
     promptBuilder: PromptBuilderService,
     zodValidator: ZodValidatorService,
     config: ConfigService,

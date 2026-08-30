@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { ContextPackService } from '../assessment/context-pack.service';
 import type { ContextPackConfig } from '../assessment/context-pack.service';
 import { describeAIError, isAIFallbackEligible } from '../ai/ai-error.utils';
-import { OpenAIGateway } from '../ai/openai.gateway';
+import { AI_GATEWAY_TOKEN, type IAIGateway } from '../ai/ai-gateway.interface';
 import { resolveOutputLanguage } from '../ai/output-language';
 import { PipelineStrategyFactory } from '../ai/pipelines/pipeline-strategy.factory';
 import type {
@@ -60,7 +60,8 @@ export class GenerateSessionQuestions {
     private readonly factory: PipelineStrategyFactory,
     private readonly questionBankService: QuestionBankService,
     private readonly questionCriteria: QuestionCriteriaService,
-    private readonly openai: OpenAIGateway,
+    @Inject(AI_GATEWAY_TOKEN)
+    private readonly openai: IAIGateway,
   ) {}
 
   async execute(job: QuestionGenerationJobDto): Promise<void> {

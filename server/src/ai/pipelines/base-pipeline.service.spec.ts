@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { EvaluateAnswer } from '../../assessment/evaluate-answer.service';
 import { HrPipelineService } from './hr.pipeline.service';
 import { OpenAIGateway } from '../openai.gateway';
+import { AI_GATEWAY_TOKEN } from '../ai-gateway.interface';
 import { PromptBuilderService } from '../prompt-builder.service';
 import { ZodValidatorService } from '../zod-validator.service';
 import { InterviewAIException } from '../../common/exceptions/interview-ai.exception';
@@ -56,6 +57,7 @@ describe('BasePipelineService (via HrPipelineService)', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HrPipelineService,
+        { provide: AI_GATEWAY_TOKEN, useValue: mockOpenAI },
         { provide: OpenAIGateway, useValue: mockOpenAI },
         { provide: PromptBuilderService, useValue: mockPromptBuilder },
         { provide: ZodValidatorService, useValue: mockZodValidator },

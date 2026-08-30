@@ -247,7 +247,12 @@ export const createMockOpenAIGateway = () => ({
   chatCompletion: jest.fn(),
   getChatModel: jest.fn().mockReturnValue('google/gemma-4-e4b'),
   transcribe: jest.fn(),
+  generateStructured: jest.fn(),
+  generateText: jest.fn(),
+  transcribeAudio: jest.fn(),
 });
+
+export const createMockAIGateway = createMockOpenAIGateway;
 
 export const createMockQuestionBankService = () => ({
   selectFallbackQuestions: jest.fn().mockResolvedValue([]),

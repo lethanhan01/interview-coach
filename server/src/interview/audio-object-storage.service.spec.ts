@@ -1,75 +1,81 @@
-import { ConfigService } from '@nestjs/config';
-import { createClient } from '@supabase/supabase-js';
 import { AudioObjectStorage } from './audio-object-storage.service';
-
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({
-    storage: {},
-  })),
-}));
+import type { IPrivateMediaStorage } from './media-storage.interface';
+import { ErrorCode } from '../common/exceptions/error-code.enum';
 
 describe('AudioObjectStorage', () => {
+  let mockStorage: jest.Mocked<IPrivateMediaStorage>;
+  let service: AudioObjectStorage;
+
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockStorage = {
+      upload: jest.fn(),
+      createSignedUrl: jest.fn(),
+      delete: jest.fn(),
+    };
+    service = new AudioObjectStorage(mockStorage);
   });
 
-  it('passes a WebSocket transport to Supabase for Node.js 20 runtimes', () => {
-    const config = {
-      getOrThrow: jest.fn((key: string) => {
-        if (key === 'SUPABASE_URL') {
-          return 'https://example.supabase.co';
-        }
-
-        return 'service-role-key';
+  it('từ chối khi không có buffer file âm thanh', async () => {
+    await expect(
+      service.uploadInterviewAudio({
+        sessionId: 'session-1',
+        userId: 'user-1',
+        file: undefined,
       }),
-    } as unknown as ConfigService;
-
-    new AudioObjectStorage(config);
-
-    expect(createClient).toHaveBeenCalledWith(
-      'https://example.supabase.co',
-      'service-role-key',
-      expect.objectContaining({
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-        realtime: {
-          transport: expect.any(Function),
-        },
-      }),
-    );
+    ).rejects.toMatchObject({ errorCode: ErrorCode.INVALID_ANSWER_TYPE });
   });
 
-  it('characterizes the current public-URL storage contract', async () => {
-    const upload = jest.fn().mockResolvedValue({ error: null });
-    const getPublicUrl = jest.fn().mockReturnValue({
-      data: { publicUrl: 'https://storage.example/interview-audio/audio.webm' },
-    });
-    (createClient as jest.Mock).mockReturnValue({
-      storage: {
-        from: jest.fn().mockReturnValue({ upload, getPublicUrl }),
-      },
-    });
-    const storage = new AudioObjectStorage({
-      getOrThrow: jest.fn(() => 'value'),
-    } as unknown as ConfigService);
+  it('từ chối định dạng tệp không được hỗ trợ', async () => {
+    await expect(
+      service.uploadInterviewAudio({
+        sessionId: 'session-1',
+        userId: 'user-1',
+        file: { buffer: Buffer.from('audio'), mimetype: 'audio/aac', size: 100 },
+      }),
+    ).rejects.toMatchObject({ errorCode: ErrorCode.INVALID_ANSWER_TYPE });
+  });
 
-    const result = await storage.uploadInterviewAudio({
+  it('ủy quyền upload cho IPrivateMediaStorage và trả về metadata đầy đủ', async () => {
+    mockStorage.upload.mockResolvedValue({
+      mediaKey: 'user-1/session-1/audio-123.webm',
+      audioSizeBytes: 500,
+      audioFileUrl: 'https://storage.example/signed-url',
+    });
+
+    const result = await service.uploadInterviewAudio({
       sessionId: 'session-1',
       userId: 'user-1',
-      file: { buffer: Buffer.from('audio'), mimetype: 'audio/webm', size: 5 },
+      file: { buffer: Buffer.from('audio'), mimetype: 'audio/webm', size: 500 },
     });
 
-    expect(upload).toHaveBeenCalledWith(
-      expect.stringMatching(/^user-1\/session-1\/audio-.+\.webm$/),
-      expect.any(Buffer),
-      { contentType: 'audio/webm', upsert: false },
+    expect(mockStorage.upload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: expect.stringMatching(/^user-1\/session-1\/audio-.+\.webm$/),
+        file: { buffer: Buffer.from('audio'), mimetype: 'audio/webm', size: 500 },
+      }),
     );
     expect(result).toEqual({
-      audioFileUrl: 'https://storage.example/interview-audio/audio.webm',
-      audioSizeBytes: 5,
+      mediaKey: 'user-1/session-1/audio-123.webm',
+      audioSizeBytes: 500,
+      audioFileUrl: 'https://storage.example/signed-url',
     });
-    expect(getPublicUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('ủy quyền getSignedUrl cho IPrivateMediaStorage', async () => {
+    mockStorage.createSignedUrl.mockResolvedValue({
+      signedUrl: 'https://storage.example/signed-url',
+      expiresInSeconds: 1800,
+    });
+
+    const result = await service.getSignedUrl('user-1/session-1/audio-123.webm', 1800);
+
+    expect(mockStorage.createSignedUrl).toHaveBeenCalledWith(
+      'user-1/session-1/audio-123.webm',
+      1800,
+    );
+    expect(result).toEqual({
+      signedUrl: 'https://storage.example/signed-url',
+      expiresInSeconds: 1800,
+    });
   });
 });

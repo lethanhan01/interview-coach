@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { SseService } from '../infrastructure/realtime/redis/sse.service';
-import { OpenAIGateway } from '../ai/openai.gateway';
+import { AI_GATEWAY_TOKEN, type IAIGateway } from '../ai/ai-gateway.interface';
 import { COMPREHENSIVE_REPORT_PROMPT_CONFIG } from '../ai/prompts/comprehensive-report-v1.0';
 import type { SessionType } from '../ai/pipelines/interview-pipeline.interface';
 import {
@@ -239,7 +239,8 @@ export class GenerateComprehensiveReport {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sseService: SseService,
-    private readonly openai: OpenAIGateway,
+    @Inject(AI_GATEWAY_TOKEN)
+    private readonly openai: IAIGateway,
   ) {}
 
   async execute(job: ComprehensiveReportJobDto): Promise<void> {

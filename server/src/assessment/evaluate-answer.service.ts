@@ -1,5 +1,5 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { OpenAIGateway } from '../ai/openai.gateway';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { AI_GATEWAY_TOKEN, type IAIGateway } from '../ai/ai-gateway.interface';
 import { PromptBuilderService } from '../ai/prompt-builder.service';
 import { ZodValidatorService } from '../ai/zod-validator.service';
 import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../ai/prompts/surgical-feedback-v1.5';
@@ -51,7 +51,8 @@ export class EvaluateAnswer {
   readonly logger = new Logger(EvaluateAnswer.name);
 
   constructor(
-    private readonly openai: OpenAIGateway,
+    @Inject(AI_GATEWAY_TOKEN)
+    private readonly openai: IAIGateway,
     private readonly promptBuilder: PromptBuilderService,
     private readonly zodValidator: ZodValidatorService,
   ) {}

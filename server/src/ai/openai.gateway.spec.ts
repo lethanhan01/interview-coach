@@ -1,4 +1,5 @@
 import { APIError, APIUserAbortError } from 'openai';
+import { z } from 'zod';
 import { OpenAIGateway } from './openai.gateway';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 
@@ -456,3 +457,111 @@ describe('OpenAIGateway — transcription boundary', () => {
     );
   });
 });
+
+describe('OpenAIGateway — Hexagonal port methods', () => {
+  it('generateText delegates to chatCompletion with system and user messages', async () => {
+    const config = { get: jest.fn() };
+    const chatClient = {
+      create: jest.fn().mockResolvedValue({
+        choices: [{ message: { content: 'Generated text response' } }],
+      }),
+    };
+    const gateway = new OpenAIGateway(config as any, chatClient as any);
+
+    const result = await gateway.generateText({
+      systemPrompt: 'You are an assistant',
+      userPrompt: 'Hello',
+      temperature: 0.5,
+    });
+
+    expect(result).toBe('Generated text response');
+    expect(chatClient.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          { role: 'system', content: 'You are an assistant' },
+          { role: 'user', content: 'Hello' },
+        ],
+        temperature: 0.5,
+      }),
+      expect.any(Number),
+    );
+  });
+
+  it('generateStructured validates response with schema successfully', async () => {
+    const config = { get: jest.fn() };
+    const chatClient = {
+      create: jest.fn().mockResolvedValue({
+        choices: [
+          { message: { content: JSON.stringify({ score: 85, summary: 'Good job' }) } },
+        ],
+      }),
+    };
+    const gateway = new OpenAIGateway(config as any, chatClient as any);
+
+    const testSchema = z.object({
+      score: z.number(),
+      summary: z.string(),
+    });
+
+    const result = await gateway.generateStructured({
+      systemPrompt: 'System',
+      userPrompt: 'User',
+      schema: testSchema,
+      schemaName: 'TestEvaluation',
+    });
+
+    expect(result).toEqual({ score: 85, summary: 'Good job' });
+  });
+
+  it('generateStructured throws SCHEMA_VALIDATION_ERROR when payload does not match schema', async () => {
+    const config = { get: jest.fn() };
+    const chatClient = {
+      create: jest.fn().mockResolvedValue({
+        choices: [
+          { message: { content: JSON.stringify({ score: 'invalid_number' }) } },
+        ],
+      }),
+    };
+    const gateway = new OpenAIGateway(config as any, chatClient as any);
+
+    const testSchema = z.object({
+      score: z.number(),
+    });
+
+    await expect(
+      gateway.generateStructured({
+        systemPrompt: 'System',
+        userPrompt: 'User',
+        schema: testSchema,
+        schemaName: 'InvalidPayload',
+      }),
+    ).rejects.toThrow('AI response failed schema validation for InvalidPayload');
+  });
+
+  it('transcribeAudio delegates with default mimeType', async () => {
+    const config = { get: jest.fn() };
+    const transcriptionClient = {
+      create: jest.fn().mockResolvedValue({ text: 'audio transcribed', duration: 5 }),
+    };
+    const gateway = new OpenAIGateway(
+      config as any,
+      undefined,
+      transcriptionClient as any,
+    );
+    const audioBuffer = Buffer.from('audio-data');
+
+    const result = await gateway.transcribeAudio({
+      audioBuffer,
+      language: 'en',
+    });
+
+    expect(result).toEqual({ text: 'audio transcribed', durationSeconds: 5 });
+    expect(transcriptionClient.create).toHaveBeenCalledWith(
+      audioBuffer,
+      'audio/webm',
+      'en',
+      undefined,
+    );
+  });
+});
+

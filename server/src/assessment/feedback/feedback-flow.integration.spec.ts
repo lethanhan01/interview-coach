@@ -8,6 +8,7 @@ import { PipelineStrategyFactory } from '../../ai/pipelines/pipeline-strategy.fa
 import { PromptBuilderService } from '../../ai/prompt-builder.service';
 import { ZodValidatorService } from '../../ai/zod-validator.service';
 import { OpenAIGateway } from '../../ai/openai.gateway';
+import { AI_GATEWAY_TOKEN } from '../../ai/ai-gateway.interface';
 import { ContextPackService } from '../context-pack.service';
 import { PrismaService } from '../../infrastructure/database/prisma/prisma.service';
 import { SseService } from '../../infrastructure/realtime/redis/sse.service';
@@ -140,6 +141,7 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
         PipelineStrategyFactory,
         PromptBuilderService,
         ZodValidatorService,
+        { provide: AI_GATEWAY_TOKEN, useValue: mockOpenAI },
         { provide: OpenAIGateway, useValue: mockOpenAI },
         { provide: ContextPackService, useValue: mockContextPackService },
         { provide: PrismaService, useValue: mockPrisma },

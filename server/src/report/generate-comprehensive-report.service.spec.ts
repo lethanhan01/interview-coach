@@ -4,6 +4,7 @@ import { GenerateComprehensiveReport } from './generate-comprehensive-report.ser
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { SseService } from '../infrastructure/realtime/redis/sse.service';
 import { OpenAIGateway } from '../ai/openai.gateway';
+import { AI_GATEWAY_TOKEN } from '../ai/ai-gateway.interface';
 import {
   createMockOpenAIGateway,
   createMockSseService,
@@ -146,6 +147,7 @@ describe('GenerateComprehensiveReport', () => {
         GenerateComprehensiveReport,
         { provide: PrismaService, useValue: prisma },
         { provide: SseService, useValue: mockSse },
+        { provide: AI_GATEWAY_TOKEN, useValue: mockOpenAI },
         { provide: OpenAIGateway, useValue: mockOpenAI },
       ],
     }).compile();

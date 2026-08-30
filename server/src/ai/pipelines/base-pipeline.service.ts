@@ -1,9 +1,9 @@
-import { HttpStatus, Logger } from '@nestjs/common';
+import { HttpStatus, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EvaluateAnswer } from '../../assessment/evaluate-answer.service';
 import { InterviewAIException } from '../../common/exceptions/interview-ai.exception';
 import { ErrorCode } from '../../common/exceptions/error-code.enum';
-import { OpenAIGateway } from '../openai.gateway';
+import { AI_GATEWAY_TOKEN, type IAIGateway } from '../ai-gateway.interface';
 import { getLanguageInstruction } from '../output-language';
 import { PromptBuilderService } from '../prompt-builder.service';
 import { QUESTION_GEN_PROMPT_CONFIG } from '../prompts/question-gen-v1.0';
@@ -24,7 +24,8 @@ export abstract class BasePipelineService implements InterviewPipeline {
   protected readonly logger: Logger;
 
   constructor(
-    protected readonly openai: OpenAIGateway,
+    @Inject(AI_GATEWAY_TOKEN)
+    protected readonly openai: IAIGateway,
     protected readonly promptBuilder: PromptBuilderService,
     protected readonly zodValidator: ZodValidatorService,
     protected readonly config: ConfigService,

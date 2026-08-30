@@ -1,7 +1,7 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { isIP } from 'node:net';
-import { OpenAIGateway } from '../ai/openai.gateway';
+import { AI_GATEWAY_TOKEN, type IAIGateway } from '../ai/ai-gateway.interface';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 
@@ -23,7 +23,8 @@ export class SpeechToText {
   private readonly allowedHosts: Set<string>;
 
   constructor(
-    private readonly openAIGateway: OpenAIGateway,
+    @Inject(AI_GATEWAY_TOKEN)
+    private readonly openAIGateway: IAIGateway,
     config: ConfigService,
   ) {
     const supabaseHost = new URL(

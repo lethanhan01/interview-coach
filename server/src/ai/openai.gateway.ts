@@ -1,35 +1,22 @@
 import { Injectable, HttpStatus, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APIError, APIUserAbortError } from 'openai';
-import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import { OpenAIChatClient } from './openai-chat.client';
 import { OpenAITranscriptionClient } from './openai-transcription.client';
+import {
+  type IAIGateway,
+  type ChatTask,
+  type ChatCompletionParams,
+  type TranscribeParams,
+  type TranscribeResult,
+  type GenerateStructuredParams,
+  type GenerateTextParams,
+  type TranscribeAudioParams,
+} from './ai-gateway.interface';
 
-type ChatTask = 'question-generation' | 'feedback' | 'report';
-
-interface ChatCompletionParams {
-  messages: ChatCompletionMessageParam[];
-  model?: string;
-  temperature: number;
-  maxTokens: number;
-  responseFormat?: 'json_object';
-  task?: ChatTask;
-  timeoutMs?: number;
-}
-
-interface TranscribeParams {
-  audioBuffer: Buffer;
-  mimeType: 'audio/webm' | 'audio/mp4' | 'audio/wav';
-  language?: 'vi' | 'en';
-  timeoutMs?: number;
-}
-
-interface TranscribeResult {
-  text: string;
-  durationSeconds: number;
-}
+export type { ChatTask, ChatCompletionParams, TranscribeParams, TranscribeResult };
 
 // Retry delays for transient rate limits only (not quota exhaustion)
 const RATE_LIMIT_RETRY_DELAYS_MS = [1000, 2000];
@@ -49,7 +36,7 @@ interface JsonExtractionResult {
 }
 
 @Injectable()
-export class OpenAIGateway {
+export class OpenAIGateway implements IAIGateway {
   private readonly logger = new Logger(OpenAIGateway.name);
   private readonly chatModel: string;
   private readonly feedbackModel?: string;
@@ -450,4 +437,70 @@ export class OpenAIGateway {
       };
     });
   }
+
+  async generateStructured<T>(params: GenerateStructuredParams<T>): Promise<T> {
+    const raw = await this.chatCompletion({
+      messages: [
+        { role: 'system', content: params.systemPrompt },
+        { role: 'user', content: params.userPrompt },
+      ],
+      model: params.model,
+      temperature: params.temperature ?? 0.2,
+      maxTokens: params.maxTokens ?? 2000,
+      responseFormat: 'json_object',
+      task: params.task,
+      timeoutMs: params.timeoutMs,
+    });
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new InterviewAIException(
+        ErrorCode.AI_INVALID_JSON,
+        HttpStatus.BAD_GATEWAY,
+        'Invalid JSON returned by AI provider',
+      );
+    }
+
+    const validation = params.schema.safeParse(parsed);
+    if (!validation.success) {
+      this.logger.warn(
+        `AI output schema validation failed: ${validation.error.message}`,
+      );
+      throw new InterviewAIException(
+        ErrorCode.SCHEMA_VALIDATION_ERROR,
+        HttpStatus.BAD_GATEWAY,
+        `AI response failed schema validation${params.schemaName ? ` for ${params.schemaName}` : ''}: ${validation.error.message}`,
+      );
+    }
+
+    return validation.data;
+  }
+
+  async generateText(params: GenerateTextParams): Promise<string> {
+    return this.chatCompletion({
+      messages: [
+        { role: 'system', content: params.systemPrompt },
+        { role: 'user', content: params.userPrompt },
+      ],
+      model: params.model,
+      temperature: params.temperature ?? 0.7,
+      maxTokens: params.maxTokens ?? 2000,
+      task: params.task,
+      timeoutMs: params.timeoutMs,
+    });
+  }
+
+  async transcribeAudio(
+    params: TranscribeAudioParams,
+  ): Promise<TranscribeResult> {
+    return this.transcribe({
+      audioBuffer: params.audioBuffer,
+      mimeType: params.mimeType ?? 'audio/webm',
+      language: params.language,
+      timeoutMs: params.timeoutMs,
+    });
+  }
 }
+
