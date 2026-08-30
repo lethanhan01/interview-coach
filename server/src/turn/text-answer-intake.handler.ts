@@ -115,4 +115,3 @@ export class TextAnswerIntakeHandler implements IAnswerIntakeHandler {
     };
   }
 }
-

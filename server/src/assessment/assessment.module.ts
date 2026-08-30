@@ -23,11 +23,7 @@ const workerProviders = workersEnabled() ? [FeedbackProcessor] : [];
       defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[FEEDBACK_QUEUE],
     }),
   ],
-  providers: [
-    RubricCatalogService,
-    ContextPackService,
-    ...workerProviders,
-  ],
+  providers: [RubricCatalogService, ContextPackService, ...workerProviders],
   controllers: [RubricController],
   exports: [RubricCatalogService, ContextPackService],
 })

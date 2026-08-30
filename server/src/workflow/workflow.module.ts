@@ -37,4 +37,3 @@ import { WorkflowService } from './workflow.service';
   exports: [WorkflowService, WorkflowDispatcher],
 })
 export class WorkflowModule {}
-

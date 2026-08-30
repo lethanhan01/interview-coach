@@ -88,7 +88,7 @@ export class ChangeInterviewSessionStatus {
     }
     this.policy.assertTransition(session.status, 'completed');
     const updated = autoSkipUnanswered
-      ? await this.completeWithAutoSkippedAnswers(session.id, session)
+      ? await this.completeWithAutoSkippedAnswers(session.id)
       : await this.completeAnsweredSession(session.id, session);
     await this.dispatcher.dispatchFor('report-generation', session.id);
     return updated;
@@ -122,7 +122,6 @@ export class ChangeInterviewSessionStatus {
 
   private async completeWithAutoSkippedAnswers(
     sessionId: string,
-    session: InterviewSession,
   ): Promise<InterviewSession> {
     return this.prisma.$transaction(async (tx) => {
       const [questions, answers] = await Promise.all([

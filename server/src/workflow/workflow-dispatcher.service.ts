@@ -179,7 +179,6 @@ export class WorkflowDispatcher
     }
   }
 
-
   private async enqueueReport(command: OutboxCommand): Promise<boolean> {
     const answers = await this.prisma.userAnswer.findMany({
       where: { question: { sessionId: command.aggregateId } },

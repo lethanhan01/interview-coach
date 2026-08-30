@@ -1,5 +1,4 @@
 import { ConfigService } from '@nestjs/config';
-import { OpenAIGateway } from '../ai/openai.gateway';
 import { SpeechToText } from './speech-to-text.service';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import {
@@ -19,10 +18,7 @@ describe('SpeechToText', () => {
       SUPABASE_URL: 'https://project.supabase.co',
       AUDIO_ALLOWED_HOSTS: '',
     });
-    service = new SpeechToText(
-      mockOpenAI as unknown as OpenAIGateway,
-      config as unknown as ConfigService,
-    );
+    service = new SpeechToText(mockOpenAI, config as unknown as ConfigService);
     fetchMock = jest.fn();
     global.fetch = fetchMock;
   });

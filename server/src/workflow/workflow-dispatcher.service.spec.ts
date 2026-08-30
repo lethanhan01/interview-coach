@@ -66,7 +66,10 @@ describe('WorkflowDispatcher', () => {
     };
     prisma.workflowOutbox.findUnique.mockResolvedValue(transcriptionCommand);
 
-    await dispatcher.dispatchFor('transcription', transcriptionCommand.aggregateId);
+    await dispatcher.dispatchFor(
+      'transcription',
+      transcriptionCommand.aggregateId,
+    );
 
     expect(transcriptionQueue.add).toHaveBeenCalledWith(
       'transcription',
@@ -105,7 +108,6 @@ describe('WorkflowDispatcher', () => {
       }),
     );
   });
-
 
   it('does not publish when another dispatcher already claimed the command', async () => {
     prisma.workflowOutbox.findUnique.mockResolvedValue(COMMAND);

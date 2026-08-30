@@ -7,8 +7,8 @@ import { IInterviewModeStrategy } from './interview-mode-strategy.interface';
 export class HrInterviewStrategy implements IInterviewModeStrategy {
   readonly mode = 'hr';
 
-  validateSessionConfig(dto: CreateSessionDto): void {
-    // HR interview specific validations if needed
+  validateSessionConfig(_dto: CreateSessionDto): void {
+    void _dto;
   }
 
   buildQuestionGenerationPayload(

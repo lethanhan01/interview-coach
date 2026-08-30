@@ -7,8 +7,8 @@ import { IInterviewModeStrategy } from './interview-mode-strategy.interface';
 export class TechnicalInterviewStrategy implements IInterviewModeStrategy {
   readonly mode = 'technical';
 
-  validateSessionConfig(dto: CreateSessionDto): void {
-    // Technical interview specific validations if needed
+  validateSessionConfig(_dto: CreateSessionDto): void {
+    void _dto;
   }
 
   buildQuestionGenerationPayload(

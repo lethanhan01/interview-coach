@@ -43,7 +43,10 @@ describe('SupabaseMediaStorageAdapter', () => {
   it('uploads file and returns mediaKey and pre-signed URL', async () => {
     const upload = jest.fn().mockResolvedValue({ error: null });
     const createSignedUrl = jest.fn().mockResolvedValue({
-      data: { signedUrl: 'https://storage.example/interview-audio/signed-audio.webm?token=xyz' },
+      data: {
+        signedUrl:
+          'https://storage.example/interview-audio/signed-audio.webm?token=xyz',
+      },
       error: null,
     });
     (createClient as jest.Mock).mockReturnValue({
@@ -57,7 +60,11 @@ describe('SupabaseMediaStorageAdapter', () => {
 
     const result = await adapter.upload({
       path: 'user-1/session-1/audio-123.webm',
-      file: { buffer: Buffer.from('audio'), mimetype: 'audio/webm', size: 1024 },
+      file: {
+        buffer: Buffer.from('audio'),
+        mimetype: 'audio/webm',
+        size: 1024,
+      },
     });
 
     expect(upload).toHaveBeenCalledWith(
@@ -65,17 +72,24 @@ describe('SupabaseMediaStorageAdapter', () => {
       expect.any(Buffer),
       { contentType: 'audio/webm', upsert: false },
     );
-    expect(createSignedUrl).toHaveBeenCalledWith('user-1/session-1/audio-123.webm', 1800);
+    expect(createSignedUrl).toHaveBeenCalledWith(
+      'user-1/session-1/audio-123.webm',
+      1800,
+    );
     expect(result).toEqual({
       mediaKey: 'user-1/session-1/audio-123.webm',
       audioSizeBytes: 1024,
-      audioFileUrl: 'https://storage.example/interview-audio/signed-audio.webm?token=xyz',
+      audioFileUrl:
+        'https://storage.example/interview-audio/signed-audio.webm?token=xyz',
     });
   });
 
   it('creates signed download url with custom expiration', async () => {
     const createSignedUrl = jest.fn().mockResolvedValue({
-      data: { signedUrl: 'https://storage.example/interview-audio/custom-exp.webm?token=abc' },
+      data: {
+        signedUrl:
+          'https://storage.example/interview-audio/custom-exp.webm?token=abc',
+      },
       error: null,
     });
     (createClient as jest.Mock).mockReturnValue({
@@ -87,11 +101,18 @@ describe('SupabaseMediaStorageAdapter', () => {
       getOrThrow: jest.fn(() => 'value'),
     } as unknown as ConfigService);
 
-    const result = await adapter.createSignedUrl('user-1/session-1/audio-123.webm', 3600);
+    const result = await adapter.createSignedUrl(
+      'user-1/session-1/audio-123.webm',
+      3600,
+    );
 
-    expect(createSignedUrl).toHaveBeenCalledWith('user-1/session-1/audio-123.webm', 3600);
+    expect(createSignedUrl).toHaveBeenCalledWith(
+      'user-1/session-1/audio-123.webm',
+      3600,
+    );
     expect(result).toEqual({
-      signedUrl: 'https://storage.example/interview-audio/custom-exp.webm?token=abc',
+      signedUrl:
+        'https://storage.example/interview-audio/custom-exp.webm?token=abc',
       expiresInSeconds: 3600,
     });
   });

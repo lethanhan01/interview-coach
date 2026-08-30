@@ -16,7 +16,9 @@ import { SubmitAnswerDto } from './dto/submit-answer.dto';
 describe('TextAnswerIntakeHandler', () => {
   let handler: TextAnswerIntakeHandler;
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
-  let mockQuestionCriteria: ReturnType<typeof createMockQuestionCriteriaService>;
+  let mockQuestionCriteria: ReturnType<
+    typeof createMockQuestionCriteriaService
+  >;
   let mockWorkflow: ReturnType<typeof createMockWorkflowService>;
   let mockDispatcher: ReturnType<typeof createMockWorkflowDispatcher>;
 
@@ -201,4 +203,3 @@ describe('TextAnswerIntakeHandler', () => {
     });
   });
 });
-

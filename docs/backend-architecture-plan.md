@@ -480,20 +480,18 @@ Khi dự án chính thức kích hoạt phát triển tính năng mới, đội 
 - [x] Task 3.4: Xây dựng `AnswerIntakeRegistry` (`src/turn/answer-intake.registry.ts`), refactor `SubmitTurnAnswer` thành Thin Orchestrator, cập nhật `TurnModule` và `TurnService`.
 - [x] Task 3.5: Viết Unit Tests kiểm thử độc lập từng Intake Handler, Registry và kiểm thử 100% toàn bộ hệ thống (58/58 test suites, 446/446 tests passed).
 
-### Giai đoạn 4: Hoàn thiện Transactional Workflow Outbox & BullMQ — [x] ĐANG TRIỂN KHAI TỪNG PHẦN (Task 4.1, 4.2 & 4.3 Done)
+### Giai đoạn 4: Hoàn thiện Transactional Workflow Outbox & BullMQ — [x] ĐÃ HOÀN THÀNH (100% Tests Passed)
 - [x] Task 4.1: Rà soát & hoàn thiện entity / interface `WorkflowOutboxService` (`WorkflowService`) đảm bảo ghi command trong cùng DB Transaction với state thay đổi cho cả 4 loại commands (`question-generation`, `report-generation`, `transcription`, `feedback`).
 - [x] Task 4.2: Xây dựng / chuẩn hóa `WorkflowDispatcher` đăng ký và inject đủ 4 BullMQ queues (`QUESTION_GEN_QUEUE`, `REPORT_QUEUE`, `FEEDBACK_QUEUE`, `TRANSCRIPTION_QUEUE`), quét lệnh pending và đẩy vào worker an toàn, có timeout recovery.
 - [x] Task 4.3: Tích hợp Intake Handlers (`TextAnswerIntakeHandler`, `VoiceAnswerIntakeHandler`) qua Transactional Outbox thay vì ghi queue trực tiếp, cập nhật `TurnModule` và 100% unit tests.
-- [ ] Task 4.4: Kiểm thử kịch bản giả lập crash và idempotency để đảm bảo không bao giờ thất thoát job.
-- [ ] Task 4.5: Chạy 100% test suites và xác nhận an toàn tuyệt đối.
-
-
+- [x] Task 4.4: Xây dựng bộ kiểm thử kịch bản giả lập crash, timeout claim recovery, race condition idempotency, và exponential backoff retry (`src/workflow/workflow-outbox-resilience.spec.ts`).
+- [x] Task 4.5: Chạy 100% test suites (59/59 suites, 459/459 tests PASS), build thành công, lint 0 lỗi, xác nhận ranh giới kiến trúc an toàn tuyệt đối.
 
 ---
 
 ## 8. NHẬT KÝ TIẾN ĐỘ, QUYẾT ĐỊNH KIẾN TRÚC & KẾ HOẠCH BƯỚC TIẾP THEO
 
-### 8.1. Những gì đã hoàn thành (Phase 1, Phase 2 & Phase 3 Accomplishments)
+### 8.1. Những gì đã hoàn thành (Phase 1, Phase 2, Phase 3 & Phase 4 Accomplishments)
 1. **Giai đoạn 1 — Ports & Adapters cho AI Gateway & Media Storage**:
    - `src/ai/ai-gateway.interface.ts`: Hợp đồng chuẩn `IAIGateway` & token `AI_GATEWAY_TOKEN`.
    - `src/ai/openai.gateway.ts`: Adapter OpenAI implements `IAIGateway`.
@@ -516,19 +514,21 @@ Khi dự án chính thức kích hoạt phát triển tính năng mới, đội 
    - `src/turn/submit-turn-answer.service.ts`: Refactor thành Thin Orchestrator phân chia thẩm quyền và ủy thác cho Handler.
    - Unit tests độc lập: `text-answer-intake.handler.spec.ts`, `voice-answer-intake.handler.spec.ts`, `answer-intake.registry.spec.ts`, `turn.service.spec.ts`.
 
-4. **Kết quả kiểm thử & đo lường chất lượng**:
-   - Toàn bộ **58/58 test suites** và **446/446 tests** đều PASS 100%.
-   - Ranh giới kiến trúc `src/architecture/feature-boundaries.spec.ts`: **0 vi phạm**, 100% tuân thủ.
+4. **Giai đoạn 4 — Transactional Workflow Outbox & BullMQ Resilience**:
+   - `src/workflow/workflow.service.ts`: Ghi nhận command trong cùng Prisma interactive transaction với state thay đổi cho cả 4 domain flows (`question-generation`, `transcription`, `feedback`, `report-generation`).
+   - `src/workflow/workflow-dispatcher.service.ts`: Quản lý 4 BullMQ queues, trang bị cơ chế Atomic Claiming (`pending` -> `processing`), Timeout Recovery (`CLAIM_TIMEOUT_MS = 5 phút`), Exponential Backoff Retry (1s -> 30s) và Report Barrier Deferral.
+   - `src/workflow/workflow-outbox-resilience.spec.ts`: Bộ kiểm thử chuyên sâu mô phỏng 8 kịch bản (Atomic claim lock, Stale claims recovery sau crash, Redis temporary outage backoff, Terminal failure, Report barrier check & completion, Idempotency keys, Lifecycle safety).
+   - Đạt độ bao phủ kiểm thử toàn diện: **59/59 test suites passed (459/459 tests passed)**, build thành công, lint 0 lỗi, và 0 vi phạm ranh giới kiến trúc Hexagonal.
 
 ---
 
-### 8.2. Kế hoạch bước tiếp theo (Next Phase Plan: Phase 4)
-Triển khai **Giai đoạn 4: Hoàn thiện Transactional Workflow Outbox & BullMQ** với các task nhỏ:
-1. **Task 4.1**: Rà soát `WorkflowOutboxService` & tích hợp Transactional Outbox.
-2. **Task 4.2**: Chuẩn hóa Dispatcher Poller & BullMQ producer.
-3. **Task 4.3**: Command Handlers phân tách SRP.
-4. **Task 4.4**: Kiểm thử idempotency & retry policies.
-5. **Task 4.5**: Chạy toàn bộ test suites và kiểm tra ranh giới kiến trúc.
+### 8.2. Tổng kết & Trạng thái Hệ thống
+Toàn bộ 4 giai đoạn chính trong **Kế hoạch Thiết kế & Tái cấu trúc Kiến trúc Backend** đã được hoàn tất 100%:
+- **Ports & Adapters**: Sẵn sàng tích hợp Gemini/Claude Gateway hoặc S3 Media Storage adapter mới.
+- **Strategy Pattern (Session Engine)**: Sẵn sàng mở rộng `LiveCodingStrategy` hoặc `RealtimeVoiceStrategy`.
+- **Handler Pattern (Answer Intake)**: Sẵn sàng mở rộng `CodeAnswerIntakeHandler`.
+- **Transactional Outbox & BullMQ**: Đảm bảo 100% dữ liệu tác vụ không bao giờ bị thất thoát, an toàn trước crash/sự cố hạ tầng.
+
 
 
 

@@ -1,9 +1,12 @@
 import { AudioObjectStorage } from './audio-object-storage.service';
-import type { IPrivateMediaStorage } from './media-storage.interface';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 
 describe('AudioObjectStorage', () => {
-  let mockStorage: jest.Mocked<IPrivateMediaStorage>;
+  let mockStorage: {
+    upload: jest.Mock;
+    createSignedUrl: jest.Mock;
+    delete: jest.Mock;
+  };
   let service: AudioObjectStorage;
 
   beforeEach(() => {
@@ -30,7 +33,11 @@ describe('AudioObjectStorage', () => {
       service.uploadInterviewAudio({
         sessionId: 'session-1',
         userId: 'user-1',
-        file: { buffer: Buffer.from('audio'), mimetype: 'audio/aac', size: 100 },
+        file: {
+          buffer: Buffer.from('audio'),
+          mimetype: 'audio/aac',
+          size: 100,
+        },
       }),
     ).rejects.toMatchObject({ errorCode: ErrorCode.INVALID_ANSWER_TYPE });
   });
@@ -51,7 +58,11 @@ describe('AudioObjectStorage', () => {
     expect(mockStorage.upload).toHaveBeenCalledWith(
       expect.objectContaining({
         path: expect.stringMatching(/^user-1\/session-1\/audio-.+\.webm$/),
-        file: { buffer: Buffer.from('audio'), mimetype: 'audio/webm', size: 500 },
+        file: {
+          buffer: Buffer.from('audio'),
+          mimetype: 'audio/webm',
+          size: 500,
+        },
       }),
     );
     expect(result).toEqual({
@@ -67,7 +78,10 @@ describe('AudioObjectStorage', () => {
       expiresInSeconds: 1800,
     });
 
-    const result = await service.getSignedUrl('user-1/session-1/audio-123.webm', 1800);
+    const result = await service.getSignedUrl(
+      'user-1/session-1/audio-123.webm',
+      1800,
+    );
 
     expect(mockStorage.createSignedUrl).toHaveBeenCalledWith(
       'user-1/session-1/audio-123.webm',

@@ -100,7 +100,8 @@ export class EvaluateAnswer {
     const targetIds = target.map(({ id }) => id);
     const base = this.promptBuilder.buildBaseSystem('surgical-feedback');
     const strategyInstructions =
-      options.strategyInstructions ?? defaultStrategyInstructions[input.sessionType];
+      options.strategyInstructions ??
+      defaultStrategyInstructions[input.sessionType];
     const strategy = `${base}\n\n${getLanguageInstruction(input.language)}\n\nInterview strategy: ${strategyInstructions}`;
     const withPack = this.promptBuilder.applyContextPackForEvaluation(
       strategy,

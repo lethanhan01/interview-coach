@@ -133,7 +133,6 @@ describe('PromptBuilderService', () => {
       expect(result).toContain('Do NOT apply any behavioral criteria');
     });
 
-
     it('mọi session type đều chứa cultural notes', () => {
       (['hr', 'technical'] as const).forEach((sessionType) => {
         const result = service.applyContextPackForEvaluation(

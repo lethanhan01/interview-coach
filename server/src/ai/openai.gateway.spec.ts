@@ -492,7 +492,11 @@ describe('OpenAIGateway — Hexagonal port methods', () => {
     const chatClient = {
       create: jest.fn().mockResolvedValue({
         choices: [
-          { message: { content: JSON.stringify({ score: 85, summary: 'Good job' }) } },
+          {
+            message: {
+              content: JSON.stringify({ score: 85, summary: 'Good job' }),
+            },
+          },
         ],
       }),
     };
@@ -535,13 +539,17 @@ describe('OpenAIGateway — Hexagonal port methods', () => {
         schema: testSchema,
         schemaName: 'InvalidPayload',
       }),
-    ).rejects.toThrow('AI response failed schema validation for InvalidPayload');
+    ).rejects.toThrow(
+      'AI response failed schema validation for InvalidPayload',
+    );
   });
 
   it('transcribeAudio delegates with default mimeType', async () => {
     const config = { get: jest.fn() };
     const transcriptionClient = {
-      create: jest.fn().mockResolvedValue({ text: 'audio transcribed', duration: 5 }),
+      create: jest
+        .fn()
+        .mockResolvedValue({ text: 'audio transcribed', duration: 5 }),
     };
     const gateway = new OpenAIGateway(
       config as any,
@@ -564,4 +572,3 @@ describe('OpenAIGateway — Hexagonal port methods', () => {
     );
   });
 });
-

@@ -16,7 +16,12 @@ import {
   type TranscribeAudioParams,
 } from './ai-gateway.interface';
 
-export type { ChatTask, ChatCompletionParams, TranscribeParams, TranscribeResult };
+export type {
+  ChatTask,
+  ChatCompletionParams,
+  TranscribeParams,
+  TranscribeResult,
+};
 
 // Retry delays for transient rate limits only (not quota exhaustion)
 const RATE_LIMIT_RETRY_DELAYS_MS = [1000, 2000];
@@ -503,4 +508,3 @@ export class OpenAIGateway implements IAIGateway {
     });
   }
 }
-

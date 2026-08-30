@@ -117,7 +117,6 @@ describe('TurnService', () => {
     service = module.get<TurnService>(TurnService);
   });
 
-
   afterEach(() => jest.clearAllMocks());
 
   describe('uploadAudio', () => {
@@ -707,7 +706,10 @@ describe('TurnService', () => {
         expect.objectContaining({
           commandType: 'feedback',
           aggregateId: 'answer-1',
-          payload: expect.objectContaining({ answerId: 'answer-1', language: 'vi' }),
+          payload: expect.objectContaining({
+            answerId: 'answer-1',
+            language: 'vi',
+          }),
         }),
       );
       expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
@@ -825,4 +827,3 @@ describe('TurnService', () => {
     });
   });
 });
-

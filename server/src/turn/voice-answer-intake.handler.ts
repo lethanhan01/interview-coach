@@ -38,7 +38,6 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
     return this.handleVoiceWithTranscript(dto, context);
   }
 
-
   private async handleAudioOnly(
     dto: SubmitAnswerDto,
     context: AnswerIntakeContext,
@@ -70,11 +69,7 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
       };
     }
 
-    const payload = this.buildTranscriptionPayload(
-      '',
-      dto,
-      context,
-    );
+    const payload = this.buildTranscriptionPayload('', dto, context);
 
     const created = await this.prisma.$transaction(async (tx) => {
       const answer = await tx.userAnswer.upsert({
@@ -212,7 +207,6 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
     await this.dispatcher.dispatchFor('transcription', answerId);
   }
 
-
   private buildTranscriptionPayload(
     answerId: string,
     dto: SubmitAnswerDto,
@@ -256,4 +250,3 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
 function transcriptText(raw?: string): string {
   return raw?.trim() ?? '';
 }
-

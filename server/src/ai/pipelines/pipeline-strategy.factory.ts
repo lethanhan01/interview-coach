@@ -15,10 +15,7 @@ export class PipelineStrategyFactory {
     private readonly technical: TechnicalPipelineService,
   ) {
     this.strategies = new Map(
-      [hr, technical].map((pipeline) => [
-        pipeline.sessionType,
-        pipeline,
-      ]),
+      [hr, technical].map((pipeline) => [pipeline.sessionType, pipeline]),
     );
   }
 

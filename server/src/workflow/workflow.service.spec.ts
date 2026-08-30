@@ -81,10 +81,6 @@ describe('WorkflowService', () => {
         commandType: 'report-generation',
         payload: {},
       }),
-    ).toThrow(
-      'aggregateId or sessionId must be provided for workflow command',
-    );
+    ).toThrow('aggregateId or sessionId must be provided for workflow command');
   });
 });
-
-

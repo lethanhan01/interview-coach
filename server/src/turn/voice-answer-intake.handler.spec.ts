@@ -18,7 +18,9 @@ import { SubmitAnswerDto } from './dto/submit-answer.dto';
 describe('VoiceAnswerIntakeHandler', () => {
   let handler: VoiceAnswerIntakeHandler;
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
-  let mockQuestionCriteria: ReturnType<typeof createMockQuestionCriteriaService>;
+  let mockQuestionCriteria: ReturnType<
+    typeof createMockQuestionCriteriaService
+  >;
   let mockVoiceMetrics: ReturnType<typeof createMockVoiceMetricsService>;
   let mockWorkflow: ReturnType<typeof createMockWorkflowService>;
   let mockDispatcher: ReturnType<typeof createMockWorkflowDispatcher>;
@@ -352,4 +354,3 @@ describe('VoiceAnswerIntakeHandler', () => {
     });
   });
 });
-

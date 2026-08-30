@@ -265,8 +265,6 @@ describe('FeedbackProcessor Integration (real NestJS wiring, mocked OpenAI)', ()
     expect(systemContent).toContain('technical depth');
   });
 
-
-
   it('fallback: khi LLM trả về JSON không hợp lệ ở lần cuối thì ghi isFallback=true', async () => {
     mockOpenAI.chatCompletion.mockResolvedValue('not valid json {{{{');
 

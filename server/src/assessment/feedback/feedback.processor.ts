@@ -81,17 +81,19 @@ export class FeedbackProcessor extends WorkerHost {
     let hasAnnotations = false;
 
     try {
-      const feedback = await this.pipelines.getStrategy(sessionType).evaluateAnswer({
-        sessionType,
-        questionId,
-        questionText,
-        questionCategory,
-        competencyDomains,
-        answerText,
-        contextPackConfig:
-          await this.contextPackService.getContextPack(contextPack),
-        language,
-      });
+      const feedback = await this.pipelines
+        .getStrategy(sessionType)
+        .evaluateAnswer({
+          sessionType,
+          questionId,
+          questionText,
+          questionCategory,
+          competencyDomains,
+          answerText,
+          contextPackConfig:
+            await this.contextPackService.getContextPack(contextPack),
+          language,
+        });
       const sanitizedSegments = sanitizeFeedbackSegments(
         answerText,
         feedback.annotatedSegments,

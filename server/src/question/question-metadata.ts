@@ -27,11 +27,6 @@ function categoryFromDomain(domain: string): QuestionCategory {
   return domain.startsWith('TD') ? 'technical' : 'behavioral';
 }
 
-function normalizeQuestionCategory(value?: string): QuestionCategory | null {
-  if (value === 'behavioral' || value === 'technical') return value;
-  return null;
-}
-
 export function isDomainAllowedForSession(
   domain: string,
   sessionType: SessionType,

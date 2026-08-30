@@ -16,9 +16,9 @@ const SUPPORTED_AUDIO_TYPES = new Map([
   ['audio/wav', 'wav'],
 ]);
 
-export interface UploadedAudioFile extends UploadedMediaFile {}
+export type UploadedAudioFile = UploadedMediaFile;
 
-export interface StoredAudioFile extends StoredMediaResult {}
+export type StoredAudioFile = StoredMediaResult;
 
 @Injectable()
 export class AudioObjectStorage {
@@ -67,4 +67,3 @@ export class AudioObjectStorage {
     return this.mediaStorage.createSignedUrl(mediaKey, expiresInSeconds);
   }
 }
-

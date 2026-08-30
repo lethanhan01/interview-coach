@@ -72,7 +72,6 @@ describe('question metadata helpers', () => {
     });
   });
 
-
   it('reject mảng rỗng sau normalize', () => {
     expect(
       normalizeGeneratedQuestionMetadata(
@@ -119,7 +118,6 @@ describe('question metadata helpers', () => {
       }),
     ).toBe(6);
   });
-
 
   it('cleanup HR và Technical vẫn giữ fallback D1/TD1', () => {
     expect(
