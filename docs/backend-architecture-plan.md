@@ -473,24 +473,25 @@ Khi dự án chính thức kích hoạt phát triển tính năng mới, đội 
 - [x] Task 2.4: Xây dựng `SessionStrategyRegistry` đăng ký `hr` và `technical`, tiêm vào `SessionService` (`CreateInterviewSession`, `ChangeInterviewSessionStatus`).
 - [x] Task 2.5: Viết Unit Tests kiểm thử tính độc lập của từng Strategy và xác nhận 100% test suite passed (55/55 suites, 431/431 tests).
 
-### Giai đoạn 3: Chuẩn hóa Answer Intake (Handler Pattern) — [ ] BƯỚC TIẾP THEO
-- [ ] Task 3.1: Định nghĩa interface `IAnswerIntakeHandler` (`src/turn/answer-intake-handler.interface.ts`).
-- [ ] Task 3.2: Xây dựng `TextAnswerIntakeHandler` (xử lý text input, validate độ dài, ghi Outbox Command EVALUATE_TURN_ANSWER).
-- [ ] Task 3.3: Xây dựng `AudioAnswerIntakeHandler` (xử lý audio buffer/stream, upload private storage qua `IPrivateMediaStorage`, ghi Outbox Command TRANSCRIBE_AUDIO).
-- [ ] Task 3.4: Xây dựng `AnswerIntakeRegistry` và refactor `TurnService` thành Thin Orchestrator.
-- [ ] Task 3.5: Viết Unit Tests kiểm thử độc lập từng Intake Handler và test suites toàn bộ module.
+### Giai đoạn 3: Chuẩn hóa Answer Intake (Handler Pattern) — [x] ĐÃ HOÀN THÀNH (100% Tests Passed)
+- [x] Task 3.1: Định nghĩa interface `IAnswerIntakeHandler` và `AnswerIntakeContext` (`src/turn/answer-intake-handler.interface.ts`).
+- [x] Task 3.2: Xây dựng `TextAnswerIntakeHandler` (xử lý text input, validate độ dài, enqueue feedback job) và unit tests `text-answer-intake.handler.spec.ts`.
+- [x] Task 3.3: Xây dựng `VoiceAnswerIntakeHandler` (xử lý audio URL, enqueue transcription job, tính voice metrics khi có transcript) và unit tests `voice-answer-intake.handler.spec.ts`.
+- [x] Task 3.4: Xây dựng `AnswerIntakeRegistry` (`src/turn/answer-intake.registry.ts`), refactor `SubmitTurnAnswer` thành Thin Orchestrator, cập nhật `TurnModule` và `TurnService`.
+- [x] Task 3.5: Viết Unit Tests kiểm thử độc lập từng Intake Handler, Registry và kiểm thử 100% toàn bộ hệ thống (58/58 test suites, 446/446 tests passed).
 
-### Giai đoạn 4: Hoàn thiện Transactional Workflow Outbox & BullMQ — [ ] CHỜ THỰC HIỆN
-- [ ] Khởi tạo/cập nhật bảng `WorkflowOutbox` trong Prisma.
-- [ ] Viết `WorkflowOutboxService` đảm bảo ghi command trong cùng DB Transaction với state thay đổi.
-- [ ] Xây dựng `WorkflowOutboxDispatcher` quét lệnh pending và đẩy vào BullMQ worker.
-- [ ] Kiểm thử tình huống giả lập crash hệ thống để xác nhận không bao giờ thất thoát job.
+### Giai đoạn 4: Hoàn thiện Transactional Workflow Outbox & BullMQ — [ ] BƯỚC TIẾP THEO
+- [ ] Task 4.1: Rà soát & hoàn thiện entity / interface `WorkflowOutboxService` đảm bảo ghi command trong cùng DB Transaction với state thay đổi.
+- [ ] Task 4.2: Xây dựng / chuẩn hóa `WorkflowOutboxDispatcher` quét lệnh pending và đẩy vào BullMQ worker.
+- [ ] Task 4.3: Xây dựng các Command Handler độc lập (`GenerateQuestionsCommandHandler`, `TranscribeAudioCommandHandler`, `EvaluateTurnAnswerCommandHandler`, `GenerateSessionReportCommandHandler`).
+- [ ] Task 4.4: Kiểm thử kịch bản giả lập crash và idempotency để đảm bảo không bao giờ thất thoát job.
+- [ ] Task 4.5: Chạy 100% test suites và xác nhận an toàn tuyệt đối.
 
 ---
 
 ## 8. NHẬT KÝ TIẾN ĐỘ, QUYẾT ĐỊNH KIẾN TRÚC & KẾ HOẠCH BƯỚC TIẾP THEO
 
-### 8.1. Những gì đã hoàn thành (Phase 1 & Phase 2 Accomplishments)
+### 8.1. Những gì đã hoàn thành (Phase 1, Phase 2 & Phase 3 Accomplishments)
 1. **Giai đoạn 1 — Ports & Adapters cho AI Gateway & Media Storage**:
    - `src/ai/ai-gateway.interface.ts`: Hợp đồng chuẩn `IAIGateway` & token `AI_GATEWAY_TOKEN`.
    - `src/ai/openai.gateway.ts`: Adapter OpenAI implements `IAIGateway`.
@@ -505,18 +506,27 @@ Khi dự án chính thức kích hoạt phát triển tính năng mới, đội 
    - Tích hợp vào `CreateInterviewSession` và `ChangeInterviewSessionStatus`.
    - Unit tests độc lập: `hr-interview.strategy.spec.ts`, `technical-interview.strategy.spec.ts`, `session-strategy.registry.spec.ts`, `session.service.spec.ts`.
 
-3. **Kết quả kiểm thử & đo lường chất lượng**:
-   - Toàn bộ **55/55 test suites** và **431/431 tests** đều PASS 100%.
+3. **Giai đoạn 3 — Handler Pattern cho Answer Intake**:
+   - `src/turn/answer-intake-handler.interface.ts`: Hợp đồng `IAnswerIntakeHandler` & `AnswerIntakeContext`.
+   - `src/turn/text-answer-intake.handler.ts`: Chuyên xử lý câu trả lời dạng văn bản, validate và enqueue `FEEDBACK_QUEUE`.
+   - `src/turn/voice-answer-intake.handler.ts`: Chuyên xử lý ghi âm giọng nói, phân luồng audio pending transcription vs voice kèm transcript (tính `VoiceMetrics` WPM/filler words).
+   - `src/turn/answer-intake.registry.ts`: Registry quản lý tập trung các Handlers, sẵn sàng cho `CodeAnswerIntakeHandler` tương lai.
+   - `src/turn/submit-turn-answer.service.ts`: Refactor thành Thin Orchestrator phân chia thẩm quyền và ủy thác cho Handler.
+   - Unit tests độc lập: `text-answer-intake.handler.spec.ts`, `voice-answer-intake.handler.spec.ts`, `answer-intake.registry.spec.ts`, `turn.service.spec.ts`.
+
+4. **Kết quả kiểm thử & đo lường chất lượng**:
+   - Toàn bộ **58/58 test suites** và **446/446 tests** đều PASS 100%.
    - Ranh giới kiến trúc `src/architecture/feature-boundaries.spec.ts`: **0 vi phạm**, 100% tuân thủ.
 
 ---
 
-### 8.2. Kế hoạch bước tiếp theo (Next Phase Plan: Phase 3)
-Triển khai **Giai đoạn 3: Chuẩn hóa Answer Intake (Handler Pattern)** với các task nhỏ:
-1. **Task 3.1**: Định nghĩa contract `IAnswerIntakeHandler`.
-2. **Task 3.2**: Hiện thực `TextAnswerIntakeHandler`.
-3. **Task 3.3**: Hiện thực `AudioAnswerIntakeHandler`.
-4. **Task 3.4**: Hiện thực `AnswerIntakeRegistry` và tích hợp vào `TurnService`.
-5. **Task 3.5**: Kiểm thử 100% test suites.
+### 8.2. Kế hoạch bước tiếp theo (Next Phase Plan: Phase 4)
+Triển khai **Giai đoạn 4: Hoàn thiện Transactional Workflow Outbox & BullMQ** với các task nhỏ:
+1. **Task 4.1**: Rà soát `WorkflowOutboxService` & tích hợp Transactional Outbox.
+2. **Task 4.2**: Chuẩn hóa Dispatcher Poller & BullMQ producer.
+3. **Task 4.3**: Command Handlers phân tách SRP.
+4. **Task 4.4**: Kiểm thử idempotency & retry policies.
+5. **Task 4.5**: Chạy toàn bộ test suites và kiểm tra ranh giới kiến trúc.
+
 
 

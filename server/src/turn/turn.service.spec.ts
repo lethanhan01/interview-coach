@@ -23,6 +23,10 @@ import {
   createMockVoiceMetricsService,
 } from '../test-utils/mock-factories';
 
+import { TextAnswerIntakeHandler } from './text-answer-intake.handler';
+import { VoiceAnswerIntakeHandler } from './voice-answer-intake.handler';
+import { AnswerIntakeRegistry } from './answer-intake.registry';
+
 describe('TurnService', () => {
   let service: TurnService;
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
@@ -95,6 +99,9 @@ describe('TurnService', () => {
       providers: [
         TurnService,
         TurnAnswerContext,
+        TextAnswerIntakeHandler,
+        VoiceAnswerIntakeHandler,
+        AnswerIntakeRegistry,
         SubmitTurnAnswer,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
