@@ -83,7 +83,9 @@ describe('Session completion flow (integration)', () => {
       userAnswer: {
         upsert: jest.fn(async ({ where, create }: any) => {
           const existing = [...answers.values()].find(
-            (a) => a.questionId === (where.questionId ?? where.sessionId_questionId?.questionId),
+            (a) =>
+              a.questionId ===
+              (where.questionId ?? where.sessionId_questionId?.questionId),
           );
           if (existing) return existing;
           const answer = {
@@ -223,15 +225,12 @@ describe('Session completion flow (integration)', () => {
       data: Record<string, unknown>;
       opts: Record<string, unknown>;
     }> = [];
-    const feedbackQueue = {
-      add: jest.fn(async (name: string, data: any, opts: any) => {
-        feedbackJobs.push({ name, data, opts });
-        return {};
-      }),
-    };
     const sseService = { emit: jest.fn(async () => undefined) };
     const workflowService = new WorkflowService();
-    const feedbackDispatchCalls: Array<{ commandType: string; aggregateId: string }> = [];
+    const feedbackDispatchCalls: Array<{
+      commandType: string;
+      aggregateId: string;
+    }> = [];
     const workflowDispatcher = {
       dispatchFor: jest.fn(async (commandType: string, aggregateId: string) => {
         feedbackDispatchCalls.push({ commandType, aggregateId });
@@ -239,9 +238,10 @@ describe('Session completion flow (integration)', () => {
           // Simulate dispatcher reading from outbox and pushing to feedbackQueue
           const outboxKey = `${commandType}:${aggregateId}`;
           // Find the outbox entry that was written by enqueueInTransaction
-          const outboxUpsertCall = transaction.workflowOutbox.upsert.mock.calls.find(
-            (call: any) => call[0]?.where?.idempotencyKey === outboxKey,
-          );
+          const outboxUpsertCall =
+            transaction.workflowOutbox.upsert.mock.calls.find(
+              (call: any) => call[0]?.where?.idempotencyKey === outboxKey,
+            );
           const payload = outboxUpsertCall?.[0]?.create;
           if (payload) {
             feedbackJobs.push({

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { WorkflowService } from '../src/infrastructure/workflow/workflow.service';
-import { prisma } from '../prisma/seed/_client';
+import { prisma } from './helpers/prisma';
 
 describe('Workflow outbox (PostgreSQL)', () => {
   const workflow = new WorkflowService();

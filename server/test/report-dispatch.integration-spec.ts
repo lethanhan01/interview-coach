@@ -4,7 +4,7 @@ import { WorkflowDispatcher } from '../src/infrastructure/workflow/workflow-disp
 import { WorkflowService } from '../src/infrastructure/workflow/workflow.service';
 import { REPORT_QUEUE } from '../src/core/common/constants/queue.constants';
 import { provisionDefaultRubricCatalog } from '../src/modules/interview-assessment/evaluation/rubric/rubric-catalog-provision';
-import { prisma } from '../prisma/seed/_client';
+import { prisma } from './helpers/prisma';
 
 describe('Report dispatch (PostgreSQL + Redis)', () => {
   const email = `report-dispatch-${randomUUID()}@example.com`;

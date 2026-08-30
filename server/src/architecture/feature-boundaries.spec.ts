@@ -106,7 +106,10 @@ describe('3-Layer Clean Architecture & Bounded Contexts Boundaries', () => {
     const violations: string[] = [];
     for (const file of coreFiles) {
       for (const importPath of getAllImports(file)) {
-        if (importPath.startsWith('@modules/') || importPath.includes('/modules/')) {
+        if (
+          importPath.startsWith('@modules/') ||
+          importPath.includes('/modules/')
+        ) {
           violations.push(`${relative(SRC_ROOT, file)} -> ${importPath}`);
         }
       }
@@ -129,11 +132,17 @@ describe('3-Layer Clean Architecture & Bounded Contexts Boundaries', () => {
       for (const importPath of getAllImports(file)) {
         // Kiểm tra alias import dạng @modules/<context>/...
         if (importPath.startsWith('@modules/')) {
-          const targetContext = importPath.replace('@modules/', '').split('/')[0];
+          const targetContext = importPath
+            .replace('@modules/', '')
+            .split('/')[0];
           const isCrossContext =
-            BOUNDED_CONTEXTS.has(targetContext) && targetContext !== sourceContext;
+            BOUNDED_CONTEXTS.has(targetContext) &&
+            targetContext !== sourceContext;
 
-          if (isCrossContext && !APPROVED_CROSS_MODULE_IMPORTS.has(importPath)) {
+          if (
+            isCrossContext &&
+            !APPROVED_CROSS_MODULE_IMPORTS.has(importPath)
+          ) {
             violations.push(
               `[${sourceContext}] ${relative(SRC_ROOT, file)} -> ${importPath}`,
             );
@@ -143,14 +152,22 @@ describe('3-Layer Clean Architecture & Bounded Contexts Boundaries', () => {
         // Kiểm tra relative import nếu có trường hợp đi xuyên module
         if (importPath.startsWith('.')) {
           const absoluteTarget = resolve(file, '..', importPath);
-          const targetRel = relative(SRC_ROOT, absoluteTarget).split(sep).join('/');
+          const targetRel = relative(SRC_ROOT, absoluteTarget)
+            .split(sep)
+            .join('/');
           if (targetRel.startsWith('modules/')) {
-            const targetContext = targetRel.replace('modules/', '').split('/')[0];
+            const targetContext = targetRel
+              .replace('modules/', '')
+              .split('/')[0];
             const isCrossContext =
-              BOUNDED_CONTEXTS.has(targetContext) && targetContext !== sourceContext;
+              BOUNDED_CONTEXTS.has(targetContext) &&
+              targetContext !== sourceContext;
 
             const normalizedTarget = `@${targetRel}`;
-            if (isCrossContext && !APPROVED_CROSS_MODULE_IMPORTS.has(normalizedTarget)) {
+            if (
+              isCrossContext &&
+              !APPROVED_CROSS_MODULE_IMPORTS.has(normalizedTarget)
+            ) {
               violations.push(
                 `[${sourceContext}] ${relative(SRC_ROOT, file)} -> ${importPath} (${targetRel})`,
               );

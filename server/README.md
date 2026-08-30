@@ -153,7 +153,7 @@ Lệnh này gọi `GET /api/v1` và `GET /health`. Nếu DB hoặc Redis chưa s
 
 ## Xác thực local
 
-Đăng ký và đăng nhập đi qua backend; cookie JWT được đặt HttpOnly. Chạy `npm run seed` để tạo demo user và admin từ `ADMIN_EMAIL`/`ADMIN_PASSWORD`.
+Đăng ký và đăng nhập đi qua backend; cookie JWT được đặt HttpOnly.
 
 ---
 
@@ -178,15 +178,13 @@ Lệnh này gọi `GET /api/v1` và `GET /health`. Nếu DB hoặc Redis chưa s
 | `npm run db:verify:pre`              | Kiểm tra anomaly trước khi siết constraint/index raw SQL                                         |
 | `npm run db:verify`                  | Kiểm tra RLS/policies/trigger/constraint/index sau khi apply raw SQL                             |
 | `npm run db:prepare-db-push-raw-sql` | Tạm gỡ raw constraint mà Prisma `db push` không quản lý, trước khi apply lại bằng `db:apply-sql` |
-| `npm run db:sync:prebackup`          | Pha an toàn: thêm cột/bảng mới và backfill, không drop dữ liệu cũ                                 |
 | `npm run db:sync:full`               | Flow đầy đủ: validate → verify pre → generate → prepare → db push → apply raw SQL → verify       |
-| `npm run seed`                       | Seed dữ liệu mẫu (question bank, ...)                                                            |
 
 ---
 
 ## Đồng bộ database schema
 
-> Production safety: `db:sync*`, `db:apply-sql`, `db:migrate-role`, and `seed` are blocked when `NODE_ENV=production`. Use reviewed migrations and a backup/PITR runbook instead.
+> Production safety: `db:sync*` and `db:apply-sql` are blocked when `NODE_ENV=production`. Use reviewed migrations and a backup/PITR runbook instead.
 
 ## Emergency write freeze
 
@@ -204,12 +202,6 @@ Chạy khi:
 - Database local thiếu constraint, trigger, RLS policy, index hoặc column mới
 - Cần chuẩn bị unique constraint cho `user_answers`
 - Cần apply lại raw SQL trong `prisma/migrations/migration.sql` sau `prisma db push`
-
-Pha an toàn trước backup:
-
-```powershell
-npm run db:sync:prebackup
-```
 
 Pha cleanup sau khi đã backup DB thật:
 

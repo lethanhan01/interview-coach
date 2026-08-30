@@ -7,7 +7,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/infrastructure/database/prisma/prisma.service';
 import { provisionDefaultRubricCatalog } from '../src/modules/interview-assessment/evaluation/rubric/rubric-catalog-provision';
-import { prisma as seedPrisma } from '../prisma/seed/_client';
+import { prisma as testPrisma } from './helpers/prisma';
 
 describe('session HTTP contracts', () => {
   let app: INestApplication;
@@ -15,8 +15,8 @@ describe('session HTTP contracts', () => {
   let catalogBeforeBoot: { id: string; checksum: string | null }[];
 
   beforeAll(async () => {
-    await provisionDefaultRubricCatalog(seedPrisma);
-    catalogBeforeBoot = await seedPrisma.rubricVersion.findMany({
+    await provisionDefaultRubricCatalog(testPrisma);
+    catalogBeforeBoot = await testPrisma.rubricVersion.findMany({
       select: { id: true, checksum: true },
       orderBy: { id: 'asc' },
     });

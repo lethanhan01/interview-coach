@@ -6,6 +6,3 @@ import { buildPgConnectionConfig } from '../../src/infrastructure/database/prism
 export const prisma = new PrismaClient({
   adapter: new PrismaPg(buildPgConnectionConfig(process.env['DATABASE_URL'])),
 });
-
-export const DEMO_EMAIL = 'demo@interviewai.dev';
-export const DEMO_PASSWORD = 'Demo@123456';
