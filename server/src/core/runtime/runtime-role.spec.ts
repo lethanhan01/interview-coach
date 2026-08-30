@@ -21,9 +21,9 @@ const processorModules = [
     'ComprehensiveReportProcessor',
   ],
   [
-    '../../interview/interview.module',
-    '../../interview/transcription.processor',
-    'InterviewModule',
+    '../../modules/media/media.module',
+    '../../modules/media/transcription.processor',
+    'MediaModule',
     'TranscriptionProcessor',
   ],
 ] as const;

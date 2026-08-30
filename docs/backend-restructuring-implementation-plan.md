@@ -221,19 +221,19 @@ Bản kế hoạch được chia thành **12 phần nhỏ độc lập** để t
 
 ---
 
-### [ ] Phần 4: Xây dựng Bounded Context Media (`src/modules/media/`)
-- [ ] Tạo thư mục `src/modules/media/`.
-- [ ] Di chuyển các file xử lý âm thanh từ `src/interview/` sang `src/modules/media/`:
+### [x] Phần 4: Xây dựng Bounded Context Media (`src/modules/media/`)
+- [x] Tạo thư mục `src/modules/media/`.
+- [x] Di chuyển các file xử lý âm thanh từ `src/interview/` sang `src/modules/media/`:
   - `speech-to-text.service.ts` & `.spec.ts`
   - `voice-metrics.service.ts` & `.spec.ts`
   - `transcribe-answer.service.ts` & `.spec.ts`
   - `transcription.processor.ts`
   - `transcription-job.dto.ts`
-  - `audio-object-storage.service.ts`
+  - `audio-object-storage.service.ts` & `.spec.ts`
   - `upload-and-transcribe-answer-audio.service.ts`
-- [ ] Đổi tên `InterviewModule` $\rightarrow$ `MediaModule` trong `src/modules/media/media.module.ts`.
-- [ ] Xóa thư mục cũ `src/interview/`.
-- [ ] Chạy tests của media (`npm test src/modules/media`).
+- [x] Đổi tên `InterviewModule` $\rightarrow$ `MediaModule` trong `src/modules/media/media.module.ts`.
+- [x] Xóa thư mục cũ `src/interview/`.
+- [x] Chạy tests của media (`npm test src/modules/media`).
 
 ---
 

@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
 import { TranscribeAnswer } from './transcribe-answer.service';
-import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
-import { SseService } from '../infrastructure/realtime/redis/sse.service';
-import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { SseService } from '@infra/realtime/redis/sse.service';
+import { QuestionCriteriaService } from '../../question-criteria/question-criteria.service';
 import { SpeechToText } from './speech-to-text.service';
 import { VoiceMetricsService } from './voice-metrics.service';
 import {
@@ -20,7 +20,7 @@ import {
   createMockQueue,
   createMockQuestionCriteriaService,
 } from '@core/test-utils/mock-factories';
-import { ReportService } from '../report/report.service';
+import { ReportService } from '../../report/report.service';
 import { FALLBACK_FEEDBACK_MESSAGE } from '@infra/ai/fallback-content';
 
 const BASE_JOB_DATA = {

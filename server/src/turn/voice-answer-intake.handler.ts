@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
-import { VoiceMetricsService } from '../interview/voice-metrics.service';
-import type { TranscriptionJobDto } from '../interview/transcription-job.dto';
+import { VoiceMetricsService } from '@modules/media/voice-metrics.service';
+import type { TranscriptionJobDto } from '@modules/media/transcription-job.dto';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 import { WorkflowService } from '@infra/workflow/workflow.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';

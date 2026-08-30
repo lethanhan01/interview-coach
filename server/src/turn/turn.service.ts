@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { UploadedAudioFile } from '../interview/audio-object-storage.service';
+import type { UploadedAudioFile } from '@modules/media/audio-object-storage.service';
 import {
   UploadAndTranscribeAnswerAudio,
   type AudioUploadResult,
-} from '../interview/upload-and-transcribe-answer-audio.service';
+} from '@modules/media/upload-and-transcribe-answer-audio.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
 import { SubmitTurnAnswer } from './submit-turn-answer.service';

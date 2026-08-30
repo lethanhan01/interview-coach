@@ -15,7 +15,7 @@ import { AssessmentModule } from './assessment/assessment.module';
 import { QuestionModule } from './question/question.module';
 import { SessionModule } from './session/session.module';
 import { TurnModule } from './turn/turn.module';
-import { InterviewModule } from './interview/interview.module';
+import { MediaModule } from '@modules/media/media.module';
 import { ReportModule } from './report/report.module';
 import { UserModule } from './user/user.module';
 import { SavedJobDescriptionModule } from './saved-job-description/saved-job-description.module';
@@ -56,7 +56,7 @@ class ApiRootController {
     QuestionModule,
     SessionModule,
     TurnModule,
-    InterviewModule,
+    MediaModule,
     ReportModule,
     UserModule,
     SavedJobDescriptionModule,

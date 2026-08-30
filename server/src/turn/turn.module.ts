@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
-import { InterviewModule } from '../interview/interview.module';
+import { MediaModule } from '@modules/media/media.module';
 import { QuestionCriteriaModule } from '../question-criteria/question-criteria.module';
 import { WorkflowModule } from '@infra/workflow/workflow.module';
 import { TurnController } from './turn.controller';
@@ -14,7 +14,7 @@ import { AnswerIntakeRegistry } from './answer-intake.registry';
 @Module({
   imports: [
     AuthModule,
-    InterviewModule,
+    MediaModule,
     QuestionCriteriaModule,
     WorkflowModule,
   ],

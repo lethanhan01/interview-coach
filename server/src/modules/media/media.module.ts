@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { AiModule } from '@infra/ai/ai.module';
 import { StorageModule } from '@infra/storage/storage.module';
-import { QuestionCriteriaModule } from '../question-criteria/question-criteria.module';
-import { ReportModule } from '../report/report.module';
+import { QuestionCriteriaModule } from '../../question-criteria/question-criteria.module';
+import { ReportModule } from '../../report/report.module';
 import {
   FEEDBACK_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
@@ -51,4 +51,4 @@ const workerProviders = workersEnabled() ? [TranscriptionProcessor] : [];
     VoiceMetricsService,
   ],
 })
-export class InterviewModule {}
+export class MediaModule {}
