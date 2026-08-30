@@ -23,7 +23,8 @@ server/src/
 │   ├── config/                                (Environment Validation, Global Config)
 │   ├── runtime/                               (HTTP Server vs Background Worker Roles)
 │   ├── types/                                 (Global Domain Types & Enums)
-│   └── test-utils/                            (Shared Test Fixtures & Mocks)
+│   ├── test-utils/                            (Shared Test Fixtures & Mocks)
+│   └── architecture.spec.ts                   (Automated Boundary & Clean Architecture Enforcer)
 │
 ├── infrastructure/                            ──► [TẦNG 2: HẠ TẦNG KỸ THUẬT - PORTS & ADAPTERS]
 │   ├── database/prisma/                       (Prisma ORM, Connection Resilience, Base Repositories)
@@ -52,9 +53,6 @@ server/src/
 │   └── interview-assessment/                  ──► [Context 3: Đánh giá, Phản hồi & Báo cáo (Sau)]
 │       ├── evaluation/                        (Turn Evaluation, Rubric Scoring, Feedback Sanitizer)
 │       └── report/                            (Comprehensive Session Report, Radar Scoring Matrix)
-│
-├── architecture/                              ──► [KIỂM SOÁT RANH GIỚI TỰ ĐỘNG]
-│   └── feature-boundaries.spec.ts             (Automated Boundary Enforcer)
 │
 ├── app.module.ts                              ──► [ROOT MODULE KẾT NỐI RÚT GỌN]
 └── main.ts
@@ -200,7 +198,6 @@ Chạy khi:
 
 - Vừa thay đổi `prisma/schema.prisma`
 - Database local thiếu constraint, trigger, RLS policy, index hoặc column mới
-- Cần chuẩn bị unique constraint cho `user_answers`
 - Cần apply lại raw SQL trong `prisma/migrations/migration.sql` sau `prisma db push`
 
 Pha cleanup sau khi đã backup DB thật:
@@ -211,7 +208,7 @@ npm run db:sync:full
 
 Trước khi chạy pha cleanup, set `DB_BACKUP_CONFIRMED=true`.
 
-Lệnh thực hiện: `db:validate` → `db:verify:pre` → `prisma generate` → `db:prepare-user-answer-unique` → `db:prepare-db-push-raw-sql` → `prisma db push` → `db:apply-sql` → `db:verify`.
+Lệnh thực hiện: `db:validate` → `db:verify:pre` → `prisma generate` → `db:prepare-db-push-raw-sql` → `prisma db push` → `db:apply-sql` → `db:verify`.
 
 `db:verify:pre` phải pass trước khi apply constraint mới. Các anomaly chặn migration gồm answer lệch session-question, session trỏ saved JD khác user, nhiều active resume cùng user, và dữ liệu vi phạm CHECK/range.
 
