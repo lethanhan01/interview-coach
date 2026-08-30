@@ -1,6 +1,6 @@
 import { AccountStatus, UserRole, type PrismaClient } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
-import { hashPassword } from '../../src/auth/password';
+import { hashPassword } from '../../src/modules/auth/password';
 import { DEMO_EMAIL, DEMO_PASSWORD } from './_client';
 
 const DEMO_ACCOUNTS = [

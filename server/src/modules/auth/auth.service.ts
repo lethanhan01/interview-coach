@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AccountStatus, UserRole, type User } from '@prisma/client';
 import { createHmac, randomInt, randomUUID } from 'node:crypto';
 import nodemailer from 'nodemailer';
-import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { hashPassword, verifyPassword } from './password';
 
 const PASSWORD_MIN_LENGTH = 12;

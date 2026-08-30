@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { SaveJobDescriptionDto } from './dto/save-job-description.dto';
 import { SavedJobDescriptionService } from './saved-job-description.service';
 import {

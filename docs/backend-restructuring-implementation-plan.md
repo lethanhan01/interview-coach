@@ -2,7 +2,7 @@
 
 > **Tài liệu**: Kế hoạch triển khai tái cấu trúc thư mục và kiến trúc Backend (`server/src`)  
 > **Hệ thống**: Nền tảng AI Mock Interview Coach  
-> **Trạng thái**: Đã hoàn thành Phần 1 đến Phần 7 (7/12 phần - 58.3%). Sẵn sàng triển khai Phần 8 (Identity & Admin Modules).  
+> **Trạng thái**: Đã hoàn thành Phần 1 đến Phần 8 (8/12 phần - 66.7%). Sẵn sàng triển khai Phần 9 (Cập nhật Root AppModule).  
 > **Mục tiêu**: Tái tổ chức toàn bộ `server/src` từ cấu trúc 22 thư mục phẳng hiện tại thành **3 tầng rõ ràng (Core - Infrastructure - Modules)**, gom nhóm nghiệp vụ phỏng vấn thành **3 Bounded Contexts theo vòng đời chuẩn (Prep - Live - Assessment)**, tách riêng hạ tầng Media STT (`media`), và cung cấp bản đồ kiến trúc trực quan giúp developer mới nắm bắt hệ thống trong vòng 15 phút.
 
 ---
@@ -280,12 +280,15 @@ Bản kế hoạch được chia thành **12 phần nhỏ độc lập** để t
 
 ---
 
-### [ ] Phần 8: Di chuyển Identity & Admin Modules
-- [ ] Di chuyển `src/auth/` $\rightarrow$ `src/modules/auth/`.
-- [ ] Di chuyển `src/user/` $\rightarrow$ `src/modules/user/`.
-- [ ] Di chuyển `src/admin/` $\rightarrow$ `src/modules/admin/`.
-- [ ] Di chuyển `src/health/` $\rightarrow$ `src/modules/health/`.
-- [ ] Chạy tests của các modules này (`npm test src/modules/auth src/modules/user src/modules/admin src/modules/health`).
+### [x] Phần 8: Di chuyển Identity & Admin Modules - HOÀN THÀNH 100%
+- [x] Di chuyển `src/auth/` $\rightarrow$ `src/modules/auth/`.
+- [x] Di chuyển `src/user/` $\rightarrow$ `src/modules/user/`.
+- [x] Di chuyển `src/admin/` $\rightarrow$ `src/modules/admin/`.
+- [x] Di chuyển `src/health/` $\rightarrow$ `src/modules/health/`.
+- [x] Cập nhật toàn bộ các import phụ thuộc (`@modules/auth/...`, `@infra/database/prisma/...`, `prisma/seed/01-users.ts`).
+- [x] Chạy tests của 4 modules này (`npm test src/modules/auth src/modules/user src/modules/admin src/modules/health`) $\rightarrow$ **PASS** (7/7 suites, 17/17 tests).
+- [x] Full regression test toàn bộ backend (`npm test`) $\rightarrow$ **PASS** (59/59 suites, 459/459 tests).
+- [x] TypeScript build (`npm run build`) $\rightarrow$ **PASS** (0 errors).
 
 ---
 

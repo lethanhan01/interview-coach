@@ -5,13 +5,13 @@ import { SessionService } from './session.service';
 import { CreateInterviewSession } from './create-interview-session.service';
 import { ChangeInterviewSessionStatus } from './change-interview-session-status.service';
 import { SessionLifecyclePolicy } from './session-lifecycle.policy';
-import { SseTokenGuard } from '../../../auth/guards/sse-token.guard';
+import { SseTokenGuard } from '@modules/auth/guards/sse-token.guard';
 import {
   QUESTION_GEN_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
 } from '@core/common/constants/queue.constants';
 import { ReportModule } from '@modules/interview-assessment/report/report.module';
-import { AuthModule } from '../../../auth/auth.module';
+import { AuthModule } from '@modules/auth/auth.module';
 import { EvaluationModule } from '@modules/interview-assessment/evaluation/evaluation.module';
 import { WorkflowModule } from '@infra/workflow/workflow.module';
 

@@ -11,8 +11,8 @@ import {
   MessageEvent,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
-import { SseTokenGuard } from '../../../auth/guards/sse-token.guard';
+import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { SseTokenGuard } from '@modules/auth/guards/sse-token.guard';
 import { SessionService } from './session.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
 import { ReportService } from '@modules/interview-assessment/report/report.service';

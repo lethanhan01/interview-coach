@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { AuthModule } from '@/auth/auth.module';
+import { AuthModule } from '@modules/auth/auth.module';
 import { AiModule } from '@infra/ai/ai.module';
 import {
   QUEUE_DEFAULT_JOB_OPTIONS,
