@@ -39,10 +39,7 @@ export class GenerateComprehensiveReport {
         collected.skippedAnswers,
         language,
       );
-    const allFeedbacks = [
-      ...collected.feedbacks,
-      ...syntheticSkippedFeedbacks,
-    ];
+    const allFeedbacks = [...collected.feedbacks, ...syntheticSkippedFeedbacks];
     const evaluatedFeedbacks = allFeedbacks.filter(
       (feedback) => !feedback.isFallback,
     );

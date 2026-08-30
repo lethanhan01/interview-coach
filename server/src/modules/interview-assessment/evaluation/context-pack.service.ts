@@ -1,5 +1,7 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, Optional } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { CONTEXT_PACK_DATA, ContextPackId } from './rubric/context-pack.data';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import {
@@ -35,7 +37,9 @@ export class ContextPackService {
   constructor(@Optional() private readonly prisma?: PrismaService) {}
 
   async getContextPack(type: ContextPackType): Promise<ContextPackConfig> {
-    if (!this.prisma) return this.getLegacyContextPack(type);
+    if (!this.prisma) {
+      return this.getLegacyContextPack(type);
+    }
 
     try {
       const version = await this.prisma.rubricVersion.findFirst({
@@ -53,38 +57,32 @@ export class ContextPackService {
         },
       });
 
-      const categories = version?.categories ?? [];
-      const hasCompleteRubric =
-        categories.some((category) => category.categoryKey === 'behavioral') &&
-        categories.some((category) => category.categoryKey === 'technical') &&
-        categories.some((category) => category.criteria.length > 0);
-
-      if (!hasCompleteRubric) {
+      if (!version) {
         this.logger.warn(
-          `No complete rubric found for ${type}; falling back to static default rubric data.`,
+          `No active rubric version found for context pack ${type}; using fallback context pack`,
         );
         return this.getLegacyContextPack(type);
       }
 
       return this.fromRubricCategories(
         type,
-        categories.map((category) => ({
+        version.categories.map((category) => ({
           key: category.categoryKey as 'behavioral' | 'technical',
           label: category.label,
-          weight: category.weight,
+          weight: Number(category.weight),
           displayOrder: category.displayOrder,
           criteria: category.criteria.map((criterion) => ({
             code: criterion.code,
             name: criterion.name,
-            weight: criterion.weight,
+            weight: Number(criterion.weight),
             displayOrder: criterion.displayOrder,
           })),
         })),
-        version?.id,
+        version.id,
       );
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.warn(
-        `Unable to read rubric for ${type}; falling back to static default rubric data: ${
+        `Failed to fetch dynamic rubric version for context pack ${type}; using fallback context pack: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );
@@ -127,7 +125,11 @@ export class ContextPackService {
   private getLegacyContextPack(type: ContextPackType): ContextPackConfig {
     const pack = CONTEXT_PACK_DATA.find((item) => item.id === type);
     if (!pack) {
-      throw new Error(`Unsupported context pack: ${type}`);
+      throw new InterviewAIException(
+        ErrorCode.RUBRIC_NOT_FOUND,
+        HttpStatus.BAD_REQUEST,
+        `Unsupported context pack: ${type}`,
+      );
     }
 
     return this.fromRubricCategories(

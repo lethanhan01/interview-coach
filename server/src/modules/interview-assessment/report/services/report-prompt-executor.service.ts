@@ -94,7 +94,9 @@ export class ReportPromptExecutor {
       } else {
         this.logger.error(
           `ComprehensiveReportProcessor: skipped-answer generation failed for session ${sessionId}`,
-          openaiError instanceof Error ? openaiError.stack : String(openaiError),
+          openaiError instanceof Error
+            ? openaiError.stack
+            : String(openaiError),
         );
       }
       return defaultAnswers;
@@ -164,7 +166,9 @@ export class ReportPromptExecutor {
       } else {
         this.logger.error(
           `ComprehensiveReportProcessor: AI provider call failed for session ${sessionId}`,
-          openaiError instanceof Error ? openaiError.stack : String(openaiError),
+          openaiError instanceof Error
+            ? openaiError.stack
+            : String(openaiError),
         );
       }
       return defaultActionPlan;

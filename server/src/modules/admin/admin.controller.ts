@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  NotFoundException,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -13,6 +12,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/guards/roles.guard';
 import { Roles } from '@modules/auth/decorators/roles.decorator';
@@ -61,7 +62,13 @@ export class AdminController {
   )
   async getUser(@Param('id', ParseUUIDPipe) id: string) {
     const user = await this.adminService.getUser(id);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) {
+      throw new InterviewAIException(
+        ErrorCode.USER_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+        'User not found',
+      );
+    }
     return { success: true, data: user };
   }
 

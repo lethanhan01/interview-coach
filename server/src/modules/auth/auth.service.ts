@@ -1,15 +1,12 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AccountStatus, UserRole, type User } from '@prisma/client';
 import { createHmac, randomInt, randomUUID } from 'node:crypto';
 import nodemailer from 'nodemailer';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { hashPassword, verifyPassword } from './password';
 
 const PASSWORD_MIN_LENGTH = 12;
@@ -22,6 +19,7 @@ export class AuthService {
   private readonly cookieMaxAge: number;
   private readonly verificationCodeTtlMs: number;
   private readonly authSecret: string;
+  private readonly smtpFrom: string;
   private readonly mailer: nodemailer.Transporter;
 
   constructor(
@@ -35,6 +33,8 @@ export class AuthService {
     this.verificationCodeTtlMs =
       (config.get<number>('PASSWORD_RESET_OTP_TTL_MINUTES') ?? 30) * 60 * 1000;
     this.authSecret = config.getOrThrow<string>('AUTH_JWT_SECRET');
+    this.smtpFrom =
+      config.get<string>('SMTP_FROM') ?? 'noreply@interviewcoach.com';
     this.mailer = nodemailer.createTransport({
       host: config.getOrThrow<string>('SMTP_HOST'),
       port: config.getOrThrow<number>('SMTP_PORT'),
@@ -82,7 +82,11 @@ export class AuthService {
       return { user, token: await this.sign(user) };
     } catch (error) {
       if ((error as { code?: string }).code === 'P2002') {
-        throw new ConflictException('Email is already registered');
+        throw new InterviewAIException(
+          ErrorCode.EMAIL_ALREADY_EXISTS,
+          HttpStatus.CONFLICT,
+          'Email is already registered',
+        );
       }
       throw error;
     }
@@ -100,10 +104,18 @@ export class AuthService {
       !user.passwordHash ||
       !(await verifyPassword(password, user.passwordHash))
     ) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new InterviewAIException(
+        ErrorCode.INVALID_CREDENTIALS,
+        HttpStatus.UNAUTHORIZED,
+        'Invalid email or password',
+      );
     }
     if (user.status !== AccountStatus.active) {
-      throw new UnauthorizedException('This account is not active');
+      throw new InterviewAIException(
+        ErrorCode.ACCOUNT_INACTIVE,
+        HttpStatus.UNAUTHORIZED,
+        'This account is not active',
+      );
     }
     return { user, token: await this.sign(user) };
   }
@@ -128,7 +140,11 @@ export class AuthService {
       }
       return user;
     } catch {
-      throw new UnauthorizedException('Invalid or expired session');
+      throw new InterviewAIException(
+        ErrorCode.UNAUTHORIZED,
+        HttpStatus.UNAUTHORIZED,
+        'Invalid or expired session',
+      );
     }
   }
 
@@ -142,7 +158,11 @@ export class AuthService {
       !user?.passwordHash ||
       !(await verifyPassword(currentPassword, user.passwordHash))
     ) {
-      throw new UnauthorizedException('Current password is incorrect');
+      throw new InterviewAIException(
+        ErrorCode.INVALID_CREDENTIALS,
+        HttpStatus.UNAUTHORIZED,
+        'Current password is incorrect',
+      );
     }
     this.assertPassword(newPassword);
     const updated = await this.updatePassword(
@@ -175,7 +195,7 @@ export class AuthService {
       },
     });
     await this.mailer.sendMail({
-      from: process.env.SMTP_FROM,
+      from: this.smtpFrom,
       to: user.email,
       subject: 'Mã OTP đặt lại mật khẩu InterviewCoach',
       text: `Mã OTP của bạn là: ${code}\nMã có hiệu lực trong ${this.verificationCodeTtlMs / 60000} phút.`,
@@ -193,7 +213,11 @@ export class AuthService {
       where: { email: normalizedEmail },
     });
     if (!user || user.status === AccountStatus.deleted) {
-      throw new BadRequestException('Invalid or expired reset code');
+      throw new InterviewAIException(
+        ErrorCode.VALIDATION_ERROR,
+        HttpStatus.BAD_REQUEST,
+        'Invalid or expired reset code',
+      );
     }
 
     const verification = await this.prisma.userVerificationCode.findUnique({
@@ -206,7 +230,11 @@ export class AuthService {
       verification.expiresAt <= new Date() ||
       verification.codeHash !== this.hashVerificationCode(user.id, code)
     ) {
-      throw new BadRequestException('Invalid or expired reset code');
+      throw new InterviewAIException(
+        ErrorCode.VALIDATION_ERROR,
+        HttpStatus.BAD_REQUEST,
+        'Invalid or expired reset code',
+      );
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
@@ -264,7 +292,9 @@ export class AuthService {
       password.length < PASSWORD_MIN_LENGTH ||
       password.length > PASSWORD_MAX_LENGTH
     ) {
-      throw new BadRequestException(
+      throw new InterviewAIException(
+        ErrorCode.VALIDATION_ERROR,
+        HttpStatus.BAD_REQUEST,
         `Password must be ${PASSWORD_MIN_LENGTH}-${PASSWORD_MAX_LENGTH} characters`,
       );
     }

@@ -66,13 +66,11 @@ export class ReportPersistenceService {
             sessionId,
             reportType: 'executive_summary',
             version: 1,
-            contentJson:
-              executiveSummary as unknown as Prisma.InputJsonValue,
+            contentJson: executiveSummary as unknown as Prisma.InputJsonValue,
             ...reportMetadata,
           },
           update: {
-            contentJson:
-              executiveSummary as unknown as Prisma.InputJsonValue,
+            contentJson: executiveSummary as unknown as Prisma.InputJsonValue,
             ...reportMetadata,
           },
         }),

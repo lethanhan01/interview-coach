@@ -47,7 +47,11 @@ describe('ReportPromptExecutor', () => {
       {
         id: 'turn-1',
         skipped: true,
-        question: { questionText: 'Explain microservices', orderIndex: 1, criteria: [] },
+        question: {
+          questionText: 'Explain microservices',
+          orderIndex: 1,
+          criteria: [],
+        },
       },
     ];
 
@@ -79,12 +83,17 @@ describe('ReportPromptExecutor', () => {
 
       expect(result.answers[0].modelAnswer).toBe('AI suggested answer');
       expect(mockOpenAI.chatCompletion).toHaveBeenCalledWith(
-        expect.objectContaining({ task: 'report', responseFormat: 'json_object' }),
+        expect.objectContaining({
+          task: 'report',
+          responseFormat: 'json_object',
+        }),
       );
     });
 
     it('recovers with fallback answers when AI throws quota exceeded or other error', async () => {
-      mockOpenAI.chatCompletion.mockRejectedValue(new Error('Rate limit exceeded: 429 quota exhausted'));
+      mockOpenAI.chatCompletion.mockRejectedValue(
+        new Error('Rate limit exceeded: 429 quota exhausted'),
+      );
 
       const result = await promptExecutor.executeSkippedModelAnswers({
         sessionId: 'session-1',
@@ -125,7 +134,13 @@ describe('ReportPromptExecutor', () => {
 
     it('calls AI and returns normalized action plan items', async () => {
       mockOpenAI.chatCompletion.mockResolvedValue(
-        JSON.stringify({ items: ['Practice concise STAR examples', 'Improve speed', 'Elaborate impact'] }),
+        JSON.stringify({
+          items: [
+            'Practice concise STAR examples',
+            'Improve speed',
+            'Elaborate impact',
+          ],
+        }),
       );
 
       const result = await promptExecutor.executeActionPlan({
@@ -139,7 +154,9 @@ describe('ReportPromptExecutor', () => {
     });
 
     it('returns fallback action plan when AI call throws an error', async () => {
-      mockOpenAI.chatCompletion.mockRejectedValue(new Error('AI Gateway Timeout'));
+      mockOpenAI.chatCompletion.mockRejectedValue(
+        new Error('AI Gateway Timeout'),
+      );
 
       const result = await promptExecutor.executeActionPlan({
         sessionId: 'session-1',

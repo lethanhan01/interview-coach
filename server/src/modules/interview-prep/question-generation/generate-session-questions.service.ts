@@ -1,6 +1,8 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import {
   AssessmentFacade,
   type ContextPackConfig,
@@ -140,7 +142,9 @@ export class GenerateSessionQuestions {
       job.durationMin,
     );
     if (rows.length < job.totalQuestions) {
-      throw new Error(
+      throw new InterviewAIException(
+        ErrorCode.AI_SERVICE_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR,
         `Only ${rows.length}/${job.totalQuestions} questions available after metadata validation`,
       );
     }

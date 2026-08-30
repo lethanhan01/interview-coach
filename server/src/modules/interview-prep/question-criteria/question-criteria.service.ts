@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 
 type RubricCategoryRow = {
   categoryKey: string;
@@ -86,7 +88,11 @@ export class QuestionCriteriaService {
 
     const codes = unique(linked);
     if (codes.length === 0) {
-      throw new Error('Session question has no criteria relation');
+      throw new InterviewAIException(
+        ErrorCode.VALIDATION_ERROR,
+        HttpStatus.BAD_REQUEST,
+        'Session question has no criteria relation',
+      );
     }
     return codes;
   }
@@ -98,7 +104,9 @@ export class QuestionCriteriaService {
   }): Promise<SessionQuestionCriterionCreateInput[]> {
     const codes = unique(input.criterionCodes);
     if (codes.length === 0) {
-      throw new Error(
+      throw new InterviewAIException(
+        ErrorCode.VALIDATION_ERROR,
+        HttpStatus.BAD_REQUEST,
         'Session question criteria must include at least one code',
       );
     }
@@ -112,7 +120,9 @@ export class QuestionCriteriaService {
     );
     const missing = codes.filter((code) => !byCode.has(code));
     if (missing.length > 0) {
-      throw new Error(
+      throw new InterviewAIException(
+        ErrorCode.RUBRIC_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
         `Unable to resolve rubric criteria for version ${input.rubricVersionId}: ${missing.join(', ')}`,
       );
     }
@@ -120,7 +130,11 @@ export class QuestionCriteriaService {
     return codes.map((code) => {
       const criterion = byCode.get(code);
       if (!criterion) {
-        throw new Error(`Unable to resolve rubric criterion ${code}`);
+        throw new InterviewAIException(
+          ErrorCode.RUBRIC_NOT_FOUND,
+          HttpStatus.NOT_FOUND,
+          `Unable to resolve rubric criterion ${code}`,
+        );
       }
 
       return {

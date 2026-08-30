@@ -23,7 +23,11 @@ export class TurnService {
     file?: UploadedAudioFile,
   ): Promise<AudioUploadResult> {
     await this.context.assertOwner(sessionId, userId);
-    return this.mediaFacade.uploadAndTranscribeAudio({ sessionId, userId, file });
+    return this.mediaFacade.uploadAndTranscribeAudio({
+      sessionId,
+      userId,
+      file,
+    });
   }
 
   submitAnswer(

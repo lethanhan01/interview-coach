@@ -1,10 +1,8 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { AccountStatus, UserRole } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 
 @Injectable()
 export class AdminService {
@@ -51,11 +49,24 @@ export class AdminService {
   ) {
     await this.assertAdminCanManage(id, actorId);
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw new NotFoundException('User not found');
-    if (!changes.role && !changes.status)
-      throw new BadRequestException('At least one account field is required');
+    if (!user) {
+      throw new InterviewAIException(
+        ErrorCode.USER_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+        'User not found',
+      );
+    }
+    if (!changes.role && !changes.status) {
+      throw new InterviewAIException(
+        ErrorCode.VALIDATION_ERROR,
+        HttpStatus.BAD_REQUEST,
+        'At least one account field is required',
+      );
+    }
     if (changes.status === AccountStatus.password_reset_required) {
-      throw new BadRequestException(
+      throw new InterviewAIException(
+        ErrorCode.VALIDATION_ERROR,
+        HttpStatus.BAD_REQUEST,
         'Use the password reset flow for this status',
       );
     }
@@ -69,8 +80,13 @@ export class AdminService {
   async deleteUser(id: string, actorId: string) {
     await this.assertAdminCanManage(id, actorId);
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user || user.status === AccountStatus.deleted)
-      throw new NotFoundException('User not found');
+    if (!user || user.status === AccountStatus.deleted) {
+      throw new InterviewAIException(
+        ErrorCode.USER_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+        'User not found',
+      );
+    }
     await this.prisma.user.update({
       where: { id },
       data: { status: AccountStatus.deleted, tokenVersion: { increment: 1 } },
@@ -82,18 +98,28 @@ export class AdminService {
     actorId: string,
   ): Promise<void> {
     if (id === actorId) {
-      throw new BadRequestException(
+      throw new InterviewAIException(
+        ErrorCode.VALIDATION_ERROR,
+        HttpStatus.BAD_REQUEST,
         'Administrators cannot manage their own account',
       );
     }
     const target = await this.prisma.user.findUnique({ where: { id } });
-    if (!target) throw new NotFoundException('User not found');
+    if (!target) {
+      throw new InterviewAIException(
+        ErrorCode.USER_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+        'User not found',
+      );
+    }
     if (target.role === UserRole.admin) {
       const adminCount = await this.prisma.user.count({
         where: { role: UserRole.admin, status: { not: AccountStatus.deleted } },
       });
       if (adminCount <= 1) {
-        throw new BadRequestException(
+        throw new InterviewAIException(
+          ErrorCode.VALIDATION_ERROR,
+          HttpStatus.BAD_REQUEST,
           'The last active administrator cannot be managed',
         );
       }

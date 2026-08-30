@@ -117,9 +117,9 @@ describe('SessionService', () => {
         }),
       );
       expect(result).toEqual(BASE_SESSION);
-      expect(mockAssessmentFacade.ensureActiveRubricVersion).toHaveBeenCalledWith(
-        'VN',
-      );
+      expect(
+        mockAssessmentFacade.ensureActiveRubricVersion,
+      ).toHaveBeenCalledWith('VN');
       expect(mockWorkflowService.enqueueInTransaction).toHaveBeenCalledWith(
         mockPrisma,
         expect.objectContaining({

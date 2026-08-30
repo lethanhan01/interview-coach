@@ -1,11 +1,13 @@
 import {
   CanActivate,
   ExecutionContext,
-  ForbiddenException,
+  HttpStatus,
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UserRole } from '@prisma/client';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import type { AuthenticatedUser } from '../dto/authenticated-user.dto';
 
@@ -32,12 +34,18 @@ export class RolesGuard implements CanActivate {
     const user = req.user;
 
     if (!user) {
-      throw new ForbiddenException('Authentication required');
+      throw new InterviewAIException(
+        ErrorCode.FORBIDDEN,
+        HttpStatus.FORBIDDEN,
+        'Authentication required',
+      );
     }
 
     const hasRole = requiredRoles.includes(user.role);
     if (!hasRole) {
-      throw new ForbiddenException(
+      throw new InterviewAIException(
+        ErrorCode.FORBIDDEN,
+        HttpStatus.FORBIDDEN,
         `Access restricted to roles: ${requiredRoles.join(', ')}`,
       );
     }

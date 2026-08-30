@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import type { Prisma, QuestionSessionType } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 
 type QuestionBankRow = {
@@ -64,7 +66,9 @@ export class QuestionBankService {
     });
 
     if (candidates.length === 0) {
-      throw new Error(
+      throw new InterviewAIException(
+        ErrorCode.QUESTION_BANK_EMPTY,
+        HttpStatus.NOT_FOUND,
         `No fallback questions available for ${sessionType}/${contextPackId}`,
       );
     }
@@ -72,7 +76,9 @@ export class QuestionBankService {
     const selected = this.selectWithDifficultySpread(candidates, count);
 
     if (selected.length < count) {
-      throw new Error(
+      throw new InterviewAIException(
+        ErrorCode.QUESTION_BANK_EMPTY,
+        HttpStatus.NOT_FOUND,
         `Only ${selected.length}/${count} fallback questions available for ${sessionType}/${contextPackId}`,
       );
     }
@@ -89,7 +95,9 @@ export class QuestionBankService {
       .filter((q): q is FallbackQuestion => q !== null);
 
     if (mapped.length === 0) {
-      throw new Error(
+      throw new InterviewAIException(
+        ErrorCode.QUESTION_BANK_EMPTY,
+        HttpStatus.NOT_FOUND,
         `No fallback questions with valid criteria for ${sessionType}/${contextPackId}`,
       );
     }

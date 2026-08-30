@@ -125,7 +125,9 @@ export class ReportMetricsAggregator {
 
     for (const feedback of feedbacks) {
       if (feedback.isFallback) continue;
-      for (const dimension of this.toDimensionScores(feedback.dimensionScores)) {
+      for (const dimension of this.toDimensionScores(
+        feedback.dimensionScores,
+      )) {
         const current = totals.get(dimension.id) ?? { sum: 0, count: 0 };
         totals.set(dimension.id, {
           sum: current.sum + dimension.score,

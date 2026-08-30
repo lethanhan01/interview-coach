@@ -42,9 +42,7 @@ describe('TranscribeAnswer', () => {
     enqueueIfAllFeedbacksReady: jest.Mock;
   };
   let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
-  let mockPrepFacade: ReturnType<
-    typeof createMockQuestionCriteriaService
-  >;
+  let mockPrepFacade: ReturnType<typeof createMockQuestionCriteriaService>;
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
@@ -226,7 +224,9 @@ describe('TranscribeAnswer', () => {
         attemptsMade: 1,
         opts: { attempts: 2 },
       } as unknown as Job<typeof BASE_JOB_DATA>;
-      mockAssessmentFacade.enqueueIfAllFeedbacksReady.mockResolvedValue(undefined);
+      mockAssessmentFacade.enqueueIfAllFeedbacksReady.mockResolvedValue(
+        undefined,
+      );
 
       await expect(processor.execute(job)).resolves.toBeUndefined();
 
@@ -249,12 +249,9 @@ describe('TranscribeAnswer', () => {
         where: { id: 'answer-1' },
         data: { transcriptionStatus: 'failed', feedbackGenerated: true },
       });
-      expect(mockAssessmentFacade.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
-        'session-123',
-        'hr',
-        'VN',
-        'vi',
-      );
+      expect(
+        mockAssessmentFacade.enqueueIfAllFeedbacksReady,
+      ).toHaveBeenCalledWith('session-123', 'hr', 'VN', 'vi');
       expect(mockSse.emit).toHaveBeenCalledWith(
         'sse:session:session-123',
         'turn.transcription_ready',

@@ -90,7 +90,10 @@ describe('AssessmentFacade', () => {
 
     const result = await facade.getFeedbackProgress('s-1', 'u-1');
 
-    expect(reportService.getFeedbackProgress).toHaveBeenCalledWith('s-1', 'u-1');
+    expect(reportService.getFeedbackProgress).toHaveBeenCalledWith(
+      's-1',
+      'u-1',
+    );
     expect(result).toEqual(mockProgress);
   });
 

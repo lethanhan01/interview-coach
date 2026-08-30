@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import type {
   ReportCollectedData,
   ReportFeedbackInput,
@@ -57,7 +59,9 @@ export class ReportDataCollector {
 
     const expectedFeedbackCount = new Set(answeredTurnIds).size;
     if (rawFeedbacks.length !== expectedFeedbackCount) {
-      throw new Error(
+      throw new InterviewAIException(
+        ErrorCode.REPORT_NOT_READY,
+        HttpStatus.UNPROCESSABLE_ENTITY,
         `Report input is not ready for session ${sessionId}: ${rawFeedbacks.length}/${expectedFeedbackCount} feedbacks`,
       );
     }

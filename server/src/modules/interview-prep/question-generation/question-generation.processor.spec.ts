@@ -68,7 +68,19 @@ describe('QuestionGenerationProcessor', () => {
       technical_weight: 0.6,
     },
     culturalNotes: 'Văn hóa công sở tại Việt Nam.',
-    rubricDimensions: ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'TD1', 'TD2', 'TD3', 'TD4', 'TD5'],
+    rubricDimensions: [
+      'D1',
+      'D2',
+      'D3',
+      'D4',
+      'D5',
+      'D6',
+      'TD1',
+      'TD2',
+      'TD3',
+      'TD4',
+      'TD5',
+    ],
   };
 
   const makeJob = (data = BASE_JOB_DATA) =>

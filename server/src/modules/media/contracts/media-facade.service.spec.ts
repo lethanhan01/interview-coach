@@ -22,7 +22,7 @@ describe('MediaFacade', () => {
 
     voiceMetricsService = {
       calculate: jest.fn(),
-    } as unknown as jest.Mocked<VoiceMetricsService>;
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -79,7 +79,9 @@ describe('MediaFacade', () => {
     };
     const result = await facade.uploadAndTranscribeAudio(params);
 
-    expect(uploadAndTranscribeAudioService.execute).toHaveBeenCalledWith(params);
+    expect(uploadAndTranscribeAudioService.execute).toHaveBeenCalledWith(
+      params,
+    );
     expect(result).toEqual(mockResult);
   });
 

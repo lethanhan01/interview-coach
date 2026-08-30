@@ -80,10 +80,11 @@ describe('TurnService', () => {
     mockWorkflow = createMockWorkflowService();
     mockDispatcher = createMockWorkflowDispatcher();
     mockPrepFacade = {
-      codesFromSessionQuestion: jest.fn((question) =>
-        question.criteria?.map(
-          (link: any) => link.rubricCriterion?.code ?? link.criterionCode,
-        ) ?? [],
+      codesFromSessionQuestion: jest.fn(
+        (question) =>
+          question.criteria?.map(
+            (link: any) => link.rubricCriterion?.code ?? link.criterionCode,
+          ) ?? [],
       ),
     };
     mockMediaFacade = {
