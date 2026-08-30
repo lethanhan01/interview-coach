@@ -3,7 +3,7 @@ import { Client } from 'pg';
 import {
   buildPgConnectionConfig,
   setClientDbTimeZone,
-} from '../src/infrastructure/database/prisma/db-timezone';
+} from '../../src/infrastructure/database/prisma/db-timezone';
 
 type Phase = 'pre' | 'post';
 
@@ -635,13 +635,13 @@ async function runCatalogChecks(): Promise<CheckResult[]> {
       `SELECT 1
        FROM pg_trigger
        WHERE tgname = 'on_auth_user_created'
-         AND tgrelid = 'auth.users'::regclass
-         AND NOT tgisinternal`,
+       AND tgrelid = 'auth.users'::regclass
+       AND NOT tgisinternal`,
     );
     results.push({
       name: 'trigger:auth.users:on_auth_user_created',
-       ok: !authTrigger,
-       detail: authTrigger ? 'unexpectedly present' : 'absent',
+      ok: !authTrigger,
+      detail: authTrigger ? 'unexpectedly present' : 'absent',
     });
   }
 

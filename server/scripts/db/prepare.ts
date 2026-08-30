@@ -3,7 +3,7 @@ import { Client } from 'pg';
 import {
   buildPgConnectionConfig,
   setClientDbTimeZone,
-} from '../src/infrastructure/database/prisma/db-timezone';
+} from '../../src/infrastructure/database/prisma/db-timezone';
 
 const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 
