@@ -2,7 +2,7 @@
 
 > **Tài liệu**: Kế hoạch triển khai tái cấu trúc thư mục và kiến trúc Backend (`server/src`)  
 > **Hệ thống**: Nền tảng AI Mock Interview Coach  
-> **Trạng thái**: Đã hoàn thành Phần 1 đến Phần 8 (8/12 phần - 66.7%). Sẵn sàng triển khai Phần 9 (Cập nhật Root AppModule).  
+> **Trạng thái**: Đã hoàn thành Phần 1 đến Phần 10 (10/12 phần - 83.3%). Sẵn sàng triển khai Phần 11 (Kiểm thử toàn diện & Build Check).  
 > **Mục tiêu**: Tái tổ chức toàn bộ `server/src` từ cấu trúc 22 thư mục phẳng hiện tại thành **3 tầng rõ ràng (Core - Infrastructure - Modules)**, gom nhóm nghiệp vụ phỏng vấn thành **3 Bounded Contexts theo vòng đời chuẩn (Prep - Live - Assessment)**, tách riêng hạ tầng Media STT (`media`), và cung cấp bản đồ kiến trúc trực quan giúp developer mới nắm bắt hệ thống trong vòng 15 phút.
 
 ---
@@ -292,80 +292,25 @@ Bản kế hoạch được chia thành **12 phần nhỏ độc lập** để t
 
 ---
 
-### [ ] Phần 9: Cập nhật Root `AppModule` (`src/app.module.ts`)
-- [ ] Cập nhật lại các import trong `src/app.module.ts` theo cấu trúc gọn gàng:
-
-```typescript
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { BullModule } from '@nestjs/bullmq';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-
-// Core & Infra
-import { CommonModule } from '@core/common/common.module';
-import { validateEnv } from '@core/config/env.validation';
-import { InterviewAIExceptionFilter } from '@core/common/exceptions/interview-ai-exception.filter';
-import { MaintenanceModeGuard } from '@core/common/guards/maintenance-mode.guard';
-import { RequestIdMiddleware } from '@core/common/middleware/request-id.middleware';
-import { PrismaModule } from '@infra/database/prisma/prisma.module';
-import { AiModule } from '@infra/ai/ai.module';
-import { WorkflowModule } from '@infra/workflow/workflow.module';
-
-// Business Modules
-import { HealthModule } from '@modules/health/health.module';
-import { AuthModule } from '@modules/auth/auth.module';
-import { UserModule } from '@modules/user/user.module';
-import { AdminModule } from '@modules/admin/admin.module';
-import { MediaModule } from '@modules/media/media.module';
-import { InterviewPrepModule } from '@modules/interview-prep/interview-prep.module';
-import { InterviewLiveModule } from '@modules/interview-live/interview-live.module';
-import { InterviewAssessmentModule } from '@modules/interview-assessment/interview-assessment.module';
-
-@Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
-    BullModule.forRootAsync({
-      useFactory: (config: ConfigService) => ({
-        connection: {
-          host: config.get<string>('REDIS_HOST'),
-          port: config.get<number>('REDIS_PORT'),
-        },
-      }),
-      inject: [ConfigService],
-    }),
-    CommonModule,
-    HealthModule,
-    PrismaModule,
-    AuthModule,
-    UserModule,
-    AdminModule,
-    AiModule,
-    WorkflowModule,
-    MediaModule,
-    InterviewPrepModule,
-    InterviewLiveModule,
-    InterviewAssessmentModule,
-  ],
-  providers: [
-    { provide: APP_FILTER, useClass: InterviewAIExceptionFilter },
-    { provide: APP_GUARD, useClass: MaintenanceModeGuard },
-  ],
-})
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestIdMiddleware).forRoutes('*');
-  }
-}
-```
+### [x] Phần 9: Cập nhật Root `AppModule` (`src/app.module.ts`) - HOÀN THÀNH 100%
+- [x] Cập nhật lại các import trong `src/app.module.ts` theo cấu trúc 3 tầng gọn gàng (`@core/*`, `@infra/*`, `@modules/*`).
+- [x] Bổ sung `WorkflowModule` (`@infra/workflow/workflow.module`) vào danh sách imports toàn cục.
+- [x] Giữ nguyên `ApiRootController` cho route `/`.
+- [x] Kiểm thử & nghiệm thu:
+  - Runtime role tests: `npm test src/core/runtime/runtime-role.spec.ts` $\rightarrow$ **PASS** (1 suite, 7 tests).
+  - TypeScript build: `npm run build` $\rightarrow$ **PASS** (0 errors).
 
 ---
 
-### [ ] Phần 10: Cập nhật Automated Boundary Tests (`feature-boundaries.spec.ts`)
-- [ ] Cập nhật lại danh sách FEATURES và các quy tắc kiểm tra ranh giới kiến trúc trong `src/architecture/feature-boundaries.spec.ts`:
-  1. `core/` không phụ thuộc vào `infrastructure/` hoặc `modules/`.
-  2. `controllers` trong `modules/` không được import trực tiếp persistence (`@prisma/client`), queue (`bullmq`), hay external SDK (`openai`, `supabase`).
-  3. Cross-module imports giữa các Bounded Contexts chỉ thông qua public interfaces / aggregator exports.
-- [ ] Chạy `npm test src/architecture/feature-boundaries.spec.ts` đảm bảo `PASS`.
+### [x] Phần 10: Cập nhật Automated Boundary Tests (`feature-boundaries.spec.ts`) - HOÀN THÀNH 100%
+- [x] Cập nhật danh sách Bounded Contexts (`admin`, `auth`, `health`, `interview-assessment`, `interview-live`, `interview-prep`, `media`, `user`) và các quy tắc kiểm tra ranh giới kiến trúc tự động:
+  1. `controllers` trong `src/modules/` không được import trực tiếp persistence (`prisma.service`, `@infra/database/prisma`), queue (`@nestjs/bullmq`, `bullmq`), hay external SDK (`openai`, `@supabase/supabase-js`).
+  2. `src/core/` độc lập, zero business logic và không phụ thuộc vào `src/modules/`.
+  3. Cross-module imports giữa các Bounded Contexts chỉ thông qua danh mục hợp đồng được duyệt (`APPROVED_CROSS_MODULE_IMPORTS`).
+- [x] Kiểm thử & nghiệm thu:
+  - Unit tests ranh giới: `npm test src/architecture/feature-boundaries.spec.ts` $\rightarrow$ **PASS** (1 suite, 3 tests).
+  - Full regression toàn bộ backend: `npm test` $\rightarrow$ **PASS** (59/59 suites, 460/460 tests).
+  - TypeScript build: `npm run build` $\rightarrow$ **PASS** (0 errors).
 
 ---
 

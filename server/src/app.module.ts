@@ -8,21 +8,28 @@ import {
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-import { PrismaModule } from './infrastructure/database/prisma/prisma.module';
-import { AuthModule } from '@modules/auth/auth.module';
-import { AiModule } from '@infra/ai/ai.module';
-import { InterviewAssessmentModule } from '@modules/interview-assessment/interview-assessment.module';
-import { InterviewLiveModule } from '@modules/interview-live/interview-live.module';
-import { MediaModule } from '@modules/media/media.module';
-import { InterviewPrepModule } from '@modules/interview-prep/interview-prep.module';
-import { UserModule } from '@modules/user/user.module';
+
+// --- TẦNG 1: CORE & SHARED ---
+import { CommonModule } from '@core/common/common.module';
 import { validateEnv } from '@core/config/env.validation';
 import { InterviewAIExceptionFilter } from '@core/common/exceptions/interview-ai-exception.filter';
-import { RequestIdMiddleware } from '@core/common/middleware/request-id.middleware';
-import { CommonModule } from '@core/common/common.module';
-import { HealthModule } from '@modules/health/health.module';
-import { AdminModule } from '@modules/admin/admin.module';
 import { MaintenanceModeGuard } from '@core/common/guards/maintenance-mode.guard';
+import { RequestIdMiddleware } from '@core/common/middleware/request-id.middleware';
+
+// --- TẦNG 2: INFRASTRUCTURE ---
+import { PrismaModule } from '@infra/database/prisma/prisma.module';
+import { AiModule } from '@infra/ai/ai.module';
+import { WorkflowModule } from '@infra/workflow/workflow.module';
+
+// --- TẦNG 3: BUSINESS MODULES (BOUNDED CONTEXTS) ---
+import { HealthModule } from '@modules/health/health.module';
+import { AuthModule } from '@modules/auth/auth.module';
+import { UserModule } from '@modules/user/user.module';
+import { AdminModule } from '@modules/admin/admin.module';
+import { MediaModule } from '@modules/media/media.module';
+import { InterviewPrepModule } from '@modules/interview-prep/interview-prep.module';
+import { InterviewLiveModule } from '@modules/interview-live/interview-live.module';
+import { InterviewAssessmentModule } from '@modules/interview-assessment/interview-assessment.module';
 
 @Controller()
 class ApiRootController {
@@ -34,6 +41,7 @@ class ApiRootController {
 
 @Module({
   imports: [
+    // Global Config & Queue Providers
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     BullModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
@@ -44,17 +52,22 @@ class ApiRootController {
       }),
       inject: [ConfigService],
     }),
+
+    // Core & Infrastructure
     CommonModule,
-    HealthModule,
     PrismaModule,
-    AuthModule,
     AiModule,
-    InterviewLiveModule,
-    MediaModule,
-    InterviewPrepModule,
-    InterviewAssessmentModule,
+    WorkflowModule,
+
+    // Domain & Business Modules
+    HealthModule,
+    AuthModule,
     UserModule,
     AdminModule,
+    MediaModule,
+    InterviewPrepModule,
+    InterviewLiveModule,
+    InterviewAssessmentModule,
   ],
   controllers: [ApiRootController],
   providers: [
