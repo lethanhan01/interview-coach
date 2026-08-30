@@ -21,10 +21,7 @@ Server là ứng dụng NestJS (REST API + SSE) với kiến trúc modular. Yêu
 ```
 ├── 📁 prisma
 │   ├── 📁 migrations
-│   │   ├── 📄 add_user_role_enum.sql            # Thêm enum UserRole (candidate, admin)
-│   │   ├── 📄 enforce-user-required-fields.sql  # Bắt buộc firstname, lastname, email
-│   │   ├── 📄 local-auth.sql                    # Schema auth local (password hash, verification)
-│   │   └── 📄 migration.sql                     # Migration chính: các bảng interview, question, session
+│   │   └── 📄 migration.sql                     # File migration SQL hợp nhất: schema hardening, RLS, indexes, constraints
 │   ├── 📁 seed
 │   │   ├── 📁 data
 │   │   │   └── ⚙️ kaggle-questions.json         # Dataset câu hỏi interview từ Kaggle (frontend)
