@@ -7,4 +7,5 @@ import { SavedJobDescriptionService } from './saved-job-description.service';
   providers: [SavedJobDescriptionService],
   exports: [SavedJobDescriptionService],
 })
-export class SavedJobDescriptionModule {}
+export class JobDescriptionModule {}
+export { JobDescriptionModule as SavedJobDescriptionModule };

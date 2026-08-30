@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { VoiceAnswerIntakeHandler } from './voice-answer-intake.handler';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
+import { QuestionCriteriaService } from '@modules/interview-prep/question-criteria/question-criteria.service';
 import { VoiceMetricsService } from '@modules/media/voice-metrics.service';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 import { WorkflowService } from '@infra/workflow/workflow.service';

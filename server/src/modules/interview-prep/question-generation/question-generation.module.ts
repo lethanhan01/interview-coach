@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { AiModule } from '@infra/ai/ai.module';
-import { AssessmentModule } from '../assessment/assessment.module';
+import { AssessmentModule } from '@/assessment/assessment.module';
 import {
   QUESTION_GEN_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
@@ -26,5 +26,7 @@ const workerProviders = workersEnabled() ? [QuestionGenerationProcessor] : [];
     }),
   ],
   providers: [GenerateSessionQuestions, ...workerProviders],
+  exports: [GenerateSessionQuestions],
 })
-export class QuestionModule {}
+export class QuestionGenerationModule {}
+export { QuestionGenerationModule as QuestionModule };

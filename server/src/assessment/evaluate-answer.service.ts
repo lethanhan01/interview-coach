@@ -1,5 +1,8 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { AI_GATEWAY_TOKEN, type IAIGateway } from '@infra/ai/ai-gateway.interface';
+import {
+  AI_GATEWAY_TOKEN,
+  type IAIGateway,
+} from '@infra/ai/ai-gateway.interface';
 import { PromptBuilderService } from '@infra/ai/prompt-builder.service';
 import { ZodValidatorService } from '@infra/ai/zod-validator.service';
 import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '@infra/ai/prompts/surgical-feedback-v1.5';

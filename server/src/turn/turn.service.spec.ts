@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
 import { TurnService } from './turn.service';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
+import { QuestionCriteriaService } from '@modules/interview-prep/question-criteria/question-criteria.service';
 import { UploadAndTranscribeAnswerAudio } from '@modules/media/upload-and-transcribe-answer-audio.service';
 import { VoiceMetricsService } from '@modules/media/voice-metrics.service';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';

@@ -9,9 +9,9 @@ const processorModules = [
     'FeedbackProcessor',
   ],
   [
-    '../../question/question.module',
-    '../../question/question-generation.processor',
-    'QuestionModule',
+    '../../modules/interview-prep/question-generation/question-generation.module',
+    '../../modules/interview-prep/question-generation/question-generation.processor',
+    'QuestionGenerationModule',
     'QuestionGenerationProcessor',
   ],
   [

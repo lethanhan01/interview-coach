@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
-import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { QuestionCriteriaService } from '@modules/interview-prep/question-criteria/question-criteria.service';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 import { WorkflowService } from '@infra/workflow/workflow.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';

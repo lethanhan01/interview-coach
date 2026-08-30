@@ -4,7 +4,7 @@ import type { Job } from 'bullmq';
 import { TranscribeAnswer } from './transcribe-answer.service';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
-import { QuestionCriteriaService } from '../../question-criteria/question-criteria.service';
+import { QuestionCriteriaService } from '@modules/interview-prep/question-criteria/question-criteria.service';
 import { SpeechToText } from './speech-to-text.service';
 import { VoiceMetricsService } from './voice-metrics.service';
 import {

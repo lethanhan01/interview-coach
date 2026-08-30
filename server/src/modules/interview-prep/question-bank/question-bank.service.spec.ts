@@ -12,8 +12,8 @@ describe('QuestionBankService', () => {
   beforeEach(() => {
     mockPrisma = createMockPrismaService();
     service = new QuestionBankService(
-      mockPrisma as any,
-      new QuestionCriteriaService(mockPrisma as any),
+      mockPrisma,
+      new QuestionCriteriaService(mockPrisma),
     );
   });
 

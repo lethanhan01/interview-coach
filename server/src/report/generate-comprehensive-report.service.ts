@@ -3,7 +3,10 @@ import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { SseService } from '../infrastructure/realtime/redis/sse.service';
-import { AI_GATEWAY_TOKEN, type IAIGateway } from '@infra/ai/ai-gateway.interface';
+import {
+  AI_GATEWAY_TOKEN,
+  type IAIGateway,
+} from '@infra/ai/ai-gateway.interface';
 import { COMPREHENSIVE_REPORT_PROMPT_CONFIG } from '@infra/ai/prompts/comprehensive-report-v1.0';
 import type { SessionType } from '@infra/ai/pipelines/interview-pipeline.interface';
 import {

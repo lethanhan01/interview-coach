@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
+import { QuestionCriteriaService } from '@modules/interview-prep/question-criteria/question-criteria.service';
 import { VoiceMetricsService } from '@modules/media/voice-metrics.service';
 import type { TranscriptionJobDto } from '@modules/media/transcription-job.dto';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';

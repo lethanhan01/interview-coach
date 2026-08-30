@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { MediaModule } from '@modules/media/media.module';
-import { QuestionCriteriaModule } from '../question-criteria/question-criteria.module';
+import { QuestionCriteriaModule } from '@modules/interview-prep/question-criteria/question-criteria.module';
 import { WorkflowModule } from '@infra/workflow/workflow.module';
 import { TurnController } from './turn.controller';
 import { TurnService } from './turn.service';
@@ -12,12 +12,7 @@ import { VoiceAnswerIntakeHandler } from './voice-answer-intake.handler';
 import { AnswerIntakeRegistry } from './answer-intake.registry';
 
 @Module({
-  imports: [
-    AuthModule,
-    MediaModule,
-    QuestionCriteriaModule,
-    WorkflowModule,
-  ],
+  imports: [AuthModule, MediaModule, QuestionCriteriaModule, WorkflowModule],
   controllers: [TurnController],
   providers: [
     TurnService,

@@ -2,7 +2,7 @@
 
 > **Tài liệu**: Kế hoạch triển khai tái cấu trúc thư mục và kiến trúc Backend (`server/src`)  
 > **Hệ thống**: Nền tảng AI Mock Interview Coach  
-> **Trạng thái**: Bản kế hoạch phân đoạn chi tiết (Sẵn sàng triển khai theo từng phần nhỏ)  
+> **Trạng thái**: Đã hoàn thành Phần 1 đến Phần 5 (5/12 phần - 41.7%). Sẵn sàng triển khai Phần 6 (Interview Live).  
 > **Mục tiêu**: Tái tổ chức toàn bộ `server/src` từ cấu trúc 22 thư mục phẳng hiện tại thành **3 tầng rõ ràng (Core - Infrastructure - Modules)**, gom nhóm nghiệp vụ phỏng vấn thành **3 Bounded Contexts theo vòng đời chuẩn (Prep - Live - Assessment)**, tách riêng hạ tầng Media STT (`media`), và cung cấp bản đồ kiến trúc trực quan giúp developer mới nắm bắt hệ thống trong vòng 15 phút.
 
 ---
@@ -237,14 +237,24 @@ Bản kế hoạch được chia thành **12 phần nhỏ độc lập** để t
 
 ---
 
-### [ ] Phần 5: Xây dựng Bounded Context Interview Prep (`src/modules/interview-prep/`)
-- [ ] Tạo thư mục `src/modules/interview-prep/`.
-- [ ] Di chuyển `src/question/` $\rightarrow$ `src/modules/interview-prep/question-generation/`.
-- [ ] Di chuyển `src/question-bank/` $\rightarrow$ `src/modules/interview-prep/question-bank/`.
-- [ ] Di chuyển `src/question-criteria/` $\rightarrow$ `src/modules/interview-prep/question-criteria/`.
-- [ ] Di chuyển `src/saved-job-description/` $\rightarrow$ `src/modules/interview-prep/job-description/`.
-- [ ] Tạo Aggregator Module `interview-prep.module.ts` kết nối 4 module trên.
-- [ ] Chạy tests của interview-prep (`npm test src/modules/interview-prep`).
+### [x] Phần 5: Xây dựng Bounded Context Interview Prep (`src/modules/interview-prep/`) - HOÀN THÀNH 100%
+- [x] Tạo thư mục `src/modules/interview-prep/`.
+- [x] Di chuyển `src/question/` $\rightarrow$ `src/modules/interview-prep/question-generation/`.
+- [x] Di chuyển `src/question-bank/` $\rightarrow$ `src/modules/interview-prep/question-bank/`.
+- [x] Di chuyển `src/question-criteria/` $\rightarrow$ `src/modules/interview-prep/question-criteria/`.
+- [x] Di chuyển `src/saved-job-description/` $\rightarrow$ `src/modules/interview-prep/job-description/`.
+- [x] Tạo Aggregator Module `interview-prep.module.ts` kết nối và export 4 module con (`QuestionGenerationModule`, `QuestionBankModule`, `QuestionCriteriaModule`, `JobDescriptionModule`).
+- [x] Cập nhật import liên quan:
+  - `src/app.module.ts`: thay thế các module rời rạc bằng `InterviewPrepModule`.
+  - `src/modules/media/`: trỏ đúng `QuestionCriteriaService` từ `@modules/interview-prep/question-criteria/...`.
+  - `src/turn/`: cập nhật các intake handlers (`text`, `voice`) trỏ sang path mới.
+  - `src/core/runtime/runtime-role.spec.ts`: cập nhật mock providers.
+- [x] Kiểm thử & nghiệm thu nghiêm ngặt:
+  - Unit tests context prep: `npm test src/modules/interview-prep` $\rightarrow$ **PASS** (4/4 suites, 41/41 tests).
+  - Regression toàn hệ thống: `npm test` $\rightarrow$ **PASS** (59/59 suites, 459/459 tests).
+  - Biên dịch TypeScript: `npm run build` $\rightarrow$ **PASS** (0 errors).
+  - Runtime bootstrapping: `node dist/main.js` $\rightarrow$ **PASS** (khởi tạo thành công các controllers, services, outbox processors và mapping đầy đủ routes).
+  - Lưu ý Watch Mode: Lỗi tạm thời `MODULE_NOT_FOUND` trong lúc watch mode phát hiện file di chuyển là race-condition tự nhiên khi tệp đang được chuyển vị trí; sau khi build/start lại hệ thống khởi động bình thường không có lỗi sót lại.
 
 ---
 
