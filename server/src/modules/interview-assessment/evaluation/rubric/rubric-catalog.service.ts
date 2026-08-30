@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../infrastructure/database/prisma/prisma.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { CONTEXT_PACK_DATA, type ContextPackId } from './context-pack.data';
 
 @Injectable()

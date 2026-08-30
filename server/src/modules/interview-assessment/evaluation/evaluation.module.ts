@@ -27,4 +27,5 @@ const workerProviders = workersEnabled() ? [FeedbackProcessor] : [];
   controllers: [RubricController],
   exports: [RubricCatalogService, ContextPackService],
 })
-export class AssessmentModule {}
+export class EvaluationModule {}
+

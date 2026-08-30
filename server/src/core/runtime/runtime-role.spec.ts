@@ -3,9 +3,9 @@ import { resolveRuntimeRole } from './runtime-role';
 
 const processorModules = [
   [
-    '../../assessment/assessment.module',
-    '../../assessment/feedback/feedback.processor',
-    'AssessmentModule',
+    '../../modules/interview-assessment/evaluation/evaluation.module',
+    '../../modules/interview-assessment/evaluation/feedback/feedback.processor',
+    'EvaluationModule',
     'FeedbackProcessor',
   ],
   [
@@ -15,8 +15,8 @@ const processorModules = [
     'QuestionGenerationProcessor',
   ],
   [
-    '../../report/report.module',
-    '../../report/comprehensive-report.processor',
+    '../../modules/interview-assessment/report/report.module',
+    '../../modules/interview-assessment/report/comprehensive-report.processor',
     'ReportModule',
     'ComprehensiveReportProcessor',
   ],

@@ -1,7 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReportService } from './report.service';
-import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';

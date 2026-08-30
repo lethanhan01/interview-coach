@@ -20,7 +20,7 @@ import {
   createMockQueue,
   createMockQuestionCriteriaService,
 } from '@core/test-utils/mock-factories';
-import { ReportService } from '../../report/report.service';
+import { ReportService } from '@modules/interview-assessment/report/report.service';
 import { FALLBACK_FEEDBACK_MESSAGE } from '@infra/ai/fallback-content';
 
 const BASE_JOB_DATA = {

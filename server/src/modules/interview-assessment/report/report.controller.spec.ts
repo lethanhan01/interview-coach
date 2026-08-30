@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
 import { ReportController } from './report.controller';
 import { ReportService } from './report.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { createMockReportService } from '@core/test-utils/mock-factories';

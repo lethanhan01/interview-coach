@@ -1,4 +1,4 @@
-import { migrateLegacyContextPackIds } from '../src/assessment/rubric/legacy-context-pack-migration';
+import { migrateLegacyContextPackIds } from '../src/modules/interview-assessment/evaluation/rubric/legacy-context-pack-migration';
 import { prisma } from './seed/_client';
 
 migrateLegacyContextPackIds(prisma)

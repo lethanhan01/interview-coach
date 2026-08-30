@@ -3,7 +3,7 @@ import {
   normalizeGeneratedQuestionMetadata,
   normalizeQuestionMetadataForCleanup,
 } from './question-metadata';
-import type { ContextPackConfig } from '../assessment/context-pack.service';
+import type { ContextPackConfig } from '@modules/interview-assessment/evaluation/context-pack.service';
 
 const contextPack = {
   behavioralDimensions: [

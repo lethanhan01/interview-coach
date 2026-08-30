@@ -8,7 +8,7 @@ import { ZodValidatorService } from './zod-validator.service';
 import { HrPipelineService } from './pipelines/hr.pipeline.service';
 import { TechnicalPipelineService } from './pipelines/technical.pipeline.service';
 import { PipelineStrategyFactory } from './pipelines/pipeline-strategy.factory';
-import { EvaluateAnswer } from '@/assessment/evaluate-answer.service';
+import { EvaluateAnswer } from '@modules/interview-assessment/evaluation/evaluate-answer.service';
 
 @Module({
   providers: [

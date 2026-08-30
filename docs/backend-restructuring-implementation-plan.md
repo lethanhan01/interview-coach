@@ -2,7 +2,7 @@
 
 > **Tài liệu**: Kế hoạch triển khai tái cấu trúc thư mục và kiến trúc Backend (`server/src`)  
 > **Hệ thống**: Nền tảng AI Mock Interview Coach  
-> **Trạng thái**: Đã hoàn thành Phần 1 đến Phần 5 (5/12 phần - 41.7%). Sẵn sàng triển khai Phần 6 (Interview Live).  
+> **Trạng thái**: Đã hoàn thành Phần 1 đến Phần 7 (7/12 phần - 58.3%). Sẵn sàng triển khai Phần 8 (Identity & Admin Modules).  
 > **Mục tiêu**: Tái tổ chức toàn bộ `server/src` từ cấu trúc 22 thư mục phẳng hiện tại thành **3 tầng rõ ràng (Core - Infrastructure - Modules)**, gom nhóm nghiệp vụ phỏng vấn thành **3 Bounded Contexts theo vòng đời chuẩn (Prep - Live - Assessment)**, tách riêng hạ tầng Media STT (`media`), và cung cấp bản đồ kiến trúc trực quan giúp developer mới nắm bắt hệ thống trong vòng 15 phút.
 
 ---
@@ -258,21 +258,25 @@ Bản kế hoạch được chia thành **12 phần nhỏ độc lập** để t
 
 ---
 
-### [ ] Phần 6: Xây dựng Bounded Context Interview Live (`src/modules/interview-live/`)
-- [ ] Tạo thư mục `src/modules/interview-live/`.
-- [ ] Di chuyển `src/session/` $\rightarrow$ `src/modules/interview-live/session/`.
-- [ ] Di chuyển `src/turn/` $\rightarrow$ `src/modules/interview-live/turn/`.
-- [ ] Tạo Aggregator Module `interview-live.module.ts` kết nối Session và Turn modules.
-- [ ] Chạy tests của interview-live (`npm test src/modules/interview-live`).
+### [x] Phần 6: Xây dựng Bounded Context Interview Live (`src/modules/interview-live/`) - HOÀN THÀNH 100%
+- [x] Tạo thư mục `src/modules/interview-live/`.
+- [x] Di chuyển `src/session/` $\rightarrow$ `src/modules/interview-live/session/`.
+- [x] Di chuyển `src/turn/` $\rightarrow$ `src/modules/interview-live/turn/`.
+- [x] Tạo Aggregator Module `interview-live.module.ts` kết nối Session và Turn modules.
+- [x] Chạy tests của interview-live (`npm test src/modules/interview-live`) $\rightarrow$ **PASS** (17/17 suites, 118/118 tests).
 
 ---
 
-### [ ] Phần 7: Xây dựng Bounded Context Interview Assessment (`src/modules/interview-assessment/`)
-- [ ] Tạo thư mục `src/modules/interview-assessment/`.
-- [ ] Di chuyển `src/assessment/` $\rightarrow$ `src/modules/interview-assessment/evaluation/`.
-- [ ] Di chuyển `src/report/` $\rightarrow$ `src/modules/interview-assessment/report/`.
-- [ ] Tạo Aggregator Module `interview-assessment.module.ts` kết nối Evaluation và Report modules.
-- [ ] Chạy tests của interview-assessment (`npm test src/modules/interview-assessment`).
+### [x] Phần 7: Xây dựng Bounded Context Interview Assessment (`src/modules/interview-assessment/`) - HOÀN THÀNH 100%
+- [x] Tạo thư mục `src/modules/interview-assessment/`.
+- [x] Di chuyển `src/assessment/` $\rightarrow$ `src/modules/interview-assessment/evaluation/` (đổi tên thành `EvaluationModule`).
+- [x] Di chuyển `src/report/` $\rightarrow$ `src/modules/interview-assessment/report/` (`ReportModule`).
+- [x] Tạo Aggregator Module `interview-assessment.module.ts` kết nối Evaluation và Report modules.
+- [x] Cập nhật toàn bộ các module phụ thuộc (`prep`, `live`, `media`, `ai`, `core runtime`, `test/`, `prisma/`).
+- [x] Chạy tests của interview-assessment (`npm test src/modules/interview-assessment`) $\rightarrow$ **PASS** (11/11 suites, 98/98 tests).
+- [x] Full regression test toàn bộ backend (`npm test`) $\rightarrow$ **PASS** (59/59 suites, 459/459 tests).
+- [x] TypeScript build (`npm run build`) $\rightarrow$ **PASS** (0 errors).
+- [x] Runtime bootstrapping verification (`node dist/main.js`) $\rightarrow$ **PASS** (NestJS khởi động thành công, ánh xạ chính xác toàn bộ routes và khởi chạy outbox workers).
 
 ---
 

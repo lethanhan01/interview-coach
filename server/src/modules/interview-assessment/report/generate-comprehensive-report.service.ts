@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
-import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
-import { SseService } from '../infrastructure/realtime/redis/sse.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { SseService } from '@infra/realtime/redis/sse.service';
 import {
   AI_GATEWAY_TOKEN,
   type IAIGateway,

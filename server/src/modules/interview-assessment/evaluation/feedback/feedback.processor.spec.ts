@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import type { Job } from 'bullmq';
 import { FeedbackProcessor } from './feedback.processor';
-import { PrismaService } from '../../infrastructure/database/prisma/prisma.service';
-import { SseService } from '../../infrastructure/realtime/redis/sse.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { SseService } from '@infra/realtime/redis/sse.service';
 import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '@infra/ai/pipelines/pipeline-strategy.factory';
 import { EvaluateAnswer } from '../evaluate-answer.service';

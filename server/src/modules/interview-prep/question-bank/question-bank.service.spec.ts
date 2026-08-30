@@ -1,5 +1,6 @@
 import { QuestionBankService } from './question-bank.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
 import {
   createMockPrismaService,
   createMockQuestionBank,
@@ -12,8 +13,8 @@ describe('QuestionBankService', () => {
   beforeEach(() => {
     mockPrisma = createMockPrismaService();
     service = new QuestionBankService(
-      mockPrisma,
-      new QuestionCriteriaService(mockPrisma),
+      mockPrisma as unknown as PrismaService,
+      new QuestionCriteriaService(mockPrisma as unknown as PrismaService),
     );
   });
 

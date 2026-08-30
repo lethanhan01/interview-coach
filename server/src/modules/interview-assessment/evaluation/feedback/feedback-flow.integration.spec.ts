@@ -10,8 +10,8 @@ import { ZodValidatorService } from '@infra/ai/zod-validator.service';
 import { OpenAIGateway } from '@infra/ai/openai.gateway';
 import { AI_GATEWAY_TOKEN } from '@infra/ai/ai-gateway.interface';
 import { ContextPackService } from '../context-pack.service';
-import { PrismaService } from '../../infrastructure/database/prisma/prisma.service';
-import { SseService } from '../../infrastructure/realtime/redis/sse.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { SseService } from '@infra/realtime/redis/sse.service';
 import { ReportService } from '../../report/report.service';
 import { EvaluateAnswer } from '../evaluate-answer.service';
 import {

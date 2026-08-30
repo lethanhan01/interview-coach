@@ -3,7 +3,7 @@ import { Queue } from 'bullmq';
 import { WorkflowDispatcher } from '../src/infrastructure/workflow/workflow-dispatcher.service';
 import { WorkflowService } from '../src/infrastructure/workflow/workflow.service';
 import { REPORT_QUEUE } from '../src/core/common/constants/queue.constants';
-import { provisionDefaultRubricCatalog } from '../src/assessment/rubric/rubric-catalog-provision';
+import { provisionDefaultRubricCatalog } from '../src/modules/interview-assessment/evaluation/rubric/rubric-catalog-provision';
 import { prisma } from '../prisma/seed/_client';
 
 describe('Report dispatch (PostgreSQL + Redis)', () => {

@@ -1,12 +1,14 @@
 import type { Job } from 'bullmq';
-import { SubmitTurnAnswer } from '../src/turn/submit-turn-answer.service';
-import { TurnAnswerContext } from '../src/turn/turn-answer-context.service';
-import { FeedbackProcessor } from '../src/assessment/feedback/feedback.processor';
-import { SessionService } from '../src/session/session.service';
-import { ChangeInterviewSessionStatus } from '../src/session/change-interview-session-status.service';
-import { SessionLifecyclePolicy } from '../src/session/session-lifecycle.policy';
-import { ReportService } from '../src/report/report.service';
-import { GenerateComprehensiveReport } from '../src/report/generate-comprehensive-report.service';
+import { SubmitTurnAnswer } from '../src/modules/interview-live/turn/submit-turn-answer.service';
+import { TurnAnswerContext } from '../src/modules/interview-live/turn/turn-answer-context.service';
+import { TextAnswerIntakeHandler } from '../src/modules/interview-live/turn/text-answer-intake.handler';
+import { AnswerIntakeRegistry } from '../src/modules/interview-live/turn/answer-intake.registry';
+import { FeedbackProcessor } from '../src/modules/interview-assessment/evaluation/feedback/feedback.processor';
+import { SessionService } from '../src/modules/interview-live/session/session.service';
+import { ChangeInterviewSessionStatus } from '../src/modules/interview-live/session/change-interview-session-status.service';
+import { SessionLifecyclePolicy } from '../src/modules/interview-live/session/session-lifecycle.policy';
+import { ReportService } from '../src/modules/interview-assessment/report/report.service';
+import { GenerateComprehensiveReport } from '../src/modules/interview-assessment/report/generate-comprehensive-report.service';
 import { WorkflowService } from '../src/infrastructure/workflow/workflow.service';
 
 describe('Session completion flow (integration)', () => {
@@ -79,6 +81,22 @@ describe('Session completion flow (integration)', () => {
         }),
       },
       userAnswer: {
+        upsert: jest.fn(async ({ where, create }: any) => {
+          const existing = [...answers.values()].find(
+            (a) => a.questionId === (where.questionId ?? where.sessionId_questionId?.questionId),
+          );
+          if (existing) return existing;
+          const answer = {
+            id: `answer-${Date.now()}`,
+            feedbackGenerated: false,
+            transcriptionStatus: null,
+            skipped: false,
+            createdAt: new Date(),
+            ...create,
+          };
+          answers.set(answer.id, answer);
+          return answer;
+        }),
         update: jest.fn(async ({ where, data }: any) => {
           const answer = answers.get(where.id);
           if (!answer) throw new Error('Answer not found');
@@ -212,58 +230,82 @@ describe('Session completion flow (integration)', () => {
       }),
     };
     const sseService = { emit: jest.fn(async () => undefined) };
-
+    const workflowService = new WorkflowService();
+    const feedbackDispatchCalls: Array<{ commandType: string; aggregateId: string }> = [];
     const workflowDispatcher = {
-      dispatchFor: jest.fn(async (commandType: string, sessionId: string) => {
-        if (commandType !== 'report-generation') return;
-        reportJobs.push({
-          name: 'comprehensive-report',
-          data: {
-            sessionId,
-            sessionType: session.sessionType,
-            contextPack: session.contextPackId,
-            language: 'vi',
-            turnIds: [...answers.keys()],
-          },
-          opts: { jobId: `workflow-report-${sessionId}` },
-        });
+      dispatchFor: jest.fn(async (commandType: string, aggregateId: string) => {
+        feedbackDispatchCalls.push({ commandType, aggregateId });
+        if (commandType === 'feedback') {
+          // Simulate dispatcher reading from outbox and pushing to feedbackQueue
+          const outboxKey = `${commandType}:${aggregateId}`;
+          // Find the outbox entry that was written by enqueueInTransaction
+          const outboxUpsertCall = transaction.workflowOutbox.upsert.mock.calls.find(
+            (call: any) => call[0]?.where?.idempotencyKey === outboxKey,
+          );
+          const payload = outboxUpsertCall?.[0]?.create;
+          if (payload) {
+            feedbackJobs.push({
+              name: 'feedback',
+              data: payload.payload ?? {},
+              opts: { jobId: `workflow-feedback-${aggregateId}` },
+            });
+          }
+        }
+        if (commandType === 'report-generation') {
+          reportJobs.push({
+            name: 'comprehensive-report',
+            data: {
+              sessionId: aggregateId,
+              sessionType: session.sessionType,
+              contextPack: session.contextPackId,
+              language: 'vi',
+              turnIds: [...answers.keys()],
+            },
+            opts: { jobId: `workflow-report-${aggregateId}` },
+          });
+        }
       }),
     };
     const reportService = new ReportService(
       prisma as any,
       workflowDispatcher as any,
     );
+    const questionCriteria = {
+      codesFromSessionQuestion: jest.fn(() => ['D1']),
+    } as any;
+    const textHandler = new TextAnswerIntakeHandler(
+      prisma as any,
+      questionCriteria,
+      workflowService,
+      workflowDispatcher as any,
+    );
+    const voiceHandler = { supportedMode: 'voice', handle: jest.fn() } as any;
+    const intakeRegistry = new AnswerIntakeRegistry(textHandler, voiceHandler);
     const turnService = new SubmitTurnAnswer(
       prisma as any,
       new TurnAnswerContext(prisma as any),
-      {
-        getHandler: jest.fn(() => ({
-          handle: jest.fn(async () => ({
-            answerId: 'answer-1',
-            feedbackQueued: true,
-            transcriptionPending: false,
-          })),
-        })),
-      } as any,
+      intakeRegistry,
     );
     const feedbackProcessor = new FeedbackProcessor(
       prisma as any,
       sseService as any,
       { getContextPack: jest.fn(() => ({})) } as any,
       {
-        execute: jest.fn(async () => ({
-          overallScore: 84,
-          modelAnswer: 'A concise STAR response.',
-          keyTakeaway: 'Quantify the result.',
-          annotatedSegments: [
-            {
-              segmentText: 'difficult project',
-              startIndex: 15,
-              endIndex: 32,
-              highlightLevel: 'strength',
-              annotation: 'Relevant example',
-            },
-          ],
+        getStrategy: jest.fn(() => ({
+          evaluateAnswer: jest.fn(async () => ({
+            overallScore: 84,
+            modelAnswer: 'A concise STAR response.',
+            keyTakeaway: 'Quantify the result.',
+            annotatedSegments: [
+              {
+                segmentText: 'difficult project',
+                startIndex: 15,
+                endIndex: 32,
+                highlightLevel: 'strength',
+                annotation: 'Relevant example',
+              },
+            ],
+          })),
         })),
       } as any,
       reportService,
@@ -278,6 +320,13 @@ describe('Session completion flow (integration)', () => {
         workflowDispatcher as any,
         {
           getStrategy: jest.fn(() => ({
+            isSessionCompletable: jest.fn(() => true),
+            buildReportGenerationPayload: jest.fn((s) => ({
+              sessionId: s.id,
+              sessionType: s.sessionType,
+              contextPack: s.contextPackId,
+              language: 'vi',
+            })),
             onCompleted: jest.fn(),
           })),
         } as any,

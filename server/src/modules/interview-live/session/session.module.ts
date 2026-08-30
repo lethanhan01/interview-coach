@@ -10,9 +10,9 @@ import {
   QUESTION_GEN_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
 } from '@core/common/constants/queue.constants';
-import { ReportModule } from '../../../report/report.module';
+import { ReportModule } from '@modules/interview-assessment/report/report.module';
 import { AuthModule } from '../../../auth/auth.module';
-import { AssessmentModule } from '../../../assessment/assessment.module';
+import { EvaluationModule } from '@modules/interview-assessment/evaluation/evaluation.module';
 import { WorkflowModule } from '@infra/workflow/workflow.module';
 
 import { HrInterviewStrategy } from './hr-interview.strategy';
@@ -23,7 +23,7 @@ import { SessionStrategyRegistry } from './session-strategy.registry';
   imports: [
     ReportModule,
     AuthModule,
-    AssessmentModule,
+    EvaluationModule,
     WorkflowModule,
     BullModule.registerQueue({
       name: QUESTION_GEN_QUEUE,

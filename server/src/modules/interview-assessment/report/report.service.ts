@@ -1,5 +1,6 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
-import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import {
@@ -12,7 +13,7 @@ import {
   getFallbackActionPlan,
   getFallbackReportSummary,
 } from '@infra/ai/fallback-content';
-import { sanitizeFeedbackSegments } from '../assessment/feedback-segment-sanitizer';
+import { sanitizeFeedbackSegments } from '../evaluation/feedback-segment-sanitizer';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 
 function toRecord(value: unknown): Record<string, unknown> {

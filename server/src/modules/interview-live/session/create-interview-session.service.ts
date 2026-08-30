@@ -1,7 +1,7 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InterviewSession } from '@prisma/client';
-import { RubricCatalogService } from '../../../assessment/rubric/rubric-catalog.service';
+import type { InterviewSession } from '@prisma/client';
+import { RubricCatalogService } from '@modules/interview-assessment/evaluation/rubric/rubric-catalog.service';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { PrismaService } from '@infra/database/prisma/prisma.service';

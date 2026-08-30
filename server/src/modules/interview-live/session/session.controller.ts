@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
 import { SseTokenGuard } from '../../../auth/guards/sse-token.guard';
 import { SessionService } from './session.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
-import { ReportService } from '../../../report/report.service';
+import { ReportService } from '@modules/interview-assessment/report/report.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionStatusDto } from './dto/update-session-status.dto';
 import {

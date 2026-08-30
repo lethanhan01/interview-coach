@@ -3,8 +3,8 @@ import { Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import type { Prisma } from '@prisma/client';
-import { PrismaService } from '../../infrastructure/database/prisma/prisma.service';
-import { SseService } from '../../infrastructure/realtime/redis/sse.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { SseService } from '@infra/realtime/redis/sse.service';
 import { ContextPackService } from '../context-pack.service';
 import { ReportService } from '../../report/report.service';
 import {

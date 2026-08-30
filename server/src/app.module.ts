@@ -11,11 +11,10 @@ import { BullModule } from '@nestjs/bullmq';
 import { PrismaModule } from './infrastructure/database/prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { AiModule } from '@infra/ai/ai.module';
-import { AssessmentModule } from './assessment/assessment.module';
+import { InterviewAssessmentModule } from '@modules/interview-assessment/interview-assessment.module';
 import { InterviewLiveModule } from '@modules/interview-live/interview-live.module';
 import { MediaModule } from '@modules/media/media.module';
 import { InterviewPrepModule } from '@modules/interview-prep/interview-prep.module';
-import { ReportModule } from './report/report.module';
 import { UserModule } from './user/user.module';
 import { validateEnv } from '@core/config/env.validation';
 import { InterviewAIExceptionFilter } from '@core/common/exceptions/interview-ai-exception.filter';
@@ -50,11 +49,10 @@ class ApiRootController {
     PrismaModule,
     AuthModule,
     AiModule,
-    AssessmentModule,
     InterviewLiveModule,
     MediaModule,
     InterviewPrepModule,
-    ReportModule,
+    InterviewAssessmentModule,
     UserModule,
     AdminModule,
   ],

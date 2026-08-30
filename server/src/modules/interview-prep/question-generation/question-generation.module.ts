@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { AiModule } from '@infra/ai/ai.module';
-import { AssessmentModule } from '@/assessment/assessment.module';
+import { EvaluationModule } from '@modules/interview-assessment/evaluation/evaluation.module';
 import {
   QUESTION_GEN_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
@@ -17,7 +17,7 @@ const workerProviders = workersEnabled() ? [QuestionGenerationProcessor] : [];
 @Module({
   imports: [
     AiModule,
-    AssessmentModule,
+    EvaluationModule,
     QuestionBankModule,
     QuestionCriteriaModule,
     BullModule.registerQueue({
