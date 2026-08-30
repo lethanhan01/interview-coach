@@ -11,6 +11,10 @@ import { ReportService } from './report.service';
 import { ReportController } from './report.controller';
 import { ComprehensiveReportProcessor } from './comprehensive-report.processor';
 import { GenerateComprehensiveReport } from './generate-comprehensive-report.service';
+import { ReportMetricsAggregator } from './services/report-metrics-aggregator.service';
+import { ReportDataCollector } from './services/report-data-collector.service';
+import { ReportPromptExecutor } from './services/report-prompt-executor.service';
+import { ReportPersistenceService } from './services/report-persistence.service';
 import { workersEnabled } from '@core/runtime/runtime-role';
 
 const workerProviders = workersEnabled() ? [ComprehensiveReportProcessor] : [];
@@ -25,7 +29,15 @@ const workerProviders = workersEnabled() ? [ComprehensiveReportProcessor] : [];
       defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[REPORT_QUEUE],
     }),
   ],
-  providers: [ReportService, GenerateComprehensiveReport, ...workerProviders],
+  providers: [
+    ReportService,
+    GenerateComprehensiveReport,
+    ReportMetricsAggregator,
+    ReportDataCollector,
+    ReportPromptExecutor,
+    ReportPersistenceService,
+    ...workerProviders,
+  ],
   controllers: [ReportController],
   exports: [ReportService],
 })

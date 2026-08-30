@@ -1,6 +1,11 @@
+import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { Job } from 'bullmq';
 import { GenerateComprehensiveReport } from './generate-comprehensive-report.service';
+import { ReportDataCollector } from './services/report-data-collector.service';
+import { ReportMetricsAggregator } from './services/report-metrics-aggregator.service';
+import { ReportPromptExecutor } from './services/report-prompt-executor.service';
+import { ReportPersistenceService } from './services/report-persistence.service';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
 import { OpenAIGateway } from '@infra/ai/openai.gateway';
@@ -145,6 +150,10 @@ describe('GenerateComprehensiveReport', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GenerateComprehensiveReport,
+        ReportDataCollector,
+        ReportMetricsAggregator,
+        ReportPromptExecutor,
+        ReportPersistenceService,
         { provide: PrismaService, useValue: prisma },
         { provide: SseService, useValue: mockSse },
         { provide: AI_GATEWAY_TOKEN, useValue: mockOpenAI },
@@ -257,8 +266,8 @@ describe('GenerateComprehensiveReport', () => {
     prisma.sessionReport.upsert.mockResolvedValue({});
     prisma.aiFeedback.upsert.mockResolvedValue({});
     prisma.interviewSession.update.mockResolvedValue({});
-    const warnSpy = jest.spyOn((processor as any).logger, 'warn');
-    const errorSpy = jest.spyOn((processor as any).logger, 'error');
+    const warnSpy = jest.spyOn(Logger.prototype, 'warn');
+    const errorSpy = jest.spyOn(Logger.prototype, 'error');
 
     await expect(processor.process(job)).resolves.toBeUndefined();
 

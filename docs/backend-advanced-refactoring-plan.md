@@ -70,9 +70,9 @@ graph TD
 
 ## 3. KẾ HOẠCH TRIỂN KHAI CHI TIẾT THEO 2 PHASE
 
-### Phase 1: Phân rã các Big Services (Decomposition & Pure Testing)
+### Phase 1: Phân rã các Big Services (Decomposition & Pure Testing) - [HOÀN THÀNH 100%]
 
-Mục tiêu: Phân rã `GenerateComprehensiveReport` và tối ưu `EvaluateAnswer` thành các Sub-services độc lập, bổ sung Unit Tests cho từng thành phần.
+Mục tiêu: Phân rã `GenerateComprehensiveReport` và tối ưu `EvaluateAnswer` thành các Sub-services độc lập, bổ sung Unit Tests cho từng thành phần. (Đã hoàn thành 5/5 tasks, 70/70 unit tests pass, TypeScript build pass).
 
 #### Task 1.1: Tách `ReportMetricsAggregator` (`report-metrics-aggregator.service.ts`)
 * **Trách nhiệm**: Pure domain logic xử lý dữ liệu và tính toán điểm số.
