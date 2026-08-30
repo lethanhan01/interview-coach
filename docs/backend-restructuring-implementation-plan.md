@@ -2,7 +2,7 @@
 
 > **Tài liệu**: Kế hoạch triển khai tái cấu trúc thư mục và kiến trúc Backend (`server/src`)  
 > **Hệ thống**: Nền tảng AI Mock Interview Coach  
-> **Trạng thái**: Đã hoàn thành Phần 1 đến Phần 10 (10/12 phần - 83.3%). Sẵn sàng triển khai Phần 11 (Kiểm thử toàn diện & Build Check).  
+> **Trạng thái**: Đã hoàn thành toàn bộ Phần 1 đến Phần 12 (12/12 phần - 100%). Kế hoạch tái cấu trúc Backend hoàn tất xuất sắc và toàn diện.  
 > **Mục tiêu**: Tái tổ chức toàn bộ `server/src` từ cấu trúc 22 thư mục phẳng hiện tại thành **3 tầng rõ ràng (Core - Infrastructure - Modules)**, gom nhóm nghiệp vụ phỏng vấn thành **3 Bounded Contexts theo vòng đời chuẩn (Prep - Live - Assessment)**, tách riêng hạ tầng Media STT (`media`), và cung cấp bản đồ kiến trúc trực quan giúp developer mới nắm bắt hệ thống trong vòng 15 phút.
 
 ---
@@ -314,19 +314,24 @@ Bản kế hoạch được chia thành **12 phần nhỏ độc lập** để t
 
 ---
 
-### [ ] Phần 11: Kiểm thử toàn diện & Build Check
-- [ ] Chạy toàn bộ test suites của backend:
+### [x] Phần 11: Kiểm thử toàn diện & Build Check - HOÀN THÀNH 100%
+- [x] Chạy toàn bộ test suites của backend:
   ```bash
   npm test
   ```
-  *(Yêu cầu: 59/59 test suites passed, 459/459 tests passed)*
-- [ ] Chạy build TypeScript kiểm tra không còn broken imports:
+  *(Kết quả: **59/59 test suites passed**, **460/460 tests passed**, 0 failures)*
+- [x] Chạy build TypeScript kiểm tra không còn broken imports:
   ```bash
   npm run build
   ```
+  *(Kết quả: **0 compilation errors**, sinh mã sạch ra thư mục `dist/`)*
+- [x] Xác thực Runtime Bootstrapping & Inversion of Control (IoC):
+  - NestJS Application Context (`AppModule`): Khởi tạo thành công 100% providers, database connection, guards, services và outbox processors.
+  - HTTP Application Routing: Khởi tạo và ánh xạ đầy đủ 100% controllers & routes (`/api/v1/*`, `/health`).
 
 ---
 
-### [ ] Phần 12: Cập nhật Tài liệu Onboarding & Visual Architecture Guide
-- [ ] Cập nhật `server/README.md` với sơ đồ 3 tầng và hướng dẫn cho dev mới.
-- [ ] Cập nhật `server/CLAUDE.md` với quy chuẩn vị trí đặt file mới (Core, Infra, Bounded Contexts).
+### [x] Phần 12: Cập nhật Tài liệu Onboarding & Visual Architecture Guide - HOÀN THÀNH 100%
+- [x] Cập nhật `server/README.md` với sơ đồ kiến trúc 3 tầng trực quan, mô tả chi tiết các Bounded Contexts và danh sách path aliases (`@core/*`, `@infra/*`, `@modules/*`, `@/*`) giúp onboarding developer mới trong 15 phút.
+- [x] Cập nhật `server/CLAUDE.md` với quy chuẩn vị trí đặt file mới (Core, Infrastructure, Bounded Contexts, Module Index) và 3 bộ quy tắc ranh giới kiến trúc tự động (`feature-boundaries.spec.ts`).
+

@@ -12,6 +12,62 @@ Mở Swagger cùng origin backend, gọi `POST /auth/login` hoặc `POST /auth/r
 
 ---
 
+## Kiến trúc 3 Tầng & Bounded Contexts (3-Layer Architecture)
+
+Backend được tổ chức theo mô hình **3 Tầng Rõ Ràng (Core - Infrastructure - Modules)** kết hợp **Bounded Contexts** chuẩn hóa theo vòng đời phỏng vấn:
+
+```text
+server/src/
+├── core/                                      ──► [TẦNG 1: NỀN TẢNG CHUNG - ZERO BUSINESS LOGIC]
+│   ├── common/                                (Filters, Interceptors, Guards, Middleware, Constants, Swagger)
+│   ├── config/                                (Environment Validation, Global Config)
+│   ├── runtime/                               (HTTP Server vs Background Worker Roles)
+│   ├── types/                                 (Global Domain Types & Enums)
+│   └── test-utils/                            (Shared Test Fixtures & Mocks)
+│
+├── infrastructure/                            ──► [TẦNG 2: HẠ TẦNG KỸ THUẬT - PORTS & ADAPTERS]
+│   ├── database/prisma/                       (Prisma ORM, Connection Resilience, Base Repositories)
+│   ├── ai/                                    (OpenAI Gateway, Prompt Builders, Zod Schema Validators)
+│   ├── storage/                               (IPrivateMediaStorageAdapter, SupabaseMediaAdapter)
+│   ├── workflow/                              (Transactional Outbox Engine, BullMQ Dispatcher)
+│   └── realtime/                              (WebSocket / SSE Gateway)
+│
+├── modules/                                   ──► [TẦNG 3: NGHIỆP VỤ ỨNG DỤNG - BOUNDED CONTEXTS]
+│   ├── auth/                                  (Authentication, JWT, Password Hashing, Guards)
+│   ├── user/                                  (User Profiles, Account Management)
+│   ├── admin/                                 (System Ops, Metrics, Operational Dashboards)
+│   ├── health/                                (Liveness & Readiness Probes)
+│   ├── media/                                 (Private Audio Storage, Whisper STT, Voice Metrics)
+│   │
+│   ├── interview-prep/                        ──► [Context 1: Chuẩn bị & Tài nguyên Phỏng vấn (Trước)]
+│   │   ├── question-generation/               (AI Dynamic Question Generator & BullMQ Processor)
+│   │   ├── question-bank/                     (Curated Question Bank & Catalog)
+│   │   ├── question-criteria/                 (Assessment Rubric Criteria & Benchmarks)
+│   │   └── job-description/                   (Saved JD CRUD & Resume Context Parsing)
+│   │
+│   ├── interview-live/                        ──► [Context 2: Tiến trình Phỏng vấn Trực tiếp (Trong)]
+│   │   ├── session/                           (Session Lifecycle, Mode Strategies: HR / Technical)
+│   │   └── turn/                              (Turn Management, Intake Handlers: Text / Voice)
+│   │
+│   └── interview-assessment/                  ──► [Context 3: Đánh giá, Phản hồi & Báo cáo (Sau)]
+│       ├── evaluation/                        (Turn Evaluation, Rubric Scoring, Feedback Sanitizer)
+│       └── report/                            (Comprehensive Session Report, Radar Scoring Matrix)
+│
+├── architecture/                              ──► [KIỂM SOÁT RANH GIỚI TỰ ĐỘNG]
+│   └── feature-boundaries.spec.ts             (Automated Boundary Enforcer)
+│
+├── app.module.ts                              ──► [ROOT MODULE KẾT NỐI RÚT GỌN]
+└── main.ts
+```
+
+### Path Aliases được hỗ trợ:
+- `@core/*` $\rightarrow$ `src/core/*`
+- `@infra/*` $\rightarrow$ `src/infrastructure/*`
+- `@modules/*` $\rightarrow$ `src/modules/*`
+- `@/*` $\rightarrow$ `src/*`
+
+---
+
 ## Yêu cầu
 
 - Node.js >= 20
