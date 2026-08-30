@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { AuthModule } from '../auth/auth.module';
-import { AiModule } from '../ai/ai.module';
+import { AiModule } from '@infra/ai/ai.module';
 import {
   QUEUE_DEFAULT_JOB_OPTIONS,
   REPORT_QUEUE,
 } from '@core/common/constants/queue.constants';
-import { WorkflowModule } from '../workflow/workflow.module';
+import { WorkflowModule } from '@infra/workflow/workflow.module';
 import { ReportService } from './report.service';
 import { ReportController } from './report.controller';
 import { ComprehensiveReportProcessor } from './comprehensive-report.processor';

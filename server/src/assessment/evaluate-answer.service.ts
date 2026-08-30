@@ -1,20 +1,20 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { AI_GATEWAY_TOKEN, type IAIGateway } from '../ai/ai-gateway.interface';
-import { PromptBuilderService } from '../ai/prompt-builder.service';
-import { ZodValidatorService } from '../ai/zod-validator.service';
-import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../ai/prompts/surgical-feedback-v1.5';
+import { AI_GATEWAY_TOKEN, type IAIGateway } from '@infra/ai/ai-gateway.interface';
+import { PromptBuilderService } from '@infra/ai/prompt-builder.service';
+import { ZodValidatorService } from '@infra/ai/zod-validator.service';
+import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '@infra/ai/prompts/surgical-feedback-v1.5';
 import {
   FeedbackSchema,
   PROMPT_VERSION,
-} from '../ai/pipelines/pipeline.schemas';
+} from '@infra/ai/pipelines/pipeline.schemas';
 import type {
   AppliedDimension,
   FeedbackInput,
   SurgicalFeedback,
-} from '../ai/pipelines/interview-pipeline.interface';
+} from '@infra/ai/pipelines/interview-pipeline.interface';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
-import { getLanguageInstruction } from '../ai/output-language';
+import { getLanguageInstruction } from '@infra/ai/output-language';
 import { resolveAppliedDimensions } from './dimension-matcher';
 import { sanitizeFeedbackSegments } from './feedback-segment-sanitizer';
 import { z } from 'zod';

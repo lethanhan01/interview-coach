@@ -5,11 +5,9 @@
  */
 import { Client } from 'pg';
 import dotenv from 'dotenv';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: join(__dirname, '../.env') });
+dotenv.config({ path: join(process.cwd(), '.env') });
 
 const client = new Client({ connectionString: process.env.DIRECT_URL });
 

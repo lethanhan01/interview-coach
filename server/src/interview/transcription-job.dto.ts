@@ -1,5 +1,5 @@
-import type { SessionType } from '../ai/pipelines/interview-pipeline.interface';
-import type { OutputLanguage } from '../ai/output-language';
+import type { SessionType } from '@infra/ai/pipelines/interview-pipeline.interface';
+import type { OutputLanguage } from '@infra/ai/output-language';
 
 export interface TranscriptionJobDto {
   sessionId: string;

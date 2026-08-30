@@ -7,8 +7,8 @@ import { SessionLifecyclePolicy } from './session-lifecycle.policy';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { RubricCatalogService } from '../assessment/rubric/rubric-catalog.service';
-import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
-import { WorkflowService } from '../workflow/workflow.service';
+import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
+import { WorkflowService } from '@infra/workflow/workflow.service';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import {

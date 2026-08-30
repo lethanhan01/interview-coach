@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { Queue } from 'bullmq';
-import { WorkflowDispatcher } from '../src/workflow/workflow-dispatcher.service';
-import { WorkflowService } from '../src/workflow/workflow.service';
-import { REPORT_QUEUE } from '../src/common/constants/queue.constants';
+import { WorkflowDispatcher } from '../src/infrastructure/workflow/workflow-dispatcher.service';
+import { WorkflowService } from '../src/infrastructure/workflow/workflow.service';
+import { REPORT_QUEUE } from '../src/core/common/constants/queue.constants';
 import { provisionDefaultRubricCatalog } from '../src/assessment/rubric/rubric-catalog-provision';
 import { prisma } from '../prisma/seed/_client';
 
@@ -101,6 +101,8 @@ describe('Report dispatch (PostgreSQL + Redis)', () => {
       prisma as any,
       { add: jest.fn() } as any,
       queue,
+      { add: jest.fn() } as any,
+      { add: jest.fn() } as any,
     );
 
     await Promise.all([

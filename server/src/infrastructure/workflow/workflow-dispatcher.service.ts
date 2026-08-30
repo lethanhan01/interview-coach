@@ -18,7 +18,7 @@ import {
   TRANSCRIPTION_JOB_ATTEMPTS,
   TRANSCRIPTION_QUEUE,
 } from '@core/common/constants/queue.constants';
-import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { workersEnabled } from '@core/runtime/runtime-role';
 import { WorkflowCommandType } from './workflow.service';
 

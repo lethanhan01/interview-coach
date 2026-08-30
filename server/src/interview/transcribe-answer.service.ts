@@ -13,10 +13,10 @@ import {
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
 } from '@core/common/constants/queue.constants';
-import { getFallbackFeedbackMessage } from '../ai/fallback-content';
-import type { OutputLanguage } from '../ai/output-language';
-import { resolveOutputLanguage } from '../ai/output-language';
-import type { SessionType } from '../ai/pipelines/interview-pipeline.interface';
+import { getFallbackFeedbackMessage } from '@infra/ai/fallback-content';
+import type { OutputLanguage } from '@infra/ai/output-language';
+import { resolveOutputLanguage } from '@infra/ai/output-language';
+import type { SessionType } from '@infra/ai/pipelines/interview-pipeline.interface';
 import type { TranscriptionJobDto } from './transcription-job.dto';
 
 @Injectable()

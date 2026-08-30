@@ -3,22 +3,22 @@ import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { SseService } from '../infrastructure/realtime/redis/sse.service';
-import { AI_GATEWAY_TOKEN, type IAIGateway } from '../ai/ai-gateway.interface';
-import { COMPREHENSIVE_REPORT_PROMPT_CONFIG } from '../ai/prompts/comprehensive-report-v1.0';
-import type { SessionType } from '../ai/pipelines/interview-pipeline.interface';
+import { AI_GATEWAY_TOKEN, type IAIGateway } from '@infra/ai/ai-gateway.interface';
+import { COMPREHENSIVE_REPORT_PROMPT_CONFIG } from '@infra/ai/prompts/comprehensive-report-v1.0';
+import type { SessionType } from '@infra/ai/pipelines/interview-pipeline.interface';
 import {
   describeAIError,
   isAIFallbackEligible,
   isAIQuotaExceeded,
-} from '../ai/ai-error.utils';
+} from '@infra/ai/ai-error.utils';
 import {
   getFallbackActionPlan,
   getFallbackReportSummary,
-} from '../ai/fallback-content';
+} from '@infra/ai/fallback-content';
 import {
   getLanguageInstruction,
   resolveOutputLanguage,
-} from '../ai/output-language';
+} from '@infra/ai/output-language';
 
 export interface ComprehensiveReportJobDto {
   sessionId: string;

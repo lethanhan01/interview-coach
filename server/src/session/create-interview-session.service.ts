@@ -5,10 +5,10 @@ import { RubricCatalogService } from '../assessment/rubric/rubric-catalog.servic
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
-import { resolveOutputLanguage } from '../ai/output-language';
+import { resolveOutputLanguage } from '@infra/ai/output-language';
 import { CreateSessionDto } from './dto/create-session.dto';
-import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
-import { WorkflowService } from '../workflow/workflow.service';
+import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
+import { WorkflowService } from '@infra/workflow/workflow.service';
 import { SessionStrategyRegistry } from './session-strategy.registry';
 
 @Injectable()

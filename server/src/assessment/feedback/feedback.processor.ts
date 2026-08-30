@@ -11,18 +11,18 @@ import {
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
 } from '@core/common/constants/queue.constants';
-import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '../../ai/prompts/surgical-feedback-v1.5';
-import type { SessionType } from '../../ai/pipelines/interview-pipeline.interface';
+import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '@infra/ai/prompts/surgical-feedback-v1.5';
+import type { SessionType } from '@infra/ai/pipelines/interview-pipeline.interface';
 import {
   describeAIError,
   isAIQuotaExceeded,
   isAIFallbackEligible,
-} from '../../ai/ai-error.utils';
+} from '@infra/ai/ai-error.utils';
 import { getFallbackFeedbackMessage } from '../feedback-fallback';
-import type { OutputLanguage } from '../../ai/output-language';
-import { resolveOutputLanguage } from '../../ai/output-language';
+import type { OutputLanguage } from '@infra/ai/output-language';
+import { resolveOutputLanguage } from '@infra/ai/output-language';
 import { sanitizeFeedbackSegments } from '../feedback-segment-sanitizer';
-import { PipelineStrategyFactory } from '../../ai/pipelines/pipeline-strategy.factory';
+import { PipelineStrategyFactory } from '@infra/ai/pipelines/pipeline-strategy.factory';
 
 interface FeedbackJobDto {
   sessionId: string;

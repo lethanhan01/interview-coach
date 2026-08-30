@@ -4,11 +4,11 @@ import { GenerateSessionQuestions } from './generate-session-questions.service';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { SseService } from '../infrastructure/realtime/redis/sse.service';
 import { ContextPackService } from '../assessment/context-pack.service';
-import { PipelineStrategyFactory } from '../ai/pipelines/pipeline-strategy.factory';
+import { PipelineStrategyFactory } from '@infra/ai/pipelines/pipeline-strategy.factory';
 import { QuestionBankService } from '../question-bank/question-bank.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
-import { OpenAIGateway } from '../ai/openai.gateway';
-import { AI_GATEWAY_TOKEN } from '../ai/ai-gateway.interface';
+import { OpenAIGateway } from '@infra/ai/openai.gateway';
+import { AI_GATEWAY_TOKEN } from '@infra/ai/ai-gateway.interface';
 import {
   createMockPrismaService,
   createMockSseService,

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { AiModule } from '../ai/ai.module';
+import { AiModule } from '@infra/ai/ai.module';
+import { StorageModule } from '@infra/storage/storage.module';
 import { QuestionCriteriaModule } from '../question-criteria/question-criteria.module';
 import { ReportModule } from '../report/report.module';
 import {
@@ -9,8 +10,6 @@ import {
   TRANSCRIPTION_QUEUE,
 } from '@core/common/constants/queue.constants';
 import { AudioObjectStorage } from './audio-object-storage.service';
-import { SupabaseMediaStorageAdapter } from './supabase-media-storage.adapter';
-import { MEDIA_STORAGE_TOKEN } from './media-storage.interface';
 import { SpeechToText } from './speech-to-text.service';
 import { TranscribeAnswer } from './transcribe-answer.service';
 import { TranscriptionProcessor } from './transcription.processor';
@@ -23,6 +22,7 @@ const workerProviders = workersEnabled() ? [TranscriptionProcessor] : [];
 @Module({
   imports: [
     AiModule,
+    StorageModule,
     QuestionCriteriaModule,
     ReportModule,
     BullModule.registerQueue(
@@ -37,10 +37,6 @@ const workerProviders = workersEnabled() ? [TranscriptionProcessor] : [];
     ),
   ],
   providers: [
-    {
-      provide: MEDIA_STORAGE_TOKEN,
-      useClass: SupabaseMediaStorageAdapter,
-    },
     AudioObjectStorage,
     SpeechToText,
     UploadAndTranscribeAnswerAudio,
@@ -49,7 +45,7 @@ const workerProviders = workersEnabled() ? [TranscriptionProcessor] : [];
     ...workerProviders,
   ],
   exports: [
-    MEDIA_STORAGE_TOKEN,
+    StorageModule,
     AudioObjectStorage,
     UploadAndTranscribeAnswerAudio,
     VoiceMetricsService,

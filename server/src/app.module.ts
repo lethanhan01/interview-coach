@@ -10,7 +10,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import { PrismaModule } from './infrastructure/database/prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
-import { AiModule } from './ai/ai.module';
+import { AiModule } from '@infra/ai/ai.module';
 import { AssessmentModule } from './assessment/assessment.module';
 import { QuestionModule } from './question/question.module';
 import { SessionModule } from './session/session.module';

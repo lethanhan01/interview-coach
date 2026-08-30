@@ -91,7 +91,7 @@ describe('resolveRuntimeRole', () => {
       jest.resetModules();
       const {
         WorkflowDispatcher,
-      } = require('../../workflow/workflow-dispatcher.service');
+      } = require('../../infrastructure/workflow/workflow-dispatcher.service');
       const dispatcher = new WorkflowDispatcher({}, {}, {});
       const reconcile = jest.spyOn(dispatcher, 'reconcile');
 

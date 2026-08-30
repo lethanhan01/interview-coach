@@ -7,7 +7,7 @@ import { ChangeInterviewSessionStatus } from '../src/session/change-interview-se
 import { SessionLifecyclePolicy } from '../src/session/session-lifecycle.policy';
 import { ReportService } from '../src/report/report.service';
 import { GenerateComprehensiveReport } from '../src/report/generate-comprehensive-report.service';
-import { WorkflowService } from '../src/workflow/workflow.service';
+import { WorkflowService } from '../src/infrastructure/workflow/workflow.service';
 
 describe('Session completion flow (integration)', () => {
   it('submit answer -> feedback queue -> completing -> report queue -> completed', async () => {
@@ -236,10 +236,15 @@ describe('Session completion flow (integration)', () => {
     const turnService = new SubmitTurnAnswer(
       prisma as any,
       new TurnAnswerContext(prisma as any),
-      { codesFromSessionQuestion: jest.fn(() => ['D4']) } as any,
-      { calculate: jest.fn() },
-      feedbackQueue as any,
-      { add: jest.fn() } as any,
+      {
+        getHandler: jest.fn(() => ({
+          handle: jest.fn(async () => ({
+            answerId: 'answer-1',
+            feedbackQueued: true,
+            transcriptionPending: false,
+          })),
+        })),
+      } as any,
     );
     const feedbackProcessor = new FeedbackProcessor(
       prisma as any,
@@ -271,6 +276,11 @@ describe('Session completion flow (integration)', () => {
         new SessionLifecyclePolicy(),
         new WorkflowService(),
         workflowDispatcher as any,
+        {
+          getStrategy: jest.fn(() => ({
+            onCompleted: jest.fn(),
+          })),
+        } as any,
       ),
     );
     const reportGenerator = new GenerateComprehensiveReport(

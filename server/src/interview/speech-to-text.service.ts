@@ -1,7 +1,7 @@
 import { Injectable, HttpStatus, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { isIP } from 'node:net';
-import { AI_GATEWAY_TOKEN, type IAIGateway } from '../ai/ai-gateway.interface';
+import { AI_GATEWAY_TOKEN, type IAIGateway } from '@infra/ai/ai-gateway.interface';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 

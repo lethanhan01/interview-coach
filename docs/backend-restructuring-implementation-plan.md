@@ -211,13 +211,13 @@ Bản kế hoạch được chia thành **12 phần nhỏ độc lập** để t
 
 ---
 
-### [ ] Phần 3: Di chuyển & Tổ chức Tầng Infrastructure (`src/infrastructure/`)
-- [ ] Di chuyển `ai/` $\rightarrow$ `src/infrastructure/ai/`.
-- [ ] Di chuyển `workflow/` $\rightarrow$ `src/infrastructure/workflow/`.
-- [ ] Tạo `src/infrastructure/storage/`, di chuyển `media-storage.interface.ts` và `supabase-media-storage.adapter.ts` từ `src/interview/` sang.
-- [ ] Tạo `storage.module.ts` để export Storage Providers.
-- [ ] Giữ nguyên `database/prisma/` và `realtime/` trong `src/infrastructure/`.
-- [ ] Cập nhật các import và chạy tests của infrastructure (`npm test src/infrastructure`).
+### [x] Phần 3: Di chuyển & Tổ chức Tầng Infrastructure (`src/infrastructure/`)
+- [x] Di chuyển `ai/` $\rightarrow$ `src/infrastructure/ai/`.
+- [x] Di chuyển `workflow/` $\rightarrow$ `src/infrastructure/workflow/`.
+- [x] Tạo `src/infrastructure/storage/`, di chuyển `media-storage.interface.ts` và `supabase-media-storage.adapter.ts` từ `src/interview/` sang.
+- [x] Tạo `storage.module.ts` để export Storage Providers.
+- [x] Giữ nguyên `database/prisma/` và `realtime/` trong `src/infrastructure/`.
+- [x] Cập nhật các import và chạy tests của infrastructure (`npm test src/infrastructure`).
 
 ---
 

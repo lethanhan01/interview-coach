@@ -8,7 +8,7 @@ import {
   type UploadedMediaFile,
   type StoredMediaResult,
   type SignedUrlResult,
-} from './media-storage.interface';
+} from '@infra/storage/media-storage.interface';
 
 const SUPPORTED_AUDIO_TYPES = new Map([
   ['audio/webm', 'webm'],

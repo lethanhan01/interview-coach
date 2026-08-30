@@ -4,7 +4,6 @@ import { join, relative, resolve, sep } from 'node:path';
 const SRC_ROOT = resolve(__dirname, '..');
 const FEATURES = new Set([
   'admin',
-  'ai',
   'assessment',
   'auth',
   'health',
@@ -26,12 +25,6 @@ const APPROVED_INTERNAL_IMPORTS = new Set([
   'auth/guards/jwt-auth.guard',
   'auth/guards/roles.guard',
   'auth/guards/sse-token.guard',
-  'ai/pipelines/interview-pipeline.interface',
-  'ai/pipelines/pipeline-strategy.factory',
-  'ai/pipelines/pipeline.schemas',
-  'ai/prompts/comprehensive-report-v1.0',
-  'ai/prompts/question-gen-v1.0',
-  'ai/prompts/surgical-feedback-v1.5',
   'assessment/rubric/rubric-catalog.service',
 ]);
 const IMPORT_PATTERN = /from\s+['"](\.{1,2}\/[^'"]+)['"]/g;

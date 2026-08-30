@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TextAnswerIntakeHandler } from './text-answer-intake.handler';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
-import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
-import { WorkflowService } from '../workflow/workflow.service';
+import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
+import { WorkflowService } from '@infra/workflow/workflow.service';
 import {
   createMockPrismaService,
   createMockQuestionCriteriaService,

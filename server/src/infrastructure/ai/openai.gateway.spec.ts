@@ -55,7 +55,9 @@ describe('OpenAIGateway', () => {
     const gateway = new OpenAIGateway(config as any);
     const create = jest
       .fn()
-      .mockRejectedValue(new APIUserAbortError('Request was aborted.'));
+      .mockRejectedValue(
+        new APIUserAbortError({ message: 'Request was aborted.' }),
+      );
     (gateway as any).chatClient.chat.completions.create = create;
 
     await expect(gateway.chatCompletion(params)).rejects.toMatchObject({

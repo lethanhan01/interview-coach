@@ -3,14 +3,14 @@ import { randomUUID } from 'crypto';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { ContextPackService } from '../assessment/context-pack.service';
 import type { ContextPackConfig } from '../assessment/context-pack.service';
-import { describeAIError, isAIFallbackEligible } from '../ai/ai-error.utils';
-import { AI_GATEWAY_TOKEN, type IAIGateway } from '../ai/ai-gateway.interface';
-import { resolveOutputLanguage } from '../ai/output-language';
-import { PipelineStrategyFactory } from '../ai/pipelines/pipeline-strategy.factory';
+import { describeAIError, isAIFallbackEligible } from '@infra/ai/ai-error.utils';
+import { AI_GATEWAY_TOKEN, type IAIGateway } from '@infra/ai/ai-gateway.interface';
+import { resolveOutputLanguage } from '@infra/ai/output-language';
+import { PipelineStrategyFactory } from '@infra/ai/pipelines/pipeline-strategy.factory';
 import type {
   GeneratedQuestion,
   SessionType,
-} from '../ai/pipelines/interview-pipeline.interface';
+} from '@infra/ai/pipelines/interview-pipeline.interface';
 import { QuestionBankService } from '../question-bank/question-bank.service';
 import type { FallbackQuestion } from '../question-bank/question-bank.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';

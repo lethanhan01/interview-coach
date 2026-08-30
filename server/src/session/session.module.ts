@@ -13,7 +13,7 @@ import {
 import { ReportModule } from '../report/report.module';
 import { AuthModule } from '../auth/auth.module';
 import { AssessmentModule } from '../assessment/assessment.module';
-import { WorkflowModule } from '../workflow/workflow.module';
+import { WorkflowModule } from '@infra/workflow/workflow.module';
 
 import { HrInterviewStrategy } from './hr-interview.strategy';
 import { TechnicalInterviewStrategy } from './technical-interview.strategy';

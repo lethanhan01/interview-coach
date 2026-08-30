@@ -2,7 +2,7 @@ import type {
   ContextPackConfig,
   RubricDimensionEntry,
 } from '../assessment/context-pack.service';
-import type { SessionType } from '../ai/pipelines/interview-pipeline.interface';
+import type { SessionType } from '@infra/ai/pipelines/interview-pipeline.interface';
 
 export type QuestionCategory = 'behavioral' | 'technical';
 

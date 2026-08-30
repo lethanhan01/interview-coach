@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-import type { ContextPackConfig } from '../assessment/context-pack.service';
+import type { ContextPackConfig } from '@/assessment/context-pack.service';
 import type { SessionType } from './pipelines/interview-pipeline.interface';
 
 export type PromptTask =

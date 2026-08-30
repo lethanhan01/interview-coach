@@ -7,7 +7,7 @@ import {
   REPORT_QUEUE,
   TRANSCRIPTION_QUEUE,
 } from '@core/common/constants/queue.constants';
-import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
+import { PrismaModule } from '@infra/database/prisma/prisma.module';
 import { WorkflowDispatcher } from './workflow-dispatcher.service';
 import { WorkflowService } from './workflow.service';
 

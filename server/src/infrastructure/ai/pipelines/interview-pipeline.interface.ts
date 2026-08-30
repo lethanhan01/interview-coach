@@ -1,4 +1,4 @@
-import type { ContextPackConfig } from '../../assessment/context-pack.service';
+import type { ContextPackConfig } from '@/assessment/context-pack.service';
 import type { OutputLanguage } from '../output-language';
 export {
   SESSION_TYPES,

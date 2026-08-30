@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { InterviewModule } from '../interview/interview.module';
 import { QuestionCriteriaModule } from '../question-criteria/question-criteria.module';
-import { WorkflowModule } from '../workflow/workflow.module';
+import { WorkflowModule } from '@infra/workflow/workflow.module';
 import { TurnController } from './turn.controller';
 import { TurnService } from './turn.service';
 import { TurnAnswerContext } from './turn-answer-context.service';

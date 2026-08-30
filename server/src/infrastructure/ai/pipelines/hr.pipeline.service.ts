@@ -1,16 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EvaluateAnswer } from '../../assessment/evaluate-answer.service';
+import { EvaluateAnswer } from '@/assessment/evaluate-answer.service';
 import { AI_GATEWAY_TOKEN, type IAIGateway } from '../ai-gateway.interface';
 import { PromptBuilderService } from '../prompt-builder.service';
 import { ZodValidatorService } from '../zod-validator.service';
 import { BasePipelineService } from './base-pipeline.service';
 
 @Injectable()
-export class TechnicalPipelineService extends BasePipelineService {
-  readonly sessionType = 'technical' as const;
+export class HrPipelineService extends BasePipelineService {
+  readonly sessionType = 'hr' as const;
   protected readonly strategyInstructions =
-    'Focus on technical depth, applied problem-solving, trade-offs, debugging, system design, and engineering quality. Ask for reasoning and concrete implementation decisions.';
+    'Focus on behavioral evidence, motivation, communication, collaboration, self-awareness, and culture fit. Probe for concrete STAR examples. Avoid deep technical trivia unless the job description explicitly requires it.';
 
   constructor(
     @Inject(AI_GATEWAY_TOKEN)

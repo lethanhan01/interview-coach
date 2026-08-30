@@ -4,7 +4,7 @@ import { FeedbackProcessor } from './feedback.processor';
 import { PrismaService } from '../../infrastructure/database/prisma/prisma.service';
 import { SseService } from '../../infrastructure/realtime/redis/sse.service';
 import { ContextPackService } from '../context-pack.service';
-import { PipelineStrategyFactory } from '../../ai/pipelines/pipeline-strategy.factory';
+import { PipelineStrategyFactory } from '@infra/ai/pipelines/pipeline-strategy.factory';
 import { EvaluateAnswer } from '../evaluate-answer.service';
 import { ReportService } from '../../report/report.service';
 import {
@@ -443,7 +443,7 @@ describe('FeedbackProcessor', () => {
       data: { ...jobData, sessionType: 'technical' as const },
       attemptsMade: 0,
       opts: { attempts: 2 },
-    } as Job<typeof jobData>;
+    } as unknown as Job<typeof jobData>;
 
     await processor.process(technicalJob);
 

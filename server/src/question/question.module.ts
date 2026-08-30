@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { AiModule } from '../ai/ai.module';
+import { AiModule } from '@infra/ai/ai.module';
 import { AssessmentModule } from '../assessment/assessment.module';
 import {
   QUESTION_GEN_QUEUE,

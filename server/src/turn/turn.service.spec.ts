@@ -5,8 +5,8 @@ import { PrismaService } from '../infrastructure/database/prisma/prisma.service'
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import { UploadAndTranscribeAnswerAudio } from '../interview/upload-and-transcribe-answer-audio.service';
 import { VoiceMetricsService } from '../interview/voice-metrics.service';
-import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
-import { WorkflowService } from '../workflow/workflow.service';
+import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
+import { WorkflowService } from '@infra/workflow/workflow.service';
 import { TurnAnswerContext } from './turn-answer-context.service';
 import { SubmitTurnAnswer } from './submit-turn-answer.service';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';

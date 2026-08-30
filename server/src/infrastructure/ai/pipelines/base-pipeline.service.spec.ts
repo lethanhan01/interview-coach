@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EvaluateAnswer } from '../../assessment/evaluate-answer.service';
+import { EvaluateAnswer } from '@/assessment/evaluate-answer.service';
 import { HrPipelineService } from './hr.pipeline.service';
 import { OpenAIGateway } from '../openai.gateway';
 import { AI_GATEWAY_TOKEN } from '../ai-gateway.interface';

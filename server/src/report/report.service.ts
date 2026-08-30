@@ -11,9 +11,9 @@ import { FeedbackProgressDto } from './dto/feedback-progress.dto';
 import {
   getFallbackActionPlan,
   getFallbackReportSummary,
-} from '../ai/fallback-content';
+} from '@infra/ai/fallback-content';
 import { sanitizeFeedbackSegments } from '../assessment/feedback-segment-sanitizer';
-import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
+import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 
 function toRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
