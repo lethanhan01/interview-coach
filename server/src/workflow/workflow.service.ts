@@ -1,12 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
-export type WorkflowCommandType = 'question-generation' | 'report-generation';
+export type WorkflowCommandType =
+  | 'question-generation'
+  | 'report-generation'
+  | 'transcription'
+  | 'feedback';
 
-interface EnqueueWorkflowCommand {
+export interface EnqueueWorkflowCommand {
   commandType: WorkflowCommandType;
-  sessionId: string;
+  aggregateId?: string;
+  sessionId?: string;
   payload: Prisma.InputJsonValue;
+  idempotencyKey?: string;
 }
 
 @Injectable()
@@ -15,17 +21,29 @@ export class WorkflowService {
     tx: Prisma.TransactionClient,
     command: EnqueueWorkflowCommand,
   ) {
+    const aggregateId = command.aggregateId ?? command.sessionId;
+    if (!aggregateId) {
+      throw new Error(
+        'aggregateId or sessionId must be provided for workflow command',
+      );
+    }
+    const idempotencyKey =
+      command.idempotencyKey ?? `${command.commandType}:${aggregateId}`;
+
     return tx.workflowOutbox.upsert({
       where: {
-        idempotencyKey: `${command.commandType}:${command.sessionId}`,
+        idempotencyKey,
       },
       create: {
         commandType: command.commandType,
-        aggregateId: command.sessionId,
+        aggregateId,
         payload: command.payload,
-        idempotencyKey: `${command.commandType}:${command.sessionId}`,
+        idempotencyKey,
       },
       update: {},
     });
   }
 }
+
+export { WorkflowService as WorkflowOutboxService };
+

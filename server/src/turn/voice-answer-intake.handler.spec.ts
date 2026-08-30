@@ -1,20 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getQueueToken } from '@nestjs/bullmq';
 import { VoiceAnswerIntakeHandler } from './voice-answer-intake.handler';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import { VoiceMetricsService } from '../interview/voice-metrics.service';
-import {
-  FEEDBACK_QUEUE,
-  FEEDBACK_JOB_ATTEMPTS,
-  TRANSCRIPTION_QUEUE,
-  TRANSCRIPTION_JOB_ATTEMPTS,
-} from '../common/constants/queue.constants';
+import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
+import { WorkflowService } from '../workflow/workflow.service';
 import {
   createMockPrismaService,
   createMockQuestionCriteriaService,
-  createMockQueue,
   createMockVoiceMetricsService,
+  createMockWorkflowDispatcher,
+  createMockWorkflowService,
 } from '../test-utils/mock-factories';
 import { AnswerIntakeContext } from './answer-intake-handler.interface';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
@@ -24,8 +20,8 @@ describe('VoiceAnswerIntakeHandler', () => {
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockQuestionCriteria: ReturnType<typeof createMockQuestionCriteriaService>;
   let mockVoiceMetrics: ReturnType<typeof createMockVoiceMetricsService>;
-  let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
-  let mockTranscriptionQueue: ReturnType<typeof createMockQueue>;
+  let mockWorkflow: ReturnType<typeof createMockWorkflowService>;
+  let mockDispatcher: ReturnType<typeof createMockWorkflowDispatcher>;
 
   const mockContext: AnswerIntakeContext = {
     sessionId: 'session-123',
@@ -52,8 +48,8 @@ describe('VoiceAnswerIntakeHandler', () => {
     mockPrisma = createMockPrismaService();
     mockQuestionCriteria = createMockQuestionCriteriaService();
     mockVoiceMetrics = createMockVoiceMetricsService();
-    mockFeedbackQueue = createMockQueue();
-    mockTranscriptionQueue = createMockQueue();
+    mockWorkflow = createMockWorkflowService();
+    mockDispatcher = createMockWorkflowDispatcher();
 
     mockQuestionCriteria.codesFromSessionQuestion.mockReturnValue(['T1', 'T2']);
     mockVoiceMetrics.calculate.mockReturnValue({
@@ -75,12 +71,12 @@ describe('VoiceAnswerIntakeHandler', () => {
           useValue: mockVoiceMetrics,
         },
         {
-          provide: getQueueToken(FEEDBACK_QUEUE),
-          useValue: mockFeedbackQueue,
+          provide: WorkflowService,
+          useValue: mockWorkflow,
         },
         {
-          provide: getQueueToken(TRANSCRIPTION_QUEUE),
-          useValue: mockTranscriptionQueue,
+          provide: WorkflowDispatcher,
+          useValue: mockDispatcher,
         },
       ],
     }).compile();
@@ -93,7 +89,7 @@ describe('VoiceAnswerIntakeHandler', () => {
   });
 
   describe('Audio only (no transcript)', () => {
-    it('should create new voice answer and enqueue transcription job when audioFileUrl is present', async () => {
+    it('should create new voice answer, enqueue transcription in outbox, and dispatch job when audioFileUrl is present', async () => {
       mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
       mockPrisma.userAnswer.upsert.mockResolvedValue({
         id: 'ans-voice-1',
@@ -132,23 +128,27 @@ describe('VoiceAnswerIntakeHandler', () => {
         update: {},
       });
 
-      expect(mockTranscriptionQueue.add).toHaveBeenCalledWith(
+      expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
+        expect.anything(),
+        {
+          commandType: 'transcription',
+          aggregateId: 'ans-voice-1',
+          payload: {
+            sessionId: 'session-123',
+            answerId: 'ans-voice-1',
+            audioFileUrl: 'https://storage.example.com/audio/1.mp3',
+            audioDurationSeconds: 45,
+            audioSizeBytes: 102400,
+            contextPack: 'VN',
+            sessionType: 'technical',
+            language: 'vi',
+          },
+        },
+      );
+
+      expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
         'transcription',
-        {
-          sessionId: 'session-123',
-          answerId: 'ans-voice-1',
-          audioFileUrl: 'https://storage.example.com/audio/1.mp3',
-          audioDurationSeconds: 45,
-          audioSizeBytes: 102400,
-          contextPack: 'VN',
-          sessionType: 'technical',
-          language: 'vi',
-        },
-        {
-          jobId: 'transcription-ans-voice-1',
-          attempts: TRANSCRIPTION_JOB_ATTEMPTS,
-          backoff: { type: 'fixed', delay: 3000 },
-        },
+        'ans-voice-1',
       );
 
       expect(result).toEqual({
@@ -178,7 +178,8 @@ describe('VoiceAnswerIntakeHandler', () => {
         feedbackQueued: true,
         transcriptionPending: false,
       });
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('should return feedbackQueued: false if existing answer has transcriptionStatus "failed"', async () => {
@@ -201,7 +202,8 @@ describe('VoiceAnswerIntakeHandler', () => {
         feedbackQueued: false,
         transcriptionPending: false,
       });
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('should re-enqueue transcription if existing answer is still pending', async () => {
@@ -221,14 +223,20 @@ describe('VoiceAnswerIntakeHandler', () => {
 
       const result = await handler.handle(dto, mockContext);
 
-      expect(mockTranscriptionQueue.add).toHaveBeenCalledWith(
+      expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          commandType: 'transcription',
+          aggregateId: 'ans-voice-pending',
+          payload: expect.objectContaining({
+            answerId: 'ans-voice-pending',
+          }),
+        }),
+      );
+
+      expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
         'transcription',
-        expect.objectContaining({
-          answerId: 'ans-voice-pending',
-        }),
-        expect.objectContaining({
-          jobId: 'transcription-ans-voice-pending',
-        }),
+        'ans-voice-pending',
       );
 
       expect(result).toEqual({
@@ -240,7 +248,7 @@ describe('VoiceAnswerIntakeHandler', () => {
   });
 
   describe('Voice with transcript', () => {
-    it('should calculate voice metrics and enqueue feedback job', async () => {
+    it('should calculate voice metrics, enqueue feedback in outbox, and dispatch job', async () => {
       mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
       mockPrisma.userAnswer.upsert.mockResolvedValue({
         id: 'ans-voice-with-txt',
@@ -286,26 +294,30 @@ describe('VoiceAnswerIntakeHandler', () => {
         update: {},
       });
 
-      expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
+      expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
+        expect.anything(),
+        {
+          commandType: 'feedback',
+          aggregateId: 'ans-voice-with-txt',
+          payload: {
+            sessionId: 'session-123',
+            turnId: 'ans-voice-with-txt',
+            answerId: 'ans-voice-with-txt',
+            questionId: 'q-202',
+            questionText: 'Mô tả kiến trúc dự án gần nhất của bạn?',
+            questionCategory: 'technical',
+            competencyDomains: ['T1', 'T2'],
+            answerText: 'Tôi thiết kế hệ thống theo Event Driven Architecture.',
+            contextPack: 'VN',
+            sessionType: 'technical',
+            language: 'vi',
+          },
+        },
+      );
+
+      expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
         'feedback',
-        {
-          sessionId: 'session-123',
-          turnId: 'ans-voice-with-txt',
-          answerId: 'ans-voice-with-txt',
-          questionId: 'q-202',
-          questionText: 'Mô tả kiến trúc dự án gần nhất của bạn?',
-          questionCategory: 'technical',
-          competencyDomains: ['T1', 'T2'],
-          answerText: 'Tôi thiết kế hệ thống theo Event Driven Architecture.',
-          contextPack: 'VN',
-          sessionType: 'technical',
-          language: 'vi',
-        },
-        {
-          jobId: 'feedback-ans-voice-with-txt',
-          attempts: FEEDBACK_JOB_ATTEMPTS,
-          backoff: { type: 'fixed', delay: 2000 },
-        },
+        'ans-voice-with-txt',
       );
 
       expect(result).toEqual({
@@ -335,7 +347,9 @@ describe('VoiceAnswerIntakeHandler', () => {
         feedbackQueued: false,
         transcriptionPending: false,
       });
-      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
   });
 });
+

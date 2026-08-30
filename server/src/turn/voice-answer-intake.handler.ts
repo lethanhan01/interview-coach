@@ -1,17 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
 import { Prisma } from '@prisma/client';
-import { Queue } from 'bullmq';
-import {
-  FEEDBACK_JOB_ATTEMPTS,
-  FEEDBACK_QUEUE,
-  TRANSCRIPTION_JOB_ATTEMPTS,
-  TRANSCRIPTION_QUEUE,
-} from '../common/constants/queue.constants';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import { VoiceMetricsService } from '../interview/voice-metrics.service';
 import type { TranscriptionJobDto } from '../interview/transcription-job.dto';
+import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
+import { WorkflowService } from '../workflow/workflow.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
 import {
@@ -27,9 +21,8 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
     private readonly prisma: PrismaService,
     private readonly questionCriteria: QuestionCriteriaService,
     private readonly voiceMetrics: VoiceMetricsService,
-    @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
-    @InjectQueue(TRANSCRIPTION_QUEUE)
-    private readonly transcriptionQueue: Queue,
+    private readonly workflow: WorkflowService,
+    private readonly dispatcher: WorkflowDispatcher,
   ) {}
 
   async handle(
@@ -42,8 +35,9 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
       return this.handleAudioOnly(dto, context);
     }
 
-    return this.handleVoiceWithTranscript(dto, context, transcript ?? '');
+    return this.handleVoiceWithTranscript(dto, context);
   }
+
 
   private async handleAudioOnly(
     dto: SubmitAnswerDto,
@@ -76,24 +70,43 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
       };
     }
 
-    const answer = await this.prisma.userAnswer.upsert({
-      where: { questionId: dto.questionId },
-      create: {
-        questionId: dto.questionId,
-        answerMode: 'voice',
-        answerText: '',
-        skipped: false,
-        audioFileUrl: dto.audioFileUrl,
-        audioDurationSeconds: dto.audioDurationSeconds,
-        audioSizeBytes: dto.audioSizeBytes,
-        transcriptionStatus: 'pending',
-      },
-      update: {},
+    const payload = this.buildTranscriptionPayload(
+      '',
+      dto,
+      context,
+    );
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      const answer = await tx.userAnswer.upsert({
+        where: { questionId: dto.questionId },
+        create: {
+          questionId: dto.questionId,
+          answerMode: 'voice',
+          answerText: '',
+          skipped: false,
+          audioFileUrl: dto.audioFileUrl,
+          audioDurationSeconds: dto.audioDurationSeconds,
+          audioSizeBytes: dto.audioSizeBytes,
+          transcriptionStatus: 'pending',
+        },
+        update: {},
+      });
+
+      payload.answerId = answer.id;
+
+      await this.workflow.enqueueInTransaction(tx, {
+        commandType: 'transcription',
+        aggregateId: answer.id,
+        payload: payload as unknown as Prisma.InputJsonValue,
+      });
+
+      return answer;
     });
 
-    await this.enqueueTranscription(answer.id, dto, context);
+    await this.dispatcher.dispatchFor('transcription', created.id);
+
     return {
-      answerId: answer.id,
+      answerId: created.id,
       feedbackQueued: false,
       transcriptionPending: true,
     };
@@ -102,71 +115,82 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
   private async handleVoiceWithTranscript(
     dto: SubmitAnswerDto,
     context: AnswerIntakeContext,
-    transcript: string,
   ): Promise<TurnResponseDto> {
-    let answer = await this.prisma.userAnswer.findUnique({
+    const existing = await this.prisma.userAnswer.findUnique({
       where: { questionId: dto.questionId },
     });
 
-    if (answer?.skipped) {
+    if (existing?.skipped) {
       return {
-        answerId: answer.id,
+        answerId: existing.id,
         feedbackQueued: false,
         transcriptionPending: false,
       };
     }
 
-    if (!answer) {
+    let answerId: string;
+
+    if (existing) {
+      answerId = existing.id;
+      const feedbackPayload = this.buildFeedbackPayload(
+        existing.id,
+        existing.answerText,
+        context,
+      );
+      await this.prisma.$transaction(async (tx) => {
+        await this.workflow.enqueueInTransaction(tx, {
+          commandType: 'feedback',
+          aggregateId: existing.id,
+          payload: feedbackPayload,
+        });
+      });
+    } else {
       const metrics = this.voiceMetrics.calculate(
-        transcript,
+        transcriptText(dto.answerText),
         dto.audioDurationSeconds ?? 0,
       );
 
-      answer = await this.prisma.userAnswer.upsert({
-        where: { questionId: dto.questionId },
-        create: {
-          questionId: dto.questionId,
-          answerMode: 'voice',
-          answerText: transcript,
-          skipped: false,
-          audioFileUrl: dto.audioFileUrl,
-          audioDurationSeconds: dto.audioDurationSeconds,
-          audioSizeBytes: dto.audioSizeBytes,
-          transcriptionStatus: 'done',
-          voiceMetricsJson: metrics
-            ? (metrics as unknown as Prisma.InputJsonValue)
-            : undefined,
-        },
-        update: {},
+      const created = await this.prisma.$transaction(async (tx) => {
+        const answer = await tx.userAnswer.upsert({
+          where: { questionId: dto.questionId },
+          create: {
+            questionId: dto.questionId,
+            answerMode: 'voice',
+            answerText: transcriptText(dto.answerText),
+            skipped: false,
+            audioFileUrl: dto.audioFileUrl,
+            audioDurationSeconds: dto.audioDurationSeconds,
+            audioSizeBytes: dto.audioSizeBytes,
+            transcriptionStatus: 'done',
+            voiceMetricsJson: metrics
+              ? (metrics as unknown as Prisma.InputJsonValue)
+              : undefined,
+          },
+          update: {},
+        });
+
+        const feedbackPayload = this.buildFeedbackPayload(
+          answer.id,
+          answer.answerText,
+          context,
+        );
+
+        await this.workflow.enqueueInTransaction(tx, {
+          commandType: 'feedback',
+          aggregateId: answer.id,
+          payload: feedbackPayload,
+        });
+
+        return answer;
       });
+
+      answerId = created.id;
     }
 
-    await this.feedbackQueue.add(
-      'feedback',
-      {
-        sessionId: context.sessionId,
-        turnId: answer.id,
-        answerId: answer.id,
-        questionId: context.question.id,
-        questionText: context.question.questionText,
-        questionCategory: context.question.questionCategory,
-        competencyDomains: this.questionCriteria.codesFromSessionQuestion(
-          context.question,
-        ),
-        answerText: answer.answerText,
-        contextPack: context.session.contextPackId,
-        sessionType: context.sessionType,
-        language: context.session.language,
-      },
-      {
-        jobId: `feedback-${answer.id}`,
-        attempts: FEEDBACK_JOB_ATTEMPTS,
-        backoff: { type: 'fixed', delay: 2000 },
-      },
-    );
+    await this.dispatcher.dispatchFor('feedback', answerId);
 
     return {
-      answerId: answer.id,
+      answerId,
       feedbackQueued: true,
       transcriptionPending: false,
     };
@@ -177,7 +201,24 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
     dto: SubmitAnswerDto,
     context: AnswerIntakeContext,
   ) {
-    const payload: TranscriptionJobDto = {
+    const payload = this.buildTranscriptionPayload(answerId, dto, context);
+    await this.prisma.$transaction(async (tx) => {
+      await this.workflow.enqueueInTransaction(tx, {
+        commandType: 'transcription',
+        aggregateId: answerId,
+        payload: payload as unknown as Prisma.InputJsonValue,
+      });
+    });
+    await this.dispatcher.dispatchFor('transcription', answerId);
+  }
+
+
+  private buildTranscriptionPayload(
+    answerId: string,
+    dto: SubmitAnswerDto,
+    context: AnswerIntakeContext,
+  ): TranscriptionJobDto {
+    return {
       sessionId: context.sessionId,
       answerId,
       audioFileUrl: dto.audioFileUrl!,
@@ -187,11 +228,32 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
       sessionType: context.sessionType,
       language: context.session.language as TranscriptionJobDto['language'],
     };
+  }
 
-    await this.transcriptionQueue.add('transcription', payload, {
-      jobId: `transcription-${answerId}`,
-      attempts: TRANSCRIPTION_JOB_ATTEMPTS,
-      backoff: { type: 'fixed', delay: 3000 },
-    });
+  private buildFeedbackPayload(
+    answerId: string,
+    answerText: string,
+    context: AnswerIntakeContext,
+  ) {
+    return {
+      sessionId: context.sessionId,
+      turnId: answerId,
+      answerId,
+      questionId: context.question.id,
+      questionText: context.question.questionText,
+      questionCategory: context.question.questionCategory,
+      competencyDomains: this.questionCriteria.codesFromSessionQuestion(
+        context.question,
+      ),
+      answerText,
+      contextPack: context.session.contextPackId,
+      sessionType: context.sessionType,
+      language: context.session.language,
+    };
   }
 }
+
+function transcriptText(raw?: string): string {
+  return raw?.trim() ?? '';
+}
+

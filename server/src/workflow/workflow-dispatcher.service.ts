@@ -8,11 +8,15 @@ import {
 import { Prisma } from '@prisma/client';
 import { Queue } from 'bullmq';
 import {
+  FEEDBACK_JOB_ATTEMPTS,
+  FEEDBACK_QUEUE,
   QUESTION_GEN_JOB_ATTEMPTS,
   QUESTION_GEN_QUEUE,
   REPORT_JOB_ATTEMPTS,
   REPORT_JOB_RETRY_DELAY_MS,
   REPORT_QUEUE,
+  TRANSCRIPTION_JOB_ATTEMPTS,
+  TRANSCRIPTION_QUEUE,
 } from '../common/constants/queue.constants';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { workersEnabled } from '../runtime/runtime-role';
@@ -43,6 +47,9 @@ export class WorkflowDispatcher
     private readonly prisma: PrismaService,
     @InjectQueue(QUESTION_GEN_QUEUE) private readonly questionQueue: Queue,
     @InjectQueue(REPORT_QUEUE) private readonly reportQueue: Queue,
+    @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
+    @InjectQueue(TRANSCRIPTION_QUEUE)
+    private readonly transcriptionQueue: Queue,
   ) {}
 
   onApplicationBootstrap() {
@@ -61,11 +68,13 @@ export class WorkflowDispatcher
 
   async dispatchFor(
     commandType: WorkflowCommandType,
-    sessionId: string,
+    aggregateId: string,
+    idempotencyKey?: string,
   ): Promise<void> {
     try {
+      const key = idempotencyKey ?? `${commandType}:${aggregateId}`;
       const command = await this.prisma.workflowOutbox.findUnique({
-        where: { idempotencyKey: `${commandType}:${sessionId}` },
+        where: { idempotencyKey: key },
         select: {
           id: true,
           commandType: true,
@@ -77,7 +86,7 @@ export class WorkflowDispatcher
       if (command) await this.dispatch(command);
     } catch (error: unknown) {
       this.logger.error(
-        `Unable to dispatch ${commandType} for session ${sessionId}`,
+        `Unable to dispatch ${commandType} for aggregate ${aggregateId}`,
         error instanceof Error ? error.stack : String(error),
       );
     }
@@ -141,6 +150,18 @@ export class WorkflowDispatcher
         });
       } else if (command.commandType === 'report-generation') {
         if (!(await this.enqueueReport(command))) return;
+      } else if (command.commandType === 'transcription') {
+        await this.transcriptionQueue.add('transcription', command.payload, {
+          jobId: `workflow-${command.id}`,
+          attempts: TRANSCRIPTION_JOB_ATTEMPTS,
+          backoff: { type: 'fixed', delay: 3_000 },
+        });
+      } else if (command.commandType === 'feedback') {
+        await this.feedbackQueue.add('feedback', command.payload, {
+          jobId: `workflow-${command.id}`,
+          attempts: FEEDBACK_JOB_ATTEMPTS,
+          backoff: { type: 'fixed', delay: 2_000 },
+        });
       } else {
         throw new Error(`Unsupported workflow command: ${command.commandType}`);
       }
@@ -157,6 +178,7 @@ export class WorkflowDispatcher
       await this.recordFailure(command, error);
     }
   }
+
 
   private async enqueueReport(command: OutboxCommand): Promise<boolean> {
     const answers = await this.prisma.userAnswer.findMany({

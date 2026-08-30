@@ -1,12 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import {
-  FEEDBACK_JOB_ATTEMPTS,
-  FEEDBACK_QUEUE,
-} from '../common/constants/queue.constants';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
+import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
+import { WorkflowService } from '../workflow/workflow.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
 import {
@@ -21,67 +17,102 @@ export class TextAnswerIntakeHandler implements IAnswerIntakeHandler {
   constructor(
     private readonly prisma: PrismaService,
     private readonly questionCriteria: QuestionCriteriaService,
-    @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
+    private readonly workflow: WorkflowService,
+    private readonly dispatcher: WorkflowDispatcher,
   ) {}
 
   async handle(
     dto: SubmitAnswerDto,
     context: AnswerIntakeContext,
   ): Promise<TurnResponseDto> {
-    let answer = await this.prisma.userAnswer.findUnique({
+    const existing = await this.prisma.userAnswer.findUnique({
       where: { questionId: dto.questionId },
     });
 
-    if (answer?.skipped) {
+    if (existing?.skipped) {
       return {
-        answerId: answer.id,
+        answerId: existing.id,
         feedbackQueued: false,
         transcriptionPending: false,
       };
     }
 
-    if (!answer) {
-      const answerText = dto.answerText?.trim() ?? '';
-      answer = await this.prisma.userAnswer.upsert({
-        where: { questionId: dto.questionId },
-        create: {
-          questionId: dto.questionId,
-          answerMode: 'text',
-          answerText,
-          skipped: false,
-        },
-        update: {},
+    let answerId: string;
+
+    if (existing) {
+      answerId = existing.id;
+      const feedbackPayload = this.buildFeedbackPayload(
+        existing.id,
+        existing.answerText,
+        context,
+      );
+      await this.prisma.$transaction(async (tx) => {
+        await this.workflow.enqueueInTransaction(tx, {
+          commandType: 'feedback',
+          aggregateId: existing.id,
+          payload: feedbackPayload,
+        });
       });
+    } else {
+      const answerText = dto.answerText?.trim() ?? '';
+      const created = await this.prisma.$transaction(async (tx) => {
+        const answer = await tx.userAnswer.upsert({
+          where: { questionId: dto.questionId },
+          create: {
+            questionId: dto.questionId,
+            answerMode: 'text',
+            answerText,
+            skipped: false,
+          },
+          update: {},
+        });
+
+        const feedbackPayload = this.buildFeedbackPayload(
+          answer.id,
+          answer.answerText,
+          context,
+        );
+
+        await this.workflow.enqueueInTransaction(tx, {
+          commandType: 'feedback',
+          aggregateId: answer.id,
+          payload: feedbackPayload,
+        });
+
+        return answer;
+      });
+      answerId = created.id;
     }
 
-    await this.feedbackQueue.add(
-      'feedback',
-      {
-        sessionId: context.sessionId,
-        turnId: answer.id,
-        answerId: answer.id,
-        questionId: context.question.id,
-        questionText: context.question.questionText,
-        questionCategory: context.question.questionCategory,
-        competencyDomains: this.questionCriteria.codesFromSessionQuestion(
-          context.question,
-        ),
-        answerText: answer.answerText,
-        contextPack: context.session.contextPackId,
-        sessionType: context.sessionType,
-        language: context.session.language,
-      },
-      {
-        jobId: `feedback-${answer.id}`,
-        attempts: FEEDBACK_JOB_ATTEMPTS,
-        backoff: { type: 'fixed', delay: 2000 },
-      },
-    );
+    await this.dispatcher.dispatchFor('feedback', answerId);
 
     return {
-      answerId: answer.id,
+      answerId,
       feedbackQueued: true,
       transcriptionPending: false,
     };
   }
+
+  private buildFeedbackPayload(
+    answerId: string,
+    answerText: string,
+    context: AnswerIntakeContext,
+  ) {
+    return {
+      sessionId: context.sessionId,
+      turnId: answerId,
+      answerId,
+      questionId: context.question.id,
+      questionText: context.question.questionText,
+      questionCategory: context.question.questionCategory,
+      competencyDomains: this.questionCriteria.codesFromSessionQuestion(
+        context.question,
+      ),
+      answerText,
+      contextPack: context.session.contextPackId,
+      sessionType: context.sessionType,
+      language: context.session.language,
+    };
+  }
 }
+

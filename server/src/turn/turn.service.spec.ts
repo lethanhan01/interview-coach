@@ -1,26 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
-import { getQueueToken } from '@nestjs/bullmq';
 import { TurnService } from './turn.service';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import { UploadAndTranscribeAnswerAudio } from '../interview/upload-and-transcribe-answer-audio.service';
 import { VoiceMetricsService } from '../interview/voice-metrics.service';
+import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
+import { WorkflowService } from '../workflow/workflow.service';
 import { TurnAnswerContext } from './turn-answer-context.service';
 import { SubmitTurnAnswer } from './submit-turn-answer.service';
-import {
-  FEEDBACK_QUEUE,
-  FEEDBACK_JOB_ATTEMPTS,
-  TRANSCRIPTION_QUEUE,
-  TRANSCRIPTION_JOB_ATTEMPTS,
-} from '../common/constants/queue.constants';
 import { InterviewAIException } from '../common/exceptions/interview-ai.exception';
 import { ErrorCode } from '../common/exceptions/error-code.enum';
 import {
   createMockPrismaService,
   createMockQuestionCriteriaService,
-  createMockQueue,
   createMockVoiceMetricsService,
+  createMockWorkflowDispatcher,
+  createMockWorkflowService,
 } from '../test-utils/mock-factories';
 
 import { TextAnswerIntakeHandler } from './text-answer-intake.handler';
@@ -30,8 +26,8 @@ import { AnswerIntakeRegistry } from './answer-intake.registry';
 describe('TurnService', () => {
   let service: TurnService;
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
-  let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
-  let mockTranscriptionQueue: ReturnType<typeof createMockQueue>;
+  let mockWorkflow: ReturnType<typeof createMockWorkflowService>;
+  let mockDispatcher: ReturnType<typeof createMockWorkflowDispatcher>;
   let mockQuestionCriteria: ReturnType<
     typeof createMockQuestionCriteriaService
   >;
@@ -82,8 +78,8 @@ describe('TurnService', () => {
 
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
-    mockFeedbackQueue = createMockQueue();
-    mockTranscriptionQueue = createMockQueue();
+    mockWorkflow = createMockWorkflowService();
+    mockDispatcher = createMockWorkflowDispatcher();
     mockQuestionCriteria = createMockQuestionCriteriaService();
     mockAudioStorage = {
       execute: jest.fn(),
@@ -113,16 +109,14 @@ describe('TurnService', () => {
           provide: VoiceMetricsService,
           useValue: mockVoiceMetrics,
         },
-        { provide: getQueueToken(FEEDBACK_QUEUE), useValue: mockFeedbackQueue },
-        {
-          provide: getQueueToken(TRANSCRIPTION_QUEUE),
-          useValue: mockTranscriptionQueue,
-        },
+        { provide: WorkflowService, useValue: mockWorkflow },
+        { provide: WorkflowDispatcher, useValue: mockDispatcher },
       ],
     }).compile();
 
     service = module.get<TurnService>(TurnService);
   });
+
 
   afterEach(() => jest.clearAllMocks());
 
@@ -234,8 +228,8 @@ describe('TurnService', () => {
         service.submitAnswer('session-123', 'user-abc', TEXT_DTO),
       ).rejects.toThrow(InterviewAIException);
 
-      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...BASE_SESSION,
@@ -260,8 +254,8 @@ describe('TurnService', () => {
         service.submitAnswer('session-123', 'user-abc', TEXT_DTO),
       ).rejects.toThrow(InterviewAIException);
 
-      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue({
         ...BASE_SESSION,
@@ -289,8 +283,8 @@ describe('TurnService', () => {
       });
 
       expect(mockPrisma.sessionQuestion.findFirst).not.toHaveBeenCalled();
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
-      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('ném NOT_FOUND (404) khi question không tồn tại trong session', async () => {
@@ -322,7 +316,6 @@ describe('TurnService', () => {
       });
       mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
       mockPrisma.userAnswer.upsert.mockResolvedValue(BASE_ANSWER);
-      mockFeedbackQueue.add.mockResolvedValue({});
 
       const result = await service.submitAnswer(
         'session-123',
@@ -338,12 +331,11 @@ describe('TurnService', () => {
       expect(mockPrisma.userAnswer.upsert).toHaveBeenCalled();
     });
 
-    it('text mode: tạo answer, enqueue feedback', async () => {
+    it('text mode: tạo answer, enqueue feedback in outbox, dispatch', async () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
       mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
       mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
       mockPrisma.userAnswer.upsert.mockResolvedValue(BASE_ANSWER);
-      mockFeedbackQueue.add.mockResolvedValue({});
 
       const result = await service.submitAnswer(
         'session-123',
@@ -356,28 +348,30 @@ describe('TurnService', () => {
         feedbackQueued: true,
         transcriptionPending: false,
       });
-      expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
-        'feedback',
-        expect.objectContaining({
-          sessionId: 'session-123',
-          turnId: 'answer-1',
-          answerId: 'answer-1',
-          questionId: 'q-1',
-          questionText: 'Giới thiệu bản thân?',
-          questionCategory: 'behavioral',
-          competencyDomains: ['D1'],
-          answerText: 'Tôi là developer với 2 năm kinh nghiệm.',
-          contextPack: 'VN',
-          sessionType: 'hr',
-          language: 'vi',
-        }),
-        expect.objectContaining({
-          jobId: 'feedback-answer-1',
-          attempts: FEEDBACK_JOB_ATTEMPTS,
-          backoff: { type: 'fixed', delay: 2000 },
-        }),
+      expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
+        expect.anything(),
+        {
+          commandType: 'feedback',
+          aggregateId: 'answer-1',
+          payload: expect.objectContaining({
+            sessionId: 'session-123',
+            turnId: 'answer-1',
+            answerId: 'answer-1',
+            questionId: 'q-1',
+            questionText: 'Giới thiệu bản thân?',
+            questionCategory: 'behavioral',
+            competencyDomains: ['D1'],
+            answerText: 'Tôi là developer với 2 năm kinh nghiệm.',
+            contextPack: 'VN',
+            sessionType: 'hr',
+            language: 'vi',
+          }),
+        },
       );
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
+        'feedback',
+        'answer-1',
+      );
     });
 
     it('skipQuestion: tạo skipped answer rỗng và không enqueue feedback/transcription', async () => {
@@ -412,8 +406,8 @@ describe('TurnService', () => {
           }),
         }),
       );
-      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('skipQuestion retry: dùng lại skipped answer hiện có và không enqueue', async () => {
@@ -439,8 +433,8 @@ describe('TurnService', () => {
         transcriptionPending: false,
       });
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
-      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('skipQuestion không ghi đè câu trả lời thật đã tồn tại', async () => {
@@ -465,8 +459,8 @@ describe('TurnService', () => {
         transcriptionPending: false,
       });
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
-      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('không enqueue feedback nếu submit đến sau khi câu hỏi đã bị skipped', async () => {
@@ -491,8 +485,8 @@ describe('TurnService', () => {
         transcriptionPending: false,
       });
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
-      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('feedback payload dùng questionText/contextPack/sessionType từ DB cho technical Western session', async () => {
@@ -518,36 +512,39 @@ describe('TurnService', () => {
         ...BASE_ANSWER,
         answerText: 'I chose pagination because it reduced memory usage.',
       });
-      mockFeedbackQueue.add.mockResolvedValue({});
 
       await service.submitAnswer('session-123', 'user-abc', {
         ...TEXT_DTO,
         answerText: 'Client text should only be stored before enqueue.',
       });
 
-      expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
-        'feedback',
+      expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
+        expect.anything(),
         {
-          sessionId: 'session-123',
-          turnId: 'answer-1',
-          answerId: 'answer-1',
-          questionId: 'q-1',
-          questionText: 'Explain a system design trade-off.',
-          questionCategory: 'technical',
-          competencyDomains: ['TD3'],
-          answerText: 'I chose pagination because it reduced memory usage.',
-          contextPack: 'Western',
-          sessionType: 'technical',
-          language: 'vi',
+          commandType: 'feedback',
+          aggregateId: 'answer-1',
+          payload: expect.objectContaining({
+            sessionId: 'session-123',
+            turnId: 'answer-1',
+            answerId: 'answer-1',
+            questionId: 'q-1',
+            questionText: 'Explain a system design trade-off.',
+            questionCategory: 'technical',
+            competencyDomains: ['TD3'],
+            answerText: 'I chose pagination because it reduced memory usage.',
+            contextPack: 'Western',
+            sessionType: 'technical',
+            language: 'vi',
+          }),
         },
-        expect.objectContaining({
-          jobId: 'feedback-answer-1',
-          attempts: FEEDBACK_JOB_ATTEMPTS,
-        }),
+      );
+      expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
+        'feedback',
+        'answer-1',
       );
     });
 
-    it('voice mode: enqueue transcription job, không gọi Whisper trực tiếp, return transcriptionPending=true', async () => {
+    it('voice mode: enqueue transcription in outbox, không gọi Whisper trực tiếp, return transcriptionPending=true', async () => {
       const voiceDto = {
         questionId: 'q-1',
         answerMode: 'voice' as const,
@@ -563,7 +560,6 @@ describe('TurnService', () => {
         answerText: '',
         audioFileUrl: 'https://storage.example.com/audio.webm',
       });
-      mockTranscriptionQueue.add.mockResolvedValue({});
 
       const result = await service.submitAnswer(
         'session-123',
@@ -576,20 +572,23 @@ describe('TurnService', () => {
         feedbackQueued: false,
         transcriptionPending: true,
       });
-      expect(mockTranscriptionQueue.add).toHaveBeenCalledWith(
-        'transcription',
-        expect.objectContaining({
-          sessionId: 'session-123',
-          answerId: 'answer-1',
-          audioFileUrl: 'https://storage.example.com/audio.webm',
-          language: 'vi',
-        }),
-        expect.objectContaining({
-          jobId: 'transcription-answer-1',
-          attempts: TRANSCRIPTION_JOB_ATTEMPTS,
-        }),
+      expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
+        expect.anything(),
+        {
+          commandType: 'transcription',
+          aggregateId: 'answer-1',
+          payload: expect.objectContaining({
+            sessionId: 'session-123',
+            answerId: 'answer-1',
+            audioFileUrl: 'https://storage.example.com/audio.webm',
+            language: 'vi',
+          }),
+        },
       );
-      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
+        'transcription',
+        'answer-1',
+      );
     });
 
     it('voice mode: lưu answer với transcriptionStatus=pending và answerText rỗng', async () => {
@@ -607,7 +606,6 @@ describe('TurnService', () => {
         ...BASE_ANSWER,
         answerText: '',
       });
-      mockTranscriptionQueue.add.mockResolvedValue({});
 
       await service.submitAnswer('session-123', 'user-abc', voiceDto);
 
@@ -643,7 +641,6 @@ describe('TurnService', () => {
         audioFileUrl: 'https://storage.example.com/audio.webm',
         transcriptionStatus: 'done',
       });
-      mockFeedbackQueue.add.mockResolvedValue({});
 
       const result = await service.submitAnswer(
         'session-123',
@@ -675,14 +672,20 @@ describe('TurnService', () => {
         editedTranscript,
         30,
       );
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
-      expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
+      expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
+        expect.anything(),
+        {
+          commandType: 'feedback',
+          aggregateId: 'answer-1',
+          payload: expect.objectContaining({
+            answerText: editedTranscript,
+            language: 'vi',
+          }),
+        },
+      );
+      expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
         'feedback',
-        expect.objectContaining({
-          answerText: editedTranscript,
-          language: 'vi',
-        }),
-        expect.objectContaining({ jobId: 'feedback-answer-1' }),
+        'answer-1',
       );
     });
 
@@ -690,7 +693,6 @@ describe('TurnService', () => {
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
       mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
       mockPrisma.userAnswer.findUnique.mockResolvedValue(BASE_ANSWER);
-      mockFeedbackQueue.add.mockResolvedValue({});
 
       const result = await service.submitAnswer(
         'session-123',
@@ -700,10 +702,17 @@ describe('TurnService', () => {
 
       expect(result.answerId).toBe('answer-1');
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
-      expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
+      expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          commandType: 'feedback',
+          aggregateId: 'answer-1',
+          payload: expect.objectContaining({ answerId: 'answer-1', language: 'vi' }),
+        }),
+      );
+      expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
         'feedback',
-        expect.objectContaining({ answerId: 'answer-1', language: 'vi' }),
-        expect.objectContaining({ jobId: 'feedback-answer-1' }),
+        'answer-1',
       );
     });
 
@@ -734,8 +743,8 @@ describe('TurnService', () => {
         transcriptionPending: false,
       });
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
-      expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
 
     it('voice retry: transcription còn pending → re-enqueue transcription, return transcriptionPending=true', async () => {
@@ -752,7 +761,6 @@ describe('TurnService', () => {
         answerMode: 'voice',
         transcriptionStatus: 'pending',
       });
-      mockTranscriptionQueue.add.mockResolvedValue({});
 
       const result = await service.submitAnswer(
         'session-123',
@@ -766,18 +774,22 @@ describe('TurnService', () => {
         transcriptionPending: true,
       });
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
-      expect(mockTranscriptionQueue.add).toHaveBeenCalledWith(
+      expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
+        expect.anything(),
+        {
+          commandType: 'transcription',
+          aggregateId: 'answer-1',
+          payload: expect.objectContaining({
+            sessionId: 'session-123',
+            answerId: 'answer-1',
+            audioFileUrl: 'https://example.com/audio.mp3',
+            language: 'vi',
+          }),
+        },
+      );
+      expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
         'transcription',
-        expect.objectContaining({
-          sessionId: 'session-123',
-          answerId: 'answer-1',
-          audioFileUrl: 'https://example.com/audio.mp3',
-          language: 'vi',
-        }),
-        expect.objectContaining({
-          jobId: 'transcription-answer-1',
-          attempts: TRANSCRIPTION_JOB_ATTEMPTS,
-        }),
+        'answer-1',
       );
     });
 
@@ -808,7 +820,9 @@ describe('TurnService', () => {
         transcriptionPending: false,
       });
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
-      expect(mockTranscriptionQueue.add).not.toHaveBeenCalled();
+      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
   });
 });
+

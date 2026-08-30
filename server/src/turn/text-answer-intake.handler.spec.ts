@@ -1,16 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getQueueToken } from '@nestjs/bullmq';
 import { TextAnswerIntakeHandler } from './text-answer-intake.handler';
 import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
-import {
-  FEEDBACK_QUEUE,
-  FEEDBACK_JOB_ATTEMPTS,
-} from '../common/constants/queue.constants';
+import { WorkflowDispatcher } from '../workflow/workflow-dispatcher.service';
+import { WorkflowService } from '../workflow/workflow.service';
 import {
   createMockPrismaService,
   createMockQuestionCriteriaService,
-  createMockQueue,
+  createMockWorkflowDispatcher,
+  createMockWorkflowService,
 } from '../test-utils/mock-factories';
 import { AnswerIntakeContext } from './answer-intake-handler.interface';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
@@ -19,7 +17,8 @@ describe('TextAnswerIntakeHandler', () => {
   let handler: TextAnswerIntakeHandler;
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockQuestionCriteria: ReturnType<typeof createMockQuestionCriteriaService>;
-  let mockFeedbackQueue: ReturnType<typeof createMockQueue>;
+  let mockWorkflow: ReturnType<typeof createMockWorkflowService>;
+  let mockDispatcher: ReturnType<typeof createMockWorkflowDispatcher>;
 
   const mockContext: AnswerIntakeContext = {
     sessionId: 'session-123',
@@ -45,7 +44,8 @@ describe('TextAnswerIntakeHandler', () => {
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
     mockQuestionCriteria = createMockQuestionCriteriaService();
-    mockFeedbackQueue = createMockQueue();
+    mockWorkflow = createMockWorkflowService();
+    mockDispatcher = createMockWorkflowDispatcher();
 
     mockQuestionCriteria.codesFromSessionQuestion.mockReturnValue(['D1', 'D2']);
 
@@ -58,8 +58,12 @@ describe('TextAnswerIntakeHandler', () => {
           useValue: mockQuestionCriteria,
         },
         {
-          provide: getQueueToken(FEEDBACK_QUEUE),
-          useValue: mockFeedbackQueue,
+          provide: WorkflowService,
+          useValue: mockWorkflow,
+        },
+        {
+          provide: WorkflowDispatcher,
+          useValue: mockDispatcher,
         },
       ],
     }).compile();
@@ -91,10 +95,11 @@ describe('TextAnswerIntakeHandler', () => {
       feedbackQueued: false,
       transcriptionPending: false,
     });
-    expect(mockFeedbackQueue.add).not.toHaveBeenCalled();
+    expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+    expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
   });
 
-  it('should create a new text answer and enqueue feedback job', async () => {
+  it('should create a new text answer, enqueue feedback in outbox transaction, and dispatch job', async () => {
     mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
     mockPrisma.userAnswer.upsert.mockResolvedValue({
       id: 'ans-new-1',
@@ -123,26 +128,30 @@ describe('TextAnswerIntakeHandler', () => {
       update: {},
     });
 
-    expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
+    expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        commandType: 'feedback',
+        aggregateId: 'ans-new-1',
+        payload: {
+          sessionId: 'session-123',
+          turnId: 'ans-new-1',
+          answerId: 'ans-new-1',
+          questionId: 'q-101',
+          questionText: 'Hãy giới thiệu kinh nghiệm của bạn?',
+          questionCategory: 'behavioral',
+          competencyDomains: ['D1', 'D2'],
+          answerText: 'Tôi có 3 năm kinh nghiệm lập trình backend với NestJS.',
+          contextPack: 'VN',
+          sessionType: 'hr',
+          language: 'vi',
+        },
+      },
+    );
+
+    expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
       'feedback',
-      {
-        sessionId: 'session-123',
-        turnId: 'ans-new-1',
-        answerId: 'ans-new-1',
-        questionId: 'q-101',
-        questionText: 'Hãy giới thiệu kinh nghiệm của bạn?',
-        questionCategory: 'behavioral',
-        competencyDomains: ['D1', 'D2'],
-        answerText: 'Tôi có 3 năm kinh nghiệm lập trình backend với NestJS.',
-        contextPack: 'VN',
-        sessionType: 'hr',
-        language: 'vi',
-      },
-      {
-        jobId: 'feedback-ans-new-1',
-        attempts: FEEDBACK_JOB_ATTEMPTS,
-        backoff: { type: 'fixed', delay: 2000 },
-      },
+      'ans-new-1',
     );
 
     expect(result).toEqual({
@@ -152,7 +161,7 @@ describe('TextAnswerIntakeHandler', () => {
     });
   });
 
-  it('should reuse existing non-skipped answer and enqueue feedback job', async () => {
+  it('should reuse existing non-skipped answer, enqueue feedback in outbox transaction, and dispatch job', async () => {
     mockPrisma.userAnswer.findUnique.mockResolvedValue({
       id: 'ans-existing-1',
       questionId: 'q-101',
@@ -170,15 +179,20 @@ describe('TextAnswerIntakeHandler', () => {
     const result = await handler.handle(dto, mockContext);
 
     expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
-    expect(mockFeedbackQueue.add).toHaveBeenCalledWith(
+    expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        commandType: 'feedback',
+        aggregateId: 'ans-existing-1',
+        payload: expect.objectContaining({
+          answerId: 'ans-existing-1',
+          answerText: 'Câu trả lời đã lưu trước đó',
+        }),
+      }),
+    );
+    expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
       'feedback',
-      expect.objectContaining({
-        answerId: 'ans-existing-1',
-        answerText: 'Câu trả lời đã lưu trước đó',
-      }),
-      expect.objectContaining({
-        jobId: 'feedback-ans-existing-1',
-      }),
+      'ans-existing-1',
     );
     expect(result).toEqual({
       answerId: 'ans-existing-1',
@@ -187,3 +201,4 @@ describe('TextAnswerIntakeHandler', () => {
     });
   });
 });
+

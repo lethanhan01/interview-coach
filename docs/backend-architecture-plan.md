@@ -480,12 +480,14 @@ Khi dự án chính thức kích hoạt phát triển tính năng mới, đội 
 - [x] Task 3.4: Xây dựng `AnswerIntakeRegistry` (`src/turn/answer-intake.registry.ts`), refactor `SubmitTurnAnswer` thành Thin Orchestrator, cập nhật `TurnModule` và `TurnService`.
 - [x] Task 3.5: Viết Unit Tests kiểm thử độc lập từng Intake Handler, Registry và kiểm thử 100% toàn bộ hệ thống (58/58 test suites, 446/446 tests passed).
 
-### Giai đoạn 4: Hoàn thiện Transactional Workflow Outbox & BullMQ — [ ] BƯỚC TIẾP THEO
-- [ ] Task 4.1: Rà soát & hoàn thiện entity / interface `WorkflowOutboxService` đảm bảo ghi command trong cùng DB Transaction với state thay đổi.
-- [ ] Task 4.2: Xây dựng / chuẩn hóa `WorkflowOutboxDispatcher` quét lệnh pending và đẩy vào BullMQ worker.
-- [ ] Task 4.3: Xây dựng các Command Handler độc lập (`GenerateQuestionsCommandHandler`, `TranscribeAudioCommandHandler`, `EvaluateTurnAnswerCommandHandler`, `GenerateSessionReportCommandHandler`).
+### Giai đoạn 4: Hoàn thiện Transactional Workflow Outbox & BullMQ — [x] ĐANG TRIỂN KHAI TỪNG PHẦN (Task 4.1, 4.2 & 4.3 Done)
+- [x] Task 4.1: Rà soát & hoàn thiện entity / interface `WorkflowOutboxService` (`WorkflowService`) đảm bảo ghi command trong cùng DB Transaction với state thay đổi cho cả 4 loại commands (`question-generation`, `report-generation`, `transcription`, `feedback`).
+- [x] Task 4.2: Xây dựng / chuẩn hóa `WorkflowDispatcher` đăng ký và inject đủ 4 BullMQ queues (`QUESTION_GEN_QUEUE`, `REPORT_QUEUE`, `FEEDBACK_QUEUE`, `TRANSCRIPTION_QUEUE`), quét lệnh pending và đẩy vào worker an toàn, có timeout recovery.
+- [x] Task 4.3: Tích hợp Intake Handlers (`TextAnswerIntakeHandler`, `VoiceAnswerIntakeHandler`) qua Transactional Outbox thay vì ghi queue trực tiếp, cập nhật `TurnModule` và 100% unit tests.
 - [ ] Task 4.4: Kiểm thử kịch bản giả lập crash và idempotency để đảm bảo không bao giờ thất thoát job.
 - [ ] Task 4.5: Chạy 100% test suites và xác nhận an toàn tuyệt đối.
+
+
 
 ---
 

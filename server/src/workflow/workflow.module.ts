@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import {
+  FEEDBACK_QUEUE,
   QUESTION_GEN_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
   REPORT_QUEUE,
+  TRANSCRIPTION_QUEUE,
 } from '../common/constants/queue.constants';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { WorkflowDispatcher } from './workflow-dispatcher.service';
@@ -21,9 +23,18 @@ import { WorkflowService } from './workflow.service';
         name: REPORT_QUEUE,
         defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[REPORT_QUEUE],
       },
+      {
+        name: FEEDBACK_QUEUE,
+        defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[FEEDBACK_QUEUE],
+      },
+      {
+        name: TRANSCRIPTION_QUEUE,
+        defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[TRANSCRIPTION_QUEUE],
+      },
     ),
   ],
   providers: [WorkflowService, WorkflowDispatcher],
   exports: [WorkflowService, WorkflowDispatcher],
 })
 export class WorkflowModule {}
+
