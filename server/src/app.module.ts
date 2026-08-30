@@ -12,8 +12,7 @@ import { PrismaModule } from './infrastructure/database/prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { AiModule } from '@infra/ai/ai.module';
 import { AssessmentModule } from './assessment/assessment.module';
-import { SessionModule } from './session/session.module';
-import { TurnModule } from './turn/turn.module';
+import { InterviewLiveModule } from '@modules/interview-live/interview-live.module';
 import { MediaModule } from '@modules/media/media.module';
 import { InterviewPrepModule } from '@modules/interview-prep/interview-prep.module';
 import { ReportModule } from './report/report.module';
@@ -52,8 +51,7 @@ class ApiRootController {
     AuthModule,
     AiModule,
     AssessmentModule,
-    SessionModule,
-    TurnModule,
+    InterviewLiveModule,
     MediaModule,
     InterviewPrepModule,
     ReportModule,

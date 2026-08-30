@@ -1,10 +1,10 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InterviewSession } from '@prisma/client';
-import { RubricCatalogService } from '../assessment/rubric/rubric-catalog.service';
+import { RubricCatalogService } from '../../../assessment/rubric/rubric-catalog.service';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
-import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { resolveOutputLanguage } from '@infra/ai/output-language';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';

@@ -2,7 +2,7 @@ import { Injectable, HttpStatus } from '@nestjs/common';
 import { InterviewSession } from '@prisma/client';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
-import { PrismaService } from '../infrastructure/database/prisma/prisma.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { SessionStatusUpdate } from './dto/update-session-status.dto';
 import { SessionLifecyclePolicy } from './session-lifecycle.policy';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
