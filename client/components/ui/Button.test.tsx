@@ -287,4 +287,46 @@ describe('Button — asChild', () => {
     expect(link).toBeInTheDocument()
     expect(link.tagName).toBe('A')
   })
+
+  it('merges button variant classes directly onto the child anchor tag', () => {
+    render(
+      <Button variant="outline" size="sm" asChild className="custom-test-class">
+        <a href="/resume">Xem hồ sơ CV</a>
+      </Button>
+    )
+    const link = screen.getByRole('link', { name: 'Xem hồ sơ CV' })
+    expect(link).toHaveClass('custom-test-class')
+    expect(link).toHaveClass('h-8')
+    expect(link).toHaveClass('border-border')
+    expect(link).toHaveClass('inline-flex')
+  })
+
+  it('renders multiple children (leading icon, text, trailing icon) directly inside child anchor tag without wrapper span', () => {
+    render(
+      <Button variant="outline" size="sm" asChild className="gap-1.5">
+        <a href="/resume">
+          <span data-testid="leading-icon">📜</span>
+          <span>Xem hồ sơ CV</span>
+          <span data-testid="trailing-icon">→</span>
+        </a>
+      </Button>
+    )
+    const link = screen.getByRole('link', { name: /Xem hồ sơ CV/ })
+    expect(link).toBeInTheDocument()
+    expect(screen.getByTestId('leading-icon')).toBeInTheDocument()
+    expect(screen.getByTestId('trailing-icon')).toBeInTheDocument()
+    // Direct parent of icons must be the anchor tag itself, not an inner wrapper span
+    expect(screen.getByTestId('leading-icon').parentElement).toBe(link)
+  })
+
+  it('applies disabled styling when disabled or loading is passed to asChild', () => {
+    render(
+      <Button asChild disabled>
+        <a href="/disabled">Disabled Link</a>
+      </Button>
+    )
+    const link = screen.getByRole('link', { name: 'Disabled Link' })
+    expect(link).toHaveClass('pointer-events-none')
+    expect(link).toHaveClass('opacity-50')
+  })
 })

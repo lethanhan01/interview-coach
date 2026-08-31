@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { fn } from 'storybook/test'
-import { ArrowRight, Mail, Trash2 } from 'lucide-react'
+import { ArrowRight, Mail, ScrollText, Trash2 } from 'lucide-react'
 
 import { Button } from './Button'
 
@@ -283,6 +283,26 @@ export const AsLink: Story = {
       description: {
         story:
           '`asChild` render button styles lên thẻ `<a>` bên trong. Hữu ích khi cần link có kiểu dáng button.',
+      },
+    },
+  },
+}
+
+export const AsLinkWithIcons: Story = {
+  render: (args) => (
+    <Button {...args} variant="outline" size="sm" asChild className="gap-1.5">
+      <a href="#resume">
+        <ScrollText className="h-4 w-4 text-brand" />
+        <span>Xem hồ sơ CV</span>
+        <ArrowRight className="h-3.5 w-3.5" />
+      </a>
+    </Button>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          '`asChild` kết hợp với nhiều phần tử con (icon đầu + text + icon đuôi). Đảm bảo hiển thị thẳng hàng ngang hoàn hảo không vỡ layout.',
       },
     },
   },
