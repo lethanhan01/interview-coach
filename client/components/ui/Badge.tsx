@@ -62,7 +62,7 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
         )}
         {...props}
       >
-        <span className="min-w-0 truncate">{children}</span>
+        {children}
         {onDismiss && (
           <button
             type="button"

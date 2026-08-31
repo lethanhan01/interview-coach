@@ -3,6 +3,14 @@
 import { useState } from 'react'
 import { PencilLine } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import { Label } from '@/components/ui/Label'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/Select'
 import ProfileSection from '@/components/profile/ProfileSection'
 import ProfileField from '@/components/profile/ProfileField'
 import {
@@ -23,9 +31,6 @@ interface Props {
   data: CareerInfoData
   onSave: (data: CareerInfoData) => Promise<void>
 }
-
-const FIELD_CLASS =
-  'w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
 
 function normalizeCareerInfo(data: CareerInfoData): CareerInfoData {
   return {
@@ -124,50 +129,52 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
           </dl>
         ) : (
           <div className="flex flex-col gap-4">
-            <div>
-              <label className="text-ink mb-1 block text-sm font-medium">
-                Vị trí mục tiêu
-              </label>
-              <select
-                value={positionOptions.normalized}
-                onChange={(e) => set('targetPosition', e.target.value)}
-                className={FIELD_CLASS}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="target-position">Vị trí mục tiêu</Label>
+              <Select
+                value={positionOptions.normalized || undefined}
+                onValueChange={(val) => set('targetPosition', val)}
               >
-                <option value="">Chọn vị trí mục tiêu</option>
-                {positionOptions.fallback && (
-                  <option value={positionOptions.fallback}>
-                    Giá trị hiện tại: {positionOptions.fallback}
-                  </option>
-                )}
-                {POSITION_OPTIONS.map((position) => (
-                  <option key={position} value={position}>
-                    {position}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="target-position" aria-label="Vị trí mục tiêu">
+                  <SelectValue placeholder="Chọn vị trí mục tiêu" />
+                </SelectTrigger>
+                <SelectContent>
+                  {positionOptions.fallback && (
+                    <SelectItem value={positionOptions.fallback}>
+                      Giá trị hiện tại: {positionOptions.fallback}
+                    </SelectItem>
+                  )}
+                  {POSITION_OPTIONS.map((position) => (
+                    <SelectItem key={position} value={position}>
+                      {position}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <label className="text-ink mb-1 block text-sm font-medium">
-                Mức kinh nghiệm
-              </label>
-              <select
-                value={levelOptions.normalized}
-                onChange={(e) => set('targetLevel', e.target.value)}
-                className={FIELD_CLASS}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="target-level">Mức kinh nghiệm</Label>
+              <Select
+                value={levelOptions.normalized || undefined}
+                onValueChange={(val) => set('targetLevel', val)}
               >
-                <option value="">Chọn mức kinh nghiệm</option>
-                {levelOptions.fallback && (
-                  <option value={levelOptions.fallback}>
-                    Giá trị hiện tại: {levelOptions.fallback}
-                  </option>
-                )}
-                {JD_LEVEL_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="target-level" aria-label="Mức kinh nghiệm">
+                  <SelectValue placeholder="Chọn mức kinh nghiệm" />
+                </SelectTrigger>
+                <SelectContent>
+                  {levelOptions.fallback && (
+                    <SelectItem value={levelOptions.fallback}>
+                      Giá trị hiện tại: {levelOptions.fallback}
+                    </SelectItem>
+                  )}
+                  {JD_LEVEL_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {error && <p className="text-danger text-sm">{error}</p>}

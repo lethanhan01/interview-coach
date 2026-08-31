@@ -10,7 +10,10 @@ import {
   UserCheck,
   Target,
 } from 'lucide-react'
+import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import Button from '@/components/ui/Button'
+import { Progress } from '@/components/ui/Progress'
 import type { GetProfileResponse } from '@/lib/types'
 
 interface ResumeHeaderProps {
@@ -81,6 +84,12 @@ export default function ResumeHeader({ data }: ResumeHeaderProps) {
     )
   }
 
+  const getProgressVariant = () => {
+    if (completeness >= 80) return 'success'
+    if (completeness >= 50) return 'brand'
+    return 'default'
+  }
+
   const scrollTo = (id: string) => {
     const el = document.getElementById(id)
     if (el) {
@@ -89,7 +98,7 @@ export default function ResumeHeader({ data }: ResumeHeaderProps) {
   }
 
   return (
-    <div className="border-border bg-surface shadow-card flex flex-col gap-5 rounded-2xl border p-5">
+    <Card className="flex flex-col gap-5 p-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="bg-brand-subtle text-brand flex size-10 shrink-0 items-center justify-center rounded-xl">
@@ -107,14 +116,14 @@ export default function ResumeHeader({ data }: ResumeHeaderProps) {
         <div>{getStatusBadge()}</div>
       </div>
 
-      {/* Progress bar */}
+      {/* Progress bar using UI Progress component */}
       <div className="space-y-1.5">
-        <div className="bg-muted h-2.5 w-full overflow-hidden rounded-full">
-          <div
-            className="bg-brand h-full rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${completeness}%` }}
-          />
-        </div>
+        <Progress
+          value={completeness}
+          variant={getProgressVariant()}
+          size="md"
+          aria-label="Độ hoàn thiện hồ sơ"
+        />
       </div>
 
       {/* Quick Jump Navigation */}
@@ -124,18 +133,20 @@ export default function ResumeHeader({ data }: ResumeHeaderProps) {
         </span>
         <div className="flex flex-wrap gap-2">
           {SECTIONS.map(({ id, label, icon: Icon }) => (
-            <button
+            <Button
               key={id}
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => scrollTo(id)}
-              className="border-border bg-surface hover:bg-brand-subtle hover:text-brand-subtle-fg hover:border-brand/30 text-ink-muted inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-8 gap-1.5 px-2.5 text-xs text-ink-muted hover:text-brand"
             >
               <Icon className="h-3.5 w-3.5" />
               <span>{label}</span>
-            </button>
+            </Button>
           ))}
         </div>
       </div>
-    </div>
+    </Card>
   )
 }

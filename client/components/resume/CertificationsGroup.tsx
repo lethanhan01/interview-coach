@@ -1,8 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { PencilLine } from 'lucide-react'
+import { PencilLine, Plus, Trash2 } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/Textarea'
+import { Label } from '@/components/ui/Label'
 import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
 import ProfileSection from '@/components/profile/ProfileSection'
 import type { CertificationEntry, AwardEntry } from '@/lib/types'
@@ -38,9 +41,6 @@ function emptyAward(): AwardEntry {
     description: '',
   }
 }
-
-const inputCls =
-  'w-full rounded-lg border border-border bg-canvas px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none'
 
 export default function CertificationsGroup({ data, onSave }: Props) {
   const [isEditing, setIsEditing] = useState(false)
@@ -121,69 +121,64 @@ export default function CertificationsGroup({ data, onSave }: Props) {
           {professionalCerts.map((c) => (
             <div
               key={c.id}
-              className="border-border bg-canvas mb-3 rounded-lg border p-3.5"
+              className="border-border bg-surface mb-3 rounded-xl border p-4 shadow-sm"
             >
               {isEditing ? (
-                <div className="flex flex-col gap-2">
-                  <div>
-                    <label className="text-ink-muted mb-1 block text-xs">
-                      Tên chứng chỉ
-                    </label>
-                    <input
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={`cert-name-${c.id}`}>Tên chứng chỉ</Label>
+                    <Input
+                      id={`cert-name-${c.id}`}
                       placeholder="Tên chứng chỉ"
                       value={c.name}
                       onChange={(e) => updateCert(c.id, 'name', e.target.value)}
-                      className={inputCls}
                     />
                   </div>
-                  <div>
-                    <label className="text-ink-muted mb-1 block text-xs">
-                      Đơn vị cấp
-                    </label>
-                    <input
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={`cert-issuer-${c.id}`}>Đơn vị cấp</Label>
+                    <Input
+                      id={`cert-issuer-${c.id}`}
                       placeholder="Đơn vị cấp"
                       value={c.issuer}
                       onChange={(e) => updateCert(c.id, 'issuer', e.target.value)}
-                      className={inputCls}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-ink-muted mb-1 block text-xs">
-                        Ngày cấp
-                      </label>
-                      <input
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor={`cert-issue-date-${c.id}`}>Ngày cấp</Label>
+                      <Input
+                        id={`cert-issue-date-${c.id}`}
                         type="date"
                         value={c.issueDate}
                         onChange={(e) =>
                           updateCert(c.id, 'issueDate', e.target.value)
                         }
-                        className={inputCls}
                       />
                     </div>
-                    <div>
-                      <label className="text-ink-muted mb-1 block text-xs">
-                        Ngày hết hạn
-                      </label>
-                      <input
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor={`cert-exp-date-${c.id}`}>Ngày hết hạn</Label>
+                      <Input
+                        id={`cert-exp-date-${c.id}`}
                         type="date"
                         value={c.expiryDate ?? ''}
                         onChange={(e) =>
                           updateCert(c.id, 'expiryDate', e.target.value)
                         }
-                        className={inputCls}
                       />
                     </div>
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() =>
                       setCerts((prev) => prev.filter((x) => x.id !== c.id))
                     }
-                    className="text-danger self-start text-xs hover:underline"
+                    className="text-danger hover:text-danger hover:bg-danger-subtle self-start h-7 gap-1 px-2 text-xs"
                   >
+                    <Trash2 className="size-3.5" />
                     Xóa
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <div>
@@ -199,13 +194,16 @@ export default function CertificationsGroup({ data, onSave }: Props) {
           ))}
           {isEditing && (
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               onClick={() =>
                 setCerts((prev) => [...prev, emptyCert('professional')])
               }
+              className="gap-1 text-xs"
             >
-              + Thêm chứng chỉ chuyên môn
+              <Plus className="size-3.5" />
+              Thêm chứng chỉ chuyên môn
             </Button>
           )}
         </div>
@@ -221,86 +219,79 @@ export default function CertificationsGroup({ data, onSave }: Props) {
           {languageCerts.map((c) => (
             <div
               key={c.id}
-              className="border-border bg-canvas mb-3 rounded-lg border p-3.5"
+              className="border-border bg-surface mb-3 rounded-xl border p-4 shadow-sm"
             >
               {isEditing ? (
-                <div className="flex flex-col gap-2">
-                  <div>
-                    <label className="text-ink-muted mb-1 block text-xs">
-                      Tên chứng chỉ
-                    </label>
-                    <input
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={`lang-cert-name-${c.id}`}>Tên chứng chỉ</Label>
+                    <Input
+                      id={`lang-cert-name-${c.id}`}
                       placeholder="Ví dụ: IELTS, TOEIC"
                       value={c.name}
                       onChange={(e) => updateCert(c.id, 'name', e.target.value)}
-                      className={inputCls}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-ink-muted mb-1 block text-xs">
-                        Điểm
-                      </label>
-                      <input
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor={`lang-cert-score-${c.id}`}>Điểm</Label>
+                      <Input
+                        id={`lang-cert-score-${c.id}`}
                         placeholder="Ví dụ: 7.0"
                         value={c.score ?? ''}
                         onChange={(e) =>
                           updateCert(c.id, 'score', e.target.value)
                         }
-                        className={inputCls}
                       />
                     </div>
-                    <div>
-                      <label className="text-ink-muted mb-1 block text-xs">
-                        Đơn vị cấp
-                      </label>
-                      <input
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor={`lang-cert-issuer-${c.id}`}>Đơn vị cấp</Label>
+                      <Input
+                        id={`lang-cert-issuer-${c.id}`}
                         placeholder="Đơn vị cấp"
                         value={c.issuer}
                         onChange={(e) =>
                           updateCert(c.id, 'issuer', e.target.value)
                         }
-                        className={inputCls}
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-ink-muted mb-1 block text-xs">
-                        Ngày cấp
-                      </label>
-                      <input
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor={`lang-cert-issue-${c.id}`}>Ngày cấp</Label>
+                      <Input
+                        id={`lang-cert-issue-${c.id}`}
                         type="date"
                         value={c.issueDate}
                         onChange={(e) =>
                           updateCert(c.id, 'issueDate', e.target.value)
                         }
-                        className={inputCls}
                       />
                     </div>
-                    <div>
-                      <label className="text-ink-muted mb-1 block text-xs">
-                        Ngày hết hạn
-                      </label>
-                      <input
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor={`lang-cert-exp-${c.id}`}>Ngày hết hạn</Label>
+                      <Input
+                        id={`lang-cert-exp-${c.id}`}
                         type="date"
                         value={c.expiryDate ?? ''}
                         onChange={(e) =>
                           updateCert(c.id, 'expiryDate', e.target.value)
                         }
-                        className={inputCls}
                       />
                     </div>
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() =>
                       setCerts((prev) => prev.filter((x) => x.id !== c.id))
                     }
-                    className="text-danger self-start text-xs hover:underline"
+                    className="text-danger hover:text-danger hover:bg-danger-subtle self-start h-7 gap-1 px-2 text-xs"
                   >
+                    <Trash2 className="size-3.5" />
                     Xóa
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <div>
@@ -319,11 +310,14 @@ export default function CertificationsGroup({ data, onSave }: Props) {
           ))}
           {isEditing && (
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               onClick={() => setCerts((prev) => [...prev, emptyCert('language')])}
+              className="gap-1 text-xs"
             >
-              + Thêm chứng chỉ ngoại ngữ
+              <Plus className="size-3.5" />
+              Thêm chứng chỉ ngoại ngữ
             </Button>
           )}
         </div>
@@ -339,72 +333,67 @@ export default function CertificationsGroup({ data, onSave }: Props) {
           {currentAwards.map((a) => (
             <div
               key={a.id}
-              className="border-border bg-canvas mb-3 rounded-lg border p-3.5"
+              className="border-border bg-surface mb-3 rounded-xl border p-4 shadow-sm"
             >
               {isEditing ? (
-                <div className="flex flex-col gap-2">
-                  <div>
-                    <label className="text-ink-muted mb-1 block text-xs">
-                      Tên giải thưởng
-                    </label>
-                    <input
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={`award-name-${a.id}`}>Tên giải thưởng</Label>
+                    <Input
+                      id={`award-name-${a.id}`}
                       placeholder="Tên giải thưởng"
                       value={a.name}
                       onChange={(e) => updateAward(a.id, 'name', e.target.value)}
-                      className={inputCls}
                     />
                   </div>
-                  <div className="grid grid-cols-2 items-end gap-2">
-                    <div>
-                      <label className="text-ink-muted mb-1 block text-xs">
-                        Tổ chức trao
-                      </label>
-                      <input
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor={`award-org-${a.id}`}>Tổ chức trao</Label>
+                      <Input
+                        id={`award-org-${a.id}`}
                         placeholder="Tổ chức trao"
                         value={a.organization}
                         onChange={(e) =>
                           updateAward(a.id, 'organization', e.target.value)
                         }
-                        className={inputCls}
                       />
                     </div>
-                    <div>
-                      <label className="text-ink-muted mb-1 block text-xs">
-                        Ngày nhận
-                      </label>
-                      <input
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor={`award-date-${a.id}`}>Ngày nhận</Label>
+                      <Input
+                        id={`award-date-${a.id}`}
                         type="date"
                         value={a.date}
                         onChange={(e) =>
                           updateAward(a.id, 'date', e.target.value)
                         }
-                        className={inputCls}
                       />
                     </div>
                   </div>
-                  <div>
-                    <label className="text-ink-muted mb-1 block text-xs">
-                      Mô tả
-                    </label>
-                    <textarea
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={`award-desc-${a.id}`}>Mô tả</Label>
+                    <Textarea
+                      id={`award-desc-${a.id}`}
                       placeholder="Mô tả (tùy chọn)"
                       value={a.description}
                       onChange={(e) =>
                         updateAward(a.id, 'description', e.target.value)
                       }
-                      className={`${inputCls} resize-none`}
                       rows={2}
                     />
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() =>
                       setAwards((prev) => prev.filter((x) => x.id !== a.id))
                     }
-                    className="text-danger self-start text-xs hover:underline"
+                    className="text-danger hover:text-danger hover:bg-danger-subtle self-start h-7 gap-1 px-2 text-xs"
                   >
+                    <Trash2 className="size-3.5" />
                     Xóa
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <div>
@@ -422,11 +411,14 @@ export default function CertificationsGroup({ data, onSave }: Props) {
           ))}
           {isEditing && (
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               onClick={() => setAwards((prev) => [...prev, emptyAward()])}
+              className="gap-1 text-xs"
             >
-              + Thêm giải thưởng
+              <Plus className="size-3.5" />
+              Thêm giải thưởng
             </Button>
           )}
         </div>

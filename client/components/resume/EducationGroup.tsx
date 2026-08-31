@@ -3,6 +3,15 @@
 import { useState } from 'react'
 import { PencilLine } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Label } from '@/components/ui/Label'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/Select'
 import ProfileSection from '@/components/profile/ProfileSection'
 import ProfileField from '@/components/profile/ProfileField'
 import { EDUCATION_DEGREE_OPTIONS } from './constants'
@@ -16,9 +25,6 @@ interface Props {
 const DEGREE_LABEL: Record<string, string> = Object.fromEntries(
   EDUCATION_DEGREE_OPTIONS.filter((o) => o.value).map((o) => [o.value, o.label])
 )
-
-const FIELD_CLASS =
-  'w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
 
 function toText(value: unknown) {
   if (value === null || value === undefined) return ''
@@ -101,53 +107,67 @@ export default function EducationGroup({ data, onSave }: Props) {
         ) : (
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Trình độ">
-                <select
-                  value={form.degree}
-                  onChange={(e) => set('degree', e.target.value)}
-                  className={FIELD_CLASS}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="education-degree">Trình độ</Label>
+                <Select
+                  value={form.degree || undefined}
+                  onValueChange={(val) => set('degree', val)}
                 >
-                  {EDUCATION_DEGREE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Năm tốt nghiệp">
-                <input
+                  <SelectTrigger id="education-degree" aria-label="Trình độ học vấn">
+                    <SelectValue placeholder="Chọn trình độ..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EDUCATION_DEGREE_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="education-grad-year">Năm tốt nghiệp</Label>
+                <Input
+                  id="education-grad-year"
                   value={form.graduationYear}
                   onChange={(e) => set('graduationYear', e.target.value)}
                   placeholder="2024"
                   maxLength={4}
-                  className={FIELD_CLASS}
                 />
-              </Field>
-              <Field label="Trường" className="sm:col-span-2">
-                <input
+              </div>
+
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <Label htmlFor="education-school">Trường</Label>
+                <Input
+                  id="education-school"
                   value={form.school}
                   onChange={(e) => set('school', e.target.value)}
                   placeholder="Đại học Bách Khoa Hà Nội"
-                  className={FIELD_CLASS}
                 />
-              </Field>
-              <Field label="Ngành học" className="sm:col-span-2">
-                <input
+              </div>
+
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <Label htmlFor="education-major">Ngành học</Label>
+                <Input
+                  id="education-major"
                   value={form.major}
                   onChange={(e) => set('major', e.target.value)}
                   placeholder="Công nghệ thông tin"
-                  className={FIELD_CLASS}
                 />
-              </Field>
-              <Field label="GPA / CPA">
-                <input
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="education-gpa">GPA / CPA</Label>
+                <Input
+                  id="education-gpa"
                   value={form.gpa}
                   onChange={(e) => set('gpa', e.target.value)}
                   placeholder="3.2 / 4.0"
-                  className={FIELD_CLASS}
                 />
-              </Field>
+              </div>
             </div>
+
             {error && <p className="text-danger text-sm">{error}</p>}
             <div className="flex gap-2">
               <Button onClick={handleSave} loading={saving} disabled={saving}>
@@ -160,23 +180,6 @@ export default function EducationGroup({ data, onSave }: Props) {
           </div>
         )}
       </ProfileSection>
-    </div>
-  )
-}
-
-function Field({
-  label,
-  children,
-  className,
-}: {
-  label: string
-  children: React.ReactNode
-  className?: string
-}) {
-  return (
-    <div className={className}>
-      <label className="text-ink mb-1 block text-sm font-medium">{label}</label>
-      {children}
     </div>
   )
 }

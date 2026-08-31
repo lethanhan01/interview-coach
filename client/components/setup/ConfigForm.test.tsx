@@ -60,9 +60,8 @@ describe('ConfigForm', () => {
 
   it('visually marks the currently selected session type', () => {
     render(<ConfigForm {...DEFAULT_PROPS} sessionType="technical" />)
-    // The selected card shows a filled indicator dot
     const technicalText = screen.getByText('Technical')
-    const card = technicalText.closest('button')
+    const card = technicalText.closest('label')
     // Selected card has border-brand class
     expect(card?.className).toContain('border-brand')
   })
@@ -70,7 +69,8 @@ describe('ConfigForm', () => {
   it('visually marks the currently selected context pack', () => {
     render(<ConfigForm {...DEFAULT_PROPS} contextPack="Western" />)
     const westernText = screen.getByText('Western')
-    const card = westernText.closest('button')
+    const card = westernText.closest('label')
     expect(card?.className).toContain('border-brand')
   })
 })
+

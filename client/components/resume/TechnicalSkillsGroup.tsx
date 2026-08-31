@@ -4,6 +4,14 @@ import { useState } from 'react'
 import { PencilLine } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { Input } from '@/components/ui/Input'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/Select'
 import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
 import ProfileSection from '@/components/profile/ProfileSection'
 import { TECH_CATEGORIES, TECH_OPTIONS } from './constants'
@@ -103,41 +111,43 @@ export default function TechnicalSkillsGroup({ data, onSave }: Props) {
                   <ProfileEmptyState message="Chưa thêm" className="text-xs" />
                 )}
                 {displayEntries.map((e) => (
-                  <Badge key={e.id} variant="default" className="px-2.5 py-0.5">
+                  <Badge
+                    key={e.id}
+                    variant="default"
+                    className="px-2.5 py-0.5"
+                    onDismiss={isEditing ? () => removeEntry(e.id) : undefined}
+                    dismissLabel={`Xóa kỹ năng ${e.name}`}
+                  >
                     {e.name}
                     <span className="text-ink-muted">· {e.usagePeriod}th</span>
-                    {isEditing && (
-                      <button
-                        type="button"
-                        onClick={() => removeEntry(e.id)}
-                        className="text-ink-muted hover:text-danger ml-1 leading-none"
-                      >
-                        ×
-                      </button>
-                    )}
                   </Badge>
                 ))}
               </div>
               {isEditing && available.length > 0 && (
-                <div className="flex gap-2">
-                  <select
-                    value={s.name}
-                    onChange={(ev) =>
-                      setAddState((prev) => ({
-                        ...prev,
-                        [key]: { ...s, name: ev.target.value },
-                      }))
-                    }
-                    className="border-border bg-canvas text-ink focus:border-brand flex-1 rounded-xl border px-3 py-1.5 text-sm focus:outline-none"
-                  >
-                    <option value="">Chọn...</option>
-                    {available.map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                  <input
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <Select
+                      value={s.name || undefined}
+                      onValueChange={(val) =>
+                        setAddState((prev) => ({
+                          ...prev,
+                          [key]: { ...s, name: val },
+                        }))
+                      }
+                    >
+                      <SelectTrigger aria-label={`Chọn ${label}`}>
+                        <SelectValue placeholder="Chọn kỹ năng..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {available.map((n) => (
+                          <SelectItem key={n} value={n}>
+                            {n}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Input
                     type="number"
                     min={0}
                     placeholder="Tháng"
@@ -148,11 +158,12 @@ export default function TechnicalSkillsGroup({ data, onSave }: Props) {
                         [key]: { ...s, usagePeriod: ev.target.value },
                       }))
                     }
-                    className="border-border bg-canvas text-ink focus:border-brand w-20 rounded-xl border px-3 py-1.5 text-sm focus:outline-none"
+                    className="w-24"
                   />
                   <Button
                     variant="secondary"
-                    size="sm"
+                    size="md"
+                    type="button"
                     onClick={() => addEntry(key)}
                   >
                     Thêm

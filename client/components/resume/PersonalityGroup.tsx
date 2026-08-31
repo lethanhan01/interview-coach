@@ -3,6 +3,13 @@
 import { useState } from 'react'
 import { PencilLine } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/Select'
 import ProfileSection from '@/components/profile/ProfileSection'
 import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
 import { PERSONALITY_OPTIONS } from './constants'
@@ -61,17 +68,21 @@ export default function PersonalityGroup({ data, onSave }: Props) {
       >
         {isEditing ? (
           <div className="flex flex-col gap-3">
-            <select
-              value={form.personality}
-              onChange={(e) => setForm({ personality: e.target.value })}
-              className="border-border bg-canvas text-ink focus:border-brand w-full rounded-xl border px-3 py-2 text-sm focus:outline-none"
+            <Select
+              value={form.personality || undefined}
+              onValueChange={(val) => setForm({ personality: val })}
             >
-              {PERSONALITY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger aria-label="Tính cách & phong cách làm việc">
+                <SelectValue placeholder="Chọn phong cách làm việc..." />
+              </SelectTrigger>
+              <SelectContent>
+                {PERSONALITY_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {error && <p className="text-danger text-xs">{error}</p>}
             <div className="flex gap-2">
               <Button

@@ -1,9 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { PencilLine } from 'lucide-react'
+import { PencilLine, Plus, Trash2 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { Input } from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/Textarea'
+import { Checkbox } from '@/components/ui/Checkbox'
+import { Label } from '@/components/ui/Label'
 import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
 import ProfileSection from '@/components/profile/ProfileSection'
 import type { WorkExperienceEntry, TechnicalSkillEntry } from '@/lib/types'
@@ -23,9 +27,6 @@ const EMPTY_ENTRY: Omit<WorkExperienceEntry, 'id'> = {
   description: '',
   techStack: [],
 }
-
-const FIELD_CLASS =
-  'w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
 
 function newEntry(): WorkExperienceEntry {
   return { ...EMPTY_ENTRY, id: crypto.randomUUID(), techStack: [] }
@@ -122,7 +123,7 @@ export default function WorkExperienceGroup({
               {displayList.map((entry) => (
                 <div
                   key={entry.id}
-                  className="border-border rounded-xl border p-4"
+                  className="border-border bg-surface rounded-xl border p-4 shadow-sm"
                 >
                   <p className="text-ink text-sm font-semibold">
                     {entry.position || '—'}
@@ -151,89 +152,104 @@ export default function WorkExperienceGroup({
         ) : (
           <div className="flex flex-col gap-6">
             {form.map((entry, idx) => (
-              <div key={entry.id} className="border-border rounded-xl border p-4">
+              <div
+                key={entry.id}
+                className="border-border bg-surface rounded-xl border p-4 shadow-sm"
+              >
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-ink text-sm font-medium">
                     Vị trí #{idx + 1}
                   </p>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => removeEntry(entry.id)}
-                    className="text-danger text-xs hover:underline"
+                    className="text-danger hover:text-danger hover:bg-danger-subtle h-7 gap-1 px-2 text-xs"
                   >
+                    <Trash2 className="size-3.5" />
                     Xóa
-                  </button>
+                  </Button>
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Field label="Công ty" className="sm:col-span-2">
-                    <input
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <Label htmlFor={`company-${entry.id}`}>Công ty</Label>
+                    <Input
+                      id={`company-${entry.id}`}
                       value={entry.company}
                       onChange={(e) =>
                         setEntry(entry.id, 'company', e.target.value)
                       }
                       placeholder="Google Vietnam"
-                      className={FIELD_CLASS}
                     />
-                  </Field>
-                  <Field label="Vị trí" className="sm:col-span-2">
-                    <input
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <Label htmlFor={`position-${entry.id}`}>Vị trí</Label>
+                    <Input
+                      id={`position-${entry.id}`}
                       value={entry.position}
                       onChange={(e) =>
                         setEntry(entry.id, 'position', e.target.value)
                       }
                       placeholder="Frontend Developer"
-                      className={FIELD_CLASS}
                     />
-                  </Field>
-                  <Field label="Ngày bắt đầu">
-                    <input
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={`start-date-${entry.id}`}>Ngày bắt đầu</Label>
+                    <Input
+                      id={`start-date-${entry.id}`}
                       type="date"
                       value={entry.startDate}
                       onChange={(e) =>
                         setEntry(entry.id, 'startDate', e.target.value)
                       }
-                      className={FIELD_CLASS}
                     />
-                  </Field>
-                  <Field label="Ngày kết thúc">
-                    <input
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={`end-date-${entry.id}`}>Ngày kết thúc</Label>
+                    <Input
+                      id={`end-date-${entry.id}`}
                       type="date"
                       value={entry.endDate}
                       disabled={entry.isCurrent}
                       onChange={(e) =>
                         setEntry(entry.id, 'endDate', e.target.value)
                       }
-                      className={`${FIELD_CLASS} disabled:opacity-50`}
                     />
-                  </Field>
-                  <div className="flex items-center gap-2 sm:col-span-2">
-                    <input
-                      type="checkbox"
+                  </div>
+
+                  <div className="flex items-center gap-2 sm:col-span-2 pt-1">
+                    <Checkbox
                       id={`current-${entry.id}`}
                       checked={entry.isCurrent}
-                      onChange={(e) =>
-                        setEntry(entry.id, 'isCurrent', e.target.checked)
+                      onCheckedChange={(checked) =>
+                        setEntry(entry.id, 'isCurrent', !!checked)
                       }
-                      className="border-border accent-brand h-4 w-4 rounded"
                     />
-                    <label
+                    <Label
                       htmlFor={`current-${entry.id}`}
-                      className="text-ink text-sm"
+                      className="cursor-pointer font-normal"
                     >
                       Đang làm việc tại đây
-                    </label>
+                    </Label>
                   </div>
-                  <Field label="Mô tả" className="sm:col-span-2">
-                    <textarea
+
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <Label htmlFor={`desc-${entry.id}`}>Mô tả</Label>
+                    <Textarea
+                      id={`desc-${entry.id}`}
                       value={entry.description}
                       onChange={(e) =>
                         setEntry(entry.id, 'description', e.target.value)
                       }
                       placeholder="Mô tả công việc, thành tích..."
                       rows={3}
-                      className={FIELD_CLASS}
                     />
-                  </Field>
+                  </div>
+
                   <div className="sm:col-span-2">
                     <p className="text-ink mb-1.5 text-sm font-medium">
                       Tech stack
@@ -250,18 +266,15 @@ export default function WorkExperienceGroup({
                             tech.name
                           )
                           return (
-                            <button
+                            <Badge
                               key={tech.id}
-                              type="button"
+                              variant={selected ? 'brand' : 'default'}
+                              interactive
                               onClick={() => toggleEntryTech(entry.id, tech.name)}
-                              className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
-                                selected
-                                  ? 'border-brand bg-brand/10 text-brand'
-                                  : 'border-border bg-canvas text-ink-muted hover:border-brand'
-                              }`}
+                              className="text-xs"
                             >
                               {tech.name}
-                            </button>
+                            </Badge>
                           )
                         })}
                       </div>
@@ -272,11 +285,14 @@ export default function WorkExperienceGroup({
             ))}
 
             <Button
+              type="button"
               variant="ghost"
+              size="sm"
               onClick={addEntry}
-              className="self-start text-sm"
+              className="self-start gap-1 text-sm"
             >
-              + Thêm kinh nghiệm
+              <Plus className="size-4" />
+              Thêm kinh nghiệm
             </Button>
 
             {error && <p className="text-danger text-sm">{error}</p>}
@@ -291,23 +307,6 @@ export default function WorkExperienceGroup({
           </div>
         )}
       </ProfileSection>
-    </div>
-  )
-}
-
-function Field({
-  label,
-  children,
-  className,
-}: {
-  label: string
-  children: React.ReactNode
-  className?: string
-}) {
-  return (
-    <div className={className}>
-      <label className="text-ink mb-1 block text-sm font-medium">{label}</label>
-      {children}
     </div>
   )
 }
