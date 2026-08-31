@@ -2,13 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { apiClient } from '@/lib/api-client'
+import { rubricService, sessionService } from '@/services'
 import type {
   FeedbackProgress,
   Report,
   RubricConfig,
   Session,
 } from '@/lib/types'
+
+
 import AnnotatedTranscript from '@/components/report/AnnotatedTranscript'
 import CompetencyScoreChart from '@/components/report/CompetencyScoreChart'
 import SessionMetadataCard from '@/components/report/SessionMetadataCard'
@@ -140,13 +142,14 @@ export default function ReportPage() {
     let progressTimer: ReturnType<typeof setTimeout> | undefined
     let eventSource: EventSource | undefined
 
-    const sessionPromise = apiClient
-      .get<Session>(`/sessions/${sessionId}`)
+    const sessionPromise = sessionService
+      .getSession(sessionId)
       .then(async (data) => {
         if (!canceled) setSession(data)
         try {
-          const rubric = await apiClient.get<RubricConfig>(
-            `/rubrics/${data.contextPackId}?sessionType=${data.sessionType}`
+          const rubric = await rubricService.getActiveRubric(
+            data.contextPackId,
+            data.sessionType
           )
           if (!canceled) setRubricConfig(rubric)
         } catch {
@@ -157,9 +160,7 @@ export default function ReportPage() {
 
     async function fetchReport() {
       try {
-        const data = await apiClient.get<Report>(
-          `/sessions/${sessionId}/report`
-        )
+        const data = await sessionService.getReport(sessionId)
         if (canceled) return
         await sessionPromise
         reportLoadedRef.current = true
@@ -181,9 +182,7 @@ export default function ReportPage() {
 
     async function fetchProgress() {
       try {
-        const data = await apiClient.get<FeedbackProgress>(
-          `/sessions/${sessionId}/feedback-progress`
-        )
+        const data = await sessionService.getFeedbackProgress(sessionId)
         if (canceled || reportLoadedRef.current) return
         applyProgress(data)
         if (data.reportReady) {
@@ -201,11 +200,7 @@ export default function ReportPage() {
 
     async function subscribeToProgress() {
       if (canceled) return
-      const apiBase =
-        process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'
-      eventSource = new EventSource(`${apiBase}/sessions/${sessionId}/events`, {
-        withCredentials: true,
-      })
+      eventSource = sessionService.createEventSource(sessionId)
       eventSource.addEventListener('session.feedback_progress', (event) => {
         const data = JSON.parse(
           (event as MessageEvent).data
@@ -218,6 +213,7 @@ export default function ReportPage() {
       })
       eventSource.onerror = () => eventSource?.close()
     }
+
 
     fetchReport()
     fetchProgress()

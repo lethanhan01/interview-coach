@@ -4,9 +4,19 @@ import EducationGroup from './EducationGroup'
 
 describe('EducationGroup', () => {
   it('renders correctly', () => {
-    // Basic render test
-    // You may need to provide required props
-    const { container } = render(<EducationGroup data={{}} onSave={vi.fn()} label="Test" message="Empty" title="Section" />)
+    const { container } = render(
+      <EducationGroup
+        data={{
+          degree: 'BS',
+          school: 'Uni',
+          major: 'CS',
+          gpa: '3.5',
+          graduationYear: '2024',
+        }}
+        onSave={vi.fn()}
+      />
+    )
     expect(container).toBeInTheDocument()
   })
 })
+

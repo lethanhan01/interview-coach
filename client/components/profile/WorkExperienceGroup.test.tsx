@@ -4,8 +4,10 @@ import WorkExperienceGroup from './WorkExperienceGroup'
 
 describe('WorkExperienceGroup', () => {
   it('renders correctly', () => {
-    // Basic render test
-    const { container } = render(<WorkExperienceGroup data={[]} onSave={vi.fn()} />)
+    const { container } = render(
+      <WorkExperienceGroup data={[]} availableTechs={[]} onSave={vi.fn()} />
+    )
     expect(container).toBeInTheDocument()
   })
 })
+

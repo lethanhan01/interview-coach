@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from 'react'
+import { authService } from '@/services'
 
 type Role = 'candidate' | 'admin'
 type CurrentUser = { id: string; email: string }
@@ -27,9 +28,6 @@ const AuthContext = createContext<AuthContextValue>({
   refresh: async () => null,
 })
 
-const apiBase =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [value, setValue] = useState<Omit<AuthContextValue, 'refresh'>>({
     user: null,
@@ -40,16 +38,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async (): Promise<Role | null> => {
     try {
-      const response = await fetch(`${apiBase}/auth/me`, {
-        credentials: 'include',
-      })
-      if (!response.ok) throw new Error('Not authenticated')
-      const body = await response.json()
-      const fetchedRole = body.data.role
+      const user = await authService.getMe()
+      if (!user) throw new Error('Not authenticated')
+      const fetchedRole = user.role as Role
       setValue({
-        user: { id: body.data.id, email: body.data.email },
+        user: { id: user.id, email: user.email },
         role: fetchedRole,
-        status: body.data.status,
+        status: user.status,
         isLoading: false,
       })
       return fetchedRole
@@ -71,3 +66,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   return useContext(AuthContext)
 }
+

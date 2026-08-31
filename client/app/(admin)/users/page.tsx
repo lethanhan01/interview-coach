@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { apiClient } from '@/lib/api-client'
+import { adminService } from '@/services'
+import type { AdminUser } from '@/lib/types'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -27,14 +28,6 @@ import {
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { Search, AlertCircle, Trash2, Unlock, Lock, Users } from 'lucide-react'
 
-type AdminUser = {
-  id: string
-  email: string
-  role: string
-  status: string
-  createdAt: string
-}
-
 export default function AdminUsersPage() {
   const { role, isLoading: authLoading } = useAuth()
   const [users, setUsers] = useState<AdminUser[]>([])
@@ -46,8 +39,8 @@ export default function AdminUsersPage() {
   const fetchUsers = useCallback(async () => {
     setError('')
     try {
-      const result = await apiClient.get<{ data: AdminUser[] }>('/admin/users')
-      setUsers(result.data)
+      const data = await adminService.listUsers()
+      setUsers(data)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Không thể tải users')
     } finally {
@@ -69,7 +62,7 @@ export default function AdminUsersPage() {
 
   const changeStatus = async (id: string, currentStatus: string) => {
     try {
-      await apiClient.patch(`/admin/users/${id}`, {
+      await adminService.updateUser(id, {
         status: currentStatus === 'active' ? 'locked' : 'active',
       })
       await load()
@@ -81,7 +74,7 @@ export default function AdminUsersPage() {
   const deleteUser = async () => {
     if (!userToDelete) return
     try {
-      await apiClient.delete<void>(`/admin/users/${userToDelete}`)
+      await adminService.deleteUser(userToDelete)
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Không thể xóa user')
@@ -89,6 +82,7 @@ export default function AdminUsersPage() {
       setUserToDelete(null)
     }
   }
+
 
   if (authLoading || role !== 'admin') return null
 

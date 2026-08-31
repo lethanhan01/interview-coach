@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ScrollText, ArrowRight, User } from 'lucide-react'
-import { apiClient } from '@/lib/api-client'
+import { profileService } from '@/services'
+
 import type { GetProfileResponse } from '@/lib/types'
 import PersonalInfoGroup from '@/components/profile/PersonalInfoGroup'
 import AccountInfoGroup from '@/components/profile/AccountInfoGroup'
@@ -17,8 +18,8 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    apiClient
-      .get<GetProfileResponse>('/profile')
+    profileService
+      .getProfile()
       .then(setData)
       .catch((err) =>
         setError(err instanceof Error ? err.message : 'Không thể tải thông tin tài khoản')
@@ -27,9 +28,10 @@ export default function ProfilePage() {
   }, [])
 
   async function patchProfile<T extends object>(patch: T) {
-    const updated = await apiClient.patch<GetProfileResponse>('/profile', patch)
+    const updated = await profileService.updateProfile(patch)
     setData(updated)
   }
+
 
   if (loading) {
     return (

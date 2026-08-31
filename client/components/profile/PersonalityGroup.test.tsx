@@ -4,9 +4,10 @@ import PersonalityGroup from './PersonalityGroup'
 
 describe('PersonalityGroup', () => {
   it('renders correctly', () => {
-    // Basic render test
-    // You may need to provide required props
-    const { container } = render(<PersonalityGroup data={{}} onSave={vi.fn()} label="Test" message="Empty" title="Section" />)
+    const { container } = render(
+      <PersonalityGroup data={{ personality: 'Test' }} onSave={vi.fn()} />
+    )
     expect(container).toBeInTheDocument()
   })
 })
+

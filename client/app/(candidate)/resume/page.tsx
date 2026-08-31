@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { User, ArrowRight } from 'lucide-react'
-import { apiClient } from '@/lib/api-client'
+import { profileService } from '@/services'
+
 import type {
   GetProfileResponse,
   EducationEntry,
@@ -29,8 +30,8 @@ export default function ResumePage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    apiClient
-      .get<GetProfileResponse>('/profile')
+    profileService
+      .getProfile()
       .then(setData)
       .catch((err) =>
         setError(err instanceof Error ? err.message : 'Không thể tải hồ sơ CV')
@@ -39,9 +40,10 @@ export default function ResumePage() {
   }, [])
 
   async function patchProfile<T extends object>(patch: T) {
-    const updated = await apiClient.patch<GetProfileResponse>('/profile', patch)
+    const updated = await profileService.updateProfile(patch)
     setData(updated)
   }
+
 
   if (loading) {
     return (

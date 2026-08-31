@@ -4,8 +4,7 @@ import { useState } from 'react'
 import { KeyRound, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import ProfileSection from './ProfileSection'
 import Button from '@/components/ui/Button'
-import { apiClient } from '@/lib/api-client'
-import type { ChangePasswordResponse } from '@/lib/types'
+import { authService } from '@/services'
 
 const FIELD_CONTAINER_CLASS = 'flex flex-col gap-1.5'
 const INPUT_CLASS =
@@ -51,10 +50,7 @@ export default function ChangePasswordGroup() {
 
     setLoading(true)
     try {
-      await apiClient.post<ChangePasswordResponse>('/auth/change-password', {
-        currentPassword,
-        newPassword,
-      })
+      await authService.changePassword(currentPassword, newPassword)
       setSuccess(true)
       setCurrentPassword('')
       setNewPassword('')
@@ -67,6 +63,7 @@ export default function ChangePasswordGroup() {
       setLoading(false)
     }
   }
+
 
   return (
     <ProfileSection title="Đổi mật khẩu & Bảo mật">

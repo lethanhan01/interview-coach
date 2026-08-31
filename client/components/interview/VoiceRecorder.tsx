@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import LoadingSpinner from '../ui/LoadingSpinner'
 import Button from '../ui/Button'
+import type { AudioUploadResult } from '@/lib/types'
 
 interface VoiceRecorderProps {
   onSubmit: (
@@ -11,23 +12,17 @@ interface VoiceRecorderProps {
     sizeBytes: number,
     transcript: string
   ) => Promise<void>
-  onUploadAudio: (blob: Blob) => Promise<AudioUploadResponse>
+  onUploadAudio: (blob: Blob) => Promise<AudioUploadResult>
   sessionId?: string
   disabled?: boolean
 }
 
 type RecordState = 'idle' | 'recording' | 'transcribing' | 'submitting'
 
-interface AudioUploadResponse {
-  audioFileUrl: string
-  audioSizeBytes: number
-  transcript: string
-  transcriptDurationSeconds?: number
-}
-
 interface VoiceDraft {
   audioUrl: string
   durationSeconds: number
+
   sizeBytes: number
 }
 

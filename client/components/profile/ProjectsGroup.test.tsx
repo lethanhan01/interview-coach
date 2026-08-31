@@ -4,8 +4,9 @@ import ProjectsGroup from './ProjectsGroup'
 
 describe('ProjectsGroup', () => {
   it('renders correctly', () => {
-    // Basic render test
-    const { container } = render(<ProjectsGroup data={[]} onSave={vi.fn()} />)
+    const { container } = render(
+      <ProjectsGroup data={[]} availableTechs={[]} onSave={vi.fn()} />
+    )
     expect(container).toBeInTheDocument()
   })
 })

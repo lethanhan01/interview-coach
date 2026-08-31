@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Plus, Clock } from 'lucide-react'
-import { apiClient } from '@/lib/api-client'
+import { sessionService } from '@/services'
+
 import type { Session } from '@/lib/types'
 import { formatVietnamDateTime } from '@/lib/date-time'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -84,10 +85,10 @@ export default function SessionsPage() {
 
   useEffect(() => {
     let cancelled = false
-    apiClient
-      .get<{ sessions: Session[] }>('/sessions')
+    sessionService
+      .getSessions()
       .then((data) => {
-        if (!cancelled) setSessions(data.sessions ?? [])
+        if (!cancelled) setSessions(data)
       })
       .catch((err) => {
         if (cancelled) return
@@ -106,6 +107,7 @@ export default function SessionsPage() {
       cancelled = true
     }
   }, [retryCount])
+
 
   function retryLoad() {
     setLoading(true)

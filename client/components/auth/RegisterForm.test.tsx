@@ -13,7 +13,8 @@ describe('RegisterForm', () => {
   it('renders all form fields and submit button', () => {
     render(<RegisterForm onSubmit={mockOnSubmit} />)
     
-    expect(screen.getByLabelText(/Họ và Tên/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Họ/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Tên/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Email/i)).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Ít nhất 12 ký tự', { exact: false })).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Nhập lại mật khẩu', { exact: false })).toBeInTheDocument()
@@ -27,7 +28,8 @@ describe('RegisterForm', () => {
     await userEvent.click(submitButton)
 
     await waitFor(() => {
-      expect(screen.getByText(/Họ và Tên là bắt buộc/i)).toBeInTheDocument()
+      expect(screen.getByText(/Họ là bắt buộc/i)).toBeInTheDocument()
+      expect(screen.getByText(/Tên là bắt buộc/i)).toBeInTheDocument()
       expect(screen.getByText(/Email là bắt buộc/i)).toBeInTheDocument()
       expect(screen.getByText(/Mật khẩu phải có ít nhất 12 ký tự/i)).toBeInTheDocument()
       expect(screen.getByText(/Vui lòng xác nhận mật khẩu/i)).toBeInTheDocument()
@@ -39,7 +41,8 @@ describe('RegisterForm', () => {
   it('shows validation error when passwords do not match', async () => {
     render(<RegisterForm onSubmit={mockOnSubmit} />)
     
-    await userEvent.type(screen.getByLabelText(/Họ và Tên/i), 'Nguyen Van A')
+    await userEvent.type(screen.getByLabelText(/Họ/i), 'Nguyễn')
+    await userEvent.type(screen.getByLabelText(/Tên/i), 'Văn A')
     await userEvent.type(screen.getByLabelText(/Email/i), 'test@example.com')
     await userEvent.type(screen.getByPlaceholderText('Ít nhất 12 ký tự', { exact: false }), 'ValidPassword123!')
     await userEvent.type(screen.getByPlaceholderText('Nhập lại mật khẩu', { exact: false }), 'DifferentPassword!')
@@ -57,9 +60,9 @@ describe('RegisterForm', () => {
   it('calls onSubmit with form data when valid', async () => {
     render(<RegisterForm onSubmit={mockOnSubmit} />)
     
-    await userEvent.type(screen.getByLabelText(/Họ và Tên/i), 'Nguyen Van A')
+    await userEvent.type(screen.getByLabelText(/Họ/i), 'Nguyễn')
+    await userEvent.type(screen.getByLabelText(/Tên/i), 'Văn A')
     await userEvent.type(screen.getByLabelText(/Email/i), 'test@example.com')
-    // Select the first 'Mật khẩu' label by finding the input by placeholder or using a more specific query
     await userEvent.type(screen.getByPlaceholderText('Ít nhất 12 ký tự', { exact: false }), 'ValidPassword123!')
     await userEvent.type(screen.getByPlaceholderText('Nhập lại mật khẩu', { exact: false }), 'ValidPassword123!')
     
@@ -69,7 +72,8 @@ describe('RegisterForm', () => {
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalledWith(
         {
-          fullName: 'Nguyen Van A',
+          lastname: 'Nguyễn',
+          firstname: 'Văn A',
           email: 'test@example.com',
           password: 'ValidPassword123!',
           confirmPassword: 'ValidPassword123!',
@@ -78,6 +82,7 @@ describe('RegisterForm', () => {
       )
     })
   })
+
 
   it('displays server error when provided', () => {
     render(
@@ -97,3 +102,4 @@ describe('RegisterForm', () => {
     expect(submitButton).toBeDisabled()
   })
 })
+

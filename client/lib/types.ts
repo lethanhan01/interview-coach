@@ -216,11 +216,6 @@ export interface GetProfileResponse {
   } | null
 }
 
-export interface ChangePasswordPayload {
-  currentPassword: string
-  newPassword: string
-}
-
 export interface ChangePasswordResponse {
   success: boolean
   data?: {
@@ -232,4 +227,95 @@ export interface ChangePasswordResponse {
     lastname: string | null
   }
 }
+
+export interface RegisterPayload {
+  email: string
+  password: string
+  firstname: string
+  lastname: string
+}
+
+export interface LoginPayload {
+  email: string
+  password: string
+}
+
+export interface PasswordResetRequestPayload {
+  email: string
+}
+
+export interface PasswordResetConfirmPayload {
+  email: string
+  code: string
+  newPassword: string
+}
+
+export interface AuthUser {
+  id: string
+  email: string
+  role: 'candidate' | 'admin'
+  status: string
+  firstname: string | null
+  lastname: string | null
+}
+
+export interface AdminUser {
+  id: string
+  email: string
+  role: string
+  status: string
+  createdAt: string
+  firstname?: string | null
+  lastname?: string | null
+}
+
+export interface Question {
+  id: string
+  content: string
+  orderIndex: number
+  answered?: boolean
+  answerId?: string
+  skipped?: boolean
+}
+
+export interface QuestionsResponse {
+  questions: Question[]
+  currentIndex?: number
+}
+
+export type SessionStatusAction = 'active' | 'paused' | 'completed' | 'canceled'
+
+export interface UpdateSessionStatusPayload {
+  status: SessionStatusAction
+  remainingSeconds?: number
+  autoSkipUnanswered?: boolean
+}
+
+export interface SubmitAnswerPayload {
+  questionId: string
+  answerMode: 'text' | 'voice'
+  answerText?: string
+  skipQuestion?: boolean
+  audioFileUrl?: string
+  audioDurationSeconds?: number
+  audioSizeBytes?: number
+}
+
+export interface TurnResponse {
+  turnId?: string
+  status?: string
+  feedbackGenerated?: boolean
+  questionId?: string
+  answerText?: string
+}
+
+export interface AudioUploadResult {
+  audioFileUrl: string
+  audioSizeBytes: number
+  mediaKey?: string
+  transcript: string
+  transcriptDurationSeconds?: number
+}
+
+
 

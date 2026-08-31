@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { apiClient } from '@/lib/api-client'
+import { prepService } from '@/services'
 import type { SavedJobDescription } from '@/lib/types'
 import { formatVietnamRelativeDate } from '@/lib/date-time'
 import { Building2, MapPin, Clock, Plus, ChevronRight } from 'lucide-react'
@@ -19,14 +19,15 @@ export default function JdLibraryPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    apiClient
-      .get<{ items: SavedJobDescription[] }>('/saved-job-descriptions')
-      .then((data) => setItems(data.items ?? []))
+    prepService
+      .getSavedJobDescriptions()
+      .then(setItems)
       .catch((err) =>
         setError(err instanceof Error ? err.message : 'Không thể tải danh sách')
       )
       .finally(() => setLoading(false))
   }, [])
+
 
   function handleSelect(item: SavedJobDescription) {
     // Navigate to setup with the selected JD pre-filled via query param

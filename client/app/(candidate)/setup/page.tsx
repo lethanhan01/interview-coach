@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { apiClient } from '@/lib/api-client'
+import { prepService, sessionService } from '@/services'
 import type {
   ContextPack,
   OutputLanguage,
@@ -11,6 +11,7 @@ import type {
   Session,
   SessionType,
 } from '@/lib/types'
+
 import {
   type JdFormData,
   type InterviewDuration,
@@ -248,19 +249,14 @@ function SetupPageContent() {
 
     async function loadSavedJobDescriptions() {
       try {
-        const data = await apiClient.get<{ items: SavedJobDescription[] }>(
-          '/saved-job-descriptions'
-        )
+        const itemsData = await prepService.getSavedJobDescriptions()
         if (!cancelled) {
-          let items = data.items ?? []
+          let items = itemsData
           let sessions: Session[] = []
 
           if (items.some((item) => !normalizeJdLevel(item.level))) {
             try {
-              const sessionData = await apiClient.get<{ sessions: Session[] }>(
-                '/sessions'
-              )
-              sessions = sessionData.sessions ?? []
+              sessions = await sessionService.getSessions()
               items = hydrateSavedJobDescriptionLevels(items, sessions)
             } catch {
               // Best-effort fallback for legacy JD records saved before level existed.
@@ -344,11 +340,10 @@ function SetupPageContent() {
     setSubmitting(true)
     try {
       const jobDescription = serializeJd(jd)
-      const savedJobDescription = await apiClient.post<SavedJobDescription>(
-        '/saved-job-descriptions',
+      const savedJobDescription = await prepService.saveJobDescription(
         toSavedJobDescriptionPayload(jd)
       )
-      const data = await apiClient.post<{ id: string }>('/sessions', {
+      const data = await sessionService.createSession({
         jobDescription,
         sessionType,
         contextPack,
@@ -365,6 +360,7 @@ function SetupPageContent() {
       setSubmitting(false)
     }
   }
+
 
   // Hiện loading spinner khi đang fetch danh sách JD (chỉ ở step 0)
   if (step === 0 && !jdPickerReady) {

@@ -2,11 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import ChangePasswordGroup from './ChangePasswordGroup'
-import { apiClient } from '@/lib/api-client'
+import { authService } from '@/services'
 
-vi.mock('@/lib/api-client', () => ({
-  apiClient: {
-    post: vi.fn(),
+vi.mock('@/services', () => ({
+  authService: {
+    changePassword: vi.fn(),
   },
 }))
 
@@ -36,7 +36,7 @@ describe('ChangePasswordGroup', () => {
     expect(
       await screen.findByText('Vui lòng nhập mật khẩu hiện tại.')
     ).toBeInTheDocument()
-    expect(apiClient.post).not.toHaveBeenCalled()
+    expect(authService.changePassword).not.toHaveBeenCalled()
   })
 
   it('shows validation error when new password is less than 8 characters', async () => {
@@ -53,7 +53,7 @@ describe('ChangePasswordGroup', () => {
     expect(
       await screen.findByText('Mật khẩu mới phải có ít nhất 8 ký tự.')
     ).toBeInTheDocument()
-    expect(apiClient.post).not.toHaveBeenCalled()
+    expect(authService.changePassword).not.toHaveBeenCalled()
   })
 
   it('shows validation error when confirmation password does not match', async () => {
@@ -70,12 +70,19 @@ describe('ChangePasswordGroup', () => {
     expect(
       await screen.findByText('Mật khẩu xác nhận không khớp.')
     ).toBeInTheDocument()
-    expect(apiClient.post).not.toHaveBeenCalled()
+    expect(authService.changePassword).not.toHaveBeenCalled()
   })
 
   it('submits successfully and clears fields on valid input', async () => {
     const user = userEvent.setup()
-    vi.mocked(apiClient.post).mockResolvedValueOnce({ success: true })
+    vi.mocked(authService.changePassword).mockResolvedValueOnce({
+      id: 'user-1',
+      email: 'test@example.com',
+      role: 'candidate',
+      status: 'active',
+      firstname: 'An',
+      lastname: 'Nguyen',
+    })
 
     render(<ChangePasswordGroup />)
 
@@ -91,10 +98,10 @@ describe('ChangePasswordGroup', () => {
     await user.click(submitBtn)
 
     await waitFor(() => {
-      expect(apiClient.post).toHaveBeenCalledWith('/auth/change-password', {
-        currentPassword: 'oldPassword123',
-        newPassword: 'newStrongPassword123',
-      })
+      expect(authService.changePassword).toHaveBeenCalledWith(
+        'oldPassword123',
+        'newStrongPassword123'
+      )
     })
 
     expect(
@@ -105,3 +112,4 @@ describe('ChangePasswordGroup', () => {
     expect(confirmInput).toHaveValue('')
   })
 })
+
