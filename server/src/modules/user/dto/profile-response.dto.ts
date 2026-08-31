@@ -2,6 +2,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 
 export class ProfileDetailsResponseDto {
+  @ApiPropertyOptional() targetPosition?: string | null;
+  @ApiPropertyOptional() targetLevel?: string | null;
   @ApiPropertyOptional() personality?: string | null;
   @ApiPropertyOptional({ type: 'object', additionalProperties: true })
   education?: Prisma.JsonValue | null;

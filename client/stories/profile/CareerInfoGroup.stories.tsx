@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import CareerInfoGroup from '../../components/profile/CareerInfoGroup'
+import CareerInfoGroup from '../../components/resume/CareerInfoGroup'
 
 const meta: Meta<typeof CareerInfoGroup> = {
   title: 'Feature/Profile/CareerInfoGroup',

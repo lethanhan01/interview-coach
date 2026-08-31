@@ -106,8 +106,8 @@ export default function ResumePage() {
       <div className="flex flex-col gap-6">
         <CareerInfoGroup
           data={{
-            targetPosition: (profile as Record<string, unknown> | null)?.targetPosition as string | undefined,
-            targetLevel: (profile as Record<string, unknown> | null)?.targetLevel as string | undefined,
+            targetPosition: profile?.targetPosition ?? undefined,
+            targetLevel: profile?.targetLevel ?? undefined,
           }}
           onSave={(career) => patchProfile(career)}
         />

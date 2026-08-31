@@ -17,6 +17,16 @@ export class UpdateProfileDto {
   @IsOptional()
   @MaxLength(100)
   lastname?: string;
+  @ApiPropertyOptional({ maxLength: 100 })
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  targetPosition?: string;
+  @ApiPropertyOptional({ maxLength: 100 })
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  targetLevel?: string;
   @ApiPropertyOptional() @IsString() @IsOptional() personality?: string;
   @ApiPropertyOptional({ type: 'object', additionalProperties: true })
   @IsObject()

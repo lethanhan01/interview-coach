@@ -95,7 +95,7 @@ export default function ConfigForm({
     <div className="flex flex-col gap-7">
       <div>
         <p className="text-ink mb-3 text-sm font-medium">Loại phỏng vấn</p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {SESSION_TYPES.map((t) => (
             <SelectCard
               key={t.value}

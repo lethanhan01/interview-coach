@@ -1,8 +1,107 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { profileService } from '@/services'
+import type { GetProfileResponse } from '@/lib/types'
+import PersonalInfoGroup from '@/components/profile/PersonalInfoGroup'
+import AccountInfoGroup from '@/components/profile/AccountInfoGroup'
+import ChangePasswordGroup from '@/components/profile/ChangePasswordGroup'
+import { Badge } from '@/components/ui/Badge'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { ShieldCheck } from 'lucide-react'
+
 export default function AdminProfilePage() {
+  const [data, setData] = useState<GetProfileResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    profileService
+      .getProfile()
+      .then(setData)
+      .catch((err) =>
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Không thể tải thông tin tài khoản'
+        )
+      )
+      .finally(() => setLoading(false))
+  }, [])
+
+  async function patchProfile<T extends object>(patch: T) {
+    const updated = await profileService.updateProfile(patch)
+    setData(updated)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-3xl py-10">
+        <p className="text-danger text-sm">{error}</p>
+      </div>
+    )
+  }
+
+  const fullName = [data?.lastname, data?.firstname].filter(Boolean).join(' ')
+
   return (
-    <div>
-      <h1 className="mb-4 text-3xl font-bold">Hồ sơ Quản trị viên</h1>
-      <p>Tính năng này đang được phát triển. Vui lòng quay lại sau.</p>
+    <div className="mx-auto max-w-3xl space-y-6">
+      <div>
+        <h1 className="text-ink text-2xl font-bold">Hồ sơ Quản trị viên</h1>
+        <p className="text-ink-muted mt-1 text-sm">
+          Quản lý thông tin tài khoản và bảo mật của quản trị viên hệ thống.
+        </p>
+      </div>
+
+      {/* Admin Profile Header Card */}
+      <div className="border-border bg-surface shadow-card flex flex-col justify-between gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-4">
+          <div className="bg-brand-subtle text-brand-subtle-fg flex size-14 shrink-0 items-center justify-center rounded-full border border-brand/20">
+            <span className="text-brand text-xl font-bold">
+              {(data?.firstname?.[0] || data?.email?.[0] || 'A').toUpperCase()}
+            </span>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-ink text-lg font-semibold">
+                {fullName || data?.email}
+              </h2>
+              <Badge variant="brand" className="text-xs">
+                Quản trị viên
+              </Badge>
+            </div>
+            <p className="text-ink-muted text-sm">{data?.email}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 text-xs text-ink-muted">
+          <ShieldCheck className="size-4 text-brand" />
+          <span>Toàn quyền hệ thống</span>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-6">
+        <PersonalInfoGroup
+          data={{ firstname: data?.firstname, lastname: data?.lastname }}
+          onSave={(patch) => patchProfile(patch)}
+        />
+
+        <AccountInfoGroup
+          email={data?.email}
+          role="admin"
+          status="active"
+        />
+
+        <ChangePasswordGroup />
+      </div>
     </div>
   )
 }

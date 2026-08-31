@@ -19,6 +19,8 @@ export class UserService {
         lastname: true,
         profile: {
           select: {
+            targetPosition: true,
+            targetLevel: true,
             personality: true,
             education: true,
             workExperience: true,
@@ -39,6 +41,8 @@ export class UserService {
       firstname: user.firstname,
       lastname: user.lastname,
       profile: user.profile && {
+        targetPosition: user.profile.targetPosition,
+        targetLevel: user.profile.targetLevel,
         personality: user.profile.personality,
         education: user.profile.education,
         workExperience: user.profile.workExperience,
@@ -56,6 +60,8 @@ export class UserService {
       lastname: dto.lastname,
     });
     const profileData = this.stripUndefined({
+      targetPosition: dto.targetPosition,
+      targetLevel: dto.targetLevel,
       personality: dto.personality,
       education: dto.education,
       workExperience: dto.workExperience,

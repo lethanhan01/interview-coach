@@ -206,6 +206,8 @@ export interface GetProfileResponse {
   firstname?: string
   lastname?: string
   profile: {
+    targetPosition?: string | null
+    targetLevel?: string | null
     personality?: string
     education?: EducationEntry
     workExperience?: WorkExperienceEntry[]

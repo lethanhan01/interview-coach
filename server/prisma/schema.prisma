@@ -138,6 +138,8 @@ model UserVerificationCode {
 model UserProfile {
   id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId          String   @unique @map("user_id") @db.Uuid
+  targetPosition  String?  @map("target_position")
+  targetLevel     String?  @map("target_level")
   personality     String?
   education       Json?
   workExperience  Json?    @map("work_experience")
