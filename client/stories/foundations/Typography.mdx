@@ -5,7 +5,7 @@ import TypographySpecimen from './components/TypographySpecimen'
 
 # Typography (Kiểu chữ)
 
-Tài liệu này định nghĩa các quy chuẩn **Typography** chuẩn hóa cho hệ thống Interview Coach, bao gồm Font family, Font size scale, Line height và Font weight.
+Tài liệu này định nghĩa các quy chuẩn **Typography** chuẩn hóa cho hệ thống Interview Coach, bao gồm Font family, Font size scale (từ `xs` đến `6xl`), Line height, Tracking (Letter spacing) và Numeric features (`tabular-nums`).
 
 ---
 
@@ -15,6 +15,7 @@ Typography đóng vai trò cốt lõi trong việc định hình trải nghiệm
 
 - **Sans-serif (`Geist`)**: Phông chữ chủ đạo (`--font-sans`) cho tất cả giao diện người dùng, tiêu đề, văn bản nội dung.
 - **Monospace (`Geist Mono`)**: Phông chữ cách đều (`--font-mono`) cho hiển thị mã nguồn, số liệu thống kê, dữ liệu kỹ thuật và timestamp.
+- **Tabular Figures (`.tabular-nums`)**: Khóa độ rộng chữ số cố định cho đồng hồ đếm ngược, audio visualizer timestamps và bảng điểm scorecard.
 
 ---
 
@@ -35,7 +36,11 @@ Bạn có thể chỉnh sửa văn bản thử nghiệm trong ô bên dưới đ
 | **base** | `text-base` | `--text-base` | `1.00rem` | `16px` | `1.50rem (24px)` | Body text mặc định, paragraph, modal content |
 | **lg** | `text-lg` | `--text-lg` | `1.125rem` | `18px` | `1.75rem (28px)` | Tiêu đề card, section header nhỏ, H4 |
 | **xl** | `text-xl` | `--text-xl` | `1.25rem` | `20px` | `1.75rem (28px)` | Section header vừa, Modal title, H3 |
-| **2xl** | `text-2xl` | `--text-2xl` | `1.50rem` | `24px` | `2.00rem (32px)` | Page title chính, Dashboard header, H1/H2 |
+| **2xl** | `text-2xl` | `--text-2xl` | `1.50rem` | `24px` | `2.00rem (32px)` | Page title chính, Dashboard header, H2 |
+| **3xl** | `text-3xl` | `--text-3xl` | `1.875rem` | `30px` | `2.25rem (36px)` | Tiêu đề chính Landing page, H1 lớn |
+| **4xl** | `text-4xl` | `--text-4xl` | `2.25rem` | `36px` | `2.50rem (40px)` | Hero title nổi bật, Điểm số to |
+| **5xl** | `text-5xl` | `--text-5xl` | `3.00rem` | `48px` | `1 (48px)` | Landing page Hero headline |
+| **6xl** | `text-6xl` | `--text-6xl` | `3.75rem` | `60px` | `1 (60px)` | Marketing display headline cực đại |
 
 ---
 
@@ -43,31 +48,10 @@ Bạn có thể chỉnh sửa văn bản thử nghiệm trong ô bên dưới đ
 
 ### ✅ Do (Nên làm)
 - **Ưu tiên sử dụng Ink Tokens**: Kết hợp font-size với màu chữ phân cấp `text-ink` (chính), `text-ink-muted` (phụ), `text-ink-faint` (nhạt).
-- **Tương thích Line Height**: Luôn sử dụng cặp `text-*` chuẩn của Tailwind để tự động nhận đúng `line-height`, tránh bị đè chữ.
+- **Sử dụng `.tabular-nums` cho số liệu động**: Luôn thêm class `tabular-nums` cho audio time timer (`02:45 / 15:00`) và scorecard để tránh giật giao diện khi số thay đổi.
+- **Tương thích Line Height**: Luôn sử dụng cặp `text-*` chuẩn của Tailwind để tự động nhận đúng `line-height`.
 - **Thứ tự phân cấp (Heading Hierarchy)**: Đảm bảo thứ tự tiêu đề tuân thủ cấu trúc HTML H1 -> H2 -> H3 -> H4 để hỗ trợ trình đọc màn hình (Screen Reader).
-- **Phông monospace đúng nơi**: Chỉ sử dụng `font-mono` cho code snippet, ID hash, chỉ số kỹ thuật hoặc điểm số phỏng vấn.
 
 ### ❌ Don't (Không nên làm)
 - **Không tùy tiện dùng font size lạ**: Tránh dùng font-size không nằm trong scale như `text-[13px]` hay `text-[17px]` (Tuân thủ Quy tắc 3 trong [UI Conventions](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/stories/foundations/Conventions.mdx)).
 - **Không dùng quá nhiều font weight trên 1 màn hình**: Giới hạn tối đa 2-3 độ đậm (`normal`, `semibold`, `bold`) trong cùng một cụm giao diện.
-
----
-
-## 5. Ví dụ Mã nguồn (Code Examples)
-
-```tsx
-import React from 'react'
-
-export const InterviewHeader = () => {
-  return (
-    <div className="space-y-2 font-sans">
-      <h1 className="text-2xl font-bold tracking-tight text-ink">
-        Luyện tập Phỏng vấn System Design
-      </h1>
-      <p className="text-sm text-ink-muted">
-        Mã phiên: <code className="font-mono text-xs bg-surface-raised px-1.5 py-0.5 rounded border border-border">#SESS-8921</code>
-      </p>
-    </div>
-  )
-}
-```

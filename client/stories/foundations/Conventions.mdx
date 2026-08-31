@@ -2,152 +2,222 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 <Meta title="Foundations/Conventions" />
 
-# UI Component Conventions (Quy chuẩn Sinh & Sáng tạo UI)
+# UI & Style Architecture Conventions (Quy chuẩn Toàn diện Hệ thống Styles)
 
-Tài liệu này định nghĩa bộ quy tắc bắt buộc áp dụng đối với **Developer** và **AI Assistant** khi tạo mới, tinh chỉnh hoặc tái cấu trúc các giao diện Frontend trong dự án **Interview Coach**.
-
----
-
-## 1. Tổng quan & Mục đích
-
-Nhằm duy trì tính nhất quán về mặt thị giác, tối ưu hiệu năng của Tailwind CSS JIT Compiler, và tránh nợ kỹ thuật (technical debt), tất cả mã nguồn UI phải tuân thủ nghiêm ngặt **5 bộ quy tắc chuẩn hóa** dưới đây.
+Tài liệu này định nghĩa bộ quy chuẩn bắt buộc áp dụng cho **Developer** và **AI Assistant** khi thiết kế, triển khai hoặc tái cấu trúc bất kỳ UI Component, trang hoặc layout nào trong dự án **Interview Coach**.
 
 ---
 
-## 2. Các Quy chuẩn Cốt lõi (Core Rules)
+## 1. Kiến trúc 3-Tier Design Tokens (Phân cấp Token 3 Tầng)
+
+Hệ thống token của dự án tuân thủ mô hình chuẩn Enterprise 3 tầng, bảo đảm tính linh hoạt và nhất quán:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Tier 1: Primitive Tokens (tokens.css)                       │
+│  Neutral, Brand, Violet (AI), Cyan (Audio), Charts, Tiers   │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ (Mapped via Semantic Role)
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Tier 2: Semantic Tokens (themes.css)                        │
+│  Primary, Secondary, AI, Waveform, Destructive, Ink, Border  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ (Contextual Depth & Interaction)
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Tier 3: Elevation & Utilities (themes.css & utilities.css) │
+│  Surface-0..3, Specular Highlights, Glass, Shimmer, Press    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### ❌ Anti-pattern (Cấm):
+- Tuyệt đối **KHÔNG** dùng trực tiếp Primitive classes trong component (`bg-violet-600`, `bg-neutral-900`, `text-blue-500`).
+
+### ✅ Best Practice (Bắt buộc):
+- Luôn sử dụng Semantic / Surface classes (`bg-ai`, `bg-surface-1`, `text-ink`, `border-border`).
+
+---
+
+## 2. Bảng Quy chuẩn Phân tầng Bề mặt (Surface & Elevation Hierarchy)
+
+Để tránh hiện tượng phẳng màu (flatness) trong Dark Mode và tạo chiều sâu thị giác tự nhiên, tất cả containers phải tuân thủ đúng tầng Surface:
+
+| Tầng Bề mặt | Tailwind Class | Trường hợp Áp dụng | Kết hợp Khuyến nghị |
+| :--- | :--- | :--- | :--- |
+| **Surface 0 (Canvas)** | `bg-surface-0` hoặc `bg-background` | Nền canvas toàn trang (`<body>`, layout background). | `text-ink` |
+| **Surface 1 (Container)** | `bg-surface-1` hoặc `bg-card` | Thẻ Card, Section panel, Table container, Widget. | `border border-border shadow-elevation-1` |
+| **Surface 2 (Floating)** | `bg-surface-2` hoặc `bg-popover` | Dropdown Menu, Select list, Popover, Tooltip. | `border border-border shadow-elevation-2` |
+| **Surface 3 (Overlay)** | `bg-surface-3` | Modal Dialog, Alert Dialog, Sheet Drawer. | `border border-border shadow-elevation-3 border-specular` |
+| **Surface Inset** | `bg-surface-inset` | Ô Input nhập liệu, Code block, Search bar thụt lề. | `border border-border/80 text-ink` |
+
+### 🌟 Hiệu ứng Phản quang Specular (`.border-specular`)
+- Trong Dark Mode, các khối nổi tầng cao (`Surface-1`, `Surface-3`, Modal, Dialog) nên kèm class `border-specular` để tạo viền sáng tinh tế mép trên theo phong cách Linear/Stripe.
+
+---
+
+## 3. Quy chuẩn Màu Sắc Chức năng (Functional & Domain Tokens)
+
+### 3.1. AI Coach & Cognitive Insights
+Áp dụng cho mọi tính năng liên quan đến AI (Chấm điểm phỏng vấn, Gợi ý câu trả lời, Phân tích biểu cảm, Đánh giá STAR):
+- **Nút/Điểm nhấn AI**: `bg-ai text-ai-foreground hover:bg-ai-hover active:bg-ai-active`
+- **Khung chứa nhận xét AI**: `bg-ai-subtle border border-ai-border text-ai-subtle-fg`
+- **Text tiêu đề AI**: `text-ai font-semibold`
+
+### 3.2. Real-time Audio Waveform & Telemetry
+Áp dụng cho thanh đo âm lượng mic, realtime speech indicator, sóng âm audio:
+- **Biểu tượng mic / Cột sóng âm**: `text-waveform` hoặc `bg-waveform`
+
+### 3.3. Biểu đồ Năng lực & Xếp hạng (Charts & Score Tiers)
+Áp dụng cho Radar Chart, Bar Chart, Bảng xếp hạng năng lực:
+- **Chuỗi màu Category**: `bg-chart-1` đến `bg-chart-6`
+- **Hạng đánh giá (Score Tiers)**:
+  - Đồng (Bronze): `text-score-bronze`
+  - Bạc (Silver): `text-score-silver`
+  - Vàng (Gold): `text-score-gold`
+  - Kim cương (Diamond): `text-score-diamond`
+
+---
+
+## 4. Quy chuẩn Typography & Numeric Features
+
+### 4.1. Phân cấp Văn bản (Text Hierarchy)
+- **Tiêu đề chính / Văn bản then chốt**: `text-ink` (độ tương phản cao nhất).
+- **Phụ đề / Label / Mô tả**: `text-ink-muted`.
+- **Ghi chú mờ / Placeholder**: `text-ink-faint`.
+
+### 4.2. Thang Display Kích thước Lớn
+- `text-2xl` (24px/32px): Tiêu đề Section, Card Header, Modal Title.
+- `text-3xl` (30px/36px): Tiêu đề trang Dashboard / Session Detail.
+- `text-4xl` (36px/40px) đến `text-6xl` (60px): Landing page Hero title, Điểm tổng kết phỏng vấn to (`95/100`).
+
+### 4.3. Bắt buộc `.tabular-nums` cho Dữ liệu Động
+Mọi con số có khả năng nhảy số liên tục (Đồng hồ đếm ngược `00:45`, Audio timestamp `02:14 / 15:00`, Score counter) **BẮT BUỘC** phải có class `tabular-nums` để cố định độ rộng con số, chống giật rung layout.
+
+---
+
+## 5. Danh mục Bộ Utilities Tương tác Chuẩn hóa
+
+| Utility Class | Mục đích sử dụng | Ví dụ Cú pháp |
+| :--- | :--- | :--- |
+| `.focus-ring` | Vòng viền focus chuẩn WCAG khi điều hướng bằng bàn phím. | `<button className="focus-ring ...">` |
+| `.pressable` | Micro-interaction co giãn nhẹ khi click chuột/chạm. | `<Card className="pressable cursor-pointer ...">` |
+| `.scrollbar-thin` | Thanh cuộn mảnh thanh lịch tự đổi màu theo Dark/Light Mode. | `<div className="overflow-y-auto scrollbar-thin max-h-64">` |
+| `.scrollbar-none` | Ẩn hoàn toàn thanh cuộn nhưng vẫn cho phép cuộn nội dung. | `<div className="overflow-x-auto scrollbar-none">` |
+| `.glass-panel` | Khung kính mờ (Frosted glass) với blur 12px cho Sticky Header/Bar. | `<header className="sticky top-0 glass-panel border-b border-border">` |
+| `.border-specular` | Viền phản quang mép trên (Specular highlight) cho Card/Modal. | `<div className="bg-surface-1 border border-border border-specular ...">` |
+| `.animate-shimmer` | Hiệu ứng quét gradient cho khung Skeleton Loading. | `<div className="bg-surface-inset animate-shimmer h-6 rounded-md" />` |
+| `.tabular-nums` | Khóa độ rộng số cách đều. | `<span className="font-mono text-sm tabular-nums">02:45</span>` |
+
+---
+
+## 6. Bộ 5 Quy tắc Cốt lõi & Anti-patterns (Core Rules)
 
 ### Quy tắc 1: Component Reusability (Tái sử dụng UI Primitives)
-
-Luôn ưu tiên tái sử dụng các components chung (`@/components/ui/*`) thay vì tự tạo lại các thẻ HTML thuần kèm Tailwind classes lặp đi lặp lại trên nhiều trang.
-
-#### ❌ KHÔNG ĐƯỢC LÀM (DON'T)
-Tự viết thẻ HTML thuần kèm các class định dạng cơ bản ở nhiều trang khác nhau:
-```tsx
-// Trang Candidate Dashboard
-<button className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-  Save
-</button>
-
-// Trang Session Detail (Viết lại lặp đi lặp lại)
-<button className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white">
-  Save
-</button>
-```
-
-#### ✅ NÊN LÀM (DO)
-Tái sử dụng UI Primitive component đã được chuẩn hóa từ `@/components/ui/Button`:
-```tsx
-import { Button } from '@/components/ui/Button'
-
-<Button variant="primary" size="md">
-  Save
-</Button>
-```
-
----
+- **DO**: Dùng `<Button variant="primary">`, `<Badge variant="ai">`, `<Card>`.
+- **DON'T**: Tự viết `<button className="bg-blue-600 px-4 py-2 ...">` khắp nơi.
 
 ### Quy tắc 2: Safe Dynamic Styling (An toàn khi xử lý Style động)
+- **DO**: Dùng Lookup Map hoặc `cva`:
+  ```tsx
+  const tierBadges = {
+    gold: "bg-amber-50 text-amber-800 border-amber-200",
+    diamond: "bg-cyan-50 text-cyan-800 border-cyan-200",
+  } as const;
+  ```
+- **DON'T**: Nối chuỗi động `` `bg-${color}-500` `` (khiến Tailwind JIT bỏ sót class khi build).
 
-Nghiêm cấm việc nối chuỗi dynamic class trong Tailwind CSS. Tailwind JIT compiler sẽ không thể phát hiện các class tạo ra từ việc ghép chuỗi động (`bg-${color}-500`), dẫn đến class bị thiếu khi build sản phẩm.
+### Quy tắc 3: Design Tokens & No Arbitrary Values
+- **DO**: Dùng token chuẩn `h-10`, `rounded-lg`, `bg-surface-1`.
+- **DON'T**: Dùng `h-[43px]`, `rounded-[11px]`, `bg-[#1769ff]` trừ khi có ghi chú `// Design Exception: [Lý do]`.
 
-#### ❌ KHÔNG ĐƯỢC LÀM (DON'T)
-Ghép chuỗi class động trong template literal:
-```tsx
-// ⚠️ Tệp build sẽ KHÔNG bao gồm các class này vì JIT compiler không scan được string interpolation!
-<div className={`bg-${color}-500 text-${color}-900`} />
-```
+### Quy tắc 4: Class Merging qua `cn()`
+- **DO**: Luôn bọc qua `cn("class-mặc-định", className)`.
 
-#### ✅ NÊN LÀM (DO)
-Định nghĩa sẵn Lookup Object chứa class đầy đủ hoặc dùng `cva` (Class Variance Authority):
-```tsx
-const badgeVariants = {
-  success: "bg-success text-success-foreground",
-  warning: "bg-warning text-warning-foreground",
-  destructive: "bg-destructive text-destructive-foreground",
-  info: "bg-primary/10 text-primary",
-} as const;
-
-type BadgeStatus = keyof typeof badgeVariants;
-
-function StatusBadge({ status }: { status: BadgeStatus }) {
-  return <div className={badgeVariants[status]} />;
-}
-```
+### Quy tắc 5: Interactive & Accessibility States
+- **DO**: Đầy đủ `hover:`, `active:`, `focus-visible:`, `disabled:opacity-50 disabled:pointer-events-none`.
 
 ---
 
-### Quy tắc 3: Design Tokens & No Arbitrary Values (Cấm hardcode Magic Values)
+## 7. Mẫu Code Chuẩn Mực (Component Reference Patterns)
 
-Toàn bộ kích thước, màu sắc, khoảng cách và bo góc phải tuân theo hệ thống Design Tokens (Spacing, Radius, Colors, Typography).
-
-#### ❌ KHÔNG ĐƯỢC LÀM (DON'T)
-Dùng arbitrary bracket values như `h-[43px]`, `rounded-[11px]`, `bg-[#1769ff]` ngẫu nhiên:
+### Mẫu 1: Thẻ Nhận xét AI Coach (AI Evaluation Card)
 ```tsx
-<Button className="h-[43px] rounded-[11px] bg-[#1769ff] p-[13px]" />
-```
-
-#### ✅ NÊN LÀM (DO)
-Dùng tokens tiêu chuẩn qua các props `size`, `variant`:
-```tsx
-<Button size="md" variant="primary" />
-```
-
-#### ⚠️ Quy định về Ngoại lệ (Design Exception Protocol)
-Trường hợp đặc biệt bắt buộc phải sử dụng Arbitrary values (ví dụ: khớp chính xác tỉ lệ khung hình của canvas SVG hoặc iframe bên thứ ba), mã nguồn **bắt buộc phải kèm theo comment giải thích lý do thiết kế**:
-```tsx
-// Design Exception: Cố định kích thước khung xem Audio Visualizer theo thông số SVG
-<div className="h-[180px] w-[320px] shrink-0" />
-```
-
----
-
-### Quy tắc 4: Component Structure & Class Merging (Cấu trúc & Merge Class)
-
-Tất cả UI components phải hỗ trợ prop `className` và hợp nhất class an toàn bằng utility `cn()` từ `@/lib/utils` (kết hợp `clsx` và `tailwind-merge`).
-
-#### ❌ KHÔNG ĐƯỢC LÀM (DON'T)
-Ghi đè hoặc nối `className` thủ công khiến trùng lặp class CSS:
-```tsx
-function CustomCard({ className }: { className?: string }) {
-  // Trùng lặp class "p-4" và "p-6" nếu className truyền vào có "p-6"
-  return <div className={`p-4 bg-card ${className}`} />;
-}
-```
-
-#### ✅ NÊN LÀM (DO)
-Sử dụng `cn()` để ghi đè class an toàn và đúng thứ tự ưu tiên:
-```tsx
+import React from 'react'
+import { Sparkles } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
 
-function CustomCard({ className, children }: { className?: string; children: React.ReactNode }) {
+interface AiFeedbackProps {
+  score: number
+  feedback: string
+  className?: string
+}
+
+export const AiFeedbackCard: React.FC<AiFeedbackProps> = ({ score, feedback, className }) => {
   return (
-    <div className={cn("rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm", className)}>
-      {children}
-    </div>
-  );
+    <Card className={cn("bg-surface-1 border border-border border-specular shadow-elevation-1", className)}>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-ai-subtle text-ai border border-ai-border">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <CardTitle className="text-base font-semibold text-ink">
+            Đánh giá từ AI Coach
+          </CardTitle>
+        </div>
+        <Badge variant="outline" className="font-mono tabular-nums text-score-gold border-amber-300">
+          Điểm: {score}/100
+        </Badge>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-ink-muted leading-relaxed">
+          {feedback}
+        </p>
+        <div className="p-3 rounded-lg bg-ai-subtle border border-ai-border text-xs text-ai-subtle-fg">
+          💡 <strong>Gợi ý cải thiện:</strong> Hãy áp dụng mô hình STAR rõ ràng hơn ở phần Result.
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 ```
 
----
+### Mẫu 2: Thanh Đo Âm Thanh & Countdown Timer
+```tsx
+import React from 'react'
+import { Mic } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-### Quy tắc 5: Interactive & Accessibility States (Trạng thái tương tác & Hỗ trợ truy cập)
+export const VoiceControlBar: React.FC<{ isRecording: boolean; remainingSeconds: number }> = ({
+  isRecording,
+  remainingSeconds,
+}) => {
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0')
+    const s = (secs % 60).toString().padStart(2, '0')
+    return `${m}:${s}`
+  }
 
-Các phần tử tương tác (Button, Input, Select, Switch) phải đáp ứng đầy đủ các trạng thái người dùng và hỗ trợ accessibility (WCAG).
+  return (
+    <div className="flex items-center justify-between p-3 rounded-xl bg-surface-2 border border-border shadow-elevation-2">
+      <div className="flex items-center gap-3">
+        <div className={cn(
+          "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+          isRecording ? "bg-red-500/10 text-red-500 animate-pulse" : "bg-surface-inset text-ink-muted"
+        )}>
+          <Mic className="w-4 h-4 text-waveform" />
+        </div>
+        <span className="text-xs font-medium text-ink">
+          {isRecording ? "Đang ghi âm câu trả lời..." : "Sẵn sàng ghi âm"}
+        </span>
+      </div>
 
-#### ✅ NÊN LÀM (DO)
-- **Focus Ring**: Luôn có `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`.
-- **Disabled**: Cấu hình `disabled:opacity-50 disabled:pointer-events-none`.
-- **Loading State**: Trạng thái loading phải kèm hiệu ứng mờ nhạt và khóa bấm `aria-disabled="true"`.
-- **Contrast**: Luôn kiểm tra màu văn bản và màu nền đạt tỉ lệ tương phản tối thiểu 4.5:1.
-
----
-
-## 3. Checklist Kiểm tra dành cho Developer & AI
-
-Trước khi commit mã nguồn hoặc tạo Pull Request, hãy kiểm tra danh sách sau:
-
-- [ ] 1. Đã kiểm tra thư viện `@/components/ui/` xem có component tương đương chưa trước khi tự viết thẻ HTML thuần?
-- [ ] 2. Không sử dụng string interpolation dạng `` `bg-${val}` `` cho Tailwind classes?
-- [ ] 3. Đã loại bỏ toàn bộ arbitrary values (`px-[...]`, `bg-[#...]`) hoặc đã ghi comment lý do thiết kế nếu là ngoại lệ?
-- [ ] 4. Đã bọc `className` qua utility `cn()`?
-- [ ] 5. Đã hỗ trợ đầy đủ `hover`, `focus-visible`, `disabled` và `dark:` mode?
+      <div className="font-mono text-sm font-semibold text-ink tabular-nums px-2.5 py-1 rounded-md bg-surface-inset border border-border">
+        ⏱ {formatTime(remainingSeconds)}
+      </div>
+    </div>
+  )
+}
+```

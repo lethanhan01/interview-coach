@@ -1,9 +1,20 @@
 @theme inline {
+  /* =========================================
+     Base Semantic Tokens
+     ========================================= */
   --color-background: var(--bg);
   --color-foreground: var(--fg);
 
+  /* Multi-level Surfaces (Elevation-aware) */
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-surface-inset: var(--surface-inset);
+
   --color-surface: var(--surface);
   --color-surface-foreground: var(--surface-fg);
+  --color-surface-raised: var(--surface-raised);
 
   --color-card: var(--card);
   --color-card-foreground: var(--card-fg);
@@ -11,77 +22,122 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-fg);
 
+  /* Brand / Primary */
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-active: var(--primary-active);
   --color-primary-foreground: var(--primary-fg);
 
+  --color-brand: var(--primary);
+  --color-brand-hover: var(--primary-hover);
+  --color-brand-active: var(--primary-active);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-subtle-fg: var(--brand-subtle-fg);
+  --color-brand-subtle-border: var(--brand-subtle-border);
+
+  /* Secondary */
   --color-secondary: var(--secondary);
   --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-active: var(--secondary-active);
   --color-secondary-foreground: var(--secondary-fg);
 
+  /* Muted & Accent */
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-fg);
-
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-fg);
 
+  /* AI & Cognitive Insights */
+  --color-ai: var(--ai);
+  --color-ai-hover: var(--ai-hover);
+  --color-ai-active: var(--ai-active);
+  --color-ai-foreground: var(--ai-fg);
+  --color-ai-subtle: var(--ai-subtle);
+  --color-ai-subtle-fg: var(--ai-subtle-fg);
+  --color-ai-border: var(--ai-border);
+
+  /* Audio Telemetry & Real-time Waveform */
+  --color-waveform: var(--waveform);
+
+  /* Destructive / Danger */
   --color-destructive: var(--destructive);
   --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-active: var(--destructive-active);
   --color-destructive-foreground: var(--destructive-fg);
 
   --color-danger: var(--destructive);
   --color-danger-hover: var(--destructive-hover);
+  --color-danger-active: var(--destructive-active);
   --color-danger-foreground: var(--destructive-fg);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-danger-subtle-fg: var(--danger-subtle-fg);
 
+  /* Success */
   --color-success: var(--success);
+  --color-success-hover: var(--success-hover);
+  --color-success-active: var(--success-active);
   --color-success-foreground: var(--success-fg);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-subtle-fg: var(--success-subtle-fg);
 
+  /* Warning */
   --color-warning: var(--warning);
+  --color-warning-hover: var(--warning-hover);
+  --color-warning-active: var(--warning-active);
   --color-warning-foreground: var(--warning-fg);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-subtle-fg: var(--warning-subtle-fg);
 
+  /* Info */
   --color-info: var(--info);
+  --color-info-hover: var(--info-hover);
+  --color-info-active: var(--info-active);
   --color-info-foreground: var(--info-fg);
 
+  /* Borders & Specular */
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-border-specular: var(--border-specular);
 
+  /* Interactive Elements */
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-focus: var(--focus);
   --color-disabled: var(--disabled);
   --color-overlay: var(--overlay);
 
-  /* Extended Semantic Tokens */
+  /* Extended Semantic Ink Tokens */
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
   --color-ink-faint: var(--ink-faint);
-  --color-surface-raised: var(--surface-raised);
 
-  --color-brand: var(--primary);
-  --color-brand-muted: var(--brand-subtle-border);
-  --color-brand-subtle: var(--brand-subtle);
-  --color-brand-subtle-fg: var(--brand-subtle-fg);
-  --color-brand-subtle-border: var(--brand-subtle-border);
+  /* Charts & Data Visualization */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
-  --color-success-subtle: var(--success-subtle);
-  --color-success-subtle-fg: var(--success-subtle-fg);
-
-  --color-warning-subtle: var(--warning-subtle);
-  --color-warning-subtle-fg: var(--warning-subtle-fg);
-
-  --color-danger-subtle: var(--danger-subtle);
-  --color-danger-subtle-fg: var(--danger-subtle-fg);
+  /* Score Tier Badges */
+  --color-score-bronze: var(--score-bronze);
+  --color-score-silver: var(--score-silver);
+  --color-score-gold: var(--score-gold);
+  --color-score-diamond: var(--score-diamond);
 }
 
 @layer base {
   :root {
+    /* Base Surface & Foreground */
     --bg: var(--color-neutral-50);
     --fg: var(--color-neutral-900);
 
-    --ink: var(--color-neutral-900);
-    --ink-muted: var(--color-neutral-500);
-    --ink-faint: var(--color-neutral-400);
+    /* Elevation-aware Surfaces (Light Mode) */
+    --surface-0: var(--color-neutral-50);
+    --surface-1: #ffffff;
+    --surface-2: #ffffff;
+    --surface-3: #ffffff;
+    --surface-inset: var(--color-neutral-100);
 
     --surface: #ffffff;
     --surface-fg: var(--color-neutral-900);
@@ -93,65 +149,116 @@
     --popover: #ffffff;
     --popover-fg: var(--color-neutral-900);
 
+    /* Text Hierarchy */
+    --ink: var(--color-neutral-900);
+    --ink-muted: var(--color-neutral-500);
+    --ink-faint: var(--color-neutral-400);
+
+    /* Brand / Primary */
     --primary: var(--color-brand-600);
     --primary-hover: var(--color-brand-700);
     --primary-active: var(--color-brand-800);
     --primary-fg: #ffffff;
 
+    --brand-muted: var(--color-brand-100);
     --brand-subtle: var(--color-brand-50);
     --brand-subtle-fg: var(--color-brand-700);
     --brand-subtle-border: var(--color-brand-200);
 
+    /* Secondary */
     --secondary: var(--color-neutral-100);
     --secondary-hover: var(--color-neutral-200);
+    --secondary-active: var(--color-neutral-300);
     --secondary-fg: var(--color-neutral-900);
 
+    /* Muted & Accent */
     --muted: var(--color-neutral-100);
     --muted-fg: var(--color-neutral-500);
 
     --accent: var(--color-neutral-100);
     --accent-fg: var(--color-neutral-900);
 
+    /* AI Coach & Insights */
+    --ai: var(--color-violet-600);
+    --ai-hover: var(--color-violet-700);
+    --ai-active: var(--color-violet-800);
+    --ai-fg: #ffffff;
+    --ai-subtle: var(--color-violet-50);
+    --ai-subtle-fg: var(--color-violet-700);
+    --ai-border: var(--color-violet-200);
+
+    /* Real-time Voice / Waveform */
+    --waveform: var(--color-cyan-600);
+
+    /* Destructive */
     --destructive: var(--color-red-600);
     --destructive-hover: var(--color-red-700);
+    --destructive-active: var(--color-red-800);
     --destructive-fg: #ffffff;
 
     --danger-subtle: var(--color-red-50);
     --danger-subtle-fg: var(--color-red-700);
 
+    /* Success */
     --success: var(--color-green-600);
+    --success-hover: var(--color-green-700);
+    --success-active: var(--color-green-800);
     --success-fg: #ffffff;
 
     --success-subtle: var(--color-green-50);
     --success-subtle-fg: var(--color-green-700);
 
+    /* Warning */
     --warning: var(--color-amber-500);
+    --warning-hover: var(--color-amber-600);
+    --warning-active: var(--color-amber-700);
     --warning-fg: var(--color-neutral-950);
 
     --warning-subtle: var(--color-amber-50);
     --warning-subtle-fg: var(--color-amber-800);
 
+    /* Info */
     --info: var(--color-blue-600);
+    --info-hover: var(--color-blue-700);
+    --info-active: var(--color-blue-800);
     --info-fg: #ffffff;
 
+    /* Borders & Specular */
     --border: var(--color-neutral-200);
     --border-strong: var(--color-neutral-300);
+    --border-specular: rgba(255, 255, 255, 0.6);
 
+    /* Form & Interaction */
     --input: var(--color-neutral-200);
     --ring: var(--color-brand-600);
     --focus: var(--color-brand-500);
     --disabled: var(--color-neutral-100);
-
     --overlay: rgb(0 0 0 / 0.5);
+
+    /* Data Visualization */
+    --chart-1: var(--color-chart-1);
+    --chart-2: var(--color-chart-2);
+    --chart-3: var(--color-chart-3);
+    --chart-4: var(--color-chart-4);
+    --chart-5: var(--color-chart-5);
+
+    --score-bronze: var(--color-tier-bronze);
+    --score-silver: var(--color-tier-silver);
+    --score-gold: var(--color-tier-gold);
+    --score-diamond: var(--color-tier-diamond);
   }
 
   .dark {
-    --bg: var(--color-neutral-950);
+    /* Base Surface & Foreground */
+    --bg: #030712;
     --fg: var(--color-neutral-50);
 
-    --ink: var(--color-neutral-50);
-    --ink-muted: var(--color-neutral-400);
-    --ink-faint: var(--color-neutral-500);
+    /* Elevation-aware Surfaces (Dark Mode - Distinct Layers) */
+    --surface-0: #030712;
+    --surface-1: var(--color-neutral-900);
+    --surface-2: var(--color-neutral-800);
+    --surface-3: var(--color-neutral-700);
+    --surface-inset: #020617;
 
     --surface: var(--color-neutral-900);
     --surface-fg: var(--color-neutral-50);
@@ -160,58 +267,105 @@
     --card: var(--color-neutral-900);
     --card-fg: var(--color-neutral-50);
 
-    --popover: var(--color-neutral-900);
+    --popover: var(--color-neutral-800);
     --popover-fg: var(--color-neutral-50);
 
+    /* Text Hierarchy */
+    --ink: var(--color-neutral-50);
+    --ink-muted: var(--color-neutral-400);
+    --ink-faint: var(--color-neutral-500);
+
+    /* Brand / Primary */
     --primary: var(--color-brand-500);
     --primary-hover: var(--color-brand-400);
     --primary-active: var(--color-brand-300);
     --primary-fg: #ffffff;
 
+    --brand-muted: var(--color-brand-900);
     --brand-subtle: var(--color-brand-950);
     --brand-subtle-fg: var(--color-brand-300);
     --brand-subtle-border: var(--color-brand-800);
 
+    /* Secondary */
     --secondary: var(--color-neutral-800);
     --secondary-hover: var(--color-neutral-700);
+    --secondary-active: var(--color-neutral-600);
     --secondary-fg: var(--color-neutral-50);
 
+    /* Muted & Accent */
     --muted: var(--color-neutral-800);
     --muted-fg: var(--color-neutral-400);
 
     --accent: var(--color-neutral-800);
     --accent-fg: var(--color-neutral-50);
 
+    /* AI Coach & Insights */
+    --ai: var(--color-violet-500);
+    --ai-hover: var(--color-violet-400);
+    --ai-active: var(--color-violet-300);
+    --ai-fg: #ffffff;
+    --ai-subtle: var(--color-violet-950);
+    --ai-subtle-fg: var(--color-violet-300);
+    --ai-border: var(--color-violet-800);
+
+    /* Real-time Voice / Waveform */
+    --waveform: var(--color-cyan-400);
+
+    /* Destructive */
     --destructive: var(--color-red-500);
     --destructive-hover: var(--color-red-400);
+    --destructive-active: var(--color-red-300);
     --destructive-fg: #ffffff;
 
     --danger-subtle: var(--color-red-950);
     --danger-subtle-fg: var(--color-red-300);
 
+    /* Success */
     --success: var(--color-green-500);
+    --success-hover: var(--color-green-400);
+    --success-active: var(--color-green-300);
     --success-fg: #ffffff;
 
     --success-subtle: var(--color-green-950);
     --success-subtle-fg: var(--color-green-300);
 
+    /* Warning */
     --warning: var(--color-amber-500);
+    --warning-hover: var(--color-amber-400);
+    --warning-active: var(--color-amber-300);
     --warning-fg: var(--color-neutral-950);
 
     --warning-subtle: var(--color-amber-950);
     --warning-subtle-fg: var(--color-amber-300);
 
+    /* Info */
     --info: var(--color-blue-500);
+    --info-hover: var(--color-blue-400);
+    --info-active: var(--color-blue-300);
     --info-fg: #ffffff;
 
+    /* Borders & Specular */
     --border: var(--color-neutral-800);
     --border-strong: var(--color-neutral-700);
+    --border-specular: rgba(255, 255, 255, 0.08);
 
+    /* Form & Interaction */
     --input: var(--color-neutral-800);
     --ring: var(--color-brand-500);
     --focus: var(--color-brand-400);
     --disabled: var(--color-neutral-800);
-
     --overlay: rgb(0 0 0 / 0.7);
+
+    /* Data Visualization */
+    --chart-1: var(--color-chart-1);
+    --chart-2: var(--color-chart-2);
+    --chart-3: var(--color-chart-3);
+    --chart-4: var(--color-chart-4);
+    --chart-5: var(--color-chart-5);
+
+    --score-bronze: var(--color-tier-bronze);
+    --score-silver: var(--color-tier-silver);
+    --score-gold: var(--color-tier-gold);
+    --score-diamond: var(--color-tier-diamond);
   }
 }

@@ -21,7 +21,7 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "types": ["@testing-library/jest-dom/vitest", "vitest/globals", "node"]
+    "types": ["@testing-library/jest-dom", "@testing-library/jest-dom/vitest", "vitest/globals", "node"]
   },
   "include": [
     "next-env.d.ts",
