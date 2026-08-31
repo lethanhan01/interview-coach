@@ -6,7 +6,9 @@ import { adminService } from '@/services'
 import type { AdminUser } from '@/lib/types'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { Card } from '@/components/ui/Card'
+import { PageContainer } from '@/components/patterns/LayoutPatterns'
+import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns'
 import {
   Users,
   UserCheck,
@@ -38,18 +40,14 @@ export default function AdminDashboardPage() {
   }, [])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <LoadingSpinner size="lg" />
-      </div>
-    )
+    return <LoadingState text="Đang tải dữ liệu thống kê quản trị..." minHeight="min-h-[50vh]" />
   }
 
   if (error) {
     return (
-      <div className="mx-auto max-w-5xl py-10">
-        <p className="text-danger text-sm">{error}</p>
-      </div>
+      <PageContainer maxWidth="lg" className="py-10">
+        <ErrorState description={error} />
+      </PageContainer>
     )
   }
 
@@ -66,9 +64,9 @@ export default function AdminDashboardPage() {
     .slice(0, 5)
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 py-6">
+    <PageContainer maxWidth="lg" className="space-y-8 py-0">
       {/* Header Banner */}
-      <div className="border-border bg-surface shadow-card rounded-3xl border p-6">
+      <Card className="p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -90,12 +88,12 @@ export default function AdminDashboardPage() {
             </Link>
           </Button>
         </div>
-      </div>
+      </Card>
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Total Users */}
-        <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
+        <Card className="p-5">
           <div className="flex items-center justify-between">
             <span className="text-ink-muted text-xs font-medium uppercase tracking-wider">
               Tổng người dùng
@@ -110,10 +108,10 @@ export default function AdminDashboardPage() {
             </span>
             <span className="text-ink-faint text-xs">tài khoản</span>
           </div>
-        </div>
+        </Card>
 
         {/* Active Users */}
-        <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
+        <Card className="p-5">
           <div className="flex items-center justify-between">
             <span className="text-ink-muted text-xs font-medium uppercase tracking-wider">
               Đang hoạt động
@@ -132,10 +130,10 @@ export default function AdminDashboardPage() {
                 : '100%'}
             </span>
           </div>
-        </div>
+        </Card>
 
         {/* Locked Users */}
-        <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
+        <Card className="p-5">
           <div className="flex items-center justify-between">
             <span className="text-ink-muted text-xs font-medium uppercase tracking-wider">
               Đã bị khóa
@@ -150,10 +148,10 @@ export default function AdminDashboardPage() {
             </span>
             <span className="text-ink-faint text-xs">tài khoản</span>
           </div>
-        </div>
+        </Card>
 
         {/* Admin Accounts */}
-        <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
+        <Card className="p-5">
           <div className="flex items-center justify-between">
             <span className="text-ink-muted text-xs font-medium uppercase tracking-wider">
               Quản trị viên
@@ -168,13 +166,13 @@ export default function AdminDashboardPage() {
             </span>
             <span className="text-ink-faint text-xs">admin</span>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Two columns: Recent Registrations & Quick Actions */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Recent users snippet (2 cols) */}
-        <div className="border-border bg-surface shadow-card rounded-2xl border p-6 lg:col-span-2">
+        <Card className="p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-ink text-base font-semibold">
@@ -228,11 +226,11 @@ export default function AdminDashboardPage() {
               )
             })}
           </div>
-        </div>
+        </Card>
 
         {/* Quick Actions (1 col) */}
         <div className="flex flex-col gap-4">
-          <div className="border-border bg-surface shadow-card rounded-2xl border p-6">
+          <Card className="p-6">
             <h2 className="text-ink text-base font-semibold mb-1">
               Thao tác nhanh
             </h2>
@@ -281,9 +279,9 @@ export default function AdminDashboardPage() {
                 <ArrowRight className="text-ink-faint size-4" />
               </Link>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-brand rounded-2xl p-5 text-white">
+          <Card className="bg-brand p-5 text-white border-brand">
             <div className="flex items-center gap-2">
               <Sparkles className="size-5 text-brand-200" />
               <p className="font-semibold text-sm">AI Session Engine</p>
@@ -291,9 +289,9 @@ export default function AdminDashboardPage() {
             <p className="text-brand-100 text-xs mt-2 leading-relaxed">
               Hệ thống phỏng vấn AI và đánh giá tự động đang hoạt động bình thường trên nền tảng.
             </p>
-          </div>
+          </Card>
         </div>
       </div>
-    </div>
+    </PageContainer>
   )
 }

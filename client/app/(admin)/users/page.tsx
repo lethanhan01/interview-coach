@@ -7,6 +7,7 @@ import type { AdminUser } from '@/lib/types'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { Card } from '@/components/ui/Card'
 import {
   Table,
   TableHeader,
@@ -25,8 +26,9 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/AlertDialog'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { Search, AlertCircle, Trash2, Unlock, Lock, Users } from 'lucide-react'
+import { PageContainer, PageHeader } from '@/components/patterns/LayoutPatterns'
+import { LoadingState, EmptyState, ErrorState } from '@/components/patterns/FeedbackPatterns'
+import { Search, Trash2, Unlock, Lock, Users } from 'lucide-react'
 
 export default function AdminUsersPage() {
   const { role, isLoading: authLoading } = useAuth()
@@ -83,7 +85,6 @@ export default function AdminUsersPage() {
     }
   }
 
-
   if (authLoading || role !== 'admin') return null
 
   const filteredUsers = users.filter((u) =>
@@ -91,17 +92,11 @@ export default function AdminUsersPage() {
   )
 
   return (
-    <section className="mx-auto max-w-5xl space-y-6 py-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-ink text-2xl font-bold tracking-tight">
-            Quản lý người dùng
-          </h1>
-          <p className="text-ink-muted mt-1 text-sm">
-            Quản lý tài khoản, phân quyền và trạng thái hệ thống.
-          </p>
-        </div>
-      </div>
+    <PageContainer maxWidth="lg" className="space-y-6 py-0">
+      <PageHeader
+        title="Quản lý người dùng"
+        description="Quản lý tài khoản, phân quyền và trạng thái hệ thống."
+      />
 
       <div className="flex items-center gap-4">
         <div className="w-full sm:max-w-sm">
@@ -115,22 +110,19 @@ export default function AdminUsersPage() {
       </div>
 
       {error && (
-        <div className="bg-danger-bg text-danger border-danger/20 flex items-center gap-2 rounded-xl border p-4 text-sm font-medium">
-          <AlertCircle className="size-5" />
-          <p>{error}</p>
-        </div>
+        <ErrorState description={error} minHeight="min-h-[100px]" />
       )}
 
-      <div className="bg-surface shadow-card border-border overflow-hidden rounded-xl border">
+      <Card className="overflow-hidden p-0">
         {isLoading ? (
-          <div className="flex h-48 items-center justify-center">
-            <LoadingSpinner size="lg" />
-          </div>
+          <LoadingState text="Đang tải danh sách người dùng..." minHeight="h-48" />
         ) : filteredUsers.length === 0 ? (
-          <div className="text-ink-muted flex h-48 flex-col items-center justify-center">
-            <Users className="mb-2 size-8 opacity-50" />
-            <p>Không tìm thấy người dùng nào.</p>
-          </div>
+          <EmptyState
+            minHeight="h-48"
+            title="Không tìm thấy người dùng"
+            description={search ? `Không có kết quả nào khớp với "${search}"` : 'Hệ thống chưa có người dùng nào'}
+            icon={<Users className="size-8 text-ink-muted/50" />}
+          />
         ) : (
           <Table>
             <TableHeader>
@@ -193,7 +185,7 @@ export default function AdminUsersPage() {
             </TableBody>
           </Table>
         )}
-      </div>
+      </Card>
 
       <AlertDialog
         open={!!userToDelete}
@@ -215,6 +207,6 @@ export default function AdminUsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </section>
+    </PageContainer>
   )
 }

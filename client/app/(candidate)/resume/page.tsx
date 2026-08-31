@@ -23,6 +23,8 @@ import WorkExperienceGroup from '@/components/resume/WorkExperienceGroup'
 import ProjectsGroup from '@/components/resume/ProjectsGroup'
 import CertificationsGroup from '@/components/resume/CertificationsGroup'
 import { Button } from '@/components/ui/Button'
+import { PageContainer, PageHeader } from '@/components/patterns/LayoutPatterns'
+import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns'
 
 export default function ResumePage() {
   const [data, setData] = useState<GetProfileResponse | null>(null)
@@ -44,20 +46,15 @@ export default function ResumePage() {
     setData(updated)
   }
 
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="border-brand size-8 animate-spin rounded-full border-2 border-t-transparent" />
-      </div>
-    )
+    return <LoadingState text="Đang tải hồ sơ CV..." minHeight="min-h-[50vh]" />
   }
 
   if (error) {
     return (
-      <div className="mx-auto max-w-3xl py-10">
-        <p className="text-danger text-sm">{error}</p>
-      </div>
+      <PageContainer maxWidth="md" className="py-10">
+        <ErrorState description={error} />
+      </PageContainer>
     )
   }
 
@@ -81,23 +78,21 @@ export default function ResumePage() {
   const projects = normalizeWithId<ProjectEntry>(profile?.projects)
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      {/* Top Header info */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-ink text-2xl font-bold">Hồ sơ CV & Kinh nghiệm</h1>
-          <p className="text-ink-muted text-sm mt-1">
-            Quản lý thông tin học vấn, kỹ năng, kinh nghiệm và dự án để AI cá nhân hóa câu hỏi phỏng vấn.
-          </p>
-        </div>
-        <Button variant="outline" size="sm" asChild className="self-start sm:self-auto gap-1.5 shrink-0">
-          <Link href="/profile">
-            <User className="h-4 w-4 text-brand" />
-            <span>Cài đặt tài khoản</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </Button>
-      </div>
+    <PageContainer maxWidth="md" className="space-y-6">
+      {/* Top Header info using PageHeader */}
+      <PageHeader
+        title="Hồ sơ CV & Kinh nghiệm"
+        description="Quản lý thông tin học vấn, kỹ năng, kinh nghiệm và dự án để AI cá nhân hóa câu hỏi phỏng vấn."
+        actions={
+          <Button variant="outline" size="sm" asChild className="gap-1.5 shrink-0">
+            <Link href="/profile">
+              <User className="h-4 w-4 text-brand" />
+              <span>Cài đặt tài khoản</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Completeness score & quick navigation anchor links */}
       <ResumeHeader data={data} />
@@ -151,6 +146,6 @@ export default function ResumePage() {
           onSave={(patch) => patchProfile(patch)}
         />
       </div>
-    </div>
+    </PageContainer>
   )
 }

@@ -7,7 +7,9 @@ import PersonalInfoGroup from '@/components/profile/PersonalInfoGroup'
 import AccountInfoGroup from '@/components/profile/AccountInfoGroup'
 import ChangePasswordGroup from '@/components/profile/ChangePasswordGroup'
 import { Badge } from '@/components/ui/Badge'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { Card } from '@/components/ui/Card'
+import { PageContainer } from '@/components/patterns/LayoutPatterns'
+import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns'
 import { ShieldCheck } from 'lucide-react'
 
 export default function AdminProfilePage() {
@@ -35,25 +37,21 @@ export default function AdminProfilePage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <LoadingSpinner size="lg" />
-      </div>
-    )
+    return <LoadingState text="Đang tải thông tin tài khoản..." minHeight="min-h-[50vh]" />
   }
 
   if (error) {
     return (
-      <div className="mx-auto max-w-3xl py-10">
-        <p className="text-danger text-sm">{error}</p>
-      </div>
+      <PageContainer maxWidth="md" className="py-10">
+        <ErrorState description={error} />
+      </PageContainer>
     )
   }
 
   const fullName = [data?.lastname, data?.firstname].filter(Boolean).join(' ')
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <PageContainer maxWidth="md" className="space-y-6">
       <div>
         <h1 className="text-ink text-2xl font-bold">Hồ sơ Quản trị viên</h1>
         <p className="text-ink-muted mt-1 text-sm">
@@ -62,7 +60,7 @@ export default function AdminProfilePage() {
       </div>
 
       {/* Admin Profile Header Card */}
-      <div className="border-border bg-surface shadow-card flex flex-col justify-between gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center">
+      <Card className="flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
           <div className="bg-brand-subtle text-brand-subtle-fg flex size-14 shrink-0 items-center justify-center rounded-full border border-brand/20">
             <span className="text-brand text-xl font-bold">
@@ -86,7 +84,7 @@ export default function AdminProfilePage() {
           <ShieldCheck className="size-4 text-brand" />
           <span>Toàn quyền hệ thống</span>
         </div>
-      </div>
+      </Card>
 
       <div className="flex flex-col gap-6">
         <PersonalInfoGroup
@@ -102,6 +100,6 @@ export default function AdminProfilePage() {
 
         <ChangePasswordGroup />
       </div>
-    </div>
+    </PageContainer>
   )
 }

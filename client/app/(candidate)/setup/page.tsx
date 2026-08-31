@@ -27,6 +27,8 @@ import SavedJdPicker from '@/components/setup/SavedJdPicker'
 import { ArrowLeft } from 'lucide-react'
 import { getJdLevelLabel, normalizeJdLevel } from '@/lib/interview-options'
 import { cn } from '@/lib/utils'
+import { PageContainer } from '@/components/patterns/LayoutPatterns'
+import { LoadingState } from '@/components/patterns/FeedbackPatterns'
 
 // ── Constants & Types (re-exported from @/lib/setup-types) ───────────────────
 // The actual definitions live in lib/setup-types.ts so that components/setup/*
@@ -185,11 +187,7 @@ const STEP_LABELS: Record<1 | 2 | 3, string> = {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 function SetupPageLoading() {
-  return (
-    <div className="flex items-center justify-center py-20">
-      <div className="border-brand size-8 animate-spin rounded-full border-2 border-t-transparent" />
-    </div>
-  )
+  return <LoadingState text="Đang tải dữ liệu cấu hình..." minHeight="min-h-[50vh]" />
 }
 
 export default function SetupPage() {
@@ -368,7 +366,7 @@ function SetupPageContent() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <PageContainer maxWidth="md">
       {/* Step 0 — Saved JD Picker (no stepper) */}
       {step === 0 && (
         <SavedJdPicker
@@ -536,6 +534,6 @@ function SetupPageContent() {
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

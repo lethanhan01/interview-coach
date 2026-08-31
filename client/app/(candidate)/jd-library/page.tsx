@@ -9,7 +9,8 @@ import { Building2, MapPin, Clock, Plus, ChevronRight } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { PageContainer, PageHeader } from '@/components/patterns/LayoutPatterns'
+import { LoadingState, ErrorState, EmptyState } from '@/components/patterns/FeedbackPatterns'
 
 const MAX_TECH_SHOWN = 5
 
@@ -29,9 +30,7 @@ export default function JdLibraryPage() {
       .finally(() => setLoading(false))
   }, [])
 
-
   function handleSelect(item: SavedJobDescription) {
-    // Navigate to setup with the selected JD pre-filled via query param
     router.push(`/setup?jdId=${item.id}`)
   }
 
@@ -40,58 +39,45 @@ export default function JdLibraryPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <LoadingSpinner size="lg" />
-      </div>
-    )
+    return <LoadingState text="Đang tải danh sách Job Descriptions..." minHeight="min-h-[50vh]" />
   }
 
   if (error) {
     return (
-      <div className="mx-auto max-w-2xl py-10">
-        <p className="text-danger text-sm">{error}</p>
-      </div>
+      <PageContainer maxWidth="md" className="py-10">
+        <ErrorState description={error} />
+      </PageContainer>
     )
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <PageContainer maxWidth="md">
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-ink text-2xl font-bold">Job Descriptions</h1>
-          <p className="text-ink-muted mt-1 text-sm">
-            {items.length > 0
-              ? `${items.length} JD đã lưu — chọn để bắt đầu phỏng vấn`
-              : 'Chưa có JD nào được lưu'}
-          </p>
-        </div>
-        <Button onClick={handleNew} size="md">
-          <Plus className="size-4" aria-hidden="true" />
-          Tạo phiên mới
-        </Button>
-      </div>
-
-      {items.length === 0 ? (
-        /* Empty state */
-        <div className="border-border flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed py-16 text-center">
-          <div className="bg-brand-subtle text-brand-subtle-fg flex size-14 items-center justify-center rounded-full">
-            <Building2 className="size-7" aria-hidden="true" />
-          </div>
-          <div>
-            <p className="text-ink font-semibold">
-              Chưa có Job Description nào
-            </p>
-            <p className="text-ink-muted mt-1 text-sm">
-              Tạo phiên phỏng vấn đầu tiên để bắt đầu lưu JD
-            </p>
-          </div>
-          <Button onClick={handleNew} variant="secondary">
+      <PageHeader
+        title="Job Descriptions"
+        description={
+          items.length > 0
+            ? `${items.length} JD đã lưu — chọn để bắt đầu phỏng vấn`
+            : 'Chưa có JD nào được lưu'
+        }
+        actions={
+          <Button onClick={handleNew} size="md">
             <Plus className="size-4" aria-hidden="true" />
             Tạo phiên mới
           </Button>
-        </div>
+        }
+      />
+
+      {items.length === 0 ? (
+        <EmptyState
+          title="Chưa có Job Description nào"
+          description="Tạo phiên phỏng vấn đầu tiên để bắt đầu lưu JD"
+          icon={<Building2 className="size-12 text-brand" aria-hidden="true" />}
+          action={{
+            label: 'Tạo phiên mới',
+            onClick: handleNew,
+          }}
+        />
       ) : (
         <div className="flex flex-col gap-3">
           {items.map((item) => {
@@ -181,7 +167,6 @@ export default function JdLibraryPage() {
           })}
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }
-

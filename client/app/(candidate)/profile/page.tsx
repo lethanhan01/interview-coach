@@ -11,6 +11,9 @@ import AccountInfoGroup from '@/components/profile/AccountInfoGroup'
 import ChangePasswordGroup from '@/components/profile/ChangePasswordGroup'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { Card } from '@/components/ui/Card'
+import { PageContainer } from '@/components/patterns/LayoutPatterns'
+import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns'
 
 export default function ProfilePage() {
   const [data, setData] = useState<GetProfileResponse | null>(null)
@@ -32,27 +35,22 @@ export default function ProfilePage() {
     setData(updated)
   }
 
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="border-brand size-8 animate-spin rounded-full border-2 border-t-transparent" />
-      </div>
-    )
+    return <LoadingState text="Đang tải thông tin tài khoản..." minHeight="min-h-[50vh]" />
   }
 
   if (error) {
     return (
-      <div className="mx-auto max-w-3xl py-10">
-        <p className="text-danger text-sm">{error}</p>
-      </div>
+      <PageContainer maxWidth="md" className="py-10">
+        <ErrorState description={error} />
+      </PageContainer>
     )
   }
 
   const fullName = [data?.lastname, data?.firstname].filter(Boolean).join(' ')
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <PageContainer maxWidth="md" className="space-y-6">
       <div>
         <h1 className="text-ink text-2xl font-bold">Cài đặt tài khoản</h1>
         <p className="text-ink-muted text-sm mt-1">
@@ -61,7 +59,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Account Profile Header Card */}
-      <div className="border-border bg-surface shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border p-5">
+      <Card className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5">
         <div className="flex items-center gap-4">
           <div className="bg-brand-100 dark:bg-brand/20 flex size-14 shrink-0 items-center justify-center rounded-full border border-brand/20">
             <span className="text-brand text-xl font-bold">
@@ -89,7 +87,7 @@ export default function ProfilePage() {
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </Button>
-      </div>
+      </Card>
 
       <div className="flex flex-col gap-6">
         <PersonalInfoGroup
@@ -105,6 +103,6 @@ export default function ProfilePage() {
 
         <ChangePasswordGroup />
       </div>
-    </div>
+    </PageContainer>
   )
 }

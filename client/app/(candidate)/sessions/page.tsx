@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Plus, Clock } from 'lucide-react'
 import { sessionService } from '@/services'
 
 import type { Session } from '@/lib/types'
 import { formatVietnamDateTime } from '@/lib/date-time'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { PageContainer } from '@/components/patterns/LayoutPatterns'
+import { LoadingState, ErrorState, EmptyState } from '@/components/patterns/FeedbackPatterns'
 import { cn } from '@/lib/utils'
 
 const SESSION_TYPE_LABELS: Record<string, string> = {
@@ -80,6 +82,7 @@ function ScoreDisplay({ score }: Readonly<{ score: number }>) {
 }
 
 export default function SessionsPage() {
+  const router = useRouter()
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -117,31 +120,20 @@ export default function SessionsPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    )
+    return <LoadingState text="Đang tải danh sách phiên phỏng vấn..." minHeight="min-h-[50vh]" />
   }
 
   if (error) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
-        <p className="text-danger text-sm">{error}</p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={retryLoad}
-        >
-          Thử lại
-        </Button>
-      </div>
+      <PageContainer maxWidth="xl" className="py-10">
+        <ErrorState description={error} onRetry={retryLoad} />
+      </PageContainer>
     )
   }
 
   return (
-    <div>
-      <Card className="mb-8 p-6">
+    <PageContainer maxWidth="xl" className="space-y-8">
+      <Card className="p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
             <p className="text-ink-muted text-xs font-semibold uppercase tracking-[0.2em]">
@@ -168,26 +160,15 @@ export default function SessionsPage() {
       </Card>
 
       {sessions.length === 0 ? (
-        <Card className="p-10 text-center">
-          <div className="bg-brand-subtle text-brand-subtle-fg mx-auto flex size-16 items-center justify-center rounded-2xl">
-            <Plus className="size-7" aria-hidden="true" />
-          </div>
-          <p className="text-ink mt-5 text-lg font-semibold">
-            Chưa có phiên phỏng vấn nào
-          </p>
-          <p className="text-ink-muted mx-auto mt-2 max-w-sm text-sm">
-            Dán Job Description và bắt đầu luyện tập ngay để nhận phản hồi từ
-            AI.
-          </p>
-          <div className="mt-5">
-            <Button asChild size="md">
-              <Link href="/setup">
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Bắt đầu phỏng vấn
-              </Link>
-            </Button>
-          </div>
-        </Card>
+        <EmptyState
+          title="Chưa có phiên phỏng vấn nào"
+          description="Dán Job Description và bắt đầu luyện tập ngay để nhận phản hồi từ AI."
+          icon={<Plus className="size-12 text-brand" aria-hidden="true" />}
+          action={{
+            label: 'Bắt đầu phỏng vấn',
+            onClick: () => router.push('/setup'),
+          }}
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sessions.map((s) => {
@@ -274,6 +255,6 @@ export default function SessionsPage() {
           })}
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }
