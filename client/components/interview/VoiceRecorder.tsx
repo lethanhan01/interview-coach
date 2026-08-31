@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import LoadingSpinner from '../ui/LoadingSpinner'
 import Button from '../ui/Button'
+import { Textarea } from '../ui/Textarea'
+import { Label } from '../ui/Label'
 import type { AudioUploadResult } from '@/lib/types'
 
 interface VoiceRecorderProps {
@@ -144,19 +146,16 @@ export default function VoiceRecorder({
   return (
     <div className="flex flex-col items-center gap-4">
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-danger text-sm">
           {error}
         </p>
       )}
       {draft ? (
         <div className="flex w-full flex-col gap-3">
-          <label
-            htmlFor="voice-transcript"
-            className="text-ink text-sm font-medium"
-          >
+          <Label htmlFor="voice-transcript">
             Nội dung câu trả lời
-          </label>
-          <textarea
+          </Label>
+          <Textarea
             id="voice-transcript"
             aria-label="Transcript câu trả lời"
             value={transcript}
@@ -166,7 +165,7 @@ export default function VoiceRecorder({
             }}
             disabled={disabled || state === 'submitting'}
             rows={6}
-            className="border-border text-ink placeholder:text-ink-faint focus:border-brand focus:ring-brand w-full resize-none rounded-xl border p-3 text-sm focus:outline-none focus:ring-2 disabled:opacity-50"
+            className="resize-none"
           />
           <div className="flex flex-wrap justify-end gap-3">
             <Button

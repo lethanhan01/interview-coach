@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { PencilLine } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Label } from '@/components/ui/Label'
 import ProfileSection from './ProfileSection'
 import ProfileField from './ProfileField'
 
@@ -15,9 +17,6 @@ interface Props {
   data: PersonalInfoData
   onSave: (data: PersonalInfoData) => Promise<void>
 }
-
-const FIELD_CLASS =
-  'w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none'
 
 export default function PersonalInfoGroup({ data, onSave }: Props) {
   const [isEditing, setIsEditing] = useState(false)
@@ -76,22 +75,26 @@ export default function PersonalInfoGroup({ data, onSave }: Props) {
       ) : (
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Họ">
-              <input
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="profile-lastname">Họ</Label>
+              <Input
+                id="profile-lastname"
                 value={form.lastname ?? ''}
                 onChange={(e) => set('lastname', e.target.value)}
                 placeholder="Nguyễn Văn"
-                className={FIELD_CLASS}
+                disabled={saving}
               />
-            </Field>
-            <Field label="Tên">
-              <input
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="profile-firstname">Tên</Label>
+              <Input
+                id="profile-firstname"
                 value={form.firstname ?? ''}
                 onChange={(e) => set('firstname', e.target.value)}
                 placeholder="A"
-                className={FIELD_CLASS}
+                disabled={saving}
               />
-            </Field>
+            </div>
           </div>
           {error && <p className="text-danger text-sm">{error}</p>}
           <div className="flex gap-2">
@@ -108,17 +111,3 @@ export default function PersonalInfoGroup({ data, onSave }: Props) {
   )
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div>
-      <label className="text-ink mb-1 block text-sm font-medium">{label}</label>
-      {children}
-    </div>
-  )
-}

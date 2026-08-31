@@ -6,6 +6,7 @@ import { prepService } from '@/services'
 import type { SavedJobDescription } from '@/lib/types'
 import { formatVietnamRelativeDate } from '@/lib/date-time'
 import { Building2, MapPin, Clock, Plus, ChevronRight } from 'lucide-react'
+import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -101,11 +102,19 @@ export default function JdLibraryPage() {
             const extraCount = item.techStack.length - MAX_TECH_SHOWN
 
             return (
-              <button
+              <Card
                 key={item.id}
-                type="button"
+                hover
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSelect(item)}
-                className="border-border bg-surface shadow-card hover:border-brand/40 hover:shadow-glow group w-full rounded-2xl border p-5 text-left transition-all duration-150 hover:-translate-y-0.5"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleSelect(item)
+                  }
+                }}
+                className="group w-full p-5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -167,7 +176,7 @@ export default function JdLibraryPage() {
                   {/* Arrow */}
                   <ChevronRight className="text-ink-faint group-hover:text-brand mt-1 size-5 shrink-0 transition-all duration-150 group-hover:translate-x-0.5" />
                 </div>
-              </button>
+              </Card>
             )
           })}
         </div>
@@ -175,3 +184,4 @@ export default function JdLibraryPage() {
     </div>
   )
 }
+

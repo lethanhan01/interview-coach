@@ -4,11 +4,11 @@ import { useState } from 'react'
 import { KeyRound, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import ProfileSection from './ProfileSection'
 import Button from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Label } from '@/components/ui/Label'
 import { authService } from '@/services'
 
 const FIELD_CONTAINER_CLASS = 'flex flex-col gap-1.5'
-const INPUT_CLASS =
-  'w-full rounded-lg border border-border bg-surface px-3 py-2 pr-10 text-sm text-ink placeholder:text-ink-muted focus:border-brand focus:ring-2 focus:ring-brand focus:outline-none disabled:opacity-50'
 
 export default function ChangePasswordGroup() {
   const [currentPassword, setCurrentPassword] = useState('')
@@ -64,7 +64,6 @@ export default function ChangePasswordGroup() {
     }
   }
 
-
   return (
     <ProfileSection title="Đổi mật khẩu & Bảo mật">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -89,100 +88,88 @@ export default function ChangePasswordGroup() {
         )}
 
         <div className={FIELD_CONTAINER_CLASS}>
-          <label
-            htmlFor="current-password"
-            className="text-ink text-sm font-medium"
-          >
-            Mật khẩu hiện tại
-          </label>
-          <div className="relative">
-            <input
-              id="current-password"
-              type={showCurrent ? 'text' : 'password'}
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="••••••••"
-              disabled={loading}
-              className={INPUT_CLASS}
-            />
-            <button
-              type="button"
-              onClick={() => setShowCurrent(!showCurrent)}
-              className="text-ink-muted hover:text-ink absolute right-3 top-1/2 -translate-y-1/2 text-sm focus:outline-none"
-              aria-label={showCurrent ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-            >
-              {showCurrent ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-            </button>
-          </div>
+          <Label htmlFor="current-password">Mật khẩu hiện tại</Label>
+          <Input
+            id="current-password"
+            type={showCurrent ? 'text' : 'password'}
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            placeholder="••••••••"
+            disabled={loading}
+            trailingAction={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                onClick={() => setShowCurrent(!showCurrent)}
+                aria-label={showCurrent ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              >
+                {showCurrent ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            }
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className={FIELD_CONTAINER_CLASS}>
-            <label
-              htmlFor="new-password"
-              className="text-ink text-sm font-medium"
-            >
-              Mật khẩu mới
-            </label>
-            <div className="relative">
-              <input
-                id="new-password"
-                type={showNew ? 'text' : 'password'}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Tối thiểu 8 ký tự"
-                disabled={loading}
-                className={INPUT_CLASS}
-              />
-              <button
-                type="button"
-                onClick={() => setShowNew(!showNew)}
-                className="text-ink-muted hover:text-ink absolute right-3 top-1/2 -translate-y-1/2 text-sm focus:outline-none"
-                aria-label={showNew ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              >
-                {showNew ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
+            <Label htmlFor="new-password">Mật khẩu mới</Label>
+            <Input
+              id="new-password"
+              type={showNew ? 'text' : 'password'}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Tối thiểu 8 ký tự"
+              disabled={loading}
+              trailingAction={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  onClick={() => setShowNew(!showNew)}
+                  aria-label={showNew ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                >
+                  {showNew ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              }
+            />
           </div>
 
           <div className={FIELD_CONTAINER_CLASS}>
-            <label
-              htmlFor="confirm-password"
-              className="text-ink text-sm font-medium"
-            >
-              Xác nhận mật khẩu mới
-            </label>
-            <div className="relative">
-              <input
-                id="confirm-password"
-                type={showConfirm ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Nhập lại mật khẩu mới"
-                disabled={loading}
-                className={INPUT_CLASS}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirm(!showConfirm)}
-                className="text-ink-muted hover:text-ink absolute right-3 top-1/2 -translate-y-1/2 text-sm focus:outline-none"
-                aria-label={showConfirm ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              >
-                {showConfirm ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
+            <Label htmlFor="confirm-password">Xác nhận mật khẩu mới</Label>
+            <Input
+              id="confirm-password"
+              type={showConfirm ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Nhập lại mật khẩu mới"
+              disabled={loading}
+              trailingAction={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  aria-label={showConfirm ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                >
+                  {showConfirm ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              }
+            />
           </div>
         </div>
 

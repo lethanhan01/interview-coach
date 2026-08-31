@@ -38,6 +38,27 @@ describe('Badge Component', () => {
     expect(ref.current).toBeInstanceOf(HTMLSpanElement)
   })
 
+  it('renders interactive badge with button role and tabIndex', () => {
+    render(<Badge interactive>Clickable Badge</Badge>)
+    const badge = screen.getByRole('button', { name: 'Clickable Badge' })
+    expect(badge).toBeInTheDocument()
+    expect(badge).toHaveAttribute('tabIndex', '0')
+    expect(badge).toHaveClass('cursor-pointer')
+  })
+
+  it('renders onDismiss button and triggers callback', () => {
+    const handleDismiss = vi.fn()
+    render(
+      <Badge onDismiss={handleDismiss} dismissLabel="Bỏ chọn React">
+        React
+      </Badge>
+    )
+    const dismissBtn = screen.getByRole('button', { name: 'Bỏ chọn React' })
+    expect(dismissBtn).toBeInTheDocument()
+    dismissBtn.click()
+    expect(handleDismiss).toHaveBeenCalledTimes(1)
+  })
+
   it('should pass a11y tests', async () => {
     const { container } = render(
       <div>
@@ -49,9 +70,14 @@ describe('Badge Component', () => {
         <Badge variant="warning">Warning</Badge>
         <Badge variant="danger">Danger</Badge>
         <Badge variant="destructive">Destructive</Badge>
+        <Badge interactive>Interactive</Badge>
+        <Badge onDismiss={() => {}} dismissLabel="Xóa tag">
+          Dismissible
+        </Badge>
       </div>
     )
     const results = await axe(container)
     expect(results).toHaveNoViolations()
   })
 })
+

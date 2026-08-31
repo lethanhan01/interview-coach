@@ -18,7 +18,7 @@ const CONTEXT_PACK_LABELS: Record<ContextPack, string> = {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-brand-200/50 flex justify-between gap-4 border-b py-2 last:border-0">
+    <div className="border-brand-subtle-border flex justify-between gap-4 border-b py-2 last:border-0">
       <span className="text-ink-muted shrink-0">{label}</span>
       <span className="text-ink text-right font-medium">{value}</span>
     </div>

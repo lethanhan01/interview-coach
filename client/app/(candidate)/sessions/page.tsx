@@ -9,6 +9,7 @@ import type { Session } from '@/lib/types'
 import { formatVietnamDateTime } from '@/lib/date-time'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Badge } from '@/components/ui/Badge'
+import Button from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 
 const SESSION_TYPE_LABELS: Record<string, string> = {
@@ -127,12 +128,13 @@ export default function SessionsPage() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
         <p className="text-danger text-sm">{error}</p>
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={retryLoad}
-          className="border-brand text-brand hover:bg-brand-subtle rounded-full border px-4 py-1.5 text-sm font-medium transition-colors"
         >
           Thử lại
-        </button>
+        </Button>
       </div>
     )
   }

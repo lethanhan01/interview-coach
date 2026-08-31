@@ -1,10 +1,17 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { X } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
+import { Badge } from '@/components/ui/Badge'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/Select'
 import type { JdFormData } from '@/lib/setup-types'
 import type { SavedJobDescription } from '@/lib/types'
 import {
@@ -25,28 +32,6 @@ interface JdFormProps {
   savedJobDescriptions?: SavedJobDescription[]
   selectedSavedJobDescriptionId?: string
   onSelectSavedJobDescription?: (id: string) => void
-}
-
-const selectCls =
-  'w-full px-4 py-2.5 rounded-lg text-sm text-ink bg-surface border border-border outline-none transition-colors focus:ring-2 focus:ring-brand focus:border-brand'
-
-function SelectField({
-  label,
-  htmlFor,
-  children,
-}: {
-  label: string
-  htmlFor?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={htmlFor} className="text-ink text-sm font-medium">
-        {label}
-      </label>
-      {children}
-    </div>
-  )
 }
 
 export default function JdForm({ value, onChange }: JdFormProps) {
@@ -134,39 +119,47 @@ export default function JdForm({ value, onChange }: JdFormProps) {
         <h2 className="text-ink mb-4 text-base font-semibold">
           Vị trí tuyển dụng
         </h2>
-        <SelectField label="Vị trí" htmlFor="jd-position">
-          <select
-            id="jd-position"
-            value={value.position}
-            onChange={(e) => set('position', e.target.value)}
-            className={selectCls}
-            required
-          >
-            <option value="">Chọn vị trí...</option>
-            {POSITION_OPTIONS.map((pos) => (
-              <option key={pos} value={pos}>
-                {pos}
-              </option>
-            ))}
-          </select>
-        </SelectField>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <SelectField label="Level yêu cầu" htmlFor="jd-level">
-            <select
-              id="jd-level"
-              value={value.level}
-              onChange={(e) => set('level', e.target.value)}
-              className={selectCls}
-              required
+        <FormField name="position" isRequired>
+          <FormLabel>Vị trí</FormLabel>
+          <FormControl>
+            <Select
+              value={value.position}
+              onValueChange={(val) => set('position', val)}
             >
-              <option value="">Chọn level...</option>
-              {JD_LEVEL_OPTIONS.map((level) => (
-                <option key={level.value} value={level.value}>
-                  {level.label}
-                </option>
-              ))}
-            </select>
-          </SelectField>
+              <SelectTrigger id="jd-position" aria-label="Vị trí">
+                <SelectValue placeholder="Chọn vị trí..." />
+              </SelectTrigger>
+              <SelectContent>
+                {POSITION_OPTIONS.map((pos) => (
+                  <SelectItem key={pos} value={pos}>
+                    {pos}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormControl>
+        </FormField>
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <FormField name="level" isRequired>
+            <FormLabel>Level yêu cầu</FormLabel>
+            <FormControl>
+              <Select
+                value={value.level}
+                onValueChange={(val) => set('level', val)}
+              >
+                <SelectTrigger id="jd-level" aria-label="Level yêu cầu">
+                  <SelectValue placeholder="Chọn level..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {JD_LEVEL_OPTIONS.map((level) => (
+                    <SelectItem key={level.value} value={level.value}>
+                      {level.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormControl>
+          </FormField>
           <FormField name="headcount">
             <FormLabel>Số lượng tuyển</FormLabel>
             <FormControl>
@@ -247,16 +240,15 @@ export default function JdForm({ value, onChange }: JdFormProps) {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {value.techStack.map((tech) => (
-                      <button
+                      <Badge
                         key={tech}
-                        type="button"
-                        onClick={() => removeTech(tech)}
-                        aria-label={`Bỏ chọn ${tech}`}
-                        className="border-brand-subtle-border bg-brand-subtle text-brand-subtle-fg hover:bg-surface-raised inline-flex max-w-full items-center gap-1 rounded-full border px-3 py-1 text-left text-xs transition-colors"
+                        variant="brand"
+                        onDismiss={() => removeTech(tech)}
+                        dismissLabel={`Bỏ chọn ${tech}`}
+                        className="text-xs"
                       >
-                        <span className="min-w-0 break-words">{tech}</span>
-                        <X className="size-3 shrink-0" aria-hidden="true" />
-                      </button>
+                        {tech}
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -276,21 +268,16 @@ export default function JdForm({ value, onChange }: JdFormProps) {
                       {techs.map((tech) => {
                         const selected = value.techStack.includes(tech)
                         return (
-                          <button
+                          <Badge
                             key={tech}
-                            type="button"
+                            variant={selected ? 'brand' : 'default'}
+                            interactive
                             onClick={() => toggleTech(tech)}
                             aria-pressed={selected}
-                            className={[
-                              'max-w-full rounded-full border px-3 py-1 text-left text-xs transition-colors',
-                              'whitespace-normal break-words',
-                              selected
-                                ? 'border-brand-subtle-border bg-brand-subtle text-brand-subtle-fg'
-                                : 'border-border text-ink-muted hover:border-brand-muted',
-                            ].join(' ')}
+                            className="text-xs"
                           >
                             {tech}
-                          </button>
+                          </Badge>
                         )
                       })}
                     </div>
@@ -324,21 +311,26 @@ export default function JdForm({ value, onChange }: JdFormProps) {
             </FormControl>
           </FormField>
 
-          <SelectField label="Thưởng" htmlFor="jd-bonus">
-            <select
-              id="jd-bonus"
-              value={value.bonus}
-              onChange={(e) => set('bonus', e.target.value)}
-              className={selectCls}
-            >
-              <option value="">Chọn hình thức thưởng...</option>
-              {BONUS_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </SelectField>
+          <FormField name="bonus">
+            <FormLabel>Thưởng</FormLabel>
+            <FormControl>
+              <Select
+                value={value.bonus || ''}
+                onValueChange={(val) => set('bonus', val)}
+              >
+                <SelectTrigger id="jd-bonus" aria-label="Thưởng">
+                  <SelectValue placeholder="Chọn hình thức thưởng..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {BONUS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt} value={opt}>
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormControl>
+          </FormField>
           <FormField name="benefits">
             <FormLabel>Quyền lợi nhân viên</FormLabel>
             <FormControl>
@@ -355,3 +347,4 @@ export default function JdForm({ value, onChange }: JdFormProps) {
     </div>
   )
 }
+

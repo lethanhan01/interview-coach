@@ -382,14 +382,16 @@ function SetupPageContent() {
       {step >= 1 && (
         <>
           {/* Back to JD library */}
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => router.push('/jd-library')}
-            className="text-ink-muted hover:text-brand mb-6 flex items-center gap-1.5 text-sm transition-colors"
+            className="text-ink-muted hover:text-brand mb-6 -ml-2 flex items-center gap-1.5 text-sm"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
             Thư viện JD
-          </button>
+          </Button>
 
           <div className="mb-10 flex items-start gap-2">
             {([1, 2, 3] as (1 | 2 | 3)[]).map((s) => (
