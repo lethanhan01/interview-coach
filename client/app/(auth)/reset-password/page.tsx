@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { authService } from '@/services'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { FormField, FormLabel, FormControl, FormMessage } from '@/components/form/FormField'
+import { FormField, FormLabel, FormControl } from '@/components/form/FormField'
 import { KeyRound, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react'
 
 export default function ResetPasswordPage() {

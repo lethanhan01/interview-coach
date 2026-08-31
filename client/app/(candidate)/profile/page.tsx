@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ScrollText, ArrowRight, User } from 'lucide-react'
+import { ScrollText, ArrowRight } from 'lucide-react'
 import { profileService } from '@/services'
 
 import type { GetProfileResponse } from '@/lib/types'

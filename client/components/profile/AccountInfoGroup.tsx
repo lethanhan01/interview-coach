@@ -2,7 +2,6 @@
 
 import { ShieldCheck, Mail, UserCheck } from 'lucide-react'
 import ProfileSection from './ProfileSection'
-import ProfileField from './ProfileField'
 import { Badge } from '@/components/ui/Badge'
 
 interface AccountInfoGroupProps {
