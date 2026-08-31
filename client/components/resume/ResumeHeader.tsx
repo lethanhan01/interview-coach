@@ -62,20 +62,20 @@ export default function ResumeHeader({ data }: ResumeHeaderProps) {
   const getStatusBadge = () => {
     if (completeness >= 80) {
       return (
-        <Badge variant="default" className="bg-success text-white">
+        <Badge variant="success">
           Hồ sơ hoàn hảo ({completeness}%)
         </Badge>
       )
     }
     if (completeness >= 50) {
       return (
-        <Badge variant="secondary" className="text-brand font-medium">
+        <Badge variant="brand">
           Đang hoàn thiện ({completeness}%)
         </Badge>
       )
     }
     return (
-      <Badge variant="outline" className="text-ink-muted">
+      <Badge variant="secondary">
         Cần bổ sung thêm ({completeness}%)
       </Badge>
     )
@@ -109,7 +109,7 @@ export default function ResumeHeader({ data }: ResumeHeaderProps) {
 
       {/* Progress bar */}
       <div className="space-y-1.5">
-        <div className="bg-neutral-100 dark:bg-neutral-800 h-2.5 w-full overflow-hidden rounded-full">
+        <div className="bg-muted h-2.5 w-full overflow-hidden rounded-full">
           <div
             className="bg-brand h-full rounded-full transition-all duration-500 ease-out"
             style={{ width: `${completeness}%` }}
@@ -128,7 +128,7 @@ export default function ResumeHeader({ data }: ResumeHeaderProps) {
               key={id}
               type="button"
               onClick={() => scrollTo(id)}
-              className="border-border bg-surface hover:bg-brand-subtle hover:text-brand-subtle-fg hover:border-brand/30 text-ink-muted inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className="border-border bg-surface hover:bg-brand-subtle hover:text-brand-subtle-fg hover:border-brand/30 text-ink-muted inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Icon className="h-3.5 w-3.5" />
               <span>{label}</span>

@@ -114,7 +114,7 @@ export const Interactive: Story = {
           onNew={() => setSelected(null)}
         />
         {selected && (
-          <div className="mt-4 rounded-lg bg-green-50 p-3 text-sm text-green-800">
+          <div className="bg-success-subtle text-success-subtle-fg border-success-subtle-fg/30 mt-4 rounded-lg border p-3 text-sm">
             Đã chọn: <strong>{selected.companyName}</strong> —{' '}
             {selected.jobTitle}
           </div>

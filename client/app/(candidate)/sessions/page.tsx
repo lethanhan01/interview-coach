@@ -8,6 +8,7 @@ import type { Session } from '@/lib/types'
 import { formatVietnamDateTime } from '@/lib/date-time'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Badge } from '@/components/ui/Badge'
+import { cn } from '@/lib/utils'
 
 const SESSION_TYPE_LABELS: Record<string, string> = {
   hr: 'HR / Behavioral',
@@ -46,23 +47,30 @@ function getCompanyName(jobDescription: string): string | undefined {
   return line.slice(line.indexOf(':') + 1).trim() || undefined
 }
 
-function scoreContainerClass(pct: number): string {
-  if (pct >= 70) return 'bg-green-50 text-green-700'
-  if (pct >= 50) return 'bg-amber-50 text-amber-700'
-  return 'bg-red-50 text-red-700'
+const scoreVariants = {
+  high: 'bg-success-subtle text-success-subtle-fg border-success-subtle-fg/30',
+  medium: 'bg-warning-subtle text-warning-subtle-fg border-warning-subtle-fg/30',
+  low: 'bg-danger-subtle text-danger-subtle-fg border-danger-subtle-fg/30',
+} as const
+
+function getScoreTier(pct: number): keyof typeof scoreVariants {
+  if (pct >= 70) return 'high'
+  if (pct >= 50) return 'medium'
+  return 'low'
 }
 
 function ScoreDisplay({ score }: Readonly<{ score: number }>) {
   const pct = Math.min(100, Math.max(0, score))
+  const tier = getScoreTier(pct)
 
   return (
-    <div className={`rounded-xl px-4 py-3 ${scoreContainerClass(pct)}`}>
-      <p className="mb-1 text-xs font-medium opacity-60">Điểm tổng</p>
+    <div className={cn('rounded-xl border px-4 py-3', scoreVariants[tier])}>
+      <p className="mb-1 text-xs font-medium opacity-70">Điểm tổng</p>
       <div className="flex items-baseline gap-1">
         <span className="text-2xl font-bold tabular-nums leading-none">
           {score}
         </span>
-        <span className="text-sm opacity-50">/100</span>
+        <span className="text-sm opacity-60">/100</span>
       </div>
     </div>
   )

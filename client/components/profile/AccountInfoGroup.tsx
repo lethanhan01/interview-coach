@@ -49,7 +49,7 @@ export default function AccountInfoGroup({
           </dt>
           <dd>
             <Badge
-              variant={isStatusActive ? 'default' : 'destructive'}
+              variant={isStatusActive ? 'success' : 'danger'}
               className="font-medium"
             >
               {isStatusActive ? 'Đang hoạt động' : 'Tạm khóa'}

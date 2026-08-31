@@ -276,7 +276,7 @@ export default function ReportPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">
+      <h1 className="text-foreground mb-6 text-2xl font-bold">
         Báo cáo phỏng vấn
       </h1>
 
@@ -301,13 +301,13 @@ export default function ReportPage() {
 
       <div className="flex flex-col gap-6">
         {report.reportQuality === 'partial' && (
-          <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+          <div className="bg-warning-subtle text-warning-subtle-fg border-warning-subtle-fg/30 rounded-xl border px-4 py-3 text-sm">
             Một số câu trả lời không được AI chấm điểm tự động. Điểm tổng vẫn
             tính các câu đã bỏ qua là 0 điểm.
           </div>
         )}
         {report.reportQuality === 'not_scorable' && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <div className="border-brand-subtle-border bg-brand-subtle text-brand-subtle-fg rounded-xl border px-4 py-3 text-sm">
             Báo cáo cũ này chưa có dữ liệu điểm cho các câu đã bỏ qua. Các báo
             cáo mới sẽ tính câu bỏ qua là 0 điểm.
           </div>
@@ -323,7 +323,7 @@ export default function ReportPage() {
               <dt className="text-ink-faint text-xs font-medium uppercase tracking-wide">
                 Nhận xét tổng quan
               </dt>
-              <dd className="mt-1 text-sm text-gray-900">
+              <dd className="text-foreground mt-1 text-sm">
                 {overviewSummary.overview}
               </dd>
             </div>
@@ -336,13 +336,13 @@ export default function ReportPage() {
                 {overviewSummary.goodAnswers.length > 0 ? (
                   <ul className="flex flex-col gap-1.5">
                     {overviewSummary.goodAnswers.map((item) => (
-                      <li key={item.label} className="text-sm text-gray-900">
+                      <li key={item.label} className="text-foreground text-sm">
                         {item.label} - {item.score}/100
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <span className="text-sm text-gray-500">
+                  <span className="text-muted-foreground text-sm">
                     Chưa có câu trả lời nào đạt từ {GOOD_ANSWER_THRESHOLD}/100.
                   </span>
                 )}
@@ -357,13 +357,13 @@ export default function ReportPage() {
                 {overviewSummary.weakAnswers.length > 0 ? (
                   <ul className="flex flex-col gap-1.5">
                     {overviewSummary.weakAnswers.map((item) => (
-                      <li key={item.label} className="text-sm text-gray-900">
+                      <li key={item.label} className="text-foreground text-sm">
                         {item.label} - {item.score}/100
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <span className="text-sm text-gray-500">
+                  <span className="text-muted-foreground text-sm">
                     Không có câu trả lời nào dưới {WEAK_ANSWER_THRESHOLD}/100.
                   </span>
                 )}
@@ -380,7 +380,7 @@ export default function ReportPage() {
                     {overviewSummary.improvementDirections.map((item) => (
                       <li
                         key={item}
-                        className="flex gap-2 text-sm text-gray-900"
+                        className="text-foreground flex gap-2 text-sm"
                       >
                         <span className="bg-brand mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" />
                         <span>{item}</span>
@@ -388,7 +388,7 @@ export default function ReportPage() {
                     ))}
                   </ul>
                 ) : (
-                  <span className="text-sm text-gray-500">
+                  <span className="text-muted-foreground text-sm">
                     Chưa có đủ dữ liệu để tổng hợp hướng cải thiện.
                   </span>
                 )}

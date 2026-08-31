@@ -1,5 +1,6 @@
 import type { Session, SessionType, ContextPack } from '@/lib/types'
 import { formatVietnamDateTime } from '@/lib/date-time'
+import { Badge } from '@/components/ui/Badge'
 
 const SESSION_TYPE_LABELS: Record<SessionType, string> = {
   hr: 'Nhân sự',
@@ -14,10 +15,10 @@ const CONTEXT_PACK_LABELS: Record<ContextPack, string> = {
 function MetaRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
+      <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
         {label}
       </span>
-      <span className="text-sm text-gray-900">{value}</span>
+      <span className="text-foreground text-sm">{value}</span>
     </div>
   )
 }
@@ -25,10 +26,10 @@ function MetaRow({ label, value }: { label: string; value: React.ReactNode }) {
 function TextBlock({ label, value }: { label: string; value?: string }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
+      <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
         {label}
       </span>
-      <p className="whitespace-pre-line rounded-md bg-gray-50 px-3 py-2 text-sm leading-6 text-gray-900">
+      <p className="bg-surface-raised text-foreground whitespace-pre-line rounded-md px-3 py-2 text-sm leading-6">
         {value || '—'}
       </p>
     </div>
@@ -115,12 +116,9 @@ export default function SessionMetadataCard({
     jobDescription.techStack.length > 0 ? (
       <span className="flex flex-wrap gap-1.5">
         {jobDescription.techStack.map((item) => (
-          <span
-            key={item}
-            className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-700"
-          >
+          <Badge key={item} variant="secondary" className="text-xs">
             {item}
-          </span>
+          </Badge>
         ))}
       </span>
     ) : (
@@ -128,8 +126,8 @@ export default function SessionMetadataCard({
     )
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h2 className="mb-4 text-base font-semibold text-gray-900">
+    <div className="border-border bg-card text-card-foreground rounded-xl border p-6 shadow-sm">
+      <h2 className="text-foreground mb-4 text-base font-semibold">
         Thông tin phiên phỏng vấn
       </h2>
       <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
@@ -154,8 +152,8 @@ export default function SessionMetadataCard({
         <MetaRow label="Số câu hỏi" value={`${session.numQuestions} câu`} />
         <MetaRow label="Vị trí mục tiêu" value={session.jobTitle ?? '—'} />
       </div>
-      <div className="mt-5 border-t border-gray-100 pt-5">
-        <h3 className="mb-4 text-sm font-semibold text-gray-900">
+      <div className="border-border mt-5 border-t pt-5">
+        <h3 className="text-foreground mb-4 text-sm font-semibold">
           Mô tả công việc (JD)
         </h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">

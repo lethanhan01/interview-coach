@@ -18,6 +18,20 @@ describe('Badge Component', () => {
     expect(badge).toHaveClass('bg-brand-subtle')
   })
 
+  it('renders correctly with secondary variant', () => {
+    render(<Badge variant="secondary">Secondary Badge</Badge>)
+    const badge = screen.getByText('Secondary Badge')
+    expect(badge).toBeInTheDocument()
+    expect(badge).toHaveClass('bg-secondary')
+  })
+
+  it('renders correctly with outline variant', () => {
+    render(<Badge variant="outline">Outline Badge</Badge>)
+    const badge = screen.getByText('Outline Badge')
+    expect(badge).toBeInTheDocument()
+    expect(badge).toHaveClass('bg-transparent')
+  })
+
   it('forwards refs correctly', () => {
     const ref = React.createRef<HTMLSpanElement>()
     render(<Badge ref={ref}>Badge</Badge>)
@@ -28,10 +42,13 @@ describe('Badge Component', () => {
     const { container } = render(
       <div>
         <Badge>Default</Badge>
+        <Badge variant="secondary">Secondary</Badge>
+        <Badge variant="outline">Outline</Badge>
         <Badge variant="brand">Brand</Badge>
         <Badge variant="success">Success</Badge>
         <Badge variant="warning">Warning</Badge>
         <Badge variant="danger">Danger</Badge>
+        <Badge variant="destructive">Destructive</Badge>
       </div>
     )
     const results = await axe(container)

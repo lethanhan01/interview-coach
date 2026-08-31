@@ -196,31 +196,33 @@ export default function VoiceRecorder({
         </div>
       ) : (
         state === 'idle' && (
-          <button
+          <Button
+            variant="destructive"
+            size="lg"
             aria-label="Bắt đầu ghi âm"
             onClick={startRecording}
             disabled={disabled}
-            className="rounded-full bg-red-600 px-8 py-3 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
           >
             Bắt đầu ghi âm
-          </button>
+          </Button>
         )
       )}
       {state === 'recording' && (
-        <button
+        <Button
+          variant="primary"
+          size="lg"
           aria-label="Dừng ghi âm"
           onClick={stopRecording}
-          className="flex items-center gap-2 rounded-full bg-gray-800 px-8 py-3 text-sm font-medium text-white hover:bg-black"
         >
           <span
             aria-hidden="true"
-            className="h-2 w-2 animate-pulse rounded-full bg-red-500"
+            className="bg-destructive size-2 animate-pulse rounded-full"
           />
           Dừng ghi âm
-        </button>
+        </Button>
       )}
       {state === 'transcribing' && (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <LoadingSpinner size="sm" />
           Đang chuyển giọng nói thành văn bản...
         </div>

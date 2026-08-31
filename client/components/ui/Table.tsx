@@ -81,6 +81,7 @@ const TableHead = React.forwardRef<
   <div
     ref={ref}
     role="columnheader"
+    // Design Exception: Chiều rộng cố định dành riêng cho cột Checkbox selection
     className={cn(
       'text-ink-muted flex h-12 flex-1 items-center px-4 text-left align-middle font-medium [&:has([role=checkbox])]:w-[50px] [&:has([role=checkbox])]:flex-none',
       className
@@ -97,6 +98,7 @@ const TableCell = React.forwardRef<
   <div
     ref={ref}
     role="cell"
+    // Design Exception: Chiều rộng cố định dành riêng cho cột Checkbox selection
     className={cn(
       'flex flex-1 items-center p-4 align-middle [&:has([role=checkbox])]:w-[50px] [&:has([role=checkbox])]:flex-none',
       className

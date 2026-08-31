@@ -112,13 +112,13 @@ export default function SavedJdPicker({ items, onSelect, onNew }: Props) {
                         <Badge
                           key={tech}
                           variant="brand"
-                          className="text-[11px]"
+                          className="text-xs"
                         >
                           {tech}
                         </Badge>
                       ))}
                       {extraCount > 0 && (
-                        <Badge variant="default" className="text-[11px]">
+                        <Badge variant="default" className="text-xs">
                           +{extraCount}
                         </Badge>
                       )}

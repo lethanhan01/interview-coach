@@ -25,6 +25,7 @@ import ConfirmStep from '@/components/setup/ConfirmStep'
 import SavedJdPicker from '@/components/setup/SavedJdPicker'
 import { ArrowLeft } from 'lucide-react'
 import { getJdLevelLabel, normalizeJdLevel } from '@/lib/interview-options'
+import { cn } from '@/lib/utils'
 
 // ── Constants & Types (re-exported from @/lib/setup-types) ───────────────────
 // The actual definitions live in lib/setup-types.ts so that components/setup/*
@@ -399,14 +400,14 @@ function SetupPageContent() {
               <div key={s} className="flex items-center gap-2">
                 <div className="flex flex-col items-center gap-1.5">
                   <div
-                    className={[
+                    className={cn(
                       'flex size-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-150',
                       s === step
-                        ? 'bg-brand ring-brand-200 text-white ring-4'
+                        ? 'bg-brand ring-brand-subtle-border text-white ring-4'
                         : s < step
                           ? 'bg-brand text-white'
-                          : 'bg-border text-ink-faint',
-                    ].join(' ')}
+                          : 'bg-border text-ink-faint'
+                    )}
                   >
                     {s < step ? (
                       <svg
@@ -429,20 +430,20 @@ function SetupPageContent() {
                     )}
                   </div>
                   <span
-                    className={[
+                    className={cn(
                       'hidden text-xs sm:block',
-                      s === step ? 'text-ink font-medium' : 'text-ink-faint',
-                    ].join(' ')}
+                      s === step ? 'text-ink font-medium' : 'text-ink-faint'
+                    )}
                   >
                     {STEP_LABELS[s]}
                   </span>
                 </div>
                 {s < 3 && (
                   <div
-                    className={[
+                    className={cn(
                       'mb-4 h-px w-10 transition-all duration-150',
-                      s < step ? 'bg-brand' : 'bg-border',
-                    ].join(' ')}
+                      s < step ? 'bg-brand' : 'bg-border'
+                    )}
                   />
                 )}
               </div>

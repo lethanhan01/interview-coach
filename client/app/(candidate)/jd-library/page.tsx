@@ -8,6 +8,7 @@ import { formatVietnamRelativeDate } from '@/lib/date-time'
 import { Building2, MapPin, Clock, Plus, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 const MAX_TECH_SHOWN = 5
 
@@ -39,7 +40,7 @@ export default function JdLibraryPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="border-brand size-8 animate-spin rounded-full border-2 border-t-transparent" />
+        <LoadingSpinner size="lg" />
       </div>
     )
   }
@@ -148,13 +149,13 @@ export default function JdLibraryPage() {
                           <Badge
                             key={tech}
                             variant="brand"
-                            className="text-[11px]"
+                            className="text-xs"
                           >
                             {tech}
                           </Badge>
                         ))}
                         {extraCount > 0 && (
-                          <Badge variant="default" className="text-[11px]">
+                          <Badge variant="default" className="text-xs">
                             +{extraCount}
                           </Badge>
                         )}
