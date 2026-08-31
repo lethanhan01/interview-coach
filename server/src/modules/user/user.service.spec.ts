@@ -60,6 +60,8 @@ describe('UserService', () => {
           lastname: true,
           profile: {
             select: {
+              targetPosition: true,
+              targetLevel: true,
               personality: true,
               education: true,
               workExperience: true,

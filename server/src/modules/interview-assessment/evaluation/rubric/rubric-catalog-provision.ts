@@ -88,5 +88,8 @@ export async function provisionDefaultRubricCatalog(
         }
       }
     }
+  }, {
+    maxWait: 10000,
+    timeout: 60000,
   });
 }
