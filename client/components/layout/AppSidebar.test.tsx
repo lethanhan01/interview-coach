@@ -35,7 +35,8 @@ describe('AppSidebar', () => {
     render(<AppSidebar role="candidate" />)
     expect(await screen.findByText('Phỏng vấn')).toBeInTheDocument()
     expect(screen.getByText('Tạo mới')).toBeInTheDocument()
-    expect(screen.getByText('Hồ sơ')).toBeInTheDocument()
+    expect(screen.getByText('CV / Resume')).toBeInTheDocument()
+    expect(screen.getByText('Tài khoản')).toBeInTheDocument()
   })
 
   it('highlights active route', async () => {

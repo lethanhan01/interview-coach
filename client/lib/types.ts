@@ -215,3 +215,21 @@ export interface GetProfileResponse {
     awards?: AwardEntry[]
   } | null
 }
+
+export interface ChangePasswordPayload {
+  currentPassword: string
+  newPassword: string
+}
+
+export interface ChangePasswordResponse {
+  success: boolean
+  data?: {
+    id: string
+    email: string
+    role: string
+    status: string
+    firstname: string | null
+    lastname: string | null
+  }
+}
+

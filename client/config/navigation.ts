@@ -4,6 +4,7 @@ import {
   User,
   CalendarDays,
   FileText,
+  ScrollText,
 } from 'lucide-react'
 
 export type NavItem = {
@@ -48,8 +49,14 @@ export const candidateNavigation: NavItem[] = [
     match: ['/jd-library', '/setup'],
   },
   {
+    href: '/resume',
+    label: 'CV / Resume',
+    icon: ScrollText,
+    match: ['/resume'],
+  },
+  {
     href: '/profile',
-    label: 'Hồ sơ',
+    label: 'Tài khoản',
     icon: User,
     match: ['/profile'],
   },

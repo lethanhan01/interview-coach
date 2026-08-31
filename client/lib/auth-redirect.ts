@@ -5,6 +5,7 @@ const BLOCKED_PREFIXES = ['/login', '/callback']
 export const PROTECTED_ROUTE_PREFIXES = [
   '/sessions',
   '/setup',
+  '/resume',
   '/profile',
   '/jd-library',
   '/admin',
