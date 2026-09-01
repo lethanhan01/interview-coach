@@ -12,20 +12,17 @@ export const createMockQuestionBank = (
     createdAt: Date;
     updatedAt: Date;
     criteria: Array<{
-      rubricCriterion: {
+      criteria: {
         id: string;
         code: string;
         name: string;
         weight: number;
         displayOrder: number;
-        rubricCategory: {
-          categoryKey: string;
-          displayOrder: number;
-          rubricVersion: {
-            id: string;
-            contextPackId: string;
-            status: string;
-          };
+        competency: {
+          code: string;
+          name: string;
+          categoryCode: string;
+          categoryName: string;
         };
       };
     }>;
@@ -47,20 +44,17 @@ export const createMockQuestionBank = (
   updatedAt: new Date('2025-01-01'),
   criteria: [
     {
-      rubricCriterion: {
-        id: 'criterion-D4',
-        code: 'D4',
-        name: 'Communication',
+      criteria: {
+        id: 'level-PROG-L4',
+        code: 'PROG-L4',
+        name: 'Software development - Level 4',
         weight: 1,
         displayOrder: 4,
-        rubricCategory: {
-          categoryKey: 'behavioral',
-          displayOrder: 1,
-          rubricVersion: {
-            id: 'rubric-version-vn',
-            contextPackId: 'VN',
-            status: 'active',
-          },
+        competency: {
+          code: 'PROG',
+          name: 'Software development',
+          categoryCode: 'DEV_IMPL',
+          categoryName: 'Development and implementation',
         },
       },
     },
@@ -74,16 +68,36 @@ export const createMockPrismaService = () => {
       typeof input === 'function' ? input(prisma) : Promise.all(input),
     ),
     isBootstrapDatabaseAvailable: jest.fn().mockReturnValue(true),
-    rubricCriterion: {
+    criteria: {
       findMany: jest.fn().mockResolvedValue([]),
-    },
-    rubricVersion: {
       findFirst: jest.fn().mockResolvedValue(null),
-      upsert: jest.fn(),
     },
-    rubricCategory: {
+    competency: {
       findMany: jest.fn().mockResolvedValue([]),
-      upsert: jest.fn(),
+      findUnique: jest.fn().mockResolvedValue(null),
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
+    level: {
+      findMany: jest.fn().mockResolvedValue([]),
+      findFirst: jest.fn().mockResolvedValue({ id: 'lvl-4', rank: 4, name: 'Apply', code: 'LV4' }),
+    },
+    role: {
+      findMany: jest.fn().mockResolvedValue([]),
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
+    roleLevelCompetency: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+    sessionCompetency: {
+      createMany: jest.fn().mockResolvedValue({ count: 0 }),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+    questionBankCriterion: {
+      createMany: jest.fn().mockResolvedValue({ count: 0 }),
+    },
+    sessionQuestionCriterion: {
+      createMany: jest.fn().mockResolvedValue({ count: 0 }),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     questionBank: {
       findMany: jest.fn().mockResolvedValue([]),
@@ -97,79 +111,88 @@ export const createMockPrismaService = () => {
       count: jest.fn().mockResolvedValue(0),
     },
     interviewSession: {
-      count: jest.fn(),
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
+      count: jest.fn().mockResolvedValue(0),
+      create: jest.fn().mockResolvedValue({ id: 'session-123' }),
+      findUnique: jest.fn().mockResolvedValue(null),
+      findMany: jest.fn().mockResolvedValue([]),
+      findFirst: jest.fn().mockResolvedValue(null),
+      update: jest.fn().mockResolvedValue({ id: 'session-123' }),
       updateMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
     sessionQuestion: {
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      createMany: jest.fn(),
-      count: jest.fn(),
-    },
-    sessionQuestionCriterion: {
+      findMany: jest.fn().mockResolvedValue([]),
+      findFirst: jest.fn().mockResolvedValue(null),
       createMany: jest.fn().mockResolvedValue({ count: 0 }),
+      count: jest.fn().mockResolvedValue(0),
     },
     followUpQuestion: {
-      create: jest.fn(),
+      create: jest.fn().mockResolvedValue({ id: 'fu-1' }),
     },
     userAnswer: {
-      create: jest.fn(),
+      create: jest.fn().mockResolvedValue({ id: 'ua-123' }),
       createMany: jest.fn().mockResolvedValue({ count: 0 }),
+      findMany: jest.fn().mockResolvedValue([]),
       findUnique: jest.fn().mockResolvedValue(null),
-      findMany: jest.fn(),
-      upsert: jest.fn(),
-      update: jest.fn(),
-      count: jest.fn(),
+      findFirst: jest.fn().mockResolvedValue(null),
+      update: jest.fn().mockResolvedValue({ id: 'ua-123' }),
+      upsert: jest.fn().mockResolvedValue({ id: 'ua-123' }),
+      count: jest.fn().mockResolvedValue(0),
     },
     aiFeedback: {
-      upsert: jest.fn().mockResolvedValue({ id: 'feedback-1' }),
+      findMany: jest.fn().mockResolvedValue([]),
       findUnique: jest.fn().mockResolvedValue(null),
+      findFirst: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({ id: 'af-123' }),
+      upsert: jest.fn().mockResolvedValue({ id: 'af-123' }),
     },
     user: {
-      create: jest.fn(),
-      update: jest.fn(),
-      upsert: jest.fn(),
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      count: jest.fn(),
+      create: jest.fn().mockResolvedValue({ id: 'user-1' }),
+      update: jest.fn().mockResolvedValue({ id: 'user-1' }),
+      upsert: jest.fn().mockResolvedValue({ id: 'user-1' }),
+      findUnique: jest.fn().mockResolvedValue(null),
+      findMany: jest.fn().mockResolvedValue([]),
+      findFirst: jest.fn().mockResolvedValue(null),
+      count: jest.fn().mockResolvedValue(0),
     },
     userProfile: {
-      upsert: jest.fn(),
+      upsert: jest.fn().mockResolvedValue({ id: 'profile-1' }),
+      findUnique: jest.fn().mockResolvedValue(null),
     },
     userVerificationCode: {
-      upsert: jest.fn(),
-      findUnique: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
+      upsert: jest.fn().mockResolvedValue({ id: 'code-1' }),
+      findUnique: jest.fn().mockResolvedValue(null),
+      delete: jest.fn().mockResolvedValue({ id: 'code-1' }),
+      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
     savedJobDescription: {
-      findMany: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
       findFirst: jest.fn().mockResolvedValue({
         id: 'sjd-12345678-1234-4234-8234-123456789012',
         userId: 'user-abc',
       }),
-      create: jest.fn(),
-      update: jest.fn(),
+      create: jest.fn().mockResolvedValue({ id: 'sjd-123', userId: 'user-abc' }),
+      update: jest.fn().mockResolvedValue({ id: 'sjd-123' }),
     },
     sessionReport: {
-      upsert: jest.fn(),
       findMany: jest.fn().mockResolvedValue([]),
       findFirst: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({ id: 'sr-123' }),
+      upsert: jest.fn().mockResolvedValue({ id: 'sr-123' }),
     },
     workflowOutbox: {
-      upsert: jest.fn(),
+      create: jest.fn().mockResolvedValue({ id: 'wo-123' }),
+      upsert: jest.fn().mockResolvedValue({ id: 'wo-123' }),
+    },
+    companyProfile: {
+      findMany: jest.fn().mockResolvedValue([]),
+      findFirst: jest.fn().mockResolvedValue(null),
     },
   };
   return prisma;
 };
 
 export const createMockQueue = () => ({
-  add: jest.fn(),
+  add: jest.fn().mockResolvedValue({ id: 'job-123' }),
   getJob: jest.fn().mockResolvedValue(null),
 });
 
@@ -181,11 +204,18 @@ export const createMockConfigService = (
 });
 
 export const createMockWhisperService = () => ({
-  transcribe: jest.fn(),
+  transcribe: jest.fn().mockResolvedValue({
+    text: 'Transcribed text sample',
+    durationSeconds: 30,
+  }),
 });
 
 export const createMockVoiceMetricsService = () => ({
-  calculate: jest.fn(),
+  calculate: jest.fn().mockReturnValue({
+    wpm: 120,
+    fillerWords: 2,
+    pauses: 1,
+  }),
 });
 
 export const createMockReportService = () => ({
@@ -214,7 +244,7 @@ export const createMockSessionService = () => ({
 });
 
 export const createMockSseService = () => ({
-  emit: jest.fn(),
+  emit: jest.fn().mockResolvedValue(undefined),
   subscribe: jest.fn(),
 });
 
@@ -259,18 +289,12 @@ export const createMockQuestionBankService = () => ({
 });
 
 export const createMockQuestionCriteriaService = () => ({
-  codesFromQuestionBank: jest.fn((question) =>
-    question.criteria.map((link) => link.rubricCriterion.code),
-  ),
-  codesFromSessionQuestion: jest.fn((question) =>
-    question.criteria.map(
-      (link) => link.rubricCriterion?.code ?? link.criterionCode,
-    ),
-  ),
+  codesFromQuestionBank: jest.fn().mockReturnValue(['PROG-L4']),
+  codesFromSessionQuestion: jest.fn().mockReturnValue(['PROG-L4']),
   buildSessionQuestionCriteriaData: jest.fn().mockResolvedValue([
     {
-      sessionQuestionId: 'question-1',
-      rubricCriterionId: 'criterion-1',
+      sessionQuestionId: 'sq-1',
+      criteriaId: 'lvl-1',
     },
   ]),
 });

@@ -60,7 +60,7 @@ describe('PrepFacade', () => {
 
   it('delegates buildSessionQuestionCriteriaData to QuestionCriteriaService', async () => {
     const mockOutput = [
-      { sessionQuestionId: 'sq-1', rubricCriterionId: 'rc-1' },
+      { sessionQuestionId: 'sq-1', criteriaId: 'lvl-1' },
     ];
     questionCriteriaService.buildSessionQuestionCriteriaData.mockResolvedValue(
       mockOutput,

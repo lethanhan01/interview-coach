@@ -15,7 +15,7 @@ export interface IInterviewModeStrategy {
   buildQuestionGenerationPayload(
     session: InterviewSession,
     dto: CreateSessionDto,
-    rubricVersionId: string,
+    sfiaVersion?: string,
   ): Record<string, any>;
 
   /**

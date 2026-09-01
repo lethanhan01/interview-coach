@@ -42,6 +42,7 @@ describe('HrInterviewStrategy', () => {
       targetRoles: ['Backend Developer'],
       contextPack: 'VN',
       rubricVersionId: 'rubric-version-vn-1',
+      sfiaVersion: 'rubric-version-vn-1',
       language: 'vi',
       totalQuestions: 5,
       durationMin: 30,

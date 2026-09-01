@@ -43,13 +43,16 @@ interface PrismaMock {
             questionText: string;
             orderIndex: number;
             criteria: Array<{
-              rubricCriterion: {
+              criteria: {
                 code: string;
                 name: string;
                 weight: number;
                 displayOrder: number;
-                rubricCategory: {
-                  categoryKey: string;
+                competency: {
+                  code: string;
+                  name: string;
+                  categoryCode: string;
+                  categoryName: string;
                 };
               };
             }>;
@@ -98,14 +101,19 @@ describe('GenerateComprehensiveReport', () => {
     name: string,
     weight: number,
     displayOrder: number,
-    categoryKey = 'behavioral',
+    categoryCode = 'behavioral',
   ) => ({
-    rubricCriterion: {
+    criteria: {
       code,
       name,
       weight,
       displayOrder,
-      rubricCategory: { categoryKey },
+      competency: {
+        code,
+        name,
+        categoryCode,
+        categoryName: categoryCode,
+      },
     },
   });
 

@@ -2,9 +2,9 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { buildPgConnectionConfig } from '../src/infrastructure/database/prisma/db-timezone';
-import { provisionDefaultRubricCatalog } from '../src/modules/interview-assessment/evaluation/rubric/rubric-catalog-provision';
 import { seedSfiaV9Catalog } from './seeds/sfia-v9.seed';
 import { backfillCompanyProfiles } from './seeds/backfill-companies';
+import { mapQuestionBankCriteria } from './seeds/map-question-criteria.seed';
 
 async function main() {
   const adapter = new PrismaPg(buildPgConnectionConfig(process.env['DATABASE_URL']));
@@ -13,17 +13,17 @@ async function main() {
   try {
     console.log('--- Starting Database Seed & Migration Workflow ---');
 
-    // 1. Legacy Rubric Provisioning
-    console.log('1. Provisioning Legacy Rubric Catalog...');
-    await provisionDefaultRubricCatalog(prisma);
-
-    // 2. SFIA 9 Framework Seed
-    console.log('2. Provisioning SFIA 9 Framework...');
+    // 1. SFIA 9 Framework Seed (Flattened Taxonomy & Criteria)
+    console.log('1. Provisioning SFIA 9 Framework...');
     await seedSfiaV9Catalog(prisma);
 
-    // 3. Backfill Companies
-    console.log('3. Backfilling Company Profiles...');
+    // 2. Backfill Companies
+    console.log('2. Backfilling Company Profiles...');
     await backfillCompanyProfiles(prisma);
+
+    // 3. Map Question Bank to SFIA 9 Criteria
+    console.log('3. Mapping Question Bank to SFIA 9 Criteria...');
+    await mapQuestionBankCriteria(prisma);
 
     console.log('--- Database Seed & Migration Completed Successfully ---');
   } catch (error) {

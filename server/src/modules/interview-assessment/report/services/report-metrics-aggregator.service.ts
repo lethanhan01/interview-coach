@@ -62,23 +62,22 @@ export class ReportMetricsAggregator {
     return criteria
       .slice()
       .sort((a, b) => {
-        const categoryOrder =
-          a.rubricCriterion.rubricCategory.categoryKey.localeCompare(
-            b.rubricCriterion.rubricCategory.categoryKey,
-          );
+        const catA = a.criteria.competency?.categoryCode ?? '';
+        const catB = b.criteria.competency?.categoryCode ?? '';
+        const categoryOrder = catA.localeCompare(catB);
         if (categoryOrder !== 0) return categoryOrder;
 
         const displayOrder =
-          a.rubricCriterion.displayOrder - b.rubricCriterion.displayOrder;
+          a.criteria.displayOrder - b.criteria.displayOrder;
         if (displayOrder !== 0) return displayOrder;
 
-        return a.rubricCriterion.code.localeCompare(b.rubricCriterion.code);
+        return a.criteria.code.localeCompare(b.criteria.code);
       })
       .map((criterion) => ({
-        id: criterion.rubricCriterion.code,
-        name: criterion.rubricCriterion.name,
+        id: criterion.criteria.code,
+        name: criterion.criteria.name,
         score: 0,
-        weight: criterion.rubricCriterion.weight,
+        weight: Number(criterion.criteria.weight ?? 1.0),
       }));
   }
 

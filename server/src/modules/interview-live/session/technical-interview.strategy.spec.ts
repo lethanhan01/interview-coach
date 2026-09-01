@@ -42,6 +42,7 @@ describe('TechnicalInterviewStrategy', () => {
       targetRoles: ['Backend Developer', 'DevOps'],
       contextPack: 'VN',
       rubricVersionId: 'rubric-version-vn-1',
+      sfiaVersion: 'rubric-version-vn-1',
       language: 'vi',
       totalQuestions: 5,
       durationMin: 30,
@@ -49,7 +50,7 @@ describe('TechnicalInterviewStrategy', () => {
   });
 
   it('xác thực điều kiện hoàn tất session chính xác', () => {
-    const session = { id: 'session-tech-1' } as InterviewSession;
+    const session = { id: 'session-1' } as InterviewSession;
     expect(strategy.isSessionCompletable(session, 5, 5)).toBe(true);
     expect(strategy.isSessionCompletable(session, 6, 5)).toBe(true);
     expect(strategy.isSessionCompletable(session, 4, 5)).toBe(false);

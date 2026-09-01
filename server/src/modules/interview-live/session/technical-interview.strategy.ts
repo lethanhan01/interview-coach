@@ -14,7 +14,7 @@ export class TechnicalInterviewStrategy implements IInterviewModeStrategy {
   buildQuestionGenerationPayload(
     session: InterviewSession,
     dto: CreateSessionDto,
-    rubricVersionId: string,
+    sfiaVersion = '9.0.0',
   ): Record<string, any> {
     return {
       sessionId: session.id,
@@ -22,7 +22,8 @@ export class TechnicalInterviewStrategy implements IInterviewModeStrategy {
       jobDescriptionText: dto.jobDescription,
       targetRoles: dto.targetRoles ?? [],
       contextPack: dto.contextPack,
-      rubricVersionId,
+      rubricVersionId: sfiaVersion,
+      sfiaVersion,
       language: session.language,
       totalQuestions: session.numQuestions,
       durationMin: session.durationMin,

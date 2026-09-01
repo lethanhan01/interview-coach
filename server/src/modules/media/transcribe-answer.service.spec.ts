@@ -109,6 +109,7 @@ describe('TranscribeAnswer', () => {
     });
     mockSse.emit.mockResolvedValue(undefined);
     mockFeedbackQueue.add.mockResolvedValue({} as any);
+    mockPrepFacade.codesFromSessionQuestion.mockReturnValue(['D1', 'D6']);
 
     const job = {
       data: BASE_JOB_DATA,

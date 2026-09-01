@@ -9,18 +9,21 @@ export interface ComprehensiveReportJobDto {
   turnIds: string[];
 }
 
-export interface RubricCriterionDetail {
+export interface CriteriaDetail {
   code: string;
   name: string;
-  weight: number;
+  weight?: any;
   displayOrder: number;
-  rubricCategory: {
-    categoryKey: string;
+  competency?: {
+    code: string;
+    name: string;
+    categoryCode?: string;
+    categoryName?: string;
   };
 }
 
 export interface QuestionCriterionWrapper {
-  rubricCriterion: RubricCriterionDetail;
+  criteria: CriteriaDetail;
 }
 
 export interface ReportUserAnswerRecord {

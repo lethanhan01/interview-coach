@@ -23,6 +23,13 @@ export interface SfiaLevelData {
   description: string;
 }
 
+export interface BehavioralIndicatorItem {
+  id: string;
+  statement: string;
+  keywords: string[];
+  rubric: string;
+}
+
 export interface SfiaSkillData {
   code: string;
   name: string;
@@ -34,7 +41,7 @@ export interface SfiaSkillData {
     code: string;
     name: string;
     levelDescription: string;
-    behavioralIndicators?: string[];
+    behavioralIndicators?: BehavioralIndicatorItem[];
   }[];
 }
 
@@ -216,9 +223,24 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         levelDescription:
           'Designs, codes, tests and documents simple programs or scripts under direction using given specifications.',
         behavioralIndicators: [
-          'Writes clean code following team conventions',
-          'Implements basic algorithms and data structures',
-          'Writes basic unit tests',
+          {
+            id: 'PROG-L2-IND1',
+            statement: 'Writes clean code following team conventions and standard syntax.',
+            keywords: ['syntax', 'clean code', 'conventions', 'basic coding'],
+            rubric: 'Candidate writes syntactically correct code following basic styling guidelines.',
+          },
+          {
+            id: 'PROG-L2-IND2',
+            statement: 'Implements basic algorithms, control flow and data structures accurately.',
+            keywords: ['loops', 'arrays', 'conditionals', 'data structures'],
+            rubric: 'Candidate implements correct logic with standard data structures.',
+          },
+          {
+            id: 'PROG-L2-IND3',
+            statement: 'Writes basic unit tests for simple functional logic under guidance.',
+            keywords: ['unit test', 'test case', 'assertion'],
+            rubric: 'Candidate writes simple test cases verifying happy paths.',
+          },
         ],
       },
       {
@@ -228,10 +250,30 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         levelDescription:
           'Designs, codes, verifies, tests, documents and refactors standard programs/scripts. Contributes to code reviews.',
         behavioralIndicators: [
-          'Autonomously builds non-trivial features',
-          'Follows OOP/functional paradigms and clean architecture',
-          'Handles errors, edge cases and input validation securely',
-          'Executes comprehensive unit and integration testing',
+          {
+            id: 'PROG-L3-IND1',
+            statement: 'Autonomously builds non-trivial features and refactors code for clarity and maintainability.',
+            keywords: ['refactoring', 'modularity', 'clean code', 'feature development'],
+            rubric: 'Candidate demonstrates independent coding ability and proactive refactoring for readability.',
+          },
+          {
+            id: 'PROG-L3-IND2',
+            statement: 'Follows OOP or Functional paradigms and standard design patterns.',
+            keywords: ['oop', 'functional programming', 'design patterns', 'dry', 'solid'],
+            rubric: 'Candidate organizes code into coherent abstractions adhering to core design principles.',
+          },
+          {
+            id: 'PROG-L3-IND3',
+            statement: 'Handles errors, exceptions, edge cases and input validation securely.',
+            keywords: ['error handling', 'validation', 'edge cases', 'exceptions'],
+            rubric: 'Candidate robustly guards against null/undefined, invalid inputs, and unexpected runtime states.',
+          },
+          {
+            id: 'PROG-L3-IND4',
+            statement: 'Executes comprehensive unit and integration testing with appropriate mocks.',
+            keywords: ['unit testing', 'integration testing', 'mocks', 'test coverage'],
+            rubric: 'Candidate creates structured test suites covering both success and error branches.',
+          },
         ],
       },
       {
@@ -241,10 +283,30 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         levelDescription:
           'Designs, codes, verifies, tests, documents, amends and refactors complex programs/scripts and integration software services. Applies agreed standards and tools.',
         behavioralIndicators: [
-          'Architects modular, testable, and maintainable services',
-          'Optimizes performance, concurrency and resource usage',
-          'Enforces coding standards and conducts thorough code reviews',
-          'Solves complex technical trade-offs effectively',
+          {
+            id: 'PROG-L4-IND1',
+            statement: 'Architects modular, testable, and maintainable services and integration layers.',
+            keywords: ['architecture', 'microservices', 'modularity', 'separation of concerns'],
+            rubric: 'Candidate designs scalable module boundaries and robust integration interfaces.',
+          },
+          {
+            id: 'PROG-L4-IND2',
+            statement: 'Optimizes performance, memory allocation, concurrency and resource usage.',
+            keywords: ['concurrency', 'async', 'performance optimization', 'memory leak', 'profiling'],
+            rubric: 'Candidate identifies performance bottlenecks and employs asynchronous/concurrent optimizations.',
+          },
+          {
+            id: 'PROG-L4-IND3',
+            statement: 'Enforces coding standards, leads deep code reviews, and provides constructive feedback.',
+            keywords: ['code review', 'best practices', 'mentorship', 'standards enforcement'],
+            rubric: 'Candidate provides thorough code review feedback focused on security, efficiency, and design.',
+          },
+          {
+            id: 'PROG-L4-IND4',
+            statement: 'Solves complex technical trade-offs between speed, cost, maintainability, and reliability.',
+            keywords: ['trade-offs', 'technical debt', 'complexity management'],
+            rubric: 'Candidate articulates pros and cons of technical approaches clearly and makes sound decisions.',
+          },
         ],
       },
       {
@@ -254,10 +316,24 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         levelDescription:
           'Sets standards for programming and software development. Leads software development projects and adopts modern software engineering practices.',
         behavioralIndicators: [
-          'Defines organization-wide software design patterns and standards',
-          'Guides major refactoring and system modernization initiatives',
-          'Drives adoption of automated CI/CD and software quality gates',
-          'Mentors senior and staff engineers in software design',
+          {
+            id: 'PROG-L5-IND1',
+            statement: 'Defines organization-wide software design patterns, guidelines, and quality standards.',
+            keywords: ['enterprise standards', 'architectural governance', 'framework selection'],
+            rubric: 'Candidate sets overarching technical direction and engineering guidelines.',
+          },
+          {
+            id: 'PROG-L5-IND2',
+            statement: 'Guides major system modernization initiatives and high-risk refactoring.',
+            keywords: ['modernization', 'legacy migration', 'system refactoring'],
+            rubric: 'Candidate plans and executes seamless system transformations without downtime.',
+          },
+          {
+            id: 'PROG-L5-IND3',
+            statement: 'Drives adoption of automated CI/CD pipelines, static analysis, and automated quality gates.',
+            keywords: ['ci/cd', 'automation', 'devops', 'quality gates', 'sonarqube'],
+            rubric: 'Candidate implements automated verification and deployment ecosystems across teams.',
+          },
         ],
       },
     ],
@@ -278,9 +354,24 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         levelDescription:
           'Develops and maintains simple or physical data models based on given logical designs. Optimizes queries.',
         behavioralIndicators: [
-          'Designs normalized relational schemas (3NF)',
-          'Writes performant SQL queries, joins and aggregations',
-          'Applies appropriate indexes and constraints',
+          {
+            id: 'DBDS-L3-IND1',
+            statement: 'Designs normalized relational database schemas adhering to 3NF standards.',
+            keywords: ['normalization', '3nf', 'relational schema', 'foreign keys', 'entities'],
+            rubric: 'Candidate properly normalizes entities and designs clean primary/foreign key relationships.',
+          },
+          {
+            id: 'DBDS-L3-IND2',
+            statement: 'Writes performant SQL queries, joins, subqueries, and aggregations.',
+            keywords: ['sql queries', 'joins', 'aggregation', 'group by', 'indexes'],
+            rubric: 'Candidate crafts accurate SQL queries and avoids Cartesian products.',
+          },
+          {
+            id: 'DBDS-L3-IND3',
+            statement: 'Applies appropriate indexes and constraints to maintain data integrity.',
+            keywords: ['b-tree index', 'unique constraint', 'check constraint', 'indexing'],
+            rubric: 'Candidate creates relevant indexes for query performance and enforces constraints.',
+          },
         ],
       },
       {
@@ -290,10 +381,30 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         levelDescription:
           'Designs relational and non-relational database structures for complex systems. Evaluates query performance and concurrency.',
         behavioralIndicators: [
-          'Balances normalization vs denormalization for performance',
-          'Designs indexing strategies, partitions and caching layers',
-          'Prevents N+1 queries, race conditions and transaction locks',
-          'Plans zero-downtime database migrations',
+          {
+            id: 'DBDS-L4-IND1',
+            statement: 'Balances normalization vs deliberate denormalization for read/write performance.',
+            keywords: ['denormalization', 'read performance', 'caching', 'nosql modeling'],
+            rubric: 'Candidate evaluates query patterns to decide appropriate schema structures.',
+          },
+          {
+            id: 'DBDS-L4-IND2',
+            statement: 'Designs comprehensive indexing strategies (Composite, Partial, GIN) and partitioning.',
+            keywords: ['composite index', 'partial index', 'partitioning', 'explain analyze'],
+            rubric: 'Candidate uses query execution plans to optimize complex queries and large tables.',
+          },
+          {
+            id: 'DBDS-L4-IND3',
+            statement: 'Prevents N+1 queries, race conditions, and deadlocks via proper isolation levels.',
+            keywords: ['n+1 problem', 'acid', 'isolation levels', 'optimistic locking', 'pessimistic locking'],
+            rubric: 'Candidate manages transaction boundaries and concurrency safeguards effectively.',
+          },
+          {
+            id: 'DBDS-L4-IND4',
+            statement: 'Plans and executes zero-downtime database migrations (Expand-Contract pattern).',
+            keywords: ['zero-downtime migration', 'expand contract', 'schema evolution'],
+            rubric: 'Candidate designs phased migration scripts avoiding table locks during production deploy.',
+          },
         ],
       },
       {
@@ -303,9 +414,18 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         levelDescription:
           'Sets policies and standards for database design and data management. Defines enterprise data architectures.',
         behavioralIndicators: [
-          'Architects distributed data storage, sharding and replication',
-          'Formulates disaster recovery, high availability and consistency models',
-          'Sets standards for transactional integrity (ACID vs BASE)',
+          {
+            id: 'DBDS-L5-IND1',
+            statement: 'Architects distributed data storage, sharding, replication, and read-replica strategies.',
+            keywords: ['sharding', 'replication', 'read replicas', 'distributed database'],
+            rubric: 'Candidate designs global data topologies meeting high availability and throughput needs.',
+          },
+          {
+            id: 'DBDS-L5-IND2',
+            statement: 'Formulates disaster recovery, point-in-time recovery, and consistency trade-offs (CAP theorem).',
+            keywords: ['cap theorem', 'eventual consistency', 'disaster recovery', 'rpo', 'rto'],
+            rubric: 'Candidate balances consistency, availability, and partition tolerance strategically.',
+          },
         ],
       },
     ],
@@ -325,6 +445,14 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         name: 'Testing - Level 2',
         levelDescription:
           'Executes given test scripts under supervision. Records test results and logs defects systematically.',
+        behavioralIndicators: [
+          {
+            id: 'TEST-L2-IND1',
+            statement: 'Executes manual and automated test scripts methodically and logs defects with reproducible steps.',
+            keywords: ['test execution', 'bug report', 'reproducible steps'],
+            rubric: 'Candidate writes clear, actionable defect tickets and verifies bug fixes.',
+          },
+        ],
       },
       {
         levelRank: 3,
@@ -333,9 +461,18 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         levelDescription:
           'Designs test cases and test scripts. Creates test data and automates tests using standard test frameworks.',
         behavioralIndicators: [
-          'Writes comprehensive unit and integration tests',
-          'Identifies boundary conditions and regression risks',
-          'Utilizes mocks, stubs and test fixtures appropriately',
+          {
+            id: 'TEST-L3-IND1',
+            statement: 'Designs comprehensive test cases covering positive, negative, and edge cases.',
+            keywords: ['test case design', 'boundary analysis', 'equivalence partitioning'],
+            rubric: 'Candidate identifies critical boundary values and failure scenarios systematically.',
+          },
+          {
+            id: 'TEST-L3-IND2',
+            statement: 'Writes automated unit and integration tests using standard frameworks (Jest, Mocha, PyTest).',
+            keywords: ['jest', 'automated testing', 'unit test', 'integration test', 'mocks'],
+            rubric: 'Candidate creates reliable automated test suites with proper isolation.',
+          },
         ],
       },
       {
@@ -345,9 +482,18 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         levelDescription:
           'Plans and drives testing activities across systems. Designs automated test frameworks and performance tests.',
         behavioralIndicators: [
-          'Architects end-to-end testing pipelines in CI/CD',
-          'Performs stress, load and performance profiling',
-          'Ensures test coverage and reliability (eliminates flaky tests)',
+          {
+            id: 'TEST-L4-IND1',
+            statement: 'Architects end-to-end testing frameworks and integrates them seamlessly into CI/CD pipelines.',
+            keywords: ['e2e testing', 'playwright', 'cypress', 'ci/cd integration', 'test automation'],
+            rubric: 'Candidate establishes robust testing automation ensuring fast feedback and no flaky tests.',
+          },
+          {
+            id: 'TEST-L4-IND2',
+            statement: 'Performs stress, load, profiling, and performance benchmark testing.',
+            keywords: ['load testing', 'k6', 'jmeter', 'stress test', 'benchmarking'],
+            rubric: 'Candidate identifies system bottlenecks and verifies SLA performance under load.',
+          },
         ],
       },
       {
@@ -355,7 +501,15 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         code: 'TEST_L5',
         name: 'Testing - Level 5',
         levelDescription:
-          'Sets organizational testing policies and quality assurance standards.',
+          'Sets organizational testing policies, quality assurance standards, and test engineering strategy.',
+        behavioralIndicators: [
+          {
+            id: 'TEST-L5-IND1',
+            statement: 'Establishes enterprise-wide QA strategy, shift-left testing, and automated release gates.',
+            keywords: ['qa strategy', 'shift left', 'quality governance', 'release gates'],
+            rubric: 'Candidate drives organizational adoption of modern quality practices.',
+          },
+        ],
       },
     ],
   },
@@ -369,15 +523,45 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
       'Covers microservices architecture, event-driven systems, API design, scalability and resilience.',
     levels: [
       {
+        levelRank: 3,
+        code: 'DESN_L3',
+        name: 'Systems Design - Level 3',
+        levelDescription:
+          'Specifies user and system interfaces and translates requirements into detailed software component designs.',
+        behavioralIndicators: [
+          {
+            id: 'DESN-L3-IND1',
+            statement: 'Designs clean component interfaces and REST API contracts with structured payloads.',
+            keywords: ['api design', 'rest api', 'dto', 'component interface'],
+            rubric: 'Candidate creates intuitive, well-typed API schemas and component boundaries.',
+          },
+        ],
+      },
+      {
         levelRank: 4,
         code: 'DESN_L4',
         name: 'Systems Design - Level 4',
         levelDescription:
           'Designs large or complex components, subsystems and interfaces using agreed modeling techniques and design patterns.',
         behavioralIndicators: [
-          'Designs clean RESTful and event-driven APIs',
-          'Applies SOLID principles and modular architectural patterns',
-          'Designs for resilience: circuit breakers, retries, rate limiting',
+          {
+            id: 'DESN-L4-IND1',
+            statement: 'Applies DDD, Hexagonal/Clean Architecture, and SOLID principles to system components.',
+            keywords: ['ddd', 'clean architecture', 'hexagonal', 'solid', 'domain model'],
+            rubric: 'Candidate isolates business domain logic from infrastructure and presentation layers.',
+          },
+          {
+            id: 'DESN-L4-IND2',
+            statement: 'Designs resilient distributed systems with circuit breakers, retries, and rate limiting.',
+            keywords: ['resilience', 'circuit breaker', 'rate limiting', 'retry with backoff', 'fallback'],
+            rubric: 'Candidate safeguards systems against cascading failures and network instability.',
+          },
+          {
+            id: 'DESN-L4-IND3',
+            statement: 'Designs asynchronous, event-driven communications using message brokers.',
+            keywords: ['event-driven', 'message queue', 'pub/sub', 'rabbitmq', 'kafka', 'idempotency'],
+            rubric: 'Candidate ensures message delivery guarantees, consumer idempotency, and outbox patterns.',
+          },
         ],
       },
       {
@@ -387,9 +571,18 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         levelDescription:
           'Specifies and designs large, complex, distributed systems. Ensures alignment with business objectives and technical strategy.',
         behavioralIndicators: [
-          'Architects distributed microservices, message queues and caching',
-          'Formulates scalability, high availability and low latency strategies',
-          'Leads architectural decision records (ADRs) and trade-off analysis',
+          {
+            id: 'DESN-L5-IND1',
+            statement: 'Architects high-throughput distributed microservices, multi-region setups, and caching topologies.',
+            keywords: ['distributed systems', 'scalability', 'multi-region', 'caching tier', 'redis'],
+            rubric: 'Candidate designs architectures meeting high scalability and low latency requirements.',
+          },
+          {
+            id: 'DESN-L5-IND2',
+            statement: 'Authors Architecture Decision Records (ADRs) and leads cross-team technical consensus.',
+            keywords: ['adr', 'architecture decision record', 'trade-off analysis', 'system trade-offs'],
+            rubric: 'Candidate documents design trade-offs transparently and drives stakeholder alignment.',
+          },
         ],
       },
     ],
@@ -409,9 +602,24 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         levelDescription:
           'Applies secure coding standards. Identifies and remediates common vulnerabilities (OWASP Top 10).',
         behavioralIndicators: [
-          'Protects against SQL Injection, XSS, CSRF, and SSRF',
-          'Implements secure authentication (JWT, OAuth2) and RBAC',
-          'Encrypts sensitive data at rest and in transit',
+          {
+            id: 'CYBS-L3-IND1',
+            statement: 'Prevents and remediates OWASP Top 10 vulnerabilities (SQLi, XSS, CSRF, SSRF, Broken Auth).',
+            keywords: ['owasp top 10', 'sqli', 'xss', 'csrf', 'input sanitization', 'security'],
+            rubric: 'Candidate identifies security vulnerabilities and implements effective sanitization/validation.',
+          },
+          {
+            id: 'CYBS-L3-IND2',
+            statement: 'Implements secure authentication (JWT, OAuth 2.0, MFA) and Role-Based Access Control (RBAC).',
+            keywords: ['jwt', 'oauth2', 'rbac', 'authentication', 'authorization'],
+            rubric: 'Candidate manages token lifecycles, hashing (bcrypt/argon2), and permission guards.',
+          },
+          {
+            id: 'CYBS-L3-IND3',
+            statement: 'Encrypts sensitive data at rest and in transit adhering to industry standards (TLS, AES-256).',
+            keywords: ['encryption', 'tls', 'aes-256', 'https', 'data protection'],
+            rubric: 'Candidate ensures secrets, passwords, and PII are never leaked or stored in plaintext.',
+          },
         ],
       },
       {
@@ -420,6 +628,66 @@ export const SFIA_9_SKILLS: SfiaSkillData[] = [
         name: 'Cyber Security - Level 4',
         levelDescription:
           'Conducts security assessments, threat modeling and vulnerability evaluations across system components.',
+        behavioralIndicators: [
+          {
+            id: 'CYBS-L4-IND1',
+            statement: 'Performs STRIDE threat modeling and evaluates attack surfaces for new features.',
+            keywords: ['threat modeling', 'stride', 'attack surface', 'security assessment'],
+            rubric: 'Candidate analyzes threat vectors and designs defense-in-depth security mitigations.',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    code: 'ITOP',
+    name: 'IT infrastructure / DevOps',
+    subcategoryCode: 'SERV_OP',
+    overallDescription:
+      'The operation, monitoring, automation and maintenance of cloud infrastructure, containers and CI/CD pipelines.',
+    guidanceNotes: 'Covers Docker, Kubernetes, CI/CD, AWS/GCP, Prometheus, Grafana and logging.',
+    levels: [
+      {
+        levelRank: 3,
+        code: 'ITOP_L3',
+        name: 'DevOps & Operations - Level 3',
+        levelDescription:
+          'Maintains and operates cloud services, containerized applications, and deployment workflows.',
+        behavioralIndicators: [
+          {
+            id: 'ITOP-L3-IND1',
+            statement: 'Builds and containerizes applications using Docker best practices (multi-stage builds).',
+            keywords: ['docker', 'containerization', 'multi-stage build', 'dockerfile'],
+            rubric: 'Candidate writes lightweight, secure Dockerfiles avoiding running as root.',
+          },
+          {
+            id: 'ITOP-L3-IND2',
+            statement: 'Configures CI/CD pipelines for automated testing, linting, and staging deployment.',
+            keywords: ['github actions', 'ci/cd pipeline', 'gitlab ci', 'automated deployment'],
+            rubric: 'Candidate implements reliable automated deployment workflows.',
+          },
+        ],
+      },
+      {
+        levelRank: 4,
+        code: 'ITOP_L4',
+        name: 'DevOps & Operations - Level 4',
+        levelDescription:
+          'Designs infrastructure as code (IaC), Kubernetes orchestrations, and full-stack observability.',
+        behavioralIndicators: [
+          {
+            id: 'ITOP-L4-IND1',
+            statement: 'Provisions cloud resources using Infrastructure as Code (Terraform, CloudFormation).',
+            keywords: ['terraform', 'iac', 'cloud infrastructure', 'aws', 'gcp'],
+            rubric: 'Candidate writes modular, declarative IaC configurations managing state safely.',
+          },
+          {
+            id: 'ITOP-L4-IND2',
+            statement: 'Implements comprehensive observability (Metrics, Logs, Distributed Tracing, Alerting).',
+            keywords: ['observability', 'prometheus', 'grafana', 'opentelemetry', 'distributed tracing'],
+            rubric: 'Candidate sets up actionable dashboards and alert rules based on Golden Signals.',
+          },
+        ],
       },
     ],
   },
@@ -431,10 +699,11 @@ export const SFIA_9_ROLES: SfiaRoleData[] = [
     name: 'Backend Developer',
     description: 'Specializes in server-side logic, databases, APIs and backend architecture.',
     skills: [
-      { skillCode: 'PROG', targetLevelRank: 4, defaultWeight: 0.4, priority: 1 },
-      { skillCode: 'DBDS', targetLevelRank: 4, defaultWeight: 0.3, priority: 2 },
-      { skillCode: 'DESN', targetLevelRank: 4, defaultWeight: 0.15, priority: 3 },
-      { skillCode: 'TEST', targetLevelRank: 3, defaultWeight: 0.15, priority: 4 },
+      { skillCode: 'PROG', targetLevelRank: 4, defaultWeight: 0.35, priority: 1 },
+      { skillCode: 'DBDS', targetLevelRank: 4, defaultWeight: 0.25, priority: 2 },
+      { skillCode: 'DESN', targetLevelRank: 4, defaultWeight: 0.2, priority: 3 },
+      { skillCode: 'TEST', targetLevelRank: 3, defaultWeight: 0.1, priority: 4 },
+      { skillCode: 'CYBS', targetLevelRank: 3, defaultWeight: 0.1, priority: 5 },
     ],
   },
   {
@@ -452,10 +721,32 @@ export const SFIA_9_ROLES: SfiaRoleData[] = [
     name: 'Fullstack Developer',
     description: 'End-to-end development covering frontend, backend, databases and basic cloud deployments.',
     skills: [
-      { skillCode: 'PROG', targetLevelRank: 4, defaultWeight: 0.35, priority: 1 },
-      { skillCode: 'DBDS', targetLevelRank: 4, defaultWeight: 0.25, priority: 2 },
+      { skillCode: 'PROG', targetLevelRank: 4, defaultWeight: 0.3, priority: 1 },
+      { skillCode: 'DBDS', targetLevelRank: 4, defaultWeight: 0.2, priority: 2 },
       { skillCode: 'DESN', targetLevelRank: 4, defaultWeight: 0.2, priority: 3 },
-      { skillCode: 'TEST', targetLevelRank: 3, defaultWeight: 0.2, priority: 4 },
+      { skillCode: 'TEST', targetLevelRank: 3, defaultWeight: 0.15, priority: 4 },
+      { skillCode: 'ITOP', targetLevelRank: 3, defaultWeight: 0.15, priority: 5 },
+    ],
+  },
+  {
+    code: 'DEVOPS_ENG',
+    name: 'DevOps Engineer',
+    description: 'Specializes in CI/CD, cloud infrastructure, container orchestration and system reliability.',
+    skills: [
+      { skillCode: 'ITOP', targetLevelRank: 4, defaultWeight: 0.45, priority: 1 },
+      { skillCode: 'CYBS', targetLevelRank: 4, defaultWeight: 0.25, priority: 2 },
+      { skillCode: 'PROG', targetLevelRank: 3, defaultWeight: 0.15, priority: 3 },
+      { skillCode: 'DESN', targetLevelRank: 4, defaultWeight: 0.15, priority: 4 },
+    ],
+  },
+  {
+    code: 'QA_ENG',
+    name: 'QA Automation Engineer',
+    description: 'Specializes in test automation frameworks, regression pipelines and quality assurance.',
+    skills: [
+      { skillCode: 'TEST', targetLevelRank: 4, defaultWeight: 0.5, priority: 1 },
+      { skillCode: 'PROG', targetLevelRank: 3, defaultWeight: 0.3, priority: 2 },
+      { skillCode: 'ITOP', targetLevelRank: 3, defaultWeight: 0.2, priority: 3 },
     ],
   },
 ];
@@ -509,4 +800,12 @@ export const SFIA_9_SKILL_MAPPINGS: SfiaSkillMappingData[] = [
   { skillName: 'OAuth2', skillCode: 'CYBS', relevanceWeight: 0.9 },
   { skillName: 'JWT', skillCode: 'CYBS', relevanceWeight: 0.8 },
   { skillName: 'OWASP', skillCode: 'CYBS', relevanceWeight: 1.0 },
+
+  // DevOps & Cloud -> ITOP
+  { skillName: 'Docker', skillCode: 'ITOP', relevanceWeight: 1.0 },
+  { skillName: 'Kubernetes', skillCode: 'ITOP', relevanceWeight: 1.0 },
+  { skillName: 'CI/CD', skillCode: 'ITOP', relevanceWeight: 1.0 },
+  { skillName: 'Terraform', skillCode: 'ITOP', relevanceWeight: 1.0 },
+  { skillName: 'AWS', skillCode: 'ITOP', relevanceWeight: 1.0 },
+  { skillName: 'GCP', skillCode: 'ITOP', relevanceWeight: 1.0 },
 ];

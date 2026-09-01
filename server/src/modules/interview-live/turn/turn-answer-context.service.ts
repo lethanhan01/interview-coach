@@ -8,9 +8,9 @@ import { PrismaService } from '@infra/database/prisma/prisma.service';
 export const SESSION_QUESTION_CRITERIA_INCLUDE = {
   criteria: {
     include: {
-      rubricCriterion: {
+      criteria: {
         include: {
-          rubricCategory: { include: { rubricVersion: true } },
+          competency: true,
         },
       },
     },

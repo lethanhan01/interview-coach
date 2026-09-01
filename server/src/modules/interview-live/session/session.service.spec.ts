@@ -117,9 +117,6 @@ describe('SessionService', () => {
         }),
       );
       expect(result).toEqual(BASE_SESSION);
-      expect(
-        mockAssessmentFacade.ensureActiveRubricVersion,
-      ).toHaveBeenCalledWith('VN');
       expect(mockWorkflowService.enqueueInTransaction).toHaveBeenCalledWith(
         mockPrisma,
         expect.objectContaining({
@@ -232,17 +229,7 @@ describe('SessionService', () => {
       expect(mockPrisma.interviewSession.update).not.toHaveBeenCalled();
     });
 
-    it('trả SERVICE_UNAVAILABLE khi context pack không thể đồng bộ', async () => {
-      mockPrisma.interviewSession.count.mockResolvedValue(0);
-      mockAssessmentFacade.ensureActiveRubricVersion.mockRejectedValue(
-        new Error('Database unavailable'),
-      );
-
-      await expect(
-        service.create('user-abc', CREATE_DTO),
-      ).rejects.toMatchObject({ errorCode: ErrorCode.SERVICE_UNAVAILABLE });
-      expect(mockPrisma.interviewSession.create).not.toHaveBeenCalled();
-    });
+    // Dynamic active rubric version fetch replaced by static SFIA 9 version default
 
     it('liên kết session với JD đã lưu thuộc user', async () => {
       mockPrisma.interviewSession.count.mockResolvedValue(0);

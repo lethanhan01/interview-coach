@@ -59,25 +59,24 @@ describe('SfiaMappingService', () => {
           },
         ]),
       },
-      skillCompetencyMapping: {
-        findMany: jest.fn().mockResolvedValue([
-          {
-            skillName: 'PostgreSQL',
-            competency: {
-              id: 'comp-dbds-id',
-              code: 'DBDS',
-              name: 'Database design',
-              criteria: [
-                {
-                  levelDescription: 'Designs relational and non-relational database structures.',
-                },
-              ],
-            },
-          },
-        ]),
-      },
       competency: {
-        findMany: jest.fn().mockResolvedValue([]),
+        findMany: jest.fn().mockImplementation(({ where }) => {
+          if (where?.code?.in?.includes('DBDS')) {
+            return Promise.resolve([
+              {
+                id: 'comp-dbds-id',
+                code: 'DBDS',
+                name: 'Database design',
+                criteria: [
+                  {
+                    levelDescription: 'Designs relational and non-relational database structures.',
+                  },
+                ],
+              },
+            ]);
+          }
+          return Promise.resolve([]);
+        }),
       },
     };
 

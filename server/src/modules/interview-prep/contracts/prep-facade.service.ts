@@ -6,20 +6,15 @@ import {
 } from '../question-criteria/question-criteria.service';
 
 type CriterionLink = {
-  rubricCriterion?: {
+  criteria?: {
     id: string;
     code: string;
     name: string;
-    weight: number;
+    weight?: any;
     displayOrder: number;
-    rubricCategory: {
-      categoryKey: string;
-      displayOrder: number;
-      rubricVersion: {
-        id: string;
-        contextPackId: string;
-        status: string;
-      };
+    competency?: {
+      code: string;
+      name: string;
     };
   } | null;
 };
@@ -52,7 +47,7 @@ export class PrepFacade {
 
   buildSessionQuestionCriteriaData(input: {
     sessionQuestionId: string;
-    rubricVersionId: string;
+    rubricVersionId?: string;
     criterionCodes: string[];
   }): Promise<SessionQuestionCriterionCreateInput[]> {
     return this.questionCriteriaService.buildSessionQuestionCriteriaData(input);

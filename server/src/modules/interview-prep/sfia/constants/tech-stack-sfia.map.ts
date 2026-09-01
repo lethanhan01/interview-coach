@@ -1,0 +1,141 @@
+/**
+ * In-Memory Thesaurus mapping Real-World Tech Stack keywords to SFIA 9 Competency Codes.
+ * Key: Normalized (lowercase) technology / skill name.
+ * Value: SFIA 9 Competency Code (e.g. PROG, DBDS, DESN, TEST, CYBS, ITOP).
+ */
+export const TECH_STACK_TO_SFIA_MAP: Record<string, string> = {
+  // Programming, Languages & Frameworks -> PROG
+  javascript: 'PROG',
+  typescript: 'PROG',
+  js: 'PROG',
+  ts: 'PROG',
+  nodejs: 'PROG',
+  node: 'PROG',
+  nestjs: 'PROG',
+  express: 'PROG',
+  react: 'PROG',
+  reactjs: 'PROG',
+  nextjs: 'PROG',
+  vue: 'PROG',
+  vuejs: 'PROG',
+  angular: 'PROG',
+  python: 'PROG',
+  django: 'PROG',
+  flask: 'PROG',
+  fastapi: 'PROG',
+  golang: 'PROG',
+  go: 'PROG',
+  java: 'PROG',
+  'spring boot': 'PROG',
+  spring: 'PROG',
+  'c#': 'PROG',
+  csharp: 'PROG',
+  '.net': 'PROG',
+  dotnet: 'PROG',
+  php: 'PROG',
+  laravel: 'PROG',
+  ruby: 'PROG',
+  rails: 'PROG',
+  rust: 'PROG',
+  c: 'PROG',
+  'c++': 'PROG',
+  cpp: 'PROG',
+  html: 'PROG',
+  css: 'PROG',
+  tailwind: 'PROG',
+
+  // Databases & Storage -> DBDS
+  postgresql: 'DBDS',
+  postgres: 'DBDS',
+  mysql: 'DBDS',
+  mongodb: 'DBDS',
+  mongo: 'DBDS',
+  redis: 'DBDS',
+  prisma: 'DBDS',
+  typeorm: 'DBDS',
+  hibernate: 'DBDS',
+  elasticsearch: 'DBDS',
+  dynamodb: 'DBDS',
+  cassandra: 'DBDS',
+  sqlite: 'DBDS',
+  oracle: 'DBDS',
+  sql: 'DBDS',
+  nosql: 'DBDS',
+  'database design': 'DBDS',
+  'db design': 'DBDS',
+
+  // Systems Design & Architecture -> DESN
+  microservices: 'DESN',
+  'rest api': 'DESN',
+  rest: 'DESN',
+  restful: 'DESN',
+  graphql: 'DESN',
+  grpc: 'DESN',
+  rabbitmq: 'DESN',
+  kafka: 'DESN',
+  'system design': 'DESN',
+  'system architecture': 'DESN',
+  'clean architecture': 'DESN',
+  ddd: 'DESN',
+  eventbridge: 'DESN',
+  pubsub: 'DESN',
+
+  // Testing & Quality Assurance -> TEST
+  jest: 'TEST',
+  mocha: 'TEST',
+  cypress: 'TEST',
+  playwright: 'TEST',
+  selenium: 'TEST',
+  'unit test': 'TEST',
+  'unit testing': 'TEST',
+  'integration test': 'TEST',
+  'integration testing': 'TEST',
+  'e2e test': 'TEST',
+  'e2e testing': 'TEST',
+  junit: 'TEST',
+  pytest: 'TEST',
+  qa: 'TEST',
+  k6: 'TEST',
+  jmeter: 'TEST',
+
+  // Security & Identity -> CYBS
+  'cyber security': 'CYBS',
+  security: 'CYBS',
+  oauth2: 'CYBS',
+  oauth: 'CYBS',
+  jwt: 'CYBS',
+  owasp: 'CYBS',
+  rbac: 'CYBS',
+  encryption: 'CYBS',
+  https: 'CYBS',
+  tls: 'CYBS',
+
+  // DevOps & Cloud Infrastructure -> ITOP
+  docker: 'ITOP',
+  kubernetes: 'ITOP',
+  k8s: 'ITOP',
+  'ci/cd': 'ITOP',
+  cicd: 'ITOP',
+  'github actions': 'ITOP',
+  gitlab: 'ITOP',
+  jenkins: 'ITOP',
+  terraform: 'ITOP',
+  ansible: 'ITOP',
+  aws: 'ITOP',
+  gcp: 'ITOP',
+  azure: 'ITOP',
+  linux: 'ITOP',
+  prometheus: 'ITOP',
+  grafana: 'ITOP',
+  devops: 'ITOP',
+  nginx: 'ITOP',
+};
+
+/**
+ * Resolves a given tech keyword to a SFIA Competency Code.
+ * Returns null if not found.
+ */
+export function resolveTechStackToSfiaCode(rawKeyword: string): string | null {
+  const normalized = rawKeyword.trim().toLowerCase();
+  return TECH_STACK_TO_SFIA_MAP[normalized] ?? null;
+}

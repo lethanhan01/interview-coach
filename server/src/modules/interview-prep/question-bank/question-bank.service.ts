@@ -13,20 +13,15 @@ type QuestionBankRow = {
   estimatedTimeMin: number | null;
   translations: Prisma.JsonValue | null;
   criteria?: Array<{
-    rubricCriterion?: {
+    criteria?: {
       id: string;
       code: string;
       name: string;
-      weight: number;
+      weight?: any;
       displayOrder: number;
-      rubricCategory: {
-        categoryKey: string;
-        displayOrder: number;
-        rubricVersion: {
-          id: string;
-          contextPackId: string;
-          status: string;
-        };
+      competency?: {
+        code: string;
+        name: string;
       };
     } | null;
   }>;
@@ -88,7 +83,6 @@ export class QuestionBankService {
         try {
           return this.mapFallbackQuestion(question, language, rubricVersionId);
         } catch {
-          // Question has no valid criteria relation for this context/rubric — skip it
           return null;
         }
       })
@@ -135,7 +129,7 @@ export class QuestionBankService {
     return {
       questionBankId: question.id,
       text: this.resolveText(question, language),
-      questionCategory: competencyDomains[0].startsWith('TD')
+      questionCategory: (competencyDomains[0] ?? '').startsWith('TD')
         ? 'technical'
         : 'behavioral',
       competencyDomains,
@@ -182,9 +176,9 @@ export class QuestionBankService {
 const QUESTION_BANK_CRITERIA_INCLUDE = {
   criteria: {
     include: {
-      rubricCriterion: {
+      criteria: {
         include: {
-          rubricCategory: { include: { rubricVersion: true } },
+          competency: true,
         },
       },
     },

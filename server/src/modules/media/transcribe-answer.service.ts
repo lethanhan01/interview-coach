@@ -232,9 +232,9 @@ export class TranscribeAnswer {
 const SESSION_QUESTION_CRITERIA_INCLUDE = {
   criteria: {
     include: {
-      rubricCriterion: {
+      criteria: {
         include: {
-          rubricCategory: { include: { rubricVersion: true } },
+          competency: true,
         },
       },
     },

@@ -1,23 +1,9 @@
 import { provisionDefaultRubricCatalog } from './rubric-catalog-provision';
 
 describe('provisionDefaultRubricCatalog', () => {
-  it('provisions the versioned default catalog for a fresh environment', async () => {
-    const tx = {
-      rubricVersion: { upsert: jest.fn().mockResolvedValue({ id: 'v1' }) },
-      rubricCategory: {
-        upsert: jest.fn().mockResolvedValue({ id: 'category' }),
-      },
-      rubricCriterion: {
-        findFirst: jest.fn().mockResolvedValue(null),
-        update: jest.fn(),
-        create: jest.fn().mockResolvedValue({ id: 'criterion' }),
-      },
-    };
-    const prisma = { $transaction: jest.fn((callback) => callback(tx)) };
+  it('is a no-op function for SFIA 9 catalog', async () => {
+    const prisma = { $transaction: jest.fn() };
 
-    await provisionDefaultRubricCatalog(prisma as never);
-
-    expect(tx.rubricVersion.upsert).toHaveBeenCalledTimes(2);
-    expect(tx.rubricCriterion.create).toHaveBeenCalled();
+    await expect(provisionDefaultRubricCatalog(prisma as never)).resolves.toBeUndefined();
   });
 });

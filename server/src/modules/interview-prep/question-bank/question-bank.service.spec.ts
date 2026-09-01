@@ -294,20 +294,17 @@ function mockQuestionBankWithCriteria(input: {
     estimatedTimeMin: input.estimatedTimeMin,
     translations: input.translations,
     criteria: input.criterionCodes.map((code, index) => ({
-      rubricCriterion: {
-        id: `criterion-${code}`,
+      criteria: {
+        id: `level-${code}`,
         code,
         name: code,
         weight: 1,
         displayOrder: index + 1,
-        rubricCategory: {
-          categoryKey: code.startsWith('TD') ? 'technical' : 'behavioral',
-          displayOrder: code.startsWith('TD') ? 2 : 1,
-          rubricVersion: {
-            id: `rubric-version-${input.contextPackId}`,
-            contextPackId: input.contextPackId,
-            status: 'active',
-          },
+        competency: {
+          code: code.split('-')[0] ?? code,
+          name: code,
+          categoryCode: code.startsWith('TD') ? 'DEV_IMPL' : 'BEHAVIORAL',
+          categoryName: code.startsWith('TD') ? 'Development' : 'Behavioral',
         },
       },
     })),

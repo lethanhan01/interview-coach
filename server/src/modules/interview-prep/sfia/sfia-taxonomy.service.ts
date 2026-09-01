@@ -7,14 +7,47 @@ export class SfiaTaxonomyService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getAllCategories() {
-    return this.prisma.competencyCategory.findMany({
+    const competencies = await this.prisma.competency.findMany({
       orderBy: { displayOrder: 'asc' },
-      include: {
-        subcategories: {
-          orderBy: { displayOrder: 'asc' },
-        },
+      select: {
+        categoryCode: true,
+        categoryName: true,
+        subcategoryCode: true,
+        subcategoryName: true,
       },
     });
+
+    const categoryMap = new Map<
+      string,
+      {
+        code: string;
+        name: string;
+        subcategories: Map<string, { code: string; name: string }>;
+      }
+    >();
+
+    for (const comp of competencies) {
+      if (!categoryMap.has(comp.categoryCode)) {
+        categoryMap.set(comp.categoryCode, {
+          code: comp.categoryCode,
+          name: comp.categoryName,
+          subcategories: new Map(),
+        });
+      }
+      const cat = categoryMap.get(comp.categoryCode)!;
+      if (!cat.subcategories.has(comp.subcategoryCode)) {
+        cat.subcategories.set(comp.subcategoryCode, {
+          code: comp.subcategoryCode,
+          name: comp.subcategoryName,
+        });
+      }
+    }
+
+    return Array.from(categoryMap.values()).map((cat) => ({
+      code: cat.code,
+      name: cat.name,
+      subcategories: Array.from(cat.subcategories.values()),
+    }));
   }
 
   async getAllLevels() {
@@ -36,16 +69,11 @@ export class SfiaTaxonomyService {
     });
   }
 
-  async getCompetenciesByRubricVersion(rubricVersionId: string): Promise<SfiaCompetencyDto[]> {
+  async getCompetenciesBySfiaVersion(sfiaVersion = '9.0.0'): Promise<SfiaCompetencyDto[]> {
     const competencies = await this.prisma.competency.findMany({
-      where: { rubricVersionId },
+      where: { sfiaVersion },
       orderBy: { displayOrder: 'asc' },
       include: {
-        subcategory: {
-          include: {
-            category: true,
-          },
-        },
         criteria: {
           include: {
             level: true,
@@ -61,8 +89,8 @@ export class SfiaTaxonomyService {
       name: comp.name,
       overallDescription: comp.overallDescription,
       guidanceNotes: comp.guidanceNotes,
-      categoryName: comp.subcategory?.category.name,
-      subcategoryName: comp.subcategory?.name,
+      categoryName: comp.categoryName,
+      subcategoryName: comp.subcategoryName,
       criteria: comp.criteria.map((c) => ({
         id: c.id,
         code: c.code,
@@ -72,10 +100,15 @@ export class SfiaTaxonomyService {
         levelName: c.level.name,
         levelDescription: c.levelDescription,
         behavioralIndicators: Array.isArray(c.behavioralIndicators)
-          ? (c.behavioralIndicators as string[])
+          ? (c.behavioralIndicators as any)
           : [],
+        genericAttributes: (c.genericAttributes as any) ?? null,
         weight: c.weight ? Number(c.weight) : undefined,
       })),
     }));
+  }
+
+  async getCompetenciesByRubricVersion(rubricVersionId: string): Promise<SfiaCompetencyDto[]> {
+    return this.getCompetenciesBySfiaVersion('9.0.0');
   }
 }

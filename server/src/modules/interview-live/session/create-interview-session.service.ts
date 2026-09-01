@@ -1,7 +1,6 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { InterviewSession } from '@prisma/client';
-import { AssessmentFacade } from '@modules/interview-assessment/contracts';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
@@ -17,7 +16,6 @@ export class CreateInterviewSession {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly assessmentFacade: AssessmentFacade,
     private readonly workflow: WorkflowService,
     private readonly dispatcher: WorkflowDispatcher,
     private readonly strategyRegistry: SessionStrategyRegistry,
@@ -55,19 +53,6 @@ export class CreateInterviewSession {
     const strategy = this.strategyRegistry.getStrategy(dto.sessionType);
     strategy.validateSessionConfig?.(dto);
 
-    let rubricVersionId: string;
-    try {
-      rubricVersionId = await this.assessmentFacade.ensureActiveRubricVersion(
-        dto.contextPack,
-      );
-    } catch {
-      throw new InterviewAIException(
-        ErrorCode.SERVICE_UNAVAILABLE,
-        HttpStatus.SERVICE_UNAVAILABLE,
-        'Không thể khởi tạo cấu hình phỏng vấn. Vui lòng thử lại sau.',
-      );
-    }
-
     const savedJobDescriptionId = await this.resolveSavedJobDescriptionId(
       userId,
       dto.savedJobDescriptionId,
@@ -81,14 +66,14 @@ export class CreateInterviewSession {
           numQuestions: dto.numQuestions ?? 5,
           language: resolveOutputLanguage(dto.language),
           contextPackId: dto.contextPack,
-          rubricVersionId,
+          sfiaVersion: '9.0.0',
           status: 'generating',
         },
       });
       const payload = strategy.buildQuestionGenerationPayload(
         created,
         dto,
-        rubricVersionId,
+        '9.0.0',
       );
       await this.workflow.enqueueInTransaction(tx, {
         commandType: 'question-generation',

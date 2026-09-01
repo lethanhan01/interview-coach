@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import type { InferredSessionCompetencyDto } from './dto/sfia-taxonomy-response.dto';
+import { resolveTechStackToSfiaCode } from './constants/tech-stack-sfia.map';
 
 interface InferCompetenciesInput {
   jobTitle?: string;
@@ -102,44 +103,52 @@ export class SfiaMappingService {
       }
     }
 
-    // 4. Match competencies from Tech Stack keywords
+    // 4. Match competencies from Tech Stack keywords (In-Memory Dictionary)
     if (techStack.length > 0) {
-      const mappings = await this.prisma.skillCompetencyMapping.findMany({
-        where: {
-          skillName: { in: techStack, mode: 'insensitive' },
-        },
-        include: {
-          competency: {
-            include: {
-              criteria: {
-                where: { levelId: fallbackLevel.id },
-                include: { level: true },
-              },
+      const matchedCodeToKeywords = new Map<string, string[]>();
+      for (const keyword of techStack) {
+        const sfiaCode = resolveTechStackToSfiaCode(keyword);
+        if (sfiaCode) {
+          const list = matchedCodeToKeywords.get(sfiaCode) ?? [];
+          list.push(keyword);
+          matchedCodeToKeywords.set(sfiaCode, list);
+        }
+      }
+
+      if (matchedCodeToKeywords.size > 0) {
+        const matchedCodes = Array.from(matchedCodeToKeywords.keys());
+        const matchedComps = await this.prisma.competency.findMany({
+          where: { code: { in: matchedCodes } },
+          include: {
+            criteria: {
+              where: { levelId: fallbackLevel.id },
+              include: { level: true },
             },
           },
-        },
-      });
+        });
 
-      for (const m of mappings) {
-        const existing = competencyMap.get(m.competency.id);
-        const crit = m.competency.criteria[0];
+        for (const comp of matchedComps) {
+          const keywords = matchedCodeToKeywords.get(comp.code) ?? [];
+          const existing = competencyMap.get(comp.id);
+          const crit = comp.criteria[0];
 
-        if (existing) {
-          existing.matchedKeywords.push(m.skillName);
-          existing.weight = Math.min(1.0, existing.weight + 0.05);
-        } else {
-          competencyMap.set(m.competency.id, {
-            competencyId: m.competency.id,
-            competencyCode: m.competency.code,
-            competencyName: m.competency.name,
-            targetLevelRank: fallbackLevel.rank,
-            targetLevelName: fallbackLevel.name,
-            levelDescription: crit?.levelDescription ?? m.competency.name,
-            weight: 0.25,
-            priority: 2,
-            source: 'jd_tech_stack',
-            matchedKeywords: [m.skillName],
-          });
+          if (existing) {
+            existing.matchedKeywords.push(...keywords);
+            existing.weight = Math.min(1.0, existing.weight + 0.05 * keywords.length);
+          } else {
+            competencyMap.set(comp.id, {
+              competencyId: comp.id,
+              competencyCode: comp.code,
+              competencyName: comp.name,
+              targetLevelRank: fallbackLevel.rank,
+              targetLevelName: fallbackLevel.name,
+              levelDescription: crit?.levelDescription ?? comp.name,
+              weight: 0.25,
+              priority: 2,
+              source: 'jd_tech_stack',
+              matchedKeywords: keywords,
+            });
+          }
         }
       }
     }

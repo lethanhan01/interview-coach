@@ -1,3 +1,18 @@
+export interface BehavioralIndicatorItem {
+  id: string;
+  statement: string;
+  keywords: string[];
+  rubric: string;
+}
+
+export interface GenericAttributesSnapshot {
+  autonomy?: string;
+  influence?: string;
+  complexity?: string;
+  knowledge?: string;
+  businessSkills?: string;
+}
+
 export class SfiaCriterionDto {
   id!: string;
   code!: string;
@@ -6,7 +21,8 @@ export class SfiaCriterionDto {
   levelCode!: string;
   levelName!: string;
   levelDescription!: string;
-  behavioralIndicators?: string[];
+  behavioralIndicators?: BehavioralIndicatorItem[];
+  genericAttributes?: GenericAttributesSnapshot | null;
   weight?: number;
 }
 

@@ -3,27 +3,20 @@ import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 
-type RubricCategoryRow = {
-  categoryKey: string;
-  displayOrder: number;
-  rubricVersion: {
-    id: string;
-    contextPackId: string;
-    status: string;
-  };
-};
-
-type RubricCriterionRow = {
+type CriteriaRow = {
   id: string;
   code: string;
   name: string;
-  weight: number;
+  weight?: any;
   displayOrder: number;
-  rubricCategory: RubricCategoryRow;
+  competency?: {
+    code: string;
+    name: string;
+  };
 };
 
 type CriterionLink = {
-  rubricCriterion?: RubricCriterionRow | null;
+  criteria?: CriteriaRow | null;
 };
 
 type QuestionWithCriteria = {
@@ -46,7 +39,7 @@ export type SessionQuestionWithCriteria = {
 
 export type SessionQuestionCriterionCreateInput = {
   sessionQuestionId: string;
-  rubricCriterionId: string;
+  criteriaId: string;
 };
 
 @Injectable()
@@ -55,19 +48,13 @@ export class QuestionCriteriaService {
 
   codesFromQuestionBank(
     question: QuestionBankWithCriteria,
-    rubricVersionId?: string,
+    _versionId?: string,
   ): string[] {
     const linked = (question.criteria ?? [])
-      .map((link) => link.rubricCriterion)
+      .map((link) => link.criteria)
       .filter(
-        (criterion): criterion is RubricCriterionRow =>
-          criterion !== null &&
-          criterion !== undefined &&
-          criterion.rubricCategory.rubricVersion.contextPackId ===
-            question.contextPackId &&
-          criterion.rubricCategory.rubricVersion.status === 'active' &&
-          (!rubricVersionId ||
-            criterion.rubricCategory.rubricVersion.id === rubricVersionId),
+        (criterion): criterion is CriteriaRow =>
+          criterion !== null && criterion !== undefined,
       )
       .sort(compareCriterionRows)
       .map((criterion) => criterion.code);
@@ -77,9 +64,9 @@ export class QuestionCriteriaService {
 
   codesFromSessionQuestion(question: SessionQuestionWithCriteria): string[] {
     const linked = (question.criteria ?? [])
-      .map((link) => link.rubricCriterion)
+      .map((link) => link.criteria)
       .filter(
-        (criterion): criterion is RubricCriterionRow =>
+        (criterion): criterion is CriteriaRow =>
           criterion !== null && criterion !== undefined,
       )
       .slice()
@@ -99,8 +86,8 @@ export class QuestionCriteriaService {
 
   async buildSessionQuestionCriteriaData(input: {
     sessionQuestionId: string;
-    rubricVersionId: string;
     criterionCodes: string[];
+    rubricVersionId?: string;
   }): Promise<SessionQuestionCriterionCreateInput[]> {
     const codes = unique(input.criterionCodes);
     if (codes.length === 0) {
@@ -111,10 +98,7 @@ export class QuestionCriteriaService {
       );
     }
 
-    const criteria = await this.findVersionCriteria(
-      input.rubricVersionId,
-      codes,
-    );
+    const criteria = await this.findVersionCriteria(codes);
     const byCode = new Map(
       criteria.map((criterion) => [criterion.code, criterion]),
     );
@@ -123,7 +107,7 @@ export class QuestionCriteriaService {
       throw new InterviewAIException(
         ErrorCode.RUBRIC_NOT_FOUND,
         HttpStatus.NOT_FOUND,
-        `Unable to resolve rubric criteria for version ${input.rubricVersionId}: ${missing.join(', ')}`,
+        `Unable to resolve criteria for codes: ${missing.join(', ')}`,
       );
     }
 
@@ -133,47 +117,34 @@ export class QuestionCriteriaService {
         throw new InterviewAIException(
           ErrorCode.RUBRIC_NOT_FOUND,
           HttpStatus.NOT_FOUND,
-          `Unable to resolve rubric criterion ${code}`,
+          `Unable to resolve criterion ${code}`,
         );
       }
 
       return {
         sessionQuestionId: input.sessionQuestionId,
-        rubricCriterionId: criterion.id,
+        criteriaId: criterion.id,
       };
     });
   }
 
   private async findVersionCriteria(
-    rubricVersionId: string,
     codes: string[],
-  ): Promise<RubricCriterionRow[]> {
-    return this.prisma.rubricCriterion.findMany({
+  ): Promise<CriteriaRow[]> {
+    return this.prisma.criteria.findMany({
       where: {
-        rubricCategory: { rubricVersionId },
         code: { in: codes },
       },
-      include: { rubricCategory: { include: { rubricVersion: true } } },
+      include: { competency: true },
     });
   }
 }
 
-function compareCriterionRows(a: RubricCriterionRow, b: RubricCriterionRow) {
-  const categoryOrder =
-    categorySortValue(a.rubricCategory.categoryKey) -
-    categorySortValue(b.rubricCategory.categoryKey);
-  if (categoryOrder !== 0) return categoryOrder;
-
+function compareCriterionRows(a: CriteriaRow, b: CriteriaRow) {
   const displayOrder = a.displayOrder - b.displayOrder;
   if (displayOrder !== 0) return displayOrder;
 
   return a.code.localeCompare(b.code);
-}
-
-function categorySortValue(value: string): number {
-  if (value === 'behavioral') return 1;
-  if (value === 'technical') return 2;
-  return 99;
 }
 
 function unique(values: string[]): string[] {

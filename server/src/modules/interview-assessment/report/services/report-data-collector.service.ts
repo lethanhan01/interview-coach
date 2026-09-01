@@ -27,14 +27,19 @@ export class ReportDataCollector {
             orderIndex: true,
             criteria: {
               select: {
-                rubricCriterion: {
+                criteria: {
                   select: {
                     code: true,
                     name: true,
                     weight: true,
                     displayOrder: true,
-                    rubricCategory: {
-                      select: { categoryKey: true },
+                    competency: {
+                      select: {
+                        code: true,
+                        name: true,
+                        categoryCode: true,
+                        categoryName: true,
+                      },
                     },
                   },
                 },
@@ -46,7 +51,7 @@ export class ReportDataCollector {
       orderBy: { createdAt: 'asc' },
     });
 
-    const answers: ReportUserAnswerRecord[] = rawAnswers;
+    const answers: ReportUserAnswerRecord[] = rawAnswers as unknown as ReportUserAnswerRecord[];
     const skippedAnswers = answers.filter((answer) => answer.skipped);
     const skippedAnswerIds = new Set(skippedAnswers.map((answer) => answer.id));
     const answeredTurnIds = turnIds.filter(

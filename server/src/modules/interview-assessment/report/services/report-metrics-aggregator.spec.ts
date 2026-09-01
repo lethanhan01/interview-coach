@@ -44,33 +44,45 @@ describe('ReportMetricsAggregator', () => {
   });
 
   describe('buildSkippedDimensionScores', () => {
-    it('sorts criteria by rubricCategory categoryKey, displayOrder, and code', () => {
+    it('sorts criteria by categoryCode, displayOrder, and code', () => {
       const criteria: QuestionCriterionWrapper[] = [
         {
-          rubricCriterion: {
+          criteria: {
             code: 'TECH_02',
             name: 'Problem Solving',
             weight: 1.5,
             displayOrder: 2,
-            rubricCategory: { categoryKey: 'technical' },
+            competency: {
+              code: 'TECH',
+              name: 'Technical',
+              categoryCode: 'technical',
+            },
           },
         },
         {
-          rubricCriterion: {
+          criteria: {
             code: 'BEH_01',
             name: 'Teamwork',
             weight: 1.0,
             displayOrder: 1,
-            rubricCategory: { categoryKey: 'behavioral' },
+            competency: {
+              code: 'BEH',
+              name: 'Behavioral',
+              categoryCode: 'behavioral',
+            },
           },
         },
         {
-          rubricCriterion: {
+          criteria: {
             code: 'TECH_01',
             name: 'Code Quality',
             weight: 2.0,
             displayOrder: 1,
-            rubricCategory: { categoryKey: 'technical' },
+            competency: {
+              code: 'TECH',
+              name: 'Technical',
+              categoryCode: 'technical',
+            },
           },
         },
       ];
@@ -99,12 +111,16 @@ describe('ReportMetricsAggregator', () => {
             orderIndex: 1,
             criteria: [
               {
-                rubricCriterion: {
+                criteria: {
                   code: 'SOLID_KNOW',
                   name: 'Knowledge',
                   weight: 1,
                   displayOrder: 1,
-                  rubricCategory: { categoryKey: 'technical' },
+                  competency: {
+                    code: 'SOLID',
+                    name: 'Solid',
+                    categoryCode: 'technical',
+                  },
                 },
               },
             ],
