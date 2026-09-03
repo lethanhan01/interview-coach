@@ -59,25 +59,26 @@ export class ReportMetricsAggregator {
   buildSkippedDimensionScores(
     criteria: QuestionCriterionWrapper[],
   ): SkippedDimensionScore[] {
-    return criteria
+    return (criteria ?? [])
       .slice()
+      .map((item) => item.skillLevel ?? item.criteria)
+      .filter((item): item is NonNullable<typeof item> => item !== undefined && item !== null)
       .sort((a, b) => {
-        const catA = a.criteria.competency?.categoryCode ?? '';
-        const catB = b.criteria.competency?.categoryCode ?? '';
+        const catA = a.skill?.categoryCode ?? a.competency?.categoryCode ?? '';
+        const catB = b.skill?.categoryCode ?? b.competency?.categoryCode ?? '';
         const categoryOrder = catA.localeCompare(catB);
         if (categoryOrder !== 0) return categoryOrder;
 
-        const displayOrder =
-          a.criteria.displayOrder - b.criteria.displayOrder;
+        const displayOrder = a.displayOrder - b.displayOrder;
         if (displayOrder !== 0) return displayOrder;
 
-        return a.criteria.code.localeCompare(b.criteria.code);
+        return a.code.localeCompare(b.code);
       })
-      .map((criterion) => ({
-        id: criterion.criteria.code,
-        name: criterion.criteria.name,
+      .map((item) => ({
+        id: item.code,
+        name: item.name,
         score: 0,
-        weight: Number(criterion.criteria.weight ?? 1.0),
+        weight: Number(item.weight ?? 1.0),
       }));
   }
 
@@ -91,7 +92,7 @@ export class ReportMetricsAggregator {
       keyTakeaway: this.skippedKeyTakeaway(language),
       isFallback: false,
       dimensionScores: this.buildSkippedDimensionScores(
-        answer.question.criteria,
+        answer.question.sessionQuestionSkillLevels ?? answer.question.criteria ?? [],
       ),
     }));
   }

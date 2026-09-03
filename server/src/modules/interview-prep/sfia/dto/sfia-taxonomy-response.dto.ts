@@ -13,7 +13,7 @@ export interface GenericAttributesSnapshot {
   businessSkills?: string;
 }
 
-export class SfiaCriterionDto {
+export class SfiaSkillLevelDto {
   id!: string;
   code!: string;
   name!: string;
@@ -26,7 +26,7 @@ export class SfiaCriterionDto {
   weight?: number;
 }
 
-export class SfiaCompetencyDto {
+export class SfiaSkillDto {
   id!: string;
   code!: string;
   name!: string;
@@ -34,13 +34,13 @@ export class SfiaCompetencyDto {
   guidanceNotes?: string | null;
   categoryName?: string;
   subcategoryName?: string;
-  criteria!: SfiaCriterionDto[];
+  skillLevels!: SfiaSkillLevelDto[];
 }
 
-export class InferredSessionCompetencyDto {
-  competencyId!: string;
-  competencyCode!: string;
-  competencyName!: string;
+export class InferredSessionSkillDto {
+  skillId!: string;
+  skillCode!: string;
+  skillName!: string;
   targetLevelRank!: number;
   targetLevelName!: string;
   levelDescription!: string;
@@ -48,4 +48,14 @@ export class InferredSessionCompetencyDto {
   priority!: number;
   source!: 'role_matrix' | 'jd_tech_stack' | 'fallback_general';
   matchedKeywords?: string[];
+
+  // Compatibility fields
+  competencyId?: string;
+  competencyCode?: string;
+  competencyName?: string;
 }
+
+// Backwards compatibility types
+export type SfiaCriterionDto = SfiaSkillLevelDto;
+export type SfiaCompetencyDto = SfiaSkillDto;
+export type InferredSessionCompetencyDto = InferredSessionSkillDto;

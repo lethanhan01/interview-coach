@@ -1,28 +1,28 @@
 import type { PrismaClient } from '@prisma/client';
 
 export async function mapQuestionBankCriteria(prisma: PrismaClient): Promise<void> {
-  console.log('Mapping Question Bank to SFIA 9 Criteria...');
+  console.log('Mapping Question Bank to SFIA 9 Skill Levels...');
 
-  const criteriaList = await prisma.criteria.findMany({
+  const skillLevels = await prisma.skillLevel.findMany({
     select: {
       id: true,
       code: true,
     },
   });
 
-  const criteriaByCode = new Map<string, string>();
-  for (const c of criteriaList) {
-    criteriaByCode.set(c.code, c.id);
+  const skillLevelByCode = new Map<string, string>();
+  for (const sl of skillLevels) {
+    skillLevelByCode.set(sl.code, sl.id);
   }
 
-  // Fallback criterion (e.g. PROG_L3 or first available)
-  const defaultCriteriaId =
-    criteriaByCode.get('PROG_L3') ??
-    criteriaByCode.get('PROG_L2') ??
-    criteriaList[0]?.id;
+  // Fallback skillLevel (e.g. PROG_L3 or first available)
+  const defaultSkillLevelId =
+    skillLevelByCode.get('PROG_L3') ??
+    skillLevelByCode.get('PROG_L2') ??
+    skillLevels[0]?.id;
 
-  if (!defaultCriteriaId) {
-    console.warn('No criteria available in database to map questions.');
+  if (!defaultSkillLevelId) {
+    console.warn('No skill levels available in database to map questions.');
     return;
   }
 
@@ -65,18 +65,18 @@ export async function mapQuestionBankCriteria(prisma: PrismaClient): Promise<voi
       else targetCode = 'PROG_L5';
     }
 
-    const matchedId = criteriaByCode.get(targetCode) ?? defaultCriteriaId;
+    const matchedId = skillLevelByCode.get(targetCode) ?? defaultSkillLevelId;
 
-    await prisma.questionBankCriterion.upsert({
+    await prisma.questionBankSkillLevel.upsert({
       where: {
-        questionBankId_criteriaId: {
+        questionBankId_skillLevelId: {
           questionBankId: q.id,
-          criteriaId: matchedId,
+          skillLevelId: matchedId,
         },
       },
       create: {
         questionBankId: q.id,
-        criteriaId: matchedId,
+        skillLevelId: matchedId,
         isPrimary: true,
         weight: 1.0,
       },
@@ -89,5 +89,5 @@ export async function mapQuestionBankCriteria(prisma: PrismaClient): Promise<voi
     mappedCount++;
   }
 
-  console.log(`Successfully mapped ${mappedCount} questions in Question Bank to SFIA 9 Criteria.`);
+  console.log(`Successfully mapped ${mappedCount} questions in Question Bank to SFIA 9 Skill Levels.`);
 }

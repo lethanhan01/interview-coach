@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import type { SfiaCompetencyDto } from './dto/sfia-taxonomy-response.dto';
+import type { SfiaSkillDto, SfiaCompetencyDto } from './dto/sfia-taxonomy-response.dto';
 
 @Injectable()
 export class SfiaTaxonomyService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getAllCategories() {
-    const competencies = await this.prisma.competency.findMany({
+    const skills = await this.prisma.skill.findMany({
       orderBy: { displayOrder: 'asc' },
       select: {
         categoryCode: true,
@@ -26,19 +26,19 @@ export class SfiaTaxonomyService {
       }
     >();
 
-    for (const comp of competencies) {
-      if (!categoryMap.has(comp.categoryCode)) {
-        categoryMap.set(comp.categoryCode, {
-          code: comp.categoryCode,
-          name: comp.categoryName,
+    for (const skill of skills) {
+      if (!categoryMap.has(skill.categoryCode)) {
+        categoryMap.set(skill.categoryCode, {
+          code: skill.categoryCode,
+          name: skill.categoryName,
           subcategories: new Map(),
         });
       }
-      const cat = categoryMap.get(comp.categoryCode)!;
-      if (!cat.subcategories.has(comp.subcategoryCode)) {
-        cat.subcategories.set(comp.subcategoryCode, {
-          code: comp.subcategoryCode,
-          name: comp.subcategoryName,
+      const cat = categoryMap.get(skill.categoryCode)!;
+      if (!cat.subcategories.has(skill.subcategoryCode)) {
+        cat.subcategories.set(skill.subcategoryCode, {
+          code: skill.subcategoryCode,
+          name: skill.subcategoryName,
         });
       }
     }
@@ -59,9 +59,9 @@ export class SfiaTaxonomyService {
   async getAllRoles() {
     return this.prisma.role.findMany({
       include: {
-        roleCompetencies: {
+        roleSkills: {
           include: {
-            competency: true,
+            skill: true,
             targetLevel: true,
           },
         },
@@ -69,12 +69,12 @@ export class SfiaTaxonomyService {
     });
   }
 
-  async getCompetenciesBySfiaVersion(sfiaVersion = '9.0.0'): Promise<SfiaCompetencyDto[]> {
-    const competencies = await this.prisma.competency.findMany({
+  async getSkillsBySfiaVersion(sfiaVersion = '9.0.0'): Promise<SfiaSkillDto[]> {
+    const skills = await this.prisma.skill.findMany({
       where: { sfiaVersion },
       orderBy: { displayOrder: 'asc' },
       include: {
-        criteria: {
+        skillLevels: {
           include: {
             level: true,
           },
@@ -83,32 +83,37 @@ export class SfiaTaxonomyService {
       },
     });
 
-    return competencies.map((comp) => ({
-      id: comp.id,
-      code: comp.code,
-      name: comp.name,
-      overallDescription: comp.overallDescription,
-      guidanceNotes: comp.guidanceNotes,
-      categoryName: comp.categoryName,
-      subcategoryName: comp.subcategoryName,
-      criteria: comp.criteria.map((c) => ({
-        id: c.id,
-        code: c.code,
-        name: c.name,
-        levelRank: c.level.rank,
-        levelCode: c.level.code,
-        levelName: c.level.name,
-        levelDescription: c.levelDescription,
-        behavioralIndicators: Array.isArray(c.behavioralIndicators)
-          ? (c.behavioralIndicators as any)
+    return skills.map((skill) => ({
+      id: skill.id,
+      code: skill.code,
+      name: skill.name,
+      overallDescription: skill.overallDescription,
+      guidanceNotes: skill.guidanceNotes,
+      categoryName: skill.categoryName,
+      subcategoryName: skill.subcategoryName,
+      skillLevels: skill.skillLevels.map((sl) => ({
+        id: sl.id,
+        code: sl.code,
+        name: sl.name,
+        levelRank: sl.level.rank,
+        levelCode: sl.level.code,
+        levelName: sl.level.name,
+        levelDescription: sl.levelDescription,
+        behavioralIndicators: Array.isArray(sl.behavioralIndicators)
+          ? (sl.behavioralIndicators as any)
           : [],
-        genericAttributes: (c.genericAttributes as any) ?? null,
-        weight: c.weight ? Number(c.weight) : undefined,
+        genericAttributes: (sl.genericAttributes as any) ?? null,
+        weight: sl.weight ? Number(sl.weight) : undefined,
       })),
     }));
   }
 
+  // Alias for backward compatibility
+  async getCompetenciesBySfiaVersion(sfiaVersion = '9.0.0'): Promise<SfiaCompetencyDto[]> {
+    return this.getSkillsBySfiaVersion(sfiaVersion);
+  }
+
   async getCompetenciesByRubricVersion(rubricVersionId: string): Promise<SfiaCompetencyDto[]> {
-    return this.getCompetenciesBySfiaVersion('9.0.0');
+    return this.getSkillsBySfiaVersion('9.0.0');
   }
 }

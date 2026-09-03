@@ -25,15 +25,15 @@ export class ReportDataCollector {
           select: {
             questionText: true,
             orderIndex: true,
-            criteria: {
+            sessionQuestionSkillLevels: {
               select: {
-                criteria: {
+                skillLevel: {
                   select: {
                     code: true,
                     name: true,
                     weight: true,
                     displayOrder: true,
-                    competency: {
+                    skill: {
                       select: {
                         code: true,
                         name: true,

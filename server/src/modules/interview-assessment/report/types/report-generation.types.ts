@@ -9,11 +9,17 @@ export interface ComprehensiveReportJobDto {
   turnIds: string[];
 }
 
-export interface CriteriaDetail {
+export interface SkillLevelDetail {
   code: string;
   name: string;
   weight?: any;
   displayOrder: number;
+  skill?: {
+    code: string;
+    name: string;
+    categoryCode?: string;
+    categoryName?: string;
+  };
   competency?: {
     code: string;
     name: string;
@@ -22,9 +28,14 @@ export interface CriteriaDetail {
   };
 }
 
-export interface QuestionCriterionWrapper {
-  criteria: CriteriaDetail;
+export type CriteriaDetail = SkillLevelDetail;
+
+export interface QuestionSkillLevelWrapper {
+  skillLevel?: SkillLevelDetail;
+  criteria?: SkillLevelDetail;
 }
+
+export type QuestionCriterionWrapper = QuestionSkillLevelWrapper;
 
 export interface ReportUserAnswerRecord {
   id: string;
@@ -32,7 +43,8 @@ export interface ReportUserAnswerRecord {
   question: {
     questionText: string;
     orderIndex: number;
-    criteria: QuestionCriterionWrapper[];
+    sessionQuestionSkillLevels?: QuestionSkillLevelWrapper[];
+    criteria?: QuestionCriterionWrapper[];
   };
 }
 

@@ -230,11 +230,11 @@ export class TranscribeAnswer {
 }
 
 const SESSION_QUESTION_CRITERIA_INCLUDE = {
-  criteria: {
+  sessionQuestionSkillLevels: {
     include: {
-      criteria: {
+      skillLevel: {
         include: {
-          competency: true,
+          skill: true,
         },
       },
     },

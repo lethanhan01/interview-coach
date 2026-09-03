@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import type { InferredSessionCompetencyDto } from './dto/sfia-taxonomy-response.dto';
+import type { InferredSessionSkillDto, InferredSessionCompetencyDto } from './dto/sfia-taxonomy-response.dto';
 import { resolveTechStackToSfiaCode } from './constants/tech-stack-sfia.map';
 
-interface InferCompetenciesInput {
+interface InferSkillsInput {
   jobTitle?: string;
   targetLevelRank?: number; // 1 to 7 (Default: 4 - Senior/Mid)
   techStack?: string[];
@@ -14,12 +14,12 @@ export class SfiaMappingService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Infers SFIA competencies with weights and criteria for an interview session
+   * Infers SFIA skills with weights and skill levels for an interview session
    * based on Job Title, target Level Rank and extracted Tech Stack keywords.
    */
-  async inferCompetenciesForJob(
-    input: InferCompetenciesInput,
-  ): Promise<InferredSessionCompetencyDto[]> {
+  async inferSkillsForJob(
+    input: InferSkillsInput,
+  ): Promise<InferredSessionSkillDto[]> {
     const levelRank = input.targetLevelRank ?? 4;
     const techStack = input.techStack ?? [];
     const jobTitle = input.jobTitle?.toLowerCase() ?? '';
@@ -53,12 +53,12 @@ export class SfiaMappingService {
       ? await this.prisma.role.findFirst({ where: { code: roleCode } })
       : null;
 
-    const competencyMap = new Map<
+    const skillMap = new Map<
       string,
       {
-        competencyId: string;
-        competencyCode: string;
-        competencyName: string;
+        skillId: string;
+        skillCode: string;
+        skillName: string;
         targetLevelRank: number;
         targetLevelName: string;
         levelDescription: string;
@@ -69,14 +69,14 @@ export class SfiaMappingService {
       }
     >();
 
-    // 3. Add competencies from standard Role if found
+    // 3. Add skills from standard Role if found
     if (matchedRole) {
-      const roleCompetencies = await this.prisma.roleLevelCompetency.findMany({
+      const roleSkills = await this.prisma.roleSkill.findMany({
         where: { roleId: matchedRole.id },
         include: {
-          competency: {
+          skill: {
             include: {
-              criteria: {
+              skillLevels: {
                 where: { levelId: fallbackLevel.id },
                 include: { level: true },
               },
@@ -86,24 +86,24 @@ export class SfiaMappingService {
         },
       });
 
-      for (const rc of roleCompetencies) {
-        const crit = rc.competency.criteria[0];
-        competencyMap.set(rc.competency.id, {
-          competencyId: rc.competency.id,
-          competencyCode: rc.competency.code,
-          competencyName: rc.competency.name,
+      for (const rs of roleSkills) {
+        const crit = rs.skill.skillLevels[0];
+        skillMap.set(rs.skill.id, {
+          skillId: rs.skill.id,
+          skillCode: rs.skill.code,
+          skillName: rs.skill.name,
           targetLevelRank: fallbackLevel.rank,
           targetLevelName: fallbackLevel.name,
-          levelDescription: crit?.levelDescription ?? rc.competency.name,
-          weight: Number(rc.defaultWeight),
-          priority: rc.priority ?? 1,
+          levelDescription: crit?.levelDescription ?? rs.skill.name,
+          weight: Number(rs.defaultWeight),
+          priority: rs.priority ?? 1,
           source: 'role_matrix',
           matchedKeywords: [],
         });
       }
     }
 
-    // 4. Match competencies from Tech Stack keywords (In-Memory Dictionary)
+    // 4. Match skills from Tech Stack keywords (In-Memory Dictionary)
     if (techStack.length > 0) {
       const matchedCodeToKeywords = new Map<string, string[]>();
       for (const keyword of techStack) {
@@ -117,32 +117,32 @@ export class SfiaMappingService {
 
       if (matchedCodeToKeywords.size > 0) {
         const matchedCodes = Array.from(matchedCodeToKeywords.keys());
-        const matchedComps = await this.prisma.competency.findMany({
+        const matchedSkills = await this.prisma.skill.findMany({
           where: { code: { in: matchedCodes } },
           include: {
-            criteria: {
+            skillLevels: {
               where: { levelId: fallbackLevel.id },
               include: { level: true },
             },
           },
         });
 
-        for (const comp of matchedComps) {
-          const keywords = matchedCodeToKeywords.get(comp.code) ?? [];
-          const existing = competencyMap.get(comp.id);
-          const crit = comp.criteria[0];
+        for (const skill of matchedSkills) {
+          const keywords = matchedCodeToKeywords.get(skill.code) ?? [];
+          const existing = skillMap.get(skill.id);
+          const crit = skill.skillLevels[0];
 
           if (existing) {
             existing.matchedKeywords.push(...keywords);
             existing.weight = Math.min(1.0, existing.weight + 0.05 * keywords.length);
           } else {
-            competencyMap.set(comp.id, {
-              competencyId: comp.id,
-              competencyCode: comp.code,
-              competencyName: comp.name,
+            skillMap.set(skill.id, {
+              skillId: skill.id,
+              skillCode: skill.code,
+              skillName: skill.name,
               targetLevelRank: fallbackLevel.rank,
               targetLevelName: fallbackLevel.name,
-              levelDescription: crit?.levelDescription ?? comp.name,
+              levelDescription: crit?.levelDescription ?? skill.name,
               weight: 0.25,
               priority: 2,
               source: 'jd_tech_stack',
@@ -153,27 +153,27 @@ export class SfiaMappingService {
       }
     }
 
-    // 5. Fallback: If no competencies matched, get default PROG and DBDS
-    if (competencyMap.size === 0) {
-      const defaultComps = await this.prisma.competency.findMany({
+    // 5. Fallback: If no skills matched, get default PROG and DBDS
+    if (skillMap.size === 0) {
+      const defaultSkills = await this.prisma.skill.findMany({
         where: { code: { in: ['PROG', 'DBDS', 'TEST'] } },
         include: {
-          criteria: {
+          skillLevels: {
             where: { levelId: fallbackLevel.id },
             include: { level: true },
           },
         },
       });
 
-      for (const dc of defaultComps) {
-        const crit = dc.criteria[0];
-        competencyMap.set(dc.id, {
-          competencyId: dc.id,
-          competencyCode: dc.code,
-          competencyName: dc.name,
+      for (const ds of defaultSkills) {
+        const crit = ds.skillLevels[0];
+        skillMap.set(ds.id, {
+          skillId: ds.id,
+          skillCode: ds.code,
+          skillName: ds.name,
           targetLevelRank: fallbackLevel.rank,
           targetLevelName: fallbackLevel.name,
-          levelDescription: crit?.levelDescription ?? dc.name,
+          levelDescription: crit?.levelDescription ?? ds.name,
           weight: 0.33,
           priority: 1,
           source: 'fallback_general',
@@ -183,12 +183,22 @@ export class SfiaMappingService {
     }
 
     // 6. Normalize weights so total weight = 1.0
-    const rawList = Array.from(competencyMap.values());
+    const rawList = Array.from(skillMap.values());
     const totalWeight = rawList.reduce((acc, c) => acc + c.weight, 0);
 
     return rawList.map((c) => ({
       ...c,
+      competencyId: c.skillId,
+      competencyCode: c.skillCode,
+      competencyName: c.skillName,
       weight: totalWeight > 0 ? Number((c.weight / totalWeight).toFixed(2)) : 0.25,
     }));
+  }
+
+  // Alias for backwards compatibility
+  async inferCompetenciesForJob(
+    input: InferSkillsInput,
+  ): Promise<InferredSessionCompetencyDto[]> {
+    return this.inferSkillsForJob(input);
   }
 }

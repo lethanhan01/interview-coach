@@ -5,17 +5,20 @@ import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 
-export const SESSION_QUESTION_CRITERIA_INCLUDE = {
-  criteria: {
+export const SESSION_QUESTION_SKILL_LEVELS_INCLUDE = {
+  sessionQuestionSkillLevels: {
     include: {
-      criteria: {
+      skillLevel: {
         include: {
-          competency: true,
+          skill: true,
         },
       },
     },
   },
 } satisfies Prisma.SessionQuestionInclude;
+
+// Alias for backwards compatibility
+export const SESSION_QUESTION_CRITERIA_INCLUDE = SESSION_QUESTION_SKILL_LEVELS_INCLUDE;
 
 @Injectable()
 export class TurnAnswerContext {
@@ -55,7 +58,7 @@ export class TurnAnswerContext {
     }
     const question = await this.prisma.sessionQuestion.findFirst({
       where: { id: questionId, sessionId },
-      include: SESSION_QUESTION_CRITERIA_INCLUDE,
+      include: SESSION_QUESTION_SKILL_LEVELS_INCLUDE,
     });
     if (!question) {
       throw new InterviewAIException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND);

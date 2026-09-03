@@ -68,8 +68,17 @@ export const createMockPrismaService = () => {
       typeof input === 'function' ? input(prisma) : Promise.all(input),
     ),
     isBootstrapDatabaseAvailable: jest.fn().mockReturnValue(true),
+    skillLevel: {
+      findMany: jest.fn().mockResolvedValue([]),
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
     criteria: {
       findMany: jest.fn().mockResolvedValue([]),
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
+    skill: {
+      findMany: jest.fn().mockResolvedValue([]),
+      findUnique: jest.fn().mockResolvedValue(null),
       findFirst: jest.fn().mockResolvedValue(null),
     },
     competency: {
@@ -85,15 +94,29 @@ export const createMockPrismaService = () => {
       findMany: jest.fn().mockResolvedValue([]),
       findFirst: jest.fn().mockResolvedValue(null),
     },
+    roleSkill: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
     roleLevelCompetency: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+    sessionSkill: {
+      createMany: jest.fn().mockResolvedValue({ count: 0 }),
       findMany: jest.fn().mockResolvedValue([]),
     },
     sessionCompetency: {
       createMany: jest.fn().mockResolvedValue({ count: 0 }),
       findMany: jest.fn().mockResolvedValue([]),
     },
+    questionBankSkillLevel: {
+      createMany: jest.fn().mockResolvedValue({ count: 0 }),
+    },
     questionBankCriterion: {
       createMany: jest.fn().mockResolvedValue({ count: 0 }),
+    },
+    sessionQuestionSkillLevel: {
+      createMany: jest.fn().mockResolvedValue({ count: 0 }),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     sessionQuestionCriterion: {
       createMany: jest.fn().mockResolvedValue({ count: 0 }),

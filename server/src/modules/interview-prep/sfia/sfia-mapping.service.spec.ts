@@ -27,16 +27,16 @@ describe('SfiaMappingService', () => {
           return Promise.resolve(null);
         }),
       },
-      roleLevelCompetency: {
+      roleSkill: {
         findMany: jest.fn().mockResolvedValue([
           {
             defaultWeight: 0.4,
             priority: 1,
-            competency: {
+            skill: {
               id: 'comp-prog-id',
               code: 'PROG',
               name: 'Programming/software development',
-              criteria: [
+              skillLevels: [
                 {
                   levelDescription: 'Designs, codes and tests complex software services.',
                 },
@@ -46,11 +46,11 @@ describe('SfiaMappingService', () => {
           {
             defaultWeight: 0.3,
             priority: 2,
-            competency: {
+            skill: {
               id: 'comp-dbds-id',
               code: 'DBDS',
               name: 'Database design',
-              criteria: [
+              skillLevels: [
                 {
                   levelDescription: 'Designs relational and non-relational database structures.',
                 },
@@ -59,7 +59,7 @@ describe('SfiaMappingService', () => {
           },
         ]),
       },
-      competency: {
+      skill: {
         findMany: jest.fn().mockImplementation(({ where }) => {
           if (where?.code?.in?.includes('DBDS')) {
             return Promise.resolve([
@@ -67,7 +67,7 @@ describe('SfiaMappingService', () => {
                 id: 'comp-dbds-id',
                 code: 'DBDS',
                 name: 'Database design',
-                criteria: [
+                skillLevels: [
                   {
                     levelDescription: 'Designs relational and non-relational database structures.',
                   },

@@ -3,43 +3,53 @@ import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 
-type CriteriaRow = {
+type SkillLevelRow = {
   id: string;
   code: string;
   name: string;
   weight?: any;
   displayOrder: number;
-  competency?: {
+  skill?: {
     code: string;
     name: string;
   };
 };
 
-type CriterionLink = {
-  criteria?: CriteriaRow | null;
+type SkillLevelLink = {
+  skillLevel?: SkillLevelRow | null;
 };
 
-type QuestionWithCriteria = {
-  criteria?: CriterionLink[] | null;
+type QuestionWithSkillLevels = {
+  questionBankSkillLevels?: SkillLevelLink[] | null;
+  criteria?: any[] | null; // Compatibility
 };
 
-type QuestionBankWithCriteria = QuestionWithCriteria & {
+type QuestionBankWithSkillLevels = QuestionWithSkillLevels & {
   id: string;
   contextPackId: string;
 };
 
-type SessionCriterionLink = CriterionLink;
-
-export type SessionQuestionWithCriteria = {
+export type SessionQuestionWithSkillLevels = {
   id: string;
   questionText: string;
   questionCategory: string;
-  criteria?: SessionCriterionLink[] | null;
+  sessionQuestionSkillLevels?: SkillLevelLink[] | null;
+  criteria?: any[] | null; // Compatibility
 };
 
+export type SessionQuestionWithCriteria = SessionQuestionWithSkillLevels;
+
+export type SessionQuestionSkillLevelCreateInput = {
+  sessionQuestionId: string;
+  skillLevelId: string;
+  criteriaId?: string;
+};
+
+// Backwards compatibility alias
 export type SessionQuestionCriterionCreateInput = {
   sessionQuestionId: string;
-  criteriaId: string;
+  skillLevelId?: string;
+  criteriaId?: string;
 };
 
 @Injectable()
@@ -47,38 +57,40 @@ export class QuestionCriteriaService {
   constructor(private readonly prisma: PrismaService) {}
 
   codesFromQuestionBank(
-    question: QuestionBankWithCriteria,
+    question: QuestionBankWithSkillLevels,
     _versionId?: string,
   ): string[] {
-    const linked = (question.criteria ?? [])
-      .map((link) => link.criteria)
+    const rawLinks = question.questionBankSkillLevels ?? question.criteria ?? [];
+    const linked = rawLinks
+      .map((link: any) => link.skillLevel ?? link.criteria)
       .filter(
-        (criterion): criterion is CriteriaRow =>
-          criterion !== null && criterion !== undefined,
+        (sl): sl is SkillLevelRow =>
+          sl !== null && sl !== undefined,
       )
-      .sort(compareCriterionRows)
-      .map((criterion) => criterion.code);
+      .sort(compareSkillLevelRows)
+      .map((sl) => sl.code);
 
     return unique(linked);
   }
 
-  codesFromSessionQuestion(question: SessionQuestionWithCriteria): string[] {
-    const linked = (question.criteria ?? [])
-      .map((link) => link.criteria)
+  codesFromSessionQuestion(question: SessionQuestionWithSkillLevels): string[] {
+    const rawLinks = question.sessionQuestionSkillLevels ?? question.criteria ?? [];
+    const linked = rawLinks
+      .map((link: any) => link.skillLevel ?? link.criteria)
       .filter(
-        (criterion): criterion is CriteriaRow =>
-          criterion !== null && criterion !== undefined,
+        (sl): sl is SkillLevelRow =>
+          sl !== null && sl !== undefined,
       )
       .slice()
-      .sort(compareCriterionRows)
-      .map((criterion) => criterion.code);
+      .sort(compareSkillLevelRows)
+      .map((sl) => sl.code);
 
     const codes = unique(linked);
     if (codes.length === 0) {
       throw new InterviewAIException(
         ErrorCode.VALIDATION_ERROR,
         HttpStatus.BAD_REQUEST,
-        'Session question has no criteria relation',
+        'Session question has no skill level / criteria relation',
       );
     }
     return codes;
@@ -88,7 +100,7 @@ export class QuestionCriteriaService {
     sessionQuestionId: string;
     criterionCodes: string[];
     rubricVersionId?: string;
-  }): Promise<SessionQuestionCriterionCreateInput[]> {
+  }): Promise<SessionQuestionSkillLevelCreateInput[]> {
     const codes = unique(input.criterionCodes);
     if (codes.length === 0) {
       throw new InterviewAIException(
@@ -98,49 +110,49 @@ export class QuestionCriteriaService {
       );
     }
 
-    const criteria = await this.findVersionCriteria(codes);
+    const skillLevels = await this.findVersionSkillLevels(codes);
     const byCode = new Map(
-      criteria.map((criterion) => [criterion.code, criterion]),
+      skillLevels.map((sl) => [sl.code, sl]),
     );
     const missing = codes.filter((code) => !byCode.has(code));
     if (missing.length > 0) {
       throw new InterviewAIException(
         ErrorCode.RUBRIC_NOT_FOUND,
         HttpStatus.NOT_FOUND,
-        `Unable to resolve criteria for codes: ${missing.join(', ')}`,
+        `Unable to resolve skill levels for codes: ${missing.join(', ')}`,
       );
     }
 
     return codes.map((code) => {
-      const criterion = byCode.get(code);
-      if (!criterion) {
+      const skillLevel = byCode.get(code);
+      if (!skillLevel) {
         throw new InterviewAIException(
           ErrorCode.RUBRIC_NOT_FOUND,
           HttpStatus.NOT_FOUND,
-          `Unable to resolve criterion ${code}`,
+          `Unable to resolve skill level ${code}`,
         );
       }
 
       return {
         sessionQuestionId: input.sessionQuestionId,
-        criteriaId: criterion.id,
+        skillLevelId: skillLevel.id,
       };
     });
   }
 
-  private async findVersionCriteria(
+  private async findVersionSkillLevels(
     codes: string[],
-  ): Promise<CriteriaRow[]> {
-    return this.prisma.criteria.findMany({
+  ): Promise<SkillLevelRow[]> {
+    return this.prisma.skillLevel.findMany({
       where: {
         code: { in: codes },
       },
-      include: { competency: true },
+      include: { skill: true },
     });
   }
 }
 
-function compareCriterionRows(a: CriteriaRow, b: CriteriaRow) {
+function compareSkillLevelRows(a: SkillLevelRow, b: SkillLevelRow) {
   const displayOrder = a.displayOrder - b.displayOrder;
   if (displayOrder !== 0) return displayOrder;
 

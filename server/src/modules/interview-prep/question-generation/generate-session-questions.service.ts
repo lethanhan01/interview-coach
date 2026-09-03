@@ -275,7 +275,7 @@ export class GenerateSessionQuestions {
         })),
         skipDuplicates: true,
       }),
-      this.prisma.sessionQuestionCriterion.createMany({
+      this.prisma.sessionQuestionSkillLevel.createMany({
         data: criteria,
         skipDuplicates: true,
       }),

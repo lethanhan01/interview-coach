@@ -8,7 +8,7 @@ import {
 } from './sfia-v9-data';
 
 export async function seedSfiaV9Catalog(prisma: PrismaClient): Promise<void> {
-  console.log('Seeding SFIA 9 Framework taxonomy (Flattened Hierarchy & Structured Criteria)...');
+  console.log('Seeding SFIA 9 Framework taxonomy (Skills, SkillLevels, RoleSkills)...');
 
   // Build lookup for subcategory -> (subcategory info + category info)
   const subcategoryLookup = new Map<
@@ -86,8 +86,8 @@ export async function seedSfiaV9Catalog(prisma: PrismaClient): Promise<void> {
         levelMap.set(levelRecord.rank, levelRecord.id);
       }
 
-      // 2. Seed Flattened Competencies & Competency Levels (Criteria)
-      const competencyMap = new Map<string, string>();
+      // 2. Seed Flattened Skills & Skill Levels
+      const skillMap = new Map<string, string>();
       let displayOrder = 1;
       for (const skill of SFIA_9_SKILLS) {
         const subInfo = subcategoryLookup.get(skill.subcategoryCode) ?? {
@@ -97,7 +97,7 @@ export async function seedSfiaV9Catalog(prisma: PrismaClient): Promise<void> {
           subcategoryName: skill.subcategoryCode,
         };
 
-        const compRecord = await tx.competency.upsert({
+        const skillRecord = await tx.skill.upsert({
           where: { code: skill.code },
           create: {
             code: skill.code,
@@ -123,45 +123,45 @@ export async function seedSfiaV9Catalog(prisma: PrismaClient): Promise<void> {
           },
           select: { id: true, code: true },
         });
-        competencyMap.set(compRecord.code, compRecord.id);
+        skillMap.set(skillRecord.code, skillRecord.id);
 
-        // Seed Criteria per Competency & Level
+        // Seed Skill Levels per Skill & Level
         for (const crit of skill.levels) {
           const levelId = levelMap.get(crit.levelRank);
           if (!levelId) continue;
 
           const genericAttrs = genericAttributesMap.get(crit.levelRank) ?? null;
 
-          await tx.criteria.upsert({
+          await tx.skillLevel.upsert({
             where: {
-              competencyId_levelId: {
-                competencyId: compRecord.id,
+              skillId_levelId: {
+                skillId: skillRecord.id,
                 levelId,
               },
             },
             create: {
-              competencyId: compRecord.id,
+              skillId: skillRecord.id,
               levelId,
               code: crit.code,
               name: crit.name,
               levelDescription: crit.levelDescription,
-              behavioralIndicators: crit.behavioralIndicators ?? [],
-              genericAttributes: genericAttrs,
+              behavioralIndicators: (crit.behavioralIndicators ?? []) as any,
+              genericAttributes: (genericAttrs ?? undefined) as any,
               weight: 1.0,
             },
             update: {
               code: crit.code,
               name: crit.name,
               levelDescription: crit.levelDescription,
-              behavioralIndicators: crit.behavioralIndicators ?? [],
-              genericAttributes: genericAttrs,
+              behavioralIndicators: (crit.behavioralIndicators ?? []) as any,
+              genericAttributes: (genericAttrs ?? undefined) as any,
               weight: 1.0,
             },
           });
         }
       }
 
-      // 3. Seed Roles & Role Level Competencies
+      // 3. Seed Roles & Role Skills
       for (const role of SFIA_9_ROLES) {
         const roleRecord = await tx.role.upsert({
           where: { code: role.code },
@@ -178,21 +178,21 @@ export async function seedSfiaV9Catalog(prisma: PrismaClient): Promise<void> {
         });
 
         for (const roleSkill of role.skills) {
-          const competencyId = competencyMap.get(roleSkill.skillCode);
+          const skillId = skillMap.get(roleSkill.skillCode);
           const targetLevelId = levelMap.get(roleSkill.targetLevelRank);
-          if (!competencyId || !targetLevelId) continue;
+          if (!skillId || !targetLevelId) continue;
 
-          await tx.roleLevelCompetency.upsert({
+          await tx.roleSkill.upsert({
             where: {
-              roleId_competencyId_targetLevelId: {
+              roleId_skillId_targetLevelId: {
                 roleId: roleRecord.id,
-                competencyId,
+                skillId,
                 targetLevelId,
               },
             },
             create: {
               roleId: roleRecord.id,
-              competencyId,
+              skillId,
               targetLevelId,
               defaultWeight: roleSkill.defaultWeight,
               priority: roleSkill.priority,
@@ -211,5 +211,5 @@ export async function seedSfiaV9Catalog(prisma: PrismaClient): Promise<void> {
     },
   );
 
-  console.log('SFIA 9 Framework taxonomy (Flattened & Criteria) seeded successfully.');
+  console.log('SFIA 9 Framework taxonomy (Skills, SkillLevels, RoleSkills) seeded successfully.');
 }

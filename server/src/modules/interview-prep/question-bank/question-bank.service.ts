@@ -12,14 +12,14 @@ type QuestionBankRow = {
   contextPackId: string;
   estimatedTimeMin: number | null;
   translations: Prisma.JsonValue | null;
-  criteria?: Array<{
-    criteria?: {
+  questionBankSkillLevels?: Array<{
+    skillLevel?: {
       id: string;
       code: string;
       name: string;
       weight?: any;
       displayOrder: number;
-      competency?: {
+      skill?: {
         code: string;
         name: string;
       };
@@ -57,7 +57,7 @@ export class QuestionBankService {
       },
       orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
       take: count * 3,
-      include: QUESTION_BANK_CRITERIA_INCLUDE,
+      include: QUESTION_BANK_SKILL_LEVELS_INCLUDE,
     });
 
     if (candidates.length === 0) {
@@ -173,12 +173,12 @@ export class QuestionBankService {
   }
 }
 
-const QUESTION_BANK_CRITERIA_INCLUDE = {
-  criteria: {
+const QUESTION_BANK_SKILL_LEVELS_INCLUDE = {
+  questionBankSkillLevels: {
     include: {
-      criteria: {
+      skillLevel: {
         include: {
-          competency: true,
+          skill: true,
         },
       },
     },

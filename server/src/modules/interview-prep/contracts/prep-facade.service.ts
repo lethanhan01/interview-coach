@@ -16,12 +16,28 @@ type CriterionLink = {
       code: string;
       name: string;
     };
+    skill?: {
+      code: string;
+      name: string;
+    };
+  } | null;
+  skillLevel?: {
+    id: string;
+    code: string;
+    name: string;
+    weight?: any;
+    displayOrder: number;
+    skill?: {
+      code: string;
+      name: string;
+    };
   } | null;
 };
 
 export type QuestionBankWithCriteria = {
   id: string;
   contextPackId: string;
+  questionBankSkillLevels?: CriterionLink[] | null;
   criteria?: CriterionLink[] | null;
 };
 
