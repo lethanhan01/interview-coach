@@ -13,6 +13,7 @@
     "db:prepare-db-push-raw-sql": "ts-node scripts/db/prepare.ts",
     "db:verify:pre": "ts-node scripts/db/verify.ts --phase=pre",
     "db:verify": "ts-node scripts/db/verify.ts --phase=post",
+    "seed:sfia": "ts-node scripts/seed-sfia.ts",
     "db:sync": "npm run db:sync:full",
     "db:require-backup": "node scripts/db-guard.mjs --require-backup",
     "db:sync:prisma": "node scripts/db-guard.mjs --deny-prod db:sync:prisma && prisma generate && npm run db:prepare-db-push-raw-sql && prisma db push --accept-data-loss",
@@ -71,6 +72,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "ws": "^8.21.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
