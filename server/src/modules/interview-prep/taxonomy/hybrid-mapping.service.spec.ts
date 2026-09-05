@@ -111,7 +111,7 @@ describe('HybridMappingService', () => {
       expect(skills).toHaveLength(4);
       expect(skills.map((s) => s.skillCode)).toEqual([
         'ETMG',
-        'REFM',
+        'RLMT',
         'PDSV',
         'OCDV',
       ]);

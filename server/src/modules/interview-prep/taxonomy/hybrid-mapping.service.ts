@@ -59,7 +59,7 @@ export class HybridMappingService {
   private resolveHrSkills(targetLevel: number): ResolvedSessionSkill[] {
     const hrSkillCodes = [
       { skillCode: 'ETMG', weight: 1.5, isCore: true },
-      { skillCode: 'REFM', weight: 1.2, isCore: true },
+      { skillCode: 'RLMT', weight: 1.2, isCore: true },
       { skillCode: 'PDSV', weight: 1.0, isCore: false },
       { skillCode: 'OCDV', weight: 1.0, isCore: false },
     ];
