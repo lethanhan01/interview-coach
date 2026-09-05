@@ -20,6 +20,7 @@ import {
 import { HrInterviewStrategy } from './hr-interview.strategy';
 import { TechnicalInterviewStrategy } from './technical-interview.strategy';
 import { SessionStrategyRegistry } from './session-strategy.registry';
+import { ONET_FACADE_TOKEN } from '@modules/onet/contracts';
 
 const BASE_SESSION = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -85,6 +86,16 @@ describe('SessionService', () => {
         { provide: WorkflowService, useValue: mockWorkflowService },
         { provide: WorkflowDispatcher, useValue: mockWorkflowDispatcher },
         { provide: ConfigService, useValue: mockConfig },
+        {
+          provide: ONET_FACADE_TOKEN,
+          useValue: {
+            findOccupationByTitle: jest.fn().mockResolvedValue({
+              socCode: '15-1252.00',
+              title: 'Software Developers',
+            }),
+            getToolsAndTechnology: jest.fn().mockResolvedValue([]),
+          },
+        },
       ],
     }).compile();
 
@@ -206,6 +217,16 @@ describe('SessionService', () => {
           { provide: WorkflowService, useValue: mockWorkflowService },
           { provide: WorkflowDispatcher, useValue: mockWorkflowDispatcher },
           { provide: ConfigService, useValue: mockConfig },
+          {
+            provide: ONET_FACADE_TOKEN,
+            useValue: {
+              findOccupationByTitle: jest.fn().mockResolvedValue({
+                socCode: '15-1252.00',
+                title: 'Software Developers',
+              }),
+              getToolsAndTechnology: jest.fn().mockResolvedValue([]),
+            },
+          },
         ],
       }).compile();
       const noLimitService = noLimitModule.get<SessionService>(SessionService);
@@ -236,6 +257,9 @@ describe('SessionService', () => {
       mockPrisma.savedJobDescription.findFirst.mockResolvedValue({
         id: 'saved-jd-1',
         userId: 'user-abc',
+        onetSocCode: '15-1252.00',
+        targetSfiaLevel: 3,
+        normalizedTechStack: [],
       });
       mockPrisma.savedJobDescription.update.mockResolvedValue({});
       mockPrisma.interviewSession.create.mockResolvedValue({

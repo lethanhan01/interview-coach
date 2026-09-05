@@ -15,7 +15,7 @@
 | :--- | :--- | :--- | :--- |
 | **Giai đoạn 1** | Database Add-only Migration & Làm Giàu Dữ Liệu QuestionBank | 🟢 Đã hoàn thành | 4 / 4 bước |
 | **Giai đoạn 2** | Xây Dựng 2 Bounded Contexts `SfiaModule` & `OnetModule` | 🟢 Đã hoàn thành | 3 / 3 bước |
-| **Giai đoạn 3** | Cầu Nối Hybrid & Tích Hợp JD / Session Lifecycle | ⚪ Chưa bắt đầu | 0 / 3 bước |
+| **Giai đoạn 3** | Cầu Nối Hybrid & Tích Hợp JD / Session Lifecycle | 🟢 Đã hoàn thành | 3 / 3 bước |
 | **Giai đoạn 4** | Cấp Phát Câu Hỏi Theo `session_skills` & Tiêu Chí Nhị Phân | ⚪ Chưa bắt đầu | 0 / 2 bước |
 | **Giai đoạn 5** | Chấm Điểm Tất Định, Báo Cáo Năng Lực & Dọn Dẹp Schema Cũ | ⚪ Chưa bắt đầu | 0 / 5 bước |
 
@@ -24,6 +24,7 @@
 ## CHI TIẾT CÁC GIAI ĐOẠN
 
 ### Giai Đoạn 1: Database Add-only Migration & Làm Giàu Dữ Liệu QuestionBank
+
 
 - [x] **Bước 1.1: Mở rộng Schema (Add-only) & Đồng bộ Database**
   - [x] Baseline check: `npm run prisma:generate`, `npm run build`, `npm run test:arch` đạt 100%.
@@ -93,11 +94,36 @@
 ---
 
 ### Giai Đoạn 3: Cầu Nối Hybrid & Tích Hợp JD / Session Lifecycle
-- [ ] **Bước 3.1: Xây Dựng `HybridMappingService`**
-- [ ] **Bước 3.2: Cập Nhật `SaveJobDescriptionService`**
-- [ ] **Bước 3.3: Tích Hợp Vào Asynchronous Outbox Worker (`question-generation`)**
+- [x] **Bước 3.1: Xây Dựng `HybridMappingService`**
+  - [x] Tạo `server/src/modules/interview-prep/taxonomy/hybrid-mapping.types.ts` định nghĩa `ResolvedSessionSkill` và `ResolveSkillsParams`.
+  - [x] Triển khai `server/src/modules/interview-prep/taxonomy/hybrid-mapping.service.ts`:
+    - Phân tách rành mạch phiên Technical vs HR: Tự động gắn 4 kỹ năng hành vi SFIA (`ETMG`, `REFM`, `PDSV`, `OCDV`) cho HR.
+    - Cơ chế 2 tầng an toàn: Tầng 1 tra cứu bảng `onet_sfia_mappings` theo `(onetSocCode, targetSfiaLevel)`.
+    - Tầng 2 (Cache Miss): Gọi LLM suy luận từ danh sách 147 SFIA skills và lưu cache vào `onet_sfia_mappings` (`source = 'ai_inferred'`).
+    - Tầng 3 (Resilience Safe Fallback): Tự động lấy mapping cùng SOC ở level khác hoặc default IT skills (`PROG`, `TEST`, `ARCH`) nếu LLM offline/lỗi mạng, bảo đảm 100% không bao giờ crash phiên.
+    - Thuật toán `distributeTechContext` phân loại thông minh công nghệ: CSDL -> `DBDS`, Dev/Framework -> `PROG`, DevOps/Cloud -> `ITOP`.
+  - [x] Tạo `server/src/modules/interview-prep/taxonomy/taxonomy.module.ts` và export qua `interview-prep.module.ts`.
+  - [x] Viết bộ unit test `server/src/modules/interview-prep/taxonomy/hybrid-mapping.service.spec.ts`: Đạt 7/7 tests passed 100%.
+  - [x] Xác nhận `npm run test:arch` (3/3 tests passed) và `npm run build` (Exit code 0).
+- [x] **Bước 3.2: Cập Nhật `SaveJobDescriptionService`**
+  - [x] Nâng cấp `SavedJobDescriptionService`: Inject `ONET_FACADE_TOKEN` (`IOnetFacade`).
+  - [x] Chuẩn hóa chức danh công việc qua `IOnetFacade.findOccupationByTitle(jobTitle)` để lấy `onetSocCode` và `onetOccupationTitle`.
+  - [x] Trích xuất và đối soát danh mục công cụ phần mềm qua `IOnetFacade.getToolsAndTechnology(socCode)` để lưu vào `normalizedTechStack: string[]`.
+  - [x] Xây dựng hàm `inferTargetSfiaLevel(level, jobTitle, jobContent)`: Hỗ trợ xử lý thông minh cả tiếng Anh lẫn tiếng Việt (có dấu và không dấu qua hàm `removeVietnameseTones`), ánh xạ chuẩn xác phân cấp SFIA (Lead -> 5, Senior -> 4, Middle -> 3, Junior -> 2, Intern -> 1).
+  - [x] Cập nhật `JobDescriptionModule` import `OnetModule` và `PrismaModule`.
+  - [x] Viết bộ unit test `server/src/modules/interview-prep/job-description/saved-job-description.service.spec.ts`: Đạt 8/8 tests passed 100%.
+  - [x] Xác nhận `npm run test:arch` (3/3 tests passed) và `npm run build` (Exit code 0).
+- [x] **Bước 3.3: Tích Hợp Vào Asynchronous Outbox Worker (`question-generation`)**
+  - [x] Nâng cấp `CreateInterviewSession`: Tự động làm giàu On-the-fly cho các Job Description cũ thiếu `onetSocCode` hoặc `targetSfiaLevel`, sao chép trực tiếp vào `InterviewSession` và đóng gói vào outbox payload.
+  - [x] Cập nhật `TechnicalInterviewStrategy` và `HrInterviewStrategy` chuyển tiếp `onetSocCode` và `targetSfiaLevel` trong payload.
+  - [x] Cập nhật `GenerateSessionQuestions`: Inject `HybridMappingService`, khởi tạo các bản ghi `session_skills` (bản hợp đồng đánh giá duy nhất của phiên) trong CSDL bất đồng bộ trước khi cấp phát câu hỏi, đảm bảo API `POST /sessions` luôn phản hồi < 100ms.
+  - [x] Chạy toàn bộ 69/69 test suites backend: Đạt **540/540 tests passed 100%**.
+  - [x] Chạy script kiểm tra thực tế với CSDL Live PostgreSQL: Hoàn tất 100% cả 4 bước (lưu JD chuẩn hóa, suy luận SFIA level, giải quyết kỹ năng SFIA có techContext, và ghi nhận `session_skills` bền vững).
+  - [x] Xác nhận `npm run test:arch` (3/3 tests passed) và `npm run build` (Exit code 0).
+  - [x] **KẾT LUẬN:** Giai đoạn 3 đã hoàn thành 100% (3/3 bước). Hệ thống sẵn sàng chuyển sang Giai đoạn 4 (Cấp Phát Câu Hỏi Theo `session_skills` & Tiêu Chí Nhị Phân).
 
 ---
+
 
 ### Giai Đoạn 4: Cấp Phát Câu Hỏi Theo `session_skills` & Tiêu Chí Nhị Phân
 - [ ] **Bước 4.1: Cập Nhật `QuestionBankService`**
@@ -184,4 +210,52 @@
 - Chạy `npm run test:arch`: **3/3 tests passed 100%** (Đảm bảo tuân thủ nghiêm ngặt 3-Layer Clean Architecture & ranh giới Bounded Contexts).
 - Chạy `npm run build`: **Thành công 100% (Exit code 0)**.
 - **KẾT LUẬN:** Giai đoạn 2 đã chính thức **HOÀN THÀNH 100% (3/3 bước)** với chất lượng và độ ổn định cao nhất, không có nợ kỹ thuật (zero tech debt). Sẵn sàng chuyển sang Giai đoạn 3: Cầu Nối Hybrid & Tích Hợp JD / Session Lifecycle.
+ 
++### [2026-09-06] Hoàn thành Bước 3.1: Xây Dựng HybridMappingService
++- Đã tạo `server/src/modules/interview-prep/taxonomy/hybrid-mapping.types.ts` định nghĩa kiểu dữ liệu `ResolvedSessionSkill` và `ResolveSkillsParams`.
++- Đã triển khai `server/src/modules/interview-prep/taxonomy/hybrid-mapping.service.ts`:
++  - Tầng 1: Tra cứu bản ghi curated mapping trong bảng `onet_sfia_mappings` theo `(onetSocCode, targetSfiaLevel)`.
++  - Tầng 2: Fallback kích hoạt AI Gateway phân tích JD đối chiếu 147 SFIA skills và lưu cache vào `onet_sfia_mappings` (`source = 'ai_inferred'`).
++  - Tầng 3: Safe resilience fallback lấy mapping của cùng SOC ở level khác hoặc bộ kỹ năng mặc định (`PROG`, `TEST`, `ARCH`), đảm bảo phiên phỏng vấn 100% không bao giờ bị crash.
+### [2026-09-06] Hoàn thành Bước 3.1: Xây Dựng HybridMappingService
+- Đã tạo `server/src/modules/interview-prep/taxonomy/hybrid-mapping.types.ts` định nghĩa kiểu dữ liệu `ResolvedSessionSkill` và `ResolveSkillsParams`.
+- Đã triển khai `server/src/modules/interview-prep/taxonomy/hybrid-mapping.service.ts`:
+  - Tầng 1: Tra cứu bản ghi curated mapping trong bảng `onet_sfia_mappings` theo `(onetSocCode, targetSfiaLevel)`.
+  - Tầng 2: Fallback kích hoạt AI Gateway phân tích JD đối chiếu 147 SFIA skills và lưu cache vào `onet_sfia_mappings` (`source = 'ai_inferred'`).
+  - Tầng 3: Safe resilience fallback lấy mapping của cùng SOC ở level khác hoặc bộ kỹ năng mặc định (`PROG`, `TEST`, `ARCH`), đảm bảo phiên phỏng vấn 100% không bao giờ bị crash.
+  - Phiên HR: Tự động ánh xạ 4 kỹ năng hành vi/văn hóa SFIA chuẩn (`ETMG`, `REFM`, `PDSV`, `OCDV`) với `techContext = []`.
+  - Thuật toán `distributeTechContext` phân loại thông minh công nghệ: CSDL -> `DBDS`, Dev/Framework -> `PROG`, DevOps/Cloud -> `ITOP`.
+- Đã đóng gói vào `TaxonomyModule` và xuất qua `InterviewPrepModule`.
+- Viết bộ unit test `server/src/modules/interview-prep/taxonomy/hybrid-mapping.service.spec.ts`: Đạt **7/7 tests passed 100%**.
+- Kiểm tra `npm run test:arch`: **3/3 tests passed 100%**.
+- Kiểm tra `npm run build`: **Thành công 100% (Exit code 0)**.
+- **KẾT LUẬN:** Bước 3.1 đã hoàn thành an toàn tuyệt đối. Sẵn sàng chuyển sang Bước 3.2: Cập Nhật `SaveJobDescriptionService`.
 
+### [2026-09-06] Hoàn thành Bước 3.2: Cập Nhật SaveJobDescriptionService
+- Đã nâng cấp `SavedJobDescriptionService` kết nối với `IOnetFacade` (`ONET_FACADE_TOKEN`):
+  - Tự động tìm kiếm mã nghề O*NET `onetSocCode` và chức danh chuẩn `onetOccupationTitle` qua `findOccupationByTitle`.
+  - Tự động trích xuất và chuẩn hóa công cụ phần mềm qua `getToolsAndTechnology(socCode)` và lưu vào `normalizedTechStack: string[]`.
+  - Xây dựng hàm helper `inferTargetSfiaLevel`: Xử lý cả tiếng Anh và tiếng Việt (loại bỏ dấu tiếng Việt qua hàm `removeVietnameseTones` chuẩn Unicode NFD) để nhận diện thâm niên chính xác tuyệt đối (Lead/Architect -> Level 5, Senior -> Level 4, Middle -> Level 3, Junior/Fresher -> Level 2, Intern -> Level 1).
+- Đã cập nhật `JobDescriptionModule` import `OnetModule` và `PrismaModule`.
+- Viết bộ unit test `server/src/modules/interview-prep/job-description/saved-job-description.service.spec.ts`: Đạt **8/8 tests passed 100%**.
+- Kiểm tra `npm run test:arch`: **3/3 tests passed 100%**.
+- Kiểm tra `npm run build`: **Thành công 100% (Exit code 0)**.
+- **KẾT LUẬN:** Bước 3.2 đã hoàn tất 100%. Sẵn sàng chuyển sang Bước 3.3: Tích Hợp Vào Asynchronous Outbox Worker & Session Lifecycle.
+
+### [2026-09-06] Hoàn thành Bước 3.3: Tích Hợp Vào Asynchronous Outbox Worker & Session Lifecycle (Kết thúc Giai Đoạn 3)
+- Đã nâng cấp `CreateInterviewSession` và `SessionModule`:
+  - Tự động làm giàu On-the-fly cho các Job Description cũ khi người dùng tạo phiên phỏng vấn (tự chuẩn hóa O*NET SOC và suy luận SFIA Level nếu thiếu).
+  - Tự động sao chép `onetSocCode` và `targetSfiaLevel` sang bản ghi `interview_sessions` mới.
+  - Chuyển tiếp các trường này sang Transactional Outbox Worker (`question-generation`) để xử lý bất đồng bộ, giữ nguyên thời gian phản hồi API `POST /sessions` dưới 100ms.
+- Đã cập nhật `TechnicalInterviewStrategy` và `HrInterviewStrategy` chuyển tiếp `onetSocCode` và `targetSfiaLevel` trong payload.
+- Đã nâng cấp `GenerateSessionQuestions` và `QuestionGenerationModule`:
+  - Nạp `TaxonomyModule` và inject `HybridMappingService`.
+  - Khởi tạo danh sách `session_skills` (Bản hợp đồng đánh giá duy nhất của phiên) trong CSDL PostgreSQL trước khi tiến hành cấp phát câu hỏi.
+- Đã chạy kiểm tra thực tế trên CSDL Live PostgreSQL qua script độc lập:
+  - Tạo Job Description: "Senior Full Stack Engineer" -> Tự động nhận diện O*NET SOC `15-1252.00`, SFIA Level 4 và công nghệ chuẩn hóa.
+  - Phân giải kỹ năng SFIA: Thu được 4 kỹ năng (`PROG`, `DBDS`, `DESN`, `ARCH`) phân bổ công nghệ chuẩn xác.
+  - Ghi nhận thành công 4 bản ghi `session_skills` vào CSDL và dọn dẹp sạch sẽ dữ liệu thử nghiệm.
+- Đã chạy toàn bộ test suites backend: **69/69 test suites passed 100% (540/540 unit & integration tests)**.
+- Kiểm tra `npm run test:arch`: **3/3 tests passed 100%** (Tuân thủ nghiêm ngặt Clean Architecture 3 lớp và ranh giới Bounded Contexts).
+- Kiểm tra `npm run build`: **Thành công 100% (Exit code 0)**.
+- **KẾT LUẬN:** Giai đoạn 3 đã chính thức **HOÀN THÀNH 100% (3/3 bước)** với chất lượng và độ ổn định cao nhất, không có nợ kỹ thuật (zero tech debt). Hệ thống sẵn sàng chuyển sang Giai đoạn 4: Cấp Phát Câu Hỏi Theo `session_skills` & Tiêu Chí Nhị Phân.

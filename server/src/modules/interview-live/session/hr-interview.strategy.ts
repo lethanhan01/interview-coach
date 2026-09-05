@@ -27,6 +27,8 @@ export class HrInterviewStrategy implements IInterviewModeStrategy {
       language: session.language,
       totalQuestions: session.numQuestions,
       durationMin: session.durationMin,
+      onetSocCode: session.onetSocCode,
+      targetSfiaLevel: session.targetSfiaLevel,
     };
   }
 

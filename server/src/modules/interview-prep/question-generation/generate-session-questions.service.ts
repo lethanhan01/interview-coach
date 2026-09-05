@@ -24,6 +24,7 @@ import type {
 import { QuestionBankService } from '../question-bank/question-bank.service';
 import type { FallbackQuestion } from '../question-bank/question-bank.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
+import { HybridMappingService } from '../taxonomy/hybrid-mapping.service';
 import {
   calculateEstimatedTimeMin,
   normalizeGeneratedQuestionMetadata,
@@ -42,6 +43,9 @@ export interface QuestionGenerationJobDto {
   language: string;
   totalQuestions: number;
   durationMin: number;
+  onetSocCode?: string | null;
+  targetSfiaLevel?: number | null;
+  normalizedTechStack?: string[];
 }
 
 type MergedQuestionRow = {
@@ -70,11 +74,20 @@ export class GenerateSessionQuestions {
     private readonly factory: PipelineStrategyFactory,
     private readonly questionBankService: QuestionBankService,
     private readonly questionCriteria: QuestionCriteriaService,
+    private readonly hybridMappingService: HybridMappingService,
     @Inject(AI_GATEWAY_TOKEN)
     private readonly openai: IAIGateway,
   ) {}
 
   async execute(job: QuestionGenerationJobDto): Promise<void> {
+    try {
+      await this.initSessionSkills(job);
+    } catch (skillError) {
+      this.logger.warn(
+        `Failed to initialize session_skills for session ${job.sessionId}: ${skillError instanceof Error ? skillError.message : String(skillError)}`,
+      );
+    }
+
     const outputLanguage = resolveOutputLanguage(job.language);
     const aiCount = Math.round(job.totalQuestions / AI_QUESTION_EVERY_N);
 
@@ -324,4 +337,76 @@ export class GenerateSessionQuestions {
     }
     return normalized;
   }
+
+  private async initSessionSkills(
+    job: QuestionGenerationJobDto,
+  ): Promise<void> {
+    let socCode = job.onetSocCode;
+    let targetLevel = job.targetSfiaLevel;
+    let normalizedTechStack = job.normalizedTechStack;
+
+    if (!socCode || !targetLevel || !normalizedTechStack) {
+      const session = await this.prisma.interviewSession.findUnique({
+        where: { id: job.sessionId },
+        select: {
+          onetSocCode: true,
+          targetSfiaLevel: true,
+          savedJobDescription: {
+            select: {
+              onetSocCode: true,
+              targetSfiaLevel: true,
+              normalizedTechStack: true,
+              techStack: true,
+            },
+          },
+        },
+      });
+
+      if (session) {
+        socCode =
+          socCode ||
+          session.onetSocCode ||
+          session.savedJobDescription?.onetSocCode;
+        targetLevel =
+          targetLevel ||
+          session.targetSfiaLevel ||
+          session.savedJobDescription?.targetSfiaLevel;
+        if (!normalizedTechStack || normalizedTechStack.length === 0) {
+          normalizedTechStack =
+            (session.savedJobDescription?.normalizedTechStack as string[]) ||
+            session.savedJobDescription?.techStack ||
+            [];
+        }
+      }
+    }
+
+    const resolved =
+      await this.hybridMappingService.resolveSkillsForSession({
+        socCode,
+        targetLevel,
+        jdText: job.jobDescriptionText,
+        normalizedTechStack: normalizedTechStack || [],
+        sessionType: job.sessionType,
+      });
+
+    if (resolved.length > 0) {
+      await this.prisma.sessionSkill.createMany({
+        data: resolved.map((s, index) => ({
+          sessionId: job.sessionId,
+          skillCode: s.skillCode,
+          techContext: s.techContext,
+          targetLevel: s.targetLevel,
+          weight: s.weight,
+          source: s.source,
+          priority: index + 1,
+        })),
+        skipDuplicates: true,
+      });
+
+      this.logger.log(
+        `Initialized ${resolved.length} session_skills for session ${job.sessionId}: [${resolved.map((s) => s.skillCode).join(', ')}]`,
+      );
+    }
+  }
 }
+

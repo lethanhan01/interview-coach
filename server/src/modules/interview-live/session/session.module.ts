@@ -13,6 +13,7 @@ import {
 import { AuthModule } from '@modules/auth/auth.module';
 import { EvaluationModule } from '@modules/interview-assessment/evaluation/evaluation.module';
 import { WorkflowModule } from '@infra/workflow/workflow.module';
+import { OnetModule } from '@modules/onet/onet.module';
 
 import { HrInterviewStrategy } from './hr-interview.strategy';
 import { TechnicalInterviewStrategy } from './technical-interview.strategy';
@@ -23,6 +24,7 @@ import { SessionStrategyRegistry } from './session-strategy.registry';
     AuthModule,
     EvaluationModule,
     WorkflowModule,
+    OnetModule,
     BullModule.registerQueue({
       name: QUESTION_GEN_QUEUE,
       defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[QUESTION_GEN_QUEUE],

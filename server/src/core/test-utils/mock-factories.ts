@@ -192,9 +192,16 @@ export const createMockPrismaService = () => {
       findFirst: jest.fn().mockResolvedValue({
         id: 'sjd-12345678-1234-4234-8234-123456789012',
         userId: 'user-abc',
+        onetSocCode: '15-1252.00',
+        targetSfiaLevel: 3,
+        normalizedTechStack: ['Node.js', 'PostgreSQL'],
       }),
       create: jest.fn().mockResolvedValue({ id: 'sjd-123', userId: 'user-abc' }),
       update: jest.fn().mockResolvedValue({ id: 'sjd-123' }),
+    },
+    onetSfiaMapping: {
+      findMany: jest.fn().mockResolvedValue([]),
+      createMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
     sessionReport: {
       findMany: jest.fn().mockResolvedValue([]),

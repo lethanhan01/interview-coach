@@ -7,6 +7,7 @@ import { AssessmentFacade } from '@modules/interview-assessment/contracts';
 import { PipelineStrategyFactory } from '@infra/ai/pipelines/pipeline-strategy.factory';
 import { QuestionBankService } from '../question-bank/question-bank.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
+import { HybridMappingService } from '../taxonomy/hybrid-mapping.service';
 import { OpenAIGateway } from '@infra/ai/openai.gateway';
 import { AI_GATEWAY_TOKEN } from '@infra/ai/ai-gateway.interface';
 import {
@@ -83,8 +84,8 @@ describe('QuestionGenerationProcessor', () => {
     ],
   };
 
-  const makeJob = (data = BASE_JOB_DATA) =>
-    ({ data }) as Job<typeof BASE_JOB_DATA>;
+  const makeJob = (data?: Partial<typeof BASE_JOB_DATA & { onetSocCode?: string; targetSfiaLevel?: number; normalizedTechStack?: string[] }>) =>
+    ({ data: { ...BASE_JOB_DATA, ...data } }) as Job<any>;
 
   const makeGeneratedQuestions = (count: number) =>
     Array.from({ length: count }, (_, index) => ({
@@ -134,6 +135,29 @@ describe('QuestionGenerationProcessor', () => {
         { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
         { provide: AI_GATEWAY_TOKEN, useValue: mockOpenAI },
         { provide: OpenAIGateway, useValue: mockOpenAI },
+        {
+          provide: HybridMappingService,
+          useValue: {
+            resolveSkillsForSession: jest.fn().mockResolvedValue([
+              {
+                skillCode: 'PROG',
+                targetLevel: 3,
+                weight: 1.5,
+                isCore: true,
+                source: 'curated',
+                techContext: ['Node.js'],
+              },
+              {
+                skillCode: 'TEST',
+                targetLevel: 3,
+                weight: 1.0,
+                isCore: true,
+                source: 'curated',
+                techContext: ['Jest'],
+              },
+            ]),
+          },
+        },
       ],
     }).compile();
 
@@ -769,6 +793,47 @@ describe('QuestionGenerationProcessor', () => {
         data: { status: 'error' },
       });
       expect(mockPrisma.sessionQuestion.createMany).not.toHaveBeenCalled();
+    });
+
+    it('khởi tạo các bản ghi session_skills cho session trước khi cấp phát câu hỏi', async () => {
+      const mockStrategy = {
+        generateQuestions: jest.fn().mockResolvedValue([
+          {
+            text: 'Mô tả kinh nghiệm lập trình',
+            category: 'technical',
+            competencyDomains: ['TD1'],
+            difficulty: 2,
+          },
+        ]),
+      };
+      mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
+      mockFactory.getStrategy.mockReturnValue(mockStrategy);
+      mockQuestionBankService.selectFallbackQuestions.mockResolvedValue(
+        makeFallbackQuestions(4),
+      );
+      mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 5 });
+      mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
+      mockSse.emit.mockResolvedValue(undefined);
+
+      await processor.process(
+        makeJob({
+          sessionType: 'technical',
+          onetSocCode: '15-1252.00',
+          targetSfiaLevel: 3,
+          normalizedTechStack: ['Node.js', 'PostgreSQL'],
+        }),
+      );
+
+      expect(mockPrisma.sessionSkill.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            sessionId: 'session-123',
+            skillCode: 'PROG',
+            techContext: ['Node.js'],
+          }),
+        ]),
+        skipDuplicates: true,
+      });
     });
   });
 });

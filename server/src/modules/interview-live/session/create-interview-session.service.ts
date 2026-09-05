@@ -1,6 +1,6 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Inject, Injectable, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { InterviewSession } from '@prisma/client';
+import type { InterviewSession, SavedJobDescription } from '@prisma/client';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
@@ -9,6 +9,11 @@ import { CreateSessionDto } from './dto/create-session.dto';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 import { WorkflowService } from '@infra/workflow/workflow.service';
 import { SessionStrategyRegistry } from './session-strategy.registry';
+import {
+  type IOnetFacade,
+  ONET_FACADE_TOKEN,
+} from '@modules/onet/contracts';
+import { inferTargetSfiaLevel } from '@modules/interview-prep/contracts';
 
 @Injectable()
 export class CreateInterviewSession {
@@ -19,6 +24,8 @@ export class CreateInterviewSession {
     private readonly workflow: WorkflowService,
     private readonly dispatcher: WorkflowDispatcher,
     private readonly strategyRegistry: SessionStrategyRegistry,
+    @Inject(ONET_FACADE_TOKEN)
+    private readonly onetFacade: IOnetFacade,
     config: ConfigService,
   ) {
     const configuredLimit = Number(
@@ -53,14 +60,15 @@ export class CreateInterviewSession {
     const strategy = this.strategyRegistry.getStrategy(dto.sessionType);
     strategy.validateSessionConfig?.(dto);
 
-    const savedJobDescriptionId = await this.resolveSavedJobDescriptionId(
+    const savedJobDescription = await this.resolveAndEnrichSavedJobDescription(
       userId,
       dto.savedJobDescriptionId,
     );
+
     const session = await this.prisma.$transaction(async (tx) => {
       const created = await tx.interviewSession.create({
         data: {
-          savedJobDescriptionId,
+          savedJobDescriptionId: savedJobDescription.id,
           jobDescription: dto.jobDescription,
           sessionType: dto.sessionType,
           numQuestions: dto.numQuestions ?? 5,
@@ -68,18 +76,28 @@ export class CreateInterviewSession {
           contextPackId: dto.contextPack,
           sfiaVersion: '9.0.0',
           status: 'generating',
+          onetSocCode: savedJobDescription.onetSocCode,
+          targetSfiaLevel: savedJobDescription.targetSfiaLevel,
         },
       });
+
       const payload = strategy.buildQuestionGenerationPayload(
         created,
         dto,
         '9.0.0',
       );
+
+      payload.onetSocCode = created.onetSocCode;
+      payload.targetSfiaLevel = created.targetSfiaLevel;
+      payload.normalizedTechStack =
+        (savedJobDescription.normalizedTechStack as string[]) ?? [];
+
       await this.workflow.enqueueInTransaction(tx, {
         commandType: 'question-generation',
         sessionId: created.id,
         payload,
       });
+
       return created;
     });
 
@@ -87,21 +105,67 @@ export class CreateInterviewSession {
     return session;
   }
 
-  private async resolveSavedJobDescriptionId(
+  private async resolveAndEnrichSavedJobDescription(
     userId: string,
     savedJobDescriptionId: string,
-  ): Promise<string> {
+  ): Promise<SavedJobDescription> {
     const savedJobDescription = await this.prisma.savedJobDescription.findFirst(
       {
         where: { id: savedJobDescriptionId, userId, deletedAt: null },
       },
     );
-    if (!savedJobDescription)
+    if (!savedJobDescription) {
       throw new InterviewAIException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
+    if (savedJobDescription.onetSocCode && savedJobDescription.targetSfiaLevel) {
+      await this.prisma.savedJobDescription.update({
+        where: { id: savedJobDescriptionId },
+        data: { lastUsedAt: new Date() },
+      });
+      return savedJobDescription;
+    }
+
+    let onetSocCode = savedJobDescription.onetSocCode;
+    let targetSfiaLevel = savedJobDescription.targetSfiaLevel;
+    let normalizedTechStack = savedJobDescription.normalizedTechStack as
+      | string[]
+      | null;
+
+    try {
+      const occupation = await this.onetFacade.findOccupationByTitle(
+        savedJobDescription.jobTitle,
+      );
+      onetSocCode = occupation ? occupation.socCode : '15-1252.00';
+    } catch {
+      onetSocCode = onetSocCode || '15-1252.00';
+    }
+
+    targetSfiaLevel = inferTargetSfiaLevel(
+      savedJobDescription.level,
+      savedJobDescription.jobTitle,
+      savedJobDescription.requirements,
+    );
+
+    if (!normalizedTechStack || normalizedTechStack.length === 0) {
+      normalizedTechStack = savedJobDescription.techStack ?? [];
+    }
+
     await this.prisma.savedJobDescription.update({
       where: { id: savedJobDescriptionId },
-      data: { lastUsedAt: new Date() },
+      data: {
+        onetSocCode,
+        targetSfiaLevel,
+        normalizedTechStack,
+        lastUsedAt: new Date(),
+      },
     });
-    return savedJobDescriptionId;
+
+    return {
+      ...savedJobDescription,
+      onetSocCode,
+      targetSfiaLevel,
+      normalizedTechStack,
+    };
   }
 }

@@ -1,11 +1,63 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { SavedJobDescription } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
+import {
+  type IOnetFacade,
+  ONET_FACADE_TOKEN,
+} from '@modules/onet/contracts';
 import { SaveJobDescriptionDto } from './dto/save-job-description.dto';
+
+function removeVietnameseTones(str: string): string {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
+    .toLowerCase();
+}
+
+export function inferTargetSfiaLevel(
+  level?: string | null,
+  jobTitle?: string | null,
+  jobContent?: string | null,
+): number {
+  const combined = removeVietnameseTones(
+    `${level || ''} ${jobTitle || ''} ${jobContent || ''}`,
+  );
+
+  // Lead / Principal / Architect / Director -> Level 5
+  if (
+    /(lead|principal|architect|director|truong nhom|kien truc su|team lead|tech lead)/i.test(
+      combined,
+    )
+  ) {
+    return 5;
+  }
+  // Senior -> Level 4
+  if (/(senior|sr\b|chuyen vien cao cap|chuyen vien chinh)/i.test(combined)) {
+    return 4;
+  }
+  // Junior / Fresher -> Level 2
+  if (/(junior|fresher|associate|moi tot nghiep)/i.test(combined)) {
+    return 2;
+  }
+  // Intern -> Level 1
+  if (/(intern|thuc tap|sinh vien)/i.test(combined)) {
+    return 1;
+  }
+  // Middle / Default -> Level 3
+  return 3;
+}
 
 @Injectable()
 export class SavedJobDescriptionService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(SavedJobDescriptionService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(ONET_FACADE_TOKEN)
+    private readonly onetFacade: IOnetFacade,
+  ) {}
 
   findAll(userId: string): Promise<SavedJobDescription[]> {
     return this.prisma.savedJobDescription.findMany({
@@ -19,6 +71,15 @@ export class SavedJobDescriptionService {
     dto: SaveJobDescriptionDto,
   ): Promise<SavedJobDescription> {
     const data = this.normalize(dto);
+
+    // Chuẩn hóa O*NET SOC và công nghệ
+    const onetData = await this.enrichOnetAndSfiaMetadata(
+      data.jobTitle,
+      data.level,
+      data.requirements,
+      data.techStack,
+    );
+
     const existing = await this.prisma.savedJobDescription.findFirst({
       where: {
         userId,
@@ -29,16 +90,88 @@ export class SavedJobDescriptionService {
     });
 
     const lastUsedAt = new Date();
+    const fullPayload = {
+      ...data,
+      ...onetData,
+      lastUsedAt,
+    };
+
     if (existing) {
       return this.prisma.savedJobDescription.update({
         where: { id: existing.id },
-        data: { ...data, lastUsedAt },
+        data: fullPayload,
       });
     }
 
     return this.prisma.savedJobDescription.create({
-      data: { ...data, userId, lastUsedAt },
+      data: {
+        ...fullPayload,
+        userId,
+      },
     });
+  }
+
+  private async enrichOnetAndSfiaMetadata(
+    jobTitle: string,
+    level?: string | null,
+    requirements?: string | null,
+    rawTechStack: string[] = [],
+  ): Promise<{
+    onetSocCode: string;
+    onetOccupationTitle: string;
+    targetSfiaLevel: number;
+    normalizedTechStack: string[];
+  }> {
+    let onetSocCode = '15-1252.00';
+    let onetOccupationTitle = 'Software Developers';
+    let normalizedTechStack: string[] = [...rawTechStack];
+
+    try {
+      const occupation = await this.onetFacade.findOccupationByTitle(jobTitle);
+      if (occupation) {
+        onetSocCode = occupation.socCode;
+        onetOccupationTitle = occupation.title;
+
+        const onetTools = await this.onetFacade.getToolsAndTechnology(
+          occupation.socCode,
+        );
+
+        if (onetTools.length > 0) {
+          const toolMap = new Map(
+            onetTools.map((t) => [t.example.toLowerCase(), t.example]),
+          );
+
+          const matchedTech = new Set<string>();
+          for (const item of rawTechStack) {
+            const canonical = toolMap.get(item.toLowerCase());
+            matchedTech.add(canonical || item);
+          }
+
+          if (matchedTech.size === 0) {
+            const hotTech = onetTools
+              .filter((t) => t.isHotTechnology)
+              .slice(0, 5)
+              .map((t) => t.example);
+            hotTech.forEach((t) => matchedTech.add(t));
+          }
+
+          normalizedTechStack = Array.from(matchedTech);
+        }
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Failed to enrich O*NET metadata for job title "${jobTitle}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+
+    const targetSfiaLevel = inferTargetSfiaLevel(level, jobTitle, requirements);
+
+    return {
+      onetSocCode,
+      onetOccupationTitle,
+      targetSfiaLevel,
+      normalizedTechStack,
+    };
   }
 
   private normalize(dto: SaveJobDescriptionDto) {
@@ -51,7 +184,7 @@ export class SavedJobDescriptionService {
       companyName: dto.companyName.trim(),
       companyWebsite: trimOptional(dto.companyWebsite),
       jobTitle: dto.jobTitle.trim(),
-      level: dto.level.trim(),
+      level: dto.level?.trim() || null,
       headcount: trimOptional(dto.headcount),
       location: trimOptional(dto.location),
       requirements: dto.requirements.trim(),
