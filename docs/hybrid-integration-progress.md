@@ -13,7 +13,7 @@
 
 | Giai Đoạn | Nội Dung Công Việc | Trạng Thái | Hoàn Thành |
 | :--- | :--- | :--- | :--- |
-| **Giai đoạn 1** | Database Add-only Migration & Làm Giàu Dữ Liệu QuestionBank | 🟡 Đang thực hiện | 1 / 4 bước |
+| **Giai đoạn 1** | Database Add-only Migration & Làm Giàu Dữ Liệu QuestionBank | 🟢 Đã hoàn thành | 4 / 4 bước |
 | **Giai đoạn 2** | Xây Dựng 2 Bounded Contexts `SfiaModule` & `OnetModule` | ⚪ Chưa bắt đầu | 0 / 3 bước |
 | **Giai đoạn 3** | Cầu Nối Hybrid & Tích Hợp JD / Session Lifecycle | ⚪ Chưa bắt đầu | 0 / 3 bước |
 | **Giai đoạn 4** | Cấp Phát Câu Hỏi Theo `session_skills` & Tiêu Chí Nhị Phân | ⚪ Chưa bắt đầu | 0 / 2 bước |
@@ -43,20 +43,23 @@
   - [x] Xác nhận biên dịch `npm run build` và `npm run test:arch` thành công 100%.
   - [x] Cập nhật tài liệu `docs/Design/DetailedDesign/database-design/Database.md`.
 
-- [ ] **Bước 1.2: Viết & Chạy Script Làm Giàu QuestionBank Hiện Có**
-  - [ ] Viết script `server/scripts/enrich-existing-question-bank.ts`.
-  - [ ] Trích xuất SFIA skill & level từ các câu hỏi hiện có.
-  - [ ] Gán mã O*NET SOC phù hợp và sinh bộ tiêu chí nhị phân 2 chiều (`core`, `seniority`) vào `question_criteria`.
-  - [ ] Xác nhận toàn bộ câu hỏi trong Question Bank đã có criteria nhị phân.
+- [x] **Bước 1.2: Viết & Chạy Script Làm Giàu QuestionBank Hiện Có**
+  - [x] Viết script `server/scripts/enrich-existing-question-bank.ts`.
+  - [x] Trích xuất SFIA skill & level từ 359 câu hỏi hiện có thông qua bảng trung gian cũ `question_bank_skill_levels`.
+  - [x] Gán mã O*NET SOC phù hợp (`15-1252.00`, `15-1243.00`, `15-1244.00`, `15-1253.00`, `15-1212.00`).
+  - [x] Sinh bộ 718 tiêu chí nhị phân 2 chiều (`core`, `seniority`) vào bảng `question_criteria` (mỗi câu hỏi đúng 1 `core` và 1 `seniority`).
+  - [x] Chạy script kiểm tra độc lập `server/scripts/verify-step1-2.ts`: Nghiệm thu đạt 100% (359/359 câu hỏi đã gắn nhãn đầy đủ, 718/718 tiêu chí hợp lệ).
 
-- [ ] **Bước 1.3: Viết & Chạy Script Seed Cầu Nối `onet_sfia_mappings` Theo Cấp Bậc**
-  - [ ] Viết script `server/scripts/seed-onet-sfia-mappings.ts`.
-  - [ ] Seed ma trận các vị trí IT phổ biến theo các cấp độ Level 2, 3, 4.
-  - [ ] Chạy script và verify dữ liệu trong database.
+- [x] **Bước 1.3: Viết & Chạy Script Seed Cầu Nối `onet_sfia_mappings` Theo Cấp Bậc**
+  - [x] Viết script `server/scripts/seed-onet-sfia-mappings.ts`.
+  - [x] Seed ma trận các vị trí IT cốt lõi (`15-1252.00`, `15-1244.00`, `15-1243.00`, `15-1253.00`, `15-1212.00`) theo các cấp độ Level 2, 3, 4 (tổng cộng 32 bản ghi).
+  - [x] Chạy script kiểm tra độc lập `server/scripts/verify-step1-3.ts`: Nghiệm thu đạt 100% (32 bản ghi phủ đủ các level và ngành nghề).
 
-- [ ] **Bước 1.4: Kiểm Tra Toàn Vẹn Dữ Liệu Add-only**
-  - [ ] Viết / chạy script kiểm tra toàn vẹn dữ liệu.
-  - [ ] Kiểm tra `npm run build` và `npm run test:arch`.
+- [x] **Bước 1.4: Kiểm Tra Toàn Vẹn Dữ Liệu Add-only**
+  - [x] Viết và chạy script kiểm tra toàn diện `server/scripts/verify-phase1-integrity.ts`: 100% qua (359 câu hỏi, 718 tiêu chí, 32 mappings, 7 bảng cũ bảo toàn).
+  - [x] Kiểm tra `npm run build`: Thành công (Exit code 0).
+  - [x] Kiểm tra `npm run test:arch`: Thành công (3/3 tests passed).
+  - [x] Dọn dẹp sạch sẽ các script inspect nháp tạm thời.
 
 ---
 
@@ -96,3 +99,28 @@
 - Đã chạy `npm run prisma:generate` & `npm run build`: Thành công (Exit code 0).
 - Đã chạy `npm run test:arch`: Thành công (3/3 tests passed).
 - Khởi tạo file theo dõi tiến độ `docs/hybrid-integration-progress.md`.
+
+### [2026-09-06] Hoàn thành Bước 1.2: Làm Giàu QuestionBank Hiện Có
+- Viết và thực thi thành công `server/scripts/enrich-existing-question-bank.ts`.
+- Đã cập nhật 359/359 câu hỏi trong `public.question_bank` với đầy đủ `onet_soc_code`, `sfia_skill_code` và `target_sfia_level`.
+- Đã sinh 718 tiêu chí nhị phân chuẩn hóa 2 chiều (`core`, `seniority`) vào bảng `public.question_criteria`.
+- Chạy kiểm tra nghiệm thu độc lập `server/scripts/verify-step1-2.ts`: Đạt 100% (không có câu hỏi thiếu nhãn, tỷ lệ tiêu chí 1:1 cân đối giữa core và seniority).
+
+### [2026-09-06] Hoàn thành Bước 1.3: Seed Cầu Nối onet_sfia_mappings Theo Cấp Bậc
+- Viết và thực thi thành công `server/scripts/seed-onet-sfia-mappings.ts`.
+- Đã seed 32 bản ghi ánh xạ giữa 5 nhóm nghề IT cốt lõi (`15-1252.00`, `15-1244.00`, `15-1243.00`, `15-1253.00`, `15-1212.00`) và các kỹ năng SFIA theo các cấp độ Level 2, 3, 4.
+- Chạy kiểm tra nghiệm thu độc lập `server/scripts/verify-step1-3.ts`: Đạt 100% (đầy đủ 32 bản ghi, trọng số weight và is_core chính xác).
+
+### [2026-09-06] Hoàn thành Bước 1.4: Kiểm Tra Toàn Vẹn & Nghiệm Thu Giai Đoạn 1
+- Viết và thực thi thành công script kiểm tra toàn diện `server/scripts/verify-phase1-integrity.ts`.
+- 100% câu hỏi (359/359) trong `public.question_bank` đã gắn nhãn O*NET, SFIA và Level.
+- 100% tiêu chí (718/718) trong `public.question_criteria` phân bổ cân bằng 1:1 giữa `core` (359) và `seniority` (359).
+- Bảng `public.onet_sfia_mappings` có đủ 32 bản ghi phủ kín các cấp độ 2, 3, 4 cho 5 mã nghề IT.
+- Toàn bộ 7 bảng cũ được bảo toàn nguyên vẹn 100% (Add-only strategy).
+- Kiểm tra `npm run build`: Thành công (Exit code 0).
+- Kiểm tra `npm run test:arch`: Thành công (3/3 tests passed).
+- Dọn dẹp an toàn các file kiểm tra tạm thời.
+- **KẾT LUẬN:** Giai đoạn 1 đã hoàn tất 100% (4/4 bước) đạt chuẩn chất lượng và an toàn tuyệt đối.
+
+
+
