@@ -14,7 +14,7 @@
 | Giai Đoạn | Nội Dung Công Việc | Trạng Thái | Hoàn Thành |
 | :--- | :--- | :--- | :--- |
 | **Giai đoạn 1** | Database Add-only Migration & Làm Giàu Dữ Liệu QuestionBank | 🟢 Đã hoàn thành | 4 / 4 bước |
-| **Giai đoạn 2** | Xây Dựng 2 Bounded Contexts `SfiaModule` & `OnetModule` | 🟡 Đang thực hiện | 1 / 3 bước |
+| **Giai đoạn 2** | Xây Dựng 2 Bounded Contexts `SfiaModule` & `OnetModule` | 🟢 Đã hoàn thành | 3 / 3 bước |
 | **Giai đoạn 3** | Cầu Nối Hybrid & Tích Hợp JD / Session Lifecycle | ⚪ Chưa bắt đầu | 0 / 3 bước |
 | **Giai đoạn 4** | Cấp Phát Câu Hỏi Theo `session_skills` & Tiêu Chí Nhị Phân | ⚪ Chưa bắt đầu | 0 / 2 bước |
 | **Giai đoạn 5** | Chấm Điểm Tất Định, Báo Cáo Năng Lực & Dọn Dẹp Schema Cũ | ⚪ Chưa bắt đầu | 0 / 5 bước |
@@ -53,7 +53,7 @@
 - [x] **Bước 1.3: Viết & Chạy Script Seed Cầu Nối `onet_sfia_mappings` Theo Cấp Bậc**
   - [x] Viết script `server/scripts/seed-onet-sfia-mappings.ts`.
   - [x] Seed ma trận các vị trí IT cốt lõi (`15-1252.00`, `15-1244.00`, `15-1243.00`, `15-1253.00`, `15-1212.00`) theo các cấp độ Level 2, 3, 4 (tổng cộng 32 bản ghi).
-  - [x] Chạy script kiểm tra độc lập `server/scripts/verify-step1-3.ts`: Nghiệm thu đạt 100% (32 bản ghi phủ đủ các level và ngành nghề).
+  - [x] Chạy script kiểm tra độc lập `server/scripts/verify-step1-3.ts`: Nghiệm thu đạt 100% (đầy đủ 32 bản ghi phủ đủ các level và ngành nghề).
 
 - [x] **Bước 1.4: Kiểm Tra Toàn Vẹn Dữ Liệu Add-only**
   - [x] Viết và chạy script kiểm tra toàn diện `server/scripts/verify-phase1-integrity.ts`: 100% qua (359 câu hỏi, 718 tiêu chí, 32 mappings, 7 bảng cũ bảo toàn).
@@ -72,8 +72,23 @@
   - [x] Viết unit test `sfia.facade.spec.ts` kiểm tra cache hit, case-insensitivity, xử lý ngoại lệ và thời gian phản hồi ~0ms (8/8 tests passed).
   - [x] Cập nhật `server/src/core/architecture.spec.ts` bổ sung `'sfia'` và `'onet'` vào `BOUNDED_CONTEXTS`.
   - [x] Xác nhận `npm run test:arch` (3/3 tests passed) và `npm run build` (Exit code 0).
-- [ ] **Bước 2.2: Bounded Context `OnetModule`**
-- [ ] **Bước 2.3: Đăng Ký Modules & Dọn Dẹp Thư Mục Cũ**
+- [x] **Bước 2.2: Bounded Context `OnetModule`**
+  - [x] Tạo `server/src/modules/onet/contracts/onet.facade.interface.ts`, `onet.dto.ts`, và `index.ts`.
+  - [x] Tạo các chỉ mục tối ưu hóa tốc độ truy vấn: GIN Trigram index trên `onet.job_titles(job_title)`, BTree index trên `onet.job_titles(onetsoc_code)` và `onet.software_skills(onetsoc_code)` qua script `server/scripts/create-onet-indexes.ts`.
+  - [x] Viết `onet.service.ts`: Tìm kiếm chính xác trên `onet.occupation_data` và tìm kiếm mờ kết hợp `similarity` cùng `word_similarity` trên 54.269 alternate job titles trong `onet.job_titles`. Xử lý chính xác các chức danh có giải nghĩa trong ngoặc đơn (VD: `DevOps Engineer (Development Operations Engineer)`).
+  - [x] Trích xuất danh sách Hot Technologies và công nghệ in-demand từ `onet.software_skills`.
+  - [x] Viết `onet.facade.ts` hiện thực hóa `IOnetFacade` và `server/src/modules/onet/onet.module.ts`.
+  - [x] Viết bộ unit test `server/src/modules/onet/onet.facade.spec.ts`: Đạt 14/14 tests passed 100% (kiểm tra exact match, fuzzy alternate match, fallback occupation match, non-existent titles, SOC lookup, tools & tech extraction, error resilience).
+  - [x] Xác nhận nghiệm thu thực tế với Live Database: Tìm kiếm "Software Developers" (exact), "Full Stack Developer" (fuzzy), "DevOps Engineer" (word_similarity), tra cứu mã SOC và 430 công cụ phần mềm.
+  - [x] Xác nhận `npm run test:arch` (3/3 tests passed) và `npm run build` (Exit code 0).
+- [x] **Bước 2.3: Đăng Ký Modules & Dọn Dẹp Thư Mục Cũ**
+  - [x] Đăng ký `SfiaModule` và `OnetModule` trực tiếp vào `server/src/app.module.ts` dưới nhóm Bounded Contexts.
+  - [x] Dọn dẹp hoàn toàn thư mục cũ `server/src/modules/interview-prep/sfia/` (bao gồm `sfia-mapping.service.ts`, `sfia-taxonomy.service.ts`, constants và DTOs cũ).
+  - [x] Cập nhật `server/src/modules/interview-prep/interview-prep.module.ts` tách biệt độc lập, không còn phụ thuộc vào module sfia cũ.
+  - [x] Chạy toàn bộ test suites backend: 68/68 test suites passed 100% (527/527 tests).
+  - [x] Xác nhận `npm run test:arch`: 3/3 tests passed 100%.
+  - [x] Xác nhận `npm run build`: Thành công (Exit code 0).
+  - [x] **KẾT LUẬN:** Giai đoạn 2 đã hoàn thành 100% (3/3 bước). Hệ thống sẵn sàng chuyển sang Giai đoạn 3 (Cầu Nối Hybrid & Tích Hợp JD / Session Lifecycle).
 
 ---
 
@@ -142,6 +157,31 @@
 - Chạy `npm run build`: Thành công (Exit code 0).
 - **KẾT LUẬN:** Bước 2.1 đã hoàn tất 100% an toàn và sẵn sàng cho Bước 2.2 (`OnetModule`).
 
+### [2026-09-06] Hoàn thành Bước 2.2: Bounded Context OnetModule
+- Đã tạo hợp đồng giao tiếp độc lập `server/src/modules/onet/contracts/`:
+  - `onet.dto.ts` (`OnetOccupationDto`, `OnetTechDto`)
+  - `onet.facade.interface.ts` (`IOnetFacade`, token `ONET_FACADE_TOKEN`)
+  - `index.ts`
+- Đã tối ưu hóa CSDL PostgreSQL cho schema `onet`: Tạo chỉ mục GIN Trigram `idx_onet_job_titles_trgm` trên `onet.job_titles(job_title)`, và các chỉ mục BTree trên `onet.job_titles(onetsoc_code)` cùng `onet.software_skills(onetsoc_code)` via `server/scripts/create-onet-indexes.ts`.
+- Đã triển khai `server/src/modules/onet/onet.service.ts`:
+  - Khớp trực tiếp chức danh chuẩn trên `onet.occupation_data`.
+  - Tìm kiếm mờ thông minh trên 54.269 alternate job titles với công thức `GREATEST(similarity, word_similarity)` giúp khớp chính xác các vị trí IT thực tế kể cả khi có mô tả mở rộng trong ngoặc đơn (như `DevOps Engineer (Development Operations Engineer)`).
+  - Dự phòng tìm kiếm mờ (fallback) trực tiếp trên `onet.occupation_data.title`.
+  - Tra cứu mã SOC chuẩn `getOccupationBySocCode`.
+  - Trích xuất công nghệ và công cụ phần mềm `getToolsAndTechnology` từ `onet.software_skills`, ưu tiên các Hot Technologies.
+- Đã triển khai `server/src/modules/onet/onet.facade.ts` hiện thực hóa `IOnetFacade` và `server/src/modules/onet/onet.module.ts`.
+- Viết bộ unit test `server/src/modules/onet/onet.facade.spec.ts`: Đạt 14/14 tests passed 100%.
+- Kiểm tra live integration với PostgreSQL: Đạt 100% tất cả các kịch bản.
+- Chạy `npm run test:arch`: Thành công (3/3 tests passed).
+- Chạy `npm run build`: Thành công (Exit code 0).
+- **KẾT LUẬN:** Bước 2.2 đã hoàn tất 100% an toàn và sẵn sàng cho Bước 2.3 (`Đăng Ký Modules & Dọn Dẹp Thư Mục Cũ`).
 
-
+### [2026-09-06] Hoàn thành Bước 2.3: Đăng Ký Modules & Dọn Dẹp Thư Mục Cũ (Kết thúc Giai Đoạn 2)
+- Đã đăng ký `SfiaModule` và `OnetModule` vào `server/src/app.module.ts` dưới nhóm Domain & Business Modules (Bounded Contexts).
+- Đã xóa sạch thư mục legacy `server/src/modules/interview-prep/sfia/` (bao gồm `sfia-mapping.service.ts`, `sfia-taxonomy.service.ts`, constants và DTOs cũ).
+- Đã cập nhật `server/src/modules/interview-prep/interview-prep.module.ts` độc lập và sạch sẽ.
+- Chạy toàn bộ test suites của backend: **68/68 test suites passed 100% (527/527 unit & integration tests)**.
+- Chạy `npm run test:arch`: **3/3 tests passed 100%** (Đảm bảo tuân thủ nghiêm ngặt 3-Layer Clean Architecture & ranh giới Bounded Contexts).
+- Chạy `npm run build`: **Thành công 100% (Exit code 0)**.
+- **KẾT LUẬN:** Giai đoạn 2 đã chính thức **HOÀN THÀNH 100% (3/3 bước)** với chất lượng và độ ổn định cao nhất, không có nợ kỹ thuật (zero tech debt). Sẵn sàng chuyển sang Giai đoạn 3: Cầu Nối Hybrid & Tích Hợp JD / Session Lifecycle.
 

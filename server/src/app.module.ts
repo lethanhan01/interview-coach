@@ -30,6 +30,8 @@ import { MediaModule } from '@modules/media/media.module';
 import { InterviewPrepModule } from '@modules/interview-prep/interview-prep.module';
 import { InterviewLiveModule } from '@modules/interview-live/interview-live.module';
 import { InterviewAssessmentModule } from '@modules/interview-assessment/interview-assessment.module';
+import { SfiaModule } from '@modules/sfia/sfia.module';
+import { OnetModule } from '@modules/onet/onet.module';
 
 @Controller()
 class ApiRootController {
@@ -68,6 +70,8 @@ class ApiRootController {
     InterviewPrepModule,
     InterviewLiveModule,
     InterviewAssessmentModule,
+    SfiaModule,
+    OnetModule,
   ],
   controllers: [ApiRootController],
   providers: [
