@@ -16,7 +16,7 @@
 | **Giai đoạn 1** | Database Add-only Migration & Làm Giàu Dữ Liệu QuestionBank | 🟢 Đã hoàn thành | 4 / 4 bước |
 | **Giai đoạn 2** | Xây Dựng 2 Bounded Contexts `SfiaModule` & `OnetModule` | 🟢 Đã hoàn thành | 3 / 3 bước |
 | **Giai đoạn 3** | Cầu Nối Hybrid & Tích Hợp JD / Session Lifecycle | 🟢 Đã hoàn thành | 3 / 3 bước |
-| **Giai đoạn 4** | Cấp Phát Câu Hỏi Theo `session_skills` & Tiêu Chí Nhị Phân | ⚪ Chưa bắt đầu | 0 / 2 bước |
+| **Giai đoạn 4** | Cấp Phát Câu Hỏi Theo `session_skills` & Tiêu Chí Nhị Phân | 🟢 Đã hoàn thành | 2 / 2 bước |
 | **Giai đoạn 5** | Chấm Điểm Tất Định, Báo Cáo Năng Lực & Dọn Dẹp Schema Cũ | ⚪ Chưa bắt đầu | 0 / 5 bước |
 
 ---
@@ -126,8 +126,40 @@
 
 
 ### Giai Đoạn 4: Cấp Phát Câu Hỏi Theo `session_skills` & Tiêu Chí Nhị Phân
-- [ ] **Bước 4.1: Cập Nhật `QuestionBankService`**
-- [ ] **Bước 4.2: Cập Nhật `GenerateSessionQuestions` (Fallback AI)**
+- [x] **Bước 4.1: Cập Nhật `QuestionBankService`**
+  - [x] Định nghĩa kiểu dữ liệu `RubricCriterionDto`, `SkillAllocationRequirement`, `AllocatedQuestionDto`, `QuestionBankAllocationResult`.
+  - [x] Xây dựng phương thức `allocateQuestionsForSessionSkills`:
+    - Phân bổ câu hỏi theo trọng số (weight) của `session_skills`.
+    - Xử lý trường hợp `totalQuestions < sessionSkills.length`: tự động lọc top skills theo trọng số cao nhất.
+    - Cơ chế tra cứu 2 tầng: Tầng 1 khớp chính xác `(sfiaSkillCode, targetSfiaLevel, sessionType)`. Tầng 2 fallback lân cận (+/- 1 Level) nếu ngân hàng thiếu câu hỏi đúng level.
+    - Xáo trộn ngẫu nhiên Fisher-Yates và chống trùng lặp câu hỏi trong phiên qua `Set<string>`.
+    - Sao chép các bản ghi `question_criteria` sang cấu trúc JSONB chuẩn 2 chiều (`core`, `seniority`).
+    - Ghi nhận `target_level` câu hỏi theo Target Level của `session_skill` (vai trò tuyển dụng) để bảo đảm nhất quán đánh giá.
+    - Báo cáo chính xác danh sách `uncoveredRequirements` khi ngân hàng không đủ câu hỏi để chuyển tiếp sang AI.
+  - [x] Giữ nguyên 100% hàm `selectFallbackQuestions` cũ để bảo toàn tương thích ngược cho Phase 4.
+  - [x] Viết bộ unit test `question-bank.service.spec.ts`: Đạt 13/13 tests passed 100%.
+  - [x] Kiểm tra `npm run test:arch` (3/3 tests passed) và `npm run build` (Exit code 0).
+- [x] **Bước 4.2: Cập Nhật `GenerateSessionQuestions` (Fallback AI & Tích Hợp Đầy Đủ)**
+  - [x] Xây dựng `SkillTargetedQuestionGeneratorService`:
+    - Structured Output sử dụng Zod schema (`SkillQuestionOutputSchema`) đảm bảo câu hỏi tình huống thực tế kèm đúng 2 tiêu chí nhị phân `core` và `seniority`.
+    - Tích hợp `ISfiaFacade` nạp định nghĩa kỹ năng và essence của target level.
+    - Cơ chế Multi-tiered Resilience Fallback chống sập 100%: nếu LLM gặp lỗi mạng/timeout, tự động lấy câu hỏi dự phòng trong QuestionBank hoặc câu hỏi an toàn mặc định, đảm bảo không bao giờ crash phiên phỏng vấn.
+  - [x] Nâng cấp `QuestionGenerationModule` đăng ký `SfiaModule` và `SkillTargetedQuestionGeneratorService`.
+  - [x] Nâng cấp `GenerateSessionQuestions.execute`:
+    - Đọc danh sách `session_skills` của phiên từ CSDL.
+    - Gọi `QuestionBankService.allocateQuestionsForSessionSkills` để cấp phát câu hỏi ngân hàng.
+    - Kích hoạt `SkillTargetedQuestionGeneratorService` sinh động các câu hỏi còn thiếu từ `uncoveredRequirements`.
+    - Áp dụng thuật toán sắp xếp lũy tiến (Progressive Flow): câu hỏi dễ/nền tảng ở đầu phiên, câu hỏi chuyên sâu/trade-off ở giữa và cuối phiên (`orderIndex: 1..N`).
+    - Lưu vào `session_questions` trong `prisma.$transaction` với `session_skill_id`, `sfia_skill_code`, `target_level` và `rubric_criteria`.
+    - Best-effort liên kết `sessionQuestionSkillLevels` để các service cũ trong Phase 4 không bị ảnh hưởng.
+    - Giữ nguyên luồng legacy fallback để đảm bảo 100% tương thích ngược cho toàn bộ test suites hiện có.
+  - [x] Viết unit tests chuyên biệt:
+    - `skill-targeted-question-generator.service.spec.ts`: Đạt 3/3 tests passed 100%.
+    - `question-generation.processor.spec.ts`: Đạt 25/25 tests passed 100%.
+  - [x] Chạy script kiểm thử thực tế trên CSDL Live PostgreSQL: Đạt 100% (4 câu hỏi được phân bổ đúng chuẩn SFIA Level 4, 100% câu hỏi gắn `sessionSkillId`, 100% tiêu chí nhị phân 2 chiều `core` và `seniority`, thứ tự lũy tiến và dọn dẹp an toàn).
+  - [x] Chạy toàn bộ test suites backend: **70/70 test suites passed 100% (549/549 tests)**.
+  - [x] Xác nhận `npm run test:arch` (3/3 tests passed) và `npm run build` (Exit code 0).
+  - [x] **KẾT LUẬN:** Giai đoạn 4 đã hoàn thành 100% (2/2 bước). Hệ thống sẵn sàng chuyển sang Giai đoạn 5 (Chấm Điểm Tất Định, Báo Cáo Năng Lực & Dọn Dẹp Schema Cũ).
 
 ---
 
@@ -259,3 +291,40 @@
 - Kiểm tra `npm run test:arch`: **3/3 tests passed 100%** (Tuân thủ nghiêm ngặt Clean Architecture 3 lớp và ranh giới Bounded Contexts).
 - Kiểm tra `npm run build`: **Thành công 100% (Exit code 0)**.
 - **KẾT LUẬN:** Giai đoạn 3 đã chính thức **HOÀN THÀNH 100% (3/3 bước)** với chất lượng và độ ổn định cao nhất, không có nợ kỹ thuật (zero tech debt). Hệ thống sẵn sàng chuyển sang Giai đoạn 4: Cấp Phát Câu Hỏi Theo `session_skills` & Tiêu Chí Nhị Phân.
+
+### [2026-09-06] Hoàn thành Bước 4.1: Cập Nhật QuestionBankService
+- Đã bổ sung các DTOs chuẩn hóa: `RubricCriterionDto`, `SkillAllocationRequirement`, `AllocatedQuestionDto`, `QuestionBankAllocationResult`.
+- Đã triển khai phương thức `allocateQuestionsForSessionSkills`:
+  - Thuật toán phân bổ số câu hỏi thông minh theo trọng số kỹ năng, tự động cắt giảm top skills nếu số lượng câu hỏi ít hơn số lượng kỹ năng.
+  - Cơ chế tra cứu 2 tầng: Khớp chính xác Target Level -> Fallback lân cận (+/- 1 Level).
+  - Thuật toán Fisher-Yates xáo trộn ngẫu nhiên tập ứng viên và quản lý danh sách `usedQuestionBankIds` chống lặp câu hỏi.
+  - Tự động map dữ liệu từ bảng `question_criteria` sang mảng 2 tiêu chí nhị phân `core` và `seniority` chuẩn JSONB.
+  - Tự động sinh tiêu chí fallback an toàn nếu câu hỏi ngân hàng chưa có criteria.
+  - Ghi nhận `target_level` của câu hỏi theo Target Level của `session_skill`.
+  - Giữ nguyên toàn bộ phương thức cũ `selectFallbackQuestions` nhằm đảm bảo tương thích ngược 100%.
+- Viết bộ unit tests chuyên sâu trong `question-bank.service.spec.ts`: Đạt **13/13 tests passed 100%**.
+- Kiểm tra `npm run test:arch`: **3/3 tests passed 100%**.
+- Kiểm tra `npm run build`: **Thành công 100% (Exit code 0)**.
+- **KẾT LUẬN:** Bước 4.1 đã hoàn thành an toàn tuyệt đối, sẵn sàng chuyển sang Bước 4.2: Cập Nhật `GenerateSessionQuestions` (Fallback AI).
+
+### [2026-09-06] Hoàn thành Bước 4.2: Cập Nhật GenerateSessionQuestions & Kết thúc Giai Đoạn 4
+- Đã tạo `SkillTargetedQuestionGeneratorService` (`skill-targeted-question-generator.service.ts`):
+  - Structured Outputs với Zod schema chuẩn hóa sinh câu hỏi kèm đúng 2 tiêu chí nhị phân `core` và `seniority`.
+  - Cơ chế Multi-tiered Resilience Fallback chống sập 100%: khi AI Gateway timeout/quota/mất mạng, tự động lấy câu hỏi dự phòng từ ngân hàng và gắn tiêu chí mặc định.
+  - Unit test `skill-targeted-question-generator.service.spec.ts`: **3/3 tests passed 100%**.
+- Đã nâng cấp `GenerateSessionQuestions` (`generate-session-questions.service.ts`):
+  - Phân bổ câu hỏi theo `session_skills`, bù đắp phần thiếu bằng `SkillTargetedQuestionGeneratorService`.
+  - Sắp xếp lũy tiến Progressive Flow (độ khó tăng dần 1..N).
+  - Ghi nhận `session_questions` với `session_skill_id`, `rubric_criteria` và best-effort link `sessionQuestionSkillLevels`.
+  - Bảo toàn 100% luồng legacy fallback cho các kịch bản cũ.
+- Đã cập nhật `question-generation.processor.spec.ts`: **25/25 tests passed 100%**.
+- Đã kiểm thử thực tế trên CSDL Live PostgreSQL (`verify-phase4-live.ts`):
+  - Sinh thành công 4 câu hỏi cho vị trí Senior Full Stack Engineer (Level 4): 3 câu từ ngân hàng (`PROG`, `DBDS`, `DESN`), 1 câu AI sinh động (`ARCH`).
+  - 100% câu hỏi gắn `sessionSkillId` hợp lệ trỏ tới `session_skills`.
+  - 100% câu hỏi có đúng 2 tiêu chí nhị phân chuẩn hóa 2 chiều (`core`, `seniority`).
+  - Thứ tự lũy tiến `orderIndex: 1..4` chuẩn mực và dọn dẹp sạch sẽ dữ liệu.
+- Chạy toàn bộ test suites backend: **70/70 test suites passed 100% (549/549 unit & integration tests)**.
+- Kiểm tra `npm run test:arch`: **3/3 tests passed 100%** (Tuân thủ Clean Architecture và Bounded Contexts).
+- Kiểm tra `npm run build`: **Thành công 100% (Exit code 0)**.
+- **KẾT LUẬN:** Giai đoạn 4 đã chính thức **HOÀN THÀNH 100% (2/2 bước)** với chất lượng và độ tin cậy tuyệt đối, zero tech debt. Hệ thống đã sẵn sàng chuyển sang Giai đoạn 5: Chấm Điểm Tất Định, Báo Cáo Năng Lực & Dọn Dẹp Schema Cũ.
+

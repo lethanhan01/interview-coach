@@ -17,8 +17,10 @@ import {
   createMockPipelineStrategyFactory,
   createMockQuestionBankService,
   createMockQuestionCriteriaService,
+  createMockSkillTargetedQuestionGeneratorService,
   createMockOpenAIGateway,
 } from '@core/test-utils/mock-factories';
+import { SkillTargetedQuestionGeneratorService } from './skill-targeted-question-generator.service';
 import type { Job } from 'bullmq';
 import { HttpStatus } from '@nestjs/common';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
@@ -31,6 +33,9 @@ describe('QuestionGenerationProcessor', () => {
   let mockContextPack: ReturnType<typeof createMockContextPackService>;
   let mockFactory: ReturnType<typeof createMockPipelineStrategyFactory>;
   let mockQuestionBankService: ReturnType<typeof createMockQuestionBankService>;
+  let mockSkillGenerator: ReturnType<
+    typeof createMockSkillTargetedQuestionGeneratorService
+  >;
   let mockQuestionCriteria: ReturnType<
     typeof createMockQuestionCriteriaService
   >;
@@ -110,6 +115,7 @@ describe('QuestionGenerationProcessor', () => {
     mockContextPack = createMockContextPackService();
     mockFactory = createMockPipelineStrategyFactory();
     mockQuestionBankService = createMockQuestionBankService();
+    mockSkillGenerator = createMockSkillTargetedQuestionGeneratorService();
     mockQuestionCriteria = createMockQuestionCriteriaService();
     mockOpenAI = createMockOpenAIGateway();
     mockPrisma.$transaction.mockImplementation((operations) =>
@@ -132,6 +138,10 @@ describe('QuestionGenerationProcessor', () => {
         { provide: AssessmentFacade, useValue: mockContextPack },
         { provide: PipelineStrategyFactory, useValue: mockFactory },
         { provide: QuestionBankService, useValue: mockQuestionBankService },
+        {
+          provide: SkillTargetedQuestionGeneratorService,
+          useValue: mockSkillGenerator,
+        },
         { provide: QuestionCriteriaService, useValue: mockQuestionCriteria },
         { provide: AI_GATEWAY_TOKEN, useValue: mockOpenAI },
         { provide: OpenAIGateway, useValue: mockOpenAI },
@@ -834,6 +844,111 @@ describe('QuestionGenerationProcessor', () => {
         ]),
         skipDuplicates: true,
       });
+    });
+
+    it('thực thi Hybrid Unified Allocation khi session_skills tồn tại (phân bổ QuestionBank + AI fallback và rubricCriteria)', async () => {
+      // Mock session_skills trong DB
+      mockPrisma.sessionSkill.findMany.mockResolvedValue([
+        {
+          id: 'sk-prog',
+          sessionId: 'session-123',
+          skillCode: 'PROG',
+          targetLevel: 4,
+          weight: 1.5,
+          techContext: ['NestJS', 'PostgreSQL'],
+        },
+        {
+          id: 'sk-dbds',
+          sessionId: 'session-123',
+          skillCode: 'DBDS',
+          targetLevel: 4,
+          weight: 1.0,
+          techContext: ['PostgreSQL'],
+        },
+      ]);
+
+      // Mock allocateQuestionsForSessionSkills: PROG được 1 câu từ bank, DBDS thiếu 1 câu
+      mockQuestionBankService.allocateQuestionsForSessionSkills.mockResolvedValue({
+        allocatedQuestions: [
+          {
+            questionBankId: 'qb-prog-1',
+            sessionSkillId: 'sk-prog',
+            sfiaSkillCode: 'PROG',
+            targetLevel: 4,
+            questionText: 'Explain NestJS dependency injection lifecycle.',
+            questionCategory: 'technical',
+            source: 'bank',
+            difficulty: 2,
+            estimatedTimeMin: 5,
+            rubricCriteria: [
+              { id: 'c1', text: 'Core DI understanding', dimension: 'core', weight: 1.0 },
+              { id: 'c2', text: 'Seniority scope management', dimension: 'seniority', weight: 1.0 },
+            ],
+          },
+        ],
+        uncoveredRequirements: [
+          {
+            requirement: {
+              sessionSkillId: 'sk-dbds',
+              skillCode: 'DBDS',
+              targetLevel: 4,
+              weight: 1.0,
+              techContext: ['PostgreSQL'],
+            },
+            neededCount: 1,
+          },
+        ],
+      });
+
+      // Mock AI Generator trả về câu hỏi cho DBDS
+      mockSkillGenerator.generateQuestion.mockResolvedValue({
+        questionText: 'Trong PostgreSQL tải cao, làm sao giảm thiểu lock contention trên bảng lớn?',
+        estimatedTimeMin: 6,
+        rubricCriteria: [
+          { id: 'crit_db_core', text: 'Nêu đúng cơ chế MVCC và Row-level locking', dimension: 'core', weight: 1.0 },
+          { id: 'crit_db_sen', text: 'Phân tích trade-off khi phân vùng bảng (Partitioning)', dimension: 'seniority', weight: 1.0 },
+        ],
+        source: 'ai_generated',
+        difficulty: 4,
+      });
+
+      mockPrisma.sessionQuestion.createMany.mockResolvedValue({ count: 2 });
+      mockPrisma.interviewSession.updateMany.mockResolvedValue({ count: 1 });
+      mockSse.emit.mockResolvedValue(undefined);
+
+      await processor.process(
+        makeJob({
+          sessionType: 'technical',
+          totalQuestions: 2,
+        }),
+      );
+
+      expect(mockQuestionBankService.allocateQuestionsForSessionSkills).toHaveBeenCalledWith(
+        expect.objectContaining({
+          totalQuestions: 2,
+          sessionType: 'technical',
+        }),
+      );
+      expect(mockSkillGenerator.generateQuestion).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skillCode: 'DBDS',
+          targetLevel: 4,
+        }),
+      );
+
+      const createArgs = mockPrisma.sessionQuestion.createMany.mock.calls[0][0];
+      expect(createArgs.data).toHaveLength(2);
+      // Kiểm tra progressive order: Dễ (difficulty 2) trước, Khó (difficulty 4) sau
+      expect(createArgs.data[0].sfiaSkillCode).toBe('PROG');
+      expect(createArgs.data[0].orderIndex).toBe(1);
+      expect(createArgs.data[0].sessionSkillId).toBe('sk-prog');
+      expect(createArgs.data[0].rubricCriteria).toHaveLength(2);
+
+      expect(createArgs.data[1].sfiaSkillCode).toBe('DBDS');
+      expect(createArgs.data[1].orderIndex).toBe(2);
+      expect(createArgs.data[1].sessionSkillId).toBe('sk-dbds');
+      expect(createArgs.data[1].source).toBe('ai_generated');
+      expect(createArgs.data[1].rubricCriteria).toHaveLength(2);
     });
   });
 });

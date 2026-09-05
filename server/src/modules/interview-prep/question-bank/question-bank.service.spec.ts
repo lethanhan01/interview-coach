@@ -275,6 +275,263 @@ describe('QuestionBankService', () => {
       }),
     );
   });
+
+  describe('allocateQuestionsForSessionSkills (Hybrid Integration)', () => {
+    it('trả về rỗng khi không có sessionSkills hoặc totalQuestions <= 0', async () => {
+      const resultEmpty = await service.allocateQuestionsForSessionSkills({
+        sessionSkills: [],
+        totalQuestions: 5,
+        sessionType: 'technical',
+        language: 'vi',
+      });
+      expect(resultEmpty.allocatedQuestions).toEqual([]);
+      expect(resultEmpty.uncoveredRequirements).toEqual([]);
+
+      const resultZero = await service.allocateQuestionsForSessionSkills({
+        sessionSkills: [
+          {
+            sessionSkillId: 'sk-1',
+            skillCode: 'PROG',
+            targetLevel: 4,
+            weight: 1.5,
+          },
+        ],
+        totalQuestions: 0,
+        sessionType: 'technical',
+        language: 'vi',
+      });
+      expect(resultZero.allocatedQuestions).toEqual([]);
+    });
+
+    it('phân bổ đủ câu hỏi theo trọng số và khớp chính xác Target Level', async () => {
+      const skills = [
+        {
+          sessionSkillId: 'sk-prog',
+          skillCode: 'PROG',
+          targetLevel: 4,
+          weight: 1.5,
+        },
+        {
+          sessionSkillId: 'sk-dbds',
+          skillCode: 'DBDS',
+          targetLevel: 3,
+          weight: 1.0,
+        },
+      ];
+
+      // totalQuestions = 3 -> PROG (weight 1.5) được 2 câu, DBDS (weight 1.0) được 1 câu
+      mockPrisma.questionBank.findMany
+        .mockResolvedValueOnce([
+          {
+            id: 'q-prog-1',
+            content: 'How does Event Loop work in Node.js?',
+            difficulty: 3,
+            estimatedTimeMin: 5,
+            translations: { vi: 'Event loop trong Node.js hoạt động như thế nào?' },
+            questionCriteria: [
+              {
+                id: 'crit-1',
+                criteriaText: 'Hiểu rõ các phases của Event Loop',
+                dimension: 'core',
+                weight: 1.0,
+              },
+              {
+                id: 'crit-2',
+                criteriaText: 'Phân tích được trade-off khi offload task nặng sang worker threads',
+                dimension: 'seniority',
+                weight: 1.0,
+              },
+            ],
+          },
+          {
+            id: 'q-prog-2',
+            content: 'Explain memory leak detection in V8.',
+            difficulty: 4,
+            estimatedTimeMin: 5,
+            translations: null,
+            questionCriteria: [],
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            id: 'q-dbds-1',
+            content: 'Explain B-Tree Index in PostgreSQL.',
+            difficulty: 3,
+            estimatedTimeMin: 5,
+            translations: { vi: 'Giải thích nguyên lý B-Tree Index trong Postgres.' },
+            questionCriteria: [
+              {
+                id: 'crit-db-1',
+                criteriaText: 'Nêu đúng cấu trúc B-Tree',
+                dimension: 'core',
+                weight: 1.0,
+              },
+              {
+                id: 'crit-db-2',
+                criteriaText: 'Đánh giá trade-off ghi khi có quá nhiều index',
+                dimension: 'seniority',
+                weight: 1.0,
+              },
+            ],
+          },
+        ]);
+
+      const result = await service.allocateQuestionsForSessionSkills({
+        sessionSkills: skills,
+        totalQuestions: 3,
+        sessionType: 'technical',
+        language: 'vi',
+      });
+
+      expect(result.allocatedQuestions).toHaveLength(3);
+      expect(result.uncoveredRequirements).toHaveLength(0);
+
+      const progAllocated = result.allocatedQuestions.filter(
+        (q) => q.sfiaSkillCode === 'PROG',
+      );
+      expect(progAllocated).toHaveLength(2);
+      const progTexts = progAllocated.map((q) => q.questionText);
+      expect(progTexts).toContain(
+        'Event loop trong Node.js hoạt động như thế nào?',
+      );
+      expect(progTexts).toContain('Explain memory leak detection in V8.');
+
+      const withCriteria = progAllocated.find(
+        (q) => q.questionBankId === 'q-prog-1',
+      );
+      expect(withCriteria?.rubricCriteria).toHaveLength(2);
+      expect(withCriteria?.rubricCriteria[0].dimension).toBe('core');
+      expect(withCriteria?.rubricCriteria[1].dimension).toBe('seniority');
+
+      // Khi câu hỏi không có questionCriteria, tự sinh fallback criteria
+      const withoutCriteria = progAllocated.find(
+        (q) => q.questionBankId === 'q-prog-2',
+      );
+      expect(withoutCriteria?.rubricCriteria).toHaveLength(2);
+
+      const dbdsAllocated = result.allocatedQuestions.filter(
+        (q) => q.sfiaSkillCode === 'DBDS',
+      );
+      expect(dbdsAllocated).toHaveLength(1);
+      expect(dbdsAllocated[0].questionText).toBe(
+        'Giải thích nguyên lý B-Tree Index trong Postgres.',
+      );
+    });
+
+    it('cắt giảm top skills theo trọng số khi totalQuestions < sessionSkills.length', async () => {
+      const skills = [
+        { sessionSkillId: 'sk-1', skillCode: 'PROG', targetLevel: 4, weight: 1.5 },
+        { sessionSkillId: 'sk-2', skillCode: 'DBDS', targetLevel: 4, weight: 1.2 },
+        { sessionSkillId: 'sk-3', skillCode: 'ARCH', targetLevel: 4, weight: 1.0 },
+      ];
+
+      // totalQuestions = 2 -> Chỉ chọn PROG và DBDS
+      mockPrisma.questionBank.findMany
+        .mockResolvedValueOnce([
+          {
+            id: 'q-1',
+            content: 'Question 1',
+            difficulty: 3,
+            estimatedTimeMin: 5,
+            translations: null,
+            questionCriteria: [],
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            id: 'q-2',
+            content: 'Question 2',
+            difficulty: 3,
+            estimatedTimeMin: 5,
+            translations: null,
+            questionCriteria: [],
+          },
+        ]);
+
+      const result = await service.allocateQuestionsForSessionSkills({
+        sessionSkills: skills,
+        totalQuestions: 2,
+        sessionType: 'technical',
+        language: 'vi',
+      });
+
+      expect(result.allocatedQuestions).toHaveLength(2);
+      const allocatedCodes = result.allocatedQuestions.map((q) => q.sfiaSkillCode);
+      expect(allocatedCodes).toContain('PROG');
+      expect(allocatedCodes).toContain('DBDS');
+      expect(allocatedCodes).not.toContain('ARCH');
+    });
+
+    it('fallback sang level lân cận (+/- 1 Level) khi ngân hàng thiếu câu hỏi đúng level', async () => {
+      const skills = [
+        { sessionSkillId: 'sk-1', skillCode: 'DESN', targetLevel: 4, weight: 1.0 },
+      ];
+
+      // Lần gọi 1 (Exact Level 4): Không có câu nào
+      mockPrisma.questionBank.findMany.mockResolvedValueOnce([]);
+
+      // Lần gọi 2 (Adjacent Levels 3 và 5): Tìm thấy 1 câu Level 3
+      mockPrisma.questionBank.findMany.mockResolvedValueOnce([
+        {
+          id: 'q-desn-lvl3',
+          content: 'Describe design patterns in practice.',
+          difficulty: 3,
+          estimatedTimeMin: 5,
+          translations: null,
+          questionCriteria: [
+            {
+              id: 'c-1',
+              criteriaText: 'Nêu đúng pattern',
+              dimension: 'core',
+              weight: 1.0,
+            },
+            {
+              id: 'c-2',
+              criteriaText: 'Phân tích trade-off',
+              dimension: 'seniority',
+              weight: 1.0,
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.allocateQuestionsForSessionSkills({
+        sessionSkills: skills,
+        totalQuestions: 1,
+        sessionType: 'technical',
+        language: 'en',
+      });
+
+      expect(result.allocatedQuestions).toHaveLength(1);
+      expect(result.allocatedQuestions[0].questionBankId).toBe('q-desn-lvl3');
+      // Target Level của câu hỏi lưu theo Target Level của session_skill (Level 4)
+      expect(result.allocatedQuestions[0].targetLevel).toBe(4);
+      expect(result.uncoveredRequirements).toHaveLength(0);
+    });
+
+    it('báo cáo uncoveredRequirements khi ngân hàng không đủ câu hỏi', async () => {
+      const skills = [
+        { sessionSkillId: 'sk-rare', skillCode: 'RARE', targetLevel: 5, weight: 1.0 },
+      ];
+
+      // Exact Level 5: rỗng
+      mockPrisma.questionBank.findMany.mockResolvedValueOnce([]);
+      // Adjacent Level 4, 6: cũng rỗng
+      mockPrisma.questionBank.findMany.mockResolvedValueOnce([]);
+
+      const result = await service.allocateQuestionsForSessionSkills({
+        sessionSkills: skills,
+        totalQuestions: 1,
+        sessionType: 'technical',
+        language: 'en',
+      });
+
+      expect(result.allocatedQuestions).toHaveLength(0);
+      expect(result.uncoveredRequirements).toHaveLength(1);
+      expect(result.uncoveredRequirements[0].requirement.skillCode).toBe('RARE');
+      expect(result.uncoveredRequirements[0].neededCount).toBe(1);
+    });
+  });
 });
 
 function mockQuestionBankWithCriteria(input: {

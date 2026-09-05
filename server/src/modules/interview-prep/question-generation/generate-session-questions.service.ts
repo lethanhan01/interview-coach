@@ -21,10 +21,14 @@ import type {
   GeneratedQuestion,
   SessionType,
 } from '@infra/ai/pipelines/interview-pipeline.interface';
-import { QuestionBankService } from '../question-bank/question-bank.service';
-import type { FallbackQuestion } from '../question-bank/question-bank.service';
+import {
+  QuestionBankService,
+  type AllocatedQuestionDto,
+  type FallbackQuestion,
+} from '../question-bank/question-bank.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
 import { HybridMappingService } from '../taxonomy/hybrid-mapping.service';
+import { SkillTargetedQuestionGeneratorService } from './skill-targeted-question-generator.service';
 import {
   calculateEstimatedTimeMin,
   normalizeGeneratedQuestionMetadata,
@@ -75,6 +79,7 @@ export class GenerateSessionQuestions {
     private readonly questionBankService: QuestionBankService,
     private readonly questionCriteria: QuestionCriteriaService,
     private readonly hybridMappingService: HybridMappingService,
+    private readonly skillQuestionGenerator: SkillTargetedQuestionGeneratorService,
     @Inject(AI_GATEWAY_TOKEN)
     private readonly openai: IAIGateway,
   ) {}
@@ -88,6 +93,209 @@ export class GenerateSessionQuestions {
       );
     }
 
+    const sessionSkills = await this.prisma.sessionSkill.findMany({
+      where: { sessionId: job.sessionId },
+      orderBy: [{ weight: 'desc' }, { priority: 'asc' }],
+    });
+
+    if (sessionSkills.length > 0) {
+      await this.executeHybridAllocation(job, sessionSkills);
+      return;
+    }
+
+    await this.executeLegacyAllocation(job);
+  }
+
+  /**
+   * Quy trình cấp phát câu hỏi Hybrid Unified:
+   * - Quy tụ 100% câu hỏi vào session_skills
+   * - Tra cứu QuestionBank theo session_skills
+   * - Fallback AI Dynamic Generation cho các kỹ năng chưa đủ câu hỏi
+   * - Sắp xếp lũy tiến (Progressive Flow: Dễ -> Khó)
+   * - Ghi nhận vào session_questions & best-effort link sessionQuestionSkillLevels
+   */
+  private async executeHybridAllocation(
+    job: QuestionGenerationJobDto,
+    sessionSkills: Array<{
+      id: string;
+      skillCode: string;
+      targetLevel: number;
+      weight: any;
+      techContext: string[];
+    }>,
+  ): Promise<void> {
+    const outputLanguage = resolveOutputLanguage(job.language);
+
+    // 1. Phân bổ câu hỏi từ Question Bank
+    const bankResult =
+      await this.questionBankService.allocateQuestionsForSessionSkills({
+        sessionSkills: sessionSkills.map((s) => ({
+          sessionSkillId: s.id,
+          skillCode: s.skillCode,
+          targetLevel: s.targetLevel,
+          weight: s.weight,
+          techContext: s.techContext,
+        })),
+        totalQuestions: job.totalQuestions,
+        sessionType: job.sessionType,
+        language: outputLanguage,
+      });
+
+    const allAllocated: AllocatedQuestionDto[] = [
+      ...bankResult.allocatedQuestions,
+    ];
+
+    // 2. Với các kỹ năng ngân hàng không đủ câu hỏi, kích hoạt SkillTargeted AI Generator
+    for (const item of bankResult.uncoveredRequirements) {
+      for (let i = 0; i < item.neededCount; i++) {
+        const generated = await this.skillQuestionGenerator.generateQuestion({
+          sessionType: job.sessionType,
+          skillCode: item.requirement.skillCode,
+          targetLevel: item.requirement.targetLevel,
+          techContext: item.requirement.techContext || [],
+          jobDescriptionText: job.jobDescriptionText,
+          language: outputLanguage,
+        });
+
+        allAllocated.push({
+          questionBankId: generated.questionBankId,
+          sessionSkillId: item.requirement.sessionSkillId,
+          sfiaSkillCode: item.requirement.skillCode,
+          targetLevel: item.requirement.targetLevel,
+          questionText: generated.questionText,
+          questionCategory:
+            job.sessionType === 'technical' ? 'technical' : 'behavioral',
+          source: generated.source,
+          difficulty: generated.difficulty,
+          estimatedTimeMin: generated.estimatedTimeMin,
+          rubricCriteria: generated.rubricCriteria,
+        });
+      }
+    }
+
+    // 3. Đảm bảo đủ số lượng câu hỏi theo yêu cầu
+    if (allAllocated.length < job.totalQuestions && sessionSkills.length > 0) {
+      const primarySkill = sessionSkills[0];
+      const neededMore = job.totalQuestions - allAllocated.length;
+      for (let i = 0; i < neededMore; i++) {
+        const generated = await this.skillQuestionGenerator.generateQuestion({
+          sessionType: job.sessionType,
+          skillCode: primarySkill.skillCode,
+          targetLevel: primarySkill.targetLevel,
+          techContext: primarySkill.techContext || [],
+          jobDescriptionText: job.jobDescriptionText,
+          language: outputLanguage,
+        });
+
+        allAllocated.push({
+          questionBankId: generated.questionBankId,
+          sessionSkillId: primarySkill.id,
+          sfiaSkillCode: primarySkill.skillCode,
+          targetLevel: primarySkill.targetLevel,
+          questionText: generated.questionText,
+          questionCategory:
+            job.sessionType === 'technical' ? 'technical' : 'behavioral',
+          source: generated.source,
+          difficulty: generated.difficulty,
+          estimatedTimeMin: generated.estimatedTimeMin,
+          rubricCriteria: generated.rubricCriteria,
+        });
+      }
+    }
+
+    // 4. Sắp xếp lũy tiến (Progressive Flow): từ dễ đến khó (difficulty tăng dần)
+    allAllocated.sort((a, b) => (a.difficulty ?? 3) - (b.difficulty ?? 3));
+    const finalQuestions = allAllocated.slice(0, job.totalQuestions);
+
+    // 5. Lưu an toàn vào CSDL
+    const count = await this.persistHybridQuestions(
+      job.sessionId,
+      finalQuestions,
+    );
+    this.logger.log(
+      `Hybrid question generation persisted for session ${job.sessionId}: bank=${bankResult.allocatedQuestions.length} ai=${finalQuestions.length - bankResult.allocatedQuestions.length} total=${count}`,
+    );
+  }
+
+  private async persistHybridQuestions(
+    sessionId: string,
+    questions: AllocatedQuestionDto[],
+  ): Promise<number> {
+    const questionRows = questions.map((q, index) => ({
+      id: randomUUID(),
+      sessionId,
+      sessionSkillId: q.sessionSkillId,
+      sfiaSkillCode: q.sfiaSkillCode,
+      targetLevel: q.targetLevel,
+      rubricCriteria: q.rubricCriteria as any,
+      questionBankId: q.questionBankId || null,
+      questionText: q.questionText,
+      orderIndex: index + 1,
+      questionCategory: q.questionCategory,
+      source: q.source,
+      estimatedTimeMin: q.estimatedTimeMin,
+    }));
+
+    // Best-effort link sessionQuestionSkillLevels cho Phase 4
+    const skillCodes = Array.from(
+      new Set(questions.map((q) => q.sfiaSkillCode).filter(Boolean)),
+    );
+    const matchingSkillLevels = await this.prisma.skillLevel
+      .findMany({
+        where: {
+          skill: { code: { in: skillCodes } },
+        },
+        include: {
+          skill: true,
+          level: true,
+        },
+      })
+      .catch(() => []);
+
+    const skillLevelMap = new Map<string, string>();
+    for (const sl of matchingSkillLevels) {
+      if (sl.skill?.code && sl.level?.rank) {
+        skillLevelMap.set(`${sl.skill.code}-${sl.level.rank}`, sl.id);
+      }
+    }
+
+    const legacyCriteria: Array<{
+      sessionQuestionId: string;
+      skillLevelId: string;
+    }> = [];
+
+    for (const q of questionRows) {
+      const key = `${q.sfiaSkillCode}-${q.targetLevel}`;
+      const slId = skillLevelMap.get(key);
+      if (slId) {
+        legacyCriteria.push({
+          sessionQuestionId: q.id,
+          skillLevelId: slId,
+        });
+      }
+    }
+
+    const [createdQuestions] = await this.prisma.$transaction([
+      this.prisma.sessionQuestion.createMany({
+        data: questionRows,
+        skipDuplicates: true,
+      }),
+      ...(legacyCriteria.length > 0
+        ? [
+            this.prisma.sessionQuestionSkillLevel.createMany({
+              data: legacyCriteria,
+              skipDuplicates: true,
+            }),
+          ]
+        : []),
+    ]);
+
+    return createdQuestions.count;
+  }
+
+  private async executeLegacyAllocation(
+    job: QuestionGenerationJobDto,
+  ): Promise<void> {
     const outputLanguage = resolveOutputLanguage(job.language);
     const aiCount = Math.round(job.totalQuestions / AI_QUESTION_EVERY_N);
 
@@ -167,7 +375,7 @@ export class GenerateSessionQuestions {
       rows,
     );
     this.logger.log(
-      `Hybrid question generation persisted for session ${job.sessionId}: ai=${aiCount} qb=${bankQuestions.length} total=${count} model=${this.openai.getChatModel()}`,
+      `Legacy question generation persisted for session ${job.sessionId}: ai=${aiCount} qb=${bankQuestions.length} total=${count} model=${this.openai.getChatModel()}`,
     );
   }
 

@@ -316,6 +316,33 @@ export const createMockAIGateway = createMockOpenAIGateway;
 
 export const createMockQuestionBankService = () => ({
   selectFallbackQuestions: jest.fn().mockResolvedValue([]),
+  allocateQuestionsForSessionSkills: jest.fn().mockResolvedValue({
+    allocatedQuestions: [],
+    uncoveredRequirements: [],
+  }),
+});
+
+export const createMockSkillTargetedQuestionGeneratorService = () => ({
+  generateQuestion: jest.fn().mockResolvedValue({
+    questionText: 'Mock AI situational question',
+    estimatedTimeMin: 5,
+    rubricCriteria: [
+      {
+        id: 'crit_mock_core',
+        text: 'Mock core criteria',
+        dimension: 'core',
+        weight: 1.0,
+      },
+      {
+        id: 'crit_mock_seniority',
+        text: 'Mock seniority criteria',
+        dimension: 'seniority',
+        weight: 1.0,
+      },
+    ],
+    source: 'ai_generated',
+    difficulty: 3,
+  }),
 });
 
 export const createMockQuestionCriteriaService = () => ({
