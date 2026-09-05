@@ -685,6 +685,15 @@ Hệ thống sử dụng Zod schema ở tầng ứng dụng để validate tính
 | `ai_feedbacks` | `idx_ai_feedbacks_user_answer_id` | `user_answer_id` | Partial Index: Lấy feedback phân tích cho lượt trả lời. |
 | `annotated_segments` | `idx_annotated_segments_feedback_id` | `ai_feedback_id` | Lấy danh sách đoạn văn bản chú thích của feedback. |
 | `workflow_outbox` | `idx_workflow_outbox_due` | `state, available_at` | Worker quét nhanh các tác vụ outbox đang chờ xử lý (`pending`). |
+| `onet_sfia_mappings` | `idx_onet_sfia_mappings_soc` | `onet_soc_code` | Tra cứu nhanh kỹ năng SFIA theo mã nghề nghiệp O*NET. |
+| `onet_sfia_mappings` | `idx_onet_sfia_mappings_sfia` | `sfia_skill_code` | Tra cứu nghề nghiệp O*NET theo mã kỹ năng SFIA. |
+| `question_criteria` | `idx_question_criteria_bank_id` | `question_bank_id` | Nạp nhanh bộ tiêu chí nhị phân của câu hỏi trong ngân hàng. |
+| `question_bank` | `idx_question_bank_soc_level` | `onet_soc_code, target_sfia_level` | Lọc câu hỏi ngân hàng theo nghề nghiệp và cấp độ SFIA mục tiêu. |
+| `question_bank` | `idx_question_bank_sfia_skill_level` | `sfia_skill_code, target_sfia_level` | Lọc câu hỏi ngân hàng theo mã kỹ năng và cấp độ SFIA mục tiêu. |
+| `saved_job_descriptions` | `idx_saved_jds_onet_soc` | `onet_soc_code` | Phân nhóm và tra cứu JD theo mã nghề nghiệp O*NET. |
+| `interview_sessions` | `idx_interview_sessions_onet_soc` | `onet_soc_code` | Thống kê và tra cứu phiên phỏng vấn theo mã nghề O*NET. |
+| `session_skills` | `idx_session_skills_skill_code` | `skill_code` | Tra cứu các phiên phỏng vấn đánh giá một kỹ năng SFIA cụ thể. |
+| `session_questions` | `idx_session_questions_session_skill` | `session_skill_id` | Lấy danh sách câu hỏi thuộc về một kỹ năng đánh giá trong phiên. |
 
 ---
 
@@ -699,3 +708,5 @@ Hệ thống sử dụng Zod schema ở tầng ứng dụng để validate tính
 | `question_bank_criteria` | `question_bank_skill_levels` (`QuestionBankSkillLevel`) | Khóa ngoại rõ ràng `skill_level_id` trỏ thẳng tới bảng `skill_levels(id)`. |
 | `session_question_criteria` | `session_question_skill_levels` (`SessionQuestionSkillLevel`) | Khóa ngoại rõ ràng `skill_level_id` trỏ thẳng tới bảng `skill_levels(id)`. |
 | `skill_competency_mappings` | In-Memory Map (`tech-stack-sfia.map.ts`) | Loại bỏ 1 bảng thừa, tra cứu Tech Stack sang mã SFIA với độ trễ 0ms trong RAM. |
+| (Mới) Khung đánh giá lai O*NET + SFIA | `onet_sfia_mappings`, `question_criteria` | Tinh chỉnh Cỗ máy Đánh giá Tinh gọn Unified Interview Engine, loose coupling qua mã chuẩn hóa không dùng FK cứng. |
+

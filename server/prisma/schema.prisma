@@ -76,7 +76,6 @@ model Skill {
 
   skillLevels        SkillLevel[]
   roleSkills         RoleSkill[]
-  sessionLinks       SessionSkill[]
 
   @@index([categoryCode], map: "idx_skills_category_code")
   @@index([subcategoryCode], map: "idx_skills_subcategory_code")
@@ -144,11 +143,19 @@ model QuestionBank {
   createdAt               DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  // === TRƯỜNG MỚI GẮN NHÃN KÉP O*NET + SFIA ===
+  onetSocCode             String?                  @map("onet_soc_code") @db.VarChar(10)
+  sfiaSkillCode           String?                  @map("sfia_skill_code") @db.VarChar(10)
+  targetSfiaLevel         Int?                     @map("target_sfia_level") @db.SmallInt
+
   questionBankSkillLevels QuestionBankSkillLevel[]
+  questionCriteria        QuestionCriteria[]
   sessionQuestions        SessionQuestion[]
 
   @@index([contextPackId], map: "idx_question_bank_context_pack", where: raw("(deleted_at IS NULL)"))
   @@index([sessionType, difficulty], map: "idx_question_bank_session_type_difficulty", where: raw("(deleted_at IS NULL)"))
+  @@index([onetSocCode, targetSfiaLevel], map: "idx_question_bank_soc_level", where: raw("(deleted_at IS NULL)"))
+  @@index([sfiaSkillCode, targetSfiaLevel], map: "idx_question_bank_sfia_skill_level", where: raw("(deleted_at IS NULL)"))
   @@map("question_bank")
 }
 
@@ -166,6 +173,41 @@ model QuestionBankSkillLevel {
   @@unique([questionBankId, skillLevelId], map: "question_bank_skill_levels_unique")
   @@index([skillLevelId], map: "idx_question_bank_skill_levels_skill_level_id")
   @@map("question_bank_skill_levels")
+}
+
+// ==========================================
+// HYBRID INTEGRATION: ONET-SFIA & CRITERIA
+// ==========================================
+
+model OnetSfiaMapping {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  onetSocCode     String   @map("onet_soc_code") @db.VarChar(10)
+  sfiaSkillCode   String   @map("sfia_skill_code") @db.VarChar(10)
+  targetSfiaLevel Int      @default(3) @map("target_sfia_level") @db.SmallInt
+  defaultWeight   Decimal  @default(1.00) @map("default_weight") @db.Decimal(5, 2)
+  isCore          Boolean  @default(true) @map("is_core")
+  source          String   @default("curated") @map("source")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([onetSocCode, sfiaSkillCode, targetSfiaLevel], map: "onet_sfia_mappings_unique")
+  @@index([onetSocCode], map: "idx_onet_sfia_mappings_soc")
+  @@index([sfiaSkillCode], map: "idx_onet_sfia_mappings_sfia")
+  @@map("onet_sfia_mappings")
+}
+
+model QuestionCriteria {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionBankId String       @map("question_bank_id") @db.Uuid
+  criteriaText   String       @map("criteria_text") @db.Text
+  dimension      String       @db.VarChar(30)
+  weight         Decimal      @default(1.00) @map("weight") @db.Decimal(5, 2)
+  orderIndex     Int          @default(0) @map("order_index")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  questionBank   QuestionBank @relation(fields: [questionBankId], references: [id], onDelete: Cascade)
+
+  @@index([questionBankId], map: "idx_question_criteria_bank_id")
+  @@map("question_criteria")
 }
 
 // ==========================================
@@ -260,17 +302,25 @@ model SavedJobDescription {
   benefits         String?
   salary           String?
   bonus            String?
-  lastUsedAt       DateTime?          @map("last_used_at") @db.Timestamptz(6)
-  deletedAt        DateTime?          @map("deleted_at") @db.Timestamptz(6)
-  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  companyProfile   CompanyProfile?    @relation(fields: [companyProfileId], references: [id])
-  sessions         InterviewSession[]
+  // === TRƯỜNG MỚI TÍCH HỢP O*NET & SFIA ===
+  onetSocCode         String?            @map("onet_soc_code") @db.VarChar(10)
+  onetOccupationTitle String?            @map("onet_occupation_title") @db.VarChar(150)
+  targetSfiaLevel     Int?               @map("target_sfia_level") @db.SmallInt
+  normalizedTechStack Json?              @map("normalized_tech_stack")
+
+  lastUsedAt          DateTime?          @map("last_used_at") @db.Timestamptz(6)
+  deletedAt           DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyProfile      CompanyProfile?    @relation(fields: [companyProfileId], references: [id])
+  sessions            InterviewSession[]
 
   @@index([userId, updatedAt(sort: Desc)], map: "idx_saved_job_descriptions_user_updated")
   @@index([userId, companyName, jobTitle], map: "idx_saved_job_descriptions_user_company_title")
+  @@index([onetSocCode], map: "idx_saved_jds_onet_soc")
   @@map("saved_job_descriptions")
 }
 
@@ -290,6 +340,13 @@ model InterviewSession {
   contextPackId         String              @map("context_pack_id")
   sfiaVersion           String              @default("9.0.0") @map("sfia_version")
   status                String              @default("generating")
+
+  // === TRƯỜNG MỚI TÍCH HỢP O*NET & SFIA ===
+  onetSocCode           String?             @map("onet_soc_code") @db.VarChar(10)
+  targetSfiaLevel       Int?                @map("target_sfia_level") @db.SmallInt
+  competencyMatchRate   Decimal?            @map("competency_match_rate") @db.Decimal(5, 2)
+  recommendationStatus  String?             @map("recommendation_status") @db.VarChar(30)
+
   overallScore          Int?                @map("overall_score")
   completedAt           DateTime?           @map("completed_at") @db.Timestamptz(6)
   createdAt             DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -302,24 +359,30 @@ model InterviewSession {
 
   @@index([createdAt(sort: Desc)], map: "idx_interview_sessions_created_at")
   @@index([savedJobDescriptionId], map: "idx_interview_sessions_saved_jd")
+  @@index([onetSocCode], map: "idx_interview_sessions_onet_soc")
   @@map("interview_sessions")
 }
 
 model SessionSkill {
   id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sessionId    String           @map("session_id") @db.Uuid
-  skillId      String           @map("skill_id") @db.Uuid
-  weight       Decimal          @map("weight") @db.Decimal(5, 2)
+  skillCode    String           @map("skill_code") @db.VarChar(10)
+  techContext  String[]         @default([]) @map("tech_context")
+  targetLevel  Int              @default(3) @map("target_level") @db.SmallInt
+  actualLevel  Int?             @map("actual_level") @db.SmallInt
+  score        Int?             @map("score")
+  weight       Decimal          @default(1.00) @map("weight") @db.Decimal(5, 2)
   priority     Int?             @default(1)
   source       String           @map("source")
   reasoning    Json?            @map("reasoning")
   createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  session      InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  skill        Skill            @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  session          InterviewSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionQuestions SessionQuestion[]
 
-  @@unique([sessionId, skillId], map: "session_skills_session_skill_key")
+  @@unique([sessionId, skillCode], map: "session_skills_session_skill_code_key")
   @@index([sessionId], map: "idx_session_skills_session")
+  @@index([skillCode], map: "idx_session_skills_skill_code")
   @@map("session_skills")
 }
 
@@ -335,16 +398,25 @@ model SessionQuestion {
   estimatedTimeMin           Int?                        @map("estimated_time_min")
   generationModel            String?                     @map("generation_model")
   generationMetadata         Json?                       @map("generation_metadata")
+
+  // === THUỘC TÍNH ĐÁNH GIÁ & TIÊU CHÍ ===
+  sessionSkillId             String?                     @map("session_skill_id") @db.Uuid
+  sfiaSkillCode              String?                     @map("sfia_skill_code") @db.VarChar(10)
+  targetLevel                Int?                        @map("target_level") @db.SmallInt
+  rubricCriteria             Json?                       @map("rubric_criteria")
+
   createdAt                  DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
 
   sessionQuestionSkillLevels SessionQuestionSkillLevel[]
   questionBank               QuestionBank?               @relation(fields: [questionBankId], references: [id])
   session                    InterviewSession            @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionSkill               SessionSkill?               @relation(fields: [sessionSkillId], references: [id], onDelete: SetNull)
   userAnswers                UserAnswer[]
 
   @@unique([sessionId, orderIndex])
   @@index([sessionId], map: "idx_session_questions_session_id")
   @@index([sessionId, questionText], map: "idx_session_questions_session_id_text")
+  @@index([sessionSkillId], map: "idx_session_questions_session_skill")
   @@map("session_questions")
 }
 
@@ -391,10 +463,20 @@ model AiFeedback {
   overallScore      Int                @map("overall_score")
   modelAnswer       String             @map("model_answer")
   keyTakeaway       String             @map("key_takeaway")
-  promptVersion     String             @map("prompt_version")
-  isFallback        Boolean            @default(false) @map("is_fallback")
-  dimensionScores   Json?              @map("dimension_scores")
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  promptVersion       String              @map("prompt_version")
+  isFallback          Boolean             @default(false) @map("is_fallback")
+
+  // === TRƯỜNG MỚI ĐÁNH GIÁ NHỊ PHÂN & CẤP ĐỘ ===
+  demonstratedLevel   Int?                @map("demonstrated_level") @db.SmallInt
+  criteriaPassRate    Decimal?            @map("criteria_pass_rate") @db.Decimal(5, 2)
+  criteriaEvaluations Json?               @map("criteria_evaluations")
+  strengths           String[]            @default([]) @map("strengths")
+  improvements        String[]            @default([]) @map("improvements")
+
+  // === TƯƠNG THÍCH TẠM THỜI (GIỮ TRONG PHASE 1-4, DROP Ở BƯỚC 5.5) ===
+  dimensionScores     Json?               @map("dimension_scores")
+
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
 
   userAnswer        UserAnswer         @relation(fields: [userAnswerId], references: [id], onDelete: Cascade)
   annotatedSegments AnnotatedSegment[]
