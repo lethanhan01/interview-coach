@@ -14,7 +14,7 @@
 | Giai Đoạn | Nội Dung Công Việc | Trạng Thái | Hoàn Thành |
 | :--- | :--- | :--- | :--- |
 | **Giai đoạn 1** | Database Add-only Migration & Làm Giàu Dữ Liệu QuestionBank | 🟢 Đã hoàn thành | 4 / 4 bước |
-| **Giai đoạn 2** | Xây Dựng 2 Bounded Contexts `SfiaModule` & `OnetModule` | ⚪ Chưa bắt đầu | 0 / 3 bước |
+| **Giai đoạn 2** | Xây Dựng 2 Bounded Contexts `SfiaModule` & `OnetModule` | 🟡 Đang thực hiện | 1 / 3 bước |
 | **Giai đoạn 3** | Cầu Nối Hybrid & Tích Hợp JD / Session Lifecycle | ⚪ Chưa bắt đầu | 0 / 3 bước |
 | **Giai đoạn 4** | Cấp Phát Câu Hỏi Theo `session_skills` & Tiêu Chí Nhị Phân | ⚪ Chưa bắt đầu | 0 / 2 bước |
 | **Giai đoạn 5** | Chấm Điểm Tất Định, Báo Cáo Năng Lực & Dọn Dẹp Schema Cũ | ⚪ Chưa bắt đầu | 0 / 5 bước |
@@ -64,7 +64,14 @@
 ---
 
 ### Giai Đoạn 2: Xây Dựng 2 Bounded Contexts `SfiaModule` & `OnetModule`
-- [ ] **Bước 2.1: Bounded Context `SfiaModule`**
+- [x] **Bước 2.1: Bounded Context `SfiaModule`**
+  - [x] Tạo `server/src/modules/sfia/contracts/sfia.facade.interface.ts` và `sfia.dto.ts`.
+  - [x] Viết `sfia.service.ts`: Khởi tạo In-Memory Map cho 147 kỹ năng và 7 levels khi `onModuleInit` từ schema `sfia`.
+  - [x] Viết `sfia.facade.ts` implement `ISfiaFacade`.
+  - [x] Viết `sfia.module.ts` export `SFIA_FACADE_TOKEN`, `SfiaFacade`, `SfiaService`.
+  - [x] Viết unit test `sfia.facade.spec.ts` kiểm tra cache hit, case-insensitivity, xử lý ngoại lệ và thời gian phản hồi ~0ms (8/8 tests passed).
+  - [x] Cập nhật `server/src/core/architecture.spec.ts` bổ sung `'sfia'` và `'onet'` vào `BOUNDED_CONTEXTS`.
+  - [x] Xác nhận `npm run test:arch` (3/3 tests passed) và `npm run build` (Exit code 0).
 - [ ] **Bước 2.2: Bounded Context `OnetModule`**
 - [ ] **Bước 2.3: Đăng Ký Modules & Dọn Dẹp Thư Mục Cũ**
 
@@ -121,6 +128,20 @@
 - Kiểm tra `npm run test:arch`: Thành công (3/3 tests passed).
 - Dọn dẹp an toàn các file kiểm tra tạm thời.
 - **KẾT LUẬN:** Giai đoạn 1 đã hoàn tất 100% (4/4 bước) đạt chuẩn chất lượng và an toàn tuyệt đối.
+
+### [2026-09-06] Hoàn thành Bước 2.1: Bounded Context SfiaModule
+- Đã tạo hợp đồng giao tiếp độc lập `server/src/modules/sfia/contracts/`:
+  - `sfia.dto.ts` (`SfiaSkillDto`, `SfiaLevelDto`)
+  - `sfia.facade.interface.ts` (`ISfiaFacade`, token `SFIA_FACADE_TOKEN`)
+  - `index.ts`
+- Đã triển khai `server/src/modules/sfia/sfia.service.ts` nạp 147 kỹ năng và 7 levels vào In-Memory Map khi khởi động ứng dụng (`onModuleInit`), đảm bảo thời gian truy vấn runtime xấp xỉ ~0ms.
+- Đã triển khai `server/src/modules/sfia/sfia.facade.ts` hiện thực hóa `ISfiaFacade` và `server/src/modules/sfia/sfia.module.ts`.
+- Đã cập nhật kiến trúc `server/src/core/architecture.spec.ts` đăng ký `'sfia'` và `'onet'` vào `BOUNDED_CONTEXTS`.
+- Viết bộ unit test `server/src/modules/sfia/sfia.facade.spec.ts`: Đạt 8/8 tests passed 100% (kiểm tra lookup exact code, case-insensitivity, null handling, level retrieval, full skills list).
+- Chạy `npm run test:arch`: Thành công (3/3 tests passed).
+- Chạy `npm run build`: Thành công (Exit code 0).
+- **KẾT LUẬN:** Bước 2.1 đã hoàn tất 100% an toàn và sẵn sàng cho Bước 2.2 (`OnetModule`).
+
 
 
 

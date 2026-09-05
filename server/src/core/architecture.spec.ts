@@ -11,6 +11,8 @@ const BOUNDED_CONTEXTS = new Set([
   'interview-live',
   'interview-prep',
   'media',
+  'onet',
+  'sfia',
   'user',
 ]);
 
