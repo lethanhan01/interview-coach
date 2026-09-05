@@ -66,7 +66,6 @@ export class TranscribeAnswer {
 
       const question = await this.prisma.sessionQuestion.findFirst({
         where: { id: answer.questionId, sessionId },
-        include: SESSION_QUESTION_CRITERIA_INCLUDE,
       });
 
       if (!question) {
@@ -229,14 +228,3 @@ export class TranscribeAnswer {
   }
 }
 
-const SESSION_QUESTION_CRITERIA_INCLUDE = {
-  sessionQuestionSkillLevels: {
-    include: {
-      skillLevel: {
-        include: {
-          skill: true,
-        },
-      },
-    },
-  },
-} satisfies Prisma.SessionQuestionInclude;

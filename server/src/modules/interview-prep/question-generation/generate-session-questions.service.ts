@@ -236,59 +236,10 @@ export class GenerateSessionQuestions {
       estimatedTimeMin: q.estimatedTimeMin,
     }));
 
-    // Best-effort link sessionQuestionSkillLevels cho Phase 4
-    const skillCodes = Array.from(
-      new Set(questions.map((q) => q.sfiaSkillCode).filter(Boolean)),
-    );
-    const matchingSkillLevels = await this.prisma.skillLevel
-      .findMany({
-        where: {
-          skill: { code: { in: skillCodes } },
-        },
-        include: {
-          skill: true,
-          level: true,
-        },
-      })
-      .catch(() => []);
-
-    const skillLevelMap = new Map<string, string>();
-    for (const sl of matchingSkillLevels) {
-      if (sl.skill?.code && sl.level?.rank) {
-        skillLevelMap.set(`${sl.skill.code}-${sl.level.rank}`, sl.id);
-      }
-    }
-
-    const legacyCriteria: Array<{
-      sessionQuestionId: string;
-      skillLevelId: string;
-    }> = [];
-
-    for (const q of questionRows) {
-      const key = `${q.sfiaSkillCode}-${q.targetLevel}`;
-      const slId = skillLevelMap.get(key);
-      if (slId) {
-        legacyCriteria.push({
-          sessionQuestionId: q.id,
-          skillLevelId: slId,
-        });
-      }
-    }
-
-    const [createdQuestions] = await this.prisma.$transaction([
-      this.prisma.sessionQuestion.createMany({
-        data: questionRows,
-        skipDuplicates: true,
-      }),
-      ...(legacyCriteria.length > 0
-        ? [
-            this.prisma.sessionQuestionSkillLevel.createMany({
-              data: legacyCriteria,
-              skipDuplicates: true,
-            }),
-          ]
-        : []),
-    ]);
+    const createdQuestions = await this.prisma.sessionQuestion.createMany({
+      data: questionRows,
+      skipDuplicates: true,
+    });
 
     return createdQuestions.count;
   }
@@ -470,37 +421,29 @@ export class GenerateSessionQuestions {
       id: randomUUID(),
       sessionId,
     }));
-    const criteria = (
-      await Promise.all(
-        questions.map((question) =>
-          this.questionCriteria.buildSessionQuestionCriteriaData({
-            sessionQuestionId: question.id,
-            rubricVersionId,
-            criterionCodes: question.competencyDomains,
-          }),
-        ),
-      )
-    ).flat();
-    const [result] = await this.prisma.$transaction([
-      this.prisma.sessionQuestion.createMany({
-        data: questions.map((question) => ({
-          ...(question.questionBankId
-            ? { questionBankId: question.questionBankId }
-            : {}),
-          questionText: question.questionText,
-          orderIndex: question.orderIndex,
-          questionCategory: question.questionCategory,
-          estimatedTimeMin: question.estimatedTimeMin,
-          id: question.id,
-          sessionId: question.sessionId,
-        })),
-        skipDuplicates: true,
-      }),
-      this.prisma.sessionQuestionSkillLevel.createMany({
-        data: criteria,
-        skipDuplicates: true,
-      }),
-    ]);
+    await Promise.all(
+      questions.map((question) =>
+        this.questionCriteria.buildSessionQuestionCriteriaData({
+          sessionQuestionId: question.id,
+          rubricVersionId,
+          criterionCodes: question.competencyDomains,
+        }),
+      ),
+    );
+    const result = await this.prisma.sessionQuestion.createMany({
+      data: questions.map((question) => ({
+        ...(question.questionBankId
+          ? { questionBankId: question.questionBankId }
+          : {}),
+        questionText: question.questionText,
+        orderIndex: question.orderIndex,
+        questionCategory: question.questionCategory,
+        estimatedTimeMin: question.estimatedTimeMin,
+        id: question.id,
+        sessionId: question.sessionId,
+      })),
+      skipDuplicates: true,
+    });
     return result.count;
   }
 

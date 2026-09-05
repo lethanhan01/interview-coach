@@ -25,26 +25,9 @@ export class ReportDataCollector {
           select: {
             questionText: true,
             orderIndex: true,
-            sessionQuestionSkillLevels: {
-              select: {
-                skillLevel: {
-                  select: {
-                    code: true,
-                    name: true,
-                    weight: true,
-                    displayOrder: true,
-                    skill: {
-                      select: {
-                        code: true,
-                        name: true,
-                        categoryCode: true,
-                        categoryName: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            sfiaSkillCode: true,
+            targetLevel: true,
+            rubricCriteria: true,
           },
         },
       },

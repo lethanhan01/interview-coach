@@ -5,17 +5,7 @@ import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 
-export const SESSION_QUESTION_SKILL_LEVELS_INCLUDE = {
-  sessionQuestionSkillLevels: {
-    include: {
-      skillLevel: {
-        include: {
-          skill: true,
-        },
-      },
-    },
-  },
-} satisfies Prisma.SessionQuestionInclude;
+export const SESSION_QUESTION_SKILL_LEVELS_INCLUDE = {} as any;
 
 // Alias for backwards compatibility
 export const SESSION_QUESTION_CRITERIA_INCLUDE = SESSION_QUESTION_SKILL_LEVELS_INCLUDE;

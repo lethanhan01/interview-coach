@@ -43,6 +43,9 @@ export interface ReportUserAnswerRecord {
   question: {
     questionText: string;
     orderIndex: number;
+    sfiaSkillCode?: string | null;
+    targetLevel?: number | null;
+    rubricCriteria?: unknown;
     sessionQuestionSkillLevels?: QuestionSkillLevelWrapper[];
     criteria?: QuestionCriterionWrapper[];
   };

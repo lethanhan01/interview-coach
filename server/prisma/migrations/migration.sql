@@ -1007,7 +1007,8 @@ ALTER TABLE session_reports
     'comm_analysis',
     'competency_heatmap',
     'action_plan',
-    'skipped_answers'
+    'skipped_answers',
+    'session_competency_evaluation'
   ));
 
 DO $$

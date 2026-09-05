@@ -10,6 +10,10 @@ import type {
   ReportFinalPayload,
 } from './types/report-generation.types';
 
+import { Optional } from '@nestjs/common';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { UnifiedReportGeneratorService } from './services/unified-report-generator.service';
+
 export { ComprehensiveReportJobDto };
 
 @Injectable()
@@ -21,13 +25,38 @@ export class GenerateComprehensiveReport {
     private readonly metricsAggregator: ReportMetricsAggregator,
     private readonly promptExecutor: ReportPromptExecutor,
     private readonly persistenceService: ReportPersistenceService,
+    @Optional()
+    private readonly unifiedReportGenerator?: UnifiedReportGeneratorService,
+    @Optional()
+    private readonly prisma?: PrismaService,
   ) {}
 
   async execute(job: ComprehensiveReportJobDto): Promise<void> {
     const { sessionId, turnIds } = job;
     const language = resolveOutputLanguage(job.language);
 
-    // 1. Collect & validate data from database
+    // Kiểm tra nếu phiên có session_skills (Hybrid Engine Phase 4 & 5)
+    if (this.unifiedReportGenerator && this.prisma?.sessionSkill?.count) {
+      try {
+        const skillCount = await this.prisma.sessionSkill.count({
+          where: { sessionId },
+        });
+        if (skillCount > 0) {
+          this.logger.log(
+            `Generating unified competency report for session ${sessionId} (skills=${skillCount})`,
+          );
+          await this.unifiedReportGenerator.generateReport(sessionId, language);
+          return;
+        }
+      } catch (err: unknown) {
+        this.logger.warn(
+          `Unable to check session_skills count for session ${sessionId}, falling back to legacy report flow`,
+          err,
+        );
+      }
+    }
+
+    // 1. Collect & validate data from database (Legacy flow)
     const collected = await this.dataCollector.collectReportData(
       sessionId,
       turnIds,

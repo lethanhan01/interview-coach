@@ -7,6 +7,8 @@ import { ContextPackService } from '../context-pack.service';
 import { PipelineStrategyFactory } from '@infra/ai/pipelines/pipeline-strategy.factory';
 import { EvaluateAnswer } from '../evaluate-answer.service';
 import { ReportService } from '../../report/report.service';
+import { BinaryCriteriaEvaluatorService } from '../binary-criteria-evaluator.service';
+import { ScoringEngineService } from '../scoring-engine.service';
 import {
   createMockContextPackService,
   createMockPipelineStrategyFactory,
@@ -71,6 +73,8 @@ describe('FeedbackProcessor', () => {
   let mockContextPack: ReturnType<typeof createMockContextPackService>;
   let mockFactory: ReturnType<typeof createMockPipelineStrategyFactory>;
   let mockReportService: ReturnType<typeof createMockReportService>;
+  let mockBinaryCriteriaEvaluator: any;
+  let mockScoringEngine: any;
   let strategy: { evaluateAnswer: jest.Mock };
 
   const jobData = {
@@ -141,6 +145,41 @@ describe('FeedbackProcessor', () => {
     mockFactory.getStrategy.mockReturnValue(strategy);
     mockSse.emit.mockResolvedValue(undefined);
 
+    mockBinaryCriteriaEvaluator = {
+      evaluate: jest.fn().mockResolvedValue({
+        criteriaEvaluations: [
+          { criteriaId: 'c1', passed: true, evidence: 'Đạt' },
+          { criteriaId: 'c2', passed: false, evidence: 'Chưa đạt' },
+        ],
+        strengths: ['Tốt'],
+        improvements: ['Cần cải thiện'],
+        modelAnswer: 'Mẫu',
+        keyTakeaway: 'Takeaway',
+        annotatedSegments: [
+          {
+            segmentText: 'backend developer',
+            startIndex: 7,
+            endIndex: 24,
+            highlightLevel: 'positive',
+            annotation: 'Cụ thể',
+          },
+        ],
+        isFallback: false,
+        promptVersion: 'binary-criteria-v1.0',
+      }),
+    };
+
+    mockScoringEngine = {
+      calculateQuestionScore: jest.fn().mockReturnValue({
+        questionScore: 50,
+        criteriaPassRate: 50,
+        corePassRate: 1.0,
+        seniorityPassRate: 0.0,
+      }),
+      inferDemonstratedLevel: jest.fn().mockReturnValue(3),
+      aggregateSessionSkillScores: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FeedbackProcessor,
@@ -153,6 +192,14 @@ describe('FeedbackProcessor', () => {
         },
         { provide: PipelineStrategyFactory, useValue: mockFactory },
         { provide: ReportService, useValue: mockReportService },
+        {
+          provide: BinaryCriteriaEvaluatorService,
+          useValue: mockBinaryCriteriaEvaluator,
+        },
+        {
+          provide: ScoringEngineService,
+          useValue: mockScoringEngine,
+        },
       ],
     }).compile();
 
@@ -535,5 +582,61 @@ describe('FeedbackProcessor', () => {
     expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledTimes(
       2,
     );
+  });
+
+  describe('Dual-Mode Hybrid Assessment Flow (Phase 5)', () => {
+    it('kích hoạt BinaryCriteriaEvaluator và ScoringEngine khi câu hỏi có rubricCriteria', async () => {
+      // Mock sessionQuestion có rubricCriteria
+      prisma.sessionQuestion = {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'q-1',
+          sfiaSkillCode: 'DBDS',
+          targetLevel: 4,
+          sessionSkillId: 'skill-dbds',
+          rubricCriteria: [
+            { id: 'crit_core', dimension: 'core', statement: 'Kiến thức Index' },
+            { id: 'crit_seniority', dimension: 'seniority', statement: 'Trade-off' },
+          ],
+        }),
+      } as any;
+
+      await processor.process(makeJob());
+
+      // Xác nhận BinaryCriteriaEvaluator được gọi thay vì legacy pipeline
+      expect(mockBinaryCriteriaEvaluator.evaluate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          questionText: 'Giới thiệu bản thân?',
+          answerText: 'Tôi là backend developer.',
+          rubricCriteria: expect.any(Array),
+          sfiaSkillCode: 'DBDS',
+          targetLevel: 4,
+        }),
+      );
+
+      // Xác nhận ScoringEngine tính điểm và suy luận level
+      expect(mockScoringEngine.calculateQuestionScore).toHaveBeenCalled();
+      expect(mockScoringEngine.inferDemonstratedLevel).toHaveBeenCalledWith(4, 1.0, 0.0);
+
+      // Xác nhận lưu feedback với demonstratedLevel và criteriaEvaluations
+      expect(tx.aiFeedback.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userAnswerId: 'answer-1' },
+          create: expect.objectContaining({
+            overallScore: 50,
+            demonstratedLevel: 3,
+            criteriaPassRate: 50,
+            promptVersion: 'binary-criteria-v1.0',
+            strengths: ['Tốt'],
+            improvements: ['Cần cải thiện'],
+          }),
+        }),
+      );
+
+      // Xác nhận tự động tổng hợp session_skills
+      expect(mockScoringEngine.aggregateSessionSkillScores).toHaveBeenCalledWith(
+        'session-123',
+        tx,
+      );
+    });
   });
 });

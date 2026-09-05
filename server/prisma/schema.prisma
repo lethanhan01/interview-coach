@@ -25,108 +25,6 @@ enum AccountStatus {
 }
 
 // ==========================================
-// SFIA 9 FRAMEWORK & TAXONOMY (FLATTENED)
-// ==========================================
-
-model Level {
-  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code             String       @unique
-  name             String       @map("name")
-  rank             Int          @unique
-  autonomy         String?      @db.Text
-  influence        String?      @db.Text
-  complexity       String?      @db.Text
-  businessSkills   String?      @map("business_skills") @db.Text
-  knowledge        String?      @db.Text
-  description      String?      @db.Text
-  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  
-  skillLevels      SkillLevel[]
-  roleSkills       RoleSkill[]
-
-  @@map("levels")
-}
-
-model Role {
-  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code             String       @unique
-  name             String       @map("name")
-  description      String?      @db.Text
-  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  
-  roleSkills       RoleSkill[]
-
-  @@map("roles")
-}
-
-model Skill {
-  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code               String          @unique
-  name               String          @map("name")
-  categoryCode       String          @map("category_code")
-  categoryName       String          @map("category_name")
-  subcategoryCode    String          @map("subcategory_code")
-  subcategoryName    String          @map("subcategory_name")
-  overallDescription String?         @map("overall_description") @db.Text
-  guidanceNotes      String?         @map("guidance_notes") @db.Text
-  sfiaVersion        String          @default("9.0.0") @map("sfia_version")
-  displayOrder       Int             @default(0) @map("display_order")
-  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  skillLevels        SkillLevel[]
-  roleSkills         RoleSkill[]
-
-  @@index([categoryCode], map: "idx_skills_category_code")
-  @@index([subcategoryCode], map: "idx_skills_subcategory_code")
-  @@map("skills")
-}
-
-model SkillLevel {
-  id                         String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  skillId                    String                      @map("skill_id") @db.Uuid
-  levelId                    String                      @map("level_id") @db.Uuid
-  code                       String
-  name                       String
-  levelDescription           String                      @map("level_description") @db.Text
-  behavioralIndicators       Json?                       @map("behavioral_indicators")
-  genericAttributes          Json?                       @map("generic_attributes")
-  weight                     Decimal?                    @default(1.00) @db.Decimal(5, 2)
-  displayOrder               Int                         @default(0) @map("display_order")
-  createdAt                  DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                  DateTime                    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  skill                      Skill                       @relation(fields: [skillId], references: [id], onDelete: Cascade)
-  level                      Level                       @relation(fields: [levelId], references: [id], onDelete: Restrict)
-  questionBankSkillLevels    QuestionBankSkillLevel[]
-  sessionQuestionSkillLevels SessionQuestionSkillLevel[]
-
-  @@unique([skillId, levelId], map: "skill_levels_skill_level_key")
-  @@unique([code], map: "skill_levels_code_key")
-  @@index([skillId], map: "idx_skill_levels_skill")
-  @@index([levelId], map: "idx_skill_levels_level")
-  @@map("skill_levels")
-}
-
-model RoleSkill {
-  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  roleId        String     @map("role_id") @db.Uuid
-  skillId       String     @map("skill_id") @db.Uuid
-  targetLevelId String     @map("target_level_id") @db.Uuid
-  defaultWeight Decimal    @map("default_weight") @db.Decimal(5, 2)
-  priority      Int?       @default(1)
-  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  role          Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  skill         Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
-  targetLevel   Level      @relation(fields: [targetLevelId], references: [id], onDelete: Restrict)
-
-  @@unique([roleId, skillId, targetLevelId], map: "role_skills_unique")
-  @@index([roleId], map: "idx_role_skills_role")
-  @@map("role_skills")
-}
-
-// ==========================================
 // QUESTION BANK (PRESERVED CONTENT)
 // ==========================================
 
@@ -148,7 +46,6 @@ model QuestionBank {
   sfiaSkillCode           String?                  @map("sfia_skill_code") @db.VarChar(10)
   targetSfiaLevel         Int?                     @map("target_sfia_level") @db.SmallInt
 
-  questionBankSkillLevels QuestionBankSkillLevel[]
   questionCriteria        QuestionCriteria[]
   sessionQuestions        SessionQuestion[]
 
@@ -157,22 +54,6 @@ model QuestionBank {
   @@index([onetSocCode, targetSfiaLevel], map: "idx_question_bank_soc_level", where: raw("(deleted_at IS NULL)"))
   @@index([sfiaSkillCode, targetSfiaLevel], map: "idx_question_bank_sfia_skill_level", where: raw("(deleted_at IS NULL)"))
   @@map("question_bank")
-}
-
-model QuestionBankSkillLevel {
-  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  questionBankId String       @map("question_bank_id") @db.Uuid
-  skillLevelId   String       @map("skill_level_id") @db.Uuid
-  isPrimary      Boolean      @default(true) @map("is_primary")
-  weight         Decimal      @default(1.00) @map("weight") @db.Decimal(5, 2)
-  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  questionBank   QuestionBank @relation(fields: [questionBankId], references: [id], onDelete: Cascade)
-  skillLevel     SkillLevel   @relation(fields: [skillLevelId], references: [id], onDelete: Cascade)
-
-  @@unique([questionBankId, skillLevelId], map: "question_bank_skill_levels_unique")
-  @@index([skillLevelId], map: "idx_question_bank_skill_levels_skill_level_id")
-  @@map("question_bank_skill_levels")
 }
 
 // ==========================================
@@ -407,7 +288,6 @@ model SessionQuestion {
 
   createdAt                  DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  sessionQuestionSkillLevels SessionQuestionSkillLevel[]
   questionBank               QuestionBank?               @relation(fields: [questionBankId], references: [id])
   session                    InterviewSession            @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionSkill               SessionSkill?               @relation(fields: [sessionSkillId], references: [id], onDelete: SetNull)
@@ -418,21 +298,6 @@ model SessionQuestion {
   @@index([sessionId, questionText], map: "idx_session_questions_session_id_text")
   @@index([sessionSkillId], map: "idx_session_questions_session_skill")
   @@map("session_questions")
-}
-
-model SessionQuestionSkillLevel {
-  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionQuestionId String          @map("session_question_id") @db.Uuid
-  skillLevelId      String          @map("skill_level_id") @db.Uuid
-  weight            Decimal         @default(1.00) @map("weight") @db.Decimal(5, 2)
-  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  sessionQuestion   SessionQuestion @relation(fields: [sessionQuestionId], references: [id], onDelete: Cascade)
-  skillLevel        SkillLevel      @relation(fields: [skillLevelId], references: [id], onDelete: Cascade)
-
-  @@unique([sessionQuestionId, skillLevelId], map: "session_question_skill_levels_unique")
-  @@index([skillLevelId], map: "idx_session_question_skill_levels_skill_level_id")
-  @@map("session_question_skill_levels")
 }
 
 model UserAnswer {

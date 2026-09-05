@@ -15,6 +15,8 @@ import { ReportMetricsAggregator } from './services/report-metrics-aggregator.se
 import { ReportDataCollector } from './services/report-data-collector.service';
 import { ReportPromptExecutor } from './services/report-prompt-executor.service';
 import { ReportPersistenceService } from './services/report-persistence.service';
+import { SfiaModule } from '@modules/sfia/sfia.module';
+import { UnifiedReportGeneratorService } from './services/unified-report-generator.service';
 import { workersEnabled } from '@core/runtime/runtime-role';
 
 const workerProviders = workersEnabled() ? [ComprehensiveReportProcessor] : [];
@@ -23,6 +25,7 @@ const workerProviders = workersEnabled() ? [ComprehensiveReportProcessor] : [];
   imports: [
     AuthModule,
     AiModule,
+    SfiaModule,
     WorkflowModule,
     BullModule.registerQueue({
       name: REPORT_QUEUE,
@@ -36,9 +39,10 @@ const workerProviders = workersEnabled() ? [ComprehensiveReportProcessor] : [];
     ReportDataCollector,
     ReportPromptExecutor,
     ReportPersistenceService,
+    UnifiedReportGeneratorService,
     ...workerProviders,
   ],
   controllers: [ReportController],
-  exports: [ReportService],
+  exports: [ReportService, UnifiedReportGeneratorService],
 })
 export class ReportModule {}

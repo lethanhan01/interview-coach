@@ -1,5 +1,5 @@
 // BullMQ adapter for the Assessment feedback workflow.
-import { Logger } from '@nestjs/common';
+import { Logger, Optional } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import type { Prisma } from '@prisma/client';
@@ -23,6 +23,9 @@ import type { OutputLanguage } from '@infra/ai/output-language';
 import { resolveOutputLanguage } from '@infra/ai/output-language';
 import { sanitizeFeedbackSegments } from '../feedback-segment-sanitizer';
 import { PipelineStrategyFactory } from '@infra/ai/pipelines/pipeline-strategy.factory';
+
+import { BinaryCriteriaEvaluatorService } from '../binary-criteria-evaluator.service';
+import { ScoringEngineService } from '../scoring-engine.service';
 
 interface FeedbackJobDto {
   sessionId: string;
@@ -60,6 +63,10 @@ export class FeedbackProcessor extends WorkerHost {
     private readonly contextPackService: ContextPackService,
     private readonly pipelines: PipelineStrategyFactory,
     private readonly reportService: ReportService,
+    @Optional()
+    private readonly binaryCriteriaEvaluator?: BinaryCriteriaEvaluatorService,
+    @Optional()
+    private readonly scoringEngine?: ScoringEngineService,
   ) {
     super();
   }
@@ -81,79 +88,222 @@ export class FeedbackProcessor extends WorkerHost {
     let hasAnnotations = false;
 
     try {
-      const feedback = await this.pipelines
-        .getStrategy(sessionType)
-        .evaluateAnswer({
-          sessionType,
-          questionId,
+      // 1. Kiểm tra xem câu hỏi có rubricCriteria của Hybrid Engine (Phase 4 & 5) hay không
+      const question =
+        questionId && this.prisma.sessionQuestion?.findUnique
+          ? await this.prisma.sessionQuestion.findUnique({
+              where: { id: questionId },
+              select: {
+                id: true,
+                rubricCriteria: true,
+                sfiaSkillCode: true,
+                targetLevel: true,
+                sessionSkillId: true,
+              },
+            })
+          : this.prisma.sessionQuestion?.findFirst
+            ? await this.prisma.sessionQuestion.findFirst({
+                where: { userAnswers: { some: { id: answerId } } },
+                select: {
+                  id: true,
+                  rubricCriteria: true,
+                  sfiaSkillCode: true,
+                  targetLevel: true,
+                  sessionSkillId: true,
+                },
+              })
+            : null;
+
+      const hasRubricCriteria =
+        Boolean(this.binaryCriteriaEvaluator) &&
+        Boolean(this.scoringEngine) &&
+        Array.isArray(question?.rubricCriteria) &&
+        (question.rubricCriteria as unknown[]).length > 0;
+
+      if (hasRubricCriteria && this.binaryCriteriaEvaluator && this.scoringEngine) {
+        // === NHÁNH MỚI: ĐÁNH GIÁ NHỊ PHÂN VÀ TÍNH ĐIỂM TẤT ĐỊNH (PHASE 5) ===
+        const criteriaList = question.rubricCriteria as any[];
+        const binaryFeedback = await this.binaryCriteriaEvaluator.evaluate({
           questionText,
-          questionCategory,
-          competencyDomains,
           answerText,
-          contextPackConfig:
-            await this.contextPackService.getContextPack(contextPack),
+          rubricCriteria: criteriaList,
+          sessionType,
           language,
+          sfiaSkillCode: question.sfiaSkillCode ?? undefined,
+          targetLevel: question.targetLevel ?? undefined,
         });
-      const sanitizedSegments = sanitizeFeedbackSegments(
-        answerText,
-        feedback.annotatedSegments,
-      );
-      if (sanitizedSegments.issues.length > 0) {
-        this.logger.warn(
-          `FeedbackProcessor removed invalid annotated segments for session ${sessionId} answer ${answerId}: ` +
-            `removed=${sanitizedSegments.issues.length}`,
+
+        const scoring = this.scoringEngine.calculateQuestionScore(
+          binaryFeedback.criteriaEvaluations,
+          criteriaList,
         );
-      }
 
-      await this.prisma.$transaction(async (tx) => {
-        const aiFeedback = await tx.aiFeedback.upsert({
-          where: { userAnswerId: answerId },
-          create: {
-            userAnswerId: answerId,
-            overallScore: feedback.overallScore,
-            modelAnswer: feedback.modelAnswer,
-            keyTakeaway: feedback.keyTakeaway,
-            promptVersion: feedback.promptVersion,
-            isFallback: false,
-            dimensionScores:
-              feedback.appliedDimensions as unknown as Prisma.InputJsonValue,
-          },
-          update: {
-            overallScore: feedback.overallScore,
-            modelAnswer: feedback.modelAnswer,
-            keyTakeaway: feedback.keyTakeaway,
-            promptVersion: feedback.promptVersion,
-            isFallback: false,
-            dimensionScores:
-              feedback.appliedDimensions as unknown as Prisma.InputJsonValue,
-          },
-        });
+        const demonstratedLevel = this.scoringEngine.inferDemonstratedLevel(
+          question.targetLevel ?? 3,
+          scoring.corePassRate,
+          scoring.seniorityPassRate,
+        );
 
-        await tx.annotatedSegment.deleteMany({
-          where: { aiFeedbackId: aiFeedback.id },
-        });
-        if (sanitizedSegments.segments.length > 0) {
-          await tx.annotatedSegment.createMany({
-            data: sanitizedSegments.segments.map((seg) => ({
-              aiFeedbackId: aiFeedback.id,
-              segmentText: seg.segmentText,
-              startIndex: seg.startIndex,
-              endIndex: seg.endIndex,
-              highlightLevel: seg.highlightLevel,
-              annotation: seg.annotation,
-              suggestion: seg.suggestion ?? null,
-              improvedVersion: seg.improvedVersion ?? null,
-            })),
+        const dimensionScoresFallback = [
+          {
+            id: 'core',
+            name: 'Core Competency',
+            score: Math.round(scoring.corePassRate * 100),
+            weight: 0.5,
+          },
+          {
+            id: 'seniority',
+            name: 'Seniority & Ownership',
+            score: Math.round(scoring.seniorityPassRate * 100),
+            weight: 0.5,
+          },
+        ];
+
+        await this.prisma.$transaction(async (tx) => {
+          const aiFeedback = await tx.aiFeedback.upsert({
+            where: { userAnswerId: answerId },
+            create: {
+              userAnswerId: answerId,
+              overallScore: scoring.questionScore,
+              demonstratedLevel,
+              criteriaPassRate: scoring.criteriaPassRate,
+              criteriaEvaluations:
+                binaryFeedback.criteriaEvaluations as unknown as Prisma.InputJsonValue,
+              strengths: binaryFeedback.strengths,
+              improvements: binaryFeedback.improvements,
+              modelAnswer: binaryFeedback.modelAnswer,
+              keyTakeaway: binaryFeedback.keyTakeaway,
+              promptVersion: binaryFeedback.promptVersion,
+              isFallback: binaryFeedback.isFallback,
+              dimensionScores:
+                dimensionScoresFallback as unknown as Prisma.InputJsonValue,
+            },
+            update: {
+              overallScore: scoring.questionScore,
+              demonstratedLevel,
+              criteriaPassRate: scoring.criteriaPassRate,
+              criteriaEvaluations:
+                binaryFeedback.criteriaEvaluations as unknown as Prisma.InputJsonValue,
+              strengths: binaryFeedback.strengths,
+              improvements: binaryFeedback.improvements,
+              modelAnswer: binaryFeedback.modelAnswer,
+              keyTakeaway: binaryFeedback.keyTakeaway,
+              promptVersion: binaryFeedback.promptVersion,
+              isFallback: binaryFeedback.isFallback,
+              dimensionScores:
+                dimensionScoresFallback as unknown as Prisma.InputJsonValue,
+            },
           });
+
+          await tx.annotatedSegment.deleteMany({
+            where: { aiFeedbackId: aiFeedback.id },
+          });
+
+          if (binaryFeedback.annotatedSegments.length > 0) {
+            await tx.annotatedSegment.createMany({
+              data: binaryFeedback.annotatedSegments.map((seg) => ({
+                aiFeedbackId: aiFeedback.id,
+                segmentText: seg.segmentText,
+                startIndex: seg.startIndex,
+                endIndex: seg.endIndex,
+                highlightLevel: seg.highlightLevel,
+                annotation: seg.annotation,
+                suggestion: seg.suggestion ?? null,
+                improvedVersion: seg.improvedVersion ?? null,
+              })),
+            });
+          }
+
+          await tx.userAnswer.update({
+            where: { id: answerId },
+            data: { feedbackGenerated: true },
+          });
+
+          // Tự động tổng hợp điểm và level cho session_skills
+          await this.scoringEngine!.aggregateSessionSkillScores(sessionId, tx);
+        });
+
+        hasAnnotations = binaryFeedback.annotatedSegments.length > 0;
+      } else {
+        // === NHÁNH LEGACY: ĐÁNH GIÁ PHIÊN CŨ KHÔNG CÓ RUBRIC CRITERIA ===
+        const feedback = await this.pipelines
+          .getStrategy(sessionType)
+          .evaluateAnswer({
+            sessionType,
+            questionId,
+            questionText,
+            questionCategory,
+            competencyDomains,
+            answerText,
+            contextPackConfig:
+              await this.contextPackService.getContextPack(contextPack),
+            language,
+          });
+        const sanitizedSegments = sanitizeFeedbackSegments(
+          answerText,
+          feedback.annotatedSegments,
+        );
+        if (sanitizedSegments.issues.length > 0) {
+          this.logger.warn(
+            `FeedbackProcessor removed invalid annotated segments for session ${sessionId} answer ${answerId}: ` +
+              `removed=${sanitizedSegments.issues.length}`,
+          );
         }
 
-        await tx.userAnswer.update({
-          where: { id: answerId },
-          data: { feedbackGenerated: true },
-        });
-      });
+        await this.prisma.$transaction(async (tx) => {
+          const aiFeedback = await tx.aiFeedback.upsert({
+            where: { userAnswerId: answerId },
+            create: {
+              userAnswerId: answerId,
+              overallScore: feedback.overallScore,
+              modelAnswer: feedback.modelAnswer,
+              keyTakeaway: feedback.keyTakeaway,
+              promptVersion: feedback.promptVersion,
+              isFallback: false,
+              dimensionScores:
+                feedback.appliedDimensions as unknown as Prisma.InputJsonValue,
+            },
+            update: {
+              overallScore: feedback.overallScore,
+              modelAnswer: feedback.modelAnswer,
+              keyTakeaway: feedback.keyTakeaway,
+              promptVersion: feedback.promptVersion,
+              isFallback: false,
+              dimensionScores:
+                feedback.appliedDimensions as unknown as Prisma.InputJsonValue,
+            },
+          });
 
-      hasAnnotations = sanitizedSegments.segments.length > 0;
+          await tx.annotatedSegment.deleteMany({
+            where: { aiFeedbackId: aiFeedback.id },
+          });
+          if (sanitizedSegments.segments.length > 0) {
+            await tx.annotatedSegment.createMany({
+              data: sanitizedSegments.segments.map((seg) => ({
+                aiFeedbackId: aiFeedback.id,
+                segmentText: seg.segmentText,
+                startIndex: seg.startIndex,
+                endIndex: seg.endIndex,
+                highlightLevel: seg.highlightLevel,
+                annotation: seg.annotation,
+                suggestion: seg.suggestion ?? null,
+                improvedVersion: seg.improvedVersion ?? null,
+              })),
+            });
+          }
+
+          await tx.userAnswer.update({
+            where: { id: answerId },
+            data: { feedbackGenerated: true },
+          });
+
+          if (this.scoringEngine) {
+            await this.scoringEngine.aggregateSessionSkillScores(sessionId, tx);
+          }
+        });
+
+        hasAnnotations = sanitizedSegments.segments.length > 0;
+      }
     } catch (error: unknown) {
       const isQuotaError = isAIQuotaExceeded(error);
       const totalAttempts = job.opts.attempts ?? FEEDBACK_JOB_ATTEMPTS;

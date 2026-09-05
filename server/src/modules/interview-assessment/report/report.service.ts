@@ -84,11 +84,15 @@ export class ReportService {
       );
     }
 
+    const unifiedReport = findLatestReport(
+      session.sessionReports,
+      'session_competency_evaluation',
+    );
     const executiveSummaryReport = findLatestReport(
       session.sessionReports,
       'executive_summary',
     );
-    if (!executiveSummaryReport) {
+    if (!executiveSummaryReport && !unifiedReport) {
       throw new InterviewAIException(
         ErrorCode.REPORT_NOT_READY,
         HttpStatus.ACCEPTED,
@@ -117,7 +121,7 @@ export class ReportService {
       const answerText = answer?.answerText ?? '';
 
       const rawSegments: AnnotatedSegmentDto[] =
-        feedback?.annotatedSegments.map((s) => ({
+        (feedback?.annotatedSegments ?? []).map((s) => ({
           id: s.id,
           segmentText: s.segmentText,
           startIndex: s.startIndex,
@@ -125,7 +129,7 @@ export class ReportService {
           highlightLevel: s.highlightLevel,
           annotation: s.annotation,
           suggestion: s.suggestion ?? undefined,
-        })) ?? [];
+        }));
       const segments = sanitizeFeedbackSegments(
         answerText,
         rawSegments,
@@ -152,10 +156,22 @@ export class ReportService {
       };
     });
 
-    const storedActionPlan = toRecord(
-      findLatestReport(session.sessionReports, 'action_plan')?.contentJson,
-    );
-    const storedExecutiveSummary = toRecord(executiveSummaryReport.contentJson);
+    const unifiedContent = toRecord(unifiedReport?.contentJson);
+    const unifiedSummary = toRecord(unifiedContent.summary);
+
+    const storedActionPlan =
+      unifiedContent.actionPlan !== undefined
+        ? { actionPlan: unifiedContent.actionPlan }
+        : toRecord(findLatestReport(session.sessionReports, 'action_plan')?.contentJson);
+
+    const storedExecutiveSummary = executiveSummaryReport
+      ? toRecord(executiveSummaryReport.contentJson)
+      : {
+          ...unifiedSummary,
+          summary: unifiedSummary.executiveSummary,
+          skillsBreakdown: unifiedContent.skillsBreakdown,
+        };
+
     const skippedModelAnswers = toSkippedModelAnswerMap(
       findLatestReport(session.sessionReports, 'skipped_answers')?.contentJson,
     );
@@ -208,10 +224,13 @@ export class ReportService {
             summary: getFallbackReportSummary(session.language),
           }
         : storedExecutiveSummary,
-      competencyHeatmap: toRecord(
-        findLatestReport(session.sessionReports, 'competency_heatmap')
-          ?.contentJson,
-      ),
+      competencyHeatmap:
+        unifiedContent.skillsBreakdown !== undefined
+          ? { skillsBreakdown: unifiedContent.skillsBreakdown }
+          : toRecord(
+              findLatestReport(session.sessionReports, 'competency_heatmap')
+                ?.contentJson,
+            ),
       actionPlan:
         allFeedbackIsFallback && Object.keys(storedActionPlan).length === 0
           ? getFallbackActionPlan(session.language)
@@ -233,7 +252,11 @@ export class ReportService {
           select: { userId: true },
         },
         sessionReports: {
-          where: { reportType: 'executive_summary' },
+          where: {
+            reportType: {
+              in: ['executive_summary', 'session_competency_evaluation'],
+            },
+          },
           select: { id: true },
           take: 1,
         },

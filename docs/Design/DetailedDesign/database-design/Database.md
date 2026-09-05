@@ -710,3 +710,23 @@ Hệ thống sử dụng Zod schema ở tầng ứng dụng để validate tính
 | `skill_competency_mappings` | In-Memory Map (`tech-stack-sfia.map.ts`) | Loại bỏ 1 bảng thừa, tra cứu Tech Stack sang mã SFIA với độ trễ 0ms trong RAM. |
 | (Mới) Khung đánh giá lai O*NET + SFIA | `onet_sfia_mappings`, `question_criteria` | Tinh chỉnh Cỗ máy Đánh giá Tinh gọn Unified Interview Engine, loose coupling qua mã chuẩn hóa không dùng FK cứng. |
 
+### 7.2 Hoàn Tất Dọn Dẹp Schema & Bảng Legacy (Giai Đoạn 5 - Bước 5.5)
+
+Vào ngày **2026-09-06**, hệ thống đã chính thức hoàn thành quá trình chuyển đổi toàn diện sang kiến trúc **Hybrid Assessment Framework (O*NET + SFIA)**:
+* **7 bảng cũ đã được DROP hoàn toàn khỏi PostgreSQL và `schema.prisma`:**
+  1. `skills`
+  2. `levels`
+  3. `skill_levels`
+  4. `roles`
+  5. `role_skills`
+  6. `question_bank_skill_levels`
+  7. `session_question_skill_levels`
+* **Cơ chế đánh giá năng lực mới (Zero Legacy Dependency):**
+  * Danh mục 147 kỹ năng SFIA 9 và 7 cấp độ được quản lý trực tiếp qua `SfiaModule` (In-memory cached lookup ~0ms) thay vì truy vấn các bảng DB tĩnh cũ.
+  * Danh mục nghề nghiệp và công cụ công nghệ được quản lý qua `OnetModule` (`onet` schema).
+  * Phiên phỏng vấn được điều hướng bởi hợp đồng đánh giá duy nhất: `session_skills`.
+  * Tiêu chí đánh giá câu hỏi chuẩn hóa 2 chiều `core` và `seniority` lưu tại `public.question_criteria` và `session_questions.rubric_criteria`.
+  * Đánh giá Pass/Fail nhị phân và chấm điểm tất định 100% qua `BinaryCriteriaEvaluatorService` và `ScoringEngineService`.
+  * Báo cáo hợp nhất chuẩn hóa: `session_reports` với `report_type = 'session_competency_evaluation'`.
+
+

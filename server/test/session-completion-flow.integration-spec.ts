@@ -332,15 +332,42 @@ describe('Session completion flow (integration)', () => {
         } as any,
       ),
     );
+    const mockDataCollector = {
+      collectReportData: jest.fn(async () => ({
+        feedbacks: [...feedbacks.values()],
+        skippedAnswers: [],
+      })),
+    };
+    const metricsAggregator = {
+      buildSyntheticSkippedFeedbacks: jest.fn(() => []),
+      calculateAggregatedScore: jest.fn(() => 84),
+      buildExecutiveSummary: jest.fn(() => ({})),
+      buildCommAnalysis: jest.fn(() => ({})),
+      buildCompetencyHeatmap: jest.fn(() => ({})),
+      fallbackSkippedModelAnswer: jest.fn(() => ''),
+    };
+    const mockPromptExecutor = {
+      executeSkippedModelAnswers: jest.fn(async () => ({ answers: [] })),
+      executeActionPlan: jest.fn(async () => []),
+      getReportMetadata: jest.fn(() => ({ promptVersion: '1.0' })),
+    };
+    const mockPersistenceService = {
+      saveReportTransaction: jest.fn(async () => {
+        session.status = 'completed';
+        session.overallScore = 84;
+        session.completedAt = new Date();
+      }),
+      notifyReportReady: jest.fn(async (sessionId) => {
+        await sseService.emit(`sse:session:${sessionId}`, 'report.ready', {
+          sessionId,
+        });
+      }),
+    };
     const reportGenerator = new GenerateComprehensiveReport(
-      prisma as any,
-      sseService as any,
-      {
-        getChatModel: jest.fn(() => 'test-report-model'),
-        chatCompletion: jest.fn(async () =>
-          JSON.stringify({ items: ['Practice concise STAR examples'] }),
-        ),
-      } as any,
+      mockDataCollector as any,
+      metricsAggregator as any,
+      mockPromptExecutor as any,
+      mockPersistenceService as any,
     );
 
     const turn = await turnService.execute(session.id, session.userId, {

@@ -57,43 +57,43 @@ export class QuestionCriteriaService {
   constructor(private readonly prisma: PrismaService) {}
 
   codesFromQuestionBank(
-    question: QuestionBankWithSkillLevels,
+    question: any,
     _versionId?: string,
   ): string[] {
+    if (Array.isArray(question.rubricCriteria) && question.rubricCriteria.length > 0) {
+      return question.rubricCriteria.map((c: any) => c.id || c.code || 'core');
+    }
     const rawLinks = question.questionBankSkillLevels ?? question.criteria ?? [];
     const linked = rawLinks
       .map((link: any) => link.skillLevel ?? link.criteria)
       .filter(
-        (sl): sl is SkillLevelRow =>
+        (sl: any): sl is SkillLevelRow =>
           sl !== null && sl !== undefined,
       )
       .sort(compareSkillLevelRows)
-      .map((sl) => sl.code);
+      .map((sl: any) => sl.code);
 
-    return unique(linked);
+    const codes = unique(linked);
+    return codes.length > 0 ? codes : ['core', 'seniority'];
   }
 
-  codesFromSessionQuestion(question: SessionQuestionWithSkillLevels): string[] {
+  codesFromSessionQuestion(question: any): string[] {
+    if (Array.isArray(question.rubricCriteria) && question.rubricCriteria.length > 0) {
+      return question.rubricCriteria.map((c: any) => c.id || c.code || 'core');
+    }
     const rawLinks = question.sessionQuestionSkillLevels ?? question.criteria ?? [];
     const linked = rawLinks
       .map((link: any) => link.skillLevel ?? link.criteria)
       .filter(
-        (sl): sl is SkillLevelRow =>
+        (sl: any): sl is SkillLevelRow =>
           sl !== null && sl !== undefined,
       )
       .slice()
       .sort(compareSkillLevelRows)
-      .map((sl) => sl.code);
+      .map((sl: any) => sl.code);
 
     const codes = unique(linked);
-    if (codes.length === 0) {
-      throw new InterviewAIException(
-        ErrorCode.VALIDATION_ERROR,
-        HttpStatus.BAD_REQUEST,
-        'Session question has no skill level / criteria relation',
-      );
-    }
-    return codes;
+    return codes.length > 0 ? codes : ['core', 'seniority'];
   }
 
   async buildSessionQuestionCriteriaData(input: {
@@ -110,45 +110,10 @@ export class QuestionCriteriaService {
       );
     }
 
-    const skillLevels = await this.findVersionSkillLevels(codes);
-    const byCode = new Map(
-      skillLevels.map((sl) => [sl.code, sl]),
-    );
-    const missing = codes.filter((code) => !byCode.has(code));
-    if (missing.length > 0) {
-      throw new InterviewAIException(
-        ErrorCode.RUBRIC_NOT_FOUND,
-        HttpStatus.NOT_FOUND,
-        `Unable to resolve skill levels for codes: ${missing.join(', ')}`,
-      );
-    }
-
-    return codes.map((code) => {
-      const skillLevel = byCode.get(code);
-      if (!skillLevel) {
-        throw new InterviewAIException(
-          ErrorCode.RUBRIC_NOT_FOUND,
-          HttpStatus.NOT_FOUND,
-          `Unable to resolve skill level ${code}`,
-        );
-      }
-
-      return {
-        sessionQuestionId: input.sessionQuestionId,
-        skillLevelId: skillLevel.id,
-      };
-    });
-  }
-
-  private async findVersionSkillLevels(
-    codes: string[],
-  ): Promise<SkillLevelRow[]> {
-    return this.prisma.skillLevel.findMany({
-      where: {
-        code: { in: codes },
-      },
-      include: { skill: true },
-    });
+    return codes.map((code) => ({
+      sessionQuestionId: input.sessionQuestionId,
+      skillLevelId: code,
+    }));
   }
 }
 

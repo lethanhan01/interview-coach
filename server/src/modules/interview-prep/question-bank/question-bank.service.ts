@@ -12,19 +12,8 @@ type QuestionBankRow = {
   contextPackId: string;
   estimatedTimeMin: number | null;
   translations: Prisma.JsonValue | null;
-  questionBankSkillLevels?: Array<{
-    skillLevel?: {
-      id: string;
-      code: string;
-      name: string;
-      weight?: any;
-      displayOrder: number;
-      skill?: {
-        code: string;
-        name: string;
-      };
-    } | null;
-  }>;
+  questionCriteria?: Array<any>;
+  questionBankSkillLevels?: any[];
 };
 
 export type FallbackQuestion = {
@@ -294,7 +283,7 @@ export class QuestionBankService {
       },
       orderBy: [{ difficulty: 'asc' }, { createdAt: 'asc' }],
       take: count * 3,
-      include: QUESTION_BANK_SKILL_LEVELS_INCLUDE,
+      include: { questionCriteria: true },
     });
 
     if (candidates.length === 0) {
@@ -410,14 +399,3 @@ export class QuestionBankService {
   }
 }
 
-const QUESTION_BANK_SKILL_LEVELS_INCLUDE = {
-  questionBankSkillLevels: {
-    include: {
-      skillLevel: {
-        include: {
-          skill: true,
-        },
-      },
-    },
-  },
-} satisfies Prisma.QuestionBankInclude;

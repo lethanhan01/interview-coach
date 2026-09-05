@@ -13,6 +13,8 @@ import { RubricController } from './rubric.controller';
 import { workersEnabled } from '@core/runtime/runtime-role';
 
 import { AssessmentFacade } from '../contracts/assessment-facade.service';
+import { BinaryCriteriaEvaluatorService } from './binary-criteria-evaluator.service';
+import { ScoringEngineService } from './scoring-engine.service';
 
 const workerProviders = workersEnabled() ? [FeedbackProcessor] : [];
 
@@ -29,9 +31,17 @@ const workerProviders = workersEnabled() ? [FeedbackProcessor] : [];
     RubricCatalogService,
     ContextPackService,
     AssessmentFacade,
+    BinaryCriteriaEvaluatorService,
+    ScoringEngineService,
     ...workerProviders,
   ],
   controllers: [RubricController],
-  exports: [RubricCatalogService, ContextPackService, AssessmentFacade],
+  exports: [
+    RubricCatalogService,
+    ContextPackService,
+    AssessmentFacade,
+    BinaryCriteriaEvaluatorService,
+    ScoringEngineService,
+  ],
 })
 export class EvaluationModule {}
