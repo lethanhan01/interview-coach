@@ -34,7 +34,11 @@ export const authService = {
    * Đăng xuất và xóa cookie xác thực
    */
   async logout(): Promise<void> {
-    await apiClient.post<void>('/auth/logout')
+    try {
+      await apiClient.post<void>('/auth/logout')
+    } catch (err) {
+      console.warn('Logout request warning (proceeding with local cleanup):', err)
+    }
   },
 
   /**

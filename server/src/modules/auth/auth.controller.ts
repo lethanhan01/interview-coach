@@ -101,6 +101,7 @@ export class AuthController {
     return { success: true, data: this.publicUser(result.user) };
   }
 
+  @Public()
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiCookieAuth('cookieAuth')

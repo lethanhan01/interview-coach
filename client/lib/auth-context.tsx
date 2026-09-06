@@ -18,6 +18,7 @@ type AuthContextValue = {
   status: string | null
   isLoading: boolean
   refresh: () => Promise<Role | null>
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -26,10 +27,11 @@ const AuthContext = createContext<AuthContextValue>({
   status: null,
   isLoading: true,
   refresh: async () => null,
+  logout: async () => {},
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [value, setValue] = useState<Omit<AuthContextValue, 'refresh'>>({
+  const [value, setValue] = useState<Omit<AuthContextValue, 'refresh' | 'logout'>>({
     user: null,
     role: null,
     status: null,
@@ -54,11 +56,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      await authService.logout()
+    } finally {
+      setValue({ user: null, role: null, status: null, isLoading: false })
+    }
+  }, [])
+
   useEffect(() => {
     const timeout = window.setTimeout(() => void refresh(), 0)
     return () => window.clearTimeout(timeout)
   }, [refresh])
-  const contextValue = useMemo(() => ({ ...value, refresh }), [value, refresh])
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setValue({ user: null, role: null, status: null, isLoading: false })
+    }
+    window.addEventListener('auth:session-expired', handleSessionExpired)
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired)
+  }, [])
+
+  const contextValue = useMemo(
+    () => ({ ...value, refresh, logout }),
+    [value, refresh, logout]
+  )
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
 }

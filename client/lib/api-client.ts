@@ -99,6 +99,9 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
         } else {
           isRefreshing = false
           const sessionErr = new Error('Session expired')
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:session-expired'))
+          }
           onRefreshed(sessionErr)
         }
       } catch (err) {
