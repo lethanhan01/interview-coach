@@ -5,7 +5,7 @@ test.describe('Profile & Resume Frontend Flow', () => {
     // 1. Đăng nhập vào hệ thống với tài khoản demo
     await page.goto('/login');
     await page.getByPlaceholder('Nhập email').fill('demo@interviewai.dev');
-    await page.getByPlaceholder('Nhập mật khẩu').fill('Demo@123456');
+    await page.getByPlaceholder('Nhập mật khẩu').fill('Demo@1234567');
     await page.getByRole('button', { name: /đăng nhập/i }).click();
 
     // Chờ điều hướng sau khi login thành công

@@ -12,6 +12,15 @@ Mở Swagger cùng origin backend, gọi `POST /auth/login` hoặc `POST /auth/r
 
 ---
 
+### Tài khoản và mật khẩu để test:
+
+```
+demo@interviewai.dev
+Demo@1234567
+```
+
+---
+
 ## Kiến trúc 3 Tầng & Bounded Contexts (3-Layer Architecture)
 
 Backend được tổ chức theo mô hình **3 Tầng Rõ Ràng (Core - Infrastructure - Modules)** kết hợp **Bounded Contexts** chuẩn hóa theo vòng đời phỏng vấn:

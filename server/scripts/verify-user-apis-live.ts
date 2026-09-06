@@ -35,7 +35,7 @@ async function runLiveVerification() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: 'demo@interviewai.dev',
-        password: 'Demo@123456',
+        password: 'Demo@1234567',
       }),
     });
 
