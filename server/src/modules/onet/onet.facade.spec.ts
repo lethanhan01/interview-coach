@@ -225,4 +225,29 @@ describe('OnetFacade & OnetService', () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe('searchOccupations', () => {
+    it('returns default IT occupations when query is empty', async () => {
+      queryRawMock.mockResolvedValueOnce([mockOccupation]);
+
+      const result = await service.searchOccupations();
+      expect(result).toEqual([mockOccupation]);
+      expect(queryRawMock).toHaveBeenCalled();
+    });
+
+    it('returns searched occupations with similarity scores when query is provided', async () => {
+      queryRawMock.mockResolvedValueOnce([mockFuzzyAlternateMatch]);
+
+      const result = await service.searchOccupations('Software Engineer', 5);
+      expect(result).toEqual([mockFuzzyAlternateMatch]);
+      expect(queryRawMock).toHaveBeenCalled();
+    });
+
+    it('catches error and returns empty array on failure', async () => {
+      queryRawMock.mockRejectedValueOnce(new Error('Database query failed'));
+
+      const result = await service.searchOccupations('crash');
+      expect(result).toEqual([]);
+    });
+  });
 });

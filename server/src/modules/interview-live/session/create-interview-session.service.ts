@@ -77,7 +77,8 @@ export class CreateInterviewSession {
           sfiaVersion: '9.0.0',
           status: 'generating',
           onetSocCode: savedJobDescription.onetSocCode,
-          targetSfiaLevel: savedJobDescription.targetSfiaLevel,
+          targetSfiaLevel:
+            dto.targetSfiaLevel ?? savedJobDescription.targetSfiaLevel,
         },
       });
 

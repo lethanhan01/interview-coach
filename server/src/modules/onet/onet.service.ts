@@ -240,4 +240,118 @@ export class OnetService {
       return [];
     }
   }
+
+  /**
+   * Tìm kiếm danh sách chức danh O*NET tương thích.
+   * Hỗ trợ tìm kiếm mờ pg_trgm trên cả 54K alternate titles và canonical titles.
+   * Deduplicate theo SOC Code: mỗi mã SOC chỉ trả về 1 bản ghi tốt nhất.
+   * Nếu query rỗng, trả về danh sách 10 chức danh IT phổ biến.
+   */
+  async searchOccupations(
+    query?: string,
+    limit = 10,
+  ): Promise<OnetOccupationDto[]> {
+    const cleanLimit = Math.max(1, Math.min(50, limit || 10));
+    const cleanQuery = typeof query === 'string' ? query.trim() : '';
+
+    if (!cleanQuery) {
+      try {
+        const topOccupations = await this.prisma.$queryRaw<OnetOccupationDto[]>`
+          SELECT 
+            onetsoc_code AS "socCode",
+            title,
+            description,
+            title AS "matchedTitle",
+            1.0::float AS "similarityScore"
+          FROM onet.occupation_data
+          WHERE onetsoc_code IN (
+            '15-1252.00', '15-1253.00', '15-1244.00', '15-1243.00', '15-1212.00',
+            '15-1251.00', '15-1241.00', '15-1299.08', '11-3021.00', '15-1232.00'
+          )
+          ORDER BY title ASC
+          LIMIT ${cleanLimit};
+        `;
+        return topOccupations;
+      } catch (error) {
+        this.logger.error(
+          `Error querying default O*NET occupations: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        return [];
+      }
+    }
+
+    const translatedTitle = normalizeVietnameseJobTitle(cleanQuery);
+    const searchTerm = translatedTitle.trim() || cleanQuery;
+    const likePattern = `%${searchTerm}%`;
+
+    try {
+      const records = await this.prisma.$queryRaw<OnetOccupationDto[]>`
+        SELECT 
+          "socCode",
+          title,
+          description,
+          "matchedTitle",
+          "similarityScore"
+        FROM (
+          SELECT DISTINCT ON (sub."socCode")
+            sub."socCode",
+            sub.title,
+            sub.description,
+            sub."matchedTitle",
+            sub."similarityScore"
+          FROM (
+            SELECT 
+              jt.onetsoc_code AS "socCode",
+              occ.title,
+              occ.description,
+              jt.job_title AS "matchedTitle",
+              GREATEST(
+                similarity(jt.job_title, ${searchTerm}),
+                word_similarity(${searchTerm}, jt.job_title),
+                CASE WHEN jt.job_title ILIKE ${likePattern} THEN 0.35 ELSE 0 END
+              )::float AS "similarityScore"
+            FROM onet.job_titles jt
+            JOIN onet.occupation_data occ ON jt.onetsoc_code = occ.onetsoc_code
+            WHERE 
+              jt.job_title % ${searchTerm} 
+              OR ${searchTerm} <% jt.job_title
+              OR word_similarity(${searchTerm}, jt.job_title) >= 0.25
+              OR similarity(jt.job_title, ${searchTerm}) >= 0.2
+              OR jt.job_title ILIKE ${likePattern}
+
+            UNION ALL
+
+            SELECT 
+              occ.onetsoc_code AS "socCode",
+              occ.title,
+              occ.description,
+              occ.title AS "matchedTitle",
+              GREATEST(
+                similarity(occ.title, ${searchTerm}),
+                word_similarity(${searchTerm}, occ.title),
+                CASE WHEN occ.title ILIKE ${likePattern} THEN 0.40 ELSE 0 END
+              )::float AS "similarityScore"
+            FROM onet.occupation_data occ
+            WHERE 
+              occ.title % ${searchTerm}
+              OR ${searchTerm} <% occ.title
+              OR word_similarity(${searchTerm}, occ.title) >= 0.25
+              OR similarity(occ.title, ${searchTerm}) >= 0.2
+              OR occ.title ILIKE ${likePattern}
+          ) sub
+          ORDER BY sub."socCode", sub."similarityScore" DESC
+        ) deduplicated
+        ORDER BY "similarityScore" DESC
+        LIMIT ${cleanLimit};
+      `;
+
+      return records;
+    } catch (error) {
+      this.logger.error(
+        `Error searching O*NET occupations for query "${cleanQuery}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return [];
+    }
+  }
 }
+

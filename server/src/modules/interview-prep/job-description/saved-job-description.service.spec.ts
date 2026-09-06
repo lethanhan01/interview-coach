@@ -230,4 +230,28 @@ describe('SavedJobDescriptionService', () => {
       }),
     });
   });
+
+  it('ưu tiên targetSfiaLevel và onetSocCode do người dùng truyền vào trong DTO', async () => {
+    mockPrisma.savedJobDescription.findFirst.mockResolvedValue(null);
+    mockPrisma.savedJobDescription.create.mockResolvedValue({
+      id: 'saved-custom',
+      userId: 'user-abc',
+    });
+
+    await service.save('user-abc', {
+      ...BASE_DTO,
+      onetSocCode: '15-1212.00',
+      onetOccupationTitle: 'Information Security Analysts',
+      targetSfiaLevel: 5,
+    });
+
+    expect(mockPrisma.savedJobDescription.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'user-abc',
+        onetSocCode: '15-1212.00',
+        onetOccupationTitle: 'Information Security Analysts',
+        targetSfiaLevel: 5,
+      }),
+    });
+  });
 });

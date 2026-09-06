@@ -14,6 +14,7 @@ import { AuthModule } from '@modules/auth/auth.module';
 import { EvaluationModule } from '@modules/interview-assessment/evaluation/evaluation.module';
 import { WorkflowModule } from '@infra/workflow/workflow.module';
 import { OnetModule } from '@modules/onet/onet.module';
+import { SfiaModule } from '@modules/sfia/sfia.module';
 
 import { HrInterviewStrategy } from './hr-interview.strategy';
 import { TechnicalInterviewStrategy } from './technical-interview.strategy';
@@ -25,6 +26,7 @@ import { SessionStrategyRegistry } from './session-strategy.registry';
     EvaluationModule,
     WorkflowModule,
     OnetModule,
+    SfiaModule,
     BullModule.registerQueue({
       name: QUESTION_GEN_QUEUE,
       defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[QUESTION_GEN_QUEUE],

@@ -131,6 +131,9 @@ export class SavedJobDescriptionService {
       data.level,
       data.requirements,
       data.techStack,
+      dto.onetSocCode,
+      dto.onetOccupationTitle,
+      dto.targetSfiaLevel,
     );
 
     const existing = await this.prisma.savedJobDescription.findFirst({
@@ -169,55 +172,72 @@ export class SavedJobDescriptionService {
     level?: string | null,
     requirements?: string | null,
     rawTechStack: string[] = [],
+    customOnetSocCode?: string,
+    customOnetOccupationTitle?: string,
+    customTargetSfiaLevel?: number,
   ): Promise<{
     onetSocCode: string;
     onetOccupationTitle: string;
     targetSfiaLevel: number;
     normalizedTechStack: string[];
   }> {
-    let onetSocCode = '15-1252.00';
-    let onetOccupationTitle = 'Software Developers';
+    let onetSocCode = customOnetSocCode?.trim() || '15-1252.00';
+    let onetOccupationTitle =
+      customOnetOccupationTitle?.trim() || 'Software Developers';
     let normalizedTechStack: string[] = [...rawTechStack];
 
-    try {
-      const occupation = await this.onetFacade.findOccupationByTitle(jobTitle);
-      if (occupation) {
-        onetSocCode = occupation.socCode;
-        onetOccupationTitle = occupation.title;
+    if (!customOnetSocCode) {
+      try {
+        const occupation = await this.onetFacade.findOccupationByTitle(jobTitle);
+        if (occupation) {
+          onetSocCode = occupation.socCode;
+          onetOccupationTitle = occupation.title;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Failed to enrich O*NET metadata for job title "${jobTitle}": ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
 
-        const onetTools = await this.onetFacade.getToolsAndTechnology(
-          occupation.socCode,
+    try {
+      const onetTools = await this.onetFacade.getToolsAndTechnology(
+        onetSocCode,
+      );
+
+      if (onetTools.length > 0) {
+        const toolMap = new Map(
+          onetTools.map((t) => [t.example.toLowerCase(), t.example]),
         );
 
-        if (onetTools.length > 0) {
-          const toolMap = new Map(
-            onetTools.map((t) => [t.example.toLowerCase(), t.example]),
-          );
-
-          const matchedTech = new Set<string>();
-          for (const item of rawTechStack) {
-            const canonical = toolMap.get(item.toLowerCase());
-            matchedTech.add(canonical || item);
-          }
-
-          if (matchedTech.size === 0) {
-            const hotTech = onetTools
-              .filter((t) => t.isHotTechnology)
-              .slice(0, 5)
-              .map((t) => t.example);
-            hotTech.forEach((t) => matchedTech.add(t));
-          }
-
-          normalizedTechStack = Array.from(matchedTech);
+        const matchedTech = new Set<string>();
+        for (const item of rawTechStack) {
+          const canonical = toolMap.get(item.toLowerCase());
+          matchedTech.add(canonical || item);
         }
+
+        if (matchedTech.size === 0) {
+          const hotTech = onetTools
+            .filter((t) => t.isHotTechnology)
+            .slice(0, 5)
+            .map((t) => t.example);
+          hotTech.forEach((t) => matchedTech.add(t));
+        }
+
+        normalizedTechStack = Array.from(matchedTech);
       }
     } catch (error) {
       this.logger.warn(
-        `Failed to enrich O*NET metadata for job title "${jobTitle}": ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to enrich O*NET tools for socCode "${onetSocCode}": ${error instanceof Error ? error.message : String(error)}`,
       );
     }
 
-    const targetSfiaLevel = inferTargetSfiaLevel(level, jobTitle, requirements);
+    const targetSfiaLevel =
+      typeof customTargetSfiaLevel === 'number' &&
+      customTargetSfiaLevel >= 1 &&
+      customTargetSfiaLevel <= 7
+        ? customTargetSfiaLevel
+        : inferTargetSfiaLevel(level, jobTitle, requirements);
 
     return {
       onetSocCode,

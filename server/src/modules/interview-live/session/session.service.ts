@@ -1,8 +1,12 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Inject, Injectable, HttpStatus } from '@nestjs/common';
 import { InterviewSession } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import {
+  type ISfiaFacade,
+  SFIA_FACADE_TOKEN,
+} from '@modules/sfia/contracts';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SessionStatusUpdate } from './dto/update-session-status.dto';
 import { ChangeInterviewSessionStatus } from './change-interview-session-status.service';
@@ -17,6 +21,8 @@ export class SessionService {
     private readonly prisma: PrismaService,
     private readonly createInterviewSession: CreateInterviewSession,
     private readonly changeInterviewSessionStatus: ChangeInterviewSessionStatus,
+    @Inject(SFIA_FACADE_TOKEN)
+    private readonly sfiaFacade: ISfiaFacade,
   ) {}
 
   create(userId: string, dto: CreateSessionDto): Promise<InterviewSession> {
@@ -79,6 +85,7 @@ export class SessionService {
     const [questions, answers] = await Promise.all([
       this.prisma.sessionQuestion.findMany({
         where: { sessionId },
+        include: { sessionSkill: true },
         orderBy: { orderIndex: 'asc' },
       }),
       this.prisma.userAnswer.findMany({
@@ -98,17 +105,31 @@ export class SessionService {
     const answersByQuestionId = new Map(
       answers.map((answer) => [answer.questionId, answer]),
     );
-    const mappedQuestions = questions.map((question) => {
-      const answer = answersByQuestionId.get(question.id);
-      return {
-        id: question.id,
-        content: question.questionText,
-        orderIndex: question.orderIndex,
-        answered: Boolean(answer),
-        answerId: answer?.id,
-        skipped: answer?.skipped,
-      };
-    });
+    const mappedQuestions = await Promise.all(
+      questions.map(async (question) => {
+        const answer = answersByQuestionId.get(question.id);
+        const skillCode =
+          question.sfiaSkillCode || question.sessionSkill?.skillCode || undefined;
+        let skillName: string | undefined = skillCode;
+        if (skillCode) {
+          const skill = await this.sfiaFacade.getSkillByCode(skillCode);
+          if (skill?.name) {
+            skillName = skill.name;
+          }
+        }
+        return {
+          id: question.id,
+          content: question.questionText,
+          orderIndex: question.orderIndex,
+          answered: Boolean(answer),
+          answerId: answer?.id,
+          skipped: answer?.skipped,
+          skillCode,
+          skillName,
+          techContext: (question.sessionSkill?.techContext as string[]) ?? [],
+        };
+      }),
+    );
     const firstUnansweredIndex = mappedQuestions.findIndex(
       (question) => !question.answered,
     );

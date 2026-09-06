@@ -41,6 +41,12 @@ export class CreateSessionDto {
   @IsArray()
   @IsString({ each: true })
   targetRoles?: string[];
+  @ApiPropertyOptional({ minimum: 1, maximum: 7, example: 3 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(7)
+  targetSfiaLevel?: number;
   @ApiProperty({ format: 'uuid' })
   @IsUUID()
   savedJobDescriptionId: string;

@@ -21,6 +21,7 @@ import { HrInterviewStrategy } from './hr-interview.strategy';
 import { TechnicalInterviewStrategy } from './technical-interview.strategy';
 import { SessionStrategyRegistry } from './session-strategy.registry';
 import { ONET_FACADE_TOKEN } from '@modules/onet/contracts';
+import { SFIA_FACADE_TOKEN } from '@modules/sfia/contracts';
 
 const BASE_SESSION = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -96,6 +97,26 @@ describe('SessionService', () => {
               title: 'Software Developers',
             }),
             getToolsAndTechnology: jest.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: SFIA_FACADE_TOKEN,
+          useValue: {
+            getSkillByCode: jest.fn().mockImplementation((code: string) => {
+              if (code === 'PROG') {
+                return Promise.resolve({
+                  code: 'PROG',
+                  name: 'Software Development',
+                  description: 'Develop software',
+                  category: 'Development',
+                  subCategory: 'Programming',
+                  levelCount: 7,
+                });
+              }
+              return Promise.resolve(null);
+            }),
+            getLevel: jest.fn().mockResolvedValue(null),
+            getAllSkills: jest.fn().mockResolvedValue([]),
           },
         },
       ],
@@ -227,6 +248,14 @@ describe('SessionService', () => {
                 title: 'Software Developers',
               }),
               getToolsAndTechnology: jest.fn().mockResolvedValue([]),
+            },
+          },
+          {
+            provide: SFIA_FACADE_TOKEN,
+            useValue: {
+              getSkillByCode: jest.fn().mockResolvedValue(null),
+              getLevel: jest.fn().mockResolvedValue(null),
+              getAllSkills: jest.fn().mockResolvedValue([]),
             },
           },
         ],
@@ -750,6 +779,9 @@ describe('SessionService', () => {
             answered: false,
             answerId: undefined,
             skipped: undefined,
+            skillCode: undefined,
+            skillName: undefined,
+            techContext: [],
           },
           {
             id: 'q-2',
@@ -758,12 +790,16 @@ describe('SessionService', () => {
             answered: false,
             answerId: undefined,
             skipped: undefined,
+            skillCode: undefined,
+            skillName: undefined,
+            techContext: [],
           },
         ],
         currentIndex: 0,
       });
       expect(mockPrisma.sessionQuestion.findMany).toHaveBeenCalledWith({
         where: { sessionId: '11111111-1111-4111-8111-111111111111' },
+        include: { sessionSkill: true },
         orderBy: { orderIndex: 'asc' },
       });
       expect(mockPrisma.userAnswer.findMany).toHaveBeenCalledWith({
@@ -994,6 +1030,36 @@ describe('SessionService', () => {
 
       expect(result.currentIndex).toBe(1);
       expect(result.questions.every((q) => q.answered)).toBe(true);
+    });
+
+    it('enriches skillCode, skillName and techContext from sessionSkill and sfiaFacade', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...BASE_SESSION,
+        status: 'active',
+      });
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Viết unit test như thế nào?',
+          orderIndex: 1,
+          sessionId: '11111111-1111-4111-8111-111111111111',
+          sfiaSkillCode: 'PROG',
+          sessionSkill: {
+            skillCode: 'PROG',
+            techContext: ['TypeScript', 'Jest'],
+          },
+        },
+      ]);
+      mockPrisma.userAnswer.findMany.mockResolvedValue([]);
+
+      const result = await service.findQuestions(
+        '11111111-1111-4111-8111-111111111111',
+        'user-abc',
+      );
+
+      expect(result.questions[0].skillCode).toBe('PROG');
+      expect(result.questions[0].skillName).toBe('Software Development');
+      expect(result.questions[0].techContext).toEqual(['TypeScript', 'Jest']);
     });
   });
 });

@@ -56,6 +56,8 @@ export interface CreateSessionPayload {
   numQuestions?: number
   targetRoles?: string[]
   savedJobDescriptionId?: string
+  targetSfiaLevel?: number
+  onetSocCode?: string
 }
 
 export interface SavedJobDescription {
@@ -73,6 +75,10 @@ export interface SavedJobDescription {
   benefits?: string | null
   salary?: string | null
   bonus?: string | null
+  onetSocCode?: string | null
+  onetOccupationTitle?: string | null
+  targetSfiaLevel?: number | null
+  normalizedTechStack?: string[] | null
   lastUsedAt?: string | null
   createdAt: string
   updatedAt: string
@@ -91,6 +97,9 @@ export interface SaveJobDescriptionPayload {
   benefits?: string
   salary?: string
   bonus?: string
+  onetSocCode?: string
+  onetOccupationTitle?: string
+  targetSfiaLevel?: number
 }
 
 export interface AnnotatedSegment {
@@ -101,6 +110,52 @@ export interface AnnotatedSegment {
   highlightLevel: string
   annotation: string
   suggestion?: string
+}
+
+export type RecommendationStatus =
+  | 'strongly_recommended'
+  | 'recommended'
+  | 'borderline'
+  | 'not_recommended'
+
+export interface SkillBreakdownItem {
+  skillCode: string
+  skillName: string
+  techContext: string[]
+  targetLevel: number
+  demonstratedLevel: number
+  score: number
+  status: 'passed' | 'gap'
+  strengths: string
+  areasForImprovement: string
+}
+
+export interface BinaryCriterionResult {
+  criteriaId: string
+  passed: boolean
+  evidence: string
+  deductionReason?: string | null
+  criteriaText?: string
+  dimension?: 'core' | 'seniority'
+}
+
+export interface ActionPlanItem {
+  priority: 'high' | 'medium' | 'low'
+  skillCode: string
+  title: string
+  topics: string[]
+  estimatedWeeks: number
+}
+
+export interface ExecutiveSummary {
+  overallScore?: number | null
+  targetSfiaLevel?: number
+  demonstratedSfiaLevel?: number
+  recommendationStatus?: RecommendationStatus
+  summary?: string
+  evaluatedTurns?: number
+  fallbackTurns?: number
+  [key: string]: unknown
 }
 
 export interface TranscriptItem {
@@ -120,15 +175,24 @@ export interface TranscriptItem {
     score: number
     weight: number
   }[]
+  criteriaEvaluations?: BinaryCriterionResult[]
+  demonstratedLevel?: number | null
+  criteriaPassRate?: number | null
+  strengths?: string[]
+  improvements?: string[]
 }
 
 export interface Report {
   sessionId: string
   reportQuality: 'full' | 'partial' | 'unavailable' | 'not_scorable'
   overallScore: number | null
-  executiveSummary: Record<string, unknown>
+  recommendationStatus?: RecommendationStatus
+  skillsBreakdown?: SkillBreakdownItem[]
+  actionPlan:
+    | { items?: string[]; actionPlan?: ActionPlanItem[] }
+    | Record<string, unknown>
+  executiveSummary: ExecutiveSummary
   competencyHeatmap: Record<string, unknown>
-  actionPlan: Record<string, unknown>
   transcript: TranscriptItem[]
 }
 
@@ -278,6 +342,10 @@ export interface Question {
   answered?: boolean
   answerId?: string
   skipped?: boolean
+  skillCode?: string
+  skillName?: string
+  techContext?: string[]
+  targetLevel?: number
 }
 
 export interface QuestionsResponse {

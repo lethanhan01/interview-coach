@@ -1,8 +1,11 @@
 import {
   IsArray,
+  IsInt,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
   MinLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -58,4 +61,18 @@ export class SaveJobDescriptionDto {
   @IsString()
   @MaxLength(120)
   bonus?: string;
+  @ApiPropertyOptional({ minimum: 1, maximum: 7, example: 3 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(7)
+  targetSfiaLevel?: number;
+  @ApiPropertyOptional({ example: '15-1252.00' })
+  @IsOptional()
+  @IsString()
+  onetSocCode?: string;
+  @ApiPropertyOptional({ example: 'Software Developers' })
+  @IsOptional()
+  @IsString()
+  onetOccupationTitle?: string;
 }
