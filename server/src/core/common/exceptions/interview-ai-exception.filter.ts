@@ -55,11 +55,17 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
       );
     }
 
+    const requestId =
+      (request.headers?.['x-request-id'] as string) ||
+      (request.headers?.['X-Request-ID'] as string) ||
+      undefined;
+
     response.status(status).json({
       success: false,
       errorCode,
       message,
       path: request.url,
+      requestId,
       timestamp: new Date().toISOString(),
     });
   }

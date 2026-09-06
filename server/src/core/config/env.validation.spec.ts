@@ -26,4 +26,20 @@ describe('validateEnv', () => {
       validateEnv({ ...validEnv, AUTH_JWT_SECRET: 'short' }),
     ).toThrow();
   });
+
+  it('validates optional auth cookie and redis variables when provided', () => {
+    const result = validateEnv({
+      ...validEnv,
+      AUTH_ACCESS_COOKIE_NAME: 'custom_access_cookie',
+      AUTH_REFRESH_COOKIE_NAME: 'custom_refresh_cookie',
+      AUTH_ACCESS_COOKIE_MAX_AGE: '1200',
+      AUTH_REFRESH_COOKIE_MAX_AGE: '1209600',
+      REDIS_PASSWORD: 'secure_redis_password',
+    });
+    expect(result.AUTH_ACCESS_COOKIE_NAME).toBe('custom_access_cookie');
+    expect(result.AUTH_REFRESH_COOKIE_NAME).toBe('custom_refresh_cookie');
+    expect(result.AUTH_ACCESS_COOKIE_MAX_AGE).toBe(1200);
+    expect(result.AUTH_REFRESH_COOKIE_MAX_AGE).toBe(1209600);
+    expect(result.REDIS_PASSWORD).toBe('secure_redis_password');
+  });
 });

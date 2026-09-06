@@ -24,12 +24,21 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly config: ConfigService) {}
 
   onModuleInit() {
+    const password = this.config.get<string>('REDIS_PASSWORD') || undefined;
     const options = {
       host: this.config.get<string>('REDIS_HOST'),
       port: this.config.get<number>('REDIS_PORT'),
+      ...(password ? { password } : {}),
     };
     this.publisher = new Redis(options);
     this.subscriber = new Redis(options);
+
+    this.publisher.on('error', (err: Error) => {
+      this.logger.warn(`SSE Redis publisher connection error: ${err.message}`);
+    });
+    this.subscriber.on('error', (err: Error) => {
+      this.logger.warn(`SSE Redis subscriber connection error: ${err.message}`);
+    });
   }
 
   async onModuleDestroy() {

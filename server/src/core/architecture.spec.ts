@@ -5,6 +5,7 @@ const SRC_ROOT = resolve(__dirname, '..');
 
 const BOUNDED_CONTEXTS = new Set([
   'auth',
+  'candidate-profile',
   'health',
   'interview-assessment',
   'interview-live',

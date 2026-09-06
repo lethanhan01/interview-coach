@@ -13,10 +13,11 @@ const mockResponse = () => {
 const mockHost = (
   res: ReturnType<typeof mockResponse>,
   url = '/api/v1/test',
+  headers: Record<string, string> = {},
 ) => ({
   switchToHttp: () => ({
     getResponse: () => res,
-    getRequest: () => ({ url }),
+    getRequest: () => ({ url, headers }),
   }),
 });
 
@@ -100,5 +101,21 @@ describe('InterviewAIExceptionFilter', () => {
     const body = res.json.mock.calls[0][0] as Record<string, unknown>;
     expect(body.path).toBe('/api/v1/sessions');
     expect(body.timestamp).toBeDefined();
+  });
+
+  it('response gắn requestId nếu request có header x-request-id', () => {
+    const res = mockResponse();
+    const exception = new InterviewAIException(
+      ErrorCode.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST,
+    );
+
+    filter.catch(
+      exception,
+      mockHost(res, '/api/v1/test', { 'x-request-id': 'req-xyz-123' }) as never,
+    );
+
+    const body = res.json.mock.calls[0][0] as Record<string, unknown>;
+    expect(body.requestId).toBe('req-xyz-123');
   });
 });
