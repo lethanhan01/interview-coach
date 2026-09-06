@@ -40,8 +40,6 @@ export class ReportPersistenceService {
               keyTakeaway: feedback.keyTakeaway,
               promptVersion: reportMetadata.promptVersion,
               isFallback: feedback.isFallback,
-              dimensionScores:
-                feedback.dimensionScores as Prisma.InputJsonValue,
             },
             update: {
               overallScore: feedback.overallScore,
@@ -49,8 +47,6 @@ export class ReportPersistenceService {
               keyTakeaway: feedback.keyTakeaway,
               promptVersion: reportMetadata.promptVersion,
               isFallback: feedback.isFallback,
-              dimensionScores:
-                feedback.dimensionScores as Prisma.InputJsonValue,
             },
           }),
         ),

@@ -6,6 +6,7 @@ import {
   ReportResponseDto,
   TranscriptItemDto,
   AnnotatedSegmentDto,
+  BinaryCriterionResultDto,
 } from './dto/report-response.dto';
 import { FeedbackProgressDto } from './dto/feedback-progress.dto';
 import {
@@ -147,12 +148,15 @@ export class ReportService {
         keyTakeaway: answer?.skipped ? '' : (feedback?.keyTakeaway ?? ''),
         isFallback: feedback?.isFallback ?? false,
         segments: answer?.skipped ? [] : segments,
-        appliedDimensions:
-          !feedback || feedback.isFallback
-            ? undefined
-            : ((feedback.dimensionScores as
-                | { id: string; name: string; score: number; weight: number }[]
-                | null) ?? undefined),
+        criteriaEvaluations:
+          (feedback?.criteriaEvaluations as unknown as BinaryCriterionResultDto[]) ??
+          undefined,
+        demonstratedLevel: feedback?.demonstratedLevel ?? null,
+        criteriaPassRate: feedback?.criteriaPassRate
+          ? Number(feedback.criteriaPassRate)
+          : null,
+        strengths: feedback?.strengths ?? [],
+        improvements: feedback?.improvements ?? [],
       };
     });
 
@@ -213,6 +217,13 @@ export class ReportService {
       sessionId,
       reportQuality,
       overallScore: allFeedbackIsFallback ? null : session.overallScore,
+      recommendationStatus:
+        session.recommendationStatus ??
+        (unifiedSummary.recommendationStatus as string | undefined),
+      skillsBreakdown:
+        unifiedContent.skillsBreakdown !== undefined
+          ? (unifiedContent.skillsBreakdown as Record<string, unknown>[])
+          : undefined,
       executiveSummary: allFeedbackIsFallback
         ? {
             ...storedExecutiveSummary,

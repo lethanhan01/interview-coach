@@ -3,12 +3,14 @@ import { AssessmentFacade } from './assessment-facade.service';
 import { RubricCatalogService } from '../evaluation/rubric/rubric-catalog.service';
 import { ContextPackService } from '../evaluation/context-pack.service';
 import { ReportService } from '../report/report.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
 
 describe('AssessmentFacade', () => {
   let facade: AssessmentFacade;
   let rubricCatalog: jest.Mocked<RubricCatalogService>;
   let contextPackService: jest.Mocked<ContextPackService>;
   let reportService: jest.Mocked<ReportService>;
+  let mockPrisma: any;
 
   beforeEach(async () => {
     rubricCatalog = {
@@ -26,12 +28,20 @@ describe('AssessmentFacade', () => {
       getReport: jest.fn(),
     } as unknown as jest.Mocked<ReportService>;
 
+    mockPrisma = {
+      sessionQuestion: { findUnique: jest.fn(), findMany: jest.fn() },
+      userAnswer: { upsert: jest.fn() },
+      aiFeedback: { upsert: jest.fn() },
+      $transaction: jest.fn(async (cb: any) => cb(mockPrisma)),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AssessmentFacade,
         { provide: RubricCatalogService, useValue: rubricCatalog },
         { provide: ContextPackService, useValue: contextPackService },
         { provide: ReportService, useValue: reportService },
+        { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
 
@@ -126,5 +136,55 @@ describe('AssessmentFacade', () => {
 
     expect(reportService.getReport).toHaveBeenCalledWith('s-1', 'u-1', true);
     expect(result).toEqual(mockReport);
+  });
+
+  it('recordSkippedQuestion tạo UserAnswer skipped và gọi enqueueIfAllFeedbacksReady', async () => {
+    (mockPrisma.sessionQuestion.findUnique as jest.Mock).mockResolvedValue({
+      id: 'q-1',
+      sessionId: 's-1',
+      rubricCriteria: [],
+    });
+    (mockPrisma.userAnswer.upsert as jest.Mock).mockResolvedValue({
+      id: 'ans-1',
+      skipped: true,
+    });
+
+    const result = await facade.recordSkippedQuestion({
+      sessionId: 's-1',
+      questionId: 'q-1',
+      sessionType: 'technical',
+      contextPack: 'VN',
+      language: 'vi',
+    });
+
+    expect(result).toEqual({ answerId: 'ans-1' });
+    expect(reportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
+      's-1',
+      'technical',
+      'VN',
+      'vi',
+    );
+  });
+
+  it('recordAutoSkippedQuestions xử lý batch unanswered questions', async () => {
+    (mockPrisma.sessionQuestion.findMany as jest.Mock).mockResolvedValue([
+      { id: 'q-1', sessionId: 's-1', rubricCriteria: [] },
+      { id: 'q-2', sessionId: 's-1', rubricCriteria: [] },
+    ]);
+    (mockPrisma.userAnswer.upsert as jest.Mock).mockResolvedValue({
+      id: 'ans-auto',
+      skipped: true,
+    });
+
+    await facade.recordAutoSkippedQuestions({
+      sessionId: 's-1',
+      questionIds: ['q-1', 'q-2'],
+    });
+
+    expect(mockPrisma.sessionQuestion.findMany).toHaveBeenCalledWith({
+      where: { id: { in: ['q-1', 'q-2'] } },
+      select: expect.any(Object),
+    });
+    expect(mockPrisma.userAnswer.upsert).toHaveBeenCalledTimes(2);
   });
 });

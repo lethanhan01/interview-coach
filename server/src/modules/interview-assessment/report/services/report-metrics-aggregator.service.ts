@@ -119,7 +119,7 @@ export class ReportMetricsAggregator {
   }
 
   buildCompetencyHeatmap(
-    feedbacks: { isFallback: boolean; dimensionScores: unknown }[],
+    feedbacks: { isFallback: boolean; dimensionScores?: unknown }[],
   ): Record<string, number> {
     const totals = new Map<string, { sum: number; count: number }>();
 

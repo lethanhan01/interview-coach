@@ -399,10 +399,6 @@ describe('GenerateComprehensiveReport', () => {
           userAnswerId: 'answer-2',
           overallScore: 0,
           isFallback: false,
-          dimensionScores: [
-            { id: 'D1', name: 'Communication', score: 0, weight: 0.6 },
-            { id: 'D2', name: 'Problem solving', score: 0, weight: 0.4 },
-          ],
         }),
       }),
     );

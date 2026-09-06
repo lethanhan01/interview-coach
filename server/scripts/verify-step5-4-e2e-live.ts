@@ -200,8 +200,8 @@ async function main() {
     });
     const q1Score = scoringEngine.calculateQuestionScore(
       [
-        { criteriaId: 'core', passed: true },
-        { criteriaId: 'seniority', passed: true },
+        { criteriaId: 'core', passed: true, evidence: 'Event loop và microtasks hiểu rõ' },
+        { criteriaId: 'seniority', passed: true, evidence: 'Nắm vững GC và backpressure' },
       ],
       rubricProg as any,
     );
@@ -230,8 +230,8 @@ async function main() {
     });
     const q2Score = scoringEngine.calculateQuestionScore(
       [
-        { criteriaId: 'core', passed: true },
-        { criteriaId: 'seniority', passed: false },
+        { criteriaId: 'core', passed: true, evidence: 'Sử dụng B-tree index cho foreign keys' },
+        { criteriaId: 'seniority', passed: false, evidence: 'Chưa tối ưu partition' },
       ],
       rubricDbds as any,
     );
@@ -260,8 +260,8 @@ async function main() {
     });
     const q3Score = scoringEngine.calculateQuestionScore(
       [
-        { criteriaId: 'core', passed: false },
-        { criteriaId: 'seniority', passed: false },
+        { criteriaId: 'core', passed: false, evidence: 'Không nắm cơ chế phân tán' },
+        { criteriaId: 'seniority', passed: false, evidence: 'Không giải thích được split-brain' },
       ],
       rubricArch as any,
     );

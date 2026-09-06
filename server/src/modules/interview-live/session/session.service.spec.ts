@@ -56,6 +56,7 @@ describe('SessionService', () => {
   let mockAssessmentFacade: {
     ensureContextPack?: jest.Mock;
     ensureActiveRubricVersion: jest.Mock;
+    recordAutoSkippedQuestions?: jest.Mock;
   };
   let mockConfig: ReturnType<typeof createMockConfigService>;
 
@@ -67,6 +68,7 @@ describe('SessionService', () => {
       ensureActiveRubricVersion: jest
         .fn()
         .mockResolvedValue('rubric-version-vn'),
+      recordAutoSkippedQuestions: jest.fn().mockResolvedValue(undefined),
     };
     mockConfig = createMockConfigService({
       SESSION_CREATION_LIMIT_PER_24H: 10,
@@ -623,30 +625,11 @@ describe('SessionService', () => {
       );
 
       expect(result.status).toBe('completing');
-      expect(mockPrisma.userAnswer.createMany).toHaveBeenCalledWith({
-        data: [
-          {
-            questionId: 'q-2',
-            answerMode: 'text',
-            answerText: '',
-            skipped: true,
-            feedbackGenerated: false,
-          },
-          {
-            questionId: 'q-4',
-            answerMode: 'text',
-            answerText: '',
-            skipped: true,
-            feedbackGenerated: false,
-          },
-          {
-            questionId: 'q-5',
-            answerMode: 'text',
-            answerText: '',
-            skipped: true,
-            feedbackGenerated: false,
-          },
-        ],
+      expect(
+        mockAssessmentFacade.recordAutoSkippedQuestions,
+      ).toHaveBeenCalledWith({
+        sessionId: '11111111-1111-4111-8111-111111111111',
+        questionIds: ['q-2', 'q-4', 'q-5'],
       });
       expect(mockPrisma.interviewSession.update).toHaveBeenCalledWith({
         where: { id: '11111111-1111-4111-8111-111111111111' },

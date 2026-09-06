@@ -56,7 +56,7 @@ export interface ReportFeedbackInput {
   overallScore: number;
   keyTakeaway: string;
   isFallback: boolean;
-  dimensionScores: unknown;
+  dimensionScores?: unknown;
 }
 
 export interface ReportCollectedData {

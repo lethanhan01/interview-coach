@@ -46,6 +46,7 @@ export class GenerateComprehensiveReport {
             `Generating unified competency report for session ${sessionId} (skills=${skillCount})`,
           );
           await this.unifiedReportGenerator.generateReport(sessionId, language);
+          await this.persistenceService.notifyReportReady(sessionId);
           return;
         }
       } catch (err: unknown) {

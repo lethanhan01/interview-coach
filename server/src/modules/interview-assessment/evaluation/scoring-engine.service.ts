@@ -156,7 +156,8 @@ export class ScoringEngineService {
       improvements: [
         'Ứng viên đã bỏ qua câu hỏi này. Cần ôn tập bổ sung kiến thức và kỹ năng tương ứng.',
       ],
-      modelAnswer: '',
+      modelAnswer:
+        'Ứng viên có thể tham khảo câu trả lời mẫu trong báo cáo chi tiết cuối phiên.',
       keyTakeaway: 'Hãy luôn cố gắng đưa ra phản hồi kể cả khi chưa nắm chắc giải pháp hoàn chỉnh.',
       isFallback: false,
     };
@@ -211,8 +212,8 @@ export class ScoringEngineService {
 
       for (const q of questions) {
         const answer = q.userAnswers?.[0];
-        if (!answer || answer.skipped || !answer.aiFeedback) {
-          // Câu hỏi chưa trả lời hoặc bị skip: tính điểm 0, Level 1 vào mẫu số
+        if (!answer || answer.skipped || !answer.aiFeedback || answer.aiFeedback.isFallback) {
+          // Câu hỏi chưa trả lời, bị skip hoặc fallback: tính điểm 0, Level 1 vào mẫu số
           scoreSum += 0;
           levelSum += 1;
         } else {

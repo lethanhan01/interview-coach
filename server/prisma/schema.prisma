@@ -338,9 +338,6 @@ model AiFeedback {
   strengths           String[]            @default([]) @map("strengths")
   improvements        String[]            @default([]) @map("improvements")
 
-  // === TƯƠNG THÍCH TẠM THỜI (GIỮ TRONG PHASE 1-4, DROP Ở BƯỚC 5.5) ===
-  dimensionScores     Json?               @map("dimension_scores")
-
   createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
 
   userAnswer        UserAnswer         @relation(fields: [userAnswerId], references: [id], onDelete: Cascade)

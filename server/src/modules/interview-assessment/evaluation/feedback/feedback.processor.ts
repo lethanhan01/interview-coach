@@ -143,22 +143,6 @@ export class FeedbackProcessor extends WorkerHost {
           scoring.corePassRate,
           scoring.seniorityPassRate,
         );
-
-        const dimensionScoresFallback = [
-          {
-            id: 'core',
-            name: 'Core Competency',
-            score: Math.round(scoring.corePassRate * 100),
-            weight: 0.5,
-          },
-          {
-            id: 'seniority',
-            name: 'Seniority & Ownership',
-            score: Math.round(scoring.seniorityPassRate * 100),
-            weight: 0.5,
-          },
-        ];
-
         await this.prisma.$transaction(async (tx) => {
           const aiFeedback = await tx.aiFeedback.upsert({
             where: { userAnswerId: answerId },
@@ -175,8 +159,6 @@ export class FeedbackProcessor extends WorkerHost {
               keyTakeaway: binaryFeedback.keyTakeaway,
               promptVersion: binaryFeedback.promptVersion,
               isFallback: binaryFeedback.isFallback,
-              dimensionScores:
-                dimensionScoresFallback as unknown as Prisma.InputJsonValue,
             },
             update: {
               overallScore: scoring.questionScore,
@@ -190,8 +172,6 @@ export class FeedbackProcessor extends WorkerHost {
               keyTakeaway: binaryFeedback.keyTakeaway,
               promptVersion: binaryFeedback.promptVersion,
               isFallback: binaryFeedback.isFallback,
-              dimensionScores:
-                dimensionScoresFallback as unknown as Prisma.InputJsonValue,
             },
           });
 
@@ -260,8 +240,6 @@ export class FeedbackProcessor extends WorkerHost {
               keyTakeaway: feedback.keyTakeaway,
               promptVersion: feedback.promptVersion,
               isFallback: false,
-              dimensionScores:
-                feedback.appliedDimensions as unknown as Prisma.InputJsonValue,
             },
             update: {
               overallScore: feedback.overallScore,
@@ -269,8 +247,6 @@ export class FeedbackProcessor extends WorkerHost {
               keyTakeaway: feedback.keyTakeaway,
               promptVersion: feedback.promptVersion,
               isFallback: false,
-              dimensionScores:
-                feedback.appliedDimensions as unknown as Prisma.InputJsonValue,
             },
           });
 

@@ -10,6 +10,13 @@ export class AnnotatedSegmentDto {
   @ApiPropertyOptional() suggestion?: string;
 }
 
+export class BinaryCriterionResultDto {
+  @ApiProperty() criteriaId: string;
+  @ApiProperty() passed: boolean;
+  @ApiProperty() evidence: string;
+  @ApiPropertyOptional({ nullable: true }) deductionReason?: string | null;
+}
+
 export class TranscriptItemDto {
   @ApiPropertyOptional() answerId?: string;
   @ApiProperty() questionText: string;
@@ -28,6 +35,16 @@ export class TranscriptItemDto {
     score: number;
     weight: number;
   }[];
+  @ApiPropertyOptional({ type: [BinaryCriterionResultDto] })
+  criteriaEvaluations?: BinaryCriterionResultDto[];
+  @ApiPropertyOptional({ nullable: true })
+  demonstratedLevel?: number | null;
+  @ApiPropertyOptional({ nullable: true })
+  criteriaPassRate?: number | null;
+  @ApiPropertyOptional({ type: [String] })
+  strengths?: string[];
+  @ApiPropertyOptional({ type: [String] })
+  improvements?: string[];
 }
 
 export class ReportResponseDto {
@@ -42,4 +59,8 @@ export class ReportResponseDto {
   @ApiProperty({ type: 'object', additionalProperties: true })
   actionPlan: Record<string, unknown>;
   @ApiProperty({ type: [TranscriptItemDto] }) transcript: TranscriptItemDto[];
+  @ApiPropertyOptional()
+  recommendationStatus?: string;
+  @ApiPropertyOptional({ type: 'array', items: { type: 'object' } })
+  skillsBreakdown?: Record<string, unknown>[];
 }

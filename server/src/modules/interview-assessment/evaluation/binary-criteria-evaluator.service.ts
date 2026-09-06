@@ -276,31 +276,36 @@ Hãy trả về kết quả dưới định dạng JSON khớp hoàn toàn với
 
   /**
    * Tạo kết quả fallback dự phòng an toàn khi AI Gateway bị lỗi/quota/mất mạng.
+   * Tuyệt đối không tự động cấp điểm hoặc đánh dấu Pass khi hệ thống gặp sự cố.
    */
   private buildFallbackOutput(
     input: BinaryEvaluationInput,
     isVietnamese: boolean,
   ): BinaryEvaluationOutput {
     const defaultEvidence = isVietnamese
-      ? 'Hệ thống ghi nhận câu trả lời và sử dụng đánh giá an toàn do gián đoạn AI.'
-      : 'System recorded answer with safe fallback evaluation due to AI disruption.';
+      ? 'Hệ thống ghi nhận câu trả lời nhưng không thể kết nối tới AI Evaluator. Tiêu chí được đánh dấu Không đạt theo cơ chế an toàn.'
+      : 'System recorded answer but could not connect to AI Evaluator. Criterion marked as Failed under safe resilience policy.';
+
+    const defaultDeduction = isVietnamese
+      ? 'Gián đoạn dịch vụ AI đánh giá độc lập.'
+      : 'Independent AI evaluation service disruption.';
 
     const criteriaEvaluations: BinaryCriterionEvaluationResult[] =
       input.rubricCriteria.map((c) => ({
         criteriaId: c.id,
-        passed: (input.answerText || '').trim().length > 50,
+        passed: false, // Bắt buộc false: Không cấp điểm ảo khi hệ thống lỗi
         evidence: defaultEvidence,
-        deductionReason: null,
+        deductionReason: defaultDeduction,
       }));
 
     return {
       criteriaEvaluations,
       strengths: isVietnamese
-        ? ['Ứng viên đã nỗ lực hoàn thành câu trả lời.']
+        ? ['Ứng viên đã nỗ lực hoàn thành phản hồi cho câu hỏi.']
         : ['Candidate attempted to answer the question.'],
       improvements: isVietnamese
-        ? ['Cần đào sâu hơn vào các khía cạnh kỹ thuật và phân tích trade-off.']
-        : ['Focus more on technical depth and trade-off analysis.'],
+        ? ['Hệ thống chưa thể phân tích chi tiết do gián đoạn AI. Cần đánh giá bổ sung.']
+        : ['Detailed analysis unavailable due to AI disruption. Follow-up evaluation required.'],
       modelAnswer: isVietnamese
         ? 'Hệ thống đang đồng bộ câu trả lời mẫu cho kỹ năng này.'
         : 'Model answer is being synchronized for this skill.',

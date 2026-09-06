@@ -498,6 +498,17 @@
 - **TỔNG KẾT TOÀN DỰ ÁN:**
   - **16/16 bước (100% 🟢)** của cả 5 Giai đoạn trong kế hoạch `docs/public-schema-refinement-and-hybrid-integration-plan.md` đã hoàn thành trọn vẹn, vượt mọi chỉ tiêu về chất lượng, hiệu năng, kiến trúc Clean Architecture, và độ an toàn CSDL (Zero Regression, Zero Tech Debt).
 
+---
 
-
-
+### [2026-09-06] Hoàn thành Thẩm Định Chuyên Sâu (`/grill-me`) & Khắc Phục Triệt Để 6 Lỗ Hổng Kỹ Thuật (Zero Tech Debt)
+- **Kiểm định & Khắc phục:**
+  1. **AI Fallback Logic**: Sửa `buildFallbackOutput` trong `BinaryCriteriaEvaluatorService` trả về `passed = false`, điểm 0, Level 1. `ScoringEngineService` xử lý fallback như câu skip (0 điểm, Level 1), triệt tiêu hoàn toàn lỗ hổng gian lận.
+  2. **Skip Wire-Up Qua Facade**: Loại bỏ thao tác DB trực tiếp từ `interview-live`, đóng gói `recordSkippedQuestion` & `recordAutoSkippedQuestions` vào `AssessmentFacade` với đầy đủ Transactional Integrity và cập nhật `session_skills`.
+  3. **SSE Realtime Báo Cáo**: Bổ sung `persistenceService.notifyReportReady(sessionId)` trong `generate-comprehensive-report.service.ts` cho luồng báo cáo hợp nhất `unifiedReportGenerator`.
+  4. **DTO Synchronization**: Bổ sung `criteriaEvaluations`, `demonstratedLevel`, `criteriaPassRate`, `strengths`, `improvements` vào `TranscriptItemDto`; bổ sung `skillsBreakdown`, `recommendationStatus` vào `ReportResponseDto`.
+  5. **Schema Cleanup**: Drop vĩnh viễn cột `dimension_scores` khỏi CSDL PostgreSQL và model `AiFeedback`. Cập nhật `chk_session_reports_report_type` cho 6 loại báo cáo.
+  6. **Toàn Bộ Test Suites & E2E**:
+     - `npm run test:arch`: **3/3 tests passed (100%)**.
+     - Unit & Integration tests (`scoring-engine`, `binary-criteria-evaluator`, `feedback.processor`, `assessment-facade`, `report.service`, `generate-comprehensive-report`, `hybrid-assessment-lifecycle`): **77/77 tests passed (100%)**.
+     - Live E2E script `scripts/verify-step5-4-e2e-live.ts`: **100% PASSED**.
+     - `npm run build`: **Thành công 100% (Exit code 0)**.

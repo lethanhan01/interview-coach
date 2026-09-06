@@ -63,6 +63,9 @@ interface PrismaMock {
       callback: (transaction: TransactionMock) => Promise<unknown>,
     ) => Promise<unknown>
   >;
+  sessionQuestion?: {
+    findUnique: jest.Mock;
+  };
 }
 
 describe('FeedbackProcessor', () => {
@@ -223,22 +226,20 @@ describe('FeedbackProcessor', () => {
     });
   });
 
-  it('persist dimensionScores từ appliedDimensions vào feedback thật', async () => {
+  it('persist feedback thành công từ pipeline vào feedback thật', async () => {
     await processor.process(makeJob());
 
     expect(tx.aiFeedback.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         create: expect.objectContaining({
-          dimensionScores: [
-            { id: 'D1', name: 'Communication', score: 80, weight: 0.5 },
-            { id: 'D2', name: 'Teamwork', score: 60, weight: 0.5 },
-          ],
+          overallScore: 80,
+          modelAnswer: 'Một câu trả lời tốt.',
+          keyTakeaway: 'Thêm số liệu cụ thể.',
         }),
         update: expect.objectContaining({
-          dimensionScores: [
-            { id: 'D1', name: 'Communication', score: 80, weight: 0.5 },
-            { id: 'D2', name: 'Teamwork', score: 60, weight: 0.5 },
-          ],
+          overallScore: 80,
+          modelAnswer: 'Một câu trả lời tốt.',
+          keyTakeaway: 'Thêm số liệu cụ thể.',
         }),
       }),
     );

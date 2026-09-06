@@ -366,7 +366,49 @@ export class UnifiedReportGeneratorService {
         },
       });
 
-      // 5.4 Cập nhật InterviewSession status = 'completed' và recommendationStatus
+      // 5.4 Lưu skipped_answers nếu có câu hỏi bị bỏ qua
+      const skippedQuestions = session.sessionQuestions.filter(
+        (q) => q.userAnswers?.[0]?.skipped,
+      );
+      if (skippedQuestions.length > 0) {
+        const skippedAnswersList = skippedQuestions.map((q) => {
+          const ans = q.userAnswers[0];
+          const existingModelAnswer = ans.aiFeedback?.modelAnswer;
+          const fallbackModelAnswer = isVietnamese
+            ? `Định hướng câu trả lời chuẩn cho câu hỏi "${q.questionText}": Cần nêu rõ định nghĩa cốt lõi, kiến trúc triển khai, và các phân tích đánh đổi (trade-offs) theo tiêu chuẩn SFIA.`
+            : `Model answer outline for "${q.questionText}": Clearly state core concept, architectural design, and trade-offs aligned with SFIA standards.`;
+          return {
+            answerId: ans.id,
+            modelAnswer:
+              existingModelAnswer && existingModelAnswer.trim().length > 0
+                ? existingModelAnswer
+                : fallbackModelAnswer,
+          };
+        });
+
+        await tx.sessionReport.upsert({
+          where: {
+            sessionId_reportType_version: {
+              sessionId,
+              reportType: 'skipped_answers',
+              version: 1,
+            },
+          },
+          create: {
+            sessionId,
+            reportType: 'skipped_answers',
+            version: 1,
+            contentJson: { answers: skippedAnswersList } as Prisma.InputJsonValue,
+            promptVersion: UNIFIED_REPORT_PROMPT_VERSION,
+          },
+          update: {
+            contentJson: { answers: skippedAnswersList } as Prisma.InputJsonValue,
+            promptVersion: UNIFIED_REPORT_PROMPT_VERSION,
+          },
+        });
+      }
+
+      // 5.5 Cập nhật InterviewSession status = 'completed' và recommendationStatus
       await tx.interviewSession.update({
         where: { id: sessionId },
         data: {

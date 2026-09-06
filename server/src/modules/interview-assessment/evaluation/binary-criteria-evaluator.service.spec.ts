@@ -162,6 +162,8 @@ describe('BinaryCriteriaEvaluatorService', () => {
 
     expect(result.isFallback).toBe(true);
     expect(result.criteriaEvaluations).toHaveLength(2);
+    expect(result.criteriaEvaluations[0].passed).toBe(false);
+    expect(result.criteriaEvaluations[1].passed).toBe(false);
     expect(result.modelAnswer).toBeDefined();
     expect(result.keyTakeaway).toBeDefined();
     expect(result.improvements.length).toBeGreaterThan(0);

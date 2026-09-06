@@ -1,4 +1,4 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus, Optional } from '@nestjs/common';
 import { InterviewSession } from '@prisma/client';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
@@ -8,6 +8,7 @@ import { SessionLifecyclePolicy } from './session-lifecycle.policy';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 import { WorkflowService } from '@infra/workflow/workflow.service';
 import { SessionStrategyRegistry } from './session-strategy.registry';
+import { AssessmentFacade } from '@modules/interview-assessment/contracts';
 
 @Injectable()
 export class ChangeInterviewSessionStatus {
@@ -17,6 +18,8 @@ export class ChangeInterviewSessionStatus {
     private readonly workflow: WorkflowService,
     private readonly dispatcher: WorkflowDispatcher,
     private readonly strategyRegistry: SessionStrategyRegistry,
+    @Optional()
+    private readonly assessmentFacade?: AssessmentFacade,
   ) {}
 
   async execute(
@@ -123,32 +126,37 @@ export class ChangeInterviewSessionStatus {
   private async completeWithAutoSkippedAnswers(
     sessionId: string,
   ): Promise<InterviewSession> {
-    return this.prisma.$transaction(async (tx) => {
-      const [questions, answers] = await Promise.all([
-        tx.sessionQuestion.findMany({
-          where: { sessionId },
-          select: { id: true },
-          orderBy: { orderIndex: 'asc' },
-        }),
-        tx.userAnswer.findMany({
-          where: { question: { sessionId } },
-          select: { questionId: true },
-        }),
-      ]);
-      if (questions.length === 0)
-        throw new InterviewAIException(
-          ErrorCode.SESSION_INCOMPLETE,
-          HttpStatus.CONFLICT,
-          'Không thể hoàn thành phỏng vấn khi chưa có câu hỏi.',
-        );
-      const answeredQuestionIds = new Set(
-        answers.map((answer) => answer.questionId),
+    const [questions, answers] = await Promise.all([
+      this.prisma.sessionQuestion.findMany({
+        where: { sessionId },
+        select: { id: true },
+        orderBy: { orderIndex: 'asc' },
+      }),
+      this.prisma.userAnswer.findMany({
+        where: { question: { sessionId } },
+        select: { questionId: true },
+      }),
+    ]);
+    if (questions.length === 0)
+      throw new InterviewAIException(
+        ErrorCode.SESSION_INCOMPLETE,
+        HttpStatus.CONFLICT,
+        'Không thể hoàn thành phỏng vấn khi chưa có câu hỏi.',
       );
-      const unansweredQuestions = questions.filter(
-        (question) => !answeredQuestionIds.has(question.id),
-      );
-      if (unansweredQuestions.length > 0) {
-        await tx.userAnswer.createMany({
+    const answeredQuestionIds = new Set(
+      answers.map((answer) => answer.questionId),
+    );
+    const unansweredQuestions = questions.filter(
+      (question) => !answeredQuestionIds.has(question.id),
+    );
+    if (unansweredQuestions.length > 0) {
+      if (this.assessmentFacade) {
+        await this.assessmentFacade.recordAutoSkippedQuestions({
+          sessionId,
+          questionIds: unansweredQuestions.map((q) => q.id),
+        });
+      } else {
+        await this.prisma.userAnswer.createMany({
           data: unansweredQuestions.map((question) => ({
             questionId: question.id,
             answerMode: 'text',
@@ -158,6 +166,8 @@ export class ChangeInterviewSessionStatus {
           })),
         });
       }
+    }
+    return this.prisma.$transaction(async (tx) => {
       const updated = await tx.interviewSession.update({
         where: { id: sessionId },
         data: { status: 'completing', completedAt: null, remainingSeconds: 0 },

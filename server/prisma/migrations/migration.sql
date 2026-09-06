@@ -1510,3 +1510,19 @@ DO $$ BEGIN
       USING "session_type"::"QuestionSessionType";
   END IF;
 END $$;
+
+-- Drop legacy dimension_scores from ai_feedbacks
+ALTER TABLE public.ai_feedbacks DROP COLUMN IF EXISTS dimension_scores;
+
+-- Update check constraint for session_reports to include session_competency_evaluation
+ALTER TABLE public.session_reports DROP CONSTRAINT IF EXISTS chk_session_reports_report_type;
+ALTER TABLE public.session_reports 
+  ADD CONSTRAINT chk_session_reports_report_type 
+  CHECK (report_type IN (
+    'executive_summary',
+    'comm_analysis',
+    'competency_heatmap',
+    'action_plan',
+    'skipped_answers',
+    'session_competency_evaluation'
+  ));

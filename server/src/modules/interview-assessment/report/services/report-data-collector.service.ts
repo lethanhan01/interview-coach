@@ -59,7 +59,6 @@ export class ReportDataCollector {
       overallScore: f.overallScore,
       keyTakeaway: f.keyTakeaway,
       isFallback: f.isFallback,
-      dimensionScores: f.dimensionScores,
     }));
 
     return {

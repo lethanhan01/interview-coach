@@ -97,13 +97,13 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
       rubricCriteria: [
         {
           id: 'core',
-          dimension: 'core',
+          dimension: 'core' as const,
           description: 'Understands event loop, microtasks, and stream pipelines',
           weight: 0.6,
         },
         {
           id: 'seniority',
-          dimension: 'seniority',
+          dimension: 'seniority' as const,
           description: 'Discusses trade-offs in garbage collection and backpressure handling',
           weight: 0.4,
         },
@@ -120,13 +120,13 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
       rubricCriteria: [
         {
           id: 'core',
-          dimension: 'core',
+          dimension: 'core' as const,
           description: 'Identifies compound indexes and foreign key indexes',
           weight: 0.6,
         },
         {
           id: 'seniority',
-          dimension: 'seniority',
+          dimension: 'seniority' as const,
           description: 'Evaluates partial indexes, partitioning, and vacuum impact',
           weight: 0.4,
         },
@@ -143,13 +143,13 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
       rubricCriteria: [
         {
           id: 'core',
-          dimension: 'core',
+          dimension: 'core' as const,
           description: 'Designs message broker, idempotent consumers, and dead-letter queues',
           weight: 0.6,
         },
         {
           id: 'seniority',
-          dimension: 'seniority',
+          dimension: 'seniority' as const,
           description: 'Addresses split-brain, distributed transactions (Saga/Outbox), and CDC',
           weight: 0.4,
         },
@@ -166,13 +166,13 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
       rubricCriteria: [
         {
           id: 'core',
-          dimension: 'core',
+          dimension: 'core' as const,
           description: 'Component separation and CSS encapsulation',
           weight: 0.6,
         },
         {
           id: 'seniority',
-          dimension: 'seniority',
+          dimension: 'seniority' as const,
           description: 'Versioned design token pipeline and independent deployments',
           weight: 0.4,
         },

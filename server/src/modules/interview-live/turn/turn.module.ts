@@ -3,6 +3,7 @@ import { AuthModule } from '@modules/auth/auth.module';
 import { MediaModule } from '@modules/media/media.module';
 import { QuestionCriteriaModule } from '@modules/interview-prep/question-criteria/question-criteria.module';
 import { WorkflowModule } from '@infra/workflow/workflow.module';
+import { EvaluationModule } from '@modules/interview-assessment/evaluation/evaluation.module';
 import { TurnController } from './turn.controller';
 import { TurnService } from './turn.service';
 import { TurnAnswerContext } from './turn-answer-context.service';
@@ -12,7 +13,13 @@ import { VoiceAnswerIntakeHandler } from './voice-answer-intake.handler';
 import { AnswerIntakeRegistry } from './answer-intake.registry';
 
 @Module({
-  imports: [AuthModule, MediaModule, QuestionCriteriaModule, WorkflowModule],
+  imports: [
+    AuthModule,
+    MediaModule,
+    QuestionCriteriaModule,
+    WorkflowModule,
+    EvaluationModule,
+  ],
   controllers: [TurnController],
   providers: [
     TurnService,
