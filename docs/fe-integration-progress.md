@@ -16,9 +16,9 @@
 | **Pha 1** | Chuẩn Hóa Contracts, Data Types, Backend Bridge & Test Fixtures | 🟢 Đã hoàn thành | 3 / 3 bước |
 | **Pha 2** | Xây Dựng Bộ UI Components Đánh Giá Tinh Gọn Mới | 🟢 Đã hoàn thành | 5 / 5 bước |
 | **Pha 3** | Tái Cấu Trúc Toàn Diện Trang Báo Cáo Phỏng Vấn (/report) | 🟢 Đã hoàn thành | 4 / 4 bước |
-| **Pha 4** | Nâng Cấp Phòng Phỏng Vấn Trực Tiếp (Live Session /sessions/[id]) | ⚪ Chưa bắt đầu | 0 / 2 bước |
+| **Pha 4** | Nâng Cấp Phòng Phỏng Vấn Trực Tiếp (Live Session /sessions/[id]) | 🟢 Đã hoàn thành | 2 / 2 bước |
 | **Pha 5** | Đồng Bộ Luồng Thiết Lập JD Chuẩn Hóa O*NET (/setup & /jd-library) | ⚪ Chưa bắt đầu | 0 / 4 bước |
-| **TỔNG THỂ** | **Đồng Bộ Hoàn Toàn Frontend Với Unified Interview Engine** | 🟡 **ĐANG THỰC HIỆN** | **12 / 18 bước** |
+| **TỔNG THỂ** | **Đồng Bộ Hoàn Toàn Frontend Với Unified Interview Engine** | 🟡 **ĐANG THỰC HIỆN** | **14 / 18 bước** |
 
 ---
 
@@ -120,8 +120,22 @@
 
 ### Pha 4: Nâng Cấp Phòng Phỏng Vấn Trực Tiếp (Live Session /sessions/[id])
 
-- [ ] **Bước 4.1: Cập nhật `QuestionCard.tsx` (Hiển thị Badge Kỹ Năng & Tech Context, ẩn tiêu chí)**
-- [ ] **Bước 4.2: Tích Hợp Vào Phòng Thi Trực Tiếp (`page.tsx`) & Unit Test**
+- [x] **Bước 4.1: Cập nhật `QuestionCard.tsx` (Hiển thị Badge Kỹ Năng SFIA, Flex-wrap Responsive & Bảo Mật Đề Thi)**
+  - [x] Nâng cấp `QuestionCard.tsx`: Bổ sung props `skillCode?: string`, `skillName?: string`, `techContext?: string[]`, `className?: string`.
+  - [x] Định dạng nhãn kỹ năng SFIA chuẩn hóa: Ưu tiên `${skillName} (${skillCode})` (ví dụ: `Phát triển Phần mềm (PROG)`) hoặc fallback `skillName || skillCode`. Ẩn hoàn toàn badge khi không có thông tin kỹ năng.
+  - [x] Tích hợp UI Primitive `<Badge variant="brand">` kết hợp icon `Sparkles` (`size-3`) trang trọng, tuân thủ UI Rule 1 & Rule 3.
+  - [x] Bố cục header responsive `flex flex-wrap items-center justify-between gap-2.5`, tự động bẻ dòng mượt mà trên mobile màn hình nhỏ mà không tràn viền.
+  - [x] Hỗ trợ class merging qua `cn(...)` tuân thủ UI Rule 4.
+  - [x] **Bảo mật tuyệt đối (Exam Security):** Tuyệt đối không hiển thị `targetLevel`, tiêu chí rubric `criteria`, và ẩn danh sách chips công nghệ O*NET trong phòng thi trực tiếp để tối ưu sự tập trung của ứng viên.
+  - [x] Xây dựng bộ Unit Test `QuestionCard.test.tsx` (7/7 tests pass) bao phủ: hiển thị câu hỏi, số thứ tự, format nhãn kỹ năng khi có cả name & code, fallback khi chỉ có name hoặc code, ẩn badge khi không có kỹ năng, kiểm tra bảo mật không để lọt tech tags/criteria/target level, và custom className.
+  - [x] Bổ sung 6 Storybook stories trong `QuestionCard.stories.tsx` (`Default`, `WithSfiaSkill`, `SkillNameOnly`, `SkillCodeOnly`, `LongQuestionWithSkill`, `MobileViewport`), toàn bộ 6/6 tests pass trên Storybook Chromium test-runner.
+- [x] **Bước 4.2: Tích Hợp Vào Phòng Thi Trực Tiếp (`page.tsx`) & Kiểm Thử Toàn Diện**
+  - [x] Cập nhật `client/app/(candidate)/sessions/[sessionId]/page.tsx`: Truyền `skillCode={current.skillCode}`, `skillName={current.skillName}`, `techContext={current.techContext}` từ đối tượng `current` (`Question`) vào `<QuestionCard>`.
+  - [x] Chạy kiểm thử module interview: 4/4 test files (16 tests) pass 100%.
+  - [x] Chạy typecheck: `npm run typecheck` đạt 0 errors (TypeScript sạch sẽ).
+  - [x] Chạy toàn bộ test suite client: 143/143 test files (489 tests) pass 100%.
+  - [x] Chạy production build: `npm run build` thành công 100% với Next.js Turbopack.
+  - [x] Chạy kiểm thử kiến trúc backend: `npm run test:arch` đạt 3/3 rules pass.
 
 ---
 

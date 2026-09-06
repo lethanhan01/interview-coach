@@ -444,6 +444,9 @@ export default function InterviewPage() {
             questionText={current.content}
             orderIndex={currentIndex}
             totalQuestions={questions.length}
+            skillCode={current.skillCode}
+            skillName={current.skillName}
+            techContext={current.techContext}
           />
         )}
 
