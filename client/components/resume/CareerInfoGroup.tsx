@@ -100,8 +100,8 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
     let cancelled = false
     if (!isOnetDropdownOpen) return
 
-    setIsSearchingOnet(true)
     const timer = setTimeout(() => {
+      setIsSearchingOnet(true)
       onetService
         .searchOccupations(onetQuery, 8)
         .then((items) => {

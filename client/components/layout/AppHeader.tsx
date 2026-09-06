@@ -81,7 +81,7 @@ export default function AppHeader({ role, logoutActionSlot }: AppHeaderProps) {
               </>
             ) : (
               <DropdownMenuItem asChild>
-                <Link href="/admin-profile" className="flex w-full items-center gap-2 cursor-pointer">
+                <Link href="/admin/profile" className="flex w-full items-center gap-2 cursor-pointer">
                   <User className="h-4 w-4" />
                   <span>Hồ sơ Admin</span>
                 </Link>

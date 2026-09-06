@@ -16,22 +16,22 @@ export type NavItem = {
 
 export const adminNavigation: NavItem[] = [
   {
-    href: '/admin-dashboard',
+    href: '/admin/dashboard',
     label: 'Dashboard',
     icon: LayoutDashboard,
-    match: ['/admin-dashboard'],
+    match: ['/admin/dashboard', '/admin-dashboard'],
   },
   {
-    href: '/users',
+    href: '/admin/users',
     label: 'Quản lý User',
     icon: Users,
-    match: ['/users'],
+    match: ['/admin/users', '/users'],
   },
   {
-    href: '/admin-profile',
+    href: '/admin/profile',
     label: 'Hồ sơ',
     icon: User,
-    match: ['/admin-profile'],
+    match: ['/admin/profile', '/admin-profile'],
   },
 ]
 

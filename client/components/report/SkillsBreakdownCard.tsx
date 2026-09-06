@@ -1,5 +1,4 @@
-import React from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
+import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Progress } from '@/components/ui/Progress'
 import { Sparkles, AlertCircle, Award, Cpu } from 'lucide-react'

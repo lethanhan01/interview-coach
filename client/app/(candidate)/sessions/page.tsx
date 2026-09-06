@@ -1,12 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Plus, Clock } from 'lucide-react'
-import { sessionService } from '@/services'
+import { useSessions } from '@/hooks/useSessions'
 
-import type { Session } from '@/lib/types'
 import { formatVietnamDateTime } from '@/lib/date-time'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
@@ -83,40 +81,16 @@ function ScoreDisplay({ score }: Readonly<{ score: number }>) {
 
 export default function SessionsPage() {
   const router = useRouter()
-  const [sessions, setSessions] = useState<Session[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [retryCount, setRetryCount] = useState(0)
+  const { sessions, isLoading: loading, error: swrError, mutate } = useSessions()
 
-  useEffect(() => {
-    let cancelled = false
-    sessionService
-      .getSessions()
-      .then((data) => {
-        if (!cancelled) setSessions(data)
-      })
-      .catch((err) => {
-        if (cancelled) return
-        const msg =
-          err instanceof Error ? err.message : 'Không thể tải danh sách'
-        setError(
-          msg === 'Failed to fetch'
-            ? 'Không thể kết nối đến server. Kiểm tra server có đang chạy không.'
-            : msg
-        )
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [retryCount])
+  const error = swrError
+    ? swrError.message === 'Failed to fetch'
+      ? 'Không thể kết nối đến server. Kiểm tra server có đang chạy không.'
+      : swrError.message
+    : null
 
   function retryLoad() {
-    setLoading(true)
-    setError(null)
-    setRetryCount((c) => c + 1)
+    void mutate()
   }
 
   if (loading) {

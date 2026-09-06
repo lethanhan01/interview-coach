@@ -93,7 +93,6 @@ export function detectTechCategory(techName: string): TechCategory {
 export default function TechnicalSkillsGroup({
   data,
   onetSocCode,
-  targetPosition,
   onSave,
 }: Props) {
   const [isEditing, setIsEditing] = useState(false)
@@ -118,7 +117,14 @@ export default function TechnicalSkillsGroup({
   // Fetch O*NET Tools & Technologies khi có onetSocCode
   useEffect(() => {
     let cancelled = false
-    if (onetSocCode) {
+
+    const timer = setTimeout(() => {
+      if (!onetSocCode) {
+        setOnetTechs([])
+        setIsLoadingTechs(false)
+        return
+      }
+
       setIsLoadingTechs(true)
       onetService
         .getOccupationTech(onetSocCode)
@@ -134,12 +140,11 @@ export default function TechnicalSkillsGroup({
             setIsLoadingTechs(false)
           }
         })
-    } else {
-      setOnetTechs([])
-    }
+    }, 0)
 
     return () => {
       cancelled = true
+      clearTimeout(timer)
     }
   }, [onetSocCode])
 

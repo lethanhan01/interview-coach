@@ -82,7 +82,7 @@ export default function AdminDashboardPage() {
             </p>
           </div>
           <Button asChild size="md">
-            <Link href="/users">
+            <Link href="/admin/users">
               <Users className="size-4 mr-1.5" />
               <span>Quản lý người dùng</span>
             </Link>
@@ -183,7 +183,7 @@ export default function AdminDashboardPage() {
               </p>
             </div>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/users" className="gap-1 text-xs">
+              <Link href="/admin/users" className="gap-1 text-xs">
                 <span>Xem tất cả</span>
                 <ArrowRight className="size-3.5" />
               </Link>
@@ -240,7 +240,7 @@ export default function AdminDashboardPage() {
 
             <div className="flex flex-col gap-3">
               <Link
-                href="/users"
+                href="/admin/users"
                 className="border-border hover:border-brand/40 bg-surface-raised flex items-center justify-between rounded-xl border p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-card"
               >
                 <div className="flex items-center gap-3">
@@ -260,7 +260,7 @@ export default function AdminDashboardPage() {
               </Link>
 
               <Link
-                href="/admin-profile"
+                href="/admin/profile"
                 className="border-border hover:border-brand/40 bg-surface-raised flex items-center justify-between rounded-xl border p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-card"
               >
                 <div className="flex items-center gap-3">

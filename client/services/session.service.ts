@@ -96,7 +96,13 @@ export const sessionService = {
    * Upload file ghi âm audio cho câu trả lời dạng voice
    */
   async uploadAudio(sessionId: string, blob: Blob): Promise<AudioUploadResult> {
-    const filename = `audio-${crypto.randomUUID()}.webm`
+    let ext = 'webm'
+    if (blob.type.includes('mp4')) {
+      ext = 'mp4'
+    } else if (blob.type.includes('wav')) {
+      ext = 'wav'
+    }
+    const filename = `audio-${crypto.randomUUID()}.${ext}`
     const formData = new FormData()
     formData.append('file', blob, filename)
     return apiClient.postForm<AudioUploadResult>(

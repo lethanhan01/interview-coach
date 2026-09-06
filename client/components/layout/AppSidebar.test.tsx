@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
-  usePathname: vi.fn(() => '/admin-dashboard'),
+  usePathname: vi.fn(() => '/admin/dashboard'),
 }))
 
 // Mock TooltipProvider to avoid radix-ui act warnings in tests
@@ -21,7 +21,7 @@ vi.mock('@/components/ui/Tooltip', () => ({
 describe('AppSidebar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(usePathname).mockReturnValue('/admin-dashboard')
+    vi.mocked(usePathname).mockReturnValue('/admin/dashboard')
   })
 
   it('renders admin navigation items', async () => {
@@ -40,7 +40,7 @@ describe('AppSidebar', () => {
   })
 
   it('highlights active route', async () => {
-    vi.mocked(usePathname).mockReturnValue('/users')
+    vi.mocked(usePathname).mockReturnValue('/admin/users')
     render(<AppSidebar role="admin" />)
     
     await screen.findByText('Quản lý User')

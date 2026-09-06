@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { sessionService } from '@/services'
+import { useSessionEvents } from '@/hooks/useSessionEvents'
 import type {
   ActionPlanItem,
   FeedbackProgress,
@@ -23,7 +24,6 @@ import Progress from '@/components/ui/Progress'
 import { Card } from '@/components/ui/Card'
 
 const REPORT_POLL_INTERVAL_MS = 5000
-const PROGRESS_POLL_INTERVAL_MS = 2000
 const GOOD_ANSWER_THRESHOLD = 70
 const WEAK_ANSWER_THRESHOLD = 40
 
@@ -186,88 +186,95 @@ export default function ReportPage() {
     )
   }, [progress])
 
+  const [usePollingFallback, setUsePollingFallback] = useState(false)
+
+  const fetchReport = useCallback(async () => {
+    try {
+      const data = await sessionService.getReport(sessionId)
+      reportLoadedRef.current = true
+      setReport(data)
+      setLoading(false)
+      setError(null)
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes('REPORT_NOT_READY')) {
+        // Report still generating
+      } else {
+        setError(err instanceof Error ? err.message : 'Không thể tải báo cáo')
+        setLoading(false)
+      }
+    }
+  }, [sessionId])
+
+  const fetchProgress = useCallback(async () => {
+    try {
+      const data = await sessionService.getFeedbackProgress(sessionId)
+      if (reportLoadedRef.current) return
+      applyProgress(data)
+      if (data.reportReady) {
+        void fetchReport()
+      }
+    } catch {
+      // Best-effort
+    }
+  }, [sessionId, applyProgress, fetchReport])
+
+  useSessionEvents({
+    sessionId,
+    enabled: !report,
+    onProgress: (prog) => {
+      applyProgress(prog)
+      if (prog.reportReady) {
+        void fetchReport()
+      }
+    },
+    onReportReady: () => {
+      void fetchReport()
+    },
+    onCompleted: () => {
+      void fetchReport()
+    },
+    onConnectionChange: (connected) => {
+      if (connected) setUsePollingFallback(false)
+    },
+    onError: () => {
+      setUsePollingFallback(true)
+    },
+  })
+
+  // Initial load: get session metadata, check if report or progress is already available
   useEffect(() => {
     let canceled = false
-    let reportTimer: ReturnType<typeof setTimeout> | undefined
-    let progressTimer: ReturnType<typeof setTimeout> | undefined
-    let eventSource: EventSource | undefined
 
-    const sessionPromise = sessionService
-      .getSession(sessionId)
-      .then((data) => {
-        if (!canceled) setSession(data)
-      })
-      .catch(() => {})
+    const timer = setTimeout(() => {
+      sessionService
+        .getSession(sessionId)
+        .then((data) => {
+          if (!canceled) setSession(data)
+        })
+        .catch(() => {})
 
-    async function fetchReport() {
-      try {
-        const data = await sessionService.getReport(sessionId)
-        if (canceled) return
-        await sessionPromise
-        reportLoadedRef.current = true
-        setReport(data)
-        setLoading(false)
-        setError(null)
-        if (reportTimer) clearTimeout(reportTimer)
-        if (progressTimer) clearTimeout(progressTimer)
-      } catch (err: unknown) {
-        if (canceled) return
-        if (err instanceof Error && err.message.includes('REPORT_NOT_READY')) {
-          reportTimer = setTimeout(fetchReport, REPORT_POLL_INTERVAL_MS)
-        } else {
-          setError(err instanceof Error ? err.message : 'Không thể tải báo cáo')
-          setLoading(false)
-        }
-      }
-    }
-
-    async function fetchProgress() {
-      try {
-        const data = await sessionService.getFeedbackProgress(sessionId)
-        if (canceled || reportLoadedRef.current) return
-        applyProgress(data)
-        if (data.reportReady) {
-          void fetchReport()
-          return
-        }
-      } catch {
-        // Progress is best-effort; report polling/SSE still handles readiness.
-      } finally {
-        if (!canceled && !reportLoadedRef.current) {
-          progressTimer = setTimeout(fetchProgress, PROGRESS_POLL_INTERVAL_MS)
-        }
-      }
-    }
-
-    async function subscribeToProgress() {
-      if (canceled) return
-      eventSource = sessionService.createEventSource(sessionId)
-      eventSource.addEventListener('session.feedback_progress', (event) => {
-        const data = JSON.parse(
-          (event as MessageEvent).data
-        ) as FeedbackProgress
-        applyProgress(data)
-        if (data.reportReady) void fetchReport()
-      })
-      eventSource.addEventListener('report.ready', () => {
-        void fetchReport()
-      })
-      eventSource.onerror = () => eventSource?.close()
-    }
-
-
-    fetchReport()
-    fetchProgress()
-    void subscribeToProgress()
+      void fetchReport()
+      void fetchProgress()
+    }, 0)
 
     return () => {
       canceled = true
-      if (reportTimer) clearTimeout(reportTimer)
-      if (progressTimer) clearTimeout(progressTimer)
-      eventSource?.close()
-      reportLoadedRef.current = false
+      clearTimeout(timer)
     }
-  }, [applyProgress, sessionId])
+  }, [sessionId, fetchReport, fetchProgress])
+
+  // Fallback Polling: ONLY active when SSE connection fails
+  useEffect(() => {
+    if (!usePollingFallback || reportLoadedRef.current || report) return
+
+    const interval = setInterval(() => {
+      if (reportLoadedRef.current) return
+      void fetchProgress()
+      void fetchReport()
+    }, REPORT_POLL_INTERVAL_MS)
+
+    return () => clearInterval(interval)
+  }, [usePollingFallback, report, fetchProgress, fetchReport])
 
   if (loading) {
     const feedbackRequired = progress?.feedbackRequired ?? 0

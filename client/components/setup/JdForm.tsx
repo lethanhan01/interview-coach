@@ -45,7 +45,6 @@ export default function JdForm({ value, onChange }: JdFormProps) {
   const [isSearchingOnet, setIsSearchingOnet] = useState(false)
   const [isOnetDropdownOpen, setIsOnetDropdownOpen] = useState(false)
   const [onetTechSuggestions, setOnetTechSuggestions] = useState<OnetTech[]>([])
-  const [isLoadingTech, setIsLoadingTech] = useState(false)
   const comboboxRef = useRef<HTMLDivElement>(null)
 
   const set = (field: keyof JdFormData, val: string) =>
@@ -72,8 +71,8 @@ export default function JdForm({ value, onChange }: JdFormProps) {
     let cancelled = false
     if (!isOnetDropdownOpen) return
 
-    setIsSearchingOnet(true)
     const timer = setTimeout(() => {
+      setIsSearchingOnet(true)
       onetService
         .searchOccupations(onetQuery, 8)
         .then((items) => {
@@ -99,28 +98,28 @@ export default function JdForm({ value, onChange }: JdFormProps) {
   // Lấy gợi ý công nghệ O*NET khi mã SOC thay đổi
   useEffect(() => {
     let cancelled = false
-    if (value.onetSocCode) {
-      setIsLoadingTech(true)
-      onetService
-        .getOccupationTech(value.onetSocCode)
-        .then((techs) => {
-          if (!cancelled) {
-            setOnetTechSuggestions(techs)
-            setIsLoadingTech(false)
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setOnetTechSuggestions([])
-            setIsLoadingTech(false)
-          }
-        })
-    } else {
-      setOnetTechSuggestions([])
-    }
+    const timer = setTimeout(() => {
+      if (value.onetSocCode) {
+        onetService
+          .getOccupationTech(value.onetSocCode)
+          .then((techs) => {
+            if (!cancelled) {
+              setOnetTechSuggestions(techs)
+            }
+          })
+          .catch(() => {
+            if (!cancelled) {
+              setOnetTechSuggestions([])
+            }
+          })
+      } else {
+        setOnetTechSuggestions([])
+      }
+    }, 0)
 
     return () => {
       cancelled = true
+      clearTimeout(timer)
     }
   }, [value.onetSocCode])
 

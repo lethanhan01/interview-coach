@@ -9,6 +9,9 @@ export const PROTECTED_ROUTE_PREFIXES = [
   '/profile',
   '/jd-library',
   '/admin',
+  '/admin-dashboard',
+  '/admin-profile',
+  '/users',
 ] as const
 
 function matchesPathPrefix(pathname: string, prefix: string): boolean {

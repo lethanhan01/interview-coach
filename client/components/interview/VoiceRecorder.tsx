@@ -28,6 +28,22 @@ interface VoiceDraft {
   sizeBytes: number
 }
 
+function getSupportedAudioMimeType(): string {
+  if (typeof window === 'undefined' || !('MediaRecorder' in window)) return ''
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+    'audio/wav',
+  ]
+  for (const mime of candidates) {
+    if (MediaRecorder.isTypeSupported(mime)) {
+      return mime
+    }
+  }
+  return ''
+}
+
 export default function VoiceRecorder({
   onSubmit,
   onUploadAudio,
@@ -41,6 +57,7 @@ export default function VoiceRecorder({
   const streamRef = useRef<MediaStream | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const startTimeRef = useRef<number>(0)
+  const activeMimeTypeRef = useRef<string>('')
 
   async function startRecording() {
     setError(null)
@@ -49,7 +66,12 @@ export default function VoiceRecorder({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      const selectedMime = getSupportedAudioMimeType()
+      activeMimeTypeRef.current = selectedMime
+      const options: MediaRecorderOptions = selectedMime
+        ? { mimeType: selectedMime }
+        : {}
+      const recorder = new MediaRecorder(stream, options)
       chunksRef.current = []
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data)
@@ -84,7 +106,9 @@ export default function VoiceRecorder({
     const durationSeconds = Math.round(
       (Date.now() - startTimeRef.current) / 1000
     )
-    const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+    const mimeType =
+      recorder.mimeType || activeMimeTypeRef.current || 'audio/webm'
+    const blob = new Blob(chunksRef.current, { type: mimeType })
 
     try {
       const upload = await onUploadAudio(blob)

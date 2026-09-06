@@ -7,19 +7,20 @@ const legacyCookieName = 'interviewcoach_auth'
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl
-  const hasSessionCookie = Boolean(
-    request.cookies.get(accessCookieName)?.value ||
+  const hasAccessToken = Boolean(request.cookies.get(accessCookieName)?.value)
+  const hasAnyCookie = Boolean(
+    hasAccessToken ||
     request.cookies.get(refreshCookieName)?.value ||
     request.cookies.get(legacyCookieName)?.value
   )
-  if (!hasSessionCookie && isProtectedPath(pathname)) {
+  if (!hasAnyCookie && isProtectedPath(pathname)) {
     const login = request.nextUrl.clone()
     login.pathname = '/login'
     login.search = ''
     login.searchParams.set('next', `${pathname}${search}`)
     return NextResponse.redirect(login)
   }
-  if (hasSessionCookie && pathname === '/login') {
+  if (hasAccessToken && pathname === '/login') {
     return NextResponse.redirect(
       new URL(
         getSafeNext(request.nextUrl.searchParams.get('next')),

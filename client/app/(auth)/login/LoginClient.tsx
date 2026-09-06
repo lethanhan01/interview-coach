@@ -32,7 +32,7 @@ export default function LoginClient() {
       const role = await refresh()
       const rawNext = searchParams.get('next')
       if (!rawNext || !rawNext.startsWith('/')) {
-        router.replace(role === 'admin' ? '/admin-dashboard' : '/sessions')
+        router.replace(role === 'admin' ? '/admin/dashboard' : '/sessions')
       } else {
         router.replace(next)
       }
