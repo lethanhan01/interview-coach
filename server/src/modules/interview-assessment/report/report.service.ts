@@ -144,8 +144,14 @@ export class ReportService {
         skipped: answer?.skipped ?? false,
         overallScore:
           !feedback || feedback.isFallback ? null : feedback.overallScore,
-        modelAnswer: answer?.skipped ? '' : (feedback?.modelAnswer ?? ''),
-        keyTakeaway: answer?.skipped ? '' : (feedback?.keyTakeaway ?? ''),
+        modelAnswer: answer?.skipped
+          ? (feedback?.modelAnswer ?? '')
+          : (feedback?.modelAnswer ?? ''),
+        keyTakeaway:
+          feedback?.keyTakeaway ??
+          (answer?.skipped
+            ? 'Hãy luôn cố gắng đưa ra phản hồi kể cả khi chưa nắm chắc giải pháp hoàn chỉnh.'
+            : ''),
         isFallback: feedback?.isFallback ?? false,
         segments: answer?.skipped ? [] : segments,
         criteriaEvaluations:
@@ -162,18 +168,27 @@ export class ReportService {
 
     const unifiedContent = toRecord(unifiedReport?.contentJson);
     const unifiedSummary = toRecord(unifiedContent.summary);
+    const rawBreakdown =
+      unifiedContent.skillsBreakdown !== undefined
+        ? unifiedContent.skillsBreakdown
+        : unifiedContent.skills_breakdown;
+    const rawActionPlan =
+      unifiedContent.actionPlan !== undefined
+        ? unifiedContent.actionPlan
+        : unifiedContent.action_plan;
 
     const storedActionPlan =
-      unifiedContent.actionPlan !== undefined
-        ? { actionPlan: unifiedContent.actionPlan }
+      rawActionPlan !== undefined
+        ? { actionPlan: rawActionPlan }
         : toRecord(findLatestReport(session.sessionReports, 'action_plan')?.contentJson);
 
     const storedExecutiveSummary = executiveSummaryReport
       ? toRecord(executiveSummaryReport.contentJson)
       : {
           ...unifiedSummary,
-          summary: unifiedSummary.executiveSummary,
-          skillsBreakdown: unifiedContent.skillsBreakdown,
+          summary:
+            unifiedSummary.executiveSummary ?? unifiedSummary.executive_summary,
+          skillsBreakdown: rawBreakdown,
         };
 
     const skippedModelAnswers = toSkippedModelAnswerMap(
@@ -221,8 +236,8 @@ export class ReportService {
         session.recommendationStatus ??
         (unifiedSummary.recommendationStatus as string | undefined),
       skillsBreakdown:
-        unifiedContent.skillsBreakdown !== undefined
-          ? (unifiedContent.skillsBreakdown as Record<string, unknown>[])
+        rawBreakdown !== undefined
+          ? (rawBreakdown as any)
           : undefined,
       executiveSummary: allFeedbackIsFallback
         ? {
@@ -236,8 +251,8 @@ export class ReportService {
           }
         : storedExecutiveSummary,
       competencyHeatmap:
-        unifiedContent.skillsBreakdown !== undefined
-          ? { skillsBreakdown: unifiedContent.skillsBreakdown }
+        rawBreakdown !== undefined
+          ? { skillsBreakdown: rawBreakdown }
           : toRecord(
               findLatestReport(session.sessionReports, 'competency_heatmap')
                 ?.contentJson,

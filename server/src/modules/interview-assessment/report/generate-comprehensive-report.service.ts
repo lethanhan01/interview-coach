@@ -36,25 +36,28 @@ export class GenerateComprehensiveReport {
     const language = resolveOutputLanguage(job.language);
 
     // Kiểm tra nếu phiên có session_skills (Hybrid Engine Phase 4 & 5)
+    let hasSessionSkills = false;
     if (this.unifiedReportGenerator && this.prisma?.sessionSkill?.count) {
       try {
         const skillCount = await this.prisma.sessionSkill.count({
           where: { sessionId },
         });
-        if (skillCount > 0) {
-          this.logger.log(
-            `Generating unified competency report for session ${sessionId} (skills=${skillCount})`,
-          );
-          await this.unifiedReportGenerator.generateReport(sessionId, language);
-          await this.persistenceService.notifyReportReady(sessionId);
-          return;
-        }
+        hasSessionSkills = skillCount > 0;
       } catch (err: unknown) {
         this.logger.warn(
-          `Unable to check session_skills count for session ${sessionId}, falling back to legacy report flow`,
+          `Unable to check session_skills count for session ${sessionId}`,
           err,
         );
       }
+    }
+
+    if (hasSessionSkills && this.unifiedReportGenerator) {
+      this.logger.log(
+        `Generating unified competency report for session ${sessionId}`,
+      );
+      await this.unifiedReportGenerator.generateReport(sessionId, language);
+      await this.persistenceService.notifyReportReady(sessionId);
+      return;
     }
 
     // 1. Collect & validate data from database (Legacy flow)

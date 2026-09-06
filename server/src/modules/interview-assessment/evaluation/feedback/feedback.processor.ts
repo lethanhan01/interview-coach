@@ -340,17 +340,27 @@ export class FeedbackProcessor extends WorkerHost {
             create: {
               userAnswerId: answerId,
               overallScore: 0,
+              demonstratedLevel: 1,
+              criteriaPassRate: 0,
+              strengths: [],
+              improvements: [getFallbackFeedbackMessage(language)],
               modelAnswer: '',
               keyTakeaway: getFallbackFeedbackMessage(language),
               promptVersion: SURGICAL_FEEDBACK_PROMPT_CONFIG.version,
               isFallback: true,
             },
-            update: {},
+            update: {
+              isFallback: true,
+            },
           });
           await tx.userAnswer.update({
             where: { id: answerId },
             data: { feedbackGenerated: true },
           });
+
+          if (this.scoringEngine) {
+            await this.scoringEngine.aggregateSessionSkillScores(sessionId, tx);
+          }
           return false;
         });
       } catch (fallbackError: unknown) {

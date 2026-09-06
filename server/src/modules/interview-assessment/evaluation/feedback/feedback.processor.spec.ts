@@ -359,6 +359,10 @@ describe('FeedbackProcessor', () => {
       expect.stringContaining('AI provider quota exhausted'),
     );
     expect(errorSpy).not.toHaveBeenCalled();
+    expect(mockScoringEngine.aggregateSessionSkillScores).toHaveBeenCalledWith(
+      'session-123',
+      tx,
+    );
     expect(mockReportService.enqueueIfAllFeedbacksReady).toHaveBeenCalledWith(
       'session-123',
       'hr',

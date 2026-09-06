@@ -9,6 +9,7 @@ import {
   SFIA_FACADE_TOKEN,
   type ISfiaFacade,
 } from '@modules/sfia/contracts';
+import { ScoringEngineService } from '../../evaluation/scoring-engine.service';
 
 export const UNIFIED_REPORT_TYPE = 'session_competency_evaluation';
 export const UNIFIED_REPORT_PROMPT_VERSION = 'session-report-unified-v1.0';
@@ -23,6 +24,13 @@ export interface SkillBreakdownItem {
   status: 'passed' | 'gap';
   strengths: string;
   areasForImprovement: string;
+  // Dual-key Schema 3 Plan v4 support
+  skill_code?: string;
+  skill_name?: string;
+  tech_context?: string[];
+  target_level?: number;
+  demonstrated_level?: number;
+  areas_for_improvement?: string;
 }
 
 export interface CompetencyActionPlanItem {
@@ -31,6 +39,9 @@ export interface CompetencyActionPlanItem {
   title: string;
   topics: string[];
   estimatedWeeks: number;
+  // Dual-key Schema 3 Plan v4 support
+  skill_code?: string;
+  estimated_weeks?: number;
 }
 
 export interface SessionCompetencyReportContent {
@@ -44,9 +55,21 @@ export interface SessionCompetencyReportContent {
       | 'borderline'
       | 'not_recommended';
     executiveSummary: string;
+    // Dual-key Schema 3 Plan v4 support
+    overall_score?: number;
+    target_sfia_level?: number;
+    demonstrated_sfia_level?: number;
+    recommendation_status?:
+      | 'strongly_recommended'
+      | 'recommended'
+      | 'borderline'
+      | 'not_recommended';
+    executive_summary?: string;
   };
   skillsBreakdown: SkillBreakdownItem[];
+  skills_breakdown?: SkillBreakdownItem[];
   actionPlan: CompetencyActionPlanItem[];
+  action_plan?: CompetencyActionPlanItem[];
 }
 
 @Injectable()
@@ -61,6 +84,8 @@ export class UnifiedReportGeneratorService {
     @Optional()
     @Inject(SFIA_FACADE_TOKEN)
     private readonly sfiaFacade?: ISfiaFacade,
+    @Optional()
+    private readonly scoringEngine?: ScoringEngineService,
   ) {}
 
   /**
@@ -88,6 +113,11 @@ export class UnifiedReportGeneratorService {
     language = 'vi',
   ): Promise<SessionCompetencyReportContent> {
     const isVietnamese = language !== 'en';
+
+    // Chủ động đồng bộ điểm số và cấp độ kỹ năng mới nhất trước khi trích xuất dữ liệu báo cáo
+    if (this.scoringEngine) {
+      await this.scoringEngine.aggregateSessionSkillScores(sessionId);
+    }
 
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
@@ -270,6 +300,22 @@ export class UnifiedReportGeneratorService {
       );
     }
 
+    const canonicalSkillsBreakdown = skillsBreakdown.map((s) => ({
+      ...s,
+      skill_code: s.skillCode,
+      skill_name: s.skillName,
+      tech_context: s.techContext,
+      target_level: s.targetLevel,
+      demonstrated_level: s.demonstratedLevel,
+      areas_for_improvement: s.areasForImprovement,
+    }));
+
+    const canonicalActionPlan = actionPlan.map((a) => ({
+      ...a,
+      skill_code: a.skillCode,
+      estimated_weeks: a.estimatedWeeks,
+    }));
+
     const reportContent: SessionCompetencyReportContent = {
       summary: {
         overallScore,
@@ -277,9 +323,16 @@ export class UnifiedReportGeneratorService {
         demonstratedSfiaLevel,
         recommendationStatus,
         executiveSummary,
+        overall_score: overallScore,
+        target_sfia_level: targetSfiaLevel,
+        demonstrated_sfia_level: demonstratedSfiaLevel,
+        recommendation_status: recommendationStatus,
+        executive_summary: executiveSummary,
       },
-      skillsBreakdown,
-      actionPlan,
+      skillsBreakdown: canonicalSkillsBreakdown,
+      skills_breakdown: canonicalSkillsBreakdown,
+      actionPlan: canonicalActionPlan,
+      action_plan: canonicalActionPlan,
     };
 
     // 5. Lưu vào CSDL trong prisma transaction: lưu session_competency_evaluation và compatibility copies

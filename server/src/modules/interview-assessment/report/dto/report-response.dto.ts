@@ -47,6 +47,35 @@ export class TranscriptItemDto {
   improvements?: string[];
 }
 
+export class SkillBreakdownDto {
+  @ApiProperty({ description: 'Mã kỹ năng SFIA (e.g. PROG, DBDS)' })
+  skillCode: string;
+
+  @ApiProperty({ description: 'Tên hiển thị chuẩn của kỹ năng' })
+  skillName: string;
+
+  @ApiProperty({ type: [String], description: 'Công nghệ O*NET áp dụng' })
+  techContext: string[];
+
+  @ApiProperty({ description: 'Cấp độ SFIA kỳ vọng (1-7)' })
+  targetLevel: number;
+
+  @ApiProperty({ description: 'Cấp độ SFIA thực tế thể hiện (1-7)' })
+  demonstratedLevel: number;
+
+  @ApiProperty({ description: 'Điểm số kỹ năng (0-100)' })
+  score: number;
+
+  @ApiProperty({ enum: ['passed', 'gap'], description: 'Trạng thái đạt chuẩn' })
+  status: 'passed' | 'gap';
+
+  @ApiProperty({ description: 'Điểm mạnh chính của ứng viên' })
+  strengths: string;
+
+  @ApiProperty({ description: 'Điểm cần cải thiện để đạt chuẩn' })
+  areasForImprovement: string;
+}
+
 export class ReportResponseDto {
   @ApiProperty() sessionId: string;
   @ApiProperty({ enum: ['full', 'partial', 'unavailable', 'not_scorable'] })
@@ -61,6 +90,6 @@ export class ReportResponseDto {
   @ApiProperty({ type: [TranscriptItemDto] }) transcript: TranscriptItemDto[];
   @ApiPropertyOptional()
   recommendationStatus?: string;
-  @ApiPropertyOptional({ type: 'array', items: { type: 'object' } })
-  skillsBreakdown?: Record<string, unknown>[];
+  @ApiPropertyOptional({ type: [SkillBreakdownDto] })
+  skillsBreakdown?: SkillBreakdownDto[];
 }

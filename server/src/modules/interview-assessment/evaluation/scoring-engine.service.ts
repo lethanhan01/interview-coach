@@ -70,12 +70,13 @@ export class ScoringEngineService {
         totalPassedWeight += weight;
       }
 
-      if (criterion.dimension === 'core') {
+      const dimension = String(criterion.dimension || '').toLowerCase().trim();
+      if (dimension === 'core') {
         coreWeight += weight;
         if (isPassed) {
           corePassedWeight += weight;
         }
-      } else if (criterion.dimension === 'seniority') {
+      } else if (dimension === 'seniority') {
         seniorityWeight += weight;
         if (isPassed) {
           seniorityPassedWeight += weight;

@@ -6,12 +6,14 @@ import {
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { AI_GATEWAY_TOKEN } from '@infra/ai/ai-gateway.interface';
 import { SFIA_FACADE_TOKEN } from '@modules/sfia/contracts';
+import { ScoringEngineService } from '../../evaluation/scoring-engine.service';
 
 describe('UnifiedReportGeneratorService', () => {
   let service: UnifiedReportGeneratorService;
   let mockPrisma: any;
   let mockAiGateway: any;
   let mockSfiaFacade: any;
+  let mockScoringEngine: any;
   let tx: any;
 
   beforeEach(async () => {
@@ -43,12 +45,17 @@ describe('UnifiedReportGeneratorService', () => {
       }),
     };
 
+    mockScoringEngine = {
+      aggregateSessionSkillScores: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UnifiedReportGeneratorService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AI_GATEWAY_TOKEN, useValue: mockAiGateway },
         { provide: SFIA_FACADE_TOKEN, useValue: mockSfiaFacade },
+        { provide: ScoringEngineService, useValue: mockScoringEngine },
       ],
     }).compile();
 
@@ -146,16 +153,23 @@ describe('UnifiedReportGeneratorService', () => {
 
       const report = await service.generateReport(sessionId, 'vi');
 
+      expect(mockScoringEngine.aggregateSessionSkillScores).toHaveBeenCalledWith(sessionId);
       expect(report.summary.overallScore).toBe(78);
+      expect(report.summary.overall_score).toBe(78);
       expect(report.summary.recommendationStatus).toBe('recommended');
+      expect(report.summary.recommendation_status).toBe('recommended');
       expect(report.summary.executiveSummary).toBe(aiResponse.executive_summary);
       expect(report.skillsBreakdown).toHaveLength(2);
+      expect(report.skills_breakdown).toHaveLength(2);
+      expect(report.skills_breakdown?.[0].skill_code).toBe('PROG');
       expect(report.skillsBreakdown[0].status).toBe('passed');
       expect(report.skillsBreakdown[0].skillName).toBe('Software Development');
       expect(report.skillsBreakdown[1].status).toBe('gap');
       expect(report.skillsBreakdown[1].skillName).toBe('Database Design');
       expect(report.actionPlan).toHaveLength(1);
+      expect(report.action_plan).toHaveLength(1);
       expect(report.actionPlan[0].skillCode).toBe('DBDS');
+      expect(report.action_plan?.[0].skill_code).toBe('DBDS');
 
       // Xác nhận lưu DB trong transaction
       expect(tx.sessionReport.upsert).toHaveBeenCalledWith(

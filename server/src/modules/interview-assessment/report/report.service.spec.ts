@@ -396,7 +396,7 @@ describe('ReportService', () => {
           answerText: '',
           overallScore: 0,
           modelAnswer: 'Câu trả lời đề xuất cho câu bị bỏ qua.',
-          keyTakeaway: '',
+          keyTakeaway: 'Skipped question',
           segments: [],
         }),
       );
@@ -698,6 +698,74 @@ describe('ReportService', () => {
       await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
 
       expect(mockWorkflowDispatcher.dispatchFor).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('session_competency_evaluation (Hybrid Engine Report)', () => {
+    it('ánh xạ chính xác session_competency_evaluation với skillsBreakdown và dual-key', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        recommendationStatus: 'recommended',
+        overallScore: 85,
+        sessionReports: [
+          {
+            reportType: 'session_competency_evaluation',
+            version: 1,
+            contentJson: {
+              summary: {
+                overall_score: 85,
+                recommendation_status: 'recommended',
+                executive_summary: 'Ứng viên đạt chuẩn.',
+              },
+              skills_breakdown: [
+                {
+                  skill_code: 'PROG',
+                  skill_name: 'Software Development',
+                  target_level: 4,
+                  demonstrated_level: 4,
+                  score: 90,
+                  status: 'passed',
+                },
+              ],
+              action_plan: [
+                { skill_code: 'DBDS', title: 'Học thêm CSDL', estimated_weeks: 2 },
+              ],
+            },
+          },
+        ],
+      });
+
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Explain event loop',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              id: 'a-1',
+              answerText: '',
+              skipped: true,
+              aiFeedback: {
+                overallScore: 0,
+                keyTakeaway: 'Hãy luôn cố gắng đưa ra phản hồi.',
+                isFallback: false,
+                annotatedSegments: [],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.overallScore).toBe(85);
+      expect(result.recommendationStatus).toBe('recommended');
+      expect(result.skillsBreakdown).toHaveLength(1);
+      expect((result.skillsBreakdown as any)[0].skill_code).toBe('PROG');
+      expect(result.transcript[0].skipped).toBe(true);
+      expect(result.transcript[0].keyTakeaway).toBe(
+        'Hãy luôn cố gắng đưa ra phản hồi.',
+      );
     });
   });
 });

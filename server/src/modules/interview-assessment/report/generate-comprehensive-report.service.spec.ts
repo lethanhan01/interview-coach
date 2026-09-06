@@ -6,6 +6,7 @@ import { ReportDataCollector } from './services/report-data-collector.service';
 import { ReportMetricsAggregator } from './services/report-metrics-aggregator.service';
 import { ReportPromptExecutor } from './services/report-prompt-executor.service';
 import { ReportPersistenceService } from './services/report-persistence.service';
+import { UnifiedReportGeneratorService } from './services/unified-report-generator.service';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
 import { OpenAIGateway } from '@infra/ai/openai.gateway';
@@ -512,5 +513,81 @@ describe('GenerateComprehensiveReport', () => {
     expect(
       (skippedAnswersCall?.[0] as any).create.contentJson.answers,
     ).toHaveLength(2);
+  });
+
+  describe('Hybrid Engine Unified Report', () => {
+    it('kích hoạt unifiedReportGenerator khi phiên có session_skills', async () => {
+      const mockUnifiedReportGenerator = {
+        generateReport: jest.fn().mockResolvedValue({}),
+      };
+      (prisma as any).sessionSkill = {
+        count: jest.fn().mockResolvedValue(3),
+      };
+
+      const customModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          GenerateComprehensiveReport,
+          ReportDataCollector,
+          ReportMetricsAggregator,
+          ReportPromptExecutor,
+          ReportPersistenceService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: SseService, useValue: mockSse },
+          { provide: AI_GATEWAY_TOKEN, useValue: mockOpenAI },
+          { provide: OpenAIGateway, useValue: mockOpenAI },
+          {
+            provide: UnifiedReportGeneratorService,
+            useValue: mockUnifiedReportGenerator,
+          },
+        ],
+      }).compile();
+
+      const customProcessor = customModule.get(GenerateComprehensiveReport);
+      await customProcessor.process(job);
+
+      expect(mockUnifiedReportGenerator.generateReport).toHaveBeenCalledWith(
+        'session-123',
+        'vi',
+      );
+      expect(mockSse.emit).toHaveBeenCalledWith(
+        'sse:session:session-123',
+        'report.ready',
+        { sessionId: 'session-123' },
+      );
+    });
+
+    it('re-throw lỗi để BullMQ retry khi unifiedReportGenerator.generateReport gặp sự cố', async () => {
+      const mockUnifiedReportGenerator = {
+        generateReport: jest
+          .fn()
+          .mockRejectedValue(new Error('AI Synthesis Failure')),
+      };
+      (prisma as any).sessionSkill = {
+        count: jest.fn().mockResolvedValue(2),
+      };
+
+      const customModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          GenerateComprehensiveReport,
+          ReportDataCollector,
+          ReportMetricsAggregator,
+          ReportPromptExecutor,
+          ReportPersistenceService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: SseService, useValue: mockSse },
+          { provide: AI_GATEWAY_TOKEN, useValue: mockOpenAI },
+          { provide: OpenAIGateway, useValue: mockOpenAI },
+          {
+            provide: UnifiedReportGeneratorService,
+            useValue: mockUnifiedReportGenerator,
+          },
+        ],
+      }).compile();
+
+      const customProcessor = customModule.get(GenerateComprehensiveReport);
+      await expect(customProcessor.process(job)).rejects.toThrow(
+        'AI Synthesis Failure',
+      );
+    });
   });
 });

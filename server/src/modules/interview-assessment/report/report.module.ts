@@ -17,6 +17,7 @@ import { ReportPromptExecutor } from './services/report-prompt-executor.service'
 import { ReportPersistenceService } from './services/report-persistence.service';
 import { SfiaModule } from '@modules/sfia/sfia.module';
 import { UnifiedReportGeneratorService } from './services/unified-report-generator.service';
+import { ScoringEngineService } from '../evaluation/scoring-engine.service';
 import { workersEnabled } from '@core/runtime/runtime-role';
 
 const workerProviders = workersEnabled() ? [ComprehensiveReportProcessor] : [];
@@ -40,6 +41,7 @@ const workerProviders = workersEnabled() ? [ComprehensiveReportProcessor] : [];
     ReportPromptExecutor,
     ReportPersistenceService,
     UnifiedReportGeneratorService,
+    ScoringEngineService,
     ...workerProviders,
   ],
   controllers: [ReportController],

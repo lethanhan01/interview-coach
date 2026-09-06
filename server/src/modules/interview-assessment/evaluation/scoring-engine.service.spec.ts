@@ -88,6 +88,22 @@ describe('ScoringEngineService', () => {
       expect(result.questionScore).toBe(0);
       expect(result.criteriaPassRate).toBe(0);
     });
+
+    it('nên xử lý chuẩn xác dimension có chữ hoa và khoảng trắng thừa', () => {
+      const criteria = [
+        { id: 'c1', dimension: ' CORE ' as any, weight: 1.0 },
+        { id: 'c2', dimension: 'Seniority ' as any, weight: 1.0 },
+      ];
+      const evaluations = [
+        { criteriaId: 'c1', passed: true, evidence: 'Đạt core' },
+        { criteriaId: 'c2', passed: false, evidence: 'Trượt seniority' },
+      ];
+
+      const result = service.calculateQuestionScore(evaluations, criteria);
+      expect(result.questionScore).toBe(50);
+      expect(result.corePassRate).toBe(1);
+      expect(result.seniorityPassRate).toBe(0);
+    });
   });
 
   describe('inferDemonstratedLevel', () => {

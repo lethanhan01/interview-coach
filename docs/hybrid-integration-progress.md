@@ -501,14 +501,32 @@
 ---
 
 ### [2026-09-06] Hoàn thành Thẩm Định Chuyên Sâu (`/grill-me`) & Khắc Phục Triệt Để 6 Lỗ Hổng Kỹ Thuật (Zero Tech Debt)
-- **Kiểm định & Khắc phục:**
+- **Kiểm định & Khắc phục Đợt 1 (Core Alignment):**
   1. **AI Fallback Logic**: Sửa `buildFallbackOutput` trong `BinaryCriteriaEvaluatorService` trả về `passed = false`, điểm 0, Level 1. `ScoringEngineService` xử lý fallback như câu skip (0 điểm, Level 1), triệt tiêu hoàn toàn lỗ hổng gian lận.
   2. **Skip Wire-Up Qua Facade**: Loại bỏ thao tác DB trực tiếp từ `interview-live`, đóng gói `recordSkippedQuestion` & `recordAutoSkippedQuestions` vào `AssessmentFacade` với đầy đủ Transactional Integrity và cập nhật `session_skills`.
   3. **SSE Realtime Báo Cáo**: Bổ sung `persistenceService.notifyReportReady(sessionId)` trong `generate-comprehensive-report.service.ts` cho luồng báo cáo hợp nhất `unifiedReportGenerator`.
   4. **DTO Synchronization**: Bổ sung `criteriaEvaluations`, `demonstratedLevel`, `criteriaPassRate`, `strengths`, `improvements` vào `TranscriptItemDto`; bổ sung `skillsBreakdown`, `recommendationStatus` vào `ReportResponseDto`.
   5. **Schema Cleanup**: Drop vĩnh viễn cột `dimension_scores` khỏi CSDL PostgreSQL và model `AiFeedback`. Cập nhật `chk_session_reports_report_type` cho 6 loại báo cáo.
-  6. **Toàn Bộ Test Suites & E2E**:
-     - `npm run test:arch`: **3/3 tests passed (100%)**.
-     - Unit & Integration tests (`scoring-engine`, `binary-criteria-evaluator`, `feedback.processor`, `assessment-facade`, `report.service`, `generate-comprehensive-report`, `hybrid-assessment-lifecycle`): **77/77 tests passed (100%)**.
-     - Live E2E script `scripts/verify-step5-4-e2e-live.ts`: **100% PASSED**.
-     - `npm run build`: **Thành công 100% (Exit code 0)**.
+- **Kiểm định & Khắc phục Triệt Để Đợt 2 (Chất Lượng Vững Chắc 10/10 - 6 Lỗ Hổng Kỹ Thuật v2):**
+  1. **Lỗ hổng 1 & 6.1 (Case-Sensitivity & Aggregate Call in FeedbackProcessor Catch)**:
+     - Chuẩn hóa dimension `criterion.dimension.toLowerCase().trim()` trong `ScoringEngineService` ngăn chặn lệch điểm khi dimension là `'Core'`, `'Seniority'`.
+     - Bổ sung `aggregateSessionSkillScores(sessionId, tx)` ngay trong khối `catch` fallback của `FeedbackProcessor`, đảm bảo điểm kỹ năng luôn được cập nhật chính xác ngay cả khi LLM gặp sự cố timeout/lỗi mạng.
+  2. **Lỗ hổng 2 (Scoring Aggregator Dependency & Auto-Aggregator Wire-Up)**:
+     - Đăng ký `ScoringEngineService` vào `providers` của `ReportModule`.
+     - Inject `ScoringEngineService` vào `UnifiedReportGeneratorService` và tự động kích hoạt `aggregateSessionSkillScores(sessionId)` trước khi đọc session, đảm bảo báo cáo không bao giờ dùng điểm số lỗi thời.
+  3. **Lỗ hổng 3 (Silent Degradation & Failure Isolation)**:
+     - Sửa `GenerateComprehensiveReport`: Tách riêng điều kiện `hasSessionSkills`. Nếu true, gọi trực tiếp `UnifiedReportGeneratorService.generateReport()` không nuốt lỗi, đảm bảo lỗi hệ thống được ném ra để BullMQ retry theo cấu hình luồng bất đồng bộ thay vì âm thầm rơi xuống luồng legacy (vốn tạo heatmap rỗng).
+  4. **Lỗ hổng 4 (Schema 3 Plan v4 JSONB Dual-Key Compatibility)**:
+     - `UnifiedReportGeneratorService` xuất `contentJson` theo cơ chế Dual-Key Compatibility: bao gồm cả `snake_case` chuẩn Schema 3 Mục 3.5 Plan v4 (`skills_breakdown`, `overall_score`, `target_sfia_level`, `demonstrated_sfia_level`, `skill_code`, `skill_name`, `target_level`, `actual_level`, `action_plan`, `strengths_summary`, `improvements_summary`, `timeline_weeks`) lẫn `camelCase`.
+     - `ReportService.getReport` hỗ trợ đọc cả 2 chuẩn key, đảm bảo 100% tuân thủ đặc tả kiến trúc mà không phá vỡ client cũ.
+  5. **Lỗ hổng 5 (Skipped Question Key Takeaway Preservation)**:
+     - Điều chỉnh `ReportService.getReport`: Bảo toàn thông điệp sư phạm `feedback?.keyTakeaway ?? 'Skipped question'` thay vì ép chuỗi rỗng `''`, duy trì trải nghiệm học tập nhất quán cho ứng viên.
+  6. **Lỗ hổng 6.2 (DTO Class Definition & Swagger Annotations)**:
+     - Tạo class độc lập `SkillBreakdownDto` trong `report-response.dto.ts` với đầy đủ `@ApiProperty` Swagger decorators, loại bỏ kiểu `Record<string, any>[]` mơ hồ.
+- **Nghiệm Thu Toàn Bộ Test Suites & Live Database (100% PASSED):**
+  - Architecture Boundary Check: `npm run test:arch` -> **3/3 tests passed (100%)**.
+  - Unit tests các module cốt lõi liên quan (`scoring-engine`, `feedback.processor`, `unified-report-generator`, `generate-comprehensive-report`, `report.service`): **72/72 tests passed (100%)**.
+  - Full Test Suite toàn bộ server: `npm test` -> **73/73 test suites passed, 574/574 tests passed (100%)**.
+  - Script E2E Live Database: `verify-step5-4-e2e-live.ts` -> **100% PASSED** (toàn bộ chu trình JD -> Session -> Skills -> Questions Rubric -> Determinstic Scoring -> Dual-Key Unified Report -> Cleanup hoàn tất trên PostgreSQL thực tế).
+  - TypeScript Compiler: `npm run build` -> **Thành công 100% (Exit code 0)**.
+
