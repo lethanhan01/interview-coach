@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { Body, Controller, Get, Post } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
+import { Roles, CurrentUser } from '@core/common/decorators';
 import { SaveJobDescriptionDto } from './dto/save-job-description.dto';
 import { SavedJobDescriptionService } from './saved-job-description.service';
 import {
@@ -12,6 +13,7 @@ import {
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
 @Controller('saved-job-descriptions')
+@Roles(UserRole.candidate)
 @ApiTags('Saved Job Descriptions')
 @ApiCookieAuth('cookieAuth')
 export class SavedJobDescriptionController {
@@ -20,25 +22,23 @@ export class SavedJobDescriptionController {
   ) {}
 
   @Get()
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'List saved job descriptions' })
   @ApiOkResponse({ description: 'Saved job descriptions.' })
   @ApiCommonErrors(401)
-  async findAll(@Req() req: { user: { id: string } }) {
+  async findAll(@CurrentUser('id') userId: string) {
     return {
-      items: await this.savedJobDescriptionService.findAll(req.user.id),
+      items: await this.savedJobDescriptionService.findAll(userId),
     };
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Save a job description' })
   @ApiCreatedResponse({ description: 'Saved job description.' })
   @ApiCommonErrors(400, 401)
   async save(
     @Body() dto: SaveJobDescriptionDto,
-    @Req() req: { user: { id: string } },
+    @CurrentUser('id') userId: string,
   ) {
-    return this.savedJobDescriptionService.save(req.user.id, dto);
+    return this.savedJobDescriptionService.save(userId, dto);
   }
 }

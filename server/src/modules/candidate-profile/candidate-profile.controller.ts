@@ -1,8 +1,6 @@
-import { Controller, Get, Patch, Body, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Body } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/guards/roles.guard';
-import { Roles } from '@modules/auth/decorators/roles.decorator';
+import { Roles, CurrentUser } from '@core/common/decorators';
 import { CandidateProfileService } from './candidate-profile.service';
 import { UpdateCandidateProfileDto } from './dto/update-candidate-profile.dto';
 import { CandidateProfileResponseDto } from './dto/candidate-profile-response.dto';
@@ -15,7 +13,6 @@ import {
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
 @Controller('candidate-profile')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.candidate)
 @ApiTags('Candidate Profile')
 @ApiCookieAuth('cookieAuth')
@@ -31,8 +28,9 @@ export class CandidateProfileController {
     type: CandidateProfileResponseDto,
   })
   @ApiCommonErrors(401, 403, 404)
-  async getProfile(@Req() req: { user: { id: string } }) {
-    return this.candidateProfileService.getProfile(req.user.id);
+  async getProfile(@CurrentUser() userOrReq: any) {
+    const userId = userOrReq?.user?.id ?? userOrReq?.id ?? userOrReq;
+    return this.candidateProfileService.getProfile(userId);
   }
 
   @Patch()
@@ -44,8 +42,9 @@ export class CandidateProfileController {
   @ApiCommonErrors(400, 401, 403, 404)
   async updateProfile(
     @Body() dto: UpdateCandidateProfileDto,
-    @Req() req: { user: { id: string } },
+    @CurrentUser() userOrReq: any,
   ) {
-    return this.candidateProfileService.upsertProfile(req.user.id, dto);
+    const userId = userOrReq?.user?.id ?? userOrReq?.id ?? userOrReq;
+    return this.candidateProfileService.upsertProfile(userId, dto);
   }
 }

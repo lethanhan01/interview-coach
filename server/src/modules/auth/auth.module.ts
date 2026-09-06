@@ -2,10 +2,9 @@ import { Module, Global } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '@infra/database/prisma/prisma.module';
+import { AUTH_TOKEN_VERIFIER } from '@core/common/guards/auth-token-verifier.interface';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RolesGuard } from './guards/roles.guard';
 
 @Global()
 @Module({
@@ -21,7 +20,13 @@ import { RolesGuard } from './guards/roles.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard, RolesGuard],
-  exports: [JwtAuthGuard, RolesGuard, AuthService],
+  providers: [
+    AuthService,
+    {
+      provide: AUTH_TOKEN_VERIFIER,
+      useExisting: AuthService,
+    },
+  ],
+  exports: [AuthService, AUTH_TOKEN_VERIFIER],
 })
 export class AuthModule {}

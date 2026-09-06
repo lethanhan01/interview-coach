@@ -8,12 +8,17 @@ import {
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 // --- TẦNG 1: CORE & SHARED ---
 import { CommonModule } from '@core/common/common.module';
 import { validateEnv } from '@core/config/env.validation';
 import { InterviewAIExceptionFilter } from '@core/common/exceptions/interview-ai-exception.filter';
-import { MaintenanceModeGuard } from '@core/common/guards/maintenance-mode.guard';
+import {
+  MaintenanceModeGuard,
+  JwtAuthGuard,
+  RolesGuard,
+} from '@core/common/guards';
 import { RequestIdMiddleware } from '@core/common/middleware/request-id.middleware';
 
 // --- TẦNG 2: INFRASTRUCTURE ---
@@ -55,6 +60,12 @@ class ApiRootController {
       }),
       inject: [ConfigService],
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 60,
+      },
+    ]),
 
     // Core & Infrastructure
     CommonModule,
@@ -79,6 +90,9 @@ class ApiRootController {
   providers: [
     { provide: APP_FILTER, useClass: InterviewAIExceptionFilter },
     { provide: APP_GUARD, useClass: MaintenanceModeGuard },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule implements NestModule {

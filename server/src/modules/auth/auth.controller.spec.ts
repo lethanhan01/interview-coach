@@ -10,9 +10,11 @@ describe('AuthController', () => {
         lastname: 'Lovelace',
         role: 'admin',
         status: 'active',
+        emailVerified: true,
       }),
     };
-    const controller = new AuthController(auth as never);
+    const config = { get: jest.fn().mockReturnValue('development') };
+    const controller = new AuthController(auth as never, config as never);
     await expect(controller.me({ user: { id: 'u1' } })).resolves.toEqual({
       success: true,
       data: {
@@ -22,6 +24,7 @@ describe('AuthController', () => {
         lastname: 'Lovelace',
         role: 'admin',
         status: 'active',
+        emailVerified: true,
       },
     });
   });

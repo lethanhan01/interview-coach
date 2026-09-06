@@ -6,13 +6,13 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UserRole } from '@prisma/client';
-import { ErrorCode } from '@core/common/exceptions/error-code.enum';
-import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '../exceptions/error-code.enum';
+import { InterviewAIException } from '../exceptions/interview-ai.exception';
 import { ROLES_KEY } from '../decorators/roles.decorator';
-import type { AuthenticatedUser } from '../dto/authenticated-user.dto';
+import type { AuthenticatedUserPayload } from './auth-token-verifier.interface';
 
 interface AuthenticatedRequest {
-  user?: AuthenticatedUser;
+  user?: AuthenticatedUserPayload;
 }
 
 @Injectable()

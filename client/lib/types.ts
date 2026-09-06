@@ -341,6 +341,7 @@ export interface AuthUser {
   status: string
   firstname: string | null
   lastname: string | null
+  emailVerified?: boolean
 }
 
 export interface AdminUser {

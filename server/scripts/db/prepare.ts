@@ -48,25 +48,36 @@ async function main() {
         END IF;
       END $$;
 
-      UPDATE users u
-      SET
-        firstname = CASE
-          WHEN trimmed.full_name IS NULL OR trimmed.full_name = '' THEN NULL
-          ELSE split_part(trimmed.full_name, ' ', 1)
-        END,
-        lastname = CASE
-          WHEN trimmed.full_name IS NULL OR trimmed.full_name = '' THEN NULL
-          WHEN position(' ' in trimmed.full_name) = 0 THEN NULL
-          ELSE nullif(regexp_replace(trimmed.full_name, '^\\S+\\s*', ''), '')
-        END
-      FROM (
-        SELECT
-          user_id,
-          btrim(full_name) AS full_name
-        FROM user_profiles
-        WHERE full_name IS NOT NULL
-      ) trimmed
-      WHERE u.id = trimmed.user_id;
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'user_profiles'
+            AND column_name = 'full_name'
+        ) THEN
+          UPDATE users u
+          SET
+            firstname = CASE
+              WHEN trimmed.full_name IS NULL OR trimmed.full_name = '' THEN NULL
+              ELSE split_part(trimmed.full_name, ' ', 1)
+            END,
+            lastname = CASE
+              WHEN trimmed.full_name IS NULL OR trimmed.full_name = '' THEN NULL
+              WHEN position(' ' in trimmed.full_name) = 0 THEN NULL
+              ELSE nullif(regexp_replace(trimmed.full_name, '^\\S+\\s*', ''), '')
+            END
+          FROM (
+            SELECT
+              user_id,
+              btrim(full_name) AS full_name
+            FROM user_profiles
+            WHERE full_name IS NOT NULL
+          ) trimmed
+          WHERE u.id = trimmed.user_id;
+        END IF;
+      END $$;
 
       UPDATE users
       SET role = 'candidate'
@@ -116,10 +127,10 @@ async function main() {
           RAISE EXCEPTION 'Cannot version rubric context packs: found % invalid context_pack_id values', invalid_contexts;
         END IF;
 
-        ALTER TABLE rubric_categories
+        ALTER TABLE IF EXISTS rubric_categories
           ADD COLUMN IF NOT EXISTS rubric_version_id UUID;
 
-        ALTER TABLE interview_sessions
+        ALTER TABLE IF EXISTS interview_sessions
           ADD COLUMN IF NOT EXISTS rubric_version_id UUID;
 
         IF EXISTS (
@@ -173,18 +184,20 @@ async function main() {
           END IF;
         END IF;
 
-        SELECT count(*) INTO duplicate_count
-        FROM (
-          SELECT rc.rubric_version_id, rcr.code
-          FROM rubric_criteria rcr
-          JOIN rubric_categories rc
-            ON rc.id = rcr.rubric_category_id
-          GROUP BY rc.rubric_version_id, rcr.code
-          HAVING count(*) > 1
-        ) duplicates;
+        IF to_regclass('public.rubric_criteria') IS NOT NULL AND to_regclass('public.rubric_categories') IS NOT NULL THEN
+          SELECT count(*) INTO duplicate_count
+          FROM (
+            SELECT rc.rubric_version_id, rcr.code
+            FROM rubric_criteria rcr
+            JOIN rubric_categories rc
+              ON rc.id = rcr.rubric_category_id
+            GROUP BY rc.rubric_version_id, rcr.code
+            HAVING count(*) > 1
+          ) duplicates;
 
-        IF duplicate_count > 0 THEN
-          RAISE EXCEPTION 'Cannot enforce rubric criterion version-code uniqueness: found % duplicate code groups', duplicate_count;
+          IF duplicate_count > 0 THEN
+            RAISE EXCEPTION 'Cannot enforce rubric criterion version-code uniqueness: found % duplicate code groups', duplicate_count;
+          END IF;
         END IF;
 
         IF to_regclass('public.session_question_criteria') IS NOT NULL THEN
@@ -197,7 +210,7 @@ async function main() {
             WHERE table_schema = 'public'
               AND table_name = 'session_question_criteria'
               AND column_name = 'criterion_code'
-          ) THEN
+          ) AND to_regclass('public.rubric_criteria') IS NOT NULL AND to_regclass('public.rubric_categories') IS NOT NULL THEN
             UPDATE session_question_criteria sqc
             SET rubric_criterion_id = rcr.id
             FROM session_questions sq
@@ -214,10 +227,10 @@ async function main() {
         END IF;
       END $$;
 
-      ALTER TABLE rubric_categories
+      ALTER TABLE IF EXISTS rubric_categories
         DROP CONSTRAINT IF EXISTS rubric_categories_context_category_key;
 
-      ALTER TABLE rubric_criteria
+      ALTER TABLE IF EXISTS rubric_criteria
         DROP CONSTRAINT IF EXISTS rubric_criteria_rubric_version_id_fkey,
         DROP CONSTRAINT IF EXISTS rubric_criteria_version_code_key,
         DROP CONSTRAINT IF EXISTS rubric_criteria_category_code_key;
@@ -225,18 +238,28 @@ async function main() {
       DROP INDEX IF EXISTS idx_rubric_criteria_version;
       DROP INDEX IF EXISTS rubric_criteria_version_code_key;
 
-      ALTER TABLE interview_sessions
+      ALTER TABLE IF EXISTS interview_sessions
         DROP CONSTRAINT IF EXISTS interview_sessions_context_pack_id_fkey;
 
-      ALTER TABLE question_bank
+      ALTER TABLE IF EXISTS question_bank
         DROP CONSTRAINT IF EXISTS question_bank_context_pack_id_fkey;
 
-      ALTER TABLE rubric_categories
+      ALTER TABLE IF EXISTS rubric_categories
         DROP CONSTRAINT IF EXISTS rubric_categories_rubric_version_id_fkey;
 
-      DROP TRIGGER IF EXISTS trg_rubric_criteria_version_code ON rubric_criteria;
-      DROP TRIGGER IF EXISTS trg_question_bank_criteria_active_version ON question_bank_criteria;
-      DROP TRIGGER IF EXISTS trg_session_question_criteria_session_version ON session_question_criteria;
+      DO $$
+      BEGIN
+        IF to_regclass('public.rubric_criteria') IS NOT NULL THEN
+          EXECUTE 'DROP TRIGGER IF EXISTS trg_rubric_criteria_version_code ON rubric_criteria';
+        END IF;
+        IF to_regclass('public.question_bank_criteria') IS NOT NULL THEN
+          EXECUTE 'DROP TRIGGER IF EXISTS trg_question_bank_criteria_active_version ON question_bank_criteria';
+        END IF;
+        IF to_regclass('public.session_question_criteria') IS NOT NULL THEN
+          EXECUTE 'DROP TRIGGER IF EXISTS trg_session_question_criteria_session_version ON session_question_criteria';
+        END IF;
+      END $$;
+
       DROP FUNCTION IF EXISTS validate_rubric_criterion_version_code();
       DROP FUNCTION IF EXISTS validate_question_bank_criterion_version();
       DROP FUNCTION IF EXISTS validate_session_question_criterion_version();

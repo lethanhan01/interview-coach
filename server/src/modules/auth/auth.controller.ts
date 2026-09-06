@@ -7,10 +7,9 @@ import {
   Post,
   Req,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import {
   ApiCookieAuth,
   ApiCreatedResponse,
@@ -19,15 +18,18 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
-import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Public, CurrentUser } from '@core/common/decorators';
+import type { AuthenticatedUserPayload } from '@core/common/guards/auth-token-verifier.interface';
+import { AuthService, type DualTokens } from './auth.service';
 import {
   ChangePasswordDto,
   LoginDto,
   PasswordResetConfirmDto,
   PasswordResetRequestDto,
   RegisterDto,
+  VerifyEmailConfirmDto,
 } from './dto/local-auth.dto';
 
 @Controller('auth')
@@ -38,12 +40,14 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
+  @Public()
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({
     summary: 'Register and start a cookie-authenticated session',
   })
   @ApiCreatedResponse({
-    description: 'Account created; authentication cookie is set.',
+    description: 'Account created; authentication cookies are set.',
   })
   @ApiCommonErrors(HttpStatus.BAD_REQUEST, HttpStatus.CONFLICT)
   async register(
@@ -56,15 +60,17 @@ export class AuthController {
       body.firstname,
       body.lastname,
     );
-    this.setCookie(response, result.token);
+    this.setCookies(response, result.tokens);
     return { success: true, data: this.publicUser(result.user) };
   }
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Log in and set the authentication cookie' })
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Log in and set authentication cookies' })
   @ApiOkResponse({
-    description: 'Authenticated user; authentication cookie is set.',
+    description: 'Authenticated user; authentication cookies are set.',
   })
   @ApiCommonErrors(HttpStatus.BAD_REQUEST, HttpStatus.UNAUTHORIZED)
   async login(
@@ -72,59 +78,82 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const result = await this.authService.login(body.email, body.password);
-    this.setCookie(response, result.token);
+    this.setCookies(response, result.tokens);
+    return { success: true, data: this.publicUser(result.user) };
+  }
+
+  @Public()
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Rotate and refresh access token via refresh cookie' })
+  @ApiOkResponse({
+    description: 'Refreshed session; new authentication cookies are set.',
+  })
+  @ApiCommonErrors(HttpStatus.UNAUTHORIZED)
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const refreshToken =
+      req.cookies?.[this.authService.getRefreshCookieName()];
+    const result = await this.authService.refreshSession(refreshToken);
+    this.setCookies(response, result.tokens);
     return { success: true, data: this.publicUser(result.user) };
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiCookieAuth('cookieAuth')
-  @ApiOperation({ summary: 'Clear the authentication cookie' })
-  @ApiNoContentResponse({ description: 'Cookie cleared.' })
-  logout(@Res({ passthrough: true }) response: Response): void {
-    response.clearCookie(
-      this.authService.getCookieName(),
-      this.cookieOptions(),
-    );
+  @ApiOperation({ summary: 'Clear the authentication cookies and revoke refresh token' })
+  @ApiNoContentResponse({ description: 'Cookies cleared and session revoked.' })
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<void> {
+    const refreshToken =
+      req.cookies?.[this.authService.getRefreshCookieName()];
+    await this.authService.logout(refreshToken);
+    this.clearCookies(response);
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
   @ApiCookieAuth('cookieAuth')
   @ApiOperation({ summary: 'Get the current user' })
   @ApiOkResponse({ description: 'Current authenticated user.' })
   @ApiCommonErrors(HttpStatus.UNAUTHORIZED)
-  async me(@Req() req: { user: { id: string } }) {
-    const user = await this.authService.getMe(req.user.id);
-    return { success: true, data: user && this.publicUser(user) };
+  async me(@CurrentUser() userOrReq: any) {
+    const userId = userOrReq?.user?.id ?? userOrReq?.id ?? userOrReq;
+    const dbUser = await this.authService.getMe(userId);
+    return { success: true, data: dbUser && this.publicUser(dbUser) };
   }
 
   @Post('change-password')
-  @UseGuards(JwtAuthGuard)
   @ApiCookieAuth('cookieAuth')
   @ApiOperation({
-    summary: 'Change password and rotate the authentication cookie',
+    summary: 'Change password and rotate the authentication cookies',
   })
   @ApiOkResponse({
-    description: 'Updated user; authentication cookie is refreshed.',
+    description: 'Updated user; authentication cookies are refreshed.',
   })
   @ApiCommonErrors(HttpStatus.BAD_REQUEST, HttpStatus.UNAUTHORIZED)
   async changePassword(
-    @Req() req: { user: { id: string } },
+    @CurrentUser() user: AuthenticatedUserPayload,
     @Body() body: ChangePasswordDto,
     @Res({ passthrough: true }) response: Response,
   ) {
     const result = await this.authService.changePassword(
-      req.user.id,
+      user.id,
       body.currentPassword,
       body.newPassword,
     );
-    this.setCookie(response, result.token);
+    this.setCookies(response, result.tokens);
     return { success: true, data: this.publicUser(result.user) };
   }
 
+  @Public()
   @Post('password-reset/request')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @ApiOperation({ summary: 'Request a password-reset code' })
   @ApiNoContentResponse({ description: 'Request accepted.' })
   @ApiCommonErrors(HttpStatus.BAD_REQUEST)
@@ -134,10 +163,12 @@ export class AuthController {
     await this.authService.requestPasswordReset(body.email);
   }
 
+  @Public()
   @Post('password-reset/confirm')
-  @ApiOperation({ summary: 'Confirm password reset and set a new cookie' })
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Confirm password reset and set new cookies' })
   @ApiOkResponse({
-    description: 'Password reset; authentication cookie is set.',
+    description: 'Password reset; authentication cookies are set.',
   })
   @ApiCommonErrors(HttpStatus.BAD_REQUEST)
   async confirmPasswordReset(
@@ -149,26 +180,83 @@ export class AuthController {
       body.code,
       body.newPassword,
     );
-    this.setCookie(response, result.token);
+    this.setCookies(response, result.tokens);
     return { success: true, data: this.publicUser(result.user) };
   }
 
-  private setCookie(response: Response, token: string): void {
+  @Post('email-verification/request')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiCookieAuth('cookieAuth')
+  @ApiOperation({ summary: 'Request an email verification OTP code' })
+  @ApiNoContentResponse({ description: 'Verification OTP sent.' })
+  @ApiCommonErrors(HttpStatus.UNAUTHORIZED)
+  async requestEmailVerification(
+    @CurrentUser() user: AuthenticatedUserPayload,
+  ): Promise<void> {
+    await this.authService.requestEmailVerification(user.id);
+  }
+
+  @Post('email-verification/confirm')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiCookieAuth('cookieAuth')
+  @ApiOperation({ summary: 'Confirm email verification OTP' })
+  @ApiOkResponse({
+    description: 'Email verified; updated user returned.',
+  })
+  @ApiCommonErrors(HttpStatus.BAD_REQUEST, HttpStatus.UNAUTHORIZED)
+  async confirmEmailVerification(
+    @CurrentUser() user: AuthenticatedUserPayload,
+    @Body() body: VerifyEmailConfirmDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.confirmEmailVerification(
+      user.id,
+      body.code,
+    );
+    this.setCookies(response, result.tokens);
+    return { success: true, data: this.publicUser(result.user) };
+  }
+
+  private setCookies(response: Response, tokens: DualTokens): void {
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
+
+    // Access Token Cookie (15 min)
+    response.cookie(this.authService.getAccessCookieName(), tokens.accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: this.authService.getAccessCookieMaxAge() * 1000,
+      path: '/',
+    });
+
+    // Refresh Token Cookie (7 days)
     response.cookie(
-      this.authService.getCookieName(),
-      token,
-      this.cookieOptions(),
+      this.authService.getRefreshCookieName(),
+      tokens.refreshToken,
+      {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        maxAge: this.authService.getRefreshCookieMaxAge() * 1000,
+        path: '/',
+      },
     );
   }
 
-  private cookieOptions() {
-    return {
+  private clearCookies(response: Response): void {
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
+    const baseOptions = {
       httpOnly: true,
-      secure: this.configService.get<string>('NODE_ENV') === 'production',
+      secure: isProduction,
       sameSite: 'lax' as const,
-      maxAge: this.authService.getCookieMaxAge() * 1000,
       path: '/',
     };
+
+    response.clearCookie(this.authService.getAccessCookieName(), baseOptions);
+    response.clearCookie(this.authService.getRefreshCookieName(), baseOptions);
   }
 
   private publicUser(user: {
@@ -178,6 +266,7 @@ export class AuthController {
     status: string;
     firstname: string | null;
     lastname: string | null;
+    emailVerified?: boolean;
   }) {
     return {
       id: user.id,
@@ -186,6 +275,7 @@ export class AuthController {
       status: user.status,
       firstname: user.firstname,
       lastname: user.lastname,
+      emailVerified: user.emailVerified ?? false,
     };
   }
 }

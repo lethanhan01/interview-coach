@@ -1,5 +1,5 @@
-import { Controller, Get, Patch, Body, Req, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { Controller, Get, Patch, Body } from '@nestjs/common';
+import { CurrentUser } from '@core/common/decorators';
 import { UserService } from './user.service';
 import { UserAccountResponseDto } from './dto/user-account-response.dto';
 import { UpdateUserAccountDto } from './dto/update-user-account.dto';
@@ -12,7 +12,6 @@ import {
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard)
 @ApiTags('Users')
 @ApiCookieAuth('cookieAuth')
 export class UserController {
@@ -25,8 +24,9 @@ export class UserController {
     type: UserAccountResponseDto,
   })
   @ApiCommonErrors(401, 404)
-  async getMe(@Req() req: { user: { id: string } }) {
-    return this.userService.getAccount(req.user.id);
+  async getMe(@CurrentUser() user: { id: string }) {
+    const userId = (user as any)?.id ?? (user as any)?.user?.id;
+    return this.userService.getAccount(userId);
   }
 
   @Patch('me')
@@ -38,8 +38,9 @@ export class UserController {
   @ApiCommonErrors(400, 401, 404)
   async updateMe(
     @Body() dto: UpdateUserAccountDto,
-    @Req() req: { user: { id: string } },
+    @CurrentUser() user: { id: string },
   ) {
-    return this.userService.updateAccount(req.user.id, dto);
+    const userId = (user as any)?.id ?? (user as any)?.user?.id;
+    return this.userService.updateAccount(userId, dto);
   }
 }

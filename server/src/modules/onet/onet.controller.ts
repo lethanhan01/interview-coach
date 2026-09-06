@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import {
   ApiCookieAuth,
   ApiOkResponse,
@@ -6,7 +6,6 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 import { OnetService } from './onet.service';
 import { SearchOnetOccupationsDto } from './dto/search-onet-occupations.dto';
@@ -19,7 +18,6 @@ export class OnetController {
   constructor(private readonly onetService: OnetService) {}
 
   @Get('occupations')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Search O*NET occupations by title or keyword' })
   @ApiOkResponse({ description: 'List of matching O*NET occupations' })
   @ApiCommonErrors(401)
@@ -28,7 +26,6 @@ export class OnetController {
   }
 
   @Get('occupations/:socCode/tech')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get tools and technology for an O*NET SOC code' })
   @ApiParam({ name: 'socCode', example: '15-1252.00' })
   @ApiOkResponse({ description: 'Tools and technology list' })

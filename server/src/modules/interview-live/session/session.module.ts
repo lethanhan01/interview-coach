@@ -5,7 +5,7 @@ import { SessionService } from './session.service';
 import { CreateInterviewSession } from './create-interview-session.service';
 import { ChangeInterviewSessionStatus } from './change-interview-session-status.service';
 import { SessionLifecyclePolicy } from './session-lifecycle.policy';
-import { SseTokenGuard } from '@modules/auth/guards/sse-token.guard';
+import { SseTokenGuard, JwtAuthGuard } from '@core/common/guards';
 import {
   QUESTION_GEN_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
@@ -38,6 +38,7 @@ import { SessionStrategyRegistry } from './session-strategy.registry';
     CreateInterviewSession,
     ChangeInterviewSessionStatus,
     SessionLifecyclePolicy,
+    JwtAuthGuard,
     SseTokenGuard,
     HrInterviewStrategy,
     TechnicalInterviewStrategy,

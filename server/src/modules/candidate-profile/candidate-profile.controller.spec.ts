@@ -1,8 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CandidateProfileController } from './candidate-profile.controller';
 import { CandidateProfileService } from './candidate-profile.service';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/guards/roles.guard';
+import { JwtAuthGuard, RolesGuard } from '@core/common/guards';
 import { createMockCandidateProfileService } from '@core/test-utils/mock-factories';
 
 describe('CandidateProfileController', () => {

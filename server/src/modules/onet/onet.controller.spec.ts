@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { OnetController } from './onet.controller';
 import { OnetService } from './onet.service';
 import { OnetOccupationDto, OnetTechDto } from './contracts/onet.dto';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '@core/common/guards';
 
 describe('OnetController', () => {
   let controller: OnetController;

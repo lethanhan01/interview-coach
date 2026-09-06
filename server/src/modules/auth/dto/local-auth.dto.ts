@@ -58,3 +58,11 @@ export class PasswordResetConfirmDto {
   @MaxLength(128)
   newPassword: string;
 }
+
+export class VerifyEmailConfirmDto {
+  @ApiProperty({ example: '123456', description: '6-digit verification code' })
+  @IsString()
+  @Matches(/^\d{6}$/, { message: 'Code must be a 6-digit numeric string' })
+  code: string;
+}
+

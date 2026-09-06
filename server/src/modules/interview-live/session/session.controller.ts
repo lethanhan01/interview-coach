@@ -5,14 +5,15 @@ import {
   Patch,
   Param,
   Body,
-  Req,
   UseGuards,
   Sse,
   MessageEvent,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { SseTokenGuard } from '@modules/auth/guards/sse-token.guard';
+import { UserRole } from '@prisma/client';
+import { Roles, CurrentUser } from '@core/common/decorators';
+import { SseTokenGuard } from '@core/common/guards';
+import type { AuthenticatedUserPayload } from '@core/common/guards/auth-token-verifier.interface';
 import { SessionService } from './session.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
 import { AssessmentFacade } from '@modules/interview-assessment/contracts';
@@ -29,7 +30,25 @@ import {
 } from '@nestjs/swagger';
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
+function extractUser(userOrReq: any): AuthenticatedUserPayload {
+  if (userOrReq?.user) {
+    return {
+      id: userOrReq.user.id,
+      email: userOrReq.user.email ?? '',
+      role: userOrReq.user.role ?? UserRole.candidate,
+      emailVerified: userOrReq.user.emailVerified,
+    };
+  }
+  return {
+    id: typeof userOrReq === 'string' ? userOrReq : userOrReq?.id ?? '',
+    email: userOrReq?.email ?? '',
+    role: userOrReq?.role ?? UserRole.candidate,
+    emailVerified: userOrReq?.emailVerified,
+  };
+}
+
 @Controller('sessions')
+@Roles(UserRole.candidate)
 @ApiTags('Sessions')
 @ApiCookieAuth('cookieAuth')
 export class SessionController {
@@ -40,7 +59,6 @@ export class SessionController {
   ) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Create an interview session and queue question generation',
   })
@@ -48,90 +66,90 @@ export class SessionController {
   @ApiCommonErrors(400, 401, 429, 503)
   async create(
     @Body() dto: CreateSessionDto,
-    @Req() req: { user: { id: string } },
+    @CurrentUser() userOrReq: any,
   ) {
-    return this.sessionService.create(req.user.id, dto);
+    const user = extractUser(userOrReq);
+    return this.sessionService.create(user.id, dto);
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'List the current user sessions' })
   @ApiOkResponse({ description: 'Sessions.' })
   @ApiCommonErrors(401)
-  async findAll(@Req() req: { user: { id: string; emailVerified: boolean } }) {
+  async findAll(@CurrentUser() userOrReq: any) {
+    const user = extractUser(userOrReq);
     return {
       sessions: await this.sessionService.findAll(
-        req.user.id,
-        req.user.emailVerified,
+        user.id,
+        user.emailVerified,
       ),
     };
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get an interview session' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ description: 'Session.' })
   @ApiCommonErrors(401, 403, 404)
   async findOne(
     @Param('id') id: string,
-    @Req() req: { user: { id: string; emailVerified: boolean } },
+    @CurrentUser() userOrReq: any,
   ) {
+    const user = extractUser(userOrReq);
     return this.sessionService.findById(
       id,
-      req.user.id,
-      req.user.emailVerified,
+      user.id,
+      user.emailVerified,
     );
   }
 
   @Get(':id/status')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get question-generation status' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ description: 'Session status and question count.' })
   @ApiCommonErrors(401, 403, 404)
   async getStatus(
     @Param('id') id: string,
-    @Req() req: { user: { id: string; emailVerified: boolean } },
+    @CurrentUser() userOrReq: any,
   ) {
+    const user = extractUser(userOrReq);
     const session = await this.sessionService.findById(
       id,
-      req.user.id,
-      req.user.emailVerified,
+      user.id,
+      user.emailVerified,
     );
     return { status: session.status, numQuestions: session.numQuestions };
   }
 
   @Get(':id/questions')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get generated session questions' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ description: 'Questions.' })
   @ApiCommonErrors(401, 403, 404)
   async findQuestions(
     @Param('id') id: string,
-    @Req() req: { user: { id: string; emailVerified: boolean } },
+    @CurrentUser() userOrReq: any,
   ) {
-    await this.sessionService.findById(id, req.user.id, req.user.emailVerified);
-    return this.sessionService.findQuestions(id, req.user.id);
+    const user = extractUser(userOrReq);
+    await this.sessionService.findById(id, user.id, user.emailVerified);
+    return this.sessionService.findQuestions(id, user.id);
   }
 
   @Get(':id/feedback-progress')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get asynchronous feedback progress' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ description: 'Feedback progress.' })
   @ApiCommonErrors(401, 403, 404)
   async getFeedbackProgress(
     @Param('id') id: string,
-    @Req() req: { user: { id: string; emailVerified: boolean } },
+    @CurrentUser() userOrReq: any,
   ) {
-    await this.sessionService.findById(id, req.user.id, req.user.emailVerified);
-    return this.assessmentFacade.getFeedbackProgress(id, req.user.id);
+    const user = extractUser(userOrReq);
+    await this.sessionService.findById(id, user.id, user.emailVerified);
+    return this.assessmentFacade.getFeedbackProgress(id, user.id);
   }
 
   @Patch(':id/status')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update interview session status' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ description: 'Updated session.' })
@@ -139,11 +157,12 @@ export class SessionController {
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateSessionStatusDto,
-    @Req() req: { user: { id: string } },
+    @CurrentUser() userOrReq: any,
   ) {
+    const user = extractUser(userOrReq);
     return this.sessionService.updateStatus(
       id,
-      req.user.id,
+      user.id,
       dto.status,
       dto.remainingSeconds,
       dto.autoSkipUnanswered,
@@ -162,9 +181,10 @@ export class SessionController {
   @ApiCommonErrors(401, 403, 404)
   async streamEvents(
     @Param('id') id: string,
-    @Req() req: { user: { id: string } },
+    @CurrentUser() userOrReq: any,
   ): Promise<Observable<MessageEvent>> {
-    await this.sessionService.findById(id, req.user.id);
+    const user = extractUser(userOrReq);
+    await this.sessionService.findById(id, user.id);
     return this.sseService.subscribe(`sse:session:${id}`);
   }
 }

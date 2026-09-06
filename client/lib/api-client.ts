@@ -44,6 +44,27 @@ function isErrorBody(value: unknown): value is ServerErrorPayload {
   )
 }
 
+let isRefreshing = false
+let refreshSubscribers: Array<(error?: Error | null) => void> = []
+
+function subscribeTokenRefresh(cb: (error?: Error | null) => void) {
+  refreshSubscribers.push(cb)
+}
+
+function onRefreshed(error?: Error | null) {
+  refreshSubscribers.forEach((cb) => cb(error))
+  refreshSubscribers = []
+}
+
+const AUTH_EXCLUDED_FROM_REFRESH = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/logout',
+  '/auth/password-reset',
+  '/auth/email-verification',
+]
+
 async function request<T>(path: string, options: RequestInit): Promise<T> {
   const isFormData =
     typeof FormData !== 'undefined' && options.body instanceof FormData
@@ -57,6 +78,51 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
     headers,
     credentials: 'include',
   })
+
+  // Handle 401 Silent Refresh for non-auth endpoints
+  if (
+    response.status === 401 &&
+    !AUTH_EXCLUDED_FROM_REFRESH.some((excluded) => path.startsWith(excluded))
+  ) {
+    if (!isRefreshing) {
+      isRefreshing = true
+      try {
+        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+        })
+
+        if (refreshResponse.ok) {
+          isRefreshing = false
+          onRefreshed(null)
+          return request<T>(path, options)
+        } else {
+          isRefreshing = false
+          const sessionErr = new Error('Session expired')
+          onRefreshed(sessionErr)
+        }
+      } catch (err) {
+        isRefreshing = false
+        onRefreshed(err instanceof Error ? err : new Error(String(err)))
+      }
+    } else {
+      return new Promise<T>((resolve, reject) => {
+        subscribeTokenRefresh((err) => {
+          if (err) {
+            reject(
+              new ApiClientError(
+                API_ERROR_MESSAGES.UNAUTHORIZED,
+                401,
+                'UNAUTHORIZED'
+              )
+            )
+          } else {
+            resolve(request<T>(path, options))
+          }
+        })
+      })
+    }
+  }
 
   // 204 No Content
   if (response.status === 204) {

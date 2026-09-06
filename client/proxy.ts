@@ -1,11 +1,17 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { getSafeNext, isProtectedPath } from './lib/auth-redirect'
 
-const cookieName = process.env.AUTH_COOKIE_NAME ?? 'interviewcoach_auth'
+const accessCookieName = process.env.AUTH_COOKIE_NAME ?? 'interviewcoach_access'
+const refreshCookieName = process.env.REFRESH_COOKIE_NAME ?? 'interviewcoach_refresh'
+const legacyCookieName = 'interviewcoach_auth'
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl
-  const hasSessionCookie = Boolean(request.cookies.get(cookieName)?.value)
+  const hasSessionCookie = Boolean(
+    request.cookies.get(accessCookieName)?.value ||
+    request.cookies.get(refreshCookieName)?.value ||
+    request.cookies.get(legacyCookieName)?.value
+  )
   if (!hasSessionCookie && isProtectedPath(pathname)) {
     const login = request.nextUrl.clone()
     login.pathname = '/login'

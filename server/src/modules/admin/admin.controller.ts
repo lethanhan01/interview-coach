@@ -8,15 +8,11 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
-  Req,
-  UseGuards,
 } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/guards/roles.guard';
-import { Roles } from '@modules/auth/decorators/roles.decorator';
+import { Roles, CurrentUser } from '@core/common/decorators';
 import { AdminService } from './admin.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
@@ -30,7 +26,6 @@ import {
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
 @Controller('admin')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.admin)
 @ApiTags('Admin')
 @ApiCookieAuth('cookieAuth')
@@ -88,10 +83,10 @@ export class AdminController {
   )
   async updateUser(
     @Param('id', ParseUUIDPipe) id: string,
-    @Req() req: { user: { id: string } },
+    @CurrentUser('id') currentUserId: string,
     @Body() body: UpdateUserDto,
   ) {
-    const user = await this.adminService.updateUser(id, req.user.id, body);
+    const user = await this.adminService.updateUser(id, currentUserId, body);
     return { success: true, data: user };
   }
 
@@ -109,8 +104,8 @@ export class AdminController {
   )
   async deleteUser(
     @Param('id', ParseUUIDPipe) id: string,
-    @Req() req: { user: { id: string } },
+    @CurrentUser('id') currentUserId: string,
   ) {
-    await this.adminService.deleteUser(id, req.user.id);
+    await this.adminService.deleteUser(id, currentUserId);
   }
 }

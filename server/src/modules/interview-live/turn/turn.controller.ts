@@ -3,15 +3,14 @@ import {
   Post,
   Param,
   Body,
-  UseGuards,
   UseInterceptors,
   UploadedFile,
-  Req,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { UserRole } from '@prisma/client';
+import { Roles, CurrentUser } from '@core/common/decorators';
 import { TurnService } from './turn.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
@@ -30,12 +29,8 @@ import {
 } from '@nestjs/swagger';
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
-interface AuthenticatedRequest extends Request {
-  user: { id: string; email: string };
-}
-
 @Controller('sessions/:sessionId/turns')
-@UseGuards(JwtAuthGuard)
+@Roles(UserRole.candidate)
 @ApiTags('Turns')
 @ApiCookieAuth('cookieAuth')
 export class TurnController {
@@ -67,9 +62,10 @@ export class TurnController {
   async uploadAudio(
     @Param('sessionId') sessionId: string,
     @UploadedFile() file: UploadedAudioFile | undefined,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() userOrReq: any,
   ): Promise<AudioUploadResult> {
-    return this.turnService.uploadAudio(sessionId, req.user.id, file);
+    const userId = userOrReq?.user?.id ?? userOrReq?.id ?? userOrReq;
+    return this.turnService.uploadAudio(sessionId, userId, file);
   }
 
   @Post()
@@ -81,8 +77,9 @@ export class TurnController {
   async submitAnswer(
     @Param('sessionId') sessionId: string,
     @Body() dto: SubmitAnswerDto,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() userOrReq: any,
   ): Promise<TurnResponseDto> {
-    return this.turnService.submitAnswer(sessionId, req.user.id, dto);
+    const userId = userOrReq?.user?.id ?? userOrReq?.id ?? userOrReq;
+    return this.turnService.submitAnswer(sessionId, userId, dto);
   }
 }

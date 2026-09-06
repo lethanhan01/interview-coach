@@ -4,8 +4,7 @@ import { SessionController } from './session.controller';
 import { SessionService } from './session.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
 import { AssessmentFacade } from '@modules/interview-assessment/contracts';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { SseTokenGuard } from '@modules/auth/guards/sse-token.guard';
+import { JwtAuthGuard, SseTokenGuard } from '@core/common/guards';
 import {
   createMockReportService,
   createMockSessionService,

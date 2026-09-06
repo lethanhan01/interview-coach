@@ -4,4 +4,5 @@ export class AuthenticatedUser {
   id: string;
   email: string;
   role: UserRole;
+  emailVerified: boolean;
 }

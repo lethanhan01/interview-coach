@@ -1,5 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import {
   ContextPackService,
   type ContextPackType,
@@ -22,7 +21,6 @@ export class RubricController {
   constructor(private readonly contextPackService: ContextPackService) {}
 
   @Get(':contextPackId')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get the active scoring rubric for a context pack' })
   @ApiParam({ name: 'contextPackId', enum: ['VN', 'Western'] })
   @ApiQuery({

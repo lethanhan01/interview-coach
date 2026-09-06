@@ -27,13 +27,9 @@ function isAllowedCrossModuleImport(
   importPath: string,
   targetContext: string,
 ): boolean {
-  // Auth guards & decorators dùng chung toàn hệ thống
+  // Module auth chỉ cho phép import .module để đăng ký DI (guards/decorators nay chuyển về @core/common)
   if (targetContext === 'auth') {
-    return (
-      importPath.startsWith('@modules/auth/guards/') ||
-      importPath.startsWith('@modules/auth/decorators/') ||
-      importPath === '@modules/auth/auth.module'
-    );
+    return importPath === '@modules/auth/auth.module';
   }
 
   // Giao tiếp qua Public Contracts

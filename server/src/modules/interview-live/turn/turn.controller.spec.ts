@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TurnController } from './turn.controller';
 import { TurnService } from './turn.service';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '@core/common/guards';
 import { createMockTurnService } from '@core/test-utils/mock-factories';
 
 describe('TurnController', () => {

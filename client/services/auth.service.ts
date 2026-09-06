@@ -73,4 +73,29 @@ export const authService = {
     )
     return res.data
   },
+
+  /**
+   * Làm mới Access Token thông qua Refresh Token cookie
+   */
+  async refresh(): Promise<AuthUser> {
+    const res = await apiClient.post<ApiResponse<AuthUser>>('/auth/refresh')
+    return res.data
+  },
+
+  /**
+   * Yêu cầu gửi mã xác thực email
+   */
+  async requestEmailVerification(): Promise<void> {
+    await apiClient.post<void>('/auth/email-verification/request')
+  },
+
+  /**
+   * Xác nhận mã xác thực email
+   */
+  async confirmEmailVerification(code: string): Promise<AuthUser> {
+    const res = await apiClient.post<ApiResponse<AuthUser>>('/auth/email-verification/confirm', {
+      code,
+    })
+    return res.data
+  },
 }
