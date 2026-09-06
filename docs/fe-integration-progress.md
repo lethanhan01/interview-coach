@@ -15,10 +15,10 @@
 | :--- | :--- | :---: | :---: |
 | **Pha 1** | Chuẩn Hóa Contracts, Data Types, Backend Bridge & Test Fixtures | 🟢 Đã hoàn thành | 3 / 3 bước |
 | **Pha 2** | Xây Dựng Bộ UI Components Đánh Giá Tinh Gọn Mới | 🟢 Đã hoàn thành | 5 / 5 bước |
-| **Pha 3** | Tái Cấu Trúc Toàn Diện Trang Báo Cáo Phỏng Vấn (/report) | ⚪ Chưa bắt đầu | 0 / 4 bước |
+| **Pha 3** | Tái Cấu Trúc Toàn Diện Trang Báo Cáo Phỏng Vấn (/report) | 🟢 Đã hoàn thành | 4 / 4 bước |
 | **Pha 4** | Nâng Cấp Phòng Phỏng Vấn Trực Tiếp (Live Session /sessions/[id]) | ⚪ Chưa bắt đầu | 0 / 2 bước |
 | **Pha 5** | Đồng Bộ Luồng Thiết Lập JD Chuẩn Hóa O*NET (/setup & /jd-library) | ⚪ Chưa bắt đầu | 0 / 4 bước |
-| **TỔNG THỂ** | **Đồng Bộ Hoàn Toàn Frontend Với Unified Interview Engine** | 🟡 **ĐANG THỰC HIỆN** | **8 / 18 bước** |
+| **TỔNG THỂ** | **Đồng Bộ Hoàn Toàn Frontend Với Unified Interview Engine** | 🟡 **ĐANG THỰC HIỆN** | **12 / 18 bước** |
 
 ---
 
@@ -89,10 +89,30 @@
 
 ### Pha 3: Tái Cấu Trúc Toàn Diện Trang Báo Cáo Phỏng Vấn (/report)
 
-- [ ] **Bước 3.1: Xóa Bỏ `CompetencyScoreChart.tsx` & Xây Dựng Fallback Phiên Cũ**
-- [ ] **Bước 3.2: Nâng cấp Hero Banner Trang Báo Cáo (Overall Score & Recommendation)**
-- [ ] **Bước 3.3: Tái Cấu Trúc `AnnotatedTranscript.tsx` (Binary Criteria & Skipped Turns)**
-- [ ] **Bước 3.4: Chạy Toàn Bộ Vitest Cho Module Report**
+- [x] **Bước 3.1: Xóa Bỏ `CompetencyScoreChart.tsx` & Xây Dựng Fallback Phiên Cũ**
+  - [x] Xóa bỏ các tệp tin liên quan đến biểu đồ cũ: `client/components/report/CompetencyScoreChart.tsx`, `CompetencyScoreChart.test.tsx` và `client/stories/report/CompetencyScoreChart.stories.tsx`.
+  - [x] Dọn dẹp `report/page.tsx`: Loại bỏ import `rubricService`, state `rubricConfig`, và lệnh gọi `rubricService.getActiveRubric` không cần thiết.
+  - [x] Tích hợp mô hình năng lực 2 tầng: Render `SfiaCompetencyOverview` (Tầng 1) và `SkillsBreakdownCard` (Tầng 2) khi có `skillsBreakdown`.
+  - [x] Xây dựng Fallback Alert an toàn cho các phiên cũ: Hiển thị banner phiên bản trước với semantic tokens (`bg-surface-1`, `border-border`), bảo lưu toàn bộ điểm số tổng quát và transcript.
+  - [x] Tích hợp `ActionPlanTimeline`: Hỗ trợ cả định dạng mới có cấu trúc (`ActionPlanItem`) và mảng chuỗi legacy (`items`).
+  - [x] Chạy kiểm tra: `npm run typecheck` (0 errors), `npm run test:unit` (142/142 test files, 469/469 tests pass 100%).
+- [x] **Bước 3.2: Nâng cấp Hero Banner Trang Báo Cáo (Overall Score & Recommendation)**
+  - [x] Nâng cấp Hero Banner với bố cục 2 cột responsive linh hoạt (`flex-col md:flex-row md:items-center md:justify-between`).
+  - [x] Cột trái: Hiển thị Điểm Tổng Kết `overallScore / 100` với font chữ `text-5xl font-bold tabular-nums tracking-tight` kèm phụ đề Cấp bậc SFIA Kỳ vọng vs Thể hiện (`targetSfiaLevel` & `demonstratedSfiaLevel`).
+  - [x] Cột phải: Tích hợp `RecommendationBadge` (size `lg`) hiển thị trạng thái khuyến nghị tuyển dụng chuẩn hóa.
+  - [x] Fallback an toàn khi `overallScore == null` hoặc khi báo cáo ở trạng thái `partial`/`not_scorable`.
+  - [x] Chạy kiểm tra: `npm run typecheck` (0 errors) sạch sẽ.
+- [x] **Bước 3.3: Tái Cấu Trúc `AnnotatedTranscript.tsx` (Binary Criteria & Skipped Turns)**
+  - [x] Tích hợp `BinaryCriteriaChecklist` trực tiếp vào từng câu hỏi có dữ liệu thẩm định nhị phân Core & Seniority.
+  - [x] Header mỗi câu: Bổ sung Badge Cấp bậc thể hiện (`SFIA Level {demonstratedLevel}`) và Badge Tỷ lệ đạt (`Đạt {criteriaPassRate * 100}% tiêu chí`).
+  - [x] Xử lý câu bị bỏ qua (`skipped = true`): Hiển thị banner cảnh báo chuẩn hóa nhận 0 điểm và SFIA Level 1; ẩn tiêu chí thẩm định; vẫn hiển thị câu trả lời mẫu đề xuất (`modelAnswer`).
+  - [x] Bảo toàn cơ chế tương thích ngược (Graceful Legacy Fallback) cho các phiên cũ: Hiển thị nhận xét theo `segments` và `appliedDimensions` khi chưa có dữ liệu tiêu chí mới.
+- [x] **Bước 3.4: Chạy Toàn Bộ Vitest Cho Module Report & Kiểm Thử Toàn Diện**
+  - [x] Mở rộng unit test toàn diện cho `AnnotatedTranscript.test.tsx` (4/4 tests pass): Kiểm tra câu chuẩn hóa, câu bị bỏ qua, phiên cũ và trường hợp rỗng.
+  - [x] Tạo mới unit test `page.test.tsx` cho trang Báo cáo phỏng vấn (3/3 tests pass): Kiểm tra toàn diện 3 kịch bản lớn (Phiên Unified SFIA 9 + O*NET, Phiên Legacy fallback an toàn, Phiên Skipped cảnh báo bỏ qua).
+  - [x] Sửa lỗi phòng vệ (defensive fix) trong `SessionMetadataCard.tsx` xử lý an toàn khi `jobDescription` rỗng hoặc thiếu.
+  - [x] Chạy toàn bộ test suite client: 143/143 test files (475/475 tests) pass 100% không cảnh báo lỗi.
+  - [x] Chạy kiểm tra biên dịch `npm run typecheck` (0 errors) và `next build` hoàn tất 100% tạo production bundle sạch sẽ.
 
 ---
 

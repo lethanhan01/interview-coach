@@ -64,7 +64,10 @@ function trimBlock(lines: string[]): string | undefined {
   return value || undefined
 }
 
-function parseJobDescription(jobDescription: string): ParsedJobDescription {
+function parseJobDescription(jobDescription?: string): ParsedJobDescription {
+  if (!jobDescription) {
+    return { techStack: [] }
+  }
   const lines = jobDescription.split(/\r?\n/)
 
   const getInlineValue = (label: string) => {

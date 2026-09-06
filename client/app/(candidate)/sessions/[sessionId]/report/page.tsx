@@ -2,19 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { rubricService, sessionService } from '@/services'
+import { sessionService } from '@/services'
 import type {
   FeedbackProgress,
   Report,
-  RubricConfig,
   Session,
 } from '@/lib/types'
 
-
+import { Info } from 'lucide-react'
 import AnnotatedTranscript from '@/components/report/AnnotatedTranscript'
-import CompetencyScoreChart from '@/components/report/CompetencyScoreChart'
+import { RecommendationBadge } from '@/components/report/RecommendationBadge'
+import { SfiaCompetencyOverview } from '@/components/report/SfiaCompetencyOverview'
+import { SkillsBreakdownCard } from '@/components/report/SkillsBreakdownCard'
+import { ActionPlanTimeline } from '@/components/report/ActionPlanTimeline'
 import SessionMetadataCard from '@/components/report/SessionMetadataCard'
-import ScoringMethodCard from '@/components/report/ScoringMethodCard'
+import { ScoringMethodCard } from '@/components/report/ScoringMethodCard'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 const REPORT_POLL_INTERVAL_MS = 5000
@@ -92,7 +94,6 @@ export default function ReportPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const [report, setReport] = useState<Report | null>(null)
   const [session, setSession] = useState<Session | null>(null)
-  const [rubricConfig, setRubricConfig] = useState<RubricConfig | null>(null)
   const [progress, setProgress] = useState<FeedbackProgress | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -144,17 +145,8 @@ export default function ReportPage() {
 
     const sessionPromise = sessionService
       .getSession(sessionId)
-      .then(async (data) => {
+      .then((data) => {
         if (!canceled) setSession(data)
-        try {
-          const rubric = await rubricService.getActiveRubric(
-            data.contextPackId,
-            data.sessionType
-          )
-          if (!canceled) setRubricConfig(rubric)
-        } catch {
-          if (!canceled) setRubricConfig(null)
-        }
       })
       .catch(() => {})
 
@@ -269,6 +261,9 @@ export default function ReportPage() {
   if (!report) return null
 
   const overviewSummary = buildOverviewSummary(report)
+  const recommendationStatus =
+    report.recommendationStatus ??
+    report.executiveSummary?.recommendationStatus
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -276,22 +271,53 @@ export default function ReportPage() {
         Báo cáo phỏng vấn
       </h1>
 
-      <div className="bg-brand mb-8 rounded-2xl p-6 text-white">
-        <p className="text-brand-200 mb-1 text-sm">Điểm đánh giá tổng</p>
-        {report.overallScore == null ? (
-          <div>
-            <p className="text-2xl font-bold">Chưa thể chấm điểm</p>
-            <p className="text-brand-100 mt-2 text-sm">
-              {report.reportQuality === 'not_scorable'
-                ? 'Phiên này chưa có câu trả lời nào để chấm điểm.'
-                : 'Dịch vụ AI tạm thời chưa khả dụng. Câu trả lời của bạn vẫn đã được lưu.'}
-            </p>
-          </div>
-        ) : (
-          <p className="text-5xl font-bold">
-            {report.overallScore.toFixed(1)}
-            <span className="text-brand-200 ml-1 text-2xl">/ 100</span>
+      <div className="bg-brand mb-8 flex flex-col justify-between gap-6 rounded-2xl p-6 text-white shadow-sm md:flex-row md:items-center">
+        <div>
+          <p className="text-brand-200 text-xs font-medium uppercase tracking-wider">
+            Điểm đánh giá tổng kết
           </p>
+          {report.overallScore == null ? (
+            <div className="mt-1">
+              <p className="text-2xl font-bold">Chưa thể chấm điểm</p>
+              <p className="text-brand-100 mt-1 text-xs">
+                {report.reportQuality === 'not_scorable'
+                  ? 'Phiên này chưa có câu trả lời nào để chấm điểm.'
+                  : 'Dịch vụ AI tạm thời chưa khả dụng. Câu trả lời của bạn vẫn đã được lưu.'}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-1 flex items-baseline gap-1">
+              <span className="text-5xl font-bold tracking-tight tabular-nums">
+                {report.overallScore.toFixed(1)}
+              </span>
+              <span className="text-brand-200 text-xl font-medium">/ 100</span>
+            </div>
+          )}
+
+          {(report.executiveSummary?.targetSfiaLevel ||
+            report.executiveSummary?.demonstratedSfiaLevel != null) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-brand-100">
+              {report.executiveSummary.targetSfiaLevel && (
+                <span className="rounded-md border border-white/10 bg-brand-900/30 px-2.5 py-1">
+                  Kỳ vọng: <strong>SFIA Level {report.executiveSummary.targetSfiaLevel}</strong>
+                </span>
+              )}
+              {report.executiveSummary.demonstratedSfiaLevel != null && (
+                <span className="rounded-md border border-white/10 bg-brand-900/30 px-2.5 py-1">
+                  Thể hiện: <strong>SFIA Level {report.executiveSummary.demonstratedSfiaLevel}</strong>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {recommendationStatus && (
+          <div className="flex shrink-0 flex-col items-start gap-1.5 md:items-end">
+            <span className="text-brand-200 text-xs font-medium uppercase tracking-wider">
+              Khuyến nghị tuyển dụng
+            </span>
+            <RecommendationBadge status={recommendationStatus} size="lg" />
+          </div>
         )}
       </div>
 
@@ -397,11 +423,27 @@ export default function ReportPage() {
           <ScoringMethodCard
             contextPackId={session.contextPackId}
             sessionType={session.sessionType}
-            rubricConfig={rubricConfig}
           />
         )}
 
-        <CompetencyScoreChart scores={report.competencyHeatmap} />
+        {report.skillsBreakdown && report.skillsBreakdown.length > 0 ? (
+          <>
+            <SfiaCompetencyOverview skills={report.skillsBreakdown} />
+            <SkillsBreakdownCard skills={report.skillsBreakdown} />
+          </>
+        ) : (
+          <div className="border-border bg-surface-1 text-ink rounded-2xl border p-6 text-sm">
+            <div className="flex items-center gap-2 font-semibold">
+              <Info className="size-4 text-brand" />
+              Báo cáo phiên bản trước
+            </div>
+            <p className="text-ink-muted mt-1.5 text-xs leading-relaxed">
+              Phiên phỏng vấn này được khởi tạo trước khi hệ thống nâng cấp khung năng lực SFIA 9 &amp; O*NET. Điểm tổng quát và nội dung chi tiết từng câu trả lời vẫn được bảo lưu đầy đủ bên dưới.
+            </p>
+          </div>
+        )}
+
+        <ActionPlanTimeline actionPlan={report.actionPlan} />
 
         <div>
           <h2 className="text-ink mb-4 text-base font-semibold">
@@ -411,7 +453,6 @@ export default function ReportPage() {
             items={report.transcript ?? []}
             contextPackId={session?.contextPackId}
             sessionType={session?.sessionType}
-            rubricHint={rubricConfig?.hint}
           />
         </div>
       </div>
