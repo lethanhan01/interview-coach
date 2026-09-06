@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { adminService } from '@/services'
+import { userManagementService } from '@/services'
 import type { AdminUser } from '@/lib/types'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -41,7 +41,7 @@ export default function AdminUsersPage() {
   const fetchUsers = useCallback(async () => {
     setError('')
     try {
-      const data = await adminService.listUsers()
+      const data = await userManagementService.listUsers()
       setUsers(data)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Không thể tải users')
@@ -64,7 +64,7 @@ export default function AdminUsersPage() {
 
   const changeStatus = async (id: string, currentStatus: string) => {
     try {
-      await adminService.updateUser(id, {
+      await userManagementService.updateUser(id, {
         status: currentStatus === 'active' ? 'locked' : 'active',
       })
       await load()
@@ -76,7 +76,7 @@ export default function AdminUsersPage() {
   const deleteUser = async () => {
     if (!userToDelete) return
     try {
-      await adminService.deleteUser(userToDelete)
+      await userManagementService.deleteUser(userToDelete)
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Không thể xóa user')

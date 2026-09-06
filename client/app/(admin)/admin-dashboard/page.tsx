@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { adminService } from '@/services'
+import { userManagementService } from '@/services'
 import type { AdminUser } from '@/lib/types'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -26,7 +26,7 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    adminService
+    userManagementService
       .listUsers()
       .then(setUsers)
       .catch((err) =>

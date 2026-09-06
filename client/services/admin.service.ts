@@ -6,12 +6,12 @@ interface ApiResponse<T> {
   data: T
 }
 
-export const adminService = {
+export const userManagementService = {
   /**
    * Lấy danh sách toàn bộ người dùng trong hệ thống (chỉ dành cho admin)
    */
   async listUsers(): Promise<AdminUser[]> {
-    const res = await apiClient.get<ApiResponse<AdminUser[]>>('/admin/users')
+    const res = await apiClient.get<ApiResponse<AdminUser[]>>('/users')
     return res.data
   },
 
@@ -19,7 +19,7 @@ export const adminService = {
    * Lấy thông tin một người dùng theo ID (chỉ dành cho admin)
    */
   async getUser(id: string): Promise<AdminUser> {
-    const res = await apiClient.get<ApiResponse<AdminUser>>(`/admin/users/${id}`)
+    const res = await apiClient.get<ApiResponse<AdminUser>>(`/users/${id}`)
     return res.data
   },
 
@@ -31,7 +31,7 @@ export const adminService = {
     payload: { role?: string; status?: string }
   ): Promise<AdminUser> {
     const res = await apiClient.patch<ApiResponse<AdminUser>>(
-      `/admin/users/${id}`,
+      `/users/${id}`,
       payload
     )
     return res.data
@@ -41,6 +41,9 @@ export const adminService = {
    * Xóa tài khoản người dùng (chỉ dành cho admin)
    */
   async deleteUser(id: string): Promise<void> {
-    await apiClient.delete<void>(`/admin/users/${id}`)
+    await apiClient.delete<void>(`/users/${id}`)
   },
 }
+
+export const adminService = userManagementService
+

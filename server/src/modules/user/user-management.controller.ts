@@ -13,7 +13,7 @@ import { UserRole } from '@prisma/client';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { Roles, CurrentUser } from '@core/common/decorators';
-import { AdminService } from './admin.service';
+import { UserManagementService } from './user-management.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
   ApiCookieAuth,
@@ -25,26 +25,26 @@ import {
 } from '@nestjs/swagger';
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
-@Controller('admin')
+@Controller('users')
 @Roles(UserRole.admin)
-@ApiTags('Admin')
+@ApiTags('User Management')
 @ApiCookieAuth('cookieAuth')
-export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+export class UserManagementController {
+  constructor(private readonly userManagementService: UserManagementService) {}
 
   /** List all users (admin only) */
-  @Get('users')
+  @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List users (admin only)' })
   @ApiOkResponse({ description: 'User list.' })
   @ApiCommonErrors(HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN)
   async listUsers() {
-    const users = await this.adminService.listUsers();
+    const users = await this.userManagementService.listUsers();
     return { success: true, data: users };
   }
 
   /** Get single user by ID */
-  @Get('users/:id')
+  @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get a user (admin only)' })
   @ApiParam({ name: 'id', format: 'uuid' })
@@ -56,7 +56,7 @@ export class AdminController {
     HttpStatus.NOT_FOUND,
   )
   async getUser(@Param('id', ParseUUIDPipe) id: string) {
-    const user = await this.adminService.getUser(id);
+    const user = await this.userManagementService.getUser(id);
     if (!user) {
       throw new InterviewAIException(
         ErrorCode.USER_NOT_FOUND,
@@ -67,8 +67,8 @@ export class AdminController {
     return { success: true, data: user };
   }
 
-  /** Update account role or lifecycle status. */
-  @Patch('users/:id')
+  /** Update account role or lifecycle status */
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update account role or lifecycle status (admin only)',
@@ -86,12 +86,16 @@ export class AdminController {
     @CurrentUser('id') currentUserId: string,
     @Body() body: UpdateUserDto,
   ) {
-    const user = await this.adminService.updateUser(id, currentUserId, body);
+    const user = await this.userManagementService.updateUser(
+      id,
+      currentUserId,
+      body,
+    );
     return { success: true, data: user };
   }
 
   /** Delete a user account */
-  @Delete('users/:id')
+  @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a user account (admin only)' })
   @ApiParam({ name: 'id', format: 'uuid' })
@@ -106,6 +110,6 @@ export class AdminController {
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser('id') currentUserId: string,
   ) {
-    await this.adminService.deleteUser(id, currentUserId);
+    await this.userManagementService.deleteUser(id, currentUserId);
   }
 }

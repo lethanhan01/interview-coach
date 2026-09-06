@@ -4,7 +4,6 @@ import { join, relative, resolve, sep } from 'node:path';
 const SRC_ROOT = resolve(__dirname, '..');
 
 const BOUNDED_CONTEXTS = new Set([
-  'admin',
   'auth',
   'health',
   'interview-assessment',

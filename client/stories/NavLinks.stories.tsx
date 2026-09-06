@@ -25,7 +25,7 @@ export const Admin: Story = {
       { href: '/sessions', label: 'Phỏng vấn', match: ['/sessions'] },
       { href: '/jd-library', label: 'Tạo mới', match: ['/jd-library', '/setup'] },
       { href: '/profile', label: 'Hồ sơ', match: ['/profile'] },
-      { href: '/admin/users', label: 'Quản trị', match: ['/admin'] },
+      { href: '/users', label: 'Quản trị', match: ['/users'] },
     ]
   }
 }

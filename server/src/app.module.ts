@@ -30,7 +30,6 @@ import { WorkflowModule } from '@infra/workflow/workflow.module';
 import { HealthModule } from '@modules/health/health.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { UserModule } from '@modules/user/user.module';
-import { AdminModule } from '@modules/admin/admin.module';
 import { MediaModule } from '@modules/media/media.module';
 import { InterviewPrepModule } from '@modules/interview-prep/interview-prep.module';
 import { InterviewLiveModule } from '@modules/interview-live/interview-live.module';
@@ -77,7 +76,6 @@ class ApiRootController {
     HealthModule,
     AuthModule,
     UserModule,
-    AdminModule,
     MediaModule,
     InterviewPrepModule,
     InterviewLiveModule,

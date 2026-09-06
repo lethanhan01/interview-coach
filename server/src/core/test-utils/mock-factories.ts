@@ -295,6 +295,13 @@ export const createMockUserService = () => ({
   updateAccount: jest.fn(),
 });
 
+export const createMockUserManagementService = () => ({
+  listUsers: jest.fn(),
+  getUser: jest.fn(),
+  updateUser: jest.fn(),
+  deleteUser: jest.fn(),
+});
+
 export const createMockUserFacade = () => ({
   getUserAccount: jest.fn(),
   updateUserAccount: jest.fn(),

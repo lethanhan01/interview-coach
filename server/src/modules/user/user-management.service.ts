@@ -5,7 +5,7 @@ import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 
 @Injectable()
-export class AdminService {
+export class UserManagementService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listUsers(includeDeleted = false) {

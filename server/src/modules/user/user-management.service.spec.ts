@@ -1,19 +1,19 @@
 import { AccountStatus, UserRole } from '@prisma/client';
-import { AdminService } from './admin.service';
+import { UserManagementService } from './user-management.service';
 import { createMockPrismaService } from '@core/test-utils/mock-factories';
 
-describe('AdminService', () => {
+describe('UserManagementService', () => {
   const target = {
     id: 'target',
     role: UserRole.candidate,
     status: AccountStatus.active,
   };
   let prisma: ReturnType<typeof createMockPrismaService>;
-  let service: AdminService;
+  let service: UserManagementService;
 
   beforeEach(() => {
     prisma = createMockPrismaService();
-    service = new AdminService(prisma as never);
+    service = new UserManagementService(prisma as never);
   });
 
   it('rejects self-management before changing an account', async () => {
