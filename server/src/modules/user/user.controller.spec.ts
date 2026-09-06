@@ -26,50 +26,57 @@ describe('UserController', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  describe('GET /profile', () => {
-    it('gọi userService.getProfile với userId và trả về profile', async () => {
-      const userWithProfile = {
+  describe('GET /users/me', () => {
+    it('calls userService.getAccount with userId and returns user account', async () => {
+      const userAccount = {
         id: 'user-abc',
         email: 'test@example.com',
         firstname: 'Nguyen',
         lastname: 'Van A',
         role: 'candidate',
         status: 'active',
-        profile: null,
+        createdAt: new Date(),
       };
-      mockUserService.getProfile.mockResolvedValue(userWithProfile);
+      mockUserService.getAccount.mockResolvedValue(userAccount);
 
-      const result = await controller.getProfile(mockReq());
+      const result = await controller.getMe(mockReq());
 
-      expect(result).toEqual(userWithProfile);
-      expect(mockUserService.getProfile).toHaveBeenCalledWith('user-abc');
+      expect(result).toEqual(userAccount);
+      expect(mockUserService.getAccount).toHaveBeenCalledWith('user-abc');
     });
   });
 
-  describe('PATCH /profile', () => {
-    it('gọi userService.upsertProfile với userId và dto', async () => {
+  describe('PATCH /users/me', () => {
+    it('calls userService.updateAccount with userId and dto', async () => {
       const dto = {
         firstname: 'Nguyen',
-        lastname: 'Van A',
-        technicalSkills: [{ name: 'TypeScript' }],
-      } as any;
-      const updatedProfile = { userId: 'user-abc', ...dto };
-      mockUserService.upsertProfile.mockResolvedValue(updatedProfile);
+        lastname: 'Van B',
+      };
+      const updatedAccount = {
+        id: 'user-abc',
+        email: 'test@example.com',
+        firstname: 'Nguyen',
+        lastname: 'Van B',
+        role: 'candidate',
+        status: 'active',
+        createdAt: new Date(),
+      };
+      mockUserService.updateAccount.mockResolvedValue(updatedAccount);
 
-      const result = await controller.updateProfile(dto, mockReq());
+      const result = await controller.updateMe(dto, mockReq());
 
-      expect(result).toEqual(updatedProfile);
-      expect(mockUserService.upsertProfile).toHaveBeenCalledWith(
+      expect(result).toEqual(updatedAccount);
+      expect(mockUserService.updateAccount).toHaveBeenCalledWith(
         'user-abc',
         dto,
       );
     });
 
-    it('propagate exception khi userService.upsertProfile ném lỗi', async () => {
-      const dto = { firstname: 'An' } as any;
-      mockUserService.upsertProfile.mockRejectedValue(new Error('DB error'));
+    it('propagates exception when userService.updateAccount throws', async () => {
+      const dto = { firstname: 'An' };
+      mockUserService.updateAccount.mockRejectedValue(new Error('DB error'));
 
-      await expect(controller.updateProfile(dto, mockReq())).rejects.toThrow(
+      await expect(controller.updateMe(dto, mockReq())).rejects.toThrow(
         'DB error',
       );
     });

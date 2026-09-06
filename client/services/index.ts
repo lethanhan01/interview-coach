@@ -1,4 +1,6 @@
 export { authService } from './auth.service'
+export { userService } from './user.service'
+export { candidateProfileService } from './candidate-profile.service'
 export { profileService } from './profile.service'
 export { prepService } from './prep.service'
 export { sessionService } from './session.service'

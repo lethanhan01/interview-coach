@@ -291,8 +291,22 @@ export const createMockTurnService = () => ({
 });
 
 export const createMockUserService = () => ({
+  getAccount: jest.fn(),
+  updateAccount: jest.fn(),
+});
+
+export const createMockUserFacade = () => ({
+  getUserAccount: jest.fn(),
+  updateUserAccount: jest.fn(),
+});
+
+export const createMockCandidateProfileService = () => ({
   getProfile: jest.fn(),
   upsertProfile: jest.fn(),
+});
+
+export const createMockCandidateProfileFacade = () => ({
+  getCandidateProfile: jest.fn(),
 });
 
 export const createMockWorkflowService = () => ({

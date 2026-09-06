@@ -15,12 +15,11 @@ describe('UserService', () => {
     email: 'test@example.com',
     passwordHash: 'secret-hash',
     tokenVersion: 2,
-    firstname: null,
-    lastname: null,
+    firstname: 'Van A',
+    lastname: 'Nguyen',
     role: 'candidate',
     status: 'active',
     createdAt: new Date(),
-    profile: null,
   };
 
   beforeEach(async () => {
@@ -36,18 +35,20 @@ describe('UserService', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  describe('getProfile', () => {
-    it('tra ve user voi profile khi tim thay', async () => {
+  describe('getAccount', () => {
+    it('returns user account when user exists', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(BASE_USER);
 
-      const result = await service.getProfile('user-123');
+      const result = await service.getAccount('user-123');
 
       expect(result).toEqual({
         id: BASE_USER.id,
         email: BASE_USER.email,
         firstname: BASE_USER.firstname,
         lastname: BASE_USER.lastname,
-        profile: BASE_USER.profile,
+        role: BASE_USER.role,
+        status: BASE_USER.status,
+        createdAt: BASE_USER.createdAt,
       });
       expect(result).not.toHaveProperty('passwordHash');
       expect(result).not.toHaveProperty('tokenVersion');
@@ -58,70 +59,27 @@ describe('UserService', () => {
           email: true,
           firstname: true,
           lastname: true,
-          profile: {
-            select: {
-              targetPosition: true,
-              targetLevel: true,
-              personality: true,
-              education: true,
-              workExperience: true,
-              projects: true,
-              technicalSkills: true,
-              certifications: true,
-              awards: true,
-            },
-          },
+          role: true,
+          status: true,
+          createdAt: true,
         },
       });
     });
 
-    it('tra ve 6 nhom CV truc tiep trong profile', async () => {
-      const userWithProfile = {
-        ...BASE_USER,
-        profile: {
-          userId: 'user-123',
-          personality: null,
-          education: { school: 'HUST' },
-          workExperience: [],
-          projects: [],
-          technicalSkills: [{ name: 'TypeScript' }],
-          certifications: [],
-          awards: [],
-        },
-      };
-      mockPrisma.user.findUnique.mockResolvedValue(userWithProfile);
-
-      const result = await service.getProfile('user-123');
-
-      expect(result).toEqual({
-        id: BASE_USER.id,
-        email: BASE_USER.email,
-        firstname: BASE_USER.firstname,
-        lastname: BASE_USER.lastname,
-        profile: {
-          personality: null,
-          education: { school: 'HUST' },
-          workExperience: [],
-          projects: [],
-          technicalSkills: [{ name: 'TypeScript' }],
-          certifications: [],
-          awards: [],
-        },
-      });
-    });
-
-    it('nem NOT_FOUND (404) khi user khong ton tai', async () => {
+    it('throws NOT_FOUND (404) when user does not exist', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.getProfile('nonexistent')).rejects.toThrow(
+      await expect(service.getAccount('nonexistent')).rejects.toThrow(
         InterviewAIException,
       );
 
       mockPrisma.user.findUnique.mockResolvedValue(null);
       try {
-        await service.getProfile('nonexistent');
+        await service.getAccount('nonexistent');
       } catch (e) {
-        expect((e as InterviewAIException).errorCode).toBe(ErrorCode.NOT_FOUND);
+        expect((e as InterviewAIException).errorCode).toBe(
+          ErrorCode.USER_NOT_FOUND,
+        );
         expect((e as InterviewAIException).getStatus()).toBe(
           HttpStatus.NOT_FOUND,
         );
@@ -129,67 +87,74 @@ describe('UserService', () => {
     });
   });
 
-  describe('upsertProfile', () => {
-    it('upsert truc tiep profile va 6 nhom CV vao user_profiles', async () => {
+  describe('updateAccount', () => {
+    it('updates user firstname and lastname successfully', async () => {
       const dto = {
-        firstname: 'Nguyen',
-        lastname: 'Van A',
-        education: { school: 'HUST' },
-        technicalSkills: [{ name: 'TypeScript' }],
-        certifications: [],
-        awards: [],
+        firstname: 'UpdatedName',
+        lastname: 'UpdatedLastName',
       };
-      mockPrisma.userProfile.upsert.mockResolvedValue({});
-      mockPrisma.user.findUnique.mockResolvedValue(BASE_USER);
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce(BASE_USER)
+        .mockResolvedValueOnce({
+          ...BASE_USER,
+          ...dto,
+        });
+      mockPrisma.user.update.mockResolvedValue({ ...BASE_USER, ...dto });
 
-      await service.upsertProfile('user-123', dto);
+      const result = await service.updateAccount('user-123', dto);
 
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'user-123' },
-        data: { firstname: 'Nguyen', lastname: 'Van A' },
+        data: { firstname: 'UpdatedName', lastname: 'UpdatedLastName' },
       });
-      expect(mockPrisma.userProfile.upsert).toHaveBeenCalledWith({
-        where: { userId: 'user-123' },
-        create: {
-          education: { school: 'HUST' },
-          technicalSkills: [{ name: 'TypeScript' }],
-          certifications: [],
-          awards: [],
-          userId: 'user-123',
-        },
-        update: {
-          education: { school: 'HUST' },
-          technicalSkills: [{ name: 'TypeScript' }],
-          certifications: [],
-          awards: [],
-        },
+      expect(result.firstname).toBe('UpdatedName');
+      expect(result.lastname).toBe('UpdatedLastName');
+    });
+
+    it('throws VALIDATION_ERROR when candidate provides empty name', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(BASE_USER);
+
+      await expect(
+        service.updateAccount('user-123', { firstname: '   ' }),
+      ).rejects.toThrow(InterviewAIException);
+
+      mockPrisma.user.findUnique.mockResolvedValue(BASE_USER);
+      try {
+        await service.updateAccount('user-123', { firstname: '   ' });
+      } catch (e) {
+        expect((e as InterviewAIException).errorCode).toBe(
+          ErrorCode.VALIDATION_ERROR,
+        );
+        expect((e as InterviewAIException).getStatus()).toBe(
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    });
+
+    it('strips undefined so fields not sent are not modified', async () => {
+      const dto = {
+        firstname: 'Nguyen',
+        lastname: undefined,
+      };
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce(BASE_USER)
+        .mockResolvedValueOnce({ ...BASE_USER, firstname: 'Nguyen' });
+      mockPrisma.user.update.mockResolvedValue({});
+
+      await service.updateAccount('user-123', dto);
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+        data: { firstname: 'Nguyen' },
       });
     });
 
-    it('loai undefined de PATCH tung phan khong ghi de field khong gui', async () => {
-      const dto = {
-        firstname: 'Nguyen',
-        lastname: 'Van A',
-        education: undefined,
-        technicalSkills: [{ name: 'Go' }],
-      };
-      mockPrisma.userProfile.upsert.mockResolvedValue({});
-      mockPrisma.user.findUnique.mockResolvedValue(BASE_USER);
+    it('throws NOT_FOUND when updating a non-existent user', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await service.upsertProfile('user-123', dto);
-
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-123' },
-        data: { firstname: 'Nguyen', lastname: 'Van A' },
-      });
-      const expectedPatch = {
-        technicalSkills: [{ name: 'Go' }],
-      };
-      expect(mockPrisma.userProfile.upsert).toHaveBeenCalledWith({
-        where: { userId: 'user-123' },
-        create: { ...expectedPatch, userId: 'user-123' },
-        update: expectedPatch,
-      });
+      await expect(
+        service.updateAccount('nonexistent', { firstname: 'Test' }),
+      ).rejects.toThrow(InterviewAIException);
     });
   });
 });

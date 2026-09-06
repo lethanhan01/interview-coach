@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ScrollText, ArrowRight } from 'lucide-react'
-import { profileService } from '@/services'
+import { userService } from '@/services'
 
-import type { GetProfileResponse } from '@/lib/types'
+import type { UserAccountResponse, UpdateUserAccountPayload } from '@/lib/types'
 import PersonalInfoGroup from '@/components/profile/PersonalInfoGroup'
 import AccountInfoGroup from '@/components/profile/AccountInfoGroup'
 import ChangePasswordGroup from '@/components/profile/ChangePasswordGroup'
@@ -16,27 +16,34 @@ import { PageContainer } from '@/components/patterns/LayoutPatterns'
 import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns'
 
 export default function ProfilePage() {
-  const [data, setData] = useState<GetProfileResponse | null>(null)
+  const [data, setData] = useState<UserAccountResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    profileService
-      .getProfile()
+    userService
+      .getCurrentUser()
       .then(setData)
       .catch((err) =>
-        setError(err instanceof Error ? err.message : 'Không thể tải thông tin tài khoản')
+        setError(
+          err instanceof Error ? err.message : 'Không thể tải thông tin tài khoản'
+        )
       )
       .finally(() => setLoading(false))
   }, [])
 
-  async function patchProfile<T extends object>(patch: T) {
-    const updated = await profileService.updateProfile(patch)
+  async function patchAccount(patch: UpdateUserAccountPayload) {
+    const updated = await userService.updateCurrentUser(patch)
     setData(updated)
   }
 
   if (loading) {
-    return <LoadingState text="Đang tải thông tin tài khoản..." minHeight="min-h-[50vh]" />
+    return (
+      <LoadingState
+        text="Đang tải thông tin tài khoản..."
+        minHeight="min-h-[50vh]"
+      />
+    )
   }
 
   if (error) {
@@ -80,7 +87,12 @@ export default function ProfilePage() {
         </div>
 
         {/* Quick jump to Resume */}
-        <Button variant="outline" size="sm" asChild className="shrink-0 gap-1.5 self-start sm:self-auto">
+        <Button
+          variant="outline"
+          size="sm"
+          asChild
+          className="shrink-0 gap-1.5 self-start sm:self-auto"
+        >
           <Link href="/resume">
             <ScrollText className="h-4 w-4 text-brand" />
             <span>Xem hồ sơ CV</span>
@@ -91,14 +103,17 @@ export default function ProfilePage() {
 
       <div className="flex flex-col gap-6">
         <PersonalInfoGroup
-          data={{ firstname: data?.firstname, lastname: data?.lastname }}
-          onSave={(patch) => patchProfile(patch)}
+          data={{
+            firstname: data?.firstname ?? undefined,
+            lastname: data?.lastname ?? undefined,
+          }}
+          onSave={(patch) => patchAccount(patch)}
         />
 
         <AccountInfoGroup
           email={data?.email}
-          role="candidate"
-          status="active"
+          role={data?.role || 'candidate'}
+          status={data?.status || 'active'}
         />
 
         <ChangePasswordGroup />

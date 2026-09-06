@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { profileService } from '@/services'
-import type { GetProfileResponse } from '@/lib/types'
+import { userService } from '@/services'
+import type { UserAccountResponse, UpdateUserAccountPayload } from '@/lib/types'
 import PersonalInfoGroup from '@/components/profile/PersonalInfoGroup'
 import AccountInfoGroup from '@/components/profile/AccountInfoGroup'
 import ChangePasswordGroup from '@/components/profile/ChangePasswordGroup'
@@ -13,13 +13,13 @@ import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns
 import { ShieldCheck } from 'lucide-react'
 
 export default function AdminProfilePage() {
-  const [data, setData] = useState<GetProfileResponse | null>(null)
+  const [data, setData] = useState<UserAccountResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    profileService
-      .getProfile()
+    userService
+      .getCurrentUser()
       .then(setData)
       .catch((err) =>
         setError(
@@ -31,13 +31,18 @@ export default function AdminProfilePage() {
       .finally(() => setLoading(false))
   }, [])
 
-  async function patchProfile<T extends object>(patch: T) {
-    const updated = await profileService.updateProfile(patch)
+  async function patchAccount(patch: UpdateUserAccountPayload) {
+    const updated = await userService.updateCurrentUser(patch)
     setData(updated)
   }
 
   if (loading) {
-    return <LoadingState text="Đang tải thông tin tài khoản..." minHeight="min-h-[50vh]" />
+    return (
+      <LoadingState
+        text="Đang tải thông tin tài khoản..."
+        minHeight="min-h-[50vh]"
+      />
+    )
   }
 
   if (error) {
@@ -88,14 +93,17 @@ export default function AdminProfilePage() {
 
       <div className="flex flex-col gap-6">
         <PersonalInfoGroup
-          data={{ firstname: data?.firstname, lastname: data?.lastname }}
-          onSave={(patch) => patchProfile(patch)}
+          data={{
+            firstname: data?.firstname ?? undefined,
+            lastname: data?.lastname ?? undefined,
+          }}
+          onSave={(patch) => patchAccount(patch)}
         />
 
         <AccountInfoGroup
           email={data?.email}
-          role="admin"
-          status="active"
+          role={data?.role || 'admin'}
+          status={data?.status || 'active'}
         />
 
         <ChangePasswordGroup />

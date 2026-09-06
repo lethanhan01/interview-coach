@@ -272,6 +272,9 @@ export interface GetProfileResponse {
   profile: {
     targetPosition?: string | null
     targetLevel?: string | null
+    onetSocCode?: string | null
+    onetOccupationTitle?: string | null
+    targetSfiaLevel?: number | null
     personality?: string
     education?: EducationEntry
     workExperience?: WorkExperienceEntry[]
@@ -280,6 +283,21 @@ export interface GetProfileResponse {
     certifications?: CertificationEntry[]
     awards?: AwardEntry[]
   } | null
+}
+
+export interface UserAccountResponse {
+  id: string
+  email: string
+  firstname: string | null
+  lastname: string | null
+  role: string
+  status: string
+  createdAt: string
+}
+
+export interface UpdateUserAccountPayload {
+  firstname?: string
+  lastname?: string
 }
 
 export interface ChangePasswordResponse {

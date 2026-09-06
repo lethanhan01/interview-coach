@@ -32,6 +32,7 @@ import { InterviewLiveModule } from '@modules/interview-live/interview-live.modu
 import { InterviewAssessmentModule } from '@modules/interview-assessment/interview-assessment.module';
 import { SfiaModule } from '@modules/sfia/sfia.module';
 import { OnetModule } from '@modules/onet/onet.module';
+import { CandidateProfileModule } from '@modules/candidate-profile/candidate-profile.module';
 
 @Controller()
 class ApiRootController {
@@ -72,6 +73,7 @@ class ApiRootController {
     InterviewAssessmentModule,
     SfiaModule,
     OnetModule,
+    CandidateProfileModule,
   ],
   controllers: [ApiRootController],
   providers: [

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { User, ArrowRight } from 'lucide-react'
-import { profileService } from '@/services'
+import { candidateProfileService } from '@/services'
 
 import type {
   GetProfileResponse,
@@ -32,7 +32,7 @@ export default function ResumePage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    profileService
+    candidateProfileService
       .getProfile()
       .then(setData)
       .catch((err) =>
@@ -42,7 +42,7 @@ export default function ResumePage() {
   }, [])
 
   async function patchProfile<T extends object>(patch: T) {
-    const updated = await profileService.updateProfile(patch)
+    const updated = await candidateProfileService.updateProfile(patch)
     setData(updated)
   }
 
@@ -103,6 +103,9 @@ export default function ResumePage() {
           data={{
             targetPosition: profile?.targetPosition ?? undefined,
             targetLevel: profile?.targetLevel ?? undefined,
+            onetSocCode: profile?.onetSocCode ?? undefined,
+            onetOccupationTitle: profile?.onetOccupationTitle ?? undefined,
+            targetSfiaLevel: profile?.targetSfiaLevel ?? undefined,
           }}
           onSave={(career) => patchProfile(career)}
         />
@@ -119,6 +122,8 @@ export default function ResumePage() {
 
         <TechnicalSkillsGroup
           data={technicalSkills}
+          onetSocCode={profile?.onetSocCode}
+          targetPosition={profile?.targetPosition}
           onSave={(patch) => patchProfile(patch)}
         />
 

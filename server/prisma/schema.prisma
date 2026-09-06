@@ -130,22 +130,26 @@ model UserVerificationCode {
 }
 
 model UserProfile {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId          String   @unique @map("user_id") @db.Uuid
-  targetPosition  String?  @map("target_position")
-  targetLevel     String?  @map("target_level")
-  personality     String?
-  education       Json?
-  workExperience  Json?    @map("work_experience")
-  projects        Json?
-  technicalSkills Json?    @map("technical_skills")
-  certifications  Json?
-  awards          Json?
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String   @unique @map("user_id") @db.Uuid
+  targetPosition      String?  @map("target_position")
+  targetLevel         String?  @map("target_level")
+  onetSocCode         String?  @map("onet_soc_code") @db.VarChar(10)
+  onetOccupationTitle String?  @map("onet_occupation_title")
+  targetSfiaLevel     Int?     @map("target_sfia_level") @db.SmallInt
+  personality         String?
+  education           Json?
+  workExperience      Json?    @map("work_experience")
+  projects            Json?
+  technicalSkills     Json?    @map("technical_skills")
+  certifications      Json?
+  awards              Json?
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([onetSocCode], map: "idx_user_profiles_onet_soc")
   @@map("user_profiles")
 }
 
