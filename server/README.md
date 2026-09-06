@@ -17,6 +17,11 @@ Mở Swagger cùng origin backend, gọi `POST /auth/login` hoặc `POST /auth/r
 ```
 demo@interviewai.dev
 Demo@1234567
+
+admin:
+hungletai@gmail.com
+Demo@1234567
+
 ```
 
 ---

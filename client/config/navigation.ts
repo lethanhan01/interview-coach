@@ -5,6 +5,7 @@ import {
   CalendarDays,
   FileText,
   ScrollText,
+  BookOpen,
 } from 'lucide-react'
 
 export type NavItem = {
@@ -20,6 +21,12 @@ export const adminNavigation: NavItem[] = [
     label: 'Dashboard',
     icon: LayoutDashboard,
     match: ['/admin/dashboard', '/admin-dashboard'],
+  },
+  {
+    href: '/admin/onet',
+    label: 'O*NET Browser',
+    icon: BookOpen,
+    match: ['/admin/onet'],
   },
   {
     href: '/admin/users',
