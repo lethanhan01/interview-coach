@@ -18,6 +18,7 @@ import {
   DURATION_OPTIONS,
   EMPTY_JD,
   isJdValid,
+  mapJdLevelToSfia,
 } from '@/lib/setup-types'
 import Button from '@/components/ui/Button'
 import JdForm from '@/components/setup/JdForm'
@@ -51,11 +52,19 @@ function stringArray(value: unknown): string[] {
 function normalizeJdFormData(
   value: Partial<Record<keyof JdFormData, unknown>> | null | undefined
 ): JdFormData {
+  const level = text(value?.level)
+  const targetSfia =
+    typeof value?.targetSfiaLevel === 'number'
+      ? value.targetSfiaLevel
+      : level
+        ? mapJdLevelToSfia(level)
+        : undefined
+
   return {
     company: text(value?.company),
     website: text(value?.website),
     position: text(value?.position),
-    level: text(value?.level),
+    level,
     headcount: text(value?.headcount),
     location: text(value?.location),
     requirements: text(value?.requirements),
@@ -64,6 +73,9 @@ function normalizeJdFormData(
     benefits: text(value?.benefits),
     salary: text(value?.salary),
     bonus: text(value?.bonus),
+    onetSocCode: value?.onetSocCode ? text(value.onetSocCode) : undefined,
+    onetOccupationTitle: value?.onetOccupationTitle ? text(value.onetOccupationTitle) : undefined,
+    targetSfiaLevel: targetSfia,
   }
 }
 
@@ -119,6 +131,9 @@ function toSavedJobDescriptionPayload(
     benefits: optional(form.benefits),
     salary: optional(form.salary),
     bonus: optional(form.bonus),
+    onetSocCode: optional(form.onetSocCode ?? ''),
+    onetOccupationTitle: optional(form.onetOccupationTitle ?? ''),
+    targetSfiaLevel: form.targetSfiaLevel ?? mapJdLevelToSfia(form.level),
   }
 }
 
@@ -159,19 +174,25 @@ function savedJobDescriptionToForm(
   item: SavedJobDescription,
   sessions: Session[] = []
 ): JdFormData {
+  const resolvedLevel = resolveSavedJobDescriptionLevel(item, sessions)
   return normalizeJdFormData({
     company: item.companyName,
-    website: item.companyWebsite,
+    website: item.companyWebsite ?? undefined,
     position: item.jobTitle,
-    level: resolveSavedJobDescriptionLevel(item, sessions),
-    headcount: item.headcount,
-    location: item.location,
+    level: resolvedLevel,
+    headcount: item.headcount ?? undefined,
+    location: item.location ?? undefined,
     requirements: item.requirements,
     jobContent: item.jobContent,
     techStack: item.techStack,
-    benefits: item.benefits,
-    salary: item.salary,
-    bonus: item.bonus,
+    benefits: item.benefits ?? undefined,
+    salary: item.salary ?? undefined,
+    bonus: item.bonus ?? undefined,
+    onetSocCode: item.onetSocCode ?? undefined,
+    onetOccupationTitle: item.onetOccupationTitle ?? undefined,
+    targetSfiaLevel:
+      item.targetSfiaLevel ??
+      (resolvedLevel ? mapJdLevelToSfia(resolvedLevel) : undefined),
   })
 }
 
@@ -341,6 +362,7 @@ function SetupPageContent() {
       const savedJobDescription = await prepService.saveJobDescription(
         toSavedJobDescriptionPayload(jd)
       )
+      const targetSfia = jd.targetSfiaLevel ?? mapJdLevelToSfia(jd.level)
       const data = await sessionService.createSession({
         jobDescription,
         sessionType,
@@ -349,6 +371,8 @@ function SetupPageContent() {
         numQuestions,
         targetRoles: [jd.position],
         savedJobDescriptionId: savedJobDescription.id,
+        targetSfiaLevel: targetSfia,
+        onetSocCode: jd.onetSocCode,
       })
       router.push(`/sessions/${data.id}`)
     } catch (err) {
@@ -523,6 +547,7 @@ function SetupPageContent() {
             contextPack={contextPack}
             duration={duration}
             error={error}
+            onChange={updateJd}
           />
           <div className="flex justify-between">
             <Button variant="ghost" onClick={() => setStep(2)}>

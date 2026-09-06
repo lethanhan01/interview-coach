@@ -17,8 +17,8 @@
 | **Pha 2** | Xây Dựng Bộ UI Components Đánh Giá Tinh Gọn Mới | 🟢 Đã hoàn thành | 5 / 5 bước |
 | **Pha 3** | Tái Cấu Trúc Toàn Diện Trang Báo Cáo Phỏng Vấn (/report) | 🟢 Đã hoàn thành | 4 / 4 bước |
 | **Pha 4** | Nâng Cấp Phòng Phỏng Vấn Trực Tiếp (Live Session /sessions/[id]) | 🟢 Đã hoàn thành | 2 / 2 bước |
-| **Pha 5** | Đồng Bộ Luồng Thiết Lập JD Chuẩn Hóa O*NET (/setup & /jd-library) | ⚪ Chưa bắt đầu | 0 / 4 bước |
-| **TỔNG THỂ** | **Đồng Bộ Hoàn Toàn Frontend Với Unified Interview Engine** | 🟡 **ĐANG THỰC HIỆN** | **14 / 18 bước** |
+| **Pha 5** | Đồng Bộ Luồng Thiết Lập JD Chuẩn Hóa O*NET (/setup & /jd-library) | 🟢 Đã hoàn thành | 4 / 4 bước |
+| **TỔNG THỂ** | **Đồng Bộ Hoàn Toàn Frontend Với Unified Interview Engine** | 🟢 **HOÀN THÀNH TOÀN DIỆN** | **18 / 18 bước** |
 
 ---
 
@@ -141,7 +141,36 @@
 
 ### Pha 5: Đồng Bộ Luồng Thiết Lập JD Chuẩn Hóa O*NET (/setup & /jd-library)
 
-- [ ] **Bước 5.1: Cập nhật `JdForm.tsx` Với O*NET Hybrid Combobox & Ánh Xạ Mặc Định SFIA Level**
-- [ ] **Bước 5.2: Cập nhật `ConfirmStep.tsx` Với Thẻ AI Job Profile & Cho Phép Điều Chỉnh SFIA Level**
-- [ ] **Bước 5.3: Cập nhật Thư Viện JD (`/jd-library`)**
-- [ ] **Bước 5.4: Chạy Kiểm Thử Toàn Diện & Typecheck (Next.js Build + Backend Tests)**
+- [x] **Bước 5.1: Cập nhật `JdForm.tsx` Với O*NET Hybrid Combobox & Ánh Xạ Mặc Định SFIA Level**
+  - [x] Bổ sung Combobox tìm kiếm Chức danh chuẩn O*NET (`/onet/occupations`) có debounce 250ms, hiển thị mã SOC và chức danh.
+  - [x] Tự động gợi ý Vị trí (`position`) khi chọn Chức danh O*NET nếu đang trống, cho phép xóa/thay đổi linh hoạt.
+  - [x] Tích hợp gợi ý công nghệ O*NET (`/onet/occupations/:socCode/tech`), hiển thị các chips công nghệ cho phép người dùng click thêm nhanh vào Tech Stack.
+  - [x] Tự động suy luận `targetSfiaLevel` mặc định khi người dùng chọn Level qua `mapJdLevelToSfia`.
+  - [x] Mở rộng bộ unit test `JdForm.test.tsx` (16/16 tests pass) bao phủ tìm kiếm, chọn chức danh O*NET, clear chức danh, hiển thị tech chips và suy luận SFIA Level.
+  - [x] Bổ sung Story `WithOnetOccupation` trong `JdForm.stories.tsx`.
+  - [x] Typecheck `npm run typecheck` thành công 100% không lỗi.
+- [x] **Bước 5.2: Cập nhật `ConfirmStep.tsx` Với Thẻ AI Job Profile & Cho Phép Điều Chỉnh SFIA Level**
+  - [x] Thiết kế thẻ "Hồ sơ Vị trí Tuyển dụng (AI Job Profile)" hiển thị Chức danh chuẩn O*NET (kèm mã SOC) và chips Tech Stack trọng điểm.
+  - [x] Hỗ trợ điều chỉnh Cấp bậc SFIA mục tiêu (Level 1-5) thông qua primitive `Select`, tự động cập nhật ngược lại `jd.targetSfiaLevel` qua callback `onChange`.
+  - [x] Cập nhật `app/(candidate)/setup/page.tsx`:
+    - Chuẩn hóa `normalizeJdFormData` và `savedJobDescriptionToForm` bảo lưu `onetSocCode`, `onetOccupationTitle`, `targetSfiaLevel`.
+    - Cập nhật `toSavedJobDescriptionPayload` truyền `onetSocCode`, `onetOccupationTitle`, `targetSfiaLevel` sang API `saveJobDescription`.
+    - Cập nhật `handleSubmit` truyền `targetSfiaLevel` và `onetSocCode` vào payload gọi `sessionService.createSession`.
+    - Truyền `onChange={updateJd}` vào `<ConfirmStep>`.
+  - [x] Mở rộng unit tests `ConfirmStep.test.tsx` (11/11 tests pass) bao phủ hiển thị AI Job Profile, mã SOC, fallback tự do và select Cấp bậc SFIA.
+  - [x] Bổ sung Story `WithOnetAndSfiaProfile` trong `ConfirmStep.stories.tsx`.
+  - [x] Toàn bộ 8 test files setup (59 tests gồm cả Storybook tests) pass 100%.
+- [x] **Bước 5.3: Cập nhật Thư Viện JD (`/jd-library`)**
+  - [x] Cập nhật giao diện thẻ JD đã lưu trong `app/(candidate)/jd-library/page.tsx`:
+    - Hiển thị Huy hiệu Cấp bậc SFIA mục tiêu (`Badge variant="brand"`: `SFIA Level {targetSfiaLevel}`) kèm icon `Award`.
+    - Hiển thị Huy hiệu Chức danh chuẩn O*NET (`Badge variant="outline"`: `{onetOccupationTitle} ({onetSocCode})`) kèm icon `Sparkles`.
+    - Hiển thị nhãn Level chuẩn hóa từ `getJdLevelLabel(item.level)` cạnh chức danh công ty.
+  - [x] Tạo mới bộ Unit Test hoàn chỉnh `app/(candidate)/jd-library/page.test.tsx` (6/6 tests pass) kiểm thử trạng thái loading, lỗi API, danh sách trống, hiển thị badges SFIA/O*NET và điều hướng khi click/Enter vào setup.
+  - [x] Typecheck `npm run typecheck` đạt 0 errors (TypeScript sạch sẽ).
+- [x] **Bước 5.4: Chạy Kiểm Thử Toàn Diện & Typecheck (Next.js Build + Backend Tests)**
+  - [x] **Client Typecheck (`npm run typecheck`):** 0 errors, TypeScript strictly typed.
+  - [x] **Client Unit Test Suite (`npm run test:unit`):** 144/144 test files pass (504/504 tests pass 100%, bao gồm toàn bộ unit tests và Storybook Chromium test-runner).
+  - [x] **Client Production Build (`npm run build`):** Biên dịch Next.js 16.2.6 (Turbopack) thành công 100%, tạo static/dynamic routes sạch sẽ.
+  - [x] **Backend Architecture Tests (`npm run test:arch`):** 3/3 architectural boundary rules pass.
+  - [x] **Backend Test Suite (`npm test`):** 74/74 test suites pass (590/590 tests pass 100%).
+  - [x] **Backend Production Build (`npm run build`):** Prisma Client generate và NestJS build hoàn tất 100% không lỗi.

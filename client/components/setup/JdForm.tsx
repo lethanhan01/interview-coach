@@ -1,10 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Badge } from '@/components/ui/Badge'
+import Button from '@/components/ui/Button'
 import {
   Select,
   SelectTrigger,
@@ -13,6 +14,7 @@ import {
   SelectItem,
 } from '@/components/ui/Select'
 import type { JdFormData } from '@/lib/setup-types'
+import { mapJdLevelToSfia } from '@/lib/setup-types'
 import type { SavedJobDescription } from '@/lib/types'
 import {
   BONUS_OPTIONS,
@@ -25,6 +27,8 @@ import {
   FormLabel,
   FormControl,
 } from '@/components/form'
+import { onetService, type OnetOccupation, type OnetTech } from '@/services'
+import { Briefcase, Loader2, Search, Sparkles, X } from 'lucide-react'
 
 interface JdFormProps {
   value: JdFormData
@@ -36,8 +40,122 @@ interface JdFormProps {
 
 export default function JdForm({ value, onChange }: JdFormProps) {
   const [techQuery, setTechQuery] = useState('')
+  const [onetQuery, setOnetQuery] = useState('')
+  const [onetResults, setOnetResults] = useState<OnetOccupation[]>([])
+  const [isSearchingOnet, setIsSearchingOnet] = useState(false)
+  const [isOnetDropdownOpen, setIsOnetDropdownOpen] = useState(false)
+  const [onetTechSuggestions, setOnetTechSuggestions] = useState<OnetTech[]>([])
+  const [isLoadingTech, setIsLoadingTech] = useState(false)
+  const comboboxRef = useRef<HTMLDivElement>(null)
+
   const set = (field: keyof JdFormData, val: string) =>
     onChange({ ...value, [field]: val })
+
+  // Đóng dropdown O*NET khi click ra ngoài
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        comboboxRef.current &&
+        !comboboxRef.current.contains(event.target as Node)
+      ) {
+        setIsOnetDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  // Tìm kiếm chức danh O*NET debounce khi mở dropdown
+  useEffect(() => {
+    let cancelled = false
+    if (!isOnetDropdownOpen) return
+
+    setIsSearchingOnet(true)
+    const timer = setTimeout(() => {
+      onetService
+        .searchOccupations(onetQuery, 8)
+        .then((items) => {
+          if (!cancelled) {
+            setOnetResults(items)
+            setIsSearchingOnet(false)
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setOnetResults([])
+            setIsSearchingOnet(false)
+          }
+        })
+    }, 250)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [onetQuery, isOnetDropdownOpen])
+
+  // Lấy gợi ý công nghệ O*NET khi mã SOC thay đổi
+  useEffect(() => {
+    let cancelled = false
+    if (value.onetSocCode) {
+      setIsLoadingTech(true)
+      onetService
+        .getOccupationTech(value.onetSocCode)
+        .then((techs) => {
+          if (!cancelled) {
+            setOnetTechSuggestions(techs)
+            setIsLoadingTech(false)
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setOnetTechSuggestions([])
+            setIsLoadingTech(false)
+          }
+        })
+    } else {
+      setOnetTechSuggestions([])
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [value.onetSocCode])
+
+  const handleSelectOnet = (occ: OnetOccupation) => {
+    setIsOnetDropdownOpen(false)
+    setOnetQuery('')
+    const targetSfia =
+      value.targetSfiaLevel ??
+      (value.level ? mapJdLevelToSfia(value.level) : 3)
+    onChange({
+      ...value,
+      onetSocCode: occ.socCode,
+      onetOccupationTitle: occ.title,
+      position: value.position.trim().length > 0 ? value.position : occ.title,
+      targetSfiaLevel: targetSfia,
+    })
+  }
+
+  const handleClearOnet = () => {
+    setOnetTechSuggestions([])
+    onChange({
+      ...value,
+      onetSocCode: undefined,
+      onetOccupationTitle: undefined,
+    })
+  }
+
+  const handleLevelChange = (val: string) => {
+    const suggestedSfia = mapJdLevelToSfia(val)
+    onChange({
+      ...value,
+      level: val,
+      targetSfiaLevel: suggestedSfia,
+    })
+  }
 
   const toggleTech = (tech: string) =>
     onChange({
@@ -119,6 +237,137 @@ export default function JdForm({ value, onChange }: JdFormProps) {
         <h2 className="text-ink mb-4 text-base font-semibold">
           Vị trí tuyển dụng
         </h2>
+
+        {/* Chức danh chuẩn O*NET (AI Matching) */}
+        <div className="mb-4">
+          <FormField name="onetOccupation">
+            <div className="mb-1.5 flex items-center justify-between">
+              <FormLabel>Chức danh chuẩn O*NET (AI Matching)</FormLabel>
+              <span className="text-brand flex items-center gap-1 text-xs font-medium">
+                <Sparkles className="size-3" aria-hidden="true" />
+                Khuyến nghị để tối ưu phỏng vấn
+              </span>
+            </div>
+            <FormControl>
+              {value.onetSocCode && value.onetOccupationTitle ? (
+                <div className="border-brand-subtle-border bg-brand-subtle/50 flex items-center justify-between gap-3 rounded-lg border px-3.5 py-2.5">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <div className="bg-brand text-brand-fg flex size-7 shrink-0 items-center justify-center rounded-md">
+                      <Briefcase className="size-3.5" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-ink truncate text-sm font-semibold">
+                        {value.onetOccupationTitle}
+                      </p>
+                      <p className="text-ink-muted text-xs">
+                        Mã SOC: {value.onetSocCode}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearOnet}
+                    aria-label="Bỏ chọn chức danh O*NET"
+                    className="text-ink-muted hover:text-ink shrink-0"
+                  >
+                    <X className="size-4" aria-hidden="true" />
+                    <span className="sr-only sm:not-sr-only sm:ml-1 sm:text-xs">
+                      Bỏ chọn
+                    </span>
+                  </Button>
+                </div>
+              ) : (
+                <div ref={comboboxRef} className="relative">
+                  <div className="relative">
+                    <Input
+                      type="search"
+                      value={onetQuery}
+                      onChange={(e) => {
+                        setOnetQuery(e.target.value)
+                        setIsOnetDropdownOpen(true)
+                      }}
+                      onFocus={() => setIsOnetDropdownOpen(true)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          setIsOnetDropdownOpen(false)
+                        }
+                      }}
+                      placeholder="Tìm kiếm chức danh O*NET (VD: Software Developers, Data Scientists...)"
+                      aria-expanded={isOnetDropdownOpen}
+                      aria-autocomplete="list"
+                      aria-label="Tìm kiếm chức danh chuẩn O*NET"
+                      className="pr-9"
+                    />
+                    <div className="text-ink-muted pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                      {isSearchingOnet ? (
+                        <Loader2
+                          className="text-brand size-4 animate-spin"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <Search className="size-4" aria-hidden="true" />
+                      )}
+                    </div>
+                  </div>
+
+                  {isOnetDropdownOpen && (
+                    <div
+                      role="listbox"
+                      aria-label="Danh sách chức danh O*NET gợi ý"
+                      className="border-border bg-surface-1 absolute z-30 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border p-1 shadow-lg"
+                    >
+                      {isSearchingOnet && onetResults.length === 0 ? (
+                        <div className="text-ink-muted flex items-center justify-center gap-2 py-4 text-xs">
+                          <Loader2
+                            className="text-brand size-3.5 animate-spin"
+                            aria-hidden="true"
+                          />
+                          Đang tìm kiếm chức danh O*NET...
+                        </div>
+                      ) : onetResults.length === 0 ? (
+                        <div className="text-ink-muted px-3 py-3 text-center text-xs">
+                          Không tìm thấy chức danh O*NET phù hợp.
+                        </div>
+                      ) : (
+                        onetResults.map((occ) => (
+                          <button
+                            key={occ.socCode}
+                            type="button"
+                            role="option"
+                            aria-selected={value.onetSocCode === occ.socCode}
+                            onClick={() => handleSelectOnet(occ)}
+                            className="hover:bg-surface-2 focus-visible:bg-surface-2 flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-xs transition-colors focus-visible:outline-none"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-ink truncate font-medium">
+                                {occ.title}
+                              </p>
+                              {occ.matchedTitle &&
+                                occ.matchedTitle !== occ.title && (
+                                  <p className="text-ink-faint truncate text-[11px]">
+                                    Khớp với: {occ.matchedTitle}
+                                  </p>
+                                )}
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className="shrink-0 font-mono text-[10px]"
+                            >
+                              {occ.socCode}
+                            </Badge>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </FormControl>
+          </FormField>
+        </div>
+
         <FormField name="position" isRequired>
           <FormLabel>Vị trí</FormLabel>
           <FormControl>
@@ -143,10 +392,7 @@ export default function JdForm({ value, onChange }: JdFormProps) {
           <FormField name="level" isRequired>
             <FormLabel>Level yêu cầu</FormLabel>
             <FormControl>
-              <Select
-                value={value.level}
-                onValueChange={(val) => set('level', val)}
-              >
+              <Select value={value.level} onValueChange={handleLevelChange}>
                 <SelectTrigger id="jd-level" aria-label="Level yêu cầu">
                   <SelectValue placeholder="Chọn level..." />
                 </SelectTrigger>
@@ -221,6 +467,39 @@ export default function JdForm({ value, onChange }: JdFormProps) {
           <div>
             <p className="text-ink mb-1.5 text-sm font-medium">Tech Stack</p>
             <div className="border-border bg-surface flex flex-col gap-4 rounded-lg border p-4">
+              {/* Gợi ý công nghệ từ O*NET khi có occupation */}
+              {onetTechSuggestions.length > 0 && (
+                <div className="border-brand-subtle-border bg-brand-subtle/40 rounded-lg border p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-brand flex items-center gap-1.5 text-xs font-semibold">
+                      <Sparkles className="size-3.5" aria-hidden="true" />
+                      Gợi ý công nghệ O*NET cho {value.onetOccupationTitle}
+                    </span>
+                    <span className="text-ink-muted text-xs">
+                      Bấm để thêm nhanh vào Tech Stack
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {onetTechSuggestions.map((tech) => {
+                      const selected = value.techStack.includes(tech.example)
+                      return (
+                        <Badge
+                          key={tech.example}
+                          variant={selected ? 'brand' : 'default'}
+                          interactive
+                          onClick={() => toggleTech(tech.example)}
+                          aria-pressed={selected}
+                          className="text-xs"
+                        >
+                          {selected ? '✓ ' : '+ '}
+                          {tech.example}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
               <FormField name="techQuery">
                 <FormLabel>Tìm kiếm tech stack</FormLabel>
                 <FormControl>
@@ -347,4 +626,3 @@ export default function JdForm({ value, onChange }: JdFormProps) {
     </div>
   )
 }
-

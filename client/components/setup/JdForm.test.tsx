@@ -1,10 +1,35 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import JdForm from './JdForm'
 import { EMPTY_JD } from '@/lib/setup-types'
 import type { JdFormData } from '@/lib/setup-types'
+import { onetService } from '@/services'
+
+vi.mock('@/services', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>()
+  return {
+    ...actual,
+    onetService: {
+      searchOccupations: vi.fn().mockResolvedValue([
+        {
+          socCode: '15-1252.00',
+          title: 'Software Developers',
+          description: 'Develop software',
+        },
+      ]),
+      getOccupationTech: vi.fn().mockResolvedValue([
+        { example: 'Docker', isHotTechnology: true, inDemand: true },
+        { example: 'Kubernetes', isHotTechnology: true, inDemand: false },
+      ]),
+    },
+  }
+})
 
 describe('JdForm', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('renders all section headings', () => {
     render(<JdForm value={EMPTY_JD} onChange={vi.fn()} />)
     expect(screen.getByText('Thông tin công ty')).toBeInTheDocument()
@@ -72,7 +97,6 @@ describe('JdForm', () => {
     }
     render(<JdForm value={valueWithTechs} onChange={vi.fn()} />)
     expect(screen.getByText('Đã chọn (2)')).toBeInTheDocument()
-    // React tag appears in both selected chips and the grid
     const reactElements = screen.getAllByText('React')
     expect(reactElements.length).toBeGreaterThanOrEqual(1)
   })
@@ -98,7 +122,6 @@ describe('JdForm', () => {
     )
     fireEvent.change(searchInput, { target: { value: 'pytorch' } })
     expect(screen.getByText('PyTorch')).toBeInTheDocument()
-    // Unrelated tech should not be visible
     expect(screen.queryByText('React')).not.toBeInTheDocument()
   })
 
@@ -114,6 +137,95 @@ describe('JdForm', () => {
     fireEvent.change(salaryInput, { target: { value: '20-30 triệu' } })
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ salary: '20-30 triệu' })
+    )
+  })
+
+  // ── O*NET & SFIA Level Integration Tests ───────────────────────────────────
+
+  it('renders O*NET search input when no occupation is selected', () => {
+    render(<JdForm value={EMPTY_JD} onChange={vi.fn()} />)
+    expect(
+      screen.getByPlaceholderText(
+        'Tìm kiếm chức danh O*NET (VD: Software Developers, Data Scientists...)'
+      )
+    ).toBeInTheDocument()
+  })
+
+  it('searches O*NET occupations on typing and selects an option', async () => {
+    const onChange = vi.fn()
+    render(<JdForm value={EMPTY_JD} onChange={onChange} />)
+
+    const searchInput = screen.getByPlaceholderText(
+      'Tìm kiếm chức danh O*NET (VD: Software Developers, Data Scientists...)'
+    )
+    fireEvent.change(searchInput, { target: { value: 'Software' } })
+
+    await waitFor(() => {
+      expect(onetService.searchOccupations).toHaveBeenCalledWith('Software', 8)
+    })
+
+    const option = await screen.findByRole('option', { name: /Software Developers/i })
+    fireEvent.click(option)
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        onetSocCode: '15-1252.00',
+        onetOccupationTitle: 'Software Developers',
+        position: 'Software Developers',
+        targetSfiaLevel: 3,
+      })
+    )
+  })
+
+  it('displays selected O*NET occupation and allows clearing it', async () => {
+    const onChange = vi.fn()
+    const valueWithOnet: JdFormData = {
+      ...EMPTY_JD,
+      onetSocCode: '15-1252.00',
+      onetOccupationTitle: 'Software Developers',
+    }
+    render(<JdForm value={valueWithOnet} onChange={onChange} />)
+
+    await waitFor(() => {
+      expect(onetService.getOccupationTech).toHaveBeenCalledWith('15-1252.00')
+    })
+
+    expect(screen.getByText('Software Developers')).toBeInTheDocument()
+    expect(screen.getByText('Mã SOC: 15-1252.00')).toBeInTheDocument()
+
+    const clearBtn = screen.getByRole('button', { name: 'Bỏ chọn chức danh O*NET' })
+    fireEvent.click(clearBtn)
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        onetSocCode: undefined,
+        onetOccupationTitle: undefined,
+      })
+    )
+  })
+
+  it('renders O*NET tech suggestions when occupation is selected and toggles tech chip', async () => {
+    const onChange = vi.fn()
+    const valueWithOnet: JdFormData = {
+      ...EMPTY_JD,
+      onetSocCode: '15-1252.00',
+      onetOccupationTitle: 'Software Developers',
+      techStack: [],
+    }
+    render(<JdForm value={valueWithOnet} onChange={onChange} />)
+
+    await waitFor(() => {
+      expect(onetService.getOccupationTech).toHaveBeenCalledWith('15-1252.00')
+    })
+
+    const dockerChip = await screen.findByText('+ Docker')
+    expect(dockerChip).toBeInTheDocument()
+
+    fireEvent.click(dockerChip)
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        techStack: ['Docker'],
+      })
     )
   })
 })

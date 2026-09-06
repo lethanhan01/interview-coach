@@ -5,7 +5,16 @@ import { useRouter } from 'next/navigation'
 import { prepService } from '@/services'
 import type { SavedJobDescription } from '@/lib/types'
 import { formatVietnamRelativeDate } from '@/lib/date-time'
-import { Building2, MapPin, Clock, Plus, ChevronRight } from 'lucide-react'
+import { getJdLevelLabel } from '@/lib/interview-options'
+import {
+  Building2,
+  MapPin,
+  Clock,
+  Plus,
+  ChevronRight,
+  Award,
+  Sparkles,
+} from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
@@ -113,11 +122,41 @@ export default function JdLibraryPage() {
                         <p className="text-ink truncate font-semibold">
                           {item.companyName}
                         </p>
-                        <p className="text-ink-muted truncate text-sm">
-                          {item.jobTitle}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-ink-muted truncate text-sm">
+                            {item.jobTitle}
+                          </p>
+                          {item.level && (
+                            <Badge variant="outline" className="text-xs">
+                              {getJdLevelLabel(item.level)}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
+
+                    {/* O*NET Occupation & SFIA Level Badges */}
+                    {(item.onetOccupationTitle || item.targetSfiaLevel) && (
+                      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                        {item.targetSfiaLevel && (
+                          <Badge variant="brand" className="text-xs">
+                            <Award className="mr-1 size-3" aria-hidden="true" />
+                            SFIA Level {item.targetSfiaLevel}
+                          </Badge>
+                        )}
+                        {item.onetOccupationTitle && (
+                          <Badge variant="outline" className="text-ink-muted text-xs">
+                            <Sparkles className="text-brand mr-1 size-3" aria-hidden="true" />
+                            {item.onetOccupationTitle}
+                            {item.onetSocCode && (
+                              <span className="text-ink-faint ml-1 font-mono text-xs opacity-80">
+                                ({item.onetSocCode})
+                              </span>
+                            )}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
 
                     {/* Meta */}
                     <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">

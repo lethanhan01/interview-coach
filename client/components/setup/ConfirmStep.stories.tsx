@@ -77,3 +77,20 @@ export const WithError: Story = {
     error: 'Không thể tạo phiên phỏng vấn. Vui lòng thử lại sau.',
   },
 }
+
+export const WithOnetAndSfiaProfile: Story = {
+  args: {
+    jd: {
+      ...MOCK_JD,
+      onetSocCode: '15-1252.00',
+      onetOccupationTitle: 'Software Developers',
+      targetSfiaLevel: 3,
+    },
+    sessionType: 'technical',
+    contextPack: 'Western',
+    duration: 60,
+    error: null,
+    onChange: () => {},
+  },
+}
+
