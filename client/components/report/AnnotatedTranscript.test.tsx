@@ -57,17 +57,18 @@ describe('AnnotatedTranscript', () => {
     expect(screen.getAllByText('Xem câu trả lời đề xuất ▸').length).toBeGreaterThan(0)
   })
 
-  it('renders legacy turns with appliedDimensions fallback', () => {
+  it('renders legacy turns with graceful fallback banner', () => {
     render(
       <AnnotatedTranscript
         items={mockLegacyReport.transcript}
-        contextPackId="VN"
-        sessionType="technical"
       />
     )
 
-    expect(screen.getByText('Tiêu chí áp dụng')).toBeInTheDocument()
-    expect(screen.getByText('Kỹ năng giao tiếp')).toBeInTheDocument()
-    expect(screen.getByText('Tư duy giải quyết vấn đề')).toBeInTheDocument()
+    expect(
+      screen.getAllByText(
+        /Câu trả lời này thuộc phiên bản trước, không có dữ liệu thẩm định tiêu chí SFIA 9 & O\*NET chi tiết/i
+      ).length
+    ).toBeGreaterThan(0)
+    expect(screen.getByText('Câu 1')).toBeInTheDocument()
   })
 })

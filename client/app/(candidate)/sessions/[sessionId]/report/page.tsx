@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { sessionService } from '@/services'
 import type {
+  ActionPlanItem,
   FeedbackProgress,
   Report,
   Session,
@@ -18,6 +19,8 @@ import { ActionPlanTimeline } from '@/components/report/ActionPlanTimeline'
 import SessionMetadataCard from '@/components/report/SessionMetadataCard'
 import { ScoringMethodCard } from '@/components/report/ScoringMethodCard'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import Progress from '@/components/ui/Progress'
+import { Card } from '@/components/ui/Card'
 
 const REPORT_POLL_INTERVAL_MS = 5000
 const PROGRESS_POLL_INTERVAL_MS = 2000
@@ -42,6 +45,52 @@ function toStringList(value: unknown): string[] {
   return value.filter(
     (item): item is string => typeof item === 'string' && item.trim() !== ''
   )
+}
+
+function extractActionPlanDirections(actionPlan: Report['actionPlan']): string[] {
+  if (!actionPlan) return []
+
+  let structuredItems: ActionPlanItem[] = []
+  if (Array.isArray(actionPlan)) {
+    if (actionPlan.length > 0 && typeof actionPlan[0] === 'object') {
+      structuredItems = actionPlan as ActionPlanItem[]
+    }
+  } else if (
+    typeof actionPlan === 'object' &&
+    actionPlan !== null &&
+    'actionPlan' in actionPlan &&
+    Array.isArray((actionPlan as { actionPlan?: ActionPlanItem[] }).actionPlan)
+  ) {
+    structuredItems = (actionPlan as { actionPlan: ActionPlanItem[] }).actionPlan
+  }
+
+  if (structuredItems.length > 0) {
+    const priorityWeight: Record<string, number> = { high: 3, medium: 2, low: 1 }
+    const sorted = [...structuredItems].sort(
+      (a, b) => (priorityWeight[b.priority] ?? 0) - (priorityWeight[a.priority] ?? 0)
+    )
+    const directions: string[] = []
+    for (const item of sorted) {
+      if (item.title) {
+        if (item.topics && item.topics.length > 0) {
+          directions.push(`${item.title} (${item.topics.slice(0, 2).join(', ')})`)
+        } else {
+          directions.push(item.title)
+        }
+      }
+      if (directions.length >= 3) break
+    }
+    if (directions.length > 0) return directions
+  }
+
+  const legacyItems = toStringList(
+    Array.isArray(actionPlan)
+      ? actionPlan
+      : typeof actionPlan === 'object' && actionPlan !== null && 'items' in actionPlan
+        ? (actionPlan as { items?: unknown }).items
+        : []
+  )
+  return legacyItems
 }
 
 function buildOverviewSummary(report: Report): OverviewSummary {
@@ -70,10 +119,10 @@ function buildOverviewSummary(report: Report): OverviewSummary {
   const weakAnswers = scoredAnswers.filter(
     (item) => item.score < WEAK_ANSWER_THRESHOLD
   )
-  const actionPlanItems = toStringList(report.actionPlan?.items)
+  const actionPlanDirections = extractActionPlanDirections(report.actionPlan)
   const improvementDirections =
-    actionPlanItems.length > 0
-      ? actionPlanItems
+    actionPlanDirections.length > 0
+      ? actionPlanDirections
       : Array.from(
           new Set(
             weakAnswers.flatMap((item) =>
@@ -238,12 +287,12 @@ export default function ReportPage() {
         <LoadingSpinner size="lg" />
         <div className="w-full">
           <p className="text-ink text-sm font-semibold">{progressLabel}</p>
-          <div className="bg-brand-100 mt-3 h-2 w-full overflow-hidden rounded-full">
-            <div
-              className="bg-brand h-full rounded-full transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
+          <Progress
+            value={progressPercent}
+            variant="brand"
+            size="sm"
+            className="mt-3"
+          />
           <p className="text-ink-muted mt-2 text-sm">{detailLabel}</p>
         </div>
       </div>
@@ -298,13 +347,18 @@ export default function ReportPage() {
             report.executiveSummary?.demonstratedSfiaLevel != null) && (
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-brand-100">
               {report.executiveSummary.targetSfiaLevel && (
-                <span className="rounded-md border border-white/10 bg-brand-900/30 px-2.5 py-1">
+                <span className="rounded-md border border-white/20 bg-black/20 px-2.5 py-1">
                   Kỳ vọng: <strong>SFIA Level {report.executiveSummary.targetSfiaLevel}</strong>
                 </span>
               )}
               {report.executiveSummary.demonstratedSfiaLevel != null && (
-                <span className="rounded-md border border-white/10 bg-brand-900/30 px-2.5 py-1">
-                  Thể hiện: <strong>SFIA Level {report.executiveSummary.demonstratedSfiaLevel}</strong>
+                <span className="rounded-md border border-white/20 bg-black/20 px-2.5 py-1">
+                  Thể hiện:{' '}
+                  <strong>
+                    {report.executiveSummary.demonstratedSfiaLevel > 0
+                      ? `SFIA Level ${report.executiveSummary.demonstratedSfiaLevel}`
+                      : 'Chưa thể hiện (Level 0)'}
+                  </strong>
                 </span>
               )}
             </div>
@@ -336,7 +390,7 @@ export default function ReportPage() {
         )}
         {session && <SessionMetadataCard session={session} />}
 
-        <div className="border-brand-subtle-border bg-brand-subtle rounded-2xl border p-5">
+        <Card className="border-brand-subtle-border bg-brand-subtle p-5 shadow-none">
           <h2 className="text-ink mb-4 text-base font-semibold">
             Tóm tắt tổng quan
           </h2>
@@ -417,7 +471,7 @@ export default function ReportPage() {
               </dd>
             </div>
           </dl>
-        </div>
+        </Card>
 
         {session?.contextPackId && session?.sessionType && (
           <ScoringMethodCard

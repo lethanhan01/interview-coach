@@ -4,8 +4,8 @@ import {
   AnnotatedSegment,
   type SessionType,
 } from '@/lib/types'
-import { getRubricHint } from '@/lib/rubric-config'
 import { Badge } from '@/components/ui/Badge'
+import { Card } from '@/components/ui/Card'
 import { BinaryCriteriaChecklist } from '@/components/report/BinaryCriteriaChecklist'
 import { AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -89,8 +89,6 @@ export interface AnnotatedTranscriptProps {
 
 export default function AnnotatedTranscript({
   items = [],
-  contextPackId,
-  sessionType,
   className,
 }: AnnotatedTranscriptProps) {
   return (
@@ -102,9 +100,9 @@ export default function AnnotatedTranscript({
         )
 
         return (
-          <div
+          <Card
             key={item.orderIndex}
-            className="border-border bg-card text-card-foreground rounded-xl border p-6 shadow-sm"
+            className="p-6"
           >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
@@ -171,45 +169,9 @@ export default function AnnotatedTranscript({
 
             {!item.skipped && (!item.criteriaEvaluations || item.criteriaEvaluations.length === 0) && (
               <>
-                {item.appliedDimensions && item.appliedDimensions.length > 0 ? (
-                  <div className="mb-3">
-                    <p className="text-muted-foreground mb-1.5 text-xs font-medium">
-                      Tiêu chí áp dụng
-                    </p>
-                    <div className="flex flex-col gap-1.5">
-                      {item.appliedDimensions.map((dim) => (
-                        <div key={dim.id} className="flex items-center gap-3">
-                          <div className="text-ink-muted w-44 shrink-0 truncate text-xs">
-                            {dim.name}
-                          </div>
-                          <div className="flex-1">
-                            <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
-                              <div
-                                className="bg-brand h-full rounded-full"
-                                style={{
-                                  width: `${Math.min(100, Math.max(0, dim.score))}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <span className="text-muted-foreground w-28 text-right text-xs tabular-nums">
-                            {dim.score}/100 ({Math.round(dim.weight * 100)}%)
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  contextPackId && sessionType && (
-                    <p className="text-muted-foreground mb-3 text-xs">
-                      Tiêu chí đánh giá:{' '}
-                      {getRubricHint(
-                        contextPackId as 'VN' | 'Western',
-                        sessionType as SessionType
-                      )}
-                    </p>
-                  )
-                )}
+                <div className="border-border bg-surface-raised text-ink-muted mb-4 rounded-lg border p-3 text-xs leading-relaxed">
+                  Câu trả lời này thuộc phiên bản trước, không có dữ liệu thẩm định tiêu chí SFIA 9 &amp; O*NET chi tiết.
+                </div>
 
                 {item.segments && item.segments.length > 0 && (
                   <div className="mb-4 flex flex-col gap-4">
@@ -230,7 +192,7 @@ export default function AnnotatedTranscript({
 
             {item.modelAnswer && (
               <details className="group">
-                <summary className="text-brand cursor-pointer list-none text-xs font-medium uppercase tracking-wide hover:opacity-80">
+                <summary className="text-brand hover:opacity-80 focus-visible:ring-brand cursor-pointer list-none rounded text-xs font-medium uppercase tracking-wide focus-visible:outline-none focus-visible:ring-2">
                   Xem câu trả lời đề xuất ▸
                 </summary>
                 <div className="bg-brand-subtle text-ink mt-2 rounded-lg p-4 text-sm leading-relaxed">
@@ -238,7 +200,7 @@ export default function AnnotatedTranscript({
                 </div>
               </details>
             )}
-          </div>
+          </Card>
         )
       })}
     </div>

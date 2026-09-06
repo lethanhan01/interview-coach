@@ -1,6 +1,8 @@
 import type { Session, SessionType, ContextPack } from '@/lib/types'
 import { formatVietnamDateTime } from '@/lib/date-time'
 import { Badge } from '@/components/ui/Badge'
+import { Card } from '@/components/ui/Card'
+import { cn } from '@/lib/utils'
 
 const SESSION_TYPE_LABELS: Record<SessionType, string> = {
   hr: 'Nhân sự',
@@ -71,18 +73,24 @@ function parseJobDescription(jobDescription?: string): ParsedJobDescription {
   const lines = jobDescription.split(/\r?\n/)
 
   const getInlineValue = (label: string) => {
-    const line = lines.find((item) => item.trim().startsWith(`${label}:`))
+    const target = `${label.toLowerCase()}:`
+    const line = lines.find((item) =>
+      item.trim().toLowerCase().startsWith(target)
+    )
     return line?.slice(line.indexOf(':') + 1).trim() || undefined
   }
 
   const getSectionValue = (label: string) => {
-    const startIndex = lines.findIndex((item) => item.trim() === `${label}:`)
+    const target = `${label.toLowerCase()}:`
+    const startIndex = lines.findIndex(
+      (item) => item.trim().toLowerCase() === target
+    )
     if (startIndex === -1) return undefined
 
     const content: string[] = []
     for (let i = startIndex + 1; i < lines.length; i += 1) {
-      const current = lines[i].trim()
-      if (SECTION_LABELS.includes(current)) break
+      const current = lines[i].trim().toLowerCase()
+      if (SECTION_LABELS.some((s) => s.toLowerCase() === current)) break
       content.push(lines[i])
     }
 
@@ -109,10 +117,12 @@ function parseJobDescription(jobDescription?: string): ParsedJobDescription {
 
 interface SessionMetadataCardProps {
   session: Session
+  className?: string
 }
 
 export default function SessionMetadataCard({
   session,
+  className,
 }: SessionMetadataCardProps) {
   const jobDescription = parseJobDescription(session.jobDescription)
   const techStackValue =
@@ -129,7 +139,7 @@ export default function SessionMetadataCard({
     )
 
   return (
-    <div className="border-border bg-card text-card-foreground rounded-xl border p-6 shadow-sm">
+    <Card className={cn('p-6', className)}>
       <h2 className="text-foreground mb-4 text-base font-semibold">
         Thông tin phiên phỏng vấn
       </h2>
@@ -183,6 +193,6 @@ export default function SessionMetadataCard({
           />
         </div>
       </div>
-    </div>
+    </Card>
   )
 }

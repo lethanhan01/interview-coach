@@ -107,12 +107,14 @@
   - [x] Header mỗi câu: Bổ sung Badge Cấp bậc thể hiện (`SFIA Level {demonstratedLevel}`) và Badge Tỷ lệ đạt (`Đạt {criteriaPassRate * 100}% tiêu chí`).
   - [x] Xử lý câu bị bỏ qua (`skipped = true`): Hiển thị banner cảnh báo chuẩn hóa nhận 0 điểm và SFIA Level 1; ẩn tiêu chí thẩm định; vẫn hiển thị câu trả lời mẫu đề xuất (`modelAnswer`).
   - [x] Bảo toàn cơ chế tương thích ngược (Graceful Legacy Fallback) cho các phiên cũ: Hiển thị nhận xét theo `segments` và `appliedDimensions` khi chưa có dữ liệu tiêu chí mới.
-- [x] **Bước 3.4: Chạy Toàn Bộ Vitest Cho Module Report & Kiểm Thử Toàn Diện**
-  - [x] Mở rộng unit test toàn diện cho `AnnotatedTranscript.test.tsx` (4/4 tests pass): Kiểm tra câu chuẩn hóa, câu bị bỏ qua, phiên cũ và trường hợp rỗng.
-  - [x] Tạo mới unit test `page.test.tsx` cho trang Báo cáo phỏng vấn (3/3 tests pass): Kiểm tra toàn diện 3 kịch bản lớn (Phiên Unified SFIA 9 + O*NET, Phiên Legacy fallback an toàn, Phiên Skipped cảnh báo bỏ qua).
-  - [x] Sửa lỗi phòng vệ (defensive fix) trong `SessionMetadataCard.tsx` xử lý an toàn khi `jobDescription` rỗng hoặc thiếu.
-  - [x] Chạy toàn bộ test suite client: 143/143 test files (475/475 tests) pass 100% không cảnh báo lỗi.
-  - [x] Chạy kiểm tra biên dịch `npm run typecheck` (0 errors) và `next build` hoàn tất 100% tạo production bundle sạch sẽ.
+- [x] **Remediation & Hardening (/grill-me Thẩm Định Chuyên Sâu Pha 3):**
+  - [x] **Triệt tiêu Rubric cũ trong `AnnotatedTranscript.tsx`:** Xóa sạch import `getRubricHint` từ `@/lib/rubric-config` và khối render `appliedDimensions`, thay thế bằng thông báo phiên bản cũ chuẩn hóa nhẹ nhàng khi không có tiêu chí nhị phân SFIA & O*NET.
+  - [x] **Logic trích xuất `improvementDirections`:** Bổ sung `extractActionPlanDirections` trong `report/page.tsx`, ưu tiên trích xuất tiêu đề hành động và chủ đề ôn tập từ `report.actionPlan.actionPlan` theo thứ tự ưu tiên (`high` -> `medium`), giải quyết triệt để lỗi hiển thị thiếu thông tin cải thiện trong Tóm tắt tổng quan.
+  - [x] **Parser JD linh hoạt (Case-insensitive):** Cập nhật `parseJobDescription` trong `SessionMetadataCard.tsx` so khớp không phân biệt hoa thường (`Tech Stack:` lẫn `Tech stack:`, `Yêu cầu:`...), bổ sung unit test kiểm chứng bóc tách thành công chips công nghệ.
+  - [x] **Tuân thủ triệt để UI Rule 1 & Rule 3:** Tái sử dụng UI Primitive `<Progress>` ở màn hình loading của `report/page.tsx` thay cho thanh loading HTML thô; tái sử dụng primitive `<Card>` cho khối Tóm tắt tổng quan, `AnnotatedTranscript` và `SessionMetadataCard`; xóa bỏ arbitrary brackets/classes trong Hero banner.
+  - [x] **Accessibility & Trạng thái Level 0:** Bổ sung `focus-visible:ring-brand` cho nút mở câu trả lời đề xuất; chuẩn hóa hiển thị Cấp bậc khi `demonstratedSfiaLevel === 0` thành `Chưa thể hiện (Level 0)`.
+  - [x] **Mở rộng Storybook Coverage:** Bổ sung 4 stories trong `AnnotatedTranscript.stories.tsx` (`Default`, `UnifiedTurns`, `SkippedTurn`, `LegacyFallback`), toàn bộ pass Storybook Chromium test-runner.
+  - [x] **Chạy toàn bộ Verification Suite:** Toàn bộ 28 tests module report pass 100%, 4 Storybook tests pass, `npm run typecheck` (0 errors) và `next build` hoàn tất 100%.
 
 ---
 

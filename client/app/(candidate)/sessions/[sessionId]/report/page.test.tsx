@@ -81,6 +81,9 @@ describe('ReportPage', () => {
     expect(
       screen.getByText(/Kế Hoạch Hành Động & Lộ Trình Ôn Tập/i)
     ).toBeInTheDocument()
+    expect(
+      screen.getAllByText(/Nâng cao kỹ thuật thiết kế CSDL phân tán và phân vùng/i).length
+    ).toBeGreaterThanOrEqual(2)
 
     // Transcript assertions
     expect(screen.getByText('Phân tích từng câu trả lời')).toBeInTheDocument()
