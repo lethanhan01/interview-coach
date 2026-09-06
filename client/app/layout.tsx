@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth-context'
+import { OfflineBanner } from '@/components/patterns/OfflineBanner'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -39,7 +40,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <OfflineBanner />
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
