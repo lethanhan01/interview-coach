@@ -193,8 +193,13 @@ describe('HybridMappingService', () => {
       expect(skills[1].skillCode).toBe('TEST');
       expect(skills[1].source).toBe('ai_inferred');
 
-      // Verify AI Gateway call
+      // Verify AI Gateway call and presence of TEST skill in prompt
       expect(aiGatewayMock.generateStructured).toHaveBeenCalledTimes(1);
+      expect(aiGatewayMock.generateStructured).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userPrompt: expect.stringContaining('TEST: Testing [L1-L6]'),
+        }),
+      );
 
       // Verify caching to DB
       expect(prismaMock.onetSfiaMapping.createMany).toHaveBeenCalledWith({

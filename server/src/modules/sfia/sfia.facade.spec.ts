@@ -148,4 +148,15 @@ describe('SfiaFacade & SfiaService', () => {
       expect(all.map((s) => s.code)).toEqual(['PROG', 'DBDS']);
     });
   });
+
+  describe('self-healing', () => {
+    it('should trigger self-healing loadCache when service was not initialized', async () => {
+      const uninitService = new SfiaService(mockPrismaService as any);
+      expect(uninitService.isInitialized()).toBe(false);
+
+      const skill = await uninitService.getSkillByCode('PROG');
+      expect(skill?.code).toBe('PROG');
+      expect(uninitService.isInitialized()).toBe(true);
+    });
+  });
 });

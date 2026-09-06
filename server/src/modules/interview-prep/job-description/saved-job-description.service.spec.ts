@@ -27,10 +27,11 @@ const BASE_DTO = {
 };
 
 describe('inferTargetSfiaLevel', () => {
-  it('should infer Level 5 for Lead / Principal / Architect', () => {
+  it('should infer Level 5 for Lead / Principal / Architect in title or level', () => {
     expect(inferTargetSfiaLevel('Lead Developer', 'Tech Lead')).toBe(5);
     expect(inferTargetSfiaLevel('Middle', 'Solutions Architect')).toBe(5);
     expect(inferTargetSfiaLevel(null, 'Principal Engineer')).toBe(5);
+    expect(inferTargetSfiaLevel('Team Lead', 'Backend Engineer')).toBe(5);
   });
 
   it('should infer Level 4 for Senior', () => {
@@ -53,6 +54,60 @@ describe('inferTargetSfiaLevel', () => {
   it('should default to Level 3 for Middle or unspecified levels', () => {
     expect(inferTargetSfiaLevel('middle', 'Developer')).toBe(3);
     expect(inferTargetSfiaLevel(null, 'Developer')).toBe(3);
+  });
+
+  it('should NOT misclassify Junior as Level 5 when content has "leading" or "leadership"', () => {
+    expect(
+      inferTargetSfiaLevel(
+        'junior',
+        'Junior Node.js Developer',
+        'We are a leading fintech company in Southeast Asia. Looking for someone with leadership potential.',
+      ),
+    ).toBe(2);
+
+    expect(
+      inferTargetSfiaLevel(
+        'junior',
+        'Developer',
+        'We are leading the digital transformation market.',
+      ),
+    ).toBe(2);
+  });
+
+  it('should prioritize explicit level over job content references', () => {
+    expect(
+      inferTargetSfiaLevel(
+        'junior',
+        'Developer',
+        'You will work closely and report to the Tech Lead of the department.',
+      ),
+    ).toBe(2);
+
+    expect(
+      inferTargetSfiaLevel(
+        'senior',
+        'Developer',
+        'Direct report to Engineering Director.',
+      ),
+    ).toBe(4);
+  });
+
+  it('should infer Level 5 from job content only when explicit role phrase is present and level/title are generic', () => {
+    expect(
+      inferTargetSfiaLevel(
+        null,
+        'Software Engineer',
+        'We are looking for a Tech Lead to manage 10 developers.',
+      ),
+    ).toBe(5);
+
+    expect(
+      inferTargetSfiaLevel(
+        null,
+        'Software Engineer',
+        'Company is leading in retail industry.',
+      ),
+    ).toBe(3);
   });
 });
 

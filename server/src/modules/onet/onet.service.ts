@@ -2,6 +2,57 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { OnetOccupationDto, OnetTechDto } from './contracts/onet.dto';
 
+function removeVietnameseTones(str: string): string {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
+    .toLowerCase();
+}
+
+export function normalizeVietnameseJobTitle(title: string): string {
+  const norm = removeVietnameseTones(title);
+
+  // Bảng ánh xạ các vị trí CNTT phổ biến từ tiếng Việt sang tiếng Anh
+  if (/\b(kiem thu|tester|qa|qc)\b/i.test(norm)) {
+    return 'Software Quality Assurance Analysts and Testers';
+  }
+  if (
+    /\b(lap trinh vien|ky su phan mem|phat trien phan mem|developer|programmer)\b/i.test(
+      norm,
+    )
+  ) {
+    return 'Software Developers';
+  }
+  if (/\b(du lieu|database|csdl|data engineer|dba)\b/i.test(norm)) {
+    return 'Database Architects';
+  }
+  if (
+    /\b(quan tri he thong|ky su he thong|devops|quan tri mang|sysadmin)\b/i.test(
+      norm,
+    )
+  ) {
+    return 'Network and Computer Systems Administrators';
+  }
+  if (
+    /\b(an toan thong tin|an ninh mang|bao mat|cyber security)\b/i.test(norm)
+  ) {
+    return 'Information Security Analysts';
+  }
+  if (/\b(phan tich nghiep vu|business analyst|ba)\b/i.test(norm)) {
+    return 'Management Analysts';
+  }
+  if (/\b(quan ly du an|quan tri du an|project manager|pm)\b/i.test(norm)) {
+    return 'Computer and Information Systems Managers';
+  }
+  if (/\b(kien truc su|architect)\b/i.test(norm)) {
+    return 'Computer Systems Architects';
+  }
+
+  return title;
+}
+
 @Injectable()
 export class OnetService {
   private readonly logger = new Logger(OnetService.name);
@@ -10,6 +61,7 @@ export class OnetService {
 
   /**
    * Tìm kiếm chức danh công việc O*NET tương thích nhất dựa trên tiêu đề công việc (Job Title).
+   * Hỗ trợ chuẩn hóa chức danh tiếng Việt sang tiếng Anh trước khi tìm kiếm.
    * Sử dụng pg_trgm fuzzy matching trên bảng onet.job_titles (54K alternate titles)
    * và fallback sang onet.occupation_data.
    */
@@ -23,66 +75,82 @@ export class OnetService {
       return null;
     }
 
+    const translatedTitle = normalizeVietnameseJobTitle(cleanTitle);
+    const searchQueries =
+      translatedTitle !== cleanTitle
+        ? [translatedTitle, cleanTitle]
+        : [cleanTitle];
+
     try {
       // 1. Khớp chính xác tên chuẩn (Exact case-insensitive match on occupation_data)
-      const exactMatches = await this.prisma.$queryRaw<OnetOccupationDto[]>`
-        SELECT 
-          onetsoc_code AS "socCode",
-          title,
-          description,
-          title AS "matchedTitle",
-          1.0::float AS "similarityScore"
-        FROM onet.occupation_data
-        WHERE LOWER(title) = LOWER(${cleanTitle})
-        LIMIT 1;
-      `;
+      for (const query of searchQueries) {
+        const exactMatches = await this.prisma.$queryRaw<OnetOccupationDto[]>`
+          SELECT 
+            onetsoc_code AS "socCode",
+            title,
+            description,
+            title AS "matchedTitle",
+            1.0::float AS "similarityScore"
+          FROM onet.occupation_data
+          WHERE LOWER(title) = LOWER(${query})
+          LIMIT 1;
+        `;
 
-      if (exactMatches.length > 0) {
-        return exactMatches[0];
+        if (exactMatches.length > 0) {
+          return exactMatches[0];
+        }
       }
 
       // 2. Tìm kiếm mờ thông qua 54K alternate job titles (Trigram GIN search + word_similarity)
-      const fuzzyAlternateMatches = await this.prisma.$queryRaw<OnetOccupationDto[]>`
-        SELECT 
-          jt.onetsoc_code AS "socCode",
-          occ.title,
-          occ.description,
-          jt.job_title AS "matchedTitle",
-          GREATEST(
-            similarity(jt.job_title, ${cleanTitle}),
-            word_similarity(${cleanTitle}, jt.job_title)
-          )::float AS "similarityScore"
-        FROM onet.job_titles jt
-        JOIN onet.occupation_data occ ON jt.onetsoc_code = occ.onetsoc_code
-        WHERE 
-          jt.job_title % ${cleanTitle} 
-          OR ${cleanTitle} <% jt.job_title
-          OR word_similarity(${cleanTitle}, jt.job_title) >= 0.4
-          OR similarity(jt.job_title, ${cleanTitle}) >= 0.25
-        ORDER BY "similarityScore" DESC
-        LIMIT 1;
-      `;
+      for (const query of searchQueries) {
+        const fuzzyAlternateMatches = await this.prisma.$queryRaw<
+          OnetOccupationDto[]
+        >`
+          SELECT 
+            jt.onetsoc_code AS "socCode",
+            occ.title,
+            occ.description,
+            jt.job_title AS "matchedTitle",
+            GREATEST(
+              similarity(jt.job_title, ${query}),
+              word_similarity(${query}, jt.job_title)
+            )::float AS "similarityScore"
+          FROM onet.job_titles jt
+          JOIN onet.occupation_data occ ON jt.onetsoc_code = occ.onetsoc_code
+          WHERE 
+            jt.job_title % ${query} 
+            OR ${query} <% jt.job_title
+            OR word_similarity(${query}, jt.job_title) >= 0.4
+            OR similarity(jt.job_title, ${query}) >= 0.25
+          ORDER BY "similarityScore" DESC
+          LIMIT 1;
+        `;
 
-      if (fuzzyAlternateMatches.length > 0) {
-        return fuzzyAlternateMatches[0];
+        if (fuzzyAlternateMatches.length > 0) {
+          return fuzzyAlternateMatches[0];
+        }
       }
 
       // 3. Fallback: Tìm kiếm mờ trực tiếp trên onet.occupation_data.title
-      const fallbackMatches = await this.prisma.$queryRaw<OnetOccupationDto[]>`
-        SELECT 
-          occ.onetsoc_code AS "socCode",
-          occ.title,
-          occ.description,
-          occ.title AS "matchedTitle",
-          similarity(occ.title, ${cleanTitle})::float AS "similarityScore"
-        FROM onet.occupation_data occ
-        WHERE occ.title % ${cleanTitle} OR similarity(occ.title, ${cleanTitle}) >= 0.20
-        ORDER BY "similarityScore" DESC
-        LIMIT 1;
-      `;
+      for (const query of searchQueries) {
+        const fallbackMatches = await this.prisma.$queryRaw<
+          OnetOccupationDto[]
+        >`
+          SELECT 
+            occ.onetsoc_code AS "socCode",
+            occ.title,
+            occ.description,
+            occ.title AS "matchedTitle",
+            similarity(occ.title, ${query})::float AS "similarityScore"
+          FROM onet.occupation_data occ
+          WHERE occ.title % ${query} OR similarity(occ.title, ${query}) >= 0.20
+          ORDER BY "similarityScore" DESC
+          LIMIT 1;
+        `;
 
-      if (fallbackMatches.length > 0) {
-        return fallbackMatches[0];
+        if (fallbackMatches.length > 0) {
+          return fallbackMatches[0];
+        }
       }
 
       return null;

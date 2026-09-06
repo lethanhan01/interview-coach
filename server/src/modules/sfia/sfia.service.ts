@@ -95,17 +95,26 @@ export class SfiaService implements OnModuleInit {
 
   async getSkillByCode(code: string): Promise<SfiaSkillDto | null> {
     if (!code) return null;
+    if (!this.initialized) {
+      await this.loadCache();
+    }
     const skill = this.skillMap.get(code.trim().toUpperCase());
     return skill ? { ...skill } : null;
   }
 
   async getLevel(levelId: number): Promise<SfiaLevelDto | null> {
     if (typeof levelId !== 'number') return null;
+    if (!this.initialized) {
+      await this.loadCache();
+    }
     const level = this.levelMap.get(levelId);
     return level ? { ...level } : null;
   }
 
   async getAllSkills(): Promise<SfiaSkillDto[]> {
+    if (!this.initialized) {
+      await this.loadCache();
+    }
     return Array.from(this.skillMap.values()).map((s) => ({ ...s }));
   }
 

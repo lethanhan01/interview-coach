@@ -156,9 +156,17 @@ export class HybridMappingService {
     const allSkills = await this.sfiaFacade.getAllSkills();
     const availableCodes = new Set(allSkills.map((s) => s.code.toUpperCase()));
 
-    const skillsOverview = allSkills
-      .slice(0, 80)
-      .map((s) => `${s.code}: ${s.name}`)
+    // Nạp toàn diện các kỹ năng SFIA có hỗ trợ targetLevel mục tiêu, không cắt cụt danh mục
+    const eligibleSkills = allSkills.filter(
+      (s) =>
+        (!s.minLevel || s.minLevel <= targetLevel) &&
+        (!s.maxLevel || s.maxLevel >= targetLevel),
+    );
+    const candidateSkills =
+      eligibleSkills.length >= 10 ? eligibleSkills : allSkills;
+
+    const skillsOverview = candidateSkills
+      .map((s) => `${s.code}: ${s.name} [L${s.minLevel}-L${s.maxLevel}]`)
       .join('\n');
 
     const systemPrompt = `You are a specialist in O*NET occupational standards and SFIA (Skills Framework for the Information Age) version 9.
@@ -170,7 +178,7 @@ Target SFIA Level: ${targetLevel}
 Job Description Text:
 ${jdText.slice(0, 1500)}
 
-Available SFIA Skills (code and name):
+Available SFIA Skills (code, name, supported level range):
 ${skillsOverview}
 
 Please select 2-4 appropriate SFIA skill codes for this role.`;

@@ -129,6 +129,46 @@ describe('OnetFacade & OnetService', () => {
       const result = await facade.findOccupationByTitle('Software Engineer');
       expect(result).toBeNull();
     });
+
+    it('should translate Vietnamese title and find occupation successfully', async () => {
+      // Direct exact match on translated title 'Software Quality Assurance Analysts and Testers'
+      const mockQaOccupation = {
+        socCode: '15-1253.00',
+        title: 'Software Quality Assurance Analysts and Testers',
+        description: 'Test software for bugs.',
+        matchedTitle: 'Software Quality Assurance Analysts and Testers',
+        similarityScore: 1.0,
+      };
+
+      queryRawMock.mockResolvedValueOnce([mockQaOccupation]);
+
+      const result = await facade.findOccupationByTitle(
+        'Chuyên viên kiểm thử phần mềm',
+      );
+      expect(result).toEqual(mockQaOccupation);
+      expect(result?.socCode).toBe('15-1253.00');
+    });
+  });
+
+  describe('normalizeVietnameseJobTitle', () => {
+    it('should normalize Vietnamese IT job titles to English equivalents', () => {
+      const { normalizeVietnameseJobTitle } = require('./onet.service');
+      expect(
+        normalizeVietnameseJobTitle('Chuyên viên kiểm thử phần mềm'),
+      ).toBe('Software Quality Assurance Analysts and Testers');
+      expect(
+        normalizeVietnameseJobTitle('Lập trình viên Backend Node.js'),
+      ).toBe('Software Developers');
+      expect(
+        normalizeVietnameseJobTitle('Kỹ sư quản trị hệ thống DevOps'),
+      ).toBe('Network and Computer Systems Administrators');
+      expect(
+        normalizeVietnameseJobTitle('Chuyên viên an toàn thông tin'),
+      ).toBe('Information Security Analysts');
+      expect(
+        normalizeVietnameseJobTitle('Kỹ sư cơ sở dữ liệu'),
+      ).toBe('Database Architects');
+    });
   });
 
   describe('getOccupationBySocCode', () => {

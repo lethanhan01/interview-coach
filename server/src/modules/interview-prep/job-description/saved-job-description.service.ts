@@ -21,31 +21,84 @@ export function inferTargetSfiaLevel(
   jobTitle?: string | null,
   jobContent?: string | null,
 ): number {
-  const combined = removeVietnameseTones(
-    `${level || ''} ${jobTitle || ''} ${jobContent || ''}`,
-  );
+  // Tầng 1: Đánh giá chức danh công việc `jobTitle` (thường mang chức danh chính thức)
+  if (jobTitle && typeof jobTitle === 'string' && jobTitle.trim()) {
+    const normTitle = removeVietnameseTones(jobTitle.trim());
+    if (
+      /\b(lead|principal|architect|director|truong nhom|kien truc su|team lead|tech lead)\b/i.test(
+        normTitle,
+      )
+    ) {
+      return 5;
+    }
+    if (/\b(senior|sr\b|chuyen vien cao cap|chuyen vien chinh)\b/i.test(normTitle)) {
+      return 4;
+    }
+    if (/\b(intern|thuc tap|sinh vien|trainee)\b/i.test(normTitle)) {
+      return 1;
+    }
+    if (/\b(junior|fresher|associate|moi tot nghiep|entry)\b/i.test(normTitle)) {
+      return 2;
+    }
+    if (/\b(middle|mid)\b/i.test(normTitle)) {
+      return 3;
+    }
+  }
 
-  // Lead / Principal / Architect / Director -> Level 5
-  if (
-    /(lead|principal|architect|director|truong nhom|kien truc su|team lead|tech lead)/i.test(
-      combined,
-    )
-  ) {
-    return 5;
+  // Tầng 2: Đánh giá trường `level` chỉ định trực tiếp từ form/user
+  if (level && typeof level === 'string' && level.trim()) {
+    const normLevel = removeVietnameseTones(level.trim());
+    if (
+      /\b(lead|principal|architect|director|truong nhom|kien truc su|team lead|tech lead)\b/i.test(
+        normLevel,
+      )
+    ) {
+      return 5;
+    }
+    if (/\b(senior|sr\b|chuyen vien cao cap|chuyen vien chinh)\b/i.test(normLevel)) {
+      return 4;
+    }
+    if (/\b(intern|thuc tap|sinh vien|trainee)\b/i.test(normLevel)) {
+      return 1;
+    }
+    if (/\b(junior|fresher|associate|moi tot nghiep|entry)\b/i.test(normLevel)) {
+      return 2;
+    }
+    if (/\b(middle|mid|intermediate)\b/i.test(normLevel)) {
+      return 3;
+    }
   }
-  // Senior -> Level 4
-  if (/(senior|sr\b|chuyen vien cao cap|chuyen vien chinh)/i.test(combined)) {
-    return 4;
+
+  // Tầng 3: Quét nội dung `jobContent` hoặc `requirements` bằng các cụm từ vai trò nghiêm ngặt
+  if (jobContent && typeof jobContent === 'string' && jobContent.trim()) {
+    const normContent = removeVietnameseTones(jobContent.trim());
+    if (
+      /\b(tech lead|team lead|principal engineer|lead developer|truong nhom phat trien)\b/i.test(
+        normContent,
+      )
+    ) {
+      return 5;
+    }
+    if (
+      /\b(senior developer|senior engineer|senior backend|senior frontend|chuyen vien chinh)\b/i.test(
+        normContent,
+      )
+    ) {
+      return 4;
+    }
+    if (
+      /\b(junior developer|junior engineer|fresher developer|lap trinh vien moi tot nghiep)\b/i.test(
+        normContent,
+      )
+    ) {
+      return 2;
+    }
+    if (/\b(thuc tap sinh|internship program)\b/i.test(normContent)) {
+      return 1;
+    }
   }
-  // Junior / Fresher -> Level 2
-  if (/(junior|fresher|associate|moi tot nghiep)/i.test(combined)) {
-    return 2;
-  }
-  // Intern -> Level 1
-  if (/(intern|thuc tap|sinh vien)/i.test(combined)) {
-    return 1;
-  }
-  // Middle / Default -> Level 3
+
+  // Mặc định an toàn cho các vai trò chưa xác định thâm niên: Middle (Level 3)
   return 3;
 }
 

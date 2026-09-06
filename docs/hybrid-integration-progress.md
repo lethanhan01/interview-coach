@@ -120,8 +120,32 @@
   - [x] Cập nhật `GenerateSessionQuestions`: Inject `HybridMappingService`, khởi tạo các bản ghi `session_skills` (bản hợp đồng đánh giá duy nhất của phiên) trong CSDL bất đồng bộ trước khi cấp phát câu hỏi, đảm bảo API `POST /sessions` luôn phản hồi < 100ms.
   - [x] Chạy toàn bộ 69/69 test suites backend: Đạt **540/540 tests passed 100%**.
   - [x] Chạy script kiểm tra thực tế với CSDL Live PostgreSQL: Hoàn tất 100% cả 4 bước (lưu JD chuẩn hóa, suy luận SFIA level, giải quyết kỹ năng SFIA có techContext, và ghi nhận `session_skills` bền vững).
-  - [x] Xác nhận `npm run test:arch` (3/3 tests passed) và `npm run build` (Exit code 0).
-  - [x] **KẾT LUẬN:** Giai đoạn 3 đã hoàn thành 100% (3/3 bước). Hệ thống sẵn sàng chuyển sang Giai đoạn 4 (Cấp Phát Câu Hỏi Theo `session_skills` & Tiêu Chí Nhị Phân).
+- [x] **Bước 3.4: Rà Soát Chuyên Sâu (/grill-me) & Khắc Phục Triệt Để Các Điểm Lệch Giai Đoạn 1, 2, 3**
+  - [x] **Sửa lỗi đảo ngược cấp bậc SFIA trong `inferTargetSfiaLevel`:**
+    - Thiết kế cơ chế phân tầng ưu tiên: `jobTitle` -> `level` -> `jobContent/requirements`.
+    - Bổ sung word boundary `\b` chặt chẽ (`\blead\b`, `\bteam lead\b`, `\bsenior\b`, `\bjunior\b`, `\bintern\b`), chặn 100% hiện tượng false-positive từ các từ nhiễu doanh nghiệp (*"leading company"*, *"leadership mindset"*).
+    - Viết bổ sung 8 unit tests kiểm tra chống nhiễu từ vựng trong `saved-job-description.service.spec.ts` (11/11 passed).
+  - [x] **Mở rộng toàn bộ 147 kỹ năng SFIA trong `HybridMappingService.inferSkillsViaAi`:**
+    - Loại bỏ hoàn toàn `.slice(0, 80)`, nạp toàn bộ 147 kỹ năng SFIA 9 kèm khoảng cấp độ `[Lmin-Lmax]`, tối ưu hóa trong ~735 tokens.
+    - Lọc thông minh theo `targetLevel` để model AI không bao giờ bỏ sót các kỹ năng kiểm thử (`TEST`), bảo mật (`SCTY`, `SCAD`), hay thiết kế (`VISL`).
+    - Viết unit test xác minh presence của `TEST: Testing [L1-L6]` trong prompt (7/7 passed).
+  - [x] **Cầu nối chuẩn hóa chức danh Tiếng Việt trong `OnetService`:**
+    - Xây dựng hàm `normalizeVietnameseJobTitle` ánh xạ các vị trí CNTT cốt lõi từ tiếng Việt sang tiếng Anh chuẩn O*NET.
+    - Nâng cấp `findOccupationByTitle` hỗ trợ tìm kiếm 2 nhánh kết hợp, ánh xạ chính xác *"Chuyên viên kiểm thử phần mềm"* -> `15-1253.00` (Software Quality Assurance Analysts and Testers).
+    - Bổ sung unit tests trong `onet.facade.spec.ts` (16/16 passed).
+  - [x] **Đồng bộ hóa làm giàu O*NET Tech Stack trong `CreateInterviewSession`:**
+    - Bảo toàn `onetSocCode` hiện có, không ghi đè bừa bãi.
+    - Làm giàu `normalizedTechStack` qua `onetFacade.getToolsAndTechnology(onetSocCode)` đồng bộ với `SavedJobDescriptionService`.
+  - [x] **Cơ chế Self-Healing cho `SfiaService`:**
+    - Bổ sung cơ chế lazy reload khi `!this.initialized` để tự phục hồi nếu khởi động ban đầu gặp sự cố CSDL tạm thời.
+    - Bổ sung unit test trong `sfia.facade.spec.ts` (9/9 passed).
+  - [x] **Kiểm thử hồi quy toàn hệ thống:**
+    - Chạy `server/scripts/verify-fixes-phase123-live.ts` trên Live PostgreSQL: **100% Passed**.
+    - Chạy `server/scripts/verify-step5-4-e2e-live.ts` trên Live PostgreSQL: **100% Passed**.
+    - Chạy `npm run test:arch`: **3/3 Passed**.
+    - Chạy toàn bộ backend test suites: **73/73 suites passed (580/580 tests passed 100%)**.
+    - Chạy `npm run build`: **Thành công 100% (Exit code 0)**.
+  - [x] **KẾT LUẬN TOÀN DIỆN:** Toàn bộ các lỗ hổng và điểm kém chất lượng phát hiện qua `/grill-me` cho Giai đoạn 1, 2, 3 đã được khắc phục triệt để và nghiệm thu thành công.
 
 ---
 

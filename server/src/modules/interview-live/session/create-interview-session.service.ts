@@ -132,23 +132,52 @@ export class CreateInterviewSession {
       | string[]
       | null;
 
-    try {
-      const occupation = await this.onetFacade.findOccupationByTitle(
-        savedJobDescription.jobTitle,
-      );
-      onetSocCode = occupation ? occupation.socCode : '15-1252.00';
-    } catch {
-      onetSocCode = onetSocCode || '15-1252.00';
+    if (!onetSocCode) {
+      try {
+        const occupation = await this.onetFacade.findOccupationByTitle(
+          savedJobDescription.jobTitle,
+        );
+        onetSocCode = occupation ? occupation.socCode : '15-1252.00';
+      } catch {
+        onetSocCode = '15-1252.00';
+      }
     }
 
-    targetSfiaLevel = inferTargetSfiaLevel(
-      savedJobDescription.level,
-      savedJobDescription.jobTitle,
-      savedJobDescription.requirements,
-    );
+    if (!targetSfiaLevel) {
+      targetSfiaLevel = inferTargetSfiaLevel(
+        savedJobDescription.level,
+        savedJobDescription.jobTitle,
+        savedJobDescription.requirements,
+      );
+    }
 
     if (!normalizedTechStack || normalizedTechStack.length === 0) {
-      normalizedTechStack = savedJobDescription.techStack ?? [];
+      const rawTech = savedJobDescription.techStack ?? [];
+      try {
+        const onetTools =
+          await this.onetFacade.getToolsAndTechnology(onetSocCode);
+        if (onetTools.length > 0) {
+          const toolMap = new Map(
+            onetTools.map((t) => [t.example.toLowerCase(), t.example]),
+          );
+          const matchedTech = new Set<string>();
+          for (const item of rawTech) {
+            const canonical = toolMap.get(item.toLowerCase());
+            matchedTech.add(canonical || item);
+          }
+          if (matchedTech.size === 0) {
+            onetTools
+              .filter((t) => t.isHotTechnology)
+              .slice(0, 5)
+              .forEach((t) => matchedTech.add(t.example));
+          }
+          normalizedTechStack = Array.from(matchedTech);
+        } else {
+          normalizedTechStack = rawTech;
+        }
+      } catch {
+        normalizedTechStack = rawTech;
+      }
     }
 
     await this.prisma.savedJobDescription.update({
