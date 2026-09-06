@@ -325,6 +325,41 @@ describe('SessionService', () => {
       );
     });
 
+    it('đồng bộ targetSfiaLevel tùy biến vào savedJobDescription khi khác với giá trị hiện tại', async () => {
+      mockPrisma.interviewSession.count.mockResolvedValue(0);
+      mockPrisma.savedJobDescription.findFirst.mockResolvedValue({
+        id: 'saved-jd-1',
+        userId: 'user-abc',
+        onetSocCode: '15-1252.00',
+        targetSfiaLevel: 3,
+        normalizedTechStack: [],
+      });
+      mockPrisma.savedJobDescription.update.mockResolvedValue({});
+      mockPrisma.interviewSession.create.mockResolvedValue({
+        ...BASE_SESSION,
+        savedJobDescriptionId: 'saved-jd-1',
+        targetSfiaLevel: 4,
+      });
+
+      await service.create('user-abc', {
+        ...CREATE_DTO,
+        savedJobDescriptionId: 'saved-jd-1',
+        targetSfiaLevel: 4,
+      });
+
+      expect(mockPrisma.savedJobDescription.update).toHaveBeenCalledWith({
+        where: { id: 'saved-jd-1' },
+        data: { targetSfiaLevel: 4 },
+      });
+      expect(mockPrisma.interviewSession.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            targetSfiaLevel: 4,
+          }),
+        }),
+      );
+    });
+
     it('từ chối savedJobDescriptionId không thuộc user', async () => {
       mockPrisma.interviewSession.count.mockResolvedValue(0);
       mockPrisma.savedJobDescription.findFirst.mockResolvedValue(null);

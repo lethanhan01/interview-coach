@@ -10,6 +10,7 @@ import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 import { OnetService } from './onet.service';
 import { SearchOnetOccupationsDto } from './dto/search-onet-occupations.dto';
+import { GetOnetTechParamDto } from './dto/get-onet-tech-param.dto';
 
 @Controller('onet')
 @ApiTags('O*NET')
@@ -31,8 +32,8 @@ export class OnetController {
   @ApiOperation({ summary: 'Get tools and technology for an O*NET SOC code' })
   @ApiParam({ name: 'socCode', example: '15-1252.00' })
   @ApiOkResponse({ description: 'Tools and technology list' })
-  @ApiCommonErrors(401)
-  async getToolsAndTechnology(@Param('socCode') socCode: string) {
-    return this.onetService.getToolsAndTechnology(socCode);
+  @ApiCommonErrors(400, 401)
+  async getToolsAndTechnology(@Param() params: GetOnetTechParamDto) {
+    return this.onetService.getToolsAndTechnology(params.socCode);
   }
 }

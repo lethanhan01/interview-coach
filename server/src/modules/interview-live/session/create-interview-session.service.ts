@@ -65,6 +65,17 @@ export class CreateInterviewSession {
       dto.savedJobDescriptionId,
     );
 
+    if (
+      dto.targetSfiaLevel &&
+      savedJobDescription.targetSfiaLevel !== dto.targetSfiaLevel
+    ) {
+      await this.prisma.savedJobDescription.update({
+        where: { id: savedJobDescription.id },
+        data: { targetSfiaLevel: dto.targetSfiaLevel },
+      });
+      savedJobDescription.targetSfiaLevel = dto.targetSfiaLevel;
+    }
+
     const session = await this.prisma.$transaction(async (tx) => {
       const created = await tx.interviewSession.create({
         data: {

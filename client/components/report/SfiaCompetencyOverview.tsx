@@ -31,24 +31,25 @@ function SegmentMeter({
   targetLevel,
   skillName,
 }: SegmentMeterProps) {
-  const isPassed = demonstratedLevel >= targetLevel
+  const safeDemonstratedLevel = Math.max(0, Math.min(7, demonstratedLevel ?? 0))
+  const isPassed = safeDemonstratedLevel >= targetLevel && targetLevel > 0
   const segments = [1, 2, 3, 4, 5, 6, 7]
 
   return (
     <div
       role="meter"
       aria-label={`Thang đo SFIA 7 cấp độ cho ${skillName}`}
-      aria-valuenow={demonstratedLevel}
-      aria-valuemin={1}
+      aria-valuenow={safeDemonstratedLevel}
+      aria-valuemin={0}
       aria-valuemax={7}
       className="flex flex-col gap-1.5"
     >
       <div className="flex items-center gap-1">
         {segments.map((level) => {
-          const isFilled = level <= demonstratedLevel
+          const isFilled = level <= safeDemonstratedLevel && safeDemonstratedLevel > 0
           const isTarget = level === targetLevel
           const isBetweenDemonstratedAndTarget =
-            level > demonstratedLevel && level <= targetLevel
+            level > safeDemonstratedLevel && level <= targetLevel
 
           let segmentColor = 'bg-surface-inset text-ink-muted/50 border-border/40'
           if (isFilled) {
@@ -64,7 +65,8 @@ function SegmentMeter({
               key={level}
               title={`Level ${level}: ${SFIA_LEVEL_DESCRIPTIONS[level] || ''}${
                 isTarget ? ' (Mục tiêu)' : ''
-              }${level === demonstratedLevel ? ' (Thể hiện)' : ''}`}
+              }${level === safeDemonstratedLevel ? ' (Thể hiện)' : ''}`}
+              // Design Exception: Compact typography token [10px] for 7-segment meter to prevent numeral overflow on narrow viewports
               className={cn(
                 'relative flex h-6 flex-1 items-center justify-center rounded-sm border text-[10px] font-semibold tabular-nums transition-colors',
                 segmentColor,
@@ -76,7 +78,7 @@ function SegmentMeter({
           )
         })}
       </div>
-      <div className="text-ink-muted flex items-center justify-between text-[11px]">
+      <div className="text-ink-muted flex items-center justify-between text-xs">
         <span>L1: Cơ bản</span>
         <span className="text-ink-faint">Thang SFIA Level 1-7</span>
         <span>L7: Chiến lược</span>
@@ -172,7 +174,12 @@ export function SfiaCompetencyOverview({
                       Kỳ vọng: <strong className="text-ink tabular-nums">Level {skill.targetLevel}</strong>
                     </span>
                     <span className="text-ink-muted">
-                      Thể hiện: <strong className={cn('tabular-nums', isPassed ? 'text-success' : 'text-warning')}>Level {skill.demonstratedLevel}</strong>
+                      Thể hiện:{' '}
+                      <strong className={cn('tabular-nums', isPassed ? 'text-success' : 'text-warning')}>
+                        {skill.demonstratedLevel > 0
+                          ? `Level ${skill.demonstratedLevel}`
+                          : 'Chưa thể hiện (Level 0)'}
+                      </strong>
                     </span>
                   </div>
 

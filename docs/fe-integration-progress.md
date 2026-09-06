@@ -77,6 +77,14 @@
   - [x] Viết unit test `client/components/report/ScoringMethodCard.test.tsx` (2/2 pass).
   - [x] Chạy typecheck và toàn bộ unit test suite (139 test files, 454 tests pass 100%).
 
+- [x] **Remediation & Hardening (/grill-me Thẩm Định Chuyên Sâu Pha 1 & 2):**
+  - [x] **Chuẩn hóa Typography & UI Rule 3:** Thay thế toàn bộ 6 vị trí `text-[11px]` trong `BinaryCriteriaChecklist`, `SkillsBreakdownCard`, `ActionPlanTimeline` sang `text-xs`; giữ `text-[10px]` ở SegmentMeter kèm comment `// Design Exception: ...`.
+  - [x] **WAI-ARIA Accessibility:** Bổ sung `aria-valuemin="0"`, `aria-valuenow="0"` và hiển thị nhãn *"Chưa thể hiện (Level 0)"* khi `demonstratedLevel = 0`. Viết unit test kiểm chứng (4/4 tests pass).
+  - [x] **Storybook Visual Catalog & Test-Runner:** Bổ sung 5 file `.stories.tsx` chuẩn mực trong `client/stories/report/` cho toàn bộ 5 UI components mới. Toàn bộ 144 test files (471 tests) đều pass với Vitest Chromium.
+  - [x] **Backend Validation:** Tạo `GetOnetTechParamDto` xác thực mã SOC bằng regex `^\d{2}-\d{4}\.\d{2}$` theo Backend Rule 4.
+  - [x] **Đồng bộ dữ liệu JD:** Đồng bộ cập nhật `targetSfiaLevel` tùy biến vào `SavedJobDescription` trong `create-interview-session.service.ts` và viết unit test kiểm chứng trong `session.service.spec.ts`.
+  - [x] **Chạy toàn bộ Verification Suite:** `npm run test:arch` (3/3 pass), `npm test` server (74/74 suites, 590/590 tests pass), `nest build` sạch sẽ; `npm run typecheck` client (0 errors), `npm run test:unit` (144 files, 471 tests pass) và `next build` hoàn tất 100%.
+
 ---
 
 ### Pha 3: Tái Cấu Trúc Toàn Diện Trang Báo Cáo Phỏng Vấn (/report)

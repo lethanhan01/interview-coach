@@ -44,4 +44,23 @@ describe('SfiaCompetencyOverview', () => {
       screen.getByText(/Ngữ cảnh: TypeScript • Node.js • PostgreSQL/)
     ).toBeInTheDocument()
   })
+
+  it('handles edge case when demonstratedLevel is 0 with valid ARIA meter attributes', () => {
+    const zeroLevelSkills = [
+      {
+        ...mockUnifiedSkillsBreakdown[0],
+        demonstratedLevel: 0,
+        status: 'gap' as const,
+      },
+    ]
+
+    render(<SfiaCompetencyOverview skills={zeroLevelSkills} />)
+
+    const meter = screen.getByRole('meter')
+    expect(meter).toHaveAttribute('aria-valuenow', '0')
+    expect(meter).toHaveAttribute('aria-valuemin', '0')
+    expect(meter).toHaveAttribute('aria-valuemax', '7')
+
+    expect(screen.getByText('Chưa thể hiện (Level 0)')).toBeInTheDocument()
+  })
 })

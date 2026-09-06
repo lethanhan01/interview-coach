@@ -62,7 +62,7 @@ export function SkillsBreakdownCard({
                         <Badge
                           key={tech}
                           variant="secondary"
-                          className="px-2 py-0 text-[11px] font-normal"
+                          className="px-2 py-0.5 text-xs font-normal"
                         >
                           {tech}
                         </Badge>

@@ -60,17 +60,17 @@ export function BinaryCriteriaChecklist({
 
                   {/* Dimension badge */}
                   {isCore && (
-                    <Badge variant="outline" className="text-[11px] font-medium">
+                    <Badge variant="outline" className="text-xs font-medium">
                       Cốt lõi (Core)
                     </Badge>
                   )}
                   {isSeniority && (
-                    <Badge variant="brand" className="text-[11px] font-medium">
+                    <Badge variant="brand" className="text-xs font-medium">
                       Thâm niên (Seniority)
                     </Badge>
                   )}
                   {!isCore && !isSeniority && (
-                    <Badge variant="secondary" className="text-[11px]">
+                    <Badge variant="secondary" className="text-xs">
                       Tiêu chí
                     </Badge>
                   )}
@@ -83,7 +83,7 @@ export function BinaryCriteriaChecklist({
                 {/* Status badge */}
                 <Badge
                   variant={criterion.passed ? 'success' : 'danger'}
-                  className="px-2 py-0 text-[11px] font-medium"
+                  className="px-2 py-0 text-xs font-medium"
                 >
                   {criterion.passed ? 'Đạt' : 'Không đạt'}
                 </Badge>
@@ -92,7 +92,7 @@ export function BinaryCriteriaChecklist({
               {/* Evidence box */}
               {criterion.evidence && (
                 <div className="bg-surface-inset text-ink border-border/40 flex flex-col gap-1 rounded-lg border p-2.5 text-xs">
-                  <div className="text-ink-muted flex items-center gap-1 text-[11px] font-medium">
+                  <div className="text-ink-muted flex items-center gap-1 text-xs font-medium">
                     <Quote className="size-3" aria-hidden="true" />
                     <span>Bằng chứng ghi nhận:</span>
                   </div>
@@ -105,7 +105,7 @@ export function BinaryCriteriaChecklist({
               {/* Deduction reason box (if failed) */}
               {!criterion.passed && criterion.deductionReason && (
                 <div className="bg-danger-subtle/30 border-danger text-ink rounded-r-lg border-l-2 p-2.5 text-xs">
-                  <div className="flex items-center gap-1 text-[11px] font-semibold text-danger">
+                  <div className="flex items-center gap-1 text-xs font-semibold text-danger">
                     <AlertCircle className="size-3" aria-hidden="true" />
                     <span>Lý do chưa đạt:</span>
                   </div>

@@ -74,7 +74,9 @@ describe('OnetController', () => {
 
   describe('GET /onet/occupations/:socCode/tech', () => {
     it('calls onetService.getToolsAndTechnology with socCode', async () => {
-      const result = await controller.getToolsAndTechnology('15-1252.00');
+      const result = await controller.getToolsAndTechnology({
+        socCode: '15-1252.00',
+      });
 
       expect(service.getToolsAndTechnology).toHaveBeenCalledWith('15-1252.00');
       expect(result).toEqual(mockTech);

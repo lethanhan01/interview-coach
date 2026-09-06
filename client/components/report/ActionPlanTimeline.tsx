@@ -154,7 +154,7 @@ export function ActionPlanTimeline({
                   {/* Focus Topics */}
                   {item.topics && item.topics.length > 0 && (
                     <div className="flex flex-col gap-1.5 pt-1">
-                      <span className="text-ink-muted text-[11px] font-medium uppercase tracking-wider">
+                      <span className="text-ink-muted text-xs font-medium uppercase tracking-wider">
                         Chủ đề trọng tâm cần củng cố:
                       </span>
                       <div className="flex flex-wrap items-center gap-2">
