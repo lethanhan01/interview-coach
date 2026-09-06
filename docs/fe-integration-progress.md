@@ -14,11 +14,11 @@
 | Giai Đoạn | Nội Dung Công Việc | Trạng Thái | Hoàn Thành |
 | :--- | :--- | :---: | :---: |
 | **Pha 1** | Chuẩn Hóa Contracts, Data Types, Backend Bridge & Test Fixtures | 🟢 Đã hoàn thành | 3 / 3 bước |
-| **Pha 2** | Xây Dựng Bộ UI Components Đánh Giá Tinh Gọn Mới | ⚪ Chưa bắt đầu | 0 / 5 bước |
+| **Pha 2** | Xây Dựng Bộ UI Components Đánh Giá Tinh Gọn Mới | 🟢 Đã hoàn thành | 5 / 5 bước |
 | **Pha 3** | Tái Cấu Trúc Toàn Diện Trang Báo Cáo Phỏng Vấn (/report) | ⚪ Chưa bắt đầu | 0 / 4 bước |
 | **Pha 4** | Nâng Cấp Phòng Phỏng Vấn Trực Tiếp (Live Session /sessions/[id]) | ⚪ Chưa bắt đầu | 0 / 2 bước |
 | **Pha 5** | Đồng Bộ Luồng Thiết Lập JD Chuẩn Hóa O*NET (/setup & /jd-library) | ⚪ Chưa bắt đầu | 0 / 4 bước |
-| **TỔNG THỂ** | **Đồng Bộ Hoàn Toàn Frontend Với Unified Interview Engine** | 🟡 **ĐANG THỰC HIỆN** | **3 / 18 bước** |
+| **TỔNG THỂ** | **Đồng Bộ Hoàn Toàn Frontend Với Unified Interview Engine** | 🟡 **ĐANG THỰC HIỆN** | **8 / 18 bước** |
 
 ---
 
@@ -54,11 +54,28 @@
 
 ### Pha 2: Xây Dựng Bộ UI Components Đánh Giá Tinh Gọn Mới
 
-- [ ] **Bước 2.1: Xây dựng `RecommendationBadge.tsx` & Unit Test**
-- [ ] **Bước 2.2: Xây dựng Mô hình 2 Tầng cho Skills Breakdown (`SfiaCompetencyOverview.tsx` & `SkillsBreakdownCard.tsx`) & Unit Test**
-- [ ] **Bước 2.3: Xây dựng `BinaryCriteriaChecklist.tsx` & Unit Test**
-- [ ] **Bước 2.4: Xây dựng `ActionPlanTimeline.tsx` & Unit Test**
-- [ ] **Bước 2.5: Cải tiến trực tiếp `ScoringMethodCard.tsx` & Cập nhật Unit Test**
+- [x] **Bước 2.1: Xây dựng `RecommendationBadge.tsx` & Unit Test**
+  - [x] Tạo `client/components/report/RecommendationBadge.tsx` hỗ trợ 4 trạng thái (`strongly_recommended`, `recommended`, `borderline`, `not_recommended`) kèm fallback an toàn.
+  - [x] Sử dụng semantic tokens và primitive `Badge`, hỗ trợ các kích cỡ `sm`, `md`, `lg`.
+  - [x] Viết unit test `client/components/report/RecommendationBadge.test.tsx` (6/6 tests pass).
+  - [x] Chạy typecheck và vitest xác nhận 100% đạt chuẩn.
+- [x] **Bước 2.2: Xây dựng Mô hình 2 Tầng cho Skills Breakdown (`SfiaCompetencyOverview.tsx` & `SkillsBreakdownCard.tsx`) & Unit Test**
+  - [x] Tạo `client/components/report/SfiaCompetencyOverview.tsx` hiển thị thanh đo 7-segment SFIA Level 1-7, Target vs Demonstrated, bộ đếm Đạt chuẩn / Cần hoàn thiện.
+  - [x] Tạo `client/components/report/SkillsBreakdownCard.tsx` hiển thị chi tiết từng kỹ năng, O*NET tech chips, thanh tiến trình điểm số, box Điểm mạnh & Điểm cần hoàn thiện.
+  - [x] Viết unit tests `SfiaCompetencyOverview.test.tsx` (3/3 pass) và `SkillsBreakdownCard.test.tsx` (2/2 pass).
+  - [x] Chạy typecheck và vitest xác nhận 100% đạt chuẩn.
+- [x] **Bước 2.3: Xây dựng `BinaryCriteriaChecklist.tsx` & Unit Test**
+  - [x] Tạo `client/components/report/BinaryCriteriaChecklist.tsx` hiển thị danh sách tiêu chí nhị phân, badge chiều đánh giá Core vs Seniority, trích dẫn Bằng chứng và Lý do chưa đạt.
+  - [x] Viết unit test `client/components/report/BinaryCriteriaChecklist.test.tsx` (2/2 pass).
+  - [x] Chạy typecheck và vitest xác nhận 100% đạt chuẩn.
+- [x] **Bước 2.4: Xây dựng `ActionPlanTimeline.tsx` & Unit Test**
+  - [x] Tạo `client/components/report/ActionPlanTimeline.tsx` hỗ trợ cả định dạng mới có cấu trúc (ActionPlanItem) kèm độ ưu tiên, số tuần và topics lẫn định dạng legacy fallback.
+  - [x] Viết unit test `client/components/report/ActionPlanTimeline.test.tsx` (3/3 pass).
+  - [x] Chạy typecheck và vitest xác nhận 100% đạt chuẩn.
+- [x] **Bước 2.5: Cải tiến trực tiếp `ScoringMethodCard.tsx` & Cập nhật Unit Test**
+  - [x] Thay thế Donut Chart D1-D6 cũ bằng Thẻ Accordion tương tác giải thích cơ chế đánh giá SFIA 9 & O*NET: Tiêu chí nhị phân 2 chiều (Core & Seniority), Thang cấp bậc SFIA Level 1-7, Cách tính điểm tất định và quy tắc câu bỏ qua (0 điểm, Level 1).
+  - [x] Viết unit test `client/components/report/ScoringMethodCard.test.tsx` (2/2 pass).
+  - [x] Chạy typecheck và toàn bộ unit test suite (139 test files, 454 tests pass 100%).
 
 ---
 
