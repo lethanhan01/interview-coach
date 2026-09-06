@@ -6,13 +6,13 @@
 > - UI Conventions: `client/stories/foundations/Conventions.mdx` & `.claude/rules/ui-conventions.md`
 > - Agent Mandates: `.agents/AGENTS.md`
 > **Vị trí tài liệu:** `docs/fe-unified-interview-engine-integration-plan.md`  
-> **Trạng thái:** Đã qua thẩm định kiến trúc chuyên sâu (/grill-me v3) - Hoàn thiện toàn diện Backend Contract & Frontend UI, Không kẽ hở kỹ thuật, Sẵn sàng triển khai.
+> **Trạng thái:** Đã qua thẩm định kiến trúc chuyên sâu (/grill-me v4) - Hoàn thiện toàn diện Backend Contract & Frontend UI, Tuyệt đối tuân thủ Architecture Rules, Không kẽ hở kỹ thuật, Sẵn sàng triển khai.
 
 ---
 
 ## MỤC LỤC
 
-1. [Tổng Quan Bối Cảnh & Kết Quả Thẩm Định (/grill-me v3)](#1-tổng-quan-bối-cảnh--kết-quả-thẩm-định-grill-me-v3)
+1. [Tổng Quan Bối Cảnh & Kết Quả Thẩm Định (/grill-me v4)](#1-tổng-quan-bối-cảnh--kết-quả-thẩm-định-grill-me-v4)
    - [1.1 Hiện trạng Frontend & Sự Lệch Pha Dữ Liệu](#11-hiện-trạng-frontend--sự-lệch-pha-dữ-liệu)
    - [1.2 Các Quyết Định Kỹ Thuật Đã Chốt Qua /grill-me](#12-các-quyết-định-kỹ-thuật-đã-chốt-qua-grill-me)
 2. [Nguyên Tắc Kiến Trúc & Thiết Kế Giao Diện Frontend](#2-nguyên-tắc-kiến-trúc--thiết-kế-giao-diện-frontend)
@@ -28,7 +28,7 @@
 
 ---
 
-## 1. Tổng Quan Bối Cảnh & Kết Quả Thẩm Định (/grill-me v3)
+## 1. Tổng Quan Bối Cảnh & Kết Quả Thẩm Định (/grill-me v4)
 
 ### 1.1 Hiện trạng Frontend & Sự Lệch Pha Dữ Liệu
 Sau khi Backend chuyển đổi toàn diện sang **Unified Interview Engine** (quy tụ vào `session_skills`, chuẩn hóa O\*NET SOC Code + SFIA Level 1-7, tiêu chí nhị phân 2 chiều `core` và `seniority`), Frontend hiện tại gặp các điểm nghẽn nghiêm trọng:
@@ -40,16 +40,18 @@ Sau khi Backend chuyển đổi toàn diện sang **Unified Interview Engine** (
 
 ### 1.2 Các Quyết Định Kỹ Thuật Đã Chốt Qua /grill-me
 
-| Thành phần | Thiết kế cũ / Vấn đề | Quyết định kỹ thuật chốt (/grill-me) |
+| Thành phần | Thiết kế cũ / Vấn đề | Quyết định kỹ thuật chốt (/grill-me v4) |
 | :--- | :--- | :--- |
-| **Backend Contracts** | `findQuestions` thiếu skill/tech; DTOs thiếu `targetSfiaLevel`; O\*NET chưa có API public | **Mở rộng nhẹ Backend:**<br>1. Thêm `OnetController` (`GET /onet/occupations`, `GET /onet/occupations/:socCode/tech`).<br>2. Cập nhật `session.service.ts` (`findQuestions` trả về `skillCode`, `skillName`, `techContext`).<br>3. Bổ sung `targetSfiaLevel?: number` vào `CreateSessionDto` & `SaveJobDescriptionDto`. |
-| **Nhập liệu JD (`JdForm`)** | Nhập tự do không ràng buộc | **Binding trực tiếp từ Schema O\*NET dạng Hybrid Combobox:** Cho phép tìm kiếm/chọn chức danh chuẩn O\*NET (kèm mã SOC) để chuẩn hóa; tự động gợi ý danh sách Tech Stack của O\*NET; vẫn cho phép ứng viên chỉnh sửa tên công việc theo thực tế JD công ty. |
-| **Xác nhận JD (`ConfirmStep`)** | Chỉ có text thô | **Thẻ tóm tắt `AI Job Profile`:** Hiển thị Chức danh O\*NET, mã SOC, Cấp bậc SFIA mục tiêu (Level 2-5) có thể điều chỉnh qua Radio/Select, danh sách Tech Stack chuẩn hóa. |
+| **API O\*NET Search** | `findOccupationByTitle` chỉ trả về 1 kết quả duy nhất (`LIMIT 1`) | **Bổ sung `searchOccupations(query?, limit = 10)`:** Tìm kiếm mờ qua `pg_trgm` trên `onet.job_titles` và `onet.occupation_data` trả về danh sách `OnetOccupationDto[]`. Khi `query` rỗng, trả về danh sách vị trí IT phổ biến. Bảo vệ bằng `@UseGuards(JwtAuthGuard)`. |
+| **Backend Contracts (Rule 1)** | Nghiệp vụ `findQuestions` cần trả về `skillName` nhưng cấm import chéo nội bộ `SfiaService` | **Tuân thủ Rule 1 qua Facade Contract:** `SessionModule` import `SfiaModule` và inject `ISfiaFacade` bằng `@Inject(SFIA_FACADE_TOKEN)`. Gọi `sfiaFacade.getSkillByCode(code)` truy xuất từ in-memory cache 0ms. |
+| **DTOs & Target SFIA Level** | Backend DTOs chưa nhận `targetSfiaLevel` tùy biến | **Mở rộng DTOs:** Thêm `targetSfiaLevel?: number` vào `CreateSessionDto` & `SaveJobDescriptionDto`. Cập nhật `create-interview-session.service.ts` ưu tiên `dto.targetSfiaLevel ?? savedJobDescription.targetSfiaLevel`. |
+| **Khởi tạo & Tùy chỉnh SFIA Level** | Chỉ có trường text level tự do, chưa liên kết với SFIA Level 1-7 | **Luồng 2 bước tự động & linh hoạt:**<br>1. Tại `JdForm`: Tự động suy luận `targetSfiaLevel` mặc định từ trường `level` (Junior -> 2, Middle -> 3, Senior -> 4, Lead -> 5).<br>2. Tại `ConfirmStep`: Thẻ `AI Job Profile` cho phép ứng viên điều chỉnh qua Radio/Select (Level 2 đến 5), đồng bộ ngược lại state `jd` để lưu chuẩn vào cả `SavedJobDescription` và `InterviewSession`. |
+| **Binding O\*NET trong JD (`JdForm`)** | Nhập tự do không ràng buộc | **Hybrid Combobox O\*NET:** Tìm kiếm/chọn chức danh O\*NET (kèm mã SOC); tự động gợi ý Chips công nghệ từ `/onet/occupations/:socCode/tech`; vẫn cho phép gõ tùy chỉnh tên công việc theo thực tế công ty. |
+| **Dọn dẹp Rubric cũ trên Báo cáo** | `ReportPage` vẫn gọi `rubricService.getActiveRubric` | **Loại bỏ triệt để Rubric API cũ:** Xóa lệnh gọi `rubricService.getActiveRubric` khỏi `ReportPage`. `ScoringMethodCard` và `AnnotatedTranscript` nhận dữ liệu SFIA và `criteriaEvaluations` trực tiếp từ `Report`. |
 | **Thẻ phương pháp (`ScoringMethodCard`)** | Donut D1-D6 cũ | **Ghi đè trực tiếp:** Thay thế toàn bộ bằng thẻ Accordion giải thích cơ chế Đánh giá Tiêu chí Nhị phân 2 Chiều (Core & Seniority) + Thang Cấp độ SFIA Level 1-7 cho mọi phiên. |
 | **Biểu đồ cũ (`CompetencyScoreChart`)** | Vẽ heatmap D1-D6 cũ | **Loại bỏ hoàn toàn:** Xóa `CompetencyScoreChart.tsx`. Các phiên cũ không có `skillsBreakdown` sẽ hiển thị banner thông báo phiên bản cũ và điểm tổng kết. |
 | **Hiển thị năng lực (`SkillsBreakdown`)** | Không có | **Mô hình 2 tầng:**<br>• Tầng 1 `SfiaCompetencyOverview`: Bảng đối chiếu Cấp độ Target vs Demonstrated (thanh đo 7-segment trực quan).<br>• Tầng 2 `SkillsBreakdownCard`: Danh sách thẻ chi tiết kèm O\*NET Tech Stack, điểm 0-100, Ưu điểm & Điểm cần hoàn thiện. |
-| **Checklist từng câu (`AnnotatedTranscript`)** | Thanh điểm `appliedDimensions` cũ | **`BinaryCriteriaChecklist`:** Render checklist Pass/Fail icon, Evidence trích dẫn, Lý do trừ điểm, Demonstrated Level. Giữ nguyên highlight câu chữ và Model Answer. |
-| **Phòng phỏng vấn Live** | Thiếu định hướng kỹ năng | **Hiển thị Badge Kỹ năng & Chips Tech Stack** ở đầu mỗi câu hỏi; ẩn hoàn toàn Rubric Criteria và Target Level để tránh học vẹt. |
+| **Phòng phỏng vấn Live (`QuestionCard`)** | Thiếu định hướng kỹ năng | **Hiển thị Badge Kỹ năng & Chips Tech Stack:** Badge Kỹ năng hiển thị cho mọi câu hỏi có mã SFIA (cả Tech lẫn HR); Chips Công nghệ O\*NET chỉ hiển thị khi `techContext.length > 0`. Tuyệt đối ẩn Rubric Criteria và Target Level. |
 
 ---
 
@@ -72,25 +74,59 @@ Tất cả mã nguồn mới và sửa đổi phải tuân thủ nghiêm ngặt 
 
 ### Pha 1: Chuẩn Hóa Contracts, Data Types, Backend Bridge & Test Fixtures
 
-> **Mục tiêu:** Cung cấp hạ tầng Contract Type-Safe ở cả Backend và Frontend, mở các endpoints còn thiếu phục vụ O\*NET binding và context câu hỏi.
+> **Mục tiêu:** Cung cấp hạ tầng Contract Type-Safe ở cả Backend và Frontend, tuân thủ Rule 1 Cross-Module Contract, mở các endpoints còn thiếu phục vụ O\*NET binding và context câu hỏi.
 
 #### Bước 1.1: Bổ sung Backend Controller & Contract (`server/`)
-1. **Tạo `server/src/modules/onet/onet.controller.ts`:**
-   - `@Get('occupations')`: Tìm kiếm danh mục chức danh O\*NET qua `onetService.findOccupationByTitle` hoặc danh sách IT occupations phổ biến.
-   - `@Get('occupations/:socCode/tech')`: Lấy danh sách Tools & Technologies qua `onetService.getToolsAndTechnology(socCode)`.
+1. **Mở rộng `OnetService` & Tạo `OnetController`:**
+   - Trong `server/src/modules/onet/onet.service.ts`:
+     - Thêm `searchOccupations(query?: string, limit = 10): Promise<OnetOccupationDto[]>`: Sử dụng `pg_trgm` similarity trên `onet.job_titles` và `onet.occupation_data`. Nếu `query` rỗng, trả về danh sách các chức danh IT chuẩn phổ biến.
+   - Tạo `server/src/modules/onet/onet.controller.ts`:
+     - `@UseGuards(JwtAuthGuard)`
+     - `@Get('occupations')`: Gọi `onetService.searchOccupations(query, limit)`.
+     - `@Get('occupations/:socCode/tech')`: Lấy danh sách Tools & Technologies qua `onetService.getToolsAndTechnology(socCode)`.
    - Đăng ký `OnetController` vào `OnetModule`.
 2. **Cập nhật `server/src/modules/interview-live/session/session.service.ts`:**
+   - Trong `SessionModule`: Import `SfiaModule`.
+   - Trong `SessionService`: Inject `@Inject(SFIA_FACADE_TOKEN) private readonly sfiaFacade: ISfiaFacade` (Tuân thủ triệt để Rule 1 Cross-Module Communication via Contracts).
    - Trong `findQuestions(sessionId, userId)`: `include: { sessionSkill: true }`, trích xuất và trả về:
      - `skillCode`: `question.sfiaSkillCode || question.sessionSkill?.skillCode`
-     - `skillName`: Tra cứu từ `SfiaService` (hoặc fallback `skillCode`)
+     - `skillName`: Tra cứu qua `await this.sfiaFacade.getSkillByCode(skillCode)` (fallback `skillCode`)
      - `techContext`: `question.sessionSkill?.techContext ?? []`
 3. **Cập nhật DTOs Backend:**
    - `CreateSessionDto`: Thêm `@IsOptional() @IsInt() @Min(1) @Max(7) targetSfiaLevel?: number;`
    - `SaveJobDescriptionDto`: Thêm `@IsOptional() @IsInt() @Min(1) @Max(7) targetSfiaLevel?: number;` và `@IsOptional() @IsString() onetSocCode?: string;`
-   - Cập nhật `create-interview-session.service.ts` để ưu tiên `dto.targetSfiaLevel` nếu người dùng tùy chỉnh.
+   - Cập nhật `create-interview-session.service.ts` để ưu tiên `dto.targetSfiaLevel ?? savedJobDescription.targetSfiaLevel`.
 
-#### Bước 1.2: Cập nhật `client/lib/types.ts` & Services
-- **Mở rộng interface `Report`:**
+#### Bước 1.2: Cập nhật `client/lib/types.ts`, `setup-types.ts` & Services
+- **Cập nhật `client/lib/setup-types.ts`:**
+  - Bổ sung vào `JdFormData`:
+    ```typescript
+    onetSocCode?: string;
+    onetOccupationTitle?: string;
+    targetSfiaLevel?: number;
+    ```
+  - Thêm helper ánh xạ mặc định từ level sang SFIA level:
+    ```typescript
+    export function mapJdLevelToSfia(level: string): number {
+      switch (level.toLowerCase()) {
+        case 'intern':
+        case 'fresher':
+          return 1;
+        case 'junior':
+          return 2;
+        case 'middle':
+          return 3;
+        case 'senior':
+          return 4;
+        case 'lead':
+        case 'manager':
+          return 5;
+        default:
+          return 3;
+      }
+    }
+    ```
+- **Mở rộng interface `Report` trong `client/lib/types.ts`:**
   ```typescript
   export type RecommendationStatus = 
     | 'strongly_recommended' 
@@ -155,7 +191,7 @@ Tất cả mã nguồn mới và sửa đổi phải tuân thủ nghiêm ngặt 
   - `Question`: Thêm `skillCode?: string; skillName?: string; techContext?: string[]; targetLevel?: number;`.
   - `SavedJobDescription`: Thêm `onetSocCode?: string; onetOccupationTitle?: string; targetSfiaLevel?: number; normalizedTechStack?: string[];`.
 - **Tạo `client/services/onet.service.ts`:**
-  - `searchOccupations(query: string)`
+  - `searchOccupations(query?: string, limit = 10)`
   - `getOccupationTech(socCode: string)`
 
 #### Bước 1.3: Tạo Mock Test Fixtures (`client/tests/fixtures/report.fixture.ts`)
@@ -216,17 +252,19 @@ Tất cả mã nguồn mới và sửa đổi phải tuân thủ nghiêm ngặt 
   - Mục 1: Tiêu chí Nhị phân 2 Chiều (Core & Seniority).
   - Mục 2: Thang Cấp bậc SFIA Version 9 (Level 1-7).
   - Mục 3: Cách tính điểm tất định 0-100% (câu bỏ qua tính 0 điểm).
+- Loại bỏ prop `rubricConfig` cũ.
 - **Cập nhật Unit Test:** `ScoringMethodCard.test.tsx`.
 
 ---
 
 ### Pha 3: Tái Cấu Trúc Toàn Diện Trang Báo Cáo Phỏng Vấn (/report)
 
-> **Mục tiêu:** Ráp nối toàn bộ components mới vào [report/page.tsx](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/app/(candidate)/sessions/[sessionId]/report/page.tsx), loại bỏ component cũ `CompetencyScoreChart.tsx`.
+> **Mục tiêu:** Ráp nối toàn bộ components mới vào [report/page.tsx](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/app/(candidate)/sessions/[sessionId]/report/page.tsx), loại bỏ component cũ `CompetencyScoreChart.tsx` và dọn dẹp API rubric thừa.
 
 #### Bước 3.1: Xóa Bỏ `CompetencyScoreChart.tsx` & Xây Dựng Fallback
 - Xóa file `client/components/report/CompetencyScoreChart.tsx` và test tương ứng.
 - Trong `report/page.tsx`:
+  - Loại bỏ hoàn toàn lệnh gọi `rubricService.getActiveRubric` và state `rubricConfig`.
   - Nếu `report.skillsBreakdown && report.skillsBreakdown.length > 0`: Render `SfiaCompetencyOverview` + `SkillsBreakdownCard`.
   - Nếu không có `skillsBreakdown` (phiên cũ): Hiển thị thông báo phiên bản cũ nhẹ nhàng, không vẽ lại chart cũ.
   - Xử lý Action Plan: Nếu có `actionPlan.actionPlan` thì render `ActionPlanTimeline`; nếu là `items` thì render danh sách gạch đầu dòng.
@@ -238,8 +276,9 @@ Tất cả mã nguồn mới và sửa đổi phải tuân thủ nghiêm ngặt 
 
 #### Bước 3.3: Tái cấu trúc `AnnotatedTranscript.tsx`
 - Tích hợp `BinaryCriteriaChecklist` vào từng câu trả lời.
-- Hiển thị Demonstrated Level của từng câu (`Level 1-7`).
-- Loại bỏ hoàn toàn khối render `appliedDimensions` cũ.
+- Hiển thị Demonstrated Level của từng câu (`Level 1-7`) kèm Tỷ lệ đạt tiêu chí (`criteriaPassRate`).
+- Loại bỏ hoàn toàn khối render `appliedDimensions` cũ và prop `rubricHint`.
+- Xử lý Skipped Question: Hiển thị banner *"Câu hỏi này đã bị bỏ qua (Nhận 0 điểm và Level 1 theo quy chuẩn)"* kèm Model Answer.
 - Cập nhật unit test `AnnotatedTranscript.test.tsx`.
 
 #### Bước 3.4: Chạy Vitest Trang Báo Cáo
@@ -257,14 +296,14 @@ Tất cả mã nguồn mới và sửa đổi phải tuân thủ nghiêm ngặt 
 #### Bước 4.1: Cập nhật `QuestionCard.tsx`
 - **Vị trí:** `client/components/interview/QuestionCard.tsx`
 - Thanh ngữ cảnh câu hỏi:
-  - Huy hiệu Kỹ năng (nếu có): Hiển thị tên kỹ năng (ví dụ: `Phát triển Phần mềm` hoặc `PROG`).
-  - Chips Công nghệ: Danh sách tags công nghệ O\*NET (ví dụ: `Node.js`, `PostgreSQL`).
+  - Huy hiệu Kỹ năng (nếu có): Hiển thị tên kỹ năng SFIA (ví dụ: `Phát triển Phần mềm` hoặc `PROG`) cho cả phiên Kỹ thuật và HR.
+  - Chips Công nghệ: Danh sách tags công nghệ O\*NET (ví dụ: `Node.js`, `PostgreSQL`), chỉ hiển thị khi `techContext.length > 0`.
   - **Bảo mật đề thi:** Tuyệt đối **KHÔNG** hiển thị Rubric Criteria và Target Level.
 - **Unit Test:** `QuestionCard.test.tsx`.
 
 #### Bước 4.2: Tích hợp vào Phòng Thi Trực Tiếp
 - Trong `client/app/(candidate)/sessions/[sessionId]/page.tsx`:
-  - Truyền `skillCode`, `skillName`, `techContext` từ `Question` vào `QuestionCard`.
+  - Truyền `skillCode`, `skillName`, `techContext` từ `current` (Question) vào `QuestionCard`.
 
 ---
 
@@ -280,14 +319,16 @@ Tất cả mã nguồn mới và sửa đổi phải tuân thủ nghiêm ngặt 
     - Tự động điền giá trị gợi ý vào trường "Vị trí tuyển dụng" (Job Title) nhưng vẫn cho phép ứng viên gõ tùy chỉnh theo JD công ty.
     - Gọi API `/onet/occupations/:socCode/tech` để hiển thị danh sách Chips gợi ý công nghệ O\*NET, cho phép ứng viên bấm chọn nhanh để thêm vào Tech Stack.
     - Tự động cập nhật `onetSocCode` và `onetOccupationTitle` vào state JD.
+  - Khi chọn "Level yêu cầu": Tự động suy luận và cập nhật `targetSfiaLevel` mặc định qua `mapJdLevelToSfia(level)`.
 
 #### Bước 5.2: Cập nhật `ConfirmStep.tsx`
 - **Vị trí:** `client/components/setup/ConfirmStep.tsx`
+- Nhận prop `onChange?: (jd: JdFormData) => void`.
 - Thẻ tóm tắt **"Hồ sơ Vị trí Tuyển dụng (AI Job Profile)"**:
   - Chức danh chuẩn O\*NET: `onetOccupationTitle` kèm mã SOC.
-  - Cấp bậc SFIA mục tiêu: Cho phép người dùng tùy chỉnh Cấp bậc (Level 2: Junior, Level 3: Middle, Level 4: Senior, Level 5: Lead) thông qua Radio Group / Select.
+  - Cấp bậc SFIA mục tiêu: Cho phép người dùng tùy chỉnh Cấp bậc (Level 2: Junior, Level 3: Middle, Level 4: Senior, Level 5: Lead) thông qua Radio Group / Select. Khi thay đổi, gọi `onChange` để cập nhật `targetSfiaLevel` vào `jd`.
   - Danh sách Chips Tech Stack đã chọn.
-- Truyền `targetSfiaLevel` đã chọn vào payload `saveJobDescription` và `createSession`.
+- Trong `setup/page.tsx`: Truyền `targetSfiaLevel` đã cập nhật vào payload `saveJobDescription` và `createSession`.
 
 #### Bước 5.3: Cập nhật Thư Viện JD (`/jd-library`)
 - **Vị trí:** `client/app/(candidate)/jd-library/page.tsx`
@@ -299,7 +340,7 @@ Tất cả mã nguồn mới và sửa đổi phải tuân thủ nghiêm ngặt 
   cd client && npm run test:unit
   npm run typecheck
   npm run build
-  cd ../server && npm run test:unit
+  cd ../server && npm test
   ```
 
 ---
@@ -308,37 +349,42 @@ Tất cả mã nguồn mới và sửa đổi phải tuân thủ nghiêm ngặt 
 
 | STT | Thao tác | Tệp tin | Pha | Trách nhiệm chính |
 | :---: | :--- | :--- | :---: | :--- |
-| 1 | **NEW** | `server/src/modules/onet/onet.controller.ts` | 1 | API tìm kiếm Chức danh O\*NET và danh sách Tools & Technologies. |
-| 2 | **MODIFY** | `server/src/modules/onet/onet.module.ts` | 1 | Khai báo `OnetController`. |
-| 3 | **MODIFY** | `server/src/modules/interview-live/session/session.service.ts` | 1 | `findQuestions` trả về `skillCode`, `skillName`, `techContext`. |
-| 4 | **MODIFY** | `server/src/modules/interview-live/session/dto/create-session.dto.ts` | 1 | Bổ sung `targetSfiaLevel?: number`. |
-| 5 | **MODIFY** | `server/src/modules/interview-prep/job-description/dto/save-job-description.dto.ts` | 1 | Bổ sung `targetSfiaLevel?: number; onetSocCode?: string;`. |
-| 6 | **MODIFY** | `client/lib/types.ts` | 1 | Mở rộng interfaces `Report`, `TranscriptItem`, `Question`, `ExecutiveSummary`... |
-| 7 | **NEW** | `client/services/onet.service.ts` | 1 | Client service gọi API O\*NET. |
-| 8 | **MODIFY** | `client/services/session.service.ts` | 1 | Chuẩn hóa hàm `getReport`. |
-| 9 | **NEW** | `client/tests/fixtures/report.fixture.ts` | 1 | Cung cấp mock data chuẩn cho Unified Report, Legacy Report, Skipped Report. |
-| 10 | **NEW** | `client/components/report/RecommendationBadge.tsx` | 2 | Huy hiệu khuyến nghị tuyển dụng 4 trạng thái. |
-| 11 | **NEW** | `client/components/report/RecommendationBadge.test.tsx` | 2 | Unit test cho `RecommendationBadge`. |
-| 12 | **NEW** | `client/components/report/SfiaCompetencyOverview.tsx` | 2 | Tầng 1: Bảng đối chiếu Cấp bậc SFIA Level 1-7 toàn bộ kỹ năng. |
-| 13 | **NEW** | `client/components/report/SkillsBreakdownCard.tsx` | 2 | Tầng 2: Thẻ kỹ năng SFIA chi tiết kèm tech stack, điểm số, ưu/nhược điểm. |
-| 14 | **NEW** | `client/components/report/SkillsBreakdownCard.test.tsx` | 2 | Unit test cho `SkillsBreakdownCard` & `SfiaCompetencyOverview`. |
-| 15 | **NEW** | `client/components/report/BinaryCriteriaChecklist.tsx` | 2 | Checklist tiêu chí nhị phân Pass/Fail kèm Evidence & Deduction Reason. |
-| 16 | **NEW** | `client/components/report/BinaryCriteriaChecklist.test.tsx` | 2 | Unit test cho `BinaryCriteriaChecklist`. |
-| 17 | **NEW** | `client/components/report/ActionPlanTimeline.tsx` | 2 | Lộ trình ôn tập theo độ ưu tiên và số tuần. |
-| 18 | **NEW** | `client/components/report/ActionPlanTimeline.test.tsx` | 2 | Unit test cho `ActionPlanTimeline`. |
-| 19 | **MODIFY** | `client/components/report/ScoringMethodCard.tsx` | 2 | Thay thế trực tiếp Donut cũ bằng Accordion giải thích SFIA 9 & Core/Seniority. |
-| 20 | **MODIFY** | `client/components/report/ScoringMethodCard.test.tsx` | 2 | Cập nhật unit test cho `ScoringMethodCard`. |
-| 21 | **DELETE** | `client/components/report/CompetencyScoreChart.tsx` | 3 | Xóa bỏ component biểu đồ D1-D6 cũ. |
-| 22 | **DELETE** | `client/components/report/CompetencyScoreChart.test.tsx` | 3 | Xóa bỏ unit test của component biểu đồ cũ. |
-| 23 | **MODIFY** | `client/components/report/AnnotatedTranscript.tsx` | 3 | Tích hợp `BinaryCriteriaChecklist`, loại bỏ `appliedDimensions`. |
-| 24 | **MODIFY** | `client/components/report/AnnotatedTranscript.test.tsx` | 3 | Cập nhật unit test cho `AnnotatedTranscript`. |
-| 25 | **MODIFY** | `client/app/(candidate)/sessions/[sessionId]/report/page.tsx` | 3 | Ghép nối giao diện Report mới + Fallback cho phiên cũ. |
-| 26 | **MODIFY** | `client/components/interview/QuestionCard.tsx` | 4 | Hiển thị Tên kỹ năng và Chips công nghệ, ẩn tiêu chí đề thi. |
-| 27 | **MODIFY** | `client/components/interview/QuestionCard.test.tsx` | 4 | Cập nhật unit test cho `QuestionCard`. |
-| 28 | **MODIFY** | `client/app/(candidate)/sessions/[sessionId]/page.tsx` | 4 | Truyền kỹ năng và công nghệ vào `QuestionCard`. |
-| 29 | **MODIFY** | `client/components/setup/JdForm.tsx` | 5 | Hybrid Combobox chọn Chức danh O\*NET và gợi ý Tech Stack. |
-| 30 | **MODIFY** | `client/components/setup/ConfirmStep.tsx` | 5 | Thẻ `AI Job Profile` cho phép tùy chỉnh Cấp bậc SFIA mục tiêu (Level 2-5). |
-| 31 | **MODIFY** | `client/app/(candidate)/jd-library/page.tsx` | 5 | Hiển thị thông tin O\*NET & SFIA trên thẻ JD. |
+| 1 | **MODIFY** | `server/src/modules/onet/onet.service.ts` | 1 | Thêm `searchOccupations(query?, limit)` và curated IT fallback. |
+| 2 | **NEW** | `server/src/modules/onet/onet.controller.ts` | 1 | API tìm kiếm Chức danh O\*NET và danh sách Tools & Technologies (`@UseGuards(JwtAuthGuard)`). |
+| 3 | **MODIFY** | `server/src/modules/onet/onet.module.ts` | 1 | Khai báo `OnetController`. |
+| 4 | **MODIFY** | `server/src/modules/interview-live/session/session.module.ts` | 1 | Import `SfiaModule` để cung cấp `ISfiaFacade`. |
+| 5 | **MODIFY** | `server/src/modules/interview-live/session/session.service.ts` | 1 | Inject `ISfiaFacade`, `findQuestions` trả về `skillCode`, `skillName`, `techContext`. |
+| 6 | **MODIFY** | `server/src/modules/interview-live/session/dto/create-session.dto.ts` | 1 | Bổ sung `targetSfiaLevel?: number`. |
+| 7 | **MODIFY** | `server/src/modules/interview-live/session/create-interview-session.service.ts` | 1 | Ưu tiên `dto.targetSfiaLevel ?? savedJobDescription.targetSfiaLevel`. |
+| 8 | **MODIFY** | `server/src/modules/interview-prep/job-description/dto/save-job-description.dto.ts` | 1 | Bổ sung `targetSfiaLevel?: number; onetSocCode?: string;`. |
+| 9 | **MODIFY** | `client/lib/setup-types.ts` | 1 | Bổ sung `onetSocCode`, `onetOccupationTitle`, `targetSfiaLevel` vào `JdFormData` + helper `mapJdLevelToSfia`. |
+| 10 | **MODIFY** | `client/lib/types.ts` | 1 | Mở rộng interfaces `Report`, `TranscriptItem`, `Question`, `ExecutiveSummary`... |
+| 11 | **NEW** | `client/services/onet.service.ts` | 1 | Client service gọi API O\*NET. |
+| 12 | **MODIFY** | `client/services/session.service.ts` | 1 | Chuẩn hóa hàm `getReport`. |
+| 13 | **NEW** | `client/tests/fixtures/report.fixture.ts` | 1 | Cung cấp mock data chuẩn cho Unified Report, Legacy Report, Skipped Report. |
+| 14 | **NEW** | `client/components/report/RecommendationBadge.tsx` | 2 | Huy hiệu khuyến nghị tuyển dụng 4 trạng thái. |
+| 15 | **NEW** | `client/components/report/RecommendationBadge.test.tsx` | 2 | Unit test cho `RecommendationBadge`. |
+| 16 | **NEW** | `client/components/report/SfiaCompetencyOverview.tsx` | 2 | Tầng 1: Bảng đối chiếu Cấp bậc SFIA Level 1-7 toàn bộ kỹ năng. |
+| 17 | **NEW** | `client/components/report/SkillsBreakdownCard.tsx` | 2 | Tầng 2: Thẻ kỹ năng SFIA chi tiết kèm tech stack, điểm số, ưu/nhược điểm. |
+| 18 | **NEW** | `client/components/report/SkillsBreakdownCard.test.tsx` | 2 | Unit test cho `SkillsBreakdownCard` & `SfiaCompetencyOverview`. |
+| 19 | **NEW** | `client/components/report/BinaryCriteriaChecklist.tsx` | 2 | Checklist tiêu chí nhị phân Pass/Fail kèm Evidence & Deduction Reason. |
+| 20 | **NEW** | `client/components/report/BinaryCriteriaChecklist.test.tsx` | 2 | Unit test cho `BinaryCriteriaChecklist`. |
+| 21 | **NEW** | `client/components/report/ActionPlanTimeline.tsx` | 2 | Lộ trình ôn tập theo độ ưu tiên và số tuần. |
+| 22 | **NEW** | `client/components/report/ActionPlanTimeline.test.tsx` | 2 | Unit test cho `ActionPlanTimeline`. |
+| 23 | **MODIFY** | `client/components/report/ScoringMethodCard.tsx` | 2 | Thay thế trực tiếp Donut cũ bằng Accordion giải thích SFIA 9 & Core/Seniority. |
+| 24 | **MODIFY** | `client/components/report/ScoringMethodCard.test.tsx` | 2 | Cập nhật unit test cho `ScoringMethodCard`. |
+| 25 | **DELETE** | `client/components/report/CompetencyScoreChart.tsx` | 3 | Xóa bỏ component biểu đồ D1-D6 cũ. |
+| 26 | **DELETE** | `client/components/report/CompetencyScoreChart.test.tsx` | 3 | Xóa bỏ unit test của component biểu đồ cũ. |
+| 27 | **MODIFY** | `client/components/report/AnnotatedTranscript.tsx` | 3 | Tích hợp `BinaryCriteriaChecklist`, loại bỏ `appliedDimensions` & `rubricHint`. |
+| 28 | **MODIFY** | `client/components/report/AnnotatedTranscript.test.tsx` | 3 | Cập nhật unit test cho `AnnotatedTranscript`. |
+| 29 | **MODIFY** | `client/app/(candidate)/sessions/[sessionId]/report/page.tsx` | 3 | Ghép nối Report mới, loại bỏ `rubricService.getActiveRubric` + Fallback phiên cũ. |
+| 30 | **MODIFY** | `client/components/interview/QuestionCard.tsx` | 4 | Hiển thị Tên kỹ năng (cả Tech & HR) và Chips công nghệ, ẩn tiêu chí đề thi. |
+| 31 | **MODIFY** | `client/components/interview/QuestionCard.test.tsx` | 4 | Cập nhật unit test cho `QuestionCard`. |
+| 32 | **MODIFY** | `client/app/(candidate)/sessions/[sessionId]/page.tsx` | 4 | Truyền kỹ năng và công nghệ vào `QuestionCard`. |
+| 33 | **MODIFY** | `client/components/setup/JdForm.tsx` | 5 | Hybrid Combobox chọn Chức danh O\*NET và tự suy luận SFIA Level mặc định. |
+| 34 | **MODIFY** | `client/components/setup/ConfirmStep.tsx` | 5 | Thẻ `AI Job Profile` cho phép tùy chỉnh Cấp bậc SFIA mục tiêu (Level 2-5) qua `onChange`. |
+| 35 | **MODIFY** | `client/app/(candidate)/setup/page.tsx` | 5 | Đồng bộ `targetSfiaLevel` và `onetSocCode` vào `saveJobDescription` & `createSession`. |
+| 36 | **MODIFY** | `client/app/(candidate)/jd-library/page.tsx` | 5 | Hiển thị thông tin O\*NET & SFIA trên thẻ JD. |
 
 ---
 
@@ -356,25 +402,27 @@ Tất cả mã nguồn mới và sửa đổi phải tuân thủ nghiêm ngặt 
 - Câu lệnh thực thi:
   ```bash
   cd client && npm run typecheck && npm run build
-  cd ../server && npm run test:unit
+  cd ../server && npm test
   ```
-- Tiêu chí nghiệm thu: **Lệnh `next build` xuất ra bundle sản xuất thành công**, 0 compile errors.
+- Tiêu chí nghiệm thu: **Lệnh `next build` xuất ra bundle sản xuất thành công**, 0 compile errors; toàn bộ Jest test suite backend pass.
 
 ### 5.3 Kịch Bản Kiểm Thử Thủ Công (Manual Scenarios)
 1. **Kịch bản 1: Nhập JD Mới Với O\*NET Binding (/setup):**
    - Vào `/setup`, gõ tìm kiếm chức danh "Software Developers". Chọn mã SOC `15-1252.00`.
    - Hệ thống tự gợi ý danh sách Tech Stack (Node.js, React, SQL...). Bấm chọn nhanh các chips.
-   - Tới `ConfirmStep`, thẻ `AI Job Profile` hiển thị đúng Chức danh và Level 3. Thử chuyển sang Level 4.
-   - Bấm bắt đầu -> Phiên phỏng vấn được khởi tạo thành công với Level 4 mục tiêu.
+   - Trường "Level yêu cầu" chọn "Senior" -> Tự động ánh xạ SFIA Level 4.
+   - Tới `ConfirmStep`, thẻ `AI Job Profile` hiển thị đúng Chức danh và Level 4. Thử điều chỉnh sang Level 3.
+   - Bấm bắt đầu -> Phiên phỏng vấn được khởi tạo thành công với Level 3 mục tiêu.
 2. **Kịch bản 2: Phòng Phỏng Vấn Trực Tiếp (Live Session):**
-   - Mỗi câu hỏi hiển thị Badge Kỹ năng và Chips Tech Stack ở thanh tiêu đề nhỏ.
+   - Mỗi câu hỏi hiển thị Badge Kỹ năng (cả Tech & HR) và Chips Tech Stack (nếu có) ở thanh tiêu đề nhỏ.
    - Tiêu chí chấm điểm và cấp bậc mục tiêu hoàn toàn được giấu kín.
 3. **Kịch bản 3: Xem Báo Cáo Phiên Mới (Unified Engine):**
    - Vào phiên đã hoàn thành.
-   - Kiểm tra: `RecommendationBadge`, điểm số lớn `tabular-nums`, Tầng 1 bảng SFIA Level 1-7, Tầng 2 thẻ kỹ năng chi tiết có ưu/nhược điểm, checklist tiêu chí Pass/Fail kèm evidence, lộ trình Action Plan có tuần và topics.
+   - Kiểm tra: `RecommendationBadge`, điểm số lớn `tabular-nums`, Tầng 1 bảng SFIA Level 1-7, Tầng 2 thẻ kỹ năng chi tiết có ưu/nhược điểm, checklist tiêu chí Pass/Fail kèm evidence & deduction reason, lộ trình Action Plan có tuần và topics.
+   - Không còn bất kỳ network request nào gọi `getActiveRubric`.
 4. **Kịch bản 4: Xem Báo Cáo Phiên Cũ (Graceful Fallback):**
    - Mở báo cáo của phiên cũ (không có `skillsBreakdown`).
-   - Kiểm tra: Không crash, hiển thị thông báo phiên cũ an toàn.
+   - Kiểm tra: Không crash, hiển thị thông báo phiên cũ an toàn kèm điểm tổng kết.
 
 ---
 
@@ -387,3 +435,4 @@ Tất cả mã nguồn mới và sửa đổi phải tuân thủ nghiêm ngặt 
 | **Báo cáo chưa sẵn sàng (`REPORT_NOT_READY` / SSE)** | Trung bình | Cơ chế Polling kết hợp Server-Sent Events (SSE) đã có sẵn trong `ReportPage` được bảo toàn nguyên vẹn. |
 | **Vi phạm UI Conventions (Hardcode mã màu hex/bracket)** | Cao | Sử dụng triệt để CVA và bảng lookup `RECORD` cố định, toàn bộ colors ánh xạ vào Semantic Tokens của hệ thống (`bg-surface-1`, `text-ink`, `bg-ai`, `border-border`). |
 | **Không tìm thấy O\*NET match khi gõ tự do** | Thấp | Giữ giá trị gõ tự do làm `jobTitle`, fallback `onetSocCode = '15-1252.00'` và `onetOccupationTitle = 'Software Developers'`. |
+| **Vi phạm Module Architecture (Rule 1)** | Nghiêm trọng | `SessionService` tuyệt đối không import chéo `SfiaService`. Bắt buộc dùng `ISfiaFacade` được inject qua `SFIA_FACADE_TOKEN` từ `@modules/sfia/contracts`. |
