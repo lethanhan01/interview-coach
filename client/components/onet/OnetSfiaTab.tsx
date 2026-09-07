@@ -445,8 +445,8 @@ export function OnetSfiaTab({
           </Button>
         </div>
 
-        {/* Empty State when no mappings exist */}
-        {localMappings.length === 0 && (
+        {/* Empty State when no mappings exist and not currently inserting */}
+        {localMappings.length === 0 && !isInserting && (
           <div className="p-8">
             <EmptyState
               icon={<Network className="text-brand size-12" />}

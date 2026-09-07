@@ -119,12 +119,12 @@ export function OnetSfiaRow({
     setValidationError(null)
   }
 
-  // Scroll into view when highlighted
+  // Scroll into view when highlighted or inserting
   useEffect(() => {
-    if (isHighlighted && rowRef.current) {
+    if ((isHighlighted || isInserting) && rowRef.current) {
       rowRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
-  }, [isHighlighted])
+  }, [isHighlighted, isInserting])
 
   // Track isDirty
   useEffect(() => {
