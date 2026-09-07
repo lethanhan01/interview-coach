@@ -1,31 +1,29 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import {
   Copy,
   Check,
   Sparkles,
-  GraduationCap,
-  Briefcase,
-  Wrench,
-  FileCheck2,
   Share2,
-  Clock,
-  Layers,
   AlertCircle,
   RefreshCw,
-  Info,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { onetMockService } from '@/services/onet.mock'
+import { OnetOverviewTab } from './OnetOverviewTab'
+import { OnetTechSkillsTab } from './OnetTechSkillsTab'
+import { OnetTasksTab } from './OnetTasksTab'
+import { OnetAlternateTitlesTab } from './OnetAlternateTitlesTab'
+import { OnetSfiaTab } from './OnetSfiaTab'
 import type {
   OnetOccupationDetail,
   OnetDetailSubTab,
+  OnetSfiaMapping,
 } from './types'
 
 export interface OnetDetailShellProps {
@@ -33,6 +31,7 @@ export interface OnetDetailShellProps {
   activeDetailTab: OnetDetailSubTab
   onSelectDetailTab: (tab: OnetDetailSubTab) => void
   onLoadedDetail?: (detail: OnetOccupationDetail) => void
+  onDirtyChange?: (isDirty: boolean) => void
   className?: string
 }
 
@@ -41,6 +40,7 @@ export function OnetDetailShell({
   activeDetailTab,
   onSelectDetailTab,
   onLoadedDetail,
+  onDirtyChange,
   className,
 }: OnetDetailShellProps) {
   const [detail, setDetail] = useState<OnetOccupationDetail | null>(null)
@@ -48,12 +48,17 @@ export function OnetDetailShell({
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [prevSoc, setPrevSoc] = useState(socCode)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   if (prevSoc !== socCode) {
     setPrevSoc(socCode)
     setLoading(true)
     setError(null)
   }
+
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [socCode, activeDetailTab])
 
   useEffect(() => {
     let isCancelled = false
@@ -118,6 +123,22 @@ export function OnetDetailShell({
     } catch {
       // Fallback
     }
+  }
+
+  const handleUpdateMappings = (newMappings: OnetSfiaMapping[]) => {
+    if (!detail) return
+    const updated: OnetOccupationDetail = {
+      ...detail,
+      sfiaMappings: newMappings,
+      mappingCount: newMappings.length,
+      isMapped: newMappings.length > 0,
+      stats: {
+        ...detail.stats,
+        mappingCount: newMappings.length,
+      },
+    }
+    setDetail(updated)
+    onLoadedDetail?.(updated)
   }
 
   // Loading Skeleton State
@@ -272,170 +293,43 @@ export function OnetDetailShell({
         </div>
       </div>
 
-      {/* Main Content Body (Independently Scrollable) */}
-      <div className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3.5">
-        {/* Tab 1: Overview Tab Content */}
+      {/* Main Content Body (Independently Scrollable with scrollbar-thin) */}
+      <div
+        ref={contentRef}
+        className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3.5 scrollbar-thin"
+      >
+        {/* Tab 1: Overview */}
         {activeDetailTab === 'overview' && (
-          <div className="space-y-3.5">
-            {/* KPI Metric Cards */}
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-              <Card className="p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-ink-muted text-xs font-medium uppercase tracking-wider">
-                    Công nghệ
-                  </span>
-                  <Wrench className="text-brand size-3.5" />
-                </div>
-                <div className="mt-1.5 flex items-baseline gap-1.5">
-                  <span className="text-ink text-xl font-bold tabular-nums">
-                    {detail.stats.toolCount}
-                  </span>
-                  <span className="text-ink-faint text-xs">tools</span>
-                </div>
-              </Card>
-
-              <Card className="p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-ink-muted text-xs font-medium uppercase tracking-wider">
-                    SFIA 9
-                  </span>
-                  <Sparkles className="text-success size-3.5" />
-                </div>
-                <div className="mt-1.5 flex items-baseline gap-1.5">
-                  <span className="text-ink text-xl font-bold tabular-nums">
-                    {detail.stats.mappingCount}
-                  </span>
-                  <span className="text-ink-faint text-xs">kỹ năng</span>
-                </div>
-              </Card>
-
-              <Card className="p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-ink-muted text-xs font-medium uppercase tracking-wider">
-                    Nhiệm vụ
-                  </span>
-                  <FileCheck2 className="text-brand size-3.5" />
-                </div>
-                <div className="mt-1.5 flex items-baseline gap-1.5">
-                  <span className="text-ink text-xl font-bold tabular-nums">
-                    {detail.stats.taskCount}
-                  </span>
-                  <span className="text-ink-faint text-xs">tasks</span>
-                </div>
-              </Card>
-
-              <Card className="p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-ink-muted text-xs font-medium uppercase tracking-wider">
-                    Chức danh
-                  </span>
-                  <Layers className="text-ink-muted size-3.5" />
-                </div>
-                <div className="mt-1.5 flex items-baseline gap-1.5">
-                  <span className="text-ink text-xl font-bold tabular-nums">
-                    {detail.stats.alternateTitleCount}
-                  </span>
-                  <span className="text-ink-faint text-xs">titles</span>
-                </div>
-              </Card>
-            </div>
-
-            {/* Description Card */}
-            <Card className="p-3.5 sm:p-4">
-              <h2 className="text-ink text-xs font-semibold uppercase tracking-wider">
-                Mô tả Vai trò Nghề nghiệp (O*NET Content Model)
-              </h2>
-              <p className="text-ink/90 mt-2 text-xs sm:text-sm leading-relaxed">
-                {detail.description}
-              </p>
-            </Card>
-
-            {/* Job Zone Card */}
-            <Card className="p-3.5 sm:p-4">
-              <div className="flex items-center justify-between border-b pb-2">
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="text-brand size-4" />
-                  <h2 className="text-ink text-xs sm:text-sm font-semibold">
-                    Job Zone {detail.jobZone.zone}: {detail.jobZone.name}
-                  </h2>
-                </div>
-                <Badge variant="outline" className="text-[11px]">
-                  Cấp độ {detail.jobZone.zone} / 5
-                </Badge>
-              </div>
-
-              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1 text-ink-muted text-[11px]">
-                    <GraduationCap className="size-3" />
-                    <span>Trình độ học vấn</span>
-                  </div>
-                  <p className="text-ink text-xs font-medium leading-normal">
-                    {detail.jobZone.education}
-                  </p>
-                </div>
-
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1 text-ink-muted text-[11px]">
-                    <Briefcase className="size-3" />
-                    <span>Kinh nghiệm yêu cầu</span>
-                  </div>
-                  <p className="text-ink text-xs font-medium leading-normal">
-                    {detail.jobZone.experience}
-                  </p>
-                </div>
-
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1 text-ink-muted text-[11px]">
-                    <Clock className="size-3" />
-                    <span>Đào tạo tại chỗ</span>
-                  </div>
-                  <p className="text-ink text-xs font-medium leading-normal">
-                    {detail.jobZone.jobTraining}
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            {/* Phase 1 Completion Note Banner */}
-            <div className="border-brand/30 bg-brand/5 flex items-start gap-2.5 rounded-xl border p-3">
-              <Info className="text-brand mt-0.5 size-4 shrink-0" />
-              <div className="space-y-0.5 text-xs leading-relaxed">
-                <p className="text-brand font-semibold text-[11px]">
-                  Sẵn sàng chuyển tiếp sang Phase 2 & 3
-                </p>
-                <p className="text-ink-muted text-[11px]">
-                  Bạn đang xem bộ khung điều hướng và Master Sidebar của <strong>Phase 1</strong>. Các tab chi tiết chuyên sâu gồm Interactive Tech Cloud, Bảng Ánh xạ SFIA CRUD Inline, Phân loại Nhiệm vụ Core/Supplemental, và Tra cứu Chức danh thị trường sẽ được kích hoạt trong <strong>Phase 2</strong> và <strong>Phase 3</strong>.
-                </p>
-              </div>
-            </div>
-          </div>
+          <OnetOverviewTab
+            detail={detail}
+            onSelectDetailTab={onSelectDetailTab}
+          />
         )}
 
-        {/* Sub-tabs Placeholder (Ready for Phase 2 & 3) */}
-        {activeDetailTab !== 'overview' && (
-          <Card className="flex flex-col items-center justify-center p-12 text-center">
-            <div className="bg-surface-inset text-brand flex size-14 items-center justify-center rounded-2xl">
-              <Layers className="size-7" />
-            </div>
-            <h3 className="text-ink mt-4 text-base font-bold">
-              Tab {activeDetailTab === 'tech' && 'Kỹ năng Phần mềm (Tech Skills)'}
-              {activeDetailTab === 'sfia' && 'Ánh xạ Năng lực SFIA (SFIA Mappings)'}
-              {activeDetailTab === 'tasks' && 'Nhiệm vụ Công việc (Tasks)'}
-              {activeDetailTab === 'titles' && 'Chức danh Thị trường (Alternate Titles)'}
-            </h3>
-            <p className="text-ink-muted mt-2 max-w-md text-xs leading-relaxed">
-              Nội dung chuyên sâu của tab này đã được chuẩn bị đầy đủ dữ liệu trong Mock Service và sẽ được kích hoạt giao diện chi tiết trong <strong>Phase 2</strong> (Tech Skills, Tasks, Titles) và <strong>Phase 3</strong> (SFIA CRUD Inline).
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onSelectDetailTab('overview')}
-              className="mt-5 text-xs"
-            >
-              Quay lại tab Tổng quan
-            </Button>
-          </Card>
+        {/* Tab 2: Tech Skills */}
+        {activeDetailTab === 'tech' && (
+          <OnetTechSkillsTab skills={detail.softwareSkills} />
+        )}
+
+        {/* Tab 3: SFIA Mapping CRUD Inline */}
+        {activeDetailTab === 'sfia' && (
+          <OnetSfiaTab
+            socCode={detail.socCode}
+            occupationTitle={detail.title}
+            mappings={detail.sfiaMappings}
+            onUpdateMappings={handleUpdateMappings}
+            onDirtyChange={onDirtyChange}
+          />
+        )}
+
+        {/* Tab 4: Tasks */}
+        {activeDetailTab === 'tasks' && (
+          <OnetTasksTab tasks={detail.tasks} />
+        )}
+
+        {/* Tab 5: Alternate Job Titles */}
+        {activeDetailTab === 'titles' && (
+          <OnetAlternateTitlesTab titles={detail.alternateTitles} />
         )}
       </div>
     </div>

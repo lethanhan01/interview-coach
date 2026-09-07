@@ -148,7 +148,7 @@ Mọi component, tab và view đều phải xử lý đầy đủ và đồng b�
 
 ## 3. Kế hoạch Triển khai 6 Phase Chi tiết
 
-### Phase 1: Layout Shell, Điều hướng, Mock Service & Master Sidebar
+### Phase 1: Layout Shell, Điều hướng, Mock Service & Master Sidebar (✅ Hoàn thành)
 
 **Mục tiêu**: Thiết lập bộ khung điều hướng trang `/admin/onet`, cơ chế cấp dữ liệu mẫu (Mock Service), bộ chuyển đổi 2 chế độ xem (`Analytics` vs `Explorer`), và Master Sidebar phân cấp theo 23 nhóm SOC lớn.
 
@@ -168,11 +168,11 @@ Mọi component, tab và view đều phải xử lý đầy đủ và đồng b�
    - Xử lý Drawer trên Mobile/Tablet (`<Sheet>` trượt từ trái).
 
 **Tiêu chí nghiệm thu Phase 1**:
-- Truy cập `/admin/onet` từ thanh menu quản trị thành công.
-- Chuyển đổi tab Explorer và Analytics mượt mà, URL cập nhật đúng `?tab=explorer`.
-- Sidebar hiển thị đầy đủ 23 Major Groups, mở/đóng accordion mượt, ô tìm kiếm lọc chính xác nghề.
-- Click chọn một nghề -> URL cập nhật `?soc=15-1252.00`.
-- Trên màn hình nhỏ (<1024px), sidebar tự ẩn và mở qua Drawer nút bấm mượt mà.
+- [x] Truy cập `/admin/onet` từ thanh menu quản trị thành công.
+- [x] Chuyển đổi tab Explorer và Analytics mượt mà, URL cập nhật đúng `?tab=explorer`.
+- [x] Sidebar hiển thị đầy đủ 23 Major Groups, mở/đóng accordion mượt, ô tìm kiếm lọc chính xác nghề.
+- [x] Click chọn một nghề -> URL cập nhật `?soc=15-1252.00`.
+- [x] Trên màn hình nhỏ (<1024px), sidebar tự ẩn và mở qua Drawer nút bấm mượt mà.
 
 ---
 
@@ -202,45 +202,48 @@ Mọi component, tab và view đều phải xử lý đầy đủ và đồng b�
    - Phân trang gọn gàng (Pagination) và ô tìm kiếm chức danh.
 
 **Tiêu chí nghiệm thu Phase 2**:
-- Click bất kỳ nghề nào ở Sidebar -> Detail Panel cập nhật nội dung tức thì.
-- Chuyển đổi giữa các tab lưu trạng thái vào URL `?detail=tech`, `?detail=tasks`...
-- Tab Tech Skills lọc đúng theo chips "Hot Tech" và ô search.
-- Tab Tasks hiển thị 2 nhóm nhiệm vụ rõ ràng, dễ đọc.
-- Tab Alternate Titles phân trang và tìm kiếm chức danh hoạt động mượt mà.
+- [x] Click bất kỳ nghề nào ở Sidebar -> Detail Panel cập nhật nội dung tức thì.
+- [x] Chuyển đổi giữa các tab lưu trạng thái vào URL `?detail=tech`, `?detail=tasks`...
+- [x] Tab Tech Skills lọc đúng theo chips "Hot Tech", "In Demand", ô search, hỗ trợ 2 chế độ xem (Category & Cloud) và copy nhanh.
+- [x] Tab Tasks hiển thị 2 nhóm nhiệm vụ (Core & Supplemental) rõ ràng, đánh số thứ tự, highlight từ khóa tìm kiếm và copy câu phát biểu.
+- [x] Tab Alternate Titles phân trang 10/20/50, ô tìm kiếm chức danh và sao chép lẻ/hàng loạt hoạt động mượt mà.
+- [x] Tab Overview hiển thị 4 KPI click chuyển tab, nút sao chép mô tả, và thanh đo trực quan 5 mức Job Zone.
 
 ---
 
-### Phase 3: Detail Panel — Tab SFIA Mapping CRUD Inline
+### Phase 3: Detail Panel — Tab SFIA Mapping CRUD Inline (✅ Hoàn thành)
 
-**Mục tiêu**: Xây dựng tab Ánh xạ năng lực SFIA với bảng **Inline Editable Table**, cho phép Admin xem, chỉnh sửa trực tiếp trên hàng, thêm mới qua Combobox gợi ý SFIA, và xóa mapping an toàn.
+**Mục tiêu**: Xây dựng tab Ánh xạ năng lực SFIA với kiến trúc trực quan 2 tầng (**2-Tier Visual Competency Architecture**), gồm **Level Spectrum Bar** (Tier 1) và **Inline Editable Table** (Tier 2), cho phép Admin xem, chỉnh sửa trực tiếp trên hàng, thêm mới qua Combobox gợi ý SFIA, và xóa mapping an toàn.
 
 **Các công việc cụ thể**:
 1. **SFIA Tab Container (`client/components/onet/OnetSfiaTab.tsx`)**:
-   - Header hiển thị tổng số mapping hiện có của nghề, nút `+ Thêm Mapping mới`.
-   - Bảng hiển thị danh sách mappings với các cột: Mã & Tên kỹ năng SFIA, Cấp độ mục tiêu (Level), Trọng số (Weight), Cốt lõi (Core/Secondary), Nguồn (Source), Thao tác (Actions).
-2. **Hàng Bảng Inline Editable (`client/components/onet/OnetMappingRow.tsx`)**:
-   - **View Mode**: Hiển thị dữ liệu dạng Badge và Text chuẩn token; nút ✏️ (Chỉnh sửa) và 🗑️ (Xóa).
+   - Header hiển thị thanh tìm kiếm, bộ lọc Core/Secondary, nút khôi phục dữ liệu mẫu và nút `+ Thêm Ánh xạ Mới`.
+   - Tích hợp Level Spectrum Bar (Tier 1) phản ánh phân bố cấp độ L1–L7 của toàn bộ nghề nghiệp.
+   - Bảng hiển thị danh sách mappings với các cột: Kỹ năng SFIA, Cấp độ mục tiêu & Thang đo 7 mức (Mini Gauge), Trọng số (Weight), Vai trò (Core/Secondary), Nguồn (Source), Thao tác (Actions).
+2. **Hàng Bảng Inline Editable (`client/components/onet/OnetSfiaRow.tsx`)**:
+   - **View Mode**: Hiển thị dữ liệu dạng Badge và Text chuẩn token; thanh 7-bar Mini Gauge trực quan; Popover tra cứu định nghĩa SFIA 9; nút ✏️ (Chỉnh sửa) và 🗑️ (Xóa).
    - **Edit Mode**:
-     - Cột Level chuyển thành `<Select>` chỉ chứa các level hợp lệ trong dải `[minLevel, maxLevel]` của skill đó.
+     - Cột Level chuyển thành `<Select>` chỉ chứa các level hợp lệ trong dải `[minLevel, maxLevel]` của skill đó, kèm thẻ mô tả trách nhiệm công việc thực tế theo SFIA.
      - Cột Weight chuyển thành `<Input type="number" min="0.1" max="5.0" step="0.1">`.
      - Cột Core chuyển thành `<Switch>`.
-     - Cột Actions chuyển thành nút **Lưu (✔️ Check)** và **Hủy (✖️ X)**.
+     - Cột Actions chuyển thành nút **Lưu (✔️ Check)** và **Hủy (✖️ X)**, hỗ trợ phím tắt Enter và Escape.
 3. **Luồng Thêm mới Mapping**:
-   - Bấm `+ Thêm Mapping mới` -> Chèn 1 hàng mới ở đầu bảng.
-   - Ô Kỹ năng SFIA sử dụng `<Combobox>` tìm kiếm theo mã hoặc tên kỹ năng (ví dụ gõ "prog" -> gợi ý `PROG - Programming/software development`).
+   - Bấm `+ Thêm Ánh xạ Mới` -> Chèn 1 hàng mới ở đầu bảng.
+   - Ô Kỹ năng SFIA sử dụng `<Combobox>` tìm kiếm theo mã hoặc tên kỹ năng (ví dụ gõ "prog" -> gợi ý `PROG - Lập trình/phát triển phần mềm`).
    - Sau khi chọn Skill: Dropdown Level tự động tính toán và giới hạn chỉ cho chọn các level hợp lệ của skill đó.
    - Bấm Lưu -> Thêm vào danh sách mock state -> Hiển thị Toast thông báo thành công.
 4. **Luồng Xóa Mapping**:
    - Bấm 🗑️ -> Mở `<AlertDialog>` xác nhận: *"Bạn có chắc chắn muốn xóa ánh xạ kỹ năng SFIA {CODE} level {LEVEL}?"* -> Xác nhận -> Xóa khỏi bảng.
 5. **Cảnh báo Thay đổi Chưa lưu (`UnsavedNavigationGuard`)**:
-   - Chặn chuyển nghề/chuyển tab khi đang có hàng ở Edit mode và hiển thị modal cảnh báo.
+   - Chặn chuyển nghề/chuyển tab/chuyển hàng khi đang có hàng ở Edit mode và hiển thị modal cảnh báo an toàn.
 
 **Tiêu chí nghiệm thu Phase 3**:
-- Bấm Sửa trên hàng -> Chuyển thành form inline mượt mà, áp dụng đúng Single-row Edit Rule.
-- Dropdown Level không cho phép chọn ngoài khoảng min-max của kỹ năng.
-- Thêm mới qua Combobox mượt mà, hỗ trợ tìm kiếm nhanh.
-- Xóa có modal xác nhận an toàn, có toast feedback rõ ràng.
-- Chuyển nghề khi đang sửa -> Modal cảnh báo xuất hiện đúng yêu cầu.
+- [x] Kiến trúc 2 tầng (Tier 1 Visual Spectrum Bar + Tier 2 Inline Table) trực quan, có 4 KPI cards và pin kỹ năng click-to-highlight.
+- [x] Bấm Sửa trên hàng -> Chuyển thành form inline mượt mà, áp dụng đúng Single-row Edit Rule.
+- [x] Dropdown Level không cho phép chọn ngoài khoảng min-max của kỹ năng, hiển thị mô tả trách nhiệm trực tiếp theo cấp độ.
+- [x] Thêm mới qua Combobox mượt mà, hỗ trợ tìm kiếm nhanh theo mã hoặc tên kỹ năng SFIA 9.
+- [x] Xóa có modal xác nhận an toàn (`AlertDialog`), có toast feedback rõ ràng.
+- [x] Chuyển nghề/chuyển tab/chuyển hàng khi đang sửa -> Modal cảnh báo `UnsavedNavigationGuard` xuất hiện đúng yêu cầu.
 
 ---
 
@@ -325,8 +328,8 @@ Mọi component, tab và view đều phải xử lý đầy đủ và đồng b�
 
 | Phase | Tên Phase | Trọng tâm | Trạng thái |
 |---|---|---|---|
-| **Phase 1** | Shell, Navigation, Mock Service & Master Sidebar | Frontend UI & Navigation | ⏳ Sẵn sàng thực hiện |
-| **Phase 2** | Detail Panel 4 Tab nội dung (Overview, Tech, Tasks, Titles) | Frontend UI & Content | ⏳ Chờ Phase 1 duyệt |
+| **Phase 1** | Shell, Navigation, Mock Service & Master Sidebar | Frontend UI & Navigation | ✅ Hoàn thành |
+| **Phase 2** | Detail Panel 4 Tab nội dung (Overview, Tech, Tasks, Titles) | Frontend UI & Content | ✅ Hoàn thành (Chờ duyệt) |
 | **Phase 3** | Detail Panel Tab SFIA Mapping CRUD Inline | Frontend Interaction & State | ⏳ Chờ Phase 2 duyệt |
 | **Phase 4** | Chế độ xem Thống kê Analytics Dashboard | Frontend Visual & Analytics | ⏳ Chờ Phase 3 duyệt |
 | **Phase 5** | Backend Controller, Service, DTOs & DB Queries | Backend Architecture & DB | ⏳ Chờ duyệt toàn bộ UI |

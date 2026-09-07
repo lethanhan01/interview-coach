@@ -43,10 +43,21 @@ export interface OnetSoftwareSkill {
   inDemand: boolean // ⚡ In Demand
 }
 
+export interface SfiaSkillDefinition {
+  code: string // e.g. "PROG", "TEST", "DBDS"
+  name: string // e.g. "Programming/software development"
+  category: string // e.g. "Phát triển & Triển khai", "Dữ liệu & Phân tích"
+  description: string // Mô tả tổng quan năng lực kỹ năng
+  minLevel: number // Giới hạn dưới hợp lệ (1 - 7)
+  maxLevel: number // Giới hạn trên hợp lệ (1 - 7)
+  levelDescriptions: Record<number, string> // Mô tả tiêu chuẩn tại từng level
+}
+
 export interface OnetSfiaMapping {
   id: string
   skillCode: string // e.g. "PROG", "TEST", "DBDS"
   skillName: string // e.g. "Programming/software development"
+  category?: string
   targetLevel: number // 1 - 7
   minLevel: number // Giới hạn dưới hợp lệ của skill
   maxLevel: number // Giới hạn trên hợp lệ của skill

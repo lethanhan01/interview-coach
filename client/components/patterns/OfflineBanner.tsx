@@ -1,8 +1,25 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { WifiOff } from 'lucide-react'
 import Button from '@/components/ui/Button'
+
+function subscribeOnlineStatus(callback: () => void) {
+  window.addEventListener('online', callback)
+  window.addEventListener('offline', callback)
+  return () => {
+    window.removeEventListener('online', callback)
+    window.removeEventListener('offline', callback)
+  }
+}
+
+function getOnlineSnapshot() {
+  return !navigator.onLine
+}
+
+function getServerSnapshot() {
+  return false
+}
 
 /**
  * OfflineBanner — Global network offline overlay.
@@ -14,23 +31,11 @@ import Button from '@/components/ui/Button'
  * - Automatically hides when connectivity is restored.
  */
 export function OfflineBanner() {
-  const [isOffline, setIsOffline] = useState(false)
-
-  useEffect(() => {
-    // Initialise from browser's current online state
-    setIsOffline(!navigator.onLine)
-
-    const handleOffline = () => setIsOffline(true)
-    const handleOnline  = () => setIsOffline(false)
-
-    window.addEventListener('offline', handleOffline)
-    window.addEventListener('online',  handleOnline)
-
-    return () => {
-      window.removeEventListener('offline', handleOffline)
-      window.removeEventListener('online',  handleOnline)
-    }
-  }, [])
+  const isOffline = useSyncExternalStore(
+    subscribeOnlineStatus,
+    getOnlineSnapshot,
+    getServerSnapshot
+  )
 
   if (!isOffline) return null
 

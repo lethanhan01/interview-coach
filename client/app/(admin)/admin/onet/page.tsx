@@ -5,8 +5,19 @@ import {
   Compass,
   BarChart3,
   BookOpen,
+  AlertTriangle,
 } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/AlertDialog'
 import { LoadingState } from '@/components/patterns/FeedbackPatterns'
 import {
   useOnetParams,
@@ -15,6 +26,7 @@ import {
   OnetDetailShell,
   OnetAnalyticsPlaceholder,
   type OnetMainTab,
+  type OnetDetailSubTab,
 } from '@/components/onet'
 
 function OnetBrowserWorkspace() {
@@ -28,6 +40,32 @@ function OnetBrowserWorkspace() {
   } = useOnetParams()
 
   const [currentTitle, setCurrentTitle] = useState<string>('Software Developers')
+  const [isSfiaDirty, setIsSfiaDirty] = useState(false)
+  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null)
+
+  const guardedSetSoc = (newSoc: string) => {
+    if (isSfiaDirty && newSoc !== selectedSoc) {
+      setPendingNavigation(() => () => setSoc(newSoc))
+      return
+    }
+    setSoc(newSoc)
+  }
+
+  const guardedSetTab = (newTab: OnetMainTab) => {
+    if (isSfiaDirty && newTab !== activeTab) {
+      setPendingNavigation(() => () => setTab(newTab))
+      return
+    }
+    setTab(newTab)
+  }
+
+  const guardedSetDetailTab = (newDetailTab: OnetDetailSubTab) => {
+    if (isSfiaDirty && newDetailTab !== activeDetailTab) {
+      setPendingNavigation(() => () => setDetailTab(newDetailTab))
+      return
+    }
+    setDetailTab(newDetailTab)
+  }
 
   return (
     <div className="flex flex-col gap-3 h-full min-h-0 flex-1">
@@ -55,7 +93,7 @@ function OnetBrowserWorkspace() {
         {/* Top-Level Mode Switcher: Explorer vs Analytics */}
         <Tabs
           value={activeTab}
-          onValueChange={(val) => setTab(val as OnetMainTab)}
+          onValueChange={(val) => guardedSetTab(val as OnetMainTab)}
           className="shrink-0"
         >
           <TabsList className="bg-surface-inset h-9 p-1">
@@ -78,7 +116,7 @@ function OnetBrowserWorkspace() {
           <OnetMobileDrawer
             selectedSoc={selectedSoc}
             selectedTitle={currentTitle}
-            onSelectSoc={setSoc}
+            onSelectSoc={guardedSetSoc}
           />
 
           {/* 2-Column Master-Detail Layout */}
@@ -87,7 +125,7 @@ function OnetBrowserWorkspace() {
             <aside className="hidden lg:block w-[340px] shrink-0 border border-border/70 rounded-xl overflow-hidden bg-card shadow-sm">
               <OnetSidebar
                 selectedSoc={selectedSoc}
-                onSelectSoc={setSoc}
+                onSelectSoc={guardedSetSoc}
               />
             </aside>
 
@@ -96,8 +134,9 @@ function OnetBrowserWorkspace() {
               <OnetDetailShell
                 socCode={selectedSoc}
                 activeDetailTab={activeDetailTab}
-                onSelectDetailTab={setDetailTab}
+                onSelectDetailTab={guardedSetDetailTab}
                 onLoadedDetail={(d) => setCurrentTitle(d.title)}
+                onDirtyChange={setIsSfiaDirty}
               />
             </main>
           </div>
@@ -108,13 +147,55 @@ function OnetBrowserWorkspace() {
       {activeTab === 'analytics' && (
         <div className="flex-1 overflow-hidden min-h-0">
           <OnetAnalyticsPlaceholder
-            onSwitchToExplorer={() => setTab('explorer')}
+            onSwitchToExplorer={() => guardedSetTab('explorer')}
           />
         </div>
       )}
+
+      {/* Global Unsaved Navigation Guard Modal */}
+      <AlertDialog
+        open={pendingNavigation !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingNavigation(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="bg-amber-500/10 text-amber-600 flex size-10 items-center justify-center rounded-full mb-1">
+              <AlertTriangle className="size-5" />
+            </div>
+            <AlertDialogTitle className="text-ink text-base">
+              Thay đổi chưa được lưu
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-ink-muted leading-relaxed">
+              Bạn đang có các thay đổi chưa được lưu trên bảng ánh xạ SFIA. Nếu rời đi bây giờ, toàn bộ chỉnh sửa này sẽ bị mất.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => setPendingNavigation(null)}
+              className="text-xs"
+            >
+              Ở lại trang
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setIsSfiaDirty(false)
+                const action = pendingNavigation
+                setPendingNavigation(null)
+                action?.()
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-xs"
+            >
+              Rời đi không lưu
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
+
 
 export default function OnetAdminPage() {
   return (
