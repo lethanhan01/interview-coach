@@ -247,28 +247,35 @@ Mọi component, tab và view đều phải xử lý đầy đủ và đồng b�
 
 ---
 
-### Phase 4: Chế độ xem Thống kê & Phân tích (Analytics Dashboard View)
+### Phase 4: Chế độ xem Thống kê & Phân tích (Analytics Dashboard View) (✅ Hoàn thành)
 
 **Mục tiêu**: Xây dựng màn hình Dashboard tổng quan giúp quản trị viên nắm bắt các chỉ số vĩ mô về chuẩn O\*NET và độ hoàn thiện dữ liệu mapping SFIA.
 
 **Các công việc cụ thể**:
 1. **Analytics View Container (`client/components/onet/OnetAnalyticsView.tsx`)**:
-   - Bố cục lưới thông minh, cân đối các khối thông tin.
+   - Bố cục lưới 3 tầng thông minh, cân đối các khối thông tin, header banner với nút làm mới reactive.
 2. **KPI Summary Cards (`client/components/onet/OnetSummaryCards.tsx`)**:
    - 4 thẻ chỉ số: Tổng số nghề chuẩn (1.016), Tổng số mapping O\*NET ↔ SFIA, Tỷ lệ bao phủ nhóm IT (%), Tổng số công nghệ và số Hot Tech.
-   - Gradient tinh tế, icon Lucide sắc nét, số liệu trực quan.
+   - Gradient tinh tế, icon Lucide sắc nét, số liệu trực quan `tabular-nums`.
 3. **Biểu đồ Phân bổ 23 Major Groups (`client/components/onet/SocGroupDistributionChart.tsx`)**:
    - Biểu đồ phân bổ tỷ lệ các nhóm nghề SOC bằng CSS/SVG nhẹ, tương thích 100% theme, highlight đặc biệt nhóm 15 - Computer & Math.
+   - Hỗ trợ chuyển đổi giữa [Số lượng nghề] và [Tỷ lệ đã mapped %], tooltip chi tiết và click cross-filter xuống bảng Top Nghề.
 4. **Bảng Top Nghề Quan tâm nhất (`client/components/onet/OnetTopOccupations.tsx`)**:
-   - Danh sách các nghề nghiệp có lượng ứng viên và JD liên kết cao nhất.
-   - Nút hành động nhanh: **"Xem trong Explorer"** -> Tự động chuyển sang tab Explorer và chọn ngay nghề đó.
+   - Danh sách các nghề nghiệp có lượng ứng viên và JD liên kết cao nhất, thứ hạng vinh danh `#1 - #3`.
+   - Tìm kiếm, sắp xếp theo Lượt luyện phỏng vấn / JD / Mapping, phân trang 10/20/50, và điều hướng kép sang Explorer:
+     - Nút **"Xem trong Explorer"** -> Mở tab con Tổng quan (`overview`).
+     - Click badge **"SFIA Mappings"** -> Mở thẳng tab con Ánh xạ SFIA (`sfia`).
 5. **Biểu đồ Độ phủ Kỹ năng SFIA (`client/components/onet/SfiaSkillCoverageChart.tsx`)**:
    - Biểu đồ thanh ngang (Horizontal Bar Chart) hiển thị các kỹ năng SFIA được gán nhiều nhất (PROG, TEST, DBDS, ITOP...).
+   - Lọc theo Danh mục SFIA, dải level L2–L6, Core/Secondary ratio, và toggle Top 8 <-> 25 kỹ năng.
 
 **Tiêu chí nghiệm thu Phase 4**:
-- Chuyển sang tab "Thống kê & Phân tích" hiển thị đầy đủ, đẹp mắt.
-- Bấm nút "Xem trong Explorer" tại bất kỳ nghề nào trong bảng Top Nghề -> Tự động chuyển view sang Explorer và mở đúng nghề đó.
-- **Nghiệm thu toàn bộ Giai đoạn Frontend**: Giao diện và tương tác đạt 100% yêu cầu trước khi bước sang Backend.
+- [x] Chuyển sang tab "Thống kê & Phân tích" hiển thị đầy đủ, đẹp mắt với bố cục 3 tầng cân xứng.
+- [x] Biểu đồ 23 Major Groups tương tác mượt, highlight nhóm 15, nhấp cột lọc chéo bảng Top Nghề thành công.
+- [x] Biểu đồ SFIA lọc Category mượt mà, mở rộng/thu gọn danh sách kỹ năng tức thì.
+- [x] Bảng Top Nghề tìm kiếm, sắp xếp, phân trang chuẩn 10/20/50 hàng.
+- [x] Cơ chế điều hướng kép: Bấm nút Explorer mở tab overview; click badge SFIA mở thẳng tab sfia.
+- [x] **Nghiệm thu toàn bộ Giai đoạn Frontend**: Giao diện và tương tác đạt 100% yêu cầu trước khi bước sang Backend.
 
 ---
 
@@ -331,6 +338,6 @@ Mọi component, tab và view đều phải xử lý đầy đủ và đồng b�
 | **Phase 1** | Shell, Navigation, Mock Service & Master Sidebar | Frontend UI & Navigation | ✅ Hoàn thành |
 | **Phase 2** | Detail Panel 4 Tab nội dung (Overview, Tech, Tasks, Titles) | Frontend UI & Content | ✅ Hoàn thành |
 | **Phase 3** | Detail Panel Tab SFIA Mapping CRUD Inline | Frontend Interaction & State | ✅ Hoàn thành |
-| **Phase 4** | Chế độ xem Thống kê Analytics Dashboard | Frontend Visual & Analytics | ⏳ Sẵn sàng triển khai |
+| **Phase 4** | Chế độ xem Thống kê Analytics Dashboard | Frontend Visual & Analytics | ✅ Hoàn thành |
 | **Phase 5** | Backend Controller, Service, DTOs & DB Queries | Backend Architecture & DB | ⏳ Chờ duyệt toàn bộ UI |
 | **Phase 6** | Ghép nối API Thật, Phân quyền Admin & E2E Acceptance | Integration & Acceptance | ⏳ Chờ Phase 5 hoàn thành |

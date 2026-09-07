@@ -36,7 +36,7 @@ export default function AppLayout({
           className={cn(
             'flex-1',
             isWorkspaceMode
-              ? 'overflow-hidden p-2 sm:p-3 lg:p-4'
+              ? 'overflow-hidden p-1 sm:p-1.5 lg:px-2 lg:pt-1.5 lg:pb-1'
               : 'overflow-y-auto p-4 sm:p-6 lg:p-8'
           )}
         >

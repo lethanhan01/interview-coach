@@ -4,6 +4,10 @@ import type {
   OnetOccupationDetail,
   SfiaSkillDefinition,
   OnetSfiaMapping,
+  OnetAnalyticsSummary,
+  SocGroupDistributionItem,
+  SfiaSkillCoverageItem,
+  OnetTopOccupationItem,
 } from '@/components/onet/types'
 
 const SIMULATED_LATENCY_MS = 120
@@ -1103,6 +1107,321 @@ export const onetMockService = {
       return [...store.sfiaMappings]
     }
     return []
+  },
+
+  /**
+   * Tính toán tóm tắt KPI toàn hệ thống (Realtime Reactive)
+   */
+  async getAnalyticsSummary(): Promise<OnetAnalyticsSummary> {
+    await sleep(80)
+
+    // Đếm số lượng nghề có mapping từ store và mock occupations
+    const mappedSocCodes = new Set<string>()
+    MOCK_OCCUPATIONS.forEach((o) => {
+      const store = OCCUPATION_DETAILS_STORE[o.socCode]
+      if ((store && store.sfiaMappings.length > 0) || o.isMapped) {
+        mappedSocCodes.add(o.socCode)
+      }
+    })
+
+    // Tính toán riêng nhóm 15
+    const itOccupations = MOCK_OCCUPATIONS.filter((o) => o.majorGroupCode === '15')
+    const itMappedCount = itOccupations.filter((o) => mappedSocCodes.has(o.socCode)).length
+    const itGroupTotal = 36 // Chuẩn O*NET Major Group 15
+    const itGroupCoveragePercent = Math.round((itMappedCount / itGroupTotal) * 100)
+
+    // Tổng số nghề mapped toàn hệ thống (mô phỏng tổng thể bao gồm các nhóm khác)
+    const baseOtherMapped = 42 // từ các nhóm 11, 13, 17, 27...
+    const totalMappedOccupations = baseOtherMapped + itMappedCount
+    const totalOccupations = 1016
+    const overallMappingCoveragePercent = Math.round(
+      (totalMappedOccupations / totalOccupations) * 100
+    )
+
+    // Tính tổng lượt mock interview và JD
+    let totalMockInterviews = 6840
+    let totalLinkedJobDescriptions = 1640
+    itOccupations.forEach((o) => {
+      const metrics = MOCK_TOP_METRICS[o.socCode]
+      if (metrics) {
+        totalMockInterviews += metrics.mockInterviewCount
+        totalLinkedJobDescriptions += metrics.jobDescriptionCount
+      }
+    })
+
+    return {
+      totalOccupations,
+      totalMajorGroups: 23,
+      totalMappedOccupations,
+      overallMappingCoveragePercent,
+      itGroupOccupations: itGroupTotal,
+      itGroupMappedOccupations: itMappedCount,
+      itGroupCoveragePercent,
+      totalSoftwareSkills: 31821,
+      hotTechCount: 4215,
+      inDemandTechCount: 7890,
+      totalAlternateTitles: 54269,
+      totalMockInterviews,
+      totalLinkedJobDescriptions,
+    }
+  },
+
+  /**
+   * Lấy dữ liệu phân bổ 23 Major Groups SOC
+   */
+  async getSocGroupDistribution(): Promise<SocGroupDistributionItem[]> {
+    await sleep(60)
+
+    // Tính số lượng nghề nhóm 15 đã mapped
+    const itMappedCount = MOCK_OCCUPATIONS.filter(
+      (o) =>
+        o.majorGroupCode === '15' &&
+        ((OCCUPATION_DETAILS_STORE[o.socCode]?.sfiaMappings?.length ?? 0) > 0 || o.isMapped)
+    ).length
+
+    return MOCK_SOC_MAJOR_GROUPS.map((group) => {
+      const isFocusGroup = group.code === '15'
+      const mappedOccupations = isFocusGroup ? itMappedCount : group.mappedCount
+      const mappingCoveragePercent = Math.round(
+        (mappedOccupations / group.totalOccupations) * 100
+      )
+
+      return {
+        code: group.code,
+        name: group.name,
+        englishName: group.englishName,
+        totalOccupations: group.totalOccupations,
+        mappedOccupations,
+        mappingCoveragePercent,
+        isFocusGroup,
+      }
+    })
+  },
+
+  /**
+   * Lấy thống kê độ phủ kỹ năng SFIA 9
+   */
+  async getSfiaSkillCoverage(): Promise<SfiaSkillCoverageItem[]> {
+    await sleep(70)
+
+    // Baseline frequency cho các kỹ năng SFIA phổ biến
+    const baselineCounts: Record<string, { mapped: number; core: number; sec: number }> = {
+      PROG: { mapped: 18, core: 14, sec: 4 },
+      TEST: { mapped: 14, core: 10, sec: 4 },
+      DBDS: { mapped: 12, core: 8, sec: 4 },
+      SWDN: { mapped: 11, core: 9, sec: 2 },
+      DATM: { mapped: 10, core: 7, sec: 3 },
+      ITOP: { mapped: 9, core: 6, sec: 3 },
+      SCTY: { mapped: 8, core: 6, sec: 2 },
+      BUSA: { mapped: 7, core: 4, sec: 3 },
+      METL: { mapped: 6, core: 4, sec: 2 },
+      STPL: { mapped: 5, core: 3, sec: 2 },
+      QUAS: { mapped: 5, core: 2, sec: 3 },
+      VISL: { mapped: 4, core: 3, sec: 1 },
+      NTAS: { mapped: 4, core: 3, sec: 1 },
+      IRMG: { mapped: 3, core: 2, sec: 1 },
+      USUP: { mapped: 3, core: 2, sec: 1 },
+      INCA: { mapped: 3, core: 2, sec: 1 },
+      DESN: { mapped: 3, core: 2, sec: 1 },
+    }
+
+    // Quét động qua OCCUPATION_DETAILS_STORE để tính toán các thay đổi do Admin thực hiện
+    const dynamicStats: Record<
+      string,
+      { count: number; core: number; sec: number; levels: number[] }
+    > = {}
+
+    Object.values(OCCUPATION_DETAILS_STORE).forEach((detail) => {
+      detail.sfiaMappings.forEach((mapping) => {
+        if (!dynamicStats[mapping.skillCode]) {
+          dynamicStats[mapping.skillCode] = { count: 0, core: 0, sec: 0, levels: [] }
+        }
+        dynamicStats[mapping.skillCode].count += 1
+        if (mapping.isCore) {
+          dynamicStats[mapping.skillCode].core += 1
+        } else {
+          dynamicStats[mapping.skillCode].sec += 1
+        }
+        dynamicStats[mapping.skillCode].levels.push(mapping.targetLevel)
+      })
+    })
+
+    return MOCK_SFIA_SKILLS_LIBRARY.map((skill) => {
+      const base = baselineCounts[skill.code] || { mapped: 2, core: 1, sec: 1 }
+      const dyn = dynamicStats[skill.code]
+
+      const mappedOccupationsCount = dyn ? Math.max(base.mapped, dyn.count) : base.mapped
+      const coreCount = dyn ? Math.max(base.core, dyn.core) : base.core
+      const secondaryCount = Math.max(0, mappedOccupationsCount - coreCount)
+
+      const levels = dyn?.levels.length ? dyn.levels : [skill.minLevel, skill.maxLevel]
+      const minTargetLevel = Math.min(...levels)
+      const maxTargetLevel = Math.max(...levels)
+      const avgTargetLevel = Math.round(
+        levels.reduce((acc, curr) => acc + curr, 0) / levels.length
+      )
+
+      return {
+        code: skill.code,
+        name: skill.name,
+        category: skill.category,
+        mappedOccupationsCount,
+        coreCount,
+        secondaryCount,
+        minTargetLevel,
+        maxTargetLevel,
+        avgTargetLevel,
+      }
+    }).sort((a, b) => b.mappedOccupationsCount - a.mappedOccupationsCount)
+  },
+
+  /**
+   * Lấy danh sách nghề nghiệp được quan tâm và luyện tập nhiều nhất
+   */
+  async getTopOccupations(params?: {
+    groupCode?: string
+    query?: string
+  }): Promise<OnetTopOccupationItem[]> {
+    await sleep(60)
+
+    let items: OnetTopOccupationItem[] = MOCK_OCCUPATIONS.map((occ) => {
+      const store = OCCUPATION_DETAILS_STORE[occ.socCode]
+      const metrics = MOCK_TOP_METRICS[occ.socCode] || {
+        mockInterviewCount: 150,
+        jobDescriptionCount: 40,
+        majorGroupName: 'Máy tính & Toán học',
+      }
+
+      const mappingCount = store ? store.sfiaMappings.length : occ.mappingCount
+      const isMapped = mappingCount > 0
+      const coreSkillCodes = store
+        ? store.sfiaMappings.filter((m) => m.isCore).map((m) => m.skillCode).slice(0, 3)
+        : occ.socCode === '15-1252.00'
+        ? ['PROG', 'SWDN']
+        : occ.socCode === '15-1253.00'
+        ? ['TEST', 'METL']
+        : occ.socCode === '15-1243.00'
+        ? ['DBDS', 'DATM']
+        : occ.socCode === '15-1212.00'
+        ? ['SCTY', 'VISL']
+        : occ.socCode === '15-2051.00'
+        ? ['DATM', 'BUSA']
+        : ['PROG']
+
+      const group = MOCK_SOC_MAJOR_GROUPS.find((g) => g.code === occ.majorGroupCode)
+
+      return {
+        socCode: occ.socCode,
+        title: occ.title,
+        majorGroupCode: occ.majorGroupCode,
+        majorGroupName: group ? group.name : metrics.majorGroupName,
+        mockInterviewCount: metrics.mockInterviewCount,
+        jobDescriptionCount: metrics.jobDescriptionCount,
+        mappingCount,
+        isMapped,
+        coreSkillCodes,
+      }
+    })
+
+    // Sắp xếp mặc định theo lượt mock interview giảm dần
+    items.sort((a, b) => b.mockInterviewCount - a.mockInterviewCount)
+
+    // Lọc theo Major Group nếu có
+    if (params?.groupCode) {
+      items = items.filter((item) => item.majorGroupCode === params.groupCode)
+    }
+
+    // Lọc theo từ khóa tìm kiếm nếu có
+    if (params?.query) {
+      const clean = params.query.trim().toLowerCase()
+      items = items.filter(
+        (item) =>
+          item.socCode.toLowerCase().includes(clean) ||
+          item.title.toLowerCase().includes(clean) ||
+          item.majorGroupName.toLowerCase().includes(clean)
+      )
+    }
+
+    return items
+  },
+}
+
+/**
+ * Bảng số liệu mô phỏng lượt Mock Interview và JD cho các nghề
+ */
+const MOCK_TOP_METRICS: Record<
+  string,
+  { mockInterviewCount: number; jobDescriptionCount: number; majorGroupName: string }
+> = {
+  '15-1252.00': {
+    mockInterviewCount: 1420,
+    jobDescriptionCount: 385,
+    majorGroupName: 'Máy tính & Toán học',
+  },
+  '15-1253.00': {
+    mockInterviewCount: 890,
+    jobDescriptionCount: 210,
+    majorGroupName: 'Máy tính & Toán học',
+  },
+  '15-2051.00': {
+    mockInterviewCount: 760,
+    jobDescriptionCount: 195,
+    majorGroupName: 'Máy tính & Toán học',
+  },
+  '15-1243.00': {
+    mockInterviewCount: 620,
+    jobDescriptionCount: 145,
+    majorGroupName: 'Máy tính & Toán học',
+  },
+  '15-1212.00': {
+    mockInterviewCount: 540,
+    jobDescriptionCount: 130,
+    majorGroupName: 'Máy tính & Toán học',
+  },
+  '15-1254.00': {
+    mockInterviewCount: 480,
+    jobDescriptionCount: 115,
+    majorGroupName: 'Máy tính & Toán học',
+  },
+  '15-1299.08': {
+    mockInterviewCount: 410,
+    jobDescriptionCount: 95,
+    majorGroupName: 'Máy tính & Toán học',
+  },
+  '15-1244.00': {
+    mockInterviewCount: 350,
+    jobDescriptionCount: 80,
+    majorGroupName: 'Máy tính & Toán học',
+  },
+  '15-1232.00': {
+    mockInterviewCount: 290,
+    jobDescriptionCount: 65,
+    majorGroupName: 'Máy tính & Toán học',
+  },
+  '15-1211.00': {
+    mockInterviewCount: 240,
+    jobDescriptionCount: 55,
+    majorGroupName: 'Máy tính & Toán học',
+  },
+  '11-3021.00': {
+    mockInterviewCount: 380,
+    jobDescriptionCount: 90,
+    majorGroupName: 'Quản lý',
+  },
+  '13-1111.00': {
+    mockInterviewCount: 310,
+    jobDescriptionCount: 75,
+    majorGroupName: 'Kinh doanh & Vận hành Tài chính',
+  },
+  '17-2071.00': {
+    mockInterviewCount: 260,
+    jobDescriptionCount: 60,
+    majorGroupName: 'Kiến trúc & Kỹ thuật',
+  },
+  '27-1024.00': {
+    mockInterviewCount: 440,
+    jobDescriptionCount: 110,
+    majorGroupName: 'Nghệ thuật, Thiết kế & Truyền thông',
   },
 }
 

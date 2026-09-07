@@ -24,7 +24,7 @@ import {
   OnetSidebar,
   OnetMobileDrawer,
   OnetDetailShell,
-  OnetAnalyticsPlaceholder,
+  OnetAnalyticsView,
   type OnetMainTab,
   type OnetDetailSubTab,
 } from '@/components/onet'
@@ -68,9 +68,9 @@ function OnetBrowserWorkspace() {
   }
 
   return (
-    <div className="flex flex-col gap-3 h-full min-h-0 flex-1">
+    <div className="flex flex-col gap-2 h-full min-h-0 flex-1">
       {/* Top Header Bar (Flat Header) */}
-      <div className="border-border/60 flex shrink-0 flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 border-b pb-2 pt-0.5">
+      <div className="border-border/60 flex shrink-0 flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b pb-1.5 pt-0">
         <div className="flex items-center gap-2.5">
           <div className="bg-brand/10 text-brand flex size-8 shrink-0 items-center justify-center rounded-lg">
             <BookOpen className="size-4" />
@@ -146,8 +146,13 @@ function OnetBrowserWorkspace() {
       {/* Mode 2: Analytics View */}
       {activeTab === 'analytics' && (
         <div className="flex-1 overflow-hidden min-h-0">
-          <OnetAnalyticsPlaceholder
+          <OnetAnalyticsView
             onSwitchToExplorer={() => guardedSetTab('explorer')}
+            onSelectOccupation={(socCode, subTab = 'overview') => {
+              guardedSetSoc(socCode)
+              guardedSetDetailTab(subTab)
+              guardedSetTab('explorer')
+            }}
           />
         </div>
       )}

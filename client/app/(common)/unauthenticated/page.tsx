@@ -12,7 +12,9 @@ import { getSafeNext } from '@/lib/auth-redirect'
  * Reads ?next= param and passes it through to the login page so the user
  * is redirected back to their original destination after signing in.
  */
-export default function UnauthenticatedPage() {
+import { Suspense } from 'react'
+
+function UnauthenticatedContent() {
   const searchParams = useSearchParams()
   const next = getSafeNext(searchParams.get('next'))
   const loginHref = `/login?next=${encodeURIComponent(next)}`
@@ -38,5 +40,13 @@ export default function UnauthenticatedPage() {
         },
       ]}
     />
+  )
+}
+
+export default function UnauthenticatedPage() {
+  return (
+    <Suspense fallback={null}>
+      <UnauthenticatedContent />
+    </Suspense>
   )
 }

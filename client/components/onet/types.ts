@@ -80,3 +80,65 @@ export interface OnetOccupationDetail extends OnetOccupationSummary {
   alternateTitles: string[]
   sfiaMappings: OnetSfiaMapping[]
 }
+
+/**
+ * 1. Tóm tắt chỉ số KPI toàn hệ thống (Analytics Summary)
+ */
+export interface OnetAnalyticsSummary {
+  totalOccupations: number // Tổng số nghề chuẩn (1.016)
+  totalMajorGroups: number // 23 Major Groups
+  totalMappedOccupations: number // Số nghề đã có ít nhất 1 SFIA mapping
+  overallMappingCoveragePercent: number // Tỷ lệ % nghề đã mapped
+  itGroupOccupations: number // Số nghề thuộc nhóm 15 (Máy tính & Toán học)
+  itGroupMappedOccupations: number // Số nghề nhóm 15 đã mapped
+  itGroupCoveragePercent: number // Tỷ lệ % nhóm IT đã mapped
+  totalSoftwareSkills: number // Tổng số công nghệ/phần mềm (31.821)
+  hotTechCount: number // Số lượng Hot Technologies
+  inDemandTechCount: number // Số lượng In-Demand Technologies
+  totalAlternateTitles: number // Tổng số chức danh thay thế (54.269)
+  totalMockInterviews: number // Tổng lượt luyện phỏng vấn giả lập
+  totalLinkedJobDescriptions: number // Tổng số JD liên kết
+}
+
+/**
+ * 2. Phân bổ dữ liệu 23 Major Groups SOC
+ */
+export interface SocGroupDistributionItem {
+  code: string // Mã 2 chữ số (e.g. "15", "11")
+  name: string // Tên tiếng Việt
+  englishName: string // Tên tiếng Anh chuẩn SOC
+  totalOccupations: number // Số nghề thuộc nhóm
+  mappedOccupations: number // Số nghề đã có SFIA mapping
+  mappingCoveragePercent: number // Tỷ lệ % mapped trong nhóm
+  isFocusGroup: boolean // true nếu là Nhóm 15 (Máy tính & Toán học)
+}
+
+/**
+ * 3. Phân bổ độ phủ kỹ năng SFIA 9
+ */
+export interface SfiaSkillCoverageItem {
+  code: string // Mã kỹ năng (e.g. "PROG", "TEST", "DBDS")
+  name: string // Tên kỹ năng chuẩn SFIA 9
+  category: string // Danh mục SFIA
+  mappedOccupationsCount: number // Số lượng nghề được ánh xạ kỹ năng này
+  coreCount: number // Số nghề coi đây là kỹ năng Cốt lõi (Core)
+  secondaryCount: number // Số nghề coi đây là kỹ năng Bổ trợ (Secondary)
+  minTargetLevel: number // Cấp độ mục tiêu thấp nhất
+  maxTargetLevel: number // Cấp độ mục tiêu cao nhất
+  avgTargetLevel: number // Cấp độ mục tiêu trung bình
+}
+
+/**
+ * 4. Dữ liệu nghề nghiệp quan tâm & luyện tập nhiều nhất
+ */
+export interface OnetTopOccupationItem {
+  socCode: string // Mã SOC (e.g. "15-1252.00")
+  title: string // Tên nghề chuẩn
+  majorGroupCode: string // Mã nhóm ngành lớn (e.g. "15")
+  majorGroupName: string // Tên nhóm ngành lớn
+  mockInterviewCount: number // Lượt luyện phỏng vấn giả lập
+  jobDescriptionCount: number // Lượt JD liên kết
+  mappingCount: number // Số lượng kỹ năng SFIA đã ánh xạ
+  isMapped: boolean // true nếu mappingCount > 0
+  coreSkillCodes: string[] // Danh sách mã kỹ năng cốt lõi xem trước (e.g. ["PROG", "SWDN"])
+}
