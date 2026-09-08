@@ -1,6 +1,7 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { SfiaLevelDto, SfiaSkillDto } from './contracts/sfia.dto';
+import { SFIA_REPOSITORY_TOKEN } from './domain/sfia-repository.interface';
+import type { ISfiaRepository } from './domain/sfia-repository.interface';
 
 @Injectable()
 export class SfiaService implements OnModuleInit {
@@ -9,7 +10,10 @@ export class SfiaService implements OnModuleInit {
   private readonly levelMap = new Map<number, SfiaLevelDto>();
   private initialized = false;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(SFIA_REPOSITORY_TOKEN)
+    private readonly sfiaRepository: ISfiaRepository,
+  ) {}
 
   async onModuleInit(): Promise<void> {
     await this.loadCache();
@@ -17,29 +21,7 @@ export class SfiaService implements OnModuleInit {
 
   async loadCache(): Promise<void> {
     try {
-      const rawSkills = await this.prisma.$queryRaw<
-        Array<{
-          code: string;
-          name: string;
-          categoryCode: string;
-          subcategoryCode: string;
-          overallDescription: string;
-          minLevel: number;
-          maxLevel: number;
-        }>
-      >`
-        SELECT 
-          s.code,
-          s.name,
-          COALESCE(sc.category_code, '') AS "categoryCode",
-          s.subcategory_code AS "subcategoryCode",
-          COALESCE(s.overall_description, '') AS "overallDescription",
-          s.min_level AS "minLevel",
-          s.max_level AS "maxLevel"
-        FROM sfia.skills s
-        LEFT JOIN sfia.subcategories sc ON s.subcategory_code = sc.code
-        ORDER BY s.code ASC;
-      `;
+      const rawSkills = await this.sfiaRepository.loadAllRawSkills();
 
       this.skillMap.clear();
       for (const item of rawSkills) {
@@ -54,22 +36,7 @@ export class SfiaService implements OnModuleInit {
         });
       }
 
-      const rawLevels = await this.prisma.$queryRaw<
-        Array<{
-          levelId: number;
-          name: string;
-          essence: string;
-          description: string;
-        }>
-      >`
-        SELECT 
-          level_id AS "levelId",
-          name,
-          COALESCE(essence, '') AS essence,
-          COALESCE(description, '') AS description
-        FROM sfia.levels
-        ORDER BY level_id ASC;
-      `;
+      const rawLevels = await this.sfiaRepository.loadAllRawLevels();
 
       this.levelMap.clear();
       for (const item of rawLevels) {
@@ -88,7 +55,7 @@ export class SfiaService implements OnModuleInit {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to load SFIA cache from database: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to load SFIA cache from repository: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { OnetOccupationDto, OnetTechDto } from './contracts/onet.dto';
+import { ONET_REPOSITORY_TOKEN } from './domain/onet-repository.interface';
+import type { IOnetRepository } from './domain/onet-repository.interface';
 
 function removeVietnameseTones(str: string): string {
   return str
@@ -57,7 +58,10 @@ export function normalizeVietnameseJobTitle(title: string): string {
 export class OnetService {
   private readonly logger = new Logger(OnetService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(ONET_REPOSITORY_TOKEN)
+    private readonly onetRepository: IOnetRepository,
+  ) {}
 
   /**
    * Tìm kiếm chức danh công việc O*NET tương thích nhất dựa trên tiêu đề công việc (Job Title).
@@ -86,72 +90,28 @@ export class OnetService {
     try {
       // 1. Khớp chính xác tên chuẩn (Exact case-insensitive match on occupation_data)
       for (const query of searchQueries) {
-        const exactMatches = await this.prisma.$queryRaw<OnetOccupationDto[]>`
-          SELECT 
-            onetsoc_code AS "socCode",
-            title,
-            description,
-            title AS "matchedTitle",
-            1.0::float AS "similarityScore"
-          FROM onet.occupation_data
-          WHERE LOWER(title) = LOWER(${query})
-          LIMIT 1;
-        `;
-
-        if (exactMatches.length > 0) {
-          return exactMatches[0];
+        const exactMatch =
+          await this.onetRepository.findExactOccupationByTitle(query);
+        if (exactMatch) {
+          return exactMatch;
         }
       }
 
       // 2. Tìm kiếm mờ thông qua 54K alternate job titles (Trigram GIN search + word_similarity)
       for (const query of searchQueries) {
-        const fuzzyAlternateMatches = await this.prisma.$queryRaw<
-          OnetOccupationDto[]
-        >`
-          SELECT 
-            jt.onetsoc_code AS "socCode",
-            occ.title,
-            occ.description,
-            jt.job_title AS "matchedTitle",
-            GREATEST(
-              similarity(jt.job_title, ${query}),
-              word_similarity(${query}, jt.job_title)
-            )::float AS "similarityScore"
-          FROM onet.job_titles jt
-          JOIN onet.occupation_data occ ON jt.onetsoc_code = occ.onetsoc_code
-          WHERE 
-            jt.job_title % ${query} 
-            OR ${query} <% jt.job_title
-            OR word_similarity(${query}, jt.job_title) >= 0.4
-            OR similarity(jt.job_title, ${query}) >= 0.25
-          ORDER BY "similarityScore" DESC
-          LIMIT 1;
-        `;
-
-        if (fuzzyAlternateMatches.length > 0) {
-          return fuzzyAlternateMatches[0];
+        const fuzzyAlternateMatch =
+          await this.onetRepository.findFuzzyAlternateTitles(query);
+        if (fuzzyAlternateMatch) {
+          return fuzzyAlternateMatch;
         }
       }
 
       // 3. Fallback: Tìm kiếm mờ trực tiếp trên onet.occupation_data.title
       for (const query of searchQueries) {
-        const fallbackMatches = await this.prisma.$queryRaw<
-          OnetOccupationDto[]
-        >`
-          SELECT 
-            occ.onetsoc_code AS "socCode",
-            occ.title,
-            occ.description,
-            occ.title AS "matchedTitle",
-            similarity(occ.title, ${query})::float AS "similarityScore"
-          FROM onet.occupation_data occ
-          WHERE occ.title % ${query} OR similarity(occ.title, ${query}) >= 0.20
-          ORDER BY "similarityScore" DESC
-          LIMIT 1;
-        `;
-
-        if (fallbackMatches.length > 0) {
-          return fallbackMatches[0];
+        const fallbackMatch =
+          await this.onetRepository.findFuzzyOccupationData(query);
+        if (fallbackMatch) {
+          return fallbackMatch;
         }
       }
 
@@ -180,19 +140,7 @@ export class OnetService {
     }
 
     try {
-      const records = await this.prisma.$queryRaw<OnetOccupationDto[]>`
-        SELECT 
-          onetsoc_code AS "socCode",
-          title,
-          description,
-          title AS "matchedTitle",
-          1.0::float AS "similarityScore"
-        FROM onet.occupation_data
-        WHERE onetsoc_code = ${cleanSoc}
-        LIMIT 1;
-      `;
-
-      return records.length > 0 ? records[0] : null;
+      return await this.onetRepository.getOccupationBySocCode(cleanSoc);
     } catch (error) {
       this.logger.error(
         `Error querying O*NET occupation by socCode "${cleanSoc}": ${error instanceof Error ? error.message : String(error)}`,
@@ -216,27 +164,7 @@ export class OnetService {
     }
 
     try {
-      const rawTech = await this.prisma.$queryRaw<
-        Array<{
-          example: string;
-          isHotTechnology: boolean;
-          inDemand: boolean;
-        }>
-      >`
-        SELECT 
-          workplace_example AS "example",
-          (hot_technology = 'Y') AS "isHotTechnology",
-          (in_demand = 'Y') AS "inDemand"
-        FROM onet.software_skills
-        WHERE onetsoc_code = ${cleanSoc}
-        ORDER BY (hot_technology = 'Y') DESC, workplace_example ASC;
-      `;
-
-      return rawTech.map((item) => ({
-        example: item.example,
-        isHotTechnology: Boolean(item.isHotTechnology),
-        inDemand: Boolean(item.inDemand),
-      }));
+      return await this.onetRepository.getToolsAndTechnology(cleanSoc);
     } catch (error) {
       this.logger.error(
         `Error querying O*NET tools & tech for socCode "${cleanSoc}": ${error instanceof Error ? error.message : String(error)}`,
@@ -260,22 +188,7 @@ export class OnetService {
 
     if (!cleanQuery) {
       try {
-        const topOccupations = await this.prisma.$queryRaw<OnetOccupationDto[]>`
-          SELECT 
-            onetsoc_code AS "socCode",
-            title,
-            description,
-            title AS "matchedTitle",
-            1.0::float AS "similarityScore"
-          FROM onet.occupation_data
-          WHERE onetsoc_code IN (
-            '15-1252.00', '15-1253.00', '15-1244.00', '15-1243.00', '15-1212.00',
-            '15-1251.00', '15-1241.00', '15-1299.08', '11-3021.00', '15-1232.00'
-          )
-          ORDER BY title ASC
-          LIMIT ${cleanLimit};
-        `;
-        return topOccupations;
+        return await this.onetRepository.getDefaultOccupations(cleanLimit);
       } catch (error) {
         this.logger.error(
           `Error querying default O*NET occupations: ${error instanceof Error ? error.message : String(error)}`,
@@ -289,67 +202,11 @@ export class OnetService {
     const likePattern = `%${searchTerm}%`;
 
     try {
-      const records = await this.prisma.$queryRaw<OnetOccupationDto[]>`
-        SELECT 
-          "socCode",
-          title,
-          description,
-          "matchedTitle",
-          "similarityScore"
-        FROM (
-          SELECT DISTINCT ON (sub."socCode")
-            sub."socCode",
-            sub.title,
-            sub.description,
-            sub."matchedTitle",
-            sub."similarityScore"
-          FROM (
-            SELECT 
-              jt.onetsoc_code AS "socCode",
-              occ.title,
-              occ.description,
-              jt.job_title AS "matchedTitle",
-              GREATEST(
-                similarity(jt.job_title, ${searchTerm}),
-                word_similarity(${searchTerm}, jt.job_title),
-                CASE WHEN jt.job_title ILIKE ${likePattern} THEN 0.35 ELSE 0 END
-              )::float AS "similarityScore"
-            FROM onet.job_titles jt
-            JOIN onet.occupation_data occ ON jt.onetsoc_code = occ.onetsoc_code
-            WHERE 
-              jt.job_title % ${searchTerm} 
-              OR ${searchTerm} <% jt.job_title
-              OR word_similarity(${searchTerm}, jt.job_title) >= 0.25
-              OR similarity(jt.job_title, ${searchTerm}) >= 0.2
-              OR jt.job_title ILIKE ${likePattern}
-
-            UNION ALL
-
-            SELECT 
-              occ.onetsoc_code AS "socCode",
-              occ.title,
-              occ.description,
-              occ.title AS "matchedTitle",
-              GREATEST(
-                similarity(occ.title, ${searchTerm}),
-                word_similarity(${searchTerm}, occ.title),
-                CASE WHEN occ.title ILIKE ${likePattern} THEN 0.40 ELSE 0 END
-              )::float AS "similarityScore"
-            FROM onet.occupation_data occ
-            WHERE 
-              occ.title % ${searchTerm}
-              OR ${searchTerm} <% occ.title
-              OR word_similarity(${searchTerm}, occ.title) >= 0.25
-              OR similarity(occ.title, ${searchTerm}) >= 0.2
-              OR occ.title ILIKE ${likePattern}
-          ) sub
-          ORDER BY sub."socCode", sub."similarityScore" DESC
-        ) deduplicated
-        ORDER BY "similarityScore" DESC
-        LIMIT ${cleanLimit};
-      `;
-
-      return records;
+      return await this.onetRepository.searchOccupationsWithScores(
+        searchTerm,
+        likePattern,
+        cleanLimit,
+      );
     } catch (error) {
       this.logger.error(
         `Error searching O*NET occupations for query "${cleanQuery}": ${error instanceof Error ? error.message : String(error)}`,

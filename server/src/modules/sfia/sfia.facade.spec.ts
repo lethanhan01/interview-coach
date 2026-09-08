@@ -1,9 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaService } from '@infra/database/prisma/prisma.service';
 import {
   SFIA_FACADE_TOKEN,
   ISfiaFacade,
 } from './contracts/sfia.facade.interface';
+import {
+  SFIA_REPOSITORY_TOKEN,
+  ISfiaRepository,
+} from './domain/sfia-repository.interface';
 import { SfiaService } from './sfia.service';
 import { SfiaFacade } from './sfia.facade';
 
@@ -53,20 +56,14 @@ describe('SfiaFacade & SfiaService', () => {
     },
   ];
 
-  const mockPrismaService = {
-    $queryRaw: jest.fn().mockImplementation((query: any) => {
-      const text = query?.strings ? query.strings.join(' ') : String(query);
-      if (text.includes('sfia.skills')) {
-        return Promise.resolve(mockSkills);
-      }
-      if (text.includes('sfia.levels')) {
-        return Promise.resolve(mockLevels);
-      }
-      return Promise.resolve([]);
-    }),
+  const mockSfiaRepository: ISfiaRepository = {
+    loadAllRawSkills: jest.fn().mockResolvedValue(mockSkills),
+    loadAllRawLevels: jest.fn().mockResolvedValue(mockLevels),
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SfiaService,
@@ -76,8 +73,8 @@ describe('SfiaFacade & SfiaService', () => {
           useExisting: SfiaFacade,
         },
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: SFIA_REPOSITORY_TOKEN,
+          useValue: mockSfiaRepository,
         },
       ],
     }).compile();
@@ -154,7 +151,7 @@ describe('SfiaFacade & SfiaService', () => {
 
   describe('self-healing', () => {
     it('should trigger self-healing loadCache when service was not initialized', async () => {
-      const uninitService = new SfiaService(mockPrismaService as any);
+      const uninitService = new SfiaService(mockSfiaRepository);
       expect(uninitService.isInitialized()).toBe(false);
 
       const skill = await uninitService.getSkillByCode('PROG');

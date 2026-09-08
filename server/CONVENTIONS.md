@@ -31,6 +31,7 @@
    - [5.1. Quản lý Giao dịch (Interactive Transactions: `prisma.$transaction`)](#51-quản-lý-giao-dịch-interactive-transactions-prismatransaction)
    - [5.2. Bảo mật Dữ liệu & Tối ưu Hiệu năng Truy vấn](#52-bảo-mật-dữ-liệu--tối-ưu-hiệu-năng-truy-vấn)
    - [5.3. Quy chuẩn Quản trị Schema & Migration An toàn (Zero-Downtime Database Migration)](#53-quy-chuẩn-quản-trị-schema--migration-an-toàn-zero-downtime-database-migration)
+   - [5.4. Chuẩn hóa Targeted Domain Repository Pattern (Raw SQL & Fuzzy Search)](#54-chuẩn-hóa-targeted-domain-repository-pattern-raw-sql--fuzzy-search)
 6. [Quy chuẩn Tích hợp AI / LLM & Background Workflows](#6-quy-chuẩn-tích-hợp-ai--llm--background-workflows)
    - [6.1. Đóng gói Dịch vụ AI (AI Gateway Isolation)](#61-đóng-gói-dịch-vụ-ai-ai-gateway-isolation)
    - [6.2. Structured Output & Validation Schema (Zod / JSON Schema)](#62-structured-output--validation-schema)
@@ -466,6 +467,17 @@ await this.prisma.$transaction(async (tx) => {
 2. **Bước 2 (Deploy Code):** Deploy code backend mới đọc dữ liệu từ cả 2 cột (fallback) và ghi đồng thời vào cột mới.
 3. **Bước 3 (Backfill Data):** Chạy background migration script chuyển đổi dữ liệu từ cột cũ sang cột mới.
 4. **Bước 4 (Contract):** Khi hệ thống ổn định, tạo migration mới để xóa cột cũ.
+
+### 5.4. Chuẩn hóa Targeted Domain Repository Pattern (Raw SQL & Fuzzy Search)
+Theo triết lý Pragmatic Clean Architecture, dự án không áp dụng generic repository boilerplate tràn lan. Tuy nhiên, khi xuất hiện các nghiệp vụ dữ liệu đặc thù sau, **bắt buộc** phải tách ra **Targeted Domain Repository**:
+1. **Raw SQL (`$queryRaw` / `$queryRawUnsafe`)**: Tìm kiếm mờ (`pg_trgm`, `similarity()`, `word_similarity()`), full-text search, hoặc các hàm đặc thù của PostgreSQL.
+2. **Multi-Schema Database References**: Tương tác với các schema phụ độc lập (`onet.*`, `sfia.*`).
+3. **Complex CTE & Analytics Aggregations**: Các câu lệnh tổng hợp thống kê phức tạp, đếm chéo nhiều bảng.
+
+#### Quy tắc thiết kế Targeted Repository:
+- **Interface & Injection Token (DIP):** Định nghĩa Interface `IXxxRepository` và Symbol Token `XXX_REPOSITORY_TOKEN = Symbol('IXxxRepository')` trong thư mục `domain/` của Bounded Context. Use Case Service chỉ inject Interface thông qua `@Inject(XXX_REPOSITORY_TOKEN)`.
+- **Anti-Corruption Layer (Raw Row Types):** Định nghĩa toàn bộ kiểu dữ liệu trả về thô của PostgreSQL trong `repositories/types/xxx-raw-row.types.ts`. Repository chịu trách nhiệm map raw rows sang Domain DTO trước khi trả về Service.
+- **Transaction Propagation (`tx?: Prisma.TransactionClient`):** Các phương thức của Repository nhận tham số tùy chọn `tx?: Prisma.TransactionClient` để có thể tham gia vào interactive transaction (`prisma.$transaction`) do Service quản lý.
 
 ---
 

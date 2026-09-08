@@ -1,9 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaService } from '@infra/database/prisma/prisma.service';
 import {
   ONET_FACADE_TOKEN,
   IOnetFacade,
 } from './contracts/onet.facade.interface';
+import {
+  ONET_REPOSITORY_TOKEN,
+  IOnetRepository,
+} from './domain/onet-repository.interface';
 import { OnetService, normalizeVietnameseJobTitle } from './onet.service';
 import { OnetFacade } from './onet.facade';
 
@@ -45,13 +48,17 @@ describe('OnetFacade & OnetService', () => {
     },
   ];
 
-  let queryRawMock: jest.Mock;
+  let mockOnetRepo: jest.Mocked<IOnetRepository>;
 
   beforeEach(async () => {
-    queryRawMock = jest.fn();
-
-    const mockPrismaService = {
-      $queryRaw: queryRawMock,
+    mockOnetRepo = {
+      findExactOccupationByTitle: jest.fn(),
+      findFuzzyAlternateTitles: jest.fn(),
+      findFuzzyOccupationData: jest.fn(),
+      getOccupationBySocCode: jest.fn(),
+      getToolsAndTechnology: jest.fn(),
+      getDefaultOccupations: jest.fn(),
+      searchOccupationsWithScores: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -63,8 +70,8 @@ describe('OnetFacade & OnetService', () => {
           useExisting: OnetFacade,
         },
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: ONET_REPOSITORY_TOKEN,
+          useValue: mockOnetRepo,
         },
       ],
     }).compile();
@@ -82,47 +89,49 @@ describe('OnetFacade & OnetService', () => {
     it('should return null if title is empty or whitespace', async () => {
       expect(await facade.findOccupationByTitle('')).toBeNull();
       expect(await facade.findOccupationByTitle('   ')).toBeNull();
-      expect(queryRawMock).not.toHaveBeenCalled();
+      expect(mockOnetRepo.findExactOccupationByTitle).not.toHaveBeenCalled();
     });
 
     it('should return exact match when occupation title matches directly', async () => {
-      queryRawMock.mockResolvedValueOnce([mockOccupation]);
+      mockOnetRepo.findExactOccupationByTitle.mockResolvedValueOnce(
+        mockOccupation,
+      );
 
       const result = await facade.findOccupationByTitle('Software Developers');
       expect(result).toEqual(mockOccupation);
-      expect(queryRawMock).toHaveBeenCalledTimes(1);
+      expect(mockOnetRepo.findExactOccupationByTitle).toHaveBeenCalledTimes(1);
     });
 
     it('should return fuzzy match from alternate job titles when exact match misses', async () => {
-      // 1st query: exact match on occupation_data -> empty
-      queryRawMock.mockResolvedValueOnce([]);
-      // 2nd query: fuzzy match on job_titles -> returns match
-      queryRawMock.mockResolvedValueOnce([mockFuzzyAlternateMatch]);
+      mockOnetRepo.findExactOccupationByTitle.mockResolvedValueOnce(null);
+      mockOnetRepo.findFuzzyAlternateTitles.mockResolvedValueOnce(
+        mockFuzzyAlternateMatch,
+      );
 
       const result = await facade.findOccupationByTitle(
         'Full Stack Software Engineer',
       );
       expect(result).toEqual(mockFuzzyAlternateMatch);
-      expect(queryRawMock).toHaveBeenCalledTimes(2);
+      expect(mockOnetRepo.findExactOccupationByTitle).toHaveBeenCalledTimes(1);
+      expect(mockOnetRepo.findFuzzyAlternateTitles).toHaveBeenCalledTimes(1);
     });
 
     it('should fallback to fuzzy match on occupation_data when alternate titles miss', async () => {
-      // 1st query: exact -> empty
-      queryRawMock.mockResolvedValueOnce([]);
-      // 2nd query: alternate titles -> empty
-      queryRawMock.mockResolvedValueOnce([]);
-      // 3rd query: fallback on occupation_data -> returns match
-      queryRawMock.mockResolvedValueOnce([mockOccupation]);
+      mockOnetRepo.findExactOccupationByTitle.mockResolvedValueOnce(null);
+      mockOnetRepo.findFuzzyAlternateTitles.mockResolvedValueOnce(null);
+      mockOnetRepo.findFuzzyOccupationData.mockResolvedValueOnce(mockOccupation);
 
       const result = await facade.findOccupationByTitle('Software Dev');
       expect(result).toEqual(mockOccupation);
-      expect(queryRawMock).toHaveBeenCalledTimes(3);
+      expect(mockOnetRepo.findExactOccupationByTitle).toHaveBeenCalledTimes(1);
+      expect(mockOnetRepo.findFuzzyAlternateTitles).toHaveBeenCalledTimes(1);
+      expect(mockOnetRepo.findFuzzyOccupationData).toHaveBeenCalledTimes(1);
     });
 
     it('should return null when all searches find no matching occupation', async () => {
-      queryRawMock.mockResolvedValueOnce([]);
-      queryRawMock.mockResolvedValueOnce([]);
-      queryRawMock.mockResolvedValueOnce([]);
+      mockOnetRepo.findExactOccupationByTitle.mockResolvedValueOnce(null);
+      mockOnetRepo.findFuzzyAlternateTitles.mockResolvedValueOnce(null);
+      mockOnetRepo.findFuzzyOccupationData.mockResolvedValueOnce(null);
 
       const result = await facade.findOccupationByTitle(
         'Random Nonexistent Job 12345',
@@ -131,14 +140,15 @@ describe('OnetFacade & OnetService', () => {
     });
 
     it('should catch database errors and return null gracefully', async () => {
-      queryRawMock.mockRejectedValueOnce(new Error('DB connection timeout'));
+      mockOnetRepo.findExactOccupationByTitle.mockRejectedValueOnce(
+        new Error('DB connection timeout'),
+      );
 
       const result = await facade.findOccupationByTitle('Software Engineer');
       expect(result).toBeNull();
     });
 
     it('should translate Vietnamese title and find occupation successfully', async () => {
-      // Direct exact match on translated title 'Software Quality Assurance Analysts and Testers'
       const mockQaOccupation = {
         socCode: '15-1253.00',
         title: 'Software Quality Assurance Analysts and Testers',
@@ -147,7 +157,9 @@ describe('OnetFacade & OnetService', () => {
         similarityScore: 1.0,
       };
 
-      queryRawMock.mockResolvedValueOnce([mockQaOccupation]);
+      mockOnetRepo.findExactOccupationByTitle.mockResolvedValueOnce(
+        mockQaOccupation,
+      );
 
       const result = await facade.findOccupationByTitle(
         'Chuyên viên kiểm thử phần mềm',
@@ -181,25 +193,27 @@ describe('OnetFacade & OnetService', () => {
     it('should return null for empty or whitespace socCode', async () => {
       expect(await facade.getOccupationBySocCode('')).toBeNull();
       expect(await facade.getOccupationBySocCode('   ')).toBeNull();
-      expect(queryRawMock).not.toHaveBeenCalled();
+      expect(mockOnetRepo.getOccupationBySocCode).not.toHaveBeenCalled();
     });
 
     it('should return occupation for valid socCode', async () => {
-      queryRawMock.mockResolvedValueOnce([mockOccupation]);
+      mockOnetRepo.getOccupationBySocCode.mockResolvedValueOnce(mockOccupation);
 
       const result = await facade.getOccupationBySocCode('15-1252.00');
       expect(result).toEqual(mockOccupation);
     });
 
     it('should return null when socCode is not found', async () => {
-      queryRawMock.mockResolvedValueOnce([]);
+      mockOnetRepo.getOccupationBySocCode.mockResolvedValueOnce(null);
 
       const result = await facade.getOccupationBySocCode('99-9999.00');
       expect(result).toBeNull();
     });
 
     it('should catch error and return null', async () => {
-      queryRawMock.mockRejectedValueOnce(new Error('Query error'));
+      mockOnetRepo.getOccupationBySocCode.mockRejectedValueOnce(
+        new Error('Query error'),
+      );
 
       const result = await facade.getOccupationBySocCode('15-1252.00');
       expect(result).toBeNull();
@@ -210,22 +224,20 @@ describe('OnetFacade & OnetService', () => {
     it('should return empty array for empty or whitespace socCode', async () => {
       expect(await facade.getToolsAndTechnology('')).toEqual([]);
       expect(await facade.getToolsAndTechnology('   ')).toEqual([]);
-      expect(queryRawMock).not.toHaveBeenCalled();
+      expect(mockOnetRepo.getToolsAndTechnology).not.toHaveBeenCalled();
     });
 
     it('should return mapped tools and technologies for socCode', async () => {
-      queryRawMock.mockResolvedValueOnce([
-        { example: 'Docker', isHotTechnology: true, inDemand: true },
-        { example: 'Node.js', isHotTechnology: true, inDemand: false },
-        { example: 'C++', isHotTechnology: false, inDemand: false },
-      ]);
+      mockOnetRepo.getToolsAndTechnology.mockResolvedValueOnce(mockTechSkills);
 
       const result = await facade.getToolsAndTechnology('15-1252.00');
       expect(result).toEqual(mockTechSkills);
     });
 
     it('should catch error and return empty array', async () => {
-      queryRawMock.mockRejectedValueOnce(new Error('Database error'));
+      mockOnetRepo.getToolsAndTechnology.mockRejectedValueOnce(
+        new Error('Database error'),
+      );
 
       const result = await facade.getToolsAndTechnology('15-1252.00');
       expect(result).toEqual([]);
@@ -234,23 +246,29 @@ describe('OnetFacade & OnetService', () => {
 
   describe('searchOccupations', () => {
     it('returns default IT occupations when query is empty', async () => {
-      queryRawMock.mockResolvedValueOnce([mockOccupation]);
+      mockOnetRepo.getDefaultOccupations.mockResolvedValueOnce([
+        mockOccupation,
+      ]);
 
       const result = await service.searchOccupations();
       expect(result).toEqual([mockOccupation]);
-      expect(queryRawMock).toHaveBeenCalled();
+      expect(mockOnetRepo.getDefaultOccupations).toHaveBeenCalled();
     });
 
     it('returns searched occupations with similarity scores when query is provided', async () => {
-      queryRawMock.mockResolvedValueOnce([mockFuzzyAlternateMatch]);
+      mockOnetRepo.searchOccupationsWithScores.mockResolvedValueOnce([
+        mockFuzzyAlternateMatch,
+      ]);
 
       const result = await service.searchOccupations('Software Engineer', 5);
       expect(result).toEqual([mockFuzzyAlternateMatch]);
-      expect(queryRawMock).toHaveBeenCalled();
+      expect(mockOnetRepo.searchOccupationsWithScores).toHaveBeenCalled();
     });
 
     it('catches error and returns empty array on failure', async () => {
-      queryRawMock.mockRejectedValueOnce(new Error('Database query failed'));
+      mockOnetRepo.searchOccupationsWithScores.mockRejectedValueOnce(
+        new Error('Database query failed'),
+      );
 
       const result = await service.searchOccupations('crash');
       expect(result).toEqual([]);
