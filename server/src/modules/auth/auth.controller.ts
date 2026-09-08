@@ -85,7 +85,9 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Rotate and refresh access token via refresh cookie' })
+  @ApiOperation({
+    summary: 'Rotate and refresh access token via refresh cookie',
+  })
   @ApiOkResponse({
     description: 'Refreshed session; new authentication cookies are set.',
   })
@@ -94,8 +96,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const refreshToken =
-      req.cookies?.[this.authService.getRefreshCookieName()];
+    const refreshToken = req.cookies?.[this.authService.getRefreshCookieName()];
     try {
       const result = await this.authService.refreshSession(refreshToken);
       this.setCookies(response, result.tokens);
@@ -110,14 +111,15 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiCookieAuth('cookieAuth')
-  @ApiOperation({ summary: 'Clear the authentication cookies and revoke refresh token' })
+  @ApiOperation({
+    summary: 'Clear the authentication cookies and revoke refresh token',
+  })
   @ApiNoContentResponse({ description: 'Cookies cleared and session revoked.' })
   async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<void> {
-    const refreshToken =
-      req.cookies?.[this.authService.getRefreshCookieName()];
+    const refreshToken = req.cookies?.[this.authService.getRefreshCookieName()];
     await this.authService.logout(refreshToken);
     this.clearCookies(response);
   }
@@ -229,13 +231,17 @@ export class AuthController {
       this.configService.get<string>('NODE_ENV') === 'production';
 
     // Access Token Cookie (15 min)
-    response.cookie(this.authService.getAccessCookieName(), tokens.accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'lax',
-      maxAge: this.authService.getAccessCookieMaxAge() * 1000,
-      path: '/',
-    });
+    response.cookie(
+      this.authService.getAccessCookieName(),
+      tokens.accessToken,
+      {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        maxAge: this.authService.getAccessCookieMaxAge() * 1000,
+        path: '/',
+      },
+    );
 
     // Refresh Token Cookie (7 days)
     response.cookie(

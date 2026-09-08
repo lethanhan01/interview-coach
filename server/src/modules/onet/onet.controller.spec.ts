@@ -55,30 +55,33 @@ describe('OnetController', () => {
 
   describe('GET /onet/occupations', () => {
     it('calls onetService.searchOccupations with query and limit', async () => {
+      const searchSpy = jest.spyOn(service, 'searchOccupations');
       const result = await controller.searchOccupations({
         query: 'developer',
         limit: 5,
       });
 
-      expect(service.searchOccupations).toHaveBeenCalledWith('developer', 5);
+      expect(searchSpy).toHaveBeenCalledWith('developer', 5);
       expect(result).toEqual(mockOccupations);
     });
 
     it('calls onetService.searchOccupations with undefined query and default limit', async () => {
+      const searchSpy = jest.spyOn(service, 'searchOccupations');
       const result = await controller.searchOccupations({});
 
-      expect(service.searchOccupations).toHaveBeenCalledWith(undefined, 10);
+      expect(searchSpy).toHaveBeenCalledWith(undefined, 10);
       expect(result).toEqual(mockOccupations);
     });
   });
 
   describe('GET /onet/occupations/:socCode/tech', () => {
     it('calls onetService.getToolsAndTechnology with socCode', async () => {
+      const techSpy = jest.spyOn(service, 'getToolsAndTechnology');
       const result = await controller.getToolsAndTechnology({
         socCode: '15-1252.00',
       });
 
-      expect(service.getToolsAndTechnology).toHaveBeenCalledWith('15-1252.00');
+      expect(techSpy).toHaveBeenCalledWith('15-1252.00');
       expect(result).toEqual(mockTech);
     });
   });

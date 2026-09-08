@@ -121,16 +121,17 @@ export class ReportService {
       const feedback = answer?.aiFeedback;
       const answerText = answer?.answerText ?? '';
 
-      const rawSegments: AnnotatedSegmentDto[] =
-        (feedback?.annotatedSegments ?? []).map((s) => ({
-          id: s.id,
-          segmentText: s.segmentText,
-          startIndex: s.startIndex,
-          endIndex: s.endIndex,
-          highlightLevel: s.highlightLevel,
-          annotation: s.annotation,
-          suggestion: s.suggestion ?? undefined,
-        }));
+      const rawSegments: AnnotatedSegmentDto[] = (
+        feedback?.annotatedSegments ?? []
+      ).map((s) => ({
+        id: s.id,
+        segmentText: s.segmentText,
+        startIndex: s.startIndex,
+        endIndex: s.endIndex,
+        highlightLevel: s.highlightLevel,
+        annotation: s.annotation,
+        suggestion: s.suggestion ?? undefined,
+      }));
       const segments = sanitizeFeedbackSegments(
         answerText,
         rawSegments,
@@ -180,7 +181,10 @@ export class ReportService {
     const storedActionPlan =
       rawActionPlan !== undefined
         ? { actionPlan: rawActionPlan }
-        : toRecord(findLatestReport(session.sessionReports, 'action_plan')?.contentJson);
+        : toRecord(
+            findLatestReport(session.sessionReports, 'action_plan')
+              ?.contentJson,
+          );
 
     const storedExecutiveSummary = executiveSummaryReport
       ? toRecord(executiveSummaryReport.contentJson)
@@ -236,9 +240,7 @@ export class ReportService {
         session.recommendationStatus ??
         (unifiedSummary.recommendationStatus as string | undefined),
       skillsBreakdown:
-        rawBreakdown !== undefined
-          ? (rawBreakdown as any)
-          : undefined,
+        rawBreakdown !== undefined ? (rawBreakdown as any) : undefined,
       executiveSummary: allFeedbackIsFallback
         ? {
             ...storedExecutiveSummary,

@@ -107,7 +107,7 @@ export class QuestionBankService {
         where: {
           sfiaSkillCode: requirement.skillCode,
           targetSfiaLevel: requirement.targetLevel,
-          sessionType: params.sessionType as QuestionSessionType,
+          sessionType: params.sessionType,
           deletedAt: null,
           id: { notIn: Array.from(usedQuestionBankIds) },
         },
@@ -118,7 +118,7 @@ export class QuestionBankService {
         },
       });
 
-      let candidatePool = [...exactQuestions];
+      const candidatePool = [...exactQuestions];
 
       // Tầng 2: Nếu thiếu câu hỏi, fallback lân cận (+/- 1 level)
       if (candidatePool.length < count) {
@@ -137,7 +137,7 @@ export class QuestionBankService {
             where: {
               sfiaSkillCode: requirement.skillCode,
               targetSfiaLevel: { in: adjacentLevels },
-              sessionType: params.sessionType as QuestionSessionType,
+              sessionType: params.sessionType,
               deletedAt: null,
               id: { notIn: Array.from(excludeIds) },
             },
@@ -164,9 +164,7 @@ export class QuestionBankService {
           criteria = question.questionCriteria.map((c) => ({
             id: c.id,
             text: c.criteriaText,
-            dimension: (c.dimension === 'seniority' ? 'seniority' : 'core') as
-              | 'core'
-              | 'seniority',
+            dimension: c.dimension === 'seniority' ? 'seniority' : 'core',
             weight: Number(c.weight ?? 1.0),
           }));
         } else {
@@ -191,10 +189,7 @@ export class QuestionBankService {
           sessionSkillId: requirement.sessionSkillId,
           sfiaSkillCode: requirement.skillCode,
           targetLevel: requirement.targetLevel,
-          questionText: this.resolveText(
-            question as unknown as QuestionBankRow,
-            params.language,
-          ),
+          questionText: this.resolveText(question, params.language),
           questionCategory:
             params.sessionType === 'technical' ? 'technical' : 'behavioral',
           source: 'bank',
@@ -398,4 +393,3 @@ export class QuestionBankService {
     return selected.slice(0, count);
   }
 }
-

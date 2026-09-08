@@ -43,7 +43,8 @@ describe('BinaryCriteriaEvaluatorService', () => {
         {
           criteria_id: 'crit_core',
           passed: true,
-          evidence: 'Ứng viên giải thích rõ ràng về B-Tree index và cơ chế quét.',
+          evidence:
+            'Ứng viên giải thích rõ ràng về B-Tree index và cơ chế quét.',
           deduction_reason: null,
         },
         {
@@ -72,7 +73,8 @@ describe('BinaryCriteriaEvaluatorService', () => {
 
     const result = await service.evaluate({
       questionText: 'Giải thích cơ chế Index trong CSDL quan hệ?',
-      answerText: 'B-Tree index giúp tìm kiếm nhanh O(log N) nhưng làm tăng chi phí khi INSERT/UPDATE.',
+      answerText:
+        'B-Tree index giúp tìm kiếm nhanh O(log N) nhưng làm tăng chi phí khi INSERT/UPDATE.',
       rubricCriteria: [
         {
           id: 'crit_core',
@@ -130,7 +132,11 @@ describe('BinaryCriteriaEvaluatorService', () => {
       answerText: 'Câu trả lời test ngắn.',
       rubricCriteria: [
         { id: 'crit_core', dimension: 'core', statement: 'Tiêu chí 1' },
-        { id: 'crit_seniority', dimension: 'seniority', statement: 'Tiêu chí 2' },
+        {
+          id: 'crit_seniority',
+          dimension: 'seniority',
+          statement: 'Tiêu chí 2',
+        },
       ],
       sessionType: 'technical',
       language: 'vi',
@@ -151,10 +157,15 @@ describe('BinaryCriteriaEvaluatorService', () => {
 
     const result = await service.evaluate({
       questionText: 'Câu hỏi test',
-      answerText: 'Một câu trả lời dài hơn 50 ký tự để kiểm tra phản hồi fallback dự phòng của hệ thống.',
+      answerText:
+        'Một câu trả lời dài hơn 50 ký tự để kiểm tra phản hồi fallback dự phòng của hệ thống.',
       rubricCriteria: [
         { id: 'crit_core', dimension: 'core', statement: 'Tiêu chí 1' },
-        { id: 'crit_seniority', dimension: 'seniority', statement: 'Tiêu chí 2' },
+        {
+          id: 'crit_seniority',
+          dimension: 'seniority',
+          statement: 'Tiêu chí 2',
+        },
       ],
       sessionType: 'technical',
       language: 'vi',

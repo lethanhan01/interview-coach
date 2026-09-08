@@ -34,7 +34,7 @@ export class ReportDataCollector {
       orderBy: { createdAt: 'asc' },
     });
 
-    const answers: ReportUserAnswerRecord[] = rawAnswers as unknown as ReportUserAnswerRecord[];
+    const answers: ReportUserAnswerRecord[] = rawAnswers;
     const skippedAnswers = answers.filter((answer) => answer.skipped);
     const skippedAnswerIds = new Set(skippedAnswers.map((answer) => answer.id));
     const answeredTurnIds = turnIds.filter(

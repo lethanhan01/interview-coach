@@ -5,10 +5,7 @@ import {
 } from './saved-job-description.service';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { createMockPrismaService } from '@core/test-utils/mock-factories';
-import {
-  ONET_FACADE_TOKEN,
-  IOnetFacade,
-} from '@modules/onet/contracts';
+import { ONET_FACADE_TOKEN, IOnetFacade } from '@modules/onet/contracts';
 
 const BASE_DTO = {
   companyName: 'FPT Software',
@@ -37,7 +34,9 @@ describe('inferTargetSfiaLevel', () => {
   it('should infer Level 4 for Senior', () => {
     expect(inferTargetSfiaLevel('senior', 'Software Developer')).toBe(4);
     expect(inferTargetSfiaLevel(null, 'Senior Backend Developer')).toBe(4);
-    expect(inferTargetSfiaLevel('Chuyên viên cao cấp', 'Kỹ sư phần mềm')).toBe(4);
+    expect(inferTargetSfiaLevel('Chuyên viên cao cấp', 'Kỹ sư phần mềm')).toBe(
+      4,
+    );
   });
 
   it('should infer Level 2 for Junior / Fresher', () => {

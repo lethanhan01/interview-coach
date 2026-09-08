@@ -52,7 +52,8 @@ export class AuthService implements AuthTokenVerifier {
       config.get<string>('AUTH_COOKIE_NAME') ??
       'interviewcoach_access';
     this.refreshCookieName =
-      config.get<string>('AUTH_REFRESH_COOKIE_NAME') ?? 'interviewcoach_refresh';
+      config.get<string>('AUTH_REFRESH_COOKIE_NAME') ??
+      'interviewcoach_refresh';
     this.accessCookieMaxAge =
       config.get<number>('AUTH_ACCESS_COOKIE_MAX_AGE') ?? 900; // 15 minutes
     this.refreshCookieMaxAge =
@@ -340,12 +341,20 @@ export class AuthService implements AuthTokenVerifier {
       create: {
         userId: user.id,
         purpose: PASSWORD_RESET_PURPOSE,
-        codeHash: this.hashVerificationCode(user.id, code, PASSWORD_RESET_PURPOSE),
+        codeHash: this.hashVerificationCode(
+          user.id,
+          code,
+          PASSWORD_RESET_PURPOSE,
+        ),
         attempts: 0,
         expiresAt: new Date(Date.now() + this.otpTtlMs),
       },
       update: {
-        codeHash: this.hashVerificationCode(user.id, code, PASSWORD_RESET_PURPOSE),
+        codeHash: this.hashVerificationCode(
+          user.id,
+          code,
+          PASSWORD_RESET_PURPOSE,
+        ),
         attempts: 0,
         expiresAt: new Date(Date.now() + this.otpTtlMs),
       },
@@ -473,17 +482,28 @@ export class AuthService implements AuthTokenVerifier {
     const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
     await this.prisma.userVerificationCode.upsert({
       where: {
-        userId_purpose: { userId: user.id, purpose: EMAIL_VERIFICATION_PURPOSE },
+        userId_purpose: {
+          userId: user.id,
+          purpose: EMAIL_VERIFICATION_PURPOSE,
+        },
       },
       create: {
         userId: user.id,
         purpose: EMAIL_VERIFICATION_PURPOSE,
-        codeHash: this.hashVerificationCode(user.id, code, EMAIL_VERIFICATION_PURPOSE),
+        codeHash: this.hashVerificationCode(
+          user.id,
+          code,
+          EMAIL_VERIFICATION_PURPOSE,
+        ),
         attempts: 0,
         expiresAt: new Date(Date.now() + this.otpTtlMs),
       },
       update: {
-        codeHash: this.hashVerificationCode(user.id, code, EMAIL_VERIFICATION_PURPOSE),
+        codeHash: this.hashVerificationCode(
+          user.id,
+          code,
+          EMAIL_VERIFICATION_PURPOSE,
+        ),
         attempts: 0,
         expiresAt: new Date(Date.now() + this.otpTtlMs),
       },
@@ -517,7 +537,10 @@ export class AuthService implements AuthTokenVerifier {
 
     const verification = await this.prisma.userVerificationCode.findUnique({
       where: {
-        userId_purpose: { userId: user.id, purpose: EMAIL_VERIFICATION_PURPOSE },
+        userId_purpose: {
+          userId: user.id,
+          purpose: EMAIL_VERIFICATION_PURPOSE,
+        },
       },
     });
 

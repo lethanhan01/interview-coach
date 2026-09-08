@@ -22,5 +22,3 @@ import { TaxonomyModule } from './taxonomy/taxonomy.module';
   ],
 })
 export class InterviewPrepModule {}
-
-

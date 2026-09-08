@@ -88,7 +88,12 @@ export const createMockPrismaService = () => {
     },
     level: {
       findMany: jest.fn().mockResolvedValue([]),
-      findFirst: jest.fn().mockResolvedValue({ id: 'lvl-4', rank: 4, name: 'Apply', code: 'LV4' }),
+      findFirst: jest.fn().mockResolvedValue({
+        id: 'lvl-4',
+        rank: 4,
+        name: 'Apply',
+        code: 'LV4',
+      }),
     },
     role: {
       findMany: jest.fn().mockResolvedValue([]),
@@ -196,7 +201,9 @@ export const createMockPrismaService = () => {
         targetSfiaLevel: 3,
         normalizedTechStack: ['Node.js', 'PostgreSQL'],
       }),
-      create: jest.fn().mockResolvedValue({ id: 'sjd-123', userId: 'user-abc' }),
+      create: jest
+        .fn()
+        .mockResolvedValue({ id: 'sjd-123', userId: 'user-abc' }),
       update: jest.fn().mockResolvedValue({ id: 'sjd-123' }),
     },
     onetSfiaMapping: {

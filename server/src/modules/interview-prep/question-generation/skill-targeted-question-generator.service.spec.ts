@@ -22,7 +22,8 @@ describe('SkillTargetedQuestionGeneratorService', () => {
       getSkillByCode: jest.fn().mockResolvedValue({
         code: 'PROG',
         name: 'Software Development',
-        overallDescription: 'The design, creation, testing and documenting of new and amended software.',
+        overallDescription:
+          'The design, creation, testing and documenting of new and amended software.',
       }),
       getLevel: jest.fn().mockResolvedValue({
         levelId: 4,
@@ -42,7 +43,8 @@ describe('SkillTargetedQuestionGeneratorService', () => {
 
   it('sinh câu hỏi AI thành công với đúng 2 tiêu chí nhị phân', async () => {
     mockAiGateway.generateStructured.mockResolvedValueOnce({
-      questionText: 'Trong hệ thống microservices NestJS, bạn xử lý race condition khi update balance ví điện tử như thế nào?',
+      questionText:
+        'Trong hệ thống microservices NestJS, bạn xử lý race condition khi update balance ví điện tử như thế nào?',
       estimatedTimeMin: 6,
       rubricCriteria: [
         {
@@ -65,7 +67,8 @@ describe('SkillTargetedQuestionGeneratorService', () => {
       skillCode: 'PROG',
       targetLevel: 4,
       techContext: ['NestJS', 'PostgreSQL'],
-      jobDescriptionText: 'Tuyển Senior Backend Developer thành thạo NestJS và Postgres.',
+      jobDescriptionText:
+        'Tuyển Senior Backend Developer thành thạo NestJS và Postgres.',
       language: 'vi',
     });
 
@@ -87,17 +90,21 @@ describe('SkillTargetedQuestionGeneratorService', () => {
       content: 'Explain database transaction isolation levels.',
       difficulty: 4,
       estimatedTimeMin: 5,
-      translations: { vi: 'Giải thích các mức cô lập transaction trong database.' },
+      translations: {
+        vi: 'Giải thích các mức cô lập transaction trong database.',
+      },
       questionCriteria: [
         {
           id: 'c-fb-1',
-          criteriaText: 'Nêu đúng 4 mức cô lập (Read Uncommitted, Read Committed, Repeatable Read, Serializable)',
+          criteriaText:
+            'Nêu đúng 4 mức cô lập (Read Uncommitted, Read Committed, Repeatable Read, Serializable)',
           dimension: 'core',
           weight: 1.0,
         },
         {
           id: 'c-fb-2',
-          criteriaText: 'Phân tích được hiện tượng Phantom Read và Serializable Snapshot Isolation',
+          criteriaText:
+            'Phân tích được hiện tượng Phantom Read và Serializable Snapshot Isolation',
           dimension: 'seniority',
           weight: 1.0,
         },
@@ -115,7 +122,9 @@ describe('SkillTargetedQuestionGeneratorService', () => {
 
     expect(result.source).toBe('bank');
     expect(result.questionBankId).toBe('qb-fb-1');
-    expect(result.questionText).toBe('Giải thích các mức cô lập transaction trong database.');
+    expect(result.questionText).toBe(
+      'Giải thích các mức cô lập transaction trong database.',
+    );
     expect(result.rubricCriteria).toHaveLength(2);
     expect(result.rubricCriteria[0].dimension).toBe('core');
     expect(result.rubricCriteria[1].dimension).toBe('seniority');

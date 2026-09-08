@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import { ONET_FACADE_TOKEN, IOnetFacade } from './contracts/onet.facade.interface';
-import { OnetService } from './onet.service';
+import {
+  ONET_FACADE_TOKEN,
+  IOnetFacade,
+} from './contracts/onet.facade.interface';
+import { OnetService, normalizeVietnameseJobTitle } from './onet.service';
 import { OnetFacade } from './onet.facade';
 
 describe('OnetFacade & OnetService', () => {
@@ -96,7 +99,9 @@ describe('OnetFacade & OnetService', () => {
       // 2nd query: fuzzy match on job_titles -> returns match
       queryRawMock.mockResolvedValueOnce([mockFuzzyAlternateMatch]);
 
-      const result = await facade.findOccupationByTitle('Full Stack Software Engineer');
+      const result = await facade.findOccupationByTitle(
+        'Full Stack Software Engineer',
+      );
       expect(result).toEqual(mockFuzzyAlternateMatch);
       expect(queryRawMock).toHaveBeenCalledTimes(2);
     });
@@ -119,7 +124,9 @@ describe('OnetFacade & OnetService', () => {
       queryRawMock.mockResolvedValueOnce([]);
       queryRawMock.mockResolvedValueOnce([]);
 
-      const result = await facade.findOccupationByTitle('Random Nonexistent Job 12345');
+      const result = await facade.findOccupationByTitle(
+        'Random Nonexistent Job 12345',
+      );
       expect(result).toBeNull();
     });
 
@@ -152,22 +159,21 @@ describe('OnetFacade & OnetService', () => {
 
   describe('normalizeVietnameseJobTitle', () => {
     it('should normalize Vietnamese IT job titles to English equivalents', () => {
-      const { normalizeVietnameseJobTitle } = require('./onet.service');
-      expect(
-        normalizeVietnameseJobTitle('Chuyên viên kiểm thử phần mềm'),
-      ).toBe('Software Quality Assurance Analysts and Testers');
+      expect(normalizeVietnameseJobTitle('Chuyên viên kiểm thử phần mềm')).toBe(
+        'Software Quality Assurance Analysts and Testers',
+      );
       expect(
         normalizeVietnameseJobTitle('Lập trình viên Backend Node.js'),
       ).toBe('Software Developers');
       expect(
         normalizeVietnameseJobTitle('Kỹ sư quản trị hệ thống DevOps'),
       ).toBe('Network and Computer Systems Administrators');
-      expect(
-        normalizeVietnameseJobTitle('Chuyên viên an toàn thông tin'),
-      ).toBe('Information Security Analysts');
-      expect(
-        normalizeVietnameseJobTitle('Kỹ sư cơ sở dữ liệu'),
-      ).toBe('Database Architects');
+      expect(normalizeVietnameseJobTitle('Chuyên viên an toàn thông tin')).toBe(
+        'Information Security Analysts',
+      );
+      expect(normalizeVietnameseJobTitle('Kỹ sư cơ sở dữ liệu')).toBe(
+        'Database Architects',
+      );
     });
   });
 

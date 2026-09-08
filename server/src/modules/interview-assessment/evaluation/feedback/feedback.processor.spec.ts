@@ -599,11 +599,19 @@ describe('FeedbackProcessor', () => {
           targetLevel: 4,
           sessionSkillId: 'skill-dbds',
           rubricCriteria: [
-            { id: 'crit_core', dimension: 'core', statement: 'Kiến thức Index' },
-            { id: 'crit_seniority', dimension: 'seniority', statement: 'Trade-off' },
+            {
+              id: 'crit_core',
+              dimension: 'core',
+              statement: 'Kiến thức Index',
+            },
+            {
+              id: 'crit_seniority',
+              dimension: 'seniority',
+              statement: 'Trade-off',
+            },
           ],
         }),
-      } as any;
+      };
 
       await processor.process(makeJob());
 
@@ -620,7 +628,11 @@ describe('FeedbackProcessor', () => {
 
       // Xác nhận ScoringEngine tính điểm và suy luận level
       expect(mockScoringEngine.calculateQuestionScore).toHaveBeenCalled();
-      expect(mockScoringEngine.inferDemonstratedLevel).toHaveBeenCalledWith(4, 1.0, 0.0);
+      expect(mockScoringEngine.inferDemonstratedLevel).toHaveBeenCalledWith(
+        4,
+        1.0,
+        0.0,
+      );
 
       // Xác nhận lưu feedback với demonstratedLevel và criteriaEvaluations
       expect(tx.aiFeedback.upsert).toHaveBeenCalledWith(
@@ -638,10 +650,9 @@ describe('FeedbackProcessor', () => {
       );
 
       // Xác nhận tự động tổng hợp session_skills
-      expect(mockScoringEngine.aggregateSessionSkillScores).toHaveBeenCalledWith(
-        'session-123',
-        tx,
-      );
+      expect(
+        mockScoringEngine.aggregateSessionSkillScores,
+      ).toHaveBeenCalledWith('session-123', tx);
     });
   });
 });

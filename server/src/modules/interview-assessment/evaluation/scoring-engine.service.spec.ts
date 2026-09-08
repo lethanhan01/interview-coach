@@ -159,8 +159,20 @@ describe('ScoringEngineService', () => {
 
       mockPrisma.sessionSkill.findMany
         .mockResolvedValueOnce([
-          { id: 'skill-1', sessionId, skillCode: 'PROG', targetLevel: 4, weight: 2.0 },
-          { id: 'skill-2', sessionId, skillCode: 'DBDS', targetLevel: 3, weight: 1.0 },
+          {
+            id: 'skill-1',
+            sessionId,
+            skillCode: 'PROG',
+            targetLevel: 4,
+            weight: 2.0,
+          },
+          {
+            id: 'skill-2',
+            sessionId,
+            skillCode: 'DBDS',
+            targetLevel: 3,
+            weight: 1.0,
+          },
         ])
         .mockResolvedValueOnce([
           { id: 'skill-1', score: 85, weight: 2.0 },
@@ -172,13 +184,23 @@ describe('ScoringEngineService', () => {
           id: 'q1',
           sessionId,
           sessionSkillId: 'skill-1',
-          userAnswers: [{ skipped: false, aiFeedback: { overallScore: 90, demonstratedLevel: 4 } }],
+          userAnswers: [
+            {
+              skipped: false,
+              aiFeedback: { overallScore: 90, demonstratedLevel: 4 },
+            },
+          ],
         },
         {
           id: 'q2',
           sessionId,
           sessionSkillId: 'skill-1',
-          userAnswers: [{ skipped: false, aiFeedback: { overallScore: 80, demonstratedLevel: 4 } }],
+          userAnswers: [
+            {
+              skipped: false,
+              aiFeedback: { overallScore: 80, demonstratedLevel: 4 },
+            },
+          ],
         },
         {
           id: 'q3',

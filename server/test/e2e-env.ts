@@ -23,4 +23,3 @@ process.env.SMTP_FROM = 'test@example.com';
 process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? 'test';
 process.env.OPENAI_BASE_URL =
   process.env.OPENAI_BASE_URL ?? 'http://127.0.0.1:1234/v1';
-

@@ -1,10 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import {
-  type ISfiaFacade,
-  SFIA_FACADE_TOKEN,
-} from '@modules/sfia/contracts';
+import { type ISfiaFacade, SFIA_FACADE_TOKEN } from '@modules/sfia/contracts';
 import {
   AI_GATEWAY_TOKEN,
   type IAIGateway,
@@ -111,7 +108,11 @@ export class HybridMappingService {
 
     // Tầng 2: Cache Miss -> Thử suy luận qua LLM và lưu cache
     try {
-      const aiInferred = await this.inferSkillsViaAi(socCode, targetLevel, jdText);
+      const aiInferred = await this.inferSkillsViaAi(
+        socCode,
+        targetLevel,
+        jdText,
+      );
       if (aiInferred.length > 0) {
         // Lưu cache vào CSDL
         await this.prisma.onetSfiaMapping

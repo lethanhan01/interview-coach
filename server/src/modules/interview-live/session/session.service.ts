@@ -3,10 +3,7 @@ import { InterviewSession } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
-import {
-  type ISfiaFacade,
-  SFIA_FACADE_TOKEN,
-} from '@modules/sfia/contracts';
+import { type ISfiaFacade, SFIA_FACADE_TOKEN } from '@modules/sfia/contracts';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SessionStatusUpdate } from './dto/update-session-status.dto';
 import { ChangeInterviewSessionStatus } from './change-interview-session-status.service';
@@ -109,7 +106,9 @@ export class SessionService {
       questions.map(async (question) => {
         const answer = answersByQuestionId.get(question.id);
         const skillCode =
-          question.sfiaSkillCode || question.sessionSkill?.skillCode || undefined;
+          question.sfiaSkillCode ||
+          question.sessionSkill?.skillCode ||
+          undefined;
         let skillName: string | undefined = skillCode;
         if (skillCode) {
           const skill = await this.sfiaFacade.getSkillByCode(skillCode);

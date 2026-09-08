@@ -56,20 +56,18 @@ export type SessionQuestionCriterionCreateInput = {
 export class QuestionCriteriaService {
   constructor(private readonly prisma: PrismaService) {}
 
-  codesFromQuestionBank(
-    question: any,
-    _versionId?: string,
-  ): string[] {
-    if (Array.isArray(question.rubricCriteria) && question.rubricCriteria.length > 0) {
+  codesFromQuestionBank(question: any, _versionId?: string): string[] {
+    if (
+      Array.isArray(question.rubricCriteria) &&
+      question.rubricCriteria.length > 0
+    ) {
       return question.rubricCriteria.map((c: any) => c.id || c.code || 'core');
     }
-    const rawLinks = question.questionBankSkillLevels ?? question.criteria ?? [];
+    const rawLinks =
+      question.questionBankSkillLevels ?? question.criteria ?? [];
     const linked = rawLinks
       .map((link: any) => link.skillLevel ?? link.criteria)
-      .filter(
-        (sl: any): sl is SkillLevelRow =>
-          sl !== null && sl !== undefined,
-      )
+      .filter((sl: any): sl is SkillLevelRow => sl !== null && sl !== undefined)
       .sort(compareSkillLevelRows)
       .map((sl: any) => sl.code);
 
@@ -78,16 +76,17 @@ export class QuestionCriteriaService {
   }
 
   codesFromSessionQuestion(question: any): string[] {
-    if (Array.isArray(question.rubricCriteria) && question.rubricCriteria.length > 0) {
+    if (
+      Array.isArray(question.rubricCriteria) &&
+      question.rubricCriteria.length > 0
+    ) {
       return question.rubricCriteria.map((c: any) => c.id || c.code || 'core');
     }
-    const rawLinks = question.sessionQuestionSkillLevels ?? question.criteria ?? [];
+    const rawLinks =
+      question.sessionQuestionSkillLevels ?? question.criteria ?? [];
     const linked = rawLinks
       .map((link: any) => link.skillLevel ?? link.criteria)
-      .filter(
-        (sl: any): sl is SkillLevelRow =>
-          sl !== null && sl !== undefined,
-      )
+      .filter((sl: any): sl is SkillLevelRow => sl !== null && sl !== undefined)
       .slice()
       .sort(compareSkillLevelRows)
       .map((sl: any) => sl.code);

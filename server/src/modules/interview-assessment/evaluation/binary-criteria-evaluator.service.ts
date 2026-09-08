@@ -13,9 +13,13 @@ export const BINARY_CRITERIA_PROMPT_VERSION = 'binary-criteria-v1.0';
 export const BinaryCriteriaOutputSchema = z.object({
   criteria_evaluations: z.array(
     z.object({
-      criteria_id: z.string().describe('ID tiêu chí tương ứng (crit_core, crit_seniority, ...)'),
+      criteria_id: z
+        .string()
+        .describe('ID tiêu chí tương ứng (crit_core, crit_seniority, ...)'),
       passed: z.boolean().describe('Đạt (true) hoặc Không đạt (false)'),
-      evidence: z.string().describe('Bằng chứng cụ thể trích dẫn từ câu trả lời của ứng viên'),
+      evidence: z
+        .string()
+        .describe('Bằng chứng cụ thể trích dẫn từ câu trả lời của ứng viên'),
       deduction_reason: z
         .string()
         .nullable()
@@ -304,8 +308,12 @@ Hãy trả về kết quả dưới định dạng JSON khớp hoàn toàn với
         ? ['Ứng viên đã nỗ lực hoàn thành phản hồi cho câu hỏi.']
         : ['Candidate attempted to answer the question.'],
       improvements: isVietnamese
-        ? ['Hệ thống chưa thể phân tích chi tiết do gián đoạn AI. Cần đánh giá bổ sung.']
-        : ['Detailed analysis unavailable due to AI disruption. Follow-up evaluation required.'],
+        ? [
+            'Hệ thống chưa thể phân tích chi tiết do gián đoạn AI. Cần đánh giá bổ sung.',
+          ]
+        : [
+            'Detailed analysis unavailable due to AI disruption. Follow-up evaluation required.',
+          ],
       modelAnswer: isVietnamese
         ? 'Hệ thống đang đồng bộ câu trả lời mẫu cho kỹ năng này.'
         : 'Model answer is being synchronized for this skill.',

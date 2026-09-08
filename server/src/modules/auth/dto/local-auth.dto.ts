@@ -65,4 +65,3 @@ export class VerifyEmailConfirmDto {
   @Matches(/^\d{6}$/, { message: 'Code must be a 6-digit numeric string' })
   code: string;
 }
-

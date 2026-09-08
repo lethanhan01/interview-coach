@@ -141,7 +141,10 @@ export class AssessmentFacade {
           },
         });
 
-        await this.scoringEngine.aggregateSessionSkillScores(params.sessionId, tx);
+        await this.scoringEngine.aggregateSessionSkillScores(
+          params.sessionId,
+          tx,
+        );
       }
 
       return { answerId: answer.id };
@@ -242,7 +245,10 @@ export class AssessmentFacade {
       }
 
       if (this.scoringEngine) {
-        await this.scoringEngine.aggregateSessionSkillScores(params.sessionId, tx);
+        await this.scoringEngine.aggregateSessionSkillScores(
+          params.sessionId,
+          tx,
+        );
       }
     });
   }

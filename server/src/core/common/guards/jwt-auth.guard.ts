@@ -43,7 +43,8 @@ export class JwtAuthGuard implements CanActivate {
     let token = request.cookies?.[cookieName];
 
     if (!token && request.headers) {
-      const authHeader = request.headers['authorization'] || request.headers['Authorization'];
+      const authHeader =
+        request.headers['authorization'] || request.headers['Authorization'];
       if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
         token = authHeader.substring(7).trim();
       }

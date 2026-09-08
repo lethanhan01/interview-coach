@@ -5,10 +5,7 @@ import {
   SFIA_FACADE_TOKEN,
   SfiaSkillDto,
 } from '@modules/sfia/contracts';
-import {
-  AI_GATEWAY_TOKEN,
-  IAIGateway,
-} from '@infra/ai/ai-gateway.interface';
+import { AI_GATEWAY_TOKEN, IAIGateway } from '@infra/ai/ai-gateway.interface';
 import { HybridMappingService } from './hybrid-mapping.service';
 
 describe('HybridMappingService', () => {
@@ -183,7 +180,8 @@ describe('HybridMappingService', () => {
         sessionType: 'technical',
         socCode: '15-1252.00',
         targetLevel: 4,
-        jdText: 'Senior Software Engineer with strong programming and testing skills',
+        jdText:
+          'Senior Software Engineer with strong programming and testing skills',
         normalizedTechStack: ['TypeScript', 'Jest'],
       });
 

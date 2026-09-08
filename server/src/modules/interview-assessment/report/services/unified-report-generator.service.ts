@@ -5,10 +5,7 @@ import {
   AI_GATEWAY_TOKEN,
   type IAIGateway,
 } from '@infra/ai/ai-gateway.interface';
-import {
-  SFIA_FACADE_TOKEN,
-  type ISfiaFacade,
-} from '@modules/sfia/contracts';
+import { SFIA_FACADE_TOKEN, type ISfiaFacade } from '@modules/sfia/contracts';
 import { ScoringEngineService } from '../../evaluation/scoring-engine.service';
 
 export const UNIFIED_REPORT_TYPE = 'session_competency_evaluation';
@@ -162,7 +159,9 @@ export class UnifiedReportGeneratorService {
       let skillName = skill.skillCode;
       if (this.sfiaFacade) {
         try {
-          const sfiaSkill = await this.sfiaFacade.getSkillByCode(skill.skillCode);
+          const sfiaSkill = await this.sfiaFacade.getSkillByCode(
+            skill.skillCode,
+          );
           if (sfiaSkill?.name) {
             skillName = sfiaSkill.name;
           }
@@ -260,7 +259,8 @@ export class UnifiedReportGeneratorService {
     if (this.aiGateway) {
       try {
         const promptResult = await this.synthesizeSummaryAndActionPlanWithAI({
-          jobTitle: session.savedJobDescription?.jobTitle ?? 'Software Engineer',
+          jobTitle:
+            session.savedJobDescription?.jobTitle ?? 'Software Engineer',
           targetSfiaLevel,
           demonstratedSfiaLevel,
           overallScore,
@@ -378,7 +378,7 @@ export class UnifiedReportGeneratorService {
             recommendationStatus,
             targetSfiaLevel,
             demonstratedSfiaLevel,
-          } as Prisma.InputJsonValue,
+          },
           promptVersion: UNIFIED_REPORT_PROMPT_VERSION,
         },
         update: {
@@ -388,7 +388,7 @@ export class UnifiedReportGeneratorService {
             recommendationStatus,
             targetSfiaLevel,
             demonstratedSfiaLevel,
-          } as Prisma.InputJsonValue,
+          },
           promptVersion: UNIFIED_REPORT_PROMPT_VERSION,
         },
       });
@@ -451,11 +451,15 @@ export class UnifiedReportGeneratorService {
             sessionId,
             reportType: 'skipped_answers',
             version: 1,
-            contentJson: { answers: skippedAnswersList } as Prisma.InputJsonValue,
+            contentJson: {
+              answers: skippedAnswersList,
+            },
             promptVersion: UNIFIED_REPORT_PROMPT_VERSION,
           },
           update: {
-            contentJson: { answers: skippedAnswersList } as Prisma.InputJsonValue,
+            contentJson: {
+              answers: skippedAnswersList,
+            },
             promptVersion: UNIFIED_REPORT_PROMPT_VERSION,
           },
         });

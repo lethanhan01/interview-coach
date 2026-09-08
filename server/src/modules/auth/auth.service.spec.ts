@@ -41,7 +41,9 @@ describe('AuthService', () => {
 
     mockJwt = {
       signAsync: jest.fn().mockResolvedValue('mock-access-token'),
-      verifyAsync: jest.fn().mockResolvedValue({ sub: 'user-1', tokenVersion: 0 }),
+      verifyAsync: jest
+        .fn()
+        .mockResolvedValue({ sub: 'user-1', tokenVersion: 0 }),
     };
 
     mockConfig = {
@@ -55,7 +57,8 @@ describe('AuthService', () => {
         return undefined;
       }),
       getOrThrow: jest.fn((key: string) => {
-        if (key === 'AUTH_JWT_SECRET') return 'test-secret-key-32-chars-long-xxx';
+        if (key === 'AUTH_JWT_SECRET')
+          return 'test-secret-key-32-chars-long-xxx';
         if (key === 'SMTP_HOST') return 'smtp.example.com';
         if (key === 'SMTP_PORT') return 587;
         if (key === 'SMTP_USER') return 'user';
@@ -64,11 +67,7 @@ describe('AuthService', () => {
       }),
     };
 
-    authService = new AuthService(
-      mockPrisma as unknown as PrismaService,
-      mockJwt as unknown as JwtService,
-      mockConfig as unknown as ConfigService,
-    );
+    authService = new AuthService(mockPrisma, mockJwt, mockConfig);
     // Mock mailer
     (authService as any).mailer = {
       sendMail: jest.fn().mockResolvedValue(true),
@@ -109,9 +108,9 @@ describe('AuthService', () => {
         emailVerified: true,
       });
 
-      await expect(authService.verifySessionToken('valid-token')).rejects.toThrow(
-        InterviewAIException,
-      );
+      await expect(
+        authService.verifySessionToken('valid-token'),
+      ).rejects.toThrow(InterviewAIException);
     });
 
     it('throws UNAUTHORIZED when account is locked or deleted', async () => {
@@ -124,9 +123,9 @@ describe('AuthService', () => {
         emailVerified: true,
       });
 
-      await expect(authService.verifySessionToken('valid-token')).rejects.toThrow(
-        InterviewAIException,
-      );
+      await expect(
+        authService.verifySessionToken('valid-token'),
+      ).rejects.toThrow(InterviewAIException);
     });
   });
 
@@ -147,7 +146,10 @@ describe('AuthService', () => {
 
       mockPrisma.refreshToken.create.mockResolvedValue({});
 
-      const result = await authService.login('test@example.com', 'ValidPassw0rd123!');
+      const result = await authService.login(
+        'test@example.com',
+        'ValidPassw0rd123!',
+      );
       expect(result.user.id).toBe('user-1');
       expect(result.tokens.accessToken).toBe('mock-access-token');
       expect(typeof result.tokens.refreshToken).toBe('string');
@@ -208,9 +210,9 @@ describe('AuthService', () => {
         user: { id: 'user-1', status: AccountStatus.active },
       });
 
-      await expect(authService.refreshSession('compromised-token')).rejects.toThrow(
-        InterviewAIException,
-      );
+      await expect(
+        authService.refreshSession('compromised-token'),
+      ).rejects.toThrow(InterviewAIException);
       expect(mockPrisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'user-1' },
@@ -256,7 +258,11 @@ describe('AuthService', () => {
       });
 
       await expect(
-        authService.resetPassword('locked@example.com', '123456', 'NewPassword123!'),
+        authService.resetPassword(
+          'locked@example.com',
+          '123456',
+          'NewPassword123!',
+        ),
       ).rejects.toThrow(
         new InterviewAIException(
           ErrorCode.ACCOUNT_INACTIVE,
@@ -327,7 +333,10 @@ describe('AuthService', () => {
         emailVerified: true,
       });
 
-      const result = await authService.confirmEmailVerification('user-1', '123456');
+      const result = await authService.confirmEmailVerification(
+        'user-1',
+        '123456',
+      );
       expect(result.user.emailVerified).toBe(true);
       expect(mockPrisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({

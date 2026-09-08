@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import { SFIA_FACADE_TOKEN, ISfiaFacade } from './contracts/sfia.facade.interface';
+import {
+  SFIA_FACADE_TOKEN,
+  ISfiaFacade,
+} from './contracts/sfia.facade.interface';
 import { SfiaService } from './sfia.service';
 import { SfiaFacade } from './sfia.facade';
 

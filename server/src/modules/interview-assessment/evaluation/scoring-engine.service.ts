@@ -70,7 +70,9 @@ export class ScoringEngineService {
         totalPassedWeight += weight;
       }
 
-      const dimension = String(criterion.dimension || '').toLowerCase().trim();
+      const dimension = String(criterion.dimension || '')
+        .toLowerCase()
+        .trim();
       if (dimension === 'core') {
         coreWeight += weight;
         if (isPassed) {
@@ -91,8 +93,7 @@ export class ScoringEngineService {
       Math.max(0, Math.round(criteriaPassRate)),
     );
 
-    const corePassRate =
-      coreWeight > 0 ? corePassedWeight / coreWeight : 1.0;
+    const corePassRate = coreWeight > 0 ? corePassedWeight / coreWeight : 1.0;
     const seniorityPassRate =
       seniorityWeight > 0 ? seniorityPassedWeight / seniorityWeight : 1.0;
 
@@ -116,7 +117,10 @@ export class ScoringEngineService {
     corePassRate: number,
     seniorityPassRate: number,
   ): number {
-    const safeTargetLevel = Math.max(1, Math.min(7, Math.round(targetLevel || 3)));
+    const safeTargetLevel = Math.max(
+      1,
+      Math.min(7, Math.round(targetLevel || 3)),
+    );
 
     let rawDemonstratedLevel: number;
     if (corePassRate < 0.5) {
@@ -159,7 +163,8 @@ export class ScoringEngineService {
       ],
       modelAnswer:
         'Ứng viên có thể tham khảo câu trả lời mẫu trong báo cáo chi tiết cuối phiên.',
-      keyTakeaway: 'Hãy luôn cố gắng đưa ra phản hồi kể cả khi chưa nắm chắc giải pháp hoàn chỉnh.',
+      keyTakeaway:
+        'Hãy luôn cố gắng đưa ra phản hồi kể cả khi chưa nắm chắc giải pháp hoàn chỉnh.',
       isFallback: false,
     };
   }
@@ -213,7 +218,12 @@ export class ScoringEngineService {
 
       for (const q of questions) {
         const answer = q.userAnswers?.[0];
-        if (!answer || answer.skipped || !answer.aiFeedback || answer.aiFeedback.isFallback) {
+        if (
+          !answer ||
+          answer.skipped ||
+          !answer.aiFeedback ||
+          answer.aiFeedback.isFallback
+        ) {
           // Câu hỏi chưa trả lời, bị skip hoặc fallback: tính điểm 0, Level 1 vào mẫu số
           scoreSum += 0;
           levelSum += 1;
@@ -224,9 +234,15 @@ export class ScoringEngineService {
       }
 
       const count = questions.length;
-      const skillScore = Math.min(100, Math.max(0, Math.round(scoreSum / count)));
+      const skillScore = Math.min(
+        100,
+        Math.max(0, Math.round(scoreSum / count)),
+      );
       const rawActualLevel = Math.round(levelSum / count);
-      const actualLevel = Math.min(skill.targetLevel, Math.max(1, rawActualLevel));
+      const actualLevel = Math.min(
+        skill.targetLevel,
+        Math.max(1, rawActualLevel),
+      );
 
       await db.sessionSkill.update({
         where: { id: skill.id },

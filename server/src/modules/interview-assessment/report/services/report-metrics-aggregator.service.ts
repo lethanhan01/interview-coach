@@ -62,7 +62,10 @@ export class ReportMetricsAggregator {
     return (criteria ?? [])
       .slice()
       .map((item) => item.skillLevel ?? item.criteria)
-      .filter((item): item is NonNullable<typeof item> => item !== undefined && item !== null)
+      .filter(
+        (item): item is NonNullable<typeof item> =>
+          item !== undefined && item !== null,
+      )
       .sort((a, b) => {
         const catA = a.skill?.categoryCode ?? a.competency?.categoryCode ?? '';
         const catB = b.skill?.categoryCode ?? b.competency?.categoryCode ?? '';
@@ -92,7 +95,9 @@ export class ReportMetricsAggregator {
       keyTakeaway: this.skippedKeyTakeaway(language),
       isFallback: false,
       dimensionScores: this.buildSkippedDimensionScores(
-        answer.question.sessionQuestionSkillLevels ?? answer.question.criteria ?? [],
+        answer.question.sessionQuestionSkillLevels ??
+          answer.question.criteria ??
+          [],
       ),
     }));
   }

@@ -40,7 +40,7 @@ function extractUser(userOrReq: any): AuthenticatedUserPayload {
     };
   }
   return {
-    id: typeof userOrReq === 'string' ? userOrReq : userOrReq?.id ?? '',
+    id: typeof userOrReq === 'string' ? userOrReq : (userOrReq?.id ?? ''),
     email: userOrReq?.email ?? '',
     role: userOrReq?.role ?? UserRole.candidate,
     emailVerified: userOrReq?.emailVerified,
@@ -64,10 +64,7 @@ export class SessionController {
   })
   @ApiCreatedResponse({ description: 'Session created.' })
   @ApiCommonErrors(400, 401, 429, 503)
-  async create(
-    @Body() dto: CreateSessionDto,
-    @CurrentUser() userOrReq: any,
-  ) {
+  async create(@Body() dto: CreateSessionDto, @CurrentUser() userOrReq: any) {
     const user = extractUser(userOrReq);
     return this.sessionService.create(user.id, dto);
   }
@@ -79,10 +76,7 @@ export class SessionController {
   async findAll(@CurrentUser() userOrReq: any) {
     const user = extractUser(userOrReq);
     return {
-      sessions: await this.sessionService.findAll(
-        user.id,
-        user.emailVerified,
-      ),
+      sessions: await this.sessionService.findAll(user.id, user.emailVerified),
     };
   }
 
@@ -91,16 +85,9 @@ export class SessionController {
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ description: 'Session.' })
   @ApiCommonErrors(401, 403, 404)
-  async findOne(
-    @Param('id') id: string,
-    @CurrentUser() userOrReq: any,
-  ) {
+  async findOne(@Param('id') id: string, @CurrentUser() userOrReq: any) {
     const user = extractUser(userOrReq);
-    return this.sessionService.findById(
-      id,
-      user.id,
-      user.emailVerified,
-    );
+    return this.sessionService.findById(id, user.id, user.emailVerified);
   }
 
   @Get(':id/status')
@@ -108,10 +95,7 @@ export class SessionController {
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ description: 'Session status and question count.' })
   @ApiCommonErrors(401, 403, 404)
-  async getStatus(
-    @Param('id') id: string,
-    @CurrentUser() userOrReq: any,
-  ) {
+  async getStatus(@Param('id') id: string, @CurrentUser() userOrReq: any) {
     const user = extractUser(userOrReq);
     const session = await this.sessionService.findById(
       id,
@@ -126,10 +110,7 @@ export class SessionController {
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ description: 'Questions.' })
   @ApiCommonErrors(401, 403, 404)
-  async findQuestions(
-    @Param('id') id: string,
-    @CurrentUser() userOrReq: any,
-  ) {
+  async findQuestions(@Param('id') id: string, @CurrentUser() userOrReq: any) {
     const user = extractUser(userOrReq);
     await this.sessionService.findById(id, user.id, user.emailVerified);
     return this.sessionService.findQuestions(id, user.id);

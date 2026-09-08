@@ -327,7 +327,9 @@ describe('QuestionBankService', () => {
             content: 'How does Event Loop work in Node.js?',
             difficulty: 3,
             estimatedTimeMin: 5,
-            translations: { vi: 'Event loop trong Node.js hoạt động như thế nào?' },
+            translations: {
+              vi: 'Event loop trong Node.js hoạt động như thế nào?',
+            },
             questionCriteria: [
               {
                 id: 'crit-1',
@@ -337,7 +339,8 @@ describe('QuestionBankService', () => {
               },
               {
                 id: 'crit-2',
-                criteriaText: 'Phân tích được trade-off khi offload task nặng sang worker threads',
+                criteriaText:
+                  'Phân tích được trade-off khi offload task nặng sang worker threads',
                 dimension: 'seniority',
                 weight: 1.0,
               },
@@ -358,7 +361,9 @@ describe('QuestionBankService', () => {
             content: 'Explain B-Tree Index in PostgreSQL.',
             difficulty: 3,
             estimatedTimeMin: 5,
-            translations: { vi: 'Giải thích nguyên lý B-Tree Index trong Postgres.' },
+            translations: {
+              vi: 'Giải thích nguyên lý B-Tree Index trong Postgres.',
+            },
             questionCriteria: [
               {
                 id: 'crit-db-1',
@@ -420,9 +425,24 @@ describe('QuestionBankService', () => {
 
     it('cắt giảm top skills theo trọng số khi totalQuestions < sessionSkills.length', async () => {
       const skills = [
-        { sessionSkillId: 'sk-1', skillCode: 'PROG', targetLevel: 4, weight: 1.5 },
-        { sessionSkillId: 'sk-2', skillCode: 'DBDS', targetLevel: 4, weight: 1.2 },
-        { sessionSkillId: 'sk-3', skillCode: 'ARCH', targetLevel: 4, weight: 1.0 },
+        {
+          sessionSkillId: 'sk-1',
+          skillCode: 'PROG',
+          targetLevel: 4,
+          weight: 1.5,
+        },
+        {
+          sessionSkillId: 'sk-2',
+          skillCode: 'DBDS',
+          targetLevel: 4,
+          weight: 1.2,
+        },
+        {
+          sessionSkillId: 'sk-3',
+          skillCode: 'ARCH',
+          targetLevel: 4,
+          weight: 1.0,
+        },
       ];
 
       // totalQuestions = 2 -> Chỉ chọn PROG và DBDS
@@ -456,7 +476,9 @@ describe('QuestionBankService', () => {
       });
 
       expect(result.allocatedQuestions).toHaveLength(2);
-      const allocatedCodes = result.allocatedQuestions.map((q) => q.sfiaSkillCode);
+      const allocatedCodes = result.allocatedQuestions.map(
+        (q) => q.sfiaSkillCode,
+      );
       expect(allocatedCodes).toContain('PROG');
       expect(allocatedCodes).toContain('DBDS');
       expect(allocatedCodes).not.toContain('ARCH');
@@ -464,7 +486,12 @@ describe('QuestionBankService', () => {
 
     it('fallback sang level lân cận (+/- 1 Level) khi ngân hàng thiếu câu hỏi đúng level', async () => {
       const skills = [
-        { sessionSkillId: 'sk-1', skillCode: 'DESN', targetLevel: 4, weight: 1.0 },
+        {
+          sessionSkillId: 'sk-1',
+          skillCode: 'DESN',
+          targetLevel: 4,
+          weight: 1.0,
+        },
       ];
 
       // Lần gọi 1 (Exact Level 4): Không có câu nào
@@ -511,7 +538,12 @@ describe('QuestionBankService', () => {
 
     it('báo cáo uncoveredRequirements khi ngân hàng không đủ câu hỏi', async () => {
       const skills = [
-        { sessionSkillId: 'sk-rare', skillCode: 'RARE', targetLevel: 5, weight: 1.0 },
+        {
+          sessionSkillId: 'sk-rare',
+          skillCode: 'RARE',
+          targetLevel: 5,
+          weight: 1.0,
+        },
       ];
 
       // Exact Level 5: rỗng
@@ -528,7 +560,9 @@ describe('QuestionBankService', () => {
 
       expect(result.allocatedQuestions).toHaveLength(0);
       expect(result.uncoveredRequirements).toHaveLength(1);
-      expect(result.uncoveredRequirements[0].requirement.skillCode).toBe('RARE');
+      expect(result.uncoveredRequirements[0].requirement.skillCode).toBe(
+        'RARE',
+      );
       expect(result.uncoveredRequirements[0].neededCount).toBe(1);
     });
   });

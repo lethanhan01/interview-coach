@@ -65,7 +65,9 @@ export class OnetService {
    * Sử dụng pg_trgm fuzzy matching trên bảng onet.job_titles (54K alternate titles)
    * và fallback sang onet.occupation_data.
    */
-  async findOccupationByTitle(title: string): Promise<OnetOccupationDto | null> {
+  async findOccupationByTitle(
+    title: string,
+  ): Promise<OnetOccupationDto | null> {
     if (!title || typeof title !== 'string') {
       return null;
     }
@@ -165,7 +167,9 @@ export class OnetService {
   /**
    * Lấy thông tin chức danh O*NET theo mã SOC chuẩn (ví dụ '15-1252.00').
    */
-  async getOccupationBySocCode(socCode: string): Promise<OnetOccupationDto | null> {
+  async getOccupationBySocCode(
+    socCode: string,
+  ): Promise<OnetOccupationDto | null> {
     if (!socCode || typeof socCode !== 'string') {
       return null;
     }
@@ -354,4 +358,3 @@ export class OnetService {
     }
   }
 }
-

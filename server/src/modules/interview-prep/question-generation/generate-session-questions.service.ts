@@ -531,14 +531,13 @@ export class GenerateSessionQuestions {
       }
     }
 
-    const resolved =
-      await this.hybridMappingService.resolveSkillsForSession({
-        socCode,
-        targetLevel,
-        jdText: job.jobDescriptionText,
-        normalizedTechStack: normalizedTechStack || [],
-        sessionType: job.sessionType,
-      });
+    const resolved = await this.hybridMappingService.resolveSkillsForSession({
+      socCode,
+      targetLevel,
+      jdText: job.jobDescriptionText,
+      normalizedTechStack: normalizedTechStack || [],
+      sessionType: job.sessionType,
+    });
 
     if (resolved.length > 0) {
       await this.prisma.sessionSkill.createMany({
@@ -560,4 +559,3 @@ export class GenerateSessionQuestions {
     }
   }
 }
-

@@ -83,7 +83,7 @@ describe('CandidateProfileController', () => {
         updatedProfile as any,
       );
 
-      const result = await controller.updateProfile(dto as any, mockReq());
+      const result = await controller.updateProfile(dto, mockReq());
 
       expect(result).toEqual(updatedProfile);
       expect(mockCandidateProfileService.upsertProfile).toHaveBeenCalledWith(

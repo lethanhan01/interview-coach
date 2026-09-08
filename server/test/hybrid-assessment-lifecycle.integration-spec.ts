@@ -93,18 +93,21 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
       sfiaSkillCode: 'PROG',
       targetLevel: 4,
       orderIndex: 1,
-      questionText: 'Explain memory management and async patterns in TypeScript/Node.js.',
+      questionText:
+        'Explain memory management and async patterns in TypeScript/Node.js.',
       rubricCriteria: [
         {
           id: 'core',
           dimension: 'core' as const,
-          description: 'Understands event loop, microtasks, and stream pipelines',
+          description:
+            'Understands event loop, microtasks, and stream pipelines',
           weight: 0.6,
         },
         {
           id: 'seniority',
           dimension: 'seniority' as const,
-          description: 'Discusses trade-offs in garbage collection and backpressure handling',
+          description:
+            'Discusses trade-offs in garbage collection and backpressure handling',
           weight: 0.4,
         },
       ],
@@ -116,7 +119,8 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
       sfiaSkillCode: 'DBDS',
       targetLevel: 4,
       orderIndex: 2,
-      questionText: 'Design an indexing strategy for a multi-tenant PostgreSQL system.',
+      questionText:
+        'Design an indexing strategy for a multi-tenant PostgreSQL system.',
       rubricCriteria: [
         {
           id: 'core',
@@ -127,7 +131,8 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
         {
           id: 'seniority',
           dimension: 'seniority' as const,
-          description: 'Evaluates partial indexes, partitioning, and vacuum impact',
+          description:
+            'Evaluates partial indexes, partitioning, and vacuum impact',
           weight: 0.4,
         },
       ],
@@ -144,13 +149,15 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
         {
           id: 'core',
           dimension: 'core' as const,
-          description: 'Designs message broker, idempotent consumers, and dead-letter queues',
+          description:
+            'Designs message broker, idempotent consumers, and dead-letter queues',
           weight: 0.6,
         },
         {
           id: 'seniority',
           dimension: 'seniority' as const,
-          description: 'Addresses split-brain, distributed transactions (Saga/Outbox), and CDC',
+          description:
+            'Addresses split-brain, distributed transactions (Saga/Outbox), and CDC',
           weight: 0.4,
         },
       ],
@@ -162,7 +169,8 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
       sfiaSkillCode: 'DESN',
       targetLevel: 4,
       orderIndex: 4,
-      questionText: 'How do you structure micro-frontends and design token contracts?',
+      questionText:
+        'How do you structure micro-frontends and design token contracts?',
       rubricCriteria: [
         {
           id: 'core',
@@ -173,7 +181,8 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
         {
           id: 'seniority',
           dimension: 'seniority' as const,
-          description: 'Versioned design token pipeline and independent deployments',
+          description:
+            'Versioned design token pipeline and independent deployments',
           weight: 0.4,
         },
       ],
@@ -240,7 +249,9 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
         return sessionQuestions
           .filter((q) => q.sessionId === where.sessionId)
           .map((q) => {
-            const ans = userAnswersMap.get(`ans-${q.sfiaSkillCode.toLowerCase()}`);
+            const ans = userAnswersMap.get(
+              `ans-${q.sfiaSkillCode.toLowerCase()}`,
+            );
             return {
               ...q,
               userAnswers: ans ? [ans] : [],
@@ -497,7 +508,7 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
 
     // Câu 4 (DESN Level 4): Ứng viên bấm Bỏ qua (Skip)
     const skippedData = scoringEngine.buildSkippedFeedbackData(
-      sessionQuestions[3].rubricCriteria as any,
+      sessionQuestions[3].rubricCriteria,
       sessionQuestions[3].targetLevel,
     );
     expect(skippedData.overallScore).toBe(0);
@@ -516,7 +527,7 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
     // ------------------------------------------------------------------------
     // BƯỚC 2: AGGREGATE SESSION SKILL SCORES VÀO CSDL
     // ------------------------------------------------------------------------
-    await scoringEngine.aggregateSessionSkillScores(mockSessionId, mockPrisma as any);
+    await scoringEngine.aggregateSessionSkillScores(mockSessionId, mockPrisma);
 
     // Xác nhận kết quả tổng hợp của từng kỹ năng:
     const progSkill = sessionSkillsMap.get('skill-prog');
@@ -587,22 +598,33 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
     expect(desnBreakdown.status).toBe('gap');
 
     // Kiểm tra bản ghi tương thích ngược executive_summary & action_plan
-    const execReport = sessionReportsMap.get(`${mockSessionId}:executive_summary:1`);
+    const execReport = sessionReportsMap.get(
+      `${mockSessionId}:executive_summary:1`,
+    );
     expect(execReport).toBeDefined();
     expect(execReport.contentJson.overallScore).toBe(40);
 
-    const actionReport = sessionReportsMap.get(`${mockSessionId}:action_plan:1`);
+    const actionReport = sessionReportsMap.get(
+      `${mockSessionId}:action_plan:1`,
+    );
     expect(actionReport).toBeDefined();
     expect(actionReport.contentJson.actionPlan).toHaveLength(2);
 
     // ------------------------------------------------------------------------
     // BƯỚC 4: KIỂM TRA TẦNG TRUY VẤN BÁO CÁO QUA ReportService.getReport
     // ------------------------------------------------------------------------
-    const fullReportDto = await reportService.getReport(mockSessionId, mockUserId);
+    const fullReportDto = await reportService.getReport(
+      mockSessionId,
+      mockUserId,
+    );
     expect(fullReportDto).toBeDefined();
     expect(fullReportDto.overallScore).toBe(40);
-    expect((fullReportDto.executiveSummary as any).recommendationStatus).toBe('not_recommended');
-    expect((fullReportDto.competencyHeatmap as any).skillsBreakdown).toHaveLength(4);
+    expect((fullReportDto.executiveSummary as any).recommendationStatus).toBe(
+      'not_recommended',
+    );
+    expect(
+      (fullReportDto.competencyHeatmap as any).skillsBreakdown,
+    ).toHaveLength(4);
     expect((fullReportDto.actionPlan as any).actionPlan).toHaveLength(2);
   });
 });

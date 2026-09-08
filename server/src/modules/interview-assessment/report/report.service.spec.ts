@@ -728,7 +728,11 @@ describe('ReportService', () => {
                 },
               ],
               action_plan: [
-                { skill_code: 'DBDS', title: 'Học thêm CSDL', estimated_weeks: 2 },
+                {
+                  skill_code: 'DBDS',
+                  title: 'Học thêm CSDL',
+                  estimated_weeks: 2,
+                },
               ],
             },
           },

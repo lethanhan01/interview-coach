@@ -29,7 +29,10 @@ export class UpdateCandidateProfileDto {
   @MaxLength(10)
   onetSocCode?: string;
 
-  @ApiPropertyOptional({ maxLength: 255, description: 'O*NET Occupation Title' })
+  @ApiPropertyOptional({
+    maxLength: 255,
+    description: 'O*NET Occupation Title',
+  })
   @IsString()
   @IsOptional()
   @MaxLength(255)

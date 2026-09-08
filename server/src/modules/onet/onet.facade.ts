@@ -7,7 +7,9 @@ import { OnetService } from './onet.service';
 export class OnetFacade implements IOnetFacade {
   constructor(private readonly onetService: OnetService) {}
 
-  async findOccupationByTitle(title: string): Promise<OnetOccupationDto | null> {
+  async findOccupationByTitle(
+    title: string,
+  ): Promise<OnetOccupationDto | null> {
     return this.onetService.findOccupationByTitle(title);
   }
 
@@ -15,7 +17,9 @@ export class OnetFacade implements IOnetFacade {
     return this.onetService.getToolsAndTechnology(socCode);
   }
 
-  async getOccupationBySocCode(socCode: string): Promise<OnetOccupationDto | null> {
+  async getOccupationBySocCode(
+    socCode: string,
+  ): Promise<OnetOccupationDto | null> {
     return this.onetService.getOccupationBySocCode(socCode);
   }
 }

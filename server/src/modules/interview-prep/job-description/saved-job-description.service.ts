@@ -1,10 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { SavedJobDescription } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import {
-  type IOnetFacade,
-  ONET_FACADE_TOKEN,
-} from '@modules/onet/contracts';
+import { type IOnetFacade, ONET_FACADE_TOKEN } from '@modules/onet/contracts';
 import { SaveJobDescriptionDto } from './dto/save-job-description.dto';
 
 function removeVietnameseTones(str: string): string {
@@ -31,13 +28,17 @@ export function inferTargetSfiaLevel(
     ) {
       return 5;
     }
-    if (/\b(senior|sr\b|chuyen vien cao cap|chuyen vien chinh)\b/i.test(normTitle)) {
+    if (
+      /\b(senior|sr\b|chuyen vien cao cap|chuyen vien chinh)\b/i.test(normTitle)
+    ) {
       return 4;
     }
     if (/\b(intern|thuc tap|sinh vien|trainee)\b/i.test(normTitle)) {
       return 1;
     }
-    if (/\b(junior|fresher|associate|moi tot nghiep|entry)\b/i.test(normTitle)) {
+    if (
+      /\b(junior|fresher|associate|moi tot nghiep|entry)\b/i.test(normTitle)
+    ) {
       return 2;
     }
     if (/\b(middle|mid)\b/i.test(normTitle)) {
@@ -55,13 +56,17 @@ export function inferTargetSfiaLevel(
     ) {
       return 5;
     }
-    if (/\b(senior|sr\b|chuyen vien cao cap|chuyen vien chinh)\b/i.test(normLevel)) {
+    if (
+      /\b(senior|sr\b|chuyen vien cao cap|chuyen vien chinh)\b/i.test(normLevel)
+    ) {
       return 4;
     }
     if (/\b(intern|thuc tap|sinh vien|trainee)\b/i.test(normLevel)) {
       return 1;
     }
-    if (/\b(junior|fresher|associate|moi tot nghiep|entry)\b/i.test(normLevel)) {
+    if (
+      /\b(junior|fresher|associate|moi tot nghiep|entry)\b/i.test(normLevel)
+    ) {
       return 2;
     }
     if (/\b(middle|mid|intermediate)\b/i.test(normLevel)) {
@@ -188,7 +193,8 @@ export class SavedJobDescriptionService {
 
     if (!customOnetSocCode) {
       try {
-        const occupation = await this.onetFacade.findOccupationByTitle(jobTitle);
+        const occupation =
+          await this.onetFacade.findOccupationByTitle(jobTitle);
         if (occupation) {
           onetSocCode = occupation.socCode;
           onetOccupationTitle = occupation.title;
@@ -201,9 +207,8 @@ export class SavedJobDescriptionService {
     }
 
     try {
-      const onetTools = await this.onetFacade.getToolsAndTechnology(
-        onetSocCode,
-      );
+      const onetTools =
+        await this.onetFacade.getToolsAndTechnology(onetSocCode);
 
       if (onetTools.length > 0) {
         const toolMap = new Map(

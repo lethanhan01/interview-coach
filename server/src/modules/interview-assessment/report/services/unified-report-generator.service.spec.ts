@@ -39,8 +39,10 @@ describe('UnifiedReportGeneratorService', () => {
 
     mockSfiaFacade = {
       getSkillByCode: jest.fn().mockImplementation((code) => {
-        if (code === 'PROG') return Promise.resolve({ name: 'Software Development' });
-        if (code === 'DBDS') return Promise.resolve({ name: 'Database Design' });
+        if (code === 'PROG')
+          return Promise.resolve({ name: 'Software Development' });
+        if (code === 'DBDS')
+          return Promise.resolve({ name: 'Database Design' });
         return Promise.resolve(null);
       }),
     };
@@ -66,8 +68,12 @@ describe('UnifiedReportGeneratorService', () => {
 
   describe('resolveRecommendationStatus', () => {
     it('nên phân loại chính xác các ngưỡng điểm khuyến nghị', () => {
-      expect(service.resolveRecommendationStatus(85)).toBe('strongly_recommended');
-      expect(service.resolveRecommendationStatus(80)).toBe('strongly_recommended');
+      expect(service.resolveRecommendationStatus(85)).toBe(
+        'strongly_recommended',
+      );
+      expect(service.resolveRecommendationStatus(80)).toBe(
+        'strongly_recommended',
+      );
       expect(service.resolveRecommendationStatus(75)).toBe('recommended');
       expect(service.resolveRecommendationStatus(65)).toBe('recommended');
       expect(service.resolveRecommendationStatus(60)).toBe('borderline');
@@ -144,21 +150,30 @@ describe('UnifiedReportGeneratorService', () => {
             priority: 'high',
             skill_code: 'DBDS',
             title: 'Tối ưu hóa PostgreSQL chuyên sâu',
-            topics: ['Connection Pooling với PgBouncer', 'Lock Contention Analysis'],
+            topics: [
+              'Connection Pooling với PgBouncer',
+              'Lock Contention Analysis',
+            ],
             estimated_weeks: 2,
           },
         ],
       };
-      mockAiGateway.chatCompletion.mockResolvedValue(JSON.stringify(aiResponse));
+      mockAiGateway.chatCompletion.mockResolvedValue(
+        JSON.stringify(aiResponse),
+      );
 
       const report = await service.generateReport(sessionId, 'vi');
 
-      expect(mockScoringEngine.aggregateSessionSkillScores).toHaveBeenCalledWith(sessionId);
+      expect(
+        mockScoringEngine.aggregateSessionSkillScores,
+      ).toHaveBeenCalledWith(sessionId);
       expect(report.summary.overallScore).toBe(78);
       expect(report.summary.overall_score).toBe(78);
       expect(report.summary.recommendationStatus).toBe('recommended');
       expect(report.summary.recommendation_status).toBe('recommended');
-      expect(report.summary.executiveSummary).toBe(aiResponse.executive_summary);
+      expect(report.summary.executiveSummary).toBe(
+        aiResponse.executive_summary,
+      );
       expect(report.skillsBreakdown).toHaveLength(2);
       expect(report.skills_breakdown).toHaveLength(2);
       expect(report.skills_breakdown?.[0].skill_code).toBe('PROG');
@@ -219,7 +234,9 @@ describe('UnifiedReportGeneratorService', () => {
       };
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue(mockSession);
-      mockAiGateway.chatCompletion.mockRejectedValue(new Error('AI Gateway 503 Overloaded'));
+      mockAiGateway.chatCompletion.mockRejectedValue(
+        new Error('AI Gateway 503 Overloaded'),
+      );
 
       const report = await service.generateReport(sessionId, 'vi');
 

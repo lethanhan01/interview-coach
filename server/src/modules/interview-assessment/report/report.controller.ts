@@ -27,13 +27,12 @@ export class ReportController {
   @ApiCommonErrors(401, 403, 404, 202)
   async getReport(
     @Param('sessionId') sessionId: string,
-    @CurrentUser() userOrReq: AuthenticatedUserPayload | { user: AuthenticatedUserPayload },
+    @CurrentUser()
+    userOrReq: AuthenticatedUserPayload | { user: AuthenticatedUserPayload },
   ): Promise<ReportResponseDto> {
-    const user = (userOrReq as { user?: AuthenticatedUserPayload })?.user ?? (userOrReq as AuthenticatedUserPayload);
-    return this.reportService.getReport(
-      sessionId,
-      user.id,
-      user.emailVerified,
-    );
+    const user =
+      (userOrReq as { user?: AuthenticatedUserPayload })?.user ??
+      (userOrReq as AuthenticatedUserPayload);
+    return this.reportService.getReport(sessionId, user.id, user.emailVerified);
   }
 }

@@ -5,10 +5,7 @@ import {
   AI_GATEWAY_TOKEN,
   type IAIGateway,
 } from '@infra/ai/ai-gateway.interface';
-import {
-  SFIA_FACADE_TOKEN,
-  type ISfiaFacade,
-} from '@modules/sfia/contracts';
+import { SFIA_FACADE_TOKEN, type ISfiaFacade } from '@modules/sfia/contracts';
 import { type RubricCriterionDto } from '../question-bank/question-bank.service';
 
 export const SkillQuestionOutputSchema = z.object({
@@ -178,16 +175,17 @@ Please produce the question and exactly 2 binary criteria (1 core, 1 seniority) 
           criteria = bankFallback.questionCriteria.map((c) => ({
             id: c.id,
             text: c.criteriaText,
-            dimension: (c.dimension === 'seniority'
-              ? 'seniority'
-              : 'core') as 'core' | 'seniority',
+            dimension: c.dimension === 'seniority' ? 'seniority' : 'core',
             weight: Number(c.weight ?? 1.0),
           }));
         } else {
           criteria = this.createDefaultCriteria(params, isVietnamese);
         }
 
-        const translations = bankFallback.translations as Record<string, string> | null;
+        const translations = bankFallback.translations as Record<
+          string,
+          string
+        > | null;
         const text =
           (isVietnamese ? translations?.['vi'] : translations?.['en']) ||
           bankFallback.content;
@@ -209,7 +207,9 @@ Please produce the question and exactly 2 binary criteria (1 core, 1 seniority) 
 
     // Default safe fallback question if DB has no matches
     const techText =
-      params.techContext.length > 0 ? ` (${params.techContext.join(', ')})` : '';
+      params.techContext.length > 0
+        ? ` (${params.techContext.join(', ')})`
+        : '';
 
     const defaultText = isVietnamese
       ? `Hãy chia sẻ một tình huống thực tế bạn đã áp dụng kỹ năng ${params.skillCode}${techText} để giải quyết một bài toán phức tạp trong công việc. Bạn đã tiếp cận vấn đề như thế nào và đâu là trade-off quan trọng nhất?`

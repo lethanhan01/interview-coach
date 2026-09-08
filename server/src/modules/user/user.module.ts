@@ -20,4 +20,3 @@ import { USER_FACADE_TOKEN } from './contracts/user.facade.interface';
   exports: [USER_FACADE_TOKEN, UserFacade, UserService, UserManagementService],
 })
 export class UserModule {}
-

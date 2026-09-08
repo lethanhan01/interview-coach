@@ -7,4 +7,3 @@ export type {
   SessionQuestionCriterionCreateInput,
 } from '../question-criteria/question-criteria.service';
 export { inferTargetSfiaLevel } from '../job-description/saved-job-description.service';
-

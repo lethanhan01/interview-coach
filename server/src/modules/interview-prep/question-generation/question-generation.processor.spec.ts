@@ -89,8 +89,15 @@ describe('QuestionGenerationProcessor', () => {
     ],
   };
 
-  const makeJob = (data?: Partial<typeof BASE_JOB_DATA & { onetSocCode?: string; targetSfiaLevel?: number; normalizedTechStack?: string[] }>) =>
-    ({ data: { ...BASE_JOB_DATA, ...data } }) as Job<any>;
+  const makeJob = (
+    data?: Partial<
+      typeof BASE_JOB_DATA & {
+        onetSocCode?: string;
+        targetSfiaLevel?: number;
+        normalizedTechStack?: string[];
+      }
+    >,
+  ) => ({ data: { ...BASE_JOB_DATA, ...data } }) as Job<any>;
 
   const makeGeneratedQuestions = (count: number) =>
     Array.from({ length: count }, (_, index) => ({
@@ -868,45 +875,68 @@ describe('QuestionGenerationProcessor', () => {
       ]);
 
       // Mock allocateQuestionsForSessionSkills: PROG được 1 câu từ bank, DBDS thiếu 1 câu
-      mockQuestionBankService.allocateQuestionsForSessionSkills.mockResolvedValue({
-        allocatedQuestions: [
-          {
-            questionBankId: 'qb-prog-1',
-            sessionSkillId: 'sk-prog',
-            sfiaSkillCode: 'PROG',
-            targetLevel: 4,
-            questionText: 'Explain NestJS dependency injection lifecycle.',
-            questionCategory: 'technical',
-            source: 'bank',
-            difficulty: 2,
-            estimatedTimeMin: 5,
-            rubricCriteria: [
-              { id: 'c1', text: 'Core DI understanding', dimension: 'core', weight: 1.0 },
-              { id: 'c2', text: 'Seniority scope management', dimension: 'seniority', weight: 1.0 },
-            ],
-          },
-        ],
-        uncoveredRequirements: [
-          {
-            requirement: {
-              sessionSkillId: 'sk-dbds',
-              skillCode: 'DBDS',
+      mockQuestionBankService.allocateQuestionsForSessionSkills.mockResolvedValue(
+        {
+          allocatedQuestions: [
+            {
+              questionBankId: 'qb-prog-1',
+              sessionSkillId: 'sk-prog',
+              sfiaSkillCode: 'PROG',
               targetLevel: 4,
-              weight: 1.0,
-              techContext: ['PostgreSQL'],
+              questionText: 'Explain NestJS dependency injection lifecycle.',
+              questionCategory: 'technical',
+              source: 'bank',
+              difficulty: 2,
+              estimatedTimeMin: 5,
+              rubricCriteria: [
+                {
+                  id: 'c1',
+                  text: 'Core DI understanding',
+                  dimension: 'core',
+                  weight: 1.0,
+                },
+                {
+                  id: 'c2',
+                  text: 'Seniority scope management',
+                  dimension: 'seniority',
+                  weight: 1.0,
+                },
+              ],
             },
-            neededCount: 1,
-          },
-        ],
-      });
+          ],
+          uncoveredRequirements: [
+            {
+              requirement: {
+                sessionSkillId: 'sk-dbds',
+                skillCode: 'DBDS',
+                targetLevel: 4,
+                weight: 1.0,
+                techContext: ['PostgreSQL'],
+              },
+              neededCount: 1,
+            },
+          ],
+        },
+      );
 
       // Mock AI Generator trả về câu hỏi cho DBDS
       mockSkillGenerator.generateQuestion.mockResolvedValue({
-        questionText: 'Trong PostgreSQL tải cao, làm sao giảm thiểu lock contention trên bảng lớn?',
+        questionText:
+          'Trong PostgreSQL tải cao, làm sao giảm thiểu lock contention trên bảng lớn?',
         estimatedTimeMin: 6,
         rubricCriteria: [
-          { id: 'crit_db_core', text: 'Nêu đúng cơ chế MVCC và Row-level locking', dimension: 'core', weight: 1.0 },
-          { id: 'crit_db_sen', text: 'Phân tích trade-off khi phân vùng bảng (Partitioning)', dimension: 'seniority', weight: 1.0 },
+          {
+            id: 'crit_db_core',
+            text: 'Nêu đúng cơ chế MVCC và Row-level locking',
+            dimension: 'core',
+            weight: 1.0,
+          },
+          {
+            id: 'crit_db_sen',
+            text: 'Phân tích trade-off khi phân vùng bảng (Partitioning)',
+            dimension: 'seniority',
+            weight: 1.0,
+          },
         ],
         source: 'ai_generated',
         difficulty: 4,
@@ -923,7 +953,9 @@ describe('QuestionGenerationProcessor', () => {
         }),
       );
 
-      expect(mockQuestionBankService.allocateQuestionsForSessionSkills).toHaveBeenCalledWith(
+      expect(
+        mockQuestionBankService.allocateQuestionsForSessionSkills,
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           totalQuestions: 2,
           sessionType: 'technical',

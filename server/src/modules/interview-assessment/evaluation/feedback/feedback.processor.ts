@@ -120,7 +120,11 @@ export class FeedbackProcessor extends WorkerHost {
         Array.isArray(question?.rubricCriteria) &&
         (question.rubricCriteria as unknown[]).length > 0;
 
-      if (hasRubricCriteria && this.binaryCriteriaEvaluator && this.scoringEngine) {
+      if (
+        hasRubricCriteria &&
+        this.binaryCriteriaEvaluator &&
+        this.scoringEngine
+      ) {
         // === NHÁNH MỚI: ĐÁNH GIÁ NHỊ PHÂN VÀ TÍNH ĐIỂM TẤT ĐỊNH (PHASE 5) ===
         const criteriaList = question.rubricCriteria as any[];
         const binaryFeedback = await this.binaryCriteriaEvaluator.evaluate({

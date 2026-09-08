@@ -9,10 +9,7 @@ import { CreateSessionDto } from './dto/create-session.dto';
 import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
 import { WorkflowService } from '@infra/workflow/workflow.service';
 import { SessionStrategyRegistry } from './session-strategy.registry';
-import {
-  type IOnetFacade,
-  ONET_FACADE_TOKEN,
-} from '@modules/onet/contracts';
+import { type IOnetFacade, ONET_FACADE_TOKEN } from '@modules/onet/contracts';
 import { inferTargetSfiaLevel } from '@modules/interview-prep/contracts';
 
 @Injectable()
@@ -130,7 +127,10 @@ export class CreateInterviewSession {
       throw new InterviewAIException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
-    if (savedJobDescription.onetSocCode && savedJobDescription.targetSfiaLevel) {
+    if (
+      savedJobDescription.onetSocCode &&
+      savedJobDescription.targetSfiaLevel
+    ) {
       await this.prisma.savedJobDescription.update({
         where: { id: savedJobDescriptionId },
         data: { lastUsedAt: new Date() },
