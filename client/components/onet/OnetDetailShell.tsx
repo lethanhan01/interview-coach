@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
-import { onetMockService } from '@/services/onet.mock'
+import { onetAdminService } from '@/services/onet-admin.service'
 import { OnetOverviewTab } from './OnetOverviewTab'
 import { OnetTechSkillsTab } from './OnetTechSkillsTab'
 import { OnetTasksTab } from './OnetTasksTab'
@@ -63,7 +63,7 @@ export function OnetDetailShell({
   useEffect(() => {
     let isCancelled = false
 
-    onetMockService
+    onetAdminService
       .getOccupationDetail(socCode)
       .then((data) => {
         if (isCancelled) return
@@ -94,7 +94,7 @@ export function OnetDetailShell({
   const handleRetry = () => {
     setLoading(true)
     setError(null)
-    onetMockService
+    onetAdminService
       .getOccupationDetail(socCode)
       .then((data) => {
         if (data) {
@@ -329,7 +329,11 @@ export function OnetDetailShell({
 
         {/* Tab 5: Alternate Job Titles */}
         {activeDetailTab === 'titles' && (
-          <OnetAlternateTitlesTab titles={detail.alternateTitles} />
+          <OnetAlternateTitlesTab
+            socCode={detail.socCode}
+            initialTitles={detail.alternateTitles}
+            totalCount={detail.stats.alternateTitleCount}
+          />
         )}
       </div>
     </div>

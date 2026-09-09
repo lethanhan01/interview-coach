@@ -94,3 +94,14 @@ export interface OccupationTaskRawRow {
   statement: string;
   isCore: boolean;
 }
+
+export interface OccupationSfiaMappingRawRow {
+  id: string;
+  onetSocCode: string;
+  sfiaSkillCode: string;
+  targetSfiaLevel: number;
+  defaultWeight: number;
+  isCore: boolean;
+  source: string;
+  createdAt: Date;
+}

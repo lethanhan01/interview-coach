@@ -63,7 +63,9 @@ describe('OnetAdminRepository', () => {
 
   describe('getMajorGroupsDistribution', () => {
     it('returns major groups distribution', async () => {
-      const mockGroups = [{ code: '15', totalOccupations: 30, mappedOccupations: 25 }];
+      const mockGroups = [
+        { code: '15', totalOccupations: 30, mappedOccupations: 25 },
+      ];
       queryRawMock.mockResolvedValueOnce(mockGroups);
 
       const result = await repository.getMajorGroupsDistribution();
@@ -84,7 +86,12 @@ describe('OnetAdminRepository', () => {
       ];
       queryRawUnsafeMock.mockResolvedValueOnce(mockSidebar);
 
-      const result = await repository.searchSidebarOccupations('15', true, 'developer', 10);
+      const result = await repository.searchSidebarOccupations(
+        '15',
+        true,
+        'developer',
+        10,
+      );
       expect(result).toEqual(mockSidebar);
     });
   });
@@ -132,7 +139,11 @@ describe('OnetAdminRepository', () => {
 
   describe('getOccupationBaseDetail & JobZone & Stats', () => {
     it('returns occupation base detail', async () => {
-      const mockDetail = { socCode: '15-1252.00', title: 'Software Developers', description: 'Desc' };
+      const mockDetail = {
+        socCode: '15-1252.00',
+        title: 'Software Developers',
+        description: 'Desc',
+      };
       queryRawMock.mockResolvedValueOnce([mockDetail]);
 
       const result = await repository.getOccupationBaseDetail('15-1252.00');
@@ -140,7 +151,13 @@ describe('OnetAdminRepository', () => {
     });
 
     it('returns occupation job zone', async () => {
-      const mockJobZone = { zone: 4, name: 'Zone 4', education: 'BS', experience: '4y', jobTraining: 'None' };
+      const mockJobZone = {
+        zone: 4,
+        name: 'Zone 4',
+        education: 'BS',
+        experience: '4y',
+        jobTraining: 'None',
+      };
       queryRawMock.mockResolvedValueOnce([mockJobZone]);
 
       const result = await repository.getOccupationJobZone('15-1252.00');
@@ -148,7 +165,12 @@ describe('OnetAdminRepository', () => {
     });
 
     it('returns occupation stats counts', async () => {
-      const mockCounts = { toolCount: 5, taskCount: 10, mappingCount: 2, alternateTitleCount: 20 };
+      const mockCounts = {
+        toolCount: 5,
+        taskCount: 10,
+        mappingCount: 2,
+        alternateTitleCount: 20,
+      };
       queryRawMock.mockResolvedValueOnce([mockCounts]);
 
       const result = await repository.getOccupationStatsCounts('15-1252.00');
@@ -158,7 +180,14 @@ describe('OnetAdminRepository', () => {
 
   describe('getOccupationTechSkills & Tasks', () => {
     it('returns tech skills', async () => {
-      const mockTech = [{ name: 'Docker', category: 'DevOps', isHotTechnology: true, inDemand: true }];
+      const mockTech = [
+        {
+          name: 'Docker',
+          category: 'DevOps',
+          isHotTechnology: true,
+          inDemand: true,
+        },
+      ];
       queryRawMock.mockResolvedValueOnce(mockTech);
 
       const result = await repository.getOccupationTechSkills('15-1252.00');
@@ -177,13 +206,23 @@ describe('OnetAdminRepository', () => {
   describe('getAlternateTitlesPaginated & Count', () => {
     it('returns alternate titles count', async () => {
       queryRawUnsafeMock.mockResolvedValueOnce([{ count: 15 }]);
-      const count = await repository.getAlternateTitlesCount('15-1252.00', 'dev');
+      const count = await repository.getAlternateTitlesCount(
+        '15-1252.00',
+        'dev',
+      );
       expect(count).toBe(15);
     });
 
     it('returns paginated alternate titles', async () => {
-      queryRawUnsafeMock.mockResolvedValueOnce([{ job_title: 'Full Stack Dev' }]);
-      const titles = await repository.getAlternateTitlesPaginated('15-1252.00', 'dev', 10, 0);
+      queryRawUnsafeMock.mockResolvedValueOnce([
+        { job_title: 'Full Stack Dev' },
+      ]);
+      const titles = await repository.getAlternateTitlesPaginated(
+        '15-1252.00',
+        'dev',
+        10,
+        0,
+      );
       expect(titles).toEqual(['Full Stack Dev']);
     });
   });

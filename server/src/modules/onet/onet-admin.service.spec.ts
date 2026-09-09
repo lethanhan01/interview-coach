@@ -24,9 +24,11 @@ describe('OnetAdminService', () => {
       totalMockInterviews: 120,
       totalLinkedJobDescriptions: 45,
     }),
-    getMajorGroupsDistribution: jest.fn().mockResolvedValue([
-      { code: '15', totalOccupations: 100, mappedOccupations: 80 },
-    ]),
+    getMajorGroupsDistribution: jest
+      .fn()
+      .mockResolvedValue([
+        { code: '15', totalOccupations: 100, mappedOccupations: 80 },
+      ]),
     searchSidebarOccupations: jest.fn().mockResolvedValue([
       {
         socCode: '15-1252.00',
@@ -85,13 +87,60 @@ describe('OnetAdminService', () => {
         inDemand: true,
       },
     ]),
-    getOccupationTasks: jest.fn().mockResolvedValue([
-      { id: 1, statement: 'Develop software', isCore: true },
-    ]),
+    getOccupationTasks: jest
+      .fn()
+      .mockResolvedValue([
+        { id: 1, statement: 'Develop software', isCore: true },
+      ]),
     getAlternateTitlesCount: jest.fn().mockResolvedValue(30),
     getAlternateTitlesPaginated: jest
       .fn()
       .mockResolvedValue(['Full Stack Engineer', 'Backend Dev']),
+    getOccupationSfiaMappings: jest.fn().mockResolvedValue([
+      {
+        id: 'map_1',
+        onetSocCode: '15-1252.00',
+        sfiaSkillCode: 'PROG',
+        targetSfiaLevel: 3,
+        defaultWeight: 1.0,
+        isCore: true,
+        source: 'EXPERT_CURATED',
+        createdAt: new Date(),
+      },
+    ]),
+    findSfiaMappingById: jest.fn().mockResolvedValue({
+      id: 'map_1',
+      onetSocCode: '15-1252.00',
+      sfiaSkillCode: 'PROG',
+      targetSfiaLevel: 3,
+      defaultWeight: 1.0,
+      isCore: true,
+      source: 'EXPERT_CURATED',
+      createdAt: new Date(),
+    }),
+    findSfiaMappingByUnique: jest.fn().mockResolvedValue(null),
+    createSfiaMapping: jest.fn().mockResolvedValue({
+      id: 'map_new',
+      onetSocCode: '15-1252.00',
+      sfiaSkillCode: 'TEST',
+      targetSfiaLevel: 2,
+      defaultWeight: 1.0,
+      isCore: false,
+      source: 'USER_DEFINED',
+      createdAt: new Date(),
+    }),
+    updateSfiaMapping: jest.fn().mockResolvedValue({
+      id: 'map_1',
+      onetSocCode: '15-1252.00',
+      sfiaSkillCode: 'PROG',
+      targetSfiaLevel: 4,
+      defaultWeight: 1.5,
+      isCore: true,
+      source: 'EXPERT_CURATED',
+      createdAt: new Date(),
+    }),
+    deleteSfiaMapping: jest.fn().mockResolvedValue(true),
+    deleteOccupationMappings: jest.fn().mockResolvedValue(1),
   };
 
   const mockSfiaFacade = {
@@ -136,9 +185,9 @@ describe('OnetAdminService', () => {
   });
 
   describe('getMajorGroupsDistribution', () => {
-    it('returns all 23 major groups with coverage percentages', async () => {
+    it('returns major groups with coverage percentages', async () => {
       const result = await service.getMajorGroupsDistribution();
-      expect(result.length).toBe(23);
+      expect(result.length).toBe(1);
       const itGroup = result.find((g) => g.code === '15');
       expect(itGroup?.isFocusGroup).toBe(true);
       expect(itGroup?.totalOccupations).toBe(100);
@@ -199,12 +248,47 @@ describe('OnetAdminService', () => {
     });
 
     it('throws not found exception when base detail is null', async () => {
-      (mockAdminRepo.getOccupationBaseDetail as jest.Mock).mockResolvedValueOnce(
-        null,
-      );
+      (
+        mockAdminRepo.getOccupationBaseDetail as jest.Mock
+      ).mockResolvedValueOnce(null);
       await expect(service.getOccupationDetail('99-9999.00')).rejects.toThrow(
         InterviewAIException,
       );
+    });
+  });
+
+  describe('SFIA Mapping CRUD', () => {
+    it('returns sfia mappings for occupation', async () => {
+      const result = await service.getOccupationSfiaMappings('15-1252.00');
+      expect(result).toHaveLength(1);
+      expect(result[0].sfiaSkillCode).toBe('PROG');
+    });
+
+    it('creates sfia mapping successfully', async () => {
+      const result = await service.createSfiaMapping('15-1252.00', {
+        sfiaSkillCode: 'PROG',
+        targetSfiaLevel: 3,
+        defaultWeight: 1.0,
+      });
+      expect(result.id).toBeDefined();
+    });
+
+    it('updates sfia mapping successfully', async () => {
+      const result = await service.updateSfiaMapping('15-1252.00', 'map_1', {
+        targetSfiaLevel: 4,
+        defaultWeight: 1.5,
+      });
+      expect(result.targetSfiaLevel).toBe(4);
+    });
+
+    it('deletes sfia mapping successfully', async () => {
+      const result = await service.deleteSfiaMapping('15-1252.00', 'map_1');
+      expect(result.success).toBe(true);
+    });
+
+    it('resets sfia mappings', async () => {
+      const result = await service.resetSfiaMappings('15-1252.00');
+      expect(result).toHaveLength(1);
     });
   });
 });

@@ -142,3 +142,12 @@ export interface OnetTopOccupationItem {
   isMapped: boolean // true nếu mappingCount > 0
   coreSkillCodes: string[] // Danh sách mã kỹ năng cốt lõi xem trước (e.g. ["PROG", "SWDN"])
 }
+
+export interface PaginatedAlternateTitles {
+  items: string[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+

@@ -78,9 +78,8 @@ describe('OnetRepository', () => {
   describe('findFuzzyAlternateTitles', () => {
     it('returns fuzzy match from alternate titles', async () => {
       queryRawMock.mockResolvedValueOnce([mockOccupationRow]);
-      const result = await repository.findFuzzyAlternateTitles(
-        'Full Stack Dev',
-      );
+      const result =
+        await repository.findFuzzyAlternateTitles('Full Stack Dev');
       expect(result).toEqual(mockOccupationRow);
     });
   });

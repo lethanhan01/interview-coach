@@ -7,3 +7,5 @@ export { sessionService } from './session.service'
 export { rubricService } from './rubric.service'
 export { adminService, userManagementService } from './admin.service'
 export { onetService, type OnetOccupation, type OnetTech } from './onet.service'
+export { onetAdminService } from './onet-admin.service'
+

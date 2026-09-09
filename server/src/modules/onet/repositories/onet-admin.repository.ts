@@ -13,6 +13,7 @@ import {
   OccupationStatsCountsRawRow,
   OccupationTechSkillRawRow,
   OccupationTaskRawRow,
+  OccupationSfiaMappingRawRow,
 } from './types/onet-raw-row.types';
 
 @Injectable()
@@ -334,7 +335,7 @@ export class OnetAdminRepository implements IOnetAdminRepository {
       return await this.getClient(tx).$queryRaw<OccupationTechSkillRawRow[]>`
         SELECT 
           workplace_example AS "name",
-          COALESCE(commodity_code::text, 'Công cụ chung') AS "category",
+          'Phần mềm & Công nghệ' AS "category",
           (hot_technology = 'Y') AS "isHotTechnology",
           (in_demand = 'Y') AS "inDemand"
         FROM onet.software_skills
@@ -428,6 +429,223 @@ export class OnetAdminRepository implements IOnetAdminRepository {
     } catch (error) {
       this.logger.error(
         `Error querying alternate titles paginated for "${socCode}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
+  }
+
+  async getOccupationSfiaMappings(
+    socCode: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<OccupationSfiaMappingRawRow[]> {
+    try {
+      const records = await this.getClient(tx).onetSfiaMapping.findMany({
+        where: { onetSocCode: socCode },
+        orderBy: [
+          { isCore: 'desc' },
+          { targetSfiaLevel: 'asc' },
+          { sfiaSkillCode: 'asc' },
+        ],
+      });
+
+      return records.map((r) => ({
+        id: r.id,
+        onetSocCode: r.onetSocCode,
+        sfiaSkillCode: r.sfiaSkillCode,
+        targetSfiaLevel: r.targetSfiaLevel,
+        defaultWeight: Number(r.defaultWeight),
+        isCore: r.isCore,
+        source: r.source,
+        createdAt: r.createdAt,
+      }));
+    } catch (error) {
+      this.logger.error(
+        `Error querying SFIA mappings for "${socCode}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
+  }
+
+  async findSfiaMappingById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<OccupationSfiaMappingRawRow | null> {
+    try {
+      const record = await this.getClient(tx).onetSfiaMapping.findUnique({
+        where: { id },
+      });
+
+      if (!record) return null;
+
+      return {
+        id: record.id,
+        onetSocCode: record.onetSocCode,
+        sfiaSkillCode: record.sfiaSkillCode,
+        targetSfiaLevel: record.targetSfiaLevel,
+        defaultWeight: Number(record.defaultWeight),
+        isCore: record.isCore,
+        source: record.source,
+        createdAt: record.createdAt,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error finding SFIA mapping by id "${id}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
+  }
+
+  async findSfiaMappingByUnique(
+    socCode: string,
+    sfiaSkillCode: string,
+    targetSfiaLevel: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<OccupationSfiaMappingRawRow | null> {
+    try {
+      const record = await this.getClient(tx).onetSfiaMapping.findUnique({
+        where: {
+          onetSocCode_sfiaSkillCode_targetSfiaLevel: {
+            onetSocCode: socCode,
+            sfiaSkillCode,
+            targetSfiaLevel,
+          },
+        },
+      });
+
+      if (!record) return null;
+
+      return {
+        id: record.id,
+        onetSocCode: record.onetSocCode,
+        sfiaSkillCode: record.sfiaSkillCode,
+        targetSfiaLevel: record.targetSfiaLevel,
+        defaultWeight: Number(record.defaultWeight),
+        isCore: record.isCore,
+        source: record.source,
+        createdAt: record.createdAt,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error finding SFIA mapping by unique constraint: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
+  }
+
+  async createSfiaMapping(
+    socCode: string,
+    sfiaSkillCode: string,
+    targetSfiaLevel: number,
+    defaultWeight: number,
+    isCore: boolean,
+    source = 'EXPERT_CURATED',
+    tx?: Prisma.TransactionClient,
+  ): Promise<OccupationSfiaMappingRawRow> {
+    try {
+      const record = await this.getClient(tx).onetSfiaMapping.create({
+        data: {
+          onetSocCode: socCode,
+          sfiaSkillCode,
+          targetSfiaLevel,
+          defaultWeight: new Prisma.Decimal(defaultWeight),
+          isCore,
+          source,
+        },
+      });
+
+      return {
+        id: record.id,
+        onetSocCode: record.onetSocCode,
+        sfiaSkillCode: record.sfiaSkillCode,
+        targetSfiaLevel: record.targetSfiaLevel,
+        defaultWeight: Number(record.defaultWeight),
+        isCore: record.isCore,
+        source: record.source,
+        createdAt: record.createdAt,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error creating SFIA mapping: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
+  }
+
+  async updateSfiaMapping(
+    id: string,
+    targetSfiaLevel?: number,
+    defaultWeight?: number,
+    isCore?: boolean,
+    source?: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<OccupationSfiaMappingRawRow> {
+    try {
+      const updateData: Prisma.OnetSfiaMappingUpdateInput = {};
+      if (typeof targetSfiaLevel === 'number') {
+        updateData.targetSfiaLevel = targetSfiaLevel;
+      }
+      if (typeof defaultWeight === 'number') {
+        updateData.defaultWeight = new Prisma.Decimal(defaultWeight);
+      }
+      if (typeof isCore === 'boolean') {
+        updateData.isCore = isCore;
+      }
+      if (source) {
+        updateData.source = source;
+      }
+
+      const record = await this.getClient(tx).onetSfiaMapping.update({
+        where: { id },
+        data: updateData,
+      });
+
+      return {
+        id: record.id,
+        onetSocCode: record.onetSocCode,
+        sfiaSkillCode: record.sfiaSkillCode,
+        targetSfiaLevel: record.targetSfiaLevel,
+        defaultWeight: Number(record.defaultWeight),
+        isCore: record.isCore,
+        source: record.source,
+        createdAt: record.createdAt,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error updating SFIA mapping "${id}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
+  }
+
+  async deleteSfiaMapping(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<boolean> {
+    try {
+      await this.getClient(tx).onetSfiaMapping.delete({
+        where: { id },
+      });
+      return true;
+    } catch (error) {
+      this.logger.error(
+        `Error deleting SFIA mapping "${id}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
+  }
+
+  async deleteOccupationMappings(
+    socCode: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    try {
+      const res = await this.getClient(tx).onetSfiaMapping.deleteMany({
+        where: { onetSocCode: socCode },
+      });
+      return res.count;
+    } catch (error) {
+      this.logger.error(
+        `Error deleting occupation mappings for "${socCode}": ${error instanceof Error ? error.message : String(error)}`,
       );
       throw error;
     }

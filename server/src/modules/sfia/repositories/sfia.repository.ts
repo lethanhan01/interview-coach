@@ -2,10 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { ISfiaRepository } from '../domain/sfia-repository.interface';
-import {
-  SfiaSkillRawRow,
-  SfiaLevelRawRow,
-} from './types/sfia-raw-row.types';
+import { SfiaSkillRawRow, SfiaLevelRawRow } from './types/sfia-raw-row.types';
 
 @Injectable()
 export class SfiaRepository implements ISfiaRepository {

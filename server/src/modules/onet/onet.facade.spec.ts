@@ -119,7 +119,9 @@ describe('OnetFacade & OnetService', () => {
     it('should fallback to fuzzy match on occupation_data when alternate titles miss', async () => {
       mockOnetRepo.findExactOccupationByTitle.mockResolvedValueOnce(null);
       mockOnetRepo.findFuzzyAlternateTitles.mockResolvedValueOnce(null);
-      mockOnetRepo.findFuzzyOccupationData.mockResolvedValueOnce(mockOccupation);
+      mockOnetRepo.findFuzzyOccupationData.mockResolvedValueOnce(
+        mockOccupation,
+      );
 
       const result = await facade.findOccupationByTitle('Software Dev');
       expect(result).toEqual(mockOccupation);

@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { SfiaRepository } from './sfia.repository';
-import { ISfiaRepository, SFIA_REPOSITORY_TOKEN } from '../domain/sfia-repository.interface';
+import {
+  ISfiaRepository,
+  SFIA_REPOSITORY_TOKEN,
+} from '../domain/sfia-repository.interface';
 
 describe('SfiaRepository', () => {
   let repository: ISfiaRepository;

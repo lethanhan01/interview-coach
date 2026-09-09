@@ -10,6 +10,7 @@ import {
   OccupationStatsCountsRawRow,
   OccupationTechSkillRawRow,
   OccupationTaskRawRow,
+  OccupationSfiaMappingRawRow,
 } from '../repositories/types/onet-raw-row.types';
 
 export const ONET_ADMIN_REPOSITORY_TOKEN = Symbol('IOnetAdminRepository');
@@ -81,4 +82,50 @@ export interface IOnetAdminRepository {
     offset: number,
     tx?: Prisma.TransactionClient,
   ): Promise<string[]>;
+
+  getOccupationSfiaMappings(
+    socCode: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<OccupationSfiaMappingRawRow[]>;
+
+  findSfiaMappingById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<OccupationSfiaMappingRawRow | null>;
+
+  findSfiaMappingByUnique(
+    socCode: string,
+    sfiaSkillCode: string,
+    targetSfiaLevel: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<OccupationSfiaMappingRawRow | null>;
+
+  createSfiaMapping(
+    socCode: string,
+    sfiaSkillCode: string,
+    targetSfiaLevel: number,
+    defaultWeight: number,
+    isCore: boolean,
+    source?: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<OccupationSfiaMappingRawRow>;
+
+  updateSfiaMapping(
+    id: string,
+    targetSfiaLevel?: number,
+    defaultWeight?: number,
+    isCore?: boolean,
+    source?: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<OccupationSfiaMappingRawRow>;
+
+  deleteSfiaMapping(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<boolean>;
+
+  deleteOccupationMappings(
+    socCode: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number>;
 }

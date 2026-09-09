@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { onetMockService } from '@/services/onet.mock'
+import { onetAdminService } from '@/services/onet-admin.service'
 import { OnetSummaryCards } from './OnetSummaryCards'
 import { SocGroupDistributionChart } from './SocGroupDistributionChart'
 import { SfiaSkillCoverageChart } from './SfiaSkillCoverageChart'
@@ -51,10 +51,10 @@ export function OnetAnalyticsView({
     let isMounted = true
 
     Promise.all([
-      onetMockService.getAnalyticsSummary(),
-      onetMockService.getSocGroupDistribution(),
-      onetMockService.getSfiaSkillCoverage(),
-      onetMockService.getTopOccupations(),
+      onetAdminService.getAnalyticsSummary(),
+      onetAdminService.getMajorGroupsDistribution(),
+      onetAdminService.getSfiaSkillCoverage(),
+      onetAdminService.getTopOccupations(),
     ])
       .then(([sum, dist, sfia, occs]) => {
         if (!isMounted) return
@@ -68,7 +68,7 @@ export function OnetAnalyticsView({
       .catch((err) => {
         if (!isMounted) return
         console.error('Lỗi khi tải dữ liệu Analytics:', err)
-        setError('Không thể tải số liệu phân tích O*NET. Vui lòng thử lại.')
+        setError('Không thể tải số liệu phân tích O*NET từ database. Vui lòng thử lại.')
         setIsLoading(false)
       })
 
@@ -84,10 +84,10 @@ export function OnetAnalyticsView({
       setError(null)
 
       const [sum, dist, sfia, occs] = await Promise.all([
-        onetMockService.getAnalyticsSummary(),
-        onetMockService.getSocGroupDistribution(),
-        onetMockService.getSfiaSkillCoverage(),
-        onetMockService.getTopOccupations(),
+        onetAdminService.getAnalyticsSummary(),
+        onetAdminService.getMajorGroupsDistribution(),
+        onetAdminService.getSfiaSkillCoverage(),
+        onetAdminService.getTopOccupations(),
       ])
 
       setSummary(sum)
@@ -194,7 +194,7 @@ export function OnetAnalyticsView({
             onClick={handleRefresh}
             disabled={isRefreshing}
             className="gap-1 text-xs font-medium h-6 px-2"
-            title="Làm mới lại dữ liệu từ mock store"
+            title="Làm mới lại dữ liệu từ cơ sở dữ liệu"
           >
             <RotateCcw className={cn('size-3', isRefreshing && 'animate-spin')} />
             <span>Làm mới</span>

@@ -35,7 +35,7 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/AlertDialog'
 import { EmptyState } from '@/components/patterns/FeedbackPatterns'
-import { onetMockService } from '@/services/onet.mock'
+import { onetAdminService } from '@/services/onet-admin.service'
 import { OnetSfiaSpectrumBar } from './OnetSfiaSpectrumBar'
 import { OnetSfiaRow } from './OnetSfiaRow'
 import type {
@@ -113,7 +113,7 @@ export function OnetSfiaTab({
 
   // Load SFIA Library
   useEffect(() => {
-    onetMockService.getSfiaLibrary().then(setSfiaLibrary)
+    onetAdminService.getSfiaLibrary().then(setSfiaLibrary)
   }, [])
 
   // Auto clear status message after 3 seconds
@@ -201,7 +201,12 @@ export function OnetSfiaTab({
   ) => {
     setIsSaving(true)
     try {
-      const saved = await onetMockService.updateSfiaMapping(socCode, id, updatedData)
+      const saved = await onetAdminService.updateSfiaMapping(socCode, id, {
+        targetLevel: updatedData.targetLevel,
+        weight: updatedData.weight,
+        isCore: updatedData.isCore,
+        source: updatedData.source,
+      })
       const updated = localMappings.map((m) => (m.id === id ? saved : m))
       setLocalMappings(updated)
       onUpdateMappings?.(updated)
@@ -225,13 +230,9 @@ export function OnetSfiaTab({
   const handleSaveInsert = async (data: Partial<OnetSfiaMapping>) => {
     setIsSaving(true)
     try {
-      const newMapping = await onetMockService.createSfiaMapping(socCode, {
+      const newMapping = await onetAdminService.createSfiaMapping(socCode, {
         skillCode: data.skillCode || '',
-        skillName: data.skillName || '',
-        category: data.category,
         targetLevel: data.targetLevel || 3,
-        minLevel: data.minLevel || 1,
-        maxLevel: data.maxLevel || 7,
         weight: data.weight || 1.0,
         isCore: data.isCore ?? true,
         source: 'USER_DEFINED',
@@ -260,7 +261,7 @@ export function OnetSfiaTab({
     if (!deleteTarget) return
     setIsDeleting(true)
     try {
-      await onetMockService.deleteSfiaMapping(socCode, deleteTarget.id)
+      await onetAdminService.deleteSfiaMapping(socCode, deleteTarget.id)
       const updated = localMappings.filter((m) => m.id !== deleteTarget.id)
       setLocalMappings(updated)
       onUpdateMappings?.(updated)
@@ -280,21 +281,21 @@ export function OnetSfiaTab({
   }
 
   const handleResetToDefault = async () => {
-    if (window.confirm('Bạn có chắc muốn khôi phục danh sách ánh xạ SFIA mặc định của nghề này?')) {
+    if (window.confirm('Bạn có chắc muốn khôi phục danh sách ánh xạ SFIA từ cơ sở dữ liệu cho nghề này?')) {
       try {
-        const restored = await onetMockService.resetSfiaMappings(socCode)
+        const restored = await onetAdminService.resetSfiaMappings(socCode)
         setLocalMappings(restored)
         onUpdateMappings?.(restored)
         setEditingId(null)
         setIsInserting(false)
         setIsCurrentRowDirty(false)
         setStatusMessage({
-          text: 'Đã khôi phục dữ liệu ánh xạ mẫu thành công!',
+          text: 'Đã khôi phục dữ liệu ánh xạ từ database thành công!',
           type: 'success',
         })
       } catch {
         setStatusMessage({
-          text: 'Không thể khôi phục dữ liệu mẫu',
+          text: 'Không thể khôi phục dữ liệu ánh xạ',
           type: 'error',
         })
       }

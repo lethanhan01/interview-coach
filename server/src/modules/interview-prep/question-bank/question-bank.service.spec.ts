@@ -13,8 +13,8 @@ describe('QuestionBankService', () => {
   beforeEach(() => {
     mockPrisma = createMockPrismaService();
     service = new QuestionBankService(
-      mockPrisma as unknown as PrismaService,
-      new QuestionCriteriaService(mockPrisma as unknown as PrismaService),
+      mockPrisma,
+      new QuestionCriteriaService(mockPrisma),
     );
   });
 

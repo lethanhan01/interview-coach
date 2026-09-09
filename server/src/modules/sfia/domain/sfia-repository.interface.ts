@@ -1,5 +1,8 @@
 import { Prisma } from '@prisma/client';
-import { SfiaSkillRawRow, SfiaLevelRawRow } from '../repositories/types/sfia-raw-row.types';
+import {
+  SfiaSkillRawRow,
+  SfiaLevelRawRow,
+} from '../repositories/types/sfia-raw-row.types';
 
 export const SFIA_REPOSITORY_TOKEN = Symbol('ISfiaRepository');
 
