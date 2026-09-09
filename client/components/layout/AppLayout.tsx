@@ -21,7 +21,10 @@ export default function AppLayout({
 }: AppLayoutProps) {
   const pathname = usePathname()
   const isWorkspaceMode =
-    isWorkspace ?? (pathname?.startsWith('/admin/onet') ?? false)
+    isWorkspace ??
+    (pathname?.startsWith('/admin/onet') ||
+      pathname?.startsWith('/admin/sfia') ||
+      false)
 
   return (
     <div className="bg-surface-raised flex h-screen overflow-hidden">
