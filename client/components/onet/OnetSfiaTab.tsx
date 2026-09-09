@@ -82,9 +82,17 @@ export function OnetSfiaTab({
   // Modals
   const [deleteTarget, setDeleteTarget] = useState<OnetSfiaMapping | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
   const [switchRowAlert, setSwitchRowAlert] = useState<{
     targetId: string | null
     isTargetInserting: boolean
+  } | null>(null)
+
+  // Error tracking per row
+  const [rowError, setRowError] = useState<{
+    rowId: string | 'insert'
+    field: 'level' | 'skillCode' | 'weight' | null
   } | null>(null)
 
   // Toast / Status Message
@@ -104,6 +112,7 @@ export function OnetSfiaTab({
     setEditingId(null)
     setIsInserting(false)
     setIsCurrentRowDirty(false)
+    setRowError(null)
   }
 
   // Inform parent of dirty state
@@ -156,36 +165,37 @@ export function OnetSfiaTab({
   const secondaryCount = localMappings.length - coreCount
 
   // --------------------------------------------------------------------------
-  // Single-row Edit Rule Handlers
+  // Edit State Machine Handlers
   // --------------------------------------------------------------------------
   const handleRequestStartEdit = (targetId: string) => {
-    if ((editingId || isInserting) && isCurrentRowDirty) {
-      // Prompt modal to discard previous dirty row
+    if (isCurrentRowDirty) {
       setSwitchRowAlert({ targetId, isTargetInserting: false })
       return
     }
+    setRowError(null)
     setIsInserting(false)
     setEditingId(targetId)
-    setIsCurrentRowDirty(false)
   }
 
   const handleRequestStartInsert = () => {
-    if ((editingId || isInserting) && isCurrentRowDirty) {
+    if (isCurrentRowDirty) {
       setSwitchRowAlert({ targetId: null, isTargetInserting: true })
       return
     }
+    setRowError(null)
     setEditingId(null)
     setIsInserting(true)
-    setIsCurrentRowDirty(false)
   }
 
   const handleConfirmSwitchRow = () => {
-    if (!switchRowAlert) return
     setIsCurrentRowDirty(false)
+    setRowError(null)
+    if (!switchRowAlert) return
+
     if (switchRowAlert.isTargetInserting) {
       setEditingId(null)
       setIsInserting(true)
-    } else if (switchRowAlert.targetId) {
+    } else {
       setIsInserting(false)
       setEditingId(switchRowAlert.targetId)
     }
@@ -200,6 +210,7 @@ export function OnetSfiaTab({
     updatedData: Partial<OnetSfiaMapping>
   ) => {
     setIsSaving(true)
+    setRowError(null)
     try {
       const saved = await onetAdminService.updateSfiaMapping(socCode, id, {
         targetLevel: updatedData.targetLevel,
@@ -212,13 +223,23 @@ export function OnetSfiaTab({
       onUpdateMappings?.(updated)
       setEditingId(null)
       setIsCurrentRowDirty(false)
+      setRowError(null)
       setStatusMessage({
         text: `Đã cập nhật ánh xạ kỹ năng ${saved.skillCode} thành công!`,
         type: 'success',
       })
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Không thể lưu ánh xạ kỹ năng'
+      let field: 'level' | 'skillCode' | 'weight' | null = null
+      const lower = msg.toLowerCase()
+      if (lower.includes('cấp độ') || lower.includes('level') || lower.includes('tồn tại') || lower.includes('409')) {
+        field = 'level'
+      } else if (lower.includes('trọng số') || lower.includes('weight')) {
+        field = 'weight'
+      }
+      setRowError({ rowId: id, field })
       setStatusMessage({
-        text: err instanceof Error ? err.message : 'Không thể lưu ánh xạ kỹ năng',
+        text: msg,
         type: 'error',
       })
       throw err
@@ -229,6 +250,7 @@ export function OnetSfiaTab({
 
   const handleSaveInsert = async (data: Partial<OnetSfiaMapping>) => {
     setIsSaving(true)
+    setRowError(null)
     try {
       const newMapping = await onetAdminService.createSfiaMapping(socCode, {
         skillCode: data.skillCode || '',
@@ -242,13 +264,25 @@ export function OnetSfiaTab({
       onUpdateMappings?.(updated)
       setIsInserting(false)
       setIsCurrentRowDirty(false)
+      setRowError(null)
       setStatusMessage({
         text: `Đã thêm mới ánh xạ kỹ năng ${newMapping.skillCode} thành công!`,
         type: 'success',
       })
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Không thể thêm mới ánh xạ kỹ năng'
+      let field: 'level' | 'skillCode' | 'weight' | null = null
+      const lower = msg.toLowerCase()
+      if (lower.includes('cấp độ') || lower.includes('level') || lower.includes('tồn tại') || lower.includes('409')) {
+        field = 'level'
+      } else if (lower.includes('kỹ năng') || lower.includes('skill')) {
+        field = 'skillCode'
+      } else if (lower.includes('trọng số') || lower.includes('weight')) {
+        field = 'weight'
+      }
+      setRowError({ rowId: 'insert', field })
       setStatusMessage({
-        text: err instanceof Error ? err.message : 'Không thể thêm mới ánh xạ kỹ năng',
+        text: msg,
         type: 'error',
       })
       throw err
@@ -280,26 +314,33 @@ export function OnetSfiaTab({
     }
   }
 
-  const handleResetToDefault = async () => {
-    if (window.confirm('Bạn có chắc muốn khôi phục danh sách ánh xạ SFIA từ cơ sở dữ liệu cho nghề này?')) {
-      try {
-        const restored = await onetAdminService.resetSfiaMappings(socCode)
-        setLocalMappings(restored)
-        onUpdateMappings?.(restored)
-        setEditingId(null)
-        setIsInserting(false)
-        setIsCurrentRowDirty(false)
-        setStatusMessage({
-          text: 'Đã khôi phục dữ liệu ánh xạ từ database thành công!',
-          type: 'success',
-        })
-      } catch {
-        setStatusMessage({
-          text: 'Không thể khôi phục dữ liệu ánh xạ',
-          type: 'error',
-        })
-      }
+  const handleExecuteReset = async () => {
+    setIsResetting(true)
+    try {
+      const restored = await onetAdminService.resetSfiaMappings(socCode)
+      setLocalMappings(restored)
+      onUpdateMappings?.(restored)
+      setEditingId(null)
+      setIsInserting(false)
+      setIsCurrentRowDirty(false)
+      setRowError(null)
+      setIsResetConfirmOpen(false)
+      setStatusMessage({
+        text: 'Đã khôi phục dữ liệu ánh xạ từ database thành công!',
+        type: 'success',
+      })
+    } catch {
+      setStatusMessage({
+        text: 'Không thể khôi phục dữ liệu ánh xạ',
+        type: 'error',
+      })
+    } finally {
+      setIsResetting(false)
     }
+  }
+
+  const handleResetToDefault = () => {
+    setIsResetConfirmOpen(true)
   }
 
   // Temporary dummy mapping template for insert row
@@ -507,10 +548,12 @@ export function OnetSfiaTab({
                     isInserting={true}
                     isSaving={isSaving}
                     availableSkills={unmappedSkills}
+                    errorField={rowError?.rowId === 'insert' ? rowError.field : null}
                     onStartEdit={() => {}}
                     onCancelEdit={() => {
                       setIsInserting(false)
                       setIsCurrentRowDirty(false)
+                      setRowError(null)
                     }}
                     onSave={handleSaveInsert}
                     onDelete={() => {}}
@@ -527,10 +570,12 @@ export function OnetSfiaTab({
                     isEditing={editingId === mapping.id}
                     isSaving={isSaving && editingId === mapping.id}
                     availableSkills={sfiaLibrary}
+                    errorField={rowError?.rowId === mapping.id ? rowError.field : null}
                     onStartEdit={() => handleRequestStartEdit(mapping.id)}
                     onCancelEdit={() => {
                       setEditingId(null)
                       setIsCurrentRowDirty(false)
+                      setRowError(null)
                     }}
                     onSave={(data) => handleSaveExisting(mapping.id, data)}
                     onDelete={() => setDeleteTarget(mapping)}
@@ -619,6 +664,46 @@ export function OnetSfiaTab({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-xs"
             >
               Hủy thay đổi & Tiếp tục
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal 3: Reset to Default Confirmation Guard */}
+      <AlertDialog
+        open={isResetConfirmOpen}
+        onOpenChange={(open) => {
+          if (!open && !isResetting) setIsResetConfirmOpen(false)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="bg-brand/10 text-brand flex size-10 items-center justify-center rounded-full mb-1">
+              <RotateCcw className="size-5" />
+            </div>
+            <AlertDialogTitle className="text-ink text-base">
+              Khôi phục Ánh xạ SFIA Mặc định
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-ink-muted leading-relaxed space-y-2">
+              <span>
+                Bạn có chắc chắn muốn tải lại toàn bộ danh sách ánh xạ SFIA từ cơ sở dữ liệu cho nghề{' '}
+                <strong className="text-ink font-semibold">{occupationTitle}</strong> ({socCode})?
+              </span>
+              <span className="block text-ink-muted">
+                Các chỉnh sửa chưa lưu hoặc hàng nháp đang mở sẽ bị hủy bỏ.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isResetting} className="text-xs">
+              Hủy bỏ
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleExecuteReset}
+              disabled={isResetting}
+              className="bg-brand text-brand-foreground hover:bg-brand/90 text-xs gap-1.5"
+            >
+              {isResetting ? <LoadingSpinner className="size-3.5" /> : 'Xác nhận khôi phục'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

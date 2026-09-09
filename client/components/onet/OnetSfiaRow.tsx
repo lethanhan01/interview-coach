@@ -48,6 +48,7 @@ export interface OnetSfiaRowProps {
   isInserting?: boolean
   isSaving: boolean
   availableSkills?: SfiaSkillDefinition[]
+  errorField?: 'level' | 'skillCode' | 'weight' | null
   onStartEdit: () => void
   onCancelEdit: () => void
   onSave: (data: Partial<OnetSfiaMapping>) => Promise<void>
@@ -82,6 +83,7 @@ export function OnetSfiaRow({
   isInserting = false,
   isSaving,
   availableSkills = [],
+  errorField,
   onStartEdit,
   onCancelEdit,
   onSave,
@@ -116,6 +118,16 @@ export function OnetSfiaRow({
         setDraftLevel(def.minLevel)
       }
     }
+    setValidationError(null)
+  }
+
+  const handleLevelChange = (val: string) => {
+    setDraftLevel(Number(val))
+    setValidationError(null)
+  }
+
+  const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDraftWeight(Number(e.target.value))
     setValidationError(null)
   }
 
@@ -213,6 +225,21 @@ export function OnetSfiaRow({
     currentSkillDef?.levelDescriptions[draftLevel] ||
     `Yêu cầu thực thi trách nhiệm cấp độ ${draftLevel} theo chuẩn SFIA 9.`
 
+  const hasLevelError =
+    errorField === 'level' ||
+    (validationError &&
+      (validationError.toLowerCase().includes('cấp độ') ||
+        validationError.toLowerCase().includes('level') ||
+        validationError.toLowerCase().includes('tồn tại')))
+
+  const hasSkillError =
+    errorField === 'skillCode' ||
+    (validationError && validationError.toLowerCase().includes('kỹ năng'))
+
+  const hasWeightError =
+    errorField === 'weight' ||
+    (validationError && validationError.toLowerCase().includes('trọng số'))
+
   // --------------------------------------------------------------------------
   // EDIT / INSERT MODE
   // --------------------------------------------------------------------------
@@ -223,7 +250,7 @@ export function OnetSfiaRow({
         onKeyDown={handleKeyDown}
         className={cn(
           'bg-surface-inset/60 transition-colors',
-          validationError && 'bg-destructive/5',
+          (validationError || errorField) && 'bg-destructive/5',
           className
         )}
       >
@@ -238,7 +265,10 @@ export function OnetSfiaRow({
                 placeholder="Chọn kỹ năng SFIA..."
                 searchPlaceholder="Tìm mã hoặc tên kỹ năng..."
                 emptyText="Không tìm thấy kỹ năng phù hợp"
-                className="h-8 text-xs font-medium w-full min-w-[200px]"
+                className={cn(
+                  'h-8 text-xs font-medium w-full min-w-[200px]',
+                  hasSkillError && 'border-critical ring-1 ring-critical text-critical'
+                )}
               />
               {currentSkillDef && (
                 <span className="text-[10px] text-ink-muted block truncate">
@@ -271,9 +301,14 @@ export function OnetSfiaRow({
             <div className="flex items-center gap-1.5">
               <Select
                 value={String(draftLevel)}
-                onValueChange={(val) => setDraftLevel(Number(val))}
+                onValueChange={handleLevelChange}
               >
-                <SelectTrigger className="h-8 text-xs font-semibold w-full">
+                <SelectTrigger
+                  className={cn(
+                    'h-8 text-xs font-semibold w-full',
+                    hasLevelError && 'border-critical ring-1 ring-critical text-critical focus:ring-critical'
+                  )}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -310,8 +345,11 @@ export function OnetSfiaRow({
                 max="5.0"
                 step="0.1"
                 value={draftWeight}
-                onChange={(e) => setDraftWeight(Number(e.target.value))}
-                className="h-8 text-xs font-mono font-bold tabular-nums text-center w-20"
+                onChange={handleWeightChange}
+                className={cn(
+                  'h-8 text-xs font-mono font-bold tabular-nums text-center w-20',
+                  hasWeightError && 'border-critical ring-1 ring-critical text-critical focus:ring-critical'
+                )}
               />
               <span className="text-xs text-ink-muted">x</span>
             </div>

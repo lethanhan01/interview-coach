@@ -30,12 +30,14 @@ import type {
 export interface OnetSidebarProps {
   selectedSoc: string
   onSelectSoc: (socCode: string) => void
+  refreshTrigger?: number
   className?: string
 }
 
 export function OnetSidebar({
   selectedSoc,
   onSelectSoc,
+  refreshTrigger = 0,
   className,
 }: OnetSidebarProps) {
   const [majorGroups, setMajorGroups] = useState<SocMajorGroup[]>([])
@@ -59,6 +61,7 @@ export function OnetSidebar({
   const [userExpandedGroups, setUserExpandedGroups] = useState<string[]>([selectedGroupCode])
   const [prevSoc, setPrevSoc] = useState(selectedSoc)
   const fetchedGroupRef = useRef<Set<string>>(new Set())
+  const searchSeqRef = useRef(0)
 
   // Adjust state during render when selectedSoc changes
   if (prevSoc !== selectedSoc) {
@@ -134,6 +137,26 @@ export function OnetSidebar({
     }
   }, [selectedGroupCode])
 
+  // Reactive Background Refresh when SFIA Mappings are mutated
+  useEffect(() => {
+    if (refreshTrigger <= 0) return
+
+    onetAdminService.getMajorGroups().then((groups) => {
+      setMajorGroups(groups)
+    }).catch(() => {})
+
+    // Re-fetch opened groups to update badges & mapped dots
+    const openGroups = Array.from(fetchedGroupRef.current)
+    openGroups.forEach((groupCode) => {
+      onetAdminService.searchOccupations({ groupCode, limit: 100 }).then((occs) => {
+        setGroupOccupationsCache((prev) => ({
+          ...prev,
+          [groupCode]: occs,
+        }))
+      }).catch(() => {})
+    })
+  }, [refreshTrigger])
+
   // Debounce search query 300ms
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -142,11 +165,11 @@ export function OnetSidebar({
     return () => clearTimeout(timer)
   }, [query])
 
-  // Perform server-side search when debounced query is non-empty
+  // Perform server-side search when debounced query is non-empty (with sequence ID race condition guard)
   useEffect(() => {
     if (!debouncedQuery) return
 
-    let isCancelled = false
+    const currentSeq = ++searchSeqRef.current
 
     onetAdminService
       .searchOccupations({
@@ -154,19 +177,17 @@ export function OnetSidebar({
         limit: 60,
       })
       .then((results) => {
-        if (isCancelled) return
-        setSearchResults(results)
-        setLastSearchQuery(debouncedQuery)
+        if (searchSeqRef.current === currentSeq) {
+          setSearchResults(results)
+          setLastSearchQuery(debouncedQuery)
+        }
       })
       .catch(() => {
-        if (isCancelled) return
-        setSearchResults([])
-        setLastSearchQuery(debouncedQuery)
+        if (searchSeqRef.current === currentSeq) {
+          setSearchResults([])
+          setLastSearchQuery(debouncedQuery)
+        }
       })
-
-    return () => {
-      isCancelled = true
-    }
   }, [debouncedQuery])
 
   // Handle expanding / collapsing accordion items

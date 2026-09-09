@@ -42,6 +42,19 @@ function OnetBrowserWorkspace() {
   const [currentTitle, setCurrentTitle] = useState<string>('Software Developers')
   const [isSfiaDirty, setIsSfiaDirty] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null)
+  const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0)
+
+  // Browser beforeunload safety guard
+  React.useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isSfiaDirty) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [isSfiaDirty])
 
   const guardedSetSoc = (newSoc: string) => {
     if (isSfiaDirty && newSoc !== selectedSoc) {
@@ -65,6 +78,10 @@ function OnetBrowserWorkspace() {
       return
     }
     setDetailTab(newDetailTab)
+  }
+
+  const handleMappingsUpdated = () => {
+    setSidebarRefreshKey((prev) => prev + 1)
   }
 
   return (
@@ -126,6 +143,7 @@ function OnetBrowserWorkspace() {
               <OnetSidebar
                 selectedSoc={selectedSoc}
                 onSelectSoc={guardedSetSoc}
+                refreshTrigger={sidebarRefreshKey}
               />
             </aside>
 
@@ -136,6 +154,7 @@ function OnetBrowserWorkspace() {
                 activeDetailTab={activeDetailTab}
                 onSelectDetailTab={guardedSetDetailTab}
                 onLoadedDetail={(d) => setCurrentTitle(d.title)}
+                onUpdateMappings={handleMappingsUpdated}
                 onDirtyChange={setIsSfiaDirty}
               />
             </main>

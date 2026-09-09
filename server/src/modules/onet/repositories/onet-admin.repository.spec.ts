@@ -84,7 +84,7 @@ describe('OnetAdminRepository', () => {
           mappingCount: 5,
         },
       ];
-      queryRawUnsafeMock.mockResolvedValueOnce(mockSidebar);
+      queryRawMock.mockResolvedValueOnce(mockSidebar);
 
       const result = await repository.searchSidebarOccupations(
         '15',
@@ -110,7 +110,7 @@ describe('OnetAdminRepository', () => {
           coreSkillCodes: ['PROG'],
         },
       ];
-      queryRawUnsafeMock.mockResolvedValueOnce(mockTop);
+      queryRawMock.mockResolvedValueOnce(mockTop);
 
       const result = await repository.getTopOccupations('dev', 'interviews', 5);
       expect(result).toEqual(mockTop);
@@ -205,7 +205,7 @@ describe('OnetAdminRepository', () => {
 
   describe('getAlternateTitlesPaginated & Count', () => {
     it('returns alternate titles count', async () => {
-      queryRawUnsafeMock.mockResolvedValueOnce([{ count: 15 }]);
+      queryRawMock.mockResolvedValueOnce([{ count: 15 }]);
       const count = await repository.getAlternateTitlesCount(
         '15-1252.00',
         'dev',
@@ -214,7 +214,7 @@ describe('OnetAdminRepository', () => {
     });
 
     it('returns paginated alternate titles', async () => {
-      queryRawUnsafeMock.mockResolvedValueOnce([
+      queryRawMock.mockResolvedValueOnce([
         { job_title: 'Full Stack Dev' },
       ]);
       const titles = await repository.getAlternateTitlesPaginated(

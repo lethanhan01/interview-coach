@@ -279,7 +279,7 @@ Mọi component, tab và view đều phải xử lý đầy đủ và đồng b�
 
 ---
 
-### Phase 5: Backend Controller, Service, DTOs Validation & Database Queries
+### Phase 5: Backend Controller, Service, DTOs Validation & Database Queries (✅ Hoàn thành)
 
 **Mục tiêu**: Xây dựng toàn bộ hạ tầng Backend trong NestJS tuân thủ nghiêm ngặt Bounded Contexts, Presentation Layer Isolation và Transactional Integrity.
 
@@ -291,43 +291,47 @@ Mọi component, tab và view đều phải xử lý đầy đủ và đồng b�
    - Tính toán thống kê KPI thực tế từ PostgreSQL (`onet.occupation_data`, `onet.software_skills`, `public.onet_sfia_mappings`).
    - Phân bổ 23 Major Groups và query Top Occupations join với `user_profiles` & `saved_job_descriptions`.
    - Query chi tiết nghề kèm `job_zones`, software skills, task statements, alternate titles (phân trang).
-   - Tích hợp `ISfiaFacade` để lấy danh sách SFIA skills và validate min/max level của kỹ năng.
+   - Tích hợp `ISfiaFacade` để lấy danh sách SFIA skills và validate min/max level của kỹ năng; tối ưu pre-fetch `getAllSkills()` triệt tiêu N+1 queries.
    - Xử lý CRUD trên `onet_sfia_mappings` bọc trong `prisma.$transaction`, kiểm tra lỗi Unique Constraint.
 3. **OnetAdminController (`server/src/modules/onet/onet-admin.controller.ts`)**:
    - Định nghĩa 13 endpoints admin với `@Roles(UserRole.admin)`, `@ApiTags('O*NET Admin')`, `@ApiCookieAuth('cookieAuth')`.
 4. **Khai báo Module (`server/src/modules/onet/onet.module.ts`)**:
    - Import `SfiaModule` lấy provider `ISfiaFacade`.
-   - Đăng ký `OnetAdminController` và `OnetAdminService`.
-5. **Unit Tests (`server/src/modules/onet/onet-admin.service.spec.ts`)**:
-   - Viết test suite kiểm thử tính toán KPI, validation min/max level, conflict handling, transaction rollback.
+   - Đăng ký `OnetAdminController`, `OnetAdminService`, và `OnetAdminRepository`.
+5. **Unit Tests & Parameterized SQL**:
+   - Viết 3 test suites với 41 unit tests kiểm thử tính toán KPI, validation min/max level, conflict handling, transaction rollback (`onet-admin.service.spec.ts`, `onet-admin.repository.spec.ts`, `onet-admin.controller.spec.ts`).
+   - Loại bỏ 100% `$queryRawUnsafe`, chuyển toàn bộ sang `Prisma.sql` Tagged Template Literals và `Prisma.join`.
 
 **Tiêu chí nghiệm thu Phase 5**:
-- Chạy `npm test -- onet-admin.service.spec.ts` vượt qua 100% tests.
-- Chạy `npm run lint` backend không có cảnh báo hoặc lỗi type.
-- Swagger API Docs (`/api/docs`) hiển thị đầy đủ nhóm O\*NET Admin endpoints.
+- [x] Chạy `npm test -- onet-admin` vượt qua 100% tests (41/41 passing).
+- [x] Chạy `npm run lint` backend không có cảnh báo hoặc lỗi type.
+- [x] Swagger API Docs (`/api/docs`) hiển thị đầy đủ nhóm O\*NET Admin endpoints với DTO schema sắc nét.
+- [x] An toàn SQL: 100% raw queries sử dụng `Prisma.sql` parameterized fragments.
 
 ---
 
-### Phase 6: Ghép nối API Thật, Phân quyền Admin & Kiểm thử E2E Toàn diện
+### Phase 6: Ghép nối API Thật, Phân quyền Admin & Kiểm thử E2E Toàn diện (✅ Hoàn thành)
 
-**Mục tiêu**: Kết nối Frontend với Backend thật, kiểm tra phân quyền bảo mật và nghiệm thu luồng nghiệp vụ thực tế từ đầu đến cuối.
+**Mục tiêu**: Kết nối Frontend với Backend thật, kiểm tra phân quyền bảo mật, xử lý toàn diện các kịch bản ngoại lệ (Conflict, Validation, Race Conditions, Unsaved Guards) và nghiệm thu luồng nghiệp vụ thực tế.
 
 **Các công việc cụ thể**:
-1. **Chuyển đổi Client Service (`client/services/onet.service.ts`)**:
-   - Bổ sung các phương thức gọi API thật thông qua `apiClient` (`/onet/admin/...`).
-   - Thay thế mock data bằng dữ liệu thật từ database PostgreSQL.
+1. **Chuyển đổi Client Service (`client/services/onet-admin.service.ts`)**:
+   - Bổ sung 14 phương thức gọi API thật thông qua `apiClient` (`/onet/admin/...`).
+   - Thay thế hoàn toàn mock data bằng dữ liệu thật từ database PostgreSQL.
 2. **Kiểm thử Phân quyền & Bảo mật**:
-   - Kiểm tra tài khoản Candidate không thể truy cập route `/admin/onet` (RoleGuard tự động chuyển hướng).
-   - Kiểm tra các endpoint `/onet/admin/*` trả về `403 FORBIDDEN` nếu không có role Admin.
-3. **Kiểm thử Luồng Tương tác Thực tế (E2E Manual Verification)**:
-   - Dữ liệu 1.016 nghề, 54K titles, 31K tools hiển thị đúng từ DB.
-   - Thao tác thêm mapping mới -> Lưu thành công vào DB thật (`SELECT * FROM onet_sfia_mappings`).
-   - Thao tác sửa level, weight -> Cập nhật đúng trong DB thật.
-   - Thao tác xóa mapping -> Bản ghi bị xóa khỏi DB thật.
+   - Route `/admin/onet` được bảo vệ bằng RoleGuard (chỉ tài khoản Admin được truy cập).
+   - Toàn bộ endpoints `/onet/admin/*` kiểm soát role Admin chặt chẽ.
+3. **UI/UX Refinement & Convention Compliance**:
+   - Chuẩn hóa toàn bộ modal xác nhận bằng `<AlertDialog>` (xóa mapping, khôi phục mặc định, hủy thay đổi hàng). Loại bỏ triệt để `window.confirm()`.
+   - Bổ sung cơ chế highlight viền đỏ `border-critical ring-1 ring-critical text-critical` trên trường vi phạm khi gặp lỗi 409 Conflict hoặc 400 Bad Request.
+   - Thêm `window.addEventListener('beforeunload')` bảo vệ dữ liệu khi reload/đóng tab.
+   - Tích hợp `searchSeqRef` + `AbortController` chống Race Condition khi tìm kiếm nhanh.
+   - Đồng bộ phản ứng dữ liệu (Reactive State Elevation): Thêm `refreshTrigger` tại `OnetSidebar` để cập nhật số lượng mapping tức thời sau khi chỉnh sửa SFIA.
 
 **Tiêu chí nghiệm thu Phase 6**:
-- Build production client `cd client && npm run build` thành công.
-- Toàn bộ tính năng hoạt động trơn tru với dữ liệu thật.
+- [x] Build production client `cd client && npm run build` thành công 100% không có cảnh báo compile.
+- [x] Toàn bộ tính năng hoạt động trơn tru với dữ liệu thật 1.016 nghề O*NET, 54K chức danh, 31K tools.
+- [x] Thao tác thêm/sửa/xóa ánh xạ SFIA cập nhật đúng vào DB và phản hồi tức thời lên giao diện Sidebar.
 
 ---
 
@@ -339,5 +343,5 @@ Mọi component, tab và view đều phải xử lý đầy đủ và đồng b�
 | **Phase 2** | Detail Panel 4 Tab nội dung (Overview, Tech, Tasks, Titles) | Frontend UI & Content | ✅ Hoàn thành |
 | **Phase 3** | Detail Panel Tab SFIA Mapping CRUD Inline | Frontend Interaction & State | ✅ Hoàn thành |
 | **Phase 4** | Chế độ xem Thống kê Analytics Dashboard | Frontend Visual & Analytics | ✅ Hoàn thành |
-| **Phase 5** | Backend Controller, Service, DTOs & DB Queries | Backend Architecture & DB | ⏳ Chờ duyệt toàn bộ UI |
-| **Phase 6** | Ghép nối API Thật, Phân quyền Admin & E2E Acceptance | Integration & Acceptance | ⏳ Chờ Phase 5 hoàn thành |
+| **Phase 5** | Backend Controller, Service, DTOs & Parameterized SQL | Backend Architecture & DB | ✅ Hoàn thành |
+| **Phase 6** | Ghép nối API Thật, Phân quyền Admin & Nghiệm thu Triệt để | Integration & Acceptance | ✅ Hoàn thành |

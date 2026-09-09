@@ -250,12 +250,12 @@ export function OnetTechSkillsTab({
 
               {/* Skills Badges Grid */}
               <div className="flex flex-wrap gap-2 pt-0.5">
-                {items.map((skill) => {
+                {items.map((skill, idx) => {
                   const isCopied = copiedSkill === skill.name
 
                   return (
                     <button
-                      key={skill.name}
+                      key={`${category}-${skill.name}-${idx}`}
                       type="button"
                       onClick={() => handleCopySkill(skill.name)}
                       className={cn(
@@ -314,12 +314,12 @@ export function OnetTechSkillsTab({
       {filteredSkills.length > 0 && viewMode === 'cloud' && (
         <Card className="p-4 sm:p-5">
           <div className="flex flex-wrap items-center gap-2.5">
-            {filteredSkills.map((skill) => {
+            {filteredSkills.map((skill, idx) => {
               const isCopied = copiedSkill === skill.name
 
               return (
                 <button
-                  key={skill.name}
+                  key={`cloud-${skill.name}-${idx}`}
                   type="button"
                   onClick={() => handleCopySkill(skill.name)}
                   className={cn(

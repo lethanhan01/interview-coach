@@ -335,10 +335,10 @@ export function OnetTopOccupations({
                     {/* Core Skills Chips */}
                     <TableCell className="w-32 shrink-0 hidden md:flex py-1.5 px-2">
                       <div className="flex items-center gap-1 flex-wrap">
-                        {item.coreSkillCodes.length > 0 ? (
-                          item.coreSkillCodes.map((code) => (
+                        {item.coreSkillCodes && item.coreSkillCodes.length > 0 ? (
+                          Array.from(new Set(item.coreSkillCodes)).map((code, idx) => (
                             <span
-                              key={code}
+                              key={`${item.socCode}-core-${code}-${idx}`}
                               className="bg-surface-inset text-ink font-mono font-semibold text-[9px] px-1 py-0.2 rounded border border-border/50"
                             >
                               {code}

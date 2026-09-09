@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import {
   Search,
   X,
@@ -81,6 +81,7 @@ export function OnetAlternateTitlesTab({
   const isServerMode = Boolean(socCode)
   const currentKey = `${socCode}:${currentPage}:${pageSize}:${debouncedQuery}`
   const loading = isServerMode && lastFetchedKey !== currentKey
+  const seqRef = useRef(0)
 
   // Debounce search input 300ms
   useEffect(() => {
@@ -91,11 +92,11 @@ export function OnetAlternateTitlesTab({
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  // Fetch paginated alternate titles from backend API in server mode
+  // Fetch paginated alternate titles from backend API in server mode (with race condition guard)
   useEffect(() => {
     if (!socCode) return
 
-    let isCancelled = false
+    const currentSeq = ++seqRef.current
 
     onetAdminService
       .getAlternateTitles(socCode, {
@@ -104,23 +105,21 @@ export function OnetAlternateTitlesTab({
         search: debouncedQuery,
       })
       .then((res) => {
-        if (isCancelled) return
-        setServerItems(res.items || [])
-        setServerTotal(res.total || 0)
-        setServerTotalPages(res.totalPages || 1)
-        setLastFetchedKey(currentKey)
+        if (seqRef.current === currentSeq) {
+          setServerItems(res.items || [])
+          setServerTotal(res.total || 0)
+          setServerTotalPages(res.totalPages || 1)
+          setLastFetchedKey(currentKey)
+        }
       })
       .catch(() => {
-        if (isCancelled) return
-        setServerItems([])
-        setServerTotal(0)
-        setServerTotalPages(1)
-        setLastFetchedKey(currentKey)
+        if (seqRef.current === currentSeq) {
+          setServerItems([])
+          setServerTotal(0)
+          setServerTotalPages(1)
+          setLastFetchedKey(currentKey)
+        }
       })
-
-    return () => {
-      isCancelled = true
-    }
   }, [socCode, currentPage, pageSize, debouncedQuery, currentKey])
 
   // Client mode derived pagination
@@ -284,12 +283,12 @@ export function OnetAlternateTitlesTab({
       {/* 2-Column Responsive Card Grid */}
       {!loading && items.length > 0 && (
         <div className="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-2">
-          {items.map((title) => {
+          {items.map((title, idx) => {
             const isCopied = copiedTitle === title
 
             return (
               <Card
-                key={title}
+                key={`${socCode}-${title}-${idx}`}
                 className="group pressable flex items-center justify-between gap-2.5 p-3 transition-all hover:border-brand/40 hover:bg-surface-inset/40"
               >
                 <div className="flex items-center gap-2.5 min-w-0">

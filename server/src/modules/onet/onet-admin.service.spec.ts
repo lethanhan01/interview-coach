@@ -149,6 +149,15 @@ describe('OnetAdminService', () => {
       name: 'Software Development',
       categoryCode: 'DEV_IMPL',
     }),
+    getAllSkills: jest.fn().mockResolvedValue([
+      {
+        code: 'PROG',
+        name: 'Software Development',
+        categoryCode: 'DEV_IMPL',
+        minLevel: 1,
+        maxLevel: 6,
+      },
+    ]),
   };
 
   beforeEach(async () => {

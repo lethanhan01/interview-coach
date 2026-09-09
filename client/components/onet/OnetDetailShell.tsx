@@ -31,6 +31,7 @@ export interface OnetDetailShellProps {
   activeDetailTab: OnetDetailSubTab
   onSelectDetailTab: (tab: OnetDetailSubTab) => void
   onLoadedDetail?: (detail: OnetOccupationDetail) => void
+  onUpdateMappings?: (newMappings: OnetSfiaMapping[]) => void
   onDirtyChange?: (isDirty: boolean) => void
   className?: string
 }
@@ -40,6 +41,7 @@ export function OnetDetailShell({
   activeDetailTab,
   onSelectDetailTab,
   onLoadedDetail,
+  onUpdateMappings,
   onDirtyChange,
   className,
 }: OnetDetailShellProps) {
@@ -139,6 +141,7 @@ export function OnetDetailShell({
     }
     setDetail(updated)
     onLoadedDetail?.(updated)
+    onUpdateMappings?.(newMappings)
   }
 
   // Loading Skeleton State

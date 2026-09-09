@@ -100,19 +100,23 @@ export class OnetAdminRepository implements IOnetAdminRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<SidebarOccupationRawRow[]> {
     try {
-      let whereClauses = 'WHERE 1=1';
+      const conditions: Prisma.Sql[] = [Prisma.sql`1=1`];
       if (groupCode) {
-        whereClauses += ` AND occ.onetsoc_code LIKE '${groupCode.replace(/'/g, "''")}-%'`;
+        const groupPattern = `${groupCode}-%`;
+        conditions.push(Prisma.sql`occ.onetsoc_code LIKE ${groupPattern}`);
       }
       if (mappedOnly) {
-        whereClauses += ' AND m.mapping_count > 0';
+        conditions.push(Prisma.sql`COALESCE(m.mapping_count, 0) > 0`);
       }
       if (search) {
-        const cleanSearch = search.replace(/'/g, "''");
-        whereClauses += ` AND (occ.onetsoc_code ILIKE '%${cleanSearch}%' OR occ.title ILIKE '%${cleanSearch}%')`;
+        const searchPattern = `%${search}%`;
+        conditions.push(
+          Prisma.sql`(occ.onetsoc_code ILIKE ${searchPattern} OR occ.title ILIKE ${searchPattern})`,
+        );
       }
+      const whereClause = Prisma.join(conditions, ' AND ');
 
-      const sql = `
+      return await this.getClient(tx).$queryRaw<SidebarOccupationRawRow[]>`
         WITH mapping_counts AS (
           SELECT onet_soc_code, COUNT(*)::int AS mapping_count
           FROM public.onet_sfia_mappings
@@ -126,14 +130,10 @@ export class OnetAdminRepository implements IOnetAdminRepository {
           COALESCE(m.mapping_count, 0)::int AS "mappingCount"
         FROM onet.occupation_data occ
         LEFT JOIN mapping_counts m ON occ.onetsoc_code = m.onet_soc_code
-        ${whereClauses}
+        WHERE ${whereClause}
         ORDER BY (COALESCE(m.mapping_count, 0) > 0) DESC, occ.onetsoc_code ASC
         LIMIT ${limit};
       `;
-
-      return await this.getClient(tx).$queryRawUnsafe<
-        SidebarOccupationRawRow[]
-      >(sql);
     } catch (error) {
       this.logger.error(
         `Error searching sidebar occupations: ${error instanceof Error ? error.message : String(error)}`,
@@ -149,22 +149,23 @@ export class OnetAdminRepository implements IOnetAdminRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<TopOccupationRawRow[]> {
     try {
-      let searchCondition = '';
+      const conditions: Prisma.Sql[] = [Prisma.sql`1=1`];
       if (search) {
-        const cleanSearch = search.replace(/'/g, "''");
-        searchCondition = `WHERE occ.title ILIKE '%${cleanSearch}%' OR occ.onetsoc_code ILIKE '%${cleanSearch}%'`;
+        const searchPattern = `%${search}%`;
+        conditions.push(
+          Prisma.sql`(occ.title ILIKE ${searchPattern} OR occ.onetsoc_code ILIKE ${searchPattern})`,
+        );
       }
+      const whereClause = Prisma.join(conditions, ' AND ');
 
-      let orderClause =
-        'ORDER BY "mockInterviewCount" DESC, "mappingCount" DESC';
+      let orderByClause = Prisma.sql`ORDER BY "mockInterviewCount" DESC, "mappingCount" DESC`;
       if (sortBy === 'jds') {
-        orderClause =
-          'ORDER BY "jobDescriptionCount" DESC, "mockInterviewCount" DESC';
+        orderByClause = Prisma.sql`ORDER BY "jobDescriptionCount" DESC, "mockInterviewCount" DESC`;
       } else if (sortBy === 'mappings') {
-        orderClause = 'ORDER BY "mappingCount" DESC, "mockInterviewCount" DESC';
+        orderByClause = Prisma.sql`ORDER BY "mappingCount" DESC, "mockInterviewCount" DESC`;
       }
 
-      const sql = `
+      return await this.getClient(tx).$queryRaw<TopOccupationRawRow[]>`
         WITH session_counts AS (
           SELECT onet_soc_code, COUNT(*)::int AS sessions_count
           FROM public.interview_sessions
@@ -181,7 +182,7 @@ export class OnetAdminRepository implements IOnetAdminRepository {
           SELECT 
             onet_soc_code,
             COUNT(*)::int AS mappings_count,
-            ARRAY_AGG(sfia_skill_code) FILTER (WHERE is_core = TRUE) AS core_skills
+            ARRAY_AGG(DISTINCT sfia_skill_code) FILTER (WHERE is_core = TRUE) AS core_skills
           FROM public.onet_sfia_mappings
           GROUP BY onet_soc_code
         )
@@ -198,14 +199,10 @@ export class OnetAdminRepository implements IOnetAdminRepository {
         LEFT JOIN session_counts sc ON occ.onetsoc_code = sc.onet_soc_code
         LEFT JOIN jd_counts jc ON occ.onetsoc_code = jc.onet_soc_code
         LEFT JOIN mapping_stats ms ON occ.onetsoc_code = ms.onet_soc_code
-        ${searchCondition}
-        ${orderClause}
+        WHERE ${whereClause}
+        ${orderByClause}
         LIMIT ${limit};
       `;
-
-      return await this.getClient(tx).$queryRawUnsafe<TopOccupationRawRow[]>(
-        sql,
-      );
     } catch (error) {
       this.logger.error(
         `Error querying top occupations: ${error instanceof Error ? error.message : String(error)}`,
@@ -378,19 +375,20 @@ export class OnetAdminRepository implements IOnetAdminRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     try {
-      let searchCondition = '';
+      const conditions: Prisma.Sql[] = [Prisma.sql`onetsoc_code = ${socCode}`];
       if (search) {
-        const cleanSearch = search.replace(/'/g, "''");
-        searchCondition = `AND job_title ILIKE '%${cleanSearch}%'`;
+        const searchPattern = `%${search}%`;
+        conditions.push(Prisma.sql`job_title ILIKE ${searchPattern}`);
       }
+      const whereClause = Prisma.join(conditions, ' AND ');
 
-      const countRows = await this.getClient(tx).$queryRawUnsafe<
+      const countRows = await this.getClient(tx).$queryRaw<
         Array<{ count: number }>
-      >(`
+      >`
         SELECT COUNT(*)::int AS count
         FROM onet.job_titles
-        WHERE onetsoc_code = '${socCode.replace(/'/g, "''")}' ${searchCondition};
-      `);
+        WHERE ${whereClause};
+      `;
 
       return Number(countRows[0]?.count) || 0;
     } catch (error) {
@@ -409,21 +407,22 @@ export class OnetAdminRepository implements IOnetAdminRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<string[]> {
     try {
-      let searchCondition = '';
+      const conditions: Prisma.Sql[] = [Prisma.sql`onetsoc_code = ${socCode}`];
       if (search) {
-        const cleanSearch = search.replace(/'/g, "''");
-        searchCondition = `AND job_title ILIKE '%${cleanSearch}%'`;
+        const searchPattern = `%${search}%`;
+        conditions.push(Prisma.sql`job_title ILIKE ${searchPattern}`);
       }
+      const whereClause = Prisma.join(conditions, ' AND ');
 
-      const itemsRows = await this.getClient(tx).$queryRawUnsafe<
+      const itemsRows = await this.getClient(tx).$queryRaw<
         Array<{ job_title: string }>
-      >(`
+      >`
         SELECT job_title
         FROM onet.job_titles
-        WHERE onetsoc_code = '${socCode.replace(/'/g, "''")}' ${searchCondition}
+        WHERE ${whereClause}
         ORDER BY job_title ASC
         LIMIT ${limit} OFFSET ${offset};
-      `);
+      `;
 
       return itemsRows.map((r) => r.job_title);
     } catch (error) {

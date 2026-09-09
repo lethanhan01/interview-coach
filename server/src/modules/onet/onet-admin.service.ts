@@ -223,7 +223,7 @@ export class OnetAdminService {
           mappingCount: Number(r.mappingCount) || 0,
           isMapped: Boolean(r.isMapped),
           coreSkillCodes: Array.isArray(r.coreSkillCodes)
-            ? r.coreSkillCodes
+            ? Array.from(new Set(r.coreSkillCodes))
             : [],
         };
       });
@@ -252,22 +252,32 @@ export class OnetAdminService {
       const rawRows =
         await this.onetAdminRepository.getSfiaSkillCoverage(cleanLimit);
 
+      const skillMap = new Map<
+        string,
+        { name: string; category: string }
+      >();
+
+      if (this.sfiaFacade) {
+        try {
+          const allSkills = await this.sfiaFacade.getAllSkills();
+          for (const s of allSkills) {
+            skillMap.set(s.code.toUpperCase(), {
+              name: s.name,
+              category: s.categoryCode || 'Software Engineering',
+            });
+          }
+        } catch (err) {
+          this.logger.warn(
+            `Failed to pre-fetch all SFIA skills for coverage: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+      }
+
       const enriched: SfiaSkillCoverageItemDto[] = [];
       for (const row of rawRows) {
-        let name = row.code;
-        let skillCategory = 'Chung';
-
-        if (this.sfiaFacade) {
-          try {
-            const skillInfo = await this.sfiaFacade.getSkillByCode(row.code);
-            if (skillInfo) {
-              name = skillInfo.name;
-              skillCategory = skillInfo.categoryCode || skillCategory;
-            }
-          } catch {
-            // Ignore facade lookup failure
-          }
-        }
+        const meta = skillMap.get(row.code.toUpperCase());
+        const name = meta?.name || row.code;
+        const skillCategory = meta?.category || 'Chung';
 
         if (
           !category ||
