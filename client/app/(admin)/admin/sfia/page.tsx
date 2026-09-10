@@ -26,6 +26,7 @@ import {
   type SfiaCategory,
   type SfiaSubcategory,
   type SfiaSkillSummary,
+  type SfiaSkillDetail,
   type SfiaCoverageStats,
   SFIA_CATEGORY_THEMES,
   SFIA_LEVEL_DEFINITIONS,
@@ -33,6 +34,7 @@ import {
   SfiaAnatomyBanner,
   SfiaSidebarTree,
   SfiaMobileDrawer,
+  SfiaDetailPanel,
 } from '@/components/sfia'
 import { sfiaAdminService } from '@/services/sfia-admin.service'
 
@@ -50,18 +52,11 @@ function SfiaBrowserWorkspace() {
   const [categories, setCategories] = useState<SfiaCategory[]>([])
   const [subcategories, setSubcategories] = useState<SfiaSubcategory[]>([])
   const [skills, setSkills] = useState<SfiaSkillSummary[]>([])
+  const [skillDetail, setSkillDetail] = useState<SfiaSkillDetail | null>(null)
+  const [loadingDetail, setLoadingDetail] = useState(false)
+  const [detailError, setDetailError] = useState<string | null>(null)
   const [stats, setStats] = useState<SfiaCoverageStats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [copiedCode, setCopiedCode] = useState<string | null>(null)
-
-  const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(code)
-    setCopiedCode(code)
-    toast.success(`Đã sao chép mã kỹ năng: ${code}`)
-    setTimeout(() => {
-      setCopiedCode(null)
-    }, 2000)
-  }
 
   useEffect(() => {
     async function loadData() {
@@ -83,6 +78,41 @@ function SfiaBrowserWorkspace() {
     }
     loadData()
   }, [])
+
+  // Fetch detailed skill data whenever selectedSkill changes
+  useEffect(() => {
+    let isCancelled = false
+    async function loadSkillDetail() {
+      if (!selectedSkill) return
+      try {
+        setLoadingDetail(true)
+        setDetailError(null)
+        const detail = await sfiaAdminService.getSkillDetail(selectedSkill)
+        if (!isCancelled) {
+          if (detail) {
+            setSkillDetail(detail)
+          } else {
+            setDetailError(`Không tìm thấy chi tiết cho kỹ năng ${selectedSkill}`)
+          }
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          setDetailError(
+            err instanceof Error ? err.message : 'Không thể tải chi tiết kỹ năng SFIA'
+          )
+        }
+      } finally {
+        if (!isCancelled) {
+          setLoadingDetail(false)
+        }
+      }
+    }
+
+    loadSkillDetail()
+    return () => {
+      isCancelled = true
+    }
+  }, [selectedSkill])
 
   return (
     <div className="flex flex-col gap-2 h-full min-h-0 flex-1">
@@ -170,156 +200,31 @@ function SfiaBrowserWorkspace() {
                 />
               </div>
 
-              {/* Right Column: Hero Preview Card (Phase 2 Preview / Phase 3 Placeholder) */}
+              {/* Right Column: Complete SfiaDetailPanel (Phase 3) */}
               <div className="col-span-1 lg:col-span-8 xl:col-span-8 flex flex-col gap-3 overflow-y-auto">
-                {(() => {
-                  const currentSkill = skills.find((s) => s.code === selectedSkill) || skills[0]
-                  const currentCat = categories.find((c) => c.code === currentSkill?.categoryCode)
-                  const currentSub = subcategories.find((s) => s.code === currentSkill?.subcategoryCode)
-                  const theme = getCategoryTheme(currentSkill?.categoryCode || 'DEV_IMPL')
-
-                  if (!currentSkill) return null
-
-                  return (
-                    <div className="bg-card border border-border/80 rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
-                      {/* Top Header Row */}
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-4">
-                        <div className="flex items-start gap-3">
-                          <div
-                            className={cn(
-                              'size-12 rounded-xl flex items-center justify-center font-mono font-bold text-base border shadow-xs',
-                              theme.badge
-                            )}
-                          >
-                            {currentSkill.code}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h2 className="text-base sm:text-lg font-bold text-ink">
-                                {currentSkill.name}
-                              </h2>
-                              <span
-                                className={cn(
-                                  'text-[11px] font-semibold px-2.5 py-0.5 rounded-full border',
-                                  theme.badge
-                                )}
-                              >
-                                Level {currentSkill.minLevel} ➔ Level {currentSkill.maxLevel}
-                              </span>
-                            </div>
-
-                            {/* Breadcrumb Navigation */}
-                            <div className="flex items-center gap-1.5 text-xs text-ink-muted mt-1 flex-wrap">
-                              <span className="flex items-center gap-1">
-                                <span className={cn('size-2 rounded-full', theme.dot)} />
-                                <strong className="text-ink font-medium">{currentCat?.nameVi || currentSkill.categoryCode}</strong>
-                              </span>
-                              <span>›</span>
-                              <span>{currentSub?.nameVi || currentSub?.name || currentSkill.subcategoryCode}</span>
-                              <span>›</span>
-                              <span className="font-mono text-ink font-semibold">{currentSkill.code}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Action Buttons & Current Level Indicator */}
-                        <div className="flex flex-wrap sm:flex-col items-end gap-2 shrink-0">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleCopyCode(currentSkill.code)}
-                              className="h-8 px-2.5 text-xs gap-1.5"
-                            >
-                              {copiedCode === currentSkill.code ? (
-                                <>
-                                  <Check className="size-3.5 text-emerald-500" />
-                                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Đã chép</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="size-3.5 text-ink-muted" />
-                                  <span>Sao chép mã</span>
-                                </>
-                              )}
-                            </Button>
-
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setTab('matrix')}
-                              className="h-8 px-2.5 text-xs gap-1.5 text-brand hover:text-brand"
-                              title="Xem vị trí kỹ năng trong Ma trận 2D"
-                            >
-                              <Grid3X3 className="size-3.5" />
-                              <span>Ma trận 2D</span>
-                            </Button>
-                          </div>
-
-                          <div className="bg-surface-raised/80 border border-border/70 rounded-lg px-2.5 py-1.5 text-right w-full">
-                            <span className="text-[10px] text-ink-muted uppercase font-semibold block">
-                              Cấp độ đang chọn
-                            </span>
-                            <span className="text-xs font-bold text-brand mt-0.5 inline-block">
-                              {SFIA_LEVEL_DEFINITIONS[selectedLevel]?.name || `Level ${selectedLevel}`} (L{selectedLevel})
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Summary Metrics */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                        <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
-                          <span className="text-[11px] text-ink-muted">Dải cấp độ khả dụng</span>
-                          <p className="text-sm font-bold text-ink mt-0.5 font-mono">
-                            L{currentSkill.minLevel} đến L{currentSkill.maxLevel} ({currentSkill.maxLevel - currentSkill.minLevel + 1} levels)
-                          </p>
-                        </div>
-                        <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
-                          <span className="text-[11px] text-ink-muted">Câu hỏi phỏng vấn</span>
-                          <p className="text-sm font-bold text-ink mt-0.5">
-                            {currentSkill.questionCount} câu hỏi
-                          </p>
-                        </div>
-                        <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
-                          <span className="text-[11px] text-ink-muted">Nghề O*NET liên kết</span>
-                          <p className="text-sm font-bold text-ink mt-0.5">
-                            {currentSkill.onetCount} vị trí nghề
-                          </p>
-                        </div>
-                        <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
-                          <span className="text-[11px] text-ink-muted">Trạng thái dữ liệu</span>
-                          <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                            Chuẩn SFIA 9.0
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Overview Summary Box */}
-                      <div className="bg-surface-raised/30 border border-border/60 rounded-lg p-3.5 space-y-1">
-                        <h3 className="text-xs font-bold text-ink uppercase tracking-wider">
-                          Tổng quan Kỹ năng Chuyên môn
-                        </h3>
-                        <p className="text-xs text-ink-muted leading-relaxed">
-                          Kỹ năng <strong className="text-ink">{currentSkill.name}</strong> ({currentSkill.code}) thuộc phân nhóm <strong className="text-ink">{currentSub?.nameVi || currentSub?.name}</strong> trong danh mục <strong className="text-ink">{currentCat?.nameVi}</strong>. Kỹ năng này bao quát các chuẩn năng lực chuyên môn từ Cấp độ {currentSkill.minLevel} đến Cấp độ {currentSkill.maxLevel} theo khung tham chiếu quốc tế SFIA 9.
-                        </p>
-                      </div>
-
-                      {/* Phase 3 Notice Banner */}
-                      <div className="bg-brand/5 border border-brand/20 rounded-lg p-3.5 flex items-start gap-2.5">
-                        <Sparkles className="size-4 text-brand shrink-0 mt-0.5" />
-                        <div className="text-xs">
-                          <p className="font-bold text-ink">
-                            Khung chi tiết đa tầng (Interactive 7-Level Steppers & Behavior Statements)
-                          </p>
-                          <p className="text-ink-muted mt-0.5 leading-relaxed">
-                            Thước đo dải cấp độ 7 đốt trực quan, bản phát biểu năng lực chi tiết (`sfia.skill_levels`) và ghi chú ngữ cảnh (`guidance_notes`) sẽ được xây dựng hoàn chỉnh trong Phase 3.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })()}
+                <SfiaDetailPanel
+                  skillDetail={skillDetail}
+                  loading={loadingDetail}
+                  error={detailError}
+                  categories={categories}
+                  subcategories={subcategories}
+                  selectedLevel={selectedLevel}
+                  onSelectLevel={(level) => setLevel(level)}
+                  onNavigateToMatrix={() => setTab('matrix')}
+                  onRetry={() => {
+                    if (selectedSkill) {
+                      setLoadingDetail(true)
+                      setDetailError(null)
+                      sfiaAdminService
+                        .getSkillDetail(selectedSkill)
+                        .then((d) => setSkillDetail(d))
+                        .catch((e) =>
+                          setDetailError(e instanceof Error ? e.message : 'Không thể tải chi tiết')
+                        )
+                        .finally(() => setLoadingDetail(false))
+                    }
+                  }}
+                />
               </div>
             </div>
           </div>
