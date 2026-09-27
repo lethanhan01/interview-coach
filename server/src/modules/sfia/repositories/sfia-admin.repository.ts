@@ -551,7 +551,8 @@ export class SfiaAdminRepository implements ISfiaAdminRepository {
           content: data.content,
           sessionType,
           difficulty: data.difficulty,
-          contextPackId: 'sfia-v9',
+          // 'VN' là context pack hợp lệ theo chk_question_bank_context_pack constraint
+          contextPackId: 'VN',
           sfiaSkillCode: data.sfiaSkillCode,
           targetSfiaLevel: data.targetSfiaLevel,
         },

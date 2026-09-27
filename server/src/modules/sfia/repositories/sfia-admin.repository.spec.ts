@@ -379,7 +379,7 @@ describe('SfiaAdminRepository', () => {
           content: 'Test question about caching',
           sessionType: QuestionSessionType.technical,
           difficulty: 2,
-          contextPackId: 'sfia-v9',
+          contextPackId: 'VN', // 'VN' hợp lệ theo chk_question_bank_context_pack constraint
           sfiaSkillCode: 'PROG',
           targetSfiaLevel: 3,
         },

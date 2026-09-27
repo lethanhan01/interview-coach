@@ -41,10 +41,10 @@ import {
 /**
  * SfiaAdminController — 10 Admin REST endpoints cho SFIA 9 Knowledge Base
  *
- * Base route: /sfia/admin
+ * Base route: /admin/sfia
  * Authorization: @Roles(UserRole.admin) — JWT + Cookie required
  */
-@Controller('sfia/admin')
+@Controller('admin/sfia')
 @Roles(UserRole.admin)
 @ApiTags('SFIA Admin')
 @ApiCookieAuth('cookieAuth')
@@ -53,7 +53,7 @@ export class SfiaAdminController {
   constructor(private readonly sfiaAdminService: SfiaAdminService) {}
 
   /**
-   * 1. GET /sfia/admin/taxonomy
+   * 1. GET /admin/sfia/taxonomy
    * Lấy toàn bộ cây phân loại SFIA 9 (Categories + Subcategories + Skills)
    * dùng để khởi tạo sidebar, filter panel và tree view của admin UI.
    */
@@ -73,7 +73,7 @@ export class SfiaAdminController {
   }
 
   /**
-   * 2. GET /sfia/admin/categories
+   * 2. GET /admin/sfia/categories
    * Lấy danh sách 6 danh mục lớn SFIA 9 kèm số lượng kỹ năng.
    */
   @Get('categories')
@@ -92,7 +92,7 @@ export class SfiaAdminController {
   }
 
   /**
-   * 3. GET /sfia/admin/subcategories
+   * 3. GET /admin/sfia/subcategories
    * Lấy danh sách 22 phân nhóm chuyên môn (có thể lọc theo category).
    */
   @Get('subcategories')
@@ -119,7 +119,7 @@ export class SfiaAdminController {
   }
 
   /**
-   * 4. GET /sfia/admin/skills
+   * 4. GET /admin/sfia/skills
    * Lấy danh sách kỹ năng SFIA có bộ lọc (category, subcategory, level, query text).
    */
   @Get('skills')
@@ -140,7 +140,7 @@ export class SfiaAdminController {
   }
 
   /**
-   * 5. GET /sfia/admin/skills/:code
+   * 5. GET /admin/sfia/skills/:code
    * Lấy chi tiết toàn diện của một kỹ năng: level statements, O*NET mappings, question bank.
    */
   @Get('skills/:code')
@@ -171,7 +171,7 @@ export class SfiaAdminController {
   }
 
   /**
-   * 6. GET /sfia/admin/levels
+   * 6. GET /admin/sfia/levels
    * Lấy danh sách 7 cấp độ trách nhiệm chuẩn SFIA 9.
    */
   @Get('levels')
@@ -190,7 +190,7 @@ export class SfiaAdminController {
   }
 
   /**
-   * 7. GET /sfia/admin/generic-attributes
+   * 7. GET /admin/sfia/generic-attributes
    * Lấy danh sách thuộc tính chung (Autonomy, Influence, Complexity,...) và tiêu chuẩn đo lường qua 7 levels.
    */
   @Get('generic-attributes')
@@ -209,7 +209,7 @@ export class SfiaAdminController {
   }
 
   /**
-   * 8. GET /sfia/admin/matrix
+   * 8. GET /admin/sfia/matrix
    * Lấy toàn bộ dữ liệu 2D matrix (147 kỹ năng x 7 levels) với trạng thái từng ô.
    */
   @Get('matrix')
@@ -236,10 +236,10 @@ export class SfiaAdminController {
   }
 
   /**
-   * 9. GET /sfia/admin/coverage
+   * 9. GET /admin/sfia/analytics/coverage (hỗ trợ alias /admin/sfia/coverage)
    * Lấy số liệu thống kê KPI độ phủ câu hỏi + O*NET toàn bộ SFIA.
    */
-  @Get('coverage')
+  @Get(['analytics/coverage', 'coverage'])
   @ApiOperation({
     summary: 'Get SFIA question coverage KPI statistics',
     description:
@@ -255,7 +255,7 @@ export class SfiaAdminController {
   }
 
   /**
-   * 10. POST /sfia/admin/skills/:code/questions
+   * 10. POST /admin/sfia/skills/:code/questions
    * Tạo câu hỏi phỏng vấn mới gắn nhãn kỹ năng và level SFIA.
    */
   @Post('skills/:code/questions')

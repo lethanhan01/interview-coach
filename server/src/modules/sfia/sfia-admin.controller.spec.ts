@@ -180,7 +180,7 @@ describe('SfiaAdminController', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 1. GET /sfia/admin/taxonomy
+  // 1. GET /admin/sfia/taxonomy
   // -------------------------------------------------------------------------
   describe('getTaxonomy()', () => {
     it('should delegate to sfiaAdminService.getTaxonomy() and return the result', async () => {
@@ -203,7 +203,7 @@ describe('SfiaAdminController', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 2. GET /sfia/admin/categories
+  // 2. GET /admin/sfia/categories
   // -------------------------------------------------------------------------
   describe('getCategories()', () => {
     it('should return list of categories from the service', async () => {
@@ -224,7 +224,7 @@ describe('SfiaAdminController', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 3. GET /sfia/admin/subcategories
+  // 3. GET /admin/sfia/subcategories
   // -------------------------------------------------------------------------
   describe('getSubcategories()', () => {
     it('should pass categoryCode filter to the service', async () => {
@@ -246,7 +246,7 @@ describe('SfiaAdminController', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 4. GET /sfia/admin/skills
+  // 4. GET /admin/sfia/skills
   // -------------------------------------------------------------------------
   describe('getSkills()', () => {
     it('should pass filters to the service and return skill summaries', async () => {
@@ -272,7 +272,7 @@ describe('SfiaAdminController', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 5. GET /sfia/admin/skills/:code
+  // 5. GET /admin/sfia/skills/:code
   // -------------------------------------------------------------------------
   describe('getSkillDetail()', () => {
     it('should return full skill detail for a valid code', async () => {
@@ -303,7 +303,7 @@ describe('SfiaAdminController', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 6. GET /sfia/admin/levels
+  // 6. GET /admin/sfia/levels
   // -------------------------------------------------------------------------
   describe('getResponsibilityLevels()', () => {
     it('should return the 7 responsibility levels from the service', async () => {
@@ -317,7 +317,7 @@ describe('SfiaAdminController', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 7. GET /sfia/admin/generic-attributes
+  // 7. GET /admin/sfia/generic-attributes
   // -------------------------------------------------------------------------
   describe('getGenericAttributes()', () => {
     it('should return generic attributes from the service', async () => {
@@ -331,7 +331,7 @@ describe('SfiaAdminController', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 8. GET /sfia/admin/matrix
+  // 8. GET /admin/sfia/matrix
   // -------------------------------------------------------------------------
   describe('getMatrixData()', () => {
     it('should pass categoryCode filter and return matrix response', async () => {
@@ -354,7 +354,7 @@ describe('SfiaAdminController', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 9. GET /sfia/admin/coverage
+  // 9. GET /admin/sfia/analytics/coverage
   // -------------------------------------------------------------------------
   describe('getCoverageStats()', () => {
     it('should return coverage statistics from the service', async () => {
@@ -371,7 +371,7 @@ describe('SfiaAdminController', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 10. POST /sfia/admin/skills/:code/questions
+  // 10. POST /admin/sfia/skills/:code/questions
   // -------------------------------------------------------------------------
   describe('createQuestion()', () => {
     const validDto: CreateSfiaQuestionDto = {

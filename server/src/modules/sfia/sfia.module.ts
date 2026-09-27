@@ -36,6 +36,13 @@ import { SfiaAdminController } from './sfia-admin.controller';
       useExisting: SfiaFacade,
     },
   ],
-  exports: [SFIA_FACADE_TOKEN, SFIA_REPOSITORY_TOKEN, SfiaFacade, SfiaService],
+  exports: [
+    SFIA_FACADE_TOKEN,
+    SFIA_REPOSITORY_TOKEN,
+    SFIA_ADMIN_REPOSITORY_TOKEN,
+    SfiaFacade,
+    SfiaService,
+    SfiaAdminService,
+  ],
 })
 export class SfiaModule {}
