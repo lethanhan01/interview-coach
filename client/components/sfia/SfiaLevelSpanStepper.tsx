@@ -70,7 +70,7 @@ export function SfiaLevelSpanStepper({
         tabIndex={0}
         onKeyDown={handleKeyDown}
         role="region"
-        aria-label="Thước đo 7 cấp độ trách nhiệm SFIA"
+        aria-label="SFIA 7-level responsibility span stepper"
         className={cn(
           'bg-surface-raised/40 border border-border/70 rounded-xl p-3.5 sm:p-4 space-y-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40',
           className
@@ -81,15 +81,15 @@ export function SfiaLevelSpanStepper({
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-ink flex items-center gap-1.5">
               <Sparkles className="size-3.5 text-brand shrink-0" />
-              <span>Thước đo 7 Cấp độ Trách nhiệm (7-Level Span Stepper)</span>
+              <span>7-Level Responsibility Span Stepper</span>
             </span>
             <span className="text-[11px] text-ink-muted hidden sm:inline-block">
-              (Dùng phím mũi tên ← → hoặc số 1-7 để chuyển nhanh)
+              (Use arrow keys ← → or 1-7 numbers to jump)
             </span>
           </div>
 
           <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-ink-muted">Dải hợp lệ:</span>
+            <span className="text-ink-muted">Valid range:</span>
             <span
               className={cn(
                 'px-2 py-0.5 rounded-full font-mono text-[11px] font-semibold border',
@@ -149,9 +149,9 @@ export function SfiaLevelSpanStepper({
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="text-xs max-w-xs text-center">
-                      <p className="font-semibold text-rose-300">Không khả dụng ở Level {lvl}</p>
+                      <p className="font-semibold text-rose-300">Not available at Level {lvl}</p>
                       <p className="text-[11px] opacity-90 mt-0.5">
-                        Chuẩn SFIA 9 không định nghĩa kỹ năng này tại Level {lvl} ({def?.nameVi}).
+                        SFIA 9 standard does not define this skill at Level {lvl}.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -165,7 +165,7 @@ export function SfiaLevelSpanStepper({
                       type="button"
                       onClick={() => onSelectLevel(lvl)}
                       aria-current={isSelected ? 'step' : undefined}
-                      aria-label={`Chọn Level ${lvl} - ${def?.name} (${def?.nameVi})`}
+                      aria-label={`Select Level ${lvl} - ${def?.name}`}
                       className={cn(
                         'flex flex-col items-center gap-1.5 group cursor-pointer select-none transition-all outline-none focus-visible:ring-2 focus-visible:ring-brand/60 rounded-lg p-0.5',
                         isSelected ? 'scale-105' : 'hover:scale-105'
@@ -207,7 +207,7 @@ export function SfiaLevelSpanStepper({
                               ? 'font-bold text-ink'
                               : 'text-ink-muted group-hover:text-ink'
                           )}
-                          title={`${def?.name} - ${def?.nameVi}`}
+                          title={def?.name}
                         >
                           {def?.name}
                         </span>
@@ -218,9 +218,8 @@ export function SfiaLevelSpanStepper({
                     <p className="font-semibold text-brand">
                       Level {lvl}: {def?.name}
                     </p>
-                    <p className="text-[11px] opacity-90">{def?.nameVi}</p>
                     <p className="text-[10px] text-ink-muted mt-1 italic">
-                      Nhấp để xem chi tiết năng lực hành vi và chuẩn đánh giá
+                      Click to view behavioral criteria and statements
                     </p>
                   </TooltipContent>
                 </Tooltip>

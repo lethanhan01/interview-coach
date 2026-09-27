@@ -24,43 +24,43 @@ describe('SfiaBlindSpotsTable Component', () => {
     render(<SfiaBlindSpotsTable {...defaultProps} />)
 
     // Heading and badge
-    expect(screen.getByText('Bảng Cảnh Báo Điểm Mù (Blind Spots)')).toBeInTheDocument()
-    expect(screen.getByText('35 điểm mù')).toBeInTheDocument()
+    expect(screen.getByText('Blind Spots Warning Table')).toBeInTheDocument()
+    expect(screen.getByText('35 blind spots')).toBeInTheDocument()
 
     // Pagination info
     const summary = screen.getByTestId('pagination-summary')
-    expect(summary).toHaveTextContent('Hiển thị 1 - 10 trên tổng số 35 điểm mù')
+    expect(summary).toHaveTextContent('Showing 1 - 10 of 35 blind spots')
 
     // Page buttons
-    expect(screen.getByRole('button', { name: 'Trang 1' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Trang 2' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Trang 3' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Trang 4' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Page 1' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Page 2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Page 3' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Page 4' })).toBeInTheDocument()
   })
 
   it('handles client pagination when clicking next page button', () => {
     render(<SfiaBlindSpotsTable {...defaultProps} />)
 
     // Click on Page 2
-    const page2Button = screen.getByRole('button', { name: 'Trang 2' })
+    const page2Button = screen.getByRole('button', { name: 'Page 2' })
     fireEvent.click(page2Button)
 
     // Now showing items 11 - 20
     const summary = screen.getByTestId('pagination-summary')
-    expect(summary).toHaveTextContent('Hiển thị 11 - 20 trên tổng số 35 điểm mù')
+    expect(summary).toHaveTextContent('Showing 11 - 20 of 35 blind spots')
   })
 
   it('filters blind spots by text search query', () => {
     render(<SfiaBlindSpotsTable {...defaultProps} />)
 
-    const searchInput = screen.getByPlaceholderText(/Tìm theo mã code/i)
+    const searchInput = screen.getByPlaceholderText(/Search code/i)
     fireEvent.change(searchInput, { target: { value: 'DESN' } })
 
     // Only DESN is displayed
     expect(screen.getByTestId('skill-code-DESN')).toBeInTheDocument()
     expect(screen.getByText('Digital product design')).toBeInTheDocument()
     const summary = screen.getByTestId('pagination-summary')
-    expect(summary).toHaveTextContent('Hiển thị 1 - 1 trên tổng số 1 điểm mù')
+    expect(summary).toHaveTextContent('Showing 1 - 1 of 1 blind spots')
   })
 
   it('triggers onSelectCategoryFilter when category is changed via filter', () => {
@@ -74,7 +74,7 @@ describe('SfiaBlindSpotsTable Component', () => {
 
     // Check trigger exists
     const categorySelectTrigger = screen.getByRole('combobox', {
-      name: /Lọc theo danh mục SFIA/i,
+      name: /Filter by SFIA category/i,
     })
     expect(categorySelectTrigger).toBeInTheDocument()
   })
@@ -94,17 +94,17 @@ describe('SfiaBlindSpotsTable Component', () => {
     )
 
     // Active chips
-    expect(screen.getByText(/Danh mục: Chiến lược & Kiến trúc/i)).toBeInTheDocument()
+    expect(screen.getByText(/Category: Strategy and architecture/i)).toBeInTheDocument()
     expect(screen.getByText(/Level 4/i)).toBeInTheDocument()
 
     // Clear all filters button
-    const clearAllButton = screen.getByRole('button', { name: /Xóa tất cả bộ lọc/i })
+    const clearAllButton = screen.getByRole('button', { name: /Clear all filters/i })
     fireEvent.click(clearAllButton)
     expect(onSelectCategoryFilter).toHaveBeenCalledWith(null)
     expect(onSelectLevelFilter).toHaveBeenCalledWith(null)
   })
 
-  it('triggers onCreateQuestion when clicking [Tạo câu hỏi] button on a row', () => {
+  it('triggers onCreateQuestion when clicking [Create Question] button on a row', () => {
     const onCreateQuestion = vi.fn()
     render(
       <SfiaBlindSpotsTable
@@ -113,7 +113,7 @@ describe('SfiaBlindSpotsTable Component', () => {
       />
     )
 
-    const createButtons = screen.getAllByRole('button', { name: /Tạo câu hỏi/i })
+    const createButtons = screen.getAllByRole('button', { name: /Create Question/i })
     expect(createButtons.length).toBeGreaterThan(0)
 
     fireEvent.click(createButtons[0])
@@ -145,7 +145,7 @@ describe('SfiaBlindSpotsTable Component', () => {
     )
 
     const exportButton = screen.getByRole('button', {
-      name: /Xuất danh sách điểm mù CSV/i,
+      name: /Export Blind Spots CSV/i,
     })
     fireEvent.click(exportButton)
     expect(onExportCsv).toHaveBeenCalled()
@@ -154,13 +154,13 @@ describe('SfiaBlindSpotsTable Component', () => {
   it('renders empty search state when no skills match search query', () => {
     render(<SfiaBlindSpotsTable {...defaultProps} />)
 
-    const searchInput = screen.getByPlaceholderText(/Tìm theo mã code/i)
+    const searchInput = screen.getByPlaceholderText(/Search code/i)
     fireEvent.change(searchInput, { target: { value: 'XYZNONEXISTENT' } })
 
     expect(
-      screen.getByText('Không tìm thấy kỹ năng điểm mù nào phù hợp')
+      screen.getByText('No matching blind spots found')
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Đặt lại bộ lọc/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Reset filters/i })).toBeInTheDocument()
   })
 
   it('renders celebration box when there are 0 blind spots in skills list', () => {
@@ -176,7 +176,7 @@ describe('SfiaBlindSpotsTable Component', () => {
     )
 
     expect(
-      screen.getByText('Tuyệt vời! Không còn điểm mù năng lực nào')
+      screen.getByText('Outstanding! No skill blind spots remaining')
     ).toBeInTheDocument()
   })
 })

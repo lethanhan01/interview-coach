@@ -73,7 +73,7 @@ describe('SfiaMatrixView', () => {
     const thead = container.querySelector('thead')
     expect(thead).toBeInTheDocument()
 
-    expect(screen.getByText('Kỹ Năng SFIA 9')).toBeInTheDocument()
+    expect(screen.getByText('SFIA 9 Skills')).toBeInTheDocument()
     for (let l = 1; l <= 7; l++) {
       expect(screen.getAllByText(`L${l}`).length).toBeGreaterThanOrEqual(1)
     }
@@ -83,7 +83,7 @@ describe('SfiaMatrixView', () => {
     render(<SfiaMatrixView {...defaultProps} />)
 
     expect(screen.getByTestId('category-header-DEV_IMPL')).toBeInTheDocument()
-    expect(screen.getByText(/Phát triển & Triển khai/)).toBeInTheDocument()
+    expect(screen.getByText(/Development and implementation/)).toBeInTheDocument()
   })
 
   it('correctly marks inactive cells and active cells based on min/max level', () => {
@@ -135,9 +135,9 @@ describe('SfiaMatrixView', () => {
     )
 
     expect(screen.getByTestId('matrix-empty-state')).toBeInTheDocument()
-    expect(screen.getByText('Không tìm thấy kỹ năng SFIA nào phù hợp')).toBeInTheDocument()
+    expect(screen.getByText('No matching SFIA skills found')).toBeInTheDocument()
 
-    const clearBtn = screen.getByRole('button', { name: 'Xóa bộ lọc' })
+    const clearBtn = screen.getByRole('button', { name: 'Clear filters' })
     fireEvent.click(clearBtn)
     expect(onClearFilters).toHaveBeenCalled()
   })

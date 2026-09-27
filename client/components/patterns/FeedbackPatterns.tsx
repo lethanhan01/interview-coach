@@ -78,6 +78,7 @@ export interface ErrorStateProps {
   description?: string
   error?: Error | null
   onRetry?: () => void
+  retryLabel?: string
   className?: string
   minHeight?: string
 }
@@ -87,6 +88,7 @@ export function ErrorState({
   description = 'Không thể tải dữ liệu. Vui lòng thử lại sau.',
   error,
   onRetry,
+  retryLabel = 'Thử lại',
   className,
   minHeight = 'min-h-[250px]',
 }: ErrorStateProps) {
@@ -111,7 +113,7 @@ export function ErrorState({
           onClick={onRetry}
           className="border-danger/20 text-danger hover:bg-danger/10 mt-4"
         >
-          Thử lại
+          {retryLabel}
         </Button>
       )}
     </div>

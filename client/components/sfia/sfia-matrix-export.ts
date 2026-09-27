@@ -5,8 +5,8 @@ import type {
 } from './types'
 
 /**
- * Tạo nội dung chuỗi CSV từ dữ liệu ma trận SFIA 2D
- * Định dạng kèm UTF-8 BOM (\uFEFF) giúp Excel tự động hiển thị đúng ký tự tiếng Việt
+ * Generates CSV string from SFIA 2D matrix dataset
+ * Prepends UTF-8 BOM (\uFEFF) for seamless Microsoft Excel rendering
  */
 export function generateSfiaMatrixCsvString(
   skills: SfiaSkillSummary[],
@@ -15,7 +15,7 @@ export function generateSfiaMatrixCsvString(
 ): string {
   const categoryMap = new Map<string, string>()
   for (const cat of categories) {
-    categoryMap.set(cat.code, cat.nameVi || cat.name)
+    categoryMap.set(cat.code, cat.name)
   }
 
   const escapeCsv = (val: string | number | undefined | null): string => {
@@ -25,11 +25,11 @@ export function generateSfiaMatrixCsvString(
   }
 
   const headers = [
-    'Mã kỹ năng',
-    'Tên kỹ năng (English)',
-    'Mã danh mục',
-    'Tên danh mục',
-    'Phân nhóm',
+    'Skill Code',
+    'Skill Name',
+    'Category Code',
+    'Category Name',
+    'Subcategory Code',
     'Min Level',
     'Max Level',
     'Level 1',
@@ -39,8 +39,8 @@ export function generateSfiaMatrixCsvString(
     'Level 5',
     'Level 6',
     'Level 7',
-    'Tổng câu hỏi',
-    'Tổng nghề O*NET',
+    'Total Questions',
+    'Total O*NET Occupations',
   ]
 
   const rows: string[] = []
@@ -54,7 +54,7 @@ export function generateSfiaMatrixCsvString(
       const cellKey = `${skill.code}_L${l}`
       const cell = cells[cellKey]
       if (cell && cell.isAvailable) {
-        levelCells.push(`Khả dụng (${cell.questionCount} Qs, ${cell.onetCount} O*NET)`)
+        levelCells.push(`Available (${cell.questionCount} Qs, ${cell.onetCount} O*NET)`)
       } else {
         levelCells.push('—')
       }
@@ -76,40 +76,39 @@ export function generateSfiaMatrixCsvString(
     rows.push(row.join(','))
   }
 
-  // Thêm UTF-8 Byte Order Mark (\uFEFF)
+  // Prepend UTF-8 BOM (\uFEFF)
   return '\uFEFF' + rows.join('\r\n')
 }
 
 /**
- * Kích hoạt tải xuống file CSV ma trận SFIA 2D trên trình duyệt
+ * Triggers file download in the browser
  */
 export function downloadSfiaMatrixCsv(
   skills: SfiaSkillSummary[],
   categories: SfiaCategory[],
   cells: Record<string, SfiaMatrixCellData>,
-  filename?: string
+  fileName?: string
 ): boolean {
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return false
-  }
-
   try {
     const csvContent = generateSfiaMatrixCsvString(skills, categories, cells)
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
 
-    const dateStr = new Date().toISOString().slice(0, 10)
-    const finalFilename = filename || `SFIA9_Matrix_Grid_${dateStr}.csv`
+    const dateStr = new Date().toISOString().split('T')[0]
+    const defaultFileName = `sfia9-matrix-grid-${dateStr}.csv`
 
     const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', finalFilename)
+    link.setAttribute('href', url)
+    link.setAttribute('download', fileName || defaultFileName)
+    link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
+
     return true
-  } catch {
+  } catch (error) {
+    console.error('Failed to export SFIA matrix CSV:', error)
     return false
   }
 }

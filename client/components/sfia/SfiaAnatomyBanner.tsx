@@ -76,14 +76,14 @@ export function SfiaAnatomyBanner({ stats, className }: SfiaAnatomyBannerProps) 
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-sm font-bold text-ink">
-                Khung Cấu Trúc Phân Tầng SFIA 9 (Framework Anatomy)
+                SFIA 9 Framework Anatomy
               </h2>
               <Badge variant="secondary" className="text-[10px] uppercase font-semibold px-2 py-0.5">
-                4 Trụ cột Chuẩn Quốc Tế
+                4 Core Pillars
               </Badge>
             </div>
             <p className="text-[11px] sm:text-xs text-ink-muted mt-0.5">
-              Mô hình chuẩn hóa từ Danh mục nghiệp vụ ➔ Phân nhóm chuyên môn ➔ Kỹ năng thực hành ➔ 7 Cấp độ trách nhiệm
+              Standardized architecture: Categories ➔ Subcategories ➔ Skills ➔ 7 Levels of Responsibility
             </p>
           </div>
         </div>
@@ -94,16 +94,16 @@ export function SfiaAnatomyBanner({ stats, className }: SfiaAnatomyBannerProps) 
             size="sm"
             onClick={toggleCollapsed}
             className="text-xs text-ink-muted hover:text-ink gap-1.5 h-8 px-2.5"
-            aria-label={collapsed ? 'Mở rộng giải phẫu cấu trúc SFIA 9' : 'Thu gọn giải phẫu cấu trúc SFIA 9'}
+            aria-label={collapsed ? 'Expand SFIA 9 Framework Anatomy' : 'Collapse SFIA 9 Framework Anatomy'}
           >
             {collapsed ? (
               <>
-                <span className="hidden sm:inline">Mở rộng sơ đồ</span>
+                <span className="hidden sm:inline">Expand Anatomy</span>
                 <ChevronDown className="size-3.5" />
               </>
             ) : (
               <>
-                <span className="hidden sm:inline">Thu gọn</span>
+                <span className="hidden sm:inline">Collapse</span>
                 <ChevronUp className="size-3.5" />
               </>
             )}
@@ -121,15 +121,15 @@ export function SfiaAnatomyBanner({ stats, className }: SfiaAnatomyBannerProps) 
               <div>
                 <div className="flex items-center justify-between gap-1 mb-1.5">
                   <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1">
-                    <Layers className="size-3" /> Trụ cột 1
+                    <Layers className="size-3" /> Pillar 1
                   </span>
                   <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
-                    6 Danh mục
+                    6 Categories
                   </span>
                 </div>
-                <h3 className="text-xs font-bold text-ink">Danh mục Nghiệp vụ</h3>
+                <h3 className="text-xs font-bold text-ink">Business Categories</h3>
                 <p className="text-[11px] text-ink-muted mt-1 leading-relaxed">
-                  Phân loại 6 lĩnh vực chính: Chiến lược, Chuyển đổi, Phát triển, Vận hành, Con người, Đối tác.
+                  High-level domains: Strategy & Architecture, Change & Transformation, Development, Delivery, People, Relationships.
                 </p>
               </div>
               <div className="text-[10px] text-ink-muted/80 pt-2 mt-2 border-t border-border/40 font-mono">
@@ -142,15 +142,15 @@ export function SfiaAnatomyBanner({ stats, className }: SfiaAnatomyBannerProps) 
               <div>
                 <div className="flex items-center justify-between gap-1 mb-1.5">
                   <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
-                    <FolderTree className="size-3" /> Trụ cột 2
+                    <FolderTree className="size-3" /> Pillar 2
                   </span>
                   <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
-                    22 Phân nhóm
+                    22 Subcategories
                   </span>
                 </div>
-                <h3 className="text-xs font-bold text-ink">Phân nhóm Chuyên môn</h3>
+                <h3 className="text-xs font-bold text-ink">Professional Domains</h3>
                 <p className="text-[11px] text-ink-muted mt-1 leading-relaxed">
-                  Gom cụm các phân nhánh kỹ thuật: Systems development, Data & analytics, Security, UX...
+                  Targeted capability clusters: Systems development, Data & analytics, Security, UX, Management.
                 </p>
               </div>
               <div className="text-[10px] text-ink-muted/80 pt-2 mt-2 border-t border-border/40 font-mono">
@@ -163,15 +163,15 @@ export function SfiaAnatomyBanner({ stats, className }: SfiaAnatomyBannerProps) 
               <div>
                 <div className="flex items-center justify-between gap-1 mb-1.5">
                   <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-wider flex items-center gap-1">
-                    <FileCode2 className="size-3" /> Trụ cột 3
+                    <FileCode2 className="size-3" /> Pillar 3
                   </span>
                   <span className="bg-violet-500/10 text-violet-600 dark:text-violet-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
-                    147 Kỹ năng
+                    147 Skills
                   </span>
                 </div>
-                <h3 className="text-xs font-bold text-ink">Kỹ năng Thực hành</h3>
+                <h3 className="text-xs font-bold text-ink">Practicing Skills</h3>
                 <p className="text-[11px] text-ink-muted mt-1 leading-relaxed">
-                  Mã 4 chữ cái (PROG, SWDN, DBDS). Mỗi kỹ năng sở hữu dải cấp độ độc lập (min_level..max_level).
+                  4-letter code standards (PROG, SWDN, DBDS). Each skill defines an explicit level span (min_level..max_level).
                 </p>
               </div>
               <div className="text-[10px] text-ink-muted/80 pt-2 mt-2 border-t border-border/40 font-mono">
@@ -184,15 +184,15 @@ export function SfiaAnatomyBanner({ stats, className }: SfiaAnatomyBannerProps) 
               <div>
                 <div className="flex items-center justify-between gap-1 mb-1.5">
                   <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                    <Award className="size-3" /> Trụ cột 4
+                    <Award className="size-3" /> Pillar 4
                   </span>
                   <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
-                    7 Cấp độ
+                    7 Levels
                   </span>
                 </div>
-                <h3 className="text-xs font-bold text-ink">Cấp độ Trách nhiệm</h3>
+                <h3 className="text-xs font-bold text-ink">Responsibility Levels</h3>
                 <p className="text-[11px] text-ink-muted mt-1 leading-relaxed">
-                  Từ Level 1 (Follow) đến Level 7 (Set strategy), gắn kết với 5 thuộc tính nền tảng (Autonomy, Influence...).
+                  From Level 1 (Follow) to Level 7 (Set strategy, inspire), anchored by 5 generic attributes.
                 </p>
               </div>
               <div className="text-[10px] text-ink-muted/80 pt-2 mt-2 border-t border-border/40 font-mono">
@@ -205,8 +205,8 @@ export function SfiaAnatomyBanner({ stats, className }: SfiaAnatomyBannerProps) 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
             <div className="bg-surface-inset/60 border border-border/50 rounded-lg p-2.5 flex items-center justify-between">
               <div>
-                <span className="text-[11px] text-ink-muted font-medium block">Kỹ năng SFIA 9</span>
-                <span className="text-sm sm:text-base font-bold text-ink">147 Kỹ năng</span>
+                <span className="text-[11px] text-ink-muted font-medium block">SFIA 9 Skills</span>
+                <span className="text-sm sm:text-base font-bold text-ink">147 Skills</span>
               </div>
               <div className="size-7 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
                 147
@@ -215,8 +215,8 @@ export function SfiaAnatomyBanner({ stats, className }: SfiaAnatomyBannerProps) 
 
             <div className="bg-surface-inset/60 border border-border/50 rounded-lg p-2.5 flex items-center justify-between">
               <div>
-                <span className="text-[11px] text-ink-muted font-medium block">Phân nhóm chuyên môn</span>
-                <span className="text-sm sm:text-base font-bold text-ink">22 Phân nhóm</span>
+                <span className="text-[11px] text-ink-muted font-medium block">Subcategories</span>
+                <span className="text-sm sm:text-base font-bold text-ink">22 Groups</span>
               </div>
               <div className="size-7 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
                 22
@@ -225,8 +225,8 @@ export function SfiaAnatomyBanner({ stats, className }: SfiaAnatomyBannerProps) 
 
             <div className="bg-surface-inset/60 border border-border/50 rounded-lg p-2.5 flex items-center justify-between">
               <div>
-                <span className="text-[11px] text-ink-muted font-medium block">Danh mục lớn</span>
-                <span className="text-sm sm:text-base font-bold text-ink">6 Danh mục</span>
+                <span className="text-[11px] text-ink-muted font-medium block">Categories</span>
+                <span className="text-sm sm:text-base font-bold text-ink">6 Categories</span>
               </div>
               <div className="size-7 rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold text-xs">
                 6
@@ -235,9 +235,9 @@ export function SfiaAnatomyBanner({ stats, className }: SfiaAnatomyBannerProps) 
 
             <div className="bg-surface-inset/60 border border-border/50 rounded-lg p-2.5 flex items-center justify-between">
               <div>
-                <span className="text-[11px] text-ink-muted font-medium block">Câu hỏi phỏng vấn</span>
+                <span className="text-[11px] text-ink-muted font-medium block">Question Bank</span>
                 <span className="text-sm sm:text-base font-bold text-ink">
-                  {stats?.totalQuestions ?? 0} Câu hỏi
+                  {stats?.totalQuestions ?? 0} Questions
                 </span>
               </div>
               <div className="size-7 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs">

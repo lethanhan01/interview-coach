@@ -70,7 +70,7 @@ const SfiaMatrixCell = memo(function SfiaMatrixCell({
         className="h-14 flex items-center justify-center bg-surface-inset/30 text-ink-muted/30 select-none text-xs transition-colors"
       >
         <span aria-hidden="true">—</span>
-        <span className="sr-only">Không khả dụng ở Level {levelId}</span>
+        <span className="sr-only">Not available at Level {levelId}</span>
       </div>
     )
   }
@@ -86,7 +86,7 @@ const SfiaMatrixCell = memo(function SfiaMatrixCell({
           type="button"
           data-testid={`cell-${skill.code}-L${levelId}`}
           onClick={() => onSelect(skill.code, levelId)}
-          aria-label={`${skill.code} Level ${levelId} (${levelInfo.name}), ${questionCount} câu hỏi, ${onetCount} nghề O*NET`}
+          aria-label={`${skill.code} Level ${levelId} (${levelInfo.name}), ${questionCount} questions, ${onetCount} O*NET occupations`}
           className={cn(
             'group relative flex h-14 w-full flex-col items-center justify-center rounded-lg border p-1 transition-all duration-150',
             'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
@@ -103,7 +103,7 @@ const SfiaMatrixCell = memo(function SfiaMatrixCell({
             </span>
             {isBlindSpot && (
               <span
-                title="Điểm mù: Chưa có câu hỏi phỏng vấn"
+                title="Blind spot: No interview questions"
                 className="size-1.5 rounded-full bg-rose-500 animate-pulse"
               />
             )}
@@ -150,12 +150,12 @@ const SfiaMatrixCell = memo(function SfiaMatrixCell({
           </p>
           <div className="text-[10px] text-muted-foreground flex items-center justify-between gap-3 pt-1 border-t border-border/30">
             <span className={cn(isBlindSpot && 'text-rose-400 font-bold')}>
-              Câu hỏi: {questionCount}
+              Questions: {questionCount}
             </span>
-            <span>Nghề O*NET: {onetCount}</span>
+            <span>O*NET Occupations: {onetCount}</span>
           </div>
           <p className="text-[9px] text-muted-foreground/80 italic mt-0.5">
-            Nhấp để mở chi tiết & tạo câu hỏi
+            Click to view details & create question
           </p>
         </div>
       </TooltipContent>
@@ -283,7 +283,7 @@ export function SfiaMatrixView({
     return map
   }, [categories, filteredSkills])
 
-  // Trạng thái trống (Empty State khi không có kỹ năng nào phù hợp)
+  // Empty State when no skills match filters
   if (filteredSkills.length === 0) {
     return (
       <div
@@ -298,13 +298,13 @@ export function SfiaMatrixView({
         </div>
         <h3 className="text-sm font-bold text-ink mb-1">
           {blindSpotsOnly
-            ? 'Không phát hiện điểm mù nào trong nhóm kỹ năng đã chọn'
-            : 'Không tìm thấy kỹ năng SFIA nào phù hợp'}
+            ? 'No blind spots detected in the selected filter group'
+            : 'No matching SFIA skills found'}
         </h3>
         <p className="text-xs text-ink-muted max-w-sm mb-4 leading-relaxed">
           {blindSpotsOnly
-            ? 'Toàn bộ các ô năng lực trong dải hiển thị đều đã có ít nhất một câu hỏi phỏng vấn trong ngân hàng dữ liệu.'
-            : 'Hãy thử thay đổi từ khóa tìm kiếm hoặc chọn danh mục khác để xem kết quả.'}
+            ? 'All capability cells in the visible range already have at least one interview question in the repository.'
+            : 'Try adjusting your search query or selecting another category to see results.'}
         </p>
         {onClearFilters && (
           <Button
@@ -313,7 +313,7 @@ export function SfiaMatrixView({
             onClick={onClearFilters}
             className="text-xs"
           >
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -340,7 +340,7 @@ export function SfiaMatrixView({
                   className="sticky left-0 top-0 z-30 bg-surface-raised min-w-[220px] max-w-[260px] p-3 text-left font-bold text-ink border-r border-border shadow-xs"
                 >
                   <div className="flex items-center justify-between">
-                    <span>Kỹ Năng SFIA 9</span>
+                    <span>SFIA 9 Skills</span>
                     <span className="text-[10px] text-ink-muted font-normal">
                       ({filteredSkills.length})
                     </span>
@@ -398,10 +398,10 @@ export function SfiaMatrixView({
                             className={cn('size-2 rounded-full shrink-0', theme.dot)}
                           />
                           <span className="font-bold text-ink">
-                            {category.nameVi || category.name}
+                            {category.name || category.nameVi}
                           </span>
                           <span className="font-mono text-[10px] text-ink-muted font-normal">
-                            ({categorySkills.length} kỹ năng)
+                            ({categorySkills.length} skills)
                           </span>
                         </div>
                       </td>

@@ -138,7 +138,7 @@ export function SfiaBlindSpotsTable({
     onSelectLevelFilter?.(null)
   }
 
-  // Nếu toàn bộ hệ thống không còn điểm mù nào
+  // All skills covered state
   if (allBlindSpots.length === 0) {
     return (
       <div
@@ -151,10 +151,10 @@ export function SfiaBlindSpotsTable({
           <CheckCircle2 className="size-6" />
         </div>
         <h3 className="text-base font-bold text-ink mb-1">
-          Tuyệt vời! Không còn điểm mù năng lực nào
+          Outstanding! No skill blind spots remaining
         </h3>
         <p className="text-xs text-ink-muted max-w-md mx-auto">
-          100% kỹ năng SFIA 9 đã có ít nhất một câu hỏi phỏng vấn chuẩn mực trong Ngân hàng câu hỏi.
+          100% of SFIA 9 skills have at least one sample interview question in the Question Bank.
         </p>
       </div>
     )
@@ -179,17 +179,17 @@ export function SfiaBlindSpotsTable({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-bold text-ink">
-                  Bảng Cảnh Báo Điểm Mù (Blind Spots)
+                  Blind Spots Warning Table
                 </h3>
                 <Badge
                   variant="outline"
                   className="bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 tabular-nums text-[10px] font-semibold"
                 >
-                  {allBlindSpots.length} điểm mù
+                  {allBlindSpots.length} blind spots
                 </Badge>
               </div>
               <p className="text-[11px] text-ink-muted">
-                Danh sách các kỹ năng SFIA chưa có câu hỏi phỏng vấn trong Ngân hàng câu hỏi
+                SFIA skills without interview questions in the Question Bank
               </p>
             </div>
           </div>
@@ -204,7 +204,7 @@ export function SfiaBlindSpotsTable({
               className="gap-1.5 text-xs h-8 shrink-0 self-start sm:self-auto"
             >
               <Download className="size-3.5" />
-              <span>{isExportingCsv ? 'Đang xuất CSV...' : 'Xuất danh sách điểm mù CSV'}</span>
+              <span>{isExportingCsv ? 'Exporting CSV...' : 'Export Blind Spots CSV'}</span>
             </Button>
           )}
         </div>
@@ -217,14 +217,14 @@ export function SfiaBlindSpotsTable({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm theo mã code (PROG) hoặc tên kỹ năng..."
+              placeholder="Search code (PROG) or skill name..."
               leadingIcon={<Search className="size-4 text-ink-muted" />}
               trailingAction={
                 searchQuery ? (
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    aria-label="Xóa từ khóa tìm kiếm"
+                    aria-label="Clear search query"
                     className="text-ink-muted hover:text-ink absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-md"
                   >
                     <X className="size-3.5" />
@@ -244,14 +244,14 @@ export function SfiaBlindSpotsTable({
               }
             >
               <SelectTrigger
-                aria-label="Lọc theo danh mục SFIA"
+                aria-label="Filter by SFIA category"
                 className="h-8 text-xs"
               >
-                <SelectValue placeholder="Tất cả danh mục" />
+                <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">
-                  <span className="font-medium">Tất cả danh mục (6)</span>
+                  <span className="font-medium">All Categories (6)</span>
                 </SelectItem>
                 {categories.map((cat) => {
                   const theme = getCategoryTheme(cat.code)
@@ -259,7 +259,7 @@ export function SfiaBlindSpotsTable({
                     <SelectItem key={cat.code} value={cat.code}>
                       <div className="flex items-center gap-2">
                         <span className={cn('size-2 rounded-full shrink-0', theme.dot)} />
-                        <span>{cat.nameVi}</span>
+                        <span>{cat.name}</span>
                       </div>
                     </SelectItem>
                   )
@@ -281,14 +281,14 @@ export function SfiaBlindSpotsTable({
               }
             >
               <SelectTrigger
-                aria-label="Lọc theo cấp độ SFIA"
+                aria-label="Filter by SFIA level"
                 className="h-8 text-xs"
               >
-                <SelectValue placeholder="Tất cả Level" />
+                <SelectValue placeholder="All Levels" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">
-                  <span className="font-medium">Tất cả Level (1-7)</span>
+                  <span className="font-medium">All Levels (1-7)</span>
                 </SelectItem>
                 {[1, 2, 3, 4, 5, 6, 7].map((lvl) => {
                   const info = getLevelTheme(lvl)
@@ -309,7 +309,7 @@ export function SfiaBlindSpotsTable({
         {hasActiveFilters && (
           <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
             <span className="text-[11px] text-ink-muted flex items-center gap-1">
-              <Filter className="size-3" /> Đang lọc:
+              <Filter className="size-3" /> Filtering by:
             </span>
 
             {searchQuery && (
@@ -317,11 +317,11 @@ export function SfiaBlindSpotsTable({
                 variant="outline"
                 className="gap-1 bg-surface-inset text-ink text-[11px]"
               >
-                <span>Từ khóa: &quot;{searchQuery}&quot;</span>
+                <span>Keyword: &quot;{searchQuery}&quot;</span>
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  aria-label="Xóa lọc từ khóa"
+                  aria-label="Clear keyword filter"
                   className="hover:text-destructive"
                 >
                   <X className="size-3" />
@@ -335,14 +335,14 @@ export function SfiaBlindSpotsTable({
                 className="gap-1 bg-surface-inset text-ink text-[11px]"
               >
                 <span>
-                  Danh mục:{' '}
-                  {categories.find((c) => c.code === selectedCategoryFilter)?.nameVi ||
+                  Category:{' '}
+                  {categories.find((c) => c.code === selectedCategoryFilter)?.name ||
                     selectedCategoryFilter}
                 </span>
                 <button
                   type="button"
                   onClick={() => onSelectCategoryFilter?.(null)}
-                  aria-label="Xóa lọc danh mục"
+                  aria-label="Clear category filter"
                   className="hover:text-destructive"
                 >
                   <X className="size-3" />
@@ -359,7 +359,7 @@ export function SfiaBlindSpotsTable({
                 <button
                   type="button"
                   onClick={() => onSelectLevelFilter?.(null)}
-                  aria-label="Xóa lọc cấp độ"
+                  aria-label="Clear level filter"
                   className="hover:text-destructive"
                 >
                   <X className="size-3" />
@@ -373,7 +373,7 @@ export function SfiaBlindSpotsTable({
               onClick={handleClearAllFilters}
               className="h-6 text-[11px] text-ink-muted hover:text-ink px-1.5"
             >
-              Xóa tất cả bộ lọc
+              Clear all filters
             </Button>
           </div>
         )}
@@ -384,13 +384,13 @@ export function SfiaBlindSpotsTable({
         <div className="p-8 text-center flex flex-col items-center justify-center">
           <SearchX className="size-8 text-ink-muted mb-2" />
           <h4 className="text-sm font-semibold text-ink">
-            Không tìm thấy kỹ năng điểm mù nào phù hợp
+            No matching blind spots found
           </h4>
           <p className="text-xs text-ink-muted max-w-sm mt-1 mb-3">
-            Thử thay đổi từ khóa tìm kiếm hoặc đặt lại các bộ lọc danh mục và cấp độ.
+            Try adjusting search keywords or reset category and level filters.
           </p>
           <Button variant="outline" size="sm" onClick={handleClearAllFilters}>
-            Đặt lại bộ lọc
+            Reset filters
           </Button>
         </div>
       ) : (
@@ -398,13 +398,13 @@ export function SfiaBlindSpotsTable({
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-border/80 bg-surface-inset/50 text-ink-muted text-[11px] font-semibold">
-                <th className="py-2.5 px-3">Mã code</th>
-                <th className="py-2.5 px-3">Tên kỹ năng</th>
-                <th className="py-2.5 px-3">Danh mục SFIA</th>
-                <th className="py-2.5 px-3 text-center">Dải Level</th>
-                <th className="py-2.5 px-3 text-center">Nhu cầu O*NET</th>
-                <th className="py-2.5 px-3">Mức độ ưu tiên</th>
-                <th className="py-2.5 px-3 text-right">Hành động</th>
+                <th className="py-2.5 px-3">Skill Code</th>
+                <th className="py-2.5 px-3">Skill Name</th>
+                <th className="py-2.5 px-3">SFIA Category</th>
+                <th className="py-2.5 px-3 text-center">Level Span</th>
+                <th className="py-2.5 px-3 text-center">O*NET Demand</th>
+                <th className="py-2.5 px-3">Priority</th>
+                <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
@@ -423,9 +423,9 @@ export function SfiaBlindSpotsTable({
                         type="button"
                         onClick={() => onSelectSkill(skill.code)}
                         data-testid={`skill-code-${skill.code}`}
-                        aria-label={`Mã kỹ năng ${skill.code}`}
+                        aria-label={`Skill code ${skill.code}`}
                         className="font-mono font-bold text-xs text-brand hover:underline flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded"
-                        title={`Xem chi tiết kỹ năng ${skill.code} trong Cây danh mục`}
+                        title={`View details for ${skill.code} in Taxonomy Tree`}
                       >
                         <span>{skill.code}</span>
                         <ExternalLink className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -465,7 +465,7 @@ export function SfiaBlindSpotsTable({
                         {skill.onetCount >= 8 && (
                            <Flame className="size-3 text-rose-500 fill-rose-500" />
                         )}
-                        <span>{skill.onetCount} nghề</span>
+                        <span>{skill.onetCount} occupations</span>
                       </span>
                     </td>
 
@@ -497,7 +497,7 @@ export function SfiaBlindSpotsTable({
                           className="h-7 text-xs gap-1 border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/50"
                         >
                           <Plus className="size-3" />
-                          <span>Tạo câu hỏi</span>
+                          <span>Create Question</span>
                         </Button>
 
                         <Button
@@ -505,10 +505,10 @@ export function SfiaBlindSpotsTable({
                           size="sm"
                           onClick={() => onSelectSkill(skill.code)}
                           className="h-7 w-7 p-0 text-ink-muted hover:text-brand"
-                          title="Xem toàn văn mô tả kỹ năng trong Cây SFIA"
+                          title="View full skill definition in SFIA Tree"
                         >
                           <ExternalLink className="size-3.5" />
-                          <span className="sr-only">Xem chi tiết {skill.code}</span>
+                          <span className="sr-only">View details for {skill.code}</span>
                         </Button>
                       </div>
                     </td>
@@ -524,9 +524,9 @@ export function SfiaBlindSpotsTable({
       {filteredSkills.length > 0 && (
         <div className="p-3 border-t border-border/80 bg-surface-inset/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
           <div data-testid="pagination-summary" className="text-ink-muted text-[11px] tabular-nums">
-            Hiển thị <strong className="text-ink">{startIndex + 1}</strong> -{' '}
-            <strong className="text-ink">{endIndex}</strong> trên tổng số{' '}
-            <strong className="text-ink">{totalItems}</strong> điểm mù
+            Showing <strong className="text-ink">{startIndex + 1}</strong> -{' '}
+            <strong className="text-ink">{endIndex}</strong> of{' '}
+            <strong className="text-ink">{totalItems}</strong> blind spots
           </div>
 
           {totalPages > 1 && (
@@ -536,11 +536,11 @@ export function SfiaBlindSpotsTable({
                 size="sm"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={safeCurrentPage <= 1}
-                aria-label="Trang trước"
+                aria-label="Previous page"
                 className="h-7 px-2 text-xs"
               >
                 <ChevronLeft className="size-3.5" />
-                <span className="hidden sm:inline ml-1">Trước</span>
+                <span className="hidden sm:inline ml-1">Previous</span>
               </Button>
 
               <div className="flex items-center gap-1 mx-1">
@@ -551,7 +551,7 @@ export function SfiaBlindSpotsTable({
                       variant={pageNum === safeCurrentPage ? 'primary' : 'ghost'}
                       size="sm"
                       onClick={() => setCurrentPage(pageNum)}
-                      aria-label={`Trang ${pageNum}`}
+                      aria-label={`Page ${pageNum}`}
                       className="h-7 w-7 p-0 text-xs tabular-nums"
                     >
                       {pageNum}
@@ -565,10 +565,10 @@ export function SfiaBlindSpotsTable({
                 size="sm"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={safeCurrentPage >= totalPages}
-                aria-label="Trang sau"
+                aria-label="Next page"
                 className="h-7 px-2 text-xs"
               >
-                <span className="hidden sm:inline mr-1">Sau</span>
+                <span className="hidden sm:inline mr-1">Next</span>
                 <ChevronRight className="size-3.5" />
               </Button>
             </div>

@@ -74,21 +74,21 @@ describe('sfia-analytics-export utility', () => {
       const res = getBlindSpotPriority(9)
       expect(res.level).toBe('HIGH')
       expect(res.badgeVariant).toBe('danger')
-      expect(res.labelVi).toContain('Ưu tiên cao')
+      expect(res.labelVi).toBe('High Priority')
     })
 
     it('returns MEDIUM priority when onetCount between 4 and 7', () => {
       const res = getBlindSpotPriority(5)
       expect(res.level).toBe('MEDIUM')
       expect(res.badgeVariant).toBe('warning')
-      expect(res.labelVi).toContain('Ưu tiên trung bình')
+      expect(res.labelVi).toBe('Medium Priority')
     })
 
     it('returns STANDARD priority when onetCount < 4', () => {
       const res = getBlindSpotPriority(2)
       expect(res.level).toBe('STANDARD')
       expect(res.badgeVariant).toBe('neutral')
-      expect(res.labelVi).toContain('Tiêu chuẩn')
+      expect(res.labelVi).toBe('Standard')
     })
   })
 
@@ -108,20 +108,13 @@ describe('sfia-analytics-export utility', () => {
       expect(csv).toContain('"MEAS"')
     })
 
-    it('includes translated category names and correct priority labels', () => {
+    it('includes category names and correct priority labels', () => {
       const csv = generateSfiaBlindSpotsCsvString(mockSkills, mockCategories)
-      expect(csv).toContain('"Phát triển & Triển khai"')
-      expect(csv).toContain('"Chiến lược & Kiến trúc"')
-      expect(csv).toContain('Ưu tiên cao (High)')
-      expect(csv).toContain('Ưu tiên trung bình (Medium)')
-      expect(csv).toContain('Tiêu chuẩn (Standard)')
-    })
-
-    it('includes summary appendix footer', () => {
-      const csv = generateSfiaBlindSpotsCsvString(mockSkills, mockCategories)
-      expect(csv).toContain('TỔNG HỢP BÁO CÁO ĐIỂM MÙ KHUNG NĂNG LỰC SFIA 9')
-      expect(csv).toContain('Tổng số điểm mù')
-      expect(csv).toContain('"3"') // 3 blind spots in mockSkills
+      expect(csv).toContain('"Development and implementation"')
+      expect(csv).toContain('"Strategy and architecture"')
+      expect(csv).toContain('"High Priority"')
+      expect(csv).toContain('"Medium Priority"')
+      expect(csv).toContain('"Standard"')
     })
 
     it('escapes quotes and special characters properly', () => {

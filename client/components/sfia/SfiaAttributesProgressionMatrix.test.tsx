@@ -71,9 +71,9 @@ describe('SfiaAttributesProgressionMatrix', () => {
   it('renders rows for all provided generic attributes', () => {
     render(<SfiaAttributesProgressionMatrix {...defaultProps} />)
     expect(screen.getByText('Autonomy')).toBeInTheDocument()
-    expect(screen.getByText('Mức độ tự chủ')).toBeInTheDocument()
+    expect(screen.getByText('AUTONOMY')).toBeInTheDocument()
     expect(screen.getByText('Influence')).toBeInTheDocument()
-    expect(screen.getByText('Mức độ ảnh hưởng')).toBeInTheDocument()
+    expect(screen.getByText('INFLUENCE')).toBeInTheDocument()
   })
 
   it('displays the level statements in the matrix cells', () => {
@@ -93,14 +93,14 @@ describe('SfiaAttributesProgressionMatrix', () => {
 
   it('highlights the selected level column', () => {
     render(<SfiaAttributesProgressionMatrix {...defaultProps} selectedLevel={3} />)
-    // The selected column has "Đang chọn" indicators
-    const activeIndicators = screen.getAllByText('Đang chọn')
+    // The selected column has "Selected" indicators
+    const activeIndicators = screen.getAllByText('Selected')
     expect(activeIndicators.length).toBeGreaterThan(0)
   })
 
   it('filters rows based on search input', () => {
     render(<SfiaAttributesProgressionMatrix {...defaultProps} />)
-    const searchInput = screen.getByPlaceholderText('Tìm kiếm nội dung tiêu chuẩn...')
+    const searchInput = screen.getByPlaceholderText('Search attribute criteria...')
     fireEvent.change(searchInput, { target: { value: 'xu thế' } })
 
     // "Influence" has "Dẫn dắt xu thế", "Autonomy" does not
@@ -110,7 +110,7 @@ describe('SfiaAttributesProgressionMatrix', () => {
 
   it('handles CSV export button click and downloads file', () => {
     render(<SfiaAttributesProgressionMatrix {...defaultProps} />)
-    const exportBtn = screen.getByRole('button', { name: /Xuất CSV/i })
+    const exportBtn = screen.getByRole('button', { name: /Export Matrix CSV|CSV/i })
     fireEvent.click(exportBtn)
     expect(window.URL.createObjectURL).toHaveBeenCalled()
   })

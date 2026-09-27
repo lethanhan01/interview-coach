@@ -38,9 +38,9 @@ describe('SfiaOnetMappingsTab', () => {
       />
     )
 
-    expect(screen.getByText(/Chưa có vị trí nghề nghiệp O\*NET liên kết/i)).toBeInTheDocument()
+    expect(screen.getByText(/No mapped O\*NET occupations/i)).toBeInTheDocument()
     expect(screen.getByText(/UNMAPPED/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Khám phá O\*NET Explorer/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Explore O\*NET Browser/i })).toHaveAttribute(
       'href',
       '/admin/onet'
     )
@@ -55,7 +55,7 @@ describe('SfiaOnetMappingsTab', () => {
       />
     )
 
-    expect(screen.getByPlaceholderText(/Tìm theo mã SOC hoặc tên nghề/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Search by SOC code or occupation title/i)).toBeInTheDocument()
     // Due to Dual-Layout (Desktop Table + Mobile Cards), text exists in both views
     expect(screen.getAllByText('15-1252.00').length).toBe(2)
     expect(screen.getAllByText('Software Developers').length).toBe(2)
@@ -63,10 +63,10 @@ describe('SfiaOnetMappingsTab', () => {
     expect(screen.getAllByText('Software Quality Assurance Analysts').length).toBe(2)
 
     // Core badge and supplemental badge
-    const coreBadges = screen.getAllByText('Cốt lõi')
+    const coreBadges = screen.getAllByText('Core')
     expect(coreBadges.length).toBeGreaterThanOrEqual(2)
 
-    const suppBadges = screen.getAllByText('Bổ trợ')
+    const suppBadges = screen.getAllByText('Supplemental')
     expect(suppBadges.length).toBeGreaterThanOrEqual(2)
   })
 
@@ -79,7 +79,7 @@ describe('SfiaOnetMappingsTab', () => {
       />
     )
 
-    const searchInput = screen.getByPlaceholderText(/Tìm theo mã SOC hoặc tên nghề/i)
+    const searchInput = screen.getByPlaceholderText(/Search by SOC code or occupation title/i)
     fireEvent.change(searchInput, { target: { value: 'Programmers' } })
 
     expect(screen.getAllByText('Computer Programmers').length).toBe(2)
@@ -96,16 +96,16 @@ describe('SfiaOnetMappingsTab', () => {
       />
     )
 
-    // Click 'Bổ trợ'
-    const suppTab = screen.getByRole('button', { name: /Bổ trợ/i })
+    // Click 'Supplemental'
+    const suppTab = screen.getByRole('button', { name: /Supplemental/i })
     fireEvent.click(suppTab)
 
     expect(screen.getAllByText('Software Quality Assurance Analysts').length).toBe(2)
     expect(screen.queryByText('Software Developers')).not.toBeInTheDocument()
     expect(screen.queryByText('Computer Programmers')).not.toBeInTheDocument()
 
-    // Click 'Cốt lõi'
-    const coreTab = screen.getByRole('button', { name: /Cốt lõi/i })
+    // Click 'Core'
+    const coreTab = screen.getByRole('button', { name: /Core/i })
     fireEvent.click(coreTab)
 
     expect(screen.getAllByText('Software Developers').length).toBe(2)
@@ -122,7 +122,7 @@ describe('SfiaOnetMappingsTab', () => {
       />
     )
 
-    const links = screen.getAllByRole('link', { name: /Chi tiết|Xem/i })
+    const links = screen.getAllByRole('link', { name: /Details|View/i })
     expect(links.length).toBeGreaterThanOrEqual(1)
     expect(links[0]).toHaveAttribute(
       'href',

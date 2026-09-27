@@ -121,15 +121,15 @@ export function SfiaDetailPanel({
           <AlertCircle className="size-8" />
         </div>
         <h3 className="text-base font-bold text-ink mb-1">
-          {error || 'Không tìm thấy thông tin kỹ năng SFIA'}
+          {error || 'SFIA skill details not found'}
         </h3>
         <p className="text-xs text-ink-muted max-w-sm mb-4 leading-relaxed">
-          Không thể tải chi tiết hoặc kỹ năng không tồn tại trong hệ thống. Vui lòng thử lại hoặc chọn một kỹ năng khác.
+          Failed to load skill details or the skill does not exist in the system. Please try again or select a different skill.
         </p>
         {onRetry && (
           <Button variant="outline" size="sm" onClick={onRetry} className="gap-2">
             <RefreshCw className="size-3.5" />
-            <span>Thử tải lại</span>
+            <span>Try Again</span>
           </Button>
         )}
       </div>
@@ -175,10 +175,10 @@ export function SfiaDetailPanel({
             <div className="flex items-center gap-1.5 text-xs text-ink-muted mt-1 flex-wrap">
               <span className="flex items-center gap-1">
                 <span className={cn('size-2 rounded-full', theme.dot)} />
-                <strong className="text-ink font-medium">{currentCat?.nameVi || skillDetail.categoryCode}</strong>
+                <strong className="text-ink font-medium">{currentCat?.name || skillDetail.categoryCode}</strong>
               </span>
               <span>›</span>
-              <span>{currentSub?.nameVi || currentSub?.name || skillDetail.subcategoryCode}</span>
+              <span>{currentSub?.name || skillDetail.subcategoryCode}</span>
               <span>›</span>
               <span className="font-mono text-ink font-semibold">{skillDetail.code}</span>
             </div>
@@ -192,17 +192,17 @@ export function SfiaDetailPanel({
             size="sm"
             onClick={handleCopyCode}
             className="h-8 px-2.5 text-xs gap-1.5"
-            title="Sao chép mã kỹ năng"
+            title="Copy skill code"
           >
             {copiedCode ? (
               <>
                 <Check className="size-3.5 text-emerald-500" />
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Đã chép</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Copied</span>
               </>
             ) : (
               <>
                 <Copy className="size-3.5 text-ink-muted" />
-                <span>Sao chép mã</span>
+                <span>Copy Code</span>
               </>
             )}
           </Button>
@@ -212,10 +212,10 @@ export function SfiaDetailPanel({
             size="sm"
             onClick={() => setAiModalOpen(true)}
             className="h-8 px-2.5 text-xs gap-1.5 border-brand/40 text-brand hover:bg-brand/5 hover:text-brand"
-            title="Mở mẫu System Prompt cho AI Evaluator"
+            title="Open AI Evaluator System Prompt Template"
           >
             <Bot className="size-3.5" />
-            <span>Prompt AI Rubric</span>
+            <span>AI Rubric Prompt</span>
           </Button>
 
           {onNavigateToMatrix && (
@@ -224,10 +224,10 @@ export function SfiaDetailPanel({
               size="sm"
               onClick={onNavigateToMatrix}
               className="h-8 px-2.5 text-xs gap-1.5 text-ink-muted hover:text-ink"
-              title="Xem vị trí kỹ năng trong Ma trận 2D"
+              title="View skill position in 2D Matrix"
             >
               <Grid3X3 className="size-3.5" />
-              <span className="hidden sm:inline-block">Ma trận 2D</span>
+              <span className="hidden sm:inline-block">2D Matrix</span>
             </Button>
           )}
         </div>
@@ -236,25 +236,25 @@ export function SfiaDetailPanel({
       {/* 2. Mini KPI Metric Badges */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
-          <span className="text-[11px] text-ink-muted">Dải cấp độ chuẩn</span>
+          <span className="text-[11px] text-ink-muted">Standard Level Span</span>
           <p className="text-sm font-bold text-ink mt-0.5 font-mono">
-            L{skillDetail.minLevel} đến L{skillDetail.maxLevel} ({skillDetail.maxLevel - skillDetail.minLevel + 1} levels)
+            L{skillDetail.minLevel} to L{skillDetail.maxLevel} ({skillDetail.maxLevel - skillDetail.minLevel + 1} levels)
           </p>
         </div>
         <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
-          <span className="text-[11px] text-ink-muted">Câu hỏi phỏng vấn</span>
+          <span className="text-[11px] text-ink-muted">Interview Questions</span>
           <p className="text-sm font-bold text-ink mt-0.5">
-            {skillDetail.questionBankItems?.length || skillDetail.questionCount} câu hỏi
+            {skillDetail.questionBankItems?.length || skillDetail.questionCount} questions
           </p>
         </div>
         <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
-          <span className="text-[11px] text-ink-muted">Nghề O*NET liên kết</span>
+          <span className="text-[11px] text-ink-muted">Mapped O*NET Occupations</span>
           <p className="text-sm font-bold text-ink mt-0.5">
-            {skillDetail.onetMappings?.length || skillDetail.onetCount} vị trí nghề
+            {skillDetail.onetMappings?.length || skillDetail.onetCount} occupations
           </p>
         </div>
         <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
-          <span className="text-[11px] text-ink-muted">Cấp độ đang chọn</span>
+          <span className="text-[11px] text-ink-muted">Active Level</span>
           <p className="text-sm font-bold text-brand mt-0.5">
             L{selectedLevel} ({levelDef?.name || ''})
           </p>
@@ -279,18 +279,18 @@ export function SfiaDetailPanel({
         <TabsList className="bg-surface-inset h-9 p-1 w-full justify-start overflow-x-auto">
           <TabsTrigger value="statements" className="gap-1.5 text-xs px-3 py-1">
             <Layers className="size-3.5" />
-            <span>Năng lực Hành vi & Hướng dẫn</span>
+            <span>Behavioral Statements & Guidance</span>
           </TabsTrigger>
           <TabsTrigger value="onet" className="gap-1.5 text-xs px-3 py-1">
             <Briefcase className="size-3.5" />
-            <span>Nghề nghiệp O*NET</span>
+            <span>O*NET Occupations</span>
             <span className="text-[10px] opacity-75 font-mono">
               ({skillDetail.onetMappings?.length || skillDetail.onetCount || 0})
             </span>
           </TabsTrigger>
           <TabsTrigger value="questions" className="gap-1.5 text-xs px-3 py-1">
             <HelpCircle className="size-3.5" />
-            <span>Ngân hàng câu hỏi & Tạo mới</span>
+            <span>Question Bank & Create</span>
             <span className="text-[10px] opacity-75 font-mono">
               ({skillDetail.questionBankItems?.length || skillDetail.questionCount || 0})
             </span>

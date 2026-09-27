@@ -76,7 +76,7 @@ export function SfiaGenericAttributesView({
           <AlertCircle className="size-6" />
         </div>
         <h3 className="text-base font-bold text-ink mb-1">
-          Không thể tải dữ liệu Cấp độ & Thuộc tính SFIA
+          Failed to load SFIA Levels & Generic Attributes
         </h3>
         <p className="text-xs text-ink-muted max-w-md mb-4">{error}</p>
         {onRetry && (
@@ -87,7 +87,7 @@ export function SfiaGenericAttributesView({
             className="gap-2 text-xs font-semibold"
           >
             <RefreshCw className="size-3.5" />
-            <span>Thử lại</span>
+            <span>Try Again</span>
           </Button>
         )}
       </div>
@@ -111,18 +111,18 @@ export function SfiaGenericAttributesView({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-sm sm:text-base font-bold text-ink leading-tight">
-                7 Cấp Độ Trách Nhiệm & 5 Thuộc Tính Năng Lực Nền Tảng
+                7 Levels of Responsibility & 5 Core Generic Attributes
               </h2>
               <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-md px-1.5 py-0.2 text-[10px] font-semibold">
                 SFIA 9
               </span>
             </div>
             <div className="flex items-center gap-2 text-[11px] text-ink-muted mt-0.5">
-              <span>Chuẩn đánh giá đa chiều cho AI Evaluator</span>
+              <span>Multi-dimensional evaluation standards for AI evaluation</span>
               <span>•</span>
               <span className="font-medium text-ink">7 Levels</span>
               <span>•</span>
-              <span className="font-medium text-ink">5 Trụ cột cốt lõi</span>
+              <span className="font-medium text-ink">5 Core Pillars</span>
             </div>
           </div>
         </div>
@@ -137,18 +137,18 @@ export function SfiaGenericAttributesView({
               <TabsTrigger
                 value="level"
                 className="gap-1.5 text-xs font-semibold px-3 py-1"
-                aria-label="Chế độ xem theo cấp độ"
+                aria-label="Level-Centric View"
               >
                 <SlidersHorizontal className="size-3.5" />
-                <span>Theo Cấp độ</span>
+                <span>By Level</span>
               </TabsTrigger>
               <TabsTrigger
                 value="matrix"
                 className="gap-1.5 text-xs font-semibold px-3 py-1"
-                aria-label="Chế độ xem ma trận tiến trình"
+                aria-label="Progression Matrix View"
               >
                 <Grid3X3 className="size-3.5" />
-                <span>Ma trận Tiến trình</span>
+                <span>Progression Matrix</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>

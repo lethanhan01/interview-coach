@@ -43,12 +43,12 @@ describe('SfiaMatrixToolbar', () => {
   it('renders all toolbar elements correctly', () => {
     render(<SfiaMatrixToolbar {...defaultProps} />)
 
-    expect(screen.getByPlaceholderText('Tìm mã hoặc tên kỹ năng...')).toBeInTheDocument()
-    expect(screen.getByText('Xuất Ma trận CSV')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Search code (PROG) or skill name...')).toBeInTheDocument()
+    expect(screen.getByText('Export Matrix CSV')).toBeInTheDocument()
     expect(screen.getByText('Level')).toBeInTheDocument()
-    expect(screen.getByText('Số câu hỏi')).toBeInTheDocument()
-    expect(screen.getByText('Nghề O*NET')).toBeInTheDocument()
-    expect(screen.getByText('Lọc điểm mù (0 câu hỏi)')).toBeInTheDocument()
+    expect(screen.getByText('Questions')).toBeInTheDocument()
+    expect(screen.getByText('O*NET')).toBeInTheDocument()
+    expect(screen.getByText('Blind spots only (0 questions)')).toBeInTheDocument()
     expect(screen.getByText('147')).toBeInTheDocument()
   })
 
@@ -56,7 +56,7 @@ describe('SfiaMatrixToolbar', () => {
     const onSearchChange = vi.fn()
     render(<SfiaMatrixToolbar {...defaultProps} onSearchChange={onSearchChange} />)
 
-    const input = screen.getByPlaceholderText('Tìm mã hoặc tên kỹ năng...')
+    const input = screen.getByPlaceholderText('Search code (PROG) or skill name...')
     fireEvent.change(input, { target: { value: 'PROG' } })
 
     expect(onSearchChange).toHaveBeenCalledWith('PROG')
@@ -72,7 +72,7 @@ describe('SfiaMatrixToolbar', () => {
       />
     )
 
-    const clearBtn = screen.getByRole('button', { name: 'Xóa tìm kiếm' })
+    const clearBtn = screen.getByRole('button', { name: 'Clear search' })
     fireEvent.click(clearBtn)
 
     expect(onSearchChange).toHaveBeenCalledWith('')
@@ -87,10 +87,10 @@ describe('SfiaMatrixToolbar', () => {
       />
     )
 
-    fireEvent.click(screen.getByText('Số câu hỏi'))
+    fireEvent.click(screen.getByText('Questions'))
     expect(onDisplayModeChange).toHaveBeenCalledWith('questions')
 
-    fireEvent.click(screen.getByText('Nghề O*NET'))
+    fireEvent.click(screen.getByText('O*NET'))
     expect(onDisplayModeChange).toHaveBeenCalledWith('onet')
   })
 
@@ -113,7 +113,7 @@ describe('SfiaMatrixToolbar', () => {
     const onExportCsv = vi.fn()
     render(<SfiaMatrixToolbar {...defaultProps} onExportCsv={onExportCsv} />)
 
-    const exportBtn = screen.getByRole('button', { name: /Xuất Ma trận CSV/i })
+    const exportBtn = screen.getByRole('button', { name: /Export Matrix CSV/i })
     fireEvent.click(exportBtn)
 
     expect(onExportCsv).toHaveBeenCalled()

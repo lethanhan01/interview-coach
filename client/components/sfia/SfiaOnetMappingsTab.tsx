@@ -101,7 +101,7 @@ export function SfiaOnetMappingsTab({
     return result
   }, [onetMappings, searchQuery, filterType])
 
-  // Trạng thái kỹ năng chưa có mapping nào trong hệ thống
+  // Empty state when no mappings exist
   if (onetMappings.length === 0) {
     return (
       <div
@@ -115,10 +115,10 @@ export function SfiaOnetMappingsTab({
         </div>
         <div className="space-y-1.5 max-w-md mx-auto">
           <h4 className="text-base font-bold text-ink">
-            Chưa có vị trí nghề nghiệp O*NET liên kết
+            No mapped O*NET occupations
           </h4>
           <p className="text-xs text-ink-muted leading-relaxed">
-            Kỹ năng <span className="font-semibold text-ink font-mono">{skillCode}</span> ({skillName}) hiện tại chưa được ánh xạ với mã nghề O*NET SOC nào trong cơ sở dữ liệu (`public.onet_sfia_mappings`).
+            Skill <span className="font-semibold text-ink font-mono">{skillCode}</span> ({skillName}) is currently not mapped to any O*NET SOC occupation in the database (`public.onet_sfia_mappings`).
           </p>
         </div>
         <div>
@@ -127,7 +127,7 @@ export function SfiaOnetMappingsTab({
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-surface-inset hover:bg-surface-raised border border-border text-xs font-semibold text-ink transition-colors shadow-xs"
           >
             <Compass className="size-3.5 text-brand" />
-            <span>Khám phá O*NET Explorer</span>
+            <span>Explore O*NET Browser</span>
           </Link>
         </div>
       </div>
@@ -136,21 +136,21 @@ export function SfiaOnetMappingsTab({
 
   return (
     <div className={cn('space-y-3.5', className)}>
-      {/* 1. Header Toolbar: Tìm kiếm & Bộ lọc phân loại */}
+      {/* 1. Header Toolbar: Search & Classification Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-surface-inset/60 p-2.5 rounded-xl border border-border/60">
         {/* Search Input */}
         <div className="relative flex-1 max-w-sm">
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm theo mã SOC hoặc tên nghề..."
+            placeholder="Search by SOC code or occupation title..."
             leadingIcon={<Search className="size-3.5" />}
             trailingAction={
               searchQuery ? (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  aria-label="Xóa tìm kiếm"
+                  aria-label="Clear search"
                   className="size-5 rounded flex items-center justify-center text-ink-muted hover:text-ink transition-colors"
                 >
                   <X className="size-3" />
@@ -173,7 +173,7 @@ export function SfiaOnetMappingsTab({
                 : 'text-ink-muted hover:text-ink'
             )}
           >
-            <span>Tất cả</span>
+            <span>All</span>
             <span className="ml-1 text-[10px] opacity-70 tabular-nums font-mono">
               ({onetMappings.length})
             </span>
@@ -189,7 +189,7 @@ export function SfiaOnetMappingsTab({
                 : 'text-ink-muted hover:text-ink'
             )}
           >
-            <span>Cốt lõi</span>
+            <span>Core</span>
             <span className="ml-1 text-[10px] opacity-70 tabular-nums font-mono">
               ({coreCount})
             </span>
@@ -205,7 +205,7 @@ export function SfiaOnetMappingsTab({
                 : 'text-ink-muted hover:text-ink'
             )}
           >
-            <span>Bổ trợ</span>
+            <span>Supplemental</span>
             <span className="ml-1 text-[10px] opacity-70 tabular-nums font-mono">
               ({supplementalCount})
             </span>
@@ -213,15 +213,15 @@ export function SfiaOnetMappingsTab({
         </div>
       </div>
 
-      {/* 2. Danh sách hiển thị theo chế độ lọc */}
+      {/* 2. Filter Results View */}
       {filteredAndSortedMappings.length === 0 ? (
         <div className="bg-card border border-border/80 rounded-xl p-8 text-center space-y-2">
           <Search className="size-7 text-ink-muted mx-auto opacity-60" />
           <h5 className="text-sm font-semibold text-ink">
-            Không tìm thấy vị trí nghề phù hợp
+            No matching occupations found
           </h5>
           <p className="text-xs text-ink-muted">
-            Không có mã nghề O*NET nào thỏa mãn điều kiện tìm kiếm &quot;{searchQuery}&quot;.
+            No O*NET occupations match your search query &quot;{searchQuery}&quot;.
           </p>
           <Button
             variant="outline"
@@ -232,32 +232,32 @@ export function SfiaOnetMappingsTab({
             }}
             className="h-7 text-xs mt-2"
           >
-            Đặt lại bộ lọc
+            Reset filters
           </Button>
         </div>
       ) : (
         <>
-          {/* A. Chế độ Desktop / Tablet (>= 640px): Bảng dữ liệu có scrollbar-thin chống tràn ngang */}
+          {/* A. Desktop / Tablet Table View (>= 640px) */}
           <div className="hidden sm:block rounded-xl border border-border/80 bg-card overflow-hidden shadow-xs">
             <div className="overflow-x-auto scrollbar-thin">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-surface-inset/40 hover:bg-surface-inset/40 border-b border-border/80">
-                    <TableHead className="w-28 text-xs font-semibold text-ink">Mã SOC</TableHead>
+                    <TableHead className="w-28 text-xs font-semibold text-ink">SOC Code</TableHead>
                     <TableHead className="text-xs font-semibold text-ink min-w-[220px]">
-                      Vị trí nghề nghiệp O*NET
+                      O*NET Occupation Title
                     </TableHead>
                     <TableHead className="w-28 text-xs font-semibold text-ink text-center">
-                      Cấp độ mục tiêu
+                      Target Level
                     </TableHead>
                     <TableHead className="w-36 text-xs font-semibold text-ink">
-                      Trọng số đánh giá
+                      Assessment Weight
                     </TableHead>
                     <TableHead className="w-28 text-xs font-semibold text-ink text-center">
-                      Phân loại
+                      Classification
                     </TableHead>
                     <TableHead className="w-28 text-xs font-semibold text-ink text-right">
-                      Thao tác
+                      Actions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -273,19 +273,19 @@ export function SfiaOnetMappingsTab({
                         key={mapping.socCode}
                         className="hover:bg-surface-inset/30 transition-colors border-b border-border/50 last:border-b-0"
                       >
-                        {/* Cột 1: Mã SOC */}
+                        {/* Column 1: SOC Code */}
                         <TableCell className="w-28 font-mono font-semibold text-xs text-brand">
                           {mapping.socCode}
                         </TableCell>
 
-                        {/* Cột 2: Tên nghề nghiệp */}
+                        {/* Column 2: Occupation Title */}
                         <TableCell className="min-w-[220px]">
                           <span className="font-medium text-xs sm:text-sm text-ink block leading-snug">
                             {mapping.occupationTitle}
                           </span>
                         </TableCell>
 
-                        {/* Cột 3: Cấp độ mục tiêu */}
+                        {/* Column 3: Target Level */}
                         <TableCell className="w-28 text-center">
                           <span
                             className={cn(
@@ -297,7 +297,7 @@ export function SfiaOnetMappingsTab({
                           </span>
                         </TableCell>
 
-                        {/* Cột 4: Trọng số đánh giá */}
+                        {/* Column 4: Assessment Weight */}
                         <TableCell className="w-36">
                           <div className="space-y-1">
                             <div className="flex items-center justify-between text-xs">
@@ -306,10 +306,10 @@ export function SfiaOnetMappingsTab({
                               </span>
                               <span className="text-[10px] text-ink-muted">
                                 {mapping.weight >= 2.0
-                                  ? 'Rất cao'
+                                  ? 'Very High'
                                   : mapping.weight >= 1.5
-                                    ? 'Cao'
-                                    : 'Tiêu chuẩn'}
+                                    ? 'High'
+                                    : 'Standard'}
                               </span>
                             </div>
                             {/* Mini visual indicator bar */}
@@ -325,7 +325,7 @@ export function SfiaOnetMappingsTab({
                           </div>
                         </TableCell>
 
-                        {/* Cột 5: Phân loại Core/Supplemental */}
+                        {/* Column 5: Classification Core/Supplemental */}
                         <TableCell className="w-28 text-center">
                           <span
                             className={cn(
@@ -335,20 +335,20 @@ export function SfiaOnetMappingsTab({
                                 : ONET_CORE_BADGES.supplemental
                             )}
                           >
-                            {mapping.isCore ? 'Cốt lõi' : 'Bổ trợ'}
+                            {mapping.isCore ? 'Core' : 'Supplemental'}
                           </span>
                         </TableCell>
 
-                        {/* Cột 6: Hành động mở tab mới */}
+                        {/* Column 6: Link to O*NET */}
                         <TableCell className="w-28 text-right">
                           <a
                             href={`/admin/onet?soc=${encodeURIComponent(mapping.socCode)}&detail=sfia`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-xs text-brand hover:text-brand-hover hover:underline font-medium transition-colors"
-                            title={`Xem chi tiết nghề ${mapping.occupationTitle} trên O*NET Browser`}
+                            title={`View details for ${mapping.occupationTitle} on O*NET Browser`}
                           >
-                            <span>Chi tiết</span>
+                            <span>Details</span>
                             <ExternalLink className="size-3" />
                           </a>
                         </TableCell>
@@ -360,7 +360,7 @@ export function SfiaOnetMappingsTab({
             </div>
           </div>
 
-          {/* B. Chế độ Mobile (< 640px): Danh sách Thẻ Compact Cards bảo đảm không bao giờ tràn ngang */}
+          {/* B. Mobile Compact Cards (< 640px) */}
           <div className="block sm:hidden space-y-2">
             {filteredAndSortedMappings.map((mapping) => {
               const weightPct = Math.min(100, Math.round((mapping.weight / 2.5) * 100))
@@ -390,7 +390,7 @@ export function SfiaOnetMappingsTab({
                           : ONET_CORE_BADGES.supplemental
                       )}
                     >
-                      {mapping.isCore ? 'Cốt lõi' : 'Bổ trợ'}
+                      {mapping.isCore ? 'Core' : 'Supplemental'}
                     </span>
                   </div>
 
@@ -401,11 +401,11 @@ export function SfiaOnetMappingsTab({
                         targetBadgeStyle
                       )}
                     >
-                      Mục tiêu L{mapping.targetLevel}
+                      Target L{mapping.targetLevel}
                     </span>
 
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-ink-muted">Trọng số:</span>
+                      <span className="text-[11px] text-ink-muted">Weight:</span>
                       <span className="font-mono font-bold text-xs text-ink tabular-nums">
                         x{mapping.weight.toFixed(1)}
                       </span>
@@ -417,7 +417,7 @@ export function SfiaOnetMappingsTab({
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-brand font-semibold hover:underline"
                     >
-                      <span>Xem</span>
+                      <span>View</span>
                       <ExternalLink className="size-3" />
                     </a>
                   </div>

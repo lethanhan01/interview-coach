@@ -80,14 +80,14 @@ export function SfiaMatrixToolbar({
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Tìm mã hoặc tên kỹ năng..."
+              placeholder="Search code (PROG) or skill name..."
               leadingIcon={<Search className="size-4 text-ink-muted" />}
               trailingAction={
                 searchQuery ? (
                   <button
                     type="button"
                     onClick={() => onSearchChange('')}
-                    aria-label="Xóa tìm kiếm"
+                    aria-label="Clear search"
                     className="text-ink-muted hover:text-ink absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-md transition-colors"
                   >
                     <X className="size-3.5" />
@@ -105,14 +105,14 @@ export function SfiaMatrixToolbar({
               onValueChange={(val) => onCategoryChange(val === 'ALL' ? '' : val)}
             >
               <SelectTrigger
-                aria-label="Lọc theo danh mục"
+                aria-label="Filter by category"
                 className="h-9 text-xs"
               >
-                <SelectValue placeholder="Tất cả danh mục" />
+                <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">
-                  <span className="font-medium">Tất cả danh mục ({categories.length})</span>
+                  <span className="font-medium">All Categories ({categories.length})</span>
                 </SelectItem>
                 {categories.map((cat) => {
                   const theme = getCategoryTheme(cat.code)
@@ -120,7 +120,7 @@ export function SfiaMatrixToolbar({
                     <SelectItem key={cat.code} value={cat.code}>
                       <div className="flex items-center gap-2">
                         <span className={cn('size-2 rounded-full shrink-0', theme.dot)} />
-                        <span className="truncate">{cat.nameVi || cat.name}</span>
+                        <span className="truncate">{cat.name}</span>
                         <span className="text-[10px] text-ink-muted ml-auto font-mono">
                           ({cat.skillCount})
                         </span>
@@ -141,10 +141,10 @@ export function SfiaMatrixToolbar({
             onClick={onExportCsv}
             disabled={isExporting}
             className="h-9 gap-1.5 text-xs font-semibold px-3"
-            title="Xuất dữ liệu ma trận sang file CSV UTF-8"
+            title="Export matrix data to UTF-8 CSV"
           >
             <Download className="size-3.5" />
-            <span>{isExporting ? 'Đang xuất CSV...' : 'Xuất Ma trận CSV'}</span>
+            <span>{isExporting ? 'Exporting CSV...' : 'Export Matrix CSV'}</span>
           </Button>
         </div>
       </div>
@@ -154,7 +154,7 @@ export function SfiaMatrixToolbar({
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Display Mode Segmented Controls */}
           <div className="flex items-center gap-1 text-xs text-ink-muted">
-            <span className="text-[11px] font-medium mr-1 text-ink-muted">Hiển thị ô:</span>
+            <span className="text-[11px] font-medium mr-1 text-ink-muted">Cell display:</span>
             <div className="bg-surface-inset p-0.5 rounded-lg flex items-center border border-border/60">
               <button
                 type="button"
@@ -180,7 +180,7 @@ export function SfiaMatrixToolbar({
                 )}
               >
                 <HelpCircle className="size-3" />
-                <span>Số câu hỏi</span>
+                <span>Questions</span>
               </button>
               <button
                 type="button"
@@ -193,7 +193,7 @@ export function SfiaMatrixToolbar({
                 )}
               >
                 <Briefcase className="size-3" />
-                <span>Nghề O*NET</span>
+                <span>O*NET</span>
               </button>
             </div>
           </div>
@@ -223,7 +223,7 @@ export function SfiaMatrixToolbar({
                   blindSpotsOnly ? 'text-amber-600 dark:text-amber-400' : 'text-ink-muted'
                 )}
               />
-              <span>Lọc điểm mù (0 câu hỏi)</span>
+              <span>Blind spots only (0 questions)</span>
               {blindSpotsCount !== undefined && (
                 <span
                   className={cn(
@@ -243,8 +243,8 @@ export function SfiaMatrixToolbar({
         {/* Counter Badge */}
         <div className="flex items-center gap-2 self-start sm:self-auto text-xs text-ink-muted">
           <span className="text-[11px]">
-            Đang hiển thị: <strong className="text-ink">{displayedSkillsCount}</strong> /{' '}
-            <span>{totalSkillsCount} kỹ năng</span>
+            Showing: <strong className="text-ink">{displayedSkillsCount}</strong> /{' '}
+            <span>{totalSkillsCount} skills</span>
           </span>
         </div>
       </div>

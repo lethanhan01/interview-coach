@@ -46,12 +46,12 @@ const QUESTION_DIFFICULTY_BADGES = {
 } as const
 
 const DIFFICULTY_LABELS: Record<'EASY' | 'MEDIUM' | 'HARD', string> = {
-  EASY: 'Dễ',
-  MEDIUM: 'Trung bình',
-  HARD: 'Khó',
+  EASY: 'Easy',
+  MEDIUM: 'Medium',
+  HARD: 'Hard',
 }
 
-// Lookup table an toàn cho badges thể loại phỏng vấn
+// Lookup table for interview category badges
 const QUESTION_TYPE_BADGES = {
   TECHNICAL: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
   BEHAVIORAL: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
@@ -60,10 +60,10 @@ const QUESTION_TYPE_BADGES = {
 } as const
 
 const TYPE_LABELS: Record<'TECHNICAL' | 'BEHAVIORAL' | 'SITUATIONAL' | 'HR', string> = {
-  TECHNICAL: 'Kỹ thuật',
-  BEHAVIORAL: 'Hành vi',
-  SITUATIONAL: 'Tình huống',
-  HR: 'Nhân sự',
+  TECHNICAL: 'Technical',
+  BEHAVIORAL: 'Behavioral',
+  SITUATIONAL: 'Situational',
+  HR: 'HR',
 }
 
 export function SfiaQuestionBankTab({
@@ -152,24 +152,24 @@ export function SfiaQuestionBankTab({
     })
   }, [items, searchQuery, filterLevel, filterDifficulty, filterType, selectedLevel])
 
-  // Xử lý sao chép nội dung câu hỏi
+  // Handle copying question text
   const handleCopyQuestion = async (q: SfiaQuestionBankItem) => {
     try {
       await navigator.clipboard.writeText(q.questionText)
       setCopiedId(q.id)
-      toast.success(`Đã sao chép câu hỏi (${q.id}) vào clipboard!`)
+      toast.success(`Question (${q.id}) copied to clipboard!`)
       setTimeout(() => setCopiedId(null), 2000)
     } catch {
-      toast.error('Không thể sao chép câu hỏi')
+      toast.error('Failed to copy question')
     }
   }
 
-  // Xử lý khi tạo câu hỏi mới thành công
+  // Handle newly created question callback
   const handleQuestionCreatedInternal = (newQ: SfiaQuestionBankItem) => {
     setNewlyCreatedId(newQ.id)
     onQuestionCreated?.(newQ)
 
-    // Nếu bộ lọc đang ẩn câu hỏi vừa tạo, đặt lại bộ lọc để người dùng thấy ngay
+    // If active filters hide the newly created question, reset filters
     if (filterLevel !== 'all' && filterLevel !== String(newQ.targetSfiaLevel)) {
       setFilterLevel('all')
     }
@@ -191,48 +191,48 @@ export function SfiaQuestionBankTab({
 
   return (
     <div className={cn('space-y-4', className)}>
-      {/* 1. 4 Thẻ Mini KPI Thống Kê Phân Bổ Câu Hỏi */}
+      {/* 1. 4 Mini KPI Distribution Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        {/* KPI 1: Tổng câu hỏi */}
+        {/* KPI 1: Total Questions */}
         <div className="bg-surface-inset p-3 rounded-xl border border-border/60">
           <div className="flex items-center justify-between text-ink-muted text-[11px]">
-            <span>Tổng câu hỏi mẫu</span>
+            <span>Total Sample Questions</span>
             <HelpCircle className="size-3.5 text-brand" />
           </div>
           <p className="text-base sm:text-lg font-bold text-ink mt-1 font-mono tabular-nums">
             {stats.total}{' '}
-            <span className="text-xs font-normal text-ink-muted">câu</span>
+            <span className="text-xs font-normal text-ink-muted">questions</span>
           </p>
         </div>
 
-        {/* KPI 2: Phân bổ độ khó */}
+        {/* KPI 2: Difficulty Distribution */}
         <div className="bg-surface-inset p-3 rounded-xl border border-border/60">
           <div className="flex items-center justify-between text-ink-muted text-[11px]">
-            <span>Phân bổ độ khó</span>
+            <span>Difficulty Breakdown</span>
             <BarChart2 className="size-3.5 text-amber-500" />
           </div>
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
               <span className="size-1.5 rounded-full bg-emerald-500" />
-              {stats.easy} Dễ
+              {stats.easy} Easy
             </span>
             <span className="text-ink-muted text-[10px]">·</span>
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
               <span className="size-1.5 rounded-full bg-amber-500" />
-              {stats.medium} Vừa
+              {stats.medium} Medium
             </span>
             <span className="text-ink-muted text-[10px]">·</span>
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
               <span className="size-1.5 rounded-full bg-rose-500" />
-              {stats.hard} Khó
+              {stats.hard} Hard
             </span>
           </div>
         </div>
 
-        {/* KPI 3: Phân loại phỏng vấn */}
+        {/* KPI 3: Question Category Breakdown */}
         <div className="bg-surface-inset p-3 rounded-xl border border-border/60">
           <div className="flex items-center justify-between text-ink-muted text-[11px]">
-            <span>Thể loại câu hỏi</span>
+            <span>Question Types</span>
             <SlidersHorizontal className="size-3.5 text-violet-500" />
           </div>
           <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-ink flex-wrap">
@@ -241,29 +241,29 @@ export function SfiaQuestionBankTab({
             </span>
             <span className="text-ink-muted text-[10px]">·</span>
             <span className="font-semibold text-blue-600 dark:text-blue-400">
-              {stats.behavioral} Hành vi
+              {stats.behavioral} Behavioral
             </span>
             <span className="text-ink-muted text-[10px]">·</span>
             <span className="font-semibold text-cyan-600 dark:text-cyan-400">
-              {stats.situational + stats.hr} Khác
+              {stats.situational + stats.hr} Other
             </span>
           </div>
         </div>
 
-        {/* KPI 4: Khớp với Level đang chọn */}
+        {/* KPI 4: Matching Current Level */}
         <div className="bg-surface-inset p-3 rounded-xl border border-border/60">
           <div className="flex items-center justify-between text-ink-muted text-[11px]">
-            <span>Tại Level {selectedLevel} đang chọn</span>
+            <span>At Selected Level {selectedLevel}</span>
             <Sparkles className="size-3.5 text-brand" />
           </div>
           <p className="text-base sm:text-lg font-bold text-brand mt-1 font-mono tabular-nums">
             {stats.matchingCurrentLevel}{' '}
-            <span className="text-xs font-normal text-ink-muted">câu hỏi</span>
+            <span className="text-xs font-normal text-ink-muted">questions</span>
           </p>
         </div>
       </div>
 
-      {/* 2. Thanh Công Cụ: Tìm Kiếm, Bộ Lọc & Nút Tạo Mới */}
+      {/* 2. Toolbar: Search, Filters & Action Button */}
       <div className="bg-surface-inset/60 p-3 rounded-xl border border-border/60 space-y-2.5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
           {/* Search Bar */}
@@ -271,14 +271,14 @@ export function SfiaQuestionBankTab({
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm nội dung hoặc mã câu hỏi..."
+              placeholder="Search question content or ID..."
               leadingIcon={<Search className="size-3.5" />}
               trailingAction={
                 searchQuery ? (
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    aria-label="Xóa tìm kiếm"
+                    aria-label="Clear search"
                     className="size-5 rounded flex items-center justify-center text-ink-muted hover:text-ink transition-colors"
                   >
                     <X className="size-3" />
@@ -289,7 +289,7 @@ export function SfiaQuestionBankTab({
             />
           </div>
 
-          {/* Action Button: Tạo câu hỏi mới */}
+          {/* Action Button: Create Question */}
           <Button
             variant="primary"
             size="sm"
@@ -297,13 +297,13 @@ export function SfiaQuestionBankTab({
             className="h-8 px-3 text-xs gap-1.5 shrink-0 self-start sm:self-auto shadow-xs"
           >
             <Plus className="size-3.5" />
-            <span>Tạo câu hỏi mới</span>
+            <span>Create Question</span>
           </Button>
         </div>
 
         {/* Filter Pills / Selects */}
         <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-border/40">
-          {/* Quick toggle: Chỉ lọc Level đang chọn */}
+          {/* Quick toggle: Level only */}
           <button
             type="button"
             onClick={() =>
@@ -317,18 +317,18 @@ export function SfiaQuestionBankTab({
             )}
           >
             <Sparkles className="size-3" />
-            <span>Chỉ Level {selectedLevel} ({stats.matchingCurrentLevel})</span>
+            <span>Level {selectedLevel} only ({stats.matchingCurrentLevel})</span>
           </button>
 
           {/* Level Filter Dropdown */}
           <div className="w-36">
             <Select value={filterLevel} onValueChange={setFilterLevel}>
               <SelectTrigger className="h-7 text-xs bg-background">
-                <SelectValue placeholder="Chọn Level" />
+                <SelectValue placeholder="Select Level" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả Level</SelectItem>
-                <SelectItem value="current">Level {selectedLevel} (Đang chọn)</SelectItem>
+                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="current">Level {selectedLevel} (Selected)</SelectItem>
                 {Array.from(
                   { length: skillDetail.maxLevel - skillDetail.minLevel + 1 },
                   (_, i) => skillDetail.minLevel + i
@@ -345,13 +345,13 @@ export function SfiaQuestionBankTab({
           <div className="w-32">
             <Select value={filterDifficulty} onValueChange={setFilterDifficulty}>
               <SelectTrigger className="h-7 text-xs bg-background">
-                <SelectValue placeholder="Độ khó" />
+                <SelectValue placeholder="Difficulty" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Mọi độ khó</SelectItem>
-                <SelectItem value="EASY">Dễ (Easy)</SelectItem>
-                <SelectItem value="MEDIUM">Trung bình (Medium)</SelectItem>
-                <SelectItem value="HARD">Khó (Hard)</SelectItem>
+                <SelectItem value="ALL">All Difficulties</SelectItem>
+                <SelectItem value="EASY">Easy</SelectItem>
+                <SelectItem value="MEDIUM">Medium</SelectItem>
+                <SelectItem value="HARD">Hard</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -360,14 +360,14 @@ export function SfiaQuestionBankTab({
           <div className="w-36">
             <Select value={filterType} onValueChange={setFilterType}>
               <SelectTrigger className="h-7 text-xs bg-background">
-                <SelectValue placeholder="Loại câu hỏi" />
+                <SelectValue placeholder="Question Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Mọi thể loại</SelectItem>
-                <SelectItem value="TECHNICAL">Kỹ thuật (Tech)</SelectItem>
-                <SelectItem value="BEHAVIORAL">Hành vi (Behavioral)</SelectItem>
-                <SelectItem value="SITUATIONAL">Tình huống (Situational)</SelectItem>
-                <SelectItem value="HR">Nhân sự (HR)</SelectItem>
+                <SelectItem value="ALL">All Types</SelectItem>
+                <SelectItem value="TECHNICAL">Technical (Tech)</SelectItem>
+                <SelectItem value="BEHAVIORAL">Behavioral</SelectItem>
+                <SelectItem value="SITUATIONAL">Situational</SelectItem>
+                <SelectItem value="HR">HR</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -384,26 +384,26 @@ export function SfiaQuestionBankTab({
               }}
               className="text-xs text-ink-muted hover:text-ink font-medium px-2 py-1 rounded hover:bg-surface-raised transition-colors ml-auto"
             >
-              Xóa bộ lọc
+              Reset filters
             </button>
           )}
         </div>
       </div>
 
-      {/* 3. Danh Sách Thẻ Câu Hỏi */}
+      {/* 3. Question Cards List */}
       {filteredQuestions.length === 0 ? (
         <div className="bg-card border border-border/80 rounded-xl p-8 text-center space-y-3">
           <HelpCircle className="size-8 text-ink-muted mx-auto opacity-50" />
           <div className="space-y-1 max-w-sm mx-auto">
             <h5 className="text-sm font-bold text-ink">
               {items.length === 0
-                ? 'Chưa có câu hỏi phỏng vấn nào'
-                : 'Không có câu hỏi nào khớp với bộ lọc'}
+                ? 'No interview questions yet'
+                : 'No questions match your filters'}
             </h5>
             <p className="text-xs text-ink-muted leading-relaxed">
               {items.length === 0
-                ? `Kỹ năng ${skillDetail.code} hiện chưa có câu hỏi mẫu nào được gắn nhãn trong ngân hàng câu hỏi.`
-                : 'Thử tìm kiếm với từ khóa khác hoặc điều chỉnh các tiêu chí lọc độ khó / cấp độ.'}
+                ? `Skill ${skillDetail.code} currently has no sample questions mapped in the question bank.`
+                : 'Try searching with different keywords or adjust the difficulty/level filters.'}
             </p>
           </div>
           {items.length === 0 ? (
@@ -414,7 +414,7 @@ export function SfiaQuestionBankTab({
               className="gap-1.5 h-8 text-xs mt-2"
             >
               <Plus className="size-3.5" />
-              <span>Tạo câu hỏi đầu tiên</span>
+              <span>Create First Question</span>
             </Button>
           ) : (
             <Button
@@ -428,7 +428,7 @@ export function SfiaQuestionBankTab({
               }}
               className="h-8 text-xs mt-1"
             >
-              Đặt lại toàn bộ lọc
+              Reset all filters
             </Button>
           )}
         </div>
@@ -436,7 +436,7 @@ export function SfiaQuestionBankTab({
         <div className="space-y-2.5">
           <div className="flex items-center justify-between text-xs text-ink-muted px-1">
             <span>
-              Hiển thị <strong className="text-ink">{filteredQuestions.length}</strong> / {items.length} câu hỏi
+              Showing <strong className="text-ink">{filteredQuestions.length}</strong> / {items.length} questions
             </span>
           </div>
 
@@ -486,8 +486,8 @@ export function SfiaQuestionBankTab({
                     <button
                       type="button"
                       onClick={() => onSelectLevel?.(q.targetSfiaLevel)}
-                      title={`Bấm để chuyển Thước đo sang Level ${q.targetSfiaLevel}`}
-                      aria-label={`Bấm để chuyển Thước đo sang Level ${q.targetSfiaLevel}`}
+                      title={`Click to set Stepper to Level ${q.targetSfiaLevel}`}
+                      aria-label={`Click to set Stepper to Level ${q.targetSfiaLevel}`}
                       className={cn(
                         'inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border transition-transform select-none',
                         q.targetSfiaLevel === selectedLevel
@@ -495,7 +495,7 @@ export function SfiaQuestionBankTab({
                           : 'bg-surface-raised border-border text-ink hover:scale-105'
                       )}
                     >
-                      <span>Mục tiêu: L{q.targetSfiaLevel}</span>
+                      <span>Target: L{q.targetSfiaLevel}</span>
                       {q.targetSfiaLevel === selectedLevel && (
                         <CheckCircle2 className="size-3 text-brand" />
                       )}
@@ -508,19 +508,19 @@ export function SfiaQuestionBankTab({
                     size="sm"
                     onClick={() => handleCopyQuestion(q)}
                     className="h-7 px-2 text-xs gap-1.5 shrink-0"
-                    title="Sao chép câu hỏi này"
+                    title="Copy this question"
                   >
                     {isCopied ? (
                       <>
                         <Check className="size-3 text-emerald-500" />
                         <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                          Đã chép
+                          Copied
                         </span>
                       </>
                     ) : (
                       <>
                         <Copy className="size-3 text-ink-muted" />
-                        <span>Sao chép</span>
+                        <span>Copy</span>
                       </>
                     )}
                   </Button>

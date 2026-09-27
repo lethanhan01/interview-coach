@@ -18,7 +18,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
-import { LoadingState } from '@/components/patterns/FeedbackPatterns'
+import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns'
 import { cn } from '@/lib/utils'
 import {
   useSfiaParams,
@@ -75,6 +75,7 @@ function SfiaBrowserWorkspace() {
   const [detailError, setDetailError] = useState<string | null>(null)
   const [stats, setStats] = useState<SfiaCoverageStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [pageError, setPageError] = useState<string | null>(null)
 
   // Phase 5 Matrix Grid States
   const [matrixCells, setMatrixCells] = useState<Record<string, SfiaMatrixCellData>>({})
@@ -96,37 +97,39 @@ function SfiaBrowserWorkspace() {
   const [targetBlindSpotSkill, setTargetBlindSpotSkill] = useState<SfiaSkillSummary | null>(null)
   const [isExportingBlindSpotsCsv, setIsExportingBlindSpotsCsv] = useState(false)
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true)
-        const [catList, subList, skillList, statData, matrixData, levelList, attrList] =
-          await Promise.all([
-            sfiaAdminService.getCategories(),
-            sfiaAdminService.getSubcategories(),
-            sfiaAdminService.getSkills(),
-            sfiaAdminService.getCoverageStats(),
-            sfiaAdminService.getMatrixData(),
-            sfiaAdminService.getResponsibilityLevels(),
-            sfiaAdminService.getGenericAttributes(),
-          ])
-        setCategories(catList)
-        setSubcategories(subList)
-        setSkills(skillList)
-        setStats(statData)
-        setMatrixCells(matrixData.cells)
-        setResponsibilityLevels(levelList)
-        setGenericAttributes(attrList)
-      } catch (err) {
-        setAttributesError(
-          err instanceof Error ? err.message : 'Không thể tải dữ liệu Cấp độ & Thuộc tính SFIA'
-        )
-      } finally {
-        setLoading(false)
-      }
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      setPageError(null)
+      const [catList, subList, skillList, statData, matrixData, levelList, attrList] =
+        await Promise.all([
+          sfiaAdminService.getCategories(),
+          sfiaAdminService.getSubcategories(),
+          sfiaAdminService.getSkills(),
+          sfiaAdminService.getCoverageStats(),
+          sfiaAdminService.getMatrixData(),
+          sfiaAdminService.getResponsibilityLevels(),
+          sfiaAdminService.getGenericAttributes(),
+        ])
+      setCategories(catList)
+      setSubcategories(subList)
+      setSkills(skillList)
+      setStats(statData)
+      setMatrixCells(matrixData.cells)
+      setResponsibilityLevels(levelList)
+      setGenericAttributes(attrList)
+    } catch (err) {
+      setPageError(
+        err instanceof Error ? err.message : 'Failed to load SFIA 9 knowledge repository'
+      )
+    } finally {
+      setLoading(false)
     }
-    loadData()
   }, [])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   // Fetch detailed skill data whenever selectedSkill changes
   useEffect(() => {
@@ -141,13 +144,13 @@ function SfiaBrowserWorkspace() {
           if (detail) {
             setSkillDetail(detail)
           } else {
-            setDetailError(`Không tìm thấy chi tiết cho kỹ năng ${selectedSkill}`)
+            setDetailError(`No details found for skill ${selectedSkill}`)
           }
         }
       } catch (err) {
         if (!isCancelled) {
           setDetailError(
-            err instanceof Error ? err.message : 'Không thể tải chi tiết kỹ năng SFIA'
+            err instanceof Error ? err.message : 'Failed to load SFIA skill details'
           )
         }
       } finally {
@@ -163,14 +166,14 @@ function SfiaBrowserWorkspace() {
     }
   }, [selectedSkill])
 
-  // Lọc kỹ năng hiển thị trong Ma trận 2D
+  // Filter skills displayed in 2D Matrix
   const displayedMatrixSkills = React.useMemo(() => {
     return skills.filter((skill) => {
-      // 1. Lọc theo danh mục
+      // 1. Filter by category
       if (selectedCategory && skill.categoryCode !== selectedCategory) {
         return false
       }
-      // 2. Tìm kiếm theo mã hoặc tên
+      // 2. Search by code or name
       if (matrixSearch.trim()) {
         const q = matrixSearch.toLowerCase().trim()
         const matchCode = skill.code.toLowerCase().includes(q)
@@ -181,7 +184,7 @@ function SfiaBrowserWorkspace() {
     })
   }, [skills, selectedCategory, matrixSearch])
 
-  // Đếm số lượng kỹ năng có điểm mù trong tập hiển thị
+  // Count skills with blind spots in displayed set
   const blindSpotsCount = React.useMemo(() => {
     let count = 0
     for (const skill of displayedMatrixSkills) {
@@ -196,7 +199,7 @@ function SfiaBrowserWorkspace() {
     return count
   }, [displayedMatrixSkills, matrixCells])
 
-  // Xử lý xuất file CSV ma trận
+  // Export Matrix CSV handler
   const handleExportCsv = () => {
     try {
       setIsExportingCsv(true)
@@ -206,26 +209,26 @@ function SfiaBrowserWorkspace() {
         matrixCells
       )
       if (success) {
-        toast.success('Đã xuất ma trận SFIA 2D thành công!', {
-          description: 'File CSV UTF-8 đã được tải xuống trình duyệt.',
+        toast.success('SFIA 2D Matrix exported successfully!', {
+          description: 'UTF-8 CSV file has been downloaded.',
         })
       } else {
-        toast.error('Không thể xuất file CSV ma trận')
+        toast.error('Failed to export matrix CSV')
       }
     } catch {
-      toast.error('Có lỗi xảy ra khi tạo file CSV')
+      toast.error('An error occurred while creating CSV file')
     } finally {
       setIsExportingCsv(false)
     }
   }
 
-  // Xử lý điều hướng từ Sheet sang Tab 1 (Taxonomy)
+  // Handle navigation from Sheet to Tab 1 (Taxonomy)
   const handleOpenInTaxonomy = (skillCode: string, levelId: number) => {
     setSkill(skillCode, levelId)
     setTab('taxonomy')
   }
 
-  // Xử lý đồng bộ dữ liệu Reactive khi tạo câu hỏi mới (từ Sheet Ma trận hoặc Bảng Điểm mù)
+  // Reactive data synchronization when creating question from Sheet or Blind Spots Table
   const handleQuestionCreated = (newQuestion: SfiaQuestionBankItem) => {
     const targetCode =
       inspectedCell?.skillCode || targetBlindSpotSkill?.code || ''
@@ -242,11 +245,11 @@ function SfiaBrowserWorkspace() {
         },
       }))
 
-      // Kiểm tra xem kỹ năng trước đó có phải điểm mù (questionCount === 0) không
+      // Check if skill was previously a blind spot (questionCount === 0)
       const targetSkill = skills.find((s) => s.code === targetCode)
       const wasBlindSpot = targetSkill ? targetSkill.questionCount === 0 : false
 
-      // Cập nhật danh sách tóm tắt kỹ năng
+      // Update skill summary list
       setSkills((prev) =>
         prev.map((s) =>
           s.code === targetCode
@@ -255,7 +258,7 @@ function SfiaBrowserWorkspace() {
         )
       )
 
-      // Cập nhật chi tiết kỹ năng nếu đang cache
+      // Update skill detail if cached
       setSkillDetail((prev) => {
         if (!prev || prev.code !== targetCode) return prev
         return {
@@ -265,7 +268,7 @@ function SfiaBrowserWorkspace() {
         }
       })
 
-      // Cập nhật tổng thể thống kê (KPIs & Distributions)
+      // Update overall coverage statistics (KPIs & Distributions)
       setStats((prev) => {
         if (!prev) return prev
         return {
@@ -290,9 +293,9 @@ function SfiaBrowserWorkspace() {
         }
       })
 
-      toast.success('Đã tạo câu hỏi phỏng vấn mới thành công!', {
-        description: `Đã cập nhật câu hỏi cho kỹ năng ${targetCode} Level ${targetLvl}. ${
-          wasBlindSpot ? 'Kỹ năng đã rời khỏi danh sách điểm mù.' : ''
+      toast.success('New interview question created successfully!', {
+        description: `Updated question for ${targetCode} Level ${targetLvl}.${
+          wasBlindSpot ? ' Skill removed from blind spots.' : ''
         }`,
       })
     }
@@ -300,20 +303,20 @@ function SfiaBrowserWorkspace() {
     setTargetBlindSpotSkill(null)
   }
 
-  // Phase 7 Handlers: Xuất CSV điểm mù & cuộn nhanh
+  // Phase 7 Handlers: Export Blind Spots CSV
   const handleExportBlindSpotsCsv = () => {
     try {
       setIsExportingBlindSpotsCsv(true)
       const success = downloadSfiaBlindSpotsCsv(skills, categories)
       if (success) {
-        toast.success('Đã xuất danh sách điểm mù SFIA 9 thành công!', {
-          description: 'File CSV UTF-8 BOM đã được tải xuống trình duyệt.',
+        toast.success('SFIA 9 blind spots exported successfully!', {
+          description: 'UTF-8 BOM CSV file has been downloaded.',
         })
       } else {
-        toast.error('Không thể xuất file CSV điểm mù')
+        toast.error('Failed to export blind spots CSV')
       }
     } catch {
-      toast.error('Có lỗi xảy ra khi tạo file CSV điểm mù')
+      toast.error('An error occurred while creating blind spots CSV')
     } finally {
       setIsExportingBlindSpotsCsv(false)
     }
@@ -340,6 +343,27 @@ function SfiaBrowserWorkspace() {
     }
   }
 
+  if (loading) {
+    return (
+      <LoadingState
+        text="Loading SFIA 9 Knowledge Browser..."
+        minHeight="min-h-[70vh]"
+      />
+    )
+  }
+
+  if (pageError) {
+    return (
+      <ErrorState
+        title="Failed to Load SFIA 9 Knowledge Browser"
+        description={pageError}
+        onRetry={loadData}
+        retryLabel="Try Again"
+        minHeight="min-h-[70vh]"
+      />
+    )
+  }
+
   return (
     <div className="flex flex-col gap-2 h-full min-h-0 flex-1">
       {/* Top Header Bar (Flat Workspace Header) */}
@@ -361,7 +385,7 @@ function SfiaBrowserWorkspace() {
               </span>
             </div>
             <p className="text-ink-muted text-xs leading-none mt-0.5">
-              Khung năng lực kỹ năng số chuẩn quốc tế (Skills Framework for the Information Age) & Ánh xạ câu hỏi phỏng vấn
+              Digital skills capability framework (Skills Framework for the Information Age) & Interview question mappings
             </p>
           </div>
         </div>
@@ -375,19 +399,19 @@ function SfiaBrowserWorkspace() {
           <TabsList className="bg-surface-inset h-9 p-1">
             <TabsTrigger value="taxonomy" className="gap-1.5 text-xs font-semibold px-2.5 py-1">
               <FolderTree className="size-3.5" />
-              <span>Khám phá Cây kỹ năng</span>
+              <span>Taxonomy Explorer</span>
             </TabsTrigger>
             <TabsTrigger value="matrix" className="gap-1.5 text-xs font-semibold px-2.5 py-1">
               <Grid3X3 className="size-3.5" />
-              <span>Ma trận 2D</span>
+              <span>SFIA Matrix (2D Grid)</span>
             </TabsTrigger>
             <TabsTrigger value="attributes" className="gap-1.5 text-xs font-semibold px-2.5 py-1">
               <SlidersHorizontal className="size-3.5" />
-              <span>Cấp độ & Thuộc tính</span>
+              <span>Levels & Attributes</span>
             </TabsTrigger>
             <TabsTrigger value="analytics" className="gap-1.5 text-xs font-semibold px-2.5 py-1">
               <BarChart3 className="size-3.5" />
-              <span>Thống kê độ phủ</span>
+              <span>Coverage Analytics</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -462,7 +486,7 @@ function SfiaBrowserWorkspace() {
                         .getSkillDetail(selectedSkill)
                         .then((d) => setSkillDetail(d))
                         .catch((e) =>
-                          setDetailError(e instanceof Error ? e.message : 'Không thể tải chi tiết')
+                          setDetailError(e instanceof Error ? e.message : 'Failed to load skill details')
                         )
                         .finally(() => setLoadingDetail(false))
                     }
@@ -555,7 +579,7 @@ function SfiaBrowserWorkspace() {
                 setAttributesError(
                   err instanceof Error
                     ? err.message
-                    : 'Không thể tải lại dữ liệu Cấp độ & Thuộc tính'
+                    : 'Failed to reload Levels & Attributes'
                 )
               }
             }}
@@ -585,7 +609,7 @@ function SfiaBrowserWorkspace() {
                   const statData = await sfiaAdminService.getCoverageStats()
                   setStats(statData)
                 } catch {
-                  toast.error('Không thể tải lại dữ liệu thống kê')
+                  toast.error('Failed to reload analytics coverage statistics')
                 }
               }}
             />
@@ -612,7 +636,7 @@ function SfiaBrowserWorkspace() {
         )}
       </div>
 
-      {/* Modal Tạo Câu Hỏi Mới Đa Năng (Từ Sheet Ma Trận hoặc Bảng Điểm Mù) */}
+      {/* Universal Question Creation Modal (from Matrix Sheet or Blind Spots Table) */}
       {isCreateQuestionOpen && (inspectedCell || targetBlindSpotSkill) && (
         <SfiaCreateQuestionModal
           open={isCreateQuestionOpen}
@@ -654,7 +678,7 @@ export default function SfiaAdminPage() {
     <Suspense
       fallback={
         <LoadingState
-          text="Đang khởi tạo SFIA 9 Knowledge Browser..."
+          text="Initializing SFIA 9 Knowledge Browser..."
           minHeight="min-h-[60vh]"
         />
       }

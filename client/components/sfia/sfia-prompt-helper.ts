@@ -4,14 +4,12 @@
 
 import type { SfiaSkillDetail } from './types'
 import { SFIA_LEVEL_DEFINITIONS, getCategoryName } from './sfia-theme'
-import { MOCK_SFIA_RESPONSIBILITY_LEVELS } from './sfia-mock-data'
 
 export function generateSfiaRubricMarkdownPrompt(
   skillDetail: SfiaSkillDetail,
   selectedLevel: number
 ): string {
   const levelDef = SFIA_LEVEL_DEFINITIONS[selectedLevel]
-  const levelResp = MOCK_SFIA_RESPONSIBILITY_LEVELS.find((l) => l.levelId === selectedLevel)
   const statement = skillDetail.skillLevels.find((sl) => sl.levelId === selectedLevel)
   const categoryName = getCategoryName(skillDetail.categoryCode)
 
@@ -28,11 +26,11 @@ You are an expert AI Interview Evaluator assessing a candidate's competency base
 - **Skill Name**: ${skillDetail.name}
 - **Category**: ${categoryName} (${skillDetail.categoryCode})
 - **Subcategory**: ${skillDetail.subcategoryCode}
-- **Target SFIA Level**: Level ${selectedLevel} — ${levelDef?.name || ''} (${levelDef?.nameVi || ''})
+- **Target SFIA Level**: Level ${selectedLevel} — ${levelDef?.name || ''}
 
 ## 2. GENERAL LEVEL RESPONSIBILITY & ESSENCE
-- **Core Essence**: "${statement?.essence || levelResp?.essence || 'Demonstrates professional competence at this level.'}"
-- **General Scope**: ${levelResp?.description || 'N/A'}
+- **Core Essence**: "${statement?.essence || 'Demonstrates professional competence at this level.'}"
+- **General Scope**: Standard SFIA 9 responsibility scope at Level ${selectedLevel}.
 
 ## 3. SPECIFIC BEHAVIORAL STATEMENTS (EVALUATION CRITERIA)
 The candidate must demonstrate practical evidence aligning with the following criteria:

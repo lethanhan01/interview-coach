@@ -77,13 +77,13 @@ export function SfiaMatrixInspectionSheet({
           if (data) {
             setDetail(data)
           } else {
-            setError(`Không tìm thấy dữ liệu cho kỹ năng ${skillCode}`)
+            setError(`Skill data not found for ${skillCode}`)
           }
         }
       } catch (err) {
         if (!isCancelled) {
           setError(
-            err instanceof Error ? err.message : 'Không thể tải chi tiết kỹ năng'
+            err instanceof Error ? err.message : 'Failed to load skill details'
           )
         }
       } finally {
@@ -116,13 +116,13 @@ export function SfiaMatrixInspectionSheet({
       const promptMarkdown = generateSfiaRubricMarkdownPrompt(detail, levelId)
       await navigator.clipboard.writeText(promptMarkdown)
       toast.success(
-        `Đã sao chép prompt rubric đánh giá cho ${detail.code} Level ${levelId}!`,
+        `Copied rubric prompt for ${detail.code} Level ${levelId}!`,
         {
-          description: 'Bạn có thể dán trực tiếp vào prompt kiểm thử LLM Evaluator.',
+          description: 'You can paste it directly into LLM Evaluator testing.',
         }
       )
     } catch {
-      toast.error('Không thể sao chép prompt vào bộ nhớ tạm')
+      toast.error('Failed to copy prompt to clipboard')
     }
   }
 
@@ -144,7 +144,7 @@ export function SfiaMatrixInspectionSheet({
               {skillCode}
             </span>
             <span className="text-[11px] font-medium text-ink-muted bg-surface-inset px-2 py-0.5 rounded-full border border-border">
-              {theme.nameVi || theme.name}
+              {theme.name}
             </span>
             {detail?.subcategoryCode && (
               <span className="text-[11px] font-mono text-ink-muted">
@@ -158,7 +158,7 @@ export function SfiaMatrixInspectionSheet({
           </SheetTitle>
 
           <SheetDescription className="text-xs text-ink-muted mt-0.5">
-            Thanh tra chuẩn năng lực SFIA 9 & Ánh xạ hệ thống phỏng vấn
+            SFIA 9 Competency Inspection & Interview Mapping
           </SheetDescription>
 
           {/* Level Hero Identity Badge */}
@@ -177,20 +177,17 @@ export function SfiaMatrixInspectionSheet({
                   <h4 className="text-xs font-bold text-ink leading-none">
                     {levelInfo.name}
                   </h4>
-                  <p className="text-[10px] text-ink-muted mt-0.5">
-                    {levelInfo.nameVi}
-                  </p>
                 </div>
               </div>
 
               {isBlindSpot ? (
                 <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <AlertTriangle className="size-3" />
-                  Điểm mù (0 Q)
+                  Blind Spot (0 Q)
                 </span>
               ) : (
                 <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                  {levelQuestions.length} câu hỏi
+                  {levelQuestions.length} questions
                 </span>
               )}
             </div>
@@ -202,7 +199,7 @@ export function SfiaMatrixInspectionSheet({
           {loading && (
             <div className="flex flex-col items-center justify-center p-12 text-ink-muted gap-3">
               <LoadingSpinner className="size-6 text-brand" />
-              <span>Đang tải thông tin năng lực {skillCode}...</span>
+              <span>Loading skill information for {skillCode}...</span>
             </div>
           )}
 
@@ -224,14 +221,14 @@ export function SfiaMatrixInspectionSheet({
                   }
                 }}
               >
-                Thử lại
+                Try Again
               </Button>
             </div>
           )}
 
           {!loading && !error && detail && (
             <>
-              {/* 1. Bản chất cấp độ chung (Essence) */}
+              {/* 1. Level Essence */}
               {levelStatement?.essence && (
                 <div
                   className={cn(
@@ -240,7 +237,7 @@ export function SfiaMatrixInspectionSheet({
                   )}
                 >
                   <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted block mb-1">
-                    Bản chất cấp độ (Essence)
+                    Level Essence
                   </span>
                   <p className="italic text-ink font-medium leading-relaxed">
                     &ldquo;{levelStatement.essence}&rdquo;
@@ -248,24 +245,24 @@ export function SfiaMatrixInspectionSheet({
                 </div>
               )}
 
-              {/* 2. Phát biểu năng lực hành vi chi tiết (Statement) */}
+              {/* 2. SFIA Level Statement */}
               <div className="p-3.5 rounded-xl border border-border bg-card shadow-xs">
                 <div className="flex items-center gap-1.5 font-bold text-ink mb-2">
                   <BookOpen className="size-4 text-brand" />
-                  <span>Phát biểu năng lực SFIA chuẩn</span>
+                  <span>Standard SFIA Competency Statement</span>
                 </div>
                 <p className="text-ink leading-relaxed whitespace-pre-line text-xs">
                   {levelStatement?.description ||
-                    `Tiêu chuẩn năng lực của ${detail.name} tại Level ${levelId}.`}
+                    `Competency standard for ${detail.name} at Level ${levelId}.`}
                 </p>
               </div>
 
-              {/* 3. Ngân hàng câu hỏi liên kết tại cấp độ này */}
+              {/* 3. Mapped Question Bank at this level */}
               <div className="p-3.5 rounded-xl border border-border bg-card shadow-xs space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 font-bold text-ink">
                     <HelpCircle className="size-4 text-brand" />
-                    <span>Ngân hàng câu hỏi liên kết ({levelQuestions.length})</span>
+                    <span>Mapped Question Bank ({levelQuestions.length})</span>
                   </div>
                 </div>
 
@@ -273,10 +270,10 @@ export function SfiaMatrixInspectionSheet({
                   <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200">
                     <div className="flex items-center gap-2 font-bold mb-1">
                       <AlertTriangle className="size-3.5 text-amber-600" />
-                      <span>Cảnh báo Điểm mù (Blind Spot)</span>
+                      <span>Blind Spot Warning</span>
                     </div>
                     <p className="text-[11px] leading-relaxed">
-                      Chưa có câu hỏi phỏng vấn nào cho kỹ năng {skillCode} ở Level {levelId}. Hãy bấm nút &ldquo;Tạo câu hỏi cho level này&rdquo; bên dưới để bổ sung ngay.
+                      No interview questions currently mapped for {skillCode} at Level {levelId}. Click &ldquo;Create Question&rdquo; below to add one.
                     </p>
                   </div>
                 ) : (
@@ -299,25 +296,25 @@ export function SfiaMatrixInspectionSheet({
                     ))}
                     {levelQuestions.length > 3 && (
                       <p className="text-[10px] text-ink-muted text-center italic">
-                        và {levelQuestions.length - 3} câu hỏi khác...
+                        and {levelQuestions.length - 3} other questions...
                       </p>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* 4. Nghề nghiệp O*NET liên quan tại cấp độ này */}
+              {/* 4. Mapped O*NET Occupations at this level */}
               <div className="p-3.5 rounded-xl border border-border bg-card shadow-xs space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 font-bold text-ink">
                     <Briefcase className="size-4 text-brand" />
-                    <span>Nghề O*NET yêu cầu cấp độ này ({levelOnetMappings.length})</span>
+                    <span>O*NET Occupations requiring this level ({levelOnetMappings.length})</span>
                   </div>
                 </div>
 
                 {levelOnetMappings.length === 0 ? (
                   <p className="text-ink-muted italic text-[11px]">
-                    Chưa có nghề nghiệp O*NET nào yêu cầu cụ thể cấp độ này.
+                    No O*NET occupations specifically mapped to this level.
                   </p>
                 ) : (
                   <div className="space-y-1.5">
@@ -366,10 +363,10 @@ export function SfiaMatrixInspectionSheet({
               }
             }}
             className="w-full sm:flex-1 text-xs gap-1.5 font-semibold h-9"
-            title="Chuyển sang Tab Khám phá Cây kỹ năng và chọn đúng kỹ năng này"
+            title="Switch to Taxonomy Tree and select this skill"
           >
             <FolderTree className="size-3.5" />
-            <span>Mở Cây kỹ năng</span>
+            <span>Open in Tree</span>
           </Button>
 
           {/* Action 2: Copy AI Prompt Rubric */}
@@ -379,10 +376,10 @@ export function SfiaMatrixInspectionSheet({
             onClick={handleCopyPrompt}
             disabled={!detail || !levelId}
             className="w-full sm:flex-1 text-xs gap-1.5 font-semibold h-9"
-            title="Sao chép chuẩn Rubric đánh giá năng lực vào bộ nhớ tạm"
+            title="Copy evaluation rubric prompt to clipboard"
           >
             <Copy className="size-3.5" />
-            <span>Sao chép Prompt AI</span>
+            <span>Copy AI Prompt</span>
           </Button>
 
           {/* Action 3: Create Question for this Level */}
@@ -396,10 +393,10 @@ export function SfiaMatrixInspectionSheet({
             }}
             disabled={!skillCode || !levelId}
             className="w-full sm:flex-1 text-xs gap-1.5 font-semibold h-9"
-            title="Tạo câu hỏi phỏng vấn mới cho kỹ năng và cấp độ này"
+            title="Create new interview question for this skill and level"
           >
             <Plus className="size-3.5" />
-            <span>Tạo câu hỏi</span>
+            <span>Create Question</span>
           </Button>
         </SheetFooter>
       </SheetContent>

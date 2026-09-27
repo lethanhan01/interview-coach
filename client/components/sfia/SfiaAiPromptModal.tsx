@@ -59,11 +59,11 @@ export function SfiaAiPromptModal({
       await navigator.clipboard.writeText(markdownContent)
       setCopiedMd(true)
       toast.success(
-        `Đã sao chép System Prompt SFIA cho ${skillDetail.code} (Level ${selectedLevel}) vào bộ nhớ tạm!`
+        `Copied SFIA System Prompt for ${skillDetail.code} (Level ${selectedLevel}) to clipboard!`
       )
       setTimeout(() => setCopiedMd(false), 2000)
     } catch {
-      toast.error('Không thể sao chép vào bộ nhớ tạm')
+      toast.error('Failed to copy to clipboard')
     }
   }
 
@@ -71,10 +71,10 @@ export function SfiaAiPromptModal({
     try {
       await navigator.clipboard.writeText(jsonContent)
       setCopiedJson(true)
-      toast.success(`Đã sao chép JSON Schema Rubric vào bộ nhớ tạm!`)
+      toast.success(`Copied JSON Schema Rubric to clipboard!`)
       setTimeout(() => setCopiedJson(false), 2000)
     } catch {
-      toast.error('Không thể sao chép vào bộ nhớ tạm')
+      toast.error('Failed to copy to clipboard')
     }
   }
 
@@ -96,7 +96,7 @@ export function SfiaAiPromptModal({
                 </span>
               </DialogTitle>
               <DialogDescription className="text-xs text-ink-muted mt-0.5">
-                Mẫu System Prompt & Tiêu chuẩn Rubric SFIA 9 chuẩn hóa phục vụ LLM Evaluator chấm điểm phỏng vấn
+                Standardized SFIA 9 System Prompt & Rubric schema for LLM interview evaluation
               </DialogDescription>
             </div>
           </div>
@@ -106,7 +106,7 @@ export function SfiaAiPromptModal({
         <div className="bg-surface-raised/50 border border-border/60 rounded-lg p-2.5 flex items-start gap-2 text-xs text-ink-muted shrink-0">
           <Info className="size-4 text-brand shrink-0 mt-0.5" />
           <p>
-            Prompt này nhúng trực tiếp Bản chất cấp độ <strong className="text-ink">L{selectedLevel} ({levelDef?.name})</strong> và tiêu chuẩn hành vi từ cơ sở dữ liệu SFIA 9 để đảm bảo AI chấm điểm chuẩn xác, khách quan.
+            This prompt directly embeds Level <strong className="text-ink">L{selectedLevel} ({levelDef?.name})</strong> Essence and behavioral criteria from the SFIA 9 database to ensure objective and accurate AI assessment.
           </p>
         </div>
 
@@ -139,12 +139,12 @@ export function SfiaAiPromptModal({
                   {copiedMd ? (
                     <>
                       <Check className="size-3.5" />
-                      <span>Đã sao chép</span>
+                      <span>Copied</span>
                     </>
                   ) : (
                     <>
                       <Copy className="size-3.5" />
-                      <span>Sao chép Prompt</span>
+                      <span>Copy Prompt</span>
                     </>
                   )}
                 </Button>
@@ -158,12 +158,12 @@ export function SfiaAiPromptModal({
                   {copiedJson ? (
                     <>
                       <Check className="size-3.5" />
-                      <span>Đã sao chép</span>
+                      <span>Copied</span>
                     </>
                   ) : (
                     <>
                       <Copy className="size-3.5" />
-                      <span>Sao chép JSON Schema</span>
+                      <span>Copy JSON Schema</span>
                     </>
                   )}
                 </Button>

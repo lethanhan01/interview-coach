@@ -73,20 +73,20 @@ export function SfiaAttributesProgressionMatrix({
     })
   }, [attributes, searchQuery])
 
-  // Xử lý xuất file CSV
+  // Export CSV handler
   const handleExportCsv = () => {
     try {
       setIsExporting(true)
       const success = downloadSfiaAttributesProgressionCsv(levels, attributes)
       if (success) {
-        toast.success('Đã xuất file Ma trận Tiến trình thành công!', {
-          description: 'File CSV UTF-8 chứa bảng 5 thuộc tính x 7 cấp độ đã được tải xuống.',
+        toast.success('Attributes Progression Matrix exported successfully!', {
+          description: 'UTF-8 CSV file containing the 5 attributes x 7 levels matrix has been downloaded.',
         })
       } else {
-        toast.error('Không thể tạo file CSV')
+        toast.error('Failed to generate CSV file')
       }
     } catch {
-      toast.error('Có lỗi xảy ra khi xuất dữ liệu bảng tiến trình')
+      toast.error('An error occurred while exporting progression matrix')
     } finally {
       setIsExporting(false)
     }
@@ -108,14 +108,14 @@ export function SfiaAttributesProgressionMatrix({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold text-ink leading-tight">
-                Ma Trận Tiến Hóa 5 Thuộc Tính Năng Lực Nền Tảng
+                5 Core Generic Attributes Progression Matrix
               </h2>
               <span className="bg-brand/10 text-brand border border-brand/20 rounded-md px-1.5 py-0.2 text-[10px] font-semibold">
                 SFIA 9
               </span>
             </div>
             <p className="text-[11px] text-ink-muted leading-tight mt-0.5">
-              So sánh bước nhảy vọt năng lực hành vi qua 7 cấp độ trách nhiệm (Follow ➔ Strategy)
+              Comparing behavioral competency progression across 7 levels of responsibility (Follow ➔ Strategy)
             </p>
           </div>
         </div>
@@ -127,7 +127,7 @@ export function SfiaAttributesProgressionMatrix({
             <Search className="size-3.5 text-ink-muted absolute left-2.5 top-1/2 -translate-y-1/2" />
             <Input
               type="text"
-              placeholder="Tìm kiếm nội dung tiêu chuẩn..."
+              placeholder="Search attribute criteria..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8 pr-7 h-8 text-xs bg-card"
@@ -137,7 +137,7 @@ export function SfiaAttributesProgressionMatrix({
                 type="button"
                 onClick={() => setSearchQuery('')}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink cursor-pointer"
-                title="Xóa tìm kiếm"
+                title="Clear search"
               >
                 <X className="size-3.5" />
               </button>
@@ -151,10 +151,10 @@ export function SfiaAttributesProgressionMatrix({
             onClick={handleExportCsv}
             disabled={isExporting}
             className="h-8 gap-1.5 text-xs font-semibold shrink-0"
-            title="Tải xuống bảng ma trận 5x7 định dạng CSV UTF-8 cho Excel"
+            title="Download 5x7 progression matrix in UTF-8 CSV format"
           >
             <Download className="size-3.5" />
-            <span className="hidden sm:inline">Xuất CSV Ma Trận</span>
+            <span className="hidden sm:inline">Export Matrix CSV</span>
             <span className="sm:hidden">CSV</span>
           </Button>
         </div>
@@ -169,7 +169,7 @@ export function SfiaAttributesProgressionMatrix({
               {/* Top-Left Corner Intersection (Sticky Top + Left) */}
               <th className="sticky left-0 z-40 bg-surface-raised border-r border-border/80 p-3 min-w-[220px] max-w-[240px] text-xs font-bold text-ink">
                 <div className="flex items-center justify-between">
-                  <span>5 Thuộc tính cốt lõi</span>
+                  <span>5 Core Attributes</span>
                   <span className="text-[10px] font-mono text-ink-muted bg-surface-inset px-1.5 py-0.5 rounded">
                     {filteredAttributes.length}/5
                   </span>
@@ -192,7 +192,7 @@ export function SfiaAttributesProgressionMatrix({
                         : 'hover:bg-surface-inset'
                     )}
                     onClick={() => onSelectLevel(lvl.levelId)}
-                    title={`Nhấp để chọn và tập trung vào Level ${lvl.levelId} (${lvl.name})`}
+                    title={`Click to select and focus on Level ${lvl.levelId} (${lvl.name})`}
                   >
                     <div className="flex items-center justify-between gap-1.5 mb-1">
                       <div className="flex items-center gap-1.5">
@@ -216,12 +216,8 @@ export function SfiaAttributesProgressionMatrix({
                         </span>
                       </div>
                       {isSelected && (
-                        <span className="size-2 rounded-full bg-brand" title="Cột đang chọn" />
+                        <span className="size-2 rounded-full bg-brand" title="Currently selected column" />
                       )}
-                    </div>
-
-                    <div className="text-[11px] text-ink-muted truncate mb-1">
-                      {lvl.nameVi}
                     </div>
 
                     <p className="text-[10px] text-ink-muted/80 line-clamp-2 leading-tight italic font-normal">
@@ -241,14 +237,14 @@ export function SfiaAttributesProgressionMatrix({
                   colSpan={8}
                   className="p-8 text-center text-ink-muted text-xs bg-surface-inset/40"
                 >
-                  Không tìm thấy thuộc tính nào phù hợp với từ khóa "{searchQuery}".
+                  No attributes found matching "{searchQuery}".
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setSearchQuery('')}
                     className="ml-2 text-brand hover:underline"
                   >
-                    Xóa tìm kiếm
+                    Clear search
                   </Button>
                 </td>
               </tr>
@@ -278,9 +274,6 @@ export function SfiaAttributesProgressionMatrix({
                         <div>
                           <div className="font-bold text-xs text-ink leading-tight">
                             {attr.name}
-                          </div>
-                          <div className="text-[10px] text-ink-muted leading-none">
-                            {attr.nameVi}
                           </div>
                         </div>
                       </div>
@@ -313,13 +306,13 @@ export function SfiaAttributesProgressionMatrix({
                               : 'hover:bg-surface-raised/60',
                             isQueryMatched && 'ring-2 ring-amber-500/50 bg-amber-500/10'
                           )}
-                          title={`Level ${lvl.levelId} - ${attr.name}: Nhấp để chọn level`}
+                          title={`Level ${lvl.levelId} - ${attr.name}: Click to select level`}
                         >
                           <div className="flex items-center justify-between gap-1 mb-1 text-[10px] text-ink-muted">
                             <span className="font-mono font-bold">L{lvl.levelId}</span>
                             {isSelected && (
                               <span className="text-[9px] text-brand font-semibold uppercase">
-                                Đang chọn
+                                Selected
                               </span>
                             )}
                           </div>
@@ -346,10 +339,10 @@ export function SfiaAttributesProgressionMatrix({
       <div className="p-2 px-3 border-t border-border/80 bg-surface-raised flex items-center justify-between text-[11px] text-ink-muted shrink-0">
         <div className="flex items-center gap-2">
           <span className="size-1.5 rounded-full bg-emerald-500" />
-          <span>Bảng ma trận đối chiếu 5 thuộc tính x 7 cấp độ chuẩn quốc tế SFIA 9</span>
+          <span>5 Generic Attributes x 7 Levels Progression Matrix - SFIA 9 International Standard</span>
         </div>
         <div>
-          <span>Cột đang chọn: <strong className="text-ink font-semibold">Level {selectedLevel}</strong></span>
+          <span>Selected Column: <strong className="text-ink font-semibold">Level {selectedLevel}</strong></span>
         </div>
       </div>
     </div>

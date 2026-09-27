@@ -70,7 +70,7 @@ describe('SfiaMatrixInspectionSheet', () => {
   it('renders skill information and level statement after loading', async () => {
     render(<SfiaMatrixInspectionSheet {...defaultProps} />)
 
-    expect(screen.getByText(/Đang tải thông tin năng lực/)).toBeInTheDocument()
+    expect(screen.getByText(/Loading skill information/)).toBeInTheDocument()
 
     await waitFor(() => {
       expect(screen.getByText('Programming/software development')).toBeInTheDocument()
@@ -82,7 +82,7 @@ describe('SfiaMatrixInspectionSheet', () => {
     expect(screen.getByText('15-1252.00')).toBeInTheDocument()
   })
 
-  it('triggers onOpenInTaxonomy and onClose when "Mở Cây kỹ năng" is clicked', async () => {
+  it('triggers onOpenInTaxonomy and onClose when "Open in Tree" is clicked', async () => {
     const onOpenInTaxonomy = vi.fn()
     const onClose = vi.fn()
 
@@ -98,14 +98,14 @@ describe('SfiaMatrixInspectionSheet', () => {
       expect(screen.getByText('Programming/software development')).toBeInTheDocument()
     })
 
-    const openTaxonomyBtn = screen.getByRole('button', { name: /Mở Cây kỹ năng/i })
+    const openTaxonomyBtn = screen.getByRole('button', { name: /Open in Tree/i })
     fireEvent.click(openTaxonomyBtn)
 
     expect(onOpenInTaxonomy).toHaveBeenCalledWith('PROG', 3)
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('triggers onCreateQuestion when "Tạo câu hỏi" is clicked', async () => {
+  it('triggers onCreateQuestion when "Create Question" is clicked', async () => {
     const onCreateQuestion = vi.fn()
 
     render(
@@ -119,13 +119,13 @@ describe('SfiaMatrixInspectionSheet', () => {
       expect(screen.getByText('Programming/software development')).toBeInTheDocument()
     })
 
-    const createBtn = screen.getByRole('button', { name: /Tạo câu hỏi/i })
+    const createBtn = screen.getByRole('button', { name: /Create Question/i })
     fireEvent.click(createBtn)
 
     expect(onCreateQuestion).toHaveBeenCalledWith('PROG', 3)
   })
 
-  it('copies prompt rubric to clipboard when "Sao chép Prompt AI" is clicked', async () => {
+  it('copies prompt rubric to clipboard when "Copy AI Prompt" is clicked', async () => {
     const writeTextMock = vi.fn().mockResolvedValue(undefined)
     Object.assign(navigator, {
       clipboard: {
@@ -139,7 +139,7 @@ describe('SfiaMatrixInspectionSheet', () => {
       expect(screen.getByText('Programming/software development')).toBeInTheDocument()
     })
 
-    const copyBtn = screen.getByRole('button', { name: /Sao chép Prompt AI/i })
+    const copyBtn = screen.getByRole('button', { name: /Copy AI Prompt/i })
     fireEvent.click(copyBtn)
 
     expect(writeTextMock).toHaveBeenCalled()

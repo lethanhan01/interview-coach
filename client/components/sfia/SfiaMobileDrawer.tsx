@@ -72,7 +72,7 @@ export function SfiaMobileDrawer({
           className="shrink-0 gap-1.5 text-xs font-semibold h-8"
         >
           <FolderTree className="size-3.5 text-brand" />
-          <span>Cây Kỹ Năng SFIA</span>
+          <span>SFIA Skill Tree</span>
         </Button>
 
         {/* Current Active Skill Preview on Mobile */}
@@ -101,7 +101,7 @@ export function SfiaMobileDrawer({
         size="sm"
         onClick={() => setOpen(true)}
         className="size-8 p-0 shrink-0 text-ink-muted hover:text-ink"
-        aria-label="Mở cây danh mục SFIA 9"
+        aria-label="Open SFIA 9 Skill Tree"
       >
         <ChevronRight className="size-4" />
       </Button>
@@ -117,7 +117,7 @@ export function SfiaMobileDrawer({
               <div className="size-6 rounded-md bg-brand/10 text-brand flex items-center justify-center">
                 <Network className="size-3.5" />
               </div>
-              <span>Khám Phá Cây Kỹ Năng SFIA 9</span>
+              <span>SFIA 9 Skill Tree</span>
             </SheetTitle>
           </SheetHeader>
 

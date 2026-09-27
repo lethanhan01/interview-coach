@@ -47,14 +47,14 @@ describe('sfia-matrix-export utility', () => {
 
   it('contains header row and formatted skill data', () => {
     const csv = generateSfiaMatrixCsvString(mockSkills, mockCategories, mockCells)
-    expect(csv).toContain('Mã kỹ năng')
+    expect(csv).toContain('Skill Code')
     expect(csv).toContain('PROG')
     expect(csv).toContain('Programming/software development')
-    expect(csv).toContain('Phát triển & Triển khai')
+    expect(csv).toContain('Development and implementation')
     // Level 1 is inactive
     expect(csv).toContain('—')
     // Level 2 is active with question count
-    expect(csv).toContain('Khả dụng (2 Qs, 1 O*NET)')
+    expect(csv).toContain('Available (2 Qs, 1 O*NET)')
   })
 
   it('downloads file via browser document DOM in client environment', () => {

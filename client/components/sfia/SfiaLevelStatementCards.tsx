@@ -17,7 +17,6 @@ import {
   getCategoryTheme,
   SFIA_LEVEL_DEFINITIONS,
 } from './sfia-theme'
-import { MOCK_SFIA_RESPONSIBILITY_LEVELS } from './sfia-mock-data'
 
 export interface SfiaLevelStatementCardsProps {
   skillDetail: SfiaSkillDetail
@@ -39,10 +38,6 @@ export function SfiaLevelStatementCards({
     (sl) => sl.levelId === selectedLevel
   )
 
-  // Find general essence for this level
-  const generalLevelResp = MOCK_SFIA_RESPONSIBILITY_LEVELS.find(
-    (l) => l.levelId === selectedLevel
-  )
   const levelDef = SFIA_LEVEL_DEFINITIONS[selectedLevel]
 
   const availableLevels = skillDetail.skillLevels.map((sl) => sl.levelId)
@@ -72,7 +67,7 @@ export function SfiaLevelStatementCards({
       <div className="flex items-center justify-between gap-2 flex-wrap bg-surface-raised/50 border border-border/70 rounded-xl p-2">
         <div className="flex items-center gap-1.5 text-xs text-ink-muted pl-1">
           <Target className="size-3.5 text-brand" />
-          <span className="font-semibold text-ink">Cấp độ:</span>
+          <span className="font-semibold text-ink">Level:</span>
         </div>
 
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -111,10 +106,10 @@ export function SfiaLevelStatementCards({
             <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <div className="text-xs">
               <p className="font-bold">
-                Kỹ năng {skillDetail.code} không áp dụng tại Level {selectedLevel}
+                Skill {skillDetail.code} is not applicable at Level {selectedLevel}
               </p>
               <p className="text-ink-muted dark:text-amber-300/80 mt-0.5">
-                Chuẩn SFIA 9 định nghĩa dải năng lực cho {skillDetail.name} từ Level {skillDetail.minLevel} đến Level {skillDetail.maxLevel}.
+                SFIA 9 defines the capability span for {skillDetail.name} from Level {skillDetail.minLevel} to Level {skillDetail.maxLevel}.
               </p>
             </div>
           </div>
@@ -125,7 +120,7 @@ export function SfiaLevelStatementCards({
             onClick={() => onSelectLevel(skillDetail.minLevel)}
             className="h-8 text-xs gap-1.5 shrink-0 bg-card"
           >
-            <span>Chuyển về Level {skillDetail.minLevel}</span>
+            <span>Switch to Level {skillDetail.minLevel}</span>
             <ArrowRight className="size-3.5" />
           </Button>
         </div>
@@ -146,10 +141,10 @@ export function SfiaLevelStatementCards({
             </div>
             <div>
               <h4 className="text-xs font-bold text-ink uppercase tracking-wider">
-                Bản chất Cốt lõi Cấp độ {selectedLevel} (Level Essence)
+                Level {selectedLevel} Essence
               </h4>
               <p className="text-[11px] text-ink-muted">
-                {levelDef?.name || `Level ${selectedLevel}`} — {levelDef?.nameVi || ''}
+                {levelDef?.name || `Level ${selectedLevel}`}
               </p>
             </div>
           </div>
@@ -168,13 +163,8 @@ export function SfiaLevelStatementCards({
         <div className="relative pl-3 border-l-2 border-border/80 text-xs sm:text-sm text-ink font-medium italic leading-relaxed">
           <Quote className="size-3 absolute -top-1 -left-1.5 text-ink-muted/40" />
           <p className="text-ink">
-            &ldquo;{currentStatement?.essence || generalLevelResp?.essence || 'Mô tả bản chất cấp độ theo chuẩn SFIA 9.'}&rdquo;
+            &ldquo;{currentStatement?.essence || 'Demonstrates professional competence and accountability at this level.'}&rdquo;
           </p>
-          {generalLevelResp?.description && (
-            <p className="text-ink-muted text-xs not-italic mt-1.5 font-normal">
-              <strong>Phạm vi trách nhiệm chung:</strong> {generalLevelResp.description}
-            </p>
-          )}
         </div>
       </div>
 
@@ -187,17 +177,17 @@ export function SfiaLevelStatementCards({
             </div>
             <div>
               <h3 className="text-sm font-bold text-ink">
-                Phát biểu Năng lực Hành vi Chuyên môn (Behavioral Statements)
+                Behavioral Statements
               </h3>
               <p className="text-xs text-ink-muted">
-                Chuẩn đánh giá hành vi cho kỹ năng <strong className="text-ink">{skillDetail.name}</strong> ({skillDetail.code}) tại <strong className="text-ink">Level {selectedLevel}</strong>
+                Evaluation criteria for <strong className="text-ink">{skillDetail.name}</strong> ({skillDetail.code}) at <strong className="text-ink">Level {selectedLevel}</strong>
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-ink-muted">
-              {parsedStatements.length} tiêu chuẩn hành vi
+              {parsedStatements.length} {parsedStatements.length === 1 ? 'statement' : 'statements'}
             </span>
           </div>
         </div>
@@ -224,7 +214,7 @@ export function SfiaLevelStatementCards({
         ) : (
           <div className="py-8 text-center bg-surface-inset rounded-lg border border-dashed border-border/80">
             <p className="text-xs text-ink-muted">
-              Chưa có dữ liệu phát biểu năng lực cụ thể cho Level {selectedLevel}.
+              No specific behavioral statement data found for Level {selectedLevel}.
             </p>
             {availableLevels.length > 0 && (
               <Button
@@ -233,7 +223,7 @@ export function SfiaLevelStatementCards({
                 onClick={() => onSelectLevel(availableLevels[0])}
                 className="mt-3 text-xs gap-1"
               >
-                <span>Xem Level {availableLevels[0]} khả dụng</span>
+                <span>View available Level {availableLevels[0]}</span>
               </Button>
             )}
           </div>

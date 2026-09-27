@@ -84,10 +84,10 @@ describe('SfiaDetailPanel Integration', () => {
       />
     )
 
-    expect(screen.getByRole('tab', { name: /Năng lực Hành vi/i })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /Nghề nghiệp O\*NET/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Behavioral Statements & Guidance/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /O\*NET Occupations/i })).toBeInTheDocument()
     expect(
-      screen.getByRole('tab', { name: /Ngân hàng câu hỏi & Tạo mới/i })
+      screen.getByRole('tab', { name: /Question Bank & Create/i })
     ).toBeInTheDocument()
   })
 
@@ -103,7 +103,7 @@ describe('SfiaDetailPanel Integration', () => {
       />
     )
 
-    const onetTab = screen.getByRole('tab', { name: /Nghề nghiệp O\*NET/i })
+    const onetTab = screen.getByRole('tab', { name: /O\*NET Occupations/i })
     await user.click(onetTab)
 
     expect(screen.getAllByText('15-1252.00').length).toBeGreaterThanOrEqual(1)
@@ -123,7 +123,7 @@ describe('SfiaDetailPanel Integration', () => {
     )
 
     const questionsTab = screen.getByRole('tab', {
-      name: /Ngân hàng câu hỏi & Tạo mới/i,
+      name: /Question Bank & Create/i,
     })
     await user.click(questionsTab)
 
@@ -131,7 +131,7 @@ describe('SfiaDetailPanel Integration', () => {
       screen.getByText('Explain how to handle memory leaks in React applications.')
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: /Tạo câu hỏi mới/i })
+      screen.getByRole('button', { name: /Create Question/i })
     ).toBeInTheDocument()
   })
 })

@@ -154,24 +154,24 @@ describe('SfiaLevelAttributesView', () => {
 
   it('renders all 7 level buttons on the stepper', () => {
     render(<SfiaLevelAttributesView {...defaultProps} />)
-    expect(screen.getByRole('button', { name: /Chọn Cấp độ 1 - Follow/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Chọn Cấp độ 3 - Apply/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Chọn Cấp độ 7 - Set strategy \/ Inspire/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Select Level 1 - Follow/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Select Level 3 - Apply/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Select Level 7 - Set strategy \/ Inspire/i })).toBeInTheDocument()
   })
 
   it('indicates active state on the selected level button', () => {
     render(<SfiaLevelAttributesView {...defaultProps} selectedLevel={3} />)
-    const btnL3 = screen.getByRole('button', { name: /Chọn Cấp độ 3 - Apply/i })
+    const btnL3 = screen.getByRole('button', { name: /Select Level 3 - Apply/i })
     expect(btnL3).toHaveAttribute('aria-pressed', 'true')
 
-    const btnL4 = screen.getByRole('button', { name: /Chọn Cấp độ 4 - Enable/i })
+    const btnL4 = screen.getByRole('button', { name: /Select Level 4 - Enable/i })
     expect(btnL4).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('calls onSelectLevel when a different level button is clicked', () => {
     const onSelectLevel = vi.fn()
     render(<SfiaLevelAttributesView {...defaultProps} onSelectLevel={onSelectLevel} />)
-    const btnL5 = screen.getByRole('button', { name: /Chọn Cấp độ 5 - Ensure \/ Advise/i })
+    const btnL5 = screen.getByRole('button', { name: /Select Level 5 - Ensure \/ Advise/i })
     fireEvent.click(btnL5)
     expect(onSelectLevel).toHaveBeenCalledWith(5)
   })
@@ -199,19 +199,19 @@ describe('SfiaLevelAttributesView', () => {
 
   it('copies AI prompt rubric to clipboard when clicking copy button', async () => {
     render(<SfiaLevelAttributesView {...defaultProps} selectedLevel={3} />)
-    const copyBtn = screen.getByRole('button', { name: /Sao chép Prompt AI/i })
+    const copyBtn = screen.getByRole('button', { name: /Copy AI Prompt/i })
     fireEvent.click(copyBtn)
 
     await waitFor(() => {
       expect(navigator.clipboard.writeText).toHaveBeenCalled()
-      expect(screen.getByText(/Đã sao chép!/i)).toBeInTheDocument()
+      expect(screen.getByText(/Copied!/i)).toBeInTheDocument()
     })
   })
 
   it('calls onNavigateToMatrixWithLevel when clicking view skills button', () => {
     const onNavigate = vi.fn()
     render(<SfiaLevelAttributesView {...defaultProps} selectedLevel={4} onNavigateToMatrixWithLevel={onNavigate} />)
-    const navBtn = screen.getByRole('button', { name: /Xem kỹ năng L4/i })
+    const navBtn = screen.getByRole('button', { name: /View Level 4 Skills/i })
     fireEvent.click(navBtn)
     expect(onNavigate).toHaveBeenCalledWith(4)
   })

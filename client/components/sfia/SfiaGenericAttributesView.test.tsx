@@ -42,28 +42,28 @@ describe('SfiaGenericAttributesView', () => {
 
   it('renders header bar and view switcher tabs', () => {
     render(<SfiaGenericAttributesView {...defaultProps} />)
-    expect(screen.getByText(/7 Cấp Độ Trách Nhiệm & 5 Thuộc Tính Năng Lực Nền Tảng/i)).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /Chế độ xem theo cấp độ/i })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /Chế độ xem ma trận tiến trình/i })).toBeInTheDocument()
+    expect(screen.getByText(/7 Levels of Responsibility & 5 Core Generic Attributes/i)).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Level-Centric View/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Progression Matrix View/i })).toBeInTheDocument()
   })
 
   it('renders level-centric view when viewMode is level', () => {
     render(<SfiaGenericAttributesView {...defaultProps} viewMode="level" />)
-    expect(screen.getByText(/Chọn Cấp Độ Trách Nhiệm/i)).toBeInTheDocument()
-    expect(screen.getByText(/Bản chất cốt lõi/i)).toBeInTheDocument()
+    expect(screen.getByText(/Select Responsibility Level/i)).toBeInTheDocument()
+    expect(screen.getByText(/Essence of Level/i)).toBeInTheDocument()
   })
 
   it('renders progression matrix view when viewMode is matrix', () => {
     render(<SfiaGenericAttributesView {...defaultProps} viewMode="matrix" />)
-    expect(screen.getByText(/Ma Trận Tiến Hóa 5 Thuộc Tính Năng Lực Nền Tảng/i)).toBeInTheDocument()
-    expect(screen.getByPlaceholderText(/Tìm kiếm nội dung tiêu chuẩn.../i)).toBeInTheDocument()
+    expect(screen.getByText(/5 Core Generic Attributes Progression Matrix/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Search attribute criteria.../i)).toBeInTheDocument()
   })
 
   it('calls onViewModeChange when switching tabs', async () => {
     const user = userEvent.setup()
     const onViewModeChange = vi.fn()
     render(<SfiaGenericAttributesView {...defaultProps} onViewModeChange={onViewModeChange} />)
-    const matrixTab = screen.getByRole('tab', { name: /Chế độ xem ma trận tiến trình/i })
+    const matrixTab = screen.getByRole('tab', { name: /Progression Matrix View/i })
     await user.click(matrixTab)
     expect(onViewModeChange).toHaveBeenCalledWith('matrix')
   })
@@ -71,7 +71,7 @@ describe('SfiaGenericAttributesView', () => {
   it('renders loading skeleton when loading prop is true', () => {
     const { container } = render(<SfiaGenericAttributesView {...defaultProps} loading={true} />)
     expect(container.querySelector('.animate-pulse')).toBeInTheDocument()
-    expect(screen.queryByText(/Chọn Cấp Độ Trách Nhiệm/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Select Responsibility Level/i)).not.toBeInTheDocument()
   })
 
   it('renders error state and handles retry button click', () => {
@@ -79,14 +79,14 @@ describe('SfiaGenericAttributesView', () => {
     render(
       <SfiaGenericAttributesView
         {...defaultProps}
-        error="Lỗi kết nối máy chủ"
+        error="Server connection error"
         onRetry={onRetry}
       />
     )
-    expect(screen.getByText(/Không thể tải dữ liệu Cấp độ & Thuộc tính SFIA/i)).toBeInTheDocument()
-    expect(screen.getByText('Lỗi kết nối máy chủ')).toBeInTheDocument()
+    expect(screen.getByText(/Failed to load SFIA Levels & Generic Attributes/i)).toBeInTheDocument()
+    expect(screen.getByText('Server connection error')).toBeInTheDocument()
 
-    const retryBtn = screen.getByRole('button', { name: /Thử lại/i })
+    const retryBtn = screen.getByRole('button', { name: /Try Again/i })
     fireEvent.click(retryBtn)
     expect(onRetry).toHaveBeenCalled()
   })

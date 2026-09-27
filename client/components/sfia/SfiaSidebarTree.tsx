@@ -77,6 +77,18 @@ export function SfiaSidebarTree({
     }
   }, [currentSkillInfo])
 
+  // Auto-scroll selected skill into view smoothly on mount or skill change
+  useEffect(() => {
+    if (!selectedSkill) return
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`sfia-tree-skill-${selectedSkill}`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }
+    }, 150)
+    return () => clearTimeout(timer)
+  }, [selectedSkill, expandedSubcategories])
+
   // Global keyboard shortcut to focus search: Ctrl+K, Cmd+K or "/"
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -244,7 +256,7 @@ export function SfiaSidebarTree({
             ref={searchInputRef}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm mã (PROG) hoặc tên kỹ năng..."
+            placeholder="Search code (PROG) or skill name..."
             leadingIcon={<Search className="size-4 text-ink-muted" />}
             trailingAction={
               searchQuery ? (
@@ -252,7 +264,7 @@ export function SfiaSidebarTree({
                   type="button"
                   onClick={() => setSearchQuery('')}
                   className="size-6 flex items-center justify-center rounded-md hover:bg-surface text-ink-muted hover:text-ink mr-2 transition-colors"
-                  aria-label="Xóa tìm kiếm"
+                  aria-label="Clear search"
                 >
                   <X className="size-3.5" />
                 </button>
@@ -277,16 +289,16 @@ export function SfiaSidebarTree({
                 setLevelFilter(val === 'all' ? 'all' : Number(val))
               }}
               className="w-full h-8 text-xs bg-surface border border-border/70 rounded-lg px-2.5 py-1 text-ink focus:outline-none focus:ring-1 focus:ring-brand"
-              aria-label="Lọc theo cấp độ SFIA"
+              aria-label="Filter by SFIA Level"
             >
-              <option value="all">⚡ Tất cả cấp độ (L1 - L7)</option>
-              <option value="1">Level 1 — Follow (Theo dõi)</option>
-              <option value="2">Level 2 — Assist (Hỗ trợ)</option>
-              <option value="3">Level 3 — Apply (Áp dụng độc lập)</option>
-              <option value="4">Level 4 — Enable (Chủ động & Tạo điều kiện)</option>
-              <option value="5">Level 5 — Ensure (Đảm bảo & Quản lý)</option>
-              <option value="6">Level 6 — Initiate (Khởi xướng & Lãnh đạo)</option>
-              <option value="7">Level 7 — Strategy (Định hình chiến lược)</option>
+              <option value="all">⚡ All Levels (L1 - L7)</option>
+              <option value="1">Level 1 — Follow</option>
+              <option value="2">Level 2 — Assist</option>
+              <option value="3">Level 3 — Apply</option>
+              <option value="4">Level 4 — Enable</option>
+              <option value="5">Level 5 — Ensure / Advise</option>
+              <option value="6">Level 6 — Initiate / Influence</option>
+              <option value="7">Level 7 — Set strategy / Inspire</option>
             </select>
           </div>
 
@@ -297,18 +309,18 @@ export function SfiaSidebarTree({
               size="sm"
               onClick={handleExpandAll}
               className="h-8 px-2 text-[11px] font-medium"
-              title="Mở rộng tất cả các nhánh"
+              title="Expand all branches"
             >
-              Mở hết
+              Expand All
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleCollapseAll}
               className="h-8 px-2 text-[11px] font-medium"
-              title="Thu gọn tất cả các nhánh"
+              title="Collapse all branches"
             >
-              Gập lại
+              Collapse All
             </Button>
           </div>
         </div>
@@ -320,11 +332,11 @@ export function SfiaSidebarTree({
             <span>
               {isFilterActive ? (
                 <span>
-                  Khớp <strong className="text-ink font-semibold">{filteredSkills.length}</strong> / {skills.length} kỹ năng
+                  Matched <strong className="text-ink font-semibold">{filteredSkills.length}</strong> of {skills.length} skills
                 </span>
               ) : (
                 <span>
-                  Tổng số <strong className="text-ink font-semibold">{skills.length}</strong> kỹ năng SFIA 9
+                  Total <strong className="text-ink font-semibold">{skills.length}</strong> SFIA 9 skills
                 </span>
               )}
             </span>
@@ -336,7 +348,7 @@ export function SfiaSidebarTree({
               className="text-brand hover:underline flex items-center gap-1 text-[10px] font-semibold"
             >
               <RotateCcw className="size-2.5" />
-              <span>Đặt lại</span>
+              <span>Reset</span>
             </button>
           )}
         </div>
@@ -351,9 +363,9 @@ export function SfiaSidebarTree({
               <SearchX className="size-5" />
             </div>
             <div>
-              <p className="text-xs font-bold text-ink">Không tìm thấy kỹ năng</p>
+              <p className="text-xs font-bold text-ink">No skills found</p>
               <p className="text-[11px] text-ink-muted mt-0.5 max-w-[200px] leading-relaxed">
-                Không có kỹ năng nào khớp với từ khóa & cấp độ đã chọn.
+                No skills match your current search query and level filter.
               </p>
             </div>
             <Button
@@ -363,7 +375,7 @@ export function SfiaSidebarTree({
               className="text-xs gap-1.5 h-8 mt-1"
             >
               <RotateCcw className="size-3" />
-              Đặt lại bộ lọc
+              Reset Filters
             </Button>
           </div>
         ) : (
@@ -396,7 +408,7 @@ export function SfiaSidebarTree({
                   <div className="flex items-center gap-2 min-w-0 pr-1">
                     <span className={cn('size-2 rounded-full shrink-0', theme.dot)} />
                     <span className="text-xs font-bold text-ink truncate group-hover:text-brand transition-colors">
-                      {cat.nameVi}
+                      {cat.name}
                     </span>
                   </div>
 
@@ -441,7 +453,7 @@ export function SfiaSidebarTree({
                             <div className="flex items-center gap-1.5 min-w-0 pr-1">
                               <Folder className="size-3 text-ink-muted group-hover/sub:text-brand shrink-0" />
                               <span className="text-[11px] truncate">
-                                {sub.nameVi || sub.name}
+                                {sub.name}
                               </span>
                             </div>
 
@@ -467,6 +479,7 @@ export function SfiaSidebarTree({
 
                                 return (
                                   <button
+                                    id={`sfia-tree-skill-${skill.code}`}
                                     key={skill.code}
                                     type="button"
                                     onClick={() => handleSkillClick(skill)}
@@ -516,7 +529,7 @@ export function SfiaSidebarTree({
                                       {skill.questionCount > 0 && (
                                         <span
                                           className="size-1.5 rounded-full bg-emerald-500"
-                                          title={`${skill.questionCount} câu hỏi phỏng vấn`}
+                                          title={`${skill.questionCount} interview questions`}
                                         />
                                       )}
                                     </div>

@@ -42,16 +42,16 @@ export interface SfiaCreateQuestionModalProps {
 }
 
 const INTERVIEW_TYPES = [
-  { value: 'TECHNICAL', label: 'Kỹ thuật (Technical)' },
-  { value: 'BEHAVIORAL', label: 'Hành vi (Behavioral)' },
-  { value: 'SITUATIONAL', label: 'Tình huống (Situational)' },
-  { value: 'HR', label: 'Nhân sự & Văn hóa (HR)' },
+  { value: 'TECHNICAL', label: 'Technical' },
+  { value: 'BEHAVIORAL', label: 'Behavioral' },
+  { value: 'SITUATIONAL', label: 'Situational' },
+  { value: 'HR', label: 'HR / Cultural' },
 ] as const
 
 const DIFFICULTY_LEVELS = [
-  { value: 'EASY', label: 'Dễ (Easy)' },
-  { value: 'MEDIUM', label: 'Trung bình (Medium)' },
-  { value: 'HARD', label: 'Khó (Hard)' },
+  { value: 'EASY', label: 'Easy' },
+  { value: 'MEDIUM', label: 'Medium' },
+  { value: 'HARD', label: 'Hard' },
 ] as const
 
 export function SfiaCreateQuestionModal({
@@ -94,12 +94,12 @@ export function SfiaCreateQuestionModal({
 
     const trimmed = questionText.trim()
     if (trimmed.length < 15) {
-      setError('Nội dung câu hỏi phỏng vấn phải có tối thiểu 15 ký tự.')
+      setError('Interview question content must be at least 15 characters.')
       return
     }
 
     if (trimmed.length > 500) {
-      setError('Nội dung câu hỏi không được vượt quá 500 ký tự.')
+      setError('Question content cannot exceed 500 characters.')
       return
     }
 
@@ -107,21 +107,21 @@ export function SfiaCreateQuestionModal({
       setIsSubmitting(true)
       setError(null)
 
-      const created = await sfiaAdminService.addMockQuestion(skillCode, {
+      const created = await sfiaAdminService.createQuestion(skillCode, {
         questionText: trimmed,
         type,
         difficulty,
         targetSfiaLevel: level,
       })
 
-      toast.success('Đã thêm câu hỏi phỏng vấn mới thành công!')
+      toast.success('Interview question created and tagged successfully!')
       onQuestionCreated(created)
       onOpenChange(false)
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : 'Không thể thêm câu hỏi. Vui lòng thử lại.'
+          : 'Failed to create interview question. Please try again.'
       )
     } finally {
       setIsSubmitting(false)
@@ -137,11 +137,11 @@ export function SfiaCreateQuestionModal({
               <Plus className="size-4" />
             </div>
             <DialogTitle className="text-base sm:text-lg">
-              Tạo câu hỏi phỏng vấn mới
+              Create Interview Question
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs text-ink-muted">
-            Thêm câu hỏi mới vào ngân hàng câu hỏi gắn nhãn kỹ năng{' '}
+            Add a new question to the bank, mapped to{' '}
             <strong className="text-ink font-mono font-semibold">{skillCode}</strong> ({skillName}).
           </DialogDescription>
         </DialogHeader>
@@ -150,7 +150,7 @@ export function SfiaCreateQuestionModal({
           {/* Identity info row */}
           <div className="p-3 bg-surface-inset rounded-lg border border-border/60 flex items-center justify-between text-xs">
             <div>
-              <span className="text-ink-muted block text-[11px]">Kỹ năng SFIA 9:</span>
+              <span className="text-ink-muted block text-[11px]">SFIA 9 Skill:</span>
               <span className="font-semibold text-ink font-mono">{skillCode}</span>
               <span className="text-ink-muted ml-1.5">— {skillName}</span>
             </div>
@@ -164,19 +164,19 @@ export function SfiaCreateQuestionModal({
             {/* Field: Target Level */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-ink block">
-                Cấp độ SFIA mục tiêu <span className="text-rose-500">*</span>
+                Target SFIA Level <span className="text-rose-500">*</span>
               </label>
               <Select
                 value={String(level)}
                 onValueChange={(val) => setLevel(Number(val))}
               >
                 <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="Chọn cấp độ" />
+                  <SelectValue placeholder="Select level" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableLevels.map((lvl) => (
                     <SelectItem key={lvl} value={String(lvl)}>
-                      Level {lvl} {lvl === defaultLevel ? '(Đang chọn)' : ''}
+                      Level {lvl} {lvl === defaultLevel ? '(Selected)' : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -186,14 +186,14 @@ export function SfiaCreateQuestionModal({
             {/* Field: Interview Type */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-ink block">
-                Loại phỏng vấn <span className="text-rose-500">*</span>
+                Interview Type <span className="text-rose-500">*</span>
               </label>
               <Select
                 value={type}
                 onValueChange={(val) => setType(val as typeof type)}
               >
                 <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="Chọn loại phỏng vấn" />
+                  <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
                   {INTERVIEW_TYPES.map((t) => (
@@ -209,7 +209,7 @@ export function SfiaCreateQuestionModal({
           {/* Field: Difficulty */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-ink block">
-              Độ khó câu hỏi <span className="text-rose-500">*</span>
+              Difficulty <span className="text-rose-500">*</span>
             </label>
             <div className="grid grid-cols-3 gap-2">
               {DIFFICULTY_LEVELS.map((d) => (
@@ -238,7 +238,7 @@ export function SfiaCreateQuestionModal({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-ink">
-                Nội dung câu hỏi phỏng vấn <span className="text-rose-500">*</span>
+                Question Content <span className="text-rose-500">*</span>
               </label>
               <span className="text-[11px] font-mono text-ink-muted tabular-nums">
                 {questionText.length}/500
@@ -250,7 +250,7 @@ export function SfiaCreateQuestionModal({
                 setQuestionText(e.target.value)
                 if (error) setError(null)
               }}
-              placeholder="Nhập nội dung câu hỏi phỏng vấn tình huống, kỹ thuật hoặc hành vi chi tiết..."
+              placeholder="Enter practical technical question scenario, problem statement, or behavioral prompt..."
               rows={4}
               maxLength={500}
               className="text-xs resize-none bg-surface-inset"
@@ -273,7 +273,7 @@ export function SfiaCreateQuestionModal({
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
-              Hủy
+              Cancel
             </Button>
             <Button
               type="submit"
@@ -285,12 +285,12 @@ export function SfiaCreateQuestionModal({
               {isSubmitting ? (
                 <>
                   <Loader2 className="size-3.5 animate-spin" />
-                  <span>Đang lưu...</span>
+                  <span>Creating...</span>
                 </>
               ) : (
                 <>
                   <Plus className="size-3.5" />
-                  <span>Lưu câu hỏi</span>
+                  <span>Create Question</span>
                 </>
               )}
             </Button>

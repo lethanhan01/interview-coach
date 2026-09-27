@@ -91,14 +91,14 @@ export function SfiaLevelAttributesView({
     levels[0] || {
       levelId: selectedLevel,
       name: `Level ${selectedLevel}`,
-      nameVi: `Cấp độ ${selectedLevel}`,
-      essence: 'Chưa có dữ liệu bản chất cho cấp độ này.',
-      description: 'Chưa có dữ liệu mô tả cho cấp độ này.',
+      nameVi: `Level ${selectedLevel}`,
+      essence: 'No essence data for this level.',
+      description: 'No description data for this level.',
     }
 
   const currentLevelTheme = getLevelTheme(selectedLevel)
 
-  // Xử lý sao chép Prompt AI
+  // Copy AI Prompt handler
   const handleCopyPrompt = async () => {
     const success = await copySfiaLevelPromptToClipboard(currentLevel, attributes, 'markdown')
     if (success) {
@@ -115,11 +115,11 @@ export function SfiaLevelAttributesView({
           <div className="flex items-center gap-2">
             <Layers className="size-4 text-brand" />
             <span className="text-xs font-semibold text-ink uppercase tracking-wider">
-              Chọn Cấp Độ Trách Nhiệm (SFIA Levels 1 - 7)
+              Select Responsibility Level (SFIA Levels 1 - 7)
             </span>
           </div>
           <span className="text-[11px] text-ink-muted">
-            Đang xem: <strong className="text-ink font-semibold">Level {selectedLevel}</strong> — {currentLevel.name}
+            Viewing: <strong className="text-ink font-semibold">Level {selectedLevel}</strong> — {currentLevel.name}
           </span>
         </div>
 
@@ -141,7 +141,7 @@ export function SfiaLevelAttributesView({
                     : 'bg-surface-inset border-border hover:border-border-strong text-ink-muted hover:text-ink'
                 )}
                 aria-pressed={isSelected}
-                aria-label={`Chọn Cấp độ ${lvl.levelId} - ${lvl.name}`}
+                aria-label={`Select Level ${lvl.levelId} - ${lvl.name}`}
               >
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span
@@ -161,14 +161,6 @@ export function SfiaLevelAttributesView({
                     {lvl.name}
                   </span>
                 </div>
-                <span
-                  className={cn(
-                    'text-[10px] truncate max-w-[100px] leading-tight',
-                    isSelected ? 'text-white/90' : 'text-ink-muted'
-                  )}
-                >
-                  {lvl.nameVi}
-                </span>
               </button>
             )
           })}
@@ -192,12 +184,9 @@ export function SfiaLevelAttributesView({
                 <h2 className="text-base sm:text-lg font-bold text-ink tracking-tight">
                   Level {selectedLevel} — {currentLevel.name}
                 </h2>
-                <span className="bg-surface-raised border border-border px-2 py-0.5 rounded-full text-[11px] font-medium text-ink-muted">
-                  {currentLevel.nameVi}
-                </span>
               </div>
               <p className="text-xs text-ink-muted mt-0.5">
-                Tiêu chuẩn năng lực hành vi và chuẩn mực trách nhiệm quốc tế theo SFIA 9
+                International behavioral and responsibility standards under SFIA 9
               </p>
             </div>
           </div>
@@ -209,17 +198,17 @@ export function SfiaLevelAttributesView({
               size="sm"
               onClick={handleCopyPrompt}
               className="gap-1.5 text-xs font-semibold"
-              title="Sao chép chuẩn Rubric để dán vào System Prompt cho AI Evaluator"
+              title="Copy Rubric standard to paste into System Prompt for AI Evaluator"
             >
               {copied ? (
                 <>
                   <Check className="size-3.5 text-emerald-600" />
-                  <span className="text-emerald-600">Đã sao chép!</span>
+                  <span className="text-emerald-600">Copied!</span>
                 </>
               ) : (
                 <>
                   <Copy className="size-3.5" />
-                  <span>Sao chép Prompt AI</span>
+                  <span>Copy AI Prompt</span>
                 </>
               )}
             </Button>
@@ -230,9 +219,9 @@ export function SfiaLevelAttributesView({
                 size="sm"
                 onClick={() => onNavigateToMatrixWithLevel(selectedLevel)}
                 className="gap-1.5 text-xs text-ink-muted hover:text-ink"
-                title={`Xem tất cả kỹ năng SFIA có Level ${selectedLevel} trong Ma trận 2D`}
+                title={`View all SFIA skills applicable at Level ${selectedLevel} in 2D Matrix`}
               >
-                <span>Xem kỹ năng L{selectedLevel}</span>
+                <span>View Level {selectedLevel} Skills</span>
                 <ChevronRight className="size-3.5" />
               </Button>
             )}
@@ -243,7 +232,7 @@ export function SfiaLevelAttributesView({
         <div className="bg-surface-inset border-l-4 border-brand p-3.5 rounded-r-lg flex flex-col gap-1">
           <div className="flex items-center gap-1.5 text-brand text-xs font-bold uppercase tracking-wider">
             <Sparkles className="size-3.5" />
-            <span>Bản chất cốt lõi (Essence of Level {selectedLevel})</span>
+            <span>Essence of Level {selectedLevel}</span>
           </div>
           <p className="text-xs sm:text-sm text-ink italic font-medium leading-relaxed">
             "{currentLevel.essence}"
@@ -252,7 +241,7 @@ export function SfiaLevelAttributesView({
 
         {/* General Scope and Authority */}
         <div className="flex flex-col gap-1 text-xs">
-          <span className="font-semibold text-ink">Quyền hạn & Phạm vi trách nhiệm chung:</span>
+          <span className="font-semibold text-ink">General Scope and Responsibility:</span>
           <p className="text-ink-muted leading-relaxed text-xs sm:text-sm">
             {currentLevel.description}
           </p>
@@ -265,11 +254,11 @@ export function SfiaLevelAttributesView({
           <div className="flex items-center gap-2">
             <span className="size-2 rounded-full bg-brand" />
             <h3 className="text-xs sm:text-sm font-bold text-ink uppercase tracking-wider">
-              5 Thuộc Tính Năng Lực Nền Tảng (Generic Attributes at Level {selectedLevel})
+              5 Core Generic Attributes at Level {selectedLevel}
             </h3>
           </div>
           <span className="text-[11px] text-ink-muted">
-            Tiêu chuẩn hành vi tham chiếu cho AI chấm điểm
+            Behavioral benchmark criteria for AI assessment
           </span>
         </div>
 
@@ -277,7 +266,7 @@ export function SfiaLevelAttributesView({
           {attributes.map((attr) => {
             const theme = getAttributeTheme(attr.code)
             const Icon = ATTRIBUTE_ICONS[attr.code] || Compass
-            const statement = attr.levels[selectedLevel] || 'Chưa có mô tả tiêu chuẩn cho cấp độ này.'
+            const statement = attr.levels[selectedLevel] || 'No statement defined for this level.'
 
             return (
               <div
@@ -303,9 +292,6 @@ export function SfiaLevelAttributesView({
                         <h4 className="text-sm font-bold text-ink leading-tight">
                           {attr.name}
                         </h4>
-                        <span className="text-[11px] text-ink-muted leading-none">
-                          {attr.nameVi}
-                        </span>
                       </div>
                     </div>
                     <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-surface-inset text-ink-muted border border-border/60">
@@ -334,7 +320,7 @@ export function SfiaLevelAttributesView({
                       )}
                     >
                       <span className="size-1.5 rounded-full bg-current" />
-                      <span>Tiêu chuẩn Level {selectedLevel}</span>
+                      <span>Level {selectedLevel} Standard</span>
                     </span>
                     <span className="text-[10px] font-mono text-ink-muted">
                       L{selectedLevel}
