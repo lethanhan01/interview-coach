@@ -46,7 +46,10 @@ import {
   SfiaMatrixInspectionSheet,
   SfiaCreateQuestionModal,
   SfiaGenericAttributesView,
+  SfiaAnalyticsView,
+  SfiaBlindSpotsTable,
   downloadSfiaMatrixCsv,
+  downloadSfiaBlindSpotsCsv,
 } from '@/components/sfia'
 import { sfiaAdminService } from '@/services/sfia-admin.service'
 
@@ -86,6 +89,12 @@ function SfiaBrowserWorkspace() {
   const [responsibilityLevels, setResponsibilityLevels] = useState<SfiaLevelResponsibility[]>([])
   const [genericAttributes, setGenericAttributes] = useState<SfiaGenericAttribute[]>([])
   const [attributesError, setAttributesError] = useState<string | null>(null)
+
+  // Phase 7 Coverage Analytics & Blind Spots States
+  const [analyticsCategoryFilter, setAnalyticsCategoryFilter] = useState<string | null>(null)
+  const [analyticsLevelFilter, setAnalyticsLevelFilter] = useState<number | null>(null)
+  const [targetBlindSpotSkill, setTargetBlindSpotSkill] = useState<SfiaSkillSummary | null>(null)
+  const [isExportingBlindSpotsCsv, setIsExportingBlindSpotsCsv] = useState(false)
 
   useEffect(() => {
     async function loadData() {
@@ -216,10 +225,15 @@ function SfiaBrowserWorkspace() {
     setTab('taxonomy')
   }
 
-  // Xử lý đồng bộ dữ liệu Reactive khi tạo câu hỏi mới từ Sheet
+  // Xử lý đồng bộ dữ liệu Reactive khi tạo câu hỏi mới (từ Sheet Ma trận hoặc Bảng Điểm mù)
   const handleQuestionCreated = (newQuestion: SfiaQuestionBankItem) => {
-    if (inspectedCell) {
-      const key = `${inspectedCell.skillCode}_L${inspectedCell.levelId}`
+    const targetCode =
+      inspectedCell?.skillCode || targetBlindSpotSkill?.code || ''
+    const targetLvl =
+      inspectedCell?.levelId || targetBlindSpotSkill?.minLevel || newQuestion.targetSfiaLevel || 1
+
+    if (targetCode) {
+      const key = `${targetCode}_L${targetLvl}`
       setMatrixCells((prev) => ({
         ...prev,
         [key]: {
@@ -228,10 +242,14 @@ function SfiaBrowserWorkspace() {
         },
       }))
 
+      // Kiểm tra xem kỹ năng trước đó có phải điểm mù (questionCount === 0) không
+      const targetSkill = skills.find((s) => s.code === targetCode)
+      const wasBlindSpot = targetSkill ? targetSkill.questionCount === 0 : false
+
       // Cập nhật danh sách tóm tắt kỹ năng
       setSkills((prev) =>
         prev.map((s) =>
-          s.code === inspectedCell.skillCode
+          s.code === targetCode
             ? { ...s, questionCount: s.questionCount + 1 }
             : s
         )
@@ -239,7 +257,7 @@ function SfiaBrowserWorkspace() {
 
       // Cập nhật chi tiết kỹ năng nếu đang cache
       setSkillDetail((prev) => {
-        if (!prev || prev.code !== inspectedCell.skillCode) return prev
+        if (!prev || prev.code !== targetCode) return prev
         return {
           ...prev,
           questionCount: prev.questionCount + 1,
@@ -247,20 +265,79 @@ function SfiaBrowserWorkspace() {
         }
       })
 
-      // Cập nhật tổng thể thống kê
+      // Cập nhật tổng thể thống kê (KPIs & Distributions)
       setStats((prev) => {
         if (!prev) return prev
         return {
           ...prev,
           totalQuestions: prev.totalQuestions + 1,
+          skillsWithQuestions: wasBlindSpot
+            ? prev.skillsWithQuestions + 1
+            : prev.skillsWithQuestions,
+          blindSpotsCount: wasBlindSpot
+            ? Math.max(0, prev.blindSpotsCount - 1)
+            : prev.blindSpotsCount,
+          categoryDistribution: prev.categoryDistribution.map((cat) =>
+            cat.code === targetSkill?.categoryCode
+              ? { ...cat, questionCount: cat.questionCount + 1 }
+              : cat
+          ),
+          levelDistribution: prev.levelDistribution.map((lvl) =>
+            lvl.level === targetLvl
+              ? { ...lvl, questionCount: lvl.questionCount + 1 }
+              : lvl
+          ),
         }
       })
 
       toast.success('Đã tạo câu hỏi phỏng vấn mới thành công!', {
-        description: `Đã cập nhật câu hỏi cho kỹ năng ${inspectedCell.skillCode} Level ${inspectedCell.levelId}.`,
+        description: `Đã cập nhật câu hỏi cho kỹ năng ${targetCode} Level ${targetLvl}. ${
+          wasBlindSpot ? 'Kỹ năng đã rời khỏi danh sách điểm mù.' : ''
+        }`,
       })
     }
     setIsCreateQuestionOpen(false)
+    setTargetBlindSpotSkill(null)
+  }
+
+  // Phase 7 Handlers: Xuất CSV điểm mù & cuộn nhanh
+  const handleExportBlindSpotsCsv = () => {
+    try {
+      setIsExportingBlindSpotsCsv(true)
+      const success = downloadSfiaBlindSpotsCsv(skills, categories)
+      if (success) {
+        toast.success('Đã xuất danh sách điểm mù SFIA 9 thành công!', {
+          description: 'File CSV UTF-8 BOM đã được tải xuống trình duyệt.',
+        })
+      } else {
+        toast.error('Không thể xuất file CSV điểm mù')
+      }
+    } catch {
+      toast.error('Có lỗi xảy ra khi tạo file CSV điểm mù')
+    } finally {
+      setIsExportingBlindSpotsCsv(false)
+    }
+  }
+
+  const handleScrollToBlindSpots = () => {
+    const el = document.getElementById('sfia-blind-spots-table-container')
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
+  const handleSelectAnalyticsCategory = (catCode: string | null) => {
+    setAnalyticsCategoryFilter(catCode)
+    if (catCode) {
+      handleScrollToBlindSpots()
+    }
+  }
+
+  const handleSelectAnalyticsLevel = (level: number | null) => {
+    setAnalyticsLevelFilter(level)
+    if (level !== null) {
+      handleScrollToBlindSpots()
+    }
   }
 
   return (
@@ -447,27 +524,6 @@ function SfiaBrowserWorkspace() {
                 setIsCreateQuestionOpen(true)
               }}
             />
-
-            {/* Modal Tạo Câu Hỏi Mới Trực Tiếp Từ Sheet */}
-            {isCreateQuestionOpen && inspectedCell && (
-              <SfiaCreateQuestionModal
-                open={isCreateQuestionOpen}
-                onOpenChange={setIsCreateQuestionOpen}
-                skillCode={inspectedCell.skillCode}
-                skillName={
-                  skills.find((s) => s.code === inspectedCell.skillCode)?.name ||
-                  inspectedCell.skillCode
-                }
-                minLevel={
-                  skills.find((s) => s.code === inspectedCell.skillCode)?.minLevel || 1
-                }
-                maxLevel={
-                  skills.find((s) => s.code === inspectedCell.skillCode)?.maxLevel || 7
-                }
-                defaultLevel={inspectedCell.levelId}
-                onQuestionCreated={handleQuestionCreated}
-              />
-            )}
           </div>
         )}
 
@@ -506,26 +562,89 @@ function SfiaBrowserWorkspace() {
           />
         )}
 
-        {/* Tab 4: Analytics (Phase 7 Placeholder Shell) */}
+        {/* Tab 4: Coverage Analytics Dashboard & Blind Spot Alerts (Phase 7) */}
         {activeTab === 'analytics' && (
-          <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center bg-card border border-border/80 rounded-xl">
-            <div className="bg-emerald-500/10 text-emerald-600 p-3 rounded-full mb-3">
-              <BarChart3 className="size-8" />
-            </div>
-            <h3 className="text-base font-bold text-ink mb-1">
-              Coverage Analytics Dashboard & Bảng Cảnh Báo Điểm Mù
-            </h3>
-            <p className="text-xs text-ink-muted max-w-md mb-4 leading-relaxed">
-              Biểu đồ phân bổ 6 danh mục, tỷ lệ phủ theo 7 level và bảng danh sách kỹ năng chưa có câu hỏi (Blind Spots) sẽ được xây dựng trong Phase 7.
-            </p>
-            <div className="flex items-center gap-4 text-xs text-ink-muted bg-surface-inset px-4 py-2 rounded-lg border border-border">
-              <span>Tổng kỹ năng: <strong className="text-ink">147</strong></span>
-              <span>Đã có câu hỏi: <strong className="text-emerald-600 font-semibold">{stats?.skillsWithQuestions}</strong></span>
-              <span>Điểm mù: <strong className="text-rose-600 font-semibold">{stats?.blindSpotsCount}</strong></span>
-            </div>
+          <div className="flex flex-col gap-6 pb-16 max-w-7xl mx-auto w-full">
+            <SfiaAnalyticsView
+              stats={stats}
+              categories={categories}
+              skills={skills}
+              selectedCategoryFilter={analyticsCategoryFilter}
+              selectedLevelFilter={analyticsLevelFilter}
+              onSelectCategory={handleSelectAnalyticsCategory}
+              onSelectLevel={handleSelectAnalyticsLevel}
+              onSelectSkill={(code) => {
+                setSkill(code)
+                setTab('taxonomy')
+              }}
+              onScrollToBlindSpots={handleScrollToBlindSpots}
+              loading={loading}
+              error={null}
+              onRetry={async () => {
+                try {
+                  const statData = await sfiaAdminService.getCoverageStats()
+                  setStats(statData)
+                } catch {
+                  toast.error('Không thể tải lại dữ liệu thống kê')
+                }
+              }}
+            />
+
+            <SfiaBlindSpotsTable
+              skills={skills}
+              categories={categories}
+              selectedCategoryFilter={analyticsCategoryFilter}
+              selectedLevelFilter={analyticsLevelFilter}
+              onSelectCategoryFilter={setAnalyticsCategoryFilter}
+              onSelectLevelFilter={setAnalyticsLevelFilter}
+              onCreateQuestion={(skill) => {
+                setTargetBlindSpotSkill(skill)
+                setIsCreateQuestionOpen(true)
+              }}
+              onSelectSkill={(code) => {
+                setSkill(code)
+                setTab('taxonomy')
+              }}
+              onExportCsv={handleExportBlindSpotsCsv}
+              isExportingCsv={isExportingBlindSpotsCsv}
+            />
           </div>
         )}
       </div>
+
+      {/* Modal Tạo Câu Hỏi Mới Đa Năng (Từ Sheet Ma Trận hoặc Bảng Điểm Mù) */}
+      {isCreateQuestionOpen && (inspectedCell || targetBlindSpotSkill) && (
+        <SfiaCreateQuestionModal
+          open={isCreateQuestionOpen}
+          onOpenChange={(open) => {
+            setIsCreateQuestionOpen(open)
+            if (!open) {
+              setTargetBlindSpotSkill(null)
+            }
+          }}
+          skillCode={inspectedCell?.skillCode || targetBlindSpotSkill?.code || ''}
+          skillName={
+            (inspectedCell
+              ? skills.find((s) => s.code === inspectedCell.skillCode)?.name
+              : targetBlindSpotSkill?.name) ||
+            inspectedCell?.skillCode ||
+            targetBlindSpotSkill?.code ||
+            ''
+          }
+          minLevel={
+            (inspectedCell
+              ? skills.find((s) => s.code === inspectedCell.skillCode)?.minLevel
+              : targetBlindSpotSkill?.minLevel) || 1
+          }
+          maxLevel={
+            (inspectedCell
+              ? skills.find((s) => s.code === inspectedCell.skillCode)?.maxLevel
+              : targetBlindSpotSkill?.maxLevel) || 7
+          }
+          defaultLevel={inspectedCell?.levelId || targetBlindSpotSkill?.minLevel || 1}
+          onQuestionCreated={handleQuestionCreated}
+        />
+      )}
     </div>
   )
 }

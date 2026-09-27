@@ -77,3 +77,53 @@ describe('SfiaAdminPage - Matrix Tab Integration', () => {
     })
   })
 })
+
+describe('SfiaAdminPage - Phase 7 Analytics Tab Integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockSearchParams = new URLSearchParams('tab=analytics')
+  })
+
+  it('renders Coverage Analytics Dashboard and Blind Spots Table in Tab 4', async () => {
+    render(<SfiaAdminPage />)
+
+    // Wait for data load
+    await waitFor(() => {
+      expect(screen.getByText('Tổng kỹ năng SFIA 9')).toBeInTheDocument()
+    })
+
+    // 4 KPI Cards
+    expect(screen.getByText('147')).toBeInTheDocument()
+    expect(screen.getByText('76.2%')).toBeInTheDocument()
+    expect(screen.getByText('66.7%')).toBeInTheDocument()
+    expect(screen.getAllByText('35').length).toBeGreaterThanOrEqual(1)
+
+    // Distribution charts & Leaderboard
+    expect(screen.getByText('Phân bổ & Độ phủ theo 6 Danh mục SFIA')).toBeInTheDocument()
+    expect(screen.getByText('Phân bổ câu hỏi theo 7 Cấp độ SFIA')).toBeInTheDocument()
+    expect(screen.getByText('Top 10 Kỹ Năng SFIA Phổ Biến Nhất trong O*NET')).toBeInTheDocument()
+
+    // Blind Spots Table
+    expect(screen.getByText('Bảng Cảnh Báo Điểm Mù (Blind Spots)')).toBeInTheDocument()
+    expect(screen.getByText('35 điểm mù')).toBeInTheDocument()
+    expect(screen.getByText('Xuất danh sách điểm mù CSV')).toBeInTheDocument()
+  })
+
+  it('opens create question modal when clicking [Tạo câu hỏi] in blind spots table', async () => {
+    render(<SfiaAdminPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Bảng Cảnh Báo Điểm Mù (Blind Spots)')).toBeInTheDocument()
+    })
+
+    const createButtons = screen.getAllByRole('button', { name: /Tạo câu hỏi/i })
+    expect(createButtons.length).toBeGreaterThan(0)
+
+    fireEvent.click(createButtons[0])
+
+    await waitFor(() => {
+      expect(screen.getByText(/Tạo câu hỏi phỏng vấn mới/i)).toBeInTheDocument()
+    })
+  })
+})
+

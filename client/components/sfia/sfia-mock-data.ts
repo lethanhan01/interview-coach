@@ -276,6 +276,58 @@ export const MOCK_SFIA_SKILL_SUMMARIES: SfiaSkillSummary[] = [
   // REL_ENG / STAKE_ENG
   { code: 'RLMT', name: 'Stakeholder relationship management', categoryCode: 'REL_ENG', subcategoryCode: 'STAKE_ENG', minLevel: 4, maxLevel: 7, questionCount: 15, onetCount: 8 },
   { code: 'CSMG', name: 'Customer service management', categoryCode: 'REL_ENG', subcategoryCode: 'STAKE_ENG', minLevel: 3, maxLevel: 6, questionCount: 10, onetCount: 5 },
+
+  // =========================================================================
+  // 35 BLIND SPOTS (Kỹ năng chưa có câu hỏi trong ngân hàng: questionCount = 0)
+  // Khớp với thống kê MOCK_SFIA_COVERAGE_STATS.blindSpotsCount = 35
+  // =========================================================================
+
+  // 1. STRAT_ARCH (7 Điểm mù)
+  { code: 'EMRG', name: 'Emerging technology monitoring', categoryCode: 'STRAT_ARCH', subcategoryCode: 'STRAT_PLAN', minLevel: 4, maxLevel: 6, questionCount: 0, onetCount: 4 },
+  { code: 'ITMG', name: 'IT management', categoryCode: 'STRAT_ARCH', subcategoryCode: 'STRAT_PLAN', minLevel: 5, maxLevel: 7, questionCount: 0, onetCount: 6 },
+  { code: 'MEAS', name: 'Measurement', categoryCode: 'STRAT_ARCH', subcategoryCode: 'STRAT_PLAN', minLevel: 3, maxLevel: 6, questionCount: 0, onetCount: 3 },
+  { code: 'VRPN', name: 'Vulnerability assessment', categoryCode: 'STRAT_ARCH', subcategoryCode: 'SEC_PRIV', minLevel: 2, maxLevel: 6, questionCount: 0, onetCount: 8 },
+  { code: 'DIGR', name: 'Digital forensics', categoryCode: 'STRAT_ARCH', subcategoryCode: 'SEC_PRIV', minLevel: 3, maxLevel: 6, questionCount: 0, onetCount: 5 },
+  { code: 'BURM', name: 'Business risk management', categoryCode: 'STRAT_ARCH', subcategoryCode: 'GOVN_RISK', minLevel: 4, maxLevel: 7, questionCount: 0, onetCount: 5 },
+  { code: 'RSCH', name: 'Research', categoryCode: 'STRAT_ARCH', subcategoryCode: 'INNOV_RES', minLevel: 3, maxLevel: 6, questionCount: 0, onetCount: 4 },
+
+  // 2. CHG_TRANS (6 Điểm mù)
+  { code: 'OCDV', name: 'Organisation development', categoryCode: 'CHG_TRANS', subcategoryCode: 'BUS_CHG', minLevel: 5, maxLevel: 7, questionCount: 0, onetCount: 5 },
+  { code: 'BENM', name: 'Benefits management', categoryCode: 'CHG_TRANS', subcategoryCode: 'BUS_CHG', minLevel: 4, maxLevel: 6, questionCount: 0, onetCount: 4 },
+  { code: 'SUEN', name: 'Sustainability engineering', categoryCode: 'CHG_TRANS', subcategoryCode: 'BUS_CHG', minLevel: 3, maxLevel: 6, questionCount: 0, onetCount: 3 },
+  { code: 'CIPM', name: 'Continuous improvement', categoryCode: 'CHG_TRANS', subcategoryCode: 'BUS_CHG', minLevel: 3, maxLevel: 7, questionCount: 0, onetCount: 6 },
+  { code: 'PORT', name: 'Portfolio management', categoryCode: 'CHG_TRANS', subcategoryCode: 'PROJ_PROG', minLevel: 5, maxLevel: 7, questionCount: 0, onetCount: 7 },
+  { code: 'POMG', name: 'Portfolio, programme and project support', categoryCode: 'CHG_TRANS', subcategoryCode: 'PROJ_PROG', minLevel: 1, maxLevel: 5, questionCount: 0, onetCount: 4 },
+
+  // 3. DEV_IMPL (7 Điểm mù)
+  { code: 'DESN', name: 'Digital product design', categoryCode: 'DEV_IMPL', subcategoryCode: 'UX_DESIGN', minLevel: 2, maxLevel: 6, questionCount: 0, onetCount: 9 },
+  { code: 'HFIN', name: 'Human factors integration', categoryCode: 'DEV_IMPL', subcategoryCode: 'UX_DESIGN', minLevel: 3, maxLevel: 6, questionCount: 0, onetCount: 5 },
+  { code: 'UNAN', name: 'User research', categoryCode: 'DEV_IMPL', subcategoryCode: 'UX_DESIGN', minLevel: 3, maxLevel: 5, questionCount: 0, onetCount: 7 },
+  { code: 'PROT', name: 'Prototyping', categoryCode: 'DEV_IMPL', subcategoryCode: 'UX_DESIGN', minLevel: 2, maxLevel: 6, questionCount: 0, onetCount: 6 },
+  { code: 'ANIM', name: 'Animation development', categoryCode: 'DEV_IMPL', subcategoryCode: 'UX_DESIGN', minLevel: 2, maxLevel: 5, questionCount: 0, onetCount: 3 },
+  { code: 'ASUP', name: 'Application support', categoryCode: 'DEV_IMPL', subcategoryCode: 'SYS_INT', minLevel: 2, maxLevel: 5, questionCount: 0, onetCount: 8 },
+  { code: 'SINT', name: 'Systems integration and build', categoryCode: 'DEV_IMPL', subcategoryCode: 'SYS_INT', minLevel: 2, maxLevel: 6, questionCount: 0, onetCount: 7 },
+
+  // 4. DELIV_OP (6 Điểm mù)
+  { code: 'THIN', name: 'Threat intelligence', categoryCode: 'DELIV_OP', subcategoryCode: 'SEC_OPS', minLevel: 3, maxLevel: 6, questionCount: 0, onetCount: 7 },
+  { code: 'VULN', name: 'Vulnerability research', categoryCode: 'DELIV_OP', subcategoryCode: 'SEC_OPS', minLevel: 3, maxLevel: 6, questionCount: 0, onetCount: 6 },
+  { code: 'HSIN', name: 'High performance computing', categoryCode: 'DELIV_OP', subcategoryCode: 'IT_INFRA', minLevel: 3, maxLevel: 6, questionCount: 0, onetCount: 4 },
+  { code: 'RFMS', name: 'Radio frequency engineering', categoryCode: 'DELIV_OP', subcategoryCode: 'IT_INFRA', minLevel: 2, maxLevel: 6, questionCount: 0, onetCount: 3 },
+  { code: 'COPL', name: 'Continuity management', categoryCode: 'DELIV_OP', subcategoryCode: 'SVC_MGMT', minLevel: 4, maxLevel: 6, questionCount: 0, onetCount: 5 },
+  { code: 'ICOP', name: 'Technical documentation', categoryCode: 'DELIV_OP', subcategoryCode: 'CONT_MGMT', minLevel: 1, maxLevel: 5, questionCount: 0, onetCount: 8 },
+
+  // 5. PPL_SKILL (5 Điểm mù)
+  { code: 'ETMG', name: 'Education and training management', categoryCode: 'PPL_SKILL', subcategoryCode: 'SKILL_DEV', minLevel: 4, maxLevel: 6, questionCount: 0, onetCount: 5 },
+  { code: 'TEAC', name: 'Teaching', categoryCode: 'PPL_SKILL', subcategoryCode: 'SKILL_DEV', minLevel: 2, maxLevel: 5, questionCount: 0, onetCount: 4 },
+  { code: 'OCMT', name: 'Organisation capability management', categoryCode: 'PPL_SKILL', subcategoryCode: 'TALENT_ACQ', minLevel: 5, maxLevel: 7, questionCount: 0, onetCount: 6 },
+  { code: 'WFPL', name: 'Workforce planning', categoryCode: 'PPL_SKILL', subcategoryCode: 'TALENT_ACQ', minLevel: 4, maxLevel: 6, questionCount: 0, onetCount: 5 },
+  { code: 'PROF', name: 'Professional development', categoryCode: 'PPL_SKILL', subcategoryCode: 'SKILL_DEV', minLevel: 4, maxLevel: 6, questionCount: 0, onetCount: 4 },
+
+  // 6. REL_ENG (4 Điểm mù)
+  { code: 'COMM', name: 'Communications', categoryCode: 'REL_ENG', subcategoryCode: 'STAKE_ENG', minLevel: 2, maxLevel: 6, questionCount: 0, onetCount: 7 },
+  { code: 'BUPR', name: 'Buyer relations', categoryCode: 'REL_ENG', subcategoryCode: 'SOURC_SUPP', minLevel: 3, maxLevel: 6, questionCount: 0, onetCount: 5 },
+  { code: 'NOKN', name: 'Contract management', categoryCode: 'REL_ENG', subcategoryCode: 'SOURC_SUPP', minLevel: 3, maxLevel: 6, questionCount: 0, onetCount: 6 },
+  { code: 'SEMI', name: 'Selling', categoryCode: 'REL_ENG', subcategoryCode: 'SALES_MKT', minLevel: 3, maxLevel: 6, questionCount: 0, onetCount: 8 },
 ]
 
 export const MOCK_SFIA_SKILL_DETAILS: Record<string, SfiaSkillDetail> = {
