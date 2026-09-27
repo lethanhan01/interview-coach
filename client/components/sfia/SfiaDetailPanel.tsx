@@ -22,6 +22,7 @@ import type {
   SfiaCategory,
   SfiaSubcategory,
   SfiaSkillDetail,
+  SfiaQuestionBankItem,
 } from './types'
 import {
   getCategoryTheme,
@@ -31,6 +32,8 @@ import { SfiaLevelSpanStepper } from './SfiaLevelSpanStepper'
 import { SfiaLevelStatementCards } from './SfiaLevelStatementCards'
 import { SfiaGuidanceNotes } from './SfiaGuidanceNotes'
 import { SfiaAiPromptModal } from './SfiaAiPromptModal'
+import { SfiaOnetMappingsTab } from './SfiaOnetMappingsTab'
+import { SfiaQuestionBankTab } from './SfiaQuestionBankTab'
 
 export interface SfiaDetailPanelProps {
   skillDetail: SfiaSkillDetail | null
@@ -40,6 +43,7 @@ export interface SfiaDetailPanelProps {
   subcategories: SfiaSubcategory[]
   selectedLevel: number
   onSelectLevel: (level: number) => void
+  onSkillUpdated?: (detail: SfiaSkillDetail) => void
   onNavigateToMatrix?: () => void
   onRetry?: () => void
   className?: string
@@ -53,6 +57,7 @@ export function SfiaDetailPanel({
   subcategories,
   selectedLevel,
   onSelectLevel,
+  onSkillUpdated,
   onNavigateToMatrix,
   onRetry,
   className,
@@ -239,13 +244,13 @@ export function SfiaDetailPanel({
         <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
           <span className="text-[11px] text-ink-muted">Câu hỏi phỏng vấn</span>
           <p className="text-sm font-bold text-ink mt-0.5">
-            {skillDetail.questionCount} câu hỏi
+            {skillDetail.questionBankItems?.length || skillDetail.questionCount} câu hỏi
           </p>
         </div>
         <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
           <span className="text-[11px] text-ink-muted">Nghề O*NET liên kết</span>
           <p className="text-sm font-bold text-ink mt-0.5">
-            {skillDetail.onetCount} vị trí nghề
+            {skillDetail.onetMappings?.length || skillDetail.onetCount} vị trí nghề
           </p>
         </div>
         <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
@@ -279,12 +284,16 @@ export function SfiaDetailPanel({
           <TabsTrigger value="onet" className="gap-1.5 text-xs px-3 py-1">
             <Briefcase className="size-3.5" />
             <span>Nghề nghiệp O*NET</span>
-            <span className="text-[10px] opacity-75">({skillDetail.onetCount})</span>
+            <span className="text-[10px] opacity-75 font-mono">
+              ({skillDetail.onetMappings?.length || skillDetail.onetCount || 0})
+            </span>
           </TabsTrigger>
           <TabsTrigger value="questions" className="gap-1.5 text-xs px-3 py-1">
             <HelpCircle className="size-3.5" />
-            <span>Ngân hàng câu hỏi</span>
-            <span className="text-[10px] opacity-75">({skillDetail.questionCount})</span>
+            <span>Ngân hàng câu hỏi & Tạo mới</span>
+            <span className="text-[10px] opacity-75 font-mono">
+              ({skillDetail.questionBankItems?.length || skillDetail.questionCount || 0})
+            </span>
           </TabsTrigger>
         </TabsList>
 
@@ -304,30 +313,31 @@ export function SfiaDetailPanel({
           />
         </TabsContent>
 
-        {/* Tab 2: O*NET Mappings (Smart Placeholder ready for Phase 4) */}
+        {/* Tab 2: O*NET Mappings (Phase 4 Integrated) */}
         <TabsContent value="onet" className="mt-0">
-          <div className="bg-surface-raised/30 border border-border/80 rounded-xl p-6 text-center space-y-2">
-            <Briefcase className="size-8 text-brand mx-auto mb-1 opacity-80" />
-            <h4 className="text-sm font-bold text-ink">
-              Ánh xạ Nghề nghiệp O*NET ({skillDetail.onetCount} vị trí)
-            </h4>
-            <p className="text-xs text-ink-muted max-w-md mx-auto leading-relaxed">
-              Bảng ánh xạ trực tiếp sang các mã nghề O*NET SOC (`public.onet_sfia_mappings`) kèm trọng số và cờ Core/Supplemental sẽ được mở rộng đầy đủ trong Phase 4.
-            </p>
-          </div>
+          <SfiaOnetMappingsTab
+            skillCode={skillDetail.code}
+            skillName={skillDetail.name}
+            onetMappings={skillDetail.onetMappings || []}
+          />
         </TabsContent>
 
-        {/* Tab 3: Question Bank (Smart Placeholder ready for Phase 4) */}
+        {/* Tab 3: Question Bank & Create Modal (Phase 4 Integrated) */}
         <TabsContent value="questions" className="mt-0">
-          <div className="bg-surface-raised/30 border border-border/80 rounded-xl p-6 text-center space-y-2">
-            <HelpCircle className="size-8 text-brand mx-auto mb-1 opacity-80" />
-            <h4 className="text-sm font-bold text-ink">
-              Ngân hàng Câu hỏi Phỏng vấn ({skillDetail.questionCount} câu hỏi)
-            </h4>
-            <p className="text-xs text-ink-muted max-w-md mx-auto leading-relaxed">
-              Danh sách câu hỏi phỏng vấn gắn nhãn kỹ năng {skillDetail.code} phân theo độ khó và loại phỏng vấn (`public.question_bank`) sẽ được mở rộng đầy đủ trong Phase 4.
-            </p>
-          </div>
+          <SfiaQuestionBankTab
+            skillDetail={skillDetail}
+            selectedLevel={selectedLevel}
+            onSelectLevel={onSelectLevel}
+            onQuestionCreated={(newQ) => {
+              if (!skillDetail) return
+              const updated: SfiaSkillDetail = {
+                ...skillDetail,
+                questionCount: (skillDetail.questionCount || 0) + 1,
+                questionBankItems: [newQ, ...(skillDetail.questionBankItems || [])],
+              }
+              onSkillUpdated?.(updated)
+            }}
+          />
         </TabsContent>
       </Tabs>
 

@@ -8,6 +8,7 @@ import type {
   SfiaGenericAttribute,
   SfiaCoverageStats,
   SfiaMatrixCellData,
+  SfiaQuestionBankItem,
 } from '@/components/sfia/types'
 import {
   MOCK_SFIA_CATEGORIES,
@@ -25,6 +26,10 @@ import {
  * - false (Phase 8 ➔ Phase 9): Sử dụng NestJS Backend API thật
  */
 const USE_MOCK = true
+
+// In-Memory Session Mock Caches (Bảo đảm tính nhất quán state trong phiên làm việc)
+let mockSkillSummariesCache: SfiaSkillSummary[] = [...MOCK_SFIA_SKILL_SUMMARIES]
+let mockSkillDetailsCache: Record<string, SfiaSkillDetail> = { ...MOCK_SFIA_SKILL_DETAILS }
 
 export interface SfiaSkillFilters {
   categoryCode?: string
@@ -71,7 +76,7 @@ export const sfiaAdminService = {
    */
   async getSkills(filters?: SfiaSkillFilters): Promise<SfiaSkillSummary[]> {
     if (USE_MOCK) {
-      let result = [...MOCK_SFIA_SKILL_SUMMARIES]
+      let result = [...mockSkillSummariesCache]
 
       if (filters?.categoryCode) {
         result = result.filter((s) => s.categoryCode === filters.categoryCode)
@@ -109,12 +114,12 @@ export const sfiaAdminService = {
   async getSkillDetail(skillCode: string): Promise<SfiaSkillDetail | null> {
     if (USE_MOCK) {
       const code = skillCode.toUpperCase()
-      if (MOCK_SFIA_SKILL_DETAILS[code]) {
-        return Promise.resolve(MOCK_SFIA_SKILL_DETAILS[code])
+      if (mockSkillDetailsCache[code]) {
+        return Promise.resolve(mockSkillDetailsCache[code])
       }
 
       // Fallback nếu kỹ năng có trong tóm tắt nhưng chưa có chi tiết phong phú
-      const summary = MOCK_SFIA_SKILL_SUMMARIES.find((s) => s.code === code)
+      const summary = mockSkillSummariesCache.find((s) => s.code === code)
       if (summary) {
         const generatedLevels = []
         for (let l = summary.minLevel; l <= summary.maxLevel; l++) {
@@ -126,20 +131,62 @@ export const sfiaAdminService = {
           })
         }
 
-        return Promise.resolve({
+        const generatedDetail: SfiaSkillDetail = {
           ...summary,
           overallDescription: `Mô tả tổng quan về kỹ năng ${summary.name} theo khung năng lực SFIA 9.`,
           guidanceNotes: `Các lưu ý hướng dẫn áp dụng cho kỹ năng ${summary.name} trong thực tế phỏng vấn và đánh giá năng lực.`,
           skillLevels: generatedLevels,
           onetMappings: [],
           questionBankItems: [],
-        })
+        }
+
+        mockSkillDetailsCache[code] = generatedDetail
+        return Promise.resolve(generatedDetail)
       }
 
       return Promise.resolve(null)
     }
 
     return apiClient.get<SfiaSkillDetail>(`/admin/sfia/skills/${encodeURIComponent(skillCode)}`)
+  },
+
+  /**
+   * Thêm câu hỏi phỏng vấn mới vào kho dữ liệu (hỗ trợ in-memory mock store trong Phase 4)
+   */
+  async addMockQuestion(
+    skillCode: string,
+    newQuestion: Omit<SfiaQuestionBankItem, 'id'>
+  ): Promise<SfiaQuestionBankItem> {
+    const code = skillCode.toUpperCase()
+    const id = `Q-${code}-${Math.floor(1000 + Math.random() * 9000)}`
+    const createdItem: SfiaQuestionBankItem = {
+      id,
+      ...newQuestion,
+    }
+
+    if (USE_MOCK) {
+      // 1. Cập nhật chi tiết kỹ năng trong cache
+      const detail = await this.getSkillDetail(code)
+      if (detail) {
+        detail.questionBankItems = [createdItem, ...(detail.questionBankItems || [])]
+        detail.questionCount += 1
+        mockSkillDetailsCache[code] = { ...detail }
+      }
+
+      // 2. Đồng bộ questionCount trong danh sách tóm tắt
+      const summary = mockSkillSummariesCache.find((s) => s.code === code)
+      if (summary) {
+        summary.questionCount += 1
+      }
+
+      return Promise.resolve(createdItem)
+    }
+
+    // Backend endpoint khi sang Phase 8
+    return apiClient.post<SfiaQuestionBankItem>(
+      `/admin/sfia/skills/${encodeURIComponent(code)}/questions`,
+      newQuestion
+    )
   },
 
   /**

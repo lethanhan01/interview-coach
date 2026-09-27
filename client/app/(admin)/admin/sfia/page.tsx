@@ -210,6 +210,16 @@ function SfiaBrowserWorkspace() {
                   subcategories={subcategories}
                   selectedLevel={selectedLevel}
                   onSelectLevel={(level) => setLevel(level)}
+                  onSkillUpdated={(updated) => {
+                    setSkillDetail(updated)
+                    setSkills((prev) =>
+                      prev.map((s) =>
+                        s.code === updated.code
+                          ? { ...s, questionCount: updated.questionCount }
+                          : s
+                      )
+                    )
+                  }}
                   onNavigateToMatrix={() => setTab('matrix')}
                   onRetry={() => {
                     if (selectedSkill) {
