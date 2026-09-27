@@ -4,9 +4,12 @@ import { useCallback } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import type { SfiaMainTab } from './types'
 
+export type SfiaAttributesViewMode = 'level' | 'matrix'
+
 export const DEFAULT_SFIA_MAIN_TAB: SfiaMainTab = 'taxonomy'
 export const DEFAULT_SFIA_SKILL_CODE = 'PROG'
 export const DEFAULT_SFIA_LEVEL = 3
+export const DEFAULT_SFIA_ATTRIBUTES_VIEW: SfiaAttributesViewMode = 'level'
 
 export function useSfiaParams() {
   const router = useRouter()
@@ -26,6 +29,10 @@ export function useSfiaParams() {
   const selectedLevel = isNaN(parsedLevel) || parsedLevel < 1 || parsedLevel > 7 ? DEFAULT_SFIA_LEVEL : parsedLevel
 
   const selectedCategory = searchParams.get('category') || null
+
+  const rawAttrView = searchParams.get('attrView')
+  const attrView: SfiaAttributesViewMode =
+    rawAttrView === 'matrix' ? 'matrix' : DEFAULT_SFIA_ATTRIBUTES_VIEW
 
   // URL search params updater helper
   const updateParams = useCallback(
@@ -83,15 +90,26 @@ export function useSfiaParams() {
     [updateParams]
   )
 
+  const setAttrView = useCallback(
+    (mode: SfiaAttributesViewMode) => {
+      updateParams({
+        attrView: mode === DEFAULT_SFIA_ATTRIBUTES_VIEW ? null : mode,
+      })
+    },
+    [updateParams]
+  )
+
   return {
     activeTab,
     selectedSkill,
     selectedLevel,
     selectedCategory,
+    attrView,
     setTab,
     setSkill,
     setLevel,
     setCategory,
+    setAttrView,
     updateParams,
   }
 }

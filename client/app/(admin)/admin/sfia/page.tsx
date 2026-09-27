@@ -31,6 +31,9 @@ import {
   type SfiaMatrixCellData,
   type SfiaMatrixDisplayMode,
   type SfiaQuestionBankItem,
+  type SfiaLevelResponsibility,
+  type SfiaGenericAttribute,
+  type SfiaAttributesViewMode,
   SFIA_CATEGORY_THEMES,
   SFIA_LEVEL_DEFINITIONS,
   getCategoryTheme,
@@ -42,6 +45,7 @@ import {
   SfiaMatrixView,
   SfiaMatrixInspectionSheet,
   SfiaCreateQuestionModal,
+  SfiaGenericAttributesView,
   downloadSfiaMatrixCsv,
 } from '@/components/sfia'
 import { sfiaAdminService } from '@/services/sfia-admin.service'
@@ -52,10 +56,12 @@ function SfiaBrowserWorkspace() {
     selectedSkill,
     selectedLevel,
     selectedCategory,
+    attrView,
     setTab,
     setSkill,
     setLevel,
     setCategory,
+    setAttrView,
   } = useSfiaParams()
 
   const [categories, setCategories] = useState<SfiaCategory[]>([])
@@ -76,22 +82,36 @@ function SfiaBrowserWorkspace() {
   const [isCreateQuestionOpen, setIsCreateQuestionOpen] = useState(false)
   const [isExportingCsv, setIsExportingCsv] = useState(false)
 
+  // Phase 6 Responsibility Levels & Generic Attributes States
+  const [responsibilityLevels, setResponsibilityLevels] = useState<SfiaLevelResponsibility[]>([])
+  const [genericAttributes, setGenericAttributes] = useState<SfiaGenericAttribute[]>([])
+  const [attributesError, setAttributesError] = useState<string | null>(null)
+
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true)
-        const [catList, subList, skillList, statData, matrixData] = await Promise.all([
-          sfiaAdminService.getCategories(),
-          sfiaAdminService.getSubcategories(),
-          sfiaAdminService.getSkills(),
-          sfiaAdminService.getCoverageStats(),
-          sfiaAdminService.getMatrixData(),
-        ])
+        const [catList, subList, skillList, statData, matrixData, levelList, attrList] =
+          await Promise.all([
+            sfiaAdminService.getCategories(),
+            sfiaAdminService.getSubcategories(),
+            sfiaAdminService.getSkills(),
+            sfiaAdminService.getCoverageStats(),
+            sfiaAdminService.getMatrixData(),
+            sfiaAdminService.getResponsibilityLevels(),
+            sfiaAdminService.getGenericAttributes(),
+          ])
         setCategories(catList)
         setSubcategories(subList)
         setSkills(skillList)
         setStats(statData)
         setMatrixCells(matrixData.cells)
+        setResponsibilityLevels(levelList)
+        setGenericAttributes(attrList)
+      } catch (err) {
+        setAttributesError(
+          err instanceof Error ? err.message : 'Không thể tải dữ liệu Cấp độ & Thuộc tính SFIA'
+        )
       } finally {
         setLoading(false)
       }
@@ -300,7 +320,9 @@ function SfiaBrowserWorkspace() {
       <div
         className={cn(
           'flex-1 min-h-0',
-          activeTab === 'matrix' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'
+          activeTab === 'matrix' || (activeTab === 'attributes' && attrView === 'matrix')
+            ? 'overflow-hidden flex flex-col'
+            : 'overflow-y-auto'
         )}
       >
         {/* Tab 1: Taxonomy Explorer (Phases 1-4 Foundation) */}
@@ -449,23 +471,39 @@ function SfiaBrowserWorkspace() {
           </div>
         )}
 
-        {/* Tab 3: Generic Attributes (Phase 6 Placeholder Shell) */}
+        {/* Tab 3: Generic Attributes & 7 Responsibility Levels (Phase 6 Dual-View) */}
         {activeTab === 'attributes' && (
-          <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center bg-card border border-border/80 rounded-xl">
-            <div className="bg-amber-500/10 text-amber-600 p-3 rounded-full mb-3">
-              <SlidersHorizontal className="size-8" />
-            </div>
-            <h3 className="text-base font-bold text-ink mb-1">
-              7 Cấp Độ Trách Nhiệm & 5 Thuộc Tính Năng Lực Nền Tảng
-            </h3>
-            <p className="text-xs text-ink-muted max-w-md mb-4 leading-relaxed">
-              Chế độ xem kép (Theo từng cấp độ & Ma trận so sánh tiến trình thuộc tính) sẽ được xây dựng trong Phase 6.
-            </p>
-            <div className="flex items-center gap-2 text-xs text-ink-muted bg-surface-inset px-3 py-1.5 rounded-lg border border-border">
-              <span>5 Trụ cột:</span>
-              <span className="font-semibold text-ink">Autonomy, Influence, Complexity, Business skills, Knowledge</span>
-            </div>
-          </div>
+          <SfiaGenericAttributesView
+            levels={responsibilityLevels}
+            attributes={genericAttributes}
+            selectedLevel={selectedLevel}
+            onSelectLevel={(lvl) => setLevel(lvl)}
+            viewMode={attrView}
+            onViewModeChange={setAttrView}
+            onNavigateToMatrixWithLevel={(lvl) => {
+              setLevel(lvl)
+              setTab('matrix')
+            }}
+            loading={loading}
+            error={attributesError}
+            onRetry={async () => {
+              try {
+                setAttributesError(null)
+                const [lvlList, attrList] = await Promise.all([
+                  sfiaAdminService.getResponsibilityLevels(),
+                  sfiaAdminService.getGenericAttributes(),
+                ])
+                setResponsibilityLevels(lvlList)
+                setGenericAttributes(attrList)
+              } catch (err) {
+                setAttributesError(
+                  err instanceof Error
+                    ? err.message
+                    : 'Không thể tải lại dữ liệu Cấp độ & Thuộc tính'
+                )
+              }
+            }}
+          />
         )}
 
         {/* Tab 4: Analytics (Phase 7 Placeholder Shell) */}

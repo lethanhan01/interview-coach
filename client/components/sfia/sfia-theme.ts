@@ -123,3 +123,84 @@ export function getLevelTheme(level: number) {
     color: 'text-slate-600 dark:text-slate-400',
   }
 }
+
+export interface SfiaAttributeTheme {
+  code: string
+  name: string
+  nameVi: string
+  badge: string
+  border: string
+  accent: string
+  bgLight: string
+  iconName: 'Compass' | 'Users' | 'Cpu' | 'Briefcase' | 'BookOpen'
+}
+
+export const SFIA_ATTRIBUTE_THEMES: Record<string, SfiaAttributeTheme> = {
+  AUTONOMY: {
+    code: 'AUTONOMY',
+    name: 'Autonomy',
+    nameVi: 'Mức độ tự chủ',
+    badge: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+    border: 'border-blue-500/30 dark:border-blue-500/20',
+    accent: 'text-blue-600 dark:text-blue-400',
+    bgLight: 'bg-blue-500/5',
+    iconName: 'Compass',
+  },
+  INFLUENCE: {
+    code: 'INFLUENCE',
+    name: 'Influence',
+    nameVi: 'Mức độ ảnh hưởng',
+    badge: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
+    border: 'border-violet-500/30 dark:border-violet-500/20',
+    accent: 'text-violet-600 dark:text-violet-400',
+    bgLight: 'bg-violet-500/5',
+    iconName: 'Users',
+  },
+  COMPLEXITY: {
+    code: 'COMPLEXITY',
+    name: 'Complexity',
+    nameVi: 'Độ phức tạp của vấn đề',
+    badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+    border: 'border-amber-500/30 dark:border-amber-500/20',
+    accent: 'text-amber-600 dark:text-amber-400',
+    bgLight: 'bg-amber-500/5',
+    iconName: 'Cpu',
+  },
+  BUSINESS_SKILLS: {
+    code: 'BUSINESS_SKILLS',
+    name: 'Business skills',
+    nameVi: 'Kỹ năng kinh doanh & Đạo đức số',
+    badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+    border: 'border-emerald-500/30 dark:border-emerald-500/20',
+    accent: 'text-emerald-600 dark:text-emerald-400',
+    bgLight: 'bg-emerald-500/5',
+    iconName: 'Briefcase',
+  },
+  KNOWLEDGE: {
+    code: 'KNOWLEDGE',
+    name: 'Knowledge',
+    nameVi: 'Mức độ tiếp thu & Ứng dụng kiến thức',
+    badge: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
+    border: 'border-cyan-500/30 dark:border-cyan-500/20',
+    accent: 'text-cyan-600 dark:text-cyan-400',
+    bgLight: 'bg-cyan-500/5',
+    iconName: 'BookOpen',
+  },
+}
+
+export const SFIA_DEFAULT_ATTRIBUTE_THEME: SfiaAttributeTheme = {
+  code: 'UNKNOWN',
+  name: 'Generic Attribute',
+  nameVi: 'Thuộc tính năng lực',
+  badge: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20',
+  border: 'border-slate-500/30 dark:border-slate-500/20',
+  accent: 'text-slate-600 dark:text-slate-400',
+  bgLight: 'bg-slate-500/5',
+  iconName: 'Compass',
+}
+
+export function getAttributeTheme(attributeCode?: string | null): SfiaAttributeTheme {
+  if (!attributeCode) return SFIA_DEFAULT_ATTRIBUTE_THEME
+  return SFIA_ATTRIBUTE_THEMES[attributeCode] || SFIA_DEFAULT_ATTRIBUTE_THEME
+}
+
