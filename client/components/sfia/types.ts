@@ -81,6 +81,8 @@ export interface SfiaGenericAttribute {
   levels: Record<number, string> // Mô tả tiêu chuẩn tại từng level 1 - 7
 }
 
+export type SfiaMatrixDisplayMode = 'level' | 'questions' | 'onet'
+
 export interface SfiaMatrixCellData {
   skillCode: string
   levelId: number // 1 - 7

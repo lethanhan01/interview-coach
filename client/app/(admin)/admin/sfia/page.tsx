@@ -28,6 +28,9 @@ import {
   type SfiaSkillSummary,
   type SfiaSkillDetail,
   type SfiaCoverageStats,
+  type SfiaMatrixCellData,
+  type SfiaMatrixDisplayMode,
+  type SfiaQuestionBankItem,
   SFIA_CATEGORY_THEMES,
   SFIA_LEVEL_DEFINITIONS,
   getCategoryTheme,
@@ -35,6 +38,11 @@ import {
   SfiaSidebarTree,
   SfiaMobileDrawer,
   SfiaDetailPanel,
+  SfiaMatrixToolbar,
+  SfiaMatrixView,
+  SfiaMatrixInspectionSheet,
+  SfiaCreateQuestionModal,
+  downloadSfiaMatrixCsv,
 } from '@/components/sfia'
 import { sfiaAdminService } from '@/services/sfia-admin.service'
 
@@ -47,6 +55,7 @@ function SfiaBrowserWorkspace() {
     setTab,
     setSkill,
     setLevel,
+    setCategory,
   } = useSfiaParams()
 
   const [categories, setCategories] = useState<SfiaCategory[]>([])
@@ -58,20 +67,31 @@ function SfiaBrowserWorkspace() {
   const [stats, setStats] = useState<SfiaCoverageStats | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Phase 5 Matrix Grid States
+  const [matrixCells, setMatrixCells] = useState<Record<string, SfiaMatrixCellData>>({})
+  const [matrixSearch, setMatrixSearch] = useState('')
+  const [matrixDisplayMode, setMatrixDisplayMode] = useState<SfiaMatrixDisplayMode>('level')
+  const [matrixBlindSpotsOnly, setMatrixBlindSpotsOnly] = useState(false)
+  const [inspectedCell, setInspectedCell] = useState<{ skillCode: string; levelId: number } | null>(null)
+  const [isCreateQuestionOpen, setIsCreateQuestionOpen] = useState(false)
+  const [isExportingCsv, setIsExportingCsv] = useState(false)
+
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true)
-        const [catList, subList, skillList, statData] = await Promise.all([
+        const [catList, subList, skillList, statData, matrixData] = await Promise.all([
           sfiaAdminService.getCategories(),
           sfiaAdminService.getSubcategories(),
           sfiaAdminService.getSkills(),
           sfiaAdminService.getCoverageStats(),
+          sfiaAdminService.getMatrixData(),
         ])
         setCategories(catList)
         setSubcategories(subList)
         setSkills(skillList)
         setStats(statData)
+        setMatrixCells(matrixData.cells)
       } finally {
         setLoading(false)
       }
@@ -113,6 +133,115 @@ function SfiaBrowserWorkspace() {
       isCancelled = true
     }
   }, [selectedSkill])
+
+  // Lọc kỹ năng hiển thị trong Ma trận 2D
+  const displayedMatrixSkills = React.useMemo(() => {
+    return skills.filter((skill) => {
+      // 1. Lọc theo danh mục
+      if (selectedCategory && skill.categoryCode !== selectedCategory) {
+        return false
+      }
+      // 2. Tìm kiếm theo mã hoặc tên
+      if (matrixSearch.trim()) {
+        const q = matrixSearch.toLowerCase().trim()
+        const matchCode = skill.code.toLowerCase().includes(q)
+        const matchName = skill.name.toLowerCase().includes(q)
+        if (!matchCode && !matchName) return false
+      }
+      return true
+    })
+  }, [skills, selectedCategory, matrixSearch])
+
+  // Đếm số lượng kỹ năng có điểm mù trong tập hiển thị
+  const blindSpotsCount = React.useMemo(() => {
+    let count = 0
+    for (const skill of displayedMatrixSkills) {
+      for (let lvl = skill.minLevel; lvl <= skill.maxLevel; lvl++) {
+        const cell = matrixCells[`${skill.code}_L${lvl}`]
+        if (cell && cell.questionCount === 0) {
+          count++
+          break
+        }
+      }
+    }
+    return count
+  }, [displayedMatrixSkills, matrixCells])
+
+  // Xử lý xuất file CSV ma trận
+  const handleExportCsv = () => {
+    try {
+      setIsExportingCsv(true)
+      const success = downloadSfiaMatrixCsv(
+        displayedMatrixSkills,
+        categories,
+        matrixCells
+      )
+      if (success) {
+        toast.success('Đã xuất ma trận SFIA 2D thành công!', {
+          description: 'File CSV UTF-8 đã được tải xuống trình duyệt.',
+        })
+      } else {
+        toast.error('Không thể xuất file CSV ma trận')
+      }
+    } catch {
+      toast.error('Có lỗi xảy ra khi tạo file CSV')
+    } finally {
+      setIsExportingCsv(false)
+    }
+  }
+
+  // Xử lý điều hướng từ Sheet sang Tab 1 (Taxonomy)
+  const handleOpenInTaxonomy = (skillCode: string, levelId: number) => {
+    setSkill(skillCode, levelId)
+    setTab('taxonomy')
+  }
+
+  // Xử lý đồng bộ dữ liệu Reactive khi tạo câu hỏi mới từ Sheet
+  const handleQuestionCreated = (newQuestion: SfiaQuestionBankItem) => {
+    if (inspectedCell) {
+      const key = `${inspectedCell.skillCode}_L${inspectedCell.levelId}`
+      setMatrixCells((prev) => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          questionCount: (prev[key]?.questionCount || 0) + 1,
+        },
+      }))
+
+      // Cập nhật danh sách tóm tắt kỹ năng
+      setSkills((prev) =>
+        prev.map((s) =>
+          s.code === inspectedCell.skillCode
+            ? { ...s, questionCount: s.questionCount + 1 }
+            : s
+        )
+      )
+
+      // Cập nhật chi tiết kỹ năng nếu đang cache
+      setSkillDetail((prev) => {
+        if (!prev || prev.code !== inspectedCell.skillCode) return prev
+        return {
+          ...prev,
+          questionCount: prev.questionCount + 1,
+          questionBankItems: [newQuestion, ...(prev.questionBankItems || [])],
+        }
+      })
+
+      // Cập nhật tổng thể thống kê
+      setStats((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          totalQuestions: prev.totalQuestions + 1,
+        }
+      })
+
+      toast.success('Đã tạo câu hỏi phỏng vấn mới thành công!', {
+        description: `Đã cập nhật câu hỏi cho kỹ năng ${inspectedCell.skillCode} Level ${inspectedCell.levelId}.`,
+      })
+    }
+    setIsCreateQuestionOpen(false)
+  }
 
   return (
     <div className="flex flex-col gap-2 h-full min-h-0 flex-1">
@@ -168,7 +297,12 @@ function SfiaBrowserWorkspace() {
       </div>
 
       {/* Main Tab Content Panels */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div
+        className={cn(
+          'flex-1 min-h-0',
+          activeTab === 'matrix' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'
+        )}
+      >
         {/* Tab 1: Taxonomy Explorer (Phases 1-4 Foundation) */}
         {activeTab === 'taxonomy' && (
           <div className="flex flex-col gap-3 h-full min-h-0">
@@ -240,24 +374,78 @@ function SfiaBrowserWorkspace() {
           </div>
         )}
 
-        {/* Tab 2: SFIA Matrix Grid 2D (Phase 5 Placeholder Shell) */}
+        {/* Tab 2: SFIA Matrix Grid 2D (Phase 5 Workspace) */}
         {activeTab === 'matrix' && (
-          <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center bg-card border border-border/80 rounded-xl">
-            <div className="bg-brand/10 text-brand p-3 rounded-full mb-3">
-              <Grid3X3 className="size-8" />
-            </div>
-            <h3 className="text-base font-bold text-ink mb-1">
-              SFIA 9 Matrix Grid 2D (Ma Trận 147 Kỹ Năng x 7 Cấp Độ)
-            </h3>
-            <p className="text-xs text-ink-muted max-w-md mb-4 leading-relaxed">
-              Bảng ma trận 2 chiều với Sticky Headers, xem nhanh qua Slide-over Sheet và bộ lọc điểm mù sẽ được xây dựng trong Phase 5.
-            </p>
-            <div className="flex items-center gap-2 text-xs text-ink-muted bg-surface-inset px-3 py-1.5 rounded-lg border border-border">
-              <span>Đã nạp sẵn:</span>
-              <strong className="text-ink">{skills.length} kỹ năng</strong>
-              <span>x</span>
-              <strong className="text-ink">7 cấp độ trách nhiệm</strong>
-            </div>
+          <div className="flex flex-col gap-2.5 h-full min-h-0 flex-1 overflow-hidden">
+            {/* Matrix Toolbar Controls */}
+            <SfiaMatrixToolbar
+              categories={categories}
+              selectedCategory={selectedCategory || ''}
+              onCategoryChange={(catCode) => setCategory(catCode || null)}
+              searchQuery={matrixSearch}
+              onSearchChange={setMatrixSearch}
+              displayMode={matrixDisplayMode}
+              onDisplayModeChange={setMatrixDisplayMode}
+              blindSpotsOnly={matrixBlindSpotsOnly}
+              onBlindSpotsOnlyChange={setMatrixBlindSpotsOnly}
+              onExportCsv={handleExportCsv}
+              totalSkillsCount={skills.length}
+              displayedSkillsCount={displayedMatrixSkills.length}
+              blindSpotsCount={blindSpotsCount}
+              isExporting={isExportingCsv}
+            />
+
+            {/* 2D Matrix Table Grid View */}
+            <SfiaMatrixView
+              skills={displayedMatrixSkills}
+              categories={categories}
+              cells={matrixCells}
+              displayMode={matrixDisplayMode}
+              blindSpotsOnly={matrixBlindSpotsOnly}
+              inspectedCell={inspectedCell}
+              onSelectCell={(skillCode, levelId) =>
+                setInspectedCell({ skillCode, levelId })
+              }
+              onClearFilters={() => {
+                setMatrixSearch('')
+                setCategory(null)
+                setMatrixBlindSpotsOnly(false)
+              }}
+            />
+
+            {/* Slide-Over Inspection Sheet */}
+            <SfiaMatrixInspectionSheet
+              isOpen={!!inspectedCell}
+              onClose={() => setInspectedCell(null)}
+              skillCode={inspectedCell?.skillCode || null}
+              levelId={inspectedCell?.levelId || null}
+              categories={categories}
+              onOpenInTaxonomy={handleOpenInTaxonomy}
+              onCreateQuestion={(skillCode, levelId) => {
+                setIsCreateQuestionOpen(true)
+              }}
+            />
+
+            {/* Modal Tạo Câu Hỏi Mới Trực Tiếp Từ Sheet */}
+            {isCreateQuestionOpen && inspectedCell && (
+              <SfiaCreateQuestionModal
+                open={isCreateQuestionOpen}
+                onOpenChange={setIsCreateQuestionOpen}
+                skillCode={inspectedCell.skillCode}
+                skillName={
+                  skills.find((s) => s.code === inspectedCell.skillCode)?.name ||
+                  inspectedCell.skillCode
+                }
+                minLevel={
+                  skills.find((s) => s.code === inspectedCell.skillCode)?.minLevel || 1
+                }
+                maxLevel={
+                  skills.find((s) => s.code === inspectedCell.skillCode)?.maxLevel || 7
+                }
+                defaultLevel={inspectedCell.levelId}
+                onQuestionCreated={handleQuestionCreated}
+              />
+            )}
           </div>
         )}
 
