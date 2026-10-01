@@ -15,6 +15,8 @@ import { TranscribeAnswer } from './transcribe-answer.service';
 import { TranscriptionProcessor } from './transcription.processor';
 import { UploadAndTranscribeAnswerAudio } from './upload-and-transcribe-answer-audio.service';
 import { VoiceMetricsService } from './voice-metrics.service';
+import { StreamAudioService } from './stream-audio.service';
+import { MediaStreamController } from './media-stream.controller';
 import { workersEnabled } from '@core/runtime/runtime-role';
 
 import { MediaFacade } from './contracts/media-facade.service';
@@ -22,6 +24,7 @@ import { MediaFacade } from './contracts/media-facade.service';
 const workerProviders = workersEnabled() ? [TranscriptionProcessor] : [];
 
 @Module({
+  controllers: [MediaStreamController],
   imports: [
     AiModule,
     StorageModule,
@@ -44,6 +47,7 @@ const workerProviders = workersEnabled() ? [TranscriptionProcessor] : [];
     UploadAndTranscribeAnswerAudio,
     VoiceMetricsService,
     TranscribeAnswer,
+    StreamAudioService,
     MediaFacade,
     ...workerProviders,
   ],

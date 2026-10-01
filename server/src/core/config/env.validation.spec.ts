@@ -1,8 +1,8 @@
 import { validateEnv } from './env.validation';
 
 const validEnv = {
-  SUPABASE_URL: 'https://example.supabase.co',
-  SUPABASE_SERVICE_ROLE_KEY: 'service-role-key-value',
+  APP_URL: 'http://localhost:3000',
+  MEDIA_STORAGE_PATH: './uploads/audio',
   AUTH_JWT_SECRET: 'a-very-long-local-auth-secret-for-tests',
   SMTP_HOST: 'smtp.example.com',
   SMTP_PORT: '587',
@@ -14,8 +14,11 @@ const validEnv = {
 };
 
 describe('validateEnv', () => {
-  it('validates local authentication configuration', () => {
+  it('validates local authentication and storage configuration', () => {
     const result = validateEnv(validEnv);
+    expect(result.APP_URL).toBe('http://localhost:3000');
+    expect(result.MEDIA_STORAGE_PATH).toBe('./uploads/audio');
+    expect(result.MEDIA_SIGNED_URL_TTL_SECONDS).toBe(1800);
     expect(result.AUTH_COOKIE_NAME).toBe('interviewcoach_auth');
     expect(result.AUTH_COOKIE_MAX_AGE).toBe(86_400);
     expect(result.SMTP_PORT).toBe(587);

@@ -8,10 +8,9 @@ process.env.DIRECT_URL = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 process.env.REDIS_HOST = process.env.REDIS_HOST ?? 'localhost';
 process.env.REDIS_PORT = process.env.REDIS_PORT ?? '6379';
 process.env.WORKERS_ENABLED = 'false';
-process.env.SUPABASE_URL =
-  process.env.SUPABASE_URL ?? 'https://placeholder.supabase.co';
-process.env.SUPABASE_SERVICE_ROLE_KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'placeholder_service_role_key';
+process.env.APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
+process.env.MEDIA_STORAGE_PATH =
+  process.env.MEDIA_STORAGE_PATH ?? './uploads/audio-test';
 process.env.AUTH_JWT_SECRET =
   process.env.AUTH_JWT_SECRET ??
   'test_jwt_secret_must_be_at_least_32_characters';

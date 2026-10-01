@@ -1,10 +1,12 @@
-import { Injectable, HttpStatus, Inject } from '@nestjs/common';
+import { Injectable, HttpStatus, Inject, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { isIP } from 'node:net';
+import * as path from 'node:path';
 import {
   AI_GATEWAY_TOKEN,
   type IAIGateway,
 } from '@infra/ai/ai-gateway.interface';
+import { LocalDiskMediaStorageAdapter } from '@infra/storage/local-disk-media-storage.adapter';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 
@@ -24,15 +26,23 @@ interface TranscribeResult {
 @Injectable()
 export class SpeechToText {
   private readonly allowedHosts: Set<string>;
+  private readonly isDevOrTest: boolean;
 
   constructor(
     @Inject(AI_GATEWAY_TOKEN)
     private readonly openAIGateway: IAIGateway,
     config: ConfigService,
+    @Optional()
+    private readonly storageAdapter?: LocalDiskMediaStorageAdapter,
   ) {
-    const supabaseHost = new URL(
-      config.getOrThrow<string>('SUPABASE_URL'),
-    ).hostname.toLowerCase();
+    const rawAppUrl = config.get<string>('APP_URL') || 'http://localhost:3000';
+    let appHost = 'localhost';
+    try {
+      appHost = new URL(rawAppUrl).hostname.toLowerCase();
+    } catch {
+      // Keep default
+    }
+
     const configuredHosts =
       config
         .get<string>('AUDIO_ALLOWED_HOSTS')
@@ -40,10 +50,24 @@ export class SpeechToText {
         .map((host) => host.trim().toLowerCase())
         .filter(Boolean) ?? [];
 
-    this.allowedHosts = new Set([supabaseHost, ...configuredHosts]);
+    this.allowedHosts = new Set([appHost, 'localhost', '127.0.0.1', ...configuredHosts]);
+    this.isDevOrTest = (config.get<string>('NODE_ENV') || 'development') !== 'production';
   }
 
   async transcribe(audioFileUrl: string): Promise<TranscribeResult> {
+    // 1. Kiểm tra nếu là URL nội bộ -> Đọc trực tiếp Buffer từ Local Disk
+    const localKey = this.extractLocalMediaKey(audioFileUrl);
+    if (localKey && this.storageAdapter) {
+      const buffer = await this.storageAdapter.readBuffer(localKey);
+      const mimeType = this.mimeFromKey(localKey);
+      return this.openAIGateway.transcribe({
+        audioBuffer: buffer,
+        mimeType,
+        timeoutMs: AUDIO_DOWNLOAD_TIMEOUT_MS,
+      });
+    }
+
+    // 2. Fallback: Tải qua HTTP nếu là liên kết ngoài
     const url = this.validateAudioUrl(audioFileUrl);
     let response: Response;
 
@@ -120,6 +144,22 @@ export class SpeechToText {
     });
   }
 
+  private extractLocalMediaKey(audioFileUrl: string): string | null {
+    if (!audioFileUrl) return null;
+    try {
+      const parsed = new URL(audioFileUrl);
+      if (parsed.pathname === '/media/audio/stream') {
+        return parsed.searchParams.get('key');
+      }
+    } catch {
+      // If it's a relative path or direct mediaKey without protocol
+      if (!audioFileUrl.includes('://')) {
+        return audioFileUrl;
+      }
+    }
+    return null;
+  }
+
   private validateAudioUrl(audioFileUrl: string): URL {
     let url: URL;
     try {
@@ -133,11 +173,14 @@ export class SpeechToText {
     }
 
     const hostname = url.hostname.toLowerCase();
+    const isAllowedProtocol =
+      url.protocol === 'https:' ||
+      (url.protocol === 'http:' && (this.isDevOrTest || hostname === 'localhost' || hostname === '127.0.0.1'));
+
     if (
-      url.protocol !== 'https:' ||
+      !isAllowedProtocol ||
       url.username ||
       url.password ||
-      isIP(hostname) !== 0 ||
       !this.allowedHosts.has(hostname)
     ) {
       throw new InterviewAIException(
@@ -155,6 +198,13 @@ export class SpeechToText {
   ): 'audio/webm' | 'audio/mp4' | 'audio/wav' {
     if (contentType === 'audio/mp4') return 'audio/mp4';
     if (contentType === 'audio/wav') return 'audio/wav';
+    return 'audio/webm';
+  }
+
+  private mimeFromKey(key: string): 'audio/webm' | 'audio/mp4' | 'audio/wav' {
+    const ext = path.extname(key).toLowerCase();
+    if (ext === '.mp4' || ext === '.m4a') return 'audio/mp4';
+    if (ext === '.wav') return 'audio/wav';
     return 'audio/webm';
   }
 }

@@ -2,8 +2,13 @@ import { z } from 'zod';
 import { DEFAULT_DB_TIME_ZONE } from '@infra/database/prisma/db-timezone';
 
 const EnvSchema = z.object({
-  SUPABASE_URL: z.string().url(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  APP_URL: z.string().url().default('http://localhost:3000'),
+  MEDIA_STORAGE_PATH: z.string().min(1).default('./uploads/audio'),
+  MEDIA_SIGNED_URL_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(1800),
   AUTH_JWT_SECRET: z.string().min(32),
   AUTH_COOKIE_NAME: z.string().min(1).default('interviewcoach_auth'),
   AUTH_COOKIE_MAX_AGE: z.coerce.number().int().positive().default(86_400),

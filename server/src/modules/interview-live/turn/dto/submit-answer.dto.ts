@@ -32,11 +32,11 @@ export class SubmitAnswerDto {
   skipQuestion?: boolean;
   @ApiPropertyOptional({
     format: 'uri',
-    description: 'HTTPS URL required for voice answers.',
+    description: 'HTTP/HTTPS URL required for voice answers.',
   })
   @ValidateIf((o: SubmitAnswerDto) => o.answerMode === 'voice')
   @IsUrl({
-    protocols: ['https'],
+    protocols: ['http', 'https'],
     require_protocol: true,
     require_valid_protocol: true,
   })

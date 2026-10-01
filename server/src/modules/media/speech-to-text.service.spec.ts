@@ -5,20 +5,31 @@ import {
   createMockConfigService,
   createMockOpenAIGateway,
 } from '@core/test-utils/mock-factories';
+import { LocalDiskMediaStorageAdapter } from '@infra/storage/local-disk-media-storage.adapter';
 
 describe('SpeechToText', () => {
   const originalFetch = global.fetch;
   let service: SpeechToText;
   let mockOpenAI: ReturnType<typeof createMockOpenAIGateway>;
+  let mockStorageAdapter: jest.Mocked<LocalDiskMediaStorageAdapter>;
   let fetchMock: jest.MockedFunction<typeof fetch>;
 
   beforeEach(() => {
     mockOpenAI = createMockOpenAIGateway();
+    mockStorageAdapter = {
+      readBuffer: jest.fn(),
+    } as unknown as jest.Mocked<LocalDiskMediaStorageAdapter>;
+
     const config = createMockConfigService({
-      SUPABASE_URL: 'https://project.supabase.co',
+      APP_URL: 'https://project.example.com',
       AUDIO_ALLOWED_HOSTS: '',
+      NODE_ENV: 'production',
     });
-    service = new SpeechToText(mockOpenAI, config as unknown as ConfigService);
+    service = new SpeechToText(
+      mockOpenAI,
+      config as unknown as ConfigService,
+      mockStorageAdapter,
+    );
     fetchMock = jest.fn();
     global.fetch = fetchMock;
   });
@@ -28,9 +39,33 @@ describe('SpeechToText', () => {
     jest.clearAllMocks();
   });
 
-  it('từ chối URL không dùng HTTPS hoặc không thuộc allowlist', async () => {
+  it('đọc trực tiếp từ LocalDiskMediaStorageAdapter nếu URL là stream link nội bộ', async () => {
+    mockStorageAdapter.readBuffer.mockResolvedValue(Buffer.from([10, 20, 30]));
+    mockOpenAI.transcribe.mockResolvedValue({
+      text: 'Đọc file trực tiếp từ disk',
+      durationSeconds: 3,
+    });
+
+    const localUrl = 'https://project.example.com/media/audio/stream?key=user-1/audio.webm&expires=1780000000&token=abc';
+    const result = await service.transcribe(localUrl);
+
+    expect(result).toEqual({
+      text: 'Đọc file trực tiếp từ disk',
+      durationSeconds: 3,
+    });
+    expect(mockStorageAdapter.readBuffer).toHaveBeenCalledWith('user-1/audio.webm');
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(mockOpenAI.transcribe).toHaveBeenCalledWith(
+      expect.objectContaining({
+        audioBuffer: Buffer.from([10, 20, 30]),
+        mimeType: 'audio/webm',
+      }),
+    );
+  });
+
+  it('từ chối URL không dùng HTTPS (trong production) hoặc không thuộc allowlist', async () => {
     await expect(
-      service.transcribe('http://project.supabase.co/audio.webm'),
+      service.transcribe('http://project.example.com/audio.webm'),
     ).rejects.toMatchObject({ errorCode: ErrorCode.INVALID_AUDIO_URL });
     await expect(
       service.transcribe('https://attacker.example/audio.webm'),
@@ -42,7 +77,7 @@ describe('SpeechToText', () => {
     fetchMock.mockResolvedValue(new Response('not found', { status: 404 }));
 
     await expect(
-      service.transcribe('https://project.supabase.co/audio.webm'),
+      service.transcribe('https://project.example.com/audio.webm'),
     ).rejects.toMatchObject({ errorCode: ErrorCode.AUDIO_DOWNLOAD_FAILED });
     expect(mockOpenAI.transcribe).not.toHaveBeenCalled();
   });
@@ -63,7 +98,7 @@ describe('SpeechToText', () => {
     );
 
     await expect(
-      service.transcribe('https://project.supabase.co/audio.webm'),
+      service.transcribe('https://project.example.com/audio.webm'),
     ).rejects.toMatchObject({ errorCode: ErrorCode.AUDIO_TOO_LARGE });
     expect(mockOpenAI.transcribe).not.toHaveBeenCalled();
   });
@@ -84,7 +119,7 @@ describe('SpeechToText', () => {
     });
 
     await expect(
-      service.transcribe('https://project.supabase.co/audio.webm'),
+      service.transcribe('https://project.example.com/audio.webm'),
     ).resolves.toEqual({ text: 'Xin chào', durationSeconds: 2 });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [requestedUrl, options] = fetchMock.mock.calls[0];
