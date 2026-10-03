@@ -1,6 +1,7 @@
 'use client'
 
 import React, { memo } from 'react'
+
 import {
   Layers,
   CheckCircle2,
@@ -11,20 +12,12 @@ import {
   Trophy,
   ArrowUpRight,
   X,
-  Sparkles,
-  BarChart3,
   ExternalLink,
   Info,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/Tooltip'
 import {
   type SfiaCategory,
   type SfiaSkillSummary,
@@ -34,7 +27,6 @@ import {
   type SfiaTopOnetMappedSkill,
 } from './types'
 import {
-  SFIA_CATEGORY_THEMES,
   getCategoryTheme,
   getLevelTheme,
 } from './sfia-theme'
@@ -582,8 +574,6 @@ const SfiaTopOnetLeaderboard = memo(function SfiaTopOnetLeaderboard({
  */
 export function SfiaAnalyticsView({
   stats,
-  categories,
-  skills,
   selectedCategoryFilter,
   selectedLevelFilter,
   onSelectCategory,

@@ -7,24 +7,17 @@ import {
   SearchX,
   ChevronDown,
   ChevronRight,
-  FolderTree,
   Folder,
   Layers,
-  Filter,
-  ChevronsUpDown,
   RotateCcw,
-  Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import {
   type SfiaCategory,
   type SfiaSubcategory,
   type SfiaSkillSummary,
-  SFIA_CATEGORY_THEMES,
-  SFIA_LEVEL_DEFINITIONS,
   getCategoryTheme,
 } from './index'
 
@@ -56,26 +49,29 @@ export function SfiaSidebarTree({
   }, [skills, selectedSkill])
 
   // Expanded categories & subcategories sets
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
-  const [expandedSubcategories, setExpandedSubcategories] = useState<Set<string>>(new Set())
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => {
+    const initial = new Set<string>()
+    if (currentSkillInfo) initial.add(currentSkillInfo.categoryCode)
+    return initial
+  })
+  const [expandedSubcategories, setExpandedSubcategories] = useState<Set<string>>(() => {
+    const initial = new Set<string>()
+    if (currentSkillInfo) initial.add(currentSkillInfo.subcategoryCode)
+    return initial
+  })
+
+  // Synchronously update expansion when selected skill changes or loads during render (React 19 pattern)
+  const currentSkillKey = currentSkillInfo ? `${currentSkillInfo.code}:${currentSkillInfo.categoryCode}:${currentSkillInfo.subcategoryCode}` : ''
+  const [prevSkillKey, setPrevSkillKey] = useState(currentSkillKey)
+  if (prevSkillKey !== currentSkillKey) {
+    setPrevSkillKey(currentSkillKey)
+    if (currentSkillInfo) {
+      setExpandedCategories((prev) => new Set(prev).add(currentSkillInfo.categoryCode))
+      setExpandedSubcategories((prev) => new Set(prev).add(currentSkillInfo.subcategoryCode))
+    }
+  }
 
   const searchInputRef = useRef<HTMLInputElement>(null)
-
-  // Initialize expansion with selected skill's category & subcategory on mount or skill change
-  useEffect(() => {
-    if (currentSkillInfo) {
-      setExpandedCategories((prev) => {
-        const next = new Set(prev)
-        next.add(currentSkillInfo.categoryCode)
-        return next
-      })
-      setExpandedSubcategories((prev) => {
-        const next = new Set(prev)
-        next.add(currentSkillInfo.subcategoryCode)
-        return next
-      })
-    }
-  }, [currentSkillInfo])
 
   // Auto-scroll selected skill into view smoothly on mount or skill change
   useEffect(() => {
@@ -142,15 +138,6 @@ export function SfiaSidebarTree({
       matchedSubcategoryCodes: subCodes,
     }
   }, [skills, searchQuery, levelFilter])
-
-  // Auto-expand branches when searching or filtering
-  useEffect(() => {
-    const isSearching = searchQuery.trim().length > 0 || levelFilter !== 'all'
-    if (isSearching) {
-      setExpandedCategories(new Set(matchedCategoryCodes))
-      setExpandedSubcategories(new Set(matchedSubcategoryCodes))
-    }
-  }, [searchQuery, levelFilter, matchedCategoryCodes, matchedSubcategoryCodes])
 
   // Expand / Collapse all handlers
   const handleExpandAll = useCallback(() => {
@@ -384,7 +371,7 @@ export function SfiaSidebarTree({
             // If filtering and this category has 0 matches, hide it
             if (isFilterActive && !isCatMatched) return null
 
-            const isCatExpanded = expandedCategories.has(cat.code)
+            const isCatExpanded = isFilterActive ? isCatMatched : expandedCategories.has(cat.code)
             const theme = getCategoryTheme(cat.code)
             const subList = subcategoriesByCategory[cat.code] || []
 
@@ -433,7 +420,7 @@ export function SfiaSidebarTree({
                       const isSubMatched = matchedSubcategoryCodes.has(sub.code)
                       if (isFilterActive && !isSubMatched) return null
 
-                      const isSubExpanded = expandedSubcategories.has(sub.code)
+                      const isSubExpanded = isFilterActive ? isSubMatched : expandedSubcategories.has(sub.code)
                       const subSkills = skillsBySubcategory[sub.code] || []
                       const totalSkillsInSub = totalSkillsCountMap.subMap[sub.code] || sub.skillCount
 

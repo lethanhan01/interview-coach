@@ -30,20 +30,42 @@ import {
 } from '@nestjs/swagger';
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
-function extractUser(userOrReq: any): AuthenticatedUserPayload {
-  if (userOrReq?.user) {
+function extractUser(userOrReq: unknown): AuthenticatedUserPayload {
+  if (typeof userOrReq === 'string') {
     return {
-      id: userOrReq.user.id,
-      email: userOrReq.user.email ?? '',
-      role: userOrReq.user.role ?? UserRole.candidate,
-      emailVerified: userOrReq.user.emailVerified,
+      id: userOrReq,
+      email: '',
+      role: UserRole.candidate,
+      emailVerified: false,
     };
   }
+
+  if (typeof userOrReq === 'object' && userOrReq !== null) {
+    const candidate = userOrReq as Record<string, unknown>;
+    const nestedUser =
+      typeof candidate.user === 'object' && candidate.user !== null
+        ? (candidate.user as Record<string, unknown>)
+        : candidate;
+
+    return {
+      id: typeof nestedUser.id === 'string' ? nestedUser.id : '',
+      email: typeof nestedUser.email === 'string' ? nestedUser.email : '',
+      role:
+        nestedUser.role === UserRole.admin
+          ? UserRole.admin
+          : UserRole.candidate,
+      emailVerified:
+        typeof nestedUser.emailVerified === 'boolean'
+          ? nestedUser.emailVerified
+          : false,
+    };
+  }
+
   return {
-    id: typeof userOrReq === 'string' ? userOrReq : (userOrReq?.id ?? ''),
-    email: userOrReq?.email ?? '',
-    role: userOrReq?.role ?? UserRole.candidate,
-    emailVerified: userOrReq?.emailVerified,
+    id: '',
+    email: '',
+    role: UserRole.candidate,
+    emailVerified: false,
   };
 }
 

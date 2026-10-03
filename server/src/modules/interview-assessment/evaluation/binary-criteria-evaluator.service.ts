@@ -203,7 +203,7 @@ Hãy trả về kết quả dưới định dạng JSON khớp hoàn toàn với
         task: 'feedback',
       });
 
-      const parsedJson = JSON.parse(rawResponse);
+      const parsedJson: unknown = JSON.parse(rawResponse);
       const validated: BinaryCriteriaOutput = this.zodValidator.validate(
         BinaryCriteriaOutputSchema,
         parsedJson,

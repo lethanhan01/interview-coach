@@ -6,7 +6,6 @@ import { SseService } from '@infra/realtime/redis/sse.service';
 import { AssessmentFacade } from '@modules/interview-assessment/contracts';
 import { JwtAuthGuard, SseTokenGuard } from '@core/common/guards';
 import {
-  createMockReportService,
   createMockSessionService,
   createMockSseService,
 } from '@core/test-utils/mock-factories';

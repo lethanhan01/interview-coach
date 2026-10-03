@@ -214,9 +214,7 @@ describe('OnetAdminRepository', () => {
     });
 
     it('returns paginated alternate titles', async () => {
-      queryRawMock.mockResolvedValueOnce([
-        { job_title: 'Full Stack Dev' },
-      ]);
+      queryRawMock.mockResolvedValueOnce([{ job_title: 'Full Stack Dev' }]);
       const titles = await repository.getAlternateTitlesPaginated(
         '15-1252.00',
         'dev',

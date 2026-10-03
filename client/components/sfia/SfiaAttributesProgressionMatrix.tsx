@@ -11,8 +11,6 @@ import {
   X,
   Download,
   Layers,
-  Sparkles,
-  CheckCircle2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -21,7 +19,6 @@ import { cn } from '@/lib/utils'
 import type { SfiaLevelResponsibility, SfiaGenericAttribute } from './types'
 import {
   getAttributeTheme,
-  getLevelTheme,
 } from './sfia-theme'
 import { downloadSfiaAttributesProgressionCsv } from './sfia-attributes-export'
 
@@ -179,7 +176,6 @@ export function SfiaAttributesProgressionMatrix({
               {/* 7 Level Column Headers */}
               {levels.map((lvl) => {
                 const isSelected = lvl.levelId === selectedLevel
-                const levelTheme = getLevelTheme(lvl.levelId)
 
                 return (
                   <th
@@ -221,7 +217,7 @@ export function SfiaAttributesProgressionMatrix({
                     </div>
 
                     <p className="text-[10px] text-ink-muted/80 line-clamp-2 leading-tight italic font-normal">
-                      "{lvl.essence}"
+                      &quot;{lvl.essence}&quot;
                     </p>
                   </th>
                 )
@@ -237,7 +233,7 @@ export function SfiaAttributesProgressionMatrix({
                   colSpan={8}
                   className="p-8 text-center text-ink-muted text-xs bg-surface-inset/40"
                 >
-                  No attributes found matching "{searchQuery}".
+                  No attributes found matching &quot;{searchQuery}&quot;.
                   <Button
                     variant="ghost"
                     size="sm"

@@ -4,7 +4,6 @@ import * as React from 'react'
 import { useState, useMemo } from 'react'
 import { FolderTree, Network, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import {
   Sheet,
   SheetContent,
@@ -17,7 +16,6 @@ import {
   type SfiaSkillSummary,
   SfiaSidebarTree,
   getCategoryTheme,
-  SFIA_LEVEL_DEFINITIONS,
 } from './index'
 import { cn } from '@/lib/utils'
 

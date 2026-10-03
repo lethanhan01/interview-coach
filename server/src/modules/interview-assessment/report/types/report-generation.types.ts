@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import type { SessionType } from '@infra/ai/pipelines/interview-pipeline.interface';
 
 export interface ComprehensiveReportJobDto {

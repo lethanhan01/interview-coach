@@ -9,9 +9,6 @@ import {
   HelpCircle,
   Briefcase,
   BookOpen,
-  CheckCircle2,
-  ExternalLink,
-  Layers,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -24,12 +21,10 @@ import {
   SheetFooter,
 } from '@/components/ui/Sheet'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import {
   type SfiaCategory,
   type SfiaSkillDetail,
-  type SfiaQuestionBankItem,
 } from './types'
 import { sfiaAdminService } from '@/services/sfia-admin.service'
 import { getCategoryTheme, getLevelTheme } from './sfia-theme'
@@ -50,7 +45,6 @@ export function SfiaMatrixInspectionSheet({
   onClose,
   skillCode,
   levelId,
-  categories = [],
   onOpenInTaxonomy,
   onCreateQuestion,
 }: SfiaMatrixInspectionSheetProps) {

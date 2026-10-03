@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
-import { SfiaAdminService, SFIA_VI_TRANSLATIONS } from './sfia-admin.service';
+import { SfiaAdminService } from './sfia-admin.service';
 import {
   ISfiaAdminRepository,
   SFIA_ADMIN_REPOSITORY_TOKEN,
@@ -177,7 +177,9 @@ describe('SfiaAdminService', () => {
       loadSubcategories: jest.fn().mockResolvedValue(mockSubcategories),
       loadLevels: jest.fn().mockResolvedValue(mockLevels),
       loadGenericAttributes: jest.fn().mockResolvedValue(mockAttributes),
-      loadGenericAttributeLevels: jest.fn().mockResolvedValue(mockAttributeLevels),
+      loadGenericAttributeLevels: jest
+        .fn()
+        .mockResolvedValue(mockAttributeLevels),
       loadSkillsWithCounts: jest.fn().mockResolvedValue(mockSkillsWithCounts),
       loadSkillDetailBase: jest.fn().mockResolvedValue(mockSkillDetailBase),
       loadSkillLevels: jest.fn().mockResolvedValue(mockSkillLevels),
@@ -185,9 +187,13 @@ describe('SfiaAdminService', () => {
       loadSkillQuestions: jest.fn().mockResolvedValue(mockQuestions),
       loadMatrixCells: jest.fn().mockResolvedValue(mockMatrixCells),
       loadCoverageMetrics: jest.fn().mockResolvedValue(mockCoverageMetrics),
-      loadCategoryDistribution: jest.fn().mockResolvedValue(mockCategoryDistribution),
+      loadCategoryDistribution: jest
+        .fn()
+        .mockResolvedValue(mockCategoryDistribution),
       loadLevelDistribution: jest.fn().mockResolvedValue(mockLevelDistribution),
-      loadTopOnetMappedSkills: jest.fn().mockResolvedValue(mockTopOnetMappedSkills),
+      loadTopOnetMappedSkills: jest
+        .fn()
+        .mockResolvedValue(mockTopOnetMappedSkills),
       createQuestion: jest.fn().mockResolvedValue({
         id: 'new-q-uuid',
         questionText: 'Test question',
@@ -250,7 +256,10 @@ describe('SfiaAdminService', () => {
 
   describe('getSkills', () => {
     it('returns skills summaries with counts', async () => {
-      const res = await service.getSkills({ categoryCode: 'DEV_IMPL', level: 3 });
+      const res = await service.getSkills({
+        categoryCode: 'DEV_IMPL',
+        level: 3,
+      });
       expect(res).toHaveLength(1);
       expect(res[0].code).toBe('PROG');
       expect(res[0].questionCount).toBe(15);
@@ -268,14 +277,18 @@ describe('SfiaAdminService', () => {
     it('returns full skill detail with levels, onet, and questions', async () => {
       const res = await service.getSkillDetail('prog');
       expect(res.code).toBe('PROG');
-      expect(res.overallDescription).toBe('Designing, building, verifying software.');
+      expect(res.overallDescription).toBe(
+        'Designing, building, verifying software.',
+      );
       expect(res.skillLevels).toHaveLength(1);
       expect(res.onetMappings).toHaveLength(1);
       expect(res.questionBankItems).toHaveLength(1);
     });
 
     it('throws VALIDATION_ERROR when code is empty', async () => {
-      await expect(service.getSkillDetail('')).rejects.toThrow(InterviewAIException);
+      await expect(service.getSkillDetail('')).rejects.toThrow(
+        InterviewAIException,
+      );
       try {
         await service.getSkillDetail('');
       } catch (err: any) {
@@ -286,7 +299,9 @@ describe('SfiaAdminService', () => {
 
     it('throws SFIA_SKILL_NOT_FOUND when skill does not exist', async () => {
       repoMock.loadSkillDetailBase.mockResolvedValueOnce(null);
-      await expect(service.getSkillDetail('UNKNOWN')).rejects.toThrow(InterviewAIException);
+      await expect(service.getSkillDetail('UNKNOWN')).rejects.toThrow(
+        InterviewAIException,
+      );
       try {
         await service.getSkillDetail('UNKNOWN');
       } catch (err: any) {
@@ -368,7 +383,9 @@ describe('SfiaAdminService', () => {
     it('returns complete coverage analytics', async () => {
       const res = await service.getCoverageStats();
       expect(res.totalSkills).toBe(147);
-      expect(res.categoryDistribution[0].nameVi).toBe('Phát triển & Triển khai');
+      expect(res.categoryDistribution[0].nameVi).toBe(
+        'Phát triển & Triển khai',
+      );
       expect(res.levelDistribution[0].shortName).toBe('L3 Apply');
       expect(res.topOnetMappedSkills[0].skillCode).toBe('PROG');
     });

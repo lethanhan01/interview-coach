@@ -1,6 +1,5 @@
 import { QuestionBankService } from './question-bank.service';
 import { QuestionCriteriaService } from '../question-criteria/question-criteria.service';
-import { PrismaService } from '@infra/database/prisma/prisma.service';
 import {
   createMockPrismaService,
   createMockQuestionBank,

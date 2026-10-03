@@ -7,9 +7,7 @@ import {
   Plus,
   Copy,
   Check,
-  Filter,
   X,
-  Layers,
   Sparkles,
   BarChart2,
   CheckCircle2,
@@ -19,7 +17,6 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
 import {
   Select,
   SelectTrigger,
@@ -81,7 +78,10 @@ export function SfiaQuestionBankTab({
   const [copiedId, setCopiedId] = React.useState<string | null>(null)
   const [newlyCreatedId, setNewlyCreatedId] = React.useState<string | null>(null)
 
-  const items = skillDetail.questionBankItems || []
+  const items = React.useMemo(
+    () => skillDetail.questionBankItems || [],
+    [skillDetail.questionBankItems]
+  )
 
   // Đếm các thông số phân bổ
   const stats = React.useMemo(() => {

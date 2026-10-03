@@ -176,7 +176,7 @@ describe('SfiaAdminController', () => {
     }).compile();
 
     controller = module.get<SfiaAdminController>(SfiaAdminController);
-    serviceMock = module.get(SfiaAdminService) as jest.Mocked<SfiaAdminService>;
+    serviceMock = module.get(SfiaAdminService);
   });
 
   // -------------------------------------------------------------------------
@@ -401,9 +401,9 @@ describe('SfiaAdminController', () => {
         ),
       );
 
-      await expect(controller.createQuestion('', validDto)).rejects.toBeInstanceOf(
-        InterviewAIException,
-      );
+      await expect(
+        controller.createQuestion('', validDto),
+      ).rejects.toBeInstanceOf(InterviewAIException);
     });
 
     it('should propagate SFIA_SKILL_INVALID_LEVEL when target level is out of range', async () => {

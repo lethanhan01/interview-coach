@@ -10,6 +10,7 @@ import {
 import { ReportService } from '../report/report.service';
 import { ScoringEngineService } from '../evaluation/scoring-engine.service';
 import type { ContextPackId } from '../evaluation/rubric/context-pack.data';
+import type { BinaryEvaluationCriterion } from '../evaluation/binary-criteria-evaluator.service';
 import type { FeedbackProgressDto } from '../report/dto/feedback-progress.dto';
 import type { ReportResponseDto } from '../report/dto/report-response.dto';
 
@@ -106,7 +107,7 @@ export class AssessmentFacade {
         question.rubricCriteria.length > 0
       ) {
         const skippedFeedback = this.scoringEngine.buildSkippedFeedbackData(
-          question.rubricCriteria as any,
+          question.rubricCriteria as unknown as BinaryEvaluationCriterion[],
           question.targetLevel ?? 3,
         );
 
@@ -207,7 +208,7 @@ export class AssessmentFacade {
           question.rubricCriteria.length > 0
         ) {
           const skippedFeedback = this.scoringEngine.buildSkippedFeedbackData(
-            question.rubricCriteria as any,
+            question.rubricCriteria as unknown as BinaryEvaluationCriterion[],
             question.targetLevel ?? 3,
           );
 

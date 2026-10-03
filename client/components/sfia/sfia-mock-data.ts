@@ -11,7 +11,6 @@ import {
   SfiaLevelResponsibility,
   SfiaGenericAttribute,
   SfiaCoverageStats,
-  SfiaMatrixCellData,
 } from './types'
 
 export const MOCK_SFIA_CATEGORIES: SfiaCategory[] = [

@@ -252,10 +252,7 @@ export class OnetAdminService {
       const rawRows =
         await this.onetAdminRepository.getSfiaSkillCoverage(cleanLimit);
 
-      const skillMap = new Map<
-        string,
-        { name: string; category: string }
-      >();
+      const skillMap = new Map<string, { name: string; category: string }>();
 
       if (this.sfiaFacade) {
         try {

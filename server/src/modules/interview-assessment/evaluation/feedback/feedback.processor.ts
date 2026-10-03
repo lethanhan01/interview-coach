@@ -24,7 +24,10 @@ import { resolveOutputLanguage } from '@infra/ai/output-language';
 import { sanitizeFeedbackSegments } from '../feedback-segment-sanitizer';
 import { PipelineStrategyFactory } from '@infra/ai/pipelines/pipeline-strategy.factory';
 
-import { BinaryCriteriaEvaluatorService } from '../binary-criteria-evaluator.service';
+import {
+  BinaryCriteriaEvaluatorService,
+  type BinaryEvaluationCriterion,
+} from '../binary-criteria-evaluator.service';
 import { ScoringEngineService } from '../scoring-engine.service';
 
 interface FeedbackJobDto {
@@ -126,7 +129,9 @@ export class FeedbackProcessor extends WorkerHost {
         this.scoringEngine
       ) {
         // === NHÁNH MỚI: ĐÁNH GIÁ NHỊ PHÂN VÀ TÍNH ĐIỂM TẤT ĐỊNH (PHASE 5) ===
-        const criteriaList = question.rubricCriteria as any[];
+        const criteriaList = (Array.isArray(question.rubricCriteria)
+          ? question.rubricCriteria
+          : []) as unknown as BinaryEvaluationCriterion[];
         const binaryFeedback = await this.binaryCriteriaEvaluator.evaluate({
           questionText,
           answerText,

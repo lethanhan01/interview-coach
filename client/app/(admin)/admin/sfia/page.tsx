@@ -7,16 +7,8 @@ import {
   Grid3X3,
   SlidersHorizontal,
   BarChart3,
-  Layers,
-  Sparkles,
-  BookOpen,
-  CheckCircle2,
-  Copy,
-  Check,
-  ExternalLink,
 } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
-import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
 import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns'
 import { cn } from '@/lib/utils'
@@ -33,10 +25,6 @@ import {
   type SfiaQuestionBankItem,
   type SfiaLevelResponsibility,
   type SfiaGenericAttribute,
-  type SfiaAttributesViewMode,
-  SFIA_CATEGORY_THEMES,
-  SFIA_LEVEL_DEFINITIONS,
-  getCategoryTheme,
   SfiaAnatomyBanner,
   SfiaSidebarTree,
   SfiaMobileDrawer,
@@ -128,8 +116,46 @@ function SfiaBrowserWorkspace() {
   }, [])
 
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    let isCancelled = false
+    async function init() {
+      try {
+        const [catList, subList, skillList, statData, matrixData, levelList, attrList] =
+          await Promise.all([
+            sfiaAdminService.getCategories(),
+            sfiaAdminService.getSubcategories(),
+            sfiaAdminService.getSkills(),
+            sfiaAdminService.getCoverageStats(),
+            sfiaAdminService.getMatrixData(),
+            sfiaAdminService.getResponsibilityLevels(),
+            sfiaAdminService.getGenericAttributes(),
+          ])
+        if (!isCancelled) {
+          setCategories(catList)
+          setSubcategories(subList)
+          setSkills(skillList)
+          setStats(statData)
+          setMatrixCells(matrixData.cells)
+          setResponsibilityLevels(levelList)
+          setGenericAttributes(attrList)
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          setPageError(
+            err instanceof Error ? err.message : 'Failed to load SFIA 9 knowledge repository'
+          )
+        }
+      } finally {
+        if (!isCancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void init()
+    return () => {
+      isCancelled = true
+    }
+  }, [])
 
   // Fetch detailed skill data whenever selectedSkill changes
   useEffect(() => {
@@ -544,7 +570,7 @@ function SfiaBrowserWorkspace() {
               levelId={inspectedCell?.levelId || null}
               categories={categories}
               onOpenInTaxonomy={handleOpenInTaxonomy}
-              onCreateQuestion={(skillCode, levelId) => {
+              onCreateQuestion={() => {
                 setIsCreateQuestionOpen(true)
               }}
             />

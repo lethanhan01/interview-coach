@@ -2,7 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsEnum,
-  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -89,7 +88,9 @@ export class SfiaSkillSummaryDto {
 }
 
 export class SfiaSkillFiltersQueryDto {
-  @ApiPropertyOptional({ description: 'Mã danh mục SFIA lớn (ví dụ: DEV_IMPL)' })
+  @ApiPropertyOptional({
+    description: 'Mã danh mục SFIA lớn (ví dụ: DEV_IMPL)',
+  })
   @IsOptional()
   @IsString()
   categoryCode?: string;
@@ -99,7 +100,11 @@ export class SfiaSkillFiltersQueryDto {
   @IsString()
   subcategoryCode?: string;
 
-  @ApiPropertyOptional({ description: 'Lọc kỹ năng khả dụng tại Cấp độ (1-7)', minimum: 1, maximum: 7 })
+  @ApiPropertyOptional({
+    description: 'Lọc kỹ năng khả dụng tại Cấp độ (1-7)',
+    minimum: 1,
+    maximum: 7,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -107,7 +112,9 @@ export class SfiaSkillFiltersQueryDto {
   @Max(7)
   level?: number;
 
-  @ApiPropertyOptional({ description: 'Từ khóa tìm kiếm theo mã code hoặc tên' })
+  @ApiPropertyOptional({
+    description: 'Từ khóa tìm kiếm theo mã code hoặc tên',
+  })
   @IsOptional()
   @IsString()
   query?: string;
@@ -124,10 +131,14 @@ export class SfiaSkillLevelStatementDto {
   @ApiProperty({ example: 3 })
   levelId!: number;
 
-  @ApiProperty({ example: 'Applies software engineering and testing principles...' })
+  @ApiProperty({
+    example: 'Applies software engineering and testing principles...',
+  })
   description!: string;
 
-  @ApiPropertyOptional({ example: 'Applies knowledge and skills to perform tasks...' })
+  @ApiPropertyOptional({
+    example: 'Applies knowledge and skills to perform tasks...',
+  })
   essence?: string;
 }
 
@@ -155,7 +166,10 @@ export class SfiaQuestionBankItemDto {
   @ApiProperty({ example: 'Giải thích cơ chế Event Loop trong Node.js' })
   questionText!: string;
 
-  @ApiProperty({ example: 'TECHNICAL', enum: ['TECHNICAL', 'BEHAVIORAL', 'SITUATIONAL', 'HR'] })
+  @ApiProperty({
+    example: 'TECHNICAL',
+    enum: ['TECHNICAL', 'BEHAVIORAL', 'SITUATIONAL', 'HR'],
+  })
   type!: 'TECHNICAL' | 'BEHAVIORAL' | 'SITUATIONAL' | 'HR';
 
   @ApiProperty({ example: 'MEDIUM', enum: ['EASY', 'MEDIUM', 'HARD'] })
@@ -166,10 +180,14 @@ export class SfiaQuestionBankItemDto {
 }
 
 export class SfiaSkillDetailDto extends SfiaSkillSummaryDto {
-  @ApiProperty({ example: 'The planning, designing, creation, amending, verification...' })
+  @ApiProperty({
+    example: 'The planning, designing, creation, amending, verification...',
+  })
   overallDescription!: string;
 
-  @ApiPropertyOptional({ example: 'Relevant to software engineering across all platforms...' })
+  @ApiPropertyOptional({
+    example: 'Relevant to software engineering across all platforms...',
+  })
   guidanceNotes?: string;
 
   @ApiProperty({ type: [SfiaSkillLevelStatementDto] })
@@ -214,7 +232,10 @@ export class SfiaLevelResponsibilityDto {
   @ApiProperty({ example: 'Applies knowledge and skills to perform tasks...' })
   essence!: string;
 
-  @ApiProperty({ example: 'Works under general direction. Uses discretion in identifying and resolving problems...' })
+  @ApiProperty({
+    example:
+      'Works under general direction. Uses discretion in identifying and resolving problems...',
+  })
   description!: string;
 }
 
@@ -262,7 +283,9 @@ export class SfiaMatrixCellDataDto {
   @ApiProperty({ example: 2 })
   onetCount!: number;
 
-  @ApiPropertyOptional({ example: 'Applies software engineering principles...' })
+  @ApiPropertyOptional({
+    example: 'Applies software engineering principles...',
+  })
   statementSnippet?: string;
 }
 
@@ -274,7 +297,8 @@ export class SfiaMatrixResponseDto {
   categories!: SfiaCategoryDto[];
 
   @ApiProperty({
-    description: 'Từ điển tra cứu trạng thái ô với key định dạng {skillCode}_L{levelId}',
+    description:
+      'Từ điển tra cứu trạng thái ô với key định dạng {skillCode}_L{levelId}',
     example: {
       PROG_L3: {
         skillCode: 'PROG',
@@ -394,7 +418,8 @@ export class SfiaCoverageStatsDto {
 export class CreateSfiaQuestionDto {
   @ApiProperty({
     description: 'Nội dung câu hỏi phỏng vấn chi tiết',
-    example: 'Giải thích nguyên lý Event Loop trong Node.js và cách tối ưu I/O throughput.',
+    example:
+      'Giải thích nguyên lý Event Loop trong Node.js và cách tối ưu I/O throughput.',
   })
   @IsString()
   @IsNotEmpty({ message: 'Nội dung câu hỏi không được để trống' })
@@ -406,7 +431,8 @@ export class CreateSfiaQuestionDto {
     example: 'TECHNICAL',
   })
   @IsEnum(['TECHNICAL', 'HR', 'BEHAVIORAL', 'SITUATIONAL'], {
-    message: 'Loại câu hỏi phải là một trong: TECHNICAL, HR, BEHAVIORAL, SITUATIONAL',
+    message:
+      'Loại câu hỏi phải là một trong: TECHNICAL, HR, BEHAVIORAL, SITUATIONAL',
   })
   type!: 'TECHNICAL' | 'HR' | 'BEHAVIORAL' | 'SITUATIONAL';
 

@@ -109,14 +109,19 @@ export class SfiaAdminService implements OnModuleInit {
    */
   async loadStaticCache(): Promise<void> {
     try {
-      const [rawCategories, rawSubcategories, rawLevels, rawAttributes, rawAttributeLevels] =
-        await Promise.all([
-          this.sfiaAdminRepo.loadCategories(),
-          this.sfiaAdminRepo.loadSubcategories(),
-          this.sfiaAdminRepo.loadLevels(),
-          this.sfiaAdminRepo.loadGenericAttributes(),
-          this.sfiaAdminRepo.loadGenericAttributeLevels(),
-        ]);
+      const [
+        rawCategories,
+        rawSubcategories,
+        rawLevels,
+        rawAttributes,
+        rawAttributeLevels,
+      ] = await Promise.all([
+        this.sfiaAdminRepo.loadCategories(),
+        this.sfiaAdminRepo.loadSubcategories(),
+        this.sfiaAdminRepo.loadLevels(),
+        this.sfiaAdminRepo.loadGenericAttributes(),
+        this.sfiaAdminRepo.loadGenericAttributeLevels(),
+      ]);
 
       // 1. Categories
       this.cachedCategories = rawCategories.map((c) => ({
@@ -191,7 +196,9 @@ export class SfiaAdminService implements OnModuleInit {
         skillCount: c.skillCount,
       }));
     } catch (error) {
-      this.logger.error(`Error in getCategories: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error in getCategories: ${error instanceof Error ? error.message : String(error)}`,
+      );
       // Fallback to in-memory cached categories if DB query throws
       if (this.cachedCategories.length > 0) return [...this.cachedCategories];
       throw error;
@@ -203,7 +210,8 @@ export class SfiaAdminService implements OnModuleInit {
    */
   async getSubcategories(categoryCode?: string): Promise<SfiaSubcategoryDto[]> {
     try {
-      const rawSubcategories = await this.sfiaAdminRepo.loadSubcategories(categoryCode);
+      const rawSubcategories =
+        await this.sfiaAdminRepo.loadSubcategories(categoryCode);
       return rawSubcategories.map((sc) => ({
         code: sc.code,
         categoryCode: sc.categoryCode,
@@ -214,10 +222,14 @@ export class SfiaAdminService implements OnModuleInit {
         skillCount: sc.skillCount,
       }));
     } catch (error) {
-      this.logger.error(`Error in getSubcategories: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error in getSubcategories: ${error instanceof Error ? error.message : String(error)}`,
+      );
       if (this.cachedSubcategories.length > 0) {
         return categoryCode
-          ? this.cachedSubcategories.filter((sc) => sc.categoryCode === categoryCode)
+          ? this.cachedSubcategories.filter(
+              (sc) => sc.categoryCode === categoryCode,
+            )
           : [...this.cachedSubcategories];
       }
       throw error;
@@ -227,7 +239,9 @@ export class SfiaAdminService implements OnModuleInit {
   /**
    * 3. Lấy danh sách kỹ năng SFIA có hỗ trợ bộ lọc và đếm số câu hỏi + O*NET
    */
-  async getSkills(filters?: SfiaSkillFiltersQueryDto): Promise<SfiaSkillSummaryDto[]> {
+  async getSkills(
+    filters?: SfiaSkillFiltersQueryDto,
+  ): Promise<SfiaSkillSummaryDto[]> {
     try {
       const rawSkills = await this.sfiaAdminRepo.loadSkillsWithCounts({
         categoryCode: filters?.categoryCode,
@@ -247,7 +261,9 @@ export class SfiaAdminService implements OnModuleInit {
         onetCount: s.onetCount,
       }));
     } catch (error) {
-      this.logger.error(`Error in getSkills: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error in getSkills: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }
@@ -308,14 +324,16 @@ export class SfiaAdminService implements OnModuleInit {
         questionBankItems: questions.map((q) => ({
           id: q.id,
           questionText: q.questionText,
-          type: q.type as any,
-          difficulty: q.difficulty as any,
+          type: q.type as 'TECHNICAL' | 'BEHAVIORAL' | 'SITUATIONAL' | 'HR',
+          difficulty: q.difficulty as 'EASY' | 'MEDIUM' | 'HARD',
           targetSfiaLevel: q.targetSfiaLevel,
         })),
       };
     } catch (error) {
       if (error instanceof InterviewAIException) throw error;
-      this.logger.error(`Error in getSkillDetail for ${cleanCode}: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error in getSkillDetail for ${cleanCode}: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }
@@ -337,7 +355,9 @@ export class SfiaAdminService implements OnModuleInit {
         skills,
       };
     } catch (error) {
-      this.logger.error(`Error in getTaxonomy: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error in getTaxonomy: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }
@@ -356,7 +376,9 @@ export class SfiaAdminService implements OnModuleInit {
         description: l.description,
       }));
     } catch (error) {
-      this.logger.error(`Error in getResponsibilityLevels: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error in getResponsibilityLevels: ${error instanceof Error ? error.message : String(error)}`,
+      );
       if (this.cachedLevels.length > 0) return [...this.cachedLevels];
       throw error;
     }
@@ -388,8 +410,11 @@ export class SfiaAdminService implements OnModuleInit {
         levels: levelMapByAttr[ga.code] || {},
       }));
     } catch (error) {
-      this.logger.error(`Error in getGenericAttributes: ${error instanceof Error ? error.message : String(error)}`);
-      if (this.cachedGenericAttributes.length > 0) return [...this.cachedGenericAttributes];
+      this.logger.error(
+        `Error in getGenericAttributes: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      if (this.cachedGenericAttributes.length > 0)
+        return [...this.cachedGenericAttributes];
       throw error;
     }
   }
@@ -406,7 +431,14 @@ export class SfiaAdminService implements OnModuleInit {
       ]);
 
       // Dựng map ô ma trận dựa trên kết quả SQL
-      const rawCellMap = new Map<string, { questionCount: number; onetCount: number; statementSnippet: string | null }>();
+      const rawCellMap = new Map<
+        string,
+        {
+          questionCount: number;
+          onetCount: number;
+          statementSnippet: string | null;
+        }
+      >();
       for (const cell of rawCells) {
         rawCellMap.set(`${cell.skillCode}_L${cell.levelId}`, {
           questionCount: cell.questionCount,
@@ -428,9 +460,11 @@ export class SfiaAdminService implements OnModuleInit {
             skillCode: skill.code,
             levelId: lvl,
             isAvailable,
-            questionCount: isAvailable ? (found?.questionCount || 0) : 0,
-            onetCount: isAvailable ? (found?.onetCount || 0) : 0,
-            statementSnippet: isAvailable ? (found?.statementSnippet ?? undefined) : undefined,
+            questionCount: isAvailable ? found?.questionCount || 0 : 0,
+            onetCount: isAvailable ? found?.onetCount || 0 : 0,
+            statementSnippet: isAvailable
+              ? (found?.statementSnippet ?? undefined)
+              : undefined,
           };
         }
       }
@@ -441,7 +475,9 @@ export class SfiaAdminService implements OnModuleInit {
         cells,
       };
     } catch (error) {
-      this.logger.error(`Error in getMatrixData: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error in getMatrixData: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }
@@ -493,7 +529,9 @@ export class SfiaAdminService implements OnModuleInit {
         })),
       };
     } catch (error) {
-      this.logger.error(`Error in getCoverageStats: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error in getCoverageStats: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }
@@ -525,7 +563,10 @@ export class SfiaAdminService implements OnModuleInit {
     }
 
     // 2. Kiểm tra ràng buộc dải level hợp lệ
-    if (dto.targetSfiaLevel < skill.minLevel || dto.targetSfiaLevel > skill.maxLevel) {
+    if (
+      dto.targetSfiaLevel < skill.minLevel ||
+      dto.targetSfiaLevel > skill.maxLevel
+    ) {
       throw new InterviewAIException(
         ErrorCode.SFIA_SKILL_INVALID_LEVEL,
         HttpStatus.BAD_REQUEST,
@@ -555,12 +596,14 @@ export class SfiaAdminService implements OnModuleInit {
       return {
         id: created.id,
         questionText: created.questionText,
-        type: created.type as any,
-        difficulty: created.difficulty as any,
+        type: created.type as 'TECHNICAL' | 'BEHAVIORAL' | 'SITUATIONAL' | 'HR',
+        difficulty: created.difficulty as 'EASY' | 'MEDIUM' | 'HARD',
         targetSfiaLevel: created.targetSfiaLevel,
       };
     } catch (error) {
-      this.logger.error(`Error in createQuestion for ${cleanCode}: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error in createQuestion for ${cleanCode}: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }

@@ -23,9 +23,7 @@ const MIME_MAP: Record<string, string> = {
 
 @Injectable()
 export class StreamAudioService {
-  constructor(
-    private readonly storageAdapter: LocalDiskMediaStorageAdapter,
-  ) {}
+  constructor(private readonly storageAdapter: LocalDiskMediaStorageAdapter) {}
 
   async getAudioStream(
     dto: StreamAudioQueryDto,
@@ -77,7 +75,12 @@ export class StreamAudioService {
       const start = parseInt(parts[0], 10);
       const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
 
-      if (isNaN(start) || start >= fileSize || (parts[1] && end >= fileSize) || start > end) {
+      if (
+        isNaN(start) ||
+        start >= fileSize ||
+        (parts[1] && end >= fileSize) ||
+        start > end
+      ) {
         throw new InterviewAIException(
           ErrorCode.VALIDATION_ERROR,
           HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE,

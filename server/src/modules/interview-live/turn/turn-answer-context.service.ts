@@ -1,11 +1,10 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { isSessionType } from '@core/common/constants/session.constants';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 
-export const SESSION_QUESTION_SKILL_LEVELS_INCLUDE = {} as any;
+export const SESSION_QUESTION_SKILL_LEVELS_INCLUDE = undefined;
 
 // Alias for backwards compatibility
 export const SESSION_QUESTION_CRITERIA_INCLUDE =
@@ -49,7 +48,6 @@ export class TurnAnswerContext {
     }
     const question = await this.prisma.sessionQuestion.findFirst({
       where: { id: questionId, sessionId },
-      include: SESSION_QUESTION_SKILL_LEVELS_INCLUDE,
     });
     if (!question) {
       throw new InterviewAIException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND);

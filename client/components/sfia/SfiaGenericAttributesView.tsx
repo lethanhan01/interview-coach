@@ -4,7 +4,6 @@ import React from 'react'
 import {
   SlidersHorizontal,
   Grid3X3,
-  Layers,
   AlertCircle,
   RefreshCw,
 } from 'lucide-react'

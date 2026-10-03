@@ -9,13 +9,11 @@ import {
   Layers,
   HelpCircle,
   Briefcase,
-  CheckCircle2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Switch } from '@/components/ui/Switch'
-import { Badge } from '@/components/ui/Badge'
 import {
   Select,
   SelectContent,
@@ -27,7 +25,7 @@ import {
   type SfiaCategory,
   type SfiaMatrixDisplayMode,
 } from './types'
-import { SFIA_CATEGORY_THEMES, getCategoryTheme } from './sfia-theme'
+import { getCategoryTheme } from './sfia-theme'
 
 export interface SfiaMatrixToolbarProps {
   categories: SfiaCategory[]

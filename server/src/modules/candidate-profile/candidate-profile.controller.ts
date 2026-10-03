@@ -12,6 +12,25 @@ import {
 } from '@nestjs/swagger';
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
+type RequestUser = string | { id: string } | { user: { id: string } };
+
+function resolveUserId(userOrReq: RequestUser): string {
+  if (typeof userOrReq === 'string') {
+    return userOrReq;
+  }
+  if ('id' in userOrReq && typeof userOrReq.id === 'string') {
+    return userOrReq.id;
+  }
+  if (
+    'user' in userOrReq &&
+    userOrReq.user &&
+    typeof userOrReq.user.id === 'string'
+  ) {
+    return userOrReq.user.id;
+  }
+  return '';
+}
+
 @Controller('candidate-profile')
 @Roles(UserRole.candidate)
 @ApiTags('Candidate Profile')
@@ -28,8 +47,8 @@ export class CandidateProfileController {
     type: CandidateProfileResponseDto,
   })
   @ApiCommonErrors(401, 403, 404)
-  async getProfile(@CurrentUser() userOrReq: any) {
-    const userId = userOrReq?.user?.id ?? userOrReq?.id ?? userOrReq;
+  async getProfile(@CurrentUser() userOrReq: RequestUser) {
+    const userId = resolveUserId(userOrReq);
     return this.candidateProfileService.getProfile(userId);
   }
 
@@ -42,9 +61,9 @@ export class CandidateProfileController {
   @ApiCommonErrors(400, 401, 403, 404)
   async updateProfile(
     @Body() dto: UpdateCandidateProfileDto,
-    @CurrentUser() userOrReq: any,
+    @CurrentUser() userOrReq: RequestUser,
   ) {
-    const userId = userOrReq?.user?.id ?? userOrReq?.id ?? userOrReq;
+    const userId = resolveUserId(userOrReq);
     return this.candidateProfileService.upsertProfile(userId, dto);
   }
 }

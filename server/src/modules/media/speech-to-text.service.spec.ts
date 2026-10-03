@@ -46,14 +46,17 @@ describe('SpeechToText', () => {
       durationSeconds: 3,
     });
 
-    const localUrl = 'https://project.example.com/media/audio/stream?key=user-1/audio.webm&expires=1780000000&token=abc';
+    const localUrl =
+      'https://project.example.com/media/audio/stream?key=user-1/audio.webm&expires=1780000000&token=abc';
     const result = await service.transcribe(localUrl);
 
     expect(result).toEqual({
       text: 'Đọc file trực tiếp từ disk',
       durationSeconds: 3,
     });
-    expect(mockStorageAdapter.readBuffer).toHaveBeenCalledWith('user-1/audio.webm');
+    expect(mockStorageAdapter.readBuffer).toHaveBeenCalledWith(
+      'user-1/audio.webm',
+    );
     expect(global.fetch).not.toHaveBeenCalled();
     expect(mockOpenAI.transcribe).toHaveBeenCalledWith(
       expect.objectContaining({

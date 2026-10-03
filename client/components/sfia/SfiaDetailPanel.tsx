@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import {
-  Sparkles,
   Copy,
   Check,
   Grid3X3,
@@ -12,7 +11,6 @@ import {
   Briefcase,
   AlertCircle,
   RefreshCw,
-  SlidersHorizontal,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -22,7 +20,6 @@ import type {
   SfiaCategory,
   SfiaSubcategory,
   SfiaSkillDetail,
-  SfiaQuestionBankItem,
 } from './types'
 import {
   getCategoryTheme,

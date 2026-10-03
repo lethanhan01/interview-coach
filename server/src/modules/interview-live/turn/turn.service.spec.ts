@@ -12,8 +12,6 @@ import { InterviewAIException } from '@core/common/exceptions/interview-ai.excep
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import {
   createMockPrismaService,
-  createMockQuestionCriteriaService,
-  createMockVoiceMetricsService,
   createMockWorkflowDispatcher,
   createMockWorkflowService,
 } from '@core/test-utils/mock-factories';

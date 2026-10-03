@@ -206,7 +206,9 @@ describe('SfiaAdminRepository', () => {
 
     it('throws error when DB query fails', async () => {
       queryRawMock.mockRejectedValueOnce(new Error('DB Query Error'));
-      await expect(repository.loadCategories()).rejects.toThrow('DB Query Error');
+      await expect(repository.loadCategories()).rejects.toThrow(
+        'DB Query Error',
+      );
     });
   });
 

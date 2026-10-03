@@ -228,7 +228,8 @@ export class OnetAnalyticsSummaryDto {
 export class SocGroupDistributionItemDto {
   @ApiProperty({ example: '15' }) code: string;
   @ApiProperty({ example: 'Máy tính & Toán học' }) name: string;
-  @ApiProperty({ example: 'Computer and Mathematical Occupations' }) englishName: string;
+  @ApiProperty({ example: 'Computer and Mathematical Occupations' })
+  englishName: string;
   @ApiProperty({ example: 35 }) totalOccupations: number;
   @ApiProperty({ example: 28 }) mappedOccupations: number;
   @ApiProperty({ example: 80.0 }) mappingCoveragePercent: number;
@@ -238,7 +239,8 @@ export class SocGroupDistributionItemDto {
 export class OnetMajorGroupSummaryDto {
   @ApiProperty({ example: '15' }) code: string;
   @ApiProperty({ example: 'Máy tính & Toán học' }) name: string;
-  @ApiProperty({ example: 'Computer and Mathematical Occupations' }) englishName: string;
+  @ApiProperty({ example: 'Computer and Mathematical Occupations' })
+  englishName: string;
   @ApiProperty({ example: 35 }) totalOccupations: number;
   @ApiProperty({ example: 28 }) mappedCount: number;
 }
@@ -252,7 +254,8 @@ export class OnetTopOccupationItemDto {
   @ApiProperty({ example: 15 }) jobDescriptionCount: number;
   @ApiProperty({ example: 8 }) mappingCount: number;
   @ApiProperty({ example: true }) isMapped: boolean;
-  @ApiProperty({ example: ['PROG', 'TEST'], type: [String] }) coreSkillCodes: string[];
+  @ApiProperty({ example: ['PROG', 'TEST'], type: [String] })
+  coreSkillCodes: string[];
 }
 
 export class SfiaSkillCoverageItemDto {
@@ -285,13 +288,18 @@ export class OnetJobZoneInfoDto {
 
 export class OnetTaskStatementDto {
   @ApiProperty({ example: '1024' }) id: string;
-  @ApiProperty({ example: 'Develop, create, and modify general computer applications software.' }) statement: string;
+  @ApiProperty({
+    example:
+      'Develop, create, and modify general computer applications software.',
+  })
+  statement: string;
   @ApiProperty({ example: true }) isCore: boolean;
 }
 
 export class OnetSoftwareSkillDto {
   @ApiProperty({ example: 'Node.js' }) name: string;
-  @ApiProperty({ example: 'Development Environment Software' }) category: string;
+  @ApiProperty({ example: 'Development Environment Software' })
+  category: string;
   @ApiProperty({ example: true }) isHotTechnology: boolean;
   @ApiProperty({ example: true }) inDemand: boolean;
 }
@@ -300,24 +308,32 @@ export class OnetSfiaMappingItemDto {
   @ApiProperty({ example: 'map_123' }) id: string;
   @ApiPropertyOptional({ example: '15-1252.00' }) onetSocCode?: string;
   @ApiProperty({ example: 'PROG' }) sfiaSkillCode: string;
-  @ApiProperty({ example: 'Programming/software development' }) skillName: string;
-  @ApiPropertyOptional({ example: 'Software engineering' }) skillCategory?: string;
+  @ApiProperty({ example: 'Programming/software development' })
+  skillName: string;
+  @ApiPropertyOptional({ example: 'Software engineering' })
+  skillCategory?: string;
   @ApiProperty({ example: 3 }) targetSfiaLevel: number;
   @ApiProperty({ example: 1.5 }) defaultWeight: number;
   @ApiProperty({ example: true }) isCore: boolean;
   @ApiProperty({ example: 'EXPERT_CURATED' }) source: string;
   @ApiProperty({ example: 2 }) minLevel: number;
   @ApiProperty({ example: 6 }) maxLevel: number;
-  @ApiPropertyOptional({ example: 'Designs, codes, verifies, tests, amends...' }) responsibility?: string;
-  @ApiPropertyOptional({ example: '2026-01-01T00:00:00.000Z' }) createdAt?: string;
-  @ApiPropertyOptional({ example: '2026-01-01T00:00:00.000Z' }) updatedAt?: string;
+  @ApiPropertyOptional({
+    example: 'Designs, codes, verifies, tests, amends...',
+  })
+  responsibility?: string;
+  @ApiPropertyOptional({ example: '2026-01-01T00:00:00.000Z' })
+  createdAt?: string;
+  @ApiPropertyOptional({ example: '2026-01-01T00:00:00.000Z' })
+  updatedAt?: string;
 }
 
 export class OnetSfiaMappingResponseDto extends OnetSfiaMappingItemDto {}
 
 export class SfiaLibrarySkillLevelDto {
   @ApiProperty({ example: 2 }) level: number;
-  @ApiProperty({ example: 'Designs, codes, verifies, tests, amends...' }) description: string;
+  @ApiProperty({ example: 'Designs, codes, verifies, tests, amends...' })
+  description: string;
 }
 
 export class SfiaLibrarySkillDto {
@@ -327,8 +343,10 @@ export class SfiaLibrarySkillDto {
   @ApiProperty({ example: 'SWEN' }) categoryCode: string;
   @ApiProperty({ example: 2 }) minLevel: number;
   @ApiProperty({ example: 6 }) maxLevel: number;
-  @ApiProperty({ example: 'The planning, designing, creation, testing...' }) description: string;
-  @ApiProperty({ type: [SfiaLibrarySkillLevelDto] }) levels: SfiaLibrarySkillLevelDto[];
+  @ApiProperty({ example: 'The planning, designing, creation, testing...' })
+  description: string;
+  @ApiProperty({ type: [SfiaLibrarySkillLevelDto] })
+  levels: SfiaLibrarySkillLevelDto[];
 }
 
 export class OnetOccupationDetailStatsDto {
@@ -339,20 +357,33 @@ export class OnetOccupationDetailStatsDto {
 }
 
 export class OnetOccupationDetailDto extends OnetOccupationSummaryDto {
-  @ApiProperty({ example: 'Research, design, and develop computer and network software.' }) description: string;
+  @ApiProperty({
+    example: 'Research, design, and develop computer and network software.',
+  })
+  description: string;
   @ApiProperty({ type: OnetJobZoneInfoDto }) jobZone: OnetJobZoneInfoDto;
-  @ApiProperty({ type: OnetOccupationDetailStatsDto }) stats: OnetOccupationDetailStatsDto;
+  @ApiProperty({ type: OnetOccupationDetailStatsDto })
+  stats: OnetOccupationDetailStatsDto;
   @ApiProperty({ type: [OnetTaskStatementDto] }) tasks: OnetTaskStatementDto[];
-  @ApiProperty({ type: [OnetSoftwareSkillDto] }) softwareSkills: OnetSoftwareSkillDto[];
-  @ApiProperty({ example: ['Full Stack Developer', 'Backend Engineer'], type: [String] }) alternateTitles: string[];
-  @ApiProperty({ type: [OnetSfiaMappingItemDto] }) sfiaMappings: OnetSfiaMappingItemDto[];
+  @ApiProperty({ type: [OnetSoftwareSkillDto] })
+  softwareSkills: OnetSoftwareSkillDto[];
+  @ApiProperty({
+    example: ['Full Stack Developer', 'Backend Engineer'],
+    type: [String],
+  })
+  alternateTitles: string[];
+  @ApiProperty({ type: [OnetSfiaMappingItemDto] })
+  sfiaMappings: OnetSfiaMappingItemDto[];
 }
 
 export class PaginatedAlternateTitlesDto {
-  @ApiProperty({ example: ['Full Stack Developer', 'Backend Engineer'], type: [String] }) items: string[];
+  @ApiProperty({
+    example: ['Full Stack Developer', 'Backend Engineer'],
+    type: [String],
+  })
+  items: string[];
   @ApiProperty({ example: 84 }) total: number;
   @ApiProperty({ example: 1 }) page: number;
   @ApiProperty({ example: 20 }) limit: number;
   @ApiProperty({ example: 5 }) totalPages: number;
 }
-

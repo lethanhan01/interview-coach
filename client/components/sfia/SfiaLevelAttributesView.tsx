@@ -9,7 +9,6 @@ import {
   BookOpen,
   Copy,
   Check,
-  ExternalLink,
   Sparkles,
   Layers,
   ChevronRight,
@@ -18,10 +17,7 @@ import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import type { SfiaLevelResponsibility, SfiaGenericAttribute } from './types'
 import {
-  SFIA_LEVEL_DEFINITIONS,
-  SFIA_ATTRIBUTE_THEMES,
   getAttributeTheme,
-  getLevelTheme,
 } from './sfia-theme'
 import { copySfiaLevelPromptToClipboard } from './sfia-attributes-prompt-helper'
 
@@ -95,8 +91,6 @@ export function SfiaLevelAttributesView({
       essence: 'No essence data for this level.',
       description: 'No description data for this level.',
     }
-
-  const currentLevelTheme = getLevelTheme(selectedLevel)
 
   // Copy AI Prompt handler
   const handleCopyPrompt = async () => {
@@ -235,7 +229,7 @@ export function SfiaLevelAttributesView({
             <span>Essence of Level {selectedLevel}</span>
           </div>
           <p className="text-xs sm:text-sm text-ink italic font-medium leading-relaxed">
-            "{currentLevel.essence}"
+            &quot;{currentLevel.essence}&quot;
           </p>
         </div>
 

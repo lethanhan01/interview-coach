@@ -1,5 +1,6 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
@@ -120,7 +121,7 @@ export class GenerateSessionQuestions {
       id: string;
       skillCode: string;
       targetLevel: number;
-      weight: any;
+      weight: number | Prisma.Decimal;
       techContext: string[];
     }>,
   ): Promise<void> {
@@ -227,7 +228,7 @@ export class GenerateSessionQuestions {
       sessionSkillId: q.sessionSkillId,
       sfiaSkillCode: q.sfiaSkillCode,
       targetLevel: q.targetLevel,
-      rubricCriteria: q.rubricCriteria as any,
+      rubricCriteria: q.rubricCriteria as unknown as Prisma.InputJsonValue,
       questionBankId: q.questionBankId || null,
       questionText: q.questionText,
       orderIndex: index + 1,

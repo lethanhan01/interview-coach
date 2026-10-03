@@ -143,6 +143,7 @@ export class ScoringEngineService {
     rubricCriteria: BinaryEvaluationCriterion[],
     _targetLevel: number,
   ): SkippedFeedbackData {
+    void _targetLevel;
     const criteriaEvaluations: BinaryCriterionEvaluationResult[] = (
       rubricCriteria || []
     ).map((c) => ({

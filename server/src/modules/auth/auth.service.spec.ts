@@ -1,9 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import { AccountStatus, UserRole } from '@prisma/client';
 import { AuthService } from './auth.service';
-import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import * as passwordModule from './password';

@@ -2,12 +2,9 @@
 
 import React, { useMemo, memo } from 'react'
 import {
-  AlertTriangle,
   AlertCircle,
-  HelpCircle,
   Briefcase,
   SearchX,
-  ExternalLink,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
@@ -24,8 +21,6 @@ import {
   type SfiaMatrixDisplayMode,
 } from './types'
 import {
-  SFIA_CATEGORY_THEMES,
-  SFIA_LEVEL_DEFINITIONS,
   getCategoryTheme,
   getLevelTheme,
 } from './sfia-theme'

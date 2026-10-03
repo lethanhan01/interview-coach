@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useEffect, memo } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   Search,
   X,
@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   SearchX,
   Flame,
-  ArrowUpDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
@@ -28,17 +27,10 @@ import {
   SelectValue,
 } from '@/components/ui/Select'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/Tooltip'
-import {
   type SfiaCategory,
   type SfiaSkillSummary,
 } from './types'
 import {
-  SFIA_CATEGORY_THEMES,
   getCategoryTheme,
   getLevelTheme,
 } from './sfia-theme'
@@ -110,10 +102,24 @@ export function SfiaBlindSpotsTable({
     return result
   }, [allBlindSpots, selectedCategoryFilter, selectedLevelFilter, searchQuery])
 
-  // Tự động chuyển về trang 1 khi thay đổi điều kiện lọc
-  useEffect(() => {
+  const [prevFilters, setPrevFilters] = useState({
+    category: selectedCategoryFilter,
+    level: selectedLevelFilter,
+    query: searchQuery,
+  })
+
+  if (
+    prevFilters.category !== selectedCategoryFilter ||
+    prevFilters.level !== selectedLevelFilter ||
+    prevFilters.query !== searchQuery
+  ) {
+    setPrevFilters({
+      category: selectedCategoryFilter,
+      level: selectedLevelFilter,
+      query: searchQuery,
+    })
     setCurrentPage(1)
-  }, [selectedCategoryFilter, selectedLevelFilter, searchQuery])
+  }
 
   // 3. Tính toán phân trang Client-side (10 items / trang)
   const totalItems = filteredSkills.length

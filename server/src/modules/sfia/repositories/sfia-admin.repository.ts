@@ -104,9 +104,7 @@ export class SfiaAdminRepository implements ISfiaAdminRepository {
       const conditions: Prisma.Sql[] = [Prisma.sql`1=1`];
 
       if (filters?.categoryCode) {
-        conditions.push(
-          Prisma.sql`sc.category_code = ${filters.categoryCode}`,
-        );
+        conditions.push(Prisma.sql`sc.category_code = ${filters.categoryCode}`);
       }
       if (filters?.subcategoryCode) {
         conditions.push(
@@ -283,9 +281,7 @@ export class SfiaAdminRepository implements ISfiaAdminRepository {
   /**
    * 8. Lấy 7 cấp độ trách nhiệm SFIA 9
    */
-  async loadLevels(
-    tx?: Prisma.TransactionClient,
-  ): Promise<SfiaLevelRawRow[]> {
+  async loadLevels(tx?: Prisma.TransactionClient): Promise<SfiaLevelRawRow[]> {
     try {
       return await this.getClient(tx).$queryRaw<SfiaLevelRawRow[]>`
         SELECT 
@@ -311,9 +307,7 @@ export class SfiaAdminRepository implements ISfiaAdminRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<SfiaGenericAttributeRawRow[]> {
     try {
-      return await this.getClient(tx).$queryRaw<
-        SfiaGenericAttributeRawRow[]
-      >`
+      return await this.getClient(tx).$queryRaw<SfiaGenericAttributeRawRow[]>`
         SELECT 
           code,
           name,
@@ -440,9 +434,7 @@ export class SfiaAdminRepository implements ISfiaAdminRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<SfiaCategoryMetricRawRow[]> {
     try {
-      return await this.getClient(tx).$queryRaw<
-        SfiaCategoryMetricRawRow[]
-      >`
+      return await this.getClient(tx).$queryRaw<SfiaCategoryMetricRawRow[]>`
         SELECT 
           c.code,
           c.name,
@@ -500,9 +492,7 @@ export class SfiaAdminRepository implements ISfiaAdminRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<SfiaTopOnetMappedSkillRawRow[]> {
     try {
-      return await this.getClient(tx).$queryRaw<
-        SfiaTopOnetMappedSkillRawRow[]
-      >`
+      return await this.getClient(tx).$queryRaw<SfiaTopOnetMappedSkillRawRow[]>`
         SELECT 
           s.code AS "skillCode",
           s.name AS "skillName",

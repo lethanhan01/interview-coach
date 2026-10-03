@@ -5,7 +5,6 @@ import { JwtAuthGuard, RolesGuard } from '@core/common/guards';
 
 describe('OnetAdminController', () => {
   let controller: OnetAdminController;
-  let service: OnetAdminService;
 
   const mockAnalyticsSummary = {
     totalOccupations: 1016,
@@ -180,7 +179,6 @@ describe('OnetAdminController', () => {
       .compile();
 
     controller = module.get<OnetAdminController>(OnetAdminController);
-    service = module.get<OnetAdminService>(OnetAdminService);
   });
 
   it('should be defined', () => {

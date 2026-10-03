@@ -11,7 +11,6 @@ import { WorkflowDispatcher } from '../src/infrastructure/workflow/workflow-disp
 
 describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
   let scoringEngine: ScoringEngineService;
-  let binaryEvaluator: BinaryCriteriaEvaluatorService;
   let unifiedReportGenerator: UnifiedReportGeneratorService;
   let reportService: ReportService;
 
@@ -351,10 +350,6 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
     ),
   };
 
-  const mockSseService = {
-    emit: jest.fn(),
-  };
-
   const mockWorkflowDispatcher = {
     dispatchWorkflowCommand: jest.fn(),
   };
@@ -375,9 +370,6 @@ describe('Hybrid Assessment Lifecycle (End-to-End Integration)', () => {
     }).compile();
 
     scoringEngine = module.get<ScoringEngineService>(ScoringEngineService);
-    binaryEvaluator = module.get<BinaryCriteriaEvaluatorService>(
-      BinaryCriteriaEvaluatorService,
-    );
     unifiedReportGenerator = module.get<UnifiedReportGeneratorService>(
       UnifiedReportGeneratorService,
     );

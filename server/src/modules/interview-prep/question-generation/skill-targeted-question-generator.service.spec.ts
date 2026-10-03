@@ -1,5 +1,4 @@
 import { SkillTargetedQuestionGeneratorService } from './skill-targeted-question-generator.service';
-import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { createMockPrismaService } from '@core/test-utils/mock-factories';
 
 describe('SkillTargetedQuestionGeneratorService', () => {
@@ -33,7 +32,7 @@ describe('SkillTargetedQuestionGeneratorService', () => {
     };
 
     service = new SkillTargetedQuestionGeneratorService(
-      mockPrisma as unknown as PrismaService,
+      mockPrisma,
       mockAiGateway as any,
       mockSfiaFacade as any,
     );

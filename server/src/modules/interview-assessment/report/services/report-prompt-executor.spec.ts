@@ -11,7 +11,6 @@ import type {
 describe('ReportPromptExecutor', () => {
   let promptExecutor: ReportPromptExecutor;
   let mockOpenAI: ReturnType<typeof createMockOpenAIGateway>;
-  let metricsAggregator: ReportMetricsAggregator;
 
   beforeEach(async () => {
     mockOpenAI = createMockOpenAIGateway();
@@ -26,9 +25,6 @@ describe('ReportPromptExecutor', () => {
     }).compile();
 
     promptExecutor = module.get<ReportPromptExecutor>(ReportPromptExecutor);
-    metricsAggregator = module.get<ReportMetricsAggregator>(
-      ReportMetricsAggregator,
-    );
   });
 
   describe('getReportMetadata', () => {

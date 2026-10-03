@@ -62,7 +62,9 @@ describe('StreamAudioService', () => {
 
   it('từ chối khi tệp tin không tồn tại trên máy chủ', async () => {
     mockAdapter.verifyToken.mockReturnValue(true);
-    mockAdapter.resolveSafePath.mockReturnValue(path.join(tempDir, 'not-exist.webm'));
+    mockAdapter.resolveSafePath.mockReturnValue(
+      path.join(tempDir, 'not-exist.webm'),
+    );
     const futureExpires = Math.floor(Date.now() / 1000) + 1800;
 
     await expect(

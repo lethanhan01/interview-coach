@@ -6,7 +6,6 @@ import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service'
 import { WorkflowService } from '@infra/workflow/workflow.service';
 import {
   createMockPrismaService,
-  createMockQuestionCriteriaService,
   createMockWorkflowDispatcher,
   createMockWorkflowService,
 } from '@core/test-utils/mock-factories';

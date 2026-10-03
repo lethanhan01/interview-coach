@@ -32,8 +32,8 @@ export class SubmitTurnAnswer {
         sessionId,
         dto.questionId,
         session.sessionType,
-        (session as any).contextPackId,
-        (session as any).language,
+        session.contextPackId,
+        session.language,
       );
     }
 

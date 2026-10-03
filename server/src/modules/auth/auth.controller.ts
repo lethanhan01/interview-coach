@@ -32,6 +32,29 @@ import {
   VerifyEmailConfirmDto,
 } from './dto/local-auth.dto';
 
+interface RequestWithCookies extends Omit<Request, 'cookies'> {
+  cookies?: Record<string, string | undefined>;
+}
+
+type RequestUser = string | { id: string } | { user: { id: string } };
+
+function resolveUserId(userOrReq: RequestUser): string {
+  if (typeof userOrReq === 'string') {
+    return userOrReq;
+  }
+  if ('id' in userOrReq && typeof userOrReq.id === 'string') {
+    return userOrReq.id;
+  }
+  if (
+    'user' in userOrReq &&
+    userOrReq.user &&
+    typeof userOrReq.user.id === 'string'
+  ) {
+    return userOrReq.user.id;
+  }
+  return '';
+}
+
 @Controller('auth')
 @ApiTags('Auth')
 export class AuthController {
@@ -93,7 +116,7 @@ export class AuthController {
   })
   @ApiCommonErrors(HttpStatus.UNAUTHORIZED)
   async refresh(
-    @Req() req: Request,
+    @Req() req: RequestWithCookies,
     @Res({ passthrough: true }) response: Response,
   ) {
     const refreshToken = req.cookies?.[this.authService.getRefreshCookieName()];
@@ -116,7 +139,7 @@ export class AuthController {
   })
   @ApiNoContentResponse({ description: 'Cookies cleared and session revoked.' })
   async logout(
-    @Req() req: Request,
+    @Req() req: RequestWithCookies,
     @Res({ passthrough: true }) response: Response,
   ): Promise<void> {
     const refreshToken = req.cookies?.[this.authService.getRefreshCookieName()];
@@ -129,8 +152,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Get the current user' })
   @ApiOkResponse({ description: 'Current authenticated user.' })
   @ApiCommonErrors(HttpStatus.UNAUTHORIZED)
-  async me(@CurrentUser() userOrReq: any) {
-    const userId = userOrReq?.user?.id ?? userOrReq?.id ?? userOrReq;
+  async me(@CurrentUser() userOrReq: RequestUser) {
+    const userId = resolveUserId(userOrReq);
     const dbUser = await this.authService.getMe(userId);
     return { success: true, data: dbUser && this.publicUser(dbUser) };
   }

@@ -9,7 +9,6 @@ import { ZodValidatorService } from '@infra/ai/zod-validator.service';
 describe('BinaryCriteriaEvaluatorService', () => {
   let service: BinaryCriteriaEvaluatorService;
   let mockAiGateway: { chatCompletion: jest.Mock };
-  let zodValidator: ZodValidatorService;
 
   beforeEach(async () => {
     mockAiGateway = {
@@ -30,7 +29,6 @@ describe('BinaryCriteriaEvaluatorService', () => {
     service = module.get<BinaryCriteriaEvaluatorService>(
       BinaryCriteriaEvaluatorService,
     );
-    zodValidator = module.get<ZodValidatorService>(ZodValidatorService);
   });
 
   it('nên được khởi tạo thành công', () => {

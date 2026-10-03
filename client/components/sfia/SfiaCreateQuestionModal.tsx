@@ -2,8 +2,6 @@
 
 import * as React from 'react'
 import {
-  HelpCircle,
-  Sparkles,
   AlertCircle,
   Plus,
   Loader2,
@@ -71,15 +69,19 @@ export function SfiaCreateQuestionModal({
   const [error, setError] = React.useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
-  // Reset form when modal opens or defaultLevel changes
-  React.useEffect(() => {
-    if (open) {
-      setLevel(Math.max(minLevel, Math.min(maxLevel, defaultLevel)))
-      setQuestionText('')
-      setError(null)
-      setIsSubmitting(false)
-    }
-  }, [open, defaultLevel, minLevel, maxLevel])
+  const [prevOpen, setPrevOpen] = React.useState(open)
+  const [prevDefaultLevel, setPrevDefaultLevel] = React.useState(defaultLevel)
+
+  if (open && (!prevOpen || prevDefaultLevel !== defaultLevel)) {
+    setPrevOpen(open)
+    setPrevDefaultLevel(defaultLevel)
+    setLevel(Math.max(minLevel, Math.min(maxLevel, defaultLevel)))
+    setQuestionText('')
+    setError(null)
+    setIsSubmitting(false)
+  } else if (!open && prevOpen) {
+    setPrevOpen(false)
+  }
 
   const availableLevels = React.useMemo(() => {
     const list: number[] = []

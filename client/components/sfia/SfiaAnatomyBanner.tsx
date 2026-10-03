@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import {
   Sparkles,
   ChevronDown,
@@ -22,32 +22,45 @@ export interface SfiaAnatomyBannerProps {
   className?: string
 }
 
-export function SfiaAnatomyBanner({ stats, className }: SfiaAnatomyBannerProps) {
-  const [collapsed, setCollapsed] = useState(false)
-  const [hasMounted, setHasMounted] = useState(false)
+const emptySubscribe = () => () => {}
 
-  useEffect(() => {
-    setHasMounted(true)
+const subscribeCollapsed = (callback: () => void) => {
+  window.addEventListener('storage', callback)
+  window.addEventListener('sfia_banner_toggle', callback)
+  return () => {
+    window.removeEventListener('storage', callback)
+    window.removeEventListener('sfia_banner_toggle', callback)
+  }
+}
+
+const getCollapsedSnapshot = () => {
+  try {
+    return localStorage.getItem(LOCAL_STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+export function SfiaAnatomyBanner({ stats, className }: SfiaAnatomyBannerProps) {
+  const hasMounted = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  )
+  const collapsed = React.useSyncExternalStore(
+    subscribeCollapsed,
+    getCollapsedSnapshot,
+    () => false,
+  )
+
+  const toggleCollapsed = () => {
     try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY)
-      if (saved !== null) {
-        setCollapsed(saved === 'true')
-      }
+      const current = localStorage.getItem(LOCAL_STORAGE_KEY) === 'true'
+      localStorage.setItem(LOCAL_STORAGE_KEY, String(!current))
+      window.dispatchEvent(new Event('sfia_banner_toggle'))
     } catch {
       // Ignore localStorage errors
     }
-  }, [])
-
-  const toggleCollapsed = () => {
-    setCollapsed((prev) => {
-      const next = !prev
-      try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, String(next))
-      } catch {
-        // Ignore localStorage errors
-      }
-      return next
-    })
   }
 
   // Prevent layout shift during hydration

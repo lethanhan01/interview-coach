@@ -29,6 +29,25 @@ import {
 } from '@nestjs/swagger';
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
+type RequestUser = string | { id: string } | { user: { id: string } };
+
+function resolveUserId(userOrReq: RequestUser): string {
+  if (typeof userOrReq === 'string') {
+    return userOrReq;
+  }
+  if ('id' in userOrReq && typeof userOrReq.id === 'string') {
+    return userOrReq.id;
+  }
+  if (
+    'user' in userOrReq &&
+    userOrReq.user &&
+    typeof userOrReq.user.id === 'string'
+  ) {
+    return userOrReq.user.id;
+  }
+  return '';
+}
+
 @Controller('sessions/:sessionId/turns')
 @Roles(UserRole.candidate)
 @ApiTags('Turns')
@@ -62,9 +81,9 @@ export class TurnController {
   async uploadAudio(
     @Param('sessionId') sessionId: string,
     @UploadedFile() file: UploadedAudioFile | undefined,
-    @CurrentUser() userOrReq: any,
+    @CurrentUser() userOrReq: RequestUser,
   ): Promise<AudioUploadResult> {
-    const userId = userOrReq?.user?.id ?? userOrReq?.id ?? userOrReq;
+    const userId = resolveUserId(userOrReq);
     return this.turnService.uploadAudio(sessionId, userId, file);
   }
 
@@ -77,9 +96,9 @@ export class TurnController {
   async submitAnswer(
     @Param('sessionId') sessionId: string,
     @Body() dto: SubmitAnswerDto,
-    @CurrentUser() userOrReq: any,
+    @CurrentUser() userOrReq: RequestUser,
   ): Promise<TurnResponseDto> {
-    const userId = userOrReq?.user?.id ?? userOrReq?.id ?? userOrReq;
+    const userId = resolveUserId(userOrReq);
     return this.turnService.submitAnswer(sessionId, userId, dto);
   }
 }

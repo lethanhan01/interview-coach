@@ -19,22 +19,12 @@ type SkillLevelLink = {
   skillLevel?: SkillLevelRow | null;
 };
 
-type QuestionWithSkillLevels = {
-  questionBankSkillLevels?: SkillLevelLink[] | null;
-  criteria?: any[] | null; // Compatibility
-};
-
-type QuestionBankWithSkillLevels = QuestionWithSkillLevels & {
-  id: string;
-  contextPackId: string;
-};
-
 export type SessionQuestionWithSkillLevels = {
   id: string;
   questionText: string;
   questionCategory: string;
   sessionQuestionSkillLevels?: SkillLevelLink[] | null;
-  criteria?: any[] | null; // Compatibility
+  criteria?: unknown[] | null; // Compatibility
 };
 
 export type SessionQuestionWithCriteria = SessionQuestionWithSkillLevels;
@@ -56,46 +46,72 @@ export type SessionQuestionCriterionCreateInput = {
 export class QuestionCriteriaService {
   constructor(private readonly prisma: PrismaService) {}
 
-  codesFromQuestionBank(question: any, _versionId?: string): string[] {
+  codesFromQuestionBank(
+    question: Record<string, unknown>,
+    _versionId?: string,
+  ): string[] {
+    void _versionId;
     if (
       Array.isArray(question.rubricCriteria) &&
       question.rubricCriteria.length > 0
     ) {
-      return question.rubricCriteria.map((c: any) => c.id || c.code || 'core');
+      return (question.rubricCriteria as Record<string, unknown>[]).map(
+        (c) =>
+          (typeof c.id === 'string' ? c.id : undefined) ||
+          (typeof c.code === 'string' ? c.code : undefined) ||
+          'core',
+      );
     }
-    const rawLinks =
-      question.questionBankSkillLevels ?? question.criteria ?? [];
+    const rawLinks = Array.isArray(question.questionBankSkillLevels)
+      ? (question.questionBankSkillLevels as Record<string, unknown>[])
+      : Array.isArray(question.criteria)
+        ? (question.criteria as Record<string, unknown>[])
+        : [];
     const linked = rawLinks
-      .map((link: any) => link.skillLevel ?? link.criteria)
-      .filter((sl: any): sl is SkillLevelRow => sl !== null && sl !== undefined)
+      .map(
+        (link) =>
+          (link.skillLevel ?? link.criteria) as SkillLevelRow | undefined,
+      )
+      .filter((sl): sl is SkillLevelRow => sl !== null && sl !== undefined)
       .sort(compareSkillLevelRows)
-      .map((sl: any) => sl.code);
+      .map((sl) => sl.code);
 
     const codes = unique(linked);
     return codes.length > 0 ? codes : ['core', 'seniority'];
   }
 
-  codesFromSessionQuestion(question: any): string[] {
+  codesFromSessionQuestion(question: Record<string, unknown>): string[] {
     if (
       Array.isArray(question.rubricCriteria) &&
       question.rubricCriteria.length > 0
     ) {
-      return question.rubricCriteria.map((c: any) => c.id || c.code || 'core');
+      return (question.rubricCriteria as Record<string, unknown>[]).map(
+        (c) =>
+          (typeof c.id === 'string' ? c.id : undefined) ||
+          (typeof c.code === 'string' ? c.code : undefined) ||
+          'core',
+      );
     }
-    const rawLinks =
-      question.sessionQuestionSkillLevels ?? question.criteria ?? [];
+    const rawLinks = Array.isArray(question.sessionQuestionSkillLevels)
+      ? (question.sessionQuestionSkillLevels as Record<string, unknown>[])
+      : Array.isArray(question.criteria)
+        ? (question.criteria as Record<string, unknown>[])
+        : [];
     const linked = rawLinks
-      .map((link: any) => link.skillLevel ?? link.criteria)
-      .filter((sl: any): sl is SkillLevelRow => sl !== null && sl !== undefined)
+      .map(
+        (link) =>
+          (link.skillLevel ?? link.criteria) as SkillLevelRow | undefined,
+      )
+      .filter((sl): sl is SkillLevelRow => sl !== null && sl !== undefined)
       .slice()
       .sort(compareSkillLevelRows)
-      .map((sl: any) => sl.code);
+      .map((sl) => sl.code);
 
     const codes = unique(linked);
     return codes.length > 0 ? codes : ['core', 'seniority'];
   }
 
-  async buildSessionQuestionCriteriaData(input: {
+  buildSessionQuestionCriteriaData(input: {
     sessionQuestionId: string;
     criterionCodes: string[];
     rubricVersionId?: string;
@@ -109,10 +125,12 @@ export class QuestionCriteriaService {
       );
     }
 
-    return codes.map((code) => ({
-      sessionQuestionId: input.sessionQuestionId,
-      skillLevelId: code,
-    }));
+    return Promise.resolve(
+      codes.map((code) => ({
+        sessionQuestionId: input.sessionQuestionId,
+        skillLevelId: code,
+      })),
+    );
   }
 }
 

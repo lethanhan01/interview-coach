@@ -33,8 +33,8 @@ export interface ContextPackConfig {
 export class ContextPackService {
   private readonly logger = new Logger(ContextPackService.name);
 
-  async getContextPack(type: ContextPackType): Promise<ContextPackConfig> {
-    return this.getLegacyContextPack(type);
+  getContextPack(type: ContextPackType): Promise<ContextPackConfig> {
+    return Promise.resolve(this.getLegacyContextPack(type));
   }
 
   async getRubricSnapshot(

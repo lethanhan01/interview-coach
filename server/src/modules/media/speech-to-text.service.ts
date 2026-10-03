@@ -1,6 +1,5 @@
 import { Injectable, HttpStatus, Inject, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { isIP } from 'node:net';
 import * as path from 'node:path';
 import {
   AI_GATEWAY_TOKEN,
@@ -50,8 +49,14 @@ export class SpeechToText {
         .map((host) => host.trim().toLowerCase())
         .filter(Boolean) ?? [];
 
-    this.allowedHosts = new Set([appHost, 'localhost', '127.0.0.1', ...configuredHosts]);
-    this.isDevOrTest = (config.get<string>('NODE_ENV') || 'development') !== 'production';
+    this.allowedHosts = new Set([
+      appHost,
+      'localhost',
+      '127.0.0.1',
+      ...configuredHosts,
+    ]);
+    this.isDevOrTest =
+      (config.get<string>('NODE_ENV') || 'development') !== 'production';
   }
 
   async transcribe(audioFileUrl: string): Promise<TranscribeResult> {
@@ -175,7 +180,10 @@ export class SpeechToText {
     const hostname = url.hostname.toLowerCase();
     const isAllowedProtocol =
       url.protocol === 'https:' ||
-      (url.protocol === 'http:' && (this.isDevOrTest || hostname === 'localhost' || hostname === '127.0.0.1'));
+      (url.protocol === 'http:' &&
+        (this.isDevOrTest ||
+          hostname === 'localhost' ||
+          hostname === '127.0.0.1'));
 
     if (
       !isAllowedProtocol ||

@@ -104,7 +104,7 @@ export class LocalDiskMediaStorageAdapter implements IPrivateMediaStorage {
   /**
    * Generates an HMAC-signed URL with an expiration timestamp.
    */
-  async createSignedUrl(
+  createSignedUrl(
     mediaKey: string,
     expiresInSeconds?: number,
   ): Promise<SignedUrlResult> {
@@ -116,10 +116,10 @@ export class LocalDiskMediaStorageAdapter implements IPrivateMediaStorage {
       mediaKey,
     )}&expires=${expires}&token=${token}`;
 
-    return {
+    return Promise.resolve({
       signedUrl,
       expiresInSeconds: ttl,
-    };
+    });
   }
 
   /**

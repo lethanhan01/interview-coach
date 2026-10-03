@@ -263,7 +263,7 @@ export class SfiaAdminController {
   @ApiOperation({
     summary: 'Create a new interview question tagged with SFIA skill and level',
     description:
-      'Creates a new question in the question bank and tags it with the specified SFIA skill code and target level. Validates that the target level is within the skill\'s min–max level range.',
+      "Creates a new question in the question bank and tags it with the specified SFIA skill code and target level. Validates that the target level is within the skill's min–max level range.",
   })
   @ApiParam({
     name: 'code',

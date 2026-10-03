@@ -15,8 +15,8 @@ export class RubricCatalogService {
     }
   }
 
-  async ensureActiveRubricVersion(id: ContextPackId): Promise<string> {
+  ensureActiveRubricVersion(id: ContextPackId): Promise<string> {
     this.ensureContextPack(id);
-    return '9.0.0';
+    return Promise.resolve('9.0.0');
   }
 }

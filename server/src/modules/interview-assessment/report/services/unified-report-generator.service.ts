@@ -549,23 +549,47 @@ ${breakdownText}`;
       task: 'report',
     });
 
-    const parsed = JSON.parse(raw);
+    interface RawActionPlanItem {
+      priority?: string;
+      skill_code?: string;
+      title?: string;
+      topics?: string[];
+      estimated_weeks?: number | string;
+    }
+
+    interface RawReportLlmResponse {
+      executive_summary?: string;
+      action_plan?: RawActionPlanItem[];
+    }
+
+    const parsed = (
+      typeof raw === 'string' ? (JSON.parse(raw) as unknown) : {}
+    ) as RawReportLlmResponse;
+    const actionPlanItems = Array.isArray(parsed?.action_plan)
+      ? parsed.action_plan
+      : [];
+
     return {
       executiveSummary:
-        typeof parsed.executive_summary === 'string'
+        typeof parsed?.executive_summary === 'string'
           ? parsed.executive_summary
           : '',
-      actionPlan: Array.isArray(parsed.action_plan)
-        ? parsed.action_plan.map((item: any) => ({
-            priority: ['high', 'medium', 'low'].includes(item.priority)
-              ? item.priority
-              : 'high',
-            skillCode: item.skill_code ?? 'SKILL',
-            title: item.title ?? 'Củng cố năng lực chuyên môn',
-            topics: Array.isArray(item.topics) ? item.topics : [],
-            estimatedWeeks: Number(item.estimated_weeks) || 2,
-          }))
-        : [],
+      actionPlan: actionPlanItems.map((item) => ({
+        priority:
+          item.priority === 'high' ||
+          item.priority === 'medium' ||
+          item.priority === 'low'
+            ? item.priority
+            : 'high',
+        skillCode:
+          typeof item.skill_code === 'string' ? item.skill_code : 'SKILL',
+        title:
+          typeof item.title === 'string'
+            ? item.title
+            : 'Củng cố năng lực chuyên môn',
+        topics: Array.isArray(item.topics) ? item.topics : [],
+        estimatedWeeks: Number(item.estimated_weeks) || 2,
+      })),
     };
   }
 

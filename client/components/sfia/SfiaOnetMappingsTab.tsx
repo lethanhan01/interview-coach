@@ -5,7 +5,6 @@ import {
   Briefcase,
   Search,
   ExternalLink,
-  SlidersHorizontal,
   X,
   Compass,
 } from 'lucide-react'
@@ -13,7 +12,6 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import {
   Table,
   TableHeader,
@@ -363,7 +361,6 @@ export function SfiaOnetMappingsTab({
           {/* B. Mobile Compact Cards (< 640px) */}
           <div className="block sm:hidden space-y-2">
             {filteredAndSortedMappings.map((mapping) => {
-              const weightPct = Math.min(100, Math.round((mapping.weight / 2.5) * 100))
               const targetBadgeStyle =
                 TARGET_LEVEL_BADGES[mapping.targetLevel] ||
                 'bg-surface-raised text-ink-muted border-border'

@@ -72,8 +72,9 @@ describe('LocalDiskMediaStorageAdapter', () => {
     const token = adapter.generateHmac(mediaKey, expires);
     expect(adapter.verifyToken(mediaKey, expires, token)).toBe(true);
 
-    // Token bị sửa đổi
-    expect(adapter.verifyToken(mediaKey, expires, 'tampered-token')).toBe(false);
+    expect(adapter.verifyToken(mediaKey, expires, 'tampered-token')).toBe(
+      false,
+    );
 
     // Thời gian hết hạn khác
     expect(adapter.verifyToken(mediaKey, expires + 10, token)).toBe(false);

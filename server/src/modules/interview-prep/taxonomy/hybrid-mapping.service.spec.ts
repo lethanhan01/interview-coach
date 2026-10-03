@@ -1,11 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
-import {
-  ISfiaFacade,
-  SFIA_FACADE_TOKEN,
-  SfiaSkillDto,
-} from '@modules/sfia/contracts';
-import { AI_GATEWAY_TOKEN, IAIGateway } from '@infra/ai/ai-gateway.interface';
+import { SFIA_FACADE_TOKEN, SfiaSkillDto } from '@modules/sfia/contracts';
+import { AI_GATEWAY_TOKEN } from '@infra/ai/ai-gateway.interface';
 import { HybridMappingService } from './hybrid-mapping.service';
 
 describe('HybridMappingService', () => {

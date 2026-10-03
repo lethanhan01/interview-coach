@@ -7,6 +7,7 @@ import {
   TranscriptItemDto,
   AnnotatedSegmentDto,
   BinaryCriterionResultDto,
+  SkillBreakdownDto,
 } from './dto/report-response.dto';
 import { FeedbackProgressDto } from './dto/feedback-progress.dto';
 import {
@@ -240,7 +241,9 @@ export class ReportService {
         session.recommendationStatus ??
         (unifiedSummary.recommendationStatus as string | undefined),
       skillsBreakdown:
-        rawBreakdown !== undefined ? (rawBreakdown as any) : undefined,
+        rawBreakdown !== undefined
+          ? (rawBreakdown as unknown as SkillBreakdownDto[])
+          : undefined,
       executiveSummary: allFeedbackIsFallback
         ? {
             ...storedExecutiveSummary,

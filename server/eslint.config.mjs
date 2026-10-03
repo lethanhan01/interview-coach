@@ -33,7 +33,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.spec.ts', 'test/**/*.ts', 'src/test-utils/**/*.ts'],
+    files: ['**/*.spec.ts', 'test/**/*.ts', 'src/**/test-utils/**/*.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
@@ -41,6 +41,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
       '@typescript-eslint/require-await': 'off',
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
 );

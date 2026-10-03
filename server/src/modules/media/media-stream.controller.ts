@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  Headers,
-  Res,
-} from '@nestjs/common';
+import { Controller, Get, Query, Headers, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { ApiOperation, ApiTags, ApiProduces } from '@nestjs/swagger';
 import { StreamAudioQueryDto } from './dto/stream-audio-query.dto';
@@ -17,7 +11,8 @@ export class MediaStreamController {
 
   @Get('stream')
   @ApiOperation({
-    summary: 'Phát trực tuyến (stream) tệp âm thanh phỏng vấn hỗ trợ HTTP Range',
+    summary:
+      'Phát trực tuyến (stream) tệp âm thanh phỏng vấn hỗ trợ HTTP Range',
   })
   @ApiProduces('audio/webm', 'audio/mp4', 'audio/wav')
   async stream(
