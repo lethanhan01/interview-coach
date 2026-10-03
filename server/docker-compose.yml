@@ -1,20 +1,141 @@
 name: interviewcoach
 
 services:
+  # ----------------------------------------------------------------------------
+  # REDIS: In-memory cache, BullMQ queue & SSE Pub/Sub
+  # ----------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes"]
+    container_name: interviewcoach-redis
+    restart: unless-stopped
+    command: [
+      "redis-server",
+      "--appendonly", "yes",
+      "--maxmemory", "192mb",
+      "--maxmemory-policy", "noeviction"
+    ]
     environment:
       TZ: Asia/Ho_Chi_Minh
-    ports:
-      - "6379:6379"
+    # KHÔNG mở cổng ra ngoài host để bảo mật tuyệt đối trên VPS. Giao tiếp qua mạng nội bộ Docker.
     volumes:
       - redis-data:/data
+    networks:
+      - interviewcoach-net
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+  # ----------------------------------------------------------------------------
+  # SERVER API: HTTP REST Endpoints, Swagger Docs & SSE
+  # ----------------------------------------------------------------------------
+  server-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: interviewcoach-server:latest
+    container_name: interviewcoach-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      RUNTIME_ROLE: api
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      NODE_OPTIONS: "--max-old-space-size=384"
+    # Port mapping: 127.0.0.1:3002 trên host -> 3000 trong container (Dành cho host Reverse Proxy Nginx/Caddy)
+    ports:
+      - "127.0.0.1:3002:3000"
+    # Cho phép container kết nối tới PostgreSQL đang chạy trên Host OS của VPS
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - interviewcoach-net
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    command: ["node", "dist/main.js", "--role=api"]
+    deploy:
+      resources:
+        limits:
+          memory: 600M
+        reservations:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ----------------------------------------------------------------------------
+  # SERVER WORKER: BullMQ Background Processor (Feedback, Audio, AI Generation)
+  # ----------------------------------------------------------------------------
+  server-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: interviewcoach-server:latest
+    container_name: interviewcoach-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      RUNTIME_ROLE: worker
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      NODE_OPTIONS: "--max-old-space-size=450"
+    # Worker KHÔNG mở bất kỳ port nào ra ngoài
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - interviewcoach-net
+    depends_on:
+      redis:
+        condition: service_healthy
+      server-api:
+        condition: service_healthy
+    command: ["node", "dist/main.js", "--role=worker"]
+    deploy:
+      resources:
+        limits:
+          memory: 700M
+        reservations:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ------------------------------------------------------------------------------
+# VOLUMES & NETWORKS
+# ------------------------------------------------------------------------------
 volumes:
   redis-data:
+    name: interviewcoach-redis-data
+
+networks:
+  interviewcoach-net:
+    name: interviewcoach-network
+    driver: bridge
