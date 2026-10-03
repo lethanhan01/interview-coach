@@ -45,7 +45,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: interviewcoach-server:latest
+    image: ${SERVER_IMAGE:-ghcr.io/lethanhan01/interview-coach/interviewcoach-server:latest}
     container_name: interviewcoach-api
     restart: unless-stopped
     env_file:
@@ -94,7 +94,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: interviewcoach-server:latest
+    image: ${SERVER_IMAGE:-ghcr.io/lethanhan01/interview-coach/interviewcoach-server:latest}
     container_name: interviewcoach-worker
     restart: unless-stopped
     env_file:
