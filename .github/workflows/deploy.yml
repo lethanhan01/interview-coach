@@ -13,6 +13,10 @@ on:
         description: 'Nhánh Git muốn build & deploy lên VPS'
         required: true
         default: 'main'
+      run_migration:
+        description: 'Chạy Prisma migration khi deploy (true/false)'
+        required: false
+        default: 'true'
 
 permissions:
   contents: read
@@ -210,6 +214,6 @@ jobs:
           # 3. Kích hoạt quy trình deploy an toàn
           export SERVER_IMAGE="$SERVER_IMAGE"
           export DEPLOY_MODE=pull
-          export RUN_PRISMA_MIGRATE=true
+          export RUN_PRISMA_MIGRATE="${{ github.event.inputs.run_migration || 'true' }}"
 
           bash ./deploy.sh

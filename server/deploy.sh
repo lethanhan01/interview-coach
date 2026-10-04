@@ -51,10 +51,12 @@ fi
 # 3. Đồng bộ Schema Prisma Database qua Docker Container (nếu được bật)
 if [[ "$RUN_PRISMA_MIGRATE" == "true" ]]; then
   echo "🗄️ Đang chạy Prisma Migrations qua container..."
-  if docker compose run --rm server-api npx prisma migrate deploy; then
+  if docker compose run --rm server-api npx --no-install prisma migrate deploy; then
     echo "✅ Áp dụng Prisma Migrations thành công!"
   else
-    echo "❌ Lỗi: Prisma Migration thất bại!"
+    echo "❌ Lỗi: Prisma Migration thất bại! Vui lòng kiểm tra:"
+    echo "   1. Chuỗi kết nối DATABASE_URL / DIRECT_URL trong .env trên VPS (đảm bảo dùng host.docker.internal:5432)."
+    echo "   2. Dịch vụ PostgreSQL trên host VPS có đang chạy và mở quyền kết nối cho mạng Docker không."
     rollback
   fi
 fi
@@ -64,8 +66,8 @@ echo "🔄 Khởi động lại container server-api & server-worker..."
 docker compose up -d --force-recreate server-api server-worker
 
 # 5. Đợi container khởi động và kiểm tra Healthcheck (Liveness)
-echo "🩺 Đang kiểm tra trạng thái sức khỏe container (tối đa 45s)..."
-RETRIES=15
+echo "🩺 Đang kiểm tra trạng thái sức khỏe container (tối đa 60s)..."
+RETRIES=20
 HEALTH_OK=false
 until [[ "$RETRIES" -le 0 ]]; do
   STATUS=$(docker inspect --format='{{json .State.Health.Status}}' interviewcoach-api 2>/dev/null || echo '"starting"')
@@ -80,7 +82,7 @@ until [[ "$RETRIES" -le 0 ]]; do
 done
 
 if [[ "$HEALTH_OK" == false ]]; then
-  echo "❌ Lỗi: Container không đạt trạng thái healthy sau 45s. Chi tiết logs gần nhất:"
+  echo "❌ Lỗi: Container không đạt trạng thái healthy sau 60s. Chi tiết logs gần nhất:"
   docker compose logs --tail=50 server-api
   rollback
 fi
