@@ -28,7 +28,9 @@ describe('WorkflowService', () => {
         idempotencyKey:
           'question-generation:11111111-1111-4111-8111-111111111111',
       },
-      update: {},
+      update: {
+        updatedAt: expect.any(Date),
+      },
     });
   });
 
@@ -49,7 +51,9 @@ describe('WorkflowService', () => {
         payload: { answerId: '22222222-2222-4222-8222-222222222222' },
         idempotencyKey: 'transcription:22222222-2222-4222-8222-222222222222',
       },
-      update: {},
+      update: {
+        updatedAt: expect.any(Date),
+      },
     });
   });
 
@@ -71,7 +75,9 @@ describe('WorkflowService', () => {
         payload: { answerId: '33333333-3333-4333-8333-333333333333' },
         idempotencyKey: 'custom-feedback-key-123',
       },
-      update: {},
+      update: {
+        updatedAt: expect.any(Date),
+      },
     });
   });
 

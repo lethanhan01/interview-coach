@@ -94,6 +94,11 @@ jobs:
 
       - name: Run Integration Tests
         run: npm run test:integration
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5433/interviewcoach_test?schema=public
+          REDIS_HOST: localhost
+          REDIS_PORT: '6379'
 
   # ----------------------------------------------------------------------------
   # JOB 2: BUILD & PUSH DOCKER IMAGE LÊN GHCR (ubuntu-latest)
