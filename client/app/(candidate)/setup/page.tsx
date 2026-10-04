@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { apiClient } from '@/lib/api-client'
+import { prepService, sessionService } from '@/services'
 import type {
   ContextPack,
   OutputLanguage,
@@ -11,12 +11,14 @@ import type {
   Session,
   SessionType,
 } from '@/lib/types'
+
 import {
   type JdFormData,
   type InterviewDuration,
   DURATION_OPTIONS,
   EMPTY_JD,
   isJdValid,
+  mapJdLevelToSfia,
 } from '@/lib/setup-types'
 import Button from '@/components/ui/Button'
 import JdForm from '@/components/setup/JdForm'
@@ -25,6 +27,9 @@ import ConfirmStep from '@/components/setup/ConfirmStep'
 import SavedJdPicker from '@/components/setup/SavedJdPicker'
 import { ArrowLeft } from 'lucide-react'
 import { getJdLevelLabel, normalizeJdLevel } from '@/lib/interview-options'
+import { cn } from '@/lib/utils'
+import { PageContainer } from '@/components/patterns/LayoutPatterns'
+import { LoadingState } from '@/components/patterns/FeedbackPatterns'
 
 // ── Constants & Types (re-exported from @/lib/setup-types) ───────────────────
 // The actual definitions live in lib/setup-types.ts so that components/setup/*
@@ -47,11 +52,19 @@ function stringArray(value: unknown): string[] {
 function normalizeJdFormData(
   value: Partial<Record<keyof JdFormData, unknown>> | null | undefined
 ): JdFormData {
+  const level = text(value?.level)
+  const targetSfia =
+    typeof value?.targetSfiaLevel === 'number'
+      ? value.targetSfiaLevel
+      : level
+        ? mapJdLevelToSfia(level)
+        : undefined
+
   return {
     company: text(value?.company),
     website: text(value?.website),
     position: text(value?.position),
-    level: text(value?.level),
+    level,
     headcount: text(value?.headcount),
     location: text(value?.location),
     requirements: text(value?.requirements),
@@ -60,6 +73,9 @@ function normalizeJdFormData(
     benefits: text(value?.benefits),
     salary: text(value?.salary),
     bonus: text(value?.bonus),
+    onetSocCode: value?.onetSocCode ? text(value.onetSocCode) : undefined,
+    onetOccupationTitle: value?.onetOccupationTitle ? text(value.onetOccupationTitle) : undefined,
+    targetSfiaLevel: targetSfia,
   }
 }
 
@@ -115,6 +131,9 @@ function toSavedJobDescriptionPayload(
     benefits: optional(form.benefits),
     salary: optional(form.salary),
     bonus: optional(form.bonus),
+    onetSocCode: optional(form.onetSocCode ?? ''),
+    onetOccupationTitle: optional(form.onetOccupationTitle ?? ''),
+    targetSfiaLevel: form.targetSfiaLevel ?? mapJdLevelToSfia(form.level),
   }
 }
 
@@ -155,19 +174,25 @@ function savedJobDescriptionToForm(
   item: SavedJobDescription,
   sessions: Session[] = []
 ): JdFormData {
+  const resolvedLevel = resolveSavedJobDescriptionLevel(item, sessions)
   return normalizeJdFormData({
     company: item.companyName,
-    website: item.companyWebsite,
+    website: item.companyWebsite ?? undefined,
     position: item.jobTitle,
-    level: resolveSavedJobDescriptionLevel(item, sessions),
-    headcount: item.headcount,
-    location: item.location,
+    level: resolvedLevel,
+    headcount: item.headcount ?? undefined,
+    location: item.location ?? undefined,
     requirements: item.requirements,
     jobContent: item.jobContent,
     techStack: item.techStack,
-    benefits: item.benefits,
-    salary: item.salary,
-    bonus: item.bonus,
+    benefits: item.benefits ?? undefined,
+    salary: item.salary ?? undefined,
+    bonus: item.bonus ?? undefined,
+    onetSocCode: item.onetSocCode ?? undefined,
+    onetOccupationTitle: item.onetOccupationTitle ?? undefined,
+    targetSfiaLevel:
+      item.targetSfiaLevel ??
+      (resolvedLevel ? mapJdLevelToSfia(resolvedLevel) : undefined),
   })
 }
 
@@ -183,11 +208,7 @@ const STEP_LABELS: Record<1 | 2 | 3, string> = {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 function SetupPageLoading() {
-  return (
-    <div className="flex items-center justify-center py-20">
-      <div className="border-brand size-8 animate-spin rounded-full border-2 border-t-transparent" />
-    </div>
-  )
+  return <LoadingState text="Đang tải dữ liệu cấu hình..." minHeight="min-h-[50vh]" />
 }
 
 export default function SetupPage() {
@@ -247,19 +268,14 @@ function SetupPageContent() {
 
     async function loadSavedJobDescriptions() {
       try {
-        const data = await apiClient.get<{ items: SavedJobDescription[] }>(
-          '/saved-job-descriptions'
-        )
+        const itemsData = await prepService.getSavedJobDescriptions()
         if (!cancelled) {
-          let items = data.items ?? []
+          let items = itemsData
           let sessions: Session[] = []
 
           if (items.some((item) => !normalizeJdLevel(item.level))) {
             try {
-              const sessionData = await apiClient.get<{ sessions: Session[] }>(
-                '/sessions'
-              )
-              sessions = sessionData.sessions ?? []
+              sessions = await sessionService.getSessions()
               items = hydrateSavedJobDescriptionLevels(items, sessions)
             } catch {
               // Best-effort fallback for legacy JD records saved before level existed.
@@ -343,11 +359,11 @@ function SetupPageContent() {
     setSubmitting(true)
     try {
       const jobDescription = serializeJd(jd)
-      const savedJobDescription = await apiClient.post<SavedJobDescription>(
-        '/saved-job-descriptions',
+      const savedJobDescription = await prepService.saveJobDescription(
         toSavedJobDescriptionPayload(jd)
       )
-      const data = await apiClient.post<{ id: string }>('/sessions', {
+      const targetSfia = jd.targetSfiaLevel ?? mapJdLevelToSfia(jd.level)
+      const data = await sessionService.createSession({
         jobDescription,
         sessionType,
         contextPack,
@@ -355,6 +371,8 @@ function SetupPageContent() {
         numQuestions,
         targetRoles: [jd.position],
         savedJobDescriptionId: savedJobDescription.id,
+        targetSfiaLevel: targetSfia,
+        onetSocCode: jd.onetSocCode,
       })
       router.push(`/sessions/${data.id}`)
     } catch (err) {
@@ -365,13 +383,14 @@ function SetupPageContent() {
     }
   }
 
+
   // Hiện loading spinner khi đang fetch danh sách JD (chỉ ở step 0)
   if (step === 0 && !jdPickerReady) {
     return <SetupPageLoading />
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <PageContainer maxWidth="md">
       {/* Step 0 — Saved JD Picker (no stepper) */}
       {step === 0 && (
         <SavedJdPicker
@@ -385,28 +404,30 @@ function SetupPageContent() {
       {step >= 1 && (
         <>
           {/* Back to JD library */}
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => router.push('/jd-library')}
-            className="text-ink-muted hover:text-brand mb-6 flex items-center gap-1.5 text-sm transition-colors"
+            className="text-ink-muted hover:text-brand mb-6 -ml-2 flex items-center gap-1.5 text-sm"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
             Thư viện JD
-          </button>
+          </Button>
 
           <div className="mb-10 flex items-start gap-2">
             {([1, 2, 3] as (1 | 2 | 3)[]).map((s) => (
               <div key={s} className="flex items-center gap-2">
                 <div className="flex flex-col items-center gap-1.5">
                   <div
-                    className={[
+                    className={cn(
                       'flex size-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-150',
                       s === step
-                        ? 'bg-brand ring-brand-200 text-white ring-4'
+                        ? 'bg-brand ring-brand-subtle-border text-white ring-4'
                         : s < step
                           ? 'bg-brand text-white'
-                          : 'bg-border text-ink-faint',
-                    ].join(' ')}
+                          : 'bg-border text-ink-faint'
+                    )}
                   >
                     {s < step ? (
                       <svg
@@ -429,20 +450,20 @@ function SetupPageContent() {
                     )}
                   </div>
                   <span
-                    className={[
+                    className={cn(
                       'hidden text-xs sm:block',
-                      s === step ? 'text-ink font-medium' : 'text-ink-faint',
-                    ].join(' ')}
+                      s === step ? 'text-ink font-medium' : 'text-ink-faint'
+                    )}
                   >
                     {STEP_LABELS[s]}
                   </span>
                 </div>
                 {s < 3 && (
                   <div
-                    className={[
+                    className={cn(
                       'mb-4 h-px w-10 transition-all duration-150',
-                      s < step ? 'bg-brand' : 'bg-border',
-                    ].join(' ')}
+                      s < step ? 'bg-brand' : 'bg-border'
+                    )}
                   />
                 )}
               </div>
@@ -526,6 +547,7 @@ function SetupPageContent() {
             contextPack={contextPack}
             duration={duration}
             error={error}
+            onChange={updateJd}
           />
           <div className="flex justify-between">
             <Button variant="ghost" onClick={() => setStep(2)}>
@@ -537,6 +559,6 @@ function SetupPageContent() {
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

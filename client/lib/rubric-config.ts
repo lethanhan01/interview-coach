@@ -66,9 +66,7 @@ export function getRubricCategories(
   // Single-type session: that category carries 100% of the score.
   if (sessionType === 'hr')
     return [{ ...config.behavioral, categoryWeightPct: 100 }]
-  if (sessionType === 'technical')
-    return [{ ...config.technical, categoryWeightPct: 100 }]
-  return [config.behavioral, config.technical]
+  return [{ ...config.technical, categoryWeightPct: 100 }]
 }
 
 export function getRubricHint(
@@ -81,10 +79,7 @@ export function getRubricHint(
       .map((d) => `${d.code} ${d.nameVi} (${d.weightPct}%)`)
       .join(' · ')}`
   }
-  if (sessionType === 'technical') {
-    return `Tiêu chí kỹ thuật: ${config.technical.dimensions
-      .map((d) => `${d.code} ${d.nameVi} (${d.weightPct}%)`)
-      .join(' · ')}`
-  }
-  return `Hành vi ${config.behavioral.categoryWeightPct}% + Kỹ thuật ${config.technical.categoryWeightPct}%`
+  return `Tiêu chí kỹ thuật: ${config.technical.dimensions
+    .map((d) => `${d.code} ${d.nameVi} (${d.weightPct}%)`)
+    .join(' · ')}`
 }

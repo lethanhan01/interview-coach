@@ -48,6 +48,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             ref={ref}
             className={cn(
               // Base
+              // Design Exception: Chiều cao tối thiểu tiêu chuẩn cho Textarea đa dòng
               'border-input bg-surface text-foreground ring-offset-background flex min-h-[80px] w-full resize-none rounded-xl border px-4 py-3 text-sm transition-colors duration-150',
               'placeholder:text-muted-foreground',
               // Focus ring

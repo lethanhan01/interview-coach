@@ -29,7 +29,7 @@ export default function CountdownTimer({
   const colorClass = isExpired
     ? 'text-danger'
     : isWarning
-      ? 'text-amber-500'
+      ? 'text-warning'
       : 'text-ink-muted'
 
   return (

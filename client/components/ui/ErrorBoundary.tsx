@@ -25,7 +25,8 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         this.props.fallback ?? (
-          <div className="flex min-h-[200px] items-center justify-center text-sm text-gray-500">
+          // Design Exception: Chiều cao tối thiểu cho fallback error boundary
+          <div className="text-muted-foreground flex min-h-[200px] items-center justify-center text-sm">
             Đã xảy ra lỗi. Vui lòng tải lại trang.
           </div>
         )

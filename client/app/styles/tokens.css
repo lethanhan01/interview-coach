@@ -7,7 +7,7 @@
     var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
     Consolas, 'Liberation Mono', 'Courier New', monospace;
 
-  /* Sizes */
+  /* Font Sizes & Line Heights */
   --text-xs: 0.75rem; /* 12px */
   --text-xs--line-height: 1rem; /* 16px */
   --text-sm: 0.875rem; /* 14px */
@@ -20,6 +20,20 @@
   --text-xl--line-height: 1.75rem; /* 28px */
   --text-2xl: 1.5rem; /* 24px */
   --text-2xl--line-height: 2rem; /* 32px */
+  --text-3xl: 1.875rem; /* 30px */
+  --text-3xl--line-height: 2.25rem; /* 36px */
+  --text-4xl: 2.25rem; /* 36px */
+  --text-4xl--line-height: 2.5rem; /* 40px */
+  --text-5xl: 3rem; /* 48px */
+  --text-5xl--line-height: 1;
+  --text-6xl: 3.75rem; /* 60px */
+  --text-6xl--line-height: 1;
+
+  /* Letter Spacing (Tracking) */
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.025em;
 
   /* Weights */
   --font-weight-normal: 400;
@@ -56,7 +70,33 @@
   --color-brand-900: #1e3a8a;
   --color-brand-950: #172554;
 
-  /* Red (Destructive) */
+  /* Violet (AI & Cognitive Insights) */
+  --color-violet-50: #f5f3ff;
+  --color-violet-100: #ede9fe;
+  --color-violet-200: #ddd6fe;
+  --color-violet-300: #c4b5fd;
+  --color-violet-400: #a78bfa;
+  --color-violet-500: #8b5cf6;
+  --color-violet-600: #7c3aed;
+  --color-violet-700: #6d28d9;
+  --color-violet-800: #5b21b6;
+  --color-violet-900: #4c1d95;
+  --color-violet-950: #2e1065;
+
+  /* Cyan (Audio Waveform & Real-time Telemetry) */
+  --color-cyan-50: #ecfeff;
+  --color-cyan-100: #cffafe;
+  --color-cyan-200: #a5f3fc;
+  --color-cyan-300: #67e8f9;
+  --color-cyan-400: #22d3ee;
+  --color-cyan-500: #06b6d4;
+  --color-cyan-600: #0891b2;
+  --color-cyan-700: #0e7490;
+  --color-cyan-800: #155e75;
+  --color-cyan-900: #164e63;
+  --color-cyan-950: #083344;
+
+  /* Red (Destructive / Danger) */
   --color-red-50: #fef2f2;
   --color-red-100: #fee2e2;
   --color-red-200: #fecaca;
@@ -95,7 +135,7 @@
   --color-amber-900: #78350f;
   --color-amber-950: #451a03;
 
-  /* Blue (Info - slightly different from brand if needed, or mapped to brand) */
+  /* Blue (Info) */
   --color-blue-50: #f0f9ff;
   --color-blue-100: #e0f2fe;
   --color-blue-200: #bae6fd;
@@ -108,6 +148,20 @@
   --color-blue-900: #0c4a6e;
   --color-blue-950: #082f49;
 
+  /* Categorical Data Viz / Charts */
+  --color-chart-1: #2563eb;
+  --color-chart-2: #7c3aed;
+  --color-chart-3: #0891b2;
+  --color-chart-4: #16a34a;
+  --color-chart-5: #f59e0b;
+  --color-chart-6: #ef4444;
+
+  /* Score & Mastery Tiers */
+  --color-tier-bronze: #cd7f32;
+  --color-tier-silver: #94a3b8;
+  --color-tier-gold: #f59e0b;
+  --color-tier-diamond: #06b6d4;
+
   /* =========================================
      Radius
      ========================================= */
@@ -116,16 +170,30 @@
   --radius-md: 0.375rem; /* 6px */
   --radius-lg: 0.5rem; /* 8px */
   --radius-xl: 0.75rem; /* 12px */
+  --radius-2xl: 1rem; /* 16px */
   --radius-full: 9999px;
 
   /* =========================================
-     Shadows
+     Shadows & Elevation
      ========================================= */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg:
     0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Elevation Surface Shadows */
+  --shadow-elevation-1: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-elevation-2: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.12);
+  --shadow-elevation-3: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.15);
+
+  /* Specular Highlights for Dark Mode Depth */
+  --shadow-specular-top: inset 0 1px 0 0 rgb(255 255 255 / 0.08);
+  --shadow-inner-glow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+
+  /* Legacy Component Shadow Aliases */
   --shadow-popover:
     0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-dialog:
@@ -148,29 +216,7 @@
   --ease-exit: cubic-bezier(0.4, 0, 1, 1); /* Acceleration */
   --default-transition-timing-function: var(--ease-standard);
 
-  /* =========================================
-     Layout
-     ========================================= */
-  --spacing-content-max-width: 1280px;
-  --spacing-page-padding-mobile: 1rem;
-  --spacing-page-padding-desktop: 2rem;
-  --spacing-header-height: 4rem;
-  --spacing-sidebar-width: 16rem;
-
-  /* =========================================
-     Z-index
-     ========================================= */
-  --z-index-base: 0;
-  --z-index-sticky: 100;
-  --z-index-dropdown: 200;
-  --z-index-overlay: 300;
-  --z-index-modal: 400;
-  --z-index-toast: 500;
-  --z-index-tooltip: 600;
-
-  /* =========================================
-     Accordion Animation Keyframes
-     ========================================= */
+  /* Keyframe Animations */
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
@@ -191,4 +237,39 @@
       height: 0;
     }
   }
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.65;
+    }
+  }
+
+  /* =========================================
+     Layout & Spacing
+     ========================================= */
+  --spacing-content-max-width: 1280px;
+  --spacing-page-padding-mobile: 1rem;
+  --spacing-page-padding-desktop: 2rem;
+  --spacing-header-height: 4rem;
+  --spacing-sidebar-width: 16rem;
+
+  /* =========================================
+     Z-index
+     ========================================= */
+  --z-index-base: 0;
+  --z-index-sticky: 100;
+  --z-index-dropdown: 200;
+  --z-index-overlay: 300;
+  --z-index-modal: 400;
+  --z-index-toast: 500;
+  --z-index-tooltip: 600;
 }

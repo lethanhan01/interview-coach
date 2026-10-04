@@ -17,8 +17,8 @@ export const Default: Story = {
   args: {},
 }
 
-export const CustomClass: Story = {
+export const DestructiveVariant: Story = {
   args: {
-    className: 'bg-red-500 text-white hover:bg-red-600',
+    variant: 'destructive',
   },
 }

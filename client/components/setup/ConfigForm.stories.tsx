@@ -62,9 +62,9 @@ export const TechnicalWestern: Story = {
   },
 }
 
-export const MixedLong: Story = {
+export const TechnicalLong: Story = {
   args: {
-    sessionType: 'mixed',
+    sessionType: 'technical',
     contextPack: 'VN',
     duration: 90,
     setSessionType: () => {},

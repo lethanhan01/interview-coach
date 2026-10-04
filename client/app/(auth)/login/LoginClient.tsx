@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { getSafeNext } from '@/lib/auth-redirect'
 import { useAuth } from '@/hooks/useAuth'
 import LoginForm, { type LoginFormData } from '@/components/auth/LoginForm'
+import { authService } from '@/services'
 
 export default function LoginClient() {
   const router = useRouter()
@@ -25,33 +26,20 @@ export default function LoginClient() {
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true)
     setServerError(null)
-    
+
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'}/auth/login`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        }
-      )
-      
-      const result = await response.json().catch(() => null)
-      
-      if (!response.ok) {
-        setServerError(result?.message ?? 'Không thể đăng nhập')
+      await authService.login(data)
+      const role = await refresh()
+      const rawNext = searchParams.get('next')
+      if (!rawNext || !rawNext.startsWith('/')) {
+        router.replace(role === 'admin' ? '/admin/dashboard' : '/sessions')
       } else {
-        const role = await refresh()
-        const rawNext = searchParams.get('next')
-        if (!rawNext || !rawNext.startsWith('/')) {
-          router.replace(role === 'admin' ? '/admin-dashboard' : '/sessions')
-        } else {
-          router.replace(next)
-        }
+        router.replace(next)
       }
-    } catch {
-      setServerError('Lỗi kết nối đến máy chủ. Vui lòng thử lại sau.')
+    } catch (err) {
+      setServerError(
+        err instanceof Error ? err.message : 'Không thể đăng nhập'
+      )
     } finally {
       setLoading(false)
     }
@@ -66,3 +54,4 @@ export default function LoginClient() {
     />
   )
 }
+

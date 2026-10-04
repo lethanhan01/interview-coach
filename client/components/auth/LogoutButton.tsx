@@ -1,17 +1,21 @@
+import Button, { type ButtonProps } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 
-export type LogoutButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>
+export type LogoutButtonProps = ButtonProps
 
-export default function LogoutButton({ className, ...props }: LogoutButtonProps) {
+export default function LogoutButton({ className, variant = 'ghost', size = 'sm', ...props }: LogoutButtonProps) {
   return (
-    <button
-      {...props}
+    <Button
+      variant={variant}
+      size={size}
       className={cn(
-        'text-ink-muted hover:text-brand-subtle-fg hover:bg-brand-subtle focus-visible:ring-brand rounded-lg px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+        'text-ink-muted hover:text-brand-subtle-fg hover:bg-brand-subtle font-normal',
         className
       )}
+      {...props}
     >
       Đăng xuất
-    </button>
+    </Button>
   )
 }
+

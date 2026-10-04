@@ -7,53 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-model RubricVersion {
-  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contextPackId String             @map("context_pack_id")
-  versionKey    String             @map("version_key")
-  status        String             @default("active")
-  checksum      String?
-  publishedAt   DateTime           @default(now()) @map("published_at") @db.Timestamptz(6)
-  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  categories    RubricCategory[]
-  sessions      InterviewSession[]
-
-  @@unique([contextPackId, versionKey], map: "rubric_versions_context_version_key")
-  @@index([contextPackId], map: "idx_rubric_versions_context_pack")
-  @@map("rubric_versions")
-}
-
-model RubricCategory {
-  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  rubricVersionId String            @map("rubric_version_id") @db.Uuid
-  categoryKey     String            @map("category_key")
-  label           String
-  weight          Float
-  displayOrder    Int               @default(0) @map("display_order")
-  rubricVersion   RubricVersion     @relation(fields: [rubricVersionId], references: [id], onDelete: Cascade, map: "rubric_categories_rubric_version_id_fkey")
-  criteria        RubricCriterion[]
-
-  @@unique([rubricVersionId, categoryKey], map: "rubric_categories_version_category_key")
-  @@index([rubricVersionId], map: "idx_rubric_categories_version")
-  @@map("rubric_categories")
-}
-
-model RubricCriterion {
-  id                   String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  rubricCategoryId     String                     @map("rubric_category_id") @db.Uuid
-  code                 String
-  name                 String
-  weight               Float
-  displayOrder         Int                        @default(0) @map("display_order")
-  rubricCategory       RubricCategory             @relation(fields: [rubricCategoryId], references: [id], onDelete: Cascade)
-  questionBankLinks    QuestionBankCriterion[]
-  sessionQuestionLinks SessionQuestionCriterion[]
-
-  @@unique([rubricCategoryId, code], map: "rubric_criteria_category_code_key")
-  @@index([rubricCategoryId], map: "idx_rubric_criteria_category")
-  @@map("rubric_criteria")
-}
-
 enum QuestionSessionType {
   hr
   technical
@@ -71,37 +24,76 @@ enum AccountStatus {
   password_reset_required
 }
 
+// ==========================================
+// QUESTION BANK (PRESERVED CONTENT)
+// ==========================================
+
 model QuestionBank {
-  id               String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  content          String
-  sessionType      QuestionSessionType     @map("session_type")
-  difficulty       Int
-  contextPackId    String                  @map("context_pack_id")
-  estimatedTimeMin Int?                    @map("estimated_time_min")
-  translations     Json?
-  contentJson      Json?                   @map("content_json")
-  deletedAt        DateTime?               @map("deleted_at") @db.Timestamptz(6)
-  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  criteria         QuestionBankCriterion[]
-  sessionQuestions SessionQuestion[]
+  id                      String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  content                 String
+  sessionType             QuestionSessionType      @map("session_type")
+  difficulty              Int
+  contextPackId           String                   @map("context_pack_id")
+  estimatedTimeMin        Int?                     @map("estimated_time_min")
+  translations            Json?
+  contentJson             Json?                    @map("content_json")
+  deletedAt               DateTime?                @map("deleted_at") @db.Timestamptz(6)
+  createdAt               DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // === TRƯỜNG MỚI GẮN NHÃN KÉP O*NET + SFIA ===
+  onetSocCode             String?                  @map("onet_soc_code") @db.VarChar(10)
+  sfiaSkillCode           String?                  @map("sfia_skill_code") @db.VarChar(10)
+  targetSfiaLevel         Int?                     @map("target_sfia_level") @db.SmallInt
+
+  questionCriteria        QuestionCriteria[]
+  sessionQuestions        SessionQuestion[]
 
   @@index([contextPackId], map: "idx_question_bank_context_pack", where: raw("(deleted_at IS NULL)"))
   @@index([sessionType, difficulty], map: "idx_question_bank_session_type_difficulty", where: raw("(deleted_at IS NULL)"))
+  @@index([onetSocCode, targetSfiaLevel], map: "idx_question_bank_soc_level", where: raw("(deleted_at IS NULL)"))
+  @@index([sfiaSkillCode, targetSfiaLevel], map: "idx_question_bank_sfia_skill_level", where: raw("(deleted_at IS NULL)"))
   @@map("question_bank")
 }
 
-model QuestionBankCriterion {
-  questionBankId    String          @map("question_bank_id") @db.Uuid
-  rubricCriterionId String          @map("rubric_criterion_id") @db.Uuid
-  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  questionBank      QuestionBank    @relation(fields: [questionBankId], references: [id], onDelete: Cascade, map: "question_bank_criteria_question_bank_id_fkey")
-  rubricCriterion   RubricCriterion @relation(fields: [rubricCriterionId], references: [id], onDelete: Restrict, map: "question_bank_criteria_rubric_criterion_id_fkey")
+// ==========================================
+// HYBRID INTEGRATION: ONET-SFIA & CRITERIA
+// ==========================================
 
-  @@id([questionBankId, rubricCriterionId], map: "question_bank_criteria_pkey")
-  @@index([rubricCriterionId], map: "idx_question_bank_criteria_rubric_criterion")
-  @@map("question_bank_criteria")
+model OnetSfiaMapping {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  onetSocCode     String   @map("onet_soc_code") @db.VarChar(10)
+  sfiaSkillCode   String   @map("sfia_skill_code") @db.VarChar(10)
+  targetSfiaLevel Int      @default(3) @map("target_sfia_level") @db.SmallInt
+  defaultWeight   Decimal  @default(1.00) @map("default_weight") @db.Decimal(5, 2)
+  isCore          Boolean  @default(true) @map("is_core")
+  source          String   @default("curated") @map("source")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([onetSocCode, sfiaSkillCode, targetSfiaLevel], map: "onet_sfia_mappings_unique")
+  @@index([onetSocCode], map: "idx_onet_sfia_mappings_soc")
+  @@index([sfiaSkillCode], map: "idx_onet_sfia_mappings_sfia")
+  @@map("onet_sfia_mappings")
 }
+
+model QuestionCriteria {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionBankId String       @map("question_bank_id") @db.Uuid
+  criteriaText   String       @map("criteria_text") @db.Text
+  dimension      String       @db.VarChar(30)
+  weight         Decimal      @default(1.00) @map("weight") @db.Decimal(5, 2)
+  orderIndex     Int          @default(0) @map("order_index")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  questionBank   QuestionBank @relation(fields: [questionBankId], references: [id], onDelete: Cascade)
+
+  @@index([questionBankId], map: "idx_question_criteria_bank_id")
+  @@map("question_criteria")
+}
+
+// ==========================================
+// USER & PROFILE CONTEXT (100% PRESERVED)
+// ==========================================
 
 model User {
   id                   String                 @id @db.Uuid
@@ -112,13 +104,30 @@ model User {
   lastname             String?                @map("last_name")
   passwordHash         String                 @map("password_hash")
   tokenVersion         Int                    @default(0) @map("token_version")
+  emailVerified        Boolean                @default(false) @map("email_verified")
   createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
   savedJobDescriptions SavedJobDescription[]
   profile              UserProfile?
   verificationCodes    UserVerificationCode[]
+  refreshTokens        RefreshToken[]
 
   @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_refresh_tokens_user_id")
+  @@map("refresh_tokens")
 }
 
 model UserVerificationCode {
@@ -126,8 +135,10 @@ model UserVerificationCode {
   userId    String   @map("user_id") @db.Uuid
   purpose   String
   codeHash  String   @map("code_hash")
+  attempts  Int      @default(0)
   expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, purpose], map: "user_verification_codes_user_purpose_key")
@@ -136,36 +147,88 @@ model UserVerificationCode {
 }
 
 model UserProfile {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId          String   @unique @map("user_id") @db.Uuid
-  personality     String?
-  education       Json?
-  workExperience  Json?    @map("work_experience")
-  projects        Json?
-  technicalSkills Json?    @map("technical_skills")
-  certifications  Json?
-  awards          Json?
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String   @unique @map("user_id") @db.Uuid
+  targetPosition      String?  @map("target_position")
+  targetLevel         String?  @map("target_level")
+  onetSocCode         String?  @map("onet_soc_code") @db.VarChar(10)
+  onetOccupationTitle String?  @map("onet_occupation_title")
+  targetSfiaLevel     Int?     @map("target_sfia_level") @db.SmallInt
+  personality         String?
+  education           Json?
+  workExperience      Json?    @map("work_experience")
+  projects            Json?
+  technicalSkills     Json?    @map("technical_skills")
+  certifications      Json?
+  awards              Json?
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([onetSocCode], map: "idx_user_profiles_onet_soc")
   @@map("user_profiles")
 }
 
-model SessionReport {
-  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionId        String           @map("session_id") @db.Uuid
-  reportType       String           @map("report_type")
-  version          Int              @default(1)
-  contentJson      Json             @map("content_json")
-  generatedByModel String?          @map("generated_by_model")
-  promptVersion    String?          @map("prompt_version")
-  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  session          InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+model CompanyProfile {
+  id          String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String                @map("name")
+  website     String?               @map("website")
+  description String?               @db.Text
+  industry    String?
+  location    String?
+  companySize String?               @map("company_size")
+  logoUrl     String?               @map("logo_url")
+  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  @@unique([sessionId, reportType, version])
-  @@map("session_reports")
+  savedJds    SavedJobDescription[]
+
+  @@index([name], map: "idx_company_profiles_name")
+  @@map("company_profiles")
 }
+
+model SavedJobDescription {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String             @map("user_id") @db.Uuid
+  companyProfileId String?            @map("company_profile_id") @db.Uuid
+  companyName      String             @map("company_name")
+  companyWebsite   String?            @map("company_website")
+  jobTitle         String             @map("job_title")
+  level            String?
+  headcount        String?
+  location         String?
+  requirements     String
+  jobContent       String             @map("job_content")
+  techStack        String[]           @default([]) @map("tech_stack")
+  benefits         String?
+  salary           String?
+  bonus            String?
+
+  // === TRƯỜNG MỚI TÍCH HỢP O*NET & SFIA ===
+  onetSocCode         String?            @map("onet_soc_code") @db.VarChar(10)
+  onetOccupationTitle String?            @map("onet_occupation_title") @db.VarChar(150)
+  targetSfiaLevel     Int?               @map("target_sfia_level") @db.SmallInt
+  normalizedTechStack Json?              @map("normalized_tech_stack")
+
+  lastUsedAt          DateTime?          @map("last_used_at") @db.Timestamptz(6)
+  deletedAt           DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyProfile      CompanyProfile?    @relation(fields: [companyProfileId], references: [id])
+  sessions            InterviewSession[]
+
+  @@index([userId, updatedAt(sort: Desc)], map: "idx_saved_job_descriptions_user_updated")
+  @@index([userId, companyName, jobTitle], map: "idx_saved_job_descriptions_user_company_title")
+  @@index([onetSocCode], map: "idx_saved_jds_onet_soc")
+  @@map("saved_job_descriptions")
+}
+
+// ==========================================
+// INTERVIEW SESSIONS & EVALUATION (SFIA 9)
+// ==========================================
 
 model InterviewSession {
   id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -177,80 +240,85 @@ model InterviewSession {
   remainingSeconds      Int?                @map("remaining_seconds")
   language              String              @default("vi")
   contextPackId         String              @map("context_pack_id")
-  rubricVersionId       String              @map("rubric_version_id") @db.Uuid
+  sfiaVersion           String              @default("9.0.0") @map("sfia_version")
   status                String              @default("generating")
+
+  // === TRƯỜNG MỚI TÍCH HỢP O*NET & SFIA ===
+  onetSocCode           String?             @map("onet_soc_code") @db.VarChar(10)
+  targetSfiaLevel       Int?                @map("target_sfia_level") @db.SmallInt
+  competencyMatchRate   Decimal?            @map("competency_match_rate") @db.Decimal(5, 2)
+  recommendationStatus  String?             @map("recommendation_status") @db.VarChar(30)
+
   overallScore          Int?                @map("overall_score")
   completedAt           DateTime?           @map("completed_at") @db.Timestamptz(6)
   createdAt             DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
   savedJobDescription   SavedJobDescription @relation(fields: [savedJobDescriptionId], references: [id], onDelete: Restrict)
-  rubricVersion         RubricVersion       @relation(fields: [rubricVersionId], references: [id], onDelete: Restrict, map: "interview_sessions_rubric_version_id_fkey")
   sessionQuestions      SessionQuestion[]
   sessionReports        SessionReport[]
+  sessionSkills         SessionSkill[]
 
   @@index([createdAt(sort: Desc)], map: "idx_interview_sessions_created_at")
-  @@index([rubricVersionId], map: "idx_interview_sessions_rubric_version")
   @@index([savedJobDescriptionId], map: "idx_interview_sessions_saved_jd")
+  @@index([onetSocCode], map: "idx_interview_sessions_onet_soc")
   @@map("interview_sessions")
 }
 
-model SavedJobDescription {
-  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId         String             @map("user_id") @db.Uuid
-  companyName    String             @map("company_name")
-  companyWebsite String?            @map("company_website")
-  jobTitle       String             @map("job_title")
-  level          String?
-  headcount      String?
-  location       String?
-  requirements   String
-  jobContent     String             @map("job_content")
-  techStack      String[]           @default([]) @map("tech_stack")
-  benefits       String?
-  salary         String?
-  bonus          String?
-  lastUsedAt     DateTime?          @map("last_used_at") @db.Timestamptz(6)
-  deletedAt      DateTime?          @map("deleted_at") @db.Timestamptz(6)
-  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessions       InterviewSession[]
+model SessionSkill {
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId    String           @map("session_id") @db.Uuid
+  skillCode    String           @map("skill_code") @db.VarChar(10)
+  techContext  String[]         @default([]) @map("tech_context")
+  targetLevel  Int              @default(3) @map("target_level") @db.SmallInt
+  actualLevel  Int?             @map("actual_level") @db.SmallInt
+  score        Int?             @map("score")
+  weight       Decimal          @default(1.00) @map("weight") @db.Decimal(5, 2)
+  priority     Int?             @default(1)
+  source       String           @map("source")
+  reasoning    Json?            @map("reasoning")
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@index([userId, updatedAt(sort: Desc)], map: "idx_saved_job_descriptions_user_updated")
-  @@index([userId, companyName, jobTitle], map: "idx_saved_job_descriptions_user_company_title")
-  @@map("saved_job_descriptions")
+  session          InterviewSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionQuestions SessionQuestion[]
+
+  @@unique([sessionId, skillCode], map: "session_skills_session_skill_code_key")
+  @@index([sessionId], map: "idx_session_skills_session")
+  @@index([skillCode], map: "idx_session_skills_skill_code")
+  @@map("session_skills")
 }
 
 model SessionQuestion {
-  id               String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionId        String                     @map("session_id") @db.Uuid
-  questionBankId   String?                    @map("question_bank_id") @db.Uuid
-  questionText     String                     @map("question_text")
-  orderIndex       Int                        @map("order_index")
-  questionCategory String                     @map("question_category")
-  estimatedTimeMin Int?                       @map("estimated_time_min")
-  createdAt        DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
-  criteria         SessionQuestionCriterion[]
-  questionBank     QuestionBank?              @relation(fields: [questionBankId], references: [id])
-  session          InterviewSession           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  userAnswers      UserAnswer[]
+  id                         String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId                  String                      @map("session_id") @db.Uuid
+  questionBankId             String?                     @map("question_bank_id") @db.Uuid
+  questionText               String                      @map("question_text")
+  orderIndex                 Int                         @map("order_index")
+  questionCategory           String                      @map("question_category")
+  source                     String                      @default("bank")
+  questionType               String?                     @map("question_type")
+  estimatedTimeMin           Int?                        @map("estimated_time_min")
+  generationModel            String?                     @map("generation_model")
+  generationMetadata         Json?                       @map("generation_metadata")
+
+  // === THUỘC TÍNH ĐÁNH GIÁ & TIÊU CHÍ ===
+  sessionSkillId             String?                     @map("session_skill_id") @db.Uuid
+  sfiaSkillCode              String?                     @map("sfia_skill_code") @db.VarChar(10)
+  targetLevel                Int?                        @map("target_level") @db.SmallInt
+  rubricCriteria             Json?                       @map("rubric_criteria")
+
+  createdAt                  DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  questionBank               QuestionBank?               @relation(fields: [questionBankId], references: [id])
+  session                    InterviewSession            @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionSkill               SessionSkill?               @relation(fields: [sessionSkillId], references: [id], onDelete: SetNull)
+  userAnswers                UserAnswer[]
 
   @@unique([sessionId, orderIndex])
   @@index([sessionId], map: "idx_session_questions_session_id")
   @@index([sessionId, questionText], map: "idx_session_questions_session_id_text")
+  @@index([sessionSkillId], map: "idx_session_questions_session_skill")
   @@map("session_questions")
-}
-
-model SessionQuestionCriterion {
-  sessionQuestionId String          @map("session_question_id") @db.Uuid
-  rubricCriterionId String          @map("rubric_criterion_id") @db.Uuid
-  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  sessionQuestion   SessionQuestion @relation(fields: [sessionQuestionId], references: [id], onDelete: Cascade, map: "session_question_criteria_session_question_id_fkey")
-  rubricCriterion   RubricCriterion @relation(fields: [rubricCriterionId], references: [id], onDelete: Restrict, map: "session_question_criteria_rubric_criterion_id_fkey")
-
-  @@id([sessionQuestionId, rubricCriterionId], map: "session_question_criteria_pkey")
-  @@index([rubricCriterionId], map: "idx_session_question_criteria_rubric_criterion")
-  @@map("session_question_criteria")
 }
 
 model UserAnswer {
@@ -267,6 +335,7 @@ model UserAnswer {
   feedbackGenerated    Boolean         @default(false) @map("feedback_generated")
   createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
   aiFeedback           AiFeedback?
   question             SessionQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
@@ -280,10 +349,18 @@ model AiFeedback {
   overallScore      Int                @map("overall_score")
   modelAnswer       String             @map("model_answer")
   keyTakeaway       String             @map("key_takeaway")
-  promptVersion     String             @map("prompt_version")
-  isFallback        Boolean            @default(false) @map("is_fallback")
-  dimensionScores   Json?              @map("dimension_scores")
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  promptVersion       String              @map("prompt_version")
+  isFallback          Boolean             @default(false) @map("is_fallback")
+
+  // === TRƯỜNG MỚI ĐÁNH GIÁ NHỊ PHÂN & CẤP ĐỘ ===
+  demonstratedLevel   Int?                @map("demonstrated_level") @db.SmallInt
+  criteriaPassRate    Decimal?            @map("criteria_pass_rate") @db.Decimal(5, 2)
+  criteriaEvaluations Json?               @map("criteria_evaluations")
+  strengths           String[]            @default([]) @map("strengths")
+  improvements        String[]            @default([]) @map("improvements")
+
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
   userAnswer        UserAnswer         @relation(fields: [userAnswerId], references: [id], onDelete: Cascade)
   annotatedSegments AnnotatedSegment[]
 
@@ -302,8 +379,44 @@ model AnnotatedSegment {
   suggestion      String?
   improvedVersion String?    @map("improved_version")
   createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+
   aiFeedback      AiFeedback @relation(fields: [aiFeedbackId], references: [id], onDelete: Cascade)
 
   @@index([aiFeedbackId], map: "idx_annotated_segments_feedback_id")
   @@map("annotated_segments")
+}
+
+model SessionReport {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId        String           @map("session_id") @db.Uuid
+  reportType       String           @map("report_type")
+  version          Int              @default(1)
+  contentJson      Json             @map("content_json")
+  generatedByModel String?          @map("generated_by_model")
+  promptVersion    String?          @map("prompt_version")
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  session          InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, reportType, version])
+  @@map("session_reports")
+}
+
+model WorkflowOutbox {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  commandType    String    @map("command_type")
+  aggregateId    String    @map("aggregate_id") @db.Uuid
+  payload        Json
+  idempotencyKey String    @unique @map("idempotency_key")
+  state          String    @default("pending")
+  attempts       Int       @default(0)
+  availableAt    DateTime  @default(now()) @map("available_at") @db.Timestamptz(6)
+  processedAt    DateTime? @map("processed_at") @db.Timestamptz(6)
+  errorSummary   String?   @map("error_summary")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([state, availableAt], map: "idx_workflow_outbox_due")
+  @@index([aggregateId], map: "idx_workflow_outbox_aggregate")
+  @@map("workflow_outbox")
 }

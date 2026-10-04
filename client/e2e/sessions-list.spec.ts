@@ -27,7 +27,7 @@ const MOCK_COMPLETED: Session = {
 const MOCK_COMPLETING: Session = {
   id: 'sess-completing',
   userId: 'u1',
-  sessionType: 'mixed',
+  sessionType: 'technical',
   contextPackId: 'VN',
   status: 'completing',
   numQuestions: 5,
@@ -38,7 +38,7 @@ const MOCK_COMPLETING: Session = {
 const MOCK_PAUSED: Session = {
   id: 'sess-paused',
   userId: 'u1',
-  sessionType: 'mixed',
+  sessionType: 'hr',
   contextPackId: 'VN',
   status: 'paused',
   numQuestions: 5,

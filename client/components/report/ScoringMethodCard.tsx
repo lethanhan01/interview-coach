@@ -1,185 +1,204 @@
-import type { ContextPack, RubricConfig, SessionType } from '@/lib/types'
-import { getRubricCategories } from '@/lib/rubric-config'
-import type { RubricCategory } from '@/lib/types'
+'use client'
 
-interface ScoringMethodCardProps {
-  contextPackId: ContextPack
-  sessionType: SessionType
-  rubricConfig?: RubricConfig | null
+import React from 'react'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/components/ui/Accordion'
+import {
+  Sparkles,
+  ShieldCheck,
+  Layers,
+  Calculator,
+  CheckCircle2,
+  AlertTriangle,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import type { ContextPack, SessionType } from '@/lib/types'
+
+export interface ScoringMethodCardProps {
+  contextPackId?: ContextPack
+  sessionType?: SessionType
+  rubricConfig?: unknown
+  className?: string
 }
 
-const SLICE_COLORS = [
-  'var(--color-brand)',
-  'var(--color-success)',
-  'var(--color-warning)',
-  'var(--color-danger)',
-  'var(--color-info)',
-  'var(--color-ink-muted)',
-]
-
-function buildDonutGradient(category: RubricCategory) {
-  let current = 0
-
-  return category.dimensions
-    .map((dim, index) => {
-      const start = current
-      current += dim.weightPct
-      return `${SLICE_COLORS[index % SLICE_COLORS.length]} ${start}% ${current}%`
-    })
-    .join(', ')
-}
-
-function sessionTypeLabel(sessionType: SessionType) {
-  if (sessionType === 'hr') return 'phỏng vấn hành vi'
-  if (sessionType === 'technical') return 'phỏng vấn kỹ thuật'
-  return 'phỏng vấn tổng hợp'
-}
-
-function CategorySection({ category }: { category: RubricCategory }) {
-  const donutGradient = buildDonutGradient(category)
-
-  return (
-    <section className="border-border bg-surface-raised rounded-lg border p-4">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="text-ink text-sm font-semibold">{category.label}</h3>
-          <p className="text-ink-muted mt-1 text-xs leading-relaxed">
-            Tỷ trọng bên dưới là tỷ trọng gốc trong nhóm tiêu chí này.
-          </p>
-        </div>
-        <span className="bg-brand-subtle text-brand-subtle-fg rounded-full px-2.5 py-0.5 text-xs font-medium">
-          {category.categoryWeightPct}% điểm phiên
-        </span>
-      </div>
-
-      <div className="grid gap-5 md:grid-cols-[160px_1fr] md:items-center">
-        <div className="bg-brand-subtle mx-auto flex size-36 items-center justify-center rounded-full p-3">
-          <div
-            aria-label={`${category.label}: ${category.dimensions
-              .map((dim) => `${dim.nameVi} ${dim.weightPct}%`)
-              .join(', ')}`}
-            className="flex size-full items-center justify-center rounded-full"
-            role="img"
-            style={{ background: `conic-gradient(${donutGradient})` }}
-          >
-            <div className="bg-surface shadow-card flex size-20 flex-col items-center justify-center rounded-full text-center">
-              <span className="text-ink text-lg font-semibold">
-                {category.categoryWeightPct}%
-              </span>
-              <span className="text-ink-muted text-[11px] font-medium">
-                điểm phiên
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-2 sm:grid-cols-2">
-          {category.dimensions.map((dim, index) => (
-            <div key={dim.code} className="flex items-start gap-2.5">
-              <span
-                aria-hidden="true"
-                className="mt-1 size-2.5 shrink-0 rounded-full"
-                style={{
-                  backgroundColor: SLICE_COLORS[index % SLICE_COLORS.length],
-                }}
-              />
-              <div className="min-w-0">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-ink-faint text-xs font-medium">
-                    {dim.code}
-                  </span>
-                  <span className="text-ink text-sm font-medium">
-                    {dim.nameVi}
-                  </span>
-                </div>
-                <p className="text-ink-muted mt-0.5 text-xs">
-                  {dim.weightPct}% trong nhóm tiêu chí
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-export default function ScoringMethodCard({
+export function ScoringMethodCard({
   contextPackId,
   sessionType,
-  rubricConfig,
+  className,
 }: ScoringMethodCardProps) {
-  const categories =
-    rubricConfig?.categories ?? getRubricCategories(contextPackId, sessionType)
-  const isMixed = sessionType === 'mixed'
-  const label = sessionTypeLabel(sessionType)
+  const sessionLabel =
+    sessionType === 'technical'
+      ? 'Chuyên môn Kỹ thuật'
+      : sessionType === 'hr'
+        ? 'Phỏng vấn Hành vi & Nhân sự'
+        : 'Phỏng vấn Chuẩn hóa'
 
   return (
-    <div className="border-border bg-surface rounded-lg border p-6">
-      <h2 className="text-ink text-base font-semibold">
-        Phương pháp chấm điểm
-      </h2>
+    <Card className={cn('flex flex-col gap-5', className)}>
+      <CardHeader className="pb-0">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-brand-subtle text-brand-subtle-fg flex size-9 items-center justify-center rounded-lg">
+              <Sparkles className="size-5" aria-hidden="true" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">
+                Phương Pháp Đánh Giá Chuẩn Hóa SFIA 9 & O*NET
+              </CardTitle>
+              <p className="text-ink-muted text-xs">
+                Cơ chế chấm điểm tất định, thẩm định nhị phân và đối chiếu cấp độ năng lực
+              </p>
+            </div>
+          </div>
 
-      <div className="border-brand-subtle-border bg-brand-subtle mt-4 rounded-lg border p-4">
-        <p className="text-ink text-sm leading-relaxed">
-          Báo cáo này dùng thang điểm 1-100 cho từng câu trả lời. Với mỗi câu,
-          hệ thống chỉ chọn những tiêu chí thật sự liên quan đến nội dung câu
-          hỏi, chấm điểm từng tiêu chí, rồi tính điểm câu bằng trung bình có
-          trọng số của các tiêu chí đã được chọn.
-        </p>
-      </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">
+              {sessionLabel}
+            </Badge>
+            {contextPackId && (
+              <Badge variant="secondary" className="text-xs">
+                Bối cảnh: {contextPackId}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </CardHeader>
 
-      {isMixed && (
-        <p className="bg-surface-raised text-ink mt-4 rounded-lg px-4 py-2.5 text-sm leading-relaxed">
-          <span className="font-medium">Lưu ý:</span> Phiên tổng hợp có cả tiêu
-          chí hành vi và kỹ thuật. Mỗi câu vẫn được chấm theo đúng nhóm tiêu chí
-          phù hợp với câu đó; điểm tổng phiên là trung bình cộng các câu đã chấm
-          được.
-        </p>
-      )}
-
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <div className="border-border bg-surface-raised rounded-lg border p-3">
-          <p className="text-ink-faint text-xs font-medium uppercase tracking-wide">
-            Bước 1
-          </p>
-          <p className="text-ink mt-1 text-sm font-medium">
-            Chọn tiêu chí phù hợp
-          </p>
-          <p className="text-ink-muted mt-1 text-xs leading-relaxed">
-            Không phải câu nào cũng dùng toàn bộ rubric; chỉ tiêu chí có bằng
-            chứng trong câu trả lời mới được tính.
+      <CardContent className="py-0">
+        <div className="bg-brand-subtle/40 border-brand-subtle-border rounded-xl border p-4">
+          <p className="text-ink text-xs leading-relaxed">
+            Hệ thống áp dụng <strong>Cỗ máy Đánh giá Tinh gọn (Unified Interview Engine)</strong>,
+            kết hợp bộ tiêu chí nhị phân 2 chiều và khung kỹ năng toàn cầu <strong>SFIA Version 9</strong> cùng
+            phân loại nghề nghiệp chuẩn hóa <strong>O*NET</strong>. Đảm bảo tính khách quan, minh bạch và nhất quán
+            cho mọi ứng viên.
           </p>
         </div>
-        <div className="border-border bg-surface-raised rounded-lg border p-3">
-          <p className="text-ink-faint text-xs font-medium uppercase tracking-wide">
-            Bước 2
-          </p>
-          <p className="text-ink mt-1 text-sm font-medium">
-            Chuẩn hóa trọng số
-          </p>
-          <p className="text-ink-muted mt-1 text-xs leading-relaxed">
-            Nếu một câu chỉ dùng vài tiêu chí, trọng số của các tiêu chí đó được
-            quy đổi lại để tổng bằng 100%.
-          </p>
-        </div>
-        <div className="border-border bg-surface-raised rounded-lg border p-3">
-          <p className="text-ink-faint text-xs font-medium uppercase tracking-wide">
-            Bước 3
-          </p>
-          <p className="text-ink mt-1 text-sm font-medium">Tính điểm tổng</p>
-          <p className="text-ink-muted mt-1 text-xs leading-relaxed">
-            Điểm câu = tổng điểm tiêu chí nhân trọng số đã chuẩn hóa. Điểm phiên{' '}
-            {label} = trung bình cộng các câu trả lời đã chấm được.
-          </p>
-        </div>
-      </div>
 
-      <div className="mt-5 flex flex-col gap-4">
-        {categories.map((cat) => (
-          <CategorySection key={cat.label} category={cat} />
-        ))}
-      </div>
-    </div>
+        <Accordion
+          type="single"
+          collapsible
+          defaultValue="item-1"
+          className="mt-4 divide-border/60 divide-y"
+        >
+          {/* Mục 1: Tiêu chí Nhị phân 2 Chiều */}
+          <AccordionItem value="item-1" className="border-b-0 py-1">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-2 text-left">
+                <ShieldCheck className="size-4 text-brand shrink-0" aria-hidden="true" />
+                <span className="text-ink text-sm font-semibold">
+                  1. Tiêu Chí Đánh Giá Nhị Phân 2 Chiều (Core & Seniority)
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="text-ink flex flex-col gap-2.5 pt-1 text-xs leading-relaxed">
+                <p>
+                  Mỗi câu trả lời của ứng viên được AI trích xuất bằng chứng (evidence) và đối chiếu
+                  chặt chẽ qua 2 chiều nhị phân độc lập (Đạt / Không Đạt):
+                </p>
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                  <div className="bg-surface-raised border-border/60 rounded-lg border p-3">
+                    <div className="flex items-center gap-1.5 font-semibold text-brand">
+                      <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                      <span>Chiều Cốt Lõi (Core Dimension)</span>
+                    </div>
+                    <p className="text-ink-muted mt-1">
+                      Kiểm chứng kiến thức kỹ thuật trọng tâm, hiểu biết về nguyên lý nền tảng
+                      và mức độ chính xác của giải pháp đề xuất.
+                    </p>
+                  </div>
+
+                  <div className="bg-surface-raised border-border/60 rounded-lg border p-3">
+                    <div className="flex items-center gap-1.5 font-semibold text-brand">
+                      <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                      <span>Chiều Thâm Niên (Seniority Dimension)</span>
+                    </div>
+                    <p className="text-ink-muted mt-1">
+                      Kiểm chứng tư duy thiết kế kiến trúc quy mô lớn, tính toán trade-off,
+                      khả năng phòng ngừa race condition và xử lý ngoại lệ phức tạp.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Mục 2: Thang Cấp bậc Năng lực SFIA 9 */}
+          <AccordionItem value="item-2" className="border-b-0 py-1">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-2 text-left">
+                <Layers className="size-4 text-brand shrink-0" aria-hidden="true" />
+                <span className="text-ink text-sm font-semibold">
+                  2. Thang Cấp Bậc Năng Lực Quốc Tế SFIA Version 9 (Level 1-7)
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="text-ink flex flex-col gap-2.5 pt-1 text-xs leading-relaxed">
+                <p>
+                  Khung kỹ năng SFIA 9 định lượng cấp độ thể hiện thực tế của ứng viên
+                  thông qua các hành vi và bằng chứng kỹ thuật:
+                </p>
+                <div className="bg-surface-raised border-border/60 divide-border/60 divide-y rounded-lg border">
+                  <div className="flex items-center justify-between p-2.5">
+                    <span className="text-ink font-semibold">Level 1 - 2 (Follow & Assist)</span>
+                    <span className="text-ink-muted">Cơ bản, thực thi dưới sự hướng dẫn</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5">
+                    <span className="text-ink font-semibold">Level 3 (Apply)</span>
+                    <span className="text-ink-muted">Độc lập giải quyết vấn đề tiêu chuẩn</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5">
+                    <span className="text-ink font-semibold">Level 4 (Enable)</span>
+                    <span className="text-ink-muted">Chủ động hướng dẫn, tối ưu giải pháp</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5">
+                    <span className="text-ink font-semibold">Level 5 - 7 (Ensure, Advise & Strategy)</span>
+                    <span className="text-ink-muted">Định hướng kiến trúc, dẫn dắt chiến lược</span>
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Mục 3: Tính điểm tất định & Bỏ qua */}
+          <AccordionItem value="item-3" className="border-b-0 py-1">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-2 text-left">
+                <Calculator className="size-4 text-brand shrink-0" aria-hidden="true" />
+                <span className="text-ink text-sm font-semibold">
+                  3. Tính Điểm Tất Định 0-100% & Quy Tắc Bỏ Qua Câu Hỏi
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="text-ink flex flex-col gap-2 pt-1 text-xs leading-relaxed">
+                <p>
+                  • <strong>Tính điểm tất định:</strong> Điểm số mỗi câu được tổng hợp trực tiếp
+                  từ tỷ lệ đạt các tiêu chí (Pass Rate) kết hợp cấp độ SFIA được chứng minh,
+                  loại bỏ hoàn toàn sự cảm tính.
+                </p>
+                <div className="bg-warning-subtle/30 border-warning text-ink flex items-start gap-2 rounded-lg border-l-2 p-3">
+                  <AlertTriangle className="size-4 text-warning shrink-0 mt-0.5" aria-hidden="true" />
+                  <p>
+                    <strong>Quy tắc câu hỏi bị bỏ qua (Skipped Turn):</strong> Khi ứng viên chủ động
+                    bỏ qua câu hỏi hoặc không trả lời, hệ thống sẽ tự động chấm <strong>0 điểm</strong> và
+                    xếp cấp độ thể hiện ở <strong>Level 1</strong> theo chuẩn mực thi cử quốc tế.
+                  </p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </CardContent>
+    </Card>
   )
 }
+
+export default ScoringMethodCard

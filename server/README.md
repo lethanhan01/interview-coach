@@ -12,6 +12,74 @@ Mở Swagger cùng origin backend, gọi `POST /auth/login` hoặc `POST /auth/r
 
 ---
 
+### Tài khoản và mật khẩu để test:
+
+```
+demo@interviewai.dev
+Demo@1234567
+
+admin:
+hungletai@gmail.com
+Demo@1234567
+
+```
+
+---
+
+## Kiến trúc 3 Tầng & Bounded Contexts (3-Layer Architecture)
+
+Backend được tổ chức theo mô hình **3 Tầng Rõ Ràng (Core - Infrastructure - Modules)** kết hợp **Bounded Contexts** chuẩn hóa theo vòng đời phỏng vấn:
+
+```text
+server/src/
+├── core/                                      ──► [TẦNG 1: NỀN TẢNG CHUNG - ZERO BUSINESS LOGIC]
+│   ├── common/                                (Filters, Interceptors, Guards, Middleware, Constants, Swagger)
+│   ├── config/                                (Environment Validation, Global Config)
+│   ├── runtime/                               (HTTP Server vs Background Worker Roles)
+│   ├── types/                                 (Global Domain Types & Enums)
+│   ├── test-utils/                            (Shared Test Fixtures & Mocks)
+│   └── architecture.spec.ts                   (Automated Boundary & Clean Architecture Enforcer)
+│
+├── infrastructure/                            ──► [TẦNG 2: HẠ TẦNG KỸ THUẬT - PORTS & ADAPTERS]
+│   ├── database/prisma/                       (Prisma ORM, Connection Resilience, Base Repositories)
+│   ├── ai/                                    (OpenAI Gateway, Prompt Builders, Zod Schema Validators)
+│   ├── storage/                               (IPrivateMediaStorageAdapter, SupabaseMediaAdapter)
+│   ├── workflow/                              (Transactional Outbox Engine, BullMQ Dispatcher)
+│   └── realtime/                              (WebSocket / SSE Gateway)
+│
+├── modules/                                   ──► [TẦNG 3: NGHIỆP VỤ ỨNG DỤNG - BOUNDED CONTEXTS]
+│   ├── auth/                                  (Authentication, JWT, Password Hashing, Guards)
+│   ├── user/                                  (User Profiles, Account Management)
+│   ├── admin/                                 (System Ops, Metrics, Operational Dashboards)
+│   ├── health/                                (Liveness & Readiness Probes)
+│   ├── media/                                 (Private Audio Storage, Whisper STT, Voice Metrics)
+│   │
+│   ├── interview-prep/                        ──► [Context 1: Chuẩn bị & Tài nguyên Phỏng vấn (Trước)]
+│   │   ├── question-generation/               (AI Dynamic Question Generator & BullMQ Processor)
+│   │   ├── question-bank/                     (Curated Question Bank & Catalog)
+│   │   ├── question-criteria/                 (Assessment Rubric Criteria & Benchmarks)
+│   │   └── job-description/                   (Saved JD CRUD & Resume Context Parsing)
+│   │
+│   ├── interview-live/                        ──► [Context 2: Tiến trình Phỏng vấn Trực tiếp (Trong)]
+│   │   ├── session/                           (Session Lifecycle, Mode Strategies: HR / Technical)
+│   │   └── turn/                              (Turn Management, Intake Handlers: Text / Voice)
+│   │
+│   └── interview-assessment/                  ──► [Context 3: Đánh giá, Phản hồi & Báo cáo (Sau)]
+│       ├── evaluation/                        (Turn Evaluation, Rubric Scoring, Feedback Sanitizer)
+│       └── report/                            (Comprehensive Session Report, Radar Scoring Matrix)
+│
+├── app.module.ts                              ──► [ROOT MODULE KẾT NỐI RÚT GỌN]
+└── main.ts
+```
+
+### Path Aliases được hỗ trợ:
+- `@core/*` $\rightarrow$ `src/core/*`
+- `@infra/*` $\rightarrow$ `src/infrastructure/*`
+- `@modules/*` $\rightarrow$ `src/modules/*`
+- `@/*` $\rightarrow$ `src/*`
+
+---
+
 ## Yêu cầu
 
 - Node.js >= 20
@@ -97,7 +165,7 @@ Lệnh này gọi `GET /api/v1` và `GET /health`. Nếu DB hoặc Redis chưa s
 
 ## Xác thực local
 
-Đăng ký và đăng nhập đi qua backend; cookie JWT được đặt HttpOnly. Chạy `npm run seed` để tạo demo user và admin từ `ADMIN_EMAIL`/`ADMIN_PASSWORD`.
+Đăng ký và đăng nhập đi qua backend; cookie JWT được đặt HttpOnly.
 
 ---
 
@@ -122,15 +190,13 @@ Lệnh này gọi `GET /api/v1` và `GET /health`. Nếu DB hoặc Redis chưa s
 | `npm run db:verify:pre`              | Kiểm tra anomaly trước khi siết constraint/index raw SQL                                         |
 | `npm run db:verify`                  | Kiểm tra RLS/policies/trigger/constraint/index sau khi apply raw SQL                             |
 | `npm run db:prepare-db-push-raw-sql` | Tạm gỡ raw constraint mà Prisma `db push` không quản lý, trước khi apply lại bằng `db:apply-sql` |
-| `npm run db:sync:prebackup`          | Pha an toàn: thêm cột/bảng mới và backfill, không drop dữ liệu cũ                                 |
 | `npm run db:sync:full`               | Flow đầy đủ: validate → verify pre → generate → prepare → db push → apply raw SQL → verify       |
-| `npm run seed`                       | Seed dữ liệu mẫu (question bank, ...)                                                            |
 
 ---
 
 ## Đồng bộ database schema
 
-> Production safety: `db:sync*`, `db:apply-sql`, `db:migrate-role`, and `seed` are blocked when `NODE_ENV=production`. Use reviewed migrations and a backup/PITR runbook instead.
+> Production safety: `db:sync*` and `db:apply-sql` are blocked when `NODE_ENV=production`. Use reviewed migrations and a backup/PITR runbook instead.
 
 ## Emergency write freeze
 
@@ -146,14 +212,7 @@ Chạy khi:
 
 - Vừa thay đổi `prisma/schema.prisma`
 - Database local thiếu constraint, trigger, RLS policy, index hoặc column mới
-- Cần chuẩn bị unique constraint cho `user_answers`
 - Cần apply lại raw SQL trong `prisma/migrations/migration.sql` sau `prisma db push`
-
-Pha an toàn trước backup:
-
-```powershell
-npm run db:sync:prebackup
-```
 
 Pha cleanup sau khi đã backup DB thật:
 
@@ -163,7 +222,7 @@ npm run db:sync:full
 
 Trước khi chạy pha cleanup, set `DB_BACKUP_CONFIRMED=true`.
 
-Lệnh thực hiện: `db:validate` → `db:verify:pre` → `prisma generate` → `db:prepare-user-answer-unique` → `db:prepare-db-push-raw-sql` → `prisma db push` → `db:apply-sql` → `db:verify`.
+Lệnh thực hiện: `db:validate` → `db:verify:pre` → `prisma generate` → `db:prepare-db-push-raw-sql` → `prisma db push` → `db:apply-sql` → `db:verify`.
 
 `db:verify:pre` phải pass trước khi apply constraint mới. Các anomaly chặn migration gồm answer lệch session-question, session trỏ saved JD khác user, nhiều active resume cùng user, và dữ liệu vi phạm CHECK/range.
 

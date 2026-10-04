@@ -1,18 +1,21 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Plus, Clock } from 'lucide-react'
-import { apiClient } from '@/lib/api-client'
-import type { Session } from '@/lib/types'
+import { useSessions } from '@/hooks/useSessions'
+
 import { formatVietnamDateTime } from '@/lib/date-time'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Badge } from '@/components/ui/Badge'
+import Button from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { PageContainer } from '@/components/patterns/LayoutPatterns'
+import { LoadingState, ErrorState, EmptyState } from '@/components/patterns/FeedbackPatterns'
+import { cn } from '@/lib/utils'
 
 const SESSION_TYPE_LABELS: Record<string, string> = {
   hr: 'HR / Behavioral',
   technical: 'Technical',
-  mixed: 'Mixed',
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -47,90 +50,64 @@ function getCompanyName(jobDescription: string): string | undefined {
   return line.slice(line.indexOf(':') + 1).trim() || undefined
 }
 
-function scoreContainerClass(pct: number): string {
-  if (pct >= 70) return 'bg-green-50 text-green-700'
-  if (pct >= 50) return 'bg-amber-50 text-amber-700'
-  return 'bg-red-50 text-red-700'
+const scoreVariants = {
+  high: 'bg-success-subtle text-success-subtle-fg border-success-subtle-fg/30',
+  medium: 'bg-warning-subtle text-warning-subtle-fg border-warning-subtle-fg/30',
+  low: 'bg-danger-subtle text-danger-subtle-fg border-danger-subtle-fg/30',
+} as const
+
+function getScoreTier(pct: number): keyof typeof scoreVariants {
+  if (pct >= 70) return 'high'
+  if (pct >= 50) return 'medium'
+  return 'low'
 }
 
 function ScoreDisplay({ score }: Readonly<{ score: number }>) {
   const pct = Math.min(100, Math.max(0, score))
+  const tier = getScoreTier(pct)
 
   return (
-    <div className={`rounded-xl px-4 py-3 ${scoreContainerClass(pct)}`}>
-      <p className="mb-1 text-xs font-medium opacity-60">Điểm tổng</p>
+    <div className={cn('rounded-xl border px-4 py-3', scoreVariants[tier])}>
+      <p className="mb-1 text-xs font-medium opacity-70">Điểm tổng</p>
       <div className="flex items-baseline gap-1">
         <span className="text-2xl font-bold tabular-nums leading-none">
           {score}
         </span>
-        <span className="text-sm opacity-50">/100</span>
+        <span className="text-sm opacity-60">/100</span>
       </div>
     </div>
   )
 }
 
 export default function SessionsPage() {
-  const [sessions, setSessions] = useState<Session[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [retryCount, setRetryCount] = useState(0)
+  const router = useRouter()
+  const { sessions, isLoading: loading, error: swrError, mutate } = useSessions()
 
-  useEffect(() => {
-    let cancelled = false
-    apiClient
-      .get<{ sessions: Session[] }>('/sessions')
-      .then((data) => {
-        if (!cancelled) setSessions(data.sessions ?? [])
-      })
-      .catch((err) => {
-        if (cancelled) return
-        const msg =
-          err instanceof Error ? err.message : 'Không thể tải danh sách'
-        setError(
-          msg === 'Failed to fetch'
-            ? 'Không thể kết nối đến server. Kiểm tra server có đang chạy không.'
-            : msg
-        )
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [retryCount])
+  const error = swrError
+    ? swrError.message === 'Failed to fetch'
+      ? 'Không thể kết nối đến server. Kiểm tra server có đang chạy không.'
+      : swrError.message
+    : null
 
   function retryLoad() {
-    setLoading(true)
-    setError(null)
-    setRetryCount((c) => c + 1)
+    void mutate()
   }
 
   if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    )
+    return <LoadingState text="Đang tải danh sách phiên phỏng vấn..." minHeight="min-h-[50vh]" />
   }
 
   if (error) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
-        <p className="text-danger text-sm">{error}</p>
-        <button
-          onClick={retryLoad}
-          className="border-brand text-brand hover:bg-brand-subtle rounded-full border px-4 py-1.5 text-sm font-medium transition-colors"
-        >
-          Thử lại
-        </button>
-      </div>
+      <PageContainer maxWidth="xl" className="py-10">
+        <ErrorState description={error} onRetry={retryLoad} />
+      </PageContainer>
     )
   }
 
   return (
-    <div>
-      <div className="border-border bg-surface shadow-card mb-8 rounded-3xl border p-6">
+    <PageContainer maxWidth="xl" className="space-y-8">
+      <Card className="p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
             <p className="text-ink-muted text-xs font-semibold uppercase tracking-[0.2em]">
@@ -147,44 +124,34 @@ export default function SessionsPage() {
               thành.
             </p>
           </div>
-          <Link
-            href="/setup"
-            className="bg-brand shadow-btn hover:bg-brand-light hover:shadow-glow inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-white transition-all duration-150 hover:scale-[1.02]"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Tạo phiên mới
-          </Link>
+          <Button asChild size="md">
+            <Link href="/setup">
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Tạo phiên mới
+            </Link>
+          </Button>
         </div>
-      </div>
+      </Card>
 
       {sessions.length === 0 ? (
-        <div className="border-border bg-surface shadow-card rounded-3xl border p-10 text-center">
-          <div className="bg-brand-subtle text-brand-subtle-fg mx-auto flex size-16 items-center justify-center rounded-2xl">
-            <Plus className="size-7" aria-hidden="true" />
-          </div>
-          <p className="text-ink mt-5 text-lg font-semibold">
-            Chưa có phiên phỏng vấn nào
-          </p>
-          <p className="text-ink-muted mx-auto mt-2 max-w-sm text-sm">
-            Dán Job Description và bắt đầu luyện tập ngay để nhận phản hồi từ
-            AI.
-          </p>
-          <Link
-            href="/setup"
-            className="bg-brand shadow-btn hover:bg-brand-light hover:shadow-glow mt-5 inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium text-white transition-all duration-150 hover:scale-[1.02]"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Bắt đầu phỏng vấn
-          </Link>
-        </div>
+        <EmptyState
+          title="Chưa có phiên phỏng vấn nào"
+          description="Dán Job Description và bắt đầu luyện tập ngay để nhận phản hồi từ AI."
+          icon={<Plus className="size-12 text-brand" aria-hidden="true" />}
+          action={{
+            label: 'Bắt đầu phỏng vấn',
+            onClick: () => router.push('/setup'),
+          }}
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sessions.map((s) => {
             const company = getCompanyName(s.jobDescription)
             return (
-              <div
+              <Card
                 key={s.id}
-                className="border-border bg-surface shadow-card hover:shadow-glow flex h-full flex-col rounded-2xl border transition-all duration-150 hover:-translate-y-0.5"
+                hover
+                className="flex h-full flex-col justify-between"
               >
                 <div className="flex flex-1 flex-col gap-4 p-5">
                   {/* Status badge + date/time */}
@@ -211,17 +178,17 @@ export default function SessionsPage() {
 
                   {/* Metadata chips: interview type, context pack, duration */}
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="border-border text-ink-muted rounded-md border px-2 py-0.5 text-xs font-medium">
+                    <Badge variant="default" className="font-medium">
                       {SESSION_TYPE_LABELS[s.sessionType] ?? s.sessionType}
-                    </span>
-                    <span className="border-border text-ink-muted rounded-md border px-2 py-0.5 text-xs">
+                    </Badge>
+                    <Badge variant="default">
                       {s.contextPackId}
-                    </span>
+                    </Badge>
                     {s.durationMin != null && (
-                      <span className="border-border text-ink-muted flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs">
+                      <Badge variant="default" className="flex items-center gap-1">
                         <Clock className="h-3 w-3" aria-hidden="true" />
                         {s.durationMin} phút
-                      </span>
+                      </Badge>
                     )}
                   </div>
 
@@ -233,38 +200,35 @@ export default function SessionsPage() {
                   {/* Action button */}
                   <div className="border-border mt-auto border-t pt-3">
                     {s.status === 'completed' && (
-                      <Link
-                        href={`/sessions/${s.id}/report`}
-                        className="bg-brand shadow-btn hover:bg-brand-light block w-full rounded-full px-3 py-2 text-center text-xs font-semibold text-white transition-all"
-                      >
-                        Xem báo cáo
-                      </Link>
+                      <Button asChild size="sm" className="w-full">
+                        <Link href={`/sessions/${s.id}/report`}>
+                          Xem báo cáo
+                        </Link>
+                      </Button>
                     )}
                     {s.status === 'completing' && (
-                      <Link
-                        href={`/sessions/${s.id}/report`}
-                        className="border-brand text-brand hover:bg-brand-subtle block w-full rounded-full border px-3 py-2 text-center text-xs font-medium transition-colors"
-                      >
-                        Theo dõi báo cáo
-                      </Link>
+                      <Button asChild variant="outline" size="sm" className="w-full text-brand border-brand hover:bg-brand-subtle">
+                        <Link href={`/sessions/${s.id}/report`}>
+                          Theo dõi báo cáo
+                        </Link>
+                      </Button>
                     )}
                     {(s.status === 'active' ||
                       s.status === 'ready' ||
                       s.status === 'paused') && (
-                      <Link
-                        href={`/sessions/${s.id}`}
-                        className="bg-brand shadow-btn hover:bg-brand-light block w-full rounded-full px-3 py-2 text-center text-xs font-semibold text-white transition-all"
-                      >
-                        {s.status === 'ready' ? 'Bắt đầu' : 'Tiếp tục'}
-                      </Link>
+                      <Button asChild size="sm" className="w-full">
+                        <Link href={`/sessions/${s.id}`}>
+                          {s.status === 'ready' ? 'Bắt đầu' : 'Tiếp tục'}
+                        </Link>
+                      </Button>
                     )}
                   </div>
                 </div>
-              </div>
+              </Card>
             )
           })}
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

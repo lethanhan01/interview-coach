@@ -1,138 +1,123 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { apiClient } from '@/lib/api-client'
-import type {
-  GetProfileResponse,
-  EducationEntry,
-  WorkExperienceEntry,
-  ProjectEntry,
-  TechnicalSkillEntry,
-  CertificationEntry,
-  AwardEntry,
-} from '@/lib/types'
+import Link from 'next/link'
+import { ScrollText, ArrowRight } from 'lucide-react'
+import { userService } from '@/services'
+
+import type { UserAccountResponse, UpdateUserAccountPayload } from '@/lib/types'
 import PersonalInfoGroup from '@/components/profile/PersonalInfoGroup'
-import PersonalityGroup from '@/components/profile/PersonalityGroup'
-import TechnicalSkillsGroup from '@/components/profile/TechnicalSkillsGroup'
-import EducationGroup from '@/components/profile/EducationGroup'
-import WorkExperienceGroup from '@/components/profile/WorkExperienceGroup'
-import ProjectsGroup from '@/components/profile/ProjectsGroup'
-import CertificationsGroup from '@/components/profile/CertificationsGroup'
+import AccountInfoGroup from '@/components/profile/AccountInfoGroup'
+import ChangePasswordGroup from '@/components/profile/ChangePasswordGroup'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { Card } from '@/components/ui/Card'
+import { PageContainer } from '@/components/patterns/LayoutPatterns'
+import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns'
 
 export default function ProfilePage() {
-  const [data, setData] = useState<GetProfileResponse | null>(null)
+  const [data, setData] = useState<UserAccountResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    apiClient
-      .get<GetProfileResponse>('/profile')
+    userService
+      .getCurrentUser()
       .then(setData)
       .catch((err) =>
-        setError(err instanceof Error ? err.message : 'Không thể tải hồ sơ')
+        setError(
+          err instanceof Error ? err.message : 'Không thể tải thông tin tài khoản'
+        )
       )
       .finally(() => setLoading(false))
   }, [])
 
-  async function patchProfile<T extends object>(patch: T) {
-    const updated = await apiClient.patch<GetProfileResponse>('/profile', patch)
+  async function patchAccount(patch: UpdateUserAccountPayload) {
+    const updated = await userService.updateCurrentUser(patch)
     setData(updated)
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="border-brand size-8 animate-spin rounded-full border-2 border-t-transparent" />
-      </div>
+      <LoadingState
+        text="Đang tải thông tin tài khoản..."
+        minHeight="min-h-[50vh]"
+      />
     )
   }
 
   if (error) {
     return (
-      <div className="mx-auto max-w-3xl py-10">
-        <p className="text-danger text-sm">{error}</p>
-      </div>
+      <PageContainer maxWidth="md" className="py-10">
+        <ErrorState description={error} />
+      </PageContainer>
     )
   }
 
-  const profile = data?.profile ?? null
-
-  /** Đảm bảo mọi entry có `id` vì dữ liệu JSON cũ có thể thiếu id. */
-  function normalizeWithId<T extends { id?: string }>(arr: unknown): T[] {
-    if (!Array.isArray(arr)) return []
-    return arr.map((e) => ({
-      ...(e as T),
-      id: (e as T).id || crypto.randomUUID(),
-    }))
-  }
-
-  const technicalSkills = Array.isArray(profile?.technicalSkills)
-    ? (profile.technicalSkills as TechnicalSkillEntry[])
-    : []
-  const workExperience = normalizeWithId<WorkExperienceEntry>(
-    profile?.workExperience
-  )
-  const projects = normalizeWithId<ProjectEntry>(profile?.projects)
+  const fullName = [data?.lastname, data?.firstname].filter(Boolean).join(' ')
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="text-ink mb-6 text-2xl font-bold">Hồ sơ</h1>
+    <PageContainer maxWidth="md" className="space-y-6">
+      <div>
+        <h1 className="text-ink text-2xl font-bold">Cài đặt tài khoản</h1>
+        <p className="text-ink-muted text-sm mt-1">
+          Quản lý thông tin đăng nhập, hồ sơ cá nhân và bảo mật tài khoản.
+        </p>
+      </div>
 
-      {/* Email header */}
-      <div className="border-border bg-surface shadow-card mb-4 flex items-center gap-4 rounded-2xl border p-4">
-        <div className="bg-brand-100 flex size-10 items-center justify-center rounded-full">
-          <span className="text-brand text-base font-bold">
-            {(data?.email?.[0] ?? 'U').toUpperCase()}
-          </span>
+      {/* Account Profile Header Card */}
+      <Card className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5">
+        <div className="flex items-center gap-4">
+          <div className="bg-brand-100 dark:bg-brand/20 flex size-14 shrink-0 items-center justify-center rounded-full border border-brand/20">
+            <span className="text-brand text-xl font-bold">
+              {(data?.firstname?.[0] || data?.email?.[0] || 'U').toUpperCase()}
+            </span>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-ink text-lg font-semibold">
+                {fullName || data?.email}
+              </h2>
+              <Badge variant="secondary" className="text-xs">
+                Ứng viên
+              </Badge>
+            </div>
+            <p className="text-ink-muted text-sm">{data?.email}</p>
+          </div>
         </div>
-        <p className="text-ink text-sm font-medium">{data?.email}</p>
-      </div>
 
-      <div className="flex flex-col gap-4">
+        {/* Quick jump to Resume */}
+        <Button
+          variant="outline"
+          size="sm"
+          asChild
+          className="shrink-0 gap-1.5 self-start sm:self-auto"
+        >
+          <Link href="/resume">
+            <ScrollText className="h-4 w-4 text-brand" />
+            <span>Xem hồ sơ CV</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </Button>
+      </Card>
+
+      <div className="flex flex-col gap-6">
         <PersonalInfoGroup
-          data={{ fullName: profile?.fullName }}
-          onSave={(patch) => patchProfile(patch)}
-        />
-
-        <EducationGroup
-          data={profile?.education}
-          onSave={(edu: EducationEntry) => patchProfile({ education: edu })}
-        />
-
-        <CertificationsGroup
           data={{
-            certifications:
-              (profile?.certifications as CertificationEntry[] | undefined) ??
-              [],
-            awards: (profile?.awards as AwardEntry[] | undefined) ?? [],
+            firstname: data?.firstname ?? undefined,
+            lastname: data?.lastname ?? undefined,
           }}
-          onSave={(patch) => patchProfile(patch)}
+          onSave={(patch) => patchAccount(patch)}
         />
 
-        <TechnicalSkillsGroup
-          data={technicalSkills}
-          onSave={(patch) => patchProfile(patch)}
+        <AccountInfoGroup
+          email={data?.email}
+          role={data?.role || 'candidate'}
+          status={data?.status || 'active'}
         />
 
-        <ProjectsGroup
-          data={projects}
-          availableTechs={technicalSkills}
-          onSave={(proj: ProjectEntry[]) => patchProfile({ projects: proj })}
-        />
-
-        <WorkExperienceGroup
-          data={workExperience}
-          availableTechs={technicalSkills}
-          onSave={(we: WorkExperienceEntry[]) =>
-            patchProfile({ workExperience: we })
-          }
-        />
-
-        <PersonalityGroup
-          data={{ personality: profile?.personality }}
-          onSave={(patch) => patchProfile(patch)}
-        />
+        <ChangePasswordGroup />
       </div>
-    </div>
+    </PageContainer>
   )
 }

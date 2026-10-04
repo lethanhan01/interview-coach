@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
-  usePathname: vi.fn(() => '/admin-dashboard'),
+  usePathname: vi.fn(() => '/admin/dashboard'),
 }))
 
 // Mock TooltipProvider to avoid radix-ui act warnings in tests
@@ -21,7 +21,7 @@ vi.mock('@/components/ui/Tooltip', () => ({
 describe('AppSidebar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(usePathname).mockReturnValue('/admin-dashboard')
+    vi.mocked(usePathname).mockReturnValue('/admin/dashboard')
   })
 
   it('renders admin navigation items', async () => {
@@ -35,11 +35,12 @@ describe('AppSidebar', () => {
     render(<AppSidebar role="candidate" />)
     expect(await screen.findByText('Phỏng vấn')).toBeInTheDocument()
     expect(screen.getByText('Tạo mới')).toBeInTheDocument()
-    expect(screen.getByText('Hồ sơ')).toBeInTheDocument()
+    expect(screen.getByText('CV / Resume')).toBeInTheDocument()
+    expect(screen.getByText('Tài khoản')).toBeInTheDocument()
   })
 
   it('highlights active route', async () => {
-    vi.mocked(usePathname).mockReturnValue('/users')
+    vi.mocked(usePathname).mockReturnValue('/admin/users')
     render(<AppSidebar role="admin" />)
     
     await screen.findByText('Quản lý User')

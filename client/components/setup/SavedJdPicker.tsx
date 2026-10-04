@@ -1,6 +1,7 @@
 'use client'
 
 import { Building2, MapPin, Clock, Plus, ChevronRight } from 'lucide-react'
+import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import type { SavedJobDescription } from '@/lib/types'
 import { getJdLevelLabel } from '@/lib/interview-options'
@@ -26,10 +27,18 @@ export default function SavedJdPicker({ items, onSelect, onNew }: Props) {
       </div>
 
       {/* New JD button */}
-      <button
-        type="button"
+      <Card
+        hover
+        role="button"
+        tabIndex={0}
         onClick={onNew}
-        className="border-brand-subtle-border bg-brand-subtle/50 hover:border-brand hover:bg-brand-subtle group flex w-full items-center gap-4 rounded-2xl border-2 border-dashed p-5 text-left transition-all duration-150"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onNew()
+          }
+        }}
+        className="border-brand-subtle-border bg-brand-subtle/50 hover:border-brand hover:bg-brand-subtle group flex w-full items-center gap-4 rounded-2xl border-2 border-dashed p-5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
       >
         <div className="bg-brand shadow-btn flex size-10 shrink-0 items-center justify-center rounded-full text-white transition-transform duration-150 group-hover:scale-110">
           <Plus className="size-5" aria-hidden="true" />
@@ -41,7 +50,7 @@ export default function SavedJdPicker({ items, onSelect, onNew }: Props) {
           </p>
         </div>
         <ChevronRight className="text-brand ml-auto size-4 opacity-60 transition-transform duration-150 group-hover:translate-x-0.5" />
-      </button>
+      </Card>
 
       {/* Divider */}
       <div className="flex items-center gap-3">
@@ -63,11 +72,19 @@ export default function SavedJdPicker({ items, onSelect, onNew }: Props) {
           const extraCount = item.techStack.length - MAX_TECH_SHOWN
 
           return (
-            <button
+            <Card
               key={item.id}
-              type="button"
+              hover
+              role="button"
+              tabIndex={0}
               onClick={() => onSelect(item)}
-              className="border-border bg-surface shadow-card hover:border-brand/40 hover:shadow-glow group w-full rounded-2xl border p-5 text-left transition-all duration-150 hover:-translate-y-0.5"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onSelect(item)
+                }
+              }}
+              className="group w-full p-5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             >
               <div className="flex items-start justify-between gap-3">
                 {/* Left: company + position */}
@@ -112,13 +129,13 @@ export default function SavedJdPicker({ items, onSelect, onNew }: Props) {
                         <Badge
                           key={tech}
                           variant="brand"
-                          className="text-[11px]"
+                          className="text-xs"
                         >
                           {tech}
                         </Badge>
                       ))}
                       {extraCount > 0 && (
-                        <Badge variant="default" className="text-[11px]">
+                        <Badge variant="default" className="text-xs">
                           +{extraCount}
                         </Badge>
                       )}
@@ -129,10 +146,11 @@ export default function SavedJdPicker({ items, onSelect, onNew }: Props) {
                 {/* Right: arrow */}
                 <ChevronRight className="text-ink-faint group-hover:text-brand mt-1 size-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
               </div>
-            </button>
+            </Card>
           )
         })}
       </div>
     </div>
   )
 }
+

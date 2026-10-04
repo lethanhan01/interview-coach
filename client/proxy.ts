@@ -1,27 +1,15 @@
-import { NextResponse, type NextRequest } from 'next/server'
-import { getSafeNext, isProtectedPath } from './lib/auth-redirect'
+import { type NextRequest } from 'next/server'
+import { handleMiddleware } from './middleware/index'
 
-const cookieName = process.env.AUTH_COOKIE_NAME ?? 'interviewcoach_auth'
-
+/**
+ * Next.js proxy entry point (Next.js 16 convention — replaces middleware.ts).
+ * Thin wrapper — all logic lives in middleware/index.ts.
+ *
+ * IMPORTANT: `config.matcher` must be a static literal — Turbopack parses it
+ * at compile-time and cannot resolve imported variables.
+ */
 export function proxy(request: NextRequest) {
-  const { pathname, search } = request.nextUrl
-  const hasSessionCookie = Boolean(request.cookies.get(cookieName)?.value)
-  if (!hasSessionCookie && isProtectedPath(pathname)) {
-    const login = request.nextUrl.clone()
-    login.pathname = '/login'
-    login.search = ''
-    login.searchParams.set('next', `${pathname}${search}`)
-    return NextResponse.redirect(login)
-  }
-  if (hasSessionCookie && pathname === '/login') {
-    return NextResponse.redirect(
-      new URL(
-        getSafeNext(request.nextUrl.searchParams.get('next')),
-        request.url
-      )
-    )
-  }
-  return NextResponse.next()
+  return handleMiddleware(request)
 }
 
 export const config = {

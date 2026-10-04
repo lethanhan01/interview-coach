@@ -6,6 +6,8 @@ InterviewAI là ứng dụng AI Mock Interview — nền tảng luyện phỏng 
 
 ### Khám phá và yêu cầu
 
+Hiện tại các  tài liệu đều đã  outdate, chưa cập nhật theo trạng thái mới nhất của dự án nên không tin hoàn toàn vào nguồn này, source of truth duy nhất là mã nguồn tại @service/
+
 | Tài liệu | Mô tả | Trạng thái |
 |----------|-------|------------|
 | [Discovery Document](RequirementAnalysis/discovery-docs/Discovery_Document.md) | Vấn đề cần giải quyết, người dùng mục tiêu, phân tích thị trường | Hoàn thành |
@@ -21,6 +23,7 @@ InterviewAI là ứng dụng AI Mock Interview — nền tảng luyện phỏng 
 |----------|-------|------------|
 | [SAD](Design/ArchitecturalDesign/SAD_InterviewAI_v1.0.md) | Kiến trúc tổng thể, tech stack, thiết kế AI pipeline | Hoàn thành |
 | [HLD](Design/ArchitecturalDesign/HLD_InterviewAI_v1.0.md) | Thiết kế cấp cao — 5 luồng dữ liệu, ~35 API endpoints | Hoàn thành |
+| [Backend Architecture Plan](backend-architecture-plan.md) | Kế hoạch kiến trúc Backend tối ưu scope hiện tại & extension seams tương lai (SOLID, Hexagonal) | Hoàn thành |
 | [MVP Scope](Design/MVP_Scope.md) | Quick reference IN/OUT cho MVP — 5 UCs, 11 tables, 5 routes, NFR implementation | Hoàn thành |
 | [ADR-001 → ADR-007](Design/ArchitecturalDesign/ADRs/) | 7 quyết định kiến trúc quan trọng (Next.js, NestJS, Supabase, v.v.) | Hoàn thành |
 | [Session Type Spec](Design/ArchitecturalDesign/interview_ai_coach_session_type_spec.md) | Đặc tả 3 loại phỏng vấn: HR, Technical, Mixed | Hoàn thành |

@@ -1,8 +1,11 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import LoadingSpinner from '../ui/LoadingSpinner'
 import Button from '../ui/Button'
+import { Textarea } from '../ui/Textarea'
+import { Label } from '../ui/Label'
+import type { AudioUploadResult } from '@/lib/types'
 
 interface VoiceRecorderProps {
   onSubmit: (
@@ -11,24 +14,34 @@ interface VoiceRecorderProps {
     sizeBytes: number,
     transcript: string
   ) => Promise<void>
-  onUploadAudio: (blob: Blob) => Promise<AudioUploadResponse>
+  onUploadAudio: (blob: Blob) => Promise<AudioUploadResult>
   sessionId?: string
   disabled?: boolean
 }
 
 type RecordState = 'idle' | 'recording' | 'transcribing' | 'submitting'
 
-interface AudioUploadResponse {
-  audioFileUrl: string
-  audioSizeBytes: number
-  transcript: string
-  transcriptDurationSeconds?: number
-}
-
 interface VoiceDraft {
   audioUrl: string
   durationSeconds: number
+
   sizeBytes: number
+}
+
+function getSupportedAudioMimeType(): string {
+  if (typeof window === 'undefined' || !('MediaRecorder' in window)) return ''
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+    'audio/wav',
+  ]
+  for (const mime of candidates) {
+    if (MediaRecorder.isTypeSupported(mime)) {
+      return mime
+    }
+  }
+  return ''
 }
 
 export default function VoiceRecorder({
@@ -41,8 +54,10 @@ export default function VoiceRecorder({
   const [draft, setDraft] = useState<VoiceDraft | null>(null)
   const [transcript, setTranscript] = useState('')
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const startTimeRef = useRef<number>(0)
+  const activeMimeTypeRef = useRef<string>('')
 
   async function startRecording() {
     setError(null)
@@ -50,7 +65,13 @@ export default function VoiceRecorder({
     setTranscript('')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      streamRef.current = stream
+      const selectedMime = getSupportedAudioMimeType()
+      activeMimeTypeRef.current = selectedMime
+      const options: MediaRecorderOptions = selectedMime
+        ? { mimeType: selectedMime }
+        : {}
+      const recorder = new MediaRecorder(stream, options)
       chunksRef.current = []
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data)
@@ -77,14 +98,17 @@ export default function VoiceRecorder({
     await new Promise<void>((resolve) => {
       recorder.onstop = () => resolve()
       recorder.stop()
-      recorder.stream.getTracks().forEach((t) => t.stop())
+      streamRef.current?.getTracks().forEach((t) => t.stop())
+      streamRef.current = null
     })
 
     setState('transcribing')
     const durationSeconds = Math.round(
       (Date.now() - startTimeRef.current) / 1000
     )
-    const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+    const mimeType =
+      recorder.mimeType || activeMimeTypeRef.current || 'audio/webm'
+    const blob = new Blob(chunksRef.current, { type: mimeType })
 
     try {
       const upload = await onUploadAudio(blob)
@@ -134,22 +158,28 @@ export default function VoiceRecorder({
     setError(null)
   }
 
+  useEffect(() => {
+    return () => {
+      mediaRecorderRef.current?.stream.getTracks().forEach((t) => t.stop())
+      streamRef.current?.getTracks().forEach((t) => t.stop())
+      mediaRecorderRef.current = null
+      streamRef.current = null
+    }
+  }, [])
+
   return (
     <div className="flex flex-col items-center gap-4">
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-danger text-sm">
           {error}
         </p>
       )}
       {draft ? (
         <div className="flex w-full flex-col gap-3">
-          <label
-            htmlFor="voice-transcript"
-            className="text-ink text-sm font-medium"
-          >
+          <Label htmlFor="voice-transcript">
             Nội dung câu trả lời
-          </label>
-          <textarea
+          </Label>
+          <Textarea
             id="voice-transcript"
             aria-label="Transcript câu trả lời"
             value={transcript}
@@ -159,7 +189,7 @@ export default function VoiceRecorder({
             }}
             disabled={disabled || state === 'submitting'}
             rows={6}
-            className="border-border text-ink placeholder:text-ink-faint focus:border-brand focus:ring-brand w-full resize-none rounded-xl border p-3 text-sm focus:outline-none focus:ring-2 disabled:opacity-50"
+            className="resize-none"
           />
           <div className="flex flex-wrap justify-end gap-3">
             <Button
@@ -184,31 +214,33 @@ export default function VoiceRecorder({
         </div>
       ) : (
         state === 'idle' && (
-          <button
+          <Button
+            variant="destructive"
+            size="lg"
             aria-label="Bắt đầu ghi âm"
             onClick={startRecording}
             disabled={disabled}
-            className="rounded-full bg-red-600 px-8 py-3 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
           >
             Bắt đầu ghi âm
-          </button>
+          </Button>
         )
       )}
       {state === 'recording' && (
-        <button
+        <Button
+          variant="primary"
+          size="lg"
           aria-label="Dừng ghi âm"
           onClick={stopRecording}
-          className="flex items-center gap-2 rounded-full bg-gray-800 px-8 py-3 text-sm font-medium text-white hover:bg-black"
         >
           <span
             aria-hidden="true"
-            className="h-2 w-2 animate-pulse rounded-full bg-red-500"
+            className="bg-destructive size-2 animate-pulse rounded-full"
           />
           Dừng ghi âm
-        </button>
+        </Button>
       )}
       {state === 'transcribing' && (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <LoadingSpinner size="sm" />
           Đang chuyển giọng nói thành văn bản...
         </div>

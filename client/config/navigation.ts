@@ -4,6 +4,9 @@ import {
   User,
   CalendarDays,
   FileText,
+  ScrollText,
+  BookOpen,
+  Network,
 } from 'lucide-react'
 
 export type NavItem = {
@@ -15,22 +18,34 @@ export type NavItem = {
 
 export const adminNavigation: NavItem[] = [
   {
-    href: '/admin-dashboard',
+    href: '/admin/dashboard',
     label: 'Dashboard',
     icon: LayoutDashboard,
-    match: ['/admin-dashboard'],
+    match: ['/admin/dashboard', '/admin-dashboard'],
   },
   {
-    href: '/users',
+    href: '/admin/onet',
+    label: 'O*NET Browser',
+    icon: BookOpen,
+    match: ['/admin/onet'],
+  },
+  {
+    href: '/admin/sfia',
+    label: 'SFIA Framework',
+    icon: Network,
+    match: ['/admin/sfia'],
+  },
+  {
+    href: '/admin/users',
     label: 'Quản lý User',
     icon: Users,
-    match: ['/users'],
+    match: ['/admin/users', '/users'],
   },
   {
-    href: '/admin-profile',
+    href: '/admin/profile',
     label: 'Hồ sơ',
     icon: User,
-    match: ['/admin-profile'],
+    match: ['/admin/profile', '/admin-profile'],
   },
 ]
 
@@ -48,8 +63,14 @@ export const candidateNavigation: NavItem[] = [
     match: ['/jd-library', '/setup'],
   },
   {
+    href: '/resume',
+    label: 'CV / Resume',
+    icon: ScrollText,
+    match: ['/resume'],
+  },
+  {
     href: '/profile',
-    label: 'Hồ sơ',
+    label: 'Tài khoản',
     icon: User,
     match: ['/profile'],
   },

@@ -45,6 +45,34 @@ const PRIMITIVE_BRAND: PrimitiveColor[] = [
   { name: 'brand-950', varName: '--color-brand-950', hex: '#172554' },
 ]
 
+const PRIMITIVE_VIOLET: PrimitiveColor[] = [
+  { name: 'violet-50', varName: '--color-violet-50', hex: '#f5f3ff' },
+  { name: 'violet-100', varName: '--color-violet-100', hex: '#ede9fe' },
+  { name: 'violet-200', varName: '--color-violet-200', hex: '#ddd6fe' },
+  { name: 'violet-300', varName: '--color-violet-300', hex: '#c4b5fd' },
+  { name: 'violet-400', varName: '--color-violet-400', hex: '#a78bfa' },
+  { name: 'violet-500', varName: '--color-violet-500', hex: '#8b5cf6' },
+  { name: 'violet-600', varName: '--color-violet-600', hex: '#7c3aed' },
+  { name: 'violet-700', varName: '--color-violet-700', hex: '#6d28d9' },
+  { name: 'violet-800', varName: '--color-violet-800', hex: '#5b21b6' },
+  { name: 'violet-900', varName: '--color-violet-900', hex: '#4c1d95' },
+  { name: 'violet-950', varName: '--color-violet-950', hex: '#2e1065' },
+]
+
+const PRIMITIVE_CYAN: PrimitiveColor[] = [
+  { name: 'cyan-50', varName: '--color-cyan-50', hex: '#ecfeff' },
+  { name: 'cyan-100', varName: '--color-cyan-100', hex: '#cffafe' },
+  { name: 'cyan-200', varName: '--color-cyan-200', hex: '#a5f3fc' },
+  { name: 'cyan-300', varName: '--color-cyan-300', hex: '#67e8f9' },
+  { name: 'cyan-400', varName: '--color-cyan-400', hex: '#22d3ee' },
+  { name: 'cyan-500', varName: '--color-cyan-500', hex: '#06b6d4' },
+  { name: 'cyan-600', varName: '--color-cyan-600', hex: '#0891b2' },
+  { name: 'cyan-700', varName: '--color-cyan-700', hex: '#0e7490' },
+  { name: 'cyan-800', varName: '--color-cyan-800', hex: '#155e75' },
+  { name: 'cyan-900', varName: '--color-cyan-900', hex: '#164e63' },
+  { name: 'cyan-950', varName: '--color-cyan-950', hex: '#083344' },
+]
+
 const PRIMITIVE_RED: PrimitiveColor[] = [
   { name: 'red-500', varName: '--color-red-500', hex: '#ef4444' },
   { name: 'red-600', varName: '--color-red-600', hex: '#dc2626' },
@@ -63,27 +91,71 @@ const PRIMITIVE_AMBER: PrimitiveColor[] = [
   { name: 'amber-600', varName: '--color-amber-600', hex: '#d97706' },
 ]
 
+const PRIMITIVE_CHARTS: PrimitiveColor[] = [
+  { name: 'chart-1 (Brand)', varName: '--color-chart-1', hex: '#2563eb' },
+  { name: 'chart-2 (AI Violet)', varName: '--color-chart-2', hex: '#7c3aed' },
+  { name: 'chart-3 (Telemetry Cyan)', varName: '--color-chart-3', hex: '#0891b2' },
+  { name: 'chart-4 (Success)', varName: '--color-chart-4', hex: '#16a34a' },
+  { name: 'chart-5 (Warning)', varName: '--color-chart-5', hex: '#f59e0b' },
+  { name: 'chart-6 (Danger)', varName: '--color-chart-6', hex: '#ef4444' },
+]
+
+const PRIMITIVE_TIERS: PrimitiveColor[] = [
+  { name: 'tier-bronze', varName: '--color-tier-bronze', hex: '#cd7f32' },
+  { name: 'tier-silver', varName: '--color-tier-silver', hex: '#94a3b8' },
+  { name: 'tier-gold', varName: '--color-tier-gold', hex: '#f59e0b' },
+  { name: 'tier-diamond', varName: '--color-tier-diamond', hex: '#06b6d4' },
+]
+
 const SEMANTIC_COLORS: SemanticColor[] = [
   {
-    name: 'Background / Foreground',
-    varName: '--color-background',
+    name: 'Canvas Surface (Surface-0)',
+    varName: '--color-surface-0',
     lightValue: 'neutral-50 (#f8fafc)',
-    darkValue: 'neutral-950 (#020617)',
-    description: 'Nền chính của toàn bộ trang web và màu chữ chuẩn.',
+    darkValue: '#030712 (Deep black)',
+    description: 'Nền canvas chính của toàn bộ trang web.',
   },
   {
-    name: 'Surface / Card',
-    varName: '--color-surface',
+    name: 'Container Surface (Surface-1)',
+    varName: '--color-surface-1',
     lightValue: '#ffffff',
     darkValue: 'neutral-900 (#0f172a)',
-    description: 'Nền của container, thẻ card, bảng điều khiển.',
+    description: 'Nền của card, section, panel thông tin.',
   },
   {
-    name: 'Primary',
+    name: 'Floating Surface (Surface-2)',
+    varName: '--color-surface-2',
+    lightValue: '#ffffff',
+    darkValue: 'neutral-800 (#1e293b)',
+    description: 'Nền của dropdown menu, popover, tooltip nổi.',
+  },
+  {
+    name: 'Overlay Surface (Surface-3)',
+    varName: '--color-surface-3',
+    lightValue: '#ffffff',
+    darkValue: 'neutral-700 (#334155)',
+    description: 'Nền của dialog, modal, drawer tầng cao nhất.',
+  },
+  {
+    name: 'Primary Brand',
     varName: '--color-primary',
     lightValue: 'brand-600 (#2563eb)',
     darkValue: 'brand-500 (#3b82f6)',
     description: 'Màu thương hiệu chủ đạo cho nút nhấn, link chính, active state.',
+  },
+  {
+    name: 'AI Insights & Coach',
+    varName: '--color-ai',
+    lightValue: 'violet-600 (#7c3aed)',
+    darkValue: 'violet-500 (#8b5cf6)',
+    description: 'Màu nhận diện tính năng AI chấm điểm, nhận xét phỏng vấn.',
+  },
+  {
+    name: 'Waveform Telemetry',
+    varName: '--color-waveform',
+    lightValue: 'cyan-600 (#0891b2)',
+    darkValue: 'cyan-400 (#22d3ee)',
+    description: 'Màu thanh âm thanh và đo lường giọng nói thời gian thực.',
   },
   {
     name: 'Secondary',
@@ -91,13 +163,6 @@ const SEMANTIC_COLORS: SemanticColor[] = [
     lightValue: 'neutral-100 (#f1f5f9)',
     darkValue: 'neutral-800 (#1e293b)',
     description: 'Hành động phụ hoặc phần tử có độ ưu tiên thấp hơn.',
-  },
-  {
-    name: 'Muted',
-    varName: '--color-muted',
-    lightValue: 'neutral-100 / neutral-500',
-    darkValue: 'neutral-800 / neutral-400',
-    description: 'Văn bản phụ, placeholder, trạng thái nhạt.',
   },
   {
     name: 'Destructive',
@@ -111,7 +176,7 @@ const SEMANTIC_COLORS: SemanticColor[] = [
     varName: '--color-success',
     lightValue: 'green-600 (#16a34a)',
     darkValue: 'green-500 (#22c55e)',
-    description: 'Trạng thái thành công, hoàn thành, đáp án đúng.',
+    description: 'Trạng thái thành công, hoàn thành, đỗ phỏng vấn.',
   },
   {
     name: 'Warning',
@@ -121,11 +186,11 @@ const SEMANTIC_COLORS: SemanticColor[] = [
     description: 'Cảnh báo, nhắc nhở cần chú ý.',
   },
   {
-    name: 'Border / Input',
+    name: 'Border / Specular',
     varName: '--color-border',
     lightValue: 'neutral-200 (#e2e8f0)',
     darkValue: 'neutral-800 (#1e293b)',
-    description: 'Đường viền của card, input, divider.',
+    description: 'Đường viền của card, input, divider kết hợp viền specular phản quang.',
   },
 ]
 
@@ -146,7 +211,7 @@ export const ColorPalette: React.FC = () => {
           <button
             key={c.varName}
             onClick={() => handleCopy(`var(${c.varName})`)}
-            className="group relative flex flex-col items-center p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:shadow-md transition bg-white dark:bg-slate-900 text-left"
+            className="group relative flex flex-col items-center p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:shadow-md transition bg-white dark:bg-slate-900 text-left cursor-pointer"
             title={`Click to copy var(${c.varName})`}
           >
             <div
@@ -175,13 +240,13 @@ export const ColorPalette: React.FC = () => {
 
   return (
     <div className="my-6 space-y-8 font-sans">
-      {/* Semantic Tokens Table (2-column comparison) */}
+      {/* Semantic Tokens Table */}
       <section className="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200 dark:border-slate-800">
         <h3 className="text-lg font-bold mb-1 text-slate-900 dark:text-slate-100">
-          Semantic Colors (Theme-aware)
+          Semantic Colors (Theme-aware Multi-layer)
         </h3>
         <p className="text-xs text-slate-500 mb-4">
-          Các biến màu tự động thích ứng giữa Light Mode và Dark Mode. Click vào biến để copy.
+          Hệ thống màu ngữ nghĩa đa tầng (Surface 0-3, Brand, AI, Waveform) tự động thích ứng Light/Dark Mode. Click để copy biến CSS.
         </p>
 
         <div className="overflow-x-auto">
@@ -200,7 +265,7 @@ export const ColorPalette: React.FC = () => {
                   <td className="py-3 px-3 font-medium">
                     <button
                       onClick={() => handleCopy(`var(${sc.varName})`)}
-                      className="inline-flex items-center gap-1.5 font-mono text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                      className="inline-flex items-center gap-1.5 font-mono text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                     >
                       <span>{sc.varName}</span>
                       {copiedVar === `var(${sc.varName})` ? (
@@ -247,11 +312,15 @@ export const ColorPalette: React.FC = () => {
           Primitive Palettes
         </h3>
         <p className="text-xs text-slate-500 mb-6">
-          Bảng màu thô cố định. Hạn chế dùng trực tiếp trong UI component, ưu tiên dùng Semantic Token.
+          Bảng màu thô cố định cho hệ thống (Neutral, Brand, Violet AI, Cyan Audio, Charts, Mastery Tiers).
         </p>
 
         {renderPrimitiveRow('Neutral (Slate-like)', PRIMITIVE_NEUTRAL)}
         {renderPrimitiveRow('Brand (Blue)', PRIMITIVE_BRAND)}
+        {renderPrimitiveRow('Violet (AI & Insights)', PRIMITIVE_VIOLET)}
+        {renderPrimitiveRow('Cyan (Audio & Waveform)', PRIMITIVE_CYAN)}
+        {renderPrimitiveRow('Categorical Charts (Data Viz)', PRIMITIVE_CHARTS)}
+        {renderPrimitiveRow('Score & Mastery Tiers', PRIMITIVE_TIERS)}
         {renderPrimitiveRow('Red (Destructive)', PRIMITIVE_RED)}
         {renderPrimitiveRow('Green (Success)', PRIMITIVE_GREEN)}
         {renderPrimitiveRow('Amber (Warning)', PRIMITIVE_AMBER)}

@@ -1,0 +1,265 @@
+'use client'
+
+import React from 'react'
+import {
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Layers,
+  FolderTree,
+  FileCode2,
+  Award,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import type { SfiaCoverageStats } from './types'
+
+const LOCAL_STORAGE_KEY = 'sfia_anatomy_banner_collapsed'
+
+export interface SfiaAnatomyBannerProps {
+  stats?: SfiaCoverageStats | null
+  className?: string
+}
+
+const emptySubscribe = () => () => {}
+
+const subscribeCollapsed = (callback: () => void) => {
+  window.addEventListener('storage', callback)
+  window.addEventListener('sfia_banner_toggle', callback)
+  return () => {
+    window.removeEventListener('storage', callback)
+    window.removeEventListener('sfia_banner_toggle', callback)
+  }
+}
+
+const getCollapsedSnapshot = () => {
+  try {
+    return localStorage.getItem(LOCAL_STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+export function SfiaAnatomyBanner({ stats, className }: SfiaAnatomyBannerProps) {
+  const hasMounted = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  )
+  const collapsed = React.useSyncExternalStore(
+    subscribeCollapsed,
+    getCollapsedSnapshot,
+    () => false,
+  )
+
+  const toggleCollapsed = () => {
+    try {
+      const current = localStorage.getItem(LOCAL_STORAGE_KEY) === 'true'
+      localStorage.setItem(LOCAL_STORAGE_KEY, String(!current))
+      window.dispatchEvent(new Event('sfia_banner_toggle'))
+    } catch {
+      // Ignore localStorage errors
+    }
+  }
+
+  // Prevent layout shift during hydration
+  if (!hasMounted) {
+    return (
+      <div className={cn('bg-card border border-border/80 rounded-xl p-4 shadow-sm animate-pulse', className)}>
+        <div className="h-6 bg-surface-raised rounded w-1/3 mb-2" />
+        <div className="h-4 bg-surface-raised rounded w-1/2" />
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={cn(
+        'bg-card border border-border/80 rounded-xl shadow-sm transition-all duration-200 overflow-hidden',
+        className
+      )}
+    >
+      {/* Banner Top Header */}
+      <div className="flex items-center justify-between p-3.5 sm:p-4 bg-surface-raised/30 border-b border-border/50">
+        <div className="flex items-center gap-2.5">
+          <div className="bg-brand/10 text-brand flex size-8 shrink-0 items-center justify-center rounded-lg border border-brand/20">
+            <Sparkles className="size-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-sm font-bold text-ink">
+                SFIA 9 Framework Anatomy
+              </h2>
+              <Badge variant="secondary" className="text-[10px] uppercase font-semibold px-2 py-0.5">
+                4 Core Pillars
+              </Badge>
+            </div>
+            <p className="text-[11px] sm:text-xs text-ink-muted mt-0.5">
+              Standardized architecture: Categories ➔ Subcategories ➔ Skills ➔ 7 Levels of Responsibility
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleCollapsed}
+            className="text-xs text-ink-muted hover:text-ink gap-1.5 h-8 px-2.5"
+            aria-label={collapsed ? 'Expand SFIA 9 Framework Anatomy' : 'Collapse SFIA 9 Framework Anatomy'}
+          >
+            {collapsed ? (
+              <>
+                <span className="hidden sm:inline">Expand Anatomy</span>
+                <ChevronDown className="size-3.5" />
+              </>
+            ) : (
+              <>
+                <span className="hidden sm:inline">Collapse</span>
+                <ChevronUp className="size-3.5" />
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Collapsible Content */}
+      {!collapsed && (
+        <div className="p-3.5 sm:p-4 flex flex-col gap-4">
+          {/* 4 Pillars Flow Diagram */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5 sm:gap-3 relative">
+            {/* Pillar 1: Categories */}
+            <div className="bg-surface border border-blue-500/30 rounded-lg p-3 flex flex-col justify-between relative group hover:border-blue-500/50 transition-colors">
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-1.5">
+                  <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                    <Layers className="size-3" /> Pillar 1
+                  </span>
+                  <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
+                    6 Categories
+                  </span>
+                </div>
+                <h3 className="text-xs font-bold text-ink">Business Categories</h3>
+                <p className="text-[11px] text-ink-muted mt-1 leading-relaxed">
+                  High-level domains: Strategy & Architecture, Change & Transformation, Development, Delivery, People, Relationships.
+                </p>
+              </div>
+              <div className="text-[10px] text-ink-muted/80 pt-2 mt-2 border-t border-border/40 font-mono">
+                STRAT_ARCH • DEV_IMPL...
+              </div>
+            </div>
+
+            {/* Pillar 2: Subcategories */}
+            <div className="bg-surface border border-emerald-500/30 rounded-lg p-3 flex flex-col justify-between relative group hover:border-emerald-500/50 transition-colors">
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-1.5">
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                    <FolderTree className="size-3" /> Pillar 2
+                  </span>
+                  <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
+                    22 Subcategories
+                  </span>
+                </div>
+                <h3 className="text-xs font-bold text-ink">Professional Domains</h3>
+                <p className="text-[11px] text-ink-muted mt-1 leading-relaxed">
+                  Targeted capability clusters: Systems development, Data & analytics, Security, UX, Management.
+                </p>
+              </div>
+              <div className="text-[10px] text-ink-muted/80 pt-2 mt-2 border-t border-border/40 font-mono">
+                SYS_DEV • DATA_ANA...
+              </div>
+            </div>
+
+            {/* Pillar 3: Skills */}
+            <div className="bg-surface border border-violet-500/30 rounded-lg p-3 flex flex-col justify-between relative group hover:border-violet-500/50 transition-colors">
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-1.5">
+                  <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-wider flex items-center gap-1">
+                    <FileCode2 className="size-3" /> Pillar 3
+                  </span>
+                  <span className="bg-violet-500/10 text-violet-600 dark:text-violet-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
+                    147 Skills
+                  </span>
+                </div>
+                <h3 className="text-xs font-bold text-ink">Practicing Skills</h3>
+                <p className="text-[11px] text-ink-muted mt-1 leading-relaxed">
+                  4-letter code standards (PROG, SWDN, DBDS). Each skill defines an explicit level span (min_level..max_level).
+                </p>
+              </div>
+              <div className="text-[10px] text-ink-muted/80 pt-2 mt-2 border-t border-border/40 font-mono">
+                PROG (L2-6) • ARCH (L5-7)
+              </div>
+            </div>
+
+            {/* Pillar 4: Responsibility Levels */}
+            <div className="bg-surface border border-amber-500/30 rounded-lg p-3 flex flex-col justify-between relative group hover:border-amber-500/50 transition-colors">
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-1.5">
+                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                    <Award className="size-3" /> Pillar 4
+                  </span>
+                  <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
+                    7 Levels
+                  </span>
+                </div>
+                <h3 className="text-xs font-bold text-ink">Responsibility Levels</h3>
+                <p className="text-[11px] text-ink-muted mt-1 leading-relaxed">
+                  From Level 1 (Follow) to Level 7 (Set strategy, inspire), anchored by 5 generic attributes.
+                </p>
+              </div>
+              <div className="text-[10px] text-ink-muted/80 pt-2 mt-2 border-t border-border/40 font-mono">
+                Level 1 ➔ Level 7
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Mini-Stat Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+            <div className="bg-surface-inset/60 border border-border/50 rounded-lg p-2.5 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] text-ink-muted font-medium block">SFIA 9 Skills</span>
+                <span className="text-sm sm:text-base font-bold text-ink">147 Skills</span>
+              </div>
+              <div className="size-7 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
+                147
+              </div>
+            </div>
+
+            <div className="bg-surface-inset/60 border border-border/50 rounded-lg p-2.5 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] text-ink-muted font-medium block">Subcategories</span>
+                <span className="text-sm sm:text-base font-bold text-ink">22 Groups</span>
+              </div>
+              <div className="size-7 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
+                22
+              </div>
+            </div>
+
+            <div className="bg-surface-inset/60 border border-border/50 rounded-lg p-2.5 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] text-ink-muted font-medium block">Categories</span>
+                <span className="text-sm sm:text-base font-bold text-ink">6 Categories</span>
+              </div>
+              <div className="size-7 rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold text-xs">
+                6
+              </div>
+            </div>
+
+            <div className="bg-surface-inset/60 border border-border/50 rounded-lg p-2.5 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] text-ink-muted font-medium block">Question Bank</span>
+                <span className="text-sm sm:text-base font-bold text-ink">
+                  {stats?.totalQuestions ?? 0} Questions
+                </span>
+              </div>
+              <div className="size-7 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs">
+                {stats?.totalQuestions ?? 0}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

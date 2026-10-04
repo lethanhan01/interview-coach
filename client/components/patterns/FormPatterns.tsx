@@ -1,6 +1,7 @@
 import React, { InputHTMLAttributes, forwardRef } from 'react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/Input'
+import Button from '@/components/ui/Button'
 import { Search, X } from 'lucide-react'
 
 export interface FormSectionProps {
@@ -58,31 +59,34 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     }
 
     return (
-      <div className={cn('relative w-full max-w-sm', containerClassName)}>
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          <Search className="text-ink-muted h-4 w-4" />
-        </div>
+      <div className={cn('w-full max-w-sm', containerClassName)}>
         <Input
           ref={ref}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={cn('pl-9 pr-9', className)}
+          leadingIcon={<Search className="text-ink-muted h-4 w-4" />}
+          trailingAction={
+            value ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7 text-ink-muted hover:text-ink"
+                onClick={handleClear}
+                aria-label="Xóa tìm kiếm"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            ) : undefined
+          }
+          className={className}
           {...props}
         />
-        {value && (
-          <button
-            type="button"
-            onClick={handleClear}
-            className="text-ink-muted hover:text-ink absolute inset-y-0 right-0 flex items-center pr-3 focus:outline-none"
-            aria-label="Xóa tìm kiếm"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
       </div>
     )
   }
 )
 SearchInput.displayName = 'SearchInput'
+

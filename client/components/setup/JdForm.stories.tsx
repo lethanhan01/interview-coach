@@ -60,3 +60,24 @@ export const WithValidationHints: Story = {
     return <JdForm {...args} value={value} onChange={setValue} />
   },
 }
+
+export const WithOnetOccupation: Story = {
+  render: (args) => {
+    const [value, setValue] = useState<JdFormData>({
+      ...EMPTY_JD,
+      company: 'VNG Corporation',
+      position: 'Software Developers',
+      level: 'middle',
+      onetSocCode: '15-1252.00',
+      onetOccupationTitle: 'Software Developers',
+      targetSfiaLevel: 3,
+      requirements:
+        'Yêu cầu tối thiểu 2 năm kinh nghiệm phát triển backend bằng Node.js hoặc Go. Nắm chắc kiến trúc vi dịch vụ.',
+      jobContent:
+        'Tham gia thiết kế và triển khai API backend cho các sản phẩm game và payment. Tối ưu hóa hiệu năng cơ sở dữ liệu.',
+      techStack: ['Node.js', 'PostgreSQL', 'Docker'],
+    })
+    return <JdForm {...args} value={value} onChange={setValue} />
+  },
+}
+

@@ -21,7 +21,16 @@ const meta = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'brand', 'success', 'warning', 'danger'],
+      options: [
+        'default',
+        'secondary',
+        'outline',
+        'brand',
+        'success',
+        'warning',
+        'danger',
+        'destructive',
+      ],
     },
   },
 } satisfies Meta<typeof Badge>
@@ -33,6 +42,20 @@ export const Default: Story = {
   args: {
     children: 'Badge',
     variant: 'default',
+  },
+}
+
+export const Secondary: Story = {
+  args: {
+    children: 'Secondary',
+    variant: 'secondary',
+  },
+}
+
+export const Outline: Story = {
+  args: {
+    children: 'Outline',
+    variant: 'outline',
   },
 }
 
@@ -61,5 +84,12 @@ export const Danger: Story = {
   args: {
     children: 'Danger',
     variant: 'danger',
+  },
+}
+
+export const Destructive: Story = {
+  args: {
+    children: 'Destructive',
+    variant: 'destructive',
   },
 }

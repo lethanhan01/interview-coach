@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { Slot, Slottable } from '@radix-ui/react-slot'
+import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -103,11 +103,27 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : 'button'
     const isDisabled = disabled || loading
 
+    if (asChild) {
+      return (
+        <Slot
+          ref={ref}
+          className={cn(
+            buttonVariants({ variant, size, className }),
+            isDisabled && 'pointer-events-none opacity-50'
+          )}
+          aria-disabled={isDisabled || undefined}
+          aria-busy={loading || undefined}
+          {...props}
+        >
+          {children}
+        </Slot>
+      )
+    }
+
     return (
-      <Comp
+      <button
         ref={ref}
         className={cn(buttonVariants({ variant, size, className }))}
         disabled={isDisabled}
@@ -125,22 +141,15 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           </span>
         )}
 
-        {/*
-         * Slottable wraps children so Radix Slot can properly forward them
-         * to the child element when asChild=true, while keeping the span
-         * opacity technique intact for loading width stability.
-         */}
-        <Slottable>
-          <span
-            className={cn(
-              'inline-flex items-center gap-2',
-              loading && 'opacity-0'
-            )}
-          >
-            {children}
-          </span>
-        </Slottable>
-      </Comp>
+        <span
+          className={cn(
+            'inline-flex items-center gap-2',
+            loading && 'opacity-0'
+          )}
+        >
+          {children}
+        </span>
+      </button>
     )
   }
 )

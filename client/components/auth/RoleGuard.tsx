@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 export default function RoleGuard({
   children,
@@ -26,7 +27,13 @@ export default function RoleGuard({
     }
   }, [isLoading, role, router, allowedRole, fallbackRoute])
 
-  if (isLoading || role !== allowedRole) return null
+  if (isLoading || role !== allowedRole) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
 
   return <>{children}</>
 }

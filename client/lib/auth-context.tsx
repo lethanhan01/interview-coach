@@ -1,6 +1,14 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
+import { authService } from '@/services'
 
 type Role = 'candidate' | 'admin'
 type CurrentUser = { id: string; email: string }
@@ -10,6 +18,7 @@ type AuthContextValue = {
   status: string | null
   isLoading: boolean
   refresh: () => Promise<Role | null>
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -18,13 +27,11 @@ const AuthContext = createContext<AuthContextValue>({
   status: null,
   isLoading: true,
   refresh: async () => null,
+  logout: async () => {},
 })
 
-const apiBase =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [value, setValue] = useState<Omit<AuthContextValue, 'refresh'>>({
+  const [value, setValue] = useState<Omit<AuthContextValue, 'refresh' | 'logout'>>({
     user: null,
     role: null,
     status: null,
@@ -33,16 +40,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async (): Promise<Role | null> => {
     try {
-      const response = await fetch(`${apiBase}/auth/me`, {
-        credentials: 'include',
-      })
-      if (!response.ok) throw new Error('Not authenticated')
-      const body = await response.json()
-      const fetchedRole = body.data.role
+      const user = await authService.getMe()
+      if (!user) throw new Error('Not authenticated')
+      const fetchedRole = user.role as Role
       setValue({
-        user: { id: body.data.id, email: body.data.email },
+        user: { id: user.id, email: user.email },
         role: fetchedRole,
-        status: body.data.status,
+        status: user.status,
         isLoading: false,
       })
       return fetchedRole
@@ -52,17 +56,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      await authService.logout()
+    } finally {
+      setValue({ user: null, role: null, status: null, isLoading: false })
+    }
+  }, [])
+
   useEffect(() => {
     const timeout = window.setTimeout(() => void refresh(), 0)
     return () => window.clearTimeout(timeout)
   }, [refresh])
-  return (
-    <AuthContext.Provider value={{ ...value, refresh }}>
-      {children}
-    </AuthContext.Provider>
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setValue({ user: null, role: null, status: null, isLoading: false })
+      void authService.logout().catch(() => {})
+    }
+    window.addEventListener('auth:session-expired', handleSessionExpired)
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired)
+  }, [])
+
+  const contextValue = useMemo(
+    () => ({ ...value, refresh, logout }),
+    [value, refresh, logout]
   )
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
   return useContext(AuthContext)
 }
+

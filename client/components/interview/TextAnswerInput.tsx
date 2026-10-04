@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Button from '../ui/Button'
+import { Textarea } from '../ui/Textarea'
+import { Label } from '../ui/Label'
 
 interface TextAnswerInputProps {
   onSubmit: (text: string) => Promise<void>
@@ -32,10 +34,10 @@ export default function TextAnswerInput({
 
   return (
     <div className="flex flex-col gap-3">
-      <label htmlFor="answer-textarea" className="sr-only">
+      <Label htmlFor="answer-textarea" className="sr-only">
         Câu trả lời của bạn
-      </label>
-      <textarea
+      </Label>
+      <Textarea
         id="answer-textarea"
         aria-label="Câu trả lời của bạn"
         value={text}
@@ -46,7 +48,7 @@ export default function TextAnswerInput({
         disabled={disabled || submitting}
         placeholder="Nhập câu trả lời của bạn..."
         rows={6}
-        className="border-border text-ink placeholder:text-ink-faint focus:border-brand focus:ring-brand w-full resize-none rounded-xl border p-3 text-sm focus:outline-none focus:ring-2 disabled:opacity-50"
+        className="resize-none"
       />
       {error && (
         <p role="alert" className="text-danger text-sm">
@@ -65,3 +67,4 @@ export default function TextAnswerInput({
     </div>
   )
 }
+

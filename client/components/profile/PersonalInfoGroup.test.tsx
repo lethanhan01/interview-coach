@@ -4,9 +4,13 @@ import PersonalInfoGroup from './PersonalInfoGroup'
 
 describe('PersonalInfoGroup', () => {
   it('renders correctly', () => {
-    // Basic render test
-    // You may need to provide required props
-    const { container } = render(<PersonalInfoGroup data={{}} onSave={vi.fn()} label="Test" message="Empty" title="Section" />)
+    const { container } = render(
+      <PersonalInfoGroup
+        data={{ firstname: 'An', lastname: 'Nguyen' }}
+        onSave={vi.fn()}
+      />
+    )
     expect(container).toBeInTheDocument()
   })
 })
+

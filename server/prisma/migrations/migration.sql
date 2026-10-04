@@ -1,4 +1,29 @@
 -- =============================================================================
+-- Workflow outbox: additive durable commands for post-commit queue work.
+-- Dispatcher/cutover follows in RF-009; this table is retained on rollback.
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS workflow_outbox (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  command_type TEXT NOT NULL,
+  aggregate_id UUID NOT NULL,
+  payload JSONB NOT NULL,
+  idempotency_key TEXT NOT NULL UNIQUE,
+  state TEXT NOT NULL DEFAULT 'pending',
+  attempts INTEGER NOT NULL DEFAULT 0,
+  available_at TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  processed_at TIMESTAMPTZ(6),
+  error_summary TEXT,
+  created_at TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ(6) NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_workflow_outbox_due
+  ON workflow_outbox(state, available_at);
+CREATE INDEX IF NOT EXISTS idx_workflow_outbox_aggregate
+  ON workflow_outbox(aggregate_id);
+
+-- =============================================================================
 -- InterviewCoach — Consolidated migration
 -- Apply against a Supabase project that already has the base schema created
 -- via `prisma db push`. Execute as a superuser or service role.
@@ -6,13 +31,11 @@
 -- re-run after every push. Run via `npm run db:apply-sql`.
 -- =============================================================================
 
-
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 DROP FUNCTION IF EXISTS public.handle_new_auth_user();
 
-
 -- -----------------------------------------------------------------------------
--- 2. Retired tables
+-- 2. Retired tables & column adjustments
 -- -----------------------------------------------------------------------------
 
 -- AI quality logging is deferred; remove the unused empty audit table from the
@@ -32,10 +55,46 @@ ALTER TABLE question_bank
   DROP COLUMN IF EXISTS applicable_levels,
   DROP COLUMN IF EXISTS tags;
 
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'UserRole') THEN
+    CREATE TYPE "UserRole" AS ENUM ('candidate', 'admin');
+  END IF;
+END $$;
+
 ALTER TABLE users
   DROP COLUMN IF EXISTS profile_completed,
   DROP COLUMN IF EXISTS last_login_at,
-  DROP COLUMN IF EXISTS deleted_at;
+  DROP COLUMN IF EXISTS deleted_at,
+  DROP COLUMN IF EXISTS password_updated_at,
+  DROP COLUMN IF EXISTS password_reset_token_hash,
+  DROP COLUMN IF EXISTS password_reset_expires_at;
+
+ALTER TABLE users
+  DROP CONSTRAINT IF EXISTS chk_users_role;
+ALTER TABLE users
+  ADD CONSTRAINT chk_users_role
+  CHECK (role::text IN ('candidate', 'admin'));
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.users WHERE password_hash IS NULL) THEN
+    ALTER TABLE public.users ALTER COLUMN password_hash SET NOT NULL;
+  END IF;
+END $$;
+
+ALTER TABLE public.users
+  DROP CONSTRAINT IF EXISTS chk_users_candidate_names;
+
+ALTER TABLE public.users
+  ADD CONSTRAINT chk_users_candidate_names
+  CHECK (
+    role::text <> 'candidate'
+    OR (
+      first_name IS NOT NULL AND btrim(first_name) <> ''
+      AND last_name IS NOT NULL AND btrim(last_name) <> ''
+    )
+  );
 
 ALTER TABLE user_profiles
   ADD COLUMN IF NOT EXISTS education JSONB,
@@ -64,7 +123,6 @@ ALTER TABLE interview_sessions
 
 ALTER TABLE saved_job_descriptions
   ADD COLUMN IF NOT EXISTS level TEXT;
-
 
 -- -----------------------------------------------------------------------------
 -- 3. RLS policies
@@ -949,7 +1007,8 @@ ALTER TABLE session_reports
     'comm_analysis',
     'competency_heatmap',
     'action_plan',
-    'skipped_answers'
+    'skipped_answers',
+    'session_competency_evaluation'
   ));
 
 DO $$
@@ -1451,3 +1510,19 @@ DO $$ BEGIN
       USING "session_type"::"QuestionSessionType";
   END IF;
 END $$;
+
+-- Drop legacy dimension_scores from ai_feedbacks
+ALTER TABLE public.ai_feedbacks DROP COLUMN IF EXISTS dimension_scores;
+
+-- Update check constraint for session_reports to include session_competency_evaluation
+ALTER TABLE public.session_reports DROP CONSTRAINT IF EXISTS chk_session_reports_report_type;
+ALTER TABLE public.session_reports 
+  ADD CONSTRAINT chk_session_reports_report_type 
+  CHECK (report_type IN (
+    'executive_summary',
+    'comm_analysis',
+    'competency_heatmap',
+    'action_plan',
+    'skipped_answers',
+    'session_competency_evaluation'
+  ));

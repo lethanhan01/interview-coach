@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "npm run dev:next",
+    "dev:clean": "npm run clean && npm run dev:next",
     "dev:next": "next dev --port 5173",
+    "clean": "node -e \"try { require('fs').rmSync('.next', { recursive: true, force: true }) } catch {}\"",
     "dev:all": "concurrently -k -n next,storybook -c blue,magenta npm:dev:next npm:storybook",
     "build": "next build",
     "start": "next start",

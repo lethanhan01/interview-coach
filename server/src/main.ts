@@ -3,9 +3,17 @@ import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { exec } from 'node:child_process';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
-import { setupSwagger } from './common/swagger/swagger';
+import { setupSwagger } from '@core/common/swagger/swagger';
+import { resolveRuntimeRole } from '@core/runtime/runtime-role';
 
 async function bootstrap() {
+  const runtimeRole = resolveRuntimeRole();
+  if (runtimeRole === 'worker') {
+    const app = await NestFactory.createApplicationContext(AppModule);
+    app.enableShutdownHooks();
+    return;
+  }
+
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api/v1', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],

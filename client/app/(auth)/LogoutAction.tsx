@@ -2,25 +2,21 @@
 
 import { useRouter } from 'next/navigation'
 import LogoutButton from '@/components/auth/LogoutButton'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function LogoutAction({ className }: { className?: string }) {
   const router = useRouter()
+  const { logout } = useAuth()
 
   async function handleLogout() {
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'}/auth/logout`,
-        {
-          method: 'POST',
-          credentials: 'include',
-        }
-      )
-    } catch (error) {
-      console.error('Logout failed:', error)
+      await logout()
     } finally {
       router.replace('/login')
+      router.refresh()
     }
   }
 
   return <LogoutButton className={className} onClick={handleLogout} />
 }
+

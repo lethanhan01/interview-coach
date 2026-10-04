@@ -1,12 +1,11 @@
 import { render } from '@testing-library/react'
-import { expect, it, describe, vi } from 'vitest'
+import { expect, it, describe } from 'vitest'
 import ProfileEmptyState from './ProfileEmptyState'
 
 describe('ProfileEmptyState', () => {
   it('renders correctly', () => {
-    // Basic render test
-    // You may need to provide required props
-    const { container } = render(<ProfileEmptyState data={{}} onSave={vi.fn()} label="Test" message="Empty" title="Section" />)
+    const { container } = render(<ProfileEmptyState message="No data" />)
     expect(container).toBeInTheDocument()
   })
 })
+

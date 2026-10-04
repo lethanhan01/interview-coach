@@ -5,9 +5,13 @@ const BLOCKED_PREFIXES = ['/login', '/callback']
 export const PROTECTED_ROUTE_PREFIXES = [
   '/sessions',
   '/setup',
+  '/resume',
   '/profile',
   '/jd-library',
   '/admin',
+  '/admin-dashboard',
+  '/admin-profile',
+  '/users',
 ] as const
 
 function matchesPathPrefix(pathname: string, prefix: string): boolean {

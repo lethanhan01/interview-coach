@@ -52,8 +52,9 @@ describe('DataPatterns', () => {
     })
 
     it('renders empty state when data is empty', () => {
-      render(<DataTable columns={columns} data={[]} keyExtractor={(r) => r.id} emptyState="No items found" />)
+      render(<DataTable<{ id: number; name: string }> columns={columns} data={[]} keyExtractor={(r) => r.id} emptyState="No items found" />)
       expect(screen.getByText('No items found')).toBeInTheDocument()
     })
   })
 })
+

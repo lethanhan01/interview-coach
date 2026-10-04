@@ -1,0 +1,775 @@
+import { HttpStatus } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ReportService } from './report.service';
+import { PrismaService } from '@infra/database/prisma/prisma.service';
+import { WorkflowDispatcher } from '@infra/workflow/workflow-dispatcher.service';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import {
+  createMockPrismaService,
+  createMockWorkflowDispatcher,
+} from '@core/test-utils/mock-factories';
+
+const COMPLETED_SESSION = {
+  id: 'session-123',
+  overallScore: 75,
+  status: 'completed',
+  savedJobDescription: {
+    userId: 'user-abc',
+  },
+  sessionReports: [
+    {
+      reportType: 'executive_summary',
+      version: 1,
+      contentJson: { summary: 'Good performance' },
+    },
+    {
+      reportType: 'competency_heatmap',
+      version: 1,
+      contentJson: { clarity: 80 },
+    },
+    { reportType: 'action_plan', version: 1, contentJson: { actions: [] } },
+    { reportType: 'comm_analysis', version: 1, contentJson: {} },
+  ],
+};
+
+describe('ReportService', () => {
+  let service: ReportService;
+  let mockPrisma: ReturnType<typeof createMockPrismaService>;
+  let mockWorkflowDispatcher: ReturnType<typeof createMockWorkflowDispatcher>;
+
+  beforeEach(async () => {
+    mockPrisma = createMockPrismaService();
+    mockWorkflowDispatcher = createMockWorkflowDispatcher();
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ReportService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: WorkflowDispatcher, useValue: mockWorkflowDispatcher },
+      ],
+    }).compile();
+
+    service = module.get<ReportService>(ReportService);
+  });
+
+  afterEach(() => jest.clearAllMocks());
+
+  describe('getReport', () => {
+    it('trả về report đầy đủ khi session hợp lệ và report sẵn sàng', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.sessionId).toBe('session-123');
+      expect(result.overallScore).toBe(75);
+    });
+
+    it('throw SESSION_NOT_FOUND (404) khi session không tồn tại', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
+
+      await expect(service.getReport('bad-id', 'user-abc')).rejects.toThrow(
+        InterviewAIException,
+      );
+
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
+      try {
+        await service.getReport('bad-id', 'user-abc');
+      } catch (e) {
+        expect((e as InterviewAIException).errorCode).toBe(
+          ErrorCode.SESSION_NOT_FOUND,
+        );
+        expect((e as InterviewAIException).getStatus()).toBe(
+          HttpStatus.NOT_FOUND,
+        );
+      }
+    });
+
+    it('throw FORBIDDEN (403) khi user không phải chủ sở hữu', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
+
+      await expect(
+        service.getReport('session-123', 'other-user'),
+      ).rejects.toThrow(InterviewAIException);
+
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
+      try {
+        await service.getReport('session-123', 'other-user');
+      } catch (e) {
+        expect((e as InterviewAIException).errorCode).toBe(ErrorCode.FORBIDDEN);
+      }
+    });
+
+    it('throw REPORT_NOT_READY (202) khi chưa có executive_summary report', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        sessionReports: [],
+      });
+
+      await expect(
+        service.getReport('session-123', 'user-abc'),
+      ).rejects.toThrow(InterviewAIException);
+
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        sessionReports: [],
+      });
+      try {
+        await service.getReport('session-123', 'user-abc');
+      } catch (e) {
+        expect((e as InterviewAIException).errorCode).toBe(
+          ErrorCode.REPORT_NOT_READY,
+        );
+        expect((e as InterviewAIException).getStatus()).toBe(
+          HttpStatus.ACCEPTED,
+        );
+      }
+    });
+
+    it('transcript rỗng khi không có questions', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+      expect(result.transcript).toHaveLength(0);
+    });
+
+    it('chuẩn hóa các JSON object phụ bị null thành object rỗng khi thiếu rows', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        sessionReports: [
+          {
+            reportType: 'executive_summary',
+            version: 1,
+            contentJson: { summary: 'Good performance' },
+          },
+        ],
+      });
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.competencyHeatmap).toEqual({});
+      expect(result.actionPlan).toEqual({});
+    });
+
+    it('transcript có đúng số items theo số questions', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Tell me about yourself',
+          orderIndex: 1,
+          userAnswers: [],
+        },
+        {
+          id: 'q-2',
+          questionText: 'Your strengths?',
+          orderIndex: 2,
+          userAnswers: [],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+      expect(result.transcript).toHaveLength(2);
+      expect(result.transcript[0].questionText).toBe('Tell me about yourself');
+    });
+
+    it('trả về reportQuality=full khi không có fallback feedbacks', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Question 1',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              answerText: 'Answer',
+              aiFeedback: {
+                overallScore: 80,
+                modelAnswer: 'Model',
+                keyTakeaway: 'Key',
+                isFallback: false,
+                annotatedSegments: [],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.reportQuality).toBe('full');
+    });
+
+    it('trả về reportQuality=unavailable khi tất cả feedbacks là fallback', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Question 1',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              answerText: 'Answer',
+              aiFeedback: {
+                overallScore: 0,
+                modelAnswer: '',
+                keyTakeaway: 'AI unavailable',
+                isFallback: true,
+                annotatedSegments: [],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.reportQuality).toBe('unavailable');
+    });
+
+    it('trả về reportQuality=partial khi một phần feedbacks là fallback', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Q1',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              answerText: 'A1',
+              aiFeedback: {
+                overallScore: 80,
+                modelAnswer: 'M',
+                keyTakeaway: 'K',
+                isFallback: false,
+                annotatedSegments: [],
+              },
+            },
+          ],
+        },
+        {
+          id: 'q-2',
+          questionText: 'Q2',
+          orderIndex: 2,
+          userAnswers: [
+            {
+              answerText: 'A2',
+              aiFeedback: {
+                overallScore: 0,
+                modelAnswer: '',
+                keyTakeaway: 'AI unavailable',
+                isFallback: true,
+                annotatedSegments: [],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.reportQuality).toBe('partial');
+    });
+
+    it('trả score=null thay vì 0 khi toàn bộ feedback là fallback', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        overallScore: 0,
+        sessionReports: [
+          {
+            reportType: 'executive_summary',
+            version: 1,
+            contentJson: { summary: 'Good performance' },
+          },
+          { reportType: 'action_plan', version: 1, contentJson: {} },
+        ],
+      });
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Tell me about yourself',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              answerText: 'I am a developer.',
+              aiFeedback: {
+                overallScore: 0,
+                modelAnswer: '',
+                keyTakeaway: 'AI unavailable',
+                isFallback: true,
+                annotatedSegments: [],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.overallScore).toBeNull();
+      expect(result.transcript[0].overallScore).toBeNull();
+      expect(result.transcript[0].isFallback).toBe(true);
+      expect(result.executiveSummary.overallScore).toBeNull();
+      expect(result.actionPlan.items).toHaveLength(3);
+    });
+
+    it('trả score=0 và modelAnswer cho phiên chỉ có câu skipped đã được hệ thống chấm', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        overallScore: 0,
+        sessionReports: [
+          {
+            reportType: 'executive_summary',
+            version: 1,
+            contentJson: { summary: 'Skipped session', overallScore: 0 },
+          },
+          {
+            reportType: 'skipped_answers',
+            version: 1,
+            contentJson: {
+              answers: [
+                {
+                  answerId: 'answer-skip-1',
+                  modelAnswer: 'Câu trả lời đề xuất cho câu bị bỏ qua.',
+                },
+              ],
+            },
+          },
+        ],
+      });
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Question 1',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              id: 'answer-skip-1',
+              answerText: '',
+              skipped: true,
+              aiFeedback: {
+                overallScore: 0,
+                modelAnswer: '',
+                keyTakeaway: 'Skipped question',
+                isFallback: false,
+                annotatedSegments: [],
+                dimensionScores: [
+                  {
+                    id: 'D1',
+                    name: 'Communication',
+                    score: 0,
+                    weight: 1,
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.reportQuality).toBe('full');
+      expect(result.overallScore).toBe(0);
+      expect(result.transcript[0]).toEqual(
+        expect.objectContaining({
+          skipped: true,
+          answerText: '',
+          overallScore: 0,
+          modelAnswer: 'Câu trả lời đề xuất cho câu bị bỏ qua.',
+          keyTakeaway: 'Skipped question',
+          segments: [],
+        }),
+      );
+    });
+
+    it('criteriaEvaluations: có giá trị ở câu có evaluation, undefined ở fallback/không có', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Normal Q',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              id: 'a-1',
+              answerText: 'Good answer',
+              skipped: false,
+              aiFeedback: {
+                overallScore: 80,
+                modelAnswer: 'Model',
+                keyTakeaway: 'Key',
+                isFallback: false,
+                annotatedSegments: [],
+                criteriaEvaluations: [
+                  { criteriaId: 'crit_1', passed: true, evidence: 'Good' },
+                ],
+                demonstratedLevel: 4,
+                criteriaPassRate: 1.0,
+              },
+            },
+          ],
+        },
+        {
+          id: 'q-2',
+          questionText: 'Fallback Q',
+          orderIndex: 2,
+          userAnswers: [
+            {
+              id: 'a-2',
+              answerText: 'Bad connection',
+              skipped: false,
+              aiFeedback: {
+                overallScore: 0,
+                modelAnswer: '',
+                keyTakeaway: 'AI unavailable',
+                isFallback: true,
+                annotatedSegments: [],
+                criteriaEvaluations: null,
+                demonstratedLevel: null,
+                criteriaPassRate: null,
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+      const normalItem = result.transcript[0];
+      const fallbackItem = result.transcript[1];
+
+      expect(normalItem.criteriaEvaluations).toEqual([
+        { criteriaId: 'crit_1', passed: true, evidence: 'Good' },
+      ]);
+      expect(normalItem.demonstratedLevel).toBe(4);
+      expect(fallbackItem.criteriaEvaluations).toBeUndefined();
+    });
+
+    it('không trả annotated segment nếu segmentText không thuộc answerText', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(
+        COMPLETED_SESSION,
+      );
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-rest',
+          questionText: 'REST là gì?',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              id: '8abade13-5a8f-414c-ad07-7878ed94b01d',
+              answerText: 'Tôi nghĩ REST là nghỉ ngơi.',
+              skipped: false,
+              aiFeedback: {
+                overallScore: 15,
+                modelAnswer: 'REST là một kiến trúc phong cách.',
+                keyTakeaway: 'Cần phân biệt nghĩa kỹ thuật.',
+                isFallback: false,
+                annotatedSegments: [
+                  {
+                    id: 'seg-from-model-answer',
+                    segmentText: 'REST là một kiến trúc phong cách.',
+                    startIndex: 0,
+                    endIndex: 34,
+                    highlightLevel: 'strength',
+                    annotation: 'Định nghĩa đúng.',
+                    suggestion: null,
+                  },
+                ],
+                dimensionScores: [
+                  { id: 'TD1', name: 'Fundamentals', score: 15, weight: 1 },
+                ],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.transcript[0]).toEqual(
+        expect.objectContaining({
+          answerId: '8abade13-5a8f-414c-ad07-7878ed94b01d',
+          segments: [],
+        }),
+      );
+    });
+  });
+
+  describe('getFeedbackProgress', () => {
+    it('tính progress đúng và không tính skipped answers vào feedbackRequired', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        id: 'session-123',
+        savedJobDescription: { userId: 'user-abc' },
+        status: 'completing',
+        sessionReports: [],
+      });
+      mockPrisma.sessionQuestion.count.mockResolvedValue(5);
+      mockPrisma.userAnswer.count
+        .mockResolvedValueOnce(4)
+        .mockResolvedValueOnce(1)
+        .mockResolvedValueOnce(2);
+
+      const result = await service.getFeedbackProgress(
+        'session-123',
+        'user-abc',
+      );
+
+      expect(result).toEqual({
+        sessionId: 'session-123',
+        status: 'completing',
+        totalQuestions: 5,
+        answeredQuestions: 4,
+        skippedQuestions: 1,
+        feedbackRequired: 3,
+        feedbackCompleted: 2,
+        feedbackPending: 1,
+        reportReady: false,
+      });
+    });
+
+    it('trả pending = 0 khi tất cả câu đã trả lời đều skipped', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        id: 'session-123',
+        savedJobDescription: { userId: 'user-abc' },
+        status: 'completing',
+        sessionReports: [],
+      });
+      mockPrisma.sessionQuestion.count.mockResolvedValue(3);
+      mockPrisma.userAnswer.count
+        .mockResolvedValueOnce(3)
+        .mockResolvedValueOnce(3)
+        .mockResolvedValueOnce(0);
+
+      const result = await service.getFeedbackProgress(
+        'session-123',
+        'user-abc',
+      );
+
+      expect(result.feedbackRequired).toBe(0);
+      expect(result.feedbackCompleted).toBe(0);
+      expect(result.feedbackPending).toBe(0);
+    });
+
+    it('reportReady=true khi session completed và đã có executive_summary', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        id: 'session-123',
+        savedJobDescription: { userId: 'user-abc' },
+        status: 'completed',
+        sessionReports: [{ id: 'report-1' }],
+      });
+      mockPrisma.sessionQuestion.count.mockResolvedValue(1);
+      mockPrisma.userAnswer.count
+        .mockResolvedValueOnce(1)
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(1);
+
+      const result = await service.getFeedbackProgress(
+        'session-123',
+        'user-abc',
+      );
+
+      expect(result.reportReady).toBe(true);
+    });
+
+    it('throw FORBIDDEN khi user không phải chủ sở hữu', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        id: 'session-123',
+        savedJobDescription: {
+          userId: 'user-abc',
+        },
+        status: 'completing',
+        sessionReports: [],
+      });
+
+      await expect(
+        service.getFeedbackProgress('session-123', 'other-user'),
+      ).rejects.toMatchObject({ errorCode: ErrorCode.FORBIDDEN });
+      expect(mockPrisma.sessionQuestion.count).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('enqueueReport', () => {
+    it('chuyển report command cho workflow dispatcher', async () => {
+      await service.enqueueReport('session-123');
+
+      expect(mockWorkflowDispatcher.dispatchFor).toHaveBeenCalledWith(
+        'report-generation',
+        'session-123',
+      );
+    });
+  });
+
+  describe('enqueueIfAllFeedbacksReady', () => {
+    it('không enqueue khi session status không phải completing', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        status: 'active',
+      });
+
+      await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
+
+      expect(mockWorkflowDispatcher.dispatchFor).not.toHaveBeenCalled();
+    });
+
+    it('không enqueue khi chưa đủ feedbacks', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        status: 'completing',
+      });
+      mockPrisma.userAnswer.count
+        .mockResolvedValueOnce(3) // total
+        .mockResolvedValueOnce(2); // pending non-skipped feedbacks
+
+      await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
+
+      expect(mockWorkflowDispatcher.dispatchFor).not.toHaveBeenCalled();
+    });
+
+    it('không enqueue khi session completing nhưng chưa có answer nào', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        status: 'completing',
+      });
+      mockPrisma.userAnswer.count
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(0);
+
+      await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
+
+      expect(mockWorkflowDispatcher.dispatchFor).not.toHaveBeenCalled();
+    });
+
+    it('enqueue report khi tất cả feedbacks đã xong và status là completing', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        status: 'completing',
+      });
+      mockPrisma.userAnswer.count
+        .mockResolvedValueOnce(3) // total
+        .mockResolvedValueOnce(0); // pending non-skipped feedbacks
+      await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
+
+      expect(mockWorkflowDispatcher.dispatchFor).toHaveBeenCalledWith(
+        'report-generation',
+        'session-123',
+      );
+    });
+
+    it('enqueue khi chỉ còn câu skipped chưa có feedback', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        status: 'completing',
+      });
+      mockPrisma.userAnswer.count
+        .mockResolvedValueOnce(3)
+        .mockResolvedValueOnce(0);
+      await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
+
+      expect(mockWorkflowDispatcher.dispatchFor).toHaveBeenCalledWith(
+        'report-generation',
+        'session-123',
+      );
+    });
+
+    it('không enqueue khi session không tồn tại', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
+
+      await service.enqueueIfAllFeedbacksReady('session-123', 'hr', 'VN');
+
+      expect(mockWorkflowDispatcher.dispatchFor).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('session_competency_evaluation (Hybrid Engine Report)', () => {
+    it('ánh xạ chính xác session_competency_evaluation với skillsBreakdown và dual-key', async () => {
+      mockPrisma.interviewSession.findUnique.mockResolvedValue({
+        ...COMPLETED_SESSION,
+        recommendationStatus: 'recommended',
+        overallScore: 85,
+        sessionReports: [
+          {
+            reportType: 'session_competency_evaluation',
+            version: 1,
+            contentJson: {
+              summary: {
+                overall_score: 85,
+                recommendation_status: 'recommended',
+                executive_summary: 'Ứng viên đạt chuẩn.',
+              },
+              skills_breakdown: [
+                {
+                  skill_code: 'PROG',
+                  skill_name: 'Software Development',
+                  target_level: 4,
+                  demonstrated_level: 4,
+                  score: 90,
+                  status: 'passed',
+                },
+              ],
+              action_plan: [
+                {
+                  skill_code: 'DBDS',
+                  title: 'Học thêm CSDL',
+                  estimated_weeks: 2,
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      mockPrisma.sessionQuestion.findMany.mockResolvedValue([
+        {
+          id: 'q-1',
+          questionText: 'Explain event loop',
+          orderIndex: 1,
+          userAnswers: [
+            {
+              id: 'a-1',
+              answerText: '',
+              skipped: true,
+              aiFeedback: {
+                overallScore: 0,
+                keyTakeaway: 'Hãy luôn cố gắng đưa ra phản hồi.',
+                isFallback: false,
+                annotatedSegments: [],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getReport('session-123', 'user-abc');
+
+      expect(result.overallScore).toBe(85);
+      expect(result.recommendationStatus).toBe('recommended');
+      expect(result.skillsBreakdown).toHaveLength(1);
+      expect((result.skillsBreakdown as any)[0].skill_code).toBe('PROG');
+      expect(result.transcript[0].skipped).toBe(true);
+      expect(result.transcript[0].keyTakeaway).toBe(
+        'Hãy luôn cố gắng đưa ra phản hồi.',
+      );
+    });
+  });
+});

@@ -101,13 +101,13 @@ describe('ConfirmStep', () => {
     render(
       <ConfirmStep
         jd={FULL_JD}
-        sessionType="mixed"
+        sessionType="technical"
         contextPack="Western"
         duration={90}
         error={null}
       />
     )
-    expect(screen.getByText('Mixed (HR + Technical)')).toBeInTheDocument()
+    expect(screen.getByText('Technical')).toBeInTheDocument()
     expect(screen.getByText('Western')).toBeInTheDocument()
     expect(screen.getByText('1 tiếng rưỡi')).toBeInTheDocument()
     expect(screen.getByText('45 câu')).toBeInTheDocument()
@@ -155,4 +155,61 @@ describe('ConfirmStep', () => {
     )
     expect(screen.getByText('Junior')).toBeInTheDocument()
   })
+
+  it('renders AI Job Profile section with O*NET info and tech stack', () => {
+    const onetJd: JdFormData = {
+      ...FULL_JD,
+      onetSocCode: '15-1252.00',
+      onetOccupationTitle: 'Software Developers',
+      targetSfiaLevel: 2,
+    }
+    render(
+      <ConfirmStep
+        jd={onetJd}
+        sessionType="technical"
+        contextPack="Western"
+        duration={60}
+        error={null}
+      />
+    )
+    expect(
+      screen.getByText('Hồ sơ Vị trí Tuyển dụng (AI Job Profile)')
+    ).toBeInTheDocument()
+    expect(screen.getByText('Software Developers')).toBeInTheDocument()
+    expect(screen.getByText('15-1252.00')).toBeInTheDocument()
+    expect(screen.getByText('React')).toBeInTheDocument()
+    expect(screen.getByText('TypeScript')).toBeInTheDocument()
+  })
+
+  it('renders fallback when O*NET is not linked', () => {
+    render(
+      <ConfirmStep
+        jd={MINIMAL_JD}
+        sessionType="technical"
+        contextPack="VN"
+        duration={30}
+        error={null}
+      />
+    )
+    expect(
+      screen.getByText('Tự do (chưa chuẩn hóa O*NET)')
+    ).toBeInTheDocument()
+  })
+
+  it('renders SFIA Level select when onChange is provided', () => {
+    render(
+      <ConfirmStep
+        jd={FULL_JD}
+        sessionType="technical"
+        contextPack="VN"
+        duration={30}
+        error={null}
+        onChange={() => {}}
+      />
+    )
+    expect(
+      screen.getByRole('combobox', { name: 'Cấp bậc SFIA mục tiêu' })
+    ).toBeInTheDocument()
+  })
 })
+

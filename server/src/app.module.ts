@@ -8,21 +8,35 @@ import {
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-import { PrismaModule } from './prisma/prisma.module';
-import { AuthModule } from './auth/auth.module';
-import { AiModule } from './ai/ai.module';
-import { SessionModule } from './session/session.module';
-import { TurnModule } from './turn/turn.module';
-import { ReportModule } from './report/report.module';
-import { UserModule } from './user/user.module';
-import { SavedJobDescriptionModule } from './saved-job-description/saved-job-description.module';
-import { validateEnv } from './config/env.validation';
-import { InterviewAIExceptionFilter } from './common/exceptions/interview-ai-exception.filter';
-import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
-import { CommonModule } from './common/common.module';
-import { HealthModule } from './health/health.module';
-import { AdminModule } from './admin/admin.module';
-import { MaintenanceModeGuard } from './common/guards/maintenance-mode.guard';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+
+// --- TẦNG 1: CORE & SHARED ---
+import { CommonModule } from '@core/common/common.module';
+import { validateEnv } from '@core/config/env.validation';
+import { InterviewAIExceptionFilter } from '@core/common/exceptions/interview-ai-exception.filter';
+import {
+  MaintenanceModeGuard,
+  JwtAuthGuard,
+  RolesGuard,
+} from '@core/common/guards';
+import { RequestIdMiddleware } from '@core/common/middleware/request-id.middleware';
+
+// --- TẦNG 2: INFRASTRUCTURE ---
+import { PrismaModule } from '@infra/database/prisma/prisma.module';
+import { AiModule } from '@infra/ai/ai.module';
+import { WorkflowModule } from '@infra/workflow/workflow.module';
+
+// --- TẦNG 3: BUSINESS MODULES (BOUNDED CONTEXTS) ---
+import { HealthModule } from '@modules/health/health.module';
+import { AuthModule } from '@modules/auth/auth.module';
+import { UserModule } from '@modules/user/user.module';
+import { MediaModule } from '@modules/media/media.module';
+import { InterviewPrepModule } from '@modules/interview-prep/interview-prep.module';
+import { InterviewLiveModule } from '@modules/interview-live/interview-live.module';
+import { InterviewAssessmentModule } from '@modules/interview-assessment/interview-assessment.module';
+import { SfiaModule } from '@modules/sfia/sfia.module';
+import { OnetModule } from '@modules/onet/onet.module';
+import { CandidateProfileModule } from '@modules/candidate-profile/candidate-profile.module';
 
 @Controller()
 class ApiRootController {
@@ -34,6 +48,7 @@ class ApiRootController {
 
 @Module({
   imports: [
+    // Global Config & Queue Providers
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     BullModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
@@ -44,22 +59,38 @@ class ApiRootController {
       }),
       inject: [ConfigService],
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 60,
+      },
+    ]),
+
+    // Core & Infrastructure
     CommonModule,
-    HealthModule,
     PrismaModule,
-    AuthModule,
     AiModule,
-    SessionModule,
-    TurnModule,
-    ReportModule,
+    WorkflowModule,
+
+    // Domain & Business Modules
+    HealthModule,
+    AuthModule,
     UserModule,
-    SavedJobDescriptionModule,
-    AdminModule,
+    MediaModule,
+    InterviewPrepModule,
+    InterviewLiveModule,
+    InterviewAssessmentModule,
+    SfiaModule,
+    OnetModule,
+    CandidateProfileModule,
   ],
   controllers: [ApiRootController],
   providers: [
     { provide: APP_FILTER, useClass: InterviewAIExceptionFilter },
     { provide: APP_GUARD, useClass: MaintenanceModeGuard },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule implements NestModule {

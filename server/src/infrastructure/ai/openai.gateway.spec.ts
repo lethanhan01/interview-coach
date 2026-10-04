@@ -1,0 +1,576 @@
+import { APIError, APIUserAbortError } from 'openai';
+import { z } from 'zod';
+import { OpenAIGateway } from './openai.gateway';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+
+describe('OpenAIGateway', () => {
+  const params = {
+    temperature: 0,
+    maxTokens: 10,
+    messages: [{ role: 'user' as const, content: 'hello' }],
+  };
+  const config = {
+    get: jest.fn((key: string) => {
+      const values: Record<string, string> = {
+        OPENAI_API_KEY: 'test-key',
+        OPENAI_BASE_URL: 'http://127.0.0.1:1234/v1',
+        OPENAI_CHAT_MODEL: 'google/gemma-4-e4b',
+        OPENAI_JSON_MODE: 'false',
+        OPENAI_TIMEOUT_MS: '30000',
+      };
+      return values[key];
+    }),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('không retry lỗi 429 insufficient_quota và tạm ngắt các call kế tiếp', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockRejectedValue(
+      new APIError(
+        429,
+        {
+          code: 'insufficient_quota',
+          message: 'You exceeded your current quota.',
+          type: 'insufficient_quota',
+        },
+        undefined,
+        new Headers(),
+      ),
+    );
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(params)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_QUOTA_EXCEEDED,
+    });
+    await expect(gateway.chatCompletion(params)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_QUOTA_EXCEEDED,
+    });
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('ném AI_TIMEOUT khi AbortSignal timeout (APIUserAbortError)', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest
+      .fn()
+      .mockRejectedValue(
+        new APIUserAbortError({ message: 'Request was aborted.' }),
+      );
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(params)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_TIMEOUT,
+    });
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('dùng model local mặc định từ cấu hình khi params không truyền model', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: 'ok' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(params)).resolves.toBe('ok');
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'google/gemma-4-e4b',
+      }),
+      expect.any(Object),
+    );
+    expect(gateway.getChatModel()).toBe('google/gemma-4-e4b');
+  });
+
+  it('ưu tiên explicit model rồi mới đến task model và chat model', async () => {
+    const taskModelConfig = {
+      get: jest.fn((key: string) => {
+        const values: Record<string, string> = {
+          OPENAI_API_KEY: 'test-key',
+          OPENAI_BASE_URL: 'http://127.0.0.1:1234/v1',
+          OPENAI_CHAT_MODEL: 'base-model',
+          OPENAI_FEEDBACK_MODEL: 'feedback-model',
+          OPENAI_REPORT_MODEL: 'report-model',
+          OPENAI_JSON_MODE: 'false',
+          OPENAI_TIMEOUT_MS: '30000',
+        };
+        return values[key];
+      }),
+    };
+    const gateway = new OpenAIGateway(taskModelConfig as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: 'ok' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await gateway.chatCompletion({ ...params, task: 'feedback' });
+    await gateway.chatCompletion({ ...params, task: 'report' });
+    await gateway.chatCompletion({
+      ...params,
+      task: 'feedback',
+      model: 'explicit-model',
+    });
+
+    expect(create.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ model: 'feedback-model' }),
+    );
+    expect(create.mock.calls[1][0]).toEqual(
+      expect.objectContaining({ model: 'report-model' }),
+    );
+    expect(create.mock.calls[2][0]).toEqual(
+      expect.objectContaining({ model: 'explicit-model' }),
+    );
+    expect(gateway.getChatModel('report' as any)).toBe('report-model');
+  });
+});
+
+describe('OpenAIGateway — JSON extraction', () => {
+  const jsonParams = {
+    temperature: 0,
+    maxTokens: 100,
+    messages: [{ role: 'user' as const, content: 'hello' }],
+    responseFormat: 'json_object' as const,
+  };
+  const config = {
+    get: jest.fn((key: string) => {
+      const values: Record<string, string> = {
+        OPENAI_API_KEY: 'test-key',
+        OPENAI_BASE_URL: 'http://127.0.0.1:1234/v1',
+        OPENAI_CHAT_MODEL: 'google/gemma-4-e4b',
+        OPENAI_JSON_MODE: 'false',
+        OPENAI_TIMEOUT_MS: '30000',
+      };
+      return values[key];
+    }),
+  };
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('strip markdown ```json``` code fence và trả về JSON sạch', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const rawFromModel = '```json\n{"score":85,"comment":"good"}\n```';
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: rawFromModel } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    const result = await gateway.chatCompletion(jsonParams);
+    expect(result).toBe('{"score":85,"comment":"good"}');
+    expect(() => JSON.parse(result)).not.toThrow();
+  });
+
+  it('giữ nguyên plain JSON không có wrapper', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const rawFromModel = '{"score":85,"comment":"good"}';
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: rawFromModel } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    const result = await gateway.chatCompletion(jsonParams);
+    expect(result).toBe('{"score":85,"comment":"good"}');
+  });
+
+  it('extract JSON object từ text có prose xung quanh', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const rawFromModel =
+      'Sure! Here is the JSON:\n{"score":70}\nHope that helps.';
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: rawFromModel } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    const result = await gateway.chatCompletion(jsonParams);
+    expect(result).toBe('{"score":70}');
+    expect(() => JSON.parse(result)).not.toThrow();
+  });
+
+  it('repair trailing comma an toàn trước khi parse', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: '{"items":["a",],"ok":true,}' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    const result = await gateway.chatCompletion(jsonParams);
+    expect(result).toBe('{"items":["a"],"ok":true}');
+  });
+
+  it('repair single-quoted JSON đơn giản khi không có double quote lẫn bên trong', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: "{'score':85,'comment':'good'}" } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    const result = await gateway.chatCompletion(jsonParams);
+    expect(JSON.parse(result)).toEqual({ score: 85, comment: 'good' });
+  });
+
+  it('không repair single quote không an toàn', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: "{'comment':'candidate's answer'}" } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(jsonParams)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_INVALID_JSON,
+    });
+  });
+
+  it('ném AI_INVALID_JSON rõ ràng khi responseFormat json_object nhưng output không phải JSON', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: 'not-json {{' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(jsonParams)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_INVALID_JSON,
+      message: expect.stringContaining('invalid JSON'),
+    });
+  });
+
+  it('ném AI_INVALID_JSON với message "truncated" khi finish_reason=length', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [
+        { finish_reason: 'length', message: { content: '{"items":["a' } },
+      ],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(jsonParams)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_INVALID_JSON,
+      message: expect.stringContaining('truncated JSON'),
+    });
+  });
+
+  it('gửi response_format json_object khi OPENAI_JSON_MODE=true', async () => {
+    const jsonModeConfig = {
+      get: jest.fn((key: string) => {
+        const values: Record<string, string> = {
+          OPENAI_API_KEY: 'test-key',
+          OPENAI_BASE_URL: 'http://127.0.0.1:1234/v1',
+          OPENAI_CHAT_MODEL: 'google/gemma-4-e4b',
+          OPENAI_JSON_MODE: 'true',
+          OPENAI_TIMEOUT_MS: '30000',
+        };
+        return values[key];
+      }),
+    };
+    const gateway = new OpenAIGateway(jsonModeConfig as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: '{"score":85}' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await gateway.chatCompletion(jsonParams);
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        response_format: { type: 'json_object' },
+      }),
+      expect.any(Object),
+    );
+  });
+});
+
+describe('OpenAIGateway — empty response và task-specific timeout', () => {
+  const params = {
+    temperature: 0,
+    maxTokens: 10,
+    messages: [{ role: 'user' as const, content: 'hello' }],
+  };
+  const config = {
+    get: jest.fn((key: string) => {
+      const values: Record<string, string | undefined> = {
+        OPENAI_API_KEY: 'test-key',
+        OPENAI_BASE_URL: 'http://127.0.0.1:1234/v1',
+        OPENAI_CHAT_MODEL: 'google/gemma-4-e4b',
+        OPENAI_JSON_MODE: 'false',
+        OPENAI_TIMEOUT_MS: '30000',
+        OPENAI_FEEDBACK_TIMEOUT_MS: '420000',
+        OPENAI_REPORT_TIMEOUT_MS: '600000',
+        OPENAI_QUESTION_TIMEOUT_MS: '240000',
+      };
+      return values[key];
+    }),
+  };
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('ném AI_EMPTY_RESPONSE khi model trả về content rỗng', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: '' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(params)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_EMPTY_RESPONSE,
+    });
+  });
+
+  it('ném AI_EMPTY_RESPONSE khi choices là mảng rỗng', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({ choices: [] });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(params)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_EMPTY_RESPONSE,
+    });
+  });
+
+  it('retry đúng 1 lần với max_tokens=3600 khi question-generation bị content rỗng do finish_reason=length', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest
+      .fn()
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            finish_reason: 'length',
+            message: {
+              content: '',
+              reasoning_content: 'thinking without final JSON',
+            },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            finish_reason: 'stop',
+            message: { content: '{"questions":[]}' },
+          },
+        ],
+      });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(
+      gateway.chatCompletion({
+        ...params,
+        maxTokens: 2400,
+        responseFormat: 'json_object',
+        task: 'question-generation',
+      }),
+    ).resolves.toBe('{"questions":[]}');
+
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(create.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ max_tokens: 2400 }),
+    );
+    expect(create.mock.calls[1][0]).toEqual(
+      expect.objectContaining({ max_tokens: 3600 }),
+    );
+  });
+
+  it('sau retry truncated vẫn ném AI_EMPTY_RESPONSE nếu content cuối cùng rỗng', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest.fn().mockResolvedValue({
+      choices: [
+        {
+          finish_reason: 'length',
+          message: { content: '', reasoning_content: 'still thinking' },
+        },
+      ],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(
+      gateway.chatCompletion({
+        ...params,
+        maxTokens: 2400,
+        responseFormat: 'json_object',
+        task: 'question-generation',
+      }),
+    ).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_EMPTY_RESPONSE,
+      message: expect.stringContaining('empty final content'),
+    });
+    expect(create).toHaveBeenCalledTimes(2);
+  });
+
+  it('task feedback dùng OPENAI_FEEDBACK_TIMEOUT_MS (420s) cho AbortSignal', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const mockSignal = { aborted: false } as unknown as AbortSignal;
+    const timeoutSpy = jest
+      .spyOn(AbortSignal, 'timeout')
+      .mockReturnValue(mockSignal);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: '{"ok":true}' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await gateway.chatCompletion({ ...params, task: 'feedback' });
+
+    expect(timeoutSpy).toHaveBeenCalledWith(420000);
+    timeoutSpy.mockRestore();
+  });
+
+  it('task report dùng OPENAI_REPORT_TIMEOUT_MS (600s) cho AbortSignal', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const mockSignal = { aborted: false } as unknown as AbortSignal;
+    const timeoutSpy = jest
+      .spyOn(AbortSignal, 'timeout')
+      .mockReturnValue(mockSignal);
+    const create = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: '{"ok":true}' } }],
+    });
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await gateway.chatCompletion({ ...params, task: 'report' });
+
+    expect(timeoutSpy).toHaveBeenCalledWith(600000);
+    timeoutSpy.mockRestore();
+  });
+});
+
+describe('OpenAIGateway — transcription boundary', () => {
+  it('giữ nguyên audio request và response mapping qua transcription client', async () => {
+    const config = { get: jest.fn() };
+    const transcriptionClient = {
+      create: jest.fn().mockResolvedValue({ text: 'xin chào', duration: 12.5 }),
+    };
+    const gateway = new OpenAIGateway(
+      config as any,
+      undefined,
+      transcriptionClient as any,
+    );
+    const audioBuffer = Buffer.from('audio');
+
+    await expect(
+      gateway.transcribe({
+        audioBuffer,
+        mimeType: 'audio/webm',
+        language: 'vi',
+        timeoutMs: 12_000,
+      }),
+    ).resolves.toEqual({ text: 'xin chào', durationSeconds: 12.5 });
+
+    expect(transcriptionClient.create).toHaveBeenCalledWith(
+      audioBuffer,
+      'audio/webm',
+      'vi',
+      12_000,
+    );
+  });
+});
+
+describe('OpenAIGateway — Hexagonal port methods', () => {
+  it('generateText delegates to chatCompletion with system and user messages', async () => {
+    const config = { get: jest.fn() };
+    const chatClient = {
+      create: jest.fn().mockResolvedValue({
+        choices: [{ message: { content: 'Generated text response' } }],
+      }),
+    };
+    const gateway = new OpenAIGateway(config as any, chatClient as any);
+
+    const result = await gateway.generateText({
+      systemPrompt: 'You are an assistant',
+      userPrompt: 'Hello',
+      temperature: 0.5,
+    });
+
+    expect(result).toBe('Generated text response');
+    expect(chatClient.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          { role: 'system', content: 'You are an assistant' },
+          { role: 'user', content: 'Hello' },
+        ],
+        temperature: 0.5,
+      }),
+      expect.any(Number),
+    );
+  });
+
+  it('generateStructured validates response with schema successfully', async () => {
+    const config = { get: jest.fn() };
+    const chatClient = {
+      create: jest.fn().mockResolvedValue({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({ score: 85, summary: 'Good job' }),
+            },
+          },
+        ],
+      }),
+    };
+    const gateway = new OpenAIGateway(config as any, chatClient as any);
+
+    const testSchema = z.object({
+      score: z.number(),
+      summary: z.string(),
+    });
+
+    const result = await gateway.generateStructured({
+      systemPrompt: 'System',
+      userPrompt: 'User',
+      schema: testSchema,
+      schemaName: 'TestEvaluation',
+    });
+
+    expect(result).toEqual({ score: 85, summary: 'Good job' });
+  });
+
+  it('generateStructured throws SCHEMA_VALIDATION_ERROR when payload does not match schema', async () => {
+    const config = { get: jest.fn() };
+    const chatClient = {
+      create: jest.fn().mockResolvedValue({
+        choices: [
+          { message: { content: JSON.stringify({ score: 'invalid_number' }) } },
+        ],
+      }),
+    };
+    const gateway = new OpenAIGateway(config as any, chatClient as any);
+
+    const testSchema = z.object({
+      score: z.number(),
+    });
+
+    await expect(
+      gateway.generateStructured({
+        systemPrompt: 'System',
+        userPrompt: 'User',
+        schema: testSchema,
+        schemaName: 'InvalidPayload',
+      }),
+    ).rejects.toThrow(
+      'AI response failed schema validation for InvalidPayload',
+    );
+  });
+
+  it('transcribeAudio delegates with default mimeType', async () => {
+    const config = { get: jest.fn() };
+    const transcriptionClient = {
+      create: jest
+        .fn()
+        .mockResolvedValue({ text: 'audio transcribed', duration: 5 }),
+    };
+    const gateway = new OpenAIGateway(
+      config as any,
+      undefined,
+      transcriptionClient as any,
+    );
+    const audioBuffer = Buffer.from('audio-data');
+
+    const result = await gateway.transcribeAudio({
+      audioBuffer,
+      language: 'en',
+    });
+
+    expect(result).toEqual({ text: 'audio transcribed', durationSeconds: 5 });
+    expect(transcriptionClient.create).toHaveBeenCalledWith(
+      audioBuffer,
+      'audio/webm',
+      'en',
+      undefined,
+    );
+  });
+});

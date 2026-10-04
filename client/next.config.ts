@@ -9,6 +9,26 @@ if (missing.length > 0) {
   )
 }
 
-const nextConfig: NextConfig = {/* config options here */}
+const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/admin-dashboard',
+        destination: '/admin/dashboard',
+        permanent: true,
+      },
+      {
+        source: '/admin-profile',
+        destination: '/admin/profile',
+        permanent: true,
+      },
+      {
+        source: '/users',
+        destination: '/admin/users',
+        permanent: true,
+      },
+    ]
+  },
+}
 
 export default nextConfig

@@ -5,6 +5,8 @@ import {
   type InterviewDuration,
   DURATION_OPTIONS,
 } from '@/lib/setup-types'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup'
+import { cn } from '@/lib/utils'
 
 const SESSION_TYPES: {
   value: SessionType
@@ -21,11 +23,6 @@ const SESSION_TYPES: {
     label: 'Technical',
     description: 'Câu hỏi kỹ thuật chuyên sâu theo JD',
   },
-  {
-    value: 'mixed',
-    label: 'Mixed (HR + Technical)',
-    description: 'Kết hợp cả HR và Technical',
-  },
 ]
 
 const CONTEXT_PACKS: { value: ContextPack; label: string; desc: string }[] = [
@@ -41,41 +38,35 @@ const CONTEXT_PACKS: { value: ContextPack; label: string; desc: string }[] = [
   },
 ]
 
-function SelectCard<T extends string | number>({
+function SelectCard({
   value,
-  current,
-  onSelect,
+  id,
   label,
   sublabel,
+  selected,
 }: {
-  value: T
-  current: T
-  onSelect: (v: T) => void
+  value: string
+  id: string
   label: string
   sublabel: string
+  selected: boolean
 }) {
-  const selected = value === current
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(value)}
-      className={[
-        'rounded-xl border-2 p-4 text-left transition-all duration-150',
+    <label
+      htmlFor={id}
+      className={cn(
+        'cursor-pointer rounded-xl border-2 p-4 text-left transition-all duration-150 flex flex-col justify-between select-none',
         selected
           ? 'border-brand bg-brand-subtle shadow-card'
-          : 'border-border bg-surface hover:border-brand-muted',
-      ].join(' ')}
+          : 'border-border bg-surface hover:border-brand-muted'
+      )}
     >
       <div className="mb-1.5 flex items-center justify-between">
         <span className="text-ink text-sm font-medium">{label}</span>
-        {selected && (
-          <span className="bg-brand flex size-4 shrink-0 items-center justify-center rounded-full">
-            <span className="size-1.5 rounded-full bg-white" />
-          </span>
-        )}
+        <RadioGroupItem value={value} id={id} />
       </div>
       <p className="text-ink-muted text-xs leading-relaxed">{sublabel}</p>
-    </button>
+    </label>
   )
 }
 
@@ -100,51 +91,64 @@ export default function ConfigForm({
     <div className="flex flex-col gap-7">
       <div>
         <p className="text-ink mb-3 text-sm font-medium">Loại phỏng vấn</p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <RadioGroup
+          value={sessionType}
+          onValueChange={(val) => setSessionType(val as SessionType)}
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+        >
           {SESSION_TYPES.map((t) => (
             <SelectCard
               key={t.value}
+              id={`session-type-${t.value}`}
               value={t.value}
-              current={sessionType}
-              onSelect={setSessionType}
+              selected={sessionType === t.value}
               label={t.label}
               sublabel={t.description}
             />
           ))}
-        </div>
+        </RadioGroup>
       </div>
 
       <div>
         <p className="text-ink mb-3 text-sm font-medium">Context Pack</p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <RadioGroup
+          value={contextPack}
+          onValueChange={(val) => setContextPack(val as ContextPack)}
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+        >
           {CONTEXT_PACKS.map((cp) => (
             <SelectCard
               key={cp.value}
+              id={`context-pack-${cp.value}`}
               value={cp.value}
-              current={contextPack}
-              onSelect={setContextPack}
+              selected={contextPack === cp.value}
               label={cp.label}
               sublabel={cp.desc}
             />
           ))}
-        </div>
+        </RadioGroup>
       </div>
 
       <div>
         <p className="text-ink mb-3 text-sm font-medium">Thời gian phỏng vấn</p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <RadioGroup
+          value={String(duration)}
+          onValueChange={(val) => setDuration(Number(val) as InterviewDuration)}
+          className="grid grid-cols-1 gap-3 sm:grid-cols-3"
+        >
           {DURATION_OPTIONS.map((d) => (
             <SelectCard
               key={d.value}
-              value={d.value as InterviewDuration}
-              current={duration}
-              onSelect={setDuration}
+              id={`duration-${d.value}`}
+              value={String(d.value)}
+              selected={duration === d.value}
               label={d.label}
               sublabel={`~${d.numQuestions} câu hỏi`}
             />
           ))}
-        </div>
+        </RadioGroup>
       </div>
     </div>
   )
 }
+

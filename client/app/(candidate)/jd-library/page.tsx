@@ -2,12 +2,24 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { apiClient } from '@/lib/api-client'
+import { prepService } from '@/services'
 import type { SavedJobDescription } from '@/lib/types'
 import { formatVietnamRelativeDate } from '@/lib/date-time'
-import { Building2, MapPin, Clock, Plus, ChevronRight } from 'lucide-react'
+import { getJdLevelLabel } from '@/lib/interview-options'
+import {
+  Building2,
+  MapPin,
+  Clock,
+  Plus,
+  ChevronRight,
+  Award,
+  Sparkles,
+} from 'lucide-react'
+import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
+import { PageContainer, PageHeader } from '@/components/patterns/LayoutPatterns'
+import { LoadingState, ErrorState, EmptyState } from '@/components/patterns/FeedbackPatterns'
 
 const MAX_TECH_SHOWN = 5
 
@@ -18,9 +30,9 @@ export default function JdLibraryPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    apiClient
-      .get<{ items: SavedJobDescription[] }>('/saved-job-descriptions')
-      .then((data) => setItems(data.items ?? []))
+    prepService
+      .getSavedJobDescriptions()
+      .then(setItems)
       .catch((err) =>
         setError(err instanceof Error ? err.message : 'Không thể tải danh sách')
       )
@@ -28,7 +40,6 @@ export default function JdLibraryPage() {
   }, [])
 
   function handleSelect(item: SavedJobDescription) {
-    // Navigate to setup with the selected JD pre-filled via query param
     router.push(`/setup?jdId=${item.id}`)
   }
 
@@ -37,58 +48,45 @@ export default function JdLibraryPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="border-brand size-8 animate-spin rounded-full border-2 border-t-transparent" />
-      </div>
-    )
+    return <LoadingState text="Đang tải danh sách Job Descriptions..." minHeight="min-h-[50vh]" />
   }
 
   if (error) {
     return (
-      <div className="mx-auto max-w-2xl py-10">
-        <p className="text-danger text-sm">{error}</p>
-      </div>
+      <PageContainer maxWidth="md" className="py-10">
+        <ErrorState description={error} />
+      </PageContainer>
     )
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <PageContainer maxWidth="md">
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-ink text-2xl font-bold">Job Descriptions</h1>
-          <p className="text-ink-muted mt-1 text-sm">
-            {items.length > 0
-              ? `${items.length} JD đã lưu — chọn để bắt đầu phỏng vấn`
-              : 'Chưa có JD nào được lưu'}
-          </p>
-        </div>
-        <Button onClick={handleNew} size="md">
-          <Plus className="size-4" aria-hidden="true" />
-          Tạo phiên mới
-        </Button>
-      </div>
-
-      {items.length === 0 ? (
-        /* Empty state */
-        <div className="border-border flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed py-16 text-center">
-          <div className="bg-brand-subtle text-brand-subtle-fg flex size-14 items-center justify-center rounded-full">
-            <Building2 className="size-7" aria-hidden="true" />
-          </div>
-          <div>
-            <p className="text-ink font-semibold">
-              Chưa có Job Description nào
-            </p>
-            <p className="text-ink-muted mt-1 text-sm">
-              Tạo phiên phỏng vấn đầu tiên để bắt đầu lưu JD
-            </p>
-          </div>
-          <Button onClick={handleNew} variant="secondary">
+      <PageHeader
+        title="Job Descriptions"
+        description={
+          items.length > 0
+            ? `${items.length} JD đã lưu — chọn để bắt đầu phỏng vấn`
+            : 'Chưa có JD nào được lưu'
+        }
+        actions={
+          <Button onClick={handleNew} size="md">
             <Plus className="size-4" aria-hidden="true" />
             Tạo phiên mới
           </Button>
-        </div>
+        }
+      />
+
+      {items.length === 0 ? (
+        <EmptyState
+          title="Chưa có Job Description nào"
+          description="Tạo phiên phỏng vấn đầu tiên để bắt đầu lưu JD"
+          icon={<Building2 className="size-12 text-brand" aria-hidden="true" />}
+          action={{
+            label: 'Tạo phiên mới',
+            onClick: handleNew,
+          }}
+        />
       ) : (
         <div className="flex flex-col gap-3">
           {items.map((item) => {
@@ -99,11 +97,19 @@ export default function JdLibraryPage() {
             const extraCount = item.techStack.length - MAX_TECH_SHOWN
 
             return (
-              <button
+              <Card
                 key={item.id}
-                type="button"
+                hover
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSelect(item)}
-                className="border-border bg-surface shadow-card hover:border-brand/40 hover:shadow-glow group w-full rounded-2xl border p-5 text-left transition-all duration-150 hover:-translate-y-0.5"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleSelect(item)
+                  }
+                }}
+                className="group w-full p-5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -116,11 +122,41 @@ export default function JdLibraryPage() {
                         <p className="text-ink truncate font-semibold">
                           {item.companyName}
                         </p>
-                        <p className="text-ink-muted truncate text-sm">
-                          {item.jobTitle}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-ink-muted truncate text-sm">
+                            {item.jobTitle}
+                          </p>
+                          {item.level && (
+                            <Badge variant="outline" className="text-xs">
+                              {getJdLevelLabel(item.level)}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
+
+                    {/* O*NET Occupation & SFIA Level Badges */}
+                    {(item.onetOccupationTitle || item.targetSfiaLevel) && (
+                      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                        {item.targetSfiaLevel && (
+                          <Badge variant="brand" className="text-xs">
+                            <Award className="mr-1 size-3" aria-hidden="true" />
+                            SFIA Level {item.targetSfiaLevel}
+                          </Badge>
+                        )}
+                        {item.onetOccupationTitle && (
+                          <Badge variant="outline" className="text-ink-muted text-xs">
+                            <Sparkles className="text-brand mr-1 size-3" aria-hidden="true" />
+                            {item.onetOccupationTitle}
+                            {item.onetSocCode && (
+                              <span className="text-ink-faint ml-1 font-mono text-xs opacity-80">
+                                ({item.onetSocCode})
+                              </span>
+                            )}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
 
                     {/* Meta */}
                     <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -148,13 +184,13 @@ export default function JdLibraryPage() {
                           <Badge
                             key={tech}
                             variant="brand"
-                            className="text-[11px]"
+                            className="text-xs"
                           >
                             {tech}
                           </Badge>
                         ))}
                         {extraCount > 0 && (
-                          <Badge variant="default" className="text-[11px]">
+                          <Badge variant="default" className="text-xs">
                             +{extraCount}
                           </Badge>
                         )}
@@ -165,11 +201,11 @@ export default function JdLibraryPage() {
                   {/* Arrow */}
                   <ChevronRight className="text-ink-faint group-hover:text-brand mt-1 size-5 shrink-0 transition-all duration-150 group-hover:translate-x-0.5" />
                 </div>
-              </button>
+              </Card>
             )
           })}
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

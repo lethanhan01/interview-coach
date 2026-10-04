@@ -9,7 +9,7 @@ import {
   SkipForward,
   XCircle,
 } from 'lucide-react'
-import { apiClient } from '@/lib/api-client'
+import { sessionService } from '@/services'
 import QuestionCard from '@/components/interview/QuestionCard'
 import TextAnswerInput from '@/components/interview/TextAnswerInput'
 import VoiceRecorder from '@/components/interview/VoiceRecorder'
@@ -17,46 +17,30 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
 import Button from '@/components/ui/Button'
 import CountdownTimer from '@/components/interview/CountdownTimer'
-import type { Session, SessionStatus } from '@/lib/types'
-
-interface Question {
-  id: string
-  content: string
-  orderIndex: number
-  answered?: boolean
-  answerId?: string
-  skipped?: boolean
-}
-
-interface QuestionsResponse {
-  questions: Question[]
-  currentIndex?: number
-}
+import type { Question, SessionStatus, SessionStatusAction } from '@/lib/types'
 
 type AnswerMode = 'text' | 'voice'
-type SessionStatusAction = 'active' | 'paused' | 'canceled'
 
 export default function InterviewPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const router = useRouter()
 
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [sessionStatus, setSessionStatus] = useState<SessionStatus>('generating')
   const [answerMode, setAnswerMode] = useState<AnswerMode>('text')
-  const [isCompleting, setIsCompleting] = useState(false)
-  const [isTimeoutCompleting, setIsTimeoutCompleting] = useState(false)
-  const [sessionStatus, setSessionStatus] =
-    useState<SessionStatus>('generating')
   const [statusAction, setStatusAction] = useState<SessionStatusAction | null>(
     null
   )
-  const [turnSubmitting, setTurnSubmitting] = useState(false)
-  const [actionError, setActionError] = useState<string | null>(null)
-  const [accessToken, setAccessToken] = useState('')
-  const [remainingSeconds, setRemainingSeconds] = useState<number>(30 * 60)
+  const [remainingSeconds, setRemainingSeconds] = useState(30 * 60)
+  const [loading, setLoading] = useState(true)
   const [questionsReady, setQuestionsReady] = useState(false)
+  const [turnSubmitting, setTurnSubmitting] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
+  const [isTimeoutCompleting, setIsTimeoutCompleting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+
   const eventSourceRef = useRef<EventSource | null>(null)
   const questionsReadyRef = useRef(false)
   const turnSubmittingRef = useRef(false)
@@ -72,9 +56,7 @@ export default function InterviewPage() {
   }, [questionsReady])
 
   const loadReadyQuestions = useCallback(async (): Promise<boolean> => {
-    const qs = await apiClient.get<QuestionsResponse>(
-      `/sessions/${sessionId}/questions`
-    )
+    const qs = await sessionService.getQuestions(sessionId)
     if (qs.questions.length === 0) return false
 
     setQuestions(qs.questions)
@@ -88,11 +70,7 @@ export default function InterviewPage() {
   useEffect(() => {
     async function init() {
       try {
-        setAccessToken('dev-mock-token')
-
-        const currentSession = await apiClient.get<Session>(
-          `/sessions/${sessionId}`
-        )
+        const currentSession = await sessionService.getSession(sessionId)
         setSessionStatus(currentSession.status)
         if (
           currentSession.status === 'completing' ||
@@ -134,12 +112,7 @@ export default function InterviewPage() {
   }, [sessionId, router, loadReadyQuestions])
 
   useEffect(() => {
-    if (!accessToken) return
-    const apiBase =
-      process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'
-    const es = new EventSource(
-      `${apiBase}/sessions/${sessionId}/events?token=${accessToken}`
-    )
+    const es = sessionService.createEventSource(sessionId)
     eventSourceRef.current = es
 
     es.addEventListener('session.status', (e) => {
@@ -170,15 +143,15 @@ export default function InterviewPage() {
     es.onerror = () => es.close()
 
     return () => es.close()
-  }, [sessionId, accessToken, router, loadReadyQuestions])
+  }, [sessionId, router, loadReadyQuestions])
 
   const updateSessionStatus = useCallback(
     async (status: SessionStatusAction) => {
       setActionError(null)
       setStatusAction(status)
       try {
-        const updated = await apiClient.patch<Session>(
-          `/sessions/${sessionId}/status`,
+        const updated = await sessionService.updateStatus(
+          sessionId,
           status === 'paused'
             ? { status, remainingSeconds: remainingSecondsRef.current }
             : { status }
@@ -211,10 +184,7 @@ export default function InterviewPage() {
   const advance = useCallback(async () => {
     if (currentIndex + 1 >= questions.length) {
       setIsCompleting(true)
-      await apiClient.patch<{ status: SessionStatus }>(
-        `/sessions/${sessionId}/status`,
-        { status: 'completed' }
-      )
+      await sessionService.updateStatus(sessionId, { status: 'completed' })
       router.replace(`/sessions/${sessionId}/report`)
     } else {
       setCurrentIndex((i) => i + 1)
@@ -240,14 +210,11 @@ export default function InterviewPage() {
     setActionError(null)
 
     try {
-      await apiClient.patch<{ status: SessionStatus }>(
-        `/sessions/${sessionId}/status`,
-        {
-          status: 'completed',
-          autoSkipUnanswered: true,
-          remainingSeconds: 0,
-        }
-      )
+      await sessionService.updateStatus(sessionId, {
+        status: 'completed',
+        autoSkipUnanswered: true,
+        remainingSeconds: 0,
+      })
       router.replace(`/sessions/${sessionId}/report`)
     } catch (err) {
       timeoutCompletingRef.current = false
@@ -269,7 +236,7 @@ export default function InterviewPage() {
       turnSubmittingRef.current = true
       setTurnSubmitting(true)
       try {
-        await apiClient.post(`/sessions/${sessionId}/turns`, {
+        await sessionService.submitTurn(sessionId, {
           answerMode: 'text',
           answerText: text,
           questionId: questions[currentIndex]?.id,
@@ -294,7 +261,7 @@ export default function InterviewPage() {
       turnSubmittingRef.current = true
       setTurnSubmitting(true)
       try {
-        await apiClient.post(`/sessions/${sessionId}/turns`, {
+        await sessionService.submitTurn(sessionId, {
           answerMode: 'voice',
           answerText: transcript,
           audioFileUrl: audioUrl,
@@ -317,7 +284,7 @@ export default function InterviewPage() {
     setTurnSubmitting(true)
     setActionError(null)
     try {
-      await apiClient.post(`/sessions/${sessionId}/turns`, {
+      await sessionService.submitTurn(sessionId, {
         answerMode: 'text',
         answerText: '',
         skipQuestion: true,
@@ -333,6 +300,7 @@ export default function InterviewPage() {
       setTurnSubmitting(false)
     }
   }, [sessionId, questions, currentIndex, advance])
+
 
   if (loading) {
     return (
@@ -476,6 +444,9 @@ export default function InterviewPage() {
             questionText={current.content}
             orderIndex={currentIndex}
             totalQuestions={questions.length}
+            skillCode={current.skillCode}
+            skillName={current.skillName}
+            techContext={current.techContext}
           />
         )}
 
@@ -503,18 +474,11 @@ export default function InterviewPage() {
             <VoiceRecorder
               key={current?.id}
               onSubmit={submitVoice}
-              onUploadAudio={async (blob) => {
-                const filename = `audio-${crypto.randomUUID()}.webm`
-                const formData = new FormData()
-                formData.append('file', blob, filename)
-                return apiClient.postForm(
-                  `/sessions/${sessionId}/turns/audio`,
-                  formData
-                )
-              }}
+              onUploadAudio={(blob) => sessionService.uploadAudio(sessionId, blob)}
               sessionId={sessionId}
               disabled={turnSubmitting || isCompleting}
             />
+
           )}
         </div>
         <div className="mt-4 flex justify-end">

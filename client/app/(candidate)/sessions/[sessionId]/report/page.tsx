@@ -2,21 +2,28 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { apiClient } from '@/lib/api-client'
+import { sessionService } from '@/services'
+import { useSessionEvents } from '@/hooks/useSessionEvents'
 import type {
+  ActionPlanItem,
   FeedbackProgress,
   Report,
-  RubricConfig,
   Session,
 } from '@/lib/types'
+
+import { Info } from 'lucide-react'
 import AnnotatedTranscript from '@/components/report/AnnotatedTranscript'
-import CompetencyScoreChart from '@/components/report/CompetencyScoreChart'
+import { RecommendationBadge } from '@/components/report/RecommendationBadge'
+import { SfiaCompetencyOverview } from '@/components/report/SfiaCompetencyOverview'
+import { SkillsBreakdownCard } from '@/components/report/SkillsBreakdownCard'
+import { ActionPlanTimeline } from '@/components/report/ActionPlanTimeline'
 import SessionMetadataCard from '@/components/report/SessionMetadataCard'
-import ScoringMethodCard from '@/components/report/ScoringMethodCard'
+import { ScoringMethodCard } from '@/components/report/ScoringMethodCard'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import Progress from '@/components/ui/Progress'
+import { Card } from '@/components/ui/Card'
 
 const REPORT_POLL_INTERVAL_MS = 5000
-const PROGRESS_POLL_INTERVAL_MS = 2000
 const GOOD_ANSWER_THRESHOLD = 70
 const WEAK_ANSWER_THRESHOLD = 40
 
@@ -38,6 +45,52 @@ function toStringList(value: unknown): string[] {
   return value.filter(
     (item): item is string => typeof item === 'string' && item.trim() !== ''
   )
+}
+
+function extractActionPlanDirections(actionPlan: Report['actionPlan']): string[] {
+  if (!actionPlan) return []
+
+  let structuredItems: ActionPlanItem[] = []
+  if (Array.isArray(actionPlan)) {
+    if (actionPlan.length > 0 && typeof actionPlan[0] === 'object') {
+      structuredItems = actionPlan as ActionPlanItem[]
+    }
+  } else if (
+    typeof actionPlan === 'object' &&
+    actionPlan !== null &&
+    'actionPlan' in actionPlan &&
+    Array.isArray((actionPlan as { actionPlan?: ActionPlanItem[] }).actionPlan)
+  ) {
+    structuredItems = (actionPlan as { actionPlan: ActionPlanItem[] }).actionPlan
+  }
+
+  if (structuredItems.length > 0) {
+    const priorityWeight: Record<string, number> = { high: 3, medium: 2, low: 1 }
+    const sorted = [...structuredItems].sort(
+      (a, b) => (priorityWeight[b.priority] ?? 0) - (priorityWeight[a.priority] ?? 0)
+    )
+    const directions: string[] = []
+    for (const item of sorted) {
+      if (item.title) {
+        if (item.topics && item.topics.length > 0) {
+          directions.push(`${item.title} (${item.topics.slice(0, 2).join(', ')})`)
+        } else {
+          directions.push(item.title)
+        }
+      }
+      if (directions.length >= 3) break
+    }
+    if (directions.length > 0) return directions
+  }
+
+  const legacyItems = toStringList(
+    Array.isArray(actionPlan)
+      ? actionPlan
+      : typeof actionPlan === 'object' && actionPlan !== null && 'items' in actionPlan
+        ? (actionPlan as { items?: unknown }).items
+        : []
+  )
+  return legacyItems
 }
 
 function buildOverviewSummary(report: Report): OverviewSummary {
@@ -66,10 +119,10 @@ function buildOverviewSummary(report: Report): OverviewSummary {
   const weakAnswers = scoredAnswers.filter(
     (item) => item.score < WEAK_ANSWER_THRESHOLD
   )
-  const actionPlanItems = toStringList(report.actionPlan?.items)
+  const actionPlanDirections = extractActionPlanDirections(report.actionPlan)
   const improvementDirections =
-    actionPlanItems.length > 0
-      ? actionPlanItems
+    actionPlanDirections.length > 0
+      ? actionPlanDirections
       : Array.from(
           new Set(
             weakAnswers.flatMap((item) =>
@@ -90,7 +143,6 @@ export default function ReportPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const [report, setReport] = useState<Report | null>(null)
   const [session, setSession] = useState<Session | null>(null)
-  const [rubricConfig, setRubricConfig] = useState<RubricConfig | null>(null)
   const [progress, setProgress] = useState<FeedbackProgress | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -134,103 +186,95 @@ export default function ReportPage() {
     )
   }, [progress])
 
+  const [usePollingFallback, setUsePollingFallback] = useState(false)
+
+  const fetchReport = useCallback(async () => {
+    try {
+      const data = await sessionService.getReport(sessionId)
+      reportLoadedRef.current = true
+      setReport(data)
+      setLoading(false)
+      setError(null)
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes('REPORT_NOT_READY')) {
+        // Report still generating
+      } else {
+        setError(err instanceof Error ? err.message : 'Không thể tải báo cáo')
+        setLoading(false)
+      }
+    }
+  }, [sessionId])
+
+  const fetchProgress = useCallback(async () => {
+    try {
+      const data = await sessionService.getFeedbackProgress(sessionId)
+      if (reportLoadedRef.current) return
+      applyProgress(data)
+      if (data.reportReady) {
+        void fetchReport()
+      }
+    } catch {
+      // Best-effort
+    }
+  }, [sessionId, applyProgress, fetchReport])
+
+  useSessionEvents({
+    sessionId,
+    enabled: !report,
+    onProgress: (prog) => {
+      applyProgress(prog)
+      if (prog.reportReady) {
+        void fetchReport()
+      }
+    },
+    onReportReady: () => {
+      void fetchReport()
+    },
+    onCompleted: () => {
+      void fetchReport()
+    },
+    onConnectionChange: (connected) => {
+      if (connected) setUsePollingFallback(false)
+    },
+    onError: () => {
+      setUsePollingFallback(true)
+    },
+  })
+
+  // Initial load: get session metadata, check if report or progress is already available
   useEffect(() => {
     let canceled = false
-    let reportTimer: ReturnType<typeof setTimeout> | undefined
-    let progressTimer: ReturnType<typeof setTimeout> | undefined
-    let eventSource: EventSource | undefined
 
-    const sessionPromise = apiClient
-      .get<Session>(`/sessions/${sessionId}`)
-      .then(async (data) => {
-        if (!canceled) setSession(data)
-        try {
-          const rubric = await apiClient.get<RubricConfig>(
-            `/rubrics/${data.contextPackId}?sessionType=${data.sessionType}`
-          )
-          if (!canceled) setRubricConfig(rubric)
-        } catch {
-          if (!canceled) setRubricConfig(null)
-        }
-      })
-      .catch(() => {})
+    const timer = setTimeout(() => {
+      sessionService
+        .getSession(sessionId)
+        .then((data) => {
+          if (!canceled) setSession(data)
+        })
+        .catch(() => {})
 
-    async function fetchReport() {
-      try {
-        const data = await apiClient.get<Report>(
-          `/sessions/${sessionId}/report`
-        )
-        if (canceled) return
-        await sessionPromise
-        reportLoadedRef.current = true
-        setReport(data)
-        setLoading(false)
-        setError(null)
-        if (reportTimer) clearTimeout(reportTimer)
-        if (progressTimer) clearTimeout(progressTimer)
-      } catch (err: unknown) {
-        if (canceled) return
-        if (err instanceof Error && err.message.includes('REPORT_NOT_READY')) {
-          reportTimer = setTimeout(fetchReport, REPORT_POLL_INTERVAL_MS)
-        } else {
-          setError(err instanceof Error ? err.message : 'Không thể tải báo cáo')
-          setLoading(false)
-        }
-      }
-    }
-
-    async function fetchProgress() {
-      try {
-        const data = await apiClient.get<FeedbackProgress>(
-          `/sessions/${sessionId}/feedback-progress`
-        )
-        if (canceled || reportLoadedRef.current) return
-        applyProgress(data)
-        if (data.reportReady) {
-          void fetchReport()
-          return
-        }
-      } catch {
-        // Progress is best-effort; report polling/SSE still handles readiness.
-      } finally {
-        if (!canceled && !reportLoadedRef.current) {
-          progressTimer = setTimeout(fetchProgress, PROGRESS_POLL_INTERVAL_MS)
-        }
-      }
-    }
-
-    async function subscribeToProgress() {
-      if (canceled) return
-      const apiBase =
-        process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'
-      eventSource = new EventSource(`${apiBase}/sessions/${sessionId}/events`, {
-        withCredentials: true,
-      })
-      eventSource.addEventListener('session.feedback_progress', (event) => {
-        const data = JSON.parse(
-          (event as MessageEvent).data
-        ) as FeedbackProgress
-        applyProgress(data)
-        if (data.reportReady) void fetchReport()
-      })
-      eventSource.addEventListener('report.ready', () => {
-        void fetchReport()
-      })
-      eventSource.onerror = () => eventSource?.close()
-    }
-
-    fetchReport()
-    fetchProgress()
-    void subscribeToProgress()
+      void fetchReport()
+      void fetchProgress()
+    }, 0)
 
     return () => {
       canceled = true
-      if (reportTimer) clearTimeout(reportTimer)
-      if (progressTimer) clearTimeout(progressTimer)
-      eventSource?.close()
-      reportLoadedRef.current = false
+      clearTimeout(timer)
     }
-  }, [applyProgress, sessionId])
+  }, [sessionId, fetchReport, fetchProgress])
+
+  // Fallback Polling: ONLY active when SSE connection fails
+  useEffect(() => {
+    if (!usePollingFallback || reportLoadedRef.current || report) return
+
+    const interval = setInterval(() => {
+      if (reportLoadedRef.current) return
+      void fetchProgress()
+      void fetchReport()
+    }, REPORT_POLL_INTERVAL_MS)
+
+    return () => clearInterval(interval)
+  }, [usePollingFallback, report, fetchProgress, fetchReport])
 
   if (loading) {
     const feedbackRequired = progress?.feedbackRequired ?? 0
@@ -250,12 +294,12 @@ export default function ReportPage() {
         <LoadingSpinner size="lg" />
         <div className="w-full">
           <p className="text-ink text-sm font-semibold">{progressLabel}</p>
-          <div className="bg-brand-100 mt-3 h-2 w-full overflow-hidden rounded-full">
-            <div
-              className="bg-brand h-full rounded-full transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
+          <Progress
+            value={progressPercent}
+            variant="brand"
+            size="sm"
+            className="mt-3"
+          />
           <p className="text-ink-muted mt-2 text-sm">{detailLabel}</p>
         </div>
       </div>
@@ -273,48 +317,87 @@ export default function ReportPage() {
   if (!report) return null
 
   const overviewSummary = buildOverviewSummary(report)
+  const recommendationStatus =
+    report.recommendationStatus ??
+    report.executiveSummary?.recommendationStatus
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">
+      <h1 className="text-foreground mb-6 text-2xl font-bold">
         Báo cáo phỏng vấn
       </h1>
 
-      <div className="bg-brand mb-8 rounded-2xl p-6 text-white">
-        <p className="text-brand-200 mb-1 text-sm">Điểm đánh giá tổng</p>
-        {report.overallScore == null ? (
-          <div>
-            <p className="text-2xl font-bold">Chưa thể chấm điểm</p>
-            <p className="text-brand-100 mt-2 text-sm">
-              {report.reportQuality === 'not_scorable'
-                ? 'Phiên này chưa có câu trả lời nào để chấm điểm.'
-                : 'Dịch vụ AI tạm thời chưa khả dụng. Câu trả lời của bạn vẫn đã được lưu.'}
-            </p>
-          </div>
-        ) : (
-          <p className="text-5xl font-bold">
-            {report.overallScore.toFixed(1)}
-            <span className="text-brand-200 ml-1 text-2xl">/ 100</span>
+      <div className="bg-brand mb-8 flex flex-col justify-between gap-6 rounded-2xl p-6 text-white shadow-sm md:flex-row md:items-center">
+        <div>
+          <p className="text-brand-200 text-xs font-medium uppercase tracking-wider">
+            Điểm đánh giá tổng kết
           </p>
+          {report.overallScore == null ? (
+            <div className="mt-1">
+              <p className="text-2xl font-bold">Chưa thể chấm điểm</p>
+              <p className="text-brand-100 mt-1 text-xs">
+                {report.reportQuality === 'not_scorable'
+                  ? 'Phiên này chưa có câu trả lời nào để chấm điểm.'
+                  : 'Dịch vụ AI tạm thời chưa khả dụng. Câu trả lời của bạn vẫn đã được lưu.'}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-1 flex items-baseline gap-1">
+              <span className="text-5xl font-bold tracking-tight tabular-nums">
+                {report.overallScore.toFixed(1)}
+              </span>
+              <span className="text-brand-200 text-xl font-medium">/ 100</span>
+            </div>
+          )}
+
+          {(report.executiveSummary?.targetSfiaLevel ||
+            report.executiveSummary?.demonstratedSfiaLevel != null) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-brand-100">
+              {report.executiveSummary.targetSfiaLevel && (
+                <span className="rounded-md border border-white/20 bg-black/20 px-2.5 py-1">
+                  Kỳ vọng: <strong>SFIA Level {report.executiveSummary.targetSfiaLevel}</strong>
+                </span>
+              )}
+              {report.executiveSummary.demonstratedSfiaLevel != null && (
+                <span className="rounded-md border border-white/20 bg-black/20 px-2.5 py-1">
+                  Thể hiện:{' '}
+                  <strong>
+                    {report.executiveSummary.demonstratedSfiaLevel > 0
+                      ? `SFIA Level ${report.executiveSummary.demonstratedSfiaLevel}`
+                      : 'Chưa thể hiện (Level 0)'}
+                  </strong>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {recommendationStatus && (
+          <div className="flex shrink-0 flex-col items-start gap-1.5 md:items-end">
+            <span className="text-brand-200 text-xs font-medium uppercase tracking-wider">
+              Khuyến nghị tuyển dụng
+            </span>
+            <RecommendationBadge status={recommendationStatus} size="lg" />
+          </div>
         )}
       </div>
 
       <div className="flex flex-col gap-6">
         {report.reportQuality === 'partial' && (
-          <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+          <div className="bg-warning-subtle text-warning-subtle-fg border-warning-subtle-fg/30 rounded-xl border px-4 py-3 text-sm">
             Một số câu trả lời không được AI chấm điểm tự động. Điểm tổng vẫn
             tính các câu đã bỏ qua là 0 điểm.
           </div>
         )}
         {report.reportQuality === 'not_scorable' && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <div className="border-brand-subtle-border bg-brand-subtle text-brand-subtle-fg rounded-xl border px-4 py-3 text-sm">
             Báo cáo cũ này chưa có dữ liệu điểm cho các câu đã bỏ qua. Các báo
             cáo mới sẽ tính câu bỏ qua là 0 điểm.
           </div>
         )}
         {session && <SessionMetadataCard session={session} />}
 
-        <div className="border-brand-subtle-border bg-brand-subtle rounded-2xl border p-5">
+        <Card className="border-brand-subtle-border bg-brand-subtle p-5 shadow-none">
           <h2 className="text-ink mb-4 text-base font-semibold">
             Tóm tắt tổng quan
           </h2>
@@ -323,7 +406,7 @@ export default function ReportPage() {
               <dt className="text-ink-faint text-xs font-medium uppercase tracking-wide">
                 Nhận xét tổng quan
               </dt>
-              <dd className="mt-1 text-sm text-gray-900">
+              <dd className="text-foreground mt-1 text-sm">
                 {overviewSummary.overview}
               </dd>
             </div>
@@ -336,13 +419,13 @@ export default function ReportPage() {
                 {overviewSummary.goodAnswers.length > 0 ? (
                   <ul className="flex flex-col gap-1.5">
                     {overviewSummary.goodAnswers.map((item) => (
-                      <li key={item.label} className="text-sm text-gray-900">
+                      <li key={item.label} className="text-foreground text-sm">
                         {item.label} - {item.score}/100
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <span className="text-sm text-gray-500">
+                  <span className="text-muted-foreground text-sm">
                     Chưa có câu trả lời nào đạt từ {GOOD_ANSWER_THRESHOLD}/100.
                   </span>
                 )}
@@ -357,13 +440,13 @@ export default function ReportPage() {
                 {overviewSummary.weakAnswers.length > 0 ? (
                   <ul className="flex flex-col gap-1.5">
                     {overviewSummary.weakAnswers.map((item) => (
-                      <li key={item.label} className="text-sm text-gray-900">
+                      <li key={item.label} className="text-foreground text-sm">
                         {item.label} - {item.score}/100
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <span className="text-sm text-gray-500">
+                  <span className="text-muted-foreground text-sm">
                     Không có câu trả lời nào dưới {WEAK_ANSWER_THRESHOLD}/100.
                   </span>
                 )}
@@ -380,7 +463,7 @@ export default function ReportPage() {
                     {overviewSummary.improvementDirections.map((item) => (
                       <li
                         key={item}
-                        className="flex gap-2 text-sm text-gray-900"
+                        className="text-foreground flex gap-2 text-sm"
                       >
                         <span className="bg-brand mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" />
                         <span>{item}</span>
@@ -388,24 +471,40 @@ export default function ReportPage() {
                     ))}
                   </ul>
                 ) : (
-                  <span className="text-sm text-gray-500">
+                  <span className="text-muted-foreground text-sm">
                     Chưa có đủ dữ liệu để tổng hợp hướng cải thiện.
                   </span>
                 )}
               </dd>
             </div>
           </dl>
-        </div>
+        </Card>
 
         {session?.contextPackId && session?.sessionType && (
           <ScoringMethodCard
             contextPackId={session.contextPackId}
             sessionType={session.sessionType}
-            rubricConfig={rubricConfig}
           />
         )}
 
-        <CompetencyScoreChart scores={report.competencyHeatmap} />
+        {report.skillsBreakdown && report.skillsBreakdown.length > 0 ? (
+          <>
+            <SfiaCompetencyOverview skills={report.skillsBreakdown} />
+            <SkillsBreakdownCard skills={report.skillsBreakdown} />
+          </>
+        ) : (
+          <div className="border-border bg-surface-1 text-ink rounded-2xl border p-6 text-sm">
+            <div className="flex items-center gap-2 font-semibold">
+              <Info className="size-4 text-brand" />
+              Báo cáo phiên bản trước
+            </div>
+            <p className="text-ink-muted mt-1.5 text-xs leading-relaxed">
+              Phiên phỏng vấn này được khởi tạo trước khi hệ thống nâng cấp khung năng lực SFIA 9 &amp; O*NET. Điểm tổng quát và nội dung chi tiết từng câu trả lời vẫn được bảo lưu đầy đủ bên dưới.
+            </p>
+          </div>
+        )}
+
+        <ActionPlanTimeline actionPlan={report.actionPlan} />
 
         <div>
           <h2 className="text-ink mb-4 text-base font-semibold">
@@ -415,7 +514,6 @@ export default function ReportPage() {
             items={report.transcript ?? []}
             contextPackId={session?.contextPackId}
             sessionType={session?.sessionType}
-            rubricHint={rubricConfig?.hint}
           />
         </div>
       </div>

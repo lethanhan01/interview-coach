@@ -17,7 +17,7 @@ export default function PublicLayout({
         </nav>
       </header>
       <main className="flex-1">{children}</main>
-      <footer className="border-t px-6 py-4 text-center text-sm text-gray-500">
+      <footer className="text-muted-foreground border-t px-6 py-4 text-center text-sm">
         &copy; 2026 Interview Coach. All rights reserved.
       </footer>
     </div>

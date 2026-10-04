@@ -16,7 +16,8 @@ import {
 
 export const registerSchema = z
   .object({
-    fullName: z.string().min(1, 'Họ và Tên là bắt buộc'),
+    lastname: z.string().min(1, 'Họ là bắt buộc'),
+    firstname: z.string().min(1, 'Tên là bắt buộc'),
     email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
     password: z.string().min(12, 'Mật khẩu phải có ít nhất 12 ký tự'),
     confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
@@ -42,7 +43,8 @@ export default function RegisterForm({
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      fullName: '',
+      lastname: '',
+      firstname: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -73,19 +75,35 @@ export default function RegisterForm({
         )}
 
         <div className="space-y-4">
-          <Controller
-            control={form.control}
-            name="fullName"
-            render={({ field, fieldState }) => (
-              <FormField name="fullName" isInvalid={!!fieldState.error} isRequired>
-                <FormLabel>Họ và Tên</FormLabel>
-                <FormControl>
-                  <Input type="text" placeholder="Ví dụ: Nguyễn Văn A" {...field} />
-                </FormControl>
-                <FormMessage>{fieldState.error?.message}</FormMessage>
-              </FormField>
-            )}
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Controller
+              control={form.control}
+              name="lastname"
+              render={({ field, fieldState }) => (
+                <FormField name="lastname" isInvalid={!!fieldState.error} isRequired>
+                  <FormLabel>Họ</FormLabel>
+                  <FormControl>
+                    <Input type="text" placeholder="Nguyễn" {...field} />
+                  </FormControl>
+                  <FormMessage>{fieldState.error?.message}</FormMessage>
+                </FormField>
+              )}
+            />
+
+            <Controller
+              control={form.control}
+              name="firstname"
+              render={({ field, fieldState }) => (
+                <FormField name="firstname" isInvalid={!!fieldState.error} isRequired>
+                  <FormLabel>Tên</FormLabel>
+                  <FormControl>
+                    <Input type="text" placeholder="Văn A" {...field} />
+                  </FormControl>
+                  <FormMessage>{fieldState.error?.message}</FormMessage>
+                </FormField>
+              )}
+            />
+          </div>
 
           <Controller
             control={form.control}
@@ -147,3 +165,4 @@ export default function RegisterForm({
     </div>
   )
 }
+
