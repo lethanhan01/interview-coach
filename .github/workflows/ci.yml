@@ -165,4 +165,4 @@ jobs:
           docker run --rm
           --entrypoint node
           ${{ steps.image.outputs.name }}:sha-${{ github.sha }}
-          -e "const fs = require('node:fs'); fs.accessSync('/app/dist/main.js'); fs.accessSync('/app/node_modules/.prisma/client/index.js'); if (process.env.NODE_ENV !== 'production') process.exit(1); if (process.getuid && process.getuid() === 0) process.exit(1); console.log('Server image artifact smoke OK');"
+          -e "const fs = require('node:fs'); fs.accessSync('/app/dist/main.js'); fs.accessSync('/app/node_modules/.prisma/client/index.js'); fs.accessSync('/app/node_modules/.bin/prisma'); if (process.env.NODE_ENV !== 'production') process.exit(1); if (process.getuid && process.getuid() === 0) process.exit(1); console.log('Server image artifact smoke OK');"
