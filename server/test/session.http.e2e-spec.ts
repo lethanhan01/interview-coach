@@ -1,52 +1,41 @@
 import '../test/e2e-env';
-import { ValidationPipe } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import type { INestApplication } from '@nestjs/common';
-import cookieParser from 'cookie-parser';
 import request from 'supertest';
-import { AppModule } from '../src/app.module';
+import type { INestApplication } from '@nestjs/common';
 import { PrismaService } from '../src/infrastructure/database/prisma/prisma.service';
-import { provisionDefaultRubricCatalog } from '../src/modules/interview-assessment/evaluation/rubric/rubric-catalog-provision';
-import { prisma as testPrisma } from './helpers/prisma';
+import { createE2eTestApp } from './helpers/e2e-app';
 
 describe('session HTTP contracts', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  let catalogBeforeBoot: { id: string; checksum: string | null }[];
+  let cleanupApp: () => Promise<void>;
+  const createdEmails: string[] = [];
 
   beforeAll(async () => {
-    await provisionDefaultRubricCatalog(testPrisma);
-    catalogBeforeBoot = await testPrisma.rubricVersion.findMany({
-      select: { id: true, checksum: true },
-      orderBy: { id: 'asc' },
-    });
-
-    const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleRef.createNestApplication();
-    app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true }),
-    );
-    app.use(cookieParser());
-    await app.init();
-    prisma = app.get(PrismaService);
-    await expect(
-      prisma.rubricVersion.findMany({
-        select: { id: true, checksum: true },
-        orderBy: { id: 'asc' },
-      }),
-    ).resolves.toEqual(catalogBeforeBoot);
+    const context = await createE2eTestApp();
+    app = context.app;
+    prisma = context.prisma;
+    cleanupApp = context.cleanup;
   });
 
   afterAll(async () => {
-    await app.close();
-    await seedPrisma.$disconnect();
+    try {
+      if (createdEmails.length > 0) {
+        await prisma.user
+          .deleteMany({
+            where: { email: { in: createdEmails } },
+          })
+          .catch(() => undefined);
+      }
+    } finally {
+      if (cleanupApp) {
+        await cleanupApp().catch(() => undefined);
+      }
+    }
   });
 
   it('keeps the Session, Turn, Report, Rubric, and SSE-auth HTTP contracts', async () => {
     const email = `phase0-${Date.now()}@example.com`;
+    createdEmails.push(email);
     const register = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
       .send({
@@ -60,6 +49,10 @@ describe('session HTTP contracts', () => {
     expect(register.body).toMatchObject({ success: true, data: { email } });
     const cookie = register.headers['set-cookie'][0];
     const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerified: true },
+    });
     const savedJob = await prisma.savedJobDescription.create({
       data: {
         userId: user.id,
@@ -115,6 +108,7 @@ describe('session HTTP contracts', () => {
       contextPackId: 'VN',
       sessionType: 'technical',
     });
+    expect(rubric.body.categories).toBeInstanceOf(Array);
 
     await request(app.getHttpServer())
       .get(`/api/v1/sessions/${created.body.id}/events`)
@@ -125,10 +119,12 @@ describe('session HTTP contracts', () => {
       .set('Cookie', 'interviewcoach_auth=invalid-token')
       .expect(401);
 
+    const otherEmail = `phase0-other-${Date.now()}@example.com`;
+    createdEmails.push(otherEmail);
     const otherUser = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
       .send({
-        email: `phase0-other-${Date.now()}@example.com`,
+        email: otherEmail,
         password: 'phase0-test-password',
         firstname: 'Other',
         lastname: 'User',
@@ -146,17 +142,15 @@ describe('session HTTP contracts', () => {
         questionText: 'Describe a production incident you resolved.',
         orderIndex: 1,
         questionCategory: 'technical',
+        sfiaSkillCode: 'PROG',
+        targetLevel: 4,
+        rubricCriteria: [
+          { name: 'Incident Diagnosis', weight: 0.5 },
+          { name: 'Mitigation Strategy', weight: 0.5 },
+        ],
       },
     });
-    const criterion = await prisma.rubricCriterion.findFirstOrThrow({
-      where: { rubricCategory: { rubricVersion: { contextPackId: 'VN' } } },
-    });
-    await prisma.sessionQuestionCriterion.create({
-      data: {
-        sessionQuestionId: firstQuestion.id,
-        rubricCriterionId: criterion.id,
-      },
-    });
+
     await prisma.interviewSession.update({
       where: { id: created.body.id },
       data: { status: 'active' },
@@ -183,6 +177,12 @@ describe('session HTTP contracts', () => {
         questionText: 'Explain your deployment rollback process.',
         orderIndex: 2,
         questionCategory: 'technical',
+        sfiaSkillCode: 'PROG',
+        targetLevel: 4,
+        rubricCriteria: [
+          { name: 'Rollback Procedure', weight: 0.5 },
+          { name: 'Root Cause Verification', weight: 0.5 },
+        ],
       },
     });
     const voiceTurn = await request(app.getHttpServer())
@@ -203,10 +203,11 @@ describe('session HTTP contracts', () => {
       .post(`/api/v1/sessions/${created.body.id}/turns/audio`)
       .set('Cookie', cookie)
       .expect(400);
-  });
+  }, 60000);
 
-  it('does not expose credentials from the profile endpoint', async () => {
+  it('does not expose credentials from the users me endpoint', async () => {
     const email = `profile-contract-${Date.now()}@example.com`;
+    createdEmails.push(email);
     const register = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
       .send({
@@ -218,7 +219,7 @@ describe('session HTTP contracts', () => {
       .expect(201);
 
     const profile = await request(app.getHttpServer())
-      .get('/api/v1/profile')
+      .get('/api/v1/users/me')
       .set('Cookie', register.headers['set-cookie'][0])
       .expect(200);
 

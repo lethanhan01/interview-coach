@@ -8,8 +8,11 @@ describe('Workflow outbox (PostgreSQL)', () => {
   const idempotencyKey = `question-generation:${sessionId}`;
 
   afterAll(async () => {
-    await prisma.workflowOutbox.deleteMany({ where: { idempotencyKey } });
-    await prisma.$disconnect();
+    try {
+      await prisma.workflowOutbox.deleteMany({ where: { idempotencyKey } });
+    } finally {
+      await prisma.$disconnect().catch(() => undefined);
+    }
   });
 
   it('rolls back state command together and stores one command after commit', async () => {

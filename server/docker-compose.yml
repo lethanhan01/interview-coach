@@ -16,7 +16,9 @@ services:
     ]
     environment:
       TZ: Asia/Ho_Chi_Minh
-    # KHÔNG mở cổng ra ngoài host để bảo mật tuyệt đối trên VPS. Giao tiếp qua mạng nội bộ Docker.
+    # Lắng nghe duy nhất trên 127.0.0.1 của host để bảo mật tuyệt đối trên VPS, đồng thời cho phép dev/test kết nối
+    ports:
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
     networks:

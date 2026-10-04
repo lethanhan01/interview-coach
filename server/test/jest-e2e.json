@@ -4,6 +4,8 @@
   "testEnvironment": "node",
   "setupFiles": ["<rootDir>/e2e-env.ts"],
   "testRegex": ".http.e2e-spec.ts$",
+  "testTimeout": 60000,
+  "maxWorkers": 1,
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },

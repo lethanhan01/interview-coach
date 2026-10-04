@@ -3,7 +3,6 @@ import { Queue } from 'bullmq';
 import { WorkflowDispatcher } from '../src/infrastructure/workflow/workflow-dispatcher.service';
 import { WorkflowService } from '../src/infrastructure/workflow/workflow.service';
 import { REPORT_QUEUE } from '../src/core/common/constants/queue.constants';
-import { provisionDefaultRubricCatalog } from '../src/modules/interview-assessment/evaluation/rubric/rubric-catalog-provision';
 import { prisma } from './helpers/prisma';
 
 describe('Report dispatch (PostgreSQL + Redis)', () => {
@@ -14,10 +13,6 @@ describe('Report dispatch (PostgreSQL + Redis)', () => {
   let commandId: string;
 
   beforeAll(async () => {
-    await provisionDefaultRubricCatalog(prisma);
-    const rubric = await prisma.rubricVersion.findFirstOrThrow({
-      where: { contextPackId: 'VN', status: 'active' },
-    });
     const user = await prisma.user.create({
       data: {
         id: randomUUID(),
@@ -27,6 +22,7 @@ describe('Report dispatch (PostgreSQL + Redis)', () => {
         lastname: 'Dispatch',
       },
     });
+
     const savedJob = await prisma.savedJobDescription.create({
       data: {
         userId: user.id,
@@ -36,17 +32,19 @@ describe('Report dispatch (PostgreSQL + Redis)', () => {
         jobContent: 'Build reliable backend services.',
       },
     });
+
     const session = await prisma.interviewSession.create({
       data: {
         savedJobDescriptionId: savedJob.id,
         jobDescription: 'Backend role',
         sessionType: 'technical',
         contextPackId: 'VN',
-        rubricVersionId: rubric.id,
+        sfiaVersion: '9.0.0',
         status: 'completing',
       },
     });
     sessionId = session.id;
+
     const question = await prisma.sessionQuestion.create({
       data: {
         sessionId,
@@ -55,6 +53,7 @@ describe('Report dispatch (PostgreSQL + Redis)', () => {
         questionCategory: 'technical',
       },
     });
+
     const answer = await prisma.userAnswer.create({
       data: {
         questionId: question.id,
@@ -64,6 +63,7 @@ describe('Report dispatch (PostgreSQL + Redis)', () => {
       },
     });
     answerId = answer.id;
+
     const command = await prisma.$transaction((tx) =>
       new WorkflowService().enqueueInTransaction(tx, {
         commandType: 'report-generation',
@@ -77,6 +77,7 @@ describe('Report dispatch (PostgreSQL + Redis)', () => {
       }),
     );
     commandId = command.id;
+
     queue = new Queue(REPORT_QUEUE, {
       connection: {
         host: process.env.REDIS_HOST,
@@ -87,13 +88,20 @@ describe('Report dispatch (PostgreSQL + Redis)', () => {
   });
 
   afterAll(async () => {
-    await queue?.remove(`workflow-${commandId}`).catch(() => undefined);
-    await queue?.close();
-    await prisma.workflowOutbox
-      .delete({ where: { id: commandId } })
-      .catch(() => undefined);
-    await prisma.user.delete({ where: { email } }).catch(() => undefined);
-    await prisma.$disconnect();
+    try {
+      if (queue) {
+        await queue.remove(`workflow-${commandId}`).catch(() => undefined);
+        await queue.close().catch(() => undefined);
+      }
+      if (commandId) {
+        await prisma.workflowOutbox
+          .delete({ where: { id: commandId } })
+          .catch(() => undefined);
+      }
+      await prisma.user.delete({ where: { email } }).catch(() => undefined);
+    } finally {
+      await prisma.$disconnect().catch(() => undefined);
+    }
   });
 
   it('keeps one effective report job when dispatcher is requested twice', async () => {

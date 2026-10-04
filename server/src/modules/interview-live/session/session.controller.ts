@@ -13,7 +13,6 @@ import { Observable } from 'rxjs';
 import { UserRole } from '@prisma/client';
 import { Roles, CurrentUser } from '@core/common/decorators';
 import { SseTokenGuard } from '@core/common/guards';
-import type { AuthenticatedUserPayload } from '@core/common/guards/auth-token-verifier.interface';
 import { SessionService } from './session.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
 import { AssessmentFacade } from '@modules/interview-assessment/contracts';
@@ -30,13 +29,19 @@ import {
 } from '@nestjs/swagger';
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 
-function extractUser(userOrReq: unknown): AuthenticatedUserPayload {
+interface ExtractedUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  emailVerified?: boolean;
+}
+
+function extractUser(userOrReq: unknown): ExtractedUser {
   if (typeof userOrReq === 'string') {
     return {
       id: userOrReq,
       email: '',
       role: UserRole.candidate,
-      emailVerified: false,
     };
   }
 
@@ -57,7 +62,7 @@ function extractUser(userOrReq: unknown): AuthenticatedUserPayload {
       emailVerified:
         typeof nestedUser.emailVerified === 'boolean'
           ? nestedUser.emailVerified
-          : false,
+          : undefined,
     };
   }
 
@@ -65,7 +70,6 @@ function extractUser(userOrReq: unknown): AuthenticatedUserPayload {
     id: '',
     email: '',
     role: UserRole.candidate,
-    emailVerified: false,
   };
 }
 

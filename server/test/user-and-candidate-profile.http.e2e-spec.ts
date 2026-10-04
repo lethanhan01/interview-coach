@@ -1,15 +1,13 @@
 import 'dotenv/config';
-import { ValidationPipe } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
-import cookieParser from 'cookie-parser';
 import request from 'supertest';
-import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/infrastructure/database/prisma/prisma.service';
+import { createE2eTestApp } from './helpers/e2e-app';
 
 describe('UserModule & CandidateProfileModule HTTP E2E Contracts', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let cleanupApp: () => Promise<void>;
 
   let candidateCookie: string[];
   let candidateUserId: string;
@@ -20,18 +18,10 @@ describe('UserModule & CandidateProfileModule HTTP E2E Contracts', () => {
   const testPassword = 'Password123!';
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleRef.createNestApplication();
-    app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true }),
-    );
-    app.use(cookieParser());
-    await app.init();
-    prisma = app.get(PrismaService);
+    const context = await createE2eTestApp();
+    app = context.app;
+    prisma = context.prisma;
+    cleanupApp = context.cleanup;
 
     // 1. Đăng ký tài khoản candidate
     const candRegister = await request(app.getHttpServer())
@@ -77,14 +67,24 @@ describe('UserModule & CandidateProfileModule HTTP E2E Contracts', () => {
   });
 
   afterAll(async () => {
-    // Cleanup test users
-    await prisma.userProfile.deleteMany({
-      where: { userId: { in: [candidateUserId] } },
-    });
-    await prisma.user.deleteMany({
-      where: { email: { in: [candidateEmail, adminEmail] } },
-    });
-    await app.close();
+    try {
+      if (candidateUserId) {
+        await prisma.userProfile
+          .deleteMany({
+            where: { userId: { in: [candidateUserId] } },
+          })
+          .catch(() => undefined);
+      }
+      await prisma.user
+        .deleteMany({
+          where: { email: { in: [candidateEmail, adminEmail] } },
+        })
+        .catch(() => undefined);
+    } finally {
+      if (cleanupApp) {
+        await cleanupApp().catch(() => undefined);
+      }
+    }
   });
 
   describe('UserModule: /api/v1/users/me', () => {
