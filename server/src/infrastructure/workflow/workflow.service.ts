@@ -40,7 +40,12 @@ export class WorkflowService {
         payload: command.payload,
         idempotencyKey,
       },
-      update: {},
+      update: {
+        // Design Decision: A non-empty update field is required so that Prisma emits
+        // native atomic `INSERT ... ON CONFLICT ("idempotency_key") DO UPDATE SET ...`
+        // in PostgreSQL, preventing P2002 race conditions during concurrent enqueue.
+        updatedAt: new Date(),
+      },
     });
   }
 }
