@@ -106,5 +106,32 @@ describe('AppLogger', () => {
 
       consoleSpy.mockRestore();
     });
+
+    it('bổ sung userId và durationMs khi có trong RequestContext', () => {
+      process.env.NODE_ENV = 'production';
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+      RequestContext.run(
+        {
+          requestId: 'req-prod-user',
+          correlationId: 'corr-prod-user',
+          userId: 'usr-abc-123',
+          startTime: Date.now() - 50,
+        },
+        () => {
+          logger.log('User action', 'UserContext');
+        },
+      );
+
+      expect(consoleSpy).toHaveBeenCalled();
+      const rawJson = consoleSpy.mock.calls[0][0];
+      const parsed = JSON.parse(rawJson);
+
+      expect(parsed.userId).toBe('usr-abc-123');
+      expect(typeof parsed.durationMs).toBe('number');
+      expect(parsed.durationMs).toBeGreaterThanOrEqual(0);
+
+      consoleSpy.mockRestore();
+    });
   });
 });

@@ -9,10 +9,11 @@ import {
   Sse,
   MessageEvent,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import { Observable, catchError, of } from 'rxjs';
 import { UserRole } from '@prisma/client';
 import { Roles, CurrentUser } from '@core/common/decorators';
 import { SseTokenGuard } from '@core/common/guards';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { SessionService } from './session.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
 import { AssessmentFacade } from '@modules/interview-assessment/contracts';
@@ -192,6 +193,20 @@ export class SessionController {
   ): Promise<Observable<MessageEvent>> {
     const user = extractUser(userOrReq);
     await this.sessionService.findById(id, user.id);
-    return this.sseService.subscribe(`sse:session:${id}`);
+    return this.sseService.subscribe(`sse:session:${id}`).pipe(
+      catchError((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        return of({
+          type: 'error',
+          data: {
+            error: {
+              code: ErrorCode.INTERNAL_ERROR,
+              message,
+            },
+            timestamp: new Date().toISOString(),
+          },
+        } as MessageEvent);
+      }),
+    );
   }
 }

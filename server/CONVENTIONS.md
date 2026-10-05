@@ -12,14 +12,14 @@
    - [2.1. Cấu trúc Module Bounded Context chuẩn](#21-cấu-trúc-module-bounded-context-chuẩn)
    - [2.2. Vai trò của Thư mục `contracts/` và Facade Pattern](#22-vai-trò-của-thư-mục-contracts-và-facade-pattern)
    - [2.3. Quy ước Đặt tên (Naming Conventions)](#23-quy-ước-đặt-tên-naming-conventions)
-3. [Quy chuẩn Tầng Presentation (API, WebSocket & Idempotency)](#3-quy-chuẩn-tầng-presentation-api-websocket--idempotency)
+3. [Quy chuẩn Tầng Presentation (API, Real-Time SSE & Idempotency)](#3-quy-chuẩn-tầng-presentation-api-real-time-sse--idempotency)
    - [3.1. Thiết kế RESTful API Chuẩn mực](#31-thiết-kế-restful-api-chuẩn-mực)
    - [3.2. DTO & Validation với `class-validator`](#32-dto--validation-với-class-validator)
    - [3.3. Ràng buộc Cô lập Controller (Strict Presentation Isolation)](#33-ràng-buộc-cô-lập-controller-strict-presentation-isolation)
    - [3.4. Chuẩn hóa Response Serialization & Data Masking](#34-chuẩn-hóa-response-serialization--data-masking)
    - [3.5. Chuẩn hóa Phân trang & Lọc Dữ liệu (Pagination & Filtering Standards)](#35-chuẩn-hóa-phân-trang--lọc-dữ-liệu-pagination--filtering-standards)
    - [3.6. Chuẩn hóa Khóa Chống Trùng lặp (Idempotency & Double-Submit Prevention)](#36-chuẩn-hóa-khóa-chống-trùng-lặp-idempotency--double-submit-prevention)
-   - [3.7. Quy chuẩn WebSocket / Real-Time Gateway (Real-Time Communication)](#37-quy-chuẩn-websocket--real-time-gateway-real-time-communication)
+   - [3.7. Quy chuẩn Server-Sent Events (SSE) & Real-Time Communication](#37-quy-chuẩn-server-sent-events-sse--real-time-communication)
 4. [Quy chuẩn Tầng Nghiệp vụ (Business Logic & Concurrency Control)](#4-quy-chuẩn-tầng-nghiệp-vụ-business-logic--concurrency-control)
    - [4.1. Thiết kế Service theo Use Case (Single Responsibility)](#41-thiết-kế-service-theo-use-case-single-responsibility)
    - [4.2. Giao tiếp Xuyên Module (Cross-Module Communication via Facade)](#42-giao-tiếp-xuyên-module-cross-module-communication-via-facade)
@@ -56,7 +56,7 @@ Backend của InterviewCoach được xây dựng theo mô hình **Modular Monol
 
 ```mermaid
 graph TD
-    Client[Client Apps / Web Frontend] -->|HTTP REST / WebSocket| L1[Layer 1: Presentation Layer<br/>Controllers, Gateways, Guards, Interceptors, DTOs]
+    Client[Client Apps / Web Frontend] -->|HTTP REST / Server-Sent Events (SSE)| L1[Layer 1: Presentation Layer<br/>Controllers, Guards, Interceptors, DTOs]
     L1 -->|Invoke Use Cases| L2[Layer 2: Application & Domain Layer<br/>Use Case Services, Facades, Business Logic, Domain Entities]
     L2 -->|Query / Mutate / Dispatch| L3[Layer 3: Infrastructure Layer<br/>Prisma ORM, AI Clients, Storage, Workflows/Queues, Redis]
     
@@ -68,7 +68,7 @@ graph TD
 ```
 
 ### 1.1. Ba Tầng Kiến trúc (3-Layer Architecture)
-- **Tầng 1 - Presentation Layer (`controllers`, `gateways`, `dto`, `guards`, `interceptors`):** Tiếp nhận HTTP Request / WebSocket, validate schema dữ liệu đầu vào qua DTO, kiểm tra quyền truy cập (Auth Guards), quản lý WebSocket handshake/events, và serialize response trả về. **Tuyệt đối không chứa logic nghiệp vụ hay truy vấn database.**
+- **Tầng 1 - Presentation Layer (`controllers`, `dto`, `guards`, `interceptors`):** Tiếp nhận HTTP Request / Server-Sent Events (SSE), validate schema dữ liệu đầu vào qua DTO, kiểm tra quyền truy cập (Auth Guards), stream events realtime qua `SseService`, và serialize response trả về. **Tuyệt đối không chứa logic nghiệp vụ hay truy vấn database.**
 - **Tầng 2 - Application & Domain Layer (`services`, `use-cases`, `contracts`):** Trung tâm xử lý logic nghiệp vụ, điều phối dữ liệu (orchestration), tính toán, quản lý concurrency và đảm bảo tính toàn vẹn của domain.
 - **Tầng 3 - Infrastructure Layer (`@infra/*`, `prisma`, `ai`, `storage`, `workflow`, `redis`):** Giao tiếp với các tài nguyên bên ngoài: Cơ sở dữ liệu PostgreSQL (qua Prisma), Object Storage (S3/Supabase), AI Services (OpenAI/Gemini/Whisper), Message Queue (BullMQ/Redis).
 
@@ -83,7 +83,7 @@ graph TD
 
 ### 1.3. Mô hình Tiến trình & Khả năng Mở rộng Quy mô (Process Roles & Scalability)
 Hệ thống hỗ trợ chạy ở cả dạng nguyên khối duy nhất hoặc tách biệt thành các tiến trình độc lập phục vụ scale theo tải (tuân thủ **Twelve-Factor App**):
-- `start:api` (`--role=api`): Chuyên phục vụ HTTP REST / WebSocket, không khởi chạy queue workers ngốn CPU.
+- `start:api` (`--role=api`): Chuyên phục vụ HTTP REST và Server-Sent Events (`@Sse`), không khởi chạy queue workers ngốn CPU.
 - `start:worker` (`--role=worker`): Chuyên tiêu thụ các hàng đợi BullMQ (STT, LLM Assessment, Report Generation), có thể scale horizontal nhiều node worker độc lập.
 - `start:all` (`--role=all`): Chạy cả API và Worker trong cùng 1 process (tối ưu cho môi trường Dev hoặc Server tài nguyên nhỏ).
 
@@ -97,7 +97,7 @@ Mỗi module lớn trong `server/src/modules/` được tổ chức theo Feature
 ```text
 src/modules/<bounded-context>/
 ├── <sub-feature>/
-│   ├── <sub-feature>.controller.ts       # Controller của feature
+│   ├── <sub-feature>.controller.ts       # Controller của feature (REST & @Sse)
 │   ├── <sub-feature>.controller.spec.ts  # Test của controller
 │   ├── <use-case-name>.service.ts        # Use Case Service xử lý nghiệp vụ
 │   ├── <use-case-name>.service.spec.ts   # Unit test cho service
@@ -106,10 +106,6 @@ src/modules/<bounded-context>/
 │   │   ├── pagination-query.dto.ts       # DTO query phân trang / lọc
 │   │   └── <feature>-response.dto.ts     # DTO định dạng kết quả trả về
 │   └── <sub-feature>.module.ts           # NestJS Module con (nếu có)
-│
-├── gateways/                             # (Bắt buộc nếu module có Realtime WebSocket)
-│   ├── <feature>.gateway.ts              # WebSocket Gateway
-│   └── <feature>.gateway.spec.ts         # Unit test cho Gateway
 │
 ├── contracts/                            # (Bắt buộc nếu module cung cấp API cho module khác)
 │   ├── <context>-facade.service.ts       # Facade tập trung export public methods
@@ -135,11 +131,10 @@ src/modules/<bounded-context>/
 | **Interface / Type** | `PascalCase` (không prefix `I`) | `VoiceMetrics`, `AudioUploadResult`, `StoredAudioFile` |
 | **Enum / Error Code** | `UPPER_SNAKE_CASE` | `ErrorCode.SESSION_NOT_FOUND`, `SessionStatus.COMPLETED` |
 | **DTO Class** | `PascalCase` + Suffix `Dto` | `CreateSessionDto`, `AnswerIntakeDto`, `PaginationQueryDto` |
-| **Gateway Class** | `PascalCase` + Suffix `Gateway`| `InterviewLiveGateway`, `TranscriptionGateway` |
 
 ---
 
-## 3. Quy chuẩn Tầng Presentation (API, WebSocket & Idempotency)
+## 3. Quy chuẩn Tầng Presentation (API, Real-Time SSE & Idempotency)
 
 ### 3.1. Thiết kế RESTful API Chuẩn mực
 - **Resource Nouns & Kebab-Case URLs:** Sử dụng danh từ số nhiều ở dạng `kebab-case`.
@@ -291,42 +286,50 @@ export class PaginatedResponseDto<T> {
 Khi số lượng bản ghi lớn (> 100,000 dòng như Chat Turns, Event Logs), cấm dùng `skip/offset`. Bắt buộc dùng `cursor` (ID hoặc timestamp) kết hợp `take`.
 
 ### 3.6. Chuẩn hóa Khóa Chống Trùng lặp (Idempotency & Double-Submit Prevention)
-Các mutation quan trọng hoặc tốn chi phí (Tạo Session phỏng vấn, Nộp bài thi, Trừ credit) phải hỗ trợ header `Idempotency-Key`:
-1. Client gửi UUIDv4 qua header `Idempotency-Key`.
-2. Interceptor kiểm tra key trong Redis:
-   - Nếu key đã hoàn thành: Trả về trực tiếp response cache có mã `200 OK` / `201 Created`.
-   - Nếu key đang được xử lý: Ném `InterviewAIException(ErrorCode.REQUEST_IN_PROGRESS, HttpStatus.CONFLICT)`.
-   - Nếu key chưa tồn tại: Khóa key với TTL 60s, cho request thực thi và lưu cache kết quả với TTL 24h.
+Hệ thống áp dụng quản trị chống trùng lặp theo 2 cấp độ:
 
-### 3.7. Quy chuẩn WebSocket / Real-Time Gateway (Real-Time Communication)
-Áp dụng cho các tính năng phỏng vấn tương tác trực tiếp (Live STT, Voice Streaming):
-- **Vị trí file:** `src/modules/<context>/gateways/<feature>.gateway.ts`.
-- **Handshake Authentication:** Bắt buộc xác thực token JWT trong `handleConnection(client: Socket)`:
+1. **Cấp độ Transactional Outbox (Hiện hành - Production Ready):**
+   - Mọi tác vụ bất đồng bộ nặng (sinh câu hỏi, bóc băng, chấm điểm, sinh báo cáo) khi dispatch vào outbox bắt buộc chỉ định `idempotencyKey: `${commandType}:${aggregateId}``.
+   - `WorkflowService.enqueueInTransaction()` thực hiện Prisma `upsert` với mệnh đề `update: { updatedAt: new Date() }` để kích hoạt atomic `INSERT ... ON CONFLICT DO UPDATE` ở mức PostgreSQL, ngăn ngừa tuyệt đối lỗi `P2002` race condition khi có nhiều request đồng thời.
+2. **Cấp độ HTTP REST Mutation (Lộ trình Phase 22 - Tech Debt Roadmap):**
+   - Khi triển khai Redis-backed Idempotency Interceptor cho REST endpoints:
+     - Client gửi UUIDv4 qua header `Idempotency-Key`.
+     - Key đang xử lý: Ném `InterviewAIException(ErrorCode.REQUEST_IN_PROGRESS, HttpStatus.CONFLICT)`.
+     - Key đã hoàn thành: Trả trực tiếp response cache `200 OK` / `201 Created`.
+
+### 3.7. Quy chuẩn Server-Sent Events (SSE) & Real-Time Communication
+Hệ thống sử dụng **Server-Sent Events (SSE)** làm phương thức giao tiếp thời gian thực đơn chiều (Server ➔ Client) cho toàn bộ diễn biến phỏng vấn (câu hỏi sẵn sàng, tiến độ chấm điểm, thông báo lỗi):
+
+- **Vị trí Endpoint:** Khai báo trực tiếp trong Controller thông qua decorator `@Sse(':id/events')`.
+- **Bảo mật & Phân quyền:**
+  - Bắt buộc gắn `@UseGuards(SseTokenGuard)` để xác thực JWT token qua query param hoặc header (do browser `EventSource` API hạn chế header tùy biến).
+  - Bắt buộc kiểm tra quyền sở hữu session (`session.userId === user.id`) trước khi mở stream.
+- **Hạ tầng Redis Pub/Sub:**
+  - Inject `SseService` (`@infra/realtime/redis/sse.service`) để subscribe vào Redis channel cô lập `sse:session:${sessionId}`.
+  - Khi client ngắt kết nối, teardown logic của RxJS Observable tự động giảm subscriber counter và hủy đăng ký Redis channel để giải phóng bộ nhớ.
+- **Chuẩn hóa Stream Error Envelope:**
+  - Controller bọc stream qua RxJS `catchError` để khi Redis gặp sự cố kết nối, stream phát sự kiện `error` chuẩn hóa thay vì đứt ngầm:
   ```typescript
-  @WebSocketGateway({ namespace: '/interview-live', cors: { origin: '*' } })
-  export class InterviewLiveGateway implements OnGatewayConnection, OnGatewayDisconnect {
-    async handleConnection(client: Socket) {
-      try {
-        const token = client.handshake.auth?.token || client.handshake.headers?.authorization;
-        const user = await this.authService.verifyWsToken(token);
-        client.data.user = user;
-      } catch (err) {
-        client.emit('error', { code: 'UNAUTHORIZED', message: 'Invalid token' });
-        client.disconnect(true);
-      }
-    }
+  @Sse(':id/events')
+  @UseGuards(SseTokenGuard)
+  async streamEvents(@Param('id') id: string, @CurrentUser() user: any): Promise<Observable<MessageEvent>> {
+    await this.sessionService.findById(id, user.id);
+    return this.sseService.subscribe(`sse:session:${id}`).pipe(
+      catchError((error: unknown) => of({
+        type: 'error',
+        data: {
+          error: {
+            code: ErrorCode.INTERNAL_ERROR,
+            message: error instanceof Error ? error.message : 'Realtime stream error',
+          },
+          timestamp: new Date().toISOString(),
+        },
+      } as MessageEvent)),
+    );
   }
   ```
-- **Envelope định dạng Event chuẩn:**
-  ```typescript
-  export interface WsEventEnvelope<T = any> {
-    event: string;
-    data: T;
-    timestamp: number;
-    correlationId?: string;
-  }
-  ```
-- **Lifecycle & Dọn dẹp kết nối:** Khi client disconnect bất ngờ (`handleDisconnect`), gateway phải tự động giải phóng Redis audio buffer và cập nhật trạng thái session sau 30 giây timeout nếu không reconnect.
+- **Phát sự kiện lỗi chủ động từ Worker:**
+  - Khi background worker gặp sự cố (ví dụ: AI timeout, quota exhausted), gọi trực tiếp `await this.sseService.emitError(channel, code, message)` để thông báo lập tức cho giao diện người dùng.
 
 ---
 
@@ -406,11 +409,11 @@ throw new InterviewAIException(
 
 #### c. Safety Net cho Database & Prisma Errors
 Không cần thủ công `try/catch` mọi truy vấn Prisma chỉ để ném NotFound/Conflict. Bộ lọc trung tâm [`InterviewAIExceptionFilter`](file:///c:/Users/An/Documents/GR1/InterviewCoach/server/src/core/common/exceptions/interview-ai-exception.filter.ts) tích hợp [`PrismaErrorMapper`](file:///c:/Users/An/Documents/GR1/InterviewCoach/server/src/core/common/exceptions/mappers/prisma-error.mapper.ts) tự động phân loại:
-- `P2002` (Unique constraint) ➔ `409 Conflict` (`RESOURCE_ALREADY_EXISTS`)
-- `P2025` (Record not found) ➔ `404 Not Found` (`RESOURCE_NOT_FOUND`)
-- `P2003` (Foreign key violation) ➔ `400 Bad Request` (`BAD_REQUEST`)
-- `P1001` / `P1002` (Connection timeout) ➔ `503 Service Unavailable` (`SERVICE_UNAVAILABLE`)
-- Unhandled Error ➔ `500 Internal Server Error` (ẩn toàn bộ chi tiết nhạy cảm trong Production).
+- `P2002` (Unique constraint) ➔ `409 Conflict` (`ErrorCode.CONFLICT`)
+- `P2025` (Record not found) ➔ `404 Not Found` (`ErrorCode.NOT_FOUND`)
+- `P2003` (Foreign key violation) ➔ `400 Bad Request` (`ErrorCode.VALIDATION_ERROR`)
+- `P1001` / `P1002` (Connection timeout) ➔ `503 Service Unavailable` (`ErrorCode.SERVICE_UNAVAILABLE`)
+- Unhandled Error ➔ `500 Internal Server Error` (`ErrorCode.INTERNAL_ERROR`, ẩn toàn bộ chi tiết nhạy cảm trong Production).
 
 #### d. Worker & BullMQ Error Boundaries
 Trong môi trường `RUNTIME_ROLE=worker`, không có HTTP Filter xử lý ngoại lệ. Mọi BullMQ Processor bắt buộc phải bọc thực thi qua [`BullMqJobErrorHandler.handleJobExecution`](file:///c:/Users/An/Documents/GR1/InterviewCoach/server/src/infrastructure/workflow/bullmq-error-handler.ts):
@@ -573,10 +576,14 @@ Các tác vụ tiêu tốn tài nguyên và thời gian thực thi dài (> 3 gi�
 ### 6.4. Khả năng Chống chịu & Đo lường AI (AI Resilience, Telemetry & Fallback)
 
 #### a. Hard Timeout & AbortController
-Không để lời gọi AI treo vô tận. Bắt buộc gắn timeout cứng:
-- LLM Single-turn Chat: Tối đa `30,000ms` (30 giây).
-- Whisper Audio Transcription: Tối đa `60,000ms` (60 giây).
-- Deep Assessment Workflow: Tối đa `90,000ms` (90 giây).
+Không để lời gọi AI treo vô tận. Bắt buộc gắn timeout cứng bằng `AbortController.signal` tương ứng với tải tác vụ (đồng bộ theo Phase 13 Timeout Policy):
+- **LLM Single-turn Chat / Quick Scoring**: Tối đa `30,000ms` (30 giây) (`OPENAI_TIMEOUT_MS`).
+- **Whisper Audio Transcription (STT)**: Tối đa `60,000ms` (60 giây).
+- **Question Generation (10 câu hỏi + Rubric)**: Tối đa `240,000ms` (4 phút) (`OPENAI_QUESTION_TIMEOUT_MS`).
+- **Turn Feedback Scoring (Single Turn Rubric)**: Tối đa `420,000ms` (7 phút) (`OPENAI_FEEDBACK_TIMEOUT_MS`).
+- **Comprehensive Deep Assessment Report**: Tối đa `600,000ms` (10 phút) (`OPENAI_REPORT_TIMEOUT_MS`).
+- **Database Prisma Query**: `10,000ms` (10 giây).
+- **Redis Cache / Distributed Lock**: `3,000ms` (3 giây).
 
 #### b. Exponential Backoff & Jitter Retry
 Tự động retry tối đa 3 lần cho các lỗi mạng tạm thời hoặc Rate Limit (`429`, `503`):
@@ -632,14 +639,19 @@ if (session.userId !== userId && userRole !== UserRole.ADMIN) {
 ```
 
 ### 7.3. Quy chuẩn Structured Logging & Distributed Tracing (Correlation-ID Propagation)
-- **Cấm hoàn toàn:** `console.log`, `console.error` trong toàn bộ mã nguồn `server/src/`.
-- **Cơ chế Lan truyền `Correlation-ID`:**
+- **Cấm hoàn toàn:** `console.log`, `console.error` trong toàn bộ mã nguồn `server/src/`. Sử dụng `AppLogger` hoặc `new Logger(Context.name)`.
+- **Đăng ký Global Logger bắt buộc trong `main.ts`:**
+  - Bắt buộc gọi `app.useLogger(app.get(AppLogger))` cho cả tiến trình HTTP API (`NestFactory.create`) và Background Worker (`NestFactory.createApplicationContext`) kết hợp `{ bufferLogs: true }`.
+  - Nhờ đó, 100% log nội bộ của NestJS và mọi instance `new Logger(...)` trên toàn codebase đều tự động thừa hưởng format JSON, che chắn PII và gán `correlationId`.
+- **Cơ chế Lan truyền `Correlation-ID` & Đo lường:**
+  - `AppLogger` tự động trích xuất `correlationId`, `userId` từ `RequestContext` (`AsyncLocalStorage`) và tính toán `durationMs` dựa trên `startTime`.
+  - Tự động đệ quy làm sạch các trường dữ liệu nhạy cảm (PII: `password`, `token`, `secret`, `apiKey`, `creditCard`).
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User
-    participant Gateway as HTTP Middleware / WS
+    participant Gateway as HTTP Middleware
     participant ALS as AsyncLocalStorage Context
     participant Service as Use Case Service
     participant Queue as BullMQ Queue
@@ -647,7 +659,7 @@ sequenceDiagram
     participant AI as AI Gateway
     
     User->>Gateway: Request (Header: X-Correlation-ID hoặc sinh mới UUID)
-    Gateway->>ALS: Lưu correlationId, userId vào Context
+    Gateway->>ALS: Lưu correlationId, userId, startTime vào Context
     Gateway->>Service: Thực thi Use Case
     Service->>AI: Gửi Prompt (Log kèm correlationId & latencyMs)
     Service->>Queue: Dispatch Job (Đính kèm correlationId vào job.data)
@@ -656,16 +668,16 @@ sequenceDiagram
     Worker->>Worker: Ghi log hoàn tất có correlationId thống nhất
 ```
 
-- **Format Structured JSON Log chuẩn:**
+- **Format Structured JSON Log chuẩn trên Production:**
 ```json
 {
   "timestamp": "2026-08-31T01:15:00.000Z",
-  "level": "INFO",
+  "level": "info",
   "context": "CreateInterviewSession",
   "correlationId": "c8b4f8d2-5a21-4c12-9c12-ef389d41bc29",
   "userId": "usr_991823",
-  "message": "Interview session created successfully",
-  "durationMs": 142
+  "durationMs": 142,
+  "message": "Interview session created successfully"
 }
 ```
 

@@ -83,7 +83,7 @@ describe('TranscriptionProcessor', () => {
     } as unknown as Job<TranscriptionJobDto>;
 
     const transientError = new InterviewAIException(
-      ErrorCode.AI_SERVICE_UNAVAILABLE,
+      ErrorCode.SERVICE_UNAVAILABLE,
       HttpStatus.SERVICE_UNAVAILABLE,
       'Whisper service down',
     );

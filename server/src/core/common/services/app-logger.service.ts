@@ -43,7 +43,10 @@ export function redactSensitiveData(data: unknown, seen = new WeakSet()): unknow
 @Injectable()
 export class AppLogger implements LoggerService {
   private formatLog(level: string, message: unknown, context?: string, meta?: unknown): string {
-    const correlationId = RequestContext.getCorrelationId();
+    const store = RequestContext.get();
+    const correlationId = store?.correlationId ?? 'no-correlation-id';
+    const userId = store?.userId;
+    const durationMs = store?.startTime ? Date.now() - store.startTime : undefined;
     const timestamp = new Date().toISOString();
     const isProd = process.env.NODE_ENV === 'production';
 
@@ -57,6 +60,8 @@ export class AppLogger implements LoggerService {
         level,
         context: context ?? 'Application',
         correlationId,
+        ...(userId ? { userId } : {}),
+        ...(durationMs !== undefined ? { durationMs } : {}),
         message: cleanMessage,
         meta: cleanMeta,
       });
@@ -81,7 +86,10 @@ export class AppLogger implements LoggerService {
   }
 
   error(message: unknown, trace?: string, context?: string, meta?: unknown) {
-    const correlationId = RequestContext.getCorrelationId();
+    const store = RequestContext.get();
+    const correlationId = store?.correlationId ?? 'no-correlation-id';
+    const userId = store?.userId;
+    const durationMs = store?.startTime ? Date.now() - store.startTime : undefined;
     const isProd = process.env.NODE_ENV === 'production';
 
     if (isProd) {
@@ -91,6 +99,8 @@ export class AppLogger implements LoggerService {
           level: 'error',
           context: context ?? 'Application',
           correlationId,
+          ...(userId ? { userId } : {}),
+          ...(durationMs !== undefined ? { durationMs } : {}),
           message:
             typeof message === 'object' ? redactSensitiveData(message) : message,
           stack: trace,
