@@ -714,13 +714,13 @@ export const DEFAULT_BULLMQ_RETRY_OPTIONS = {
 
 | Loại Tác vụ | Ngưỡng Timeout Cứng | Biến Cấu hình (`ConfigService`) | Cơ chế Thực thi | Hành động Khi Timeout |
 | :--- | :--- | :--- | :--- | :--- |
-| **LLM Single-turn Chat / Quick Scoring** | `30,000ms` (30s) | `OPENAI_TIMEOUT_MS` | `AbortController.signal` | Ném `AI_TIMEOUT`, kích hoạt Fallback |
-| **Question Generation (10 Questions + Rubric)** | `240,000ms` (4 phút) | `OPENAI_QUESTION_TIMEOUT_MS` | `AbortController.signal` | Ném `AI_TIMEOUT`, kích hoạt Fallback câu hỏi mặc định |
-| **Turn Feedback Scoring (Single Turn Rubric)** | `420,000ms` (7 phút) | `OPENAI_FEEDBACK_TIMEOUT_MS` | `AbortController.signal` | Dùng `FALLBACK_FEEDBACK_MESSAGE` (`fallback-content.ts`) |
-| **Comprehensive Deep Assessment Report** | `600,000ms` (10 phút) | `OPENAI_REPORT_TIMEOUT_MS` | `AbortController.signal` | Dùng `FALLBACK_REPORT_SUMMARIES` (`fallback-content.ts`) |
-| **Whisper Audio Transcription (STT)** | `60,000ms` (60s) | Hardcoded client timeout | `AbortController.signal` | Đánh dấu turn transcription failed, ghi log cảnh báo |
-| **Database Prisma Query** | `10,000ms` (10s) | Prisma Connection Pool Config | Prisma Query Timeout | Map sang `SERVICE_UNAVAILABLE` qua `PrismaErrorMapper` |
-| **Redis Cache / Distributed Lock** | `3,000ms` (3s) | ioredis command timeout | Redis Timeout | Bỏ qua cache, đọc DB trực tiếp |
+| **LLM Single-turn Chat / Quick Scoring** | `30,000ms` (30s) | `OPENAI_TIMEOUT_MS` | `AbortSignal.timeout` | Ném `AI_TIMEOUT`, kích hoạt Fallback |
+| **Question Generation (10 Questions + Rubric)** | `240,000ms` (4 phút) | `OPENAI_QUESTION_TIMEOUT_MS` | `AbortSignal.timeout` | Kích hoạt ngay Multi-tiered Resilience Fallback (QuestionBank / Default question) bảo đảm High Availability; nếu lỗi nghiêm trọng không thể khắc phục thì BullMQ retry (2 attempts), hết lượt chuyển session `error` + SSE |
+| **Turn Feedback Scoring (Single Turn Rubric)** | `420,000ms` (7 phút) | `OPENAI_FEEDBACK_TIMEOUT_MS` | `AbortSignal.timeout` (BullMQ `lockDuration: 420_000ms`, `stalledInterval: 60_000ms`) | Dùng `FALLBACK_FEEDBACK_MESSAGE` (`fallback-content.ts`) |
+| **Comprehensive Deep Assessment Report** | `600,000ms` (10 phút) | `OPENAI_REPORT_TIMEOUT_MS` | `AbortSignal.timeout` (BullMQ `lockDuration: 600_000ms`, `stalledInterval: 60_000ms`) | Dùng `FALLBACK_REPORT_SUMMARIES` (`fallback-content.ts`) |
+| **Whisper Audio Transcription (STT)** | `60,000ms` (60s) | `WHISPER_TIMEOUT_MS` (độc lập với audio download 15s) | `AbortSignal.timeout` (fallback mặc định 60s tại `OpenAIGateway`) | Đánh dấu turn transcription failed, ghi log cảnh báo, kích hoạt fallback feedback |
+| **Database Prisma Pool & Transaction** | Connect `30,000ms`, Tx maxWait `15,000ms`, Tx timeout `30,000ms` | `PRISMA_CONNECTION_TIMEOUT_MS`, `PRISMA_TRANSACTION_MAX_WAIT_MS`, `PRISMA_TRANSACTION_TIMEOUT_MS` | Prisma Client config | Map sang `SERVICE_UNAVAILABLE` qua `PrismaErrorMapper` |
+| **Redis SSE Pub/Sub** | Connect `10,000ms`, Publisher command `3,000ms` | `REDIS_CONNECT_TIMEOUT_MS`, `REDIS_COMMAND_TIMEOUT_MS` | ioredis client options | Log WARN, không làm sập tiến trình hay block job |
 
 ---
 

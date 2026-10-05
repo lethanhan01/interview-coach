@@ -45,4 +45,21 @@ describe('validateEnv', () => {
     expect(result.AUTH_REFRESH_COOKIE_MAX_AGE).toBe(1209600);
     expect(result.REDIS_PASSWORD).toBe('secure_redis_password');
   });
+
+  it('validates timeout defaults and custom overrides for Whisper and Redis', () => {
+    const defaultResult = validateEnv(validEnv);
+    expect(defaultResult.WHISPER_TIMEOUT_MS).toBe(60_000);
+    expect(defaultResult.REDIS_CONNECT_TIMEOUT_MS).toBe(10_000);
+    expect(defaultResult.REDIS_COMMAND_TIMEOUT_MS).toBe(3_000);
+
+    const customResult = validateEnv({
+      ...validEnv,
+      WHISPER_TIMEOUT_MS: '45000',
+      REDIS_CONNECT_TIMEOUT_MS: '5000',
+      REDIS_COMMAND_TIMEOUT_MS: '2000',
+    });
+    expect(customResult.WHISPER_TIMEOUT_MS).toBe(45_000);
+    expect(customResult.REDIS_CONNECT_TIMEOUT_MS).toBe(5_000);
+    expect(customResult.REDIS_COMMAND_TIMEOUT_MS).toBe(2_000);
+  });
 });

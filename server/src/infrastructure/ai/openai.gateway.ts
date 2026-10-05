@@ -51,6 +51,7 @@ export class OpenAIGateway implements IAIGateway {
   private readonly questionTimeoutMs: number;
   private readonly feedbackTimeoutMs: number;
   private readonly reportTimeoutMs: number;
+  private readonly whisperTimeoutMs: number;
   private quotaBlockedUntil = 0;
 
   constructor(
@@ -80,6 +81,7 @@ export class OpenAIGateway implements IAIGateway {
       config.get('OPENAI_REPORT_TIMEOUT_MS') ??
         Math.max(this.defaultTimeoutMs, 600_000),
     );
+    this.whisperTimeoutMs = Number(config.get('WHISPER_TIMEOUT_MS') ?? 60_000);
   }
 
   getChatModel(task?: ChatTask): string {
@@ -436,13 +438,14 @@ export class OpenAIGateway implements IAIGateway {
 
   async transcribe(params: TranscribeParams): Promise<TranscribeResult> {
     const { audioBuffer, mimeType, language, timeoutMs } = params;
+    const effectiveTimeoutMs = timeoutMs ?? this.whisperTimeoutMs;
 
     return this.withRetry(async () => {
       const response = await this.transcriptionClient.create(
         audioBuffer,
         mimeType,
         language,
-        timeoutMs,
+        effectiveTimeoutMs,
       );
       const responseRecord = response as unknown as Record<string, unknown>;
       const duration =

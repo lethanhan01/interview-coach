@@ -9,6 +9,9 @@ import { ConfigService } from '@nestjs/config';
 import { Observable, map } from 'rxjs';
 import Redis from 'ioredis';
 
+const DEFAULT_REDIS_CONNECT_TIMEOUT_MS = 10_000;
+const DEFAULT_REDIS_COMMAND_TIMEOUT_MS = 3_000;
+
 interface SseMessage {
   event: string;
   data: unknown;
@@ -25,12 +28,22 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     const password = this.config.get<string>('REDIS_PASSWORD') || undefined;
+    const connectTimeout = this.readPositiveMs(
+      'REDIS_CONNECT_TIMEOUT_MS',
+      DEFAULT_REDIS_CONNECT_TIMEOUT_MS,
+    );
+    const commandTimeout = this.readPositiveMs(
+      'REDIS_COMMAND_TIMEOUT_MS',
+      DEFAULT_REDIS_COMMAND_TIMEOUT_MS,
+    );
     const options = {
       host: this.config.get<string>('REDIS_HOST'),
       port: this.config.get<number>('REDIS_PORT'),
       ...(password ? { password } : {}),
+      connectTimeout,
     };
-    this.publisher = new Redis(options);
+    this.publisher = new Redis({ ...options, commandTimeout });
+    // Subscriber stays in subscribe mode, so no commandTimeout is applied.
     this.subscriber = new Redis(options);
 
     this.publisher.on('error', (err: Error) => {
@@ -39,6 +52,11 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
     this.subscriber.on('error', (err: Error) => {
       this.logger.warn(`SSE Redis subscriber connection error: ${err.message}`);
     });
+  }
+
+  private readPositiveMs(key: string, fallback: number): number {
+    const value = Number(this.config.get<number | string>(key));
+    return Number.isFinite(value) && value > 0 ? value : fallback;
   }
 
   async onModuleDestroy() {

@@ -11,6 +11,7 @@ import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 const AUDIO_DOWNLOAD_TIMEOUT_MS = 15_000;
+const DEFAULT_WHISPER_TIMEOUT_MS = 60_000;
 const ALLOWED_AUDIO_CONTENT_TYPES = new Set([
   'audio/mp4',
   'audio/wav',
@@ -26,6 +27,7 @@ interface TranscribeResult {
 export class SpeechToText {
   private readonly allowedHosts: Set<string>;
   private readonly isDevOrTest: boolean;
+  private readonly whisperTimeoutMs: number;
 
   constructor(
     @Inject(AI_GATEWAY_TOKEN)
@@ -58,6 +60,13 @@ export class SpeechToText {
     ]);
     this.isDevOrTest =
       (config.get<string>('NODE_ENV') || 'development') !== 'production';
+    const configuredWhisperTimeout = Number(
+      config.get<number | string>('WHISPER_TIMEOUT_MS'),
+    );
+    this.whisperTimeoutMs =
+      Number.isFinite(configuredWhisperTimeout) && configuredWhisperTimeout > 0
+        ? configuredWhisperTimeout
+        : DEFAULT_WHISPER_TIMEOUT_MS;
   }
 
   async transcribe(audioFileUrl: string): Promise<TranscribeResult> {
@@ -69,7 +78,7 @@ export class SpeechToText {
       return this.openAIGateway.transcribe({
         audioBuffer: buffer,
         mimeType,
-        timeoutMs: AUDIO_DOWNLOAD_TIMEOUT_MS,
+        timeoutMs: this.whisperTimeoutMs,
       });
     }
 
@@ -147,7 +156,7 @@ export class SpeechToText {
     return this.openAIGateway.transcribe({
       audioBuffer: buffer,
       mimeType: this.toSupportedMimeType(contentType),
-      timeoutMs: AUDIO_DOWNLOAD_TIMEOUT_MS,
+      timeoutMs: this.whisperTimeoutMs,
     });
   }
 

@@ -63,5 +63,54 @@ describe('SseService', () => {
     });
     expect(payload.data.timestamp).toBeDefined();
   });
+
+  describe('Redis timeouts', () => {
+    const buildService = (overrides: Record<string, unknown> = {}) =>
+      new SseService({
+        get: jest.fn((key: string) => {
+          if (key in overrides) return overrides[key];
+          return key === 'REDIS_PORT' ? 6379 : 'localhost';
+        }),
+      } as unknown as ConfigService);
+
+    it('dùng giá trị mặc định: connectTimeout 10s cho cả hai, commandTimeout 3s chỉ cho publisher', () => {
+      buildService({
+        REDIS_CONNECT_TIMEOUT_MS: undefined,
+        REDIS_COMMAND_TIMEOUT_MS: undefined,
+      }).onModuleInit();
+      const calls = (Redis as unknown as jest.Mock).mock.calls;
+      expect(calls[0][0]).toMatchObject({
+        connectTimeout: 10_000,
+        commandTimeout: 3_000,
+      });
+      expect(calls[1][0]).toMatchObject({ connectTimeout: 10_000 });
+      expect(calls[1][0]).not.toHaveProperty('commandTimeout');
+    });
+
+    it('đọc giá trị cấu hình hợp lệ từ ConfigService', () => {
+      buildService({
+        REDIS_CONNECT_TIMEOUT_MS: 2_000,
+        REDIS_COMMAND_TIMEOUT_MS: '1500',
+      }).onModuleInit();
+      const calls = (Redis as unknown as jest.Mock).mock.calls;
+      expect(calls[0][0]).toMatchObject({
+        connectTimeout: 2_000,
+        commandTimeout: 1_500,
+      });
+      expect(calls[1][0]).toMatchObject({ connectTimeout: 2_000 });
+    });
+
+    it('giá trị không hợp lệ (NaN, <= 0) quay về mặc định', () => {
+      buildService({
+        REDIS_CONNECT_TIMEOUT_MS: 'abc',
+        REDIS_COMMAND_TIMEOUT_MS: -5,
+      }).onModuleInit();
+      const calls = (Redis as unknown as jest.Mock).mock.calls;
+      expect(calls[0][0]).toMatchObject({
+        connectTimeout: 10_000,
+        commandTimeout: 3_000,
+      });
+    });
+  });
 });
 

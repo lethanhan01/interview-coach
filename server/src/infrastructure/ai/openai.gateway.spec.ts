@@ -486,6 +486,31 @@ describe('OpenAIGateway — transcription boundary', () => {
       12_000,
     );
   });
+
+  it('ném AI_TIMEOUT (không retry) khi Whisper vượt timeout', async () => {
+    const config = { get: jest.fn() };
+    const transcriptionClient = {
+      create: jest
+        .fn()
+        .mockRejectedValue(
+          new APIUserAbortError({ message: 'Request was aborted.' }),
+        ),
+    };
+    const gateway = new OpenAIGateway(
+      config as any,
+      undefined,
+      transcriptionClient as any,
+    );
+
+    await expect(
+      gateway.transcribe({
+        audioBuffer: Buffer.from('audio'),
+        mimeType: 'audio/webm',
+        timeoutMs: 60_000,
+      }),
+    ).rejects.toMatchObject({ errorCode: ErrorCode.AI_TIMEOUT });
+    expect(transcriptionClient.create).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('OpenAIGateway — Hexagonal port methods', () => {
@@ -598,7 +623,36 @@ describe('OpenAIGateway — Hexagonal port methods', () => {
       audioBuffer,
       'audio/webm',
       'en',
+      60_000,
+    );
+  });
+
+  it('transcribe delegates with explicit timeoutMs override', async () => {
+    const config = { get: jest.fn() };
+    const transcriptionClient = {
+      create: jest
+        .fn()
+        .mockResolvedValue({ text: 'audio transcribed', duration: 5 }),
+    };
+    const gateway = new OpenAIGateway(
+      config as any,
       undefined,
+      transcriptionClient as any,
+    );
+    const audioBuffer = Buffer.from('audio-data');
+
+    await gateway.transcribe({
+      audioBuffer,
+      mimeType: 'audio/mp4',
+      language: 'vi',
+      timeoutMs: 15_000,
+    });
+
+    expect(transcriptionClient.create).toHaveBeenCalledWith(
+      audioBuffer,
+      'audio/mp4',
+      'vi',
+      15_000,
     );
   });
 });

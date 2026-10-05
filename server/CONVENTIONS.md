@@ -578,12 +578,12 @@ Các tác vụ tiêu tốn tài nguyên và thời gian thực thi dài (> 3 gi�
 #### a. Hard Timeout & AbortController
 Không để lời gọi AI treo vô tận. Bắt buộc gắn timeout cứng bằng `AbortController.signal` tương ứng với tải tác vụ (đồng bộ theo Phase 13 Timeout Policy):
 - **LLM Single-turn Chat / Quick Scoring**: Tối đa `30,000ms` (30 giây) (`OPENAI_TIMEOUT_MS`).
-- **Whisper Audio Transcription (STT)**: Tối đa `60,000ms` (60 giây).
+- **Whisper Audio Transcription (STT)**: Tối đa `60,000ms` (60 giây) (`WHISPER_TIMEOUT_MS`, độc lập với audio download timeout 15s).
 - **Question Generation (10 câu hỏi + Rubric)**: Tối đa `240,000ms` (4 phút) (`OPENAI_QUESTION_TIMEOUT_MS`).
 - **Turn Feedback Scoring (Single Turn Rubric)**: Tối đa `420,000ms` (7 phút) (`OPENAI_FEEDBACK_TIMEOUT_MS`).
 - **Comprehensive Deep Assessment Report**: Tối đa `600,000ms` (10 phút) (`OPENAI_REPORT_TIMEOUT_MS`).
-- **Database Prisma Query**: `10,000ms` (10 giây).
-- **Redis Cache / Distributed Lock**: `3,000ms` (3 giây).
+- **Database Prisma Pool & Transaction**: Connection `30,000ms` (`PRISMA_CONNECTION_TIMEOUT_MS`), Tx timeout `30,000ms` (`PRISMA_TRANSACTION_TIMEOUT_MS`), Tx maxWait `15,000ms` (`PRISMA_TRANSACTION_MAX_WAIT_MS`).
+- **Redis SSE Pub/Sub**: Connect `10,000ms` (`REDIS_CONNECT_TIMEOUT_MS`), Publisher command `3,000ms` (`REDIS_COMMAND_TIMEOUT_MS`).
 
 #### b. Exponential Backoff & Jitter Retry
 Tự động retry tối đa 3 lần cho các lỗi mạng tạm thời hoặc Rate Limit (`429`, `503`):

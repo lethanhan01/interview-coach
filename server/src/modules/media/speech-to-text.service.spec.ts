@@ -136,4 +136,74 @@ describe('SpeechToText', () => {
       }),
     );
   });
+
+  describe('timeout policy', () => {
+    const buildService = (overrides: Record<string, string | number> = {}) =>
+      new SpeechToText(
+        mockOpenAI,
+        createMockConfigService({
+          APP_URL: 'https://project.example.com',
+          AUDIO_ALLOWED_HOSTS: '',
+          NODE_ENV: 'production',
+          ...overrides,
+        }) as unknown as ConfigService,
+        mockStorageAdapter,
+      );
+    const localUrl =
+      'https://project.example.com/media/audio/stream?key=user-1/audio.webm';
+
+    it('Whisper nhận timeout mặc định 60s (không phải 15s tải file) ở nhánh local disk', async () => {
+      mockStorageAdapter.readBuffer.mockResolvedValue(Buffer.from([1]));
+      mockOpenAI.transcribe.mockResolvedValue({ text: 'a', durationSeconds: 1 });
+
+      await service.transcribe(localUrl);
+
+      expect(mockOpenAI.transcribe).toHaveBeenCalledWith(
+        expect.objectContaining({ timeoutMs: 60_000 }),
+      );
+    });
+
+    it('WHISPER_TIMEOUT_MS cấu hình được và áp dụng cho nhánh local disk', async () => {
+      mockStorageAdapter.readBuffer.mockResolvedValue(Buffer.from([1]));
+      mockOpenAI.transcribe.mockResolvedValue({ text: 'a', durationSeconds: 1 });
+
+      await buildService({ WHISPER_TIMEOUT_MS: 90_000 }).transcribe(localUrl);
+
+      expect(mockOpenAI.transcribe).toHaveBeenCalledWith(
+        expect.objectContaining({ timeoutMs: 90_000 }),
+      );
+    });
+
+    it('WHISPER_TIMEOUT_MS không hợp lệ quay về 60s', async () => {
+      mockStorageAdapter.readBuffer.mockResolvedValue(Buffer.from([1]));
+      mockOpenAI.transcribe.mockResolvedValue({ text: 'a', durationSeconds: 1 });
+
+      await buildService({ WHISPER_TIMEOUT_MS: -1 }).transcribe(localUrl);
+
+      expect(mockOpenAI.transcribe).toHaveBeenCalledWith(
+        expect.objectContaining({ timeoutMs: 60_000 }),
+      );
+    });
+
+    it('nhánh HTTP: fetch dùng 15s, còn Whisper dùng WHISPER_TIMEOUT_MS', async () => {
+      const timeoutSpy = jest.spyOn(AbortSignal, 'timeout');
+      fetchMock.mockResolvedValue(
+        new Response(new Uint8Array([1, 2, 3]), {
+          status: 200,
+          headers: { 'content-type': 'audio/webm', 'content-length': '3' },
+        }),
+      );
+      mockOpenAI.transcribe.mockResolvedValue({ text: 'a', durationSeconds: 1 });
+
+      await buildService({ WHISPER_TIMEOUT_MS: 75_000 }).transcribe(
+        'https://project.example.com/audio.webm',
+      );
+
+      expect(timeoutSpy).toHaveBeenCalledWith(15_000);
+      expect(mockOpenAI.transcribe).toHaveBeenCalledWith(
+        expect.objectContaining({ timeoutMs: 75_000 }),
+      );
+      timeoutSpy.mockRestore();
+    });
+  });
 });

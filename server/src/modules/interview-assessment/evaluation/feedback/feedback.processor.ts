@@ -49,7 +49,11 @@ interface FeedbackJobDto {
 
 const REPORT_READINESS_LOCAL_ATTEMPTS = 2;
 
-@Processor(FEEDBACK_QUEUE, { concurrency: FEEDBACK_WORKER_CONCURRENCY })
+@Processor(FEEDBACK_QUEUE, {
+  concurrency: FEEDBACK_WORKER_CONCURRENCY,
+  lockDuration: 420_000,
+  stalledInterval: 60_000,
+})
 export class FeedbackProcessor extends WorkerHost {
   private readonly logger = new Logger(FeedbackProcessor.name);
 
