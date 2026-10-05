@@ -5,6 +5,7 @@ import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 import { setupSwagger } from '@core/common/swagger/swagger';
 import { resolveRuntimeRole } from '@core/runtime/runtime-role';
+import { validationErrorFactory } from '@core/common/pipes/validation-error.factory';
 
 async function bootstrap() {
   const runtimeRole = resolveRuntimeRole();
@@ -18,7 +19,13 @@ async function bootstrap() {
   app.setGlobalPrefix('api/v1', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      exceptionFactory: validationErrorFactory,
+    }),
+  );
   app.enableCors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true,

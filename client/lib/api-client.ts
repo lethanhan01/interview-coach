@@ -6,14 +6,19 @@ export function getApiBaseUrl(): string {
 }
 
 export class ApiClientError extends Error {
+  public readonly data?: unknown
+
   constructor(
     message: string,
     public readonly statusCode: number,
     public readonly errorCode?: string,
-    public readonly data?: unknown
+    public readonly details?: Record<string, string[]> | null,
+    public readonly requestId?: string,
+    rawData?: unknown,
   ) {
     super(message)
     this.name = 'ApiClientError'
+    this.data = details ?? rawData
   }
 }
 
@@ -31,6 +36,17 @@ const API_ERROR_MESSAGES: Record<string, string> = {
 
 interface ServerErrorPayload {
   success?: boolean
+  error?: {
+    code?: string
+    message?: string
+    details?: Record<string, string[]> | null
+  }
+  meta?: {
+    requestId?: string
+    correlationId?: string
+    timestamp?: string
+    path?: string
+  }
   errorCode?: string
   message?: string
   [key: string]: unknown
@@ -138,12 +154,24 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
 
   if (!response.ok || isErrorBody(body)) {
     const err = body
+    const code = err.error?.code ?? err.errorCode
+    const details = err.error?.details ?? null
+    const requestId = err.meta?.requestId
+
     const message =
-      (err.errorCode ? API_ERROR_MESSAGES[err.errorCode] : undefined) ??
+      (code ? API_ERROR_MESSAGES[code] : undefined) ??
+      err.error?.message ??
       err.message ??
-      err.errorCode ??
+      code ??
       `Yêu cầu thất bại (${response.status})`
-    throw new ApiClientError(message, response.status, err.errorCode, body)
+    throw new ApiClientError(
+      message,
+      response.status,
+      code,
+      details,
+      requestId,
+      body,
+    )
   }
 
   return body as T

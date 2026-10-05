@@ -1,4 +1,5 @@
 import { HttpStatus, HttpException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { InterviewAIExceptionFilter } from './interview-ai-exception.filter';
 import { InterviewAIException } from './interview-ai.exception';
 import { ErrorCode } from './error-code.enum';
@@ -28,11 +29,13 @@ describe('InterviewAIExceptionFilter', () => {
     filter = new InterviewAIExceptionFilter();
   });
 
-  it('xử lý InterviewAIException — trả đúng status và errorCode', () => {
+  it('xử lý InterviewAIException — trả đúng status và hierarchical error envelope', () => {
     const res = mockResponse();
     const exception = new InterviewAIException(
       ErrorCode.FORBIDDEN,
       HttpStatus.FORBIDDEN,
+      'Access denied',
+      { details: { reason: ['Account suspended'] } },
     );
 
     filter.catch(exception, mockHost(res) as never);
@@ -41,12 +44,20 @@ describe('InterviewAIExceptionFilter', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         success: false,
-        errorCode: ErrorCode.FORBIDDEN,
+        error: {
+          code: ErrorCode.FORBIDDEN,
+          message: 'Access denied',
+          details: { reason: ['Account suspended'] },
+        },
+        meta: expect.objectContaining({
+          path: '/api/v1/test',
+          timestamp: expect.any(String),
+        }),
       }),
     );
   });
 
-  it('xử lý HttpException 401 — map sang UNAUTHORIZED error code', () => {
+  it('xử lý HttpException 401 — map sang UNAUTHORIZED error code trong envelope', () => {
     const res = mockResponse();
     const exception = new HttpException(
       'Unauthorized',
@@ -59,7 +70,10 @@ describe('InterviewAIExceptionFilter', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         success: false,
-        errorCode: ErrorCode.UNAUTHORIZED,
+        error: expect.objectContaining({
+          code: ErrorCode.UNAUTHORIZED,
+          message: 'Unauthorized',
+        }),
       }),
     );
   });
@@ -72,7 +86,33 @@ describe('InterviewAIExceptionFilter', () => {
     );
 
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ errorCode: ErrorCode.FORBIDDEN }),
+      expect.objectContaining({
+        error: expect.objectContaining({ code: ErrorCode.FORBIDDEN }),
+      }),
+    );
+  });
+
+  it('xử lý PrismaClientKnownRequestError P2002 — map sang CONFLICT (409)', () => {
+    const res = mockResponse();
+    const prismaError = new Prisma.PrismaClientKnownRequestError(
+      'Unique constraint failed',
+      {
+        code: 'P2002',
+        clientVersion: '7.8.0',
+        meta: { target: ['email'] },
+      },
+    );
+
+    filter.catch(prismaError, mockHost(res) as never);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({
+          code: ErrorCode.CONFLICT,
+        }),
+      }),
     );
   });
 
@@ -84,12 +124,14 @@ describe('InterviewAIExceptionFilter', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         success: false,
-        errorCode: ErrorCode.INTERNAL_ERROR,
+        error: expect.objectContaining({
+          code: ErrorCode.INTERNAL_ERROR,
+        }),
       }),
     );
   });
 
-  it('response có path và timestamp', () => {
+  it('response có path và timestamp trong meta', () => {
     const res = mockResponse();
     const exception = new InterviewAIException(
       ErrorCode.NOT_FOUND,
@@ -98,9 +140,11 @@ describe('InterviewAIExceptionFilter', () => {
 
     filter.catch(exception, mockHost(res, '/api/v1/sessions') as never);
 
-    const body = res.json.mock.calls[0][0] as Record<string, unknown>;
-    expect(body.path).toBe('/api/v1/sessions');
-    expect(body.timestamp).toBeDefined();
+    const body = res.json.mock.calls[0][0] as {
+      meta: { path: string; timestamp: string };
+    };
+    expect(body.meta.path).toBe('/api/v1/sessions');
+    expect(body.meta.timestamp).toBeDefined();
   });
 
   it('response gắn requestId nếu request có header x-request-id', () => {
@@ -115,7 +159,7 @@ describe('InterviewAIExceptionFilter', () => {
       mockHost(res, '/api/v1/test', { 'x-request-id': 'req-xyz-123' }) as never,
     );
 
-    const body = res.json.mock.calls[0][0] as Record<string, unknown>;
-    expect(body.requestId).toBe('req-xyz-123');
+    const body = res.json.mock.calls[0][0] as { meta: { requestId?: string } };
+    expect(body.meta.requestId).toBe('req-xyz-123');
   });
 });
