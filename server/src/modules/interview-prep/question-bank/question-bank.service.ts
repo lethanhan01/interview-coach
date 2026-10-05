@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import type { Prisma, QuestionSessionType } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
@@ -63,6 +63,8 @@ export interface QuestionBankAllocationResult {
 
 @Injectable()
 export class QuestionBankService {
+  private readonly logger = new Logger(QuestionBankService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly questionCriteria: QuestionCriteriaService,
@@ -303,7 +305,11 @@ export class QuestionBankService {
       .map((question) => {
         try {
           return this.mapFallbackQuestion(question, language, rubricVersionId);
-        } catch {
+        } catch (error) {
+          // convention: Rule 6 - Skip individual malformed fallback question
+          this.logger.warn(
+            `Failed to map fallback question ${question.id}: ${error instanceof Error ? error.message : String(error)}`,
+          );
           return null;
         }
       })

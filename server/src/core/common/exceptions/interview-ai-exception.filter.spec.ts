@@ -162,4 +162,41 @@ describe('InterviewAIExceptionFilter', () => {
     const body = res.json.mock.calls[0][0] as { meta: { requestId?: string } };
     expect(body.meta.requestId).toBe('req-xyz-123');
   });
+
+  it('response gắn correlationId nếu request có header x-correlation-id', () => {
+    const res = mockResponse();
+    const exception = new InterviewAIException(
+      ErrorCode.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST,
+    );
+
+    filter.catch(
+      exception,
+      mockHost(res, '/api/v1/test', { 'x-correlation-id': 'corr-abc-999' }) as never,
+    );
+
+    const body = res.json.mock.calls[0][0] as {
+      meta: { correlationId?: string };
+    };
+    expect(body.meta.correlationId).toBe('corr-abc-999');
+  });
+
+  it('ghi log ERROR khi InterviewAIException là non-operational hoặc status >= 500', () => {
+    const res = mockResponse();
+    const loggerErrorSpy = jest.spyOn((filter as any).logger, 'error');
+
+    const exception = new InterviewAIException(
+      ErrorCode.SERVICE_UNAVAILABLE,
+      HttpStatus.SERVICE_UNAVAILABLE,
+      'DB unreachable',
+      { isOperational: false },
+    );
+
+    filter.catch(exception, mockHost(res) as never);
+
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[SERVICE_UNAVAILABLE] DB unreachable'),
+      expect.anything(),
+    );
+  });
 });

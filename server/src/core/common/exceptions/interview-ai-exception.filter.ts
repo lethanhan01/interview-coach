@@ -40,6 +40,13 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
       errorCode = exception.errorCode;
       message = exception.message;
       details = exception.details ?? null;
+
+      if (!exception.isOperational || status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+        this.logger.error(
+          `[${errorCode}] ${message}`,
+          exception.stack,
+        );
+      }
     } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       const mapped = PrismaErrorMapper.map(exception);
       status = mapped.getStatus();
@@ -95,7 +102,11 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
       RequestContext.getRequestId() ||
       undefined;
 
-    const correlationId = RequestContext.getCorrelationId();
+    const correlationId =
+      (request.headers?.['x-correlation-id'] as string) ||
+      (request.headers?.['X-Correlation-ID'] as string) ||
+      RequestContext.getCorrelationId() ||
+      undefined;
 
     response.status(status).json({
       success: false,

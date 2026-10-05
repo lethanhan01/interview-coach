@@ -83,7 +83,12 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
           (this.channelSubscribers.get(channel) ?? 1) - 1;
         if (remainingSubscribers <= 0) {
           this.channelSubscribers.delete(channel);
-          this.subscriber.unsubscribe(channel).catch(() => {});
+          // convention: Rule 6 - Non-fatal cleanup: unsubscription error during client disconnect
+          this.subscriber.unsubscribe(channel).catch((err: unknown) => {
+            this.logger.debug?.(
+              `Failed to unsubscribe from Redis channel ${channel}: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          });
         } else this.channelSubscribers.set(channel, remainingSubscribers);
       };
     }).pipe(

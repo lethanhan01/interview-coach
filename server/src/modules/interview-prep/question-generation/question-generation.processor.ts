@@ -51,8 +51,18 @@ export class QuestionGenerationProcessor extends WorkerHost {
   private async markSessionError(sessionId: string): Promise<void> {
     await this.prisma.interviewSession
       .update({ where: { id: sessionId }, data: { status: 'error' } })
-      .catch(() => {});
-    await this.emitStatus(sessionId, 'error').catch(() => {});
+      // Rule 6: best-effort cleanup, must log so infra failures are visible
+      .catch((err: unknown) =>
+        this.logger.warn(
+          `Failed to mark session ${sessionId} as error in DB: ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
+    // Rule 6: best-effort SSE notify, must log if emit fails
+    await this.emitStatus(sessionId, 'error').catch((err: unknown) =>
+      this.logger.warn(
+        `Failed to emit error status for session ${sessionId}: ${err instanceof Error ? err.message : String(err)}`,
+      ),
+    );
   }
 
   private async emitStatus(

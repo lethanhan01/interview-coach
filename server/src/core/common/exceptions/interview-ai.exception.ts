@@ -10,6 +10,9 @@ export interface InterviewAIExceptionOptions {
 
 export class InterviewAIException extends HttpException {
   public readonly details?: Record<string, string[]> | unknown;
+  // Explicit class property for cause so consumers can read it without
+  // relying on the native Node.js Error.cause (architectural clarity).
+  public override readonly cause: unknown;
   public readonly metadata?: Record<string, unknown>;
   public readonly isOperational: boolean;
 
@@ -31,9 +34,12 @@ export class InterviewAIException extends HttpException {
     );
 
     this.details = options?.details;
+    this.cause = options?.cause;
     this.metadata = options?.metadata;
     this.isOperational = options?.isOperational ?? true;
 
+    // Giữ nguyên prototype chain cho instanceof checking
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
+
