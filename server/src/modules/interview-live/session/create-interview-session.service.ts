@@ -1,4 +1,4 @@
-import { Inject, Injectable, HttpStatus } from '@nestjs/common';
+import { Inject, Injectable, HttpStatus, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { InterviewSession, SavedJobDescription } from '@prisma/client';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
@@ -14,6 +14,7 @@ import { inferTargetSfiaLevel } from '@modules/interview-prep/contracts';
 
 @Injectable()
 export class CreateInterviewSession {
+  private readonly logger = new Logger(CreateInterviewSession.name);
   private readonly sessionCreationLimitPer24h: number;
 
   constructor(
@@ -150,7 +151,10 @@ export class CreateInterviewSession {
           savedJobDescription.jobTitle,
         );
         onetSocCode = occupation ? occupation.socCode : '15-1252.00';
-      } catch {
+      } catch (error: unknown) {
+        this.logger.warn(
+          `Failed to infer ONET occupation for "${savedJobDescription.jobTitle}": ${error instanceof Error ? error.message : String(error)}. Defaulting to 15-1252.00.`,
+        );
         onetSocCode = '15-1252.00';
       }
     }
@@ -187,7 +191,10 @@ export class CreateInterviewSession {
         } else {
           normalizedTechStack = rawTech;
         }
-      } catch {
+      } catch (error: unknown) {
+        this.logger.warn(
+          `Failed to fetch ONET tools and technology: ${error instanceof Error ? error.message : String(error)}. Falling back to raw tech stack.`,
+        );
         normalizedTechStack = rawTech;
       }
     }

@@ -531,8 +531,10 @@ export class OnetAdminService {
             if (lvl) {
               responsibility = lvl.description;
             }
-          } catch {
-            // ignore facade lookup failure
+          } catch (error: unknown) {
+            this.logger.warn(
+              `Failed to lookup SFIA metadata for ${m.sfiaSkillCode}: ${error instanceof Error ? error.message : String(error)}`,
+            );
           }
         }
 
@@ -704,8 +706,10 @@ export class OnetAdminService {
           minLevel = skill.minLevel;
           maxLevel = skill.maxLevel;
         }
-      } catch {
-        // ignore facade failure
+      } catch (error: unknown) {
+        this.logger.warn(
+          `Failed to lookup SFIA metadata for ${updated.sfiaSkillCode}: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     }
 

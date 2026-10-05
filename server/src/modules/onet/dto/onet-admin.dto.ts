@@ -137,6 +137,7 @@ export class OnetSearchOccupationsQueryDto {
   @IsOptional()
   @IsInt()
   @Min(1)
+  // convention-ignore: PRES_003 Admin requires listing all ONET occupations up to 1500
   @Max(1500)
   @Type(() => Number)
   limit?: number = 50;

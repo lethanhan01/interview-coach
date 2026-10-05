@@ -38,6 +38,7 @@ export class SpeechToText {
     let appHost = 'localhost';
     try {
       appHost = new URL(rawAppUrl).hostname.toLowerCase();
+    // convention-ignore: ERR_003 Fallback to localhost if APP_URL is not a valid absolute URL
     } catch {
       // Keep default
     }

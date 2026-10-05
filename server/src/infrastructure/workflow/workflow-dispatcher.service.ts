@@ -182,6 +182,9 @@ export class WorkflowDispatcher
         },
       });
     } catch (error: unknown) {
+      this.logger.error(
+        `Failed to dispatch command ${command.id} (${command.commandType}): ${error instanceof Error ? error.message : String(error)}`,
+      );
       await this.recordFailure(command, error);
     }
   }

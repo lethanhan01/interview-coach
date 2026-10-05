@@ -171,8 +171,10 @@ export class UnifiedReportGeneratorService {
           if (sfiaSkill?.name) {
             skillName = sfiaSkill.name;
           }
-        } catch {
-          // Bỏ qua lỗi tra cứu, giữ skillCode
+        } catch (error: unknown) {
+          this.logger.warn(
+            `Failed to resolve SFIA skill name for ${skill.skillCode}: ${error instanceof Error ? error.message : String(error)}`,
+          );
         }
       }
 
