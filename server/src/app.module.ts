@@ -5,7 +5,7 @@ import {
   Module,
   NestModule,
 } from '@nestjs/common';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -14,6 +14,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { CommonModule } from '@core/common/common.module';
 import { validateEnv } from '@core/config/env.validation';
 import { InterviewAIExceptionFilter } from '@core/common/exceptions/interview-ai-exception.filter';
+import { IdempotencyInterceptor } from '@core/common/interceptors/idempotency.interceptor';
 import {
   MaintenanceModeGuard,
   JwtAuthGuard,
@@ -87,6 +88,7 @@ class ApiRootController {
   controllers: [ApiRootController],
   providers: [
     { provide: APP_FILTER, useClass: InterviewAIExceptionFilter },
+    { provide: APP_INTERCEPTOR, useExisting: IdempotencyInterceptor },
     { provide: APP_GUARD, useClass: MaintenanceModeGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },

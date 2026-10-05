@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserRole } from '@core/common/enums';
-import { Roles, CurrentUser } from '@core/common/decorators';
+import { Roles, CurrentUser, Idempotent } from '@core/common/decorators';
 import { TurnService } from './turn.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
@@ -88,6 +88,7 @@ export class TurnController {
   }
 
   @Post()
+  @Idempotent({ ttlSeconds: 86400 })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Submit a text or voice answer' })
   @ApiParam({ name: 'sessionId', format: 'uuid' })

@@ -66,7 +66,14 @@ const EnvSchema = z.object({
   OPENAI_FEEDBACK_TIMEOUT_MS: z.coerce.number().positive().default(420_000),
   OPENAI_REPORT_TIMEOUT_MS: z.coerce.number().positive().default(600_000),
   OPENAI_QUESTION_TIMEOUT_MS: z.coerce.number().positive().default(240_000),
+  WHISPER_BASE_URL: z.string().url().optional(),
   WHISPER_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+  IDEMPOTENCY_LOCK_TTL_SECONDS: z.coerce.number().int().positive().default(60),
+  IDEMPOTENCY_CACHE_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(86_400),
   REDIS_CONNECT_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
   REDIS_COMMAND_TIMEOUT_MS: z.coerce.number().int().positive().default(3_000),
   OPENAI_QUESTION_MAX_TOKENS: z.coerce.number().int().positive().default(2_400),

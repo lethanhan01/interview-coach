@@ -251,6 +251,14 @@ Bảng mã lỗi chuẩn hóa tại Client (`API_ERROR_MESSAGES`):
 | `SERVICE_UNAVAILABLE` | Database/Hạ tầng tạm thời gián đoạn | "Dịch vụ tạm thời không khả dụng. Vui lòng thử lại sau." |
 | `AI_TIMEOUT` | Lời gọi AI vượt quá thời gian cho phép | "Hệ thống AI phản hồi chậm. Vui lòng thử lại sau ít phút." |
 | `AI_QUOTA_EXCEEDED` | Hết hạn mức AI | "Hệ thống đang quá tải hạn mức AI. Vui lòng thử lại sau." |
+| `REQUEST_IN_PROGRESS` | Thao tác cùng khóa idempotency đang xử lý | "Thao tác đang được xử lý, vui lòng không gửi yêu cầu liên tục." |
+
+### 9.1. Khóa Chống Trùng lặp (HTTP REST Idempotency)
+Client có thể truyền header `Idempotency-Key: <uuid-v4>` (hoặc tùy chọn `idempotencyKey` trong `RequestOptions` của `apiClient`) khi thực hiện các yêu cầu mutation (`POST`, `PUT`, `PATCH`, `DELETE`):
+- **Request đang xử lý (`IN_PROGRESS`)**: Server ném HTTP 409 `REQUEST_IN_PROGRESS`. Client hiển thị thông báo cảnh báo thân thiện và tránh spam request.
+- **Request đã hoàn thành (`COMPLETED`)**: Server trả về kết quả nguyên vẹn từ Redis cache kèm headers `Idempotent-Replay: true` và `X-Cache-Lookup: HIT`, không kích hoạt lại use case.
+- **Phát hiện Payload Mismatch (SHA-256)**: Nếu gửi cùng key nhưng thay đổi request body, server ném HTTP 409 `CONFLICT` để bảo vệ tính toàn vẹn dữ liệu.
+- **Khả năng phục hồi (Fail-Open)**: Khi Redis mất kết nối, hệ thống ghi log cảnh báo và cho phép request tiếp tục chạy, không làm gián đoạn buổi phỏng vấn.
 
 ---
 

@@ -1,4 +1,5 @@
-import { ApiClientError } from '../api-client'
+import { vi } from 'vitest'
+import { ApiClientError, API_ERROR_MESSAGES, apiClient } from '../api-client'
 
 describe('ApiClientError', () => {
   it('khởi tạo với các tham số cơ bản', () => {
@@ -56,6 +57,79 @@ describe('ApiClientError', () => {
     expect(error.requestId).toBe('req-test-999')
     expect(error.correlationId).toBe('corr-trace-888')
     expect(error.data).toEqual(details)
+  })
+})
+
+describe('apiClient Idempotency & Error Messages', () => {
+  const originalFetch = global.fetch
+
+  afterEach(() => {
+    global.fetch = originalFetch
+  })
+
+  it('định nghĩa thông điệp tiếng Việt thân thiện cho REQUEST_IN_PROGRESS', () => {
+    expect(API_ERROR_MESSAGES.REQUEST_IN_PROGRESS).toBe(
+      'Thao tác đang được xử lý, vui lòng không gửi yêu cầu liên tục.',
+    )
+  })
+
+  it('gửi header Idempotency-Key khi options chứa idempotencyKey', async () => {
+    let capturedHeaders: Record<string, string> | undefined
+
+    global.fetch = vi.fn().mockImplementation((url, init) => {
+      capturedHeaders = init?.headers as Record<string, string>
+      return Promise.resolve({
+        ok: true,
+        status: 201,
+        json: () => Promise.resolve({ id: 'sess-123' }),
+      })
+    })
+
+    const res = await apiClient.post(
+      '/sessions',
+      { role: 'Backend' },
+      { idempotencyKey: 'custom-key-uuid-123' },
+    )
+
+    expect(res).toEqual({ id: 'sess-123' })
+    expect(capturedHeaders?.['Idempotency-Key']).toBe('custom-key-uuid-123')
+    expect(capturedHeaders?.['Content-Type']).toBe('application/json')
+  })
+
+  it('tự động sinh header Idempotency-Key khi options không chứa idempotencyKey trên POST', async () => {
+    let capturedHeaders: Record<string, string> | undefined
+
+    global.fetch = vi.fn().mockImplementation((url, init) => {
+      capturedHeaders = init?.headers as Record<string, string>
+      return Promise.resolve({
+        ok: true,
+        status: 201,
+        json: () => Promise.resolve({ id: 'sess-auto-key' }),
+      })
+    })
+
+    const res = await apiClient.post('/sessions', { role: 'Backend' })
+
+    expect(res).toEqual({ id: 'sess-auto-key' })
+    expect(capturedHeaders?.['Idempotency-Key']).toBeDefined()
+    expect(capturedHeaders?.['Idempotency-Key'].length).toBeGreaterThan(10)
+  })
+
+  it('không gắn header Idempotency-Key trên GET requests', async () => {
+    let capturedHeaders: Record<string, string> | undefined
+
+    global.fetch = vi.fn().mockImplementation((url, init) => {
+      capturedHeaders = init?.headers as Record<string, string>
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ data: [] }),
+      })
+    })
+
+    await apiClient.get('/sessions')
+
+    expect(capturedHeaders?.['Idempotency-Key']).toBeUndefined()
   })
 })
 

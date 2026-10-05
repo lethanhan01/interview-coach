@@ -62,4 +62,21 @@ describe('validateEnv', () => {
     expect(customResult.REDIS_CONNECT_TIMEOUT_MS).toBe(5_000);
     expect(customResult.REDIS_COMMAND_TIMEOUT_MS).toBe(2_000);
   });
+
+  it('validates idempotency TTL defaults and custom overrides', () => {
+    const defaultResult = validateEnv(validEnv);
+    expect(defaultResult.IDEMPOTENCY_LOCK_TTL_SECONDS).toBe(60);
+    expect(defaultResult.IDEMPOTENCY_CACHE_TTL_SECONDS).toBe(86_400);
+    expect(defaultResult.WHISPER_BASE_URL).toBeUndefined();
+
+    const customResult = validateEnv({
+      ...validEnv,
+      IDEMPOTENCY_LOCK_TTL_SECONDS: '120',
+      IDEMPOTENCY_CACHE_TTL_SECONDS: '3600',
+      WHISPER_BASE_URL: 'http://localhost:8000/v1',
+    });
+    expect(customResult.IDEMPOTENCY_LOCK_TTL_SECONDS).toBe(120);
+    expect(customResult.IDEMPOTENCY_CACHE_TTL_SECONDS).toBe(3600);
+    expect(customResult.WHISPER_BASE_URL).toBe('http://localhost:8000/v1');
+  });
 });

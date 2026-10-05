@@ -23,7 +23,7 @@ export class ApiClientError extends Error {
   }
 }
 
-const API_ERROR_MESSAGES: Record<string, string> = {
+export const API_ERROR_MESSAGES: Record<string, string> = {
   SESSION_LIMIT_EXCEEDED:
     'Bạn đã tạo 10 phiên phỏng vấn trong 24 giờ qua. Hãy tiếp tục phiên cũ hoặc thử lại sau.',
   UNAUTHORIZED: 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ.',
@@ -45,6 +45,8 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   INVALID_VERIFICATION_CODE: 'Mã xác thực không chính xác hoặc đã hết hạn.',
   RATE_LIMIT_EXCEEDED:
     'Hệ thống đang tiếp nhận quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.',
+  REQUEST_IN_PROGRESS:
+    'Thao tác đang được xử lý, vui lòng không gửi yêu cầu liên tục.',
 }
 
 interface ServerErrorPayload {
@@ -94,13 +96,35 @@ const AUTH_EXCLUDED_FROM_REFRESH = [
   '/auth/email-verification',
 ]
 
-async function request<T>(path: string, options: RequestInit): Promise<T> {
+function generateUuid(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
+export interface RequestOptions extends RequestInit {
+  idempotencyKey?: string
+}
+
+async function request<T>(path: string, options: RequestOptions): Promise<T> {
   const isFormData =
     typeof FormData !== 'undefined' && options.body instanceof FormData
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
   }
   if (!isFormData) headers['Content-Type'] = 'application/json'
+
+  const method = (options.method || 'GET').toUpperCase()
+  const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)
+
+  if (isMutation) {
+    headers['Idempotency-Key'] = options.idempotencyKey || generateUuid()
+  }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -193,22 +217,26 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
 }
 
 export const apiClient = {
-  get: <T>(path: string) => request<T>(path, { method: 'GET' }),
+  get: <T>(path: string, options?: RequestOptions) =>
+    request<T>(path, { ...options, method: 'GET' }),
 
-  post: <T>(path: string, body?: unknown) =>
+  post: <T>(path: string, body?: unknown, options?: RequestOptions) =>
     request<T>(path, {
+      ...options,
       method: 'POST',
       body: body !== undefined ? JSON.stringify(body) : undefined,
     }),
 
-  postForm: <T>(path: string, body: FormData) =>
-    request<T>(path, { method: 'POST', body }),
+  postForm: <T>(path: string, body: FormData, options?: RequestOptions) =>
+    request<T>(path, { ...options, method: 'POST', body }),
 
-  patch: <T>(path: string, body?: unknown) =>
+  patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>
     request<T>(path, {
+      ...options,
       method: 'PATCH',
       body: body !== undefined ? JSON.stringify(body) : undefined,
     }),
 
-  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  delete: <T>(path: string, options?: RequestOptions) =>
+    request<T>(path, { ...options, method: 'DELETE' }),
 }

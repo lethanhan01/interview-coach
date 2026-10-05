@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { Observable, catchError, of } from 'rxjs';
 import { UserRole } from '@core/common/enums';
-import { Roles, CurrentUser } from '@core/common/decorators';
+import { Roles, CurrentUser, Idempotent } from '@core/common/decorators';
 import { SseTokenGuard } from '@core/common/guards';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { SessionService } from './session.service';
@@ -86,6 +86,7 @@ export class SessionController {
   ) {}
 
   @Post()
+  @Idempotent({ ttlSeconds: 86400 })
   @ApiOperation({
     summary: 'Create an interview session and queue question generation',
   })
@@ -158,6 +159,7 @@ export class SessionController {
   }
 
   @Patch(':id/status')
+  @Idempotent({ ttlSeconds: 86400 })
   @ApiOperation({ summary: 'Update interview session status' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ description: 'Updated session.' })

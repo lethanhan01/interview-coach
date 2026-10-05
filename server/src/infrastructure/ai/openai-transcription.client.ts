@@ -7,8 +7,14 @@ export class OpenAITranscriptionClient {
   private readonly client: OpenAI;
 
   constructor(config: ConfigService) {
+    const baseURL =
+      config.get<string>('WHISPER_BASE_URL') ||
+      config.get<string>('OPENAI_BASE_URL') ||
+      undefined;
+
     this.client = new OpenAI({
       apiKey: config.get<string>('OPENAI_API_KEY') ?? 'lm-studio',
+      ...(baseURL ? { baseURL } : {}),
       maxRetries: 0,
     });
   }

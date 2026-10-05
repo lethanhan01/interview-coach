@@ -286,16 +286,21 @@ export class PaginatedResponseDto<T> {
 Khi số lượng bản ghi lớn (> 100,000 dòng như Chat Turns, Event Logs), cấm dùng `skip/offset`. Bắt buộc dùng `cursor` (ID hoặc timestamp) kết hợp `take`.
 
 ### 3.6. Chuẩn hóa Khóa Chống Trùng lặp (Idempotency & Double-Submit Prevention)
-Hệ thống áp dụng quản trị chống trùng lặp theo 2 cấp độ:
+Hệ thống áp dụng quản trị chống trùng lặp toàn diện theo 2 cấp độ:
 
-1. **Cấp độ Transactional Outbox (Hiện hành - Production Ready):**
+1. **Cấp độ Transactional Outbox (Xử lý Bất đồng bộ - Production Ready):**
    - Mọi tác vụ bất đồng bộ nặng (sinh câu hỏi, bóc băng, chấm điểm, sinh báo cáo) khi dispatch vào outbox bắt buộc chỉ định `idempotencyKey: `${commandType}:${aggregateId}``.
    - `WorkflowService.enqueueInTransaction()` thực hiện Prisma `upsert` với mệnh đề `update: { updatedAt: new Date() }` để kích hoạt atomic `INSERT ... ON CONFLICT DO UPDATE` ở mức PostgreSQL, ngăn ngừa tuyệt đối lỗi `P2002` race condition khi có nhiều request đồng thời.
-2. **Cấp độ HTTP REST Mutation (Lộ trình Phase 22 - Tech Debt Roadmap):**
-   - Khi triển khai Redis-backed Idempotency Interceptor cho REST endpoints:
-     - Client gửi UUIDv4 qua header `Idempotency-Key`.
-     - Key đang xử lý: Ném `InterviewAIException(ErrorCode.REQUEST_IN_PROGRESS, HttpStatus.CONFLICT)`.
-     - Key đã hoàn thành: Trả trực tiếp response cache `200 OK` / `201 Created`.
+2. **Cấp độ HTTP REST Mutation (Xử lý Đồng bộ REST - Production Ready):**
+   - Triển khai toàn diện thông qua `IdempotencyInterceptor` (`@core/common/interceptors`) và decorator `@Idempotent()`:
+     - **Tự động bảo vệ**: Đăng ký làm `APP_INTERCEPTOR` toàn cục cho mọi mutating methods (`POST`, `PUT`, `PATCH`, `DELETE`) khi client gửi header `Idempotency-Key` (hoặc `X-Idempotency-Key`).
+     - **Cấu hình tùy biến**: Decorator `@Idempotent({ required?: boolean, ttlSeconds?: number })` cho phép bắt buộc hoặc cấu hình TTL riêng (mặc định 24h = 86.400s) cho các endpoint quan trọng như `SessionController.create`, `SessionController.updateStatus`, `TurnController.submitAnswer`.
+     - **Định dạng Redis Key**: `idempotency:${userId}:${method}:${path}:${key}` bảo đảm cô lập hoàn toàn giữa các người dùng và các API khác nhau.
+     - **Payload Fingerprinting**: Tự động tạo hash SHA-256 của request body. Nếu client gửi cùng key nhưng thay đổi body, ném ngay `InterviewAIException(ErrorCode.CONFLICT, HttpStatus.CONFLICT, 'Idempotency key was previously used with a different request payload')`.
+     - **Trạng thái đang xử lý (`IN_PROGRESS`)**: Khóa nguyên tử qua `SET NX EX 60s`. Nếu có request đồng thời thứ hai cùng key, ném `InterviewAIException(ErrorCode.REQUEST_IN_PROGRESS, HttpStatus.CONFLICT)`.
+     - **Trạng thái hoàn tất (`COMPLETED`)**: Trả lại nguyên vẹn response body và status code từ cache kèm headers `Idempotent-Replay: true` và `X-Cache-Lookup: HIT`, không kích hoạt lại use case.
+     - **Tự phục hồi khi lỗi**: Tự động xóa lock trong Redis khi pipeline ném unhandled error (5xx) để client có thể retry ngay lập tức.
+     - **Khả năng chống chịu (Fail-Open)**: Khi Redis mất kết nối hoặc timeout, ghi log cảnh báo `WARN` và cho phép request tiếp tục xử lý, bảo đảm High Availability cho phiên phỏng vấn.
 
 ### 3.7. Quy chuẩn Server-Sent Events (SSE) & Real-Time Communication
 Hệ thống sử dụng **Server-Sent Events (SSE)** làm phương thức giao tiếp thời gian thực đơn chiều (Server ➔ Client) cho toàn bộ diễn biến phỏng vấn (câu hỏi sẵn sàng, tiến độ chấm điểm, thông báo lỗi):
@@ -605,8 +610,11 @@ export interface AiExecutionMetrics {
 }
 ```
 
-#### d. Model Fallback
-Khi model chính (Primary: `gpt-4o`) liên tục quá tải hoặc lỗi quota, AI Gateway phải có cơ chế chuyển giao tự động sang model thứ cấp (Secondary: `gemini-1.5-flash` hoặc `gpt-4o-mini`) để duy trì độ sẵn sàng 99.9%.
+#### d. Local GPU LLM & Deterministic Content Fallback
+Hệ thống được thiết kế theo mô hình **Self-hosted / Local GPU Inference Readiness**:
+- **Mô hình Ngôn ngữ (LLM Chat & Scoring)**: Tích hợp qua `OpenAIChatClient` trỏ vào endpoint tương thích chuẩn OpenAI (`OPENAI_BASE_URL`, ví dụ `http://127.0.0.1:1234/v1` cho LM Studio, vLLM, hoặc Ollama) với model local như `google/gemma-4-e4b`.
+- **Mô hình Nhận dạng Giọng nói (Whisper STT)**: Tích hợp qua `OpenAITranscriptionClient` hỗ trợ biến cấu hình `WHISPER_BASE_URL` (ví dụ `http://localhost:8000/v1` cho faster-whisper-server trên GPU).
+- **Phục hồi Nội dung Xác định (Deterministic Content Fallback)**: Khi AI gặp sự cố quota, timeout hoặc lỗi server nội bộ, hệ thống tự động kích hoạt `fallback-content.ts` sinh nhận xét và báo cáo tổng kết đa ngôn ngữ (`vi`/`en`), bảo đảm 100% người dùng nhận được kết quả mà không cần phụ thuộc vào nhà cung cấp phụ trợ đám mây khác.
 
 ---
 
