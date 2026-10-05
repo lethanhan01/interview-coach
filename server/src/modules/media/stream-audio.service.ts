@@ -61,6 +61,7 @@ export class StreamAudioService {
           ErrorCode.NOT_FOUND,
           HttpStatus.NOT_FOUND,
           'Không tìm thấy tệp âm thanh trên máy chủ.',
+          { cause: err },
         );
       }
       throw err;

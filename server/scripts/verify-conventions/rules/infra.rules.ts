@@ -1,5 +1,21 @@
 import * as ts from 'typescript';
 import { RuleDefinition, Violation } from '../types';
+import { PROCESS_ENV_WHITELIST } from '../config';
+
+const VENDOR_AI_SDKS = [
+  'openai',
+  '@google/genai',
+  '@google/generative-ai',
+  '@anthropic-ai/sdk',
+  'langchain',
+  '@langchain/core',
+];
+
+function isVendorAiModule(specifier: string): boolean {
+  return VENDOR_AI_SDKS.some(
+    (sdk) => specifier === sdk || specifier.startsWith(`${sdk}/`),
+  );
+}
 
 export const infra001VendorAiSdkProhibition: RuleDefinition = {
   id: 'INFRA_001',
@@ -7,7 +23,7 @@ export const infra001VendorAiSdkProhibition: RuleDefinition = {
   category: 'INFRA',
   severity: 'ERROR',
   description:
-    'Direct OpenAI SDK imports and instantiations are prohibited outside src/infrastructure/ai/.',
+    'Direct AI vendor SDK imports and instantiations (OpenAI, Gemini, Anthropic) are prohibited outside src/infrastructure/ai/.',
   check: (ctx) => {
     if (
       ctx.relPath.startsWith('infrastructure/ai/') ||
@@ -19,8 +35,9 @@ export const infra001VendorAiSdkProhibition: RuleDefinition = {
 
     const checkNode = (node: ts.Node) => {
       if (ts.isImportDeclaration(node)) {
-        const specifier = (node.moduleSpecifier as ts.StringLiteral).text;
-        if (specifier === 'openai' || specifier.startsWith('openai/')) {
+        if (!node.moduleSpecifier || !ts.isStringLiteral(node.moduleSpecifier)) return;
+        const specifier = node.moduleSpecifier.text;
+        if (isVendorAiModule(specifier)) {
           const { line, character } =
             ctx.sourceFile.getLineAndCharacterOfPosition(node.getStart());
           const lineNum = line + 1;
@@ -35,10 +52,9 @@ export const infra001VendorAiSdkProhibition: RuleDefinition = {
               line: lineNum,
               column: character + 1,
               snippet: ctx.lines[line]?.trim(),
-              message:
-                'Direct import of vendor "openai" package is forbidden outside src/infrastructure/ai/.',
+              message: `Direct import of vendor AI package "${specifier}" is forbidden outside src/infrastructure/ai/.`,
               remediation:
-                'Inject OpenAiChatClient or OpenAiTranscriptionClient from @infrastructure/ai instead.',
+                'Inject OpenAiChatClient, OpenAiTranscriptionClient or AI gateways from @infrastructure/ai instead.',
             });
           }
         }
@@ -46,7 +62,7 @@ export const infra001VendorAiSdkProhibition: RuleDefinition = {
 
       if (ts.isNewExpression(node)) {
         const className = node.expression.getText(ctx.sourceFile);
-        if (className === 'OpenAI') {
+        if (className === 'OpenAI' || className === 'GoogleGenerativeAI') {
           const { line, character } =
             ctx.sourceFile.getLineAndCharacterOfPosition(node.getStart());
           const lineNum = line + 1;
@@ -61,10 +77,9 @@ export const infra001VendorAiSdkProhibition: RuleDefinition = {
               line: lineNum,
               column: character + 1,
               snippet: ctx.lines[line]?.trim(),
-              message:
-                'Direct instantiation "new OpenAI(...)" is forbidden outside src/infrastructure/ai/.',
+              message: `Direct instantiation "new ${className}(...)" is forbidden outside src/infrastructure/ai/.`,
               remediation:
-                'Inject OpenAiChatClient or OpenAiTranscriptionClient from @infrastructure/ai instead.',
+                'Inject OpenAiChatClient or AI gateways from @infrastructure/ai instead.',
             });
           }
         }
@@ -112,10 +127,24 @@ export const infra002BullMqErrorBoundary: RuleDefinition = {
             if (ts.isMethodDeclaration(member)) {
               const methodName = member.name.getText(ctx.sourceFile);
               if (methodName === 'process') {
-                const bodyText = member.body?.getText(ctx.sourceFile) || '';
-                const usesErrorHandler =
-                  bodyText.includes('BullMqJobErrorHandler.handleJobExecution') ||
-                  bodyText.includes('handleJobExecution');
+                let usesErrorHandler = false;
+
+                const inspectMethod = (mNode: ts.Node) => {
+                  if (ts.isCallExpression(mNode)) {
+                    const callText = mNode.expression.getText(ctx.sourceFile);
+                    if (
+                      callText.includes('BullMqJobErrorHandler.handleJobExecution') ||
+                      callText === 'handleJobExecution'
+                    ) {
+                      usesErrorHandler = true;
+                    }
+                  }
+                  ts.forEachChild(mNode, inspectMethod);
+                };
+
+                if (member.body) {
+                  inspectMethod(member.body);
+                }
 
                 if (!usesErrorHandler) {
                   const { line, character } =
@@ -193,8 +222,59 @@ export const infra003BootstrapLoggerWire: RuleDefinition = {
   },
 };
 
+export const conf001DirectProcessEnvProhibition: RuleDefinition = {
+  id: 'CONF_001',
+  name: 'Direct process.env Access Prohibition',
+  category: 'INFRA',
+  severity: 'ERROR',
+  description:
+    'Direct access to process.env is forbidden in business logic. Inject ConfigService from @nestjs/config instead.',
+  check: (ctx) => {
+    if (
+      ctx.relPath.endsWith('.spec.ts') ||
+      PROCESS_ENV_WHITELIST.has(ctx.relPath)
+    ) {
+      return [];
+    }
+    const violations: Violation[] = [];
+
+    const checkNode = (node: ts.Node) => {
+      if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
+        const exprText = node.expression.getText(ctx.sourceFile);
+        if (exprText === 'process.env') {
+          const { line, character } =
+            ctx.sourceFile.getLineAndCharacterOfPosition(node.getStart());
+          const lineNum = line + 1;
+          if (!ctx.isIgnored('CONF_001', lineNum)) {
+            violations.push({
+              ruleId: 'CONF_001',
+              ruleName: 'Direct process.env Access Prohibition',
+              category: 'INFRA',
+              severity: 'ERROR',
+              filePath: ctx.filePath,
+              relPath: ctx.relPath,
+              line: lineNum,
+              column: character + 1,
+              snippet: ctx.lines[line]?.trim(),
+              message:
+                'Direct access to "process.env" in application/business code is forbidden.',
+              remediation:
+                'Inject ConfigService from @nestjs/config or use configuration constants.',
+            });
+          }
+        }
+      }
+      ts.forEachChild(node, checkNode);
+    };
+
+    ts.forEachChild(ctx.sourceFile, checkNode);
+    return violations;
+  },
+};
+
 export const infraRules: RuleDefinition[] = [
   infra001VendorAiSdkProhibition,
   infra002BullMqErrorBoundary,
   infra003BootstrapLoggerWire,
+  conf001DirectProcessEnvProhibition,
 ];

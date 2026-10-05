@@ -82,11 +82,12 @@ export class SpeechToText {
         redirect: 'error',
         signal: AbortSignal.timeout(AUDIO_DOWNLOAD_TIMEOUT_MS),
       });
-    } catch {
+    } catch (error) {
       throw new InterviewAIException(
         ErrorCode.AUDIO_DOWNLOAD_FAILED,
         HttpStatus.BAD_GATEWAY,
         'Không thể tải tệp âm thanh.',
+        { cause: error },
       );
     }
 
@@ -170,11 +171,12 @@ export class SpeechToText {
     let url: URL;
     try {
       url = new URL(audioFileUrl);
-    } catch {
+    } catch (error) {
       throw new InterviewAIException(
         ErrorCode.INVALID_AUDIO_URL,
         HttpStatus.BAD_REQUEST,
         'URL tệp âm thanh không hợp lệ.',
+        { cause: error },
       );
     }
 

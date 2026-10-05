@@ -9,7 +9,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@core/common/enums';
 import { Roles, CurrentUser } from '@core/common/decorators';
 import { TurnService } from './turn.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';

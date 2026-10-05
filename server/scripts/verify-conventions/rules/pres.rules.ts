@@ -34,7 +34,7 @@ export const pres001DtoTyping: RuleDefinition = {
   category: 'PRES',
   severity: 'ERROR',
   description:
-    'Controllers must type @Body() and @Query() with an explicit DTO class (not any, unknown, or untyped).',
+    'Controllers must type @Body() and @Query() with an explicit DTO class (not any, unknown, primitive, inline object, or untyped).',
   check: (ctx) => {
     if (!ctx.relPath.endsWith('.controller.ts') || ctx.relPath.endsWith('.spec.ts')) {
       return [];
@@ -58,7 +58,12 @@ export const pres001DtoTyping: RuleDefinition = {
                 typeText === 'any' ||
                 typeText === 'unknown' ||
                 typeText === 'object' ||
-                typeText.startsWith('Record<');
+                typeText === 'string' ||
+                typeText === 'number' ||
+                typeText === 'boolean' ||
+                typeText.startsWith('{') ||
+                typeText.startsWith('Record<') ||
+                (typeText.startsWith('I') && /^[I][A-Z]/.test(typeText));
 
               if (!hasKeyArg && isInvalidType) {
                 const { line, character } =
@@ -96,9 +101,6 @@ export const pres001DtoTyping: RuleDefinition = {
 const VALIDATION_DECORATOR_REGEX =
   /^(Is[A-Z]|Validate|Type$|Transform$|Min$|Max$|Length$|Matches$|IsIn$|Array[A-Z]|Allow$)/;
 
-const INPUT_DTO_NAME_REGEX =
-  /(?:Create|Update|Save|Submit|Login|Register|Reset|Change|Confirm|Query|Filter|Params?|Request|Input|Body|Payload|Search|Auth)Dto?$/i;
-
 const OUTPUT_DTO_REGEX =
   /(?:Response|Result|Output|Metric|Stats?|Distribution(?:Item)?|Summary|Overview|Item|Row|Detail|View|Entity|Model)Dto?$/i;
 
@@ -106,15 +108,30 @@ function isOutputDtoClass(className: string): boolean {
   return (
     OUTPUT_DTO_REGEX.test(className) ||
     className.startsWith('Paginated') ||
-    className.endsWith('Response')
+    className.endsWith('Response') ||
+    className.endsWith('ResponseDto')
   );
 }
 
-function isInputDtoClass(className: string): boolean {
+const INPUT_DTO_NAME_REGEX =
+  /^(?:Create|Update|Save|Submit|Login|Register|Reset|Change|Confirm|Query|Filter|Params?|Request|Input|Body|Payload|Search|Auth)/i;
+
+const INPUT_FILE_NAME_REGEX =
+  /(?:create|update|save|submit|login|register|reset|change|confirm|query|filter|param|request|input|body|payload|search|auth)/i;
+
+function isInputDtoClass(className: string, relPath: string): boolean {
   if (isOutputDtoClass(className)) {
     return false;
   }
-  return INPUT_DTO_NAME_REGEX.test(className);
+  const fileName = relPath.split('/').pop() || relPath;
+  if (
+    INPUT_DTO_NAME_REGEX.test(className) ||
+    /(?:Query|Filter|Request|Input|Params?|Body|Payload)Dto?$/i.test(className) ||
+    INPUT_FILE_NAME_REGEX.test(fileName)
+  ) {
+    return true;
+  }
+  return false;
 }
 
 export const pres002DtoValidation: RuleDefinition = {
@@ -134,7 +151,7 @@ export const pres002DtoValidation: RuleDefinition = {
       if (ts.isClassDeclaration(node)) {
         const className = node.name?.getText(ctx.sourceFile) || '';
         // Only target input DTOs (Request / Query / Param / Body / Input)
-        if (!isInputDtoClass(className)) {
+        if (!isInputDtoClass(className, ctx.relPath)) {
           return;
         }
 
@@ -182,13 +199,15 @@ export const pres002DtoValidation: RuleDefinition = {
   },
 };
 
+const PAGINATION_PROP_REGEX = /^(limit|take|pageSize|perPage|size)$/i;
+
 export const pres003PaginationBound: RuleDefinition = {
   id: 'PRES_003',
   name: 'Pagination Query Bound Enforcement',
   category: 'PRES',
   severity: 'ERROR',
   description:
-    'Pagination query parameters (limit or take) must be guarded with @Max(N) where N <= 100 to prevent DoS.',
+    'Pagination query parameters (limit, take, pageSize) must be guarded with @Max(N) where N <= 100 to prevent DoS.',
   check: (ctx) => {
     if (!ctx.relPath.endsWith('.dto.ts') || ctx.relPath.endsWith('.spec.ts')) {
       return [];
@@ -206,14 +225,14 @@ export const pres003PaginationBound: RuleDefinition = {
         for (const member of node.members) {
           if (ts.isPropertyDeclaration(member)) {
             const propName = member.name.getText(ctx.sourceFile);
-            if (propName === 'limit' || propName === 'take') {
+            if (PAGINATION_PROP_REGEX.test(propName)) {
               const decorators = getDecorators(member);
               let maxVal: number | null = null;
-              let maxDecoratorNode: ts.Decorator | null = null;
+              let hasMin = false;
 
               for (const dec of decorators) {
-                if (getDecoratorName(dec) === 'Max') {
-                  maxDecoratorNode = dec;
+                const dName = getDecoratorName(dec);
+                if (dName === 'Max') {
                   const call = getDecoratorCall(dec);
                   if (call && call.arguments.length > 0) {
                     const arg = call.arguments[0];
@@ -221,6 +240,9 @@ export const pres003PaginationBound: RuleDefinition = {
                       maxVal = Number(arg.text);
                     }
                   }
+                }
+                if (dName === 'Min') {
+                  hasMin = true;
                 }
               }
 
@@ -260,6 +282,22 @@ export const pres003PaginationBound: RuleDefinition = {
                   message: `Pagination property "${propName}" in DTO "${className}" has @Max(${maxVal}) which exceeds the 100 item safety ceiling.`,
                   remediation:
                     'Reduce @Max value to <= 100, or add "// convention-ignore: PRES_003 <reason>" if this is an explicit administrative exception.',
+                });
+              }
+
+              if (!hasMin) {
+                violations.push({
+                  ruleId: 'PRES_003',
+                  ruleName: 'Pagination Query Bound Enforcement',
+                  category: 'PRES',
+                  severity: 'ERROR',
+                  filePath: ctx.filePath,
+                  relPath: ctx.relPath,
+                  line: lineNum,
+                  column: character + 1,
+                  snippet: ctx.lines[startLine]?.trim(),
+                  message: `Pagination property "${propName}" in DTO "${className}" lacks @Min(1) lower bound guard.`,
+                  remediation: 'Add @Min(1) to prevent negative or zero pagination limits.',
                 });
               }
             }
@@ -332,8 +370,22 @@ export const pres004SseSecurityAndCatch: RuleDefinition = {
                 }
               }
 
-              const methodBody = member.body?.getText(ctx.sourceFile) || '';
-              if (!methodBody.includes('catchError')) {
+              let hasCatchError = false;
+              const inspectMethod = (mChild: ts.Node) => {
+                if (ts.isCallExpression(mChild)) {
+                  const callText = mChild.expression.getText(ctx.sourceFile);
+                  if (callText === 'catchError' || callText.endsWith('.catchError')) {
+                    hasCatchError = true;
+                  }
+                }
+                ts.forEachChild(mChild, inspectMethod);
+              };
+
+              if (member.body) {
+                inspectMethod(member.body);
+              }
+
+              if (!hasCatchError) {
                 if (!ctx.isIgnored('PRES_004', lineNum)) {
                   violations.push({
                     ruleId: 'PRES_004',

@@ -95,6 +95,7 @@ export class OnetAdminService {
         ErrorCode.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Không thể truy vấn thông tin thống kê O*NET Analytics.',
+        { cause: error },
       );
     }
   }
@@ -131,6 +132,7 @@ export class OnetAdminService {
         ErrorCode.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Không thể truy vấn phân bổ 23 nhóm nghề O*NET SOC.',
+        { cause: error },
       );
     }
   }
@@ -191,6 +193,7 @@ export class OnetAdminService {
         ErrorCode.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Không thể tìm kiếm danh sách nghề nghiệp O*NET.',
+        { cause: error },
       );
     }
   }
@@ -235,6 +238,7 @@ export class OnetAdminService {
         ErrorCode.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Không thể truy vấn danh sách Top nghề quan tâm.',
+        { cause: error },
       );
     }
   }
@@ -303,6 +307,7 @@ export class OnetAdminService {
         ErrorCode.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Không thể truy vấn độ phủ kỹ năng SFIA.',
+        { cause: error },
       );
     }
   }
@@ -401,6 +406,7 @@ export class OnetAdminService {
         ErrorCode.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR,
         `Không thể lấy thông tin chi tiết nghề nghiệp ${cleanSoc}.`,
+        { cause: error },
       );
     }
   }

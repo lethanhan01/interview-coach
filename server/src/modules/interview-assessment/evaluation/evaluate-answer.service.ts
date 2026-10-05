@@ -141,6 +141,7 @@ export class EvaluateAnswer {
         ErrorCode.SCHEMA_VALIDATION_ERROR,
         HttpStatus.UNPROCESSABLE_ENTITY,
         'Invalid JSON from AI',
+        { cause: error },
       );
     }
     let validated: ValidatedFeedback;

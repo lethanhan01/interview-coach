@@ -92,7 +92,8 @@ export class OpenAIGateway implements IAIGateway {
     const body = error.error as Record<string, unknown> | undefined;
     return (
       body?.code === 'insufficient_quota' ||
-      error.message.includes('exceeded your current quota')
+      body?.type === 'insufficient_quota' ||
+      error.code === 'insufficient_quota'
     );
   }
 
@@ -118,6 +119,7 @@ export class OpenAIGateway implements IAIGateway {
             `AI provider error: ${
               error instanceof Error ? error.message : String(error)
             }`,
+            { cause: error },
           );
         }
 
@@ -126,6 +128,7 @@ export class OpenAIGateway implements IAIGateway {
             ErrorCode.AI_TIMEOUT,
             HttpStatus.GATEWAY_TIMEOUT,
             'AI provider request timed out',
+            { cause: error },
           );
         }
 
@@ -148,6 +151,7 @@ export class OpenAIGateway implements IAIGateway {
             ErrorCode.AI_RATE_LIMIT,
             HttpStatus.TOO_MANY_REQUESTS,
             `AI provider rate limit persists after ${RATE_LIMIT_RETRY_DELAYS_MS.length} retries.`,
+            { cause: error },
           );
         }
 
@@ -155,6 +159,7 @@ export class OpenAIGateway implements IAIGateway {
           ErrorCode.AI_SERVICE_ERROR,
           HttpStatus.BAD_GATEWAY,
           `AI provider API error ${error.status ?? 'unknown'}: ${error.message}`,
+          { cause: error },
         );
       }
     }
@@ -460,11 +465,12 @@ export class OpenAIGateway implements IAIGateway {
     let parsed: unknown;
     try {
       parsed = JSON.parse(raw);
-    } catch {
+    } catch (parseErr) {
       throw new InterviewAIException(
         ErrorCode.AI_INVALID_JSON,
         HttpStatus.BAD_GATEWAY,
         'Invalid JSON returned by AI provider',
+        { cause: parseErr },
       );
     }
 

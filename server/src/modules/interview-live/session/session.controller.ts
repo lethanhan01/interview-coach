@@ -10,7 +10,7 @@ import {
   MessageEvent,
 } from '@nestjs/common';
 import { Observable, catchError, of } from 'rxjs';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@core/common/enums';
 import { Roles, CurrentUser } from '@core/common/decorators';
 import { SseTokenGuard } from '@core/common/guards';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';

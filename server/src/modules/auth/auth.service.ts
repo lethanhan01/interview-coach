@@ -181,6 +181,7 @@ export class AuthService implements AuthTokenVerifier {
           ErrorCode.EMAIL_ALREADY_EXISTS,
           HttpStatus.CONFLICT,
           'Email is already registered',
+          { cause: error },
         );
       }
       throw error;

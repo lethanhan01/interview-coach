@@ -8,9 +8,12 @@ export function writeMarkdownReport(
   outputPath: string = resolve(SERVER_ROOT, 'CONVENTIONS-AUDIT-REPORT.md'),
 ): void {
   const isPassed = summary.errorsCount === 0;
-  const statusBadge = isPassed
-    ? '![Status: PASSED](https://img.shields.io/badge/Conventions-PASSED-brightgreen)'
-    : '![Status: FAILED](https://img.shields.io/badge/Conventions-FAILED-red)';
+  const statusBadge =
+    summary.errorsCount > 0
+      ? '![Status: FAILED](https://img.shields.io/badge/Conventions-FAILED-red)'
+      : summary.warningsCount > 0
+        ? '![Status: PASSED WITH WARNINGS](https://img.shields.io/badge/Conventions-PASSED_WITH_WARNINGS-yellow)'
+        : '![Status: PASSED](https://img.shields.io/badge/Conventions-PASSED-brightgreen)';
 
   const lines: string[] = [
     '# Backend Architecture & Conventions Audit Report',
@@ -41,14 +44,15 @@ export function writeMarkdownReport(
     '| **PRES** | `PRES_002` | DTO Validation Decorators | `ERROR` | Active |',
     '| **PRES** | `PRES_003` | Pagination Query Bound (@Max <= 100) | `ERROR` | Active |',
     '| **PRES** | `PRES_004` | SSE Endpoint Guard & catchError Pipe | `ERROR` | Active |',
-    '| **ERR**  | `ERR_001`  | Raw Error Throw Prohibition | `ERROR` | Active |',
-    '| **ERR**  | `ERR_002`  | Domain Layer HTTP Exception Prohibition | `ERROR` | Active |',
+    '| **ERR**  | `ERR_001`  | Raw Error & Literal Throw Prohibition | `ERROR` | Active |',
+    '| **ERR**  | `ERR_002`  | Application Layer HTTP Exception Prohibition | `ERROR` | Active |',
     '| **ERR**  | `ERR_003`  | Empty Catch Clause / Swallow Detection | `ERROR` | Active |',
     '| **ERR**  | `ERR_004`  | String Error Matching Prohibition | `ERROR` | Active |',
-    '| **ERR**  | `ERR_005`  | Root Cause Preservation in Catch Blocks | `WARN`  | Active |',
+    '| **ERR**  | `ERR_005`  | Root Cause Preservation in Catch Blocks | `ERROR` | Active |',
     '| **INFRA**| `INFRA_001`| Direct Vendor AI SDK Prohibition | `ERROR` | Active |',
     '| **INFRA**| `INFRA_002`| BullMQ Worker Error Boundary Wrapper | `ERROR` | Active |',
     '| **INFRA**| `INFRA_003`| Bootstrap Logger Wire Enforcement | `ERROR` | Active |',
+    '| **INFRA**| `CONF_001` | Direct process.env Access Prohibition | `ERROR` | Active |',
     '| **OBS**  | `OBS_001`  | Direct Console Logging Prohibition | `ERROR` | Active |',
     '| **NAME** | `NAME_001` | Kebab-Case File Naming Convention | `WARN`  | Active |',
     '| **NAME** | `NAME_002` | Class Suffix & PascalCase Alignment | `WARN`  | Active |',

@@ -10,6 +10,7 @@ import { ReportService } from '../../report/report.service';
 import {
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
+  FEEDBACK_WORKER_CONCURRENCY,
 } from '@core/common/constants/queue.constants';
 import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '@infra/ai/prompts/surgical-feedback-v1.5';
 import type { SessionType } from '@infra/ai/pipelines/interview-pipeline.interface';
@@ -46,18 +47,8 @@ interface FeedbackJobDto {
 }
 
 const REPORT_READINESS_LOCAL_ATTEMPTS = 2;
-const DEFAULT_FEEDBACK_WORKER_CONCURRENCY = 2;
 
-function parseFeedbackWorkerConcurrency(): number {
-  const raw = process.env.FEEDBACK_WORKER_CONCURRENCY;
-  const parsed = raw === undefined ? NaN : Number(raw);
-  if (!Number.isInteger(parsed) || parsed < 1) {
-    return DEFAULT_FEEDBACK_WORKER_CONCURRENCY;
-  }
-  return parsed;
-}
-
-@Processor(FEEDBACK_QUEUE, { concurrency: parseFeedbackWorkerConcurrency() })
+@Processor(FEEDBACK_QUEUE, { concurrency: FEEDBACK_WORKER_CONCURRENCY })
 export class FeedbackProcessor extends WorkerHost {
   private readonly logger = new Logger(FeedbackProcessor.name);
 

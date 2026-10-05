@@ -1,9 +1,10 @@
+import { dirname, relative, resolve, sep } from 'node:path';
 import * as ts from 'typescript';
 import { RuleDefinition, Violation } from '../types';
-import { BOUNDED_CONTEXTS } from '../config';
+import { BOUNDED_CONTEXTS, SRC_ROOT } from '../config';
 
 const CONTROLLER_FORBIDDEN_IMPORT =
-  /(?:prisma\.service|infrastructure\/database\/prisma|@nestjs\/bullmq|bullmq|openai|@supabase\/supabase-js|axios)/i;
+  /(?:prisma\.service|@prisma\/client|infrastructure\/database\/prisma|@nestjs\/bullmq|bullmq|openai|@supabase\/supabase-js|axios|workflow\.service|infrastructure\/workflow)/i;
 
 export const arch001ControllerIsolation: RuleDefinition = {
   id: 'ARCH_001',
@@ -11,14 +12,15 @@ export const arch001ControllerIsolation: RuleDefinition = {
   category: 'ARCH',
   severity: 'ERROR',
   description:
-    'Controllers must not import PrismaService, database models, BullMQ queues, WorkflowService, or vendor SDKs.',
+    'Controllers must not import PrismaService, @prisma/client, database models, BullMQ queues, WorkflowService, or vendor SDKs.',
   check: (ctx) => {
     if (!ctx.relPath.endsWith('.controller.ts')) return [];
     const violations: Violation[] = [];
 
     ts.forEachChild(ctx.sourceFile, (node) => {
       if (ts.isImportDeclaration(node)) {
-        const moduleSpecifier = (node.moduleSpecifier as ts.StringLiteral).text;
+        if (!node.moduleSpecifier || !ts.isStringLiteral(node.moduleSpecifier)) return;
+        const moduleSpecifier = node.moduleSpecifier.text;
         if (CONTROLLER_FORBIDDEN_IMPORT.test(moduleSpecifier)) {
           const { line, character } =
             ctx.sourceFile.getLineAndCharacterOfPosition(node.getStart());
@@ -35,9 +37,9 @@ export const arch001ControllerIsolation: RuleDefinition = {
             line: lineNum,
             column: character + 1,
             snippet: ctx.lines[line]?.trim(),
-            message: `Controller imports forbidden infrastructure component: "${moduleSpecifier}"`,
+            message: `Controller imports forbidden infrastructure component or database client: "${moduleSpecifier}"`,
             remediation:
-              'Delegate business and infrastructure logic to a Use Case Service. Do not import database or queue services directly in controllers.',
+              'Delegate business and infrastructure logic to a Use Case Service. Use domain enums from @core/common/ instead of @prisma/client.',
           });
         }
       }
@@ -66,7 +68,8 @@ export const arch002CoreIndependence: RuleDefinition = {
 
     ts.forEachChild(ctx.sourceFile, (node) => {
       if (ts.isImportDeclaration(node)) {
-        const moduleSpecifier = (node.moduleSpecifier as ts.StringLiteral).text;
+        if (!node.moduleSpecifier || !ts.isStringLiteral(node.moduleSpecifier)) return;
+        const moduleSpecifier = node.moduleSpecifier.text;
         if (
           moduleSpecifier.startsWith('@modules/') ||
           moduleSpecifier.includes('/modules/')
@@ -104,6 +107,25 @@ function getBoundedContextOf(relPath: string): string | null {
   return parts[0] || null;
 }
 
+function isAllowedCrossModuleImport(
+  importPath: string,
+  targetContext: string,
+): boolean {
+  if (targetContext === 'auth') {
+    return importPath === '@modules/auth/auth.module';
+  }
+  if (
+    importPath === `@modules/${targetContext}/contracts` ||
+    importPath.startsWith(`@modules/${targetContext}/contracts/`)
+  ) {
+    return true;
+  }
+  if (importPath.endsWith('.module')) {
+    return true;
+  }
+  return false;
+}
+
 export const arch003BoundedContextContracts: RuleDefinition = {
   id: 'ARCH_003',
   name: 'Bounded Context Contract Enforcement',
@@ -122,41 +144,47 @@ export const arch003BoundedContextContracts: RuleDefinition = {
 
     ts.forEachChild(ctx.sourceFile, (node) => {
       if (ts.isImportDeclaration(node)) {
-        const importPath = (node.moduleSpecifier as ts.StringLiteral).text;
+        if (!node.moduleSpecifier || !ts.isStringLiteral(node.moduleSpecifier)) return;
+        const importPath = node.moduleSpecifier.text;
+
+        let targetContext: string | null = null;
+        let normalizedPath = importPath;
 
         if (importPath.startsWith('@modules/')) {
-          const targetContext = importPath.replace('@modules/', '').split('/')[0];
-          const isCrossContext =
-            BOUNDED_CONTEXTS.has(targetContext) && targetContext !== sourceContext;
+          targetContext = importPath.replace('@modules/', '').split('/')[0];
+        } else if (importPath.startsWith('.')) {
+          const absoluteTarget = resolve(dirname(ctx.filePath), importPath);
+          const targetRel = relative(SRC_ROOT, absoluteTarget).split(sep).join('/');
+          if (targetRel.startsWith('modules/')) {
+            targetContext = targetRel.replace('modules/', '').split('/')[0];
+            normalizedPath = `@${targetRel}`;
+          }
+        }
 
-          if (isCrossContext) {
-            const isAllowed =
-              targetContext === 'auth'
-                ? importPath === '@modules/auth/auth.module'
-                : importPath === `@modules/${targetContext}/contracts` ||
-                  importPath.startsWith(`@modules/${targetContext}/contracts/`) ||
-                  importPath.endsWith('.module');
+        if (
+          targetContext &&
+          BOUNDED_CONTEXTS.has(targetContext) &&
+          targetContext !== sourceContext
+        ) {
+          if (!isAllowedCrossModuleImport(normalizedPath, targetContext)) {
+            const { line, character } =
+              ctx.sourceFile.getLineAndCharacterOfPosition(node.getStart());
+            const lineNum = line + 1;
+            if (ctx.isIgnored('ARCH_003', lineNum)) return;
 
-            if (!isAllowed) {
-              const { line, character } =
-                ctx.sourceFile.getLineAndCharacterOfPosition(node.getStart());
-              const lineNum = line + 1;
-              if (ctx.isIgnored('ARCH_003', lineNum)) return;
-
-              violations.push({
-                ruleId: 'ARCH_003',
-                ruleName: 'Bounded Context Contract Enforcement',
-                category: 'ARCH',
-                severity: 'ERROR',
-                filePath: ctx.filePath,
-                relPath: ctx.relPath,
-                line: lineNum,
-                column: character + 1,
-                snippet: ctx.lines[line]?.trim(),
-                message: `Illegal cross-module import from [${sourceContext}] into internal file of [${targetContext}]: "${importPath}"`,
-                remediation: `Import through public facade contract (@modules/${targetContext}/contracts) instead of internal paths.`,
-              });
-            }
+            violations.push({
+              ruleId: 'ARCH_003',
+              ruleName: 'Bounded Context Contract Enforcement',
+              category: 'ARCH',
+              severity: 'ERROR',
+              filePath: ctx.filePath,
+              relPath: ctx.relPath,
+              line: lineNum,
+              column: character + 1,
+              snippet: ctx.lines[line]?.trim(),
+              message: `Illegal cross-module import from [${sourceContext}] into internal file of [${targetContext}]: "${importPath}"`,
+              remediation: `Import through public facade contract (@modules/${targetContext}/contracts) instead of internal paths.`,
+            });
           }
         }
       }

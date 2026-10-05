@@ -37,6 +37,18 @@ async function run(): Promise<void> {
         }
       } catch (err) {
         console.error(`Error running rule ${rule.id} on ${ctx.relPath}:`, err);
+        allViolations.push({
+          ruleId: rule.id,
+          ruleName: rule.name,
+          category: rule.category,
+          severity: 'ERROR',
+          filePath: ctx.filePath,
+          relPath: ctx.relPath,
+          line: 1,
+          column: 1,
+          message: `Rule ${rule.id} execution failed unexpectedly: ${err instanceof Error ? err.message : String(err)}`,
+          remediation: 'Fix source file syntax error or investigate rule checker implementation.',
+        });
       }
     }
   }

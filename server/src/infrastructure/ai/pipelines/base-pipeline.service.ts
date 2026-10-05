@@ -61,11 +61,12 @@ export abstract class BasePipelineService implements InterviewPipeline {
     let parsed: unknown;
     try {
       parsed = JSON.parse(raw);
-    } catch {
+    } catch (error) {
       throw new InterviewAIException(
         ErrorCode.AI_SERVICE_ERROR,
         HttpStatus.BAD_GATEWAY,
         'Invalid JSON from AI',
+        { cause: error },
       );
     }
     const validated = this.zodValidator.validate(QuestionsSchema, parsed);
