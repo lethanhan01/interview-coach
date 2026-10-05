@@ -10,7 +10,13 @@ const SENSITIVE_KEYS = new Set([
   'apikey',
   'authorization',
   'secret',
+  'clientsecret',
+  'client_secret',
+  'privatekey',
+  'private_key',
   'creditcard',
+  'cookie',
+  'set-cookie',
 ]);
 
 export function redactSensitiveData(data: unknown, seen = new WeakSet()): unknown {

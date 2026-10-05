@@ -2,6 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { RequestContext } from '@core/common/context/request-context';
 
 export type WorkflowCommandType =
   | 'question-generation'
@@ -34,6 +35,22 @@ export class WorkflowService {
     const idempotencyKey =
       command.idempotencyKey ?? `${command.commandType}:${aggregateId}`;
 
+    const correlationId = RequestContext.getCorrelationId();
+    let payloadToStore = command.payload;
+    if (
+      typeof command.payload === 'object' &&
+      command.payload !== null &&
+      !Array.isArray(command.payload)
+    ) {
+      const payloadObj = command.payload as Record<string, unknown>;
+      payloadToStore = {
+        ...payloadObj,
+        ...(payloadObj.correlationId || correlationId !== 'no-correlation-id'
+          ? { correlationId: payloadObj.correlationId ?? correlationId }
+          : {}),
+      } as Prisma.InputJsonValue;
+    }
+
     return tx.workflowOutbox.upsert({
       where: {
         idempotencyKey,
@@ -41,7 +58,7 @@ export class WorkflowService {
       create: {
         commandType: command.commandType,
         aggregateId,
-        payload: command.payload,
+        payload: payloadToStore,
         idempotencyKey,
       },
       update: {

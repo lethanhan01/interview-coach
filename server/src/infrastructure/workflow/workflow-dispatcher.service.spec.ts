@@ -45,7 +45,10 @@ describe('WorkflowDispatcher', () => {
 
     expect(questionQueue.add).toHaveBeenCalledWith(
       'question-generation',
-      COMMAND.payload,
+      expect.objectContaining({
+        ...COMMAND.payload,
+        correlationId: 'workflow-command-1',
+      }),
       expect.objectContaining({ jobId: 'workflow-command-1' }),
     );
     expect(prisma.workflowOutbox.updateMany).toHaveBeenLastCalledWith(
@@ -73,7 +76,10 @@ describe('WorkflowDispatcher', () => {
 
     expect(transcriptionQueue.add).toHaveBeenCalledWith(
       'transcription',
-      transcriptionCommand.payload,
+      expect.objectContaining({
+        ...transcriptionCommand.payload,
+        correlationId: 'workflow-command-2',
+      }),
       expect.objectContaining({ jobId: 'workflow-command-2' }),
     );
     expect(prisma.workflowOutbox.updateMany).toHaveBeenLastCalledWith(
@@ -98,7 +104,10 @@ describe('WorkflowDispatcher', () => {
 
     expect(feedbackQueue.add).toHaveBeenCalledWith(
       'feedback',
-      feedbackCommand.payload,
+      expect.objectContaining({
+        ...feedbackCommand.payload,
+        correlationId: 'workflow-command-3',
+      }),
       expect.objectContaining({ jobId: 'workflow-command-3' }),
     );
     expect(prisma.workflowOutbox.updateMany).toHaveBeenLastCalledWith(
@@ -106,6 +115,31 @@ describe('WorkflowDispatcher', () => {
         where: { id: 'command-3', state: 'processing' },
         data: expect.objectContaining({ state: 'completed' }),
       }),
+    );
+  });
+
+  it('bảo toàn correlationId có sẵn trong outbox command payload khi dispatch sang queue', async () => {
+    const customCorrelationCommand = {
+      id: 'command-custom',
+      commandType: 'question-generation',
+      aggregateId: '11111111-1111-4111-8111-111111111111',
+      payload: {
+        sessionId: '11111111-1111-4111-8111-111111111111',
+        correlationId: 'http-originated-corr-id-999',
+      },
+      attempts: 0,
+    };
+    prisma.workflowOutbox.findUnique.mockResolvedValue(customCorrelationCommand);
+
+    await dispatcher.dispatchFor('question-generation', customCorrelationCommand.aggregateId);
+
+    expect(questionQueue.add).toHaveBeenCalledWith(
+      'question-generation',
+      expect.objectContaining({
+        sessionId: '11111111-1111-4111-8111-111111111111',
+        correlationId: 'http-originated-corr-id-999',
+      }),
+      expect.objectContaining({ jobId: 'workflow-command-custom' }),
     );
   });
 

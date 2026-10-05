@@ -231,11 +231,29 @@ describe('SfiaAdminService', () => {
       expect(res[0].skillCount).toBe(42);
     });
 
-    it('falls back to cache when DB throws error', async () => {
+    it('falls back to cache when DB throws error and logs warn, not error', async () => {
+      const warnSpy = jest.spyOn((service as any).logger, 'warn');
+      const errorSpy = jest.spyOn((service as any).logger, 'error');
+
       repoMock.loadCategories.mockRejectedValueOnce(new Error('DB failure'));
       const res = await service.getCategories();
       expect(res).toHaveLength(1);
       expect(res[0].code).toBe('DEV_IMPL');
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Database error in getCategories, falling back to cached categories'),
+      );
+      expect(errorSpy).not.toHaveBeenCalled();
+    });
+
+    it('re-throws DB error without logger.error when cache is empty', async () => {
+      (service as any).cachedCategories = [];
+      const errorSpy = jest.spyOn((service as any).logger, 'error');
+
+      repoMock.loadCategories.mockRejectedValueOnce(new Error('Fatal DB crash'));
+
+      await expect(service.getCategories()).rejects.toThrow('Fatal DB crash');
+      expect(errorSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -270,6 +288,14 @@ describe('SfiaAdminService', () => {
         level: 3,
         query: undefined,
       });
+    });
+
+    it('propagates DB error directly without duplicate logger.error', async () => {
+      const errorSpy = jest.spyOn((service as any).logger, 'error');
+      repoMock.loadSkillsWithCounts.mockRejectedValueOnce(new Error('DB skills query timeout'));
+
+      await expect(service.getSkills()).rejects.toThrow('DB skills query timeout');
+      expect(errorSpy).not.toHaveBeenCalled();
     });
   });
 

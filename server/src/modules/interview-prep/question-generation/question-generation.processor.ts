@@ -33,7 +33,13 @@ export class QuestionGenerationProcessor extends WorkerHost {
             await this.emitStatus(job.data.sessionId, 'active');
           }
         } catch (error: unknown) {
-          await this.markSessionError(job.data.sessionId);
+          const maxAttempts = job.opts?.attempts ?? 1;
+          const attemptsMade = (job.attemptsMade ?? 0) + 1;
+          const isFatal = BullMqJobErrorHandler.isFatal(error);
+
+          if (isFatal || attemptsMade >= maxAttempts) {
+            await this.markSessionError(job.data.sessionId);
+          }
           throw error;
         }
       },

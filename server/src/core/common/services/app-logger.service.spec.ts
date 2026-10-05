@@ -34,6 +34,21 @@ describe('AppLogger', () => {
       expect(result.nested.visible).toBe('hello');
     });
 
+    it('che giấu cookie, client_secret và private_key', () => {
+      const input = {
+        cookie: 'session_id=secret_cookie_val',
+        client_secret: 'oauth_secret_abc',
+        privateKey: '-----BEGIN RSA PRIVATE KEY-----',
+        publicField: 'public-data',
+      };
+
+      const result = redactSensitiveData(input) as Record<string, any>;
+      expect(result.cookie).toBe('[REDACTED]');
+      expect(result.client_secret).toBe('[REDACTED]');
+      expect(result.privateKey).toBe('[REDACTED]');
+      expect(result.publicField).toBe('public-data');
+    });
+
     it('xử lý an toàn tham chiếu vòng (circular references)', () => {
       const obj: Record<string, any> = { name: 'circular' };
       obj.self = obj;
@@ -132,6 +147,42 @@ describe('AppLogger', () => {
       expect(parsed.durationMs).toBeGreaterThanOrEqual(0);
 
       consoleSpy.mockRestore();
+    });
+
+    it('in JSON structured qua console.error khi gọi logger.error ở production', () => {
+      process.env.NODE_ENV = 'production';
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      RequestContext.run(
+        {
+          requestId: 'req-err-123',
+          correlationId: 'corr-err-123',
+          userId: 'usr-err-123',
+          startTime: Date.now() - 100,
+        },
+        () => {
+          logger.error(
+            'Database failure',
+            'Error: Connection timeout\n  at db.query',
+            'DatabaseContext',
+            { password: 'db-pass-secret' },
+          );
+        },
+      );
+
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      const rawJson = consoleErrorSpy.mock.calls[0][0];
+      const parsed = JSON.parse(rawJson);
+
+      expect(parsed.level).toBe('error');
+      expect(parsed.context).toBe('DatabaseContext');
+      expect(parsed.correlationId).toBe('corr-err-123');
+      expect(parsed.userId).toBe('usr-err-123');
+      expect(parsed.message).toBe('Database failure');
+      expect(parsed.stack).toContain('Connection timeout');
+      expect(parsed.meta.password).toBe('[REDACTED]');
+
+      consoleErrorSpy.mockRestore();
     });
   });
 });

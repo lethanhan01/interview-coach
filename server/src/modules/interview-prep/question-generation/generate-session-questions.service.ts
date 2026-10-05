@@ -51,6 +51,7 @@ export interface QuestionGenerationJobDto {
   onetSocCode?: string | null;
   targetSfiaLevel?: number | null;
   normalizedTechStack?: string[];
+  correlationId?: string;
 }
 
 type MergedQuestionRow = {

@@ -144,26 +144,39 @@ export class WorkflowDispatcher
     });
     if (claimed.count === 0) return;
 
+    const rawPayload =
+      typeof command.payload === 'object' &&
+      command.payload !== null &&
+      !Array.isArray(command.payload)
+        ? (command.payload as Record<string, unknown>)
+        : {};
+    const correlationId =
+      (rawPayload.correlationId as string) || `workflow-${command.id}`;
+    const jobPayload = {
+      ...rawPayload,
+      correlationId,
+    };
+
     try {
       if (command.commandType === 'question-generation') {
-        await this.questionQueue.add('question-generation', command.payload, {
+        await this.questionQueue.add('question-generation', jobPayload, {
           jobId: `workflow-${command.id}`,
           attempts: QUESTION_GEN_JOB_ATTEMPTS,
-          backoff: { type: 'fixed', delay: 2_000 },
+          backoff: { type: 'exponential', delay: 3_000 },
         });
       } else if (command.commandType === 'report-generation') {
-        if (!(await this.enqueueReport(command))) return;
+        if (!(await this.enqueueReport(command, jobPayload))) return;
       } else if (command.commandType === 'transcription') {
-        await this.transcriptionQueue.add('transcription', command.payload, {
+        await this.transcriptionQueue.add('transcription', jobPayload, {
           jobId: `workflow-${command.id}`,
           attempts: TRANSCRIPTION_JOB_ATTEMPTS,
-          backoff: { type: 'fixed', delay: 3_000 },
+          backoff: { type: 'exponential', delay: 3_000 },
         });
       } else if (command.commandType === 'feedback') {
-        await this.feedbackQueue.add('feedback', command.payload, {
+        await this.feedbackQueue.add('feedback', jobPayload, {
           jobId: `workflow-${command.id}`,
           attempts: FEEDBACK_JOB_ATTEMPTS,
-          backoff: { type: 'fixed', delay: 2_000 },
+          backoff: { type: 'exponential', delay: 3_000 },
         });
       } else {
         throw new InterviewAIException(
@@ -189,7 +202,10 @@ export class WorkflowDispatcher
     }
   }
 
-  private async enqueueReport(command: OutboxCommand): Promise<boolean> {
+  private async enqueueReport(
+    command: OutboxCommand,
+    jobPayload?: Record<string, unknown>,
+  ): Promise<boolean> {
     const answers = await this.prisma.userAnswer.findMany({
       where: { question: { sessionId: command.aggregateId } },
       select: { id: true, skipped: true, feedbackGenerated: true },
@@ -203,16 +219,27 @@ export class WorkflowDispatcher
       return false;
     }
 
+    const basePayload =
+      jobPayload ??
+      (typeof command.payload === 'object' &&
+      command.payload !== null &&
+      !Array.isArray(command.payload)
+        ? (command.payload as Record<string, unknown>)
+        : {});
+    const correlationId =
+      (basePayload.correlationId as string) || `workflow-${command.id}`;
+
     await this.reportQueue.add(
       'comprehensive-report',
       {
-        ...(command.payload as Record<string, unknown>),
+        ...basePayload,
+        correlationId,
         turnIds: answers.map((answer) => answer.id),
       },
       {
         jobId: `workflow-${command.id}`,
         attempts: REPORT_JOB_ATTEMPTS,
-        backoff: { type: 'fixed', delay: REPORT_JOB_RETRY_DELAY_MS },
+        backoff: { type: 'exponential', delay: REPORT_JOB_RETRY_DELAY_MS },
       },
     );
     return true;

@@ -1,4 +1,4 @@
-import { HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { UnrecoverableError } from 'bullmq';
 import { BullMqJobErrorHandler } from './bullmq-error-handler';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
@@ -40,6 +40,29 @@ describe('BullMqJobErrorHandler', () => {
       expect(BullMqJobErrorHandler.isFatal(timeoutEx)).toBe(false);
       expect(BullMqJobErrorHandler.isFatal(serviceUnavailableEx)).toBe(false);
       expect(BullMqJobErrorHandler.isFatal(networkError)).toBe(false);
+    });
+
+    it('coi mã lỗi AI_RATE_LIMIT (429) là transient và cho phép retry', () => {
+      const rateLimitEx = new InterviewAIException(
+        ErrorCode.AI_RATE_LIMIT,
+        HttpStatus.TOO_MANY_REQUESTS,
+        'AI rate limit reached, backoff requested',
+      );
+      const http429Ex = new HttpException(
+        'Too Many Requests',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+
+      expect(BullMqJobErrorHandler.isFatal(rateLimitEx)).toBe(false);
+      expect(BullMqJobErrorHandler.isFatal(http429Ex)).toBe(false);
+    });
+
+    it('coi các lỗi HttpException 4xx thông thường là fatal', () => {
+      const badReqEx = new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
+      const unauthEx = new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+
+      expect(BullMqJobErrorHandler.isFatal(badReqEx)).toBe(true);
+      expect(BullMqJobErrorHandler.isFatal(unauthEx)).toBe(true);
     });
   });
 

@@ -65,6 +65,85 @@ describe('PrismaErrorMapper', () => {
     expect(exception.isOperational).toBe(false);
   });
 
+  it('map P2024 (connection pool timeout) sang SERVICE_UNAVAILABLE (503) với isOperational = false', () => {
+    const error = new Prisma.PrismaClientKnownRequestError(
+      'Timed out fetching a new connection from the pool',
+      {
+        code: 'P2024',
+        clientVersion: '7.8.0',
+      },
+    );
+
+    const exception = PrismaErrorMapper.map(error);
+    expect(exception.getStatus()).toBe(HttpStatus.SERVICE_UNAVAILABLE);
+    expect(exception.errorCode).toBe(ErrorCode.SERVICE_UNAVAILABLE);
+    expect(exception.isOperational).toBe(false);
+  });
+
+  it('map P2000 (value too long) sang VALIDATION_ERROR (400)', () => {
+    const error = new Prisma.PrismaClientKnownRequestError(
+      'The provided value for the column is too long',
+      {
+        code: 'P2000',
+        clientVersion: '7.8.0',
+      },
+    );
+
+    const exception = PrismaErrorMapper.map(error);
+    expect(exception.getStatus()).toBe(HttpStatus.BAD_REQUEST);
+    expect(exception.errorCode).toBe(ErrorCode.VALIDATION_ERROR);
+  });
+
+  it('map P2014 (required relation violation) sang CONFLICT (409)', () => {
+    const error = new Prisma.PrismaClientKnownRequestError(
+      'The change you are trying to make would violate the required relation',
+      {
+        code: 'P2014',
+        clientVersion: '7.8.0',
+      },
+    );
+
+    const exception = PrismaErrorMapper.map(error);
+    expect(exception.getStatus()).toBe(HttpStatus.CONFLICT);
+    expect(exception.errorCode).toBe(ErrorCode.CONFLICT);
+  });
+
+  it('map PrismaClientInitializationError sang SERVICE_UNAVAILABLE (503) với isOperational = false', () => {
+    const initError = new Prisma.PrismaClientInitializationError(
+      'Can not reach database server at `localhost:5432`',
+      '7.8.0',
+    );
+
+    const exception = PrismaErrorMapper.map(initError);
+    expect(exception.getStatus()).toBe(HttpStatus.SERVICE_UNAVAILABLE);
+    expect(exception.errorCode).toBe(ErrorCode.SERVICE_UNAVAILABLE);
+    expect(exception.isOperational).toBe(false);
+    expect(exception.cause).toBe(initError);
+  });
+
+  it('map PrismaClientRustPanicError sang INTERNAL_ERROR (500) với isOperational = false', () => {
+    const panicError = new Prisma.PrismaClientRustPanicError(
+      'Engine panic',
+      '7.8.0',
+    );
+
+    const exception = PrismaErrorMapper.map(panicError);
+    expect(exception.getStatus()).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+    expect(exception.errorCode).toBe(ErrorCode.INTERNAL_ERROR);
+    expect(exception.isOperational).toBe(false);
+  });
+
+  it('map PrismaClientValidationError sang VALIDATION_ERROR (400)', () => {
+    const validationError = new Prisma.PrismaClientValidationError(
+      'Invalid prisma query args',
+      { clientVersion: '7.8.0' },
+    );
+
+    const exception = PrismaErrorMapper.map(validationError);
+    expect(exception.getStatus()).toBe(HttpStatus.BAD_REQUEST);
+    expect(exception.errorCode).toBe(ErrorCode.VALIDATION_ERROR);
+  });
+
   it('map unknown prisma code sang INTERNAL_ERROR (500)', () => {
     const unknownError = new Prisma.PrismaClientKnownRequestError(
       'Unknown DB fault',

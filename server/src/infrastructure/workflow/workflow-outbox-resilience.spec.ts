@@ -82,7 +82,7 @@ describe('WorkflowOutboxResilienceSpec', () => {
       expect(questionQueue.add).toHaveBeenCalledTimes(1);
       expect(questionQueue.add).toHaveBeenCalledWith(
         'question-generation',
-        command.payload,
+        expect.objectContaining(command.payload),
         expect.objectContaining({
           jobId: 'workflow-cmd-race-1',
           attempts: QUESTION_GEN_JOB_ATTEMPTS,
@@ -124,7 +124,7 @@ describe('WorkflowOutboxResilienceSpec', () => {
       // Verified: Transcription job was dispatched with deterministic job id
       expect(transcriptionQueue.add).toHaveBeenCalledWith(
         'transcription',
-        orphanedCommand.payload,
+        expect.objectContaining(orphanedCommand.payload),
         expect.objectContaining({
           jobId: 'workflow-cmd-crashed-1',
           attempts: TRANSCRIPTION_JOB_ATTEMPTS,
@@ -268,15 +268,15 @@ describe('WorkflowOutboxResilienceSpec', () => {
 
       expect(reportQueue.add).toHaveBeenCalledWith(
         'comprehensive-report',
-        {
+        expect.objectContaining({
           sessionId: 'session-report-2',
           reportType: 'comprehensive',
           turnIds: ['ans-1', 'ans-2'],
-        },
+        }),
         expect.objectContaining({
           jobId: 'workflow-cmd-report-ready',
           attempts: REPORT_JOB_ATTEMPTS,
-          backoff: { type: 'fixed', delay: REPORT_JOB_RETRY_DELAY_MS },
+          backoff: { type: 'exponential', delay: REPORT_JOB_RETRY_DELAY_MS },
         }),
       );
 

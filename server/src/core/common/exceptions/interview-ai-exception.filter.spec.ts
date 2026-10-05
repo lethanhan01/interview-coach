@@ -116,6 +116,27 @@ describe('InterviewAIExceptionFilter', () => {
     );
   });
 
+  it('xử lý PrismaClientInitializationError — map sang SERVICE_UNAVAILABLE (503)', () => {
+    const res = mockResponse();
+    const initError = new Prisma.PrismaClientInitializationError(
+      'Cannot connect to PostgreSQL server at localhost:5432',
+      '7.8.0',
+    );
+
+    filter.catch(initError, mockHost(res) as never);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({
+          code: ErrorCode.SERVICE_UNAVAILABLE,
+          message: 'Database server connection could not be initialized',
+        }),
+      }),
+    );
+  });
+
   it('xử lý unknown Error — trả 500 INTERNAL_ERROR', () => {
     const res = mockResponse();
     filter.catch(new Error('Unexpected crash'), mockHost(res) as never);

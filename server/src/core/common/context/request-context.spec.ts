@@ -57,4 +57,19 @@ describe('RequestContext', () => {
     expect(resultA).toBe('corr-A');
     expect(resultB).toBe('corr-B');
   });
+
+  it('cập nhật userId qua setUserId khi đã ở trong context', () => {
+    RequestContext.run(
+      {
+        requestId: 'req-auth',
+        correlationId: 'corr-auth',
+        startTime: Date.now(),
+      },
+      () => {
+        expect(RequestContext.getUserId()).toBeUndefined();
+        RequestContext.setUserId('user-authenticated-456');
+        expect(RequestContext.getUserId()).toBe('user-authenticated-456');
+      },
+    );
+  });
 });

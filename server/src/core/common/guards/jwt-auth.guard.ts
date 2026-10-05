@@ -9,6 +9,7 @@ import { Reflector } from '@nestjs/core';
 import { ErrorCode } from '../exceptions/error-code.enum';
 import { InterviewAIException } from '../exceptions/interview-ai.exception';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { RequestContext } from '../context/request-context';
 import {
   AUTH_TOKEN_VERIFIER,
   type AuthTokenVerifier,
@@ -60,6 +61,9 @@ export class JwtAuthGuard implements CanActivate {
 
     const user = await this.tokenVerifier.verifySessionToken(token);
     request.user = user;
+    if (user?.id) {
+      RequestContext.setUserId(user.id);
+    }
     return true;
   }
 }

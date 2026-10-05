@@ -1,4 +1,4 @@
-import { APIError, APIUserAbortError } from 'openai';
+import { APIError, APIUserAbortError, APIConnectionTimeoutError } from 'openai';
 import { z } from 'zod';
 import { OpenAIGateway } from './openai.gateway';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
@@ -58,6 +58,34 @@ describe('OpenAIGateway', () => {
       .mockRejectedValue(
         new APIUserAbortError({ message: 'Request was aborted.' }),
       );
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(params)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_TIMEOUT,
+    });
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('ném AI_TIMEOUT khi gặp lỗi kết nối timeout mạng (APIConnectionTimeoutError)', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest
+      .fn()
+      .mockRejectedValue(
+        new APIConnectionTimeoutError({ message: 'Request timed out.' }),
+      );
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(params)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_TIMEOUT,
+    });
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('ném AI_TIMEOUT khi gặp lỗi timeout chung (message contains timeout)', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest
+      .fn()
+      .mockRejectedValue(new Error('Connection timed out after 30000ms'));
     (gateway as any).chatClient.chat.completions.create = create;
 
     await expect(gateway.chatCompletion(params)).rejects.toMatchObject({

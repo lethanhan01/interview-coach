@@ -6,6 +6,7 @@ export interface ComprehensiveReportJobDto {
   contextPack: 'VN' | 'Western';
   language?: 'vi' | 'en';
   turnIds: string[];
+  correlationId?: string;
 }
 
 export interface SkillLevelDetail {

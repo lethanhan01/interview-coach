@@ -47,15 +47,28 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
           exception.stack,
         );
       }
-    } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+    } else if (
+      exception instanceof Prisma.PrismaClientKnownRequestError ||
+      exception instanceof Prisma.PrismaClientInitializationError ||
+      exception instanceof Prisma.PrismaClientRustPanicError ||
+      exception instanceof Prisma.PrismaClientValidationError
+    ) {
       const mapped = PrismaErrorMapper.map(exception);
       status = mapped.getStatus();
       errorCode = mapped.errorCode;
       message = mapped.message;
       details = mapped.details ?? null;
-      this.logger.warn(
-        `PrismaClientKnownRequestError [${exception.code}]: ${exception.message}`,
-      );
+
+      if (!mapped.isOperational || status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+        this.logger.error(
+          `Prisma Database Error: ${exception.message}`,
+          exception.stack,
+        );
+      } else {
+        this.logger.warn(
+          `Prisma Database Error [${'code' in exception ? (exception as any).code : exception.name}]: ${exception.message}`,
+        );
+      }
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       errorCode =

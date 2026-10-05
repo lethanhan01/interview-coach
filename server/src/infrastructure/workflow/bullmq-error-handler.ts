@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { Job, UnrecoverableError } from 'bullmq';
 import { RequestContext } from '@core/common/context/request-context';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
@@ -28,7 +28,21 @@ export class BullMqJobErrorHandler {
       if (NON_RETRYABLE_ERROR_CODES.has(error.errorCode)) {
         return true;
       }
+      if (
+        error.errorCode === ErrorCode.AI_RATE_LIMIT ||
+        error.getStatus() === HttpStatus.TOO_MANY_REQUESTS
+      ) {
+        return false;
+      }
       const status = error.getStatus();
+      if (status >= 400 && status < 500) {
+        return true;
+      }
+    } else if (error instanceof HttpException) {
+      const status = error.getStatus();
+      if (status === HttpStatus.TOO_MANY_REQUESTS) {
+        return false;
+      }
       if (status >= 400 && status < 500) {
         return true;
       }

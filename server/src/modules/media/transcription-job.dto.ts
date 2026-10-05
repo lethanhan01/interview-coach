@@ -10,4 +10,5 @@ export interface TranscriptionJobDto {
   contextPack: 'VN' | 'Western';
   sessionType: SessionType;
   language?: OutputLanguage;
+  correlationId?: string;
 }

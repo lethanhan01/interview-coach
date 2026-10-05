@@ -11,12 +11,13 @@ import { AssessmentFacade } from '@modules/interview-assessment/contracts';
 import {
   TRANSCRIPTION_JOB_ATTEMPTS,
   FEEDBACK_QUEUE,
-  FEEDBACK_JOB_ATTEMPTS,
+  QUEUE_DEFAULT_JOB_OPTIONS,
 } from '@core/common/constants/queue.constants';
 import { getFallbackFeedbackMessage } from '@infra/ai/fallback-content';
 import type { OutputLanguage } from '@infra/ai/output-language';
 import { resolveOutputLanguage } from '@infra/ai/output-language';
 import type { SessionType } from '@infra/ai/pipelines/interview-pipeline.interface';
+import { RequestContext } from '@core/common/context/request-context';
 import type { TranscriptionJobDto } from './transcription-job.dto';
 
 @Injectable()
@@ -104,12 +105,12 @@ export class TranscribeAnswer {
         contextPack,
         sessionType,
         language,
+        correlationId: RequestContext.getCorrelationId(),
       };
 
       await this.feedbackQueue.add('feedback', jobBase, {
         jobId: `feedback-${answerId}`,
-        attempts: FEEDBACK_JOB_ATTEMPTS,
-        backoff: { type: 'fixed', delay: 2000 },
+        ...QUEUE_DEFAULT_JOB_OPTIONS[FEEDBACK_QUEUE],
       });
 
       await this.emitTranscriptionReady(sessionId, answerId);
@@ -202,11 +203,11 @@ export class TranscribeAnswer {
         contextPack,
         sessionType,
         language,
+        correlationId: RequestContext.getCorrelationId(),
       },
       {
         jobId: `feedback-${answerId}`,
-        attempts: FEEDBACK_JOB_ATTEMPTS,
-        backoff: { type: 'fixed', delay: 2000 },
+        ...QUEUE_DEFAULT_JOB_OPTIONS[FEEDBACK_QUEUE],
       },
     );
   }

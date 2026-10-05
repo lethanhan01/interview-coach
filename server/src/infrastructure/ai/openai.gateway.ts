@@ -1,6 +1,6 @@
 import { Injectable, HttpStatus, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { APIError, APIUserAbortError } from 'openai';
+import { APIError, APIUserAbortError, APIConnectionTimeoutError } from 'openai';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { OpenAIChatClient } from './openai-chat.client';
@@ -112,6 +112,23 @@ export class OpenAIGateway implements IAIGateway {
       } catch (error) {
         if (error instanceof InterviewAIException) throw error;
 
+        if (
+          error instanceof APIUserAbortError ||
+          error instanceof APIConnectionTimeoutError ||
+          (error instanceof Error &&
+            (error.name === 'TimeoutError' ||
+              error.name === 'AbortError' ||
+              error.message.toLowerCase().includes('timeout') ||
+              error.message.toLowerCase().includes('timed out')))
+        ) {
+          throw new InterviewAIException(
+            ErrorCode.AI_TIMEOUT,
+            HttpStatus.GATEWAY_TIMEOUT,
+            'AI provider request timed out',
+            { cause: error },
+          );
+        }
+
         if (!(error instanceof APIError)) {
           throw new InterviewAIException(
             ErrorCode.AI_SERVICE_ERROR,
@@ -119,15 +136,6 @@ export class OpenAIGateway implements IAIGateway {
             `AI provider error: ${
               error instanceof Error ? error.message : String(error)
             }`,
-            { cause: error },
-          );
-        }
-
-        if (error instanceof APIUserAbortError) {
-          throw new InterviewAIException(
-            ErrorCode.AI_TIMEOUT,
-            HttpStatus.GATEWAY_TIMEOUT,
-            'AI provider request timed out',
             { cause: error },
           );
         }

@@ -44,6 +44,7 @@ interface FeedbackJobDto {
   contextPack: 'VN' | 'Western';
   sessionType: SessionType;
   language?: OutputLanguage;
+  correlationId?: string;
 }
 
 const REPORT_READINESS_LOCAL_ATTEMPTS = 2;
