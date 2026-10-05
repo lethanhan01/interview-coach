@@ -1,5 +1,6 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import {
+  HttpStatus,
   Injectable,
   Logger,
   OnApplicationBootstrap,
@@ -7,6 +8,8 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { Queue } from 'bullmq';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import {
   FEEDBACK_JOB_ATTEMPTS,
   FEEDBACK_QUEUE,
@@ -163,7 +166,11 @@ export class WorkflowDispatcher
           backoff: { type: 'fixed', delay: 2_000 },
         });
       } else {
-        throw new Error(`Unsupported workflow command: ${command.commandType}`);
+        throw new InterviewAIException(
+          ErrorCode.BAD_REQUEST,
+          HttpStatus.BAD_REQUEST,
+          `Unsupported workflow command: ${command.commandType}`,
+        );
       }
 
       await this.prisma.workflowOutbox.updateMany({

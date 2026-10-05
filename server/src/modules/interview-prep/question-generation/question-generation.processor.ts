@@ -4,6 +4,7 @@ import type { Job } from 'bullmq';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
 import { QUESTION_GEN_QUEUE } from '@core/common/constants/queue.constants';
+import { BullMqJobErrorHandler } from '@infra/workflow/bullmq-error-handler';
 import {
   GenerateSessionQuestions,
   type QuestionGenerationJobDto,
@@ -21,20 +22,22 @@ export class QuestionGenerationProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<QuestionGenerationJobDto>): Promise<void> {
-    try {
-      await this.generateSessionQuestions.execute(job.data);
-      if (await this.markActiveUnlessStopped(job.data.sessionId)) {
-        await this.emitStatus(job.data.sessionId, 'active');
-      }
-    } catch (error: unknown) {
-      this.logger.error(
-        `Unable to generate questions for session ${job.data.sessionId}`,
-        error instanceof Error ? error.stack : String(error),
-      );
-      await this.markSessionError(job.data.sessionId);
-      throw error;
-    }
+  process(job: Job<QuestionGenerationJobDto>): Promise<void> {
+    return BullMqJobErrorHandler.handleJobExecution(
+      QuestionGenerationProcessor.name,
+      job,
+      async () => {
+        try {
+          await this.generateSessionQuestions.execute(job.data);
+          if (await this.markActiveUnlessStopped(job.data.sessionId)) {
+            await this.emitStatus(job.data.sessionId, 'active');
+          }
+        } catch (error: unknown) {
+          await this.markSessionError(job.data.sessionId);
+          throw error;
+        }
+      },
+    );
   }
 
   private async markActiveUnlessStopped(sessionId: string): Promise<boolean> {

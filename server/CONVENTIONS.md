@@ -364,18 +364,79 @@ export class CreateInterviewSession {
 > **Không leak Prisma Transaction Client (`tx`) xuyên ranh giới Facade / Bounded Context.**
 > Mỗi Bounded Context sở hữu và quản lý tính toàn vẹn dữ liệu của riêng mình. Không truyền đối tượng `tx` từ module này sang module khác để ép transaction phân tán (2PC). Khi cần phối hợp giữa các context, áp dụng mô hình **Eventual Consistency** hoặc **Saga Workflow**.
 
-### 4.5. Chuẩn hóa Quản lý Ngoại lệ (Exception Handling)
-Không throw `new HttpException()`, `new BadRequestException('...')` tùy tiện với chuỗi ký tự tự do. Sử dụng lớp ngoại lệ chuẩn của hệ thống [`InterviewAIException`](file:///c:/Users/An/Documents/GR1/InterviewCoach/server/src/core/common/exceptions/interview-ai.exception.ts) kết hợp cùng [`ErrorCode`](file:///c:/Users/An/Documents/GR1/InterviewCoach/server/src/core/common/exceptions/error-code.enum.ts):
+### 4.5. Chuẩn hóa Quản lý Ngoại lệ (Standardized Exception Handling & Resiliency)
 
+#### a. Quy tắc Cốt lõi (Golden Rules)
+1. **Tuyệt đối không dùng raw `throw new Error(...)`** hoặc `new HttpException(...)` trong toàn bộ application code (ngoại trừ 3 file bootstrap môi trường/kết nối DB ban đầu).
+2. **Luôn sử dụng `InterviewAIException`** kết hợp với centralized `ErrorCode` enum và HTTP status phù hợp.
+3. **Mọi response lỗi đều tuân thủ chuẩn Unified Error Envelope**:
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed",
+    "details": {
+      "email": ["email must be an email"]
+    }
+  },
+  "meta": {
+    "requestId": "req-1728100000-abcd",
+    "correlationId": "corr-uuid-1234",
+    "timestamp": "2026-10-05T10:00:00.000Z",
+    "path": "/api/v1/auth/register"
+  }
+}
+```
+
+#### b. Cú pháp & Tùy chọn của `InterviewAIException`
 ```typescript
-// ❌ BAD: Throw error với string tự do, không kiểm soát mã lỗi
-throw new NotFoundException('Cannot find this interview session in db');
-
-// ✅ GOOD: Sử dụng ErrorCode enum và domain exception chuẩn
 throw new InterviewAIException(
   ErrorCode.SESSION_NOT_FOUND,
   HttpStatus.NOT_FOUND,
   `Interview session ${sessionId} does not exist or has been deleted`,
+  {
+    details: { sessionId },            // Structured validation / field errors
+    metadata: { attemptCount: 3 },      // Internal observability context (redacted in prod)
+    cause: originalError,               // Original error for tracing stack
+    isOperational: true,                // true = expected business error; false = system crash
+  },
+);
+```
+
+#### c. Safety Net cho Database & Prisma Errors
+Không cần thủ công `try/catch` mọi truy vấn Prisma chỉ để ném NotFound/Conflict. Bộ lọc trung tâm [`InterviewAIExceptionFilter`](file:///c:/Users/An/Documents/GR1/InterviewCoach/server/src/core/common/exceptions/interview-ai-exception.filter.ts) tích hợp [`PrismaErrorMapper`](file:///c:/Users/An/Documents/GR1/InterviewCoach/server/src/core/common/exceptions/mappers/prisma-error.mapper.ts) tự động phân loại:
+- `P2002` (Unique constraint) ➔ `409 Conflict` (`RESOURCE_ALREADY_EXISTS`)
+- `P2025` (Record not found) ➔ `404 Not Found` (`RESOURCE_NOT_FOUND`)
+- `P2003` (Foreign key violation) ➔ `400 Bad Request` (`BAD_REQUEST`)
+- `P1001` / `P1002` (Connection timeout) ➔ `503 Service Unavailable` (`SERVICE_UNAVAILABLE`)
+- Unhandled Error ➔ `500 Internal Server Error` (ẩn toàn bộ chi tiết nhạy cảm trong Production).
+
+#### d. Worker & BullMQ Error Boundaries
+Trong môi trường `RUNTIME_ROLE=worker`, không có HTTP Filter xử lý ngoại lệ. Mọi BullMQ Processor bắt buộc phải bọc thực thi qua [`BullMqJobErrorHandler.handleJobExecution`](file:///c:/Users/An/Documents/GR1/InterviewCoach/server/src/infrastructure/workflow/bullmq-error-handler.ts):
+```typescript
+@Processor(MY_QUEUE)
+export class MyProcessor extends WorkerHost {
+  process(job: Job<MyDataDto>): Promise<void> {
+    return BullMqJobErrorHandler.handleJobExecution(
+      MyProcessor.name,
+      job,
+      () => this.myService.execute(job.data),
+    );
+  }
+}
+```
+- **Lỗi Fatal (4xx, Not Found, Validation, Conflict):** `BullMqJobErrorHandler` ném `UnrecoverableError` để BullMQ dừng ngay retry, tránh nghẽn hàng đợi vô ích.
+- **Lỗi Transient (5xx, AI timeout, Network reset):** Ném lỗi gốc để kích hoạt exponential backoff retry.
+- **Context Preservation:** Tự động khôi phục `correlationId` từ payload của Job vào [`RequestContext`](file:///c:/Users/An/Documents/GR1/InterviewCoach/server/src/core/common/context/request-context.ts).
+
+#### e. Chuẩn hóa Báo lỗi Realtime SSE
+Khi thông báo lỗi qua SSE về Client, sử dụng phương thức chuẩn `sseService.emitError(channel, code, message)`:
+```typescript
+await this.sseService.emitError(
+  `sse:session:${sessionId}`,
+  ErrorCode.AI_TIMEOUT,
+  'Question generation took longer than expected. Retrying with fallback.',
 );
 ```
 

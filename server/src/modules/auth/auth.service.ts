@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AccountStatus, UserRole, type User } from '@prisma/client';
@@ -33,6 +33,7 @@ export interface DualTokens {
 
 @Injectable()
 export class AuthService implements AuthTokenVerifier {
+  private readonly logger = new Logger(AuthService.name);
   private readonly accessCookieName: string;
   private readonly refreshCookieName: string;
   private readonly accessCookieMaxAge: number;
@@ -97,7 +98,11 @@ export class AuthService implements AuthTokenVerifier {
         tokenVersion: number;
       }>(token);
       if (!payload?.sub || !Number.isInteger(payload.tokenVersion)) {
-        throw new Error('Invalid token');
+        throw new InterviewAIException(
+          ErrorCode.UNAUTHORIZED,
+          HttpStatus.UNAUTHORIZED,
+          'Invalid token',
+        );
       }
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
@@ -107,7 +112,11 @@ export class AuthService implements AuthTokenVerifier {
         user.status !== AccountStatus.active ||
         user.tokenVersion !== payload.tokenVersion
       ) {
-        throw new Error('Invalid account or session expired');
+        throw new InterviewAIException(
+          ErrorCode.UNAUTHORIZED,
+          HttpStatus.UNAUTHORIZED,
+          'Invalid account or session expired',
+        );
       }
       return {
         id: user.id,
@@ -115,11 +124,15 @@ export class AuthService implements AuthTokenVerifier {
         role: user.role,
         emailVerified: user.emailVerified,
       };
-    } catch {
+    } catch (error) {
+      if (error instanceof InterviewAIException) {
+        throw error;
+      }
       throw new InterviewAIException(
         ErrorCode.UNAUTHORIZED,
         HttpStatus.UNAUTHORIZED,
         'Invalid or expired session',
+        { cause: error },
       );
     }
   }
@@ -155,7 +168,11 @@ export class AuthService implements AuthTokenVerifier {
       const tokens = await this.signTokens(user);
 
       // Trigger email verification OTP asynchronously
-      this.requestEmailVerification(user.id).catch(() => undefined);
+      this.requestEmailVerification(user.id).catch((err: unknown) => {
+        this.logger.warn(
+          `Failed to trigger async email verification for user ${user.id}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      });
 
       return { user, tokens };
     } catch (error) {

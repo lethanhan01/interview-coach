@@ -1,6 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { REPORT_QUEUE } from '@core/common/constants/queue.constants';
+import { BullMqJobErrorHandler } from '@infra/workflow/bullmq-error-handler';
 import {
   ComprehensiveReportJobDto,
   GenerateComprehensiveReport,
@@ -13,6 +14,10 @@ export class ComprehensiveReportProcessor extends WorkerHost {
   }
 
   process(job: Job<ComprehensiveReportJobDto>): Promise<void> {
-    return this.generateReport.execute(job.data);
+    return BullMqJobErrorHandler.handleJobExecution(
+      ComprehensiveReportProcessor.name,
+      job,
+      () => this.generateReport.execute(job.data),
+    );
   }
 }

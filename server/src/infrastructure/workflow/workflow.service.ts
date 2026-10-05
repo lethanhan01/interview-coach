@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 
 export type WorkflowCommandType =
   | 'question-generation'
@@ -23,7 +25,9 @@ export class WorkflowService {
   ) {
     const aggregateId = command.aggregateId ?? command.sessionId;
     if (!aggregateId) {
-      throw new Error(
+      throw new InterviewAIException(
+        ErrorCode.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST,
         'aggregateId or sessionId must be provided for workflow command',
       );
     }

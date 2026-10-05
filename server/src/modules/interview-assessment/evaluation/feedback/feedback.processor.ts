@@ -23,6 +23,7 @@ import type { OutputLanguage } from '@infra/ai/output-language';
 import { resolveOutputLanguage } from '@infra/ai/output-language';
 import { sanitizeFeedbackSegments } from '../feedback-segment-sanitizer';
 import { PipelineStrategyFactory } from '@infra/ai/pipelines/pipeline-strategy.factory';
+import { BullMqJobErrorHandler } from '@infra/workflow/bullmq-error-handler';
 
 import {
   BinaryCriteriaEvaluatorService,
@@ -74,7 +75,15 @@ export class FeedbackProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<FeedbackJobDto>): Promise<void> {
+  process(job: Job<FeedbackJobDto>): Promise<void> {
+    return BullMqJobErrorHandler.handleJobExecution(
+      FeedbackProcessor.name,
+      job,
+      () => this.executeFeedback(job),
+    );
+  }
+
+  private async executeFeedback(job: Job<FeedbackJobDto>): Promise<void> {
     const {
       sessionId,
       answerId,

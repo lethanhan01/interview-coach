@@ -49,6 +49,16 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
     await this.publisher.publish(channel, JSON.stringify({ event, data }));
   }
 
+  async emitError(channel: string, code: string, message: string): Promise<void> {
+    await this.emit(channel, 'error', {
+      error: {
+        code,
+        message,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   subscribe(channel: string): Observable<MessageEvent> {
     return new Observable<SseMessage>((observer) => {
       const subscriberCount = this.channelSubscribers.get(channel) ?? 0;

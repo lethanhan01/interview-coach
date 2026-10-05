@@ -39,4 +39,29 @@ describe('SseService', () => {
     second.unsubscribe();
     expect(subscriber.unsubscribe).toHaveBeenCalledWith('sse:session:1');
   });
+
+  it('emitError phát sự kiện error với payload chuẩn hóa { error: { code, message }, timestamp }', async () => {
+    const service = new SseService({
+      get: jest.fn((key: string) =>
+        key === 'REDIS_PORT' ? 6379 : 'localhost',
+      ),
+    } as unknown as ConfigService);
+    service.onModuleInit();
+    const publisher = (Redis as unknown as jest.Mock).mock.results[0]
+      .value as { publish: jest.Mock };
+
+    await service.emitError('sse:session:1', 'AI_TIMEOUT', 'Request timed out');
+
+    expect(publisher.publish).toHaveBeenCalledTimes(1);
+    const [channel, payloadStr] = publisher.publish.mock.calls[0];
+    expect(channel).toBe('sse:session:1');
+    const payload = JSON.parse(payloadStr);
+    expect(payload.event).toBe('error');
+    expect(payload.data.error).toEqual({
+      code: 'AI_TIMEOUT',
+      message: 'Request timed out',
+    });
+    expect(payload.data.timestamp).toBeDefined();
+  });
 });
+
