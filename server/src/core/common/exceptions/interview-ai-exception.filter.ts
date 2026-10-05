@@ -11,6 +11,7 @@ import { Prisma } from '@prisma/client';
 import { ErrorCode } from './error-code.enum';
 import { InterviewAIException } from './interview-ai.exception';
 import { PrismaErrorMapper } from './mappers/prisma-error.mapper';
+import { RequestContext } from '../context/request-context';
 
 const httpExceptionCodeByStatus: Partial<Record<number, ErrorCode>> = {
   [HttpStatus.BAD_REQUEST]: ErrorCode.BAD_REQUEST,
@@ -91,7 +92,10 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
     const requestId =
       (request.headers?.['x-request-id'] as string) ||
       (request.headers?.['X-Request-ID'] as string) ||
+      RequestContext.getRequestId() ||
       undefined;
+
+    const correlationId = RequestContext.getCorrelationId();
 
     response.status(status).json({
       success: false,
@@ -101,7 +105,8 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
         details,
       },
       meta: {
-        requestId,
+        requestId: requestId !== 'no-request-id' ? requestId : undefined,
+        correlationId: correlationId !== 'no-correlation-id' ? correlationId : undefined,
         timestamp: new Date().toISOString(),
         path: request.url,
       },
