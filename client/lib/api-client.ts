@@ -14,6 +14,7 @@ export class ApiClientError extends Error {
     public readonly errorCode?: string,
     public readonly details?: Record<string, string[]> | null,
     public readonly requestId?: string,
+    public readonly correlationId?: string,
     rawData?: unknown,
   ) {
     super(message)
@@ -29,9 +30,21 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   FORBIDDEN: 'Bạn không có quyền thực hiện thao tác này.',
   VALIDATION_ERROR: 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.',
   USER_NOT_FOUND: 'Không tìm thấy thông tin người dùng.',
+  INVALID_CREDENTIALS: 'Email hoặc mật khẩu không chính xác.',
   AUTH_INVALID_CREDENTIALS: 'Email hoặc mật khẩu không chính xác.',
+  EMAIL_ALREADY_EXISTS: 'Email này đã được sử dụng.',
   AUTH_EMAIL_EXISTS: 'Email này đã được sử dụng.',
+  EMAIL_NOT_VERIFIED:
+    'Email của bạn chưa được xác thực. Vui lòng xác thực email trước khi tiếp tục.',
+  SERVICE_UNAVAILABLE:
+    'Dịch vụ tạm thời không khả dụng. Vui lòng thử lại sau ít phút.',
+  AI_TIMEOUT:
+    'Hệ thống AI phản hồi quá thời gian cho phép. Đang áp dụng kết quả dự phòng.',
+  AI_QUOTA_EXCEEDED:
+    'Hệ thống AI đang tạm thời vượt hạn mức, vui lòng thử lại sau.',
   INVALID_VERIFICATION_CODE: 'Mã xác thực không chính xác hoặc đã hết hạn.',
+  RATE_LIMIT_EXCEEDED:
+    'Hệ thống đang tiếp nhận quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.',
 }
 
 interface ServerErrorPayload {
@@ -157,6 +170,7 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
     const code = err.error?.code ?? err.errorCode
     const details = err.error?.details ?? null
     const requestId = err.meta?.requestId
+    const correlationId = err.meta?.correlationId
 
     const message =
       (code ? API_ERROR_MESSAGES[code] : undefined) ??
@@ -170,6 +184,7 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
       code,
       details,
       requestId,
+      correlationId,
       body,
     )
   }

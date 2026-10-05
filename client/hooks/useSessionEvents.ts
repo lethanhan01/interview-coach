@@ -125,6 +125,23 @@ export function useSessionEvents({
       es.addEventListener('report.ready', handleFinished)
       es.addEventListener('session.completed', handleFinished)
 
+      es.addEventListener('session.error', (event) => {
+        try {
+          const payload = JSON.parse((event as MessageEvent).data) as {
+            error?: { code?: string; message?: string }
+            timestamp?: string
+          }
+          const errMessage = payload.error?.message || 'Lỗi xử lý phiên phỏng vấn'
+          const errCode = payload.error?.code
+          isTerminatedRef.current = true
+          cleanup()
+          setConnectionState('disconnected')
+          onErrorRef.current?.(new Error(`[${errCode || 'ERROR'}] ${errMessage}`))
+        } catch (err) {
+          console.warn('Failed to parse session.error SSE payload:', err)
+        }
+      })
+
       es.onerror = () => {
         cleanup()
         onConnectionChangeRef.current?.(false)

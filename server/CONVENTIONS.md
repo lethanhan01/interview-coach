@@ -700,13 +700,19 @@ Dự án duy trì bộ test kiểm tra cấu trúc tự động tại [`src/core
 
 ### 8.3. Bộ lệnh Kiểm tra Bắt buộc trước khi Commit
 ```bash
-# 1. Chạy kiểm tra ranh giới kiến trúc
+# 1. Kiểm tra tuân thủ bộ quy ước kiến trúc và coding standards
+npm run check:conventions
+
+# 2. Chạy kiểm tra ranh giới kiến trúc tự động
 npm run test:arch
 
-# 2. Chạy toàn bộ Unit Tests
+# 3. Kiểm tra xác minh khả năng quan sát & truy vết Traceability
+npm run check:observability
+
+# 4. Chạy toàn bộ Unit Tests (bao gồm error boundary & trace spec)
 npm test
 
-# 3. Kiểm tra tính toàn vẹn TypeScript Build
+# 5. Kiểm tra tính toàn vẹn TypeScript & Prisma Build
 npm run build
 ```
 

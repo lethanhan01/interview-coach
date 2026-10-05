@@ -56,7 +56,7 @@ describe('SseService', () => {
     const [channel, payloadStr] = publisher.publish.mock.calls[0];
     expect(channel).toBe('sse:session:1');
     const payload = JSON.parse(payloadStr);
-    expect(payload.event).toBe('error');
+    expect(payload.event).toBe('session.error');
     expect(payload.data.error).toEqual({
       code: 'AI_TIMEOUT',
       message: 'Request timed out',

@@ -71,8 +71,19 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
       }
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
-      errorCode =
-        httpExceptionCodeByStatus[status] ?? ErrorCode.VALIDATION_ERROR;
+      if (httpExceptionCodeByStatus[status]) {
+        errorCode = httpExceptionCodeByStatus[status]!;
+      } else if (status === HttpStatus.TOO_MANY_REQUESTS) {
+        errorCode = ErrorCode.RATE_LIMIT_EXCEEDED;
+      } else if (status === HttpStatus.PAYLOAD_TOO_LARGE) {
+        errorCode = ErrorCode.AUDIO_TOO_LARGE;
+      } else if (status === HttpStatus.SERVICE_UNAVAILABLE) {
+        errorCode = ErrorCode.SERVICE_UNAVAILABLE;
+      } else if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+        errorCode = ErrorCode.INTERNAL_ERROR;
+      } else {
+        errorCode = ErrorCode.BAD_REQUEST;
+      }
       const body = exception.getResponse();
       const rawMsg =
         typeof body === 'string'
@@ -91,17 +102,13 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       errorCode = ErrorCode.INTERNAL_ERROR;
-      const isProd = process.env.NODE_ENV === 'production';
-      message = isProd
-        ? 'Internal server error'
-        : exception instanceof Error
-          ? exception.message
-          : 'Internal server error';
-      details = isProd
-        ? null
-        : exception instanceof Error
-          ? { stack: exception.stack }
-          : null;
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      message = isDevelopment && exception instanceof Error
+        ? exception.message
+        : 'Internal server error';
+      details = isDevelopment && exception instanceof Error
+        ? { stack: exception.stack }
+        : null;
 
       this.logger.error(
         'Unhandled exception',

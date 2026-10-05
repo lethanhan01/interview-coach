@@ -3,8 +3,8 @@
 > **Tài liệu**: Master Plan Kiểm toán, Tái thiết kế Kiến trúc & Lộ trình Chuyển đổi Toàn diện Hệ thống Quản trị Lỗi (Error Handling Architecture)  
 > **Dự án**: InterviewCoach Monorepo (`server` & `client`)  
 > **Tác giả / Vai trò**: Senior Backend Engineer / Software Architect  
-> **Trạng thái**: Đã phê duyệt qua Grill-Me — Sẵn sàng triển khai  
-> **Phiên bản**: 2.1 (Enterprise Production-Ready Specification — Đã tinh chỉnh và đồng bộ 100% với Codebase thực tế)
+> **Trạng thái**: Đã hoàn tất 100% triển khai và nghiệm thu (Phases 1-22) — Production-Ready  
+> **Phiên bản**: 3.0 (Enterprise Production-Ready — Đã kiểm thử tự động và xác minh thực tế toàn diện)
 
 ---
 
@@ -769,49 +769,52 @@ Milestone 5: Verification, Integration Testing & Documentation
 ### Chi tiết Các Tác vụ theo từng Milestone:
 
 #### Milestone 1: Core Foundation & Strict Cutover Contract
-- [ ] Cập nhật `InterviewAIException`: Thêm `details`, `cause`, `metadata`, `isOperational`.
-- [ ] Bổ sung mã enum trong `ErrorCode`: `FORBIDDEN_RESOURCE`, `TRANSCRIPTION_FAILED`, `ASSESSMENT_FAILED`, `REQUEST_IN_PROGRESS`, `BAD_REQUEST`.
-- [ ] Tạo mới `PrismaErrorMapper`: Map `P2002`, `P2025`, `P2003`, `P1001` sang `InterviewAIException`.
-- [ ] Tạo mới `validationErrorFactory` tại `server/src/core/common/pipes/validation-error.factory.ts`.
-- [ ] Cập nhật `InterviewAIExceptionFilter`: Định dạng lại response JSON phân cấp `{ success: false, error: {...}, meta: {...} }` và tích hợp `PrismaErrorMapper`.
-- [ ] Cấu hình `ValidationPipe` trong `main.ts` sử dụng `validationErrorFactory`.
-- [ ] Cập nhật [client/lib/api-client.ts](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/lib/api-client.ts): Hỗ trợ cấu trúc response mới, bảo toàn `data` field.
-- [ ] Cập nhật [client/e2e/interview.spec.ts](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/e2e/interview.spec.ts) tương thích với payload mới.
-- [ ] Cập nhật `interview-ai-exception.filter.spec.ts` và tạo mới `interview-ai.exception.spec.ts`.
+- [x] Cập nhật `InterviewAIException`: Thêm `details`, `cause`, `metadata`, `isOperational`.
+- [x] Bổ sung mã enum trong `ErrorCode`: `FORBIDDEN_RESOURCE`, `TRANSCRIPTION_FAILED`, `ASSESSMENT_FAILED`, `REQUEST_IN_PROGRESS`, `BAD_REQUEST`.
+- [x] Tạo mới `PrismaErrorMapper`: Map `P2002`, `P2025`, `P2003`, `P1001` sang `InterviewAIException`.
+- [x] Tạo mới `validationErrorFactory` tại `server/src/core/common/pipes/validation-error.factory.ts`.
+- [x] Cập nhật `InterviewAIExceptionFilter`: Định dạng lại response JSON phân cấp `{ success: false, error: {...}, meta: {...} }` và tích hợp `PrismaErrorMapper`.
+- [x] Cấu hình `ValidationPipe` trong `main.ts` sử dụng `validationErrorFactory`.
+- [x] Cập nhật [client/lib/api-client.ts](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/lib/api-client.ts): Hỗ trợ cấu trúc response mới, bảo toàn `data` field và `correlationId`.
+- [x] Cập nhật [client/e2e/interview.spec.ts](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/e2e/interview.spec.ts) tương thích với payload mới.
+- [x] Cập nhật `interview-ai-exception.filter.spec.ts` và tạo mới `interview-ai.exception.spec.ts`.
 
 #### Milestone 2: Observability & Context Propagation
-- [ ] Tạo mới `RequestContext` (`AsyncLocalStorage`) tại `server/src/core/common/context/request-context.ts`.
-- [ ] Cập nhật `RequestIdMiddleware` đón nhận `x-request-id`, `x-correlation-id`, trả về headers tương ứng và bọc request qua `RequestContext.run()`.
-- [ ] Tạo mới `AppLogger` tại `server/src/core/common/services/app-logger.service.ts`: Ghi log JSON có `correlationId`, tự động che dấu PII.
-- [ ] Đăng ký `AppLogger` vào `CommonModule` làm Global Logger.
+- [x] Tạo mới `RequestContext` (`AsyncLocalStorage`) tại `server/src/core/common/context/request-context.ts`.
+- [x] Cập nhật `RequestIdMiddleware` đón nhận `x-request-id`, `x-correlation-id`, trả về headers tương ứng và bọc request qua `RequestContext.run()`.
+- [x] Tạo mới `AppLogger` tại `server/src/core/common/services/app-logger.service.ts`: Ghi log JSON có `correlationId`, tự động che dấu PII.
+- [x] Đăng ký `AppLogger` vào `CommonModule` làm Global Logger.
 
 #### Milestone 3: Worker & SSE Realtime Boundaries
-- [ ] Tạo mới `BullMqJobErrorHandler` tại `server/src/infrastructure/workflow/bullmq-error-handler.ts`:
+- [x] Tạo mới `BullMqJobErrorHandler` tại `server/src/infrastructure/workflow/bullmq-error-handler.ts`:
   - Khôi phục `RequestContext` từ `job.data.correlationId`.
   - Phân loại lỗi Fatal vs Transient.
   - Ghi log thất bại có context đầy đủ.
-- [ ] Tích hợp `BullMqJobErrorHandler` vào **toàn bộ 4 BullMQ Processors**:
+- [x] Tích hợp `BullMqJobErrorHandler` vào **toàn bộ 4 BullMQ Processors**:
   1. `ComprehensiveReportProcessor`
   2. `FeedbackProcessor`
   3. `QuestionGenerationProcessor`
   4. `TranscriptionProcessor`
-- [ ] Chuẩn hóa payload sự kiện lỗi trên luồng SSE (`SessionController` `:id/events` & `SseService`).
+- [x] Chuẩn hóa payload sự kiện lỗi trên luồng SSE (`SessionController` `:id/events` & `SseService`).
 
 #### Milestone 4: Codebase Audit & Sanitization
-- [ ] Sửa `unified-report-generator.service.ts`: Thay thế `throw new Error(...)` bằng `InterviewAIException`.
-- [ ] Sửa `auth.service.ts`: Thay thế `throw new Error(...)` bằng `InterviewAIException`; **bảo lưu** khối catch `P2002` ném `EMAIL_ALREADY_EXISTS`.
-- [ ] Sửa `workflow-dispatcher.service.ts`: Thay thế `throw new Error(...)` bằng domain exception chuẩn.
-- [ ] Sửa `pipeline-strategy.factory.ts`: Thay thế `throw new Error(...)` bằng `InterviewAIException(ErrorCode.INVALID_SESSION_TYPE, HttpStatus.BAD_REQUEST)`.
-- [ ] Sửa `workflow.service.ts`: Thay thế `throw new Error(...)` bằng `InterviewAIException(ErrorCode.INTERNAL_ERROR, HttpStatus.INTERNAL_SERVER_ERROR)`.
-- [ ] Rà soát toàn bộ các điểm nuốt lỗi (`.catch(() => undefined)`), bổ sung log `logger.warn`.
+- [x] Sửa `unified-report-generator.service.ts`: Thay thế `throw new Error(...)` bằng `InterviewAIException`.
+- [x] Sửa `auth.service.ts`: Thay thế `throw new Error(...)` bằng `InterviewAIException`; **bảo lưu** khối catch `P2002` ném `EMAIL_ALREADY_EXISTS`.
+- [x] Sửa `workflow-dispatcher.service.ts`: Thay thế `throw new Error(...)` bằng domain exception chuẩn.
+- [x] Sửa `pipeline-strategy.factory.ts`: Thay thế `throw new Error(...)` bằng `InterviewAIException(ErrorCode.INVALID_SESSION_TYPE, HttpStatus.BAD_REQUEST)`.
+- [x] Sửa `workflow.service.ts`: Thay thế `throw new Error(...)` bằng `InterviewAIException(ErrorCode.INTERNAL_ERROR, HttpStatus.INTERNAL_SERVER_ERROR)`.
+- [x] Rà soát toàn bộ các điểm nuốt lỗi (`.catch(() => undefined)`), bổ sung log `logger.warn`.
 
 #### Milestone 5: Verification, Integration Testing & Documentation
-- [ ] Chạy kiểm thử ranh giới kiến trúc: `npm run test:arch`.
-- [ ] Chạy toàn bộ test suites server: `npm test`.
-- [ ] Kiểm tra tính toàn vẹn biên dịch server: `npm run build`.
-- [ ] Kiểm tra type check client: `cd ../client && npm run build` (hoặc `npx tsc --noEmit`).
-- [ ] Cập nhật `server/CONVENTIONS.md`.
-- [ ] Tạo mới tài liệu hướng dẫn kỹ thuật chi tiết: `server/docs/error-handling.md`.
+- [x] Chạy kiểm thử ranh giới kiến trúc: `npm run test:arch`.
+- [x] Chạy toàn bộ test suites server: `npm test`.
+- [x] Kiểm tra tính toàn vẹn biên dịch server: `npm run build`.
+- [x] Kiểm tra type check client: `cd ../client && npm run build` (hoặc `npx tsc --noEmit`).
+- [x] Cập nhật `server/CONVENTIONS.md`.
+- [x] Tạo mới tài liệu hướng dẫn kỹ thuật chi tiết: `server/docs/error-handling.md`.
+- [x] Tạo bộ kiểm thử ranh giới và chống rò rỉ: `server/src/core/common/exceptions/error-boundary.spec.ts`.
+- [x] Tạo bộ kiểm thử lan truyền trace: `server/src/infrastructure/workflow/observability-trace.spec.ts`.
+- [x] Tạo script kiểm tra observability CLI: `server/scripts/verify-observability.ts`.
 
 ---
 
@@ -912,21 +915,21 @@ try {
 
 Trước khi merge bất kỳ thay đổi nào thuộc Error Handling System, PR phải đạt 100% checklist sau:
 
-- [ ] **1. Architecture**: Sử dụng duy nhất `InterviewAIException`, không tự ý tạo class exception riêng rẽ.
-- [ ] **2. Architecture**: Controller hoàn toàn mỏng, không chứa try/catch format lỗi.
-- [ ] **3. Architecture**: Module này sang module khác chỉ gọi qua `contracts/` Facade, không leak ngoại lệ nội bộ.
-- [ ] **4. Contract**: Mọi API HTTP Error Response đều tuân thủ `{ success: false, error: { code, message, details }, meta: {...} }`.
-- [ ] **5. Contract**: Frontend `api-client.ts` xử lý trơn tru cả lỗi validation (`details`) lẫn lỗi nghiệp vụ.
-- [ ] **6. Security**: Response 500 trên Production không chứa stack trace hay database error internals.
-- [ ] **7. Security**: Dữ liệu log được lọc sạch PII (password, tokens, secrets).
-- [ ] **8. Observability**: Mọi dòng log lỗi đều có `correlationId` lấy từ `RequestContext`.
-- [ ] **9. Observability**: Toàn bộ 4 BullMQ Processors ghi nhận đủ thông tin trace và attempts qua `BullMqJobErrorHandler`.
-- [ ] **10. Reliability**: Mọi lời gọi AI (OpenAI, Whisper) đều có hard timeout bằng `AbortController` tương ứng với tải tác vụ (30s - 600s).
-- [ ] **11. Reliability**: Retry chỉ áp dụng cho lỗi Transient, không retry lỗi Validation hay 404.
-- [ ] **12. Realtime**: Luồng Server-Sent Events (SSE) phát sự kiện lỗi có cấu trúc envelope chuẩn khi xảy ra sự cố.
-- [ ] **13. Quality**: `npm run test:arch` PASS 100%.
-- [ ] **14. Quality**: `npm test` PASS 100%.
-- [ ] **15. Quality**: `npm run build` (cả server và client) PASS 0 error.
+- [x] **1. Architecture**: Sử dụng duy nhất `InterviewAIException`, không tự ý tạo class exception riêng rẽ.
+- [x] **2. Architecture**: Controller hoàn toàn mỏng, không chứa try/catch format lỗi.
+- [x] **3. Architecture**: Module này sang module khác chỉ gọi qua `contracts/` Facade, không leak ngoại lệ nội bộ.
+- [x] **4. Contract**: Mọi API HTTP Error Response đều tuân thủ `{ success: false, error: { code, message, details }, meta: {...} }`.
+- [x] **5. Contract**: Frontend `api-client.ts` xử lý trơn tru cả lỗi validation (`details`) lẫn lỗi nghiệp vụ.
+- [x] **6. Security**: Response 500 trên Production không chứa stack trace hay database error internals.
+- [x] **7. Security**: Dữ liệu log được lọc sạch PII (password, tokens, secrets).
+- [x] **8. Observability**: Mọi dòng log lỗi đều có `correlationId` lấy từ `RequestContext`.
+- [x] **9. Observability**: Toàn bộ 4 BullMQ Processors ghi nhận đủ thông tin trace và attempts qua `BullMqJobErrorHandler`.
+- [x] **10. Reliability**: Mọi lời gọi AI (OpenAI, Whisper) đều có hard timeout bằng `AbortController` tương ứng với tải tác vụ (30s - 600s).
+- [x] **11. Reliability**: Retry chỉ áp dụng cho lỗi Transient, không retry lỗi Validation hay 404.
+- [x] **12. Realtime**: Luồng Server-Sent Events (SSE) phát sự kiện lỗi có cấu trúc envelope chuẩn khi xảy ra sự cố.
+- [x] **13. Quality**: `npm run test:arch` PASS 100%.
+- [x] **14. Quality**: `npm test` PASS 100%.
+- [x] **15. Quality**: `npm run build` (cả server và client) PASS 0 error.
 
 ---
 

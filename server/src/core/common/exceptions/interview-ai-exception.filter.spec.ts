@@ -220,4 +220,81 @@ describe('InterviewAIExceptionFilter', () => {
       expect.anything(),
     );
   });
+
+  describe('HttpException hierarchical fallback mapping', () => {
+    it('map HttpException 429 sang RATE_LIMIT_EXCEEDED', () => {
+      const res = mockResponse();
+      filter.catch(
+        new HttpException('Too Many Requests', HttpStatus.TOO_MANY_REQUESTS),
+        mockHost(res) as never,
+      );
+
+      expect(res.status).toHaveBeenCalledWith(429);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({ code: ErrorCode.RATE_LIMIT_EXCEEDED }),
+        }),
+      );
+    });
+
+    it('map HttpException 502/504 sang INTERNAL_ERROR', () => {
+      const res = mockResponse();
+      filter.catch(
+        new HttpException('Bad Gateway', HttpStatus.BAD_GATEWAY),
+        mockHost(res) as never,
+      );
+
+      expect(res.status).toHaveBeenCalledWith(502);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({ code: ErrorCode.INTERNAL_ERROR }),
+        }),
+      );
+    });
+
+    it('map HttpException 422 hoặc mã 4xx khác sang BAD_REQUEST', () => {
+      const res = mockResponse();
+      filter.catch(
+        new HttpException('Unprocessable Entity', HttpStatus.UNPROCESSABLE_ENTITY),
+        mockHost(res) as never,
+      );
+
+      expect(res.status).toHaveBeenCalledWith(422);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({ code: ErrorCode.BAD_REQUEST }),
+        }),
+      );
+    });
+  });
+
+  describe('Stack trace and message whitelist security', () => {
+    const originalEnv = process.env.NODE_ENV;
+
+    afterEach(() => {
+      process.env.NODE_ENV = originalEnv;
+    });
+
+    it('ẩn tuyệt đối stack trace và trả thông điệp chung trên staging hoặc khi NODE_ENV undefined', () => {
+      delete process.env.NODE_ENV;
+      const res = mockResponse();
+      filter.catch(new Error('Sensitive DB Error: Password123'), mockHost(res) as never);
+
+      const body = res.json.mock.calls[0][0];
+      expect(body.error.message).toBe('Internal server error');
+      expect(body.error.details).toBeNull();
+    });
+
+    it('chỉ hiển thị stack trace và exception message khi NODE_ENV === development', () => {
+      process.env.NODE_ENV = 'development';
+      const res = mockResponse();
+      const error = new Error('Debug error with details');
+      filter.catch(error, mockHost(res) as never);
+
+      const body = res.json.mock.calls[0][0];
+      expect(body.error.message).toBe('Debug error with details');
+      expect(body.error.details).toEqual({ stack: error.stack });
+    });
+  });
 });
+

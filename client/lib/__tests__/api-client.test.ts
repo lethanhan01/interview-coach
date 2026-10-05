@@ -34,8 +34,28 @@ describe('ApiClientError', () => {
       'INTERNAL_ERROR',
       null,
       undefined,
+      undefined,
       rawData,
     )
     expect(error.data).toEqual(rawData)
   })
+
+  it('lưu trữ correlationId và requestId đầy đủ từ response metadata', () => {
+    const details = { password: ['password is too weak'] }
+    const error = new ApiClientError(
+      'Validation error',
+      400,
+      'VALIDATION_ERROR',
+      details,
+      'req-test-999',
+      'corr-trace-888',
+    )
+    expect(error.statusCode).toBe(400)
+    expect(error.errorCode).toBe('VALIDATION_ERROR')
+    expect(error.details).toEqual(details)
+    expect(error.requestId).toBe('req-test-999')
+    expect(error.correlationId).toBe('corr-trace-888')
+    expect(error.data).toEqual(details)
+  })
 })
+

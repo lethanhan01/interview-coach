@@ -44,6 +44,7 @@
     "test:arch": "jest src/core/architecture.spec.ts",
     "check:conventions": "ts-node -r tsconfig-paths/register scripts/verify-conventions/index.ts",
     "check:conventions:report": "ts-node -r tsconfig-paths/register scripts/verify-conventions/index.ts --report",
+    "check:observability": "ts-node -r tsconfig-paths/register scripts/verify-observability.ts",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",

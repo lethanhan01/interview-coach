@@ -68,7 +68,7 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
   }
 
   async emitError(channel: string, code: string, message: string): Promise<void> {
-    await this.emit(channel, 'error', {
+    await this.emit(channel, 'session.error', {
       error: {
         code,
         message,

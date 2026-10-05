@@ -196,7 +196,7 @@ describe('SessionController', () => {
       const result = await controller.streamEvents('session-1', mockReq());
       const emitted = await firstValueFrom(result);
 
-      expect(emitted.type).toBe('error');
+      expect(emitted.type).toBe('session.error');
       expect((emitted.data as any).error.code).toBe('INTERNAL_ERROR');
       expect((emitted.data as any).error.message).toBe('Redis connection lost');
     });

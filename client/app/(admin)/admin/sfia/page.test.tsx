@@ -23,6 +23,58 @@ vi.mock('sonner', () => ({
   },
 }))
 
+vi.mock('@/services/sfia-admin.service', async () => {
+  const {
+    MOCK_SFIA_CATEGORIES,
+    MOCK_SFIA_SUBCATEGORIES,
+    MOCK_SFIA_SKILL_SUMMARIES,
+    MOCK_SFIA_SKILL_DETAILS,
+    MOCK_SFIA_RESPONSIBILITY_LEVELS,
+    MOCK_SFIA_GENERIC_ATTRIBUTES,
+    MOCK_SFIA_COVERAGE_STATS,
+  } = await import('@/components/sfia/sfia-mock-data')
+
+  return {
+    sfiaAdminService: {
+      getCategories: vi.fn().mockResolvedValue(MOCK_SFIA_CATEGORIES),
+      getSubcategories: vi.fn().mockResolvedValue(MOCK_SFIA_SUBCATEGORIES),
+      getSkills: vi.fn().mockResolvedValue(MOCK_SFIA_SKILL_SUMMARIES),
+      getSkillDetail: vi.fn().mockImplementation((code: string) => Promise.resolve(MOCK_SFIA_SKILL_DETAILS[code] || null)),
+      getCoverageStats: vi.fn().mockResolvedValue(MOCK_SFIA_COVERAGE_STATS),
+      getMatrixData: vi.fn().mockResolvedValue({
+        skills: MOCK_SFIA_SKILL_SUMMARIES,
+        categories: MOCK_SFIA_CATEGORIES,
+        cells: {
+          'PROG-3': {
+            skillCode: 'PROG',
+            levelId: 3,
+            questionCount: 5,
+            onetCount: 3,
+          },
+        },
+      }),
+      getResponsibilityLevels: vi.fn().mockResolvedValue(MOCK_SFIA_RESPONSIBILITY_LEVELS),
+      getGenericAttributes: vi.fn().mockResolvedValue(MOCK_SFIA_GENERIC_ATTRIBUTES),
+      createQuestion: vi.fn().mockResolvedValue({
+        id: 'new-q-1',
+        questionText: 'Mock question',
+        type: 'TECHNICAL',
+        difficulty: 'MEDIUM',
+        targetSfiaLevel: 3,
+        createdAt: new Date().toISOString(),
+      }),
+      addMockQuestion: vi.fn().mockResolvedValue({
+        id: 'new-q-1',
+        questionText: 'Mock question',
+        type: 'TECHNICAL',
+        difficulty: 'MEDIUM',
+        targetSfiaLevel: 3,
+        createdAt: new Date().toISOString(),
+      }),
+    },
+  }
+})
+
 describe('SfiaAdminPage - Matrix Tab Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -32,27 +84,25 @@ describe('SfiaAdminPage - Matrix Tab Integration', () => {
   it('renders SFIA Knowledge Browser header and Matrix tab workspace', async () => {
     render(<SfiaAdminPage />)
 
-    expect(screen.getByText('SFIA 9 Knowledge Browser')).toBeInTheDocument()
-    expect(screen.getByText('Ma trận 2D')).toBeInTheDocument()
-
     // Wait for mock data to load
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Tìm mã hoặc tên kỹ năng...')).toBeInTheDocument()
+      expect(screen.getByText('SFIA 9 Knowledge Browser')).toBeInTheDocument()
+      expect(screen.getByText('SFIA Matrix (2D Grid)')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('Search code (PROG) or skill name...')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('Kỹ Năng SFIA 9')).toBeInTheDocument()
-    expect(screen.getByText('Xuất Ma trận CSV')).toBeInTheDocument()
-    expect(screen.getByText('Lọc điểm mù (0 câu hỏi)')).toBeInTheDocument()
+    expect(screen.getByText('Export Matrix CSV')).toBeInTheDocument()
+    expect(screen.getByText('Blind spots only (0 questions)')).toBeInTheDocument()
   })
 
   it('filters matrix skills when search query is typed in toolbar', async () => {
     render(<SfiaAdminPage />)
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Tìm mã hoặc tên kỹ năng...')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('Search code (PROG) or skill name...')).toBeInTheDocument()
     })
 
-    const searchInput = screen.getByPlaceholderText('Tìm mã hoặc tên kỹ năng...')
+    const searchInput = screen.getByPlaceholderText('Search code (PROG) or skill name...')
     fireEvent.change(searchInput, { target: { value: 'PROG' } })
 
     await waitFor(() => {
@@ -71,9 +121,9 @@ describe('SfiaAdminPage - Matrix Tab Integration', () => {
     fireEvent.click(cellL3)
 
     await waitFor(() => {
-      expect(screen.getByText('Mở Cây kỹ năng')).toBeInTheDocument()
-      expect(screen.getByText('Sao chép Prompt AI')).toBeInTheDocument()
-      expect(screen.getByText('Tạo câu hỏi')).toBeInTheDocument()
+      expect(screen.getByText('Open in Tree')).toBeInTheDocument()
+      expect(screen.getByText('Copy AI Prompt')).toBeInTheDocument()
+      expect(screen.getByText('Create Question')).toBeInTheDocument()
     })
   })
 })
@@ -104,26 +154,27 @@ describe('SfiaAdminPage - Phase 7 Analytics Tab Integration', () => {
     expect(screen.getByText('Top 10 Kỹ Năng SFIA Phổ Biến Nhất trong O*NET')).toBeInTheDocument()
 
     // Blind Spots Table
-    expect(screen.getByText('Bảng Cảnh Báo Điểm Mù (Blind Spots)')).toBeInTheDocument()
-    expect(screen.getByText('35 điểm mù')).toBeInTheDocument()
-    expect(screen.getByText('Xuất danh sách điểm mù CSV')).toBeInTheDocument()
+    expect(screen.getByText('Blind Spots Warning Table')).toBeInTheDocument()
+    expect(screen.getByText('35 blind spots')).toBeInTheDocument()
+    expect(screen.getByText('Export Blind Spots CSV')).toBeInTheDocument()
   })
 
-  it('opens create question modal when clicking [Tạo câu hỏi] in blind spots table', async () => {
+  it('opens create question modal when clicking [Create Question] in blind spots table', async () => {
     render(<SfiaAdminPage />)
 
     await waitFor(() => {
-      expect(screen.getByText('Bảng Cảnh Báo Điểm Mù (Blind Spots)')).toBeInTheDocument()
+      expect(screen.getByText('Blind Spots Warning Table')).toBeInTheDocument()
     })
 
-    const createButtons = screen.getAllByRole('button', { name: /Tạo câu hỏi/i })
+    const createButtons = screen.getAllByRole('button', { name: /Create Question/i })
     expect(createButtons.length).toBeGreaterThan(0)
 
     fireEvent.click(createButtons[0])
 
     await waitFor(() => {
-      expect(screen.getByText(/Tạo câu hỏi phỏng vấn mới/i)).toBeInTheDocument()
+      expect(screen.getByText(/Create Interview Question/i)).toBeInTheDocument()
     })
   })
 })
+
 

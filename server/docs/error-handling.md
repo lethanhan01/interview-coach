@@ -213,12 +213,71 @@ try {
 
 ---
 
-## 8. Bảng Quy tắc Do's & Don'ts
+## 8. Bảng Quy tắc Do's & Don'ts (Anti-Patterns Checklist)
 
-| Hành động | Do (Nên làm) ✅ | Don't (Không được làm) ❌ |
+| Hành động | Do (Nên làm) ✅ | Don't (Không được làm) ❌ | Lý do & Biện pháp Khắc phục |
+| :--- | :--- | :--- | :--- |
+| **Ném ngoại lệ** | `throw new InterviewAIException(ErrorCode.XYZ, HttpStatus.XYZ, '...')` | `throw new Error('Something failed')` hoặc `throw new BadRequestException('...')` | Đảm bảo tính nhất quán 100% qua một class ngoại lệ duy nhất; giữ trọn vẹn `ErrorCode` enum và HTTP status. |
+| **Validation DTO** | Khai báo DTO decorator (`@IsString`, `@IsEmail`), dùng `validationErrorFactory` | Tự `if (!email) throw new Error(...)` rải rác trong Controller/Service | Tự động hóa kiểm tra kiểu, gom nhóm dictionary theo field và trả về HTTP 400 chuẩn. |
+| **Prisma Query** | Để `PrismaErrorMapper` tự động chuyển đổi mã `P2002`, `P2025`, `P1001` | `try { ... } catch (e) { throw new Error(e.message) }` | Loại bỏ boilerplate; ngăn ngừa leak tên bảng, column nội bộ hoặc database connection URL. |
+| **Background Job** | Bọc bằng `BullMqJobErrorHandler.handleJobExecution` trong Worker | Thực thi trực tiếp trong `process()` không có error boundary | Phân loại chính xác Fatal (4xx -> dừng retry) vs Transient (5xx -> retry); lan truyền `correlationId`. |
+| **Logging** | Dùng `AppLogger` với structured context, tự động lọc PII | Dùng `console.log` / `console.error` hoặc log plaintext chứa password/token | Đảm bảo log JSON có `correlationId`, `userId`, `durationMs` và che chắn PII (`***REDACTED***`). |
+| **Kiểm tra lỗi Client** | Dựa trên `error.code` (`ErrorCode.XYZ`) hoặc `ApiClientError` | So sánh chuỗi ký tự `if (err.message === '...')` | Message có thể thay đổi hoặc địa phương hóa (i18n), trong khi `code` là bất biến. |
+| **Phản hồi Controller** | Return DTO / Model, để Filter tự động format envelope | Thủ công `res.status(500).json(error)` trong Controller | Giữ Presentation layer mỏng, tách biệt hoàn toàn format response lỗi về Global Filter. |
+
+---
+
+## 9. Đồng bộ Hợp đồng Lỗi Phía Client (`@client/lib/api-client.ts`)
+
+Lớp `ApiClientError` tại Client tự động giải nén cấu trúc Unified Error Envelope và bảo toàn `correlationId`:
+
+```typescript
+export class ApiClientError extends Error {
+  readonly status: number;
+  readonly code?: string;
+  readonly details?: Record<string, string[]>;
+  readonly correlationId?: string;
+  readonly originalError?: unknown;
+}
+```
+
+Bảng mã lỗi chuẩn hóa tại Client (`API_ERROR_MESSAGES`):
+
+| ErrorCode Server | Ý nghĩa Nghiệp vụ | Client Thông báo Thân thiện |
 | :--- | :--- | :--- |
-| **Ném ngoại lệ** | `throw new InterviewAIException(ErrorCode.XYZ, HttpStatus.XYZ, '...')` | `throw new Error('Something failed')` hoặc `throw new BadRequestException('...')` |
-| **Validation** | Khai báo DTO decorator (`@IsString`, `@IsEmail`), dùng `validationErrorFactory` | Tự `if (!email) throw new Error(...)` rải rác |
-| **Prisma Query** | Để `PrismaErrorMapper` tự động chuyển đổi mã `P2002`, `P2025` | `try { ... } catch (e) { throw new Error(e.message) }` |
-| **Background Job** | Bọc bằng `BullMqJobErrorHandler.handleJobExecution` | Thực thi trực tiếp trong `process()` không có error boundary |
-| **Logging** | Dùng `AppLogger` với structured context, tự động lọc PII | Dùng `console.log` hoặc log plaintext chứa password/token |
+| `INVALID_CREDENTIALS` | Sai email hoặc mật khẩu | "Email hoặc mật khẩu không chính xác." |
+| `EMAIL_ALREADY_EXISTS` | Email đã được đăng ký | "Email này đã được sử dụng. Vui lòng chọn email khác." |
+| `EMAIL_NOT_VERIFIED` | Tài khoản chưa kích hoạt | "Email chưa được xác thực. Vui lòng kiểm tra hộp thư." |
+| `SERVICE_UNAVAILABLE` | Database/Hạ tầng tạm thời gián đoạn | "Dịch vụ tạm thời không khả dụng. Vui lòng thử lại sau." |
+| `AI_TIMEOUT` | Lời gọi AI vượt quá thời gian cho phép | "Hệ thống AI phản hồi chậm. Vui lòng thử lại sau ít phút." |
+| `AI_QUOTA_EXCEEDED` | Hết hạn mức AI | "Hệ thống đang quá tải hạn mức AI. Vui lòng thử lại sau." |
+
+---
+
+## 10. Bộ Lệnh Kiểm thử & Xác minh Tự động (Testing & Verification)
+
+Trước khi commit mã nguồn hoặc tạo Pull Request, kỹ sư bắt buộc chạy các lệnh kiểm thử sau:
+
+```bash
+# 1. Kiểm tra ranh giới kiến trúc (Architecture Boundaries)
+npm run test:arch
+
+# 2. Kiểm thử 5 nhóm kịch bản Error Boundary & Anti-Leak (Supertest)
+npm test -- error-boundary.spec.ts
+
+# 3. Kiểm thử Lan truyền Trace & Correlation-ID (HTTP -> Context -> BullMQ -> Worker)
+npm test -- observability-trace.spec.ts
+
+# 4. Chạy script terminal xác minh Traceability & Observability trực quan
+npm run check:observability
+
+# 5. Kiểm tra tuân thủ bộ quy ước kỹ thuật backend (Conventions Checker)
+npm run check:conventions
+
+# 6. Chạy toàn bộ Unit Test Suites
+npm test
+
+# 7. Kiểm tra tính toàn vẹn biên dịch TypeScript (Nest Build & Prisma)
+npm run build
+```
+

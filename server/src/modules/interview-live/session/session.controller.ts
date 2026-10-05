@@ -197,7 +197,7 @@ export class SessionController {
       catchError((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         return of({
-          type: 'error',
+          type: 'session.error',
           data: {
             error: {
               code: ErrorCode.INTERNAL_ERROR,

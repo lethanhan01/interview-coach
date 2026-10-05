@@ -140,6 +140,19 @@ export default function InterviewPage() {
     }
     es.addEventListener('report.ready', openReport)
     es.addEventListener('session.completed', openReport)
+    es.addEventListener('session.error', (e) => {
+      try {
+        const data = JSON.parse((e as MessageEvent).data) as {
+          error?: { code?: string; message?: string }
+        }
+        setError(data.error?.message || 'Có lỗi xảy ra trong phiên phỏng vấn.')
+      } catch {
+        setError('Có lỗi xảy ra trong phiên phỏng vấn.')
+      }
+      setLoading(false)
+      setQuestionsReady(false)
+      es.close()
+    })
     es.onerror = () => es.close()
 
     return () => es.close()
