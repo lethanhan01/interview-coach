@@ -28,6 +28,8 @@ export default function InterviewPage() {
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('generating')
+  const [sessionLanguage, setSessionLanguage] = useState<'vi' | 'en'>('vi')
+  const [draftAnswer, setDraftAnswer] = useState<string>('')
   const [answerMode, setAnswerMode] = useState<AnswerMode>('text')
   const [statusAction, setStatusAction] = useState<SessionStatusAction | null>(
     null
@@ -72,6 +74,9 @@ export default function InterviewPage() {
       try {
         const currentSession = await sessionService.getSession(sessionId)
         setSessionStatus(currentSession.status)
+        if (currentSession.language) {
+          setSessionLanguage(currentSession.language)
+        }
         if (
           currentSession.status === 'completing' ||
           currentSession.status === 'completed'
@@ -195,6 +200,7 @@ export default function InterviewPage() {
   }, [updateSessionStatus])
 
   const advance = useCallback(async () => {
+    setDraftAnswer('')
     if (currentIndex + 1 >= questions.length) {
       setIsCompleting(true)
       await sessionService.updateStatus(sessionId, { status: 'completed' })
@@ -254,6 +260,7 @@ export default function InterviewPage() {
           answerText: text,
           questionId: questions[currentIndex]?.id,
         })
+        setDraftAnswer('')
         await advance()
       } finally {
         turnSubmittingRef.current = false
@@ -264,12 +271,7 @@ export default function InterviewPage() {
   )
 
   const submitVoice = useCallback(
-    async (
-      audioUrl: string,
-      durationSeconds: number,
-      sizeBytes: number,
-      transcript: string
-    ) => {
+    async (transcript: string, durationSeconds: number) => {
       if (turnSubmittingRef.current) return
       turnSubmittingRef.current = true
       setTurnSubmitting(true)
@@ -277,11 +279,10 @@ export default function InterviewPage() {
         await sessionService.submitTurn(sessionId, {
           answerMode: 'voice',
           answerText: transcript,
-          audioFileUrl: audioUrl,
           audioDurationSeconds: durationSeconds,
-          audioSizeBytes: sizeBytes,
           questionId: questions[currentIndex]?.id,
         })
+        setDraftAnswer('')
         await advance()
       } finally {
         turnSubmittingRef.current = false
@@ -481,17 +482,20 @@ export default function InterviewPage() {
             <TextAnswerInput
               key={current?.id}
               onSubmit={submitText}
+              initialValue={draftAnswer}
+              onTextChange={setDraftAnswer}
               disabled={turnSubmitting || isCompleting}
             />
           ) : (
             <VoiceRecorder
               key={current?.id}
               onSubmit={submitVoice}
-              onUploadAudio={(blob) => sessionService.uploadAudio(sessionId, blob)}
+              language={sessionLanguage}
+              initialDraft={draftAnswer}
+              onDraftChange={setDraftAnswer}
               sessionId={sessionId}
               disabled={turnSubmitting || isCompleting}
             />
-
           )}
         </div>
         <div className="mt-4 flex justify-end">

@@ -3,12 +3,6 @@ import { DEFAULT_DB_TIME_ZONE } from '@infra/database/prisma/db-timezone';
 
 const EnvSchema = z.object({
   APP_URL: z.string().url().default('http://localhost:3000'),
-  MEDIA_STORAGE_PATH: z.string().min(1).default('./uploads/audio'),
-  MEDIA_SIGNED_URL_TTL_SECONDS: z.coerce
-    .number()
-    .int()
-    .positive()
-    .default(1800),
   AUTH_JWT_SECRET: z.string().min(32),
   AUTH_COOKIE_NAME: z.string().min(1).default('interviewcoach_auth'),
   AUTH_COOKIE_MAX_AGE: z.coerce.number().int().positive().default(86_400),
@@ -66,8 +60,6 @@ const EnvSchema = z.object({
   OPENAI_FEEDBACK_TIMEOUT_MS: z.coerce.number().positive().default(420_000),
   OPENAI_REPORT_TIMEOUT_MS: z.coerce.number().positive().default(600_000),
   OPENAI_QUESTION_TIMEOUT_MS: z.coerce.number().positive().default(240_000),
-  WHISPER_BASE_URL: z.string().url().optional(),
-  WHISPER_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
   IDEMPOTENCY_LOCK_TTL_SECONDS: z.coerce.number().int().positive().default(60),
   IDEMPOTENCY_CACHE_TTL_SECONDS: z.coerce
     .number()
@@ -83,7 +75,6 @@ const EnvSchema = z.object({
   REDIS_HOST: z.string().default('localhost'),
   REDIS_PORT: z.coerce.number().default(6379),
   REDIS_PASSWORD: z.string().optional(),
-  AUDIO_ALLOWED_HOSTS: z.string().optional(),
   PORT: z.coerce.number().default(3000),
   SESSION_CREATION_LIMIT_PER_24H: z.coerce.number().int().min(0).default(10),
   MAINTENANCE_MODE: z.enum(['true', 'false']).default('false'),

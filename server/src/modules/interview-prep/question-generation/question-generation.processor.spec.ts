@@ -487,7 +487,9 @@ describe('QuestionGenerationProcessor', () => {
   it('không đánh dấu session status=error trên attempt 1 của retryable error', async () => {
     mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
     mockFactory.getStrategy.mockReturnValue({
-      generateQuestions: jest.fn().mockRejectedValue(new Error('Transient AI network drop')),
+      generateQuestions: jest
+        .fn()
+        .mockRejectedValue(new Error('Transient AI network drop')),
     });
     mockQuestionBankService.selectFallbackQuestions.mockRejectedValue(
       new Error('Transient QB timeout'),
@@ -499,7 +501,9 @@ describe('QuestionGenerationProcessor', () => {
       opts: { attempts: 2 },
     } as unknown as Job<any>;
 
-    await expect(processor.process(retryableJob)).rejects.toThrow('Transient QB timeout');
+    await expect(processor.process(retryableJob)).rejects.toThrow(
+      'Transient QB timeout',
+    );
 
     expect(mockPrisma.interviewSession.update).not.toHaveBeenCalled();
     expect(mockSse.emit).not.toHaveBeenCalledWith(

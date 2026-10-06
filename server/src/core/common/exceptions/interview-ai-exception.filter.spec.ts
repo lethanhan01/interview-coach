@@ -193,7 +193,9 @@ describe('InterviewAIExceptionFilter', () => {
 
     filter.catch(
       exception,
-      mockHost(res, '/api/v1/test', { 'x-correlation-id': 'corr-abc-999' }) as never,
+      mockHost(res, '/api/v1/test', {
+        'x-correlation-id': 'corr-abc-999',
+      }) as never,
     );
 
     const body = res.json.mock.calls[0][0] as {
@@ -232,7 +234,9 @@ describe('InterviewAIExceptionFilter', () => {
       expect(res.status).toHaveBeenCalledWith(429);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          error: expect.objectContaining({ code: ErrorCode.RATE_LIMIT_EXCEEDED }),
+          error: expect.objectContaining({
+            code: ErrorCode.RATE_LIMIT_EXCEEDED,
+          }),
         }),
       );
     });
@@ -255,7 +259,10 @@ describe('InterviewAIExceptionFilter', () => {
     it('map HttpException 422 hoặc mã 4xx khác sang BAD_REQUEST', () => {
       const res = mockResponse();
       filter.catch(
-        new HttpException('Unprocessable Entity', HttpStatus.UNPROCESSABLE_ENTITY),
+        new HttpException(
+          'Unprocessable Entity',
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        ),
         mockHost(res) as never,
       );
 
@@ -278,7 +285,10 @@ describe('InterviewAIExceptionFilter', () => {
     it('ẩn tuyệt đối stack trace và trả thông điệp chung trên staging hoặc khi NODE_ENV undefined', () => {
       delete process.env.NODE_ENV;
       const res = mockResponse();
-      filter.catch(new Error('Sensitive DB Error: Password123'), mockHost(res) as never);
+      filter.catch(
+        new Error('Sensitive DB Error: Password123'),
+        mockHost(res) as never,
+      );
 
       const body = res.json.mock.calls[0][0];
       expect(body.error.message).toBe('Internal server error');
@@ -297,4 +307,3 @@ describe('InterviewAIExceptionFilter', () => {
     });
   });
 });
-

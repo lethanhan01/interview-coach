@@ -1,9 +1,9 @@
 import { WorkflowDispatcher } from './workflow-dispatcher.service';
 import {
+  FEEDBACK_JOB_ATTEMPTS,
   QUESTION_GEN_JOB_ATTEMPTS,
   REPORT_JOB_ATTEMPTS,
   REPORT_JOB_RETRY_DELAY_MS,
-  TRANSCRIPTION_JOB_ATTEMPTS,
 } from '@core/common/constants/queue.constants';
 
 describe('WorkflowOutboxResilienceSpec', () => {
@@ -11,7 +11,6 @@ describe('WorkflowOutboxResilienceSpec', () => {
   let questionQueue: { add: jest.Mock };
   let reportQueue: { add: jest.Mock };
   let feedbackQueue: { add: jest.Mock };
-  let transcriptionQueue: { add: jest.Mock };
   let dispatcher: WorkflowDispatcher;
 
   beforeEach(() => {
@@ -26,14 +25,12 @@ describe('WorkflowOutboxResilienceSpec', () => {
     questionQueue = { add: jest.fn().mockResolvedValue({}) };
     reportQueue = { add: jest.fn().mockResolvedValue({}) };
     feedbackQueue = { add: jest.fn().mockResolvedValue({}) };
-    transcriptionQueue = { add: jest.fn().mockResolvedValue({}) };
 
     dispatcher = new WorkflowDispatcher(
       prisma,
       questionQueue as any,
       reportQueue as any,
       feedbackQueue as any,
-      transcriptionQueue as any,
     );
   });
 
@@ -95,9 +92,12 @@ describe('WorkflowOutboxResilienceSpec', () => {
     it('reclaims orphaned processing records older than 5 minutes and successfully redispatches them', async () => {
       const orphanedCommand = {
         id: 'cmd-crashed-1',
-        commandType: 'transcription',
+        commandType: 'feedback',
         aggregateId: 'answer-crashed-1',
-        payload: { audioFileUrl: 'https://storage.example.com/audio.webm' },
+        payload: {
+          answerId: 'answer-crashed-1',
+          answerText: 'Test answer text',
+        },
         attempts: 1,
       };
 
@@ -121,13 +121,13 @@ describe('WorkflowOutboxResilienceSpec', () => {
         },
       });
 
-      // Verified: Transcription job was dispatched with deterministic job id
-      expect(transcriptionQueue.add).toHaveBeenCalledWith(
-        'transcription',
+      // Verified: Feedback job was dispatched with deterministic job id
+      expect(feedbackQueue.add).toHaveBeenCalledWith(
+        'feedback',
         expect.objectContaining(orphanedCommand.payload),
         expect.objectContaining({
           jobId: 'workflow-cmd-crashed-1',
-          attempts: TRANSCRIPTION_JOB_ATTEMPTS,
+          attempts: FEEDBACK_JOB_ATTEMPTS,
         }),
       );
 
@@ -296,15 +296,15 @@ describe('WorkflowOutboxResilienceSpec', () => {
       const customKey = 'custom-key-12345';
       const command = {
         id: 'cmd-custom-1',
-        commandType: 'transcription',
+        commandType: 'feedback',
         aggregateId: 'ans-12345',
-        payload: { audioFileUrl: 'https://example.com/audio.webm' },
+        payload: { answerId: 'ans-12345', answerText: 'Test custom key' },
         attempts: 0,
       };
 
       prisma.workflowOutbox.findUnique.mockResolvedValue(command);
 
-      await dispatcher.dispatchFor('transcription', 'ans-12345', customKey);
+      await dispatcher.dispatchFor('feedback', 'ans-12345', customKey);
 
       expect(prisma.workflowOutbox.findUnique).toHaveBeenCalledWith({
         where: { idempotencyKey: customKey },

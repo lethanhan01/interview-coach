@@ -2,14 +2,14 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { ErrorCode } from './error-code.enum';
 
 export interface InterviewAIExceptionOptions {
-  details?: Record<string, string[]> | unknown;
+  details?: unknown;
   cause?: unknown;
   metadata?: Record<string, unknown>;
   isOperational?: boolean;
 }
 
 export class InterviewAIException extends HttpException {
-  public readonly details?: Record<string, string[]> | unknown;
+  public readonly details?: unknown;
   // Explicit class property for cause so consumers can read it without
   // relying on the native Node.js Error.cause (architectural clarity).
   public override readonly cause: unknown;
@@ -42,4 +42,3 @@ export class InterviewAIException extends HttpException {
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
-

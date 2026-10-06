@@ -29,10 +29,14 @@ class TraceTestController {
     const correlationId = RequestContext.getCorrelationId();
     const requestId = RequestContext.getRequestId();
 
-    this.logger.log('HTTP: Received request to dispatch job', 'TraceController', {
-      action: body.action,
-      token: body.sensitiveToken,
-    });
+    this.logger.log(
+      'HTTP: Received request to dispatch job',
+      'TraceController',
+      {
+        action: body.action,
+        token: body.sensitiveToken,
+      },
+    );
 
     return {
       success: true,
@@ -132,7 +136,9 @@ describe('Observability Trace Continuity & Distributed Tracing (Phase 19)', () =
       })
       .filter(Boolean);
 
-    const httpLog = parsedLogs.find((l) => l.message === 'HTTP: Received request to dispatch job');
+    const httpLog = parsedLogs.find(
+      (l) => l.message === 'HTTP: Received request to dispatch job',
+    );
     expect(httpLog).toBeDefined();
     expect(httpLog.correlationId).toBe(clientTraceId);
     expect(httpLog.level).toBe('info');
@@ -163,10 +169,14 @@ describe('Observability Trace Continuity & Distributed Tracing (Phase 19)', () =
         workerCapturedCorrelationId = RequestContext.getCorrelationId();
 
         const logger = app.get(AppLogger);
-        logger.log('Worker: Processing assessment report', 'ReportTraceProcessor', {
-          sessionId: 'sess-123',
-          apiKey: 'secret-openai-api-key-999',
-        });
+        logger.log(
+          'Worker: Processing assessment report',
+          'ReportTraceProcessor',
+          {
+            sessionId: 'sess-123',
+            apiKey: 'secret-openai-api-key-999',
+          },
+        );
 
         return { reportGenerated: true };
       },
@@ -197,7 +207,9 @@ describe('Observability Trace Continuity & Distributed Tracing (Phase 19)', () =
 
     // Khẳng định PII Masking trong Worker Log
     expect(workerLog.meta?.apiKey).toBe('[REDACTED]');
-    expect(JSON.stringify(workerLog)).not.toContain('secret-openai-api-key-999');
+    expect(JSON.stringify(workerLog)).not.toContain(
+      'secret-openai-api-key-999',
+    );
   });
 
   it('tự động sinh correlationId khi Client không gửi header và bảo toàn sang Worker', async () => {
@@ -243,7 +255,10 @@ describe('Observability Trace Continuity & Distributed Tracing (Phase 19)', () =
       opts: { attempts: 3 },
     };
 
-    const errorHandlerSpy = jest.spyOn((BullMqJobErrorHandler as any).logger, 'error');
+    const errorHandlerSpy = jest.spyOn(
+      (BullMqJobErrorHandler as any).logger,
+      'error',
+    );
     let correlationInContext = '';
 
     try {
@@ -265,7 +280,9 @@ describe('Observability Trace Continuity & Distributed Tracing (Phase 19)', () =
 
     expect(correlationInContext).toBe(errorTraceId);
     expect(errorHandlerSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[FailedTaskProcessor] Job job-fail-303 FAILED permanently'),
+      expect.stringContaining(
+        '[FailedTaskProcessor] Job job-fail-303 FAILED permanently',
+      ),
       expect.anything(),
     );
     errorHandlerSpy.mockRestore();

@@ -7,14 +7,18 @@ import { Label } from '../ui/Label'
 
 interface TextAnswerInputProps {
   onSubmit: (text: string) => Promise<void>
+  initialValue?: string
+  onTextChange?: (text: string) => void
   disabled?: boolean
 }
 
 export default function TextAnswerInput({
   onSubmit,
+  initialValue = '',
+  onTextChange,
   disabled,
 }: TextAnswerInputProps) {
-  const [text, setText] = useState('')
+  const [text, setText] = useState(initialValue)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,6 +47,7 @@ export default function TextAnswerInput({
         value={text}
         onChange={(e) => {
           setText(e.target.value)
+          onTextChange?.(e.target.value)
           setError(null)
         }}
         disabled={disabled || submitting}

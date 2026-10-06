@@ -33,7 +33,6 @@ export class TextAnswerIntakeHandler implements IAnswerIntakeHandler {
       return {
         answerId: existing.id,
         feedbackQueued: false,
-        transcriptionPending: false,
       };
     }
 
@@ -89,7 +88,6 @@ export class TextAnswerIntakeHandler implements IAnswerIntakeHandler {
     return {
       answerId,
       feedbackQueued: true,
-      transcriptionPending: false,
     };
   }
 

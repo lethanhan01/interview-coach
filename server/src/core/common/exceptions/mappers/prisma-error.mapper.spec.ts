@@ -22,13 +22,10 @@ describe('PrismaErrorMapper', () => {
   });
 
   it('map P2025 sang NOT_FOUND (404)', () => {
-    const error = new Prisma.PrismaClientKnownRequestError(
-      'Record not found',
-      {
-        code: 'P2025',
-        clientVersion: '7.8.0',
-      },
-    );
+    const error = new Prisma.PrismaClientKnownRequestError('Record not found', {
+      code: 'P2025',
+      clientVersion: '7.8.0',
+    });
 
     const exception = PrismaErrorMapper.map(error);
     expect(exception.getStatus()).toBe(HttpStatus.NOT_FOUND);

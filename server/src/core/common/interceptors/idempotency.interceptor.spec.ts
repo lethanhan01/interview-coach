@@ -2,10 +2,7 @@ import { ExecutionContext, CallHandler, HttpStatus } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { of, throwError } from 'rxjs';
-import {
-  IdempotencyInterceptor,
-  IDEMPOTENT_METADATA_KEY,
-} from './idempotency.interceptor';
+import { IdempotencyInterceptor } from './idempotency.interceptor';
 import { InterviewAIException } from '../exceptions/interview-ai.exception';
 import { ErrorCode } from '../exceptions/error-code.enum';
 import * as crypto from 'crypto';
@@ -87,7 +84,9 @@ describe('IdempotencyInterceptor', () => {
     return { context, response };
   }
 
-  function createMockCallHandler(returnValue: any = { success: true }): CallHandler {
+  function createMockCallHandler(
+    returnValue: any = { success: true },
+  ): CallHandler {
     return {
       handle: jest.fn(() => of(returnValue)),
     };
@@ -291,7 +290,10 @@ describe('IdempotencyInterceptor', () => {
         .update(JSON.stringify(body))
         .digest('hex');
 
-      const cachedResponse = { id: 'sess-already-created', role: 'Backend Engineer' };
+      const cachedResponse = {
+        id: 'sess-already-created',
+        role: 'Backend Engineer',
+      };
       mockRedis.get.mockResolvedValue(
         JSON.stringify({
           status: 'COMPLETED',

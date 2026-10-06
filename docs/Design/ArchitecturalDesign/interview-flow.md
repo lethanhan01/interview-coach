@@ -69,24 +69,23 @@ Backend lưu câu trả lời, đẩy job feedback vào hàng đợi, trả về
 
 ### Trả lời bằng giọng nói
 
-1. Người dùng bấm ghi âm — `MediaRecorder` API trong browser thu âm thanh.
-2. Sau khi dừng: audio upload trực tiếp lên Supabase Storage, nhận về một public URL.
-3. Frontend gửi URL đó lên backend:
+1. Người dùng nhấn nút phát biểu — Browser kích hoạt Web Speech API (`webkitSpeechRecognition` / `SpeechRecognition`) cùng bộ visualizer sóng âm theo thời gian thực (Web Audio API `AnalyserNode`).
+2. Trình duyệt nhận diện giọng nói realtime và chuyển thành văn bản (transcript).
+3. Người dùng dừng phát biểu, xem lại và có thể chỉnh sửa trực tiếp nội dung transcript trước khi nộp.
+4. Frontend gửi transcript đã xác nhận kèm thời lượng lên backend:
 
 ```
 POST /api/v1/sessions/:sessionId/turns
-{ questionId, answerMode: 'voice', audioFileUrl, audioDurationSeconds, audioSizeBytes }
+{ questionId, answerMode: 'voice', answerText, audioDurationSeconds }
 ```
 
-Backend lưu câu trả lời với text rỗng và `transcriptionStatus: 'pending'`, đẩy job transcription vào hàng đợi, trả về `{ transcriptionPending: true }`.
+Backend tính toán các chỉ số nhịp điệu phát biểu (Voice Metrics: WPM, filler words, pause duration) qua `MediaFacade`, lưu câu trả lời vào database và đẩy thẳng job `feedback` vào outbox BullMQ, trả về `{ answerId, feedbackQueued: true }`. Hệ thống không lưu trữ file âm thanh và không cần bước upload/streaming audio.
 
 ---
 
 ## Bước 5: AI đánh giá từng câu trả lời (chạy nền)
 
-### Với câu trả lời text
-
-Worker `FeedbackProcessor` xử lý:
+Worker `FeedbackProcessor` xử lý cho cả câu trả lời text và voice:
 
 1. Load câu hỏi + câu trả lời từ database.
 2. Load rubric đánh giá theo context pack (VN: 4 tiêu chí × 25%; Western: 5 tiêu chí × 20%).
@@ -100,14 +99,6 @@ Worker `FeedbackProcessor` xử lý:
 6. Gửi SSE `turn.feedback_ready` về frontend.
 
 Frontend nhận thông báo → hiển thị inline feedback cho câu đó trong khi người dùng tiếp tục trả lời câu tiếp theo.
-
-### Với câu trả lời giọng nói
-
-Thêm một bước trước feedback:
-
-1. Worker `TranscriptionProcessor` lấy audio URL, gọi OpenAI Whisper để chuyển thành text.
-2. Sau khi có text, tự động đẩy tiếp job feedback — từ đây xử lý giống hệt text mode.
-3. Nếu Whisper thất bại (hết số lần thử): lưu feedback dự phòng với `isFallback=true`, không có điểm số, vẫn tính là đã xử lý xong.
 
 ---
 

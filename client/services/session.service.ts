@@ -1,6 +1,5 @@
 import { apiClient, getApiBaseUrl } from '@/lib/api-client'
 import type {
-  AudioUploadResult,
   CreateSessionPayload,
   FeedbackProgress,
   QuestionsResponse,
@@ -89,25 +88,6 @@ export const sessionService = {
     return apiClient.post<TurnResponse>(
       `/sessions/${sessionId}/turns`,
       payload
-    )
-  },
-
-  /**
-   * Upload file ghi âm audio cho câu trả lời dạng voice
-   */
-  async uploadAudio(sessionId: string, blob: Blob): Promise<AudioUploadResult> {
-    let ext = 'webm'
-    if (blob.type.includes('mp4')) {
-      ext = 'mp4'
-    } else if (blob.type.includes('wav')) {
-      ext = 'wav'
-    }
-    const filename = `audio-${crypto.randomUUID()}.${ext}`
-    const formData = new FormData()
-    formData.append('file', blob, filename)
-    return apiClient.postForm<AudioUploadResult>(
-      `/sessions/${sessionId}/turns/audio`,
-      formData
     )
   },
 

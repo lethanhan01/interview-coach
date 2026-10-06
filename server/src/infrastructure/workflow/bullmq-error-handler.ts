@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { HttpException, Logger } from '@nestjs/common';
 import { Job, UnrecoverableError } from 'bullmq';
 import { RequestContext } from '@core/common/context/request-context';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
@@ -16,8 +16,7 @@ const NON_RETRYABLE_ERROR_CODES = new Set<ErrorCode>([
   ErrorCode.FORBIDDEN_RESOURCE,
   ErrorCode.UNAUTHORIZED,
   ErrorCode.INVALID_SESSION_TYPE,
-  ErrorCode.AUDIO_TOO_LARGE,
-  ErrorCode.INVALID_AUDIO_URL,
+  ErrorCode.PAYLOAD_TOO_LARGE,
 ]);
 
 export class BullMqJobErrorHandler {
@@ -30,7 +29,7 @@ export class BullMqJobErrorHandler {
       }
       if (
         error.errorCode === ErrorCode.AI_RATE_LIMIT ||
-        error.getStatus() === HttpStatus.TOO_MANY_REQUESTS
+        error.getStatus() === 429
       ) {
         return false;
       }
@@ -40,7 +39,7 @@ export class BullMqJobErrorHandler {
       }
     } else if (error instanceof HttpException) {
       const status = error.getStatus();
-      if (status === HttpStatus.TOO_MANY_REQUESTS) {
+      if (status === 429) {
         return false;
       }
       if (status >= 400 && status < 500) {
@@ -78,8 +77,7 @@ export class BullMqJobErrorHandler {
 
           const errorMsg =
             error instanceof Error ? error.message : String(error);
-          const errorStack =
-            error instanceof Error ? error.stack : undefined;
+          const errorStack = error instanceof Error ? error.stack : undefined;
 
           if (fatal || attemptsMade >= maxAttempts) {
             this.logger.error(

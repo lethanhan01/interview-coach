@@ -13,7 +13,6 @@ describe('WorkflowDispatcher', () => {
   let questionQueue: { add: jest.Mock };
   let reportQueue: { add: jest.Mock };
   let feedbackQueue: { add: jest.Mock };
-  let transcriptionQueue: { add: jest.Mock };
   let dispatcher: WorkflowDispatcher;
 
   beforeEach(() => {
@@ -28,13 +27,11 @@ describe('WorkflowDispatcher', () => {
     questionQueue = { add: jest.fn().mockResolvedValue({}) };
     reportQueue = { add: jest.fn().mockResolvedValue({}) };
     feedbackQueue = { add: jest.fn().mockResolvedValue({}) };
-    transcriptionQueue = { add: jest.fn().mockResolvedValue({}) };
     dispatcher = new WorkflowDispatcher(
       prisma,
       questionQueue as any,
       reportQueue as any,
       feedbackQueue as any,
-      transcriptionQueue as any,
     );
   });
 
@@ -54,37 +51,6 @@ describe('WorkflowDispatcher', () => {
     expect(prisma.workflowOutbox.updateMany).toHaveBeenLastCalledWith(
       expect.objectContaining({
         where: { id: COMMAND.id, state: 'processing' },
-        data: expect.objectContaining({ state: 'completed' }),
-      }),
-    );
-  });
-
-  it('claims and dispatches a transcription command to transcriptionQueue', async () => {
-    const transcriptionCommand = {
-      id: 'command-2',
-      commandType: 'transcription',
-      aggregateId: '22222222-2222-4222-8222-222222222222',
-      payload: { audioFileUrl: 'https://example.com/audio.webm' },
-      attempts: 0,
-    };
-    prisma.workflowOutbox.findUnique.mockResolvedValue(transcriptionCommand);
-
-    await dispatcher.dispatchFor(
-      'transcription',
-      transcriptionCommand.aggregateId,
-    );
-
-    expect(transcriptionQueue.add).toHaveBeenCalledWith(
-      'transcription',
-      expect.objectContaining({
-        ...transcriptionCommand.payload,
-        correlationId: 'workflow-command-2',
-      }),
-      expect.objectContaining({ jobId: 'workflow-command-2' }),
-    );
-    expect(prisma.workflowOutbox.updateMany).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        where: { id: 'command-2', state: 'processing' },
         data: expect.objectContaining({ state: 'completed' }),
       }),
     );
@@ -129,9 +95,14 @@ describe('WorkflowDispatcher', () => {
       },
       attempts: 0,
     };
-    prisma.workflowOutbox.findUnique.mockResolvedValue(customCorrelationCommand);
+    prisma.workflowOutbox.findUnique.mockResolvedValue(
+      customCorrelationCommand,
+    );
 
-    await dispatcher.dispatchFor('question-generation', customCorrelationCommand.aggregateId);
+    await dispatcher.dispatchFor(
+      'question-generation',
+      customCorrelationCommand.aggregateId,
+    );
 
     expect(questionQueue.add).toHaveBeenCalledWith(
       'question-generation',

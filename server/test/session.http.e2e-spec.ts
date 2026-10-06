@@ -168,7 +168,6 @@ describe('session HTTP contracts', () => {
       .expect(201);
     expect(textTurn.body).toMatchObject({
       feedbackQueued: true,
-      transcriptionPending: false,
     });
 
     const voiceQuestion = await prisma.sessionQuestion.create({
@@ -191,18 +190,14 @@ describe('session HTTP contracts', () => {
       .send({
         questionId: voiceQuestion.id,
         answerMode: 'voice',
-        audioFileUrl: 'https://example.com/answer.webm',
+        answerText:
+          'We use blue-green deployment with automated rollback triggers.',
+        audioDurationSeconds: 25,
       })
       .expect(201);
     expect(voiceTurn.body).toMatchObject({
-      feedbackQueued: false,
-      transcriptionPending: true,
+      feedbackQueued: true,
     });
-
-    await request(app.getHttpServer())
-      .post(`/api/v1/sessions/${created.body.id}/turns/audio`)
-      .set('Cookie', cookie)
-      .expect(400);
   }, 60000);
 
   it('does not expose credentials from the users me endpoint', async () => {

@@ -42,8 +42,6 @@ describe('validationErrorFactory', () => {
 
     const exception = validationErrorFactory([parentError]);
     const details = exception.details as Record<string, string[]>;
-    expect(details['address.street']).toEqual([
-      'street should not be empty',
-    ]);
+    expect(details['address.street']).toEqual(['street should not be empty']);
   });
 });

@@ -18,8 +18,6 @@ import {
   REPORT_JOB_ATTEMPTS,
   REPORT_JOB_RETRY_DELAY_MS,
   REPORT_QUEUE,
-  TRANSCRIPTION_JOB_ATTEMPTS,
-  TRANSCRIPTION_QUEUE,
 } from '@core/common/constants/queue.constants';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { workersEnabled } from '@core/runtime/runtime-role';
@@ -51,8 +49,6 @@ export class WorkflowDispatcher
     @InjectQueue(QUESTION_GEN_QUEUE) private readonly questionQueue: Queue,
     @InjectQueue(REPORT_QUEUE) private readonly reportQueue: Queue,
     @InjectQueue(FEEDBACK_QUEUE) private readonly feedbackQueue: Queue,
-    @InjectQueue(TRANSCRIPTION_QUEUE)
-    private readonly transcriptionQueue: Queue,
   ) {}
 
   onApplicationBootstrap() {
@@ -166,12 +162,6 @@ export class WorkflowDispatcher
         });
       } else if (command.commandType === 'report-generation') {
         if (!(await this.enqueueReport(command, jobPayload))) return;
-      } else if (command.commandType === 'transcription') {
-        await this.transcriptionQueue.add('transcription', jobPayload, {
-          jobId: `workflow-${command.id}`,
-          attempts: TRANSCRIPTION_JOB_ATTEMPTS,
-          backoff: { type: 'exponential', delay: 3_000 },
-        });
       } else if (command.commandType === 'feedback') {
         await this.feedbackQueue.add('feedback', jobPayload, {
           jobId: `workflow-${command.id}`,
@@ -224,7 +214,7 @@ export class WorkflowDispatcher
       (typeof command.payload === 'object' &&
       command.payload !== null &&
       !Array.isArray(command.payload)
-        ? (command.payload as Record<string, unknown>)
+        ? command.payload
         : {});
     const correlationId =
       (basePayload.correlationId as string) || `workflow-${command.id}`;

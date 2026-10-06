@@ -29,7 +29,10 @@ describe('RequestIdMiddleware', () => {
     expect(req.headers['x-request-id']).toBe(existingId);
     expect(req.headers['x-correlation-id']).toBe(existingCorrId);
     expect(res.setHeader).toHaveBeenCalledWith('X-Request-ID', existingId);
-    expect(res.setHeader).toHaveBeenCalledWith('X-Correlation-ID', existingCorrId);
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'X-Correlation-ID',
+      existingCorrId,
+    );
     expect(next).toHaveBeenCalled();
     expect(contextCorrId).toBe(existingCorrId);
   });
@@ -55,7 +58,10 @@ describe('RequestIdMiddleware', () => {
     expect(typeof assignedCorrId).toBe('string');
     expect(assignedCorrId.length).toBeGreaterThan(0);
     expect(res.setHeader).toHaveBeenCalledWith('X-Request-ID', assignedId);
-    expect(res.setHeader).toHaveBeenCalledWith('X-Correlation-ID', assignedCorrId);
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'X-Correlation-ID',
+      assignedCorrId,
+    );
     expect(next).toHaveBeenCalled();
     expect(contextRequestId).toBe(assignedId);
     expect(contextCorrId).toBe(assignedCorrId);

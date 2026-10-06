@@ -91,7 +91,6 @@ describe('Session completion flow (integration)', () => {
           const answer = {
             id: `answer-${Date.now()}`,
             feedbackGenerated: false,
-            transcriptionStatus: null,
             skipped: false,
             createdAt: new Date(),
             ...create,

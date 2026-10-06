@@ -385,9 +385,7 @@ export interface SubmitAnswerPayload {
   answerMode: 'text' | 'voice'
   answerText?: string
   skipQuestion?: boolean
-  audioFileUrl?: string
   audioDurationSeconds?: number
-  audioSizeBytes?: number
 }
 
 export interface TurnResponse {
@@ -396,14 +394,6 @@ export interface TurnResponse {
   feedbackGenerated?: boolean
   questionId?: string
   answerText?: string
-}
-
-export interface AudioUploadResult {
-  audioFileUrl: string
-  audioSizeBytes: number
-  mediaKey?: string
-  transcript: string
-  transcriptDurationSeconds?: number
 }
 
 

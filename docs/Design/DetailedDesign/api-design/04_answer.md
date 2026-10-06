@@ -2,37 +2,7 @@
 
 Reference: [01_overview.md](01_overview.md)
 
-Backend hiện tại expose API upload audio và API submit turn.
-
-## POST /api/v1/sessions/:sessionId/turns/audio
-
-**Endpoint URL**
-
-`POST /api/v1/sessions/:sessionId/turns/audio`
-
-**Purpose**
-
-Upload file audio của câu trả lời vào Supabase Storage bucket `interview-audio` qua backend. Backend xác thực owner của session rồi dùng service role để upload, giúp voice mode hoạt động cả khi môi trường local đang bật mock auth.
-Sau upload, backend gọi Whisper để trả transcript nháp cho frontend hiển thị và cho phép user chỉnh sửa trước khi submit turn.
-
-**Authentication**
-
-Bearer JWT hoặc dev mock token khi `AUTH_ENABLED=false`.
-
-**Request body**
-
-`multipart/form-data` với field `file`. MIME hỗ trợ: `audio/webm`, `audio/mp4`, `audio/wav`. Kích thước tối đa 10 MiB.
-
-**Response body - 201 Created**
-
-```json
-{
-  "audioFileUrl": "https://project.supabase.co/storage/v1/object/public/interview-audio/user/session/audio.webm",
-  "audioSizeBytes": 1250000,
-  "transcript": "Nội dung câu trả lời được transcript...",
-  "transcriptDurationSeconds": 90
-}
-```
+Backend hiện tại expose API submit turn cho cả hai chế độ text và voice. Tính năng lưu trữ file âm thanh và transcription qua Whisper phía server đã được gỡ bỏ hoàn toàn. Thay vào đó, giọng nói được nhận diện trực tiếp tại trình duyệt ứng viên (Web Speech API) và gửi text transcript kèm thời lượng về server để chấm điểm và phân tích voice metrics.
 
 ## POST /api/v1/sessions/:sessionId/turns
 
@@ -42,11 +12,11 @@ Bearer JWT hoặc dev mock token khi `AUTH_ENABLED=false`.
 
 **Purpose**
 
-Lưu câu trả lời dạng text hoặc voice cho một câu hỏi, sau đó enqueue job sinh follow-up và feedback.
+Lưu câu trả lời dạng text hoặc voice cho một câu hỏi, tính toán voice metrics (nếu là voice), lưu vào cơ sở dữ liệu và enqueue job sinh feedback/đánh giá AI qua BullMQ Outbox.
 
 **Authentication**
 
-Bearer JWT.
+Bearer JWT hoặc dev mock token khi `AUTH_ENABLED=false`.
 
 **Path parameters**
 
@@ -56,16 +26,17 @@ Bearer JWT.
 
 **Request body**
 
-Request luôn là `application/json`. Voice mode nhận URL file audio đã được upload qua `/turns/audio`. Nếu frontend gửi `answerText` trong voice mode, đó là transcript đã được user chỉnh sửa và backend dùng trực tiếp để enqueue feedback; backend không transcribe lại audio trong bước submit.
+Request luôn là `application/json`.
+- Ở chế độ `text`: ứng viên nhập trực tiếp văn bản trả lời (`answerText`).
+- Ở chế độ `voice`: ứng viên trả lời qua microphone, trình duyệt chuyển đổi trực tiếp thành transcript bằng Web Speech API; ứng viên xác nhận/chỉnh sửa nội dung rồi gửi `answerText` kèm `audioDurationSeconds`. Server không lưu trữ file âm thanh và không gọi Whisper.
 
 ```json
 {
   "questionId": "question-uuid",
-  "answerMode": "text",
-  "answerText": "Nội dung trả lời...",
-  "audioFileUrl": "https://example.com/answer.webm",
+  "answerMode": "voice",
+  "answerText": "Nội dung trả lời hoặc transcript từ giọng nói...",
   "audioDurationSeconds": 90,
-  "audioSizeBytes": 1250000
+  "skipQuestion": false
 }
 ```
 
@@ -73,28 +44,23 @@ Request luôn là `application/json`. Voice mode nhận URL file audio đã đư
 |--------|------|----------|-----------|
 | `questionId` | string | Có | ID câu hỏi; câu hỏi phải thuộc `sessionId`. |
 | `answerMode` | string | Có | `text` hoặc `voice`. |
-| `answerText` | string | Khi `answerMode=text`; tùy chọn khi `answerMode=voice` | Nội dung trả lời text hoặc transcript voice đã được chỉnh sửa. Nếu có giá trị thì phải tối thiểu 10 ký tự. |
-| `audioFileUrl` | string URL | Khi `answerMode=voice` | URL công khai/backend có thể fetch để gửi sang Whisper. |
-| `audioDurationSeconds` | integer | Không | Thời lượng audio do client cung cấp, tối thiểu 0; nếu thiếu sẽ dùng duration từ Whisper. |
-| `audioSizeBytes` | integer | Không | Kích thước audio do client báo, tối thiểu 0; chỉ dùng để lưu metadata. |
-
-Trong text mode, `audioFileUrl` không được service sử dụng để transcribe. Trong voice mode mới, frontend gửi `answerText` đã chỉnh sửa; backend lưu nội dung này với `transcriptionStatus=done`. Nếu client cũ chỉ gửi audio URL mà không gửi `answerText`, backend vẫn dùng fallback async transcription queue.
+| `answerText` | string | Khi không skip | Nội dung trả lời text hoặc transcript giọng nói đã xác nhận (tối thiểu 10 ký tự nếu có). |
+| `audioDurationSeconds` | integer | Tùy chọn (khi voice) | Thời lượng phát biểu (giây) tính từ trình duyệt, tối thiểu 0. Dùng để tính chỉ số nhịp điệu nói (WPM, filler words). |
+| `skipQuestion` | boolean | Không | `true` nếu ứng viên chọn bỏ qua câu hỏi này. |
 
 **Response body - 201 Created**
 
 ```json
 {
   "answerId": "answer-uuid",
-  "feedbackQueued": true,
-  "transcriptionPending": false
+  "feedbackQueued": true
 }
 ```
 
 | Trường | Kiểu | Chú thích |
 |--------|------|-----------|
 | `answerId` | string | UUID của `UserAnswer` vừa tạo. |
-| `feedbackQueued` | boolean | `true` nếu feedback job đã được enqueue. Voice mode có transcript đã chỉnh sửa enqueue feedback ngay. |
-| `transcriptionPending` | boolean | `true` nếu voice answer audio-only đã lưu placeholder và đang chờ transcription worker. |
+| `feedbackQueued` | boolean | `true` nếu feedback job đã được enqueue vào outbox. |
 
 Nếu session đang là `ready` hoặc `generating`, service chuyển session sang `active` trước khi lưu answer.
 
@@ -102,19 +68,14 @@ Nếu session đang là `ready` hoặc `generating`, service chuyển session sa
 
 | HTTP | `errorCode` | Khi xảy ra |
 |------|-------------|------------|
-| 400 | `VALIDATION_ERROR` | Request body sai kiểu, thiếu trường theo mode, URL audio sai hoặc số metadata âm. |
+| 400 | `VALIDATION_ERROR` | Request body sai kiểu, thiếu trường theo mode hoặc nội dung dưới 10 ký tự. |
 | 401 | `UNAUTHORIZED` | Bearer token thiếu, sai hoặc hết hạn. |
 | 403 | `FORBIDDEN` | Session thuộc user khác. |
 | 403 | `SESSION_NOT_ACTIVE` | Session không ở một trong `active`, `ready`, `generating`. |
 | 404 | `SESSION_NOT_FOUND` | Không tìm thấy session. |
 | 404 | `NOT_FOUND` | `questionId` không tồn tại trong session. |
-| 413 | `AUDIO_TOO_LARGE` | File tải từ `audioFileUrl` lớn hơn 10 MiB. |
-| 500 | `INTERNAL_ERROR` | Fetch/transcribe audio thất bại, lỗi DB hoặc lỗi enqueue job. |
+| 500 | `INTERNAL_ERROR` | Lỗi cơ sở dữ liệu hoặc lỗi enqueue outbox job. |
 
-## API turn chưa có
+## Ghi chú về Endpoint Upload Audio đã gỡ bỏ
 
-Các API sau từng xuất hiện trong design cũ nhưng không có controller:
-
-- `GET /api/v1/sessions/:id/turns/:turnId`
-- `POST /api/v1/sessions/:id/turns/:turnId/followup`
-- `GET /api/v1/sessions/:id/turns/:turnId/feedback`
+- `POST /api/v1/sessions/:sessionId/turns/audio` (Upload file multipart audio và server-side Whisper transcription): **Đã gỡ bỏ hoàn toàn**. Hệ thống hiện tối ưu hóa bằng cách xử lý speech-to-text realtime tại client, tiết kiệm chi phí lưu trữ object storage và giảm độ trễ phản hồi.

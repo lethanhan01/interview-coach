@@ -19,15 +19,18 @@ const SENSITIVE_KEYS = new Set([
   'set-cookie',
 ]);
 
-export function redactSensitiveData(data: unknown, seen = new WeakSet()): unknown {
+export function redactSensitiveData(
+  data: unknown,
+  seen = new WeakSet(),
+): unknown {
   if (data === null || typeof data !== 'object') {
     return data;
   }
 
-  if (seen.has(data as object)) {
+  if (seen.has(data)) {
     return '[CIRCULAR]';
   }
-  seen.add(data as object);
+  seen.add(data);
 
   if (Array.isArray(data)) {
     return data.map((item) => redactSensitiveData(item, seen));
@@ -48,11 +51,18 @@ export function redactSensitiveData(data: unknown, seen = new WeakSet()): unknow
 
 @Injectable()
 export class AppLogger implements LoggerService {
-  private formatLog(level: string, message: unknown, context?: string, meta?: unknown): string {
+  private formatLog(
+    level: string,
+    message: unknown,
+    context?: string,
+    meta?: unknown,
+  ): string {
     const store = RequestContext.get();
     const correlationId = store?.correlationId ?? 'no-correlation-id';
     const userId = store?.userId;
-    const durationMs = store?.startTime ? Date.now() - store.startTime : undefined;
+    const durationMs = store?.startTime
+      ? Date.now() - store.startTime
+      : undefined;
     const timestamp = new Date().toISOString();
     const isProd = process.env.NODE_ENV === 'production';
 
@@ -95,7 +105,9 @@ export class AppLogger implements LoggerService {
     const store = RequestContext.get();
     const correlationId = store?.correlationId ?? 'no-correlation-id';
     const userId = store?.userId;
-    const durationMs = store?.startTime ? Date.now() - store.startTime : undefined;
+    const durationMs = store?.startTime
+      ? Date.now() - store.startTime
+      : undefined;
     const isProd = process.env.NODE_ENV === 'production';
 
     if (isProd) {
@@ -108,7 +120,9 @@ export class AppLogger implements LoggerService {
           ...(userId ? { userId } : {}),
           ...(durationMs !== undefined ? { durationMs } : {}),
           message:
-            typeof message === 'object' ? redactSensitiveData(message) : message,
+            typeof message === 'object'
+              ? redactSensitiveData(message)
+              : message,
           stack: trace,
           meta: meta ? redactSensitiveData(meta) : undefined,
         }),

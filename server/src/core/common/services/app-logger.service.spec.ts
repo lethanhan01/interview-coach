@@ -59,10 +59,7 @@ describe('AppLogger', () => {
     });
 
     it('xử lý mảng (arrays)', () => {
-      const input = [
-        { password: '123' },
-        { title: 'Normal' },
-      ];
+      const input = [{ password: '123' }, { title: 'Normal' }];
 
       const result = redactSensitiveData(input) as any[];
       expect(result[0].password).toBe('[REDACTED]');

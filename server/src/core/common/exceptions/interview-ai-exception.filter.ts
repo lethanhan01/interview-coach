@@ -19,6 +19,9 @@ const httpExceptionCodeByStatus: Partial<Record<number, ErrorCode>> = {
   [HttpStatus.FORBIDDEN]: ErrorCode.FORBIDDEN,
   [HttpStatus.NOT_FOUND]: ErrorCode.NOT_FOUND,
   [HttpStatus.CONFLICT]: ErrorCode.CONFLICT,
+  [HttpStatus.TOO_MANY_REQUESTS]: ErrorCode.RATE_LIMIT_EXCEEDED,
+  [HttpStatus.PAYLOAD_TOO_LARGE]: ErrorCode.PAYLOAD_TOO_LARGE,
+  [HttpStatus.SERVICE_UNAVAILABLE]: ErrorCode.SERVICE_UNAVAILABLE,
 };
 
 @Catch()
@@ -33,7 +36,7 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
     let status: number;
     let errorCode: ErrorCode;
     let message: string;
-    let details: Record<string, string[]> | unknown = null;
+    let details: unknown = null;
 
     if (exception instanceof InterviewAIException) {
       status = exception.getStatus();
@@ -41,11 +44,8 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
       message = exception.message;
       details = exception.details ?? null;
 
-      if (!exception.isOperational || status >= HttpStatus.INTERNAL_SERVER_ERROR) {
-        this.logger.error(
-          `[${errorCode}] ${message}`,
-          exception.stack,
-        );
+      if (!exception.isOperational || status >= 500) {
+        this.logger.error(`[${errorCode}] ${message}`, exception.stack);
       }
     } else if (
       exception instanceof Prisma.PrismaClientKnownRequestError ||
@@ -59,27 +59,25 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
       message = mapped.message;
       details = mapped.details ?? null;
 
-      if (!mapped.isOperational || status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      if (!mapped.isOperational || status >= 500) {
         this.logger.error(
           `Prisma Database Error: ${exception.message}`,
           exception.stack,
         );
       } else {
+        const prismaCode =
+          'code' in exception
+            ? String((exception as { code?: string }).code)
+            : exception.name;
         this.logger.warn(
-          `Prisma Database Error [${'code' in exception ? (exception as any).code : exception.name}]: ${exception.message}`,
+          `Prisma Database Error [${prismaCode}]: ${exception.message}`,
         );
       }
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       if (httpExceptionCodeByStatus[status]) {
         errorCode = httpExceptionCodeByStatus[status]!;
-      } else if (status === HttpStatus.TOO_MANY_REQUESTS) {
-        errorCode = ErrorCode.RATE_LIMIT_EXCEEDED;
-      } else if (status === HttpStatus.PAYLOAD_TOO_LARGE) {
-        errorCode = ErrorCode.AUDIO_TOO_LARGE;
-      } else if (status === HttpStatus.SERVICE_UNAVAILABLE) {
-        errorCode = ErrorCode.SERVICE_UNAVAILABLE;
-      } else if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      } else if (status >= 500) {
         errorCode = ErrorCode.INTERNAL_ERROR;
       } else {
         errorCode = ErrorCode.BAD_REQUEST;
@@ -103,12 +101,14 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       errorCode = ErrorCode.INTERNAL_ERROR;
       const isDevelopment = process.env.NODE_ENV === 'development';
-      message = isDevelopment && exception instanceof Error
-        ? exception.message
-        : 'Internal server error';
-      details = isDevelopment && exception instanceof Error
-        ? { stack: exception.stack }
-        : null;
+      message =
+        isDevelopment && exception instanceof Error
+          ? exception.message
+          : 'Internal server error';
+      details =
+        isDevelopment && exception instanceof Error
+          ? { stack: exception.stack }
+          : null;
 
       this.logger.error(
         'Unhandled exception',
@@ -137,7 +137,8 @@ export class InterviewAIExceptionFilter implements ExceptionFilter {
       },
       meta: {
         requestId: requestId !== 'no-request-id' ? requestId : undefined,
-        correlationId: correlationId !== 'no-correlation-id' ? correlationId : undefined,
+        correlationId:
+          correlationId !== 'no-correlation-id' ? correlationId : undefined,
         timestamp: new Date().toISOString(),
         path: request.url,
       },

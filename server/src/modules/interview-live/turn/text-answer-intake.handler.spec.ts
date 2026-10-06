@@ -94,7 +94,6 @@ describe('TextAnswerIntakeHandler', () => {
     expect(result).toEqual({
       answerId: 'ans-skipped',
       feedbackQueued: false,
-      transcriptionPending: false,
     });
     expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
     expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
@@ -158,7 +157,6 @@ describe('TextAnswerIntakeHandler', () => {
     expect(result).toEqual({
       answerId: 'ans-new-1',
       feedbackQueued: true,
-      transcriptionPending: false,
     });
   });
 
@@ -198,7 +196,6 @@ describe('TextAnswerIntakeHandler', () => {
     expect(result).toEqual({
       answerId: 'ans-existing-1',
       feedbackQueued: true,
-      transcriptionPending: false,
     });
   });
 });

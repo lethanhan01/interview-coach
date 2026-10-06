@@ -59,7 +59,10 @@ describe('BullMqJobErrorHandler', () => {
 
     it('coi các lỗi HttpException 4xx thông thường là fatal', () => {
       const badReqEx = new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
-      const unauthEx = new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      const unauthEx = new HttpException(
+        'Unauthorized',
+        HttpStatus.UNAUTHORIZED,
+      );
 
       expect(BullMqJobErrorHandler.isFatal(badReqEx)).toBe(true);
       expect(BullMqJobErrorHandler.isFatal(unauthEx)).toBe(true);
@@ -104,9 +107,13 @@ describe('BullMqJobErrorHandler', () => {
       );
 
       await expect(
-        BullMqJobErrorHandler.handleJobExecution('TestProcessor', job, async () => {
-          throw fatalError;
-        }),
+        BullMqJobErrorHandler.handleJobExecution(
+          'TestProcessor',
+          job,
+          async () => {
+            throw fatalError;
+          },
+        ),
       ).rejects.toThrow(UnrecoverableError);
     });
 
@@ -125,9 +132,13 @@ describe('BullMqJobErrorHandler', () => {
       );
 
       await expect(
-        BullMqJobErrorHandler.handleJobExecution('TestProcessor', job, async () => {
-          throw transientError;
-        }),
+        BullMqJobErrorHandler.handleJobExecution(
+          'TestProcessor',
+          job,
+          async () => {
+            throw transientError;
+          },
+        ),
       ).rejects.toThrow(transientError);
     });
   });

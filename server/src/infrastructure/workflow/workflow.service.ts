@@ -7,7 +7,6 @@ import { RequestContext } from '@core/common/context/request-context';
 export type WorkflowCommandType =
   | 'question-generation'
   | 'report-generation'
-  | 'transcription'
   | 'feedback';
 
 export interface EnqueueWorkflowCommand {
@@ -48,7 +47,7 @@ export class WorkflowService {
         ...(payloadObj.correlationId || correlationId !== 'no-correlation-id'
           ? { correlationId: payloadObj.correlationId ?? correlationId }
           : {}),
-      } as Prisma.InputJsonValue;
+      };
     }
 
     return tx.workflowOutbox.upsert({

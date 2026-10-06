@@ -47,8 +47,9 @@ describe('SseService', () => {
       ),
     } as unknown as ConfigService);
     service.onModuleInit();
-    const publisher = (Redis as unknown as jest.Mock).mock.results[0]
-      .value as { publish: jest.Mock };
+    const publisher = (Redis as unknown as jest.Mock).mock.results[0].value as {
+      publish: jest.Mock;
+    };
 
     await service.emitError('sse:session:1', 'AI_TIMEOUT', 'Request timed out');
 
@@ -113,4 +114,3 @@ describe('SseService', () => {
     });
   });
 });
-

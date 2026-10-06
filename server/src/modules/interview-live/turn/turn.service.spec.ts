@@ -29,7 +29,6 @@ describe('TurnService', () => {
     codesFromSessionQuestion: jest.Mock;
   };
   let mockMediaFacade: {
-    uploadAndTranscribeAudio: jest.Mock;
     calculateVoiceMetrics: jest.Mock;
   };
 
@@ -86,7 +85,6 @@ describe('TurnService', () => {
       ),
     };
     mockMediaFacade = {
-      uploadAndTranscribeAudio: jest.fn(),
       calculateVoiceMetrics: jest.fn().mockReturnValue({
         wpm: 120,
         fillerWordCount: 1,
@@ -117,62 +115,6 @@ describe('TurnService', () => {
   });
 
   afterEach(() => jest.clearAllMocks());
-
-  describe('uploadAudio', () => {
-    const AUDIO_FILE = {
-      buffer: Buffer.from([1, 2, 3]),
-      mimetype: 'audio/webm',
-      size: 3,
-    };
-
-    it('ném SESSION_NOT_FOUND khi session không tồn tại', async () => {
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(null);
-
-      await expect(
-        service.uploadAudio('session-123', 'user-abc', AUDIO_FILE),
-      ).rejects.toMatchObject({
-        errorCode: ErrorCode.SESSION_NOT_FOUND,
-      });
-
-      expect(mockMediaFacade.uploadAndTranscribeAudio).not.toHaveBeenCalled();
-    });
-
-    it('ném FORBIDDEN khi user không phải owner', async () => {
-      mockPrisma.interviewSession.findUnique.mockResolvedValue({
-        savedJobDescription: { userId: 'other-user' },
-      });
-
-      await expect(
-        service.uploadAudio('session-123', 'user-abc', AUDIO_FILE),
-      ).rejects.toMatchObject({
-        errorCode: ErrorCode.FORBIDDEN,
-      });
-
-      expect(mockMediaFacade.uploadAndTranscribeAudio).not.toHaveBeenCalled();
-    });
-
-    it('ủy quyền upload audio cho use case khi session thuộc user', async () => {
-      const uploadResult = {
-        audioFileUrl:
-          'https://project.supabase.co/storage/v1/object/public/interview-audio/u/s/audio.webm',
-        audioSizeBytes: 3,
-      };
-      mockPrisma.interviewSession.findUnique.mockResolvedValue({
-        savedJobDescription: { userId: 'user-abc' },
-      });
-      mockMediaFacade.uploadAndTranscribeAudio.mockResolvedValue(uploadResult);
-
-      await expect(
-        service.uploadAudio('session-123', 'user-abc', AUDIO_FILE),
-      ).resolves.toEqual(uploadResult);
-
-      expect(mockMediaFacade.uploadAndTranscribeAudio).toHaveBeenCalledWith({
-        sessionId: 'session-123',
-        userId: 'user-abc',
-        file: AUDIO_FILE,
-      });
-    });
-  });
 
   describe('submitAnswer', () => {
     it('ném SESSION_NOT_FOUND (404) khi session không tồn tại', async () => {
@@ -344,7 +286,6 @@ describe('TurnService', () => {
       expect(result).toEqual({
         answerId: 'answer-1',
         feedbackQueued: true,
-        transcriptionPending: false,
       });
       expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
         expect.anything(),
@@ -392,7 +333,6 @@ describe('TurnService', () => {
       expect(result).toEqual({
         answerId: 'answer-1',
         feedbackQueued: false,
-        transcriptionPending: false,
       });
       expect(mockPrisma.userAnswer.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -415,7 +355,6 @@ describe('TurnService', () => {
         ...BASE_ANSWER,
         answerText: '',
         skipped: true,
-        transcriptionStatus: null,
       });
 
       const result = await service.submitAnswer('session-123', 'user-abc', {
@@ -428,7 +367,6 @@ describe('TurnService', () => {
       expect(result).toEqual({
         answerId: 'answer-1',
         feedbackQueued: false,
-        transcriptionPending: false,
       });
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
       expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
@@ -441,7 +379,6 @@ describe('TurnService', () => {
       mockPrisma.userAnswer.findUnique.mockResolvedValue({
         ...BASE_ANSWER,
         skipped: false,
-        transcriptionStatus: null,
       });
 
       const result = await service.submitAnswer('session-123', 'user-abc', {
@@ -454,7 +391,6 @@ describe('TurnService', () => {
       expect(result).toEqual({
         answerId: 'answer-1',
         feedbackQueued: true,
-        transcriptionPending: false,
       });
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
       expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
@@ -468,7 +404,6 @@ describe('TurnService', () => {
         ...BASE_ANSWER,
         answerText: '',
         skipped: true,
-        transcriptionStatus: null,
       });
 
       const result = await service.submitAnswer(
@@ -480,7 +415,6 @@ describe('TurnService', () => {
       expect(result).toEqual({
         answerId: 'answer-1',
         feedbackQueued: false,
-        transcriptionPending: false,
       });
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
       expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
@@ -542,102 +476,24 @@ describe('TurnService', () => {
       );
     });
 
-    it('voice mode: enqueue transcription in outbox, không gọi Whisper trực tiếp, return transcriptionPending=true', async () => {
-      const voiceDto = {
-        questionId: 'q-1',
-        answerMode: 'voice' as const,
-        audioFileUrl: 'https://storage.example.com/audio.webm',
-        audioDurationSeconds: 45,
-        audioSizeBytes: 102400,
-      };
-
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
-      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
-      mockPrisma.userAnswer.upsert.mockResolvedValue({
-        ...BASE_ANSWER,
-        answerText: '',
-        audioFileUrl: 'https://storage.example.com/audio.webm',
-      });
-
-      const result = await service.submitAnswer(
-        'session-123',
-        'user-abc',
-        voiceDto,
-      );
-
-      expect(result).toEqual({
-        answerId: 'answer-1',
-        feedbackQueued: false,
-        transcriptionPending: true,
-      });
-      expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
-        expect.anything(),
-        {
-          commandType: 'transcription',
-          aggregateId: 'answer-1',
-          payload: expect.objectContaining({
-            sessionId: 'session-123',
-            answerId: 'answer-1',
-            audioFileUrl: 'https://storage.example.com/audio.webm',
-            language: 'vi',
-          }),
-        },
-      );
-      expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
-        'transcription',
-        'answer-1',
-      );
-    });
-
-    it('voice mode: lưu answer với transcriptionStatus=pending và answerText rỗng', async () => {
-      const voiceDto = {
-        questionId: 'q-1',
-        answerMode: 'voice' as const,
-        audioFileUrl: 'https://storage.example.com/audio.webm',
-        audioDurationSeconds: 45,
-        audioSizeBytes: 102400,
-      };
-
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
-      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
-      mockPrisma.userAnswer.upsert.mockResolvedValue({
-        ...BASE_ANSWER,
-        answerText: '',
-      });
-
-      await service.submitAnswer('session-123', 'user-abc', voiceDto);
-
-      expect(mockPrisma.userAnswer.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          create: expect.objectContaining({
-            answerText: '',
-            audioFileUrl: 'https://storage.example.com/audio.webm',
-            transcriptionStatus: 'pending',
-          }),
-        }),
-      );
-    });
-
-    it('voice mode với transcript đã chỉnh: lưu answerText, đánh dấu done và enqueue feedback ngay', async () => {
-      const editedTranscript =
+    it('voice mode: lưu answerText, tính voice metrics và enqueue feedback ngay', async () => {
+      const voiceTranscript =
         'Tôi là developer backend, có kinh nghiệm xây dựng API NestJS.';
       const voiceDto = {
         questionId: 'q-1',
         answerMode: 'voice' as const,
-        answerText: editedTranscript,
-        audioFileUrl: 'https://storage.example.com/audio.webm',
+        answerText: voiceTranscript,
         audioDurationSeconds: 30,
-        audioSizeBytes: 102400,
       };
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
       mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
+      mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
       mockPrisma.userAnswer.upsert.mockResolvedValue({
         ...BASE_ANSWER,
         answerMode: 'voice',
-        answerText: editedTranscript,
-        audioFileUrl: 'https://storage.example.com/audio.webm',
-        transcriptionStatus: 'done',
+        answerText: voiceTranscript,
+        audioDurationSeconds: 30,
       });
 
       const result = await service.submitAnswer(
@@ -649,15 +505,13 @@ describe('TurnService', () => {
       expect(result).toEqual({
         answerId: 'answer-1',
         feedbackQueued: true,
-        transcriptionPending: false,
       });
       expect(mockPrisma.userAnswer.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           create: expect.objectContaining({
             answerMode: 'voice',
-            answerText: editedTranscript,
-            audioFileUrl: 'https://storage.example.com/audio.webm',
-            transcriptionStatus: 'done',
+            answerText: voiceTranscript,
+            audioDurationSeconds: 30,
             voiceMetricsJson: {
               wpm: 120,
               fillerWordCount: 1,
@@ -667,7 +521,7 @@ describe('TurnService', () => {
         }),
       );
       expect(mockMediaFacade.calculateVoiceMetrics).toHaveBeenCalledWith(
-        editedTranscript,
+        voiceTranscript,
         30,
       );
       expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
@@ -676,7 +530,7 @@ describe('TurnService', () => {
           commandType: 'feedback',
           aggregateId: 'answer-1',
           payload: expect.objectContaining({
-            answerText: editedTranscript,
+            answerText: voiceTranscript,
             language: 'vi',
           }),
         },
@@ -717,11 +571,12 @@ describe('TurnService', () => {
       );
     });
 
-    it('voice retry: transcription đã done → return feedbackQueued=true, không tạo record mới, không re-enqueue', async () => {
+    it('voice retry: answer đã tồn tại → re-enqueue feedback, không tạo record mới', async () => {
       const VOICE_DTO = {
         questionId: 'q-1',
         answerMode: 'voice' as const,
-        audioFileUrl: 'https://example.com/audio.mp3',
+        answerText: 'Câu trả lời đã lưu',
+        audioDurationSeconds: 20,
       };
 
       mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
@@ -729,7 +584,7 @@ describe('TurnService', () => {
       mockPrisma.userAnswer.findUnique.mockResolvedValue({
         ...BASE_ANSWER,
         answerMode: 'voice',
-        transcriptionStatus: 'done',
+        answerText: 'Câu trả lời đã lưu',
       });
 
       const result = await service.submitAnswer(
@@ -741,88 +596,23 @@ describe('TurnService', () => {
       expect(result).toEqual({
         answerId: 'answer-1',
         feedbackQueued: true,
-        transcriptionPending: false,
-      });
-      expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
-      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
-      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
-    });
-
-    it('voice retry: transcription còn pending → re-enqueue transcription, return transcriptionPending=true', async () => {
-      const VOICE_DTO = {
-        questionId: 'q-1',
-        answerMode: 'voice' as const,
-        audioFileUrl: 'https://example.com/audio.mp3',
-      };
-
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
-      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
-      mockPrisma.userAnswer.findUnique.mockResolvedValue({
-        ...BASE_ANSWER,
-        answerMode: 'voice',
-        transcriptionStatus: 'pending',
-      });
-
-      const result = await service.submitAnswer(
-        'session-123',
-        'user-abc',
-        VOICE_DTO,
-      );
-
-      expect(result).toEqual({
-        answerId: 'answer-1',
-        feedbackQueued: false,
-        transcriptionPending: true,
       });
       expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
       expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
         expect.anything(),
-        {
-          commandType: 'transcription',
+        expect.objectContaining({
+          commandType: 'feedback',
           aggregateId: 'answer-1',
           payload: expect.objectContaining({
-            sessionId: 'session-123',
             answerId: 'answer-1',
-            audioFileUrl: 'https://example.com/audio.mp3',
-            language: 'vi',
+            answerText: 'Câu trả lời đã lưu',
           }),
-        },
+        }),
       );
       expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
-        'transcription',
+        'feedback',
         'answer-1',
       );
-    });
-
-    it('voice retry: transcription failed → return transcriptionPending=false, feedbackQueued=false, không re-enqueue', async () => {
-      const VOICE_DTO = {
-        questionId: 'q-1',
-        answerMode: 'voice' as const,
-        audioFileUrl: 'https://example.com/audio.mp3',
-      };
-
-      mockPrisma.interviewSession.findUnique.mockResolvedValue(BASE_SESSION);
-      mockPrisma.sessionQuestion.findFirst.mockResolvedValue(BASE_QUESTION);
-      mockPrisma.userAnswer.findUnique.mockResolvedValue({
-        ...BASE_ANSWER,
-        answerMode: 'voice',
-        transcriptionStatus: 'failed',
-      });
-
-      const result = await service.submitAnswer(
-        'session-123',
-        'user-abc',
-        VOICE_DTO,
-      );
-
-      expect(result).toEqual({
-        answerId: 'answer-1',
-        feedbackQueued: false,
-        transcriptionPending: false,
-      });
-      expect(mockPrisma.userAnswer.upsert).not.toHaveBeenCalled();
-      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
-      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
     });
   });
 });

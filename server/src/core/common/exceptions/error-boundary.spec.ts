@@ -28,7 +28,9 @@ class TestBoundaryDto {
   @IsEmail({}, { message: 'email must be an email' })
   email!: string;
 
-  @MinLength(8, { message: 'password must be longer than or equal to 8 characters' })
+  @MinLength(8, {
+    message: 'password must be longer than or equal to 8 characters',
+  })
   password!: string;
 
   @IsOptional()
@@ -78,10 +80,13 @@ class TestBoundaryController {
   // 3c. Endpoint test Prisma P1001 (Connection error)
   @Get('prisma-p1001')
   testPrismaP1001() {
-    throw new Prisma.PrismaClientKnownRequestError('Cannot connect to database', {
-      code: 'P1001',
-      clientVersion: '7.8.0',
-    });
+    throw new Prisma.PrismaClientKnownRequestError(
+      'Cannot connect to database',
+      {
+        code: 'P1001',
+        clientVersion: '7.8.0',
+      },
+    );
   }
 
   // 4. Endpoint test Unhandled 500 Exception
@@ -171,7 +176,9 @@ describe('Error Boundary & Security Anti-Leak Tests (Phase 18)', () => {
           message: 'Validation failed for incoming payload',
           details: {
             email: expect.arrayContaining([expect.stringContaining('email')]),
-            password: expect.arrayContaining([expect.stringContaining('password')]),
+            password: expect.arrayContaining([
+              expect.stringContaining('password'),
+            ]),
           },
         },
         meta: {
@@ -195,7 +202,9 @@ describe('Error Boundary & Security Anti-Leak Tests (Phase 18)', () => {
       expect(res.body.error.details).toHaveProperty('email');
       expect(res.body.error.details).toHaveProperty('age');
       expect(res.body.error.details.email).toContain('email must be an email');
-      expect(res.body.error.details.age).toContain('age must not be less than 18');
+      expect(res.body.error.details.age).toContain(
+        'age must not be less than 18',
+      );
     });
   });
 
@@ -360,4 +369,3 @@ describe('Error Boundary & Security Anti-Leak Tests (Phase 18)', () => {
     });
   });
 });
-

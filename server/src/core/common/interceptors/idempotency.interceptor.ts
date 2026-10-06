@@ -22,6 +22,17 @@ import {
   IDEMPOTENT_METADATA_KEY,
   IdempotentOptions,
 } from '../decorators/idempotent.decorator';
+import type { Request, Response } from 'express';
+
+interface AuthenticatedRequest extends Request {
+  user?: { id?: string; user?: { id?: string } };
+  file?: {
+    originalname?: string;
+    size?: number;
+    mimetype?: string;
+    buffer?: Buffer;
+  };
+}
 
 export const IDEMPOTENCY_REDIS_CLIENT = 'IDEMPOTENCY_REDIS_CLIENT';
 
@@ -84,7 +95,9 @@ export class IdempotencyInterceptor
       this.isInternalRedis = true;
 
       this.redisClient.on('error', (err: Error) => {
-        this.logger.warn(`Idempotency Redis connection warning: ${err.message}`);
+        this.logger.warn(
+          `Idempotency Redis connection warning: ${err.message}`,
+        );
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -105,8 +118,8 @@ export class IdempotencyInterceptor
     next: CallHandler,
   ): Promise<Observable<unknown>> {
     const http = context.switchToHttp();
-    const req = http.getRequest();
-    const res = http.getResponse();
+    const req = http.getRequest<AuthenticatedRequest>();
+    const res = http.getResponse<Response>();
 
     if (!req || !req.method) {
       return next.handle();
@@ -164,7 +177,9 @@ export class IdempotencyInterceptor
 
     const userId =
       req.user?.id ||
-      (typeof req.user === 'object' && req.user !== null && req.user.user?.id) ||
+      (typeof req.user === 'object' &&
+        req.user !== null &&
+        req.user.user?.id) ||
       'anon';
     const rawUrl = req.originalUrl || req.url || req.baseUrl || req.path || '';
     const path = rawUrl.split('?')[0];
@@ -202,10 +217,7 @@ export class IdempotencyInterceptor
           const existing = this.parseRecord(existingRaw);
 
           // Payload Fingerprinting: Check if payload body matches original request
-          if (
-            existing.payloadHash &&
-            existing.payloadHash !== payloadHash
-          ) {
+          if (existing.payloadHash && existing.payloadHash !== payloadHash) {
             throw new InterviewAIException(
               ErrorCode.CONFLICT,
               HttpStatus.CONFLICT,
@@ -241,7 +253,7 @@ export class IdempotencyInterceptor
 
     // 3. Lock acquired successfully -> Execute request and handle completion/failure
     return next.handle().pipe(
-      concatMap(async (responseBody) => {
+      concatMap(async (responseBody: unknown) => {
         await this.saveCompletedRecord(
           redisKey,
           res.statusCode || HttpStatus.OK,
@@ -261,7 +273,12 @@ export class IdempotencyInterceptor
 
   private computePayloadHash(
     body: unknown,
-    file?: { originalname?: string; size?: number; mimetype?: string; buffer?: Buffer },
+    file?: {
+      originalname?: string;
+      size?: number;
+      mimetype?: string;
+      buffer?: Buffer;
+    },
   ): string {
     const hash = crypto.createHash('sha256');
     const serialized =
@@ -282,7 +299,7 @@ export class IdempotencyInterceptor
 
   private parseRecord(raw: string): StoredIdempotencyRecord {
     try {
-      return JSON.parse(raw);
+      return JSON.parse(raw) as StoredIdempotencyRecord;
     } catch {
       return { status: 'IN_PROGRESS' };
     }
@@ -304,12 +321,7 @@ export class IdempotencyInterceptor
         body,
         payloadHash,
       };
-      await this.redisClient.set(
-        key,
-        JSON.stringify(record),
-        'EX',
-        ttlSeconds,
-      );
+      await this.redisClient.set(key, JSON.stringify(record), 'EX', ttlSeconds);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.warn(

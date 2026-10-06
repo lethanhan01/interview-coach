@@ -98,7 +98,7 @@ export function resolveAppliedDimensions(
         seen.add(resolved.id);
         result.push(resolved);
       }
-    // convention-ignore: ERR_003 Skip malformed entry on unexpected error
+      // convention-ignore: ERR_003 Skip malformed entry on unexpected error
     } catch {
       // resolveOne should not throw, but belt-and-suspenders: skip entry on unexpected error
     }

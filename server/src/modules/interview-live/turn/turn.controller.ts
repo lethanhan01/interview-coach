@@ -3,24 +3,15 @@ import {
   Post,
   Param,
   Body,
-  UseInterceptors,
-  UploadedFile,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { UserRole } from '@core/common/enums';
 import { Roles, CurrentUser, Idempotent } from '@core/common/decorators';
 import { TurnService } from './turn.service';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { TurnResponseDto } from './dto/turn-response.dto';
-import type {
-  UploadedAudioFile,
-  AudioUploadResult,
-} from '@modules/media/contracts';
 import {
-  ApiBody,
-  ApiConsumes,
   ApiCookieAuth,
   ApiCreatedResponse,
   ApiOperation,
@@ -54,38 +45,6 @@ function resolveUserId(userOrReq: RequestUser): string {
 @ApiCookieAuth('cookieAuth')
 export class TurnController {
   constructor(private readonly turnService: TurnService) {}
-
-  @Post('audio')
-  @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(
-    FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
-  )
-  @ApiOperation({ summary: 'Upload answer audio (maximum 10 MB)' })
-  @ApiParam({ name: 'sessionId', format: 'uuid' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['file'],
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-          description: 'Audio file, maximum 10 MB.',
-        },
-      },
-    },
-  })
-  @ApiCreatedResponse({ description: 'Uploaded audio metadata.' })
-  @ApiCommonErrors(400, 401, 403, 404, 413, 415, 503)
-  async uploadAudio(
-    @Param('sessionId') sessionId: string,
-    @UploadedFile() file: UploadedAudioFile | undefined,
-    @CurrentUser() userOrReq: RequestUser,
-  ): Promise<AudioUploadResult> {
-    const userId = resolveUserId(userOrReq);
-    return this.turnService.uploadAudio(sessionId, userId, file);
-  }
 
   @Post()
   @Idempotent({ ttlSeconds: 86400 })

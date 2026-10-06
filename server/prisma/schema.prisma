@@ -326,12 +326,9 @@ model UserAnswer {
   questionId           String          @unique @map("question_id") @db.Uuid
   answerMode           String          @map("answer_mode")
   answerText           String          @map("answer_text")
-  audioFileUrl         String?         @map("audio_file_url")
   audioDurationSeconds Int?            @map("audio_duration_seconds")
-  audioSizeBytes       Int?            @map("audio_size_bytes")
   skipped              Boolean         @default(false)
   voiceMetricsJson     Json?           @map("voice_metrics_json")
-  transcriptionStatus  String?         @map("transcription_status")
   feedbackGenerated    Boolean         @default(false) @map("feedback_generated")
   createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)

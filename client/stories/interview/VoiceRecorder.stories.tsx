@@ -6,21 +6,12 @@ const meta: Meta<typeof VoiceRecorder> = {
   component: VoiceRecorder,
   tags: ['autodocs'],
   args: {
-    onSubmit: async (url: string, duration: number, size: number, transcript: string) => {
-      console.log('Submitted:', { url, duration, size, transcript })
+    onSubmit: async (transcript: string, durationSeconds: number) => {
+      console.log('Submitted transcript:', { transcript, durationSeconds })
       await new Promise((resolve) => setTimeout(resolve, 1000))
     },
-    onUploadAudio: async (blob: Blob) => {
-      console.log('Uploading blob:', blob)
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      return {
-        audioFileUrl: 'https://example.com/audio.webm',
-        audioSizeBytes: blob.size,
-        transcript: 'Đây là nội dung mô phỏng trả về từ server sau khi nhận diện giọng nói.',
-        transcriptDurationSeconds: 10,
-      }
-    },
     sessionId: 'session-123',
+    language: 'vi',
   },
 }
 
@@ -28,6 +19,21 @@ export default meta
 type Story = StoryObj<typeof VoiceRecorder>
 
 export const Default: Story = {}
+
+export const WithDraft: Story = {
+  args: {
+    initialDraft:
+      'Tôi có hơn ba năm kinh nghiệm phát triển hệ thống backend phân tán với NestJS, PostgreSQL và Redis.',
+  },
+}
+
+export const EnglishLanguage: Story = {
+  args: {
+    language: 'en',
+    initialDraft:
+      'I have designed multiple microservice architectures with Docker and Kubernetes.',
+  },
+}
 
 export const Disabled: Story = {
   args: {

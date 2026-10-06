@@ -26,7 +26,7 @@ describe('RequestContext', () => {
 
   it('cô lập dữ liệu giữa các execution context bất đồng bộ', async () => {
     const taskA = new Promise<string>((resolve) => {
-      RequestContext.run(
+      void RequestContext.run(
         {
           requestId: 'req-A',
           correlationId: 'corr-A',
@@ -40,7 +40,7 @@ describe('RequestContext', () => {
     });
 
     const taskB = new Promise<string>((resolve) => {
-      RequestContext.run(
+      void RequestContext.run(
         {
           requestId: 'req-B',
           correlationId: 'corr-B',

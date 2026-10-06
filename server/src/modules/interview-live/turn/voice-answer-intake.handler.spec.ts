@@ -91,267 +91,140 @@ describe('VoiceAnswerIntakeHandler', () => {
     expect(handler.supportedMode).toBe('voice');
   });
 
-  describe('Audio only (no transcript)', () => {
-    it('should create new voice answer, enqueue transcription in outbox, and dispatch job when audioFileUrl is present', async () => {
-      mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
-      mockPrisma.userAnswer.upsert.mockResolvedValue({
-        id: 'ans-voice-1',
-        questionId: 'q-202',
-        answerMode: 'voice',
-        answerText: '',
-        skipped: false,
-        audioFileUrl: 'https://storage.example.com/audio/1.mp3',
-        audioDurationSeconds: 45,
-        audioSizeBytes: 102400,
-        transcriptionStatus: 'pending',
-      } as any);
+  it('should calculate voice metrics, save answer with text, enqueue feedback in outbox, and dispatch job', async () => {
+    mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
+    mockPrisma.userAnswer.upsert.mockResolvedValue({
+      id: 'ans-voice-1',
+      questionId: 'q-202',
+      answerMode: 'voice',
+      answerText: 'Tôi thiết kế hệ thống theo Event Driven Architecture.',
+      skipped: false,
+      audioDurationSeconds: 45,
+    } as any);
 
-      const dto: SubmitAnswerDto = {
-        questionId: 'q-202',
-        answerMode: 'voice',
-        audioFileUrl: 'https://storage.example.com/audio/1.mp3',
-        audioDurationSeconds: 45,
-        audioSizeBytes: 102400,
-      };
+    const dto: SubmitAnswerDto = {
+      questionId: 'q-202',
+      answerMode: 'voice',
+      answerText: '  Tôi thiết kế hệ thống theo Event Driven Architecture.  ',
+      audioDurationSeconds: 45,
+    };
 
-      const result = await handler.handle(dto, mockContext);
+    const result = await handler.handle(dto, mockContext);
 
-      expect(mockPrisma.userAnswer.upsert).toHaveBeenCalledWith({
-        where: { questionId: 'q-202' },
-        create: {
-          questionId: 'q-202',
-          answerMode: 'voice',
-          answerText: '',
-          skipped: false,
-          audioFileUrl: 'https://storage.example.com/audio/1.mp3',
-          audioDurationSeconds: 45,
-          audioSizeBytes: 102400,
-          transcriptionStatus: 'pending',
-        },
-        update: {},
-      });
+    expect(mockMediaFacade.calculateVoiceMetrics).toHaveBeenCalledWith(
+      'Tôi thiết kế hệ thống theo Event Driven Architecture.',
+      45,
+    );
 
-      expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
-        expect.anything(),
-        {
-          commandType: 'transcription',
-          aggregateId: 'ans-voice-1',
-          payload: {
-            sessionId: 'session-123',
-            answerId: 'ans-voice-1',
-            audioFileUrl: 'https://storage.example.com/audio/1.mp3',
-            audioDurationSeconds: 45,
-            audioSizeBytes: 102400,
-            contextPack: 'VN',
-            sessionType: 'technical',
-            language: 'vi',
-          },
-        },
-      );
-
-      expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
-        'transcription',
-        'ans-voice-1',
-      );
-
-      expect(result).toEqual({
-        answerId: 'ans-voice-1',
-        feedbackQueued: false,
-        transcriptionPending: true,
-      });
-    });
-
-    it('should return feedbackQueued: true if existing answer has transcriptionStatus "done"', async () => {
-      mockPrisma.userAnswer.findUnique.mockResolvedValue({
-        id: 'ans-voice-done',
-        questionId: 'q-202',
-        transcriptionStatus: 'done',
-      } as any);
-
-      const dto: SubmitAnswerDto = {
-        questionId: 'q-202',
-        answerMode: 'voice',
-        audioFileUrl: 'https://storage.example.com/audio/1.mp3',
-      };
-
-      const result = await handler.handle(dto, mockContext);
-
-      expect(result).toEqual({
-        answerId: 'ans-voice-done',
-        feedbackQueued: true,
-        transcriptionPending: false,
-      });
-      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
-      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
-    });
-
-    it('should return feedbackQueued: false if existing answer has transcriptionStatus "failed"', async () => {
-      mockPrisma.userAnswer.findUnique.mockResolvedValue({
-        id: 'ans-voice-failed',
-        questionId: 'q-202',
-        transcriptionStatus: 'failed',
-      } as any);
-
-      const dto: SubmitAnswerDto = {
-        questionId: 'q-202',
-        answerMode: 'voice',
-        audioFileUrl: 'https://storage.example.com/audio/1.mp3',
-      };
-
-      const result = await handler.handle(dto, mockContext);
-
-      expect(result).toEqual({
-        answerId: 'ans-voice-failed',
-        feedbackQueued: false,
-        transcriptionPending: false,
-      });
-      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
-      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
-    });
-
-    it('should re-enqueue transcription if existing answer is still pending', async () => {
-      mockPrisma.userAnswer.findUnique.mockResolvedValue({
-        id: 'ans-voice-pending',
-        questionId: 'q-202',
-        transcriptionStatus: 'pending',
-      } as any);
-
-      const dto: SubmitAnswerDto = {
-        questionId: 'q-202',
-        answerMode: 'voice',
-        audioFileUrl: 'https://storage.example.com/audio/1.mp3',
-        audioDurationSeconds: 30,
-        audioSizeBytes: 50000,
-      };
-
-      const result = await handler.handle(dto, mockContext);
-
-      expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          commandType: 'transcription',
-          aggregateId: 'ans-voice-pending',
-          payload: expect.objectContaining({
-            answerId: 'ans-voice-pending',
-          }),
-        }),
-      );
-
-      expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
-        'transcription',
-        'ans-voice-pending',
-      );
-
-      expect(result).toEqual({
-        answerId: 'ans-voice-pending',
-        feedbackQueued: false,
-        transcriptionPending: true,
-      });
-    });
-  });
-
-  describe('Voice with transcript', () => {
-    it('should calculate voice metrics, enqueue feedback in outbox, and dispatch job', async () => {
-      mockPrisma.userAnswer.findUnique.mockResolvedValue(null);
-      mockPrisma.userAnswer.upsert.mockResolvedValue({
-        id: 'ans-voice-with-txt',
+    expect(mockPrisma.userAnswer.upsert).toHaveBeenCalledWith({
+      where: { questionId: 'q-202' },
+      create: {
         questionId: 'q-202',
         answerMode: 'voice',
         answerText: 'Tôi thiết kế hệ thống theo Event Driven Architecture.',
         skipped: false,
-        transcriptionStatus: 'done',
-      } as any);
-
-      const dto: SubmitAnswerDto = {
-        questionId: 'q-202',
-        answerMode: 'voice',
-        answerText: '  Tôi thiết kế hệ thống theo Event Driven Architecture.  ',
-        audioFileUrl: 'https://storage.example.com/audio/2.mp3',
-        audioDurationSeconds: 20,
-      };
-
-      const result = await handler.handle(dto, mockContext);
-
-      expect(mockMediaFacade.calculateVoiceMetrics).toHaveBeenCalledWith(
-        'Tôi thiết kế hệ thống theo Event Driven Architecture.',
-        20,
-      );
-
-      expect(mockPrisma.userAnswer.upsert).toHaveBeenCalledWith({
-        where: { questionId: 'q-202' },
-        create: {
-          questionId: 'q-202',
-          answerMode: 'voice',
-          answerText: 'Tôi thiết kế hệ thống theo Event Driven Architecture.',
-          skipped: false,
-          audioFileUrl: 'https://storage.example.com/audio/2.mp3',
-          audioDurationSeconds: 20,
-          audioSizeBytes: undefined,
-          transcriptionStatus: 'done',
-          voiceMetricsJson: {
-            wpm: 135,
-            fillerWordCount: 2,
-            fillerWords: ['à', 'ừm'],
-          },
+        audioDurationSeconds: 45,
+        voiceMetricsJson: {
+          wpm: 135,
+          fillerWordCount: 2,
+          fillerWords: ['à', 'ừm'],
         },
-        update: {},
-      });
-
-      expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
-        expect.anything(),
-        {
-          commandType: 'feedback',
-          aggregateId: 'ans-voice-with-txt',
-          payload: {
-            sessionId: 'session-123',
-            turnId: 'ans-voice-with-txt',
-            answerId: 'ans-voice-with-txt',
-            questionId: 'q-202',
-            questionText: 'Mô tả kiến trúc dự án gần nhất của bạn?',
-            questionCategory: 'technical',
-            competencyDomains: ['T1', 'T2'],
-            answerText: 'Tôi thiết kế hệ thống theo Event Driven Architecture.',
-            contextPack: 'VN',
-            sessionType: 'technical',
-            language: 'vi',
-          },
-        },
-      );
-
-      expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
-        'feedback',
-        'ans-voice-with-txt',
-      );
-
-      expect(result).toEqual({
-        answerId: 'ans-voice-with-txt',
-        feedbackQueued: true,
-        transcriptionPending: false,
-      });
+      },
+      update: {},
     });
 
-    it('should return skipped status if existing answer was skipped', async () => {
-      mockPrisma.userAnswer.findUnique.mockResolvedValue({
-        id: 'ans-skipped-voice',
-        questionId: 'q-202',
-        skipped: true,
-      } as any);
+    expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        commandType: 'feedback',
+        aggregateId: 'ans-voice-1',
+        payload: {
+          sessionId: 'session-123',
+          turnId: 'ans-voice-1',
+          answerId: 'ans-voice-1',
+          questionId: 'q-202',
+          questionText: 'Mô tả kiến trúc dự án gần nhất của bạn?',
+          questionCategory: 'technical',
+          competencyDomains: ['T1', 'T2'],
+          answerText: 'Tôi thiết kế hệ thống theo Event Driven Architecture.',
+          contextPack: 'VN',
+          sessionType: 'technical',
+          language: 'vi',
+        },
+      },
+    );
 
-      const dto: SubmitAnswerDto = {
-        questionId: 'q-202',
-        answerMode: 'voice',
-        answerText: 'Một câu trả lời gửi muộn sau khi đã skip',
-      };
+    expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
+      'feedback',
+      'ans-voice-1',
+    );
 
-      const result = await handler.handle(dto, mockContext);
+    expect(result).toEqual({
+      answerId: 'ans-voice-1',
+      feedbackQueued: true,
+    });
+  });
 
-      expect(result).toEqual({
-        answerId: 'ans-skipped-voice',
-        feedbackQueued: false,
-        transcriptionPending: false,
-      });
-      expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
-      expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
+  it('should return skipped status if existing answer was skipped', async () => {
+    mockPrisma.userAnswer.findUnique.mockResolvedValue({
+      id: 'ans-skipped-voice',
+      questionId: 'q-202',
+      skipped: true,
+    } as any);
+
+    const dto: SubmitAnswerDto = {
+      questionId: 'q-202',
+      answerMode: 'voice',
+      answerText: 'Một câu trả lời gửi muộn sau khi đã skip',
+    };
+
+    const result = await handler.handle(dto, mockContext);
+
+    expect(result).toEqual({
+      answerId: 'ans-skipped-voice',
+      feedbackQueued: false,
+    });
+    expect(mockWorkflow.enqueueInTransaction).not.toHaveBeenCalled();
+    expect(mockDispatcher.dispatchFor).not.toHaveBeenCalled();
+  });
+
+  it('should re-enqueue feedback if existing answer is already submitted', async () => {
+    mockPrisma.userAnswer.findUnique.mockResolvedValue({
+      id: 'ans-existing-voice',
+      questionId: 'q-202',
+      answerText: 'Câu trả lời đã lưu trước đó',
+      skipped: false,
+    } as any);
+
+    const dto: SubmitAnswerDto = {
+      questionId: 'q-202',
+      answerMode: 'voice',
+      answerText: 'Câu trả lời mới gửi lại',
+    };
+
+    const result = await handler.handle(dto, mockContext);
+
+    expect(mockWorkflow.enqueueInTransaction).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        commandType: 'feedback',
+        aggregateId: 'ans-existing-voice',
+        payload: expect.objectContaining({
+          sessionId: 'session-123',
+          turnId: 'ans-existing-voice',
+          answerText: 'Câu trả lời đã lưu trước đó',
+        }),
+      },
+    );
+
+    expect(mockDispatcher.dispatchFor).toHaveBeenCalledWith(
+      'feedback',
+      'ans-existing-voice',
+    );
+
+    expect(result).toEqual({
+      answerId: 'ans-existing-voice',
+      feedbackQueued: true,
     });
   });
 });

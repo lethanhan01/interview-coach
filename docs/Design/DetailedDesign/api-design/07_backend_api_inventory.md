@@ -64,7 +64,7 @@ Backend expose **18 API**. Sau khi cập nhật, cả 18 API đều có:
 - JSON field dùng camelCase, không dùng snake_case.
 - `POST /auth/logout` trả `204` và không có body.
 - SSE auth dùng query `token`, không dùng Bearer header.
-- Voice answer dùng `audioFileUrl` trong JSON, không dùng multipart upload.
+- Voice answer gửi trực tiếp transcript qua `answerText` kèm `audioDurationSeconds` trong JSON, nhận diện giọng nói tại trình duyệt (Web Speech API), không lưu trữ audio file.
 
 ## Endpoint có trong design cũ nhưng không có trong backend
 
