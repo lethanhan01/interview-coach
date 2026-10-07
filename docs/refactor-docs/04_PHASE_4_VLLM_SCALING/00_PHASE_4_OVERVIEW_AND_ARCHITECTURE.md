@@ -1,17 +1,17 @@
-# TÀI LIỆU TỔNG QUAN: PHASE 4 — HẠ TẦNG VLLM TỰ HOST & TRỢ LÝ ĐÀM THOẠI SONG CÔNG
+# TÀI LIỆU TỔNG QUAN: PHASE 4 — HẠ TẦNG VLLM TỰ HOST & FAST-PATH CONVERSATIONAL AGENT
 # (MASTER OVERVIEW, ROADMAP & DETAILED TASK BREAKDOWN)
 
 > **Trạng thái**: Approved / Production Specification  
 > **Cấp độ**: Production Specification (System Architect / Lead Engineer)  
 > **Áp dụng cho**: Hạ tầng GPU / vLLM, Trợ lý Phỏng vấn Thời gian thực, WebSockets Duplex, Smart VAD & Barge-in  
 > **Tài liệu tham chiếu**: [00_OVERVIEW_STRATEGIC_BLUEPRINT.md](../00_OVERVIEW_STRATEGIC_BLUEPRINT.md), [01_PHASE_1_AUDIO_ENGINE_AND_PILOT.md](../01_PHASE_1_AUDIO_ENGINE_AND_PILOT.md)  
-> **Phiên bản**: 2.1.0 (Chuẩn hóa toàn diện chuỗi thực thi tuần tự & Thuật ngữ tiếng Anh kỹ thuật)  
+> **Phiên bản**: 3.0.0 (Tái cấu trúc tích hợp Fast-Path Conversational Agent <900ms)  
 
 ---
 
 ## 1. TỔNG QUAN KIẾN TRÚC PHASE 4
 
-Phase 4 nâng cấp hệ thống InterviewAI từ cơ chế hỏi-đáp ngắt quãng (Turn-by-Turn request/response) lên **Full-Duplex Conversational Interviewer** song hành với **Tự host vLLM (Open-Source LLM)** nhằm tối ưu hóa 90-95% Total Cost of Ownership (TCO) ở quy mô lớn:
+Phase 4 nâng cấp hệ thống InterviewAI từ cơ chế hỏi-đáp ngắt quãng (Turn-by-Turn request/response) lên **Full-Duplex Conversational Interviewer** tích hợp **Fast-Path Conversational Agent** song hành với **Tự host vLLM (Open-Source LLM)** nhằm tối ưu hóa 90-95% Total Cost of Ownership (TCO) ở quy mô lớn:
 
 ```mermaid
 graph TD
@@ -27,15 +27,17 @@ graph TD
         AbortMgr["AbortController Dispatcher<br/>(Phát tín hiệu ngắt < 200ms)"]
     end
 
-    subgraph ComputeEngine["Hạ tầng Inference vLLM & Neural TTS"]
-        vLLM["vLLM Engine (Qwen 2.5 32B Instruct AWQ)<br/>PagedAttention + Continuous Batching"]
+    subgraph FastPathEngine["Hạ tầng Inference vLLM & Fast-Path Agent (<700ms TTFA)"]
+        PreFetch["Pre-fetched Knowledge Context<br/>(Rubric & Tech context nạp sẵn KV-Cache)"]
+        vLLM["vLLM Engine (Qwen 2.5 32B Instruct AWQ)<br/>Speculative Zero-Hop Streaming"]
         CloudLLM["Cloud OpenAI Fallback / Overflow<br/>(Circuit Breaker Triggered)"]
-        Kokoro["Kokoro TTS Neural Engine<br/>(Stream chunk 5-10 tokens -> Audio)"]
+        Kokoro["Kokoro TTS Neural Engine<br/>(Stream chunk 5-10 tokens -> Audio < 150ms)"]
     end
 
     AW -->|Binary Audio 200ms| WS
     WS --> VAD
-    VAD -->|User Speaking Stopped| vLLM
+    VAD -->|User Speaking Stopped| PreFetch
+    PreFetch --> vLLM
     VAD -->|Barge-in Interrupt Detected| AbortMgr
     AbortMgr -->|Cancel Generation| vLLM
     AbortMgr -->|Drop Audio Buffer| Kokoro
@@ -73,33 +75,33 @@ Phase 4 được chia thành 5 nhiệm vụ kỹ thuật độc lập với tài
 | **Task 4.2** | [02_NESTJS_GATEWAY_INTEGRATION_AND_SURGE_FAILOVER.md](02_NESTJS_GATEWAY_INTEGRATION_AND_SURGE_FAILOVER.md) | Tích hợp vLLM vào NestJS qua `OpenAIGateway`, cơ chế Circuit Breaker tự ngắt khi vLLM quá tải và thuật toán Cloud Surge Failover điều hướng traffic sang OpenAI API. |
 | **Task 4.3** | [03_FULL_DUPLEX_WEBSOCKET_AND_AUDIO_WORKLET.md](03_FULL_DUPLEX_WEBSOCKET_AND_AUDIO_WORKLET.md) | Xây dựng giao thức WebSockets đàm thoại hai chiều, pipeline AudioWorklet thu/phát âm thanh liên tục không block main thread, và FSM đồng bộ trạng thái hội thoại. |
 | **Task 4.4** | [04_SMART_VAD_BARGE_IN_AND_LATENCY_PIPELINE.md](04_SMART_VAD_BARGE_IN_AND_LATENCY_PIPELINE.md) | Tích hợp Silero VAD lọc tiếng ồn giả, phát hiện ngắt lời (Barge-in), truyền phát tín hiệu hủy đa tầng (<200ms) qua `AbortController` đến vLLM và Kokoro TTS. |
-| **Task 4.5** | [05_ADAPTIVE_PROBING_AND_CONVERSATIONAL_ORCHESTRATION.md](05_ADAPTIVE_PROBING_AND_CONVERSATIONAL_ORCHESTRATION.md) | Thuật toán nhận diện câu trả lời mơ hồ/lạc đề để tự động kích hoạt câu hỏi xoáy (Adaptive Follow-up Probing), kiểm soát độ sâu đàm thoại và chốt chất lượng phỏng vấn. |
+| **Task 4.5** | [05_ADAPTIVE_PROBING_AND_CONVERSATIONAL_ORCHESTRATION.md](05_ADAPTIVE_PROBING_AND_CONVERSATIONAL_ORCHESTRATION.md) | Fast-Path Conversational Agent: Cơ chế Speculative Zero-Hop Probing với Pre-fetched KV-Cache Context, ngân sách hỏi xoáy nghiêm ngặt (Junior <= 1, Senior <= 2), Time-to-First-Audio $< 700\text{ms}$. |
 
 ---
 
 ## 4. KHUNG BÀN GIAO & LIÊN KẾT TUẦN TỰ (PHASE 4 EXECUTION & HANDOVER PROTOCOL)
 
 ### 4.1 Tiền đề Bàn giao Nhận từ Phase 3 (Incoming Handover)
-* Pipeline đánh giá câu trả lời 2 chặng đã hoàn thiện và chạy ổn định qua BullMQ Outbox Worker.
+* Pipeline đánh giá câu trả lời kết hợp Multi-Agent Fact-Checking đã hoàn thiện và chạy ổn định qua BullMQ Outbox Worker.
 * Đã vượt qua toàn bộ tiêu chí của **Quality Gate 3**.
 
 ### 4.2 Chuỗi Thực thi Tuần tự (Task Sequential Flow)
 ```
 Task 4.1 (vLLM Deployment) ──> Task 4.2 (Gateway & Failover) ──> Task 4.3 (Full-Duplex WS)
                                                                            │
-Task 4.5 (Adaptive Probing) <── Task 4.4 (Smart VAD Barge-in) <────────────┘
+Task 4.5 (Fast-Path Agent) <── Task 4.4 (Smart VAD Barge-in) <─────────────┘
 ```
 
 ### 4.3 Handover Sang Phase 5 (Phase 4 -> Phase 5 Transition)
 * **Điều kiện hoàn thành Phase 4**: Vượt qua toàn bộ tiêu chí của **Quality Gate 4**.
-* **Đầu ra bàn giao**: Cụm suy luận vLLM và WebSocket Full-Duplex Gateway hoạt động hoàn chỉnh ở môi trường Dev.
+* **Đầu ra bàn giao**: Cụm suy luận vLLM và WebSocket Full-Duplex Gateway tích hợp Fast-Path Conversational Agent hoạt động hoàn chỉnh ở môi trường Dev.
 * **Tài liệu chuyển tiếp**: Chuyển sang Phase 5 tại [00_PHASE_5_OVERVIEW_AND_ARCHITECTURE.md](../05_PHASE_5_DEV_OPS_INFRA/00_PHASE_5_OVERVIEW_AND_ARCHITECTURE.md) (Task 5.1: Polyglot Monorepo & Multi-stage Containers).
 
 ---
 
 ## 5. CHỈ TIÊU NGHIỆM THU TỔNG THỂ (QUALITY GATE 4)
 
-1. **Độ Trễ Đàm Thoại Toàn Trình (Time-to-First-Audio)**: Từ khi ứng viên dứt lời đến khi nghe thấy tiếng AI phản hồi $< 800\text{ ms}$ (P95).
+1. **Độ Trễ Đàm Thoại Toàn Trình (Time-to-First-Audio)**: Từ khi ứng viên dứt lời đến khi nghe thấy tiếng AI phản hồi $< 800\text{ ms}$ (P95) và $< 700\text{ ms}$ (Average).
 2. **Độ Nhạy Ngắt Lời (Barge-in Latency)**: Dừng phát loa và giải phóng tài nguyên tính toán trong vòng $< 200\text{ ms}$ sau khi ứng viên cất lời.
 3. **Hiệu Năng & Ổn Định GPU**: Cụm vLLM chịu tải ổn định $\ge 30$ lượt suy luận song song với tốc độ sinh token $\ge 25\text{ tokens/giây/luồng}$.
 4. **Bảo Vệ Dự Phòng (Cloud Surge Failover)**: Khi vLLM quá tải hoặc gặp sự cố, hệ thống tự động chuyển mạch sang OpenAI Cloud Fallback trong $< 1.5\text{s}$ mà không làm đứt đoạn phiên phỏng vấn.

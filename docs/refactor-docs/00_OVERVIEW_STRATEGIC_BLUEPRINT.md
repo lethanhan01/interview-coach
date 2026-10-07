@@ -39,8 +39,17 @@ Thay vì mắc bẫy sai lầm "Đập đi xây lại toàn bộ bằng Python" 
 $$\mathbf{Polyglot\ Hybrid\ Architecture} = \mathbf{NestJS\ Core\ Orchestrator} + \mathbf{Python\ AI\ Compute\ Engine}$$
 
 1. **NestJS (`server/`)**: Giữ nguyên vị thế **Single Source of Truth** & **Business Orchestrator**. Toàn bộ dữ liệu người dùng, phiên phỏng vấn, phân quyền, ACID Transactions và kết nối tương tác với người dùng do NestJS làm chủ.
-2. **Python (`ai-service/`)**: Đóng vai trò **Dedicated AI Compute Engine**, hoạt động như một microservice hiệu năng cao, **hoàn toàn Stateless Compute** chuyên biệt cho Audio (STT/TTS), Embeddings, RAG, NLP Semantics, và vLLM.
+2. **Python (`ai-service/`)**: Đóng vai trò **Dedicated AI Compute Engine**, hoạt động như một microservice hiệu năng cao, **hoàn toàn Stateless Compute** chuyên biệt cho Audio (STT/TTS), Embeddings, Multi-Corpus Retrieval Tools, Agentic StateGraph, và vLLM.
 3. **Mô hình Chuyển đổi**: Áp dụng **Strangler Fig Pattern** kết hợp **Strict Provider Toggle** (điều khiển qua biến môi trường). Mọi tính năng AI được chuyển dịch sang Python theo từng giai đoạn độc lập. Bất kỳ lỗi nào phát sinh đều có thể rollback về luồng Cloud Fallback trong $< 1\text{ phút}$.
+
+### 1.3 Tầm Nhìn Kiến Trúc RAG: Chuyển Dịch Toàn Diện Sang Multi-Corpus Agentic RAG
+Để giải quyết bài toán tuyển dụng kỹ thuật chuyên sâu mà các hệ thống Naive RAG hoặc Adaptive RAG đơn lẻ không thể đáp ứng:
+* **Adaptive RAG đóng vai trò là Sub-strategy**: Cơ chế phân loại độ phức tạp truy vấn (Query Classifier) được nhúng bên trong các Tool để định tuyến giữa Cache hit, Single-hop và Iterative retrieval nhằm kiểm soát chi phí.
+* **Agentic RAG đóng vai trò là Master Paradigm**: Xây dựng hệ sinh thái các tác tử tự trị (**Autonomous Multi-Agent**) với vòng lặp suy luận (Reasoning StateGraph), tự động lập kế hoạch (Planning), gọi công cụ (**Tool Calling**) qua 4 nguồn tri thức độc lập, và tự phản tư (**Self-Reflection**).
+* **Mô hình Hai Tốc Độ (Dual-Speed Agentic Architecture)**:
+  * **Fast-Path Agent (Live Mode)**: Nạp sẵn ngữ cảnh (Pre-fetched Knowledge Context) vào KV-Cache của vLLM đầu mỗi turn, thực thi **Speculative Zero-Hop Streaming** đảm bảo Time-to-First-Audio $< 700\text{ms}$ (vượt chuẩn SLA $< 900\text{ms}$).
+  * **Deep Multi-Agent Graph (Async Mode)**: Chạy qua BullMQ Worker (ngân sách $10 - 20\text{s}$) cho khâu Lập kịch bản (Curriculum Planning) và Thẩm định Kỹ thuật (Fact-Checking theo chuẩn FEVER NLI 3 trạng thái: Supported / Contradicted / Unverified).
+* **Bảo tồn Tuyệt đối Schema Chuẩn SFIA & O\*NET**: Giữ nguyên 100% các bảng quan hệ gốc trong schema `sfia.*` và `onet.*`. Trang bị năng lực tìm kiếm ngữ nghĩa thông qua các bảng vector vệ tinh (`sfia_vectors`, `onet_vectors`, `tech_docs_vectors`) và mở rộng `public.question_bank` với khóa ngoại (`FOREIGN KEY`).
 
 ---
 
@@ -76,6 +85,13 @@ Quy định này là **chuẩn mực bất biến** cho toàn bộ 36 tài liệ
 | **Latency (p50, p95, p99)** | Độ trễ | Thời gian đáp ứng từ request đến response ở các phân vị phần trăm. |
 | **Throughput** | Băng thông / Thông lượng | Số lượt request hoặc số token sinh ra trên mỗi đơn vị thời gian (tokens/sec). |
 | **L2 Cache** | Bộ nhớ đệm tầng 2 | Tầng cache Redis lưu trữ kết quả truy vấn câu hỏi RAG nhằm đạt tốc độ $< 10\text{ms}$. |
+| **Agentic RAG / StateGraph** | RAG Tác tử / Đồ thị Trạng thái | Kiến trúc suy luận tự trị bằng LangGraph điều phối Multi-Corpus Tools và tự phản tư. |
+| **Dual-Speed Architecture** | Kiến trúc hai tốc độ | Phân tách Fast-Path Agent (<700ms Live) và Deep Multi-Agent Graph (10-20s Async). |
+| **Fast-Path Conversational Agent** | Tác tử đàm thoại nhanh | Agent live suy luận zero-hop với Pre-fetched KV-Cache Context, không gọi thêm DB query. |
+| **LangGraph Checkpointer** | Bộ lưu snapshot trạng thái | Cơ chế lưu checkpoint đồ thị suy luận vào Redis/Postgres hỗ trợ replay và Admin review. |
+| **Multi-Corpus Tool Registry** | Kho công cụ đa nguồn | Tập hợp 3 tools AI chuẩn Pydantic v2 truy vấn `question_bank`, `sfia_vectors`, `onet_vectors`, `tech_docs_vectors`. |
+| **FEVER NLI Fact-Checking** | Thẩm định NLI 3 trạng thái | Chuẩn phân loại phát biểu kỹ thuật: Supported, Contradicted, Unverified kèm trích dẫn. |
+| **Speculative Zero-Hop Execution** | Thực thi phỏng đoán không bước | Sinh câu hỏi xoáy trực tiếp từ KV-Cache của LLM mà không dừng lại gọi external tools. |
 
 ### 2.3 Kiểm thử, Đo lường & Vận hành (Testing, Observability & SRE)
 | Thuật ngữ tiếng Anh chuẩn | Khái niệm cũ (Không dùng) | Định nghĩa & Bối cảnh kỹ thuật trong dự án |
@@ -83,6 +99,7 @@ Quy định này là **chuẩn mực bất biến** cho toàn bộ 36 tài liệ
 | **Contract Test** | Kiểm thử hợp đồng | Bộ kiểm thử độc lập kép (Pytest + Jest) chạy trên shared fixtures để xác nhận tính đồng nhất wire JSON. |
 | **Quality Gate** | Cổng chất lượng | Bộ tiêu chí kỹ thuật bắt buộc phải vượt qua 100% trước khi kết thúc một Phase. |
 | **Distributed Observability** | Khả năng quan sát phân tán | Hệ thống W3C `traceparent` tracing, OpenTelemetry, Prometheus metrics và Grafana dashboards. |
+| **LangGraph Node Tracing** | Giám sát đồ thị tác tử | Trace OpenTelemetry cho từng bước trong StateGraph: thời gian tool call, token accounting, checkpointer lag. |
 | **Incident Runbook** | Sổ tay ứng cứu sự cố | Bộ quy trình ứng cứu sự cố khẩn cấp cấp độ P1/P2 với các dòng lệnh chuẩn xác. |
 | **Zero-Downtime Deployment** | Triển khai không gián đoạn | Chiến lược deploy Expand/Contract và Blue-Green không làm đứt quãng kết nối của thí sinh. |
 
@@ -95,6 +112,7 @@ graph TD
     subgraph ClientLayer["Frontend Layer (client/)"]
         WebUI["Next.js App Router (UI/UX)"]
         LocalMedia["MediaRecorder (WebM/Opus)"]
+        AudioWorklet["AudioWorklet (Full-Duplex PCM Streams)"]
         BrowserSpeechFallback["Web Speech API (Fallback)"]
     end
 
@@ -108,23 +126,36 @@ graph TD
         PrismaService["Prisma ORM Service"]
     end
 
-    subgraph AIService["Python AI Service (ai-service/ - Internal Only)"]
+    subgraph AIService["Python AI Service (ai-service/ - Dedicated AI Compute)"]
         FastAPIApp["FastAPI Engine (Port 8000)"]
-        AudioWorker["Audio Engine (faster-whisper + PyAV + Hybrid TTS)"]
-        RAGWorker["Hybrid RAG (BGE-M3 + BM25 + Reranker)"]
-        ScoringWorker["Multi-Stage Assessment Engine"]
-        vLLMClient["vLLM Adapter / Cloud LLM Client"]
+        AudioEngine["Audio Engine (faster-whisper + PyAV + Hybrid TTS + Silero VAD)"]
+        
+        subgraph AgenticEngine["Agentic RAG Engine (LangGraph StateGraph)"]
+            FastPathAgent["Fast-Path Live Agent (<700ms)<br/>Pre-fetched KV-Cache Context"]
+            CurriculumGraph["CurriculumPlannerAgent Graph (Async Prep)"]
+            FactCheckGraph["TechnicalFactCheckAgent Graph (FEVER NLI)"]
+            Checkpointer["LangGraph Checkpointer (Redis State)"]
+        end
+
+        subgraph ToolRegistry["Multi-Corpus Tool Registry (Pydantic v2)"]
+            ToolQB["QuestionBankRetrieverTool"]
+            ToolTaxonomy["CompetencyTaxonomyTool"]
+            ToolTechDocs["TechnicalGroundTruthTool"]
+        end
+
+        vLLMClient["vLLM Adapter (Qwen 2.5 32B AWQ) / Cloud LLM Client"]
     end
 
     subgraph DataStorage["Unified Storage Layer"]
-        Postgres[("PostgreSQL 16 + pgvector (Port 5432)")]
-        RedisQueue[("Redis 7 (BullMQ & Cache - Port 6379)")]
+        Postgres[("PostgreSQL 16 + pgvector (Port 5432)<br/>• public.question_bank (1024D)<br/>• public.sfia_vectors (1024D)<br/>• public.onet_vectors (1024D)<br/>• public.tech_docs_vectors (1024D)<br/>• sfia.* & onet.* Canonical Tables")]
+        RedisQueue[("Redis 7 (Port 6379)<br/>• BullMQ Job Queues<br/>• L2 Query Cache<br/>• LangGraph Checkpointer State")]
     end
 
     %% Client Interactions
     WebUI -->|"REST API / Cookies Auth"| APIGateway
     WebUI -->|"WebSockets (Live Updates)"| APIGateway
-    LocalMedia -->|"Step 1: POST /media/transcribe"| MediaModule
+    AudioWorklet -->|"Full-Duplex Audio Frames"| APIGateway
+    LocalMedia -->|"POST /media/transcribe"| MediaModule
     WebUI -.->|"Offline Fallback"| BrowserSpeechFallback
 
     %% Core Platform Interactions
@@ -137,14 +168,20 @@ graph TD
     OutboxWorker --> RedisQueue
     OutboxWorker --> PrismaService
 
-    %% Inter-Service Communication (Synchronous & Worker-Driven)
-    AIGateway -->|"HTTP Sync Stream"| FastAPIApp
+    %% Inter-Service Communication
+    AIGateway -->|"HTTP Sync / Fast-Path"| FastAPIApp
     AIGateway -.->|"Fallback if Python Down"| OpenAICloud["OpenAI Cloud APIs"]
-    OutboxWorker -->|"HTTP Heavy Compute /evaluate"| FastAPIApp
+    OutboxWorker -->|"Async Jobs: /prep/curriculum-agent & /assessment/evaluate"| FastAPIApp
 
-    %% Storage
+    %% Agentic & Tool Wiring
+    FastAPIApp --> AgenticEngine
+    CurriculumGraph --> ToolRegistry
+    FactCheckGraph --> ToolRegistry
+    AgenticEngine --> vLLMClient
+    AgenticEngine --> Checkpointer
+    Checkpointer --> RedisQueue
+    ToolRegistry -->|"Hybrid Queries: Vector <=> & tsvector @@"| Postgres
     PrismaService -->|"ACID Transactions"| Postgres
-    RAGWorker -->|"Direct Vector Distance <=>"| Postgres
 ```
 
 ---
@@ -160,9 +197,9 @@ graph TD
 | **Giao dịch Dữ liệu (ACID DB)** | **SỞ HỮU DUY NHẤT** | Không sở hữu | Mọi thao tác ghi dữ liệu nghiệp vụ (`user_answers`, `interview_sessions`) bắt buộc qua `prisma.$transaction`. |
 | **Audio STT (Voice to Text)** | Điều phối qua `MediaFacade` | **SỞ HỮU DUY NHẤT LOGIC** | NestJS nhận buffer từ client, forward sang Python. Python giải mã in-memory qua PyAV, chạy `faster-whisper` + VAD, trả về text và metrics. |
 | **Audio TTS (Text to Voice)** | Proxy Stream qua `MediaFacade` | **SỞ HỮU DUY NHẤT LOGIC** | Python chạy Hybrid TTS (Kokoro-82M cho EN + edge-tts cho VI). NestJS forward stream về client. Fallback client: Web Speech API. |
-| **Vector Storage & Embedding** | Đồng sở hữu (Schema) | **SỞ HỮU TÍNH TOÁN** | Prisma định nghĩa cột `vector(1024)`. Python chạy `BGE-M3` để sinh vector và thực hiện truy vấn tương đồng. |
-| **RAG Retrieval & Reranking** | Consumer (Nhận kết quả) | **SỞ HỮU DUY NHẤT** | Python thực hiện hybrid search (Vector + BM25 + SFIA filters + Reranker), trả về top câu hỏi cho NestJS. |
-| **Chấm điểm Đa chiều (Scoring)** | Trigger & Transaction Lưu DB | **SỞ HỮU LOGIC AI** | NestJS Outbox Worker pull job từ BullMQ -> gọi REST sang Python. Python phân tích STAR, fact-checking, trả về JSON cấu trúc chuẩn. |
+| **Multi-Corpus Storage & Vector** | Đồng sở hữu (Schema & DDL) | **SỞ HỮU TÍNH TOÁN** | Prisma định nghĩa cột `vector(1024)`. Python chạy `BGE-M3` để sinh vector và batch ingestion pipeline. |
+| **Agentic Tools & Tool Registry** | Consumer (Đăng ký tools qua facade) | **SỞ HỮU DUY NHẤT IMPLEMENTATION** | Python cài đặt 3 tools AI chuẩn Pydantic v2: `QuestionBankRetrieverTool`, `CompetencyTaxonomyTool`, `TechnicalGroundTruthTool`. |
+| **Agentic StateGraph (LangGraph)** | Trigger Job & Transaction Lưu DB | **SỞ HỮU DUY NHẤT LOGIC SUY LUẬN** | Python quản lý đồ thị `CurriculumPlannerAgent` và `TechnicalFactCheckAgent` (FEVER NLI), trả về kết quả cấu trúc JSON. |
 | **Hạ tầng LLM Inference** | Consumer | **SỞ HỮU DUY NHẤT** | Python quản lý kết nối tới vLLM (self-hosted) hoặc Cloud LLMs thông qua client OpenAI-compatible. |
 
 ---
@@ -259,34 +296,38 @@ graph TD
         T14 --> T15["Task 1.5: NestJS MediaFacade & Two-Step"]
     end
 
-    subgraph P2["PHASE 2: pgvector & Hybrid RAG"]
+    subgraph P2["PHASE 2: pgvector & Agentic RAG Foundation"]
         T15 --> T21["Task 2.1: pgvector & HNSW Migration"]
-        T21 --> T22["Task 2.2: BGE-M3 Embedding Ingestion"]
+        T21 --> T21B["Sub-Task 2.1B: Multi-Corpus Vector Schemas"]
+        T21B --> T22["Task 2.2: BGE-M3 Embedding Ingestion"]
         T22 --> T23["Task 2.3: Hybrid CTE Query & RRF"]
         T23 --> T24["Task 2.4: Cross-Encoder Reranker & Cache"]
         T24 --> T25["Task 2.5: QuestionBank Semantic Allocation"]
+        T25 --> T26["Task 2.6: Standardized AI Tools"]
+        T26 --> T27["Task 2.7: Curriculum Planner StateGraph"]
     end
 
-    subgraph P3["PHASE 3: Deep Assessment Pipeline"]
-        T25 --> T31["Task 3.1: Pass 1 STAR & Rubric Eval"]
+    subgraph P3["PHASE 3: Multi-Agent Deep Assessment"]
+        T27 --> T31["Task 3.1: Pass 1 STAR & Rubric Eval"]
         T31 --> T32["Task 3.2: Technical Fact-Checking"]
-        T32 --> T33["Task 3.3: Pass 2 Synthesis & Model Answers"]
+        T32 --> T32B["Sub-Task 3.2B: Fact-Checking StateGraph & FEVER NLI"]
+        T32B --> T33["Task 3.3: Pass 2 Synthesis & Model Answers"]
         T33 --> T34["Task 3.4: Deterministic Scoring & SFIA"]
         T34 --> T35["Task 3.5: BullMQ Outbox Orchestration"]
     end
 
-    subgraph P4["PHASE 4: vLLM Scaling & Full-Duplex"]
+    subgraph P4["PHASE 4: vLLM Scaling & Fast-Path Conversational Agent"]
         T35 --> T41["Task 4.1: vLLM Container & AWQ Quant"]
         T41 --> T42["Task 4.2: NestJS Gateway Failover"]
         T42 --> T43["Task 4.3: Full-Duplex WebSocket Gateway"]
         T43 --> T44["Task 4.4: Smart VAD Barge-in (<200ms)"]
-        T44 --> T45["Task 4.5: Adaptive Probing & Guardrails"]
+        T44 --> T45["Task 4.5: Fast-Path Probing & Zero-Hop Orchestration"]
     end
 
-    subgraph P5["PHASE 5: Enterprise SRE & Operations"]
+    subgraph P5["PHASE 5: Enterprise SRE, DevOps & Observability"]
         T45 --> T51["Task 5.1: Polyglot Monorepo & Containers"]
         T51 --> T52["Task 5.2: CI/CD & Automated Verification"]
-        T52 --> T53["Task 5.3: Distributed Observability"]
+        T52 --> T53["Task 5.3: Distributed Observability & Agent Tracing"]
         T53 --> T54["Task 5.4: Incident Runbooks P1/P2"]
         T54 --> T55["Task 5.5: Zero-Downtime Deployment"]
     end
@@ -305,21 +346,24 @@ graph TD
   * Latency STT đoạn audio 60 giây $< 1.2\text{s}$ trên GPU ($< 3.5\text{s}$ trên CPU).
   * Two-Step Flow vận hành hoàn hảo: ứng viên xem và sửa được transcript trước khi nộp.
   * Strict Toggle `AI_STT_PROVIDER=openai` sang `python` không làm gián đoạn luồng phỏng vấn.
-* **Gate 2 (Phase 2 Hybrid RAG)**:
+* **Gate 2 (Phase 2 Agentic RAG Foundation)**:
   * Latency truy vấn Hybrid RAG $< 180\text{ ms}$ cho top-5 câu hỏi (Redis Cache Hit $< 10\text{ms}$).
   * Tỷ lệ câu hỏi khớp chính xác cả O\*NET SOC Code và SFIA 9 Skill/Level đạt $100\%$.
   * Fallback sang Prisma query SQL thành công khi Python service tắt.
-* **Gate 3 (Phase 3 Deep Assessment)**:
+  * Đồ thị `CurriculumPlannerAgent` tự trị hoàn thành kiểm định rubric qua `RubricAuditorAgent` với tối đa 2 vòng lặp phản tư (Self-Reflection loops).
+* **Gate 3 (Phase 3 Multi-Agent Deep Assessment)**:
   * Pipeline phát hiện chính xác 100% lỗi kỹ thuật cài sẵn và tính toán `buzzwordDensityScore`.
-  * $100\%$ tiêu chí rubric đạt có trích dẫn bằng chứng xác thực (`evidence`) từ transcript.
+  * $100\%$ nhận định kỹ thuật được phân loại theo chuẩn FEVER NLI 3 trạng thái (Supported / Contradicted / Unverified) với trích dẫn bằng chứng từ `sfia_vectors` và `tech_docs_vectors`.
   * Kết quả JSON lưu trọn vẹn trong một `prisma.$transaction`. Điểm số và cấp độ SFIA tính toán tất định 100%.
-* **Gate 4 (Phase 4 vLLM & Real-Time Duplex)**:
-  * Time-to-First-Audio (TTFA) qua WebSockets $< 800\text{ ms}$ (P95).
+* **Gate 4 (Phase 4 vLLM & Fast-Path Conversational Agent)**:
+  * Time-to-First-Audio (TTFA) qua WebSockets $< 700\text{ ms}$ (P95) nhờ kỹ thuật Speculative Zero-Hop với Pre-fetched KV-Cache Context.
   * Barge-in Latency ngắt âm thanh và dừng GPU trong $< 200\text{ ms}$.
+  * Tuân thủ nghiêm ngặt ngân sách hỏi xoáy (Junior $\le 1$, Senior $\le 2$).
   * Chi phí token LLM giảm tối thiểu $85\%$ so với gọi GPT-4o.
-* **Gate 5 (Phase 5 Enterprise SRE & Production Hardening)**:
+* **Gate 5 (Phase 5 Enterprise SRE & Observability)**:
   * Cam kết độ sẵn sàng High Availability $\ge 99.9\%$.
   * 100% Contract Tests pass trong CI GitHub Actions trước khi merge code.
+  * $100\%$ các tác vụ chạy qua LangGraph và BullMQ đều truy vết ngược thành công về Trace ID gốc trên Jaeger; $100\%$ token tiêu thụ được hạch toán minh bạch.
   * MTTR khắc phục sự cố nghiêm trọng $< 2\text{ phút}$ theo Incident Runbooks.
 
 ---

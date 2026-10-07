@@ -122,5 +122,6 @@ curl -X POST -H "x-internal-secret: interviewai-super-secret-dev-key-change-in-p
 - [ ] Câu trả lời thực chiến đúng đắn không bị gán `buzzwordDensityScore > 35`.
 
 ### 6.6 Next Task Transition (Bước chuyển tiếp)
-- Tiếp tục sang **Task 3.3: Pass 2 Synthesis & Model Answers**: [03_PASS_2_SYNTHESIS_MODEL_ANSWER_AND_ANNOTATIONS.md](03_PASS_2_SYNTHESIS_MODEL_ANSWER_AND_ANNOTATIONS.md) để tổng hợp nhận xét và trích xuất tọa độ ký tự highlight.
+- Tiếp tục sang **Sub-Task 3.2B: LangGraph Fact-Checking Agent & FEVER NLI**: [02B_AGENTIC_FACT_CHECKING_GRAPH_AND_EVIDENCE_RETRIEVAL.md](02B_AGENTIC_FACT_CHECKING_GRAPH_AND_EVIDENCE_RETRIEVAL.md) để xây dựng đồ thị suy luận đa bước kiểm chứng bằng chứng kỹ thuật.
+- Sau khi hoàn thành Sub-Task 3.2B, chuyển tiếp sang **Task 3.3: Pass 2 Synthesis & Model Answers**: [03_PASS_2_SYNTHESIS_MODEL_ANSWER_AND_ANNOTATIONS.md](03_PASS_2_SYNTHESIS_MODEL_ANSWER_AND_ANNOTATIONS.md) để tổng hợp nhận xét và trích xuất tọa độ ký tự highlight.
 

@@ -15,7 +15,7 @@
 Phase 5 thiết lập tiêu chuẩn vận hành cấp doanh nghiệp (Enterprise SRE & DevOps) cho toàn bộ hệ sinh thái InterviewAI:
 * **Quản trị Polyglot Monorepo**: Đồng bộ mã nguồn giữa Next.js (TypeScript), NestJS (TypeScript) và AI Service (Python) trong một Git repository duy nhất với quy trình đóng gói Multi-stage Docker tối ưu dung lượng và tốc độ build qua `uv`.
 * **Automated Contract Testing**: Chống rủi ro Schema Drift giữa TypeScript DTOs và Python Pydantic models trong pipeline GitHub Actions trước khi merge mã nguồn.
-* **Distributed Observability Toàn diện**: Chuẩn hóa W3C `traceparent` qua HTTP, WebSocket và hàng đợi BullMQ; đo lường chính xác các chỉ số p50/p95/p99 Latency cho STT, TTS, RAG và GPU VRAM trên Prometheus/Grafana.
+* **Distributed Observability & Agent Tracing Toàn diện**: Chuẩn hóa W3C `traceparent` qua HTTP, WebSocket và hàng đợi BullMQ; truy vết chi tiết từng Node trong LangGraph StateGraph, Tool call latencies, và hạch toán chi phí Token Accounting trên Prometheus/Grafana.
 * **Incident Runbooks P1/P2 & Zero-Downtime Rollback**: 4 kịch bản phục hồi sự cố tức thì với các dòng lệnh chuẩn xác, kỹ thuật migration CSDL an toàn không khóa bảng (`CREATE INDEX CONCURRENTLY` ngoài transaction), và cơ chế khôi phục khẩn cấp về baseline NestJS trong $< 3\text{ phút}$.
 
 ---
@@ -29,7 +29,7 @@ docs/refactor-docs/05_PHASE_5_DEV_OPS_INFRA/
 ├── 00_PHASE_5_OVERVIEW_AND_ARCHITECTURE.md              # Kiến trúc tổng thể, SRE Blueprint & Roadmap Master
 ├── 01_POLYGLOT_MONOREPO_AND_MULTI_STAGE_CONTAINERS.md  # Task 5.1: Multi-stage Dockerfiles, uv & Docker Compose
 ├── 02_CI_CD_PIPELINE_AND_AUTOMATED_CONTRACT_TESTS.md   # Task 5.2: GitHub Actions Matrix & Wire Contract Testing
-├── 03_DISTRIBUTED_OBSERVABILITY_OPENTELEMETRY_PROMETHEUS.md # Task 5.3: W3C Tracing, Prometheus Metrics & Alerts
+├── 03_DISTRIBUTED_OBSERVABILITY_OPENTELEMETRY_PROMETHEUS.md # Task 5.3: W3C Tracing, LangGraph Spans, Tool Metrics & Token Accounting
 ├── 04_DISASTER_RECOVERY_RUNBOOKS_AND_CIRCUIT_BREAKERS.md# Task 5.4: P1/P2 Incident Runbooks & BullMQ Unstall
 └── 05_ZERO_DOWNTIME_DEPLOYMENT_AND_ROLLBACK_STRATEGY.md# Task 5.5: Non-transactional Migrations & Baseline Rollback
 ```
@@ -40,7 +40,7 @@ docs/refactor-docs/05_PHASE_5_DEV_OPS_INFRA/
 | :---: | :--- | :--- | :--- |
 | **5.1** | [01_POLYGLOT_MONOREPO_AND_MULTI_STAGE_CONTAINERS.md](05_PHASE_5_DEV_OPS_INFRA/01_POLYGLOT_MONOREPO_AND_MULTI_STAGE_CONTAINERS.md) | Monorepo Root, Dockerfiles | `uv`, Multi-stage builds, Alpine, Docker Compose |
 | **5.2** | [02_CI_CD_PIPELINE_AND_AUTOMATED_CONTRACT_TESTS.md](05_PHASE_5_DEV_OPS_INFRA/02_CI_CD_PIPELINE_AND_AUTOMATED_CONTRACT_TESTS.md) | `.github/workflows/` | GitHub Actions, Paths-filter, Contract Verification |
-| **5.3** | [03_DISTRIBUTED_OBSERVABILITY_OPENTELEMETRY_PROMETHEUS.md](05_PHASE_5_DEV_OPS_INFRA/03_DISTRIBUTED_OBSERVABILITY_OPENTELEMETRY_PROMETHEUS.md) | `server/`, `ai-service/`, Grafana | OpenTelemetry, W3C TraceContext, Prometheus, Alerts |
+| **5.3** | [03_DISTRIBUTED_OBSERVABILITY_OPENTELEMETRY_PROMETHEUS.md](05_PHASE_5_DEV_OPS_INFRA/03_DISTRIBUTED_OBSERVABILITY_OPENTELEMETRY_PROMETHEUS.md) | `server/`, `ai-service/`, Grafana | OpenTelemetry, LangGraph Spans, Tool Metrics, Token Accounting, Prometheus, Alerts |
 | **5.4** | [04_DISASTER_RECOVERY_RUNBOOKS_AND_CIRCUIT_BREAKERS.md](05_PHASE_5_DEV_OPS_INFRA/04_DISASTER_RECOVERY_RUNBOOKS_AND_CIRCUIT_BREAKERS.md) | Đội ngũ On-Call & SRE | P1/P2 Runbooks, Fast Cloud Failover, BullMQ Unstall |
 | **5.5** | [05_ZERO_DOWNTIME_DEPLOYMENT_AND_ROLLBACK_STRATEGY.md](05_PHASE_5_DEV_OPS_INFRA/05_ZERO_DOWNTIME_DEPLOYMENT_AND_ROLLBACK_STRATEGY.md) | `server/prisma/`, DevOps | Non-blocking Indexing, Expand/Contract, Baseline Rollback |
 
