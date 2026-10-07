@@ -38,4 +38,10 @@ export class SubmitAnswerDto {
   @IsInt()
   @Min(0)
   audioDurationSeconds?: number;
+
+  @ApiPropertyOptional({
+    description: 'Speech metrics extracted during STT (WPM, pauses, fillers)',
+  })
+  @IsOptional()
+  voiceMetrics?: Record<string, any>;
 }

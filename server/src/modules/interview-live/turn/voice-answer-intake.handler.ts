@@ -56,10 +56,12 @@ export class VoiceAnswerIntakeHandler implements IAnswerIntakeHandler {
         });
       });
     } else {
-      const metrics = this.mediaFacade.calculateVoiceMetrics(
-        transcriptText(dto.answerText),
-        dto.audioDurationSeconds ?? 0,
-      );
+      const metrics =
+        dto.voiceMetrics ??
+        this.mediaFacade.calculateVoiceMetrics(
+          transcriptText(dto.answerText),
+          dto.audioDurationSeconds ?? 0,
+        );
 
       const created = await this.prisma.$transaction(async (tx) => {
         const answer = await tx.userAnswer.upsert({

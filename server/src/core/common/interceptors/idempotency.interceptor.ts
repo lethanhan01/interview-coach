@@ -26,12 +26,7 @@ import type { Request, Response } from 'express';
 
 interface AuthenticatedRequest extends Request {
   user?: { id?: string; user?: { id?: string } };
-  file?: {
-    originalname?: string;
-    size?: number;
-    mimetype?: string;
-    buffer?: Buffer;
-  };
+  file?: Express.Multer.File;
 }
 
 export const IDEMPOTENCY_REDIS_CLIENT = 'IDEMPOTENCY_REDIS_CLIENT';

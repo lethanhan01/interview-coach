@@ -60,6 +60,11 @@ const EnvSchema = z.object({
   OPENAI_FEEDBACK_TIMEOUT_MS: z.coerce.number().positive().default(420_000),
   OPENAI_REPORT_TIMEOUT_MS: z.coerce.number().positive().default(600_000),
   OPENAI_QUESTION_TIMEOUT_MS: z.coerce.number().positive().default(240_000),
+  AI_STT_PROVIDER: z.enum(['python', 'openai', 'disabled']).default('python'),
+  AI_TTS_PROVIDER: z.enum(['python', 'disabled']).default('python'),
+  AI_SERVICE_URL: z.string().url().default('http://localhost:8000'),
+  INTERNAL_AI_SECRET: z.string().min(1).default('dev-secret-internal-ai-key'),
+  AI_FALLBACK_ENABLED: z.enum(['true', 'false']).default('true'),
   IDEMPOTENCY_LOCK_TTL_SECONDS: z.coerce.number().int().positive().default(60),
   IDEMPOTENCY_CACHE_TTL_SECONDS: z.coerce
     .number()

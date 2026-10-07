@@ -3,6 +3,8 @@ import { OpenAIGateway } from './openai.gateway';
 import { AI_GATEWAY_TOKEN } from './ai-gateway.interface';
 import { OpenAIChatClient } from './openai-chat.client';
 import { OpenAITranscriptionClient } from './openai-transcription.client';
+import { PythonAiClient } from './clients/python-ai.client';
+import { AIGatewayDispatcher } from './ai-gateway-dispatcher.service';
 import { PromptBuilderService } from './prompt-builder.service';
 import { ZodValidatorService } from './zod-validator.service';
 import { HrPipelineService } from './pipelines/hr.pipeline.service';
@@ -12,11 +14,13 @@ import { EvaluateAnswer } from '@modules/interview-assessment/evaluation/evaluat
 
 @Module({
   providers: [
+    PythonAiClient,
+    OpenAIGateway,
+    AIGatewayDispatcher,
     {
       provide: AI_GATEWAY_TOKEN,
-      useClass: OpenAIGateway,
+      useClass: AIGatewayDispatcher,
     },
-    OpenAIGateway,
     OpenAIChatClient,
     OpenAITranscriptionClient,
     PromptBuilderService,
@@ -30,6 +34,8 @@ import { EvaluateAnswer } from '@modules/interview-assessment/evaluation/evaluat
     AI_GATEWAY_TOKEN,
     PipelineStrategyFactory,
     OpenAIGateway,
+    PythonAiClient,
+    AIGatewayDispatcher,
     PromptBuilderService,
     ZodValidatorService,
     EvaluateAnswer,

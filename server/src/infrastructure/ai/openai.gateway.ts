@@ -14,6 +14,9 @@ import {
   type GenerateStructuredParams,
   type GenerateTextParams,
   type TranscribeAudioParams,
+  type TranscribeWithMetricsResult,
+  type SynthesizeSpeechParams,
+  type SynthesizeSpeechResult,
 } from './ai-gateway.interface';
 
 export type {
@@ -519,9 +522,58 @@ export class OpenAIGateway implements IAIGateway {
   ): Promise<TranscribeResult> {
     return this.transcribe({
       audioBuffer: params.audioBuffer,
-      mimeType: params.mimeType ?? 'audio/webm',
+      mimeType: (params.mimeType as any) ?? 'audio/webm',
       language: params.language,
       timeoutMs: params.timeoutMs,
     });
+  }
+
+  async transcribeWithMetrics(
+    params: TranscribeAudioParams,
+  ): Promise<TranscribeWithMetricsResult> {
+    const result = await this.transcribeAudio(params);
+    const duration = Math.max(0.1, result.durationSeconds);
+    const words = result.text.trim().split(/\s+/).filter(Boolean);
+    const wordCount = words.length;
+    const wpm = Math.round((wordCount / (duration / 60)) * 10) / 10;
+
+    // Simple filler word detection fallback
+    const fillerPatterns = [
+      /\b(um|uh|er|ah|like|you know)\b/gi,
+      /\b(ừm|ờ|à|kiểu|như là)\b/gi,
+    ];
+    const foundFillers: string[] = [];
+    for (const pattern of fillerPatterns) {
+      const matches = result.text.match(pattern);
+      if (matches) {
+        foundFillers.push(...matches.map((m) => m.toLowerCase()));
+      }
+    }
+
+    return {
+      text: result.text,
+      language: params.language ?? 'en',
+      durationSeconds: duration,
+      metrics: {
+        wpm,
+        fillerWordCount: foundFillers.length,
+        fillerWords: foundFillers,
+        pauseCount: 0,
+        totalPauseDurationSeconds: 0,
+        speechDurationSeconds: duration,
+        confidenceScore: 0.9,
+      },
+      words: [],
+    };
+  }
+
+  async synthesizeSpeech(
+    _params: SynthesizeSpeechParams,
+  ): Promise<SynthesizeSpeechResult> {
+    throw new InterviewAIException(
+      ErrorCode.AI_SERVICE_UNAVAILABLE,
+      HttpStatus.NOT_IMPLEMENTED,
+      'Speech synthesis is not implemented for OpenAIGateway. Use Python AI service.',
+    );
   }
 }

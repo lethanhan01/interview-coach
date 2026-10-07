@@ -380,12 +380,38 @@ export interface UpdateSessionStatusPayload {
   autoSkipUnanswered?: boolean
 }
 
+export interface VoiceMetrics {
+  wpm: number
+  fillerWordCount: number
+  fillerWords: string[]
+  pauseCount: number
+  totalPauseDurationSeconds: number
+  speechDurationSeconds: number
+  confidenceScore: number
+}
+
+export interface STTWordTimestamp {
+  word: string
+  start: number
+  end: number
+  probability: number
+}
+
+export interface TranscribeResponse {
+  text: string
+  language: string
+  durationSeconds: number
+  metrics: VoiceMetrics
+  words?: STTWordTimestamp[]
+}
+
 export interface SubmitAnswerPayload {
   questionId: string
   answerMode: 'text' | 'voice'
   answerText?: string
   skipQuestion?: boolean
   audioDurationSeconds?: number
+  voiceMetrics?: VoiceMetrics
 }
 
 export interface TurnResponse {

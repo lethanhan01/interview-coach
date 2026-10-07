@@ -19,9 +19,12 @@ import {
   Send,
   AlertCircle,
   Volume2,
+  Sparkles,
 } from 'lucide-react'
+import { mediaService } from '@/services/media.service'
+import type { VoiceMetrics } from '@/lib/types'
 
-// Browser Web Speech API type definitions to satisfy strict TypeScript rules
+// Browser Web Speech API type definitions for fallback
 interface ISpeechRecognitionResult {
   isFinal: boolean
   [index: number]: { transcript: string }
@@ -56,7 +59,11 @@ interface ISpeechRecognitionInstance extends EventTarget {
 type SpeechRecognitionConstructor = new () => ISpeechRecognitionInstance
 
 export interface VoiceRecorderProps {
-  onSubmit: (transcript: string, durationSeconds: number) => Promise<void>
+  onSubmit: (
+    transcript: string,
+    durationSeconds: number,
+    metrics?: VoiceMetrics
+  ) => Promise<void>
   onDraftChange?: (draft: string) => void
   initialDraft?: string
   language?: 'vi' | 'en'
@@ -64,17 +71,21 @@ export interface VoiceRecorderProps {
   sessionId?: string
 }
 
-type RecordState = 'idle' | 'listening' | 'reviewing' | 'submitting'
+type RecordState =
+  | 'idle'
+  | 'listening'
+  | 'transcribing'
+  | 'reviewing'
+  | 'submitting'
 
 const MAX_RECORDING_SECONDS = 180 // 3 minutes maximum per answer (STAR standard)
 
-function checkSpeechRecognitionSupport(): boolean {
+function checkMediaSupport(): boolean {
   if (typeof window === 'undefined') return true
-  const win = window as unknown as {
-    SpeechRecognition?: SpeechRecognitionConstructor
-    webkitSpeechRecognition?: SpeechRecognitionConstructor
-  }
-  return Boolean(win.SpeechRecognition || win.webkitSpeechRecognition)
+  const hasMediaDevices = Boolean(
+    navigator && navigator.mediaDevices && navigator.mediaDevices.getUserMedia
+  )
+  return hasMediaDevices
 }
 
 function subscribeToFeatureSupport(): () => void {
@@ -88,10 +99,9 @@ export default function VoiceRecorder({
   language = 'vi',
   disabled,
 }: VoiceRecorderProps) {
-  // Use React 18+ useSyncExternalStore to safely read browser capabilities without cascading renders
   const isSupported = useSyncExternalStore(
     subscribeToFeatureSupport,
-    checkSpeechRecognitionSupport,
+    checkMediaSupport,
     () => true
   )
 
@@ -101,10 +111,13 @@ export default function VoiceRecorder({
   const [error, setError] = useState<string | null>(null)
   const [transcript, setTranscript] = useState(initialDraft)
   const [durationSeconds, setDurationSeconds] = useState(0)
+  const [voiceMetrics, setVoiceMetrics] = useState<VoiceMetrics | null>(null)
   const [volumeLevels, setVolumeLevels] = useState<number[]>([
     20, 35, 60, 40, 20,
   ])
 
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
   const recognitionRef = useRef<ISpeechRecognitionInstance | null>(null)
   const isListeningRef = useRef<boolean>(false)
   const accumulatedTranscriptRef = useRef<string>(initialDraft)
@@ -172,6 +185,52 @@ export default function VoiceRecorder({
     analyserRef.current = null
   }, [])
 
+  const processAudioTranscription = useCallback(
+    async (audioBlob: Blob, elapsedSeconds: number) => {
+      setState('transcribing')
+      setError(null)
+
+      try {
+        const response = await mediaService.transcribeAudio(audioBlob, language)
+        const recognizedText = response.text?.trim() || ''
+
+        if (!recognizedText && !accumulatedTranscriptRef.current.trim()) {
+          setError(
+            'Chưa ghi nhận được âm thanh hoặc giọng nói. Vui lòng thử nói to hơn hoặc kiểm tra microphone.'
+          )
+          setState('idle')
+          return
+        }
+
+        const finalText = recognizedText || accumulatedTranscriptRef.current.trim()
+        setTranscript(finalText)
+        setVoiceMetrics(response.metrics || null)
+        setDurationSeconds(response.durationSeconds || elapsedSeconds)
+        onDraftChange?.(finalText)
+        setState('reviewing')
+      } catch (err) {
+        // Fallback to Web Speech transcript if available
+        const fallbackText = accumulatedTranscriptRef.current.trim()
+        if (fallbackText) {
+          setTranscript(fallbackText)
+          onDraftChange?.(fallbackText)
+          setState('reviewing')
+          setError(
+            'Không thể kết nối đến máy chủ nhận diện AI nâng cao. Đã chuyển sang văn bản nhận diện từ trình duyệt.'
+          )
+        } else {
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Không thể nhận diện âm thanh. Vui lòng thử lại.'
+          )
+          setState('idle')
+        }
+      }
+    },
+    [language, onDraftChange]
+  )
+
   const stopListening = useCallback(() => {
     isListeningRef.current = false
 
@@ -188,41 +247,87 @@ export default function VoiceRecorder({
       }
     }
 
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop())
-      streamRef.current = null
-    }
-
     stopVolumeVisualizer()
 
-    const finalDuration = Math.round((Date.now() - startTimeRef.current) / 1000)
+    const finalDuration = Math.max(
+      1,
+      Math.round((Date.now() - startTimeRef.current) / 1000)
+    )
     setDurationSeconds(finalDuration)
 
-    const finalResult = accumulatedTranscriptRef.current.trim()
-    if (!finalResult) {
-      setError(
-        'Chưa ghi nhận được âm thanh hoặc giọng nói. Vui lòng thử nói to hơn hoặc kiểm tra microphone.'
-      )
-      setState('idle')
-      return
+    // Stop MediaRecorder and trigger processing
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== 'inactive'
+    ) {
+      mediaRecorderRef.current.onstop = () => {
+        const mime = mediaRecorderRef.current?.mimeType || 'audio/webm'
+        const audioBlob = new Blob(audioChunksRef.current, { type: mime })
+
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((t) => t.stop())
+          streamRef.current = null
+        }
+
+        processAudioTranscription(audioBlob, finalDuration)
+      }
+
+      mediaRecorderRef.current.stop()
+    } else {
+      // Direct fallback if MediaRecorder is not available (e.g. mock test environment)
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop())
+        streamRef.current = null
+      }
+
+      const finalResult = accumulatedTranscriptRef.current.trim()
+      if (!finalResult) {
+        setError(
+          'Chưa ghi nhận được âm thanh hoặc giọng nói. Vui lòng thử nói to hơn hoặc kiểm tra microphone.'
+        )
+        setState('idle')
+        return
+      }
+
+      setTranscript(finalResult)
+      onDraftChange?.(finalResult)
+      setState('reviewing')
     }
+  }, [stopVolumeVisualizer, processAudioTranscription, onDraftChange])
 
-    setTranscript(finalResult)
-    onDraftChange?.(finalResult)
-    setState('reviewing')
-  }, [stopVolumeVisualizer, onDraftChange])
-
-  // Start speech recognition
+  // Start speech recording
   async function startListening() {
     setError(null)
     setTranscript('')
+    setVoiceMetrics(null)
     accumulatedTranscriptRef.current = ''
+    audioChunksRef.current = []
     onDraftChange?.('')
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
 
+      // Initialize MediaRecorder
+      if (typeof MediaRecorder !== 'undefined') {
+        let mimeType = 'audio/webm'
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          mimeType = 'audio/webm;codecs=opus'
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4'
+        }
+
+        const mediaRecorder = new MediaRecorder(stream, { mimeType })
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            audioChunksRef.current.push(event.data)
+          }
+        }
+        mediaRecorderRef.current = mediaRecorder
+        mediaRecorder.start(250)
+      }
+
+      // Optional Web Speech API for real-time live transcript fallback
       const win = window as unknown as {
         SpeechRecognition?: SpeechRecognitionConstructor
         webkitSpeechRecognition?: SpeechRecognitionConstructor
@@ -230,63 +335,50 @@ export default function VoiceRecorder({
       const SpeechRecognitionClass =
         win.SpeechRecognition || win.webkitSpeechRecognition
 
-      if (!SpeechRecognitionClass) {
-        setError(
-          'Trình duyệt của bạn hiện chưa hỗ trợ nhận diện giọng nói trực tiếp qua Web Speech API.'
-        )
-        return
-      }
+      if (SpeechRecognitionClass) {
+        try {
+          const recognition = new SpeechRecognitionClass()
+          recognition.continuous = true
+          recognition.interimResults = true
+          recognition.lang = language === 'en' ? 'en-US' : 'vi-VN'
 
-      const recognition = new SpeechRecognitionClass()
-      recognition.continuous = true
-      recognition.interimResults = true
-      recognition.lang = language === 'en' ? 'en-US' : 'vi-VN'
-
-      recognition.onresult = (event: ISpeechRecognitionEvent) => {
-        let finalSegment = ''
-
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          const res = event.results[i]
-          if (res.isFinal) {
-            finalSegment += res[0].transcript + ' '
+          recognition.onresult = (event: ISpeechRecognitionEvent) => {
+            let finalSegment = ''
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              const res = event.results[i]
+              if (res.isFinal) {
+                finalSegment += res[0].transcript + ' '
+              }
+            }
+            if (finalSegment) {
+              accumulatedTranscriptRef.current = (
+                accumulatedTranscriptRef.current +
+                ' ' +
+                finalSegment
+              ).trim()
+            }
           }
-        }
 
-        if (finalSegment) {
-          accumulatedTranscriptRef.current = (
-            accumulatedTranscriptRef.current +
-            ' ' +
-            finalSegment
-          ).trim()
-        }
-      }
-
-      recognition.onerror = (event: ISpeechRecognitionErrorEvent) => {
-        // Ignore aborted error which happens on manual stop
-        if (event.error === 'aborted' || event.error === 'no-speech') return
-        if (event.error === 'not-allowed') {
-          setError(
-            'Trình duyệt chưa cấp quyền microphone. Vui lòng cho phép quyền mic và thử lại.'
-          )
-        } else {
-          setError(`Lỗi nhận diện âm thanh: ${event.error}`)
-        }
-      }
-
-      recognition.onend = () => {
-        // Auto-reconnect if browser stopped on a pause while user is still answering
-        if (isListeningRef.current) {
-          try {
-            recognition.start()
-          } catch {
-            // Already started or restarting
+          recognition.onerror = (event: ISpeechRecognitionErrorEvent) => {
+            if (event.error === 'aborted' || event.error === 'no-speech') return
           }
+
+          recognition.onend = () => {
+            if (isListeningRef.current) {
+              try {
+                recognition.start()
+              } catch {}
+            }
+          }
+
+          recognitionRef.current = recognition
+          recognition.start()
+        } catch {
+          // Non-critical if browser speech fails
         }
       }
 
-      recognitionRef.current = recognition
       isListeningRef.current = true
-      recognition.start()
 
       // Audio analysis & timer start
       startVolumeVisualizer(stream)
@@ -327,8 +419,13 @@ export default function VoiceRecorder({
     setState('submitting')
     setError(null)
     try {
-      await onSubmit(finalTranscript, durationSeconds || 1)
+      if (voiceMetrics) {
+        await onSubmit(finalTranscript, durationSeconds || 1, voiceMetrics)
+      } else {
+        await onSubmit(finalTranscript, durationSeconds || 1)
+      }
       setTranscript('')
+      setVoiceMetrics(null)
       accumulatedTranscriptRef.current = ''
       onDraftChange?.('')
     } catch (err) {
@@ -339,7 +436,9 @@ export default function VoiceRecorder({
 
   function resetDraft() {
     accumulatedTranscriptRef.current = ''
+    audioChunksRef.current = []
     setTranscript('')
+    setVoiceMetrics(null)
     setDurationSeconds(0)
     setError(null)
     onDraftChange?.('')
@@ -356,6 +455,14 @@ export default function VoiceRecorder({
           recognitionRef.current.stop()
         } catch {}
       }
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state !== 'inactive'
+      ) {
+        try {
+          mediaRecorderRef.current.stop()
+        } catch {}
+      }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop())
       }
@@ -370,10 +477,10 @@ export default function VoiceRecorder({
         role="alert"
         className="flex flex-col items-center justify-center rounded-lg border border-border bg-surface-subtle p-6 text-center gap-3"
       >
-        <AlertCircle className="size-8 text-amber-500" aria-hidden="true" />
+        <AlertCircle className="size-8 text-warning-subtle-fg" aria-hidden="true" />
         <div className="space-y-1">
           <h4 className="font-semibold text-ink text-sm">
-            Trình duyệt chưa hỗ trợ Web Speech API trực tiếp
+            Trình duyệt chưa hỗ trợ truy cập microphone
           </h4>
           <p className="text-ink-muted text-xs max-w-md">
             Để có trải nghiệm phỏng vấn trực tiếp bằng giọng nói, vui lòng sử
@@ -406,14 +513,31 @@ export default function VoiceRecorder({
         </div>
       )}
 
+      {/* Transcribing State: AI Pipeline Processing */}
+      {state === 'transcribing' && (
+        <div className="flex flex-col items-center justify-center p-8 gap-3 text-ink-muted text-sm">
+          <LoadingSpinner size="md" />
+          <div className="flex items-center gap-2 font-medium text-ink">
+            <Sparkles className="size-4 text-brand-subtle-fg animate-pulse" />
+            <span>Đang chuyển đổi giọng nói & phân tích chỉ số phát biểu...</span>
+          </div>
+          <span className="text-xs text-ink-muted">
+            Mô hình Whisper & Silero VAD đang trích xuất WPM, ngập ngừng và từ đệm
+          </span>
+        </div>
+      )}
+
       {/* Reviewing Script & Binding Confirmation State */}
       {state === 'reviewing' && (
         <div className="flex w-full flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <Label htmlFor="voice-transcript" className="text-ink font-medium text-sm">
+            <Label
+              htmlFor="voice-transcript"
+              className="text-ink font-medium text-sm"
+            >
               Nội dung câu trả lời (Xác nhận & Chỉnh sửa)
             </Label>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="tabular-nums text-xs">
                 {wordCount} từ · {charCount} ký tự
               </Badge>
@@ -421,6 +545,30 @@ export default function VoiceRecorder({
                 <Badge variant="secondary" className="tabular-nums text-xs">
                   {mm}:{ss} phát biểu
                 </Badge>
+              )}
+              {voiceMetrics && (
+                <>
+                  <Badge
+                    variant={
+                      voiceMetrics.wpm >= 120 && voiceMetrics.wpm <= 165
+                        ? 'success'
+                        : 'warning'
+                    }
+                    className="tabular-nums text-xs"
+                  >
+                    {Math.round(voiceMetrics.wpm)} WPM
+                  </Badge>
+                  {voiceMetrics.pauseCount > 0 && (
+                    <Badge variant="warning" className="tabular-nums text-xs">
+                      {voiceMetrics.pauseCount} ngập ngừng (&gt;1.2s)
+                    </Badge>
+                  )}
+                  {voiceMetrics.fillerWordCount > 0 && (
+                    <Badge variant="warning" className="tabular-nums text-xs">
+                      {voiceMetrics.fillerWordCount} từ đệm
+                    </Badge>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -441,8 +589,8 @@ export default function VoiceRecorder({
           />
 
           <p className="text-xs text-ink-muted">
-            💡 <em>Mẹo:</em> Bạn có thể chỉnh sửa nhanh các thuật ngữ kỹ thuật nếu
-            nhận diện chưa hoàn toàn chính xác trước khi gửi câu trả lời.
+            💡 <em>Mẹo:</em> Bạn có thể chỉnh sửa nhanh các thuật ngữ kỹ thuật
+            nếu nhận diện chưa hoàn toàn chính xác trước khi gửi câu trả lời.
           </p>
 
           <div className="flex flex-wrap justify-end gap-3 pt-1">
@@ -510,7 +658,9 @@ export default function VoiceRecorder({
           {/* Timer Display */}
           <div className="flex items-center gap-2 text-ink-muted text-sm tabular-nums">
             <span>Thời gian:</span>
-            <span className="font-semibold text-ink">{mm}:{ss}</span>
+            <span className="font-semibold text-ink">
+              {mm}:{ss}
+            </span>
             <span className="text-ink-faint">/ 03:00</span>
           </div>
 

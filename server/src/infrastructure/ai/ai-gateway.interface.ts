@@ -1,4 +1,5 @@
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import type { Readable } from 'stream';
 import { z } from 'zod';
 
 export const AI_GATEWAY_TOKEN = Symbol('AI_GATEWAY_TOKEN');
@@ -27,6 +28,41 @@ export interface TranscribeResult {
   durationSeconds: number;
 }
 
+export interface VoiceMetricsResult {
+  wpm: number;
+  fillerWordCount: number;
+  fillerWords: string[];
+  pauseCount: number;
+  totalPauseDurationSeconds: number;
+  speechDurationSeconds: number;
+  confidenceScore: number;
+}
+
+export interface STTWordTimestampResult {
+  word: string;
+  start: number;
+  end: number;
+  probability: number;
+}
+
+export interface TranscribeWithMetricsResult {
+  text: string;
+  language: string;
+  durationSeconds: number;
+  metrics: VoiceMetricsResult;
+  words?: STTWordTimestampResult[];
+}
+
+export interface SynthesizeSpeechParams {
+  text: string;
+  language?: 'vi' | 'en';
+}
+
+export interface SynthesizeSpeechResult {
+  stream: Readable;
+  contentType: string;
+}
+
 export interface GenerateStructuredParams<T> {
   systemPrompt: string;
   userPrompt: string;
@@ -51,7 +87,7 @@ export interface GenerateTextParams {
 
 export interface TranscribeAudioParams {
   audioBuffer: Buffer;
-  mimeType?: 'audio/webm' | 'audio/mp4' | 'audio/wav';
+  mimeType?: 'audio/webm' | 'audio/mp4' | 'audio/wav' | string;
   language?: 'vi' | 'en';
   timeoutMs?: number;
 }
@@ -66,6 +102,20 @@ export interface IAIGateway {
    * Existing low-level speech-to-text contract.
    */
   transcribe(params: TranscribeParams): Promise<TranscribeResult>;
+
+  /**
+   * High-level speech-to-text with speech metrics.
+   */
+  transcribeWithMetrics(
+    params: TranscribeAudioParams,
+  ): Promise<TranscribeWithMetricsResult>;
+
+  /**
+   * Speech synthesis (TTS) returning an audio stream.
+   */
+  synthesizeSpeech(
+    params: SynthesizeSpeechParams,
+  ): Promise<SynthesizeSpeechResult>;
 
   /**
    * High-level structured generation with Zod validation.

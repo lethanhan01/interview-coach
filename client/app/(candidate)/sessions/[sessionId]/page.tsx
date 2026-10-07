@@ -17,7 +17,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
 import Button from '@/components/ui/Button'
 import CountdownTimer from '@/components/interview/CountdownTimer'
-import type { Question, SessionStatus, SessionStatusAction } from '@/lib/types'
+import type { Question, SessionStatus, SessionStatusAction, VoiceMetrics } from '@/lib/types'
 
 type AnswerMode = 'text' | 'voice'
 
@@ -271,7 +271,11 @@ export default function InterviewPage() {
   )
 
   const submitVoice = useCallback(
-    async (transcript: string, durationSeconds: number) => {
+    async (
+      transcript: string,
+      durationSeconds: number,
+      metrics?: VoiceMetrics
+    ) => {
       if (turnSubmittingRef.current) return
       turnSubmittingRef.current = true
       setTurnSubmitting(true)
@@ -280,6 +284,7 @@ export default function InterviewPage() {
           answerMode: 'voice',
           answerText: transcript,
           audioDurationSeconds: durationSeconds,
+          voiceMetrics: metrics,
           questionId: questions[currentIndex]?.id,
         })
         setDraftAnswer('')
@@ -461,6 +466,7 @@ export default function InterviewPage() {
             skillCode={current.skillCode}
             skillName={current.skillName}
             techContext={current.techContext}
+            language={sessionLanguage}
           />
         )}
 
