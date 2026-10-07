@@ -39,13 +39,13 @@ graph TD
     Router -->|Kiểm tra Trạng thái| CB{"Circuit Breaker<br/>(Opossum)"}
     
     subgraph PrimaryNode["Tuyến Chính: GPU vLLM Cục bộ"]
-        CB -->|CLOSED / HALF-OPEN| CallVLLM["Gọi Local vLLM Engine<br/>(http://vllm:8001/v1)"]
-        CallVLLM -->|Phản hồi 200 OK (< 800ms)| Success["Trả kết quả cho Hệ thống"]
+        CB -->|"CLOSED / HALF-OPEN"| CallVLLM["Gọi Local vLLM Engine<br/>(http://vllm:8001/v1)"]
+        CallVLLM -->|"Phản hồi 200 OK (< 800ms)"| Success["Trả kết quả cho Hệ thống"]
     end
     
     subgraph FallbackNode["Tuyến Dự phòng: Cloud OpenAI API"]
-        CallVLLM -->|Lỗi 503 / Timeout 1.2s| TriggerSurge["Kích hoạt Surge Overflow"]
-        CB -->|OPEN (Lỗi liên tục > 30%)| RouteCloud["Bỏ qua vLLM, gọi thẳng OpenAI"]
+        CallVLLM -->|"Lỗi 503 / Timeout 1.2s"| TriggerSurge["Kích hoạt Surge Overflow"]
+        CB -->|"OPEN (Lỗi liên tục > 30%)"| RouteCloud["Bỏ qua vLLM, gọi thẳng OpenAI"]
         TriggerSurge --> RouteCloud
         RouteCloud --> CallCloud["Gọi OpenAI Cloud API<br/>(gpt-4o / gpt-4o-mini)"]
         CallCloud --> Success

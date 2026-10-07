@@ -19,7 +19,7 @@ TypeScript và NestJS đã giải quyết xuất sắc các bài toán nền t�
 1. Xác thực và phân quyền đa vai trò (JWT, Cookie Session, RBAC: `candidate`, `admin`).
 2. Quản lý trạng thái phiên phỏng vấn (Session State Machine).
 3. Tính toàn vẹn dữ liệu qua ACID Transaction trên cơ sở dữ liệu quan hệ (`prisma.$transaction`).
-4. Khả năng phục hồi của hệ thống điều phối tác vụ nền qua BullMQ Job Queue ([`WorkflowDispatcher`](file:///c:/Users/An/Documents/GR1/InterviewCoach/server/src/infrastructure/workflow/workflow-dispatcher.service.ts)).
+4. Khả năng phục hồi của hệ thống điều phối tác vụ nền qua BullMQ Job Queue ([WorkflowDispatcher](file:///c:/Users/An/Documents/GR1/InterviewCoach/server/src/infrastructure/workflow/workflow-dispatcher.service.ts)).
 
 Tuy nhiên, khi nâng cấp thành một **Hệ thống Luyện Phỏng vấn Thông minh Cấp cao (Advanced AI Coaching Platform)** với các yêu cầu:
 * **Speech-to-Text (STT)** chính xác cao, trích xuất chỉ số âm học (WPM, độ ngập ngừng, từ đệm chuyên ngành CNTT cả tiếng Việt và tiếng Anh).
@@ -122,10 +122,10 @@ graph TD
     end
 
     %% Client Interactions
-    WebUI -->|REST API / Cookies Auth| APIGateway
-    WebUI -->|WebSockets (Live Updates)| APIGateway
-    LocalMedia -->|Step 1: POST /media/transcribe| MediaModule
-    WebUI -.->|Offline Fallback| BrowserSpeechFallback
+    WebUI -->|"REST API / Cookies Auth"| APIGateway
+    WebUI -->|"WebSockets (Live Updates)"| APIGateway
+    LocalMedia -->|"Step 1: POST /media/transcribe"| MediaModule
+    WebUI -.->|"Offline Fallback"| BrowserSpeechFallback
 
     %% Core Platform Interactions
     APIGateway --> AuthModule
@@ -138,13 +138,13 @@ graph TD
     OutboxWorker --> PrismaService
 
     %% Inter-Service Communication (Synchronous & Worker-Driven)
-    AIGateway -->|HTTP Sync Stream| FastAPIApp
-    AIGateway -.->|Fallback if Python Down| OpenAICloud["OpenAI Cloud APIs"]
-    OutboxWorker -->|HTTP Heavy Compute /evaluate| FastAPIApp
+    AIGateway -->|"HTTP Sync Stream"| FastAPIApp
+    AIGateway -.->|"Fallback if Python Down"| OpenAICloud["OpenAI Cloud APIs"]
+    OutboxWorker -->|"HTTP Heavy Compute /evaluate"| FastAPIApp
 
     %% Storage
-    PrismaService -->|ACID Transactions| Postgres
-    RAGWorker -->|Direct Vector Distance <=>| Postgres
+    PrismaService -->|"ACID Transactions"| Postgres
+    RAGWorker -->|"Direct Vector Distance <=>"| Postgres
 ```
 
 ---

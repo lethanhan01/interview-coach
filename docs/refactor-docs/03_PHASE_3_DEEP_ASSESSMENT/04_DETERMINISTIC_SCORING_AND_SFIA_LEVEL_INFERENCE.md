@@ -42,11 +42,11 @@ Cấp độ SFIA 9 được đo lường từ Level 1 đến Level 7. Thuật to
 graph TD
     Start["Bắt đầu: Target Level (Ví dụ: Level 4)"] --> CheckCore{"Core Pass Rate >= 0.5?"}
     
-    CheckCore -->|Không đạt (< 0.5)| Drop2["Hạ 2 Cấp độ<br/>demonstratedLevel = targetLevel - 2"]
-    CheckCore -->|Đạt (>= 0.5)| CheckSeniority{"Seniority Pass Rate >= 0.5?"}
+    CheckCore -->|"Không đạt (< 0.5)"| Drop2["Hạ 2 Cấp độ<br/>demonstratedLevel = targetLevel - 2"]
+    CheckCore -->|"Đạt (>= 0.5)"| CheckSeniority{"Seniority Pass Rate >= 0.5?"}
     
-    CheckSeniority -->|Không đạt (< 0.5)| Drop1["Hạ 1 Cấp độ<br/>demonstratedLevel = targetLevel - 1"]
-    CheckSeniority -->|Đạt (>= 0.5)| Keep["Giữ nguyên Cấp độ<br/>demonstratedLevel = targetLevel"]
+    CheckSeniority -->|"Không đạt (< 0.5)"| Drop1["Hạ 1 Cấp độ<br/>demonstratedLevel = targetLevel - 1"]
+    CheckSeniority -->|"Đạt (>= 0.5)"| Keep["Giữ nguyên Cấp độ<br/>demonstratedLevel = targetLevel"]
     
     Drop2 --> Clamp["Chặn Biên: [1, targetLevel]"]
     Drop1 --> Clamp

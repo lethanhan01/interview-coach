@@ -32,7 +32,7 @@ Sau khi ứng viên hoàn tất câu trả lời ban đầu, một mô hình ph�
 graph TD
     Ans["Câu trả lời của Ứng viên"] --> CheckCount{"Số lần đã hỏi xoáy<br/>ở câu này < Ngân sách cho phép?"}
     
-    CheckCount -->|Đã hết lượt (>= Max Budget)| FinishTurn["BỎ QUA HỎI XOÁY -> Chuyển sang Câu hỏi tiếp theo"]
+    CheckCount -->|"Đã hết lượt (>= Max Budget)"| FinishTurn["BỎ QUA HỎI XOÁY -> Chuyển sang Câu hỏi tiếp theo"]
     CheckCount -->|Còn lượt| EvalAnswers["Phân tích Lỗ hổng Trả lời (Gap Analysis)"]
     
     EvalAnswers --> C1{"1. Thiếu Result/Metric?<br/>(Không có số liệu đo lường cụ thể)"}
