@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-export const SERVER_ROOT = resolve(__dirname, '../..');
+export const SERVER_ROOT = resolve(__dirname, '../../..');
 export const SRC_ROOT = resolve(SERVER_ROOT, 'src');
 
 export const BOUNDED_CONTEXTS = new Set([

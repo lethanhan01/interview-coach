@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
-import { PrismaService } from '../src/infrastructure/database/prisma/prisma.service';
-import { hashPassword } from '../src/modules/auth/password';
+import { PrismaService } from '../../src/infrastructure/database/prisma/prisma.service';
+import { hashPassword } from '../../src/modules/auth/password';
 
 const prisma = new PrismaService();
 

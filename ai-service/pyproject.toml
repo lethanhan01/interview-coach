@@ -32,6 +32,8 @@ dev = [
     "pytest-asyncio>=0.24.0",
     "ruff>=0.6.9",
     "mypy>=1.11.2",
+    "pandas>=2.2.0",
+    "kaggle>=1.6.0",
 ]
 
 [build-system]

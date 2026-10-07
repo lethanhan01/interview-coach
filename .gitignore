@@ -56,8 +56,8 @@ CLAUDE.local.md
 .agents/
 skills-lock.json
 
-data/*
-!data/scripts/
+ai-service/data/*
+!ai-service/data/scripts/
 
 docs/plans/*
 scripts/*

@@ -18,9 +18,10 @@ import re
 import pandas as pd
 from pathlib import Path
 
-ROOT = Path(__file__).parent.parent.parent
-RAW = ROOT / "data" / "raw"
-OUT = ROOT / "server" / "prisma" / "seed" / "data" / "kaggle-questions.json"
+DATA_DIR = Path(__file__).resolve().parent.parent
+ROOT = DATA_DIR.parent.parent
+RAW = DATA_DIR / "raw"
+OUT = ROOT / "server" / "prisma" / "seeds" / "data" / "kaggle-questions.json"
 
 random.seed(42)
 
