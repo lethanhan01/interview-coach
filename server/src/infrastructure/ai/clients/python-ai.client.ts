@@ -24,7 +24,11 @@ export class PythonAiClient {
     ).replace(/\/+$/, '');
     this.internalSecret =
       config.get<string>('INTERNAL_AI_SECRET') ?? 'dev-secret-internal-ai-key';
-    this.defaultTimeoutMs = 8000;
+    this.defaultTimeoutMs = Number(
+      config.get('AI_STT_TIMEOUT_MS') ??
+        config.get('WHISPER_TIMEOUT_MS') ??
+        60_000,
+    );
   }
 
   async transcribe(
@@ -69,14 +73,32 @@ export class PythonAiClient {
       if (error instanceof InterviewAIException) {
         throw error;
       }
+      const err = error as Error;
+      if (
+        err.name === 'TimeoutError' ||
+        err.name === 'AbortError' ||
+        err.message?.toLowerCase().includes('timeout') ||
+        err.message?.toLowerCase().includes('timed out')
+      ) {
+        this.logger.error(
+          `Python STT service request timed out after ${timeoutMs}ms at ${url}`,
+          err.stack,
+        );
+        throw new InterviewAIException(
+          ErrorCode.AI_TIMEOUT,
+          HttpStatus.GATEWAY_TIMEOUT,
+          `AI speech service timed out after ${timeoutMs}ms`,
+          { cause: error },
+        );
+      }
       this.logger.error(
-        `Failed to call Python STT service at ${url}: ${(error as Error).message}`,
-        (error as Error).stack,
+        `Failed to call Python STT service at ${url}: ${err.message}`,
+        err.stack,
       );
       throw new InterviewAIException(
         ErrorCode.AI_SERVICE_UNAVAILABLE,
         HttpStatus.BAD_GATEWAY,
-        `AI speech service unreachable: ${(error as Error).message}`,
+        `AI speech service unreachable: ${err.message}`,
         { cause: error },
       );
     }
@@ -162,13 +184,27 @@ export class PythonAiClient {
 
     try {
       const body = (await response.json()) as {
+        errorCode?: string;
+        message?: string;
+        details?: unknown;
         error?: { code?: string; message?: string; details?: unknown };
       };
-      if (body?.error?.message) {
+
+      if (body?.message) {
+        message = body.message;
+      } else if (body?.error?.message) {
         message = body.error.message;
       }
-      if (body?.error?.details) {
+
+      if (body?.details) {
+        details = body.details;
+      } else if (body?.error?.details) {
         details = body.error.details;
+      }
+
+      const rawCode = body?.errorCode || body?.error?.code;
+      if (rawCode === 'NO_SPEECH_DETECTED') {
+        errorCode = ErrorCode.NO_SPEECH_DETECTED;
       }
     } catch (parseError) {
       this.logger.debug(
@@ -179,7 +215,9 @@ export class PythonAiClient {
     let status = HttpStatus.BAD_GATEWAY;
     if (response.status === 400) {
       status = HttpStatus.BAD_REQUEST;
-      errorCode = ErrorCode.VALIDATION_ERROR;
+      if (errorCode === ErrorCode.AI_SERVICE_UNAVAILABLE) {
+        errorCode = ErrorCode.VALIDATION_ERROR;
+      }
     } else if (response.status === 401 || response.status === 403) {
       status = HttpStatus.FORBIDDEN;
       errorCode = ErrorCode.FORBIDDEN;

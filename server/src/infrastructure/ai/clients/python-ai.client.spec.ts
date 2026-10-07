@@ -88,6 +88,46 @@ describe('PythonAiClient', () => {
         errorCode: ErrorCode.PAYLOAD_TOO_LARGE,
       });
     });
+
+    it('parses NO_SPEECH_DETECTED error from Python AI Service with status 400', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: async () => ({
+          success: false,
+          errorCode: 'NO_SPEECH_DETECTED',
+          message: 'Không phát hiện thấy âm thanh giọng nói rõ ràng trong bản ghi.',
+          details: {},
+        }),
+      } as any);
+
+      await expect(
+        client.transcribe({
+          audioBuffer: Buffer.from('silent-bytes'),
+          mimeType: 'audio/webm',
+        }),
+      ).rejects.toMatchObject({
+        errorCode: ErrorCode.NO_SPEECH_DETECTED,
+        status: 400,
+        message: 'Không phát hiện thấy âm thanh giọng nói rõ ràng trong bản ghi.',
+      });
+    });
+
+    it('handles request timeout by throwing AI_TIMEOUT with 504 status', async () => {
+      const abortError = new Error('The operation was aborted due to timeout');
+      abortError.name = 'TimeoutError';
+      global.fetch = jest.fn().mockRejectedValue(abortError);
+
+      await expect(
+        client.transcribe({
+          audioBuffer: Buffer.from('audio-bytes'),
+          mimeType: 'audio/webm',
+        }),
+      ).rejects.toMatchObject({
+        errorCode: ErrorCode.AI_TIMEOUT,
+        status: 504,
+      });
+    });
   });
 
   describe('synthesizeSpeech', () => {

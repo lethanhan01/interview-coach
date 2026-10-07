@@ -7,13 +7,30 @@ export class OpenAITranscriptionClient {
   private readonly client: OpenAI;
 
   constructor(config: ConfigService) {
-    const baseURL =
-      config.get<string>('WHISPER_BASE_URL') ||
-      config.get<string>('OPENAI_BASE_URL') ||
-      undefined;
+    const whisperBaseUrl = config.get<string>('WHISPER_BASE_URL');
+    const openaiBaseUrl = config.get<string>('OPENAI_BASE_URL');
+    const whisperApiKey = config.get<string>('WHISPER_API_KEY');
+    const openaiApiKey = config.get<string>('OPENAI_API_KEY');
+
+    // Do NOT inherit LM Studio URL for Whisper Client
+    let baseURL: string | undefined = whisperBaseUrl;
+    if (
+      !baseURL &&
+      openaiBaseUrl &&
+      !openaiBaseUrl.includes(':1234') &&
+      !openaiBaseUrl.includes('localhost:1234') &&
+      !openaiBaseUrl.includes('127.0.0.1:1234')
+    ) {
+      baseURL = openaiBaseUrl;
+    }
+
+    const apiKey =
+      whisperApiKey ||
+      (baseURL ? 'whisper-api-key' : openaiApiKey) ||
+      'dummy-whisper-key';
 
     this.client = new OpenAI({
-      apiKey: config.get<string>('OPENAI_API_KEY') ?? 'lm-studio',
+      apiKey,
       ...(baseURL ? { baseURL } : {}),
       maxRetries: 0,
     });
