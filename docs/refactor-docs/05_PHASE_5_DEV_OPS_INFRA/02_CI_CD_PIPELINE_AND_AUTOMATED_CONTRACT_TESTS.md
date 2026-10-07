@@ -213,4 +213,5 @@ jobs:
 * [ ] Kiểm thử `prisma migrate deploy` trên PostgreSQL test container chạy thành công không có lỗi cú pháp.
 
 ### 4.5 Next Task Transition (Chuyển tiếp Nhiệm vụ)
-* Sau khi pipeline CI/CD và bộ Contract Tests tự động đã chặn đứng rủi ro Schema Drift, chuyển giao sang **Task 5.3** ([03_DISTRIBUTED_OBSERVABILITY_OPENTELEMETRY_PROMETHEUS.md](03_DISTRIBUTED_OBSERVABILITY_OPENTELEMETRY_PROMETHEUS.md)) để tích hợp Distributed Tracing W3C TraceContext và Prometheus Metrics.
+* Sau khi pipeline CI/CD và bộ Contract Tests tự động đã chặn đứng rủi ro Schema Drift, chuyển giao sang **Task 5.3** ([03_STRUCTURED_LOGGING_AND_CORRELATION_ID.md](03_STRUCTURED_LOGGING_AND_CORRELATION_ID.md)) để chuẩn hóa Structured JSON Logging và lan truyền header `x-correlation-id` xuyên suốt các dịch vụ.
+

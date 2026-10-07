@@ -205,6 +205,6 @@ psql "$DATABASE_URL" -c "SELECT extname, extversion FROM pg_extension WHERE extn
 - [ ] `npx prisma generate` sinh Prisma Client thành công không lỗi type mismatch.
 
 ### 7.6 Next Task Transition (Bước chuyển tiếp)
-- Tiếp tục sang **Sub-Task 2.1B: Multi-Corpus Vector Schemas**: [01B_MULTI_CORPUS_VECTOR_SCHEMAS_AND_INDEXES.md](01B_MULTI_CORPUS_VECTOR_SCHEMAS_AND_INDEXES.md) để thiết lập các bảng vector `sfia_vectors`, `onet_vectors`, và `tech_docs_vectors`.
-- Sau khi hoàn thành Sub-Task 2.1B, chuyển sang **Task 2.2: BGE-M3 Embedding Pipeline**: [02_BGE_M3_EMBEDDING_AND_BATCH_INGESTION.md](02_BGE_M3_EMBEDDING_AND_BATCH_INGESTION.md) để xây dựng pipeline sinh vector và batch ingestion.
+- Chuyển tiếp trực tiếp sang **Task 2.2: Embedding Service & Batch Ingestion**: [02_BGE_M3_EMBEDDING_AND_BATCH_INGESTION.md](02_BGE_M3_EMBEDDING_AND_BATCH_INGESTION.md) để xây dựng dịch vụ sinh vector và script batch ingestion cho `question_bank`.
+
 

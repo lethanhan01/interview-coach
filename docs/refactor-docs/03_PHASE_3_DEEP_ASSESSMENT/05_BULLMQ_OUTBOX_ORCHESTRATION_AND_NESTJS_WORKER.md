@@ -276,6 +276,7 @@ cd server && npm run test:e2e -- test/e2e/turn-evaluation-outbox.e2e-spec.ts
 - [ ] Idempotency: Gửi lại cùng một answerId không tạo ra duplicate feedback.
 
 ### 6.6 Next Task Transition (Bước chuyển tiếp)
-- **HOÀN THÀNH PHASE 3 (DEEP ASSESSMENT & SEMANTIC SCORING)**.
-- Bàn giao sang **Phase 4 (vLLM Scaling & Full-Duplex Conversational Interviewer)**: Bắt đầu tại [01_VLLM_CONTAINER_DEPLOYMENT_AND_QUANTIZATION.md](../04_PHASE_4_VLLM_SCALING/01_VLLM_CONTAINER_DEPLOYMENT_AND_QUANTIZATION.md).
+- **HOÀN THÀNH PHASE 3 (ASSESSMENT & DETERMINISTIC SCORING)**.
+- Bàn giao sang **Phase 4: Trải nghiệm Hỏi Đào Sâu Theo Lượt (Adaptive Probing)**: Bắt đầu tại [01_ADAPTIVE_PROBING_ENGINE_AND_BUDGET.md](../04_PHASE_4_VLLM_SCALING/01_ADAPTIVE_PROBING_ENGINE_AND_BUDGET.md).
+
 

@@ -166,7 +166,7 @@ export class QuestionBankService {
 ## 5. TASK EXECUTION CONTRACT
 
 ### 5.1 Prerequisites (Tiền đề bắt buộc)
-- [ ] Hoàn thành **Task 2.4**: API `POST /api/v1/rag/retrieve` đã hoạt động với Cross-Encoder và Redis L2 Cache.
+- [ ] Hoàn thành **Task 2.3**: Truy vấn Cosine Distance kết hợp bộ lọc cứng O*NET & SFIA hoạt động tối ưu.
 - [ ] `IAIGateway` trong `server/src/infrastructure/ai/` sẵn sàng nhận method `retrieveQuestions()`.
 - [ ] Database PostgreSQL đã backfill đầy đủ vector cho `question_bank`.
 
@@ -198,6 +198,6 @@ cd server && npm run test:e2e -- test/e2e/generate-session-questions.e2e-spec.ts
 - [ ] Kỹ năng thiếu câu hỏi được chuyển an toàn sang `uncoveredRequirements` để LLM sinh bù đắp.
 
 ### 5.6 Next Task Transition (Bước chuyển tiếp)
-- Chuyển tiếp sang **Task 2.6: Đóng gói Bộ AI Tools Chuẩn Hóa**: [06_STANDARDIZED_AGENTIC_TOOLS_AND_PYDANTIC_CONTRACTS.md](06_STANDARDIZED_AGENTIC_TOOLS_AND_PYDANTIC_CONTRACTS.md) để đóng gói Multi-Corpus Retrieval thành bộ 3 AI Tools chuẩn hóa (Pydantic v2 / BaseTool).
-- Sau đó tiếp tục với **Task 2.7: LangGraph Curriculum Planner StateGraph**: [07_CURRICULUM_PLANNER_AGENTIC_GRAPH.md](07_CURRICULUM_PLANNER_AGENTIC_GRAPH.md) trước khi bàn giao toàn diện sang Phase 3.
+- Hoàn thành Phase 2, bàn giao toàn bộ sang **Phase 3: Đánh giá Câu trả lời & Tính điểm Tất định** tại [00_PHASE_3_OVERVIEW_AND_ARCHITECTURE.md](../03_PHASE_3_DEEP_ASSESSMENT/00_PHASE_3_OVERVIEW_AND_ARCHITECTURE.md) (Task 3.1: Single-Pass Assessment Endpoint).
+
 

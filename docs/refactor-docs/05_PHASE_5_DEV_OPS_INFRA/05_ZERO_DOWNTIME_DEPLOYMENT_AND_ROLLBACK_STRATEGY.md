@@ -100,7 +100,7 @@ graph TD
 ## 5. TASK EXECUTION CONTRACT
 
 ### 5.1 Prerequisites (Điều kiện tiên quyết)
-* Hoàn thành **Task 5.4** (Bộ Runbook sự cố và cơ chế Failover đã sẵn sàng).
+* Hoàn thành **Task 5.3** (Structured JSON Logging và truy vết Correlation-ID đã sẵn sàng).
 * Cơ sở dữ liệu PostgreSQL đã được cài đặt tiện ích mở rộng `pgvector`.
 * Prisma CLI có thể kết nối trực tiếp đến CSDL thông qua biến môi trường `DATABASE_URL`.
 
@@ -129,10 +129,10 @@ graph TD
 
 ### 5.4 Definition of Done [DoD]
 * [ ] **Zero-Downtime Migration**: Quá trình tạo index HNSW trên bảng cơ sở dữ liệu không làm tăng thời gian phản hồi (p99 latency) của các transaction tạo phiên phỏng vấn quá $50\text{ ms}$.
-* [ ] **Không Rơi Rớt Kết Nối Người Dùng**: Khi thực hiện rolling update phiên bản mới, tỷ lệ kết nối WebSocket bị đứt đoạn $< 0.1\%$.
-* [ ] **Thời Gian Rollback Toàn Diện**: Khi có quyết định rollback khẩn cấp, toàn bộ hệ thống trở về trạng thái hoạt động bình thường trên nền tảng NestJS Core trong vòng $< 3\text{ phút}$.
+* [ ] **Thời Gian Rollback Toàn Diện**: Khi có quyết định rollback khẩn cấp, toàn bộ hệ thống trở về trạng thái hoạt động bình thường trên nền tảng NestJS Core trong vòng $< 1\text{ phút}$.
 * [ ] Dữ liệu lịch sử trong các cột `embedding` và `ai_feedbacks` được bảo toàn nguyên vẹn $100\%$ sau rollback.
 
 ### 5.5 Next Task Transition (Hoàn tất Toàn bộ Lộ trình Master)
-* **🎉 HOÀN TẤT LỘ TRÌNH 25 TASKS (PHASE 1 ĐẾN PHASE 5)**:
-  Toàn bộ 25 nhiệm vụ kỹ thuật đã được đặc tả hoàn chỉnh, chuẩn hóa thuật ngữ tiếng Anh kỹ thuật, khớp nối chuỗi thực thi tuần tự từ đầu đến cuối, và sẵn sàng cho việc tự động thực thi mã nguồn an toàn tuyệt đối. Tiến hành nghiệm thu toàn diện theo tiêu chí **Quality Gate 5** tại [00_PHASE_5_OVERVIEW_AND_ARCHITECTURE.md](00_PHASE_5_OVERVIEW_AND_ARCHITECTURE.md).
+* **🎉 HOÀN TẤT TOÀN BỘ LỘ TRÌNH 15 TASKS THỰC DỤNG (PHASE 1 ĐẾN PHASE 5)**:
+  Toàn bộ 15 nhiệm vụ kỹ thuật đã được đặc tả hoàn chỉnh, chuẩn hóa thuật ngữ tiếng Anh kỹ thuật, loại bỏ triệt để các thành phần Over-Engineering, và sẵn sàng cho việc triển khai mã nguồn an toàn tuyệt đối. Tiến hành nghiệm thu toàn diện theo tiêu chí **Quality Gate 5** tại [00_PHASE_5_OVERVIEW_AND_ARCHITECTURE.md](00_PHASE_5_OVERVIEW_AND_ARCHITECTURE.md).
+

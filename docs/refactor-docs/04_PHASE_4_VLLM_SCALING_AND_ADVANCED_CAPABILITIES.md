@@ -1,72 +1,55 @@
-# TÀI LIỆU 04: PHASE 4 — HẠ TẦNG VLLM TỰ HOST & FAST-PATH CONVERSATIONAL AGENT
-# (MASTER BLUEPRINT & NAVIGATION INDEX CHO REAL-TIME FULL-DUPLEX INTERVIEW)
+# TÀI LIỆU 04: PHASE 4 — TRẢI NGHIỆM HỎI ĐÀO SÂU THEO LƯỢT (ADAPTIVE PROBING)
+# (PRAGMATIC TURN-BASED ADAPTIVE PROBING SPECIFICATION)
 
-> **Trạng thái**: Approved / Production Architecture Specification  
+> **Trạng thái**: Approved / Pragmatic Production Architecture Specification  
 > **Cấp độ**: Production Specification (System Architect / Lead Engineer)  
-> **Áp dụng cho**: Hạ tầng GPU / vLLM, Trợ lý Phỏng vấn Thời gian thực, WebSockets Duplex, Smart VAD & Barge-in  
+> **Áp dụng cho**: `server/src/modules/interview-live/turn/`, Python `ai-service/app/services/probing/`, `client/components/interview/`  
 > **Tài liệu tham chiếu**: [00_OVERVIEW_STRATEGIC_BLUEPRINT.md](00_OVERVIEW_STRATEGIC_BLUEPRINT.md), [01_PHASE_1_AUDIO_ENGINE_AND_PILOT.md](01_PHASE_1_AUDIO_ENGINE_AND_PILOT.md)  
 > **Thư mục tài liệu chi tiết**: [04_PHASE_4_VLLM_SCALING/](04_PHASE_4_VLLM_SCALING/00_PHASE_4_OVERVIEW_AND_ARCHITECTURE.md)  
-> **Phiên bản**: 3.0.0 (Tái cấu trúc tích hợp Fast-Path Conversational Agent <900ms)  
+> **Phiên bản**: 3.0.0 (Thay thế toàn diện cụm vLLM và WebSocket duplex bằng trải nghiệm hỏi xoáy đáp sâu theo lượt)  
 
 ---
 
 ## 1. TỔNG QUAN CHIẾN LƯỢC
 
-Phase 4 giải quyết đồng thời hai bài toán bước ngoặt của nền tảng InterviewAI:
-1. **Đột phá Tối ưu Chi phí Vận hành (TCO Optimization)**: Chuyển dịch từ việc tiêu tốn hàng nghìn USD chi phí API thương mại (GPT-4o) sang tự host mô hình mã nguồn mở hàng đầu thế giới **`Qwen 2.5 32B Instruct AWQ`** qua **vLLM** trên card đồ họa 24GB VRAM (AWS G5 / RunPod), cắt giảm **85% đến 92.4%** chi phí vận hành ở quy mô lớn.
-2. **Nâng tầm Trải nghiệm Người dùng (Fast-Path Conversational Agent)**: Xóa bỏ hoàn toàn cơ chế hỏi-đáp ngắt quãng đơn điệu, thay thế bằng tương tác giọng nói hai chiều trực tiếp qua WebSockets Streaming, tích hợp Silero VAD bắt ngắt lời tự nhiên (Barge-in Latency $< 200\text{ms}$) và tác tử đàm thoại nhanh (**Fast-Path Agent**) với cơ chế **Speculative Zero-Hop Streaming** nạp sẵn ngữ cảnh rubric vào KV-Cache, đảm bảo Time-to-First-Audio $< 700\text{ms}$ (vượt chuẩn SLA $< 900\text{ms}$).
+Phase 4 nâng cấp trải nghiệm tương tác phỏng vấn từ hỏi-đáp tĩnh sang **Hỏi Xoáy Đáp Sâu Thích Ứng (Adaptive Probing)** mà không gây rủi ro phình to hạ tầng:
+
+$$\mathbf{Pragmatic\ Adaptive\ Probing} = \mathbf{Turn\text{-}Based\ Probing\ Heuristics} + \mathbf{Sub\text{-}Turn\ Persistence\ (probing\_context\_json)}$$
+
+1. **Khả thi & Ổn định Tuyệt đối**:
+   * Loại bỏ hoàn toàn sự phụ thuộc vào máy chủ GPU tự host (vLLM) đắt đỏ và các luồng WebSocket Streaming song công dễ đứt đoạn.
+   * Sử dụng API LLM tiêu chuẩn (OpenAI / Claude / local LM Studio qua `@infra/ai`) để phân tích câu trả lời chính và sinh 1 câu hỏi đào sâu sắc bén.
+2. **Kiểm soát Ngân sách Hỏi xoáy (Strict Budget)**:
+   * Junior ($\le 3$): Tối đa **1 câu hỏi đào sâu** cho mỗi câu hỏi chính.
+   * Mid/Senior ($\ge 4$): Tối đa **2 câu hỏi đào sâu** cho mỗi câu hỏi chính.
+   * Câu trả lời quá ngắn ($< 20$ từ) hoặc lạc đề sẽ tự động bỏ qua để tiết kiệm thời gian.
+3. **Mô hình Dữ liệu Sub-turn An toàn**:
+   * Câu hỏi phụ và câu trả lời phụ được lưu trữ trực tiếp trong trường `probingContextJson` của [`UserAnswer`](file:///c:/Users/An/Documents/GR1/InterviewCoach/server/prisma/schema.prisma), không tạo thêm bản ghi câu hỏi làm vỡ ràng buộc duy nhất `orderIndex`.
 
 ---
 
-## 2. HỆ THỐNG TÀI LIỆU ĐẶC TẢ CHI TIẾT THEO TASK (TASK BREAKDOWN DIRECTORY)
+## 2. HỆ THỐNG TÀI LIỆU ĐẶC TẢ CHI TIẾT THEO TASK
 
-Để tiến hành triển khai mã nguồn tuần tự, AI Agent bắt buộc thực thi lần lượt các tài liệu đặc tả độc lập theo từng task trong thư mục [04_PHASE_4_VLLM_SCALING/](04_PHASE_4_VLLM_SCALING/00_PHASE_4_OVERVIEW_AND_ARCHITECTURE.md):
+Thư mục [04_PHASE_4_VLLM_SCALING/](04_PHASE_4_VLLM_SCALING/00_PHASE_4_OVERVIEW_AND_ARCHITECTURE.md) được tinh giản thành 2 tasks cốt lõi:
 
 ```
 docs/refactor-docs/04_PHASE_4_VLLM_SCALING/
-├── 00_PHASE_4_OVERVIEW_AND_ARCHITECTURE.md             # Kiến trúc tổng thể, TCO & Fast-Path Agent Roadmap
-├── 01_VLLM_CONTAINER_DEPLOYMENT_AND_QUANTIZATION.md    # Task 4.1: vLLM AWQ, GPU Sizing & PagedAttention
-├── 02_NESTJS_GATEWAY_INTEGRATION_AND_SURGE_FAILOVER.md # Task 4.2: NestJS IAIGateway, Circuit Breaker & Failover
-├── 03_FULL_DUPLEX_WEBSOCKET_AND_AUDIO_WORKLET.md       # Task 4.3: Binary Framing WebSocket & Client AudioWorklet
-├── 04_SMART_VAD_BARGE_IN_AND_LATENCY_PIPELINE.md       # Task 4.4: Silero VAD, <200ms Barge-in & Cascading Abort
-└── 05_ADAPTIVE_PROBING_AND_CONVERSATIONAL_ORCHESTRATION.md # Task 4.5: Fast-Path Conversational Agent, KV-Cache & Probing
+├── 00_PHASE_4_OVERVIEW_AND_ARCHITECTURE.md         # Kiến trúc tổng thể & Cơ chế hỏi xoáy Turn-based
+├── 01_ADAPTIVE_PROBING_ENGINE_AND_BUDGET.md        # Task 4.1: Adaptive Probing Engine, Prompt & Budget
+└── 02_NESTJS_PROBING_INTAKE_AND_DATA_MODEL.md      # Task 4.2: Tích hợp NestJS TurnController & probingContextJson
 ```
 
 ### Bảng Tóm tắt Phân công & Phạm vi Từng Task:
 
 | Task ID | Tên Tài liệu & Liên kết | Phạm vi Triển khai | Công nghệ Trọng tâm |
 | :---: | :--- | :--- | :--- |
-| **4.1** | [01_VLLM_CONTAINER_DEPLOYMENT_AND_QUANTIZATION.md](04_PHASE_4_VLLM_SCALING/01_VLLM_CONTAINER_DEPLOYMENT_AND_QUANTIZATION.md) | Hạ tầng GPU, Docker | `vLLM`, Qwen 2.5 32B AWQ, PagedAttention, KV-Cache |
-| **4.2** | [02_NESTJS_GATEWAY_INTEGRATION_AND_SURGE_FAILOVER.md](04_PHASE_4_VLLM_SCALING/02_NESTJS_GATEWAY_INTEGRATION_AND_SURGE_FAILOVER.md) | `server/src/infrastructure/ai/` | NestJS, `opossum` Circuit Breaker, Cloud Surge Failover |
-| **4.3** | [03_FULL_DUPLEX_WEBSOCKET_AND_AUDIO_WORKLET.md](04_PHASE_4_VLLM_SCALING/03_FULL_DUPLEX_WEBSOCKET_AND_AUDIO_WORKLET.md) | `client/`, WebSocket Gateway | `AudioWorkletNode`, Binary Framing 5-bytes, FSM |
-| **4.4** | [04_SMART_VAD_BARGE_IN_AND_LATENCY_PIPELINE.md](04_PHASE_4_VLLM_SCALING/04_SMART_VAD_BARGE_IN_AND_LATENCY_PIPELINE.md) | `ai-service/app/services/audio/` | Silero VAD ONNX, Multi-tier Cascading Abort (<200ms) |
-| **4.5** | [05_ADAPTIVE_PROBING_AND_CONVERSATIONAL_ORCHESTRATION.md](04_PHASE_4_VLLM_SCALING/05_ADAPTIVE_PROBING_AND_CONVERSATIONAL_ORCHESTRATION.md) | `server/src/modules/interview-live/` | Fast-Path Agent, Speculative Zero-Hop, Pre-fetched KV-Cache, Strict Budget |
+| **4.1** | [01_ADAPTIVE_PROBING_ENGINE_AND_BUDGET.md](04_PHASE_4_VLLM_SCALING/01_ADAPTIVE_PROBING_ENGINE_AND_BUDGET.md) | `ai-service/app/services/probing/` | LLM Prompting, Heuristics lọc nội dung, Probing Budget (Junior 1 / Senior 2) |
+| **4.2** | [02_NESTJS_PROBING_INTAKE_AND_DATA_MODEL.md](04_PHASE_4_VLLM_SCALING/02_NESTJS_PROBING_INTAKE_AND_DATA_MODEL.md) | `server/src/modules/interview-live/turn/`, `client/` | `TurnController`, DTO Sub-turn, Prisma `probingContextJson`, UI 2-step |
 
 ---
 
-## 3. KHUNG BÀN GIAO & LIÊN KẾT TUẦN TỰ (PHASE 4 EXECUTION & HANDOVER PROTOCOL)
+## 3. TIÊU CHÍ NGHIỆM THU (QUALITY GATE 4)
 
-### 3.1 Tiền đề Bàn giao Nhận từ Phase 3 (Incoming Handover)
-* Pipeline đánh giá câu trả lời kết hợp Multi-Agent Fact-Checking đã hoàn thiện và chạy ổn định qua BullMQ Outbox Worker.
-* Đã vượt qua toàn bộ tiêu chí của **Quality Gate 3**.
-
-### 3.2 Chuỗi Thực thi Tuần tự (Task Sequential Flow)
-```
-Task 4.1 (vLLM Deployment) ──> Task 4.2 (Gateway & Failover) ──> Task 4.3 (Full-Duplex WS)
-                                                                           │
-Task 4.5 (Fast-Path Agent) <── Task 4.4 (Smart VAD Barge-in) <─────────────┘
-```
-
-### 3.3 Handover Sang Phase 5 (Phase 4 -> Phase 5 Transition)
-* **Điều kiện hoàn thành Phase 4**: Vượt qua toàn bộ tiêu chí của **Quality Gate 4**.
-* **Đầu ra bàn giao**: Cụm suy luận vLLM và WebSocket Full-Duplex Gateway tích hợp Fast-Path Conversational Agent hoạt động hoàn chỉnh ở môi trường Dev.
-* **Tài liệu chuyển tiếp**: Bắt đầu Phase 5 tại [05_DEV_OPS_INFRA_AND_DISASTER_RECOVERY.md](05_DEV_OPS_INFRA_AND_DISASTER_RECOVERY.md) (Task 5.1: Polyglot Monorepo & Multi-stage Containers).
-
----
-
-## 4. CHỈ TIÊU NGHIỆM THU PHASE 4 (QUALITY GATE 4)
-
-1. **Độ Trễ Đàm Thoại Toàn Trình (Time-to-First-Audio)**: Từ khi ứng viên dứt lời đến khi nghe thấy tiếng AI phản hồi $< 800\text{ ms}$ (P95) và $< 700\text{ ms}$ (Average).
-2. **Độ Nhạy Ngắt Lời (Barge-in Latency)**: Dừng phát loa và giải phóng tài nguyên tính toán trong vòng $< 200\text{ ms}$ sau khi ứng viên cất lời.
-3. **Hiệu Năng & Ổn Định GPU**: Cụm vLLM chịu tải ổn định $\ge 30$ lượt suy luận song song với tốc độ sinh token $\ge 25\text{ tokens/giây/luồng}$.
-4. **Bảo Vệ Dự Phòng (Cloud Surge Failover)**: Khi vLLM quá tải hoặc gặp sự cố, hệ thống tự động chuyển mạch sang OpenAI Cloud Fallback trong $< 1.5\text{s}$ mà không làm đứt đoạn phiên phỏng vấn.
+1. **Độ trễ Sinh câu hỏi phụ**: Thời gian AI phản hồi câu hỏi đào sâu $< 1.5\text{s}$ (P95).
+2. **Độ chính xác Ngữ cảnh**: 100% câu hỏi đào sâu bám sát công nghệ hoặc thuật ngữ chuyên ngành do ứng viên trình bày trong câu trả lời chính.
+3. **Bảo toàn Dữ liệu**: Câu hỏi phụ và câu trả lời phụ được ghi nhận đầy đủ vào DB và được nối vào chuỗi văn bản đánh giá ở Phase 3 mà không làm gián đoạn luồng phỏng vấn.

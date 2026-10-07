@@ -130,7 +130,7 @@ Task 1.5 (NestJS Integration) <── Task 1.4 (Wire Contract Tests) <──┘
 | **Python Service Down (503 / ConnRefused)** | Container crash hoặc đứt mạng nội bộ Docker. | `AIGatewayDispatcher` phát hiện timeout sau $2.000\text{ms}$. | Nếu `AI_FALLBACK_ENABLED=true`: Chuyển sang OpenAI Whisper Cloud Fallback. Trả transcript cho ứng viên, metrics tính bằng Regex Fallback. |
 | **Buffer âm thanh rỗng / hỏng (`AUDIO_CORRUPTED`)** | Microphone ngắt đột ngột, client gửi gói tin 0-byte hoặc định dạng hỏng. | `MediaController` hoặc PyAV ném ngoại lệ `InvalidData`. | Bắt lỗi trả về HTTP 400 chuẩn: *"Bản ghi âm không hợp lệ hoặc không có dữ liệu âm thanh. Vui lòng ghi âm lại."* |
 | **Môi trường quá ồn, không có giọng nói rõ ràng** | Tiếng ồn xung quanh át tiếng nói. | Silero VAD lọc sạch toàn bộ buffer, text trả về rỗng (`""`). | NestJS phát hiện text rỗng, trả thông báo UI: *"Không phát hiện thấy giọng nói rõ ràng. Vui lòng thử lại nơi yên tĩnh hơn."* |
-| **Latency xử lý vượt ngưỡng (Timeout Spike > 8s)** | CPU/GPU bị nghẽn do quá nhiều request đồng thời. | Axios/HttpModule timeout kích hoạt tại $8.000\text{ms}$. | Hủy kết nối Python, chuyển request sang OpenAI Whisper và ghi log cảnh báo Prometheus `stt_high_latency_spike`. |
+| **Latency xử lý vượt ngưỡng (Timeout Spike > 8s)** | CPU/GPU bị nghẽn do quá nhiều request đồng thời. | Axios/HttpModule timeout kích hoạt tại $8.000\text{ms}$. | Hủy kết nối Python, chuyển request sang OpenAI Whisper và ghi log có cấu trúc cảnh báo `stt_high_latency_spike`. |
 | **Lỗi kết nối EdgeTTS (Tiếng Việt)** | Mạng Internet máy chủ ra ngoài gián đoạn. | Python `tts_manager` phát hiện lỗi kết nối EdgeTTS. | Trả lỗi có cấu trúc để Client tự động chuyển sang Web Speech API `window.speechSynthesis` phát âm tại trình duyệt. |
 
 ---
@@ -144,8 +144,8 @@ Task 1.5 (NestJS Integration) <── Task 1.4 (Wire Contract Tests) <──┘
 2. **Tuân thủ Hợp đồng Tuyệt đối (Zero Schema Drift)**:
    * 100% JSON payload truyền qua wire đều là `camelCase`.
    * Vượt qua 100% các bài kiểm thử Contract Testing trên cả Pytest (Python) và Jest (NestJS) thông qua bộ fixtures chung tại `contracts/fixtures/`.
-3. **Độ chính xác STT (Word Error Rate)**:
-   * Đạt Word Error Rate (WER) $< 8\%$ trên bộ test audio kỹ thuật song ngữ Việt-Anh.
+3. **Độ chính xác STT**:
+   * Nhận diện chính xác, rõ nghĩa các thuật ngữ kỹ thuật CNTT phổ biến bằng tiếng Việt và tiếng Anh.
 4. **Hiệu năng & Latency (Benchmark Requirements)**:
    * **GPU (NVIDIA T4 / RTX 3060 trở lên)**: Bản ghi âm 60 giây được xử lý STT và trích xuất chỉ số xong trong $< 1.2$ giây.
    * **CPU (8 vCPUs)**: Bản ghi âm 60 giây được xử lý xong trong $< 3.5$ giây.
