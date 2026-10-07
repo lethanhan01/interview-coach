@@ -16,7 +16,6 @@ describe('AIGatewayDispatcher', () => {
       get: jest.fn((key: string) => {
         if (key === 'AI_STT_PROVIDER') return 'python';
         if (key === 'AI_TTS_PROVIDER') return 'python';
-        if (key === 'AI_FALLBACK_ENABLED') return 'true';
         return undefined;
       }),
     } as unknown as jest.Mocked<ConfigService>;
@@ -72,60 +71,7 @@ describe('AIGatewayDispatcher', () => {
       expect(result).toEqual(mockResult);
     });
 
-    it('falls back to OpenAI when Python STT fails and fallback is enabled', async () => {
-      pythonAiClient.transcribe.mockRejectedValue(new Error('Connection error'));
-
-      const fallbackResult = {
-        text: 'OpenAI fallback result',
-        language: 'en',
-        durationSeconds: 2.0,
-        metrics: {
-          wpm: 120,
-          fillerWordCount: 0,
-          fillerWords: [],
-          pauseCount: 0,
-          totalPauseDurationSeconds: 0,
-          speechDurationSeconds: 2.0,
-          confidenceScore: 0.9,
-        },
-      };
-
-      openAiGateway.transcribeWithMetrics.mockResolvedValue(fallbackResult);
-
-      const result = await dispatcher.transcribeWithMetrics({
-        audioBuffer: Buffer.from('test'),
-      });
-
-      expect(pythonAiClient.transcribe).toHaveBeenCalled();
-      expect(openAiGateway.transcribeWithMetrics).toHaveBeenCalled();
-      expect(result).toEqual(fallbackResult);
-    });
-
-    it('does NOT fall back to OpenAI when Python STT fails with 4xx client error (NO_SPEECH_DETECTED)', async () => {
-      const clientError = new InterviewAIException(
-        ErrorCode.NO_SPEECH_DETECTED,
-        400,
-        'Không phát hiện thấy âm thanh giọng nói rõ ràng.',
-      );
-      pythonAiClient.transcribe.mockRejectedValue(clientError);
-
-      await expect(
-        dispatcher.transcribeWithMetrics({ audioBuffer: Buffer.from('test') }),
-      ).rejects.toThrow(clientError);
-
-      expect(pythonAiClient.transcribe).toHaveBeenCalled();
-      expect(openAiGateway.transcribeWithMetrics).not.toHaveBeenCalled();
-    });
-
-    it('skips fallback and throws Python error directly when OPENAI_BASE_URL points to LM Studio on port 1234 without WHISPER_BASE_URL', async () => {
-      configService.get.mockImplementation((key: string) => {
-        if (key === 'AI_STT_PROVIDER') return 'python';
-        if (key === 'AI_FALLBACK_ENABLED') return 'true';
-        if (key === 'OPENAI_BASE_URL') return 'http://127.0.0.1:1234/v1';
-        if (key === 'OPENAI_API_KEY') return 'lm-studio';
-        return undefined;
-      });
-
+    it('propagates server/connection error directly without fallback when Python STT fails', async () => {
       const serverError = new InterviewAIException(
         ErrorCode.AI_SERVICE_UNAVAILABLE,
         502,
@@ -141,20 +87,19 @@ describe('AIGatewayDispatcher', () => {
       expect(openAiGateway.transcribeWithMetrics).not.toHaveBeenCalled();
     });
 
-    it('skips fallback when AI_FALLBACK_ENABLED=false', async () => {
-      configService.get.mockImplementation((key: string) => {
-        if (key === 'AI_STT_PROVIDER') return 'python';
-        if (key === 'AI_FALLBACK_ENABLED') return 'false';
-        return undefined;
-      });
-
-      const serverError = new Error('Service down');
-      pythonAiClient.transcribe.mockRejectedValue(serverError);
+    it('propagates 4xx client error (NO_SPEECH_DETECTED) directly without fallback', async () => {
+      const clientError = new InterviewAIException(
+        ErrorCode.NO_SPEECH_DETECTED,
+        400,
+        'Không phát hiện thấy âm thanh giọng nói rõ ràng.',
+      );
+      pythonAiClient.transcribe.mockRejectedValue(clientError);
 
       await expect(
         dispatcher.transcribeWithMetrics({ audioBuffer: Buffer.from('test') }),
-      ).rejects.toThrow(serverError);
+      ).rejects.toThrow(clientError);
 
+      expect(pythonAiClient.transcribe).toHaveBeenCalled();
       expect(openAiGateway.transcribeWithMetrics).not.toHaveBeenCalled();
     });
 
@@ -167,6 +112,20 @@ describe('AIGatewayDispatcher', () => {
       await expect(
         dispatcher.transcribeWithMetrics({ audioBuffer: Buffer.from('test') }),
       ).rejects.toThrow(InterviewAIException);
+    });
+
+    it('throws BAD_GATEWAY if AI_STT_PROVIDER is unsupported', async () => {
+      configService.get.mockImplementation((key: string) => {
+        if (key === 'AI_STT_PROVIDER') return 'unsupported-provider';
+        return undefined;
+      });
+
+      await expect(
+        dispatcher.transcribeWithMetrics({ audioBuffer: Buffer.from('test') }),
+      ).rejects.toMatchObject({
+        errorCode: ErrorCode.AI_SERVICE_UNAVAILABLE,
+        status: 502,
+      });
     });
   });
 

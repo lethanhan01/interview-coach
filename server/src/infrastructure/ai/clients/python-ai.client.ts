@@ -25,9 +25,7 @@ export class PythonAiClient {
     this.internalSecret =
       config.get<string>('INTERNAL_AI_SECRET') ?? 'dev-secret-internal-ai-key';
     this.defaultTimeoutMs = Number(
-      config.get('AI_STT_TIMEOUT_MS') ??
-        config.get('WHISPER_TIMEOUT_MS') ??
-        60_000,
+      config.get('AI_STT_TIMEOUT_MS') ?? 60_000,
     );
   }
 

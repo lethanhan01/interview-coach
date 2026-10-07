@@ -583,7 +583,7 @@ Các tác vụ tiêu tốn tài nguyên và thời gian thực thi dài (> 3 gi�
 #### a. Hard Timeout & AbortController
 Không để lời gọi AI treo vô tận. Bắt buộc gắn timeout cứng bằng `AbortController.signal` tương ứng với tải tác vụ (đồng bộ theo Phase 13 Timeout Policy):
 - **LLM Single-turn Chat / Quick Scoring**: Tối đa `30,000ms` (30 giây) (`OPENAI_TIMEOUT_MS`).
-- **Whisper Audio Transcription (STT)**: Tối đa `60,000ms` (60 giây) (`WHISPER_TIMEOUT_MS`, độc lập với audio download timeout 15s).
+- **Speech-to-Text Transcription (STT)**: Tối đa `60,000ms` (60 giây) (`AI_STT_TIMEOUT_MS`, ủy quyền cho Python AI Service faster-whisper).
 - **Question Generation (10 câu hỏi + Rubric)**: Tối đa `240,000ms` (4 phút) (`OPENAI_QUESTION_TIMEOUT_MS`).
 - **Turn Feedback Scoring (Single Turn Rubric)**: Tối đa `420,000ms` (7 phút) (`OPENAI_FEEDBACK_TIMEOUT_MS`).
 - **Comprehensive Deep Assessment Report**: Tối đa `600,000ms` (10 phút) (`OPENAI_REPORT_TIMEOUT_MS`).
@@ -613,7 +613,7 @@ export interface AiExecutionMetrics {
 #### d. Local GPU LLM & Deterministic Content Fallback
 Hệ thống được thiết kế theo mô hình **Self-hosted / Local GPU Inference Readiness**:
 - **Mô hình Ngôn ngữ (LLM Chat & Scoring)**: Tích hợp qua `OpenAIChatClient` trỏ vào endpoint tương thích chuẩn OpenAI (`OPENAI_BASE_URL`, ví dụ `http://127.0.0.1:1234/v1` cho LM Studio, vLLM, hoặc Ollama) với model local như `google/gemma-4-e4b`.
-- **Mô hình Nhận dạng Giọng nói (Whisper STT)**: Tích hợp qua `OpenAITranscriptionClient` hỗ trợ biến cấu hình `WHISPER_BASE_URL` (ví dụ `http://localhost:8000/v1` cho faster-whisper-server trên GPU).
+- **Mô hình Nhận dạng Giọng nói & Trích xuất Chỉ số (STT & Voice Metrics)**: Xử lý chuyên biệt qua Python AI Microservice (`faster-whisper`, `Silero VAD`, `MetricsExtractor`) qua endpoint nội bộ (`AI_SERVICE_URL`).
 - **Phục hồi Nội dung Xác định (Deterministic Content Fallback)**: Khi AI gặp sự cố quota, timeout hoặc lỗi server nội bộ, hệ thống tự động kích hoạt `fallback-content.ts` sinh nhận xét và báo cáo tổng kết đa ngôn ngữ (`vi`/`en`), bảo đảm 100% người dùng nhận được kết quả mà không cần phụ thuộc vào nhà cung cấp phụ trợ đám mây khác.
 
 ---

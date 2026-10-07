@@ -240,13 +240,6 @@ export const createMockConfigService = (
   get: jest.fn((key: string) => overrides[key] ?? `mock-${key}`),
 });
 
-export const createMockWhisperService = () => ({
-  transcribe: jest.fn().mockResolvedValue({
-    text: 'Transcribed text sample',
-    durationSeconds: 30,
-  }),
-});
-
 export const createMockVoiceMetricsService = () => ({
   calculate: jest.fn().mockReturnValue({
     wpm: 120,

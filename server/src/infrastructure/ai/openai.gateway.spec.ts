@@ -457,17 +457,10 @@ describe('OpenAIGateway — empty response và task-specific timeout', () => {
   });
 });
 
-describe('OpenAIGateway — transcription boundary', () => {
-  it('giữ nguyên audio request và response mapping qua transcription client', async () => {
+describe('OpenAIGateway — transcription retired', () => {
+  it('ném NOT_IMPLEMENTED khi gọi transcribe', async () => {
     const config = { get: jest.fn() };
-    const transcriptionClient = {
-      create: jest.fn().mockResolvedValue({ text: 'xin chào', duration: 12.5 }),
-    };
-    const gateway = new OpenAIGateway(
-      config as any,
-      undefined,
-      transcriptionClient as any,
-    );
+    const gateway = new OpenAIGateway(config as any);
     const audioBuffer = Buffer.from('audio');
 
     await expect(
@@ -475,41 +468,25 @@ describe('OpenAIGateway — transcription boundary', () => {
         audioBuffer,
         mimeType: 'audio/webm',
         language: 'vi',
-        timeoutMs: 12_000,
       }),
-    ).resolves.toEqual({ text: 'xin chào', durationSeconds: 12.5 });
-
-    expect(transcriptionClient.create).toHaveBeenCalledWith(
-      audioBuffer,
-      'audio/webm',
-      'vi',
-      12_000,
-    );
+    ).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_SERVICE_UNAVAILABLE,
+      status: 501,
+    });
   });
 
-  it('ném AI_TIMEOUT (không retry) khi Whisper vượt timeout', async () => {
+  it('ném NOT_IMPLEMENTED khi gọi transcribeWithMetrics', async () => {
     const config = { get: jest.fn() };
-    const transcriptionClient = {
-      create: jest
-        .fn()
-        .mockRejectedValue(
-          new APIUserAbortError({ message: 'Request was aborted.' }),
-        ),
-    };
-    const gateway = new OpenAIGateway(
-      config as any,
-      undefined,
-      transcriptionClient as any,
-    );
+    const gateway = new OpenAIGateway(config as any);
 
     await expect(
-      gateway.transcribe({
+      gateway.transcribeWithMetrics({
         audioBuffer: Buffer.from('audio'),
-        mimeType: 'audio/webm',
-        timeoutMs: 60_000,
       }),
-    ).rejects.toMatchObject({ errorCode: ErrorCode.AI_TIMEOUT });
-    expect(transcriptionClient.create).toHaveBeenCalledTimes(1);
+    ).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_SERVICE_UNAVAILABLE,
+      status: 501,
+    });
   });
 });
 
@@ -596,63 +573,6 @@ describe('OpenAIGateway — Hexagonal port methods', () => {
       }),
     ).rejects.toThrow(
       'AI response failed schema validation for InvalidPayload',
-    );
-  });
-
-  it('transcribeAudio delegates with default mimeType', async () => {
-    const config = { get: jest.fn() };
-    const transcriptionClient = {
-      create: jest
-        .fn()
-        .mockResolvedValue({ text: 'audio transcribed', duration: 5 }),
-    };
-    const gateway = new OpenAIGateway(
-      config as any,
-      undefined,
-      transcriptionClient as any,
-    );
-    const audioBuffer = Buffer.from('audio-data');
-
-    const result = await gateway.transcribeAudio({
-      audioBuffer,
-      language: 'en',
-    });
-
-    expect(result).toEqual({ text: 'audio transcribed', durationSeconds: 5 });
-    expect(transcriptionClient.create).toHaveBeenCalledWith(
-      audioBuffer,
-      'audio/webm',
-      'en',
-      60_000,
-    );
-  });
-
-  it('transcribe delegates with explicit timeoutMs override', async () => {
-    const config = { get: jest.fn() };
-    const transcriptionClient = {
-      create: jest
-        .fn()
-        .mockResolvedValue({ text: 'audio transcribed', duration: 5 }),
-    };
-    const gateway = new OpenAIGateway(
-      config as any,
-      undefined,
-      transcriptionClient as any,
-    );
-    const audioBuffer = Buffer.from('audio-data');
-
-    await gateway.transcribe({
-      audioBuffer,
-      mimeType: 'audio/mp4',
-      language: 'vi',
-      timeoutMs: 15_000,
-    });
-
-    expect(transcriptionClient.create).toHaveBeenCalledWith(
-      audioBuffer,
-      'audio/mp4',
-      'vi',
-      15_000,
     );
   });
 });

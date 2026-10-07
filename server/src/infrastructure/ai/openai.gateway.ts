@@ -4,7 +4,6 @@ import { APIError, APIUserAbortError, APIConnectionTimeoutError } from 'openai';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { OpenAIChatClient } from './openai-chat.client';
-import { OpenAITranscriptionClient } from './openai-transcription.client';
 import {
   type IAIGateway,
   type ChatTask,
@@ -54,17 +53,12 @@ export class OpenAIGateway implements IAIGateway {
   private readonly questionTimeoutMs: number;
   private readonly feedbackTimeoutMs: number;
   private readonly reportTimeoutMs: number;
-  private readonly whisperTimeoutMs: number;
   private quotaBlockedUntil = 0;
 
   constructor(
     config: ConfigService,
     @Inject(OpenAIChatClient)
     private readonly chatClient = new OpenAIChatClient(config),
-    @Inject(OpenAITranscriptionClient)
-    private readonly transcriptionClient = new OpenAITranscriptionClient(
-      config,
-    ),
   ) {
     this.chatModel =
       config.get<string>('OPENAI_CHAT_MODEL') ?? 'google/gemma-4-e4b';
@@ -84,7 +78,6 @@ export class OpenAIGateway implements IAIGateway {
       config.get('OPENAI_REPORT_TIMEOUT_MS') ??
         Math.max(this.defaultTimeoutMs, 600_000),
     );
-    this.whisperTimeoutMs = Number(config.get('WHISPER_TIMEOUT_MS') ?? 60_000);
   }
 
   getChatModel(task?: ChatTask): string {
@@ -439,27 +432,12 @@ export class OpenAIGateway implements IAIGateway {
     });
   }
 
-  async transcribe(params: TranscribeParams): Promise<TranscribeResult> {
-    const { audioBuffer, mimeType, language, timeoutMs } = params;
-    const effectiveTimeoutMs = timeoutMs ?? this.whisperTimeoutMs;
-
-    return this.withRetry(async () => {
-      const response = await this.transcriptionClient.create(
-        audioBuffer,
-        mimeType,
-        language,
-        effectiveTimeoutMs,
-      );
-      const responseRecord = response as unknown as Record<string, unknown>;
-      const duration =
-        typeof responseRecord.duration === 'number'
-          ? responseRecord.duration
-          : 0;
-      return {
-        text: response.text,
-        durationSeconds: duration,
-      };
-    });
+  async transcribe(_params: TranscribeParams): Promise<TranscribeResult> {
+    throw new InterviewAIException(
+      ErrorCode.AI_SERVICE_UNAVAILABLE,
+      HttpStatus.NOT_IMPLEMENTED,
+      'OpenAI Whisper STT has been retired. Use Python AI service.',
+    );
   }
 
   async generateStructured<T>(params: GenerateStructuredParams<T>): Promise<T> {
@@ -518,53 +496,23 @@ export class OpenAIGateway implements IAIGateway {
   }
 
   async transcribeAudio(
-    params: TranscribeAudioParams,
+    _params: TranscribeAudioParams,
   ): Promise<TranscribeResult> {
-    return this.transcribe({
-      audioBuffer: params.audioBuffer,
-      mimeType: (params.mimeType as any) ?? 'audio/webm',
-      language: params.language,
-      timeoutMs: params.timeoutMs,
-    });
+    throw new InterviewAIException(
+      ErrorCode.AI_SERVICE_UNAVAILABLE,
+      HttpStatus.NOT_IMPLEMENTED,
+      'OpenAI Whisper STT has been retired. Use Python AI service.',
+    );
   }
 
   async transcribeWithMetrics(
-    params: TranscribeAudioParams,
+    _params: TranscribeAudioParams,
   ): Promise<TranscribeWithMetricsResult> {
-    const result = await this.transcribeAudio(params);
-    const duration = Math.max(0.1, result.durationSeconds);
-    const words = result.text.trim().split(/\s+/).filter(Boolean);
-    const wordCount = words.length;
-    const wpm = Math.round((wordCount / (duration / 60)) * 10) / 10;
-
-    // Simple filler word detection fallback
-    const fillerPatterns = [
-      /\b(um|uh|er|ah|like|you know)\b/gi,
-      /\b(ừm|ờ|à|kiểu|như là)\b/gi,
-    ];
-    const foundFillers: string[] = [];
-    for (const pattern of fillerPatterns) {
-      const matches = result.text.match(pattern);
-      if (matches) {
-        foundFillers.push(...matches.map((m) => m.toLowerCase()));
-      }
-    }
-
-    return {
-      text: result.text,
-      language: params.language ?? 'en',
-      durationSeconds: duration,
-      metrics: {
-        wpm,
-        fillerWordCount: foundFillers.length,
-        fillerWords: foundFillers,
-        pauseCount: 0,
-        totalPauseDurationSeconds: 0,
-        speechDurationSeconds: duration,
-        confidenceScore: 0.9,
-      },
-      words: [],
-    };
+    throw new InterviewAIException(
+      ErrorCode.AI_SERVICE_UNAVAILABLE,
+      HttpStatus.NOT_IMPLEMENTED,
+      'OpenAI Whisper STT has been retired. Use Python AI service.',
+    );
   }
 
   async synthesizeSpeech(
