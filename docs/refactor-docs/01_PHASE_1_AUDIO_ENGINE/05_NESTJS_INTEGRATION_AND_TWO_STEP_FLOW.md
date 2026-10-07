@@ -1,10 +1,16 @@
 # TASK 1.5: NESTJS CORE INTEGRATION, TWO-STEP VOICE INTAKE & STRICT PROVIDER TOGGLE
 
-> **Trạng thái**: Approved / Production Specification  
+> [!NOTE]
+> **TRẠNG THÁI: HOÀN THÀNH (COMPLETED)**  
+> Task này đã hoàn thành và nghiệm thu. Tài liệu kỹ thuật chính thức hiện được duy trì tại:  
+> 📖 [docs/architecture/audio-engine/nestjs-integration-flow.md](../../architecture/audio-engine/nestjs-integration-flow.md)
+
+> **Trạng thái**: Completed / Archived Historical Specification  
 > **Cấp độ**: Deep Technical Specification (Full-Stack Backend Integration, Clean Architecture & Resilience)  
 > **Áp dụng cho**: `server/src/modules/media/`, `server/src/modules/interview-live/turn/`, `server/src/infrastructure/ai/`  
 > **Tài liệu cha**: [00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md](00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md)  
 > **Phiên bản**: 2.0.0  
+
 
 ---
 

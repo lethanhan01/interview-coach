@@ -1,10 +1,16 @@
 # TASK 1.2: STT PIPELINE — FASTER-WHISPER, IN-MEMORY DECODING & ADVANCED VOICE METRICS
 
-> **Trạng thái**: Approved / Production Specification  
+> [!NOTE]
+> **TRẠNG THÁI: HOÀN THÀNH (COMPLETED)**  
+> Task này đã hoàn thành và nghiệm thu. Tài liệu kỹ thuật chính thức hiện được duy trì tại:  
+> 📖 [docs/architecture/audio-engine/stt-pipeline.md](../../architecture/audio-engine/stt-pipeline.md)
+
+> **Trạng thái**: Completed / Archived Historical Specification  
 > **Cấp độ**: Deep Technical Specification (Audio DSP & Machine Learning Inference)  
 > **Áp dụng cho**: `ai-service/app/services/stt/`, PyAV, Silero VAD, `faster-whisper` (CTranslate2)  
 > **Tài liệu cha**: [00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md](00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md)  
 > **Phiên bản**: 2.0.0  
+
 
 ---
 

@@ -1,10 +1,16 @@
 # TASK 1.4: INTER-SERVICE WIRE CONTRACT SPECIFICATION & AUTOMATED SCHEMA DRIFT TESTS
 
-> **Trạng thái**: Approved / Production Specification  
+> [!NOTE]
+> **TRẠNG THÁI: HOÀN THÀNH (COMPLETED)**  
+> Task này đã hoàn thành và nghiệm thu. Tài liệu kỹ thuật chính thức hiện được duy trì tại:  
+> 📖 [docs/architecture/audio-engine/contracts-and-testing.md](../../architecture/audio-engine/contracts-and-testing.md)
+
+> **Trạng thái**: Completed / Archived Historical Specification  
 > **Cấp độ**: Deep Technical Specification (API Contract, Serialization & Quality Assurance)  
 > **Áp dụng cho**: `contracts/fixtures/`, Python `ai-service/tests/test_contracts.py`, NestJS `server/test/contracts/`  
 > **Tài liệu cha**: [00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md](00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md)  
 > **Phiên bản**: 2.0.0  
+
 
 ---
 

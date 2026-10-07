@@ -13,25 +13,31 @@ def test_tts_synthesize_unauthorized(client: TestClient):
     assert response.json()["errorCode"] == "INVALID_INTERNAL_SECRET"
 
 
+from app.core.config import get_settings
+
+
 def test_tts_synthesize_empty_text(client: TestClient):
+    settings = get_settings()
     response = client.post(
         "/api/v1/tts/synthesize",
         json={"text": "   ", "language": "vi"},
-        headers={"x-internal-secret": "interviewai-super-secret-dev-key-change-in-prod"},
+        headers={"x-internal-secret": settings.internal_ai_secret},
     )
     assert response.status_code == 422
     assert response.json()["errorCode"] == "EMPTY_TEXT_SYNTHESIS"
 
 
 def test_tts_synthesize_text_too_long(client: TestClient):
+    settings = get_settings()
     long_text = "a" * 1005
     response = client.post(
         "/api/v1/tts/synthesize",
         json={"text": long_text, "language": "vi"},
-        headers={"x-internal-secret": "interviewai-super-secret-dev-key-change-in-prod"},
+        headers={"x-internal-secret": settings.internal_ai_secret},
     )
     assert response.status_code == 413
     assert response.json()["errorCode"] == "TEXT_TOO_LONG"
+
 
 
 @pytest.mark.asyncio

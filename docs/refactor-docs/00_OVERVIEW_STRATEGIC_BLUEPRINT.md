@@ -182,8 +182,9 @@ graph TD
 
 ## 6. DANH MỤC TÀI LIỆU CHI TIẾT TRONG BỘ TÀI LIỆU REFACTOR
 
-* [Tài liệu 01: Pilot Phase 1 — Khởi tạo `ai-service` & Audio Engine](01_PHASE_1_AUDIO_ENGINE_AND_PILOT.md)  
-  *(Thư mục chi tiết: [01_PHASE_1_AUDIO_ENGINE/](01_PHASE_1_AUDIO_ENGINE/00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md) — Tasks 1.1 đến 1.5)*
+* [Tài liệu 01: Pilot Phase 1 — Khởi tạo `ai-service` & Audio Engine](01_PHASE_1_AUDIO_ENGINE_AND_PILOT.md) — ✅ **HOÀN THÀNH (COMPLETED)**  
+  *(Tài liệu Kiến trúc & Onboarding Chính thức: [docs/architecture/audio-engine/](../architecture/audio-engine/README.md) — Kế hoạch lịch sử: [01_PHASE_1_AUDIO_ENGINE/](01_PHASE_1_AUDIO_ENGINE/00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md))*
+
 * [Tài liệu 02: Phase 2 — Nền tảng PostgreSQL `pgvector` & Ngân hàng Câu hỏi](02_PHASE_2_PGVECTOR_HYBRID_RAG_FOUNDATION.md)  
   *(Thư mục chi tiết: [02_PHASE_2_PGVECTOR_HYBRID_RAG/](02_PHASE_2_PGVECTOR_HYBRID_RAG/00_PHASE_2_OVERVIEW_AND_ARCHITECTURE.md) — Tasks 2.1 đến 2.4)*
 * [Tài liệu 03: Phase 3 — Đánh giá Câu trả lời & Tính điểm Tất định](03_PHASE_3_DEEP_ASSESSMENT_AND_SEMANTIC_SCORING.md)  

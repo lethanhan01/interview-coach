@@ -1,10 +1,16 @@
 # TASK 1.1: PYTHON AI MICROSERVICE SETUP, DEPENDENCY MANAGEMENT & RUNTIME CORE
 
-> **Trạng thái**: Approved / Production Specification  
+> [!NOTE]
+> **TRẠNG THÁI: HOÀN THÀNH (COMPLETED)**  
+> Task này đã hoàn thành và nghiệm thu. Tài liệu kỹ thuật chính thức hiện được duy trì tại:  
+> 📖 [docs/architecture/audio-engine/python-ai-service-runtime.md](../../architecture/audio-engine/python-ai-service-runtime.md)
+
+> **Trạng thái**: Completed / Archived Historical Specification  
 > **Cấp độ**: Deep Technical Specification (Backend & Infrastructure Architecture)  
 > **Áp dụng cho**: Khởi tạo thư mục `ai-service/`, Python 3.11+, Astral `uv`, Docker Container  
 > **Tài liệu cha**: [00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md](00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md)  
 > **Phiên bản**: 2.0.0  
+
 
 ---
 

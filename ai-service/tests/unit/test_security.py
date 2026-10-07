@@ -28,10 +28,15 @@ def test_invalid_internal_secret_returns_401(client: TestClient) -> None:
     assert data["errorCode"] == "INVALID_INTERNAL_SECRET"
 
 
+from app.core.config import get_settings
+
+
 def test_valid_internal_secret_returns_200(client: TestClient) -> None:
+    settings = get_settings()
     response = client.get(
         "/test-protected",
-        headers={"x-internal-secret": "interviewai-super-secret-dev-key-change-in-prod"},
+        headers={"x-internal-secret": settings.internal_ai_secret},
     )
     assert response.status_code == 200
     assert response.json() == {"status": "authorized"}
+

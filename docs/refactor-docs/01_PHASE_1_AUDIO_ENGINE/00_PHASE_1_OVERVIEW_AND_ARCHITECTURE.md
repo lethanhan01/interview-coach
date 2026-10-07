@@ -1,11 +1,17 @@
 # TÀI LIỆU TỔNG QUAN: PHASE 1 — KHỞI TẠO AI-SERVICE & NỀN TẢNG AUDIO ENGINE (STT/TTS)
 # (MASTER OVERVIEW, SYSTEM ARCHITECTURE & PILOT ROADMAP)
 
-> **Trạng thái**: Approved / Production Architecture Specification  
+> [!NOTE]
+> **TRẠNG THÁI: HOÀN THÀNH (COMPLETED)**  
+> Giai đoạn Phase 1 đã hoàn thành và nghiệm thu. Tài liệu kiến trúc chính thức hiện được duy trì tại:  
+> 📖 [docs/architecture/audio-engine/README.md](../../architecture/audio-engine/README.md)
+
+> **Trạng thái**: Completed / Archived Historical Specification  
 > **Cấp độ**: Production Specification (System Architect / Lead Engineer)  
 > **Áp dụng cho**: Khởi tạo `ai-service/`, Mở rộng `MediaModule` và `IAIGateway` trong `server/`  
 > **Tài liệu tham chiếu**: [00_OVERVIEW_STRATEGIC_BLUEPRINT.md](../00_OVERVIEW_STRATEGIC_BLUEPRINT.md)  
 > **Phiên bản**: 2.1.0 (Chuẩn hóa toàn diện chuỗi thực thi tuần tự & Thuật ngữ tiếng Anh kỹ thuật)  
+
 
 ---
 

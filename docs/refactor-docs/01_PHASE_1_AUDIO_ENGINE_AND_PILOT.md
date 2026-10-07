@@ -1,12 +1,19 @@
 # TÀI LIỆU 01: PILOT PHASE 1 — KHỞI TẠO AI-SERVICE & AUDIO ENGINE (STT/TTS)
 # (MASTER BLUEPRINT & NAVIGATION INDEX)
 
-> **Trạng thái**: Approved / Production Architecture Specification  
+> [!NOTE]
+> **TRẠNG THÁI: HOÀN THÀNH (COMPLETED)**  
+> Giai đoạn Phase 1 (Audio Engine) đã được triển khai, kiểm thử và nghiệm thu thành công theo Quality Gate 1.  
+> 📖 **Tài liệu Kiến trúc Chuẩn hóa & Hướng dẫn Onboarding Chính thức**: [docs/architecture/audio-engine/](../architecture/audio-engine/README.md)  
+> *(Tài liệu này được lưu trữ phục vụ việc đối chiếu lịch sử và quy trình triển khai).*
+
+> **Trạng thái**: Completed / Archived Historical Specification  
 > **Cấp độ**: Production Specification (System Architect / Lead Engineer)  
 > **Áp dụng cho**: Khởi tạo `ai-service/`, Mở rộng `MediaModule` và `IAIGateway` trong `server/`  
 > **Tài liệu tham chiếu**: [00_OVERVIEW_STRATEGIC_BLUEPRINT.md](00_OVERVIEW_STRATEGIC_BLUEPRINT.md)  
 > **Thư mục tài liệu chi tiết**: [01_PHASE_1_AUDIO_ENGINE/](01_PHASE_1_AUDIO_ENGINE/00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md)  
 > **Phiên bản**: 2.1.0 (Chuẩn hóa toàn diện chuỗi thực thi tuần tự & Thuật ngữ tiếng Anh kỹ thuật)  
+
 
 ---
 

@@ -1,10 +1,16 @@
 # TASK 1.3: TTS PIPELINE — HYBRID KOKORO-82M & EDGE-TTS MULTILINGUAL SYNTHESIZER
 
-> **Trạng thái**: Approved / Production Specification  
+> [!NOTE]
+> **TRẠNG THÁI: HOÀN THÀNH (COMPLETED)**  
+> Task này đã hoàn thành và nghiệm thu. Tài liệu kỹ thuật chính thức hiện được duy trì tại:  
+> 📖 [docs/architecture/audio-engine/tts-pipeline.md](../../architecture/audio-engine/tts-pipeline.md)
+
+> **Trạng thái**: Completed / Archived Historical Specification  
 > **Cấp độ**: Deep Technical Specification (Neural Speech Synthesis & Streaming Protocols)  
 > **Áp dụng cho**: `ai-service/app/services/tts/`, Kokoro-82M (English), Microsoft Edge-TTS (Vietnamese), Streaming API  
 > **Tài liệu cha**: [00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md](00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md)  
 > **Phiên bản**: 2.0.0  
+
 
 ---
 
