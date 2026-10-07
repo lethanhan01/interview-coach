@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import type { Prisma, QuestionSessionType } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
@@ -260,7 +261,7 @@ export class QuestionBankService {
 
   private shuffleArray<T>(array: T[]): void {
     for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = randomInt(0, i + 1);
       [array[i], array[j]] = [array[j], array[i]];
     }
   }
