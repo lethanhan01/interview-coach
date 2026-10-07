@@ -77,7 +77,7 @@ export const MotionDemo: React.FC = () => {
                   key={`${d.varName}-${animateKey}`}
                   className="h-full bg-blue-600 rounded-md flex items-center justify-end px-3 text-white text-[10px] font-mono shadow-sm"
                   style={{
-                    width: isReducedMotion ? '100%' : '100%',
+                    width: '100%',
                     transitionProperty: 'transform, width',
                     transitionDuration: isReducedMotion ? '0ms' : `var(${d.varName})`,
                     animation: isReducedMotion ? 'none' : `slide-demo-${d.name} var(${d.varName}) ease-in-out`,

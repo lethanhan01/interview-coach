@@ -7,9 +7,15 @@ expect.extend(toHaveNoViolations)
 
 // Mock ResizeObserver for Radix UI
 class ResizeObserverMock {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
+  observe() {
+    // Mock implementation for Vitest
+  }
+  unobserve() {
+    // Mock implementation for Vitest
+  }
+  disconnect() {
+    // Mock implementation for Vitest
+  }
 }
 window.ResizeObserver = ResizeObserverMock
 
@@ -27,5 +33,9 @@ if (typeof window.PointerEvent === 'undefined') {
 
 // Mock HTMLElement.prototype.hasPointerCapture for Radix UI
 HTMLElement.prototype.hasPointerCapture = () => false
-HTMLElement.prototype.setPointerCapture = () => {}
-HTMLElement.prototype.releasePointerCapture = () => {}
+HTMLElement.prototype.setPointerCapture = () => {
+  // Mock implementation for Vitest
+}
+HTMLElement.prototype.releasePointerCapture = () => {
+  // Mock implementation for Vitest
+}

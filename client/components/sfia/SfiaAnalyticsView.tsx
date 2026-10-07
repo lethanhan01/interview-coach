@@ -165,6 +165,8 @@ const SfiaKpiCards = memo(function SfiaKpiCards({
 
       {/* KPI 4: Điểm mù cần hành động */}
       <div
+        role="button"
+        tabIndex={0}
         className={cn(
           'flex flex-col justify-between rounded-xl border p-4 shadow-sm transition-all cursor-pointer',
           stats.blindSpotsCount > 0
@@ -172,6 +174,12 @@ const SfiaKpiCards = memo(function SfiaKpiCards({
             : 'border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/50'
         )}
         onClick={onScrollToBlindSpots}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onScrollToBlindSpots()
+          }
+        }}
         title="Nhấp để cuộn nhanh đến Bảng Điểm mù"
       >
         <div className="flex items-center justify-between">

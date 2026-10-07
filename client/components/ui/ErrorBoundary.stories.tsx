@@ -14,7 +14,6 @@ type Story = StoryObj<typeof ErrorBoundary>
 
 const BuggyComponent = () => {
   throw new Error('I crashed!')
-  return <div>This will not render</div>
 }
 
 export const Default: Story = {

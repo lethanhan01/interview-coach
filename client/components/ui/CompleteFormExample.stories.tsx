@@ -150,7 +150,7 @@ function CompleteForm({ variant }: CompleteFormProps) {
   if (variant === 'errors' && !hasTriggered) {
     setHasTriggered(true)
     // Run validation after mount
-    Promise.resolve().then(() => trigger())
+    void Promise.resolve().then(() => trigger()).catch(console.error)
   }
 
   const onSubmit = async (data: FormValues) => {

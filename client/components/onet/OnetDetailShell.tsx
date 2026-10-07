@@ -245,7 +245,7 @@ export function OnetDetailShell({
               size="sm"
               onClick={() => {
                 if (typeof window !== 'undefined') {
-                  navigator.clipboard?.writeText(window.location.href)
+                  void navigator.clipboard?.writeText(window.location.href)
                   setCopied(true)
                   setTimeout(() => setCopied(false), 2000)
                 }

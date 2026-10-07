@@ -122,7 +122,7 @@ export function OnetSfiaTab({
 
   // Load SFIA Library
   useEffect(() => {
-    onetAdminService.getSfiaLibrary().then(setSfiaLibrary)
+    void onetAdminService.getSfiaLibrary().then(setSfiaLibrary).catch(console.error)
   }, [])
 
   // Auto clear status message after 3 seconds

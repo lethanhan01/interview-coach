@@ -208,7 +208,7 @@ export function OnetSfiaRow({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSaveClick()
+      void handleSaveClick()
     } else if (e.key === 'Escape') {
       e.preventDefault()
       handleCancelClick()

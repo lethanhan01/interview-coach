@@ -198,7 +198,7 @@ export const ColorPalette: React.FC = () => {
   const [copiedVar, setCopiedVar] = useState<string | null>(null)
 
   const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text)
+    void navigator.clipboard.writeText(text)
     setCopiedVar(text)
     setTimeout(() => setCopiedVar(null), 2000)
   }

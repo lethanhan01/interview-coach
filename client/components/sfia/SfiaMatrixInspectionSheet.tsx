@@ -87,7 +87,7 @@ export function SfiaMatrixInspectionSheet({
       }
     }
 
-    loadData()
+    void loadData()
     return () => {
       isCancelled = true
     }

@@ -186,7 +186,7 @@ function SfiaBrowserWorkspace() {
       }
     }
 
-    loadSkillDetail()
+    void loadSkillDetail()
     return () => {
       isCancelled = true
     }

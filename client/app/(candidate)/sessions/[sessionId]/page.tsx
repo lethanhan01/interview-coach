@@ -113,7 +113,7 @@ export default function InterviewPage() {
         setLoading(false)
       }
     }
-    init()
+    void init()
   }, [sessionId, router, loadReadyQuestions])
 
   useEffect(() => {

@@ -146,9 +146,7 @@ export class ReportService {
         skipped: answer?.skipped ?? false,
         overallScore:
           !feedback || feedback.isFallback ? null : feedback.overallScore,
-        modelAnswer: answer?.skipped
-          ? (feedback?.modelAnswer ?? '')
-          : (feedback?.modelAnswer ?? ''),
+        modelAnswer: feedback?.modelAnswer ?? '',
         keyTakeaway:
           feedback?.keyTakeaway ??
           (answer?.skipped

@@ -56,7 +56,7 @@ export const IconGallery: React.FC = () => {
 
   const handleCopy = (name: string) => {
     const importCode = `import { ${name} } from 'lucide-react'`
-    navigator.clipboard.writeText(importCode)
+    void navigator.clipboard.writeText(importCode)
     setCopiedName(name)
     setTimeout(() => setCopiedName(null), 2000)
   }
