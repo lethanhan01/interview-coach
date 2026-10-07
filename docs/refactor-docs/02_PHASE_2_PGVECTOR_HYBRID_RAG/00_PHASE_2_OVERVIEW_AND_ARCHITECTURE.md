@@ -2,9 +2,10 @@
 # (MASTER OVERVIEW, ROADMAP & DETAILED TASK BREAKDOWN)
 
 > **Trạng thái**: Approved / Production Specification  
-> **Áp dụng cho**: PostgreSQL pgvector, `ai-service/app/services/rag/`, `server/src/modules/interview-prep/`  
+> **Cấp độ**: Production Specification (System Architect / Lead Engineer)  
+> **Áp dụng cho**: PostgreSQL 16 `pgvector`, `ai-service/app/services/rag/`, `server/src/modules/interview-prep/`  
 > **Tài liệu tham chiếu**: [00_OVERVIEW_STRATEGIC_BLUEPRINT.md](../00_OVERVIEW_STRATEGIC_BLUEPRINT.md)  
-> **Phiên bản**: 1.1.0  
+> **Phiên bản**: 2.1.0 (Chuẩn hóa toàn diện chuỗi thực thi tuần tự & Thuật ngữ tiếng Anh kỹ thuật)  
 
 ---
 
@@ -51,39 +52,44 @@ Phase 2 được phân rã thành 5 nhiệm vụ kỹ thuật độc lập với
 
 | Thứ tự | Tệp Tài liệu Đặc tả | Trọng tâm Kỹ thuật & Phạm vi Triển khai |
 | :---: | :--- | :--- |
-| **Task 2.1** | [01_PGVECTOR_SCHEMA_AND_MIGRATION.md](01_PGVECTOR_SCHEMA_AND_MIGRATION.md) | Kích hoạt extension `vector`, schema migration PostgreSQL, chỉ mục HNSW, GIN index, triggers tự động cập nhật `tsv_content` và cấu hình Prisma `Unsupported`. |
+| **Task 2.1** | [01_PGVECTOR_SCHEMA_AND_MIGRATION.md](01_PGVECTOR_SCHEMA_AND_MIGRATION.md) | Kích hoạt extension `vector`, schema migration PostgreSQL, Non-blocking HNSW index (`CONCURRENTLY`), GIN index, triggers tự động cập nhật `tsv_content` và cấu hình Prisma `Unsupported`. |
 | **Task 2.2** | [02_BGE_M3_EMBEDDING_AND_BATCH_INGESTION.md](02_BGE_M3_EMBEDDING_AND_BATCH_INGESTION.md) | Triển khai mô hình `BAAI/bge-m3` đa ngữ 1024 chiều, context window 8.192 tokens, batch ingestion pipeline cho ngân hàng câu hỏi và cơ chế đồng bộ vector. |
 | **Task 2.3** | [03_HYBRID_RETRIEVAL_AND_RRF_RANKING.md](03_HYBRID_RETRIEVAL_AND_RRF_RANKING.md) | Tách bạch Dense JD vs Sparse Tech Keywords (khắc phục bẫy zero-match), câu lệnh SQL CTE kết hợp song song và thuật toán hợp nhất thứ hạng Reciprocal Rank Fusion ($k=60$). |
-| **Task 2.4** | [04_CROSS_ENCODER_RERANKER_AND_LATENCY_CACHING.md](04_CROSS_ENCODER_RERANKER_AND_LATENCY_CACHING.md) | Mô hình Cross-Encoder `bge-reranker-base`, cơ chế lọc ứng viên tinh chọn (Top 15 $\to$ Top 5) và tầng Redis Query Cache giảm độ trễ truy vấn lặp lại xuống $< 5\text{ms}$. |
-| **Task 2.5** | [05_NESTJS_INTEGRATION_AND_QUESTION_ALLOCATION.md](05_NESTJS_INTEGRATION_AND_QUESTION_ALLOCATION.md) | Tích hợp vào `QuestionBankService` và luồng `GenerateSessionQuestions`, thay thế Fisher-Yates shuffle bằng semantic ranking, cơ chế fallback tự động và contract tests. |
+| **Task 2.4** | [04_CROSS_ENCODER_RERANKER_AND_LATENCY_CACHING.md](04_CROSS_ENCODER_RERANKER_AND_LATENCY_CACHING.md) | Mô hình Cross-Encoder `bge-reranker-base`, cơ chế lọc ứng viên tinh chọn (Top 15 $\to$ Top 5) và tầng Redis L2 Query Cache giảm Latency truy vấn lặp lại xuống $< 10\text{ms}$. |
+| **Task 2.5** | [05_NESTJS_INTEGRATION_AND_QUESTION_ALLOCATION.md](05_NESTJS_INTEGRATION_AND_QUESTION_ALLOCATION.md) | Tích hợp vào `QuestionBankService` và luồng `GenerateSessionQuestions`, thay thế Fisher-Yates shuffle bằng semantic ranking, cơ chế Fallback tự động và contract tests. |
 
 ---
 
-## 3. LỘ TRÌNH TRIỂN KHAI & TIÊU CHÍ NGHIỆM THU TỔNG THỂ
+## 3. KHUNG BÀN GIAO & LIÊN KẾT TUẦN TỰ (PHASE 2 EXECUTION & HANDOVER PROTOCOL)
 
-```mermaid
-gantt
-    title Kế hoạch Triển khai Phase 2 (pgvector & Hybrid RAG)
-    dateFormat  YYYY-MM-DD
-    section Hạ tầng DB & Extension
-    Task 2.1: pgvector & Prisma Migration       :t2_1, 2026-10-15, 4d
-    section Pipeline Vector Hóa
-    Task 2.2: BGE-M3 Ingestion Pipeline        :t2_2, after t2_1, 5d
-    section Thuật toán Tìm kiếm
-    Task 2.3: Hybrid Retrieval & RRF Ranking    :t2_3, after t2_2, 5d
-    Task 2.4: Cross-Encoder Reranker & Cache   :t2_4, after t2_3, 4d
-    section Tích hợp Hệ thống
-    Task 2.5: NestJS QuestionBankService & Test :t2_5, after t2_4, 4d
-    Nghiệm thu Quality Gate 2                  :milestone, after t2_5, 0d
+### 3.1 Tiền đề Bàn giao Nhận từ Phase 1 (Incoming Handover)
+* Microservice `ai-service` đã vận hành ổn định trên port 8000 (FastAPI + `uv`).
+* `AIGatewayDispatcher` phía NestJS đã thiết lập cơ chế Strict Toggle.
+* Đã vượt qua toàn bộ tiêu chí của **Quality Gate 1**.
+
+### 3.2 Chuỗi Thực thi Tuần tự (Task Sequential Flow)
+```
+Task 2.1 (pgvector Migration) ──> Task 2.2 (BGE-M3 Embedder) ──> Task 2.3 (Hybrid CTE Query)
+                                                                           │
+Task 2.5 (NestJS Integration) <── Task 2.4 (Reranker & Cache) <───────────┘
 ```
 
-### Tiêu chí Nghiệm thu Tổng thể (Quality Gate 2):
+### 3.3 Handover Sang Phase 3 (Phase 2 -> Phase 3 Transition)
+* **Điều kiện hoàn thành Phase 2**: Vượt qua toàn bộ tiêu chí của **Quality Gate 2**.
+* **Đầu ra bàn giao**: Ngân hàng câu hỏi `question_bank` được trang bị vector 1024 chiều và `tsv_content`, pipeline cấp phát câu hỏi theo SFIA/O*NET hoạt động ổn định.
+* **Tài liệu chuyển tiếp**: Chuyển sang Phase 3 tại [00_PHASE_3_OVERVIEW_AND_ARCHITECTURE.md](../03_PHASE_3_DEEP_ASSESSMENT/00_PHASE_3_OVERVIEW_AND_ARCHITECTURE.md) (Task 3.1: Pass 1 STAR Deconstruction).
+
+---
+
+## 4. CHỈ TIÊU NGHIỆM THU TỔNG THỂ (QUALITY GATE 2)
+
 1. **Hiệu năng Toàn trình (End-to-End Latency)**: Đo đạc 100 lượt truy vấn cấp phát câu hỏi:
-   * Độ trễ trung bình $< 180\text{ ms}$.
+   * Average Latency $< 180\text{ ms}$.
    * P99 Latency $< 350\text{ ms}$.
-   * Lượt truy vấn Cache Hit trên Redis $< 10\text{ ms}$.
+   * Lượt truy vấn Cache Hit trên Redis L2 Cache $< 10\text{ ms}$.
 2. **Độ chính xác Nghiệp vụ**:
    * $100\%$ câu hỏi được gợi ý bám sát mã ngành O\*NET và cấp độ SFIA được yêu cầu.
    * Tuyệt đối không lẫn lộn câu hỏi giữa buổi phỏng vấn Technical và HR.
-3. **Tính Ổn định & Chịu lỗi**:
-   * Khi tắt cờ `AI_RAG_PROVIDER=prisma` hoặc Python service ngắt kết nối, NestJS tự động fallback sang SQL query thuần mà không làm đứt đoạn tiến trình tạo phiên của người dùng.
+3. **Tính Ổn định & Chịu lỗi (Zero-Downtime Fallback)**:
+   * Quá trình tạo index HNSW không gây Table Lock trên production database (`CREATE INDEX CONCURRENTLY`).
+   * Khi đổi cờ `AI_RAG_PROVIDER=prisma` hoặc Python service ngắt kết nối, NestJS tự động Fallback sang SQL query thuần mà không làm đứt đoạn tiến trình tạo phiên của người dùng.

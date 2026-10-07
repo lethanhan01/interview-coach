@@ -3,9 +3,9 @@
 
 > **Trạng thái**: Approved / Production Specification  
 > **Cấp độ**: Deep Technical Specification (Containerization & Local/Prod Orchestration)  
-> **Áp dụng cho**: `ai-service/Dockerfile`, `server/Dockerfile`, `client/Dockerfile`, `docker-compose.yml`  
+> **Áp dụng cho**: `ai-service/Dockerfile`, `server/Dockerfile`, `client/Dockerfile`, `docker-compose.yml`, `.env.example`  
 > **Tài liệu cha**: [00_PHASE_5_OVERVIEW_AND_ARCHITECTURE.md](00_PHASE_5_OVERVIEW_AND_ARCHITECTURE.md)  
-> **Phiên bản**: 2.0.0  
+> **Phiên bản**: 2.1.0 (Chuẩn hóa toàn diện chuỗi thực thi tuần tự & Thuật ngữ tiếng Anh kỹ thuật)  
 
 ---
 
@@ -18,16 +18,17 @@ Bản thiết kế Docker ban đầu bộc lộ **3 điểm yếu nghiêm trọn
    * *Giải pháp khắc phục*: Sử dụng công cụ **`uv`** (Astral) giúp tăng tốc độ cài đặt dependencies lên gấp 10-20 lần, kết hợp Multi-Stage Build để tách riêng 2 target: `cpu` (~1.2GB cho CI/Local) và `cuda` (~3.8GB cho GPU Production).
 2. **Lộ Lọt Bí Mật Hệ Thống (Hardcoded Secrets trong Compose)**:
    * Bản thảo cũ gán cứng `POSTGRES_PASSWORD: postgrespassword` và `INTERNAL_SECRET: shared_secret_token_123` ngay trong file compose theo dõi bởi Git.
-   * *Giải pháp khắc phục*: Bắt buộc chuyển sang sử dụng tệp `.env` riêng biệt có kiểm tra schema biến môi trường, tuyệt đối không commit file chứa secret vào Git.
+   * *Giải pháp khắc phục*: Bắt buộc chuyển sang sử dụng tệp `.env` riêng biệt có kiểm tra schema biến môi trường, tuyệt đối không commit file chứa secret vào Git. Cung cấp tệp `.env.example` với các biến bắt buộc rõ ràng.
 3. **Frontend Next.js Kém Tối Ưu**:
    * Chưa áp dụng chế độ `output: "standalone"` của Next.js, khiến container frontend phải vác theo toàn bộ thư mục `node_modules` phát triển (nặng > 1GB thay vì < 180MB).
+   * *Giải pháp khắc phục*: Bật cấu hình `output: "standalone"` trong `next.config.js`, copy chỉ các file tối thiểu cần thiết vào runner container.
 
 ---
 
 ## 2. MULTI-STAGE DOCKERFILE CHO TỪNG THÀNH PHẦN
 
 ### 2.1 Python AI Service (`ai-service/Dockerfile`)
-Sử dụng `uv` kết hợp cache mount để tối ưu hóa thời gian build:
+Sử dụng `uv` kết hợp cache mount để tối ưu hóa thời gian build và chia tách 2 targets:
 
 ```dockerfile
 # syntax=docker/dockerfile:1.4
@@ -39,7 +40,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Cài đặt uv từ image chính thức
+# Cài đặt uv từ image chính thức của Astral
 COPY --from=ghcr.io/astral-sh/uv:0.4.18 /uv /bin/uv
 
 # Thư viện âm thanh hệ thống bắt buộc cho ffmpeg & libsndfile
@@ -89,7 +90,7 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--worker
 ```
 
 ### 2.2 NestJS Backend (`server/Dockerfile`)
-Tách riêng layer build và runtime `node:20-alpine` siêu nhẹ:
+Tách riêng layer build và runner `node:20-alpine` siêu nhẹ:
 
 ```dockerfile
 FROM node:20-alpine AS builder
@@ -243,11 +244,41 @@ volumes:
 
 ---
 
-## 4. TIÊU CHÍ NGHIỆM THU (QUALITY GATES)
+## 4. TASK EXECUTION CONTRACT
 
-1. **Thời Gian Build Siêu Tốc**: Nhờ `uv` và Docker layer cache, thời gian rebuild code Python chỉ mất $< 20\text{ giây}$.
-2. **Kích Thước Image Tối Ưu**:
-   * Image `ai-service:cpu` $< 1.3\text{ GB}$.
-   * Image `server` $< 200\text{ MB}$.
-   * Image `client` $< 180\text{ MB}$.
-3. **Khởi Động 1-Lệnh Hoàn Hảo**: Lệnh `docker compose up -d` tự động khởi chạy 5 container theo đúng thứ tự phụ thuộc, tất cả đều đạt trạng thái `healthy` trong $< 45\text{ giây}$.
+### 4.1 Prerequisites (Điều kiện tiên quyết)
+* Mã nguồn đầy đủ của 3 thành phần monorepo: `client/`, `server/`, và `ai-service/`.
+* Docker Engine phiên bản $\ge 24.0$ và Docker Compose phiên bản $\ge 2.20$.
+* Tệp `.env` cục bộ được khởi tạo từ mẫu `.env.example` với các khóa bắt buộc: `DB_PASSWORD`, `INTERNAL_SECRET`.
+
+### 4.2 Target Deliverables (Sản phẩm bàn giao)
+* `ai-service/Dockerfile`: Multi-stage build hỗ trợ target `cpu` và `cuda` dùng `uv`.
+* `server/Dockerfile`: Multi-stage build trên nền `node:20-alpine` tách biệt builder và runner.
+* `client/Dockerfile`: Multi-stage build áp dụng `standalone` mode cho Next.js 14.
+* `docker-compose.yml`: Cấu hình điều phối 5 dịch vụ (`postgres`, `redis`, `ai-service`, `server`, `client`) có gắn healthcheck và dependency cascade.
+* `.env.example`: Danh mục biến môi trường chuẩn hóa có comment hướng dẫn bảo mật.
+
+### 4.3 Verification Commands (Lệnh kiểm thử xác thực)
+* **Tier 1 (Cấu hình & Cú pháp)**:
+  ```bash
+  # Kiểm tra tính hợp lệ của cú pháp Compose mà không khởi chạy
+  docker compose config
+  ```
+* **Tier 2 (Khởi chạy Tích hợp Thực tế)**:
+  ```bash
+  # Build tất cả các image và chạy background
+  docker compose build
+  docker compose up -d
+
+  # Xác nhận tất cả container đều đạt trạng thái healthy
+  docker compose ps
+  ```
+
+### 4.4 Definition of Done [DoD]
+* [ ] Image `ai-service:cpu` có dung lượng $< 1.3\text{ GB}$; image `server` $< 200\text{ MB}$; image `client` $< 180\text{ MB}$.
+* [ ] Thời gian rebuild mã nguồn Python qua `uv` cache mount hoàn tất trong $< 20\text{ giây}$.
+* [ ] Lệnh `docker compose up -d` khởi động 5 container theo đúng thứ tự phụ thuộc, tất cả đều đạt trạng thái `healthy` trong $< 45\text{ giây}$.
+* [ ] Tuyệt đối không có secret bị gán cứng (hardcoded) trong `docker-compose.yml`.
+
+### 4.5 Next Task Transition (Chuyển tiếp Nhiệm vụ)
+* Sau khi Task 5.1 hoàn tất và bộ container mẫu hoạt động ổn định, chuyển giao môi trường build và Docker image sang **Task 5.2** ([02_CI_CD_PIPELINE_AND_AUTOMATED_CONTRACT_TESTS.md](02_CI_CD_PIPELINE_AND_AUTOMATED_CONTRACT_TESTS.md)) để tích hợp vào GitHub Actions CI/CD matrix và tự động chạy Contract Testing Suite.

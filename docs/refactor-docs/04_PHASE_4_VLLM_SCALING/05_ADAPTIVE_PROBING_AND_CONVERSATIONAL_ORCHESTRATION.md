@@ -90,3 +90,40 @@ Khi đẩy job vào hàng đợi BullMQ `feedback.processor`, toàn bộ đoạn
 1. **Tuyệt Đối Tuân Thủ Ngân Sách**: Không bao giờ hỏi quá 1 lần (đối với Junior) hoặc quá 2 lần (đối với Senior) trên một câu hỏi đơn lẻ.
 2. **Thời Gian Sinh Câu Hỏi Phụ Siêu Tốc**: Từ lúc ứng viên dứt lời trả lời ban đầu đến khi AI bắt đầu cất giọng hỏi xoáy $< 900\text{ ms}$ (Latency tổng từ vLLM $\to$ Kokoro TTS).
 3. **Độ Chuẩn Xác Ngữ Nghĩa**: $100\%$ các câu hỏi xoáy sinh ra phải liên quan trực tiếp đến nội dung ứng viên vừa trình bày, không phát sinh câu hỏi lệch chủ đề.
+
+---
+
+## 6. TASK EXECUTION CONTRACT
+
+### 6.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 4.4**: Pipeline Smart VAD Barge-in đã tích hợp hoàn tất.
+- [ ] vLLM cụm suy luận hoạt động với model `Qwen 2.5 32B AWQ` hoặc OpenAI Cloud Fallback.
+
+### 6.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `server/src/modules/interview-live/services/adaptive-probing.service.ts`: Lớp `AdaptiveProbingService` quyết định có nên hỏi xoáy dựa trên STAR heuristic & ngân sách.
+- [ ] `server/src/modules/interview-live/services/multi-turn-transcript.manager.ts`: Lớp quản lý nối ghép hội thoại đa lượt chuẩn bị cho pipeline chấm điểm Phase 3.
+- [ ] `server/test/unit/adaptive-probing.service.spec.ts`: Bộ unit test kiểm tra budget control và prompt logic.
+
+### 6.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 1**: Giao tiếp liên module tuân thủ Clean Architecture; logic lưu transcript vào DB dùng `prisma.$transaction`.
+- [x] **Backend Rule 2**: Controllers chỉ nhận DTO và chuyển tiếp logic sang `AdaptiveProbingService`.
+
+### 6.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (NestJS Adaptive Probing Unit Test)
+cd server && npm run test -- src/modules/interview-live/services/adaptive-probing.service.spec.ts
+
+# Tier 2 (Live Conversational Probing E2E Test)
+cd server && npm run test:e2e -- test/e2e/adaptive-probing-flow.e2e-spec.ts
+```
+
+### 6.5 Definition of Done (DoD)
+- [ ] **Quality Gate 4 Approved 100%**.
+- [ ] Tuân thủ nghiêm ngặt ngân sách hỏi xoáy: $\le 1$ lần cho Junior và $\le 2$ lần cho Senior.
+- [ ] Tổng thời gian sinh câu hỏi phụ $< 900\text{ms}$ từ lúc ứng viên dứt lời đến khi nghe thấy tiếng AI.
+- [ ] Đoạn transcript đa lượt nối ghép chuẩn xác format và lưu vào `user_answers.transcriptText`.
+
+### 6.6 Next Task Transition (Bước chuyển tiếp)
+- **HOÀN THÀNH PHASE 4 (VLLM SCALING & ADVANCED CAPABILITIES)**.
+- Bàn giao sang **Phase 5 (Enterprise SRE, DevOps & Operations)**: Bắt đầu tại [01_POLYGLOT_MONOREPO_AND_MULTI_STAGE_CONTAINERS.md](../05_PHASE_5_DEV_OPS_INFRA/01_POLYGLOT_MONOREPO_AND_MULTI_STAGE_CONTAINERS.md) để chuẩn hóa Monorepo, CI/CD và SRE Production Hardening.
+

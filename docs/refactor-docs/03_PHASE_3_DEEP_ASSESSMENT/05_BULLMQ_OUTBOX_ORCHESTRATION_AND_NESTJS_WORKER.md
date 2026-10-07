@@ -237,3 +237,45 @@ export class FeedbackProcessor extends WorkerHost {
 1. **Xử lý Đồng thời Không Nghẽn**: Chạy kiểm thử tải với 50 câu trả lời nộp đồng thời, không có job nào bị mất mát (0% job loss) và không gây tràn RAM/Redis.
 2. **Toàn vẹn Transaction**: Nếu quá trình ghi `annotated_segments` bị lỗi, transaction tự động rollback $100\%$, không để lại bản ghi rác mồ côi.
 3. **Phản hồi Realtime Chuẩn xác**: Event `feedback:ready` được client nhận trong $< 300\text{ms}$ ngay sau khi transaction commit thành công.
+
+---
+
+## 6. TASK EXECUTION CONTRACT
+
+### 6.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 3.4**: Thuật toán `ScoringEngineService` đã được cài đặt và vượt qua bộ test tính tất định.
+- [ ] Redis BullMQ queue `workflow-jobs` đã sẵn sàng và kết nối thành công.
+- [ ] Database PostgreSQL có đầy đủ các bảng `ai_feedbacks`, `annotated_segments`, `user_answers`, `session_skills`.
+
+### 6.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `server/src/modules/interview-assessment/evaluation/feedback/feedback.processor.ts`: BullMQ Worker kéo job `evaluate-answer`, gọi Python REST API, bọc ghi dữ liệu trong 1 `prisma.$transaction`.
+- [ ] `server/src/infrastructure/ai/python-ai.gateway.ts`: Mở rộng phương thức `evaluateTurnAnswer()` gọi sang Python `/api/v1/assessment/evaluate`.
+- [ ] `server/src/modules/interview-assessment/contracts/assessment-facade.service.ts`: Export method `enqueueEvaluationJob()`.
+- [ ] `server/test/contracts/python-assessment.contract.spec.ts`: Jest Contract Test trên fixture `assessment-evaluate-response.fixture.json`.
+
+### 6.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 1**: Toàn bộ luồng đánh giá liên module được kích hoạt qua `AssessmentFacade`.
+- [x] **Backend Rule 2**: Controllers không chứa logic kéo/đẩy queue hay gọi Prisma trực tiếp.
+- [x] **Backend Rule 3**: Ném ngoại lệ chuẩn `InterviewAIException(ErrorCode.EVALUATION_FAILED, ...)`.
+- [x] **Backend Rule 5**: Toàn bộ việc lưu `aiFeedback`, `annotatedSegments`, cập nhật `userAnswer` và `sessionSkills` nằm trong duy nhất một `prisma.$transaction`.
+
+### 6.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (NestJS Feedback Processor Unit Test)
+cd server && npm run test -- src/modules/interview-assessment/evaluation/feedback/feedback.processor.spec.ts
+
+# Tier 2 (Live BullMQ Outbox Processing E2E Test)
+cd server && npm run test:e2e -- test/e2e/turn-evaluation-outbox.e2e-spec.ts
+```
+
+### 6.5 Definition of Done (DoD)
+- [ ] **Quality Gate 3 Approved 100%**.
+- [ ] Xử lý tải 50 jobs đồng thời không mất mát dữ liệu (0% job loss), không rò rỉ bộ nhớ Redis.
+- [ ] Toàn vẹn ACID Transaction: Lỗi ghi chép ở bất kỳ bảng con nào đều kích hoạt rollback 100%.
+- [ ] Event `feedback:ready` bắn qua SSE về client trong $< 300\text{ms}$ sau khi transaction commit.
+- [ ] Idempotency: Gửi lại cùng một answerId không tạo ra duplicate feedback.
+
+### 6.6 Next Task Transition (Bước chuyển tiếp)
+- **HOÀN THÀNH PHASE 3 (DEEP ASSESSMENT & SEMANTIC SCORING)**.
+- Bàn giao sang **Phase 4 (vLLM Scaling & Full-Duplex Conversational Interviewer)**: Bắt đầu tại [01_VLLM_CONTAINER_DEPLOYMENT_AND_QUANTIZATION.md](../04_PHASE_4_VLLM_SCALING/01_VLLM_CONTAINER_DEPLOYMENT_AND_QUANTIZATION.md).
+

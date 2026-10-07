@@ -126,3 +126,40 @@ stateDiagram-v2
 1. **Tần Suất Cắt Mẫu Chuẩn Xác**: `AudioWorklet` gửi chunk đều đặn $200\text{ ms} \pm 5\text{ ms}$ mà không bị trôi thời gian (drift).
 2. **Không Treo Trình Duyệt**: Khi chạy liên tục trong phiên phỏng vấn 45 phút, mức tiêu thụ CPU của tab trình duyệt $< 6\%$ và không có rò rỉ bộ nhớ (Memory Leak).
 3. **Chuyển Trạng Thái Tức thì**: Thời gian từ khi chuyển sang `INTERRUPTED` đến khi loa dừng phát âm thanh hoàn toàn $< 120\text{ ms}$.
+
+---
+
+## 6. TASK EXECUTION CONTRACT
+
+### 6.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 4.2**: NestJS AI Gateway đã kết nối ổn định với cụm vLLM và OpenAI Cloud Fallback.
+- [ ] Trình duyệt hỗ trợ Web Audio API và `AudioWorkletNode` (`secure context` HTTPS hoặc `localhost`).
+- [ ] NestJS WebSockets Gateway (`@nestjs/websockets`, `ws` hoặc `socket.io`) đã được cấu hình.
+
+### 6.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `client/public/audio-processors/pcm-recorder-processor.js`: File processor thu âm PCM 16kHz mono float32 chạy ngoài main thread.
+- [ ] `server/src/modules/realtime/interview-duplex.gateway.ts`: WebSocket Gateway kết nối 2 chiều giữa Client và Python AI Service qua Binary Framing 5-bytes.
+- [ ] `client/hooks/useDuplexInterview.ts`: React Hook quản lý Finite State Machine (FSM) và kết nối socket.
+
+### 6.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 1**: Realtime Gateway cô lập trong `@modules/realtime/`, tương tác qua facades.
+- [x] **Frontend Rule 1 & 4**: Tích hợp giao diện không memory leak AudioContext, tái sử dụng các components UI từ `@/components/ui/`.
+
+### 6.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (Client AudioWorklet Unit Test)
+cd client && npm run test -- tests/audio-worklet.spec.ts
+
+# Tier 2 (WebSocket Binary Frame Echo Test)
+cd server && npm run test:e2e -- test/e2e/duplex-websocket.e2e-spec.ts
+```
+
+### 6.5 Definition of Done (DoD)
+- [ ] `AudioWorklet` gửi chunk âm thanh đều đặn $200\text{ms} \pm 5\text{ms}$ không làm lag UI main thread.
+- [ ] Mức tiêu thụ CPU trình duyệt $< 6\%$ trong phiên đàm thoại kéo dài 45 phút.
+- [ ] Time-to-First-Audio (TTFA) $< 800\text{ms}$ (P95).
+- [ ] Dừng phát âm thanh trên loa trong $< 120\text{ms}$ khi nhận tín hiệu ngắt `INTERRUPTED`.
+
+### 6.6 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 4.4: Smart VAD Barge-in & Latency Pipeline**: [04_SMART_VAD_BARGE_IN_AND_LATENCY_PIPELINE.md](04_SMART_VAD_BARGE_IN_AND_LATENCY_PIPELINE.md) để tích hợp Silero VAD và giải phóng tài nguyên GPU khi bị ngắt lời.
+

@@ -597,3 +597,48 @@ describe('MediaController', () => {
   });
 });
 ```
+
+---
+
+## 7. TASK EXECUTION CONTRACT
+
+### 7.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 1.4**: Toàn bộ Contract Tests giữa NestJS và Python đã pass trên shared fixtures.
+- [ ] Python AI Microservice có thể chạy cục bộ trên port 8000 (hoặc qua mock Axios trong unit test).
+- [ ] Đã có bảng `user_answers` với cột `voice_metrics_json` trong PostgreSQL database.
+
+### 7.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `server/src/modules/media/media.controller.ts`: Controller nhận file upload, validation MIME type, ủy quyền hoàn toàn cho `MediaFacade`.
+- [ ] `server/src/modules/media/contracts/media-facade.service.ts`: Mở rộng phương thức `transcribeAudio(buffer, mimeType, language)` và `synthesizeSpeech()`.
+- [ ] `server/src/infrastructure/ai/python-ai.gateway.ts`: Implementation gọi HTTP client sang Python `ai-service` với timeout và secret header.
+- [ ] `server/src/infrastructure/ai/ai-gateway-dispatcher.service.ts`: Dispatcher định tuyến theo `AI_STT_PROVIDER=python|openai`.
+- [ ] `server/src/modules/interview-live/turn/voice-answer-intake.handler.ts`: Bọc `prisma.$transaction` lưu câu trả lời, `voiceMetricsJson` và outbox job.
+- [ ] `client/components/interview/VoiceRecorder.tsx`: Nâng cấp giao diện Two-Step Voice Flow (Transcribe $\to$ Review/Edit $\to$ Submit Turn).
+
+### 7.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 1**: Giao tiếp liên module thông qua `@modules/media/contracts/MediaFacade`.
+- [x] **Backend Rule 2**: `MediaController` không bao giờ import Prisma, BullMQ hay vendor SDKs.
+- [x] **Backend Rule 3**: Ném ngoại lệ tập trung qua `InterviewAIException(ErrorCode.XYZ, HttpStatus.XYZ)`.
+- [x] **Backend Rule 5**: Thao tác ghi DB nhiều bảng được bọc trong `prisma.$transaction`.
+- [x] **Frontend Rules**: `VoiceRecorder.tsx` sử dụng tokenized props, CVA, và không hardcode arbitrary brackets.
+
+### 7.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (NestJS Media Controller & Facade Unit Test)
+cd server && npm run test -- src/modules/media/media.controller.spec.ts
+
+# Tier 2 (Live E2E Two-Step Flow Test)
+# Khởi động stack và chạy kiểm thử tích hợp
+cd server && npm run test:e2e -- test/e2e/two-step-voice-flow.e2e-spec.ts
+```
+
+### 7.5 Definition of Done (DoD)
+- [ ] **Quality Gate 1 Approved 100%**.
+- [ ] Ứng viên tải audio lên `POST /api/v1/media/transcribe` nhận về transcript và metrics trong $< 1.5\text{s}$.
+- [ ] Đổi biến môi trường `AI_STT_PROVIDER=openai`, hệ thống chuyển hướng tự động sang OpenAI Whisper API không cần sửa code.
+- [ ] Bảng `user_answers` lưu trọn vẹn `voiceMetricsJson` (WPM, pause count, filler words) sau khi ứng viên bấm submit turn.
+
+### 7.6 Next Task Transition (Bước chuyển tiếp)
+- **HOÀN THÀNH PHASE 1 (PILOT AUDIO ENGINE)**.
+- Bàn giao sang **Phase 2 (PostgreSQL pgvector & Hybrid RAG)**: Bắt đầu tại [01_PGVECTOR_SCHEMA_AND_MIGRATION.md](../02_PHASE_2_PGVECTOR_HYBRID_RAG/01_PGVECTOR_SCHEMA_AND_MIGRATION.md).
+

@@ -150,3 +150,44 @@ Hệ thống hỗ trợ 2 cơ chế đồng bộ vector cho câu hỏi mới:
 2. **Chuẩn hóa L2**: Độ dài chuẩn $||\mathbf{v}||_2 = \sqrt{\sum v_i^2} \approx 1.0 \pm 0.001$.
 3. **Xử lý Ngoại lệ**: Nếu câu hỏi chứa ký tự đặc biệt, HTML tags hoặc rỗng, hàm xử lý an toàn không gây dừng đột ngột (crash) quy trình.
 4. **Idempotency**: Chạy lại service ingestion nhiều lần không tạo ra các bản ghi trùng lặp và bỏ qua an toàn các bản ghi đã có vector.
+
+---
+
+## 6. TASK EXECUTION CONTRACT
+
+### 6.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 2.1**: Cột `embedding vector(1024)` đã được tạo trong bảng `question_bank`.
+- [ ] Cài đặt các thư viện `sentence-transformers`, `torch`, `psycopg2-binary` trong `ai-service/pyproject.toml`.
+- [ ] Cấu hình biến môi trường kết nối database `DATABASE_URL` trong `ai-service/.env`.
+
+### 6.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `ai-service/app/services/rag/embedder.py`: Singleton `BGEEmbedder` nạp model `BAAI/bge-m3` sinh dense vector 1024 chiều.
+- [ ] `ai-service/app/services/rag/ingestion.py`: Lớp `KnowledgeBaseIngestionService` đọc câu hỏi chưa có vector và cập nhật theo batch 64.
+- [ ] `ai-service/app/schemas/rag.py`: Pydantic Models `EmbedRequest`, `EmbedResponse` (kế thừa `CamelModel`).
+- [ ] `ai-service/app/api/v1/rag.py`: Endpoints `POST /api/v1/rag/embed` và `POST /api/v1/rag/sync-embeddings`.
+
+### 6.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 5**: Toàn bộ thao tác nhúng vector là Stateless Compute; cập nhật batch vào DB an toàn và idempotent.
+- [x] **Zero Schema Drift**: DTO và JSON payload luôn ở định dạng `camelCase`.
+
+### 6.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (Unit & Embedding Dimension Test)
+cd ai-service && uv run pytest tests/unit/test_embedder.py -v
+
+# Tier 2 (Live Batch Ingestion & Dimension Verification)
+curl -X POST -H "x-internal-secret: interviewai-super-secret-dev-key-change-in-prod" \
+  -H "Content-Type: application/json" \
+  -d '{"texts":["Làm thế nào để thiết kế hệ thống phân tán chịu lỗi cao?"]}' \
+  http://localhost:8000/api/v1/rag/embed
+```
+
+### 6.5 Definition of Done (DoD)
+- [ ] Vector sinh ra có đúng $1024$ chiều float32 và chuẩn hóa L2 norm $\approx 1.0$.
+- [ ] Throughput mã hóa đạt $\ge 250\text{ câu/giây}$ trên GPU ($\ge 35\text{ câu/giây}$ trên CPU).
+- [ ] Toàn bộ câu hỏi trong `question_bank` được backfill vector mà không bị lỗi dữ liệu.
+- [ ] Chạy lại lệnh ingestion nhiều lần không phát sinh lỗi trùng lặp (Idempotent 100%).
+
+### 6.6 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 2.3: Hybrid Retrieval CTE Query & RRF**: [03_HYBRID_RETRIEVAL_AND_RRF_RANKING.md](03_HYBRID_RETRIEVAL_AND_RRF_RANKING.md) để xây dựng truy vấn kết hợp Dense và Sparse search.
+

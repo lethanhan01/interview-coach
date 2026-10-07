@@ -584,3 +584,42 @@ X-Request-Id: req-internal-auto
 
 {"status":"ok"}
 ```
+
+---
+
+## 7. TASK EXECUTION CONTRACT
+
+### 7.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Môi trường máy chủ hoặc máy dev cài sẵn Python 3.11+ và công cụ `uv` (`curl -LsSf https://astral.sh/uv/install.sh | sh`).
+- [ ] Docker engine và buildx đã cài đặt.
+- [ ] Tham chiếu template Docker Compose tại [Task 5.1 (Multi-stage Containers & Docker Compose)](../05_PHASE_5_DEV_OPS_INFRA/01_POLYGLOT_MONOREPO_AND_MULTI_STAGE_CONTAINERS.md).
+
+### 7.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `ai-service/pyproject.toml`: Khai báo FastAPI, Uvicorn, Pydantic v2, PyAV, Structlog.
+- [ ] `ai-service/app/main.py`: FastAPI application entrypoint, lifespan event nạp model, middlewares & router.
+- [ ] `ai-service/app/core/config.py`: Pydantic BaseSettings đọc biến môi trường (`AI_PORT`, `INTERNAL_AI_SECRET`).
+- [ ] `ai-service/app/core/security.py`: Middleware kiểm tra header `x-internal-secret` với `hmac.compare_digest`.
+- [ ] `ai-service/app/core/logging.py`: Structlog cấu hình JSON structured logging với `latencyMs`.
+- [ ] `ai-service/app/core/exceptions.py`: Standard Error Envelope (`InterviewAIException` compatible).
+- [ ] `ai-service/app/schemas/base.py`: `CamelModel` cơ sở (`alias_generator=to_camel`, `populate_by_name=True`).
+- [ ] `ai-service/app/api/v1/health.py`: Endpoints `GET /healthz` và `GET /ready`.
+
+### 7.3 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (Contract & Unit Verification - Fast & Mocked)
+cd ai-service && uv run pytest tests/unit/test_health.py -v
+
+# Tier 2 (Live Integration Verification)
+curl -i -H "x-internal-secret: interviewai-super-secret-dev-key-change-in-prod" http://localhost:8000/healthz
+```
+
+### 7.4 Definition of Done (DoD)
+- [ ] Endpoint `GET /healthz` trả về HTTP 200 `{"status": "ok"}`.
+- [ ] Endpoint `GET /ready` trả HTTP 503 khi khởi động và HTTP 200 khi model nạp xong.
+- [ ] 100% log in ra dạng JSON Structlog có gắn `x-request-id` và `latencyMs`.
+- [ ] Header `x-internal-secret` sai hoặc thiếu bị chặn với HTTP 403 `{"errorCode": "UNAUTHORIZED_INTERNAL_CALL"}`.
+- [ ] Tuân thủ quy tắc Stateless Compute: không ghi file tạm, không lưu session bộ nhớ.
+
+### 7.5 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 1.2: STT Pipeline**: [02_STT_PIPELINE_FASTER_WHISPER_AND_METRICS.md](02_STT_PIPELINE_FASTER_WHISPER_AND_METRICS.md) để xây dựng pipeline PyAV In-memory decoding, Silero VAD và faster-whisper.
+

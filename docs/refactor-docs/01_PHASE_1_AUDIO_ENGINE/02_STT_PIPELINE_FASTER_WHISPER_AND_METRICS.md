@@ -529,3 +529,42 @@ def test_filler_words_detection_bilingual():
     assert "ừm" in metrics.filler_words
     assert "basically" in metrics.filler_words
 ```
+
+---
+
+## 8. TASK EXECUTION CONTRACT
+
+### 8.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 1.1**: `ai-service/` đã khởi tạo thành công với FastAPI, `uv`, và Structlog.
+- [ ] Dependencies `faster-whisper`, `av`, `torch`, `soundfile` đã được cài đặt trong `pyproject.toml`.
+- [ ] Cài đặt sẵn thư viện hệ thống `ffmpeg` và `libavcodec-dev` trên môi trường chạy hoặc Docker.
+
+### 8.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `ai-service/app/services/stt/audio_decoder.py`: Lớp `AudioDecoder` giải mã In-Memory Buffer (WebM, WAV, MP4) sang PCM 16kHz float32.
+- [ ] `ai-service/app/services/stt/vad_filter.py`: Lớp `VADFilter` sử dụng Silero VAD lọc tĩnh lặng & đếm hesitation pauses ($> 1.2\text{s}$).
+- [ ] `ai-service/app/services/stt/whisper_engine.py`: Singleton `WhisperEngine` quản lý model `faster-whisper` CTranslate2.
+- [ ] `ai-service/app/services/stt/metrics_extractor.py`: Lớp `MetricsExtractor` tính WPM, bóc tách bilingual filler words.
+- [ ] `ai-service/app/schemas/stt.py`: Pydantic Models `STTResponse`, `VoiceMetrics` (kế thừa `CamelModel`).
+- [ ] `ai-service/app/api/v1/stt.py`: Endpoint `POST /api/v1/stt/transcribe` nhận `UploadFile`.
+
+### 8.3 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (Contract & Unit Verification - Fast & Mocked)
+cd ai-service && uv run pytest tests/unit/test_stt.py -v
+
+# Tier 2 (Live Integration Verification)
+curl -X POST -H "x-internal-secret: interviewai-super-secret-dev-key-change-in-prod" \
+  -F "file=@tests/fixtures/sample.webm" \
+  http://localhost:8000/api/v1/stt/transcribe
+```
+
+### 8.4 Definition of Done (DoD)
+- [ ] In-Memory Buffer xử lý trực tiếp trên RAM, không xuất hiện bất kỳ file tạm nào trong `/tmp` hay ổ cứng.
+- [ ] 100% thuộc tính JSON trả về định dạng `camelCase` (`transcript`, `wpmCount`, `fillerWordsCount`, `speechDurationSeconds`).
+- [ ] Đo đạc Word Error Rate (WER) $< 8\%$ trên bộ audio test kỹ thuật IT.
+- [ ] Latency xử lý audio 60 giây $< 1.2\text{s}$ trên GPU ($< 3.5\text{s}$ trên CPU 8 nhân).
+- [ ] File hỏng hoặc rỗng ném ngoại lệ đúng Standard Error Envelope với HTTP 400 và `errorCode: AUDIO_EMPTY`.
+
+### 8.5 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 1.3: Hybrid TTS Pipeline**: [03_TTS_PIPELINE_HYBRID_KOKORO_AND_EDGE_TTS.md](03_TTS_PIPELINE_HYBRID_KOKORO_AND_EDGE_TTS.md) để xây dựng hệ thống phát âm câu hỏi đa ngữ.
+

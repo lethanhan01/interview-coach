@@ -89,3 +89,44 @@ class Pass1ExtractionResponse(CamelModel):
 1. **Độ chính xác Trích dẫn (Evidence Fidelity)**: $100\%$ chuỗi trong `evidence` phải tồn tại chính xác trong `answerText` gốc của ứng viên.
 2. **Tuân thủ Tiêu chí Nhị phân**: Không có trường hợp nào trả về giá trị null cho trường `passed`.
 3. **Thời gian Thực thi**: P95 Latency của Pass 1 $< 4.5\text{ giây}$.
+
+---
+
+## 6. TASK EXECUTION CONTRACT
+
+### 6.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành toàn bộ **Phase 2** (Quality Gate 2 Approved).
+- [ ] LLM client (OpenAI hoặc local vLLM adapter) được cấu hình trong `ai-service/app/core/llm.py`.
+- [ ] Pydantic v2 `CamelModel` cơ sở đã sẵn sàng tại `ai-service/app/schemas/base.py`.
+
+### 6.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `ai-service/app/services/assessment/pass1_extractor.py`: Lớp `Pass1ExtractorService` bóc tách 4 thành phần STAR và đánh giá nhị phân rubric.
+- [ ] `ai-service/app/schemas/assessment.py`: Pydantic Models `Pass1ExtractionResponse`, `STARAnalysisResult`, `EvaluatedCriterionItem` (kế thừa `CamelModel`).
+- [ ] `ai-service/app/prompts/assessment_pass1.py`: System prompt bóc tách cấu trúc và rubric evaluation.
+- [ ] `ai-service/app/api/v1/assessment.py`: Endpoint nội bộ `POST /api/v1/assessment/pass1`.
+
+### 6.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 5**: AI Isolation; prompt và response schema được kiểm thực chặt chẽ qua Pydantic structured output.
+- [x] **Zero Schema Drift**: 100% thuộc tính trả về định dạng `camelCase` (`starCompletenessRatio`, `hasConcreteEvidence`, `deductionReason`).
+
+### 6.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (Unit & Mocked LLM Extraction Test)
+cd ai-service && uv run pytest tests/unit/test_pass1_extractor.py -v
+
+# Tier 2 (Live LLM Pass 1 Extraction Verification)
+curl -X POST -H "x-internal-secret: interviewai-super-secret-dev-key-change-in-prod" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Kể về sự cố hệ thống bạn từng xử lý","answerText":"Trong dự án trước, hệ thống Kafka bị tắc do lag partition. Tôi đã tăng partition từ 4 lên 12 và cấu hình lại consumer group, giúp giảm độ trễ về dưới 50ms."}' \
+  http://localhost:8000/api/v1/assessment/pass1
+```
+
+### 6.5 Definition of Done (DoD)
+- [ ] 100% trích dẫn `evidence` của tiêu chí đạt phải tồn tại chính xác trong câu trả lời gốc của ứng viên.
+- [ ] Không có trường hợp nào `passed` bị null.
+- [ ] P95 Latency của Pass 1 $< 4.5\text{s}$.
+- [ ] Short-circuit: Câu trả lời rỗng hoặc $< 15$ từ trả về ngay kết quả trượt mà không tốn chi phí gọi LLM.
+
+### 6.6 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 3.2: Technical Fact-Checking & Buzzwords Detection**: [02_TECHNICAL_FACT_CHECKING_AND_BUZZWORD_DETECTION.md](02_TECHNICAL_FACT_CHECKING_AND_BUZZWORD_DETECTION.md) để kiểm chứng tính đúng đắn kỹ thuật.
+

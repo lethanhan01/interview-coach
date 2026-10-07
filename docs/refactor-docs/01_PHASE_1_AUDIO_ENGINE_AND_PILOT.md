@@ -6,31 +6,31 @@
 > **Áp dụng cho**: Khởi tạo `ai-service/`, Mở rộng `MediaModule` và `IAIGateway` trong `server/`  
 > **Tài liệu tham chiếu**: [00_OVERVIEW_STRATEGIC_BLUEPRINT.md](00_OVERVIEW_STRATEGIC_BLUEPRINT.md)  
 > **Thư mục tài liệu chi tiết**: [01_PHASE_1_AUDIO_ENGINE/](01_PHASE_1_AUDIO_ENGINE/00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md)  
-> **Phiên bản**: 2.0.0 (Đã phân rã thành bộ tài liệu chuyên sâu 5 tasks)  
+> **Phiên bản**: 2.1.0 (Chuẩn hóa toàn diện chuỗi thực thi tuần tự & Thuật ngữ tiếng Anh kỹ thuật)  
 
 ---
 
 ## 1. TỔNG QUAN CHIẾN LƯỢC
 
-Trong chiến lược **Strangler Fig Pattern** và kiến trúc **Polyglot Hybrid Architecture**, Audio Engine (STT/TTS) được chọn làm **Pilot Project (Giai đoạn thử nghiệm đầu tiên)** nhằm thiết lập kênh kết nối an toàn tuyệt đối giữa NestJS Core và Python AI Microservice:
+Trong chiến lược **Strangler Fig Pattern** và kiến trúc **Polyglot Hybrid Architecture**, Audio Engine (STT/TTS) được chọn làm **Pilot Project (Giai đoạn thử nghiệm đầu tiên)** nhằm thiết lập kênh kết nối an toàn tuyệt đối giữa NestJS Core Orchestrator và Python AI Microservice:
 
-1. **Hoàn toàn Phi trạng thái (Stateless Compute)**:
-   * Chuyển đổi giọng nói thành văn bản (STT) và tổng hợp giọng nói (TTS) chỉ nhận luồng bytes và trả về JSON/Audio stream, không khóa (lock) dữ liệu hay phụ thuộc vào bảng nghiệp vụ PostgreSQL.
+1. **Stateless Compute Tuyệt đối**:
+   * Chuyển đổi giọng nói thành văn bản (STT) và tổng hợp giọng nói (TTS) chỉ nhận luồng bytes và trả về JSON/Audio stream; không khóa bảng (`Table Lock`) hay phụ thuộc vào Business Tables của PostgreSQL.
 2. **Khắc phục Triệt để Điểm nghẽn Trải nghiệm**:
    * Loại bỏ sự phụ thuộc chập chờn vào Web Speech API của trình duyệt.
-   * Cắt giảm chi phí gọi API OpenAI Whisper trên đám mây ($0.006/phút) và triệt tiêu độ trễ mạng quốc tế.
+   * Cắt giảm chi phí gọi API OpenAI Whisper trên đám mây ($0.006/phút) và triệt tiêu Latency mạng quốc tế.
 3. **Quyền riêng tư Tuyệt đối (Privacy-First In-Memory Processing)**:
-   * Toàn bộ dữ liệu âm thanh được giải mã và xử lý trực tiếp trên RAM (In-Memory Buffer qua PyAV). Tuyệt đối không ghi file đĩa cứng `/tmp` và không đẩy lên dịch vụ lưu trữ đám mây ngoài.
+   * Toàn bộ dữ liệu âm thanh được giải mã và xử lý trực tiếp trên RAM (In-Memory Buffer qua PyAV). Tuyệt đối không ghi file tạm ổ đĩa và không đẩy lên Cloud Storage bên ngoài.
 4. **Chuẩn hóa Trải nghiệm qua Two-Step Voice Flow**:
    * Tách bạch giai đoạn **Transcribe & Review** (ứng viên đọc lại transcript, sửa từ sai, xem WPM) và giai đoạn **Submit Turn** (chính thức ghi nhận vào lượt phỏng vấn và kích hoạt chấm điểm).
 5. **Chi phí Rollback Bằng 0 (Zero-Risk Fallback)**:
-   * Cô lập hoàn toàn qua `AIGatewayDispatcher` và Strict Feature Flags (`AI_STT_PROVIDER=python|openai`). Nếu Python service gặp sự cố, hệ thống tự động chuyển sang OpenAI Whisper hoặc Web Speech API trong $< 1\text{s}$.
+   * Cô lập hoàn toàn qua `AIGatewayDispatcher` và Strict Feature Flags (`AI_STT_PROVIDER=python|openai`). Nếu Python AI Service gặp sự cố, hệ thống tự động chuyển sang OpenAI Whisper Fallback trong $< 1\text{s}$.
 
 ---
 
 ## 2. HỆ THỐNG TÀI LIỆU ĐẶC TẢ CHI TIẾT THEO TASK (TASK BREAKDOWN DIRECTORY)
 
-Để tiến hành triển khai mã nguồn hoặc phân chia công việc cho các kỹ sư, vui lòng truy cập các tài liệu đặc tả độc lập theo từng task trong thư mục [01_PHASE_1_AUDIO_ENGINE/](01_PHASE_1_AUDIO_ENGINE/00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md):
+Để tiến hành triển khai mã nguồn tuần tự, AI Agent bắt buộc thực thi lần lượt các tài liệu đặc tả độc lập theo từng task trong thư mục [01_PHASE_1_AUDIO_ENGINE/](01_PHASE_1_AUDIO_ENGINE/00_PHASE_1_OVERVIEW_AND_ARCHITECTURE.md):
 
 ```
 docs/refactor-docs/01_PHASE_1_AUDIO_ENGINE/
@@ -54,17 +54,38 @@ docs/refactor-docs/01_PHASE_1_AUDIO_ENGINE/
 
 ---
 
-## 3. CHỈ TIÊU NGHIỆM THU PHASE 1 (QUALITY GATES)
+## 3. KHUNG BÀN GIAO & LIÊN KẾT TUẦN TỰ (PHASE 1 EXECUTION & HANDOVER PROTOCOL)
+
+### 3.1 Infrastructure Bootstrap Pre-requisites (Từ Phase 5)
+Trước khi chạy Task 1.1 và Task 1.4, tham khảo cấu trúc hạ tầng đã được thiết kế tại Phase 5:
+* **Docker & Compose**: Cấu hình template môi trường từ [Task 5.1 (Multi-stage Containers & Docker Compose)](05_PHASE_5_DEV_OPS_INFRA/01_POLYGLOT_MONOREPO_AND_MULTI_STAGE_CONTAINERS.md).
+* **Wire Test Framework**: Cơ chế test fixtures từ [Task 5.2 (Shared Contract Testing Framework)](05_PHASE_5_DEV_OPS_INFRA/02_CI_CD_PIPELINE_AND_AUTOMATED_CONTRACT_TESTS.md).
+
+### 3.2 Chuỗi Thực thi Tuần tự (Task Sequential Flow)
+```
+Task 1.1 (Setup Core) ──> Task 1.2 (STT Pipeline) ──> Task 1.3 (Hybrid TTS)
+                                                             │
+Task 1.5 (NestJS Integration) <── Task 1.4 (Wire Contract Tests) <──┘
+```
+
+### 3.3 Handover Sang Phase 2 (Phase 1 -> Phase 2 Transition)
+* **Điều kiện hoàn thành Phase 1**: Vượt qua toàn bộ tiêu chí của **Quality Gate 1**.
+* **Đầu ra bàn giao**: `ai-service` lắng nghe tại port 8000, `MediaFacade` mở rộng phương thức `transcribeAudio()` và `synthesizeSpeech()`, `AIGatewayDispatcher` định tuyến thành công qua ENV toggle.
+* **Tài liệu chuyển tiếp**: Bắt đầu Phase 2 tại [02_PHASE_2_PGVECTOR_HYBRID_RAG_FOUNDATION.md](02_PHASE_2_PGVECTOR_HYBRID_RAG_FOUNDATION.md) (Task 2.1: Kích hoạt `pgvector`).
+
+---
+
+## 4. CHỈ TIÊU NGHIỆM THU PHASE 1 (QUALITY GATE 1)
 
 1. **Khởi tạo và Chạy Ổn định (Service Liveness & Readiness)**:
    * Endpoint `GET /healthz` trả HTTP 200 `{"status": "ok"}`.
    * Endpoint `GET /ready` trả HTTP 200 sau khi `faster-whisper` và `kokoro` nạp sẵn sàng vào bộ nhớ.
 2. **Tuân thủ Hợp đồng Tuyệt đối (Zero Schema Drift)**:
    * 100% payload truyền qua wire JSON là `camelCase`.
-   * Vượt qua 100% Contract Tests ở cả Pytest và Jest thông qua shared fixtures.
+   * Vượt qua 100% Contract Tests ở cả Pytest và Jest thông qua shared fixtures tại `contracts/fixtures/`.
 3. **Độ chính xác STT (Word Error Rate)**:
    * Đạt Word Error Rate (WER) $< 8\%$ trên bộ test audio kỹ thuật IT song ngữ Việt-Anh.
-4. **Hiệu năng & Độ trễ**:
+4. **Hiệu năng & Latency**:
    * **GPU**: Audio 60s xử lý STT và bóc tách metrics $< 1.2$ giây.
    * **CPU**: Audio 60s xử lý $< 3.5$ giây.
    * **TTS Kokoro (EN)**: Real-Time Factor (RTF) $< 0.15$.
@@ -73,4 +94,4 @@ docs/refactor-docs/01_PHASE_1_AUDIO_ENGINE/
 6. **Two-Step Flow Hoạt động Trơn tru**:
    * Client hoàn tất luồng Transcribe $\rightarrow$ Review/Edit $\rightarrow$ Submit Turn $\rightarrow$ Bảng `user_answers` lưu trọn vẹn `voiceMetricsJson`.
 7. **Strict Toggle Thành công**:
-   * Chuyển `AI_STT_PROVIDER=openai` trong `.env`, hệ thống chuyển hướng tự động sang OpenAI Whisper API không cần sửa đổi mã nguồn.
+   * Chuyển `AI_STT_PROVIDER=openai` trong `.env`, hệ thống chuyển hướng tự động sang OpenAI Whisper Fallback không cần sửa đổi mã nguồn.

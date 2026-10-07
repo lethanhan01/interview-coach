@@ -109,3 +109,43 @@ class Pass2SynthesisResponse(CamelModel):
 1. **Khớp Tọa độ 100%**: Tuyệt đối không có trường hợp `answerText[startIndex:endIndex] != segmentText` khi trả về cho NestJS.
 2. **Không Chồng lấn Tọa độ (No Overlapping)**: Các phân đoạn `annotatedSegments` không được giao thoa nhau về khoảng vị trí ký tự để tránh lỗi render highlight trên CSS.
 3. **Chất lượng Model Answer**: Câu trả lời mẫu bắt buộc thể hiện đủ 4 khía cạnh STAR và nêu rõ các số liệu đo lường kỹ thuật thực tế.
+
+---
+
+## 6. TASK EXECUTION CONTRACT
+
+### 6.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 3.2**: Toàn bộ kết quả Pass 1 (STAR, Rubric) và Fact-Checking (Lỗi kỹ thuật, Buzzwords) đã sẵn sàng.
+- [ ] Pydantic v2 `CamelModel` sẵn sàng.
+
+### 6.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `ai-service/app/services/assessment/pass2_synthesizer.py`: Lớp `Pass2SynthesizerService` tổng hợp nhận xét, sinh câu trả lời mẫu STAR hoàn hảo.
+- [ ] `ai-service/app/services/assessment/offset_healer.py`: Thuật toán Character Offset Healing đối chiếu và tự động chữa lành độ lệch tọa độ ký tự.
+- [ ] `ai-service/app/schemas/assessment.py`: Bổ sung Pydantic models `Pass2SynthesisResponse`, `AnnotatedSegmentItem` (kế thừa `CamelModel`).
+- [ ] `ai-service/app/prompts/assessment_pass2.py`: System prompt tổng hợp nhận xét huấn luyện và bài học.
+
+### 6.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 5**: AI Isolation; kiểm soát structured output chặt chẽ, loại bỏ hoàn toàn rủi ro văng lỗi frontend do sai lệch tọa độ.
+- [x] **Zero Schema Drift**: 100% thuộc tính trả về định dạng `camelCase` (`modelAnswer`, `keyTakeaway`, `annotatedSegments`, `startIndex`, `endIndex`).
+
+### 6.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (Unit & Character Offset Healing Test)
+cd ai-service && uv run pytest tests/unit/test_pass2_synthesizer.py -v
+
+# Tier 2 (Live LLM Pass 2 Synthesis Verification)
+curl -X POST -H "x-internal-secret: interviewai-super-secret-dev-key-change-in-prod" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Giải thích Sharding trong DB","answerText":"Sharding là chia dữ liệu theo chiều ngang ra nhiều database instances."}' \
+  http://localhost:8000/api/v1/assessment/pass2
+```
+
+### 6.5 Definition of Done (DoD)
+- [ ] Khớp tọa độ 100%: Xác minh `answerText[startIndex:endIndex] == segmentText` cho toàn bộ các phân đoạn.
+- [ ] Không chồng lấn khoảng vị trí (`No Overlapping Intervals`), giúp giao diện Frontend hiển thị tooltip mượt mà.
+- [ ] `modelAnswer` chuẩn hóa đầy đủ 4 phần Situation, Task, Action, Result.
+- [ ] P95 Latency của Pass 2 $< 5.0\text{ giây}$.
+
+### 6.6 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 3.4: Deterministic Scoring & SFIA Level Inference**: [04_DETERMINISTIC_SCORING_AND_SFIA_LEVEL_INFERENCE.md](04_DETERMINISTIC_SCORING_AND_SFIA_LEVEL_INFERENCE.md) để tính điểm tất định 100% bằng toán học phía NestJS.
+

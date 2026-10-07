@@ -139,3 +139,43 @@ Trong đó:
 1. **Hiệu năng Truy vấn SQL**: Thời gian thực thi câu lệnh SQL Hybrid CTE trên PostgreSQL với $10.000+$ câu hỏi $< 35\text{ ms}$.
 2. **Khả năng Phục hồi khi Rỗng Kênh**: Nếu Sparse Search trả về $0$ kết quả (do không có từ khóa nào khớp), câu truy vấn vẫn trả về đủ kết quả từ kênh Dense Search nhờ `FULL OUTER JOIN`.
 3. **Độ chính xác Bộ lọc Cứng**: $100\%$ kết quả trả về bắt buộc thỏa mãn chính xác `session_type` và cấp độ `target_sfia_level <= :level`.
+
+---
+
+## 6. TASK EXECUTION CONTRACT
+
+### 6.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 2.2**: Bảng `question_bank` đã được backfill vector nhúng 1024 chiều và index HNSW + GIN hoạt động.
+- [ ] Cài đặt `asyncpg` hoặc `psycopg2-binary` trong `ai-service/pyproject.toml`.
+
+### 6.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `ai-service/app/services/rag/hybrid_retriever.py`: Lớp `HybridRetriever` thực thi câu lệnh SQL CTE kết hợp song song Dense Search và Sparse Full-Text Search.
+- [ ] Triển khai thuật toán Reciprocal Rank Fusion (RRF $k=60$) để tính điểm `finalRrfScore` và trả về Top 15 câu hỏi ứng viên.
+- [ ] `ai-service/app/schemas/rag.py`: Pydantic Models `HybridRetrieveRequest`, `CandidateQuestion` (kế thừa `CamelModel`).
+- [ ] `ai-service/app/api/v1/rag.py`: Endpoint `POST /api/v1/rag/retrieve-candidates`.
+
+### 6.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 5**: Câu truy vấn SQL CTE hoàn toàn Read-only, không gây lock bảng (`Table Lock`).
+- [x] **Tách biệt Ngữ nghĩa**: Tách riêng Dense JD vs Sparse Tech Keywords, loại bỏ triệt để bẫy zero-match của Naive RAG.
+
+### 6.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (Unit & RRF Algorithm Test)
+cd ai-service && uv run pytest tests/unit/test_hybrid_retrieval.py -v
+
+# Tier 2 (Live SQL CTE & Hybrid Candidates Verification)
+curl -X POST -H "x-internal-secret: interviewai-super-secret-dev-key-change-in-prod" \
+  -H "Content-Type: application/json" \
+  -d '{"jobDescription":"Tuyển kỹ sư Go Kafka","techKeywords":"golang kafka","targetSfiaLevel":4,"sessionType":"technical"}' \
+  http://localhost:8000/api/v1/rag/retrieve-candidates
+```
+
+### 6.5 Definition of Done (DoD)
+- [ ] Thời gian thực thi SQL CTE query $< 35\text{ms}$ trên PostgreSQL với $10.000+$ câu hỏi.
+- [ ] Khả năng chịu lỗi: Nếu kênh Sparse Search không có từ nào khớp, kênh Dense Search vẫn bảo đảm trả về đủ kết quả nhờ `FULL OUTER JOIN`.
+- [ ] $100\%$ kết quả trả về lọc đúng `session_type`, `deleted_at IS NULL`, và `target_sfia_level <= :level`.
+- [ ] Wire JSON trả về 100% `camelCase` với mảng 15 phần tử sắp xếp theo `finalRrfScore` giảm dần.
+
+### 6.6 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 2.4: Cross-Encoder Reranker & Redis L2 Cache**: [04_CROSS_ENCODER_RERANKER_AND_LATENCY_CACHING.md](04_CROSS_ENCODER_RERANKER_AND_LATENCY_CACHING.md) để xếp hạng lại Top 15 thành Top 5 câu hỏi tối ưu nhất.
+

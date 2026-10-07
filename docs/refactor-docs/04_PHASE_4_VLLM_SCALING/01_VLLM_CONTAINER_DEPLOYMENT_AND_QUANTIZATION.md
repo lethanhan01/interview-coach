@@ -134,3 +134,40 @@ echo "vLLM warm-up completed successfully. Ready for production traffic!"
 2. **Độ ổn định Bộ nhớ (Memory Stability)**: Khi chạy benchmark với 30 requests đồng thời gửi context 2.500 tokens, mức sử dụng VRAM ổn định ở ngưỡng $90-93\%$, tuyệt đối không xảy ra lỗi `CUDA out of memory`.
 3. **Tốc độ Sinh Token (Token Generation Rate)**: Tốc độ trung bình đạt $\ge 25\text{ tokens/giây}$ cho mỗi người dùng đơn lẻ và thông lượng tổng thể $\ge 350\text{ tokens/giây}$ trên GPU.
 4. **Tương thích Endpoint**: Trả về đúng định dạng JSON chuẩn OpenAI v1 Chat Completions (`id`, `object`, `created`, `model`, `choices`).
+
+---
+
+## 6. TASK EXECUTION CONTRACT
+
+### 6.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành toàn bộ **Phase 3** (Quality Gate 3 Approved).
+- [ ] Máy chủ hoặc GPU cluster trang bị tối thiểu 24GB VRAM (NVIDIA A10G, L4, RTX 3090/4090).
+- [ ] Cài đặt sẵn NVIDIA Container Toolkit (`nvidia-smi` hoạt động trong Docker).
+
+### 6.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `docker/vllm.Dockerfile`: Dockerfile đóng gói runtime `vllm/vllm-openai:latest` tối ưu AWQ.
+- [ ] `docker-compose.vllm.yml`: Service định nghĩa vLLM container expose OpenAI-compatible API trên port 8000.
+- [ ] `scripts/vllm-warmup.sh`: Script kiểm tra sẵn sàng và gửi request warmup đầu tiên.
+
+### 6.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 5**: AI Isolation; vLLM cung cấp endpoint chuẩn OpenAI-compatible để NestJS `@infra/ai/` có thể tráo đổi nhà cung cấp dễ dàng.
+- [x] **TCO Optimization Invariant**: Cắt giảm $85\% - 92\%$ chi phí token so với GPT-4o.
+
+### 6.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (Liveness & Models API Check)
+curl -s http://localhost:8000/v1/models | grep -q "Qwen2.5-32B-Instruct-AWQ"
+
+# Tier 2 (Warmup & Token Generation Speed Benchmark)
+bash scripts/vllm-warmup.sh
+```
+
+### 6.5 Definition of Done (DoD)
+- [ ] Toàn bộ quá trình nạp mô hình và warmup hoàn tất trong $< 90\text{ giây}$.
+- [ ] Mức sử dụng VRAM ổn định ở ngưỡng $90-93\%$, tuyệt đối không xảy ra lỗi CUDA OOM khi chạy 30 concurrent streams.
+- [ ] Tốc độ sinh token đạt $\ge 25\text{ tokens/giây}$ cho mỗi stream đơn lẻ.
+- [ ] Trả về JSON chuẩn OpenAI Chat Completions với `choices[0].message.content`.
+
+### 6.6 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 4.2: NestJS Gateway Integration & Surge Failover**: [02_NESTJS_GATEWAY_INTEGRATION_AND_SURGE_FAILOVER.md](02_NESTJS_GATEWAY_INTEGRATION_AND_SURGE_FAILOVER.md) để kết nối cụm vLLM với NestJS Core qua Circuit Breaker.
+

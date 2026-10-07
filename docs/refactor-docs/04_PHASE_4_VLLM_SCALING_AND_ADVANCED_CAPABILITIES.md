@@ -6,7 +6,7 @@
 > **Áp dụng cho**: Hạ tầng GPU / vLLM, Trợ lý Phỏng vấn Thời gian thực, WebSockets Duplex, Smart VAD & Barge-in  
 > **Tài liệu tham chiếu**: [00_OVERVIEW_STRATEGIC_BLUEPRINT.md](00_OVERVIEW_STRATEGIC_BLUEPRINT.md), [01_PHASE_1_AUDIO_ENGINE_AND_PILOT.md](01_PHASE_1_AUDIO_ENGINE_AND_PILOT.md)  
 > **Thư mục tài liệu chi tiết**: [04_PHASE_4_VLLM_SCALING/](04_PHASE_4_VLLM_SCALING/00_PHASE_4_OVERVIEW_AND_ARCHITECTURE.md)  
-> **Phiên bản**: 2.0.0 (Đã phân rã thành bộ tài liệu chuyên sâu 5 tasks)  
+> **Phiên bản**: 2.1.0 (Chuẩn hóa toàn diện chuỗi thực thi tuần tự & Thuật ngữ tiếng Anh kỹ thuật)  
 
 ---
 
@@ -14,13 +14,13 @@
 
 Phase 4 giải quyết đồng thời hai bài toán bước ngoặt của nền tảng InterviewAI:
 1. **Đột phá Tối ưu Chi phí Vận hành (TCO Optimization)**: Chuyển dịch từ việc tiêu tốn hàng nghìn USD chi phí API thương mại (GPT-4o) sang tự host mô hình mã nguồn mở hàng đầu thế giới **`Qwen 2.5 32B Instruct AWQ`** qua **vLLM** trên card đồ họa 24GB VRAM (AWS G5 / RunPod), cắt giảm **85% đến 92.4%** chi phí vận hành ở quy mô lớn.
-2. **Nâng tầm Trải nghiệm Người dùng (Full-Duplex Conversational Interviewer)**: Xóa bỏ hoàn toàn cơ chế hỏi-đáp ngắt quãng đơn điệu, thay thế bằng tương tác giọng nói hai chiều trực tiếp qua WebSockets Streaming, tích hợp Silero VAD bắt ngắt lời tự nhiên (Barge-in $< 200\text{ms}$) và thuật toán hỏi xoáy thích ứng (Adaptive Follow-up Probing).
+2. **Nâng tầm Trải nghiệm Người dùng (Full-Duplex Conversational Interviewer)**: Xóa bỏ hoàn toàn cơ chế hỏi-đáp ngắt quãng đơn điệu, thay thế bằng tương tác giọng nói hai chiều trực tiếp qua WebSockets Streaming, tích hợp Silero VAD bắt ngắt lời tự nhiên (Barge-in Latency $< 200\text{ms}$) và thuật toán hỏi xoáy thích ứng (Adaptive Follow-up Probing).
 
 ---
 
 ## 2. HỆ THỐNG TÀI LIỆU ĐẶC TẢ CHI TIẾT THEO TASK (TASK BREAKDOWN DIRECTORY)
 
-Để tiến hành triển khai mã nguồn hoặc phân chia công việc cho các kỹ sư, vui lòng truy cập các tài liệu đặc tả độc lập theo từng task trong thư mục [04_PHASE_4_VLLM_SCALING/](04_PHASE_4_VLLM_SCALING/00_PHASE_4_OVERVIEW_AND_ARCHITECTURE.md):
+Để tiến hành triển khai mã nguồn tuần tự, AI Agent bắt buộc thực thi lần lượt các tài liệu đặc tả độc lập theo từng task trong thư mục [04_PHASE_4_VLLM_SCALING/](04_PHASE_4_VLLM_SCALING/00_PHASE_4_OVERVIEW_AND_ARCHITECTURE.md):
 
 ```
 docs/refactor-docs/04_PHASE_4_VLLM_SCALING/
@@ -44,9 +44,29 @@ docs/refactor-docs/04_PHASE_4_VLLM_SCALING/
 
 ---
 
-## 3. CHỈ TIÊU NGHIỆM THU PHASE 4 (QUALITY GATES)
+## 3. KHUNG BÀN GIAO & LIÊN KẾT TUẦN TỰ (PHASE 4 EXECUTION & HANDOVER PROTOCOL)
+
+### 3.1 Tiền đề Bàn giao Nhận từ Phase 3 (Incoming Handover)
+* Pipeline đánh giá câu trả lời 2 chặng đã hoàn thiện và chạy ổn định qua BullMQ Outbox Worker.
+* Đã vượt qua toàn bộ tiêu chí của **Quality Gate 3**.
+
+### 3.2 Chuỗi Thực thi Tuần tự (Task Sequential Flow)
+```
+Task 4.1 (vLLM Deployment) ──> Task 4.2 (Gateway & Failover) ──> Task 4.3 (Full-Duplex WS)
+                                                                           │
+Task 4.5 (Adaptive Probing) <── Task 4.4 (Smart VAD Barge-in) <────────────┘
+```
+
+### 3.3 Handover Sang Phase 5 (Phase 4 -> Phase 5 Transition)
+* **Điều kiện hoàn thành Phase 4**: Vượt qua toàn bộ tiêu chí của **Quality Gate 4**.
+* **Đầu ra bàn giao**: Cụm suy luận vLLM và WebSocket Full-Duplex Gateway hoạt động hoàn chỉnh ở môi trường Dev.
+* **Tài liệu chuyển tiếp**: Bắt đầu Phase 5 tại [05_DEV_OPS_INFRA_AND_DISASTER_RECOVERY.md](05_DEV_OPS_INFRA_AND_DISASTER_RECOVERY.md) (Task 5.1: Polyglot Monorepo & Multi-stage Containers).
+
+---
+
+## 4. CHỈ TIÊU NGHIỆM THU PHASE 4 (QUALITY GATE 4)
 
 1. **Độ Trễ Đàm Thoại Toàn Trình (Time-to-First-Audio)**: Từ khi ứng viên dứt lời đến khi nghe thấy tiếng AI phản hồi $< 800\text{ ms}$ (P95).
 2. **Độ Nhạy Ngắt Lời (Barge-in Latency)**: Dừng phát loa và giải phóng tài nguyên tính toán trong vòng $< 200\text{ ms}$ sau khi ứng viên cất lời.
 3. **Hiệu Năng & Ổn Định GPU**: Cụm vLLM chịu tải ổn định $\ge 30$ lượt suy luận song song với tốc độ sinh token $\ge 25\text{ tokens/giây/luồng}$.
-4. **Bảo Vệ Dự Phòng (Cloud Failover)**: Khi vLLM quá tải hoặc gặp sự cố, hệ thống tự động chuyển mạch sang OpenAI Cloud trong $< 1.5\text{s}$ mà không làm đứt đoạn phiên phỏng vấn.
+4. **Bảo Vệ Dự Phòng (Cloud Surge Failover)**: Khi vLLM quá tải hoặc gặp sự cố, hệ thống tự động chuyển mạch sang OpenAI Cloud Fallback trong $< 1.5\text{s}$ mà không làm đứt đoạn phiên phỏng vấn.

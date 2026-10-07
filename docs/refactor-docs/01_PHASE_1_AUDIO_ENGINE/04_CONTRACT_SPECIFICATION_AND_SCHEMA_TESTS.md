@@ -345,3 +345,39 @@ describe('Python STT Wire Contract Conformance Test', () => {
   });
 });
 ```
+
+---
+
+## 7. TASK EXECUTION CONTRACT
+
+### 7.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 1.2** (STT Pipeline) và **Task 1.3** (TTS Pipeline).
+- [ ] Tạo thư mục dùng chung `contracts/fixtures/` tại root repository.
+- [ ] Đã cài đặt `class-validator`, `class-transformer` phía NestJS và `pytest` phía Python.
+
+### 7.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `contracts/fixtures/stt-response.fixture.json`: Golden JSON response cho STT transcribe.
+- [ ] `contracts/fixtures/tts-request.fixture.json`: Golden JSON request cho TTS synthesize.
+- [ ] `contracts/fixtures/error-envelope.fixture.json`: Golden JSON response cho Standard Error Envelope.
+- [ ] `ai-service/app/schemas/base.py`: Lớp cơ sở `CamelModel` đảm bảo `model_dump(by_alias=True)`.
+- [ ] `ai-service/tests/contract/test_contracts.py`: Pytest contract suite kiểm tra Pydantic model serialization.
+- [ ] `server/test/contracts/python-stt.contract.spec.ts`: Jest contract suite kiểm tra NestJS DTO deserialization & validation.
+
+### 7.3 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (NestJS Jest Contract Verification)
+cd server && npm run test -- test/contracts/python-stt.contract.spec.ts
+
+# Tier 1 (Python Pytest Contract Verification)
+cd ai-service && uv run pytest tests/contract/test_contracts.py -v
+```
+
+### 7.4 Definition of Done (DoD)
+- [ ] 100% thuộc tính trường trên wire JSON đều là `camelCase`.
+- [ ] Cả hai bộ kiểm thử Jest và Pytest đều pass độc lập (Tier 1) bằng cách đọc file fixture trực tiếp, không phụ thuộc vào container đang chạy.
+- [ ] Không có bất kỳ cảnh báo deprecation hay validation warning nào từ `class-validator` hoặc Pydantic v2.
+- [ ] Xác nhận Schema Drift bằng 0 giữa hai nền tảng.
+
+### 7.5 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 1.5: NestJS Integration & Two-Step Flow**: [05_NESTJS_INTEGRATION_AND_TWO_STEP_FLOW.md](05_NESTJS_INTEGRATION_AND_TWO_STEP_FLOW.md) để tích hợp MediaFacade, AIGatewayDispatcher và luồng Two-Step Voice Flow.
+

@@ -169,3 +169,41 @@ ALTER TABLE "question_bank" DROP COLUMN IF EXISTS "embedding";
 2. Kiểm tra `SELECT extname, extversion FROM pg_extension WHERE extname = 'vector';` trả về extension version $\ge 0.5.0$.
 3. Insert thử 1 bản ghi vào `question_bank` và xác minh cột `tsv_content` được tự động điền dữ liệu đúng định dạng tsvector.
 4. Sao lưu cơ sở dữ liệu bằng `pg_dump` và phục hồi lại trên test database kiểm tra không bị mất dữ liệu vector.
+
+---
+
+## 7. TASK EXECUTION CONTRACT
+
+### 7.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành toàn bộ **Phase 1** (Quality Gate 1 Approved).
+- [ ] PostgreSQL 16 server chạy với extension `pgvector` cài sẵn (image `pgvector/pgvector:pg16` hoặc tương đương).
+- [ ] Prisma CLI phiên bản $\ge 5.10.0$ trong `server/package.json`.
+
+### 7.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `server/prisma/migrations/20261015_enable_pgvector_rag/migration.sql`: Kích hoạt extension, thêm cột `embedding vector(1024)` và `tsv_content tsvector`, tạo trigger `trg_question_bank_tsv`, tạo index HNSW và GIN.
+- [ ] `server/prisma/schema.prisma`: Khai báo 2 trường `embedding Unsupported("vector(1024)")?` và `tsvContent Unsupported("tsvector")?` trong model `QuestionBank`.
+
+### 7.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 5**: Toàn bộ script DDL an toàn, không làm crash schema Prisma hiện có.
+- [x] **Non-blocking Invariant**: Sử dụng index `CONCURRENTLY` trên production để không gây Table Lock.
+- [x] **Unsupported Type Isolation**: Không bao giờ query trực tiếp `embedding` qua Prisma Client `findMany` mà thông qua raw SQL hoặc Python service.
+
+### 7.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (Prisma Schema Validation)
+cd server && npx prisma validate
+
+# Tier 2 (Live Database Migration & Extension Check)
+cd server && npx prisma migrate deploy
+psql "$DATABASE_URL" -c "SELECT extname, extversion FROM pg_extension WHERE extname = 'vector';"
+```
+
+### 7.5 Definition of Done (DoD)
+- [ ] Extension `vector` kích hoạt thành công (version $\ge 0.5.0$).
+- [ ] Bảng `question_bank` có đủ hai cột `embedding` và `tsv_content`.
+- [ ] Trigger `trg_question_bank_tsv` tự động sinh tsvector khi insert câu hỏi mới.
+- [ ] `npx prisma generate` sinh Prisma Client thành công không lỗi type mismatch.
+
+### 7.6 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 2.2: BGE-M3 Embedding Pipeline**: [02_BGE_M3_EMBEDDING_AND_BATCH_INGESTION.md](02_BGE_M3_EMBEDDING_AND_BATCH_INGESTION.md) để xây dựng pipeline sinh vector và batch ingestion.
+

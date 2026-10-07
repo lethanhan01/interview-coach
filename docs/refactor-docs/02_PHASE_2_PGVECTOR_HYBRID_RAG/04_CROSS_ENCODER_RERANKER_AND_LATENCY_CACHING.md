@@ -109,3 +109,49 @@ $$\text{CacheKey} = \text{"rag:query:"} + \text{SHA256}(\text{sessionType} + \te
 1. **Hiệu năng Đoạn Rerank**: Thời gian rerank 15 ứng viên $< 80\text{ ms}$ (P95) trên GPU hoặc $< 150\text{ ms}$ trên CPU.
 2. **Khả năng Lọc Bỏ Câu Lạc Đề**: Khi truyền một bản JD về "Golang Microservices" cùng các câu hỏi ứng viên có dính từ khóa "service" nhưng nói về "Angular frontend services", Cross-Encoder phải xếp các câu hỏi Angular xuống đáy danh sách với điểm relevance âm hoặc thấp đột biến.
 3. **Hiệu năng Cache Hit**: Khi một truy vấn giống nhau được gọi lần 2, thời gian phản hồi toàn trình $< 8\text{ ms}$.
+
+---
+
+## 6. TASK EXECUTION CONTRACT
+
+### 6.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 2.3**: Endpoint retrieve Top 15 candidates qua Hybrid CTE đã hoạt động.
+- [ ] Redis instance (Port 6379) sẵn sàng hoạt động cho tầng L2 Cache.
+- [ ] Dependencies `redis`, `sentence-transformers` được cấu hình trong `ai-service/pyproject.toml`.
+
+### 6.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `ai-service/app/services/rag/reranker.py`: Lớp `RerankerService` sử dụng Cross-Encoder `BAAI/bge-reranker-base` chấm điểm cặp (JD, Question) và tinh chọn Top 5.
+- [ ] `ai-service/app/services/rag/cache.py`: Lớp `QueryCacheService` lưu cache theo SHA256 query key vào Redis (TTL 24h).
+- [ ] `ai-service/app/api/v1/rag.py`: Endpoint chính `POST /api/v1/rag/retrieve` trả về Top 5 câu hỏi tối ưu nhất.
+
+### 6.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 5**: Stateless Compute; tầng cache Redis hoàn toàn cách ly, không ảnh hưởng logic chính nếu Redis gặp sự cố (Fail-open to live query).
+- [x] **Zero Schema Drift**: Payload trả về dạng `camelCase` gồm danh sách câu hỏi kèm `rerankScore` và `cached: boolean`.
+
+### 6.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (Unit & Cross-Encoder Test)
+cd ai-service && uv run pytest tests/unit/test_reranker.py -v
+
+# Tier 2 (Live Retrieve & Cache Hit Verification)
+# Lần 1: Cache Miss
+curl -X POST -H "x-internal-secret: interviewai-super-secret-dev-key-change-in-prod" \
+  -H "Content-Type: application/json" \
+  -d '{"jobDescription":"Senior Backend Go","techKeywords":"golang kafka","targetSfiaLevel":4,"sessionType":"technical"}' \
+  http://localhost:8000/api/v1/rag/retrieve
+# Lần 2: Cache Hit (< 10ms)
+curl -X POST -H "x-internal-secret: interviewai-super-secret-dev-key-change-in-prod" \
+  -H "Content-Type: application/json" \
+  -d '{"jobDescription":"Senior Backend Go","techKeywords":"golang kafka","targetSfiaLevel":4,"sessionType":"technical"}' \
+  http://localhost:8000/api/v1/rag/retrieve
+```
+
+### 6.5 Definition of Done (DoD)
+- [ ] P95 Latency của Cross-Encoder $< 80\text{ms}$ trên GPU ($< 150\text{ms}$ trên CPU).
+- [ ] Latency khi Cache Hit trên Redis $< 10\text{ms}$.
+- [ ] Lọc bỏ 100% câu hỏi lạc ngữ cảnh kỹ thuật.
+- [ ] Top 5 câu hỏi trả về được sắp xếp theo `rerankScore` giảm dần.
+
+### 6.6 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 2.5: NestJS QuestionBankService & Question Allocation**: [05_NESTJS_INTEGRATION_AND_QUESTION_ALLOCATION.md](05_NESTJS_INTEGRATION_AND_QUESTION_ALLOCATION.md) để tích hợp vào luồng sinh câu hỏi của NestJS Platform.
+

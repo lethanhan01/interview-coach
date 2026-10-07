@@ -85,3 +85,42 @@ class TechnicalAuditResult(CamelModel):
 
 1. **Khả năng Bắt lỗi Kiến thức Cố ý**: Trong bộ test kiểm thử chứa 10 câu trả lời có cài cắm lỗi kỹ thuật kinh điển (như *"Redis ghi dữ liệu lên ổ đĩa mỗi microsecond"* hoặc *"HTTP/2 chỉ truyền tải văn bản dạng plain text"*), hệ thống phải phát hiện thành công $100\%$ các lỗi này vào `hallucinationFlags`.
 2. **Không Đánh oan Ứng viên Thực chiến**: Một câu trả lời ngắn gọn, chính xác, có số liệu đo lường cụ thể không được có điểm `buzzwordDensityScore > 35`.
+
+---
+
+## 6. TASK EXECUTION CONTRACT
+
+### 6.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 3.1**: Kết quả trích xuất cấu trúc STAR và tiêu chí rubric nhị phân của Pass 1 đã sẵn sàng.
+- [ ] Knowledge base các thuật ngữ kỹ thuật và ground truth câu hỏi sẵn sàng.
+
+### 6.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `ai-service/app/services/assessment/fact_checker.py`: Lớp `TechnicalFactCheckerService` đối chiếu câu trả lời với ground truth để phát hiện sai lệch kỹ thuật.
+- [ ] `ai-service/app/services/assessment/buzzword_detector.py`: Lớp `BuzzwordDetectorService` tính toán `buzzwordDensityScore` (0-100) theo tỷ lệ từ đệm sáo rỗng.
+- [ ] `ai-service/app/schemas/assessment.py`: Bổ sung Pydantic models `TechnicalFactCheckResult`, `HallucinationFlag` (kế thừa `CamelModel`).
+
+### 6.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 5**: AI Isolation; kiểm chứng tính đúng đắn logic mà không phụ thuộc vào trạng thái database.
+- [x] **Zero Schema Drift**: 100% thuộc tính trả về định dạng `camelCase` (`hasErrors`, `hallucinationFlags`, `buzzwordDensityScore`).
+
+### 6.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (Unit Fact-Check & Buzzword Detector Test)
+cd ai-service && uv run pytest tests/unit/test_fact_checker.py -v
+
+# Tier 2 (Live Fact-Checking Verification)
+curl -X POST -H "x-internal-secret: interviewai-super-secret-dev-key-change-in-prod" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Kafka hoạt động như thế nào?","answerText":"Kafka lưu dữ liệu hoàn toàn trên RAM và không bao giờ ghi xuống đĩa, mỗi khi restart là mất sạch tin nhắn."}' \
+  http://localhost:8000/api/v1/assessment/fact-check
+```
+
+### 6.5 Definition of Done (DoD)
+- [ ] Bắt chính xác 100% các lỗi kiến thức sai lệch trong bộ kiểm thử 10 câu hỏi bẫy.
+- [ ] `hasErrors` chuyển `true` và có mô tả sửa chữa `correctedFact`.
+- [ ] Tính toán `buzzwordDensityScore` phản ánh đúng mức độ sáo rỗng của câu trả lời.
+- [ ] Câu trả lời thực chiến đúng đắn không bị gán `buzzwordDensityScore > 35`.
+
+### 6.6 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 3.3: Pass 2 Synthesis & Model Answers**: [03_PASS_2_SYNTHESIS_MODEL_ANSWER_AND_ANNOTATIONS.md](03_PASS_2_SYNTHESIS_MODEL_ANSWER_AND_ANNOTATIONS.md) để tổng hợp nhận xét và trích xuất tọa độ ký tự highlight.
+

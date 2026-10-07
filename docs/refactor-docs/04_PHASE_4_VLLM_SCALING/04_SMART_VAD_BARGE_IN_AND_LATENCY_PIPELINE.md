@@ -131,3 +131,37 @@ class ConversationalStreamManager:
 1. **Tỷ Lệ Bắt Nhầm Tiếng Ồn (False Positive Rate)**: Khi phát tiếng gõ phím cơ, tiếng ho khan hoặc tiếng xe cộ ngẫu nhiên, tỷ lệ kích hoạt nhầm Barge-in $< 2\%$.
 2. **Độ Trễ Ngắt Thực Tế**: Kể từ thời điểm ứng viên bắt đầu nói từ đầu tiên, loa máy tính ngừng phát hoàn toàn tiếng AI trong vòng $< 400\text{ ms}$.
 3. **Giải Phóng Bộ Nhớ GPU**: Sau sự kiện ngắt lời, mức chiếm dụng bộ nhớ của tiến trình vLLM và Kokoro TTS phải trở về trạng thái nghỉ (idle) trong vòng $< 200\text{ ms}$, không tồn đọng job rác.
+
+---
+
+## 6. TASK EXECUTION CONTRACT
+
+### 6.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 4.3**: Luồng WebSockets truyền nhận nhị phân hai chiều đã hoạt động.
+- [ ] Mô hình Silero VAD ONNX runtime (`onnxruntime`, `numpy`) đã được tích hợp trong Python `ai-service`.
+
+### 6.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `ai-service/app/services/audio/vad.py`: Lớp `SileroVADDetector` tính toán xác suất giọng nói trên các frames 30ms.
+- [ ] `ai-service/app/services/audio/barge_in_handler.py`: Bộ điều phối Cascading Abort đa tầng ngắt vLLM và Kokoro TTS.
+- [ ] `server/src/modules/realtime/services/barge-in.service.ts`: Xử lý control frame `0x02 (STOP_PLAYBACK)` về Client Audio Player.
+
+### 6.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 1 & 5**: Xử lý tín hiệu ngắt hoàn toàn phi trạng thái, giải phóng tài nguyên GPU ngay lập tức mà không làm treo các phiên khác.
+
+### 6.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (Unit VAD & Barge-in Abort Test)
+cd ai-service && uv run pytest tests/unit/test_vad_bargein.py -v
+
+# Tier 2 (Live Barge-in Audio Interruption Verification)
+cd server && npm run test:e2e -- test/e2e/barge-in-latency.e2e-spec.ts
+```
+
+### 6.5 Definition of Done (DoD)
+- [ ] False Positive Rate $< 2\%$ khi kiểm thử với tiếng ồn bàn phím cơ và tiếng ho khan.
+- [ ] Loa phía Client dừng phát hoàn toàn trong vòng $< 400\text{ms}$ kể từ khi phát hiện tiếng nói thí sinh.
+- [ ] Generator của vLLM và Kokoro TTS được gọi `aclose()` giải phóng slot GPU trong $< 200\text{ms}$.
+
+### 6.6 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 4.5: Adaptive Probing & Conversational Orchestration**: [05_ADAPTIVE_PROBING_AND_CONVERSATIONAL_ORCHESTRATION.md](05_ADAPTIVE_PROBING_AND_CONVERSATIONAL_ORCHESTRATION.md) để điều phối chiến lược hỏi xoáy thích ứng.
+

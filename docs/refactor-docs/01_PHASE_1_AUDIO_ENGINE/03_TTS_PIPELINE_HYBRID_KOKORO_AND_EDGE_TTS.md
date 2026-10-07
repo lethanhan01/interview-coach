@@ -321,3 +321,41 @@ async def test_tts_manager_routes_vietnamese_to_edge_tts():
     assert media_type == "audio/mpeg"
     assert engine == "edge-tts"
 ```
+
+---
+
+## 8. TASK EXECUTION CONTRACT
+
+### 8.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 1.1** và **Task 1.2**.
+- [ ] Cài đặt các thư viện `kokoro`, `edge-tts`, `soundfile` trong `pyproject.toml`.
+- [ ] Tải trước weights mô hình Kokoro-82M (`kokoro-v0_19.onnx` hoặc PyTorch weights) vào thư mục cache container.
+
+### 8.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `ai-service/app/services/tts/kokoro_engine.py`: Lớp `KokoroEngine` tổng hợp giọng nói tiếng Anh studio offline.
+- [ ] `ai-service/app/services/tts/edge_tts_engine.py`: Lớp `EdgeTTSEngine` kết nối Azure Neural Voices cho tiếng Việt bản địa.
+- [ ] `ai-service/app/services/tts/tts_manager.py`: Bộ điều phối `TTSManager` định tuyến ngôn ngữ và quản lý chunk generator.
+- [ ] `ai-service/app/schemas/tts.py`: Pydantic Models `TTSRequest` (kế thừa `CamelModel`).
+- [ ] `ai-service/app/api/v1/tts.py`: Endpoint `POST /api/v1/tts/synthesize` trả về `StreamingResponse`.
+
+### 8.3 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (Contract & Unit Verification - Fast & Mocked)
+cd ai-service && uv run pytest tests/unit/test_tts.py -v
+
+# Tier 2 (Live Integration Verification)
+curl -X POST -H "x-internal-secret: interviewai-super-secret-dev-key-change-in-prod" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Explain asynchronous processing in NestJS.","language":"en"}' \
+  http://localhost:8000/api/v1/tts/synthesize --output test.wav
+```
+
+### 8.4 Definition of Done (DoD)
+- [ ] Header HTTP trả về `Content-Type: audio/wav` (cho tiếng Anh) hoặc `audio/mpeg` (cho tiếng Việt) với `Transfer-Encoding: chunked`.
+- [ ] Đo đạc Real-Time Factor (RTF) $< 0.15$ trên CPU cho mô hình Kokoro-82M.
+- [ ] Tuân thủ tuyệt đối Stateless Compute: không tạo file âm thanh trung gian trên đĩa cứng.
+- [ ] Nếu dịch vụ TTS lỗi hoặc timeout, client fallback tự động kích hoạt `window.speechSynthesis` mà không văng crash ứng dụng.
+
+### 8.5 Next Task Transition (Bước chuyển tiếp)
+- Tiếp tục sang **Task 1.4: Wire Contract Tests**: [04_CONTRACT_SPECIFICATION_AND_SCHEMA_TESTS.md](04_CONTRACT_SPECIFICATION_AND_SCHEMA_TESTS.md) để thiết lập bộ kiểm thử hợp đồng kép tự động giữa Python và NestJS.
+

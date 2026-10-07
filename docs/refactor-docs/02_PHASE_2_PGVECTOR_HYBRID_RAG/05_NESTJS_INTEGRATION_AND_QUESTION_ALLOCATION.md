@@ -160,3 +160,44 @@ export class QuestionBankService {
 1. **Chuyển đổi Linh hoạt (Feature Flagging)**: Thay đổi `AI_RAG_PROVIDER=prisma` sang `python` và ngược lại mà không làm gián đoạn tiến trình tạo câu hỏi.
 2. **Không Trùng Lặp Câu Hỏi**: $100\%$ các câu hỏi được cấp phát trong một phiên phỏng vấn không bị trùng `questionBankId`.
 3. **Bù đắp Hoàn hảo**: Bất kỳ kỹ năng nào thiếu câu hỏi trong ngân hàng đều được đẩy thành công sang `uncoveredRequirements` để LLM sinh bù đắp.
+
+---
+
+## 5. TASK EXECUTION CONTRACT
+
+### 5.1 Prerequisites (Tiền đề bắt buộc)
+- [ ] Hoàn thành **Task 2.4**: API `POST /api/v1/rag/retrieve` đã hoạt động với Cross-Encoder và Redis L2 Cache.
+- [ ] `IAIGateway` trong `server/src/infrastructure/ai/` sẵn sàng nhận method `retrieveQuestions()`.
+- [ ] Database PostgreSQL đã backfill đầy đủ vector cho `question_bank`.
+
+### 5.2 Target Deliverables (Sản phẩm mã nguồn đầu ra)
+- [ ] `server/src/modules/interview-prep/question-bank.service.ts`: Nâng cấp thuật ngữ và logic `allocateQuestionsBySfia()` gọi qua `IAIGateway` thay cho Fisher-Yates shuffle.
+- [ ] `server/src/infrastructure/ai/python-ai.gateway.ts`: Triển khai hàm `retrieveQuestions()` gọi sang Python AI Service.
+- [ ] `server/src/infrastructure/ai/dto/rag-retrieval.dto.ts`: DTOs `QuestionRetrievalRequestDto`, `QuestionRetrievalResponseDto`.
+- [ ] `server/test/contracts/python-rag.contract.spec.ts`: Jest Contract Test trên fixture `rag-retrieval-response.fixture.json`.
+
+### 5.3 Architectural Rules Enforced (Tuân thủ AGENTS.md)
+- [x] **Backend Rule 1**: Giao tiếp liên module tuân thủ Clean Architecture via Contracts.
+- [x] **Backend Rule 2**: Controllers không gọi trực tiếp AI client hay database models.
+- [x] **Backend Rule 3**: Ném ngoại lệ chuẩn `InterviewAIException(ErrorCode.RAG_RETRIEVAL_FAILED, ...)`.
+- [x] **Backend Rule 5**: Thao tác tạo session câu hỏi bọc trong `prisma.$transaction`.
+
+### 5.4 Verification Command (Lệnh kiểm thử & Xác thực tự động)
+```bash
+# Tier 1 (NestJS QuestionBank Service Unit Test)
+cd server && npm run test -- src/modules/interview-prep/question-bank.service.spec.ts
+
+# Tier 2 (Live Session Generation E2E Test)
+cd server && npm run test:e2e -- test/e2e/generate-session-questions.e2e-spec.ts
+```
+
+### 5.5 Definition of Done (DoD)
+- [ ] **Quality Gate 2 Approved 100%**.
+- [ ] Cờ `AI_RAG_PROVIDER=prisma` tự động kích hoạt Fallback khi Python service offline mà không văng lỗi 500 ra client.
+- [ ] 100% các câu hỏi cấp phát không trùng lặp `questionBankId`.
+- [ ] Kỹ năng thiếu câu hỏi được chuyển an toàn sang `uncoveredRequirements` để LLM sinh bù đắp.
+
+### 5.6 Next Task Transition (Bước chuyển tiếp)
+- **HOÀN THÀNH PHASE 2 (POSTGRESQL PGVECTOR & HYBRID RAG)**.
+- Bàn giao sang **Phase 3 (Deep Assessment Pipeline)**: Bắt đầu tại [01_PASS_1_STAR_DECONSTRUCTION_AND_RUBRIC_EVAL.md](../03_PHASE_3_DEEP_ASSESSMENT/01_PASS_1_STAR_DECONSTRUCTION_AND_RUBRIC_EVAL.md) để xây dựng pipeline đánh giá câu trả lời chuyên sâu.
+
