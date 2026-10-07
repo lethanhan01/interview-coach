@@ -9,7 +9,7 @@ export class UserManagementService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listUsers(includeDeleted = false) {
-    return this.prisma.user.findMany({
+    return await this.prisma.user.findMany({
       where: includeDeleted ? {} : { status: { not: AccountStatus.deleted } },
       select: {
         id: true,
@@ -26,7 +26,7 @@ export class UserManagementService {
   }
 
   async getUser(id: string) {
-    return this.prisma.user.findUnique({
+    return await this.prisma.user.findUnique({
       where: { id },
       select: {
         id: true,

@@ -68,23 +68,7 @@ export class ReportService {
       },
     });
 
-    if (!session) {
-      throw new InterviewAIException(
-        ErrorCode.SESSION_NOT_FOUND,
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
-    if (session.savedJobDescription.userId !== userId) {
-      throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
-    }
-    if (!canAccessHistory) {
-      throw new InterviewAIException(
-        ErrorCode.EMAIL_NOT_VERIFIED,
-        HttpStatus.FORBIDDEN,
-        'Hãy xác thực email để xem lịch sử và báo cáo phỏng vấn.',
-      );
-    }
+    this.assertSessionAccess(session, userId, canAccessHistory);
 
     const unifiedReport = findLatestReport(
       session.sessionReports,
@@ -117,54 +101,9 @@ export class ReportService {
       },
     });
 
-    const transcript: TranscriptItemDto[] = questions.map((q) => {
-      const answer = q.userAnswers[0];
-      const feedback = answer?.aiFeedback;
-      const answerText = answer?.answerText ?? '';
-
-      const rawSegments: AnnotatedSegmentDto[] = (
-        feedback?.annotatedSegments ?? []
-      ).map((s) => ({
-        id: s.id,
-        segmentText: s.segmentText,
-        startIndex: s.startIndex,
-        endIndex: s.endIndex,
-        highlightLevel: s.highlightLevel,
-        annotation: s.annotation,
-        suggestion: s.suggestion ?? undefined,
-      }));
-      const segments = sanitizeFeedbackSegments(
-        answerText,
-        rawSegments,
-      ).segments;
-
-      return {
-        answerId: answer?.id,
-        questionText: q.questionText,
-        orderIndex: q.orderIndex,
-        answerText,
-        skipped: answer?.skipped ?? false,
-        overallScore:
-          !feedback || feedback.isFallback ? null : feedback.overallScore,
-        modelAnswer: feedback?.modelAnswer ?? '',
-        keyTakeaway:
-          feedback?.keyTakeaway ??
-          (answer?.skipped
-            ? 'Hãy luôn cố gắng đưa ra phản hồi kể cả khi chưa nắm chắc giải pháp hoàn chỉnh.'
-            : ''),
-        isFallback: feedback?.isFallback ?? false,
-        segments: answer?.skipped ? [] : segments,
-        criteriaEvaluations:
-          (feedback?.criteriaEvaluations as unknown as BinaryCriterionResultDto[]) ??
-          undefined,
-        demonstratedLevel: feedback?.demonstratedLevel ?? null,
-        criteriaPassRate: feedback?.criteriaPassRate
-          ? Number(feedback.criteriaPassRate)
-          : null,
-        strengths: feedback?.strengths ?? [],
-        improvements: feedback?.improvements ?? [],
-      };
-    });
+    const transcript: TranscriptItemDto[] = questions.map((q) =>
+      this.mapQuestionToTranscriptItem(q),
+    );
 
     const unifiedContent = toRecord(unifiedReport?.contentJson);
     const unifiedSummary = toRecord(unifiedContent.summary);
@@ -216,20 +155,9 @@ export class ReportService {
       (item) => item.isFallback,
     );
     const allFeedbackIsFallback = hasSomeFallback && !hasEvaluatedFeedback;
-    let reportQuality: 'full' | 'partial' | 'unavailable' | 'not_scorable';
-    if (
-      transcriptWithSkippedAnswers.length > 0 &&
-      !hasEvaluatedFeedback &&
-      !hasSomeFallback
-    ) {
-      reportQuality = 'not_scorable';
-    } else if (hasSomeFallback && hasEvaluatedFeedback) {
-      reportQuality = 'partial';
-    } else if (hasSomeFallback) {
-      reportQuality = 'unavailable';
-    } else {
-      reportQuality = 'full';
-    }
+    const reportQuality = this.determineReportQuality(
+      transcriptWithSkippedAnswers,
+    );
 
     return {
       sessionId,
@@ -266,6 +194,98 @@ export class ReportService {
           : storedActionPlan,
       transcript: transcriptWithSkippedAnswers,
     };
+  }
+
+  private assertSessionAccess(
+    session: { savedJobDescription: { userId: string } } | null,
+    userId: string,
+    canAccessHistory: boolean,
+  ): asserts session is NonNullable<typeof session> {
+    if (!session) {
+      throw new InterviewAIException(
+        ErrorCode.SESSION_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (session.savedJobDescription.userId !== userId) {
+      throw new InterviewAIException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
+    }
+    if (!canAccessHistory) {
+      throw new InterviewAIException(
+        ErrorCode.EMAIL_NOT_VERIFIED,
+        HttpStatus.FORBIDDEN,
+        'Hãy xác thực email để xem lịch sử và báo cáo phỏng vấn.',
+      );
+    }
+  }
+
+  private mapQuestionToTranscriptItem(q: any): TranscriptItemDto {
+    const answer = q.userAnswers[0];
+    const feedback = answer?.aiFeedback;
+    const answerText = answer?.answerText ?? '';
+
+    const rawSegments: AnnotatedSegmentDto[] = (
+      feedback?.annotatedSegments ?? []
+    ).map((s: any) => ({
+      id: s.id,
+      segmentText: s.segmentText,
+      startIndex: s.startIndex,
+      endIndex: s.endIndex,
+      highlightLevel: s.highlightLevel,
+      annotation: s.annotation,
+      suggestion: s.suggestion ?? undefined,
+    }));
+    const segments = sanitizeFeedbackSegments(
+      answerText,
+      rawSegments,
+    ).segments;
+
+    return {
+      answerId: answer?.id,
+      questionText: q.questionText,
+      orderIndex: q.orderIndex,
+      answerText,
+      skipped: answer?.skipped ?? false,
+      overallScore:
+        !feedback || feedback.isFallback ? null : feedback.overallScore,
+      modelAnswer: feedback?.modelAnswer ?? '',
+      keyTakeaway:
+        feedback?.keyTakeaway ??
+        (answer?.skipped
+          ? 'Hãy luôn cố gắng đưa ra phản hồi kể cả khi chưa nắm chắc giải pháp hoàn chỉnh.'
+          : ''),
+      isFallback: feedback?.isFallback ?? false,
+      segments: answer?.skipped ? [] : segments,
+      criteriaEvaluations:
+        (feedback?.criteriaEvaluations as unknown as BinaryCriterionResultDto[]) ??
+        undefined,
+      demonstratedLevel: feedback?.demonstratedLevel ?? null,
+      criteriaPassRate: feedback?.criteriaPassRate
+        ? Number(feedback.criteriaPassRate)
+        : null,
+      strengths: feedback?.strengths ?? [],
+      improvements: feedback?.improvements ?? [],
+    };
+  }
+
+  private determineReportQuality(
+    items: TranscriptItemDto[],
+  ): 'full' | 'partial' | 'unavailable' | 'not_scorable' {
+    const hasEvaluated = items.some(
+      (item) => !item.isFallback && item.overallScore !== null,
+    );
+    const hasFallback = items.some((item) => item.isFallback);
+    if (items.length > 0 && !hasEvaluated && !hasFallback) {
+      return 'not_scorable';
+    }
+    if (hasFallback && hasEvaluated) {
+      return 'partial';
+    }
+    if (hasFallback) {
+      return 'unavailable';
+    }
+    return 'full';
   }
 
   async getFeedbackProgress(
@@ -360,13 +380,10 @@ export class ReportService {
 
   private async evaluateReportReadiness(
     sessionId: string,
-    sessionType: string,
-    contextPack: 'VN' | 'Western',
-    language?: string,
+    _sessionType: string,
+    _contextPack: 'VN' | 'Western',
+    _language?: string,
   ): Promise<void> {
-    void sessionType;
-    void contextPack;
-    void language;
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
       select: { status: true },

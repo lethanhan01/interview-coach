@@ -23,8 +23,12 @@ describe('Python STT Wire Contract Conformance Test', () => {
     expect(dtoInstance.language).toBe(rawFixture.language);
     expect(dtoInstance.durationSeconds).toBe(rawFixture.durationSeconds);
     expect(dtoInstance.metrics.wpm).toBe(rawFixture.metrics.wpm);
-    expect(dtoInstance.metrics.fillerWordCount).toBe(rawFixture.metrics.fillerWordCount);
-    expect(dtoInstance.metrics.fillerWords).toEqual(rawFixture.metrics.fillerWords);
+    expect(dtoInstance.metrics.fillerWordCount).toBe(
+      rawFixture.metrics.fillerWordCount,
+    );
+    expect(dtoInstance.metrics.fillerWords).toEqual(
+      rawFixture.metrics.fillerWords,
+    );
     expect(dtoInstance.metrics.pauseCount).toBe(rawFixture.metrics.pauseCount);
     expect(dtoInstance.metrics.totalPauseDurationSeconds).toBe(
       rawFixture.metrics.totalPauseDurationSeconds,
@@ -32,7 +36,9 @@ describe('Python STT Wire Contract Conformance Test', () => {
     expect(dtoInstance.metrics.speechDurationSeconds).toBe(
       rawFixture.metrics.speechDurationSeconds,
     );
-    expect(dtoInstance.metrics.confidenceScore).toBe(rawFixture.metrics.confidenceScore);
+    expect(dtoInstance.metrics.confidenceScore).toBe(
+      rawFixture.metrics.confidenceScore,
+    );
     expect(dtoInstance.words?.[0].word).toBe(rawFixture.words[0].word);
   });
 });

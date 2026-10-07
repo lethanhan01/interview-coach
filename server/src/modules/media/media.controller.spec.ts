@@ -27,13 +27,11 @@ describe('MediaController', () => {
 
   describe('transcribe', () => {
     it('throws VALIDATION_ERROR when no file is uploaded', async () => {
-      await expect(
-        controller.transcribe(undefined, {}),
-      ).rejects.toThrow(InterviewAIException);
+      await expect(controller.transcribe(undefined, {})).rejects.toThrow(
+        InterviewAIException,
+      );
 
-      await expect(
-        controller.transcribe(undefined, {}),
-      ).rejects.toMatchObject({
+      await expect(controller.transcribe(undefined, {})).rejects.toMatchObject({
         errorCode: ErrorCode.VALIDATION_ERROR,
       });
     });
@@ -72,7 +70,7 @@ describe('MediaController', () => {
         },
       };
 
-      mediaFacade.transcribeAudio.mockResolvedValue(mockResponse as any);
+      mediaFacade.transcribeAudio.mockResolvedValue(mockResponse);
 
       const result = await controller.transcribe(validFile, { language: 'en' });
 

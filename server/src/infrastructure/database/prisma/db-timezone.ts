@@ -30,5 +30,5 @@ export async function setClientDbTimeZone(
   await client.query(`SET TIME ZONE ${quotePostgresLiteral(timeZone)}`);
 }
 export function quotePostgresLiteral(value: string): string {
-  return `'${value.replace(/'/g, "''")}'`;
+  return `'${value.replaceAll("'", "''")}'`;
 }

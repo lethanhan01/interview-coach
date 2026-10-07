@@ -1,4 +1,10 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class SynthesizeSpeechDto {
@@ -12,7 +18,10 @@ export class SynthesizeSpeechDto {
   @MaxLength(1000)
   text: string;
 
-  @ApiPropertyOptional({ enum: ['vi', 'en'], description: 'Voice language code' })
+  @ApiPropertyOptional({
+    enum: ['vi', 'en'],
+    description: 'Voice language code',
+  })
   @IsOptional()
   @IsEnum(['vi', 'en'])
   language?: 'vi' | 'en';

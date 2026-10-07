@@ -89,7 +89,10 @@ export class TranscribeResponseDto {
   @Type(() => VoiceMetricsDto)
   metrics: VoiceMetricsDto;
 
-  @ApiPropertyOptional({ type: [STTWordTimestampDto], description: 'Chi tiết timestamp từng từ' })
+  @ApiPropertyOptional({
+    type: [STTWordTimestampDto],
+    description: 'Chi tiết timestamp từng từ',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

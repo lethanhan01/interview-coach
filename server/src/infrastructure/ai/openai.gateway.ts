@@ -207,7 +207,7 @@ export class OpenAIGateway implements IAIGateway {
       (_match, inner: string) => {
         changed = true;
         return JSON.stringify(
-          inner.replace(/\\'/g, "'").replace(/\\\\/g, '\\'),
+          inner.replaceAll("\\'", "'").replaceAll('\\\\', '\\'),
         );
       },
     );
@@ -432,11 +432,13 @@ export class OpenAIGateway implements IAIGateway {
     });
   }
 
-  async transcribe(_params: TranscribeParams): Promise<TranscribeResult> {
-    throw new InterviewAIException(
-      ErrorCode.AI_SERVICE_UNAVAILABLE,
-      HttpStatus.NOT_IMPLEMENTED,
-      'OpenAI Whisper STT has been retired. Use Python AI service.',
+  transcribe(_params: TranscribeParams): Promise<TranscribeResult> {
+    return Promise.reject(
+      new InterviewAIException(
+        ErrorCode.AI_SERVICE_UNAVAILABLE,
+        HttpStatus.NOT_IMPLEMENTED,
+        'OpenAI Whisper STT has been retired. Use Python AI service.',
+      ),
     );
   }
 
@@ -495,33 +497,39 @@ export class OpenAIGateway implements IAIGateway {
     });
   }
 
-  async transcribeAudio(
+  transcribeAudio(
     _params: TranscribeAudioParams,
   ): Promise<TranscribeResult> {
-    throw new InterviewAIException(
-      ErrorCode.AI_SERVICE_UNAVAILABLE,
-      HttpStatus.NOT_IMPLEMENTED,
-      'OpenAI Whisper STT has been retired. Use Python AI service.',
+    return Promise.reject(
+      new InterviewAIException(
+        ErrorCode.AI_SERVICE_UNAVAILABLE,
+        HttpStatus.NOT_IMPLEMENTED,
+        'OpenAI Whisper STT has been retired. Use Python AI service.',
+      ),
     );
   }
 
-  async transcribeWithMetrics(
+  transcribeWithMetrics(
     _params: TranscribeAudioParams,
   ): Promise<TranscribeWithMetricsResult> {
-    throw new InterviewAIException(
-      ErrorCode.AI_SERVICE_UNAVAILABLE,
-      HttpStatus.NOT_IMPLEMENTED,
-      'OpenAI Whisper STT has been retired. Use Python AI service.',
+    return Promise.reject(
+      new InterviewAIException(
+        ErrorCode.AI_SERVICE_UNAVAILABLE,
+        HttpStatus.NOT_IMPLEMENTED,
+        'OpenAI Whisper STT has been retired. Use Python AI service.',
+      ),
     );
   }
 
-  async synthesizeSpeech(
+  synthesizeSpeech(
     _params: SynthesizeSpeechParams,
   ): Promise<SynthesizeSpeechResult> {
-    throw new InterviewAIException(
-      ErrorCode.AI_SERVICE_UNAVAILABLE,
-      HttpStatus.NOT_IMPLEMENTED,
-      'Speech synthesis is not implemented for OpenAIGateway. Use Python AI service.',
+    return Promise.reject(
+      new InterviewAIException(
+        ErrorCode.AI_SERVICE_UNAVAILABLE,
+        HttpStatus.NOT_IMPLEMENTED,
+        'Speech synthesis is not implemented for OpenAIGateway. Use Python AI service.',
+      ),
     );
   }
 }

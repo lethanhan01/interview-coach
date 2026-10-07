@@ -298,7 +298,7 @@ Please select 2-4 appropriate SFIA skill codes for this role.`;
   }
 
   private clampLevel(level?: number | null): number {
-    if (typeof level !== 'number' || isNaN(level)) return 3;
+    if (typeof level !== 'number' || Number.isNaN(level)) return 3;
     return Math.max(1, Math.min(7, Math.round(level)));
   }
 }

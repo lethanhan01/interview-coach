@@ -50,7 +50,6 @@ export class QuestionCriteriaService {
     question: Record<string, unknown>,
     _versionId?: string,
   ): string[] {
-    void _versionId;
     if (
       Array.isArray(question.rubricCriteria) &&
       question.rubricCriteria.length > 0

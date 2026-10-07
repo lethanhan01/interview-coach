@@ -54,7 +54,7 @@ export class ChangeInterviewSessionStatus {
   ): Promise<InterviewSession> {
     this.policy.assertTransition(session.status, 'paused');
     if (session.status === 'paused') return session;
-    return this.prisma.interviewSession.update({
+    return await this.prisma.interviewSession.update({
       where: { id: session.id },
       data: {
         status: 'paused',
@@ -74,7 +74,7 @@ export class ChangeInterviewSessionStatus {
   private async cancel(session: InterviewSession): Promise<InterviewSession> {
     this.policy.assertTransition(session.status, 'canceled');
     if (session.status === 'canceled') return session;
-    return this.prisma.interviewSession.update({
+    return await this.prisma.interviewSession.update({
       where: { id: session.id },
       data: { status: 'canceled', completedAt: null },
     });

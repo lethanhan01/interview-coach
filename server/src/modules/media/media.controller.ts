@@ -19,7 +19,6 @@ import {
   ApiOperation,
   ApiConsumes,
   ApiOkResponse,
-  ApiCreatedResponse,
 } from '@nestjs/swagger';
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
@@ -57,7 +56,8 @@ export class MediaController {
   @Post('transcribe')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Transcribe audio buffer and extract speech metrics (WPM, pauses, fillers)',
+    summary:
+      'Transcribe audio buffer and extract speech metrics (WPM, pauses, fillers)',
   })
   @ApiConsumes('multipart/form-data')
   @ApiOkResponse({
@@ -99,7 +99,8 @@ export class MediaController {
   @Post('synthesize')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Synthesize speech (TTS) from question text returning audio stream',
+    summary:
+      'Synthesize speech (TTS) from question text returning audio stream',
   })
   @ApiOkResponse({
     description: 'Chunked audio stream (WAV PCM 24kHz or MP3)',

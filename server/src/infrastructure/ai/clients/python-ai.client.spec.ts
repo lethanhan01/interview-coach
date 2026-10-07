@@ -96,7 +96,8 @@ describe('PythonAiClient', () => {
         json: async () => ({
           success: false,
           errorCode: 'NO_SPEECH_DETECTED',
-          message: 'Không phát hiện thấy âm thanh giọng nói rõ ràng trong bản ghi.',
+          message:
+            'Không phát hiện thấy âm thanh giọng nói rõ ràng trong bản ghi.',
           details: {},
         }),
       } as any);
@@ -109,7 +110,8 @@ describe('PythonAiClient', () => {
       ).rejects.toMatchObject({
         errorCode: ErrorCode.NO_SPEECH_DETECTED,
         status: 400,
-        message: 'Không phát hiện thấy âm thanh giọng nói rõ ràng trong bản ghi.',
+        message:
+          'Không phát hiện thấy âm thanh giọng nói rõ ràng trong bản ghi.',
       });
     });
 

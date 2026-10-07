@@ -87,7 +87,7 @@ export interface GenerateTextParams {
 
 export interface TranscribeAudioParams {
   audioBuffer: Buffer;
-  mimeType?: 'audio/webm' | 'audio/mp4' | 'audio/wav' | string;
+  mimeType?: 'audio/webm' | 'audio/mp4' | 'audio/wav' | (string & {});
   language?: 'vi' | 'en';
   timeoutMs?: number;
 }

@@ -429,7 +429,26 @@ export class SfiaAdminService implements OnModuleInit {
       });
     }
 
-    // Khởi tạo đầy đủ 147 kỹ năng x 7 levels
+    const cells = this.buildMatrixCells(skills, rawCellMap);
+
+    return {
+      skills,
+      categories,
+      cells,
+    };
+  }
+
+  private buildMatrixCells(
+    skills: SfiaSkillSummaryDto[],
+    rawCellMap: Map<
+      string,
+      {
+        questionCount: number;
+        onetCount: number;
+        statementSnippet: string | null;
+      }
+    >,
+  ): Record<string, SfiaMatrixCellDataDto> {
     const cells: Record<string, SfiaMatrixCellDataDto> = {};
 
     for (const skill of skills) {
@@ -451,11 +470,7 @@ export class SfiaAdminService implements OnModuleInit {
       }
     }
 
-    return {
-      skills,
-      categories,
-      cells,
-    };
+    return cells;
   }
 
   /**

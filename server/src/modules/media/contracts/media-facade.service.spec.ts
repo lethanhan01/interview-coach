@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Readable } from 'node:stream';
 import { MediaFacade } from './media-facade.service';
 import { VoiceMetricsService } from '../voice-metrics.service';
-import { AI_GATEWAY_TOKEN, type IAIGateway } from '@infra/ai/ai-gateway.interface';
+import {
+  AI_GATEWAY_TOKEN,
+  type IAIGateway,
+} from '@infra/ai/ai-gateway.interface';
 
 describe('MediaFacade', () => {
   let facade: MediaFacade;
@@ -12,7 +15,7 @@ describe('MediaFacade', () => {
   beforeEach(async () => {
     voiceMetricsService = {
       calculate: jest.fn(),
-    } as unknown as jest.Mocked<VoiceMetricsService>;
+    };
 
     aiGateway = {
       transcribeWithMetrics: jest.fn(),
@@ -82,7 +85,11 @@ describe('MediaFacade', () => {
   });
 
   it('delegates synthesizeSpeech to aiGateway.synthesizeSpeech', async () => {
-    const mockStream = new Readable({ read() { this.push(null); } });
+    const mockStream = new Readable({
+      read() {
+        this.push(null);
+      },
+    });
     aiGateway.synthesizeSpeech.mockResolvedValue({
       stream: mockStream,
       contentType: 'audio/wav',

@@ -24,9 +24,7 @@ export class PythonAiClient {
     ).replace(/\/+$/, '');
     this.internalSecret =
       config.get<string>('INTERNAL_AI_SECRET') ?? 'dev-secret-internal-ai-key';
-    this.defaultTimeoutMs = Number(
-      config.get('AI_STT_TIMEOUT_MS') ?? 60_000,
-    );
+    this.defaultTimeoutMs = Number(config.get('AI_STT_TIMEOUT_MS') ?? 60_000);
   }
 
   async transcribe(
@@ -128,8 +126,7 @@ export class PythonAiClient {
         await this.handleHttpError(response, 'Python TTS');
       }
 
-      const contentType =
-        response.headers.get('content-type') || 'audio/wav';
+      const contentType = response.headers.get('content-type') || 'audio/wav';
 
       if (!response.body) {
         throw new InterviewAIException(
