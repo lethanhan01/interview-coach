@@ -2,7 +2,6 @@ import React from 'react'
 import {
   TranscriptItem,
   AnnotatedSegment,
-  type SessionType,
 } from '@/lib/types'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
@@ -82,15 +81,13 @@ function FeedbackSection({
 
 export interface AnnotatedTranscriptProps {
   items: TranscriptItem[]
-  contextPackId?: 'VN' | 'Western'
-  sessionType?: SessionType
   className?: string
 }
 
 export default function AnnotatedTranscript({
   items = [],
   className,
-}: AnnotatedTranscriptProps) {
+}: Readonly<AnnotatedTranscriptProps>) {
   return (
     <div className={cn('flex flex-col gap-8', className)}>
       {items.map((item) => {

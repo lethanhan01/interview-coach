@@ -25,8 +25,8 @@ export function useSfiaParams() {
   const selectedSkill = searchParams.get('skill') || DEFAULT_SFIA_SKILL_CODE
   
   const rawLevel = searchParams.get('level')
-  const parsedLevel = rawLevel ? parseInt(rawLevel, 10) : DEFAULT_SFIA_LEVEL
-  const selectedLevel = isNaN(parsedLevel) || parsedLevel < 1 || parsedLevel > 7 ? DEFAULT_SFIA_LEVEL : parsedLevel
+  const parsedLevel = rawLevel ? Number.parseInt(rawLevel, 10) : DEFAULT_SFIA_LEVEL
+  const selectedLevel = Number.isNaN(parsedLevel) || parsedLevel < 1 || parsedLevel > 7 ? DEFAULT_SFIA_LEVEL : parsedLevel
 
   const selectedCategory = searchParams.get('category') || null
 

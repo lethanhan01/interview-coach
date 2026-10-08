@@ -19,8 +19,6 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import {
-  type SfiaCategory,
-  type SfiaSkillSummary,
   type SfiaCoverageStats,
   type SfiaCategoryMetric,
   type SfiaLevelMetric,
@@ -33,8 +31,6 @@ import {
 
 export interface SfiaAnalyticsViewProps {
   stats: SfiaCoverageStats | null
-  categories: SfiaCategory[]
-  skills?: SfiaSkillSummary[]
   selectedCategoryFilter?: string | null
   selectedLevelFilter?: number | null
   onSelectCategory?: (categoryCode: string | null) => void
@@ -339,6 +335,12 @@ const SfiaCategoryDistributionChart = memo(function SfiaCategoryDistributionChar
   )
 })
 
+function getLevelBarColor(level: number): string {
+  if (level >= 5) return 'bg-brand'
+  if (level >= 3) return 'bg-emerald-500'
+  return 'bg-cyan-500'
+}
+
 /**
  * 3. Khối Biểu Đồ Phân Bổ Theo 7 Cấp Độ Trách Nhiệm (Level Distribution Meter)
  */
@@ -346,11 +348,11 @@ const SfiaLevelDistributionChart = memo(function SfiaLevelDistributionChart({
   levelDistribution,
   selectedLevel,
   onSelectLevel,
-}: {
+}: Readonly<{
   levelDistribution: SfiaLevelMetric[]
   selectedLevel?: number | null
   onSelectLevel?: (level: number | null) => void
-}) {
+}>) {
   const maxQuestions = Math.max(
     ...levelDistribution.map((l) => l.questionCount),
     1
@@ -438,11 +440,7 @@ const SfiaLevelDistributionChart = memo(function SfiaLevelDistributionChart({
                   <div
                     className={cn(
                       'h-full rounded-full transition-all duration-500',
-                      lvl.level >= 5
-                        ? 'bg-brand'
-                        : lvl.level >= 3
-                        ? 'bg-emerald-500'
-                        : 'bg-cyan-500'
+                      getLevelBarColor(lvl.level)
                     )}
                     style={{ width: `${Math.max(6, barWidth)}%` }}
                   />
@@ -461,16 +459,22 @@ const SfiaLevelDistributionChart = memo(function SfiaLevelDistributionChart({
   )
 })
 
+const RANK_BADGE_STYLE: Record<number, string> = {
+  1: 'bg-amber-500 text-white shadow-sm',
+  2: 'bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-slate-100',
+  3: 'bg-amber-700/80 text-white',
+}
+
 /**
  * 4. Khối Bảng Xếp Hạng Top 10 Kỹ Năng SFIA Phổ Biến Nhất trong O*NET
  */
 const SfiaTopOnetLeaderboard = memo(function SfiaTopOnetLeaderboard({
   topSkills,
   onSelectSkill,
-}: {
+}: Readonly<{
   topSkills: SfiaTopOnetMappedSkill[]
   onSelectSkill?: (skillCode: string) => void
-}) {
+}>) {
   return (
     <div className="rounded-xl border border-border/80 bg-card p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
@@ -504,13 +508,7 @@ const SfiaTopOnetLeaderboard = memo(function SfiaTopOnetLeaderboard({
                 <span
                   className={cn(
                     'size-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 tabular-nums',
-                    rank === 1
-                      ? 'bg-amber-500 text-white shadow-sm'
-                      : rank === 2
-                      ? 'bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-slate-100'
-                      : rank === 3
-                      ? 'bg-amber-700/80 text-white'
-                      : 'bg-surface-inset text-ink-muted font-mono'
+                    RANK_BADGE_STYLE[rank] ?? 'bg-surface-inset text-ink-muted font-mono'
                   )}
                 >
                   {rank}
@@ -592,7 +590,7 @@ export function SfiaAnalyticsView({
   error = null,
   onRetry,
   className,
-}: SfiaAnalyticsViewProps) {
+}: Readonly<SfiaAnalyticsViewProps>) {
   // 1. Trạng thái Loading Skeleton
   if (loading) {
     return (

@@ -79,15 +79,19 @@ function ScoreDisplay({ score }: Readonly<{ score: number }>) {
   )
 }
 
+function getSessionErrorMessage(err: Error | null): string | null {
+  if (!err) return null
+  if (err.message === 'Failed to fetch') {
+    return 'Không thể kết nối đến server. Kiểm tra server có đang chạy không.'
+  }
+  return err.message
+}
+
 export default function SessionsPage() {
   const router = useRouter()
   const { sessions, isLoading: loading, error: swrError, mutate } = useSessions()
 
-  const error = swrError
-    ? swrError.message === 'Failed to fetch'
-      ? 'Không thể kết nối đến server. Kiểm tra server có đang chạy không.'
-      : swrError.message
-    : null
+  const error = getSessionErrorMessage(swrError)
 
   function retryLoad() {
     void mutate()

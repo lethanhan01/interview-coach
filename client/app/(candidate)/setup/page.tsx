@@ -53,12 +53,12 @@ function normalizeJdFormData(
   value: Partial<Record<keyof JdFormData, unknown>> | null | undefined
 ): JdFormData {
   const level = text(value?.level)
-  const targetSfia =
-    typeof value?.targetSfiaLevel === 'number'
-      ? value.targetSfiaLevel
-      : level
-        ? mapJdLevelToSfia(level)
-        : undefined
+  let targetSfia: number | undefined
+  if (typeof value?.targetSfiaLevel === 'number') {
+    targetSfia = value.targetSfiaLevel
+  } else if (level) {
+    targetSfia = mapJdLevelToSfia(level)
+  }
 
   return {
     company: text(value?.company),
@@ -203,6 +203,35 @@ const STEP_LABELS: Record<1 | 2 | 3, string> = {
   1: 'Job Description',
   2: 'Cấu hình',
   3: 'Xác nhận',
+}
+
+function getStepBadgeClass(s: number, currentStep: number): string {
+  if (s === currentStep) return 'bg-brand ring-brand-subtle-border text-white ring-4'
+  if (s < currentStep) return 'bg-brand text-white'
+  return 'bg-border text-ink-faint'
+}
+
+function renderStep1BackButton(
+  savedCount: number,
+  hasContent: boolean,
+  onBack: () => void,
+  onReset: () => void
+) {
+  if (savedCount > 0) {
+    return (
+      <Button variant="ghost" onClick={onBack}>
+        Quay lại
+      </Button>
+    )
+  }
+  if (hasContent) {
+    return (
+      <Button variant="ghost" onClick={onReset}>
+        Đặt lại
+      </Button>
+    )
+  }
+  return <span />
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -422,11 +451,7 @@ function SetupPageContent() {
                   <div
                     className={cn(
                       'flex size-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-150',
-                      s === step
-                        ? 'bg-brand ring-brand-subtle-border text-white ring-4'
-                        : s < step
-                          ? 'bg-brand text-white'
-                          : 'bg-border text-ink-faint'
+                      getStepBadgeClass(s, step)
                     )}
                   >
                     {s < step ? (
@@ -486,21 +511,13 @@ function SetupPageContent() {
           <JdForm
             value={jd}
             onChange={updateJd}
-            savedJobDescriptions={savedJobDescriptions}
-            selectedSavedJobDescriptionId={selectedSavedJobDescriptionId}
-            onSelectSavedJobDescription={selectSavedJobDescription}
           />
           <div className="flex items-center justify-between">
-            {savedJobDescriptions.length > 0 ? (
-              <Button variant="ghost" onClick={() => setStep(0)}>
-                Quay lại
-              </Button>
-            ) : jdHasContent ? (
-              <Button variant="ghost" onClick={resetJd}>
-                Đặt lại
-              </Button>
-            ) : (
-              <span />
+            {renderStep1BackButton(
+              savedJobDescriptions.length,
+              jdHasContent,
+              () => setStep(0),
+              resetJd
             )}
             <Button onClick={() => setStep(2)} disabled={!isJdValid(jd)}>
               Tiếp theo

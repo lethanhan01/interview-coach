@@ -83,14 +83,13 @@ function extractActionPlanDirections(actionPlan: Report['actionPlan']): string[]
     if (directions.length > 0) return directions
   }
 
-  const legacyItems = toStringList(
-    Array.isArray(actionPlan)
-      ? actionPlan
-      : typeof actionPlan === 'object' && actionPlan !== null && 'items' in actionPlan
-        ? (actionPlan as { items?: unknown }).items
-        : []
-  )
-  return legacyItems
+  let rawItems: unknown = []
+  if (Array.isArray(actionPlan)) {
+    rawItems = actionPlan
+  } else if (typeof actionPlan === 'object' && actionPlan !== null && 'items' in actionPlan) {
+    rawItems = (actionPlan as { items?: unknown }).items
+  }
+  return toStringList(rawItems)
 }
 
 function buildOverviewSummary(report: Report): OverviewSummary {
@@ -283,11 +282,13 @@ export default function ReportPage() {
     const progressLabel = progress
       ? `Đã chấm ${feedbackCompleted}/${feedbackRequired} câu trả lời`
       : 'Đang kiểm tra tiến trình chấm điểm...'
-    const detailLabel = progress
-      ? feedbackPending > 0
-        ? `Còn ${feedbackPending} câu đang xử lý`
-        : 'Đang tổng hợp báo cáo...'
-      : 'AI đang chuẩn bị dữ liệu báo cáo.'
+    let detailLabel = 'AI đang chuẩn bị dữ liệu báo cáo.'
+    if (progress) {
+      detailLabel =
+        feedbackPending > 0
+          ? `Còn ${feedbackPending} câu đang xử lý`
+          : 'Đang tổng hợp báo cáo...'
+    }
 
     return (
       <div className="mx-auto flex max-w-md flex-col items-center justify-center gap-4 px-4 py-20 text-center">
@@ -512,8 +513,6 @@ export default function ReportPage() {
           </h2>
           <AnnotatedTranscript
             items={report.transcript ?? []}
-            contextPackId={session?.contextPackId}
-            sessionType={session?.sessionType}
           />
         </div>
       </div>

@@ -36,14 +36,19 @@ function SegmentMeter({
   const segments = [1, 2, 3, 4, 5, 6, 7]
 
   return (
-    <div
-      role="meter"
-      aria-label={`Thang đo SFIA 7 cấp độ cho ${skillName}`}
-      aria-valuenow={safeDemonstratedLevel}
-      aria-valuemin={0}
-      aria-valuemax={7}
-      className="flex flex-col gap-1.5"
-    >
+    <div className="flex flex-col gap-1.5">
+      <meter
+        min={0}
+        max={7}
+        value={safeDemonstratedLevel}
+        aria-valuenow={safeDemonstratedLevel}
+        aria-valuemin={0}
+        aria-valuemax={7}
+        aria-label={`Thang đo SFIA 7 cấp độ cho ${skillName}`}
+        className="sr-only"
+      >
+        {safeDemonstratedLevel} / 7
+      </meter>
       <div className="flex items-center gap-1">
         {segments.map((level) => {
           const isFilled = level <= safeDemonstratedLevel && safeDemonstratedLevel > 0

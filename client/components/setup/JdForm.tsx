@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/Select'
 import type { JdFormData } from '@/lib/setup-types'
 import { mapJdLevelToSfia } from '@/lib/setup-types'
-import type { SavedJobDescription } from '@/lib/types'
 import {
   BONUS_OPTIONS,
   JD_LEVEL_OPTIONS,
@@ -33,12 +32,9 @@ import { Briefcase, Loader2, Search, Sparkles, X } from 'lucide-react'
 interface JdFormProps {
   value: JdFormData
   onChange: (data: JdFormData) => void
-  savedJobDescriptions?: SavedJobDescription[]
-  selectedSavedJobDescriptionId?: string
-  onSelectSavedJobDescription?: (id: string) => void
 }
 
-export default function JdForm({ value, onChange }: JdFormProps) {
+export default function JdForm({ value, onChange }: Readonly<JdFormProps>) {
   const [techQuery, setTechQuery] = useState('')
   const [onetQuery, setOnetQuery] = useState('')
   const [onetResults, setOnetResults] = useState<OnetOccupation[]>([])
@@ -317,7 +313,7 @@ export default function JdForm({ value, onChange }: JdFormProps) {
                       aria-label="Danh sách chức danh O*NET gợi ý"
                       className="border-border bg-surface-1 absolute z-30 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border p-1 shadow-lg"
                     >
-                      {isSearchingOnet && onetResults.length === 0 ? (
+                      {isSearchingOnet && onetResults.length === 0 && (
                         <div className="text-ink-muted flex items-center justify-center gap-2 py-4 text-xs">
                           <Loader2
                             className="text-brand size-3.5 animate-spin"
@@ -325,11 +321,13 @@ export default function JdForm({ value, onChange }: JdFormProps) {
                           />
                           Đang tìm kiếm chức danh O*NET...
                         </div>
-                      ) : onetResults.length === 0 ? (
+                      )}
+                      {!isSearchingOnet && onetResults.length === 0 && (
                         <div className="text-ink-muted px-3 py-3 text-center text-xs">
                           Không tìm thấy chức danh O*NET phù hợp.
                         </div>
-                      ) : (
+                      )}
+                      {onetResults.length > 0 &&
                         onetResults.map((occ) => (
                           <button
                             key={occ.socCode}
@@ -357,8 +355,7 @@ export default function JdForm({ value, onChange }: JdFormProps) {
                               {occ.socCode}
                             </Badge>
                           </button>
-                        ))
-                      )}
+                        ))}
                     </div>
                   )}
                 </div>

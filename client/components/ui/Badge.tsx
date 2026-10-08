@@ -48,15 +48,29 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
     },
     ref
   ) => {
+    if (interactive && !onDismiss) {
+      return (
+        <button
+          type="button"
+          ref={ref as React.ForwardedRef<HTMLButtonElement>}
+          tabIndex={0}
+          className={cn(
+            badgeVariants({ variant }),
+            'cursor-pointer hover:opacity-85 active:scale-95 transition-transform select-none',
+            className
+          )}
+          {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+        >
+          {children}
+        </button>
+      )
+    }
+
     return (
       <span
-        ref={ref}
-        role={interactive ? 'button' : undefined}
-        tabIndex={interactive ? 0 : undefined}
+        ref={ref as React.ForwardedRef<HTMLSpanElement>}
         className={cn(
           badgeVariants({ variant }),
-          interactive &&
-            'cursor-pointer hover:opacity-85 active:scale-95 transition-transform select-none',
           onDismiss && 'pr-1.5',
           className
         )}

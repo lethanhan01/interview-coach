@@ -465,7 +465,6 @@ export default function InterviewPage() {
             totalQuestions={questions.length}
             skillCode={current.skillCode}
             skillName={current.skillName}
-            techContext={current.techContext}
             language={sessionLanguage}
           />
         )}
@@ -499,7 +498,6 @@ export default function InterviewPage() {
               language={sessionLanguage}
               initialDraft={draftAnswer}
               onDraftChange={setDraftAnswer}
-              sessionId={sessionId}
               disabled={turnSubmitting || isCompleting}
             />
           )}

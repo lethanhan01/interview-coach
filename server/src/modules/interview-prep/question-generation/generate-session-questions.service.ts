@@ -1,5 +1,5 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
@@ -84,7 +84,7 @@ export class GenerateSessionQuestions {
     private readonly skillQuestionGenerator: SkillTargetedQuestionGeneratorService,
     @Inject(AI_GATEWAY_TOKEN)
     private readonly openai: IAIGateway,
-  ) {}
+  ) { }
 
   async execute(job: QuestionGenerationJobDto): Promise<void> {
     try {
@@ -148,61 +148,73 @@ export class GenerateSessionQuestions {
     ];
 
     // 2. Với các kỹ năng ngân hàng không đủ câu hỏi, kích hoạt SkillTargeted AI Generator
-    for (const item of bankResult.uncoveredRequirements) {
-      for (let i = 0; i < item.neededCount; i++) {
-        const generated = await this.skillQuestionGenerator.generateQuestion({
-          sessionType: job.sessionType,
-          skillCode: item.requirement.skillCode,
-          targetLevel: item.requirement.targetLevel,
-          techContext: item.requirement.techContext || [],
-          jobDescriptionText: job.jobDescriptionText,
-          language: outputLanguage,
-        });
+    const uncoveredPromises = bankResult.uncoveredRequirements.flatMap((item) =>
+      Array.from(
+        { length: item.neededCount },
+        async (): Promise<AllocatedQuestionDto> => {
+          const generated = await this.skillQuestionGenerator.generateQuestion({
+            sessionType: job.sessionType,
+            skillCode: item.requirement.skillCode,
+            targetLevel: item.requirement.targetLevel,
+            techContext: item.requirement.techContext || [],
+            jobDescriptionText: job.jobDescriptionText,
+            language: outputLanguage,
+          });
 
-        allAllocated.push({
-          questionBankId: generated.questionBankId,
-          sessionSkillId: item.requirement.sessionSkillId,
-          sfiaSkillCode: item.requirement.skillCode,
-          targetLevel: item.requirement.targetLevel,
-          questionText: generated.questionText,
-          questionCategory:
-            job.sessionType === 'technical' ? 'technical' : 'behavioral',
-          source: generated.source,
-          difficulty: generated.difficulty,
-          estimatedTimeMin: generated.estimatedTimeMin,
-          rubricCriteria: generated.rubricCriteria,
-        });
-      }
-    }
+          return {
+            questionBankId: generated.questionBankId,
+            sessionSkillId: item.requirement.sessionSkillId,
+            sfiaSkillCode: item.requirement.skillCode,
+            targetLevel: item.requirement.targetLevel,
+            questionText: generated.questionText,
+            questionCategory:
+              job.sessionType === 'technical' ? 'technical' : 'behavioral',
+            source: generated.source,
+            difficulty: generated.difficulty,
+            estimatedTimeMin: generated.estimatedTimeMin,
+            rubricCriteria: generated.rubricCriteria,
+          };
+        },
+      ),
+    );
+
+    const generatedUncovered = await Promise.all(uncoveredPromises);
+    allAllocated.push(...generatedUncovered);
 
     // 3. Đảm bảo đủ số lượng câu hỏi theo yêu cầu
     if (allAllocated.length < job.totalQuestions && sessionSkills.length > 0) {
       const primarySkill = sessionSkills[0];
       const neededMore = job.totalQuestions - allAllocated.length;
-      for (let i = 0; i < neededMore; i++) {
-        const generated = await this.skillQuestionGenerator.generateQuestion({
-          sessionType: job.sessionType,
-          skillCode: primarySkill.skillCode,
-          targetLevel: primarySkill.targetLevel,
-          techContext: primarySkill.techContext || [],
-          jobDescriptionText: job.jobDescriptionText,
-          language: outputLanguage,
-        });
+      const additionalPromises = Array.from(
+        { length: neededMore },
+        async (): Promise<AllocatedQuestionDto> => {
+          const generated = await this.skillQuestionGenerator.generateQuestion({
+            sessionType: job.sessionType,
+            skillCode: primarySkill.skillCode,
+            targetLevel: primarySkill.targetLevel,
+            techContext: primarySkill.techContext || [],
+            jobDescriptionText: job.jobDescriptionText,
+            language: outputLanguage,
+          });
 
-        allAllocated.push({
-          questionBankId: generated.questionBankId,
-          sessionSkillId: primarySkill.id,
-          sfiaSkillCode: primarySkill.skillCode,
-          targetLevel: primarySkill.targetLevel,
-          questionText: generated.questionText,
-          questionCategory:
-            job.sessionType === 'technical' ? 'technical' : 'behavioral',
-          source: generated.source,
-          difficulty: generated.difficulty,
-          estimatedTimeMin: generated.estimatedTimeMin,
-          rubricCriteria: generated.rubricCriteria,
-        });
-      }
+          return {
+            questionBankId: generated.questionBankId,
+            sessionSkillId: primarySkill.id,
+            sfiaSkillCode: primarySkill.skillCode,
+            targetLevel: primarySkill.targetLevel,
+            questionText: generated.questionText,
+            questionCategory:
+              job.sessionType === 'technical' ? 'technical' : 'behavioral',
+            source: generated.source,
+            difficulty: generated.difficulty,
+            estimatedTimeMin: generated.estimatedTimeMin,
+            rubricCriteria: generated.rubricCriteria,
+          };
+        },
+      );
+
+      const generatedAdditional = await Promise.all(additionalPromises);
+      allAllocated.push(...generatedAdditional);
     }
 
     // 4. Sắp xếp lũy tiến (Progressive Flow): từ dễ đến khó (difficulty tăng dần)
@@ -356,10 +368,10 @@ export class GenerateSessionQuestions {
           question.estimatedTimeMin > 0
             ? question.estimatedTimeMin
             : calculateEstimatedTimeMin({
-                durationMin: job.durationMin,
-                numQuestions: job.totalQuestions,
-                difficulty: 2,
-              }),
+              durationMin: job.durationMin,
+              numQuestions: job.totalQuestions,
+              difficulty: 2,
+            }),
       })),
     );
   }
@@ -403,10 +415,10 @@ export class GenerateSessionQuestions {
             question.estimatedTimeMin > 0
               ? question.estimatedTimeMin
               : calculateEstimatedTimeMin({
-                  durationMin,
-                  numQuestions: total,
-                  difficulty: 2,
-                }),
+                durationMin,
+                numQuestions: total,
+                difficulty: 2,
+              }),
         });
       }
     }

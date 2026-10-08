@@ -68,13 +68,13 @@ export default function ChangePasswordGroup() {
     <ProfileSection title="Đổi mật khẩu & Bảo mật">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {success && (
-          <div
-            role="status"
+          <output
+            aria-live="polite"
             className="flex items-center gap-2 rounded-lg bg-success-subtle p-3 text-sm text-success"
           >
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             <span>Đổi mật khẩu thành công!</span>
-          </div>
+          </output>
         )}
 
         {error && (

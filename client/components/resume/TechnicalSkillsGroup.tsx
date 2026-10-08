@@ -22,7 +22,6 @@ import { onetService, type OnetTech } from '@/services'
 interface Props {
   data: TechnicalSkillEntry[]
   onetSocCode?: string | null
-  targetPosition?: string | null
   onSave: (patch: Record<string, unknown>) => Promise<void>
 }
 
@@ -94,7 +93,7 @@ export default function TechnicalSkillsGroup({
   data,
   onetSocCode,
   onSave,
-}: Props) {
+}: Readonly<Props>) {
   const [isEditing, setIsEditing] = useState(false)
   const [entries, setEntries] = useState<TechnicalSkillEntry[]>(data)
   const [saving, setSaving] = useState(false)
@@ -165,8 +164,8 @@ export default function TechnicalSkillsGroup({
   function addEntry(category: TechCategory, name: string, monthsStr: string) {
     const trimmed = name.trim()
     if (!trimmed) return
-    const months = parseInt(monthsStr, 10)
-    if (isNaN(months) || months < 0) return
+    const months = Number.parseInt(monthsStr, 10)
+    if (Number.isNaN(months) || months < 0) return
     if (entries.some((e) => e.name.toLowerCase() === trimmed.toLowerCase())) {
       setError(`Kỹ năng "${trimmed}" đã có trong hồ sơ.`)
       return

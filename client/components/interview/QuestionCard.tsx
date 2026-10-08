@@ -13,11 +13,6 @@ export interface QuestionCardProps {
   totalQuestions: number
   skillCode?: string
   skillName?: string
-  /**
-   * Context công nghệ O*NET. Lưu ý: Được giữ trong props để tương thích contract,
-   * nhưng ẩn hoàn toàn trên giao diện phòng thi trực tiếp để tối ưu độ tập trung của ứng viên và bảo mật đề thi.
-   */
-  techContext?: string[]
   language?: 'vi' | 'en'
   className?: string
 }
@@ -40,7 +35,7 @@ export default function QuestionCard({
   skillName,
   language = 'vi',
   className,
-}: QuestionCardProps) {
+}: Readonly<QuestionCardProps>) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)

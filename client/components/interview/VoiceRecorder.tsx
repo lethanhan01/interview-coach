@@ -68,7 +68,6 @@ export interface VoiceRecorderProps {
   initialDraft?: string
   language?: 'vi' | 'en'
   disabled?: boolean
-  sessionId?: string
 }
 
 type RecordState =
@@ -98,7 +97,7 @@ export default function VoiceRecorder({
   initialDraft = '',
   language = 'vi',
   disabled,
-}: VoiceRecorderProps) {
+}: Readonly<VoiceRecorderProps>) {
   const isSupported = useSyncExternalStore(
     subscribeToFeatureSupport,
     checkMediaSupport,

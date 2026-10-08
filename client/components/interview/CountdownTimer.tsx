@@ -13,12 +13,18 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
+function getTimerColorClass(isExpired: boolean, isWarning: boolean): string {
+  if (isExpired) return 'text-danger'
+  if (isWarning) return 'text-warning'
+  return 'text-ink-muted'
+}
+
 export default function CountdownTimer({
   initialSeconds,
   active,
   onChange,
   onExpire,
-}: CountdownTimerProps) {
+}: Readonly<CountdownTimerProps>) {
   const { remainingSeconds, isWarning, isExpired } = useCountdown(
     initialSeconds,
     active,
@@ -26,11 +32,7 @@ export default function CountdownTimer({
     onExpire
   )
 
-  const colorClass = isExpired
-    ? 'text-danger'
-    : isWarning
-      ? 'text-warning'
-      : 'text-ink-muted'
+  const colorClass = getTimerColorClass(isExpired, isWarning)
 
   return (
     <div className="flex items-center gap-1.5">

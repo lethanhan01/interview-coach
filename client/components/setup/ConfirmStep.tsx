@@ -89,13 +89,13 @@ export default function ConfirmStep({
   duration,
   error,
   onChange,
-}: ConfirmStepProps) {
+}: Readonly<ConfirmStepProps>) {
   const durationOpt = DURATION_OPTIONS.find((d) => d.value === duration)!
   const currentSfiaLevel = jd.targetSfiaLevel ?? mapJdLevelToSfia(jd.level)
 
   const handleSfiaChange = (val: string) => {
     const levelNum = Number(val)
-    if (!isNaN(levelNum) && onChange) {
+    if (!Number.isNaN(levelNum) && onChange) {
       onChange({
         ...jd,
         targetSfiaLevel: levelNum,

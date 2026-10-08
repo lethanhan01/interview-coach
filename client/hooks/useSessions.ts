@@ -11,6 +11,11 @@ export interface UseSessionsResult {
   mutate: KeyedMutator<Session[]>
 }
 
+function toError(err: unknown): Error | null {
+  if (!err) return null
+  return err instanceof Error ? err : new Error(String(err))
+}
+
 export function useSessions(): UseSessionsResult {
   const { data, error, isLoading, mutate } = useSWR<Session[]>(
     '/sessions',
@@ -24,7 +29,7 @@ export function useSessions(): UseSessionsResult {
   return {
     sessions: data ?? [],
     isLoading,
-    error: error ? (error instanceof Error ? error : new Error(String(error))) : null,
+    error: toError(error),
     mutate,
   }
 }

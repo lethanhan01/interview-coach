@@ -2,16 +2,12 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { SfiaAnalyticsView, type SfiaAnalyticsViewProps } from './SfiaAnalyticsView'
 import {
-  MOCK_SFIA_CATEGORIES,
   MOCK_SFIA_COVERAGE_STATS,
-  MOCK_SFIA_SKILL_SUMMARIES,
 } from './sfia-mock-data'
 
 describe('SfiaAnalyticsView Component', () => {
   const defaultProps: SfiaAnalyticsViewProps = {
     stats: MOCK_SFIA_COVERAGE_STATS,
-    categories: MOCK_SFIA_CATEGORIES,
-    skills: MOCK_SFIA_SKILL_SUMMARIES,
     selectedCategoryFilter: null,
     selectedLevelFilter: null,
     onSelectCategory: vi.fn(),

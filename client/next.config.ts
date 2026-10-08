@@ -10,8 +10,8 @@ if (missing.length > 0) {
 }
 
 const nextConfig: NextConfig = {
-  async redirects() {
-    return [
+  redirects() {
+    return Promise.resolve([
       {
         source: '/admin-dashboard',
         destination: '/admin/dashboard',
@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
         destination: '/admin/users',
         permanent: true,
       },
-    ]
+    ])
   },
 }
 

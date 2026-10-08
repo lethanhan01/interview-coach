@@ -568,7 +568,6 @@ function SfiaBrowserWorkspace() {
               onClose={() => setInspectedCell(null)}
               skillCode={inspectedCell?.skillCode || null}
               levelId={inspectedCell?.levelId || null}
-              categories={categories}
               onOpenInTaxonomy={handleOpenInTaxonomy}
               onCreateQuestion={() => {
                 setIsCreateQuestionOpen(true)
@@ -617,8 +616,6 @@ function SfiaBrowserWorkspace() {
           <div className="flex flex-col gap-6 pb-16 max-w-7xl mx-auto w-full">
             <SfiaAnalyticsView
               stats={stats}
-              categories={categories}
-              skills={skills}
               selectedCategoryFilter={analyticsCategoryFilter}
               selectedLevelFilter={analyticsLevelFilter}
               onSelectCategory={handleSelectAnalyticsCategory}

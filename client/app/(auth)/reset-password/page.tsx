@@ -95,10 +95,10 @@ export default function ResetPasswordPage() {
         </div>
 
         {message && (
-          <div className="bg-success-bg text-success border-success/20 mb-6 flex items-center gap-2 rounded-lg border p-3 text-sm" role="status">
+          <output className="bg-success-bg text-success border-success/20 mb-6 flex items-center gap-2 rounded-lg border p-3 text-sm" aria-live="polite">
             <CheckCircle2 className="size-4 shrink-0" />
             <span>{message}</span>
-          </div>
+          </output>
         )}
 
         {error && (

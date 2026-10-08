@@ -23,11 +23,16 @@ interface AppSidebarProps {
   onMobileClose?: () => void
 }
 
+function getSidebarWidthClass(isMobile: boolean, isCollapsed: boolean): string {
+  if (isMobile) return 'w-full'
+  return isCollapsed ? 'w-16' : 'w-64'
+}
+
 export default function AppSidebar({
   role,
   isMobile = false,
   onMobileClose,
-}: AppSidebarProps) {
+}: Readonly<AppSidebarProps>) {
   const items = role === 'admin' ? adminNavigation : candidateNavigation
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -47,7 +52,7 @@ export default function AppSidebar({
     <aside
       className={cn(
         'bg-surface-overlay relative flex h-full flex-col border-r transition-all duration-300 ease-in-out',
-        isMobile ? 'w-full' : collapsed ? 'w-16' : 'w-64'
+        getSidebarWidthClass(isMobile, collapsed)
       )}
     >
       <div className="flex h-16 shrink-0 items-center justify-between border-b px-4">

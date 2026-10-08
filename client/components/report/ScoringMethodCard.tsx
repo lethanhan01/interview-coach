@@ -23,21 +23,22 @@ import type { ContextPack, SessionType } from '@/lib/types'
 export interface ScoringMethodCardProps {
   contextPackId?: ContextPack
   sessionType?: SessionType
-  rubricConfig?: unknown
   className?: string
+}
+
+const SESSION_LABEL_MAP: Record<SessionType, string> = {
+  technical: 'Chuyên môn Kỹ thuật',
+  hr: 'Phỏng vấn Hành vi & Nhân sự',
 }
 
 export function ScoringMethodCard({
   contextPackId,
   sessionType,
   className,
-}: ScoringMethodCardProps) {
+}: Readonly<ScoringMethodCardProps>) {
   const sessionLabel =
-    sessionType === 'technical'
-      ? 'Chuyên môn Kỹ thuật'
-      : sessionType === 'hr'
-        ? 'Phỏng vấn Hành vi & Nhân sự'
-        : 'Phỏng vấn Chuẩn hóa'
+    (sessionType ? SESSION_LABEL_MAP[sessionType] : null) ??
+    'Phỏng vấn Chuẩn hóa'
 
   return (
     <Card className={cn('flex flex-col gap-5', className)}>

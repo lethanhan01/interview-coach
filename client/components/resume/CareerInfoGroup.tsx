@@ -64,7 +64,7 @@ function buildLevelOptions(value?: string) {
   return { normalized, fallback: normalized && !known ? normalized : '' }
 }
 
-export default function CareerInfoGroup({ data, onSave }: Props) {
+export default function CareerInfoGroup({ data, onSave }: Readonly<Props>) {
   const [isEditing, setIsEditing] = useState(false)
   const [form, setForm] = useState<CareerInfoData>(() =>
     normalizeCareerInfo(data)
@@ -306,16 +306,18 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
                       aria-label="Danh sách chức danh O*NET gợi ý"
                       className="border-border bg-surface-1 absolute z-30 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border p-1 shadow-lg"
                     >
-                      {isSearchingOnet && onetResults.length === 0 ? (
+                      {isSearchingOnet && onetResults.length === 0 && (
                         <div className="text-ink-muted flex items-center justify-center gap-2 py-4 text-xs">
                           <Loader2 className="text-brand size-3.5 animate-spin" aria-hidden="true" />
                           Đang tìm kiếm chức danh O*NET...
                         </div>
-                      ) : onetResults.length === 0 ? (
+                      )}
+                      {!isSearchingOnet && onetResults.length === 0 && (
                         <div className="text-ink-muted px-3 py-3 text-center text-xs">
                           {onetQuery.trim() ? 'Không tìm thấy chức danh O*NET phù hợp.' : 'Gõ để tìm kiếm chức danh O*NET...'}
                         </div>
-                      ) : (
+                      )}
+                      {onetResults.length > 0 &&
                         onetResults.map((occ) => (
                           <button
                             key={occ.socCode}
@@ -331,8 +333,7 @@ export default function CareerInfoGroup({ data, onSave }: Props) {
                               {occ.description ? ` · ${occ.description.slice(0, 90)}...` : ''}
                             </span>
                           </button>
-                        ))
-                      )}
+                        ))}
                     </div>
                   )}
                 </div>

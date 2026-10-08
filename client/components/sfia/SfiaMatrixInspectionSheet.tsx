@@ -23,7 +23,6 @@ import {
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import {
-  type SfiaCategory,
   type SfiaSkillDetail,
 } from './types'
 import { sfiaAdminService } from '@/services/sfia-admin.service'
@@ -35,7 +34,6 @@ export interface SfiaMatrixInspectionSheetProps {
   onClose: () => void
   skillCode: string | null
   levelId: number | null
-  categories?: SfiaCategory[]
   onOpenInTaxonomy: (skillCode: string, levelId: number) => void
   onCreateQuestion: (skillCode: string, levelId: number) => void
 }
@@ -47,7 +45,7 @@ export function SfiaMatrixInspectionSheet({
   levelId,
   onOpenInTaxonomy,
   onCreateQuestion,
-}: SfiaMatrixInspectionSheetProps) {
+}: Readonly<SfiaMatrixInspectionSheetProps>) {
   const [detail, setDetail] = useState<SfiaSkillDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

@@ -32,12 +32,12 @@ export function SfiaLevelSpanStepper({
   categoryCode,
   onSelectLevel,
   className,
-}: SfiaLevelSpanStepperProps) {
+}: Readonly<SfiaLevelSpanStepperProps>) {
   const theme = getCategoryTheme(categoryCode)
-  const containerRef = React.useRef<HTMLDivElement>(null)
+  const containerRef = React.useRef<HTMLElement>(null)
 
   // Keyboard navigation: Left/Right arrows cycle through available levels; 1-7 jump directly
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       e.preventDefault()
       const nextLevel = selectedLevel + 1
@@ -55,7 +55,7 @@ export function SfiaLevelSpanStepper({
         onSelectLevel(maxLevel) // Wrap around
       }
     } else if (/^[1-7]$/.test(e.key)) {
-      const targetLvl = parseInt(e.key, 10)
+      const targetLvl = Number.parseInt(e.key, 10)
       if (targetLvl >= minLevel && targetLvl <= maxLevel) {
         e.preventDefault()
         onSelectLevel(targetLvl)
@@ -65,11 +65,10 @@ export function SfiaLevelSpanStepper({
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div
+      <section
         ref={containerRef}
         tabIndex={0}
         onKeyDown={handleKeyDown}
-        role="region"
         aria-label="SFIA 7-level responsibility span stepper"
         className={cn(
           'bg-surface-raised/40 border border-border/70 rounded-xl p-3.5 sm:p-4 space-y-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40',
@@ -227,7 +226,7 @@ export function SfiaLevelSpanStepper({
             })}
           </div>
         </div>
-      </div>
+      </section>
     </TooltipProvider>
   )
 }

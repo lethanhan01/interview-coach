@@ -114,16 +114,22 @@ export default function AdminUsersPage() {
       )}
 
       <Card className="overflow-hidden p-0">
-        {isLoading ? (
+        {isLoading && (
           <LoadingState text="Đang tải danh sách người dùng..." minHeight="h-48" />
-        ) : filteredUsers.length === 0 ? (
+        )}
+        {!isLoading && filteredUsers.length === 0 && (
           <EmptyState
             minHeight="h-48"
             title="Không tìm thấy người dùng"
-            description={search ? `Không có kết quả nào khớp với "${search}"` : 'Hệ thống chưa có người dùng nào'}
+            description={
+              search
+                ? `Không có kết quả nào khớp với "${search}"`
+                : 'Hệ thống chưa có người dùng nào'
+            }
             icon={<Users className="size-8 text-ink-muted/50" />}
           />
-        ) : (
+        )}
+        {!isLoading && filteredUsers.length > 0 && (
           <Table>
             <TableHeader>
               <TableRow>
