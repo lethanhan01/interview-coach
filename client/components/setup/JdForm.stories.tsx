@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { useState } from 'react'
 import JdForm from './JdForm'
-import { EMPTY_JD } from '@/lib/setup-types'
-import type { JdFormData } from '@/lib/setup-types'
+import { EMPTY_JD } from '@/lib/setup-helpers'
+import type { JdFormData } from '@/types'
 
 const meta: Meta<typeof JdForm> = {
   title: 'Feature/Setup/JdForm',

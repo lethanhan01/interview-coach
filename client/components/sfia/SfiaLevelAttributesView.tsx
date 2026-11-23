@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
-import type { SfiaLevelResponsibility, SfiaGenericAttribute } from './types'
+import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
 import {
   getAttributeTheme,
 } from './sfia-theme'

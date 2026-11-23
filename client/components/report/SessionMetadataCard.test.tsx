@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react'
 import { expect, it, describe } from 'vitest'
 import SessionMetadataCard from './SessionMetadataCard'
-import type { Session } from '@/lib/types'
+import type { Session } from '@/types'
 
 const mockSession: Session = {
   id: 'session-123',

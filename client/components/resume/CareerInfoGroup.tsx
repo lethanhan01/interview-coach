@@ -22,17 +22,11 @@ import {
   normalizePosition,
   POSITION_OPTIONS,
 } from '@/lib/interview-options'
-import { mapJdLevelToSfia } from '@/lib/setup-types'
-import { onetService, type OnetOccupation } from '@/services'
+import { mapJdLevelToSfia } from '@/lib/setup-helpers'
+import { onetService } from '@/services'
+import type { CareerInfoData, OnetOccupation } from '@/types'
 
-export interface CareerInfoData {
-  targetPosition?: string
-  targetRoleCategory?: string
-  targetLevel?: string
-  onetSocCode?: string
-  onetOccupationTitle?: string
-  targetSfiaLevel?: number
-}
+export type { CareerInfoData }
 
 interface Props {
   data: CareerInfoData

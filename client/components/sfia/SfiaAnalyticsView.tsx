@@ -23,7 +23,7 @@ import {
   type SfiaCategoryMetric,
   type SfiaLevelMetric,
   type SfiaTopOnetMappedSkill,
-} from './types'
+} from '@/types'
 import {
   getCategoryTheme,
   getLevelTheme,

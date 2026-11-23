@@ -8,7 +8,7 @@ import {
   mockLegacyReport,
   mockSkippedTurnsReport,
 } from '@/tests/fixtures/report.fixture'
-import type { Session } from '@/lib/types'
+import type { Session } from '@/types'
 
 vi.mock('next/navigation', () => ({
   useParams: () => ({ sessionId: 'test-session-123' }),

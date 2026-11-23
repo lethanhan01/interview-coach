@@ -10,7 +10,7 @@ import {
 import { Card } from '@/components/ui/Card'
 import { Progress } from '@/components/ui/Progress'
 import { cn } from '@/lib/utils'
-import type { OnetAnalyticsSummary } from './types'
+import type { OnetAnalyticsSummary } from '@/types'
 
 export interface OnetSummaryCardsProps {
   summary: OnetAnalyticsSummary

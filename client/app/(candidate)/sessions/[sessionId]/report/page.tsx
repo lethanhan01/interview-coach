@@ -9,7 +9,7 @@ import type {
   FeedbackProgress,
   Report,
   Session,
-} from '@/lib/types'
+} from '@/types'
 
 import { Info } from 'lucide-react'
 import AnnotatedTranscript from '@/components/report/AnnotatedTranscript'

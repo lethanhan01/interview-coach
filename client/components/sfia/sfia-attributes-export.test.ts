@@ -3,7 +3,7 @@ import {
   generateSfiaAttributesProgressionCsvString,
   downloadSfiaAttributesProgressionCsv,
 } from './sfia-attributes-export'
-import type { SfiaLevelResponsibility, SfiaGenericAttribute } from './types'
+import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
 
 describe('sfia-attributes-export utility', () => {
   const mockLevels: SfiaLevelResponsibility[] = [

@@ -29,7 +29,7 @@ import {
 import {
   type SfiaCategory,
   type SfiaSkillSummary,
-} from './types'
+} from '@/types'
 import {
   getCategoryTheme,
   getLevelTheme,

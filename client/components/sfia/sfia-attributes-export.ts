@@ -1,4 +1,4 @@
-import type { SfiaLevelResponsibility, SfiaGenericAttribute } from './types'
+import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
 
 /**
  * Tạo nội dung chuỗi CSV từ ma trận so sánh tiến trình 5 thuộc tính x 7 cấp độ

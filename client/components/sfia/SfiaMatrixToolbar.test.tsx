@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { SfiaMatrixToolbar } from './SfiaMatrixToolbar'
-import type { SfiaCategory } from './types'
+import type { SfiaCategory } from '@/types'
 
 describe('SfiaMatrixToolbar', () => {
   const mockCategories: SfiaCategory[] = [

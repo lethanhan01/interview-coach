@@ -2,7 +2,7 @@ import React from 'react'
 import { Check, CheckCheck, AlertTriangle, XCircle, HelpCircle } from 'lucide-react'
 import { Badge, type BadgeProps } from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
-import type { RecommendationStatus } from '@/lib/types'
+import type { RecommendationStatus } from '@/types'
 
 export interface RecommendationBadgeProps {
   status?: RecommendationStatus | null

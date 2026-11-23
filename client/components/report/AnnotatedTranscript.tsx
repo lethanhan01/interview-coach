@@ -2,7 +2,7 @@ import React from 'react'
 import {
   TranscriptItem,
   AnnotatedSegment,
-} from '@/lib/types'
+} from '@/types'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { BinaryCriteriaChecklist } from '@/components/report/BinaryCriteriaChecklist'

@@ -25,9 +25,8 @@ import {
   OnetMobileDrawer,
   OnetDetailShell,
   OnetAnalyticsView,
-  type OnetMainTab,
-  type OnetDetailSubTab,
 } from '@/components/onet'
+import type { OnetDetailSubTab, OnetMainTab } from '@/types'
 
 function OnetBrowserWorkspace() {
   const {

@@ -1,8 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import JdForm from './JdForm'
-import { EMPTY_JD } from '@/lib/setup-types'
-import type { JdFormData } from '@/lib/setup-types'
+import { EMPTY_JD } from '@/lib/setup-helpers'
+import type { JdFormData } from '@/types'
 import { onetService } from '@/services'
 
 vi.mock('@/services', async (importOriginal) => {

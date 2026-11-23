@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { EmptyState } from '@/components/patterns/FeedbackPatterns'
-import type { OnetSoftwareSkill } from './types'
+import type { OnetSoftwareSkill } from '@/types'
 
 export interface OnetTechSkillsTabProps {
   skills: OnetSoftwareSkill[]

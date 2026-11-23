@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { CheckCircle2, AlertTriangle, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { SkillBreakdownItem } from '@/lib/types'
+import type { SkillBreakdownItem } from '@/types'
 
 export interface SfiaCompetencyOverviewProps {
   skills?: SkillBreakdownItem[]

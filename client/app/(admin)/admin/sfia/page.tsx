@@ -14,17 +14,6 @@ import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns
 import { cn } from '@/lib/utils'
 import {
   useSfiaParams,
-  type SfiaMainTab,
-  type SfiaCategory,
-  type SfiaSubcategory,
-  type SfiaSkillSummary,
-  type SfiaSkillDetail,
-  type SfiaCoverageStats,
-  type SfiaMatrixCellData,
-  type SfiaMatrixDisplayMode,
-  type SfiaQuestionBankItem,
-  type SfiaLevelResponsibility,
-  type SfiaGenericAttribute,
   SfiaAnatomyBanner,
   SfiaSidebarTree,
   SfiaMobileDrawer,
@@ -39,6 +28,19 @@ import {
   downloadSfiaMatrixCsv,
   downloadSfiaBlindSpotsCsv,
 } from '@/components/sfia'
+import type {
+  SfiaMainTab,
+  SfiaCategory,
+  SfiaSubcategory,
+  SfiaSkillSummary,
+  SfiaSkillDetail,
+  SfiaCoverageStats,
+  SfiaMatrixCellData,
+  SfiaMatrixDisplayMode,
+  SfiaQuestionBankItem,
+  SfiaLevelResponsibility,
+  SfiaGenericAttribute,
+} from '@/types'
 import { sfiaAdminService } from '@/services/sfia-admin.service'
 
 function SfiaBrowserWorkspace() {

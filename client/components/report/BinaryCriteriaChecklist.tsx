@@ -2,7 +2,7 @@ import React from 'react'
 import { CheckCircle2, XCircle, Quote, AlertCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
-import type { BinaryCriterionResult } from '@/lib/types'
+import type { BinaryCriterionResult } from '@/types'
 
 export interface BinaryCriteriaChecklistProps {
   criteria?: BinaryCriterionResult[]

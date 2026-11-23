@@ -104,27 +104,6 @@ describe('sfiaAdminService (Live Backend API Integration)', () => {
     expect(result).toEqual(mockCreated)
   })
 
-  it('addMockQuestion calls createQuestion as alias', async () => {
-    const mockCreated = {
-      id: 'Q-PROG-5678',
-      questionText: 'Explain microservices',
-      type: 'TECHNICAL' as const,
-      difficulty: 'MEDIUM' as const,
-      targetSfiaLevel: 3,
-    }
-    const spy = vi.spyOn(apiClient, 'post').mockResolvedValue(mockCreated)
-
-    const payload = {
-      questionText: 'Explain microservices',
-      type: 'TECHNICAL' as const,
-      difficulty: 'MEDIUM' as const,
-      targetSfiaLevel: 3,
-    }
-    const result = await sfiaAdminService.addMockQuestion('PROG', payload)
-    expect(spy).toHaveBeenCalledWith('/admin/sfia/skills/PROG/questions', payload)
-    expect(result).toEqual(mockCreated)
-  })
-
   it('calls GET /admin/sfia/levels correctly', async () => {
     const spy = vi.spyOn(apiClient, 'get').mockResolvedValue([])
     await sfiaAdminService.getResponsibilityLevels()

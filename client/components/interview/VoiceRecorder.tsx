@@ -22,7 +22,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { mediaService } from '@/services/media.service'
-import type { VoiceMetrics } from '@/lib/types'
+import type { VoiceMetrics } from '@/types'
 
 // Browser Web Speech API type definitions for fallback
 interface ISpeechRecognitionResult {

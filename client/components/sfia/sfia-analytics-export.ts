@@ -1,4 +1,4 @@
-import type { SfiaCategory, SfiaSkillSummary } from './types'
+import type { SfiaCategory, SfiaSkillSummary } from '@/types'
 
 /**
  * Determines question prioritization based on O*NET market demand

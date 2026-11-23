@@ -25,7 +25,7 @@ import {
   SelectItem,
 } from '@/components/ui/Select'
 import { SfiaCreateQuestionModal } from './SfiaCreateQuestionModal'
-import type { SfiaSkillDetail, SfiaQuestionBankItem } from './types'
+import type { SfiaSkillDetail, SfiaQuestionBankItem } from '@/types'
 
 export interface SfiaQuestionBankTabProps {
   skillDetail: SfiaSkillDetail

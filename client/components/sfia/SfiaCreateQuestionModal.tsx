@@ -26,7 +26,7 @@ import {
   SelectItem,
 } from '@/components/ui/Select'
 import { sfiaAdminService } from '@/services/sfia-admin.service'
-import type { SfiaQuestionBankItem } from './types'
+import type { SfiaQuestionBankItem } from '@/types'
 
 export interface SfiaCreateQuestionModalProps {
   open: boolean

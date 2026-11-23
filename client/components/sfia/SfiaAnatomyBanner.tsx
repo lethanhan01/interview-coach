@@ -13,7 +13,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import type { SfiaCoverageStats } from './types'
+import type { SfiaCoverageStats } from '@/types'
 
 const LOCAL_STORAGE_KEY = 'sfia_anatomy_banner_collapsed'
 

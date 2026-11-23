@@ -3,7 +3,7 @@
 import { Building2, MapPin, Clock, Plus, ChevronRight } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import type { SavedJobDescription } from '@/lib/types'
+import type { SavedJobDescription } from '@/types'
 import { getJdLevelLabel } from '@/lib/interview-options'
 import { formatVietnamRelativeDate } from '@/lib/date-time'
 

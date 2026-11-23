@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ScrollText, ArrowRight } from 'lucide-react'
 import { userService } from '@/services'
 
-import type { UserAccountResponse, UpdateUserAccountPayload } from '@/lib/types'
+import type { UserAccountResponse, UpdateUserAccountPayload } from '@/types'
 import PersonalInfoGroup from '@/components/profile/PersonalInfoGroup'
 import AccountInfoGroup from '@/components/profile/AccountInfoGroup'
 import ChangePasswordGroup from '@/components/profile/ChangePasswordGroup'

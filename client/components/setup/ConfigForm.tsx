@@ -1,10 +1,7 @@
 'use client'
 
-import type { SessionType, ContextPack } from '@/lib/types'
-import {
-  type InterviewDuration,
-  DURATION_OPTIONS,
-} from '@/lib/setup-types'
+import type { SessionType, ContextPack, InterviewDuration } from '@/types'
+import { DURATION_OPTIONS } from '@/lib/setup-helpers'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup'
 import { cn } from '@/lib/utils'
 

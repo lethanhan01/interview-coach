@@ -1,8 +1,6 @@
 import { apiClient } from '@/lib/api-client'
 import type { OnetOccupation, OnetTech } from '@/types'
 
-export type { OnetOccupation, OnetTech }
-
 export const onetService = {
   /**
    * Tìm kiếm chức danh O*NET theo từ khóa hoặc lấy danh sách chức danh IT phổ biến

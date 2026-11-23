@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { useState } from 'react'
 import ConfigForm from './ConfigForm'
-import type { SessionType, ContextPack } from '@/lib/types'
-import type { InterviewDuration } from '@/lib/setup-types'
+import type { SessionType, ContextPack, InterviewDuration } from '@/types'
 
 const meta: Meta<typeof ConfigForm> = {
   title: 'Feature/Setup/ConfigForm',

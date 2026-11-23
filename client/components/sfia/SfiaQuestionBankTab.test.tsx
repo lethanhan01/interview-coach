@@ -2,7 +2,7 @@ import * as React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SfiaQuestionBankTab } from './SfiaQuestionBankTab'
-import type { SfiaSkillDetail } from './types'
+import type { SfiaSkillDetail } from '@/types'
 
 const mockDetail: SfiaSkillDetail = {
   code: 'PROG',

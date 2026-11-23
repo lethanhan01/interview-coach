@@ -10,7 +10,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
-import type { SfiaLevelResponsibility, SfiaGenericAttribute } from './types'
+import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
 import type { SfiaAttributesViewMode } from './useSfiaParams'
 import { SfiaLevelAttributesView } from './SfiaLevelAttributesView'
 import { SfiaAttributesProgressionMatrix } from './SfiaAttributesProgressionMatrix'

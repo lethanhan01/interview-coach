@@ -15,7 +15,7 @@ import {
 import ProfileSection from '@/components/profile/ProfileSection'
 import ProfileField from '@/components/profile/ProfileField'
 import { EDUCATION_DEGREE_OPTIONS } from './constants'
-import type { EducationEntry } from '@/lib/types'
+import type { EducationEntry } from '@/types'
 
 interface Props {
   data: Partial<EducationEntry> | null | undefined

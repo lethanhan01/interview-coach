@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { EmptyState } from '@/components/patterns/FeedbackPatterns'
-import type { OnetTaskStatement } from './types'
+import type { OnetTaskStatement } from '@/types'
 
 export interface OnetTasksTabProps {
   tasks: OnetTaskStatement[]

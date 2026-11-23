@@ -17,7 +17,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
 import Button from '@/components/ui/Button'
 import CountdownTimer from '@/components/interview/CountdownTimer'
-import type { Question, SessionStatus, SessionStatusAction, VoiceMetrics } from '@/lib/types'
+import type { Question, SessionStatus, SessionStatusAction, VoiceMetrics } from '@/types'
 
 type AnswerMode = 'text' | 'voice'
 

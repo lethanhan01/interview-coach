@@ -13,8 +13,8 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/Select'
-import type { JdFormData } from '@/lib/setup-types'
-import { mapJdLevelToSfia } from '@/lib/setup-types'
+import { mapJdLevelToSfia } from '@/lib/setup-helpers'
+import type { JdFormData, OnetOccupation, OnetTech } from '@/types'
 import {
   BONUS_OPTIONS,
   JD_LEVEL_OPTIONS,
@@ -26,7 +26,7 @@ import {
   FormLabel,
   FormControl,
 } from '@/components/form'
-import { onetService, type OnetOccupation, type OnetTech } from '@/services'
+import { onetService } from '@/services'
 import { Briefcase, Loader2, Search, Sparkles, X } from 'lucide-react'
 
 interface JdFormProps {

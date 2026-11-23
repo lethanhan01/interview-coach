@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
-import type { SfiaSkillDetail } from './types'
+import type { SfiaSkillDetail } from '@/types'
 import {
   getCategoryTheme,
   SFIA_LEVEL_DEFINITIONS,

@@ -1,4 +1,4 @@
-import type { Session, SessionType, ContextPack } from '@/lib/types'
+import type { Session, SessionType, ContextPack } from '@/types'
 import { formatVietnamDateTime } from '@/lib/date-time'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'

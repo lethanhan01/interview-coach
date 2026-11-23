@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Badge, type BadgeProps } from '@/components/ui/Badge'
 import { Compass, Clock, BookOpen, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { ActionPlanItem } from '@/lib/types'
+import type { ActionPlanItem } from '@/types'
 
 export interface ActionPlanTimelineProps {
   actionPlan?:

@@ -63,14 +63,6 @@ vi.mock('@/services/sfia-admin.service', async () => {
         targetSfiaLevel: 3,
         createdAt: new Date().toISOString(),
       }),
-      addMockQuestion: vi.fn().mockResolvedValue({
-        id: 'new-q-1',
-        questionText: 'Mock question',
-        type: 'TECHNICAL',
-        difficulty: 'MEDIUM',
-        targetSfiaLevel: 3,
-        createdAt: new Date().toISOString(),
-      }),
     },
   }
 })

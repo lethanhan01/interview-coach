@@ -41,7 +41,7 @@ import { OnetSfiaRow } from './OnetSfiaRow'
 import type {
   OnetSfiaMapping,
   SfiaSkillDefinition,
-} from './types'
+} from '@/types'
 
 export interface OnetSfiaTabProps {
   socCode: string

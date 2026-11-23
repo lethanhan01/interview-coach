@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SfiaMatrixInspectionSheet } from './SfiaMatrixInspectionSheet'
 import { sfiaAdminService } from '@/services/sfia-admin.service'
-import type { SfiaSkillDetail } from './types'
+import type { SfiaSkillDetail } from '@/types'
 
 vi.mock('sonner', () => ({
   toast: {

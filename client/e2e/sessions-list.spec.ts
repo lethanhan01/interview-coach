@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import type { Session } from '../lib/types'
+import type { Session } from '../types'
 
 const MOCK_ACTIVE: Session = {
   id: 'sess-active',

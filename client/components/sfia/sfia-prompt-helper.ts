@@ -2,7 +2,7 @@
  * AI Rubric Prompt Generator & Formatter for SFIA 9 Technical Mock Interview Evaluator
  */
 
-import type { SfiaSkillDetail } from './types'
+import type { SfiaSkillDetail } from '@/types'
 import { SFIA_LEVEL_DEFINITIONS, getCategoryName } from './sfia-theme'
 
 export function generateSfiaRubricMarkdownPrompt(

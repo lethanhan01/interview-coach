@@ -5,21 +5,21 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { prepService, sessionService } from '@/services'
 import type {
   ContextPack,
+  InterviewDuration,
+  JdFormData,
   OutputLanguage,
   SaveJobDescriptionPayload,
   SavedJobDescription,
   Session,
   SessionType,
-} from '@/lib/types'
+} from '@/types'
 
 import {
-  type JdFormData,
-  type InterviewDuration,
   DURATION_OPTIONS,
   EMPTY_JD,
   isJdValid,
   mapJdLevelToSfia,
-} from '@/lib/setup-types'
+} from '@/lib/setup-helpers'
 import Button from '@/components/ui/Button'
 import JdForm from '@/components/setup/JdForm'
 import ConfigForm from '@/components/setup/ConfigForm'
@@ -30,12 +30,6 @@ import { getJdLevelLabel, normalizeJdLevel } from '@/lib/interview-options'
 import { cn } from '@/lib/utils'
 import { PageContainer } from '@/components/patterns/LayoutPatterns'
 import { LoadingState } from '@/components/patterns/FeedbackPatterns'
-
-// ── Constants & Types (re-exported from @/lib/setup-types) ───────────────────
-// The actual definitions live in lib/setup-types.ts so that components/setup/*
-// can import them without depending on the app layer.
-export type { JdFormData, InterviewDuration } from '@/lib/setup-types'
-export { DURATION_OPTIONS, EMPTY_JD, isJdValid } from '@/lib/setup-types'
 
 // ── Private helpers ───────────────────────────────────────────────────────────
 

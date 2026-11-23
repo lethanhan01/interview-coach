@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import type { SfiaMainTab } from './types'
+import type { SfiaMainTab } from '@/types'
 
 export type SfiaAttributesViewMode = 'level' | 'matrix'
 

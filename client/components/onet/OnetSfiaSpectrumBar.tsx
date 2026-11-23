@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import type { OnetSfiaMapping } from './types'
+import type { OnetSfiaMapping } from '@/types'
 
 export interface OnetSfiaSpectrumBarProps {
   mappings: OnetSfiaMapping[]

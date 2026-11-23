@@ -24,7 +24,7 @@ import type {
   OnetOccupationDetail,
   OnetDetailSubTab,
   OnetSfiaMapping,
-} from './types'
+} from '@/types'
 
 export interface OnetDetailShellProps {
   socCode: string

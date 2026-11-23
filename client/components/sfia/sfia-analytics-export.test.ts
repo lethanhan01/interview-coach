@@ -4,7 +4,7 @@ import {
   generateSfiaBlindSpotsCsvString,
   downloadSfiaBlindSpotsCsv,
 } from './sfia-analytics-export'
-import type { SfiaCategory, SfiaSkillSummary } from './types'
+import type { SfiaCategory, SfiaSkillSummary } from '@/types'
 
 describe('sfia-analytics-export utility', () => {
   const mockCategories: SfiaCategory[] = [

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { useState } from 'react'
 import SavedJdPicker from './SavedJdPicker'
-import type { SavedJobDescription } from '@/lib/types'
+import type { SavedJobDescription } from '@/types'
 
 const MOCK_JDS: SavedJobDescription[] = [
   {

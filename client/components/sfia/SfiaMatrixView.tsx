@@ -19,7 +19,7 @@ import {
   type SfiaSkillSummary,
   type SfiaMatrixCellData,
   type SfiaMatrixDisplayMode,
-} from './types'
+} from '@/types'
 import {
   getCategoryTheme,
   getLevelTheme,

@@ -16,8 +16,8 @@ import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
 import ProfileSection from '@/components/profile/ProfileSection'
 import { TECH_CATEGORIES, TECH_OPTIONS } from './constants'
 import type { TechCategory } from './constants'
-import type { TechnicalSkillEntry } from '@/lib/types'
-import { onetService, type OnetTech } from '@/services'
+import type { OnetTech, TechnicalSkillEntry } from '@/types'
+import { onetService } from '@/services'
 
 interface Props {
   data: TechnicalSkillEntry[]

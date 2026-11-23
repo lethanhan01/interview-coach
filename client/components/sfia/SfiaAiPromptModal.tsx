@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
-import type { SfiaSkillDetail } from './types'
+import type { SfiaSkillDetail } from '@/types'
 import {
   generateSfiaRubricMarkdownPrompt,
   generateSfiaRubricJsonSchema,

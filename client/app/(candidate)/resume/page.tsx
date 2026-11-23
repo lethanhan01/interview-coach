@@ -13,7 +13,7 @@ import type {
   TechnicalSkillEntry,
   CertificationEntry,
   AwardEntry,
-} from '@/lib/types'
+} from '@/types'
 import ResumeHeader from '@/components/resume/ResumeHeader'
 import CareerInfoGroup from '@/components/resume/CareerInfoGroup'
 import PersonalityGroup from '@/components/resume/PersonalityGroup'

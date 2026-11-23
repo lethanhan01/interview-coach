@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/Table'
 import { EmptyState } from '@/components/patterns/FeedbackPatterns'
 import { cn } from '@/lib/utils'
-import type { OnetTopOccupationItem, OnetDetailSubTab } from './types'
+import type { OnetTopOccupationItem, OnetDetailSubTab } from '@/types'
 
 export interface OnetTopOccupationsProps {
   data: OnetTopOccupationItem[]

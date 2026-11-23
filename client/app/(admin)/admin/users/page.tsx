@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { userManagementService } from '@/services'
-import type { AdminUser } from '@/lib/types'
+import type { AdminUser } from '@/types'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'

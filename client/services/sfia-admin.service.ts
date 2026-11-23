@@ -13,12 +13,6 @@ import type {
   SfiaSubcategory,
 } from '@/types'
 
-export type {
-  CreateSfiaQuestionPayload,
-  SfiaMatrixDataResponse,
-  SfiaSkillFilters,
-}
-
 /**
  * SfiaAdminService — 100% Live Backend API Service for SFIA 9 Knowledge Base
  * Base endpoints: /admin/sfia/* on NestJS Backend (:3000/api/v1)
@@ -87,16 +81,6 @@ export const sfiaAdminService = {
       `/admin/sfia/skills/${encodeURIComponent(skillCode.toUpperCase())}/questions`,
       payload
     )
-  },
-
-  /**
-   * Alias tương thích ngược cho addMockQuestion
-   */
-  async addMockQuestion(
-    skillCode: string,
-    payload: CreateSfiaQuestionPayload
-  ): Promise<SfiaQuestionBankItem> {
-    return this.createQuestion(skillCode, payload)
   },
 
   /**

@@ -39,5 +39,3 @@ export const userManagementService = {
     await apiClient.delete<void>(`/users/${id}`)
   },
 }
-
-export const adminService = userManagementService

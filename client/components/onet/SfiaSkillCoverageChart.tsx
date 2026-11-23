@@ -11,7 +11,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
-import type { SfiaSkillCoverageItem } from './types'
+import type { SfiaSkillCoverageItem } from '@/types'
 
 export interface SfiaSkillCoverageChartProps {
   data: SfiaSkillCoverageItem[]

@@ -2,7 +2,7 @@ import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { SfiaSidebarTree } from './SfiaSidebarTree'
-import type { SfiaCategory, SfiaSubcategory, SfiaSkillSummary } from './types'
+import type { SfiaCategory, SfiaSubcategory, SfiaSkillSummary } from '@/types'
 
 const mockCategories: SfiaCategory[] = [
   {

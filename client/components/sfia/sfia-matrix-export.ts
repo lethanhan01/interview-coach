@@ -2,7 +2,7 @@ import type {
   SfiaCategory,
   SfiaSkillSummary,
   SfiaMatrixCellData,
-} from './types'
+} from '@/types'
 
 /**
  * Generates CSV string from SFIA 2D matrix dataset

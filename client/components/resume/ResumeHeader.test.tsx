@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import ResumeHeader, { calculateCompleteness } from './ResumeHeader'
-import type { GetProfileResponse } from '@/lib/types'
+import type { GetProfileResponse } from '@/types'
 
 describe('ResumeHeader', () => {
   it('calculates 0% completeness when profile is null', () => {

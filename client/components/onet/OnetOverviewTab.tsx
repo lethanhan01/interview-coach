@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/Button'
 import type {
   OnetOccupationDetail,
   OnetDetailSubTab,
-} from './types'
+} from '@/types'
 
 export interface OnetOverviewTabProps {
   detail: OnetOccupationDetail

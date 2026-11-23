@@ -14,7 +14,7 @@ import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import { Progress } from '@/components/ui/Progress'
-import type { GetProfileResponse } from '@/lib/types'
+import type { GetProfileResponse } from '@/types'
 
 interface ResumeHeaderProps {
   data: GetProfileResponse | null

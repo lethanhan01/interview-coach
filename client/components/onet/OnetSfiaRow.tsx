@@ -40,7 +40,7 @@ import { Combobox, type ComboboxOption } from '@/components/ui/Combobox'
 import type {
   OnetSfiaMapping,
   SfiaSkillDefinition,
-} from './types'
+} from '@/types'
 
 export interface OnetSfiaRowProps {
   mapping: OnetSfiaMapping

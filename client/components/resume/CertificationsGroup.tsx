@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Label } from '@/components/ui/Label'
 import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
 import ProfileSection from '@/components/profile/ProfileSection'
-import type { CertificationEntry, AwardEntry } from '@/lib/types'
+import type { CertificationEntry, AwardEntry } from '@/types'
 
 interface CertGroupData {
   certifications: CertificationEntry[]

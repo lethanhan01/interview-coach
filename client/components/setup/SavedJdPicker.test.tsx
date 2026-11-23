@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import SavedJdPicker from './SavedJdPicker'
-import type { SavedJobDescription } from '@/lib/types'
+import type { SavedJobDescription } from '@/types'
 
 const MOCK_JDS: SavedJobDescription[] = [
   {

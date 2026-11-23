@@ -11,7 +11,7 @@ import {
   SfiaLevelResponsibility,
   SfiaGenericAttribute,
   SfiaCoverageStats,
-} from './types'
+} from '@/types'
 
 export const MOCK_SFIA_CATEGORIES: SfiaCategory[] = [
   {

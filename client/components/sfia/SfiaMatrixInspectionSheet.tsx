@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import {
   type SfiaSkillDetail,
-} from './types'
+} from '@/types'
 import { sfiaAdminService } from '@/services/sfia-admin.service'
 import { getCategoryTheme, getLevelTheme } from './sfia-theme'
 import { generateSfiaRubricMarkdownPrompt } from './sfia-prompt-helper'

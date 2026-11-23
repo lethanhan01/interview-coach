@@ -25,7 +25,7 @@ import { onetAdminService } from '@/services/onet-admin.service'
 import type {
   SocMajorGroup,
   OnetOccupationSummary,
-} from './types'
+} from '@/types'
 
 export interface OnetSidebarProps {
   selectedSoc: string

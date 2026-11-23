@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import { Label } from '@/components/ui/Label'
 import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
 import ProfileSection from '@/components/profile/ProfileSection'
-import type { WorkExperienceEntry, TechnicalSkillEntry } from '@/lib/types'
+import type { WorkExperienceEntry, TechnicalSkillEntry } from '@/types'
 
 interface Props {
   data: WorkExperienceEntry[] | undefined

@@ -21,7 +21,7 @@ import type {
   SfiaSkillCoverageItem,
   OnetTopOccupationItem,
   OnetDetailSubTab,
-} from './types'
+} from '@/types'
 import { cn } from '@/lib/utils'
 
 export interface OnetAnalyticsViewProps {

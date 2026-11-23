@@ -3,7 +3,7 @@ import {
   generateSfiaMatrixCsvString,
   downloadSfiaMatrixCsv,
 } from './sfia-matrix-export'
-import type { SfiaCategory, SfiaSkillSummary, SfiaMatrixCellData } from './types'
+import type { SfiaCategory, SfiaSkillSummary, SfiaMatrixCellData } from '@/types'
 
 describe('sfia-matrix-export utility', () => {
   const mockCategories: SfiaCategory[] = [

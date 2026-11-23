@@ -20,7 +20,7 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/Table'
-import type { SfiaOnetMappingItem } from './types'
+import type { SfiaOnetMappingItem } from '@/types'
 
 export interface SfiaOnetMappingsTabProps {
   skillCode: string

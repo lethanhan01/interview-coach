@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import type { OnetDetailSubTab, OnetMainTab } from './types'
+import type { OnetDetailSubTab, OnetMainTab } from '@/types'
 
 export const DEFAULT_SOC_CODE = '15-1252.00'
 export const DEFAULT_MAIN_TAB: OnetMainTab = 'explorer'

@@ -3,7 +3,7 @@ import type {
   BinaryCriterionResult,
   Report,
   SkillBreakdownItem,
-} from '@/lib/types'
+} from '@/types'
 
 export const mockUnifiedSkillsBreakdown: SkillBreakdownItem[] = [
   {

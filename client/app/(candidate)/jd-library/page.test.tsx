@@ -3,7 +3,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import JdLibraryPage from './page'
 import { prepService } from '@/services'
-import type { SavedJobDescription } from '@/lib/types'
+import type { SavedJobDescription } from '@/types'
 
 const mockPush = vi.fn()
 

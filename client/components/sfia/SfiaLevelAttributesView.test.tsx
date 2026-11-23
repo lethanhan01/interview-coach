@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SfiaLevelAttributesView } from './SfiaLevelAttributesView'
-import type { SfiaLevelResponsibility, SfiaGenericAttribute } from './types'
+import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
 
 describe('SfiaLevelAttributesView', () => {
   const mockLevels: SfiaLevelResponsibility[] = [

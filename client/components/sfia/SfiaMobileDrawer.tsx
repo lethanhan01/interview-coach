@@ -10,13 +10,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/Sheet'
-import {
-  type SfiaCategory,
-  type SfiaSubcategory,
-  type SfiaSkillSummary,
-  SfiaSidebarTree,
-  getCategoryTheme,
-} from './index'
+import type { SfiaCategory, SfiaSubcategory, SfiaSkillSummary } from '@/types'
+import { SfiaSidebarTree, getCategoryTheme } from './index'
 import { cn } from '@/lib/utils'
 
 export interface SfiaMobileDrawerProps {

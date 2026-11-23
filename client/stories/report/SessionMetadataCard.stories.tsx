@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import SessionMetadataCard from '../../components/report/SessionMetadataCard'
-import type { Session } from '@/lib/types'
+import type { Session } from '@/types'
 
 const mockSession: Session = {
   id: 'session-123',

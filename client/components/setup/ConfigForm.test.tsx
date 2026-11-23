@@ -1,8 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import ConfigForm from './ConfigForm'
-import type { SessionType, ContextPack } from '@/lib/types'
-import type { InterviewDuration } from '@/lib/setup-types'
+import type { SessionType, ContextPack, InterviewDuration } from '@/types'
 
 const DEFAULT_PROPS = {
   sessionType: 'hr' as SessionType,

@@ -18,7 +18,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/Tooltip'
 import { cn } from '@/lib/utils'
-import type { SocGroupDistributionItem } from './types'
+import type { SocGroupDistributionItem } from '@/types'
 
 export interface SocGroupDistributionChartProps {
   data: SocGroupDistributionItem[]

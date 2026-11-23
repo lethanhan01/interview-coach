@@ -24,7 +24,7 @@ import {
 import {
   type SfiaCategory,
   type SfiaMatrixDisplayMode,
-} from './types'
+} from '@/types'
 import { getCategoryTheme } from './sfia-theme'
 
 export interface SfiaMatrixToolbarProps {

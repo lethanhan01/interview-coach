@@ -2,7 +2,7 @@ import * as React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
 import { SfiaOnetMappingsTab } from './SfiaOnetMappingsTab'
-import type { SfiaOnetMappingItem } from './types'
+import type { SfiaOnetMappingItem } from '@/types'
 
 const mockMappings: SfiaOnetMappingItem[] = [
   {

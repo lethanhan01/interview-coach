@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
 import ConfirmStep from './ConfirmStep'
-import type { JdFormData } from '@/lib/setup-types'
+import type { JdFormData } from '@/types'
 
 const FULL_JD: JdFormData = {
   company: 'FPT Software',

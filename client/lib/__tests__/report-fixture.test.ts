@@ -4,7 +4,7 @@ import {
   mockSkippedTurnsReport,
   mockUnifiedReport,
 } from '@/tests/fixtures/report.fixture'
-import { mapJdLevelToSfia } from '@/lib/setup-types'
+import { mapJdLevelToSfia } from '@/lib/setup-helpers'
 
 describe('Report Fixtures & Setup Helpers (Phase 1)', () => {
   describe('mockUnifiedReport', () => {

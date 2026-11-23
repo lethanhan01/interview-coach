@@ -1,10 +1,10 @@
-import type { SessionType, ContextPack } from '@/lib/types'
-import {
-  type JdFormData,
-  type InterviewDuration,
-  DURATION_OPTIONS,
-  mapJdLevelToSfia,
-} from '@/lib/setup-types'
+import type {
+  SessionType,
+  ContextPack,
+  JdFormData,
+  InterviewDuration,
+} from '@/types'
+import { DURATION_OPTIONS, mapJdLevelToSfia } from '@/lib/setup-helpers'
 import { getJdLevelLabel } from '@/lib/interview-options'
 import { Badge } from '@/components/ui/Badge'
 import {

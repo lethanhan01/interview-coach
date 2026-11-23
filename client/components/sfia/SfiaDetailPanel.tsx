@@ -20,7 +20,7 @@ import type {
   SfiaCategory,
   SfiaSubcategory,
   SfiaSkillDetail,
-} from './types'
+} from '@/types'
 import {
   getCategoryTheme,
   SFIA_LEVEL_DEFINITIONS,

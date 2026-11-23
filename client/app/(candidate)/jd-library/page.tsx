@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { prepService } from '@/services'
-import type { SavedJobDescription } from '@/lib/types'
+import type { SavedJobDescription } from '@/types'
 import { formatVietnamRelativeDate } from '@/lib/date-time'
 import { getJdLevelLabel } from '@/lib/interview-options'
 import {

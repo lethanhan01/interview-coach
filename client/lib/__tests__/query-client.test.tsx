@@ -13,7 +13,7 @@ import {
 import { useSessions } from '@/hooks/useSessions'
 import { sessionService } from '@/services/session.service'
 import { onetService } from '@/services/onet.service'
-import type { Session } from '@/lib/types'
+import type { Session } from '@/types'
 
 vi.mock('@/services/session.service', () => ({
   sessionService: {

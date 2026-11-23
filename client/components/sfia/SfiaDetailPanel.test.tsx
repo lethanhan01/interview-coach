@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
 import { SfiaDetailPanel } from './SfiaDetailPanel'
-import type { SfiaSkillDetail, SfiaCategory, SfiaSubcategory } from './types'
+import type { SfiaSkillDetail, SfiaCategory, SfiaSubcategory } from '@/types'
 
 const mockCat: SfiaCategory[] = [
   {

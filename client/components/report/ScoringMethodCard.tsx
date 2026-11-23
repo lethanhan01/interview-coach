@@ -18,7 +18,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { ContextPack, SessionType } from '@/lib/types'
+import type { ContextPack, SessionType } from '@/types'
 
 export interface ScoringMethodCardProps {
   contextPackId?: ContextPack
