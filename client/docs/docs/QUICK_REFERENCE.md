@@ -193,14 +193,12 @@ export function QuickSessionForm({
 }
 ```
 
-### Recipe 3: Data-Fetching Hook Tự Chứa Chuẩn TanStack Query v5 + `queryKeys` Factory (`client-swr-dedup`)
+### Recipe 3: Data-Fetching Hook Tự Chứa Chuẩn TanStack Query v5 `queryOptions()` Factory (`flow-loader-query-pattern`, `client-swr-dedup`)
 
 ```ts
-// Correct: TanStack Query v5 + queryKeys Factory + AbortSignal + Zod validation tự chứa
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+// Correct: TanStack Query v5 queryOptions() Factory + queryKeys + AbortSignal + Zod v4 tự chứa
+import { type QueryClient, queryOptions, useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
-import { apiClient } from '@/lib/api-client'
-import { queryKeys } from '@/lib/query-client'
 
 const sessionOverviewSchema = z.object({
   id: z.string(),
@@ -217,32 +215,35 @@ export type SessionOverview = z.infer<typeof sessionOverviewSchema>
 async function fetchSessionOverview(
   signal?: AbortSignal
 ): Promise<SessionOverview[]> {
-  const raw = await apiClient.get<unknown>('/sessions', { signal })
+  const response = await fetch('/api/v1/sessions', {
+    credentials: 'include',
+    signal,
+  })
+  if (!response.ok) {
+    throw new Error('Không thể tải danh sách phiên phỏng vấn.')
+  }
+  const raw: unknown = await response.json()
   return sessionOverviewResponseSchema.parse(raw).sessions
 }
 
-export interface UseSessionsOverviewResult {
-  sessions: SessionOverview[]
-  isLoading: boolean
-  error: Error | null
-  invalidate: () => Promise<void>
+export const sessionOverviewQueries = {
+  all: () => ['sessions'] as const,
+  list: () =>
+    queryOptions({
+      queryKey: ['sessions', 'list'] as const,
+      queryFn: ({ signal }) => fetchSessionOverview(signal),
+      staleTime: 10_000,
+    }),
 }
 
-export function useSessionsOverview(): UseSessionsOverviewResult {
-  const queryClient = useQueryClient()
-  const { data, error, isLoading } = useQuery<SessionOverview[]>({
-    queryKey: queryKeys.sessions.list(),
-    queryFn: ({ signal }) => fetchSessionOverview(signal),
-    staleTime: 5_000,
-  })
+export function useSessionsOverview() {
+  return useQuery(sessionOverviewQueries.list())
+}
 
-  return {
-    sessions: data ?? [],
-    isLoading,
-    error: error instanceof Error ? error : null,
-    invalidate: () =>
-      queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all }),
-  }
+export async function prefetchSessionsOverview(
+  queryClient: QueryClient
+): Promise<void> {
+  await queryClient.ensureQueryData(sessionOverviewQueries.list())
 }
 ```
 
@@ -488,16 +489,17 @@ describe('SessionCard', () => {
 | [`OPS-011`](./04-performance-and-ops/release-and-devops.md#ops-011) | Chính sách Edge Cache an toàn (public stale-while-revalidate, giữ dynamic cho auth/error) | `WARN`  |    `[Target]`     |
 | [`OPS-012`](./04-performance-and-ops/release-and-devops.md#ops-012) | Bảo mật triển khai Vercel Production & CLI Token Hygiene                                  | `ERROR` |    `[Active]`     |
 
-### 5.12. Bảng Tra Cứu Quy Chuẩn Kỹ Thuật Vercel (4 Nhóm Web / Next.js — Khớp 100% `SKILL.md`)
+### 5.12. Bảng Tra Cứu Quy Chuẩn Kỹ Thuật Vercel & TanStack (5 Nhóm Web / Next.js — Khớp 100% `SKILL.md`)
 
 Đối chiếu trực tiếp từ `client/.agents/skills/` (loại bỏ hoàn toàn nhóm mobile native không áp dụng cho web Next.js):
 
-| Skill nguồn (`client/.agents/skills/`)                                                             | Các rule/nguyên tắc thật đã xác minh                                                                                                                                                                                                                                                                                                                                                                       | Chuyên đề phụ trách                                                                   |
-| :------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------ |
-| **[`vercel-react-best-practices`](../../.agents/skills/vercel-react-best-practices/SKILL.md)**     | `async-parallel`, `bundle-barrel-imports`, `bundle-dynamic-imports`, `bundle-defer-third-party`, `server-auth-actions`, `server-parallel-fetching`, `server-serialization`, `client-swr-dedup`, `rerender-derived-state-no-effect`, `rerender-simple-expression-in-memo`, `rendering-conditional-render`, `rendering-content-visibility`, `rendering-hoist-jsx`, `js-*` (14 rules), `advanced-*` (4 rules) | `01-foundations/*`, `03-quality-and-security/*`, `04-performance-and-ops/*`           |
-| **[`vercel-composition-patterns`](../../.agents/skills/vercel-composition-patterns/SKILL.md)**     | `architecture-avoid-boolean-props`, `architecture-compound-components`, `state-decouple-implementation`, `state-context-interface`, `state-lift-state`, `patterns-explicit-variants`, `patterns-children-over-render-props`, `react19-no-forwardref`                                                                                                                                                       | `02-ui-and-design-system/component-patterns.md`, `01-foundations/coding-standards.md` |
-| **[`vercel-react-view-transitions`](../../.agents/skills/vercel-react-view-transitions/SKILL.md)** | `<ViewTransition>`, `transitionTypes` (`next/link`, `router.push`), `addTransitionType`, `default="none"`, shared element `name`, placement rule, reduced motion CSS                                                                                                                                                                                                                                       | `02-ui-and-design-system/view-transitions-and-motion.md`                              |
-| **[`vercel-optimize`](../../.agents/skills/vercel-optimize/SKILL.md)**                             | Metrics-first audit (Observability Plus), deterministic gating, safe caching policy (`private, no-store` cho auth/error routes), version-aware citations, CLI token hygiene                                                                                                                                                                                                                                | `04-performance-and-ops/release-and-devops.md`, `observability-and-telemetry.md`      |
+| Skill nguồn (`client/.agents/skills/`)                                                                         | Các rule/nguyên tắc thật đã xác minh                                                                                                                                                                                                                                                                                                                                                                       | Chuyên đề phụ trách                                                                                  |
+| :------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
+| **[`tanstack-integration-best-practices`](../../.agents/skills/tanstack-integration-best-practices/SKILL.md)** | `flow-loader-query-pattern` (`queryOptions()`, `ensureQueryData`, `prefetchQuery`), `cache-single-source` (QueryClient làm SSOT duy nhất), `setup-query-client-context` (isolated `QueryClient` cho SSR & test), `ssr-dehydrate-hydrate` (`ReactQueryDevtools`)                                                                                                                                            | `01-foundations/state-management.md`, `03-quality-and-security/*`, `mantine/04-tanstack-query-guide` |
+| **[`vercel-react-best-practices`](../../.agents/skills/vercel-react-best-practices/SKILL.md)**                 | `async-parallel`, `bundle-barrel-imports`, `bundle-dynamic-imports`, `bundle-defer-third-party`, `server-auth-actions`, `server-parallel-fetching`, `server-serialization`, `client-swr-dedup`, `rerender-derived-state-no-effect`, `rerender-simple-expression-in-memo`, `rendering-conditional-render`, `rendering-content-visibility`, `rendering-hoist-jsx`, `js-*` (14 rules), `advanced-*` (4 rules) | `01-foundations/*`, `03-quality-and-security/*`, `04-performance-and-ops/*`                          |
+| **[`vercel-composition-patterns`](../../.agents/skills/vercel-composition-patterns/SKILL.md)**                 | `architecture-avoid-boolean-props`, `architecture-compound-components`, `state-decouple-implementation`, `state-context-interface`, `state-lift-state`, `patterns-explicit-variants`, `patterns-children-over-render-props`, `react19-no-forwardref`                                                                                                                                                       | `02-ui-and-design-system/component-patterns.md`, `01-foundations/coding-standards.md`                |
+| **[`vercel-react-view-transitions`](../../.agents/skills/vercel-react-view-transitions/SKILL.md)**             | `<ViewTransition>`, `transitionTypes` (`next/link`, `router.push`), `addTransitionType`, `default="none"`, shared element `name`, placement rule, reduced motion CSS                                                                                                                                                                                                                                       | `02-ui-and-design-system/view-transitions-and-motion.md`                                             |
+| **[`vercel-optimize`](../../.agents/skills/vercel-optimize/SKILL.md)**                                         | Metrics-first audit (Observability Plus), deterministic gating, safe caching policy (`private, no-store` cho auth/error routes), version-aware citations, CLI token hygiene                                                                                                                                                                                                                                | `04-performance-and-ops/release-and-devops.md`, `observability-and-telemetry.md`                     |
 
 ### 5.13. 10 Quy Tắc Vàng Bắt Buộc Cho Lập Trình Viên InterviewCoach (10 Core Rules)
 

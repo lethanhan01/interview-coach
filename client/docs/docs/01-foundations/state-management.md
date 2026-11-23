@@ -7,7 +7,8 @@
 > **Tính chất tài liệu:** Chuẩn mực mục tiêu (Normative Standard) dựa trên **TanStack Query v5 (`@tanstack/react-query`)**, **React 19 Context**, **Next.js 16 URL Params**, **`@mantine/hooks`**, và **SSE `EventSource`**; mọi đoạn mã minh họa tự chứa theo tài liệu gốc chính thức (không trích xuất code legacy từ `client/`).  
 > **Cơ sở tham chiếu quốc tế:**
 >
-> - [TanStack Query v5 Official Documentation — Queries, Mutations & Optimistic Updates](https://tanstack.com/query/v5/docs/framework/react/overview)
+> - [TanStack Query v5 Official Documentation — `queryOptions`, Queries, Mutations & Optimistic Updates](https://tanstack.com/query/v5/docs/framework/react/guides/query-options)
+> - [TanStack Integration Best Practices (`flow-loader-query-pattern`, `cache-single-source`, `setup-query-client-context`)](../../../.agents/skills/tanstack-integration-best-practices/SKILL.md)
 > - [Next.js 16 Navigation — `useSearchParams`, `usePathname`, `useRouter`](https://nextjs.org/docs/app/api-reference/functions/use-search-params)
 > - [Mantine v9 Hooks — State & Timing Utilities](https://mantine.dev/hooks/package/)
 > - [React 19 — You Might Not Need an Effect (Derived State)](https://react.dev/learn/you-might-not-need-an-effect)
@@ -49,9 +50,9 @@ flowchart TD
 
 ## 2. Đặc Tả 4 Lớp State Nền Tảng
 
-### 2.1. Lớp 1 — Server State Với TanStack Query v5 & `queryKeys` Factory (`client-swr-dedup`)
+### 2.1. Lớp 1 — Server State Với TanStack Query v5 & `queryOptions()` Factory (`client-swr-dedup`)
 
-Theo nguyên tắc khử trùng lặp request tại client (`client-swr-dedup` trong `vercel-react-best-practices`) và tài liệu chính thức của **TanStack Query v5**, **tuyệt đối không** viết `useEffect` gọi `fetch` rồi `setState` thủ công. Mọi dữ liệu đọc từ server đi qua `useQuery` kèm bộ **`queryKeys` factory tập trung** (`@/lib/query-client`) và chuyển tiếp `AbortSignal` để khử trùng lặp request tự động:
+Theo nguyên tắc khử trùng lặp request tại client (`client-swr-dedup` trong `vercel-react-best-practices`), quy tắc `flow-loader-query-pattern` / `cache-single-source` trong `tanstack-integration-best-practices` và tài liệu chính thức của **TanStack Query v5**, **tuyệt đối không** viết `useEffect` gọi `fetch` rồi `setState` thủ công, và **không** bọc `useQuery` trong lớp adapter giả lập SWR (`{ sessions, mutate }`). Mọi dữ liệu đọc từ server phải được định nghĩa qua helper **`queryOptions()`** kết hợp bộ **`queryKeys` phân cấp** và chuyển tiếp `AbortSignal`:
 
 ```ts
 // Incorrect: Fetch trong useEffect không có cache, không deduping, dễ race condition
@@ -67,52 +68,62 @@ function useSessionsBad() {
   return sessions
 }
 
-// Correct: TanStack Query v5 + queryKeys Factory + AbortSignal + kiểu trả về tường minh
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api-client'
-import { queryKeys } from '@/lib/query-client'
+// Correct: TanStack Query v5 queryOptions() Factory + queryKeys phân cấp + AbortSignal + Zod v4
+import { type QueryClient, queryOptions, useQuery } from '@tanstack/react-query'
+import { z } from 'zod'
 
-export interface SessionSummary {
-  id: string
-  roleTitle: string
-  status: 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
-}
+const sessionSummarySchema = z.object({
+  id: z.string(),
+  roleTitle: z.string(),
+  status: z.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELLED']),
+})
+
+const sessionListResponseSchema = z.object({
+  sessions: z.array(sessionSummarySchema),
+})
+
+export type SessionSummary = z.infer<typeof sessionSummarySchema>
 
 async function fetchCandidateSessions(
   signal?: AbortSignal
 ): Promise<SessionSummary[]> {
-  const res = await apiClient.get<{ sessions: SessionSummary[] }>('/sessions', {
+  const response = await fetch('/api/v1/sessions', {
+    credentials: 'include',
     signal,
   })
-  return res.sessions ?? []
-}
-
-export interface UseSessionsListResult {
-  sessions: SessionSummary[]
-  isLoading: boolean
-  error: Error | null
-  refetch: () => Promise<void>
-  mutate: () => Promise<void>
-}
-
-export function useSessionsList(): UseSessionsListResult {
-  const queryClient = useQueryClient()
-  const { data, error, isLoading, refetch } = useQuery<SessionSummary[]>({
-    queryKey: queryKeys.sessions.list(),
-    queryFn: ({ signal }) => fetchCandidateSessions(signal),
-    staleTime: 5_000,
-  })
-
-  return {
-    sessions: data ?? [],
-    isLoading,
-    error: error instanceof Error ? error : null,
-    refetch: async () => {
-      await refetch()
-    },
-    mutate: () =>
-      queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all }),
+  if (!response.ok) {
+    throw new Error('Không thể tải danh sách phiên phỏng vấn.')
   }
+  const raw: unknown = await response.json()
+  return sessionListResponseSchema.parse(raw).sessions
+}
+
+export const queryKeys = {
+  sessions: {
+    all: ['sessions'] as const,
+    list: () => ['sessions', 'list'] as const,
+    detail: (sessionId: string) => ['sessions', 'detail', sessionId] as const,
+  },
+} as const
+
+export const sessionQueries = {
+  all: () => queryKeys.sessions.all,
+  list: () =>
+    queryOptions({
+      queryKey: queryKeys.sessions.list(),
+      queryFn: ({ signal }) => fetchCandidateSessions(signal),
+      staleTime: 10_000,
+    }),
+}
+
+export function useCandidateSessions() {
+  return useQuery(sessionQueries.list())
+}
+
+export async function prefetchCandidateSessions(
+  queryClient: QueryClient
+): Promise<void> {
+  await queryClient.ensureQueryData(sessionQueries.list())
 }
 ```
 
@@ -188,19 +199,18 @@ export function useCatalogUrlState(): UseCatalogUrlStateResult {
 
 Với các tác vụ AI bất đồng bộ (sinh câu hỏi phỏng vấn, tổng hợp báo cáo STAR), sử dụng **Server-Sent Events (`EventSource`)** kết hợp 4 nguyên tắc bắt buộc (tuân thủ `STD-TS-001`, `STD-TS-002`, `STD-ADV-002`):
 
-1. **Mô hình hóa vòng đời bằng Union State:** Khai báo rõ `SseStatus = 'idle' | 'connecting' | 'connected' | 'disconnected'`.
-2. **Ổn định callback bằng `useRef` có dependency `[onReady]` (hoặc React 19 `useEffectEvent`):** Khớp `advanced-event-handler-refs` — tuyệt đối không viết `useEffect` thiếu dependency array chạy lại mỗi lần render.
+1. **Mô hình hóa vòng đời kết nối bằng Union State:** Khai báo rõ `SseStatus = 'idle' | 'connecting' | 'connected' | 'disconnected'`.
+2. **Ổn định callback bằng `useRef` có dependency `[onReportReady]` (hoặc React 19 `useEffectEvent`):** Khớp `advanced-event-handler-refs` — tuyệt đối không viết `useEffect` thiếu dependency array chạy lại mỗi lần render.
 3. **Validate payload SSE bằng Zod v4:** Không dùng `JSON.parse(event.data) as Payload`.
-4. **Cầu nối SSE → TanStack `QueryClient` Cache:** Khi nhận sự kiện tiến độ AI (`feedback_progress`), gọi `queryClient.setQueryData(queryKeys.sessions.feedbackProgress(sessionId), parsed.data)`; khi nhận `report_ready`, gọi `queryClient.invalidateQueries` cho `report(sessionId)`, `detail(sessionId)` và `list()`.
+4. **Một nguồn chân lý duy nhất (`cache-single-source`):** Không lưu bản sao dữ liệu tiến độ vào `useState`. Khi nhận sự kiện tiến độ AI (`session.feedback_progress`), ghi trực tiếp vào `queryClient.setQueryData(progressQuery.queryKey, parsed.data)`; khi nhận `report.ready`, gọi `queryClient.invalidateQueries` cho `report(sessionId)` và `all()`.
 
 ```ts
-// Correct: SSE hook chuẩn React 19 + Zod v4 + đồng bộ trực tiếp TanStack QueryClient Cache
+// Correct: SSE hook chuẩn React 19 + Zod v4 + Single Source of Truth trên TanStack QueryClient Cache
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
-import { queryKeys } from '@/lib/query-client'
 
 const progressPayloadSchema = z.object({
   totalTurns: z.number().int().nonnegative(),
@@ -212,19 +222,50 @@ const progressPayloadSchema = z.object({
 export type ProgressPayload = z.infer<typeof progressPayloadSchema>
 export type SseStatus = 'idle' | 'connecting' | 'connected' | 'disconnected'
 
+async function fetchInitialProgress(
+  sessionId: string,
+  signal?: AbortSignal
+): Promise<ProgressPayload | null> {
+  const response = await fetch(
+    `/api/v1/sessions/${encodeURIComponent(sessionId)}/feedback-progress`,
+    { credentials: 'include', signal }
+  )
+  if (!response.ok) return null
+  const raw: unknown = await response.json()
+  return progressPayloadSchema.parse(raw)
+}
+
+export const sessionStreamQueries = {
+  all: () => ['sessions'] as const,
+  progress: (sessionId: string) =>
+    queryOptions({
+      queryKey: ['sessions', 'detail', sessionId, 'progress'] as const,
+      queryFn: ({ signal }) => fetchInitialProgress(sessionId, signal),
+      staleTime: Infinity,
+    }),
+  report: (sessionId: string) =>
+    ['sessions', 'detail', sessionId, 'report'] as const,
+}
+
 export interface UseProgressStreamResult {
   status: SseStatus
   progress: ProgressPayload | null
 }
 
 export function useProgressStream(
-  sessionId: string | null,
+  sessionId: string,
   streamUrl: string | null,
   onReportReady: () => void
 ): UseProgressStreamResult {
   const queryClient = useQueryClient()
   const [status, setStatus] = useState<SseStatus>('idle')
-  const [progress, setProgress] = useState<ProgressPayload | null>(null)
+  const progressQuery = sessionStreamQueries.progress(sessionId)
+
+  // Đọc trực tiếp từ QueryClient cache (cache-single-source)
+  const { data: progress = null } = useQuery({
+    ...progressQuery,
+    enabled: Boolean(sessionId),
+  })
 
   const onReportReadyRef = useRef(onReportReady)
   useEffect(() => {
@@ -240,32 +281,25 @@ export function useProgressStream(
       setStatus('connected')
     }
 
-    source.addEventListener('feedback_progress', (event) => {
+    source.addEventListener('session.feedback_progress', (event) => {
       try {
         const parsed = progressPayloadSchema.safeParse(
           JSON.parse((event as MessageEvent<string>).data)
         )
         if (parsed.success) {
-          setProgress(parsed.data)
-          queryClient.setQueryData(
-            queryKeys.sessions.feedbackProgress(sessionId),
-            parsed.data
-          )
+          queryClient.setQueryData(progressQuery.queryKey, parsed.data)
         }
       } catch {
         // Bỏ qua frame JSON lỗi định dạng
       }
     })
 
-    source.addEventListener('report_ready', () => {
+    source.addEventListener('report.ready', () => {
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.sessions.report(sessionId),
+        queryKey: sessionStreamQueries.report(sessionId),
       })
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.sessions.detail(sessionId),
-      })
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.sessions.list(),
+        queryKey: sessionStreamQueries.all(),
       })
       onReportReadyRef.current()
       source.close()
@@ -280,7 +314,7 @@ export function useProgressStream(
     return () => {
       source.close()
     }
-  }, [queryClient, sessionId, streamUrl])
+  }, [progressQuery.queryKey, queryClient, sessionId, streamUrl])
 
   return { status: streamUrl ? status : 'idle', progress }
 }
@@ -337,32 +371,70 @@ export function SessionStatsSummary({
 Khi cập nhật trạng thái (như hủy phiên phỏng vấn hoặc xóa ánh xạ kỹ năng), dùng vòng đời `onMutate` (`cancelQueries` + snapshot + `setQueryData`), `onError` (rollback + `notifications.show`), và `onSettled` (`invalidateQueries`) của `useMutation`:
 
 ```ts
-// Correct: Optimistic Update + tự động rollback qua TanStack Query v5 useMutation
+// Correct: Optimistic Update type-safe nhờ DataTag của queryOptions() + tự động rollback
 import { notifications } from '@mantine/notifications'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api-client'
-import { queryKeys } from '@/lib/query-client'
+import {
+  queryOptions,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
 
-interface SessionRecord {
+export interface SessionRecord {
   id: string
   status: 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
 }
 
+async function fetchActiveSessions(
+  signal?: AbortSignal
+): Promise<SessionRecord[]> {
+  const response = await fetch('/api/v1/sessions', {
+    credentials: 'include',
+    signal,
+  })
+  if (!response.ok) {
+    throw new Error('Không thể tải danh sách phiên.')
+  }
+  return (await response.json()) as SessionRecord[]
+}
+
+async function patchCancelSession(sessionId: string): Promise<void> {
+  const response = await fetch(
+    `/api/v1/sessions/${encodeURIComponent(sessionId)}/status`,
+    {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': crypto.randomUUID(),
+      },
+      body: JSON.stringify({ status: 'cancelled' }),
+    }
+  )
+  if (!response.ok) {
+    throw new Error('Không thể hủy phiên phỏng vấn.')
+  }
+}
+
+export const activeSessionQueries = {
+  all: () => ['sessions'] as const,
+  list: () =>
+    queryOptions({
+      queryKey: ['sessions', 'list'] as const,
+      queryFn: ({ signal }) => fetchActiveSessions(signal),
+    }),
+}
+
 export function useCancelSessionMutation() {
   const queryClient = useQueryClient()
-  const listKey = queryKeys.sessions.list()
+  const listQuery = activeSessionQueries.list()
 
   return useMutation({
-    mutationFn: (sessionId: string) =>
-      apiClient.patch(`/sessions/${encodeURIComponent(sessionId)}/status`, {
-        status: 'cancelled',
-      }),
+    mutationFn: patchCancelSession,
     onMutate: async (sessionId) => {
-      await queryClient.cancelQueries({ queryKey: listKey })
-      const previousSessions =
-        queryClient.getQueryData<SessionRecord[]>(listKey)
+      await queryClient.cancelQueries({ queryKey: listQuery.queryKey })
+      const previousSessions = queryClient.getQueryData(listQuery.queryKey)
 
-      queryClient.setQueryData<SessionRecord[]>(listKey, (old = []) =>
+      queryClient.setQueryData(listQuery.queryKey, (old = []) =>
         old.map((session) =>
           session.id === sessionId
             ? { ...session, status: 'CANCELLED' as const }
@@ -374,7 +446,7 @@ export function useCancelSessionMutation() {
     },
     onError: (err, _sessionId, context) => {
       if (context?.previousSessions) {
-        queryClient.setQueryData(listKey, context.previousSessions)
+        queryClient.setQueryData(listQuery.queryKey, context.previousSessions)
       }
       notifications.show({
         color: 'danger',
@@ -386,7 +458,9 @@ export function useCancelSessionMutation() {
       })
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all })
+      await queryClient.invalidateQueries({
+        queryKey: activeSessionQueries.all(),
+      })
     },
   })
 }

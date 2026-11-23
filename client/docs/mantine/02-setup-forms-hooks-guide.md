@@ -29,6 +29,7 @@ Tài liệu này mô tả cấu hình nền tảng thực tế trong `client/` (
 ```tsx
 import './globals.css'
 
+import { useState, type ReactNode } from 'react'
 import {
   ColorSchemeScript,
   MantineProvider,
@@ -36,12 +37,30 @@ import {
 } from '@mantine/core'
 import { ModalsProvider } from '@mantine/modals'
 import { Notifications } from '@mantine/notifications'
-import { QueryProvider } from '@/lib/query-client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { theme } from '@/theme'
+
+function makeQueryClient(): QueryClient {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 60_000,
+        refetchOnWindowFocus: true,
+      },
+    },
+  })
+}
+
+export function QueryProvider({ children }: { children: ReactNode }) {
+  const [queryClient] = useState(makeQueryClient)
+  return (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  )
+}
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="vi" {...mantineHtmlProps}>
       <head>

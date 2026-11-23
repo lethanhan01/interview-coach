@@ -5,7 +5,7 @@
 Dự án **InterviewCoach Frontend (`client/`)** chuyển đổi tầng quản lý Server State từ `swr` v2 sang **TanStack Query v5 (`@tanstack/react-query`)** theo kiến trúc **Tinh Gọn (1-Hop Direct REST)** — kết hợp trực tiếp với **Mantine UI v9**, **`@mantine/form` + Zod v4** và tầng **`client/services/*.service.ts` + `client/lib/api-client.ts`** hiện có:
 
 - **UI & Design System:** **Mantine UI v9 (`^9.8.2`)** — Mantine-First, Zero-Hex Semantic-Only (`client/theme.ts`), `@mantine/form` (`mode: 'uncontrolled'`) + **Zod v4 (`^4.4.3`)**, `@mantine/hooks`, `@mantine/notifications`, `@mantine/modals`, `@mantine/dropzone`, và các mẫu giao diện chuẩn hóa từ `https://ui.mantine.dev/`.
-- **Async Server State & Caching Layer (Pure Client-Side):** **TanStack Query v5 (`@tanstack/react-query`)** quản lý tập trung trong 1 tệp duy nhất **`client/lib/query-client.tsx`** (`<QueryProvider>`, `makeQueryClient()`, `getQueryClient()`, và bộ **`queryKeys` factory** chuẩn hóa cho toàn bộ 10 miền nghiệp vụ), hỗ trợ `useQuery`, `useMutation`, Optimistic Updates, hủy request qua `AbortSignal`, và đồng bộ Realtime trực tiếp từ **SSE (`EventSource`)** vào `QueryClient` cache.
+- **Async Server State & Caching Layer (Pure Client-Side):** **TanStack Query v5 (`@tanstack/react-query`)** quản lý tập trung trong 1 tệp duy nhất **`client/lib/query-client.tsx`** (`<QueryProvider>`, `makeQueryClient()`, `getQueryClient()`, bộ **`queryKeys` phân cấp** kết hợp trực tiếp với helper **`queryOptions()` Factory** theo chuẩn `tanstack.com/query/v5` & `client/.agents/skills/tanstack-integration-best-practices`), hỗ trợ `useQuery`, `useSuspenseQuery`, `useMutation`, `ensureQueryData`, Optimistic Updates type-safe qua `DataTag`, hủy request qua `AbortSignal`, và đồng bộ Realtime trực tiếp từ **SSE (`EventSource`)** vào `QueryClient` cache (`cache-single-source`).
 - **HTTP Transport & Domain Services Layer (1-Hop Direct REST):** Giữ nguyên 100% **`client/services/*.service.ts`** và **`client/lib/api-client.ts`** gọi trực tiếp tới **NestJS 11 Backend (`:3000/api/v1/*`)** với một cơ chế duy nhất cho `HttpOnly` Cookie (`credentials: 'include'`), **Browser 401 Silent Refresh**, tự động đính kèm **`Idempotency-Key`**, và chuẩn hóa lỗi **`ApiClientError`**.
 
 ---
@@ -170,20 +170,16 @@ Mọi thay đổi trong `client/docs/docs/` tuân thủ nghiêm ngặt **Unified
 
 ##### [MODIFY] [client/scripts/verify-docs-integrity.mjs](../../client/scripts/verify-docs-integrity.mjs)
 
-- Mở rộng `ALLOWED_INTERNAL_ALIASES` để cho phép `@test-utils`, `@/lib/query-client` và `@/lib/api-client` trong các đoạn code mẫu tài liệu:
+- **Siết chặt tuyệt đối `ALLOWED_INTERNAL_ALIASES` (Chống trích xuất code legacy từ `client/`):**
+  Chỉ cho phép 2 alias nền tảng `@/theme` và `@test-utils`. Mọi code block trong tài liệu bắt buộc tự chứa (self-contained) theo chuẩn chính thức từ `https://tanstack.com/query/v5`, `https://mantine.dev/`, `https://ui.mantine.dev/` và `client/.agents/skills/tanstack-integration-best-practices` (cấm import `@/lib/api-client`, `@/lib/query-client`, `@/services/*`, `@/components/*`):
   ```js
-  const ALLOWED_INTERNAL_ALIASES = new Set([
-    "@/theme",
-    "@test-utils",
-    "@/lib/query-client",
-    "@/lib/api-client",
-  ]);
+  const ALLOWED_INTERNAL_ALIASES = new Set(["@/theme", "@test-utils"]);
   ```
 - Thêm `04-tanstack-query-guide.md` và `05-mantine-templates-catalog.md` vào `TARGET_MANTINE_FILES` và `REQUIRED_KEYWORDS_BY_FILE`:
-  - `'docs/mantine/04-tanstack-query-guide.md'`: `['TanStack Query', 'useQuery', 'useMutation', 'QueryClient', 'queryKeys', 'AbortSignal']`
+  - `'docs/mantine/04-tanstack-query-guide.md'`: `['TanStack Query', 'queryOptions', 'useQuery', 'useMutation', 'QueryClient', 'queryKeys', 'AbortSignal']`
   - `'docs/mantine/05-mantine-templates-catalog.md'`: `['AppShell', 'Stepper', 'Dropzone', 'Table.ScrollContainer', 'RingProgress', 'useQuery']`
 - Cập nhật `REQUIRED_KEYWORDS_BY_FILE` của:
-  - `'docs/docs/01-foundations/state-management.md'`: Thay `'SWR'`, `'useSWR'`, `'Key Factory'` bằng `'TanStack Query'`, `'useQuery'`, `'QueryClient'`, `'queryKeys'`, `'useSearchParams'`, `'@mantine/hooks'`, `'Derived State'`, `'AbortController'`, `'EventSource'`.
+  - `'docs/docs/01-foundations/state-management.md'`: Thay `'SWR'`, `'useSWR'`, `'Key Factory'` bằng `'TanStack Query'`, `'queryOptions'`, `'useQuery'`, `'QueryClient'`, `'queryKeys'`, `'useSearchParams'`, `'@mantine/hooks'`, `'Derived State'`, `'AbortController'`, `'EventSource'`.
   - `'docs/docs/03-quality-and-security/api-contracts-and-resilience.md'`: Thay `'SWR'` bằng `'TanStack Query'`, `'Idempotency-Key'`, `'ApiClientError'`, `'AbortController'`, `'useNetwork'`, `'Target Standard'`.
 - Trong `SOFT_WARN_PHRASES` & `SOFT_WARN_EXCLUSION_RE`:
   - Gỡ bỏ cảnh báo cũ đối với `'TanStack Query'` (vì nay là chuẩn chính thức).
@@ -192,9 +188,10 @@ Mọi thay đổi trong `client/docs/docs/` tuân thủ nghiêm ngặt **Unified
 ##### [MODIFY] [AGENTS.md](../../AGENTS.md), [.agents/AGENTS.md](../../.agents/AGENTS.md), [.claude/rules/ui-conventions.md](../../.claude/rules/ui-conventions.md), [client/README.md](../../client/README.md)
 
 - Cập nhật danh mục công nghệ chuẩn: Thay `swr` (`^2.4.1`) bằng `@tanstack/react-query` (`^5`).
-- Ghi rõ quy tắc Server State: Dùng `@tanstack/react-query` (`useQuery`, `useMutation`, `queryKeys` từ `@/lib/query-client`) kết hợp với `client/services/*.service.ts` và `client/lib/api-client.ts`.
+- Đăng ký skill `tanstack-integration-best-practices/SKILL.md` vào bảng Project Skills trong `AGENTS.md`, `client/docs/mantine/README.md`, và `client/docs/docs/QUICK_REFERENCE.md` (áp dụng `queryOptions()`, `cache-single-source`, `ensureQueryData`, isolated `QueryClient`).
+- Ghi rõ quy tắc Server State: Dùng `@tanstack/react-query` (`queryOptions()`, `useQuery`, `useMutation`, `queryKeys` phân cấp) kết hợp với tầng domain services và giữ `QueryClient` cache làm nguồn chân lý duy nhất.
 
-> **Cổng nghiệm thu Chặng 1:** Chạy `npm run verify:docs` và `npm run format:check` tại `client/` đạt **0 errors, 0 warnings**.
+> **Cổng nghiệm thu Chặng 1:** Chạy `npm run verify:docs` và kiểm tra Prettier trên toàn bộ tài liệu/script thuộc phạm vi Chặng 1 đạt **0 errors, 0 warnings**.
 
 ---
 
@@ -281,8 +278,8 @@ Mục tiêu của Chặng 2 là đưa TanStack Query v5 vào vận hành thực 
 
 ```bash
 cd client
-npm run verify:docs      # Kiểm tra toàn vẹn 100% tài liệu (24 files Markdown, 131 Rule IDs, Code Block Zero-Hex Linter, Link & Anchor Integrity, 6-Part Anatomy)
-npm run format:check     # Kiểm tra Prettier cho toàn bộ tài liệu Markdown và script
+npm run verify:docs      # Kiểm tra toàn vẹn 100% tài liệu (28 files Markdown, 131 Rule IDs, Code Block Zero-Hex & Zero-Extract Linter, Link & Anchor Integrity, 6-Part Anatomy)
+npx prettier --check "docs/**/*.md" "README.md" "scripts/verify-docs-integrity.mjs" "../AGENTS.md" "../.agents/AGENTS.md" "../.claude/rules/ui-conventions.md" "../docs/documents-update/doc-update2.md"
 ```
 
 ### 4.2. Cổng Kiểm Chứng Chặng 2 (Code & Quality Gate)

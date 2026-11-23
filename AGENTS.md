@@ -55,7 +55,7 @@ Never guess Mantine v9 APIs or copy deprecated v6/v7/v8 patterns. Always check:
 10. **Standardized Forms, Hooks & Server State**:
     - Use `@mantine/form` (`mode: 'uncontrolled'`, `form.key('path')`, `{...form.getInputProps('path')}`, `schemaResolver(zodSchema, { sync: true })` with Zod v4) and `<Box component="form" onSubmit={form.onSubmit(...)} noValidate>`.
     - Prefer `@mantine/hooks` (`useDisclosure`, `useDebouncedValue`, `useMediaQuery`, `useReducedMotion`, `useHotkeys`, `useNetwork`, etc.) over hand-rolled DOM/window `useEffect` helpers.
-    - Use `@tanstack/react-query` (`useQuery`, `useMutation`, `queryKeys` from `@/lib/query-client`) combined with `client/services/*.service.ts` and `client/lib/api-client.ts` for server state (never fetch inside `useEffect`).
+    - Use `@tanstack/react-query` (`queryOptions()`, `useQuery`, `useMutation`, hierarchical `queryKeys`) combined with typed domain service functions for server state (never fetch inside `useEffect`).
 
 ## 4. Testing & Verification (`client/`)
 
@@ -77,13 +77,14 @@ Never guess Mantine v9 APIs or copy deprecated v6/v7/v8 patterns. Always check:
 
 When working on a matching task in `client/`, read the relevant `client/.agents/skills/<skill-name>/SKILL.md` first before implementing or reviewing:
 
-| Task / Trigger                                                                                   | Skill to Read (`client/.agents/skills/...`) | Scope & Adaptation Notes                                                                         |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Writing, refactoring, or optimizing React/Next.js components, RSC, data fetching, or bundle size | `vercel-react-best-practices/SKILL.md`      | Apply full **Next.js App Router, Server Components (RSC)**, and React 19 performance rules       |
-| Designing reusable/compound components, fixing boolean-prop bloat, React 19 APIs                 | `vercel-composition-patterns/SKILL.md`      | Combine with Mantine primitives (`Box`, `Paper`, `UnstyledButton`, `createPolymorphicComponent`) |
-| Adding route or UI enter/exit animations without third-party animation libs                      | `vercel-react-view-transitions/SKILL.md`    | Apply `<ViewTransition>` / `startViewTransition` with CSS Modules (`*.module.css`)               |
-| UI/UX, accessibility, or design compliance review                                                | `web-design-guidelines/SKILL.md`            | Use for audits alongside Section 3 Mantine v9 Zero-Hex rules                                     |
-| Reviewing documentation or UI prose                                                              | `writing-guidelines/SKILL.md`               | Use when editing `client/docs/` or long-form UI copy                                             |
+| Task / Trigger                                                                                   | Skill to Read (`client/.agents/skills/...`)    | Scope & Adaptation Notes                                                                                             |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Designing TanStack Query v5 data flows, `queryOptions()`, caching, prefetching & invalidation    | `tanstack-integration-best-practices/SKILL.md` | Apply `queryOptions()`, `cache-single-source`, isolated `QueryClient` & `ensureQueryData` on Next.js 16 + Mantine v9 |
+| Writing, refactoring, or optimizing React/Next.js components, RSC, data fetching, or bundle size | `vercel-react-best-practices/SKILL.md`         | Apply full **Next.js App Router, Server Components (RSC)**, and React 19 performance rules                           |
+| Designing reusable/compound components, fixing boolean-prop bloat, React 19 APIs                 | `vercel-composition-patterns/SKILL.md`         | Combine with Mantine primitives (`Box`, `Paper`, `UnstyledButton`, `createPolymorphicComponent`)                     |
+| Adding route or UI enter/exit animations without third-party animation libs                      | `vercel-react-view-transitions/SKILL.md`       | Apply `<ViewTransition>` / `startViewTransition` with CSS Modules (`*.module.css`)                                   |
+| UI/UX, accessibility, or design compliance review                                                | `web-design-guidelines/SKILL.md`               | Use for audits alongside Section 3 Mantine v9 Zero-Hex rules                                                         |
+| Reviewing documentation or UI prose                                                              | `writing-guidelines/SKILL.md`                  | Use when editing `client/docs/` or long-form UI copy                                                                 |
 
 - **Deploy-only skills**: Use `deploy-to-vercel`, `vercel-cli-with-tokens`, and `vercel-optimize` only when explicitly deploying or auditing a Vercel deployment.
 - **Not applicable**: Ignore `vercel-react-native-skills` (`client/` is a Next.js web app, not React Native/Expo).

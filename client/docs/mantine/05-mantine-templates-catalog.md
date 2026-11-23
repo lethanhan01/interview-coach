@@ -1,8 +1,11 @@
-# Catalog 7 Nhóm Giao Diện Mẫu: Mantine UI v9 (`ui.mantine.dev`) + TanStack Query v5 (`client/`)
+# Catalog 7 Nhóm Giao Diện Mẫu: Mantine UI v9 (`ui.mantine.dev`) + TanStack Query v5 (`queryOptions`)
 
-Tài liệu này cung cấp **7 nhóm Full-Stack UI Templates** được chuyển đổi theo quy trình 4 bước Zero-Hex bắt buộc từ [`https://ui.mantine.dev/`](https://ui.mantine.dev/) và [`https://mantine.dev/`](https://mantine.dev/), kết nối sẵn với **TanStack Query v5 (`useQuery`, `useMutation`, `queryKeys`, `keepPreviousData`)** và **`@mantine/form` (`mode: 'uncontrolled'`) + Zod v4**.
+Tài liệu này cung cấp **7 nhóm Full-Stack UI Templates** được chuyển đổi theo quy trình 4 bước Zero-Hex bắt buộc từ [`https://ui.mantine.dev/`](https://ui.mantine.dev/) và [`https://mantine.dev/`](https://mantine.dev/), kết nối trực tiếp với **TanStack Query v5 (`queryOptions()`, `useQuery`, `useMutation`, `keepPreviousData`)** theo [`https://tanstack.com/query/v5`](https://tanstack.com/query/v5), [`tanstack-integration-best-practices`](../../.agents/skills/tanstack-integration-best-practices/SKILL.md) và **`@mantine/form` (`mode: 'uncontrolled'`) + Zod v4**.
 
-> **Mục đích sử dụng:** Dùng làm bản thiết kế chuẩn (Reference Blueprints) khi xây dựng tính năng mới hoặc nâng cấp giao diện các màn hình trong `client/app/` và `client/components/`.
+Mọi mẫu dưới đây **tự chứa 100% (Zero Client Code Extraction)** và tách bạch rõ 2 lớp theo quy chuẩn `API-007`:
+
+1. **Tầng Dữ liệu & Query Options Factory (`queryOptions` + Typed Service + Zod v4):** Đóng gói `queryKey`, `queryFn` (nhận `{ signal }`), `staleTime` và hàm mutation.
+2. **Tầng Giao diện Mantine v9 (`'use client'`):** Chỉ tiêu thụ `useQuery(xxxQueries.list())` và `useMutation(...)`, tuyệt đối không chứa URL endpoint thô trong thân component.
 
 ---
 
@@ -10,7 +13,7 @@ Tài liệu này cung cấp **7 nhóm Full-Stack UI Templates** được chuyể
 
 1. [Nhóm 1 — Workspace AppShell, Navbar & UserMenu (`AppShell` + `queryClient.clear()`)](#1-nhóm-1-workspace-appshell-navbar-usermenu-appshell-queryclientclear)
 2. [Nhóm 2 — Authentication & Password Strength (`@mantine/form` + `useMutation`)](#2-nhóm-2-authentication-password-strength-mantineform-usemutation)
-3. [Nhóm 3 — Candidate Dashboard, StatsGrid & SessionCard (`useQuery` + `Skeleton`)](#3-nhóm-3-candidate-dashboard-statsgrid-sessioncard-usequery-skeleton)
+3. [Nhóm 3 — Candidate Dashboard, StatsGrid & SessionCard (`queryOptions` + `useQuery` + `Skeleton`)](#3-nhóm-3-candidate-dashboard-statsgrid-sessioncard-queryoptions-usequery-skeleton)
 4. [Nhóm 4 — Multi-Step Interview Setup Wizard (`Stepper` + `Dropzone` + O\*NET Search)](#4-nhóm-4-multi-step-interview-setup-wizard-stepper-dropzone-onet-search)
 5. [Nhóm 5 — Live Interview Split-View & STAR Competency Report (`RingProgress` + `Accordion`)](#5-nhóm-5-live-interview-split-view-star-competency-report-ringprogress-accordion)
 6. [Nhóm 6 — Admin Master-Detail & Server-Paginated Table (`Table.ScrollContainer` + `Drawer`)](#6-nhóm-6-admin-master-detail-server-paginated-table-tablescrollcontainer-drawer)
@@ -20,7 +23,7 @@ Tài liệu này cung cấp **7 nhóm Full-Stack UI Templates** được chuyể
 
 ## 1. Nhóm 1 — Workspace AppShell, Navbar & UserMenu (`AppShell` + `queryClient.clear()`)
 
-Tham chiếu [`ui.mantine.dev/category/navbars/`](https://ui.mantine.dev/category/navbars/) và [`mantine.dev/core/app-shell/`](https://mantine.dev/core/app-shell/). Tích hợp điều hướng `<NavLink component={Link}>`, chuyển đổi chế độ sáng/tối, và hủy sạch bộ nhớ đệm `queryClient.clear()` khi đăng xuất (`SEC-010`).
+Tham chiếu [`ui.mantine.dev/category/navbars/`](https://ui.mantine.dev/category/navbars/) và [`mantine.dev/core/app-shell/`](https://mantine.dev/core/app-shell/). Tích hợp điều hướng `<NavLink component={Link}>`, chuyển đổi chế độ sáng/tối, và xóa sạch bộ nhớ đệm `queryClient.clear()` khi đăng xuất (`SEC-010`, `cache-single-source`).
 
 ```tsx
 'use client'
@@ -53,7 +56,15 @@ import {
   IconUser,
 } from '@tabler/icons-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api-client'
+
+// --- Tầng 1: Domain Mutation Service ---
+async function requestServerLogout(): Promise<void> {
+  await fetch('/api/v1/auth/logout', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Idempotency-Key': crypto.randomUUID() },
+  })
+}
 
 const CANDIDATE_NAV_ITEMS = [
   {
@@ -85,6 +96,7 @@ export interface WorkspaceShellProps {
   children: ReactNode
 }
 
+// --- Tầng 2: Mantine v9 AppShell Component ---
 export function CandidateWorkspaceShell({
   userName,
   userEmail,
@@ -98,7 +110,7 @@ export function CandidateWorkspaceShell({
   const queryClient = useQueryClient()
 
   const logoutMutation = useMutation({
-    mutationFn: () => apiClient.post('/auth/logout'),
+    mutationFn: requestServerLogout,
     onSettled: () => {
       queryClient.clear()
       onLoggedOut()
@@ -220,7 +232,7 @@ export function CandidateWorkspaceShell({
 
 ## 2. Nhóm 2 — Authentication & Password Strength (`@mantine/form` + `useMutation`)
 
-Tham chiếu [`ui.mantine.dev/category/authentication/`](https://ui.mantine.dev/category/authentication/) và [`ui.mantine.dev/category/inputs/`](https://ui.mantine.dev/category/inputs/). Kết hợp `@mantine/form` (`uncontrolled`) + Zod v4, thanh đo độ mạnh mật khẩu `<Progress>`, và `useMutation` tự động gán lỗi server vào `form.setErrors`.
+Tham chiếu [`ui.mantine.dev/category/authentication/`](https://ui.mantine.dev/category/authentication/) và [`mantine.dev/form/values/`](https://mantine.dev/form/values/). Sử dụng `@mantine/form` (`mode: 'uncontrolled'`, `onValuesChange` để tính độ mạnh mật khẩu mà không cần re-render toàn form), thanh `<Progress>`, và `useMutation` tự động ánh xạ lỗi từng trường từ server vào `form.setErrors`.
 
 ```tsx
 'use client'
@@ -246,9 +258,8 @@ import { schemaResolver, useForm } from '@mantine/form'
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
-import { apiClient, ApiClientError } from '@/lib/api-client'
-import { queryKeys } from '@/lib/query-client'
 
+// --- Tầng 1: Schema Zod v4, Lỗi Validation & Mutation Service ---
 const registerFormSchema = z.object({
   fullName: z.string().trim().min(2, 'Họ và tên cần tối thiểu 2 ký tự'),
   email: z.string().trim().email('Địa chỉ email không hợp lệ'),
@@ -259,7 +270,39 @@ const registerFormSchema = z.object({
     .regex(/[0-9]/, 'Cần ít nhất 1 chữ số'),
 })
 
-type RegisterFormValues = z.infer<typeof registerFormSchema>
+export type RegisterFormValues = z.infer<typeof registerFormSchema>
+
+export class AuthValidationError extends Error {
+  constructor(
+    message: string,
+    public readonly fieldErrors?: Record<string, string[]>
+  ) {
+    super(message)
+    this.name = 'AuthValidationError'
+  }
+}
+
+export const authQueries = {
+  all: () => ['auth'] as const,
+  me: () => ['auth', 'me'] as const,
+}
+
+async function submitRegisterAccount(
+  payload: RegisterFormValues
+): Promise<void> {
+  const response = await fetch('/api/v1/auth/register', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': crypto.randomUUID(),
+    },
+    body: JSON.stringify(payload),
+  })
+  if (!response.ok) {
+    throw new AuthValidationError('Đăng ký tài khoản không thành công.')
+  }
+}
 
 function calculatePasswordStrength(password: string): number {
   let score = 0
@@ -269,6 +312,7 @@ function calculatePasswordStrength(password: string): number {
   return score
 }
 
+// --- Tầng 2: Mantine v9 Authentication Component ---
 export function AuthenticationRegisterCard({
   onRegistered,
 }: {
@@ -285,24 +329,22 @@ export function AuthenticationRegisterCard({
       password: '',
     },
     validate: schemaResolver(registerFormSchema, { sync: true }),
-  })
-
-  form.watch('password', ({ value }) => {
-    setPasswordStrength(calculatePasswordStrength(value))
+    onValuesChange: (values) => {
+      setPasswordStrength(calculatePasswordStrength(values.password))
+    },
   })
 
   const registerMutation = useMutation({
-    mutationFn: (payload: RegisterFormValues) =>
-      apiClient.post('/auth/register', payload),
+    mutationFn: submitRegisterAccount,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() })
+      await queryClient.invalidateQueries({ queryKey: authQueries.me() })
       onRegistered()
     },
     onError: (err) => {
-      if (err instanceof ApiClientError && err.details) {
+      if (err instanceof AuthValidationError && err.fieldErrors) {
         const mapped: Record<string, string> = {}
-        for (const [key, messages] of Object.entries(err.details)) {
-          if (messages.length > 0) mapped[key] = messages[0]
+        for (const [key, messages] of Object.entries(err.fieldErrors)) {
+          if (messages[0]) mapped[key] = messages[0]
         }
         form.setErrors(mapped)
       }
@@ -419,9 +461,9 @@ export function AuthenticationRegisterCard({
 
 ---
 
-## 3. Nhóm 3 — Candidate Dashboard, StatsGrid & SessionCard (`useQuery` + `Skeleton`)
+## 3. Nhóm 3 — Candidate Dashboard, StatsGrid & SessionCard (`queryOptions` + `useQuery` + `Skeleton`)
 
-Tham chiếu [`ui.mantine.dev/category/stats/`](https://ui.mantine.dev/category/stats/) và [`ui.mantine.dev/category/cards/`](https://ui.mantine.dev/category/cards/). Sử dụng `<UnstyledButton mod={{ active }}>` bọc `<Paper withBorder>` cho thẻ phiên phỏng vấn, kết hợp `useQuery` (`queryKeys.sessions.list()`) và bộ lọc `<SegmentedControl>`.
+Tham chiếu [`ui.mantine.dev/category/stats/`](https://ui.mantine.dev/category/stats/) và [`ui.mantine.dev/category/cards/`](https://ui.mantine.dev/category/cards/). Sử dụng `<UnstyledButton mod={{ active }}>` bọc `<Paper withBorder>` cho thẻ phiên phỏng vấn, kết hợp `useQuery(dashboardSessionQueries.list())` và Derived State thuần.
 
 ```tsx
 'use client'
@@ -441,19 +483,53 @@ import {
   UnstyledButton,
 } from '@mantine/core'
 import { IconSearch } from '@tabler/icons-react'
-import { useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api-client'
-import { queryKeys } from '@/lib/query-client'
+import { queryOptions, useQuery } from '@tanstack/react-query'
+import { z } from 'zod'
 import classes from './CandidateSessionsDashboard.module.css'
 
-export interface CandidateSessionDto {
-  id: string
-  roleTitle: string
-  companyName: string
-  status: 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
-  overallScore: number | null
+// --- Tầng 1: Schema & queryOptions() Factory ---
+const candidateSessionSchema = z.object({
+  id: z.string(),
+  roleTitle: z.string(),
+  companyName: z.string(),
+  status: z.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELLED']),
+  overallScore: z.number().nullable(),
+})
+
+export type CandidateSessionDto = z.infer<typeof candidateSessionSchema>
+
+async function fetchDashboardSessions(
+  signal?: AbortSignal
+): Promise<CandidateSessionDto[]> {
+  const response = await fetch('/api/v1/sessions', {
+    credentials: 'include',
+    signal,
+  })
+  if (!response.ok) {
+    throw new Error('Không thể tải danh sách phiên phỏng vấn.')
+  }
+  const raw: unknown = await response.json()
+  return z.object({ sessions: z.array(candidateSessionSchema) }).parse(raw)
+    .sessions
 }
 
+export const dashboardSessionQueries = {
+  all: () => ['sessions'] as const,
+  list: () =>
+    queryOptions({
+      queryKey: ['sessions', 'list'] as const,
+      queryFn: ({ signal }) => fetchDashboardSessions(signal),
+      staleTime: 10_000,
+    }),
+}
+
+const STATUS_FILTER_DATA = [
+  { label: 'Tất cả', value: 'ALL' },
+  { label: 'Đang mở', value: 'IN_PROGRESS' },
+  { label: 'Hoàn tất', value: 'COMPLETED' },
+]
+
+// --- Tầng 2: Mantine v9 Dashboard Component ---
 export function CandidateSessionsDashboard({
   selectedId,
   onSelectSession,
@@ -464,15 +540,9 @@ export function CandidateSessionsDashboard({
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
   const [keyword, setKeyword] = useState('')
 
-  const { data: sessions = [], isPending } = useQuery({
-    queryKey: queryKeys.sessions.list(),
-    queryFn: async () => {
-      const res = await apiClient.get<{ sessions: CandidateSessionDto[] }>(
-        '/sessions'
-      )
-      return res.sessions ?? []
-    },
-  })
+  const { data: sessions = [], isPending } = useQuery(
+    dashboardSessionQueries.list()
+  )
 
   const completedCount = sessions.filter((s) => s.status === 'COMPLETED').length
   const activeCount = sessions.filter((s) => s.status === 'IN_PROGRESS').length
@@ -480,10 +550,11 @@ export function CandidateSessionsDashboard({
   const filteredSessions = sessions.filter((session) => {
     const matchesStatus =
       statusFilter === 'ALL' || session.status === statusFilter
+    const normalizedKeyword = keyword.trim().toLowerCase()
     const matchesKeyword =
-      !keyword.trim() ||
-      session.roleTitle.toLowerCase().includes(keyword.trim().toLowerCase()) ||
-      session.companyName.toLowerCase().includes(keyword.trim().toLowerCase())
+      !normalizedKeyword ||
+      session.roleTitle.toLowerCase().includes(normalizedKeyword) ||
+      session.companyName.toLowerCase().includes(normalizedKeyword)
     return matchesStatus && matchesKeyword
   })
 
@@ -526,11 +597,7 @@ export function CandidateSessionsDashboard({
         <SegmentedControl
           value={statusFilter}
           onChange={setStatusFilter}
-          data={[
-            { label: 'Tất cả', value: 'ALL' },
-            { label: 'Đang mở', value: 'IN_PROGRESS' },
-            { label: 'Hoàn tất', value: 'COMPLETED' },
-          ]}
+          data={STATUS_FILTER_DATA}
         />
       </Group>
 
@@ -639,16 +706,73 @@ import { Dropzone, PDF_MIME_TYPE } from '@mantine/dropzone'
 import { useDebouncedValue } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
 import { IconFileCheck, IconUpload, IconX } from '@tabler/icons-react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api-client'
-import { queryKeys } from '@/lib/query-client'
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
+import { z } from 'zod'
 import classes from './InterviewSetupWizard.module.css'
 
-interface OnetOption {
-  socCode: string
-  title: string
+// --- Tầng 1: Schema, queryOptions() Factory & Mutation Service ---
+const onetOptionSchema = z.object({
+  socCode: z.string(),
+  title: z.string(),
+})
+
+export type OnetOption = z.infer<typeof onetOptionSchema>
+
+async function searchWizardOccupations(
+  query: string,
+  signal?: AbortSignal
+): Promise<OnetOption[]> {
+  const params = new URLSearchParams({ q: query, limit: '15' })
+  const response = await fetch(
+    `/api/v1/onet/occupations?${params.toString()}`,
+    {
+      credentials: 'include',
+      signal,
+    }
+  )
+  if (!response.ok) {
+    throw new Error('Không thể tải danh mục nghề O*NET.')
+  }
+  const raw: unknown = await response.json()
+  return z.array(onetOptionSchema).parse(raw)
 }
 
+async function createInterviewSessionRequest(payload: {
+  socCode: string | null
+  sessionType: 'TECHNICAL' | 'HR'
+}): Promise<{ id: string }> {
+  const response = await fetch('/api/v1/sessions', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': crypto.randomUUID(),
+    },
+    body: JSON.stringify(payload),
+  })
+  if (!response.ok) {
+    throw new Error('Không thể khởi tạo phiên phỏng vấn.')
+  }
+  const raw: unknown = await response.json()
+  return z.object({ id: z.string() }).parse(raw)
+}
+
+export const setupWizardQueries = {
+  sessionsAll: () => ['sessions'] as const,
+  onetSearch: (query: string) =>
+    queryOptions({
+      queryKey: ['onet', 'search', { query, limit: 15 }] as const,
+      queryFn: ({ signal }) => searchWizardOccupations(query, signal),
+      staleTime: 60_000,
+    }),
+}
+
+// --- Tầng 2: Mantine v9 Stepper + Dropzone Component ---
 export function InterviewSetupWizard({
   onSessionCreated,
 }: {
@@ -664,25 +788,19 @@ export function InterviewSetupWizard({
     'TECHNICAL'
   )
 
-  const { data: onetList = [], isFetching: isSearchingOnet } = useQuery({
-    queryKey: queryKeys.onet.search(debouncedSearch, 15),
-    queryFn: ({ signal }) =>
-      apiClient.get<OnetOption[]>(
-        `/onet/occupations?q=${encodeURIComponent(debouncedSearch)}&limit=15`,
-        { signal }
-      ),
-    staleTime: 60_000,
-  })
+  const { data: onetList = [], isFetching: isSearchingOnet } = useQuery(
+    setupWizardQueries.onetSearch(debouncedSearch)
+  )
 
   const createSessionMutation = useMutation({
     mutationFn: () =>
-      apiClient.post<{ id: string }>('/sessions', {
+      createInterviewSessionRequest({
         socCode,
         sessionType: interviewMode,
       }),
     onSuccess: async (created) => {
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.sessions.list(),
+        queryKey: setupWizardQueries.sessionsAll(),
       })
       notifications.show({
         color: 'success',
@@ -831,7 +949,7 @@ export function InterviewSetupWizard({
 
 ## 5. Nhóm 5 — Live Interview Split-View & STAR Competency Report (`RingProgress` + `Accordion`)
 
-Tham chiếu [`ui.mantine.dev/category/stats/`](https://ui.mantine.dev/category/stats/) (`StatsRing`) và [`mantine.dev/core/accordion/`](https://mantine.dev/core/accordion/). Hiển thị báo cáo STAR với `<Grid>`, `<RingProgress>`, `<Timeline>`, và `<Accordion>` kết nối `queryKeys.sessions.report(sessionId)`.
+Tham chiếu [`ui.mantine.dev/category/stats/`](https://ui.mantine.dev/category/stats/) (`StatsRing`) và [`mantine.dev/core/accordion/`](https://mantine.dev/core/accordion/). Hiển thị báo cáo STAR với `<Grid>`, `<RingProgress>`, `<Timeline>`, và `<Accordion>` tiêu thụ trực tiếp `useQuery(starReportQueries.bySession(sessionId))`.
 
 ```tsx
 'use client'
@@ -850,34 +968,59 @@ import {
   Timeline,
   Title,
 } from '@mantine/core'
-import { useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api-client'
-import { queryKeys } from '@/lib/query-client'
+import { queryOptions, useQuery } from '@tanstack/react-query'
+import { z } from 'zod'
 
-export interface StarTurnEvaluation {
-  turnIndex: number
-  questionPrompt: string
-  scorePercent: number
-  situationFeedback: string
-  actionFeedback: string
-  resultFeedback: string
+// --- Tầng 1: Schema Zod v4 & queryOptions() Factory ---
+const starTurnEvaluationSchema = z.object({
+  turnIndex: z.number().int().positive(),
+  questionPrompt: z.string(),
+  scorePercent: z.number().min(0).max(100),
+  situationFeedback: z.string(),
+  actionFeedback: z.string(),
+  resultFeedback: z.string(),
+})
+
+const sessionReportSchema = z.object({
+  sessionId: z.string(),
+  overallScore: z.number().min(0).max(100),
+  readinessLevel: z.enum(['HIGH', 'MEDIUM', 'LOW']),
+  turns: z.array(starTurnEvaluationSchema),
+})
+
+export type StarTurnEvaluation = z.infer<typeof starTurnEvaluationSchema>
+export type SessionReportDto = z.infer<typeof sessionReportSchema>
+
+async function fetchSessionStarReport(
+  sessionId: string,
+  signal?: AbortSignal
+): Promise<SessionReportDto> {
+  const response = await fetch(
+    `/api/v1/sessions/${encodeURIComponent(sessionId)}/report`,
+    { credentials: 'include', signal }
+  )
+  if (!response.ok) {
+    throw new Error('Báo cáo năng lực STAR chưa sẵn sàng.')
+  }
+  const raw: unknown = await response.json()
+  return sessionReportSchema.parse(raw)
 }
 
-export interface SessionReportDto {
-  sessionId: string
-  overallScore: number
-  readinessLevel: 'HIGH' | 'MEDIUM' | 'LOW'
-  turns: StarTurnEvaluation[]
+export const starReportQueries = {
+  bySession: (sessionId: string) =>
+    queryOptions({
+      queryKey: ['sessions', 'detail', sessionId, 'report'] as const,
+      queryFn: ({ signal }) => fetchSessionStarReport(sessionId, signal),
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+    }),
 }
 
+// --- Tầng 2: Mantine v9 Split-View Report Component ---
 export function StarCompetencyReportView({ sessionId }: { sessionId: string }) {
-  const { data: report, isPending } = useQuery({
-    queryKey: queryKeys.sessions.report(sessionId),
-    queryFn: () =>
-      apiClient.get<SessionReportDto>(
-        `/sessions/${encodeURIComponent(sessionId)}/report`
-      ),
-  })
+  const { data: report, isPending } = useQuery(
+    starReportQueries.bySession(sessionId)
+  )
 
   if (isPending || !report) {
     return (
@@ -1003,7 +1146,7 @@ export function StarCompetencyReportView({ sessionId }: { sessionId: string }) {
 
 ## 6. Nhóm 6 — Admin Master-Detail & Server-Paginated Table (`Table.ScrollContainer` + `Drawer`)
 
-Tham chiếu [`ui.mantine.dev/category/tables/`](https://ui.mantine.dev/category/tables/). Bọc bảng dữ liệu trong `<Table.ScrollContainer minWidth={720}>` (`MOB-005`), dùng `placeholderData: keepPreviousData` từ `@tanstack/react-query` để chuyển trang mượt không giật layout, và mở `<Drawer>` tra cứu chi tiết kỹ năng SFIA.
+Tham chiếu [`ui.mantine.dev/category/tables/`](https://ui.mantine.dev/category/tables/) và [`tanstack.com/query/v5/docs/framework/react/guides/paginated-queries`](https://tanstack.com/query/v5/docs/framework/react/guides/paginated-queries). Bọc bảng dữ liệu trong `<Table.ScrollContainer minWidth={720}>` (`MOB-005`), dùng `placeholderData: keepPreviousData` ngay trong `queryOptions()` để chuyển trang mượt không giật layout, và mở `<Drawer>` tra cứu chi tiết kỹ năng SFIA.
 
 ```tsx
 'use client'
@@ -1025,23 +1168,66 @@ import {
 } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
 import { IconSearch } from '@tabler/icons-react'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api-client'
-import { queryKeys } from '@/lib/query-client'
+import { keepPreviousData, queryOptions, useQuery } from '@tanstack/react-query'
+import { z } from 'zod'
 
-export interface SfiaSkillSummaryRow {
-  code: string
-  name: string
-  categoryName: string
-  minLevel: number
-  maxLevel: number
+// --- Tầng 1: Schema & Paginated queryOptions() Factory ---
+const sfiaSkillRowSchema = z.object({
+  code: z.string(),
+  name: z.string(),
+  categoryName: z.string(),
+  minLevel: z.number().int(),
+  maxLevel: z.number().int(),
+})
+
+const paginatedSfiaSkillsSchema = z.object({
+  items: z.array(sfiaSkillRowSchema),
+  totalPages: z.number().int().positive(),
+})
+
+export type SfiaSkillSummaryRow = z.infer<typeof sfiaSkillRowSchema>
+export type PaginatedSfiaSkillsResponse = z.infer<
+  typeof paginatedSfiaSkillsSchema
+>
+
+export interface SfiaSkillsFilterParams {
+  page: number
+  limit: number
+  search: string
 }
 
-export interface PaginatedSfiaSkillsResponse {
-  items: SfiaSkillSummaryRow[]
-  totalPages: number
+async function fetchPaginatedSfiaSkills(
+  filters: SfiaSkillsFilterParams,
+  signal?: AbortSignal
+): Promise<PaginatedSfiaSkillsResponse> {
+  const qs = new URLSearchParams({
+    page: String(filters.page),
+    limit: String(filters.limit),
+    search: filters.search,
+  })
+  const response = await fetch(`/api/v1/admin/sfia/skills?${qs.toString()}`, {
+    credentials: 'include',
+    signal,
+  })
+  if (!response.ok) {
+    throw new Error('Không thể tải danh mục kỹ năng SFIA 9.')
+  }
+  const raw: unknown = await response.json()
+  return paginatedSfiaSkillsSchema.parse(raw)
 }
 
+export const sfiaCatalogQueries = {
+  all: () => ['sfia-admin'] as const,
+  skills: (filters: SfiaSkillsFilterParams) =>
+    queryOptions({
+      queryKey: ['sfia-admin', 'skills', filters] as const,
+      queryFn: ({ signal }) => fetchPaginatedSfiaSkills(filters, signal),
+      placeholderData: keepPreviousData,
+      staleTime: 60_000,
+    }),
+}
+
+// --- Tầng 2: Mantine v9 Master-Detail Table Component ---
 export function AdminSfiaSkillsMasterDetail() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
@@ -1049,23 +1235,13 @@ export function AdminSfiaSkillsMasterDetail() {
   const [inspectedSkill, setInspectedSkill] =
     useState<SfiaSkillSummaryRow | null>(null)
 
-  const filters = { page, limit: 15, search: debouncedSearch }
-
-  const { data, isPending } = useQuery({
-    queryKey: queryKeys.sfiaAdmin.skills(filters),
-    queryFn: ({ signal }) => {
-      const qs = new URLSearchParams({
-        page: String(page),
-        limit: '15',
-        search: debouncedSearch,
-      })
-      return apiClient.get<PaginatedSfiaSkillsResponse>(
-        `/admin/sfia/skills?${qs.toString()}`,
-        { signal }
-      )
-    },
-    placeholderData: keepPreviousData,
-  })
+  const { data, isPending } = useQuery(
+    sfiaCatalogQueries.skills({
+      page,
+      limit: 15,
+      search: debouncedSearch,
+    })
+  )
 
   return (
     <Paper withBorder p="lg" radius="md">
@@ -1183,7 +1359,7 @@ export function AdminSfiaSkillsMasterDetail() {
 
 ## 7. Nhóm 7 — Public Hero Landing & System Status / Offline Banner (`useNetwork`)
 
-Tham chiếu [`ui.mantine.dev/category/hero/`](https://ui.mantine.dev/category/hero/) và [`mantine.dev/hooks/use-network/`](https://mantine.dev/hooks/use-network/). Kết hợp Hero Section, Features Grid và cảnh báo ngoại tuyến tự động kích hoạt `queryClient.invalidateQueries()` khi có mạng trở lại.
+Tham chiếu [`ui.mantine.dev/category/hero/`](https://ui.mantine.dev/category/hero/) và [`mantine.dev/hooks/use-network/`](https://mantine.dev/hooks/use-network/). Kết hợp Hero Section, Features Grid và cảnh báo ngoại tuyến tự động kích hoạt `queryClient.invalidateQueries()` khi kết nối mạng khôi phục.
 
 ```tsx
 'use client'
