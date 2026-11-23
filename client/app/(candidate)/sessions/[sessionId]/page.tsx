@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useMutation } from '@tanstack/react-query'
 import {
   ArrowLeft,
   PauseCircle,
@@ -9,6 +10,11 @@ import {
   SkipForward,
   XCircle,
 } from 'lucide-react'
+import {
+  queryKeys,
+  sessionQueries,
+  useOptionalQueryClient,
+} from '@/lib/query-client'
 import { sessionService } from '@/services'
 import QuestionCard from '@/components/interview/QuestionCard'
 import TextAnswerInput from '@/components/interview/TextAnswerInput'
@@ -17,13 +23,48 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
 import Button from '@/components/ui/Button'
 import CountdownTimer from '@/components/interview/CountdownTimer'
-import type { Question, SessionStatus, SessionStatusAction, VoiceMetrics } from '@/types'
+import type {
+  Question,
+  SessionStatus,
+  SessionStatusAction,
+  SubmitAnswerPayload,
+  UpdateSessionStatusPayload,
+  VoiceMetrics,
+} from '@/types'
 
 type AnswerMode = 'text' | 'voice'
 
 export default function InterviewPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const router = useRouter()
+  const queryClient = useOptionalQueryClient()
+
+  const { mutateAsync: mutateSessionStatus } = useMutation({
+    mutationFn: (payload: UpdateSessionStatusPayload) =>
+      sessionService.updateStatus(sessionId, payload),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryKeys.sessions.detail(sessionId), updated)
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.sessions.detail(sessionId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.sessions.list(),
+      })
+    },
+  })
+
+  const { mutateAsync: mutateSubmitTurn } = useMutation({
+    mutationFn: (payload: SubmitAnswerPayload) =>
+      sessionService.submitTurn(sessionId, payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.sessions.detail(sessionId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.sessions.list(),
+      })
+    },
+  })
 
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -57,22 +98,35 @@ export default function InterviewPage() {
     questionsReadyRef.current = questionsReady
   }, [questionsReady])
 
-  const loadReadyQuestions = useCallback(async (): Promise<boolean> => {
-    const qs = await sessionService.getQuestions(sessionId)
-    if (qs.questions.length === 0) return false
+  const loadReadyQuestions = useCallback(
+    async (isCancelled?: () => boolean): Promise<boolean> => {
+      const qs = await queryClient.fetchQuery({
+        ...sessionQueries.questions(sessionId),
+        staleTime: 0,
+      })
+      if (isCancelled?.() || qs.questions.length === 0) return false
 
-    setQuestions(qs.questions)
-    setCurrentIndex(Math.min(qs.currentIndex ?? 0, qs.questions.length - 1))
-    setQuestionsReady(true)
-    setError(null)
-    setLoading(false)
-    return true
-  }, [sessionId])
+      setQuestions(qs.questions)
+      setCurrentIndex(Math.min(qs.currentIndex ?? 0, qs.questions.length - 1))
+      setQuestionsReady(true)
+      setError(null)
+      setLoading(false)
+      return true
+    },
+    [queryClient, sessionId]
+  )
 
   useEffect(() => {
+    let cancelled = false
+    let pollTimer: ReturnType<typeof setTimeout> | null = null
+
     async function init() {
       try {
-        const currentSession = await sessionService.getSession(sessionId)
+        const currentSession = await queryClient.fetchQuery({
+          ...sessionQueries.detail(sessionId),
+          staleTime: 0,
+        })
+        if (cancelled) return
         setSessionStatus(currentSession.status)
         if (currentSession.language) {
           setSessionLanguage(currentSession.language)
@@ -93,12 +147,21 @@ export default function InterviewPage() {
 
         async function pollQuestions(): Promise<Question[]> {
           for (let i = 0; i < 6; i++) {
-            if (await loadReadyQuestions()) return []
-            await new Promise((r) => setTimeout(r, 5000))
+            if (cancelled) return []
+            if (await loadReadyQuestions(() => cancelled)) return []
+            if (cancelled) return []
+            await new Promise<void>((resolve) => {
+              pollTimer = setTimeout(() => {
+                pollTimer = null
+                resolve()
+              }, 5000)
+            })
           }
+          if (cancelled) return []
           throw new Error('Câu hỏi chưa sẵn sàng sau 30 giây')
         }
         await pollQuestions()
+        if (cancelled) return
         if (
           currentSession.status === 'generating' ||
           currentSession.status === 'ready'
@@ -106,15 +169,27 @@ export default function InterviewPage() {
           setSessionStatus('active')
         }
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Không thể tải phiên phỏng vấn'
-        )
+        if (!cancelled) {
+          setError(
+            err instanceof Error ? err.message : 'Không thể tải phiên phỏng vấn'
+          )
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
     void init()
-  }, [sessionId, router, loadReadyQuestions])
+
+    return () => {
+      cancelled = true
+      if (pollTimer) {
+        clearTimeout(pollTimer)
+        pollTimer = null
+      }
+    }
+  }, [sessionId, router, loadReadyQuestions, queryClient])
 
   useEffect(() => {
     const es = sessionService.createEventSource(sessionId)
@@ -126,6 +201,12 @@ export default function InterviewPage() {
       }
       if (!data.status) return
       setSessionStatus(data.status)
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.sessions.detail(sessionId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.sessions.list(),
+      })
       if (data.status === 'active' && !questionsReadyRef.current) {
         void loadReadyQuestions()
       }
@@ -140,6 +221,15 @@ export default function InterviewPage() {
     })
     const openReport = () => {
       setIsCompleting(true)
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.sessions.detail(sessionId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.sessions.list(),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.sessions.report(sessionId),
+      })
       router.replace(`/sessions/${sessionId}/report`)
       es.close()
     }
@@ -161,15 +251,14 @@ export default function InterviewPage() {
     es.onerror = () => es.close()
 
     return () => es.close()
-  }, [sessionId, router, loadReadyQuestions])
+  }, [sessionId, router, loadReadyQuestions, queryClient])
 
   const updateSessionStatus = useCallback(
     async (status: SessionStatusAction) => {
       setActionError(null)
       setStatusAction(status)
       try {
-        const updated = await sessionService.updateStatus(
-          sessionId,
+        const updated = await mutateSessionStatus(
           status === 'paused'
             ? { status, remainingSeconds: remainingSecondsRef.current }
             : { status }
@@ -191,7 +280,7 @@ export default function InterviewPage() {
         setStatusAction(null)
       }
     },
-    [sessionId]
+    [mutateSessionStatus]
   )
 
   const cancelSession = useCallback(async () => {
@@ -203,12 +292,12 @@ export default function InterviewPage() {
     setDraftAnswer('')
     if (currentIndex + 1 >= questions.length) {
       setIsCompleting(true)
-      await sessionService.updateStatus(sessionId, { status: 'completed' })
+      await mutateSessionStatus({ status: 'completed' })
       router.replace(`/sessions/${sessionId}/report`)
     } else {
       setCurrentIndex((i) => i + 1)
     }
-  }, [sessionId, questions.length, currentIndex, router])
+  }, [sessionId, questions.length, currentIndex, router, mutateSessionStatus])
 
   const completeByTimeout = useCallback(async () => {
     if (
@@ -229,7 +318,7 @@ export default function InterviewPage() {
     setActionError(null)
 
     try {
-      await sessionService.updateStatus(sessionId, {
+      await mutateSessionStatus({
         status: 'completed',
         autoSkipUnanswered: true,
         remainingSeconds: 0,
@@ -247,7 +336,7 @@ export default function InterviewPage() {
           : 'Không thể tự động hoàn tất phiên phỏng vấn'
       )
     }
-  }, [router, sessionId, sessionStatus])
+  }, [router, sessionId, sessionStatus, mutateSessionStatus])
 
   const submitText = useCallback(
     async (text: string) => {
@@ -255,7 +344,7 @@ export default function InterviewPage() {
       turnSubmittingRef.current = true
       setTurnSubmitting(true)
       try {
-        await sessionService.submitTurn(sessionId, {
+        await mutateSubmitTurn({
           answerMode: 'text',
           answerText: text,
           questionId: questions[currentIndex]?.id,
@@ -267,7 +356,7 @@ export default function InterviewPage() {
         setTurnSubmitting(false)
       }
     },
-    [sessionId, questions, currentIndex, advance]
+    [mutateSubmitTurn, questions, currentIndex, advance]
   )
 
   const submitVoice = useCallback(
@@ -280,7 +369,7 @@ export default function InterviewPage() {
       turnSubmittingRef.current = true
       setTurnSubmitting(true)
       try {
-        await sessionService.submitTurn(sessionId, {
+        await mutateSubmitTurn({
           answerMode: 'voice',
           answerText: transcript,
           audioDurationSeconds: durationSeconds,
@@ -294,7 +383,7 @@ export default function InterviewPage() {
         setTurnSubmitting(false)
       }
     },
-    [sessionId, questions, currentIndex, advance]
+    [mutateSubmitTurn, questions, currentIndex, advance]
   )
 
   const skipCurrentQuestion = useCallback(async () => {
@@ -303,7 +392,7 @@ export default function InterviewPage() {
     setTurnSubmitting(true)
     setActionError(null)
     try {
-      await sessionService.submitTurn(sessionId, {
+      await mutateSubmitTurn({
         answerMode: 'text',
         answerText: '',
         skipQuestion: true,
@@ -318,7 +407,7 @@ export default function InterviewPage() {
       turnSubmittingRef.current = false
       setTurnSubmitting(false)
     }
-  }, [sessionId, questions, currentIndex, advance])
+  }, [mutateSubmitTurn, questions, currentIndex, advance])
 
 
   if (loading) {

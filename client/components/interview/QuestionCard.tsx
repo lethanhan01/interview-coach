@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import { Sparkles, Volume2, VolumeX, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
-import { mediaService } from '@/services/media.service'
+import { mediaService } from '@/services'
 
 export interface QuestionCardProps {
   questionText: string
@@ -38,8 +39,16 @@ export default function QuestionCard({
   className,
 }: Readonly<QuestionCardProps>) {
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isStartingAudio, setIsStartingAudio] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  const { mutateAsync: synthesizeSpeech, isPending: isSynthesizing } =
+    useMutation({
+      mutationFn: ({ text, lang }: { text: string; lang: 'vi' | 'en' }) =>
+        mediaService.synthesizeSpeech(text, lang),
+    })
+
+  const isLoading = isSynthesizing || isStartingAudio
 
   const skillLabel = getSkillLabel(skillName, skillCode)
 
@@ -50,18 +59,18 @@ export default function QuestionCard({
       utterance.lang = language === 'en' ? 'en-US' : 'vi-VN'
       utterance.onend = () => {
         setIsPlaying(false)
-        setIsLoading(false)
+        setIsStartingAudio(false)
       }
       utterance.onerror = () => {
         setIsPlaying(false)
-        setIsLoading(false)
+        setIsStartingAudio(false)
       }
       window.speechSynthesis.speak(utterance)
       setIsPlaying(true)
-      setIsLoading(false)
+      setIsStartingAudio(false)
     } else {
       setIsPlaying(false)
-      setIsLoading(false)
+      setIsStartingAudio(false)
     }
   }
 
@@ -75,22 +84,24 @@ export default function QuestionCard({
         window.speechSynthesis.cancel()
       }
       setIsPlaying(false)
-      setIsLoading(false)
+      setIsStartingAudio(false)
       return
     }
 
-    setIsLoading(true)
+    if (isLoading) return
+
+    setIsStartingAudio(true)
     try {
-      const audioUrl = await mediaService.synthesizeSpeech(
-        questionText,
-        language
-      )
+      const audioUrl = await synthesizeSpeech({
+        text: questionText,
+        lang: language,
+      })
       const audio = new Audio(audioUrl)
       audioRef.current = audio
 
       audio.onended = () => {
         setIsPlaying(false)
-        setIsLoading(false)
+        setIsStartingAudio(false)
       }
       audio.onerror = () => {
         fallbackSpeech()
@@ -98,7 +109,7 @@ export default function QuestionCard({
 
       await audio.play()
       setIsPlaying(true)
-      setIsLoading(false)
+      setIsStartingAudio(false)
     } catch {
       fallbackSpeech()
     }
@@ -114,7 +125,7 @@ export default function QuestionCard({
         window.speechSynthesis.cancel()
       }
       setIsPlaying(false)
-      setIsLoading(false)
+      setIsStartingAudio(false)
     }
   }, [questionText])
 

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import JdForm from './JdForm'
 import { EMPTY_JD } from '@/lib/setup-helpers'
@@ -161,7 +161,11 @@ describe('JdForm', () => {
     fireEvent.change(searchInput, { target: { value: 'Software' } })
 
     await waitFor(() => {
-      expect(onetService.searchOccupations).toHaveBeenCalledWith('Software', 8)
+      expect(onetService.searchOccupations).toHaveBeenCalledWith(
+        'Software',
+        8,
+        expect.any(AbortSignal)
+      )
     })
 
     const option = await screen.findByRole('option', { name: /Software Developers/i })
@@ -187,7 +191,10 @@ describe('JdForm', () => {
     render(<JdForm value={valueWithOnet} onChange={onChange} />)
 
     await waitFor(() => {
-      expect(onetService.getOccupationTech).toHaveBeenCalledWith('15-1252.00')
+      expect(onetService.getOccupationTech).toHaveBeenCalledWith(
+        '15-1252.00',
+        expect.any(AbortSignal)
+      )
     })
 
     expect(screen.getByText('Software Developers')).toBeInTheDocument()
@@ -215,7 +222,10 @@ describe('JdForm', () => {
     render(<JdForm value={valueWithOnet} onChange={onChange} />)
 
     await waitFor(() => {
-      expect(onetService.getOccupationTech).toHaveBeenCalledWith('15-1252.00')
+      expect(onetService.getOccupationTech).toHaveBeenCalledWith(
+        '15-1252.00',
+        expect.any(AbortSignal)
+      )
     })
 
     const dockerChip = await screen.findByText('+ Docker')

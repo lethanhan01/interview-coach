@@ -1,8 +1,18 @@
-import { render, screen } from '@testing-library/react'
-import { expect, it, describe } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@test-utils'
+import { expect, it, describe, vi, beforeEach } from 'vitest'
 import QuestionCard from './QuestionCard'
+import { mediaService } from '@/services'
+
+vi.mock('@/services', () => ({
+  mediaService: {
+    synthesizeSpeech: vi.fn(),
+  },
+}))
 
 describe('QuestionCard', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
   it('renders question text and order correctly', () => {
     render(
       <QuestionCard
@@ -104,5 +114,83 @@ describe('QuestionCard', () => {
     )
 
     expect(container.firstElementChild).toHaveClass('my-custom-question-card')
+  })
+
+  it('synthesizes and plays question audio via mediaService mutation', async () => {
+    const mockPlay = vi.fn().mockResolvedValue(undefined)
+    const mockPause = vi.fn()
+    const MockAudio = vi.fn(function (this: Record<string, unknown>) {
+      this.play = mockPlay
+      this.pause = mockPause
+      this.onended = null
+      this.onerror = null
+    })
+    vi.stubGlobal('Audio', MockAudio)
+    vi.mocked(mediaService.synthesizeSpeech).mockResolvedValueOnce(
+      'blob:tts-audio'
+    )
+
+    render(
+      <QuestionCard
+        questionText="Explain React Query."
+        orderIndex={0}
+        totalQuestions={3}
+        language="en"
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nghe đọc câu hỏi' }))
+
+    await waitFor(() => {
+      expect(mediaService.synthesizeSpeech).toHaveBeenCalledWith(
+        'Explain React Query.',
+        'en'
+      )
+      expect(mockPlay).toHaveBeenCalledTimes(1)
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dừng đọc câu hỏi' }))
+    expect(mockPause).toHaveBeenCalledTimes(1)
+
+    vi.unstubAllGlobals()
+  })
+
+  it('falls back to browser speechSynthesis when TTS mutation fails', async () => {
+    const speak = vi.fn()
+    const cancel = vi.fn()
+    const MockUtterance = vi.fn(function (
+      this: Record<string, unknown>,
+      text: string
+    ) {
+      this.text = text
+      this.lang = ''
+      this.onend = null
+      this.onerror = null
+    })
+    Object.defineProperty(window, 'speechSynthesis', {
+      value: { speak, cancel },
+      configurable: true,
+      writable: true,
+    })
+    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance)
+    vi.mocked(mediaService.synthesizeSpeech).mockRejectedValueOnce(
+      new Error('TTS unavailable')
+    )
+
+    render(
+      <QuestionCard
+        questionText="Hãy giới thiệu bản thân."
+        orderIndex={0}
+        totalQuestions={3}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nghe đọc câu hỏi' }))
+
+    await waitFor(() => {
+      expect(speak).toHaveBeenCalledTimes(1)
+    })
+
+    vi.unstubAllGlobals()
   })
 })

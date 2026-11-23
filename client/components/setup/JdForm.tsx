@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useDebouncedValue } from '@mantine/hooks'
+import { useQuery } from '@tanstack/react-query'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
@@ -14,7 +16,8 @@ import {
   SelectItem,
 } from '@/components/ui/Select'
 import { mapJdLevelToSfia } from '@/lib/setup-helpers'
-import type { JdFormData, OnetOccupation, OnetTech } from '@/types'
+import { onetQueries } from '@/lib/query-client'
+import type { JdFormData, OnetOccupation } from '@/types'
 import {
   BONUS_OPTIONS,
   JD_LEVEL_OPTIONS,
@@ -26,7 +29,6 @@ import {
   FormLabel,
   FormControl,
 } from '@/components/form'
-import { onetService } from '@/services'
 import { Briefcase, Loader2, Search, Sparkles, X } from 'lucide-react'
 
 interface JdFormProps {
@@ -37,11 +39,19 @@ interface JdFormProps {
 export default function JdForm({ value, onChange }: Readonly<JdFormProps>) {
   const [techQuery, setTechQuery] = useState('')
   const [onetQuery, setOnetQuery] = useState('')
-  const [onetResults, setOnetResults] = useState<OnetOccupation[]>([])
-  const [isSearchingOnet, setIsSearchingOnet] = useState(false)
+  const [debouncedOnetQuery] = useDebouncedValue(onetQuery, 250)
   const [isOnetDropdownOpen, setIsOnetDropdownOpen] = useState(false)
-  const [onetTechSuggestions, setOnetTechSuggestions] = useState<OnetTech[]>([])
   const comboboxRef = useRef<HTMLDivElement>(null)
+
+  const { data: onetResults = [], isFetching: isSearchingOnet } = useQuery({
+    ...onetQueries.search(debouncedOnetQuery, 8),
+    enabled: isOnetDropdownOpen,
+  })
+
+  const { data: onetTechSuggestions = [] } = useQuery({
+    ...onetQueries.tech(value.onetSocCode ?? ''),
+    enabled: Boolean(value.onetSocCode),
+  })
 
   const set = (field: keyof JdFormData, val: string) =>
     onChange({ ...value, [field]: val })
@@ -62,63 +72,6 @@ export default function JdForm({ value, onChange }: Readonly<JdFormProps>) {
     }
   }, [])
 
-  // Tìm kiếm chức danh O*NET debounce khi mở dropdown
-  useEffect(() => {
-    let cancelled = false
-    if (!isOnetDropdownOpen) return
-
-    const timer = setTimeout(() => {
-      setIsSearchingOnet(true)
-      onetService
-        .searchOccupations(onetQuery, 8)
-        .then((items) => {
-          if (!cancelled) {
-            setOnetResults(items)
-            setIsSearchingOnet(false)
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setOnetResults([])
-            setIsSearchingOnet(false)
-          }
-        })
-    }, 250)
-
-    return () => {
-      cancelled = true
-      clearTimeout(timer)
-    }
-  }, [onetQuery, isOnetDropdownOpen])
-
-  // Lấy gợi ý công nghệ O*NET khi mã SOC thay đổi
-  useEffect(() => {
-    let cancelled = false
-    const timer = setTimeout(() => {
-      if (value.onetSocCode) {
-        onetService
-          .getOccupationTech(value.onetSocCode)
-          .then((techs) => {
-            if (!cancelled) {
-              setOnetTechSuggestions(techs)
-            }
-          })
-          .catch(() => {
-            if (!cancelled) {
-              setOnetTechSuggestions([])
-            }
-          })
-      } else {
-        setOnetTechSuggestions([])
-      }
-    }, 0)
-
-    return () => {
-      cancelled = true
-      clearTimeout(timer)
-    }
-  }, [value.onetSocCode])
-
   const handleSelectOnet = (occ: OnetOccupation) => {
     setIsOnetDropdownOpen(false)
     setOnetQuery('')
@@ -135,7 +88,6 @@ export default function JdForm({ value, onChange }: Readonly<JdFormProps>) {
   }
 
   const handleClearOnet = () => {
-    setOnetTechSuggestions([])
     onChange({
       ...value,
       onetSocCode: undefined,

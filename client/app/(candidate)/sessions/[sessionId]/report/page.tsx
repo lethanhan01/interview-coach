@@ -2,14 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { sessionService } from '@/services'
+import { useQuery } from '@tanstack/react-query'
+import { ApiClientError } from '@/lib/api-client'
+import { sessionQueries, useOptionalQueryClient } from '@/lib/query-client'
 import { useSessionEvents } from '@/hooks/useSessionEvents'
-import type {
-  ActionPlanItem,
-  FeedbackProgress,
-  Report,
-  Session,
-} from '@/types'
+import type { ActionPlanItem, FeedbackProgress, Report } from '@/types'
 
 import { Info } from 'lucide-react'
 import AnnotatedTranscript from '@/components/report/AnnotatedTranscript'
@@ -138,10 +135,24 @@ function buildOverviewSummary(report: Report): OverviewSummary {
   }
 }
 
+function isReportNotReadyError(err: unknown): boolean {
+  if (
+    err instanceof ApiClientError &&
+    err.errorCode?.toUpperCase() === 'REPORT_NOT_READY'
+  ) {
+    return true
+  }
+  return err instanceof Error && err.message.includes('REPORT_NOT_READY')
+}
+
 export default function ReportPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
+  const queryClient = useOptionalQueryClient()
+  const { data: session = null } = useQuery({
+    ...sessionQueries.detail(sessionId),
+    enabled: Boolean(sessionId),
+  })
   const [report, setReport] = useState<Report | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
   const [progress, setProgress] = useState<FeedbackProgress | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -189,24 +200,32 @@ export default function ReportPage() {
 
   const fetchReport = useCallback(async () => {
     try {
-      const data = await sessionService.getReport(sessionId)
+      const data = await queryClient.fetchQuery({
+        ...sessionQueries.report(sessionId),
+        staleTime: 0,
+        retry: false,
+      })
       reportLoadedRef.current = true
       setReport(data)
       setLoading(false)
       setError(null)
     } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes('REPORT_NOT_READY')) {
+      if (isReportNotReadyError(err)) {
         // Report still generating
       } else {
         setError(err instanceof Error ? err.message : 'Không thể tải báo cáo')
         setLoading(false)
       }
     }
-  }, [sessionId])
+  }, [queryClient, sessionId])
 
   const fetchProgress = useCallback(async () => {
     try {
-      const data = await sessionService.getFeedbackProgress(sessionId)
+      const data = await queryClient.fetchQuery({
+        ...sessionQueries.feedbackProgress(sessionId),
+        staleTime: 0,
+        retry: false,
+      })
       if (reportLoadedRef.current) return
       applyProgress(data)
       if (data.reportReady) {
@@ -215,7 +234,7 @@ export default function ReportPage() {
     } catch {
       // Best-effort
     }
-  }, [sessionId, applyProgress, fetchReport])
+  }, [queryClient, sessionId, applyProgress, fetchReport])
 
   useSessionEvents({
     sessionId,
@@ -240,24 +259,14 @@ export default function ReportPage() {
     },
   })
 
-  // Initial load: get session metadata, check if report or progress is already available
+  // Initial load: check if report or progress is already available
   useEffect(() => {
-    let canceled = false
-
     const timer = setTimeout(() => {
-      sessionService
-        .getSession(sessionId)
-        .then((data) => {
-          if (!canceled) setSession(data)
-        })
-        .catch(() => {})
-
       void fetchReport()
       void fetchProgress()
     }, 0)
 
     return () => {
-      canceled = true
       clearTimeout(timer)
     }
   }, [sessionId, fetchReport, fetchProgress])

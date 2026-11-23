@@ -2,6 +2,13 @@
 
 import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useMutation } from '@tanstack/react-query'
+import {
+  prepQueries,
+  queryKeys,
+  sessionQueries,
+  useOptionalQueryClient,
+} from '@/lib/query-client'
 import { prepService, sessionService } from '@/services'
 import type {
   ContextPack,
@@ -245,6 +252,7 @@ export default function SetupPage() {
 function SetupPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const queryClient = useOptionalQueryClient()
   const [step, setStep] = useState<Step>(0)
   const [jdPickerReady, setJdPickerReady] = useState(false)
   const [jd, setJd] = useState<JdFormData>(() => {
@@ -267,7 +275,6 @@ function SetupPageContent() {
   const [selectedSavedJobDescriptionId, setSelectedSavedJobDescriptionId] =
     useState('')
   const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
 
   const jdHasContent =
     jd.company.trim().length > 0 ||
@@ -291,14 +298,14 @@ function SetupPageContent() {
 
     async function loadSavedJobDescriptions() {
       try {
-        const itemsData = await prepService.getSavedJobDescriptions()
+        const itemsData = await queryClient.fetchQuery(prepQueries.savedJds())
         if (!cancelled) {
           let items = itemsData
           let sessions: Session[] = []
 
           if (items.some((item) => !normalizeJdLevel(item.level))) {
             try {
-              sessions = await sessionService.getSessions()
+              sessions = await queryClient.fetchQuery(sessionQueries.list())
               items = hydrateSavedJobDescriptionLevels(items, sessions)
             } catch {
               // Best-effort fallback for legacy JD records saved before level existed.
@@ -377,16 +384,17 @@ function SetupPageContent() {
     (d) => d.value === duration
   )!.numQuestions
 
-  async function handleSubmit() {
-    setError(null)
-    setSubmitting(true)
-    try {
+  const createSessionMutation = useMutation({
+    mutationFn: async () => {
       const jobDescription = serializeJd(jd)
       const savedJobDescription = await prepService.saveJobDescription(
         toSavedJobDescriptionPayload(jd)
       )
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.prep.savedJds(),
+      })
       const targetSfia = jd.targetSfiaLevel ?? mapJdLevelToSfia(jd.level)
-      const data = await sessionService.createSession({
+      return sessionService.createSession({
         jobDescription,
         sessionType,
         contextPack,
@@ -397,13 +405,27 @@ function SetupPageContent() {
         targetSfiaLevel: targetSfia,
         onetSocCode: jd.onetSocCode,
       })
+    },
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.sessions.all,
+      })
       router.push(`/sessions/${data.id}`)
-    } catch (err) {
+    },
+    onError: (err) => {
       setError(
         err instanceof Error ? err.message : 'Không thể tạo phiên phỏng vấn'
       )
-      setSubmitting(false)
-    }
+    },
+  })
+
+  const submitting =
+    createSessionMutation.isPending || createSessionMutation.isSuccess
+
+  function handleSubmit() {
+    if (submitting) return
+    setError(null)
+    createSessionMutation.mutate()
   }
 
 

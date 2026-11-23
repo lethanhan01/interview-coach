@@ -1,7 +1,13 @@
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { render, screen, userEvent, waitFor } from '@test-utils'
 import { expect, it, describe, vi, beforeEach } from 'vitest'
 import VoiceRecorder from '../../components/interview/VoiceRecorder'
+import { mediaService } from '@/services'
+
+vi.mock('@/services', () => ({
+  mediaService: {
+    transcribeAudio: vi.fn(),
+  },
+}))
 
 // Mock Web Speech API & Web Audio API
 class MockSpeechRecognition {
@@ -144,5 +150,113 @@ describe('VoiceRecorder', () => {
       screen.getByRole('button', { name: /Bắt đầu trả lời/i })
     ).toBeInTheDocument()
     expect(mockDraftChange).toHaveBeenCalledWith('')
+  })
+
+  it('transcribes recorded audio via mediaService mutation and enters reviewing state', async () => {
+    class MockMediaRecorder {
+      static isTypeSupported = vi.fn().mockReturnValue(true)
+      mimeType = 'audio/webm;codecs=opus'
+      state = 'inactive'
+      ondataavailable: ((event: { data: Blob }) => void) | null = null
+      onstop: (() => void) | null = null
+      start() {
+        this.state = 'recording'
+        this.ondataavailable?.({
+          data: new Blob(['audio-data'], { type: this.mimeType }),
+        })
+      }
+      stop() {
+        this.state = 'inactive'
+        this.onstop?.()
+      }
+    }
+
+    vi.stubGlobal('MediaRecorder', MockMediaRecorder)
+    mockGetUserMedia.mockResolvedValueOnce({
+      getTracks: () => [{ stop: vi.fn() }],
+    })
+    vi.mocked(mediaService.transcribeAudio).mockResolvedValueOnce({
+      text: 'Tôi sử dụng TanStack Query để đồng bộ server state hiệu quả.',
+      language: 'vi',
+      durationSeconds: 12,
+      metrics: {
+        wpm: 140,
+        fillerWordCount: 0,
+        fillerWords: [],
+        pauseCount: 0,
+        totalPauseDurationSeconds: 0,
+        speechDurationSeconds: 12,
+        confidenceScore: 0.95,
+      },
+    })
+
+    render(<VoiceRecorder onSubmit={vi.fn()} language="vi" />)
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /Bắt đầu trả lời/i })
+    )
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: /Dừng trả lời và xem lại transcript/i,
+      })
+    )
+
+    await waitFor(() => {
+      expect(mediaService.transcribeAudio).toHaveBeenCalledWith(
+        expect.any(Blob),
+        'vi'
+      )
+      expect(screen.getByLabelText(/Transcript câu trả lời/i)).toHaveValue(
+        'Tôi sử dụng TanStack Query để đồng bộ server state hiệu quả.'
+      )
+      expect(screen.getByText('140 WPM')).toBeInTheDocument()
+    })
+
+    vi.unstubAllGlobals()
+  })
+
+  it('shows error alert and resets to idle when transcription mutation fails without fallback', async () => {
+    class MockMediaRecorder {
+      static isTypeSupported = vi.fn().mockReturnValue(true)
+      mimeType = 'audio/webm;codecs=opus'
+      state = 'inactive'
+      ondataavailable: ((event: { data: Blob }) => void) | null = null
+      onstop: (() => void) | null = null
+      start() {
+        this.state = 'recording'
+      }
+      stop() {
+        this.state = 'inactive'
+        this.onstop?.()
+      }
+    }
+
+    vi.stubGlobal('MediaRecorder', MockMediaRecorder)
+    mockGetUserMedia.mockResolvedValueOnce({
+      getTracks: () => [{ stop: vi.fn() }],
+    })
+    vi.mocked(mediaService.transcribeAudio).mockRejectedValueOnce(
+      new Error('STT service offline')
+    )
+
+    render(<VoiceRecorder onSubmit={vi.fn()} />)
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /Bắt đầu trả lời/i })
+    )
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: /Dừng trả lời và xem lại transcript/i,
+      })
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('STT service offline')
+      expect(
+        screen.getByRole('button', { name: /Bắt đầu trả lời/i })
+      ).toBeInTheDocument()
+    })
+
+    vi.unstubAllGlobals()
   })
 })

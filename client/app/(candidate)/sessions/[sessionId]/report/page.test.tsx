@@ -1,7 +1,8 @@
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@test-utils'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import ReportPage from './page'
+import { ApiClientError } from '@/lib/api-client'
 import { sessionService } from '@/services'
 import {
   mockUnifiedReport,
@@ -126,5 +127,35 @@ describe('ReportPage', () => {
 
     // Skipped question warning inside transcript
     expect(screen.getByText('Câu hỏi này đã bị bỏ qua')).toBeInTheDocument()
+  })
+
+  it('keeps progress view without retrying when API returns REPORT_NOT_READY', async () => {
+    vi.mocked(sessionService.getFeedbackProgress).mockResolvedValue({
+      sessionId: 'test-session-123',
+      status: 'completing',
+      totalQuestions: 2,
+      answeredQuestions: 2,
+      skippedQuestions: 0,
+      feedbackRequired: 2,
+      feedbackCompleted: 1,
+      feedbackPending: 1,
+      reportReady: false,
+    })
+    vi.mocked(sessionService.getReport).mockRejectedValue(
+      new ApiClientError({
+        message: 'Báo cáo đang được tổng hợp',
+        statusCode: 409,
+        errorCode: 'REPORT_NOT_READY',
+      })
+    )
+
+    render(<ReportPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Đã chấm 1/2 câu trả lời')).toBeInTheDocument()
+    })
+
+    expect(screen.getByText('Còn 1 câu đang xử lý')).toBeInTheDocument()
+    expect(sessionService.getReport).toHaveBeenCalledTimes(1)
   })
 })

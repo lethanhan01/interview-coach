@@ -7,6 +7,7 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import LoadingSpinner from '../ui/LoadingSpinner'
 import Button from '../ui/Button'
 import { Textarea } from '../ui/Textarea'
@@ -21,7 +22,7 @@ import {
   Volume2,
   Sparkles,
 } from 'lucide-react'
-import { mediaService } from '@/services/media.service'
+import { mediaService } from '@/services'
 import type { VoiceMetrics } from '@/types'
 
 // Browser Web Speech API type definitions for fallback
@@ -185,13 +186,23 @@ export default function VoiceRecorder({
     analyserRef.current = null
   }, [])
 
+  const { mutateAsync: transcribeAudio } = useMutation({
+    mutationFn: ({
+      audioBlob,
+      lang,
+    }: {
+      audioBlob: Blob
+      lang: 'vi' | 'en'
+    }) => mediaService.transcribeAudio(audioBlob, lang),
+  })
+
   const processAudioTranscription = useCallback(
     async (audioBlob: Blob, elapsedSeconds: number) => {
       setState('transcribing')
       setError(null)
 
       try {
-        const response = await mediaService.transcribeAudio(audioBlob, language)
+        const response = await transcribeAudio({ audioBlob, lang: language })
         const recognizedText = response.text?.trim() || ''
 
         if (!recognizedText && !accumulatedTranscriptRef.current.trim()) {
@@ -228,7 +239,7 @@ export default function VoiceRecorder({
         }
       }
     },
-    [language, onDraftChange]
+    [language, onDraftChange, transcribeAudio]
   )
 
   const stopListening = useCallback(() => {

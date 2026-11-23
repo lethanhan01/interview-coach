@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { prepService } from '@/services'
+import { useQuery } from '@tanstack/react-query'
+import { prepQueries } from '@/lib/query-client'
 import type { SavedJobDescription } from '@/types'
 import { formatVietnamRelativeDate } from '@/lib/date-time'
 import { getJdLevelLabel } from '@/lib/interview-options'
@@ -25,19 +25,18 @@ const MAX_TECH_SHOWN = 5
 
 export default function JdLibraryPage() {
   const router = useRouter()
-  const [items, setItems] = useState<SavedJobDescription[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    data: items = [],
+    isLoading: loading,
+    error: queryError,
+  } = useQuery(prepQueries.savedJds())
 
-  useEffect(() => {
-    prepService
-      .getSavedJobDescriptions()
-      .then(setItems)
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : 'Không thể tải danh sách')
-      )
-      .finally(() => setLoading(false))
-  }, [])
+  const error =
+    queryError instanceof Error
+      ? queryError.message
+      : queryError
+        ? 'Không thể tải danh sách'
+        : null
 
   function handleSelect(item: SavedJobDescription) {
     router.push(`/setup?jdId=${item.id}`)
