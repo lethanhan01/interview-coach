@@ -1,21 +1,30 @@
-import { render, screen } from '@testing-library/react'
-import type { ReactNode } from 'react'
-import userEvent from '@testing-library/user-event'
-import AppSidebar from './AppSidebar'
-import { vi } from 'vitest'
+import { render, screen, userEvent, waitFor } from '@test-utils'
+import { axe } from 'jest-axe'
 import { usePathname } from 'next/navigation'
+import { vi } from 'vitest'
+import AppSidebar from './AppSidebar'
 
-// Mock next/navigation
+const mockReplace = vi.fn()
+const mockRefresh = vi.fn()
+const mockLogout = vi.fn().mockResolvedValue(undefined)
+
 vi.mock('next/navigation', () => ({
   usePathname: vi.fn(() => '/admin/dashboard'),
+  useRouter: () => ({
+    replace: mockReplace,
+    refresh: mockRefresh,
+  }),
 }))
 
-// Mock TooltipProvider to avoid radix-ui act warnings in tests
-vi.mock('@/components/ui/Tooltip', () => ({
-  TooltipProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
-  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipContent: ({ children }: { children: ReactNode }) => <>{children}</>,
+vi.mock('@/lib/auth-context', () => ({
+  useAuth: () => ({
+    user: { id: 'u-admin', email: 'admin@interviewcoach.vn' },
+    role: 'admin',
+    status: 'active',
+    isLoading: false,
+    refresh: vi.fn(),
+    logout: mockLogout,
+  }),
 }))
 
 describe('AppSidebar', () => {
@@ -24,38 +33,80 @@ describe('AppSidebar', () => {
     vi.mocked(usePathname).mockReturnValue('/admin/dashboard')
   })
 
-  it('renders admin navigation items', async () => {
-    render(<AppSidebar role="admin" />)
-    expect(await screen.findByText('Dashboard')).toBeInTheDocument()
-    expect(screen.getByText('Quản lý User')).toBeInTheDocument()
-    expect(screen.getByText('Hồ sơ')).toBeInTheDocument()
-  })
-
-  it('renders candidate navigation items', async () => {
-    render(<AppSidebar role="candidate" />)
-    expect(await screen.findByText('Phỏng vấn')).toBeInTheDocument()
-    expect(screen.getByText('Tạo mới')).toBeInTheDocument()
-    expect(screen.getByText('CV / Resume')).toBeInTheDocument()
-    expect(screen.getByText('Tài khoản')).toBeInTheDocument()
-  })
-
-  it('highlights active route', async () => {
+  it('renders admin navigation items and highlights the active route', () => {
     vi.mocked(usePathname).mockReturnValue('/admin/users')
     render(<AppSidebar role="admin" />)
-    
-    await screen.findByText('Quản lý User')
-    const activeLink = screen.getByText('Quản lý User').closest('a')
-    expect(activeLink).toHaveClass('text-brand-subtle-fg')
+
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'O*NET Browser' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'SFIA Framework' })
+    ).toBeInTheDocument()
+
+    const usersLink = screen.getByRole('link', { name: 'Quản lý User' })
+    expect(usersLink).toHaveAttribute('aria-current', 'page')
   })
 
-  it('collapses and expands', async () => {
+  it('renders candidate navigation items', () => {
+    vi.mocked(usePathname).mockReturnValue('/sessions')
+    render(<AppSidebar role="candidate" />)
+
+    expect(screen.getByRole('link', { name: 'Phỏng vấn' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    )
+    expect(screen.getByRole('link', { name: 'Tạo mới' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'CV / Resume' })
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Tài khoản' })).toBeInTheDocument()
+  })
+
+  it('invokes collapse toggle and logout actions', async () => {
     const user = userEvent.setup()
-    render(<AppSidebar role="admin" />)
-    
-    const collapseButton = await screen.findByRole('button', { name: /Collapse sidebar/i })
-    await user.click(collapseButton)
-    
-    // After collapse, text should be hidden (sr-only or not rendered)
-    expect(screen.getByRole('button', { name: /Expand sidebar/i })).toBeInTheDocument()
+    const onToggleCollapse = vi.fn()
+
+    render(
+      <AppSidebar
+        role="admin"
+        collapsed={false}
+        onToggleCollapse={onToggleCollapse}
+      />
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'Thu gọn thanh điều hướng' })
+    )
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1)
+
+    await user.click(screen.getByRole('button', { name: 'Đăng xuất' }))
+    await waitFor(() => {
+      expect(mockLogout).toHaveBeenCalledTimes(1)
+      expect(mockReplace).toHaveBeenCalledWith('/login')
+    })
+  })
+
+  it('renders mini-rail controls when collapsed', async () => {
+    const user = userEvent.setup()
+    const onToggleCollapse = vi.fn()
+
+    render(
+      <AppSidebar role="admin" collapsed onToggleCollapse={onToggleCollapse} />
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'Mở rộng thanh điều hướng' })
+    )
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1)
+    expect(
+      screen.getByRole('button', { name: 'Đăng xuất' })
+    ).toBeInTheDocument()
+  })
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(<AppSidebar role="candidate" />)
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

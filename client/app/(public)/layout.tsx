@@ -1,25 +1,21 @@
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import type { ReactNode } from 'react'
+import { Box } from '@mantine/core'
+import { PublicFooter } from '@/components/landing/PublicFooter'
+import { PublicHeader } from '@/components/landing/PublicHeader'
+import classes from './PublicLayout.module.css'
 
 export default function PublicLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: ReactNode
+}>) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="flex items-center justify-between border-b px-6 py-4">
-        <h1 className="text-xl font-bold">Interview Coach</h1>
-        <nav className="flex items-center gap-2">
-          <ThemeToggle />
-          <a href="/login" className="text-sm font-medium hover:underline">
-            Đăng nhập
-          </a>
-        </nav>
-      </header>
-      <main className="flex-1">{children}</main>
-      <footer className="text-muted-foreground border-t px-6 py-4 text-center text-sm">
-        &copy; 2026 Interview Coach. All rights reserved.
-      </footer>
-    </div>
+    <Box className={classes.shell}>
+      <PublicHeader />
+      <Box component="main" className={classes.main}>
+        {children}
+      </Box>
+      <PublicFooter />
+    </Box>
   )
 }

@@ -1,16 +1,24 @@
-import { render, screen } from '@testing-library/react'
-import { expect, it, describe } from 'vitest'
-import { FeaturesSection } from '../../components/landing/FeaturesSection'
+import { render, screen } from '@test-utils'
+import { axe } from 'jest-axe'
+import { FeaturesSection } from './FeaturesSection'
 
 describe('FeaturesSection', () => {
-  it('renders features correctly', () => {
+  it('renders features heading and 3 core feature cards', () => {
     render(<FeaturesSection />)
-    
-    expect(screen.getByRole('heading', { name: /tại sao chọn ai mock interview/i })).toBeInTheDocument()
-    
-    // Check if feature titles are present
+
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: /tại sao chọn ai mock interview/i,
+      })
+    ).toBeInTheDocument()
     expect(screen.getByText('AI Follow-up thông minh')).toBeInTheDocument()
     expect(screen.getByText('Surgical Feedback')).toBeInTheDocument()
     expect(screen.getByText('Context Pack VN / Western')).toBeInTheDocument()
+  })
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(<FeaturesSection />)
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

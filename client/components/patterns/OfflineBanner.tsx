@@ -1,71 +1,66 @@
 'use client'
 
-import { useSyncExternalStore } from 'react'
-import { WifiOff } from 'lucide-react'
-import Button from '@/components/ui/Button'
+import {
+  Box,
+  Button,
+  Overlay,
+  Paper,
+  Stack,
+  Text,
+  ThemeIcon,
+  Title,
+} from '@mantine/core'
+import { useNetwork } from '@mantine/hooks'
+import { IconRefresh, IconWifiOff } from '@tabler/icons-react'
+import classes from './OfflineBanner.module.css'
 
-function subscribeOnlineStatus(callback: () => void) {
-  window.addEventListener('online', callback)
-  window.addEventListener('offline', callback)
-  return () => {
-    window.removeEventListener('online', callback)
-    window.removeEventListener('offline', callback)
+export interface OfflineBannerProps {
+  onRetry?: () => void
+}
+
+export function OfflineBanner({ onRetry }: Readonly<OfflineBannerProps>) {
+  const network = useNetwork()
+
+  if (network.online) return null
+
+  const handleRetry = () => {
+    if (onRetry) {
+      onRetry()
+      return
+    }
+    window.location.reload()
   }
-}
-
-function getOnlineSnapshot() {
-  return !navigator.onLine
-}
-
-function getServerSnapshot() {
-  return false
-}
-
-/**
- * OfflineBanner — Global network offline overlay.
- * Mount once in app/layout.tsx (inside AuthProvider).
- *
- * Behaviour:
- * - Detects offline via navigator.onLine + window 'online'/'offline' events.
- * - Shows a full-screen overlay with a "Thử lại" button.
- * - Automatically hides when connectivity is restored.
- */
-export function OfflineBanner() {
-  const isOffline = useSyncExternalStore(
-    subscribeOnlineStatus,
-    getOnlineSnapshot,
-    getServerSnapshot
-  )
-
-  if (!isOffline) return null
 
   return (
-    <div
-      role="alert"
-      aria-live="assertive"
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-surface-3/95 p-6 backdrop-blur-sm"
-    >
-      {/* Icon */}
-      <div className="flex size-16 items-center justify-center rounded-2xl border border-border bg-surface-inset">
-        <WifiOff className="size-8 text-ink-muted" />
-      </div>
+    <Box className={classes.root} role="alert" aria-live="assertive">
+      <Overlay blur={4} backgroundOpacity={0.75} zIndex={1} />
+      <Paper withBorder shadow="md" p="xl" radius="lg" className={classes.card}>
+        <Stack align="center" gap="md">
+          <ThemeIcon color="warning" variant="light" size={56} radius="md">
+            <IconWifiOff size={28} stroke={1.5} aria-hidden="true" />
+          </ThemeIcon>
 
-      {/* Text */}
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h2 className="text-ink text-xl font-bold">Mất kết nối mạng</h2>
-        <p className="text-ink-muted max-w-xs text-sm leading-relaxed">
-          Vui lòng kiểm tra kết nối internet. Trang sẽ tự động khôi phục khi có mạng trở lại.
-        </p>
-      </div>
+          <Stack align="center" gap="xs">
+            <Title order={2} size="h3" ta="center">
+              Mất kết nối mạng
+            </Title>
+            <Text c="dimmed" size="sm" ta="center">
+              Vui lòng kiểm tra kết nối internet. Trang sẽ tự động khôi phục khi
+              có mạng trở lại.
+            </Text>
+          </Stack>
 
-      {/* Retry */}
-      <Button
-        variant="outline"
-        size="md"
-        onClick={() => window.location.reload()}
-      >
-        Thử lại
-      </Button>
-    </div>
+          <Button
+            color="brand"
+            leftSection={
+              <IconRefresh size={16} stroke={1.5} aria-hidden="true" />
+            }
+            onClick={handleRetry}
+          >
+            Thử lại
+          </Button>
+        </Stack>
+      </Paper>
+    </Box>
   )
 }

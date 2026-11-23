@@ -1,153 +1,184 @@
 'use client'
 
-import { useState, useSyncExternalStore } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { adminNavigation, candidateNavigation } from '@/config/navigation'
-import { Button } from '@/components/ui/Button'
+import { useRouter } from 'next/navigation'
 import {
+  ActionIcon,
+  Anchor,
+  Badge,
+  Box,
+  Button,
+  Group,
+  ScrollArea,
+  Stack,
+  Text,
+  ThemeIcon,
   Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/Tooltip'
+} from '@mantine/core'
+import {
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarLeftExpand,
+  IconLogout,
+  IconMicrophone,
+} from '@tabler/icons-react'
+import { adminNavigation, candidateNavigation } from '@/config/navigation'
+import { useAuth } from '@/lib/auth-context'
+import NavLinks from './NavLinks'
+import classes from './AppSidebar.module.css'
 
-const emptySubscribe = () => () => {}
-const useIsMounted = () => useSyncExternalStore(emptySubscribe, () => true, () => false)
-
-interface AppSidebarProps {
+export interface AppSidebarProps {
   role: 'admin' | 'candidate'
-  isMobile?: boolean
-  onMobileClose?: () => void
-}
-
-function getSidebarWidthClass(isMobile: boolean, isCollapsed: boolean): string {
-  if (isMobile) return 'w-full'
-  return isCollapsed ? 'w-16' : 'w-64'
+  collapsed?: boolean
+  onToggleCollapse?: () => void
+  onNavigate?: () => void
 }
 
 export default function AppSidebar({
   role,
-  isMobile = false,
-  onMobileClose,
+  collapsed = false,
+  onToggleCollapse,
+  onNavigate,
 }: Readonly<AppSidebarProps>) {
+  const router = useRouter()
+  const { logout } = useAuth()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
   const items = role === 'admin' ? adminNavigation : candidateNavigation
-  const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(false)
 
-  // Prevent hydration mismatch by rendering collapsed state only after mount
-  const mounted = useIsMounted()
-
-  if (!mounted) {
-    return (
-      <aside className={cn('bg-surface-overlay h-full border-r', isMobile ? 'w-full' : 'w-64')} />
-    )
+  async function handleLogout() {
+    setIsLoggingOut(true)
+    try {
+      await logout()
+    } finally {
+      setIsLoggingOut(false)
+      router.replace('/login')
+      router.refresh()
+    }
   }
 
-  const collapsed = !isMobile && isCollapsed
-
   return (
-    <aside
-      className={cn(
-        'bg-surface-overlay relative flex h-full flex-col border-r transition-all duration-300 ease-in-out',
-        getSidebarWidthClass(isMobile, collapsed)
-      )}
-    >
-      <div className="flex h-16 shrink-0 items-center justify-between border-b px-4">
-        {!collapsed && (
-          <Link
-            href="/"
-            className="text-brand truncate text-base font-semibold tracking-tight transition-colors hover:text-brand-light"
-            onClick={() => {
-              if (isMobile && onMobileClose) onMobileClose()
-            }}
-          >
-            AI Mock Interview
-          </Link>
-        )}
-        {collapsed && (
-          <div className="text-brand mx-auto font-bold">AI</div>
-        )}
-      </div>
+    <Stack gap={0} className={classes.root}>
+      <Box className={classes.header} mod={{ collapsed }}>
+        <Anchor
+          component={Link}
+          href="/"
+          underline="never"
+          className={classes.brandLink}
+          onClick={onNavigate}
+          aria-label="AI Mock Interview — Trang chủ"
+        >
+          <ThemeIcon color="brand" variant="light" size="md" radius="md">
+            <IconMicrophone size={18} stroke={1.5} aria-hidden="true" />
+          </ThemeIcon>
+          {!collapsed ? (
+            <Group gap="xs" wrap="nowrap">
+              <Text fw={700} size="sm" truncate>
+                AI Mock Interview
+              </Text>
+              <Badge
+                size="xs"
+                variant="light"
+                color={role === 'admin' ? 'brand' : 'neutral'}
+              >
+                {role === 'admin' ? 'Admin' : 'Ứng viên'}
+              </Badge>
+            </Group>
+          ) : null}
+        </Anchor>
+      </Box>
 
-      <div className="flex-1 overflow-y-auto py-4">
-        <nav className="space-y-1 px-2" aria-label="Sidebar Navigation">
-          <TooltipProvider delayDuration={0}>
-            {items.map(({ href, label, icon: Icon, match }) => {
-              const active = pathname
-                ? match.some((m) => pathname === m || pathname.startsWith(m + '/'))
-                : false
-              return (
-                <div key={href}>
-                  {collapsed ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Link
-                          href={href}
-                          className={cn(
-                            'flex h-10 w-full items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
-                            active
-                              ? 'bg-brand-subtle text-brand-subtle-fg'
-                              : 'text-ink-muted hover:bg-brand-subtle hover:text-brand-subtle-fg'
-                          )}
-                          aria-current={active ? 'page' : undefined}
-                        >
-                          <Icon className="h-5 w-5" />
-                          <span className="sr-only">{label}</span>
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">{label}</TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <Link
-                      href={href}
-                      className={cn(
-                        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
-                        active
-                          ? 'bg-brand-subtle text-brand-subtle-fg'
-                          : 'text-ink-muted hover:bg-brand-subtle hover:text-brand-subtle-fg'
-                      )}
-                      aria-current={active ? 'page' : undefined}
-                      onClick={() => {
-                        if (isMobile && onMobileClose) onMobileClose()
-                      }}
-                    >
-                      <Icon className="h-5 w-5 shrink-0" />
-                      <span className="truncate">{label}</span>
-                    </Link>
-                  )}
-                </div>
-              )
-            })}
-          </TooltipProvider>
-        </nav>
-      </div>
+      <ScrollArea className={classes.scrollArea} type="auto">
+        <NavLinks
+          items={items}
+          orientation="vertical"
+          collapsed={collapsed}
+          onNavigate={onNavigate}
+          asNav={false}
+        />
+      </ScrollArea>
 
-      {!isMobile && (
-        <div className="border-t p-2">
+      <Stack
+        gap="xs"
+        align={collapsed ? 'center' : 'stretch'}
+        className={classes.footer}
+      >
+        {collapsed ? (
+          <Tooltip label="Đăng xuất" position="right" withArrow>
+            <ActionIcon
+              variant="subtle"
+              color="danger"
+              size="lg"
+              radius="md"
+              aria-label="Đăng xuất"
+              onClick={handleLogout}
+              loading={isLoggingOut}
+            >
+              <IconLogout size={18} stroke={1.5} aria-hidden="true" />
+            </ActionIcon>
+          </Tooltip>
+        ) : (
           <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              'w-full text-ink-muted hover:text-ink',
-              collapsed ? 'justify-center px-0' : 'justify-start'
-            )}
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            variant="subtle"
+            color="danger"
+            fullWidth
+            justify="flex-start"
+            leftSection={
+              <IconLogout size={18} stroke={1.5} aria-hidden="true" />
+            }
+            onClick={handleLogout}
+            loading={isLoggingOut}
           >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <>
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                <span>Thu gọn</span>
-              </>
-            )}
+            Đăng xuất
           </Button>
-        </div>
-      )}
-    </aside>
+        )}
+
+        {onToggleCollapse ? (
+          collapsed ? (
+            <Tooltip
+              label="Mở rộng thanh điều hướng"
+              position="right"
+              withArrow
+            >
+              <ActionIcon
+                variant="subtle"
+                color="neutral"
+                size="lg"
+                radius="md"
+                visibleFrom="md"
+                aria-label="Mở rộng thanh điều hướng"
+                onClick={onToggleCollapse}
+              >
+                <IconLayoutSidebarLeftExpand
+                  size={18}
+                  stroke={1.5}
+                  aria-hidden="true"
+                />
+              </ActionIcon>
+            </Tooltip>
+          ) : (
+            <Button
+              variant="subtle"
+              color="neutral"
+              size="xs"
+              fullWidth
+              justify="flex-start"
+              visibleFrom="md"
+              leftSection={
+                <IconLayoutSidebarLeftCollapse
+                  size={16}
+                  stroke={1.5}
+                  aria-hidden="true"
+                />
+              }
+              onClick={onToggleCollapse}
+              aria-label="Thu gọn thanh điều hướng"
+            >
+              Thu gọn
+            </Button>
+          )
+        ) : null}
+      </Stack>
+    </Stack>
   )
 }

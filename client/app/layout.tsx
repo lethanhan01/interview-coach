@@ -9,7 +9,6 @@ import {
 } from '@mantine/core'
 import { theme } from '@/theme'
 import { AppProviders } from '@/components/app-providers'
-import { ThemeProvider } from '@/components/theme-provider'
 import { MantineColorSchemeSync } from '@/components/mantine-color-scheme-sync'
 import { OfflineBanner } from '@/components/patterns/OfflineBanner'
 
@@ -45,18 +44,11 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
         <MantineProvider theme={theme} defaultColorScheme="auto">
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <MantineColorSchemeSync />
-            <AppProviders>
-              <OfflineBanner />
-              {children}
-            </AppProviders>
-          </ThemeProvider>
+          <MantineColorSchemeSync />
+          <AppProviders>
+            <OfflineBanner />
+            {children}
+          </AppProviders>
         </MantineProvider>
       </body>
     </html>

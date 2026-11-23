@@ -1,0 +1,19 @@
+.container {
+  min-height: 70dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: var(--mantine-spacing-xl);
+}
+
+.card {
+  width: 100%;
+}
+
+.statusCode {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: rem(36px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: rem(-0.5px);
+}

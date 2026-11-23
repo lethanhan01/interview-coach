@@ -1,0 +1,19 @@
+.section {
+  padding-block: rem(64px);
+}
+
+.card {
+  transition: transform 180ms ease;
+
+  @mixin hover {
+    transform: translateY(rem(-2px));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    @mixin hover {
+      transform: none;
+    }
+  }
+}

@@ -248,7 +248,8 @@
     --score-diamond: var(--color-tier-diamond);
   }
 
-  .dark {
+  .dark,
+  [data-mantine-color-scheme='dark'] {
     /* Base Surface & Foreground */
     --bg: #030712;
     --fg: var(--color-neutral-50);

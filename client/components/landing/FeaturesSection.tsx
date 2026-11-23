@@ -1,49 +1,82 @@
-const features = [
+import {
+  Box,
+  Card,
+  Container,
+  SimpleGrid,
+  Stack,
+  Text,
+  ThemeIcon,
+  Title,
+} from '@mantine/core'
+import { IconBrain, IconTargetArrow, IconWorld } from '@tabler/icons-react'
+import classes from './FeaturesSection.module.css'
+
+const FEATURES = [
   {
     title: 'AI Follow-up thông minh',
     description:
-      'Hệ thống đặt câu hỏi tiếp theo dựa trên câu trả lời của bạn, giống phỏng vấn thật.',
+      'Hệ thống đặt câu hỏi tiếp theo dựa trên câu trả lời của bạn, đào sâu kỹ năng thực chiến giống phỏng vấn thật.',
+    icon: IconBrain,
   },
   {
     title: 'Surgical Feedback',
     description:
-      'Phản hồi highlight từng đoạn cụ thể trong câu trả lời kèm gợi ý cải thiện rõ ràng.',
+      'Phản hồi highlight từng đoạn cụ thể trong câu trả lời kèm gợi ý cải thiện rõ ràng theo cấu trúc STAR.',
+    icon: IconTargetArrow,
   },
   {
     title: 'Context Pack VN / Western',
     description:
-      'Rubric chấm điểm phù hợp văn hóa — chọn kiểu phỏng vấn phù hợp với công ty bạn target.',
+      'Rubric chấm điểm phù hợp văn hóa — chọn kiểu phỏng vấn phù hợp với công ty công nghệ bạn đang ứng tuyển.',
+    icon: IconWorld,
   },
-]
+] as const
 
 export function FeaturesSection() {
   return (
-    <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-      <div className="mb-12 text-center">
-        <h2 className="text-ink mb-3 text-3xl font-bold">
-          Tại sao chọn AI Mock Interview?
-        </h2>
-        <p className="text-ink-muted">
-          Được thiết kế riêng cho thị trường tuyển dụng IT Việt Nam
-        </p>
-      </div>
+    <Box component="section" className={classes.section}>
+      <Container size="lg">
+        <Stack gap="xl">
+          <Stack align="center" gap="xs">
+            <Title order={2} ta="center">
+              Tại sao chọn AI Mock Interview?
+            </Title>
+            <Text c="dimmed" ta="center" maw={560}>
+              Được thiết kế riêng cho thị trường tuyển dụng IT Việt Nam và sinh
+              viên chuẩn bị phỏng vấn kỹ thuật.
+            </Text>
+          </Stack>
 
-      <div className="grid gap-6 sm:grid-cols-3">
-        {features.map((f) => (
-          <div
-            key={f.title}
-            className="bg-surface shadow-card border-border flex flex-col gap-3 rounded-2xl border p-6"
-          >
-            <div className="bg-brand-subtle flex size-10 items-center justify-center rounded-xl">
-              <span className="bg-brand size-4 rounded-full" />
-            </div>
-            <h3 className="text-ink font-semibold">{f.title}</h3>
-            <p className="text-ink-muted text-sm leading-relaxed">
-              {f.description}
-            </p>
-          </div>
-        ))}
-      </div>
-    </section>
+          <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="lg">
+            {FEATURES.map(({ title, description, icon: Icon }) => (
+              <Card
+                key={title}
+                withBorder
+                radius="md"
+                p="lg"
+                className={classes.card}
+              >
+                <Stack gap="sm">
+                  <ThemeIcon
+                    color="brand"
+                    variant="light"
+                    size={44}
+                    radius="md"
+                  >
+                    <Icon size={22} stroke={1.5} aria-hidden="true" />
+                  </ThemeIcon>
+                  <Title order={3} size="h4">
+                    {title}
+                  </Title>
+                  <Text size="sm" c="dimmed">
+                    {description}
+                  </Text>
+                </Stack>
+              </Card>
+            ))}
+          </SimpleGrid>
+        </Stack>
+      </Container>
+    </Box>
   )
 }

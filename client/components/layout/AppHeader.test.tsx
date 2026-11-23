@@ -1,45 +1,68 @@
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import AppHeader from './AppHeader'
+import { AppShell } from '@mantine/core'
+import { render, screen, userEvent, within } from '@test-utils'
+import { axe } from 'jest-axe'
 import { vi } from 'vitest'
+import AppHeader from './AppHeader'
 
-// Mock next-themes
-vi.mock('next-themes', () => ({
-  useTheme: () => ({ theme: 'light', setTheme: vi.fn() }),
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    replace: vi.fn(),
+    refresh: vi.fn(),
+  }),
 }))
 
-// Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
+vi.mock('@/lib/auth-context', () => ({
+  useAuth: () => ({
+    user: { id: 'u-1', email: 'admin@interviewcoach.vn' },
+    role: 'admin',
+    status: 'active',
+    isLoading: false,
+    refresh: vi.fn(),
+    logout: vi.fn().mockResolvedValue(undefined),
+  }),
+}))
 
 describe('AppHeader', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('renders the header correctly', () => {
-    render(<AppHeader role="admin" />)
-    expect(screen.getByRole('banner')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /User Menu/i })).toBeInTheDocument()
-  })
-
-  it('renders the logout action slot', async () => {
+  it('renders header controls, mobile menu trigger, color scheme toggle, and user menu', async () => {
     const user = userEvent.setup()
+    const onToggleMobile = vi.fn()
+
     render(
-      <AppHeader 
-        role="admin" 
-        logoutActionSlot={<button>Logout Custom</button>} 
-      />
+      <AppShell header={{ height: 60 }}>
+        <AppShell.Header>
+          <AppHeader
+            role="admin"
+            mobileOpened={false}
+            onToggleMobile={onToggleMobile}
+          />
+        </AppShell.Header>
+      </AppShell>
     )
-    
-    // Click the user menu to open the dropdown
-    const userMenuBtn = screen.getByRole('button', { name: /User Menu/i })
-    await user.click(userMenuBtn)
-    
-    // Wait for the dropdown content
-    expect(await screen.findByText('Logout Custom')).toBeInTheDocument()
+
+    expect(screen.getByRole('banner')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Chuyển đổi chế độ sáng tối' })
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Mở menu điều hướng' }))
+    expect(onToggleMobile).toHaveBeenCalledTimes(1)
+
+    await user.click(screen.getByRole('button', { name: 'Menu tài khoản' }))
+    const body = within(document.body)
+    expect(await body.findByText('Hồ sơ Admin')).toBeInTheDocument()
+    expect(
+      body.getByRole('menuitem', { name: 'Đăng xuất' })
+    ).toBeInTheDocument()
+  })
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(
+      <AppShell header={{ height: 60 }}>
+        <AppShell.Header>
+          <AppHeader role="candidate" />
+        </AppShell.Header>
+      </AppShell>
+    )
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

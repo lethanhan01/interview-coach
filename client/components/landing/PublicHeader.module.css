@@ -1,0 +1,20 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: rem(64px);
+  background-color: var(--mantine-color-body);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.brandLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mantine-spacing-xs);
+  border-radius: var(--mantine-radius-sm);
+
+  &:focus-visible {
+    outline: rem(2px) solid var(--mantine-primary-color-filled);
+    outline-offset: rem(2px);
+  }
+}

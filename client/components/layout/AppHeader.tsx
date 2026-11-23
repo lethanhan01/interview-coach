@@ -1,99 +1,57 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, User, ScrollText, Settings } from 'lucide-react'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
-import { Button } from '@/components/ui/Button'
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetTitle,
-} from '@/components/ui/Sheet'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/DropdownMenu'
-import AppSidebar from './AppSidebar'
+import { Anchor, Burger, Group, Text, ThemeIcon } from '@mantine/core'
+import { IconMicrophone } from '@tabler/icons-react'
+import { ColorSchemeToggle } from './ColorSchemeToggle'
+import { UserMenuButton } from './UserMenuButton'
 
-interface AppHeaderProps {
+export interface AppHeaderProps {
   role: 'admin' | 'candidate'
-  logoutActionSlot?: React.ReactNode
+  mobileOpened?: boolean
+  onToggleMobile?: () => void
 }
 
-export default function AppHeader({ role, logoutActionSlot }: AppHeaderProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-
+export default function AppHeader({
+  role,
+  mobileOpened = false,
+  onToggleMobile,
+}: Readonly<AppHeaderProps>) {
   return (
-    <header className="bg-surface-overlay border-border/40 sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b px-4 backdrop-blur-md">
-      <div className="flex items-center gap-4">
-        <div className="md:hidden">
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Open menu">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
-              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-              <AppSidebar
-                role={role}
-                isMobile
-                onMobileClose={() => setIsMobileMenuOpen(false)}
-              />
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
+    <Group h="100%" px="md" justify="space-between" wrap="nowrap">
+      <Group gap="sm" wrap="nowrap">
+        <Burger
+          opened={mobileOpened}
+          onClick={onToggleMobile}
+          hiddenFrom="md"
+          size="sm"
+          aria-label="Mở menu điều hướng"
+        />
+        <Anchor
+          component={Link}
+          href="/"
+          underline="never"
+          hiddenFrom="md"
+          aria-label="AI Mock Interview — Trang chủ"
+        >
+          <Group gap="xs" wrap="nowrap">
+            <ThemeIcon color="brand" variant="light" size="sm" radius="md">
+              <IconMicrophone size={14} stroke={1.5} aria-hidden="true" />
+            </ThemeIcon>
+            <Text fw={700} size="sm">
+              AI Mock Interview
+            </Text>
+          </Group>
+        </Anchor>
+        <Text fw={600} size="sm" c="dimmed" visibleFrom="md">
+          {role === 'admin' ? 'Cổng quản trị' : 'Không gian luyện tập'}
+        </Text>
+      </Group>
 
-      <div className="flex items-center gap-2">
-        <ThemeToggle />
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <User className="h-5 w-5" />
-              <span className="sr-only">User Menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {role === 'candidate' ? (
-              <>
-                <DropdownMenuItem asChild>
-                  <Link href="/resume" className="flex w-full items-center gap-2 cursor-pointer">
-                    <ScrollText className="h-4 w-4" />
-                    <span>Hồ sơ CV</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/profile" className="flex w-full items-center gap-2 cursor-pointer">
-                    <Settings className="h-4 w-4" />
-                    <span>Cài đặt tài khoản</span>
-                  </Link>
-                </DropdownMenuItem>
-              </>
-            ) : (
-              <DropdownMenuItem asChild>
-                <Link href="/admin/profile" className="flex w-full items-center gap-2 cursor-pointer">
-                  <User className="h-4 w-4" />
-                  <span>Hồ sơ Admin</span>
-                </Link>
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <div className="p-1">
-              {logoutActionSlot}
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </header>
+      <Group gap="xs" wrap="nowrap">
+        <ColorSchemeToggle />
+        <UserMenuButton role={role} />
+      </Group>
+    </Group>
   )
 }

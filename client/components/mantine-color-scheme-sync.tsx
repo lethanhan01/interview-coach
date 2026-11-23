@@ -1,23 +1,19 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useTheme } from 'next-themes'
-import { useMantineColorScheme } from '@mantine/core'
+import { useComputedColorScheme } from '@mantine/core'
 
 export function MantineColorSchemeSync() {
-  const { theme, resolvedTheme } = useTheme()
-  const { setColorScheme } = useMantineColorScheme()
+  const computedColorScheme = useComputedColorScheme('light', {
+    getInitialValueInEffect: true,
+  })
 
   useEffect(() => {
-    if (theme === 'system') {
-      setColorScheme('auto')
-      return
-    }
-
-    if (resolvedTheme === 'dark' || resolvedTheme === 'light') {
-      setColorScheme(resolvedTheme)
-    }
-  }, [theme, resolvedTheme, setColorScheme])
+    document.documentElement.classList.toggle(
+      'dark',
+      computedColorScheme === 'dark'
+    )
+  }, [computedColorScheme])
 
   return null
 }

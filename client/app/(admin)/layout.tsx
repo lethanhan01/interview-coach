@@ -1,18 +1,15 @@
+import type { ReactNode } from 'react'
 import RoleGuard from '@/components/auth/RoleGuard'
 import AppLayout from '@/components/layout/AppLayout'
 
-import LogoutAction from '@/app/(auth)/LogoutAction'
-
 export default function AdminLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: ReactNode
+}>) {
   return (
     <RoleGuard allowedRole="admin" fallbackRoute="/sessions">
-      <AppLayout role="admin" logoutActionSlot={<LogoutAction className="w-full justify-start" />}>
-        {children}
-      </AppLayout>
+      <AppLayout role="admin">{children}</AppLayout>
     </RoleGuard>
   )
 }

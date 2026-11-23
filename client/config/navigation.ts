@@ -1,18 +1,24 @@
+import type { ComponentType } from 'react'
 import {
-  LayoutDashboard,
-  Users,
-  User,
-  CalendarDays,
-  FileText,
-  ScrollText,
-  BookOpen,
-  Network,
-} from 'lucide-react'
+  IconBook,
+  IconFilePlus,
+  IconFileText,
+  IconHierarchy,
+  IconLayoutDashboard,
+  IconMessages,
+  IconUser,
+  IconUsers,
+} from '@tabler/icons-react'
 
-export type NavItem = {
+export type NavIconComponent = ComponentType<{
+  size?: number | string
+  stroke?: number
+}>
+
+export interface NavItem {
   href: string
   label: string
-  icon: React.ElementType
+  icon: NavIconComponent
   match: string[]
 }
 
@@ -20,31 +26,31 @@ export const adminNavigation: NavItem[] = [
   {
     href: '/admin/dashboard',
     label: 'Dashboard',
-    icon: LayoutDashboard,
+    icon: IconLayoutDashboard,
     match: ['/admin/dashboard', '/admin-dashboard'],
   },
   {
     href: '/admin/onet',
     label: 'O*NET Browser',
-    icon: BookOpen,
+    icon: IconBook,
     match: ['/admin/onet'],
   },
   {
     href: '/admin/sfia',
     label: 'SFIA Framework',
-    icon: Network,
+    icon: IconHierarchy,
     match: ['/admin/sfia'],
   },
   {
     href: '/admin/users',
     label: 'Quản lý User',
-    icon: Users,
+    icon: IconUsers,
     match: ['/admin/users', '/users'],
   },
   {
     href: '/admin/profile',
     label: 'Hồ sơ',
-    icon: User,
+    icon: IconUser,
     match: ['/admin/profile', '/admin-profile'],
   },
 ]
@@ -53,25 +59,25 @@ export const candidateNavigation: NavItem[] = [
   {
     href: '/sessions',
     label: 'Phỏng vấn',
-    icon: CalendarDays,
+    icon: IconMessages,
     match: ['/sessions'],
   },
   {
     href: '/jd-library',
     label: 'Tạo mới',
-    icon: FileText,
+    icon: IconFilePlus,
     match: ['/jd-library', '/setup'],
   },
   {
     href: '/resume',
     label: 'CV / Resume',
-    icon: ScrollText,
+    icon: IconFileText,
     match: ['/resume'],
   },
   {
     href: '/profile',
     label: 'Tài khoản',
-    icon: User,
+    icon: IconUser,
     match: ['/profile'],
   },
 ]

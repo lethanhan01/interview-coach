@@ -1,36 +1,43 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import React, { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { SimpleGrid, Text } from '@mantine/core'
+import { useInterval } from '@mantine/hooks'
 import {
-  FileQuestion,
-  AlertTriangle,
-  RefreshCw,
-  LockKeyhole,
-  ShieldOff,
-  Wrench,
-  Rocket,
-  WifiOff,
-  Gauge,
-  Home,
-} from 'lucide-react'
-import { ErrorPageTemplate } from '@/components/patterns/ErrorPageTemplate'
+  IconAlertTriangle,
+  IconError404,
+  IconGauge,
+  IconHome,
+  IconLock,
+  IconRefresh,
+  IconRocket,
+  IconShieldOff,
+  IconTool,
+  IconWifiOff,
+} from '@tabler/icons-react'
+import {
+  ErrorPageTemplate,
+  type ErrorPageIconVariant,
+} from '@/components/patterns/ErrorPageTemplate'
 
 const meta: Meta = {
   title: 'Pages/Common',
   parameters: {
     layout: 'fullscreen',
+    nextjs: {
+      appDirectory: true,
+    },
   },
 }
+
 export default meta
 
 type Story = StoryObj
-
-// ─── 404 Not Found ──────────────────────────────────────────────────────────
 
 export const NotFoundPage: Story = {
   name: '404 — Not Found',
   render: () => (
     <ErrorPageTemplate
-      icon={<FileQuestion className="size-16" />}
+      icon={<IconError404 size={32} stroke={1.5} aria-hidden="true" />}
       iconVariant="brand"
       statusCode={404}
       title="Không tìm thấy trang"
@@ -40,7 +47,7 @@ export const NotFoundPage: Story = {
           label: 'Trang chủ',
           href: '/',
           variant: 'primary',
-          icon: <Home className="size-4" />,
+          icon: <IconHome size={16} stroke={1.5} aria-hidden="true" />,
         },
         { label: 'Phỏng vấn', href: '/sessions', variant: 'outline' },
       ]}
@@ -48,13 +55,11 @@ export const NotFoundPage: Story = {
   ),
 }
 
-// ─── 500 Internal Server Error ───────────────────────────────────────────────
-
 export const InternalErrorPage: Story = {
   name: '500 — Internal Server Error',
   render: () => (
     <ErrorPageTemplate
-      icon={<AlertTriangle className="size-16" />}
+      icon={<IconAlertTriangle size={32} stroke={1.5} aria-hidden="true" />}
       iconVariant="danger"
       title="Đã xảy ra sự cố không mong muốn"
       description="Hệ thống gặp lỗi trong quá trình xử lý yêu cầu. Vui lòng nhấn nút thử lại bên dưới hoặc quay về trang chủ."
@@ -62,13 +67,13 @@ export const InternalErrorPage: Story = {
       actions={[
         {
           label: 'Thử lại',
-          onClick: () => alert('reset()'),
+          onClick: () => {},
           variant: 'primary',
-          icon: <RefreshCw className="size-4" />,
+          icon: <IconRefresh size={16} stroke={1.5} aria-hidden="true" />,
         },
         {
           label: 'Trang chủ',
-          onClick: () => alert('→ /'),
+          href: '/',
           variant: 'outline',
         },
       ]}
@@ -76,13 +81,11 @@ export const InternalErrorPage: Story = {
   ),
 }
 
-// ─── 401 Unauthenticated ─────────────────────────────────────────────────────
-
 export const UnauthenticatedPage: Story = {
   name: '401 — Unauthenticated',
   render: () => (
     <ErrorPageTemplate
-      icon={<LockKeyhole className="size-16" />}
+      icon={<IconLock size={32} stroke={1.5} aria-hidden="true" />}
       iconVariant="brand"
       statusCode={401}
       title="Bạn chưa đăng nhập"
@@ -97,20 +100,18 @@ export const UnauthenticatedPage: Story = {
           label: 'Trang chủ',
           href: '/',
           variant: 'outline',
-          icon: <Home className="size-4" />,
+          icon: <IconHome size={16} stroke={1.5} aria-hidden="true" />,
         },
       ]}
     />
   ),
 }
 
-// ─── 403 Unauthorized ────────────────────────────────────────────────────────
-
 export const UnauthorizedPage: Story = {
   name: '403 — Unauthorized',
   render: () => (
     <ErrorPageTemplate
-      icon={<ShieldOff className="size-16" />}
+      icon={<IconShieldOff size={32} stroke={1.5} aria-hidden="true" />}
       iconVariant="warning"
       statusCode={403}
       title="Bạn không có quyền truy cập"
@@ -118,7 +119,7 @@ export const UnauthorizedPage: Story = {
       actions={[
         {
           label: 'Quay lại',
-          onClick: () => alert('router.back()'),
+          onClick: () => {},
           variant: 'outline',
         },
         { label: 'Trang chủ', href: '/', variant: 'primary' },
@@ -127,40 +128,38 @@ export const UnauthorizedPage: Story = {
   ),
 }
 
-// ─── Maintenance ─────────────────────────────────────────────────────────────
-
 export const MaintenancePage: Story = {
   name: 'Maintenance',
   render: () => (
     <ErrorPageTemplate
-      icon={<Wrench className="size-16" />}
+      icon={<IconTool size={32} stroke={1.5} aria-hidden="true" />}
       iconVariant="warning"
       title="Hệ thống đang bảo trì"
       description="Chúng tôi đang thực hiện nâng cấp để mang lại trải nghiệm tốt hơn cho bạn. Hệ thống sẽ sớm hoạt động trở lại."
       actions={[]}
     >
-      <p className="text-ink-faint mt-3 text-xs">
+      <Text size="xs" c="dimmed">
         Dự kiến hoàn thành:{' '}
-        <span className="text-ink-muted font-medium">14:00 ngày 07/09/2026</span>
-      </p>
+        <Text span fw={600} c="neutral">
+          14:00 ngày 07/09/2026
+        </Text>
+      </Text>
     </ErrorPageTemplate>
   ),
 }
-
-// ─── Coming Soon ─────────────────────────────────────────────────────────────
 
 export const ComingSoonPage: Story = {
   name: 'Coming Soon',
   render: () => (
     <ErrorPageTemplate
-      icon={<Rocket className="size-16" />}
+      icon={<IconRocket size={32} stroke={1.5} aria-hidden="true" />}
       iconVariant="brand"
       title="Tính năng sắp ra mắt"
       description="Chúng tôi đang phát triển tính năng này. Hãy quay lại sau để trải nghiệm nhé!"
       actions={[
         {
           label: 'Quay lại',
-          onClick: () => alert('router.back()'),
+          onClick: () => {},
           variant: 'outline',
         },
       ]}
@@ -168,20 +167,18 @@ export const ComingSoonPage: Story = {
   ),
 }
 
-// ─── Network Offline ─────────────────────────────────────────────────────────
-
 export const OfflineFallbackPage: Story = {
   name: 'Network Offline',
   render: () => (
     <ErrorPageTemplate
-      icon={<WifiOff className="size-16" />}
-      iconVariant="muted"
+      icon={<IconWifiOff size={32} stroke={1.5} aria-hidden="true" />}
+      iconVariant="neutral"
       title="Không có kết nối mạng"
       description="Vui lòng kiểm tra kết nối internet và thử lại."
       actions={[
         {
           label: 'Thử lại',
-          onClick: () => alert('window.location.reload()'),
+          onClick: () => {},
           variant: 'primary',
         },
       ]}
@@ -189,24 +186,29 @@ export const OfflineFallbackPage: Story = {
   ),
 }
 
-// ─── 429 Too Many Requests (with live countdown) ─────────────────────────────
-
-const STORY_RETRY_SECONDS = 10  // Shortened to 10s in Storybook for demo
+const STORY_RETRY_SECONDS = 10
 
 function TooManyRequestsDemo() {
   const [remaining, setRemaining] = useState(STORY_RETRY_SECONDS)
+  const interval = useInterval(
+    () => setRemaining((prev) => (prev > 0 ? prev - 1 : 0)),
+    1000
+  )
 
   useEffect(() => {
-    if (remaining <= 0) return
-    const timer = setInterval(() => setRemaining((r) => r - 1), 1000)
-    return () => clearInterval(timer)
-  }, [remaining])
+    if (remaining > 0) {
+      interval.start()
+    } else {
+      interval.stop()
+    }
+    return interval.stop
+  }, [remaining, interval])
 
   const isDisabled = remaining > 0
 
   return (
     <ErrorPageTemplate
-      icon={<Gauge className="size-16" />}
+      icon={<IconGauge size={32} stroke={1.5} aria-hidden="true" />}
       iconVariant="warning"
       statusCode={429}
       title="Quá nhiều yêu cầu"
@@ -229,19 +231,25 @@ export const TooManyRequestsPage: Story = {
   render: () => <TooManyRequestsDemo />,
 }
 
-// ─── All Icon Variants ────────────────────────────────────────────────────────
+const SEMANTIC_VARIANTS: ErrorPageIconVariant[] = [
+  'brand',
+  'success',
+  'warning',
+  'danger',
+  'neutral',
+]
 
 export const AllIconVariants: Story = {
-  name: 'ErrorPageTemplate — All Icon Variants',
+  name: 'ErrorPageTemplate — All Semantic Variants',
   render: () => (
-    <div className="grid grid-cols-1 gap-8 p-8 md:grid-cols-2">
-      {(['brand', 'danger', 'warning', 'muted'] as const).map((variant) => (
+    <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg" p="lg">
+      {SEMANTIC_VARIANTS.map((variant) => (
         <ErrorPageTemplate
           key={variant}
-          icon={<AlertTriangle className="size-16" />}
+          icon={<IconAlertTriangle size={32} stroke={1.5} aria-hidden="true" />}
           iconVariant={variant}
           title={`Variant: ${variant}`}
-          description="Đây là preview của icon variant này trong ErrorPageTemplate."
+          description="Đây là preview của icon variant ngữ nghĩa trong ErrorPageTemplate."
           statusCode={variant === 'danger' ? 500 : undefined}
           actions={[
             { label: 'Primary', href: '#', variant: 'primary' },
@@ -249,6 +257,6 @@ export const AllIconVariants: Story = {
           ]}
         />
       ))}
-    </div>
+    </SimpleGrid>
   ),
 }
