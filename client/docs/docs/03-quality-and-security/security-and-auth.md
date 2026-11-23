@@ -44,7 +44,7 @@ sequenceDiagram
             API->>API: Mutex Queue gọi POST /auth/refresh (1 lần duy nhất)
             alt Refresh thất bại
                 API-->>Ctx: Phát sự kiện hết phiên
-                Ctx-->>User: Purge Auth Context + SWR Cache + Draft Storage
+                Ctx-->>User: Purge Auth Context + QueryClient Cache + Draft Storage
             end
         end
     end
@@ -114,7 +114,7 @@ Bật `credentials: 'include'` khớp whitelist origin phía Backend (cấm `Acc
 
 ### 2.10. `SEC-010` — Quy Trình Hủy Phiên Sạch Sẽ (Session Purge) (`ERROR` · `[Target Standard]`)
 
-Khi người dùng đăng xuất hoặc phiên hết hạn, quy trình chuẩn bắt buộc thực hiện đủ 4 bước đồng bộ: (1) gọi API hủy HttpOnly cookie phía server, (2) reset Auth Context về `null`, (3) xóa sạch toàn bộ cache SWR nhạy cảm (`mutate(() => true, undefined, { revalidate: false })`), và (4) xóa mọi nháp trong `sessionStorage`. _(Ghi nhận thực tế: bước 3 và 4 là `[Target Standard]` cần bổ sung khi chuẩn hóa lại Auth Context.)_
+Khi người dùng đăng xuất hoặc phiên hết hạn (`auth:session-expired`), quy trình chuẩn bắt buộc thực hiện đủ 4 bước đồng bộ: (1) gọi API hủy HttpOnly cookie phía server, (2) reset Auth Context về `null`, (3) xóa sạch toàn bộ cache TanStack Query nhạy cảm (`queryClient.clear()`), và (4) xóa mọi nháp trong `sessionStorage`.
 
 <a id="sec-011"></a>
 
@@ -221,12 +221,13 @@ export function ReferenceDocLink({
 ```
 
 ```ts
-// Correct: Hủy phiên đăng xuất sạch sẽ (Server Cookie + Auth State + SWR Cache + Draft)
-import { mutate } from 'swr'
+// Correct: Hủy phiên đăng xuất sạch sẽ (Server Cookie + Auth State + QueryClient Cache + Draft)
+import type { QueryClient } from '@tanstack/react-query'
 
 const SETUP_DRAFT_KEY = 'interviewcoach:setup-wizard-draft:v1'
 
 export async function performCleanLogout(
+  queryClient: QueryClient,
   revokeServerSession: () => Promise<void>,
   resetAuthState: () => void
 ): Promise<void> {
@@ -234,10 +235,10 @@ export async function performCleanLogout(
     await revokeServerSession()
   } finally {
     resetAuthState()
+    queryClient.clear()
     if (typeof window !== 'undefined') {
       window.sessionStorage.removeItem(SETUP_DRAFT_KEY)
     }
-    await mutate(() => true, undefined, { revalidate: false })
   }
 }
 ```
@@ -246,13 +247,13 @@ export async function performCleanLogout(
 
 ## 4. Bảng Đối Chiếu Anti-Pattern vs Best Practice
 
-| Tình huống                          | Anti-Pattern (Tránh)                                              | Best Practice (Chuẩn mực)                                                                |
-| :---------------------------------- | :---------------------------------------------------------------- | :--------------------------------------------------------------------------------------- |
-| Lưu trữ JWT Access / Refresh Token  | Lưu trong `localStorage.setItem('token', jwt)` dễ bị XSS đánh cắp | Dùng HttpOnly Secure SameSite Cookies + `credentials: 'include'` (`SEC-003`)             |
-| Chuyển hướng sau đăng nhập `?next=` | `router.push(searchParams.get('next') ?? '/')` không kiểm tra     | Lọc qua `getSafeNext()` chặn `https://`, `//evil.com`, `javascript:` (`SEC-007`)         |
-| Đăng xuất người dùng                | Chỉ set `user = null` mà bỏ quên cache SWR của người dùng cũ      | Xóa đồng thời cookie server, Auth state, SWR cache và `sessionStorage` draft (`SEC-010`) |
-| Bảo vệ thao tác quản trị / xóa      | Chỉ ẩn nút trên UI hoặc chỉ dựa vào layout guard                  | Xác thực phiên & phân quyền RBAC ngay trong Server Action / Backend endpoint (`SEC-011`) |
-| Mở tài liệu tham khảo ở tab mới     | `<Anchor href={url} target="_blank">` thiếu `rel`                 | Luôn gắn `rel="noopener noreferrer"` (`SEC-007`)                                         |
+| Tình huống                          | Anti-Pattern (Tránh)                                                   | Best Practice (Chuẩn mực)                                                                      |
+| :---------------------------------- | :--------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
+| Lưu trữ JWT Access / Refresh Token  | Lưu trong `localStorage.setItem('token', jwt)` dễ bị XSS đánh cắp      | Dùng HttpOnly Secure SameSite Cookies + `credentials: 'include'` (`SEC-003`)                   |
+| Chuyển hướng sau đăng nhập `?next=` | `router.push(searchParams.get('next') ?? '/')` không kiểm tra          | Lọc qua `getSafeNext()` chặn `https://`, `//evil.com`, `javascript:` (`SEC-007`)               |
+| Đăng xuất người dùng                | Chỉ set `user = null` mà bỏ quên cache `QueryClient` của người dùng cũ | Xóa đồng thời cookie server, Auth state, `queryClient.clear()` và `sessionStorage` (`SEC-010`) |
+| Bảo vệ thao tác quản trị / xóa      | Chỉ ẩn nút trên UI hoặc chỉ dựa vào layout guard                       | Xác thực phiên & phân quyền RBAC ngay trong Server Action / Backend endpoint (`SEC-011`)       |
+| Mở tài liệu tham khảo ở tab mới     | `<Anchor href={url} target="_blank">` thiếu `rel`                      | Luôn gắn `rel="noopener noreferrer"` (`SEC-007`)                                               |
 
 ---
 
@@ -274,7 +275,7 @@ export async function performCleanLogout(
 - [ ] **4. Safe External Links:** 100% `<Anchor target="_blank">` có `rel="noopener noreferrer"` (`SEC-007`).
 - [ ] **5. PII Protection:** Không đưa email, SĐT, CV hay transcript vào URL query string hoặc `console.*` (`SEC-004`).
 - [ ] **6. Mutex Refresh Intact:** Không tự gọi `/auth/refresh` rời rạc ngoài hàng đợi Mutex của tầng HTTP client (`SEC-008`).
-- [ ] **7. Clean Logout Purge:** Đăng xuất xóa đồng thời server cookie, Auth state, SWR cache và nháp `sessionStorage` (`SEC-010`).
+- [ ] **7. Clean Logout Purge:** Đăng xuất xóa đồng thời server cookie, Auth state, `queryClient.clear()` và nháp `sessionStorage` (`SEC-010`).
 - [ ] **8. Server-Side RBAC:** Không chỉ dựa vào ẩn nút phía client để bảo vệ hành động nhạy cảm (`SEC-011`).
 - [ ] **9. Input Validation:** Mọi payload/query bên ngoài được xác thực qua Zod v4 (`SEC-006`).
 - [ ] **10. Audit Clean:** `npm run lint`, `npm run typecheck`, và `npm run test:unit` pass 100%.

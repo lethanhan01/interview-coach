@@ -30,7 +30,7 @@ Hệ thống quy chuẩn Frontend của **InterviewCoach** được tổ chức 
 
 Vì nhiều màn hình cũ trong `client/` đang trong quá trình chuyển đổi (migrate) và còn chứa nợ kỹ thuật, toàn bộ tài liệu trong `client/docs/` tuân thủ 3 nguyên tắc nghiêm ngặt được chốt chặn tự động bởi `scripts/verify-docs-integrity.mjs`:
 
-1. **Không trích xuất code từ mã nguồn nghiệp vụ cũ trong `client/`:** 100% đoạn mã tích cực trong tài liệu phải tự chứa (self-contained), lấy và adapt trực tiếp từ [`https://mantine.dev/`](https://mantine.dev/), [`https://ui.mantine.dev/`](https://ui.mantine.dev/), và bộ kỹ năng [`client/.agents/skills/`](../../.agents/skills/vercel-react-best-practices/SKILL.md). Chỉ cho phép duy nhất import nền tảng đã chuẩn hóa (`@/theme` và `@test-utils`).
+1. **Không trích xuất code từ mã nguồn nghiệp vụ cũ trong `client/`:** 100% đoạn mã tích cực trong tài liệu phải tự chứa (self-contained), lấy và adapt trực tiếp từ [`https://mantine.dev/`](https://mantine.dev/), [`https://ui.mantine.dev/`](https://ui.mantine.dev/), [`https://tanstack.com/query/v5`](https://tanstack.com/query/v5), và bộ kỹ năng [`client/.agents/skills/`](../../.agents/skills/vercel-react-best-practices/SKILL.md). Chỉ cho phép import các alias hạ tầng đã chuẩn hóa (`@/theme`, `@test-utils`, `@/lib/query-client`, `@/lib/api-client`).
 2. **Mantine v9 Zero-Hex Precedence:** Mọi ví dụ chuyển đổi từ tài liệu React/Vercel đều phải được kiểm chứng tự động qua `analyzeSource()` (`scripts/check-ui-rules.mjs`) để đạt 0 raw HTML, 0 HEX/RGB/HSL và 0 hardcode `px`.
 3. **Zero Raw-Icon Typography:** Tài liệu sử dụng nhãn chữ kỹ thuật chuẩn (`ERROR`, `WARN`, `ROADMAP`, `// Incorrect:`, `// Correct:`) thay cho raw Unicode emojis để giữ tính chuyên nghiệp và khả năng đọc cao.
 
@@ -40,7 +40,7 @@ mindmap
     01-foundations
       Architecture & App Router
       Coding Standards STD
-      State SWR & SSE
+      State TanStack Query & SSE
     02-ui-and-design-system
       Component Patterns
       Forms Mantine & Zod
@@ -50,7 +50,7 @@ mindmap
       Responsive & Touch MOB
     03-quality-and-security
       Testing 4-Layer QA
-      API Contracts & SWR API
+      API Contracts & Resilience API
       Security & Auth SEC
     04-performance-and-ops
       Performance & CWV PERF
@@ -73,14 +73,14 @@ flowchart TD
 
 ## 2. Bối Cảnh Kỹ Thuật Chuẩn Hóa Của InterviewCoach Frontend
 
-| Thành phần              | Stack chuẩn hóa (`client/package.json`)                                                                                                   | Ghi chú thực thi                                                                                                    |
-| :---------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
-| **Framework & Runtime** | Next.js `16.2.6` (App Router, `proxy.ts`), React `19.2.4`, TypeScript `^5`, `npm`                                                         | 5 Route Groups: `(public)`, `(auth)`, `(candidate)`, `(admin)`, `(common)`                                          |
-| **UI Library & Icons**  | Mantine UI v9 (`@mantine/core`, `hooks`, `form`, `notifications`, `modals`, `dropzone` `^9.8.2`) + `@tabler/icons-react` `^3.52.0`        | **Mantine-First & Zero-Hex Semantic-Only** (`client/theme.ts` RSC-safe, 5 vai trò ngữ nghĩa)                        |
-| **Styling & CSS Gate**  | PostCSS (`postcss-preset-mantine`, `postcss-simple-vars`), CSS Modules (`*.module.css`), Stylelint `^17.16.0`                             | Chạy song song Tailwind v4 qua `@layer` + `styles.layer.css` & `MantineColorSchemeSync` trong giai đoạn chuyển tiếp |
-| **Data, State & Forms** | `swr` `^2.4.1`, SSE `EventSource`, Minimal React Context, Next.js URL params, `@mantine/form` (`uncontrolled`) + `zod` `^4.4.3`           | Không cài thêm store bên ngoài hay lớp wrapper form thừa                                                            |
-| **Testing & QA**        | Vitest `^4.1.10` (`unit` vs `storybook`), `@test-utils`, `jest-axe`, Storybook `^10.5.5` (`@storybook/nextjs-vite`), Playwright `^1.62.1` | Tích hợp `scripts/check-ui-rules.mjs` (`ui:lint`) và `scripts/verify-docs-integrity.mjs` (`verify:docs`)            |
-| **Deployment**          | Vercel (`client/vercel.json`, `regions: ["sin1"]`) + GitHub Actions CI                                                                    | Fail-fast `NEXT_PUBLIC_API_BASE_URL` tại `client/next.config.ts`                                                    |
+| Thành phần              | Stack chuẩn hóa (`client/package.json`)                                                                                                       | Ghi chú thực thi                                                                                                    |
+| :---------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| **Framework & Runtime** | Next.js `16.2.6` (App Router, `proxy.ts`), React `19.2.4`, TypeScript `^5`, `npm`                                                             | 5 Route Groups: `(public)`, `(auth)`, `(candidate)`, `(admin)`, `(common)`                                          |
+| **UI Library & Icons**  | Mantine UI v9 (`@mantine/core`, `hooks`, `form`, `notifications`, `modals`, `dropzone` `^9.8.2`) + `@tabler/icons-react` `^3.52.0`            | **Mantine-First & Zero-Hex Semantic-Only** (`client/theme.ts` RSC-safe, 5 vai trò ngữ nghĩa)                        |
+| **Styling & CSS Gate**  | PostCSS (`postcss-preset-mantine`, `postcss-simple-vars`), CSS Modules (`*.module.css`), Stylelint `^17.16.0`                                 | Chạy song song Tailwind v4 qua `@layer` + `styles.layer.css` & `MantineColorSchemeSync` trong giai đoạn chuyển tiếp |
+| **Data, State & Forms** | `@tanstack/react-query` `^5`, SSE `EventSource`, Minimal React Context, Next.js URL params, `@mantine/form` (`uncontrolled`) + `zod` `^4.4.3` | Không cài thêm store bên ngoài hay lớp wrapper form thừa                                                            |
+| **Testing & QA**        | Vitest `^4.1.10` (`unit` vs `storybook`), `@test-utils`, `jest-axe`, Storybook `^10.5.5` (`@storybook/nextjs-vite`), Playwright `^1.62.1`     | Tích hợp `scripts/check-ui-rules.mjs` (`ui:lint`) và `scripts/verify-docs-integrity.mjs` (`verify:docs`)            |
+| **Deployment**          | Vercel (`client/vercel.json`, `regions: ["sin1"]`) + GitHub Actions CI                                                                        | Fail-fast `NEXT_PUBLIC_API_BASE_URL` tại `client/next.config.ts`                                                    |
 
 ---
 
@@ -92,7 +92,7 @@ flowchart TD
 | :----: | :------------------------------------------------------------------------- | :-----------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **01** | [Architecture & Structure](./01-foundations/architecture-and-structure.md) |       _(Guidebook)_       | 5 Route Groups, `proxy.ts`, RSC vs `'use client'` (`server-serialization`), Hybrid Co-location & Rule of Three, đóng băng `components/ui/`, `bundle-barrel-imports`                                    |
 | **02** | [Coding Standards](./01-foundations/coding-standards.md)                   | **`STD-*`** (16 + 18 Sub) | TypeScript Strict, `AbortSignal`, ISO-8601 UTC & hoisted `Intl.DateTimeFormat`, Structured Errors, React 19 `ref`/`use()`, `interviewcoach-convention-exempt`, Ternary `? : null`, 18 Vercel Sub-Rules |
-| **03** | [State Management](./01-foundations/state-management.md)                   |       _(Guidebook)_       | 4 lớp State (SWR v2 Key Factory `client-swr-dedup`, Minimal Context, URL `useSearchParams`, `@mantine/hooks`), kênh SSE `EventSource` + Zod, Derived State, Optimistic Rollback                        |
+| **03** | [State Management](./01-foundations/state-management.md)                   |       _(Guidebook)_       | 4 lớp State (TanStack Query v5 `queryKeys` Factory `client-swr-dedup`, Minimal Context, URL `useSearchParams`, `@mantine/hooks`), kênh SSE `EventSource` + Zod, Derived State, Optimistic Rollback     |
 
 ### Miền 2 — `02-ui-and-design-system/` (UI, Forms, Zero-Hex Design System, A11y, Motion & Responsive)
 
@@ -110,7 +110,7 @@ flowchart TD
 |  STT   | Chuyên đề                                                                               |   Tiền tố SSOT   | Nội dung trọng tâm                                                                                                                                                                                       |
 | :----: | :-------------------------------------------------------------------------------------- | :--------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **10** | [Testing & QA](./03-quality-and-security/testing-and-qa.md)                             |  _(Guidebook)_   | Kim tự tháp 4 tầng khớp `package.json`, Vitest 4 (`unit` vs `storybook`), `@test-utils`, Portal testing (`within`), Form Zod v4 testing, Accessible Queries, 12 tiêu chí DoD                             |
-| **11** | [API Contracts & Resilience](./03-quality-and-security/api-contracts-and-resilience.md) | **`API-*`** (12) | SSOT 12 `API-*`, `Idempotency-Key`, `ApiClientError`, `AbortSignal`, Zod response validation, `Promise.all` (`async-parallel`), SWR `client-swr-dedup`, `useNetwork()` Offline UX                        |
+| **11** | [API Contracts & Resilience](./03-quality-and-security/api-contracts-and-resilience.md) | **`API-*`** (12) | SSOT 12 `API-*`, `Idempotency-Key`, `ApiClientError`, `AbortSignal`, Zod response validation, `Promise.all` (`async-parallel`), TanStack Query `client-swr-dedup`, `useNetwork()` Offline UX             |
 | **12** | [Security & Auth](./03-quality-and-security/security-and-auth.md)                       | **`SEC-*`** (11) | SSOT 11 `SEC-*` (OWASP), HttpOnly Cookies + Next.js 16 `proxy.ts`, `getSafeNext()` chống Open Redirect, Mutex 401 Refresh, `server-auth-actions`, Session Purge `[Target]`, `DOMPurify` & CSP `[Target]` |
 
 ### Miền 4 — `04-performance-and-ops/` (Hiệu năng, Giám sát, i18n & DevOps)
@@ -141,7 +141,7 @@ Mọi chuyên đề trong 16 tài liệu đều tuân thủ 6 khối chuẩn (đ
 
 | Vai trò                              | Thứ tự đọc khuyến nghị                                                    | Mục tiêu                                                                         |
 | :----------------------------------- | :------------------------------------------------------------------------ | :------------------------------------------------------------------------------- |
-| **Kỹ sư mới (Onboarding — Ngày 1)**  | `QUICK_REFERENCE.md` → `../mantine/README.md` → `01-foundations/*`        | Nắm 3 điều cấm kỵ, cấu trúc App Router, SWR & bộ lệnh kiểm toán                  |
+| **Kỹ sư mới (Onboarding — Ngày 1)**  | `QUICK_REFERENCE.md` → `../mantine/README.md` → `01-foundations/*`        | Nắm 3 điều cấm kỵ, cấu trúc App Router, TanStack Query & bộ lệnh kiểm toán       |
 | **Feature Developer (UI / Migrate)** | `02-ui-and-design-system/*` → `03-quality-and-security/testing-and-qa.md` | Xây giao diện Mantine v9 Zero-Hex, Form Zod v4, A11y & unit test `@test-utils`   |
 | **Tech Lead / Reviewer / QA**        | `QUICK_REFERENCE.md` (Ma trận 131 Rule IDs) → `03-quality-and-security/*` | Review PR theo DoD 12 tiêu chí, kiểm soát API contract, bảo mật & coverage       |
 | **DevOps / Performance Owner**       | `04-performance-and-ops/*`                                                | Kiểm soát First Load JS ≤ 180KB gzip, Vercel CI/CD, Observability & Cache policy |

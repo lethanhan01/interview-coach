@@ -6,9 +6,9 @@ Tài liệu này bám sát cấu hình kiểm thử và công cụ kiểm toán 
 
 ## 1. Testing với Vitest 4 & `@test-utils`
 
-Mọi component Mantine đều yêu cầu `<MantineProvider>`. Do đó trong unit/component test **bắt buộc** import `render`, `screen`, `userEvent` từ `@test-utils` ([client/test-utils/index.ts](../../test-utils/index.ts)), **không** import `render` trực tiếp từ `@testing-library/react`.
+Mọi component Mantine và hook dữ liệu đều yêu cầu `<MantineProvider>` cùng `<QueryClientProvider>`. Do đó trong unit/component test **bắt buộc** import `render`, `screen`, `userEvent` từ `@test-utils` ([client/test-utils/index.ts](../../test-utils/index.ts)), **không** import `render` trực tiếp từ `@testing-library/react`.
 
-- File [client/test-utils/render.tsx](../../test-utils/render.tsx) tự động bọc `<MantineProvider theme={theme} env="test"><ModalsProvider>{children}</ModalsProvider></MantineProvider>` (`env="test"` tắt transition/animation để test ổn định và chạy nhanh).
+- File [client/test-utils/render.tsx](../../test-utils/render.tsx) tự động khởi tạo một instance `QueryClient` cô lập cho mỗi bài test (`retry: false`, `gcTime: 0`) và bọc `<QueryClientProvider client={testQueryClient}><MantineProvider theme={theme} env="test"><ModalsProvider>{children}</ModalsProvider></MantineProvider></QueryClientProvider>` (`env="test"` tắt transition/animation để test ổn định và chạy nhanh).
 - File [client/vitest.config.mts](../../vitest.config.mts) tách rõ 2 project:
   - **`unit`** (`jsdom` + `@testing-library/react` + `jest-axe`, alias `@` và `@test-utils`): chạy bằng `npm run test:unit`.
   - **`storybook`** (trình duyệt Playwright Chromium qua `@storybook/addon-vitest`): chạy bằng `npm run test:storybook`.

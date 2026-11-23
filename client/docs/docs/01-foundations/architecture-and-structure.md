@@ -46,7 +46,7 @@ flowchart TD
 
     APP --> GROUPS
     GROUPS --> UI["components/<domain>/ & app/.../_components/<br/>Mantine v9 + CSS Modules"]
-    UI --> HOOKS["hooks/ (SWR v2, SSE, URL & Domain Hooks)"]
+    UI --> HOOKS["hooks/ (TanStack Query v5, SSE, URL & Domain Hooks)"]
     HOOKS --> SVC["services/*.service.ts (Typed HTTP Contracts)"]
     SVC --> API["HTTP Client Layer (Fetch + AbortSignal + Errors)"]
     UI --> THEME["theme.ts (RSC-Safe Zero-Hex) & @mantine/core"]
@@ -56,7 +56,7 @@ flowchart TD
 
 - `app/` được phép import từ `components/`, `hooks/`, `services/`, `lib/`, `config/`, và `theme.ts`.
 - `components/` được phép import từ `@mantine/*`, `@tabler/icons-react`, `hooks/`, `lib/`, `config/`, và các tệp trong cùng miền `components/<domain>/`. **Cấm** import ngược từ `app/`.
-- `hooks/` được phép import từ `services/`, `lib/`, `swr`, `@mantine/hooks`. **Cấm** import UI component hoặc CSS Module.
+- `hooks/` được phép import từ `services/`, `lib/`, `@tanstack/react-query`, `@mantine/hooks`. **Cấm** import UI component hoặc CSS Module.
 - `services/` chỉ import tầng HTTP client, schema `zod`, và type DTO thuần. **Tuyệt đối không** import `react`, `next/navigation`, hay `@mantine/core`.
 
 ---
@@ -65,7 +65,7 @@ flowchart TD
 
 ### 2.1. Phân tách 3 workspace trong Monorepo
 
-- `client/` — Next.js `16.2.6` (App Router) + React `19.2.4` + Mantine v9 (`^9.8.2`) + SWR v2 + TypeScript 5 (`npm`).
+- `client/` — Next.js `16.2.6` (App Router) + React `19.2.4` + Mantine v9 (`^9.8.2`) + TanStack Query v5 + TypeScript 5 (`npm`).
 - `server/` — NestJS Backend API (REST + SSE + Prisma + PostgreSQL + BullMQ).
 - `ai-service/` — Dịch vụ AI xử lý sinh câu hỏi, giọng nói và đánh giá năng lực STAR/SFIA.
 
@@ -81,7 +81,7 @@ client/
 │   ├── (candidate)/              # Không gian ứng viên: sessions, setup, resume, jd-library, profile
 │   ├── (admin)/                  # Không gian quản trị: dashboard, sfia, onet, users, profile
 │   ├── (common)/                 # Trang trạng thái hệ thống: offline, maintenance, unauthorized
-│   ├── layout.tsx                # RootLayout (RSC): ColorSchemeScript, mantineHtmlProps, MantineProvider
+│   ├── layout.tsx                # RootLayout (RSC): ColorSchemeScript, mantineHtmlProps, MantineProvider, QueryProvider
 │   ├── globals.css               # @layer theme, base, mantine, components, utilities + styles.layer.css
 │   ├── error.tsx                 # Route Segment Error Boundary
 │   ├── global-error.tsx          # Fatal Root Layout Error Boundary
@@ -90,14 +90,14 @@ client/
 │   ├── <domain>/                 # auth, interview, setup, report, sfia, onet, resume, profile
 │   ├── layout/ & patterns/       # Khung AppShell và mẫu UI tái sử dụng dựng trên Mantine v9
 │   └── ui/                       # [LEGACY FROZEN] Chờ gỡ bỏ sau migrate — CẤM thêm file mới
-├── hooks/                        # Custom hooks dùng chung (SWR Key Factory, SSE, countdown...)
+├── hooks/                        # Custom hooks dùng chung (TanStack Query hooks, SSE, countdown...)
 ├── services/                     # Domain API Services (1 tệp / 1 ngữ cảnh nghiệp vụ)
-├── lib/                          # Tiện ích thuần không gắn UI (HTTP client, date-time, types, validators)
+├── lib/                          # Hạ tầng thuần (api-client.ts, query-client.tsx, date-time, types, validators)
 ├── middleware/                   # Guard định tuyến (Auth cookie presence, Maintenance mode)
 ├── proxy.ts                      # Next.js 16 Proxy entry point (thay middleware.ts)
 ├── config/                       # Hằng số tĩnh (navigation, feature flags)
 ├── theme.ts                      # SSOT Mantine v9 Theme (RSC-safe, Zero-Hex, 5 semantic roles)
-├── test-utils/                   # Custom render bọc MantineProvider(env="test") + ModalsProvider
+├── test-utils/                   # Custom render bọc QueryClientProvider + MantineProvider(env="test") + ModalsProvider
 ├── e2e/                          # Playwright end-to-end specs
 ├── scripts/                      # check-ui-rules.mjs, verify-docs-integrity.mjs
 └── docs/                         # docs/mantine/ (Tactical Lookup) & docs/docs/ (Enterprise Standards)
@@ -111,13 +111,13 @@ Next.js 16 App Router mặc định mọi tệp trong `app/` là **React Server 
 
 ### Bảng phân định trách nhiệm Server vs Client
 
-| Thành phần                                                                             |              Môi trường               | Quy định bắt buộc                                                                                                                                           |
-| :------------------------------------------------------------------------------------- | :-----------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `app/layout.tsx`, `app/(group)/layout.tsx`, `page.tsx`                                 |    **Server Component** (mặc định)    | Đọc `params`/`searchParams`, cấu hình `metadata`, tải dữ liệu ban đầu và chỉ truyền props tối giản xuống Client Component.                                  |
-| `client/theme.ts`                                                                      |      **RSC-Safe Shared Module**       | **Tuyệt đối không đặt `'use client'`** để `app/layout.tsx` import trực tiếp ở Server (xem [Setup Mantine v9](../../mantine/02-setup-forms-hooks-guide.md)). |
-| Component có `useState`, `useEffect`, `useSWR`, `useForm`, `@mantine/hooks`, `onClick` | **Client Component (`'use client'`)** | Cô lập tại nút lá tương tác; không đánh dấu `'use client'` ở trang gốc chỉ vì có 1 nút bấm hoặc thanh lọc nhỏ.                                              |
-| Component Mantine v9 tĩnh (`Container`, `Stack`, `Group`, `Title`, `Text`, `Paper`)    |           **RSC & Client**            | Render trực tiếp trong Server Component hoặc truyền làm `children` vào Client wrapper (**Donut / Slot Pattern**).                                           |
-| `proxy.ts` & `middleware/*`                                                            |       **Next.js Proxy Runtime**       | Chỉ xử lý định tuyến nhẹ (kiểm tra tồn tại cookie, maintenance redirect). `config.matcher` trong `proxy.ts` phải là static literal tương thích Turbopack.   |
+| Thành phần                                                                                              |              Môi trường               | Quy định bắt buộc                                                                                                                                           |
+| :------------------------------------------------------------------------------------------------------ | :-----------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/layout.tsx`, `app/(group)/layout.tsx`, `page.tsx`                                                  |    **Server Component** (mặc định)    | Đọc `params`/`searchParams`, cấu hình `metadata`, tải dữ liệu ban đầu và chỉ truyền props tối giản xuống Client Component.                                  |
+| `client/theme.ts`                                                                                       |      **RSC-Safe Shared Module**       | **Tuyệt đối không đặt `'use client'`** để `app/layout.tsx` import trực tiếp ở Server (xem [Setup Mantine v9](../../mantine/02-setup-forms-hooks-guide.md)). |
+| Component có `useState`, `useEffect`, `useQuery`, `useMutation`, `useForm`, `@mantine/hooks`, `onClick` | **Client Component (`'use client'`)** | Cô lập tại nút lá tương tác; không đánh dấu `'use client'` ở trang gốc chỉ vì có 1 nút bấm hoặc thanh lọc nhỏ.                                              |
+| Component Mantine v9 tĩnh (`Container`, `Stack`, `Group`, `Title`, `Text`, `Paper`)                     |           **RSC & Client**            | Render trực tiếp trong Server Component hoặc truyền làm `children` vào Client wrapper (**Donut / Slot Pattern**).                                           |
+| `proxy.ts` & `middleware/*`                                                                             |       **Next.js Proxy Runtime**       | Chỉ xử lý định tuyến nhẹ (kiểm tra tồn tại cookie, maintenance redirect). `config.matcher` trong `proxy.ts` phải là static literal tương thích Turbopack.   |
 
 ### Ví dụ đối chiếu `server-serialization` (adapted từ `vercel-react-best-practices` sang Mantine v9)
 

@@ -24,7 +24,7 @@ Tài liệu này mô tả cấu hình nền tảng thực tế trong `client/` (
 
 ### Root Layout ([client/app/layout.tsx](../../app/layout.tsx))
 
-`RootLayout` là Server Component, gắn `mantineHtmlProps` lên `<html>`, `<ColorSchemeScript defaultColorScheme="auto" />` trong `<head>` để chống FOUC, và bọc `<MantineProvider>`, `<Notifications />`, `<ModalsProvider>`:
+`RootLayout` là Server Component, gắn `mantineHtmlProps` lên `<html>`, `<ColorSchemeScript defaultColorScheme="auto" />` trong `<head>` để chống FOUC, và bọc `<MantineProvider>`, `<Notifications />`, `<ModalsProvider>`, `<QueryProvider>`:
 
 ```tsx
 import './globals.css'
@@ -36,6 +36,7 @@ import {
 } from '@mantine/core'
 import { ModalsProvider } from '@mantine/modals'
 import { Notifications } from '@mantine/notifications'
+import { QueryProvider } from '@/lib/query-client'
 import { theme } from '@/theme'
 
 export default function RootLayout({
@@ -49,7 +50,9 @@ export default function RootLayout({
       <body>
         <MantineProvider theme={theme} defaultColorScheme="auto">
           <Notifications position="top-right" />
-          <ModalsProvider>{children}</ModalsProvider>
+          <ModalsProvider>
+            <QueryProvider>{children}</QueryProvider>
+          </ModalsProvider>
         </MantineProvider>
       </body>
     </html>
@@ -61,7 +64,7 @@ export default function RootLayout({
 
 ### Tối ưu Tree-Shaking ([client/next.config.ts](../../next.config.ts))
 
-Đã khai báo `experimental.optimizePackageImports` cho toàn bộ package `@mantine/*` và `@tabler/icons-react` nhằm giữ bundle gọn nhẹ trên Next.js 16:
+Đã khai báo `experimental.optimizePackageImports` cho toàn bộ package `@mantine/*`, `@tabler/icons-react`, và `@tanstack/react-query` nhằm giữ bundle gọn nhẹ trên Next.js 16:
 
 ```ts
 const nextConfig: NextConfig = {
@@ -74,6 +77,7 @@ const nextConfig: NextConfig = {
       '@mantine/modals',
       '@mantine/dropzone',
       '@tabler/icons-react',
+      '@tanstack/react-query',
     ],
   },
 }
@@ -287,7 +291,7 @@ export function SessionSearchBox() {
   const [value, setValue] = useState('')
   const [debounced] = useDebouncedValue(value, 300)
 
-  // Dùng `debounced` làm key SWR hoặc lọc danh sách phiên
+  // Dùng `debounced` làm tham số trong queryKeys.onet.search(debounced) của TanStack Query
   return (
     <TextInput
       label="Tìm kiếm phiên phỏng vấn"

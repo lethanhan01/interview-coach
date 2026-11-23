@@ -162,7 +162,7 @@ export const RubricItem = {
 Trong **Next.js 16 App Router**, mô hình Container / Presentational được tổ chức rõ thành 3 lớp:
 
 1. **Server Component (`page.tsx`):** Đọc `params`/`searchParams`, khai báo `metadata`, dựng khung bố cục tĩnh (`Container`, `Stack`, `Title`) và truyền props serializable tối giản xuống Client Container (`server-serialization`).
-2. **Client Container (`'use client'`):** Quản lý `useSWR`, `@mantine/form`, `@mantine/hooks` và điều phối trạng thái loading/error.
+2. **Client Container (`'use client'`):** Quản lý `useQuery` / `useMutation` (`@tanstack/react-query`), `@mantine/form`, `@mantine/hooks` và điều phối trạng thái loading/error.
 3. **Presentational Component:** Thuần nhận props và trả về Mantine JSX (tách biệt hoàn toàn khỏi HTTP client), dễ viết Storybook story và unit test cô lập với `@test-utils` (`state-decouple-implementation`).
 
 ---

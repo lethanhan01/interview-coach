@@ -3,12 +3,12 @@
 > **Dự án:** InterviewCoach Frontend (`client/`)  
 > **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
-> **Tài liệu liên quan:** [State Management (SWR & SSE)](../01-foundations/state-management.md) | [Security & Auth (`SEC-*`)](./security-and-auth.md) | [Testing & QA](./testing-and-qa.md) | [Coding Standards (`STD-*`)](../01-foundations/coding-standards.md)  
-> **Vai trò SSOT:** Nguồn chân lý duy nhất cho **12 mã quy chuẩn `API-001` đến `API-012`**, định nghĩa chuẩn mực hợp đồng API, khử trùng lặp SWR (`client-swr-dedup`), chống waterfall (`async-parallel`, `server-parallel-fetching`), và xử lý ngoại tuyến bằng `@mantine/hooks`.  
+> **Tài liệu liên quan:** [State Management (TanStack Query & SSE)](../01-foundations/state-management.md) | [Security & Auth (`SEC-*`)](./security-and-auth.md) | [Testing & QA](./testing-and-qa.md) | [Coding Standards (`STD-*`)](../01-foundations/coding-standards.md)  
+> **Vai trò SSOT:** Nguồn chân lý duy nhất cho **12 mã quy chuẩn `API-001` đến `API-012`**, định nghĩa chuẩn mực hợp đồng API, khử trùng lặp với TanStack Query v5 (`client-swr-dedup`), chống waterfall (`async-parallel`, `server-parallel-fetching`), và xử lý ngoại tuyến bằng `@mantine/hooks`.  
 > **Cơ sở tham chiếu quốc tế:**
 >
 > - [RFC 9457 — Problem Details for HTTP APIs](https://datatracker.ietf.org/doc/html/rfc9457)
-> - [SWR v2 — Deduplication, Revalidation & Error Retry](https://swr.vercel.app/docs/error-handling)
+> - [TanStack Query v5 — Query Deduplication, Caching & Retry](https://tanstack.com/query/v5/docs/framework/react/guides/query-Retries)
 > - [Mantine v9 Hooks — `useNetwork`](https://mantine.dev/hooks/use-network/)
 > - [MDN Web Docs — `AbortController` & Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/AbortController)
 > - [Vercel React Best Practices (`async-parallel`, `server-parallel-fetching`, `client-swr-dedup`)](../../../.agents/skills/vercel-react-best-practices/SKILL.md)
@@ -31,12 +31,12 @@ Mọi giao tiếp giữa Frontend (`client/`) và NestJS Backend (`server/`) ph�
 
 ```mermaid
 sequenceDiagram
-    participant UI as Mantine Component / SWR Hook
+    participant UI as Mantine Component / TanStack Query Hook
     participant Svc as Domain Service (*.service.ts)
-    participant Client as HTTP Client Layer
+    participant Client as HTTP Client Layer (api-client.ts)
     participant API as Backend API (/api/v1)
 
-    UI->>Svc: Gọi hàm domain service (+ signal?: AbortSignal)
+    UI->>Svc: Gọi hàm domain service (+ signal?: AbortSignal từ queryFn)
     Svc->>Client: Request (credentials: include + Idempotency-Key cho mutation)
     Client->>API: HTTP Request
     alt 401 Unauthorized (non-auth route)
@@ -50,7 +50,7 @@ sequenceDiagram
         Client-->>UI: throw ApiClientError(statusCode, errorCode, details, requestId)
     else 200 / 201 OK
         API-->>Svc: JSON Payload (Zod v4 validate tại biên mạng)
-        Svc-->>UI: Typed DTO -> SWR cache & deduping
+        Svc-->>UI: Typed DTO -> QueryClient cache & deduping
     end
 ```
 
@@ -110,12 +110,13 @@ Với các payload phức tạp hoặc quan trọng (báo cáo STAR, kết quả
 
 <a id="api-009"></a>
 
-### 2.9. `API-009` — Phân Tầng `dedupingInterval` & Revalidation Trên SWR (`WARN` · `[Active]`)
+### 2.9. `API-009` — Phân Tầng `staleTime`, `gcTime` & `refetchOnWindowFocus` Trên TanStack Query (`WARN` · `[Active]`)
 
-Cấu hình SWR theo độ biến động của tài nguyên thay vì dùng một giá trị chung:
+Cấu hình TanStack Query theo độ biến động của tài nguyên thay vì dùng một giá trị chung:
 
-- Dữ liệu thay đổi thường xuyên (danh sách phiên đang hoạt động): `revalidateOnFocus: true`, `dedupingInterval: 5_000`.
-- Dữ liệu tham chiếu ít biến động (khung kỹ năng SFIA, O\*NET, báo cáo đã chốt): `revalidateOnFocus: false`, `dedupingInterval: 60_000`.
+- Dữ liệu thay đổi thường xuyên (danh sách phiên đang hoạt động): `refetchOnWindowFocus: true`, `staleTime: 5_000`.
+- Dữ liệu chuẩn mặc định toàn ứng dụng (`makeQueryClient()`): `refetchOnWindowFocus: true`, `staleTime: 30_000`.
+- Dữ liệu tham chiếu ít biến động (khung kỹ năng SFIA, O\*NET, báo cáo đã chốt): `refetchOnWindowFocus: false`, `staleTime: 60_000`.
 
 <a id="api-010"></a>
 
@@ -131,9 +132,9 @@ Khi mở rộng bộ integration tests đa-endpoint, cài `msw` v2 để chặn 
 
 <a id="api-012"></a>
 
-### 2.12. `API-012` — Khử Trùng Lặp Request Tại Client Với SWR (`WARN` · `[Active]`)
+### 2.12. `API-012` — Khử Trùng Lặp Request Tại Client Với TanStack Query (`WARN` · `[Active]`)
 
-Áp dụng quy tắc `client-swr-dedup` từ `vercel-react-best-practices`: nhiều component cùng cần một nguồn dữ liệu gọi chung 1 SWR hook dùng chung Key Factory để SWR tự khử trùng lặp chỉ gửi 1 HTTP request duy nhất.
+Áp dụng nguyên tắc `client-swr-dedup` từ `vercel-react-best-practices`: nhiều component cùng cần một nguồn dữ liệu gọi chung `useQuery` với khóa từ bộ **`queryKeys` factory** (`@/lib/query-client`) để TanStack Query tự khử trùng lặp chỉ gửi 1 HTTP request duy nhất.
 
 ---
 
@@ -252,13 +253,13 @@ export function NetworkStatusAlert({ onRetry }: { onRetry: () => void }) {
 
 ## 4. Bảng Đối Chiếu Anti-Pattern vs Best Practice
 
-| Tình huống                      | Anti-Pattern (Tránh)                                                   | Best Practice (Chuẩn mực)                                                                 |
-| :------------------------------ | :--------------------------------------------------------------------- | :---------------------------------------------------------------------------------------- |
-| Tải nhiều API độc lập           | `await fetchA(); await fetchB(); await fetchC()` tuần tự               | Gom vào `Promise.all([fetchA(), fetchB(), fetchC()])` (`API-011`, `async-parallel`)       |
-| Tìm kiếm tức thì (autocomplete) | Không truyền `AbortSignal` khiến phản hồi cũ ghi đè phản hồi mới       | Truyền `signal` từ `AbortController` hoặc gắn `useDebouncedValue` vào SWR key (`API-003`) |
-| Nộp form tạo phiên / gửi đáp án | Gửi `POST` không có `Idempotency-Key` dễ tạo trùng bản ghi khi bấm lặp | Tự động gắn `Idempotency-Key` (UUID v4) cho 100% mutation (`API-004`)                     |
-| Đọc JSON phản hồi từ server     | `return (await res.json()) as ReportDto` không kiểm chứng cấu trúc     | Parse bằng `zodSchema.parse(raw)` tại tầng service (`API-008`)                            |
-| Cảnh báo mất mạng trên UI       | Tự gắn `window.addEventListener('offline')` + dựng overlay raw HTML    | Dùng `useNetwork()` (`@mantine/hooks`) + `<Alert color="warning">` (`API-005`)            |
+| Tình huống                      | Anti-Pattern (Tránh)                                                   | Best Practice (Chuẩn mực)                                                                               |
+| :------------------------------ | :--------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------ |
+| Tải nhiều API độc lập           | `await fetchA(); await fetchB(); await fetchC()` tuần tự               | Gom vào `Promise.all([fetchA(), fetchB(), fetchC()])` (`API-011`, `async-parallel`)                     |
+| Tìm kiếm tức thì (autocomplete) | Không truyền `AbortSignal` khiến phản hồi cũ ghi đè phản hồi mới       | Truyền `signal` từ `AbortController` / `queryFn` và gắn `useDebouncedValue` vào `queryKeys` (`API-003`) |
+| Nộp form tạo phiên / gửi đáp án | Gửi `POST` không có `Idempotency-Key` dễ tạo trùng bản ghi khi bấm lặp | Tự động gắn `Idempotency-Key` (UUID v4) cho 100% mutation (`API-004`)                                   |
+| Đọc JSON phản hồi từ server     | `return (await res.json()) as ReportDto` không kiểm chứng cấu trúc     | Parse bằng `zodSchema.parse(raw)` tại tầng service (`API-008`)                                          |
+| Cảnh báo mất mạng trên UI       | Tự gắn `window.addEventListener('offline')` + dựng overlay raw HTML    | Dùng `useNetwork()` (`@mantine/hooks`) + `<Alert color="warning">` (`API-005`)                          |
 
 ---
 
@@ -279,8 +280,8 @@ export function NetworkStatusAlert({ onRetry }: { onRetry: () => void }) {
 - [ ] **3. AbortSignal Ready:** Mọi hàm search/fetch viết mới nhận và chuyển tiếp `signal?: AbortSignal` (`API-003`).
 - [ ] **4. Safe Mutations:** Mọi `POST`/`PUT`/`PATCH`/`DELETE` gắn `Idempotency-Key` chống tạo trùng (`API-004`).
 - [ ] **5. Zod Edge Validation:** Payload trọng yếu/phức tạp được xác thực bằng Zod v4 tại tầng service (`API-008`).
-- [ ] **6. SWR Granular Cache:** Chọn đúng `dedupingInterval` & `revalidateOnFocus` theo độ biến động dữ liệu (`API-009`).
+- [ ] **6. TanStack Query Granular Cache:** Chọn đúng `staleTime` & `refetchOnWindowFocus` theo độ biến động dữ liệu (`API-009`).
 - [ ] **7. Zero Waterfalls:** Các request độc lập chạy song song qua `Promise.all` (`API-011`).
-- [ ] **8. Client Deduping:** Nhiều component dùng chung 1 SWR hook key thay vì gọi trùng API (`API-012`).
+- [ ] **8. Client Deduping:** Nhiều component dùng chung `useQuery` + `queryKeys` thay vì gọi trùng API (`API-012`).
 - [ ] **9. Offline UX:** Trạng thái mất mạng dùng `useNetwork()` + `<Alert color="warning">` / `@mantine/notifications` (`API-005`).
 - [ ] **10. Test Pass:** `npm run typecheck`, `npm run lint`, và `npm run test:unit` pass 100%.

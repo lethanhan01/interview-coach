@@ -1,6 +1,6 @@
 # InterviewCoach — Frontend
 
-**Next.js 16 (App Router), React 19, TypeScript 5, Mantine UI v9 (`^9.8.2`, Zero-Hex Semantic-Only), `@mantine/form` + Zod v4, `@tabler/icons-react`, SWR.**
+**Next.js 16 (App Router), React 19, TypeScript 5, Mantine UI v9 (`^9.8.2`, Zero-Hex Semantic-Only), `@mantine/form` + Zod v4, `@tabler/icons-react`, TanStack Query v5.**
 
 > **Ghi chú chuyển tiếp**: Tailwind CSS v4 và một số component legacy vẫn đang tồn tại song song qua CSS Cascade Layers (`@layer theme, base, mantine, components, utilities;` trong `app/globals.css`) trong giai đoạn chuẩn hóa sang Mantine v9. Mọi UI mới và màn hình cập nhật đều tuân thủ 100% chuẩn Mantine v9.
 
@@ -107,9 +107,9 @@ client/
 ├── components/            — Shared & domain UI components (interview, report, auth, patterns, ...)
 ├── hooks/                 — Custom hooks (useAuth, useSessions, useSessionEvents, useCountdown)
 ├── services/              — API service layer theo domain (*.service.ts)
-├── lib/                   — API client, auth context, date-time helpers, shared types
+├── lib/                   — API client, TanStack Query client & queryKeys (query-client.tsx), auth context, date-time helpers, shared types
 ├── middleware/            — Auth & routing middleware helpers
-├── test-utils/            — Custom render bọc MantineProvider env="test" + ModalsProvider
+├── test-utils/            — Custom render bọc QueryClientProvider + MantineProvider env="test" + ModalsProvider
 ├── stories/               — Storybook foundations & component stories
 ├── e2e/                   — Playwright E2E test suites
 ├── scripts/               — Static UI rules linter (check-ui-rules.mjs), docs verifier
@@ -130,7 +130,7 @@ client/
 - **App Router only** — không dùng thư mục `pages/`.
 - **Server Components mặc định** — chỉ thêm `'use client'` khi component cần tương tác, event handlers hoặc browser/Mantine client hooks; giữ `theme.ts` hoàn toàn RSC-safe.
 - **Mantine-First & Zero-Hex** — dùng trực tiếp `@mantine/core`, `@mantine/hooks`, `@mantine/form` + Zod v4, `@tabler/icons-react`, và 5 vai trò màu ngữ nghĩa (`brand`, `success`, `warning`, `danger`, `neutral`, `c="dimmed"`).
-- **Quản lý State phân tầng** — **SWR** cho server state, **React Context** cho auth session, **Next.js URL params** cho filter/navigation, và `useState` + **`@mantine/hooks`** cho local UI state.
+- **Quản lý State phân tầng** — **TanStack Query v5 (`@tanstack/react-query`)** cho server state, **React Context** cho auth session, **Next.js URL params** cho filter/navigation, và `useState` + **`@mantine/hooks`** cho local UI state.
 - **Tách biệt Backend** — không gọi Supabase DB trực tiếp từ client; toàn bộ dữ liệu đi qua NestJS backend qua lớp `services/`.
 
 ---

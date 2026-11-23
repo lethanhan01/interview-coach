@@ -318,7 +318,7 @@ export function QuestionTransitionPanel({
 | Vị trí đặt `<ViewTransition>`               | Bọc `<ViewTransition>` trong `layout.tsx` quanh `{children}` khi page con có VT riêng               | Đặt `<ViewTransition>` ở page/component trước nút DOM thay đổi (`MOTION-003`)                                                    |
 | Thuộc tính CSS animation                    | Animate `height`, `width`, `margin`, `top` gây layout reflow                                        | Chỉ animate `transform` và `opacity` trong `150ms–300ms` (`MOTION-001`)                                                          |
 | Chuyển tab ngang (lateral)                  | Dùng hiệu ứng trượt trái/phải tạo cảm giác sai về độ sâu phân cấp                                   | Dùng fade nhẹ hoặc `default="none"`; chỉ trượt có hướng cho danh sách → chi tiết hoặc Wizard (`MOTION-002`)                      |
-| Tránh cross-fade thừa                       | Để mặc định `<ViewTransition>` không cấu hình trên trang nhiều Suspense/SWR                         | Khai báo rõ `default="none"` kèm trigger tường minh (`MOTION-005`)                                                               |
+| Tránh cross-fade thừa                       | Để mặc định `<ViewTransition>` không cấu hình trên trang nhiều `Suspense` / TanStack Query          | Khai báo rõ `default="none"` kèm trigger tường minh (`MOTION-005`)                                                               |
 
 ---
 

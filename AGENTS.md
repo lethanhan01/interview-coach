@@ -6,7 +6,7 @@ These rules are mandatory for every UI task in `client/`.
 
 - **UI Core, Hooks & Extensions**: `@mantine/core`, `@mantine/hooks`, `@mantine/form`, `@mantine/dropzone`, `@mantine/modals`, `@mantine/notifications` (`^9.8.2`)
 - **Icons**: `@tabler/icons-react` (`^3.52.0`)
-- **Framework, Data & Validation**: `next` `16.2.6` (App Router), `react` `19.2.4`, `swr` `^2.4.1`, `zod` `^4.4.3`
+- **Framework, Data & Validation**: `next` `16.2.6` (App Router), `react` `19.2.4`, `@tanstack/react-query` `^5`, `zod` `^4.4.3`
 - **Styling Toolchain**: `postcss` `^8.5.33`, `postcss-preset-mantine` `^1.18.0`, `postcss-simple-vars` `^7.0.1` (`$mantine-breakpoint-xs`..`xl` in `client/postcss.config.mjs`), `stylelint` `^17.16.0` (`stylelint-config-standard` `^40.0.0`)
 - **Build, Lint, Format & Test**: `npm`, TypeScript `^5`, ESLint `^9` (`eslint-config-next`, `eslint-plugin-storybook`), Prettier `^3.2.5`, Vitest `^4.1.10`, Storybook `^10.5.5` (`@storybook/nextjs-vite`), Playwright `^1.62.1`
 - **Not pre-installed**: `@mantine/dates`, `@mantine/charts`, `@mantine/spotlight`, `@mantine/tiptap`, `@phosphor-icons/react`. Always inspect `client/package.json` before importing an extension package; run `npm install` in `client/` only when a feature needs it.
@@ -52,9 +52,10 @@ Never guess Mantine v9 APIs or copy deprecated v6/v7/v8 patterns. Always check:
 9. **Component CSS Isolation (`*.module.css` vs `client/app/globals.css`)**:
    - Place all component/page-specific classes, hover (`@mixin hover`), `:focus-visible`, and state selectors inside `<ComponentName>.module.css`.
    - Keep `client/app/globals.css` strictly for app-wide layer declarations (`@layer theme, base, mantine, components, utilities;` + `@mantine/*/styles.layer.css`) and global base rules.
-10. **Standardized Forms & Hooks**:
+10. **Standardized Forms, Hooks & Server State**:
     - Use `@mantine/form` (`mode: 'uncontrolled'`, `form.key('path')`, `{...form.getInputProps('path')}`, `schemaResolver(zodSchema, { sync: true })` with Zod v4) and `<Box component="form" onSubmit={form.onSubmit(...)} noValidate>`.
     - Prefer `@mantine/hooks` (`useDisclosure`, `useDebouncedValue`, `useMediaQuery`, `useReducedMotion`, `useHotkeys`, `useNetwork`, etc.) over hand-rolled DOM/window `useEffect` helpers.
+    - Use `@tanstack/react-query` (`useQuery`, `useMutation`, `queryKeys` from `@/lib/query-client`) combined with `client/services/*.service.ts` and `client/lib/api-client.ts` for server state (never fetch inside `useEffect`).
 
 ## 4. Testing & Verification (`client/`)
 
@@ -76,13 +77,13 @@ Never guess Mantine v9 APIs or copy deprecated v6/v7/v8 patterns. Always check:
 
 When working on a matching task in `client/`, read the relevant `client/.agents/skills/<skill-name>/SKILL.md` first before implementing or reviewing:
 
-| Task / Trigger | Skill to Read (`client/.agents/skills/...`) | Scope & Adaptation Notes |
-|---|---|---|
-| Writing, refactoring, or optimizing React/Next.js components, RSC, data fetching, or bundle size | `vercel-react-best-practices/SKILL.md` | Apply full **Next.js App Router, Server Components (RSC)**, and React 19 performance rules |
-| Designing reusable/compound components, fixing boolean-prop bloat, React 19 APIs | `vercel-composition-patterns/SKILL.md` | Combine with Mantine primitives (`Box`, `Paper`, `UnstyledButton`, `createPolymorphicComponent`) |
-| Adding route or UI enter/exit animations without third-party animation libs | `vercel-react-view-transitions/SKILL.md` | Apply `<ViewTransition>` / `startViewTransition` with CSS Modules (`*.module.css`) |
-| UI/UX, accessibility, or design compliance review | `web-design-guidelines/SKILL.md` | Use for audits alongside Section 3 Mantine v9 Zero-Hex rules |
-| Reviewing documentation or UI prose | `writing-guidelines/SKILL.md` | Use when editing `client/docs/` or long-form UI copy |
+| Task / Trigger                                                                                   | Skill to Read (`client/.agents/skills/...`) | Scope & Adaptation Notes                                                                         |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Writing, refactoring, or optimizing React/Next.js components, RSC, data fetching, or bundle size | `vercel-react-best-practices/SKILL.md`      | Apply full **Next.js App Router, Server Components (RSC)**, and React 19 performance rules       |
+| Designing reusable/compound components, fixing boolean-prop bloat, React 19 APIs                 | `vercel-composition-patterns/SKILL.md`      | Combine with Mantine primitives (`Box`, `Paper`, `UnstyledButton`, `createPolymorphicComponent`) |
+| Adding route or UI enter/exit animations without third-party animation libs                      | `vercel-react-view-transitions/SKILL.md`    | Apply `<ViewTransition>` / `startViewTransition` with CSS Modules (`*.module.css`)               |
+| UI/UX, accessibility, or design compliance review                                                | `web-design-guidelines/SKILL.md`            | Use for audits alongside Section 3 Mantine v9 Zero-Hex rules                                     |
+| Reviewing documentation or UI prose                                                              | `writing-guidelines/SKILL.md`               | Use when editing `client/docs/` or long-form UI copy                                             |
 
 - **Deploy-only skills**: Use `deploy-to-vercel`, `vercel-cli-with-tokens`, and `vercel-optimize` only when explicitly deploying or auditing a Vercel deployment.
 - **Not applicable**: Ignore `vercel-react-native-skills` (`client/` is a Next.js web app, not React Native/Expo).

@@ -3,7 +3,7 @@
 > **Dự án:** InterviewCoach Frontend (`client/`)  
 > **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub (16 Chuyên đề / 4 Miền)](./README.md) | [Cẩm nang Mantine v9](../mantine/README.md) | [Bộ luật AI Agents (`AGENTS.md`)](../../../AGENTS.md)  
-> **Mục tiêu:** Tra cứu nhanh 3 điều cấm kỵ, 12 tiêu chí DoD PR, 4 Cheat-Recipes tự chứa theo chuẩn `mantine.dev` / `swr.vercel.app`, và ma trận đồng bộ 2 chiều chính xác **131 Core Rule IDs (+ 18 Vercel Sub-Rules)**.
+> **Mục tiêu:** Tra cứu nhanh 3 điều cấm kỵ, 12 tiêu chí DoD PR, 4 Cheat-Recipes tự chứa theo chuẩn `mantine.dev` / `tanstack.com/query/v5`, và ma trận đồng bộ 2 chiều chính xác **131 Core Rule IDs (+ 18 Vercel Sub-Rules)**.
 
 ---
 
@@ -43,7 +43,7 @@ flowchart LR
 - [ ] 2. Mantine-First: 0 thẻ raw HTML & 0 non-semantic `onClick` (SEM-HTML-001..003).
 - [ ] 3. Zero-Hex Styling: 100% dùng 5 vai trò ngữ nghĩa (`brand|success|warning|danger|neutral`), `c="dimmed"`, `*.module.css` + `rem()` (SEM-TOKEN-001..008).
 - [ ] 4. Forms & Zod v4: Form mới dùng `@mantine/form` (`uncontrolled`) + `schemaResolver(zodSchema, { sync: true })` + `<Box component="form" noValidate>`.
-- [ ] 5. State & SWR: Không fetch trong `useEffect`; dữ liệu server qua SWR v2 Key Factory (`client-swr-dedup`) & hỗ trợ `AbortSignal` (STD-ASYNC-001, API-003).
+- [ ] 5. State & TanStack Query: Không fetch trong `useEffect`; dữ liệu server qua TanStack Query v5 `queryKeys` Factory (`client-swr-dedup`) & hỗ trợ `AbortSignal` (STD-ASYNC-001, API-003).
 - [ ] 6. Time & Errors: ISO-8601 UTC + hoisted `Intl.DateTimeFormat` + lớp lỗi có cấu trúc `ApiClientError` (STD-TIME-001..002, STD-ERR-001).
 - [ ] 7. Clean React 19: Component `.tsx` ≤ 250 dòng, dùng `ref` as prop, ternary `? : null`, 0 `console.log`/`debugger` (STD-SIZE-001, STD-REF-001, STD-VCL-001, STD-CLEAN-001).
 - [ ] 8. Accessibility: Đủ `aria-label`, heading tuyến tính, touch target `rem(44px)`, và `jest-axe` 0 violations (A11Y-001..012).
@@ -193,12 +193,14 @@ export function QuickSessionForm({
 }
 ```
 
-### Recipe 3: Data-Fetching Hook Tự Chứa Chuẩn SWR v2 + Key Factory (`client-swr-dedup`)
+### Recipe 3: Data-Fetching Hook Tự Chứa Chuẩn TanStack Query v5 + `queryKeys` Factory (`client-swr-dedup`)
 
 ```ts
-// Correct: SWR Key Factory + Zod validation tự chứa (swr.vercel.app)
-import useSWR, { type KeyedMutator } from 'swr'
+// Correct: TanStack Query v5 + queryKeys Factory + AbortSignal + Zod validation tự chứa
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
+import { apiClient } from '@/lib/api-client'
+import { queryKeys } from '@/lib/query-client'
 
 const sessionOverviewSchema = z.object({
   id: z.string(),
@@ -206,40 +208,40 @@ const sessionOverviewSchema = z.object({
   status: z.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELLED']),
 })
 
-const sessionOverviewListSchema = z.array(sessionOverviewSchema)
+const sessionOverviewResponseSchema = z.object({
+  sessions: z.array(sessionOverviewSchema),
+})
+
 export type SessionOverview = z.infer<typeof sessionOverviewSchema>
 
-export const sessionQueryKeys = {
-  all: () => '/api/v1/sessions' as const,
-  detail: (id: string) => `/api/v1/sessions/${id}` as const,
-}
-
-async function fetchSessionOverview(url: string): Promise<SessionOverview[]> {
-  const response = await fetch(url, { credentials: 'include' })
-  if (!response.ok) throw new Error(`HTTP_${response.status}`)
-  const raw: unknown = await response.json()
-  return sessionOverviewListSchema.parse(raw)
+async function fetchSessionOverview(
+  signal?: AbortSignal
+): Promise<SessionOverview[]> {
+  const raw = await apiClient.get<unknown>('/sessions', { signal })
+  return sessionOverviewResponseSchema.parse(raw).sessions
 }
 
 export interface UseSessionsOverviewResult {
   sessions: SessionOverview[]
   isLoading: boolean
   error: Error | null
-  mutate: KeyedMutator<SessionOverview[]>
+  invalidate: () => Promise<void>
 }
 
 export function useSessionsOverview(): UseSessionsOverviewResult {
-  const { data, error, isLoading, mutate } = useSWR<SessionOverview[]>(
-    sessionQueryKeys.all(),
-    fetchSessionOverview,
-    { revalidateOnFocus: true, dedupingInterval: 5_000 }
-  )
+  const queryClient = useQueryClient()
+  const { data, error, isLoading } = useQuery<SessionOverview[]>({
+    queryKey: queryKeys.sessions.list(),
+    queryFn: ({ signal }) => fetchSessionOverview(signal),
+    staleTime: 5_000,
+  })
 
   return {
     sessions: data ?? [],
     isLoading,
     error: error instanceof Error ? error : null,
-    mutate,
+    invalidate: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all }),
   }
 }
 ```
@@ -284,7 +286,7 @@ describe('SessionCard', () => {
 |  **`A11Y-*`**  | Accessibility WCAG 2.2 AA & Focus Management               |          **12**          | `ERROR` / `WARN` | [`02-ui-and-design-system/accessibility.md`](./02-ui-and-design-system/accessibility.md)                               |
 | **`MOTION-*`** | Dual-Track Motion & Native View Transitions                |          **8**           | `ERROR` / `WARN` | [`02-ui-and-design-system/view-transitions-and-motion.md`](./02-ui-and-design-system/view-transitions-and-motion.md)   |
 |  **`MOB-*`**   | Responsive Web, Mobile-First & Touch UX Mantine v9         |          **10**          | `ERROR` / `WARN` | [`02-ui-and-design-system/responsive-and-touch-ux.md`](./02-ui-and-design-system/responsive-and-touch-ux.md)           |
-|  **`API-*`**   | API Contracts, SWR Deduping, Idempotency & Offline         |          **12**          | `ERROR` / `WARN` | [`03-quality-and-security/api-contracts-and-resilience.md`](./03-quality-and-security/api-contracts-and-resilience.md) |
+|  **`API-*`**   | API Contracts, Query Deduping, Idempotency & Offline       |          **12**          | `ERROR` / `WARN` | [`03-quality-and-security/api-contracts-and-resilience.md`](./03-quality-and-security/api-contracts-and-resilience.md) |
 |  **`SEC-*`**   | Frontend Security (OWASP), Auth Proxy & Session Purge      |          **11**          | `ERROR` / `WARN` | [`03-quality-and-security/security-and-auth.md`](./03-quality-and-security/security-and-auth.md)                       |
 |  **`PERF-*`**  | Core Web Vitals, Bundle Budget ≤ 180KB & Virtualization    |          **13**          | `ERROR` / `WARN` | [`04-performance-and-ops/performance-and-web-vitals.md`](./04-performance-and-ops/performance-and-web-vitals.md)       |
 |  **`OBS-*`**   | Observability, Error Boundaries, Trace & Vercel RUM        |          **9**           | `ERROR` / `WARN` | [`04-performance-and-ops/observability-and-telemetry.md`](./04-performance-and-ops/observability-and-telemetry.md)     |
@@ -402,26 +404,26 @@ describe('SessionCard', () => {
 | [`API-006`](./03-quality-and-security/api-contracts-and-resilience.md#api-006) | Hàng đợi thao tác / lưu nháp ngoại tuyến kèm `idempotencyKey`                                  | `WARN`  |    `[Target]`     |
 | [`API-007`](./03-quality-and-security/api-contracts-and-resilience.md#api-007) | Cấm hardcode endpoint URL trong components (qua `services/*.service.ts`)                       | `ERROR` |    `[Active]`     |
 | [`API-008`](./03-quality-and-security/api-contracts-and-resilience.md#api-008) | Xác thực payload phản hồi trọng yếu bằng Zod v4 tại tầng service                               | `WARN`  |    `[Active]`     |
-| [`API-009`](./03-quality-and-security/api-contracts-and-resilience.md#api-009) | Phân tầng `dedupingInterval` & revalidation SWR theo độ biến động                              | `WARN`  |    `[Active]`     |
+| [`API-009`](./03-quality-and-security/api-contracts-and-resilience.md#api-009) | Phân tầng `staleTime`, `gcTime` & `refetchOnWindowFocus` trên TanStack Query theo độ biến động | `WARN`  |    `[Active]`     |
 | [`API-010`](./03-quality-and-security/api-contracts-and-resilience.md#api-010) | Chuẩn hóa Mock Service Worker (`msw` v2) cho integration test                                  | `ERROR` |    `[Target]`     |
 | [`API-011`](./03-quality-and-security/api-contracts-and-resilience.md#api-011) | Triệt tiêu request waterfall bằng `Promise.all` (`async-parallel`, `server-parallel-fetching`) | `ERROR` |    `[Active]`     |
-| [`API-012`](./03-quality-and-security/api-contracts-and-resilience.md#api-012) | Khử trùng lặp request client bằng SWR (`client-swr-dedup`)                                     | `WARN`  |    `[Active]`     |
+| [`API-012`](./03-quality-and-security/api-contracts-and-resilience.md#api-012) | Khử trùng lặp request client bằng TanStack Query Cache & `queryKeys` (`client-swr-dedup`)      | `WARN`  |    `[Active]`     |
 
 ### 5.7. Frontend Security & Auth (`SEC-*`: 11)
 
-|                            Mã Quy Chuẩn                             | Trọng tâm                                                                                  | Mức độ  | Trạng thái |
-| :-----------------------------------------------------------------: | :----------------------------------------------------------------------------------------- | :-----: | :--------: |
-| [`SEC-001`](./03-quality-and-security/security-and-auth.md#sec-001) | Cấm render HTML thô không qua `DOMPurify.sanitize()`                                       | `ERROR` | `[Target]` |
-| [`SEC-002`](./03-quality-and-security/security-and-auth.md#sec-002) | Cấu hình Content Security Policy (CSP) chặt trong `next.config.ts`                         | `ERROR` | `[Target]` |
-| [`SEC-003`](./03-quality-and-security/security-and-auth.md#sec-003) | HttpOnly Cookies + `proxy.ts`; cấm lưu token ở `localStorage`                              | `ERROR` | `[Active]` |
-| [`SEC-004`](./03-quality-and-security/security-and-auth.md#sec-004) | Che giấu PII, không lộ email/CV/transcript vào log hay URL                                 | `ERROR` | `[Target]` |
-| [`SEC-005`](./03-quality-and-security/security-and-auth.md#sec-005) | Chống Clickjacking (`X-Frame-Options: DENY`, `frame-ancestors 'none'`)                     | `ERROR` | `[Target]` |
-| [`SEC-006`](./03-quality-and-security/security-and-auth.md#sec-006) | Phòng chống DOM Clobbering & Prototype Pollution (`Map`, `Object.hasOwn`, Zod)             | `WARN`  | `[Active]` |
-| [`SEC-007`](./03-quality-and-security/security-and-auth.md#sec-007) | `<Anchor target="_blank" rel="noopener noreferrer">` & `getSafeNext()` chống Open Redirect | `ERROR` | `[Active]` |
-| [`SEC-008`](./03-quality-and-security/security-and-auth.md#sec-008) | Mutex Refresh Queue chống 401 race condition                                               | `ERROR` | `[Active]` |
-| [`SEC-009`](./03-quality-and-security/security-and-auth.md#sec-009) | Kiểm soát CORS (`credentials: 'include'`) & Security Headers (HSTS)                        | `ERROR` | `[Target]` |
-| [`SEC-010`](./03-quality-and-security/security-and-auth.md#sec-010) | Session Purge sạch khi logout (Server cookie + Auth Context + SWR + draft)                 | `ERROR` | `[Target]` |
-| [`SEC-011`](./03-quality-and-security/security-and-auth.md#sec-011) | Xác thực quyền hạn phía server cho mọi mutation (`server-auth-actions`)                    | `ERROR` | `[Active]` |
+|                            Mã Quy Chuẩn                             | Trọng tâm                                                                                    | Mức độ  | Trạng thái |
+| :-----------------------------------------------------------------: | :------------------------------------------------------------------------------------------- | :-----: | :--------: |
+| [`SEC-001`](./03-quality-and-security/security-and-auth.md#sec-001) | Cấm render HTML thô không qua `DOMPurify.sanitize()`                                         | `ERROR` | `[Target]` |
+| [`SEC-002`](./03-quality-and-security/security-and-auth.md#sec-002) | Cấu hình Content Security Policy (CSP) chặt trong `next.config.ts`                           | `ERROR` | `[Target]` |
+| [`SEC-003`](./03-quality-and-security/security-and-auth.md#sec-003) | HttpOnly Cookies + `proxy.ts`; cấm lưu token ở `localStorage`                                | `ERROR` | `[Active]` |
+| [`SEC-004`](./03-quality-and-security/security-and-auth.md#sec-004) | Che giấu PII, không lộ email/CV/transcript vào log hay URL                                   | `ERROR` | `[Target]` |
+| [`SEC-005`](./03-quality-and-security/security-and-auth.md#sec-005) | Chống Clickjacking (`X-Frame-Options: DENY`, `frame-ancestors 'none'`)                       | `ERROR` | `[Target]` |
+| [`SEC-006`](./03-quality-and-security/security-and-auth.md#sec-006) | Phòng chống DOM Clobbering & Prototype Pollution (`Map`, `Object.hasOwn`, Zod)               | `WARN`  | `[Active]` |
+| [`SEC-007`](./03-quality-and-security/security-and-auth.md#sec-007) | `<Anchor target="_blank" rel="noopener noreferrer">` & `getSafeNext()` chống Open Redirect   | `ERROR` | `[Active]` |
+| [`SEC-008`](./03-quality-and-security/security-and-auth.md#sec-008) | Mutex Refresh Queue chống 401 race condition                                                 | `ERROR` | `[Active]` |
+| [`SEC-009`](./03-quality-and-security/security-and-auth.md#sec-009) | Kiểm soát CORS (`credentials: 'include'`) & Security Headers (HSTS)                          | `ERROR` | `[Target]` |
+| [`SEC-010`](./03-quality-and-security/security-and-auth.md#sec-010) | Session Purge sạch khi logout (Server cookie + Auth Context + `queryClient.clear()` + draft) | `ERROR` | `[Target]` |
+| [`SEC-011`](./03-quality-and-security/security-and-auth.md#sec-011) | Xác thực quyền hạn phía server cho mọi mutation (`server-auth-actions`)                      | `ERROR` | `[Active]` |
 
 ### 5.8. Performance & Core Web Vitals (`PERF-*`: 13)
 
@@ -435,7 +437,7 @@ describe('SessionCard', () => {
 | [`PERF-006`](./04-performance-and-ops/performance-and-web-vitals.md#perf-006) | Dùng `useMemo`/`useCallback` có đo lường (`rerender-simple-expression-in-memo`)             | `WARN`  |    `[Active]`     |
 | [`PERF-007`](./04-performance-and-ops/performance-and-web-vitals.md#perf-007) | Self-host font `Geist` / `Geist_Mono` qua `next/font/google`                                | `WARN`  |    `[Active]`     |
 | [`PERF-008`](./04-performance-and-ops/performance-and-web-vitals.md#perf-008) | Tách đọc/ghi DOM chống Layout Thrashing                                                     | `WARN`  |    `[Active]`     |
-| [`PERF-009`](./04-performance-and-ops/performance-and-web-vitals.md#perf-009) | Phân tách Context & độ hạt SWR key chống re-render lan rộng                                 | `WARN`  |    `[Active]`     |
+| [`PERF-009`](./04-performance-and-ops/performance-and-web-vitals.md#perf-009) | Phân tách Context & độ hạt TanStack Query `queryKeys` chống re-render lan rộng              | `WARN`  |    `[Active]`     |
 | [`PERF-010`](./04-performance-and-ops/performance-and-web-vitals.md#perf-010) | `optimizePackageImports` cho `@mantine/*` & `@tabler/icons-react` (`bundle-barrel-imports`) | `ERROR` |    `[Active]`     |
 | [`PERF-011`](./04-performance-and-ops/performance-and-web-vitals.md#perf-011) | `content-visibility: auto` cho khối below-the-fold (`rendering-content-visibility`)         | `WARN`  |    `[Active]`     |
 | [`PERF-012`](./04-performance-and-ops/performance-and-web-vitals.md#perf-012) | Hoisting phần tử JSX/hằng số tĩnh khỏi render scope (`rendering-hoist-jsx`)                 | `WARN`  |    `[Active]`     |
@@ -471,20 +473,20 @@ describe('SessionCard', () => {
 
 ### 5.11. Release Engineering & DevOps (`OPS-*`: 12)
 
-|                            Mã Quy Chuẩn                             | Trọng tâm                                                                            | Mức độ  |    Trạng thái     |
-| :-----------------------------------------------------------------: | :----------------------------------------------------------------------------------- | :-----: | :---------------: |
-| [`OPS-001`](./04-performance-and-ops/release-and-devops.md#ops-001) | Fail-fast env check (`next.config.ts` `[Active]`, Zod env schema `[Target]`)         | `ERROR` | `[Active/Target]` |
-| [`OPS-002`](./04-performance-and-ops/release-and-devops.md#ops-002) | Triển khai Vercel (`vercel.json` `sin1`) `[Active]` & Standalone Docker `[Target]`   | `ERROR` | `[Active/Target]` |
-| [`OPS-003`](./04-performance-and-ops/release-and-devops.md#ops-003) | Quản trị Redirects 308 tập trung tại `next.config.ts` & nén Brotli/Gzip              | `ERROR` |    `[Active]`     |
-| [`OPS-004`](./04-performance-and-ops/release-and-devops.md#ops-004) | Phân tầng Cache-Busting (`/_next/static/*` immutable, HTML dynamic `no-cache`)       | `ERROR` |    `[Active]`     |
-| [`OPS-005`](./04-performance-and-ops/release-and-devops.md#ops-005) | Thiết lập Security Headers tập trung trong `next.config.ts`                          | `ERROR` |    `[Target]`     |
-| [`OPS-006`](./04-performance-and-ops/release-and-devops.md#ops-006) | Maintenance Mode (`NEXT_PUBLIC_MAINTENANCE_MODE`) & Feature Flags                    | `WARN`  | `[Active/Target]` |
-| [`OPS-007`](./04-performance-and-ops/release-and-devops.md#ops-007) | SemVer 2.0 & Conventional Commits                                                    | `WARN`  |    `[Active]`     |
-| [`OPS-008`](./04-performance-and-ops/release-and-devops.md#ops-008) | Healthcheck Route Handler `/api/health` (HTTP 200)                                   | `WARN`  |    `[Target]`     |
-| [`OPS-009`](./04-performance-and-ops/release-and-devops.md#ops-009) | Phân tách biến `NEXT_PUBLIC_*` vs server secrets                                     | `WARN`  |    `[Active]`     |
-| [`OPS-010`](./04-performance-and-ops/release-and-devops.md#ops-010) | Chốt chặn CI Pipeline (`.github/workflows/ci.yml` `[Active]` → Full Gate `[Target]`) | `ERROR` | `[Active/Target]` |
-| [`OPS-011`](./04-performance-and-ops/release-and-devops.md#ops-011) | Chính sách Edge Cache an toàn (public SWR, giữ dynamic cho auth/error routes)        | `WARN`  |    `[Target]`     |
-| [`OPS-012`](./04-performance-and-ops/release-and-devops.md#ops-012) | Bảo mật triển khai Vercel Production & CLI Token Hygiene                             | `ERROR` |    `[Active]`     |
+|                            Mã Quy Chuẩn                             | Trọng tâm                                                                                 | Mức độ  |    Trạng thái     |
+| :-----------------------------------------------------------------: | :---------------------------------------------------------------------------------------- | :-----: | :---------------: |
+| [`OPS-001`](./04-performance-and-ops/release-and-devops.md#ops-001) | Fail-fast env check (`next.config.ts` `[Active]`, Zod env schema `[Target]`)              | `ERROR` | `[Active/Target]` |
+| [`OPS-002`](./04-performance-and-ops/release-and-devops.md#ops-002) | Triển khai Vercel (`vercel.json` `sin1`) `[Active]` & Standalone Docker `[Target]`        | `ERROR` | `[Active/Target]` |
+| [`OPS-003`](./04-performance-and-ops/release-and-devops.md#ops-003) | Quản trị Redirects 308 tập trung tại `next.config.ts` & nén Brotli/Gzip                   | `ERROR` |    `[Active]`     |
+| [`OPS-004`](./04-performance-and-ops/release-and-devops.md#ops-004) | Phân tầng Cache-Busting (`/_next/static/*` immutable, HTML dynamic `no-cache`)            | `ERROR` |    `[Active]`     |
+| [`OPS-005`](./04-performance-and-ops/release-and-devops.md#ops-005) | Thiết lập Security Headers tập trung trong `next.config.ts`                               | `ERROR` |    `[Target]`     |
+| [`OPS-006`](./04-performance-and-ops/release-and-devops.md#ops-006) | Maintenance Mode (`NEXT_PUBLIC_MAINTENANCE_MODE`) & Feature Flags                         | `WARN`  | `[Active/Target]` |
+| [`OPS-007`](./04-performance-and-ops/release-and-devops.md#ops-007) | SemVer 2.0 & Conventional Commits                                                         | `WARN`  |    `[Active]`     |
+| [`OPS-008`](./04-performance-and-ops/release-and-devops.md#ops-008) | Healthcheck Route Handler `/api/health` (HTTP 200)                                        | `WARN`  |    `[Target]`     |
+| [`OPS-009`](./04-performance-and-ops/release-and-devops.md#ops-009) | Phân tách biến `NEXT_PUBLIC_*` vs server secrets                                          | `WARN`  |    `[Active]`     |
+| [`OPS-010`](./04-performance-and-ops/release-and-devops.md#ops-010) | Chốt chặn CI Pipeline (`.github/workflows/ci.yml` `[Active]` → Full Gate `[Target]`)      | `ERROR` | `[Active/Target]` |
+| [`OPS-011`](./04-performance-and-ops/release-and-devops.md#ops-011) | Chính sách Edge Cache an toàn (public stale-while-revalidate, giữ dynamic cho auth/error) | `WARN`  |    `[Target]`     |
+| [`OPS-012`](./04-performance-and-ops/release-and-devops.md#ops-012) | Bảo mật triển khai Vercel Production & CLI Token Hygiene                                  | `ERROR` |    `[Active]`     |
 
 ### 5.12. Bảng Tra Cứu Quy Chuẩn Kỹ Thuật Vercel (4 Nhóm Web / Next.js — Khớp 100% `SKILL.md`)
 
@@ -499,18 +501,18 @@ describe('SessionCard', () => {
 
 ### 5.13. 10 Quy Tắc Vàng Bắt Buộc Cho Lập Trình Viên InterviewCoach (10 Core Rules)
 
-|  STT   | Mã Quy Tắc                   | Nội dung bắt buộc                                                                                                                                                                     | Lỗi thường gặp cần tránh                                                      |
-| :----: | :--------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :---------------------------------------------------------------------------- |
-| **01** | `RULE-MANTINE-FIRST`         | Import trực tiếp `@mantine/core`, `@mantine/hooks`, `@tabler/icons-react`; không dùng thẻ raw HTML hay thêm wrapper mới trong `components/ui/`.                                       | Viết `<div onClick={...}>`, `<button>`, hoặc bọc `<PrimaryButton>`.           |
-| **02** | `RULE-ZERO-HEX-D2`           | Chỉ dùng 5 vai trò ngữ nghĩa (`brand`, `success`, `warning`, `danger`, `neutral`), `c="dimmed"`, và CSS variables ngữ nghĩa Mantine (ngoại lệ duy nhất `light-dark(gray-0, dark-6)`). | Viết `#2563eb`, `color="blue"`, `c="white"`, `bg="brand.6"`, `style={{...}}`. |
-| **03** | `RULE-THREE-TIER-STYLE`      | Styling theo 3 bậc: Style Props → `*.module.css` (`rem()`, `$mantine-breakpoint-*`, `mod`) → Styles API; cấm `bd=`, `bdrs=`, hardcode `px`.                                           | Viết `mt="16px"`, `bd="1px solid ..."`, hoặc class Tailwind trên code mới.    |
-| **04** | `RULE-MANTINE-FORM-ZOD`      | Form mới 100% dùng `@mantine/form` (`mode: 'uncontrolled'`, `form.key()`) + Zod v4 `schemaResolver({ sync: true })` + `<Box component="form" noValidate>`.                            | Tạo `useState` lẻ cho từng ô input hoặc thêm form `react-hook-form` mới.      |
-| **05** | `RULE-SWR-SERVER-STATE`      | Đọc dữ liệu server qua **SWR v2** (`useSWR` + Key Factory, `client-swr-dedup`) và đồng bộ tiến độ SSE qua `mutate()`; cấm `useEffect` fetch thủ công.                                 | Gọi `fetch()` trong `useEffect` rồi lưu mảng vào Auth Context.                |
-| **06** | `RULE-ABORT-AND-IDEMPOTENCY` | Mọi API đi qua tầng service (`services/*.service.ts`) với `Idempotency-Key` cho mutation, Zod parse biên mạng, và `signal?: AbortSignal` cho search/fetch.                            | Gọi `fetch('/api/...')` trực tiếp trong component mà không hủy request cũ.    |
-| **07** | `RULE-TIME-AND-ERRORS`       | Giao tiếp API chuẩn ISO-8601 UTC; hiển thị qua hoisted `Intl.DateTimeFormat` có `timeZone` tường minh; lỗi có cấu trúc qua `ApiClientError`.                                          | Nối chuỗi ngày tháng thủ công hoặc `throw 'Lỗi server'`.                      |
-| **08** | `RULE-EXEMPT-GOVERNANCE`     | Ngoại lệ kỹ thuật hiếm hoi bắt buộc ghi `// interviewcoach-convention-exempt: <RULE_ID> <reason> until: YYYY-MM-DD`.                                                                  | Bỏ qua cảnh báo bằng comment tự chế hoặc không ghi hạn `until:`.              |
-| **09** | `RULE-DIRECT-IMPORT-PERF`    | Tránh barrel files nội bộ (`bundle-barrel-imports`), giữ First Load JS ≤ 180KB gzip, lazy-load widget nặng bằng `next/dynamic` (`bundle-dynamic-imports`).                            | Tạo barrel `index.ts` khổng lồ hoặc import thư viện monolithic.               |
-| **10** | `RULE-TEST-UTILS-A11Y`       | Unit test mới import từ `@test-utils` (`MantineProvider env="test"`), query bằng `getByRole`, và kiểm chứng `axe(container)` 0 vi phạm.                                               | Import `render` trực tiếp từ RTL hoặc query bằng `.className`.                |
+|  STT   | Mã Quy Tắc                   | Nội dung bắt buộc                                                                                                                                                                             | Lỗi thường gặp cần tránh                                                      |
+| :----: | :--------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- |
+| **01** | `RULE-MANTINE-FIRST`         | Import trực tiếp `@mantine/core`, `@mantine/hooks`, `@tabler/icons-react`; không dùng thẻ raw HTML hay thêm wrapper mới trong `components/ui/`.                                               | Viết `<div onClick={...}>`, `<button>`, hoặc bọc `<PrimaryButton>`.           |
+| **02** | `RULE-ZERO-HEX-D2`           | Chỉ dùng 5 vai trò ngữ nghĩa (`brand`, `success`, `warning`, `danger`, `neutral`), `c="dimmed"`, và CSS variables ngữ nghĩa Mantine (ngoại lệ duy nhất `light-dark(gray-0, dark-6)`).         | Viết `#2563eb`, `color="blue"`, `c="white"`, `bg="brand.6"`, `style={{...}}`. |
+| **03** | `RULE-THREE-TIER-STYLE`      | Styling theo 3 bậc: Style Props → `*.module.css` (`rem()`, `$mantine-breakpoint-*`, `mod`) → Styles API; cấm `bd=`, `bdrs=`, hardcode `px`.                                                   | Viết `mt="16px"`, `bd="1px solid ..."`, hoặc class Tailwind trên code mới.    |
+| **04** | `RULE-MANTINE-FORM-ZOD`      | Form mới 100% dùng `@mantine/form` (`mode: 'uncontrolled'`, `form.key()`) + Zod v4 `schemaResolver({ sync: true })` + `<Box component="form" noValidate>`.                                    | Tạo `useState` lẻ cho từng ô input hoặc thêm form `react-hook-form` mới.      |
+| **05** | `RULE-QUERY-SERVER-STATE`    | Đọc dữ liệu server qua **TanStack Query v5** (`useQuery` / `useMutation` + `queryKeys` Factory, `client-swr-dedup`) và đồng bộ tiến độ SSE qua `QueryClient`; cấm `useEffect` fetch thủ công. | Gọi `fetch()` trong `useEffect` rồi lưu mảng vào Auth Context.                |
+| **06** | `RULE-ABORT-AND-IDEMPOTENCY` | Mọi API đi qua tầng service (`services/*.service.ts`) với `Idempotency-Key` cho mutation, Zod parse biên mạng, và `signal?: AbortSignal` cho search/fetch.                                    | Gọi `fetch('/api/...')` trực tiếp trong component mà không hủy request cũ.    |
+| **07** | `RULE-TIME-AND-ERRORS`       | Giao tiếp API chuẩn ISO-8601 UTC; hiển thị qua hoisted `Intl.DateTimeFormat` có `timeZone` tường minh; lỗi có cấu trúc qua `ApiClientError`.                                                  | Nối chuỗi ngày tháng thủ công hoặc `throw 'Lỗi server'`.                      |
+| **08** | `RULE-EXEMPT-GOVERNANCE`     | Ngoại lệ kỹ thuật hiếm hoi bắt buộc ghi `// interviewcoach-convention-exempt: <RULE_ID> <reason> until: YYYY-MM-DD`.                                                                          | Bỏ qua cảnh báo bằng comment tự chế hoặc không ghi hạn `until:`.              |
+| **09** | `RULE-DIRECT-IMPORT-PERF`    | Tránh barrel files nội bộ (`bundle-barrel-imports`), giữ First Load JS ≤ 180KB gzip, lazy-load widget nặng bằng `next/dynamic` (`bundle-dynamic-imports`).                                    | Tạo barrel `index.ts` khổng lồ hoặc import thư viện monolithic.               |
+| **10** | `RULE-TEST-UTILS-A11Y`       | Unit test mới import từ `@test-utils` (`MantineProvider env="test"`), query bằng `getByRole`, và kiểm chứng `axe(container)` 0 vi phạm.                                                       | Import `render` trực tiếp từ RTL hoặc query bằng `.className`.                |
 
 ---
 

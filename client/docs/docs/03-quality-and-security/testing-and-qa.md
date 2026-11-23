@@ -232,7 +232,7 @@ describe('QuickRoleForm', () => {
 Package `@vitest/coverage-v8` đã cài sẵn trong `client/package.json`. Mục tiêu tập trung vào hành vi quan trọng thay vì chạy theo số dòng hình thức:
 
 - **Tầng utilities & domain services (`lib/`, `services/`):** ≥ **80%** lines/branches (xử lý lỗi, parse Zod, chuyển đổi ngày giờ, HTTP client).
-- **Tầng custom hooks (`hooks/`):** ≥ **75%** (SWR hooks, SSE stream, countdown, URL state).
+- **Tầng custom hooks (`hooks/`):** ≥ **75%** (TanStack Query hooks, SSE stream, countdown, URL state).
 - **Tầng UI components & routes:** Phủ 100% **trạng thái cốt lõi (loading, error/validation, happy path) + 0 vi phạm `jest-axe`**.
 
 ### 5.2. Storybook Visual, A11y & Playwright E2E (`[Active in Codebase]`)

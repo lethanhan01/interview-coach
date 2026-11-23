@@ -30,7 +30,7 @@ Hiệu năng Frontend tuân theo nguyên tắc **Đo lường trước — Tối
 ```mermaid
 flowchart TD
     B1["<b>1. Build-Time Budget</b><br/>optimizePackageImports (6 @mantine/* + @tabler/icons-react)<br/>First Load JS <= 180KB gzip (PERF-002)"] --> B2["<b>2. Route & Widget Splitting</b><br/>next/dynamic cho widget nặng (audio, charts, editor)<br/>Defer third-party scripts sau hydration"]
-    B2 --> B3["<b>3. Render & Layout Discipline</b><br/>Hoist static JSX + content-visibility: auto<br/>Virtualization > 100 dòng + SWR key granularity"]
+    B2 --> B3["<b>3. Render & Layout Discipline</b><br/>Hoist static JSX + content-visibility: auto<br/>Virtualization > 100 dòng + TanStack Query key granularity"]
     B3 --> CWV["<b>4. Core Web Vitals Target</b><br/>LCP <= 2.5s · INP <= 200ms · CLS <= 0.1"]
 ```
 
@@ -92,9 +92,9 @@ Không xen kẽ đọc thuộc tính hình học DOM (`offsetHeight`, `getBoundi
 
 <a id="perf-009"></a>
 
-### 2.9. `PERF-009` — Phân Tách Context & Độ Hạt SWR Key (`WARN` · `[Active]`)
+### 2.9. `PERF-009` — Phân Tách Context & Độ Hạt TanStack Query Key (`WARN` · `[Active]`)
 
-Không đưa trạng thái thay đổi liên tục (đồng hồ đếm giây, từ khóa đang gõ, bộ lọc bảng) vào Context gốc; chia nhỏ SWR key theo thực thể và dùng `@mantine/form` `mode: 'uncontrolled'` để giới hạn phạm vi re-render.
+Không đưa trạng thái thay đổi liên tục (đồng hồ đếm giây, từ khóa đang gõ, bộ lọc bảng) vào Context gốc; chia nhỏ `queryKeys` của TanStack Query theo thực thể, tận dụng tùy chọn `select` của `useQuery` khi chỉ cần 1 lát cắt dữ liệu, và dùng `@mantine/form` `mode: 'uncontrolled'` để giới hạn phạm vi re-render.
 
 <a id="perf-010"></a>
 
