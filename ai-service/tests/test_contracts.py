@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from app.schemas.common import ErrorResponse
+from app.schemas.rag import EmbedResponse
 from app.schemas.stt import STTResponse, STTWordTimestamp, VoiceMetrics
 from app.schemas.tts import TTSRequest
 
@@ -75,3 +76,18 @@ def test_error_envelope_conforms_to_fixture():
     assert dumped["errorCode"] == fixture_data["errorCode"]
     assert dumped["message"] == fixture_data["message"]
     assert dumped["details"] == fixture_data["details"]
+
+
+def test_rag_embed_response_conforms_to_fixture():
+    fixture_path = (
+        Path(__file__).parents[2] / "contracts" / "fixtures" / "rag-embed-response.fixture.json"
+    )
+    with open(fixture_path, "r", encoding="utf-8") as f:
+        fixture_data = json.load(f)
+
+    instance = EmbedResponse.model_validate(fixture_data)
+    dumped = instance.model_dump(by_alias=True)
+
+    assert set(dumped.keys()) == {"vectors", "dimension", "model"}
+    assert dumped == fixture_data
+    assert all(len(v) == fixture_data["dimension"] for v in dumped["vectors"])

@@ -1,5 +1,6 @@
 from typing import Any
 from fastapi import HTTPException, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 import structlog
@@ -51,14 +52,16 @@ async def http_exception_handler(_request: Request, exc: HTTPException) -> JSONR
 
 
 async def validation_exception_handler(_request: Request, exc: RequestValidationError) -> JSONResponse:
-    logger.warn("validation_error_caught", errors=exc.errors())
+    # jsonable_encoder: ctx của validator tự viết chứa object exception (không serialize được).
+    errors = jsonable_encoder(exc.errors())
+    logger.warn("validation_error_caught", errors=errors)
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
             "success": False,
             "errorCode": "VALIDATION_ERROR",
             "message": "Dữ liệu payload đầu vào không hợp lệ.",
-            "details": {"validationErrors": exc.errors()},
+            "details": {"validationErrors": errors},
         },
     )
 

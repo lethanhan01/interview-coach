@@ -1,5 +1,6 @@
 from functools import lru_cache
 from typing import Literal
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -41,6 +42,18 @@ class Settings(BaseSettings):
     # TTS Configuration
     kokoro_voice_default: str = "af_heart"
     edge_tts_vi_voice_default: str = "vi-VN-HoaiMyNeural"
+
+    # Embedding (OpenAI-compatible /v1/embeddings — LM Studio / vLLM / Ollama)
+    embedding_base_url: str = Field(
+        default="http://127.0.0.1:1234/v1",
+        description="Base URL upstream embeddings. Trong Docker: http://host.docker.internal:1234/v1",
+    )
+    embedding_api_key: str = "lm-studio"
+    embedding_model: str = "text-embedding-bge-m3"
+    embedding_dim: int = 1024
+    embedding_timeout_s: float = 30.0
+    embedding_max_batch: int = 64
+    embedding_max_chars: int = 8000
 
 
 @lru_cache

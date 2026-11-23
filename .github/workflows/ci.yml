@@ -44,9 +44,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      # Single source for the throwaway CI DB password (must match services.postgres below).
+      CI_PG_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'ci_test_password_unrestricted' }}
     services:
       postgres:
-        image: postgres:16-alpine
+        # PG18 + pgvector to match production (question_bank.embedding vector(1024)).
+        image: pgvector/pgvector:pg18
         env:
           POSTGRES_DB: interviewcoach_test
           POSTGRES_USER: postgres
@@ -93,11 +97,17 @@ jobs:
 
       - run: npm run build
 
+      - name: Enable pgvector extension
+        run: echo "CREATE EXTENSION IF NOT EXISTS vector;" | npx prisma db execute --stdin
+        env:
+          DATABASE_URL: postgresql://postgres:${{ env.CI_PG_PASSWORD }}@localhost:5433/interviewcoach_test?schema=public
+          DIRECT_URL: postgresql://postgres:${{ env.CI_PG_PASSWORD }}@localhost:5433/interviewcoach_test?schema=public
+
       - name: Prepare isolated test database
         run: npx prisma db push
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5433/interviewcoach_test?schema=public
-          DIRECT_URL: postgresql://postgres:postgres@localhost:5433/interviewcoach_test?schema=public
+          DATABASE_URL: postgresql://postgres:${{ env.CI_PG_PASSWORD }}@localhost:5433/interviewcoach_test?schema=public
+          DIRECT_URL: postgresql://postgres:${{ env.CI_PG_PASSWORD }}@localhost:5433/interviewcoach_test?schema=public
 
       - name: Unit tests
         run: npm test -- --runInBand --passWithNoTests

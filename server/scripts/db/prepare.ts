@@ -18,6 +18,10 @@ async function main() {
   await setClientDbTimeZone(client);
   try {
     await client.query(`
+      -- Phase 2: pgvector phải tồn tại trước db push (cột question_bank.embedding vector(1024)).
+      -- Trên DB dùng chung, extension đã được superuser tạo sẵn nên lệnh này là no-op.
+      CREATE EXTENSION IF NOT EXISTS vector;
+
       ALTER TABLE user_answers
         DROP CONSTRAINT IF EXISTS user_answers_question_session_match_fkey;
 

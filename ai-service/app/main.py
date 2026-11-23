@@ -3,6 +3,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from prometheus_fastapi_instrumentator import Instrumentator
+import httpx
 import structlog
 
 from app.api.router import api_router
@@ -15,12 +16,13 @@ from app.core.exceptions import (
     validation_exception_handler,
 )
 from app.core.logging import TracingAndLoggingMiddleware, setup_logging
+from app.services.rag.embedder import OpenAICompatibleEmbedder
 
 logger = structlog.get_logger()
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(fastapi_app: FastAPI) -> AsyncGenerator[None, None]:
     settings = get_settings()
     setup_logging(settings.log_level)
     logger.info(
@@ -28,9 +30,15 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
         env=settings.app_env,
         device=settings.whisper_device,
         whisperModel=settings.whisper_model_size,
+        embeddingModel=settings.embedding_model,
     )
-    yield
-    logger.info("service_shutting_down")
+    embedding_client = httpx.AsyncClient(timeout=settings.embedding_timeout_s)
+    fastapi_app.state.embedder = OpenAICompatibleEmbedder(embedding_client, settings)
+    try:
+        yield
+    finally:
+        await embedding_client.aclose()
+        logger.info("service_shutting_down")
 
 
 app = FastAPI(
