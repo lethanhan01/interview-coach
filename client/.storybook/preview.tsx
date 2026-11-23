@@ -4,7 +4,7 @@ import DocTemplate from './DocTemplate'
 // Polyfill to fix Radix UI's "Illegal invocation" focus error in Storybook
 if (typeof HTMLElement !== 'undefined' && typeof HTMLElement.prototype.focus !== 'function') {
   const originalFocus = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'focus')
-  if (originalFocus && originalFocus.get) {
+  if (originalFocus?.get) {
     Object.defineProperty(HTMLElement.prototype, 'focus', {
       value: function focus(options?: FocusOptions) {
         return originalFocus.get?.call(this)?.call(this, options)
@@ -17,20 +17,23 @@ if (typeof HTMLElement !== 'undefined' && typeof HTMLElement.prototype.focus !==
 
 import type { Preview, Decorator } from '@storybook/nextjs-vite'
 import { withThemeByClassName } from '@storybook/addon-themes'
+import { MantineProvider } from '@mantine/core'
+import { ModalsProvider } from '@mantine/modals'
 import React, { useEffect } from 'react'
+import { theme } from '../theme'
 
 function ReducedMotionWrapper({
   reducedMotion,
   children,
-}: {
+}: Readonly<{
   reducedMotion?: string
   children: React.ReactNode
-}) {
+}>) {
   useEffect(() => {
     if (reducedMotion === 'reduce') {
-      document.documentElement.setAttribute('data-reduced-motion', 'true')
+      document.documentElement.dataset.reducedMotion = 'true'
     } else {
-      document.documentElement.removeAttribute('data-reduced-motion')
+      delete document.documentElement.dataset.reducedMotion
     }
   }, [reducedMotion])
 
@@ -43,6 +46,23 @@ const withReducedMotion: Decorator = (Story, context) => (
   </ReducedMotionWrapper>
 )
 
+const withMantineProvider: Decorator = (Story, context) => {
+  const themeOverride = context.parameters?.themes?.themeOverride as
+    | string
+    | undefined
+  const activeTheme =
+    themeOverride || (context.globals.theme as string | undefined)
+  const scheme = activeTheme === 'dark' ? 'dark' : 'light'
+
+  return (
+    <MantineProvider theme={theme} forceColorScheme={scheme}>
+      <ModalsProvider>
+        <Story />
+      </ModalsProvider>
+    </MantineProvider>
+  )
+}
+
 const preview: Preview = {
   globalTypes: {
     reducedMotion: {
@@ -50,7 +70,7 @@ const preview: Preview = {
       description: 'Enable reduced motion preview',
       defaultValue: 'auto',
       toolbar: {
-        icon: 'videooff',
+        icon: 'lightningoff',
         items: [
           { value: 'auto', title: 'Auto (OS Default)' },
           { value: 'reduce', title: 'Force Reduced Motion' },
@@ -60,6 +80,7 @@ const preview: Preview = {
     },
   },
   decorators: [
+    withMantineProvider,
     withReducedMotion,
     // Toggles class `dark` on <html> element — integrates with next-themes
     withThemeByClassName({

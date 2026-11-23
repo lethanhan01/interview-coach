@@ -44,6 +44,7 @@ export default defineConfig({
         resolve: {
           alias: {
             '@': path.resolve(dirname, '.'),
+            '@test-utils': path.resolve(dirname, 'test-utils/index.ts'),
           },
         },
         test: {
@@ -56,6 +57,8 @@ export default defineConfig({
             'app/**/*.test.{ts,tsx}',
             'lib/**/*.test.{ts,tsx}',
             'hooks/**/*.test.{ts,tsx}',
+            'test-utils/**/*.test.{ts,tsx}',
+            'scripts/**/*.test.{ts,tsx}',
           ],
         },
       },
