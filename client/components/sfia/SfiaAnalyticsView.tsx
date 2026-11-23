@@ -173,7 +173,7 @@ const SfiaKpiCards = memo(function SfiaKpiCards({
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
-            onScrollToBlindSpots()
+            onScrollToBlindSpots?.()
           }
         }}
         title="Nhấp để cuộn nhanh đến Bảng Điểm mù"

@@ -1,10 +1,5 @@
 import { apiClient } from '@/lib/api-client'
-import type { AdminUser } from '@/lib/types'
-
-interface ApiResponse<T> {
-  success: boolean
-  data: T
-}
+import type { AdminUser, ApiResponse, UpdateAdminUserPayload } from '@/types'
 
 export const userManagementService = {
   /**
@@ -28,7 +23,7 @@ export const userManagementService = {
    */
   async updateUser(
     id: string,
-    payload: { role?: string; status?: string }
+    payload: UpdateAdminUserPayload
   ): Promise<AdminUser> {
     const res = await apiClient.patch<ApiResponse<AdminUser>>(
       `/users/${id}`,
@@ -46,4 +41,3 @@ export const userManagementService = {
 }
 
 export const adminService = userManagementService
-

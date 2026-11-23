@@ -1,34 +1,22 @@
 import { apiClient } from '@/lib/api-client'
 import type {
+  CreateSfiaQuestionPayload,
   SfiaCategory,
-  SfiaSubcategory,
-  SfiaSkillSummary,
-  SfiaSkillDetail,
-  SfiaLevelResponsibility,
-  SfiaGenericAttribute,
   SfiaCoverageStats,
-  SfiaMatrixCellData,
+  SfiaGenericAttribute,
+  SfiaLevelResponsibility,
+  SfiaMatrixDataResponse,
   SfiaQuestionBankItem,
-} from '@/components/sfia/types'
+  SfiaSkillDetail,
+  SfiaSkillFilters,
+  SfiaSkillSummary,
+  SfiaSubcategory,
+} from '@/types'
 
-export interface SfiaSkillFilters {
-  categoryCode?: string
-  subcategoryCode?: string
-  level?: number
-  query?: string
-}
-
-export interface SfiaMatrixDataResponse {
-  skills: SfiaSkillSummary[]
-  categories: SfiaCategory[]
-  cells: Record<string, SfiaMatrixCellData>
-}
-
-export interface CreateSfiaQuestionPayload {
-  questionText: string
-  type: 'TECHNICAL' | 'BEHAVIORAL' | 'SITUATIONAL' | 'HR'
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD'
-  targetSfiaLevel: number
+export type {
+  CreateSfiaQuestionPayload,
+  SfiaMatrixDataResponse,
+  SfiaSkillFilters,
 }
 
 /**
@@ -49,7 +37,9 @@ export const sfiaAdminService = {
    * Lấy danh sách 22 phân nhóm chuyên môn
    */
   async getSubcategories(categoryCode?: string): Promise<SfiaSubcategory[]> {
-    const query = categoryCode ? `?categoryCode=${encodeURIComponent(categoryCode)}` : ''
+    const query = categoryCode
+      ? `?categoryCode=${encodeURIComponent(categoryCode)}`
+      : ''
     return apiClient.get<SfiaSubcategory[]>(`/admin/sfia/subcategories${query}`)
   },
 
@@ -60,12 +50,15 @@ export const sfiaAdminService = {
   async getSkills(filters?: SfiaSkillFilters): Promise<SfiaSkillSummary[]> {
     const params = new URLSearchParams()
     if (filters?.categoryCode) params.set('categoryCode', filters.categoryCode)
-    if (filters?.subcategoryCode) params.set('subcategoryCode', filters.subcategoryCode)
+    if (filters?.subcategoryCode)
+      params.set('subcategoryCode', filters.subcategoryCode)
     if (filters?.level) params.set('level', String(filters.level))
     if (filters?.query) params.set('query', filters.query)
 
     const queryStr = params.toString()
-    return apiClient.get<SfiaSkillSummary[]>(`/admin/sfia/skills${queryStr ? `?${queryStr}` : ''}`)
+    return apiClient.get<SfiaSkillSummary[]>(
+      `/admin/sfia/skills${queryStr ? `?${queryStr}` : ''}`
+    )
   },
 
   /**
@@ -119,7 +112,9 @@ export const sfiaAdminService = {
    * Lấy danh sách 16 Thuộc tính năng lực nền tảng
    */
   async getGenericAttributes(): Promise<SfiaGenericAttribute[]> {
-    return apiClient.get<SfiaGenericAttribute[]>('/admin/sfia/generic-attributes')
+    return apiClient.get<SfiaGenericAttribute[]>(
+      '/admin/sfia/generic-attributes'
+    )
   },
 
   /**
@@ -127,7 +122,9 @@ export const sfiaAdminService = {
    * Lấy dữ liệu ma trận 2D SFIA 147 kỹ năng x 7 level
    */
   async getMatrixData(categoryCode?: string): Promise<SfiaMatrixDataResponse> {
-    const query = categoryCode ? `?categoryCode=${encodeURIComponent(categoryCode)}` : ''
+    const query = categoryCode
+      ? `?categoryCode=${encodeURIComponent(categoryCode)}`
+      : ''
     return apiClient.get<SfiaMatrixDataResponse>(`/admin/sfia/matrix${query}`)
   },
 

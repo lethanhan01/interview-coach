@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client'
-import type { UserAccountResponse, UpdateUserAccountPayload } from '@/lib/types'
+import type { UpdateUserAccountPayload, UserAccountResponse } from '@/types'
 
 export const userService = {
   /**
@@ -13,7 +13,7 @@ export const userService = {
    * Update current user's account details (e.g. firstname, lastname)
    */
   async updateCurrentUser(
-    patch: UpdateUserAccountPayload,
+    patch: UpdateUserAccountPayload
   ): Promise<UserAccountResponse> {
     return apiClient.patch<UserAccountResponse>('/users/me', patch)
   },

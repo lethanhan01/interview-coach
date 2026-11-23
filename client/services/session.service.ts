@@ -1,29 +1,33 @@
 import { apiClient, getApiBaseUrl } from '@/lib/api-client'
 import type {
   CreateSessionPayload,
+  CreateSessionResponse,
   FeedbackProgress,
   QuestionsResponse,
   Report,
   Session,
-  SessionStatus,
+  SessionsListResponse,
+  SessionStatusResponse,
   SubmitAnswerPayload,
   TurnResponse,
   UpdateSessionStatusPayload,
-} from '@/lib/types'
+} from '@/types'
 
 export const sessionService = {
   /**
    * Tạo phiên phỏng vấn mới và kích hoạt tạo bộ câu hỏi
    */
-  async createSession(payload: CreateSessionPayload): Promise<{ id: string }> {
-    return apiClient.post<{ id: string }>('/sessions', payload)
+  async createSession(
+    payload: CreateSessionPayload
+  ): Promise<CreateSessionResponse> {
+    return apiClient.post<CreateSessionResponse>('/sessions', payload)
   },
 
   /**
    * Lấy danh sách các phiên phỏng vấn của người dùng
    */
   async getSessions(signal?: AbortSignal): Promise<Session[]> {
-    const res = await apiClient.get<{ sessions: Session[] }>('/sessions', {
+    const res = await apiClient.get<SessionsListResponse>('/sessions', {
       signal,
     })
     return res.sessions ?? []
@@ -42,8 +46,8 @@ export const sessionService = {
   async getSessionStatus(
     sessionId: string,
     signal?: AbortSignal
-  ): Promise<{ status: SessionStatus; numQuestions: number }> {
-    return apiClient.get<{ status: SessionStatus; numQuestions: number }>(
+  ): Promise<SessionStatusResponse> {
+    return apiClient.get<SessionStatusResponse>(
       `/sessions/${sessionId}/status`,
       { signal }
     )

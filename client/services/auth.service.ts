@@ -1,24 +1,23 @@
 import { apiClient } from '@/lib/api-client'
 import type {
+  ApiResponse,
   AuthUser,
   ChangePasswordResponse,
   LoginPayload,
   PasswordResetConfirmPayload,
   PasswordResetRequestPayload,
   RegisterPayload,
-} from '@/lib/types'
-
-interface ApiResponse<T> {
-  success: boolean
-  data: T
-}
+} from '@/types'
 
 export const authService = {
   /**
    * Đăng nhập người dùng và thiết lập cookie xác thực
    */
   async login(payload: LoginPayload): Promise<AuthUser> {
-    const res = await apiClient.post<ApiResponse<AuthUser>>('/auth/login', payload)
+    const res = await apiClient.post<ApiResponse<AuthUser>>(
+      '/auth/login',
+      payload
+    )
     return res.data
   },
 
@@ -26,7 +25,10 @@ export const authService = {
    * Đăng ký tài khoản mới và thiết lập cookie xác thực
    */
   async register(payload: RegisterPayload): Promise<AuthUser> {
-    const res = await apiClient.post<ApiResponse<AuthUser>>('/auth/register', payload)
+    const res = await apiClient.post<ApiResponse<AuthUser>>(
+      '/auth/register',
+      payload
+    )
     return res.data
   },
 
@@ -37,7 +39,10 @@ export const authService = {
     try {
       await apiClient.post<void>('/auth/logout')
     } catch (err) {
-      console.warn('Logout request warning (proceeding with local cleanup):', err)
+      console.warn(
+        'Logout request warning (proceeding with local cleanup):',
+        err
+      )
     }
   },
 
@@ -52,25 +57,35 @@ export const authService = {
   /**
    * Đổi mật khẩu tài khoản và làm mới cookie
    */
-  async changePassword(currentPassword: string, newPassword: string): Promise<AuthUser> {
-    const res = await apiClient.post<ChangePasswordResponse>('/auth/change-password', {
-      currentPassword,
-      newPassword,
-    })
+  async changePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Promise<AuthUser> {
+    const res = await apiClient.post<ChangePasswordResponse>(
+      '/auth/change-password',
+      {
+        currentPassword,
+        newPassword,
+      }
+    )
     return res.data as AuthUser
   },
 
   /**
    * Yêu cầu gửi mã đặt lại mật khẩu qua email
    */
-  async requestPasswordReset(payload: PasswordResetRequestPayload): Promise<void> {
+  async requestPasswordReset(
+    payload: PasswordResetRequestPayload
+  ): Promise<void> {
     await apiClient.post<void>('/auth/password-reset/request', payload)
   },
 
   /**
    * Xác nhận đặt lại mật khẩu với email, mã xác thực và mật khẩu mới
    */
-  async confirmPasswordReset(payload: PasswordResetConfirmPayload): Promise<AuthUser> {
+  async confirmPasswordReset(
+    payload: PasswordResetConfirmPayload
+  ): Promise<AuthUser> {
     const res = await apiClient.post<ApiResponse<AuthUser>>(
       '/auth/password-reset/confirm',
       payload
@@ -97,9 +112,12 @@ export const authService = {
    * Xác nhận mã xác thực email
    */
   async confirmEmailVerification(code: string): Promise<AuthUser> {
-    const res = await apiClient.post<ApiResponse<AuthUser>>('/auth/email-verification/confirm', {
-      code,
-    })
+    const res = await apiClient.post<ApiResponse<AuthUser>>(
+      '/auth/email-verification/confirm',
+      {
+        code,
+      }
+    )
     return res.data
   },
 }

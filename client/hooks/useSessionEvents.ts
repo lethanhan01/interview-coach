@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { queryKeys, useOptionalQueryClient } from '@/lib/query-client'
 import { sessionService } from '@/services'
-import type { FeedbackProgress, SessionStatus } from '@/lib/types'
+import type { FeedbackProgress, SessionStatus } from '@/types'
 
 export interface UseSessionEventsOptions {
   sessionId: string

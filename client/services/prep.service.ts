@@ -1,12 +1,16 @@
 import { apiClient } from '@/lib/api-client'
-import type { SavedJobDescription, SaveJobDescriptionPayload } from '@/lib/types'
+import type {
+  SavedJobDescription,
+  SavedJobDescriptionsResponse,
+  SaveJobDescriptionPayload,
+} from '@/types'
 
 export const prepService = {
   /**
    * Lấy danh sách các Job Description đã lưu của người dùng
    */
   async getSavedJobDescriptions(): Promise<SavedJobDescription[]> {
-    const res = await apiClient.get<{ items: SavedJobDescription[] }>(
+    const res = await apiClient.get<SavedJobDescriptionsResponse>(
       '/saved-job-descriptions'
     )
     return res.items ?? []

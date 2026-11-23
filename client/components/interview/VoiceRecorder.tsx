@@ -68,6 +68,7 @@ export interface VoiceRecorderProps {
   initialDraft?: string
   language?: 'vi' | 'en'
   disabled?: boolean
+  sessionId?: string
 }
 
 type RecordState =

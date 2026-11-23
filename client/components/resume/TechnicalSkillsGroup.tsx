@@ -22,6 +22,7 @@ import { onetService, type OnetTech } from '@/services'
 interface Props {
   data: TechnicalSkillEntry[]
   onetSocCode?: string | null
+  targetPosition?: string | null
   onSave: (patch: Record<string, unknown>) => Promise<void>
 }
 

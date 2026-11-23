@@ -1,3 +1,5 @@
+import type { ServerErrorPayload } from '@/types'
+
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1'
 
@@ -15,7 +17,7 @@ export class ApiClientError extends Error {
     public readonly details?: Record<string, string[]> | null,
     public readonly requestId?: string,
     public readonly correlationId?: string,
-    rawData?: unknown,
+    rawData?: unknown
   ) {
     super(message)
     this.name = 'ApiClientError'
@@ -49,24 +51,6 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
     'Thao tác đang được xử lý, vui lòng không gửi yêu cầu liên tục.',
 }
 
-interface ServerErrorPayload {
-  success?: boolean
-  error?: {
-    code?: string
-    message?: string
-    details?: Record<string, string[]> | null
-  }
-  meta?: {
-    requestId?: string
-    correlationId?: string
-    timestamp?: string
-    path?: string
-  }
-  errorCode?: string
-  message?: string
-  [key: string]: unknown
-}
-
 function isErrorBody(value: unknown): value is ServerErrorPayload {
   return (
     Boolean(value) &&
@@ -97,7 +81,10 @@ const AUTH_EXCLUDED_FROM_REFRESH = [
 ]
 
 function generateUuid(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+  ) {
     return crypto.randomUUID()
   }
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -209,7 +196,7 @@ async function request<T>(path: string, options: RequestOptions): Promise<T> {
       details,
       requestId,
       correlationId,
-      body,
+      body
     )
   }
 

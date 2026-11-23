@@ -1,5 +1,5 @@
 import { apiClient, API_BASE_URL } from '@/lib/api-client'
-import type { TranscribeResponse } from '@/lib/types'
+import type { OutputLanguage, TranscribeResponse } from '@/types'
 
 // Cache synthesized audio blob URLs by cache key to eliminate redundant network requests
 const ttsAudioCache = new Map<string, string>()
@@ -10,7 +10,7 @@ export const mediaService = {
    */
   async transcribeAudio(
     audioBlob: Blob,
-    language?: 'vi' | 'en'
+    language?: OutputLanguage
   ): Promise<TranscribeResponse> {
     const formData = new FormData()
     const mime = audioBlob.type || 'audio/webm'
@@ -30,7 +30,7 @@ export const mediaService = {
    */
   async synthesizeSpeech(
     text: string,
-    language?: 'vi' | 'en'
+    language?: OutputLanguage
   ): Promise<string> {
     const cacheKey = `${language || 'vi'}:${text.trim()}`
     if (ttsAudioCache.has(cacheKey)) {

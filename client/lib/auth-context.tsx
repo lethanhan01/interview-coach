@@ -10,15 +10,14 @@ import {
 } from 'react'
 import { useOptionalQueryClient } from '@/lib/query-client'
 import { authService } from '@/services'
+import type { CurrentUser, UserRole } from '@/types'
 
-type Role = 'candidate' | 'admin'
-type CurrentUser = { id: string; email: string }
 type AuthContextValue = {
   user: CurrentUser | null
-  role: Role | null
+  role: UserRole | null
   status: string | null
   isLoading: boolean
-  refresh: () => Promise<Role | null>
+  refresh: () => Promise<UserRole | null>
   logout: () => Promise<void>
 }
 
@@ -42,11 +41,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading: true,
   })
 
-  const refresh = useCallback(async (): Promise<Role | null> => {
+  const refresh = useCallback(async (): Promise<UserRole | null> => {
     try {
       const user = await authService.getMe()
       if (!user) throw new Error('Not authenticated')
-      const fetchedRole = user.role as Role
+      const fetchedRole = user.role as UserRole
       setValue({
         user: { id: user.id, email: user.email },
         role: fetchedRole,

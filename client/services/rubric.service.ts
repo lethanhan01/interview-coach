@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client'
-import type { ContextPack, RubricConfig, SessionType } from '@/lib/types'
+import type { ContextPack, RubricConfig, SessionType } from '@/types'
 
 export const rubricService = {
   /**

@@ -1,18 +1,7 @@
 import { apiClient } from '@/lib/api-client'
+import type { OnetOccupation, OnetTech } from '@/types'
 
-export interface OnetOccupation {
-  socCode: string
-  title: string
-  description: string
-  matchedTitle?: string
-  similarityScore?: number
-}
-
-export interface OnetTech {
-  example: string
-  isHotTechnology: boolean
-  inDemand: boolean
-}
+export type { OnetOccupation, OnetTech }
 
 export const onetService = {
   /**

@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client'
-import type { GetProfileResponse } from '@/lib/types'
+import type { GetProfileResponse } from '@/types'
 
 export const candidateProfileService = {
   /**

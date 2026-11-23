@@ -1,6 +1,6 @@
 // Temporary fallback for report pages while the backend rubric API is unavailable.
 // The backend normalized rubric tables are the source of truth.
-import type { ContextPack, RubricCategory, SessionType } from '@/lib/types'
+import type { ContextPack, RubricCategory, SessionType } from '@/types'
 
 const RUBRIC_DATA: Record<
   ContextPack,

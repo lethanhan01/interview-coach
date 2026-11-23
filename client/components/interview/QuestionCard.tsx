@@ -13,6 +13,7 @@ export interface QuestionCardProps {
   totalQuestions: number
   skillCode?: string
   skillName?: string
+  techContext?: string[]
   language?: 'vi' | 'en'
   className?: string
 }

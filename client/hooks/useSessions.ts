@@ -6,7 +6,7 @@ import {
   sessionQueries,
   useOptionalQueryClient,
 } from '@/lib/query-client'
-import type { Session } from '@/lib/types'
+import type { Session } from '@/types'
 
 export type UseSessionsResult = Omit<
   UseQueryResult<Session[], Error>,

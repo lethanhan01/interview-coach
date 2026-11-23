@@ -1,3 +1,8 @@
+import type { TechCategory } from '@/types/candidate-profile.types'
+import type { JdLevel } from '@/types/prep.types'
+
+export type { JdLevel, TechCategory }
+
 export const POSITION_OPTIONS = [
   'Frontend Developer',
   'Backend Developer',
@@ -38,8 +43,6 @@ export const JD_LEVEL_OPTIONS = [
   { value: 'senior' as const, label: 'Senior' },
   { value: 'lead' as const, label: 'Lead / Principal' },
 ] as const
-
-export type JdLevel = (typeof JD_LEVEL_OPTIONS)[number]['value']
 
 export const BONUS_OPTIONS = [
   'Tháng 13 (1 lần/năm)',
@@ -279,8 +282,6 @@ export const TECH_CATEGORIES = [
   { key: 'platform' as const, label: 'Platform / Cloud' },
   { key: 'devtool' as const, label: 'Dev Management Tools' },
 ] as const
-
-export type TechCategory = (typeof TECH_CATEGORIES)[number]['key']
 
 const TECH_SET = new Set(Object.values(TECH_STACK_OPTIONS).flat())
 
