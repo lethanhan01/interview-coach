@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Flame, Loader2, PencilLine, Plus, Sparkles } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -17,7 +18,7 @@ import ProfileSection from '@/components/profile/ProfileSection'
 import { TECH_CATEGORIES, TECH_OPTIONS } from './constants'
 import type { TechCategory } from './constants'
 import type { OnetTech, TechnicalSkillEntry } from '@/types'
-import { onetService } from '@/services'
+import { onetQueries } from '@/lib/query-client'
 
 interface Props {
   data: TechnicalSkillEntry[]
@@ -100,53 +101,22 @@ export default function TechnicalSkillsGroup({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Gợi ý công nghệ từ O*NET
-  const [onetTechs, setOnetTechs] = useState<OnetTech[]>([])
-  const [isLoadingTechs, setIsLoadingTechs] = useState(false)
+  // Gợi ý công nghệ từ O*NET (lazy-fetch khi mở chế độ chỉnh sửa)
+  const { data: onetTechs = [], isFetching: isLoadingTechs } = useQuery({
+    ...onetQueries.tech(onetSocCode ?? ''),
+    enabled: isEditing && Boolean(onetSocCode),
+  })
 
   // State thêm kỹ năng theo form nhanh
   const [customName, setCustomName] = useState('')
-  const [customCategory, setCustomCategory] = useState<TechCategory>('framework')
+  const [customCategory, setCustomCategory] =
+    useState<TechCategory>('framework')
   const [customMonths, setCustomMonths] = useState('')
 
   // State thêm theo danh mục (cũ)
   const [addState, setAddState] = useState<
     Record<string, { name: string; usagePeriod: string }>
   >({})
-
-  // Fetch O*NET Tools & Technologies khi có onetSocCode
-  useEffect(() => {
-    let cancelled = false
-
-    const timer = setTimeout(() => {
-      if (!onetSocCode) {
-        setOnetTechs([])
-        setIsLoadingTechs(false)
-        return
-      }
-
-      setIsLoadingTechs(true)
-      onetService
-        .getOccupationTech(onetSocCode)
-        .then((items) => {
-          if (!cancelled) {
-            setOnetTechs(items)
-            setIsLoadingTechs(false)
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setOnetTechs([])
-            setIsLoadingTechs(false)
-          }
-        })
-    }, 0)
-
-    return () => {
-      cancelled = true
-      clearTimeout(timer)
-    }
-  }, [onetSocCode])
 
   function handleEdit() {
     setEntries(data)
@@ -234,15 +204,15 @@ export default function TechnicalSkillsGroup({
       >
         {/* Khu vực Gợi ý công nghệ O*NET khi đang chỉnh sửa */}
         {isEditing && (
-          <div className="mb-6 rounded-xl border border-brand/20 bg-brand-subtle/30 p-4">
+          <div className="border-brand/20 bg-brand-subtle/30 mb-6 rounded-xl border p-4">
             <div className="mb-2 flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand">
+              <div className="text-brand flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
                 <Sparkles className="size-3.5" aria-hidden="true" />
                 Gợi ý công nghệ O*NET {onetSocCode ? `[${onetSocCode}]` : ''}
               </div>
               {isLoadingTechs && (
-                <div className="flex items-center gap-1 text-xs text-ink-muted">
-                  <Loader2 className="size-3 animate-spin text-brand" />
+                <div className="text-ink-muted flex items-center gap-1 text-xs">
+                  <Loader2 className="text-brand size-3 animate-spin" />
                   Đang tải...
                 </div>
               )}
@@ -251,10 +221,10 @@ export default function TechnicalSkillsGroup({
             {onetSocCode ? (
               filteredOnetTechs.length > 0 ? (
                 <div>
-                  <p className="mb-2 text-xs text-ink-muted">
+                  <p className="text-ink-muted mb-2 text-xs">
                     Bấm vào công nghệ bên dưới để thêm nhanh vào hồ sơ năng lực:
                   </p>
-                  <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+                  <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto pr-1">
                     {filteredOnetTechs.slice(0, 30).map((t) => (
                       <button
                         key={t.example}
@@ -262,12 +232,15 @@ export default function TechnicalSkillsGroup({
                         onClick={() => handleQuickAddOnet(t)}
                         className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
                           t.isHotTechnology
-                            ? 'bg-brand/15 text-brand hover:bg-brand/25 border border-brand/30'
-                            : 'bg-surface border border-border text-ink hover:bg-surface-2'
+                            ? 'bg-brand/15 text-brand hover:bg-brand/25 border-brand/30 border'
+                            : 'bg-surface border-border text-ink hover:bg-surface-2 border'
                         }`}
                       >
                         {t.isHotTechnology && (
-                          <Flame className="size-3 text-orange-500" aria-label="Hot Technology" />
+                          <Flame
+                            className="size-3 text-orange-500"
+                            aria-label="Hot Technology"
+                          />
                         )}
                         <span>{t.example}</span>
                         <Plus className="size-3 opacity-60" />
@@ -276,21 +249,23 @@ export default function TechnicalSkillsGroup({
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-ink-muted">
+                <p className="text-ink-muted text-xs">
                   {isLoadingTechs
                     ? 'Đang tìm kiếm gợi ý công nghệ...'
                     : 'Đã thêm hết công nghệ gợi ý hoặc chưa có dữ liệu O*NET.'}
                 </p>
               )
             ) : (
-              <p className="text-xs text-ink-muted">
-                Hãy chọn <strong>Chức danh chuẩn O*NET</strong> ở mục Định hướng nghề nghiệp để nhận gợi ý công nghệ chuyên sâu phù hợp vị trí mục tiêu.
+              <p className="text-ink-muted text-xs">
+                Hãy chọn <strong>Chức danh chuẩn O*NET</strong> ở mục Định hướng
+                nghề nghiệp để nhận gợi ý công nghệ chuyên sâu phù hợp vị trí
+                mục tiêu.
               </p>
             )}
 
             {/* Khung nhập nhanh kỹ năng (Quick Custom Add) */}
-            <div className="mt-3.5 pt-3 border-t border-border/60 flex flex-wrap items-center gap-2">
-              <div className="flex-1 min-w-[160px]">
+            <div className="border-border/60 mt-3.5 flex flex-wrap items-center gap-2 border-t pt-3">
+              <div className="min-w-[160px] flex-1">
                 <Input
                   value={customName}
                   onChange={(e) => {
@@ -306,14 +281,23 @@ export default function TechnicalSkillsGroup({
               <div className="w-36">
                 <Select
                   value={customCategory}
-                  onValueChange={(val) => setCustomCategory(val as TechCategory)}
+                  onValueChange={(val) =>
+                    setCustomCategory(val as TechCategory)
+                  }
                 >
-                  <SelectTrigger aria-label="Danh mục kỹ năng" className="h-9 text-xs">
+                  <SelectTrigger
+                    aria-label="Danh mục kỹ năng"
+                    className="h-9 text-xs"
+                  >
                     <SelectValue placeholder="Danh mục" />
                   </SelectTrigger>
                   <SelectContent>
                     {TECH_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat.key} value={cat.key} className="text-xs">
+                      <SelectItem
+                        key={cat.key}
+                        value={cat.key}
+                        className="text-xs"
+                      >
                         {cat.label}
                       </SelectItem>
                     ))}
@@ -340,7 +324,7 @@ export default function TechnicalSkillsGroup({
                 disabled={!customName.trim()}
                 className="h-9 text-xs"
               >
-                <Plus className="size-3.5 mr-1" />
+                <Plus className="mr-1 size-3.5" />
                 Thêm
               </Button>
             </div>
@@ -360,7 +344,7 @@ export default function TechnicalSkillsGroup({
 
           return (
             <div key={key} className="mb-5 last:mb-0">
-              <div className="flex items-center justify-between mb-2">
+              <div className="mb-2 flex items-center justify-between">
                 <p className="text-ink-muted text-xs font-semibold uppercase tracking-wide">
                   {label}
                 </p>
@@ -382,7 +366,9 @@ export default function TechnicalSkillsGroup({
                     dismissLabel={`Xóa kỹ năng ${e.name}`}
                   >
                     {e.name}
-                    <span className="text-ink-muted ml-1">· {e.usagePeriod}th</span>
+                    <span className="text-ink-muted ml-1">
+                      · {e.usagePeriod}th
+                    </span>
                   </Badge>
                 ))}
               </div>
@@ -400,8 +386,13 @@ export default function TechnicalSkillsGroup({
                         }))
                       }
                     >
-                      <SelectTrigger aria-label={`Chọn ${label}`} className="h-8 text-xs">
-                        <SelectValue placeholder={`Chọn từ danh mục ${label}...`} />
+                      <SelectTrigger
+                        aria-label={`Chọn ${label}`}
+                        className="h-8 text-xs"
+                      >
+                        <SelectValue
+                          placeholder={`Chọn từ danh mục ${label}...`}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {available.map((n) => (
@@ -423,7 +414,7 @@ export default function TechnicalSkillsGroup({
                         [key]: { ...s, usagePeriod: ev.target.value },
                       }))
                     }
-                    className="w-20 h-8 text-xs"
+                    className="h-8 w-20 text-xs"
                   />
                   <Button
                     variant="secondary"

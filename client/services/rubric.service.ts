@@ -7,10 +7,12 @@ export const rubricService = {
    */
   async getActiveRubric(
     contextPackId: ContextPack,
-    sessionType: SessionType = 'technical'
+    sessionType: SessionType = 'technical',
+    signal?: AbortSignal
   ): Promise<RubricConfig> {
     return apiClient.get<RubricConfig>(
-      `/rubrics/${contextPackId}?sessionType=${sessionType}`
+      `/rubrics/${contextPackId}?sessionType=${sessionType}`,
+      { signal }
     )
   },
 }

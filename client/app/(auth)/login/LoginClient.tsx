@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useMutation } from '@tanstack/react-query'
 import { getSafeNext } from '@/lib/auth-redirect'
 import { useAuth } from '@/hooks/useAuth'
 import LoginForm, { type LoginFormData } from '@/components/auth/LoginForm'
@@ -20,16 +21,20 @@ export default function LoginClient() {
       : null
 
   const [serverError, setServerError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
   const { refresh } = useAuth()
 
+  const loginMutation = useMutation({
+    mutationFn: async (data: LoginFormData) => {
+      await authService.login(data)
+      return refresh()
+    },
+  })
+
   const onSubmit = async (data: LoginFormData) => {
-    setLoading(true)
     setServerError(null)
 
     try {
-      await authService.login(data)
-      const role = await refresh()
+      const role = await loginMutation.mutateAsync(data)
       const rawNext = searchParams.get('next')
       if (!rawNext || !rawNext.startsWith('/')) {
         router.replace(role === 'admin' ? '/admin/dashboard' : '/sessions')
@@ -37,21 +42,16 @@ export default function LoginClient() {
         router.replace(next)
       }
     } catch (err) {
-      setServerError(
-        err instanceof Error ? err.message : 'Không thể đăng nhập'
-      )
-    } finally {
-      setLoading(false)
+      setServerError(err instanceof Error ? err.message : 'Không thể đăng nhập')
     }
   }
 
   return (
     <LoginForm
       onSubmit={onSubmit}
-      loading={loading}
+      loading={loginMutation.isPending}
       inactiveMessage={inactiveMessage}
       serverError={serverError}
     />
   )
 }
-

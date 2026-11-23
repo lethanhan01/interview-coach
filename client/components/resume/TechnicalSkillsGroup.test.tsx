@@ -1,6 +1,8 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@test-utils'
 import { expect, it, describe, vi } from 'vitest'
-import TechnicalSkillsGroup, { detectTechCategory } from './TechnicalSkillsGroup'
+import TechnicalSkillsGroup, {
+  detectTechCategory,
+} from './TechnicalSkillsGroup'
 
 vi.mock('@/services', () => ({
   onetService: {
@@ -28,7 +30,12 @@ describe('TechnicalSkillsGroup (Resume)', () => {
     render(
       <TechnicalSkillsGroup
         data={[
-          { id: '1', category: 'language', name: 'TypeScript', usagePeriod: 24 },
+          {
+            id: '1',
+            category: 'language',
+            name: 'TypeScript',
+            usagePeriod: 24,
+          },
           { id: '2', category: 'framework', name: 'React', usagePeriod: 24 },
         ]}
         onSave={vi.fn()}

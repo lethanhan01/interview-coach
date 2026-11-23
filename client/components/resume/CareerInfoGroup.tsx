@@ -1,7 +1,16 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Briefcase, Loader2, PencilLine, Search, Sparkles, X } from 'lucide-react'
+import { useDebouncedValue } from '@mantine/hooks'
+import { useQuery } from '@tanstack/react-query'
+import {
+  Briefcase,
+  Loader2,
+  PencilLine,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
@@ -23,7 +32,7 @@ import {
   POSITION_OPTIONS,
 } from '@/lib/interview-options'
 import { mapJdLevelToSfia } from '@/lib/setup-helpers'
-import { onetService } from '@/services'
+import { onetQueries } from '@/lib/query-client'
 import type { CareerInfoData, OnetOccupation } from '@/types'
 
 export type { CareerInfoData }
@@ -42,7 +51,8 @@ function normalizeCareerInfo(data: CareerInfoData): CareerInfoData {
     onetSocCode: data.onetSocCode?.trim() || undefined,
     onetOccupationTitle: data.onetOccupationTitle?.trim() || undefined,
     targetSfiaLevel:
-      data.targetSfiaLevel ?? (normLevel ? mapJdLevelToSfia(normLevel) : undefined),
+      data.targetSfiaLevel ??
+      (normLevel ? mapJdLevelToSfia(normLevel) : undefined),
   }
 }
 
@@ -68,10 +78,14 @@ export default function CareerInfoGroup({ data, onSave }: Readonly<Props>) {
 
   // O*NET Combobox state
   const [onetQuery, setOnetQuery] = useState('')
-  const [onetResults, setOnetResults] = useState<OnetOccupation[]>([])
-  const [isSearchingOnet, setIsSearchingOnet] = useState(false)
+  const [debouncedOnetQuery] = useDebouncedValue(onetQuery, 250)
   const [isOnetDropdownOpen, setIsOnetDropdownOpen] = useState(false)
   const comboboxRef = useRef<HTMLDivElement>(null)
+
+  const { data: onetResults = [], isFetching: isSearchingOnet } = useQuery({
+    ...onetQueries.search(debouncedOnetQuery, 8),
+    enabled: isEditing && isOnetDropdownOpen,
+  })
 
   // Click outside to close O*NET dropdown
   useEffect(() => {
@@ -88,35 +102,6 @@ export default function CareerInfoGroup({ data, onSave }: Readonly<Props>) {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
-
-  // Debounced search for O*NET occupations
-  useEffect(() => {
-    let cancelled = false
-    if (!isOnetDropdownOpen) return
-
-    const timer = setTimeout(() => {
-      setIsSearchingOnet(true)
-      onetService
-        .searchOccupations(onetQuery, 8)
-        .then((items) => {
-          if (!cancelled) {
-            setOnetResults(items)
-            setIsSearchingOnet(false)
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setOnetResults([])
-            setIsSearchingOnet(false)
-          }
-        })
-    }, 250)
-
-    return () => {
-      cancelled = true
-      clearTimeout(timer)
-    }
-  }, [onetQuery, isOnetDropdownOpen])
 
   function handleEdit() {
     setForm(normalizeCareerInfo(data))
@@ -176,7 +161,8 @@ export default function CareerInfoGroup({ data, onSave }: Readonly<Props>) {
   const displayPosition = data.targetPosition || data.onetOccupationTitle || ''
   const displayLevel = normalizeCareerLevel(data.targetLevel)
   const displaySfiaLevel =
-    data.targetSfiaLevel ?? (displayLevel ? mapJdLevelToSfia(displayLevel) : undefined)
+    data.targetSfiaLevel ??
+    (displayLevel ? mapJdLevelToSfia(displayLevel) : undefined)
   const levelOptions = buildLevelOptions(form.targetLevel)
 
   return (
@@ -201,7 +187,7 @@ export default function CareerInfoGroup({ data, onSave }: Readonly<Props>) {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{displayPosition}</span>
                     {data.onetSocCode && (
-                      <Badge variant="brand" className="text-xs font-mono">
+                      <Badge variant="brand" className="font-mono text-xs">
                         SOC: {data.onetSocCode}
                       </Badge>
                     )}
@@ -230,7 +216,9 @@ export default function CareerInfoGroup({ data, onSave }: Readonly<Props>) {
             {/* O*NET Occupation Combobox */}
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="onet-occupation">Chức danh chuẩn O*NET (Taxonomy)</Label>
+                <Label htmlFor="onet-occupation">
+                  Chức danh chuẩn O*NET (Taxonomy)
+                </Label>
                 <span className="text-brand flex items-center gap-1 text-xs font-medium">
                   <Sparkles className="size-3" aria-hidden="true" />
                   Chuẩn hóa câu hỏi & kỹ năng
@@ -258,7 +246,7 @@ export default function CareerInfoGroup({ data, onSave }: Readonly<Props>) {
                     size="sm"
                     onClick={handleClearOnet}
                     aria-label="Bỏ chọn chức danh O*NET"
-                    className="text-ink-muted hover:text-ink shrink-0 h-8 px-2"
+                    className="text-ink-muted hover:text-ink h-8 shrink-0 px-2"
                   >
                     <X className="size-4" aria-hidden="true" />
                     <span className="ml-1 text-xs">Đổi</span>
@@ -287,7 +275,10 @@ export default function CareerInfoGroup({ data, onSave }: Readonly<Props>) {
                     />
                     <div className="text-ink-muted pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
                       {isSearchingOnet ? (
-                        <Loader2 className="text-brand size-4 animate-spin" aria-hidden="true" />
+                        <Loader2
+                          className="text-brand size-4 animate-spin"
+                          aria-hidden="true"
+                        />
                       ) : (
                         <Search className="size-4" aria-hidden="true" />
                       )}
@@ -302,13 +293,18 @@ export default function CareerInfoGroup({ data, onSave }: Readonly<Props>) {
                     >
                       {isSearchingOnet && onetResults.length === 0 && (
                         <div className="text-ink-muted flex items-center justify-center gap-2 py-4 text-xs">
-                          <Loader2 className="text-brand size-3.5 animate-spin" aria-hidden="true" />
+                          <Loader2
+                            className="text-brand size-3.5 animate-spin"
+                            aria-hidden="true"
+                          />
                           Đang tìm kiếm chức danh O*NET...
                         </div>
                       )}
                       {!isSearchingOnet && onetResults.length === 0 && (
                         <div className="text-ink-muted px-3 py-3 text-center text-xs">
-                          {onetQuery.trim() ? 'Không tìm thấy chức danh O*NET phù hợp.' : 'Gõ để tìm kiếm chức danh O*NET...'}
+                          {onetQuery.trim()
+                            ? 'Không tìm thấy chức danh O*NET phù hợp.'
+                            : 'Gõ để tìm kiếm chức danh O*NET...'}
                         </div>
                       )}
                       {onetResults.length > 0 &&
@@ -321,10 +317,14 @@ export default function CareerInfoGroup({ data, onSave }: Readonly<Props>) {
                             onClick={() => handleSelectOnet(occ)}
                             className="hover:bg-surface-2 focus-visible:bg-surface-2 flex w-full flex-col items-start rounded-md px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none"
                           >
-                            <span className="text-ink font-medium">{occ.title}</span>
+                            <span className="text-ink font-medium">
+                              {occ.title}
+                            </span>
                             <span className="text-ink-muted text-xs">
                               Mã SOC: {occ.socCode}
-                              {occ.description ? ` · ${occ.description.slice(0, 90)}...` : ''}
+                              {occ.description
+                                ? ` · ${occ.description.slice(0, 90)}...`
+                                : ''}
                             </span>
                           </button>
                         ))}
@@ -336,17 +336,24 @@ export default function CareerInfoGroup({ data, onSave }: Readonly<Props>) {
 
             {/* Vị trí mục tiêu hiển thị */}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="target-position">Vị trí mục tiêu (Tên hiển thị)</Label>
+              <Label htmlFor="target-position">
+                Vị trí mục tiêu (Tên hiển thị)
+              </Label>
               <Input
                 id="target-position"
                 value={form.targetPosition ?? ''}
                 onChange={(e) =>
-                  setForm((prev) => ({ ...prev, targetPosition: e.target.value }))
+                  setForm((prev) => ({
+                    ...prev,
+                    targetPosition: e.target.value,
+                  }))
                 }
                 placeholder="VD: Senior Frontend Engineer, Full-stack Developer..."
               />
               <div className="flex flex-wrap gap-1.5 pt-1">
-                <span className="text-ink-muted text-xs py-0.5">Vị trí IT phổ biến:</span>
+                <span className="text-ink-muted py-0.5 text-xs">
+                  Vị trí IT phổ biến:
+                </span>
                 {POSITION_OPTIONS.slice(0, 5).map((pos) => (
                   <button
                     key={pos}
@@ -354,7 +361,7 @@ export default function CareerInfoGroup({ data, onSave }: Readonly<Props>) {
                     onClick={() =>
                       setForm((prev) => ({ ...prev, targetPosition: pos }))
                     }
-                    className="text-brand hover:underline text-xs bg-brand-subtle px-1.5 py-0.5 rounded"
+                    className="text-brand bg-brand-subtle rounded px-1.5 py-0.5 text-xs hover:underline"
                   >
                     {pos}
                   </button>
@@ -368,7 +375,10 @@ export default function CareerInfoGroup({ data, onSave }: Readonly<Props>) {
                 <Label htmlFor="target-level">Mức kinh nghiệm</Label>
                 {form.targetLevel && (
                   <span className="text-ink-muted text-xs">
-                    Ánh xạ SFIA Level: <strong className="text-ink font-semibold">{mapJdLevelToSfia(form.targetLevel)}</strong>
+                    Ánh xạ SFIA Level:{' '}
+                    <strong className="text-ink font-semibold">
+                      {mapJdLevelToSfia(form.targetLevel)}
+                    </strong>
                   </span>
                 )}
               </div>

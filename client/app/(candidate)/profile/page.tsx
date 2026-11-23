@@ -1,11 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { ScrollText, ArrowRight } from 'lucide-react'
+import {
+  queryKeys,
+  useOptionalQueryClient,
+  userQueries,
+} from '@/lib/query-client'
 import { userService } from '@/services'
 
-import type { UserAccountResponse, UpdateUserAccountPayload } from '@/types'
+import type { UpdateUserAccountPayload } from '@/types'
 import PersonalInfoGroup from '@/components/profile/PersonalInfoGroup'
 import AccountInfoGroup from '@/components/profile/AccountInfoGroup'
 import ChangePasswordGroup from '@/components/profile/ChangePasswordGroup'
@@ -13,28 +18,36 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { PageContainer } from '@/components/patterns/LayoutPatterns'
-import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns'
+import {
+  LoadingState,
+  ErrorState,
+} from '@/components/patterns/FeedbackPatterns'
 
 export default function ProfilePage() {
-  const [data, setData] = useState<UserAccountResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useOptionalQueryClient()
+  const {
+    data = null,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery(userQueries.me())
 
-  useEffect(() => {
-    userService
-      .getCurrentUser()
-      .then(setData)
-      .catch((err) =>
-        setError(
-          err instanceof Error ? err.message : 'Không thể tải thông tin tài khoản'
-        )
-      )
-      .finally(() => setLoading(false))
-  }, [])
+  const updateAccountMutation = useMutation({
+    mutationFn: (patch: UpdateUserAccountPayload) =>
+      userService.updateCurrentUser(patch),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryKeys.users.me(), updated)
+    },
+  })
+
+  const error =
+    queryError instanceof Error
+      ? queryError.message
+      : queryError
+        ? 'Không thể tải thông tin tài khoản'
+        : null
 
   async function patchAccount(patch: UpdateUserAccountPayload) {
-    const updated = await userService.updateCurrentUser(patch)
-    setData(updated)
+    await updateAccountMutation.mutateAsync(patch)
   }
 
   if (loading) {
@@ -60,15 +73,15 @@ export default function ProfilePage() {
     <PageContainer maxWidth="md" className="space-y-6">
       <div>
         <h1 className="text-ink text-2xl font-bold">Cài đặt tài khoản</h1>
-        <p className="text-ink-muted text-sm mt-1">
+        <p className="text-ink-muted mt-1 text-sm">
           Quản lý thông tin đăng nhập, hồ sơ cá nhân và bảo mật tài khoản.
         </p>
       </div>
 
       {/* Account Profile Header Card */}
-      <Card className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5">
+      <Card className="flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
-          <div className="bg-brand-100 dark:bg-brand/20 flex size-14 shrink-0 items-center justify-center rounded-full border border-brand/20">
+          <div className="bg-brand-100 dark:bg-brand/20 border-brand/20 flex size-14 shrink-0 items-center justify-center rounded-full border">
             <span className="text-brand text-xl font-bold">
               {(data?.firstname?.[0] || data?.email?.[0] || 'U').toUpperCase()}
             </span>
@@ -94,7 +107,7 @@ export default function ProfilePage() {
           className="shrink-0 gap-1.5 self-start sm:self-auto"
         >
           <Link href="/resume">
-            <ScrollText className="h-4 w-4 text-brand" />
+            <ScrollText className="text-brand h-4 w-4" />
             <span>Xem hồ sơ CV</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>

@@ -1,21 +1,25 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent } from '@test-utils'
 import { expect, it, describe, vi } from 'vitest'
 import CareerInfoGroup from './CareerInfoGroup'
 
 vi.mock('@/services', () => ({
   onetService: {
-    searchOccupations: vi.fn().mockResolvedValue([
-      { socCode: '15-1252.00', title: 'Software Developers', description: 'Develop software' },
-    ]),
+    searchOccupations: vi
+      .fn()
+      .mockResolvedValue([
+        {
+          socCode: '15-1252.00',
+          title: 'Software Developers',
+          description: 'Develop software',
+        },
+      ]),
     getOccupationTech: vi.fn().mockResolvedValue([]),
   },
 }))
 
 describe('CareerInfoGroup (Resume)', () => {
   it('renders correctly with empty data', () => {
-    const { container } = render(
-      <CareerInfoGroup data={{}} onSave={vi.fn()} />
-    )
+    const { container } = render(<CareerInfoGroup data={{}} onSave={vi.fn()} />)
     expect(container).toBeInTheDocument()
     expect(screen.getByText('Định hướng nghề nghiệp')).toBeInTheDocument()
   })
@@ -54,6 +58,8 @@ describe('CareerInfoGroup (Resume)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /chỉnh sửa/i }))
     expect(screen.getByText('Mã O*NET SOC: 15-1252.00')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /lưu thay đổi/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /lưu thay đổi/i })
+    ).toBeInTheDocument()
   })
 })

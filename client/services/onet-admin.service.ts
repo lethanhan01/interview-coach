@@ -68,24 +68,34 @@ export const onetAdminService = {
   /**
    * 1. Lấy thông tin thống kê KPI vĩ mô cho Analytics Dashboard
    */
-  async getAnalyticsSummary(): Promise<OnetAnalyticsSummary> {
-    return apiClient.get<OnetAnalyticsSummary>('/onet/admin/analytics/summary')
+  async getAnalyticsSummary(
+    signal?: AbortSignal
+  ): Promise<OnetAnalyticsSummary> {
+    return apiClient.get<OnetAnalyticsSummary>(
+      '/onet/admin/analytics/summary',
+      {
+        signal,
+      }
+    )
   },
 
   /**
    * 2. Lấy phân bổ 23 nhóm nghề Major Groups SOC
    */
-  async getMajorGroupsDistribution(): Promise<SocGroupDistributionItem[]> {
+  async getMajorGroupsDistribution(
+    signal?: AbortSignal
+  ): Promise<SocGroupDistributionItem[]> {
     return apiClient.get<SocGroupDistributionItem[]>(
-      '/onet/admin/analytics/major-groups'
+      '/onet/admin/analytics/major-groups',
+      { signal }
     )
   },
 
   /**
    * 3. Lấy danh sách 23 Major Groups ngắn gọn cho Master Sidebar
    */
-  async getMajorGroups(): Promise<SocMajorGroup[]> {
-    const list = await this.getMajorGroupsDistribution()
+  async getMajorGroups(signal?: AbortSignal): Promise<SocMajorGroup[]> {
+    const list = await this.getMajorGroupsDistribution(signal)
     return list.map((item) => ({
       code: item.code,
       name: item.name,
@@ -99,7 +109,8 @@ export const onetAdminService = {
    * 4. Tìm kiếm / Danh sách nghề cho Master Sidebar
    */
   async searchOccupations(
-    query: OnetOccupationSearchFilters = {}
+    query: OnetOccupationSearchFilters = {},
+    signal?: AbortSignal
   ): Promise<OnetOccupationSummary[]> {
     const params = new URLSearchParams()
     if (query.groupCode) params.append('groupCode', query.groupCode)
@@ -109,7 +120,8 @@ export const onetAdminService = {
 
     const qs = params.toString()
     return apiClient.get<OnetOccupationSummary[]>(
-      `/onet/admin/occupations${qs ? `?${qs}` : ''}`
+      `/onet/admin/occupations${qs ? `?${qs}` : ''}`,
+      { signal }
     )
   },
 
@@ -117,7 +129,8 @@ export const onetAdminService = {
    * 5. Lấy danh sách Top nghề quan tâm nhất
    */
   async getTopOccupations(
-    query: OnetTopOccupationsQuery = {}
+    query: OnetTopOccupationsQuery = {},
+    signal?: AbortSignal
   ): Promise<OnetTopOccupationItem[]> {
     const params = new URLSearchParams()
     if (query.limit) params.append('limit', String(query.limit))
@@ -126,7 +139,8 @@ export const onetAdminService = {
 
     const qs = params.toString()
     return apiClient.get<OnetTopOccupationItem[]>(
-      `/onet/admin/analytics/top-occupations${qs ? `?${qs}` : ''}`
+      `/onet/admin/analytics/top-occupations${qs ? `?${qs}` : ''}`,
+      { signal }
     )
   },
 
@@ -135,7 +149,8 @@ export const onetAdminService = {
    */
   async getSfiaSkillCoverage(
     limit = 20,
-    category?: string
+    category?: string,
+    signal?: AbortSignal
   ): Promise<SfiaSkillCoverageItem[]> {
     const params = new URLSearchParams()
     if (limit) params.append('limit', String(limit))
@@ -143,17 +158,22 @@ export const onetAdminService = {
 
     const qs = params.toString()
     return apiClient.get<SfiaSkillCoverageItem[]>(
-      `/onet/admin/analytics/sfia-coverage${qs ? `?${qs}` : ''}`
+      `/onet/admin/analytics/sfia-coverage${qs ? `?${qs}` : ''}`,
+      { signal }
     )
   },
 
   /**
    * 7. Lấy chi tiết một nghề nghiệp theo mã SOC
    */
-  async getOccupationDetail(socCode: string): Promise<OnetOccupationDetail> {
+  async getOccupationDetail(
+    socCode: string,
+    signal?: AbortSignal
+  ): Promise<OnetOccupationDetail> {
     const cleanSoc = encodeURIComponent(socCode.trim())
     const res = await apiClient.get<RawOccupationDetail>(
-      `/onet/admin/occupations/${cleanSoc}`
+      `/onet/admin/occupations/${cleanSoc}`,
+      { signal }
     )
     return {
       ...res,
@@ -166,7 +186,8 @@ export const onetAdminService = {
    */
   async getAlternateTitles(
     socCode: string,
-    query: OnetAlternateTitlesQuery = {}
+    query: OnetAlternateTitlesQuery = {},
+    signal?: AbortSignal
   ): Promise<PaginatedAlternateTitles> {
     const cleanSoc = encodeURIComponent(socCode.trim())
     const params = new URLSearchParams()
@@ -176,17 +197,22 @@ export const onetAdminService = {
 
     const qs = params.toString()
     return apiClient.get<PaginatedAlternateTitles>(
-      `/onet/admin/occupations/${cleanSoc}/alternate-titles${qs ? `?${qs}` : ''}`
+      `/onet/admin/occupations/${cleanSoc}/alternate-titles${qs ? `?${qs}` : ''}`,
+      { signal }
     )
   },
 
   /**
    * 9. Lấy danh sách ánh xạ kỹ năng SFIA của một nghề
    */
-  async getOccupationSfiaMappings(socCode: string): Promise<OnetSfiaMapping[]> {
+  async getOccupationSfiaMappings(
+    socCode: string,
+    signal?: AbortSignal
+  ): Promise<OnetSfiaMapping[]> {
     const cleanSoc = encodeURIComponent(socCode.trim())
     const rawList = await apiClient.get<RawSfiaMappingItem[]>(
-      `/onet/admin/occupations/${cleanSoc}/sfia-mappings`
+      `/onet/admin/occupations/${cleanSoc}/sfia-mappings`,
+      { signal }
     )
     return rawList.map(mapRawSfiaMapping)
   },
@@ -264,9 +290,10 @@ export const onetAdminService = {
   /**
    * 14. Lấy toàn bộ thư viện kỹ năng SFIA 9 cho Combobox gợi ý
    */
-  async getSfiaLibrary(): Promise<SfiaSkillDefinition[]> {
+  async getSfiaLibrary(signal?: AbortSignal): Promise<SfiaSkillDefinition[]> {
     const rawList = await apiClient.get<RawSfiaLibrarySkill[]>(
-      '/onet/admin/sfia-library'
+      '/onet/admin/sfia-library',
+      { signal }
     )
     return rawList.map(mapRawSfiaLibrarySkill)
   },

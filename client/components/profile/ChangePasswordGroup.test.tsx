@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { render, screen, userEvent, waitFor } from '@test-utils'
 import { vi } from 'vitest'
 import ChangePasswordGroup from './ChangePasswordGroup'
 import { authService } from '@/services'
@@ -43,7 +42,10 @@ describe('ChangePasswordGroup', () => {
     const user = userEvent.setup()
     render(<ChangePasswordGroup />)
 
-    await user.type(screen.getByLabelText('Mật khẩu hiện tại'), 'oldPassword123')
+    await user.type(
+      screen.getByLabelText('Mật khẩu hiện tại'),
+      'oldPassword123'
+    )
     await user.type(screen.getByLabelText('Mật khẩu mới'), 'short')
     await user.type(screen.getByLabelText('Xác nhận mật khẩu mới'), 'short')
 
@@ -60,9 +62,15 @@ describe('ChangePasswordGroup', () => {
     const user = userEvent.setup()
     render(<ChangePasswordGroup />)
 
-    await user.type(screen.getByLabelText('Mật khẩu hiện tại'), 'oldPassword123')
+    await user.type(
+      screen.getByLabelText('Mật khẩu hiện tại'),
+      'oldPassword123'
+    )
     await user.type(screen.getByLabelText('Mật khẩu mới'), 'newPassword123')
-    await user.type(screen.getByLabelText('Xác nhận mật khẩu mới'), 'mismatch123')
+    await user.type(
+      screen.getByLabelText('Xác nhận mật khẩu mới'),
+      'mismatch123'
+    )
 
     const submitBtn = screen.getByRole('button', { name: /Cập nhật mật khẩu/i })
     await user.click(submitBtn)
@@ -112,4 +120,3 @@ describe('ChangePasswordGroup', () => {
     expect(confirmInput).toHaveValue('')
   })
 })
-

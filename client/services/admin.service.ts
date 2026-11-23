@@ -5,16 +5,20 @@ export const userManagementService = {
   /**
    * Lấy danh sách toàn bộ người dùng trong hệ thống (chỉ dành cho admin)
    */
-  async listUsers(): Promise<AdminUser[]> {
-    const res = await apiClient.get<ApiResponse<AdminUser[]>>('/users')
+  async listUsers(signal?: AbortSignal): Promise<AdminUser[]> {
+    const res = await apiClient.get<ApiResponse<AdminUser[]>>('/users', {
+      signal,
+    })
     return res.data
   },
 
   /**
    * Lấy thông tin một người dùng theo ID (chỉ dành cho admin)
    */
-  async getUser(id: string): Promise<AdminUser> {
-    const res = await apiClient.get<ApiResponse<AdminUser>>(`/users/${id}`)
+  async getUser(id: string, signal?: AbortSignal): Promise<AdminUser> {
+    const res = await apiClient.get<ApiResponse<AdminUser>>(`/users/${id}`, {
+      signal,
+    })
     return res.data
   },
 

@@ -10,10 +10,29 @@ import {
 } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ApiClientError } from '@/lib/api-client'
-import { onetService } from '@/services/onet.service'
-import { sessionService } from '@/services/session.service'
+import {
+  authService,
+  candidateProfileService,
+  onetAdminService,
+  onetService,
+  prepService,
+  rubricService,
+  sessionService,
+  sfiaAdminService,
+  userManagementService,
+  userService,
+} from '@/services'
+import type {
+  ContextPack,
+  OnetAlternateTitlesQuery,
+  OnetOccupationSearchFilters,
+  OnetTopOccupationsQuery,
+  SessionType,
+  SfiaSkillFilters,
+} from '@/types'
 
 const NON_RETRYABLE_ERROR_CODES = new Set(['REPORT_NOT_READY'])
+const FIVE_MINUTES_MS = 5 * 60_000
 
 export function shouldRetryQuery(
   failureCount: number,
@@ -118,11 +137,13 @@ export const queryKeys = {
     all: ['onet-admin'] as const,
     summary: () => ['onet-admin', 'summary'] as const,
     majorGroups: () => ['onet-admin', 'major-groups'] as const,
-    occupations: (filters?: Record<string, unknown>) =>
+    majorGroupsDistribution: () =>
+      ['onet-admin', 'major-groups-distribution'] as const,
+    occupations: (filters?: OnetOccupationSearchFilters) =>
       ['onet-admin', 'occupations', filters ?? {}] as const,
-    topOccupations: (filters?: Record<string, unknown>) =>
+    topOccupations: (filters?: OnetTopOccupationsQuery) =>
       ['onet-admin', 'top-occupations', filters ?? {}] as const,
-    sfiaCoverage: (filters?: Record<string, unknown>) =>
+    sfiaCoverage: (filters?: { limit?: number; category?: string }) =>
       ['onet-admin', 'sfia-coverage', filters ?? {}] as const,
     detail: (socCode: string) => ['onet-admin', 'detail', socCode] as const,
     alternateTitles: (
@@ -148,7 +169,7 @@ export const queryKeys = {
     categories: () => ['sfia-admin', 'categories'] as const,
     subcategories: (categoryCode?: string) =>
       ['sfia-admin', 'subcategories', categoryCode ?? 'all'] as const,
-    skills: (filters?: Record<string, unknown>) =>
+    skills: (filters?: SfiaSkillFilters) =>
       ['sfia-admin', 'skills', filters ?? {}] as const,
     skillDetail: (skillCode: string) =>
       ['sfia-admin', 'skill-detail', skillCode] as const,
@@ -159,6 +180,66 @@ export const queryKeys = {
     coverage: () => ['sfia-admin', 'coverage'] as const,
   },
 } as const
+
+export const authQueries = {
+  all: () => queryKeys.auth.all,
+  me: () =>
+    queryOptions({
+      queryKey: queryKeys.auth.me(),
+      queryFn: ({ signal }) => authService.getMe(signal),
+    }),
+}
+
+export const userQueries = {
+  all: () => queryKeys.users.all,
+  me: () =>
+    queryOptions({
+      queryKey: queryKeys.users.me(),
+      queryFn: ({ signal }) => userService.getCurrentUser(signal),
+    }),
+  adminList: () =>
+    queryOptions({
+      queryKey: queryKeys.users.adminList(),
+      queryFn: ({ signal }) => userManagementService.listUsers(signal),
+    }),
+  adminDetail: (id: string) =>
+    queryOptions({
+      queryKey: queryKeys.users.adminDetail(id),
+      queryFn: ({ signal }) => userManagementService.getUser(id, signal),
+    }),
+}
+
+export const candidateProfileQueries = {
+  all: () => queryKeys.candidateProfile.all,
+  detail: () =>
+    queryOptions({
+      queryKey: queryKeys.candidateProfile.detail(),
+      queryFn: ({ signal }) => candidateProfileService.getProfile(signal),
+    }),
+}
+
+export const prepQueries = {
+  all: () => queryKeys.prep.all,
+  savedJds: () =>
+    queryOptions({
+      queryKey: queryKeys.prep.savedJds(),
+      queryFn: ({ signal }) => prepService.getSavedJobDescriptions(signal),
+    }),
+}
+
+export const rubricQueries = {
+  all: () => queryKeys.rubrics.all,
+  active: (
+    contextPackId: ContextPack,
+    sessionType: SessionType = 'technical'
+  ) =>
+    queryOptions({
+      queryKey: queryKeys.rubrics.active(contextPackId, sessionType),
+      queryFn: ({ signal }) =>
+        rubricService.getActiveRubric(contextPackId, sessionType, signal),
+      staleTime: FIVE_MINUTES_MS,
+    }),
+}
 
 export const sessionQueries = {
   all: () => queryKeys.sessions.all,
@@ -214,6 +295,130 @@ export const onetQueries = {
       queryKey: queryKeys.onet.tech(socCode),
       queryFn: ({ signal }) => onetService.getOccupationTech(socCode, signal),
       staleTime: 60_000,
+    }),
+}
+
+export const onetAdminQueries = {
+  all: () => queryKeys.onetAdmin.all,
+  summary: () =>
+    queryOptions({
+      queryKey: queryKeys.onetAdmin.summary(),
+      queryFn: ({ signal }) => onetAdminService.getAnalyticsSummary(signal),
+    }),
+  majorGroupsDistribution: () =>
+    queryOptions({
+      queryKey: queryKeys.onetAdmin.majorGroupsDistribution(),
+      queryFn: ({ signal }) =>
+        onetAdminService.getMajorGroupsDistribution(signal),
+      staleTime: 60_000,
+    }),
+  majorGroups: () =>
+    queryOptions({
+      queryKey: queryKeys.onetAdmin.majorGroups(),
+      queryFn: ({ signal }) => onetAdminService.getMajorGroups(signal),
+      staleTime: 60_000,
+    }),
+  occupations: (filters: OnetOccupationSearchFilters = {}) =>
+    queryOptions({
+      queryKey: queryKeys.onetAdmin.occupations(filters),
+      queryFn: ({ signal }) =>
+        onetAdminService.searchOccupations(filters, signal),
+      staleTime: 60_000,
+    }),
+  topOccupations: (filters: OnetTopOccupationsQuery = {}) =>
+    queryOptions({
+      queryKey: queryKeys.onetAdmin.topOccupations(filters),
+      queryFn: ({ signal }) =>
+        onetAdminService.getTopOccupations(filters, signal),
+    }),
+  sfiaCoverage: (limit = 20, category?: string) =>
+    queryOptions({
+      queryKey: queryKeys.onetAdmin.sfiaCoverage({
+        limit,
+        category: category ?? '',
+      }),
+      queryFn: ({ signal }) =>
+        onetAdminService.getSfiaSkillCoverage(limit, category, signal),
+    }),
+  detail: (socCode: string) =>
+    queryOptions({
+      queryKey: queryKeys.onetAdmin.detail(socCode),
+      queryFn: ({ signal }) =>
+        onetAdminService.getOccupationDetail(socCode, signal),
+    }),
+  alternateTitles: (socCode: string, query: OnetAlternateTitlesQuery = {}) =>
+    queryOptions({
+      queryKey: queryKeys.onetAdmin.alternateTitles(
+        socCode,
+        query.page,
+        query.limit,
+        query.search
+      ),
+      queryFn: ({ signal }) =>
+        onetAdminService.getAlternateTitles(socCode, query, signal),
+    }),
+  sfiaMappings: (socCode: string) =>
+    queryOptions({
+      queryKey: queryKeys.onetAdmin.sfiaMappings(socCode),
+      queryFn: ({ signal }) =>
+        onetAdminService.getOccupationSfiaMappings(socCode, signal),
+    }),
+  sfiaLibrary: () =>
+    queryOptions({
+      queryKey: queryKeys.onetAdmin.sfiaLibrary(),
+      queryFn: ({ signal }) => onetAdminService.getSfiaLibrary(signal),
+      staleTime: FIVE_MINUTES_MS,
+    }),
+}
+
+export const sfiaAdminQueries = {
+  all: () => queryKeys.sfiaAdmin.all,
+  categories: () =>
+    queryOptions({
+      queryKey: queryKeys.sfiaAdmin.categories(),
+      queryFn: ({ signal }) => sfiaAdminService.getCategories(signal),
+      staleTime: FIVE_MINUTES_MS,
+    }),
+  subcategories: (categoryCode?: string) =>
+    queryOptions({
+      queryKey: queryKeys.sfiaAdmin.subcategories(categoryCode),
+      queryFn: ({ signal }) =>
+        sfiaAdminService.getSubcategories(categoryCode, signal),
+      staleTime: FIVE_MINUTES_MS,
+    }),
+  skills: (filters?: SfiaSkillFilters) =>
+    queryOptions({
+      queryKey: queryKeys.sfiaAdmin.skills(filters),
+      queryFn: ({ signal }) => sfiaAdminService.getSkills(filters, signal),
+    }),
+  skillDetail: (skillCode: string) =>
+    queryOptions({
+      queryKey: queryKeys.sfiaAdmin.skillDetail(skillCode),
+      queryFn: ({ signal }) =>
+        sfiaAdminService.getSkillDetail(skillCode, signal),
+    }),
+  levels: () =>
+    queryOptions({
+      queryKey: queryKeys.sfiaAdmin.levels(),
+      queryFn: ({ signal }) => sfiaAdminService.getResponsibilityLevels(signal),
+      staleTime: FIVE_MINUTES_MS,
+    }),
+  attributes: () =>
+    queryOptions({
+      queryKey: queryKeys.sfiaAdmin.attributes(),
+      queryFn: ({ signal }) => sfiaAdminService.getGenericAttributes(signal),
+      staleTime: FIVE_MINUTES_MS,
+    }),
+  matrix: (categoryCode?: string) =>
+    queryOptions({
+      queryKey: queryKeys.sfiaAdmin.matrix(categoryCode),
+      queryFn: ({ signal }) =>
+        sfiaAdminService.getMatrixData(categoryCode, signal),
+    }),
+  coverage: () =>
+    queryOptions({
+      queryKey: queryKeys.sfiaAdmin.coverage(),
+      queryFn: ({ signal }) => sfiaAdminService.getCoverageStats(signal),
     }),
 }
 

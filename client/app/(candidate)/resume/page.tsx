@@ -1,12 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { User, ArrowRight } from 'lucide-react'
+import {
+  candidateProfileQueries,
+  queryKeys,
+  useOptionalQueryClient,
+} from '@/lib/query-client'
 import { candidateProfileService } from '@/services'
 
 import type {
-  GetProfileResponse,
   EducationEntry,
   WorkExperienceEntry,
   ProjectEntry,
@@ -24,26 +28,36 @@ import ProjectsGroup from '@/components/resume/ProjectsGroup'
 import CertificationsGroup from '@/components/resume/CertificationsGroup'
 import { Button } from '@/components/ui/Button'
 import { PageContainer, PageHeader } from '@/components/patterns/LayoutPatterns'
-import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns'
+import {
+  LoadingState,
+  ErrorState,
+} from '@/components/patterns/FeedbackPatterns'
 
 export default function ResumePage() {
-  const [data, setData] = useState<GetProfileResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useOptionalQueryClient()
+  const {
+    data = null,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery(candidateProfileQueries.detail())
 
-  useEffect(() => {
-    candidateProfileService
-      .getProfile()
-      .then(setData)
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : 'Không thể tải hồ sơ CV')
-      )
-      .finally(() => setLoading(false))
-  }, [])
+  const updateProfileMutation = useMutation({
+    mutationFn: (patch: Record<string, unknown>) =>
+      candidateProfileService.updateProfile(patch),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryKeys.candidateProfile.detail(), updated)
+    },
+  })
+
+  const error =
+    queryError instanceof Error
+      ? queryError.message
+      : queryError
+        ? 'Không thể tải hồ sơ CV'
+        : null
 
   async function patchProfile<T extends object>(patch: T) {
-    const updated = await candidateProfileService.updateProfile(patch)
-    setData(updated)
+    await updateProfileMutation.mutateAsync(patch as Record<string, unknown>)
   }
 
   if (loading) {
@@ -84,9 +98,14 @@ export default function ResumePage() {
         title="Hồ sơ CV & Kinh nghiệm"
         description="Quản lý thông tin học vấn, kỹ năng, kinh nghiệm và dự án để AI cá nhân hóa câu hỏi phỏng vấn."
         actions={
-          <Button variant="outline" size="sm" asChild className="gap-1.5 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="shrink-0 gap-1.5"
+          >
             <Link href="/profile">
-              <User className="h-4 w-4 text-brand" />
+              <User className="text-brand h-4 w-4" />
               <span>Cài đặt tài khoản</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>

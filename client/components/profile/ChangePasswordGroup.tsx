@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import { KeyRound, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import ProfileSection from './ProfileSection'
 import Button from '@/components/ui/Button'
@@ -19,9 +20,15 @@ export default function ChangePasswordGroup() {
   const [showNew, setShowNew] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  const changePasswordMutation = useMutation({
+    mutationFn: ({ current, next }: { current: string; next: string }) =>
+      authService.changePassword(current, next),
+  })
+
+  const loading = changePasswordMutation.isPending
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -48,9 +55,11 @@ export default function ChangePasswordGroup() {
       return
     }
 
-    setLoading(true)
     try {
-      await authService.changePassword(currentPassword, newPassword)
+      await changePasswordMutation.mutateAsync({
+        current: currentPassword,
+        next: newPassword,
+      })
       setSuccess(true)
       setCurrentPassword('')
       setNewPassword('')
@@ -59,8 +68,6 @@ export default function ChangePasswordGroup() {
       setError(
         err instanceof Error ? err.message : 'Đổi mật khẩu không thành công.'
       )
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -70,7 +77,7 @@ export default function ChangePasswordGroup() {
         {success && (
           <output
             aria-live="polite"
-            className="flex items-center gap-2 rounded-lg bg-success-subtle p-3 text-sm text-success"
+            className="bg-success-subtle text-success flex items-center gap-2 rounded-lg p-3 text-sm"
           >
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             <span>Đổi mật khẩu thành công!</span>
@@ -80,7 +87,7 @@ export default function ChangePasswordGroup() {
         {error && (
           <div
             role="alert"
-            className="flex items-center gap-2 rounded-lg bg-danger-subtle p-3 text-sm text-danger"
+            className="bg-danger-subtle text-danger flex items-center gap-2 rounded-lg p-3 text-sm"
           >
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>

@@ -49,8 +49,10 @@ export const authService = {
   /**
    * Lấy thông tin người dùng hiện tại từ phiên cookie
    */
-  async getMe(): Promise<AuthUser | null> {
-    const res = await apiClient.get<ApiResponse<AuthUser | null>>('/auth/me')
+  async getMe(signal?: AbortSignal): Promise<AuthUser | null> {
+    const res = await apiClient.get<ApiResponse<AuthUser | null>>('/auth/me', {
+      signal,
+    })
     return res.data
   },
 

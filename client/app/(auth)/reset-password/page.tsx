@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useMutation } from '@tanstack/react-query'
 import { authService } from '@/services'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -16,18 +17,27 @@ export default function ResetPasswordPage() {
   const [code, setCode] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const requestResetMutation = useMutation({
+    mutationFn: authService.requestPasswordReset,
+  })
+
+  const confirmResetMutation = useMutation({
+    mutationFn: authService.confirmPasswordReset,
+  })
+
+  const loading =
+    requestResetMutation.isPending || confirmResetMutation.isPending
 
   async function handleRequest(e: React.FormEvent) {
     e.preventDefault()
     if (!email) return
-    setLoading(true)
     setError(null)
     setMessage(null)
     try {
-      await authService.requestPasswordReset({ email })
+      await requestResetMutation.mutateAsync({ email })
       setMessage('Mã xác thực đặt lại mật khẩu đã được gửi đến email của bạn.')
       setStep('confirm')
     } catch (err) {
@@ -36,8 +46,6 @@ export default function ResetPasswordPage() {
           ? err.message
           : 'Không thể gửi yêu cầu đặt lại mật khẩu. Vui lòng thử lại.'
       )
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -52,11 +60,10 @@ export default function ResetPasswordPage() {
       return
     }
 
-    setLoading(true)
     setError(null)
     setMessage(null)
     try {
-      await authService.confirmPasswordReset({
+      await confirmResetMutation.mutateAsync({
         email,
         code: code.trim(),
         newPassword,
@@ -68,8 +75,6 @@ export default function ResetPasswordPage() {
           ? err.message
           : 'Không thể đặt lại mật khẩu. Kiểm tra lại mã xác nhận hoặc email.'
       )
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -95,14 +100,20 @@ export default function ResetPasswordPage() {
         </div>
 
         {message && (
-          <output className="bg-success-bg text-success border-success/20 mb-6 flex items-center gap-2 rounded-lg border p-3 text-sm" aria-live="polite">
+          <output
+            className="bg-success-bg text-success border-success/20 mb-6 flex items-center gap-2 rounded-lg border p-3 text-sm"
+            aria-live="polite"
+          >
             <CheckCircle2 className="size-4 shrink-0" />
             <span>{message}</span>
           </output>
         )}
 
         {error && (
-          <div className="bg-danger-bg text-danger border-danger/20 mb-6 rounded-lg border p-3 text-center text-sm" role="alert">
+          <div
+            className="bg-danger-bg text-danger border-danger/20 mb-6 rounded-lg border p-3 text-center text-sm"
+            role="alert"
+          >
             {error}
           </div>
         )}
@@ -122,7 +133,12 @@ export default function ResetPasswordPage() {
               </FormControl>
             </FormField>
 
-            <Button type="submit" loading={loading} disabled={loading} className="w-full">
+            <Button
+              type="submit"
+              loading={loading}
+              disabled={loading}
+              className="w-full"
+            >
               Gửi mã xác thực
             </Button>
           </form>
@@ -182,7 +198,12 @@ export default function ResetPasswordPage() {
               </FormControl>
             </FormField>
 
-            <Button type="submit" loading={loading} disabled={loading} className="w-full">
+            <Button
+              type="submit"
+              loading={loading}
+              disabled={loading}
+              className="w-full"
+            >
               Xác nhận đổi mật khẩu
             </Button>
 
@@ -215,4 +236,3 @@ export default function ResetPasswordPage() {
     </div>
   )
 }
-

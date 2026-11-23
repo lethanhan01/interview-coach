@@ -4,16 +4,68 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ApiClientError } from '@/lib/api-client'
 import {
+  authQueries,
+  candidateProfileQueries,
   makeQueryClient,
+  onetAdminQueries,
   onetQueries,
+  prepQueries,
   queryKeys,
+  rubricQueries,
   sessionQueries,
+  sfiaAdminQueries,
   shouldRetryQuery,
+  userQueries,
 } from '@/lib/query-client'
 import { useSessions } from '@/hooks/useSessions'
+import { authService } from '@/services/auth.service'
+import { userService } from '@/services/user.service'
+import { userManagementService } from '@/services/admin.service'
+import { candidateProfileService } from '@/services/candidate-profile.service'
+import { prepService } from '@/services/prep.service'
+import { rubricService } from '@/services/rubric.service'
 import { sessionService } from '@/services/session.service'
 import { onetService } from '@/services/onet.service'
+import { onetAdminService } from '@/services/onet-admin.service'
+import { sfiaAdminService } from '@/services/sfia-admin.service'
 import type { Session } from '@/types'
+
+vi.mock('@/services/auth.service', () => ({
+  authService: {
+    getMe: vi.fn(),
+  },
+}))
+
+vi.mock('@/services/user.service', () => ({
+  userService: {
+    getCurrentUser: vi.fn(),
+  },
+}))
+
+vi.mock('@/services/admin.service', () => ({
+  userManagementService: {
+    listUsers: vi.fn(),
+    getUser: vi.fn(),
+  },
+}))
+
+vi.mock('@/services/candidate-profile.service', () => ({
+  candidateProfileService: {
+    getProfile: vi.fn(),
+  },
+}))
+
+vi.mock('@/services/prep.service', () => ({
+  prepService: {
+    getSavedJobDescriptions: vi.fn(),
+  },
+}))
+
+vi.mock('@/services/rubric.service', () => ({
+  rubricService: {
+    getActiveRubric: vi.fn(),
+  },
+}))
 
 vi.mock('@/services/session.service', () => ({
   sessionService: {
@@ -30,6 +82,34 @@ vi.mock('@/services/onet.service', () => ({
   onetService: {
     searchOccupations: vi.fn(),
     getOccupationTech: vi.fn(),
+  },
+}))
+
+vi.mock('@/services/onet-admin.service', () => ({
+  onetAdminService: {
+    getAnalyticsSummary: vi.fn(),
+    getMajorGroupsDistribution: vi.fn(),
+    getMajorGroups: vi.fn(),
+    searchOccupations: vi.fn(),
+    getTopOccupations: vi.fn(),
+    getSfiaSkillCoverage: vi.fn(),
+    getOccupationDetail: vi.fn(),
+    getAlternateTitles: vi.fn(),
+    getOccupationSfiaMappings: vi.fn(),
+    getSfiaLibrary: vi.fn(),
+  },
+}))
+
+vi.mock('@/services/sfia-admin.service', () => ({
+  sfiaAdminService: {
+    getCategories: vi.fn(),
+    getSubcategories: vi.fn(),
+    getSkills: vi.fn(),
+    getSkillDetail: vi.fn(),
+    getResponsibilityLevels: vi.fn(),
+    getGenericAttributes: vi.fn(),
+    getMatrixData: vi.fn(),
+    getCoverageStats: vi.fn(),
   },
 }))
 
@@ -93,7 +173,7 @@ describe('query-client infrastructure & TanStack Query v5 integration', () => {
     })
   })
 
-  describe('queryKeys & queryOptions() factories', () => {
+  describe('queryKeys & all 9 queryOptions() factories', () => {
     it('builds deterministic hierarchical queryKeys across all domains', () => {
       expect(queryKeys.auth.me()).toEqual(['auth', 'me'])
       expect(queryKeys.users.adminDetail('u-1')).toEqual([
@@ -123,6 +203,10 @@ describe('query-client infrastructure & TanStack Query v5 integration', () => {
         'backend',
         15,
       ])
+      expect(queryKeys.onetAdmin.majorGroupsDistribution()).toEqual([
+        'onet-admin',
+        'major-groups-distribution',
+      ])
       expect(queryKeys.onetAdmin.sfiaMappings('15-1252.00')).toEqual([
         'onet-admin',
         'sfia-mappings',
@@ -135,13 +219,76 @@ describe('query-client infrastructure & TanStack Query v5 integration', () => {
       ])
     })
 
-    it('forwards AbortSignal from sessionQueries and onetQueries queryOptions()', async () => {
+    it('forwards AbortSignal across all 9 domain queryOptions() factories', async () => {
+      vi.mocked(authService.getMe).mockResolvedValue(null)
+      vi.mocked(userService.getCurrentUser).mockResolvedValue({
+        id: 'u-1',
+        email: 'user@test.dev',
+        firstname: 'An',
+        lastname: 'Nguyen',
+        role: 'candidate',
+        status: 'active',
+        createdAt: '2026-11-23T00:00:00.000Z',
+      })
+      vi.mocked(userManagementService.listUsers).mockResolvedValue([])
+      vi.mocked(candidateProfileService.getProfile).mockResolvedValue({
+        id: 'u-1',
+        email: 'user@test.dev',
+        profile: null,
+      })
+      vi.mocked(prepService.getSavedJobDescriptions).mockResolvedValue([])
+      vi.mocked(rubricService.getActiveRubric).mockResolvedValue({
+        contextPackId: 'VN',
+        sessionType: 'technical',
+        categories: [],
+        hint: 'hint',
+      })
       vi.mocked(sessionService.getSessions).mockResolvedValue([mockSessionItem])
       vi.mocked(onetService.searchOccupations).mockResolvedValue([])
+      vi.mocked(onetAdminService.getMajorGroups).mockResolvedValue([])
+      vi.mocked(onetAdminService.getAlternateTitles).mockResolvedValue({
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      })
+      vi.mocked(sfiaAdminService.getCategories).mockResolvedValue([])
+      vi.mocked(sfiaAdminService.getSkillDetail).mockResolvedValue(null)
 
       const client = new QueryClient({
         defaultOptions: { queries: { retry: false, gcTime: 0 } },
       })
+
+      await client.fetchQuery(authQueries.me())
+      expect(authService.getMe).toHaveBeenCalledWith(expect.any(AbortSignal))
+
+      await client.fetchQuery(userQueries.me())
+      expect(userService.getCurrentUser).toHaveBeenCalledWith(
+        expect.any(AbortSignal)
+      )
+
+      await client.fetchQuery(userQueries.adminList())
+      expect(userManagementService.listUsers).toHaveBeenCalledWith(
+        expect.any(AbortSignal)
+      )
+
+      await client.fetchQuery(candidateProfileQueries.detail())
+      expect(candidateProfileService.getProfile).toHaveBeenCalledWith(
+        expect.any(AbortSignal)
+      )
+
+      await client.fetchQuery(prepQueries.savedJds())
+      expect(prepService.getSavedJobDescriptions).toHaveBeenCalledWith(
+        expect.any(AbortSignal)
+      )
+
+      await client.fetchQuery(rubricQueries.active('VN', 'technical'))
+      expect(rubricService.getActiveRubric).toHaveBeenCalledWith(
+        'VN',
+        'technical',
+        expect.any(AbortSignal)
+      )
 
       const sessions = await client.fetchQuery(sessionQueries.list())
       expect(sessions).toEqual([mockSessionItem])
@@ -153,6 +300,35 @@ describe('query-client infrastructure & TanStack Query v5 integration', () => {
       expect(onetService.searchOccupations).toHaveBeenCalledWith(
         'software',
         10,
+        expect.any(AbortSignal)
+      )
+
+      await client.fetchQuery(onetAdminQueries.majorGroups())
+      expect(onetAdminService.getMajorGroups).toHaveBeenCalledWith(
+        expect.any(AbortSignal)
+      )
+
+      await client.fetchQuery(
+        onetAdminQueries.alternateTitles('15-1252.00', {
+          page: 2,
+          limit: 10,
+          search: 'Lead',
+        })
+      )
+      expect(onetAdminService.getAlternateTitles).toHaveBeenCalledWith(
+        '15-1252.00',
+        { page: 2, limit: 10, search: 'Lead' },
+        expect.any(AbortSignal)
+      )
+
+      await client.fetchQuery(sfiaAdminQueries.categories())
+      expect(sfiaAdminService.getCategories).toHaveBeenCalledWith(
+        expect.any(AbortSignal)
+      )
+
+      await client.fetchQuery(sfiaAdminQueries.skillDetail('PROG'))
+      expect(sfiaAdminService.getSkillDetail).toHaveBeenCalledWith(
+        'PROG',
         expect.any(AbortSignal)
       )
     })

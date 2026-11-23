@@ -11,7 +11,7 @@ describe('sfiaAdminService (Live Backend API Integration)', () => {
     vi.restoreAllMocks()
   })
 
-  it('calls GET /admin/sfia/categories correctly', async () => {
+  it('calls GET /admin/sfia/categories correctly and forwards AbortSignal', async () => {
     const mockCategories = [
       {
         code: 'DEV_IMPL',
@@ -23,19 +23,27 @@ describe('sfiaAdminService (Live Backend API Integration)', () => {
       },
     ]
     const spy = vi.spyOn(apiClient, 'get').mockResolvedValue(mockCategories)
+    const controller = new AbortController()
 
-    const result = await sfiaAdminService.getCategories()
-    expect(spy).toHaveBeenCalledWith('/admin/sfia/categories')
+    const result = await sfiaAdminService.getCategories(controller.signal)
+    expect(spy).toHaveBeenCalledWith('/admin/sfia/categories', {
+      signal: controller.signal,
+    })
     expect(result).toEqual(mockCategories)
   })
 
   it('calls GET /admin/sfia/subcategories with optional category filter', async () => {
     const spy = vi.spyOn(apiClient, 'get').mockResolvedValue([])
     await sfiaAdminService.getSubcategories('DEV_IMPL')
-    expect(spy).toHaveBeenCalledWith('/admin/sfia/subcategories?categoryCode=DEV_IMPL')
+    expect(spy).toHaveBeenCalledWith(
+      '/admin/sfia/subcategories?categoryCode=DEV_IMPL',
+      { signal: undefined }
+    )
 
     await sfiaAdminService.getSubcategories()
-    expect(spy).toHaveBeenCalledWith('/admin/sfia/subcategories')
+    expect(spy).toHaveBeenCalledWith('/admin/sfia/subcategories', {
+      signal: undefined,
+    })
   })
 
   it('calls GET /admin/sfia/skills with serialized query parameters', async () => {
@@ -47,11 +55,14 @@ describe('sfiaAdminService (Live Backend API Integration)', () => {
       query: 'prog',
     })
     expect(spy).toHaveBeenCalledWith(
-      '/admin/sfia/skills?categoryCode=DEV_IMPL&subcategoryCode=SYS_DEV&level=3&query=prog'
+      '/admin/sfia/skills?categoryCode=DEV_IMPL&subcategoryCode=SYS_DEV&level=3&query=prog',
+      { signal: undefined }
     )
 
     await sfiaAdminService.getSkills()
-    expect(spy).toHaveBeenCalledWith('/admin/sfia/skills')
+    expect(spy).toHaveBeenCalledWith('/admin/sfia/skills', {
+      signal: undefined,
+    })
   })
 
   it('calls GET /admin/sfia/skills/:code with upper-cased encoded skill code', async () => {
@@ -72,7 +83,9 @@ describe('sfiaAdminService (Live Backend API Integration)', () => {
     const spy = vi.spyOn(apiClient, 'get').mockResolvedValue(mockDetail)
 
     const result = await sfiaAdminService.getSkillDetail('prog')
-    expect(spy).toHaveBeenCalledWith('/admin/sfia/skills/PROG')
+    expect(spy).toHaveBeenCalledWith('/admin/sfia/skills/PROG', {
+      signal: undefined,
+    })
     expect(result).toEqual(mockDetail)
   })
 
@@ -80,6 +93,17 @@ describe('sfiaAdminService (Live Backend API Integration)', () => {
     vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('Not found'))
     const result = await sfiaAdminService.getSkillDetail('NON_EXISTENT')
     expect(result).toBeNull()
+  })
+
+  it('rethrows AbortError in getSkillDetail so TanStack Query cancellation does not cache null', async () => {
+    const controller = new AbortController()
+    const abortError = new DOMException('Aborted', 'AbortError')
+    controller.abort()
+    vi.spyOn(apiClient, 'get').mockRejectedValue(abortError)
+
+    await expect(
+      sfiaAdminService.getSkillDetail('PROG', controller.signal)
+    ).rejects.toThrow(abortError)
   })
 
   it('calls POST /admin/sfia/skills/:code/questions with payload', async () => {
@@ -100,20 +124,27 @@ describe('sfiaAdminService (Live Backend API Integration)', () => {
     }
     const result = await sfiaAdminService.createQuestion('prog', payload)
 
-    expect(spy).toHaveBeenCalledWith('/admin/sfia/skills/PROG/questions', payload)
+    expect(spy).toHaveBeenCalledWith(
+      '/admin/sfia/skills/PROG/questions',
+      payload
+    )
     expect(result).toEqual(mockCreated)
   })
 
   it('calls GET /admin/sfia/levels correctly', async () => {
     const spy = vi.spyOn(apiClient, 'get').mockResolvedValue([])
     await sfiaAdminService.getResponsibilityLevels()
-    expect(spy).toHaveBeenCalledWith('/admin/sfia/levels')
+    expect(spy).toHaveBeenCalledWith('/admin/sfia/levels', {
+      signal: undefined,
+    })
   })
 
   it('calls GET /admin/sfia/generic-attributes correctly', async () => {
     const spy = vi.spyOn(apiClient, 'get').mockResolvedValue([])
     await sfiaAdminService.getGenericAttributes()
-    expect(spy).toHaveBeenCalledWith('/admin/sfia/generic-attributes')
+    expect(spy).toHaveBeenCalledWith('/admin/sfia/generic-attributes', {
+      signal: undefined,
+    })
   })
 
   it('calls GET /admin/sfia/matrix with optional category filter', async () => {
@@ -123,10 +154,17 @@ describe('sfiaAdminService (Live Backend API Integration)', () => {
       cells: {},
     })
     await sfiaAdminService.getMatrixData('DEV_IMPL')
-    expect(spy).toHaveBeenCalledWith('/admin/sfia/matrix?categoryCode=DEV_IMPL')
+    expect(spy).toHaveBeenCalledWith(
+      '/admin/sfia/matrix?categoryCode=DEV_IMPL',
+      {
+        signal: undefined,
+      }
+    )
 
     await sfiaAdminService.getMatrixData()
-    expect(spy).toHaveBeenCalledWith('/admin/sfia/matrix')
+    expect(spy).toHaveBeenCalledWith('/admin/sfia/matrix', {
+      signal: undefined,
+    })
   })
 
   it('calls GET /admin/sfia/analytics/coverage correctly', async () => {
@@ -134,6 +172,8 @@ describe('sfiaAdminService (Live Backend API Integration)', () => {
       totalSkills: 147,
     })
     await sfiaAdminService.getCoverageStats()
-    expect(spy).toHaveBeenCalledWith('/admin/sfia/analytics/coverage')
+    expect(spy).toHaveBeenCalledWith('/admin/sfia/analytics/coverage', {
+      signal: undefined,
+    })
   })
 })

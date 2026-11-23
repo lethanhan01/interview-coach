@@ -5,8 +5,8 @@ export const userService = {
   /**
    * Fetch current authenticated user's account details
    */
-  async getCurrentUser(): Promise<UserAccountResponse> {
-    return apiClient.get<UserAccountResponse>('/users/me')
+  async getCurrentUser(signal?: AbortSignal): Promise<UserAccountResponse> {
+    return apiClient.get<UserAccountResponse>('/users/me', { signal })
   },
 
   /**

@@ -9,9 +9,12 @@ export const prepService = {
   /**
    * Lấy danh sách các Job Description đã lưu của người dùng
    */
-  async getSavedJobDescriptions(): Promise<SavedJobDescription[]> {
+  async getSavedJobDescriptions(
+    signal?: AbortSignal
+  ): Promise<SavedJobDescription[]> {
     const res = await apiClient.get<SavedJobDescriptionsResponse>(
-      '/saved-job-descriptions'
+      '/saved-job-descriptions',
+      { signal }
     )
     return res.items ?? []
   },
