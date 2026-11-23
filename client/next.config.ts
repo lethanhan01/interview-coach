@@ -10,6 +10,17 @@ if (missing.length > 0) {
 }
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: [
+      '@mantine/core',
+      '@mantine/hooks',
+      '@mantine/form',
+      '@mantine/notifications',
+      '@mantine/modals',
+      '@mantine/dropzone',
+      '@tabler/icons-react',
+    ],
+  },
   redirects() {
     return Promise.resolve([
       {

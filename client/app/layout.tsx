@@ -1,6 +1,17 @@
+import './globals.css'
+
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
-import './globals.css'
+import {
+  ColorSchemeScript,
+  MantineProvider,
+  mantineHtmlProps,
+} from '@mantine/core'
+import { ModalsProvider } from '@mantine/modals'
+import { Notifications } from '@mantine/notifications'
+import { theme } from '@/theme'
+import { ThemeProvider } from '@/components/theme-provider'
+import { MantineColorSchemeSync } from '@/components/mantine-color-scheme-sync'
 import { AuthProvider } from '@/lib/auth-context'
 import { OfflineBanner } from '@/components/patterns/OfflineBanner'
 
@@ -20,8 +31,6 @@ export const metadata: Metadata = {
     'Nền tảng luyện phỏng vấn AI cho sinh viên CNTT Việt Nam. Paste Job Description, trả lời câu hỏi, nhận phản hồi chi tiết.',
 }
 
-import { ThemeProvider } from '@/components/theme-provider'
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,21 +39,30 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
+      {...mantineHtmlProps}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      suppressHydrationWarning
     >
+      <head>
+        <ColorSchemeScript defaultColorScheme="auto" />
+      </head>
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
-            <OfflineBanner />
-            {children}
-          </AuthProvider>
-        </ThemeProvider>
+        <MantineProvider theme={theme} defaultColorScheme="auto">
+          <Notifications position="top-right" />
+          <ModalsProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <MantineColorSchemeSync />
+              <AuthProvider>
+                <OfflineBanner />
+                {children}
+              </AuthProvider>
+            </ThemeProvider>
+          </ModalsProvider>
+        </MantineProvider>
       </body>
     </html>
   )
