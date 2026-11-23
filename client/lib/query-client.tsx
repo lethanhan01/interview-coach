@@ -10,18 +10,16 @@ import {
 } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ApiClientError } from '@/lib/api-client'
-import {
-  authService,
-  candidateProfileService,
-  onetAdminService,
-  onetService,
-  prepService,
-  rubricService,
-  sessionService,
-  sfiaAdminService,
-  userManagementService,
-  userService,
-} from '@/services'
+import { userManagementService } from '@/services/admin.service'
+import { authService } from '@/services/auth.service'
+import { candidateProfileService } from '@/services/candidate-profile.service'
+import { onetAdminService } from '@/services/onet-admin.service'
+import { onetService } from '@/services/onet.service'
+import { prepService } from '@/services/prep.service'
+import { rubricService } from '@/services/rubric.service'
+import { sessionService } from '@/services/session.service'
+import { sfiaAdminService } from '@/services/sfia-admin.service'
+import { userService } from '@/services/user.service'
 import type {
   ContextPack,
   OnetAlternateTitlesQuery,
@@ -83,6 +81,9 @@ export function getQueryClient(): QueryClient {
 }
 
 /**
+ * @deprecated Dùng `useQueryClient()` từ `@tanstack/react-query` kèm `@test-utils`.
+ * Chỉ giữ tạm đến Phase 8 cho các caller & test legacy chưa migrate.
+ *
  * Trả về QueryClient từ React Context nếu có `<QueryClientProvider>`,
  * hoặc fallback an toàn về `getQueryClient()` để không làm crash các bài unit test
  * legacy render trực tiếp bằng `@testing-library/react`.

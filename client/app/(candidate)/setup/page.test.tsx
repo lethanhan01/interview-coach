@@ -4,7 +4,8 @@ import { render, screen, fireEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import SetupPage from './page'
 import { queryKeys } from '@/lib/query-client'
-import { prepService, sessionService } from '@/services'
+import { prepService } from '@/services/prep.service'
+import { sessionService } from '@/services/session.service'
 import type { SavedJobDescription } from '@/types'
 
 const mockPush = vi.fn()
@@ -17,15 +18,21 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => mockSearchParams,
 }))
 
-vi.mock('@/services', () => ({
+vi.mock('@/services/prep.service', () => ({
   prepService: {
     getSavedJobDescriptions: vi.fn(),
     saveJobDescription: vi.fn(),
   },
+}))
+
+vi.mock('@/services/session.service', () => ({
   sessionService: {
     getSessions: vi.fn(),
     createSession: vi.fn(),
   },
+}))
+
+vi.mock('@/services/onet.service', () => ({
   onetService: {
     searchOccupations: vi.fn().mockResolvedValue([]),
     getOccupationTech: vi.fn().mockResolvedValue([]),

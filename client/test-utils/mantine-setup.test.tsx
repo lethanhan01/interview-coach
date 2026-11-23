@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { axe } from 'jest-axe'
 import { z } from 'zod'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Badge,
   Box,
@@ -12,8 +13,15 @@ import {
   TextInput,
   Title,
 } from '@mantine/core'
+import { useDatesContext } from '@mantine/dates'
 import { schemaResolver, useForm } from '@mantine/form'
-import { render, screen, userEvent } from '@test-utils'
+import { notifications } from '@mantine/notifications'
+import { createTestQueryClient, render, screen, userEvent } from '@test-utils'
+import {
+  DIRECTIONAL_VIEW_TRANSITION_ENTER,
+  DIRECTIONAL_VIEW_TRANSITION_EXIT,
+  SafeViewTransition,
+} from '@/components/patterns/SafeViewTransition'
 
 const smokeSchema = z.object({
   roleTitle: z.string().trim().min(3, 'Vị trí ứng tuyển cần ít nhất 3 ký tự'),
@@ -69,6 +77,39 @@ function SmokeInterviewForm({
   )
 }
 
+function PlatformContextProbe() {
+  const datesCtx = useDatesContext()
+  const queryClient = useQueryClient()
+  const cachedLabel = queryClient.getQueryData<string>(['smoke', 'label'])
+
+  return (
+    <SafeViewTransition
+      enter={DIRECTIONAL_VIEW_TRANSITION_ENTER}
+      exit={DIRECTIONAL_VIEW_TRANSITION_EXIT}
+    >
+      <Stack gap="xs">
+        <Text>locale:{datesCtx.locale}</Text>
+        <Text>firstDay:{String(datesCtx.firstDayOfWeek)}</Text>
+        <Text>cached:{cachedLabel ?? 'none'}</Text>
+        <Button
+          type="button"
+          color="success"
+          onClick={() =>
+            notifications.show({
+              title: 'Đã lưu cấu hình',
+              message: 'Thông báo hoạt động bình thường',
+              color: 'success',
+              closeButtonProps: { 'aria-label': 'Đóng thông báo' },
+            })
+          }
+        >
+          Hiện thông báo
+        </Button>
+      </Stack>
+    </SafeViewTransition>
+  )
+}
+
 describe('Mantine v9 + @test-utils setup smoke test', () => {
   it('renders Mantine primitives, validates with @mantine/form + Zod v4, and handles user interaction', async () => {
     const user = userEvent.setup()
@@ -93,6 +134,24 @@ describe('Mantine v9 + @test-utils setup smoke test', () => {
     })
     expect(
       await screen.findByText('Đã sẵn sàng: Frontend Engineer')
+    ).toBeInTheDocument()
+  })
+
+  it('provides DatesProvider (vi), Notifications, optional queryClient, and SafeViewTransition fallback', async () => {
+    const user = userEvent.setup()
+    const customClient = createTestQueryClient()
+    customClient.setQueryData(['smoke', 'label'], 'ready')
+
+    render(<PlatformContextProbe />, { queryClient: customClient })
+
+    expect(screen.getByText('locale:vi')).toBeInTheDocument()
+    expect(screen.getByText('firstDay:1')).toBeInTheDocument()
+    expect(screen.getByText('cached:ready')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Hiện thông báo' }))
+    expect(await screen.findByText('Đã lưu cấu hình')).toBeInTheDocument()
+    expect(
+      screen.getByText('Thông báo hoạt động bình thường')
     ).toBeInTheDocument()
   })
 

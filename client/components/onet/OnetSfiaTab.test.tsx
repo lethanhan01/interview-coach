@@ -4,10 +4,10 @@ import { render, screen, fireEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { OnetSfiaTab } from './OnetSfiaTab'
 import { queryKeys } from '@/lib/query-client'
-import { onetAdminService } from '@/services'
+import { onetAdminService } from '@/services/onet-admin.service'
 import type { OnetSfiaMapping, SfiaSkillDefinition } from '@/types'
 
-vi.mock('@/services', () => ({
+vi.mock('@/services/onet-admin.service', () => ({
   onetAdminService: {
     getSfiaLibrary: vi.fn(),
     updateSfiaMapping: vi.fn(),

@@ -1,4 +1,7 @@
+'use client'
+
 import { useEffect, useRef, useState } from 'react'
+import { useInterval } from '@mantine/hooks'
 
 interface CountdownResult {
   remainingSeconds: number
@@ -17,13 +20,20 @@ export function useCountdown(
     remainingSeconds: initialSeconds,
   })
   const startTimeRef = useRef<number | null>(null)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const startingRemainingRef = useRef<number>(initialSeconds)
   const remainingSeconds =
     countdown.initialSeconds === initialSeconds
       ? countdown.remainingSeconds
       : initialSeconds
   const remainingRef = useRef(remainingSeconds)
   const expireNotifiedRef = useRef(false)
+
+  const { start, stop } = useInterval(() => {
+    const startedAt = startTimeRef.current ?? Date.now()
+    const elapsed = Math.floor((Date.now() - startedAt) / 1000)
+    const remaining = Math.max(0, startingRemainingRef.current - elapsed)
+    setCountdown({ initialSeconds, remainingSeconds: remaining })
+  }, 1000)
 
   useEffect(() => {
     remainingRef.current = remainingSeconds
@@ -36,33 +46,28 @@ export function useCountdown(
       return
     }
 
+    stop()
+
     if (active && !expireNotifiedRef.current) {
       expireNotifiedRef.current = true
       onExpire?.()
     }
-  }, [active, remainingSeconds, onExpire])
+  }, [active, remainingSeconds, onExpire, stop])
 
   useEffect(() => {
-    if (!active || initialSeconds <= 0) return
+    if (!active || initialSeconds <= 0 || remainingRef.current <= 0) {
+      stop()
+      return
+    }
 
-    const startingRemaining = remainingRef.current
+    startingRemainingRef.current = remainingRef.current
     startTimeRef.current = Date.now()
-
-    intervalRef.current = setInterval(() => {
-      const elapsed = Math.floor(
-        (Date.now() - (startTimeRef.current ?? Date.now())) / 1000
-      )
-      const remaining = Math.max(0, startingRemaining - elapsed)
-      setCountdown({ initialSeconds, remainingSeconds: remaining })
-      if (remaining === 0 && intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }, 1000)
+    start()
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
+      stop()
     }
-  }, [initialSeconds, active])
+  }, [initialSeconds, active, start, stop])
 
   return {
     remainingSeconds,

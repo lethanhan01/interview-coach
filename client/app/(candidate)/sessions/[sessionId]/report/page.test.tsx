@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@test-utils'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import ReportPage from './page'
 import { ApiClientError } from '@/lib/api-client'
-import { sessionService } from '@/services'
+import { sessionService } from '@/services/session.service'
 import {
   mockUnifiedReport,
   mockLegacyReport,
@@ -15,7 +15,7 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({ sessionId: 'test-session-123' }),
 }))
 
-vi.mock('@/services', () => ({
+vi.mock('@/services/session.service', () => ({
   sessionService: {
     getSession: vi.fn(),
     getReport: vi.fn(),

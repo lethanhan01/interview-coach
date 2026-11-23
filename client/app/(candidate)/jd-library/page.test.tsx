@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen, waitFor, fireEvent } from '@test-utils'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import JdLibraryPage from './page'
-import { prepService } from '@/services'
+import { prepService } from '@/services/prep.service'
 import type { SavedJobDescription } from '@/types'
 
 const mockPush = vi.fn()
@@ -13,7 +13,7 @@ vi.mock('next/navigation', () => ({
   }),
 }))
 
-vi.mock('@/services', () => ({
+vi.mock('@/services/prep.service', () => ({
   prepService: {
     getSavedJobDescriptions: vi.fn(),
   },

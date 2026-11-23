@@ -6,11 +6,26 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
+  type ReactNode,
 } from 'react'
-import { useOptionalQueryClient } from '@/lib/query-client'
-import { authService } from '@/services'
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query'
+import { authQueries, queryKeys } from '@/lib/query-client'
+import { authService } from '@/services/auth.service'
 import type { CurrentUser, UserRole } from '@/types'
+
+function clearSessionCache(queryClient: QueryClient): void {
+  queryClient.setQueryData(queryKeys.auth.me(), null)
+  queryClient.removeQueries({
+    predicate: (query) =>
+      !(query.queryKey[0] === 'auth' && query.queryKey[1] === 'me'),
+  })
+  queryClient.getMutationCache().clear()
+}
 
 type AuthContextValue = {
   user: CurrentUser | null
@@ -30,53 +45,45 @@ const AuthContext = createContext<AuthContextValue>({
   logout: async () => {},
 })
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const queryClient = useOptionalQueryClient()
-  const [value, setValue] = useState<
-    Omit<AuthContextValue, 'refresh' | 'logout'>
-  >({
-    user: null,
-    role: null,
-    status: null,
-    isLoading: true,
+export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
+  const queryClient = useQueryClient()
+
+  const meQuery = useQuery({
+    ...authQueries.me(),
+    retry: false,
+  })
+
+  const { mutateAsync: runLogout } = useMutation({
+    mutationFn: () => authService.logout(),
+    onSettled: () => {
+      clearSessionCache(queryClient)
+    },
   })
 
   const refresh = useCallback(async (): Promise<UserRole | null> => {
     try {
-      const user = await authService.getMe()
-      if (!user) throw new Error('Not authenticated')
-      const fetchedRole = user.role as UserRole
-      setValue({
-        user: { id: user.id, email: user.email },
-        role: fetchedRole,
-        status: user.status,
-        isLoading: false,
+      const fetchedUser = await queryClient.fetchQuery({
+        ...authQueries.me(),
+        staleTime: 0,
       })
-      return fetchedRole
+      if (!fetchedUser) {
+        queryClient.setQueryData(queryKeys.auth.me(), null)
+        return null
+      }
+      return fetchedUser.role
     } catch {
-      setValue({ user: null, role: null, status: null, isLoading: false })
+      queryClient.setQueryData(queryKeys.auth.me(), null)
       return null
-    }
-  }, [])
-
-  const logout = useCallback(async (): Promise<void> => {
-    try {
-      await authService.logout()
-    } finally {
-      queryClient.clear()
-      setValue({ user: null, role: null, status: null, isLoading: false })
     }
   }, [queryClient])
 
-  useEffect(() => {
-    const timeout = window.setTimeout(() => void refresh(), 0)
-    return () => window.clearTimeout(timeout)
-  }, [refresh])
+  const logout = useCallback(async (): Promise<void> => {
+    await runLogout().catch(() => {})
+  }, [runLogout])
 
   useEffect(() => {
     const handleSessionExpired = () => {
-      queryClient.clear()
-      setValue({ user: null, role: null, status: null, isLoading: false })
+      clearSessionCache(queryClient)
       void authService.logout().catch(() => {})
     }
     window.addEventListener('auth:session-expired', handleSessionExpired)
@@ -84,9 +91,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener('auth:session-expired', handleSessionExpired)
   }, [queryClient])
 
-  const contextValue = useMemo(
-    () => ({ ...value, refresh, logout }),
-    [value, refresh, logout]
+  const authUser = meQuery.isError ? null : (meQuery.data ?? null)
+  const isLoading = meQuery.isPending
+
+  const contextValue = useMemo<AuthContextValue>(
+    () => ({
+      user: authUser ? { id: authUser.id, email: authUser.email } : null,
+      role: authUser ? authUser.role : null,
+      status: authUser ? authUser.status : null,
+      isLoading,
+      refresh,
+      logout,
+    }),
+    [authUser, isLoading, refresh, logout]
   )
 
   return (

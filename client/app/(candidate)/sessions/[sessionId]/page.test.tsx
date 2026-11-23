@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import InterviewPage from './page'
 import { queryKeys } from '@/lib/query-client'
-import { sessionService } from '@/services'
+import { sessionService } from '@/services/session.service'
 import type { Session } from '@/types'
 
 const mockReplace = vi.fn()
@@ -21,7 +21,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => mockRouter,
 }))
 
-vi.mock('@/services', () => ({
+vi.mock('@/services/session.service', () => ({
   sessionService: {
     getSession: vi.fn(),
     getQuestions: vi.fn(),
@@ -33,6 +33,9 @@ vi.mock('@/services', () => ({
       onerror: null,
     })),
   },
+}))
+
+vi.mock('@/services/media.service', () => ({
   mediaService: {
     synthesizeSpeech: vi.fn(),
     transcribeAudio: vi.fn(),

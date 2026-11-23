@@ -11,6 +11,7 @@ if (missing.length > 0) {
 
 const nextConfig: NextConfig = {
   experimental: {
+    viewTransition: true,
     optimizePackageImports: [
       '@mantine/core',
       '@mantine/hooks',
@@ -18,6 +19,8 @@ const nextConfig: NextConfig = {
       '@mantine/notifications',
       '@mantine/modals',
       '@mantine/dropzone',
+      '@mantine/charts',
+      '@mantine/dates',
       '@tabler/icons-react',
       '@tanstack/react-query',
     ],

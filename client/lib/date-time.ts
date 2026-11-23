@@ -51,3 +51,52 @@ function getVietnamDateOnlyUtc(value: Date): Date {
   const day = Number(partMap.get('day'))
   return new Date(Date.UTC(year, month - 1, day))
 }
+
+const YEAR_MONTH_RE = /^(\d{4})-(0[1-9]|1[0-2])$/
+const ISO_DATE_RE = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/
+
+/**
+ * Chuyển chuỗi tháng `'YYYY-MM'` (Resume/API) sang `DateValue` (`'YYYY-MM-01'`)
+ * cho `@mantine/dates` v9 bằng xử lý chuỗi thuần, tránh lệch múi giờ.
+ */
+export function toMantineMonthDate(
+  ym: string | null | undefined
+): string | null {
+  if (!ym) return null
+  const trimmed = ym.trim()
+
+  const ymMatch = YEAR_MONTH_RE.exec(trimmed)
+  if (ymMatch) {
+    return `${ymMatch[1]}-${ymMatch[2]}-01`
+  }
+
+  const isoMatch = ISO_DATE_RE.exec(trimmed)
+  if (isoMatch) {
+    return `${isoMatch[1]}-${isoMatch[2]}-01`
+  }
+
+  return null
+}
+
+/**
+ * Chuyển `DateValue` (`'YYYY-MM-DD'`) từ `@mantine/dates` v9 về chuỗi `'YYYY-MM'`
+ * (Resume/API) bằng xử lý chuỗi thuần, tránh lệch múi giờ.
+ */
+export function fromMantineMonthDate(
+  dateValue: string | null | undefined
+): string {
+  if (!dateValue) return ''
+  const trimmed = dateValue.trim()
+
+  const isoMatch = ISO_DATE_RE.exec(trimmed)
+  if (isoMatch) {
+    return `${isoMatch[1]}-${isoMatch[2]}`
+  }
+
+  const ymMatch = YEAR_MONTH_RE.exec(trimmed)
+  if (ymMatch) {
+    return `${ymMatch[1]}-${ymMatch[2]}`
+  }
+
+  return ''
+}

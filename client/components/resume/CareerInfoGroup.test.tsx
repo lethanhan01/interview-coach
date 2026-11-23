@@ -2,17 +2,15 @@ import { render, screen, fireEvent } from '@test-utils'
 import { expect, it, describe, vi } from 'vitest'
 import CareerInfoGroup from './CareerInfoGroup'
 
-vi.mock('@/services', () => ({
+vi.mock('@/services/onet.service', () => ({
   onetService: {
-    searchOccupations: vi
-      .fn()
-      .mockResolvedValue([
-        {
-          socCode: '15-1252.00',
-          title: 'Software Developers',
-          description: 'Develop software',
-        },
-      ]),
+    searchOccupations: vi.fn().mockResolvedValue([
+      {
+        socCode: '15-1252.00',
+        title: 'Software Developers',
+        description: 'Develop software',
+      },
+    ]),
     getOccupationTech: vi.fn().mockResolvedValue([]),
   },
 }))

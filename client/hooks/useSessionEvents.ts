@@ -1,9 +1,48 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { z } from 'zod'
 import { queryKeys, useOptionalQueryClient } from '@/lib/query-client'
-import { sessionService } from '@/services'
+import { sessionService } from '@/services/session.service'
 import type { FeedbackProgress, SessionStatus } from '@/types'
+
+const sessionStatusSchema = z.enum([
+  'generating',
+  'ready',
+  'active',
+  'paused',
+  'completing',
+  'completed',
+  'canceled',
+  'error',
+])
+
+const sessionStatusEventSchema = z.object({
+  status: sessionStatusSchema,
+  sessionId: z.string().optional(),
+})
+
+const feedbackProgressEventSchema = z.object({
+  sessionId: z.string(),
+  status: sessionStatusSchema,
+  totalQuestions: z.number(),
+  answeredQuestions: z.number(),
+  skippedQuestions: z.number(),
+  feedbackRequired: z.number(),
+  feedbackCompleted: z.number(),
+  feedbackPending: z.number(),
+  reportReady: z.boolean(),
+})
+
+const sessionErrorEventSchema = z.object({
+  error: z
+    .object({
+      code: z.string().optional(),
+      message: z.string().optional(),
+    })
+    .optional(),
+  timestamp: z.string().optional(),
+})
 
 export interface UseSessionEventsOptions {
   sessionId: string
@@ -89,18 +128,22 @@ export function useSessionEvents({
 
       es.addEventListener('session.status', (event) => {
         try {
-          const data = JSON.parse((event as MessageEvent).data) as {
-            status?: SessionStatus
+          const raw: unknown = JSON.parse((event as MessageEvent).data)
+          const parsed = sessionStatusEventSchema.safeParse(raw)
+          if (!parsed.success) {
+            console.warn(
+              'Invalid session.status SSE payload:',
+              parsed.error.issues
+            )
+            return
           }
-          if (data.status) {
-            void queryClient.invalidateQueries({
-              queryKey: queryKeys.sessions.status(sessionId),
-            })
-            void queryClient.invalidateQueries({
-              queryKey: queryKeys.sessions.detail(sessionId),
-            })
-            onStatusRef.current?.(data.status)
-          }
+          void queryClient.invalidateQueries({
+            queryKey: queryKeys.sessions.status(sessionId),
+          })
+          void queryClient.invalidateQueries({
+            queryKey: queryKeys.sessions.detail(sessionId),
+          })
+          onStatusRef.current?.(parsed.data.status)
         } catch (err) {
           console.warn('Failed to parse session.status SSE payload:', err)
         }
@@ -108,14 +151,20 @@ export function useSessionEvents({
 
       es.addEventListener('session.feedback_progress', (event) => {
         try {
-          const data = JSON.parse(
-            (event as MessageEvent).data
-          ) as FeedbackProgress
+          const raw: unknown = JSON.parse((event as MessageEvent).data)
+          const parsed = feedbackProgressEventSchema.safeParse(raw)
+          if (!parsed.success) {
+            console.warn(
+              'Invalid session.feedback_progress SSE payload:',
+              parsed.error.issues
+            )
+            return
+          }
           queryClient.setQueryData(
             queryKeys.sessions.feedbackProgress(sessionId),
-            data
+            parsed.data
           )
-          onProgressRef.current?.(data)
+          onProgressRef.current?.(parsed.data)
         } catch (err) {
           console.warn('Failed to parse feedback_progress SSE payload:', err)
         }
@@ -144,13 +193,18 @@ export function useSessionEvents({
 
       es.addEventListener('session.error', (event) => {
         try {
-          const payload = JSON.parse((event as MessageEvent).data) as {
-            error?: { code?: string; message?: string }
-            timestamp?: string
+          const raw: unknown = JSON.parse((event as MessageEvent).data)
+          const parsed = sessionErrorEventSchema.safeParse(raw)
+          if (!parsed.success) {
+            console.warn(
+              'Invalid session.error SSE payload:',
+              parsed.error.issues
+            )
+            return
           }
           const errMessage =
-            payload.error?.message || 'Lỗi xử lý phiên phỏng vấn'
-          const errCode = payload.error?.code
+            parsed.data.error?.message || 'Lỗi xử lý phiên phỏng vấn'
+          const errCode = parsed.data.error?.code
           isTerminatedRef.current = true
           cleanup()
           setConnectionState('disconnected')

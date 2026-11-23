@@ -3,27 +3,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import JdForm from './JdForm'
 import { EMPTY_JD } from '@/lib/setup-helpers'
 import type { JdFormData } from '@/types'
-import { onetService } from '@/services'
+import { onetService } from '@/services/onet.service'
 
-vi.mock('@/services', async (importOriginal) => {
-  const actual = await importOriginal<Record<string, unknown>>()
-  return {
-    ...actual,
-    onetService: {
-      searchOccupations: vi.fn().mockResolvedValue([
-        {
-          socCode: '15-1252.00',
-          title: 'Software Developers',
-          description: 'Develop software',
-        },
-      ]),
-      getOccupationTech: vi.fn().mockResolvedValue([
-        { example: 'Docker', isHotTechnology: true, inDemand: true },
-        { example: 'Kubernetes', isHotTechnology: true, inDemand: false },
-      ]),
-    },
-  }
-})
+vi.mock('@/services/onet.service', () => ({
+  onetService: {
+    searchOccupations: vi.fn().mockResolvedValue([
+      {
+        socCode: '15-1252.00',
+        title: 'Software Developers',
+        description: 'Develop software',
+      },
+    ]),
+    getOccupationTech: vi.fn().mockResolvedValue([
+      { example: 'Docker', isHotTechnology: true, inDemand: true },
+      { example: 'Kubernetes', isHotTechnology: true, inDemand: false },
+    ]),
+  },
+}))
 
 describe('JdForm', () => {
   beforeEach(() => {

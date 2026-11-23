@@ -3,6 +3,8 @@
 @import '@mantine/core/styles.layer.css';
 @import '@mantine/notifications/styles.layer.css';
 @import '@mantine/dropzone/styles.layer.css';
+@import '@mantine/dates/styles.layer.css';
+@import '@mantine/charts/styles.layer.css';
 
 @import 'tailwindcss';
 @import './styles/tokens.css';
@@ -33,5 +35,73 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
+  }
+}
+
+/* View Transitions (Track 2 — MOTION-001..008) */
+:root {
+  --vt-duration-exit: 150ms;
+  --vt-duration-enter: 210ms;
+  --vt-duration-move: 300ms;
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vt-slide {
+  from {
+    translate: var(--slide-offset);
+  }
+
+  to {
+    translate: 0;
+  }
+}
+
+::view-transition-new(.slide-from-right) {
+  --slide-offset: 3.75rem;
+
+  animation:
+    var(--vt-duration-enter) ease-out var(--vt-duration-exit) both vt-fade,
+    var(--vt-duration-move) ease-in-out both vt-slide;
+}
+
+::view-transition-old(.slide-to-left) {
+  --slide-offset: -3.75rem;
+
+  animation:
+    var(--vt-duration-exit) ease-in both vt-fade reverse,
+    var(--vt-duration-move) ease-in-out both vt-slide reverse;
+}
+
+::view-transition-new(.slide-from-left) {
+  --slide-offset: -3.75rem;
+
+  animation:
+    var(--vt-duration-enter) ease-out var(--vt-duration-exit) both vt-fade,
+    var(--vt-duration-move) ease-in-out both vt-slide;
+}
+
+::view-transition-old(.slide-to-right) {
+  --slide-offset: 3.75rem;
+
+  animation:
+    var(--vt-duration-exit) ease-in both vt-fade reverse,
+    var(--vt-duration-move) ease-in-out both vt-slide reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 }

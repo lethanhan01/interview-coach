@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import AdminUsersPage from './page'
 import { queryKeys } from '@/lib/query-client'
-import { userManagementService } from '@/services'
+import { userManagementService } from '@/services/admin.service'
 import type { AdminUser } from '@/types'
 
 const mockAuthState = {
@@ -16,7 +16,7 @@ vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => mockAuthState,
 }))
 
-vi.mock('@/services', () => ({
+vi.mock('@/services/admin.service', () => ({
   userManagementService: {
     listUsers: vi.fn(),
     updateUser: vi.fn(),

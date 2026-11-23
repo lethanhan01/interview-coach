@@ -7,13 +7,10 @@ import {
   MantineProvider,
   mantineHtmlProps,
 } from '@mantine/core'
-import { ModalsProvider } from '@mantine/modals'
-import { Notifications } from '@mantine/notifications'
 import { theme } from '@/theme'
+import { AppProviders } from '@/components/app-providers'
 import { ThemeProvider } from '@/components/theme-provider'
 import { MantineColorSchemeSync } from '@/components/mantine-color-scheme-sync'
-import { AuthProvider } from '@/lib/auth-context'
-import { QueryProvider } from '@/lib/query-client'
 import { OfflineBanner } from '@/components/patterns/OfflineBanner'
 
 const geistSans = Geist({
@@ -48,23 +45,18 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
         <MantineProvider theme={theme} defaultColorScheme="auto">
-          <Notifications position="top-right" />
-          <ModalsProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <MantineColorSchemeSync />
-              <QueryProvider>
-                <AuthProvider>
-                  <OfflineBanner />
-                  {children}
-                </AuthProvider>
-              </QueryProvider>
-            </ThemeProvider>
-          </ModalsProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <MantineColorSchemeSync />
+            <AppProviders>
+              <OfflineBanner />
+              {children}
+            </AppProviders>
+          </ThemeProvider>
         </MantineProvider>
       </body>
     </html>

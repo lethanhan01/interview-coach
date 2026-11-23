@@ -4,7 +4,7 @@ import TechnicalSkillsGroup, {
   detectTechCategory,
 } from './TechnicalSkillsGroup'
 
-vi.mock('@/services', () => ({
+vi.mock('@/services/onet.service', () => ({
   onetService: {
     searchOccupations: vi.fn().mockResolvedValue([]),
     getOccupationTech: vi.fn().mockResolvedValue([
