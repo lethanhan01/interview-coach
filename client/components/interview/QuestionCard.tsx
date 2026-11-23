@@ -153,16 +153,16 @@ export default function QuestionCard({
             size="sm"
             aria-label={isPlaying ? 'Dừng đọc câu hỏi' : 'Nghe đọc câu hỏi'}
             onClick={toggleAudio}
-            className="h-7 px-2 text-ink-muted hover:text-ink"
+            className="text-ink-muted hover:text-ink h-7 px-2"
           >
             {isLoading ? (
               <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
             ) : isPlaying ? (
-              <VolumeX className="size-3.5 text-brand" aria-hidden="true" />
+              <VolumeX className="text-brand size-3.5" aria-hidden="true" />
             ) : (
               <Volume2 className="size-3.5" aria-hidden="true" />
             )}
-            <span className="text-xs ml-1">
+            <span className="ml-1 text-xs">
               {isLoading ? 'Đang tải...' : isPlaying ? 'Dừng' : 'Đọc'}
             </span>
           </Button>

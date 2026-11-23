@@ -41,7 +41,9 @@ describe('JdForm', () => {
   it('renders company name input and calls onChange', () => {
     const onChange = vi.fn()
     render(<JdForm value={EMPTY_JD} onChange={onChange} />)
-    const companyInput = screen.getByPlaceholderText('VD: FPT Software, Shopee...')
+    const companyInput = screen.getByPlaceholderText(
+      'VD: FPT Software, Shopee...'
+    )
     fireEvent.change(companyInput, { target: { value: 'Shopee' } })
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ company: 'Shopee' })
@@ -168,7 +170,9 @@ describe('JdForm', () => {
       )
     })
 
-    const option = await screen.findByRole('option', { name: /Software Developers/i })
+    const option = await screen.findByRole('option', {
+      name: /Software Developers/i,
+    })
     fireEvent.click(option)
 
     expect(onChange).toHaveBeenCalledWith(
@@ -200,7 +204,9 @@ describe('JdForm', () => {
     expect(screen.getByText('Software Developers')).toBeInTheDocument()
     expect(screen.getByText('Mã SOC: 15-1252.00')).toBeInTheDocument()
 
-    const clearBtn = screen.getByRole('button', { name: 'Bỏ chọn chức danh O*NET' })
+    const clearBtn = screen.getByRole('button', {
+      name: 'Bỏ chọn chức danh O*NET',
+    })
     fireEvent.click(clearBtn)
 
     expect(onChange).toHaveBeenCalledWith(

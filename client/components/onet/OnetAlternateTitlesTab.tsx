@@ -1,7 +1,9 @@
 'use client'
 
 import * as React from 'react'
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo } from 'react'
+import { useDebouncedValue } from '@mantine/hooks'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   Search,
   X,
@@ -18,7 +20,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { EmptyState } from '@/components/patterns/FeedbackPatterns'
-import { onetAdminService } from '@/services/onet-admin.service'
+import { onetAdminQueries } from '@/lib/query-client'
 
 export interface OnetAlternateTitlesTabProps {
   socCode?: string
@@ -62,65 +64,25 @@ export function OnetAlternateTitlesTab({
   className,
 }: OnetAlternateTitlesTabProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [debouncedQuery] = useDebouncedValue(searchQuery.trim(), 300)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [copiedTitle, setCopiedTitle] = useState<string | null>(null)
   const [copiedAll, setCopiedAll] = useState(false)
 
-  // Server-side paginated state
-  const [serverItems, setServerItems] = useState<string[]>(initialTitles)
-  const [serverTotal, setServerTotal] = useState<number>(totalCount || initialTitles.length)
-  const [serverTotalPages, setServerTotalPages] = useState<number>(
-    Math.max(1, Math.ceil((totalCount || initialTitles.length) / pageSize))
-  )
-  const [lastFetchedKey, setLastFetchedKey] = useState<string>(() =>
-    socCode ? `${socCode}:1:20:` : ''
-  )
-
   const isServerMode = Boolean(socCode)
-  const currentKey = `${socCode}:${currentPage}:${pageSize}:${debouncedQuery}`
-  const loading = isServerMode && lastFetchedKey !== currentKey
-  const seqRef = useRef(0)
 
-  // Debounce search input 300ms
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(searchQuery.trim())
-      setCurrentPage(1)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+  const { data: serverData, isLoading: isServerLoading } = useQuery({
+    ...onetAdminQueries.alternateTitles(socCode ?? '', {
+      page: currentPage,
+      limit: pageSize,
+      search: debouncedQuery,
+    }),
+    placeholderData: keepPreviousData,
+    enabled: isServerMode,
+  })
 
-  // Fetch paginated alternate titles from backend API in server mode (with race condition guard)
-  useEffect(() => {
-    if (!socCode) return
-
-    const currentSeq = ++seqRef.current
-
-    onetAdminService
-      .getAlternateTitles(socCode, {
-        page: currentPage,
-        limit: pageSize,
-        search: debouncedQuery,
-      })
-      .then((res) => {
-        if (seqRef.current === currentSeq) {
-          setServerItems(res.items || [])
-          setServerTotal(res.total || 0)
-          setServerTotalPages(res.totalPages || 1)
-          setLastFetchedKey(currentKey)
-        }
-      })
-      .catch(() => {
-        if (seqRef.current === currentSeq) {
-          setServerItems([])
-          setServerTotal(0)
-          setServerTotalPages(1)
-          setLastFetchedKey(currentKey)
-        }
-      })
-  }, [socCode, currentPage, pageSize, debouncedQuery, currentKey])
+  const loading = isServerMode && isServerLoading
 
   // Client mode derived pagination
   const clientFiltered = useMemo(() => {
@@ -130,12 +92,19 @@ export function OnetAlternateTitlesTab({
   }, [isServerMode, initialTitles, debouncedQuery])
 
   const items = isServerMode
-    ? serverItems
+    ? (serverData?.items ?? initialTitles)
     : clientFiltered.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-  const total = isServerMode ? serverTotal : clientFiltered.length
+  const total = isServerMode
+    ? (serverData?.total ?? (totalCount || initialTitles.length))
+    : clientFiltered.length
   const totalPages = isServerMode
-    ? serverTotalPages
+    ? (serverData?.totalPages ?? Math.max(1, Math.ceil(total / pageSize)))
     : Math.max(1, Math.ceil(total / pageSize))
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    setCurrentPage(1)
+  }
 
   const fromIndex = total === 0 ? 0 : (currentPage - 1) * pageSize + 1
   const toIndex = Math.min(currentPage * pageSize, total)
@@ -170,15 +139,15 @@ export function OnetAlternateTitlesTab({
           <Search className="text-ink-muted absolute left-3 top-1/2 size-4 -translate-y-1/2" />
           <Input
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Tìm kiếm chức danh thị trường trong database (vd: Full Stack, Lead, Architect...)"
             className="bg-surface-inset h-9 pl-9 pr-8 text-xs sm:text-sm"
           />
           {searchQuery && (
             <button
               type="button"
-              onClick={() => setSearchQuery('')}
-              className="text-ink-muted hover:text-ink absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded focus-ring"
+              onClick={() => handleSearchChange('')}
+              className="text-ink-muted hover:text-ink focus-ring absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5"
               title="Xóa từ khóa tìm kiếm"
               aria-label="Xóa từ khóa tìm kiếm"
             >
@@ -193,13 +162,15 @@ export function OnetAlternateTitlesTab({
             variant="outline"
             size="sm"
             onClick={handleCopyAll}
-            className="h-9 gap-1.5 px-3 text-xs shrink-0 self-start sm:self-auto"
+            className="h-9 shrink-0 gap-1.5 self-start px-3 text-xs sm:self-auto"
             title="Sao chép toàn bộ danh sách chức danh trên trang hiện tại"
           >
             {copiedAll ? (
               <>
                 <Check className="text-success size-3.5" />
-                <span className="text-success font-medium">Đã chép trang này ({items.length})</span>
+                <span className="text-success font-medium">
+                  Đã chép trang này ({items.length})
+                </span>
               </>
             ) : (
               <>
@@ -212,14 +183,14 @@ export function OnetAlternateTitlesTab({
       </div>
 
       {/* Subheader: Range Stats and Page Size Selector */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2 text-xs text-ink-muted">
+      <div className="text-ink-muted flex flex-wrap items-center justify-between gap-2 border-b pb-2 text-xs">
         <div className="flex items-center gap-1.5">
           <span>Hiển thị</span>
-          <span className="font-semibold text-ink font-mono tabular-nums">
+          <span className="text-ink font-mono font-semibold tabular-nums">
             {fromIndex} - {toIndex}
           </span>
           <span>trên tổng số</span>
-          <span className="font-semibold text-ink font-mono tabular-nums">
+          <span className="text-ink font-mono font-semibold tabular-nums">
             {total}
           </span>
           <span>chức danh O*NET</span>
@@ -237,7 +208,7 @@ export function OnetAlternateTitlesTab({
                 setCurrentPage(1)
               }}
               className={cn(
-                'rounded px-1.5 py-0.5 text-[11px] font-mono tabular-nums transition-colors focus-ring',
+                'focus-ring rounded px-1.5 py-0.5 font-mono text-[11px] tabular-nums transition-colors',
                 pageSize === size
                   ? 'bg-brand text-brand-foreground font-bold'
                   : 'text-ink-muted hover:text-ink hover:bg-surface-inset'
@@ -251,8 +222,8 @@ export function OnetAlternateTitlesTab({
 
       {/* Loading Indicator */}
       {loading && (
-        <div className="flex items-center justify-center py-8 gap-2 text-xs text-ink-muted">
-          <Loader2 className="size-4 animate-spin text-brand" />
+        <div className="text-ink-muted flex items-center justify-center gap-2 py-8 text-xs">
+          <Loader2 className="text-brand size-4 animate-spin" />
           <span>Đang tải danh sách chức danh từ database...</span>
         </div>
       )}
@@ -272,7 +243,7 @@ export function OnetAlternateTitlesTab({
               searchQuery
                 ? {
                     label: 'Xóa bộ lọc tìm kiếm',
-                    onClick: () => setSearchQuery(''),
+                    onClick: () => handleSearchChange(''),
                   }
                 : undefined
             }
@@ -289,13 +260,13 @@ export function OnetAlternateTitlesTab({
             return (
               <Card
                 key={`${socCode}-${title}-${idx}`}
-                className="group pressable flex items-center justify-between gap-2.5 p-3 transition-all hover:border-brand/40 hover:bg-surface-inset/40"
+                className="pressable hover:border-brand/40 hover:bg-surface-inset/40 group flex items-center justify-between gap-2.5 p-3 transition-all"
               >
-                <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex min-w-0 items-center gap-2.5">
                   <div className="bg-brand/10 text-brand flex size-7 shrink-0 items-center justify-center rounded-lg">
                     <Briefcase className="size-3.5" />
                   </div>
-                  <span className="text-ink text-xs sm:text-sm font-medium truncate">
+                  <span className="text-ink truncate text-xs font-medium sm:text-sm">
                     <HighlightedTitle title={title} query={searchQuery} />
                   </span>
                 </div>
@@ -304,7 +275,7 @@ export function OnetAlternateTitlesTab({
                   variant="ghost"
                   size="sm"
                   onClick={() => handleCopySingle(title)}
-                  className="text-ink-muted hover:text-ink h-7 w-7 shrink-0 p-0 rounded-md"
+                  className="text-ink-muted hover:text-ink h-7 w-7 shrink-0 rounded-md p-0"
                   title="Sao chép chức danh này"
                   aria-label={`Sao chép chức danh ${title}`}
                 >
@@ -322,7 +293,7 @@ export function OnetAlternateTitlesTab({
 
       {/* Pagination Controls */}
       {!loading && totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2 border-t border-border/70">
+        <div className="border-border/70 flex items-center justify-between border-t pt-2">
           <Button
             variant="outline"
             size="sm"
@@ -334,9 +305,9 @@ export function OnetAlternateTitlesTab({
             <span>Trước</span>
           </Button>
 
-          <div className="flex items-center gap-1.5 text-xs text-ink-muted">
+          <div className="text-ink-muted flex items-center gap-1.5 text-xs">
             <span>Trang</span>
-            <span className="font-semibold text-ink font-mono tabular-nums">
+            <span className="text-ink font-mono font-semibold tabular-nums">
               {currentPage}
             </span>
             <span>/</span>

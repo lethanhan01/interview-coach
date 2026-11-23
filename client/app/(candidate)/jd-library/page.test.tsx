@@ -121,7 +121,9 @@ describe('JdLibraryPage', () => {
       expect(screen.getByText('VNG Corporation')).toBeInTheDocument()
     })
 
-    const vngCard = screen.getByText('VNG Corporation').closest('[role="button"]')!
+    const vngCard = screen
+      .getByText('VNG Corporation')
+      .closest('[role="button"]')!
     fireEvent.click(vngCard)
 
     expect(mockPush).toHaveBeenCalledWith('/setup?jdId=jd-1')

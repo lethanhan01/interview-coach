@@ -1,6 +1,7 @@
 'use client'
 
-import React, { Suspense, useEffect, useState } from 'react'
+import React, { Suspense, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   Network,
   FolderTree,
@@ -10,8 +11,16 @@ import {
 } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { toast } from 'sonner'
-import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns'
+import {
+  LoadingState,
+  ErrorState,
+} from '@/components/patterns/FeedbackPatterns'
 import { cn } from '@/lib/utils'
+import {
+  queryKeys,
+  sfiaAdminQueries,
+  useOptionalQueryClient,
+} from '@/lib/query-client'
 import {
   useSfiaParams,
   SfiaAnatomyBanner,
@@ -30,20 +39,16 @@ import {
 } from '@/components/sfia'
 import type {
   SfiaMainTab,
-  SfiaCategory,
-  SfiaSubcategory,
   SfiaSkillSummary,
   SfiaSkillDetail,
   SfiaCoverageStats,
-  SfiaMatrixCellData,
+  SfiaMatrixDataResponse,
   SfiaMatrixDisplayMode,
   SfiaQuestionBankItem,
-  SfiaLevelResponsibility,
-  SfiaGenericAttribute,
 } from '@/types'
-import { sfiaAdminService } from '@/services/sfia-admin.service'
 
 function SfiaBrowserWorkspace() {
+  const queryClient = useOptionalQueryClient()
   const {
     activeTab,
     selectedSkill,
@@ -57,142 +62,129 @@ function SfiaBrowserWorkspace() {
     setAttrView,
   } = useSfiaParams()
 
-  const [categories, setCategories] = useState<SfiaCategory[]>([])
-  const [subcategories, setSubcategories] = useState<SfiaSubcategory[]>([])
-  const [skills, setSkills] = useState<SfiaSkillSummary[]>([])
-  const [skillDetail, setSkillDetail] = useState<SfiaSkillDetail | null>(null)
-  const [loadingDetail, setLoadingDetail] = useState(false)
-  const [detailError, setDetailError] = useState<string | null>(null)
-  const [stats, setStats] = useState<SfiaCoverageStats | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [pageError, setPageError] = useState<string | null>(null)
+  const categoriesQuery = useQuery(sfiaAdminQueries.categories())
+  const subcategoriesQuery = useQuery(sfiaAdminQueries.subcategories())
+  const skillsQuery = useQuery(sfiaAdminQueries.skills())
+  const coverageQuery = useQuery(sfiaAdminQueries.coverage())
+  const matrixQuery = useQuery(sfiaAdminQueries.matrix())
+  const levelsQuery = useQuery(sfiaAdminQueries.levels())
+  const attributesQuery = useQuery(sfiaAdminQueries.attributes())
+
+  const skillDetailQuery = useQuery({
+    ...sfiaAdminQueries.skillDetail(selectedSkill ?? ''),
+    enabled: Boolean(selectedSkill),
+  })
+
+  const categories = useMemo(
+    () => categoriesQuery.data ?? [],
+    [categoriesQuery.data]
+  )
+  const subcategories = useMemo(
+    () => subcategoriesQuery.data ?? [],
+    [subcategoriesQuery.data]
+  )
+  const skills = useMemo(() => skillsQuery.data ?? [], [skillsQuery.data])
+  const stats = coverageQuery.data ?? null
+  const matrixCells = useMemo(
+    () => matrixQuery.data?.cells ?? {},
+    [matrixQuery.data]
+  )
+  const responsibilityLevels = useMemo(
+    () => levelsQuery.data ?? [],
+    [levelsQuery.data]
+  )
+  const genericAttributes = useMemo(
+    () => attributesQuery.data ?? [],
+    [attributesQuery.data]
+  )
+  const skillDetail = skillDetailQuery.data ?? null
+  const loadingDetail = skillDetailQuery.isLoading
+
+  const detailError =
+    skillDetailQuery.error instanceof Error
+      ? skillDetailQuery.error.message
+      : skillDetailQuery.error
+        ? 'Failed to load SFIA skill details'
+        : Boolean(selectedSkill) && skillDetailQuery.isFetched && !skillDetail
+          ? `No details found for skill ${selectedSkill}`
+          : null
+
+  const loading =
+    categoriesQuery.isLoading ||
+    subcategoriesQuery.isLoading ||
+    skillsQuery.isLoading ||
+    coverageQuery.isLoading ||
+    matrixQuery.isLoading ||
+    levelsQuery.isLoading ||
+    attributesQuery.isLoading
+
+  const initialError =
+    categoriesQuery.error ||
+    subcategoriesQuery.error ||
+    skillsQuery.error ||
+    coverageQuery.error ||
+    matrixQuery.error ||
+    levelsQuery.error ||
+    attributesQuery.error
+
+  const pageError =
+    initialError instanceof Error
+      ? initialError.message
+      : initialError
+        ? 'Failed to load SFIA 9 knowledge repository'
+        : null
+
+  const attributesQueryError = levelsQuery.error || attributesQuery.error
+  const attributesError =
+    attributesQueryError instanceof Error
+      ? attributesQueryError.message
+      : attributesQueryError
+        ? 'Failed to reload Levels & Attributes'
+        : null
 
   // Phase 5 Matrix Grid States
-  const [matrixCells, setMatrixCells] = useState<Record<string, SfiaMatrixCellData>>({})
   const [matrixSearch, setMatrixSearch] = useState('')
-  const [matrixDisplayMode, setMatrixDisplayMode] = useState<SfiaMatrixDisplayMode>('level')
+  const [matrixDisplayMode, setMatrixDisplayMode] =
+    useState<SfiaMatrixDisplayMode>('level')
   const [matrixBlindSpotsOnly, setMatrixBlindSpotsOnly] = useState(false)
-  const [inspectedCell, setInspectedCell] = useState<{ skillCode: string; levelId: number } | null>(null)
+  const [inspectedCell, setInspectedCell] = useState<{
+    skillCode: string
+    levelId: number
+  } | null>(null)
   const [isCreateQuestionOpen, setIsCreateQuestionOpen] = useState(false)
   const [isExportingCsv, setIsExportingCsv] = useState(false)
 
-  // Phase 6 Responsibility Levels & Generic Attributes States
-  const [responsibilityLevels, setResponsibilityLevels] = useState<SfiaLevelResponsibility[]>([])
-  const [genericAttributes, setGenericAttributes] = useState<SfiaGenericAttribute[]>([])
-  const [attributesError, setAttributesError] = useState<string | null>(null)
-
   // Phase 7 Coverage Analytics & Blind Spots States
-  const [analyticsCategoryFilter, setAnalyticsCategoryFilter] = useState<string | null>(null)
-  const [analyticsLevelFilter, setAnalyticsLevelFilter] = useState<number | null>(null)
-  const [targetBlindSpotSkill, setTargetBlindSpotSkill] = useState<SfiaSkillSummary | null>(null)
-  const [isExportingBlindSpotsCsv, setIsExportingBlindSpotsCsv] = useState(false)
+  const [analyticsCategoryFilter, setAnalyticsCategoryFilter] = useState<
+    string | null
+  >(null)
+  const [analyticsLevelFilter, setAnalyticsLevelFilter] = useState<
+    number | null
+  >(null)
+  const [targetBlindSpotSkill, setTargetBlindSpotSkill] =
+    useState<SfiaSkillSummary | null>(null)
+  const [isExportingBlindSpotsCsv, setIsExportingBlindSpotsCsv] =
+    useState(false)
 
   const loadData = React.useCallback(async () => {
-    try {
-      setLoading(true)
-      setPageError(null)
-      const [catList, subList, skillList, statData, matrixData, levelList, attrList] =
-        await Promise.all([
-          sfiaAdminService.getCategories(),
-          sfiaAdminService.getSubcategories(),
-          sfiaAdminService.getSkills(),
-          sfiaAdminService.getCoverageStats(),
-          sfiaAdminService.getMatrixData(),
-          sfiaAdminService.getResponsibilityLevels(),
-          sfiaAdminService.getGenericAttributes(),
-        ])
-      setCategories(catList)
-      setSubcategories(subList)
-      setSkills(skillList)
-      setStats(statData)
-      setMatrixCells(matrixData.cells)
-      setResponsibilityLevels(levelList)
-      setGenericAttributes(attrList)
-    } catch (err) {
-      setPageError(
-        err instanceof Error ? err.message : 'Failed to load SFIA 9 knowledge repository'
-      )
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    let isCancelled = false
-    async function init() {
-      try {
-        const [catList, subList, skillList, statData, matrixData, levelList, attrList] =
-          await Promise.all([
-            sfiaAdminService.getCategories(),
-            sfiaAdminService.getSubcategories(),
-            sfiaAdminService.getSkills(),
-            sfiaAdminService.getCoverageStats(),
-            sfiaAdminService.getMatrixData(),
-            sfiaAdminService.getResponsibilityLevels(),
-            sfiaAdminService.getGenericAttributes(),
-          ])
-        if (!isCancelled) {
-          setCategories(catList)
-          setSubcategories(subList)
-          setSkills(skillList)
-          setStats(statData)
-          setMatrixCells(matrixData.cells)
-          setResponsibilityLevels(levelList)
-          setGenericAttributes(attrList)
-        }
-      } catch (err) {
-        if (!isCancelled) {
-          setPageError(
-            err instanceof Error ? err.message : 'Failed to load SFIA 9 knowledge repository'
-          )
-        }
-      } finally {
-        if (!isCancelled) {
-          setLoading(false)
-        }
-      }
-    }
-
-    void init()
-    return () => {
-      isCancelled = true
-    }
-  }, [])
-
-  // Fetch detailed skill data whenever selectedSkill changes
-  useEffect(() => {
-    let isCancelled = false
-    async function loadSkillDetail() {
-      if (!selectedSkill) return
-      try {
-        setLoadingDetail(true)
-        setDetailError(null)
-        const detail = await sfiaAdminService.getSkillDetail(selectedSkill)
-        if (!isCancelled) {
-          if (detail) {
-            setSkillDetail(detail)
-          } else {
-            setDetailError(`No details found for skill ${selectedSkill}`)
-          }
-        }
-      } catch (err) {
-        if (!isCancelled) {
-          setDetailError(
-            err instanceof Error ? err.message : 'Failed to load SFIA skill details'
-          )
-        }
-      } finally {
-        if (!isCancelled) {
-          setLoadingDetail(false)
-        }
-      }
-    }
-
-    void loadSkillDetail()
-    return () => {
-      isCancelled = true
-    }
-  }, [selectedSkill])
+    await Promise.all([
+      categoriesQuery.refetch(),
+      subcategoriesQuery.refetch(),
+      skillsQuery.refetch(),
+      coverageQuery.refetch(),
+      matrixQuery.refetch(),
+      levelsQuery.refetch(),
+      attributesQuery.refetch(),
+    ])
+  }, [
+    categoriesQuery,
+    subcategoriesQuery,
+    skillsQuery,
+    coverageQuery,
+    matrixQuery,
+    levelsQuery,
+    attributesQuery,
+  ])
 
   // Filter skills displayed in 2D Matrix
   const displayedMatrixSkills = React.useMemo(() => {
@@ -261,65 +253,87 @@ function SfiaBrowserWorkspace() {
     const targetCode =
       inspectedCell?.skillCode || targetBlindSpotSkill?.code || ''
     const targetLvl =
-      inspectedCell?.levelId || targetBlindSpotSkill?.minLevel || newQuestion.targetSfiaLevel || 1
+      inspectedCell?.levelId ||
+      targetBlindSpotSkill?.minLevel ||
+      newQuestion.targetSfiaLevel ||
+      1
 
     if (targetCode) {
       const key = `${targetCode}_L${targetLvl}`
-      setMatrixCells((prev) => ({
-        ...prev,
-        [key]: {
-          ...prev[key],
-          questionCount: (prev[key]?.questionCount || 0) + 1,
-        },
-      }))
+      queryClient.setQueryData<SfiaMatrixDataResponse>(
+        queryKeys.sfiaAdmin.matrix(),
+        (prev) => {
+          if (!prev) return prev
+          return {
+            ...prev,
+            cells: {
+              ...prev.cells,
+              [key]: {
+                ...prev.cells[key],
+                questionCount: (prev.cells[key]?.questionCount || 0) + 1,
+              },
+            },
+          }
+        }
+      )
 
       // Check if skill was previously a blind spot (questionCount === 0)
       const targetSkill = skills.find((s) => s.code === targetCode)
       const wasBlindSpot = targetSkill ? targetSkill.questionCount === 0 : false
 
-      // Update skill summary list
-      setSkills((prev) =>
-        prev.map((s) =>
-          s.code === targetCode
-            ? { ...s, questionCount: s.questionCount + 1 }
-            : s
-        )
+      // Update skill summary list cache
+      queryClient.setQueryData<SfiaSkillSummary[]>(
+        queryKeys.sfiaAdmin.skills(),
+        (prev) =>
+          prev
+            ? prev.map((s) =>
+                s.code === targetCode
+                  ? { ...s, questionCount: s.questionCount + 1 }
+                  : s
+              )
+            : prev
       )
 
-      // Update skill detail if cached
-      setSkillDetail((prev) => {
-        if (!prev || prev.code !== targetCode) return prev
-        return {
-          ...prev,
-          questionCount: prev.questionCount + 1,
-          questionBankItems: [newQuestion, ...(prev.questionBankItems || [])],
+      // Update skill detail cache if present
+      queryClient.setQueryData<SfiaSkillDetail | null>(
+        queryKeys.sfiaAdmin.skillDetail(targetCode),
+        (prev) => {
+          if (!prev || prev.code !== targetCode) return prev
+          return {
+            ...prev,
+            questionCount: prev.questionCount + 1,
+            questionBankItems: [newQuestion, ...(prev.questionBankItems || [])],
+          }
         }
-      })
+      )
 
-      // Update overall coverage statistics (KPIs & Distributions)
-      setStats((prev) => {
-        if (!prev) return prev
-        return {
-          ...prev,
-          totalQuestions: prev.totalQuestions + 1,
-          skillsWithQuestions: wasBlindSpot
-            ? prev.skillsWithQuestions + 1
-            : prev.skillsWithQuestions,
-          blindSpotsCount: wasBlindSpot
-            ? Math.max(0, prev.blindSpotsCount - 1)
-            : prev.blindSpotsCount,
-          categoryDistribution: prev.categoryDistribution.map((cat) =>
-            cat.code === targetSkill?.categoryCode
-              ? { ...cat, questionCount: cat.questionCount + 1 }
-              : cat
-          ),
-          levelDistribution: prev.levelDistribution.map((lvl) =>
-            lvl.level === targetLvl
-              ? { ...lvl, questionCount: lvl.questionCount + 1 }
-              : lvl
-          ),
+      // Update overall coverage statistics cache (KPIs & Distributions)
+      queryClient.setQueryData<SfiaCoverageStats>(
+        queryKeys.sfiaAdmin.coverage(),
+        (prev) => {
+          if (!prev) return prev
+          return {
+            ...prev,
+            totalQuestions: prev.totalQuestions + 1,
+            skillsWithQuestions: wasBlindSpot
+              ? prev.skillsWithQuestions + 1
+              : prev.skillsWithQuestions,
+            blindSpotsCount: wasBlindSpot
+              ? Math.max(0, prev.blindSpotsCount - 1)
+              : prev.blindSpotsCount,
+            categoryDistribution: prev.categoryDistribution.map((cat) =>
+              cat.code === targetSkill?.categoryCode
+                ? { ...cat, questionCount: cat.questionCount + 1 }
+                : cat
+            ),
+            levelDistribution: prev.levelDistribution.map((lvl) =>
+              lvl.level === targetLvl
+                ? { ...lvl, questionCount: lvl.questionCount + 1 }
+                : lvl
+            ),
+          }
         }
-      })
+      )
 
       toast.success('New interview question created successfully!', {
         description: `Updated question for ${targetCode} Level ${targetLvl}.${
@@ -393,27 +407,28 @@ function SfiaBrowserWorkspace() {
   }
 
   return (
-    <div className="flex flex-col gap-2 h-full min-h-0 flex-1">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-2">
       {/* Top Header Bar (Flat Workspace Header) */}
-      <div className="border-border/60 flex shrink-0 flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b pb-1.5 pt-0">
+      <div className="border-border/60 flex shrink-0 flex-col gap-2 border-b pb-1.5 pt-0 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2.5">
           <div className="bg-brand/10 text-brand flex size-8 shrink-0 items-center justify-center rounded-lg">
             <Network className="size-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-ink text-base sm:text-lg font-bold tracking-tight">
+              <h1 className="text-ink text-base font-bold tracking-tight sm:text-lg">
                 SFIA 9 Knowledge Browser
               </h1>
-              <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+              <span className="rounded-full border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                 SFIA 9.0
               </span>
               <span className="bg-brand/10 text-brand rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
                 Admin
               </span>
             </div>
-            <p className="text-ink-muted text-xs leading-none mt-0.5">
-              Digital skills capability framework (Skills Framework for the Information Age) & Interview question mappings
+            <p className="text-ink-muted mt-0.5 text-xs leading-none">
+              Digital skills capability framework (Skills Framework for the
+              Information Age) & Interview question mappings
             </p>
           </div>
         </div>
@@ -425,19 +440,31 @@ function SfiaBrowserWorkspace() {
           className="shrink-0"
         >
           <TabsList className="bg-surface-inset h-9 p-1">
-            <TabsTrigger value="taxonomy" className="gap-1.5 text-xs font-semibold px-2.5 py-1">
+            <TabsTrigger
+              value="taxonomy"
+              className="gap-1.5 px-2.5 py-1 text-xs font-semibold"
+            >
               <FolderTree className="size-3.5" />
               <span>Taxonomy Explorer</span>
             </TabsTrigger>
-            <TabsTrigger value="matrix" className="gap-1.5 text-xs font-semibold px-2.5 py-1">
+            <TabsTrigger
+              value="matrix"
+              className="gap-1.5 px-2.5 py-1 text-xs font-semibold"
+            >
               <Grid3X3 className="size-3.5" />
               <span>SFIA Matrix (2D Grid)</span>
             </TabsTrigger>
-            <TabsTrigger value="attributes" className="gap-1.5 text-xs font-semibold px-2.5 py-1">
+            <TabsTrigger
+              value="attributes"
+              className="gap-1.5 px-2.5 py-1 text-xs font-semibold"
+            >
               <SlidersHorizontal className="size-3.5" />
               <span>Levels & Attributes</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-1.5 text-xs font-semibold px-2.5 py-1">
+            <TabsTrigger
+              value="analytics"
+              className="gap-1.5 px-2.5 py-1 text-xs font-semibold"
+            >
               <BarChart3 className="size-3.5" />
               <span>Coverage Analytics</span>
             </TabsTrigger>
@@ -448,15 +475,16 @@ function SfiaBrowserWorkspace() {
       {/* Main Tab Content Panels */}
       <div
         className={cn(
-          'flex-1 min-h-0',
-          activeTab === 'matrix' || (activeTab === 'attributes' && attrView === 'matrix')
-            ? 'overflow-hidden flex flex-col'
+          'min-h-0 flex-1',
+          activeTab === 'matrix' ||
+            (activeTab === 'attributes' && attrView === 'matrix')
+            ? 'flex flex-col overflow-hidden'
             : 'overflow-y-auto'
         )}
       >
         {/* Tab 1: Taxonomy Explorer (Phases 1-4 Foundation) */}
         {activeTab === 'taxonomy' && (
-          <div className="flex flex-col gap-3 h-full min-h-0">
+          <div className="flex h-full min-h-0 flex-col gap-3">
             {/* Phase 2.1 SFIA 9 Anatomy Banner */}
             <SfiaAnatomyBanner stats={stats} />
 
@@ -471,9 +499,9 @@ function SfiaBrowserWorkspace() {
             />
 
             {/* Split-Pane Workspace: Left = Sidebar Tree, Right = Detail Container */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 min-h-0">
+            <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-12">
               {/* Left Column: 3-Tier Collapsible Tree (Desktop >= lg) */}
-              <div className="hidden lg:block lg:col-span-4 xl:col-span-4 h-full min-h-0">
+              <div className="hidden h-full min-h-0 lg:col-span-4 lg:block xl:col-span-4">
                 <SfiaSidebarTree
                   categories={categories}
                   subcategories={subcategories}
@@ -486,7 +514,7 @@ function SfiaBrowserWorkspace() {
               </div>
 
               {/* Right Column: Complete SfiaDetailPanel (Phase 3) */}
-              <div className="col-span-1 lg:col-span-8 xl:col-span-8 flex flex-col gap-3 overflow-y-auto">
+              <div className="col-span-1 flex flex-col gap-3 overflow-y-auto lg:col-span-8 xl:col-span-8">
                 <SfiaDetailPanel
                   skillDetail={skillDetail}
                   loading={loadingDetail}
@@ -496,27 +524,26 @@ function SfiaBrowserWorkspace() {
                   selectedLevel={selectedLevel}
                   onSelectLevel={(level) => setLevel(level)}
                   onSkillUpdated={(updated) => {
-                    setSkillDetail(updated)
-                    setSkills((prev) =>
-                      prev.map((s) =>
-                        s.code === updated.code
-                          ? { ...s, questionCount: updated.questionCount }
-                          : s
-                      )
+                    queryClient.setQueryData(
+                      queryKeys.sfiaAdmin.skillDetail(updated.code),
+                      updated
+                    )
+                    queryClient.setQueryData<SfiaSkillSummary[]>(
+                      queryKeys.sfiaAdmin.skills(),
+                      (prev) =>
+                        prev
+                          ? prev.map((s) =>
+                              s.code === updated.code
+                                ? { ...s, questionCount: updated.questionCount }
+                                : s
+                            )
+                          : prev
                     )
                   }}
                   onNavigateToMatrix={() => setTab('matrix')}
                   onRetry={() => {
                     if (selectedSkill) {
-                      setLoadingDetail(true)
-                      setDetailError(null)
-                      sfiaAdminService
-                        .getSkillDetail(selectedSkill)
-                        .then((d) => setSkillDetail(d))
-                        .catch((e) =>
-                          setDetailError(e instanceof Error ? e.message : 'Failed to load skill details')
-                        )
-                        .finally(() => setLoadingDetail(false))
+                      void skillDetailQuery.refetch()
                     }
                   }}
                 />
@@ -527,7 +554,7 @@ function SfiaBrowserWorkspace() {
 
         {/* Tab 2: SFIA Matrix Grid 2D (Phase 5 Workspace) */}
         {activeTab === 'matrix' && (
-          <div className="flex flex-col gap-2.5 h-full min-h-0 flex-1 overflow-hidden">
+          <div className="flex h-full min-h-0 flex-1 flex-col gap-2.5 overflow-hidden">
             {/* Matrix Toolbar Controls */}
             <SfiaMatrixToolbar
               categories={categories}
@@ -594,28 +621,17 @@ function SfiaBrowserWorkspace() {
             loading={loading}
             error={attributesError}
             onRetry={async () => {
-              try {
-                setAttributesError(null)
-                const [lvlList, attrList] = await Promise.all([
-                  sfiaAdminService.getResponsibilityLevels(),
-                  sfiaAdminService.getGenericAttributes(),
-                ])
-                setResponsibilityLevels(lvlList)
-                setGenericAttributes(attrList)
-              } catch (err) {
-                setAttributesError(
-                  err instanceof Error
-                    ? err.message
-                    : 'Failed to reload Levels & Attributes'
-                )
-              }
+              await Promise.all([
+                levelsQuery.refetch(),
+                attributesQuery.refetch(),
+              ])
             }}
           />
         )}
 
         {/* Tab 4: Coverage Analytics Dashboard & Blind Spot Alerts (Phase 7) */}
         {activeTab === 'analytics' && (
-          <div className="flex flex-col gap-6 pb-16 max-w-7xl mx-auto w-full">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-16">
             <SfiaAnalyticsView
               stats={stats}
               selectedCategoryFilter={analyticsCategoryFilter}
@@ -630,10 +646,8 @@ function SfiaBrowserWorkspace() {
               loading={loading}
               error={null}
               onRetry={async () => {
-                try {
-                  const statData = await sfiaAdminService.getCoverageStats()
-                  setStats(statData)
-                } catch {
+                const res = await coverageQuery.refetch()
+                if (res.error) {
                   toast.error('Failed to reload analytics coverage statistics')
                 }
               }}
@@ -671,7 +685,9 @@ function SfiaBrowserWorkspace() {
               setTargetBlindSpotSkill(null)
             }
           }}
-          skillCode={inspectedCell?.skillCode || targetBlindSpotSkill?.code || ''}
+          skillCode={
+            inspectedCell?.skillCode || targetBlindSpotSkill?.code || ''
+          }
           skillName={
             (inspectedCell
               ? skills.find((s) => s.code === inspectedCell.skillCode)?.name
@@ -690,7 +706,9 @@ function SfiaBrowserWorkspace() {
               ? skills.find((s) => s.code === inspectedCell.skillCode)?.maxLevel
               : targetBlindSpotSkill?.maxLevel) || 7
           }
-          defaultLevel={inspectedCell?.levelId || targetBlindSpotSkill?.minLevel || 1}
+          defaultLevel={
+            inspectedCell?.levelId || targetBlindSpotSkill?.minLevel || 1
+          }
           onQuestionCreated={handleQuestionCreated}
         />
       )}

@@ -68,7 +68,8 @@ export default function InterviewPage() {
 
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [sessionStatus, setSessionStatus] = useState<SessionStatus>('generating')
+  const [sessionStatus, setSessionStatus] =
+    useState<SessionStatus>('generating')
   const [sessionLanguage, setSessionLanguage] = useState<'vi' | 'en'>('vi')
   const [draftAnswer, setDraftAnswer] = useState<string>('')
   const [answerMode, setAnswerMode] = useState<AnswerMode>('text')
@@ -408,7 +409,6 @@ export default function InterviewPage() {
       setTurnSubmitting(false)
     }
   }, [mutateSubmitTurn, questions, currentIndex, advance])
-
 
   if (loading) {
     return (

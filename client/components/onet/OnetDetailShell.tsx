@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useEffect, useState, useRef } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   Copy,
   Check,
@@ -14,7 +15,11 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
-import { onetAdminService } from '@/services/onet-admin.service'
+import {
+  onetAdminQueries,
+  queryKeys,
+  useOptionalQueryClient,
+} from '@/lib/query-client'
 import { OnetOverviewTab } from './OnetOverviewTab'
 import { OnetTechSkillsTab } from './OnetTechSkillsTab'
 import { OnetTasksTab } from './OnetTasksTab'
@@ -45,75 +50,42 @@ export function OnetDetailShell({
   onDirtyChange,
   className,
 }: OnetDetailShellProps) {
-  const [detail, setDetail] = useState<OnetOccupationDetail | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useOptionalQueryClient()
   const [copied, setCopied] = useState(false)
-  const [prevSoc, setPrevSoc] = useState(socCode)
   const contentRef = useRef<HTMLDivElement>(null)
 
-  if (prevSoc !== socCode) {
-    setPrevSoc(socCode)
-    setLoading(true)
-    setError(null)
-  }
+  const {
+    data: detail = null,
+    isLoading: loading,
+    error: queryError,
+    isFetched,
+    refetch,
+  } = useQuery({
+    ...onetAdminQueries.detail(socCode),
+    enabled: Boolean(socCode),
+  })
 
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
   }, [socCode, activeDetailTab])
 
   useEffect(() => {
-    let isCancelled = false
-
-    onetAdminService
-      .getOccupationDetail(socCode)
-      .then((data) => {
-        if (isCancelled) return
-        if (data) {
-          setDetail(data)
-          onLoadedDetail?.(data)
-        } else {
-          setError(`Không tìm thấy dữ liệu cho mã SOC ${socCode}`)
-        }
-      })
-      .catch((err) => {
-        if (isCancelled) return
-        setError(
-          err instanceof Error ? err.message : 'Không thể tải chi tiết nghề O*NET'
-        )
-      })
-      .finally(() => {
-        if (!isCancelled) {
-          setLoading(false)
-        }
-      })
-
-    return () => {
-      isCancelled = true
+    if (detail) {
+      onLoadedDetail?.(detail)
     }
-  }, [socCode, onLoadedDetail])
+  }, [detail, onLoadedDetail])
+
+  const error =
+    queryError instanceof Error
+      ? queryError.message
+      : queryError
+        ? 'Không thể tải chi tiết nghề O*NET'
+        : isFetched && !detail
+          ? `Không tìm thấy dữ liệu cho mã SOC ${socCode}`
+          : null
 
   const handleRetry = () => {
-    setLoading(true)
-    setError(null)
-    onetAdminService
-      .getOccupationDetail(socCode)
-      .then((data) => {
-        if (data) {
-          setDetail(data)
-          onLoadedDetail?.(data)
-        } else {
-          setError(`Không tìm thấy dữ liệu cho mã SOC ${socCode}`)
-        }
-      })
-      .catch((err) => {
-        setError(
-          err instanceof Error ? err.message : 'Không thể tải chi tiết nghề O*NET'
-        )
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+    void refetch()
   }
 
   const handleCopy = async () => {
@@ -139,7 +111,7 @@ export function OnetDetailShell({
         mappingCount: newMappings.length,
       },
     }
-    setDetail(updated)
+    queryClient.setQueryData(queryKeys.onetAdmin.detail(socCode), updated)
     onLoadedDetail?.(updated)
     onUpdateMappings?.(newMappings)
   }
@@ -147,7 +119,12 @@ export function OnetDetailShell({
   // Loading Skeleton State
   if (loading) {
     return (
-      <div className={cn('flex h-full flex-col p-6 space-y-6 overflow-y-auto', className)}>
+      <div
+        className={cn(
+          'flex h-full flex-col space-y-6 overflow-y-auto p-6',
+          className
+        )}
+      >
         {/* Header Skeleton */}
         <div className="space-y-3">
           <div className="flex gap-2">
@@ -162,9 +139,12 @@ export function OnetDetailShell({
         <div className="bg-surface-inset h-10 w-full animate-pulse rounded-lg" />
 
         {/* Content Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-surface-inset h-24 animate-pulse rounded-xl" />
+            <div
+              key={i}
+              className="bg-surface-inset h-24 animate-pulse rounded-xl"
+            />
           ))}
         </div>
         <div className="bg-surface-inset h-40 w-full animate-pulse rounded-xl" />
@@ -177,9 +157,18 @@ export function OnetDetailShell({
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
         <AlertCircle className="text-destructive mb-3 size-10" />
-        <h3 className="text-ink text-base font-semibold">Không thể tải thông tin nghề</h3>
-        <p className="text-ink-muted mt-1 text-sm max-w-md">{error || 'Nghề không tồn tại'}</p>
-        <Button variant="outline" size="sm" onClick={handleRetry} className="mt-4 gap-2">
+        <h3 className="text-ink text-base font-semibold">
+          Không thể tải thông tin nghề
+        </h3>
+        <p className="text-ink-muted mt-1 max-w-md text-sm">
+          {error || 'Nghề không tồn tại'}
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRetry}
+          className="mt-4 gap-2"
+        >
           <RefreshCw className="size-4" />
           <span>Thử lại</span>
         </Button>
@@ -190,7 +179,7 @@ export function OnetDetailShell({
   return (
     <div
       className={cn(
-        'flex h-full flex-col overflow-hidden bg-card text-card-foreground',
+        'bg-card text-card-foreground flex h-full flex-col overflow-hidden',
         className
       )}
     >
@@ -214,7 +203,7 @@ export function OnetDetailShell({
               </Badge>
             )}
 
-            <Badge variant="outline" className="text-xs text-ink-muted">
+            <Badge variant="outline" className="text-ink-muted text-xs">
               Job Zone {detail.jobZone.zone} / 5
             </Badge>
           </div>
@@ -250,7 +239,7 @@ export function OnetDetailShell({
                   setTimeout(() => setCopied(false), 2000)
                 }
               }}
-              className="gap-1.5 text-xs text-ink-muted hover:text-ink h-8 px-2.5"
+              className="text-ink-muted hover:text-ink h-8 gap-1.5 px-2.5 text-xs"
             >
               <Share2 className="size-3.5" />
               <span>Chia sẻ liên kết</span>
@@ -272,24 +261,35 @@ export function OnetDetailShell({
             onValueChange={(val) => onSelectDetailTab(val as OnetDetailSubTab)}
           >
             <TabsList className="bg-surface-inset flex h-9 w-full justify-start overflow-x-auto p-1">
-              <TabsTrigger value="overview" className="gap-1.5 text-xs px-3 py-1">
+              <TabsTrigger
+                value="overview"
+                className="gap-1.5 px-3 py-1 text-xs"
+              >
                 <span>Tổng quan</span>
               </TabsTrigger>
-              <TabsTrigger value="tech" className="gap-1.5 text-xs px-3 py-1">
+              <TabsTrigger value="tech" className="gap-1.5 px-3 py-1 text-xs">
                 <span>Kỹ năng Phần mềm</span>
-                <span className="text-[10px] opacity-75">({detail.stats.toolCount})</span>
+                <span className="text-[10px] opacity-75">
+                  ({detail.stats.toolCount})
+                </span>
               </TabsTrigger>
-              <TabsTrigger value="sfia" className="gap-1.5 text-xs px-3 py-1">
+              <TabsTrigger value="sfia" className="gap-1.5 px-3 py-1 text-xs">
                 <span>Ánh xạ SFIA</span>
-                <span className="text-[10px] opacity-75">({detail.stats.mappingCount})</span>
+                <span className="text-[10px] opacity-75">
+                  ({detail.stats.mappingCount})
+                </span>
               </TabsTrigger>
-              <TabsTrigger value="tasks" className="gap-1.5 text-xs px-3 py-1">
+              <TabsTrigger value="tasks" className="gap-1.5 px-3 py-1 text-xs">
                 <span>Nhiệm vụ</span>
-                <span className="text-[10px] opacity-75">({detail.stats.taskCount})</span>
+                <span className="text-[10px] opacity-75">
+                  ({detail.stats.taskCount})
+                </span>
               </TabsTrigger>
-              <TabsTrigger value="titles" className="gap-1.5 text-xs px-3 py-1">
+              <TabsTrigger value="titles" className="gap-1.5 px-3 py-1 text-xs">
                 <span>Chức danh</span>
-                <span className="text-[10px] opacity-75">({detail.stats.alternateTitleCount})</span>
+                <span className="text-[10px] opacity-75">
+                  ({detail.stats.alternateTitleCount})
+                </span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -299,7 +299,7 @@ export function OnetDetailShell({
       {/* Main Content Body (Independently Scrollable with scrollbar-thin) */}
       <div
         ref={contentRef}
-        className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3.5 scrollbar-thin"
+        className="scrollbar-thin flex-1 space-y-3.5 overflow-y-auto p-3.5 sm:p-4"
       >
         {/* Tab 1: Overview */}
         {activeDetailTab === 'overview' && (
@@ -326,9 +326,7 @@ export function OnetDetailShell({
         )}
 
         {/* Tab 4: Tasks */}
-        {activeDetailTab === 'tasks' && (
-          <OnetTasksTab tasks={detail.tasks} />
-        )}
+        {activeDetailTab === 'tasks' && <OnetTasksTab tasks={detail.tasks} />}
 
         {/* Tab 5: Alternate Job Titles */}
         {activeDetailTab === 'titles' && (

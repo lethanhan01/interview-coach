@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SfiaQuestionBankTab } from './SfiaQuestionBankTab'
 import type { SfiaSkillDetail } from '@/types'
@@ -52,12 +52,7 @@ describe('SfiaQuestionBankTab', () => {
   })
 
   it('renders 4 KPI mini cards with accurate metric counts', () => {
-    render(
-      <SfiaQuestionBankTab
-        skillDetail={mockDetail}
-        selectedLevel={3}
-      />
-    )
+    render(<SfiaQuestionBankTab skillDetail={mockDetail} selectedLevel={3} />)
 
     // Total questions: 3
     expect(screen.getByText('Total Sample Questions')).toBeInTheDocument()
@@ -75,18 +70,17 @@ describe('SfiaQuestionBankTab', () => {
   })
 
   it('filters questions by search query text', () => {
-    render(
-      <SfiaQuestionBankTab
-        skillDetail={mockDetail}
-        selectedLevel={3}
-      />
-    )
+    render(<SfiaQuestionBankTab skillDetail={mockDetail} selectedLevel={3} />)
 
-    const searchInput = screen.getByPlaceholderText(/Search question content or ID/i)
+    const searchInput = screen.getByPlaceholderText(
+      /Search question content or ID/i
+    )
     fireEvent.change(searchInput, { target: { value: 'memory leaks' } })
 
     expect(
-      screen.getByText('Explain how to handle memory leaks in React applications.')
+      screen.getByText(
+        'Explain how to handle memory leaks in React applications.'
+      )
     ).toBeInTheDocument()
     expect(
       screen.queryByText('Describe concurrency vs parallelism in systems.')
@@ -94,12 +88,7 @@ describe('SfiaQuestionBankTab', () => {
   })
 
   it('filters questions by quick Level toggle', () => {
-    render(
-      <SfiaQuestionBankTab
-        skillDetail={mockDetail}
-        selectedLevel={4}
-      />
-    )
+    render(<SfiaQuestionBankTab skillDetail={mockDetail} selectedLevel={4} />)
 
     // Initially all 3 are displayed
     expect(screen.getByText('Q-PROG-01')).toBeInTheDocument()
@@ -117,12 +106,7 @@ describe('SfiaQuestionBankTab', () => {
   })
 
   it('copies question text when clicking the copy button', async () => {
-    render(
-      <SfiaQuestionBankTab
-        skillDetail={mockDetail}
-        selectedLevel={3}
-      />
-    )
+    render(<SfiaQuestionBankTab skillDetail={mockDetail} selectedLevel={3} />)
 
     const copyButtons = screen.getAllByRole('button', { name: /Copy/i })
     expect(copyButtons.length).toBeGreaterThanOrEqual(1)
@@ -156,12 +140,7 @@ describe('SfiaQuestionBankTab', () => {
   })
 
   it('opens create question modal when clicking [+ Create Question]', () => {
-    render(
-      <SfiaQuestionBankTab
-        skillDetail={mockDetail}
-        selectedLevel={3}
-      />
-    )
+    render(<SfiaQuestionBankTab skillDetail={mockDetail} selectedLevel={3} />)
 
     const createBtn = screen.getByRole('button', { name: /Create Question/i })
     fireEvent.click(createBtn)

@@ -87,9 +87,7 @@ describe('VoiceRecorder', () => {
     const draft = 'Đây là câu trả lời nháp từ trước hơn 10 ký tự.'
     render(<VoiceRecorder onSubmit={mockSubmit} initialDraft={draft} />)
 
-    expect(
-      screen.getByLabelText(/Transcript câu trả lời/i)
-    ).toHaveValue(draft)
+    expect(screen.getByLabelText(/Transcript câu trả lời/i)).toHaveValue(draft)
     expect(
       screen.getByRole('button', { name: /Xác nhận & Gửi câu trả lời/i })
     ).toBeInTheDocument()

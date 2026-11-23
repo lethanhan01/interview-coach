@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SfiaMatrixInspectionSheet } from './SfiaMatrixInspectionSheet'
 import { sfiaAdminService } from '@/services/sfia-admin.service'
@@ -28,8 +28,10 @@ describe('SfiaMatrixInspectionSheet', () => {
       {
         skillCode: 'PROG',
         levelId: 3,
-        essence: 'Phát triển phần mềm độc lập với các module phức tạp vừa phải.',
-        description: 'Thiết kế, lập trình, kiểm thử các chương trình phức tạp vừa phải.',
+        essence:
+          'Phát triển phần mềm độc lập với các module phức tạp vừa phải.',
+        description:
+          'Thiết kế, lập trình, kiểm thử các chương trình phức tạp vừa phải.',
       },
     ],
     onetMappings: [
@@ -73,12 +75,18 @@ describe('SfiaMatrixInspectionSheet', () => {
     expect(screen.getByText(/Loading skill information/)).toBeInTheDocument()
 
     await waitFor(() => {
-      expect(screen.getByText('Programming/software development')).toBeInTheDocument()
+      expect(
+        screen.getByText('Programming/software development')
+      ).toBeInTheDocument()
     })
 
     expect(screen.getByText(/Phát triển phần mềm độc lập/)).toBeInTheDocument()
-    expect(screen.getByText(/Thiết kế, lập trình, kiểm thử/)).toBeInTheDocument()
-    expect(screen.getByText('Giải thích Memory Leak trong Node.js?')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Thiết kế, lập trình, kiểm thử/)
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Giải thích Memory Leak trong Node.js?')
+    ).toBeInTheDocument()
     expect(screen.getByText('15-1252.00')).toBeInTheDocument()
   })
 
@@ -95,10 +103,14 @@ describe('SfiaMatrixInspectionSheet', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Programming/software development')).toBeInTheDocument()
+      expect(
+        screen.getByText('Programming/software development')
+      ).toBeInTheDocument()
     })
 
-    const openTaxonomyBtn = screen.getByRole('button', { name: /Open in Tree/i })
+    const openTaxonomyBtn = screen.getByRole('button', {
+      name: /Open in Tree/i,
+    })
     fireEvent.click(openTaxonomyBtn)
 
     expect(onOpenInTaxonomy).toHaveBeenCalledWith('PROG', 3)
@@ -116,7 +128,9 @@ describe('SfiaMatrixInspectionSheet', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Programming/software development')).toBeInTheDocument()
+      expect(
+        screen.getByText('Programming/software development')
+      ).toBeInTheDocument()
     })
 
     const createBtn = screen.getByRole('button', { name: /Create Question/i })
@@ -136,7 +150,9 @@ describe('SfiaMatrixInspectionSheet', () => {
     render(<SfiaMatrixInspectionSheet {...defaultProps} />)
 
     await waitFor(() => {
-      expect(screen.getByText('Programming/software development')).toBeInTheDocument()
+      expect(
+        screen.getByText('Programming/software development')
+      ).toBeInTheDocument()
     })
 
     const copyBtn = screen.getByRole('button', { name: /Copy AI Prompt/i })

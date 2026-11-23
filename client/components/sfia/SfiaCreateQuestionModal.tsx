@@ -1,11 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import {
-  AlertCircle,
-  Plus,
-  Loader2,
-} from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { AlertCircle, Plus, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import {
@@ -25,8 +22,16 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/Select'
-import { sfiaAdminService } from '@/services/sfia-admin.service'
-import type { SfiaQuestionBankItem } from '@/types'
+import { queryKeys, useOptionalQueryClient } from '@/lib/query-client'
+import { sfiaAdminService } from '@/services'
+import type { CreateSfiaQuestionPayload, SfiaQuestionBankItem } from '@/types'
+
+const STATIC_SFIA_QUERY_SCOPES = new Set([
+  'categories',
+  'subcategories',
+  'levels',
+  'attributes',
+])
 
 export interface SfiaCreateQuestionModalProps {
   open: boolean
@@ -62,12 +67,34 @@ export function SfiaCreateQuestionModal({
   defaultLevel,
   onQuestionCreated,
 }: SfiaCreateQuestionModalProps) {
+  const queryClient = useOptionalQueryClient()
   const [level, setLevel] = React.useState<number>(defaultLevel)
-  const [type, setType] = React.useState<'TECHNICAL' | 'BEHAVIORAL' | 'SITUATIONAL' | 'HR'>('TECHNICAL')
-  const [difficulty, setDifficulty] = React.useState<'EASY' | 'MEDIUM' | 'HARD'>('MEDIUM')
+  const [type, setType] = React.useState<
+    'TECHNICAL' | 'BEHAVIORAL' | 'SITUATIONAL' | 'HR'
+  >('TECHNICAL')
+  const [difficulty, setDifficulty] = React.useState<
+    'EASY' | 'MEDIUM' | 'HARD'
+  >('MEDIUM')
   const [questionText, setQuestionText] = React.useState('')
   const [error, setError] = React.useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
+
+  const createQuestionMutation = useMutation({
+    mutationFn: (payload: CreateSfiaQuestionPayload) =>
+      sfiaAdminService.createQuestion(skillCode, payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.sfiaAdmin.all,
+        predicate: (query) => {
+          const scope = query.queryKey[1]
+          return (
+            typeof scope !== 'string' || !STATIC_SFIA_QUERY_SCOPES.has(scope)
+          )
+        },
+      })
+    },
+  })
+
+  const isSubmitting = createQuestionMutation.isPending
 
   const [prevOpen, setPrevOpen] = React.useState(open)
   const [prevDefaultLevel, setPrevDefaultLevel] = React.useState(defaultLevel)
@@ -78,7 +105,6 @@ export function SfiaCreateQuestionModal({
     setLevel(Math.max(minLevel, Math.min(maxLevel, defaultLevel)))
     setQuestionText('')
     setError(null)
-    setIsSubmitting(false)
   } else if (!open && prevOpen) {
     setPrevOpen(false)
   }
@@ -106,10 +132,9 @@ export function SfiaCreateQuestionModal({
     }
 
     try {
-      setIsSubmitting(true)
       setError(null)
 
-      const created = await sfiaAdminService.createQuestion(skillCode, {
+      const created = await createQuestionMutation.mutateAsync({
         questionText: trimmed,
         type,
         difficulty,
@@ -125,8 +150,6 @@ export function SfiaCreateQuestionModal({
           ? err.message
           : 'Failed to create interview question. Please try again.'
       )
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -134,38 +157,45 @@ export function SfiaCreateQuestionModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md sm:max-w-lg">
         <DialogHeader>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="size-8 rounded-lg bg-brand/10 text-brand flex items-center justify-center">
+          <div className="mb-1 flex items-center gap-2">
+            <div className="bg-brand/10 text-brand flex size-8 items-center justify-center rounded-lg">
               <Plus className="size-4" />
             </div>
             <DialogTitle className="text-base sm:text-lg">
               Create Interview Question
             </DialogTitle>
           </div>
-          <DialogDescription className="text-xs text-ink-muted">
+          <DialogDescription className="text-ink-muted text-xs">
             Add a new question to the bank, mapped to{' '}
-            <strong className="text-ink font-mono font-semibold">{skillCode}</strong> ({skillName}).
+            <strong className="text-ink font-mono font-semibold">
+              {skillCode}
+            </strong>{' '}
+            ({skillName}).
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-1">
           {/* Identity info row */}
-          <div className="p-3 bg-surface-inset rounded-lg border border-border/60 flex items-center justify-between text-xs">
+          <div className="bg-surface-inset border-border/60 flex items-center justify-between rounded-lg border p-3 text-xs">
             <div>
-              <span className="text-ink-muted block text-[11px]">SFIA 9 Skill:</span>
-              <span className="font-semibold text-ink font-mono">{skillCode}</span>
+              <span className="text-ink-muted block text-[11px]">
+                SFIA 9 Skill:
+              </span>
+              <span className="text-ink font-mono font-semibold">
+                {skillCode}
+              </span>
               <span className="text-ink-muted ml-1.5">— {skillName}</span>
             </div>
-            <span className="px-2 py-0.5 rounded-full bg-surface-raised border border-border text-[10px] font-mono font-semibold text-ink">
+            <span className="bg-surface-raised border-border text-ink rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold">
               L{minLevel} ➔ L{maxLevel}
             </span>
           </div>
 
           {/* Grid fields: Target Level & Interview Type */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {/* Field: Target Level */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink block">
+              <label className="text-ink block text-xs font-semibold">
                 Target SFIA Level <span className="text-rose-500">*</span>
               </label>
               <Select
@@ -187,7 +217,7 @@ export function SfiaCreateQuestionModal({
 
             {/* Field: Interview Type */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink block">
+              <label className="text-ink block text-xs font-semibold">
                 Interview Type <span className="text-rose-500">*</span>
               </label>
               <Select
@@ -210,7 +240,7 @@ export function SfiaCreateQuestionModal({
 
           {/* Field: Difficulty */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-ink block">
+            <label className="text-ink block text-xs font-semibold">
               Difficulty <span className="text-rose-500">*</span>
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -220,13 +250,13 @@ export function SfiaCreateQuestionModal({
                   type="button"
                   onClick={() => setDifficulty(d.value)}
                   className={cn(
-                    'py-2 px-2 rounded-lg text-xs font-medium border text-center transition-all select-none',
+                    'select-none rounded-lg border px-2 py-2 text-center text-xs font-medium transition-all',
                     difficulty === d.value
                       ? d.value === 'EASY'
-                        ? 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold shadow-xs'
+                        ? 'shadow-xs border-emerald-500 bg-emerald-500/15 font-bold text-emerald-700 dark:text-emerald-300'
                         : d.value === 'MEDIUM'
-                          ? 'bg-amber-500/15 border-amber-500 text-amber-700 dark:text-amber-300 font-bold shadow-xs'
-                          : 'bg-rose-500/15 border-rose-500 text-rose-700 dark:text-rose-300 font-bold shadow-xs'
+                          ? 'shadow-xs border-amber-500 bg-amber-500/15 font-bold text-amber-700 dark:text-amber-300'
+                          : 'shadow-xs border-rose-500 bg-rose-500/15 font-bold text-rose-700 dark:text-rose-300'
                       : 'bg-surface-inset border-border text-ink-muted hover:text-ink'
                   )}
                 >
@@ -239,10 +269,10 @@ export function SfiaCreateQuestionModal({
           {/* Field: Question Text */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-ink">
+              <label className="text-ink text-xs font-semibold">
                 Question Content <span className="text-rose-500">*</span>
               </label>
-              <span className="text-[11px] font-mono text-ink-muted tabular-nums">
+              <span className="text-ink-muted font-mono text-[11px] tabular-nums">
                 {questionText.length}/500
               </span>
             </div>
@@ -255,19 +285,19 @@ export function SfiaCreateQuestionModal({
               placeholder="Enter practical technical question scenario, problem statement, or behavioral prompt..."
               rows={4}
               maxLength={500}
-              className="text-xs resize-none bg-surface-inset"
+              className="bg-surface-inset resize-none text-xs"
             />
           </div>
 
           {/* Inline error display */}
           {error && (
-            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs">
-              <AlertCircle className="size-4 shrink-0 mt-0.5" />
+            <div className="bg-destructive/10 border-destructive/20 text-destructive flex items-start gap-2 rounded-lg border p-2.5 text-xs">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border/60">
+          <DialogFooter className="border-border/60 gap-2 border-t pt-2 sm:gap-0">
             <Button
               type="button"
               variant="outline"

@@ -1,6 +1,5 @@
 import * as React from 'react'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { render, screen, userEvent } from '@test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import { SfiaDetailPanel } from './SfiaDetailPanel'
 import type { SfiaSkillDetail, SfiaCategory, SfiaSubcategory } from '@/types'
@@ -84,8 +83,12 @@ describe('SfiaDetailPanel Integration', () => {
       />
     )
 
-    expect(screen.getByRole('tab', { name: /Behavioral Statements & Guidance/i })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /O\*NET Occupations/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('tab', { name: /Behavioral Statements & Guidance/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('tab', { name: /O\*NET Occupations/i })
+    ).toBeInTheDocument()
     expect(
       screen.getByRole('tab', { name: /Question Bank & Create/i })
     ).toBeInTheDocument()
@@ -107,7 +110,9 @@ describe('SfiaDetailPanel Integration', () => {
     await user.click(onetTab)
 
     expect(screen.getAllByText('15-1252.00').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Software Developers').length).toBeGreaterThanOrEqual(1)
+    expect(
+      screen.getAllByText('Software Developers').length
+    ).toBeGreaterThanOrEqual(1)
   })
 
   it('switches to Question Bank tab and displays question items and create button', async () => {
@@ -128,7 +133,9 @@ describe('SfiaDetailPanel Integration', () => {
     await user.click(questionsTab)
 
     expect(
-      screen.getByText('Explain how to handle memory leaks in React applications.')
+      screen.getByText(
+        'Explain how to handle memory leaks in React applications.'
+      )
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /Create Question/i })

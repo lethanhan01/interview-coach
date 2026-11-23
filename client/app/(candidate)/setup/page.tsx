@@ -75,7 +75,9 @@ function normalizeJdFormData(
     salary: text(value?.salary),
     bonus: text(value?.bonus),
     onetSocCode: value?.onetSocCode ? text(value.onetSocCode) : undefined,
-    onetOccupationTitle: value?.onetOccupationTitle ? text(value.onetOccupationTitle) : undefined,
+    onetOccupationTitle: value?.onetOccupationTitle
+      ? text(value.onetOccupationTitle)
+      : undefined,
     targetSfiaLevel: targetSfia,
   }
 }
@@ -207,7 +209,8 @@ const STEP_LABELS: Record<1 | 2 | 3, string> = {
 }
 
 function getStepBadgeClass(s: number, currentStep: number): string {
-  if (s === currentStep) return 'bg-brand ring-brand-subtle-border text-white ring-4'
+  if (s === currentStep)
+    return 'bg-brand ring-brand-subtle-border text-white ring-4'
   if (s < currentStep) return 'bg-brand text-white'
   return 'bg-border text-ink-faint'
 }
@@ -238,7 +241,12 @@ function renderStep1BackButton(
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 function SetupPageLoading() {
-  return <LoadingState text="Đang tải dữ liệu cấu hình..." minHeight="min-h-[50vh]" />
+  return (
+    <LoadingState
+      text="Đang tải dữ liệu cấu hình..."
+      minHeight="min-h-[50vh]"
+    />
+  )
 }
 
 export default function SetupPage() {
@@ -428,7 +436,6 @@ function SetupPageContent() {
     createSessionMutation.mutate()
   }
 
-
   // Hiện loading spinner khi đang fetch danh sách JD (chỉ ở step 0)
   if (step === 0 && !jdPickerReady) {
     return <SetupPageLoading />
@@ -454,7 +461,7 @@ function SetupPageContent() {
             variant="ghost"
             size="sm"
             onClick={() => router.push('/jd-library')}
-            className="text-ink-muted hover:text-brand mb-6 -ml-2 flex items-center gap-1.5 text-sm"
+            className="text-ink-muted hover:text-brand -ml-2 mb-6 flex items-center gap-1.5 text-sm"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
             Thư viện JD
@@ -524,10 +531,7 @@ function SetupPageContent() {
               Điền thông tin JD để AI tạo câu hỏi phỏng vấn phù hợp nhất.
             </p>
           </div>
-          <JdForm
-            value={jd}
-            onChange={updateJd}
-          />
+          <JdForm value={jd} onChange={updateJd} />
           <div className="flex items-center justify-between">
             {renderStep1BackButton(
               savedJobDescriptions.length,

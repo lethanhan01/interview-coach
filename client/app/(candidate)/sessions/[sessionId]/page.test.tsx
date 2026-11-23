@@ -10,13 +10,15 @@ import type { Session } from '@/types'
 const mockReplace = vi.fn()
 const mockPush = vi.fn()
 const mockEventSourceClose = vi.fn()
+const mockRouter = {
+  replace: mockReplace,
+  push: mockPush,
+}
+const mockParams = { sessionId: 'sess-1' }
 
 vi.mock('next/navigation', () => ({
-  useParams: () => ({ sessionId: 'sess-1' }),
-  useRouter: () => ({
-    replace: mockReplace,
-    push: mockPush,
-  }),
+  useParams: () => mockParams,
+  useRouter: () => mockRouter,
 }))
 
 vi.mock('@/services', () => ({

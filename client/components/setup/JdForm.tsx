@@ -24,11 +24,7 @@ import {
   POSITION_OPTIONS,
   TECH_STACK_OPTIONS,
 } from '@/lib/interview-options'
-import {
-  FormField,
-  FormLabel,
-  FormControl,
-} from '@/components/form'
+import { FormField, FormLabel, FormControl } from '@/components/form'
 import { Briefcase, Loader2, Search, Sparkles, X } from 'lucide-react'
 
 interface JdFormProps {
@@ -76,8 +72,7 @@ export default function JdForm({ value, onChange }: Readonly<JdFormProps>) {
     setIsOnetDropdownOpen(false)
     setOnetQuery('')
     const targetSfia =
-      value.targetSfiaLevel ??
-      (value.level ? mapJdLevelToSfia(value.level) : 3)
+      value.targetSfiaLevel ?? (value.level ? mapJdLevelToSfia(value.level) : 3)
     onChange({
       ...value,
       onetSocCode: occ.socCode,

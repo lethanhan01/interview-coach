@@ -1,17 +1,19 @@
 import React from 'react'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import SfiaAdminPage from './page'
 
 // Mock next/navigation
 const mockReplace = vi.fn()
+const mockPush = vi.fn()
+const mockRouter = {
+  replace: mockReplace,
+  push: mockPush,
+}
 let mockSearchParams = new URLSearchParams('tab=matrix')
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    replace: mockReplace,
-    push: vi.fn(),
-  }),
+  useRouter: () => mockRouter,
   usePathname: () => '/admin/sfia',
   useSearchParams: () => mockSearchParams,
 }))
@@ -39,7 +41,11 @@ vi.mock('@/services/sfia-admin.service', async () => {
       getCategories: vi.fn().mockResolvedValue(MOCK_SFIA_CATEGORIES),
       getSubcategories: vi.fn().mockResolvedValue(MOCK_SFIA_SUBCATEGORIES),
       getSkills: vi.fn().mockResolvedValue(MOCK_SFIA_SKILL_SUMMARIES),
-      getSkillDetail: vi.fn().mockImplementation((code: string) => Promise.resolve(MOCK_SFIA_SKILL_DETAILS[code] || null)),
+      getSkillDetail: vi
+        .fn()
+        .mockImplementation((code: string) =>
+          Promise.resolve(MOCK_SFIA_SKILL_DETAILS[code] || null)
+        ),
       getCoverageStats: vi.fn().mockResolvedValue(MOCK_SFIA_COVERAGE_STATS),
       getMatrixData: vi.fn().mockResolvedValue({
         skills: MOCK_SFIA_SKILL_SUMMARIES,
@@ -53,8 +59,12 @@ vi.mock('@/services/sfia-admin.service', async () => {
           },
         },
       }),
-      getResponsibilityLevels: vi.fn().mockResolvedValue(MOCK_SFIA_RESPONSIBILITY_LEVELS),
-      getGenericAttributes: vi.fn().mockResolvedValue(MOCK_SFIA_GENERIC_ATTRIBUTES),
+      getResponsibilityLevels: vi
+        .fn()
+        .mockResolvedValue(MOCK_SFIA_RESPONSIBILITY_LEVELS),
+      getGenericAttributes: vi
+        .fn()
+        .mockResolvedValue(MOCK_SFIA_GENERIC_ATTRIBUTES),
       createQuestion: vi.fn().mockResolvedValue({
         id: 'new-q-1',
         questionText: 'Mock question',
@@ -80,25 +90,35 @@ describe('SfiaAdminPage - Matrix Tab Integration', () => {
     await waitFor(() => {
       expect(screen.getByText('SFIA 9 Knowledge Browser')).toBeInTheDocument()
       expect(screen.getByText('SFIA Matrix (2D Grid)')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('Search code (PROG) or skill name...')).toBeInTheDocument()
+      expect(
+        screen.getByPlaceholderText('Search code (PROG) or skill name...')
+      ).toBeInTheDocument()
     })
 
     expect(screen.getByText('Export Matrix CSV')).toBeInTheDocument()
-    expect(screen.getByText('Blind spots only (0 questions)')).toBeInTheDocument()
+    expect(
+      screen.getByText('Blind spots only (0 questions)')
+    ).toBeInTheDocument()
   })
 
   it('filters matrix skills when search query is typed in toolbar', async () => {
     render(<SfiaAdminPage />)
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Search code (PROG) or skill name...')).toBeInTheDocument()
+      expect(
+        screen.getByPlaceholderText('Search code (PROG) or skill name...')
+      ).toBeInTheDocument()
     })
 
-    const searchInput = screen.getByPlaceholderText('Search code (PROG) or skill name...')
+    const searchInput = screen.getByPlaceholderText(
+      'Search code (PROG) or skill name...'
+    )
     fireEvent.change(searchInput, { target: { value: 'PROG' } })
 
     await waitFor(() => {
-      expect(screen.getByText('Programming/software development')).toBeInTheDocument()
+      expect(
+        screen.getByText('Programming/software development')
+      ).toBeInTheDocument()
     })
   })
 
@@ -141,9 +161,15 @@ describe('SfiaAdminPage - Phase 7 Analytics Tab Integration', () => {
     expect(screen.getAllByText('35').length).toBeGreaterThanOrEqual(1)
 
     // Distribution charts & Leaderboard
-    expect(screen.getByText('Phân bổ & Độ phủ theo 6 Danh mục SFIA')).toBeInTheDocument()
-    expect(screen.getByText('Phân bổ câu hỏi theo 7 Cấp độ SFIA')).toBeInTheDocument()
-    expect(screen.getByText('Top 10 Kỹ Năng SFIA Phổ Biến Nhất trong O*NET')).toBeInTheDocument()
+    expect(
+      screen.getByText('Phân bổ & Độ phủ theo 6 Danh mục SFIA')
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Phân bổ câu hỏi theo 7 Cấp độ SFIA')
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Top 10 Kỹ Năng SFIA Phổ Biến Nhất trong O*NET')
+    ).toBeInTheDocument()
 
     // Blind Spots Table
     expect(screen.getByText('Blind Spots Warning Table')).toBeInTheDocument()
@@ -158,7 +184,9 @@ describe('SfiaAdminPage - Phase 7 Analytics Tab Integration', () => {
       expect(screen.getByText('Blind Spots Warning Table')).toBeInTheDocument()
     })
 
-    const createButtons = screen.getAllByRole('button', { name: /Create Question/i })
+    const createButtons = screen.getAllByRole('button', {
+      name: /Create Question/i,
+    })
     expect(createButtons.length).toBeGreaterThan(0)
 
     fireEvent.click(createButtons[0])
@@ -168,5 +196,3 @@ describe('SfiaAdminPage - Phase 7 Analytics Tab Integration', () => {
     })
   })
 })
-
-

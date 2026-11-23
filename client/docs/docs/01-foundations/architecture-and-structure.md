@@ -54,10 +54,11 @@ flowchart TD
 
 ### Quy tắc phụ thuộc một chiều (Unidirectional Dependency Rule)
 
-- `app/` được phép import từ `components/`, `hooks/`, `services/`, `lib/`, `config/`, và `theme.ts`.
-- `components/` được phép import từ `@mantine/*`, `@tabler/icons-react`, `hooks/`, `lib/`, `config/`, và các tệp trong cùng miền `components/<domain>/`. **Cấm** import ngược từ `app/`.
-- `hooks/` được phép import từ `services/`, `lib/`, `@tanstack/react-query`, `@mantine/hooks`. **Cấm** import UI component hoặc CSS Module.
-- `services/` chỉ import tầng HTTP client, schema `zod`, và type DTO thuần. **Tuyệt đối không** import `react`, `next/navigation`, hay `@mantine/core`.
+- `app/` được phép import từ `components/`, `hooks/`, `services/`, `types/`, `lib/`, `config/`, và `theme.ts`.
+- `components/` được phép import từ `@mantine/*`, `@tabler/icons-react`, `hooks/`, `types/`, `lib/`, `config/`, và các tệp trong cùng miền `components/<domain>/`. **Cấm** import ngược từ `app/`.
+- `hooks/` được phép import từ `services/`, `types/`, `lib/`, `@tanstack/react-query`, `@mantine/hooks`. **Cấm** import UI component hoặc CSS Module.
+- `services/` chỉ import tầng HTTP client, schema `zod`, và type DTO thuần từ `types/`. **Tuyệt đối không** import `react`, `next/navigation`, `components/`, hay `@mantine/core`.
+- `types/` chứa các Pure TypeScript Domain & API Contracts (Zero Dependencies, không import React, Next.js, Mantine hay Browser DOM) ánh xạ 1:1 theo Bounded Contexts của Backend.
 
 ---
 
@@ -92,7 +93,8 @@ client/
 │   └── ui/                       # [LEGACY FROZEN] Chờ gỡ bỏ sau migrate — CẤM thêm file mới
 ├── hooks/                        # Custom hooks dùng chung (TanStack Query hooks, SSE, countdown...)
 ├── services/                     # Domain API Services (1 tệp / 1 ngữ cảnh nghiệp vụ)
-├── lib/                          # Hạ tầng thuần (api-client.ts, query-client.tsx, date-time, types, validators)
+├── types/                        # Central Pure TypeScript Domain & API Contracts (11 Bounded Contexts + barrel)
+├── lib/                          # Hạ tầng thuần (api-client.ts, query-client.tsx, date-time, validators)
 ├── middleware/                   # Guard định tuyến (Auth cookie presence, Maintenance mode)
 ├── proxy.ts                      # Next.js 16 Proxy entry point (thay middleware.ts)
 ├── config/                       # Hằng số tĩnh (navigation, feature flags)

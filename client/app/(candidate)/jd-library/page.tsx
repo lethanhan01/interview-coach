@@ -19,7 +19,11 @@ import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import { PageContainer, PageHeader } from '@/components/patterns/LayoutPatterns'
-import { LoadingState, ErrorState, EmptyState } from '@/components/patterns/FeedbackPatterns'
+import {
+  LoadingState,
+  ErrorState,
+  EmptyState,
+} from '@/components/patterns/FeedbackPatterns'
 
 const MAX_TECH_SHOWN = 5
 
@@ -47,7 +51,12 @@ export default function JdLibraryPage() {
   }
 
   if (loading) {
-    return <LoadingState text="Đang tải danh sách Job Descriptions..." minHeight="min-h-[50vh]" />
+    return (
+      <LoadingState
+        text="Đang tải danh sách Job Descriptions..."
+        minHeight="min-h-[50vh]"
+      />
+    )
   }
 
   if (error) {
@@ -80,7 +89,7 @@ export default function JdLibraryPage() {
         <EmptyState
           title="Chưa có Job Description nào"
           description="Tạo phiên phỏng vấn đầu tiên để bắt đầu lưu JD"
-          icon={<Building2 className="size-12 text-brand" aria-hidden="true" />}
+          icon={<Building2 className="text-brand size-12" aria-hidden="true" />}
           action={{
             label: 'Tạo phiên mới',
             onClick: handleNew,
@@ -108,7 +117,7 @@ export default function JdLibraryPage() {
                     handleSelect(item)
                   }
                 }}
-                className="group w-full p-5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                className="focus-visible:ring-brand group w-full p-5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -144,8 +153,14 @@ export default function JdLibraryPage() {
                           </Badge>
                         )}
                         {item.onetOccupationTitle && (
-                          <Badge variant="outline" className="text-ink-muted text-xs">
-                            <Sparkles className="text-brand mr-1 size-3" aria-hidden="true" />
+                          <Badge
+                            variant="outline"
+                            className="text-ink-muted text-xs"
+                          >
+                            <Sparkles
+                              className="text-brand mr-1 size-3"
+                              aria-hidden="true"
+                            />
                             {item.onetOccupationTitle}
                             {item.onetSocCode && (
                               <span className="text-ink-faint ml-1 font-mono text-xs opacity-80">
@@ -180,11 +195,7 @@ export default function JdLibraryPage() {
                     {item.techStack.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {shownTechs.map((tech) => (
-                          <Badge
-                            key={tech}
-                            variant="brand"
-                            className="text-xs"
-                          >
+                          <Badge key={tech} variant="brand" className="text-xs">
                             {tech}
                           </Badge>
                         ))}

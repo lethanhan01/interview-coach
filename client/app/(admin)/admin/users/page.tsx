@@ -1,9 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
+import {
+  queryKeys,
+  useOptionalQueryClient,
+  userQueries,
+} from '@/lib/query-client'
 import { userManagementService } from '@/services'
-import type { AdminUser } from '@/types'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -27,62 +32,82 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/AlertDialog'
 import { PageContainer, PageHeader } from '@/components/patterns/LayoutPatterns'
-import { LoadingState, EmptyState, ErrorState } from '@/components/patterns/FeedbackPatterns'
+import {
+  LoadingState,
+  EmptyState,
+  ErrorState,
+} from '@/components/patterns/FeedbackPatterns'
 import { Search, Trash2, Unlock, Lock, Users } from 'lucide-react'
 
 export default function AdminUsersPage() {
+  const queryClient = useOptionalQueryClient()
   const { role, isLoading: authLoading } = useAuth()
-  const [users, setUsers] = useState<AdminUser[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [mutationError, setMutationError] = useState('')
   const [search, setSearch] = useState('')
   const [userToDelete, setUserToDelete] = useState<string | null>(null)
 
-  const fetchUsers = useCallback(async () => {
-    setError('')
-    try {
-      const data = await userManagementService.listUsers()
-      setUsers(data)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Không thể tải users')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+  const {
+    data: users = [],
+    isLoading,
+    error: queryError,
+  } = useQuery({
+    ...userQueries.adminList(),
+    enabled: !authLoading && role === 'admin',
+  })
 
-  const load = async () => {
-    setIsLoading(true)
-    await fetchUsers()
-  }
-
-  useEffect(() => {
-    if (!authLoading && role === 'admin') {
-      const timeout = window.setTimeout(() => void fetchUsers(), 0)
-      return () => window.clearTimeout(timeout)
-    }
-  }, [role, authLoading, fetchUsers])
-
-  const changeStatus = async (id: string, currentStatus: string) => {
-    try {
-      await userManagementService.updateUser(id, {
-        status: currentStatus === 'active' ? 'locked' : 'active',
+  const updateUserMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      userManagementService.updateUser(id, { status }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.users.adminList(),
       })
-      await load()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Không thể cập nhật trạng thái')
-    }
+    },
+    onError: (e) => {
+      setMutationError(
+        e instanceof Error ? e.message : 'Không thể cập nhật trạng thái'
+      )
+    },
+  })
+
+  const deleteUserMutation = useMutation({
+    mutationFn: (id: string) => userManagementService.deleteUser(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.users.adminList(),
+      })
+    },
+    onError: (e) => {
+      setMutationError(e instanceof Error ? e.message : 'Không thể xóa user')
+    },
+    onSettled: () => {
+      setUserToDelete(null)
+    },
+  })
+
+  const isMutating =
+    updateUserMutation.isPending || deleteUserMutation.isPending
+
+  const error =
+    mutationError ||
+    (queryError instanceof Error
+      ? queryError.message
+      : queryError
+        ? 'Không thể tải users'
+        : '')
+
+  const changeStatus = (id: string, currentStatus: string) => {
+    setMutationError('')
+    updateUserMutation.mutate({
+      id,
+      status: currentStatus === 'active' ? 'locked' : 'active',
+    })
   }
 
-  const deleteUser = async () => {
+  const deleteUser = () => {
     if (!userToDelete) return
-    try {
-      await userManagementService.deleteUser(userToDelete)
-      await load()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Không thể xóa user')
-    } finally {
-      setUserToDelete(null)
-    }
+    setMutationError('')
+    deleteUserMutation.mutate(userToDelete)
   }
 
   if (authLoading || role !== 'admin') return null
@@ -109,13 +134,14 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {error && (
-        <ErrorState description={error} minHeight="min-h-[100px]" />
-      )}
+      {error && <ErrorState description={error} minHeight="min-h-[100px]" />}
 
       <Card className="overflow-hidden p-0">
         {isLoading && (
-          <LoadingState text="Đang tải danh sách người dùng..." minHeight="h-48" />
+          <LoadingState
+            text="Đang tải danh sách người dùng..."
+            minHeight="h-48"
+          />
         )}
         {!isLoading && filteredUsers.length === 0 && (
           <EmptyState
@@ -126,7 +152,7 @@ export default function AdminUsersPage() {
                 ? `Không có kết quả nào khớp với "${search}"`
                 : 'Hệ thống chưa có người dùng nào'
             }
-            icon={<Users className="size-8 text-ink-muted/50" />}
+            icon={<Users className="text-ink-muted/50 size-8" />}
           />
         )}
         {!isLoading && filteredUsers.length > 0 && (
@@ -163,6 +189,7 @@ export default function AdminUsersPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      disabled={isMutating}
                       onClick={() => changeStatus(user.id, user.status)}
                     >
                       {user.status === 'active' ? (
@@ -180,6 +207,7 @@ export default function AdminUsersPage() {
                     <Button
                       variant="destructive"
                       size="sm"
+                      disabled={isMutating}
                       onClick={() => setUserToDelete(user.id)}
                     >
                       <Trash2 className="size-3" />
@@ -206,8 +234,13 @@ export default function AdminUsersPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteUser}>
+            <AlertDialogCancel disabled={deleteUserMutation.isPending}>
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteUserMutation.isPending}
+              onClick={deleteUser}
+            >
               Xóa tài khoản
             </AlertDialogAction>
           </AlertDialogFooter>

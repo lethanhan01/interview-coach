@@ -37,9 +37,7 @@ describe('QuestionCard', () => {
       />
     )
 
-    expect(
-      screen.getByText('Phát triển Phần mềm (PROG)')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Phát triển Phần mềm (PROG)')).toBeInTheDocument()
   })
 
   it('renders skill badge with skillName when only skillName provided', () => {
@@ -52,9 +50,7 @@ describe('QuestionCard', () => {
       />
     )
 
-    expect(
-      screen.getByText('Giao tiếp & Làm việc nhóm')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Giao tiếp & Làm việc nhóm')).toBeInTheDocument()
   })
 
   it('renders skill badge with skillCode when only skillCode provided', () => {
@@ -80,7 +76,11 @@ describe('QuestionCard', () => {
     )
 
     // Badge container should not be rendered
-    expect(container.querySelector('[class*="bg-brand-subtle text-brand-subtle-fg"] span')).toBeNull()
+    expect(
+      container.querySelector(
+        '[class*="bg-brand-subtle text-brand-subtle-fg"] span'
+      )
+    ).toBeNull()
   })
 
   it('does not render tech context chips or rubric criteria (security constraint)', () => {
@@ -113,7 +113,9 @@ describe('QuestionCard', () => {
       />
     )
 
-    expect(container.firstElementChild).toHaveClass('my-custom-question-card')
+    expect(
+      container.querySelector('.my-custom-question-card')
+    ).toBeInTheDocument()
   })
 
   it('synthesizes and plays question audio via mediaService mutation', async () => {

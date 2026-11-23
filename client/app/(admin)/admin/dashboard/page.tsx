@@ -1,14 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { userManagementService } from '@/services'
-import type { AdminUser } from '@/types'
+import { useQuery } from '@tanstack/react-query'
+import { userQueries } from '@/lib/query-client'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { PageContainer } from '@/components/patterns/LayoutPatterns'
-import { LoadingState, ErrorState } from '@/components/patterns/FeedbackPatterns'
+import {
+  LoadingState,
+  ErrorState,
+} from '@/components/patterns/FeedbackPatterns'
 import {
   Users,
   UserCheck,
@@ -21,26 +23,26 @@ import {
 import { formatVietnamRelativeDate } from '@/lib/date-time'
 
 export default function AdminDashboardPage() {
-  const [users, setUsers] = useState<AdminUser[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    data: users = [],
+    isLoading: loading,
+    error: queryError,
+  } = useQuery(userQueries.adminList())
 
-  useEffect(() => {
-    userManagementService
-      .listUsers()
-      .then(setUsers)
-      .catch((err) =>
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Không thể tải dữ liệu thống kê quản trị'
-        )
-      )
-      .finally(() => setLoading(false))
-  }, [])
+  const error =
+    queryError instanceof Error
+      ? queryError.message
+      : queryError
+        ? 'Không thể tải dữ liệu thống kê quản trị'
+        : null
 
   if (loading) {
-    return <LoadingState text="Đang tải dữ liệu thống kê quản trị..." minHeight="min-h-[50vh]" />
+    return (
+      <LoadingState
+        text="Đang tải dữ liệu thống kê quản trị..."
+        minHeight="min-h-[50vh]"
+      />
+    )
   }
 
   if (error) {
@@ -78,12 +80,13 @@ export default function AdminDashboardPage() {
               Tổng quan hệ thống
             </h1>
             <p className="text-ink-muted mt-1 text-sm">
-              Theo dõi người dùng, phân quyền và các hoạt động trên nền tảng InterviewCoach.
+              Theo dõi người dùng, phân quyền và các hoạt động trên nền tảng
+              InterviewCoach.
             </p>
           </div>
           <Button asChild size="md">
             <Link href="/admin/users">
-              <Users className="size-4 mr-1.5" />
+              <Users className="mr-1.5 size-4" />
               <span>Quản lý người dùng</span>
             </Link>
           </Button>
@@ -173,12 +176,12 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Recent users snippet (2 cols) */}
         <Card className="p-6 lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-ink text-base font-semibold">
                 Người dùng mới đăng ký
               </h2>
-              <p className="text-ink-muted text-xs mt-0.5">
+              <p className="text-ink-muted mt-0.5 text-xs">
                 Các tài khoản vừa tạo trong hệ thống
               </p>
             </div>
@@ -231,17 +234,17 @@ export default function AdminDashboardPage() {
         {/* Quick Actions (1 col) */}
         <div className="flex flex-col gap-4">
           <Card className="p-6">
-            <h2 className="text-ink text-base font-semibold mb-1">
+            <h2 className="text-ink mb-1 text-base font-semibold">
               Thao tác nhanh
             </h2>
-            <p className="text-ink-muted text-xs mb-4">
+            <p className="text-ink-muted mb-4 text-xs">
               Truy cập nhanh các chức năng quản trị chính
             </p>
 
             <div className="flex flex-col gap-3">
               <Link
                 href="/admin/users"
-                className="border-border hover:border-brand/40 bg-surface-raised flex items-center justify-between rounded-xl border p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-card"
+                className="border-border hover:border-brand/40 bg-surface-raised hover:shadow-card flex items-center justify-between rounded-xl border p-3.5 transition-all hover:-translate-y-0.5"
               >
                 <div className="flex items-center gap-3">
                   <div className="bg-brand-subtle text-brand flex size-8 items-center justify-center rounded-lg">
@@ -261,7 +264,7 @@ export default function AdminDashboardPage() {
 
               <Link
                 href="/admin/profile"
-                className="border-border hover:border-brand/40 bg-surface-raised flex items-center justify-between rounded-xl border p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-card"
+                className="border-border hover:border-brand/40 bg-surface-raised hover:shadow-card flex items-center justify-between rounded-xl border p-3.5 transition-all hover:-translate-y-0.5"
               >
                 <div className="flex items-center gap-3">
                   <div className="bg-brand-subtle text-brand flex size-8 items-center justify-center rounded-lg">
@@ -281,13 +284,14 @@ export default function AdminDashboardPage() {
             </div>
           </Card>
 
-          <Card className="bg-brand p-5 text-white border-brand">
+          <Card className="bg-brand border-brand p-5 text-white">
             <div className="flex items-center gap-2">
-              <Sparkles className="size-5 text-brand-200" />
-              <p className="font-semibold text-sm">AI Session Engine</p>
+              <Sparkles className="text-brand-200 size-5" />
+              <p className="text-sm font-semibold">AI Session Engine</p>
             </div>
-            <p className="text-brand-100 text-xs mt-2 leading-relaxed">
-              Hệ thống phỏng vấn AI và đánh giá tự động đang hoạt động bình thường trên nền tảng.
+            <p className="text-brand-100 mt-2 text-xs leading-relaxed">
+              Hệ thống phỏng vấn AI và đánh giá tự động đang hoạt động bình
+              thường trên nền tảng.
             </p>
           </Card>
         </div>

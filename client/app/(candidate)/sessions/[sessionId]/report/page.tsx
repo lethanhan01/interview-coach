@@ -44,7 +44,9 @@ function toStringList(value: unknown): string[] {
   )
 }
 
-function extractActionPlanDirections(actionPlan: Report['actionPlan']): string[] {
+function extractActionPlanDirections(
+  actionPlan: Report['actionPlan']
+): string[] {
   if (!actionPlan) return []
 
   let structuredItems: ActionPlanItem[] = []
@@ -58,19 +60,27 @@ function extractActionPlanDirections(actionPlan: Report['actionPlan']): string[]
     'actionPlan' in actionPlan &&
     Array.isArray((actionPlan as { actionPlan?: ActionPlanItem[] }).actionPlan)
   ) {
-    structuredItems = (actionPlan as { actionPlan: ActionPlanItem[] }).actionPlan
+    structuredItems = (actionPlan as { actionPlan: ActionPlanItem[] })
+      .actionPlan
   }
 
   if (structuredItems.length > 0) {
-    const priorityWeight: Record<string, number> = { high: 3, medium: 2, low: 1 }
+    const priorityWeight: Record<string, number> = {
+      high: 3,
+      medium: 2,
+      low: 1,
+    }
     const sorted = [...structuredItems].sort(
-      (a, b) => (priorityWeight[b.priority] ?? 0) - (priorityWeight[a.priority] ?? 0)
+      (a, b) =>
+        (priorityWeight[b.priority] ?? 0) - (priorityWeight[a.priority] ?? 0)
     )
     const directions: string[] = []
     for (const item of sorted) {
       if (item.title) {
         if (item.topics && item.topics.length > 0) {
-          directions.push(`${item.title} (${item.topics.slice(0, 2).join(', ')})`)
+          directions.push(
+            `${item.title} (${item.topics.slice(0, 2).join(', ')})`
+          )
         } else {
           directions.push(item.title)
         }
@@ -83,7 +93,11 @@ function extractActionPlanDirections(actionPlan: Report['actionPlan']): string[]
   let rawItems: unknown = []
   if (Array.isArray(actionPlan)) {
     rawItems = actionPlan
-  } else if (typeof actionPlan === 'object' && actionPlan !== null && 'items' in actionPlan) {
+  } else if (
+    typeof actionPlan === 'object' &&
+    actionPlan !== null &&
+    'items' in actionPlan
+  ) {
     rawItems = (actionPlan as { items?: unknown }).items
   }
   return toStringList(rawItems)
@@ -328,8 +342,7 @@ export default function ReportPage() {
 
   const overviewSummary = buildOverviewSummary(report)
   const recommendationStatus =
-    report.recommendationStatus ??
-    report.executiveSummary?.recommendationStatus
+    report.recommendationStatus ?? report.executiveSummary?.recommendationStatus
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -353,7 +366,7 @@ export default function ReportPage() {
             </div>
           ) : (
             <div className="mt-1 flex items-baseline gap-1">
-              <span className="text-5xl font-bold tracking-tight tabular-nums">
+              <span className="text-5xl font-bold tabular-nums tracking-tight">
                 {report.overallScore.toFixed(1)}
               </span>
               <span className="text-brand-200 text-xl font-medium">/ 100</span>
@@ -362,10 +375,13 @@ export default function ReportPage() {
 
           {(report.executiveSummary?.targetSfiaLevel ||
             report.executiveSummary?.demonstratedSfiaLevel != null) && (
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-brand-100">
+            <div className="text-brand-100 mt-3 flex flex-wrap items-center gap-2 text-xs">
               {report.executiveSummary.targetSfiaLevel && (
                 <span className="rounded-md border border-white/20 bg-black/20 px-2.5 py-1">
-                  Kỳ vọng: <strong>SFIA Level {report.executiveSummary.targetSfiaLevel}</strong>
+                  Kỳ vọng:{' '}
+                  <strong>
+                    SFIA Level {report.executiveSummary.targetSfiaLevel}
+                  </strong>
                 </span>
               )}
               {report.executiveSummary.demonstratedSfiaLevel != null && (
@@ -505,11 +521,13 @@ export default function ReportPage() {
         ) : (
           <div className="border-border bg-surface-1 text-ink rounded-2xl border p-6 text-sm">
             <div className="flex items-center gap-2 font-semibold">
-              <Info className="size-4 text-brand" />
+              <Info className="text-brand size-4" />
               Báo cáo phiên bản trước
             </div>
             <p className="text-ink-muted mt-1.5 text-xs leading-relaxed">
-              Phiên phỏng vấn này được khởi tạo trước khi hệ thống nâng cấp khung năng lực SFIA 9 &amp; O*NET. Điểm tổng quát và nội dung chi tiết từng câu trả lời vẫn được bảo lưu đầy đủ bên dưới.
+              Phiên phỏng vấn này được khởi tạo trước khi hệ thống nâng cấp
+              khung năng lực SFIA 9 &amp; O*NET. Điểm tổng quát và nội dung chi
+              tiết từng câu trả lời vẫn được bảo lưu đầy đủ bên dưới.
             </p>
           </div>
         )}
@@ -520,9 +538,7 @@ export default function ReportPage() {
           <h2 className="text-ink mb-4 text-base font-semibold">
             Phân tích từng câu trả lời
           </h2>
-          <AnnotatedTranscript
-            items={report.transcript ?? []}
-          />
+          <AnnotatedTranscript items={report.transcript ?? []} />
         </div>
       </div>
     </div>

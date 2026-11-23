@@ -73,11 +73,7 @@ export interface VoiceRecorderProps {
 }
 
 type RecordState =
-  | 'idle'
-  | 'listening'
-  | 'transcribing'
-  | 'reviewing'
-  | 'submitting'
+  'idle' | 'listening' | 'transcribing' | 'reviewing' | 'submitting'
 
 const MAX_RECORDING_SECONDS = 180 // 3 minutes maximum per answer (STAR standard)
 
@@ -187,13 +183,8 @@ export default function VoiceRecorder({
   }, [])
 
   const { mutateAsync: transcribeAudio } = useMutation({
-    mutationFn: ({
-      audioBlob,
-      lang,
-    }: {
-      audioBlob: Blob
-      lang: 'vi' | 'en'
-    }) => mediaService.transcribeAudio(audioBlob, lang),
+    mutationFn: ({ audioBlob, lang }: { audioBlob: Blob; lang: 'vi' | 'en' }) =>
+      mediaService.transcribeAudio(audioBlob, lang),
   })
 
   const processAudioTranscription = useCallback(
@@ -213,7 +204,8 @@ export default function VoiceRecorder({
           return
         }
 
-        const finalText = recognizedText || accumulatedTranscriptRef.current.trim()
+        const finalText =
+          recognizedText || accumulatedTranscriptRef.current.trim()
         setTranscript(finalText)
         setVoiceMetrics(response.metrics || null)
         setDurationSeconds(response.durationSeconds || elapsedSeconds)
@@ -423,7 +415,9 @@ export default function VoiceRecorder({
     if (state === 'submitting') return
     const finalTranscript = transcript.trim()
     if (finalTranscript.length < 10) {
-      setError('Câu trả lời cần tối thiểu 10 ký tự để hệ thống có thể đánh giá.')
+      setError(
+        'Câu trả lời cần tối thiểu 10 ký tự để hệ thống có thể đánh giá.'
+      )
       return
     }
 
@@ -486,14 +480,17 @@ export default function VoiceRecorder({
     return (
       <div
         role="alert"
-        className="flex flex-col items-center justify-center rounded-lg border border-border bg-surface-subtle p-6 text-center gap-3"
+        className="border-border bg-surface-subtle flex flex-col items-center justify-center gap-3 rounded-lg border p-6 text-center"
       >
-        <AlertCircle className="size-8 text-warning-subtle-fg" aria-hidden="true" />
+        <AlertCircle
+          className="text-warning-subtle-fg size-8"
+          aria-hidden="true"
+        />
         <div className="space-y-1">
-          <h4 className="font-semibold text-ink text-sm">
+          <h4 className="text-ink text-sm font-semibold">
             Trình duyệt chưa hỗ trợ truy cập microphone
           </h4>
-          <p className="text-ink-muted text-xs max-w-md">
+          <p className="text-ink-muted max-w-md text-xs">
             Để có trải nghiệm phỏng vấn trực tiếp bằng giọng nói, vui lòng sử
             dụng Google Chrome, Microsoft Edge hoặc Safari. Bạn cũng có thể
             chuyển sang tab <strong>Text</strong> để nhập câu trả lời.
@@ -513,11 +510,11 @@ export default function VoiceRecorder({
   const charCount = transcript.trim().length
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full">
+    <div className="flex w-full flex-col items-center gap-4">
       {error && (
         <div
           role="alert"
-          className="w-full flex items-center gap-2 rounded-md bg-danger-subtle p-3 text-sm text-danger-subtle-fg"
+          className="bg-danger-subtle text-danger-subtle-fg flex w-full items-center gap-2 rounded-md p-3 text-sm"
         >
           <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
           <span>{error}</span>
@@ -526,14 +523,17 @@ export default function VoiceRecorder({
 
       {/* Transcribing State: AI Pipeline Processing */}
       {state === 'transcribing' && (
-        <div className="flex flex-col items-center justify-center p-8 gap-3 text-ink-muted text-sm">
+        <div className="text-ink-muted flex flex-col items-center justify-center gap-3 p-8 text-sm">
           <LoadingSpinner size="md" />
-          <div className="flex items-center gap-2 font-medium text-ink">
-            <Sparkles className="size-4 text-brand-subtle-fg animate-pulse" />
-            <span>Đang chuyển đổi giọng nói & phân tích chỉ số phát biểu...</span>
+          <div className="text-ink flex items-center gap-2 font-medium">
+            <Sparkles className="text-brand-subtle-fg size-4 animate-pulse" />
+            <span>
+              Đang chuyển đổi giọng nói & phân tích chỉ số phát biểu...
+            </span>
           </div>
-          <span className="text-xs text-ink-muted">
-            Mô hình Whisper & Silero VAD đang trích xuất WPM, ngập ngừng và từ đệm
+          <span className="text-ink-muted text-xs">
+            Mô hình Whisper & Silero VAD đang trích xuất WPM, ngập ngừng và từ
+            đệm
           </span>
         </div>
       )}
@@ -544,16 +544,16 @@ export default function VoiceRecorder({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Label
               htmlFor="voice-transcript"
-              className="text-ink font-medium text-sm"
+              className="text-ink text-sm font-medium"
             >
               Nội dung câu trả lời (Xác nhận & Chỉnh sửa)
             </Label>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="tabular-nums text-xs">
+              <Badge variant="outline" className="text-xs tabular-nums">
                 {wordCount} từ · {charCount} ký tự
               </Badge>
               {durationSeconds > 0 && (
-                <Badge variant="secondary" className="tabular-nums text-xs">
+                <Badge variant="secondary" className="text-xs tabular-nums">
                   {mm}:{ss} phát biểu
                 </Badge>
               )}
@@ -565,17 +565,17 @@ export default function VoiceRecorder({
                         ? 'success'
                         : 'warning'
                     }
-                    className="tabular-nums text-xs"
+                    className="text-xs tabular-nums"
                   >
                     {Math.round(voiceMetrics.wpm)} WPM
                   </Badge>
                   {voiceMetrics.pauseCount > 0 && (
-                    <Badge variant="warning" className="tabular-nums text-xs">
+                    <Badge variant="warning" className="text-xs tabular-nums">
                       {voiceMetrics.pauseCount} ngập ngừng (&gt;1.2s)
                     </Badge>
                   )}
                   {voiceMetrics.fillerWordCount > 0 && (
-                    <Badge variant="warning" className="tabular-nums text-xs">
+                    <Badge variant="warning" className="text-xs tabular-nums">
                       {voiceMetrics.fillerWordCount} từ đệm
                     </Badge>
                   )}
@@ -599,7 +599,7 @@ export default function VoiceRecorder({
             className="resize-none"
           />
 
-          <p className="text-xs text-ink-muted">
+          <p className="text-ink-muted text-xs">
             💡 <em>Mẹo:</em> Bạn có thể chỉnh sửa nhanh các thuật ngữ kỹ thuật
             nếu nhận diện chưa hoàn toàn chính xác trước khi gửi câu trả lời.
           </p>
@@ -612,7 +612,7 @@ export default function VoiceRecorder({
               onClick={resetDraft}
               disabled={disabled}
             >
-              <RotateCcw className="size-4 mr-1.5" aria-hidden="true" />
+              <RotateCcw className="mr-1.5 size-4" aria-hidden="true" />
               Nói lại từ đầu
             </Button>
             <Button
@@ -622,7 +622,7 @@ export default function VoiceRecorder({
               onClick={submitTranscript}
               disabled={charCount < 10 || disabled}
             >
-              <Send className="size-4 mr-1.5" aria-hidden="true" />
+              <Send className="mr-1.5 size-4" aria-hidden="true" />
               Xác nhận & Gửi câu trả lời
             </Button>
           </div>
@@ -631,7 +631,7 @@ export default function VoiceRecorder({
 
       {/* Submitting State */}
       {state === 'submitting' && (
-        <div className="flex flex-col items-center justify-center p-8 gap-3 text-ink-muted text-sm">
+        <div className="text-ink-muted flex flex-col items-center justify-center gap-3 p-8 text-sm">
           <LoadingSpinner size="md" />
           <span>Đang gửi câu trả lời và chuyển tiếp đến AI Coach...</span>
         </div>
@@ -639,37 +639,37 @@ export default function VoiceRecorder({
 
       {/* Listening State with Live Waveform & Timer */}
       {state === 'listening' && (
-        <div className="flex flex-col items-center gap-5 w-full py-4">
+        <div className="flex w-full flex-col items-center gap-5 py-4">
           <div className="flex items-center gap-3">
             <span
               aria-hidden="true"
               className="bg-danger size-3 animate-ping rounded-full"
             />
-            <span className="text-sm font-medium text-ink">
+            <span className="text-ink text-sm font-medium">
               Đang lắng nghe câu trả lời trực tiếp...
             </span>
           </div>
 
           {/* Real-time Waveform Visualizer */}
           <div
-            className="flex items-center justify-center gap-1.5 h-14 px-6 rounded-xl bg-surface-subtle border border-border"
+            className="bg-surface-subtle border-border flex h-14 items-center justify-center gap-1.5 rounded-xl border px-6"
             aria-label="Biểu đồ sóng âm microphone"
           >
-            <Volume2 className="size-5 text-waveform mr-2" aria-hidden="true" />
+            <Volume2 className="text-waveform mr-2 size-5" aria-hidden="true" />
             {volumeLevels.map((lvl, idx) => (
               // Design Exception: Dynamic height for real-time audio visualizer waveform bars
               <span
                 key={idx}
                 style={{ height: `${Math.max(15, Math.min(100, lvl))}%` }}
-                className="w-1.5 rounded-full bg-waveform transition-all duration-75"
+                className="bg-waveform w-1.5 rounded-full transition-all duration-75"
               />
             ))}
           </div>
 
           {/* Timer Display */}
-          <div className="flex items-center gap-2 text-ink-muted text-sm tabular-nums">
+          <div className="text-ink-muted flex items-center gap-2 text-sm tabular-nums">
             <span>Thời gian:</span>
-            <span className="font-semibold text-ink">
+            <span className="text-ink font-semibold">
               {mm}:{ss}
             </span>
             <span className="text-ink-faint">/ 03:00</span>
@@ -682,7 +682,7 @@ export default function VoiceRecorder({
             aria-label="Dừng trả lời và xem lại transcript"
             onClick={stopListening}
           >
-            <Square className="size-4 mr-2" aria-hidden="true" />
+            <Square className="mr-2 size-4" aria-hidden="true" />
             Dừng trả lời & Xem transcript
           </Button>
         </div>
@@ -703,7 +703,7 @@ export default function VoiceRecorder({
             <Mic className="size-5" aria-hidden="true" />
             Bắt đầu trả lời
           </Button>
-          <span className="text-xs text-ink-muted">
+          <span className="text-ink-muted text-xs">
             Nhấn để phát biểu trực tiếp qua microphone (Tối đa 3 phút)
           </span>
         </div>

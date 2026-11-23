@@ -71,19 +71,27 @@ describe('ReportPage', () => {
     // Hero banner assertions
     expect(screen.getByText('85.0')).toBeInTheDocument()
     expect(screen.getByText('/ 100')).toBeInTheDocument()
-    expect(screen.getAllByText(/SFIA Level 4/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/SFIA Level 4/i).length).toBeGreaterThanOrEqual(
+      1
+    )
     expect(screen.getByText('Đạt Yêu Cầu Tuyển Dụng')).toBeInTheDocument()
 
     // Skills breakdown and overview assertions
-    expect(screen.getAllByText(/Phát triển Phần mềm/i).length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/Thiết kế Cơ sở Dữ liệu/i).length).toBeGreaterThanOrEqual(1)
+    expect(
+      screen.getAllByText(/Phát triển Phần mềm/i).length
+    ).toBeGreaterThanOrEqual(1)
+    expect(
+      screen.getAllByText(/Thiết kế Cơ sở Dữ liệu/i).length
+    ).toBeGreaterThanOrEqual(1)
 
     // Action plan assertions
     expect(
       screen.getByText(/Kế Hoạch Hành Động & Lộ Trình Ôn Tập/i)
     ).toBeInTheDocument()
     expect(
-      screen.getAllByText(/Nâng cao kỹ thuật thiết kế CSDL phân tán và phân vùng/i).length
+      screen.getAllByText(
+        /Nâng cao kỹ thuật thiết kế CSDL phân tán và phân vùng/i
+      ).length
     ).toBeGreaterThanOrEqual(2)
 
     // Transcript assertions
@@ -103,12 +111,16 @@ describe('ReportPage', () => {
     expect(screen.getByText('74.0')).toBeInTheDocument()
     expect(screen.getByText('Báo cáo phiên bản trước')).toBeInTheDocument()
     expect(
-      screen.getByText(/Phiên phỏng vấn này được khởi tạo trước khi hệ thống nâng cấp khung năng lực SFIA 9 & O\*NET/i)
+      screen.getByText(
+        /Phiên phỏng vấn này được khởi tạo trước khi hệ thống nâng cấp khung năng lực SFIA 9 & O\*NET/i
+      )
     ).toBeInTheDocument()
   })
 
   it('renders skipped report with partial banner and skipped warning', async () => {
-    vi.mocked(sessionService.getReport).mockResolvedValue(mockSkippedTurnsReport)
+    vi.mocked(sessionService.getReport).mockResolvedValue(
+      mockSkippedTurnsReport
+    )
 
     render(<ReportPage />)
 
@@ -142,11 +154,7 @@ describe('ReportPage', () => {
       reportReady: false,
     })
     vi.mocked(sessionService.getReport).mockRejectedValue(
-      new ApiClientError({
-        message: 'Báo cáo đang được tổng hợp',
-        statusCode: 409,
-        errorCode: 'REPORT_NOT_READY',
-      })
+      new ApiClientError('Báo cáo đang được tổng hợp', 409, 'REPORT_NOT_READY')
     )
 
     render(<ReportPage />)

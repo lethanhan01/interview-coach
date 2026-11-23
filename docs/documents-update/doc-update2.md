@@ -272,6 +272,28 @@ Mục tiêu của Chặng 2 là đưa TanStack Query v5 vào vận hành thực 
 
 ---
 
+### CHẶNG 3: Chuẩn Hóa Kiến Trúc `client/types/` & Chuyển Đổi Toàn Diện Tầng Data Sang TanStack Query v5 (5 Đợt: `3.1` → `3.5`)
+
+Sau khi hoàn tất Chặng 1 (Docs-First) và Chặng 2 (Core TanStack Query v5 & Gỡ bỏ SWR), **Chặng 3** hoàn thiện kiến trúc tầng dữ liệu trên toàn bộ ứng dụng trước khi sang Phase 4 (Refactor UI Mantine v9 Zero-Hex):
+
+1. **Đợt 3.1 — Hệ thống Pure TypeScript Contracts (`client/types/` — 12 files):**
+   - Tách toàn bộ types từ file nguyên khối `client/lib/types.ts`, `client/services/*.service.ts` và `client/components/*/types.ts` thành 11 file theo đúng Bounded Contexts của Backend (`common`, `auth`, `user`, `candidate-profile`, `prep`, `rubric`, `session`, `report`, `media`, `onet`, `sfia`) + 1 barrel `client/types/index.ts`.
+   - Đảm bảo 100% Pure TypeScript (Zero React/Next/Mantine/DOM dependencies), chấm dứt phụ thuộc ngược `services/ -> components/`, và giữ re-export bridges mỏng (`lib/types.ts`, `components/onet/types.ts`, `components/sfia/types.ts`) cho Zero-Breakage.
+2. **Đợt 3.2 — `AbortSignal` Toàn Diện & 9 Bộ `queryOptions()` Factories:**
+   - Bổ sung `signal?: AbortSignal` cho toàn bộ hàm `GET` của các domain services (`auth`, `user`, `admin`, `candidate-profile`, `prep`, `rubric`, `onet-admin`, `sfia-admin`, cộng thêm `session` và `onet` từ Chặng 2).
+   - Hoàn thiện 9 bộ `queryOptions()` factories trong `client/lib/query-client.tsx` (`authQueries`, `userQueries`, `candidateProfileQueries`, `prepQueries`, `rubricQueries`, `sessionQueries`, `onetQueries`, `onetAdminQueries`, `sfiaAdminQueries`) kèm unit tests kiểm chứng `queryKey` & `AbortSignal`.
+3. **Đợt 3.3 — Luồng Auth, Account Profile & Candidate Resume (+ O\*NET):**
+   - Chuyển đổi `login`, `register`, `reset-password`, `(candidate)/profile`, `(admin)/admin/profile`, `ChangePasswordGroup`, `(candidate)/resume`, `CareerInfoGroup` (`useDebouncedValue` + `onetQueries.search`), và `TechnicalSkillsGroup` (`onetQueries.tech`) sang `useQuery` / `useMutation`.
+4. **Đợt 3.4 — Luồng JD Library, Setup Wizard, Live Interview Room, Report & Media:**
+   - Chuyển đổi `jd-library`, `setup` (`fetchQuery` tái dùng cache + `useMutation` chống double-submit), `JdForm` (`useDebouncedValue` + `onetQueries`), `sessions/[sessionId]` (`staleTime: 0` khi init + unmount poll cleanup + `updateStatus`/`submitTurn` mutations + SSE cache sync), `sessions/[sessionId]/report` (`useQuery(detail)` + `fetchQuery(..., { staleTime: 0, retry: false })` xử lý `REPORT_NOT_READY`), cùng `QuestionCard` (TTS `useMutation`) và `VoiceRecorder` (STT `useMutation`).
+5. **Đợt 3.5 — Phân Hệ Quản Trị (Admin Users, O\*NET Browser, SFIA 9 Browser) & Đồng Bộ Tài Liệu:**
+   - Chuyển đổi `admin/dashboard`, `admin/users` (chia sẻ cache `userQueries.adminList()` + lock/delete mutations), 5 components O\*NET (`OnetSidebar` với `useQueries`, `OnetAnalyticsView` với 4 `useQuery` song song, `OnetDetailShell`, `OnetAlternateTitlesTab` với `keepPreviousData`, `OnetSfiaTab` với 4 CRUD mutations & predicate bỏ qua `sfiaLibrary`), và 3 files SFIA 9 (`admin/sfia/page.tsx` với 7+1 `useQuery` + `setQueryData` tức thì, `SfiaMatrixInspectionSheet`, `SfiaCreateQuestionModal` với selective invalidation bỏ qua 4 nguồn tĩnh 5 phút).
+   - Chuẩn hóa unit tests sang `@test-utils` và đồng bộ cây thư mục `types/` vào `client/docs/docs/01-foundations/architecture-and-structure.md`.
+
+> **Cổng nghiệm thu Chặng 3:** Chạy đầy đủ `typecheck`, `lint`, `format:check`, `stylelint`, `ui:lint`, `test:unit`, `build` và `verify:docs` tại `client/` đạt 0 lỗi.
+
+---
+
 ## 4. Kế Hoạch Kiểm Chứng & Nghiệm Thu Từng Chặng (Verification Plan)
 
 ### 4.1. Cổng Kiểm Chứng Chặng 1 (Docs-First Gate)
