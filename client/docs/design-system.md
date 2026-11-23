@@ -1,5 +1,14 @@
 # InterviewCoach Design System
 
+> [!CAUTION]
+> **DEPRECATED — Tài liệu Legacy (Tailwind CSS v4 + Radix UI + CVA + `cn()`):**
+> Tài liệu này thuộc hệ thống Design System cũ đang chờ migrate sang **Mantine UI v9 (Zero-Hex Semantic-Only)** và **KHÔNG** được dùng cho tính năng mới hoặc màn hình đang chuyển đổi.
+>
+> Vui lòng sử dụng hệ thống quy chuẩn chính thức mới:
+>
+> - [Master Hub Quy chuẩn Kiến trúc Frontend (`client/docs/docs/README.md`)](./docs/README.md)
+> - [Cẩm nang Mantine UI v9 (`client/docs/mantine/README.md`)](./mantine/README.md)
+
 ## Overview
 
 This document outlines the architecture and guidelines for the InterviewCoach Design System, built with Next.js, Tailwind CSS v4, and React.

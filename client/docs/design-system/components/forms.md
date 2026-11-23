@@ -1,5 +1,15 @@
 # Form System
 
+> [!CAUTION]
+> **DEPRECATED — Tài liệu Legacy (React Hook Form + Radix UI + `components/ui/form-adapters/`):**
+> Tài liệu này thuộc hệ thống Form cũ đang chờ migrate sang **`@mantine/form` v9 (`mode: 'uncontrolled'`) + Zod v4 (`schemaResolver`)** và **KHÔNG** được dùng cho form mới hoặc màn hình đang chuyển đổi.
+>
+> Vui lòng sử dụng tài liệu quy chuẩn chính thức mới:
+>
+> - [Master Hub Quy chuẩn Kiến trúc Frontend (`client/docs/docs/README.md`)](../../docs/README.md)
+> - [Cẩm nang Mantine UI v9 (`client/docs/mantine/README.md`)](../../mantine/README.md)
+> - [Hướng dẫn `@mantine/form` + Zod v4 (`client/docs/mantine/02-setup-forms-hooks-guide.md`)](../../mantine/02-setup-forms-hooks-guide.md)
+
 Hệ thống form của dự án được xây dựng theo **3-layer architecture**, phân tách rõ ràng UI primitive, form composition, và form library adapter.
 
 ## Kiến trúc tổng quan
