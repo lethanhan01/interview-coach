@@ -91,4 +91,4 @@ When working on a matching task in `client/`, read the relevant `client/.agents/
 ## 6. Project Documentation
 
 - Read [client/docs/mantine/README.md](./client/docs/mantine/README.md) for the Vietnamese Mantine v9 lookup map, Zero-Hex strict rules, setup/form/hook/testing patterns, and skill mapping.
-- Read [client/docs/docs/README.md](./client/docs/docs/README.md) for the Master Hub of InterviewCoach Frontend Architecture & Engineering Conventions (17 topics + Quick Reference).
+- Read [client/docs/docs/README.md](./client/docs/docs/README.md) for the Master Hub of InterviewCoach Frontend Architecture & Engineering Conventions (16 topics across 4 domain folders + Quick Reference).

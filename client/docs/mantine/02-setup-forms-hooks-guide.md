@@ -301,10 +301,24 @@ export function SessionSearchBox() {
 ```
 
 ```tsx
-// 3. Responsive giá trị theo breakpoint với useMatches
-import { useMatches } from '@mantine/core'
+// 3. Responsive giá trị theo breakpoint với useMatches (mantine.dev/hooks/use-matches/)
+'use client'
 
-const columns = useMatches({ base: 1, sm: 2, lg: 4 })
+import { Paper, Text, useMatches } from '@mantine/core'
+
+export function ResponsiveSummaryCard({ summary }: { summary: string }) {
+  const padding = useMatches({
+    base: 'sm',
+    sm: 'md',
+    lg: 'lg',
+  })
+
+  return (
+    <Paper withBorder p={padding} radius="md">
+      <Text size="sm">{summary}</Text>
+    </Paper>
+  )
+}
 ```
 
 ---

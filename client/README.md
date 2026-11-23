@@ -114,7 +114,7 @@ client/
 ├── e2e/                   — Playwright E2E test suites
 ├── scripts/               — Static UI rules linter (check-ui-rules.mjs), docs verifier
 ├── docs/
-│   ├── docs/              — Master Hub & 17 chuyên đề quy chuẩn kiến trúc Frontend
+│   ├── docs/              — Master Hub & 16 chuyên đề quy chuẩn kiến trúc Frontend (4 miền)
 │   └── mantine/           — Cẩm nang thực hành Mantine UI v9 (Zero-Hex, Forms, Hooks, Testing)
 ├── theme.ts               — Mantine v9 theme (RSC-safe, Zero-Hex, 5 semantic roles)
 ├── postcss.config.mjs     — postcss-preset-mantine + postcss-simple-vars (breakpoints xs..xl)

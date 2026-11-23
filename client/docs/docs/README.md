@@ -1,315 +1,179 @@
-# Bản Đồ Tài Liệu & Lộ Trình Đọc Bộ Quy Chuẩn Frontend Doanh Nghiệp (Enterprise Blueprint Roadmap)
+# Master Hub: Hệ Thống Quy Chuẩn Kiến Trúc Frontend InterviewCoach (`client/docs/docs/`)
 
-> **Dự án:** Khung Tiêu Chuẩn Doanh Nghiệp & Hồ Sơ Dự Án RoGym  
-> **Phạm vi kỹ thuật:** Hệ sinh thái tài liệu quy chuẩn kỹ thuật `client/docs/` (17 Chuyên đề Doanh nghiệp)  
-> **Cổng thông tin quy chuẩn trung tâm:** [`client/FRONTEND_CONVENTIONS.md`](../FRONTEND_CONVENTIONS.md)  
-> **Cơ sở tham chiếu quốc tế:** [Bulletproof React](https://github.com/alan2207/bulletproof-react), [TkDodo's Practical React Query](https://tkdodo.eu/blog), [W3C WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/), [OWASP](https://owasp.org), [Web.dev](https://web.dev), [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807), [Vercel React Best Practices](https://vercel.com).  
-> **Phiên bản:** 8.0 (Enterprise Quality Standard — 17 Spokes & Universal Decoupling)  
-> **Áp dụng cho:** Kỹ sư Frontend, Kỹ sư Fullstack, QA / Test Engineers, Tech Leads, SecOps / DevOps và AI Assistants pair-programming.  
-
-> [!TIP]
-> 🚀 **Dành Cho Kỹ Sư Mới — Khởi Động Nhanh Trong 15 Phút:**  
-> Truy cập ngay **[`QUICK_REFERENCE.md`](./QUICK_REFERENCE.md)** để nắm bắt Lộ trình đọc 3 giai đoạn, Checklist 12 tiêu chí DoD trước khi mở PR, Top 4 công thức code chuẩn mực và Ma trận 120+ Rule IDs!
+> **Dự án:** InterviewCoach Frontend (`client/`)  
+> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Cổng tra cứu nhanh:** [Quick Reference Sheet & Ma trận 131 Rule IDs](./QUICK_REFERENCE.md) | [Cẩm nang thực chiến Mantine v9](../mantine/README.md) | [Bộ luật AI Agents (`AGENTS.md`)](../../../AGENTS.md)  
+> **Trạng thái:** Nguồn chân lý duy nhất (Single Source of Truth — SSOT) định nghĩa chuẩn mực kiến trúc, quy chuẩn viết mã, kiểm thử, bảo mật và vận hành cho toàn bộ Frontend của InterviewCoach.
 
 ---
 
 ## MỤC LỤC
-0. [🚀 Quick Reference Sheet (Tra cứu nhanh 15 phút)](./QUICK_REFERENCE.md)
-1. [Giới Thiệu & Triết Lý Kiến Trúc Hub & Spokes](#1-giới-thiệu-triết-lý-kiến-trúc-hub-spokes)
-2. [Bối Cảnh Kỹ Thuật Dự Án RoGym Frontend](#2-bối-cảnh-kỹ-thuật-dự-án-rogym-frontend)
-3. [Sitemaps Toàn Bộ Hệ Thống Tài Liệu Quy Chuẩn (17 Chuyên Đề)](#3-sitemaps-toàn-bộ-hệ-thống-tài-liệu-quy-chuẩn-17-chuyên-đề)
-4. [Khung Cấu Trúc 6 Phần Doanh Nghiệp Của Bộ Chuyên Đề (Unified 6-Part Anatomy)](#4-khung-cấu-trúc-6-phần-doanh-nghiệp-của-bộ-chuyên-đề-unified-6-part-anatomy)
+
+1. [Giới Thiệu, Chính Sách Clean Normative Docs & Kiến Trúc 4 Miền](#1-giới-thiệu-chính-sách-clean-normative-docs-kiến-trúc-4-miền)
+2. [Bối Cảnh Kỹ Thuật Chuẩn Hóa Của InterviewCoach Frontend](#2-bối-cảnh-kỹ-thuật-chuẩn-hóa-của-interviewcoach-frontend)
+3. [Sitemap Toàn Bộ 16 Chuyên Đề Theo 4 Miền Chức Năng](#3-sitemap-toàn-bộ-16-chuyên-đề-theo-4-miền-chức-năng)
+4. [Khung Cấu Trúc 6 Phần Thống Nhất (Unified 6-Part Anatomy)](#4-khung-cấu-trúc-6-phần-thống-nhất-unified-6-part-anatomy)
 5. [4 Lộ Trình Đọc Tài Liệu Theo Vai Trò](#5-4-lộ-trình-đọc-tài-liệu-theo-vai-trò)
-6. [Ma Trận Phân Phối Trách Nhiệm Theo Tài Liệu (RACI Matrix)](#6-ma-trận-phân-phối-trách-nhiệm-theo-tài-liệu-raci-matrix)
-7. [Quy Ước Đóng Góp & Cập Nhật Quy Chuẩn (RFC Governance Workflow)](#7-quy-ước-đóng-góp-cập-nhật-quy-chuẩn-rfc-governance-workflow)
-8. [Các Câu Hỏi Thường Gặp (FAQ) Cho Kỹ Sư Mới](#8-các-câu-hỏi-thường-gặp-faq-cho-kỹ-sư-mới)
+6. [Ma Trận Trách Nhiệm (RACI) & Quy Trình RFC Governance](#6-ma-trận-trách-nhiệm-raci-quy-trình-rfc-governance)
+7. [Các Câu Hỏi Thường Gặp (FAQ) Cho Kỹ Sư & AI Agents](#7-các-câu-hỏi-thường-gặp-faq-cho-kỹ-sư-ai-agents)
 
 ---
 
-## 1. Giới Thiệu & Triết Lý Kiến Trúc Hub & Spokes
+## 1. Giới Thiệu, Chính Sách Clean Normative Docs & Kiến Trúc 4 Miền
 
-Hệ thống tài liệu quy chuẩn Frontend Doanh nghiệp được cấu trúc theo mô hình **Foundation Code + Hub & Spokes** nhằm giải quyết hai bài toán kinh điển trong phát triển phần mềm quy mô lớn:
-1. **Tránh quá tải thông tin:** Kỹ sư mới vào dự án không bị choáng ngợp bởi hàng chục trang quy chuẩn dài dòng, mà có thể tiếp cận theo từng lát cắt công việc cụ thể.
-2. **Loại bỏ sự phân mảnh & ảo giác:** Tất cả quy chuẩn đều quy tụ về một nguồn dữ liệu chuẩn duy nhất (Single Source of Truth - SSOT), có dẫn chiếu học thuật chuẩn quốc tế và liên kết chặt chẽ với codebase thực tế.
+Hệ thống quy chuẩn Frontend của **InterviewCoach** được tổ chức theo mô hình **Master Hub & 4 Miền Chức Năng** (16 chuyên đề + `QUICK_REFERENCE.md`, tổng **131 Core Rule IDs + 18 Vercel Sub-Rules**), đảm bảo nguyên tắc **1 File = 1 Tiền tố SSOT — 0 chồng lấn**:
 
-### 1.1. Sơ Đồ Tư Duy Hệ Thống 17 Chuyên Đề
+- **`client/docs/docs/` (Bộ Tiêu chuẩn Kiến trúc Doanh nghiệp):** Giải thích _tại sao_ (triết lý, sơ đồ Mermaid), đặc tả chính thức từng Rule ID, Case Studies tự chứa, đối chiếu `Anti-Pattern` vs `Best Practice`, ánh xạ CI Gate và PR Review Checklist.
+- **`client/docs/mantine/` (Cẩm nang tra cứu nhanh — Tactical Lookup):** Bản đồ URL `mantine.dev` / `ui.mantine.dev`, bảng thay thế 1-1 Raw HTML → Mantine v9, setup cấu hình cốt lõi và bảng lệnh CLI hằng ngày.
+
+### Chính sách Clean Normative Docs (Tách biệt khỏi mã nguồn legacy)
+
+Vì nhiều màn hình cũ trong `client/` đang trong quá trình chuyển đổi (migrate) và còn chứa nợ kỹ thuật, toàn bộ tài liệu trong `client/docs/` tuân thủ 3 nguyên tắc nghiêm ngặt được chốt chặn tự động bởi `scripts/verify-docs-integrity.mjs`:
+
+1. **Không trích xuất code từ mã nguồn nghiệp vụ cũ trong `client/`:** 100% đoạn mã tích cực trong tài liệu phải tự chứa (self-contained), lấy và adapt trực tiếp từ [`https://mantine.dev/`](https://mantine.dev/), [`https://ui.mantine.dev/`](https://ui.mantine.dev/), và bộ kỹ năng [`client/.agents/skills/`](../../.agents/skills/vercel-react-best-practices/SKILL.md). Chỉ cho phép duy nhất import nền tảng đã chuẩn hóa (`@/theme` và `@test-utils`).
+2. **Mantine v9 Zero-Hex Precedence:** Mọi ví dụ chuyển đổi từ tài liệu React/Vercel đều phải được kiểm chứng tự động qua `analyzeSource()` (`scripts/check-ui-rules.mjs`) để đạt 0 raw HTML, 0 HEX/RGB/HSL và 0 hardcode `px`.
+3. **Zero Raw-Icon Typography:** Tài liệu sử dụng nhãn chữ kỹ thuật chuẩn (`ERROR`, `WARN`, `ROADMAP`, `// Incorrect:`, `// Correct:`) thay cho raw Unicode emojis để giữ tính chuyên nghiệp và khả năng đọc cao.
 
 ```mermaid
 mindmap
-  root((HỆ THỐNG QUY CHUẨN<br/>FRONTEND DOANH NGHIỆP<br/>17 CHUYÊN ĐỀ))
-    Kiến Trúc & Nền Tảng
-      01. Cấu Trúc Thư Mục & Modular Architecture
-      02. Quản Trị Trạng Thái Đa Tầng & Cache
-      03. Coding Standards & TypeScript Strict
-      04. Enterprise Component Patterns & Headless
-      17. Kiến Trúc Di Động Đa Nền Tảng & React Native
-    Giao Diện & Tương Tác
-      05. Form Architecture, Multi-step & Zod
-      06. Styling, Tokens 100% HEX & Theming
-      08. Semantic Design System & CVA
-      09. W3C WAI-ARIA & Accessibility WCAG 2.2
-      16. View Transitions & Motion Kỹ Thuật
-    Vận Hành Hệ Thống Doanh Nghiệp
-      10. Frontend Security & Session Governance
-      11. Web Performance & Core Web Vitals
-      12. Observability, Telemetry & Logging
-      13. API Contracts, Resilience & Offline
-      14. Internationalization i18n & Localization l10n
-      15. Release Engineering, Multi-Env & DevOps Frontend
-    Đảm Bảo Chất Lượng
-      07. Kim Tự Tháp Kiểm Thử 4 Tầng & QA
+  root((InterviewCoach<br/>Frontend v9.0))
+    01-foundations
+      Architecture & App Router
+      Coding Standards STD
+      State SWR & SSE
+    02-ui-and-design-system
+      Component Patterns
+      Forms Mantine & Zod
+      Design System & Zero-Hex SEM
+      Accessibility A11Y
+      Motion & ViewTransition MOTION
+      Responsive & Touch MOB
+    03-quality-and-security
+      Testing 4-Layer QA
+      API Contracts & SWR API
+      Security & Auth SEC
+    04-performance-and-ops
+      Performance & CWV PERF
+      Observability & Logs OBS
+      i18n & next-intl I18N
+      Release & Vercel OPS
 ```
-
-### 1.2. Sơ Đồ Luồng Điều Hướng Hub & 17 Spokes
 
 ```mermaid
 flowchart TD
-
-    HUB["MASTER HUB PORTAL<br/>client/FRONTEND_CONVENTIONS.md"]
-
-    subgraph CoreFoundations ["NHÓM 1: KIẾN TRÚC & NỀN TẢNG CỐT LÕI"]
-        direction TB
-        S01["<b>docs/01-ARCH & STRUCTURE</b><br/>Modular Monolith, Co-location,<br/>Rule of Three & Asset Pipeline"]
-        S02["<b>docs/02-STATE MANAGEMENT</b><br/>4 Lớp State, TanStack Query,<br/>BroadcastChannel & Persistent Cache"]
-        S03["<b>docs/03-CODING STANDARDS</b><br/>TypeScript Strict, AbortController,<br/>UTC Discipline & Primitive Boundary"]
-        S04["<b>docs/04-COMPONENT PATTERNS</b><br/>Compound, Headless UI,<br/>Portal Stacking & Error Boundary"]
-        S17["<b>docs/17-MOBILE & NATIVE</b><br/>Universal Architecture, LINE LIFF,<br/>Expo React Native & 44px Targets"]
-    end
-
-    subgraph DesignAndInterface ["NHÓM 2: GIAO DIỆN, DESIGN SYSTEM & TƯƠNG TÁC"]
-        direction TB
-        S05["<b>docs/05-FORMS & VALIDATION</b><br/>Bộ ba Primitive, Wizard Form,<br/>Dynamic useFieldArray & Async Zod"]
-        S06["<b>docs/06-STYLING & TOKENS</b><br/>Tokens trung tính 100% HEX,<br/>Dark Mode chống FOUC, @container"]
-        S08["<b>docs/08-SEMANTIC DESIGN</b><br/>Trụ cột S1-S4, CVA Multi-axis,<br/>Storybook Catalog & SEM-* Rules"]
-        S09["<b>docs/09-ACCESSIBILITY</b><br/>W3C WAI-ARIA APG, WCAG 2.2 AA,<br/>Widget Navigation & Reduced Motion"]
-        S16["<b>docs/16-VIEW TRANSITIONS</b><br/>W3C View Transitions, Motion,<br/>FLIP Animation & Reduced Motion"]
-    end
-
-    subgraph EnterpriseOps ["NHÓM 3: VẬN HÀNH HỆ THỐNG DOANH NGHIỆP"]
-        direction TB
-        S10["<b>docs/10-SECURITY & AUTH</b><br/>OWASP Top 10, CSP, HttpOnly Cookie,<br/>Token Rotation & PII Masking"]
-        S11["<b>docs/11-PERFORMANCE & VITALS</b><br/>Core Web Vitals, Bundle Budget,<br/>Code-splitting & Virtualization"]
-        S12["<b>docs/12-OBSERVABILITY & LOGS</b><br/>Sentry/Datadog, RUM Metrics,<br/>Trace Context & Privacy Scrubbing"]
-        S13["<b>docs/13-API CONTRACT & OFFLINE</b><br/>Contract Code-gen, RFC 7807 Errors,<br/>Exponential Backoff & MSW"]
-        S14["<b>docs/14-I18N & LOCALIZATION</b><br/>Zero Hardcoded String, i18next,<br/>Intl API & Logical RTL Layout"]
-        S15["<b>docs/15-DEVOPS & RELEASE</b><br/>Zod Env Schema, Docker Nginx SPA,<br/>Cache-Busting & Feature Flags"]
-    end
-
-    subgraph QualityAssurance ["NHÓM 4: ĐẢM BẢO CHẤT LƯỢNG & KIỂM THỬ"]
-        direction TB
-        S07["<b>docs/07-TESTING & QA</b><br/>Kim tự tháp 4 tầng: Vitest, RTL,<br/>MSW, Playwright & Visual Regression"]
-    end
-
-    HUB --> CoreFoundations
-    HUB --> DesignAndInterface
-    HUB --> EnterpriseOps
-    CoreFoundations & DesignAndInterface & EnterpriseOps --> QualityAssurance
+    HUB["<b>Master Hub</b><br/>client/docs/docs/README.md"] --> QR["<b>Quick Reference</b><br/>QUICK_REFERENCE.md (131 Core + 18 Sub-Rules)"]
+    HUB --> MAN["<b>Tactical Lookup</b><br/>client/docs/mantine/README.md"]
+    HUB --> D1["<b>01-foundations/ (3 file)</b><br/>Architecture, Coding (STD-*), State"]
+    HUB --> D2["<b>02-ui-and-design-system/ (6 file)</b><br/>Patterns, Forms, Design System (SEM-*),<br/>A11Y-*, MOTION-*, MOB-*"]
+    HUB --> D3["<b>03-quality-and-security/ (3 file)</b><br/>Testing, API (API-*), Security (SEC-*)"]
+    HUB --> D4["<b>04-performance-and-ops/ (4 file)</b><br/>Perf (PERF-*), Obs (OBS-*),<br/>i18n (I18N-*), DevOps (OPS-*)"]
 ```
 
 ---
 
-## 2. Bối Cảnh Kỹ Thuật Dự Án RoGym Frontend
+## 2. Bối Cảnh Kỹ Thuật Chuẩn Hóa Của InterviewCoach Frontend
 
-RoGym là nền tảng quản lý phòng tập thể hình quy mô doanh nghiệp với kiến trúc Single Page Application (SPA). Toàn bộ hệ thống frontend được xây dựng trên stack công nghệ hiện đại:
-- **Ngôn ngữ & Runtime:** React 18.3, TypeScript 5.4, Vite 5.2.
-- **Quản lý Dữ liệu & State:** TanStack Query v5.35 (Server Cache), Zustand 4.5 (Client Session), React Router DOM (URL State).
-- **Giao diện & Styling:** Tailwind CSS 3.4 kết hợp CSS Design Tokens thuần 100% HEX, Radix UI Primitives, Lucide React Icons.
-- **Kiểm thử tự động:** Vitest 2.1 runner, React Testing Library, jsdom environment, tích hợp CI GitHub Actions và script kiểm toán tĩnh `audit-conventions.mjs`.
-
----
-
-## 3. Sitemaps Toàn Bộ Hệ Thống Tài Liệu Quy Chuẩn (17 Chuyên Đề)
-
-Dưới đây là danh mục chi tiết 17 chuyên đề kỹ thuật thuộc bộ quy chuẩn Frontend Doanh nghiệp:
-
-| Chuyên đề | Tên tài liệu & Liên kết | Phạm vi kỹ thuật & Nội dung cốt lõi | Tài liệu tham chiếu chuẩn quốc tế |
-| :---: | :--- | :--- | :--- |
-| **01** | [`01-architecture-and-structure.md`](./01-architecture-and-structure.md) | Bản đồ 12 thư mục `client/src/`, quy tắc Co-location theo Bulletproof React, Rule of Three và Component Anatomy 4 khối chuẩn mực. | [Bulletproof React](https://github.com/alan2207/bulletproof-react) (Alan Eicker / Sandro Roth) |
-| **02** | [`02-state-management.md`](./02-state-management.md) | Phân tầng State 4 lớp (Server, Global, URL, Local UI), nguyên tắc Derived State "Compute, Don't Duplicate", State Decision Tree. | [TkDodo's Practical React Query](https://tkdodo.eu/blog) & [React.dev](https://react.dev/learn/you-might-not-need-an-effect) |
-| **03** | [`03-coding-standards.md`](./03-coding-standards.md) | Chi tiết 19 Tiêu chuẩn Coding Standards Doanh nghiệp, Bảng ánh xạ 1-1 Native sang Primitive và quy chuẩn chú thích ngoại lệ. | [W3C WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/) & [TypeScript Handbook](https://www.typescriptlang.org/docs/) |
-| **04** | [`04-component-patterns.md`](./04-component-patterns.md) | React Design Patterns: Compound Components, Container/Presentational, Error Boundaries phân cấp, Polymorphic UI Primitives (`as`). | [Patterns.dev](https://www.patterns.dev/react) |
-| **05** | [`05-forms-and-validation.md`](./05-forms-and-validation.md) | Form Architecture Tầng 1 (Primitive `<Form>`, `<FormField>`, `<SubmitButton>`), Wizard Form nhiều bước, dynamic `useFieldArray`. | [W3C Form Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/landmarks/examples/form.html) |
-| **06** | [`06-styling-and-design-tokens.md`](./06-styling-and-design-tokens.md) | Quy chuẩn 100% mã màu HEX trong CSS (6-digit & 8-digit alpha), hệ thống tokens trung tính, Container Queries `@container`. | RoGym Design Token Specification V1.0 |
-| **07** | [`07-testing-and-quality-assurance.md`](./07-testing-and-quality-assurance.md) | Kim tự tháp kiểm thử 4 tầng: Vitest 2.1, RTL, MSW Mocking, Playwright E2E và PR Definition of Done 12 tiêu chí. | [Testing Library](https://testing-library.com/) & [Vitest Docs](https://vitest.dev) |
-| **08** | [`08-semantic-design-system.md`](./08-semantic-design-system.md) | Nguồn dữ liệu chuẩn cho Semantic Design System: 4 trụ cột S1–S4, Token naming `--color-<category>-<role>`, CVA variants, Quản trị vòng đời quy chuẩn `SEM-*`. | RoGym Semantic Design System V1.0 |
-| **09** | [`09-accessibility.md`](./09-accessibility.md) | Tiêu chuẩn Tiếp cận W3C WAI-ARIA APG, Form a11y, Contrast Matrix AA, Touch target $\ge 44\text{px}$, Focus visibility, và tự động hóa với `vitest-axe`. | [W3C WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/) & WCAG 2.2 AA |
-| **10** | [`10-frontend-security-and-auth.md`](./10-frontend-security-and-auth.md) | OWASP Client-Side Top 10, Cấu hình CSP headers, In-memory Access Token + HttpOnly Refresh Token Cookie, PII Masking. | [OWASP Foundation](https://owasp.org) & [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) |
-| **11** | [`11-performance-and-web-vitals.md`](./11-performance-and-web-vitals.md) | Bộ ba chỉ số Core Web Vitals (LCP, INP, CLS), Bundle Budget $\le 180\text{KB}$, Route-based Lazy loading, Virtualization `@tanstack/react-virtual`. | [Google Web Vitals](https://web.dev/vitals/) & [Web.dev](https://web.dev) |
-| **12** | [`12-observability-and-telemetry.md`](./12-observability-and-telemetry.md) | Bắt lỗi tập trung Sentry/Datadog, Real User Monitoring (RUM), W3C Trace Context (`traceparent`), Structured Logger loại trừ PII. | [W3C Trace Context](https://www.w3.org/TR/trace-context/) & [Sentry](https://sentry.io) |
-| **13** | [`13-api-contracts-and-resilience.md`](./13-api-contracts-and-resilience.md) | Hợp đồng API OpenAPI codegen, Định dạng lỗi RFC 7807 Problem Details, Hủy request `AbortController`, Thử lại Exponential Backoff, MSW. | [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807) & [MSW](https://mswjs.io) |
-| **14** | [`14-internationalization-and-localization.md`](./14-internationalization-and-localization.md) | Nguyên tắc Zero Hardcoded Strings, Khóa dịch phân cấp, Bản địa hóa tiền tệ/ngày giờ qua `Intl` API, CSS Logical Properties hỗ trợ RTL. | [i18next](https://www.i18next.com) & [MDN Intl API](https://developer.mozilla.org) |
-| **15** | [`15-release-engineering-and-devops.md`](./15-release-engineering-and-devops.md) | Xác thực biến môi trường qua Zod schema, Dockerfile multi-stage Nginx Alpine, Chiến lược Cache-Busting, Feature Flags, SemVer 2.0.0. | [12-Factor App](https://12factor.net) & [Docker](https://docker.com) |
-| **16** | [`16-view-transitions-and-motion.md`](./16-view-transitions-and-motion.md) | Chuyển cảnh trang W3C Native View Transitions, FLIP Morphing, Quy tắc ưu tiên chuyển động 4 tầng, CSS Recipes & `@media (prefers-reduced-motion)`. | [W3C View Transitions](https://www.w3.org/TR/css-view-transitions-1/) & [Vercel View Transitions](https://github.com/vercel-labs/react-view-transitions) |
-| **17** | [`17-mobile-and-native-architecture.md`](./17-mobile-and-native-architecture.md) | Kiến trúc di động đa nền tảng Universal Component Tree, WebView Bridge LINE LIFF, Expo / React Native, Quy chuẩn Touch target $\ge 44\text{px}$, Virtualization di động. | [React Native Architecture](https://reactnative.dev) & [LINE Developers LIFF](https://developers.line.biz/en/docs/liff/) |
-
-### 3.1. Danh Mục Tài Liệu Kiến Trúc Module Cấp Cao (`src/*/README.md`)
-
-Bên cạnh 17 chuyên đề nghiệp vụ, mỗi thư mục chức năng trong `client/src/` sở hữu một tài liệu kiến trúc riêng biệt (Enterprise README) phục vụ tra cứu catalog và lộ trình refactor:
-
-| Module Thư Mục | Tài Liệu README | Trách Nhiệm Kiến Trúc Cốt Lõi |
-| :--- | :--- | :--- |
-| `src/components/` | [`../src/components/README.md`](../src/components/README.md) | Thư viện UI Primitives và Application Composites, Compound Components & Vercel Patterns. |
-| `src/hooks/` | [`../src/hooks/README.md`](../src/hooks/README.md) | Tháp phân tầng Hooks 4 cấp, TanStack Query hooks, Caching & Deduplication. |
-| `src/lib/` | [`../src/lib/README.md`](../src/lib/README.md) | 12 Infrastructure Modules: Axios instance, Logger, i18n, LIFF, RFC 7807, Query Key Factory. |
-| `src/services/` | [`../src/services/README.md`](../src/services/README.md) | 28 RESTful API services, giao thức AbortSignal bắt buộc, xử lý lỗi RFC 7807/9457. |
-| `src/stores/` | [`../src/stores/README.md`](../src/stores/README.md) | Quản lý Client State bằng Zustand, ranh giới cấm Server Cache, atomic selectors & đa tab. |
-| `src/styles/` | [`../src/styles/README.md`](../src/styles/README.md) | Hệ thống Design Tokens 2 tầng 100% HEX, Dark mode chống FOUC, Container Queries. |
-| `src/utils/` | [`../src/utils/README.md`](../src/utils/README.md) | Generic Formatters, PII Masker, và Domain Business Calculators (subscription, shift, package). |
+| Thành phần              | Stack chuẩn hóa (`client/package.json`)                                                                                                   | Ghi chú thực thi                                                                                                    |
+| :---------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| **Framework & Runtime** | Next.js `16.2.6` (App Router, `proxy.ts`), React `19.2.4`, TypeScript `^5`, `npm`                                                         | 5 Route Groups: `(public)`, `(auth)`, `(candidate)`, `(admin)`, `(common)`                                          |
+| **UI Library & Icons**  | Mantine UI v9 (`@mantine/core`, `hooks`, `form`, `notifications`, `modals`, `dropzone` `^9.8.2`) + `@tabler/icons-react` `^3.52.0`        | **Mantine-First & Zero-Hex Semantic-Only** (`client/theme.ts` RSC-safe, 5 vai trò ngữ nghĩa)                        |
+| **Styling & CSS Gate**  | PostCSS (`postcss-preset-mantine`, `postcss-simple-vars`), CSS Modules (`*.module.css`), Stylelint `^17.16.0`                             | Chạy song song Tailwind v4 qua `@layer` + `styles.layer.css` & `MantineColorSchemeSync` trong giai đoạn chuyển tiếp |
+| **Data, State & Forms** | `swr` `^2.4.1`, SSE `EventSource`, Minimal React Context, Next.js URL params, `@mantine/form` (`uncontrolled`) + `zod` `^4.4.3`           | Không cài thêm store bên ngoài hay lớp wrapper form thừa                                                            |
+| **Testing & QA**        | Vitest `^4.1.10` (`unit` vs `storybook`), `@test-utils`, `jest-axe`, Storybook `^10.5.5` (`@storybook/nextjs-vite`), Playwright `^1.62.1` | Tích hợp `scripts/check-ui-rules.mjs` (`ui:lint`) và `scripts/verify-docs-integrity.mjs` (`verify:docs`)            |
+| **Deployment**          | Vercel (`client/vercel.json`, `regions: ["sin1"]`) + GitHub Actions CI                                                                    | Fail-fast `NEXT_PUBLIC_API_BASE_URL` tại `client/next.config.ts`                                                    |
 
 ---
 
-## 4. Khung Cấu Trúc 6 Phần Doanh Nghiệp Của Bộ Chuyên Đề (Unified 6-Part Anatomy)
+## 3. Sitemap Toàn Bộ 16 Chuyên Đề Theo 4 Miền Chức Năng
 
-Nhằm đảm bảo tính đồng bộ, dễ đọc, dễ hiểu, dễ áp dụng và dễ rà soát lỗi, toàn bộ 17 chuyên đề kỹ thuật (`01` đến `17`) đều được thiết kế nhất quán theo **Khung Cấu Trúc 6 Phần**:
+### Miền 1 — `01-foundations/` (Nền tảng Kiến trúc, Coding & State)
 
-```mermaid
-flowchart TD
+|  STT   | Chuyên đề                                                                  |       Tiền tố SSOT        | Nội dung trọng tâm                                                                                                                                                                                     |
+| :----: | :------------------------------------------------------------------------- | :-----------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **01** | [Architecture & Structure](./01-foundations/architecture-and-structure.md) |       _(Guidebook)_       | 5 Route Groups, `proxy.ts`, RSC vs `'use client'` (`server-serialization`), Hybrid Co-location & Rule of Three, đóng băng `components/ui/`, `bundle-barrel-imports`                                    |
+| **02** | [Coding Standards](./01-foundations/coding-standards.md)                   | **`STD-*`** (16 + 18 Sub) | TypeScript Strict, `AbortSignal`, ISO-8601 UTC & hoisted `Intl.DateTimeFormat`, Structured Errors, React 19 `ref`/`use()`, `interviewcoach-convention-exempt`, Ternary `? : null`, 18 Vercel Sub-Rules |
+| **03** | [State Management](./01-foundations/state-management.md)                   |       _(Guidebook)_       | 4 lớp State (SWR v2 Key Factory `client-swr-dedup`, Minimal Context, URL `useSearchParams`, `@mantine/hooks`), kênh SSE `EventSource` + Zod, Derived State, Optimistic Rollback                        |
 
-    P1["<b>1. HEADER METADATA & REFERENCES</b><br/>Phiên bản 8.0, Cổng chính & Tham chiếu quốc tế"]
-    P2["<b>2. TRIẾT LÝ & SƠ ĐỒ TƯ DUY</b><br/>Lý do tồn tại, Rủi ro vi phạm & Sơ đồ Mermaid"]
-    P3["<b>3. ĐẶC TẢ KỸ THUẬT CHI TIẾT</b><br/>Toàn bộ nguyên lý, bảng mã quy chuẩn định lượng"]
-    P4["<b>4. THỰC HÀNH THỰC TẾ: DO'S & DON'TS</b><br/>Code Before/After, Bảng Anti-Patterns & Case Studies"]
-    P5["<b>5. ÁNH XẠ TOOLING KIỂM TOÁN CI</b><br/>Liên kết công cụ kiểm toán tĩnh, ESLint & CI Gate"]
-    P6["<b>6. BẢNG CHECKLIST ĐỊNH LƯỢNG PR</b><br/>Review Gate: Mã tiêu chí, Lệnh CLI & Trọng tài duyệt PR"]
+### Miền 2 — `02-ui-and-design-system/` (UI, Forms, Zero-Hex Design System, A11y, Motion & Responsive)
 
-    P1 --> P2 --> P3 --> P4 --> P5 --> P6
-```
+|  STT   | Chuyên đề                                                                             |    Tiền tố SSOT    | Nội dung trọng tâm                                                                                                                                                                                      |
+| :----: | :------------------------------------------------------------------------------------ | :----------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **04** | [Component Patterns](./02-ui-and-design-system/component-patterns.md)                 |   _(Guidebook)_    | Compound Components (`architecture-avoid-boolean-props`), RSC/Client split, Error Boundaries 3 cấp, Polymorphic (`component={Link}`, `createPolymorphicComponent`), Styles API, `useUncontrolled`       |
+| **05** | [Forms & Validation](./02-ui-and-design-system/forms-and-validation.md)               |   _(Guidebook)_    | `@mantine/form` `uncontrolled` + Zod v4 `schemaResolver({ sync: true })`, Boy Scout Migration Policy, `<Stepper>` + `createFormContext` Safe Draft, Dynamic List & `<Dropzone>`                         |
+| **06** | [Design System & Styling](./02-ui-and-design-system/design-system-and-styling.md)     |  **`SEM-*`** (19)  | SSOT trọn vẹn 19 `SEM-*`, Zero-Hex Semantic-Only (`theme.ts`), Styling 3 bậc, CSS Layers chuyển tiếp, 3 Enterprise Layout Archetypes từ `ui.mantine.dev`, Storybook 10                                  |
+| **07** | [Accessibility (WCAG 2.2 AA)](./02-ui-and-design-system/accessibility.md)             | **`A11Y-*`** (12)  | SSOT duy nhất 12 `A11Y-*`, Landmarks, Heading Order, Focus Trapping, APG Keyboard Matrix, `VisuallyHidden` milestone live announcer, `jest-axe` & `@storybook/addon-a11y`                               |
+| **08** | [View Transitions & Motion](./02-ui-and-design-system/view-transitions-and-motion.md) | **`MOTION-*`** (8) | SSOT 8 `MOTION-*`, Dual-Track Next.js `16.2.6` (`<ViewTransition>`, `transitionTypes`, `addTransitionType` + Mantine `Transition`/`Collapse`), Placement Rule, GPU-only, `useReducedMotion`             |
+| **09** | [Responsive & Touch UX](./02-ui-and-design-system/responsive-and-touch-ux.md)         |  **`MOB-*`** (10)  | SSOT 10 `MOB-*` thuần Web Mantine v9: 5 breakpoints `$mantine-breakpoint-*`, SSR-safe `hiddenFrom`/`visibleFrom`, `rem(44px)`, `AppShell` + `Drawer`, `<Table.ScrollContainer>`, `100dvh`, Mic fallback |
 
-1. **Phần 1: Header Metadata & Tài Liệu Tham Chiếu Quốc Tế:** Định danh phiên bản 8.0 chuẩn doanh nghiệp, ranh giới áp dụng và tài liệu quốc tế đối chiếu.
-2. **Phần 2: Triết Lý Kiến Trúc & Sơ Đồ Tư Duy (Visual Mental Model):** Trình bày trực quan lý do quy chuẩn tồn tại và sơ đồ Mermaid định hướng luồng xử lý.
-3. **Phần 3: Đặc Tả Kỹ Thuật Chi Tiết:** Chi tiết hóa các quy tắc bất biến, phân tầng kiến trúc và bảng mã quy chuẩn định lượng (`STD-*`, `SEM-*`, `SEC-*`, `PERF-*`, `OBS-*`, `API-*`, `I18N-*`, `OPS-*`).
-4. **Phần 4: Thực Hành Thực Tế (Do's & Don'ts & Case Studies):** Phân tách rạch ròi ❌ Anti-Pattern (Don't) và ✅ Chuẩn Mực Doanh Nghiệp (Do) với ví dụ mã nguồn thực tế.
-5. **Phần 5: Ánh Xạ Tooling Kiểm Toán CI (Automation Integration):** Liên kết trực tiếp tới các công cụ kiểm soát tự động và scripts kiểm toán.
-6. **Phần 6: Bảng Checklist Định Lượng Trước Khi Mở PR (Review Gate):** Bảng kiểm tra nhanh gồm Mã tiêu chí, Mô tả và Lệnh CLI giúp Tech Lead / QA / Dev duyệt code nhanh chóng.
+### Miền 3 — `03-quality-and-security/` (Kiểm thử, Hợp đồng API & Bảo mật)
+
+|  STT   | Chuyên đề                                                                               |   Tiền tố SSOT   | Nội dung trọng tâm                                                                                                                                                                                       |
+| :----: | :-------------------------------------------------------------------------------------- | :--------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **10** | [Testing & QA](./03-quality-and-security/testing-and-qa.md)                             |  _(Guidebook)_   | Kim tự tháp 4 tầng khớp `package.json`, Vitest 4 (`unit` vs `storybook`), `@test-utils`, Portal testing (`within`), Form Zod v4 testing, Accessible Queries, 12 tiêu chí DoD                             |
+| **11** | [API Contracts & Resilience](./03-quality-and-security/api-contracts-and-resilience.md) | **`API-*`** (12) | SSOT 12 `API-*`, `Idempotency-Key`, `ApiClientError`, `AbortSignal`, Zod response validation, `Promise.all` (`async-parallel`), SWR `client-swr-dedup`, `useNetwork()` Offline UX                        |
+| **12** | [Security & Auth](./03-quality-and-security/security-and-auth.md)                       | **`SEC-*`** (11) | SSOT 11 `SEC-*` (OWASP), HttpOnly Cookies + Next.js 16 `proxy.ts`, `getSafeNext()` chống Open Redirect, Mutex 401 Refresh, `server-auth-actions`, Session Purge `[Target]`, `DOMPurify` & CSP `[Target]` |
+
+### Miền 4 — `04-performance-and-ops/` (Hiệu năng, Giám sát, i18n & DevOps)
+
+|  STT   | Chuyên đề                                                                            |   Tiền tố SSOT    | Nội dung trọng tâm                                                                                                                                                                                             |
+| :----: | :----------------------------------------------------------------------------------- | :---------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **13** | [Performance & Web Vitals](./04-performance-and-ops/performance-and-web-vitals.md)   | **`PERF-*`** (13) | SSOT 13 `PERF-*`, CWV, ngân sách First Load JS ≤ 180KB gzip, `optimizePackageImports`, `bundle-dynamic-imports`, `@tanstack/react-virtual` `[Target]`, `rendering-content-visibility`, `rendering-hoist-jsx`   |
+| **14** | [Observability & Telemetry](./04-performance-and-ops/observability-and-telemetry.md) |  **`OBS-*`** (9)  | SSOT 9 `OBS-*`, Mantine v9 `error.tsx` & `global-error.tsx` (`error.digest`), W3C `traceparent`, POJO context sạch PII, lộ trình 2 chặng trên Vercel (Chặng 1: Vercel RUM + Logger; Chặng 2: `@sentry/nextjs`) |
+| **15** | [Internationalization](./04-performance-and-ops/internationalization.md)             | **`I18N-*`** (9)  | SSOT 9 `I18N-*`, `I18N-001` ở mức `WARN` / `ROADMAP` chờ `next-intl` (`vi` + `en`), phân loại 3 nhóm chuỗi CNTT, hoisted `Intl.*`, RTL `<DirectionProvider>` + CSS Logical Properties                          |
+| **16** | [Release Engineering & DevOps](./04-performance-and-ops/release-and-devops.md)       | **`OPS-*`** (12)  | SSOT 12 `OPS-*`, fail-fast `NEXT_PUBLIC_API_BASE_URL`, Vercel `sin1`, Ma trận Cache-Busting an toàn theo `vercel-optimize`, CI Gate, Token Hygiene, SemVer & Conventional Commits                              |
+
+---
+
+## 4. Khung Cấu Trúc 6 Phần Thống Nhất (Unified 6-Part Anatomy)
+
+Mọi chuyên đề trong 16 tài liệu đều tuân thủ 6 khối chuẩn (được kiểm tra tự động bởi `checkSixPartAnatomy` trong `verify:docs`):
+
+1. **Header Metadata & Mục lục:** Khai báo `Phiên bản: 9.0`, vai trò SSOT, trạng thái `[Active]` / `[Target]`, và liên kết tham chiếu quốc tế.
+2. **Triết lý Kiến trúc & Sơ đồ Mermaid:** Hình dung nhanh ranh giới, luồng dữ liệu hoặc cây quyết định.
+3. **Đặc tả Kỹ thuật & Rule IDs:** Mỗi Rule ID gắn neo `<a id="...">` đối soát 2 chiều chính xác 131 Core IDs với `QUICK_REFERENCE.md`.
+4. **Case Studies Tự Chứa & Bảng Đối Chiếu Anti-Pattern vs Best Practice:** Mã mẫu tự chứa lấy từ `mantine.dev`, `ui.mantine.dev`, và `vercel-*` skills, chuẩn `.prettierrc`, pass `analyzeSource()`.
+5. **Bảng Ánh Xạ Tooling Kiểm Toán CI:** Liên kết trực tiếp tới lệnh `npm run ...` trong `client/package.json`.
+6. **Checklist Định Lượng PR Review Gate:** Tối thiểu 6–12 tiêu chí checkbox kiểm chứng được cho tác giả và reviewer.
 
 ---
 
 ## 5. 4 Lộ Trình Đọc Tài Liệu Theo Vai Trò
 
-Nhằm đảm bảo hiệu suất tiếp thu cao nhất, các kỹ sư nên lựa chọn lộ trình đọc phù hợp với bối cảnh thực tế:
-
-```mermaid
-flowchart TD
-
-    subgraph T1 ["1. ONBOARDING (Kỹ sư mới)"]
-        direction TB
-        O0["FRONTEND_CONVENTIONS"]
-        O1["01-Architecture & Structure"]
-        O2["03-Coding Standards"]
-        O3["06-Styling & Tokens"]
-        O0 --> O1 --> O2 --> O3
-    end
-
-    subgraph T2 ["2. FEATURE DEV (Phát triển)"]
-        direction TB
-        F0["FRONTEND_CONVENTIONS"]
-        F1["02-State Management"]
-        F2["04-Component Patterns"]
-        F3["05-Forms & Validation"]
-        F0 --> F1 --> F2 --> F3
-    end
-
-    subgraph T3 ["3. TECH LEAD / REVIEWER / QA"]
-        direction TB
-        L0["FRONTEND_CONVENTIONS"]
-        L1["03-Coding Standards (19 Rules)"]
-        L2["07-Testing & QA (12 DoD)"]
-        L3["Tooling Audit CLI"]
-        L0 --> L1 --> L2 --> L3
-    end
-
-    subgraph T4 ["4. SECOPS & DEVOPS RELEASE"]
-        direction TB
-        P0["FRONTEND_CONVENTIONS"]
-        P1["10-Security & Auth"]
-        P2["15-Release & DevOps"]
-        P3["12-Observability & Logs"]
-        P0 --> P1 --> P2 --> P3
-    end
-```
-
-### 🚀 Lộ trình 1: Onboarding Kỹ Sư Mới (Thời lượng dự kiến: 2 - 3 giờ)
-- **Mục tiêu:** Nắm vững cấu trúc dự án, hiểu quy tắc viết mã và có thể gửi PR đầu tiên mà không mắc các lỗi cơ bản.
-- **Bước 1:** Đọc kỹ [`FRONTEND_CONVENTIONS.md`](../FRONTEND_CONVENTIONS.md) để nắm 4 trụ cột kỹ thuật, Tháp Ngữ Nghĩa và Ma trận 19 Tiêu chuẩn.
-- **Bước 2:** Đọc [`01-architecture-and-structure.md`](./01-architecture-and-structure.md) để hiểu cách tổ chức thư mục, co-location theo tính năng và mẫu cấu trúc component (Component Anatomy).
-- **Bước 3:** Đọc [`03-coding-standards.md`](./03-coding-standards.md) để nắm chắc 19 tiêu chuẩn, ghi nhớ Bảng ánh xạ 1-1 thẻ native sang primitive components và cú pháp chú thích ngoại lệ.
-- **Bước 4:** Đọc [`06-styling-and-design-tokens.md`](./06-styling-and-design-tokens.md) để nắm được cách sử dụng hệ thống Design Token và quy chuẩn 100% màu HEX.
-
-### 💻 Lộ trình 2: Lập Trình Viên Phát Triển Tính Năng / Màn Hình Nghiệp Vụ
-- **Mục tiêu:** Xây dựng màn hình nghiệp vụ mới tuân thủ đúng kiến trúc dữ liệu và khả năng tiếp cận.
-- **Bước 1:** Đọc [`02-state-management.md`](./02-state-management.md) để xác định rạch ròi trạng thái nào đưa vào TanStack Query, Zustand, URL hay `useState`.
-- **Bước 2:** Đọc [`04-component-patterns.md`](./04-component-patterns.md) để áp dụng các mẫu thiết kế phù hợp (Compound Components, Widget Error Boundaries).
-- **Bước 3:** Đọc [`05-forms-and-validation.md`](./05-forms-and-validation.md) khi xây dựng màn hình nhập liệu, đảm bảo 100% form được bọc bằng primitive `<Form>`.
-- **Bước 4:** Đọc [`13-api-contracts-and-resilience.md`](./13-api-contracts-and-resilience.md) để tích hợp hủy request `AbortController` và xử lý lỗi mạng thích ứng.
-- **Bước 5:** Đối chiếu với checklist 12 tiêu chí DoD tại [`FRONTEND_CONVENTIONS.md`](../FRONTEND_CONVENTIONS.md) trước khi gửi PR.
-
-### 🛡️ Lộ trình 3: Tech Lead, Code Reviewer & Kỹ Sư QA
-- **Mục tiêu:** Thiết lập hàng rào kiểm duyệt chất lượng mã nguồn, đảm bảo tính nhất quán của toàn bộ dự án.
-- **Bước 1:** Nắm vững 19 Tiêu chuẩn Coding Standards tại [`03-coding-standards.md`](./03-coding-standards.md) làm tiêu chí từ chối PR nếu có vi phạm.
-- **Bước 2:** Đọc [`07-testing-and-quality-assurance.md`](./07-testing-and-quality-assurance.md) để áp dụng bộ tiêu chí Definition of Done (DoD) và kịch bản test a11y.
-- **Bước 3:** Chạy script kiểm tra tĩnh `node client/scripts/audit-conventions.mjs` trên local trước khi tiến hành review mã nguồn thủ công.
-
-### ⚙️ Lộ trình 4: Kỹ Sư SecOps, DevOps & Kỹ Sư Vận Hành Phát Hành (SecOps & Release Engineering)
-- **Mục tiêu:** Thiết lập hạ tầng phát hành an toàn, bảo vệ phiên làm việc và giám sát hệ thống production.
-- **Bước 1:** Đọc [`10-frontend-security-and-auth.md`](./10-frontend-security-and-auth.md) để nắm quy chuẩn CSP headers, quản trị token an toàn và che giấu PII.
-- **Bước 2:** Đọc [`15-release-engineering-and-devops.md`](./15-release-engineering-and-devops.md) để áp dụng schema kiểm tra biến môi trường Zod, cấu hình Docker Nginx đa tầng và chiến lược Cache-Busting.
-- **Bước 3:** Đọc [`12-observability-and-telemetry.md`](./12-observability-and-telemetry.md) để cấu hình Sentry, Real User Monitoring (RUM) và liên kết W3C Trace Context.
-- **Bước 4:** Đọc [`11-performance-and-web-vitals.md`](./11-performance-and-web-vitals.md) để giám sát ngân sách Bundle Budget trong pipeline CI.
+| Vai trò                              | Thứ tự đọc khuyến nghị                                                    | Mục tiêu                                                                         |
+| :----------------------------------- | :------------------------------------------------------------------------ | :------------------------------------------------------------------------------- |
+| **Kỹ sư mới (Onboarding — Ngày 1)**  | `QUICK_REFERENCE.md` → `../mantine/README.md` → `01-foundations/*`        | Nắm 3 điều cấm kỵ, cấu trúc App Router, SWR & bộ lệnh kiểm toán                  |
+| **Feature Developer (UI / Migrate)** | `02-ui-and-design-system/*` → `03-quality-and-security/testing-and-qa.md` | Xây giao diện Mantine v9 Zero-Hex, Form Zod v4, A11y & unit test `@test-utils`   |
+| **Tech Lead / Reviewer / QA**        | `QUICK_REFERENCE.md` (Ma trận 131 Rule IDs) → `03-quality-and-security/*` | Review PR theo DoD 12 tiêu chí, kiểm soát API contract, bảo mật & coverage       |
+| **DevOps / Performance Owner**       | `04-performance-and-ops/*`                                                | Kiểm soát First Load JS ≤ 180KB gzip, Vercel CI/CD, Observability & Cache policy |
 
 ---
 
-## 6. Ma Trận Phân Phối Trách Nhiệm Theo Tài Liệu (RACI Matrix)
+## 6. Ma Trận Trách Nhiệm (RACI) & Quy Trình RFC Governance
 
-| Tài liệu quy chuẩn | Kỹ sư Frontend | Kỹ sư Fullstack | Tech Lead / Reviewer | QA Engineer | DevOps / SecOps |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| [`FRONTEND_CONVENTIONS.md`](../FRONTEND_CONVENTIONS.md) | Bắt buộc | Bắt buộc | Bắt buộc | Bắt buộc | Bắt buộc |
-| [`01-architecture-and-structure.md`](./01-architecture-and-structure.md) | Bắt buộc | Bắt buộc | Bắt buộc | Tham khảo | Tham khảo |
-| [`02-state-management.md`](./02-state-management.md) | Bắt buộc | Bắt buộc | Bắt buộc | Tham khảo | Tham khảo |
-| [`03-coding-standards.md`](./03-coding-standards.md) | Bắt buộc | Bắt buộc | Bắt buộc | Bắt buộc | Tham khảo |
-| [`04-component-patterns.md`](./04-component-patterns.md) | Bắt buộc | Tham khảo | Bắt buộc | Tham khảo | Tham khảo |
-| [`05-forms-and-validation.md`](./05-forms-and-validation.md) | Bắt buộc | Bắt buộc | Bắt buộc | Bắt buộc | Tham khảo |
-| [`06-styling-and-design-tokens.md`](./06-styling-and-design-tokens.md) | Bắt buộc | Tham khảo | Bắt buộc | Tham khảo | Tham khảo |
-| [`07-testing-and-quality-assurance.md`](./07-testing-and-quality-assurance.md) | Bắt buộc | Bắt buộc | Bắt buộc | Bắt buộc | Tham khảo |
-| [`08-semantic-design-system.md`](./08-semantic-design-system.md) | Bắt buộc | Bắt buộc | Bắt buộc | Bắt buộc | Tham khảo |
-| [`09-accessibility.md`](./09-accessibility.md) | Bắt buộc | Bắt buộc | Bắt buộc | Bắt buộc | Tham khảo |
-| [`10-frontend-security-and-auth.md`](./10-frontend-security-and-auth.md) | Bắt buộc | Bắt buộc | Bắt buộc | Tham khảo | Bắt buộc |
-| [`11-performance-and-web-vitals.md`](./11-performance-and-web-vitals.md) | Bắt buộc | Bắt buộc | Bắt buộc | Bắt buộc | Bắt buộc |
-| [`12-observability-and-telemetry.md`](./12-observability-and-telemetry.md) | Bắt buộc | Bắt buộc | Bắt buộc | Tham khảo | Bắt buộc |
-| [`13-api-contracts-and-resilience.md`](./13-api-contracts-and-resilience.md) | Bắt buộc | Bắt buộc | Bắt buộc | Bắt buộc | Tham khảo |
-| [`14-internationalization-and-localization.md`](./14-internationalization-and-localization.md) | Bắt buộc | Tham khảo | Bắt buộc | Bắt buộc | Tham khảo |
-| [`15-release-engineering-and-devops.md`](./15-release-engineering-and-devops.md) | Bắt buộc | Bắt buộc | Bắt buộc | Tham khảo | Bắt buộc |
-| [`16-view-transitions-and-motion.md`](./16-view-transitions-and-motion.md) | Bắt buộc | Bắt buộc | Bắt buộc | Bắt buộc | Tham khảo |
-| [`17-mobile-and-native-architecture.md`](./17-mobile-and-native-architecture.md) | Bắt buộc | Bắt buộc | Bắt buộc | Bắt buộc | Tham khảo |
+| Hạng mục                                          | Feature Dev | Tech Lead | QA / Reviewer | AI Agent |
+| :------------------------------------------------ | :---------: | :-------: | :-----------: | :------: |
+| Tuân thủ 131 Core Rule IDs trong PR               |    **R**    |   **A**   |     **C**     |  **R**   |
+| Duyệt ngoại lệ `interviewcoach-convention-exempt` |    **R**    |   **A**   |     **I**     |  **C**   |
+| Đề xuất sửa đổi / bổ sung quy chuẩn (RFC)         |    **C**    |   **A**   |     **C**     |  **I**   |
+| Chạy `npm run verify:docs` khi sửa tài liệu       |    **R**    |   **A**   |     **C**     |  **R**   |
+
+### Quy trình cập nhật quy chuẩn (RFC Governance)
+
+1. Mở PR chỉnh sửa trực tiếp file SSOT tương ứng trong `client/docs/docs/<miền>/` và đồng bộ `QUICK_REFERENCE.md` nếu thêm/sửa Rule ID.
+2. Đảm bảo chạy `npm run verify:docs` trong `client/` đạt **0 errors, 0 warnings** (xác thực 0 raw emoji, 0 `@/` legacy extract, 16/16 đạt 6-Part Anatomy, 131/131 Core Rule IDs synced 2 chiều, và 100% code blocks pass `analyzeSource()`).
+3. Tech Lead duyệt thay đổi và cập nhật trạng thái (`[Target]` → `[Active]`) chỉ sau khi mã nguồn thực tế đã đáp ứng 100%.
 
 ---
 
-## 7. Quy Ước Đóng Góp & Cập Nhật Quy Chuẩn (RFC Governance Workflow)
+## 7. Các Câu Hỏi Thường Gặp (FAQ) Cho Kỹ Sư & AI Agents
 
-Bộ quy chuẩn Frontend Doanh nghiệp là một tập tài liệu sống (Living Documentation). Khi dự án phát triển và có yêu cầu kỹ thuật mới phát sinh, quy trình cập nhật tuân theo 4 giai đoạn nghiêm ngặt:
-
-1. **Giai đoạn 1: Đề xuất (Draft RFC)**
-   - Kỹ sư mở GitHub Issue với nhãn `rfc:convention` mô tả: Lý do thay đổi, vấn đề gặp phải với quy chuẩn hiện tại, đề xuất phương án mới kèm ví dụ so sánh Before / After.
-2. **Giai đoạn 2: Thẩm định Kỹ thuật (Technical Evaluation)**
-   - Core Team / Tech Leads đánh giá dựa trên 4 trụ cột kỹ thuật: Predictability, Modularity, Accessibility, Testability.
-   - Thử nghiệm giải pháp trên branch thử nghiệm (`spike/`).
-3. **Giai đoạn 3: Phê duyệt & Ban hành (Approved & Implemented)**
-   - Khi RFC được phê duyệt, tài liệu chuyên đề tương ứng tại `client/docs/` sẽ được cập nhật.
-   - Cập nhật đồng thời Master Portal [`client/FRONTEND_CONVENTIONS.md`](../FRONTEND_CONVENTIONS.md) và file luật AI assistant `.agents/skills/rogym-frontend-conventions/SKILL.md`.
-4. **Giai đoạn 4: Cập nhật Tooling Automation**
-   - Viết thêm hoặc điều chỉnh rule tương ứng trong script kiểm toán tĩnh `client/scripts/audit-conventions.mjs` để CI tự động kiểm soát.
-
----
-
-## 8. Các Câu Hỏi Thường Gặp (FAQ) Cho Kỹ Sư Mới
-
-**Q1: Tại sao hệ thống lại cấm dùng thẻ `<button>` và `<a>` trực tiếp trên các trang nghiệp vụ?**  
-*Trả lời:* Vì để đảm bảo 100% tính nhất quán về style, accessible state (focus-visible, loading, disabled) và an toàn liên kết (`rel="noopener noreferrer"`). Khi dùng `<Button>`, `<ButtonLink>` hoặc `<ButtonAnchor>`, bạn được bảo vệ tự động bởi Design System mà không cần nhớ viết lại từng thuộc tính ARIA.
-
-**Q2: Khi nào tôi được phép dùng thẻ `<div>` hoặc `<span>` trên trang?**  
-*Trả lời:* Chỉ khi bạn gặp rào cản kỹ thuật từ thư viện thứ 3 (như Recharts `ResponsiveContainer`, Radix Slot) hoặc layout flex/grid đa trục không có thẻ ngữ nghĩa tương đương. Trong mọi trường hợp đó, bạn **bắt buộc** phải ghi chú thích: `{/* rogym-convention-exempt: NO_NONSEMANTIC_TAGS [Lý do cụ thể] */}` ngay trên thẻ.
-
-**Q3: Tôi có thể sử dụng `useEffect` để cập nhật state sau khi dữ liệu API trả về không?**  
-*Trả lời:* **Tuyệt đối không.** Hãy sử dụng hàm `select` trong TanStack Query v5 hoặc tính toán trực tiếp giá trị đó trong thân hàm component (Derived State). Đọc chi tiết tại [`02-state-management.md`](./02-state-management.md).
-
-**Q4: Làm sao để kiểm tra nhanh mã nguồn của tôi có vi phạm quy chuẩn nào không trước khi mở PR?**  
-*Trả lời:* Bạn có thể chạy script kiểm tra tĩnh: `node client/scripts/audit-conventions.mjs` hoặc kiểm tra toàn vẹn tài liệu với `node client/scripts/verify-docs-integrity.mjs` từ thư mục gốc của dự án.
+- **Hỏi: Có được sao chép code từ các component/hook cũ trong `client/` để làm mẫu cho tính năng mới hoặc tài liệu không?**  
+  **Đáp:** **Không.** Mã nguồn legacy trong `client/` còn tồn tại nhiều điểm chưa chuẩn (barrel imports, Tailwind/Radix, thiếu return type, thiếu Zod validation). Luôn lấy chuẩn từ tài liệu trong `client/docs/`, [`mantine.dev`](https://mantine.dev/), [`ui.mantine.dev`](https://ui.mantine.dev/), và `client/.agents/skills/vercel-*`.
+- **Hỏi: Tôi nên tạo wrapper `<PrimaryButton>` trong `components/ui/` không?**  
+  **Đáp:** **Không.** Theo nguyên tắc **Mantine-First** (`SEM-HTML-001`, `SEM-PROPS-001`), import trực tiếp `<Button color="brand">` từ `@mantine/core`. `components/ui/` đã đóng băng chờ gỡ bỏ sau khi migrate xong.
+- **Hỏi: Khi nào được phép dùng ngoại lệ `interviewcoach-convention-exempt`?**  
+  **Đáp:** Chỉ trong tình huống kỹ thuật bất khả kháng (DOM mount ref cho audio canvas hoặc `style={transitionStyles}` của Mantine `Transition`), bắt buộc ghi đúng định dạng `// interviewcoach-convention-exempt: <RULE_ID> <lý do> until: YYYY-MM-DD` (`SEM-GOV-001`, `STD-EXEMPT-001`).
+- **Hỏi: Tại sao một số mục ghi `[Target Standard]`?**  
+  **Đáp:** Để đảm bảo 100% trung thực với hiện trạng — kỹ sư và AI coding agents tuyệt đối không import package chưa cài (`next-intl`, `@sentry/nextjs`, `msw`, `dompurify`, `@tanstack/react-virtual`) trước khi cài đặt theo đúng lộ trình.
+- **Hỏi: Đọc `client/docs/mantine/` hay `client/docs/docs/` trước khi viết code UI?**  
+  **Đáp:** Mở `client/docs/mantine/` khi cần tra nhanh URL `mantine.dev`, bảng thay thế HTML hoặc lệnh CLI; đọc `client/docs/docs/` khi cần nắm kiến trúc, mẫu tự chứa chuẩn quốc tế và đối chiếu đủ 131 Core Rule IDs.

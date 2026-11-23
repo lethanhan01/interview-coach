@@ -15,13 +15,17 @@ Quy trình 3 bước trước khi viết UI:
 ### Ví dụ đối chiếu: Custom clickable card (`SessionCard`)
 
 ```tsx
-// ❌ SAI: Dùng raw HTML + non-semantic onClick
-;<div className={classes.card} onClick={onSelect}>
-  <h3>{title}</h3>
-  <p>{description}</p>
-</div>
+// Incorrect: Dùng raw HTML + non-semantic onClick
+function BadSessionCard({ title, description, onSelect }: SessionCardProps) {
+  return (
+    <div className={classes.card} onClick={onSelect}>
+      <h3>{title}</h3>
+      <p>{description}</p>
+    </div>
+  )
+}
 
-// ✅ ĐÚNG: Dựng từ Mantine primitives, đúng semantic tương tác
+// Correct: Dựng từ Mantine primitives, đúng semantic tương tác
 import { Paper, Stack, Text, Title, UnstyledButton } from '@mantine/core'
 import classes from './SessionCard.module.css'
 
@@ -128,7 +132,7 @@ Không sử dụng **Tailwind CSS**, **`styled-components`**, **Emotion** hay CS
 /* SessionCard.module.css — Chuẩn CSS Module Zero-Hex của InterviewCoach */
 .root {
   display: block;
-  text-align: left;
+  text-align: start;
   border-radius: var(--mantine-radius-md);
 
   &:focus-visible {
@@ -201,7 +205,7 @@ Toàn bộ màu sắc đi qua **5 vai trò ngữ nghĩa** đăng ký trực ti�
 ### Ví dụ đối chiếu: Border, Bubble & Inline Style (`SEM-TOKEN-003`)
 
 ```tsx
-// ❌ SAI: Dùng Box + chuỗi border shorthand + shade số + màu vật lý + hardcode white
+// Incorrect: Dùng Box + chuỗi border shorthand + shade số + màu vật lý + hardcode white
 <Box
   p="sm"
   bdrs="md"
@@ -212,11 +216,11 @@ Toàn bộ màu sắc đi qua **5 vai trò ngữ nghĩa** đăng ký trực ti�
   ...
 </Box>
 
-// ❌ SAI: Dùng style inline cho table scroll hoặc dropzone
+// Incorrect: Dùng style inline cho table scroll hoặc dropzone
 <Box style={{ overflowX: 'auto' }}><Table /></Box>
 <Group style={{ pointerEvents: 'none' }}>...</Group>
 
-// ✅ ĐÚNG: Dùng Paper withBorder + CSS Module + mod + semantic tokens
+// Correct: Dùng Paper withBorder + CSS Module + mod + semantic tokens
 <Paper
   withBorder={!isCandidate}
   p="sm"
@@ -227,7 +231,7 @@ Toàn bộ màu sắc đi qua **5 vai trò ngữ nghĩa** đăng ký trực ti�
   ...
 </Paper>
 
-// ✅ ĐÚNG: Dùng component chuẩn hoặc CSS Module
+// Correct: Dùng component chuẩn hoặc CSS Module
 <Table.ScrollContainer minWidth={600}><Table /></Table.ScrollContainer>
 <Group className={classes.dropzoneInner}>...</Group>
 ```
