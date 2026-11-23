@@ -20,6 +20,7 @@ import { withThemeByClassName } from '@storybook/addon-themes'
 import { MantineProvider } from '@mantine/core'
 import { ModalsProvider } from '@mantine/modals'
 import React, { useEffect } from 'react'
+import { QueryProvider } from '../lib/query-client'
 import { theme } from '../theme'
 
 function ReducedMotionWrapper({
@@ -55,11 +56,13 @@ const withMantineProvider: Decorator = (Story, context) => {
   const scheme = activeTheme === 'dark' ? 'dark' : 'light'
 
   return (
-    <MantineProvider theme={theme} forceColorScheme={scheme}>
-      <ModalsProvider>
-        <Story />
-      </ModalsProvider>
-    </MantineProvider>
+    <QueryProvider>
+      <MantineProvider theme={theme} forceColorScheme={scheme}>
+        <ModalsProvider>
+          <Story />
+        </ModalsProvider>
+      </MantineProvider>
+    </QueryProvider>
   )
 }
 

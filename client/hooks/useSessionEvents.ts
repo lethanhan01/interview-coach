@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { queryKeys, useOptionalQueryClient } from '@/lib/query-client'
 import { sessionService } from '@/services'
 import type { FeedbackProgress, SessionStatus } from '@/lib/types'
 
@@ -17,11 +18,7 @@ export interface UseSessionEventsOptions {
 }
 
 export type ConnectionState =
-  | 'idle'
-  | 'connecting'
-  | 'connected'
-  | 'reconnecting'
-  | 'disconnected'
+  'idle' | 'connecting' | 'connected' | 'reconnecting' | 'disconnected'
 
 export function useSessionEvents({
   sessionId,
@@ -34,6 +31,7 @@ export function useSessionEvents({
   onError,
   onConnectionChange,
 }: UseSessionEventsOptions) {
+  const queryClient = useOptionalQueryClient()
   const [connectionState, setConnectionState] =
     useState<ConnectionState>('idle')
   const retryCountRef = useRef(0)
@@ -95,6 +93,12 @@ export function useSessionEvents({
             status?: SessionStatus
           }
           if (data.status) {
+            void queryClient.invalidateQueries({
+              queryKey: queryKeys.sessions.status(sessionId),
+            })
+            void queryClient.invalidateQueries({
+              queryKey: queryKeys.sessions.detail(sessionId),
+            })
             onStatusRef.current?.(data.status)
           }
         } catch (err) {
@@ -107,6 +111,10 @@ export function useSessionEvents({
           const data = JSON.parse(
             (event as MessageEvent).data
           ) as FeedbackProgress
+          queryClient.setQueryData(
+            queryKeys.sessions.feedbackProgress(sessionId),
+            data
+          )
           onProgressRef.current?.(data)
         } catch (err) {
           console.warn('Failed to parse feedback_progress SSE payload:', err)
@@ -115,6 +123,15 @@ export function useSessionEvents({
 
       const handleFinished = () => {
         isTerminatedRef.current = true
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.sessions.report(sessionId),
+        })
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.sessions.detail(sessionId),
+        })
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.sessions.list(),
+        })
         onReportReadyRef.current?.()
         onCompletedRef.current?.()
         cleanup()
@@ -131,12 +148,15 @@ export function useSessionEvents({
             error?: { code?: string; message?: string }
             timestamp?: string
           }
-          const errMessage = payload.error?.message || 'Lỗi xử lý phiên phỏng vấn'
+          const errMessage =
+            payload.error?.message || 'Lỗi xử lý phiên phỏng vấn'
           const errCode = payload.error?.code
           isTerminatedRef.current = true
           cleanup()
           setConnectionState('disconnected')
-          onErrorRef.current?.(new Error(`[${errCode || 'ERROR'}] ${errMessage}`))
+          onErrorRef.current?.(
+            new Error(`[${errCode || 'ERROR'}] ${errMessage}`)
+          )
         } catch (err) {
           console.warn('Failed to parse session.error SSE payload:', err)
         }
@@ -170,11 +190,9 @@ export function useSessionEvents({
       }
     } catch (err) {
       setConnectionState('disconnected')
-      onErrorRef.current?.(
-        err instanceof Error ? err : new Error(String(err))
-      )
+      onErrorRef.current?.(err instanceof Error ? err : new Error(String(err)))
     }
-  }, [enabled, sessionId, maxRetries, cleanup])
+  }, [enabled, sessionId, maxRetries, cleanup, queryClient])
 
   useEffect(() => {
     connectRef.current = connect

@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
       '@mantine/modals',
       '@mantine/dropzone',
       '@tabler/icons-react',
+      '@tanstack/react-query',
     ],
   },
   redirects() {

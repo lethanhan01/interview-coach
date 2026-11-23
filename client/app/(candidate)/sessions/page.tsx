@@ -10,7 +10,11 @@ import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { PageContainer } from '@/components/patterns/LayoutPatterns'
-import { LoadingState, ErrorState, EmptyState } from '@/components/patterns/FeedbackPatterns'
+import {
+  LoadingState,
+  ErrorState,
+  EmptyState,
+} from '@/components/patterns/FeedbackPatterns'
 import { cn } from '@/lib/utils'
 
 const SESSION_TYPE_LABELS: Record<string, string> = {
@@ -52,7 +56,8 @@ function getCompanyName(jobDescription: string): string | undefined {
 
 const scoreVariants = {
   high: 'bg-success-subtle text-success-subtle-fg border-success-subtle-fg/30',
-  medium: 'bg-warning-subtle text-warning-subtle-fg border-warning-subtle-fg/30',
+  medium:
+    'bg-warning-subtle text-warning-subtle-fg border-warning-subtle-fg/30',
   low: 'bg-danger-subtle text-danger-subtle-fg border-danger-subtle-fg/30',
 } as const
 
@@ -89,16 +94,26 @@ function getSessionErrorMessage(err: Error | null): string | null {
 
 export default function SessionsPage() {
   const router = useRouter()
-  const { sessions, isLoading: loading, error: swrError, mutate } = useSessions()
+  const {
+    sessions,
+    isLoading: loading,
+    error: queryError,
+    refetch,
+  } = useSessions()
 
-  const error = getSessionErrorMessage(swrError)
+  const error = getSessionErrorMessage(queryError)
 
   function retryLoad() {
-    void mutate()
+    void refetch()
   }
 
   if (loading) {
-    return <LoadingState text="Đang tải danh sách phiên phỏng vấn..." minHeight="min-h-[50vh]" />
+    return (
+      <LoadingState
+        text="Đang tải danh sách phiên phỏng vấn..."
+        minHeight="min-h-[50vh]"
+      />
+    )
   }
 
   if (error) {
@@ -141,7 +156,7 @@ export default function SessionsPage() {
         <EmptyState
           title="Chưa có phiên phỏng vấn nào"
           description="Dán Job Description và bắt đầu luyện tập ngay để nhận phản hồi từ AI."
-          icon={<Plus className="size-12 text-brand" aria-hidden="true" />}
+          icon={<Plus className="text-brand size-12" aria-hidden="true" />}
           action={{
             label: 'Bắt đầu phỏng vấn',
             onClick: () => router.push('/setup'),
@@ -185,11 +200,12 @@ export default function SessionsPage() {
                     <Badge variant="default" className="font-medium">
                       {SESSION_TYPE_LABELS[s.sessionType] ?? s.sessionType}
                     </Badge>
-                    <Badge variant="default">
-                      {s.contextPackId}
-                    </Badge>
+                    <Badge variant="default">{s.contextPackId}</Badge>
                     {s.durationMin != null && (
-                      <Badge variant="default" className="flex items-center gap-1">
+                      <Badge
+                        variant="default"
+                        className="flex items-center gap-1"
+                      >
                         <Clock className="h-3 w-3" aria-hidden="true" />
                         {s.durationMin} phút
                       </Badge>
@@ -211,7 +227,12 @@ export default function SessionsPage() {
                       </Button>
                     )}
                     {s.status === 'completing' && (
-                      <Button asChild variant="outline" size="sm" className="w-full text-brand border-brand hover:bg-brand-subtle">
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="text-brand border-brand hover:bg-brand-subtle w-full"
+                      >
                         <Link href={`/sessions/${s.id}/report`}>
                           Theo dõi báo cáo
                         </Link>

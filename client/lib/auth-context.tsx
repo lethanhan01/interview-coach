@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from 'react'
+import { useOptionalQueryClient } from '@/lib/query-client'
 import { authService } from '@/services'
 
 type Role = 'candidate' | 'admin'
@@ -31,7 +32,10 @@ const AuthContext = createContext<AuthContextValue>({
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [value, setValue] = useState<Omit<AuthContextValue, 'refresh' | 'logout'>>({
+  const queryClient = useOptionalQueryClient()
+  const [value, setValue] = useState<
+    Omit<AuthContextValue, 'refresh' | 'logout'>
+  >({
     user: null,
     role: null,
     status: null,
@@ -60,9 +64,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await authService.logout()
     } finally {
+      queryClient.clear()
       setValue({ user: null, role: null, status: null, isLoading: false })
     }
-  }, [])
+  }, [queryClient])
 
   useEffect(() => {
     const timeout = window.setTimeout(() => void refresh(), 0)
@@ -71,22 +76,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const handleSessionExpired = () => {
+      queryClient.clear()
       setValue({ user: null, role: null, status: null, isLoading: false })
       void authService.logout().catch(() => {})
     }
     window.addEventListener('auth:session-expired', handleSessionExpired)
-    return () => window.removeEventListener('auth:session-expired', handleSessionExpired)
-  }, [])
+    return () =>
+      window.removeEventListener('auth:session-expired', handleSessionExpired)
+  }, [queryClient])
 
   const contextValue = useMemo(
     () => ({ ...value, refresh, logout }),
     [value, refresh, logout]
   )
 
-  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
+  )
 }
 
 export function useAuth() {
   return useContext(AuthContext)
 }
-

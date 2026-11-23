@@ -50,6 +50,7 @@
     "@radix-ui/react-tabs": "^1.1.21",
     "@radix-ui/react-tooltip": "^1.2.16",
     "@tabler/icons-react": "^3.52.0",
+    "@tanstack/react-query": "^5.108.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -60,7 +61,6 @@
     "react-dom": "19.2.4",
     "react-hook-form": "^7.84.0",
     "sonner": "^2.0.7",
-    "swr": "^2.4.1",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.4.3"
@@ -75,6 +75,7 @@
     "@storybook/addon-vitest": "^10.5.5",
     "@storybook/nextjs-vite": "^10.5.5",
     "@tailwindcss/postcss": "^4",
+    "@tanstack/react-query-devtools": "^5.108.4",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

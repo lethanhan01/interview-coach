@@ -1,14 +1,20 @@
 'use client'
 
-import useSWR, { type KeyedMutator } from 'swr'
-import { sessionService } from '@/services'
+import { useQuery, type UseQueryResult } from '@tanstack/react-query'
+import {
+  queryKeys,
+  sessionQueries,
+  useOptionalQueryClient,
+} from '@/lib/query-client'
 import type { Session } from '@/lib/types'
 
-export interface UseSessionsResult {
+export type UseSessionsResult = Omit<
+  UseQueryResult<Session[], Error>,
+  'error'
+> & {
   sessions: Session[]
-  isLoading: boolean
   error: Error | null
-  mutate: KeyedMutator<Session[]>
+  invalidate: () => Promise<void>
 }
 
 function toError(err: unknown): Error | null {
@@ -17,19 +23,14 @@ function toError(err: unknown): Error | null {
 }
 
 export function useSessions(): UseSessionsResult {
-  const { data, error, isLoading, mutate } = useSWR<Session[]>(
-    '/sessions',
-    () => sessionService.getSessions(),
-    {
-      revalidateOnFocus: true,
-      dedupingInterval: 5000,
-    }
-  )
+  const queryClient = useOptionalQueryClient()
+  const query = useQuery(sessionQueries.list())
 
   return {
-    sessions: data ?? [],
-    isLoading,
-    error: toError(error),
-    mutate,
+    ...query,
+    sessions: query.data ?? [],
+    error: toError(query.error),
+    invalidate: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all }),
   }
 }

@@ -13,6 +13,7 @@ import { theme } from '@/theme'
 import { ThemeProvider } from '@/components/theme-provider'
 import { MantineColorSchemeSync } from '@/components/mantine-color-scheme-sync'
 import { AuthProvider } from '@/lib/auth-context'
+import { QueryProvider } from '@/lib/query-client'
 import { OfflineBanner } from '@/components/patterns/OfflineBanner'
 
 const geistSans = Geist({
@@ -56,10 +57,12 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               <MantineColorSchemeSync />
-              <AuthProvider>
-                <OfflineBanner />
-                {children}
-              </AuthProvider>
+              <QueryProvider>
+                <AuthProvider>
+                  <OfflineBanner />
+                  {children}
+                </AuthProvider>
+              </QueryProvider>
             </ThemeProvider>
           </ModalsProvider>
         </MantineProvider>
