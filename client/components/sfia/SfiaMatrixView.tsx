@@ -1,11 +1,7 @@
 'use client'
 
 import React, { useMemo, memo } from 'react'
-import {
-  AlertCircle,
-  Briefcase,
-  SearchX,
-} from 'lucide-react'
+import { AlertCircle, Briefcase, SearchX } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import {
@@ -20,10 +16,7 @@ import {
   type SfiaMatrixCellData,
   type SfiaMatrixDisplayMode,
 } from '@/types'
-import {
-  getCategoryTheme,
-  getLevelTheme,
-} from './sfia-theme'
+import { getCategoryTheme, getLevelTheme } from './sfia-theme'
 
 export interface SfiaMatrixViewProps {
   skills: SfiaSkillSummary[]
@@ -62,7 +55,7 @@ const SfiaMatrixCell = memo(function SfiaMatrixCell({
     return (
       <div
         data-testid={`cell-${skill.code}-L${levelId}-inactive`}
-        className="h-14 flex items-center justify-center bg-surface-inset/30 text-ink-muted/30 select-none text-xs transition-colors"
+        className="bg-surface-inset/30 text-ink-muted/30 flex h-14 select-none items-center justify-center text-xs transition-colors"
       >
         <span aria-hidden="true">—</span>
         <span className="sr-only">Not available at Level {levelId}</span>
@@ -86,9 +79,9 @@ const SfiaMatrixCell = memo(function SfiaMatrixCell({
             'group relative flex h-14 w-full flex-col items-center justify-center rounded-lg border p-1 transition-all duration-150',
             'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
             theme.cellActive,
-            isInspected && 'ring-2 ring-brand shadow-md z-10 border-brand',
+            isInspected && 'ring-brand border-brand z-10 shadow-md ring-2',
             isBlindSpot &&
-              'ring-2 ring-rose-500/70 dark:ring-rose-400/70 border-rose-500/50 bg-rose-500/10 dark:bg-rose-500/20'
+              'border-rose-500/50 bg-rose-500/10 ring-2 ring-rose-500/70 dark:bg-rose-500/20 dark:ring-rose-400/70'
           )}
         >
           {/* Main Level Label */}
@@ -99,57 +92,55 @@ const SfiaMatrixCell = memo(function SfiaMatrixCell({
             {isBlindSpot && (
               <span
                 title="Blind spot: No interview questions"
-                className="size-1.5 rounded-full bg-rose-500 animate-pulse"
+                className="size-1.5 animate-pulse rounded-full bg-rose-500"
               />
             )}
           </div>
 
           {/* Sub-badge depending on display mode */}
           <div className="mt-0.5 text-[10px] leading-tight">
-            {displayMode === 'questions' && (
-              isBlindSpot ? (
-                <span className="text-rose-600 dark:text-rose-400 font-bold flex items-center gap-0.5">
-                  <AlertCircle className="size-2.5" />
-                  0 Q
+            {displayMode === 'questions' &&
+              (isBlindSpot ? (
+                <span className="flex items-center gap-0.5 font-bold text-rose-600 dark:text-rose-400">
+                  <AlertCircle className="size-2.5" />0 Q
                 </span>
               ) : (
-                <span className="text-emerald-700 dark:text-emerald-300 font-semibold">
+                <span className="font-semibold text-emerald-700 dark:text-emerald-300">
                   {questionCount} Qs
                 </span>
-              )
-            )}
+              ))}
 
             {displayMode === 'onet' && (
-              <span className="text-ink-muted font-medium flex items-center gap-0.5">
+              <span className="text-ink-muted flex items-center gap-0.5 font-medium">
                 <Briefcase className="size-2.5" />
                 {onetCount} SOC
               </span>
             )}
 
             {displayMode === 'level' && (
-              <span className="text-ink-muted/80 text-[9px] truncate max-w-[70px]">
+              <span className="text-ink-muted/80 max-w-[70px] truncate text-[9px]">
                 {levelInfo.name}
               </span>
             )}
           </div>
         </button>
       </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-xs text-xs p-2.5">
+      <TooltipContent side="top" className="max-w-xs p-2.5 text-xs">
         <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-1 font-semibold">
-            <span className="text-brand-foreground font-mono">{skill.code}</span>
+          <div className="border-border/40 flex items-center justify-between gap-2 border-b pb-1 font-semibold">
+            <span className="text-brand-foreground font-mono">
+              {skill.code}
+            </span>
             <span className="text-[10px]">{levelInfo.shortName}</span>
           </div>
-          <p className="text-[11px] font-medium leading-snug">
-            {skill.name}
-          </p>
-          <div className="text-[10px] text-muted-foreground flex items-center justify-between gap-3 pt-1 border-t border-border/30">
-            <span className={cn(isBlindSpot && 'text-rose-400 font-bold')}>
+          <p className="text-[11px] font-medium leading-snug">{skill.name}</p>
+          <div className="text-muted-foreground border-border/30 flex items-center justify-between gap-3 border-t pt-1 text-[10px]">
+            <span className={cn(isBlindSpot && 'font-bold text-rose-400')}>
               Questions: {questionCount}
             </span>
             <span>O*NET Occupations: {onetCount}</span>
           </div>
-          <p className="text-[9px] text-muted-foreground/80 italic mt-0.5">
+          <p className="text-muted-foreground/80 mt-0.5 text-[9px] italic">
             Click to view details & create question
           </p>
         </div>
@@ -178,29 +169,29 @@ const SfiaMatrixRow = memo(function SfiaMatrixRow({
   return (
     <tr
       data-testid={`matrix-row-${skill.code}`}
-      className="group hover:bg-surface-raised/40 transition-colors border-b border-border/50"
+      className="hover:bg-surface-raised/40 border-border/50 group border-b transition-colors"
     >
       {/* Sticky Skill Info Column (Left) */}
       <th
         scope="row"
-        className="sticky left-0 z-10 bg-card group-hover:bg-surface-raised/80 min-w-[220px] max-w-[260px] p-2.5 text-left border-r border-border/80 transition-colors"
+        className="bg-card group-hover:bg-surface-raised/80 border-border/80 sticky left-0 z-10 min-w-[220px] max-w-[260px] border-r p-2.5 text-left transition-colors"
       >
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-1.5">
             <span
               className={cn(
-                'rounded px-1.5 py-0.5 font-mono text-[11px] font-bold border',
+                'rounded border px-1.5 py-0.5 font-mono text-[11px] font-bold',
                 theme.badge
               )}
             >
               {skill.code}
             </span>
-            <span className="font-mono text-[10px] text-ink-muted">
+            <span className="text-ink-muted font-mono text-[10px]">
               L{skill.minLevel}-{skill.maxLevel}
             </span>
           </div>
           <span
-            className="text-xs font-medium text-ink truncate max-w-[220px]"
+            className="text-ink max-w-[220px] truncate text-xs font-medium"
             title={skill.name}
           >
             {skill.name}
@@ -213,10 +204,11 @@ const SfiaMatrixRow = memo(function SfiaMatrixRow({
         const cellKey = `${skill.code}_L${lvl}`
         const cellData = cells[cellKey]
         const isInspected =
-          inspectedCell?.skillCode === skill.code && inspectedCell?.levelId === lvl
+          inspectedCell?.skillCode === skill.code &&
+          inspectedCell?.levelId === lvl
 
         return (
-          <td key={lvl} className="p-1 min-w-[90px] text-center align-middle">
+          <td key={lvl} className="min-w-[90px] p-1 text-center align-middle">
             <SfiaMatrixCell
               skill={skill}
               levelId={lvl}
@@ -284,19 +276,19 @@ export function SfiaMatrixView({
       <div
         data-testid="matrix-empty-state"
         className={cn(
-          'flex flex-col items-center justify-center p-12 text-center bg-card border border-border/80 rounded-xl min-h-[360px]',
+          'bg-card border-border/80 flex min-h-[360px] flex-col items-center justify-center rounded-xl border p-12 text-center',
           className
         )}
       >
-        <div className="bg-surface-inset text-ink-muted p-3.5 rounded-full mb-3 border border-border">
+        <div className="bg-surface-inset text-ink-muted border-border mb-3 rounded-full border p-3.5">
           <SearchX className="size-8" />
         </div>
-        <h3 className="text-sm font-bold text-ink mb-1">
+        <h3 className="text-ink mb-1 text-sm font-bold">
           {blindSpotsOnly
             ? 'No blind spots detected in the selected filter group'
             : 'No matching SFIA skills found'}
         </h3>
-        <p className="text-xs text-ink-muted max-w-sm mb-4 leading-relaxed">
+        <p className="text-ink-muted mb-4 max-w-sm text-xs leading-relaxed">
           {blindSpotsOnly
             ? 'All capability cells in the visible range already have at least one interview question in the repository.'
             : 'Try adjusting your search query or selecting another category to see results.'}
@@ -319,24 +311,24 @@ export function SfiaMatrixView({
     <TooltipProvider delayDuration={150}>
       <div
         className={cn(
-          'relative flex flex-col flex-1 h-full min-h-0 overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm',
+          'border-border/80 bg-card relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border shadow-sm',
           className
         )}
       >
         {/* Single-Viewport Scrollable Container */}
-        <div className="overflow-auto flex-1 h-full min-h-0">
+        <div className="h-full min-h-0 flex-1 overflow-auto">
           <table className="w-full border-collapse text-xs">
             {/* Sticky Table Header */}
             <thead>
-              <tr className="border-b border-border bg-surface-raised/95 backdrop-blur">
+              <tr className="border-border bg-surface-raised/95 border-b backdrop-blur">
                 {/* Sticky Top-Left Corner Header */}
                 <th
                   scope="col"
-                  className="sticky left-0 top-0 z-30 bg-surface-raised min-w-[220px] max-w-[260px] p-3 text-left font-bold text-ink border-r border-border shadow-xs"
+                  className="bg-surface-raised text-ink border-border shadow-xs sticky left-0 top-0 z-30 min-w-[220px] max-w-[260px] border-r p-3 text-left font-bold"
                 >
                   <div className="flex items-center justify-between">
                     <span>SFIA 9 Skills</span>
-                    <span className="text-[10px] text-ink-muted font-normal">
+                    <span className="text-ink-muted text-[10px] font-normal">
                       ({filteredSkills.length})
                     </span>
                   </div>
@@ -349,13 +341,13 @@ export function SfiaMatrixView({
                     <th
                       key={lvl}
                       scope="col"
-                      className="sticky top-0 z-20 bg-surface-raised min-w-[90px] p-2 text-center font-bold border-r border-border/40 last:border-r-0 shadow-xs"
+                      className="bg-surface-raised border-border/40 shadow-xs sticky top-0 z-20 min-w-[90px] border-r p-2 text-center font-bold last:border-r-0"
                     >
                       <div className="flex flex-col items-center">
-                        <span className="font-mono text-xs font-bold text-ink">
+                        <span className="text-ink font-mono text-xs font-bold">
                           L{lvl}
                         </span>
-                        <span className="text-[10px] font-normal text-ink-muted truncate max-w-[80px]">
+                        <span className="text-ink-muted max-w-[80px] truncate text-[10px] font-normal">
                           {def.name}
                         </span>
                       </div>
@@ -378,24 +370,27 @@ export function SfiaMatrixView({
                     {/* Category Separator Banner Row */}
                     <tr
                       data-testid={`category-header-${category.code}`}
-                      className="bg-surface-raised/70 border-y border-border"
+                      className="bg-surface-raised/70 border-border border-y"
                     >
                       <td
                         colSpan={8}
                         className={cn(
-                          'p-2 pl-3 font-semibold text-xs text-ink border-l-4',
+                          'text-ink border-l-4 p-2 pl-3 text-xs font-semibold',
                           theme.border,
                           theme.bgLight
                         )}
                       >
                         <div className="flex items-center gap-2">
                           <span
-                            className={cn('size-2 rounded-full shrink-0', theme.dot)}
+                            className={cn(
+                              'size-2 shrink-0 rounded-full',
+                              theme.dot
+                            )}
                           />
-                          <span className="font-bold text-ink">
+                          <span className="text-ink font-bold">
                             {category.name || category.nameVi}
                           </span>
-                          <span className="font-mono text-[10px] text-ink-muted font-normal">
+                          <span className="text-ink-muted font-mono text-[10px] font-normal">
                             ({categorySkills.length} skills)
                           </span>
                         </div>

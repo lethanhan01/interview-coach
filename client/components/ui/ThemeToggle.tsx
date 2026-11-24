@@ -6,7 +6,12 @@ import { Sun, Moon, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 const emptySubscribe = () => () => {}
-const useIsMounted = () => useSyncExternalStore(emptySubscribe, () => true, () => false)
+const useIsMounted = () =>
+  useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  )
 
 const THEMES = ['light', 'dark', 'system'] as const
 

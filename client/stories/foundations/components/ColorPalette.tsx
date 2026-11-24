@@ -94,7 +94,11 @@ const PRIMITIVE_AMBER: PrimitiveColor[] = [
 const PRIMITIVE_CHARTS: PrimitiveColor[] = [
   { name: 'chart-1 (Brand)', varName: '--color-chart-1', hex: '#2563eb' },
   { name: 'chart-2 (AI Violet)', varName: '--color-chart-2', hex: '#7c3aed' },
-  { name: 'chart-3 (Telemetry Cyan)', varName: '--color-chart-3', hex: '#0891b2' },
+  {
+    name: 'chart-3 (Telemetry Cyan)',
+    varName: '--color-chart-3',
+    hex: '#0891b2',
+  },
   { name: 'chart-4 (Success)', varName: '--color-chart-4', hex: '#16a34a' },
   { name: 'chart-5 (Warning)', varName: '--color-chart-5', hex: '#f59e0b' },
   { name: 'chart-6 (Danger)', varName: '--color-chart-6', hex: '#ef4444' },
@@ -141,7 +145,8 @@ const SEMANTIC_COLORS: SemanticColor[] = [
     varName: '--color-primary',
     lightValue: 'brand-600 (#2563eb)',
     darkValue: 'brand-500 (#3b82f6)',
-    description: 'Màu thương hiệu chủ đạo cho nút nhấn, link chính, active state.',
+    description:
+      'Màu thương hiệu chủ đạo cho nút nhấn, link chính, active state.',
   },
   {
     name: 'AI Insights & Coach',
@@ -190,7 +195,8 @@ const SEMANTIC_COLORS: SemanticColor[] = [
     varName: '--color-border',
     lightValue: 'neutral-200 (#e2e8f0)',
     darkValue: 'neutral-800 (#1e293b)',
-    description: 'Đường viền của card, input, divider kết hợp viền specular phản quang.',
+    description:
+      'Đường viền của card, input, divider kết hợp viền specular phản quang.',
   },
 ]
 
@@ -205,31 +211,35 @@ export const ColorPalette: React.FC = () => {
 
   const renderPrimitiveRow = (title: string, colors: PrimitiveColor[]) => (
     <div className="mb-6">
-      <h4 className="text-sm font-semibold mb-3 text-slate-800 dark:text-slate-200">{title}</h4>
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-11 gap-2">
+      <h4 className="mb-3 text-sm font-semibold text-slate-800 dark:text-slate-200">
+        {title}
+      </h4>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-11">
         {colors.map((c) => (
           <button
             key={c.varName}
             onClick={() => handleCopy(`var(${c.varName})`)}
-            className="group relative flex flex-col items-center p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:shadow-md transition bg-white dark:bg-slate-900 text-left cursor-pointer"
+            className="group relative flex cursor-pointer flex-col items-center rounded-lg border border-slate-200 bg-white p-2 text-left transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
             title={`Click to copy var(${c.varName})`}
           >
             <div
-              className="w-full h-12 rounded-md mb-2 shadow-inner border border-black/10"
+              className="mb-2 h-12 w-full rounded-md border border-black/10 shadow-inner"
               style={{ backgroundColor: c.hex }}
             />
-            <span className="text-xs font-mono font-medium truncate w-full text-slate-700 dark:text-slate-300">
+            <span className="w-full truncate font-mono text-xs font-medium text-slate-700 dark:text-slate-300">
               {c.name}
             </span>
-            <span className="text-[10px] font-mono text-slate-400">{c.hex}</span>
+            <span className="font-mono text-[10px] text-slate-400">
+              {c.hex}
+            </span>
 
             {copiedVar === `var(${c.varName})` ? (
-              <span className="absolute top-1 right-1 bg-emerald-500 text-white p-1 rounded-full text-[10px]">
-                <Check className="w-3 h-3" />
+              <span className="absolute right-1 top-1 rounded-full bg-emerald-500 p-1 text-[10px] text-white">
+                <Check className="h-3 w-3" />
               </span>
             ) : (
-              <span className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-black/60 text-white p-1 rounded-full text-[10px] transition">
-                <Copy className="w-3 h-3" />
+              <span className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-[10px] text-white opacity-0 transition group-hover:opacity-100">
+                <Copy className="h-3 w-3" />
               </span>
             )}
           </button>
@@ -241,62 +251,68 @@ export const ColorPalette: React.FC = () => {
   return (
     <div className="my-6 space-y-8 font-sans">
       {/* Semantic Tokens Table */}
-      <section className="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200 dark:border-slate-800">
-        <h3 className="text-lg font-bold mb-1 text-slate-900 dark:text-slate-100">
+      <section className="rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900/50">
+        <h3 className="mb-1 text-lg font-bold text-slate-900 dark:text-slate-100">
           Semantic Colors (Theme-aware Multi-layer)
         </h3>
-        <p className="text-xs text-slate-500 mb-4">
-          Hệ thống màu ngữ nghĩa đa tầng (Surface 0-3, Brand, AI, Waveform) tự động thích ứng Light/Dark Mode. Click để copy biến CSS.
+        <p className="mb-4 text-xs text-slate-500">
+          Hệ thống màu ngữ nghĩa đa tầng (Surface 0-3, Brand, AI, Waveform) tự
+          động thích ứng Light/Dark Mode. Click để copy biến CSS.
         </p>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
+          <table className="w-full border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-700 text-slate-500 text-xs font-semibold uppercase">
-                <th className="py-3 px-3">Token & Variable</th>
-                <th className="py-3 px-3">Light Mode</th>
-                <th className="py-3 px-3">Dark Mode</th>
-                <th className="py-3 px-3">Công dụng</th>
+              <tr className="border-b border-slate-200 text-xs font-semibold uppercase text-slate-500 dark:border-slate-700">
+                <th className="px-3 py-3">Token & Variable</th>
+                <th className="px-3 py-3">Light Mode</th>
+                <th className="px-3 py-3">Dark Mode</th>
+                <th className="px-3 py-3">Công dụng</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {SEMANTIC_COLORS.map((sc) => (
-                <tr key={sc.varName} className="hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition">
-                  <td className="py-3 px-3 font-medium">
+                <tr
+                  key={sc.varName}
+                  className="transition hover:bg-slate-100/50 dark:hover:bg-slate-800/50"
+                >
+                  <td className="px-3 py-3 font-medium">
                     <button
                       onClick={() => handleCopy(`var(${sc.varName})`)}
-                      className="inline-flex items-center gap-1.5 font-mono text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                      className="inline-flex cursor-pointer items-center gap-1.5 font-mono text-xs text-blue-600 hover:underline dark:text-blue-400"
                     >
                       <span>{sc.varName}</span>
                       {copiedVar === `var(${sc.varName})` ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        <Check className="h-3.5 w-3.5 text-emerald-500" />
                       ) : (
-                        <Copy className="w-3.5 h-3.5 opacity-60" />
+                        <Copy className="h-3.5 w-3.5 opacity-60" />
                       )}
                     </button>
                     <div className="text-[11px] text-slate-400">{sc.name}</div>
                   </td>
-                  <td className="py-3 px-3">
+                  <td className="px-3 py-3">
                     <div className="flex items-center gap-2">
                       <div
-                        className="w-6 h-6 rounded border border-slate-300 shadow-sm"
+                        className="h-6 w-6 rounded border border-slate-300 shadow-sm"
                         style={{ backgroundColor: `var(${sc.varName})` }}
                       />
-                      <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                      <span className="font-mono text-xs text-slate-600 dark:text-slate-400">
                         {sc.lightValue}
                       </span>
                     </div>
                   </td>
-                  <td className="py-3 px-3">
-                    <div className="flex items-center gap-2 bg-slate-950 p-1.5 rounded-md border border-slate-800">
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-2 rounded-md border border-slate-800 bg-slate-950 p-1.5">
                       <div
-                        className="w-6 h-6 rounded border border-slate-700 dark shadow-sm"
+                        className="dark h-6 w-6 rounded border border-slate-700 shadow-sm"
                         style={{ backgroundColor: `var(${sc.varName})` }}
                       />
-                      <span className="text-xs font-mono text-slate-300">{sc.darkValue}</span>
+                      <span className="font-mono text-xs text-slate-300">
+                        {sc.darkValue}
+                      </span>
                     </div>
                   </td>
-                  <td className="py-3 px-3 text-xs text-slate-600 dark:text-slate-300">
+                  <td className="px-3 py-3 text-xs text-slate-600 dark:text-slate-300">
                     {sc.description}
                   </td>
                 </tr>
@@ -307,12 +323,13 @@ export const ColorPalette: React.FC = () => {
       </section>
 
       {/* Primitive Palettes */}
-      <section className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800">
-        <h3 className="text-lg font-bold mb-1 text-slate-900 dark:text-slate-100">
+      <section className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <h3 className="mb-1 text-lg font-bold text-slate-900 dark:text-slate-100">
           Primitive Palettes
         </h3>
-        <p className="text-xs text-slate-500 mb-6">
-          Bảng màu thô cố định cho hệ thống (Neutral, Brand, Violet AI, Cyan Audio, Charts, Mastery Tiers).
+        <p className="mb-6 text-xs text-slate-500">
+          Bảng màu thô cố định cho hệ thống (Neutral, Brand, Violet AI, Cyan
+          Audio, Charts, Mastery Tiers).
         </p>
 
         {renderPrimitiveRow('Neutral (Slate-like)', PRIMITIVE_NEUTRAL)}

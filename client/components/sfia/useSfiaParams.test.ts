@@ -51,7 +51,9 @@ describe('useSfiaParams (URL Deep Linking & State Synchronization)', () => {
   })
 
   it('4. parses deep link: ?tab=attributes&level=4&attrView=matrix', () => {
-    mockSearchParams = new URLSearchParams('tab=attributes&level=4&attrView=matrix')
+    mockSearchParams = new URLSearchParams(
+      'tab=attributes&level=4&attrView=matrix'
+    )
     const { result } = renderHook(() => useSfiaParams())
 
     expect(result.current.activeTab).toBe('attributes')
@@ -83,7 +85,9 @@ describe('useSfiaParams (URL Deep Linking & State Synchronization)', () => {
       result.current.setTab('matrix')
     })
 
-    expect(mockReplace).toHaveBeenCalledWith('/admin/sfia?tab=matrix', { scroll: false })
+    expect(mockReplace).toHaveBeenCalledWith('/admin/sfia?tab=matrix', {
+      scroll: false,
+    })
   })
 
   it('8. updates URL when setSkill is called with level', () => {
@@ -93,7 +97,9 @@ describe('useSfiaParams (URL Deep Linking & State Synchronization)', () => {
       result.current.setSkill('DBDS', 4)
     })
 
-    expect(mockReplace).toHaveBeenCalledWith('/admin/sfia?skill=DBDS&level=4', { scroll: false })
+    expect(mockReplace).toHaveBeenCalledWith('/admin/sfia?skill=DBDS&level=4', {
+      scroll: false,
+    })
   })
 
   it('9. updates URL when setCategory is called with categoryCode and clear with null', () => {
@@ -102,7 +108,10 @@ describe('useSfiaParams (URL Deep Linking & State Synchronization)', () => {
     act(() => {
       result.current.setCategory('STRAT_ARCH')
     })
-    expect(mockReplace).toHaveBeenCalledWith('/admin/sfia?category=STRAT_ARCH', { scroll: false })
+    expect(mockReplace).toHaveBeenCalledWith(
+      '/admin/sfia?category=STRAT_ARCH',
+      { scroll: false }
+    )
 
     mockSearchParams = new URLSearchParams('category=STRAT_ARCH')
     const { result: filledResult } = renderHook(() => useSfiaParams())
@@ -119,6 +128,8 @@ describe('useSfiaParams (URL Deep Linking & State Synchronization)', () => {
     act(() => {
       result.current.setAttrView('matrix')
     })
-    expect(mockReplace).toHaveBeenCalledWith('/admin/sfia?attrView=matrix', { scroll: false })
+    expect(mockReplace).toHaveBeenCalledWith('/admin/sfia?attrView=matrix', {
+      scroll: false,
+    })
   })
 })

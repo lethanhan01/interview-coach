@@ -1,12 +1,7 @@
 'use client'
 
 import React, { Suspense, useState } from 'react'
-import {
-  Compass,
-  BarChart3,
-  BookOpen,
-  AlertTriangle,
-} from 'lucide-react'
+import { Compass, BarChart3, BookOpen, AlertTriangle } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import {
   AlertDialog,
@@ -18,7 +13,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/AlertDialog'
-import { LoadingState } from '@/components/patterns/FeedbackPatterns'
+import { LoadingState } from '@/components/common/FeedbackPatterns'
 import {
   useOnetParams,
   OnetSidebar,
@@ -38,9 +33,13 @@ function OnetBrowserWorkspace() {
     setDetailTab,
   } = useOnetParams()
 
-  const [currentTitle, setCurrentTitle] = useState<string>('Software Developers')
+  const [currentTitle, setCurrentTitle] = useState<string>(
+    'Software Developers'
+  )
   const [isSfiaDirty, setIsSfiaDirty] = useState(false)
-  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null)
+  const [pendingNavigation, setPendingNavigation] = useState<
+    (() => void) | null
+  >(null)
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0)
 
   // Browser beforeunload safety guard
@@ -84,24 +83,25 @@ function OnetBrowserWorkspace() {
   }
 
   return (
-    <div className="flex flex-col gap-2 h-full min-h-0 flex-1">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-2">
       {/* Top Header Bar (Flat Header) */}
-      <div className="border-border/60 flex shrink-0 flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b pb-1.5 pt-0">
+      <div className="border-border/60 flex shrink-0 flex-col gap-2 border-b pb-1.5 pt-0 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2.5">
           <div className="bg-brand/10 text-brand flex size-8 shrink-0 items-center justify-center rounded-lg">
             <BookOpen className="size-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-ink text-base sm:text-lg font-bold tracking-tight">
+              <h1 className="text-ink text-base font-bold tracking-tight sm:text-lg">
                 O*NET Knowledge Browser
               </h1>
               <span className="bg-brand/10 text-brand rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
                 Admin
               </span>
             </div>
-            <p className="text-ink-muted text-xs leading-none mt-0.5">
-              Chuẩn phân loại nghề nghiệp Hoa Kỳ (O*NET 29.1) & Ánh xạ khung kỹ năng SFIA 9
+            <p className="text-ink-muted mt-0.5 text-xs leading-none">
+              Chuẩn phân loại nghề nghiệp Hoa Kỳ (O*NET 29.1) & Ánh xạ khung kỹ
+              năng SFIA 9
             </p>
           </div>
         </div>
@@ -113,11 +113,17 @@ function OnetBrowserWorkspace() {
           className="shrink-0"
         >
           <TabsList className="bg-surface-inset h-9 p-1">
-            <TabsTrigger value="explorer" className="gap-1.5 text-xs font-semibold px-3 py-1">
+            <TabsTrigger
+              value="explorer"
+              className="gap-1.5 px-3 py-1 text-xs font-semibold"
+            >
               <Compass className="size-3.5" />
               <span>Khám phá & Quản lý</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-1.5 text-xs font-semibold px-3 py-1">
+            <TabsTrigger
+              value="analytics"
+              className="gap-1.5 px-3 py-1 text-xs font-semibold"
+            >
               <BarChart3 className="size-3.5" />
               <span>Thống kê & Phân tích</span>
             </TabsTrigger>
@@ -127,7 +133,7 @@ function OnetBrowserWorkspace() {
 
       {/* Mode 1: Explorer View */}
       {activeTab === 'explorer' && (
-        <div className="flex flex-1 flex-col gap-3 min-h-0 overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
           {/* Mobile Drawer trigger bar (<1024px) */}
           <OnetMobileDrawer
             selectedSoc={selectedSoc}
@@ -136,9 +142,9 @@ function OnetBrowserWorkspace() {
           />
 
           {/* 2-Column Master-Detail Layout */}
-          <div className="flex flex-1 gap-4 overflow-hidden min-h-0">
+          <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
             {/* Column 1: Desktop Master Sidebar (≥1024px) */}
-            <aside className="hidden lg:block w-[340px] shrink-0 border border-border/70 rounded-xl overflow-hidden bg-card shadow-sm">
+            <aside className="border-border/70 bg-card hidden w-[340px] shrink-0 overflow-hidden rounded-xl border shadow-sm lg:block">
               <OnetSidebar
                 selectedSoc={selectedSoc}
                 onSelectSoc={guardedSetSoc}
@@ -147,7 +153,7 @@ function OnetBrowserWorkspace() {
             </aside>
 
             {/* Column 2: Detail Panel Shell */}
-            <main className="flex-1 border border-border/70 rounded-xl overflow-hidden bg-card shadow-sm min-w-0">
+            <main className="border-border/70 bg-card min-w-0 flex-1 overflow-hidden rounded-xl border shadow-sm">
               <OnetDetailShell
                 socCode={selectedSoc}
                 activeDetailTab={activeDetailTab}
@@ -163,7 +169,7 @@ function OnetBrowserWorkspace() {
 
       {/* Mode 2: Analytics View */}
       {activeTab === 'analytics' && (
-        <div className="flex-1 overflow-hidden min-h-0">
+        <div className="min-h-0 flex-1 overflow-hidden">
           <OnetAnalyticsView
             onSwitchToExplorer={() => guardedSetTab('explorer')}
             onSelectOccupation={(socCode, subTab = 'overview') => {
@@ -184,14 +190,15 @@ function OnetBrowserWorkspace() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <div className="bg-amber-500/10 text-amber-600 flex size-10 items-center justify-center rounded-full mb-1">
+            <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-amber-500/10 text-amber-600">
               <AlertTriangle className="size-5" />
             </div>
             <AlertDialogTitle className="text-ink text-base">
               Thay đổi chưa được lưu
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs text-ink-muted leading-relaxed">
-              Bạn đang có các thay đổi chưa được lưu trên bảng ánh xạ SFIA. Nếu rời đi bây giờ, toàn bộ chỉnh sửa này sẽ bị mất.
+            <AlertDialogDescription className="text-ink-muted text-xs leading-relaxed">
+              Bạn đang có các thay đổi chưa được lưu trên bảng ánh xạ SFIA. Nếu
+              rời đi bây giờ, toàn bộ chỉnh sửa này sẽ bị mất.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -218,7 +225,6 @@ function OnetBrowserWorkspace() {
     </div>
   )
 }
-
 
 export default function OnetAdminPage() {
   return (

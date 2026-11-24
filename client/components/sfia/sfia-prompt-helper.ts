@@ -10,7 +10,9 @@ export function generateSfiaRubricMarkdownPrompt(
   selectedLevel: number
 ): string {
   const levelDef = SFIA_LEVEL_DEFINITIONS[selectedLevel]
-  const statement = skillDetail.skillLevels.find((sl) => sl.levelId === selectedLevel)
+  const statement = skillDetail.skillLevels.find(
+    (sl) => sl.levelId === selectedLevel
+  )
   const categoryName = getCategoryName(skillDetail.categoryCode)
 
   const prompt = `---
@@ -77,7 +79,9 @@ export function generateSfiaRubricJsonSchema(
   skillDetail: SfiaSkillDetail,
   selectedLevel: number
 ): string {
-  const statement = skillDetail.skillLevels.find((sl) => sl.levelId === selectedLevel)
+  const statement = skillDetail.skillLevels.find(
+    (sl) => sl.levelId === selectedLevel
+  )
   const levelDef = SFIA_LEVEL_DEFINITIONS[selectedLevel]
 
   const schema = {

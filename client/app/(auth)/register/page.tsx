@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import RegisterClient from './RegisterClient'
+import RegisterClient from './_components/RegisterClient'
 
 export const metadata: Metadata = {
   title: 'Đăng ký | InterviewCoach',

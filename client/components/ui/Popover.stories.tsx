@@ -1,10 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { Button } from './Button'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from './Popover'
+import { Popover, PopoverContent, PopoverTrigger } from './Popover'
 
 const meta: Meta<typeof Popover> = {
   title: 'UI/Overlay/Popover',
@@ -12,7 +8,7 @@ const meta: Meta<typeof Popover> = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <div className="p-10 flex items-center justify-center min-h-[300px]">
+      <div className="flex min-h-[300px] items-center justify-center p-10">
         <Story />
       </div>
     ),
@@ -32,7 +28,7 @@ export const Default: Story = {
         <div className="grid gap-4">
           <div className="space-y-2">
             <h4 className="font-medium leading-none">Dimensions</h4>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Set the dimensions for the layer.
             </p>
           </div>

@@ -1,9 +1,23 @@
-import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
-import { Progress } from '@/components/ui/Progress'
-import { Sparkles, AlertCircle, Award, Cpu } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import {
+  Badge,
+  Box,
+  Card,
+  Group,
+  Paper,
+  Progress,
+  SimpleGrid,
+  Stack,
+  Text,
+  ThemeIcon,
+} from '@mantine/core'
+import {
+  IconAlertCircle,
+  IconAward,
+  IconCpu,
+  IconSparkles,
+} from '@tabler/icons-react'
 import type { SkillBreakdownItem } from '@/types'
+import classes from './SkillsBreakdownCard.module.css'
 
 export interface SkillsBreakdownCardProps {
   skills?: SkillBreakdownItem[]
@@ -13,126 +27,164 @@ export interface SkillsBreakdownCardProps {
 export function SkillsBreakdownCard({
   skills = [],
   className,
-}: SkillsBreakdownCardProps) {
+}: Readonly<SkillsBreakdownCardProps>) {
   if (!skills || skills.length === 0) {
     return null
   }
 
   return (
-    <div className={cn('flex flex-col gap-5', className)}>
-      <div className="flex items-center gap-2">
-        <div className="bg-brand-subtle text-brand-subtle-fg flex size-8 items-center justify-center rounded-lg">
-          <Award className="size-4" aria-hidden="true" />
-        </div>
-        <h3 className="text-ink text-lg font-bold">
+    <Stack gap="md" className={className}>
+      <Group gap="xs">
+        <ThemeIcon size={32} radius="md" color="brand" variant="light">
+          <IconAward size={18} aria-hidden="true" />
+        </ThemeIcon>
+        <Text size="lg" fw={700}>
           Chi Tiết Đánh Giá Từng Năng Lực (Skills Breakdown)
-        </h3>
-      </div>
+        </Text>
+      </Group>
 
-      <div className="grid grid-cols-1 gap-5">
+      <Stack gap="md">
         {skills.map((skill) => {
           const isPassed = skill.status === 'passed'
 
           return (
-            <Card
-              key={skill.skillCode}
-              className="border-border/70 flex flex-col gap-4 p-5 transition-shadow"
-            >
-              {/* Header */}
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className="font-mono text-xs font-semibold">
-                      {skill.skillCode}
-                    </Badge>
-                    <h4 className="text-ink text-base font-bold">
-                      {skill.skillName}
-                    </h4>
-                  </div>
+            <Card key={skill.skillCode} withBorder radius="md" p="lg">
+              <Stack gap="md">
+                <Group justify="space-between" align="flex-start" wrap="wrap">
+                  <Stack gap={4}>
+                    <Group gap="xs" wrap="wrap">
+                      <Badge
+                        variant="outline"
+                        size="sm"
+                        ff="monospace"
+                        fw={600}
+                      >
+                        {skill.skillCode}
+                      </Badge>
+                      <Text size="md" fw={700}>
+                        {skill.skillName}
+                      </Text>
+                    </Group>
 
-                  {/* Tech stack chips */}
-                  {skill.techContext && skill.techContext.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                      <span className="text-ink-muted flex items-center gap-1 text-xs">
-                        <Cpu className="size-3 text-brand" aria-hidden="true" />
-                        O*NET Tech:
-                      </span>
-                      {skill.techContext.map((tech) => (
-                        <Badge
-                          key={tech}
-                          variant="secondary"
-                          className="px-2 py-0.5 text-xs font-normal"
-                        >
-                          {tech}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {skill.techContext && skill.techContext.length > 0 && (
+                      <Group gap={6} wrap="wrap" mt={4}>
+                        <Group gap={4}>
+                          <IconCpu
+                            size={14}
+                            color="var(--mantine-color-brand-filled)"
+                            aria-hidden="true"
+                          />
+                          <Text size="xs" c="dimmed">
+                            O*NET Tech:
+                          </Text>
+                        </Group>
+                        {skill.techContext.map((tech) => (
+                          <Badge
+                            key={tech}
+                            variant="light"
+                            color="neutral"
+                            size="xs"
+                          >
+                            {tech}
+                          </Badge>
+                        ))}
+                      </Group>
+                    )}
+                  </Stack>
 
-                {/* Status Badge */}
-                <Badge
-                  variant={isPassed ? 'success' : 'warning'}
-                  className="px-3 py-1 text-xs font-medium"
-                >
-                  {isPassed ? 'Đạt chuẩn' : 'Cần cải thiện (Gap)'}
-                </Badge>
-              </div>
+                  <Badge
+                    variant="light"
+                    color={isPassed ? 'success' : 'warning'}
+                    size="md"
+                  >
+                    {isPassed ? 'Đạt chuẩn' : 'Cần cải thiện (Gap)'}
+                  </Badge>
+                </Group>
 
-              {/* Score & Progress */}
-              <div className="bg-surface-raised/60 border-border/50 flex flex-col gap-2 rounded-xl border p-3.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-ink-muted font-medium">
-                    Mức độ thành thạo chứng minh:
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-ink-muted">
-                      Cấp độ: <strong className="text-ink tabular-nums">Level {skill.demonstratedLevel}</strong> / Level {skill.targetLevel}
-                    </span>
-                    <span className="text-ink-muted">•</span>
-                    <span className="text-ink font-bold tabular-nums">
-                      {skill.score}/100 điểm
-                    </span>
-                  </div>
-                </div>
+                <Paper withBorder radius="md" p="sm">
+                  <Stack gap="xs">
+                    <Group justify="space-between" align="center" wrap="wrap">
+                      <Text size="xs" fw={500} c="dimmed">
+                        Mức độ thành thạo chứng minh:
+                      </Text>
+                      <Group gap="xs">
+                        <Text size="xs" c="dimmed">
+                          Cấp độ:{' '}
+                          <Text
+                            component="span"
+                            fw={700}
+                            c="var(--mantine-color-text)"
+                          >
+                            Level {skill.demonstratedLevel}
+                          </Text>{' '}
+                          / Level {skill.targetLevel}
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          •
+                        </Text>
+                        <Text size="xs" fw={700}>
+                          {skill.score}/100 điểm
+                        </Text>
+                      </Group>
+                    </Group>
 
-                <Progress
-                  value={skill.score}
-                  variant={isPassed ? 'success' : 'warning'}
-                  size="md"
-                  aria-label={`Điểm kỹ năng ${skill.skillName}: ${skill.score} trên 100`}
-                />
-              </div>
+                    <Progress
+                      value={skill.score}
+                      color={isPassed ? 'success' : 'warning'}
+                      size="md"
+                      radius="xl"
+                      aria-label={`Điểm kỹ năng ${skill.skillName}: ${skill.score} trên 100`}
+                    />
+                  </Stack>
+                </Paper>
 
-              {/* Two Feedback Boxes: Strengths & Improvement */}
-              <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
-                {/* Strengths */}
-                <div className="bg-surface-raised border-success rounded-xl border-l-4 p-3.5">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-success">
-                    <Sparkles className="size-3.5" aria-hidden="true" />
-                    <span>Điểm Mạnh Ghi Nhận</span>
-                  </div>
-                  <p className="text-ink mt-1.5 text-xs leading-relaxed">
-                    {skill.strengths || 'Ứng viên hoàn thành cơ bản câu hỏi.'}
-                  </p>
-                </div>
+                <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                  <Box
+                    className={classes.feedbackBox}
+                    mod={{ variant: 'strength' }}
+                  >
+                    <Group gap={6} mb={4}>
+                      <IconSparkles
+                        size={14}
+                        color="var(--mantine-color-success-filled)"
+                        aria-hidden="true"
+                      />
+                      <Text size="xs" fw={600} c="success">
+                        Điểm Mạnh Ghi Nhận
+                      </Text>
+                    </Group>
+                    <Text size="xs" lh="md">
+                      {skill.strengths || 'Ứng viên hoàn thành cơ bản câu hỏi.'}
+                    </Text>
+                  </Box>
 
-                {/* Areas for Improvement */}
-                <div className="bg-surface-raised border-warning rounded-xl border-l-4 p-3.5">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-warning">
-                    <AlertCircle className="size-3.5" aria-hidden="true" />
-                    <span>Điểm Cần Hoàn Thiện</span>
-                  </div>
-                  <p className="text-ink mt-1.5 text-xs leading-relaxed">
-                    {skill.areasForImprovement ||
-                      'Tiếp tục củng cố kiến thức chuyên sâu để đạt chuẩn cao hơn.'}
-                  </p>
-                </div>
-              </div>
+                  <Box
+                    className={classes.feedbackBox}
+                    mod={{ variant: 'improvement' }}
+                  >
+                    <Group gap={6} mb={4}>
+                      <IconAlertCircle
+                        size={14}
+                        color="var(--mantine-color-warning-filled)"
+                        aria-hidden="true"
+                      />
+                      <Text size="xs" fw={600} c="warning">
+                        Điểm Cần Hoàn Thiện
+                      </Text>
+                    </Group>
+                    <Text size="xs" lh="md">
+                      {skill.areasForImprovement ||
+                        'Tiếp tục củng cố kiến thức chuyên sâu để đạt chuẩn cao hơn.'}
+                    </Text>
+                  </Box>
+                </SimpleGrid>
+              </Stack>
             </Card>
           )
         })}
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   )
 }
+
+export default SkillsBreakdownCard

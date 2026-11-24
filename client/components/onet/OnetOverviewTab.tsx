@@ -19,10 +19,7 @@ import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import type {
-  OnetOccupationDetail,
-  OnetDetailSubTab,
-} from '@/types'
+import type { OnetOccupationDetail, OnetDetailSubTab } from '@/types'
 
 export interface OnetOverviewTabProps {
   detail: OnetOccupationDetail
@@ -62,7 +59,7 @@ export function OnetOverviewTab({
         {/* Tool Count Card */}
         <Card
           onClick={() => onSelectDetailTab('tech')}
-          className="group pressable cursor-pointer p-3 transition-all hover:border-brand/50 hover:shadow-elevation-2"
+          className="pressable hover:border-brand/50 hover:shadow-elevation-2 group cursor-pointer p-3 transition-all"
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
@@ -86,14 +83,14 @@ export function OnetOverviewTab({
               </span>
               <span className="text-ink-faint text-xs">tools</span>
             </div>
-            <ArrowRight className="text-ink-muted opacity-0 transition-opacity group-hover:opacity-100 size-3" />
+            <ArrowRight className="text-ink-muted size-3 opacity-0 transition-opacity group-hover:opacity-100" />
           </div>
         </Card>
 
         {/* SFIA Count Card */}
         <Card
           onClick={() => onSelectDetailTab('sfia')}
-          className="group pressable cursor-pointer p-3 transition-all hover:border-success/50 hover:shadow-elevation-2"
+          className="pressable hover:border-success/50 hover:shadow-elevation-2 group cursor-pointer p-3 transition-all"
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
@@ -117,14 +114,14 @@ export function OnetOverviewTab({
               </span>
               <span className="text-ink-faint text-xs">kỹ năng</span>
             </div>
-            <ArrowRight className="text-ink-muted opacity-0 transition-opacity group-hover:opacity-100 size-3" />
+            <ArrowRight className="text-ink-muted size-3 opacity-0 transition-opacity group-hover:opacity-100" />
           </div>
         </Card>
 
         {/* Tasks Count Card */}
         <Card
           onClick={() => onSelectDetailTab('tasks')}
-          className="group pressable cursor-pointer p-3 transition-all hover:border-brand/50 hover:shadow-elevation-2"
+          className="pressable hover:border-brand/50 hover:shadow-elevation-2 group cursor-pointer p-3 transition-all"
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
@@ -148,14 +145,14 @@ export function OnetOverviewTab({
               </span>
               <span className="text-ink-faint text-xs">tasks</span>
             </div>
-            <ArrowRight className="text-ink-muted opacity-0 transition-opacity group-hover:opacity-100 size-3" />
+            <ArrowRight className="text-ink-muted size-3 opacity-0 transition-opacity group-hover:opacity-100" />
           </div>
         </Card>
 
         {/* Alternate Titles Count Card */}
         <Card
           onClick={() => onSelectDetailTab('titles')}
-          className="group pressable cursor-pointer p-3 transition-all hover:border-brand/50 hover:shadow-elevation-2"
+          className="pressable hover:border-brand/50 hover:shadow-elevation-2 group cursor-pointer p-3 transition-all"
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
@@ -179,7 +176,7 @@ export function OnetOverviewTab({
               </span>
               <span className="text-ink-faint text-xs">titles</span>
             </div>
-            <ArrowRight className="text-ink-muted opacity-0 transition-opacity group-hover:opacity-100 size-3" />
+            <ArrowRight className="text-ink-muted size-3 opacity-0 transition-opacity group-hover:opacity-100" />
           </div>
         </Card>
       </div>
@@ -194,7 +191,7 @@ export function OnetOverviewTab({
             variant="ghost"
             size="sm"
             onClick={handleCopyDescription}
-            className="h-7 gap-1.5 px-2 text-xs text-ink-muted hover:text-ink"
+            className="text-ink-muted hover:text-ink h-7 gap-1.5 px-2 text-xs"
             aria-label="Sao chép mô tả vai trò nghề nghiệp"
           >
             {copiedDesc ? (
@@ -210,30 +207,33 @@ export function OnetOverviewTab({
             )}
           </Button>
         </div>
-        <p className="text-ink/90 mt-2.5 text-xs sm:text-sm leading-relaxed">
+        <p className="text-ink/90 mt-2.5 text-xs leading-relaxed sm:text-sm">
           {detail.description}
         </p>
       </Card>
 
       {/* Job Zone Card with 5-Step Visual Stepper */}
-      <Card className="p-3.5 sm:p-4 space-y-3.5">
+      <Card className="space-y-3.5 p-3.5 sm:p-4">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5">
           <div className="flex items-center gap-2">
             <GraduationCap className="text-brand size-4" />
-            <h2 className="text-ink text-xs sm:text-sm font-semibold">
+            <h2 className="text-ink text-xs font-semibold sm:text-sm">
               Job Zone {detail.jobZone.zone}: {detail.jobZone.name}
             </h2>
           </div>
-          <Badge variant="outline" className="text-[11px] font-mono tabular-nums">
+          <Badge
+            variant="outline"
+            className="font-mono text-[11px] tabular-nums"
+          >
             Cấp độ {detail.jobZone.zone} / 5
           </Badge>
         </div>
 
         {/* 5-Step Visual Gauge Bar */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] text-ink-muted">
+          <div className="text-ink-muted flex items-center justify-between text-[11px]">
             <span>Mức độ đào tạo & yêu cầu kinh nghiệm</span>
-            <span className="font-semibold text-brand">
+            <span className="text-brand font-semibold">
               {JOB_ZONE_LABELS[detail.jobZone.zone - 1]}
             </span>
           </div>
@@ -250,16 +250,16 @@ export function OnetOverviewTab({
                       'h-2 rounded-full transition-all',
                       isActive
                         ? isCurrent
-                          ? 'bg-brand ring-2 ring-brand/30'
+                          ? 'bg-brand ring-brand/30 ring-2'
                           : 'bg-brand/70'
-                        : 'bg-surface-inset border border-border/80'
+                        : 'bg-surface-inset border-border/80 border'
                     )}
                   />
                   <span
                     className={cn(
-                      'text-[10px] text-center font-mono tabular-nums',
+                      'text-center font-mono text-[10px] tabular-nums',
                       isCurrent
-                        ? 'font-bold text-brand'
+                        ? 'text-brand font-bold'
                         : isActive
                           ? 'text-ink-muted'
                           : 'text-ink-faint'
@@ -274,9 +274,9 @@ export function OnetOverviewTab({
         </div>
 
         {/* 3 Job Zone Specific Requirements */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 pt-1 border-t border-border/60">
+        <div className="border-border/60 grid grid-cols-1 gap-3 border-t pt-1 sm:grid-cols-3">
           <div className="space-y-0.5">
-            <div className="flex items-center gap-1 text-ink-muted text-[11px]">
+            <div className="text-ink-muted flex items-center gap-1 text-[11px]">
               <GraduationCap className="size-3" />
               <span>Trình độ học vấn</span>
             </div>
@@ -286,7 +286,7 @@ export function OnetOverviewTab({
           </div>
 
           <div className="space-y-0.5">
-            <div className="flex items-center gap-1 text-ink-muted text-[11px]">
+            <div className="text-ink-muted flex items-center gap-1 text-[11px]">
               <Briefcase className="size-3" />
               <span>Kinh nghiệm yêu cầu</span>
             </div>
@@ -296,7 +296,7 @@ export function OnetOverviewTab({
           </div>
 
           <div className="space-y-0.5">
-            <div className="flex items-center gap-1 text-ink-muted text-[11px]">
+            <div className="text-ink-muted flex items-center gap-1 text-[11px]">
               <Clock className="size-3" />
               <span>Đào tạo tại chỗ</span>
             </div>
@@ -311,11 +311,14 @@ export function OnetOverviewTab({
       <div className="border-brand/30 bg-brand/5 flex items-start gap-2.5 rounded-xl border p-3">
         <Info className="text-brand mt-0.5 size-4 shrink-0" />
         <div className="space-y-0.5 text-xs leading-relaxed">
-          <p className="text-brand font-semibold text-[11px]">
+          <p className="text-brand text-[11px] font-semibold">
             Chuẩn hóa Đánh giá Phỏng vấn AI
           </p>
           <p className="text-ink-muted text-[11px]">
-            Dữ liệu O*NET được AI Interview Coach đối chiếu để phân tích JD thực tế, tự động sinh ngân hàng câu hỏi tình huống phù hợp với cấp độ Job Zone {detail.jobZone.zone}, và đánh giá năng lực ứng viên theo các kỹ năng SFIA đã ánh xạ.
+            Dữ liệu O*NET được AI Interview Coach đối chiếu để phân tích JD thực
+            tế, tự động sinh ngân hàng câu hỏi tình huống phù hợp với cấp độ Job
+            Zone {detail.jobZone.zone}, và đánh giá năng lực ứng viên theo các
+            kỹ năng SFIA đã ánh xạ.
           </p>
         </div>
       </div>

@@ -9,7 +9,8 @@ const mockSession: Session = {
   contextPackId: 'VN',
   numQuestions: 5,
   jobTitle: 'Frontend Developer',
-  jobDescription: 'Tên công ty: Tech Corp\\nVị trí tuyển dụng: Frontend\\nTech Stack: React, TypeScript\\nYêu cầu:\\n- 2 năm kinh nghiệm\\nNội dung công việc:\\n- Code UI',
+  jobDescription:
+    'Tên công ty: Tech Corp\\nVị trí tuyển dụng: Frontend\\nTech Stack: React, TypeScript\\nYêu cầu:\\n- 2 năm kinh nghiệm\\nNội dung công việc:\\n- Code UI',
   status: 'completed',
   createdAt: '2023-10-01T10:00:00Z',
   durationMin: 30,

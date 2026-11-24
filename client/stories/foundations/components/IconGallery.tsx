@@ -11,13 +11,29 @@ interface IconItem {
 
 const COMMON_ICONS: IconItem[] = [
   // Navigation & Layout
-  { name: 'LayoutDashboard', component: LucideIcons.LayoutDashboard, category: 'Navigation' },
+  {
+    name: 'LayoutDashboard',
+    component: LucideIcons.LayoutDashboard,
+    category: 'Navigation',
+  },
   { name: 'Calendar', component: LucideIcons.Calendar, category: 'Navigation' },
   { name: 'FileText', component: LucideIcons.FileText, category: 'Navigation' },
   { name: 'Settings', component: LucideIcons.Settings, category: 'Navigation' },
-  { name: 'ChevronRight', component: LucideIcons.ChevronRight, category: 'Navigation' },
-  { name: 'ChevronDown', component: LucideIcons.ChevronDown, category: 'Navigation' },
-  { name: 'ArrowRight', component: LucideIcons.ArrowRight, category: 'Navigation' },
+  {
+    name: 'ChevronRight',
+    component: LucideIcons.ChevronRight,
+    category: 'Navigation',
+  },
+  {
+    name: 'ChevronDown',
+    component: LucideIcons.ChevronDown,
+    category: 'Navigation',
+  },
+  {
+    name: 'ArrowRight',
+    component: LucideIcons.ArrowRight,
+    category: 'Navigation',
+  },
 
   // Interview & Audio/Video
   { name: 'Video', component: LucideIcons.Video, category: 'Interview' },
@@ -36,9 +52,17 @@ const COMMON_ICONS: IconItem[] = [
   { name: 'Copy', component: LucideIcons.Copy, category: 'Action' },
   { name: 'Search', component: LucideIcons.Search, category: 'Action' },
   { name: 'Check', component: LucideIcons.Check, category: 'Feedback' },
-  { name: 'CheckCircle', component: LucideIcons.CheckCircle, category: 'Feedback' },
+  {
+    name: 'CheckCircle',
+    component: LucideIcons.CheckCircle,
+    category: 'Feedback',
+  },
   { name: 'XCircle', component: LucideIcons.XCircle, category: 'Feedback' },
-  { name: 'AlertTriangle', component: LucideIcons.AlertTriangle, category: 'Feedback' },
+  {
+    name: 'AlertTriangle',
+    component: LucideIcons.AlertTriangle,
+    category: 'Feedback',
+  },
   { name: 'Info', component: LucideIcons.Info, category: 'Feedback' },
   { name: 'Sun', component: LucideIcons.Sun, category: 'Theme' },
   { name: 'Moon', component: LucideIcons.Moon, category: 'Theme' },
@@ -64,14 +88,14 @@ export const IconGallery: React.FC = () => {
   return (
     <div className="my-6 space-y-6 font-sans">
       {/* Search Input */}
-      <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-3">
-        <LucideIcons.Search className="w-4 h-4 text-slate-400" />
+      <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+        <LucideIcons.Search className="h-4 w-4 text-slate-400" />
         <input
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Tìm kiếm icon (VD: Video, Search, User, Bot)..."
-          className="w-full text-sm bg-transparent text-slate-900 dark:text-slate-100 focus:outline-none"
+          className="w-full bg-transparent text-sm text-slate-900 focus:outline-none dark:text-slate-100"
         />
         {searchTerm && (
           <button
@@ -84,7 +108,7 @@ export const IconGallery: React.FC = () => {
       </div>
 
       {/* Icon Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {filteredIcons.map((icon) => {
           const IconComp = icon.component
           const isCopied = copiedName === icon.name
@@ -93,23 +117,25 @@ export const IconGallery: React.FC = () => {
             <button
               key={icon.name}
               onClick={() => handleCopy(icon.name)}
-              className="group relative flex flex-col items-center p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 bg-white dark:bg-slate-900 transition hover:shadow-md text-center"
+              className="group relative flex flex-col items-center rounded-xl border border-slate-200 bg-white p-4 text-center transition hover:border-blue-500 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
             >
-              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 group-hover:bg-blue-50 dark:group-hover:bg-blue-950 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition mb-2">
-                <IconComp className="w-6 h-6" />
+              <div className="mb-2 rounded-lg bg-slate-100 p-3 text-slate-700 transition group-hover:bg-blue-50 group-hover:text-blue-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-blue-950 dark:group-hover:text-blue-400">
+                <IconComp className="h-6 w-6" />
               </div>
-              <span className="text-xs font-mono font-medium text-slate-800 dark:text-slate-200 truncate w-full">
+              <span className="w-full truncate font-mono text-xs font-medium text-slate-800 dark:text-slate-200">
                 {icon.name}
               </span>
-              <span className="text-[10px] text-slate-400 mt-0.5">{icon.category}</span>
+              <span className="mt-0.5 text-[10px] text-slate-400">
+                {icon.category}
+              </span>
 
               {isCopied ? (
-                <span className="absolute top-2 right-2 bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded font-mono">
+                <span className="absolute right-2 top-2 rounded bg-emerald-500 px-1.5 py-0.5 font-mono text-[10px] text-white">
                   Copied!
                 </span>
               ) : (
-                <span className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-[10px] text-slate-400 transition">
-                  <LucideIcons.Copy className="w-3 h-3" />
+                <span className="absolute right-2 top-2 text-[10px] text-slate-400 opacity-0 transition group-hover:opacity-100">
+                  <LucideIcons.Copy className="h-3 w-3" />
                 </span>
               )}
             </button>
@@ -118,7 +144,7 @@ export const IconGallery: React.FC = () => {
       </div>
 
       {filteredIcons.length === 0 && (
-        <div className="text-center py-8 text-slate-400 text-sm">
+        <div className="py-8 text-center text-sm text-slate-400">
           Không tìm thấy icon phù hợp với &quot;{searchTerm}&quot;
         </div>
       )}

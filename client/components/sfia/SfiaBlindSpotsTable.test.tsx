@@ -1,6 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { SfiaBlindSpotsTable, type SfiaBlindSpotsTableProps } from './SfiaBlindSpotsTable'
+import {
+  SfiaBlindSpotsTable,
+  type SfiaBlindSpotsTableProps,
+} from './SfiaBlindSpotsTable'
 import {
   MOCK_SFIA_CATEGORIES,
   MOCK_SFIA_SKILL_SUMMARIES,
@@ -94,11 +97,15 @@ describe('SfiaBlindSpotsTable Component', () => {
     )
 
     // Active chips
-    expect(screen.getByText(/Category: Strategy and architecture/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Category: Strategy and architecture/i)
+    ).toBeInTheDocument()
     expect(screen.getByText(/Level 4/i)).toBeInTheDocument()
 
     // Clear all filters button
-    const clearAllButton = screen.getByRole('button', { name: /Clear all filters/i })
+    const clearAllButton = screen.getByRole('button', {
+      name: /Clear all filters/i,
+    })
     fireEvent.click(clearAllButton)
     expect(onSelectCategoryFilter).toHaveBeenCalledWith(null)
     expect(onSelectLevelFilter).toHaveBeenCalledWith(null)
@@ -113,7 +120,9 @@ describe('SfiaBlindSpotsTable Component', () => {
       />
     )
 
-    const createButtons = screen.getAllByRole('button', { name: /Create Question/i })
+    const createButtons = screen.getAllByRole('button', {
+      name: /Create Question/i,
+    })
     expect(createButtons.length).toBeGreaterThan(0)
 
     fireEvent.click(createButtons[0])
@@ -123,10 +132,7 @@ describe('SfiaBlindSpotsTable Component', () => {
   it('triggers onSelectSkill when clicking a skill code', () => {
     const onSelectSkill = vi.fn()
     render(
-      <SfiaBlindSpotsTable
-        {...defaultProps}
-        onSelectSkill={onSelectSkill}
-      />
+      <SfiaBlindSpotsTable {...defaultProps} onSelectSkill={onSelectSkill} />
     )
 
     // First page contains EMRG
@@ -137,12 +143,7 @@ describe('SfiaBlindSpotsTable Component', () => {
 
   it('triggers onExportCsv when clicking export button', () => {
     const onExportCsv = vi.fn()
-    render(
-      <SfiaBlindSpotsTable
-        {...defaultProps}
-        onExportCsv={onExportCsv}
-      />
-    )
+    render(<SfiaBlindSpotsTable {...defaultProps} onExportCsv={onExportCsv} />)
 
     const exportButton = screen.getByRole('button', {
       name: /Export Blind Spots CSV/i,
@@ -160,7 +161,9 @@ describe('SfiaBlindSpotsTable Component', () => {
     expect(
       screen.getByText('No matching blind spots found')
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Reset filters/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Reset filters/i })
+    ).toBeInTheDocument()
   })
 
   it('renders celebration box when there are 0 blind spots in skills list', () => {
@@ -169,10 +172,7 @@ describe('SfiaBlindSpotsTable Component', () => {
     )
 
     render(
-      <SfiaBlindSpotsTable
-        {...defaultProps}
-        skills={skillsWithoutBlindSpots}
-      />
+      <SfiaBlindSpotsTable {...defaultProps} skills={skillsWithoutBlindSpots} />
     )
 
     expect(

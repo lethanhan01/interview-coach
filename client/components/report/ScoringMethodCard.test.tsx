@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen } from '@test-utils'
+import { axe } from 'jest-axe'
 import { describe, expect, it } from 'vitest'
 import ScoringMethodCard from './ScoringMethodCard'
 
@@ -28,5 +29,12 @@ describe('ScoringMethodCard', () => {
     expect(
       screen.getByText(/3\. Tính Điểm Tất Định 0-100% & Quy Tắc Bỏ Qua/i)
     ).toBeInTheDocument()
+  })
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(
+      <ScoringMethodCard contextPackId="VN" sessionType="technical" />
+    )
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

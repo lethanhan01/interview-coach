@@ -4,7 +4,7 @@ import {
   mockUnifiedReport,
   mockLegacyReport,
   mockSkippedTurnsReport,
-} from '../../tests/fixtures/report.fixture'
+} from '@/test-utils/fixtures/report.fixture'
 
 const meta: Meta<typeof AnnotatedTranscript> = {
   title: 'Feature/Report/AnnotatedTranscript',

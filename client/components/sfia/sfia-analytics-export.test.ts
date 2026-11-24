@@ -140,10 +140,16 @@ describe('sfia-analytics-export utility', () => {
       const originalCreateObjectURL = window.URL.createObjectURL
       const originalRevokeObjectURL = window.URL.revokeObjectURL
 
-      window.URL.createObjectURL = vi.fn().mockReturnValue('blob:http://localhost/test-uuid')
+      window.URL.createObjectURL = vi
+        .fn()
+        .mockReturnValue('blob:http://localhost/test-uuid')
       window.URL.revokeObjectURL = vi.fn()
 
-      const result = downloadSfiaBlindSpotsCsv(mockSkills, mockCategories, 'test_blind_spots.csv')
+      const result = downloadSfiaBlindSpotsCsv(
+        mockSkills,
+        mockCategories,
+        'test_blind_spots.csv'
+      )
       expect(result).toBe(true)
       expect(window.URL.createObjectURL).toHaveBeenCalled()
 

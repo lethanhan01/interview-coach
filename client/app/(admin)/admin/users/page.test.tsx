@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, fireEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import AdminUsersPage from './page'
-import { queryKeys } from '@/lib/query-client'
+import { queryKeys } from '@/queries/keys'
 import { userManagementService } from '@/services/admin.service'
 import type { AdminUser } from '@/types'
 

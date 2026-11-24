@@ -1,9 +1,10 @@
 import { render, screen, userEvent, waitFor } from '@test-utils'
-import { expect, it, describe, vi, beforeEach } from 'vitest'
-import VoiceRecorder from '../../components/interview/VoiceRecorder'
-import { mediaService } from '@/services'
+import { axe } from 'jest-axe'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mediaService } from '@/services/media.service'
+import VoiceRecorder from './VoiceRecorder'
 
-vi.mock('@/services', () => ({
+vi.mock('@/services/media.service', () => ({
   mediaService: {
     transcribeAudio: vi.fn(),
   },
@@ -17,10 +18,10 @@ class MockSpeechRecognition {
   start = vi.fn()
   stop = vi.fn()
   abort = vi.fn()
-  onstart = null
-  onresult = null
-  onerror = null
-  onend = null
+  onstart: (() => void) | null = null
+  onresult: ((event: unknown) => void) | null = null
+  onerror: ((event: unknown) => void) | null = null
+  onend: (() => void) | null = null
 }
 
 class MockAudioContext {
@@ -213,6 +214,51 @@ describe('VoiceRecorder', () => {
     vi.unstubAllGlobals()
   })
 
+  it('renders waveform with data-level without inline style and notifies onBusyChange', async () => {
+    class MockMediaRecorder {
+      static isTypeSupported = vi.fn().mockReturnValue(true)
+      mimeType = 'audio/webm;codecs=opus'
+      state = 'inactive'
+      start() {
+        this.state = 'recording'
+      }
+      stop() {
+        this.state = 'inactive'
+      }
+    }
+
+    vi.stubGlobal('MediaRecorder', MockMediaRecorder)
+    mockGetUserMedia.mockResolvedValueOnce({
+      getTracks: () => [{ stop: vi.fn() }],
+    })
+
+    const mockBusyChange = vi.fn()
+    const { container } = render(
+      <VoiceRecorder onSubmit={vi.fn()} onBusyChange={mockBusyChange} />
+    )
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /Bắt đầu trả lời/i })
+    )
+
+    await waitFor(() => {
+      expect(mockBusyChange).toHaveBeenCalledWith(true)
+    })
+
+    const waveformImg = screen.getByRole('img', {
+      name: 'Biểu đồ sóng âm microphone',
+    })
+    expect(waveformImg).toBeInTheDocument()
+
+    const bars = container.querySelectorAll('[data-level]')
+    expect(bars.length).toBeGreaterThan(0)
+    bars.forEach((bar) => {
+      expect(bar.getAttribute('style')).toBeNull()
+    })
+
+    vi.unstubAllGlobals()
+  })
+
   it('shows error alert and resets to idle when transcription mutation fails without fallback', async () => {
     class MockMediaRecorder {
       static isTypeSupported = vi.fn().mockReturnValue(true)
@@ -222,6 +268,9 @@ describe('VoiceRecorder', () => {
       onstop: (() => void) | null = null
       start() {
         this.state = 'recording'
+        this.ondataavailable?.({
+          data: new Blob(['audio-data'], { type: this.mimeType }),
+        })
       }
       stop() {
         this.state = 'inactive'
@@ -256,5 +305,18 @@ describe('VoiceRecorder', () => {
     })
 
     vi.unstubAllGlobals()
+  })
+
+  it('has no accessibility violations in idle and reviewing states', async () => {
+    const { container, rerender } = render(<VoiceRecorder onSubmit={vi.fn()} />)
+    expect(await axe(container)).toHaveNoViolations()
+
+    rerender(
+      <VoiceRecorder
+        onSubmit={vi.fn()}
+        initialDraft="Đây là câu trả lời nháp hợp lệ để kiểm tra a11y."
+      />
+    )
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

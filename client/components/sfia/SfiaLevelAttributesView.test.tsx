@@ -32,7 +32,8 @@ describe('SfiaLevelAttributesView', () => {
       name: 'Enable',
       nameVi: 'Chủ động & Tạo điều kiện',
       essence: 'Hướng dẫn và tạo điều kiện cho người khác hoàn thành mục tiêu.',
-      description: 'Chịu trách nhiệm về mảng công việc lớn hoặc nhóm kỹ thuật nhỏ.',
+      description:
+        'Chịu trách nhiệm về mảng công việc lớn hoặc nhóm kỹ thuật nhỏ.',
     },
     {
       levelId: 5,
@@ -154,24 +155,43 @@ describe('SfiaLevelAttributesView', () => {
 
   it('renders all 7 level buttons on the stepper', () => {
     render(<SfiaLevelAttributesView {...defaultProps} />)
-    expect(screen.getByRole('button', { name: /Select Level 1 - Follow/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Select Level 3 - Apply/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Select Level 7 - Set strategy \/ Inspire/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Select Level 1 - Follow/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Select Level 3 - Apply/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: /Select Level 7 - Set strategy \/ Inspire/i,
+      })
+    ).toBeInTheDocument()
   })
 
   it('indicates active state on the selected level button', () => {
     render(<SfiaLevelAttributesView {...defaultProps} selectedLevel={3} />)
-    const btnL3 = screen.getByRole('button', { name: /Select Level 3 - Apply/i })
+    const btnL3 = screen.getByRole('button', {
+      name: /Select Level 3 - Apply/i,
+    })
     expect(btnL3).toHaveAttribute('aria-pressed', 'true')
 
-    const btnL4 = screen.getByRole('button', { name: /Select Level 4 - Enable/i })
+    const btnL4 = screen.getByRole('button', {
+      name: /Select Level 4 - Enable/i,
+    })
     expect(btnL4).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('calls onSelectLevel when a different level button is clicked', () => {
     const onSelectLevel = vi.fn()
-    render(<SfiaLevelAttributesView {...defaultProps} onSelectLevel={onSelectLevel} />)
-    const btnL5 = screen.getByRole('button', { name: /Select Level 5 - Ensure \/ Advise/i })
+    render(
+      <SfiaLevelAttributesView
+        {...defaultProps}
+        onSelectLevel={onSelectLevel}
+      />
+    )
+    const btnL5 = screen.getByRole('button', {
+      name: /Select Level 5 - Ensure \/ Advise/i,
+    })
     fireEvent.click(btnL5)
     expect(onSelectLevel).toHaveBeenCalledWith(5)
   })
@@ -179,8 +199,16 @@ describe('SfiaLevelAttributesView', () => {
   it('renders the Hero Card with selected level essence and description', () => {
     render(<SfiaLevelAttributesView {...defaultProps} selectedLevel={4} />)
     expect(screen.getByText(/Level 4 — Enable/i)).toBeInTheDocument()
-    expect(screen.getByText(/"Hướng dẫn và tạo điều kiện cho người khác hoàn thành mục tiêu."/i)).toBeInTheDocument()
-    expect(screen.getByText(/Chịu trách nhiệm về mảng công việc lớn hoặc nhóm kỹ thuật nhỏ./i)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /"Hướng dẫn và tạo điều kiện cho người khác hoàn thành mục tiêu."/i
+      )
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Chịu trách nhiệm về mảng công việc lớn hoặc nhóm kỹ thuật nhỏ./i
+      )
+    ).toBeInTheDocument()
   })
 
   it('renders all 5 generic attribute cards with correct level statements', () => {
@@ -192,9 +220,15 @@ describe('SfiaLevelAttributesView', () => {
     expect(screen.getByText('Knowledge')).toBeInTheDocument()
 
     // Level 3 statements
-    expect(screen.getByText('Làm việc độc lập trong phạm vi nhiệm vụ.')).toBeInTheDocument()
-    expect(screen.getByText('Ảnh hưởng đến chất lượng sản phẩm của nhóm.')).toBeInTheDocument()
-    expect(screen.getByText('Vấn đề kỹ thuật phi cấu trúc.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Làm việc độc lập trong phạm vi nhiệm vụ.')
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Ảnh hưởng đến chất lượng sản phẩm của nhóm.')
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Vấn đề kỹ thuật phi cấu trúc.')
+    ).toBeInTheDocument()
   })
 
   it('copies AI prompt rubric to clipboard when clicking copy button', async () => {
@@ -210,7 +244,13 @@ describe('SfiaLevelAttributesView', () => {
 
   it('calls onNavigateToMatrixWithLevel when clicking view skills button', () => {
     const onNavigate = vi.fn()
-    render(<SfiaLevelAttributesView {...defaultProps} selectedLevel={4} onNavigateToMatrixWithLevel={onNavigate} />)
+    render(
+      <SfiaLevelAttributesView
+        {...defaultProps}
+        selectedLevel={4}
+        onNavigateToMatrixWithLevel={onNavigate}
+      />
+    )
     const navBtn = screen.getByRole('button', { name: /View Level 4 Skills/i })
     fireEvent.click(navBtn)
     expect(onNavigate).toHaveBeenCalledWith(4)

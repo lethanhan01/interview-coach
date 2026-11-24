@@ -45,17 +45,20 @@ export function SfiaGenericAttributesView({
   // Loading Skeleton State
   if (loading) {
     return (
-      <div className={cn('flex flex-col gap-4 animate-pulse', className)}>
+      <div className={cn('flex animate-pulse flex-col gap-4', className)}>
         {/* Skeleton Top Bar */}
-        <div className="h-14 bg-card border border-border/80 rounded-xl" />
+        <div className="bg-card border-border/80 h-14 rounded-xl border" />
         {/* Skeleton Stepper */}
-        <div className="h-20 bg-card border border-border/80 rounded-xl" />
+        <div className="bg-card border-border/80 h-20 rounded-xl border" />
         {/* Skeleton Hero */}
-        <div className="h-44 bg-card border border-border/80 rounded-xl" />
+        <div className="bg-card border-border/80 h-44 rounded-xl border" />
         {/* Skeleton 5 Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-48 bg-card border border-border/80 rounded-xl" />
+            <div
+              key={i}
+              className="bg-card border-border/80 h-48 rounded-xl border"
+            />
           ))}
         </div>
       </div>
@@ -67,17 +70,17 @@ export function SfiaGenericAttributesView({
     return (
       <div
         className={cn(
-          'flex flex-col items-center justify-center p-8 bg-card border border-rose-500/30 rounded-xl text-center',
+          'bg-card flex flex-col items-center justify-center rounded-xl border border-rose-500/30 p-8 text-center',
           className
         )}
       >
-        <div className="size-12 rounded-full bg-rose-500/10 text-rose-600 flex items-center justify-center mb-3">
+        <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-600">
           <AlertCircle className="size-6" />
         </div>
-        <h3 className="text-base font-bold text-ink mb-1">
+        <h3 className="text-ink mb-1 text-base font-bold">
           Failed to load SFIA Levels & Generic Attributes
         </h3>
-        <p className="text-xs text-ink-muted max-w-md mb-4">{error}</p>
+        <p className="text-ink-muted mb-4 max-w-md text-xs">{error}</p>
         {onRetry && (
           <Button
             variant="outline"
@@ -96,32 +99,34 @@ export function SfiaGenericAttributesView({
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 min-h-0',
+        'flex min-h-0 flex-col gap-3',
         viewMode === 'matrix' ? 'h-full flex-1 overflow-hidden' : '',
         className
       )}
     >
       {/* Top Header Controls: Title & View Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 p-3 bg-card border border-border/80 rounded-xl shrink-0 shadow-xs">
+      <div className="bg-card border-border/80 shadow-xs flex shrink-0 flex-col gap-2.5 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 flex size-9 shrink-0 items-center justify-center rounded-lg border border-amber-500/20">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400">
             <SlidersHorizontal className="size-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm sm:text-base font-bold text-ink leading-tight">
+              <h2 className="text-ink text-sm font-bold leading-tight sm:text-base">
                 7 Levels of Responsibility & 5 Core Generic Attributes
               </h2>
-              <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-md px-1.5 py-0.2 text-[10px] font-semibold">
+              <span className="py-0.2 rounded-md border border-amber-500/20 bg-amber-500/10 px-1.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
                 SFIA 9
               </span>
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-ink-muted mt-0.5">
-              <span>Multi-dimensional evaluation standards for AI evaluation</span>
+            <div className="text-ink-muted mt-0.5 flex items-center gap-2 text-[11px]">
+              <span>
+                Multi-dimensional evaluation standards for AI evaluation
+              </span>
               <span>•</span>
-              <span className="font-medium text-ink">7 Levels</span>
+              <span className="text-ink font-medium">7 Levels</span>
               <span>•</span>
-              <span className="font-medium text-ink">5 Core Pillars</span>
+              <span className="text-ink font-medium">5 Core Pillars</span>
             </div>
           </div>
         </div>
@@ -130,12 +135,14 @@ export function SfiaGenericAttributesView({
         <div className="shrink-0">
           <Tabs
             value={viewMode}
-            onValueChange={(val) => onViewModeChange(val as SfiaAttributesViewMode)}
+            onValueChange={(val) =>
+              onViewModeChange(val as SfiaAttributesViewMode)
+            }
           >
             <TabsList className="bg-surface-inset h-8 p-0.5">
               <TabsTrigger
                 value="level"
-                className="gap-1.5 text-xs font-semibold px-3 py-1"
+                className="gap-1.5 px-3 py-1 text-xs font-semibold"
                 aria-label="Level-Centric View"
               >
                 <SlidersHorizontal className="size-3.5" />
@@ -143,7 +150,7 @@ export function SfiaGenericAttributesView({
               </TabsTrigger>
               <TabsTrigger
                 value="matrix"
-                className="gap-1.5 text-xs font-semibold px-3 py-1"
+                className="gap-1.5 px-3 py-1 text-xs font-semibold"
                 aria-label="Progression Matrix View"
               >
                 <Grid3X3 className="size-3.5" />
@@ -169,7 +176,7 @@ export function SfiaGenericAttributesView({
           attributes={attributes}
           selectedLevel={selectedLevel}
           onSelectLevel={onSelectLevel}
-          className="flex-1 min-h-0"
+          className="min-h-0 flex-1"
         />
       )}
     </div>

@@ -13,10 +13,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import type { SfiaSkillDetail } from '@/types'
-import {
-  getCategoryTheme,
-  SFIA_LEVEL_DEFINITIONS,
-} from './sfia-theme'
+import { getCategoryTheme, SFIA_LEVEL_DEFINITIONS } from './sfia-theme'
 
 export interface SfiaLevelStatementCardsProps {
   skillDetail: SfiaSkillDetail
@@ -64,13 +61,13 @@ export function SfiaLevelStatementCards({
   return (
     <div className={cn('space-y-3.5', className)}>
       {/* 1. Quick Level Selector Tabs */}
-      <div className="flex items-center justify-between gap-2 flex-wrap bg-surface-raised/50 border border-border/70 rounded-xl p-2">
-        <div className="flex items-center gap-1.5 text-xs text-ink-muted pl-1">
-          <Target className="size-3.5 text-brand" />
-          <span className="font-semibold text-ink">Level:</span>
+      <div className="bg-surface-raised/50 border-border/70 flex flex-wrap items-center justify-between gap-2 rounded-xl border p-2">
+        <div className="text-ink-muted flex items-center gap-1.5 pl-1 text-xs">
+          <Target className="text-brand size-3.5" />
+          <span className="text-ink font-semibold">Level:</span>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex flex-wrap items-center gap-1.5">
           {skillDetail.skillLevels.map((sl) => {
             const isSelected = sl.levelId === selectedLevel
             const def = SFIA_LEVEL_DEFINITIONS[sl.levelId]
@@ -82,17 +79,16 @@ export function SfiaLevelStatementCards({
                 onClick={() => onSelectLevel(sl.levelId)}
                 aria-current={isSelected ? 'page' : undefined}
                 className={cn(
-                  'px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer select-none border',
+                  'flex cursor-pointer select-none items-center gap-1.5 rounded-lg border px-3 py-1 text-xs font-semibold transition-all',
                   isSelected
-                    ? cn(
-                        'shadow-xs font-bold border-brand/50',
-                        theme.badge
-                      )
+                    ? cn('shadow-xs border-brand/50 font-bold', theme.badge)
                     : 'bg-card text-ink-muted hover:text-ink border-border/70 hover:border-border hover:bg-surface-raised'
                 )}
               >
                 <span className="font-mono">L{sl.levelId}</span>
-                <span className="hidden sm:inline-block">({def?.name || `Level ${sl.levelId}`})</span>
+                <span className="hidden sm:inline-block">
+                  ({def?.name || `Level ${sl.levelId}`})
+                </span>
               </button>
             )
           })}
@@ -101,15 +97,17 @@ export function SfiaLevelStatementCards({
 
       {/* Out of Range / Invalid Level Warning Callout */}
       {!isLevelInRange && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-amber-800 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-800 sm:flex-row sm:items-center sm:justify-between dark:text-amber-200">
           <div className="flex items-start gap-2.5">
-            <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <div className="text-xs">
               <p className="font-bold">
-                Skill {skillDetail.code} is not applicable at Level {selectedLevel}
+                Skill {skillDetail.code} is not applicable at Level{' '}
+                {selectedLevel}
               </p>
-              <p className="text-ink-muted dark:text-amber-300/80 mt-0.5">
-                SFIA 9 defines the capability span for {skillDetail.name} from Level {skillDetail.minLevel} to Level {skillDetail.maxLevel}.
+              <p className="text-ink-muted mt-0.5 dark:text-amber-300/80">
+                SFIA 9 defines the capability span for {skillDetail.name} from
+                Level {skillDetail.minLevel} to Level {skillDetail.maxLevel}.
               </p>
             </div>
           </div>
@@ -118,7 +116,7 @@ export function SfiaLevelStatementCards({
             variant="outline"
             size="sm"
             onClick={() => onSelectLevel(skillDetail.minLevel)}
-            className="h-8 text-xs gap-1.5 shrink-0 bg-card"
+            className="bg-card h-8 shrink-0 gap-1.5 text-xs"
           >
             <span>Switch to Level {skillDetail.minLevel}</span>
             <ArrowRight className="size-3.5" />
@@ -129,21 +127,26 @@ export function SfiaLevelStatementCards({
       {/* 2. Level Essence Callout Card */}
       <div
         className={cn(
-          'bg-surface-raised/40 border rounded-xl p-4 space-y-2.5 relative overflow-hidden transition-all',
+          'bg-surface-raised/40 relative space-y-2.5 overflow-hidden rounded-xl border p-4 transition-all',
           theme.border,
           'border-l-4'
         )}
       >
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className={cn('p-1 rounded-md text-white dark:text-ink-inverted', theme.dot)}>
+            <div
+              className={cn(
+                'dark:text-ink-inverted rounded-md p-1 text-white',
+                theme.dot
+              )}
+            >
               <Sparkles className="size-3.5" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-ink uppercase tracking-wider">
+              <h4 className="text-ink text-xs font-bold uppercase tracking-wider">
                 Level {selectedLevel} Essence
               </h4>
-              <p className="text-[11px] text-ink-muted">
+              <p className="text-ink-muted text-[11px]">
                 {levelDef?.name || `Level ${selectedLevel}`}
               </p>
             </div>
@@ -151,7 +154,7 @@ export function SfiaLevelStatementCards({
 
           <span
             className={cn(
-              'text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border shrink-0',
+              'shrink-0 rounded-md border px-2 py-0.5 font-mono text-[10px] font-bold',
               theme.badge
             )}
           >
@@ -160,34 +163,41 @@ export function SfiaLevelStatementCards({
         </div>
 
         {/* Essence Quote */}
-        <div className="relative pl-3 border-l-2 border-border/80 text-xs sm:text-sm text-ink font-medium italic leading-relaxed">
-          <Quote className="size-3 absolute -top-1 -left-1.5 text-ink-muted/40" />
+        <div className="border-border/80 text-ink relative border-l-2 pl-3 text-xs font-medium italic leading-relaxed sm:text-sm">
+          <Quote className="text-ink-muted/40 absolute -left-1.5 -top-1 size-3" />
           <p className="text-ink">
-            &ldquo;{currentStatement?.essence || 'Demonstrates professional competence and accountability at this level.'}&rdquo;
+            &ldquo;
+            {currentStatement?.essence ||
+              'Demonstrates professional competence and accountability at this level.'}
+            &rdquo;
           </p>
         </div>
       </div>
 
       {/* 3. Detailed Behavioral Statements Card */}
-      <div className="bg-card border border-border/80 rounded-xl p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border/60 pb-3">
+      <div className="bg-card border-border/80 shadow-xs space-y-4 rounded-xl border p-4 sm:p-5">
+        <div className="border-border/60 flex flex-col gap-2 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-brand/10 text-brand">
+            <div className="bg-brand/10 text-brand rounded-lg p-1.5">
               <BookOpen className="size-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-ink">
+              <h3 className="text-ink text-sm font-bold">
                 Behavioral Statements
               </h3>
-              <p className="text-xs text-ink-muted">
-                Evaluation criteria for <strong className="text-ink">{skillDetail.name}</strong> ({skillDetail.code}) at <strong className="text-ink">Level {selectedLevel}</strong>
+              <p className="text-ink-muted text-xs">
+                Evaluation criteria for{' '}
+                <strong className="text-ink">{skillDetail.name}</strong> (
+                {skillDetail.code}) at{' '}
+                <strong className="text-ink">Level {selectedLevel}</strong>
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-ink-muted">
-              {parsedStatements.length} {parsedStatements.length === 1 ? 'statement' : 'statements'}
+            <span className="text-ink-muted text-[11px]">
+              {parsedStatements.length}{' '}
+              {parsedStatements.length === 1 ? 'statement' : 'statements'}
             </span>
           </div>
         </div>
@@ -198,13 +208,13 @@ export function SfiaLevelStatementCards({
             {parsedStatements.map((statement, idx) => (
               <div
                 key={idx}
-                className="flex items-start gap-3 p-3 rounded-lg bg-surface-raised/30 border border-border/50 hover:bg-surface-raised/60 transition-colors"
+                className="bg-surface-raised/30 border-border/50 hover:bg-surface-raised/60 flex items-start gap-3 rounded-lg border p-3 transition-colors"
               >
                 <div className="mt-0.5 shrink-0">
                   <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <div className="space-y-1 flex-1">
-                  <p className="text-xs sm:text-sm text-ink leading-relaxed font-normal">
+                <div className="flex-1 space-y-1">
+                  <p className="text-ink text-xs font-normal leading-relaxed sm:text-sm">
                     {statement}
                   </p>
                 </div>
@@ -212,16 +222,17 @@ export function SfiaLevelStatementCards({
             ))}
           </div>
         ) : (
-          <div className="py-8 text-center bg-surface-inset rounded-lg border border-dashed border-border/80">
-            <p className="text-xs text-ink-muted">
-              No specific behavioral statement data found for Level {selectedLevel}.
+          <div className="bg-surface-inset border-border/80 rounded-lg border border-dashed py-8 text-center">
+            <p className="text-ink-muted text-xs">
+              No specific behavioral statement data found for Level{' '}
+              {selectedLevel}.
             </p>
             {availableLevels.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onSelectLevel(availableLevels[0])}
-                className="mt-3 text-xs gap-1"
+                className="mt-3 gap-1 text-xs"
               >
                 <span>View available Level {availableLevels[0]}</span>
               </Button>

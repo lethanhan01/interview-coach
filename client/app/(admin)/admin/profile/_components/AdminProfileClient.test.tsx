@@ -6,7 +6,7 @@ import {
   userEvent,
   waitFor,
 } from '@test-utils'
-import { queryKeys } from '@/lib/query-client'
+import { queryKeys } from '@/queries/keys'
 import { userService } from '@/services/user.service'
 import type { UserAccountResponse } from '@/types'
 import AdminProfileClient from './AdminProfileClient'

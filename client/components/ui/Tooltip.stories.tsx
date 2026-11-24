@@ -14,7 +14,7 @@ const meta: Meta<typeof Tooltip> = {
   decorators: [
     (Story) => (
       <TooltipProvider delayDuration={0}>
-        <div className="p-10 flex items-center justify-center">
+        <div className="flex items-center justify-center p-10">
           <Story />
         </div>
       </TooltipProvider>

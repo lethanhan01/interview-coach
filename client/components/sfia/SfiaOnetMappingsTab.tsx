@@ -1,13 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import {
-  Briefcase,
-  Search,
-  ExternalLink,
-  X,
-  Compass,
-} from 'lucide-react'
+import { Briefcase, Search, ExternalLink, X, Compass } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/Input'
@@ -104,27 +98,32 @@ export function SfiaOnetMappingsTab({
     return (
       <div
         className={cn(
-          'bg-card border border-border/80 rounded-xl p-8 text-center space-y-4',
+          'bg-card border-border/80 space-y-4 rounded-xl border p-8 text-center',
           className
         )}
       >
-        <div className="size-12 rounded-full bg-surface-inset text-ink-muted flex items-center justify-center mx-auto border border-border">
+        <div className="bg-surface-inset text-ink-muted border-border mx-auto flex size-12 items-center justify-center rounded-full border">
           <Briefcase className="size-6" />
         </div>
-        <div className="space-y-1.5 max-w-md mx-auto">
-          <h4 className="text-base font-bold text-ink">
+        <div className="mx-auto max-w-md space-y-1.5">
+          <h4 className="text-ink text-base font-bold">
             No mapped O*NET occupations
           </h4>
-          <p className="text-xs text-ink-muted leading-relaxed">
-            Skill <span className="font-semibold text-ink font-mono">{skillCode}</span> ({skillName}) is currently not mapped to any O*NET SOC occupation in the database (`public.onet_sfia_mappings`).
+          <p className="text-ink-muted text-xs leading-relaxed">
+            Skill{' '}
+            <span className="text-ink font-mono font-semibold">
+              {skillCode}
+            </span>{' '}
+            ({skillName}) is currently not mapped to any O*NET SOC occupation in
+            the database (`public.onet_sfia_mappings`).
           </p>
         </div>
         <div>
           <Link
             href="/admin/onet"
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-surface-inset hover:bg-surface-raised border border-border text-xs font-semibold text-ink transition-colors shadow-xs"
+            className="bg-surface-inset hover:bg-surface-raised border-border text-ink shadow-xs inline-flex items-center gap-2 rounded-lg border px-3.5 py-1.5 text-xs font-semibold transition-colors"
           >
-            <Compass className="size-3.5 text-brand" />
+            <Compass className="text-brand size-3.5" />
             <span>Explore O*NET Browser</span>
           </Link>
         </div>
@@ -135,9 +134,9 @@ export function SfiaOnetMappingsTab({
   return (
     <div className={cn('space-y-3.5', className)}>
       {/* 1. Header Toolbar: Search & Classification Filter */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-surface-inset/60 p-2.5 rounded-xl border border-border/60">
+      <div className="bg-surface-inset/60 border-border/60 flex flex-col gap-2.5 rounded-xl border p-2.5 sm:flex-row sm:items-center sm:justify-between">
         {/* Search Input */}
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative max-w-sm flex-1">
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -149,30 +148,30 @@ export function SfiaOnetMappingsTab({
                   type="button"
                   onClick={() => setSearchQuery('')}
                   aria-label="Clear search"
-                  className="size-5 rounded flex items-center justify-center text-ink-muted hover:text-ink transition-colors"
+                  className="text-ink-muted hover:text-ink flex size-5 items-center justify-center rounded transition-colors"
                 >
                   <X className="size-3" />
                 </button>
               ) : undefined
             }
-            className="h-8 text-xs bg-background"
+            className="bg-background h-8 text-xs"
           />
         </div>
 
         {/* Filter Segmented Controls */}
-        <div className="flex items-center gap-1 bg-surface-raised p-0.5 rounded-lg border border-border/60 self-start sm:self-auto">
+        <div className="bg-surface-raised border-border/60 flex items-center gap-1 self-start rounded-lg border p-0.5 sm:self-auto">
           <button
             type="button"
             onClick={() => setFilterType('all')}
             className={cn(
-              'px-2.5 py-1 rounded-md text-xs font-medium transition-all select-none',
+              'select-none rounded-md px-2.5 py-1 text-xs font-medium transition-all',
               filterType === 'all'
                 ? 'bg-background text-ink shadow-xs font-semibold'
                 : 'text-ink-muted hover:text-ink'
             )}
           >
             <span>All</span>
-            <span className="ml-1 text-[10px] opacity-70 tabular-nums font-mono">
+            <span className="ml-1 font-mono text-[10px] tabular-nums opacity-70">
               ({onetMappings.length})
             </span>
           </button>
@@ -181,14 +180,14 @@ export function SfiaOnetMappingsTab({
             type="button"
             onClick={() => setFilterType('core')}
             className={cn(
-              'px-2.5 py-1 rounded-md text-xs font-medium transition-all select-none',
+              'select-none rounded-md px-2.5 py-1 text-xs font-medium transition-all',
               filterType === 'core'
-                ? 'bg-background text-emerald-600 dark:text-emerald-400 shadow-xs font-semibold'
+                ? 'bg-background shadow-xs font-semibold text-emerald-600 dark:text-emerald-400'
                 : 'text-ink-muted hover:text-ink'
             )}
           >
             <span>Core</span>
-            <span className="ml-1 text-[10px] opacity-70 tabular-nums font-mono">
+            <span className="ml-1 font-mono text-[10px] tabular-nums opacity-70">
               ({coreCount})
             </span>
           </button>
@@ -197,14 +196,14 @@ export function SfiaOnetMappingsTab({
             type="button"
             onClick={() => setFilterType('supplemental')}
             className={cn(
-              'px-2.5 py-1 rounded-md text-xs font-medium transition-all select-none',
+              'select-none rounded-md px-2.5 py-1 text-xs font-medium transition-all',
               filterType === 'supplemental'
                 ? 'bg-background text-ink shadow-xs font-semibold'
                 : 'text-ink-muted hover:text-ink'
             )}
           >
             <span>Supplemental</span>
-            <span className="ml-1 text-[10px] opacity-70 tabular-nums font-mono">
+            <span className="ml-1 font-mono text-[10px] tabular-nums opacity-70">
               ({supplementalCount})
             </span>
           </button>
@@ -213,13 +212,14 @@ export function SfiaOnetMappingsTab({
 
       {/* 2. Filter Results View */}
       {filteredAndSortedMappings.length === 0 ? (
-        <div className="bg-card border border-border/80 rounded-xl p-8 text-center space-y-2">
-          <Search className="size-7 text-ink-muted mx-auto opacity-60" />
-          <h5 className="text-sm font-semibold text-ink">
+        <div className="bg-card border-border/80 space-y-2 rounded-xl border p-8 text-center">
+          <Search className="text-ink-muted mx-auto size-7 opacity-60" />
+          <h5 className="text-ink text-sm font-semibold">
             No matching occupations found
           </h5>
-          <p className="text-xs text-ink-muted">
-            No O*NET occupations match your search query &quot;{searchQuery}&quot;.
+          <p className="text-ink-muted text-xs">
+            No O*NET occupations match your search query &quot;{searchQuery}
+            &quot;.
           </p>
           <Button
             variant="outline"
@@ -228,7 +228,7 @@ export function SfiaOnetMappingsTab({
               setSearchQuery('')
               setFilterType('all')
             }}
-            className="h-7 text-xs mt-2"
+            className="mt-2 h-7 text-xs"
           >
             Reset filters
           </Button>
@@ -236,32 +236,37 @@ export function SfiaOnetMappingsTab({
       ) : (
         <>
           {/* A. Desktop / Tablet Table View (>= 640px) */}
-          <div className="hidden sm:block rounded-xl border border-border/80 bg-card overflow-hidden shadow-xs">
-            <div className="overflow-x-auto scrollbar-thin">
+          <div className="border-border/80 bg-card shadow-xs hidden overflow-hidden rounded-xl border sm:block">
+            <div className="scrollbar-thin overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-surface-inset/40 hover:bg-surface-inset/40 border-b border-border/80">
-                    <TableHead className="w-28 text-xs font-semibold text-ink">SOC Code</TableHead>
-                    <TableHead className="text-xs font-semibold text-ink min-w-[220px]">
+                  <TableRow className="bg-surface-inset/40 hover:bg-surface-inset/40 border-border/80 border-b">
+                    <TableHead className="text-ink w-28 text-xs font-semibold">
+                      SOC Code
+                    </TableHead>
+                    <TableHead className="text-ink min-w-[220px] text-xs font-semibold">
                       O*NET Occupation Title
                     </TableHead>
-                    <TableHead className="w-28 text-xs font-semibold text-ink text-center">
+                    <TableHead className="text-ink w-28 text-center text-xs font-semibold">
                       Target Level
                     </TableHead>
-                    <TableHead className="w-36 text-xs font-semibold text-ink">
+                    <TableHead className="text-ink w-36 text-xs font-semibold">
                       Assessment Weight
                     </TableHead>
-                    <TableHead className="w-28 text-xs font-semibold text-ink text-center">
+                    <TableHead className="text-ink w-28 text-center text-xs font-semibold">
                       Classification
                     </TableHead>
-                    <TableHead className="w-28 text-xs font-semibold text-ink text-right">
+                    <TableHead className="text-ink w-28 text-right text-xs font-semibold">
                       Actions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredAndSortedMappings.map((mapping) => {
-                    const weightPct = Math.min(100, Math.round((mapping.weight / 2.5) * 100))
+                    const weightPct = Math.min(
+                      100,
+                      Math.round((mapping.weight / 2.5) * 100)
+                    )
                     const targetBadgeStyle =
                       TARGET_LEVEL_BADGES[mapping.targetLevel] ||
                       'bg-surface-raised text-ink-muted border-border'
@@ -269,16 +274,16 @@ export function SfiaOnetMappingsTab({
                     return (
                       <TableRow
                         key={mapping.socCode}
-                        className="hover:bg-surface-inset/30 transition-colors border-b border-border/50 last:border-b-0"
+                        className="hover:bg-surface-inset/30 border-border/50 border-b transition-colors last:border-b-0"
                       >
                         {/* Column 1: SOC Code */}
-                        <TableCell className="w-28 font-mono font-semibold text-xs text-brand">
+                        <TableCell className="text-brand w-28 font-mono text-xs font-semibold">
                           {mapping.socCode}
                         </TableCell>
 
                         {/* Column 2: Occupation Title */}
                         <TableCell className="min-w-[220px]">
-                          <span className="font-medium text-xs sm:text-sm text-ink block leading-snug">
+                          <span className="text-ink block text-xs font-medium leading-snug sm:text-sm">
                             {mapping.occupationTitle}
                           </span>
                         </TableCell>
@@ -287,7 +292,7 @@ export function SfiaOnetMappingsTab({
                         <TableCell className="w-28 text-center">
                           <span
                             className={cn(
-                              'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold font-mono border',
+                              'inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[11px] font-semibold',
                               targetBadgeStyle
                             )}
                           >
@@ -299,10 +304,10 @@ export function SfiaOnetMappingsTab({
                         <TableCell className="w-36">
                           <div className="space-y-1">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="font-mono text-ink font-semibold tabular-nums">
+                              <span className="text-ink font-mono font-semibold tabular-nums">
                                 x{mapping.weight.toFixed(1)}
                               </span>
-                              <span className="text-[10px] text-ink-muted">
+                              <span className="text-ink-muted text-[10px]">
                                 {mapping.weight >= 2.0
                                   ? 'Very High'
                                   : mapping.weight >= 1.5
@@ -311,11 +316,13 @@ export function SfiaOnetMappingsTab({
                               </span>
                             </div>
                             {/* Mini visual indicator bar */}
-                            <div className="h-1.5 w-full bg-surface-inset rounded-full overflow-hidden border border-border/40">
+                            <div className="bg-surface-inset border-border/40 h-1.5 w-full overflow-hidden rounded-full border">
                               <div
                                 className={cn(
                                   'h-full rounded-full transition-all',
-                                  mapping.isCore ? 'bg-brand' : 'bg-ink-muted/50'
+                                  mapping.isCore
+                                    ? 'bg-brand'
+                                    : 'bg-ink-muted/50'
                                 )}
                                 style={{ width: `${weightPct}%` }}
                               />
@@ -327,7 +334,7 @@ export function SfiaOnetMappingsTab({
                         <TableCell className="w-28 text-center">
                           <span
                             className={cn(
-                              'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] border',
+                              'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px]',
                               mapping.isCore
                                 ? ONET_CORE_BADGES.core
                                 : ONET_CORE_BADGES.supplemental
@@ -343,7 +350,7 @@ export function SfiaOnetMappingsTab({
                             href={`/admin/onet?soc=${encodeURIComponent(mapping.socCode)}&detail=sfia`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-brand hover:text-brand-hover hover:underline font-medium transition-colors"
+                            className="text-brand hover:text-brand-hover inline-flex items-center gap-1 text-xs font-medium transition-colors hover:underline"
                             title={`View details for ${mapping.occupationTitle} on O*NET Browser`}
                           >
                             <span>Details</span>
@@ -359,7 +366,7 @@ export function SfiaOnetMappingsTab({
           </div>
 
           {/* B. Mobile Compact Cards (< 640px) */}
-          <div className="block sm:hidden space-y-2">
+          <div className="block space-y-2 sm:hidden">
             {filteredAndSortedMappings.map((mapping) => {
               const targetBadgeStyle =
                 TARGET_LEVEL_BADGES[mapping.targetLevel] ||
@@ -368,20 +375,20 @@ export function SfiaOnetMappingsTab({
               return (
                 <div
                   key={mapping.socCode}
-                  className="bg-card border border-border/80 rounded-xl p-3 space-y-2.5 shadow-xs"
+                  className="bg-card border-border/80 shadow-xs space-y-2.5 rounded-xl border p-3"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="font-mono text-xs font-bold text-brand block">
+                      <span className="text-brand block font-mono text-xs font-bold">
                         {mapping.socCode}
                       </span>
-                      <h6 className="text-xs font-semibold text-ink mt-0.5 leading-snug">
+                      <h6 className="text-ink mt-0.5 text-xs font-semibold leading-snug">
                         {mapping.occupationTitle}
                       </h6>
                     </div>
                     <span
                       className={cn(
-                        'shrink-0 text-[10px] px-2 py-0.5 rounded-full border',
+                        'shrink-0 rounded-full border px-2 py-0.5 text-[10px]',
                         mapping.isCore
                           ? ONET_CORE_BADGES.core
                           : ONET_CORE_BADGES.supplemental
@@ -391,10 +398,10 @@ export function SfiaOnetMappingsTab({
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs pt-1 border-t border-border/50">
+                  <div className="border-border/50 flex items-center justify-between border-t pt-1 text-xs">
                     <span
                       className={cn(
-                        'px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono border',
+                        'rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold',
                         targetBadgeStyle
                       )}
                     >
@@ -402,8 +409,10 @@ export function SfiaOnetMappingsTab({
                     </span>
 
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-ink-muted">Weight:</span>
-                      <span className="font-mono font-bold text-xs text-ink tabular-nums">
+                      <span className="text-ink-muted text-[11px]">
+                        Weight:
+                      </span>
+                      <span className="text-ink font-mono text-xs font-bold tabular-nums">
                         x{mapping.weight.toFixed(1)}
                       </span>
                     </div>
@@ -412,7 +421,7 @@ export function SfiaOnetMappingsTab({
                       href={`/admin/onet?soc=${encodeURIComponent(mapping.socCode)}&detail=sfia`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-brand font-semibold hover:underline"
+                      className="text-brand inline-flex items-center gap-1 text-xs font-semibold hover:underline"
                     >
                       <span>View</span>
                       <ExternalLink className="size-3" />

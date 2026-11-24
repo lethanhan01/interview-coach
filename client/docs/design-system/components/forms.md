@@ -396,7 +396,7 @@ If you have existing code using the old `label`/`error`/`hint` props:
 ### Files already migrated
 
 - `components/auth/RegisterForm.tsx`
-- `components/setup/JdForm.tsx`
+- `components/interview-setup/JdForm.tsx`
 
 ---
 

@@ -31,22 +31,22 @@ describe('Switch Component', () => {
   it('toggles state when clicked', async () => {
     const user = userEvent.setup()
     const onCheckedChange = vi.fn()
-    
+
     render(
       <div className="flex items-center space-x-2">
         <Switch id="toggle-switch" onCheckedChange={onCheckedChange} />
         <Label htmlFor="toggle-switch">Toggle Switch</Label>
       </div>
     )
-    
+
     const switchElement = screen.getByRole('switch')
-    
+
     // Radix Switch uses `data-state` or `aria-checked` to manage checked state visually
     // but toBeChecked() works with it as well if role="switch" uses aria-checked
     expect(switchElement).not.toBeChecked()
-    
+
     await user.click(switchElement)
-    
+
     expect(switchElement).toBeChecked()
     expect(onCheckedChange).toHaveBeenCalledWith(true)
   })

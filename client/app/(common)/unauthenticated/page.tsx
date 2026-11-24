@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { IconHome, IconLock } from '@tabler/icons-react'
-import { ErrorPageTemplate } from '@/components/patterns/ErrorPageTemplate'
+import { ErrorPageTemplate } from '@/components/common/ErrorPageTemplate'
 import { getSafeNext } from '@/lib/auth-redirect'
 
 export const metadata: Metadata = {

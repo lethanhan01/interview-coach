@@ -26,32 +26,38 @@ export function SfiaGuidanceNotes({
   return (
     <div
       className={cn(
-        'bg-card border border-border/80 rounded-xl overflow-hidden shadow-xs',
+        'bg-card border-border/80 shadow-xs overflow-hidden rounded-xl border',
         className
       )}
     >
-      <Accordion type="single" collapsible defaultValue="guidance" className="w-full">
+      <Accordion
+        type="single"
+        collapsible
+        defaultValue="guidance"
+        className="w-full"
+      >
         <AccordionItem value="guidance" className="border-none">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-surface-raised/50 transition-colors">
+          <AccordionTrigger className="hover:bg-surface-raised/50 px-4 py-3 transition-colors hover:no-underline">
             <div className="flex items-center gap-2 text-left">
-              <div className="p-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <div className="rounded-md bg-amber-500/10 p-1 text-amber-600 dark:text-amber-400">
                 <Lightbulb className="size-3.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-ink block">
+                <span className="text-ink block text-xs font-bold">
                   Ghi chú Hướng dẫn SFIA Foundation (Guidance Notes)
                 </span>
-                <span className="text-[11px] text-ink-muted">
-                  Lưu ý ngữ cảnh áp dụng thực tế khi đánh giá kỹ năng {skillName}
+                <span className="text-ink-muted text-[11px]">
+                  Lưu ý ngữ cảnh áp dụng thực tế khi đánh giá kỹ năng{' '}
+                  {skillName}
                 </span>
               </div>
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4 pt-1">
-            <div className="bg-surface-raised/40 border border-border/60 rounded-lg p-3.5 text-xs text-ink leading-relaxed space-y-2">
-              <div className="flex items-start gap-2 text-ink-muted">
-                <Info className="size-3.5 text-blue-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-ink">{guidanceNotes}</p>
+            <div className="bg-surface-raised/40 border-border/60 text-ink space-y-2 rounded-lg border p-3.5 text-xs leading-relaxed">
+              <div className="text-ink-muted flex items-start gap-2">
+                <Info className="mt-0.5 size-3.5 shrink-0 text-blue-500" />
+                <p className="text-ink text-xs">{guidanceNotes}</p>
               </div>
             </div>
           </AccordionContent>

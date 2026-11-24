@@ -19,10 +19,10 @@ export const Default: Story = {
         <TabsTrigger value="account">Tài khoản</TabsTrigger>
         <TabsTrigger value="password">Mật khẩu</TabsTrigger>
       </TabsList>
-      <TabsContent value="account" className="p-4 border rounded-md mt-2">
+      <TabsContent value="account" className="mt-2 rounded-md border p-4">
         Nội dung tab tài khoản
       </TabsContent>
-      <TabsContent value="password" className="p-4 border rounded-md mt-2">
+      <TabsContent value="password" className="mt-2 rounded-md border p-4">
         Nội dung tab mật khẩu
       </TabsContent>
     </Tabs>

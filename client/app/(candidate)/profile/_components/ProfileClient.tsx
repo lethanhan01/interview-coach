@@ -3,7 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AccountProfileView } from '@/components/profile/AccountProfileView'
 import { getErrorMessage } from '@/lib/form-errors'
-import { queryKeys, userQueries } from '@/lib/query-client'
+import { queryKeys } from '@/queries/keys'
+import { userQueries } from '@/queries/user.queries'
 import { userService } from '@/services/user.service'
 import type { UpdateUserAccountPayload } from '@/types'
 

@@ -1,14 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import {
-  Copy,
-  Check,
-  FileCode,
-  FileJson,
-  Bot,
-  Info,
-} from 'lucide-react'
+import { Copy, Check, FileCode, FileJson, Bot, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -39,7 +32,9 @@ export function SfiaAiPromptModal({
   skillDetail,
   selectedLevel,
 }: SfiaAiPromptModalProps) {
-  const [activeTab, setActiveTab] = React.useState<'markdown' | 'json'>('markdown')
+  const [activeTab, setActiveTab] = React.useState<'markdown' | 'json'>(
+    'markdown'
+  )
   const [copiedMd, setCopiedMd] = React.useState(false)
   const [copiedJson, setCopiedJson] = React.useState(false)
 
@@ -81,31 +76,37 @@ export function SfiaAiPromptModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-5 gap-3.5">
-        <DialogHeader className="border-b border-border/60 pb-3">
+      <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col gap-3.5 p-5">
+        <DialogHeader className="border-border/60 border-b pb-3">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-brand/10 text-brand">
+            <div className="bg-brand/10 text-brand rounded-lg p-1.5">
               <Bot className="size-5" />
             </div>
             <div>
-              <DialogTitle className="text-base font-bold text-ink flex items-center gap-2">
+              <DialogTitle className="text-ink flex items-center gap-2 text-base font-bold">
                 <span>AI Rubric Prompt Generator</span>
-                <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-mono px-2 py-0.5 rounded-full">
+                <span className="rounded-full border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 font-mono text-[10px] text-blue-600 dark:text-blue-400">
                   {skillDetail.code} — Level {selectedLevel}
                 </span>
               </DialogTitle>
-              <DialogDescription className="text-xs text-ink-muted mt-0.5">
-                Standardized SFIA 9 System Prompt & Rubric schema for LLM interview evaluation
+              <DialogDescription className="text-ink-muted mt-0.5 text-xs">
+                Standardized SFIA 9 System Prompt & Rubric schema for LLM
+                interview evaluation
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
         {/* Info Banner */}
-        <div className="bg-surface-raised/50 border border-border/60 rounded-lg p-2.5 flex items-start gap-2 text-xs text-ink-muted shrink-0">
-          <Info className="size-4 text-brand shrink-0 mt-0.5" />
+        <div className="bg-surface-raised/50 border-border/60 text-ink-muted flex shrink-0 items-start gap-2 rounded-lg border p-2.5 text-xs">
+          <Info className="text-brand mt-0.5 size-4 shrink-0" />
           <p>
-            This prompt directly embeds Level <strong className="text-ink">L{selectedLevel} ({levelDef?.name})</strong> Essence and behavioral criteria from the SFIA 9 database to ensure objective and accurate AI assessment.
+            This prompt directly embeds Level{' '}
+            <strong className="text-ink">
+              L{selectedLevel} ({levelDef?.name})
+            </strong>{' '}
+            Essence and behavioral criteria from the SFIA 9 database to ensure
+            objective and accurate AI assessment.
           </p>
         </div>
 
@@ -113,15 +114,18 @@ export function SfiaAiPromptModal({
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as 'markdown' | 'json')}
-          className="flex-1 flex flex-col min-h-0"
+          className="flex min-h-0 flex-1 flex-col"
         >
-          <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-2">
+          <div className="border-border/50 flex items-center justify-between gap-2 border-b pb-2">
             <TabsList className="bg-surface-inset h-8 p-0.5">
-              <TabsTrigger value="markdown" className="gap-1.5 text-xs px-2.5 py-1">
+              <TabsTrigger
+                value="markdown"
+                className="gap-1.5 px-2.5 py-1 text-xs"
+              >
                 <FileCode className="size-3.5" />
                 <span>Markdown System Prompt</span>
               </TabsTrigger>
-              <TabsTrigger value="json" className="gap-1.5 text-xs px-2.5 py-1">
+              <TabsTrigger value="json" className="gap-1.5 px-2.5 py-1 text-xs">
                 <FileJson className="size-3.5" />
                 <span>JSON Schema Rubric</span>
               </TabsTrigger>
@@ -133,7 +137,7 @@ export function SfiaAiPromptModal({
                   variant="primary"
                   size="sm"
                   onClick={handleCopyMarkdown}
-                  className="h-8 px-3 text-xs gap-1.5"
+                  className="h-8 gap-1.5 px-3 text-xs"
                 >
                   {copiedMd ? (
                     <>
@@ -152,7 +156,7 @@ export function SfiaAiPromptModal({
                   variant="primary"
                   size="sm"
                   onClick={handleCopyJson}
-                  className="h-8 px-3 text-xs gap-1.5"
+                  className="h-8 gap-1.5 px-3 text-xs"
                 >
                   {copiedJson ? (
                     <>
@@ -171,15 +175,15 @@ export function SfiaAiPromptModal({
           </div>
 
           {/* Content Tab 1: Markdown */}
-          <TabsContent value="markdown" className="flex-1 min-h-0 mt-2">
-            <div className="h-[360px] overflow-y-auto bg-surface-inset rounded-lg p-3.5 border border-border/80 font-mono text-xs text-ink leading-relaxed whitespace-pre-wrap select-all">
+          <TabsContent value="markdown" className="mt-2 min-h-0 flex-1">
+            <div className="bg-surface-inset border-border/80 text-ink h-[360px] select-all overflow-y-auto whitespace-pre-wrap rounded-lg border p-3.5 font-mono text-xs leading-relaxed">
               {markdownContent}
             </div>
           </TabsContent>
 
           {/* Content Tab 2: JSON */}
-          <TabsContent value="json" className="flex-1 min-h-0 mt-2">
-            <div className="h-[360px] overflow-y-auto bg-surface-inset rounded-lg p-3.5 border border-border/80 font-mono text-xs text-ink leading-relaxed whitespace-pre-wrap select-all">
+          <TabsContent value="json" className="mt-2 min-h-0 flex-1">
+            <div className="bg-surface-inset border-border/80 text-ink h-[360px] select-all overflow-y-auto whitespace-pre-wrap rounded-lg border p-3.5 font-mono text-xs leading-relaxed">
               {jsonContent}
             </div>
           </TabsContent>

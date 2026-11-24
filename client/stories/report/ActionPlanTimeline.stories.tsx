@@ -3,7 +3,7 @@ import { ActionPlanTimeline } from '@/components/report/ActionPlanTimeline'
 import {
   mockUnifiedActionPlan,
   mockLegacyReport,
-} from '@/tests/fixtures/report.fixture'
+} from '@/test-utils/fixtures/report.fixture'
 
 const meta: Meta<typeof ActionPlanTimeline> = {
   title: 'Feature/Report/ActionPlanTimeline',

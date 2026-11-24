@@ -23,7 +23,7 @@ import {
   IconMicrophone,
 } from '@tabler/icons-react'
 import { adminNavigation, candidateNavigation } from '@/config/navigation'
-import { useAuth } from '@/lib/auth-context'
+import { useAuth } from '@/providers/AuthProvider'
 import NavLinks from './NavLinks'
 import classes from './AppSidebar.module.css'
 

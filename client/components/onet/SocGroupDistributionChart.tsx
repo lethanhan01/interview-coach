@@ -2,12 +2,7 @@
 
 import * as React from 'react'
 import { useState } from 'react'
-import {
-  BarChart2,
-  Filter,
-  X,
-  Sparkles,
-} from 'lucide-react'
+import { BarChart2, Filter, X, Sparkles } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -48,19 +43,27 @@ export function SocGroupDistributionChart({
 
   return (
     <TooltipProvider delayDuration={150}>
-      <Card className={cn('p-2 sm:p-2.5 flex flex-col justify-between overflow-hidden', className)}>
+      <Card
+        className={cn(
+          'flex flex-col justify-between overflow-hidden p-2 sm:p-2.5',
+          className
+        )}
+      >
         {/* Header toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-1 border-b border-border/60 shrink-0">
+        <div className="border-border/60 flex shrink-0 flex-col justify-between gap-1 border-b pb-1 sm:flex-row sm:items-center">
           <div>
             <div className="flex items-center gap-1.5">
-              <div className="bg-brand/10 text-brand flex size-5.5 shrink-0 items-center justify-center rounded-md">
+              <div className="bg-brand/10 text-brand size-5.5 flex shrink-0 items-center justify-center rounded-md">
                 <BarChart2 className="size-3" />
               </div>
-              <h3 className="text-ink text-xs sm:text-sm font-bold tracking-tight">
+              <h3 className="text-ink text-xs font-bold tracking-tight sm:text-sm">
                 Phân bổ 23 Nhóm ngành SOC
               </h3>
               {selectedGroup && (
-                <Badge variant="brand" className="gap-1 text-[10px] py-0 px-1.5 font-medium">
+                <Badge
+                  variant="brand"
+                  className="gap-1 px-1.5 py-0 text-[10px] font-medium"
+                >
                   <Filter className="size-2" />
                   <span>Nhóm {selectedGroup}</span>
                   <button
@@ -69,7 +72,7 @@ export function SocGroupDistributionChart({
                       e.stopPropagation()
                       onSelectGroup(null)
                     }}
-                    className="hover:bg-brand/20 rounded p-0.5 ml-0.5 inline-flex items-center"
+                    className="hover:bg-brand/20 ml-0.5 inline-flex items-center rounded p-0.5"
                     aria-label="Bỏ lọc nhóm"
                   >
                     <X className="size-2.5" />
@@ -77,18 +80,18 @@ export function SocGroupDistributionChart({
                 </Badge>
               )}
             </div>
-            <p className="text-ink-muted text-[10px] mt-0.5">
+            <p className="text-ink-muted mt-0.5 text-[10px]">
               Nhấp vào cột bất kỳ để lọc danh sách nghề nghiệp ở bảng bên dưới
             </p>
           </div>
 
           {/* Metric Mode Toggle */}
-          <div className="flex items-center gap-0.5 bg-surface-inset p-0.5 rounded-lg shrink-0 self-start sm:self-auto border border-border/40">
+          <div className="bg-surface-inset border-border/40 flex shrink-0 items-center gap-0.5 self-start rounded-lg border p-0.5 sm:self-auto">
             <button
               type="button"
               onClick={() => setMetricMode('occupations')}
               className={cn(
-                'px-1.5 py-0.5 text-[10px] font-semibold rounded-md transition-all',
+                'rounded-md px-1.5 py-0.5 text-[10px] font-semibold transition-all',
                 metricMode === 'occupations'
                   ? 'bg-card text-ink shadow-xs'
                   : 'text-ink-muted hover:text-ink'
@@ -100,7 +103,7 @@ export function SocGroupDistributionChart({
               type="button"
               onClick={() => setMetricMode('coverage')}
               className={cn(
-                'px-1.5 py-0.5 text-[10px] font-semibold rounded-md transition-all',
+                'rounded-md px-1.5 py-0.5 text-[10px] font-semibold transition-all',
                 metricMode === 'coverage'
                   ? 'bg-card text-ink shadow-xs'
                   : 'text-ink-muted hover:text-ink'
@@ -112,9 +115,9 @@ export function SocGroupDistributionChart({
         </div>
 
         {/* Visual Chart Area */}
-        <div className="py-1 flex-1 flex flex-col justify-end min-h-0">
+        <div className="flex min-h-0 flex-1 flex-col justify-end py-1">
           {/* Bar container */}
-          <div className="h-28 flex items-end justify-between gap-0.5 sm:gap-1 px-0.5">
+          <div className="flex h-28 items-end justify-between gap-0.5 px-0.5 sm:gap-1">
             {data.map((item) => {
               const isSelected = selectedGroup === item.code
               const isFocus = item.isFocusGroup // Group 15
@@ -137,7 +140,7 @@ export function SocGroupDistributionChart({
                         onSelectGroup(isSelected ? null : item.code)
                       }
                       className={cn(
-                        'group relative flex-1 flex flex-col items-center justify-end h-full focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand rounded-t-sm transition-all duration-200 cursor-pointer',
+                        'focus-visible:outline-hidden focus-visible:ring-brand group relative flex h-full flex-1 cursor-pointer flex-col items-center justify-end rounded-t-sm transition-all duration-200 focus-visible:ring-2',
                         isSelected && 'scale-y-105'
                       )}
                       aria-label={`Nhóm ${item.code} - ${item.name}`}
@@ -146,18 +149,19 @@ export function SocGroupDistributionChart({
                       <div
                         style={{ height: `${heightPercent}%` }}
                         className={cn(
-                          'w-full rounded-t-sm transition-all duration-300 relative',
+                          'relative w-full rounded-t-sm transition-all duration-300',
                           isFocus
                             ? 'bg-brand shadow-xs group-hover:bg-brand/90'
                             : isSelected
-                            ? 'bg-ink group-hover:bg-ink/90'
-                            : 'bg-surface-raised border border-border/80 group-hover:bg-brand/30 group-hover:border-brand/40',
-                          isSelected && 'ring-2 ring-brand ring-offset-1 ring-offset-card'
+                              ? 'bg-ink group-hover:bg-ink/90'
+                              : 'bg-surface-raised border-border/80 group-hover:bg-brand/30 group-hover:border-brand/40 border',
+                          isSelected &&
+                            'ring-brand ring-offset-card ring-2 ring-offset-1'
                         )}
                       >
                         {/* Chỉ dấu sao đặc biệt cho Nhóm 15 */}
                         {isFocus && (
-                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-brand">
+                          <div className="text-brand absolute -top-3 left-1/2 -translate-x-1/2">
                             <Sparkles className="size-2.5" />
                           </div>
                         )}
@@ -166,12 +170,12 @@ export function SocGroupDistributionChart({
                       {/* Mã nhóm dưới chân cột */}
                       <span
                         className={cn(
-                          'text-[9px] font-mono mt-1 transition-colors leading-none',
+                          'mt-1 font-mono text-[9px] leading-none transition-colors',
                           isSelected
                             ? 'text-ink font-bold'
                             : isFocus
-                            ? 'text-brand font-bold'
-                            : 'text-ink-muted group-hover:text-ink'
+                              ? 'text-brand font-bold'
+                              : 'text-ink-muted group-hover:text-ink'
                         )}
                       >
                         {item.code}
@@ -179,32 +183,38 @@ export function SocGroupDistributionChart({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-xs space-y-1 p-2">
-                    <div className="flex items-center justify-between gap-2 border-b border-primary-foreground/20 pb-1">
-                      <span className="font-bold text-xs">
+                    <div className="border-primary-foreground/20 flex items-center justify-between gap-2 border-b pb-1">
+                      <span className="text-xs font-bold">
                         Nhóm {item.code}: {item.name}
                       </span>
                       {isFocus && (
-                        <Badge variant="brand" className="text-[9px] py-0 px-1 font-semibold">
+                        <Badge
+                          variant="brand"
+                          className="px-1 py-0 text-[9px] font-semibold"
+                        >
                           IT Focus
                         </Badge>
                       )}
                     </div>
-                    <p className="text-[11px] text-primary-foreground/80 italic">
+                    <p className="text-primary-foreground/80 text-[11px] italic">
                       {item.englishName}
                     </p>
-                    <div className="text-[10px] space-y-0.5 pt-0.5">
+                    <div className="space-y-0.5 pt-0.5 text-[10px]">
                       <div className="flex justify-between">
                         <span>Tổng số nghề:</span>
-                        <span className="font-semibold tabular-nums">{item.totalOccupations} nghề</span>
+                        <span className="font-semibold tabular-nums">
+                          {item.totalOccupations} nghề
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Đã ánh xạ SFIA:</span>
                         <span className="font-semibold tabular-nums">
-                          {item.mappedOccupations} nghề ({item.mappingCoveragePercent}%)
+                          {item.mappedOccupations} nghề (
+                          {item.mappingCoveragePercent}%)
                         </span>
                       </div>
                     </div>
-                    <p className="text-[9px] text-primary-foreground/70 pt-0.5 border-t border-primary-foreground/20">
+                    <p className="text-primary-foreground/70 border-primary-foreground/20 border-t pt-0.5 text-[9px]">
                       💡 Nhấp để {isSelected ? 'bỏ lọc' : 'lọc bảng bên dưới'}
                     </p>
                   </TooltipContent>
@@ -215,14 +225,14 @@ export function SocGroupDistributionChart({
         </div>
 
         {/* Legend Footer */}
-        <div className="flex flex-wrap items-center justify-between gap-1 pt-1 border-t border-border/50 text-[10px] text-ink-muted shrink-0">
+        <div className="border-border/50 text-ink-muted flex shrink-0 flex-wrap items-center justify-between gap-1 border-t pt-1 text-[10px]">
           <div className="flex items-center gap-2.5">
             <div className="flex items-center gap-1">
-              <span className="size-2 rounded-xs bg-brand shrink-0" />
+              <span className="rounded-xs bg-brand size-2 shrink-0" />
               <span>Nhóm 15 (Máy tính & CNTT - Trọng tâm)</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="size-2 rounded-xs bg-surface-raised border border-border/80 shrink-0" />
+              <span className="rounded-xs bg-surface-raised border-border/80 size-2 shrink-0 border" />
               <span>22 nhóm ngành khác</span>
             </div>
           </div>
@@ -232,7 +242,7 @@ export function SocGroupDistributionChart({
               variant="ghost"
               size="sm"
               onClick={() => onSelectGroup(null)}
-              className="h-5 text-[10px] px-1.5 text-ink-muted hover:text-ink gap-1"
+              className="text-ink-muted hover:text-ink h-5 gap-1 px-1.5 text-[10px]"
             >
               <X className="size-2.5" />
               <span>Xóa lọc</span>

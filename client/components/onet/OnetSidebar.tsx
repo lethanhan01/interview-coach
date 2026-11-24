@@ -23,11 +23,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/Accordion'
-import {
-  onetAdminQueries,
-  queryKeys,
-  useOptionalQueryClient,
-} from '@/lib/query-client'
+import { onetAdminQueries } from '@/queries/onet.queries'
+import { queryKeys } from '@/queries/keys'
+import { useOptionalQueryClient } from '@/providers/QueryProvider'
 import type { OnetOccupationSummary } from '@/types'
 
 export interface OnetSidebarProps {

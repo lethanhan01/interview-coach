@@ -65,7 +65,7 @@ describe('SetupInterviewForm', () => {
 
 - **Stylelint ([.stylelintrc.json](../../.stylelintrc.json))**: Chạy `stylelint` (`^17.16.0`) + `stylelint-config-standard` (`^40.0.0`) trên `**/*.module.css` — cấm mã màu HEX và hàm `rgb()`/`rgba()`/`hsl()`/`hsla()`, đồng thời hỗ trợ đầy đủ `rem()`, `em()`, `light-dark()`, `@mixin` và `$mantine-breakpoint-*`.
 - **UI Rules Linter ([scripts/check-ui-rules.mjs](../../scripts/check-ui-rules.mjs))**: Kiểm tra tự động 8 nhóm luật Mantine v9 Zero-Hex (`SEM-HTML-001..003`, `SEM-TOKEN-001..004`, `SEM-TOKEN-008`, `SEM-GOV-001`):
-  - `npm run ui:lint` — Quét phạm vi mặc định (`test-utils/`, `**/*.module.css`, `theme.ts`, `components/mantine-color-scheme-sync.tsx`).
+  - `npm run ui:lint` — Quét phạm vi mặc định (`test-utils/`, `**/*.module.css` bao gồm `styles/`, `theme.ts`, `providers/MantineColorSchemeSync.tsx`).
   - `npm run ui:lint -- app/duong-dan.tsx components/moi/` — Quét các file/thư mục vừa tạo hoặc chỉnh sửa.
   - `npm run ui:lint -- --all` — Quét toàn bộ codebase UI `client/` (dùng sau khi hoàn tất migrate Tailwind).
   - `npm run ui:lint -- --strict-expiry` — Đẩy mọi chú thích ngoại lệ `interviewcoach-convention-exempt` quá hạn `until: YYYY-MM-DD` thành lỗi exit code `1`.

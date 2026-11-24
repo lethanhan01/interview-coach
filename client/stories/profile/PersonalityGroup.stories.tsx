@@ -9,8 +9,8 @@ const meta: Meta<typeof PersonalityGroup> = {
     // Add default args here based on component props
     data: {},
     onSave: async () => {
-      await new Promise(r => setTimeout(r, 1000))
-    }
+      await new Promise((r) => setTimeout(r, 1000))
+    },
   },
 }
 

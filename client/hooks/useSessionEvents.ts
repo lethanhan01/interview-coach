@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import { queryKeys, useOptionalQueryClient } from '@/lib/query-client'
+import { useQueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/queries/keys'
 import { sessionService } from '@/services/session.service'
 import type { FeedbackProgress, SessionStatus } from '@/types'
 
@@ -53,6 +54,7 @@ export interface UseSessionEventsOptions {
   onReportReady?: () => void
   onCompleted?: () => void
   onError?: (error: Error) => void
+  onTerminalError?: (message: string, code?: string) => void
   onConnectionChange?: (connected: boolean) => void
 }
 
@@ -68,9 +70,10 @@ export function useSessionEvents({
   onReportReady,
   onCompleted,
   onError,
+  onTerminalError,
   onConnectionChange,
 }: UseSessionEventsOptions) {
-  const queryClient = useOptionalQueryClient()
+  const queryClient = useQueryClient()
   const [connectionState, setConnectionState] =
     useState<ConnectionState>('idle')
   const retryCountRef = useRef(0)
@@ -84,6 +87,7 @@ export function useSessionEvents({
   const onReportReadyRef = useRef(onReportReady)
   const onCompletedRef = useRef(onCompleted)
   const onErrorRef = useRef(onError)
+  const onTerminalErrorRef = useRef(onTerminalError)
   const onConnectionChangeRef = useRef(onConnectionChange)
 
   useEffect(() => {
@@ -92,6 +96,7 @@ export function useSessionEvents({
     onReportReadyRef.current = onReportReady
     onCompletedRef.current = onCompleted
     onErrorRef.current = onError
+    onTerminalErrorRef.current = onTerminalError
     onConnectionChangeRef.current = onConnectionChange
   })
 
@@ -142,6 +147,9 @@ export function useSessionEvents({
           })
           void queryClient.invalidateQueries({
             queryKey: queryKeys.sessions.detail(sessionId),
+          })
+          void queryClient.invalidateQueries({
+            queryKey: queryKeys.sessions.list(),
           })
           onStatusRef.current?.(parsed.data.status)
         } catch (err) {
@@ -208,6 +216,7 @@ export function useSessionEvents({
           isTerminatedRef.current = true
           cleanup()
           setConnectionState('disconnected')
+          onTerminalErrorRef.current?.(errMessage, errCode)
           onErrorRef.current?.(
             new Error(`[${errCode || 'ERROR'}] ${errMessage}`)
           )

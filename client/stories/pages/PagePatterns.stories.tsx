@@ -12,7 +12,7 @@ import {
   Pagination,
   ConfirmDialog,
   ColumnDef,
-} from '@/components/patterns'
+} from '@/components/common'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Plus, Download, Edit, Trash, Settings } from 'lucide-react'

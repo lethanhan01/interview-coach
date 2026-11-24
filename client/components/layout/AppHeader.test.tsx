@@ -11,7 +11,7 @@ vi.mock('next/navigation', () => ({
   }),
 }))
 
-vi.mock('@/lib/auth-context', () => ({
+vi.mock('@/providers/AuthProvider', () => ({
   useAuth: () => ({
     user: { id: 'u-1', email: 'admin@interviewcoach.vn' },
     role: 'admin',

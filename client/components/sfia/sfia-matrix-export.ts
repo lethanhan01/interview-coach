@@ -47,14 +47,17 @@ export function generateSfiaMatrixCsvString(
   rows.push(headers.map(escapeCsv).join(','))
 
   for (const skill of skills) {
-    const categoryName = categoryMap.get(skill.categoryCode) || skill.categoryCode
+    const categoryName =
+      categoryMap.get(skill.categoryCode) || skill.categoryCode
 
     const levelCells: string[] = []
     for (let l = 1; l <= 7; l++) {
       const cellKey = `${skill.code}_L${l}`
       const cell = cells[cellKey]
       if (cell && cell.isAvailable) {
-        levelCells.push(`Available (${cell.questionCount} Qs, ${cell.onetCount} O*NET)`)
+        levelCells.push(
+          `Available (${cell.questionCount} Qs, ${cell.onetCount} O*NET)`
+        )
       } else {
         levelCells.push('—')
       }

@@ -29,7 +29,7 @@ export const Default: Story = {
         <CardDescription>Deploy your new project in one-click.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="text-sm text-ink-muted">
+        <div className="text-ink-muted text-sm">
           Project setup contents go here...
         </div>
       </CardContent>

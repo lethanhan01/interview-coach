@@ -15,64 +15,71 @@ import {
 import { vi } from 'vitest'
 
 vi.mock('cmdk', () => {
-  const CommandPrimitive = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-    ({ children, ...props }, ref) => (
-      <div data-testid="cmdk-command" ref={ref} {...props}>
-        {children}
-      </div>
-    )
-  )
+  const CommandPrimitive = React.forwardRef<
+    HTMLDivElement,
+    React.HTMLAttributes<HTMLDivElement>
+  >(({ children, ...props }, ref) => (
+    <div data-testid="cmdk-command" ref={ref} {...props}>
+      {children}
+    </div>
+  ))
   CommandPrimitive.displayName = 'Command'
 
-  const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
-    ({ ...props }, ref) => (
-      <input data-testid="cmdk-input" ref={ref} {...props} />
-    )
-  )
+  const Input = React.forwardRef<
+    HTMLInputElement,
+    React.InputHTMLAttributes<HTMLInputElement>
+  >(({ ...props }, ref) => (
+    <input data-testid="cmdk-input" ref={ref} {...props} />
+  ))
   Input.displayName = 'CommandInput'
 
-  const List = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-    ({ children, ...props }, ref) => (
-      <div data-testid="cmdk-list" ref={ref} {...props}>
-        {children}
-      </div>
-    )
-  )
+  const List = React.forwardRef<
+    HTMLDivElement,
+    React.HTMLAttributes<HTMLDivElement>
+  >(({ children, ...props }, ref) => (
+    <div data-testid="cmdk-list" ref={ref} {...props}>
+      {children}
+    </div>
+  ))
   List.displayName = 'CommandList'
 
-  const Empty = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-    ({ children, ...props }, ref) => (
-      <div data-testid="cmdk-empty" ref={ref} {...props}>
-        {children}
-      </div>
-    )
-  )
+  const Empty = React.forwardRef<
+    HTMLDivElement,
+    React.HTMLAttributes<HTMLDivElement>
+  >(({ children, ...props }, ref) => (
+    <div data-testid="cmdk-empty" ref={ref} {...props}>
+      {children}
+    </div>
+  ))
   Empty.displayName = 'CommandEmpty'
 
-  const Group = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement> & { heading?: React.ReactNode }>(
-    ({ children, heading, ...props }, ref) => (
-      <div data-testid="cmdk-group" ref={ref} {...props}>
-        {heading && <div cmdk-group-heading="">{heading}</div>}
-        {children}
-      </div>
-    )
-  )
+  const Group = React.forwardRef<
+    HTMLDivElement,
+    React.HTMLAttributes<HTMLDivElement> & { heading?: React.ReactNode }
+  >(({ children, heading, ...props }, ref) => (
+    <div data-testid="cmdk-group" ref={ref} {...props}>
+      {heading && <div cmdk-group-heading="">{heading}</div>}
+      {children}
+    </div>
+  ))
   Group.displayName = 'CommandGroup'
 
-  const Item = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-    ({ children, ...props }, ref) => (
-      <div data-testid="cmdk-item" ref={ref} {...props}>
-        {children}
-      </div>
-    )
-  )
+  const Item = React.forwardRef<
+    HTMLDivElement,
+    React.HTMLAttributes<HTMLDivElement>
+  >(({ children, ...props }, ref) => (
+    <div data-testid="cmdk-item" ref={ref} {...props}>
+      {children}
+    </div>
+  ))
   Item.displayName = 'CommandItem'
 
-  const Separator = React.forwardRef<HTMLHRElement, React.HTMLAttributes<HTMLHRElement>>(
-    ({ ...props }, ref) => (
-      <hr data-testid="cmdk-separator" ref={ref} {...props} />
-    )
-  )
+  const Separator = React.forwardRef<
+    HTMLHRElement,
+    React.HTMLAttributes<HTMLHRElement>
+  >(({ ...props }, ref) => (
+    <hr data-testid="cmdk-separator" ref={ref} {...props} />
+  ))
   Separator.displayName = 'CommandSeparator'
 
   // Attach components to CommandPrimitive
@@ -115,9 +122,14 @@ describe('Command Component', () => {
     )
 
     expect(screen.getByTestId('cmdk-command')).toBeInTheDocument()
-    expect(screen.getByTestId('cmdk-input')).toHaveAttribute('placeholder', 'Search...')
+    expect(screen.getByTestId('cmdk-input')).toHaveAttribute(
+      'placeholder',
+      'Search...'
+    )
     expect(screen.getByTestId('cmdk-list')).toBeInTheDocument()
-    expect(screen.getByTestId('cmdk-empty')).toHaveTextContent('No results found.')
+    expect(screen.getByTestId('cmdk-empty')).toHaveTextContent(
+      'No results found.'
+    )
     expect(screen.getByTestId('cmdk-group')).toHaveTextContent('Settings')
     expect(screen.getByText('Profile')).toBeInTheDocument()
     expect(screen.getByText('Billing')).toBeInTheDocument()
@@ -128,7 +140,9 @@ describe('Command Component', () => {
 
   it('should apply custom class names', () => {
     render(<Command className="custom-command-class" />)
-    expect(screen.getByTestId('cmdk-command')).toHaveClass('custom-command-class')
+    expect(screen.getByTestId('cmdk-command')).toHaveClass(
+      'custom-command-class'
+    )
   })
 
   it('should not have basic accessibility violations', async () => {

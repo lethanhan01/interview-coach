@@ -20,7 +20,9 @@ describe('RadioGroup — Render', () => {
         <RadioGroupItem value="b" aria-label="Option B" />
       </RadioGroup>
     )
-    expect(screen.getByRole('radiogroup', { name: 'Options' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('radiogroup', { name: 'Options' })
+    ).toBeInTheDocument()
     expect(screen.getAllByRole('radio')).toHaveLength(2)
   })
 })
@@ -53,7 +55,7 @@ describe('RadioGroup — Interaction', () => {
         <RadioGroupItem value="b" aria-label="Option B" />
       </RadioGroup>
     )
-    
+
     const radios = screen.getAllByRole('radio')
     await user.click(radios[1])
     expect(handleValueChange).toHaveBeenCalledWith('b')
@@ -66,11 +68,11 @@ describe('RadioGroup — Interaction', () => {
         <RadioGroupItem value="b" aria-label="Option B" />
       </RadioGroup>
     )
-    
+
     await user.tab()
     const radios = screen.getAllByRole('radio')
     expect(radios[0]).toHaveFocus()
-    
+
     await user.keyboard('{ArrowDown}')
     expect(radios[1]).toHaveFocus()
   })
@@ -84,10 +86,10 @@ describe('RadioGroup — Disabled', () => {
         <RadioGroupItem value="a" aria-label="Option A" disabled />
       </RadioGroup>
     )
-    
+
     const radio = screen.getByRole('radio')
     expect(radio).toBeDisabled()
-    
+
     await user.click(radio)
     expect(handleValueChange).not.toHaveBeenCalled()
   })

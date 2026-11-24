@@ -80,4 +80,3 @@ describe('Badge Component', () => {
     expect(results).toHaveNoViolations()
   })
 })
-

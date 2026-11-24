@@ -8,7 +8,7 @@ import {
   waitFor,
 } from '@test-utils'
 import { ApiClientError } from '@/lib/api-client'
-import { queryKeys } from '@/lib/query-client'
+import { queryKeys } from '@/queries/keys'
 import { authService } from '@/services/auth.service'
 import type { AuthUser } from '@/types'
 import ChangePasswordGroup from './ChangePasswordGroup'

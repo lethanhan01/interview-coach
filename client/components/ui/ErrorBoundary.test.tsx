@@ -33,7 +33,9 @@ describe('ErrorBoundary Component', () => {
         <BuggyComponent />
       </ErrorBoundary>
     )
-    expect(screen.getByText('Đã xảy ra lỗi. Vui lòng tải lại trang.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Đã xảy ra lỗi. Vui lòng tải lại trang.')
+    ).toBeInTheDocument()
   })
 
   it('renders custom fallback if provided', () => {

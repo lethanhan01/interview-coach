@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, fireEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SfiaCreateQuestionModal } from './SfiaCreateQuestionModal'
-import { queryKeys } from '@/lib/query-client'
+import { queryKeys } from '@/queries/keys'
 import { sfiaAdminService } from '@/services'
 
 vi.mock('sonner', () => ({

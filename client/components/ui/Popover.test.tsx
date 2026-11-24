@@ -4,11 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { axe } from 'jest-axe'
 
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from './Popover'
+import { Popover, PopoverContent, PopoverTrigger } from './Popover'
 
 const setup = (jsx: React.ReactElement) => ({
   user: userEvent.setup(),
@@ -34,9 +30,9 @@ describe('Popover', () => {
         <PopoverContent>Popover content</PopoverContent>
       </Popover>
     )
-    
+
     await user.click(screen.getByText('Open popover'))
-    
+
     await waitFor(() => {
       expect(screen.getByText('Popover content')).toBeInTheDocument()
     })
@@ -49,13 +45,13 @@ describe('Popover', () => {
         <PopoverContent>Popover content</PopoverContent>
       </Popover>
     )
-    
+
     await user.tab()
     expect(screen.getByText('Open popover')).toHaveFocus()
-    
+
     // Press Enter to open
     await user.keyboard('{Enter}')
-    
+
     await waitFor(() => {
       expect(screen.getByText('Popover content')).toBeInTheDocument()
     })
@@ -68,7 +64,7 @@ describe('Popover', () => {
         <PopoverContent>Popover content</PopoverContent>
       </Popover>
     )
-    
+
     // Test closed state
     const results = await axe(container)
     expect(results).toHaveNoViolations()

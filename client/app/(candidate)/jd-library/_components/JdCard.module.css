@@ -2,30 +2,6 @@
   display: block;
   width: 100%;
   border-radius: var(--mantine-radius-md);
-
-  &:focus-visible {
-    outline: rem(2px) solid var(--mantine-primary-color-filled);
-    outline-offset: rem(2px);
-  }
-}
-
-.card {
-  transition:
-    border-color 150ms ease,
-    transform 150ms ease;
-
-  @mixin hover {
-    border-color: var(--mantine-primary-color-filled);
-    transform: translateY(rem(-1px));
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-
-    @mixin hover {
-      transform: none;
-    }
-  }
 }
 
 .chevron {
@@ -47,8 +23,4 @@
       transform: none;
     }
   }
-}
-
-.mono {
-  font-family: var(--mantine-font-family-monospace);
 }

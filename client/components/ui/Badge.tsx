@@ -10,12 +10,17 @@ const badgeVariants = cva(
       variant: {
         default: 'bg-surface-raised text-ink-muted border-border',
         secondary: 'bg-secondary text-secondary-foreground border-border',
-        outline: 'bg-transparent text-foreground border-border',
-        brand: 'bg-brand-subtle text-brand-subtle-fg border-brand-subtle-border',
-        success: 'bg-success-subtle text-success-subtle-fg border-success-subtle-fg/30',
-        warning: 'bg-warning-subtle text-warning-subtle-fg border-warning-subtle-fg/30',
-        danger: 'bg-danger-subtle text-danger-subtle-fg border-danger-subtle-fg/30',
-        destructive: 'bg-danger-subtle text-danger-subtle-fg border-danger-subtle-fg/30',
+        outline: 'text-foreground border-border bg-transparent',
+        brand:
+          'bg-brand-subtle text-brand-subtle-fg border-brand-subtle-border',
+        success:
+          'bg-success-subtle text-success-subtle-fg border-success-subtle-fg/30',
+        warning:
+          'bg-warning-subtle text-warning-subtle-fg border-warning-subtle-fg/30',
+        danger:
+          'bg-danger-subtle text-danger-subtle-fg border-danger-subtle-fg/30',
+        destructive:
+          'bg-danger-subtle text-danger-subtle-fg border-danger-subtle-fg/30',
       },
     },
     defaultVariants: {
@@ -25,8 +30,7 @@ const badgeVariants = cva(
 )
 
 export interface BadgeProps
-  extends HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof badgeVariants> {
+  extends HTMLAttributes<HTMLSpanElement>, VariantProps<typeof badgeVariants> {
   /** If true, styles the badge as a clickable interactive element. */
   interactive?: boolean
   /** If provided, renders an accessible dismiss/remove button. */
@@ -56,7 +60,7 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
           tabIndex={0}
           className={cn(
             badgeVariants({ variant }),
-            'cursor-pointer hover:opacity-85 active:scale-95 transition-transform select-none',
+            'cursor-pointer select-none transition-transform hover:opacity-85 active:scale-95',
             className
           )}
           {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
@@ -85,7 +89,7 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
               onDismiss(e)
             }}
             aria-label={dismissLabel}
-            className="hover:bg-surface-raised/50 text-current ml-0.5 inline-flex size-3.5 items-center justify-center rounded-full p-0.5 opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none"
+            className="hover:bg-surface-raised/50 ml-0.5 inline-flex size-3.5 items-center justify-center rounded-full p-0.5 text-current opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none"
           >
             <X className="size-3" aria-hidden="true" />
           </button>
@@ -95,4 +99,3 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
   }
 )
 Badge.displayName = 'Badge'
-

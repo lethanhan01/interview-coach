@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, fireEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { OnetSfiaTab } from './OnetSfiaTab'
-import { queryKeys } from '@/lib/query-client'
+import { queryKeys } from '@/queries/keys'
 import { onetAdminService } from '@/services/onet-admin.service'
 import type { OnetSfiaMapping, SfiaSkillDefinition } from '@/types'
 

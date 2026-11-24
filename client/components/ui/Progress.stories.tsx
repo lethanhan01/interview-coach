@@ -45,21 +45,21 @@ export const Default: Story = {
 
 export const Variants: Story = {
   render: () => (
-    <div className="flex flex-col gap-4 w-72">
+    <div className="flex w-72 flex-col gap-4">
       <div>
-        <p className="text-xs text-ink-muted mb-1">Brand (60%)</p>
+        <p className="text-ink-muted mb-1 text-xs">Brand (60%)</p>
         <Progress value={60} variant="brand" />
       </div>
       <div>
-        <p className="text-xs text-ink-muted mb-1">Success (85%)</p>
+        <p className="text-ink-muted mb-1 text-xs">Success (85%)</p>
         <Progress value={85} variant="success" />
       </div>
       <div>
-        <p className="text-xs text-ink-muted mb-1">Warning (45%)</p>
+        <p className="text-ink-muted mb-1 text-xs">Warning (45%)</p>
         <Progress value={45} variant="warning" />
       </div>
       <div>
-        <p className="text-xs text-ink-muted mb-1">Danger (20%)</p>
+        <p className="text-ink-muted mb-1 text-xs">Danger (20%)</p>
         <Progress value={20} variant="danger" />
       </div>
     </div>

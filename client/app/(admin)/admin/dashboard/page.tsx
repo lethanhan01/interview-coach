@@ -2,15 +2,12 @@
 
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import { userQueries } from '@/lib/query-client'
+import { userQueries } from '@/queries/user.queries'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { PageContainer } from '@/components/patterns/LayoutPatterns'
-import {
-  LoadingState,
-  ErrorState,
-} from '@/components/patterns/FeedbackPatterns'
+import { PageContainer } from '@/components/common/LayoutPatterns'
+import { LoadingState, ErrorState } from '@/components/common/FeedbackPatterns'
 import {
   Users,
   UserCheck,

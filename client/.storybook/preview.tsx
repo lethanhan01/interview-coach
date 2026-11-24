@@ -20,7 +20,7 @@ import { withThemeByClassName } from '@storybook/addon-themes'
 import { MantineProvider } from '@mantine/core'
 import { ModalsProvider } from '@mantine/modals'
 import React, { useEffect } from 'react'
-import { QueryProvider } from '../lib/query-client'
+import { QueryProvider } from '../providers/QueryProvider'
 import { theme } from '../theme'
 
 function ReducedMotionWrapper({

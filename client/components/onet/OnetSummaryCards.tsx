@@ -1,12 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import {
-  BookOpen,
-  Layers,
-  Sparkles,
-  Wrench,
-} from 'lucide-react'
+import { BookOpen, Layers, Sparkles, Wrench } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Progress } from '@/components/ui/Progress'
 import { cn } from '@/lib/utils'
@@ -31,7 +26,7 @@ export function OnetSummaryCards({
       )}
     >
       {/* Card 1: Nghề nghiệp Chuẩn SOC */}
-      <Card className="p-2.5 transition-all duration-200 hover:shadow-md hover:border-border/90">
+      <Card className="hover:border-border/90 p-2.5 transition-all duration-200 hover:shadow-md">
         <div className="flex items-center justify-between">
           <span className="text-ink-muted text-[11px] font-semibold uppercase tracking-wider">
             Nghề nghiệp SOC Chuẩn
@@ -46,19 +41,20 @@ export function OnetSummaryCards({
           </span>
           <span className="text-ink-faint text-[11px]">mã chuẩn</span>
         </div>
-        <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-ink-muted">
-          <span className="bg-surface-inset text-ink rounded px-1.5 py-0.2 font-medium">
+        <div className="text-ink-muted mt-0.5 flex items-center gap-1.5 text-[10px]">
+          <span className="bg-surface-inset text-ink py-0.2 rounded px-1.5 font-medium">
             23 nhóm
           </span>
           <span>•</span>
           <span>
-            {summary.totalMappedOccupations} nghề mapped ({summary.overallMappingCoveragePercent}%)
+            {summary.totalMappedOccupations} nghề mapped (
+            {summary.overallMappingCoveragePercent}%)
           </span>
         </div>
       </Card>
 
       {/* Card 2: Ánh xạ Khung SFIA 9 */}
-      <Card className="p-2.5 transition-all duration-200 hover:shadow-md hover:border-border/90">
+      <Card className="hover:border-border/90 p-2.5 transition-all duration-200 hover:shadow-md">
         <div className="flex items-center justify-between">
           <span className="text-ink-muted text-[11px] font-semibold uppercase tracking-wider">
             Ánh xạ Khung SFIA 9
@@ -73,13 +69,13 @@ export function OnetSummaryCards({
           </span>
           <span className="text-ink-faint text-[11px]">mappings</span>
         </div>
-        <p className="text-ink-muted mt-0.5 text-[10px] truncate">
+        <p className="text-ink-muted mt-0.5 truncate text-[10px]">
           Chuẩn năng lực 7 cấp độ trách nhiệm (L1–L7)
         </p>
       </Card>
 
       {/* Card 3: Độ phủ Nhóm IT & Toán (Nhóm 15) */}
-      <Card className="p-2.5 transition-all duration-200 hover:shadow-md hover:border-border/90">
+      <Card className="hover:border-border/90 p-2.5 transition-all duration-200 hover:shadow-md">
         <div className="flex items-center justify-between">
           <span className="text-ink-muted text-[11px] font-semibold uppercase tracking-wider">
             Độ phủ Nhóm IT (SOC 15)
@@ -101,15 +97,18 @@ export function OnetSummaryCards({
             size="sm"
             aria-label="Tỷ lệ hoàn thiện ánh xạ nhóm IT"
           />
-          <div className="flex justify-between text-[10px] text-ink-muted">
-            <span>{summary.itGroupMappedOccupations} / {summary.itGroupOccupations} nghề trọng điểm</span>
-            <span className="font-semibold text-brand">Ưu tiên</span>
+          <div className="text-ink-muted flex justify-between text-[10px]">
+            <span>
+              {summary.itGroupMappedOccupations} / {summary.itGroupOccupations}{' '}
+              nghề trọng điểm
+            </span>
+            <span className="text-brand font-semibold">Ưu tiên</span>
           </div>
         </div>
       </Card>
 
       {/* Card 4: Công nghệ & Công cụ Phần mềm */}
-      <Card className="p-2.5 transition-all duration-200 hover:shadow-md hover:border-border/90">
+      <Card className="hover:border-border/90 p-2.5 transition-all duration-200 hover:shadow-md">
         <div className="flex items-center justify-between">
           <span className="text-ink-muted text-[11px] font-semibold uppercase tracking-wider">
             Công nghệ & Phần mềm
@@ -124,12 +123,12 @@ export function OnetSummaryCards({
           </span>
           <span className="text-ink-faint text-[11px]">công cụ</span>
         </div>
-        <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-ink-muted">
-          <span className="bg-warning/15 text-warning-foreground font-semibold rounded px-1.5 py-0.2">
+        <div className="text-ink-muted mt-0.5 flex items-center gap-1.5 text-[10px]">
+          <span className="bg-warning/15 text-warning-foreground py-0.2 rounded px-1.5 font-semibold">
             🔥 {numberFormatter.format(summary.hotTechCount)} Hot
           </span>
           <span>•</span>
-          <span className="bg-success/15 text-success font-medium rounded px-1.5 py-0.2">
+          <span className="bg-success/15 text-success py-0.2 rounded px-1.5 font-medium">
             ⚡ {numberFormatter.format(summary.inDemandTechCount)} Demand
           </span>
         </div>

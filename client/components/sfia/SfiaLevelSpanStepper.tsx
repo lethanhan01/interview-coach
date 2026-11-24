@@ -9,10 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/Tooltip'
-import {
-  getCategoryTheme,
-  SFIA_LEVEL_DEFINITIONS,
-} from './sfia-theme'
+import { getCategoryTheme, SFIA_LEVEL_DEFINITIONS } from './sfia-theme'
 
 export interface SfiaLevelSpanStepperProps {
   minLevel: number
@@ -71,18 +68,18 @@ export function SfiaLevelSpanStepper({
         onKeyDown={handleKeyDown}
         aria-label="SFIA 7-level responsibility span stepper"
         className={cn(
-          'bg-surface-raised/40 border border-border/70 rounded-xl p-3.5 sm:p-4 space-y-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40',
+          'bg-surface-raised/40 border-border/70 focus-visible:ring-brand/40 space-y-3 rounded-xl border p-3.5 transition-colors focus:outline-none focus-visible:ring-2 sm:p-4',
           className
         )}
       >
         {/* Stepper Header Meta Row */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2.5">
+        <div className="border-border/50 flex flex-wrap items-center justify-between gap-2 border-b pb-2.5">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-ink flex items-center gap-1.5">
-              <Sparkles className="size-3.5 text-brand shrink-0" />
+            <span className="text-ink flex items-center gap-1.5 text-xs font-bold">
+              <Sparkles className="text-brand size-3.5 shrink-0" />
               <span>7-Level Responsibility Span Stepper</span>
             </span>
-            <span className="text-[11px] text-ink-muted hidden sm:inline-block">
+            <span className="text-ink-muted hidden text-[11px] sm:inline-block">
               (Use arrow keys ← → or 1-7 numbers to jump)
             </span>
           </div>
@@ -91,25 +88,29 @@ export function SfiaLevelSpanStepper({
             <span className="text-ink-muted">Valid range:</span>
             <span
               className={cn(
-                'px-2 py-0.5 rounded-full font-mono text-[11px] font-semibold border',
+                'rounded-full border px-2 py-0.5 font-mono text-[11px] font-semibold',
                 theme.badge
               )}
             >
-              Level {minLevel} ➔ Level {maxLevel} ({maxLevel - minLevel + 1}/7 Levels)
+              Level {minLevel} ➔ Level {maxLevel} ({maxLevel - minLevel + 1}/7
+              Levels)
             </span>
           </div>
         </div>
 
         {/* 7-Level Step Track */}
-        <div className="relative pt-2 pb-1 px-2 sm:px-4">
+        <div className="relative px-2 pb-1 pt-2 sm:px-4">
           {/* Horizontal Connecting Rail */}
           <div
-            className="absolute top-7 left-6 right-6 h-1 bg-border/80 rounded-full -translate-y-1/2 z-0"
+            className="bg-border/80 absolute left-6 right-6 top-7 z-0 h-1 -translate-y-1/2 rounded-full"
             aria-hidden="true"
           >
             {/* Active Range Highlight Sub-Rail */}
             <div
-              className={cn('h-full rounded-full transition-all duration-300 opacity-60', theme.dot)}
+              className={cn(
+                'h-full rounded-full opacity-60 transition-all duration-300',
+                theme.dot
+              )}
               style={{
                 left: `${((minLevel - 1) / 6) * 100}%`,
                 width: `${((maxLevel - minLevel) / 6) * 100}%`,
@@ -130,27 +131,33 @@ export function SfiaLevelSpanStepper({
                   <Tooltip key={lvl}>
                     <TooltipTrigger asChild>
                       <div
-                        className="flex flex-col items-center gap-1.5 opacity-40 cursor-not-allowed group select-none"
+                        className="group flex cursor-not-allowed select-none flex-col items-center gap-1.5 opacity-40"
                         aria-disabled="true"
                       >
-                        <div className="relative size-9 sm:size-10 rounded-full bg-surface-inset border border-border/80 flex items-center justify-center text-xs font-mono font-medium text-ink-muted transition-all">
+                        <div className="bg-surface-inset border-border/80 text-ink-muted relative flex size-9 items-center justify-center rounded-full border font-mono text-xs font-medium transition-all sm:size-10">
                           <span>{lvl}</span>
-                          <Ban className="size-3.5 absolute text-rose-500/70" />
+                          <Ban className="absolute size-3.5 text-rose-500/70" />
                         </div>
                         <div className="text-center">
-                          <span className="text-[10px] sm:text-[11px] font-mono font-medium text-ink-muted line-through block">
+                          <span className="text-ink-muted block font-mono text-[10px] font-medium line-through sm:text-[11px]">
                             L{lvl}
                           </span>
-                          <span className="text-[9px] text-ink-muted/80 truncate max-w-[48px] sm:max-w-[70px] hidden sm:block">
+                          <span className="text-ink-muted/80 hidden max-w-[48px] truncate text-[9px] sm:block sm:max-w-[70px]">
                             {def?.name || 'N/A'}
                           </span>
                         </div>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs max-w-xs text-center">
-                      <p className="font-semibold text-rose-300">Not available at Level {lvl}</p>
-                      <p className="text-[11px] opacity-90 mt-0.5">
-                        SFIA 9 standard does not define this skill at Level {lvl}.
+                    <TooltipContent
+                      side="top"
+                      className="max-w-xs text-center text-xs"
+                    >
+                      <p className="font-semibold text-rose-300">
+                        Not available at Level {lvl}
+                      </p>
+                      <p className="mt-0.5 text-[11px] opacity-90">
+                        SFIA 9 standard does not define this skill at Level{' '}
+                        {lvl}.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -166,17 +173,17 @@ export function SfiaLevelSpanStepper({
                       aria-current={isSelected ? 'step' : undefined}
                       aria-label={`Select Level ${lvl} - ${def?.name}`}
                       className={cn(
-                        'flex flex-col items-center gap-1.5 group cursor-pointer select-none transition-all outline-none focus-visible:ring-2 focus-visible:ring-brand/60 rounded-lg p-0.5',
+                        'focus-visible:ring-brand/60 group flex cursor-pointer select-none flex-col items-center gap-1.5 rounded-lg p-0.5 outline-none transition-all focus-visible:ring-2',
                         isSelected ? 'scale-105' : 'hover:scale-105'
                       )}
                     >
                       {/* Node Circle */}
                       <div
                         className={cn(
-                          'relative size-9 sm:size-10 rounded-full font-mono font-bold text-xs sm:text-sm flex items-center justify-center transition-all duration-200 border-2 shadow-xs',
+                          'shadow-xs relative flex size-9 items-center justify-center rounded-full border-2 font-mono text-xs font-bold transition-all duration-200 sm:size-10 sm:text-sm',
                           isSelected
                             ? cn(
-                                'text-white dark:text-ink-inverted ring-3 ring-brand/30 border-white dark:border-ink scale-110 shadow-md',
+                                'dark:text-ink-inverted ring-3 ring-brand/30 dark:border-ink scale-110 border-white text-white shadow-md',
                                 theme.dot
                               )
                             : cn(
@@ -191,7 +198,7 @@ export function SfiaLevelSpanStepper({
                       <div className="text-center">
                         <span
                           className={cn(
-                            'text-[10px] sm:text-[11px] font-mono font-bold block',
+                            'block font-mono text-[10px] font-bold sm:text-[11px]',
                             isSelected
                               ? theme.accent
                               : 'text-ink group-hover:text-brand'
@@ -201,9 +208,9 @@ export function SfiaLevelSpanStepper({
                         </span>
                         <span
                           className={cn(
-                            'text-[9px] sm:text-[10px] truncate max-w-[50px] sm:max-w-[76px] block transition-colors leading-tight',
+                            'block max-w-[50px] truncate text-[9px] leading-tight transition-colors sm:max-w-[76px] sm:text-[10px]',
                             isSelected
-                              ? 'font-bold text-ink'
+                              ? 'text-ink font-bold'
                               : 'text-ink-muted group-hover:text-ink'
                           )}
                           title={def?.name}
@@ -213,11 +220,11 @@ export function SfiaLevelSpanStepper({
                       </div>
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs max-w-xs">
-                    <p className="font-semibold text-brand">
+                  <TooltipContent side="top" className="max-w-xs text-xs">
+                    <p className="text-brand font-semibold">
                       Level {lvl}: {def?.name}
                     </p>
-                    <p className="text-[10px] text-ink-muted mt-1 italic">
+                    <p className="text-ink-muted mt-1 text-[10px] italic">
                       Click to view behavioral criteria and statements
                     </p>
                   </TooltipContent>

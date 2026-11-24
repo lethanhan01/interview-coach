@@ -5,7 +5,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const progressVariants = cva(
-  'relative w-full overflow-hidden rounded-full bg-surface-raised border border-border/50 transition-all',
+  'bg-surface-raised border-border/50 relative w-full overflow-hidden rounded-full border transition-all',
   {
     variants: {
       variant: {
@@ -29,7 +29,8 @@ const progressVariants = cva(
 )
 
 export interface ProgressProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends
+    React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof progressVariants> {
   /** The current completion value (0 - 100). */
   value?: number

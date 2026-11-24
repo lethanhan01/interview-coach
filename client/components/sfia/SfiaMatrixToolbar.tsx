@@ -21,10 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/Select'
-import {
-  type SfiaCategory,
-  type SfiaMatrixDisplayMode,
-} from '@/types'
+import { type SfiaCategory, type SfiaMatrixDisplayMode } from '@/types'
 import { getCategoryTheme } from './sfia-theme'
 
 export interface SfiaMatrixToolbarProps {
@@ -79,14 +76,14 @@ export function SfiaMatrixToolbar({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search code (PROG) or skill name..."
-              leadingIcon={<Search className="size-4 text-ink-muted" />}
+              leadingIcon={<Search className="text-ink-muted size-4" />}
               trailingAction={
                 searchQuery ? (
                   <button
                     type="button"
                     onClick={() => onSearchChange('')}
                     aria-label="Clear search"
-                    className="text-ink-muted hover:text-ink absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-md transition-colors"
+                    className="text-ink-muted hover:text-ink absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-0.5 transition-colors"
                   >
                     <X className="size-3.5" />
                   </button>
@@ -100,7 +97,9 @@ export function SfiaMatrixToolbar({
           <div className="w-full sm:w-56">
             <Select
               value={selectedCategory || 'ALL'}
-              onValueChange={(val) => onCategoryChange(val === 'ALL' ? '' : val)}
+              onValueChange={(val) =>
+                onCategoryChange(val === 'ALL' ? '' : val)
+              }
             >
               <SelectTrigger
                 aria-label="Filter by category"
@@ -110,16 +109,23 @@ export function SfiaMatrixToolbar({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">
-                  <span className="font-medium">All Categories ({categories.length})</span>
+                  <span className="font-medium">
+                    All Categories ({categories.length})
+                  </span>
                 </SelectItem>
                 {categories.map((cat) => {
                   const theme = getCategoryTheme(cat.code)
                   return (
                     <SelectItem key={cat.code} value={cat.code}>
                       <div className="flex items-center gap-2">
-                        <span className={cn('size-2 rounded-full shrink-0', theme.dot)} />
+                        <span
+                          className={cn(
+                            'size-2 shrink-0 rounded-full',
+                            theme.dot
+                          )}
+                        />
                         <span className="truncate">{cat.name}</span>
-                        <span className="text-[10px] text-ink-muted ml-auto font-mono">
+                        <span className="text-ink-muted ml-auto font-mono text-[10px]">
                           ({cat.skillCount})
                         </span>
                       </div>
@@ -132,33 +138,37 @@ export function SfiaMatrixToolbar({
         </div>
 
         {/* Right Action: CSV Export Button */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex shrink-0 items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={onExportCsv}
             disabled={isExporting}
-            className="h-9 gap-1.5 text-xs font-semibold px-3"
+            className="h-9 gap-1.5 px-3 text-xs font-semibold"
             title="Export matrix data to UTF-8 CSV"
           >
             <Download className="size-3.5" />
-            <span>{isExporting ? 'Exporting CSV...' : 'Export Matrix CSV'}</span>
+            <span>
+              {isExporting ? 'Exporting CSV...' : 'Export Matrix CSV'}
+            </span>
           </Button>
         </div>
       </div>
 
       {/* Bottom Controls Row: Display Mode Selector, Blind Spots Toggle, and Active Counts */}
-      <div className="flex flex-col gap-2 pt-2 border-t border-border/50 sm:flex-row sm:items-center sm:justify-between">
+      <div className="border-border/50 flex flex-col gap-2 border-t pt-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Display Mode Segmented Controls */}
-          <div className="flex items-center gap-1 text-xs text-ink-muted">
-            <span className="text-[11px] font-medium mr-1 text-ink-muted">Cell display:</span>
-            <div className="bg-surface-inset p-0.5 rounded-lg flex items-center border border-border/60">
+          <div className="text-ink-muted flex items-center gap-1 text-xs">
+            <span className="text-ink-muted mr-1 text-[11px] font-medium">
+              Cell display:
+            </span>
+            <div className="bg-surface-inset border-border/60 flex items-center rounded-lg border p-0.5">
               <button
                 type="button"
                 onClick={() => onDisplayModeChange('level')}
                 className={cn(
-                  'px-2 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1',
+                  'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
                   displayMode === 'level'
                     ? 'bg-card text-ink shadow-xs font-semibold'
                     : 'text-ink-muted hover:text-ink'
@@ -171,7 +181,7 @@ export function SfiaMatrixToolbar({
                 type="button"
                 onClick={() => onDisplayModeChange('questions')}
                 className={cn(
-                  'px-2 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1',
+                  'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
                   displayMode === 'questions'
                     ? 'bg-card text-ink shadow-xs font-semibold'
                     : 'text-ink-muted hover:text-ink'
@@ -184,7 +194,7 @@ export function SfiaMatrixToolbar({
                 type="button"
                 onClick={() => onDisplayModeChange('onet')}
                 className={cn(
-                  'px-2 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1',
+                  'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
                   displayMode === 'onet'
                     ? 'bg-card text-ink shadow-xs font-semibold'
                     : 'text-ink-muted hover:text-ink'
@@ -199,9 +209,9 @@ export function SfiaMatrixToolbar({
           {/* Blind Spots Only Toggle Switch */}
           <div
             className={cn(
-              'flex items-center gap-2 px-2.5 py-1 rounded-lg border text-xs transition-colors',
+              'flex items-center gap-2 rounded-lg border px-2.5 py-1 text-xs transition-colors',
               blindSpotsOnly
-                ? 'bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-200'
+                ? 'border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200'
                 : 'bg-surface-inset border-border/60 text-ink'
             )}
           >
@@ -213,22 +223,24 @@ export function SfiaMatrixToolbar({
             />
             <label
               htmlFor="sfia-blind-spots-toggle"
-              className="cursor-pointer font-medium text-[11px] flex items-center gap-1.5 select-none"
+              className="flex cursor-pointer select-none items-center gap-1.5 text-[11px] font-medium"
             >
               <AlertTriangle
                 className={cn(
                   'size-3.5',
-                  blindSpotsOnly ? 'text-amber-600 dark:text-amber-400' : 'text-ink-muted'
+                  blindSpotsOnly
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-ink-muted'
                 )}
               />
               <span>Blind spots only (0 questions)</span>
               {blindSpotsCount !== undefined && (
                 <span
                   className={cn(
-                    'px-1.5 py-0.2 rounded-full text-[10px] font-bold',
+                    'py-0.2 rounded-full px-1.5 text-[10px] font-bold',
                     blindSpotsOnly
                       ? 'bg-amber-500 text-white'
-                      : 'bg-surface-raised text-ink-muted border border-border'
+                      : 'bg-surface-raised text-ink-muted border-border border'
                   )}
                 >
                   {blindSpotsCount}
@@ -239,9 +251,10 @@ export function SfiaMatrixToolbar({
         </div>
 
         {/* Counter Badge */}
-        <div className="flex items-center gap-2 self-start sm:self-auto text-xs text-ink-muted">
+        <div className="text-ink-muted flex items-center gap-2 self-start text-xs sm:self-auto">
           <span className="text-[11px]">
-            Showing: <strong className="text-ink">{displayedSkillsCount}</strong> /{' '}
+            Showing:{' '}
+            <strong className="text-ink">{displayedSkillsCount}</strong> /{' '}
             <span>{totalSkillsCount} skills</span>
           </span>
         </div>

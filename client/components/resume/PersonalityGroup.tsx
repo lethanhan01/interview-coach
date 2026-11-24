@@ -19,7 +19,7 @@ import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
 import ProfileSection from '@/components/profile/ProfileSection'
 import { getErrorMessage } from '@/lib/form-errors'
 import { PERSONALITY_OPTIONS } from './constants'
-import classes from './PersonalityGroup.module.css'
+import interactions from '@/styles/interactions.module.css'
 
 const SELECTABLE_OPTIONS = PERSONALITY_OPTIONS.filter((opt) => opt.value !== '')
 
@@ -129,7 +129,7 @@ export default function PersonalityGroup({
                     radius="md"
                     p="sm"
                     disabled={saving}
-                    className={classes.optionCard}
+                    className={interactions.optionCard}
                   >
                     <Group justify="space-between" align="center" wrap="nowrap">
                       <Text size="sm" fw={500}>

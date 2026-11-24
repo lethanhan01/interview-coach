@@ -1,18 +1,27 @@
 import React from 'react'
 import { render, screen, waitFor } from '@test-utils'
-import { vi, describe, it, expect, beforeEach } from 'vitest'
+import { axe } from 'jest-axe'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ReportPage from './page'
 import { ApiClientError } from '@/lib/api-client'
 import { sessionService } from '@/services/session.service'
 import {
-  mockUnifiedReport,
   mockLegacyReport,
   mockSkippedTurnsReport,
-} from '@/tests/fixtures/report.fixture'
+  mockUnifiedReport,
+} from '@/test-utils/fixtures/report.fixture'
 import type { Session } from '@/types'
 
 vi.mock('next/navigation', () => ({
   useParams: () => ({ sessionId: 'test-session-123' }),
+}))
+
+vi.mock('next/dynamic', () => ({
+  default: () => {
+    return function MockDynamicComponent() {
+      return null
+    }
+  },
 }))
 
 vi.mock('@/services/session.service', () => ({
@@ -165,5 +174,17 @@ describe('ReportPage', () => {
 
     expect(screen.getByText('Còn 1 câu đang xử lý')).toBeInTheDocument()
     expect(sessionService.getReport).toHaveBeenCalledTimes(1)
+  })
+
+  it('has no accessibility violations when report is displayed', async () => {
+    vi.mocked(sessionService.getReport).mockResolvedValue(mockUnifiedReport)
+
+    const { container } = render(<ReportPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Báo cáo phỏng vấn')).toBeInTheDocument()
+    })
+
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

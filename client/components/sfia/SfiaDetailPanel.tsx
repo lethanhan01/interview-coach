@@ -16,15 +16,8 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
-import type {
-  SfiaCategory,
-  SfiaSubcategory,
-  SfiaSkillDetail,
-} from '@/types'
-import {
-  getCategoryTheme,
-  SFIA_LEVEL_DEFINITIONS,
-} from './sfia-theme'
+import type { SfiaCategory, SfiaSubcategory, SfiaSkillDetail } from '@/types'
+import { getCategoryTheme, SFIA_LEVEL_DEFINITIONS } from './sfia-theme'
 import { SfiaLevelSpanStepper } from './SfiaLevelSpanStepper'
 import { SfiaLevelStatementCards } from './SfiaLevelStatementCards'
 import { SfiaGuidanceNotes } from './SfiaGuidanceNotes'
@@ -61,7 +54,9 @@ export function SfiaDetailPanel({
 }: SfiaDetailPanelProps) {
   const [copiedCode, setCopiedCode] = React.useState(false)
   const [aiModalOpen, setAiModalOpen] = React.useState(false)
-  const [activeSubTab, setActiveSubTab] = React.useState<'statements' | 'onet' | 'questions'>('statements')
+  const [activeSubTab, setActiveSubTab] = React.useState<
+    'statements' | 'onet' | 'questions'
+  >('statements')
 
   const handleCopyCode = async () => {
     if (!skillDetail) return
@@ -78,34 +73,39 @@ export function SfiaDetailPanel({
   // Loading Skeleton State
   if (loading) {
     return (
-      <div className={cn('bg-card border border-border/80 rounded-xl p-4 sm:p-6 space-y-5 animate-pulse', className)}>
+      <div
+        className={cn(
+          'bg-card border-border/80 animate-pulse space-y-5 rounded-xl border p-4 sm:p-6',
+          className
+        )}
+      >
         {/* Header Skeleton */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-4">
+        <div className="border-border/60 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="size-12 rounded-xl bg-surface-inset shrink-0" />
+            <div className="bg-surface-inset size-12 shrink-0 rounded-xl" />
             <div className="space-y-2">
-              <div className="h-5 w-48 bg-surface-inset rounded" />
-              <div className="h-3.5 w-72 bg-surface-inset rounded" />
+              <div className="bg-surface-inset h-5 w-48 rounded" />
+              <div className="bg-surface-inset h-3.5 w-72 rounded" />
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-8 w-24 bg-surface-inset rounded-lg" />
-            <div className="h-8 w-28 bg-surface-inset rounded-lg" />
+            <div className="bg-surface-inset h-8 w-24 rounded-lg" />
+            <div className="bg-surface-inset h-8 w-28 rounded-lg" />
           </div>
         </div>
 
         {/* KPI Metrics Skeleton */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-16 bg-surface-inset rounded-lg" />
+            <div key={i} className="bg-surface-inset h-16 rounded-lg" />
           ))}
         </div>
 
         {/* Stepper Skeleton */}
-        <div className="h-28 bg-surface-inset rounded-xl" />
+        <div className="bg-surface-inset h-28 rounded-xl" />
 
         {/* Content Skeleton */}
-        <div className="h-48 bg-surface-inset rounded-xl" />
+        <div className="bg-surface-inset h-48 rounded-xl" />
       </div>
     )
   }
@@ -113,18 +113,29 @@ export function SfiaDetailPanel({
   // Error State
   if (error || !skillDetail) {
     return (
-      <div className={cn('bg-card border border-border/80 rounded-xl p-8 flex flex-col items-center justify-center text-center min-h-[400px]', className)}>
-        <div className="p-3 bg-destructive/10 text-destructive rounded-full mb-3">
+      <div
+        className={cn(
+          'bg-card border-border/80 flex min-h-[400px] flex-col items-center justify-center rounded-xl border p-8 text-center',
+          className
+        )}
+      >
+        <div className="bg-destructive/10 text-destructive mb-3 rounded-full p-3">
           <AlertCircle className="size-8" />
         </div>
-        <h3 className="text-base font-bold text-ink mb-1">
+        <h3 className="text-ink mb-1 text-base font-bold">
           {error || 'SFIA skill details not found'}
         </h3>
-        <p className="text-xs text-ink-muted max-w-sm mb-4 leading-relaxed">
-          Failed to load skill details or the skill does not exist in the system. Please try again or select a different skill.
+        <p className="text-ink-muted mb-4 max-w-sm text-xs leading-relaxed">
+          Failed to load skill details or the skill does not exist in the
+          system. Please try again or select a different skill.
         </p>
         {onRetry && (
-          <Button variant="outline" size="sm" onClick={onRetry} className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRetry}
+            className="gap-2"
+          >
             <RefreshCw className="size-3.5" />
             <span>Try Again</span>
           </Button>
@@ -134,19 +145,26 @@ export function SfiaDetailPanel({
   }
 
   const currentCat = categories.find((c) => c.code === skillDetail.categoryCode)
-  const currentSub = subcategories.find((s) => s.code === skillDetail.subcategoryCode)
+  const currentSub = subcategories.find(
+    (s) => s.code === skillDetail.subcategoryCode
+  )
   const theme = getCategoryTheme(skillDetail.categoryCode)
   const levelDef = SFIA_LEVEL_DEFINITIONS[selectedLevel]
 
   return (
-    <div className={cn('bg-card border border-border/80 rounded-xl p-4 sm:p-5 shadow-xs space-y-4', className)}>
+    <div
+      className={cn(
+        'bg-card border-border/80 shadow-xs space-y-4 rounded-xl border p-4 sm:p-5',
+        className
+      )}
+    >
       {/* 1. Hero Identity Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-4">
+      <div className="border-border/60 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           {/* Skill Code Badge Avatar */}
           <div
             className={cn(
-              'size-12 rounded-xl flex items-center justify-center font-mono font-bold text-base border shadow-xs shrink-0',
+              'shadow-xs flex size-12 shrink-0 items-center justify-center rounded-xl border font-mono text-base font-bold',
               theme.badge
             )}
           >
@@ -154,13 +172,13 @@ export function SfiaDetailPanel({
           </div>
 
           <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base sm:text-lg font-bold text-ink">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-ink text-base font-bold sm:text-lg">
                 {skillDetail.name}
               </h2>
               <span
                 className={cn(
-                  'text-[11px] font-semibold px-2.5 py-0.5 rounded-full border',
+                  'rounded-full border px-2.5 py-0.5 text-[11px] font-semibold',
                   theme.badge
                 )}
               >
@@ -169,36 +187,42 @@ export function SfiaDetailPanel({
             </div>
 
             {/* Breadcrumb Path */}
-            <div className="flex items-center gap-1.5 text-xs text-ink-muted mt-1 flex-wrap">
+            <div className="text-ink-muted mt-1 flex flex-wrap items-center gap-1.5 text-xs">
               <span className="flex items-center gap-1">
                 <span className={cn('size-2 rounded-full', theme.dot)} />
-                <strong className="text-ink font-medium">{currentCat?.name || skillDetail.categoryCode}</strong>
+                <strong className="text-ink font-medium">
+                  {currentCat?.name || skillDetail.categoryCode}
+                </strong>
               </span>
               <span>›</span>
               <span>{currentSub?.name || skillDetail.subcategoryCode}</span>
               <span>›</span>
-              <span className="font-mono text-ink font-semibold">{skillDetail.code}</span>
+              <span className="text-ink font-mono font-semibold">
+                {skillDetail.code}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={handleCopyCode}
-            className="h-8 px-2.5 text-xs gap-1.5"
+            className="h-8 gap-1.5 px-2.5 text-xs"
             title="Copy skill code"
           >
             {copiedCode ? (
               <>
                 <Check className="size-3.5 text-emerald-500" />
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Copied</span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                  Copied
+                </span>
               </>
             ) : (
               <>
-                <Copy className="size-3.5 text-ink-muted" />
+                <Copy className="text-ink-muted size-3.5" />
                 <span>Copy Code</span>
               </>
             )}
@@ -208,7 +232,7 @@ export function SfiaDetailPanel({
             variant="outline"
             size="sm"
             onClick={() => setAiModalOpen(true)}
-            className="h-8 px-2.5 text-xs gap-1.5 border-brand/40 text-brand hover:bg-brand/5 hover:text-brand"
+            className="border-brand/40 text-brand hover:bg-brand/5 hover:text-brand h-8 gap-1.5 px-2.5 text-xs"
             title="Open AI Evaluator System Prompt Template"
           >
             <Bot className="size-3.5" />
@@ -220,7 +244,7 @@ export function SfiaDetailPanel({
               variant="outline"
               size="sm"
               onClick={onNavigateToMatrix}
-              className="h-8 px-2.5 text-xs gap-1.5 text-ink-muted hover:text-ink"
+              className="text-ink-muted hover:text-ink h-8 gap-1.5 px-2.5 text-xs"
               title="View skill position in 2D Matrix"
             >
               <Grid3X3 className="size-3.5" />
@@ -231,28 +255,37 @@ export function SfiaDetailPanel({
       </div>
 
       {/* 2. Mini KPI Metric Badges */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
-          <span className="text-[11px] text-ink-muted">Standard Level Span</span>
-          <p className="text-sm font-bold text-ink mt-0.5 font-mono">
-            L{skillDetail.minLevel} to L{skillDetail.maxLevel} ({skillDetail.maxLevel - skillDetail.minLevel + 1} levels)
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <div className="bg-surface-inset border-border/50 rounded-lg border p-3">
+          <span className="text-ink-muted text-[11px]">
+            Standard Level Span
+          </span>
+          <p className="text-ink mt-0.5 font-mono text-sm font-bold">
+            L{skillDetail.minLevel} to L{skillDetail.maxLevel} (
+            {skillDetail.maxLevel - skillDetail.minLevel + 1} levels)
           </p>
         </div>
-        <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
-          <span className="text-[11px] text-ink-muted">Interview Questions</span>
-          <p className="text-sm font-bold text-ink mt-0.5">
-            {skillDetail.questionBankItems?.length || skillDetail.questionCount} questions
+        <div className="bg-surface-inset border-border/50 rounded-lg border p-3">
+          <span className="text-ink-muted text-[11px]">
+            Interview Questions
+          </span>
+          <p className="text-ink mt-0.5 text-sm font-bold">
+            {skillDetail.questionBankItems?.length || skillDetail.questionCount}{' '}
+            questions
           </p>
         </div>
-        <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
-          <span className="text-[11px] text-ink-muted">Mapped O*NET Occupations</span>
-          <p className="text-sm font-bold text-ink mt-0.5">
-            {skillDetail.onetMappings?.length || skillDetail.onetCount} occupations
+        <div className="bg-surface-inset border-border/50 rounded-lg border p-3">
+          <span className="text-ink-muted text-[11px]">
+            Mapped O*NET Occupations
+          </span>
+          <p className="text-ink mt-0.5 text-sm font-bold">
+            {skillDetail.onetMappings?.length || skillDetail.onetCount}{' '}
+            occupations
           </p>
         </div>
-        <div className="bg-surface-inset p-3 rounded-lg border border-border/50">
-          <span className="text-[11px] text-ink-muted">Active Level</span>
-          <p className="text-sm font-bold text-brand mt-0.5">
+        <div className="bg-surface-inset border-border/50 rounded-lg border p-3">
+          <span className="text-ink-muted text-[11px]">Active Level</span>
+          <p className="text-brand mt-0.5 text-sm font-bold">
             L{selectedLevel} ({levelDef?.name || ''})
           </p>
         </div>
@@ -270,32 +303,38 @@ export function SfiaDetailPanel({
       {/* 4. Sub-Tabs Workspace (Statements / O*NET / Question Bank) */}
       <Tabs
         value={activeSubTab}
-        onValueChange={(val) => setActiveSubTab(val as 'statements' | 'onet' | 'questions')}
+        onValueChange={(val) =>
+          setActiveSubTab(val as 'statements' | 'onet' | 'questions')
+        }
         className="space-y-3 pt-1"
       >
-        <TabsList className="bg-surface-inset h-9 p-1 w-full justify-start overflow-x-auto">
-          <TabsTrigger value="statements" className="gap-1.5 text-xs px-3 py-1">
+        <TabsList className="bg-surface-inset h-9 w-full justify-start overflow-x-auto p-1">
+          <TabsTrigger value="statements" className="gap-1.5 px-3 py-1 text-xs">
             <Layers className="size-3.5" />
             <span>Behavioral Statements & Guidance</span>
           </TabsTrigger>
-          <TabsTrigger value="onet" className="gap-1.5 text-xs px-3 py-1">
+          <TabsTrigger value="onet" className="gap-1.5 px-3 py-1 text-xs">
             <Briefcase className="size-3.5" />
             <span>O*NET Occupations</span>
-            <span className="text-[10px] opacity-75 font-mono">
+            <span className="font-mono text-[10px] opacity-75">
               ({skillDetail.onetMappings?.length || skillDetail.onetCount || 0})
             </span>
           </TabsTrigger>
-          <TabsTrigger value="questions" className="gap-1.5 text-xs px-3 py-1">
+          <TabsTrigger value="questions" className="gap-1.5 px-3 py-1 text-xs">
             <HelpCircle className="size-3.5" />
             <span>Question Bank & Create</span>
-            <span className="text-[10px] opacity-75 font-mono">
-              ({skillDetail.questionBankItems?.length || skillDetail.questionCount || 0})
+            <span className="font-mono text-[10px] opacity-75">
+              (
+              {skillDetail.questionBankItems?.length ||
+                skillDetail.questionCount ||
+                0}
+              )
             </span>
           </TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Behavioral Statements & Guidance Notes (Phase 3 Core) */}
-        <TabsContent value="statements" className="space-y-3.5 mt-0">
+        <TabsContent value="statements" className="mt-0 space-y-3.5">
           {/* Level Statement Cards & Essence (Phase 3.2) */}
           <SfiaLevelStatementCards
             skillDetail={skillDetail}
@@ -330,7 +369,10 @@ export function SfiaDetailPanel({
               const updated: SfiaSkillDetail = {
                 ...skillDetail,
                 questionCount: (skillDetail.questionCount || 0) + 1,
-                questionBankItems: [newQ, ...(skillDetail.questionBankItems || [])],
+                questionBankItems: [
+                  newQ,
+                  ...(skillDetail.questionBankItems || []),
+                ],
               }
               onSkillUpdated?.(updated)
             }}

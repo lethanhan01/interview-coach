@@ -11,7 +11,7 @@ import {
   IconSettings,
   IconUser,
 } from '@tabler/icons-react'
-import { useAuth } from '@/lib/auth-context'
+import { useAuth } from '@/providers/AuthProvider'
 import classes from './UserMenuButton.module.css'
 
 export interface UserMenuButtonProps {

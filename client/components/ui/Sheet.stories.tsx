@@ -34,9 +34,7 @@ export const Default: Story = {
             Thực hiện thay đổi vào hồ sơ của bạn ở đây.
           </SheetDescription>
         </SheetHeader>
-        <div className="py-4">
-          Nội dung chính của Sheet ở đây.
-        </div>
+        <div className="py-4">Nội dung chính của Sheet ở đây.</div>
         <SheetFooter>
           <Button variant="outline">Hủy</Button>
           <Button variant="primary">Lưu thay đổi</Button>
@@ -55,9 +53,7 @@ export const LeftSide: Story = {
       <SheetContent side="left">
         <SheetHeader>
           <SheetTitle>Menu Điều hướng</SheetTitle>
-          <SheetDescription>
-            Menu chính của ứng dụng.
-          </SheetDescription>
+          <SheetDescription>Menu chính của ứng dụng.</SheetDescription>
         </SheetHeader>
       </SheetContent>
     </Sheet>
@@ -73,9 +69,7 @@ export const TopSide: Story = {
       <SheetContent side="top">
         <SheetHeader>
           <SheetTitle>Thông báo mới</SheetTitle>
-          <SheetDescription>
-            Bạn có thông báo từ hệ thống.
-          </SheetDescription>
+          <SheetDescription>Bạn có thông báo từ hệ thống.</SheetDescription>
         </SheetHeader>
       </SheetContent>
     </Sheet>
@@ -91,9 +85,7 @@ export const BottomSide: Story = {
       <SheetContent side="bottom">
         <SheetHeader>
           <SheetTitle>Tùy chọn hiển thị</SheetTitle>
-          <SheetDescription>
-            Điều chỉnh cài đặt giao diện.
-          </SheetDescription>
+          <SheetDescription>Điều chỉnh cài đặt giao diện.</SheetDescription>
         </SheetHeader>
       </SheetContent>
     </Sheet>

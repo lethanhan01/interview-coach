@@ -8,9 +8,9 @@ import {
   mantineHtmlProps,
 } from '@mantine/core'
 import { theme } from '@/theme'
-import { AppProviders } from '@/components/app-providers'
-import { MantineColorSchemeSync } from '@/components/mantine-color-scheme-sync'
-import { OfflineBanner } from '@/components/patterns/OfflineBanner'
+import { AppProviders } from '@/providers/AppProviders'
+import { MantineColorSchemeSync } from '@/providers/MantineColorSchemeSync'
+import { OfflineBanner } from '@/components/common/OfflineBanner'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

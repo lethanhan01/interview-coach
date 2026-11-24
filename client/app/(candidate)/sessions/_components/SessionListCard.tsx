@@ -15,6 +15,9 @@ import {
 import { IconClock } from '@tabler/icons-react'
 import { formatVietnamDateTime } from '@/lib/date-time'
 import type { Session, SessionStatus } from '@/types'
+import interactions from '@/styles/interactions.module.css'
+import surfaces from '@/styles/surfaces.module.css'
+import typography from '@/styles/typography.module.css'
 import classes from './SessionListCard.module.css'
 
 type SemanticColor = 'brand' | 'success' | 'warning' | 'danger' | 'neutral'
@@ -72,7 +75,12 @@ export default function SessionListCard({
   const scoreColor = getScoreColor(clampedScore)
 
   return (
-    <Card withBorder radius="md" p="lg" className={classes.card}>
+    <Card
+      withBorder
+      radius="md"
+      p="lg"
+      className={`${classes.card} ${interactions.interactiveCard}`}
+    >
       <Stack gap="md" flex={1}>
         <Group justify="space-between" align="flex-start" gap="xs" wrap="wrap">
           <Badge color={statusInfo.color} variant="light" size="sm">
@@ -118,7 +126,12 @@ export default function SessionListCard({
         </Group>
 
         {hasScore ? (
-          <Paper withBorder radius="md" p="sm" className={classes.scoreBox}>
+          <Paper
+            withBorder
+            radius="md"
+            p="sm"
+            className={surfaces.subtleSurface}
+          >
             <Group gap="md" wrap="nowrap">
               <RingProgress
                 size={56}
@@ -130,7 +143,7 @@ export default function SessionListCard({
                     ta="center"
                     fz="xs"
                     fw={700}
-                    className={classes.tabular}
+                    className={typography.tabularNums}
                   >
                     {Math.round(clampedScore)}
                   </Text>
@@ -144,7 +157,7 @@ export default function SessionListCard({
                   size="lg"
                   fw={700}
                   c={scoreColor}
-                  className={classes.tabular}
+                  className={typography.tabularNums}
                 >
                   {session.overallScore}/100
                 </Text>

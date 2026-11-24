@@ -1,8 +1,0 @@
-.sectionCard {
-  /* prettier-ignore */
-  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
-}
-
-.mono {
-  font-family: var(--mantine-font-family-monospace);
-}

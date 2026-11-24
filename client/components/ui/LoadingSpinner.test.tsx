@@ -19,7 +19,7 @@ describe('LoadingSpinner Component', () => {
 
   it('passes accessibility tests', async () => {
     // A spinner is typically an icon. It should pass a11y tests.
-    // If it is used to indicate loading, it might need aria-label in real usage, 
+    // If it is used to indicate loading, it might need aria-label in real usage,
     // but the component itself should not violate rules.
     const { container } = render(
       <div role="status" aria-label="Loading content">

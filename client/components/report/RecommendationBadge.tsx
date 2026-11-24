@@ -1,7 +1,13 @@
-import React from 'react'
-import { Check, CheckCheck, AlertTriangle, XCircle, HelpCircle } from 'lucide-react'
-import { Badge, type BadgeProps } from '@/components/ui/Badge'
-import { cn } from '@/lib/utils'
+'use client'
+
+import { Badge } from '@mantine/core'
+import {
+  IconAlertTriangle,
+  IconCheck,
+  IconChecks,
+  IconCircleX,
+  IconHelpCircle,
+} from '@tabler/icons-react'
 import type { RecommendationStatus } from '@/types'
 
 export interface RecommendationBadgeProps {
@@ -11,92 +17,74 @@ export interface RecommendationBadgeProps {
 }
 
 interface StatusConfig {
-  variant: NonNullable<BadgeProps['variant']>
+  color: 'success' | 'brand' | 'warning' | 'danger' | 'neutral'
   label: string
-  Icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>
+  Icon: typeof IconCheck
+  ariaLabel: string
 }
 
 const STATUS_CONFIG: Record<RecommendationStatus, StatusConfig> = {
   strongly_recommended: {
-    variant: 'success',
+    color: 'success',
     label: 'Xuất Sắc - Đạt Chuẩn Cao',
-    Icon: CheckCheck,
+    Icon: IconChecks,
+    ariaLabel: 'Xuất Sắc - Đạt Chuẩn Cao',
   },
   recommended: {
-    variant: 'brand',
+    color: 'brand',
     label: 'Đạt Yêu Cầu Tuyển Dụng',
-    Icon: Check,
+    Icon: IconCheck,
+    ariaLabel: 'Đạt Yêu Cầu Tuyển Dụng',
   },
   borderline: {
-    variant: 'warning',
+    color: 'warning',
     label: 'Cân Nhắc - Cần Đánh Giá Thêm',
-    Icon: AlertTriangle,
+    Icon: IconAlertTriangle,
+    ariaLabel: 'Cân Nhắc - Cần Đánh Giá Thêm',
   },
   not_recommended: {
-    variant: 'danger',
+    color: 'danger',
     label: 'Chưa Đạt Chuẩn Kỳ Vọng',
-    Icon: XCircle,
+    Icon: IconCircleX,
+    ariaLabel: 'Chưa Đạt Chuẩn Kỳ Vọng',
   },
 }
 
-const SIZE_VARIANTS = {
-  sm: {
-    badgeClass: 'px-2 py-0.5 text-xs gap-1',
-    iconClass: 'size-3',
-  },
-  md: {
-    badgeClass: 'px-2.5 py-1 text-xs gap-1.5 font-medium',
-    iconClass: 'size-3.5',
-  },
-  lg: {
-    badgeClass: 'px-3.5 py-1.5 text-sm gap-2 font-semibold',
-    iconClass: 'size-4',
-  },
+const FALLBACK_CONFIG: StatusConfig = {
+  color: 'neutral',
+  label: 'Chưa xác định',
+  Icon: IconHelpCircle,
+  ariaLabel: 'Chưa xác định khuyến nghị',
+}
+
+const ICON_SIZE_MAP = {
+  sm: 12,
+  md: 14,
+  lg: 16,
 } as const
 
 export function RecommendationBadge({
   status,
   size = 'md',
   className,
-}: RecommendationBadgeProps) {
-  if (!status || !STATUS_CONFIG[status]) {
-    return (
-      <Badge
-        variant="secondary"
-        role="status"
-        aria-label="Chưa xác định khuyến nghị"
-        className={cn(
-          'inline-flex items-center',
-          SIZE_VARIANTS[size].badgeClass,
-          className
-        )}
-      >
-        <HelpCircle
-          className={SIZE_VARIANTS[size].iconClass}
-          aria-hidden="true"
-        />
-        <span>Chưa xác định</span>
-      </Badge>
-    )
-  }
-
-  const config = STATUS_CONFIG[status]
+}: Readonly<RecommendationBadgeProps>) {
+  const config = (status && STATUS_CONFIG[status]) || FALLBACK_CONFIG
   const { Icon } = config
-  const sizeConfig = SIZE_VARIANTS[size]
+  const iconSize = ICON_SIZE_MAP[size] ?? 14
 
   return (
     <Badge
-      variant={config.variant}
+      variant="light"
+      color={config.color}
+      size={size}
       role="status"
-      aria-label={config.label}
-      className={cn(
-        'inline-flex items-center shadow-xs select-none',
-        sizeConfig.badgeClass,
-        className
-      )}
+      aria-label={config.ariaLabel}
+      leftSection={<Icon size={iconSize} stroke={1.5} aria-hidden="true" />}
+      className={className}
     >
-      <Icon className={cn('shrink-0', sizeConfig.iconClass)} aria-hidden="true" />
-      <span>{config.label}</span>
+      {config.label}
     </Badge>
   )
 }
+
+export default RecommendationBadge

@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { SfiaAnalyticsView, type SfiaAnalyticsViewProps } from './SfiaAnalyticsView'
 import {
-  MOCK_SFIA_COVERAGE_STATS,
-} from './sfia-mock-data'
+  SfiaAnalyticsView,
+  type SfiaAnalyticsViewProps,
+} from './SfiaAnalyticsView'
+import { MOCK_SFIA_COVERAGE_STATS } from './sfia-mock-data'
 
 describe('SfiaAnalyticsView Component', () => {
   const defaultProps: SfiaAnalyticsViewProps = {
@@ -90,10 +91,7 @@ describe('SfiaAnalyticsView Component', () => {
   it('renders all 7 responsibility levels in level distribution chart and handles level selection', () => {
     const onSelectLevel = vi.fn()
     render(
-      <SfiaAnalyticsView
-        {...defaultProps}
-        onSelectLevel={onSelectLevel}
-      />
+      <SfiaAnalyticsView {...defaultProps} onSelectLevel={onSelectLevel} />
     )
 
     // Heading exists
@@ -107,7 +105,9 @@ describe('SfiaAnalyticsView Component', () => {
     expect(screen.getByText('Set strategy / Inspire')).toBeInTheDocument()
 
     // Click on Level 3 button
-    const level3Button = screen.getByRole('button', { name: /Lọc theo Level 3/i })
+    const level3Button = screen.getByRole('button', {
+      name: /Lọc theo Level 3/i,
+    })
     fireEvent.click(level3Button)
     expect(onSelectLevel).toHaveBeenCalledWith(3)
   })
@@ -132,10 +132,7 @@ describe('SfiaAnalyticsView Component', () => {
   it('renders Top 10 O*NET skills leaderboard and triggers onSelectSkill on click', () => {
     const onSelectSkill = vi.fn()
     render(
-      <SfiaAnalyticsView
-        {...defaultProps}
-        onSelectSkill={onSelectSkill}
-      />
+      <SfiaAnalyticsView {...defaultProps} onSelectSkill={onSelectSkill} />
     )
 
     // Heading exists
@@ -147,7 +144,9 @@ describe('SfiaAnalyticsView Component', () => {
     expect(screen.getByText('PPLM')).toBeInTheDocument()
     expect(screen.getByText('People management')).toBeInTheDocument()
     expect(screen.getByText('PROG')).toBeInTheDocument()
-    expect(screen.getByText('Programming/software development')).toBeInTheDocument()
+    expect(
+      screen.getByText('Programming/software development')
+    ).toBeInTheDocument()
 
     // Click jump action
     const viewButton = screen.getByRole('button', {
@@ -196,7 +195,9 @@ describe('SfiaAnalyticsView Component', () => {
       />
     )
 
-    const blindSpotCard = screen.getByTitle('Nhấp để cuộn nhanh đến Bảng Điểm mù')
+    const blindSpotCard = screen.getByTitle(
+      'Nhấp để cuộn nhanh đến Bảng Điểm mù'
+    )
     fireEvent.click(blindSpotCard)
     expect(onScrollToBlindSpots).toHaveBeenCalled()
   })

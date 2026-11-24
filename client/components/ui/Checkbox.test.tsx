@@ -35,8 +35,10 @@ describe('Checkbox — Accessibility', () => {
 describe('Checkbox — Interaction', () => {
   it('can be checked via click', async () => {
     const handleCheckedChange = vi.fn()
-    const { user } = setup(<Checkbox aria-label="Accept" onCheckedChange={handleCheckedChange} />)
-    
+    const { user } = setup(
+      <Checkbox aria-label="Accept" onCheckedChange={handleCheckedChange} />
+    )
+
     const checkbox = screen.getByRole('checkbox')
     await user.click(checkbox)
     expect(handleCheckedChange).toHaveBeenCalledWith(true)
@@ -44,12 +46,14 @@ describe('Checkbox — Interaction', () => {
 
   it('can be focused via Tab and toggled via Space', async () => {
     const handleCheckedChange = vi.fn()
-    const { user } = setup(<Checkbox aria-label="Accept" onCheckedChange={handleCheckedChange} />)
-    
+    const { user } = setup(
+      <Checkbox aria-label="Accept" onCheckedChange={handleCheckedChange} />
+    )
+
     await user.tab()
     const checkbox = screen.getByRole('checkbox')
     expect(checkbox).toHaveFocus()
-    
+
     await user.keyboard('{ }')
     expect(handleCheckedChange).toHaveBeenCalledWith(true)
   })
@@ -58,11 +62,17 @@ describe('Checkbox — Interaction', () => {
 describe('Checkbox — Disabled', () => {
   it('cannot be checked when disabled', async () => {
     const handleCheckedChange = vi.fn()
-    const { user } = setup(<Checkbox aria-label="Accept" disabled onCheckedChange={handleCheckedChange} />)
-    
+    const { user } = setup(
+      <Checkbox
+        aria-label="Accept"
+        disabled
+        onCheckedChange={handleCheckedChange}
+      />
+    )
+
     const checkbox = screen.getByRole('checkbox')
     expect(checkbox).toBeDisabled()
-    
+
     await user.click(checkbox)
     expect(handleCheckedChange).not.toHaveBeenCalled()
   })

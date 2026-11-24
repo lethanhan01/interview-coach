@@ -12,10 +12,12 @@ import {
   DIRECTIONAL_VIEW_TRANSITION_EXIT,
   SafeViewTransition,
   startTypedTransition,
-} from '@/components/patterns/SafeViewTransition'
+} from '@/components/common/SafeViewTransition'
 import { getErrorMessage } from '@/lib/form-errors'
 import { normalizeJdLevel } from '@/lib/interview-options'
-import { prepQueries, queryKeys, sessionQueries } from '@/lib/query-client'
+import { prepQueries } from '@/queries/prep.queries'
+import { queryKeys } from '@/queries/keys'
+import { sessionQueries } from '@/queries/session.queries'
 import { DURATION_OPTIONS, EMPTY_JD } from '@/lib/setup-helpers'
 import { prepService } from '@/services/prep.service'
 import { sessionService } from '@/services/session.service'

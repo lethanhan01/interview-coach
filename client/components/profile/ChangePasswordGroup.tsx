@@ -20,7 +20,7 @@ import {
 } from '@/components/auth/auth-schemas'
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter'
 import { extractApiFieldErrors, getErrorMessage } from '@/lib/form-errors'
-import { queryKeys } from '@/lib/query-client'
+import { queryKeys } from '@/queries/keys'
 import { authService } from '@/services/auth.service'
 import ProfileSection from './ProfileSection'
 

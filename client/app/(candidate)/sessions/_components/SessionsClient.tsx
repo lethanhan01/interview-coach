@@ -19,9 +19,9 @@ import {
 } from '@mantine/core'
 import { IconAlertCircle, IconMessages, IconPlus } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
-import { SafeViewTransition } from '@/components/patterns/SafeViewTransition'
+import { SafeViewTransition } from '@/components/common/SafeViewTransition'
 import { getErrorMessage } from '@/lib/form-errors'
-import { sessionQueries } from '@/lib/query-client'
+import { sessionQueries } from '@/queries/session.queries'
 import SessionListCard, { getCompanyName } from './SessionListCard'
 import SessionsFilterBar, {
   type SessionStatusFilter,

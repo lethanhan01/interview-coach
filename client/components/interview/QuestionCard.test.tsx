@@ -1,9 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@test-utils'
-import { expect, it, describe, vi, beforeEach } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@test-utils'
+import { axe } from 'jest-axe'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mediaService } from '@/services/media.service'
 import QuestionCard from './QuestionCard'
-import { mediaService } from '@/services'
 
-vi.mock('@/services', () => ({
+vi.mock('@/services/media.service', () => ({
   mediaService: {
     synthesizeSpeech: vi.fn(),
   },
@@ -13,6 +14,7 @@ describe('QuestionCard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
+
   it('renders question text and order correctly', () => {
     render(
       <QuestionCard
@@ -67,7 +69,7 @@ describe('QuestionCard', () => {
   })
 
   it('does not render skill badge when neither skillName nor skillCode is provided', () => {
-    const { container } = render(
+    render(
       <QuestionCard
         questionText="Introduce yourself."
         orderIndex={0}
@@ -75,12 +77,7 @@ describe('QuestionCard', () => {
       />
     )
 
-    // Badge container should not be rendered
-    expect(
-      container.querySelector(
-        '[class*="bg-brand-subtle text-brand-subtle-fg"] span'
-      )
-    ).toBeNull()
+    expect(screen.queryByText(/PROG|TEST/)).not.toBeInTheDocument()
   })
 
   it('does not render tech context chips or rubric criteria (security constraint)', () => {
@@ -103,7 +100,7 @@ describe('QuestionCard', () => {
     expect(screen.queryByText(/Tiêu chí/i)).not.toBeInTheDocument()
   })
 
-  it('merges custom className correctly via cn()', () => {
+  it('merges custom className correctly', () => {
     const { container } = render(
       <QuestionCard
         questionText="Custom class test"
@@ -194,5 +191,18 @@ describe('QuestionCard', () => {
     })
 
     vi.unstubAllGlobals()
+  })
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(
+      <QuestionCard
+        questionText="How do you handle microservices architecture?"
+        orderIndex={0}
+        totalQuestions={3}
+        skillCode="ARCH"
+        skillName="Kiến trúc hệ thống"
+      />
+    )
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

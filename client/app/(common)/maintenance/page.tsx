@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Text } from '@mantine/core'
 import { IconTool } from '@tabler/icons-react'
-import { ErrorPageTemplate } from '@/components/patterns/ErrorPageTemplate'
+import { ErrorPageTemplate } from '@/components/common/ErrorPageTemplate'
 
 export const metadata: Metadata = {
   title: 'Hệ thống đang bảo trì — Interview Coach',

@@ -19,8 +19,8 @@ import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { EmptyState } from '@/components/patterns/FeedbackPatterns'
-import { onetAdminQueries } from '@/lib/query-client'
+import { EmptyState } from '@/components/common/FeedbackPatterns'
+import { onetAdminQueries } from '@/queries/onet.queries'
 
 export interface OnetAlternateTitlesTabProps {
   socCode?: string

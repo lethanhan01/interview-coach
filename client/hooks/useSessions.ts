@@ -1,11 +1,9 @@
 'use client'
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
-import {
-  queryKeys,
-  sessionQueries,
-  useOptionalQueryClient,
-} from '@/lib/query-client'
+import { queryKeys } from '@/queries/keys'
+import { sessionQueries } from '@/queries/session.queries'
+import { useOptionalQueryClient } from '@/providers/QueryProvider'
 import type { Session } from '@/types'
 
 export type UseSessionsResult = Omit<

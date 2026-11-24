@@ -21,9 +21,11 @@ type Story = StoryObj<typeof ThemeToggle>
 
 export const Default: Story = {
   render: () => (
-    <div className="flex h-32 items-center justify-center bg-background text-foreground border border-border p-4 rounded-md">
+    <div className="bg-background text-foreground border-border flex h-32 items-center justify-center rounded-md border p-4">
       <div className="flex flex-col items-center gap-4">
-        <span>Click the button to cycle through themes (Light - Dark - System)</span>
+        <span>
+          Click the button to cycle through themes (Light - Dark - System)
+        </span>
         <ThemeToggle />
       </div>
     </div>

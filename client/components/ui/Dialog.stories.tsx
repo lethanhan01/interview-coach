@@ -31,7 +31,8 @@ export const Default: Story = {
         <DialogHeader>
           <DialogTitle>Xác nhận hành động</DialogTitle>
           <DialogDescription>
-            Bạn có chắc chắn muốn thực hiện hành động này không? Dữ liệu không thể khôi phục.
+            Bạn có chắc chắn muốn thực hiện hành động này không? Dữ liệu không
+            thể khôi phục.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

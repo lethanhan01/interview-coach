@@ -48,7 +48,7 @@ describe('Toast (Toaster) Component', () => {
   it('passes accessibility tests', async () => {
     const user = userEvent.setup()
     const { container } = render(<TestToast />)
-    
+
     // Click to show toast
     const button = screen.getByRole('button', { name: 'Show Toast' })
     await user.click(button)

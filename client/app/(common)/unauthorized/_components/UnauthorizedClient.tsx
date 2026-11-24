@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { IconShieldOff } from '@tabler/icons-react'
-import { ErrorPageTemplate } from '@/components/patterns/ErrorPageTemplate'
+import { ErrorPageTemplate } from '@/components/common/ErrorPageTemplate'
 
 export function UnauthorizedClient() {
   const router = useRouter()

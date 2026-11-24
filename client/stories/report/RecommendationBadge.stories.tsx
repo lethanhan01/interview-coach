@@ -41,17 +41,17 @@ export const NotRecommended: Story = {
 
 export const AllSizes: Story = {
   render: () => (
-    <div className="flex flex-col gap-4 items-start">
+    <div className="flex flex-col items-start gap-4">
       <div className="flex items-center gap-3">
-        <span className="w-16 text-xs text-ink-muted">Small:</span>
+        <span className="text-ink-muted w-16 text-xs">Small:</span>
         <RecommendationBadge status="strongly_recommended" size="sm" />
       </div>
       <div className="flex items-center gap-3">
-        <span className="w-16 text-xs text-ink-muted">Medium:</span>
+        <span className="text-ink-muted w-16 text-xs">Medium:</span>
         <RecommendationBadge status="strongly_recommended" size="md" />
       </div>
       <div className="flex items-center gap-3">
-        <span className="w-16 text-xs text-ink-muted">Large:</span>
+        <span className="text-ink-muted w-16 text-xs">Large:</span>
         <RecommendationBadge status="strongly_recommended" size="lg" />
       </div>
     </div>

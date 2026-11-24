@@ -15,7 +15,10 @@ export function generateSfiaLevelPromptRubric(
   const levelDef = SFIA_LEVEL_DEFINITIONS[level.levelId]
 
   if (format === 'json') {
-    const attributeStatements: Record<string, { name: string; nameVi: string; criteria: string }> = {}
+    const attributeStatements: Record<
+      string,
+      { name: string; nameVi: string; criteria: string }
+    > = {}
     attributes.forEach((attr) => {
       attributeStatements[attr.code] = {
         name: attr.name,
@@ -53,7 +56,8 @@ export function generateSfiaLevelPromptRubric(
   // Markdown format for LLM System Prompt
   const attributeSections = attributes
     .map((attr) => {
-      const statement = attr.levels[level.levelId] || 'Standard behavioral expectation.'
+      const statement =
+        attr.levels[level.levelId] || 'Standard behavioral expectation.'
       return `### ${attr.name} (${attr.nameVi})
 - **Định nghĩa tổng quát**: ${attr.description}
 - **Tiêu chuẩn Level ${level.levelId}**: 
@@ -129,7 +133,10 @@ export async function copySfiaLevelPromptToClipboard(
     return true
   } catch (err) {
     toast.error('Không thể sao chép vào bộ nhớ tạm', {
-      description: err instanceof Error ? err.message : 'Vui lòng cấp quyền clipboard cho trình duyệt.',
+      description:
+        err instanceof Error
+          ? err.message
+          : 'Vui lòng cấp quyền clipboard cho trình duyệt.',
     })
     return false
   }

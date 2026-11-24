@@ -6,13 +6,55 @@ import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
 
 describe('SfiaAttributesProgressionMatrix', () => {
   const mockLevels: SfiaLevelResponsibility[] = [
-    { levelId: 1, name: 'Follow', nameVi: 'Tuân thủ', essence: 'Giám sát trực tiếp.', description: 'Tác vụ cơ bản.' },
-    { levelId: 2, name: 'Assist', nameVi: 'Hỗ trợ', essence: 'Hoạt động độc lập quen.', description: 'Hỗ trợ đồng nghiệp.' },
-    { levelId: 3, name: 'Apply', nameVi: 'Áp dụng', essence: 'Tự chủ chuyên môn.', description: 'Chịu trách nhiệm đầu ra.' },
-    { levelId: 4, name: 'Enable', nameVi: 'Chủ động', essence: 'Hướng dẫn người khác.', description: 'Phụ trách nhóm nhỏ.' },
-    { levelId: 5, name: 'Ensure', nameVi: 'Đảm bảo', essence: 'Định hình kỹ thuật.', description: 'Cố vấn chuyên môn.' },
-    { levelId: 6, name: 'Initiate', nameVi: 'Khởi xướng', essence: 'Chuyển đổi chiến lược.', description: 'Tiêu chuẩn toàn diện.' },
-    { levelId: 7, name: 'Set strategy', nameVi: 'Chiến lược', essence: 'Tầm nhìn tối cao.', description: 'Cấp tập đoàn.' },
+    {
+      levelId: 1,
+      name: 'Follow',
+      nameVi: 'Tuân thủ',
+      essence: 'Giám sát trực tiếp.',
+      description: 'Tác vụ cơ bản.',
+    },
+    {
+      levelId: 2,
+      name: 'Assist',
+      nameVi: 'Hỗ trợ',
+      essence: 'Hoạt động độc lập quen.',
+      description: 'Hỗ trợ đồng nghiệp.',
+    },
+    {
+      levelId: 3,
+      name: 'Apply',
+      nameVi: 'Áp dụng',
+      essence: 'Tự chủ chuyên môn.',
+      description: 'Chịu trách nhiệm đầu ra.',
+    },
+    {
+      levelId: 4,
+      name: 'Enable',
+      nameVi: 'Chủ động',
+      essence: 'Hướng dẫn người khác.',
+      description: 'Phụ trách nhóm nhỏ.',
+    },
+    {
+      levelId: 5,
+      name: 'Ensure',
+      nameVi: 'Đảm bảo',
+      essence: 'Định hình kỹ thuật.',
+      description: 'Cố vấn chuyên môn.',
+    },
+    {
+      levelId: 6,
+      name: 'Initiate',
+      nameVi: 'Khởi xướng',
+      essence: 'Chuyển đổi chiến lược.',
+      description: 'Tiêu chuẩn toàn diện.',
+    },
+    {
+      levelId: 7,
+      name: 'Set strategy',
+      nameVi: 'Chiến lược',
+      essence: 'Tầm nhìn tối cao.',
+      description: 'Cấp tập đoàn.',
+    },
   ]
 
   const mockAttributes: SfiaGenericAttribute[] = [
@@ -57,15 +99,23 @@ describe('SfiaAttributesProgressionMatrix', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    window.URL.createObjectURL = vi.fn().mockReturnValue('blob:http://localhost/mock-uuid')
+    window.URL.createObjectURL = vi
+      .fn()
+      .mockReturnValue('blob:http://localhost/mock-uuid')
     window.URL.revokeObjectURL = vi.fn()
   })
 
   it('renders all 7 level column headers in the table', () => {
     render(<SfiaAttributesProgressionMatrix {...defaultProps} />)
-    expect(screen.getByRole('columnheader', { name: /Level 1: Follow/i })).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: /Level 3: Apply/i })).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: /Level 7: Set strategy/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', { name: /Level 1: Follow/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', { name: /Level 3: Apply/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', { name: /Level 7: Set strategy/i })
+    ).toBeInTheDocument()
   })
 
   it('renders rows for all provided generic attributes', () => {
@@ -79,20 +129,31 @@ describe('SfiaAttributesProgressionMatrix', () => {
   it('displays the level statements in the matrix cells', () => {
     render(<SfiaAttributesProgressionMatrix {...defaultProps} />)
     expect(screen.getByText('Chỉ đạo trực tiếp.')).toBeInTheDocument()
-    expect(screen.getByText('Làm việc độc lập trong phạm vi nhiệm vụ.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Làm việc độc lập trong phạm vi nhiệm vụ.')
+    ).toBeInTheDocument()
     expect(screen.getByText('Toàn quyền quyết định.')).toBeInTheDocument()
   })
 
   it('calls onSelectLevel when a level column header is clicked', () => {
     const onSelectLevel = vi.fn()
-    render(<SfiaAttributesProgressionMatrix {...defaultProps} onSelectLevel={onSelectLevel} />)
-    const headerL4 = screen.getByRole('columnheader', { name: /Level 4: Enable/i })
+    render(
+      <SfiaAttributesProgressionMatrix
+        {...defaultProps}
+        onSelectLevel={onSelectLevel}
+      />
+    )
+    const headerL4 = screen.getByRole('columnheader', {
+      name: /Level 4: Enable/i,
+    })
     fireEvent.click(headerL4)
     expect(onSelectLevel).toHaveBeenCalledWith(4)
   })
 
   it('highlights the selected level column', () => {
-    render(<SfiaAttributesProgressionMatrix {...defaultProps} selectedLevel={3} />)
+    render(
+      <SfiaAttributesProgressionMatrix {...defaultProps} selectedLevel={3} />
+    )
     // The selected column has "Selected" indicators
     const activeIndicators = screen.getAllByText('Selected')
     expect(activeIndicators.length).toBeGreaterThan(0)
@@ -100,7 +161,9 @@ describe('SfiaAttributesProgressionMatrix', () => {
 
   it('filters rows based on search input', () => {
     render(<SfiaAttributesProgressionMatrix {...defaultProps} />)
-    const searchInput = screen.getByPlaceholderText('Search attribute criteria...')
+    const searchInput = screen.getByPlaceholderText(
+      'Search attribute criteria...'
+    )
     fireEvent.change(searchInput, { target: { value: 'xu thế' } })
 
     // "Influence" has "Dẫn dắt xu thế", "Autonomy" does not
@@ -110,7 +173,9 @@ describe('SfiaAttributesProgressionMatrix', () => {
 
   it('handles CSV export button click and downloads file', () => {
     render(<SfiaAttributesProgressionMatrix {...defaultProps} />)
-    const exportBtn = screen.getByRole('button', { name: /Export Matrix CSV|CSV/i })
+    const exportBtn = screen.getByRole('button', {
+      name: /Export Matrix CSV|CSV/i,
+    })
     fireEvent.click(exportBtn)
     expect(window.URL.createObjectURL).toHaveBeenCalled()
   })

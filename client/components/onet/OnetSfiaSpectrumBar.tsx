@@ -2,13 +2,7 @@
 
 import * as React from 'react'
 import { useMemo } from 'react'
-import {
-  Target,
-  Star,
-  TrendingUp,
-  Scale,
-  Sparkles,
-} from 'lucide-react'
+import { Target, Star, TrendingUp, Scale, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -28,13 +22,48 @@ interface SeniorityMeta {
 }
 
 const SFIA_LEVELS_META: Record<number, SeniorityMeta> = {
-  1: { code: 'L1', name: 'Follow', subtext: 'Thực thi cơ bản', colorClass: 'border-slate-300 dark:border-slate-700' },
-  2: { code: 'L2', name: 'Assist', subtext: 'Hỗ trợ', colorClass: 'border-blue-300 dark:border-blue-800' },
-  3: { code: 'L3', name: 'Apply', subtext: 'Áp dụng / Mid', colorClass: 'border-teal-300 dark:border-teal-800' },
-  4: { code: 'L4', name: 'Enable', subtext: 'Tự chủ / Senior', colorClass: 'border-emerald-300 dark:border-emerald-800' },
-  5: { code: 'L5', name: 'Ensure', subtext: 'Đảm bảo / Lead', colorClass: 'border-amber-300 dark:border-amber-800' },
-  6: { code: 'L6', name: 'Influence', subtext: 'Định hướng / Principal', colorClass: 'border-orange-300 dark:border-orange-800' },
-  7: { code: 'L7', name: 'Strategy', subtext: 'Chiến lược / C-Level', colorClass: 'border-purple-300 dark:border-purple-800' },
+  1: {
+    code: 'L1',
+    name: 'Follow',
+    subtext: 'Thực thi cơ bản',
+    colorClass: 'border-slate-300 dark:border-slate-700',
+  },
+  2: {
+    code: 'L2',
+    name: 'Assist',
+    subtext: 'Hỗ trợ',
+    colorClass: 'border-blue-300 dark:border-blue-800',
+  },
+  3: {
+    code: 'L3',
+    name: 'Apply',
+    subtext: 'Áp dụng / Mid',
+    colorClass: 'border-teal-300 dark:border-teal-800',
+  },
+  4: {
+    code: 'L4',
+    name: 'Enable',
+    subtext: 'Tự chủ / Senior',
+    colorClass: 'border-emerald-300 dark:border-emerald-800',
+  },
+  5: {
+    code: 'L5',
+    name: 'Ensure',
+    subtext: 'Đảm bảo / Lead',
+    colorClass: 'border-amber-300 dark:border-amber-800',
+  },
+  6: {
+    code: 'L6',
+    name: 'Influence',
+    subtext: 'Định hướng / Principal',
+    colorClass: 'border-orange-300 dark:border-orange-800',
+  },
+  7: {
+    code: 'L7',
+    name: 'Strategy',
+    subtext: 'Chiến lược / C-Level',
+    colorClass: 'border-purple-300 dark:border-purple-800',
+  },
 }
 
 export function OnetSfiaSpectrumBar({
@@ -44,8 +73,12 @@ export function OnetSfiaSpectrumBar({
 }: OnetSfiaSpectrumBarProps) {
   // Compute High-Level Metrics
   const totalCount = mappings.length
-  const coreCount = useMemo(() => mappings.filter((m) => m.isCore).length, [mappings])
-  const corePercentage = totalCount > 0 ? Math.round((coreCount / totalCount) * 100) : 0
+  const coreCount = useMemo(
+    () => mappings.filter((m) => m.isCore).length,
+    [mappings]
+  )
+  const corePercentage =
+    totalCount > 0 ? Math.round((coreCount / totalCount) * 100) : 0
 
   const avgLevel = useMemo(() => {
     if (totalCount === 0) return 0
@@ -86,20 +119,20 @@ export function OnetSfiaSpectrumBar({
   }, [avgLevel])
 
   return (
-    <Card className={cn('p-3.5 sm:p-4 space-y-3.5', className)}>
+    <Card className={cn('space-y-3.5 p-3.5 sm:p-4', className)}>
       {/* 4 KPI Metric Badges Bar */}
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {/* KPI 1: Total Mappings */}
-        <div className="bg-surface-inset rounded-xl p-2.5 border border-border/70 flex items-center justify-between">
+        <div className="bg-surface-inset border-border/70 flex items-center justify-between rounded-xl border p-2.5">
           <div className="space-y-0.5">
-            <span className="text-[11px] font-medium text-ink-muted uppercase tracking-wider">
+            <span className="text-ink-muted text-[11px] font-medium uppercase tracking-wider">
               Tổng Ánh xạ
             </span>
             <div className="flex items-baseline gap-1">
-              <span className="text-ink font-bold text-lg tabular-nums">
+              <span className="text-ink text-lg font-bold tabular-nums">
                 {totalCount}
               </span>
-              <span className="text-[11px] text-ink-faint">kỹ năng</span>
+              <span className="text-ink-faint text-[11px]">kỹ năng</span>
             </div>
           </div>
           <div className="bg-brand/10 text-brand rounded-lg p-1.5">
@@ -108,36 +141,36 @@ export function OnetSfiaSpectrumBar({
         </div>
 
         {/* KPI 2: Core Skills Ratio */}
-        <div className="bg-surface-inset rounded-xl p-2.5 border border-border/70 flex items-center justify-between">
+        <div className="bg-surface-inset border-border/70 flex items-center justify-between rounded-xl border p-2.5">
           <div className="space-y-0.5">
-            <span className="text-[11px] font-medium text-ink-muted uppercase tracking-wider">
+            <span className="text-ink-muted text-[11px] font-medium uppercase tracking-wider">
               Cốt lõi (Core)
             </span>
             <div className="flex items-baseline gap-1">
-              <span className="text-ink font-bold text-lg tabular-nums">
+              <span className="text-ink text-lg font-bold tabular-nums">
                 {coreCount}
               </span>
-              <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+              <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
                 ({corePercentage}%)
               </span>
             </div>
           </div>
-          <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg p-1.5">
+          <div className="rounded-lg bg-amber-500/10 p-1.5 text-amber-600 dark:text-amber-400">
             <Star className="size-4" />
           </div>
         </div>
 
         {/* KPI 3: Average Target Level */}
-        <div className="bg-surface-inset rounded-xl p-2.5 border border-border/70 flex items-center justify-between">
+        <div className="bg-surface-inset border-border/70 flex items-center justify-between rounded-xl border p-2.5">
           <div className="space-y-0.5">
-            <span className="text-[11px] font-medium text-ink-muted uppercase tracking-wider">
+            <span className="text-ink-muted text-[11px] font-medium uppercase tracking-wider">
               Cấp độ Mục tiêu
             </span>
             <div className="flex items-baseline gap-1">
-              <span className="text-ink font-bold text-lg tabular-nums">
+              <span className="text-ink text-lg font-bold tabular-nums">
                 Level {avgLevel}
               </span>
-              <span className="text-[10px] text-ink-muted">/ 7</span>
+              <span className="text-ink-muted text-[10px]">/ 7</span>
             </div>
           </div>
           <div className="bg-brand/10 text-brand rounded-lg p-1.5">
@@ -146,16 +179,16 @@ export function OnetSfiaSpectrumBar({
         </div>
 
         {/* KPI 4: Total Weight */}
-        <div className="bg-surface-inset rounded-xl p-2.5 border border-border/70 flex items-center justify-between">
+        <div className="bg-surface-inset border-border/70 flex items-center justify-between rounded-xl border p-2.5">
           <div className="space-y-0.5">
-            <span className="text-[11px] font-medium text-ink-muted uppercase tracking-wider">
+            <span className="text-ink-muted text-[11px] font-medium uppercase tracking-wider">
               Tổng Trọng số
             </span>
             <div className="flex items-baseline gap-1">
-              <span className="text-ink font-bold text-lg tabular-nums">
+              <span className="text-ink text-lg font-bold tabular-nums">
                 {totalWeight}
               </span>
-              <span className="text-[11px] text-ink-faint">hệ số</span>
+              <span className="text-ink-faint text-[11px]">hệ số</span>
             </div>
           </div>
           <div className="bg-brand/10 text-brand rounded-lg p-1.5">
@@ -165,13 +198,13 @@ export function OnetSfiaSpectrumBar({
       </div>
 
       {/* Seniority Profile Highlight Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2.5 text-xs">
-        <div className="flex items-center gap-1.5 text-ink-muted">
+      <div className="border-border/60 flex flex-wrap items-center justify-between gap-2 border-t pt-2.5 text-xs">
+        <div className="text-ink-muted flex items-center gap-1.5">
           <Sparkles className="text-brand size-3.5 shrink-0" />
           <span>Thước đo Phổ Năng lực Cấp bậc SFIA 9:</span>
           <span className="text-brand font-semibold">{seniorityLabel}</span>
         </div>
-        <span className="text-[11px] text-ink-muted hidden sm:inline">
+        <span className="text-ink-muted hidden text-[11px] sm:inline">
           Click vào thẻ kỹ năng trên thước đo để nhảy đến hàng trong bảng
         </span>
       </div>
@@ -187,16 +220,16 @@ export function OnetSfiaSpectrumBar({
             <div
               key={lvl}
               className={cn(
-                'flex flex-col rounded-xl border p-1.5 sm:p-2 min-h-[96px] transition-colors',
+                'flex min-h-[96px] flex-col rounded-xl border p-1.5 transition-colors sm:p-2',
                 hasSkills
                   ? 'bg-surface-1 border-border/90 shadow-sm'
-                  : 'bg-surface-inset/40 border-dashed border-border/60'
+                  : 'bg-surface-inset/40 border-border/60 border-dashed'
               )}
             >
               {/* Level Column Header */}
-              <div className="text-center border-b border-border/50 pb-1 mb-1.5">
+              <div className="border-border/50 mb-1.5 border-b pb-1 text-center">
                 <div className="flex items-center justify-center gap-1">
-                  <span className="font-mono font-bold text-xs text-ink">
+                  <span className="text-ink font-mono text-xs font-bold">
                     {meta.code}
                   </span>
                   {hasSkills && (
@@ -205,16 +238,22 @@ export function OnetSfiaSpectrumBar({
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] text-ink-muted font-medium truncate" title={meta.name}>
+                <p
+                  className="text-ink-muted truncate text-[10px] font-medium"
+                  title={meta.name}
+                >
                   {meta.name}
                 </p>
-                <p className="text-[9px] text-ink-faint truncate hidden md:block" title={meta.subtext}>
+                <p
+                  className="text-ink-faint hidden truncate text-[9px] md:block"
+                  title={meta.subtext}
+                >
                   {meta.subtext}
                 </p>
               </div>
 
               {/* Skills Pins List inside this Level */}
-              <div className="flex flex-col gap-1 flex-1 justify-start overflow-hidden">
+              <div className="flex flex-1 flex-col justify-start gap-1 overflow-hidden">
                 {skillsInLvl.map((skill) => (
                   <Badge
                     key={skill.id}
@@ -222,22 +261,22 @@ export function OnetSfiaSpectrumBar({
                     variant={skill.isCore ? 'warning' : 'secondary'}
                     onClick={() => onSelectSkill?.(skill.skillCode)}
                     className={cn(
-                      'w-full justify-between rounded-lg px-2 py-1 text-[11px] font-mono text-left transition-all',
+                      'w-full justify-between rounded-lg px-2 py-1 text-left font-mono text-[11px] transition-all',
                       skill.isCore
-                        ? 'font-bold border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300 hover:border-amber-500 hover:shadow-elevation-1'
+                        ? 'hover:shadow-elevation-1 border-amber-500/40 bg-amber-500/10 font-bold text-amber-800 hover:border-amber-500 dark:text-amber-300'
                         : 'border-border/80 bg-surface-inset text-ink-muted hover:text-ink hover:border-brand/40'
                     )}
                     title={`${skill.skillCode} (${skill.skillName}) - Trọng số ${skill.weight}x ${skill.isCore ? '(Cốt lõi)' : ''}`}
                   >
                     <span className="truncate">{skill.skillCode}</span>
                     {skill.isCore && (
-                      <Star className="text-amber-500 size-2.5 shrink-0 fill-amber-500" />
+                      <Star className="size-2.5 shrink-0 fill-amber-500 text-amber-500" />
                     )}
                   </Badge>
                 ))}
 
                 {!hasSkills && (
-                  <div className="flex flex-1 items-center justify-center text-ink-faint text-[10px]">
+                  <div className="text-ink-faint flex flex-1 items-center justify-center text-[10px]">
                     —
                   </div>
                 )}

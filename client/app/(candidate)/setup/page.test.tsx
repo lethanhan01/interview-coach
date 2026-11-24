@@ -7,7 +7,7 @@ import {
 } from '@test-utils'
 import { axe } from 'jest-axe'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { queryKeys } from '@/lib/query-client'
+import { queryKeys } from '@/queries/keys'
 import { prepService } from '@/services/prep.service'
 import { sessionService } from '@/services/session.service'
 import type { SavedJobDescription } from '@/types'

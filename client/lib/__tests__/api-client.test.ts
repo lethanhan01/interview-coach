@@ -18,7 +18,7 @@ describe('ApiClientError', () => {
       400,
       'VALIDATION_ERROR',
       details,
-      'req-abc-123',
+      'req-abc-123'
     )
     expect(error.statusCode).toBe(400)
     expect(error.errorCode).toBe('VALIDATION_ERROR')
@@ -36,7 +36,7 @@ describe('ApiClientError', () => {
       null,
       undefined,
       undefined,
-      rawData,
+      rawData
     )
     expect(error.data).toEqual(rawData)
   })
@@ -49,7 +49,7 @@ describe('ApiClientError', () => {
       'VALIDATION_ERROR',
       details,
       'req-test-999',
-      'corr-trace-888',
+      'corr-trace-888'
     )
     expect(error.statusCode).toBe(400)
     expect(error.errorCode).toBe('VALIDATION_ERROR')
@@ -69,7 +69,7 @@ describe('apiClient Idempotency & Error Messages', () => {
 
   it('định nghĩa thông điệp tiếng Việt thân thiện cho REQUEST_IN_PROGRESS', () => {
     expect(API_ERROR_MESSAGES.REQUEST_IN_PROGRESS).toBe(
-      'Thao tác đang được xử lý, vui lòng không gửi yêu cầu liên tục.',
+      'Thao tác đang được xử lý, vui lòng không gửi yêu cầu liên tục.'
     )
   })
 
@@ -88,7 +88,7 @@ describe('apiClient Idempotency & Error Messages', () => {
     const res = await apiClient.post(
       '/sessions',
       { role: 'Backend' },
-      { idempotencyKey: 'custom-key-uuid-123' },
+      { idempotencyKey: 'custom-key-uuid-123' }
     )
 
     expect(res).toEqual({ id: 'sess-123' })
@@ -132,4 +132,3 @@ describe('apiClient Idempotency & Error Messages', () => {
     expect(capturedHeaders?.['Idempotency-Key']).toBeUndefined()
   })
 })
-

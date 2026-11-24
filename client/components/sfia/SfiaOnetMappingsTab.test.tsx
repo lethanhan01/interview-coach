@@ -38,12 +38,13 @@ describe('SfiaOnetMappingsTab', () => {
       />
     )
 
-    expect(screen.getByText(/No mapped O\*NET occupations/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/No mapped O\*NET occupations/i)
+    ).toBeInTheDocument()
     expect(screen.getByText(/UNMAPPED/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Explore O\*NET Browser/i })).toHaveAttribute(
-      'href',
-      '/admin/onet'
-    )
+    expect(
+      screen.getByRole('link', { name: /Explore O\*NET Browser/i })
+    ).toHaveAttribute('href', '/admin/onet')
   })
 
   it('renders table headers and mapped occupations properly', () => {
@@ -55,12 +56,16 @@ describe('SfiaOnetMappingsTab', () => {
       />
     )
 
-    expect(screen.getByPlaceholderText(/Search by SOC code or occupation title/i)).toBeInTheDocument()
+    expect(
+      screen.getByPlaceholderText(/Search by SOC code or occupation title/i)
+    ).toBeInTheDocument()
     // Due to Dual-Layout (Desktop Table + Mobile Cards), text exists in both views
     expect(screen.getAllByText('15-1252.00').length).toBe(2)
     expect(screen.getAllByText('Software Developers').length).toBe(2)
     expect(screen.getAllByText('Computer Programmers').length).toBe(2)
-    expect(screen.getAllByText('Software Quality Assurance Analysts').length).toBe(2)
+    expect(
+      screen.getAllByText('Software Quality Assurance Analysts').length
+    ).toBe(2)
 
     // Core badge and supplemental badge
     const coreBadges = screen.getAllByText('Core')
@@ -79,12 +84,16 @@ describe('SfiaOnetMappingsTab', () => {
       />
     )
 
-    const searchInput = screen.getByPlaceholderText(/Search by SOC code or occupation title/i)
+    const searchInput = screen.getByPlaceholderText(
+      /Search by SOC code or occupation title/i
+    )
     fireEvent.change(searchInput, { target: { value: 'Programmers' } })
 
     expect(screen.getAllByText('Computer Programmers').length).toBe(2)
     expect(screen.queryByText('Software Developers')).not.toBeInTheDocument()
-    expect(screen.queryByText('Software Quality Assurance Analysts')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Software Quality Assurance Analysts')
+    ).not.toBeInTheDocument()
   })
 
   it('filters occupations by Core and Supplemental tabs', () => {
@@ -100,7 +109,9 @@ describe('SfiaOnetMappingsTab', () => {
     const suppTab = screen.getByRole('button', { name: /Supplemental/i })
     fireEvent.click(suppTab)
 
-    expect(screen.getAllByText('Software Quality Assurance Analysts').length).toBe(2)
+    expect(
+      screen.getAllByText('Software Quality Assurance Analysts').length
+    ).toBe(2)
     expect(screen.queryByText('Software Developers')).not.toBeInTheDocument()
     expect(screen.queryByText('Computer Programmers')).not.toBeInTheDocument()
 
@@ -110,7 +121,9 @@ describe('SfiaOnetMappingsTab', () => {
 
     expect(screen.getAllByText('Software Developers').length).toBe(2)
     expect(screen.getAllByText('Computer Programmers').length).toBe(2)
-    expect(screen.queryByText('Software Quality Assurance Analysts')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Software Quality Assurance Analysts')
+    ).not.toBeInTheDocument()
   })
 
   it('renders link pointing to /admin/onet?soc=...&detail=sfia with target="_blank"', () => {

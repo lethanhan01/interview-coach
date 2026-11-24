@@ -16,6 +16,7 @@ import {
 import { useDisclosure } from '@mantine/hooks'
 import { IconMicrophone } from '@tabler/icons-react'
 import { ColorSchemeToggle } from '@/components/layout/ColorSchemeToggle'
+import interactions from '@/styles/interactions.module.css'
 import classes from './PublicHeader.module.css'
 
 export function PublicHeader() {
@@ -29,7 +30,7 @@ export function PublicHeader() {
             component={Link}
             href="/"
             underline="never"
-            className={classes.brandLink}
+            className={`${classes.brandLink} ${interactions.focusRing}`}
             aria-label="Interview Coach — Trang chủ"
           >
             <ThemeIcon color="brand" variant="light" size="md" radius="md">

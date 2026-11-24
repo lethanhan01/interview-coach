@@ -1,0 +1,16 @@
+.feedbackBox {
+  border-inline-start: rem(4px) solid;
+  border-radius: var(--mantine-radius-md);
+  padding: var(--mantine-spacing-sm);
+
+  /* prettier-ignore */
+  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+
+  &[data-variant='strength'] {
+    border-inline-start-color: var(--mantine-color-success-filled);
+  }
+
+  &[data-variant='improvement'] {
+    border-inline-start-color: var(--mantine-color-warning-filled);
+  }
+}

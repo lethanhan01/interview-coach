@@ -50,11 +50,15 @@ export const Invalid: Story = {
     <RadioGroup defaultValue="1" {...args}>
       <div className="flex items-center space-x-2">
         <RadioGroupItem value="1" id="i1" aria-invalid="true" />
-        <Label htmlFor="i1" className="text-destructive">Invalid Option 1</Label>
+        <Label htmlFor="i1" className="text-destructive">
+          Invalid Option 1
+        </Label>
       </div>
       <div className="flex items-center space-x-2">
         <RadioGroupItem value="2" id="i2" aria-invalid="true" />
-        <Label htmlFor="i2" className="text-destructive">Invalid Option 2</Label>
+        <Label htmlFor="i2" className="text-destructive">
+          Invalid Option 2
+        </Label>
       </div>
     </RadioGroup>
   ),

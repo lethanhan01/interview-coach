@@ -21,7 +21,15 @@ describe('Combobox Component', () => {
     }
   ) => {
     const [val, setVal] = React.useState(props.value || '')
-    return <Combobox {...props} value={val} onValueChange={setVal} options={props.options || options} aria-label={props['aria-label'] || 'Combobox'} />
+    return (
+      <Combobox
+        {...props}
+        value={val}
+        onValueChange={setVal}
+        options={props.options || options}
+        aria-label={props['aria-label'] || 'Combobox'}
+      />
+    )
   }
 
   it('renders correctly', () => {
@@ -34,7 +42,7 @@ describe('Combobox Component', () => {
     render(<ComboboxWrapper />)
     const trigger = screen.getByRole('combobox')
     await userEvent.click(trigger)
-    
+
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(screen.getByText('Option 1')).toBeInTheDocument()
   })
@@ -43,7 +51,7 @@ describe('Combobox Component', () => {
     render(<ComboboxWrapper />)
     await userEvent.click(screen.getByRole('combobox'))
     await userEvent.click(screen.getByText('Option 1'))
-    
+
     expect(screen.getByRole('combobox')).toHaveTextContent('Option 1')
   })
 

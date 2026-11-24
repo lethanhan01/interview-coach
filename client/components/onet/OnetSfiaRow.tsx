@@ -2,14 +2,7 @@
 
 import * as React from 'react'
 import { useState, useEffect, useRef } from 'react'
-import {
-  Check,
-  X,
-  Pencil,
-  Trash2,
-  Info,
-  Star,
-} from 'lucide-react'
+import { Check, X, Pencil, Trash2, Info, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -37,10 +30,7 @@ import {
   TooltipProvider,
 } from '@/components/ui/Tooltip'
 import { Combobox, type ComboboxOption } from '@/components/ui/Combobox'
-import type {
-  OnetSfiaMapping,
-  SfiaSkillDefinition,
-} from '@/types'
+import type { OnetSfiaMapping, SfiaSkillDefinition } from '@/types'
 
 export interface OnetSfiaRowProps {
   mapping: OnetSfiaMapping
@@ -190,7 +180,9 @@ export function OnetSfiaRow({
     try {
       await onSave({
         skillCode: isInserting ? selectedSkillCode : mapping.skillCode,
-        skillName: isInserting ? currentSkillDef?.name || selectedSkillCode : mapping.skillName,
+        skillName: isInserting
+          ? currentSkillDef?.name || selectedSkillCode
+          : mapping.skillName,
         category: isInserting ? currentSkillDef?.category : mapping.category,
         targetLevel: draftLevel,
         minLevel,
@@ -200,7 +192,9 @@ export function OnetSfiaRow({
         source: isInserting ? 'USER_DEFINED' : mapping.source,
       })
     } catch (err) {
-      setValidationError(err instanceof Error ? err.message : 'Lỗi khi lưu ánh xạ')
+      setValidationError(
+        err instanceof Error ? err.message : 'Lỗi khi lưu ánh xạ'
+      )
     }
   }
 
@@ -255,9 +249,9 @@ export function OnetSfiaRow({
         )}
       >
         {/* Col 1: Skill Selection */}
-        <TableCell className="flex-[2] min-w-[200px] p-3 flex-col items-start justify-center">
+        <TableCell className="min-w-[200px] flex-[2] flex-col items-start justify-center p-3">
           {isInserting ? (
-            <div className="space-y-1 w-full">
+            <div className="w-full space-y-1">
               <Combobox
                 options={comboboxOptions}
                 value={selectedSkillCode}
@@ -266,12 +260,13 @@ export function OnetSfiaRow({
                 searchPlaceholder="Tìm mã hoặc tên kỹ năng..."
                 emptyText="Không tìm thấy kỹ năng phù hợp"
                 className={cn(
-                  'h-8 text-xs font-medium w-full min-w-[200px]',
-                  hasSkillError && 'border-critical ring-1 ring-critical text-critical'
+                  'h-8 w-full min-w-[200px] text-xs font-medium',
+                  hasSkillError &&
+                    'border-critical ring-critical text-critical ring-1'
                 )}
               />
               {currentSkillDef && (
-                <span className="text-[10px] text-ink-muted block truncate">
+                <span className="text-ink-muted block truncate text-[10px]">
                   {currentSkillDef.category} • Dải level: {minLevel}-{maxLevel}
                 </span>
               )}
@@ -279,16 +274,16 @@ export function OnetSfiaRow({
           ) : (
             <div className="space-y-0.5">
               <div className="flex items-center gap-1.5">
-                <span className="font-mono text-xs font-bold text-ink">
+                <span className="text-ink font-mono text-xs font-bold">
                   {mapping.skillCode}
                 </span>
                 {mapping.category && (
-                  <Badge variant="outline" className="text-[10px] py-0 px-1">
+                  <Badge variant="outline" className="px-1 py-0 text-[10px]">
                     {mapping.category}
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-ink-muted leading-tight">
+              <p className="text-ink-muted text-xs leading-tight">
                 {mapping.skillName}
               </p>
             </div>
@@ -296,8 +291,8 @@ export function OnetSfiaRow({
         </TableCell>
 
         {/* Col 2: Level Selection with Min-Max Limiter & Description Preview */}
-        <TableCell className="flex-[2] min-w-[190px] p-3 flex-col items-start justify-center">
-          <div className="space-y-1.5 w-full">
+        <TableCell className="min-w-[190px] flex-[2] flex-col items-start justify-center p-3">
+          <div className="w-full space-y-1.5">
             <div className="flex items-center gap-1.5">
               <Select
                 value={String(draftLevel)}
@@ -305,8 +300,9 @@ export function OnetSfiaRow({
               >
                 <SelectTrigger
                   className={cn(
-                    'h-8 text-xs font-semibold w-full',
-                    hasLevelError && 'border-critical ring-1 ring-critical text-critical focus:ring-critical'
+                    'h-8 w-full text-xs font-semibold',
+                    hasLevelError &&
+                      'border-critical ring-critical text-critical focus:ring-critical ring-1'
                   )}
                 >
                   <SelectValue />
@@ -316,7 +312,11 @@ export function OnetSfiaRow({
                     const isValid = lvl >= minLevel && lvl <= maxLevel
                     if (!isValid) return null
                     return (
-                      <SelectItem key={lvl} value={String(lvl)} className="text-xs">
+                      <SelectItem
+                        key={lvl}
+                        value={String(lvl)}
+                        className="text-xs"
+                      >
                         Level {lvl} — {SFIA_LEVEL_TITLES[lvl]}
                       </SelectItem>
                     )
@@ -326,8 +326,8 @@ export function OnetSfiaRow({
             </div>
 
             {/* Live Responsibility Preview Card */}
-            <div className="rounded-lg bg-surface-1 border border-border/80 p-2 text-[11px] text-ink-muted leading-relaxed">
-              <span className="font-semibold text-brand text-[10px] uppercase tracking-wider block mb-0.5">
+            <div className="bg-surface-1 border-border/80 text-ink-muted rounded-lg border p-2 text-[11px] leading-relaxed">
+              <span className="text-brand mb-0.5 block text-[10px] font-semibold uppercase tracking-wider">
                 Tiêu chuẩn Level {draftLevel}:
               </span>
               <p className="line-clamp-2">{levelDescription}</p>
@@ -336,7 +336,7 @@ export function OnetSfiaRow({
         </TableCell>
 
         {/* Col 3: Weight Input */}
-        <TableCell className="w-24 p-3 flex-col items-start justify-center">
+        <TableCell className="w-24 flex-col items-start justify-center p-3">
           <div className="space-y-1">
             <div className="flex items-center gap-1">
               <Input
@@ -347,18 +347,19 @@ export function OnetSfiaRow({
                 value={draftWeight}
                 onChange={handleWeightChange}
                 className={cn(
-                  'h-8 text-xs font-mono font-bold tabular-nums text-center w-20',
-                  hasWeightError && 'border-critical ring-1 ring-critical text-critical focus:ring-critical'
+                  'h-8 w-20 text-center font-mono text-xs font-bold tabular-nums',
+                  hasWeightError &&
+                    'border-critical ring-critical text-critical focus:ring-critical ring-1'
                 )}
               />
-              <span className="text-xs text-ink-muted">x</span>
+              <span className="text-ink-muted text-xs">x</span>
             </div>
-            <span className="text-[10px] text-ink-faint block">0.1 - 5.0</span>
+            <span className="text-ink-faint block text-[10px]">0.1 - 5.0</span>
           </div>
         </TableCell>
 
         {/* Col 4: Core Switch */}
-        <TableCell className="w-28 p-3 items-center">
+        <TableCell className="w-28 items-center p-3">
           <div className="flex items-center gap-2">
             <Switch
               id={`core-switch-${mapping.id}`}
@@ -368,8 +369,10 @@ export function OnetSfiaRow({
             <Label
               htmlFor={`core-switch-${mapping.id}`}
               className={cn(
-                'text-xs font-medium cursor-pointer',
-                draftIsCore ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-ink-muted'
+                'cursor-pointer text-xs font-medium',
+                draftIsCore
+                  ? 'font-bold text-amber-600 dark:text-amber-400'
+                  : 'text-ink-muted'
               )}
             >
               {draftIsCore ? 'Cốt lõi' : 'Bổ trợ'}
@@ -378,20 +381,20 @@ export function OnetSfiaRow({
         </TableCell>
 
         {/* Col 5: Source */}
-        <TableCell className="w-28 p-3 items-center">
-          <Badge variant="outline" className="text-[10px] text-ink-muted">
+        <TableCell className="w-28 items-center p-3">
+          <Badge variant="outline" className="text-ink-muted text-[10px]">
             Admin tự gán
           </Badge>
         </TableCell>
 
         {/* Col 6: Actions (Save & Cancel) */}
-        <TableCell className="w-24 p-3 flex-col items-end justify-center text-right">
+        <TableCell className="w-24 flex-col items-end justify-center p-3 text-right">
           <div className="flex items-center justify-end gap-1.5 pt-0.5">
             <Button
               size="sm"
               onClick={handleSaveClick}
               disabled={isSaving}
-              className="h-7 w-7 p-0 bg-brand text-brand-foreground"
+              className="bg-brand text-brand-foreground h-7 w-7 p-0"
               title="Lưu ánh xạ (Enter)"
               aria-label="Lưu ánh xạ"
             >
@@ -407,7 +410,7 @@ export function OnetSfiaRow({
               size="sm"
               onClick={handleCancelClick}
               disabled={isSaving}
-              className="h-7 w-7 p-0 text-ink-muted hover:text-ink"
+              className="text-ink-muted hover:text-ink h-7 w-7 p-0"
               title="Hủy bỏ (Esc)"
               aria-label="Hủy bỏ"
             >
@@ -416,7 +419,7 @@ export function OnetSfiaRow({
           </div>
 
           {validationError && (
-            <p className="text-[10px] text-destructive text-right mt-1 font-medium">
+            <p className="text-destructive mt-1 text-right text-[10px] font-medium">
               {validationError}
             </p>
           )}
@@ -428,32 +431,33 @@ export function OnetSfiaRow({
   // --------------------------------------------------------------------------
   // VIEW MODE
   // --------------------------------------------------------------------------
-  const sourceInfo = SOURCE_BADGES[mapping.source] || SOURCE_BADGES.ONET_CROSSWALK
+  const sourceInfo =
+    SOURCE_BADGES[mapping.source] || SOURCE_BADGES.ONET_CROSSWALK
 
   return (
     <TableRow
       ref={rowRef}
       className={cn(
-        'transition-colors hover:bg-surface-inset/30',
-        isHighlighted && 'bg-brand/10 ring-1 ring-brand/50',
+        'hover:bg-surface-inset/30 transition-colors',
+        isHighlighted && 'bg-brand/10 ring-brand/50 ring-1',
         className
       )}
     >
       {/* Col 1: Skill Code, Name, Category & Info Popover */}
-      <TableCell className="flex-[2] min-w-[200px] p-3 items-center">
-        <div className="flex items-start justify-between gap-2 w-full">
+      <TableCell className="min-w-[200px] flex-[2] items-center p-3">
+        <div className="flex w-full items-start justify-between gap-2">
           <div className="space-y-0.5">
             <div className="flex items-center gap-1.5">
-              <span className="font-mono text-xs font-bold text-ink">
+              <span className="text-ink font-mono text-xs font-bold">
                 {mapping.skillCode}
               </span>
               {mapping.category && (
-                <Badge variant="outline" className="text-[10px] py-0 px-1">
+                <Badge variant="outline" className="px-1 py-0 text-[10px]">
                   {mapping.category}
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-ink/90 font-medium leading-tight">
+            <p className="text-ink/90 text-xs font-medium leading-tight">
               {mapping.skillName}
             </p>
           </div>
@@ -465,30 +469,31 @@ export function OnetSfiaRow({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0 rounded-full text-ink-muted hover:text-brand hover:bg-brand/10 transition-colors"
+                  className="text-ink-muted hover:text-brand hover:bg-brand/10 h-6 w-6 rounded-full p-0 transition-colors"
                   title="Xem định nghĩa kỹ năng SFIA"
                   aria-label="Xem định nghĩa kỹ năng SFIA"
                 >
                   <Info className="size-3.5" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-80 space-y-2 text-xs p-3">
+              <PopoverContent className="w-80 space-y-2 p-3 text-xs">
                 <div className="flex items-center justify-between border-b pb-1.5">
-                  <span className="font-mono font-bold text-ink">
+                  <span className="text-ink font-mono font-bold">
                     {currentSkillDef.code}
                   </span>
                   <Badge variant="outline" className="text-[10px]">
-                    Level {currentSkillDef.minLevel} - {currentSkillDef.maxLevel}
+                    Level {currentSkillDef.minLevel} -{' '}
+                    {currentSkillDef.maxLevel}
                   </Badge>
                 </div>
                 <p className="text-ink-muted leading-relaxed">
                   {currentSkillDef.description}
                 </p>
-                <div className="border-t pt-1.5 space-y-1">
-                  <span className="text-[10px] font-semibold text-brand uppercase tracking-wider block">
+                <div className="space-y-1 border-t pt-1.5">
+                  <span className="text-brand block text-[10px] font-semibold uppercase tracking-wider">
                     Tiêu chuẩn Level {mapping.targetLevel}:
                   </span>
-                  <p className="text-[11px] text-ink/80 leading-normal">
+                  <p className="text-ink/80 text-[11px] leading-normal">
                     {currentSkillDef.levelDescriptions[mapping.targetLevel]}
                   </p>
                 </div>
@@ -499,17 +504,18 @@ export function OnetSfiaRow({
       </TableCell>
 
       {/* Col 2: Level Mini Gauge & Tooltip */}
-      <TableCell className="flex-[2] min-w-[170px] p-3 items-center">
+      <TableCell className="min-w-[170px] flex-[2] items-center p-3">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="space-y-1 cursor-pointer w-full">
+              <div className="w-full cursor-pointer space-y-1">
                 {/* 7-Step Mini Gauge */}
                 <div className="flex items-center gap-0.5">
                   {Array.from({ length: 7 }, (_, i) => i + 1).map((lvl) => {
                     const isTarget = lvl <= mapping.targetLevel
                     const isCurrent = lvl === mapping.targetLevel
-                    const isValid = lvl >= mapping.minLevel && lvl <= mapping.maxLevel
+                    const isValid =
+                      lvl >= mapping.minLevel && lvl <= mapping.maxLevel
 
                     return (
                       <div
@@ -521,9 +527,9 @@ export function OnetSfiaRow({
                               ? 'bg-amber-500'
                               : 'bg-brand'
                             : isValid
-                              ? 'bg-surface-inset border border-border/80'
+                              ? 'bg-surface-inset border-border/80 border'
                               : 'bg-surface-inset/30 opacity-40',
-                          isCurrent && 'ring-1 ring-brand/60'
+                          isCurrent && 'ring-brand/60 ring-1'
                         )}
                       />
                     )
@@ -532,21 +538,22 @@ export function OnetSfiaRow({
 
                 {/* Level Text Badge */}
                 <div className="flex items-center justify-between">
-                  <span className="font-mono font-bold text-xs text-ink tabular-nums">
+                  <span className="text-ink font-mono text-xs font-bold tabular-nums">
                     Level {mapping.targetLevel}
                   </span>
-                  <span className="text-[11px] text-ink-muted">
+                  <span className="text-ink-muted text-[11px]">
                     {SFIA_LEVEL_TITLES[mapping.targetLevel]}
                   </span>
-                  <span className="text-[10px] text-ink-faint font-mono">
+                  <span className="text-ink-faint font-mono text-[10px]">
                     [{mapping.minLevel}-{mapping.maxLevel}]
                   </span>
                 </div>
               </div>
             </TooltipTrigger>
-            <TooltipContent className="max-w-xs text-xs p-2.5 space-y-1">
-              <span className="font-bold block text-amber-300">
-                Level {mapping.targetLevel} — {SFIA_LEVEL_TITLES[mapping.targetLevel]}
+            <TooltipContent className="max-w-xs space-y-1 p-2.5 text-xs">
+              <span className="block font-bold text-amber-300">
+                Level {mapping.targetLevel} —{' '}
+                {SFIA_LEVEL_TITLES[mapping.targetLevel]}
               </span>
               <p className="text-[11px] leading-relaxed opacity-95">
                 {currentSkillDef?.levelDescriptions[mapping.targetLevel] ||
@@ -558,52 +565,57 @@ export function OnetSfiaRow({
       </TableCell>
 
       {/* Col 3: Weight Number & Mini Progress */}
-      <TableCell className="w-24 p-3 items-center">
-        <div className="space-y-1 w-full">
+      <TableCell className="w-24 items-center p-3">
+        <div className="w-full space-y-1">
           <div className="flex items-baseline gap-1">
-            <span className="font-mono font-bold text-xs text-ink tabular-nums">
+            <span className="text-ink font-mono text-xs font-bold tabular-nums">
               {mapping.weight.toFixed(1)}
             </span>
-            <span className="text-[10px] text-ink-muted">x</span>
+            <span className="text-ink-muted text-[10px]">x</span>
           </div>
-          <div className="h-1 w-16 rounded-full bg-surface-inset overflow-hidden border border-border/60">
+          <div className="bg-surface-inset border-border/60 h-1 w-16 overflow-hidden rounded-full border">
             <div
-              className="h-full bg-brand rounded-full"
-              style={{ width: `${Math.min(100, (mapping.weight / 5.0) * 100)}%` }}
+              className="bg-brand h-full rounded-full"
+              style={{
+                width: `${Math.min(100, (mapping.weight / 5.0) * 100)}%`,
+              }}
             />
           </div>
         </div>
       </TableCell>
 
       {/* Col 4: Core / Secondary Badge */}
-      <TableCell className="w-28 p-3 items-center">
+      <TableCell className="w-28 items-center p-3">
         {mapping.isCore ? (
           <Badge variant="warning" className="gap-1 text-[11px] font-bold">
             <Star className="size-3 fill-amber-500 text-amber-500" />
             <span>Cốt lõi</span>
           </Badge>
         ) : (
-          <Badge variant="secondary" className="text-[11px] font-medium text-ink-muted">
+          <Badge
+            variant="secondary"
+            className="text-ink-muted text-[11px] font-medium"
+          >
             Bổ trợ
           </Badge>
         )}
       </TableCell>
 
       {/* Col 5: Source */}
-      <TableCell className="w-28 p-3 items-center">
+      <TableCell className="w-28 items-center p-3">
         <Badge variant={sourceInfo.variant} className="text-[10px] font-medium">
           {sourceInfo.label}
         </Badge>
       </TableCell>
 
       {/* Col 6: Actions */}
-      <TableCell className="w-20 p-3 items-center justify-end text-right">
+      <TableCell className="w-20 items-center justify-end p-3 text-right">
         <div className="flex items-center justify-end gap-1">
           <Button
             variant="ghost"
             size="sm"
             onClick={onStartEdit}
-            className="h-7 w-7 p-0 text-ink-muted hover:text-ink"
+            className="text-ink-muted hover:text-ink h-7 w-7 p-0"
             title="Chỉnh sửa ánh xạ này"
             aria-label="Chỉnh sửa ánh xạ này"
           >
@@ -614,7 +626,7 @@ export function OnetSfiaRow({
             variant="ghost"
             size="sm"
             onClick={onDelete}
-            className="h-7 w-7 p-0 text-ink-muted hover:text-destructive hover:bg-destructive/10"
+            className="text-ink-muted hover:text-destructive hover:bg-destructive/10 h-7 w-7 p-0"
             title="Xóa ánh xạ này"
             aria-label="Xóa ánh xạ này"
           >

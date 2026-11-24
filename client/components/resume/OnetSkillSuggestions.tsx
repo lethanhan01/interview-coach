@@ -12,7 +12,7 @@ import {
 } from '@mantine/core'
 import { IconFlame, IconPlus, IconSparkles } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
-import { onetQueries } from '@/lib/query-client'
+import { onetQueries } from '@/queries/onet.queries'
 import type { OnetTech } from '@/types'
 
 export interface OnetSkillSuggestionsProps {

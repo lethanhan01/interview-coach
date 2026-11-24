@@ -3,7 +3,7 @@ import {
   mockLegacyReport,
   mockSkippedTurnsReport,
   mockUnifiedReport,
-} from '@/tests/fixtures/report.fixture'
+} from '@/test-utils/fixtures/report.fixture'
 import { mapJdLevelToSfia } from '@/lib/setup-helpers'
 
 describe('Report Fixtures & Setup Helpers (Phase 1)', () => {
@@ -43,7 +43,11 @@ describe('Report Fixtures & Setup Helpers (Phase 1)', () => {
 
     it('contains structured action plan with priority and topics', () => {
       const actionPlan = mockUnifiedReport.actionPlan as {
-        actionPlan: Array<{ priority: string; skillCode: string; topics: string[] }>
+        actionPlan: Array<{
+          priority: string
+          skillCode: string
+          topics: string[]
+        }>
       }
       expect(actionPlan.actionPlan).toHaveLength(2)
       expect(actionPlan.actionPlan[0].priority).toBe('high')

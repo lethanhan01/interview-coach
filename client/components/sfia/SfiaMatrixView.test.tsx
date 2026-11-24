@@ -2,7 +2,11 @@ import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { SfiaMatrixView } from './SfiaMatrixView'
-import type { SfiaCategory, SfiaSkillSummary, SfiaMatrixCellData } from '@/types'
+import type {
+  SfiaCategory,
+  SfiaSkillSummary,
+  SfiaMatrixCellData,
+} from '@/types'
 
 describe('SfiaMatrixView', () => {
   const mockCategories: SfiaCategory[] = [
@@ -40,20 +44,104 @@ describe('SfiaMatrixView', () => {
   ]
 
   const mockCells: Record<string, SfiaMatrixCellData> = {
-    PROG_L1: { skillCode: 'PROG', levelId: 1, isAvailable: false, questionCount: 0, onetCount: 0 },
-    PROG_L2: { skillCode: 'PROG', levelId: 2, isAvailable: true, questionCount: 4, onetCount: 2 },
-    PROG_L3: { skillCode: 'PROG', levelId: 3, isAvailable: true, questionCount: 6, onetCount: 2 },
-    PROG_L4: { skillCode: 'PROG', levelId: 4, isAvailable: true, questionCount: 0, onetCount: 0 }, // Blind spot
-    PROG_L5: { skillCode: 'PROG', levelId: 5, isAvailable: true, questionCount: 0, onetCount: 0 }, // Blind spot
-    PROG_L6: { skillCode: 'PROG', levelId: 6, isAvailable: true, questionCount: 0, onetCount: 0 }, // Blind spot
-    PROG_L7: { skillCode: 'PROG', levelId: 7, isAvailable: false, questionCount: 0, onetCount: 0 },
-    TEST_L1: { skillCode: 'TEST', levelId: 1, isAvailable: true, questionCount: 0, onetCount: 1 },
-    TEST_L2: { skillCode: 'TEST', levelId: 2, isAvailable: true, questionCount: 0, onetCount: 1 },
-    TEST_L3: { skillCode: 'TEST', levelId: 3, isAvailable: true, questionCount: 0, onetCount: 0 },
-    TEST_L4: { skillCode: 'TEST', levelId: 4, isAvailable: true, questionCount: 0, onetCount: 0 },
-    TEST_L5: { skillCode: 'TEST', levelId: 5, isAvailable: false, questionCount: 0, onetCount: 0 },
-    TEST_L6: { skillCode: 'TEST', levelId: 6, isAvailable: false, questionCount: 0, onetCount: 0 },
-    TEST_L7: { skillCode: 'TEST', levelId: 7, isAvailable: false, questionCount: 0, onetCount: 0 },
+    PROG_L1: {
+      skillCode: 'PROG',
+      levelId: 1,
+      isAvailable: false,
+      questionCount: 0,
+      onetCount: 0,
+    },
+    PROG_L2: {
+      skillCode: 'PROG',
+      levelId: 2,
+      isAvailable: true,
+      questionCount: 4,
+      onetCount: 2,
+    },
+    PROG_L3: {
+      skillCode: 'PROG',
+      levelId: 3,
+      isAvailable: true,
+      questionCount: 6,
+      onetCount: 2,
+    },
+    PROG_L4: {
+      skillCode: 'PROG',
+      levelId: 4,
+      isAvailable: true,
+      questionCount: 0,
+      onetCount: 0,
+    }, // Blind spot
+    PROG_L5: {
+      skillCode: 'PROG',
+      levelId: 5,
+      isAvailable: true,
+      questionCount: 0,
+      onetCount: 0,
+    }, // Blind spot
+    PROG_L6: {
+      skillCode: 'PROG',
+      levelId: 6,
+      isAvailable: true,
+      questionCount: 0,
+      onetCount: 0,
+    }, // Blind spot
+    PROG_L7: {
+      skillCode: 'PROG',
+      levelId: 7,
+      isAvailable: false,
+      questionCount: 0,
+      onetCount: 0,
+    },
+    TEST_L1: {
+      skillCode: 'TEST',
+      levelId: 1,
+      isAvailable: true,
+      questionCount: 0,
+      onetCount: 1,
+    },
+    TEST_L2: {
+      skillCode: 'TEST',
+      levelId: 2,
+      isAvailable: true,
+      questionCount: 0,
+      onetCount: 1,
+    },
+    TEST_L3: {
+      skillCode: 'TEST',
+      levelId: 3,
+      isAvailable: true,
+      questionCount: 0,
+      onetCount: 0,
+    },
+    TEST_L4: {
+      skillCode: 'TEST',
+      levelId: 4,
+      isAvailable: true,
+      questionCount: 0,
+      onetCount: 0,
+    },
+    TEST_L5: {
+      skillCode: 'TEST',
+      levelId: 5,
+      isAvailable: false,
+      questionCount: 0,
+      onetCount: 0,
+    },
+    TEST_L6: {
+      skillCode: 'TEST',
+      levelId: 6,
+      isAvailable: false,
+      questionCount: 0,
+      onetCount: 0,
+    },
+    TEST_L7: {
+      skillCode: 'TEST',
+      levelId: 7,
+      isAvailable: false,
+      questionCount: 0,
+      onetCount: 0,
+    },
   }
 
   const defaultProps = {
@@ -83,7 +171,9 @@ describe('SfiaMatrixView', () => {
     render(<SfiaMatrixView {...defaultProps} />)
 
     expect(screen.getByTestId('category-header-DEV_IMPL')).toBeInTheDocument()
-    expect(screen.getByText(/Development and implementation/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Development and implementation/)
+    ).toBeInTheDocument()
   })
 
   it('correctly marks inactive cells and active cells based on min/max level', () => {
@@ -135,7 +225,9 @@ describe('SfiaMatrixView', () => {
     )
 
     expect(screen.getByTestId('matrix-empty-state')).toBeInTheDocument()
-    expect(screen.getByText('No matching SFIA skills found')).toBeInTheDocument()
+    expect(
+      screen.getByText('No matching SFIA skills found')
+    ).toBeInTheDocument()
 
     const clearBtn = screen.getByRole('button', { name: 'Clear filters' })
     fireEvent.click(clearBtn)

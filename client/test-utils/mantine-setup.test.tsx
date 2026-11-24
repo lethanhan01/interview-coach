@@ -21,7 +21,7 @@ import {
   DIRECTIONAL_VIEW_TRANSITION_ENTER,
   DIRECTIONAL_VIEW_TRANSITION_EXIT,
   SafeViewTransition,
-} from '@/components/patterns/SafeViewTransition'
+} from '@/components/common/SafeViewTransition'
 
 const smokeSchema = z.object({
   roleTitle: z.string().trim().min(3, 'Vị trí ứng tuyển cần ít nhất 3 ký tự'),

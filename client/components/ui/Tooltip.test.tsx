@@ -13,11 +13,7 @@ import {
 
 const setup = (jsx: React.ReactElement) => ({
   user: userEvent.setup(),
-  ...render(
-    <TooltipProvider delayDuration={0}>
-      {jsx}
-    </TooltipProvider>
-  ),
+  ...render(<TooltipProvider delayDuration={0}>{jsx}</TooltipProvider>),
 })
 
 describe('Tooltip', () => {
@@ -38,10 +34,12 @@ describe('Tooltip', () => {
         <TooltipContent>Tooltip text</TooltipContent>
       </Tooltip>
     )
-    
+
     await user.hover(screen.getByText('Hover me'))
     await waitFor(() => {
-      expect(screen.getByRole('tooltip', { name: 'Tooltip text' })).toBeInTheDocument()
+      expect(
+        screen.getByRole('tooltip', { name: 'Tooltip text' })
+      ).toBeInTheDocument()
     })
   })
 
@@ -52,12 +50,14 @@ describe('Tooltip', () => {
         <TooltipContent>Tooltip text</TooltipContent>
       </Tooltip>
     )
-    
+
     await user.tab()
     expect(screen.getByText('Hover me')).toHaveFocus()
-    
+
     await waitFor(() => {
-      expect(screen.getByRole('tooltip', { name: 'Tooltip text' })).toBeInTheDocument()
+      expect(
+        screen.getByRole('tooltip', { name: 'Tooltip text' })
+      ).toBeInTheDocument()
     })
   })
 

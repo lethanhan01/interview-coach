@@ -1,10 +1,10 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite';
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from './Accordion';
+} from './Accordion'
 
 const meta = {
   title: 'UI/Display/Accordion',
@@ -16,10 +16,10 @@ const meta = {
       options: ['single', 'multiple'],
     },
   },
-} satisfies Meta<typeof Accordion>;
+} satisfies Meta<typeof Accordion>
 
-export default meta;
-type Story = StoryObj<typeof meta>;
+export default meta
+type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
@@ -51,7 +51,7 @@ export const Default: Story = {
       </AccordionItem>
     </Accordion>
   ),
-};
+}
 
 export const Multiple: Story = {
   args: {
@@ -59,4 +59,4 @@ export const Multiple: Story = {
     className: 'w-full max-w-md',
   },
   render: Default.render,
-};
+}

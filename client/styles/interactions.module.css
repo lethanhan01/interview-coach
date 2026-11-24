@@ -1,0 +1,54 @@
+.focusRing {
+  &:focus-visible {
+    outline: rem(2px) solid var(--mantine-primary-color-filled);
+    outline-offset: rem(2px);
+  }
+}
+
+.interactiveCard {
+  transition:
+    border-color 150ms ease,
+    transform 150ms ease;
+
+  @mixin hover {
+    border-color: var(--mantine-primary-color-filled);
+    transform: translateY(rem(-1px));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    @mixin hover {
+      transform: none;
+    }
+  }
+}
+
+.selectableCard {
+  &[data-selected],
+  &[data-checked] {
+    border-color: var(--mantine-primary-color-filled);
+    background-color: var(--mantine-primary-color-light);
+  }
+}
+
+.optionCard {
+  position: relative;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+
+  @mixin hover {
+    border-color: var(--mantine-primary-color-filled);
+  }
+
+  &[data-checked],
+  &[data-selected] {
+    border-color: var(--mantine-primary-color-filled);
+    background-color: var(--mantine-primary-color-light);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

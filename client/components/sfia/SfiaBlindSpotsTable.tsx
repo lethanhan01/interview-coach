@@ -26,14 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/Select'
-import {
-  type SfiaCategory,
-  type SfiaSkillSummary,
-} from '@/types'
-import {
-  getCategoryTheme,
-  getLevelTheme,
-} from './sfia-theme'
+import { type SfiaCategory, type SfiaSkillSummary } from '@/types'
+import { getCategoryTheme, getLevelTheme } from './sfia-theme'
 import { getBlindSpotPriority } from './sfia-analytics-export'
 
 export interface SfiaBlindSpotsTableProps {
@@ -134,8 +128,8 @@ export function SfiaBlindSpotsTable({
   // Trạng thái có đang kích hoạt bộ lọc nào không
   const hasActiveFilters = Boolean(
     searchQuery.trim() ||
-      selectedCategoryFilter ||
-      (selectedLevelFilter !== null && selectedLevelFilter !== undefined)
+    selectedCategoryFilter ||
+    (selectedLevelFilter !== null && selectedLevelFilter !== undefined)
   )
 
   const handleClearAllFilters = () => {
@@ -153,14 +147,15 @@ export function SfiaBlindSpotsTable({
           className
         )}
       >
-        <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mb-3">
+        <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
           <CheckCircle2 className="size-6" />
         </div>
-        <h3 className="text-base font-bold text-ink mb-1">
+        <h3 className="text-ink mb-1 text-base font-bold">
           Outstanding! No skill blind spots remaining
         </h3>
-        <p className="text-xs text-ink-muted max-w-md mx-auto">
-          100% of SFIA 9 skills have at least one sample interview question in the Question Bank.
+        <p className="text-ink-muted mx-auto max-w-md text-xs">
+          100% of SFIA 9 skills have at least one sample interview question in
+          the Question Bank.
         </p>
       </div>
     )
@@ -170,31 +165,31 @@ export function SfiaBlindSpotsTable({
     <div
       id="sfia-blind-spots-table-container"
       className={cn(
-        'rounded-xl border border-border/80 bg-card shadow-sm flex flex-col',
+        'border-border/80 bg-card flex flex-col rounded-xl border shadow-sm',
         className
       )}
     >
       {/* 1. Header & Toolbar Controls */}
-      <div className="p-4 border-b border-border/80 flex flex-col gap-3">
+      <div className="border-border/80 flex flex-col gap-3 border-b p-4">
         {/* Title Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-rose-500/10 p-2 text-rose-600 dark:text-rose-400">
               <AlertTriangle className="size-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-ink">
+                <h3 className="text-ink text-sm font-bold">
                   Blind Spots Warning Table
                 </h3>
                 <Badge
                   variant="outline"
-                  className="bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 tabular-nums text-[10px] font-semibold"
+                  className="border-rose-500/20 bg-rose-500/10 text-[10px] font-semibold tabular-nums text-rose-600 dark:text-rose-400"
                 >
                   {allBlindSpots.length} blind spots
                 </Badge>
               </div>
-              <p className="text-[11px] text-ink-muted">
+              <p className="text-ink-muted text-[11px]">
                 SFIA skills without interview questions in the Question Bank
               </p>
             </div>
@@ -207,31 +202,33 @@ export function SfiaBlindSpotsTable({
               size="sm"
               onClick={onExportCsv}
               disabled={isExportingCsv}
-              className="gap-1.5 text-xs h-8 shrink-0 self-start sm:self-auto"
+              className="h-8 shrink-0 gap-1.5 self-start text-xs sm:self-auto"
             >
               <Download className="size-3.5" />
-              <span>{isExportingCsv ? 'Exporting CSV...' : 'Export Blind Spots CSV'}</span>
+              <span>
+                {isExportingCsv ? 'Exporting CSV...' : 'Export Blind Spots CSV'}
+              </span>
             </Button>
           )}
         </div>
 
         {/* Filters Controls Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 pt-1">
+        <div className="grid grid-cols-1 gap-2.5 pt-1 sm:grid-cols-12">
           {/* Search Input */}
-          <div className="sm:col-span-6 lg:col-span-5 relative">
+          <div className="relative sm:col-span-6 lg:col-span-5">
             <Input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search code (PROG) or skill name..."
-              leadingIcon={<Search className="size-4 text-ink-muted" />}
+              leadingIcon={<Search className="text-ink-muted size-4" />}
               trailingAction={
                 searchQuery ? (
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
                     aria-label="Clear search query"
-                    className="text-ink-muted hover:text-ink absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-md"
+                    className="text-ink-muted hover:text-ink absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-0.5"
                   >
                     <X className="size-3.5" />
                   </button>
@@ -264,7 +261,12 @@ export function SfiaBlindSpotsTable({
                   return (
                     <SelectItem key={cat.code} value={cat.code}>
                       <div className="flex items-center gap-2">
-                        <span className={cn('size-2 rounded-full shrink-0', theme.dot)} />
+                        <span
+                          className={cn(
+                            'size-2 shrink-0 rounded-full',
+                            theme.dot
+                          )}
+                        />
                         <span>{cat.name}</span>
                       </div>
                     </SelectItem>
@@ -278,7 +280,8 @@ export function SfiaBlindSpotsTable({
           <div className="sm:col-span-3 lg:col-span-3">
             <Select
               value={
-                selectedLevelFilter !== null && selectedLevelFilter !== undefined
+                selectedLevelFilter !== null &&
+                selectedLevelFilter !== undefined
                   ? String(selectedLevelFilter)
                   : 'ALL'
               }
@@ -314,14 +317,14 @@ export function SfiaBlindSpotsTable({
         {/* Active Filters Bar */}
         {hasActiveFilters && (
           <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
-            <span className="text-[11px] text-ink-muted flex items-center gap-1">
+            <span className="text-ink-muted flex items-center gap-1 text-[11px]">
               <Filter className="size-3" /> Filtering by:
             </span>
 
             {searchQuery && (
               <Badge
                 variant="outline"
-                className="gap-1 bg-surface-inset text-ink text-[11px]"
+                className="bg-surface-inset text-ink gap-1 text-[11px]"
               >
                 <span>Keyword: &quot;{searchQuery}&quot;</span>
                 <button
@@ -338,12 +341,12 @@ export function SfiaBlindSpotsTable({
             {selectedCategoryFilter && (
               <Badge
                 variant="outline"
-                className="gap-1 bg-surface-inset text-ink text-[11px]"
+                className="bg-surface-inset text-ink gap-1 text-[11px]"
               >
                 <span>
                   Category:{' '}
-                  {categories.find((c) => c.code === selectedCategoryFilter)?.name ||
-                    selectedCategoryFilter}
+                  {categories.find((c) => c.code === selectedCategoryFilter)
+                    ?.name || selectedCategoryFilter}
                 </span>
                 <button
                   type="button"
@@ -356,28 +359,29 @@ export function SfiaBlindSpotsTable({
               </Badge>
             )}
 
-            {selectedLevelFilter !== null && selectedLevelFilter !== undefined && (
-              <Badge
-                variant="outline"
-                className="gap-1 bg-surface-inset text-ink text-[11px]"
-              >
-                <span>Level {selectedLevelFilter}</span>
-                <button
-                  type="button"
-                  onClick={() => onSelectLevelFilter?.(null)}
-                  aria-label="Clear level filter"
-                  className="hover:text-destructive"
+            {selectedLevelFilter !== null &&
+              selectedLevelFilter !== undefined && (
+                <Badge
+                  variant="outline"
+                  className="bg-surface-inset text-ink gap-1 text-[11px]"
                 >
-                  <X className="size-3" />
-                </button>
-              </Badge>
-            )}
+                  <span>Level {selectedLevelFilter}</span>
+                  <button
+                    type="button"
+                    onClick={() => onSelectLevelFilter?.(null)}
+                    aria-label="Clear level filter"
+                    className="hover:text-destructive"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              )}
 
             <Button
               variant="ghost"
               size="sm"
               onClick={handleClearAllFilters}
-              className="h-6 text-[11px] text-ink-muted hover:text-ink px-1.5"
+              className="text-ink-muted hover:text-ink h-6 px-1.5 text-[11px]"
             >
               Clear all filters
             </Button>
@@ -387,12 +391,12 @@ export function SfiaBlindSpotsTable({
 
       {/* 2. Table Data Body */}
       {filteredSkills.length === 0 ? (
-        <div className="p-8 text-center flex flex-col items-center justify-center">
-          <SearchX className="size-8 text-ink-muted mb-2" />
-          <h4 className="text-sm font-semibold text-ink">
+        <div className="flex flex-col items-center justify-center p-8 text-center">
+          <SearchX className="text-ink-muted mb-2 size-8" />
+          <h4 className="text-ink text-sm font-semibold">
             No matching blind spots found
           </h4>
-          <p className="text-xs text-ink-muted max-w-sm mt-1 mb-3">
+          <p className="text-ink-muted mb-3 mt-1 max-w-sm text-xs">
             Try adjusting search keywords or reset category and level filters.
           </p>
           <Button variant="outline" size="sm" onClick={handleClearAllFilters}>
@@ -401,19 +405,19 @@ export function SfiaBlindSpotsTable({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full border-collapse text-left text-xs">
             <thead>
-              <tr className="border-b border-border/80 bg-surface-inset/50 text-ink-muted text-[11px] font-semibold">
-                <th className="py-2.5 px-3">Skill Code</th>
-                <th className="py-2.5 px-3">Skill Name</th>
-                <th className="py-2.5 px-3">SFIA Category</th>
-                <th className="py-2.5 px-3 text-center">Level Span</th>
-                <th className="py-2.5 px-3 text-center">O*NET Demand</th>
-                <th className="py-2.5 px-3">Priority</th>
-                <th className="py-2.5 px-3 text-right">Actions</th>
+              <tr className="border-border/80 bg-surface-inset/50 text-ink-muted border-b text-[11px] font-semibold">
+                <th className="px-3 py-2.5">Skill Code</th>
+                <th className="px-3 py-2.5">Skill Name</th>
+                <th className="px-3 py-2.5">SFIA Category</th>
+                <th className="px-3 py-2.5 text-center">Level Span</th>
+                <th className="px-3 py-2.5 text-center">O*NET Demand</th>
+                <th className="px-3 py-2.5">Priority</th>
+                <th className="px-3 py-2.5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/60">
+            <tbody className="divide-border/60 divide-y">
               {paginatedSkills.map((skill) => {
                 const theme = getCategoryTheme(skill.categoryCode)
                 const priority = getBlindSpotPriority(skill.onetCount)
@@ -421,70 +425,76 @@ export function SfiaBlindSpotsTable({
                 return (
                   <tr
                     key={skill.code}
-                    className="hover:bg-surface-inset/50 transition-colors group"
+                    className="hover:bg-surface-inset/50 group transition-colors"
                   >
                     {/* Code Badge */}
-                    <td className="py-2.5 px-3 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-3 py-2.5">
                       <button
                         type="button"
                         onClick={() => onSelectSkill(skill.code)}
                         data-testid={`skill-code-${skill.code}`}
                         aria-label={`Skill code ${skill.code}`}
-                        className="font-mono font-bold text-xs text-brand hover:underline flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded"
+                        className="text-brand focus-visible:ring-ring flex items-center gap-1 rounded font-mono text-xs font-bold hover:underline focus-visible:outline-none focus-visible:ring-1"
                         title={`View details for ${skill.code} in Taxonomy Tree`}
                       >
                         <span>{skill.code}</span>
-                        <ExternalLink className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ExternalLink className="size-3 opacity-0 transition-opacity group-hover:opacity-100" />
                       </button>
                     </td>
 
                     {/* Skill Name */}
-                    <td className="py-2.5 px-3 max-w-xs sm:max-w-sm">
-                      <div className="font-medium text-ink truncate" title={skill.name}>
+                    <td className="max-w-xs px-3 py-2.5 sm:max-w-sm">
+                      <div
+                        className="text-ink truncate font-medium"
+                        title={skill.name}
+                      >
                         {skill.name}
                       </div>
-                      <span className="text-[10px] text-ink-muted font-mono">
+                      <span className="text-ink-muted font-mono text-[10px]">
                         {skill.subcategoryCode}
                       </span>
                     </td>
 
                     {/* Category Badge */}
-                    <td className="py-2.5 px-3 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-3 py-2.5">
                       <Badge
                         variant="outline"
-                        className={cn('text-[10px] py-0 px-2 font-medium', theme.badge)}
+                        className={cn(
+                          'px-2 py-0 text-[10px] font-medium',
+                          theme.badge
+                        )}
                       >
                         {skill.categoryCode}
                       </Badge>
                     </td>
 
                     {/* Level Range */}
-                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                      <span className="font-mono text-xs text-ink-muted font-medium bg-surface-inset px-2 py-0.5 rounded border border-border/60 tabular-nums">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-center">
+                      <span className="text-ink-muted bg-surface-inset border-border/60 rounded border px-2 py-0.5 font-mono text-xs font-medium tabular-nums">
                         L{skill.minLevel} — L{skill.maxLevel}
                       </span>
                     </td>
 
                     {/* O*NET Demand Count */}
-                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 font-semibold text-cyan-600 dark:text-cyan-400 tabular-nums">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-center">
+                      <span className="inline-flex items-center gap-1 font-semibold tabular-nums text-cyan-600 dark:text-cyan-400">
                         {skill.onetCount >= 8 && (
-                           <Flame className="size-3 text-rose-500 fill-rose-500" />
+                          <Flame className="size-3 fill-rose-500 text-rose-500" />
                         )}
                         <span>{skill.onetCount} occupations</span>
                       </span>
                     </td>
 
                     {/* Priority Badge */}
-                    <td className="py-2.5 px-3 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-3 py-2.5">
                       <Badge
                         variant="outline"
                         className={cn(
-                          'text-[10px] font-semibold py-0.5',
+                          'py-0.5 text-[10px] font-semibold',
                           priority.level === 'HIGH' &&
-                            'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
+                            'border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400',
                           priority.level === 'MEDIUM' &&
-                            'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
+                            'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400',
                           priority.level === 'STANDARD' &&
                             'bg-surface-inset text-ink-muted border-border'
                         )}
@@ -494,13 +504,13 @@ export function SfiaBlindSpotsTable({
                     </td>
 
                     {/* Actions */}
-                    <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => onCreateQuestion(skill)}
-                          className="h-7 text-xs gap-1 border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/50"
+                          className="h-7 gap-1 border-rose-500/30 text-xs text-rose-600 hover:border-rose-500/50 hover:bg-rose-500/10 dark:text-rose-400"
                         >
                           <Plus className="size-3" />
                           <span>Create Question</span>
@@ -510,11 +520,13 @@ export function SfiaBlindSpotsTable({
                           variant="ghost"
                           size="sm"
                           onClick={() => onSelectSkill(skill.code)}
-                          className="h-7 w-7 p-0 text-ink-muted hover:text-brand"
+                          className="text-ink-muted hover:text-brand h-7 w-7 p-0"
                           title="View full skill definition in SFIA Tree"
                         >
                           <ExternalLink className="size-3.5" />
-                          <span className="sr-only">View details for {skill.code}</span>
+                          <span className="sr-only">
+                            View details for {skill.code}
+                          </span>
                         </Button>
                       </div>
                     </td>
@@ -528,8 +540,11 @@ export function SfiaBlindSpotsTable({
 
       {/* 3. Pagination Controls Footer */}
       {filteredSkills.length > 0 && (
-        <div className="p-3 border-t border-border/80 bg-surface-inset/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div data-testid="pagination-summary" className="text-ink-muted text-[11px] tabular-nums">
+        <div className="border-border/80 bg-surface-inset/30 flex flex-col items-center justify-between gap-3 border-t p-3 text-xs sm:flex-row">
+          <div
+            data-testid="pagination-summary"
+            className="text-ink-muted text-[11px] tabular-nums"
+          >
             Showing <strong className="text-ink">{startIndex + 1}</strong> -{' '}
             <strong className="text-ink">{endIndex}</strong> of{' '}
             <strong className="text-ink">{totalItems}</strong> blind spots
@@ -546,15 +561,17 @@ export function SfiaBlindSpotsTable({
                 className="h-7 px-2 text-xs"
               >
                 <ChevronLeft className="size-3.5" />
-                <span className="hidden sm:inline ml-1">Previous</span>
+                <span className="ml-1 hidden sm:inline">Previous</span>
               </Button>
 
-              <div className="flex items-center gap-1 mx-1">
+              <div className="mx-1 flex items-center gap-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                   (pageNum) => (
                     <Button
                       key={pageNum}
-                      variant={pageNum === safeCurrentPage ? 'primary' : 'ghost'}
+                      variant={
+                        pageNum === safeCurrentPage ? 'primary' : 'ghost'
+                      }
                       size="sm"
                       onClick={() => setCurrentPage(pageNum)}
                       aria-label={`Page ${pageNum}`}
@@ -569,12 +586,14 @@ export function SfiaBlindSpotsTable({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 disabled={safeCurrentPage >= totalPages}
                 aria-label="Next page"
                 className="h-7 px-2 text-xs"
               >
-                <span className="hidden sm:inline mr-1">Next</span>
+                <span className="mr-1 hidden sm:inline">Next</span>
                 <ChevronRight className="size-3.5" />
               </Button>
             </div>

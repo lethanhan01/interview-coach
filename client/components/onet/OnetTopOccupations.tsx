@@ -33,7 +33,7 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/Table'
-import { EmptyState } from '@/components/patterns/FeedbackPatterns'
+import { EmptyState } from '@/components/common/FeedbackPatterns'
 import { cn } from '@/lib/utils'
 import type { OnetTopOccupationItem, OnetDetailSubTab } from '@/types'
 
@@ -66,7 +66,9 @@ export function OnetTopOccupations({
     let result = [...data]
 
     if (activeGroupFilter) {
-      result = result.filter((item) => item.majorGroupCode === activeGroupFilter)
+      result = result.filter(
+        (item) => item.majorGroupCode === activeGroupFilter
+      )
     }
 
     if (searchQuery.trim()) {
@@ -112,26 +114,34 @@ export function OnetTopOccupations({
   const endIndex = Math.min(safePage * pageSize, totalItems)
 
   return (
-    <Card className={cn('p-2.5 sm:p-3 space-y-2 flex flex-col justify-between shrink-0', className)}>
+    <Card
+      className={cn(
+        'flex shrink-0 flex-col justify-between space-y-2 p-2.5 sm:p-3',
+        className
+      )}
+    >
       {/* Header Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-2 border-b border-border/60">
+      <div className="border-border/60 flex flex-col justify-between gap-2 border-b pb-2 md:flex-row md:items-center">
         <div>
           <div className="flex items-center gap-2">
             <div className="bg-brand/10 text-brand flex size-6 shrink-0 items-center justify-center rounded-md">
               <TrendingUp className="size-3.5" />
             </div>
-            <h3 className="text-ink text-xs sm:text-sm font-bold tracking-tight">
+            <h3 className="text-ink text-xs font-bold tracking-tight sm:text-sm">
               Top Nghề nghiệp Quan tâm & Luyện tập nhiều nhất
             </h3>
             {activeGroupFilter && (
-              <Badge variant="brand" className="gap-1 text-[10px] py-0.2 px-2 font-medium">
+              <Badge
+                variant="brand"
+                className="py-0.2 gap-1 px-2 text-[10px] font-medium"
+              >
                 <Filter className="size-2.5" />
                 <span>Nhóm {activeGroupFilter}</span>
                 {onClearGroupFilter && (
                   <button
                     type="button"
                     onClick={onClearGroupFilter}
-                    className="hover:bg-brand/20 rounded p-0.5 ml-0.5 inline-flex items-center cursor-pointer"
+                    className="hover:bg-brand/20 ml-0.5 inline-flex cursor-pointer items-center rounded p-0.5"
                     aria-label="Xóa lọc nhóm"
                   >
                     <X className="size-2.5" />
@@ -140,8 +150,9 @@ export function OnetTopOccupations({
               </Badge>
             )}
           </div>
-          <p className="text-ink-muted text-[11px] mt-0.5">
-            Xếp hạng theo khối lượng phỏng vấn giả lập và nhu cầu tuyển dụng thị trường
+          <p className="text-ink-muted mt-0.5 text-[11px]">
+            Xếp hạng theo khối lượng phỏng vấn giả lập và nhu cầu tuyển dụng thị
+            trường
           </p>
         </div>
 
@@ -149,7 +160,7 @@ export function OnetTopOccupations({
         <div className="flex flex-wrap items-center gap-2">
           {/* Search Box */}
           <div className="relative w-full sm:w-52">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-ink-muted" />
+            <Search className="text-ink-muted absolute left-2 top-1/2 size-3 -translate-y-1/2" />
             <Input
               type="text"
               placeholder="Tìm mã SOC, tên nghề..."
@@ -158,13 +169,13 @@ export function OnetTopOccupations({
                 setSearchQuery(e.target.value)
                 setCurrentPage(1)
               }}
-              className="pl-7 pr-6 h-7 text-xs bg-surface-raised"
+              className="bg-surface-raised h-7 pl-7 pr-6 text-xs"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink cursor-pointer"
+                className="text-ink-muted hover:text-ink absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer"
                 aria-label="Xóa từ khóa tìm kiếm"
               >
                 <X className="size-3" />
@@ -178,14 +189,22 @@ export function OnetTopOccupations({
               value={sortBy}
               onValueChange={(val) => setSortBy(val as SortField)}
             >
-              <SelectTrigger className="h-7 text-xs bg-surface-raised">
+              <SelectTrigger className="bg-surface-raised h-7 text-xs">
                 <SelectValue placeholder="Sắp xếp theo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="mock_desc">Lượt phỏng vấn (Cao nhất)</SelectItem>
-                <SelectItem value="jd_desc">Lượng JD gắn kết (Cao nhất)</SelectItem>
-                <SelectItem value="mapping_desc">Số mapping SFIA (Nhiều nhất)</SelectItem>
-                <SelectItem value="title_asc">Tên nghề nghiệp (A → Z)</SelectItem>
+                <SelectItem value="mock_desc">
+                  Lượt phỏng vấn (Cao nhất)
+                </SelectItem>
+                <SelectItem value="jd_desc">
+                  Lượng JD gắn kết (Cao nhất)
+                </SelectItem>
+                <SelectItem value="mapping_desc">
+                  Số mapping SFIA (Nhiều nhất)
+                </SelectItem>
+                <SelectItem value="title_asc">
+                  Tên nghề nghiệp (A → Z)
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -193,10 +212,10 @@ export function OnetTopOccupations({
       </div>
 
       {/* Table Container with Horizontal Scroll */}
-      <div className="rounded-xl border border-border/70 overflow-hidden bg-card">
+      <div className="border-border/70 bg-card overflow-hidden rounded-xl border">
         {totalItems === 0 ? (
           <EmptyState
-            icon={<Search className="size-8 text-ink-muted" />}
+            icon={<Search className="text-ink-muted size-8" />}
             title="Không tìm thấy nghề nghiệp phù hợp"
             description={
               searchQuery
@@ -216,25 +235,25 @@ export function OnetTopOccupations({
           <Table>
             <TableHeader className="bg-surface-inset/60">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-12 text-center shrink-0 text-xs font-semibold h-8 px-2">
+                <TableHead className="h-8 w-12 shrink-0 px-2 text-center text-xs font-semibold">
                   Hạng
                 </TableHead>
-                <TableHead className="min-w-[200px] flex-2 text-xs font-semibold h-8 px-2">
+                <TableHead className="flex-2 h-8 min-w-[200px] px-2 text-xs font-semibold">
                   Mã SOC & Tên Nghề nghiệp
                 </TableHead>
-                <TableHead className="w-24 shrink-0 text-right text-xs font-semibold h-8 px-2">
+                <TableHead className="h-8 w-24 shrink-0 px-2 text-right text-xs font-semibold">
                   Lượt Luyện AI
                 </TableHead>
-                <TableHead className="w-20 shrink-0 text-right text-xs font-semibold h-8 px-2">
+                <TableHead className="h-8 w-20 shrink-0 px-2 text-right text-xs font-semibold">
                   Số JD Gắn
                 </TableHead>
-                <TableHead className="w-28 shrink-0 text-center text-xs font-semibold h-8 px-2">
+                <TableHead className="h-8 w-28 shrink-0 px-2 text-center text-xs font-semibold">
                   Ánh xạ SFIA
                 </TableHead>
-                <TableHead className="w-32 shrink-0 text-xs font-semibold hidden md:flex h-8 px-2">
+                <TableHead className="hidden h-8 w-32 shrink-0 px-2 text-xs font-semibold md:flex">
                   Kỹ năng Cốt lõi
                 </TableHead>
-                <TableHead className="w-28 shrink-0 text-right text-xs font-semibold h-8 px-2">
+                <TableHead className="h-8 w-28 shrink-0 px-2 text-right text-xs font-semibold">
                   Thao tác
                 </TableHead>
               </TableRow>
@@ -252,71 +271,77 @@ export function OnetTopOccupations({
                     className="hover:bg-surface-muted/40 transition-colors"
                   >
                     {/* Rank */}
-                    <TableCell className="w-12 justify-center shrink-0 py-1.5 px-2">
+                    <TableCell className="w-12 shrink-0 justify-center px-2 py-1.5">
                       {isTop1 ? (
-                        <span className="flex size-5 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 font-bold text-[11px] shadow-2xs">
+                        <span className="shadow-2xs flex size-5 items-center justify-center rounded-full bg-amber-500/15 text-[11px] font-bold text-amber-600">
                           🥇
                         </span>
                       ) : isTop2 ? (
-                        <span className="flex size-5 items-center justify-center rounded-full bg-slate-400/15 text-slate-600 font-bold text-[11px] shadow-2xs">
+                        <span className="shadow-2xs flex size-5 items-center justify-center rounded-full bg-slate-400/15 text-[11px] font-bold text-slate-600">
                           🥈
                         </span>
                       ) : isTop3 ? (
-                        <span className="flex size-5 items-center justify-center rounded-full bg-orange-500/15 text-orange-600 font-bold text-[11px] shadow-2xs">
+                        <span className="shadow-2xs flex size-5 items-center justify-center rounded-full bg-orange-500/15 text-[11px] font-bold text-orange-600">
                           🥉
                         </span>
                       ) : (
-                        <span className="text-[11px] font-medium text-ink-muted tabular-nums">
+                        <span className="text-ink-muted text-[11px] font-medium tabular-nums">
                           #{rank}
                         </span>
                       )}
                     </TableCell>
 
                     {/* SOC & Title */}
-                    <TableCell className="min-w-[200px] flex-2 py-1.5 px-2">
-                      <div className="flex flex-col gap-0.5 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-mono font-bold text-[11px] text-brand">
+                    <TableCell className="flex-2 min-w-[200px] px-2 py-1.5">
+                      <div className="flex min-w-0 flex-col gap-0.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-brand font-mono text-[11px] font-bold">
                             {item.socCode}
                           </span>
-                          <span className="bg-surface-inset text-ink-muted text-[9px] px-1 py-0.2 rounded">
+                          <span className="bg-surface-inset text-ink-muted py-0.2 rounded px-1 text-[9px]">
                             Nhóm {item.majorGroupCode}
                           </span>
                         </div>
-                        <span className="text-ink font-semibold text-xs truncate">
+                        <span className="text-ink truncate text-xs font-semibold">
                           {item.title}
                         </span>
                       </div>
                     </TableCell>
 
                     {/* Mock Interviews */}
-                    <TableCell className="w-24 justify-end shrink-0 py-1.5 px-2">
-                      <div className="flex items-center gap-1 text-xs font-bold text-ink tabular-nums">
-                        <Users className="size-3 text-ink-muted" />
-                        <span>{numberFormatter.format(item.mockInterviewCount)}</span>
+                    <TableCell className="w-24 shrink-0 justify-end px-2 py-1.5">
+                      <div className="text-ink flex items-center gap-1 text-xs font-bold tabular-nums">
+                        <Users className="text-ink-muted size-3" />
+                        <span>
+                          {numberFormatter.format(item.mockInterviewCount)}
+                        </span>
                       </div>
                     </TableCell>
 
                     {/* Job Descriptions */}
-                    <TableCell className="w-20 justify-end shrink-0 py-1.5 px-2">
-                      <div className="flex items-center gap-1 text-xs font-medium text-ink-muted tabular-nums">
-                        <Briefcase className="size-3 text-ink-muted" />
-                        <span>{numberFormatter.format(item.jobDescriptionCount)}</span>
+                    <TableCell className="w-20 shrink-0 justify-end px-2 py-1.5">
+                      <div className="text-ink-muted flex items-center gap-1 text-xs font-medium tabular-nums">
+                        <Briefcase className="text-ink-muted size-3" />
+                        <span>
+                          {numberFormatter.format(item.jobDescriptionCount)}
+                        </span>
                       </div>
                     </TableCell>
 
                     {/* SFIA Status Badge (Click opens sfia tab) */}
-                    <TableCell className="w-28 justify-center shrink-0 py-1.5 px-2">
+                    <TableCell className="w-28 shrink-0 justify-center px-2 py-1.5">
                       <button
                         type="button"
-                        onClick={() => onNavigateToExplorer(item.socCode, 'sfia')}
-                        className="group inline-flex items-center gap-1 transition-transform hover:scale-105 cursor-pointer"
+                        onClick={() =>
+                          onNavigateToExplorer(item.socCode, 'sfia')
+                        }
+                        className="group inline-flex cursor-pointer items-center gap-1 transition-transform hover:scale-105"
                         title="Nhấp để xem và chỉnh sửa SFIA Mappings trong Explorer"
                       >
                         {item.isMapped ? (
                           <Badge
                             variant="brand"
-                            className="text-[10px] py-0.2 px-1.5 gap-1 group-hover:bg-brand/90"
+                            className="py-0.2 group-hover:bg-brand/90 gap-1 px-1.5 text-[10px]"
                           >
                             <Layers className="size-2.5" />
                             <span>{item.mappingCount} SFIA</span>
@@ -324,7 +349,7 @@ export function OnetTopOccupations({
                         ) : (
                           <Badge
                             variant="secondary"
-                            className="text-[10px] py-0.2 px-1.5 gap-1"
+                            className="py-0.2 gap-1 px-1.5 text-[10px]"
                           >
                             <span>Chưa mapping</span>
                           </Badge>
@@ -333,17 +358,20 @@ export function OnetTopOccupations({
                     </TableCell>
 
                     {/* Core Skills Chips */}
-                    <TableCell className="w-32 shrink-0 hidden md:flex py-1.5 px-2">
-                      <div className="flex items-center gap-1 flex-wrap">
-                        {item.coreSkillCodes && item.coreSkillCodes.length > 0 ? (
-                          Array.from(new Set(item.coreSkillCodes)).map((code, idx) => (
-                            <span
-                              key={`${item.socCode}-core-${code}-${idx}`}
-                              className="bg-surface-inset text-ink font-mono font-semibold text-[9px] px-1 py-0.2 rounded border border-border/50"
-                            >
-                              {code}
-                            </span>
-                          ))
+                    <TableCell className="hidden w-32 shrink-0 px-2 py-1.5 md:flex">
+                      <div className="flex flex-wrap items-center gap-1">
+                        {item.coreSkillCodes &&
+                        item.coreSkillCodes.length > 0 ? (
+                          Array.from(new Set(item.coreSkillCodes)).map(
+                            (code, idx) => (
+                              <span
+                                key={`${item.socCode}-core-${code}-${idx}`}
+                                className="bg-surface-inset text-ink py-0.2 border-border/50 rounded border px-1 font-mono text-[9px] font-semibold"
+                              >
+                                {code}
+                              </span>
+                            )
+                          )
                         ) : (
                           <span className="text-ink-muted text-[9px] italic">
                             Chưa gán
@@ -353,12 +381,14 @@ export function OnetTopOccupations({
                     </TableCell>
 
                     {/* Action Button (Click opens overview tab) */}
-                    <TableCell className="w-28 justify-end shrink-0 py-1.5 px-2">
+                    <TableCell className="w-28 shrink-0 justify-end px-2 py-1.5">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => onNavigateToExplorer(item.socCode, 'overview')}
-                        className="h-6 text-[11px] px-2 gap-1 font-semibold hover:border-brand hover:text-brand"
+                        onClick={() =>
+                          onNavigateToExplorer(item.socCode, 'overview')
+                        }
+                        className="hover:border-brand hover:text-brand h-6 gap-1 px-2 text-[11px] font-semibold"
                       >
                         <span>Explorer</span>
                         <ArrowRight className="size-3" />
@@ -374,11 +404,11 @@ export function OnetTopOccupations({
 
       {/* Pagination Controls */}
       {totalItems > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-1.5 pt-0.5 text-xs text-ink-muted">
+        <div className="text-ink-muted flex flex-col items-center justify-between gap-1.5 pt-0.5 text-xs sm:flex-row">
           <div className="flex items-center gap-1.5 text-[11px]">
             <span>
-              Hiển thị <strong>{startIndex}</strong>–<strong>{endIndex}</strong> /{' '}
-              <strong>{totalItems}</strong> nghề
+              Hiển thị <strong>{startIndex}</strong>–<strong>{endIndex}</strong>{' '}
+              / <strong>{totalItems}</strong> nghề
             </span>
           </div>
 
@@ -392,7 +422,7 @@ export function OnetTopOccupations({
                   setPageSize(Number(e.target.value))
                   setCurrentPage(1)
                 }}
-                className="bg-surface-raised border border-border/80 rounded px-1 py-0.5 text-[11px] text-ink"
+                className="bg-surface-raised border-border/80 text-ink rounded border px-1 py-0.5 text-[11px]"
               >
                 <option value={5}>5</option>
                 <option value={10}>10</option>
@@ -412,13 +442,15 @@ export function OnetTopOccupations({
                 <ChevronLeft className="size-3" />
                 <span className="sr-only">Trang trước</span>
               </Button>
-              <span className="px-1.5 font-medium text-ink tabular-nums text-[11px]">
+              <span className="text-ink px-1.5 text-[11px] font-medium tabular-nums">
                 {safePage} / {totalPages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 disabled={safePage >= totalPages}
                 className="h-6 px-1.5 text-xs"
               >

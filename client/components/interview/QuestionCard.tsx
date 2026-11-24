@@ -1,12 +1,22 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import {
+  Badge,
+  Button,
+  Card,
+  Group,
+  Loader,
+  Progress,
+  Stack,
+  Text,
+  Title,
+} from '@mantine/core'
+import { useReducedMotion } from '@mantine/hooks'
+import { IconSparkles, IconVolume, IconVolumeOff } from '@tabler/icons-react'
 import { useMutation } from '@tanstack/react-query'
-import { Sparkles, Volume2, VolumeX, Loader2 } from 'lucide-react'
-import { Badge } from '@/components/ui/Badge'
-import Button from '@/components/ui/Button'
-import { cn } from '@/lib/utils'
-import { mediaService } from '@/services'
+import { SafeViewTransition } from '@/components/common/SafeViewTransition'
+import { mediaService } from '@/services/media.service'
 
 export interface QuestionCardProps {
   questionText: string
@@ -38,6 +48,7 @@ export default function QuestionCard({
   language = 'vi',
   className,
 }: Readonly<QuestionCardProps>) {
+  const reduceMotion = useReducedMotion()
   const [isPlaying, setIsPlaying] = useState(false)
   const [isStartingAudio, setIsStartingAudio] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -49,8 +60,11 @@ export default function QuestionCard({
     })
 
   const isLoading = isSynthesizing || isStartingAudio
-
   const skillLabel = getSkillLabel(skillName, skillCode)
+  const progressPercent =
+    totalQuestions > 0
+      ? Math.min(100, Math.round(((orderIndex + 1) / totalQuestions) * 100))
+      : 0
 
   const fallbackSpeech = () => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -130,45 +144,63 @@ export default function QuestionCard({
   }, [questionText])
 
   return (
-    <div
-      className={cn(
-        'border-brand-subtle-border bg-brand-subtle shadow-card rounded-2xl border p-5',
-        className
-      )}
-    >
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2.5">
-        <p className="text-brand-subtle-fg text-xs font-medium uppercase tracking-wide">
-          Câu {orderIndex + 1} / {totalQuestions}
-        </p>
-        <div className="flex items-center gap-2">
-          {skillLabel && (
-            <Badge variant="brand" className="gap-1.5 font-normal">
-              <Sparkles className="size-3" aria-hidden="true" />
-              <span>{skillLabel}</span>
-            </Badge>
-          )}
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            aria-label={isPlaying ? 'Dừng đọc câu hỏi' : 'Nghe đọc câu hỏi'}
-            onClick={toggleAudio}
-            className="text-ink-muted hover:text-ink h-7 px-2"
-          >
-            {isLoading ? (
-              <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-            ) : isPlaying ? (
-              <VolumeX className="text-brand size-3.5" aria-hidden="true" />
-            ) : (
-              <Volume2 className="size-3.5" aria-hidden="true" />
-            )}
-            <span className="ml-1 text-xs">
+    <Card withBorder radius="md" p="lg" className={className}>
+      <Stack gap="md">
+        <Progress
+          value={progressPercent}
+          color="brand"
+          size="xs"
+          radius="xl"
+          transitionDuration={reduceMotion ? 0 : 200}
+          aria-label="Tiến độ câu hỏi phỏng vấn"
+        />
+
+        <Group justify="space-between" align="center" wrap="wrap" gap="xs">
+          <Text size="xs" fw={600} c="brand" tt="uppercase">
+            Câu {orderIndex + 1} / {totalQuestions}
+          </Text>
+
+          <Group gap="xs" align="center" wrap="wrap">
+            {skillLabel ? (
+              <Badge
+                variant="light"
+                color="brand"
+                leftSection={
+                  <IconSparkles size={12} stroke={1.5} aria-hidden="true" />
+                }
+              >
+                {skillLabel}
+              </Badge>
+            ) : null}
+
+            <Button
+              type="button"
+              variant="subtle"
+              color={isPlaying ? 'brand' : 'neutral'}
+              size="xs"
+              aria-label={isPlaying ? 'Dừng đọc câu hỏi' : 'Nghe đọc câu hỏi'}
+              onClick={() => void toggleAudio()}
+              leftSection={
+                isLoading ? (
+                  <Loader size={12} aria-hidden="true" />
+                ) : isPlaying ? (
+                  <IconVolumeOff size={14} stroke={1.5} aria-hidden="true" />
+                ) : (
+                  <IconVolume size={14} stroke={1.5} aria-hidden="true" />
+                )
+              }
+            >
               {isLoading ? 'Đang tải...' : isPlaying ? 'Dừng' : 'Đọc'}
-            </span>
-          </Button>
-        </div>
-      </div>
-      <p className="text-ink text-base leading-relaxed">{questionText}</p>
-    </div>
+            </Button>
+          </Group>
+        </Group>
+
+        <SafeViewTransition default="none">
+          <Title order={2} size="h4" fw={500} lh={1.6}>
+            {questionText}
+          </Title>
+        </SafeViewTransition>
+      </Stack>
+    </Card>
   )
 }

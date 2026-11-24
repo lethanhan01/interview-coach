@@ -17,9 +17,7 @@ import { Input } from '@/components/ui/Input'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
-import {
-  getAttributeTheme,
-} from './sfia-theme'
+import { getAttributeTheme } from './sfia-theme'
 import { downloadSfiaAttributesProgressionCsv } from './sfia-attributes-export'
 
 export interface SfiaAttributesProgressionMatrixProps {
@@ -31,7 +29,10 @@ export interface SfiaAttributesProgressionMatrixProps {
 }
 
 // Icon mapper for attributes per Safe Dynamic Styling
-const ATTRIBUTE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+const ATTRIBUTE_ICONS: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   AUTONOMY: Compass,
   INFLUENCE: Users,
   COMPLEXITY: Cpu,
@@ -77,7 +78,8 @@ export function SfiaAttributesProgressionMatrix({
       const success = downloadSfiaAttributesProgressionCsv(levels, attributes)
       if (success) {
         toast.success('Attributes Progression Matrix exported successfully!', {
-          description: 'UTF-8 CSV file containing the 5 attributes x 7 levels matrix has been downloaded.',
+          description:
+            'UTF-8 CSV file containing the 5 attributes x 7 levels matrix has been downloaded.',
         })
       } else {
         toast.error('Failed to generate CSV file')
@@ -92,27 +94,28 @@ export function SfiaAttributesProgressionMatrix({
   return (
     <div
       className={cn(
-        'flex flex-col h-full min-h-0 border border-border/80 rounded-xl bg-card shadow-xs overflow-hidden',
+        'border-border/80 bg-card shadow-xs flex h-full min-h-0 flex-col overflow-hidden rounded-xl border',
         className
       )}
     >
       {/* 1. Matrix Top Control Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 p-3 border-b border-border/80 bg-surface-raised shrink-0">
+      <div className="border-border/80 bg-surface-raised flex shrink-0 flex-col gap-2.5 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="bg-brand/10 text-brand flex size-8 shrink-0 items-center justify-center rounded-lg">
             <Layers className="size-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-ink leading-tight">
+              <h2 className="text-ink text-sm font-bold leading-tight">
                 5 Core Generic Attributes Progression Matrix
               </h2>
-              <span className="bg-brand/10 text-brand border border-brand/20 rounded-md px-1.5 py-0.2 text-[10px] font-semibold">
+              <span className="bg-brand/10 text-brand border-brand/20 py-0.2 rounded-md border px-1.5 text-[10px] font-semibold">
                 SFIA 9
               </span>
             </div>
-            <p className="text-[11px] text-ink-muted leading-tight mt-0.5">
-              Comparing behavioral competency progression across 7 levels of responsibility (Follow ➔ Strategy)
+            <p className="text-ink-muted mt-0.5 text-[11px] leading-tight">
+              Comparing behavioral competency progression across 7 levels of
+              responsibility (Follow ➔ Strategy)
             </p>
           </div>
         </div>
@@ -121,19 +124,19 @@ export function SfiaAttributesProgressionMatrix({
         <div className="flex items-center gap-2">
           {/* Quick Search Input */}
           <div className="relative w-48 sm:w-64">
-            <Search className="size-3.5 text-ink-muted absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <Search className="text-ink-muted absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2" />
             <Input
               type="text"
               placeholder="Search attribute criteria..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-7 h-8 text-xs bg-card"
+              className="bg-card h-8 pl-8 pr-7 text-xs"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink cursor-pointer"
+                className="text-ink-muted hover:text-ink absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer"
                 title="Clear search"
               >
                 <X className="size-3.5" />
@@ -147,7 +150,7 @@ export function SfiaAttributesProgressionMatrix({
             size="sm"
             onClick={handleExportCsv}
             disabled={isExporting}
-            className="h-8 gap-1.5 text-xs font-semibold shrink-0"
+            className="h-8 shrink-0 gap-1.5 text-xs font-semibold"
             title="Download 5x7 progression matrix in UTF-8 CSV format"
           >
             <Download className="size-3.5" />
@@ -158,16 +161,16 @@ export function SfiaAttributesProgressionMatrix({
       </div>
 
       {/* 2. 2D Progression Matrix Table with Sticky Headers */}
-      <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto scrollbar-thin relative">
+      <div className="scrollbar-thin relative min-h-0 flex-1 overflow-x-auto overflow-y-auto">
         <table className="w-full border-collapse text-left text-xs">
           {/* Table Header (Sticky Top) */}
-          <thead className="sticky top-0 z-30 bg-surface-raised border-b border-border/80 shadow-xs">
+          <thead className="bg-surface-raised border-border/80 shadow-xs sticky top-0 z-30 border-b">
             <tr>
               {/* Top-Left Corner Intersection (Sticky Top + Left) */}
-              <th className="sticky left-0 z-40 bg-surface-raised border-r border-border/80 p-3 min-w-[220px] max-w-[240px] text-xs font-bold text-ink">
+              <th className="bg-surface-raised border-border/80 text-ink sticky left-0 z-40 min-w-[220px] max-w-[240px] border-r p-3 text-xs font-bold">
                 <div className="flex items-center justify-between">
                   <span>5 Core Attributes</span>
-                  <span className="text-[10px] font-mono text-ink-muted bg-surface-inset px-1.5 py-0.5 rounded">
+                  <span className="text-ink-muted bg-surface-inset rounded px-1.5 py-0.5 font-mono text-[10px]">
                     {filteredAttributes.length}/5
                   </span>
                 </div>
@@ -182,21 +185,21 @@ export function SfiaAttributesProgressionMatrix({
                     key={lvl.levelId}
                     aria-label={`Level ${lvl.levelId}: ${lvl.name}`}
                     className={cn(
-                      'p-2.5 min-w-[280px] max-w-[340px] border-r border-border/60 transition-colors align-top cursor-pointer select-none group',
+                      'border-border/60 group min-w-[280px] max-w-[340px] cursor-pointer select-none border-r p-2.5 align-top transition-colors',
                       isSelected
-                        ? 'bg-brand/10 dark:bg-brand/15 border-b-2 border-b-brand'
+                        ? 'bg-brand/10 dark:bg-brand/15 border-b-brand border-b-2'
                         : 'hover:bg-surface-inset'
                     )}
                     onClick={() => onSelectLevel(lvl.levelId)}
                     title={`Click to select and focus on Level ${lvl.levelId} (${lvl.name})`}
                   >
-                    <div className="flex items-center justify-between gap-1.5 mb-1">
+                    <div className="mb-1 flex items-center justify-between gap-1.5">
                       <div className="flex items-center gap-1.5">
                         <span
                           className={cn(
-                            'text-[10px] font-bold px-1.5 py-0.5 rounded font-mono',
+                            'rounded px-1.5 py-0.5 font-mono text-[10px] font-bold',
                             isSelected
-                              ? 'bg-brand text-white shadow-xs'
+                              ? 'bg-brand shadow-xs text-white'
                               : 'bg-surface-inset text-ink group-hover:bg-brand/10'
                           )}
                         >
@@ -204,7 +207,7 @@ export function SfiaAttributesProgressionMatrix({
                         </span>
                         <span
                           className={cn(
-                            'font-bold text-xs truncate',
+                            'truncate text-xs font-bold',
                             isSelected ? 'text-brand' : 'text-ink'
                           )}
                         >
@@ -212,11 +215,14 @@ export function SfiaAttributesProgressionMatrix({
                         </span>
                       </div>
                       {isSelected && (
-                        <span className="size-2 rounded-full bg-brand" title="Currently selected column" />
+                        <span
+                          className="bg-brand size-2 rounded-full"
+                          title="Currently selected column"
+                        />
                       )}
                     </div>
 
-                    <p className="text-[10px] text-ink-muted/80 line-clamp-2 leading-tight italic font-normal">
+                    <p className="text-ink-muted/80 line-clamp-2 text-[10px] font-normal italic leading-tight">
                       &quot;{lvl.essence}&quot;
                     </p>
                   </th>
@@ -226,19 +232,19 @@ export function SfiaAttributesProgressionMatrix({
           </thead>
 
           {/* Table Body */}
-          <tbody className="divide-y divide-border/60">
+          <tbody className="divide-border/60 divide-y">
             {filteredAttributes.length === 0 ? (
               <tr>
                 <td
                   colSpan={8}
-                  className="p-8 text-center text-ink-muted text-xs bg-surface-inset/40"
+                  className="text-ink-muted bg-surface-inset/40 p-8 text-center text-xs"
                 >
                   No attributes found matching &quot;{searchQuery}&quot;.
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setSearchQuery('')}
-                    className="ml-2 text-brand hover:underline"
+                    className="text-brand ml-2 hover:underline"
                   >
                     Clear search
                   </Button>
@@ -250,35 +256,38 @@ export function SfiaAttributesProgressionMatrix({
                 const Icon = ATTRIBUTE_ICONS[attr.code] || Compass
 
                 return (
-                  <tr key={attr.code} className="hover:bg-surface-inset/40 transition-colors">
+                  <tr
+                    key={attr.code}
+                    className="hover:bg-surface-inset/40 transition-colors"
+                  >
                     {/* Sticky First Column: Attribute Identity */}
                     <td
                       className={cn(
-                        'sticky left-0 z-20 bg-card border-r border-border/80 p-3 min-w-[220px] max-w-[240px] align-top shadow-[2px_0_4px_rgba(0,0,0,0.03)]',
+                        'bg-card border-border/80 sticky left-0 z-20 min-w-[220px] max-w-[240px] border-r p-3 align-top shadow-[2px_0_4px_rgba(0,0,0,0.03)]',
                         theme.bgLight
                       )}
                     >
-                      <div className="flex items-center gap-2 mb-1.5">
+                      <div className="mb-1.5 flex items-center gap-2">
                         <div
                           className={cn(
-                            'size-6 rounded-md flex items-center justify-center border shadow-2xs shrink-0',
+                            'shadow-2xs flex size-6 shrink-0 items-center justify-center rounded-md border',
                             theme.badge
                           )}
                         >
                           <Icon className="size-3.5" />
                         </div>
                         <div>
-                          <div className="font-bold text-xs text-ink leading-tight">
+                          <div className="text-ink text-xs font-bold leading-tight">
                             {attr.name}
                           </div>
                         </div>
                       </div>
 
-                      <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-surface-inset text-ink-muted border border-border/60 inline-block mb-1.5">
+                      <span className="py-0.2 bg-surface-inset text-ink-muted border-border/60 mb-1.5 inline-block rounded border px-1 font-mono text-[9px]">
                         {attr.code}
                       </span>
 
-                      <p className="text-[10px] text-ink-muted leading-tight line-clamp-3">
+                      <p className="text-ink-muted line-clamp-3 text-[10px] leading-tight">
                         {attr.description}
                       </p>
                     </td>
@@ -289,32 +298,37 @@ export function SfiaAttributesProgressionMatrix({
                       const isSelected = lvl.levelId === selectedLevel
                       const isQueryMatched =
                         searchQuery.trim() !== '' &&
-                        statement.toLowerCase().includes(searchQuery.toLowerCase().trim())
+                        statement
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase().trim())
 
                       return (
                         <td
                           key={lvl.levelId}
                           onClick={() => onSelectLevel(lvl.levelId)}
                           className={cn(
-                            'p-3 min-w-[280px] max-w-[340px] border-r border-border/60 align-top transition-colors cursor-pointer text-ink text-xs leading-relaxed',
+                            'border-border/60 text-ink min-w-[280px] max-w-[340px] cursor-pointer border-r p-3 align-top text-xs leading-relaxed transition-colors',
                             isSelected
                               ? 'bg-brand/5 dark:bg-brand/10'
                               : 'hover:bg-surface-raised/60',
-                            isQueryMatched && 'ring-2 ring-amber-500/50 bg-amber-500/10'
+                            isQueryMatched &&
+                              'bg-amber-500/10 ring-2 ring-amber-500/50'
                           )}
                           title={`Level ${lvl.levelId} - ${attr.name}: Click to select level`}
                         >
-                          <div className="flex items-center justify-between gap-1 mb-1 text-[10px] text-ink-muted">
-                            <span className="font-mono font-bold">L{lvl.levelId}</span>
+                          <div className="text-ink-muted mb-1 flex items-center justify-between gap-1 text-[10px]">
+                            <span className="font-mono font-bold">
+                              L{lvl.levelId}
+                            </span>
                             {isSelected && (
-                              <span className="text-[9px] text-brand font-semibold uppercase">
+                              <span className="text-brand text-[9px] font-semibold uppercase">
                                 Selected
                               </span>
                             )}
                           </div>
                           <p
                             className={cn(
-                              'text-xs text-ink leading-relaxed',
+                              'text-ink text-xs leading-relaxed',
                               isSelected && 'font-medium'
                             )}
                           >
@@ -332,13 +346,21 @@ export function SfiaAttributesProgressionMatrix({
       </div>
 
       {/* Footer Info Bar */}
-      <div className="p-2 px-3 border-t border-border/80 bg-surface-raised flex items-center justify-between text-[11px] text-ink-muted shrink-0">
+      <div className="border-border/80 bg-surface-raised text-ink-muted flex shrink-0 items-center justify-between border-t p-2 px-3 text-[11px]">
         <div className="flex items-center gap-2">
           <span className="size-1.5 rounded-full bg-emerald-500" />
-          <span>5 Generic Attributes x 7 Levels Progression Matrix - SFIA 9 International Standard</span>
+          <span>
+            5 Generic Attributes x 7 Levels Progression Matrix - SFIA 9
+            International Standard
+          </span>
         </div>
         <div>
-          <span>Selected Column: <strong className="text-ink font-semibold">Level {selectedLevel}</strong></span>
+          <span>
+            Selected Column:{' '}
+            <strong className="text-ink font-semibold">
+              Level {selectedLevel}
+            </strong>
+          </span>
         </div>
       </div>
     </div>

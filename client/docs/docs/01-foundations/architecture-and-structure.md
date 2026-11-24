@@ -45,20 +45,27 @@ flowchart TD
     end
 
     APP --> GROUPS
+    GROUPS --> PROV["providers/ (AppProviders, AuthProvider, QueryProvider, MantineColorSchemeSync)"]
     GROUPS --> UI["components/<domain>/ & app/.../_components/<br/>Mantine v9 + CSS Modules"]
-    UI --> HOOKS["hooks/ (TanStack Query v5, SSE, URL & Domain Hooks)"]
-    HOOKS --> SVC["services/*.service.ts (Typed HTTP Contracts)"]
-    SVC --> API["HTTP Client Layer (Fetch + AbortSignal + Errors)"]
-    UI --> THEME["theme.ts (RSC-Safe Zero-Hex) & @mantine/core"]
+    UI --> STYLES["styles/ (Shared Semantic CSS Modules) & theme.ts (RSC-Safe Zero-Hex)"]
+    PROV --> QUERIES["queries/ (100% Pure TS / RSC-safe queryKeys & queryOptions)"]
+    UI --> HOOKS["hooks/ (Shared Cross-App Hooks)"]
+    UI --> QUERIES
+    HOOKS --> QUERIES
+    QUERIES --> SVC["services/*.service.ts (Typed HTTP Contracts)"]
+    SVC --> API["lib/ (100% Pure TS Infrastructure: api-client, date-time, validators)"]
 ```
 
 ### Quy tắc phụ thuộc một chiều (Unidirectional Dependency Rule)
 
-- `app/` được phép import từ `components/`, `hooks/`, `services/`, `types/`, `lib/`, `config/`, và `theme.ts`.
-- `components/` được phép import từ `@mantine/*`, `@tabler/icons-react`, `hooks/`, `types/`, `lib/`, `config/`, và các tệp trong cùng miền `components/<domain>/`. **Cấm** import ngược từ `app/`.
-- `hooks/` được phép import từ `services/`, `types/`, `lib/`, `@tanstack/react-query`, `@mantine/hooks`. **Cấm** import UI component hoặc CSS Module.
+- `app/` được phép import từ `providers/`, `components/`, `styles/`, `queries/`, `hooks/`, `services/`, `types/`, `lib/`, `config/`, và `theme.ts`.
+- `providers/` chứa các Client Providers (`'use client'`) và được phép import từ `queries/`, `services/`, `types/`, `@mantine/*`, `@tanstack/react-query`.
+- `components/` được phép import từ `@mantine/*`, `@tabler/icons-react`, `styles/`, `queries/`, `hooks/`, `types/`, `lib/`, `config/`, và các tệp trong cùng miền `components/<domain>/`. **Cấm** import ngược từ `app/`.
+- `queries/` là tầng **100% Pure TypeScript / RSC-safe** (không `'use client'`, không import `react`), chỉ import `@tanstack/react-query`, `services/`, `types/`, `lib/`.
+- `hooks/` được phép import từ `queries/`, `services/`, `types/`, `lib/`, `@tanstack/react-query`, `@mantine/hooks`. **Cấm** import UI component hoặc CSS Module.
 - `services/` chỉ import tầng HTTP client, schema `zod`, và type DTO thuần từ `types/`. **Tuyệt đối không** import `react`, `next/navigation`, `components/`, hay `@mantine/core`.
 - `types/` chứa các Pure TypeScript Domain & API Contracts (Zero Dependencies, không import React, Next.js, Mantine hay Browser DOM) ánh xạ 1:1 theo Bounded Contexts của Backend.
+- **Quản lý style tập trung (`styles/`):** Ưu tiên Mantine Style Props (Tier 1) → Import trực tiếp shared semantic CSS Modules từ `@/styles/{surfaces,interactions,typography}.module.css` trong TSX cho pattern lặp ≥ 2 nơi (Tier 2) → Chỉ tạo `<Component>.module.css` cục bộ cho layout/animation đặc thù của riêng component đó (Tier 3).
 
 ---
 
@@ -87,19 +94,27 @@ client/
 │   ├── error.tsx                 # Route Segment Error Boundary
 │   ├── global-error.tsx          # Fatal Root Layout Error Boundary
 │   └── not-found.tsx             # 404 Page
+├── providers/                    # Toàn bộ React Context & App-level Client Providers ('use client')
+│   ├── AppProviders.tsx          # DatesProvider, Notifications, ModalsProvider, QueryProvider, AuthProvider
+│   ├── AuthProvider.tsx          # AuthProvider, useAuth, applyAuthenticatedSession
+│   ├── QueryProvider.tsx         # QueryProvider (+ @deprecated useOptionalQueryClient đến Phase 8)
+│   ├── MantineColorSchemeSync.tsx
+│   └── __tests__/                # Unit tests cho providers
+├── styles/                       # Shared Semantic CSS Modules (surfaces, interactions, typography)
 ├── components/                   # Domain UI Components (Mantine v9 Zero-Hex cho code mới/migrate)
-│   ├── <domain>/                 # auth, interview, setup, report, sfia, onet, resume, profile
-│   ├── layout/ & patterns/       # Khung AppShell và mẫu UI tái sử dụng dựng trên Mantine v9
-│   └── ui/                       # [LEGACY FROZEN] Chờ gỡ bỏ sau migrate — CẤM thêm file mới
-├── hooks/                        # Custom hooks dùng chung (TanStack Query hooks, SSE, countdown...)
-├── services/                     # Domain API Services (1 tệp / 1 ngữ cảnh nghiệp vụ)
+│   ├── <domain>/                 # auth, interview, interview-setup, landing, report, sfia, onet, resume, profile
+│   ├── layout/ & common/         # Khung AppShell và mẫu UI tái sử dụng dựng trên Mantine v9
+│   └── ui/ & form/               # [LEGACY FROZEN] Chờ gỡ bỏ ở Phase 8 — CẤM thêm file mới
+├── queries/                      # 100% Pure TS / RSC-safe (query-client.ts, keys.ts, *.queries.ts) + __tests__/
+├── hooks/                        # Custom hooks dùng chung (useAuth, useSessions, useSessionEvents, useCountdown)
+├── services/                     # Domain API Services (1 tệp / 1 ngữ cảnh nghiệp vụ) + __tests__/
 ├── types/                        # Central Pure TypeScript Domain & API Contracts (11 Bounded Contexts + barrel)
-├── lib/                          # Hạ tầng thuần (api-client.ts, query-client.tsx, date-time, validators)
+├── lib/                          # 100% Pure TS Infrastructure (api-client.ts, auth-redirect, date-time, form-errors, setup-helpers)
 ├── middleware/                   # Guard định tuyến (Auth cookie presence, Maintenance mode)
 ├── proxy.ts                      # Next.js 16 Proxy entry point (thay middleware.ts)
 ├── config/                       # Hằng số tĩnh (navigation, feature flags)
-├── theme.ts                      # SSOT Mantine v9 Theme (RSC-safe, Zero-Hex, 5 semantic roles)
-├── test-utils/                   # Custom render bọc QueryClientProvider + MantineProvider(env="test") + ModalsProvider
+├── theme.ts                      # SSOT Mantine v9 Theme (RSC-safe, Zero-Hex, 5 semantic roles, focusClassName)
+├── test-utils/                   # Custom render (@test-utils) + fixtures/report.fixture.ts
 ├── e2e/                          # Playwright end-to-end specs
 ├── scripts/                      # check-ui-rules.mjs, verify-docs-integrity.mjs
 └── docs/                         # docs/mantine/ (Tactical Lookup) & docs/docs/ (Enterprise Standards)
@@ -192,13 +207,13 @@ export async function CandidateProfileShell({
 2. **Thăng cấp theo Rule of Three:**
    - Lần 1: Viết cục bộ trong `app/.../_components/`.
    - Lần 2: Cân nhắc tách nếu hai màn hình chia sẻ hoàn toàn cùng hợp đồng dữ liệu và tương tác.
-   - Lần 3: Bắt buộc trích xuất lên `components/<domain>/` (hoặc `components/patterns/` nếu dùng xuyên miền).
+   - Lần 3: Bắt buộc trích xuất lên `components/<domain>/` (hoặc `components/common/` nếu dùng xuyên miền).
 3. **Đóng băng `components/ui/`:** Theo nguyên tắc **Mantine-First**, mọi UI primitive (`Button`, `TextInput`, `Modal`, `Table`, `Paper`, `Tabs`, `Select`) được import trực tiếp từ `@mantine/core`. **Tuyệt đối cấm** thêm wrapper mỏng mới trong `components/ui/`.
 
 ### 4.2. Phân tách trách nhiệm `layout`, `patterns`, và `<domain>`
 
 - **`app/(group)/layout.tsx` & `components/layout/`:** Chỉ phụ trách khung `AppShell`, điều hướng và kiểm soát ranh giới layout — không chứa logic gọi API nộp bài hay chỉnh sửa hồ sơ.
-- **`components/patterns/`:** Chứa mẫu giao diện dùng chung xuyên nhiều miền (banner ngoại tuyến, empty state, error fallback) dựng trên Mantine v9 primitives.
+- **`components/common/`:** Chứa mẫu giao diện dùng chung xuyên nhiều miền (banner ngoại tuyến, empty state, error fallback) dựng trên Mantine v9 primitives.
 - **`components/<domain>/`:** Đóng gói UI đặc thù từng miền (`interview`, `setup`, `report`, `sfia`, `onet`, `resume`, `profile`, `auth`).
 
 ---
@@ -281,7 +296,7 @@ app/(candidate)/sessions/[sessionId]/
 | Truyền dữ liệu RSC → Client  | Truyền nguyên bản ghi 50 trường cho component chỉ hiển thị 2 trường | Chỉ chọn và truyền đúng các trường serializable cần hiển thị (`server-serialization`)              |
 | Tổ chức import nội bộ        | Gom 20 module vào `index.ts` rồi import qua barrel                  | Direct import từ tệp đích; bật `optimizePackageImports` cho `@mantine/*` (`bundle-barrel-imports`) |
 | Đặt tên tệp trên Windows     | Import `./sessioncard` khi tệp thực tế là `SessionCard.tsx`         | Khớp chính xác 100% chữ hoa/thường để không lỗi build trên Linux CI/Vercel                         |
-| Component chỉ dùng ở 1 trang | Đặt ngay vào `components/patterns/` từ lần đầu                      | Đặt tại `app/.../_components/`, chỉ thăng cấp lên `components/<domain>/` khi đạt Rule of Three     |
+| Component chỉ dùng ở 1 trang | Đặt ngay vào `components/common/` từ lần đầu                        | Đặt tại `app/.../_components/`, chỉ thăng cấp lên `components/<domain>/` khi đạt Rule of Three     |
 
 ---
 

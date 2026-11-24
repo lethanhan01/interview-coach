@@ -47,17 +47,31 @@ export function generateSfiaAttributesProgressionCsvString(
 
   // Thêm phần phụ lục tóm tắt triết lý cốt lõi của 7 cấp độ
   rows.push('')
-  rows.push(escapeCsv('PHỤ LỤC: BẢN CHẤT CỐT LÕI CỦA 7 CẤP ĐỘ TRÁCH NHIỆM (SFIA 9)'))
-  rows.push(['Cấp độ', 'Tên chuẩn', 'Tên tiếng Việt', 'Bản chất cốt lõi (Essence)', 'Mô tả quyền hạn'].map(escapeCsv).join(','))
+  rows.push(
+    escapeCsv('PHỤ LỤC: BẢN CHẤT CỐT LÕI CỦA 7 CẤP ĐỘ TRÁCH NHIỆM (SFIA 9)')
+  )
+  rows.push(
+    [
+      'Cấp độ',
+      'Tên chuẩn',
+      'Tên tiếng Việt',
+      'Bản chất cốt lõi (Essence)',
+      'Mô tả quyền hạn',
+    ]
+      .map(escapeCsv)
+      .join(',')
+  )
 
   for (const lvl of levels) {
-    rows.push([
-      escapeCsv(`Level ${lvl.levelId}`),
-      escapeCsv(lvl.name),
-      escapeCsv(lvl.nameVi),
-      escapeCsv(lvl.essence),
-      escapeCsv(lvl.description),
-    ].join(','))
+    rows.push(
+      [
+        escapeCsv(`Level ${lvl.levelId}`),
+        escapeCsv(lvl.name),
+        escapeCsv(lvl.nameVi),
+        escapeCsv(lvl.essence),
+        escapeCsv(lvl.description),
+      ].join(',')
+    )
   }
 
   // Thêm UTF-8 Byte Order Mark (\uFEFF)
@@ -77,12 +91,16 @@ export function downloadSfiaAttributesProgressionCsv(
   }
 
   try {
-    const csvContent = generateSfiaAttributesProgressionCsvString(levels, attributes)
+    const csvContent = generateSfiaAttributesProgressionCsvString(
+      levels,
+      attributes
+    )
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
 
     const dateStr = new Date().toISOString().slice(0, 10)
-    const finalFilename = filename || `SFIA9_Attributes_Progression_${dateStr}.csv`
+    const finalFilename =
+      filename || `SFIA9_Attributes_Progression_${dateStr}.csv`
 
     const link = document.createElement('a')
     link.href = url

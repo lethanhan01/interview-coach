@@ -2,11 +2,7 @@
 
 import * as React from 'react'
 import { useState, useMemo } from 'react'
-import {
-  Network,
-  ChevronDown,
-  ChevronUp,
-} from 'lucide-react'
+import { Network, ChevronDown, ChevronUp } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -54,16 +50,21 @@ export function SfiaSkillCoverageChart({
   }, [data])
 
   return (
-    <Card className={cn('p-2 sm:p-2.5 flex flex-col justify-between overflow-hidden', className)}>
+    <Card
+      className={cn(
+        'flex flex-col justify-between overflow-hidden p-2 sm:p-2.5',
+        className
+      )}
+    >
       {/* Header toolbar */}
-      <div className="flex flex-col gap-1 pb-1 border-b border-border/60 shrink-0">
+      <div className="border-border/60 flex shrink-0 flex-col gap-1 border-b pb-1">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
-            <div className="bg-success/10 text-success flex size-5.5 shrink-0 items-center justify-center rounded-md">
+            <div className="bg-success/10 text-success size-5.5 flex shrink-0 items-center justify-center rounded-md">
               <Network className="size-3" />
             </div>
             <div>
-              <h3 className="text-ink text-xs sm:text-sm font-bold tracking-tight">
+              <h3 className="text-ink text-xs font-bold tracking-tight sm:text-sm">
                 Độ phủ Kỹ năng SFIA 9 Phổ biến
               </h3>
               <p className="text-ink-muted text-[10px]">
@@ -72,13 +73,16 @@ export function SfiaSkillCoverageChart({
             </div>
           </div>
 
-          <Badge variant="outline" className="text-[10px] font-mono shrink-0 py-0 px-1.5">
+          <Badge
+            variant="outline"
+            className="shrink-0 px-1.5 py-0 font-mono text-[10px]"
+          >
             {filteredData.length} kỹ năng
           </Badge>
         </div>
 
         {/* Category Filter Chips */}
-        <div className="flex flex-wrap items-center gap-1 pt-0.5 overflow-x-auto">
+        <div className="flex flex-wrap items-center gap-1 overflow-x-auto pt-0.5">
           {categories.map((cat) => {
             const isAll = cat === 'all'
             const label = isAll ? 'Tất cả' : cat
@@ -90,7 +94,7 @@ export function SfiaSkillCoverageChart({
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
                 className={cn(
-                  'px-1.5 py-0.2 text-[9px] font-medium rounded-full transition-all border whitespace-nowrap cursor-pointer leading-tight',
+                  'py-0.2 cursor-pointer whitespace-nowrap rounded-full border px-1.5 text-[9px] font-medium leading-tight transition-all',
                   isActive
                     ? 'bg-brand text-brand-foreground border-brand shadow-xs font-semibold'
                     : 'bg-surface-raised text-ink-muted border-border/70 hover:text-ink hover:border-brand/40'
@@ -104,7 +108,7 @@ export function SfiaSkillCoverageChart({
       </div>
 
       {/* Ranked Horizontal Bars */}
-      <div className="py-1 space-y-1 flex-1 overflow-y-auto min-h-0 pr-0.5">
+      <div className="min-h-0 flex-1 space-y-1 overflow-y-auto py-1 pr-0.5">
         {displayData.map((item) => {
           const widthPercent = Math.max(
             Math.round((item.mappedOccupationsCount / maxMapped) * 100),
@@ -114,46 +118,46 @@ export function SfiaSkillCoverageChart({
           return (
             <div
               key={item.code}
-              className="group flex flex-col gap-0.5 p-0.5 px-1 rounded-md transition-colors hover:bg-surface-muted/50"
+              className="hover:bg-surface-muted/50 group flex flex-col gap-0.5 rounded-md p-0.5 px-1 transition-colors"
             >
               <div className="flex items-center justify-between gap-1.5 text-xs">
-                <div className="flex items-center gap-1 min-w-0">
-                  <span className="bg-brand/10 text-brand font-mono font-bold text-[9px] px-1 py-0.2 rounded shrink-0 leading-none">
+                <div className="flex min-w-0 items-center gap-1">
+                  <span className="bg-brand/10 text-brand py-0.2 shrink-0 rounded px-1 font-mono text-[9px] font-bold leading-none">
                     {item.code}
                   </span>
-                  <span className="text-ink font-medium truncate text-[11px]">
+                  <span className="text-ink truncate text-[11px] font-medium">
                     {item.name}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1 shrink-0 text-[10px]">
+                <div className="flex shrink-0 items-center gap-1 text-[10px]">
                   {/* Badge dải level */}
-                  <span className="bg-surface-inset text-ink-muted px-1 py-0.2 rounded font-mono text-[9px]">
+                  <span className="bg-surface-inset text-ink-muted py-0.2 rounded px-1 font-mono text-[9px]">
                     L{item.minTargetLevel}–L{item.maxTargetLevel}
                   </span>
 
                   {/* Core vs Secondary breakdown */}
-                  <span className="text-success font-semibold text-[9px] bg-success/10 px-1 py-0.2 rounded">
+                  <span className="text-success bg-success/10 py-0.2 rounded px-1 text-[9px] font-semibold">
                     Core: {item.coreCount}
                   </span>
                   {item.secondaryCount > 0 && (
-                    <span className="text-ink-muted text-[9px] bg-surface-inset px-1 py-0.2 rounded">
+                    <span className="text-ink-muted bg-surface-inset py-0.2 rounded px-1 text-[9px]">
                       Sec: {item.secondaryCount}
                     </span>
                   )}
 
                   {/* Số nghề */}
-                  <span className="font-bold text-ink tabular-nums text-[10px] ml-0.5">
+                  <span className="text-ink ml-0.5 text-[10px] font-bold tabular-nums">
                     {item.mappedOccupationsCount} nghề
                   </span>
                 </div>
               </div>
 
               {/* Progress Bar */}
-              <div className="h-1.5 w-full bg-surface-raised border border-border/50 rounded-full overflow-hidden">
+              <div className="bg-surface-raised border-border/50 h-1.5 w-full overflow-hidden rounded-full border">
                 <div
                   style={{ width: `${widthPercent}%` }}
-                  className="h-full bg-brand rounded-full transition-all duration-500 ease-out group-hover:bg-brand/90"
+                  className="bg-brand group-hover:bg-brand/90 h-full rounded-full transition-all duration-500 ease-out"
                 />
               </div>
             </div>
@@ -163,12 +167,12 @@ export function SfiaSkillCoverageChart({
 
       {/* Footer Toggle Expand / Collapse */}
       {filteredData.length > DEFAULT_VISIBLE_COUNT && (
-        <div className="pt-1 border-t border-border/50 flex justify-center shrink-0">
+        <div className="border-border/50 flex shrink-0 justify-center border-t pt-1">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="h-5 text-[10px] text-ink-muted hover:text-ink gap-1"
+            className="text-ink-muted hover:text-ink h-5 gap-1 text-[10px]"
           >
             {isExpanded ? (
               <>

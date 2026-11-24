@@ -3,11 +3,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
-import {
-  queryKeys,
-  useOptionalQueryClient,
-  userQueries,
-} from '@/lib/query-client'
+import { queryKeys } from '@/queries/keys'
+import { useOptionalQueryClient } from '@/providers/QueryProvider'
+import { userQueries } from '@/queries/user.queries'
 import { userManagementService } from '@/services'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -31,12 +29,12 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/AlertDialog'
-import { PageContainer, PageHeader } from '@/components/patterns/LayoutPatterns'
+import { PageContainer, PageHeader } from '@/components/common/LayoutPatterns'
 import {
   LoadingState,
   EmptyState,
   ErrorState,
-} from '@/components/patterns/FeedbackPatterns'
+} from '@/components/common/FeedbackPatterns'
 import { Search, Trash2, Unlock, Lock, Users } from 'lucide-react'
 
 export default function AdminUsersPage() {

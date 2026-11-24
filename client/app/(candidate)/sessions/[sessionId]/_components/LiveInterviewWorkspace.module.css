@@ -1,0 +1,7 @@
+.workspace {
+  width: 100%;
+}
+
+.questionBadge {
+  font-variant-numeric: tabular-nums;
+}

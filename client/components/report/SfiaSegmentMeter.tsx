@@ -1,0 +1,93 @@
+import { Box, Group, Stack, Text } from '@mantine/core'
+import classes from './SfiaSegmentMeter.module.css'
+
+export interface SfiaSegmentMeterProps {
+  demonstratedLevel: number
+  targetLevel: number
+  skillName: string
+}
+
+const SFIA_LEVEL_DESCRIPTIONS: Record<number, string> = {
+  1: 'Follow',
+  2: 'Assist',
+  3: 'Apply',
+  4: 'Enable',
+  5: 'Ensure, Advise',
+  6: 'Initiate, Influence',
+  7: 'Set Strategy, Inspire',
+}
+
+const SEGMENTS = [1, 2, 3, 4, 5, 6, 7]
+
+export function SfiaSegmentMeter({
+  demonstratedLevel,
+  targetLevel,
+  skillName,
+}: Readonly<SfiaSegmentMeterProps>) {
+  const safeDemonstratedLevel = Math.max(0, Math.min(7, demonstratedLevel ?? 0))
+  const isPassed = safeDemonstratedLevel >= targetLevel && targetLevel > 0
+
+  return (
+    <Stack gap={6}>
+      <Box
+        component="meter"
+        min={0}
+        max={7}
+        value={safeDemonstratedLevel}
+        aria-valuenow={safeDemonstratedLevel}
+        aria-valuemin={0}
+        aria-valuemax={7}
+        aria-label={`Thang đo SFIA 7 cấp độ cho ${skillName}`}
+        className={classes.srOnly}
+      >
+        {safeDemonstratedLevel} / 7
+      </Box>
+
+      <Group gap={4} wrap="nowrap">
+        {SEGMENTS.map((level) => {
+          const isFilled =
+            level <= safeDemonstratedLevel && safeDemonstratedLevel > 0
+          const isTarget = level === targetLevel
+          const isBetweenDemonstratedAndTarget =
+            level > safeDemonstratedLevel && level <= targetLevel
+
+          let state: 'passed' | 'warning' | 'gap' | 'empty' = 'empty'
+          if (isFilled) {
+            state = isPassed ? 'passed' : 'warning'
+          } else if (isBetweenDemonstratedAndTarget) {
+            state = 'gap'
+          }
+
+          const title = `Level ${level}: ${SFIA_LEVEL_DESCRIPTIONS[level] || ''}${
+            isTarget ? ' (Mục tiêu)' : ''
+          }${level === safeDemonstratedLevel ? ' (Thể hiện)' : ''}`
+
+          return (
+            <Box
+              key={level}
+              title={title}
+              className={classes.segment}
+              mod={{ state, target: isTarget }}
+            >
+              {level}
+            </Box>
+          )
+        })}
+      </Group>
+
+      <Group justify="space-between" align="center">
+        <Text size="xs" c="dimmed">
+          L1: Cơ bản
+        </Text>
+        <Text size="xs" c="dimmed">
+          Thang SFIA Level 1-7
+        </Text>
+        <Text size="xs" c="dimmed">
+          L7: Chiến lược
+        </Text>
+      </Group>
+    </Stack>
+  )
+}
+
+export default SfiaSegmentMeter

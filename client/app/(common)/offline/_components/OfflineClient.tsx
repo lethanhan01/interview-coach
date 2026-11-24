@@ -1,7 +1,7 @@
 'use client'
 
 import { IconRefresh, IconWifiOff } from '@tabler/icons-react'
-import { ErrorPageTemplate } from '@/components/patterns/ErrorPageTemplate'
+import { ErrorPageTemplate } from '@/components/common/ErrorPageTemplate'
 
 export function OfflineClient() {
   return (

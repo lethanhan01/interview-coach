@@ -1,8 +1,20 @@
-import type { Session, SessionType, ContextPack } from '@/types'
+'use client'
+
+import {
+  Badge,
+  Card,
+  Divider,
+  Group,
+  Paper,
+  SimpleGrid,
+  Stack,
+  Text,
+  Title,
+} from '@mantine/core'
 import { formatVietnamDateTime } from '@/lib/date-time'
-import { Badge } from '@/components/ui/Badge'
-import { Card } from '@/components/ui/Card'
-import { cn } from '@/lib/utils'
+import type { ContextPack, Session, SessionType } from '@/types'
+import surfaces from '@/styles/surfaces.module.css'
+import typography from '@/styles/typography.module.css'
 
 const SESSION_TYPE_LABELS: Record<SessionType, string> = {
   hr: 'Nhân sự',
@@ -12,30 +24,6 @@ const SESSION_TYPE_LABELS: Record<SessionType, string> = {
 const CONTEXT_PACK_LABELS: Record<ContextPack, string> = {
   VN: 'Việt Nam',
   Western: 'Quốc tế (Western)',
-}
-
-function MetaRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-        {label}
-      </span>
-      <span className="text-foreground text-sm">{value}</span>
-    </div>
-  )
-}
-
-function TextBlock({ label, value }: { label: string; value?: string }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-        {label}
-      </span>
-      <p className="bg-surface-raised text-foreground whitespace-pre-line rounded-md px-3 py-2 text-sm leading-6">
-        {value || '—'}
-      </p>
-    </div>
-  )
 }
 
 interface ParsedJobDescription {
@@ -115,84 +103,135 @@ function parseJobDescription(jobDescription?: string): ParsedJobDescription {
   }
 }
 
-interface SessionMetadataCardProps {
+export interface SessionMetadataCardProps {
   session: Session
   className?: string
 }
 
-export default function SessionMetadataCard({
+function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <Stack gap={2}>
+      <Text size="xs" fw={600} tt="uppercase" c="dimmed">
+        {label}
+      </Text>
+      <Text size="sm" fw={500}>
+        {value}
+      </Text>
+    </Stack>
+  )
+}
+
+export function SessionMetadataCard({
   session,
   className,
-}: SessionMetadataCardProps) {
-  const jobDescription = parseJobDescription(session.jobDescription)
-  const techStackValue =
-    jobDescription.techStack.length > 0 ? (
-      <span className="flex flex-wrap gap-1.5">
-        {jobDescription.techStack.map((item) => (
-          <Badge key={item} variant="secondary" className="text-xs">
-            {item}
-          </Badge>
-        ))}
-      </span>
-    ) : (
-      '—'
-    )
+}: Readonly<SessionMetadataCardProps>) {
+  const parsedJd = parseJobDescription(session.jobDescription)
+  const sessionTypeLabel = session.sessionType
+    ? SESSION_TYPE_LABELS[session.sessionType] || session.sessionType
+    : '—'
+  const contextPackLabel = session.contextPackId
+    ? CONTEXT_PACK_LABELS[session.contextPackId] || session.contextPackId
+    : '—'
 
   return (
-    <Card className={cn('p-6', className)}>
-      <h2 className="text-foreground mb-4 text-base font-semibold">
-        Thông tin phiên phỏng vấn
-      </h2>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-        <MetaRow
-          label="Thời điểm"
-          value={formatVietnamDateTime(session.createdAt)}
-        />
-        <MetaRow
-          label="Loại phỏng vấn"
-          value={SESSION_TYPE_LABELS[session.sessionType]}
-        />
-        <MetaRow
-          label="Context Pack"
-          value={CONTEXT_PACK_LABELS[session.contextPackId]}
-        />
-        <MetaRow
-          label="Thời lượng"
-          value={
-            session.durationMin == null ? '—' : `${session.durationMin} phút`
-          }
-        />
-        <MetaRow label="Số câu hỏi" value={`${session.numQuestions} câu`} />
-        <MetaRow label="Vị trí mục tiêu" value={session.jobTitle ?? '—'} />
-      </div>
-      <div className="border-border mt-5 border-t pt-5">
-        <h3 className="text-foreground mb-4 text-sm font-semibold">
-          Mô tả công việc (JD)
-        </h3>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-          <MetaRow
-            label="Tên công ty"
-            value={jobDescription.companyName ?? '—'}
+    <Card withBorder radius="md" p="lg" className={className}>
+      <Stack gap="md">
+        <Title order={2} size="h4">
+          Thông tin phiên phỏng vấn
+        </Title>
+
+        <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="md">
+          <MetaItem label="Vị trí ứng tuyển" value={session.jobTitle || '—'} />
+          <MetaItem label="Loại phỏng vấn" value={sessionTypeLabel} />
+          <MetaItem label="Bối cảnh" value={contextPackLabel} />
+          <MetaItem
+            label="Số câu hỏi"
+            value={`${session.numQuestions || '—'} câu`}
           />
-          <MetaRow
-            label="Vị trí tuyển dụng"
-            value={jobDescription.jobTitle ?? session.jobTitle ?? '—'}
+          <MetaItem
+            label="Thời lượng"
+            value={`${session.durationMin || '—'} phút`}
           />
-          <MetaRow label="Level yêu cầu" value={jobDescription.level ?? '—'} />
-          <MetaRow
-            label="Số lượng tuyển"
-            value={jobDescription.headcount ?? '—'}
+          <MetaItem
+            label="Thời gian hoàn tất"
+            value={formatVietnamDateTime(
+              session.completedAt || session.createdAt
+            )}
           />
-          <MetaRow label="Tech stack" value={techStackValue} />
-        </div>
-        <div className="mt-4 grid gap-4">
-          <TextBlock label="Yêu cầu" value={jobDescription.requirements} />
-          <TextBlock
-            label="Nội dung công việc"
-            value={jobDescription.jobContent}
-          />
-        </div>
-      </div>
+        </SimpleGrid>
+
+        {session.jobDescription ? (
+          <>
+            <Divider my="xs" />
+
+            <Title order={3} size="h5">
+              Mô tả công việc (JD)
+            </Title>
+
+            <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="sm">
+              <MetaItem label="Công ty" value={parsedJd.companyName || '—'} />
+              <MetaItem label="Level yêu cầu" value={parsedJd.level || '—'} />
+              <MetaItem
+                label="Chỉ tiêu tuyển"
+                value={parsedJd.headcount || '—'}
+              />
+              <MetaItem
+                label="Vị trí JD"
+                value={parsedJd.jobTitle || session.jobTitle || '—'}
+              />
+            </SimpleGrid>
+
+            {parsedJd.techStack.length > 0 ? (
+              <Stack gap={4}>
+                <Text size="xs" fw={600} tt="uppercase" c="dimmed">
+                  Tech Stack yêu cầu
+                </Text>
+                <Group gap="xs" wrap="wrap">
+                  {parsedJd.techStack.map((tech) => (
+                    <Badge key={tech} variant="light" color="neutral" size="sm">
+                      {tech}
+                    </Badge>
+                  ))}
+                </Group>
+              </Stack>
+            ) : null}
+
+            {parsedJd.requirements ? (
+              <Stack gap={4}>
+                <Text size="xs" fw={600} tt="uppercase" c="dimmed">
+                  Yêu cầu công việc
+                </Text>
+                <Paper
+                  withBorder
+                  radius="sm"
+                  p="sm"
+                  className={`${surfaces.subtleSurface} ${typography.preLine}`}
+                >
+                  <Text size="sm">{parsedJd.requirements}</Text>
+                </Paper>
+              </Stack>
+            ) : null}
+
+            {parsedJd.jobContent ? (
+              <Stack gap={4}>
+                <Text size="xs" fw={600} tt="uppercase" c="dimmed">
+                  Nội dung công việc
+                </Text>
+                <Paper
+                  withBorder
+                  radius="sm"
+                  p="sm"
+                  className={`${surfaces.subtleSurface} ${typography.preLine}`}
+                >
+                  <Text size="sm">{parsedJd.jobContent}</Text>
+                </Paper>
+              </Stack>
+            ) : null}
+          </>
+        ) : null}
+      </Stack>
     </Card>
   )
 }
+
+export default SessionMetadataCard

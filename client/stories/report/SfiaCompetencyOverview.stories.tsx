@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { SfiaCompetencyOverview } from '@/components/report/SfiaCompetencyOverview'
-import { mockUnifiedSkillsBreakdown } from '@/tests/fixtures/report.fixture'
+import { mockUnifiedSkillsBreakdown } from '@/test-utils/fixtures/report.fixture'
 
 const meta: Meta<typeof SfiaCompetencyOverview> = {
   title: 'Feature/Report/SfiaCompetencyOverview',
@@ -61,7 +61,8 @@ export const WithZeroLevelDemonstrated: Story = {
         score: 0,
         status: 'gap',
         strengths: 'Chưa có dữ liệu đánh giá do câu hỏi bị bỏ qua.',
-        areasForImprovement: 'Cần hoàn thành các câu hỏi phỏng vấn để đo lường năng lực.',
+        areasForImprovement:
+          'Cần hoàn thành các câu hỏi phỏng vấn để đo lường năng lực.',
       },
       {
         skillCode: 'DBDS',

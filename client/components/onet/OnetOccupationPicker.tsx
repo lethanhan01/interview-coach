@@ -23,7 +23,7 @@ import {
   IconX,
 } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
-import { onetQueries } from '@/lib/query-client'
+import { onetQueries } from '@/queries/onet.queries'
 import type { OnetOccupation } from '@/types'
 import classes from './OnetOccupationPicker.module.css'
 

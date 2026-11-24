@@ -11,16 +11,11 @@ import {
 } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { toast } from 'sonner'
-import {
-  LoadingState,
-  ErrorState,
-} from '@/components/patterns/FeedbackPatterns'
+import { LoadingState, ErrorState } from '@/components/common/FeedbackPatterns'
 import { cn } from '@/lib/utils'
-import {
-  queryKeys,
-  sfiaAdminQueries,
-  useOptionalQueryClient,
-} from '@/lib/query-client'
+import { queryKeys } from '@/queries/keys'
+import { sfiaAdminQueries } from '@/queries/sfia.queries'
+import { useOptionalQueryClient } from '@/providers/QueryProvider'
 import {
   useSfiaParams,
   SfiaAnatomyBanner,

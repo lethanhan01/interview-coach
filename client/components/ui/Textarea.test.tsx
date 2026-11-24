@@ -13,7 +13,7 @@ describe('Textarea Component', () => {
     const user = userEvent.setup()
     render(<Textarea placeholder="Input" />)
     const textarea = screen.getByPlaceholderText('Input')
-    
+
     await user.type(textarea, 'Hello world')
     expect(textarea).toHaveValue('Hello world')
   })

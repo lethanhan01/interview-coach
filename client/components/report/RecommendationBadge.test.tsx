@@ -1,11 +1,14 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen } from '@test-utils'
+import { axe } from 'jest-axe'
 import { describe, expect, it } from 'vitest'
 import { RecommendationBadge } from './RecommendationBadge'
 
 describe('RecommendationBadge', () => {
   it('renders strongly_recommended status correctly', () => {
     render(<RecommendationBadge status="strongly_recommended" />)
-    const badge = screen.getByRole('status', { name: 'Xuất Sắc - Đạt Chuẩn Cao' })
+    const badge = screen.getByRole('status', {
+      name: 'Xuất Sắc - Đạt Chuẩn Cao',
+    })
     expect(badge).toBeInTheDocument()
     expect(badge).toHaveTextContent('Xuất Sắc - Đạt Chuẩn Cao')
   })
@@ -19,7 +22,9 @@ describe('RecommendationBadge', () => {
 
   it('renders borderline status correctly', () => {
     render(<RecommendationBadge status="borderline" />)
-    const badge = screen.getByRole('status', { name: 'Cân Nhắc - Cần Đánh Giá Thêm' })
+    const badge = screen.getByRole('status', {
+      name: 'Cân Nhắc - Cần Đánh Giá Thêm',
+    })
     expect(badge).toBeInTheDocument()
     expect(badge).toHaveTextContent('Cân Nhắc - Cần Đánh Giá Thêm')
   })
@@ -45,14 +50,23 @@ describe('RecommendationBadge', () => {
 
   it('applies custom className and size variations', () => {
     const { container, rerender } = render(
-      <RecommendationBadge status="recommended" size="lg" className="custom-test-class" />
+      <RecommendationBadge
+        status="recommended"
+        size="lg"
+        className="custom-test-class"
+      />
     )
-    const badge = container.firstChild as HTMLElement
-    expect(badge).toHaveClass('custom-test-class')
-    expect(badge).toHaveClass('text-sm')
+    const badge = container.querySelector('.custom-test-class')
+    expect(badge).toBeInTheDocument()
 
     rerender(<RecommendationBadge status="recommended" size="sm" />)
-    const badgeSm = container.firstChild as HTMLElement
-    expect(badgeSm).toHaveClass('text-xs')
+    expect(screen.getByRole('status')).toBeInTheDocument()
+  })
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(
+      <RecommendationBadge status="strongly_recommended" />
+    )
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

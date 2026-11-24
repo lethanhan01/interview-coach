@@ -1,5 +1,6 @@
-import { render } from '@testing-library/react'
-import { expect, it, describe } from 'vitest'
+import { render, screen } from '@test-utils'
+import { axe } from 'jest-axe'
+import { describe, expect, it } from 'vitest'
 import SessionMetadataCard from './SessionMetadataCard'
 import type { Session } from '@/types'
 
@@ -19,6 +20,7 @@ describe('SessionMetadataCard', () => {
   it('renders correctly', () => {
     const { container } = render(<SessionMetadataCard session={mockSession} />)
     expect(container).toBeInTheDocument()
+    expect(screen.getByText('Frontend Developer')).toBeInTheDocument()
   })
 
   it('parses JD sections and tech stack case-insensitively', () => {
@@ -37,11 +39,18 @@ describe('SessionMetadataCard', () => {
       ].join('\n'),
     }
 
-    const { getByText } = render(<SessionMetadataCard session={sessionWithJd} />)
-    expect(getByText('Acme Corp')).toBeInTheDocument()
-    expect(getByText('React')).toBeInTheDocument()
-    expect(getByText('Node.js')).toBeInTheDocument()
-    expect(getByText('PostgreSQL')).toBeInTheDocument()
-    expect(getByText('Có ít nhất 4 năm kinh nghiệm.')).toBeInTheDocument()
+    render(<SessionMetadataCard session={sessionWithJd} />)
+    expect(screen.getByText('Acme Corp')).toBeInTheDocument()
+    expect(screen.getByText('React')).toBeInTheDocument()
+    expect(screen.getByText('Node.js')).toBeInTheDocument()
+    expect(screen.getByText('PostgreSQL')).toBeInTheDocument()
+    expect(
+      screen.getByText('Có ít nhất 4 năm kinh nghiệm.')
+    ).toBeInTheDocument()
+  })
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(<SessionMetadataCard session={mockSession} />)
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

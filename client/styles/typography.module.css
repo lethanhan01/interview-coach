@@ -1,0 +1,7 @@
+.tabularNums {
+  font-variant-numeric: tabular-nums;
+}
+
+.preLine {
+  white-space: pre-line;
+}

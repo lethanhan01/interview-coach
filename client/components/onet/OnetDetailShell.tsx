@@ -15,11 +15,9 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
-import {
-  onetAdminQueries,
-  queryKeys,
-  useOptionalQueryClient,
-} from '@/lib/query-client'
+import { onetAdminQueries } from '@/queries/onet.queries'
+import { queryKeys } from '@/queries/keys'
+import { useOptionalQueryClient } from '@/providers/QueryProvider'
 import { OnetOverviewTab } from './OnetOverviewTab'
 import { OnetTechSkillsTab } from './OnetTechSkillsTab'
 import { OnetTasksTab } from './OnetTasksTab'

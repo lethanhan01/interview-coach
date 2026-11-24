@@ -22,7 +22,8 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/Select'
-import { queryKeys, useOptionalQueryClient } from '@/lib/query-client'
+import { queryKeys } from '@/queries/keys'
+import { useOptionalQueryClient } from '@/providers/QueryProvider'
 import { sfiaAdminService } from '@/services'
 import type { CreateSfiaQuestionPayload, SfiaQuestionBankItem } from '@/types'
 

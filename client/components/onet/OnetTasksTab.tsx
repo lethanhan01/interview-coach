@@ -16,7 +16,7 @@ import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { EmptyState } from '@/components/patterns/FeedbackPatterns'
+import { EmptyState } from '@/components/common/FeedbackPatterns'
 import type { OnetTaskStatement } from '@/types'
 
 export interface OnetTasksTabProps {
@@ -83,7 +83,9 @@ export function OnetTasksTab({ tasks, className }: OnetTasksTabProps) {
 
   const filteredSupplemental = useMemo(() => {
     if (!q) return supplementalTasks
-    return supplementalTasks.filter((t) => t.statement.toLowerCase().includes(q))
+    return supplementalTasks.filter((t) =>
+      t.statement.toLowerCase().includes(q)
+    )
   }, [supplementalTasks, q])
 
   const totalFilteredCount = filteredCore.length + filteredSupplemental.length
@@ -114,7 +116,7 @@ export function OnetTasksTab({ tasks, className }: OnetTasksTabProps) {
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="text-ink-muted hover:text-ink absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded focus-ring"
+              className="text-ink-muted hover:text-ink focus-ring absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5"
               title="Xóa từ khóa tìm kiếm"
               aria-label="Xóa từ khóa tìm kiếm"
             >
@@ -123,9 +125,9 @@ export function OnetTasksTab({ tasks, className }: OnetTasksTabProps) {
           )}
         </div>
 
-        <div className="text-xs text-ink-muted flex items-center gap-1.5 self-end sm:self-auto shrink-0">
+        <div className="text-ink-muted flex shrink-0 items-center gap-1.5 self-end text-xs sm:self-auto">
           <span>Hiển thị</span>
-          <span className="font-semibold text-ink tabular-nums">
+          <span className="text-ink font-semibold tabular-nums">
             {totalFilteredCount}
           </span>
           <span>/</span>
@@ -154,13 +156,19 @@ export function OnetTasksTab({ tasks, className }: OnetTasksTabProps) {
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Star className="text-amber-500 fill-amber-500/20 size-4" />
-              <h3 className="text-ink text-xs sm:text-sm font-bold tracking-tight">
+              <Star className="size-4 fill-amber-500/20 text-amber-500" />
+              <h3 className="text-ink text-xs font-bold tracking-tight sm:text-sm">
                 Nhiệm vụ Cốt lõi (Core Tasks)
               </h3>
             </div>
-            <Badge variant="outline" className="border-brand/40 text-brand text-[11px] font-mono tabular-nums">
-              {q ? `${filteredCore.length} / ${coreTasks.length}` : `${coreTasks.length}`} nhiệm vụ
+            <Badge
+              variant="outline"
+              className="border-brand/40 text-brand font-mono text-[11px] tabular-nums"
+            >
+              {q
+                ? `${filteredCore.length} / ${coreTasks.length}`
+                : `${coreTasks.length}`}{' '}
+              nhiệm vụ
             </Badge>
           </div>
 
@@ -171,15 +179,18 @@ export function OnetTasksTab({ tasks, className }: OnetTasksTabProps) {
               return (
                 <Card
                   key={task.id}
-                  className="group relative border-l-4 border-l-brand/80 p-3 transition-colors hover:border-brand hover:shadow-sm"
+                  className="border-l-brand/80 hover:border-brand group relative border-l-4 p-3 transition-colors hover:shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-2.5">
                       <span className="bg-brand/10 text-brand flex size-5 shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-bold tabular-nums">
                         {index + 1}
                       </span>
-                      <p className="text-ink/90 text-xs sm:text-sm leading-relaxed">
-                        <HighlightedText text={task.statement} query={searchQuery} />
+                      <p className="text-ink/90 text-xs leading-relaxed sm:text-sm">
+                        <HighlightedText
+                          text={task.statement}
+                          query={searchQuery}
+                        />
                       </p>
                     </div>
 
@@ -211,11 +222,14 @@ export function OnetTasksTab({ tasks, className }: OnetTasksTabProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ListChecks className="text-ink-muted size-4" />
-              <h3 className="text-ink text-xs sm:text-sm font-bold tracking-tight">
+              <h3 className="text-ink text-xs font-bold tracking-tight sm:text-sm">
                 Nhiệm vụ Bổ trợ (Supplemental Tasks)
               </h3>
             </div>
-            <Badge variant="secondary" className="text-[11px] font-mono tabular-nums">
+            <Badge
+              variant="secondary"
+              className="font-mono text-[11px] tabular-nums"
+            >
               {q
                 ? `${filteredSupplemental.length} / ${supplementalTasks.length}`
                 : `${supplementalTasks.length}`}{' '}
@@ -230,15 +244,18 @@ export function OnetTasksTab({ tasks, className }: OnetTasksTabProps) {
               return (
                 <Card
                   key={task.id}
-                  className="group relative border-l-4 border-l-border p-3 transition-colors hover:border-ink-muted/40 hover:shadow-sm"
+                  className="border-l-border hover:border-ink-muted/40 group relative border-l-4 p-3 transition-colors hover:shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-2.5">
                       <span className="bg-surface-inset text-ink-muted flex size-5 shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-medium tabular-nums">
                         {index + 1}
                       </span>
-                      <p className="text-ink/80 text-xs sm:text-sm leading-relaxed">
-                        <HighlightedText text={task.statement} query={searchQuery} />
+                      <p className="text-ink/80 text-xs leading-relaxed sm:text-sm">
+                        <HighlightedText
+                          text={task.statement}
+                          query={searchQuery}
+                        />
                       </p>
                     </div>
 

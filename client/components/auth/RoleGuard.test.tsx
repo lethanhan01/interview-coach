@@ -12,7 +12,7 @@ vi.mock('next/navigation', () => ({
   }),
 }))
 
-vi.mock('@/lib/auth-context', () => ({
+vi.mock('@/providers/AuthProvider', () => ({
   useAuth: () => mockUseAuth(),
 }))
 

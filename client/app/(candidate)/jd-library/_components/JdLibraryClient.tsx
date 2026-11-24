@@ -26,10 +26,10 @@ import {
   IconSearch,
 } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
-import { SafeViewTransition } from '@/components/patterns/SafeViewTransition'
+import { SafeViewTransition } from '@/components/common/SafeViewTransition'
 import { getErrorMessage } from '@/lib/form-errors'
 import { JD_LEVEL_OPTIONS, normalizeJdLevel } from '@/lib/interview-options'
-import { prepQueries } from '@/lib/query-client'
+import { prepQueries } from '@/queries/prep.queries'
 import JdCard from './JdCard'
 
 const LEVEL_FILTER_OPTIONS = [

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { act, createTestQueryClient, renderHook } from '@test-utils'
 import { useSessionEvents } from '@/hooks/useSessionEvents'
-import { queryKeys } from '@/lib/query-client'
+import { queryKeys } from '@/queries/keys'
 import { sessionService } from '@/services/session.service'
 import type { FeedbackProgress } from '@/types'
 

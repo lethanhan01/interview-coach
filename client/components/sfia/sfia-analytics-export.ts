@@ -69,7 +69,8 @@ export function generateSfiaBlindSpotsCsvString(
   const blindSpotSkills = skills.filter((s) => s.questionCount === 0)
 
   for (const skill of blindSpotSkills) {
-    const categoryName = categoryMap.get(skill.categoryCode) || skill.categoryCode
+    const categoryName =
+      categoryMap.get(skill.categoryCode) || skill.categoryCode
     const priority = getBlindSpotPriority(skill.onetCount)
 
     const row = [

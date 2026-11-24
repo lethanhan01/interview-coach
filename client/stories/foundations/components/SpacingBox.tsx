@@ -63,8 +63,8 @@ export const SpacingBox: React.FC = () => {
   return (
     <div className="my-6 space-y-8 font-sans">
       {/* Layout Spacing Tokens */}
-      <section className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800">
-        <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-slate-100">
+      <section className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
           Layout Spacing Tokens
         </h3>
 
@@ -72,21 +72,21 @@ export const SpacingBox: React.FC = () => {
           {LAYOUT_SPACING.map((ls) => (
             <div
               key={ls.varName}
-              className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row md:items-center justify-between gap-3"
+              className="flex flex-col justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:flex-row md:items-center dark:border-slate-700 dark:bg-slate-800/50"
             >
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400">
                     {ls.varName}
                   </span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-slate-700 dark:text-slate-300">
+                  <span className="rounded bg-slate-200 px-1.5 py-0.5 font-mono text-[10px] text-slate-700 dark:bg-slate-700 dark:text-slate-300">
                     {ls.twName}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-1">{ls.description}</p>
+                <p className="mt-1 text-xs text-slate-500">{ls.description}</p>
               </div>
 
-              <div className="text-sm font-mono font-bold text-slate-800 dark:text-slate-200 shrink-0">
+              <div className="shrink-0 font-mono text-sm font-bold text-slate-800 dark:text-slate-200">
                 {ls.val}
               </div>
             </div>
@@ -95,24 +95,29 @@ export const SpacingBox: React.FC = () => {
       </section>
 
       {/* Component Spacing Scale */}
-      <section className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800">
-        <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-slate-100">
+      <section className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
           Tailwind Spacing Scale (8pt Grid System)
         </h3>
 
         <div className="space-y-3">
           {TAILWIND_SCALE.map((s) => (
-            <div key={s.token} className="flex items-center gap-4 text-xs font-mono">
-              <div className="w-20 text-slate-500 shrink-0">
+            <div
+              key={s.token}
+              className="flex items-center gap-4 font-mono text-xs"
+            >
+              <div className="w-20 shrink-0 text-slate-500">
                 space-{s.token} ({s.px})
               </div>
-              <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded h-6 flex items-center px-1">
+              <div className="flex h-6 flex-1 items-center rounded bg-slate-100 px-1 dark:bg-slate-800">
                 <div
-                  className="bg-blue-500 dark:bg-blue-600 h-4 rounded shadow-sm transition-all"
+                  className="h-4 rounded bg-blue-500 shadow-sm transition-all dark:bg-blue-600"
                   style={{ width: s.px }}
                 />
               </div>
-              <div className="w-16 text-right text-slate-400 shrink-0">{s.rem}</div>
+              <div className="w-16 shrink-0 text-right text-slate-400">
+                {s.rem}
+              </div>
             </div>
           ))}
         </div>

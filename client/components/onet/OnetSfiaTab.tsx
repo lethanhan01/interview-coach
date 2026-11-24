@@ -35,12 +35,10 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/AlertDialog'
-import { EmptyState } from '@/components/patterns/FeedbackPatterns'
-import {
-  onetAdminQueries,
-  queryKeys,
-  useOptionalQueryClient,
-} from '@/lib/query-client'
+import { EmptyState } from '@/components/common/FeedbackPatterns'
+import { onetAdminQueries } from '@/queries/onet.queries'
+import { queryKeys } from '@/queries/keys'
+import { useOptionalQueryClient } from '@/providers/QueryProvider'
 import { onetAdminService } from '@/services'
 import { OnetSfiaSpectrumBar } from './OnetSfiaSpectrumBar'
 import { OnetSfiaRow } from './OnetSfiaRow'

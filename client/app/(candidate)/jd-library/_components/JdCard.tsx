@@ -21,6 +21,7 @@ import {
 import { formatVietnamRelativeDate } from '@/lib/date-time'
 import { getJdLevelLabel } from '@/lib/interview-options'
 import type { SavedJobDescription } from '@/types'
+import interactions from '@/styles/interactions.module.css'
 import classes from './JdCard.module.css'
 
 const MAX_TECH_SHOWN = 5
@@ -42,9 +43,14 @@ export default function JdCard({ item }: Readonly<JdCardProps>) {
       component={Link}
       href={`/setup?jdId=${item.id}`}
       transitionTypes={['nav-forward']}
-      className={classes.cardLink}
+      className={`${classes.cardLink} ${interactions.focusRing}`}
     >
-      <Paper withBorder radius="md" p="lg" className={classes.card}>
+      <Paper
+        withBorder
+        radius="md"
+        p="lg"
+        className={interactions.interactiveCard}
+      >
         <Group
           justify="space-between"
           align="flex-start"
@@ -102,7 +108,7 @@ export default function JdCard({ item }: Readonly<JdCardProps>) {
                         component="span"
                         size="xs"
                         c="dimmed"
-                        className={classes.mono}
+                        ff="monospace"
                       >
                         {' '}
                         ({item.onetSocCode})

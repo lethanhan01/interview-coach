@@ -1,0 +1,37 @@
+.newButton {
+  display: block;
+  width: 100%;
+  border-radius: var(--mantine-radius-md);
+  border: rem(2px) dashed var(--mantine-primary-color-filled);
+  background-color: var(--mantine-primary-color-light);
+  padding: var(--mantine-spacing-md);
+  text-align: left;
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease;
+
+  @mixin hover {
+    background-color: var(--mantine-primary-color-light-hover);
+    transform: translateY(rem(-1px));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    @mixin hover {
+      transform: none;
+    }
+  }
+}
+
+.itemButton {
+  display: block;
+  width: 100%;
+  border-radius: var(--mantine-radius-md);
+  text-align: left;
+}
+
+.chevron {
+  color: var(--mantine-color-dimmed);
+  flex-shrink: 0;
+}

@@ -4,6 +4,7 @@ import {
   type DefaultMantineColor,
   type MantineColorsTuple,
 } from '@mantine/core'
+import interactions from './styles/interactions.module.css'
 
 export type SemanticColor =
   'brand' | 'success' | 'warning' | 'danger' | 'neutral'
@@ -16,6 +17,7 @@ declare module '@mantine/core' {
 
 export const theme = createTheme({
   primaryColor: 'brand',
+  focusClassName: interactions.focusRing,
   colors: {
     brand: DEFAULT_THEME.colors.blue,
     success: DEFAULT_THEME.colors.teal,

@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/Sheet'
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { sfiaAdminQueries } from '@/lib/query-client'
+import { sfiaAdminQueries } from '@/queries/sfia.queries'
 import { getCategoryTheme, getLevelTheme } from './sfia-theme'
 import { generateSfiaRubricMarkdownPrompt } from './sfia-prompt-helper'
 

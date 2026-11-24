@@ -364,11 +364,11 @@ test('mode toggle giữa Text và Giọng nói', async ({ page }) => {
     timeout: 10000,
   })
 
-  const voiceBtn = page.getByRole('button', { name: 'Giọng nói' })
+  const voiceBtn = page.getByRole('tab', { name: /Giọng nói/i })
   await voiceBtn.click()
-  await expect(page.getByRole('button', { name: 'Text' })).toBeVisible()
+  await expect(page.getByRole('tab', { name: /Văn bản/i })).toBeVisible()
 
-  const textBtn = page.getByRole('button', { name: 'Text' })
+  const textBtn = page.getByRole('tab', { name: /Văn bản/i })
   await textBtn.click()
 })
 

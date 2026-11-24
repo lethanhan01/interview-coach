@@ -33,7 +33,9 @@ export const Disabled: Story = {
   render: (args) => (
     <div className="flex items-center space-x-2">
       <Checkbox id="disabled" disabled {...args} />
-      <Label htmlFor="disabled" className="opacity-50">Disabled checkbox</Label>
+      <Label htmlFor="disabled" className="opacity-50">
+        Disabled checkbox
+      </Label>
     </div>
   ),
 }
@@ -42,7 +44,9 @@ export const Invalid: Story = {
   render: (args) => (
     <div className="flex items-center space-x-2">
       <Checkbox id="invalid" aria-invalid="true" {...args} />
-      <Label htmlFor="invalid" className="text-destructive">Invalid checkbox</Label>
+      <Label htmlFor="invalid" className="text-destructive">
+        Invalid checkbox
+      </Label>
     </div>
   ),
 }

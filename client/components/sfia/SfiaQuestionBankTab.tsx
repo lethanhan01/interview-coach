@@ -38,7 +38,8 @@ export interface SfiaQuestionBankTabProps {
 // Lookup table an toàn cho badges độ khó
 const QUESTION_DIFFICULTY_BADGES = {
   EASY: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-  MEDIUM: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+  MEDIUM:
+    'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
   HARD: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
 } as const
 
@@ -50,13 +51,19 @@ const DIFFICULTY_LABELS: Record<'EASY' | 'MEDIUM' | 'HARD', string> = {
 
 // Lookup table for interview category badges
 const QUESTION_TYPE_BADGES = {
-  TECHNICAL: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
-  BEHAVIORAL: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-  SITUATIONAL: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
+  TECHNICAL:
+    'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
+  BEHAVIORAL:
+    'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+  SITUATIONAL:
+    'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
   HR: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
 } as const
 
-const TYPE_LABELS: Record<'TECHNICAL' | 'BEHAVIORAL' | 'SITUATIONAL' | 'HR', string> = {
+const TYPE_LABELS: Record<
+  'TECHNICAL' | 'BEHAVIORAL' | 'SITUATIONAL' | 'HR',
+  string
+> = {
   TECHNICAL: 'Technical',
   BEHAVIORAL: 'Behavioral',
   SITUATIONAL: 'Situational',
@@ -76,7 +83,9 @@ export function SfiaQuestionBankTab({
   const [filterType, setFilterType] = React.useState<string>('ALL')
   const [modalOpen, setModalOpen] = React.useState(false)
   const [copiedId, setCopiedId] = React.useState<string | null>(null)
-  const [newlyCreatedId, setNewlyCreatedId] = React.useState<string | null>(null)
+  const [newlyCreatedId, setNewlyCreatedId] = React.useState<string | null>(
+    null
+  )
 
   const items = React.useMemo(
     () => skillDetail.questionBankItems || [],
@@ -150,7 +159,14 @@ export function SfiaQuestionBankTab({
 
       return true
     })
-  }, [items, searchQuery, filterLevel, filterDifficulty, filterType, selectedLevel])
+  }, [
+    items,
+    searchQuery,
+    filterLevel,
+    filterDifficulty,
+    filterType,
+    selectedLevel,
+  ])
 
   // Handle copying question text
   const handleCopyQuestion = async (q: SfiaQuestionBankItem) => {
@@ -192,26 +208,28 @@ export function SfiaQuestionBankTab({
   return (
     <div className={cn('space-y-4', className)}>
       {/* 1. 4 Mini KPI Distribution Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {/* KPI 1: Total Questions */}
-        <div className="bg-surface-inset p-3 rounded-xl border border-border/60">
-          <div className="flex items-center justify-between text-ink-muted text-[11px]">
+        <div className="bg-surface-inset border-border/60 rounded-xl border p-3">
+          <div className="text-ink-muted flex items-center justify-between text-[11px]">
             <span>Total Sample Questions</span>
-            <HelpCircle className="size-3.5 text-brand" />
+            <HelpCircle className="text-brand size-3.5" />
           </div>
-          <p className="text-base sm:text-lg font-bold text-ink mt-1 font-mono tabular-nums">
+          <p className="text-ink mt-1 font-mono text-base font-bold tabular-nums sm:text-lg">
             {stats.total}{' '}
-            <span className="text-xs font-normal text-ink-muted">questions</span>
+            <span className="text-ink-muted text-xs font-normal">
+              questions
+            </span>
           </p>
         </div>
 
         {/* KPI 2: Difficulty Distribution */}
-        <div className="bg-surface-inset p-3 rounded-xl border border-border/60">
-          <div className="flex items-center justify-between text-ink-muted text-[11px]">
+        <div className="bg-surface-inset border-border/60 rounded-xl border p-3">
+          <div className="text-ink-muted flex items-center justify-between text-[11px]">
             <span>Difficulty Breakdown</span>
             <BarChart2 className="size-3.5 text-amber-500" />
           </div>
-          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
               <span className="size-1.5 rounded-full bg-emerald-500" />
               {stats.easy} Easy
@@ -230,12 +248,12 @@ export function SfiaQuestionBankTab({
         </div>
 
         {/* KPI 3: Question Category Breakdown */}
-        <div className="bg-surface-inset p-3 rounded-xl border border-border/60">
-          <div className="flex items-center justify-between text-ink-muted text-[11px]">
+        <div className="bg-surface-inset border-border/60 rounded-xl border p-3">
+          <div className="text-ink-muted flex items-center justify-between text-[11px]">
             <span>Question Types</span>
             <SlidersHorizontal className="size-3.5 text-violet-500" />
           </div>
-          <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-ink flex-wrap">
+          <div className="text-ink mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
             <span className="font-semibold text-violet-600 dark:text-violet-400">
               {stats.technical} Tech
             </span>
@@ -251,23 +269,25 @@ export function SfiaQuestionBankTab({
         </div>
 
         {/* KPI 4: Matching Current Level */}
-        <div className="bg-surface-inset p-3 rounded-xl border border-border/60">
-          <div className="flex items-center justify-between text-ink-muted text-[11px]">
+        <div className="bg-surface-inset border-border/60 rounded-xl border p-3">
+          <div className="text-ink-muted flex items-center justify-between text-[11px]">
             <span>At Selected Level {selectedLevel}</span>
-            <Sparkles className="size-3.5 text-brand" />
+            <Sparkles className="text-brand size-3.5" />
           </div>
-          <p className="text-base sm:text-lg font-bold text-brand mt-1 font-mono tabular-nums">
+          <p className="text-brand mt-1 font-mono text-base font-bold tabular-nums sm:text-lg">
             {stats.matchingCurrentLevel}{' '}
-            <span className="text-xs font-normal text-ink-muted">questions</span>
+            <span className="text-ink-muted text-xs font-normal">
+              questions
+            </span>
           </p>
         </div>
       </div>
 
       {/* 2. Toolbar: Search, Filters & Action Button */}
-      <div className="bg-surface-inset/60 p-3 rounded-xl border border-border/60 space-y-2.5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+      <div className="bg-surface-inset/60 border-border/60 space-y-2.5 rounded-xl border p-3">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
           {/* Search Bar */}
-          <div className="relative flex-1 max-w-sm">
+          <div className="relative max-w-sm flex-1">
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -279,13 +299,13 @@ export function SfiaQuestionBankTab({
                     type="button"
                     onClick={() => setSearchQuery('')}
                     aria-label="Clear search"
-                    className="size-5 rounded flex items-center justify-center text-ink-muted hover:text-ink transition-colors"
+                    className="text-ink-muted hover:text-ink flex size-5 items-center justify-center rounded transition-colors"
                   >
                     <X className="size-3" />
                   </button>
                 ) : undefined
               }
-              className="h-8 text-xs bg-background"
+              className="bg-background h-8 text-xs"
             />
           </div>
 
@@ -294,7 +314,7 @@ export function SfiaQuestionBankTab({
             variant="primary"
             size="sm"
             onClick={() => setModalOpen(true)}
-            className="h-8 px-3 text-xs gap-1.5 shrink-0 self-start sm:self-auto shadow-xs"
+            className="shadow-xs h-8 shrink-0 gap-1.5 self-start px-3 text-xs sm:self-auto"
           >
             <Plus className="size-3.5" />
             <span>Create Question</span>
@@ -302,7 +322,7 @@ export function SfiaQuestionBankTab({
         </div>
 
         {/* Filter Pills / Selects */}
-        <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-border/40">
+        <div className="border-border/40 flex flex-wrap items-center gap-2 border-t pt-1">
           {/* Quick toggle: Level only */}
           <button
             type="button"
@@ -310,25 +330,29 @@ export function SfiaQuestionBankTab({
               setFilterLevel((prev) => (prev === 'current' ? 'all' : 'current'))
             }
             className={cn(
-              'px-2.5 py-1 rounded-lg text-xs font-medium border transition-all select-none flex items-center gap-1.5',
+              'flex select-none items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-all',
               filterLevel === 'current'
-                ? 'bg-brand/10 border-brand text-brand font-semibold shadow-xs'
+                ? 'bg-brand/10 border-brand text-brand shadow-xs font-semibold'
                 : 'bg-background border-border text-ink-muted hover:text-ink'
             )}
           >
             <Sparkles className="size-3" />
-            <span>Level {selectedLevel} only ({stats.matchingCurrentLevel})</span>
+            <span>
+              Level {selectedLevel} only ({stats.matchingCurrentLevel})
+            </span>
           </button>
 
           {/* Level Filter Dropdown */}
           <div className="w-36">
             <Select value={filterLevel} onValueChange={setFilterLevel}>
-              <SelectTrigger className="h-7 text-xs bg-background">
+              <SelectTrigger className="bg-background h-7 text-xs">
                 <SelectValue placeholder="Select Level" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Levels</SelectItem>
-                <SelectItem value="current">Level {selectedLevel} (Selected)</SelectItem>
+                <SelectItem value="current">
+                  Level {selectedLevel} (Selected)
+                </SelectItem>
                 {Array.from(
                   { length: skillDetail.maxLevel - skillDetail.minLevel + 1 },
                   (_, i) => skillDetail.minLevel + i
@@ -343,8 +367,11 @@ export function SfiaQuestionBankTab({
 
           {/* Difficulty Filter Dropdown */}
           <div className="w-32">
-            <Select value={filterDifficulty} onValueChange={setFilterDifficulty}>
-              <SelectTrigger className="h-7 text-xs bg-background">
+            <Select
+              value={filterDifficulty}
+              onValueChange={setFilterDifficulty}
+            >
+              <SelectTrigger className="bg-background h-7 text-xs">
                 <SelectValue placeholder="Difficulty" />
               </SelectTrigger>
               <SelectContent>
@@ -359,7 +386,7 @@ export function SfiaQuestionBankTab({
           {/* Interview Type Filter Dropdown */}
           <div className="w-36">
             <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="h-7 text-xs bg-background">
+              <SelectTrigger className="bg-background h-7 text-xs">
                 <SelectValue placeholder="Question Type" />
               </SelectTrigger>
               <SelectContent>
@@ -382,7 +409,7 @@ export function SfiaQuestionBankTab({
                 setFilterDifficulty('ALL')
                 setFilterType('ALL')
               }}
-              className="text-xs text-ink-muted hover:text-ink font-medium px-2 py-1 rounded hover:bg-surface-raised transition-colors ml-auto"
+              className="text-ink-muted hover:text-ink hover:bg-surface-raised ml-auto rounded px-2 py-1 text-xs font-medium transition-colors"
             >
               Reset filters
             </button>
@@ -392,15 +419,15 @@ export function SfiaQuestionBankTab({
 
       {/* 3. Question Cards List */}
       {filteredQuestions.length === 0 ? (
-        <div className="bg-card border border-border/80 rounded-xl p-8 text-center space-y-3">
-          <HelpCircle className="size-8 text-ink-muted mx-auto opacity-50" />
-          <div className="space-y-1 max-w-sm mx-auto">
-            <h5 className="text-sm font-bold text-ink">
+        <div className="bg-card border-border/80 space-y-3 rounded-xl border p-8 text-center">
+          <HelpCircle className="text-ink-muted mx-auto size-8 opacity-50" />
+          <div className="mx-auto max-w-sm space-y-1">
+            <h5 className="text-ink text-sm font-bold">
               {items.length === 0
                 ? 'No interview questions yet'
                 : 'No questions match your filters'}
             </h5>
-            <p className="text-xs text-ink-muted leading-relaxed">
+            <p className="text-ink-muted text-xs leading-relaxed">
               {items.length === 0
                 ? `Skill ${skillDetail.code} currently has no sample questions mapped in the question bank.`
                 : 'Try searching with different keywords or adjust the difficulty/level filters.'}
@@ -411,7 +438,7 @@ export function SfiaQuestionBankTab({
               variant="primary"
               size="sm"
               onClick={() => setModalOpen(true)}
-              className="gap-1.5 h-8 text-xs mt-2"
+              className="mt-2 h-8 gap-1.5 text-xs"
             >
               <Plus className="size-3.5" />
               <span>Create First Question</span>
@@ -426,7 +453,7 @@ export function SfiaQuestionBankTab({
                 setFilterDifficulty('ALL')
                 setFilterType('ALL')
               }}
-              className="h-8 text-xs mt-1"
+              className="mt-1 h-8 text-xs"
             >
               Reset all filters
             </Button>
@@ -434,9 +461,11 @@ export function SfiaQuestionBankTab({
         </div>
       ) : (
         <div className="space-y-2.5">
-          <div className="flex items-center justify-between text-xs text-ink-muted px-1">
+          <div className="text-ink-muted flex items-center justify-between px-1 text-xs">
             <span>
-              Showing <strong className="text-ink">{filteredQuestions.length}</strong> / {items.length} questions
+              Showing{' '}
+              <strong className="text-ink">{filteredQuestions.length}</strong> /{' '}
+              {items.length} questions
             </span>
           </div>
 
@@ -448,24 +477,24 @@ export function SfiaQuestionBankTab({
               <div
                 key={q.id}
                 className={cn(
-                  'rounded-xl border p-4 space-y-3 transition-all shadow-xs',
+                  'shadow-xs space-y-3 rounded-xl border p-4 transition-all',
                   isNewlyCreated
-                    ? 'bg-brand/5 border-brand ring-2 ring-brand/20 animate-in fade-in-50 duration-500'
+                    ? 'bg-brand/5 border-brand ring-brand/20 animate-in fade-in-50 ring-2 duration-500'
                     : 'bg-card border-border/80 hover:border-border'
                 )}
               >
                 {/* Header: ID + Badges */}
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {/* Question ID */}
-                    <span className="font-mono text-xs font-semibold text-ink-muted bg-surface-inset px-2 py-0.5 rounded border border-border/50">
+                    <span className="text-ink-muted bg-surface-inset border-border/50 rounded border px-2 py-0.5 font-mono text-xs font-semibold">
                       {q.id}
                     </span>
 
                     {/* Interview Type Badge */}
                     <span
                       className={cn(
-                        'text-[10px] font-semibold px-2 py-0.5 rounded-full border',
+                        'rounded-full border px-2 py-0.5 text-[10px] font-semibold',
                         QUESTION_TYPE_BADGES[q.type]
                       )}
                     >
@@ -475,7 +504,7 @@ export function SfiaQuestionBankTab({
                     {/* Difficulty Badge */}
                     <span
                       className={cn(
-                        'text-[10px] font-semibold px-2 py-0.5 rounded-full border',
+                        'rounded-full border px-2 py-0.5 text-[10px] font-semibold',
                         QUESTION_DIFFICULTY_BADGES[q.difficulty]
                       )}
                     >
@@ -489,15 +518,15 @@ export function SfiaQuestionBankTab({
                       title={`Click to set Stepper to Level ${q.targetSfiaLevel}`}
                       aria-label={`Click to set Stepper to Level ${q.targetSfiaLevel}`}
                       className={cn(
-                        'inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border transition-transform select-none',
+                        'inline-flex select-none items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold transition-transform',
                         q.targetSfiaLevel === selectedLevel
-                          ? 'bg-brand/10 border-brand text-brand ring-1 ring-brand/20 font-bold'
+                          ? 'bg-brand/10 border-brand text-brand ring-brand/20 font-bold ring-1'
                           : 'bg-surface-raised border-border text-ink hover:scale-105'
                       )}
                     >
                       <span>Target: L{q.targetSfiaLevel}</span>
                       {q.targetSfiaLevel === selectedLevel && (
-                        <CheckCircle2 className="size-3 text-brand" />
+                        <CheckCircle2 className="text-brand size-3" />
                       )}
                     </button>
                   </div>
@@ -507,19 +536,19 @@ export function SfiaQuestionBankTab({
                     variant="outline"
                     size="sm"
                     onClick={() => handleCopyQuestion(q)}
-                    className="h-7 px-2 text-xs gap-1.5 shrink-0"
+                    className="h-7 shrink-0 gap-1.5 px-2 text-xs"
                     title="Copy this question"
                   >
                     {isCopied ? (
                       <>
                         <Check className="size-3 text-emerald-500" />
-                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
                           Copied
                         </span>
                       </>
                     ) : (
                       <>
-                        <Copy className="size-3 text-ink-muted" />
+                        <Copy className="text-ink-muted size-3" />
                         <span>Copy</span>
                       </>
                     )}
@@ -527,7 +556,7 @@ export function SfiaQuestionBankTab({
                 </div>
 
                 {/* Body: Question Text */}
-                <p className="text-xs sm:text-sm text-ink leading-relaxed font-medium break-words whitespace-pre-wrap">
+                <p className="text-ink whitespace-pre-wrap break-words text-xs font-medium leading-relaxed sm:text-sm">
                   {q.questionText}
                 </p>
               </div>

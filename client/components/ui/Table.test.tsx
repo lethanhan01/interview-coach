@@ -38,13 +38,13 @@ describe('Table Component', () => {
 
   it('renders table elements correctly', () => {
     render(<TestTable />)
-    
+
     expect(screen.getByRole('table')).toBeInTheDocument()
     expect(screen.getByText('Test Caption')).toBeInTheDocument()
     expect(screen.getByText('Header 1')).toBeInTheDocument()
     expect(screen.getByText('Cell 1')).toBeInTheDocument()
     expect(screen.getByText('Footer Content')).toBeInTheDocument()
-    
+
     // Check roles
     expect(screen.getAllByRole('rowgroup')).toHaveLength(3) // Header, Body, Footer
     expect(screen.getAllByRole('row')).toHaveLength(3) // Header row, Body row, Footer row

@@ -1,6 +1,10 @@
+'use client'
+
+import { Badge, Group, Text, VisuallyHidden } from '@mantine/core'
+import { IconClock } from '@tabler/icons-react'
 import { useCountdown } from '@/hooks/useCountdown'
 
-interface CountdownTimerProps {
+export interface CountdownTimerProps {
   initialSeconds: number
   active: boolean
   onChange?: (remainingSeconds: number) => void
@@ -13,10 +17,33 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
-function getTimerColorClass(isExpired: boolean, isWarning: boolean): string {
-  if (isExpired) return 'text-danger'
-  if (isWarning) return 'text-warning'
-  return 'text-ink-muted'
+function getTimerColor(
+  isExpired: boolean,
+  isWarning: boolean
+): 'danger' | 'warning' | 'neutral' {
+  if (isExpired) return 'danger'
+  if (isWarning) return 'warning'
+  return 'neutral'
+}
+
+function getMilestoneAnnouncement(
+  remainingSeconds: number,
+  active: boolean,
+  isExpired: boolean
+): string {
+  if (isExpired) {
+    return 'Đã hết thời gian phỏng vấn'
+  }
+  if (!active) {
+    return ''
+  }
+  if (remainingSeconds <= 60) {
+    return 'Cảnh báo: Còn dưới 1 phút phỏng vấn'
+  }
+  if (remainingSeconds <= 300) {
+    return 'Cảnh báo: Còn dưới 5 phút phỏng vấn'
+  }
+  return ''
 }
 
 export default function CountdownTimer({
@@ -32,16 +59,35 @@ export default function CountdownTimer({
     onExpire
   )
 
-  const colorClass = getTimerColorClass(isExpired, isWarning)
+  const badgeColor = getTimerColor(isExpired, isWarning)
+  const announcement = getMilestoneAnnouncement(
+    remainingSeconds,
+    active,
+    isExpired
+  )
 
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-ink-muted text-xs">Còn lại</span>
-      <span
-        className={`font-mono text-sm font-medium tabular-nums ${colorClass}`}
+    <Group gap="xs" align="center" wrap="nowrap">
+      <Badge
+        size="lg"
+        variant="light"
+        radius="md"
+        color={badgeColor}
+        leftSection={<IconClock size={16} stroke={1.5} aria-hidden="true" />}
       >
-        {formatTime(remainingSeconds)}
-      </span>
-    </div>
+        <Group gap={6} wrap="nowrap">
+          <Text component="span" size="xs" fw={500}>
+            Còn lại
+          </Text>
+          <Text component="span" size="sm" ff="monospace" fw={700}>
+            {formatTime(remainingSeconds)}
+          </Text>
+        </Group>
+      </Badge>
+
+      <VisuallyHidden role="status" aria-live="polite" aria-atomic="true">
+        {announcement}
+      </VisuallyHidden>
+    </Group>
   )
 }

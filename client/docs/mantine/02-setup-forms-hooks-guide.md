@@ -79,7 +79,7 @@ export default function RootLayout({
 }
 ```
 
-> Trong giai đoạn chuyển tiếp song song `next-themes`, [MantineColorSchemeSync](../../components/mantine-color-scheme-sync.tsx) đồng bộ `resolvedTheme` sang `useMantineColorScheme().setColorScheme(...)` để giữ Light/Dark khớp nhau 100%.
+> Trong giai đoạn chuyển tiếp song song `next-themes`, [MantineColorSchemeSync](../../providers/MantineColorSchemeSync.tsx) đồng bộ `resolvedTheme` sang `useMantineColorScheme().setColorScheme(...)` để giữ Light/Dark khớp nhau 100%.
 
 ### Tối ưu Tree-Shaking ([client/next.config.ts](../../next.config.ts))
 

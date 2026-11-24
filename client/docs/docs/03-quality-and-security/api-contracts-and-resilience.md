@@ -134,7 +134,7 @@ Khi mở rộng bộ integration tests đa-endpoint, cài `msw` v2 để chặn 
 
 ### 2.12. `API-012` — Khử Trùng Lặp Request Tại Client Với TanStack Query (`WARN` · `[Active]`)
 
-Áp dụng nguyên tắc `client-swr-dedup` từ `vercel-react-best-practices`: nhiều component cùng cần một nguồn dữ liệu gọi chung `useQuery` với khóa từ bộ **`queryKeys` factory** (`@/lib/query-client`) để TanStack Query tự khử trùng lặp chỉ gửi 1 HTTP request duy nhất.
+Áp dụng nguyên tắc `client-swr-dedup` từ `vercel-react-best-practices`: nhiều component cùng cần một nguồn dữ liệu gọi chung `useQuery` với khóa từ bộ **`queryKeys` factory** (`@/queries/keys`) và `queryOptions()` (`@/queries/*.queries`) để TanStack Query tự khử trùng lặp chỉ gửi 1 HTTP request duy nhất.
 
 ---
 

@@ -10,7 +10,14 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from './Command'
-import { Calculator, Calendar, CreditCard, Settings, Smile, User } from 'lucide-react'
+import {
+  Calculator,
+  Calendar,
+  CreditCard,
+  Settings,
+  Smile,
+  User,
+} from 'lucide-react'
 
 const meta = {
   title: 'UI/Inputs/Command',
@@ -26,7 +33,7 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   render: () => (
-    <Command className="rounded-lg border shadow-md w-[400px]">
+    <Command className="w-[400px] rounded-lg border shadow-md">
       <CommandInput placeholder="Type a command or search..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
@@ -69,9 +76,10 @@ export const Default: Story = {
 
 export const AsDialog: StoryObj<typeof CommandDialog> = {
   render: () => (
-    <div className="p-4 border border-dashed rounded-lg text-center">
-      <p className="text-sm text-muted-foreground mb-4">
-        CommandDialog is meant to be opened via a trigger. For demonstration, we show it open by default.
+    <div className="rounded-lg border border-dashed p-4 text-center">
+      <p className="text-muted-foreground mb-4 text-sm">
+        CommandDialog is meant to be opened via a trigger. For demonstration, we
+        show it open by default.
       </p>
       <CommandDialog open={true} onOpenChange={() => {}}>
         <CommandInput placeholder="Type a command or search..." />

@@ -8,8 +8,8 @@ const meta: Meta<typeof ProjectsGroup> = {
   args: {
     data: [],
     onSave: async () => {
-      await new Promise(r => setTimeout(r, 1000))
-    }
+      await new Promise((r) => setTimeout(r, 1000))
+    },
   },
 }
 

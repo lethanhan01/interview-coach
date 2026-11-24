@@ -43,20 +43,28 @@ describe('SfiaMatrixToolbar', () => {
   it('renders all toolbar elements correctly', () => {
     render(<SfiaMatrixToolbar {...defaultProps} />)
 
-    expect(screen.getByPlaceholderText('Search code (PROG) or skill name...')).toBeInTheDocument()
+    expect(
+      screen.getByPlaceholderText('Search code (PROG) or skill name...')
+    ).toBeInTheDocument()
     expect(screen.getByText('Export Matrix CSV')).toBeInTheDocument()
     expect(screen.getByText('Level')).toBeInTheDocument()
     expect(screen.getByText('Questions')).toBeInTheDocument()
     expect(screen.getByText('O*NET')).toBeInTheDocument()
-    expect(screen.getByText('Blind spots only (0 questions)')).toBeInTheDocument()
+    expect(
+      screen.getByText('Blind spots only (0 questions)')
+    ).toBeInTheDocument()
     expect(screen.getByText('147')).toBeInTheDocument()
   })
 
   it('triggers onSearchChange when user types in search input', () => {
     const onSearchChange = vi.fn()
-    render(<SfiaMatrixToolbar {...defaultProps} onSearchChange={onSearchChange} />)
+    render(
+      <SfiaMatrixToolbar {...defaultProps} onSearchChange={onSearchChange} />
+    )
 
-    const input = screen.getByPlaceholderText('Search code (PROG) or skill name...')
+    const input = screen.getByPlaceholderText(
+      'Search code (PROG) or skill name...'
+    )
     fireEvent.change(input, { target: { value: 'PROG' } })
 
     expect(onSearchChange).toHaveBeenCalledWith('PROG')

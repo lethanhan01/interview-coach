@@ -292,7 +292,7 @@ export const AsLinkWithIcons: Story = {
   render: (args) => (
     <Button {...args} variant="outline" size="sm" asChild className="gap-1.5">
       <a href="#resume">
-        <ScrollText className="h-4 w-4 text-brand" />
+        <ScrollText className="text-brand h-4 w-4" />
         <span>Xem hồ sơ CV</span>
         <ArrowRight className="h-3.5 w-3.5" />
       </a>

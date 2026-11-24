@@ -17,7 +17,7 @@ import {
 import {
   ErrorPageTemplate,
   type ErrorPageIconVariant,
-} from '@/components/patterns/ErrorPageTemplate'
+} from '@/components/common/ErrorPageTemplate'
 
 const meta: Meta = {
   title: 'Pages/Common',

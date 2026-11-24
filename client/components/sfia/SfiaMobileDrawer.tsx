@@ -52,7 +52,7 @@ export function SfiaMobileDrawer({
   return (
     <div
       className={cn(
-        'bg-card border border-border/80 rounded-xl p-2.5 shadow-sm flex items-center justify-between gap-2 lg:hidden',
+        'bg-card border-border/80 flex items-center justify-between gap-2 rounded-xl border p-2.5 shadow-sm lg:hidden',
         className
       )}
     >
@@ -62,9 +62,9 @@ export function SfiaMobileDrawer({
           variant="outline"
           size="sm"
           onClick={() => setOpen(true)}
-          className="shrink-0 gap-1.5 text-xs font-semibold h-8"
+          className="h-8 shrink-0 gap-1.5 text-xs font-semibold"
         >
-          <FolderTree className="size-3.5 text-brand" />
+          <FolderTree className="text-brand size-3.5" />
           <span>SFIA Skill Tree</span>
         </Button>
 
@@ -73,16 +73,16 @@ export function SfiaMobileDrawer({
           <div className="flex min-w-0 items-center gap-1.5 text-xs">
             <span
               className={cn(
-                'font-mono font-bold text-[10px] px-1.5 py-0.5 rounded border shrink-0',
+                'shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold',
                 theme.badge
               )}
             >
               {currentSkill.code}
             </span>
-            <span className="text-ink truncate text-xs font-medium max-w-[120px] sm:max-w-[200px]">
+            <span className="text-ink max-w-[120px] truncate text-xs font-medium sm:max-w-[200px]">
               {currentSkill.name}
             </span>
-            <span className="text-[10px] font-mono font-semibold text-ink-muted bg-surface-raised px-1 py-0.5 rounded shrink-0">
+            <span className="text-ink-muted bg-surface-raised shrink-0 rounded px-1 py-0.5 font-mono text-[10px] font-semibold">
               L{selectedLevel}
             </span>
           </div>
@@ -93,7 +93,7 @@ export function SfiaMobileDrawer({
         variant="ghost"
         size="sm"
         onClick={() => setOpen(true)}
-        className="size-8 p-0 shrink-0 text-ink-muted hover:text-ink"
+        className="text-ink-muted hover:text-ink size-8 shrink-0 p-0"
         aria-label="Open SFIA 9 Skill Tree"
       >
         <ChevronRight className="size-4" />
@@ -103,11 +103,11 @@ export function SfiaMobileDrawer({
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
           side="left"
-          className="flex h-full w-[88vw] max-w-[380px] sm:w-[400px] flex-col p-0 border-r border-border"
+          className="border-border flex h-full w-[88vw] max-w-[380px] flex-col border-r p-0 sm:w-[400px]"
         >
-          <SheetHeader className="border-border/60 border-b p-3.5 text-left bg-surface-raised/30 shrink-0">
+          <SheetHeader className="border-border/60 bg-surface-raised/30 shrink-0 border-b p-3.5 text-left">
             <SheetTitle className="flex items-center gap-2 text-sm font-bold">
-              <div className="size-6 rounded-md bg-brand/10 text-brand flex items-center justify-center">
+              <div className="bg-brand/10 text-brand flex size-6 items-center justify-center rounded-md">
                 <Network className="size-3.5" />
               </div>
               <span>SFIA 9 Skill Tree</span>
@@ -122,7 +122,7 @@ export function SfiaMobileDrawer({
               selectedSkill={selectedSkill}
               selectedLevel={selectedLevel}
               onSelectSkill={handleSelectSkill}
-              className="border-0 rounded-none shadow-none h-full"
+              className="h-full rounded-none border-0 shadow-none"
             />
           </div>
         </SheetContent>

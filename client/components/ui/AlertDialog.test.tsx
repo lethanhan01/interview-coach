@@ -42,7 +42,7 @@ describe('AlertDialog', () => {
     renderAlertDialog()
     const trigger = screen.getByRole('button', { name: 'Open' })
     await userEvent.click(trigger)
-    
+
     expect(screen.getByRole('alertdialog')).toBeInTheDocument()
     expect(screen.getByText('Title')).toBeInTheDocument()
     expect(screen.getByText('Description')).toBeInTheDocument()

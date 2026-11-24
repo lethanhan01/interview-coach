@@ -90,33 +90,56 @@ NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1
 
 ---
 
+## Bản đồ đọc dự án trong 5 phút cho người mới
+
+Để nắm nhanh luồng hoạt động của Frontend từ ngoài vào trong, đọc theo đúng thứ tự phụ thuộc một chiều sau:
+
+1. **`app/`** — Next.js 16 App Router (5 Route Groups: `(public)`, `(auth)`, `(candidate)`, `(admin)`, `(common)`); mọi route-local UI nằm trong `_components/`.
+2. **`providers/`** — Toàn bộ React Context & App-level Client Providers (`AppProviders`, `AuthProvider`, `QueryProvider`, `MantineColorSchemeSync`).
+3. **`components/`** — Shared & Domain UI Components dựng trên Mantine v9 (`layout`, `common`, `landing`, `auth`, `interview`, `interview-setup`, `report`, `resume`, `profile`, `onet`, `sfia`).
+4. **`styles/`** & **`theme.ts`** — SSOT Mantine v9 Theme (Zero-Hex, RSC-safe) và các shared semantic CSS Modules (`surfaces`, `interactions`, `typography`).
+5. **`queries/`** — 100% Pure TS / RSC-safe TanStack Query v5 (`query-client.ts`, `keys.ts`, `*.queries.ts` theo từng miền, không barrel).
+6. **`hooks/`** — Shared Cross-App Custom Hooks (`useAuth`, `useSessions`, `useSessionEvents`, `useCountdown`).
+7. **`services/`** — Typed HTTP clients theo domain (`*.service.ts`).
+8. **`types/`** & **`lib/`** — Pure TypeScript contracts (11 Bounded Contexts) và pure TS utilities (0 file `.tsx`).
+
+---
+
 ## Cấu trúc thư mục
 
 ```text
 client/
 ├── app/
 │   ├── (public)/          — Trang đích công khai (Landing)
-│   ├── (auth)/            — Đăng nhập, đăng ký, đặt lại mật khẩu (login, register, reset-password)
+│   ├── (auth)/            — Đăng nhập, đăng ký, đặt lại mật khẩu (100% có _components/)
 │   ├── (candidate)/       — Luồng ứng viên: setup, sessions/[sessionId], jd-library, resume, profile
 │   ├── (admin)/admin/     — Trang quản trị: dashboard, users, sfia, onet, profile
 │   ├── (common)/          — Trang trạng thái hệ thống: offline, maintenance, unauthorized, unauthenticated, too-many-requests, coming-soon
-│   ├── layout.tsx         — RootLayout (ColorSchemeScript, MantineProvider, Notifications, ModalsProvider)
+│   ├── layout.tsx         — RootLayout (ColorSchemeScript, MantineProvider, MantineColorSchemeSync, AppProviders, OfflineBanner)
 │   ├── globals.css        — Khai báo @layer + @mantine/*/styles.layer.css (+ CSS chuyển tiếp)
+│   ├── styles/            — [LEGACY FROZEN] Tailwind tokens/themes/utilities chờ xóa ở Phase 8
 │   ├── error.tsx          — Route Error Boundary
 │   └── global-error.tsx   — Global Error Boundary
-├── components/            — Shared & domain UI components (interview, report, auth, patterns, ...)
-├── hooks/                 — Custom hooks (useAuth, useSessions, useSessionEvents, useCountdown)
-├── services/              — API service layer theo domain (*.service.ts)
-├── lib/                   — API client, TanStack Query client & queryKeys (query-client.tsx), auth context, date-time helpers, shared types
+├── providers/             — App-level Client Providers (AppProviders, AuthProvider, QueryProvider, MantineColorSchemeSync) + __tests__/
+├── styles/                — Shared Semantic CSS Modules (surfaces, interactions, typography) chuẩn Mantine v9 Zero-Hex
+├── components/            — Shared & domain UI components (layout, common, landing, auth, interview, interview-setup, report, resume, profile, onet, sfia)
+│   ├── ui/                — [LEGACY FROZEN] Chờ xóa hoàn toàn ở Phase 8 — CẤM thêm file mới
+│   └── form/              — [LEGACY FROZEN] Chờ xóa hoàn toàn ở Phase 8 — CẤM thêm file mới
+├── queries/               — Pure TS / RSC-safe TanStack Query v5 (query-client.ts, keys.ts, *.queries.ts) + __tests__/
+├── hooks/                 — Shared cross-app custom hooks (useAuth, useSessions, useSessionEvents, useCountdown)
+├── services/              — API service layer theo domain (*.service.ts) + __tests__/
+├── types/                 — Pure TypeScript Domain & API Contracts (11 Bounded Contexts)
+├── lib/                   — 100% Pure TS Infrastructure (api-client, auth-redirect, date-time, form-errors, setup-helpers)
+├── config/                — Static config (navigation.ts)
 ├── middleware/            — Auth & routing middleware helpers
-├── test-utils/            — Custom render bọc QueryClientProvider + MantineProvider env="test" + ModalsProvider
-├── stories/               — Storybook foundations & component stories
-├── e2e/                   — Playwright E2E test suites
+├── test-utils/            — Custom render (@test-utils) + fixtures/report.fixture.ts
+├── stories/               — Storybook foundations & component stories (layout/, common/, interview/, landing/, pages/, profile/, report/)
+├── e2e/                   — Playwright E2E & visual test suites
 ├── scripts/               — Static UI rules linter (check-ui-rules.mjs), docs verifier
 ├── docs/
 │   ├── docs/              — Master Hub & 16 chuyên đề quy chuẩn kiến trúc Frontend (4 miền)
 │   └── mantine/           — Cẩm nang thực hành Mantine UI v9 (Zero-Hex, Forms, Hooks, Testing)
-├── theme.ts               — Mantine v9 theme (RSC-safe, Zero-Hex, 5 semantic roles)
+├── theme.ts               — Mantine v9 theme (RSC-safe, Zero-Hex, 5 semantic roles, focusClassName)
 ├── postcss.config.mjs     — postcss-preset-mantine + postcss-simple-vars (breakpoints xs..xl)
 ├── next.config.ts         — Env validation, optimizePackageImports, redirects
 ├── .stylelintrc.json      — Quy tắc Stylelint cho CSS Modules

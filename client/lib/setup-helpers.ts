@@ -1,6 +1,6 @@
 /**
  * Shared runtime constants and helpers for the interview setup flow.
- * Used by both `components/setup/*` and `app/(candidate)/setup/page.tsx`.
+ * Used by both `components/interview-setup/*` and `app/(candidate)/setup/page.tsx`.
  */
 import type { InterviewDuration, JdFormData } from '@/types'
 
@@ -60,7 +60,11 @@ export function mapJdLevelToSfia(level: string): number {
     norm.includes('entry')
   )
     return 2
-  if (norm.includes('senior') || norm.includes('sr') || norm.includes('cao cấp'))
+  if (
+    norm.includes('senior') ||
+    norm.includes('sr') ||
+    norm.includes('cao cấp')
+  )
     return 4
   if (
     norm.includes('lead') ||

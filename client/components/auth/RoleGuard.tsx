@@ -3,7 +3,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { Center, Loader } from '@mantine/core'
-import { useAuth } from '@/lib/auth-context'
+import { useAuth } from '@/providers/AuthProvider'
 
 export interface RoleGuardProps {
   children: ReactNode

@@ -15,7 +15,11 @@ beforeAll(() => {
 })
 
 describe('Select Component', () => {
-  const TestSelect = ({ invalid = false, disabled = false, onChange = () => {} }) => (
+  const TestSelect = ({
+    invalid = false,
+    disabled = false,
+    onChange = () => {},
+  }) => (
     <Select disabled={disabled} onValueChange={onChange}>
       <SelectTrigger aria-label="Options" invalid={invalid}>
         <SelectValue placeholder="Select option" />
@@ -42,10 +46,10 @@ describe('Select Component', () => {
   it('opens options on click', async () => {
     const user = userEvent.setup()
     render(<TestSelect />)
-    
+
     const trigger = screen.getByRole('combobox')
     await user.click(trigger)
-    
+
     await waitFor(() => {
       expect(screen.getByRole('listbox')).toBeInTheDocument()
     })
@@ -57,17 +61,19 @@ describe('Select Component', () => {
     const user = userEvent.setup()
     const onChangeMock = vi.fn()
     render(<TestSelect onChange={onChangeMock} />)
-    
+
     const trigger = screen.getByRole('combobox')
     await user.click(trigger)
-    
+
     await waitFor(() => {
-      expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument()
+      expect(
+        screen.getByRole('option', { name: 'Option 1' })
+      ).toBeInTheDocument()
     })
-    
+
     const option1 = screen.getByRole('option', { name: 'Option 1' })
     await user.click(option1)
-    
+
     expect(onChangeMock).toHaveBeenCalledWith('1')
   })
 

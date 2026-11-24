@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useInterval } from '@mantine/hooks'
 import { IconGauge, IconRefresh } from '@tabler/icons-react'
-import { ErrorPageTemplate } from '@/components/patterns/ErrorPageTemplate'
+import { ErrorPageTemplate } from '@/components/common/ErrorPageTemplate'
 
 const DEFAULT_RETRY_SECONDS = 60
 

@@ -120,9 +120,7 @@ FormField.displayName = 'FormField'
 // FormLabel
 // ---------------------------------------------------------------------------
 
-export type FormLabelProps = React.ComponentPropsWithoutRef<
-  typeof Label
->
+export type FormLabelProps = React.ComponentPropsWithoutRef<typeof Label>
 
 /**
  * FormLabel — links to the associated control via context-derived `htmlFor`.

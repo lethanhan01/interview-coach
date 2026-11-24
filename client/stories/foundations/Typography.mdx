@@ -29,29 +29,31 @@ Bạn có thể chỉnh sửa văn bản thử nghiệm trong ô bên dưới đ
 
 ## 3. Bảng Tra cứu Tokens Chi tiết (Token Reference)
 
-| Size Name | Tailwind Class | CSS Variable | Rem Value | Pixel Value | Line Height | Trường hợp sử dụng (Use Case) |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **xs** | `text-xs` | `--text-xs` | `0.75rem` | `12px` | `1.00rem (16px)` | Helper text, caption, badge, timestamp |
-| **sm** | `text-sm` | `--text-sm` | `0.875rem` | `14px` | `1.25rem (20px)` | Input text, button label, table body, card description |
-| **base** | `text-base` | `--text-base` | `1.00rem` | `16px` | `1.50rem (24px)` | Body text mặc định, paragraph, modal content |
-| **lg** | `text-lg` | `--text-lg` | `1.125rem` | `18px` | `1.75rem (28px)` | Tiêu đề card, section header nhỏ, H4 |
-| **xl** | `text-xl` | `--text-xl` | `1.25rem` | `20px` | `1.75rem (28px)` | Section header vừa, Modal title, H3 |
-| **2xl** | `text-2xl` | `--text-2xl` | `1.50rem` | `24px` | `2.00rem (32px)` | Page title chính, Dashboard header, H2 |
-| **3xl** | `text-3xl` | `--text-3xl` | `1.875rem` | `30px` | `2.25rem (36px)` | Tiêu đề chính Landing page, H1 lớn |
-| **4xl** | `text-4xl` | `--text-4xl` | `2.25rem` | `36px` | `2.50rem (40px)` | Hero title nổi bật, Điểm số to |
-| **5xl** | `text-5xl` | `--text-5xl` | `3.00rem` | `48px` | `1 (48px)` | Landing page Hero headline |
-| **6xl** | `text-6xl` | `--text-6xl` | `3.75rem` | `60px` | `1 (60px)` | Marketing display headline cực đại |
+| Size Name | Tailwind Class | CSS Variable  | Rem Value  | Pixel Value | Line Height      | Trường hợp sử dụng (Use Case)                          |
+| :-------- | :------------- | :------------ | :--------- | :---------- | :--------------- | :----------------------------------------------------- |
+| **xs**    | `text-xs`      | `--text-xs`   | `0.75rem`  | `12px`      | `1.00rem (16px)` | Helper text, caption, badge, timestamp                 |
+| **sm**    | `text-sm`      | `--text-sm`   | `0.875rem` | `14px`      | `1.25rem (20px)` | Input text, button label, table body, card description |
+| **base**  | `text-base`    | `--text-base` | `1.00rem`  | `16px`      | `1.50rem (24px)` | Body text mặc định, paragraph, modal content           |
+| **lg**    | `text-lg`      | `--text-lg`   | `1.125rem` | `18px`      | `1.75rem (28px)` | Tiêu đề card, section header nhỏ, H4                   |
+| **xl**    | `text-xl`      | `--text-xl`   | `1.25rem`  | `20px`      | `1.75rem (28px)` | Section header vừa, Modal title, H3                    |
+| **2xl**   | `text-2xl`     | `--text-2xl`  | `1.50rem`  | `24px`      | `2.00rem (32px)` | Page title chính, Dashboard header, H2                 |
+| **3xl**   | `text-3xl`     | `--text-3xl`  | `1.875rem` | `30px`      | `2.25rem (36px)` | Tiêu đề chính Landing page, H1 lớn                     |
+| **4xl**   | `text-4xl`     | `--text-4xl`  | `2.25rem`  | `36px`      | `2.50rem (40px)` | Hero title nổi bật, Điểm số to                         |
+| **5xl**   | `text-5xl`     | `--text-5xl`  | `3.00rem`  | `48px`      | `1 (48px)`       | Landing page Hero headline                             |
+| **6xl**   | `text-6xl`     | `--text-6xl`  | `3.75rem`  | `60px`      | `1 (60px)`       | Marketing display headline cực đại                     |
 
 ---
 
 ## 4. Hướng dẫn Sử dụng & Text Hierarchy (Guidelines)
 
 ### ✅ Do (Nên làm)
+
 - **Ưu tiên sử dụng Ink Tokens**: Kết hợp font-size với màu chữ phân cấp `text-ink` (chính), `text-ink-muted` (phụ), `text-ink-faint` (nhạt).
 - **Sử dụng `.tabular-nums` cho số liệu động**: Luôn thêm class `tabular-nums` cho audio time timer (`02:45 / 15:00`) và scorecard để tránh giật giao diện khi số thay đổi.
 - **Tương thích Line Height**: Luôn sử dụng cặp `text-*` chuẩn của Tailwind để tự động nhận đúng `line-height`.
 - **Thứ tự phân cấp (Heading Hierarchy)**: Đảm bảo thứ tự tiêu đề tuân thủ cấu trúc HTML H1 -> H2 -> H3 -> H4 để hỗ trợ trình đọc màn hình (Screen Reader).
 
 ### ❌ Don't (Không nên làm)
+
 - **Không tùy tiện dùng font size lạ**: Tránh dùng font-size không nằm trong scale như `text-[13px]` hay `text-[17px]` (Tuân thủ Quy tắc 3 trong [UI Conventions](file:///c:/Users/An/Documents/GR1/InterviewCoach/client/stories/foundations/Conventions.mdx)).
 - **Không dùng quá nhiều font weight trên 1 màn hình**: Giới hạn tối đa 2-3 độ đậm (`normal`, `semibold`, `bold`) trong cùng một cụm giao diện.

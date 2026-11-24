@@ -1,15 +1,20 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen } from '@test-utils'
+import { axe } from 'jest-axe'
 import { describe, expect, it } from 'vitest'
 import { SkillsBreakdownCard } from './SkillsBreakdownCard'
-import { mockUnifiedSkillsBreakdown } from '@/tests/fixtures/report.fixture'
+import { mockUnifiedSkillsBreakdown } from '@/test-utils/fixtures/report.fixture'
 
 describe('SkillsBreakdownCard', () => {
   it('renders null when skills list is empty or undefined', () => {
-    const { container, rerender } = render(<SkillsBreakdownCard skills={[]} />)
-    expect(container.firstChild).toBeNull()
+    const { rerender } = render(<SkillsBreakdownCard skills={[]} />)
+    expect(
+      screen.queryByText('Chi Tiết Đánh Giá Từng Năng Lực (Skills Breakdown)')
+    ).not.toBeInTheDocument()
 
     rerender(<SkillsBreakdownCard />)
-    expect(container.firstChild).toBeNull()
+    expect(
+      screen.queryByText('Chi Tiết Đánh Giá Từng Năng Lực (Skills Breakdown)')
+    ).not.toBeInTheDocument()
   })
 
   it('renders skill breakdown details correctly', () => {
@@ -19,7 +24,6 @@ describe('SkillsBreakdownCard', () => {
       screen.getByText('Chi Tiết Đánh Giá Từng Năng Lực (Skills Breakdown)')
     ).toBeInTheDocument()
 
-    // Skill 1 (PROG) - Passed
     expect(screen.getByText('PROG')).toBeInTheDocument()
     expect(screen.getByText('88/100 điểm')).toBeInTheDocument()
     expect(screen.getByText('Đạt chuẩn')).toBeInTheDocument()
@@ -29,7 +33,6 @@ describe('SkillsBreakdownCard', () => {
       )
     ).toBeInTheDocument()
 
-    // Skill 2 (DBDS) - Gap
     expect(screen.getByText('DBDS')).toBeInTheDocument()
     expect(screen.getByText('72/100 điểm')).toBeInTheDocument()
     expect(screen.getByText('Cần cải thiện (Gap)')).toBeInTheDocument()
@@ -39,9 +42,15 @@ describe('SkillsBreakdownCard', () => {
       )
     ).toBeInTheDocument()
 
-    // Tech Context Chips
     expect(screen.getByText('TypeScript')).toBeInTheDocument()
     expect(screen.getAllByText('PostgreSQL')).toHaveLength(2)
     expect(screen.getByText('Redis')).toBeInTheDocument()
+  })
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(
+      <SkillsBreakdownCard skills={mockUnifiedSkillsBreakdown} />
+    )
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

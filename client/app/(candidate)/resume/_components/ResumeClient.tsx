@@ -27,9 +27,10 @@ import ResumeHeader, {
   RESUME_SECTION_ITEMS,
 } from '@/components/resume/ResumeHeader'
 import { getErrorMessage } from '@/lib/form-errors'
-import { candidateProfileQueries, queryKeys } from '@/lib/query-client'
+import { candidateProfileQueries } from '@/queries/candidate-profile.queries'
+import { queryKeys } from '@/queries/keys'
 import { candidateProfileService } from '@/services/candidate-profile.service'
-import classes from './ResumeClient.module.css'
+import surfaces from '@/styles/surfaces.module.css'
 import ResumeSectionContent, { ResumeSkeleton } from './ResumeSectionContent'
 
 export default function ResumeClient() {
@@ -191,7 +192,7 @@ export default function ResumeClient() {
 
         <Grid gap="lg" align="flex-start">
           <Grid.Col span={{ base: 12, md: 4 }} visibleFrom="md">
-            <Box className={classes.stickySidebar}>
+            <Box className={surfaces.stickyPanel}>
               <ResumeHeader
                 data={data}
                 activeSection={activeSection}

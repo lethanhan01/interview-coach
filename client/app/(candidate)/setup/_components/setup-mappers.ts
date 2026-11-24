@@ -1,4 +1,4 @@
-import { normalizeJdFormData } from '@/components/setup/jd-form.schema'
+import { normalizeJdFormData } from '@/components/interview-setup/jd-form.schema'
 import { getJdLevelLabel, normalizeJdLevel } from '@/lib/interview-options'
 import { mapJdLevelToSfia } from '@/lib/setup-helpers'
 import type {
