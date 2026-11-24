@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import ResumeClient from './_components/ResumeClient'
-import { ResumeSkeleton } from './_components/ResumeSectionContent'
+import ResumeClient from '@/components/resume/ResumeClient'
+import { ResumeSkeleton } from '@/components/resume/ResumeSectionContent'
 
 export const metadata: Metadata = {
   title: 'Hồ sơ CV & Kinh nghiệm | InterviewCoach',

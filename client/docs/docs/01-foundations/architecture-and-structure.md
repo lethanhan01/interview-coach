@@ -46,7 +46,7 @@ flowchart TD
 
     APP --> GROUPS
     GROUPS --> PROV["providers/ (AppProviders, AuthProvider, QueryProvider, MantineColorSchemeSync)"]
-    GROUPS --> UI["components/<domain>/ & app/.../_components/<br/>Mantine v9 + CSS Modules"]
+    GROUPS --> UI["components/<domain>/ (Domain Co-location)<br/>Mantine v9 + CSS Modules"]
     UI --> STYLES["styles/ (Shared Semantic CSS Modules) & theme.ts (RSC-Safe Zero-Hex)"]
     PROV --> QUERIES["queries/ (100% Pure TS / RSC-safe queryKeys & queryOptions)"]
     UI --> HOOKS["hooks/ (Shared Cross-App Hooks)"]
@@ -102,7 +102,7 @@ client/
 │   └── __tests__/                # Unit tests cho providers
 ├── styles/                       # Shared Semantic CSS Modules (surfaces, interactions, typography)
 ├── components/                   # Domain UI Components (Mantine v9 Zero-Hex cho code mới/migrate)
-│   ├── <domain>/                 # auth, interview, interview-setup, landing, report, sfia, onet, resume, profile
+│   ├── <domain>/                 # auth, interview, interview-setup, jd-library, sessions, landing, report, sfia, onet, resume, profile
 │   ├── layout/ & common/         # Khung AppShell và mẫu UI tái sử dụng dựng trên Mantine v9
 │   └── ui/ & form/               # [LEGACY FROZEN] Chờ gỡ bỏ ở Phase 8 — CẤM thêm file mới
 ├── queries/                      # 100% Pure TS / RSC-safe (query-client.ts, keys.ts, *.queries.ts) + __tests__/
@@ -201,20 +201,21 @@ export async function CandidateProfileShell({
 
 ## 4. Quy Tắc Hybrid Co-location, Rule of Three & Đóng Băng `components/ui/`
 
-### 4.1. Hybrid Co-location & Rule of Three
+### 4.1. Chiến lược Thin `app/`, Domain Co-location & Rule of Three
 
-1. **Sub-component đặc thù của 1 route:** Đặt ngay cạnh `page.tsx` trong thư mục **`_components/`** (Next.js bỏ qua thư mục có tiền tố `_` khỏi routing). Đặt đồng vị các tệp liên quan: `WidgetName.tsx`, `WidgetName.module.css`, `WidgetName.test.tsx`, và `WidgetName.stories.tsx` (khi cần đưa vào catalog).
-2. **Thăng cấp theo Rule of Three:**
-   - Lần 1: Viết cục bộ trong `app/.../_components/`.
-   - Lần 2: Cân nhắc tách nếu hai màn hình chia sẻ hoàn toàn cùng hợp đồng dữ liệu và tương tác.
-   - Lần 3: Bắt buộc trích xuất lên `components/<domain>/` (hoặc `components/common/` nếu dùng xuyên miền).
-3. **Đóng băng `components/ui/`:** Theo nguyên tắc **Mantine-First**, mọi UI primitive (`Button`, `TextInput`, `Modal`, `Table`, `Paper`, `Tabs`, `Select`) được import trực tiếp từ `@mantine/core`. **Tuyệt đối cấm** thêm wrapper mỏng mới trong `components/ui/`.
+1. **Chiến lược Thin `app/` (Store project files outside `app/`):** Thư mục `app/` chỉ chứa các tệp định tuyến chuẩn của Next.js 16 App Router (`page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `global-error.tsx`, `not-found.tsx`) và `*Layout.module.css` gắn trực tiếp với `layout.tsx`. **Không tạo `_components/` trong `app/`**.
+2. **Domain Co-location trong `components/<domain>/`:** Toàn bộ UI component, `*Client.tsx`, route hooks, `WidgetName.module.css`, `WidgetName.test.tsx`, và `WidgetName.stories.tsx` của một miền nghiệp vụ được đặt đồng vị (co-located) ngay trong cùng thư mục `components/<domain>/`.
+3. **Thăng cấp theo Rule of Three:**
+   - Lần 1: Viết cục bộ trong `components/<domain>/` của miền nghiệp vụ tương ứng.
+   - Lần 2: Cân nhắc tách nếu hai miền chia sẻ hoàn toàn cùng hợp đồng dữ liệu và tương tác.
+   - Lần 3: Bắt buộc trích xuất lên `components/common/` (dùng xuyên miền).
+4. **Đóng băng `components/ui/`:** Theo nguyên tắc **Mantine-First**, mọi UI primitive (`Button`, `TextInput`, `Modal`, `Table`, `Paper`, `Tabs`, `Select`) được import trực tiếp từ `@mantine/core`. **Tuyệt đối cấm** thêm wrapper mỏng mới trong `components/ui/`.
 
-### 4.2. Phân tách trách nhiệm `layout`, `patterns`, và `<domain>`
+### 4.2. Phân tách trách nhiệm `layout`, `common`, và `<domain>`
 
 - **`app/(group)/layout.tsx` & `components/layout/`:** Chỉ phụ trách khung `AppShell`, điều hướng và kiểm soát ranh giới layout — không chứa logic gọi API nộp bài hay chỉnh sửa hồ sơ.
 - **`components/common/`:** Chứa mẫu giao diện dùng chung xuyên nhiều miền (banner ngoại tuyến, empty state, error fallback) dựng trên Mantine v9 primitives.
-- **`components/<domain>/`:** Đóng gói UI đặc thù từng miền (`interview`, `setup`, `report`, `sfia`, `onet`, `resume`, `profile`, `auth`).
+- **`components/<domain>/`:** Đóng gói toàn bộ UI & Client Shell đặc thù từng miền (`auth`, `interview`, `interview-setup`, `jd-library`, `sessions`, `landing`, `report`, `sfia`, `onet`, `resume`, `profile`).
 
 ---
 
@@ -275,16 +276,18 @@ export default nextConfig
 
 ## 6. Case Study Co-location & Bảng Đối Chiếu Anti-Pattern vs Best Practice
 
-### Case Study: Cấu trúc Co-location cho màn hình Live Interview Session
+### Case Study: Cấu trúc Thin `app/` & Domain Co-location cho màn hình Live Interview Session
 
 ```text
 app/(candidate)/sessions/[sessionId]/
-├── page.tsx                              # Server Component shell đọc params.sessionId
-└── _components/
-    ├── InterviewWorkspace.tsx            # 'use client' điều phối tương tác phiên phỏng vấn
-    ├── InterviewWorkspace.module.css     # CSS Module dùng rem() và --mantine-color-*
-    ├── InterviewWorkspace.test.tsx       # Unit test với @test-utils và jest-axe
-    └── SessionProgressBar.tsx            # Sub-component chỉ phục vụ riêng route này
+└── page.tsx                              # Server Component shell đọc params.sessionId (chỉ routing)
+
+components/interview/
+├── SessionRoomClient.tsx                 # 'use client' điều phối tương tác phiên phỏng vấn
+├── LiveInterviewWorkspace.tsx            # Workspace tương tác chính
+├── LiveInterviewWorkspace.module.css     # CSS Module dùng rem() và --mantine-color-*
+├── SessionHeaderBar.tsx                  # Sub-component cùng miền
+└── useInterviewDraft.ts                  # Custom hook co-located theo miền
 ```
 
 ### Bảng đối chiếu Anti-Pattern vs Best Practice
@@ -296,7 +299,7 @@ app/(candidate)/sessions/[sessionId]/
 | Truyền dữ liệu RSC → Client  | Truyền nguyên bản ghi 50 trường cho component chỉ hiển thị 2 trường | Chỉ chọn và truyền đúng các trường serializable cần hiển thị (`server-serialization`)              |
 | Tổ chức import nội bộ        | Gom 20 module vào `index.ts` rồi import qua barrel                  | Direct import từ tệp đích; bật `optimizePackageImports` cho `@mantine/*` (`bundle-barrel-imports`) |
 | Đặt tên tệp trên Windows     | Import `./sessioncard` khi tệp thực tế là `SessionCard.tsx`         | Khớp chính xác 100% chữ hoa/thường để không lỗi build trên Linux CI/Vercel                         |
-| Component chỉ dùng ở 1 trang | Đặt ngay vào `components/common/` từ lần đầu                        | Đặt tại `app/.../_components/`, chỉ thăng cấp lên `components/<domain>/` khi đạt Rule of Three     |
+| Component chỉ dùng ở 1 miền  | Đặt ngay vào `components/common/` hoặc trộn lẫn vào `app/`          | Đặt tại `components/<domain>/`, chỉ thăng cấp lên `components/common/` khi đạt Rule of Three       |
 
 ---
 
@@ -314,7 +317,7 @@ app/(candidate)/sessions/[sessionId]/
 
 ## 8. Checklist Định Lượng PR Review Gate
 
-- [ ] **1. Đúng Route Group & Co-location:** Trang đặt đúng 1 trong 5 Route Groups; component đặc thù 1 route đặt tại `_components/`, chỉ thăng cấp lên `components/<domain>/` theo Rule of Three.
+- [ ] **1. Đúng Route Group & Thin `app/` + Domain Co-location:** Trang đặt đúng 1 trong 5 Route Groups (chỉ routing files trong `app/`); UI component & test đặt co-located trong `components/<domain>/`, chỉ thăng cấp lên `components/common/` theo Rule of Three.
 - [ ] **2. Đóng băng `components/ui/`:** Không tạo thêm bất kỳ thin wrapper nào trong `components/ui/`; import trực tiếp từ `@mantine/core`.
 - [ ] **3. Ranh giới RSC & Serialization gọn:** `page.tsx`, `layout.tsx`, `theme.ts` không gắn `'use client'` thừa; chỉ truyền props tối thiểu qua ranh giới Server → Client (`server-serialization`).
 - [ ] **4. Chiều phụ thuộc một chiều:** `services/` không import React/UI; `hooks/` không import UI; `components/` không import từ `app/`.

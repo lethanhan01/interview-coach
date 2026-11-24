@@ -11,8 +11,8 @@ import { queryKeys } from '@/queries/keys'
 import { prepService } from '@/services/prep.service'
 import { sessionService } from '@/services/session.service'
 import type { SavedJobDescription } from '@/types'
-import SetupWizardClient from './_components/SetupWizardClient'
-import { JD_DRAFT_KEY } from './_components/useSetupDraft'
+import SetupWizardClient from '@/components/interview-setup/SetupWizardClient'
+import { JD_DRAFT_KEY } from '@/components/interview-setup/useSetupDraft'
 
 const mockPush = vi.fn()
 let mockSearchParams = new URLSearchParams()

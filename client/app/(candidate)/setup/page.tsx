@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import { SetupWizardSkeleton } from './_components/SetupStepPanels'
-import SetupWizardClient from './_components/SetupWizardClient'
+import { SetupWizardSkeleton } from '@/components/interview-setup/SetupStepPanels'
+import SetupWizardClient from '@/components/interview-setup/SetupWizardClient'
 
 export const metadata: Metadata = {
   title: 'Thiết lập phiên phỏng vấn | InterviewCoach',

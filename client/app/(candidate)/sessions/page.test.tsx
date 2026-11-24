@@ -3,7 +3,7 @@ import { axe } from 'jest-axe'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { sessionService } from '@/services/session.service'
 import type { Session } from '@/types'
-import SessionsClient from './_components/SessionsClient'
+import SessionsClient from '@/components/sessions/SessionsClient'
 
 vi.mock('@/services/session.service', () => ({
   sessionService: {

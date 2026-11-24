@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Box, Container, Paper } from '@mantine/core'
-import { AuthHeader } from './_components/AuthHeader'
-import classes from './AuthLayout.module.css'
+import { AuthHeader } from '@/components/auth/AuthHeader'
+import classes from '@/components/auth/AuthLayout.module.css'
 
 export default function AuthLayout({
   children,

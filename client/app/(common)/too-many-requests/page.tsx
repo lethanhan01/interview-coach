@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { TooManyRequestsClient } from './_components/TooManyRequestsClient'
+import { TooManyRequestsClient } from '@/components/common/TooManyRequestsClient'
 
 export const metadata: Metadata = {
   title: 'Quá nhiều yêu cầu (429) — Interview Coach',

@@ -94,9 +94,9 @@ NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1
 
 Để nắm nhanh luồng hoạt động của Frontend từ ngoài vào trong, đọc theo đúng thứ tự phụ thuộc một chiều sau:
 
-1. **`app/`** — Next.js 16 App Router (5 Route Groups: `(public)`, `(auth)`, `(candidate)`, `(admin)`, `(common)`); mọi route-local UI nằm trong `_components/`.
+1. **`app/`** — Next.js 16 App Router thuần routing (5 Route Groups: `(public)`, `(auth)`, `(candidate)`, `(admin)`, `(common)`); chỉ chứa `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx` (chiến lược **Thin `app/`**, không đặt `_components/` trong `app/`).
 2. **`providers/`** — Toàn bộ React Context & App-level Client Providers (`AppProviders`, `AuthProvider`, `QueryProvider`, `MantineColorSchemeSync`).
-3. **`components/`** — Shared & Domain UI Components dựng trên Mantine v9 (`layout`, `common`, `landing`, `auth`, `interview`, `interview-setup`, `report`, `resume`, `profile`, `onet`, `sfia`).
+3. **`components/`** — Toàn bộ Shared & Domain UI Components dựng trên Mantine v9 (`layout`, `common`, `landing`, `auth`, `interview`, `interview-setup`, `jd-library`, `sessions`, `report`, `resume`, `profile`, `onet`, `sfia`).
 4. **`styles/`** & **`theme.ts`** — SSOT Mantine v9 Theme (Zero-Hex, RSC-safe) và các shared semantic CSS Modules (`surfaces`, `interactions`, `typography`).
 5. **`queries/`** — 100% Pure TS / RSC-safe TanStack Query v5 (`query-client.ts`, `keys.ts`, `*.queries.ts` theo từng miền, không barrel).
 6. **`hooks/`** — Shared Cross-App Custom Hooks (`useAuth`, `useSessions`, `useSessionEvents`, `useCountdown`).
@@ -111,7 +111,7 @@ NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1
 client/
 ├── app/
 │   ├── (public)/          — Trang đích công khai (Landing)
-│   ├── (auth)/            — Đăng nhập, đăng ký, đặt lại mật khẩu (100% có _components/)
+│   ├── (auth)/            — Đăng nhập, đăng ký, đặt lại mật khẩu (Thin routing: page.tsx & layout.tsx)
 │   ├── (candidate)/       — Luồng ứng viên: setup, sessions/[sessionId], jd-library, resume, profile
 │   ├── (admin)/admin/     — Trang quản trị: dashboard, users, sfia, onet, profile
 │   ├── (common)/          — Trang trạng thái hệ thống: offline, maintenance, unauthorized, unauthenticated, too-many-requests, coming-soon
@@ -122,7 +122,7 @@ client/
 │   └── global-error.tsx   — Global Error Boundary
 ├── providers/             — App-level Client Providers (AppProviders, AuthProvider, QueryProvider, MantineColorSchemeSync) + __tests__/
 ├── styles/                — Shared Semantic CSS Modules (surfaces, interactions, typography) chuẩn Mantine v9 Zero-Hex
-├── components/            — Shared & domain UI components (layout, common, landing, auth, interview, interview-setup, report, resume, profile, onet, sfia)
+├── components/            — Toàn bộ UI components theo miền (layout, common, landing, auth, interview, interview-setup, jd-library, sessions, report, resume, profile, onet, sfia)
 │   ├── ui/                — [LEGACY FROZEN] Chờ xóa hoàn toàn ở Phase 8 — CẤM thêm file mới
 │   └── form/              — [LEGACY FROZEN] Chờ xóa hoàn toàn ở Phase 8 — CẤM thêm file mới
 ├── queries/               — Pure TS / RSC-safe TanStack Query v5 (query-client.ts, keys.ts, *.queries.ts) + __tests__/

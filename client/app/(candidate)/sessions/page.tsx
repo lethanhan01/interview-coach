@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import SessionsClient from './_components/SessionsClient'
+import SessionsClient from '@/components/sessions/SessionsClient'
 
 export const metadata: Metadata = {
   title: 'Phiên phỏng vấn | InterviewCoach',

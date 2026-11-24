@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import ResetPasswordClient from './_components/ResetPasswordClient'
+import ResetPasswordClient from '@/components/auth/ResetPasswordClient'
 
 export const metadata: Metadata = {
   title: 'Đặt lại mật khẩu | InterviewCoach',

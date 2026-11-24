@@ -250,7 +250,7 @@ Component React phải thuần khiết: không mutate trực tiếp `props` hay 
 
 ### 4.3. `STD-SIZE-001` — Giới Hạn Kích Thước Tệp Component ≤ 250 Dòng (`WARN` · `[Active]`)
 
-Mỗi tệp `.tsx` giữ ≤ **250 dòng** để tránh "God Component". Khi vượt ngưỡng, tách sub-component co-located trong `_components/` hoặc trích logic sang custom hook.
+Mỗi tệp `.tsx` giữ ≤ **250 dòng** để tránh "God Component". Khi vượt ngưỡng, tách sub-component co-located trong cùng thư mục `components/<domain>/` hoặc trích logic sang custom hook.
 
 <a id="std-ref-001"></a>
 

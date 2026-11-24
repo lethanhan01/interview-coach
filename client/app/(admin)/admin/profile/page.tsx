@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import AdminProfileClient from './_components/AdminProfileClient'
+import AdminProfileClient from '@/components/profile/AdminProfileClient'
 
 export const metadata: Metadata = {
   title: 'Hồ sơ quản trị viên | InterviewCoach',

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { ReportClient } from './_components/ReportClient'
+import { ReportClient } from '@/components/report/ReportClient'
 
 export const metadata: Metadata = {
   title: 'Báo Cáo Đánh Giá Phỏng Vấn | InterviewCoach',

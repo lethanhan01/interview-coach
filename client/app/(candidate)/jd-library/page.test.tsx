@@ -3,7 +3,7 @@ import { axe } from 'jest-axe'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { prepService } from '@/services/prep.service'
 import type { SavedJobDescription } from '@/types'
-import JdLibraryClient from './_components/JdLibraryClient'
+import JdLibraryClient from '@/components/jd-library/JdLibraryClient'
 
 vi.mock('@/services/prep.service', () => ({
   prepService: {
