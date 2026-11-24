@@ -1,17 +1,18 @@
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import { Text } from '@mantine/core'
 
-interface ProfileEmptyStateProps {
+export interface ProfileEmptyStateProps {
   message: ReactNode
   className?: string
 }
 
 export default function ProfileEmptyState({
   message,
-  className = '',
-}: ProfileEmptyStateProps) {
+  className,
+}: Readonly<ProfileEmptyStateProps>) {
   return (
-    <p className={['text-ink-muted/60 text-sm italic', className].join(' ')}>
+    <Text size="sm" c="dimmed" fs="italic" className={className}>
       {message}
-    </p>
+    </Text>
   )
 }

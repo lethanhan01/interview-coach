@@ -1,168 +1,169 @@
 'use client'
 
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Input } from '@/components/ui/Input'
-import { Button } from '@/components/ui/Button'
-import { Form } from '@/components/ui/form-adapters/rhf-form-field'
 import {
-  FormField,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from '@/components/form/FormField'
+  Alert,
+  Anchor,
+  Box,
+  Button,
+  PasswordInput,
+  SimpleGrid,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core'
+import { schemaResolver, useForm } from '@mantine/form'
+import { IconAlertCircle } from '@tabler/icons-react'
+import { registerSchema, type RegisterFormData } from './auth-schemas'
+import { PasswordStrengthMeter } from './PasswordStrengthMeter'
 
-export const registerSchema = z
-  .object({
-    lastname: z.string().min(1, 'Họ là bắt buộc'),
-    firstname: z.string().min(1, 'Tên là bắt buộc'),
-    email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
-    password: z.string().min(12, 'Mật khẩu phải có ít nhất 12 ký tự'),
-    confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Mật khẩu và xác nhận mật khẩu không khớp',
-    path: ['confirmPassword'],
-  })
-
-export type RegisterFormData = z.infer<typeof registerSchema>
+export { registerSchema, type RegisterFormData } from './auth-schemas'
 
 export interface RegisterFormProps {
   onSubmit: (data: RegisterFormData) => void | Promise<void>
   loading?: boolean
   serverError?: string | null
+  fieldErrors?: Partial<Record<keyof RegisterFormData, string>> | null
 }
 
 export default function RegisterForm({
   onSubmit,
   loading = false,
   serverError = null,
-}: RegisterFormProps) {
+  fieldErrors = null,
+}: Readonly<RegisterFormProps>) {
+  const [passwordValue, setPasswordValue] = useState('')
+
   const form = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
+    mode: 'uncontrolled',
+    initialValues: {
       lastname: '',
       firstname: '',
       email: '',
       password: '',
       confirmPassword: '',
     },
+    validate: schemaResolver(registerSchema, { sync: true }),
+    onValuesChange: (values) => {
+      setPasswordValue(values.password)
+    },
   })
 
+  const { setErrors } = form
+
+  useEffect(() => {
+    if (fieldErrors) {
+      setErrors(fieldErrors)
+    }
+  }, [fieldErrors, setErrors])
+
   return (
-    <div className="bg-surface-raised flex min-h-[calc(100vh-4rem)] items-center justify-center p-6">
-      <Form
-        form={form}
-        onSubmit={onSubmit}
-        className="bg-surface shadow-card border-border w-full max-w-md rounded-2xl border p-8"
-      >
-        <h1 className="text-ink mb-2 text-center text-2xl font-bold">
+    <Stack gap="lg">
+      <Stack gap={4} ta="center">
+        <Title order={1} size="h2">
           Tạo tài khoản
-        </h1>
-        <p className="text-ink-muted mb-8 text-center text-sm">
+        </Title>
+        <Text size="sm" c="dimmed">
           Bắt đầu hành trình nâng cao kỹ năng phỏng vấn của bạn
-        </p>
+        </Text>
+      </Stack>
 
-        {serverError && (
-          <div
-            className="bg-danger-bg text-danger border-danger/20 mb-6 rounded-lg border p-3 text-center text-sm"
-            role="alert"
-          >
-            {serverError}
-          </div>
-        )}
+      <Box
+        component="form"
+        onSubmit={form.onSubmit((values) => onSubmit(values))}
+        noValidate
+      >
+        <Stack gap="md">
+          {serverError ? (
+            <Alert
+              color="danger"
+              variant="light"
+              role="alert"
+              icon={
+                <IconAlertCircle size={18} stroke={1.5} aria-hidden="true" />
+              }
+            >
+              {serverError}
+            </Alert>
+          ) : null}
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Controller
-              control={form.control}
-              name="lastname"
-              render={({ field, fieldState }) => (
-                <FormField name="lastname" isInvalid={!!fieldState.error} isRequired>
-                  <FormLabel>Họ</FormLabel>
-                  <FormControl>
-                    <Input type="text" placeholder="Nguyễn" {...field} />
-                  </FormControl>
-                  <FormMessage>{fieldState.error?.message}</FormMessage>
-                </FormField>
-              )}
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+            <TextInput
+              withAsterisk
+              label="Họ"
+              placeholder="Nguyễn"
+              autoComplete="family-name"
+              disabled={loading}
+              key={form.key('lastname')}
+              {...form.getInputProps('lastname')}
             />
 
-            <Controller
-              control={form.control}
-              name="firstname"
-              render={({ field, fieldState }) => (
-                <FormField name="firstname" isInvalid={!!fieldState.error} isRequired>
-                  <FormLabel>Tên</FormLabel>
-                  <FormControl>
-                    <Input type="text" placeholder="Văn A" {...field} />
-                  </FormControl>
-                  <FormMessage>{fieldState.error?.message}</FormMessage>
-                </FormField>
-              )}
+            <TextInput
+              withAsterisk
+              label="Tên"
+              placeholder="Văn A"
+              autoComplete="given-name"
+              disabled={loading}
+              key={form.key('firstname')}
+              {...form.getInputProps('firstname')}
             />
-          </div>
+          </SimpleGrid>
 
-          <Controller
-            control={form.control}
-            name="email"
-            render={({ field, fieldState }) => (
-              <FormField name="email" isInvalid={!!fieldState.error} isRequired>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="Địa chỉ email của bạn" {...field} />
-                </FormControl>
-                <FormMessage>{fieldState.error?.message}</FormMessage>
-              </FormField>
-            )}
+          <TextInput
+            withAsterisk
+            type="email"
+            label="Email"
+            placeholder="Địa chỉ email của bạn"
+            autoComplete="email"
+            disabled={loading}
+            key={form.key('email')}
+            {...form.getInputProps('email')}
           />
 
-          <Controller
-            control={form.control}
-            name="password"
-            render={({ field, fieldState }) => (
-              <FormField name="password" isInvalid={!!fieldState.error} isRequired>
-                <FormLabel>Mật khẩu</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="Ít nhất 12 ký tự" {...field} />
-                </FormControl>
-                <FormMessage>{fieldState.error?.message}</FormMessage>
-              </FormField>
-            )}
+          <Stack gap="xs">
+            <PasswordInput
+              withAsterisk
+              label="Mật khẩu"
+              placeholder="Ít nhất 12 ký tự"
+              autoComplete="new-password"
+              disabled={loading}
+              key={form.key('password')}
+              {...form.getInputProps('password')}
+            />
+            <PasswordStrengthMeter password={passwordValue} />
+          </Stack>
+
+          <PasswordInput
+            withAsterisk
+            label="Xác nhận mật khẩu"
+            placeholder="Nhập lại mật khẩu"
+            autoComplete="new-password"
+            disabled={loading}
+            key={form.key('confirmPassword')}
+            {...form.getInputProps('confirmPassword')}
           />
 
-          <Controller
-            control={form.control}
-            name="confirmPassword"
-            render={({ field, fieldState }) => (
-              <FormField name="confirmPassword" isInvalid={!!fieldState.error} isRequired>
-                <FormLabel>Xác nhận Mật khẩu</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="Nhập lại mật khẩu" {...field} />
-                </FormControl>
-                <FormMessage>{fieldState.error?.message}</FormMessage>
-              </FormField>
-            )}
-          />
-        </div>
-
-        <Button type="submit" loading={loading} disabled={loading} className="mt-6 w-full">
-          Đăng ký
-        </Button>
-
-        <div className="text-ink-muted mt-6 text-center text-sm">
-          Đã có tài khoản?{' '}
-          <Link
-            href="/login"
-            className="text-brand hover:text-brand-light font-medium transition-colors"
+          <Button
+            type="submit"
+            color="brand"
+            fullWidth
+            mt="xs"
+            loading={loading}
+            disabled={loading}
           >
-            Đăng nhập ngay
-          </Link>
-        </div>
-      </Form>
-    </div>
+            Đăng ký
+          </Button>
+        </Stack>
+      </Box>
+
+      <Text size="sm" c="dimmed" ta="center">
+        Đã có tài khoản?{' '}
+        <Anchor component={Link} href="/login" size="sm" c="brand">
+          Đăng nhập ngay
+        </Anchor>
+      </Text>
+    </Stack>
   )
 }
-

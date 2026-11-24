@@ -2,36 +2,57 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useMutation } from '@tanstack/react-query'
-import { useAuth } from '@/hooks/useAuth'
+import { notifications } from '@mantine/notifications'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import RegisterForm, {
   type RegisterFormData,
 } from '@/components/auth/RegisterForm'
-import { authService } from '@/services'
+import { applyAuthenticatedSession } from '@/lib/auth-context'
+import { extractApiFieldErrors, getErrorMessage } from '@/lib/form-errors'
+import { authService } from '@/services/auth.service'
+
+const REGISTER_FIELDS = ['lastname', 'firstname', 'email', 'password'] as const
 
 export default function RegisterClient() {
   const router = useRouter()
-  const { refresh } = useAuth()
+  const queryClient = useQueryClient()
   const [serverError, setServerError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Partial<
+    Record<keyof RegisterFormData, string>
+  > | null>(null)
 
   const registerMutation = useMutation({
-    mutationFn: async (data: RegisterFormData) => {
+    mutationFn: (data: RegisterFormData) => {
       const { email, password, firstname, lastname } = data
-      await authService.register({ email, password, firstname, lastname })
-      await refresh()
+      return authService.register({ email, password, firstname, lastname })
     },
   })
 
   const onSubmit = async (data: RegisterFormData) => {
     setServerError(null)
+    setFieldErrors(null)
 
     try {
-      await registerMutation.mutateAsync(data)
+      const user = await registerMutation.mutateAsync(data)
+      applyAuthenticatedSession(queryClient, user)
+      notifications.show({
+        title: 'Đăng ký thành công',
+        message: 'Chào mừng bạn đến với Interview Coach!',
+        color: 'success',
+        closeButtonProps: { 'aria-label': 'Đóng thông báo' },
+      })
       router.replace('/sessions')
     } catch (err) {
-      setServerError(
-        err instanceof Error ? err.message : 'Không thể tạo tài khoản'
+      setFieldErrors(
+        extractApiFieldErrors(err, {
+          allowedFields: REGISTER_FIELDS,
+          codeToField: {
+            EMAIL_ALREADY_EXISTS: 'email',
+            AUTH_EMAIL_EXISTS: 'email',
+          },
+        })
       )
+      setServerError(getErrorMessage(err, 'Không thể tạo tài khoản'))
     }
   }
 
@@ -40,6 +61,7 @@ export default function RegisterClient() {
       onSubmit={onSubmit}
       loading={registerMutation.isPending}
       serverError={serverError}
+      fieldErrors={fieldErrors}
     />
   )
 }

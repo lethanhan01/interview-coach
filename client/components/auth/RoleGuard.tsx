@@ -1,26 +1,28 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { Center, Loader } from '@mantine/core'
+import { useAuth } from '@/lib/auth-context'
+
+export interface RoleGuardProps {
+  children: ReactNode
+  allowedRole: string
+  fallbackRoute: string
+}
 
 export default function RoleGuard({
   children,
   allowedRole,
   fallbackRoute,
-}: {
-  children: React.ReactNode
-  allowedRole: string
-  fallbackRoute: string
-}) {
+}: Readonly<RoleGuardProps>) {
   const { role, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     if (!isLoading) {
       if (role === null) {
-        router.replace('/login')
+        router.replace('/login?reason=session_expired')
       } else if (role !== allowedRole) {
         router.replace(fallbackRoute)
       }
@@ -29,9 +31,13 @@ export default function RoleGuard({
 
   if (isLoading || role !== allowedRole) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
+      <Center
+        mih="50dvh"
+        role="status"
+        aria-label="Đang kiểm tra quyền truy cập"
+      >
+        <Loader color="brand" size="md" />
+      </Center>
     )
   }
 

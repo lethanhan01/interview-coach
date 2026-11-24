@@ -1,101 +1,143 @@
 'use client'
 
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { Input } from '@/components/ui/Input'
-import { Button } from '@/components/ui/Button'
-import { Form } from '@/components/ui/form-adapters/rhf-form-field'
+import { useEffect } from 'react'
+import Link from 'next/link'
 import {
-  FormField,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from '@/components/form/FormField'
+  Alert,
+  Anchor,
+  Box,
+  Button,
+  Group,
+  PasswordInput,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core'
+import { schemaResolver, useForm } from '@mantine/form'
+import { IconAlertCircle, IconInfoCircle } from '@tabler/icons-react'
+import { loginSchema, type LoginFormData } from './auth-schemas'
 
-export const loginSchema = z.object({
-  email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
-  password: z.string().min(1, 'Mật khẩu là bắt buộc'),
-})
-
-export type LoginFormData = z.infer<typeof loginSchema>
+export { loginSchema, type LoginFormData } from './auth-schemas'
 
 export interface LoginFormProps {
   onSubmit: (data: LoginFormData) => void | Promise<void>
   loading?: boolean
   inactiveMessage?: string | null
+  sessionExpiredMessage?: string | null
   serverError?: string | null
+  fieldErrors?: Partial<Record<keyof LoginFormData, string>> | null
 }
 
 export default function LoginForm({
   onSubmit,
   loading = false,
   inactiveMessage = null,
+  sessionExpiredMessage = null,
   serverError = null,
-}: LoginFormProps) {
+  fieldErrors = null,
+}: Readonly<LoginFormProps>) {
   const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
+    mode: 'uncontrolled',
+    initialValues: {
       email: '',
       password: '',
     },
+    validate: schemaResolver(loginSchema, { sync: true }),
   })
 
+  const { setErrors } = form
+
+  useEffect(() => {
+    if (fieldErrors) {
+      setErrors(fieldErrors)
+    }
+  }, [fieldErrors, setErrors])
+
+  const dangerMessage = inactiveMessage ?? serverError
+
   return (
-    <Form
-      form={form}
-      onSubmit={onSubmit}
-      className="bg-surface shadow-card mx-auto mt-16 max-w-md space-y-4 rounded-xl p-6"
-    >
-      <h1 className="text-xl font-semibold">Đăng nhập</h1>
-      
-      <Controller
-        control={form.control}
-        name="email"
-        render={({ field, fieldState }) => (
-          <FormField name="email" isInvalid={!!fieldState.error} isRequired>
-            <FormLabel>Email</FormLabel>
-            <FormControl>
-              <Input type="email" placeholder="Nhập email" {...field} />
-            </FormControl>
-            <FormMessage>{fieldState.error?.message}</FormMessage>
-          </FormField>
-        )}
-      />
+    <Stack gap="lg">
+      <Stack gap={4} ta="center">
+        <Title order={1} size="h2">
+          Đăng nhập
+        </Title>
+        <Text size="sm" c="dimmed">
+          Chưa có tài khoản?{' '}
+          <Anchor component={Link} href="/register" size="sm" c="brand">
+            Đăng ký
+          </Anchor>
+        </Text>
+      </Stack>
 
-      <Controller
-        control={form.control}
-        name="password"
-        render={({ field, fieldState }) => (
-          <FormField name="password" isInvalid={!!fieldState.error} isRequired>
-            <FormLabel>Mật khẩu</FormLabel>
-            <FormControl>
-              <Input type="password" placeholder="Nhập mật khẩu" {...field} />
-            </FormControl>
-            <FormMessage>{fieldState.error?.message}</FormMessage>
-          </FormField>
-        )}
-      />
-
-      {(inactiveMessage || serverError) && (
-        <p role="alert" className="text-danger text-sm">
-          {inactiveMessage ?? serverError}
-        </p>
-      )}
-
-      <Button
-        type="submit"
-        disabled={loading}
-        className="w-full"
+      <Box
+        component="form"
+        onSubmit={form.onSubmit((values) => onSubmit(values))}
+        noValidate
       >
-        {loading ? 'Đang xử lý…' : 'Đăng nhập'}
-      </Button>
+        <Stack gap="md">
+          {dangerMessage ? (
+            <Alert
+              color="danger"
+              variant="light"
+              role="alert"
+              icon={
+                <IconAlertCircle size={18} stroke={1.5} aria-hidden="true" />
+              }
+            >
+              {dangerMessage}
+            </Alert>
+          ) : sessionExpiredMessage ? (
+            <Alert
+              color="warning"
+              variant="light"
+              role="status"
+              icon={
+                <IconInfoCircle size={18} stroke={1.5} aria-hidden="true" />
+              }
+            >
+              {sessionExpiredMessage}
+            </Alert>
+          ) : null}
 
-      <div className="text-center">
-        <a href="/register" className="text-brand text-sm underline">
-          Chưa có tài khoản? Đăng ký
-        </a>
-      </div>
-    </Form>
+          <TextInput
+            withAsterisk
+            type="email"
+            label="Email"
+            placeholder="Nhập email"
+            autoComplete="email"
+            disabled={loading}
+            key={form.key('email')}
+            {...form.getInputProps('email')}
+          />
+
+          <PasswordInput
+            withAsterisk
+            label="Mật khẩu"
+            placeholder="Nhập mật khẩu"
+            autoComplete="current-password"
+            disabled={loading}
+            key={form.key('password')}
+            {...form.getInputProps('password')}
+          />
+
+          <Group justify="flex-end">
+            <Anchor component={Link} href="/reset-password" size="sm" c="brand">
+              Quên mật khẩu?
+            </Anchor>
+          </Group>
+
+          <Button
+            type="submit"
+            color="brand"
+            fullWidth
+            loading={loading}
+            disabled={loading}
+          >
+            Đăng nhập
+          </Button>
+        </Stack>
+      </Box>
+    </Stack>
   )
 }

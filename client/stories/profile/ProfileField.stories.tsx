@@ -15,3 +15,10 @@ export default meta
 type Story = StoryObj<typeof ProfileField>
 
 export const Default: Story = {}
+
+export const Empty: Story = {
+  args: {
+    label: 'Ghi chú',
+    value: undefined,
+  },
+}

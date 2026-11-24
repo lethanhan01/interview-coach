@@ -34,6 +34,8 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
   USER_NOT_FOUND: 'Không tìm thấy thông tin người dùng.',
   INVALID_CREDENTIALS: 'Email hoặc mật khẩu không chính xác.',
   AUTH_INVALID_CREDENTIALS: 'Email hoặc mật khẩu không chính xác.',
+  ACCOUNT_INACTIVE:
+    'Tài khoản của bạn đã bị khóa hoặc vô hiệu hóa. Vui lòng liên hệ quản trị viên.',
   EMAIL_ALREADY_EXISTS: 'Email này đã được sử dụng.',
   AUTH_EMAIL_EXISTS: 'Email này đã được sử dụng.',
   EMAIL_NOT_VERIFIED:

@@ -1,6 +1,11 @@
 export const DEFAULT_AUTH_DESTINATION = '/sessions'
 
-const BLOCKED_PREFIXES = ['/login', '/callback']
+const BLOCKED_PREFIXES = [
+  '/login',
+  '/register',
+  '/reset-password',
+  '/callback',
+] as const
 
 export const PROTECTED_ROUTE_PREFIXES = [
   '/sessions',
@@ -14,7 +19,7 @@ export const PROTECTED_ROUTE_PREFIXES = [
   '/users',
 ] as const
 
-function matchesPathPrefix(pathname: string, prefix: string): boolean {
+export function matchesPathPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`)
 }
 
@@ -37,8 +42,9 @@ export function getSafeNext(next: string | null | undefined): string {
 
   try {
     const target = new URL(next, 'https://interviewcoach.local')
-    if (target.origin !== 'https://interviewcoach.local')
+    if (target.origin !== 'https://interviewcoach.local') {
       return DEFAULT_AUTH_DESTINATION
+    }
     if (
       BLOCKED_PREFIXES.some((prefix) =>
         matchesPathPrefix(target.pathname, prefix)

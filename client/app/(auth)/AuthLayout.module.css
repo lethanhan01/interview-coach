@@ -1,0 +1,27 @@
+.wrapper {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--mantine-color-body);
+}
+
+.header {
+  width: 100%;
+  padding: var(--mantine-spacing-md) var(--mantine-spacing-lg);
+}
+
+.brandLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mantine-spacing-xs);
+  color: var(--mantine-color-text);
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mantine-spacing-md);
+  padding-bottom: var(--mantine-spacing-xl);
+}

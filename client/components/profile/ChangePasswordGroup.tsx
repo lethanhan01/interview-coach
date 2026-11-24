@@ -1,197 +1,176 @@
 'use client'
 
 import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { KeyRound, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import {
+  Alert,
+  Box,
+  Button,
+  Group,
+  PasswordInput,
+  SimpleGrid,
+  Stack,
+} from '@mantine/core'
+import { schemaResolver, useForm } from '@mantine/form'
+import { notifications } from '@mantine/notifications'
+import { IconAlertCircle, IconCheck, IconKey } from '@tabler/icons-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  changePasswordSchema,
+  type ChangePasswordFormData,
+} from '@/components/auth/auth-schemas'
+import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter'
+import { extractApiFieldErrors, getErrorMessage } from '@/lib/form-errors'
+import { queryKeys } from '@/lib/query-client'
+import { authService } from '@/services/auth.service'
 import ProfileSection from './ProfileSection'
-import Button from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
-import { authService } from '@/services'
 
-const FIELD_CONTAINER_CLASS = 'flex flex-col gap-1.5'
+const CHANGE_PASSWORD_FIELDS = ['currentPassword', 'newPassword'] as const
 
 export default function ChangePasswordGroup() {
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+  const queryClient = useQueryClient()
+  const [newPasswordValue, setNewPasswordValue] = useState('')
+  const [serverError, setServerError] = useState<string | null>(null)
+  const [isSuccess, setIsSuccess] = useState(false)
 
-  const [showCurrent, setShowCurrent] = useState(false)
-  const [showNew, setShowNew] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
-
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const form = useForm<ChangePasswordFormData>({
+    mode: 'uncontrolled',
+    initialValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+    validate: schemaResolver(changePasswordSchema, { sync: true }),
+    onValuesChange: (values) => {
+      setNewPasswordValue(values.newPassword)
+    },
+  })
 
   const changePasswordMutation = useMutation({
-    mutationFn: ({ current, next }: { current: string; next: string }) =>
-      authService.changePassword(current, next),
+    mutationFn: ({
+      currentPassword,
+      newPassword,
+    }: {
+      currentPassword: string
+      newPassword: string
+    }) => authService.changePassword(currentPassword, newPassword),
   })
 
   const loading = changePasswordMutation.isPending
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setSuccess(false)
-
-    if (!currentPassword) {
-      setError('Vui lòng nhập mật khẩu hiện tại.')
-      return
-    }
-
-    if (newPassword.length < 8) {
-      setError('Mật khẩu mới phải có ít nhất 8 ký tự.')
-      return
-    }
-
-    if (newPassword === currentPassword) {
-      setError('Mật khẩu mới không được trùng với mật khẩu hiện tại.')
-      return
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp.')
-      return
-    }
+  async function handleSubmit(values: ChangePasswordFormData) {
+    setServerError(null)
+    setIsSuccess(false)
 
     try {
-      await changePasswordMutation.mutateAsync({
-        current: currentPassword,
-        next: newPassword,
+      const updatedUser = await changePasswordMutation.mutateAsync({
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
       })
-      setSuccess(true)
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
+      if (updatedUser) {
+        queryClient.setQueryData(queryKeys.auth.me(), updatedUser)
+      }
+      form.reset()
+      setNewPasswordValue('')
+      setIsSuccess(true)
+      notifications.show({
+        title: 'Đổi mật khẩu thành công',
+        message: 'Mật khẩu tài khoản của bạn đã được cập nhật.',
+        color: 'success',
+        closeButtonProps: { 'aria-label': 'Đóng thông báo' },
+      })
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Đổi mật khẩu không thành công.'
-      )
+      const mapped = extractApiFieldErrors(err, {
+        allowedFields: CHANGE_PASSWORD_FIELDS,
+        codeToField: {
+          INVALID_CREDENTIALS: 'currentPassword',
+          AUTH_INVALID_CREDENTIALS: 'currentPassword',
+        },
+      })
+      if (mapped) form.setErrors(mapped)
+      setServerError(getErrorMessage(err, 'Đổi mật khẩu không thành công.'))
     }
   }
 
   return (
     <ProfileSection title="Đổi mật khẩu & Bảo mật">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {success && (
-          <output
-            aria-live="polite"
-            className="bg-success-subtle text-success flex items-center gap-2 rounded-lg p-3 text-sm"
-          >
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            <span>Đổi mật khẩu thành công!</span>
-          </output>
-        )}
+      <Box component="form" onSubmit={form.onSubmit(handleSubmit)} noValidate>
+        <Stack gap="md">
+          {isSuccess ? (
+            <Alert
+              color="success"
+              variant="light"
+              role="status"
+              icon={<IconCheck size={18} stroke={1.5} aria-hidden="true" />}
+            >
+              Đổi mật khẩu thành công!
+            </Alert>
+          ) : null}
 
-        {error && (
-          <div
-            role="alert"
-            className="bg-danger-subtle text-danger flex items-center gap-2 rounded-lg p-3 text-sm"
-          >
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
+          {serverError ? (
+            <Alert
+              color="danger"
+              variant="light"
+              role="alert"
+              icon={
+                <IconAlertCircle size={18} stroke={1.5} aria-hidden="true" />
+              }
+            >
+              {serverError}
+            </Alert>
+          ) : null}
 
-        <div className={FIELD_CONTAINER_CLASS}>
-          <Label htmlFor="current-password">Mật khẩu hiện tại</Label>
-          <Input
+          <PasswordInput
             id="current-password"
-            type={showCurrent ? 'text' : 'password'}
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder="••••••••"
+            withAsterisk
+            label="Mật khẩu hiện tại"
+            placeholder="Nhập mật khẩu hiện tại"
+            autoComplete="current-password"
             disabled={loading}
-            trailingAction={
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="size-8"
-                onClick={() => setShowCurrent(!showCurrent)}
-                aria-label={showCurrent ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              >
-                {showCurrent ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-            }
+            key={form.key('currentPassword')}
+            {...form.getInputProps('currentPassword')}
           />
-        </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className={FIELD_CONTAINER_CLASS}>
-            <Label htmlFor="new-password">Mật khẩu mới</Label>
-            <Input
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+            <PasswordInput
               id="new-password"
-              type={showNew ? 'text' : 'password'}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Tối thiểu 8 ký tự"
+              withAsterisk
+              label="Mật khẩu mới"
+              placeholder="Tối thiểu 12 ký tự"
+              autoComplete="new-password"
               disabled={loading}
-              trailingAction={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  onClick={() => setShowNew(!showNew)}
-                  aria-label={showNew ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                >
-                  {showNew ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              }
+              key={form.key('newPassword')}
+              {...form.getInputProps('newPassword')}
             />
-          </div>
 
-          <div className={FIELD_CONTAINER_CLASS}>
-            <Label htmlFor="confirm-password">Xác nhận mật khẩu mới</Label>
-            <Input
+            <PasswordInput
               id="confirm-password"
-              type={showConfirm ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              withAsterisk
+              label="Xác nhận mật khẩu mới"
               placeholder="Nhập lại mật khẩu mới"
+              autoComplete="new-password"
               disabled={loading}
-              trailingAction={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  onClick={() => setShowConfirm(!showConfirm)}
-                  aria-label={showConfirm ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                >
-                  {showConfirm ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              }
+              key={form.key('confirmPassword')}
+              {...form.getInputProps('confirmPassword')}
             />
-          </div>
-        </div>
+          </SimpleGrid>
 
-        <div className="pt-2">
-          <Button
-            type="submit"
-            loading={loading}
-            disabled={loading}
-            className="flex items-center gap-2"
-          >
-            <KeyRound className="h-4 w-4" />
-            Cập nhật mật khẩu
-          </Button>
-        </div>
-      </form>
+          <PasswordStrengthMeter password={newPasswordValue} />
+
+          <Group pt="xs">
+            <Button
+              type="submit"
+              color="brand"
+              loading={loading}
+              disabled={loading}
+              leftSection={
+                <IconKey size={16} stroke={1.5} aria-hidden="true" />
+              }
+            >
+              Cập nhật mật khẩu
+            </Button>
+          </Group>
+        </Stack>
+      </Box>
     </ProfileSection>
   )
 }

@@ -6,11 +6,13 @@ const meta: Meta<typeof PersonalInfoGroup> = {
   component: PersonalInfoGroup,
   tags: ['autodocs'],
   args: {
-    // Add default args here based on component props
-    data: {},
+    data: {
+      lastname: 'Nguyễn Văn',
+      firstname: 'An',
+    },
     onSave: async () => {
-      await new Promise(r => setTimeout(r, 1000))
-    }
+      await new Promise((resolve) => setTimeout(resolve, 400))
+    },
   },
 }
 

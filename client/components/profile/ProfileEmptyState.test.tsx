@@ -1,11 +1,14 @@
-import { render } from '@testing-library/react'
-import { expect, it, describe } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import { render, screen } from '@test-utils'
 import ProfileEmptyState from './ProfileEmptyState'
 
 describe('ProfileEmptyState', () => {
-  it('renders correctly', () => {
-    const { container } = render(<ProfileEmptyState message="No data" />)
-    expect(container).toBeInTheDocument()
+  it('renders empty state message and forwards className', () => {
+    render(
+      <ProfileEmptyState message="Chưa có thông tin" className="custom-empty" />
+    )
+    const node = screen.getByText('Chưa có thông tin')
+    expect(node).toBeInTheDocument()
+    expect(node).toHaveClass('custom-empty')
   })
 })
-

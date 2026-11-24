@@ -2,47 +2,62 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useMutation } from '@tanstack/react-query'
-import { getSafeNext } from '@/lib/auth-redirect'
-import { useAuth } from '@/hooks/useAuth'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import LoginForm, { type LoginFormData } from '@/components/auth/LoginForm'
-import { authService } from '@/services'
+import { applyAuthenticatedSession } from '@/lib/auth-context'
+import { getSafeNext } from '@/lib/auth-redirect'
+import { extractApiFieldErrors, getErrorMessage } from '@/lib/form-errors'
+import { authService } from '@/services/auth.service'
+
+const LOGIN_FIELDS = ['email', 'password'] as const
 
 export default function LoginClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const next = useMemo(
-    () => getSafeNext(searchParams.get('next')),
-    [searchParams]
-  )
+  const queryClient = useQueryClient()
+
+  const rawNext = searchParams.get('next')
+  const safeNext = useMemo(() => getSafeNext(rawNext), [rawNext])
+
   const inactiveMessage =
     searchParams.get('error') === 'account_inactive'
       ? 'Tài khoản của bạn đã bị khóa hoặc xóa. Vui lòng liên hệ quản trị viên.'
       : null
 
+  const sessionExpiredMessage =
+    searchParams.get('reason') === 'session_expired'
+      ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+      : null
+
   const [serverError, setServerError] = useState<string | null>(null)
-  const { refresh } = useAuth()
+  const [fieldErrors, setFieldErrors] = useState<Partial<
+    Record<keyof LoginFormData, string>
+  > | null>(null)
 
   const loginMutation = useMutation({
-    mutationFn: async (data: LoginFormData) => {
-      await authService.login(data)
-      return refresh()
-    },
+    mutationFn: (data: LoginFormData) => authService.login(data),
   })
 
   const onSubmit = async (data: LoginFormData) => {
     setServerError(null)
+    setFieldErrors(null)
 
     try {
-      const role = await loginMutation.mutateAsync(data)
-      const rawNext = searchParams.get('next')
+      const user = await loginMutation.mutateAsync(data)
+      applyAuthenticatedSession(queryClient, user)
+
       if (!rawNext || !rawNext.startsWith('/')) {
-        router.replace(role === 'admin' ? '/admin/dashboard' : '/sessions')
+        router.replace(user.role === 'admin' ? '/admin/dashboard' : '/sessions')
       } else {
-        router.replace(next)
+        router.replace(safeNext)
       }
     } catch (err) {
-      setServerError(err instanceof Error ? err.message : 'Không thể đăng nhập')
+      setFieldErrors(
+        extractApiFieldErrors(err, {
+          allowedFields: LOGIN_FIELDS,
+        })
+      )
+      setServerError(getErrorMessage(err, 'Không thể đăng nhập'))
     }
   }
 
@@ -51,7 +66,9 @@ export default function LoginClient() {
       onSubmit={onSubmit}
       loading={loginMutation.isPending}
       inactiveMessage={inactiveMessage}
+      sessionExpiredMessage={sessionExpiredMessage}
       serverError={serverError}
+      fieldErrors={fieldErrors}
     />
   )
 }

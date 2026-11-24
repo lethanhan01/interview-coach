@@ -1,113 +1,192 @@
 'use client'
 
 import { useState } from 'react'
-import { PencilLine } from 'lucide-react'
-import Button from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
-import ProfileSection from './ProfileSection'
+import {
+  Alert,
+  Box,
+  Button,
+  Group,
+  SimpleGrid,
+  Stack,
+  TextInput,
+} from '@mantine/core'
+import { schemaResolver, useForm } from '@mantine/form'
+import { useDisclosure } from '@mantine/hooks'
+import { notifications } from '@mantine/notifications'
+import { IconAlertCircle, IconPencil } from '@tabler/icons-react'
+import {
+  personalInfoSchema,
+  type PersonalInfoFormData,
+} from '@/components/auth/auth-schemas'
+import { extractApiFieldErrors, getErrorMessage } from '@/lib/form-errors'
 import ProfileField from './ProfileField'
+import ProfileSection from './ProfileSection'
 
-interface PersonalInfoData {
+export interface PersonalInfoData {
   firstname?: string
   lastname?: string
 }
 
-interface Props {
+export interface PersonalInfoGroupProps {
   data: PersonalInfoData
   onSave: (data: PersonalInfoData) => Promise<void>
 }
 
-export default function PersonalInfoGroup({ data, onSave }: Props) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [form, setForm] = useState<PersonalInfoData>(data)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+const PERSONAL_INFO_FIELDS = ['lastname', 'firstname'] as const
 
-  function handleEdit() {
-    setForm(data)
-    setError(null)
-    setIsEditing(true)
+export default function PersonalInfoGroup({
+  data,
+  onSave,
+}: Readonly<PersonalInfoGroupProps>) {
+  const [isEditing, { open: openEdit, close: closeEdit }] = useDisclosure(false)
+  const [saving, setSaving] = useState(false)
+  const [serverError, setServerError] = useState<string | null>(null)
+
+  const form = useForm<PersonalInfoFormData>({
+    mode: 'uncontrolled',
+    initialValues: {
+      lastname: data.lastname ?? '',
+      firstname: data.firstname ?? '',
+    },
+    validate: schemaResolver(personalInfoSchema, { sync: true }),
+  })
+
+  function handleStartEdit() {
+    form.setValues({
+      lastname: data.lastname ?? '',
+      firstname: data.firstname ?? '',
+    })
+    form.clearErrors()
+    setServerError(null)
+    openEdit()
   }
 
   function handleCancel() {
-    setForm(data)
-    setError(null)
-    setIsEditing(false)
+    form.setValues({
+      lastname: data.lastname ?? '',
+      firstname: data.firstname ?? '',
+    })
+    form.clearErrors()
+    setServerError(null)
+    closeEdit()
   }
 
-  async function handleSave() {
+  async function handleSubmit(values: PersonalInfoFormData) {
     setSaving(true)
-    setError(null)
+    setServerError(null)
+
     try {
-      await onSave(form)
-      setIsEditing(false)
+      await onSave({
+        lastname: values.lastname.trim(),
+        firstname: values.firstname.trim(),
+      })
+      notifications.show({
+        title: 'Đã cập nhật',
+        message: 'Thông tin cá nhân đã được lưu thành công.',
+        color: 'success',
+        closeButtonProps: { 'aria-label': 'Đóng thông báo' },
+      })
+      closeEdit()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lưu thất bại')
+      const mapped = extractApiFieldErrors(err, {
+        allowedFields: PERSONAL_INFO_FIELDS,
+      })
+      if (mapped) form.setErrors(mapped)
+      setServerError(getErrorMessage(err, 'Lưu thất bại'))
     } finally {
       setSaving(false)
     }
   }
 
-  function set(field: keyof PersonalInfoData, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }))
-  }
+  const fullName =
+    [data.lastname, data.firstname].filter(Boolean).join(' ') || undefined
 
   return (
     <ProfileSection
       title="Thông tin cá nhân"
       action={
         !isEditing ? (
-          <Button variant="ghost" size="sm" onClick={handleEdit}>
-            <PencilLine className="h-4 w-4" aria-hidden="true" />
+          <Button
+            type="button"
+            variant="light"
+            color="brand"
+            size="xs"
+            leftSection={
+              <IconPencil size={14} stroke={1.5} aria-hidden="true" />
+            }
+            onClick={handleStartEdit}
+          >
             Chỉnh sửa
           </Button>
         ) : undefined
       }
     >
       {!isEditing ? (
-        <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-          <ProfileField
-            label="Họ và tên"
-            value={[data.lastname, data.firstname].filter(Boolean).join(' ') || undefined}
-          />
-        </dl>
+        <Box component="dl" m={0}>
+          <ProfileField label="Họ và tên" value={fullName} />
+        </Box>
       ) : (
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="profile-lastname">Họ</Label>
-              <Input
+        <Box component="form" onSubmit={form.onSubmit(handleSubmit)} noValidate>
+          <Stack gap="md">
+            {serverError ? (
+              <Alert
+                color="danger"
+                variant="light"
+                role="alert"
+                icon={
+                  <IconAlertCircle size={18} stroke={1.5} aria-hidden="true" />
+                }
+              >
+                {serverError}
+              </Alert>
+            ) : null}
+
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+              <TextInput
                 id="profile-lastname"
-                value={form.lastname ?? ''}
-                onChange={(e) => set('lastname', e.target.value)}
+                withAsterisk
+                label="Họ"
                 placeholder="Nguyễn Văn"
+                autoComplete="family-name"
                 disabled={saving}
+                key={form.key('lastname')}
+                {...form.getInputProps('lastname')}
               />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="profile-firstname">Tên</Label>
-              <Input
+
+              <TextInput
                 id="profile-firstname"
-                value={form.firstname ?? ''}
-                onChange={(e) => set('firstname', e.target.value)}
+                withAsterisk
+                label="Tên"
                 placeholder="A"
+                autoComplete="given-name"
                 disabled={saving}
+                key={form.key('firstname')}
+                {...form.getInputProps('firstname')}
               />
-            </div>
-          </div>
-          {error && <p className="text-danger text-sm">{error}</p>}
-          <div className="flex gap-2">
-            <Button onClick={handleSave} loading={saving} disabled={saving}>
-              Lưu thay đổi
-            </Button>
-            <Button variant="ghost" onClick={handleCancel} disabled={saving}>
-              Hủy
-            </Button>
-          </div>
-        </div>
+            </SimpleGrid>
+
+            <Group gap="xs">
+              <Button
+                type="submit"
+                color="brand"
+                loading={saving}
+                disabled={saving}
+              >
+                Lưu thay đổi
+              </Button>
+              <Button
+                type="button"
+                variant="subtle"
+                color="neutral"
+                onClick={handleCancel}
+                disabled={saving}
+              >
+                Hủy
+              </Button>
+            </Group>
+          </Stack>
+        </Box>
       )}
     </ProfileSection>
   )
 }
-

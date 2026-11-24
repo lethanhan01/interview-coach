@@ -1,13 +1,24 @@
+import type { ReactNode } from 'react'
+import { Box, Container, Paper } from '@mantine/core'
+import { AuthHeader } from './_components/AuthHeader'
+import classes from './AuthLayout.module.css'
+
 export default function AuthLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: ReactNode
+}>) {
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center p-4">
-      <div className="border-border bg-card text-card-foreground w-full max-w-md rounded-2xl border p-8 shadow-lg">
-        {children}
-      </div>
-    </div>
+    <Box className={classes.wrapper}>
+      <AuthHeader />
+
+      <Box component="main" className={classes.main}>
+        <Container size={440} w="100%" px={0}>
+          <Paper withBorder shadow="sm" p="xl" radius="md">
+            {children}
+          </Paper>
+        </Container>
+      </Box>
+    </Box>
   )
 }

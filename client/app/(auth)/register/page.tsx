@@ -1,5 +1,5 @@
+import type { Metadata } from 'next'
 import RegisterClient from './RegisterClient'
-import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Đăng ký | InterviewCoach',
@@ -8,9 +8,5 @@ export const metadata: Metadata = {
 }
 
 export default function RegisterPage() {
-  return (
-    <main>
-      <RegisterClient />
-    </main>
-  )
+  return <RegisterClient />
 }

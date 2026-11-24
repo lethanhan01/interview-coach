@@ -1,61 +1,124 @@
 'use client'
 
-import { ShieldCheck, Mail, UserCheck } from 'lucide-react'
+import { Badge, Group, SimpleGrid, Stack, Text, ThemeIcon } from '@mantine/core'
+import {
+  IconCalendar,
+  IconMail,
+  IconShieldCheck,
+  IconUserCheck,
+} from '@tabler/icons-react'
+import { formatVietnamDateTime } from '@/lib/date-time'
+import type { SemanticColor } from '@/theme'
 import ProfileSection from './ProfileSection'
-import { Badge } from '@/components/ui/Badge'
 
-interface AccountInfoGroupProps {
+export interface AccountInfoGroupProps {
   email?: string
   role?: string
   status?: string
+  createdAt?: string
+}
+
+interface StatusPresentation {
+  label: string
+  color: SemanticColor
+}
+
+function getStatusPresentation(status: string): StatusPresentation {
+  switch (status) {
+    case 'active':
+      return { label: 'Đang hoạt động', color: 'success' }
+    case 'password_reset_required':
+      return { label: 'Cần đặt lại mật khẩu', color: 'warning' }
+    case 'locked':
+      return { label: 'Tạm khóa', color: 'danger' }
+    case 'deleted':
+      return { label: 'Đã xóa', color: 'danger' }
+    default:
+      return { label: status, color: 'neutral' }
+  }
+}
+
+function formatCreatedAt(iso?: string): string {
+  if (!iso) return 'Chưa cập nhật'
+  const parsed = new Date(iso)
+  if (Number.isNaN(parsed.getTime())) return 'Chưa cập nhật'
+  return formatVietnamDateTime(iso)
 }
 
 export default function AccountInfoGroup({
   email,
   role = 'candidate',
   status = 'active',
-}: AccountInfoGroupProps) {
-  const roleLabel = role === 'admin' ? 'Quản trị viên' : 'Ứng viên'
-  const isStatusActive = status === 'active'
+  createdAt,
+}: Readonly<AccountInfoGroupProps>) {
+  const isAdmin = role === 'admin'
+  const roleLabel = isAdmin ? 'Quản trị viên' : 'Ứng viên'
+  const statusMeta = getStatusPresentation(status)
+  const createdAtLabel = formatCreatedAt(createdAt)
 
   return (
     <ProfileSection title="Thông tin tài khoản">
-      <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
-        <div className="flex flex-col gap-1">
-          <dt className="text-ink-muted flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider">
-            <Mail className="h-3.5 w-3.5 text-brand" />
-            Email đăng nhập
-          </dt>
-          <dd className="text-ink font-medium">{email || 'Chưa cập nhật'}</dd>
-        </div>
+      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+        <Stack gap={4}>
+          <Group gap={6} wrap="nowrap">
+            <ThemeIcon color="brand" variant="transparent" size="xs">
+              <IconMail size={14} stroke={1.5} aria-hidden="true" />
+            </ThemeIcon>
+            <Text size="xs" c="dimmed" fw={500} tt="uppercase">
+              Email đăng nhập
+            </Text>
+          </Group>
+          <Text size="sm" fw={500}>
+            {email || 'Chưa cập nhật'}
+          </Text>
+        </Stack>
 
-        <div className="flex flex-col gap-1">
-          <dt className="text-ink-muted flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider">
-            <UserCheck className="h-3.5 w-3.5 text-brand" />
-            Vai trò hệ thống
-          </dt>
-          <dd>
-            <Badge variant="secondary" className="font-medium">
+        <Stack gap={4}>
+          <Group gap={6} wrap="nowrap">
+            <ThemeIcon color="brand" variant="transparent" size="xs">
+              <IconUserCheck size={14} stroke={1.5} aria-hidden="true" />
+            </ThemeIcon>
+            <Text size="xs" c="dimmed" fw={500} tt="uppercase">
+              Vai trò hệ thống
+            </Text>
+          </Group>
+          <Group>
+            <Badge color={isAdmin ? 'brand' : 'neutral'} variant="light">
               {roleLabel}
             </Badge>
-          </dd>
-        </div>
+          </Group>
+        </Stack>
 
-        <div className="flex flex-col gap-1">
-          <dt className="text-ink-muted flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider">
-            <ShieldCheck className="h-3.5 w-3.5 text-success" />
-            Trạng thái tài khoản
-          </dt>
-          <dd>
-            <Badge
-              variant={isStatusActive ? 'success' : 'danger'}
-              className="font-medium"
-            >
-              {isStatusActive ? 'Đang hoạt động' : 'Tạm khóa'}
+        <Stack gap={4}>
+          <Group gap={6} wrap="nowrap">
+            <ThemeIcon color={statusMeta.color} variant="transparent" size="xs">
+              <IconShieldCheck size={14} stroke={1.5} aria-hidden="true" />
+            </ThemeIcon>
+            <Text size="xs" c="dimmed" fw={500} tt="uppercase">
+              Trạng thái tài khoản
+            </Text>
+          </Group>
+          <Group>
+            <Badge color={statusMeta.color} variant="light">
+              {statusMeta.label}
             </Badge>
-          </dd>
-        </div>
-      </dl>
+          </Group>
+        </Stack>
+
+        <Stack gap={4}>
+          <Group gap={6} wrap="nowrap">
+            <ThemeIcon color="neutral" variant="transparent" size="xs">
+              <IconCalendar size={14} stroke={1.5} aria-hidden="true" />
+            </ThemeIcon>
+            <Text size="xs" c="dimmed" fw={500} tt="uppercase">
+              Ngày tạo tài khoản
+            </Text>
+          </Group>
+          <Text size="sm" fw={500}>
+            {createdAtLabel}
+          </Text>
+        </Stack>
+      </SimpleGrid>
     </ProfileSection>
   )
 }

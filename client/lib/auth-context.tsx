@@ -16,7 +16,7 @@ import {
 } from '@tanstack/react-query'
 import { authQueries, queryKeys } from '@/lib/query-client'
 import { authService } from '@/services/auth.service'
-import type { CurrentUser, UserRole } from '@/types'
+import type { AuthUser, CurrentUser, UserRole } from '@/types'
 
 function clearSessionCache(queryClient: QueryClient): void {
   queryClient.setQueryData(queryKeys.auth.me(), null)
@@ -25,6 +25,21 @@ function clearSessionCache(queryClient: QueryClient): void {
       !(query.queryKey[0] === 'auth' && query.queryKey[1] === 'me'),
   })
   queryClient.getMutationCache().clear()
+}
+
+/**
+ * Ghi người dùng vừa xác thực vào cache `auth.me` và xóa sạch cache nghiệp vụ
+ * của phiên cũ (nếu có) để ngăn rò rỉ dữ liệu giữa các tài khoản.
+ */
+export function applyAuthenticatedSession(
+  queryClient: QueryClient,
+  user: AuthUser
+): void {
+  queryClient.removeQueries({
+    predicate: (query) =>
+      !(query.queryKey[0] === 'auth' && query.queryKey[1] === 'me'),
+  })
+  queryClient.setQueryData(queryKeys.auth.me(), user)
 }
 
 type AuthContextValue = {

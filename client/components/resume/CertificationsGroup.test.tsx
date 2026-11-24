@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render } from '@test-utils'
 import { expect, it, describe, vi } from 'vitest'
 import CertificationsGroup from './CertificationsGroup'
 

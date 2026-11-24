@@ -1,15 +1,24 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { Container, Paper } from '@mantine/core'
 import RegisterForm from './RegisterForm'
 
 const meta: Meta<typeof RegisterForm> = {
   title: 'Feature/Auth/RegisterForm',
   component: RegisterForm,
-  parameters: {
-    layout: 'fullscreen',
-  },
   tags: ['autodocs'],
-  argTypes: {
-    onSubmit: { action: 'submitted' },
+  decorators: [
+    (Story) => (
+      <Container size={440} py="xl">
+        <Paper withBorder shadow="sm" p="xl" radius="md">
+          <Story />
+        </Paper>
+      </Container>
+    ),
+  ],
+  args: {
+    onSubmit: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 400))
+    },
   },
 }
 

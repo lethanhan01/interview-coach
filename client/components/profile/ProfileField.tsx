@@ -1,6 +1,7 @@
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import { Stack, Text } from '@mantine/core'
 
-interface ProfileFieldProps {
+export interface ProfileFieldProps {
   label: string
   value?: ReactNode
   emptyValue?: ReactNode
@@ -11,15 +12,19 @@ export default function ProfileField({
   label,
   value,
   emptyValue = '—',
-  className = '',
-}: ProfileFieldProps) {
+  className,
+}: Readonly<ProfileFieldProps>) {
   const displayValue =
     value === null || value === undefined || value === '' ? emptyValue : value
 
   return (
-    <div className={className}>
-      <dt className="text-ink-muted text-xs font-medium">{label}</dt>
-      <dd className="text-ink mt-0.5 text-sm">{displayValue}</dd>
-    </div>
+    <Stack gap={2} className={className}>
+      <Text component="dt" size="xs" c="dimmed" fw={500}>
+        {label}
+      </Text>
+      <Text component="dd" size="sm" m={0}>
+        {displayValue}
+      </Text>
+    </Stack>
   )
 }

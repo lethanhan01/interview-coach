@@ -8,7 +8,11 @@ import {
   userEvent,
   waitFor,
 } from '@test-utils'
-import { AuthProvider, useAuth } from '@/lib/auth-context'
+import {
+  applyAuthenticatedSession,
+  AuthProvider,
+  useAuth,
+} from '@/lib/auth-context'
 import { queryKeys } from '@/lib/query-client'
 import { authService } from '@/services/auth.service'
 import type { AuthUser, UserRole } from '@/types'
@@ -230,5 +234,17 @@ describe('AuthProvider (TanStack Query v5)', () => {
     expect(queryClient.getQueryData(queryKeys.auth.me())).toBeNull()
     expect(authService.logout).toHaveBeenCalledTimes(1)
     expect(authService.getMe).toHaveBeenCalledTimes(1)
+  })
+
+  it('applyAuthenticatedSession clears stale non-auth cache and writes the new user into auth.me', () => {
+    const queryClient = createTestQueryClient()
+    queryClient.setQueryData(['sessions', 'list'], [{ id: 'old-session' }])
+    queryClient.setQueryData(queryKeys.users.me(), { id: 'old-user' })
+
+    applyAuthenticatedSession(queryClient, mockAdminUser)
+
+    expect(queryClient.getQueryData(['sessions', 'list'])).toBeUndefined()
+    expect(queryClient.getQueryData(queryKeys.users.me())).toBeUndefined()
+    expect(queryClient.getQueryData(queryKeys.auth.me())).toEqual(mockAdminUser)
   })
 })

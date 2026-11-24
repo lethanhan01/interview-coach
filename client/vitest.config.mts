@@ -56,6 +56,7 @@ export default defineConfig({
             'components/**/*.test.{ts,tsx}',
             'app/**/*.test.{ts,tsx}',
             'lib/**/*.test.{ts,tsx}',
+            'middleware/**/*.test.{ts,tsx}',
             'hooks/**/*.test.{ts,tsx}',
             'test-utils/**/*.test.{ts,tsx}',
             'scripts/**/*.test.{ts,tsx}',

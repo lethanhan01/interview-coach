@@ -1,11 +1,28 @@
-import { render } from '@testing-library/react'
-import { expect, it, describe } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import { Box } from '@mantine/core'
+import { render, screen } from '@test-utils'
 import ProfileField from './ProfileField'
 
 describe('ProfileField', () => {
-  it('renders correctly', () => {
-    const { container } = render(<ProfileField label="Name" value="Test" />)
-    expect(container).toBeInTheDocument()
+  it('renders label and value', () => {
+    render(
+      <Box component="dl">
+        <ProfileField label="Chuyên môn" value="Frontend Engineer" />
+      </Box>
+    )
+
+    expect(screen.getByText('Chuyên môn')).toBeInTheDocument()
+    expect(screen.getByText('Frontend Engineer')).toBeInTheDocument()
+  })
+
+  it('renders emptyValue fallback when value is empty or undefined', () => {
+    render(
+      <Box component="dl">
+        <ProfileField label="Ghi chú" value="" emptyValue="Chưa có" />
+      </Box>
+    )
+
+    expect(screen.getByText('Ghi chú')).toBeInTheDocument()
+    expect(screen.getByText('Chưa có')).toBeInTheDocument()
   })
 })
-
