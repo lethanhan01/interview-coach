@@ -1,17 +1,9 @@
-import React from 'react'
-import { render, screen, waitFor, fireEvent } from '@test-utils'
-import { vi, describe, it, expect, beforeEach } from 'vitest'
-import JdLibraryPage from './page'
+import { render, screen, userEvent, waitFor } from '@test-utils'
+import { axe } from 'jest-axe'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { prepService } from '@/services/prep.service'
 import type { SavedJobDescription } from '@/types'
-
-const mockPush = vi.fn()
-
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
-}))
+import JdLibraryClient from './_components/JdLibraryClient'
 
 vi.mock('@/services/prep.service', () => ({
   prepService: {
@@ -30,7 +22,8 @@ const mockJdList: SavedJobDescription[] = [
     location: 'TP. Hồ Chí Minh',
     requirements: '2+ năm kinh nghiệm Node.js, Golang, microservices.',
     jobContent: 'Thiết kế API hệ thống thanh toán ZaloPay.',
-    techStack: ['Node.js', 'Go', 'Docker', 'PostgreSQL'],
+    techStack: ['Node.js', 'Go', 'Docker', 'PostgreSQL', 'Redis', 'Kafka'],
+    salary: '30-45 triệu VNĐ',
     onetSocCode: '15-1252.00',
     onetOccupationTitle: 'Software Developers',
     targetSfiaLevel: 3,
@@ -52,94 +45,113 @@ const mockJdList: SavedJobDescription[] = [
   },
 ]
 
-describe('JdLibraryPage', () => {
+describe('JdLibraryClient', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('renders loading state initially', () => {
+  it('renders accessible loading state initially', () => {
     vi.mocked(prepService.getSavedJobDescriptions).mockReturnValue(
       new Promise(() => {})
     )
-    render(<JdLibraryPage />)
-    expect(
-      screen.getByText('Đang tải danh sách Job Descriptions...')
-    ).toBeInTheDocument()
-  })
-
-  it('renders error state when fetch fails', async () => {
-    vi.mocked(prepService.getSavedJobDescriptions).mockRejectedValue(
-      new Error('Lỗi kết nối máy chủ')
+    render(<JdLibraryClient />)
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Đang tải danh sách Job Descriptions...'
     )
-    render(<JdLibraryPage />)
-    await waitFor(() => {
-      expect(screen.getByText('Lỗi kết nối máy chủ')).toBeInTheDocument()
-    })
   })
 
-  it('renders empty state when no saved JDs exist', async () => {
+  it('renders error alert and retries when clicking Thử lại', async () => {
+    const user = userEvent.setup()
+    vi.mocked(prepService.getSavedJobDescriptions)
+      .mockRejectedValueOnce(new Error('Lỗi kết nối máy chủ'))
+      .mockResolvedValueOnce(mockJdList)
+
+    render(<JdLibraryClient />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Lỗi kết nối máy chủ'
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Thử lại' }))
+
+    expect(await screen.findByText('VNG Corporation')).toBeInTheDocument()
+    expect(prepService.getSavedJobDescriptions).toHaveBeenCalledTimes(2)
+  })
+
+  it('renders empty state with semantic links to /setup?new=1', async () => {
     vi.mocked(prepService.getSavedJobDescriptions).mockResolvedValue([])
-    render(<JdLibraryPage />)
-    await waitFor(() => {
-      expect(
-        screen.getByText('Chưa có Job Description nào')
-      ).toBeInTheDocument()
-    })
-    const createBtns = screen.getAllByRole('button', { name: /Tạo phiên mới/i })
-    expect(createBtns.length).toBeGreaterThan(0)
-    fireEvent.click(createBtns[0])
-    expect(mockPush).toHaveBeenCalledWith('/setup?new=1')
+    const { container } = render(<JdLibraryClient />)
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Chưa có Job Description nào',
+      })
+    ).toBeInTheDocument()
+
+    const createLinks = screen.getAllByRole('link', { name: /Tạo phiên mới/i })
+    expect(createLinks).toHaveLength(2)
+    for (const link of createLinks) {
+      expect(link).toHaveAttribute('href', '/setup?new=1')
+    }
+
+    expect(await axe(container)).toHaveNoViolations()
   })
 
-  it('renders list of saved JDs with O*NET and SFIA badges', async () => {
+  it('renders saved JDs with O*NET/SFIA badges, tech overflow, and semantic links', async () => {
     vi.mocked(prepService.getSavedJobDescriptions).mockResolvedValue(mockJdList)
-    render(<JdLibraryPage />)
+    const { container } = render(<JdLibraryClient />)
 
-    await waitFor(() => {
-      expect(screen.getByText('VNG Corporation')).toBeInTheDocument()
-    })
-
+    expect(await screen.findByText('VNG Corporation')).toBeInTheDocument()
     expect(screen.getByText('Backend Engineer')).toBeInTheDocument()
     expect(screen.getByText('Shopee')).toBeInTheDocument()
-    expect(screen.getByText('Frontend Engineer')).toBeInTheDocument()
-
-    // Kiểm tra huy hiệu O*NET & SFIA Level cho jd-1
     expect(screen.getByText('SFIA Level 3')).toBeInTheDocument()
     expect(screen.getByText(/Software Developers/i)).toBeInTheDocument()
     expect(screen.getByText('(15-1252.00)')).toBeInTheDocument()
-
-    // Kiểm tra tech stack chips
     expect(screen.getByText('Node.js')).toBeInTheDocument()
-    expect(screen.getByText('Go')).toBeInTheDocument()
+    expect(screen.getByText('+1')).toBeInTheDocument()
+
+    const vngLink = screen.getByRole('link', { name: /VNG Corporation/i })
+    expect(vngLink).toHaveAttribute('href', '/setup?jdId=jd-1')
+
+    const shopeeLink = screen.getByRole('link', { name: /Shopee/i })
+    expect(shopeeLink).toHaveAttribute('href', '/setup?jdId=jd-2')
+
+    expect(await axe(container)).toHaveNoViolations()
   })
 
-  it('navigates to setup page with jdId when a card is clicked', async () => {
+  it('filters JDs by search query and level filter, with reset button', async () => {
+    const user = userEvent.setup()
     vi.mocked(prepService.getSavedJobDescriptions).mockResolvedValue(mockJdList)
-    render(<JdLibraryPage />)
+    render(<JdLibraryClient />)
+
+    await screen.findByText('VNG Corporation')
+
+    const searchInput = screen.getByLabelText('Tìm kiếm Job Description')
+    await user.type(searchInput, 'Next.js')
 
     await waitFor(() => {
-      expect(screen.getByText('VNG Corporation')).toBeInTheDocument()
+      expect(screen.queryByText('VNG Corporation')).not.toBeInTheDocument()
     })
+    expect(screen.getByText('Shopee')).toBeInTheDocument()
 
-    const vngCard = screen
-      .getByText('VNG Corporation')
-      .closest('[role="button"]')!
-    fireEvent.click(vngCard)
+    await user.click(
+      screen.getByRole('button', { name: 'Xóa từ khóa tìm kiếm' })
+    )
+    expect(await screen.findByText('VNG Corporation')).toBeInTheDocument()
 
-    expect(mockPush).toHaveBeenCalledWith('/setup?jdId=jd-1')
-  })
-
-  it('navigates to setup page when pressing Enter on card', async () => {
-    vi.mocked(prepService.getSavedJobDescriptions).mockResolvedValue(mockJdList)
-    render(<JdLibraryPage />)
-
+    await user.click(screen.getByRole('radio', { name: 'Senior' }))
     await waitFor(() => {
-      expect(screen.getByText('Shopee')).toBeInTheDocument()
+      expect(screen.queryByText('VNG Corporation')).not.toBeInTheDocument()
     })
+    expect(screen.getByText('Shopee')).toBeInTheDocument()
 
-    const shopeeCard = screen.getByText('Shopee').closest('[role="button"]')!
-    fireEvent.keyDown(shopeeCard, { key: 'Enter' })
+    await user.type(searchInput, 'nonexistent-company')
+    expect(
+      screen.getByText('Không tìm thấy Job Description phù hợp')
+    ).toBeInTheDocument()
 
-    expect(mockPush).toHaveBeenCalledWith('/setup?jdId=jd-2')
+    await user.click(screen.getByRole('button', { name: 'Xóa bộ lọc' }))
+    expect(await screen.findByText('VNG Corporation')).toBeInTheDocument()
+    expect(screen.getByText('Shopee')).toBeInTheDocument()
   })
 })

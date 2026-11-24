@@ -1,79 +1,39 @@
-import type {
-  SessionType,
-  ContextPack,
-  JdFormData,
-  InterviewDuration,
-} from '@/types'
-import { DURATION_OPTIONS, mapJdLevelToSfia } from '@/lib/setup-helpers'
-import { getJdLevelLabel } from '@/lib/interview-options'
-import { Badge } from '@/components/ui/Badge'
+'use client'
+
 import {
+  Alert,
+  Badge,
+  Divider,
+  Group,
   Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/Select'
-import { Sparkles, Briefcase, Award } from 'lucide-react'
+  Stack,
+  Text,
+} from '@mantine/core'
+import {
+  IconAlertCircle,
+  IconAward,
+  IconBriefcase,
+  IconSparkles,
+} from '@tabler/icons-react'
+import { getJdLevelLabel } from '@/lib/interview-options'
+import { DURATION_OPTIONS, mapJdLevelToSfia } from '@/lib/setup-helpers'
+import type {
+  ContextPack,
+  InterviewDuration,
+  JdFormData,
+  SessionType,
+} from '@/types'
+import classes from './ConfirmStep.module.css'
+import {
+  CONTEXT_PACK_LABELS,
+  SESSION_TYPE_LABELS,
+  SFIA_LEVEL_DESCRIPTIONS,
+  SFIA_SELECT_DATA,
+  SummaryRow,
+  SummarySection,
+} from './ConfirmSummarySection'
 
-const SESSION_TYPE_LABELS: Record<SessionType, string> = {
-  hr: 'HR / Behavioral',
-  technical: 'Technical',
-}
-
-const CONTEXT_PACK_LABELS: Record<ContextPack, string> = {
-  VN: 'Việt Nam',
-  Western: 'Western',
-}
-
-const SFIA_LEVEL_DESCRIPTIONS: Record<number, { title: string; subtitle: string }> = {
-  1: { title: 'SFIA Level 1', subtitle: 'Thực thi cơ bản (Intern / Fresher)' },
-  2: { title: 'SFIA Level 2', subtitle: 'Thực thi có hướng dẫn (Junior)' },
-  3: { title: 'SFIA Level 3', subtitle: 'Chủ động áp dụng (Middle)' },
-  4: { title: 'SFIA Level 4', subtitle: 'Chuyên sâu độc lập (Senior)' },
-  5: { title: 'SFIA Level 5', subtitle: 'Dẫn dắt & Định hướng (Lead / Manager)' },
-  6: { title: 'SFIA Level 6', subtitle: 'Khởi xướng chiến lược (Director)' },
-  7: { title: 'SFIA Level 7', subtitle: 'Định hình chiến lược tổ chức (Executive)' },
-}
-
-function Row({ label, value, children }: { label: string; value?: string; children?: React.ReactNode }) {
-  return (
-    <div className="border-brand-subtle-border flex flex-col justify-between gap-1 border-b py-2.5 sm:flex-row sm:items-center sm:gap-4 last:border-0">
-      <span className="text-ink-muted shrink-0 text-sm">{label}</span>
-      {children ? (
-        <div className="flex items-center justify-start sm:justify-end">{children}</div>
-      ) : (
-        <span className="text-ink text-left font-medium sm:text-right text-sm">{value}</span>
-      )}
-    </div>
-  )
-}
-
-function Section({
-  title,
-  icon,
-  children,
-}: {
-  title: string
-  icon?: React.ReactNode
-  children: React.ReactNode
-}) {
-  return (
-    <div>
-      <div className="mb-2 flex items-center gap-1.5">
-        {icon}
-        <p className="text-ink-faint text-xs font-semibold uppercase tracking-wide">
-          {title}
-        </p>
-      </div>
-      <div className="border-brand-subtle-border bg-brand-subtle/60 rounded-2xl border overflow-hidden px-5 py-4 text-sm">
-        {children}
-      </div>
-    </div>
-  )
-}
-
-interface ConfirmStepProps {
+export interface ConfirmStepProps {
   jd: JdFormData
   sessionType: SessionType
   contextPack: ContextPack
@@ -93,141 +53,161 @@ export default function ConfirmStep({
   const durationOpt = DURATION_OPTIONS.find((d) => d.value === duration)!
   const currentSfiaLevel = jd.targetSfiaLevel ?? mapJdLevelToSfia(jd.level)
 
-  const handleSfiaChange = (val: string) => {
+  function handleSfiaChange(val: string | null) {
+    if (!val || !onChange) return
     const levelNum = Number(val)
-    if (!Number.isNaN(levelNum) && onChange) {
-      onChange({
-        ...jd,
-        targetSfiaLevel: levelNum,
-      })
+    if (!Number.isNaN(levelNum)) {
+      onChange({ ...jd, targetSfiaLevel: levelNum })
     }
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* Hồ sơ Vị trí Tuyển dụng (AI Job Profile) */}
-      <Section
+    <Stack gap="lg">
+      <SummarySection
         title="Hồ sơ Vị trí Tuyển dụng (AI Job Profile)"
-        icon={<Sparkles className="text-brand size-3.5" aria-hidden="true" />}
+        icon={<IconSparkles size={14} stroke={1.5} aria-hidden="true" />}
       >
-        <Row label="Chức danh chuẩn O*NET">
+        <SummaryRow label="Chức danh chuẩn O*NET">
           {jd.onetOccupationTitle ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-ink font-semibold">{jd.onetOccupationTitle}</span>
-              {jd.onetSocCode && (
-                <Badge variant="brand" className="font-mono text-xs">
+            <Group gap="xs" wrap="wrap">
+              <Text size="sm" fw={600}>
+                {jd.onetOccupationTitle}
+              </Text>
+              {jd.onetSocCode ? (
+                <Badge
+                  variant="light"
+                  color="brand"
+                  size="sm"
+                  className={classes.mono}
+                >
                   {jd.onetSocCode}
                 </Badge>
-              )}
-            </div>
+              ) : null}
+            </Group>
           ) : (
-            <span className="text-ink-muted italic">
+            <Text size="sm" c="dimmed" fs="italic">
               Tự do (chưa chuẩn hóa O*NET)
-            </span>
+            </Text>
           )}
-        </Row>
+        </SummaryRow>
 
-        <Row label="Cấp bậc SFIA mục tiêu">
+        <Divider />
+
+        <SummaryRow label="Cấp bậc SFIA mục tiêu">
           {onChange ? (
-            <div className="flex flex-col items-start gap-1 sm:items-end w-full sm:w-auto">
-              <div className="w-full sm:w-64">
-                <Select
-                  value={String(currentSfiaLevel)}
-                  onValueChange={handleSfiaChange}
-                >
-                  <SelectTrigger
-                    id="sfia-level-select"
-                    aria-label="Cấp bậc SFIA mục tiêu"
-                    className="h-9 text-xs"
-                  >
-                    <SelectValue placeholder="Chọn Cấp bậc SFIA..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5].map((lvl) => {
-                      const desc = SFIA_LEVEL_DESCRIPTIONS[lvl]
-                      return (
-                        <SelectItem key={lvl} value={String(lvl)}>
-                          <span className="font-semibold">{desc.title}</span>
-                          <span className="text-ink-muted ml-1.5 text-xs">
-                            — {desc.subtitle}
-                          </span>
-                        </SelectItem>
-                      )
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-              <span className="text-ink-muted text-[11px]">
+            <Stack gap={4} w={{ base: '100%', sm: 320 }}>
+              <Select
+                id="sfia-level-select"
+                aria-label="Cấp bậc SFIA mục tiêu"
+                size="xs"
+                value={String(currentSfiaLevel)}
+                data={SFIA_SELECT_DATA}
+                onChange={handleSfiaChange}
+              />
+              <Text size="xs" c="dimmed">
                 Quyết định độ sâu câu hỏi và tiêu chí đánh giá
-              </span>
-            </div>
+              </Text>
+            </Stack>
           ) : (
-            <div className="flex items-center gap-2">
-              <Badge variant="brand" className="text-xs">
+            <Group gap="xs" wrap="wrap">
+              <Badge variant="light" color="brand" size="sm">
                 SFIA Level {currentSfiaLevel}
               </Badge>
-              <span className="text-ink-muted text-xs">
+              <Text size="xs" c="dimmed">
                 {SFIA_LEVEL_DESCRIPTIONS[currentSfiaLevel]?.subtitle ?? ''}
-              </span>
-            </div>
+              </Text>
+            </Group>
           )}
-        </Row>
+        </SummaryRow>
 
-        <Row label="Tech Stack trọng điểm">
+        <Divider />
+
+        <SummaryRow label="Tech Stack trọng điểm">
           {jd.techStack.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5 sm:justify-end">
+            <Group gap={6} wrap="wrap">
               {jd.techStack.map((tech) => (
-                <Badge key={tech} variant="default" className="text-xs">
+                <Badge key={tech} variant="light" color="neutral" size="sm">
                   {tech}
                 </Badge>
               ))}
-            </div>
+            </Group>
           ) : (
-            <span className="text-ink-muted italic">Chưa xác định</span>
+            <Text size="sm" c="dimmed" fs="italic">
+              Chưa xác định
+            </Text>
           )}
-        </Row>
-      </Section>
+        </SummaryRow>
+      </SummarySection>
 
-      {/* Thông tin JD */}
-      <Section
+      <SummarySection
         title="Thông tin JD"
-        icon={<Briefcase className="text-ink-muted size-3.5" aria-hidden="true" />}
+        icon={<IconBriefcase size={14} stroke={1.5} aria-hidden="true" />}
       >
-        <Row label="Tên công ty" value={jd.company} />
-        {jd.website && <Row label="Website" value={jd.website} />}
-        <Row label="Vị trí tuyển dụng" value={jd.position} />
-        <Row label="Level yêu cầu" value={getJdLevelLabel(jd.level)} />
-        {jd.headcount && <Row label="Số lượng tuyển" value={jd.headcount} />}
-        {jd.location && <Row label="Địa điểm" value={jd.location} />}
-        {jd.salary && <Row label="Lương" value={jd.salary} />}
-        {jd.bonus && <Row label="Thưởng" value={jd.bonus} />}
-        <div className="border-brand-subtle-border border-b py-2.5">
-          <p className="text-ink-muted text-sm">Yêu cầu</p>
-          <p className="text-ink mt-1 line-clamp-3 text-sm">
-            {jd.requirements}
-          </p>
-        </div>
-        <div className="py-2.5">
-          <p className="text-ink-muted text-sm">Nội dung công việc</p>
-          <p className="text-ink mt-1 line-clamp-3 text-sm">{jd.jobContent}</p>
-        </div>
-      </Section>
+        <SummaryRow label="Tên công ty" value={jd.company} />
+        {jd.website ? <SummaryRow label="Website" value={jd.website} /> : null}
+        <SummaryRow label="Vị trí tuyển dụng" value={jd.position} />
+        <SummaryRow label="Level yêu cầu" value={getJdLevelLabel(jd.level)} />
+        {jd.headcount ? (
+          <SummaryRow label="Số lượng tuyển" value={jd.headcount} />
+        ) : null}
+        {jd.location ? (
+          <SummaryRow label="Địa điểm" value={jd.location} />
+        ) : null}
+        {jd.salary ? <SummaryRow label="Lương" value={jd.salary} /> : null}
+        {jd.bonus ? <SummaryRow label="Thưởng" value={jd.bonus} /> : null}
 
-      {/* Cấu hình phiên phỏng vấn */}
-      <Section
+        <Divider />
+
+        <Stack gap={4}>
+          <Text size="sm" c="dimmed">
+            Yêu cầu
+          </Text>
+          <Text size="sm" lineClamp={4}>
+            {jd.requirements}
+          </Text>
+        </Stack>
+
+        <Divider />
+
+        <Stack gap={4}>
+          <Text size="sm" c="dimmed">
+            Nội dung công việc
+          </Text>
+          <Text size="sm" lineClamp={4}>
+            {jd.jobContent}
+          </Text>
+        </Stack>
+      </SummarySection>
+
+      <SummarySection
         title="Cấu hình phiên phỏng vấn"
-        icon={<Award className="text-ink-muted size-3.5" aria-hidden="true" />}
+        icon={<IconAward size={14} stroke={1.5} aria-hidden="true" />}
       >
-        <Row label="Loại phỏng vấn" value={SESSION_TYPE_LABELS[sessionType]} />
-        <Row label="Context Pack" value={CONTEXT_PACK_LABELS[contextPack]} />
-        <Row label="Thời gian phỏng vấn" value={durationOpt.label} />
-        <Row
+        <SummaryRow
+          label="Loại phỏng vấn"
+          value={SESSION_TYPE_LABELS[sessionType]}
+        />
+        <SummaryRow
+          label="Context Pack"
+          value={CONTEXT_PACK_LABELS[contextPack]}
+        />
+        <SummaryRow label="Thời gian phỏng vấn" value={durationOpt.label} />
+        <SummaryRow
           label="Số câu hỏi dự kiến"
           value={`${durationOpt.numQuestions} câu`}
         />
-      </Section>
+      </SummarySection>
 
-      {error && <p className="text-danger text-sm font-medium">{error}</p>}
-    </div>
+      {error ? (
+        <Alert
+          color="danger"
+          variant="light"
+          role="alert"
+          icon={<IconAlertCircle size={18} stroke={1.5} aria-hidden="true" />}
+        >
+          {error}
+        </Alert>
+      ) : null}
+    </Stack>
   )
 }

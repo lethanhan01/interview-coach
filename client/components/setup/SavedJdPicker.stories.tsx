@@ -1,7 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { useState } from 'react'
-import SavedJdPicker from './SavedJdPicker'
+import { Alert, Stack, Text } from '@mantine/core'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import type { SavedJobDescription } from '@/types'
+import SavedJdPicker from './SavedJdPicker'
 
 const MOCK_JDS: SavedJobDescription[] = [
   {
@@ -17,13 +18,13 @@ const MOCK_JDS: SavedJobDescription[] = [
       'Tốt nghiệp CNTT, thành thạo React, TypeScript. Ít nhất 1 năm kinh nghiệm.',
     jobContent:
       'Phát triển UI cho các sản phẩm nội bộ, phối hợp với BE và Designer.',
-    techStack: ['React', 'TypeScript', 'Next.js', 'Tailwind CSS', 'Redux'],
+    techStack: ['React', 'TypeScript', 'Next.js', 'Mantine', 'Redux'],
     benefits: 'Bảo hiểm sức khỏe, 12 ngày phép',
     salary: '15-22 triệu VNĐ',
     bonus: 'Tháng 13 (1 lần/năm)',
-    lastUsedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+    lastUsedAt: '2026-09-05T10:00:00.000Z',
+    createdAt: '2026-08-01T10:00:00.000Z',
+    updatedAt: '2026-09-05T10:00:00.000Z',
   },
   {
     id: '2',
@@ -43,29 +44,8 @@ const MOCK_JDS: SavedJobDescription[] = [
     salary: '30-50 triệu VNĐ',
     bonus: 'Theo KPI',
     lastUsedAt: null,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-  },
-  {
-    id: '3',
-    userId: 'user-1',
-    companyName: 'VNG Corporation',
-    companyWebsite: null,
-    jobTitle: 'AI/ML Engineer',
-    level: 'middle',
-    headcount: null,
-    location: null,
-    requirements:
-      'Kinh nghiệm làm việc với các mô hình ML/DL, thành thạo Python.',
-    jobContent:
-      'Nghiên cứu và triển khai các mô hình AI cho sản phẩm game và nền tảng giải trí.',
-    techStack: ['Python', 'PyTorch', 'TensorFlow', 'Docker', 'Kubernetes'],
-    benefits: null,
-    salary: null,
-    bonus: null,
-    lastUsedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
+    createdAt: '2026-09-01T10:00:00.000Z',
+    updatedAt: '2026-09-01T10:00:00.000Z',
   },
 ]
 
@@ -97,31 +77,29 @@ export const Empty: Story = {
   },
 }
 
-export const SingleItem: Story = {
-  args: {
-    items: [MOCK_JDS[0]],
-  },
+function InteractiveDemo(args: React.ComponentProps<typeof SavedJdPicker>) {
+  const [selected, setSelected] = useState<SavedJobDescription | null>(null)
+  return (
+    <Stack gap="md">
+      <SavedJdPicker
+        {...args}
+        selectedId={selected?.id}
+        onSelect={(item) => setSelected(item)}
+        onNew={() => setSelected(null)}
+      />
+      {selected ? (
+        <Alert color="success" variant="light">
+          <Text size="sm">
+            Đã chọn: {selected.companyName} — {selected.jobTitle}
+          </Text>
+        </Alert>
+      ) : null}
+    </Stack>
+  )
 }
 
 export const Interactive: Story = {
-  render: (args) => {
-    const [selected, setSelected] = useState<SavedJobDescription | null>(null)
-    return (
-      <div>
-        <SavedJdPicker
-          {...args}
-          onSelect={(item) => setSelected(item)}
-          onNew={() => setSelected(null)}
-        />
-        {selected && (
-          <div className="bg-success-subtle text-success-subtle-fg border-success-subtle-fg/30 mt-4 rounded-lg border p-3 text-sm">
-            Đã chọn: <strong>{selected.companyName}</strong> —{' '}
-            {selected.jobTitle}
-          </div>
-        )}
-      </div>
-    )
-  },
+  render: (args) => <InteractiveDemo {...args} />,
   args: {
     items: MOCK_JDS,
   },

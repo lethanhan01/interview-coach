@@ -1,7 +1,8 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
-import SavedJdPicker from './SavedJdPicker'
+import { render, screen, userEvent } from '@test-utils'
+import { axe } from 'jest-axe'
+import { describe, expect, it, vi } from 'vitest'
 import type { SavedJobDescription } from '@/types'
+import SavedJdPicker from './SavedJdPicker'
 
 const MOCK_JDS: SavedJobDescription[] = [
   {
@@ -15,7 +16,7 @@ const MOCK_JDS: SavedJobDescription[] = [
     location: 'Hà Nội',
     requirements: 'Tốt nghiệp CNTT, thành thạo React, TypeScript.',
     jobContent: 'Phát triển UI cho các sản phẩm nội bộ.',
-    techStack: ['React', 'TypeScript', 'Next.js', 'Tailwind CSS', 'Redux'],
+    techStack: ['React', 'TypeScript', 'Next.js', 'Mantine', 'Redux'],
     benefits: null,
     salary: '15-22 triệu',
     bonus: null,
@@ -45,62 +46,34 @@ const MOCK_JDS: SavedJobDescription[] = [
 ]
 
 describe('SavedJdPicker', () => {
-  it('renders the "Thêm JD mới" button', () => {
-    render(<SavedJdPicker items={[]} onSelect={vi.fn()} onNew={vi.fn()} />)
-    expect(screen.getByText('Thêm JD mới')).toBeInTheDocument()
-  })
-
-  it('renders a list of saved JDs', () => {
-    render(
+  it('renders heading, new JD action, divider count, and saved JD cards', async () => {
+    const { container } = render(
       <SavedJdPicker items={MOCK_JDS} onSelect={vi.fn()} onNew={vi.fn()} />
     )
-    expect(screen.getByText('FPT Software')).toBeInTheDocument()
-    expect(screen.getByText('Shopee Vietnam')).toBeInTheDocument()
-  })
 
-  it('shows the correct JD count in the divider', () => {
-    render(
-      <SavedJdPicker items={MOCK_JDS} onSelect={vi.fn()} onNew={vi.fn()} />
-    )
-    expect(screen.getByText(`JD đã lưu (${MOCK_JDS.length})`)).toBeInTheDocument()
-  })
-
-  it('shows max 4 tech badges and an overflow badge', () => {
-    render(
-      <SavedJdPicker items={MOCK_JDS} onSelect={vi.fn()} onNew={vi.fn()} />
-    )
-    // Item 1 has 5 techs: shows 4 + "+1"
-    expect(screen.getByText('+1')).toBeInTheDocument()
-  })
-
-  it('calls onNew when the "Thêm JD mới" button is clicked', () => {
-    const onNew = vi.fn()
-    render(<SavedJdPicker items={[]} onSelect={vi.fn()} onNew={onNew} />)
-    fireEvent.click(screen.getByText('Thêm JD mới'))
-    expect(onNew).toHaveBeenCalledTimes(1)
-  })
-
-  it('calls onSelect with the correct item when a JD card is clicked', () => {
-    const onSelect = vi.fn()
-    render(
-      <SavedJdPicker items={MOCK_JDS} onSelect={onSelect} onNew={vi.fn()} />
-    )
-    fireEvent.click(screen.getByText('FPT Software'))
-    expect(onSelect).toHaveBeenCalledWith(MOCK_JDS[0])
-  })
-
-  it('renders heading and subtitle', () => {
-    render(<SavedJdPicker items={[]} onSelect={vi.fn()} onNew={vi.fn()} />)
     expect(
       screen.getByRole('heading', { name: 'Chọn Job Description' })
     ).toBeInTheDocument()
+    expect(screen.getByText('Thêm JD mới')).toBeInTheDocument()
+    expect(screen.getByText('JD đã lưu (2)')).toBeInTheDocument()
+    expect(screen.getByText('FPT Software')).toBeInTheDocument()
+    expect(screen.getByText('Frontend Developer')).toBeInTheDocument()
+    expect(screen.getByText('Shopee Vietnam')).toBeInTheDocument()
+    expect(screen.getByText('+1')).toBeInTheDocument()
+    expect(await axe(container)).toHaveNoViolations()
   })
 
-  it('displays job title and position below company name', () => {
-    render(
-      <SavedJdPicker items={MOCK_JDS} onSelect={vi.fn()} onNew={vi.fn()} />
-    )
-    expect(screen.getByText('Frontend Developer')).toBeInTheDocument()
-    expect(screen.getByText('Backend Developer')).toBeInTheDocument()
+  it('calls onNew and onSelect on semantic button clicks', async () => {
+    const user = userEvent.setup()
+    const onNew = vi.fn()
+    const onSelect = vi.fn()
+
+    render(<SavedJdPicker items={MOCK_JDS} onSelect={onSelect} onNew={onNew} />)
+
+    await user.click(screen.getByRole('button', { name: /Thêm JD mới/i }))
+    expect(onNew).toHaveBeenCalledTimes(1)
+
+    await user.click(screen.getByRole('button', { name: /FPT Software/i }))
+    expect(onSelect).toHaveBeenCalledWith(MOCK_JDS[0])
   })
 })

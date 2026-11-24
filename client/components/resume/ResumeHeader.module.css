@@ -1,0 +1,13 @@
+.navLink {
+  border-radius: var(--mantine-radius-sm);
+}
+
+.statusDone {
+  color: var(--mantine-color-success-filled);
+  flex-shrink: 0;
+}
+
+.statusTodo {
+  color: var(--mantine-color-dimmed);
+  flex-shrink: 0;
+}

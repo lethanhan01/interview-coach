@@ -1,68 +1,85 @@
 'use client'
 
-import { Building2, MapPin, Clock, Plus, ChevronRight } from 'lucide-react'
-import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
-import type { SavedJobDescription } from '@/types'
-import { getJdLevelLabel } from '@/lib/interview-options'
+import {
+  Badge,
+  Divider,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  ThemeIcon,
+  Title,
+  UnstyledButton,
+} from '@mantine/core'
+import {
+  IconBuilding,
+  IconChevronRight,
+  IconClock,
+  IconMapPin,
+  IconPlus,
+} from '@tabler/icons-react'
 import { formatVietnamRelativeDate } from '@/lib/date-time'
+import { getJdLevelLabel } from '@/lib/interview-options'
+import type { SavedJobDescription } from '@/types'
+import classes from './SavedJdPicker.module.css'
 
-interface Props {
+export interface SavedJdPickerProps {
   items: SavedJobDescription[]
+  selectedId?: string
   onSelect: (item: SavedJobDescription) => void
   onNew: () => void
 }
 
 const MAX_TECH_SHOWN = 4
 
-export default function SavedJdPicker({ items, onSelect, onNew }: Props) {
+export default function SavedJdPicker({
+  items,
+  selectedId,
+  onSelect,
+  onNew,
+}: Readonly<SavedJdPickerProps>) {
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-ink text-xl font-semibold">Chọn Job Description</h1>
-        <p className="text-ink-muted mt-1 text-sm">
+    <Stack gap="lg">
+      <Stack gap={4}>
+        <Title order={1} size="h2">
+          Chọn Job Description
+        </Title>
+        <Text size="sm" c="dimmed">
           Tái sử dụng JD từ phiên phỏng vấn trước hoặc tạo JD mới.
-        </p>
-      </div>
+        </Text>
+      </Stack>
 
-      {/* New JD button */}
-      <Card
-        hover
-        role="button"
-        tabIndex={0}
+      <UnstyledButton
+        type="button"
         onClick={onNew}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            onNew()
-          }
-        }}
-        className="border-brand-subtle-border bg-brand-subtle/50 hover:border-brand hover:bg-brand-subtle group flex w-full items-center gap-4 rounded-2xl border-2 border-dashed p-5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+        className={classes.newButton}
       >
-        <div className="bg-brand shadow-btn flex size-10 shrink-0 items-center justify-center rounded-full text-white transition-transform duration-150 group-hover:scale-110">
-          <Plus className="size-5" aria-hidden="true" />
-        </div>
-        <div>
-          <p className="text-brand text-sm font-semibold">Thêm JD mới</p>
-          <p className="text-ink-muted text-xs">
-            Điền thông tin Job Description từ đầu
-          </p>
-        </div>
-        <ChevronRight className="text-brand ml-auto size-4 opacity-60 transition-transform duration-150 group-hover:translate-x-0.5" />
-      </Card>
+        <Group justify="space-between" align="center" wrap="nowrap" gap="md">
+          <Group gap="md" align="center" wrap="nowrap">
+            <ThemeIcon size={40} radius="xl" variant="filled" color="brand">
+              <IconPlus size={20} stroke={1.5} aria-hidden="true" />
+            </ThemeIcon>
+            <Stack gap={2}>
+              <Text size="sm" fw={600} c="brand">
+                Thêm JD mới
+              </Text>
+              <Text size="xs" c="dimmed">
+                Điền thông tin Job Description từ đầu
+              </Text>
+            </Stack>
+          </Group>
+          <IconChevronRight
+            size={18}
+            stroke={1.5}
+            aria-hidden="true"
+            className={classes.chevron}
+          />
+        </Group>
+      </UnstyledButton>
 
-      {/* Divider */}
-      <div className="flex items-center gap-3">
-        <div className="bg-border h-px flex-1" />
-        <span className="text-ink-faint text-xs font-medium">
-          JD đã lưu ({items.length})
-        </span>
-        <div className="bg-border h-px flex-1" />
-      </div>
+      <Divider label={`JD đã lưu (${items.length})`} labelPosition="center" />
 
-      {/* Saved JD cards */}
-      <div className="flex flex-col gap-3">
+      <Stack gap="sm">
         {items.map((item) => {
           const displayDate = item.lastUsedAt
             ? `Dùng lần cuối ${formatVietnamRelativeDate(item.lastUsedAt)}`
@@ -70,87 +87,111 @@ export default function SavedJdPicker({ items, onSelect, onNew }: Props) {
 
           const shownTechs = item.techStack.slice(0, MAX_TECH_SHOWN)
           const extraCount = item.techStack.length - MAX_TECH_SHOWN
+          const isSelected = selectedId === item.id
 
           return (
-            <Card
+            <UnstyledButton
               key={item.id}
-              hover
-              role="button"
-              tabIndex={0}
+              type="button"
               onClick={() => onSelect(item)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  onSelect(item)
-                }
-              }}
-              className="group w-full p-5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+              className={classes.itemButton}
             >
-              <div className="flex items-start justify-between gap-3">
-                {/* Left: company + position */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-brand-subtle text-brand-subtle-fg flex size-8 shrink-0 items-center justify-center rounded-lg">
-                      <Building2 className="size-4" aria-hidden="true" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-ink truncate text-sm font-semibold">
-                        {item.companyName}
-                      </p>
-                      <p className="text-ink-muted truncate text-xs">
-                        {item.jobTitle}
-                      </p>
-                    </div>
-                  </div>
+              <Paper
+                withBorder
+                radius="md"
+                p="md"
+                mod={{ selected: isSelected }}
+                className={classes.itemCard}
+              >
+                <Group
+                  justify="space-between"
+                  align="flex-start"
+                  wrap="nowrap"
+                  gap="md"
+                >
+                  <Stack gap="xs" flex={1} miw={0}>
+                    <Group gap="sm" align="center" wrap="nowrap">
+                      <ThemeIcon
+                        size={36}
+                        radius="md"
+                        variant="light"
+                        color="brand"
+                      >
+                        <IconBuilding
+                          size={18}
+                          stroke={1.5}
+                          aria-hidden="true"
+                        />
+                      </ThemeIcon>
+                      <Stack gap={2} flex={1} miw={0}>
+                        <Text size="sm" fw={600} truncate>
+                          {item.companyName}
+                        </Text>
+                        <Text size="xs" c="dimmed" truncate>
+                          {item.jobTitle}
+                        </Text>
+                      </Stack>
+                    </Group>
 
-                  {/* Meta: location + date */}
-                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-                    {item.level && (
-                      <span className="text-brand text-xs font-medium">
-                        {getJdLevelLabel(item.level)}
-                      </span>
-                    )}
-                    {item.location && (
-                      <span className="text-ink-faint flex items-center gap-1 text-xs">
-                        <MapPin className="size-3" aria-hidden="true" />
-                        {item.location}
-                      </span>
-                    )}
-                    <span className="text-ink-faint flex items-center gap-1 text-xs">
-                      <Clock className="size-3" aria-hidden="true" />
-                      {displayDate}
-                    </span>
-                  </div>
+                    <Group gap="md" wrap="wrap">
+                      {item.level ? (
+                        <Text size="xs" fw={500} c="brand">
+                          {getJdLevelLabel(item.level)}
+                        </Text>
+                      ) : null}
+                      {item.location ? (
+                        <Group gap={4} wrap="nowrap">
+                          <IconMapPin
+                            size={13}
+                            stroke={1.5}
+                            aria-hidden="true"
+                          />
+                          <Text size="xs" c="dimmed">
+                            {item.location}
+                          </Text>
+                        </Group>
+                      ) : null}
+                      <Group gap={4} wrap="nowrap">
+                        <IconClock size={13} stroke={1.5} aria-hidden="true" />
+                        <Text size="xs" c="dimmed">
+                          {displayDate}
+                        </Text>
+                      </Group>
+                    </Group>
 
-                  {/* Tech stack badges */}
-                  {item.techStack.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {shownTechs.map((tech) => (
-                        <Badge
-                          key={tech}
-                          variant="brand"
-                          className="text-xs"
-                        >
-                          {tech}
-                        </Badge>
-                      ))}
-                      {extraCount > 0 && (
-                        <Badge variant="default" className="text-xs">
-                          +{extraCount}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    {item.techStack.length > 0 ? (
+                      <Group gap={6} wrap="wrap">
+                        {shownTechs.map((tech) => (
+                          <Badge
+                            key={tech}
+                            variant="light"
+                            color="brand"
+                            size="xs"
+                          >
+                            {tech}
+                          </Badge>
+                        ))}
+                        {extraCount > 0 ? (
+                          <Badge variant="light" color="neutral" size="xs">
+                            +{extraCount}
+                          </Badge>
+                        ) : null}
+                      </Group>
+                    ) : null}
+                  </Stack>
 
-                {/* Right: arrow */}
-                <ChevronRight className="text-ink-faint group-hover:text-brand mt-1 size-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
-              </div>
-            </Card>
+                  <IconChevronRight
+                    size={18}
+                    stroke={1.5}
+                    aria-hidden="true"
+                    className={classes.chevron}
+                  />
+                </Group>
+              </Paper>
+            </UnstyledButton>
           )
         })}
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   )
 }
-

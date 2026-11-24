@@ -1,9 +1,9 @@
 'use client'
 
-import type { SessionType, ContextPack, InterviewDuration } from '@/types'
+import { Group, Radio, SimpleGrid, Stack, Text } from '@mantine/core'
 import { DURATION_OPTIONS } from '@/lib/setup-helpers'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup'
-import { cn } from '@/lib/utils'
+import type { ContextPack, InterviewDuration, SessionType } from '@/types'
+import classes from './ConfigForm.module.css'
 
 const SESSION_TYPES: {
   value: SessionType
@@ -35,39 +35,7 @@ const CONTEXT_PACKS: { value: ContextPack; label: string; desc: string }[] = [
   },
 ]
 
-function SelectCard({
-  value,
-  id,
-  label,
-  sublabel,
-  selected,
-}: {
-  value: string
-  id: string
-  label: string
-  sublabel: string
-  selected: boolean
-}) {
-  return (
-    <label
-      htmlFor={id}
-      className={cn(
-        'cursor-pointer rounded-xl border-2 p-4 text-left transition-all duration-150 flex flex-col justify-between select-none',
-        selected
-          ? 'border-brand bg-brand-subtle shadow-card'
-          : 'border-border bg-surface hover:border-brand-muted'
-      )}
-    >
-      <div className="mb-1.5 flex items-center justify-between">
-        <span className="text-ink text-sm font-medium">{label}</span>
-        <RadioGroupItem value={value} id={id} />
-      </div>
-      <p className="text-ink-muted text-xs leading-relaxed">{sublabel}</p>
-    </label>
-  )
-}
-
-interface ConfigFormProps {
+export interface ConfigFormProps {
   sessionType: SessionType
   setSessionType: (v: SessionType) => void
   contextPack: ContextPack
@@ -83,69 +51,98 @@ export default function ConfigForm({
   setContextPack,
   duration,
   setDuration,
-}: ConfigFormProps) {
+}: Readonly<ConfigFormProps>) {
   return (
-    <div className="flex flex-col gap-7">
-      <div>
-        <p className="text-ink mb-3 text-sm font-medium">Loại phỏng vấn</p>
-        <RadioGroup
-          value={sessionType}
-          onValueChange={(val) => setSessionType(val as SessionType)}
-          className="grid grid-cols-1 gap-3 sm:grid-cols-2"
-        >
-          {SESSION_TYPES.map((t) => (
-            <SelectCard
-              key={t.value}
-              id={`session-type-${t.value}`}
-              value={t.value}
-              selected={sessionType === t.value}
-              label={t.label}
-              sublabel={t.description}
-            />
+    <Stack gap="xl">
+      <Radio.Group
+        label="Loại phỏng vấn"
+        value={sessionType}
+        onChange={(val) => setSessionType(val as SessionType)}
+      >
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" mt="xs">
+          {SESSION_TYPES.map((item) => (
+            <Radio.Card
+              key={item.value}
+              value={item.value}
+              radius="md"
+              p="md"
+              className={classes.optionCard}
+            >
+              <Stack gap={6}>
+                <Group justify="space-between" align="center" wrap="nowrap">
+                  <Text size="sm" fw={600}>
+                    {item.label}
+                  </Text>
+                  <Radio.Indicator color="brand" />
+                </Group>
+                <Text size="xs" c="dimmed">
+                  {item.description}
+                </Text>
+              </Stack>
+            </Radio.Card>
           ))}
-        </RadioGroup>
-      </div>
+        </SimpleGrid>
+      </Radio.Group>
 
-      <div>
-        <p className="text-ink mb-3 text-sm font-medium">Context Pack</p>
-        <RadioGroup
-          value={contextPack}
-          onValueChange={(val) => setContextPack(val as ContextPack)}
-          className="grid grid-cols-1 gap-3 sm:grid-cols-2"
-        >
-          {CONTEXT_PACKS.map((cp) => (
-            <SelectCard
-              key={cp.value}
-              id={`context-pack-${cp.value}`}
-              value={cp.value}
-              selected={contextPack === cp.value}
-              label={cp.label}
-              sublabel={cp.desc}
-            />
+      <Radio.Group
+        label="Context Pack"
+        value={contextPack}
+        onChange={(val) => setContextPack(val as ContextPack)}
+      >
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" mt="xs">
+          {CONTEXT_PACKS.map((item) => (
+            <Radio.Card
+              key={item.value}
+              value={item.value}
+              radius="md"
+              p="md"
+              className={classes.optionCard}
+            >
+              <Stack gap={6}>
+                <Group justify="space-between" align="center" wrap="nowrap">
+                  <Text size="sm" fw={600}>
+                    {item.label}
+                  </Text>
+                  <Radio.Indicator color="brand" />
+                </Group>
+                <Text size="xs" c="dimmed">
+                  {item.desc}
+                </Text>
+              </Stack>
+            </Radio.Card>
           ))}
-        </RadioGroup>
-      </div>
+        </SimpleGrid>
+      </Radio.Group>
 
-      <div>
-        <p className="text-ink mb-3 text-sm font-medium">Thời gian phỏng vấn</p>
-        <RadioGroup
-          value={String(duration)}
-          onValueChange={(val) => setDuration(Number(val) as InterviewDuration)}
-          className="grid grid-cols-1 gap-3 sm:grid-cols-3"
-        >
-          {DURATION_OPTIONS.map((d) => (
-            <SelectCard
-              key={d.value}
-              id={`duration-${d.value}`}
-              value={String(d.value)}
-              selected={duration === d.value}
-              label={d.label}
-              sublabel={`~${d.numQuestions} câu hỏi`}
-            />
+      <Radio.Group
+        label="Thời gian phỏng vấn"
+        value={String(duration)}
+        onChange={(val) => setDuration(Number(val) as InterviewDuration)}
+      >
+        <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="sm" mt="xs">
+          {DURATION_OPTIONS.map((item) => (
+            <Radio.Card
+              key={item.value}
+              value={String(item.value)}
+              radius="md"
+              p="md"
+              className={classes.optionCard}
+            >
+              <Stack gap={6}>
+                <Group justify="space-between" align="center" wrap="nowrap">
+                  <Text size="sm" fw={600}>
+                    {item.label}
+                  </Text>
+                  <Radio.Indicator color="brand" />
+                </Group>
+                <Text size="xs" c="dimmed">
+                  ~{item.numQuestions} câu hỏi
+                </Text>
+              </Stack>
+            </Radio.Card>
           ))}
-        </RadioGroup>
-      </div>
-    </div>
+        </SimpleGrid>
+      </Radio.Group>
+    </Stack>
   )
 }
-

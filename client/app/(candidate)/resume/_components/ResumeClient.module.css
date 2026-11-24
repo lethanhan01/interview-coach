@@ -1,0 +1,4 @@
+.stickySidebar {
+  position: sticky;
+  top: var(--mantine-spacing-md);
+}

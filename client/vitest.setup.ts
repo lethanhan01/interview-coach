@@ -52,6 +52,18 @@ if (typeof window !== 'undefined') {
     window.PointerEvent = PointerEventMock as unknown as typeof PointerEvent
   }
 
+  // Mock document.fonts for Mantine v9 TextareaAutosize in jsdom
+  if (typeof document !== 'undefined' && !('fonts' in document)) {
+    Object.defineProperty(document, 'fonts', {
+      configurable: true,
+      value: {
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        ready: Promise.resolve(),
+      },
+    })
+  }
+
   // Mock HTMLElement.prototype helpers for Radix UI & Mantine v9
   HTMLElement.prototype.scrollIntoView = () => {
     // Mock implementation for Vitest

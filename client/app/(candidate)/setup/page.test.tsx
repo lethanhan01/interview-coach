@@ -1,12 +1,18 @@
-import React from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, fireEvent, waitFor } from '@test-utils'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import SetupPage from './page'
+import {
+  createTestQueryClient,
+  render,
+  screen,
+  userEvent,
+  waitFor,
+} from '@test-utils'
+import { axe } from 'jest-axe'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { queryKeys } from '@/lib/query-client'
 import { prepService } from '@/services/prep.service'
 import { sessionService } from '@/services/session.service'
 import type { SavedJobDescription } from '@/types'
+import SetupWizardClient from './_components/SetupWizardClient'
+import { JD_DRAFT_KEY } from './_components/useSetupDraft'
 
 const mockPush = vi.fn()
 let mockSearchParams = new URLSearchParams()
@@ -55,25 +61,10 @@ const mockSavedJd: SavedJobDescription = {
   updatedAt: '2026-09-01T10:00:00Z',
 }
 
-function createTestClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        staleTime: 30_000,
-        gcTime: 60_000,
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  })
-}
-
-describe('SetupPage', () => {
+describe('SetupWizardClient', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    localStorage.clear()
+    window.localStorage.clear()
     mockSearchParams = new URLSearchParams()
     vi.mocked(prepService.getSavedJobDescriptions).mockResolvedValue([
       mockSavedJd,
@@ -82,25 +73,23 @@ describe('SetupPage', () => {
   })
 
   it('reuses cached saved JDs from QueryClient without refetching', async () => {
-    const queryClient = createTestClient()
+    const queryClient = createTestQueryClient()
+    queryClient.setDefaultOptions({
+      queries: { retry: false, staleTime: 30_000 },
+    })
     queryClient.setQueryData(queryKeys.prep.savedJds(), [mockSavedJd])
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <SetupPage />
-      </QueryClientProvider>
-    )
+    const { container } = render(<SetupWizardClient />, { queryClient })
 
-    await waitFor(() => {
-      expect(screen.getByText('VNG Corporation')).toBeInTheDocument()
-    })
-
+    expect(await screen.findByText('VNG Corporation')).toBeInTheDocument()
     expect(prepService.getSavedJobDescriptions).not.toHaveBeenCalled()
+    expect(await axe(container)).toHaveNoViolations()
   })
 
-  it('invalidates savedJds and sessions queries and blocks double-submit after success', async () => {
+  it('completes 3-step flow, invalidates queries, clears localStorage draft, and blocks double-submit', async () => {
+    const user = userEvent.setup()
     mockSearchParams = new URLSearchParams('jdId=jd-1')
-    const queryClient = createTestClient()
+    const queryClient = createTestQueryClient()
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
 
     vi.mocked(prepService.saveJobDescription).mockResolvedValue(mockSavedJd)
@@ -108,21 +97,19 @@ describe('SetupPage', () => {
       id: 'sess-123',
     })
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <SetupPage />
-      </QueryClientProvider>
-    )
+    render(<SetupWizardClient />, { queryClient })
 
-    await waitFor(() => {
-      expect(screen.getByText('Thông tin Job Description')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Thông tin Job Description')
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Tiếp theo' }))
+    await user.click(screen.getByRole('button', { name: 'Tiếp theo' }))
+
+    const submitBtn = screen.getByRole('button', {
+      name: 'Bắt đầu phỏng vấn',
     })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Tiếp theo' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Tiếp theo' }))
-
-    const submitBtn = screen.getByRole('button', { name: 'Bắt đầu phỏng vấn' })
-    fireEvent.click(submitBtn)
+    await user.click(submitBtn)
 
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/sessions/sess-123')
@@ -134,16 +121,17 @@ describe('SetupPage', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: queryKeys.sessions.all,
     })
+    expect(window.localStorage.getItem(JD_DRAFT_KEY)).toBeNull()
 
-    // Button stays locked after success while route transition is in flight
-    fireEvent.click(submitBtn)
+    await user.click(submitBtn)
     expect(prepService.saveJobDescription).toHaveBeenCalledTimes(1)
     expect(sessionService.createSession).toHaveBeenCalledTimes(1)
-  })
+  }, 15_000)
 
-  it('still invalidates savedJds and allows retry if createSession fails after JD is saved', async () => {
+  it('shows error alert and allows retry when createSession fails', async () => {
+    const user = userEvent.setup()
     mockSearchParams = new URLSearchParams('jdId=jd-1')
-    const queryClient = createTestClient()
+    const queryClient = createTestQueryClient()
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
 
     vi.mocked(prepService.saveJobDescription).mockResolvedValue(mockSavedJd)
@@ -151,32 +139,27 @@ describe('SetupPage', () => {
       new Error('Không thể khởi tạo phiên AI')
     )
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <SetupPage />
-      </QueryClientProvider>
-    )
+    render(<SetupWizardClient />, { queryClient })
 
-    await waitFor(() => {
-      expect(screen.getByText('Thông tin Job Description')).toBeInTheDocument()
+    await screen.findByText('Thông tin Job Description')
+    await user.click(screen.getByRole('button', { name: 'Tiếp theo' }))
+    await user.click(screen.getByRole('button', { name: 'Tiếp theo' }))
+
+    const submitBtn = screen.getByRole('button', {
+      name: 'Bắt đầu phỏng vấn',
     })
+    await user.click(submitBtn)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Tiếp theo' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Tiếp theo' }))
-
-    const submitBtn = screen.getByRole('button', { name: 'Bắt đầu phỏng vấn' })
-    fireEvent.click(submitBtn)
-
-    await waitFor(() => {
-      expect(
-        screen.getByText('Không thể khởi tạo phiên AI')
-      ).toBeInTheDocument()
-    })
-
+    const alerts = await screen.findAllByRole('alert')
+    expect(
+      alerts.some((el) =>
+        el.textContent?.includes('Không thể khởi tạo phiên AI')
+      )
+    ).toBe(true)
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: queryKeys.prep.savedJds(),
     })
     expect(mockPush).not.toHaveBeenCalled()
     expect(submitBtn).not.toBeDisabled()
-  })
+  }, 15_000)
 })

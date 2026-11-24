@@ -1,0 +1,30 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition:
+    border-color 150ms ease,
+    transform 150ms ease;
+
+  @mixin hover {
+    border-color: var(--mantine-primary-color-filled);
+    transform: translateY(rem(-1px));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    @mixin hover {
+      transform: none;
+    }
+  }
+}
+
+.scoreBox {
+  /* prettier-ignore */
+  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

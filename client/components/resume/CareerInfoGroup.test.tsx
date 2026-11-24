@@ -1,5 +1,6 @@
-import { render, screen, fireEvent } from '@test-utils'
-import { expect, it, describe, vi } from 'vitest'
+import { render, screen, userEvent, waitFor } from '@test-utils'
+import { axe } from 'jest-axe'
+import { describe, expect, it, vi } from 'vitest'
 import CareerInfoGroup from './CareerInfoGroup'
 
 vi.mock('@/services/onet.service', () => ({
@@ -16,14 +17,8 @@ vi.mock('@/services/onet.service', () => ({
 }))
 
 describe('CareerInfoGroup (Resume)', () => {
-  it('renders correctly with empty data', () => {
-    const { container } = render(<CareerInfoGroup data={{}} onSave={vi.fn()} />)
-    expect(container).toBeInTheDocument()
-    expect(screen.getByText('Định hướng nghề nghiệp')).toBeInTheDocument()
-  })
-
-  it('renders with O*NET SOC code and SFIA level badges in view mode', () => {
-    render(
+  it('renders view mode with O*NET SOC and SFIA level badges and passes jest-axe', async () => {
+    const { container } = render(
       <CareerInfoGroup
         data={{
           targetPosition: 'Software Developers',
@@ -36,28 +31,49 @@ describe('CareerInfoGroup (Resume)', () => {
       />
     )
 
+    expect(screen.getByText('Định hướng nghề nghiệp')).toBeInTheDocument()
     expect(screen.getByText('Software Developers')).toBeInTheDocument()
     expect(screen.getByText('SOC: 15-1252.00')).toBeInTheDocument()
     expect(screen.getByText('Senior')).toBeInTheDocument()
     expect(screen.getByText('SFIA Level 4')).toBeInTheDocument()
+    expect(await axe(container)).toHaveNoViolations()
   })
 
-  it('enters editing mode when clicking Chỉnh sửa', () => {
-    render(
+  it('edits career info, tracks dirty state, and saves updated payload', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    const onDirtyChange = vi.fn()
+
+    const { container } = render(
       <CareerInfoGroup
         data={{
           targetPosition: 'Software Developers',
           onetSocCode: '15-1252.00',
           onetOccupationTitle: 'Software Developers',
         }}
-        onSave={vi.fn()}
+        onSave={onSave}
+        onDirtyChange={onDirtyChange}
       />
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /chỉnh sửa/i }))
+    await user.click(screen.getByRole('button', { name: /chỉnh sửa/i }))
     expect(screen.getByText('Mã O*NET SOC: 15-1252.00')).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: /lưu thay đổi/i })
-    ).toBeInTheDocument()
+    expect(await axe(container)).toHaveNoViolations()
+
+    await user.click(screen.getByRole('button', { name: 'Frontend Developer' }))
+    expect(onDirtyChange).toHaveBeenCalledWith(true)
+
+    await user.click(screen.getByRole('button', { name: /lưu thay đổi/i }))
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targetPosition: 'Frontend Developer',
+          onetSocCode: '15-1252.00',
+          onetOccupationTitle: 'Software Developers',
+        })
+      )
+    })
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false)
   })
 })

@@ -1,312 +1,229 @@
 'use client'
 
-import { useState } from 'react'
-import { PencilLine, Plus, Trash2 } from 'lucide-react'
-import Button from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { Input } from '@/components/ui/Input'
-import { Textarea } from '@/components/ui/Textarea'
-import { Checkbox } from '@/components/ui/Checkbox'
-import { Label } from '@/components/ui/Label'
+import { useMemo, useState } from 'react'
+import {
+  ActionIcon,
+  Anchor,
+  Badge,
+  Box,
+  Button,
+  Card,
+  Group,
+  SimpleGrid,
+  Stack,
+  Text,
+} from '@mantine/core'
+import { modals } from '@mantine/modals'
+import { notifications } from '@mantine/notifications'
+import {
+  IconExternalLink,
+  IconPencil,
+  IconPlus,
+  IconTrash,
+} from '@tabler/icons-react'
 import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
 import ProfileSection from '@/components/profile/ProfileSection'
+import { getErrorMessage } from '@/lib/form-errors'
 import type { ProjectEntry, TechnicalSkillEntry } from '@/types'
+import ProjectFormModal from './ProjectFormModal'
+import { formatResumeDateRange } from './resume-schemas'
 
-interface Props {
+export interface ProjectsGroupProps {
   data: ProjectEntry[] | undefined
   availableTechs: TechnicalSkillEntry[]
   onSave: (data: ProjectEntry[]) => Promise<void>
 }
 
-const EMPTY_ENTRY: Omit<ProjectEntry, 'id'> = {
-  name: '',
-  description: '',
-  techStack: [],
-  url: '',
-  startDate: '',
-  endDate: '',
-  isCurrent: false,
-}
+export default function ProjectsGroup({
+  data,
+  availableTechs,
+  onSave,
+}: Readonly<ProjectsGroupProps>) {
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingEntry, setEditingEntry] = useState<ProjectEntry | null>(null)
+  const [modalKey, setModalKey] = useState(0)
 
-function newEntry(): ProjectEntry {
-  return { ...EMPTY_ENTRY, id: crypto.randomUUID(), techStack: [] }
-}
+  const items = data ?? []
+  const suggestedTechs = useMemo(
+    () => Array.from(new Set(availableTechs.map((item) => item.name))),
+    [availableTechs]
+  )
 
-export default function ProjectsGroup({ data, availableTechs, onSave }: Props) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [form, setForm] = useState<ProjectEntry[]>(data ?? [])
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  function handleEdit() {
-    setForm(data ?? [])
-    setError(null)
-    setIsEditing(true)
+  function handleOpenCreate() {
+    setEditingEntry(null)
+    setModalKey((k) => k + 1)
+    setModalOpen(true)
   }
 
-  function handleCancel() {
-    setForm(data ?? [])
-    setError(null)
-    setIsEditing(false)
+  function handleOpenEdit(entry: ProjectEntry) {
+    setEditingEntry(entry)
+    setModalKey((k) => k + 1)
+    setModalOpen(true)
   }
 
-  async function handleSave() {
-    setSaving(true)
-    setError(null)
-    try {
-      await onSave(form)
-      setIsEditing(false)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lưu thất bại')
-    } finally {
-      setSaving(false)
-    }
+  async function handleSaveEntry(entry: ProjectEntry) {
+    const exists = items.some((item) => item.id === entry.id)
+    const nextList = exists
+      ? items.map((item) => (item.id === entry.id ? entry : item))
+      : [entry, ...items]
+    await onSave(nextList)
+    notifications.show({
+      title: exists ? 'Đã cập nhật' : 'Đã thêm mới',
+      message: 'Thông tin dự án đã được lưu.',
+      color: 'success',
+      closeButtonProps: { 'aria-label': 'Đóng thông báo' },
+    })
   }
 
-  function setEntry(
-    id: string,
-    field: keyof ProjectEntry,
-    value: string | boolean
-  ) {
-    setForm((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, [field]: value } : e))
-    )
-  }
-
-  function toggleEntryTech(entryId: string, techName: string) {
-    setForm((prev) =>
-      prev.map((e) => {
-        if (e.id !== entryId) return e
-        const stack = e.techStack ?? []
-        return {
-          ...e,
-          techStack: stack.includes(techName)
-            ? stack.filter((t) => t !== techName)
-            : [...stack, techName],
+  function handleDeleteEntry(entry: ProjectEntry) {
+    modals.openConfirmModal({
+      title: 'Xóa dự án',
+      children: (
+        <Text size="sm">
+          Bạn có chắc muốn xóa dự án {entry.name || 'này'} khỏi hồ sơ CV không?
+        </Text>
+      ),
+      labels: { confirm: 'Xóa', cancel: 'Hủy' },
+      confirmProps: { color: 'danger' },
+      onConfirm: async () => {
+        try {
+          await onSave(items.filter((item) => item.id !== entry.id))
+          notifications.show({
+            title: 'Đã xóa',
+            message: 'Dự án đã được xóa khỏi hồ sơ.',
+            color: 'success',
+            closeButtonProps: { 'aria-label': 'Đóng thông báo' },
+          })
+        } catch (err) {
+          notifications.show({
+            title: 'Xóa thất bại',
+            message: getErrorMessage(err, 'Không thể xóa dự án'),
+            color: 'danger',
+            closeButtonProps: { 'aria-label': 'Đóng thông báo' },
+          })
         }
-      })
-    )
+      },
+    })
   }
-
-  function addEntry() {
-    setForm((prev) => [...prev, newEntry()])
-  }
-
-  function removeEntry(id: string) {
-    setForm((prev) => prev.filter((e) => e.id !== id))
-  }
-
-  const displayList = data ?? []
 
   return (
-    <div id="projects">
+    <Box id="projects">
       <ProfileSection
         title="Dự án cá nhân"
         action={
-          !isEditing ? (
-            <Button variant="ghost" size="sm" onClick={handleEdit}>
-              <PencilLine className="h-4 w-4" aria-hidden="true" />
-              Chỉnh sửa
-            </Button>
-          ) : undefined
+          <Button
+            type="button"
+            variant="light"
+            color="brand"
+            size="xs"
+            leftSection={<IconPlus size={14} stroke={1.5} aria-hidden="true" />}
+            onClick={handleOpenCreate}
+          >
+            Thêm dự án
+          </Button>
         }
       >
-        {!isEditing ? (
-          displayList.length === 0 ? (
-            <ProfileEmptyState message="Chưa có thông tin" />
-          ) : (
-            <div className="flex flex-col gap-4">
-              {displayList.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="border-border bg-surface rounded-xl border p-4 shadow-sm"
-                >
-                  <p className="text-ink text-sm font-semibold">
-                    {entry.name || '—'}
-                  </p>
-                  <p className="text-ink-muted mt-0.5 text-xs">
-                    {entry.startDate || '—'} →{' '}
-                    {entry.isCurrent ? 'Hiện tại' : entry.endDate || '—'}
-                  </p>
-                  {entry.techStack && entry.techStack.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {entry.techStack.map((t) => (
-                        <Badge key={t} variant="default">
-                          {t}
+        {items.length === 0 ? (
+          <ProfileEmptyState message="Chưa có thông tin dự án" />
+        ) : (
+          <SimpleGrid cols={{ base: 1 }} spacing="md">
+            {items.map((entry) => (
+              <Card key={entry.id} withBorder radius="md" p="md">
+                <Stack gap="xs">
+                  <Group
+                    justify="space-between"
+                    align="flex-start"
+                    gap="xs"
+                    wrap="nowrap"
+                  >
+                    <Stack gap={2} flex={1} miw={0}>
+                      <Text size="sm" fw={600}>
+                        {entry.name || '—'}
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        {formatResumeDateRange(
+                          entry.startDate,
+                          entry.endDate,
+                          entry.isCurrent
+                        )}
+                      </Text>
+                    </Stack>
+                    <Group gap={4} wrap="nowrap">
+                      <ActionIcon
+                        variant="subtle"
+                        color="neutral"
+                        size="sm"
+                        aria-label={`Chỉnh sửa dự án ${entry.name}`}
+                        onClick={() => handleOpenEdit(entry)}
+                      >
+                        <IconPencil size={15} stroke={1.5} aria-hidden="true" />
+                      </ActionIcon>
+                      <ActionIcon
+                        variant="subtle"
+                        color="danger"
+                        size="sm"
+                        aria-label={`Xóa dự án ${entry.name}`}
+                        onClick={() => handleDeleteEntry(entry)}
+                      >
+                        <IconTrash size={15} stroke={1.5} aria-hidden="true" />
+                      </ActionIcon>
+                    </Group>
+                  </Group>
+
+                  {entry.techStack && entry.techStack.length > 0 ? (
+                    <Group gap={6} wrap="wrap">
+                      {entry.techStack.map((tech) => (
+                        <Badge
+                          key={tech}
+                          variant="light"
+                          color="brand"
+                          size="xs"
+                        >
+                          {tech}
                         </Badge>
                       ))}
-                    </div>
-                  )}
-                  {entry.description && (
-                    <p className="text-ink mt-2 text-sm">{entry.description}</p>
-                  )}
-                  {entry.url && (
-                    <a
+                    </Group>
+                  ) : null}
+
+                  {entry.description ? (
+                    <Text size="sm">{entry.description}</Text>
+                  ) : null}
+
+                  {entry.url ? (
+                    <Anchor
                       href={entry.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-brand mt-1 inline-block text-xs hover:underline"
+                      size="xs"
+                      c="brand"
                     >
-                      {entry.url}
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          )
-        ) : (
-          <div className="flex flex-col gap-6">
-            {form.map((entry, idx) => (
-              <div
-                key={entry.id}
-                className="border-border bg-surface rounded-xl border p-4 shadow-sm"
-              >
-                <div className="mb-3 flex items-center justify-between">
-                  <p className="text-ink text-sm font-medium">Dự án #{idx + 1}</p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeEntry(entry.id)}
-                    className="text-danger hover:text-danger hover:bg-danger-subtle h-7 gap-1 px-2 text-xs"
-                  >
-                    <Trash2 className="size-3.5" />
-                    Xóa
-                  </Button>
-                </div>
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor={`project-name-${entry.id}`}>Tên dự án</Label>
-                    <Input
-                      id={`project-name-${entry.id}`}
-                      value={entry.name}
-                      onChange={(e) => setEntry(entry.id, 'name', e.target.value)}
-                      placeholder="InterviewCoach"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="flex flex-col gap-1.5">
-                      <Label htmlFor={`project-start-${entry.id}`}>Ngày bắt đầu</Label>
-                      <Input
-                        id={`project-start-${entry.id}`}
-                        type="date"
-                        value={entry.startDate}
-                        onChange={(e) =>
-                          setEntry(entry.id, 'startDate', e.target.value)
-                        }
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <Label htmlFor={`project-end-${entry.id}`}>Ngày kết thúc</Label>
-                      <Input
-                        id={`project-end-${entry.id}`}
-                        type="date"
-                        value={entry.endDate}
-                        disabled={entry.isCurrent}
-                        onChange={(e) =>
-                          setEntry(entry.id, 'endDate', e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-1">
-                    <Checkbox
-                      id={`project-current-${entry.id}`}
-                      checked={entry.isCurrent}
-                      onCheckedChange={(checked) =>
-                        setEntry(entry.id, 'isCurrent', !!checked)
-                      }
-                    />
-                    <Label
-                      htmlFor={`project-current-${entry.id}`}
-                      className="cursor-pointer font-normal"
-                    >
-                      Dự án đang thực hiện
-                    </Label>
-                  </div>
-
-                  <div>
-                    <p className="text-ink mb-1.5 text-sm font-medium">
-                      Tech stack
-                    </p>
-                    {availableTechs.length === 0 ? (
-                      <ProfileEmptyState
-                        message="Thêm kỹ năng ở mục Kỹ năng chuyên môn trước"
-                        className="text-xs"
-                      />
-                    ) : (
-                      <div className="flex flex-wrap gap-1.5">
-                        {availableTechs.map((tech) => {
-                          const selected = (entry.techStack ?? []).includes(
-                            tech.name
-                          )
-                          return (
-                            <Badge
-                              key={tech.id}
-                              variant={selected ? 'brand' : 'default'}
-                              interactive
-                              onClick={() => toggleEntryTech(entry.id, tech.name)}
-                              className="text-xs"
-                            >
-                              {tech.name}
-                            </Badge>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor={`project-url-${entry.id}`}>Link dự án</Label>
-                    <Input
-                      id={`project-url-${entry.id}`}
-                      value={entry.url}
-                      onChange={(e) => setEntry(entry.id, 'url', e.target.value)}
-                      placeholder="https://github.com/..."
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor={`project-desc-${entry.id}`}>Mô tả</Label>
-                    <Textarea
-                      id={`project-desc-${entry.id}`}
-                      value={entry.description}
-                      onChange={(e) =>
-                        setEntry(entry.id, 'description', e.target.value)
-                      }
-                      placeholder="Mô tả ngắn về dự án, vai trò, thành tích..."
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              </div>
+                      <Group gap={4} wrap="nowrap" display="inline-flex">
+                        <Text component="span" size="xs" truncate>
+                          {entry.url}
+                        </Text>
+                        <IconExternalLink
+                          size={12}
+                          stroke={1.5}
+                          aria-hidden="true"
+                        />
+                      </Group>
+                    </Anchor>
+                  ) : null}
+                </Stack>
+              </Card>
             ))}
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={addEntry}
-              className="self-start gap-1 text-sm"
-            >
-              <Plus className="size-4" />
-              Thêm dự án
-            </Button>
-
-            {error && <p className="text-danger text-sm">{error}</p>}
-            <div className="flex gap-2">
-              <Button onClick={handleSave} loading={saving} disabled={saving}>
-                Lưu thay đổi
-              </Button>
-              <Button variant="ghost" onClick={handleCancel} disabled={saving}>
-                Hủy
-              </Button>
-            </div>
-          </div>
+          </SimpleGrid>
         )}
       </ProfileSection>
-    </div>
+
+      <ProjectFormModal
+        key={modalKey}
+        opened={modalOpen}
+        initialEntry={editingEntry}
+        suggestedTechs={suggestedTechs}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleSaveEntry}
+      />
+    </Box>
   )
 }

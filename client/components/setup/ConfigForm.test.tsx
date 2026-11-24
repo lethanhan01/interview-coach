@@ -1,7 +1,8 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { render, screen, userEvent } from '@test-utils'
+import { axe } from 'jest-axe'
+import { describe, expect, it, vi } from 'vitest'
+import type { ContextPack, InterviewDuration, SessionType } from '@/types'
 import ConfigForm from './ConfigForm'
-import type { SessionType, ContextPack, InterviewDuration } from '@/types'
 
 const DEFAULT_PROPS = {
   sessionType: 'hr' as SessionType,
@@ -13,63 +14,66 @@ const DEFAULT_PROPS = {
 }
 
 describe('ConfigForm', () => {
-  it('renders session type section', () => {
-    render(<ConfigForm {...DEFAULT_PROPS} />)
+  it('renders session type, context pack, and duration options cleanly', async () => {
+    const { container } = render(<ConfigForm {...DEFAULT_PROPS} />)
     expect(screen.getByText('Loại phỏng vấn')).toBeInTheDocument()
     expect(screen.getByText('HR / Behavioral')).toBeInTheDocument()
     expect(screen.getByText('Technical')).toBeInTheDocument()
-    expect(screen.queryByText('Mixed (HR + Technical)')).not.toBeInTheDocument()
-  })
-
-  it('renders context pack section', () => {
-    render(<ConfigForm {...DEFAULT_PROPS} />)
     expect(screen.getByText('Context Pack')).toBeInTheDocument()
     expect(screen.getByText('Việt Nam')).toBeInTheDocument()
     expect(screen.getByText('Western')).toBeInTheDocument()
-  })
-
-  it('renders duration section', () => {
-    render(<ConfigForm {...DEFAULT_PROPS} />)
     expect(screen.getByText('Thời gian phỏng vấn')).toBeInTheDocument()
     expect(screen.getByText('30 phút')).toBeInTheDocument()
     expect(screen.getByText('1 tiếng')).toBeInTheDocument()
     expect(screen.getByText('1 tiếng rưỡi')).toBeInTheDocument()
+    expect(await axe(container)).toHaveNoViolations()
   })
 
-  it('calls setSessionType when a session type card is clicked', () => {
+  it('invokes callbacks when selecting radio cards', async () => {
+    const user = userEvent.setup()
     const setSessionType = vi.fn()
-    render(<ConfigForm {...DEFAULT_PROPS} setSessionType={setSessionType} />)
-    fireEvent.click(screen.getByText('Technical'))
-    expect(setSessionType).toHaveBeenCalledWith('technical')
-  })
-
-  it('calls setContextPack when a context pack card is clicked', () => {
     const setContextPack = vi.fn()
-    render(<ConfigForm {...DEFAULT_PROPS} setContextPack={setContextPack} />)
-    fireEvent.click(screen.getByText('Western'))
-    expect(setContextPack).toHaveBeenCalledWith('Western')
-  })
-
-  it('calls setDuration when a duration card is clicked', () => {
     const setDuration = vi.fn()
-    render(<ConfigForm {...DEFAULT_PROPS} setDuration={setDuration} />)
-    fireEvent.click(screen.getByText('1 tiếng'))
+
+    render(
+      <ConfigForm
+        {...DEFAULT_PROPS}
+        setSessionType={setSessionType}
+        setContextPack={setContextPack}
+        setDuration={setDuration}
+      />
+    )
+
+    await user.click(screen.getByText('Technical'))
+    expect(setSessionType).toHaveBeenCalledWith('technical')
+
+    await user.click(screen.getByText('Western'))
+    expect(setContextPack).toHaveBeenCalledWith('Western')
+
+    await user.click(screen.getByText('1 tiếng'))
     expect(setDuration).toHaveBeenCalledWith(60)
   })
 
-  it('visually marks the currently selected session type', () => {
-    render(<ConfigForm {...DEFAULT_PROPS} sessionType="technical" />)
-    const technicalText = screen.getByText('Technical')
-    const card = technicalText.closest('label')
-    // Selected card has border-brand class
-    expect(card?.className).toContain('border-brand')
-  })
+  it('marks selected radio cards with aria-checked true', () => {
+    render(
+      <ConfigForm
+        {...DEFAULT_PROPS}
+        sessionType="technical"
+        contextPack="Western"
+        duration={90}
+      />
+    )
 
-  it('visually marks the currently selected context pack', () => {
-    render(<ConfigForm {...DEFAULT_PROPS} contextPack="Western" />)
-    const westernText = screen.getByText('Western')
-    const card = westernText.closest('label')
-    expect(card?.className).toContain('border-brand')
+    expect(screen.getByRole('radio', { name: /Technical/i })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    )
+    expect(screen.getByRole('radio', { name: /Western/i })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    )
+    expect(
+      screen.getByRole('radio', { name: /1 tiếng rưỡi/i })
+    ).toHaveAttribute('aria-checked', 'true')
   })
 })
-

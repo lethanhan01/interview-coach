@@ -1,112 +1,196 @@
 'use client'
 
 import { useState } from 'react'
-import { PencilLine } from 'lucide-react'
-import Button from '@/components/ui/Button'
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/Select'
-import ProfileSection from '@/components/profile/ProfileSection'
+  Alert,
+  Badge,
+  Box,
+  Button,
+  Group,
+  Radio,
+  SimpleGrid,
+  Stack,
+  Text,
+} from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
+import { notifications } from '@mantine/notifications'
+import { IconAlertCircle, IconPencil } from '@tabler/icons-react'
 import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
+import ProfileSection from '@/components/profile/ProfileSection'
+import { getErrorMessage } from '@/lib/form-errors'
 import { PERSONALITY_OPTIONS } from './constants'
+import classes from './PersonalityGroup.module.css'
 
-interface Props {
+const SELECTABLE_OPTIONS = PERSONALITY_OPTIONS.filter((opt) => opt.value !== '')
+
+export interface PersonalityGroupProps {
   data: { personality?: string | null }
   onSave: (patch: Record<string, unknown>) => Promise<void>
+  onDirtyChange?: (dirty: boolean) => void
 }
 
-export default function PersonalityGroup({ data, onSave }: Props) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [form, setForm] = useState({ personality: data.personality ?? '' })
+export default function PersonalityGroup({
+  data,
+  onSave,
+  onDirtyChange,
+}: Readonly<PersonalityGroupProps>) {
+  const [isEditing, { open: openEdit, close: closeEdit }] = useDisclosure(false)
+  const [selected, setSelected] = useState(data.personality ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   function handleEdit() {
-    setForm({ personality: data.personality ?? '' })
-    setIsEditing(true)
+    setSelected(data.personality ?? '')
     setError(null)
+    onDirtyChange?.(false)
+    openEdit()
   }
 
   function handleCancel() {
-    setIsEditing(false)
+    setSelected(data.personality ?? '')
     setError(null)
+    onDirtyChange?.(false)
+    closeEdit()
   }
 
   async function handleSave() {
     setSaving(true)
     setError(null)
     try {
-      await onSave({ personality: form.personality || null })
-      setIsEditing(false)
+      await onSave({ personality: selected || null })
+      onDirtyChange?.(false)
+      notifications.show({
+        title: 'Đã cập nhật',
+        message: 'Phong cách làm việc đã được lưu.',
+        color: 'success',
+        closeButtonProps: { 'aria-label': 'Đóng thông báo' },
+      })
+      closeEdit()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lưu thất bại')
+      setError(getErrorMessage(err, 'Lưu thất bại'))
     } finally {
       setSaving(false)
     }
   }
 
-  const personalityLabel = PERSONALITY_OPTIONS.find(
-    (o) => o.value === data.personality
+  const personalityLabel = SELECTABLE_OPTIONS.find(
+    (opt) => opt.value === data.personality
   )?.label
 
   return (
-    <div id="personality">
+    <Box id="personality">
       <ProfileSection
         title="Tính cách & Phong cách làm việc"
         action={
           !isEditing ? (
-            <Button variant="ghost" size="sm" onClick={handleEdit}>
-              <PencilLine className="h-4 w-4" aria-hidden="true" />
+            <Button
+              type="button"
+              variant="light"
+              color="brand"
+              size="xs"
+              leftSection={
+                <IconPencil size={14} stroke={1.5} aria-hidden="true" />
+              }
+              onClick={handleEdit}
+            >
               Chỉnh sửa
             </Button>
           ) : undefined
         }
       >
         {isEditing ? (
-          <div className="flex flex-col gap-3">
-            <Select
-              value={form.personality || undefined}
-              onValueChange={(val) => setForm({ personality: val })}
-            >
-              <SelectTrigger aria-label="Tính cách & phong cách làm việc">
-                <SelectValue placeholder="Chọn phong cách làm việc..." />
-              </SelectTrigger>
-              <SelectContent>
-                {PERSONALITY_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {error && <p className="text-danger text-xs">{error}</p>}
-            <div className="flex gap-2">
-              <Button
-                variant="primary"
-                size="sm"
-                loading={saving}
-                onClick={handleSave}
+          <Stack gap="md">
+            {error ? (
+              <Alert
+                color="danger"
+                variant="light"
+                role="alert"
+                icon={
+                  <IconAlertCircle size={18} stroke={1.5} aria-hidden="true" />
+                }
               >
-                Lưu
-              </Button>
-              <Button variant="secondary" size="sm" onClick={handleCancel}>
-                Hủy
-              </Button>
-            </div>
-          </div>
+                {error}
+              </Alert>
+            ) : null}
+
+            <Radio.Group
+              aria-label="Tính cách & phong cách làm việc"
+              value={selected}
+              onChange={(val) => {
+                setSelected(val)
+                onDirtyChange?.(true)
+              }}
+            >
+              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                {SELECTABLE_OPTIONS.map((opt) => (
+                  <Radio.Card
+                    key={opt.value}
+                    value={opt.value}
+                    radius="md"
+                    p="sm"
+                    disabled={saving}
+                    className={classes.optionCard}
+                  >
+                    <Group justify="space-between" align="center" wrap="nowrap">
+                      <Text size="sm" fw={500}>
+                        {opt.label}
+                      </Text>
+                      <Radio.Indicator color="brand" />
+                    </Group>
+                  </Radio.Card>
+                ))}
+              </SimpleGrid>
+            </Radio.Group>
+
+            <Group justify="space-between" align="center" wrap="wrap">
+              <Group gap="xs">
+                <Button
+                  type="button"
+                  color="brand"
+                  size="sm"
+                  loading={saving}
+                  disabled={saving}
+                  onClick={handleSave}
+                >
+                  Lưu thay đổi
+                </Button>
+                <Button
+                  type="button"
+                  variant="subtle"
+                  color="neutral"
+                  size="sm"
+                  disabled={saving}
+                  onClick={handleCancel}
+                >
+                  Hủy
+                </Button>
+              </Group>
+
+              {selected ? (
+                <Button
+                  type="button"
+                  variant="subtle"
+                  color="neutral"
+                  size="xs"
+                  disabled={saving}
+                  onClick={() => {
+                    setSelected('')
+                    onDirtyChange?.(true)
+                  }}
+                >
+                  Bỏ chọn
+                </Button>
+              ) : null}
+            </Group>
+          </Stack>
         ) : personalityLabel ? (
-          <p className="text-ink text-sm">{personalityLabel}</p>
+          <Badge size="lg" variant="light" color="brand" w="fit-content">
+            {personalityLabel}
+          </Badge>
         ) : (
-          <ProfileEmptyState
-            message="Chưa cập nhật"
-            className="text-sm not-italic"
-          />
+          <ProfileEmptyState message="Chưa cập nhật" />
         )}
       </ProfileSection>
-    </div>
+    </Box>
   )
 }

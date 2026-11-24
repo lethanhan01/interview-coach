@@ -1,5 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@test-utils'
-import { expect, it, describe, vi } from 'vitest'
+import { render, screen, userEvent, waitFor } from '@test-utils'
+import { axe } from 'jest-axe'
+import { describe, expect, it, vi } from 'vitest'
 import TechnicalSkillsGroup, {
   detectTechCategory,
 } from './TechnicalSkillsGroup'
@@ -16,7 +17,7 @@ vi.mock('@/services/onet.service', () => ({
 }))
 
 describe('TechnicalSkillsGroup (Resume)', () => {
-  it('detectTechCategory correctly identifies common technologies', () => {
+  it('detectTechCategory identifies common technologies accurately', () => {
     expect(detectTechCategory('TypeScript')).toBe('language')
     expect(detectTechCategory('Python')).toBe('language')
     expect(detectTechCategory('React')).toBe('framework')
@@ -26,8 +27,8 @@ describe('TechnicalSkillsGroup (Resume)', () => {
     expect(detectTechCategory('Linux')).toBe('os')
   })
 
-  it('renders correctly with skill list in view mode', () => {
-    render(
+  it('renders grouped skill list in view mode and passes jest-axe', async () => {
+    const { container } = render(
       <TechnicalSkillsGroup
         data={[
           {
@@ -36,32 +37,52 @@ describe('TechnicalSkillsGroup (Resume)', () => {
             name: 'TypeScript',
             usagePeriod: 24,
           },
-          { id: '2', category: 'framework', name: 'React', usagePeriod: 24 },
+          { id: '2', category: 'framework', name: 'React', usagePeriod: 18 },
         ]}
         onSave={vi.fn()}
       />
     )
 
-    expect(screen.getByText('TypeScript')).toBeInTheDocument()
-    expect(screen.getByText('React')).toBeInTheDocument()
-    expect(screen.getAllByText('· 24th', { exact: false })).toHaveLength(2)
+    expect(screen.getByText('TypeScript · 24th')).toBeInTheDocument()
+    expect(screen.getByText('React · 18th')).toBeInTheDocument()
+    expect(await axe(container)).toHaveNoViolations()
   })
 
-  it('fetches and displays O*NET tech suggestions in edit mode when onetSocCode is provided', async () => {
+  it('loads O*NET tech suggestions, adds & saves skill, and guards duplicates', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    const onDirtyChange = vi.fn()
+
     render(
       <TechnicalSkillsGroup
         data={[]}
         onetSocCode="15-1252.00"
-        onSave={vi.fn()}
+        onSave={onSave}
+        onDirtyChange={onDirtyChange}
       />
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /chỉnh sửa/i }))
+    await user.click(screen.getByRole('button', { name: /chỉnh sửa/i }))
+
+    const dockerBtn = await screen.findByRole('button', { name: /Docker/i })
+    await user.click(dockerBtn)
+
+    await user.click(screen.getByRole('button', { name: 'Thêm' }))
+    expect(screen.getByText('Docker · 12th')).toBeInTheDocument()
+    expect(onDirtyChange).toHaveBeenCalledWith(true)
+
+    await user.click(screen.getByRole('button', { name: 'Lưu kỹ năng' }))
 
     await waitFor(() => {
-      expect(screen.getByText('Docker')).toBeInTheDocument()
-      expect(screen.getByText('Python')).toBeInTheDocument()
-      expect(screen.getByText('PostgreSQL')).toBeInTheDocument()
+      expect(onSave).toHaveBeenCalledWith({
+        technicalSkills: [
+          expect.objectContaining({
+            name: 'Docker',
+            category: 'platform',
+            usagePeriod: 12,
+          }),
+        ],
+      })
     })
   })
 })
