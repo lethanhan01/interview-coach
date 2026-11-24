@@ -1,13 +1,24 @@
-import React from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, fireEvent, waitFor } from '@test-utils'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import AdminUsersPage from './page'
+import { axe } from 'jest-axe'
+import {
+  createTestQueryClient,
+  fireEvent,
+  render,
+  screen,
+  userEvent,
+  waitFor,
+  within,
+} from '@test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { queryKeys } from '@/queries/keys'
 import { userManagementService } from '@/services/admin.service'
 import type { AdminUser } from '@/types'
+import AdminUsersPage from './page'
 
 const mockAuthState = {
+  user: { id: 'admin-self', email: 'admin@example.com' } as {
+    id: string
+    email: string
+  } | null,
   role: 'admin' as string | null,
   isLoading: false,
 }
@@ -26,8 +37,19 @@ vi.mock('@/services/admin.service', () => ({
 
 const mockUsers: AdminUser[] = [
   {
+    id: 'admin-self',
+    email: 'admin@example.com',
+    firstname: 'An',
+    lastname: 'Quản trị',
+    role: 'admin',
+    status: 'active',
+    createdAt: '2026-08-15T10:00:00Z',
+  },
+  {
     id: 'user-1',
     email: 'candidate@example.com',
+    firstname: 'Minh',
+    lastname: 'Nguyễn',
     role: 'candidate',
     status: 'active',
     createdAt: '2026-09-01T10:00:00Z',
@@ -35,67 +57,68 @@ const mockUsers: AdminUser[] = [
   {
     id: 'user-2',
     email: 'locked@example.com',
+    firstname: 'Lan',
+    lastname: 'Phạm',
     role: 'candidate',
     status: 'locked',
     createdAt: '2026-09-02T10:00:00Z',
   },
 ]
 
-function createTestClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        staleTime: 30_000,
-        gcTime: 60_000,
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  })
-}
-
 describe('AdminUsersPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockAuthState.user = { id: 'admin-self', email: 'admin@example.com' }
     mockAuthState.role = 'admin'
     mockAuthState.isLoading = false
     vi.mocked(userManagementService.listUsers).mockResolvedValue(mockUsers)
   })
 
-  it('reuses cached adminList from QueryClient without refetching', async () => {
-    const queryClient = createTestClient()
+  it('reuses cached adminList from QueryClient without refetching and passes axe', async () => {
+    const queryClient = createTestQueryClient()
+    queryClient.setDefaultOptions({
+      queries: { retry: false, staleTime: 30_000, gcTime: 60_000 },
+    })
     queryClient.setQueryData(queryKeys.users.adminList(), mockUsers)
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <AdminUsersPage />
-      </QueryClientProvider>
-    )
+    const { container } = render(<AdminUsersPage />, { queryClient })
 
     expect(await screen.findByText('candidate@example.com')).toBeInTheDocument()
     expect(screen.getByText('locked@example.com')).toBeInTheDocument()
     expect(userManagementService.listUsers).not.toHaveBeenCalled()
+
+    expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('disables lock and delete actions for the currently logged-in admin account', async () => {
+    render(<AdminUsersPage />)
+
+    const selfRow = (await screen.findByText('admin@example.com')).closest('tr')
+    expect(selfRow).not.toBeNull()
+
+    const rowScope = within(selfRow as HTMLElement)
+    expect(rowScope.getByRole('button', { name: 'Khóa' })).toBeDisabled()
+    expect(rowScope.getByRole('button', { name: 'Xóa' })).toBeDisabled()
   })
 
   it('toggles user status via mutation and invalidates adminList cache', async () => {
-    const queryClient = createTestClient()
+    const queryClient = createTestQueryClient()
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
     vi.mocked(userManagementService.updateUser).mockResolvedValueOnce({
-      ...mockUsers[0],
+      ...mockUsers[1],
       status: 'locked',
     })
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <AdminUsersPage />
-      </QueryClientProvider>
+    render(<AdminUsersPage />, { queryClient })
+
+    const targetRow = (
+      await screen.findByText('candidate@example.com')
+    ).closest('tr')
+    expect(targetRow).not.toBeNull()
+
+    fireEvent.click(
+      within(targetRow as HTMLElement).getByRole('button', { name: 'Khóa' })
     )
-
-    expect(await screen.findByText('candidate@example.com')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Khóa' }))
 
     await waitFor(() => {
       expect(userManagementService.updateUser).toHaveBeenCalledWith('user-1', {
@@ -107,21 +130,25 @@ describe('AdminUsersPage', () => {
     })
   })
 
-  it('deletes user after confirmation and invalidates adminList cache', async () => {
-    const queryClient = createTestClient()
+  it('deletes user after controlled modal confirmation and invalidates adminList cache', async () => {
+    const queryClient = createTestQueryClient()
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
     vi.mocked(userManagementService.deleteUser).mockResolvedValueOnce(undefined)
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <AdminUsersPage />
-      </QueryClientProvider>
+    render(<AdminUsersPage />, { queryClient })
+
+    const targetRow = (
+      await screen.findByText('candidate@example.com')
+    ).closest('tr')
+    expect(targetRow).not.toBeNull()
+
+    fireEvent.click(
+      within(targetRow as HTMLElement).getByRole('button', { name: 'Xóa' })
     )
 
-    expect(await screen.findByText('candidate@example.com')).toBeInTheDocument()
-
-    const deleteButtons = screen.getAllByRole('button', { name: 'Xóa' })
-    fireEvent.click(deleteButtons[0])
+    expect(
+      await screen.findByText('Xác nhận xóa tài khoản')
+    ).toBeInTheDocument()
 
     const confirmBtn = await screen.findByRole('button', {
       name: 'Xóa tài khoản',
@@ -133,6 +160,25 @@ describe('AdminUsersPage', () => {
       expect(invalidateSpy).toHaveBeenCalledWith({
         queryKey: queryKeys.users.adminList(),
       })
+    })
+  })
+
+  it('filters users by search term and status segment', async () => {
+    const user = userEvent.setup()
+    render(<AdminUsersPage />)
+
+    expect(await screen.findByText('candidate@example.com')).toBeInTheDocument()
+
+    const searchInput = screen.getByPlaceholderText(
+      /Tìm theo email hoặc họ tên/i
+    )
+    await user.type(searchInput, 'Phạm Lan')
+
+    await waitFor(() => {
+      expect(screen.getByText('locked@example.com')).toBeInTheDocument()
+      expect(
+        screen.queryByText('candidate@example.com')
+      ).not.toBeInTheDocument()
     })
   })
 
