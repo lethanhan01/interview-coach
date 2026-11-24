@@ -118,12 +118,22 @@ describe('ConfirmStep', () => {
       />
     )
 
-    const select = screen.getByRole('textbox', {
+    const select = screen.getByRole('combobox', {
       name: 'Cấp bậc SFIA mục tiêu',
     })
     await user.click(select)
 
-    const level7Option = await screen.findByRole('option', {
+    const options = await screen.findAllByRole('option')
+    expect(options).toHaveLength(7)
+    for (let level = 1; level <= 7; level += 1) {
+      expect(
+        screen.getByRole('option', {
+          name: new RegExp(`SFIA Level ${level}`, 'i'),
+        })
+      ).toBeInTheDocument()
+    }
+
+    const level7Option = screen.getByRole('option', {
       name: /SFIA Level 7/i,
     })
     await user.click(level7Option)
