@@ -12,7 +12,11 @@ import {
   Text,
 } from '@mantine/core'
 import { IconPlus } from '@tabler/icons-react'
-import { TECH_CATEGORIES, TECH_OPTIONS, type TechCategory } from './constants'
+import {
+  TECH_CATEGORIES,
+  TECH_OPTIONS,
+  type TechCategory,
+} from '@/components/resume/constants'
 
 const CATEGORY_SELECT_DATA = TECH_CATEGORIES.map((cat) => ({
   value: cat.key,

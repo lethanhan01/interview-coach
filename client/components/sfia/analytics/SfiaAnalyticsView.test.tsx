@@ -4,7 +4,7 @@ import {
   SfiaAnalyticsView,
   type SfiaAnalyticsViewProps,
 } from './SfiaAnalyticsView'
-import { MOCK_SFIA_COVERAGE_STATS } from './sfia-mock-data'
+import { MOCK_SFIA_COVERAGE_STATS } from '@/components/sfia/sfia-mock-data'
 
 describe('SfiaAnalyticsView Component', () => {
   const defaultProps: SfiaAnalyticsViewProps = {

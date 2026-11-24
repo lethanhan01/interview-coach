@@ -19,9 +19,9 @@ import {
   IconMicrophone,
   IconPlayerSkipForward,
 } from '@tabler/icons-react'
-import QuestionCard from '@/components/interview/QuestionCard'
-import TextAnswerInput from '@/components/interview/TextAnswerInput'
-import VoiceRecorder from '@/components/interview/VoiceRecorder'
+import QuestionCard from './QuestionCard'
+import TextAnswerInput from './TextAnswerInput'
+import VoiceRecorder from '@/components/interview/voice/VoiceRecorder'
 import {
   DIRECTIONAL_VIEW_TRANSITION_ENTER,
   DIRECTIONAL_VIEW_TRANSITION_EXIT,

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { WorkflowSection } from '@/components/landing/WorkflowSection'
+import { WorkflowSection } from '@/components/landing/sections/WorkflowSection'
 
 const meta: Meta<typeof WorkflowSection> = {
   title: 'Feature/Landing/WorkflowSection',

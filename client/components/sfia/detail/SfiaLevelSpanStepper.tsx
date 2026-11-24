@@ -9,7 +9,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/Tooltip'
-import { getCategoryTheme, SFIA_LEVEL_DEFINITIONS } from './sfia-theme'
+import {
+  getCategoryTheme,
+  SFIA_LEVEL_DEFINITIONS,
+} from '@/components/sfia/sfia-theme'
 
 export interface SfiaLevelSpanStepperProps {
   minLevel: number

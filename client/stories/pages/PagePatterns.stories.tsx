@@ -4,15 +4,17 @@ import {
   PageContainer,
   PageHeader,
   PageSection,
-  AsyncBoundary,
+} from '@/components/common/patterns/LayoutPatterns'
+import { AsyncBoundary } from '@/components/common/patterns/FeedbackPatterns'
+import { SearchInput } from '@/components/common/patterns/FormPatterns'
+import {
   DataTable,
   Toolbar,
   FilterBar,
-  SearchInput,
   Pagination,
-  ConfirmDialog,
-  ColumnDef,
-} from '@/components/common'
+  type ColumnDef,
+} from '@/components/common/patterns/DataPatterns'
+import { ConfirmDialog } from '@/components/common/patterns/DialogPatterns'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Plus, Download, Edit, Trash, Settings } from 'lucide-react'

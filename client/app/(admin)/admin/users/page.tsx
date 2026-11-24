@@ -29,12 +29,15 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/AlertDialog'
-import { PageContainer, PageHeader } from '@/components/common/LayoutPatterns'
+import {
+  PageContainer,
+  PageHeader,
+} from '@/components/common/patterns/LayoutPatterns'
 import {
   LoadingState,
   EmptyState,
   ErrorState,
-} from '@/components/common/FeedbackPatterns'
+} from '@/components/common/patterns/FeedbackPatterns'
 import { Search, Trash2, Unlock, Lock, Users } from 'lucide-react'
 
 export default function AdminUsersPage() {

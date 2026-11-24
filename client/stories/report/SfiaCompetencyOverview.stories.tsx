@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { SfiaCompetencyOverview } from '@/components/report/SfiaCompetencyOverview'
+import { SfiaCompetencyOverview } from '@/components/report/competency/SfiaCompetencyOverview'
 import { mockUnifiedSkillsBreakdown } from '@/test-utils/fixtures/report.fixture'
 
 const meta: Meta<typeof SfiaCompetencyOverview> = {

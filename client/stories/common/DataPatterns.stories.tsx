@@ -4,7 +4,7 @@ import {
   FilterBar,
   Pagination,
   DataTable,
-} from '@/components/common/DataPatterns'
+} from '@/components/common/patterns/DataPatterns'
 import { Button } from '@/components/ui/Button'
 import { useState } from 'react'
 

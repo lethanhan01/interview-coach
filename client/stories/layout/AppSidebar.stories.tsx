@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { AppShell, Text } from '@mantine/core'
-import AppSidebar from '@/components/layout/AppSidebar'
+import AppSidebar from '@/components/layout/sidebar/AppSidebar'
 
 const meta: Meta<typeof AppSidebar> = {
   title: 'Layout/AppSidebar',

@@ -11,7 +11,8 @@ import {
   SheetTitle,
 } from '@/components/ui/Sheet'
 import type { SfiaCategory, SfiaSubcategory, SfiaSkillSummary } from '@/types'
-import { SfiaSidebarTree, getCategoryTheme } from './index'
+import { getCategoryTheme } from '@/components/sfia/sfia-theme'
+import { SfiaSidebarTree } from './SfiaSidebarTree'
 import { cn } from '@/lib/utils'
 
 export interface SfiaMobileDrawerProps {

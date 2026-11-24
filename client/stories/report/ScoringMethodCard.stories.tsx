@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import ScoringMethodCard from '../../components/report/ScoringMethodCard'
+import ScoringMethodCard from '@/components/report/overview/ScoringMethodCard'
 
 const meta: Meta<typeof ScoringMethodCard> = {
   title: 'Feature/Report/ScoringMethodCard',

@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/Select'
 import { type SfiaCategory, type SfiaMatrixDisplayMode } from '@/types'
-import { getCategoryTheme } from './sfia-theme'
+import { getCategoryTheme } from '@/components/sfia/sfia-theme'
 
 export interface SfiaMatrixToolbarProps {
   categories: SfiaCategory[]

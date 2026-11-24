@@ -1,6 +1,6 @@
 import { render, screen, userEvent, waitFor } from '@test-utils'
 import { MantineColorSchemeSync } from '../MantineColorSchemeSync'
-import { ColorSchemeToggle } from '@/components/layout/ColorSchemeToggle'
+import { ColorSchemeToggle } from '@/components/layout/header/ColorSchemeToggle'
 
 describe('MantineColorSchemeSync', () => {
   beforeEach(() => {

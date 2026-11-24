@@ -17,7 +17,10 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 import type { SfiaCategory, SfiaSubcategory, SfiaSkillDetail } from '@/types'
-import { getCategoryTheme, SFIA_LEVEL_DEFINITIONS } from './sfia-theme'
+import {
+  getCategoryTheme,
+  SFIA_LEVEL_DEFINITIONS,
+} from '@/components/sfia/sfia-theme'
 import { SfiaLevelSpanStepper } from './SfiaLevelSpanStepper'
 import { SfiaLevelStatementCards } from './SfiaLevelStatementCards'
 import { SfiaGuidanceNotes } from './SfiaGuidanceNotes'

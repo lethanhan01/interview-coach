@@ -16,7 +16,7 @@ import {
   type SfiaMatrixCellData,
   type SfiaMatrixDisplayMode,
 } from '@/types'
-import { getCategoryTheme, getLevelTheme } from './sfia-theme'
+import { getCategoryTheme, getLevelTheme } from '@/components/sfia/sfia-theme'
 
 export interface SfiaMatrixViewProps {
   skills: SfiaSkillSummary[]

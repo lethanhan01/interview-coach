@@ -19,11 +19,11 @@ import {
   IconPlus,
   IconTrash,
 } from '@tabler/icons-react'
-import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
-import ProfileSection from '@/components/profile/ProfileSection'
+import ProfileEmptyState from '@/components/profile/primitives/ProfileEmptyState'
+import ProfileSection from '@/components/profile/primitives/ProfileSection'
 import { getErrorMessage } from '@/lib/form-errors'
 import type { TechnicalSkillEntry, WorkExperienceEntry } from '@/types'
-import { formatResumeDateRange } from './resume-schemas'
+import { formatResumeDateRange } from '@/components/resume/resume-schemas'
 import WorkExperienceFormModal from './WorkExperienceFormModal'
 
 export interface WorkExperienceGroupProps {

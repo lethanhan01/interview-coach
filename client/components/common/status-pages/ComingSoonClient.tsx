@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { IconRocket } from '@tabler/icons-react'
-import { ErrorPageTemplate } from '@/components/common/ErrorPageTemplate'
+import { ErrorPageTemplate } from './ErrorPageTemplate'
 
 export function ComingSoonClient() {
   const router = useRouter()

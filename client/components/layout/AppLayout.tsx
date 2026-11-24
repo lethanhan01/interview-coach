@@ -4,8 +4,8 @@ import type { ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { AppShell, Box } from '@mantine/core'
 import { useDisclosure, useReducedMotion } from '@mantine/hooks'
-import AppHeader from './AppHeader'
-import AppSidebar from './AppSidebar'
+import AppHeader from '@/components/layout/header/AppHeader'
+import AppSidebar from '@/components/layout/sidebar/AppSidebar'
 import classes from './AppLayout.module.css'
 
 export interface AppLayoutProps {

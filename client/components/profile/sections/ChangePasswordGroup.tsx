@@ -22,7 +22,7 @@ import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter'
 import { extractApiFieldErrors, getErrorMessage } from '@/lib/form-errors'
 import { queryKeys } from '@/queries/keys'
 import { authService } from '@/services/auth.service'
-import ProfileSection from './ProfileSection'
+import ProfileSection from '@/components/profile/primitives/ProfileSection'
 
 const CHANGE_PASSWORD_FIELDS = ['currentPassword', 'newPassword'] as const
 

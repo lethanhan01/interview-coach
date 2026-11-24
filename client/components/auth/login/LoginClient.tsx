@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import LoginForm, { type LoginFormData } from '@/components/auth/LoginForm'
+import LoginForm, { type LoginFormData } from './LoginForm'
 import { applyAuthenticatedSession } from '@/providers/AuthProvider'
 import { getSafeNext } from '@/lib/auth-redirect'
 import { extractApiFieldErrors, getErrorMessage } from '@/lib/form-errors'

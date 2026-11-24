@@ -7,7 +7,7 @@ import {
   IconPlayerPause,
   IconRefresh,
 } from '@tabler/icons-react'
-import CountdownTimer from '@/components/interview/CountdownTimer'
+import CountdownTimer from './CountdownTimer'
 import type { ConnectionState } from '@/hooks/useSessionEvents'
 import type { SessionStatusAction } from '@/types'
 

@@ -19,7 +19,7 @@ import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { EmptyState } from '@/components/common/FeedbackPatterns'
+import { EmptyState } from '@/components/common/patterns/FeedbackPatterns'
 import type { OnetSoftwareSkill } from '@/types'
 
 export interface OnetTechSkillsTabProps {

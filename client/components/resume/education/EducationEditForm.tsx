@@ -16,8 +16,11 @@ import { notifications } from '@mantine/notifications'
 import { IconAlertCircle } from '@tabler/icons-react'
 import { getErrorMessage } from '@/lib/form-errors'
 import type { EducationEntry } from '@/types'
-import { EDUCATION_DEGREE_OPTIONS } from './constants'
-import { educationSchema, type EducationFormValues } from './resume-schemas'
+import { EDUCATION_DEGREE_OPTIONS } from '@/components/resume/constants'
+import {
+  educationSchema,
+  type EducationFormValues,
+} from '@/components/resume/resume-schemas'
 
 const DEGREE_OPTIONS = EDUCATION_DEGREE_OPTIONS.filter((o) => o.value !== '')
 

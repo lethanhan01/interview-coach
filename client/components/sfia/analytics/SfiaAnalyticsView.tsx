@@ -24,7 +24,7 @@ import {
   type SfiaLevelMetric,
   type SfiaTopOnetMappedSkill,
 } from '@/types'
-import { getCategoryTheme, getLevelTheme } from './sfia-theme'
+import { getCategoryTheme, getLevelTheme } from '@/components/sfia/sfia-theme'
 
 export interface SfiaAnalyticsViewProps {
   stats: SfiaCoverageStats | null

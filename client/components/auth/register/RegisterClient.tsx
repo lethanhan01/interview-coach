@@ -4,9 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import RegisterForm, {
-  type RegisterFormData,
-} from '@/components/auth/RegisterForm'
+import RegisterForm, { type RegisterFormData } from './RegisterForm'
 import { applyAuthenticatedSession } from '@/providers/AuthProvider'
 import { extractApiFieldErrors, getErrorMessage } from '@/lib/form-errors'
 import { authService } from '@/services/auth.service'

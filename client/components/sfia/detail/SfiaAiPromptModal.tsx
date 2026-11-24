@@ -16,8 +16,8 @@ import type { SfiaSkillDetail } from '@/types'
 import {
   generateSfiaRubricMarkdownPrompt,
   generateSfiaRubricJsonSchema,
-} from './sfia-prompt-helper'
-import { SFIA_LEVEL_DEFINITIONS } from './sfia-theme'
+} from '@/components/sfia/sfia-prompt-helper'
+import { SFIA_LEVEL_DEFINITIONS } from '@/components/sfia/sfia-theme'
 
 export interface SfiaAiPromptModalProps {
   open: boolean

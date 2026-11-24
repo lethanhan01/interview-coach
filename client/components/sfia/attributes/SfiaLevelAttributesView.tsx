@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
-import { getAttributeTheme } from './sfia-theme'
+import { getAttributeTheme } from '@/components/sfia/sfia-theme'
 import { copySfiaLevelPromptToClipboard } from './sfia-attributes-prompt-helper'
 
 export interface SfiaLevelAttributesViewProps {

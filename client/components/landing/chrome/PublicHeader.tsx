@@ -15,7 +15,7 @@ import {
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { IconMicrophone } from '@tabler/icons-react'
-import { ColorSchemeToggle } from '@/components/layout/ColorSchemeToggle'
+import { ColorSchemeToggle } from '@/components/layout/header/ColorSchemeToggle'
 import interactions from '@/styles/interactions.module.css'
 import classes from './PublicHeader.module.css'
 

@@ -6,11 +6,11 @@ import { useQueryClient } from '@tanstack/react-query'
 import ErrorBoundary from '@/components/common/ErrorBoundary'
 import { useSessionEvents } from '@/hooks/useSessionEvents'
 import type { FeedbackProgress } from '@/types'
-import LiveInterviewWorkspace from './LiveInterviewWorkspace'
-import SessionStatusView from './SessionStatusView'
-import { useInterviewDraft } from './useInterviewDraft'
-import { useSessionInitialization } from './useSessionInitialization'
-import { useSessionRoomTurns } from './useSessionRoomTurns'
+import LiveInterviewWorkspace from '@/components/interview/workspace/LiveInterviewWorkspace'
+import SessionStatusView from '@/components/interview/status/SessionStatusView'
+import { useInterviewDraft } from '@/components/interview/hooks/useInterviewDraft'
+import { useSessionInitialization } from '@/components/interview/hooks/useSessionInitialization'
+import { useSessionRoomTurns } from '@/components/interview/hooks/useSessionRoomTurns'
 
 export default function SessionRoomClient() {
   const { sessionId } = useParams<{ sessionId: string }>()

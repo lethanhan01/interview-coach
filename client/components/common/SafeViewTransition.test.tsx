@@ -7,7 +7,7 @@ import {
   DIRECTIONAL_VIEW_TRANSITION_EXIT,
   SafeViewTransition,
   startTypedTransition,
-} from '@/components/common/SafeViewTransition'
+} from './SafeViewTransition'
 
 function TypedTransitionDemo() {
   const [step, setStep] = useState(1)

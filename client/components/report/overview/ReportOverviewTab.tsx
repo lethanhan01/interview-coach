@@ -16,13 +16,13 @@ import {
   IconInfoCircle,
 } from '@tabler/icons-react'
 import type { Report, Session } from '@/types'
-import SessionMetadataCard from '@/components/report/SessionMetadataCard'
-import { ScoringMethodCard } from '@/components/report/ScoringMethodCard'
+import SessionMetadataCard from './SessionMetadataCard'
+import { ScoringMethodCard } from './ScoringMethodCard'
 import {
   GOOD_ANSWER_THRESHOLD,
   type OverviewSummary,
   WEAK_ANSWER_THRESHOLD,
-} from './report-summary-helpers'
+} from '@/components/report/report-summary-helpers'
 
 export interface ReportOverviewTabProps {
   report: Report

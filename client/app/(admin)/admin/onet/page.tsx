@@ -13,14 +13,12 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/AlertDialog'
-import { LoadingState } from '@/components/common/FeedbackPatterns'
-import {
-  useOnetParams,
-  OnetSidebar,
-  OnetMobileDrawer,
-  OnetDetailShell,
-  OnetAnalyticsView,
-} from '@/components/onet'
+import { LoadingState } from '@/components/common/patterns/FeedbackPatterns'
+import { useOnetParams } from '@/components/onet/useOnetParams'
+import { OnetSidebar } from '@/components/onet/navigation/OnetSidebar'
+import { OnetMobileDrawer } from '@/components/onet/navigation/OnetMobileDrawer'
+import { OnetDetailShell } from '@/components/onet/detail/OnetDetailShell'
+import { OnetAnalyticsView } from '@/components/onet/analytics/OnetAnalyticsView'
 import type { OnetDetailSubTab, OnetMainTab } from '@/types'
 
 function OnetBrowserWorkspace() {

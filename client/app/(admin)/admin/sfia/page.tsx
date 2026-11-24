@@ -11,27 +11,28 @@ import {
 } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { toast } from 'sonner'
-import { LoadingState, ErrorState } from '@/components/common/FeedbackPatterns'
+import {
+  LoadingState,
+  ErrorState,
+} from '@/components/common/patterns/FeedbackPatterns'
 import { cn } from '@/lib/utils'
 import { queryKeys } from '@/queries/keys'
 import { sfiaAdminQueries } from '@/queries/sfia.queries'
 import { useOptionalQueryClient } from '@/providers/QueryProvider'
-import {
-  useSfiaParams,
-  SfiaAnatomyBanner,
-  SfiaSidebarTree,
-  SfiaMobileDrawer,
-  SfiaDetailPanel,
-  SfiaMatrixToolbar,
-  SfiaMatrixView,
-  SfiaMatrixInspectionSheet,
-  SfiaCreateQuestionModal,
-  SfiaGenericAttributesView,
-  SfiaAnalyticsView,
-  SfiaBlindSpotsTable,
-  downloadSfiaMatrixCsv,
-  downloadSfiaBlindSpotsCsv,
-} from '@/components/sfia'
+import { useSfiaParams } from '@/components/sfia/useSfiaParams'
+import { SfiaAnatomyBanner } from '@/components/sfia/navigation/SfiaAnatomyBanner'
+import { SfiaSidebarTree } from '@/components/sfia/navigation/SfiaSidebarTree'
+import { SfiaMobileDrawer } from '@/components/sfia/navigation/SfiaMobileDrawer'
+import { SfiaDetailPanel } from '@/components/sfia/detail/SfiaDetailPanel'
+import { SfiaCreateQuestionModal } from '@/components/sfia/detail/SfiaCreateQuestionModal'
+import { SfiaMatrixToolbar } from '@/components/sfia/matrix/SfiaMatrixToolbar'
+import { SfiaMatrixView } from '@/components/sfia/matrix/SfiaMatrixView'
+import { SfiaMatrixInspectionSheet } from '@/components/sfia/matrix/SfiaMatrixInspectionSheet'
+import { downloadSfiaMatrixCsv } from '@/components/sfia/matrix/sfia-matrix-export'
+import { SfiaGenericAttributesView } from '@/components/sfia/attributes/SfiaGenericAttributesView'
+import { SfiaAnalyticsView } from '@/components/sfia/analytics/SfiaAnalyticsView'
+import { SfiaBlindSpotsTable } from '@/components/sfia/analytics/SfiaBlindSpotsTable'
+import { downloadSfiaBlindSpotsCsv } from '@/components/sfia/analytics/sfia-analytics-export'
 import type {
   SfiaMainTab,
   SfiaSkillSummary,

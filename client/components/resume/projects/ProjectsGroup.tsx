@@ -21,12 +21,12 @@ import {
   IconPlus,
   IconTrash,
 } from '@tabler/icons-react'
-import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
-import ProfileSection from '@/components/profile/ProfileSection'
+import ProfileEmptyState from '@/components/profile/primitives/ProfileEmptyState'
+import ProfileSection from '@/components/profile/primitives/ProfileSection'
 import { getErrorMessage } from '@/lib/form-errors'
 import type { ProjectEntry, TechnicalSkillEntry } from '@/types'
 import ProjectFormModal from './ProjectFormModal'
-import { formatResumeDateRange } from './resume-schemas'
+import { formatResumeDateRange } from '@/components/resume/resume-schemas'
 
 export interface ProjectsGroupProps {
   data: ProjectEntry[] | undefined

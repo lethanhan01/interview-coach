@@ -4,7 +4,7 @@ import {
   EmptyState,
   ErrorState,
   AsyncBoundary,
-} from '@/components/common/FeedbackPatterns'
+} from '@/components/common/patterns/FeedbackPatterns'
 
 const meta: Meta = {
   title: 'Patterns/Feedback',

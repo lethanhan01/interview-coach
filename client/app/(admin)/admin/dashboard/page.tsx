@@ -6,8 +6,11 @@ import { userQueries } from '@/queries/user.queries'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { PageContainer } from '@/components/common/LayoutPatterns'
-import { LoadingState, ErrorState } from '@/components/common/FeedbackPatterns'
+import { PageContainer } from '@/components/common/patterns/LayoutPatterns'
+import {
+  LoadingState,
+  ErrorState,
+} from '@/components/common/patterns/FeedbackPatterns'
 import {
   Users,
   UserCheck,

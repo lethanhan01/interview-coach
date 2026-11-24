@@ -18,7 +18,10 @@ import { IconAlertCircle, IconCalendar } from '@tabler/icons-react'
 import { toMantineMonthDate } from '@/lib/date-time'
 import { getErrorMessage } from '@/lib/form-errors'
 import type { AwardEntry } from '@/types'
-import { awardItemSchema, type AwardFormValues } from './resume-schemas'
+import {
+  awardItemSchema,
+  type AwardFormValues,
+} from '@/components/resume/resume-schemas'
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 

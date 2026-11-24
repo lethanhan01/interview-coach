@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { AppShell, Text } from '@mantine/core'
-import AppHeader from '@/components/layout/AppHeader'
+import AppHeader from '@/components/layout/header/AppHeader'
 
 const meta: Meta<typeof AppHeader> = {
   title: 'Layout/AppHeader',

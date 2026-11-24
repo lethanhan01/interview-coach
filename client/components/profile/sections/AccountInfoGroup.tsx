@@ -9,7 +9,7 @@ import {
 } from '@tabler/icons-react'
 import { formatVietnamDateTime } from '@/lib/date-time'
 import type { SemanticColor } from '@/theme'
-import ProfileSection from './ProfileSection'
+import ProfileSection from '@/components/profile/primitives/ProfileSection'
 
 export interface AccountInfoGroupProps {
   email?: string

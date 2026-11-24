@@ -10,9 +10,9 @@ import {
   Text,
 } from '@mantine/core'
 import { IconPencil, IconTrash } from '@tabler/icons-react'
-import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
+import ProfileEmptyState from '@/components/profile/primitives/ProfileEmptyState'
 import type { AwardEntry, CertificationEntry } from '@/types'
-import { formatResumeFullDate } from './resume-schemas'
+import { formatResumeFullDate } from '@/components/resume/resume-schemas'
 
 export function CertificationCardsGrid({
   items,

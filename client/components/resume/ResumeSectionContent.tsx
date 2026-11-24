@@ -9,14 +9,14 @@ import {
   Stack,
   VisuallyHidden,
 } from '@mantine/core'
-import CareerInfoGroup from '@/components/resume/CareerInfoGroup'
-import CertificationsGroup from '@/components/resume/CertificationsGroup'
-import EducationGroup from '@/components/resume/EducationGroup'
-import PersonalityGroup from '@/components/resume/PersonalityGroup'
-import ProjectsGroup from '@/components/resume/ProjectsGroup'
-import type { ResumeSectionId } from '@/components/resume/resume-schemas'
-import TechnicalSkillsGroup from '@/components/resume/TechnicalSkillsGroup'
-import WorkExperienceGroup from '@/components/resume/WorkExperienceGroup'
+import CareerInfoGroup from '@/components/resume/career/CareerInfoGroup'
+import CertificationsGroup from '@/components/resume/certifications/CertificationsGroup'
+import EducationGroup from '@/components/resume/education/EducationGroup'
+import PersonalityGroup from '@/components/resume/personality/PersonalityGroup'
+import ProjectsGroup from '@/components/resume/projects/ProjectsGroup'
+import type { ResumeSectionId } from './resume-schemas'
+import TechnicalSkillsGroup from '@/components/resume/skills/TechnicalSkillsGroup'
+import WorkExperienceGroup from '@/components/resume/experience/WorkExperienceGroup'
 import type {
   AwardEntry,
   CandidateProfileData,

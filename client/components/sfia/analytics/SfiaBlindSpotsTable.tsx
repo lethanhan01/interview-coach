@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/Select'
 import { type SfiaCategory, type SfiaSkillSummary } from '@/types'
-import { getCategoryTheme, getLevelTheme } from './sfia-theme'
+import { getCategoryTheme, getLevelTheme } from '@/components/sfia/sfia-theme'
 import { getBlindSpotPriority } from './sfia-analytics-export'
 
 export interface SfiaBlindSpotsTableProps {

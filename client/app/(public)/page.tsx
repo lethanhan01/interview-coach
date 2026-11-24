@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import { CtaSection } from '@/components/landing/CtaSection'
-import { FeaturesSection } from '@/components/landing/FeaturesSection'
-import { HeroSection } from '@/components/landing/HeroSection'
-import { WorkflowSection } from '@/components/landing/WorkflowSection'
+import { CtaSection } from '@/components/landing/sections/CtaSection'
+import { FeaturesSection } from '@/components/landing/sections/FeaturesSection'
+import { HeroSection } from '@/components/landing/sections/HeroSection'
+import { WorkflowSection } from '@/components/landing/sections/WorkflowSection'
 
 export const metadata: Metadata = {
   title: 'Interview Coach — Luyện phỏng vấn AI chuẩn STAR & SFIA 9',

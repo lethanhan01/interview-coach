@@ -5,7 +5,7 @@
 
 import { toast } from 'sonner'
 import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
-import { SFIA_LEVEL_DEFINITIONS } from './sfia-theme'
+import { SFIA_LEVEL_DEFINITIONS } from '@/components/sfia/sfia-theme'
 
 export function generateSfiaLevelPromptRubric(
   level: SfiaLevelResponsibility,

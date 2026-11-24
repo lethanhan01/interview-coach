@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { IconError404, IconHome } from '@tabler/icons-react'
-import { ErrorPageTemplate } from '@/components/common/ErrorPageTemplate'
+import { ErrorPageTemplate } from '@/components/common/status-pages/ErrorPageTemplate'
 
 export const metadata: Metadata = {
   title: 'Không tìm thấy trang (404) — Interview Coach',

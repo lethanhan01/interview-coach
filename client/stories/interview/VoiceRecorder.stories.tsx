@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import VoiceRecorder from '../../components/interview/VoiceRecorder'
+import VoiceRecorder from '@/components/interview/voice/VoiceRecorder'
 
 const meta: Meta<typeof VoiceRecorder> = {
   title: 'Feature/Interview/VoiceRecorder',

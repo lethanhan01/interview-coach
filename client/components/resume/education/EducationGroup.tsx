@@ -3,12 +3,12 @@
 import { Badge, Box, Button, Group, Stack, Text, Timeline } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { IconPencil, IconSchool } from '@tabler/icons-react'
-import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
-import ProfileSection from '@/components/profile/ProfileSection'
+import ProfileEmptyState from '@/components/profile/primitives/ProfileEmptyState'
+import ProfileSection from '@/components/profile/primitives/ProfileSection'
 import type { EducationEntry } from '@/types'
-import { EDUCATION_DEGREE_OPTIONS } from './constants'
+import { EDUCATION_DEGREE_OPTIONS } from '@/components/resume/constants'
 import EducationEditForm from './EducationEditForm'
-import type { EducationFormValues } from './resume-schemas'
+import type { EducationFormValues } from '@/components/resume/resume-schemas'
 
 export interface EducationGroupProps {
   data: Partial<EducationEntry> | null | undefined

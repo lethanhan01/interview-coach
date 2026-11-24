@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { EmptyState } from '@/components/common/FeedbackPatterns'
+import { EmptyState } from '@/components/common/patterns/FeedbackPatterns'
 import { onetAdminQueries } from '@/queries/onet.queries'
 
 export interface OnetAlternateTitlesTabProps {

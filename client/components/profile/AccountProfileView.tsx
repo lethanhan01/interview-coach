@@ -26,9 +26,9 @@ import {
   IconUser,
 } from '@tabler/icons-react'
 import type { UpdateUserAccountPayload, UserAccountResponse } from '@/types'
-import AccountInfoGroup from './AccountInfoGroup'
-import ChangePasswordGroup from './ChangePasswordGroup'
-import PersonalInfoGroup from './PersonalInfoGroup'
+import AccountInfoGroup from '@/components/profile/sections/AccountInfoGroup'
+import ChangePasswordGroup from '@/components/profile/sections/ChangePasswordGroup'
+import PersonalInfoGroup from '@/components/profile/sections/PersonalInfoGroup'
 
 export interface AccountProfileViewProps {
   variant: 'candidate' | 'admin'

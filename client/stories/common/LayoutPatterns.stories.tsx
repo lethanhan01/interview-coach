@@ -4,7 +4,7 @@ import {
   PageHeader,
   PageSection,
   ResponsiveStack,
-} from '@/components/common/LayoutPatterns'
+} from '@/components/common/patterns/LayoutPatterns'
 import { Button } from '@/components/ui/Button'
 
 const meta: Meta = {

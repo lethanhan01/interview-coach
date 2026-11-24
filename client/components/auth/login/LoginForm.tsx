@@ -16,9 +16,9 @@ import {
 } from '@mantine/core'
 import { schemaResolver, useForm } from '@mantine/form'
 import { IconAlertCircle, IconInfoCircle } from '@tabler/icons-react'
-import { loginSchema, type LoginFormData } from './auth-schemas'
+import { loginSchema, type LoginFormData } from '@/components/auth/auth-schemas'
 
-export { loginSchema, type LoginFormData } from './auth-schemas'
+export { loginSchema, type LoginFormData } from '@/components/auth/auth-schemas'
 
 export interface LoginFormProps {
   onSubmit: (data: LoginFormData) => void | Promise<void>

@@ -204,7 +204,11 @@ export async function CandidateProfileShell({
 ### 4.1. Chiến lược Thin `app/`, Domain Co-location & Rule of Three
 
 1. **Chiến lược Thin `app/` (Store project files outside `app/`):** Thư mục `app/` chỉ chứa các tệp định tuyến chuẩn của Next.js 16 App Router (`page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `global-error.tsx`, `not-found.tsx`) và `*Layout.module.css` gắn trực tiếp với `layout.tsx`. **Không tạo `_components/` trong `app/`**.
-2. **Domain Co-location trong `components/<domain>/`:** Toàn bộ UI component, `*Client.tsx`, route hooks, `WidgetName.module.css`, `WidgetName.test.tsx`, và `WidgetName.stories.tsx` của một miền nghiệp vụ được đặt đồng vị (co-located) ngay trong cùng thư mục `components/<domain>/`.
+2. **Domain Co-location & Sub-feature Grouping trong `components/<domain>/`:** Toàn bộ UI component, `*Client.tsx`, route hooks, `WidgetName.module.css`, `WidgetName.test.tsx`, và `WidgetName.stories.tsx` của một miền nghiệp vụ được đặt đồng vị (co-located) trong `components/<domain>/`. Khi một miền vượt quá ~15 tệp hoặc có từ 2 cụm chức năng độc lập trở lên, gom thành **tối đa 1 cấp thư mục con `kebab-case`** (`components/<domain>/<sub-feature>/`):
+   - **Tệp gốc domain (`components/<domain>/`):** Giữ trình điều phối chính duy nhất (`SetupWizardClient.tsx`, `SessionRoomClient.tsx`, `ReportClient.tsx`, `ResumeClient.tsx`, `AppLayout.tsx`) cùng các schema, constants, helper hoặc hook dùng chung xuyên suốt nhiều thư mục con trong miền.
+   - **Miền đa màn hình độc lập:** Các miền chứa nhiều trang độc lập (`auth/login/`, `auth/register/`, `auth/reset-password/`, `common/status-pages/`) đặt `*Client.tsx` vào đúng thư mục chức năng của nó.
+   - **Đồng vị trong thư mục con:** Mỗi component đi kèm `.module.css`, `.test.tsx`, `.stories.tsx` nằm trực tiếp cùng cấp trong thư mục chức năng đó; **không** lồng thêm cấp thứ 2 và **không** tạo barrel `index.ts`.
+   - **Quy ước đường dẫn import:** Dùng `./FileName` cho tệp nằm cùng thư mục; dùng path alias `@/components/<domain>/...` cho mọi import khác thư mục (tuyệt đối tránh `../` leo cấp).
 3. **Thăng cấp theo Rule of Three:**
    - Lần 1: Viết cục bộ trong `components/<domain>/` của miền nghiệp vụ tương ứng.
    - Lần 2: Cân nhắc tách nếu hai miền chia sẻ hoàn toàn cùng hợp đồng dữ liệu và tương tác.
@@ -283,23 +287,38 @@ app/(candidate)/sessions/[sessionId]/
 └── page.tsx                              # Server Component shell đọc params.sessionId (chỉ routing)
 
 components/interview/
-├── SessionRoomClient.tsx                 # 'use client' điều phối tương tác phiên phỏng vấn
-├── LiveInterviewWorkspace.tsx            # Workspace tương tác chính
-├── LiveInterviewWorkspace.module.css     # CSS Module dùng rem() và --mantine-color-*
-├── SessionHeaderBar.tsx                  # Sub-component cùng miền
-└── useInterviewDraft.ts                  # Custom hook co-located theo miền
+├── SessionRoomClient.tsx                 # 'use client' điều phối chính phiên phỏng vấn (ở gốc domain)
+├── workspace/                            # Cụm giao diện làm bài trực tiếp
+│   ├── LiveInterviewWorkspace.tsx
+│   ├── LiveInterviewWorkspace.module.css # CSS Module dùng rem() và --mantine-color-*
+│   ├── SessionHeaderBar.tsx
+│   ├── CountdownTimer.tsx
+│   ├── QuestionCard.tsx
+│   └── TextAnswerInput.tsx
+├── voice/                                # Cụm ghi âm, sóng âm và duyệt transcript
+│   ├── VoiceRecorder.tsx
+│   ├── VoiceWaveform.tsx
+│   ├── VoiceTranscriptReview.tsx
+│   └── useVoiceRecorder.ts
+├── status/                               # Trạng thái phòng chờ & tiến trình phản hồi
+│   ├── SessionStatusView.tsx
+│   └── FeedbackProgressPanel.tsx
+└── hooks/                                # Custom hooks điều phối phòng phỏng vấn
+    ├── useInterviewDraft.ts
+    ├── useSessionInitialization.ts
+    └── useSessionRoomTurns.tsx
 ```
 
 ### Bảng đối chiếu Anti-Pattern vs Best Practice
 
-| Tình huống                   | Anti-Pattern (Tránh)                                                | Best Practice (Chuẩn mực)                                                                          |
-| :--------------------------- | :------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------- |
-| Tạo nút hoặc input mới       | Tạo wrapper `components/ui/PrimaryButton.tsx` bọc lại nút           | Import trực tiếp `<Button color="brand">` từ `@mantine/core`                                       |
-| Đặt `'use client'`           | Đặt `'use client'` ở đầu `page.tsx` hoặc `client/theme.ts`          | Giữ `page.tsx` và `theme.ts` RSC-safe; đẩy `'use client'` xuống nút lá tương tác                   |
-| Truyền dữ liệu RSC → Client  | Truyền nguyên bản ghi 50 trường cho component chỉ hiển thị 2 trường | Chỉ chọn và truyền đúng các trường serializable cần hiển thị (`server-serialization`)              |
-| Tổ chức import nội bộ        | Gom 20 module vào `index.ts` rồi import qua barrel                  | Direct import từ tệp đích; bật `optimizePackageImports` cho `@mantine/*` (`bundle-barrel-imports`) |
-| Đặt tên tệp trên Windows     | Import `./sessioncard` khi tệp thực tế là `SessionCard.tsx`         | Khớp chính xác 100% chữ hoa/thường để không lỗi build trên Linux CI/Vercel                         |
-| Component chỉ dùng ở 1 miền  | Đặt ngay vào `components/common/` hoặc trộn lẫn vào `app/`          | Đặt tại `components/<domain>/`, chỉ thăng cấp lên `components/common/` khi đạt Rule of Three       |
+| Tình huống                  | Anti-Pattern (Tránh)                                                | Best Practice (Chuẩn mực)                                                                          |
+| :-------------------------- | :------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------- |
+| Tạo nút hoặc input mới      | Tạo wrapper `components/ui/PrimaryButton.tsx` bọc lại nút           | Import trực tiếp `<Button color="brand">` từ `@mantine/core`                                       |
+| Đặt `'use client'`          | Đặt `'use client'` ở đầu `page.tsx` hoặc `client/theme.ts`          | Giữ `page.tsx` và `theme.ts` RSC-safe; đẩy `'use client'` xuống nút lá tương tác                   |
+| Truyền dữ liệu RSC → Client | Truyền nguyên bản ghi 50 trường cho component chỉ hiển thị 2 trường | Chỉ chọn và truyền đúng các trường serializable cần hiển thị (`server-serialization`)              |
+| Tổ chức import nội bộ       | Gom 20 module vào `index.ts` rồi import qua barrel                  | Direct import từ tệp đích; bật `optimizePackageImports` cho `@mantine/*` (`bundle-barrel-imports`) |
+| Đặt tên tệp trên Windows    | Import `./sessioncard` khi tệp thực tế là `SessionCard.tsx`         | Khớp chính xác 100% chữ hoa/thường để không lỗi build trên Linux CI/Vercel                         |
+| Component chỉ dùng ở 1 miền | Đặt ngay vào `components/common/` hoặc trộn lẫn vào `app/`          | Đặt tại `components/<domain>/`, chỉ thăng cấp lên `components/common/` khi đạt Rule of Three       |
 
 ---
 

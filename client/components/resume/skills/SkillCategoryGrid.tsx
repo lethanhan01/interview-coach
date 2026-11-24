@@ -10,9 +10,9 @@ import {
   Text,
 } from '@mantine/core'
 import { IconX } from '@tabler/icons-react'
-import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
+import ProfileEmptyState from '@/components/profile/primitives/ProfileEmptyState'
 import type { TechnicalSkillEntry } from '@/types'
-import { TECH_CATEGORIES } from './constants'
+import { TECH_CATEGORIES } from '@/components/resume/constants'
 
 export interface SkillCategoryGridProps {
   items: TechnicalSkillEntry[]

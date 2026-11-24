@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { CtaSection } from '@/components/landing/CtaSection'
+import { CtaSection } from '@/components/landing/sections/CtaSection'
 
 const meta: Meta<typeof CtaSection> = {
   title: 'Feature/Landing/CtaSection',

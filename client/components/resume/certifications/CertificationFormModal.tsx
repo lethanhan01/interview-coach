@@ -22,7 +22,7 @@ import type { CertificationEntry } from '@/types'
 import {
   certificationItemSchema,
   type CertificationFormValues,
-} from './resume-schemas'
+} from '@/components/resume/resume-schemas'
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 

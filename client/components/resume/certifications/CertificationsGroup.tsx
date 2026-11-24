@@ -10,7 +10,7 @@ import {
   IconLanguage,
   IconPlus,
 } from '@tabler/icons-react'
-import ProfileSection from '@/components/profile/ProfileSection'
+import ProfileSection from '@/components/profile/primitives/ProfileSection'
 import { getErrorMessage } from '@/lib/form-errors'
 import type { AwardEntry, CertificationEntry } from '@/types'
 import AwardFormModal from './AwardFormModal'

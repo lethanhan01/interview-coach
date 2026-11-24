@@ -1,7 +1,7 @@
 import { Badge, Card, Group, Paper, Stack, Text } from '@mantine/core'
 import type { Report } from '@/types'
-import { RecommendationBadge } from '@/components/report/RecommendationBadge'
-import { getReportRecommendationStatus } from './report-summary-helpers'
+import { RecommendationBadge } from './RecommendationBadge'
+import { getReportRecommendationStatus } from '@/components/report/report-summary-helpers'
 
 export interface ReportHeroSummaryProps {
   report: Report

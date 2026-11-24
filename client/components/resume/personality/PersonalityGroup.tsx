@@ -15,10 +15,10 @@ import {
 import { useDisclosure } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
 import { IconAlertCircle, IconPencil } from '@tabler/icons-react'
-import ProfileEmptyState from '@/components/profile/ProfileEmptyState'
-import ProfileSection from '@/components/profile/ProfileSection'
+import ProfileEmptyState from '@/components/profile/primitives/ProfileEmptyState'
+import ProfileSection from '@/components/profile/primitives/ProfileSection'
 import { getErrorMessage } from '@/lib/form-errors'
-import { PERSONALITY_OPTIONS } from './constants'
+import { PERSONALITY_OPTIONS } from '@/components/resume/constants'
 import interactions from '@/styles/interactions.module.css'
 
 const SELECTABLE_OPTIONS = PERSONALITY_OPTIONS.filter((opt) => opt.value !== '')

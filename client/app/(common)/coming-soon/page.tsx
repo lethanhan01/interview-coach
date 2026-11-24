@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { ComingSoonClient } from '@/components/common/ComingSoonClient'
+import { ComingSoonClient } from '@/components/common/status-pages/ComingSoonClient'
 
 export const metadata: Metadata = {
   title: 'Tính năng sắp ra mắt — Interview Coach',

@@ -5,7 +5,7 @@ import './globals.css'
 import { useEffect } from 'react'
 import { MantineProvider, mantineHtmlProps } from '@mantine/core'
 import { IconAlertTriangle, IconHome, IconRefresh } from '@tabler/icons-react'
-import { ErrorPageTemplate } from '@/components/common/ErrorPageTemplate'
+import { ErrorPageTemplate } from '@/components/common/status-pages/ErrorPageTemplate'
 import { theme } from '@/theme'
 
 export default function GlobalError({

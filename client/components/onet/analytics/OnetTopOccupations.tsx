@@ -33,7 +33,7 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/Table'
-import { EmptyState } from '@/components/common/FeedbackPatterns'
+import { EmptyState } from '@/components/common/patterns/FeedbackPatterns'
 import { cn } from '@/lib/utils'
 import type { OnetTopOccupationItem, OnetDetailSubTab } from '@/types'
 

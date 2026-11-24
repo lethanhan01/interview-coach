@@ -19,8 +19,8 @@ import {
   type PersonalInfoFormData,
 } from '@/components/auth/auth-schemas'
 import { extractApiFieldErrors, getErrorMessage } from '@/lib/form-errors'
-import ProfileField from './ProfileField'
-import ProfileSection from './ProfileSection'
+import ProfileField from '@/components/profile/primitives/ProfileField'
+import ProfileSection from '@/components/profile/primitives/ProfileSection'
 
 export interface PersonalInfoData {
   firstname?: string

@@ -23,7 +23,7 @@ import type { WorkExperienceEntry } from '@/types'
 import {
   workExperienceItemSchema,
   type WorkExperienceFormValues,
-} from './resume-schemas'
+} from '@/components/resume/resume-schemas'
 
 export interface WorkExperienceFormModalProps {
   opened: boolean

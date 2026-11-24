@@ -16,10 +16,16 @@ import {
 } from '@mantine/core'
 import { schemaResolver, useForm } from '@mantine/form'
 import { IconAlertCircle } from '@tabler/icons-react'
-import { registerSchema, type RegisterFormData } from './auth-schemas'
-import { PasswordStrengthMeter } from './PasswordStrengthMeter'
+import {
+  registerSchema,
+  type RegisterFormData,
+} from '@/components/auth/auth-schemas'
+import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter'
 
-export { registerSchema, type RegisterFormData } from './auth-schemas'
+export {
+  registerSchema,
+  type RegisterFormData,
+} from '@/components/auth/auth-schemas'
 
 export interface RegisterFormProps {
   onSubmit: (data: RegisterFormData) => void | Promise<void>

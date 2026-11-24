@@ -1,5 +1,8 @@
 import type { Meta } from '@storybook/nextjs-vite'
-import { FormSection, SearchInput } from '@/components/common/FormPatterns'
+import {
+  FormSection,
+  SearchInput,
+} from '@/components/common/patterns/FormPatterns'
 import { useState } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'

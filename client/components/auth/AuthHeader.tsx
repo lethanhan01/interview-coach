@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Anchor, Box, Group, Text, ThemeIcon } from '@mantine/core'
 import { IconMicrophone } from '@tabler/icons-react'
-import { ColorSchemeToggle } from '@/components/layout/ColorSchemeToggle'
+import { ColorSchemeToggle } from '@/components/layout/header/ColorSchemeToggle'
 import classes from './AuthLayout.module.css'
 
 export function AuthHeader() {

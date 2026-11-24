@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { BinaryCriteriaChecklist } from '@/components/report/BinaryCriteriaChecklist'
+import { BinaryCriteriaChecklist } from '@/components/report/transcript/BinaryCriteriaChecklist'
 import { mockUnifiedCriteriaQuestion1 } from '@/test-utils/fixtures/report.fixture'
 
 const meta: Meta<typeof BinaryCriteriaChecklist> = {

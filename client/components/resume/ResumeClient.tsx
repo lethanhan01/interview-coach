@@ -19,13 +19,8 @@ import {
 import { modals } from '@mantine/modals'
 import { IconAlertCircle, IconArrowRight, IconUser } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  isValidResumeSection,
-  type ResumeSectionId,
-} from '@/components/resume/resume-schemas'
-import ResumeHeader, {
-  RESUME_SECTION_ITEMS,
-} from '@/components/resume/ResumeHeader'
+import { isValidResumeSection, type ResumeSectionId } from './resume-schemas'
+import ResumeHeader, { RESUME_SECTION_ITEMS } from './ResumeHeader'
 import { getErrorMessage } from '@/lib/form-errors'
 import { candidateProfileQueries } from '@/queries/candidate-profile.queries'
 import { queryKeys } from '@/queries/keys'

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { OfflineClient } from '@/components/common/OfflineClient'
+import { OfflineClient } from '@/components/common/status-pages/OfflineClient'
 
 export const metadata: Metadata = {
   title: 'Không có kết nối mạng — Interview Coach',

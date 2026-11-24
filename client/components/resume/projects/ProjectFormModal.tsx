@@ -20,7 +20,10 @@ import { IconAlertCircle, IconCalendar } from '@tabler/icons-react'
 import { fromMantineMonthDate, toMantineMonthDate } from '@/lib/date-time'
 import { getErrorMessage } from '@/lib/form-errors'
 import type { ProjectEntry } from '@/types'
-import { projectItemSchema, type ProjectFormValues } from './resume-schemas'
+import {
+  projectItemSchema,
+  type ProjectFormValues,
+} from '@/components/resume/resume-schemas'
 
 export interface ProjectFormModalProps {
   opened: boolean

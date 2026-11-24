@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { IconAlertTriangle, IconHome, IconRefresh } from '@tabler/icons-react'
-import { ErrorPageTemplate } from '@/components/common/ErrorPageTemplate'
+import { ErrorPageTemplate } from '@/components/common/status-pages/ErrorPageTemplate'
 
 export default function RootError({
   error,

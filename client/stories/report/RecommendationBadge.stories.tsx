@@ -1,6 +1,6 @@
 import React from 'react'
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { RecommendationBadge } from '@/components/report/RecommendationBadge'
+import { RecommendationBadge } from '@/components/report/overview/RecommendationBadge'
 
 const meta: Meta<typeof RecommendationBadge> = {
   title: 'Feature/Report/RecommendationBadge',

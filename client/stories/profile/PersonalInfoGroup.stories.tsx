@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import PersonalInfoGroup from '../../components/profile/PersonalInfoGroup'
+import PersonalInfoGroup from '@/components/profile/sections/PersonalInfoGroup'
 
 const meta: Meta<typeof PersonalInfoGroup> = {
   title: 'Feature/Profile/PersonalInfoGroup',

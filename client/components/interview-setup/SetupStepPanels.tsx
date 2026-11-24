@@ -11,10 +11,10 @@ import {
   Title,
   VisuallyHidden,
 } from '@mantine/core'
-import ConfigForm from '@/components/interview-setup/ConfigForm'
-import ConfirmStep from '@/components/interview-setup/ConfirmStep'
-import JdForm from '@/components/interview-setup/JdForm'
-import SavedJdPicker from '@/components/interview-setup/SavedJdPicker'
+import ConfigForm from '@/components/interview-setup/config-step/ConfigForm'
+import ConfirmStep from '@/components/interview-setup/confirm-step/ConfirmStep'
+import JdForm from '@/components/interview-setup/jd-step/JdForm'
+import SavedJdPicker from '@/components/interview-setup/jd-step/SavedJdPicker'
 import { isJdValid } from '@/lib/setup-helpers'
 import type {
   ContextPack,

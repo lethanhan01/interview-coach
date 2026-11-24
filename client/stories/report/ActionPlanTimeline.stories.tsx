@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { ActionPlanTimeline } from '@/components/report/ActionPlanTimeline'
+import { ActionPlanTimeline } from '@/components/report/overview/ActionPlanTimeline'
 import {
   mockUnifiedActionPlan,
   mockLegacyReport,

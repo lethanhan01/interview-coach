@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Box } from '@mantine/core'
-import { PublicFooter } from '@/components/landing/PublicFooter'
-import { PublicHeader } from '@/components/landing/PublicHeader'
+import { PublicFooter } from '@/components/landing/chrome/PublicFooter'
+import { PublicHeader } from '@/components/landing/chrome/PublicHeader'
 import classes from './PublicLayout.module.css'
 
 export default function PublicLayout({

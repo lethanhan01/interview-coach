@@ -13,7 +13,10 @@ import {
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import type { SfiaSkillDetail } from '@/types'
-import { getCategoryTheme, SFIA_LEVEL_DEFINITIONS } from './sfia-theme'
+import {
+  getCategoryTheme,
+  SFIA_LEVEL_DEFINITIONS,
+} from '@/components/sfia/sfia-theme'
 
 export interface SfiaLevelStatementCardsProps {
   skillDetail: SfiaSkillDetail

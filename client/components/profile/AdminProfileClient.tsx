@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AccountProfileView } from '@/components/profile/AccountProfileView'
+import { AccountProfileView } from './AccountProfileView'
 import { getErrorMessage } from '@/lib/form-errors'
 import { queryKeys } from '@/queries/keys'
 import { userQueries } from '@/queries/user.queries'

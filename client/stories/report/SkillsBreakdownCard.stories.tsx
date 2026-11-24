@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { SkillsBreakdownCard } from '@/components/report/SkillsBreakdownCard'
+import { SkillsBreakdownCard } from '@/components/report/competency/SkillsBreakdownCard'
 import { mockUnifiedSkillsBreakdown } from '@/test-utils/fixtures/report.fixture'
 
 const meta: Meta<typeof SkillsBreakdownCard> = {

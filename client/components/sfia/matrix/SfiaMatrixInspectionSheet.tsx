@@ -24,8 +24,8 @@ import {
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { sfiaAdminQueries } from '@/queries/sfia.queries'
-import { getCategoryTheme, getLevelTheme } from './sfia-theme'
-import { generateSfiaRubricMarkdownPrompt } from './sfia-prompt-helper'
+import { getCategoryTheme, getLevelTheme } from '@/components/sfia/sfia-theme'
+import { generateSfiaRubricMarkdownPrompt } from '@/components/sfia/sfia-prompt-helper'
 
 export interface SfiaMatrixInspectionSheetProps {
   isOpen: boolean

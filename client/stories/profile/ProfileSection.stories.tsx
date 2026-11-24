@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { Text } from '@mantine/core'
-import ProfileSection from '../../components/profile/ProfileSection'
+import ProfileSection from '@/components/profile/primitives/ProfileSection'
 
 const meta: Meta<typeof ProfileSection> = {
   title: 'Feature/Profile/ProfileSection',

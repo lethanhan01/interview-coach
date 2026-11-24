@@ -1,5 +1,5 @@
 import type { Meta } from '@storybook/nextjs-vite'
-import { ConfirmDialog } from '@/components/common/DialogPatterns'
+import { ConfirmDialog } from '@/components/common/patterns/DialogPatterns'
 import { Button } from '@/components/ui/Button'
 import { useState } from 'react'
 

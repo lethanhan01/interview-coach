@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/Input'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
-import { getAttributeTheme } from './sfia-theme'
+import { getAttributeTheme } from '@/components/sfia/sfia-theme'
 import { downloadSfiaAttributesProgressionCsv } from './sfia-attributes-export'
 
 export interface SfiaAttributesProgressionMatrixProps {

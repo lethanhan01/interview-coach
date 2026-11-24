@@ -16,10 +16,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { sessionQueries } from '@/queries/session.queries'
 import { useSessionEvents } from '@/hooks/useSessionEvents'
 import type { FeedbackProgress, Report } from '@/types'
-import AnnotatedTranscript from '@/components/report/AnnotatedTranscript'
-import { SfiaCompetencyOverview } from '@/components/report/SfiaCompetencyOverview'
-import { SkillsBreakdownCard } from '@/components/report/SkillsBreakdownCard'
-import { ActionPlanTimeline } from '@/components/report/ActionPlanTimeline'
+import AnnotatedTranscript from '@/components/report/transcript/AnnotatedTranscript'
+import { SfiaCompetencyOverview } from '@/components/report/competency/SfiaCompetencyOverview'
+import { SkillsBreakdownCard } from '@/components/report/competency/SkillsBreakdownCard'
+import { ActionPlanTimeline } from '@/components/report/overview/ActionPlanTimeline'
 import ErrorBoundary from '@/components/common/ErrorBoundary'
 import { SafeViewTransition } from '@/components/common/SafeViewTransition'
 import {
@@ -28,8 +28,8 @@ import {
   REPORT_POLL_INTERVAL_MS,
 } from './report-summary-helpers'
 import { ReportNotReadyView } from './ReportNotReadyView'
-import { ReportHeroSummary } from './ReportHeroSummary'
-import { ReportOverviewTab } from './ReportOverviewTab'
+import { ReportHeroSummary } from '@/components/report/overview/ReportHeroSummary'
+import { ReportOverviewTab } from '@/components/report/overview/ReportOverviewTab'
 
 export interface ReportClientProps {
   sessionId?: string

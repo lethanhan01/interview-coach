@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { Center, Loader } from '@mantine/core'
-import LoginClient from '@/components/auth/LoginClient'
+import LoginClient from '@/components/auth/login/LoginClient'
 
 export const metadata: Metadata = {
   title: 'Đăng nhập | InterviewCoach',

@@ -3,8 +3,8 @@
 import { Badge, Box, Button, Group, Stack, Text } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { IconPencil } from '@tabler/icons-react'
-import ProfileField from '@/components/profile/ProfileField'
-import ProfileSection from '@/components/profile/ProfileSection'
+import ProfileField from '@/components/profile/primitives/ProfileField'
+import ProfileSection from '@/components/profile/primitives/ProfileSection'
 import {
   getJdLevelLabel,
   normalizeJdLevel,
@@ -13,7 +13,7 @@ import {
 import { mapJdLevelToSfia } from '@/lib/setup-helpers'
 import type { CareerInfoData } from '@/types'
 import CareerInfoEditForm from './CareerInfoEditForm'
-import type { CareerInfoFormValues } from './resume-schemas'
+import type { CareerInfoFormValues } from '@/components/resume/resume-schemas'
 
 export type { CareerInfoData }
 

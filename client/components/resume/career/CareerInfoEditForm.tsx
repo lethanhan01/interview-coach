@@ -19,7 +19,10 @@ import { getErrorMessage } from '@/lib/form-errors'
 import { JD_LEVEL_OPTIONS, POSITION_OPTIONS } from '@/lib/interview-options'
 import { mapJdLevelToSfia } from '@/lib/setup-helpers'
 import type { CareerInfoData, OnetOccupation } from '@/types'
-import { careerInfoSchema, type CareerInfoFormValues } from './resume-schemas'
+import {
+  careerInfoSchema,
+  type CareerInfoFormValues,
+} from '@/components/resume/resume-schemas'
 
 export interface CareerInfoEditFormProps {
   initialValues: CareerInfoFormValues

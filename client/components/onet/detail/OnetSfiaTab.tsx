@@ -35,7 +35,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/AlertDialog'
-import { EmptyState } from '@/components/common/FeedbackPatterns'
+import { EmptyState } from '@/components/common/patterns/FeedbackPatterns'
 import { onetAdminQueries } from '@/queries/onet.queries'
 import { queryKeys } from '@/queries/keys'
 import { useOptionalQueryClient } from '@/providers/QueryProvider'

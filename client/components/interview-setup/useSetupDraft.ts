@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   normalizeJdFormData,
   parseJdDraft,
-} from '@/components/interview-setup/jd-form.schema'
+} from '@/components/interview-setup/jd-step/jd-form.schema'
 import { EMPTY_JD } from '@/lib/setup-helpers'
 import type { JdFormData } from '@/types'
 

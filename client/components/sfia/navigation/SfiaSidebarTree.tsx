@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import type { SfiaCategory, SfiaSubcategory, SfiaSkillSummary } from '@/types'
-import { getCategoryTheme } from './sfia-theme'
+import { getCategoryTheme } from '@/components/sfia/sfia-theme'
 
 export interface SfiaSidebarTreeProps {
   categories: SfiaCategory[]

@@ -21,7 +21,7 @@ import {
   IconPlayerPause,
   IconPlayerPlay,
 } from '@tabler/icons-react'
-import FeedbackProgressPanel from '@/components/interview/FeedbackProgressPanel'
+import FeedbackProgressPanel from './FeedbackProgressPanel'
 import type { FeedbackProgress, SessionStatusAction } from '@/types'
 
 export interface SessionStatusViewProps {

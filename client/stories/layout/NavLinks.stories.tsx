@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import NavLinks from '@/components/layout/NavLinks'
+import NavLinks from '@/components/layout/sidebar/NavLinks'
 import { adminNavigation, candidateNavigation } from '@/config/navigation'
 
 const meta: Meta<typeof NavLinks> = {
