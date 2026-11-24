@@ -1,7 +1,0 @@
-export * from './LayoutPatterns'
-export * from './FeedbackPatterns'
-export * from './FormPatterns'
-export * from './DataPatterns'
-export * from './DialogPatterns'
-export * from './ErrorPageTemplate'
-export * from './OfflineBanner'
