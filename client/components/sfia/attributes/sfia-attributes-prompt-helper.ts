@@ -4,14 +4,12 @@
  */
 
 import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
-import { SFIA_LEVEL_DEFINITIONS } from '@/components/sfia/sfia-theme'
 
 export function generateSfiaLevelPromptRubric(
   level: SfiaLevelResponsibility,
   attributes: SfiaGenericAttribute[],
   format: 'markdown' | 'json' = 'markdown'
 ): string {
-  const levelDef = SFIA_LEVEL_DEFINITIONS[level.levelId]
 
   if (format === 'json') {
     const attributeStatements: Record<
@@ -76,7 +74,7 @@ You are an expert AI Interview Evaluator assessing whether a candidate's overall
 - **Level**: Level ${level.levelId}
 - **Standard International Name**: ${level.name}
 - **Vietnamese Standard**: ${level.nameVi}
-- **Short Name**: ${levelDef?.shortName || `L${level.levelId}`}
+- **Short Name**: L${level.levelId}
 
 ## 2. CORE ESSENCE & SCOPE OF RESPONSIBILITY
 - **Core Essence (Triết lý cốt lõi)**:

@@ -132,4 +132,29 @@ describe('useSfiaParams (URL Deep Linking & State Synchronization)', () => {
       scroll: false,
     })
   })
+
+  it('11. cleans tab param to null when setSkill is called from another tab', () => {
+    mockSearchParams = new URLSearchParams('tab=matrix&category=DEV_IMPL')
+    const { result } = renderHook(() => useSfiaParams())
+
+    act(() => {
+      result.current.setSkill('PROG', 4)
+    })
+    expect(mockReplace).toHaveBeenCalledWith(
+      '/admin/sfia?category=DEV_IMPL&skill=PROG&level=4',
+      { scroll: false }
+    )
+  })
+
+  it('12. atomically switches to matrix tab and level via navigateToMatrixWithLevel', () => {
+    mockSearchParams = new URLSearchParams('tab=attributes&level=2')
+    const { result } = renderHook(() => useSfiaParams())
+
+    act(() => {
+      result.current.navigateToMatrixWithLevel(5)
+    })
+    expect(mockReplace).toHaveBeenCalledWith('/admin/sfia?tab=matrix&level=5', {
+      scroll: false,
+    })
+  })
 })

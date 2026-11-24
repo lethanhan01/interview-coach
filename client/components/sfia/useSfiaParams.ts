@@ -76,10 +76,20 @@ export function useSfiaParams() {
       updateParams({
         skill: skillCode,
         level: levelId !== undefined ? levelId : undefined,
-        tab: activeTab !== 'taxonomy' ? 'taxonomy' : undefined,
+        tab: activeTab !== 'taxonomy' ? null : undefined,
       })
     },
     [activeTab, updateParams]
+  )
+
+  const navigateToMatrixWithLevel = useCallback(
+    (levelId: number) => {
+      updateParams({
+        tab: 'matrix',
+        level: levelId,
+      })
+    },
+    [updateParams]
   )
 
   const setLevel = useCallback(
@@ -120,6 +130,7 @@ export function useSfiaParams() {
     setLevel,
     setCategory,
     setAttrView,
+    navigateToMatrixWithLevel,
     updateParams,
   }
 }
