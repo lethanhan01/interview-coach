@@ -22,7 +22,7 @@ import {
   IconSparkles,
 } from '@tabler/icons-react'
 import type { SfiaSkillDetail } from '@/types'
-import { getSfiaCategorySemanticTheme } from '../sfia-semantic-theme'
+import { getSfiaCategorySemanticTheme } from '../sfia-theme'
 
 export interface SfiaLevelStatementCardsProps {
   skillDetail: SfiaSkillDetail

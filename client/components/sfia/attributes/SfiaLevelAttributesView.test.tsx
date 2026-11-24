@@ -1,6 +1,6 @@
-import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, userEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { axe } from 'jest-axe'
 import { SfiaLevelAttributesView } from './SfiaLevelAttributesView'
 import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
 
@@ -146,42 +146,29 @@ describe('SfiaLevelAttributesView', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    Object.assign(navigator, {
-      clipboard: {
-        writeText: vi.fn().mockResolvedValue(undefined),
-      },
-    })
   })
 
-  it('renders all 7 level buttons on the stepper', () => {
-    render(<SfiaLevelAttributesView {...defaultProps} />)
-    expect(
-      screen.getByRole('button', { name: /Select Level 1 - Follow/i })
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: /Select Level 3 - Apply/i })
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', {
-        name: /Select Level 7 - Set strategy \/ Inspire/i,
-      })
-    ).toBeInTheDocument()
-  })
-
-  it('indicates active state on the selected level button', () => {
+  it('renders reused SfiaLevelSpanStepper with all 7 level buttons and active step', () => {
     render(<SfiaLevelAttributesView {...defaultProps} selectedLevel={3} />)
-    const btnL3 = screen.getByRole('button', {
-      name: /Select Level 3 - Apply/i,
-    })
-    expect(btnL3).toHaveAttribute('aria-pressed', 'true')
 
-    const btnL4 = screen.getByRole('button', {
-      name: /Select Level 4 - Enable/i,
+    const btnL1 = screen.getByRole('button', {
+      name: /Chọn Cấp độ 1 - Tuân thủ/i,
     })
-    expect(btnL4).toHaveAttribute('aria-pressed', 'false')
+    const btnL3 = screen.getByRole('button', {
+      name: /Chọn Cấp độ 3 - Áp dụng độc lập/i,
+    })
+    const btnL7 = screen.getByRole('button', {
+      name: /Chọn Cấp độ 7 - Định hình chiến lược/i,
+    })
+
+    expect(btnL1).toBeInTheDocument()
+    expect(btnL3).toHaveAttribute('aria-current', 'step')
+    expect(btnL1).not.toHaveAttribute('aria-current')
+    expect(btnL7).toBeInTheDocument()
   })
 
-  it('calls onSelectLevel when a different level button is clicked', () => {
+  it('calls onSelectLevel when a different stepper button is clicked', async () => {
+    const user = userEvent.setup()
     const onSelectLevel = vi.fn()
     render(
       <SfiaLevelAttributesView
@@ -190,36 +177,43 @@ describe('SfiaLevelAttributesView', () => {
       />
     )
     const btnL5 = screen.getByRole('button', {
-      name: /Select Level 5 - Ensure \/ Advise/i,
+      name: /Chọn Cấp độ 5 - Đảm bảo & Cố vấn/i,
     })
-    fireEvent.click(btnL5)
+    await user.click(btnL5)
     expect(onSelectLevel).toHaveBeenCalledWith(5)
   })
 
-  it('renders the Hero Card with selected level essence and description', () => {
-    render(<SfiaLevelAttributesView {...defaultProps} selectedLevel={4} />)
-    expect(screen.getByText(/Level 4 — Enable/i)).toBeInTheDocument()
+  it('renders Hero Card with Vietnamese title, Blockquote essence, description, and passes axe', async () => {
+    const { container } = render(
+      <SfiaLevelAttributesView {...defaultProps} selectedLevel={4} />
+    )
+    expect(
+      screen.getByText(/Cấp độ 4 — Chủ động & Tạo điều kiện/i)
+    ).toBeInTheDocument()
+    expect(screen.getByText(/\(Enable\)/i)).toBeInTheDocument()
     expect(
       screen.getByText(
         /"Hướng dẫn và tạo điều kiện cho người khác hoàn thành mục tiêu."/i
       )
     ).toBeInTheDocument()
+    expect(screen.getByText(/Tinh hoa Cấp độ 4/i)).toBeInTheDocument()
     expect(
       screen.getByText(
         /Chịu trách nhiệm về mảng công việc lớn hoặc nhóm kỹ thuật nhỏ./i
       )
     ).toBeInTheDocument()
+
+    expect(await axe(container)).toHaveNoViolations()
   })
 
-  it('renders all 5 generic attribute cards with correct level statements', () => {
+  it('renders all 5 generic attribute cards with Vietnamese names and level statements', () => {
     render(<SfiaLevelAttributesView {...defaultProps} selectedLevel={3} />)
-    expect(screen.getByText('Autonomy')).toBeInTheDocument()
-    expect(screen.getByText('Influence')).toBeInTheDocument()
-    expect(screen.getByText('Complexity')).toBeInTheDocument()
-    expect(screen.getByText('Business skills')).toBeInTheDocument()
-    expect(screen.getByText('Knowledge')).toBeInTheDocument()
+    expect(screen.getByText('Mức độ tự chủ')).toBeInTheDocument()
+    expect(screen.getByText('Mức độ ảnh hưởng')).toBeInTheDocument()
+    expect(screen.getByText('Độ phức tạp')).toBeInTheDocument()
+    expect(screen.getByText('Kỹ năng kinh doanh')).toBeInTheDocument()
+    expect(screen.getByText('Kiến thức chuyên môn')).toBeInTheDocument()
 
-    // Level 3 statements
     expect(
       screen.getByText('Làm việc độc lập trong phạm vi nhiệm vụ.')
     ).toBeInTheDocument()
@@ -231,18 +225,44 @@ describe('SfiaLevelAttributesView', () => {
     ).toBeInTheDocument()
   })
 
-  it('copies AI prompt rubric to clipboard when clicking copy button', async () => {
+  it('opens Xuất AI Rubric Menu and copies both Markdown and JSON rubrics', async () => {
+    const user = userEvent.setup()
+    const writeTextSpy = vi
+      .spyOn(navigator.clipboard, 'writeText')
+      .mockResolvedValue(undefined)
     render(<SfiaLevelAttributesView {...defaultProps} selectedLevel={3} />)
-    const copyBtn = screen.getByRole('button', { name: /Copy AI Prompt/i })
-    fireEvent.click(copyBtn)
+
+    const menuTrigger = screen.getByRole('button', { name: /Xuất AI Rubric/i })
+    await user.click(menuTrigger)
+
+    const markdownItem = await screen.findByRole('menuitem', {
+      name: /Sao chép Markdown/i,
+    })
+    await user.click(markdownItem)
 
     await waitFor(() => {
-      expect(navigator.clipboard.writeText).toHaveBeenCalled()
-      expect(screen.getByText(/Copied!/i)).toBeInTheDocument()
+      expect(writeTextSpy).toHaveBeenCalledTimes(1)
+      expect(writeTextSpy.mock.calls[0][0]).toContain(
+        '# AI INTERVIEW EVALUATION SYSTEM PROMPT'
+      )
+    })
+
+    await user.click(menuTrigger)
+    const jsonItem = await screen.findByRole('menuitem', {
+      name: /Sao chép JSON/i,
+    })
+    await user.click(jsonItem)
+
+    await waitFor(() => {
+      expect(writeTextSpy).toHaveBeenCalledTimes(2)
+      const parsed = JSON.parse(writeTextSpy.mock.calls[1][0])
+      expect(parsed.framework).toBe('SFIA 9')
+      expect(parsed.targetLevel).toBe(3)
     })
   })
 
-  it('calls onNavigateToMatrixWithLevel when clicking view skills button', () => {
+  it('calls onNavigateToMatrixWithLevel when clicking Xem kỹ năng Cấp L4', async () => {
+    const user = userEvent.setup()
     const onNavigate = vi.fn()
     render(
       <SfiaLevelAttributesView
@@ -251,8 +271,10 @@ describe('SfiaLevelAttributesView', () => {
         onNavigateToMatrixWithLevel={onNavigate}
       />
     )
-    const navBtn = screen.getByRole('button', { name: /View Level 4 Skills/i })
-    fireEvent.click(navBtn)
+    const navBtn = screen.getByRole('button', {
+      name: /Xem kỹ năng Cấp L4/i,
+    })
+    await user.click(navBtn)
     expect(onNavigate).toHaveBeenCalledWith(4)
   })
 })

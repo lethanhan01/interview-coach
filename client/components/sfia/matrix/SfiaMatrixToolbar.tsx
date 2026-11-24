@@ -1,28 +1,27 @@
 'use client'
 
-import React from 'react'
 import {
-  Search,
-  X,
-  Download,
-  AlertTriangle,
-  Layers,
-  HelpCircle,
-  Briefcase,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Switch } from '@/components/ui/Switch'
-import {
+  Badge,
+  Button,
+  CloseButton,
+  Divider,
+  Group,
+  Paper,
+  SegmentedControl,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/Select'
-import { type SfiaCategory, type SfiaMatrixDisplayMode } from '@/types'
-import { getCategoryTheme } from '@/components/sfia/sfia-theme'
+  Stack,
+  Switch,
+  Text,
+  TextInput,
+} from '@mantine/core'
+import {
+  IconBriefcase,
+  IconDownload,
+  IconHelpCircle,
+  IconSearch,
+  IconStack2,
+} from '@tabler/icons-react'
+import type { SfiaCategory, SfiaMatrixDisplayMode } from '@/types'
 
 export interface SfiaMatrixToolbarProps {
   categories: SfiaCategory[]
@@ -42,6 +41,42 @@ export interface SfiaMatrixToolbarProps {
   className?: string
 }
 
+const DISPLAY_MODE_OPTIONS = [
+  {
+    value: 'level',
+    label: (
+      <Group gap={4} wrap="nowrap" justify="center">
+        <IconStack2 size={13} stroke={1.5} />
+        <Text component="span" size="xs">
+          Cấp độ
+        </Text>
+      </Group>
+    ),
+  },
+  {
+    value: 'questions',
+    label: (
+      <Group gap={4} wrap="nowrap" justify="center">
+        <IconHelpCircle size={13} stroke={1.5} />
+        <Text component="span" size="xs">
+          Câu hỏi
+        </Text>
+      </Group>
+    ),
+  },
+  {
+    value: 'onet',
+    label: (
+      <Group gap={4} wrap="nowrap" justify="center">
+        <IconBriefcase size={13} stroke={1.5} />
+        <Text component="span" size="xs">
+          O*NET
+        </Text>
+      </Group>
+    ),
+  },
+]
+
 export function SfiaMatrixToolbar({
   categories,
   selectedCategory,
@@ -58,207 +93,105 @@ export function SfiaMatrixToolbar({
   blindSpotsCount,
   isExporting = false,
   className,
-}: SfiaMatrixToolbarProps) {
+}: Readonly<SfiaMatrixToolbarProps>) {
+  const categoryOptions = categories.map((cat) => ({
+    value: cat.code,
+    label: `${cat.nameVi || cat.name} (${cat.skillCount})`,
+  }))
+
   return (
-    <div
-      className={cn(
-        'bg-card border-border/80 flex flex-col gap-2.5 rounded-xl border p-3 shadow-sm',
-        className
-      )}
-    >
-      {/* Top Row: Search, Category Filter, and Export CSV */}
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-          {/* Quick Search Input */}
-          <div className="relative w-full sm:w-64 lg:w-72">
-            <Input
-              type="text"
+    <Paper withBorder radius="md" p="sm" className={className}>
+      <Stack gap="xs">
+        <Group justify="space-between" align="center" wrap="wrap" gap="xs">
+          <Group gap="xs" align="center" wrap="wrap" flex={1}>
+            <TextInput
+              size="xs"
+              w={{ base: '100%', sm: 260, lg: 300 }}
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search code (PROG) or skill name..."
-              leadingIcon={<Search className="text-ink-muted size-4" />}
-              trailingAction={
+              onChange={(event) => onSearchChange(event.currentTarget.value)}
+              placeholder="Tìm mã (PROG) hoặc tên kỹ năng..."
+              aria-label="Tìm kiếm kỹ năng SFIA"
+              leftSection={<IconSearch size={14} stroke={1.5} />}
+              rightSection={
                 searchQuery ? (
-                  <button
-                    type="button"
+                  <CloseButton
+                    size="xs"
+                    aria-label="Xóa từ khóa tìm kiếm"
                     onClick={() => onSearchChange('')}
-                    aria-label="Clear search"
-                    className="text-ink-muted hover:text-ink absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-0.5 transition-colors"
-                  >
-                    <X className="size-3.5" />
-                  </button>
+                  />
                 ) : null
               }
-              className="h-9 text-xs"
             />
-          </div>
-
-          {/* Category Dropdown Filter */}
-          <div className="w-full sm:w-56">
             <Select
-              value={selectedCategory || 'ALL'}
-              onValueChange={(val) =>
-                onCategoryChange(val === 'ALL' ? '' : val)
-              }
-            >
-              <SelectTrigger
-                aria-label="Filter by category"
-                className="h-9 text-xs"
-              >
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  <span className="font-medium">
-                    All Categories ({categories.length})
-                  </span>
-                </SelectItem>
-                {categories.map((cat) => {
-                  const theme = getCategoryTheme(cat.code)
-                  return (
-                    <SelectItem key={cat.code} value={cat.code}>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            'size-2 shrink-0 rounded-full',
-                            theme.dot
-                          )}
-                        />
-                        <span className="truncate">{cat.name}</span>
-                        <span className="text-ink-muted ml-auto font-mono text-[10px]">
-                          ({cat.skillCount})
-                        </span>
-                      </div>
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Right Action: CSV Export Button */}
-        <div className="flex shrink-0 items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onExportCsv}
-            disabled={isExporting}
-            className="h-9 gap-1.5 px-3 text-xs font-semibold"
-            title="Export matrix data to UTF-8 CSV"
-          >
-            <Download className="size-3.5" />
-            <span>
-              {isExporting ? 'Exporting CSV...' : 'Export Matrix CSV'}
-            </span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Bottom Controls Row: Display Mode Selector, Blind Spots Toggle, and Active Counts */}
-      <div className="border-border/50 flex flex-col gap-2 border-t pt-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Display Mode Segmented Controls */}
-          <div className="text-ink-muted flex items-center gap-1 text-xs">
-            <span className="text-ink-muted mr-1 text-[11px] font-medium">
-              Cell display:
-            </span>
-            <div className="bg-surface-inset border-border/60 flex items-center rounded-lg border p-0.5">
-              <button
-                type="button"
-                onClick={() => onDisplayModeChange('level')}
-                className={cn(
-                  'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
-                  displayMode === 'level'
-                    ? 'bg-card text-ink shadow-xs font-semibold'
-                    : 'text-ink-muted hover:text-ink'
-                )}
-              >
-                <Layers className="size-3" />
-                <span>Level</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onDisplayModeChange('questions')}
-                className={cn(
-                  'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
-                  displayMode === 'questions'
-                    ? 'bg-card text-ink shadow-xs font-semibold'
-                    : 'text-ink-muted hover:text-ink'
-                )}
-              >
-                <HelpCircle className="size-3" />
-                <span>Questions</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onDisplayModeChange('onet')}
-                className={cn(
-                  'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
-                  displayMode === 'onet'
-                    ? 'bg-card text-ink shadow-xs font-semibold'
-                    : 'text-ink-muted hover:text-ink'
-                )}
-              >
-                <Briefcase className="size-3" />
-                <span>O*NET</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Blind Spots Only Toggle Switch */}
-          <div
-            className={cn(
-              'flex items-center gap-2 rounded-lg border px-2.5 py-1 text-xs transition-colors',
-              blindSpotsOnly
-                ? 'border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200'
-                : 'bg-surface-inset border-border/60 text-ink'
-            )}
-          >
-            <Switch
-              id="sfia-blind-spots-toggle"
-              checked={blindSpotsOnly}
-              onCheckedChange={onBlindSpotsOnlyChange}
-              className="scale-75"
+              size="xs"
+              w={{ base: '100%', sm: 240 }}
+              aria-label="Lọc theo danh mục"
+              placeholder="Tất cả danh mục"
+              clearable
+              clearButtonProps={{ 'aria-label': 'Xóa bộ lọc danh mục' }}
+              data={categoryOptions}
+              value={selectedCategory || null}
+              onChange={(val) => onCategoryChange(val ?? '')}
             />
-            <label
-              htmlFor="sfia-blind-spots-toggle"
-              className="flex cursor-pointer select-none items-center gap-1.5 text-[11px] font-medium"
-            >
-              <AlertTriangle
-                className={cn(
-                  'size-3.5',
-                  blindSpotsOnly
-                    ? 'text-amber-600 dark:text-amber-400'
-                    : 'text-ink-muted'
-                )}
-              />
-              <span>Blind spots only (0 questions)</span>
-              {blindSpotsCount !== undefined && (
-                <span
-                  className={cn(
-                    'py-0.2 rounded-full px-1.5 text-[10px] font-bold',
-                    blindSpotsOnly
-                      ? 'bg-amber-500 text-white'
-                      : 'bg-surface-raised text-ink-muted border-border border'
-                  )}
-                >
-                  {blindSpotsCount}
-                </span>
-              )}
-            </label>
-          </div>
-        </div>
+          </Group>
 
-        {/* Counter Badge */}
-        <div className="text-ink-muted flex items-center gap-2 self-start text-xs sm:self-auto">
-          <span className="text-[11px]">
-            Showing:{' '}
-            <strong className="text-ink">{displayedSkillsCount}</strong> /{' '}
-            <span>{totalSkillsCount} skills</span>
-          </span>
-        </div>
-      </div>
-    </div>
+          <Button
+            variant="default"
+            size="xs"
+            leftSection={<IconDownload size={14} stroke={1.5} />}
+            loading={isExporting}
+            onClick={onExportCsv}
+          >
+            Xuất Ma trận CSV
+          </Button>
+        </Group>
+
+        <Divider />
+
+        <Group justify="space-between" align="center" wrap="wrap" gap="xs">
+          <Group gap="md" align="center" wrap="wrap">
+            <Group gap="xs" align="center" wrap="nowrap">
+              <Text size="xs" c="dimmed" fw={500}>
+                Hiển thị ô:
+              </Text>
+              <SegmentedControl
+                size="xs"
+                aria-label="Chế độ hiển thị ô ma trận"
+                value={displayMode}
+                onChange={(val) =>
+                  onDisplayModeChange(val as SfiaMatrixDisplayMode)
+                }
+                data={DISPLAY_MODE_OPTIONS}
+              />
+            </Group>
+
+            <Group gap={6} align="center" wrap="nowrap">
+              <Switch
+                size="xs"
+                color="danger"
+                checked={blindSpotsOnly}
+                onChange={(e) =>
+                  onBlindSpotsOnlyChange(e.currentTarget.checked)
+                }
+                label="Chỉ hiện điểm mù (0 câu hỏi)"
+              />
+              {blindSpotsCount !== undefined && (
+                <Badge color="danger" variant="light" size="xs">
+                  {blindSpotsCount}
+                </Badge>
+              )}
+            </Group>
+          </Group>
+
+          <Text size="xs" c="dimmed">
+            Đang hiển thị:{' '}
+            <Text component="span" fw={700} c="inherit">
+              {displayedSkillsCount}
+            </Text>{' '}
+            / {totalSkillsCount} kỹ năng
+          </Text>
+        </Group>
+      </Stack>
+    </Paper>
   )
 }

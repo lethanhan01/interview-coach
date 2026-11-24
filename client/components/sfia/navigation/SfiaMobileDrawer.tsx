@@ -18,7 +18,7 @@ import type {
   SfiaSkillSummary,
   SfiaSubcategory,
 } from '@/types'
-import { getSfiaCategorySemanticTheme } from '../sfia-semantic-theme'
+import { getSfiaCategorySemanticTheme } from '../sfia-theme'
 import { SfiaSidebarTree } from './SfiaSidebarTree'
 import classes from './SfiaMobileDrawer.module.css'
 

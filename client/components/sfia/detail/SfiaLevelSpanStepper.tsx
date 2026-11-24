@@ -12,7 +12,7 @@ import {
 } from '@mantine/core'
 import { IconSparkles } from '@tabler/icons-react'
 import type { SfiaLevelResponsibility } from '@/types'
-import { getSfiaCategorySemanticTheme } from '../sfia-semantic-theme'
+import { getSfiaCategorySemanticTheme } from '../sfia-theme'
 import classes from './SfiaLevelSpanStepper.module.css'
 
 export interface SfiaLevelSpanStepperProps {

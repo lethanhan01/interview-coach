@@ -10,7 +10,6 @@ export function generateSfiaLevelPromptRubric(
   attributes: SfiaGenericAttribute[],
   format: 'markdown' | 'json' = 'markdown'
 ): string {
-
   if (format === 'json') {
     const attributeStatements: Record<
       string,

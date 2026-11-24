@@ -12,7 +12,7 @@ import {
 import { notifications } from '@mantine/notifications'
 import { IconCheck, IconCopy } from '@tabler/icons-react'
 import type { SfiaQuestionBankItem } from '@/types'
-import { getSfiaLevelSemanticTheme } from '../sfia-semantic-theme'
+import { getSfiaLevelSemanticTheme } from '../sfia-theme'
 
 export interface SfiaQuestionCardProps {
   question: SfiaQuestionBankItem

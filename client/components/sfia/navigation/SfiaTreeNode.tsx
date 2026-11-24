@@ -4,7 +4,7 @@ import { Badge, Box, Group, Stack, Text, UnstyledButton } from '@mantine/core'
 import type { RenderTreeNodePayload } from '@mantine/core'
 import { IconChevronRight, IconFolderRoot } from '@tabler/icons-react'
 import type { SfiaSkillSummary } from '@/types'
-import { getSfiaCategorySemanticTheme } from '../sfia-semantic-theme'
+import { getSfiaCategorySemanticTheme } from '../sfia-theme'
 import classes from './SfiaSidebarTree.module.css'
 
 export interface SfiaTreeNodeProps {

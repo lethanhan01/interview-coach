@@ -1,18 +1,37 @@
-import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@test-utils'
+import { render, screen, userEvent, waitFor } from '@test-utils'
+import { axe } from 'jest-axe'
+import { notifications } from '@mantine/notifications'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SfiaMatrixInspectionSheet } from './SfiaMatrixInspectionSheet'
 import { sfiaAdminService } from '@/services/sfia-admin.service'
-import type { SfiaSkillDetail } from '@/types'
-
-vi.mock('sonner', () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}))
+import type {
+  SfiaCategory,
+  SfiaLevelResponsibility,
+  SfiaSkillDetail,
+} from '@/types'
 
 describe('SfiaMatrixInspectionSheet', () => {
+  const mockCategories: SfiaCategory[] = [
+    {
+      code: 'DEV_IMPL',
+      name: 'Development and implementation',
+      nameVi: 'Phát triển & Triển khai',
+      description: 'Mô tả',
+      displayOrder: 1,
+      skillCount: 42,
+    },
+  ]
+
+  const mockLevels: SfiaLevelResponsibility[] = [
+    {
+      levelId: 3,
+      name: 'Apply',
+      nameVi: 'Áp dụng độc lập',
+      essence: 'Tự chủ trong công việc chuyên môn.',
+      description: 'Làm việc độc lập.',
+    },
+  ]
+
   const mockDetail: SfiaSkillDetail = {
     code: 'PROG',
     name: 'Programming/software development',
@@ -59,7 +78,8 @@ describe('SfiaMatrixInspectionSheet', () => {
     onClose: vi.fn(),
     skillCode: 'PROG',
     levelId: 3,
-    categories: [],
+    levels: mockLevels,
+    categories: mockCategories,
     onOpenInTaxonomy: vi.fn(),
     onCreateQuestion: vi.fn(),
   }
@@ -67,12 +87,17 @@ describe('SfiaMatrixInspectionSheet', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.spyOn(sfiaAdminService, 'getSkillDetail').mockResolvedValue(mockDetail)
+    vi.spyOn(notifications, 'show').mockImplementation(() => '')
   })
 
-  it('renders skill information and level statement after loading', async () => {
-    render(<SfiaMatrixInspectionSheet {...defaultProps} />)
+  it('renders loading state, Vietnamese skill details, and passes accessibility', async () => {
+    const { container } = render(
+      <SfiaMatrixInspectionSheet {...defaultProps} />
+    )
 
-    expect(screen.getByText(/Loading skill information/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Đang tải thông tin kỹ năng PROG/)
+    ).toBeInTheDocument()
 
     await waitFor(() => {
       expect(
@@ -80,6 +105,8 @@ describe('SfiaMatrixInspectionSheet', () => {
       ).toBeInTheDocument()
     })
 
+    expect(screen.getByText('Phát triển & Triển khai')).toBeInTheDocument()
+    expect(screen.getByText('Áp dụng độc lập')).toBeInTheDocument()
     expect(screen.getByText(/Phát triển phần mềm độc lập/)).toBeInTheDocument()
     expect(
       screen.getByText(/Thiết kế, lập trình, kiểm thử/)
@@ -88,9 +115,36 @@ describe('SfiaMatrixInspectionSheet', () => {
       screen.getByText('Giải thích Memory Leak trong Node.js?')
     ).toBeInTheDocument()
     expect(screen.getByText('15-1252.00')).toBeInTheDocument()
+    expect(screen.getByText('Cốt lõi')).toBeInTheDocument()
+
+    expect(await axe(container)).toHaveNoViolations()
   })
 
-  it('triggers onOpenInTaxonomy and onClose when "Open in Tree" is clicked', async () => {
+  it('renders error alert and retries when getSkillDetail fails', async () => {
+    const user = userEvent.setup()
+    const spy = vi
+      .spyOn(sfiaAdminService, 'getSkillDetail')
+      .mockRejectedValueOnce(new Error('Lỗi kết nối máy chủ'))
+      .mockResolvedValueOnce(mockDetail)
+
+    render(<SfiaMatrixInspectionSheet {...defaultProps} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Lỗi kết nối máy chủ')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Thử lại' }))
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Programming/software development')
+      ).toBeInTheDocument()
+    })
+    expect(spy).toHaveBeenCalledTimes(2)
+  })
+
+  it('triggers onOpenInTaxonomy and onClose when "Mở trong Cây kỹ năng" is clicked', async () => {
+    const user = userEvent.setup()
     const onOpenInTaxonomy = vi.fn()
     const onClose = vi.fn()
 
@@ -108,22 +162,24 @@ describe('SfiaMatrixInspectionSheet', () => {
       ).toBeInTheDocument()
     })
 
-    const openTaxonomyBtn = screen.getByRole('button', {
-      name: /Open in Tree/i,
-    })
-    fireEvent.click(openTaxonomyBtn)
+    await user.click(
+      screen.getByRole('button', { name: /Mở trong Cây kỹ năng/i })
+    )
 
     expect(onOpenInTaxonomy).toHaveBeenCalledWith('PROG', 3)
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('triggers onCreateQuestion when "Create Question" is clicked', async () => {
+  it('triggers onCreateQuestion and keeps Drawer open when "Tạo câu hỏi" is clicked', async () => {
+    const user = userEvent.setup()
     const onCreateQuestion = vi.fn()
+    const onClose = vi.fn()
 
     render(
       <SfiaMatrixInspectionSheet
         {...defaultProps}
         onCreateQuestion={onCreateQuestion}
+        onClose={onClose}
       />
     )
 
@@ -133,18 +189,18 @@ describe('SfiaMatrixInspectionSheet', () => {
       ).toBeInTheDocument()
     })
 
-    const createBtn = screen.getByRole('button', { name: /Create Question/i })
-    fireEvent.click(createBtn)
+    await user.click(screen.getByRole('button', { name: /Tạo câu hỏi/i }))
 
     expect(onCreateQuestion).toHaveBeenCalledWith('PROG', 3)
+    expect(onClose).not.toHaveBeenCalled()
   })
 
-  it('copies prompt rubric to clipboard when "Copy AI Prompt" is clicked', async () => {
+  it('copies AI Rubric to clipboard and shows Mantine notification', async () => {
+    const user = userEvent.setup()
     const writeTextMock = vi.fn().mockResolvedValue(undefined)
-    Object.assign(navigator, {
-      clipboard: {
-        writeText: writeTextMock,
-      },
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: writeTextMock },
+      configurable: true,
     })
 
     render(<SfiaMatrixInspectionSheet {...defaultProps} />)
@@ -155,9 +211,16 @@ describe('SfiaMatrixInspectionSheet', () => {
       ).toBeInTheDocument()
     })
 
-    const copyBtn = screen.getByRole('button', { name: /Copy AI Prompt/i })
-    fireEvent.click(copyBtn)
+    await user.click(
+      screen.getByRole('button', { name: /Sao chép AI Rubric/i })
+    )
 
-    expect(writeTextMock).toHaveBeenCalled()
+    await waitFor(() => {
+      expect(writeTextMock).toHaveBeenCalled()
+    })
+    expect(notifications.show).toHaveBeenCalledWith({
+      color: 'success',
+      message: 'Đã sao chép AI Rubric vào bộ nhớ tạm',
+    })
   })
 })

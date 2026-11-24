@@ -1,11 +1,12 @@
-import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, userEvent, waitFor } from '@test-utils'
+import { axe } from 'jest-axe'
 import { describe, it, expect, vi } from 'vitest'
 import { SfiaMatrixView } from './SfiaMatrixView'
 import type {
   SfiaCategory,
-  SfiaSkillSummary,
+  SfiaLevelResponsibility,
   SfiaMatrixCellData,
+  SfiaSkillSummary,
 } from '@/types'
 
 describe('SfiaMatrixView', () => {
@@ -20,6 +21,58 @@ describe('SfiaMatrixView', () => {
     },
   ]
 
+  const mockLevels: SfiaLevelResponsibility[] = [
+    {
+      levelId: 1,
+      name: 'Follow',
+      nameVi: 'Tuân thủ',
+      essence: 'Follows',
+      description: 'Follows',
+    },
+    {
+      levelId: 2,
+      name: 'Assist',
+      nameVi: 'Hỗ trợ',
+      essence: 'Assists',
+      description: 'Assists',
+    },
+    {
+      levelId: 3,
+      name: 'Apply',
+      nameVi: 'Áp dụng',
+      essence: 'Applies',
+      description: 'Applies',
+    },
+    {
+      levelId: 4,
+      name: 'Enable',
+      nameVi: 'Chủ động',
+      essence: 'Enables',
+      description: 'Enables',
+    },
+    {
+      levelId: 5,
+      name: 'Ensure',
+      nameVi: 'Đảm bảo',
+      essence: 'Ensures',
+      description: 'Ensures',
+    },
+    {
+      levelId: 6,
+      name: 'Initiate',
+      nameVi: 'Khởi xướng',
+      essence: 'Initiates',
+      description: 'Initiates',
+    },
+    {
+      levelId: 7,
+      name: 'Set strategy',
+      nameVi: 'Chiến lược',
+      essence: 'Sets strategy',
+      description: 'Sets strategy',
+    },
+  ]
+
   const mockSkills: SfiaSkillSummary[] = [
     {
       code: 'PROG',
@@ -28,7 +81,7 @@ describe('SfiaMatrixView', () => {
       subcategoryCode: 'SYS_DEV',
       minLevel: 2,
       maxLevel: 6,
-      questionCount: 10,
+      questionCount: 11,
       onetCount: 4,
     },
     {
@@ -38,25 +91,20 @@ describe('SfiaMatrixView', () => {
       subcategoryCode: 'SYS_DEV',
       minLevel: 1,
       maxLevel: 4,
-      questionCount: 0, // All blind spots
+      questionCount: 0,
       onetCount: 2,
     },
   ]
 
   const mockCells: Record<string, SfiaMatrixCellData> = {
-    PROG_L1: {
-      skillCode: 'PROG',
-      levelId: 1,
-      isAvailable: false,
-      questionCount: 0,
-      onetCount: 0,
-    },
     PROG_L2: {
       skillCode: 'PROG',
       levelId: 2,
       isAvailable: true,
       questionCount: 4,
       onetCount: 2,
+      statementSnippet:
+        'Thiết kế, lập trình và kiểm thử các module cơ bản theo tiêu chuẩn.',
     },
     PROG_L3: {
       skillCode: 'PROG',
@@ -64,32 +112,26 @@ describe('SfiaMatrixView', () => {
       isAvailable: true,
       questionCount: 6,
       onetCount: 2,
+      statementSnippet: 'Phát triển các thành phần phần mềm phức tạp vừa phải.',
     },
     PROG_L4: {
       skillCode: 'PROG',
       levelId: 4,
       isAvailable: true,
-      questionCount: 0,
+      questionCount: 1,
       onetCount: 0,
-    }, // Blind spot
+    },
     PROG_L5: {
       skillCode: 'PROG',
       levelId: 5,
       isAvailable: true,
       questionCount: 0,
       onetCount: 0,
-    }, // Blind spot
+    },
     PROG_L6: {
       skillCode: 'PROG',
       levelId: 6,
       isAvailable: true,
-      questionCount: 0,
-      onetCount: 0,
-    }, // Blind spot
-    PROG_L7: {
-      skillCode: 'PROG',
-      levelId: 7,
-      isAvailable: false,
       questionCount: 0,
       onetCount: 0,
     },
@@ -121,100 +163,119 @@ describe('SfiaMatrixView', () => {
       questionCount: 0,
       onetCount: 0,
     },
-    TEST_L5: {
-      skillCode: 'TEST',
-      levelId: 5,
-      isAvailable: false,
-      questionCount: 0,
-      onetCount: 0,
-    },
-    TEST_L6: {
-      skillCode: 'TEST',
-      levelId: 6,
-      isAvailable: false,
-      questionCount: 0,
-      onetCount: 0,
-    },
-    TEST_L7: {
-      skillCode: 'TEST',
-      levelId: 7,
-      isAvailable: false,
-      questionCount: 0,
-      onetCount: 0,
-    },
   }
 
   const defaultProps = {
     skills: mockSkills,
     categories: mockCategories,
     cells: mockCells,
+    levels: mockLevels,
     displayMode: 'level' as const,
     blindSpotsOnly: false,
+    onBlindSpotsOnlyChange: vi.fn(),
     inspectedCell: null,
     onSelectCell: vi.fn(),
     onClearFilters: vi.fn(),
   }
 
-  it('renders table headers for Skill and all 7 SFIA levels', () => {
+  it('renders table headers, category banner, and passes accessibility', async () => {
     const { container } = render(<SfiaMatrixView {...defaultProps} />)
 
-    const thead = container.querySelector('thead')
-    expect(thead).toBeInTheDocument()
-
-    expect(screen.getByText('SFIA 9 Skills')).toBeInTheDocument()
+    expect(screen.getByText('Kỹ năng SFIA 9')).toBeInTheDocument()
     for (let l = 1; l <= 7; l++) {
       expect(screen.getAllByText(`L${l}`).length).toBeGreaterThanOrEqual(1)
     }
-  })
-
-  it('renders category header row with category name', () => {
-    render(<SfiaMatrixView {...defaultProps} />)
-
+    expect(screen.getAllByText('Tuân thủ').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByTestId('category-header-DEV_IMPL')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Development and implementation/)
-    ).toBeInTheDocument()
+    expect(screen.getByText('Phát triển & Triển khai')).toBeInTheDocument()
+
+    expect(await axe(container)).toHaveNoViolations()
   })
 
-  it('correctly marks inactive cells and active cells based on min/max level', () => {
+  it('renders heatmap summary counts and toggles blindSpotsOnly on button click', async () => {
+    const user = userEvent.setup()
+    const onBlindSpotsOnlyChange = vi.fn()
+    render(
+      <SfiaMatrixView
+        {...defaultProps}
+        onBlindSpotsOnlyChange={onBlindSpotsOnlyChange}
+      />
+    )
+
+    expect(screen.getByText('Dồi dào 6+: 1')).toBeInTheDocument()
+    expect(screen.getByText('Tốt 3–5: 1')).toBeInTheDocument()
+    expect(screen.getByText('Mỏng 1–2: 1')).toBeInTheDocument()
+
+    const blindSpotToggle = screen.getByRole('button', {
+      name: /Điểm mù \(0\): 6/i,
+    })
+    expect(blindSpotToggle).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(blindSpotToggle)
+    expect(onBlindSpotsOnlyChange).toHaveBeenCalledWith(true)
+  })
+
+  it('marks inactive and active cells with correct data-heat tiers', () => {
     render(<SfiaMatrixView {...defaultProps} />)
 
-    // PROG L1 should be inactive
     expect(screen.getByTestId('cell-PROG-L1-inactive')).toBeInTheDocument()
-    // PROG L2 should be active button
-    expect(screen.getByTestId('cell-PROG-L2')).toBeInTheDocument()
-    // PROG L7 should be inactive
     expect(screen.getByTestId('cell-PROG-L7-inactive')).toBeInTheDocument()
+
+    expect(screen.getByTestId('cell-PROG-L2')).toHaveAttribute(
+      'data-heat',
+      'good'
+    )
+    expect(screen.getByTestId('cell-PROG-L3')).toHaveAttribute(
+      'data-heat',
+      'rich'
+    )
+    expect(screen.getByTestId('cell-PROG-L4')).toHaveAttribute(
+      'data-heat',
+      'low'
+    )
+    expect(screen.getByTestId('cell-PROG-L5')).toHaveAttribute(
+      'data-heat',
+      'blind'
+    )
   })
 
-  it('calls onSelectCell with (skillCode, levelId) when active cell is clicked', () => {
+  it('calls onSelectCell when active cell is clicked and shows HoverCard snippet on hover', async () => {
+    const user = userEvent.setup()
     const onSelectCell = vi.fn()
     render(<SfiaMatrixView {...defaultProps} onSelectCell={onSelectCell} />)
 
     const cellL2 = screen.getByTestId('cell-PROG-L2')
-    fireEvent.click(cellL2)
+    await user.hover(cellL2)
 
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'Thiết kế, lập trình và kiểm thử các module cơ bản theo tiêu chuẩn.'
+        )
+      ).toBeInTheDocument()
+    })
+    expect(screen.getByText('Câu hỏi: 4')).toBeInTheDocument()
+    expect(screen.getByText('Nghề O*NET: 2')).toBeInTheDocument()
+
+    await user.click(cellL2)
     expect(onSelectCell).toHaveBeenCalledWith('PROG', 2)
   })
 
-  it('displays question counts when displayMode is "questions"', () => {
-    render(<SfiaMatrixView {...defaultProps} displayMode="questions" />)
+  it('displays Vietnamese question counts and O*NET counts by displayMode', () => {
+    const { rerender } = render(
+      <SfiaMatrixView {...defaultProps} displayMode="questions" />
+    )
 
-    // PROG L2 has 4 questions
-    expect(screen.getByText('4 Qs')).toBeInTheDocument()
-    // PROG L3 has 6 questions
-    expect(screen.getByText('6 Qs')).toBeInTheDocument()
-    // Blind spot has 0 Q
-    expect(screen.getAllByText('0 Q').length).toBeGreaterThan(0)
+    expect(screen.getByText('4 CH')).toBeInTheDocument()
+    expect(screen.getByText('6 CH')).toBeInTheDocument()
+    expect(screen.getAllByText('0 CH').length).toBeGreaterThan(0)
+
+    rerender(<SfiaMatrixView {...defaultProps} displayMode="onet" />)
+    expect(screen.getAllByText('2 nghề').length).toBeGreaterThan(0)
   })
 
-  it('displays O*NET count when displayMode is "onet"', () => {
-    render(<SfiaMatrixView {...defaultProps} displayMode="onet" />)
-
-    expect(screen.getAllByText('2 SOC').length).toBeGreaterThan(0)
-  })
-
-  it('renders empty state when skills list is empty', () => {
+  it('renders Vietnamese empty state and calls onClearFilters', async () => {
+    const user = userEvent.setup()
     const onClearFilters = vi.fn()
     render(
       <SfiaMatrixView
@@ -226,11 +287,11 @@ describe('SfiaMatrixView', () => {
 
     expect(screen.getByTestId('matrix-empty-state')).toBeInTheDocument()
     expect(
-      screen.getByText('No matching SFIA skills found')
+      screen.getByText('Không tìm thấy kỹ năng SFIA phù hợp')
     ).toBeInTheDocument()
 
-    const clearBtn = screen.getByRole('button', { name: 'Clear filters' })
-    fireEvent.click(clearBtn)
+    const clearBtn = screen.getByRole('button', { name: 'Xóa bộ lọc' })
+    await user.click(clearBtn)
     expect(onClearFilters).toHaveBeenCalled()
   })
 })

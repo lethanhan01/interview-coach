@@ -74,21 +74,21 @@ describe('sfia-analytics-export utility', () => {
       const res = getBlindSpotPriority(9)
       expect(res.level).toBe('HIGH')
       expect(res.badgeVariant).toBe('danger')
-      expect(res.labelVi).toBe('High Priority')
+      expect(res.labelVi).toBe('Ưu tiên cao')
     })
 
     it('returns MEDIUM priority when onetCount between 4 and 7', () => {
       const res = getBlindSpotPriority(5)
       expect(res.level).toBe('MEDIUM')
       expect(res.badgeVariant).toBe('warning')
-      expect(res.labelVi).toBe('Medium Priority')
+      expect(res.labelVi).toBe('Ưu tiên trung bình')
     })
 
     it('returns STANDARD priority when onetCount < 4', () => {
       const res = getBlindSpotPriority(2)
       expect(res.level).toBe('STANDARD')
       expect(res.badgeVariant).toBe('neutral')
-      expect(res.labelVi).toBe('Standard')
+      expect(res.labelVi).toBe('Tiêu chuẩn')
     })
   })
 
@@ -112,9 +112,9 @@ describe('sfia-analytics-export utility', () => {
       const csv = generateSfiaBlindSpotsCsvString(mockSkills, mockCategories)
       expect(csv).toContain('"Development and implementation"')
       expect(csv).toContain('"Strategy and architecture"')
-      expect(csv).toContain('"High Priority"')
-      expect(csv).toContain('"Medium Priority"')
-      expect(csv).toContain('"Standard"')
+      expect(csv).toContain('"Ưu tiên cao"')
+      expect(csv).toContain('"Ưu tiên trung bình"')
+      expect(csv).toContain('"Tiêu chuẩn"')
     })
 
     it('escapes quotes and special characters properly', () => {

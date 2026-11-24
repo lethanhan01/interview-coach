@@ -13,7 +13,7 @@ import {
 } from '@mantine/core'
 import { IconExternalLink } from '@tabler/icons-react'
 import type { SfiaOnetMappingItem } from '@/types'
-import { getSfiaLevelSemanticTheme } from '../sfia-semantic-theme'
+import { getSfiaLevelSemanticTheme } from '../sfia-theme'
 
 export interface SfiaOnetMappingRowProps {
   mapping: SfiaOnetMappingItem

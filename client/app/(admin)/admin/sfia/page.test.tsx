@@ -1,9 +1,19 @@
 import React from 'react'
-import { render, screen, waitFor, fireEvent } from '@test-utils'
+import { Box } from '@mantine/core'
+import { render, screen, userEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { axe } from 'jest-axe'
+import { sfiaAdminService } from '@/services/sfia-admin.service'
 import SfiaAdminPage from './page'
 
-// Mock next/navigation
+vi.mock('next/dynamic', () => ({
+  __esModule: true,
+  default: () =>
+    function MockDynamicChart() {
+      return <Box data-testid="mock-mantine-chart" />
+    },
+}))
+
 const mockReplace = vi.fn()
 const mockPush = vi.fn()
 const mockRouter = {
@@ -16,13 +26,6 @@ vi.mock('next/navigation', () => ({
   useRouter: () => mockRouter,
   usePathname: () => '/admin/sfia',
   useSearchParams: () => mockSearchParams,
-}))
-
-vi.mock('sonner', () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
 }))
 
 vi.mock('@/services/sfia-admin.service', async () => {
@@ -48,14 +51,18 @@ vi.mock('@/services/sfia-admin.service', async () => {
         ),
       getCoverageStats: vi.fn().mockResolvedValue(MOCK_SFIA_COVERAGE_STATS),
       getMatrixData: vi.fn().mockResolvedValue({
-        skills: MOCK_SFIA_SKILL_SUMMARIES,
+        skills: MOCK_SFIA_SKILL_SUMMARIES.filter(
+          (skill, idx) => idx < 10 || skill.code === 'PROG'
+        ),
         categories: MOCK_SFIA_CATEGORIES,
         cells: {
-          'PROG-3': {
+          PROG_L3: {
             skillCode: 'PROG',
             levelId: 3,
+            isAvailable: true,
             questionCount: 5,
             onetCount: 3,
+            statementSnippet: 'Designs, codes, verifies, tests and documents.',
           },
         },
       }),
@@ -67,100 +74,111 @@ vi.mock('@/services/sfia-admin.service', async () => {
         .mockResolvedValue(MOCK_SFIA_GENERIC_ATTRIBUTES),
       createQuestion: vi.fn().mockResolvedValue({
         id: 'new-q-1',
-        questionText: 'Mock question',
+        questionText: 'Mock question about software design',
         type: 'TECHNICAL',
         difficulty: 'MEDIUM',
         targetSfiaLevel: 3,
-        createdAt: new Date().toISOString(),
       }),
     },
   }
 })
 
-describe('SfiaAdminPage - Matrix Tab Integration', () => {
+describe('SfiaAdminPage — Matrix Tab & Tab-Scoped Queries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSearchParams = new URLSearchParams('tab=matrix')
   })
 
-  it('renders SFIA Knowledge Browser header and Matrix tab workspace', async () => {
-    render(<SfiaAdminPage />)
+  it('renders SFIA 9 header & Matrix workspace without eagerly fetching other tab queries', async () => {
+    const { container } = render(<SfiaAdminPage />)
 
-    // Wait for mock data to load
     await waitFor(() => {
-      expect(screen.getByText('SFIA 9 Knowledge Browser')).toBeInTheDocument()
-      expect(screen.getByText('SFIA Matrix (2D Grid)')).toBeInTheDocument()
+      expect(screen.getByText('Khung Năng Lực SFIA 9')).toBeInTheDocument()
       expect(
-        screen.getByPlaceholderText('Search code (PROG) or skill name...')
+        screen.getByPlaceholderText('Tìm mã (PROG) hoặc tên kỹ năng...')
       ).toBeInTheDocument()
     })
 
-    expect(screen.getByText('Export Matrix CSV')).toBeInTheDocument()
+    expect(screen.getByText('Xuất Ma trận CSV')).toBeInTheDocument()
+    expect(screen.getByText('Chỉ hiện điểm mù (0 câu hỏi)')).toBeInTheDocument()
+
+    // Tab-scoped fetching (Q22): Matrix tab must NOT fetch subcategories or generic attributes
+    expect(sfiaAdminService.getMatrixData).toHaveBeenCalledTimes(1)
+    expect(sfiaAdminService.getSubcategories).not.toHaveBeenCalled()
+    expect(sfiaAdminService.getGenericAttributes).not.toHaveBeenCalled()
+
+    expect(await axe(container)).toHaveNoViolations()
+  }, 15_000)
+
+  it('filters matrix skills when typing search query in toolbar', async () => {
+    const user = userEvent.setup()
+    render(<SfiaAdminPage />)
+
+    const searchInput = await screen.findByPlaceholderText(
+      'Tìm mã (PROG) hoặc tên kỹ năng...'
+    )
+    await user.type(searchInput, 'PROG')
+
     expect(
-      screen.getByText('Blind spots only (0 questions)')
+      await screen.findByText('Programming/software development')
     ).toBeInTheDocument()
   })
 
-  it('filters matrix skills when search query is typed in toolbar', async () => {
+  it('opens Drawer on cell click, navigates atomically to taxonomy, and keeps Drawer open on Create Question', async () => {
+    const user = userEvent.setup()
     render(<SfiaAdminPage />)
 
-    await waitFor(() => {
-      expect(
-        screen.getByPlaceholderText('Search code (PROG) or skill name...')
-      ).toBeInTheDocument()
-    })
+    const cellL3 = await screen.findByTestId('cell-PROG-L3')
+    await user.click(cellL3)
 
-    const searchInput = screen.getByPlaceholderText(
-      'Search code (PROG) or skill name...'
+    expect(
+      await screen.findByRole('button', { name: /Mở trong Cây kỹ năng/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Sao chép AI Rubric/i })
+    ).toBeInTheDocument()
+
+    // Click Create Question -> modal opens while Drawer remains open (Q-B4)
+    await user.click(screen.getByRole('button', { name: /^Tạo câu hỏi$/i }))
+    expect(
+      await screen.findByText('Tạo Câu Hỏi Phỏng Vấn Mới')
+    ).toBeInTheDocument()
+
+    // Close modal and click Open in Tree -> single atomic URL update without ?tab=taxonomy
+    await user.click(screen.getByRole('button', { name: /^Hủy$/i }))
+    await user.click(
+      screen.getByRole('button', { name: /Mở trong Cây kỹ năng/i })
     )
-    fireEvent.change(searchInput, { target: { value: 'PROG' } })
-
-    await waitFor(() => {
-      expect(
-        screen.getByText('Programming/software development')
-      ).toBeInTheDocument()
+    expect(mockReplace).toHaveBeenCalledWith('/admin/sfia?skill=PROG&level=3', {
+      scroll: false,
     })
   })
 
-  it('opens inspection sheet when active cell is clicked', async () => {
+  it('isolates matrix query failure to Matrix tab without crashing workspace header', async () => {
+    vi.mocked(sfiaAdminService.getMatrixData).mockRejectedValueOnce(
+      new Error('Matrix API timeout')
+    )
     render(<SfiaAdminPage />)
 
-    await waitFor(() => {
-      expect(screen.getByTestId('cell-PROG-L3')).toBeInTheDocument()
-    })
-
-    const cellL3 = screen.getByTestId('cell-PROG-L3')
-    fireEvent.click(cellL3)
-
-    await waitFor(() => {
-      expect(screen.getByText('Open in Tree')).toBeInTheDocument()
-      expect(screen.getByText('Copy AI Prompt')).toBeInTheDocument()
-      expect(screen.getByText('Create Question')).toBeInTheDocument()
-    })
+    expect(await screen.findByText('Matrix API timeout')).toBeInTheDocument()
+    expect(screen.getByText('Khung Năng Lực SFIA 9')).toBeInTheDocument()
+    expect(screen.getByText('Phân tích độ phủ')).toBeInTheDocument()
   })
 })
 
-describe('SfiaAdminPage - Phase 7 Analytics Tab Integration', () => {
+describe('SfiaAdminPage — Analytics & Attributes Tabs Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSearchParams = new URLSearchParams('tab=analytics')
   })
 
-  it('renders Coverage Analytics Dashboard and Blind Spots Table in Tab 4', async () => {
+  it('renders Vietnamese Coverage Analytics Dashboard and Blind Spots Table', async () => {
     render(<SfiaAdminPage />)
 
-    // Wait for data load
-    await waitFor(() => {
-      expect(screen.getByText('Tổng kỹ năng SFIA 9')).toBeInTheDocument()
-    })
-
-    // 4 KPI Cards
+    expect(await screen.findByText('Tổng kỹ năng SFIA 9')).toBeInTheDocument()
     expect(screen.getByText('147')).toBeInTheDocument()
     expect(screen.getByText('76.2%')).toBeInTheDocument()
     expect(screen.getByText('66.7%')).toBeInTheDocument()
-    expect(screen.getAllByText('35').length).toBeGreaterThanOrEqual(1)
-
-    // Distribution charts & Leaderboard
     expect(
       screen.getByText('Phân bổ & Độ phủ theo 6 Danh mục SFIA')
     ).toBeInTheDocument()
@@ -170,29 +188,41 @@ describe('SfiaAdminPage - Phase 7 Analytics Tab Integration', () => {
     expect(
       screen.getByText('Top 10 Kỹ Năng SFIA Phổ Biến Nhất trong O*NET')
     ).toBeInTheDocument()
-
-    // Blind Spots Table
-    expect(screen.getByText('Blind Spots Warning Table')).toBeInTheDocument()
-    expect(screen.getByText('35 blind spots')).toBeInTheDocument()
-    expect(screen.getByText('Export Blind Spots CSV')).toBeInTheDocument()
+    expect(
+      screen.getByText('Bảng Cảnh Báo Điểm Mù Kỹ Năng')
+    ).toBeInTheDocument()
+    expect(screen.getByText('35 điểm mù')).toBeInTheDocument()
+    expect(screen.getByText('Xuất CSV Điểm mù')).toBeInTheDocument()
   })
 
-  it('opens create question modal when clicking [Create Question] in blind spots table', async () => {
+  it('opens Create Question modal when clicking Tạo câu hỏi in Blind Spots Table', async () => {
+    const user = userEvent.setup()
     render(<SfiaAdminPage />)
 
-    await waitFor(() => {
-      expect(screen.getByText('Blind Spots Warning Table')).toBeInTheDocument()
-    })
-
+    await screen.findByText('Bảng Cảnh Báo Điểm Mù Kỹ Năng')
     const createButtons = screen.getAllByRole('button', {
-      name: /Create Question/i,
+      name: /^Tạo câu hỏi$/i,
     })
     expect(createButtons.length).toBeGreaterThan(0)
 
-    fireEvent.click(createButtons[0])
+    await user.click(createButtons[0])
+    expect(
+      await screen.findByText('Tạo Câu Hỏi Phỏng Vấn Mới')
+    ).toBeInTheDocument()
+  })
 
-    await waitFor(() => {
-      expect(screen.getByText(/Create Interview Question/i)).toBeInTheDocument()
+  it('navigates atomically from Attributes tab to Matrix tab with level', async () => {
+    const user = userEvent.setup()
+    mockSearchParams = new URLSearchParams('tab=attributes&level=4')
+    render(<SfiaAdminPage />)
+
+    const jumpButton = await screen.findByRole('button', {
+      name: /Xem kỹ năng Cấp L4/i,
+    })
+    await user.click(jumpButton)
+
+    expect(mockReplace).toHaveBeenCalledWith('/admin/sfia?tab=matrix&level=4', {
+      scroll: false,
     })
   })
 })

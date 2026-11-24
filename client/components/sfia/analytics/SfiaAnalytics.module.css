@@ -1,0 +1,104 @@
+.blindSpotCard {
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-align: left;
+  border-radius: var(--mantine-radius-md);
+  border: 1px solid var(--mantine-color-danger-outline);
+  background-color: var(--mantine-color-danger-light);
+  padding: var(--mantine-spacing-md);
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+
+  &[data-clear] {
+    border-color: var(--mantine-color-success-outline);
+    background-color: var(--mantine-color-success-light);
+  }
+
+  @mixin hover {
+    background-color: var(--mantine-color-danger-light-hover);
+
+    &[data-clear] {
+      background-color: var(--mantine-color-success-light-hover);
+    }
+  }
+
+  &:focus-visible {
+    outline: rem(2px) solid var(--mantine-primary-color-filled);
+    outline-offset: rem(2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.filterPill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-xs);
+  width: 100%;
+  text-align: left;
+  padding: rem(6px) rem(10px);
+  border-radius: var(--mantine-radius-sm);
+  border: 1px solid var(--mantine-color-default-border);
+  background-color: var(--mantine-color-body);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+
+  @mixin hover {
+    background-color: var(--mantine-color-default-hover);
+  }
+
+  &[data-active] {
+    border-color: var(--mantine-primary-color-filled);
+    background-color: var(--mantine-primary-color-light);
+  }
+
+  &:focus-visible {
+    outline: rem(2px) solid var(--mantine-primary-color-filled);
+    outline-offset: rem(2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.skillCodeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: rem(4px);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 700;
+  color: var(--mantine-primary-color-filled);
+  border-radius: var(--mantine-radius-xs);
+  padding: rem(2px) rem(4px);
+
+  @mixin hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: rem(2px) solid var(--mantine-primary-color-filled);
+    outline-offset: rem(2px);
+  }
+}
+
+.leaderboardRow {
+  border-radius: var(--mantine-radius-sm);
+  padding: var(--mantine-spacing-xs);
+  transition: background-color 120ms ease;
+
+  @mixin hover {
+    background-color: var(--mantine-color-default-hover);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

@@ -1,38 +1,34 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
-  Search,
-  X,
-  Download,
-  AlertTriangle,
-  Plus,
-  ExternalLink,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  CheckCircle2,
-  SearchX,
-  Flame,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/Select'
-import { type SfiaCategory, type SfiaSkillSummary } from '@/types'
-import { getCategoryTheme, getLevelTheme } from '@/components/sfia/sfia-theme'
-import { getBlindSpotPriority } from './sfia-analytics-export'
+  Button,
+  Divider,
+  Group,
+  Pagination,
+  Paper,
+  Stack,
+  Table,
+  Text,
+  ThemeIcon,
+  Title,
+} from '@mantine/core'
+import { IconCircleCheck, IconSearchOff } from '@tabler/icons-react'
+import surfaces from '@/styles/surfaces.module.css'
+import typography from '@/styles/typography.module.css'
+import type {
+  SfiaCategory,
+  SfiaLevelResponsibility,
+  SfiaSkillSummary,
+} from '@/types'
+import { filterBlindSpotSkills } from './sfia-analytics-export'
+import { SfiaBlindSpotsRow } from './SfiaBlindSpotsRow'
+import { SfiaBlindSpotsToolbar } from './SfiaBlindSpotsToolbar'
 
 export interface SfiaBlindSpotsTableProps {
   skills: SfiaSkillSummary[]
   categories: SfiaCategory[]
+  levels?: SfiaLevelResponsibility[]
   selectedCategoryFilter?: string | null
   selectedLevelFilter?: number | null
   onSelectCategoryFilter?: (categoryCode: string | null) => void
@@ -45,10 +41,17 @@ export interface SfiaBlindSpotsTableProps {
 }
 
 const PAGE_SIZE = 10
+const getControlProps = (control: 'first' | 'previous' | 'next' | 'last') =>
+  control === 'previous'
+    ? { 'aria-label': 'Trang trước' }
+    : control === 'next'
+      ? { 'aria-label': 'Trang sau' }
+      : {}
 
 export function SfiaBlindSpotsTable({
   skills,
   categories,
+  levels,
   selectedCategoryFilter = null,
   selectedLevelFilter = null,
   onSelectCategoryFilter,
@@ -58,548 +61,184 @@ export function SfiaBlindSpotsTable({
   onExportCsv,
   isExportingCsv = false,
   className,
-}: SfiaBlindSpotsTableProps) {
+}: Readonly<SfiaBlindSpotsTableProps>) {
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
 
-  // 1. Lọc tất cả kỹ năng Điểm mù (questionCount === 0)
-  const allBlindSpots = useMemo(() => {
-    return skills.filter((s) => s.questionCount === 0)
-  }, [skills])
+  const allBlindSpots = useMemo(
+    () => skills.filter((s) => s.questionCount === 0),
+    [skills]
+  )
+  const categoryNameMap = useMemo(
+    () => new Map(categories.map((c) => [c.code, c.nameVi || c.name])),
+    [categories]
+  )
 
-  // 2. Lọc kỹ năng theo tìm kiếm, danh mục và cấp độ
-  const filteredSkills = useMemo(() => {
-    let result = allBlindSpots
+  const filteredSkills = useMemo(
+    () =>
+      filterBlindSpotSkills(
+        allBlindSpots,
+        selectedCategoryFilter,
+        selectedLevelFilter,
+        searchQuery
+      ),
+    [allBlindSpots, selectedCategoryFilter, selectedLevelFilter, searchQuery]
+  )
 
-    // Lọc theo Danh mục
-    if (selectedCategoryFilter) {
-      result = result.filter((s) => s.categoryCode === selectedCategoryFilter)
-    }
-
-    // Lọc theo Cấp độ
-    if (selectedLevelFilter !== null && selectedLevelFilter !== undefined) {
-      result = result.filter(
-        (s) =>
-          s.minLevel <= selectedLevelFilter && selectedLevelFilter <= s.maxLevel
-      )
-    }
-
-    // Lọc theo Từ khóa tìm kiếm (Mã code hoặc Tên kỹ năng)
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim()
-      result = result.filter(
-        (s) =>
-          s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
-      )
-    }
-
-    return result
-  }, [allBlindSpots, selectedCategoryFilter, selectedLevelFilter, searchQuery])
-
-  const [prevFilters, setPrevFilters] = useState({
-    category: selectedCategoryFilter,
-    level: selectedLevelFilter,
-    query: searchQuery,
-  })
-
-  if (
-    prevFilters.category !== selectedCategoryFilter ||
-    prevFilters.level !== selectedLevelFilter ||
-    prevFilters.query !== searchQuery
-  ) {
-    setPrevFilters({
-      category: selectedCategoryFilter,
-      level: selectedLevelFilter,
-      query: searchQuery,
-    })
+  const filterKey = `${selectedCategoryFilter ?? ''}|${selectedLevelFilter ?? ''}|${searchQuery}`
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (prevFilterKey !== filterKey) {
+    setPrevFilterKey(filterKey)
     setCurrentPage(1)
   }
 
-  // 3. Tính toán phân trang Client-side (10 items / trang)
   const totalItems = filteredSkills.length
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))
-  const safeCurrentPage = Math.min(currentPage, totalPages)
-  const startIndex = (safeCurrentPage - 1) * PAGE_SIZE
+  const safePage = Math.min(currentPage, totalPages)
+  const startIndex = (safePage - 1) * PAGE_SIZE
   const endIndex = Math.min(totalItems, startIndex + PAGE_SIZE)
-  const paginatedSkills = useMemo(() => {
-    return filteredSkills.slice(startIndex, endIndex)
-  }, [filteredSkills, startIndex, endIndex])
+  const paginatedSkills = filteredSkills.slice(startIndex, endIndex)
 
-  // Trạng thái có đang kích hoạt bộ lọc nào không
   const hasActiveFilters = Boolean(
-    searchQuery.trim() ||
-    selectedCategoryFilter ||
-    (selectedLevelFilter !== null && selectedLevelFilter !== undefined)
+    searchQuery.trim() || selectedCategoryFilter || selectedLevelFilter != null
   )
-
   const handleClearAllFilters = () => {
     setSearchQuery('')
     onSelectCategoryFilter?.(null)
     onSelectLevelFilter?.(null)
   }
 
-  // All skills covered state
   if (allBlindSpots.length === 0) {
     return (
-      <div
-        className={cn(
-          'rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-8 text-center',
-          className
-        )}
+      <Paper
+        id="sfia-blind-spots-table-container"
+        withBorder
+        p="xl"
+        radius="md"
+        className={className}
       >
-        <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-          <CheckCircle2 className="size-6" />
-        </div>
-        <h3 className="text-ink mb-1 text-base font-bold">
-          Outstanding! No skill blind spots remaining
-        </h3>
-        <p className="text-ink-muted mx-auto max-w-md text-xs">
-          100% of SFIA 9 skills have at least one sample interview question in
-          the Question Bank.
-        </p>
-      </div>
+        <Stack align="center" gap="xs" ta="center">
+          <ThemeIcon size="xl" radius="xl" variant="light" color="success">
+            <IconCircleCheck size={24} stroke={1.5} />
+          </ThemeIcon>
+          <Title order={3} size="h5">
+            Xuất sắc! Không còn điểm mù kỹ năng nào
+          </Title>
+          <Text size="xs" c="dimmed" maw={420}>
+            100% kỹ năng SFIA 9 đều đã có ít nhất một câu hỏi phỏng vấn mẫu
+            trong Ngân hàng câu hỏi.
+          </Text>
+        </Stack>
+      </Paper>
     )
   }
 
   return (
-    <div
+    <Paper
       id="sfia-blind-spots-table-container"
-      className={cn(
-        'border-border/80 bg-card flex flex-col rounded-xl border shadow-sm',
-        className
-      )}
+      withBorder
+      radius="md"
+      className={className}
     >
-      {/* 1. Header & Toolbar Controls */}
-      <div className="border-border/80 flex flex-col gap-3 border-b p-4">
-        {/* Title Row */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-rose-500/10 p-2 text-rose-600 dark:text-rose-400">
-              <AlertTriangle className="size-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-ink text-sm font-bold">
-                  Blind Spots Warning Table
-                </h3>
-                <Badge
-                  variant="outline"
-                  className="border-rose-500/20 bg-rose-500/10 text-[10px] font-semibold tabular-nums text-rose-600 dark:text-rose-400"
-                >
-                  {allBlindSpots.length} blind spots
-                </Badge>
-              </div>
-              <p className="text-ink-muted text-[11px]">
-                SFIA skills without interview questions in the Question Bank
-              </p>
-            </div>
-          </div>
+      <SfiaBlindSpotsToolbar
+        totalBlindSpots={allBlindSpots.length}
+        categories={categories}
+        levels={levels}
+        searchQuery={searchQuery}
+        selectedCategoryFilter={selectedCategoryFilter}
+        selectedLevelFilter={selectedLevelFilter}
+        hasActiveFilters={hasActiveFilters}
+        isExportingCsv={isExportingCsv}
+        onSearchChange={setSearchQuery}
+        onSelectCategoryFilter={onSelectCategoryFilter}
+        onSelectLevelFilter={onSelectLevelFilter}
+        onClearAllFilters={handleClearAllFilters}
+        onExportCsv={onExportCsv}
+      />
+      <Divider />
 
-          {/* Export CSV Button */}
-          {onExportCsv && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onExportCsv}
-              disabled={isExportingCsv}
-              className="h-8 shrink-0 gap-1.5 self-start text-xs sm:self-auto"
-            >
-              <Download className="size-3.5" />
-              <span>
-                {isExportingCsv ? 'Exporting CSV...' : 'Export Blind Spots CSV'}
-              </span>
-            </Button>
-          )}
-        </div>
-
-        {/* Filters Controls Row */}
-        <div className="grid grid-cols-1 gap-2.5 pt-1 sm:grid-cols-12">
-          {/* Search Input */}
-          <div className="relative sm:col-span-6 lg:col-span-5">
-            <Input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search code (PROG) or skill name..."
-              leadingIcon={<Search className="text-ink-muted size-4" />}
-              trailingAction={
-                searchQuery ? (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    aria-label="Clear search query"
-                    className="text-ink-muted hover:text-ink absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-0.5"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                ) : null
-              }
-              className="h-8 text-xs"
-            />
-          </div>
-
-          {/* Category Dropdown Filter */}
-          <div className="sm:col-span-3 lg:col-span-4">
-            <Select
-              value={selectedCategoryFilter || 'ALL'}
-              onValueChange={(val) =>
-                onSelectCategoryFilter?.(val === 'ALL' ? null : val)
-              }
-            >
-              <SelectTrigger
-                aria-label="Filter by SFIA category"
-                className="h-8 text-xs"
-              >
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  <span className="font-medium">All Categories (6)</span>
-                </SelectItem>
-                {categories.map((cat) => {
-                  const theme = getCategoryTheme(cat.code)
-                  return (
-                    <SelectItem key={cat.code} value={cat.code}>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            'size-2 shrink-0 rounded-full',
-                            theme.dot
-                          )}
-                        />
-                        <span>{cat.name}</span>
-                      </div>
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Level Dropdown Filter */}
-          <div className="sm:col-span-3 lg:col-span-3">
-            <Select
-              value={
-                selectedLevelFilter !== null &&
-                selectedLevelFilter !== undefined
-                  ? String(selectedLevelFilter)
-                  : 'ALL'
-              }
-              onValueChange={(val) =>
-                onSelectLevelFilter?.(val === 'ALL' ? null : Number(val))
-              }
-            >
-              <SelectTrigger
-                aria-label="Filter by SFIA level"
-                className="h-8 text-xs"
-              >
-                <SelectValue placeholder="All Levels" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  <span className="font-medium">All Levels (1-7)</span>
-                </SelectItem>
-                {[1, 2, 3, 4, 5, 6, 7].map((lvl) => {
-                  const info = getLevelTheme(lvl)
-                  return (
-                    <SelectItem key={lvl} value={String(lvl)}>
-                      <span>
-                        L{lvl} — {info.name}
-                      </span>
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Active Filters Bar */}
-        {hasActiveFilters && (
-          <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
-            <span className="text-ink-muted flex items-center gap-1 text-[11px]">
-              <Filter className="size-3" /> Filtering by:
-            </span>
-
-            {searchQuery && (
-              <Badge
-                variant="outline"
-                className="bg-surface-inset text-ink gap-1 text-[11px]"
-              >
-                <span>Keyword: &quot;{searchQuery}&quot;</span>
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  aria-label="Clear keyword filter"
-                  className="hover:text-destructive"
-                >
-                  <X className="size-3" />
-                </button>
-              </Badge>
-            )}
-
-            {selectedCategoryFilter && (
-              <Badge
-                variant="outline"
-                className="bg-surface-inset text-ink gap-1 text-[11px]"
-              >
-                <span>
-                  Category:{' '}
-                  {categories.find((c) => c.code === selectedCategoryFilter)
-                    ?.name || selectedCategoryFilter}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onSelectCategoryFilter?.(null)}
-                  aria-label="Clear category filter"
-                  className="hover:text-destructive"
-                >
-                  <X className="size-3" />
-                </button>
-              </Badge>
-            )}
-
-            {selectedLevelFilter !== null &&
-              selectedLevelFilter !== undefined && (
-                <Badge
-                  variant="outline"
-                  className="bg-surface-inset text-ink gap-1 text-[11px]"
-                >
-                  <span>Level {selectedLevelFilter}</span>
-                  <button
-                    type="button"
-                    onClick={() => onSelectLevelFilter?.(null)}
-                    aria-label="Clear level filter"
-                    className="hover:text-destructive"
-                  >
-                    <X className="size-3" />
-                  </button>
-                </Badge>
-              )}
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearAllFilters}
-              className="text-ink-muted hover:text-ink h-6 px-1.5 text-[11px]"
-            >
-              Clear all filters
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* 2. Table Data Body */}
-      {filteredSkills.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-8 text-center">
-          <SearchX className="text-ink-muted mb-2 size-8" />
-          <h4 className="text-ink text-sm font-semibold">
-            No matching blind spots found
-          </h4>
-          <p className="text-ink-muted mb-3 mt-1 max-w-sm text-xs">
-            Try adjusting search keywords or reset category and level filters.
-          </p>
-          <Button variant="outline" size="sm" onClick={handleClearAllFilters}>
-            Reset filters
-          </Button>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left text-xs">
-            <thead>
-              <tr className="border-border/80 bg-surface-inset/50 text-ink-muted border-b text-[11px] font-semibold">
-                <th className="px-3 py-2.5">Skill Code</th>
-                <th className="px-3 py-2.5">Skill Name</th>
-                <th className="px-3 py-2.5">SFIA Category</th>
-                <th className="px-3 py-2.5 text-center">Level Span</th>
-                <th className="px-3 py-2.5 text-center">O*NET Demand</th>
-                <th className="px-3 py-2.5">Priority</th>
-                <th className="px-3 py-2.5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-border/60 divide-y">
-              {paginatedSkills.map((skill) => {
-                const theme = getCategoryTheme(skill.categoryCode)
-                const priority = getBlindSpotPriority(skill.onetCount)
-
-                return (
-                  <tr
-                    key={skill.code}
-                    className="hover:bg-surface-inset/50 group transition-colors"
-                  >
-                    {/* Code Badge */}
-                    <td className="whitespace-nowrap px-3 py-2.5">
-                      <button
-                        type="button"
-                        onClick={() => onSelectSkill(skill.code)}
-                        data-testid={`skill-code-${skill.code}`}
-                        aria-label={`Skill code ${skill.code}`}
-                        className="text-brand focus-visible:ring-ring flex items-center gap-1 rounded font-mono text-xs font-bold hover:underline focus-visible:outline-none focus-visible:ring-1"
-                        title={`View details for ${skill.code} in Taxonomy Tree`}
-                      >
-                        <span>{skill.code}</span>
-                        <ExternalLink className="size-3 opacity-0 transition-opacity group-hover:opacity-100" />
-                      </button>
-                    </td>
-
-                    {/* Skill Name */}
-                    <td className="max-w-xs px-3 py-2.5 sm:max-w-sm">
-                      <div
-                        className="text-ink truncate font-medium"
-                        title={skill.name}
-                      >
-                        {skill.name}
-                      </div>
-                      <span className="text-ink-muted font-mono text-[10px]">
-                        {skill.subcategoryCode}
-                      </span>
-                    </td>
-
-                    {/* Category Badge */}
-                    <td className="whitespace-nowrap px-3 py-2.5">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          'px-2 py-0 text-[10px] font-medium',
-                          theme.badge
-                        )}
-                      >
-                        {skill.categoryCode}
-                      </Badge>
-                    </td>
-
-                    {/* Level Range */}
-                    <td className="whitespace-nowrap px-3 py-2.5 text-center">
-                      <span className="text-ink-muted bg-surface-inset border-border/60 rounded border px-2 py-0.5 font-mono text-xs font-medium tabular-nums">
-                        L{skill.minLevel} — L{skill.maxLevel}
-                      </span>
-                    </td>
-
-                    {/* O*NET Demand Count */}
-                    <td className="whitespace-nowrap px-3 py-2.5 text-center">
-                      <span className="inline-flex items-center gap-1 font-semibold tabular-nums text-cyan-600 dark:text-cyan-400">
-                        {skill.onetCount >= 8 && (
-                          <Flame className="size-3 fill-rose-500 text-rose-500" />
-                        )}
-                        <span>{skill.onetCount} occupations</span>
-                      </span>
-                    </td>
-
-                    {/* Priority Badge */}
-                    <td className="whitespace-nowrap px-3 py-2.5">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          'py-0.5 text-[10px] font-semibold',
-                          priority.level === 'HIGH' &&
-                            'border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400',
-                          priority.level === 'MEDIUM' &&
-                            'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400',
-                          priority.level === 'STANDARD' &&
-                            'bg-surface-inset text-ink-muted border-border'
-                        )}
-                      >
-                        {priority.labelVi}
-                      </Badge>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="whitespace-nowrap px-3 py-2.5 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onCreateQuestion(skill)}
-                          className="h-7 gap-1 border-rose-500/30 text-xs text-rose-600 hover:border-rose-500/50 hover:bg-rose-500/10 dark:text-rose-400"
-                        >
-                          <Plus className="size-3" />
-                          <span>Create Question</span>
-                        </Button>
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onSelectSkill(skill.code)}
-                          className="text-ink-muted hover:text-brand h-7 w-7 p-0"
-                          title="View full skill definition in SFIA Tree"
-                        >
-                          <ExternalLink className="size-3.5" />
-                          <span className="sr-only">
-                            View details for {skill.code}
-                          </span>
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* 3. Pagination Controls Footer */}
-      {filteredSkills.length > 0 && (
-        <div className="border-border/80 bg-surface-inset/30 flex flex-col items-center justify-between gap-3 border-t p-3 text-xs sm:flex-row">
-          <div
-            data-testid="pagination-summary"
-            className="text-ink-muted text-[11px] tabular-nums"
+      {totalItems === 0 ? (
+        <Stack align="center" gap="xs" p="xl" ta="center">
+          <ThemeIcon size="lg" radius="xl" variant="light" color="neutral">
+            <IconSearchOff size={20} stroke={1.5} />
+          </ThemeIcon>
+          <Title order={4} size="h6">
+            Không tìm thấy điểm mù nào khớp bộ lọc
+          </Title>
+          <Text size="xs" c="dimmed" maw={380}>
+            Thử điều chỉnh từ khóa tìm kiếm hoặc đặt lại bộ lọc danh mục và cấp
+            độ.
+          </Text>
+          <Button
+            variant="light"
+            color="brand"
+            size="xs"
+            onClick={handleClearAllFilters}
           >
-            Showing <strong className="text-ink">{startIndex + 1}</strong> -{' '}
-            <strong className="text-ink">{endIndex}</strong> of{' '}
-            <strong className="text-ink">{totalItems}</strong> blind spots
-          </div>
-
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={safeCurrentPage <= 1}
-                aria-label="Previous page"
-                className="h-7 px-2 text-xs"
-              >
-                <ChevronLeft className="size-3.5" />
-                <span className="ml-1 hidden sm:inline">Previous</span>
-              </Button>
-
-              <div className="mx-1 flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (pageNum) => (
-                    <Button
-                      key={pageNum}
-                      variant={
-                        pageNum === safeCurrentPage ? 'primary' : 'ghost'
-                      }
-                      size="sm"
-                      onClick={() => setCurrentPage(pageNum)}
-                      aria-label={`Page ${pageNum}`}
-                      className="h-7 w-7 p-0 text-xs tabular-nums"
-                    >
-                      {pageNum}
-                    </Button>
-                  )
-                )}
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
-                disabled={safeCurrentPage >= totalPages}
-                aria-label="Next page"
-                className="h-7 px-2 text-xs"
-              >
-                <span className="mr-1 hidden sm:inline">Next</span>
-                <ChevronRight className="size-3.5" />
-              </Button>
-            </div>
-          )}
-        </div>
+            Đặt lại bộ lọc
+          </Button>
+        </Stack>
+      ) : (
+        <>
+          <Table.ScrollContainer minWidth={720}>
+            <Table highlightOnHover verticalSpacing="xs" horizontalSpacing="sm">
+              <Table.Thead className={surfaces.subtleSurface}>
+                <Table.Tr>
+                  <Table.Th>Mã kỹ năng</Table.Th>
+                  <Table.Th>Tên kỹ năng</Table.Th>
+                  <Table.Th>Danh mục SFIA</Table.Th>
+                  <Table.Th ta="center">Dải cấp độ</Table.Th>
+                  <Table.Th ta="center">Nhu cầu O*NET</Table.Th>
+                  <Table.Th>Mức ưu tiên</Table.Th>
+                  <Table.Th ta="right">Thao tác</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {paginatedSkills.map((skill) => (
+                  <SfiaBlindSpotsRow
+                    key={skill.code}
+                    skill={skill}
+                    categoryLabel={
+                      categoryNameMap.get(skill.categoryCode) ??
+                      skill.categoryCode
+                    }
+                    onCreateQuestion={onCreateQuestion}
+                    onSelectSkill={onSelectSkill}
+                  />
+                ))}
+              </Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
+          <Group
+            justify="space-between"
+            align="center"
+            gap="sm"
+            p="sm"
+            wrap="wrap"
+            className={surfaces.borderedTop}
+          >
+            <Text
+              size="xs"
+              c="dimmed"
+              data-testid="pagination-summary"
+              className={typography.tabularNums}
+            >
+              Hiển thị {startIndex + 1} - {endIndex} trong tổng số {totalItems}{' '}
+              điểm mù
+            </Text>
+            {totalPages > 1 ? (
+              <Pagination
+                size="xs"
+                total={totalPages}
+                value={safePage}
+                onChange={setCurrentPage}
+                getItemProps={(page) => ({ 'aria-label': `Trang ${page}` })}
+                getControlProps={getControlProps}
+              />
+            ) : null}
+          </Group>
+        </>
       )}
-    </div>
+    </Paper>
   )
 }

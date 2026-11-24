@@ -1,6 +1,6 @@
-import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, userEvent, within } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { axe } from 'jest-axe'
 import { SfiaAttributesProgressionMatrix } from './SfiaAttributesProgressionMatrix'
 import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
 
@@ -95,6 +95,7 @@ describe('SfiaAttributesProgressionMatrix', () => {
     attributes: mockAttributes,
     selectedLevel: 3,
     onSelectLevel: vi.fn(),
+    onSwitchToLevelView: vi.fn(),
   }
 
   beforeEach(() => {
@@ -105,37 +106,37 @@ describe('SfiaAttributesProgressionMatrix', () => {
     window.URL.revokeObjectURL = vi.fn()
   })
 
-  it('renders all 7 level column headers in the table', () => {
-    render(<SfiaAttributesProgressionMatrix {...defaultProps} />)
-    expect(
-      screen.getByRole('columnheader', { name: /Level 1: Follow/i })
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('columnheader', { name: /Level 3: Apply/i })
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('columnheader', { name: /Level 7: Set strategy/i })
-    ).toBeInTheDocument()
-  })
+  it('renders all 7 level column header buttons, attribute rows, statements, and passes axe', async () => {
+    const { container } = render(
+      <SfiaAttributesProgressionMatrix {...defaultProps} />
+    )
 
-  it('renders rows for all provided generic attributes', () => {
-    render(<SfiaAttributesProgressionMatrix {...defaultProps} />)
-    expect(screen.getByText('Autonomy')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Cấp độ 1: Tuân thủ/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Cấp độ 3: Áp dụng/i })
+    ).toHaveAttribute('aria-pressed', 'true')
+    expect(
+      screen.getByRole('button', { name: /Cấp độ 7: Chiến lược/i })
+    ).toBeInTheDocument()
+
+    expect(screen.getByText('Mức độ tự chủ')).toBeInTheDocument()
     expect(screen.getByText('AUTONOMY')).toBeInTheDocument()
-    expect(screen.getByText('Influence')).toBeInTheDocument()
+    expect(screen.getByText('Mức độ ảnh hưởng')).toBeInTheDocument()
     expect(screen.getByText('INFLUENCE')).toBeInTheDocument()
-  })
 
-  it('displays the level statements in the matrix cells', () => {
-    render(<SfiaAttributesProgressionMatrix {...defaultProps} />)
     expect(screen.getByText('Chỉ đạo trực tiếp.')).toBeInTheDocument()
     expect(
       screen.getByText('Làm việc độc lập trong phạm vi nhiệm vụ.')
     ).toBeInTheDocument()
     expect(screen.getByText('Toàn quyền quyết định.')).toBeInTheDocument()
+
+    expect(await axe(container)).toHaveNoViolations()
   })
 
-  it('calls onSelectLevel when a level column header is clicked', () => {
+  it('calls onSelectLevel when clicking UnstyledButton inside column header, while body cells stay selectable', async () => {
+    const user = userEvent.setup()
     const onSelectLevel = vi.fn()
     render(
       <SfiaAttributesProgressionMatrix
@@ -143,40 +144,65 @@ describe('SfiaAttributesProgressionMatrix', () => {
         onSelectLevel={onSelectLevel}
       />
     )
+
     const headerL4 = screen.getByRole('columnheader', {
-      name: /Level 4: Enable/i,
+      name: /Cấp độ 4: Chủ động/i,
     })
-    fireEvent.click(headerL4)
+    await user.click(within(headerL4).getByRole('button'))
     expect(onSelectLevel).toHaveBeenCalledWith(4)
+
+    onSelectLevel.mockClear()
+    const bodyStatement = screen.getByText('Toàn quyền quyết định.')
+    await user.click(bodyStatement)
+    expect(onSelectLevel).not.toHaveBeenCalled()
   })
 
-  it('highlights the selected level column', () => {
-    render(
-      <SfiaAttributesProgressionMatrix {...defaultProps} selectedLevel={3} />
-    )
-    // The selected column has "Selected" indicators
-    const activeIndicators = screen.getAllByText('Selected')
-    expect(activeIndicators.length).toBeGreaterThan(0)
-  })
-
-  it('filters rows based on search input', () => {
+  it('filters rows and highlights matched query text with Highlight', async () => {
+    const user = userEvent.setup()
     render(<SfiaAttributesProgressionMatrix {...defaultProps} />)
+
     const searchInput = screen.getByPlaceholderText(
-      'Search attribute criteria...'
+      'Tìm kiếm tiêu chí thuộc tính...'
     )
-    fireEvent.change(searchInput, { target: { value: 'xu thế' } })
+    await user.type(searchInput, 'xu thế')
 
-    // "Influence" has "Dẫn dắt xu thế", "Autonomy" does not
-    expect(screen.getByText('Influence')).toBeInTheDocument()
-    expect(screen.queryByText('Autonomy')).not.toBeInTheDocument()
+    expect(screen.getByText('Mức độ ảnh hưởng')).toBeInTheDocument()
+    expect(screen.queryByText('Mức độ tự chủ')).not.toBeInTheDocument()
+    expect(screen.getByText('xu thế').tagName).toBe('MARK')
+
+    const clearBtn = screen.getByRole('button', {
+      name: /Xóa từ khóa tìm kiếm/i,
+    })
+    await user.click(clearBtn)
+    expect(screen.getByText('Mức độ tự chủ')).toBeInTheDocument()
   })
 
-  it('handles CSV export button click and downloads file', () => {
-    render(<SfiaAttributesProgressionMatrix {...defaultProps} />)
-    const exportBtn = screen.getByRole('button', {
-      name: /Export Matrix CSV|CSV/i,
+  it('calls onSwitchToLevelView when clicking Xem chi tiết Cấp L{n}', async () => {
+    const user = userEvent.setup()
+    const onSwitchToLevelView = vi.fn()
+    render(
+      <SfiaAttributesProgressionMatrix
+        {...defaultProps}
+        selectedLevel={5}
+        onSwitchToLevelView={onSwitchToLevelView}
+      />
+    )
+
+    const jumpBtn = screen.getByRole('button', {
+      name: /Xem chi tiết Cấp L5/i,
     })
-    fireEvent.click(exportBtn)
+    await user.click(jumpBtn)
+    expect(onSwitchToLevelView).toHaveBeenCalledTimes(1)
+  })
+
+  it('handles CSV export button click and downloads file', async () => {
+    const user = userEvent.setup()
+    render(<SfiaAttributesProgressionMatrix {...defaultProps} />)
+
+    const exportBtn = screen.getByRole('button', {
+      name: /Xuất CSV Ma trận/i,
+    })
+    await user.click(exportBtn)
     expect(window.URL.createObjectURL).toHaveBeenCalled()
   })
 })

@@ -1,6 +1,27 @@
 import type { SfiaCategory, SfiaSkillSummary } from '@/types'
 
 /**
+ * Filters blind-spot skills (questionCount === 0) by category, level, and query
+ */
+export function filterBlindSpotSkills(
+  blindSpots: SfiaSkillSummary[],
+  categoryCode: string | null,
+  level: number | null,
+  query: string
+): SfiaSkillSummary[] {
+  const q = query.toLowerCase().trim()
+  return blindSpots.filter((s) => {
+    if (categoryCode && s.categoryCode !== categoryCode) return false
+    if (level != null && (s.minLevel > level || level > s.maxLevel)) {
+      return false
+    }
+    return (
+      !q || s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
+    )
+  })
+}
+
+/**
  * Determines question prioritization based on O*NET market demand
  */
 export function getBlindSpotPriority(onetCount: number): {
@@ -11,20 +32,20 @@ export function getBlindSpotPriority(onetCount: number): {
   if (onetCount >= 8) {
     return {
       level: 'HIGH',
-      labelVi: 'High Priority',
+      labelVi: 'Ưu tiên cao',
       badgeVariant: 'danger',
     }
   }
   if (onetCount >= 4) {
     return {
       level: 'MEDIUM',
-      labelVi: 'Medium Priority',
+      labelVi: 'Ưu tiên trung bình',
       badgeVariant: 'warning',
     }
   }
   return {
     level: 'STANDARD',
-    labelVi: 'Standard',
+    labelVi: 'Tiêu chuẩn',
     badgeVariant: 'neutral',
   }
 }

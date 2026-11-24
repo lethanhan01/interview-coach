@@ -20,7 +20,7 @@ import {
   IconRobot,
 } from '@tabler/icons-react'
 import type { SfiaCategory, SfiaSkillDetail, SfiaSubcategory } from '@/types'
-import { getSfiaCategorySemanticTheme } from '../sfia-semantic-theme'
+import { getSfiaCategorySemanticTheme } from '../sfia-theme'
 
 export interface SfiaDetailHeaderProps {
   skillDetail: SfiaSkillDetail
