@@ -82,8 +82,8 @@ export function OnetAlternateTitlesTab({
         <Stack gap="xs">
           <Group justify="space-between" align="center" wrap="wrap">
             <Group gap="xs">
-              <Title order={2} size="h6">
-                Chức danh Thị trường Tương đương (Alternate Titles)
+              <Title order={3} size="h6">
+                Chức danh Thị trường Tương đương
               </Title>
               <Badge color="neutral" variant="outline" size="xs">
                 {total} chức danh

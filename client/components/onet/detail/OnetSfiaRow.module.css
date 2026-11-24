@@ -7,8 +7,46 @@
   min-width: 7rem;
 }
 
-.interactiveTarget {
+.levelTarget {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: rem(4px);
+  padding: rem(2px) rem(4px);
+  border-radius: var(--mantine-radius-sm);
   cursor: pointer;
+
+  @mixin hover {
+    background-color: var(--mantine-color-default-hover);
+  }
+
+  &:focus-visible {
+    outline: rem(2px) solid var(--mantine-primary-color-filled);
+    outline-offset: rem(2px);
+  }
+}
+
+.miniGauge {
+  display: inline-flex;
+  align-items: center;
+  gap: rem(2px);
+}
+
+.gaugeBar {
+  display: inline-block;
+  width: rem(6px);
+  height: rem(4px);
+  border-radius: var(--mantine-radius-xs);
+  background-color: var(--mantine-color-default-border);
+
+  &[data-available] {
+    background-color: var(--mantine-color-brand-light);
+  }
+
+  &[data-active] {
+    height: rem(6px);
+    background-color: var(--mantine-color-brand-filled);
+  }
 }
 
 .actionsCell {

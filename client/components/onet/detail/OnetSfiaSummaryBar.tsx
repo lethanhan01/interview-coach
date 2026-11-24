@@ -46,7 +46,7 @@ export function OnetSfiaSummaryBar({
       <Stack gap="xs">
         <Group justify="space-between" align="center" wrap="wrap">
           <Group gap="xs">
-            <Title order={2} size="h6">
+            <Title order={3} size="h6">
               Danh sách Ánh xạ Kỹ năng SFIA 9
             </Title>
             <Badge color="neutral" variant="outline" size="xs">

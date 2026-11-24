@@ -1,4 +1,4 @@
-.actionLink {
+.actionCard {
   display: block;
   width: 100%;
   padding: var(--mantine-spacing-sm);
@@ -16,6 +16,11 @@
     border-color: var(--mantine-primary-color-filled);
     background-color: var(--mantine-color-default-hover);
     transform: translateY(rem(-1px));
+  }
+
+  &:focus-visible {
+    outline: rem(2px) solid var(--mantine-primary-color-filled);
+    outline-offset: rem(2px);
   }
 
   @media (prefers-reduced-motion: reduce) {

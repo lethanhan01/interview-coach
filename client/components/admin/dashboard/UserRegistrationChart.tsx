@@ -19,7 +19,7 @@ import type { AdminUser } from '@/types'
 import {
   buildRegistrationSeries,
   type RegistrationRange,
-} from './dashboard-metrics'
+} from '@/components/admin/user-metrics'
 
 const UserRegistrationAreaChart = dynamic(
   () => import('./UserRegistrationAreaChart'),
@@ -68,7 +68,7 @@ export function UserRegistrationChart({
           />
         </Group>
 
-        {users.length === 0 || series.length === 0 ? (
+        {series.length === 0 ? (
           <Paper
             p="lg"
             radius="md"

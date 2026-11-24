@@ -25,11 +25,11 @@ import type {
  * Mapper: Chuyển đổi DTO Backend thành interface OnetSfiaMapping ở frontend
  */
 function mapRawSfiaMapping(raw: RawSfiaMappingItem): OnetSfiaMapping {
-  return {
+  const mapped: OnetSfiaMapping & { responsibility?: string } = {
     id: raw.id,
     skillCode: raw.sfiaSkillCode,
     skillName: raw.skillName || raw.sfiaSkillCode,
-    category: raw.skillCategory || 'Software Engineering',
+    category: raw.skillCategory || 'Tổng quát',
     targetLevel: raw.targetSfiaLevel,
     minLevel: raw.minLevel ?? 1,
     maxLevel: raw.maxLevel ?? 7,
@@ -39,7 +39,9 @@ function mapRawSfiaMapping(raw: RawSfiaMappingItem): OnetSfiaMapping {
         : Number(raw.defaultWeight) || 1.0,
     isCore: Boolean(raw.isCore),
     source: (raw.source || 'USER_DEFINED') as OnetSfiaMapping['source'],
+    ...(raw.responsibility ? { responsibility: raw.responsibility } : {}),
   }
+  return mapped
 }
 
 /**

@@ -24,9 +24,7 @@ export interface OnetSummaryCardsProps {
   summary: OnetAnalyticsSummary
 }
 
-export function OnetSummaryCards({
-  summary,
-}: Readonly<OnetSummaryCardsProps>) {
+export function OnetSummaryCards({ summary }: Readonly<OnetSummaryCardsProps>) {
   return (
     <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="xs">
       {/* Card 1: Tổng nghề O*NET (100% real data — Bug #4 fix) */}

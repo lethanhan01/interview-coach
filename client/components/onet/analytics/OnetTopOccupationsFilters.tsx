@@ -13,10 +13,7 @@ import {
 import { IconSearch, IconX } from '@tabler/icons-react'
 
 export type TopOccupationsSort =
-  | 'mock_desc'
-  | 'jd_desc'
-  | 'mapping_desc'
-  | 'title_asc'
+  'mock_desc' | 'jd_desc' | 'mapping_desc' | 'title_asc'
 
 interface OnetTopOccupationsFiltersProps {
   totalCount: number

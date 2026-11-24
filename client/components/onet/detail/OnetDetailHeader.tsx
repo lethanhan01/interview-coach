@@ -118,7 +118,7 @@ export function OnetDetailHeader({
         </Group>
 
         {/* Row 3: Title */}
-        <Title order={1} size="h3">
+        <Title order={2} size="h3">
           {detail.title}
         </Title>
 

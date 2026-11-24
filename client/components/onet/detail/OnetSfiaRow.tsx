@@ -3,6 +3,7 @@
 import {
   ActionIcon,
   Badge,
+  Box,
   Group,
   HoverCard,
   Progress,
@@ -10,9 +11,14 @@ import {
   Table,
   Text,
   Tooltip,
+  UnstyledButton,
 } from '@mantine/core'
 import { IconInfoCircle, IconPencil, IconTrash } from '@tabler/icons-react'
-import type { OnetSfiaMapping, SfiaSkillDefinition } from '@/types'
+import type {
+  OnetSfiaMapping,
+  SfiaLevelResponsibility,
+  SfiaSkillDefinition,
+} from '@/types'
 import { OnetSfiaRowEditor } from './OnetSfiaRowEditor'
 import classes from './OnetSfiaRow.module.css'
 
@@ -21,6 +27,7 @@ export interface OnetSfiaRowProps {
   isEditing: boolean
   isSaving: boolean
   availableSkills?: SfiaSkillDefinition[]
+  levels?: SfiaLevelResponsibility[]
   onStartEdit: () => void
   onCancelEdit: () => void
   onSave: (data: Partial<OnetSfiaMapping>) => Promise<void>
@@ -31,18 +38,29 @@ export interface OnetSfiaRowProps {
 
 const SOURCE_LABELS: Record<
   OnetSfiaMapping['source'],
-  { label: string; color: 'brand' | 'neutral' | 'success'; variant: 'outline' | 'light' }
+  {
+    label: string
+    color: 'brand' | 'neutral' | 'success'
+    variant: 'outline' | 'light'
+  }
 > = {
-  ONET_CROSSWALK: { label: 'O*NET Crosswalk', color: 'neutral', variant: 'outline' },
+  ONET_CROSSWALK: {
+    label: 'O*NET Crosswalk',
+    color: 'neutral',
+    variant: 'outline',
+  },
   EXPERT_CURATED: { label: 'Chuyên gia', color: 'brand', variant: 'light' },
   USER_DEFINED: { label: 'Tự định nghĩa', color: 'success', variant: 'light' },
 }
+
+const SFIA_LEVELS = [1, 2, 3, 4, 5, 6, 7] as const
 
 export function OnetSfiaRow({
   mapping,
   isEditing,
   isSaving,
   availableSkills = [],
+  levels = [],
   onStartEdit,
   onCancelEdit,
   onSave,
@@ -53,10 +71,19 @@ export function OnetSfiaRow({
   const skillDef = availableSkills.find((s) => s.code === mapping.skillCode)
   const minLevel = skillDef?.minLevel ?? mapping.minLevel
   const maxLevel = skillDef?.maxLevel ?? mapping.maxLevel
+  const levelMeta = levels.find((l) => l.levelId === mapping.targetLevel)
+  const mappingResponsibility = (
+    mapping as OnetSfiaMapping & { responsibility?: string }
+  ).responsibility
 
   const levelDescription =
-    skillDef?.levelDescriptions?.[mapping.targetLevel] ??
-    `Cấp độ ${mapping.targetLevel} theo tiêu chuẩn năng lực SFIA 9.`
+    skillDef?.levelDescriptions?.[mapping.targetLevel] ||
+    mappingResponsibility ||
+    'Chưa có mô tả cấp độ.'
+
+  const levelTitle = levelMeta?.nameVi
+    ? `${mapping.skillCode} — L${mapping.targetLevel}: ${levelMeta.nameVi}`
+    : `${mapping.skillCode} — Cấp độ L${mapping.targetLevel}`
 
   const sourceMeta = SOURCE_LABELS[mapping.source] ?? {
     label: mapping.source,
@@ -70,6 +97,7 @@ export function OnetSfiaRow({
         mapping={mapping}
         minLevel={minLevel}
         maxLevel={maxLevel}
+        levels={levels}
         isSaving={isSaving}
         onSave={onSave}
         onCancel={onCancelEdit}
@@ -102,21 +130,46 @@ export function OnetSfiaRow({
         </Text>
       </Table.Td>
 
-      {/* Col 3: Target Level with HoverCard */}
+      {/* Col 3: Target Level with keyboard-accessible HoverCard + 7-level gauge */}
       <Table.Td>
-        <HoverCard width={280} shadow="md" withArrow openDelay={200} withinPortal>
+        <HoverCard
+          width={300}
+          shadow="md"
+          withArrow
+          openDelay={200}
+          withinPortal
+        >
           <HoverCard.Target>
-            <Group gap={4} align="center" wrap="nowrap" className={classes.interactiveTarget}>
-              <Badge color="brand" size="xs">
-                L{mapping.targetLevel}
-              </Badge>
-              <IconInfoCircle size={12} stroke={1.5} />
-            </Group>
+            <UnstyledButton
+              type="button"
+              className={classes.levelTarget}
+              aria-label={`Xem mô tả ${levelTitle} (dải L${minLevel} đến L${maxLevel})`}
+            >
+              <Group gap={4} align="center" wrap="nowrap">
+                <Badge color="brand" size="xs">
+                  L{mapping.targetLevel}
+                </Badge>
+                <IconInfoCircle size={12} stroke={1.5} />
+              </Group>
+              <Box className={classes.miniGauge} aria-hidden="true">
+                {SFIA_LEVELS.map((lvl) => (
+                  <Box
+                    key={lvl}
+                    component="span"
+                    className={classes.gaugeBar}
+                    mod={{
+                      available: lvl >= minLevel && lvl <= maxLevel,
+                      active: lvl === mapping.targetLevel,
+                    }}
+                  />
+                ))}
+              </Box>
+            </UnstyledButton>
           </HoverCard.Target>
           <HoverCard.Dropdown>
             <Stack gap={4}>
               <Text size="xs" fw={700}>
-                {mapping.skillCode} — Cấp độ {mapping.targetLevel}
+                {levelTitle}
               </Text>
               <Text size="xs" c="dimmed">
                 {levelDescription}

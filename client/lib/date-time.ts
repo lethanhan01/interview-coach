@@ -9,6 +9,13 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('vi-VN', {
   minute: '2-digit',
 })
 
+const DATE_FORMATTER = new Intl.DateTimeFormat('vi-VN', {
+  timeZone: APP_TIME_ZONE,
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+})
+
 const DATE_KEY_FORMATTER = new Intl.DateTimeFormat('en-US', {
   timeZone: APP_TIME_ZONE,
   year: 'numeric',
@@ -17,14 +24,24 @@ const DATE_KEY_FORMATTER = new Intl.DateTimeFormat('en-US', {
 })
 
 export function formatVietnamDateTime(iso: string): string {
-  return DATE_TIME_FORMATTER.format(new Date(iso))
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '—'
+  return DATE_TIME_FORMATTER.format(date)
+}
+
+export function formatVietnamDate(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '—'
+  return DATE_FORMATTER.format(date)
 }
 
 export function formatVietnamRelativeDate(
   iso: string,
   now: Date = new Date()
 ): string {
-  const diffDays = daysBetweenVietnamDates(new Date(iso), now)
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime()) || Number.isNaN(now.getTime())) return '—'
+  const diffDays = daysBetweenVietnamDates(date, now)
 
   if (diffDays === 0) return 'Hôm nay'
   if (diffDays === 1) return 'Hôm qua'

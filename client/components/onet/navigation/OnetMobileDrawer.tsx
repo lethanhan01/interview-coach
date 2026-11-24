@@ -1,17 +1,10 @@
 'use client'
 
 import { useDisclosure } from '@mantine/hooks'
-import {
-  Badge,
-  Button,
-  Drawer,
-  Group,
-  Paper,
-  Stack,
-  Text,
-} from '@mantine/core'
+import { Badge, Button, Drawer, Group, Paper, Stack, Text } from '@mantine/core'
 import { IconListDetails } from '@tabler/icons-react'
 import { OnetSidebar } from './OnetSidebar'
+import classes from './OnetMobileDrawer.module.css'
 
 export interface OnetMobileDrawerProps {
   selectedSoc: string
@@ -63,6 +56,10 @@ export function OnetMobileDrawer({
         padding={0}
         title="Danh mục nghề nghiệp O*NET"
         hiddenFrom="lg"
+        classNames={{
+          content: classes.drawerContent,
+          body: classes.drawerBody,
+        }}
       >
         <OnetSidebar
           selectedSoc={selectedSoc}

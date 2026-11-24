@@ -1,7 +1,15 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Button, Group, Loader, Pagination, Paper, Stack, Text } from '@mantine/core'
+import {
+  Button,
+  Group,
+  Loader,
+  Pagination,
+  Paper,
+  Stack,
+  Text,
+} from '@mantine/core'
 import surfaces from '@/styles/surfaces.module.css'
 import type { OnetDetailSubTab, OnetTopOccupationItem } from '@/types'
 import {

@@ -11,11 +11,18 @@ import {
   Table,
   Text,
   Title,
+  Tooltip,
 } from '@mantine/core'
 import { IconArrowRight } from '@tabler/icons-react'
-import { formatVietnamRelativeDate } from '@/lib/date-time'
+import {
+  formatVietnamDateTime,
+  formatVietnamRelativeDate,
+} from '@/lib/date-time'
+import {
+  getUserDisplayName,
+  getUserInitials,
+} from '@/components/admin/user-metrics'
 import type { AdminUser } from '@/types'
-import { getUserDisplayName, getUserInitials } from './dashboard-metrics'
 
 interface RecentUsersTableProps {
   users: AdminUser[]
@@ -108,9 +115,14 @@ export function RecentUsersTable({ users }: Readonly<RecentUsersTableProps>) {
                         </Badge>
                       </Table.Td>
                       <Table.Td ta="right">
-                        <Text size="xs" c="dimmed">
-                          {formatVietnamRelativeDate(user.createdAt)}
-                        </Text>
+                        <Tooltip
+                          label={formatVietnamDateTime(user.createdAt)}
+                          withArrow
+                        >
+                          <Text span size="xs" c="dimmed">
+                            {formatVietnamRelativeDate(user.createdAt)}
+                          </Text>
+                        </Tooltip>
                       </Table.Td>
                     </Table.Tr>
                   )

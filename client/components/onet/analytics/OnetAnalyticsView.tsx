@@ -200,14 +200,42 @@ export function OnetAnalyticsView({
           </Grid.Col>
         </Grid>
 
-        <OnetTopOccupations
-          data={topOccupationsQuery.data ?? []}
-          isFetching={topOccupationsQuery.isFetching}
-          activeGroupFilter={selectedGroup}
-          activeGroupName={activeGroupName}
-          onClearGroupFilter={() => setSelectedGroup(null)}
-          onNavigateToExplorer={handleNavigate}
-        />
+        {topOccupationsQuery.isError ? (
+          <Alert
+            color="danger"
+            variant="light"
+            icon={<IconAlertCircle size={18} stroke={1.5} />}
+            title="Không thể tải danh sách nghề nổi bật"
+          >
+            <Stack gap="xs">
+              <Text size="sm">
+                {topOccupationsQuery.error instanceof Error
+                  ? topOccupationsQuery.error.message
+                  : 'Đã xảy ra lỗi khi tải bảng nghề nghiệp quan tâm nhất.'}
+              </Text>
+              <Group>
+                <Button
+                  size="xs"
+                  variant="light"
+                  color="danger"
+                  leftSection={<IconRefresh size={14} stroke={1.5} />}
+                  onClick={() => void topOccupationsQuery.refetch()}
+                >
+                  Thử lại
+                </Button>
+              </Group>
+            </Stack>
+          </Alert>
+        ) : (
+          <OnetTopOccupations
+            data={topOccupationsQuery.data ?? []}
+            isFetching={topOccupationsQuery.isFetching}
+            activeGroupFilter={selectedGroup}
+            activeGroupName={activeGroupName}
+            onClearGroupFilter={() => setSelectedGroup(null)}
+            onNavigateToExplorer={handleNavigate}
+          />
+        )}
       </Stack>
     </ScrollArea>
   )

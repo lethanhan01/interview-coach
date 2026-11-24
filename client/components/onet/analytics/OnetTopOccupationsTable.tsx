@@ -107,7 +107,11 @@ export function OnetTopOccupationsTable({
                         aria-label={`Ánh xạ SFIA: ${item.mappingCount}`}
                       />
                     </Progress.Root>
-                    <Group gap={6} wrap="wrap" className={typography.tabularNums}>
+                    <Group
+                      gap={6}
+                      wrap="wrap"
+                      className={typography.tabularNums}
+                    >
                       <Text size="xs" c="brand">
                         PV: {item.mockInterviewCount}
                       </Text>
@@ -171,7 +175,11 @@ export function OnetTopOccupationsTable({
                       variant="subtle"
                       color="brand"
                       leftSection={
-                        <IconCompass size={12} stroke={1.5} aria-hidden="true" />
+                        <IconCompass
+                          size={12}
+                          stroke={1.5}
+                          aria-hidden="true"
+                        />
                       }
                       onClick={() =>
                         onNavigateToExplorer(item.socCode, 'overview')

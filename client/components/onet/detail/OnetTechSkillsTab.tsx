@@ -34,7 +34,9 @@ export interface OnetTechSkillsTabProps {
 type TechFilterType = 'all' | 'hot' | 'demand'
 type TechViewMode = 'category' | 'cloud'
 
-export function OnetTechSkillsTab({ skills }: Readonly<OnetTechSkillsTabProps>) {
+export function OnetTechSkillsTab({
+  skills,
+}: Readonly<OnetTechSkillsTabProps>) {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<TechFilterType>('all')
   const [viewMode, setViewMode] = useState<TechViewMode>('category')
@@ -79,8 +81,8 @@ export function OnetTechSkillsTab({ skills }: Readonly<OnetTechSkillsTabProps>) 
         <Stack gap="xs">
           <Group justify="space-between" align="center" wrap="wrap">
             <Group gap="xs">
-              <Title order={2} size="h6">
-                Kỹ năng Phần mềm & Công cụ (Tech Stack)
+              <Title order={3} size="h6">
+                Kỹ năng Phần mềm & Công cụ
               </Title>
               <Badge color="neutral" variant="outline" size="xs">
                 {skills.length} công nghệ
@@ -127,7 +129,9 @@ export function OnetTechSkillsTab({ skills }: Readonly<OnetTechSkillsTabProps>) 
             <Chip.Group
               multiple={false}
               value={activeFilter}
-              onChange={(val) => setActiveFilter((val as TechFilterType) || 'all')}
+              onChange={(val) =>
+                setActiveFilter((val as TechFilterType) || 'all')
+              }
             >
               <Group gap="xs">
                 <Chip value="all" size="xs" variant="outline">
@@ -136,7 +140,12 @@ export function OnetTechSkillsTab({ skills }: Readonly<OnetTechSkillsTabProps>) 
                 <Chip value="hot" size="xs" variant="outline" color="warning">
                   Nóng ({hotCount})
                 </Chip>
-                <Chip value="demand" size="xs" variant="outline" color="success">
+                <Chip
+                  value="demand"
+                  size="xs"
+                  variant="outline"
+                  color="success"
+                >
                   Nhu cầu cao ({demandCount})
                 </Chip>
               </Group>
@@ -170,11 +179,7 @@ export function OnetTechSkillsTab({ skills }: Readonly<OnetTechSkillsTabProps>) 
       ) : viewMode === 'category' ? (
         <Stack gap="xs">
           {groupedSkills.map(([cat, catSkills]) => (
-            <OnetTechCategoryCard
-              key={cat}
-              category={cat}
-              skills={catSkills}
-            />
+            <OnetTechCategoryCard key={cat} category={cat} skills={catSkills} />
           ))}
         </Stack>
       ) : (

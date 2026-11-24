@@ -1,19 +1,26 @@
 'use client'
 
-import * as React from 'react'
-import { useState, useMemo } from 'react'
-import { FolderTree, Network, ChevronRight } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { useMemo } from 'react'
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/Sheet'
-import type { SfiaCategory, SfiaSubcategory, SfiaSkillSummary } from '@/types'
-import { getCategoryTheme } from '@/components/sfia/sfia-theme'
+  ActionIcon,
+  Badge,
+  Button,
+  Drawer,
+  Group,
+  Paper,
+  Text,
+} from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
+import { IconChevronRight, IconFolderRoot } from '@tabler/icons-react'
+import type {
+  SfiaCategory,
+  SfiaLevelResponsibility,
+  SfiaSkillSummary,
+  SfiaSubcategory,
+} from '@/types'
+import { getSfiaCategorySemanticTheme } from '../sfia-semantic-theme'
 import { SfiaSidebarTree } from './SfiaSidebarTree'
-import { cn } from '@/lib/utils'
+import classes from './SfiaMobileDrawer.module.css'
 
 export interface SfiaMobileDrawerProps {
   categories: SfiaCategory[]
@@ -22,6 +29,7 @@ export interface SfiaMobileDrawerProps {
   selectedSkill: string
   selectedLevel: number
   onSelectSkill: (skillCode: string, targetLevel?: number) => void
+  levels?: SfiaLevelResponsibility[]
   className?: string
 }
 
@@ -32,102 +40,89 @@ export function SfiaMobileDrawer({
   selectedSkill,
   selectedLevel,
   onSelectSkill,
+  levels,
   className,
-}: SfiaMobileDrawerProps) {
-  const [open, setOpen] = useState(false)
+}: Readonly<SfiaMobileDrawerProps>) {
+  const [opened, { open, close }] = useDisclosure(false)
 
   // Find info of currently selected skill
   const currentSkill = useMemo(() => {
-    return skills.find((s) => s.code === selectedSkill) || skills[0]
+    return skills.find((s) => s.code === selectedSkill) ?? skills[0]
   }, [skills, selectedSkill])
 
   const theme = useMemo(() => {
-    return getCategoryTheme(currentSkill?.categoryCode || 'DEV_IMPL')
+    return getSfiaCategorySemanticTheme(
+      currentSkill?.categoryCode ?? 'DEV_IMPL'
+    )
   }, [currentSkill])
 
   const handleSelectSkill = (code: string, targetLevel?: number) => {
     onSelectSkill(code, targetLevel)
-    setOpen(false)
+    close()
   }
 
   return (
-    <div
-      className={cn(
-        'bg-card border-border/80 flex items-center justify-between gap-2 rounded-xl border p-2.5 shadow-sm lg:hidden',
-        className
-      )}
-    >
-      {/* Trigger Button */}
-      <div className="flex min-w-0 items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setOpen(true)}
-          className="h-8 shrink-0 gap-1.5 text-xs font-semibold"
+    <Paper withBorder radius="md" p="xs" hiddenFrom="lg" className={className}>
+      <Group justify="space-between" align="center" wrap="nowrap">
+        <Group gap="xs" align="center" wrap="nowrap" miw={0}>
+          <Button
+            variant="outline"
+            size="xs"
+            color="brand"
+            leftSection={<IconFolderRoot size={14} stroke={1.5} />}
+            onClick={open}
+            aria-label="Mở cây kỹ năng SFIA 9"
+          >
+            Cây kỹ năng
+          </Button>
+
+          {currentSkill && (
+            <Group gap={6} align="center" wrap="nowrap" miw={0}>
+              <Badge color={theme.color} variant="light" size="xs">
+                {currentSkill.code}
+              </Badge>
+              <Text size="xs" fw={500} truncate maw={{ base: 120, sm: 200 }}>
+                {currentSkill.name}
+              </Text>
+              <Badge color="neutral" variant="outline" size="xs">
+                L{selectedLevel}
+              </Badge>
+            </Group>
+          )}
+        </Group>
+
+        <ActionIcon
+          variant="subtle"
+          color="neutral"
+          onClick={open}
+          aria-label="Mở chi tiết cây kỹ năng SFIA 9"
         >
-          <FolderTree className="text-brand size-3.5" />
-          <span>SFIA Skill Tree</span>
-        </Button>
+          <IconChevronRight size={16} stroke={1.5} />
+        </ActionIcon>
+      </Group>
 
-        {/* Current Active Skill Preview on Mobile */}
-        {currentSkill && (
-          <div className="flex min-w-0 items-center gap-1.5 text-xs">
-            <span
-              className={cn(
-                'shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold',
-                theme.badge
-              )}
-            >
-              {currentSkill.code}
-            </span>
-            <span className="text-ink max-w-[120px] truncate text-xs font-medium sm:max-w-[200px]">
-              {currentSkill.name}
-            </span>
-            <span className="text-ink-muted bg-surface-raised shrink-0 rounded px-1 py-0.5 font-mono text-[10px] font-semibold">
-              L{selectedLevel}
-            </span>
-          </div>
-        )}
-      </div>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setOpen(true)}
-        className="text-ink-muted hover:text-ink size-8 shrink-0 p-0"
-        aria-label="Open SFIA 9 Skill Tree"
+      <Drawer
+        opened={opened}
+        onClose={close}
+        size="md"
+        padding="xs"
+        title="Cây Kỹ Năng SFIA 9"
+        closeButtonProps={{ 'aria-label': 'Đóng cây kỹ năng SFIA 9' }}
+        classNames={{
+          content: classes.drawerContent,
+          body: classes.drawerBody,
+        }}
       >
-        <ChevronRight className="size-4" />
-      </Button>
-
-      {/* Slide-over Sheet Drawer from Left */}
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent
-          side="left"
-          className="border-border flex h-full w-[88vw] max-w-[380px] flex-col border-r p-0 sm:w-[400px]"
-        >
-          <SheetHeader className="border-border/60 bg-surface-raised/30 shrink-0 border-b p-3.5 text-left">
-            <SheetTitle className="flex items-center gap-2 text-sm font-bold">
-              <div className="bg-brand/10 text-brand flex size-6 items-center justify-center rounded-md">
-                <Network className="size-3.5" />
-              </div>
-              <span>SFIA 9 Skill Tree</span>
-            </SheetTitle>
-          </SheetHeader>
-
-          <div className="flex-1 overflow-hidden">
-            <SfiaSidebarTree
-              categories={categories}
-              subcategories={subcategories}
-              skills={skills}
-              selectedSkill={selectedSkill}
-              selectedLevel={selectedLevel}
-              onSelectSkill={handleSelectSkill}
-              className="h-full rounded-none border-0 shadow-none"
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
-    </div>
+        <SfiaSidebarTree
+          categories={categories}
+          subcategories={subcategories}
+          skills={skills}
+          selectedSkill={selectedSkill}
+          selectedLevel={selectedLevel}
+          onSelectSkill={handleSelectSkill}
+          levels={levels}
+        />
+      </Drawer>
+    </Paper>
   )
 }

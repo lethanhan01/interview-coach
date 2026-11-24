@@ -1,3 +1,4 @@
+import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { OnetAdminService } from './onet-admin.service';
 import {
@@ -6,6 +7,7 @@ import {
 } from './domain/onet-admin-repository.interface';
 import { SFIA_FACADE_TOKEN } from '@modules/sfia/contracts/sfia.facade.interface';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 
 describe('OnetAdminService', () => {
   let service: OnetAdminService;
@@ -161,6 +163,19 @@ describe('OnetAdminService', () => {
       name: 'Software Development',
       categoryCode: 'DEV_IMPL',
       categoryName: 'Phát triển & Triển khai',
+      minLevel: 2,
+      maxLevel: 6,
+      levelDescriptions: {
+        3: 'Thiết kế, viết mã và kiểm thử các module phần mềm vừa phải.',
+        4: 'Designs, codes, verifies, tests complex programs.',
+      },
+    }),
+    getLevel: jest.fn().mockResolvedValue({
+      levelId: 3,
+      name: 'Apply',
+      nameVi: 'Áp dụng độc lập',
+      essence: 'Works under general direction.',
+      description: 'Generic level 3 responsibility.',
     }),
     getAllLevels: jest.fn().mockResolvedValue([
       {
@@ -250,6 +265,17 @@ describe('OnetAdminService', () => {
         300,
       );
     });
+
+    it('preserves backwards compatibility for mappedOnly: true -> mappingStatus: mapped', async () => {
+      const result = await service.searchOccupations({ mappedOnly: true });
+      expect(result).toHaveLength(1);
+      expect(mockAdminRepo.searchSidebarOccupations).toHaveBeenCalledWith(
+        undefined,
+        'mapped',
+        undefined,
+        50,
+      );
+    });
   });
 
   describe('getTopOccupations', () => {
@@ -271,14 +297,93 @@ describe('OnetAdminService', () => {
   });
 
   describe('getSfiaSkillCoverage', () => {
-    it('enriches coverage items with SFIA Facade metadata and filters before slicing', async () => {
-      const result = await service.getSfiaSkillCoverage(10, 'DEV_IMPL');
-      expect(result).toHaveLength(1);
-      expect(result[0].name).toBe('Software Development');
-      expect(result[0].category).toBe('Phát triển & Triển khai');
+    it('enriches coverage items with SFIA Facade metadata and filters category BEFORE slicing to limit', async () => {
+      (mockAdminRepo.getSfiaSkillCoverage as jest.Mock).mockResolvedValueOnce([
+        {
+          code: 'GOVN',
+          mappedOccupationsCount: 40,
+          coreCount: 30,
+          secondaryCount: 10,
+          minTargetLevel: 5,
+          maxTargetLevel: 7,
+          avgTargetLevel: 6.0,
+        },
+        {
+          code: 'PROG',
+          mappedOccupationsCount: 25,
+          coreCount: 20,
+          secondaryCount: 5,
+          minTargetLevel: 2,
+          maxTargetLevel: 6,
+          avgTargetLevel: 3.8,
+        },
+        {
+          code: 'SCTY',
+          mappedOccupationsCount: 22,
+          coreCount: 15,
+          secondaryCount: 7,
+          minTargetLevel: 3,
+          maxTargetLevel: 6,
+          avgTargetLevel: 4.5,
+        },
+        {
+          code: 'TEST',
+          mappedOccupationsCount: 18,
+          coreCount: 12,
+          secondaryCount: 6,
+          minTargetLevel: 1,
+          maxTargetLevel: 6,
+          avgTargetLevel: 3.2,
+        },
+      ]);
+      mockSfiaFacade.getAllSkills.mockResolvedValueOnce([
+        {
+          code: 'GOVN',
+          name: 'Governance',
+          categoryCode: 'STRAT_ARCH',
+          categoryName: 'Chiến lược & Kiến trúc',
+          overallDescription: 'Governance',
+          minLevel: 5,
+          maxLevel: 7,
+        },
+        {
+          code: 'PROG',
+          name: 'Software Development',
+          categoryCode: 'DEV_IMPL',
+          categoryName: 'Phát triển & Triển khai',
+          overallDescription: 'Programming',
+          minLevel: 2,
+          maxLevel: 6,
+        },
+        {
+          code: 'SCTY',
+          name: 'Information Security',
+          categoryCode: 'DELIV_OPS',
+          categoryName: 'Vận hành & Triển khai',
+          overallDescription: 'Security',
+          minLevel: 3,
+          maxLevel: 6,
+        },
+        {
+          code: 'TEST',
+          name: 'Functional Testing',
+          categoryCode: 'DEV_IMPL',
+          categoryName: 'Phát triển & Triển khai',
+          overallDescription: 'Testing',
+          minLevel: 1,
+          maxLevel: 6,
+        },
+      ]);
+
+      const result = await service.getSfiaSkillCoverage(2, 'DEV_IMPL');
+
       expect(mockAdminRepo.getSfiaSkillCoverage).toHaveBeenCalledWith(
         undefined,
       );
+      expect(result).toHaveLength(2);
+      expect(result.map((item) => item.code)).toEqual(['PROG', 'TEST']);
+      expect(result[0].category).toBe('Phát triển & Triển khai');
+      expect(result[1].category).toBe('Phát triển & Triển khai');
     });
   });
 
@@ -313,10 +418,33 @@ describe('OnetAdminService', () => {
   });
 
   describe('SFIA Mapping CRUD', () => {
-    it('returns sfia mappings for occupation', async () => {
+    it('returns sfia mappings with real categoryName and levelDescriptions', async () => {
       const result = await service.getOccupationSfiaMappings('15-1252.00');
       expect(result).toHaveLength(1);
       expect(result[0].sfiaSkillCode).toBe('PROG');
+      expect(result[0].skillCategory).toBe('Phát triển & Triển khai');
+      expect(result[0].responsibility).toBe(
+        'Thiết kế, viết mã và kiểm thử các module phần mềm vừa phải.',
+      );
+      expect(result[0].minLevel).toBe(2);
+      expect(result[0].maxLevel).toBe(6);
+    });
+
+    it('falls back to sfiaFacade.getLevel when levelDescriptions lacks target level', async () => {
+      mockSfiaFacade.getSkillByCode.mockResolvedValueOnce({
+        code: 'PROG',
+        name: 'Software Development',
+        categoryCode: 'DEV_IMPL',
+        categoryName: undefined,
+        minLevel: 2,
+        maxLevel: 6,
+        levelDescriptions: {},
+      });
+
+      const result = await service.getOccupationSfiaMappings('15-1252.00');
+      expect(result[0].skillCategory).toBe('DEV_IMPL');
+      expect(result[0].responsibility).toBe('Generic level 3 responsibility.');
+      expect(mockSfiaFacade.getLevel).toHaveBeenCalledWith(3);
     });
 
     it('creates sfia mapping successfully', async () => {
@@ -326,6 +454,7 @@ describe('OnetAdminService', () => {
         defaultWeight: 1.0,
       });
       expect(result.id).toBeDefined();
+      expect(result.skillCategory).toBe('Phát triển & Triển khai');
     });
 
     it('updates sfia mapping successfully', async () => {
@@ -334,6 +463,29 @@ describe('OnetAdminService', () => {
         defaultWeight: 1.5,
       });
       expect(result.targetSfiaLevel).toBe(4);
+      expect(result.skillCategory).toBe('Phát triển & Triển khai');
+    });
+
+    it('rejects updateSfiaMapping when targetSfiaLevel is below minLevel or above maxLevel', async () => {
+      await expect(
+        service.updateSfiaMapping('15-1252.00', 'map_1', {
+          targetSfiaLevel: 1,
+        }),
+      ).rejects.toMatchObject({
+        errorCode: ErrorCode.VALIDATION_ERROR,
+        status: HttpStatus.BAD_REQUEST,
+      });
+
+      await expect(
+        service.updateSfiaMapping('15-1252.00', 'map_1', {
+          targetSfiaLevel: 7,
+        }),
+      ).rejects.toMatchObject({
+        errorCode: ErrorCode.VALIDATION_ERROR,
+        status: HttpStatus.BAD_REQUEST,
+      });
+
+      expect(mockAdminRepo.updateSfiaMapping).not.toHaveBeenCalled();
     });
 
     it('deletes sfia mapping successfully', async () => {
@@ -341,12 +493,14 @@ describe('OnetAdminService', () => {
       expect(result.success).toBe(true);
     });
 
-    it('resets USER_DEFINED sfia mappings via repository transaction', async () => {
+    it('resets USER_DEFINED sfia mappings via repository transaction without redundant DB fetch', async () => {
       const result = await service.resetSfiaMappings('15-1252.00');
       expect(mockAdminRepo.resetUserDefinedMappings).toHaveBeenCalledWith(
         '15-1252.00',
       );
+      expect(mockAdminRepo.getOccupationSfiaMappings).not.toHaveBeenCalled();
       expect(result).toHaveLength(1);
+      expect(result[0].skillCategory).toBe('Phát triển & Triển khai');
     });
 
     it('returns real level descriptions in getSfiaLibrary', async () => {

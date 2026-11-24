@@ -133,4 +133,25 @@ describe('SocGroupDistributionChart', () => {
     await user.click(coverageRadio)
     expect(coverageRadio).toBeChecked()
   })
+
+  it('selects a SOC group via keyboard-accessible Select filter', async () => {
+    const user = userEvent.setup()
+    const onSelectGroup = vi.fn()
+
+    render(
+      <SocGroupDistributionChart
+        data={MOCK_DATA}
+        selectedGroup={null}
+        onSelectGroup={onSelectGroup}
+      />
+    )
+
+    const selectInput = screen.getByRole('combobox', {
+      name: 'Lọc nhanh theo nhóm ngành SOC',
+    })
+    await user.click(selectInput)
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}')
+
+    expect(onSelectGroup).toHaveBeenCalledWith('17')
+  })
 })

@@ -1,27 +1,30 @@
 'use client'
 
-import { Button, Group, Modal, Stack, Text } from '@mantine/core'
+import { Alert, Button, Group, Modal, Stack, Text } from '@mantine/core'
+import { IconAlertCircle } from '@tabler/icons-react'
 import type { AdminUser } from '@/types'
 
 interface DeleteUserModalProps {
+  opened: boolean
   user: AdminUser | null
   isPending: boolean
+  errorMessage?: string
   onClose: () => void
   onConfirm: () => void
 }
 
 export function DeleteUserModal({
+  opened,
   user,
   isPending,
+  errorMessage,
   onClose,
   onConfirm,
 }: Readonly<DeleteUserModalProps>) {
   return (
     <Modal
-      opened={user !== null}
-      onClose={() => {
-        if (!isPending) onClose()
-      }}
+      opened={opened}
+      onClose={() => !isPending && onClose()}
       closeOnClickOutside={!isPending}
       closeOnEscape={!isPending}
       withCloseButton={!isPending}
@@ -36,7 +39,15 @@ export function DeleteUserModal({
           </Text>
           ? Người dùng sẽ không thể đăng nhập được nữa.
         </Text>
-
+        {errorMessage ? (
+          <Alert
+            color="danger"
+            variant="light"
+            icon={<IconAlertCircle size={16} stroke={1.5} />}
+          >
+            {errorMessage}
+          </Alert>
+        ) : null}
         <Group justify="flex-end" gap="sm">
           <Button variant="default" onClick={onClose} disabled={isPending}>
             Hủy

@@ -18,7 +18,7 @@ import {
 } from '@tabler/icons-react'
 import type { SemanticColor } from '@/theme'
 import typography from '@/styles/typography.module.css'
-import type { DashboardUserMetrics } from './dashboard-metrics'
+import type { DashboardUserMetrics } from '@/components/admin/user-metrics'
 
 interface AdminKpiGridProps {
   metrics: DashboardUserMetrics

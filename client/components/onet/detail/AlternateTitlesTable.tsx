@@ -72,7 +72,7 @@ export function AlternateTitlesTable({
             <Table.Thead>
               <Table.Tr>
                 <Table.Th w={60}>STT</Table.Th>
-                <Table.Th>Chức danh tương đương (Alternate Title)</Table.Th>
+                <Table.Th>Chức danh tương đương</Table.Th>
                 <Table.Th w={80} ta="right">
                   Sao chép
                 </Table.Th>

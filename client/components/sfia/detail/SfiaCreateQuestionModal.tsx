@@ -1,38 +1,40 @@
 'use client'
 
-import * as React from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { AlertCircle, Plus, Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
+import { useEffect, useMemo, useRef } from 'react'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/Dialog'
-import { Button } from '@/components/ui/Button'
-import { Textarea } from '@/components/ui/Textarea'
-import {
+  Badge,
+  Box,
+  Button,
+  Group,
+  Modal,
+  Paper,
   Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/Select'
+  SimpleGrid,
+  Stack,
+  Text,
+  Textarea,
+} from '@mantine/core'
+import { schemaResolver, useForm } from '@mantine/form'
+import { notifications } from '@mantine/notifications'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { IconPlus } from '@tabler/icons-react'
 import { queryKeys } from '@/queries/keys'
-import { useOptionalQueryClient } from '@/providers/QueryProvider'
-import { sfiaAdminService } from '@/services'
-import type { CreateSfiaQuestionPayload, SfiaQuestionBankItem } from '@/types'
-
-const STATIC_SFIA_QUERY_SCOPES = new Set([
-  'categories',
-  'subcategories',
-  'levels',
-  'attributes',
-])
+import { sfiaAdminService } from '@/services/sfia-admin.service'
+import type {
+  CreateSfiaQuestionPayload,
+  SfiaLevelResponsibility,
+  SfiaQuestionBankItem,
+} from '@/types'
+import {
+  SFIA_QUESTION_DIFFICULTIES,
+  SFIA_QUESTION_INTERVIEW_TYPES,
+  buildAvailableLevelOptions,
+  createInitialQuestionValues,
+  createSfiaQuestionSchema,
+  isDynamicSfiaQuery,
+  type SfiaQuestionFormValues,
+} from './sfia-question.schema'
+import { SfiaQuestionCharCounter } from './SfiaQuestionCharCounter'
 
 export interface SfiaCreateQuestionModalProps {
   open: boolean
@@ -42,21 +44,9 @@ export interface SfiaCreateQuestionModalProps {
   minLevel: number
   maxLevel: number
   defaultLevel: number
+  levels?: SfiaLevelResponsibility[]
   onQuestionCreated: (newQuestion: SfiaQuestionBankItem) => void
 }
-
-const INTERVIEW_TYPES = [
-  { value: 'TECHNICAL', label: 'Technical' },
-  { value: 'BEHAVIORAL', label: 'Behavioral' },
-  { value: 'SITUATIONAL', label: 'Situational' },
-  { value: 'HR', label: 'HR / Cultural' },
-] as const
-
-const DIFFICULTY_LEVELS = [
-  { value: 'EASY', label: 'Easy' },
-  { value: 'MEDIUM', label: 'Medium' },
-  { value: 'HARD', label: 'Hard' },
-] as const
 
 export function SfiaCreateQuestionModal({
   open,
@@ -66,18 +56,42 @@ export function SfiaCreateQuestionModal({
   minLevel,
   maxLevel,
   defaultLevel,
+  levels,
   onQuestionCreated,
-}: SfiaCreateQuestionModalProps) {
-  const queryClient = useOptionalQueryClient()
-  const [level, setLevel] = React.useState<number>(defaultLevel)
-  const [type, setType] = React.useState<
-    'TECHNICAL' | 'BEHAVIORAL' | 'SITUATIONAL' | 'HR'
-  >('TECHNICAL')
-  const [difficulty, setDifficulty] = React.useState<
-    'EASY' | 'MEDIUM' | 'HARD'
-  >('MEDIUM')
-  const [questionText, setQuestionText] = React.useState('')
-  const [error, setError] = React.useState<string | null>(null)
+}: Readonly<SfiaCreateQuestionModalProps>) {
+  const queryClient = useQueryClient()
+
+  const validate = useMemo(
+    () =>
+      schemaResolver(createSfiaQuestionSchema(minLevel, maxLevel), {
+        sync: true,
+      }),
+    [minLevel, maxLevel]
+  )
+
+  const form = useForm<SfiaQuestionFormValues>({
+    mode: 'uncontrolled',
+    initialValues: createInitialQuestionValues(
+      minLevel,
+      maxLevel,
+      defaultLevel
+    ),
+    validate,
+  })
+
+  const formRef = useRef(form)
+  useEffect(() => {
+    formRef.current = form
+  })
+
+  useEffect(() => {
+    if (open) {
+      formRef.current.setValues(
+        createInitialQuestionValues(minLevel, maxLevel, defaultLevel)
+      )
+      formRef.current.clearErrors()
+    }
+  }, [open, defaultLevel, minLevel, maxLevel])
 
   const createQuestionMutation = useMutation({
     mutationFn: (payload: CreateSfiaQuestionPayload) =>
@@ -85,251 +99,144 @@ export function SfiaCreateQuestionModal({
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.sfiaAdmin.all,
-        predicate: (query) => {
-          const scope = query.queryKey[1]
-          return (
-            typeof scope !== 'string' || !STATIC_SFIA_QUERY_SCOPES.has(scope)
-          )
-        },
+        predicate: isDynamicSfiaQuery,
       })
     },
   })
 
-  const isSubmitting = createQuestionMutation.isPending
+  const availableLevels = useMemo(
+    () => buildAvailableLevelOptions(minLevel, maxLevel, levels),
+    [minLevel, maxLevel, levels]
+  )
 
-  const [prevOpen, setPrevOpen] = React.useState(open)
-  const [prevDefaultLevel, setPrevDefaultLevel] = React.useState(defaultLevel)
-
-  if (open && (!prevOpen || prevDefaultLevel !== defaultLevel)) {
-    setPrevOpen(open)
-    setPrevDefaultLevel(defaultLevel)
-    setLevel(Math.max(minLevel, Math.min(maxLevel, defaultLevel)))
-    setQuestionText('')
-    setError(null)
-  } else if (!open && prevOpen) {
-    setPrevOpen(false)
-  }
-
-  const availableLevels = React.useMemo(() => {
-    const list: number[] = []
-    for (let l = minLevel; l <= maxLevel; l++) {
-      list.push(l)
-    }
-    return list
-  }, [minLevel, maxLevel])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const trimmed = questionText.trim()
-    if (trimmed.length < 15) {
-      setError('Interview question content must be at least 15 characters.')
-      return
-    }
-
-    if (trimmed.length > 500) {
-      setError('Question content cannot exceed 500 characters.')
-      return
-    }
-
+  const handleSubmit = async (values: SfiaQuestionFormValues) => {
     try {
-      setError(null)
-
       const created = await createQuestionMutation.mutateAsync({
-        questionText: trimmed,
-        type,
-        difficulty,
-        targetSfiaLevel: level,
+        questionText: values.questionText.trim(),
+        type: values.type,
+        difficulty: values.difficulty,
+        targetSfiaLevel: Number(values.targetSfiaLevel),
       })
 
-      toast.success('Interview question created and tagged successfully!')
+      notifications.show({
+        message: 'Thêm câu hỏi phỏng vấn thành công!',
+        color: 'success',
+        closeButtonProps: { 'aria-label': 'Đóng thông báo' },
+      })
       onQuestionCreated(created)
       onOpenChange(false)
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to create interview question. Please try again.'
-      )
+      form.setErrors({
+        questionText:
+          err instanceof Error
+            ? err.message
+            : 'Không thể tạo câu hỏi phỏng vấn. Vui lòng thử lại.',
+      })
     }
   }
 
+  const isSubmitting = createQuestionMutation.isPending
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md sm:max-w-lg">
-        <DialogHeader>
-          <div className="mb-1 flex items-center gap-2">
-            <div className="bg-brand/10 text-brand flex size-8 items-center justify-center rounded-lg">
-              <Plus className="size-4" />
-            </div>
-            <DialogTitle className="text-base sm:text-lg">
-              Create Interview Question
-            </DialogTitle>
-          </div>
-          <DialogDescription className="text-ink-muted text-xs">
-            Add a new question to the bank, mapped to{' '}
-            <strong className="text-ink font-mono font-semibold">
-              {skillCode}
-            </strong>{' '}
-            ({skillName}).
-          </DialogDescription>
-        </DialogHeader>
+    <Modal
+      opened={open}
+      onClose={() => !isSubmitting && onOpenChange(false)}
+      closeOnClickOutside={!isSubmitting}
+      closeOnEscape={!isSubmitting}
+      withCloseButton={!isSubmitting}
+      size="md"
+      title={
+        <Group gap="xs" align="center">
+          <IconPlus size={16} stroke={1.5} />
+          <Text fw={700} size="sm">
+            Tạo Câu Hỏi Phỏng Vấn Mới
+          </Text>
+        </Group>
+      }
+      closeButtonProps={{ 'aria-label': 'Đóng cửa sổ thêm câu hỏi' }}
+    >
+      <Box component="form" onSubmit={form.onSubmit(handleSubmit)} noValidate>
+        <Stack gap="sm">
+          <Paper withBorder p="xs" radius="sm">
+            <Group justify="space-between" align="center">
+              <Stack gap={2}>
+                <Text size="xs" c="dimmed">
+                  Kỹ năng SFIA 9
+                </Text>
+                <Text fw={700} size="xs" ff="monospace">
+                  {skillCode} — {skillName}
+                </Text>
+              </Stack>
+              <Badge color="brand" variant="light" size="xs">
+                L{minLevel} ➔ L{maxLevel}
+              </Badge>
+            </Group>
+          </Paper>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-1">
-          {/* Identity info row */}
-          <div className="bg-surface-inset border-border/60 flex items-center justify-between rounded-lg border p-3 text-xs">
-            <div>
-              <span className="text-ink-muted block text-[11px]">
-                SFIA 9 Skill:
-              </span>
-              <span className="text-ink font-mono font-semibold">
-                {skillCode}
-              </span>
-              <span className="text-ink-muted ml-1.5">— {skillName}</span>
-            </div>
-            <span className="bg-surface-raised border-border text-ink rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold">
-              L{minLevel} ➔ L{maxLevel}
-            </span>
-          </div>
-
-          {/* Grid fields: Target Level & Interview Type */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {/* Field: Target Level */}
-            <div className="space-y-1.5">
-              <label className="text-ink block text-xs font-semibold">
-                Target SFIA Level <span className="text-rose-500">*</span>
-              </label>
-              <Select
-                value={String(level)}
-                onValueChange={(val) => setLevel(Number(val))}
-              >
-                <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableLevels.map((lvl) => (
-                    <SelectItem key={lvl} value={String(lvl)}>
-                      Level {lvl} {lvl === defaultLevel ? '(Selected)' : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Field: Interview Type */}
-            <div className="space-y-1.5">
-              <label className="text-ink block text-xs font-semibold">
-                Interview Type <span className="text-rose-500">*</span>
-              </label>
-              <Select
-                value={type}
-                onValueChange={(val) => setType(val as typeof type)}
-              >
-                <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {INTERVIEW_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Field: Difficulty */}
-          <div className="space-y-1.5">
-            <label className="text-ink block text-xs font-semibold">
-              Difficulty <span className="text-rose-500">*</span>
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {DIFFICULTY_LEVELS.map((d) => (
-                <button
-                  key={d.value}
-                  type="button"
-                  onClick={() => setDifficulty(d.value)}
-                  className={cn(
-                    'select-none rounded-lg border px-2 py-2 text-center text-xs font-medium transition-all',
-                    difficulty === d.value
-                      ? d.value === 'EASY'
-                        ? 'shadow-xs border-emerald-500 bg-emerald-500/15 font-bold text-emerald-700 dark:text-emerald-300'
-                        : d.value === 'MEDIUM'
-                          ? 'shadow-xs border-amber-500 bg-amber-500/15 font-bold text-amber-700 dark:text-amber-300'
-                          : 'shadow-xs border-rose-500 bg-rose-500/15 font-bold text-rose-700 dark:text-rose-300'
-                      : 'bg-surface-inset border-border text-ink-muted hover:text-ink'
-                  )}
-                >
-                  {d.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Field: Question Text */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-ink text-xs font-semibold">
-                Question Content <span className="text-rose-500">*</span>
-              </label>
-              <span className="text-ink-muted font-mono text-[11px] tabular-nums">
-                {questionText.length}/500
-              </span>
-            </div>
-            <Textarea
-              value={questionText}
-              onChange={(e) => {
-                setQuestionText(e.target.value)
-                if (error) setError(null)
-              }}
-              placeholder="Enter practical technical question scenario, problem statement, or behavioral prompt..."
-              rows={4}
-              maxLength={500}
-              className="bg-surface-inset resize-none text-xs"
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="xs">
+            <Select
+              label="Cấp độ SFIA mục tiêu"
+              placeholder="Chọn cấp độ"
+              data={availableLevels}
+              allowDeselect={false}
+              key={form.key('targetSfiaLevel')}
+              {...form.getInputProps('targetSfiaLevel')}
+              required
             />
-          </div>
+            <Select
+              label="Loại phỏng vấn"
+              placeholder="Chọn loại"
+              data={SFIA_QUESTION_INTERVIEW_TYPES}
+              key={form.key('type')}
+              {...form.getInputProps('type')}
+              required
+            />
+          </SimpleGrid>
 
-          {/* Inline error display */}
-          {error && (
-            <div className="bg-destructive/10 border-destructive/20 text-destructive flex items-start gap-2 rounded-lg border p-2.5 text-xs">
-              <AlertCircle className="mt-0.5 size-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
+          <Select
+            label="Độ khó"
+            placeholder="Chọn độ khó"
+            data={SFIA_QUESTION_DIFFICULTIES}
+            key={form.key('difficulty')}
+            {...form.getInputProps('difficulty')}
+            required
+          />
 
-          <DialogFooter className="border-border/60 gap-2 border-t pt-2 sm:gap-0">
+          <Stack gap={4}>
+            <Textarea
+              label="Nội dung câu hỏi phỏng vấn"
+              placeholder="Nhập nội dung câu hỏi phỏng vấn chi tiết (từ 15 đến 500 ký tự)..."
+              minRows={4}
+              maxRows={8}
+              autosize
+              key={form.key('questionText')}
+              {...form.getInputProps('questionText')}
+              required
+            />
+            <SfiaQuestionCharCounter form={form} />
+          </Stack>
+
+          <Group justify="flex-end" gap="xs" mt="xs">
             <Button
-              type="button"
-              variant="outline"
-              size="sm"
+              variant="default"
+              size="xs"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
-              Cancel
+              Hủy
             </Button>
             <Button
               type="submit"
-              variant="primary"
-              size="sm"
-              disabled={isSubmitting}
-              className="gap-1.5"
+              size="xs"
+              color="brand"
+              loading={isSubmitting}
+              leftSection={<IconPlus size={14} stroke={1.5} />}
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="size-3.5 animate-spin" />
-                  <span>Creating...</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="size-3.5" />
-                  <span>Create Question</span>
-                </>
-              )}
+              Tạo câu hỏi
             </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          </Group>
+        </Stack>
+      </Box>
+    </Modal>
   )
 }

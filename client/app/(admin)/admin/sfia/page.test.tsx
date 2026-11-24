@@ -34,7 +34,7 @@ vi.mock('@/services/sfia-admin.service', async () => {
     MOCK_SFIA_RESPONSIBILITY_LEVELS,
     MOCK_SFIA_GENERIC_ATTRIBUTES,
     MOCK_SFIA_COVERAGE_STATS,
-  } = await import('@/components/sfia/sfia-mock-data')
+  } = await import('@/test-utils/fixtures/sfia.fixture')
 
   return {
     sfiaAdminService: {

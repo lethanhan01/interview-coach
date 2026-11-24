@@ -59,7 +59,7 @@ export function OnetTechCategoryCard({
                 </Text>
 
                 {skill.isHotTechnology ? (
-                  <Tooltip label="Công nghệ nóng (Hot Technology)" withArrow>
+                  <Tooltip label="Công nghệ nóng" withArrow>
                     <Badge
                       color="warning"
                       variant="light"

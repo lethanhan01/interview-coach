@@ -1,6 +1,7 @@
-import * as React from 'react'
-import { render, screen, fireEvent, waitFor } from '@test-utils'
+import React from 'react'
+import { render, screen, userEvent, fireEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { axe } from 'jest-axe'
 import { SfiaQuestionBankTab } from './SfiaQuestionBankTab'
 import type { SfiaSkillDetail } from '@/types'
 
@@ -44,10 +45,12 @@ const mockDetail: SfiaSkillDetail = {
 describe('SfiaQuestionBankTab', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    Object.assign(navigator, {
-      clipboard: {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
         writeText: vi.fn().mockImplementation(() => Promise.resolve()),
       },
+      configurable: true,
+      writable: true,
     })
   })
 
@@ -55,27 +58,26 @@ describe('SfiaQuestionBankTab', () => {
     render(<SfiaQuestionBankTab skillDetail={mockDetail} selectedLevel={3} />)
 
     // Total questions: 3
-    expect(screen.getByText('Total Sample Questions')).toBeInTheDocument()
-    expect(screen.getAllByText('3').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('Tổng số câu hỏi mẫu')).toBeInTheDocument()
+    expect(screen.getAllByText(/3 câu hỏi/).length).toBeGreaterThanOrEqual(1)
 
     // Difficulty breakdown
-    expect(screen.getByText('Difficulty Breakdown')).toBeInTheDocument()
-    expect(screen.getByText(/1 Easy/)).toBeInTheDocument()
-    expect(screen.getByText(/1 Medium/)).toBeInTheDocument()
-    expect(screen.getByText(/1 Hard/)).toBeInTheDocument()
+    expect(screen.getByText('Phân bổ độ khó')).toBeInTheDocument()
+    expect(screen.getByText(/1 Dễ · 1 TB · 1 Khó/)).toBeInTheDocument()
 
     // Matching selectedLevel 3: 2 questions (Q-PROG-02 and Q-PROG-03)
-    expect(screen.getByText('At Selected Level 3')).toBeInTheDocument()
-    expect(screen.getByText('2')).toBeInTheDocument()
+    expect(screen.getByText('Khớp cấp độ L3')).toBeInTheDocument()
+    expect(screen.getByText('2 câu hỏi')).toBeInTheDocument()
   })
 
-  it('filters questions by search query text', () => {
+  it('filters questions by search query text', async () => {
+    const user = userEvent.setup()
     render(<SfiaQuestionBankTab skillDetail={mockDetail} selectedLevel={3} />)
 
     const searchInput = screen.getByPlaceholderText(
-      /Search question content or ID/i
+      /Tìm kiếm câu hỏi hoặc mã ID/i
     )
-    fireEvent.change(searchInput, { target: { value: 'memory leaks' } })
+    await user.type(searchInput, 'memory leaks')
 
     expect(
       screen.getByText(
@@ -87,7 +89,8 @@ describe('SfiaQuestionBankTab', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('filters questions by quick Level toggle', () => {
+  it('filters questions by level select', async () => {
+    const user = userEvent.setup()
     render(<SfiaQuestionBankTab skillDetail={mockDetail} selectedLevel={4} />)
 
     // Initially all 3 are displayed
@@ -95,9 +98,12 @@ describe('SfiaQuestionBankTab', () => {
     expect(screen.getByText('Q-PROG-02')).toBeInTheDocument()
     expect(screen.getByText('Q-PROG-03')).toBeInTheDocument()
 
-    // Click 'Level 4 only' toggle
-    const toggleButton = screen.getByRole('button', { name: /Level 4 only/i })
-    fireEvent.click(toggleButton)
+    // Select Level 4
+    const levelSelect = screen.getByPlaceholderText('Cấp độ')
+    await user.click(levelSelect)
+
+    const level4Option = await screen.findByRole('option', { name: /Cấp L4/i })
+    await user.click(level4Option)
 
     // Only Q-PROG-01 is Level 4
     expect(screen.getByText('Q-PROG-01')).toBeInTheDocument()
@@ -108,7 +114,9 @@ describe('SfiaQuestionBankTab', () => {
   it('copies question text when clicking the copy button', async () => {
     render(<SfiaQuestionBankTab skillDetail={mockDetail} selectedLevel={3} />)
 
-    const copyButtons = screen.getAllByRole('button', { name: /Copy/i })
+    const copyButtons = screen.getAllByRole('button', {
+      name: /Sao chép nội dung câu hỏi/i,
+    })
     expect(copyButtons.length).toBeGreaterThanOrEqual(1)
 
     fireEvent.click(copyButtons[0])
@@ -120,34 +128,49 @@ describe('SfiaQuestionBankTab', () => {
     })
   })
 
-  it('invokes onSelectLevel when clicking the target level badge on a card', () => {
-    const handleSelectLevel = vi.fn()
-    render(
-      <SfiaQuestionBankTab
-        skillDetail={mockDetail}
-        selectedLevel={3}
-        onSelectLevel={handleSelectLevel}
-      />
+  it('opens create question modal when clicking [+ Thêm câu hỏi] and passes accessibility', async () => {
+    const user = userEvent.setup()
+    const { container } = render(
+      <SfiaQuestionBankTab skillDetail={mockDetail} selectedLevel={3} />
     )
 
-    // Click on Target L4 button on first question
-    const levelButton = screen.getByRole('button', {
-      name: /Click to set Stepper to Level 4/i,
-    })
-    fireEvent.click(levelButton)
+    const createBtn = screen.getByRole('button', { name: /Thêm câu hỏi/i })
+    await user.click(createBtn)
 
-    expect(handleSelectLevel).toHaveBeenCalledWith(4)
+    expect(
+      await screen.findByText('Tạo Câu Hỏi Phỏng Vấn Mới')
+    ).toBeInTheDocument()
+
+    expect(await axe(container)).toHaveNoViolations()
   })
 
-  it('opens create question modal when clicking [+ Create Question]', () => {
-    render(<SfiaQuestionBankTab skillDetail={mockDetail} selectedLevel={3} />)
+  it('renders Blind Spot empty state when skill has 0 questions and opens create modal', async () => {
+    const user = userEvent.setup()
+    const blindSpotDetail: SfiaSkillDetail = {
+      ...mockDetail,
+      questionCount: 0,
+      questionBankItems: [],
+    }
 
-    const createBtn = screen.getByRole('button', { name: /Create Question/i })
-    fireEvent.click(createBtn)
+    const { container } = render(
+      <SfiaQuestionBankTab skillDetail={blindSpotDetail} selectedLevel={3} />
+    )
 
-    expect(screen.getByText('Create Interview Question')).toBeInTheDocument()
     expect(
-      screen.getByText(/Add a new question to the bank/i)
+      screen.getByText('Chưa có câu hỏi nào cho kỹ năng này')
     ).toBeInTheDocument()
+    expect(
+      screen.queryByText('Không tìm thấy câu hỏi phù hợp')
+    ).not.toBeInTheDocument()
+
+    const ctaBtn = screen.getByRole('button', {
+      name: /Tạo câu hỏi đầu tiên/i,
+    })
+    await user.click(ctaBtn)
+
+    expect(
+      await screen.findByText('Tạo Câu Hỏi Phỏng Vấn Mới')
+    ).toBeInTheDocument()
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

@@ -14,7 +14,7 @@ import {
   Title,
 } from '@mantine/core'
 import typography from '@/styles/typography.module.css'
-import type { DashboardUserMetrics } from './dashboard-metrics'
+import type { DashboardUserMetrics } from '@/components/admin/user-metrics'
 
 const UserDistributionDonut = dynamic(() => import('./UserDistributionDonut'), {
   ssr: false,
@@ -46,10 +46,10 @@ export function UserDistributionChart({
         </Stack>
 
         <Center py="xs">
-          {metrics.totalUsers > 0 ? (
+          {donutData.length > 0 ? (
             <UserDistributionDonut
               data={donutData}
-              chartLabel={String(metrics.totalUsers)}
+              chartLabel={metrics.totalUsers.toLocaleString('vi-VN')}
             />
           ) : (
             <Text size="sm" c="dimmed" py="xl">

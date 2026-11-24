@@ -28,7 +28,13 @@ export default function SocGroupBarChart({
 }: Readonly<SocGroupBarChartProps>) {
   const series: BarChartSeries[] =
     metricMode === 'coverage'
-      ? [{ name: 'mappingCoveragePercent', label: 'Tỷ lệ ánh xạ (%)', color: 'success' }]
+      ? [
+          {
+            name: 'mappingCoveragePercent',
+            label: 'Tỷ lệ ánh xạ (%)',
+            color: 'success',
+          },
+        ]
       : metricMode === 'mappedSplit'
         ? [
             { name: 'mappedOccupations', label: 'Đã ánh xạ', color: 'brand' },

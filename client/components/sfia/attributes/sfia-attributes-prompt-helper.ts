@@ -3,7 +3,6 @@
  * Used by AI Technical & Behavioral Mock Interview Evaluator
  */
 
-import { toast } from 'sonner'
 import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
 import { SFIA_LEVEL_DEFINITIONS } from '@/components/sfia/sfia-theme'
 
@@ -127,17 +126,8 @@ export async function copySfiaLevelPromptToClipboard(
   try {
     const text = generateSfiaLevelPromptRubric(level, attributes, format)
     await navigator.clipboard.writeText(text)
-    toast.success(`Đã sao chép Prompt Rubric Level ${level.levelId}!`, {
-      description: `Định dạng ${format.toUpperCase()} đã sẵn sàng để dán vào prompt AI Evaluator.`,
-    })
     return true
-  } catch (err) {
-    toast.error('Không thể sao chép vào bộ nhớ tạm', {
-      description:
-        err instanceof Error
-          ? err.message
-          : 'Vui lòng cấp quyền clipboard cho trình duyệt.',
-    })
+  } catch {
     return false
   }
 }

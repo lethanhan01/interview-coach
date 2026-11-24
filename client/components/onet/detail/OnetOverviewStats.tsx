@@ -4,7 +4,6 @@ import {
   Badge,
   Group,
   Paper,
-  Progress,
   SemiCircleProgress,
   SimpleGrid,
   Stack,
@@ -47,7 +46,7 @@ export function OnetOverviewStats({
       tab: 'tech' as const,
       label: 'Công nghệ',
       count: detail.stats.toolCount,
-      unit: 'tools',
+      unit: 'công cụ',
       color: 'brand' as const,
       Icon: IconTools,
       aria: 'Xem kỹ năng phần mềm của nghề này',
@@ -65,7 +64,7 @@ export function OnetOverviewStats({
       tab: 'tasks' as const,
       label: 'Nhiệm vụ',
       count: detail.stats.taskCount,
-      unit: 'tasks',
+      unit: 'nhiệm vụ',
       color: 'brand' as const,
       Icon: IconFileCheck,
       aria: 'Xem danh sách nhiệm vụ của nghề này',
@@ -74,7 +73,7 @@ export function OnetOverviewStats({
       tab: 'titles' as const,
       label: 'Chức danh',
       count: detail.stats.alternateTitleCount,
-      unit: 'titles',
+      unit: 'chức danh',
       color: 'neutral' as const,
       Icon: IconLayersLinked,
       aria: 'Xem danh sách chức danh thị trường',
@@ -156,14 +155,6 @@ export function OnetOverviewStats({
               thickness={10}
             />
           </Group>
-
-          <Progress
-            value={(detail.jobZone.zone / 5) * 100}
-            color="brand"
-            size="sm"
-            radius="xl"
-            aria-label={`Mức độ chuẩn bị Job Zone ${detail.jobZone.zone}/5`}
-          />
 
           {/* 3 Job Zone Specific Requirements */}
           <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="xs">

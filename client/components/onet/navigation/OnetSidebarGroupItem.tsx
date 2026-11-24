@@ -145,6 +145,7 @@ export function OnetSidebarGroupItem({
                   </Stack>
                   <Box
                     component="span"
+                    role="status"
                     className={classes.statusDot}
                     mod={{ mapped: occ.isMapped }}
                     title={

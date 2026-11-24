@@ -11,11 +11,7 @@ import {
   Title,
   Tooltip,
 } from '@mantine/core'
-import {
-  IconCheck,
-  IconCopy,
-  IconInfoCircle,
-} from '@tabler/icons-react'
+import { IconCheck, IconCopy, IconInfoCircle } from '@tabler/icons-react'
 import type { OnetDetailSubTab, OnetOccupationDetail } from '@/types'
 import { OnetOverviewStats } from './OnetOverviewStats'
 
@@ -40,8 +36,8 @@ export function OnetOverviewTab({
       <Paper withBorder p="sm" radius="md">
         <Stack gap="xs">
           <Group justify="space-between" align="center" wrap="nowrap">
-            <Title order={2} size="h6">
-              Mô tả Vai trò Nghề nghiệp (O*NET Content Model)
+            <Title order={3} size="h6">
+              Mô tả Vai trò Nghề nghiệp
             </Title>
             <CopyButton value={detail.description} timeout={2000}>
               {({ copied, copy }) => (

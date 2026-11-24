@@ -31,21 +31,20 @@ export interface OnetSfiaSpectrumBarProps {
   onSelectSkill?: (skillCode: string) => void
 }
 
-const LEVEL_SEMANTICS: Record<
+const LEVEL_TOKENS: Record<
   number,
   {
-    color: 'neutral' | 'brand' | 'warning' | 'danger'
-    variant: 'outline' | 'light' | 'filled'
-    label: string
+    color: 'neutral' | 'brand' | 'success' | 'warning' | 'danger'
+    variant: 'outline' | 'light'
   }
 > = {
-  1: { color: 'neutral', variant: 'outline', label: 'L1 Thực thi' },
-  2: { color: 'neutral', variant: 'light', label: 'L2 Hỗ trợ' },
-  3: { color: 'brand', variant: 'light', label: 'L3 Áp dụng' },
-  4: { color: 'brand', variant: 'filled', label: 'L4 Tự chủ' },
-  5: { color: 'warning', variant: 'light', label: 'L5 Đảm bảo' },
-  6: { color: 'warning', variant: 'filled', label: 'L6 Định hướng' },
-  7: { color: 'danger', variant: 'filled', label: 'L7 Chiến lược' },
+  1: { color: 'neutral', variant: 'outline' },
+  2: { color: 'neutral', variant: 'light' },
+  3: { color: 'brand', variant: 'outline' },
+  4: { color: 'brand', variant: 'light' },
+  5: { color: 'success', variant: 'light' },
+  6: { color: 'warning', variant: 'light' },
+  7: { color: 'danger', variant: 'light' },
 }
 
 export function OnetSfiaSpectrumBar({
@@ -99,7 +98,7 @@ export function OnetSfiaSpectrumBar({
   const handleSkillClick = (skillCode: string) => {
     onSelectSkill?.(skillCode)
     const el = document.getElementById(`sfia-row-${skillCode}`)
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
   }
 
   return (
@@ -175,18 +174,14 @@ export function OnetSfiaSpectrumBar({
       <SimpleGrid cols={{ base: 2, sm: 4, md: 7 }} spacing="xs">
         {[1, 2, 3, 4, 5, 6, 7].map((lvl) => {
           const levelMeta = levels.find((l) => l.levelId === lvl)
-          const semantic = LEVEL_SEMANTICS[lvl]
+          const token = LEVEL_TOKENS[lvl]
           const list = skillsByLevel[lvl] ?? []
 
           return (
             <Box key={lvl} className={classes.levelCol}>
               <Stack gap={2}>
                 <Group justify="space-between" align="center" wrap="nowrap">
-                  <Badge
-                    color={semantic.color}
-                    variant={semantic.variant}
-                    size="xs"
-                  >
+                  <Badge color={token.color} variant={token.variant} size="xs">
                     L{lvl}
                   </Badge>
                   <Text size="xs" c="dimmed">
@@ -194,7 +189,7 @@ export function OnetSfiaSpectrumBar({
                   </Text>
                 </Group>
                 <Text size="xs" fw={600} truncate title={levelMeta?.name}>
-                  {levelMeta?.nameVi ?? levelMeta?.name ?? semantic.label}
+                  {levelMeta?.nameVi ?? levelMeta?.name ?? `L${lvl}`}
                 </Text>
               </Stack>
 

@@ -21,6 +21,8 @@ export interface DashboardUserMetrics {
   recentUsers: AdminUser[]
 }
 
+const VIETNAM_UTC_OFFSET_MS = 7 * 3_600_000
+
 const VN_DATE_PARTS = new Intl.DateTimeFormat('en-US', {
   timeZone: APP_TIME_ZONE,
   year: 'numeric',
@@ -28,8 +30,7 @@ const VN_DATE_PARTS = new Intl.DateTimeFormat('en-US', {
   day: '2-digit',
 })
 
-function extractVietnamParts(iso: string) {
-  const date = new Date(iso)
+function extractVietnamParts(date: Date) {
   if (Number.isNaN(date.getTime())) return null
 
   const parts = VN_DATE_PARTS.formatToParts(date)
@@ -40,6 +41,24 @@ function extractVietnamParts(iso: string) {
 
   if (!year || !month || !day) return null
   return { year, month, day, timestamp: date.getTime() }
+}
+
+function getVietnamDayStartMs(date: Date, offsetDays = 0): number {
+  const safeDate = Number.isNaN(date.getTime()) ? new Date() : date
+  const parts = extractVietnamParts(safeDate)
+  if (!parts) return 0
+  return (
+    Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day) + offsetDays
+    ) - VIETNAM_UTC_OFFSET_MS
+  )
+}
+
+function parseTimestamp(iso: string): number {
+  const ms = new Date(iso).getTime()
+  return Number.isNaN(ms) ? 0 : ms
 }
 
 export function getUserDisplayName(user: AdminUser): string {
@@ -55,6 +74,7 @@ export function getUserInitials(user: AdminUser): string {
   const last = user.lastname?.trim()[0]
   if (last && first) return `${last}${first}`.toUpperCase()
   if (first) return first.toUpperCase()
+  if (last) return last.toUpperCase()
   return (user.email.trim()[0] || 'U').toUpperCase()
 }
 
@@ -63,16 +83,17 @@ export function computeUserMetrics(users: AdminUser[]): DashboardUserMetrics {
   const activeUsers = users.filter((u) => u.status === 'active').length
   const lockedUsers = users.filter((u) => u.status === 'locked').length
   const adminCount = users.filter((u) => u.role === 'admin').length
-  const candidateCount = totalUsers - adminCount
+  const candidateCount = users.filter((u) => u.role === 'candidate').length
 
-  const pct = (value: number) =>
-    totalUsers > 0 ? Math.round((value / totalUsers) * 100) : 0
+  const activePercent =
+    totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0
+  const lockedPercent =
+    totalUsers > 0 && lockedUsers > 0 ? Math.max(0, 100 - activePercent) : 0
+  const adminPercent =
+    totalUsers > 0 ? Math.round((adminCount / totalUsers) * 100) : 0
 
   const recentUsers = [...users]
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
+    .sort((a, b) => parseTimestamp(b.createdAt) - parseTimestamp(a.createdAt))
     .slice(0, 5)
 
   return {
@@ -81,9 +102,9 @@ export function computeUserMetrics(users: AdminUser[]): DashboardUserMetrics {
     lockedUsers,
     adminCount,
     candidateCount,
-    activePercent: pct(activeUsers),
-    lockedPercent: pct(lockedUsers),
-    adminPercent: pct(adminCount),
+    activePercent,
+    lockedPercent,
+    adminPercent,
     recentUsers,
   }
 }
@@ -94,10 +115,10 @@ export function buildRegistrationSeries(
   now: Date = new Date()
 ): RegistrationPoint[] {
   const buckets = new Map<string, RegistrationPoint>()
-  const cutoffMs = now.getTime() - 30 * 86_400_000
+  const cutoffMs = getVietnamDayStartMs(now, -29)
 
   for (const user of users) {
-    const parts = extractVietnamParts(user.createdAt)
+    const parts = extractVietnamParts(new Date(user.createdAt))
     if (!parts) continue
 
     if (range === 'last30d' && parts.timestamp < cutoffMs) {

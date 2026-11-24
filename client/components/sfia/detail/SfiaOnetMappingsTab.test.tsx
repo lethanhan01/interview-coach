@@ -1,6 +1,7 @@
-import * as React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import React from 'react'
+import { render, screen, userEvent } from '@test-utils'
 import { describe, it, expect } from 'vitest'
+import { axe } from 'jest-axe'
 import { SfiaOnetMappingsTab } from './SfiaOnetMappingsTab'
 import type { SfiaOnetMappingItem } from '@/types'
 
@@ -39,11 +40,11 @@ describe('SfiaOnetMappingsTab', () => {
     )
 
     expect(
-      screen.getByText(/No mapped O\*NET occupations/i)
+      screen.getByText(/Chưa có ánh xạ nghề nghiệp O\*NET/i)
     ).toBeInTheDocument()
     expect(screen.getByText(/UNMAPPED/)).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /Explore O\*NET Browser/i })
+      screen.getByRole('link', { name: /Khám phá O\*NET Browser/i })
     ).toHaveAttribute('href', '/admin/onet')
   })
 
@@ -57,7 +58,7 @@ describe('SfiaOnetMappingsTab', () => {
     )
 
     expect(
-      screen.getByPlaceholderText(/Search by SOC code or occupation title/i)
+      screen.getByPlaceholderText(/Tìm theo mã SOC hoặc tên nghề nghiệp/i)
     ).toBeInTheDocument()
     // Due to Dual-Layout (Desktop Table + Mobile Cards), text exists in both views
     expect(screen.getAllByText('15-1252.00').length).toBe(2)
@@ -68,14 +69,16 @@ describe('SfiaOnetMappingsTab', () => {
     ).toBe(2)
 
     // Core badge and supplemental badge
-    const coreBadges = screen.getAllByText('Core')
+    const coreBadges = screen.getAllByText('Cốt lõi')
     expect(coreBadges.length).toBeGreaterThanOrEqual(2)
 
-    const suppBadges = screen.getAllByText('Supplemental')
+    const suppBadges = screen.getAllByText('Bổ trợ')
     expect(suppBadges.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('filters occupations by search keyword', () => {
+  it('filters occupations by search keyword', async () => {
+    const user = userEvent.setup()
+
     render(
       <SfiaOnetMappingsTab
         skillCode="PROG"
@@ -85,9 +88,9 @@ describe('SfiaOnetMappingsTab', () => {
     )
 
     const searchInput = screen.getByPlaceholderText(
-      /Search by SOC code or occupation title/i
+      /Tìm theo mã SOC hoặc tên nghề nghiệp/i
     )
-    fireEvent.change(searchInput, { target: { value: 'Programmers' } })
+    await user.type(searchInput, 'Programmers')
 
     expect(screen.getAllByText('Computer Programmers').length).toBe(2)
     expect(screen.queryByText('Software Developers')).not.toBeInTheDocument()
@@ -96,7 +99,9 @@ describe('SfiaOnetMappingsTab', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('filters occupations by Core and Supplemental tabs', () => {
+  it('filters occupations by Core and Supplemental tabs', async () => {
+    const user = userEvent.setup()
+
     render(
       <SfiaOnetMappingsTab
         skillCode="PROG"
@@ -105,9 +110,9 @@ describe('SfiaOnetMappingsTab', () => {
       />
     )
 
-    // Click 'Supplemental'
-    const suppTab = screen.getByRole('button', { name: /Supplemental/i })
-    fireEvent.click(suppTab)
+    // Click 'Bổ trợ'
+    const suppTab = screen.getByRole('radio', { name: /Bổ trợ/i })
+    await user.click(suppTab)
 
     expect(
       screen.getAllByText('Software Quality Assurance Analysts').length
@@ -115,9 +120,9 @@ describe('SfiaOnetMappingsTab', () => {
     expect(screen.queryByText('Software Developers')).not.toBeInTheDocument()
     expect(screen.queryByText('Computer Programmers')).not.toBeInTheDocument()
 
-    // Click 'Core'
-    const coreTab = screen.getByRole('button', { name: /Core/i })
-    fireEvent.click(coreTab)
+    // Click 'Cốt lõi'
+    const coreTab = screen.getByRole('radio', { name: /Cốt lõi/i })
+    await user.click(coreTab)
 
     expect(screen.getAllByText('Software Developers').length).toBe(2)
     expect(screen.getAllByText('Computer Programmers').length).toBe(2)
@@ -126,8 +131,8 @@ describe('SfiaOnetMappingsTab', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('renders link pointing to /admin/onet?soc=...&detail=sfia with target="_blank"', () => {
-    render(
+  it('renders link pointing to /admin/onet?soc=...&detail=sfia with target="_blank" and passes accessibility', async () => {
+    const { container } = render(
       <SfiaOnetMappingsTab
         skillCode="PROG"
         skillName="Programming"
@@ -135,13 +140,14 @@ describe('SfiaOnetMappingsTab', () => {
       />
     )
 
-    const links = screen.getAllByRole('link', { name: /Details|View/i })
+    const links = screen.getAllByRole('link', { name: /Chi tiết|Xem/i })
     expect(links.length).toBeGreaterThanOrEqual(1)
     expect(links[0]).toHaveAttribute(
       'href',
       '/admin/onet?soc=15-1252.00&detail=sfia'
     )
     expect(links[0]).toHaveAttribute('target', '_blank')
-    expect(links[0]).toHaveAttribute('rel', 'noopener noreferrer')
+
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

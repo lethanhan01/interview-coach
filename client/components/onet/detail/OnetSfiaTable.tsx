@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import {
+  Alert,
   Button,
   Group,
   Modal,
@@ -10,13 +11,19 @@ import {
   Table,
   Text,
 } from '@mantine/core'
+import { IconAlertCircle } from '@tabler/icons-react'
 import surfaces from '@/styles/surfaces.module.css'
-import type { OnetSfiaMapping, SfiaSkillDefinition } from '@/types'
+import type {
+  OnetSfiaMapping,
+  SfiaLevelResponsibility,
+  SfiaSkillDefinition,
+} from '@/types'
 import { OnetSfiaRow } from './OnetSfiaRow'
 
 export interface OnetSfiaTableProps {
   mappings: OnetSfiaMapping[]
   availableSkills: SfiaSkillDefinition[]
+  levels?: SfiaLevelResponsibility[]
   editingId: string | null
   savingId: string | null
   highlightedSkillCode: string | null
@@ -30,6 +37,7 @@ export interface OnetSfiaTableProps {
 export function OnetSfiaTable({
   mappings,
   availableSkills,
+  levels = [],
   editingId,
   savingId,
   highlightedSkillCode,
@@ -39,15 +47,35 @@ export function OnetSfiaTable({
   onDelete,
   onDirtyChange,
 }: Readonly<OnetSfiaTableProps>) {
-  const [deletingMapping, setDeletingMapping] = useState<OnetSfiaMapping | null>(null)
+  const [deleteModalOpened, setDeleteModalOpened] = useState(false)
+  const [deletingMapping, setDeletingMapping] =
+    useState<OnetSfiaMapping | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const handleOpenDelete = (mapping: OnetSfiaMapping) => {
+    setDeletingMapping(mapping)
+    setDeleteError(null)
+    setDeleteModalOpened(true)
+  }
+
+  const handleCloseDelete = () => {
+    if (isDeleting) return
+    setDeleteModalOpened(false)
+    setDeleteError(null)
+  }
 
   const handleConfirmDelete = async () => {
     if (!deletingMapping) return
     setIsDeleting(true)
+    setDeleteError(null)
     try {
       await onDelete(deletingMapping.id)
-      setDeletingMapping(null)
+      setDeleteModalOpened(false)
+    } catch (err) {
+      setDeleteError(
+        err instanceof Error ? err.message : 'Không thể xóa ánh xạ SFIA'
+      )
     } finally {
       setIsDeleting(false)
     }
@@ -61,7 +89,8 @@ export function OnetSfiaTable({
             Chưa có kỹ năng SFIA nào phù hợp với bộ lọc
           </Text>
           <Text size="xs" c="dimmed">
-            Thử thay đổi từ khóa tìm kiếm hoặc bấm Thêm ánh xạ để bổ sung kỹ năng mới.
+            Thử thay đổi từ khóa tìm kiếm hoặc bấm Thêm ánh xạ để bổ sung kỹ
+            năng mới.
           </Text>
         </Stack>
       </Paper>
@@ -94,10 +123,11 @@ export function OnetSfiaTable({
                   isEditing={editingId === mapping.id}
                   isSaving={savingId === mapping.id}
                   availableSkills={availableSkills}
+                  levels={levels}
                   onStartEdit={() => onStartEdit(mapping.id)}
                   onCancelEdit={onCancelEdit}
                   onSave={(payload) => onSave(mapping.id, payload)}
-                  onDelete={() => setDeletingMapping(mapping)}
+                  onDelete={() => handleOpenDelete(mapping)}
                   onDirtyChange={onDirtyChange}
                   isHighlighted={highlightedSkillCode === mapping.skillCode}
                 />
@@ -107,30 +137,43 @@ export function OnetSfiaTable({
         </Table.ScrollContainer>
       </Paper>
 
-      {/* Controlled Delete Modal completely outside of table */}
       <Modal
-        opened={Boolean(deletingMapping)}
-        onClose={isDeleting ? () => undefined : () => setDeletingMapping(null)}
+        opened={deleteModalOpened}
+        onClose={handleCloseDelete}
         closeOnClickOutside={!isDeleting}
+        closeOnEscape={!isDeleting}
+        withCloseButton={!isDeleting}
         closeButtonProps={{ 'aria-label': 'Đóng cửa sổ xóa ánh xạ SFIA' }}
         title="Xác nhận xóa ánh xạ SFIA"
         centered
         size="sm"
       >
         <Stack gap="sm">
+          {deleteError ? (
+            <Alert
+              color="danger"
+              variant="light"
+              icon={<IconAlertCircle size={16} stroke={1.5} />}
+              title="Lỗi xóa ánh xạ"
+            >
+              {deleteError}
+            </Alert>
+          ) : null}
+
           <Text size="sm">
             Bạn có chắc chắn muốn xóa ánh xạ kỹ năng{' '}
             <Text span fw={700}>
               {deletingMapping?.skillCode} ({deletingMapping?.skillName})
             </Text>{' '}
-            khỏi nghề này? Thao tác này có thể ảnh hưởng đến kết quả đánh giá phỏng vấn.
+            khỏi nghề này? Thao tác này có thể ảnh hưởng đến kết quả đánh giá
+            phỏng vấn.
           </Text>
 
           <Group justify="flex-end" pt="xs">
             <Button
               variant="default"
               disabled={isDeleting}
-              onClick={() => setDeletingMapping(null)}
+              onClick={handleCloseDelete}
             >
               Hủy
             </Button>

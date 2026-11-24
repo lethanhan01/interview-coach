@@ -1,6 +1,7 @@
-import * as React from 'react'
+import React from 'react'
 import { render, screen, userEvent } from '@test-utils'
 import { describe, it, expect, vi } from 'vitest'
+import { axe } from 'jest-axe'
 import { SfiaDetailPanel } from './SfiaDetailPanel'
 import type { SfiaSkillDetail, SfiaCategory, SfiaSubcategory } from '@/types'
 
@@ -72,7 +73,7 @@ const mockDetail: SfiaSkillDetail = {
 }
 
 describe('SfiaDetailPanel Integration', () => {
-  it('renders all three sub-tabs including [Ngân hàng câu hỏi & Tạo mới]', () => {
+  it('renders all three sub-tabs including [Ngân hàng câu hỏi]', () => {
     render(
       <SfiaDetailPanel
         skillDetail={mockDetail}
@@ -84,13 +85,13 @@ describe('SfiaDetailPanel Integration', () => {
     )
 
     expect(
-      screen.getByRole('tab', { name: /Behavioral Statements & Guidance/i })
+      screen.getByRole('tab', { name: /Tiêu chí hành vi & Hướng dẫn/i })
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('tab', { name: /O\*NET Occupations/i })
+      screen.getByRole('tab', { name: /Nghề nghiệp O\*NET/i })
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('tab', { name: /Question Bank & Create/i })
+      screen.getByRole('tab', { name: /Ngân hàng câu hỏi/i })
     ).toBeInTheDocument()
   })
 
@@ -106,7 +107,7 @@ describe('SfiaDetailPanel Integration', () => {
       />
     )
 
-    const onetTab = screen.getByRole('tab', { name: /O\*NET Occupations/i })
+    const onetTab = screen.getByRole('tab', { name: /Nghề nghiệp O\*NET/i })
     await user.click(onetTab)
 
     expect(screen.getAllByText('15-1252.00').length).toBeGreaterThanOrEqual(1)
@@ -115,9 +116,9 @@ describe('SfiaDetailPanel Integration', () => {
     ).toBeGreaterThanOrEqual(1)
   })
 
-  it('switches to Question Bank tab and displays question items and create button', async () => {
+  it('switches to Question Bank tab, displays question items, and passes accessibility', async () => {
     const user = userEvent.setup()
-    render(
+    const { container } = render(
       <SfiaDetailPanel
         skillDetail={mockDetail}
         categories={mockCat}
@@ -128,7 +129,7 @@ describe('SfiaDetailPanel Integration', () => {
     )
 
     const questionsTab = screen.getByRole('tab', {
-      name: /Question Bank & Create/i,
+      name: /Ngân hàng câu hỏi/i,
     })
     await user.click(questionsTab)
 
@@ -138,7 +139,9 @@ describe('SfiaDetailPanel Integration', () => {
       )
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: /Create Question/i })
+      screen.getByRole('button', { name: /Thêm câu hỏi/i })
     ).toBeInTheDocument()
+
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

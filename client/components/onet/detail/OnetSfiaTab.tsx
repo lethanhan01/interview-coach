@@ -1,23 +1,18 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Stack, Text } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { onetAdminQueries } from '@/queries/onet.queries'
 import { sfiaAdminQueries } from '@/queries/sfia.queries'
-import { queryKeys } from '@/queries/keys'
-import { onetAdminService } from '@/services'
-import type {
-  CreateOnetSfiaMappingPayload,
-  OnetSfiaMapping,
-  UpdateOnetSfiaMappingPayload,
-} from '@/types'
+import type { CreateOnetSfiaMappingPayload, OnetSfiaMapping } from '@/types'
 import { OnetSfiaAddModal } from './OnetSfiaAddModal'
 import { OnetSfiaResetModal } from './OnetSfiaResetModal'
 import { OnetSfiaSpectrumBar } from './OnetSfiaSpectrumBar'
 import { OnetSfiaSummaryBar } from './OnetSfiaSummaryBar'
 import { OnetSfiaTable } from './OnetSfiaTable'
+import { useOnetSfiaMutations } from './useOnetSfiaMutations'
 
 export interface OnetSfiaTabProps {
   socCode: string
@@ -34,72 +29,53 @@ export function OnetSfiaTab({
   onUpdateMappings,
   onDirtyChange,
 }: Readonly<OnetSfiaTabProps>) {
-  const queryClient = useQueryClient()
-  const [localMappings, setLocalMappings] = useState<OnetSfiaMapping[]>(mappings)
+  const [localMappings, setLocalMappings] = useState(mappings)
   const [prevMappings, setPrevMappings] = useState(mappings)
-
-  if (prevMappings !== mappings) {
-    setPrevMappings(mappings)
-    setLocalMappings(mappings)
-  }
-
-  const { data: sfiaLibrary = [] } = useQuery(onetAdminQueries.sfiaLibrary())
-  const { data: levels = [] } = useQuery(sfiaAdminQueries.levels())
-
-  const invalidateOnetAdmin = () => {
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.onetAdmin.all,
-      predicate: (query) =>
-        !(
-          query.queryKey[0] === 'onet-admin' &&
-          query.queryKey[1] === 'sfia-library'
-        ),
-    })
-  }
-
-  // Mutations
-  const updateMappingMutation = useMutation({
-    mutationFn: ({
-      id,
-      payload,
-    }: {
-      id: string
-      payload: UpdateOnetSfiaMappingPayload
-    }) => onetAdminService.updateSfiaMapping(socCode, id, payload),
-    onSuccess: invalidateOnetAdmin,
-  })
-
-  const createMappingMutation = useMutation({
-    mutationFn: (payload: CreateOnetSfiaMappingPayload) =>
-      onetAdminService.createSfiaMapping(socCode, payload),
-    onSuccess: invalidateOnetAdmin,
-  })
-
-  const deleteMappingMutation = useMutation({
-    mutationFn: (id: string) => onetAdminService.deleteSfiaMapping(socCode, id),
-    onSuccess: invalidateOnetAdmin,
-  })
-
-  const resetMappingsMutation = useMutation({
-    mutationFn: () => onetAdminService.resetSfiaMappings(socCode),
-    onSuccess: invalidateOnetAdmin,
-  })
-
-  // State
+  const [prevSoc, setPrevSoc] = useState(socCode)
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeFilter, setActiveFilter] = useState<'all' | 'core' | 'secondary'>('all')
+  const [activeFilter, setActiveFilter] = useState<
+    'all' | 'core' | 'secondary'
+  >('all')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [isRowDirty, setIsRowDirty] = useState(false)
   const [addModalOpened, setAddModalOpened] = useState(false)
   const [resetModalOpened, setResetModalOpened] = useState(false)
-  const [highlightedSkillCode, setHighlightedSkillCode] = useState<string | null>(null)
+  const [highlightedSkillCode, setHighlightedSkillCode] = useState<
+    string | null
+  >(null)
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  if (prevMappings !== mappings) {
+    setPrevMappings(mappings)
+    setLocalMappings(mappings)
+  }
+  if (prevSoc !== socCode) {
+    setPrevSoc(socCode)
+    setEditingId(null)
+    setIsRowDirty(false)
+  }
+
+  const { data: sfiaLibrary = [] } = useQuery(onetAdminQueries.sfiaLibrary())
+  const { data: levels = [] } = useQuery(sfiaAdminQueries.levels())
+  const {
+    createMappingMutation,
+    updateMappingMutation,
+    deleteMappingMutation,
+    resetMappingsMutation,
+    isMutating,
+  } = useOnetSfiaMutations(socCode)
 
   useEffect(() => {
     onDirtyChange?.(isRowDirty)
   }, [isRowDirty, onDirtyChange])
 
-  // Filtered mappings
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
+    }
+  }, [])
+
   const filteredMappings = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     return localMappings.filter((m) => {
@@ -118,19 +94,20 @@ export function OnetSfiaTab({
     () => localMappings.filter((m) => m.isCore).length,
     [localMappings]
   )
-  const secondaryCount = localMappings.length - coreCount
 
-  // Handlers with dirty guard
+  const commitMappings = (next: OnetSfiaMapping[]) => {
+    setLocalMappings(next)
+    onUpdateMappings?.(next)
+  }
+
   const runWithRowGuard = (action: () => void) => {
-    if (!isRowDirty) {
-      action()
-      return
-    }
+    if (!isRowDirty) return action()
     modals.openConfirmModal({
       title: 'Thay đổi chưa lưu trên dòng',
       children: (
         <Text size="sm">
-          Bạn đang có thay đổi chưa lưu trên dòng kỹ năng hiện tại. Bạn có chắc muốn hủy bỏ?
+          Bạn đang có thay đổi chưa lưu trên dòng kỹ năng hiện tại. Bạn có chắc
+          muốn hủy bỏ?
         </Text>
       ),
       labels: { confirm: 'Hủy thay đổi', cancel: 'Tiếp tục sửa' },
@@ -143,14 +120,13 @@ export function OnetSfiaTab({
     })
   }
 
-  const handleStartEdit = (id: string) => {
-    if (editingId === id) return
-    runWithRowGuard(() => setEditingId(id))
-  }
-
-  const handleCancelEdit = () => {
-    setIsRowDirty(false)
-    setEditingId(null)
+  const handleSelectSpectrumSkill = (code: string) => {
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
+    setHighlightedSkillCode(code)
+    highlightTimerRef.current = setTimeout(() => {
+      setHighlightedSkillCode(null)
+      highlightTimerRef.current = null
+    }, 3000)
   }
 
   const handleSave = async (id: string, payload: Partial<OnetSfiaMapping>) => {
@@ -164,11 +140,9 @@ export function OnetSfiaTab({
           isCore: payload.isCore,
         },
       })
-      const updated = localMappings.map((m) =>
-        m.id === id ? { ...m, ...payload } : m
+      commitMappings(
+        localMappings.map((m) => (m.id === id ? { ...m, ...payload } : m))
       )
-      setLocalMappings(updated)
-      onUpdateMappings?.(updated)
       setIsRowDirty(false)
       setEditingId(null)
     } finally {
@@ -178,9 +152,7 @@ export function OnetSfiaTab({
 
   const handleDelete = async (id: string) => {
     await deleteMappingMutation.mutateAsync(id)
-    const updated = localMappings.filter((m) => m.id !== id)
-    setLocalMappings(updated)
-    onUpdateMappings?.(updated)
+    commitMappings(localMappings.filter((m) => m.id !== id))
     if (editingId === id) {
       setIsRowDirty(false)
       setEditingId(null)
@@ -189,73 +161,66 @@ export function OnetSfiaTab({
 
   const handleAddMapping = async (payload: CreateOnetSfiaMappingPayload) => {
     const created = await createMappingMutation.mutateAsync(payload)
-    const updated = [...localMappings, created]
-    setLocalMappings(updated)
-    onUpdateMappings?.(updated)
+    commitMappings([...localMappings, created])
   }
 
   const handleResetMappings = async () => {
     const restored = await resetMappingsMutation.mutateAsync()
-    setLocalMappings(restored)
-    onUpdateMappings?.(restored)
+    commitMappings(restored)
     setResetModalOpened(false)
     setIsRowDirty(false)
     setEditingId(null)
   }
-
-  const isMutating =
-    createMappingMutation.isPending ||
-    updateMappingMutation.isPending ||
-    deleteMappingMutation.isPending ||
-    resetMappingsMutation.isPending
 
   return (
     <Stack gap="sm">
       <OnetSfiaSpectrumBar
         mappings={localMappings}
         levels={levels}
-        onSelectSkill={(code) => {
-          setHighlightedSkillCode(code)
-          setTimeout(() => setHighlightedSkillCode(null), 3000)
-        }}
+        onSelectSkill={handleSelectSpectrumSkill}
       />
-
       <OnetSfiaSummaryBar
         totalCount={localMappings.length}
         filteredCount={filteredMappings.length}
         coreCount={coreCount}
-        secondaryCount={secondaryCount}
+        secondaryCount={localMappings.length - coreCount}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
         onOpenAddModal={() => runWithRowGuard(() => setAddModalOpened(true))}
-        onOpenResetModal={() => runWithRowGuard(() => setResetModalOpened(true))}
+        onOpenResetModal={() =>
+          runWithRowGuard(() => setResetModalOpened(true))
+        }
         isMutating={isMutating}
       />
-
       <OnetSfiaTable
         mappings={filteredMappings}
         availableSkills={sfiaLibrary}
+        levels={levels}
         editingId={editingId}
         savingId={savingId}
         highlightedSkillCode={highlightedSkillCode}
-        onStartEdit={handleStartEdit}
-        onCancelEdit={handleCancelEdit}
+        onStartEdit={(id) => {
+          if (editingId !== id) runWithRowGuard(() => setEditingId(id))
+        }}
+        onCancelEdit={() => {
+          setIsRowDirty(false)
+          setEditingId(null)
+        }}
         onSave={handleSave}
         onDelete={handleDelete}
         onDirtyChange={setIsRowDirty}
       />
-
       <OnetSfiaAddModal
         opened={addModalOpened}
         onClose={() => setAddModalOpened(false)}
         availableSkills={sfiaLibrary}
         currentMappings={localMappings}
+        levels={levels}
         onAddMapping={handleAddMapping}
         isPending={createMappingMutation.isPending}
       />
-
       <OnetSfiaResetModal
         opened={resetModalOpened}
         onClose={() => setResetModalOpened(false)}

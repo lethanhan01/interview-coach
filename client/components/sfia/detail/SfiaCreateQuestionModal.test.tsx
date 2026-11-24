@@ -1,19 +1,14 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, fireEvent, waitFor } from '@test-utils'
+import { render, screen, userEvent, waitFor } from '@test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { axe } from 'jest-axe'
+import { notifications } from '@mantine/notifications'
 import { SfiaCreateQuestionModal } from './SfiaCreateQuestionModal'
 import { queryKeys } from '@/queries/keys'
-import { sfiaAdminService } from '@/services'
+import { sfiaAdminService } from '@/services/sfia-admin.service'
 
-vi.mock('sonner', () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}))
-
-vi.mock('@/services', () => ({
+vi.mock('@/services/sfia-admin.service', () => ({
   sfiaAdminService: {
     createQuestion: vi.fn(),
   },
@@ -45,23 +40,23 @@ describe('SfiaCreateQuestionModal', () => {
   })
 
   it('validates minimum question length before triggering mutation', async () => {
+    const user = userEvent.setup()
     render(<SfiaCreateQuestionModal {...defaultProps} />)
 
     const textarea = screen.getByPlaceholderText(
-      /Enter practical technical question scenario/i
+      /Nhập nội dung câu hỏi phỏng vấn chi tiết/i
     )
-    fireEvent.change(textarea, { target: { value: 'Too short' } })
-    fireEvent.click(screen.getByRole('button', { name: /Create Question/i }))
+    await user.type(textarea, 'Too short')
+    await user.click(screen.getByRole('button', { name: /Tạo câu hỏi/i }))
 
     expect(
-      await screen.findByText(
-        'Interview question content must be at least 15 characters.'
-      )
+      await screen.findByText('Nội dung câu hỏi cần tối thiểu 15 ký tự.')
     ).toBeInTheDocument()
     expect(sfiaAdminService.createQuestion).not.toHaveBeenCalled()
   })
 
   it('creates question via mutation and selectively invalidates dynamic SFIA queries only', async () => {
+    const user = userEvent.setup()
     const queryClient = createTestClient()
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
     const createdQuestion = {
@@ -75,19 +70,17 @@ describe('SfiaCreateQuestionModal', () => {
       createdQuestion
     )
 
-    render(
+    const { container } = render(
       <QueryClientProvider client={queryClient}>
         <SfiaCreateQuestionModal {...defaultProps} />
       </QueryClientProvider>
     )
 
     const textarea = screen.getByPlaceholderText(
-      /Enter practical technical question scenario/i
+      /Nhập nội dung câu hỏi phỏng vấn chi tiết/i
     )
-    fireEvent.change(textarea, {
-      target: { value: createdQuestion.questionText },
-    })
-    fireEvent.click(screen.getByRole('button', { name: /Create Question/i }))
+    await user.type(textarea, createdQuestion.questionText)
+    await user.click(screen.getByRole('button', { name: /Tạo câu hỏi/i }))
 
     await waitFor(() => {
       expect(sfiaAdminService.createQuestion).toHaveBeenCalledWith('PROG', {
@@ -128,9 +121,13 @@ describe('SfiaCreateQuestionModal', () => {
     ).toBe(true)
     expect(predicate?.({ queryKey: queryKeys.sfiaAdmin.matrix() })).toBe(true)
     expect(predicate?.({ queryKey: queryKeys.sfiaAdmin.coverage() })).toBe(true)
+
+    notifications.clean()
+    expect(await axe(container)).toHaveNoViolations()
   })
 
   it('displays inline error and keeps modal open when mutation fails', async () => {
+    const user = userEvent.setup()
     vi.mocked(sfiaAdminService.createQuestion).mockRejectedValueOnce(
       new Error('Duplicate question detected')
     )
@@ -138,19 +135,32 @@ describe('SfiaCreateQuestionModal', () => {
     render(<SfiaCreateQuestionModal {...defaultProps} />)
 
     const textarea = screen.getByPlaceholderText(
-      /Enter practical technical question scenario/i
+      /Nhập nội dung câu hỏi phỏng vấn chi tiết/i
     )
-    fireEvent.change(textarea, {
-      target: {
-        value: 'Describe how to prevent race conditions in PostgreSQL.',
-      },
-    })
-    fireEvent.click(screen.getByRole('button', { name: /Create Question/i }))
+    await user.type(
+      textarea,
+      'Describe how to prevent race conditions in PostgreSQL.'
+    )
+    await user.click(screen.getByRole('button', { name: /Tạo câu hỏi/i }))
 
     expect(
       await screen.findByText('Duplicate question detected')
     ).toBeInTheDocument()
     expect(defaultProps.onQuestionCreated).not.toHaveBeenCalled()
     expect(defaultProps.onOpenChange).not.toHaveBeenCalledWith(false)
+  })
+
+  it('updates live character counter via form.watch as user types', async () => {
+    const user = userEvent.setup()
+    render(<SfiaCreateQuestionModal {...defaultProps} />)
+
+    expect(screen.getByText('0 / 500')).toBeInTheDocument()
+
+    const textarea = screen.getByPlaceholderText(
+      /Nhập nội dung câu hỏi phỏng vấn chi tiết/i
+    )
+    await user.type(textarea, 'Explain ACID properties')
+
+    expect(screen.getByText('23 / 500')).toBeInTheDocument()
   })
 })

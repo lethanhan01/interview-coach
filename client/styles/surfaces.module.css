@@ -11,3 +11,7 @@
   position: sticky;
   top: var(--mantine-spacing-md);
 }
+
+.preLine {
+  white-space: pre-line;
+}

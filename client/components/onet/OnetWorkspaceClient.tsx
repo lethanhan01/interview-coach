@@ -204,7 +204,9 @@ function OnetWorkspaceContent() {
                 activeDetailTab={activeDetailTab}
                 onSelectDetailTab={guardedSetDetailTab}
                 onLoadedDetail={(detail) => setCurrentTitle(detail.title)}
-                onUpdateMappings={() => setSidebarRefreshKey((prev) => prev + 1)}
+                onUpdateMappings={() =>
+                  setSidebarRefreshKey((prev) => prev + 1)
+                }
                 onDirtyChange={setIsSfiaDirty}
               />
             </Paper>

@@ -48,8 +48,8 @@ export function OnetTasksTab({ tasks }: Readonly<OnetTasksTabProps>) {
         <Stack gap="xs">
           <Group justify="space-between" align="center" wrap="wrap">
             <Group gap="xs">
-              <Title order={2} size="h6">
-                Nhiệm vụ Công việc (Work Tasks)
+              <Title order={3} size="h6">
+                Nhiệm vụ Công việc
               </Title>
               <Badge color="neutral" variant="outline" size="xs">
                 {tasks.length} nhiệm vụ
@@ -134,7 +134,7 @@ export function OnetTasksTab({ tasks }: Readonly<OnetTasksTabProps>) {
             <OnetTaskItem
               key={task.id}
               task={task}
-              searchQuery={searchQuery}
+              searchQuery={searchQuery.trim()}
               index={index}
             />
           ))}

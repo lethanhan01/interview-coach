@@ -7,7 +7,7 @@ import {
 import {
   MOCK_SFIA_CATEGORIES,
   MOCK_SFIA_SKILL_SUMMARIES,
-} from '@/components/sfia/sfia-mock-data'
+} from '@/test-utils/fixtures/sfia.fixture'
 
 describe('SfiaBlindSpotsTable Component', () => {
   const defaultProps: SfiaBlindSpotsTableProps = {

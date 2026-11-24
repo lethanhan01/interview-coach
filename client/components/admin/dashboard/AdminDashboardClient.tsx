@@ -27,7 +27,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { userQueries } from '@/queries/user.queries'
 import { AdminKpiGrid } from './AdminKpiGrid'
 import { AdminQuickActions } from './AdminQuickActions'
-import { computeUserMetrics } from './dashboard-metrics'
+import { computeUserMetrics } from '@/components/admin/user-metrics'
 import { KnowledgeBaseHealthCard } from './KnowledgeBaseHealthCard'
 import { RecentUsersTable } from './RecentUsersTable'
 import { UserDistributionChart } from './UserDistributionChart'
@@ -156,18 +156,22 @@ export function AdminDashboardClient() {
         <KnowledgeBaseHealthCard enabled={isAdmin} />
 
         {/* Bottom Row: Recent Users + Quick Actions */}
-        <Grid gap="lg">
-          <Grid.Col span={{ base: 12, lg: 8 }}>
-            {usersQuery.isLoading ? (
-              <Skeleton height={300} radius="md" />
-            ) : (
-              <RecentUsersTable users={metrics.recentUsers} />
-            )}
-          </Grid.Col>
-          <Grid.Col span={{ base: 12, lg: 4 }}>
-            <AdminQuickActions />
-          </Grid.Col>
-        </Grid>
+        {usersQuery.isError ? (
+          <AdminQuickActions />
+        ) : (
+          <Grid gap="lg">
+            <Grid.Col span={{ base: 12, lg: 8 }}>
+              {usersQuery.isLoading ? (
+                <Skeleton height={300} radius="md" />
+              ) : (
+                <RecentUsersTable users={metrics.recentUsers} />
+              )}
+            </Grid.Col>
+            <Grid.Col span={{ base: 12, lg: 4 }}>
+              <AdminQuickActions />
+            </Grid.Col>
+          </Grid>
+        )}
       </Stack>
     </Container>
   )

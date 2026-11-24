@@ -11,17 +11,20 @@ import {
   Tooltip,
 } from '@mantine/core'
 import { IconLock, IconLockOpen, IconTrash } from '@tabler/icons-react'
-import { formatVietnamRelativeDate } from '@/lib/date-time'
+import {
+  formatVietnamDateTime,
+  formatVietnamRelativeDate,
+} from '@/lib/date-time'
 import {
   getUserDisplayName,
   getUserInitials,
-} from '@/components/admin/dashboard/dashboard-metrics'
+} from '@/components/admin/user-metrics'
 import type { AdminUser } from '@/types'
 
 interface UsersTableProps {
   users: AdminUser[]
   currentUserId: string | null
-  isMutating: boolean
+  updatingUserId: string | null
   onToggleStatus: (user: AdminUser) => void
   onRequestDelete: (user: AdminUser) => void
 }
@@ -29,7 +32,7 @@ interface UsersTableProps {
 export function UsersTable({
   users,
   currentUserId,
-  isMutating,
+  updatingUserId,
   onToggleStatus,
   onRequestDelete,
 }: Readonly<UsersTableProps>) {
@@ -50,13 +53,20 @@ export function UsersTable({
             const displayName = getUserDisplayName(user)
             const isSelf = currentUserId !== null && user.id === currentUserId
             const isActive = user.status === 'active'
+            const isRowUpdating = updatingUserId === user.id
+            const isOtherUpdating =
+              updatingUserId !== null && updatingUserId !== user.id
+            const selfNoteId = `self-restriction-${user.id}`
+
             const actionButtons = (
               <Group gap="xs" justify="flex-end" wrap="nowrap">
                 <Button
                   variant="light"
                   color={isActive ? 'warning' : 'success'}
                   size="xs"
-                  disabled={isMutating || isSelf}
+                  loading={isRowUpdating}
+                  disabled={isSelf || isOtherUpdating}
+                  aria-describedby={isSelf ? selfNoteId : undefined}
                   leftSection={
                     isActive ? (
                       <IconLock size={14} stroke={1.5} aria-hidden="true" />
@@ -72,7 +82,8 @@ export function UsersTable({
                   variant="light"
                   color="danger"
                   size="xs"
-                  disabled={isMutating || isSelf}
+                  disabled={isSelf || updatingUserId !== null}
+                  aria-describedby={isSelf ? selfNoteId : undefined}
                   leftSection={
                     <IconTrash size={14} stroke={1.5} aria-hidden="true" />
                   }
@@ -133,15 +144,28 @@ export function UsersTable({
                   </Badge>
                 </Table.Td>
                 <Table.Td>
-                  <Text size="xs" c="dimmed">
-                    {formatVietnamRelativeDate(user.createdAt)}
-                  </Text>
+                  <Tooltip
+                    label={formatVietnamDateTime(user.createdAt)}
+                    withArrow
+                  >
+                    <Text span size="xs" c="dimmed">
+                      {formatVietnamRelativeDate(user.createdAt)}
+                    </Text>
+                  </Tooltip>
                 </Table.Td>
                 <Table.Td ta="right">
                   {isSelf ? (
-                    <Tooltip label="Không thể tự khóa hoặc xóa tài khoản đang đăng nhập">
-                      {actionButtons}
-                    </Tooltip>
+                    <Stack gap={2} align="flex-end">
+                      <Tooltip
+                        label="Không thể tự khóa hoặc xóa tài khoản đang đăng nhập"
+                        withArrow
+                      >
+                        {actionButtons}
+                      </Tooltip>
+                      <Text id={selfNoteId} size="xs" c="dimmed">
+                        Không thể tự khóa hoặc xóa
+                      </Text>
+                    </Stack>
                   ) : (
                     actionButtons
                   )}
