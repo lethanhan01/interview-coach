@@ -1,65 +1,71 @@
 'use client'
 
-import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { useDebouncedValue } from '@mantine/hooks'
-import { useQueries, useQuery } from '@tanstack/react-query'
-import {
-  Search,
-  X,
-  SearchX,
-  AlertCircle,
-  RefreshCw,
-  Sparkles,
-  Loader2,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/Accordion'
+  Alert,
+  Box,
+  Button,
+  Group,
+  Loader,
+  ScrollArea,
+  Skeleton,
+  Stack,
+  Text,
+} from '@mantine/core'
+import { IconRefresh } from '@tabler/icons-react'
 import { onetAdminQueries } from '@/queries/onet.queries'
 import { queryKeys } from '@/queries/keys'
-import { useOptionalQueryClient } from '@/providers/QueryProvider'
-import type { OnetOccupationSummary } from '@/types'
+import type {
+  OnetMappingStatusFilter,
+  OnetOccupationSummary,
+  SocMajorGroup,
+} from '@/types'
+import { OnetSidebarGroupItem } from './OnetSidebarGroupItem'
+import { OnetSidebarHeader } from './OnetSidebarHeader'
+import classes from './OnetSidebar.module.css'
 
 export interface OnetSidebarProps {
   selectedSoc: string
   onSelectSoc: (socCode: string) => void
   refreshTrigger?: number
-  className?: string
+}
+
+const toMessage = (err: unknown, fallback: string) =>
+  err instanceof Error ? err.message : err ? fallback : null
+
+function matchesStatus(group: SocMajorGroup, status: OnetMappingStatusFilter) {
+  if (status === 'mapped') return group.mappedCount > 0
+  if (status === 'unmapped') return group.totalOccupations > group.mappedCount
+  return true
 }
 
 export function OnetSidebar({
   selectedSoc,
   onSelectSoc,
   refreshTrigger = 0,
-  className,
-}: OnetSidebarProps) {
-  const queryClient = useOptionalQueryClient()
+}: Readonly<OnetSidebarProps>) {
+  const queryClient = useQueryClient()
   const [query, setQuery] = useState('')
   const [debouncedQuery] = useDebouncedValue(query.trim(), 300)
+  const [mappingStatus, setMappingStatus] =
+    useState<OnetMappingStatusFilter>('all')
+  const hasSearch = Boolean(debouncedQuery)
 
-  // Group code of selected SOC (e.g. "15" from "15-1252.00")
-  const selectedGroupCode = useMemo(() => {
-    return selectedSoc?.split('-')[0] || '15'
-  }, [selectedSoc])
-
-  const [userExpandedGroups, setUserExpandedGroups] = useState<string[]>([
+  const selectedGroupCode = selectedSoc?.split('-')[0] || '15'
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([
     selectedGroupCode,
   ])
+  const [searchExpanded, setSearchExpanded] = useState<string[]>([])
   const [prevSoc, setPrevSoc] = useState(selectedSoc)
+  const [prevSearchKey, setPrevSearchKey] = useState('')
 
-  // Adjust state during render when selectedSoc changes
   if (prevSoc !== selectedSoc) {
     setPrevSoc(selectedSoc)
-    if (selectedGroupCode && !userExpandedGroups.includes(selectedGroupCode)) {
-      setUserExpandedGroups((prev) => [...prev, selectedGroupCode])
+    if (!expandedGroups.includes(selectedGroupCode)) {
+      setExpandedGroups((prev) => [...prev, selectedGroupCode])
     }
   }
 
@@ -69,38 +75,22 @@ export function OnetSidebar({
     [majorGroupsQuery.data]
   )
 
-  const hasSearch = Boolean(debouncedQuery)
-  const searchQueryResult = useQuery({
+  const searchQuery = useQuery({
     ...onetAdminQueries.occupations({
       search: debouncedQuery,
+      mappingStatus,
       limit: 60,
     }),
     enabled: hasSearch,
   })
-  const searchResults = useMemo(
-    () => searchQueryResult.data ?? [],
-    [searchQueryResult.data]
-  )
-  const isSearching = hasSearch && searchQueryResult.isFetching
 
   const groupQueries = useQueries({
-    queries: userExpandedGroups.map((groupCode) => ({
-      ...onetAdminQueries.occupations({ groupCode, limit: 100 }),
-      enabled: Boolean(groupCode),
+    queries: expandedGroups.map((groupCode) => ({
+      ...onetAdminQueries.occupations({ groupCode, mappingStatus, limit: 500 }),
+      enabled: !hasSearch && Boolean(groupCode),
     })),
   })
 
-  const groupOccupationsCache: Record<string, OnetOccupationSummary[]> = {}
-  const loadingGroups: Record<string, boolean> = {}
-  userExpandedGroups.forEach((groupCode, idx) => {
-    const q = groupQueries[idx]
-    if (q) {
-      groupOccupationsCache[groupCode] = q.data ?? []
-      loadingGroups[groupCode] = q.isLoading
-    }
-  })
-
-  // Backward-compatible refresh trigger synced via QueryClient invalidation
   useEffect(() => {
     if (refreshTrigger <= 0) return
     void queryClient.invalidateQueries({
@@ -111,308 +101,161 @@ export function OnetSidebar({
     })
   }, [refreshTrigger, queryClient])
 
-  const initialLoading = majorGroupsQuery.isLoading
-  const error =
-    majorGroupsQuery.error instanceof Error
-      ? majorGroupsQuery.error.message
-      : majorGroupsQuery.error
-        ? 'Không thể tải danh mục 23 nhóm nghề O*NET'
-        : null
-
-  // Handle expanding / collapsing accordion items
-  const handleAccordionChange = (newExpanded: string[]) => {
-    setUserExpandedGroups(newExpanded)
-  }
-
-  const handleRetry = () => {
-    void majorGroupsQuery.refetch()
-    groupQueries.forEach((q) => {
-      void q.refetch()
-    })
-  }
-
-  // Calculate search grouped map
   const searchGroupMap = useMemo(() => {
-    if (!hasSearch) return null
     const map = new Map<string, OnetOccupationSummary[]>()
-    searchResults.forEach((occ) => {
-      const list = map.get(occ.majorGroupCode) || []
+    for (const occ of searchQuery.data ?? []) {
+      const list = map.get(occ.majorGroupCode) ?? []
       list.push(occ)
       map.set(occ.majorGroupCode, list)
-    })
-    return map
-  }, [hasSearch, searchResults])
-
-  const searchVisibleGroups = useMemo(() => {
-    if (!searchGroupMap) return majorGroups
-    return majorGroups.filter(
-      (g) => (searchGroupMap.get(g.code) || []).length > 0
-    )
-  }, [majorGroups, searchGroupMap])
-
-  const effectiveExpandedGroups = useMemo(() => {
-    if (hasSearch && searchVisibleGroups.length > 0) {
-      return searchVisibleGroups.map((g) => g.code)
     }
-    return userExpandedGroups
-  }, [hasSearch, searchVisibleGroups, userExpandedGroups])
+    return map
+  }, [searchQuery.data])
 
-  const totalOccupationsCount = useMemo(() => {
-    return majorGroups.reduce((acc, g) => acc + (g.totalOccupations || 0), 0)
-  }, [majorGroups])
+  const visibleGroups = useMemo(() => {
+    if (hasSearch) {
+      return majorGroups.filter((g) => searchGroupMap.has(g.code))
+    }
+    return majorGroups.filter((g) => matchesStatus(g, mappingStatus))
+  }, [hasSearch, majorGroups, mappingStatus, searchGroupMap])
+
+  // Auto-expand all matched groups once per new search result set (still collapsible)
+  const searchKey = hasSearch
+    ? `${debouncedQuery}|${mappingStatus}|${visibleGroups.map((g) => g.code).join(',')}`
+    : ''
+  if (searchKey !== prevSearchKey) {
+    setPrevSearchKey(searchKey)
+    setSearchExpanded(visibleGroups.map((g) => g.code))
+  }
+
+  const totalOccupations = useMemo(
+    () => majorGroups.reduce((acc, g) => acc + (g.totalOccupations || 0), 0),
+    [majorGroups]
+  )
+
+  const resetFilters = () => {
+    setQuery('')
+    setMappingStatus('all')
+  }
+
+  const majorGroupsError = toMessage(
+    majorGroupsQuery.error,
+    'Không thể tải danh mục nhóm nghề O*NET'
+  )
+  const searchError = toMessage(
+    searchQuery.error,
+    'Không thể tìm kiếm nghề nghiệp O*NET'
+  )
 
   return (
-    <div
-      className={cn(
-        'bg-card text-card-foreground flex h-full flex-col overflow-hidden',
-        className
-      )}
-    >
-      {/* Sidebar Header & Search */}
-      <div className="border-border/60 bg-surface-raised flex shrink-0 flex-col gap-3 border-b p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-ink text-sm font-bold tracking-tight">
-              Phân loại Nghề nghiệp
-            </span>
-            <Badge variant="outline" className="text-[11px] font-semibold">
-              {totalOccupationsCount > 0
-                ? `${totalOccupationsCount} SOC`
-                : 'O*NET SOC'}
-            </Badge>
-          </div>
-          <span className="text-ink-muted text-xs">
-            {hasSearch
-              ? `${searchResults.length} kết quả`
-              : `${majorGroups.length} nhóm`}
-          </span>
-        </div>
+    <Box className={classes.root}>
+      <OnetSidebarHeader
+        totalOccupations={totalOccupations}
+        hasSearch={hasSearch}
+        searchResultCount={searchQuery.data?.length ?? 0}
+        visibleGroupsCount={visibleGroups.length}
+        majorGroupsCount={majorGroups.length}
+        query={query}
+        onQueryChange={setQuery}
+        mappingStatus={mappingStatus}
+        onMappingStatusChange={setMappingStatus}
+      />
 
-        {/* Search Input with Debounce */}
-        <div className="relative">
-          <Search className="text-ink-muted pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Tìm mã SOC hoặc tên nghề..."
-            className="bg-card pl-9 pr-8 text-xs"
-            aria-label="Tìm kiếm nghề nghiệp O*NET"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery('')}
-              className="text-ink-muted hover:text-ink focus-visible:ring-ring absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 focus-visible:outline-none focus-visible:ring-1"
-              aria-label="Xóa từ khóa tìm kiếm"
-            >
-              <X className="size-3.5" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Main Accordion List (Independently Scrollable) */}
-      <div className="flex-1 overflow-y-auto p-2">
-        {/* Loading State: Skeletons */}
-        {initialLoading && (
-          <div className="flex flex-col gap-2 p-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-surface-inset flex h-11 animate-pulse items-center justify-between rounded-lg px-3"
-              >
-                <div className="bg-border h-4 w-40 rounded" />
-                <div className="bg-border h-4 w-8 rounded-full" />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Error State */}
-        {!initialLoading && error && (
-          <div className="flex flex-col items-center justify-center p-6 text-center">
-            <AlertCircle className="text-destructive mb-2 size-8" />
-            <p className="text-ink text-sm font-medium">Lỗi tải dữ liệu</p>
-            <p className="text-ink-muted mt-1 text-xs">{error}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRetry}
-              className="mt-3 gap-1.5 text-xs"
-            >
-              <RefreshCw className="size-3.5" />
-              <span>Thử lại</span>
-            </Button>
-          </div>
-        )}
-
-        {/* Searching Indicator */}
-        {isSearching && (
-          <div className="text-ink-muted flex items-center justify-center gap-2 py-6 text-xs">
-            <Loader2 className="text-brand size-4 animate-spin" />
-            <span>Đang tìm kiếm trong database...</span>
-          </div>
-        )}
-
-        {/* Empty Search Results State */}
-        {!initialLoading &&
-          !error &&
-          !isSearching &&
-          hasSearch &&
-          searchResults.length === 0 && (
-            <div className="flex flex-col items-center justify-center p-8 text-center">
-              <div className="bg-surface-inset text-ink-muted flex size-12 items-center justify-center rounded-full">
-                <SearchX className="size-6" />
-              </div>
-              <p className="text-ink mt-3 text-sm font-semibold">
-                Không tìm thấy nghề nghiệp
-              </p>
-              <p className="text-ink-muted mt-1 text-xs leading-relaxed">
-                Không có mã nghề hoặc chức danh nào khớp với từ khóa &ldquo;
-                {debouncedQuery}&rdquo;
-              </p>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setQuery('')}
-                className="mt-3 text-xs"
-              >
-                Xóa bộ lọc
+      <ScrollArea className={classes.scroll} type="auto" offsetScrollbars>
+        <Box p="xs">
+          {majorGroupsQuery.isLoading ? (
+            <Stack gap="xs">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <Skeleton key={idx} height={40} radius="sm" />
+              ))}
+            </Stack>
+          ) : majorGroupsError || (hasSearch && searchError) ? (
+            <Alert color="danger" variant="light" title="Lỗi tải dữ liệu">
+              <Stack gap="xs">
+                <Text size="xs">{majorGroupsError ?? searchError}</Text>
+                <Group>
+                  <Button
+                    size="xs"
+                    variant="light"
+                    color="danger"
+                    leftSection={<IconRefresh size={14} stroke={1.5} />}
+                    onClick={() => {
+                      void majorGroupsQuery.refetch()
+                      if (hasSearch) void searchQuery.refetch()
+                    }}
+                  >
+                    Thử lại
+                  </Button>
+                </Group>
+              </Stack>
+            </Alert>
+          ) : hasSearch && searchQuery.isFetching ? (
+            <Group justify="center" gap="xs" py="lg">
+              <Loader size="xs" />
+              <Text size="xs" c="dimmed">
+                Đang tìm kiếm trong cơ sở dữ liệu...
+              </Text>
+            </Group>
+          ) : visibleGroups.length === 0 ? (
+            <Stack align="center" gap="xs" py="lg">
+              <Text size="sm" fw={600}>
+                Không tìm thấy nghề nghiệp phù hợp
+              </Text>
+              <Text size="xs" c="dimmed" ta="center">
+                Không có nhóm SOC nào khớp với bộ lọc hiện tại.
+              </Text>
+              <Button size="xs" variant="light" onClick={resetFilters}>
+                Đặt lại bộ lọc
               </Button>
-            </div>
-          )}
-
-        {/* Success Content: Accordion Groups */}
-        {!initialLoading &&
-          !error &&
-          !isSearching &&
-          (!hasSearch || searchResults.length > 0) && (
+            </Stack>
+          ) : (
             <Accordion
-              type="multiple"
-              value={effectiveExpandedGroups}
-              onValueChange={handleAccordionChange}
-              className="w-full space-y-1"
+              multiple
+              variant="contained"
+              radius="sm"
+              chevronPosition="left"
+              value={hasSearch ? searchExpanded : expandedGroups}
+              onChange={hasSearch ? setSearchExpanded : setExpandedGroups}
             >
-              {(hasSearch ? searchVisibleGroups : majorGroups).map((group) => {
-                const isGroupLoading = Boolean(loadingGroups[group.code])
-                const groupOccs =
-                  hasSearch && searchGroupMap
-                    ? searchGroupMap.get(group.code) || []
-                    : groupOccupationsCache[group.code] || []
+              {visibleGroups.map((group) => {
+                const idx = expandedGroups.indexOf(group.code)
+                const groupQuery = idx >= 0 ? groupQueries[idx] : undefined
+                const occupations = hasSearch
+                  ? (searchGroupMap.get(group.code) ?? [])
+                  : (groupQuery?.data ?? [])
+                const countLabel = hasSearch
+                  ? occupations.length
+                  : mappingStatus === 'mapped'
+                    ? group.mappedCount
+                    : mappingStatus === 'unmapped'
+                      ? group.totalOccupations - group.mappedCount
+                      : group.totalOccupations
 
                 return (
-                  <AccordionItem
+                  <OnetSidebarGroupItem
                     key={group.code}
-                    value={group.code}
-                    className="border-border/50 overflow-hidden rounded-lg border"
-                  >
-                    <AccordionTrigger className="hover:bg-surface-inset/60 px-3 py-2.5 text-xs font-semibold hover:no-underline">
-                      <div className="flex flex-1 items-center justify-between pr-2">
-                        <div className="flex items-center gap-2 text-left">
-                          <span className="bg-brand/10 text-brand rounded px-1.5 py-0.5 font-mono text-[10px] font-bold">
-                            {group.code}
-                          </span>
-                          <span className="text-ink line-clamp-1 max-w-[170px] text-xs">
-                            {group.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          {isGroupLoading ? (
-                            <Loader2 className="text-ink-muted size-3 animate-spin" />
-                          ) : (
-                            <Badge
-                              variant="secondary"
-                              className="h-5 px-1.5 text-[10px] font-normal"
-                            >
-                              {hasSearch
-                                ? groupOccs.length
-                                : group.totalOccupations}
-                            </Badge>
-                          )}
-                          {group.mappedCount > 0 && !hasSearch && (
-                            <span
-                              title={`${group.mappedCount} nghề đã gán SFIA`}
-                              className="bg-success/15 text-success inline-flex items-center gap-0.5 rounded px-1 text-[10px] font-medium"
-                            >
-                              <Sparkles className="size-2.5" />
-                              {group.mappedCount}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </AccordionTrigger>
-
-                    <AccordionContent className="pb-1 pt-0">
-                      {isGroupLoading && groupOccs.length === 0 ? (
-                        <div className="text-ink-muted flex items-center justify-center gap-1.5 py-4 text-xs">
-                          <Loader2 className="text-brand size-3.5 animate-spin" />
-                          <span>Đang tải danh sách nghề...</span>
-                        </div>
-                      ) : groupOccs.length === 0 ? (
-                        <div className="text-ink-muted px-4 py-3 text-center text-xs italic">
-                          Chưa có dữ liệu nghề cho nhóm này
-                        </div>
-                      ) : (
-                        <div className="divide-border/40 flex flex-col divide-y">
-                          {groupOccs.map((occ) => {
-                            const isSelected = occ.socCode === selectedSoc
-                            return (
-                              <button
-                                key={occ.socCode}
-                                type="button"
-                                onClick={() => onSelectSoc(occ.socCode)}
-                                className={cn(
-                                  'flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors',
-                                  'focus-visible:ring-brand focus-visible:outline-none focus-visible:ring-1',
-                                  isSelected
-                                    ? 'bg-brand/10 text-brand border-brand border-l-2 font-medium'
-                                    : 'hover:bg-surface-inset text-ink'
-                                )}
-                              >
-                                <div className="flex flex-1 flex-col gap-0.5 pr-2">
-                                  <div className="flex items-center gap-1.5">
-                                    <span
-                                      className={cn(
-                                        'font-mono text-[10px]',
-                                        isSelected
-                                          ? 'text-brand font-semibold'
-                                          : 'text-ink-muted'
-                                      )}
-                                    >
-                                      {occ.socCode}
-                                    </span>
-                                  </div>
-                                  <span className="line-clamp-2 text-xs leading-snug">
-                                    {occ.title}
-                                  </span>
-                                </div>
-
-                                {/* SFIA Mapped status indicator */}
-                                <div className="shrink-0">
-                                  {occ.isMapped ? (
-                                    <span
-                                      title={`Đã ánh xạ ${occ.mappingCount} kỹ năng SFIA`}
-                                      className="bg-success ring-success/20 inline-block size-2 rounded-full ring-2"
-                                    />
-                                  ) : (
-                                    <span
-                                      title="Chưa có ánh xạ SFIA"
-                                      className="bg-border inline-block size-2 rounded-full"
-                                    />
-                                  )}
-                                </div>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </AccordionContent>
-                  </AccordionItem>
+                    group={group}
+                    occupations={occupations}
+                    countLabel={countLabel}
+                    showProgress={!hasSearch}
+                    isLoading={!hasSearch && Boolean(groupQuery?.isLoading)}
+                    errorMessage={
+                      hasSearch
+                        ? null
+                        : toMessage(
+                            groupQuery?.error,
+                            'Không thể tải danh sách nghề của nhóm này'
+                          )
+                    }
+                    onRetry={() => void groupQuery?.refetch()}
+                    selectedSoc={selectedSoc}
+                    onSelectSoc={onSelectSoc}
+                  />
                 )
               })}
             </Accordion>
           )}
-      </div>
-    </div>
+        </Box>
+      </ScrollArea>
+    </Box>
   )
 }

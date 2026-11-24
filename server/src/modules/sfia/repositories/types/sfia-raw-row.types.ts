@@ -14,3 +14,9 @@ export interface SfiaLevelRawRow {
   essence: string;
   description: string;
 }
+
+export interface SfiaSkillLevelRawRow {
+  skillCode: string;
+  levelId: number | string;
+  description: string;
+}

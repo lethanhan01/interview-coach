@@ -29,7 +29,11 @@ import {
   SfiaLibrarySkillDto,
 } from './dto/onet-admin.dto';
 import { ONET_ADMIN_REPOSITORY_TOKEN } from './domain/onet-admin-repository.interface';
-import type { IOnetAdminRepository } from './domain/onet-admin-repository.interface';
+import type {
+  IOnetAdminRepository,
+  OnetMappingStatusFilter,
+} from './domain/onet-admin-repository.interface';
+import { getSocMajorGroupMeta } from './constants/soc-major-groups.constant';
 
 @Injectable()
 export class OnetAdminService {
@@ -113,11 +117,12 @@ export class OnetAdminService {
         const mapped = Number(g.mappedOccupations) || 0;
         const coverage =
           total > 0 ? Number(((mapped / total) * 100).toFixed(1)) : 0;
+        const meta = getSocMajorGroupMeta(g.code);
 
         return {
           code: g.code,
-          name: `Nhóm ${g.code}`,
-          englishName: `Major Group ${g.code}`,
+          name: meta.name,
+          englishName: meta.englishName,
           totalOccupations: total,
           mappedOccupations: mapped,
           mappingCoveragePercent: coverage,
@@ -167,13 +172,15 @@ export class OnetAdminService {
   ): Promise<OnetOccupationSummaryDto[]> {
     const search = query.search?.trim();
     const groupCode = query.groupCode?.trim();
-    const mappedOnly = Boolean(query.mappedOnly);
-    const limit = Math.max(1, Math.min(200, query.limit || 50));
+    const mappingStatus: OnetMappingStatusFilter =
+      query.mappingStatus ?? (query.mappedOnly ? 'mapped' : 'all');
+    const maxAllowed = groupCode ? 500 : 200;
+    const limit = Math.max(1, Math.min(maxAllowed, query.limit || 50));
 
     try {
       const rows = await this.onetAdminRepository.searchSidebarOccupations(
         groupCode,
-        mappedOnly,
+        mappingStatus,
         search,
         limit,
       );
@@ -207,20 +214,23 @@ export class OnetAdminService {
     const limit = Math.max(1, Math.min(50, query.limit || 10));
     const sortBy = query.sortBy || 'interviews';
     const search = query.search?.trim();
+    const groupCode = query.groupCode?.trim();
 
     try {
       const rows = await this.onetAdminRepository.getTopOccupations(
         search,
         sortBy,
         limit,
+        groupCode,
       );
 
       return rows.map((r) => {
+        const groupMeta = getSocMajorGroupMeta(r.majorGroupCode);
         return {
           socCode: r.socCode,
           title: r.title,
           majorGroupCode: r.majorGroupCode,
-          majorGroupName: `Nhóm ${r.majorGroupCode}`,
+          majorGroupName: groupMeta.name,
           mockInterviewCount: Number(r.mockInterviewCount) || 0,
           jobDescriptionCount: Number(r.jobDescriptionCount) || 0,
           mappingCount: Number(r.mappingCount) || 0,
@@ -251,12 +261,18 @@ export class OnetAdminService {
     category?: string,
   ): Promise<SfiaSkillCoverageItemDto[]> {
     const cleanLimit = Math.max(1, Math.min(100, limit || 20));
+    const cleanCategory = category?.trim().toLowerCase();
 
     try {
-      const rawRows =
-        await this.onetAdminRepository.getSfiaSkillCoverage(cleanLimit);
+      // Query without SQL LIMIT when filtering by category so filtering precedes slicing
+      const rawRows = await this.onetAdminRepository.getSfiaSkillCoverage(
+        cleanCategory ? undefined : cleanLimit,
+      );
 
-      const skillMap = new Map<string, { name: string; category: string }>();
+      const skillMap = new Map<
+        string,
+        { name: string; categoryCode: string; categoryName: string }
+      >();
 
       if (this.sfiaFacade) {
         try {
@@ -264,7 +280,9 @@ export class OnetAdminService {
           for (const s of allSkills) {
             skillMap.set(s.code.toUpperCase(), {
               name: s.name,
-              category: s.categoryCode || 'Software Engineering',
+              categoryCode: s.categoryCode || 'GENERAL',
+              categoryName:
+                s.categoryName || s.categoryCode || 'Software Engineering',
             });
           }
         } catch (err) {
@@ -278,12 +296,15 @@ export class OnetAdminService {
       for (const row of rawRows) {
         const meta = skillMap.get(row.code.toUpperCase());
         const name = meta?.name || row.code;
-        const skillCategory = meta?.category || 'Chung';
+        const skillCategory = meta?.categoryName || 'Chung';
+        const skillCategoryCode = meta?.categoryCode || '';
 
-        if (
-          !category ||
-          skillCategory.toLowerCase().includes(category.toLowerCase())
-        ) {
+        const matchesCategory =
+          !cleanCategory ||
+          skillCategory.toLowerCase().includes(cleanCategory) ||
+          skillCategoryCode.toLowerCase().includes(cleanCategory);
+
+        if (matchesCategory) {
           enriched.push({
             code: row.code,
             name,
@@ -298,7 +319,7 @@ export class OnetAdminService {
         }
       }
 
-      return enriched;
+      return enriched.slice(0, cleanLimit);
     } catch (error) {
       this.logger.error(
         `Error querying SFIA skill coverage: ${error instanceof Error ? error.message : String(error)}`,
@@ -762,10 +783,11 @@ export class OnetAdminService {
   }
 
   /**
-   * 15. Khôi phục ánh xạ SFIA về mặc định
+   * 15. Khôi phục ánh xạ SFIA về mặc định (xóa các ánh xạ USER_DEFINED trong transaction)
    */
   async resetSfiaMappings(socCode: string): Promise<OnetSfiaMappingItemDto[]> {
     const cleanSoc = socCode.trim();
+    await this.onetAdminRepository.resetUserDefinedMappings(cleanSoc);
     return this.getOccupationSfiaMappings(cleanSoc);
   }
 
@@ -782,15 +804,19 @@ export class OnetAdminService {
       return skills.map((s) => ({
         code: s.code,
         name: s.name,
-        category: s.categoryCode || 'Software Engineering',
-        categoryCode: s.categoryCode || 'SWEN',
+        category: s.categoryName || s.categoryCode || 'Chung',
+        categoryCode: s.categoryCode || 'GENERAL',
         minLevel: s.minLevel,
         maxLevel: s.maxLevel,
         description: s.overallDescription || '',
-        levels: Array.from({ length: s.maxLevel - s.minLevel + 1 }, (_, i) => ({
-          level: s.minLevel + i,
-          description: `Cấp độ ${s.minLevel + i} theo chuẩn SFIA 9`,
-        })),
+        levels: Array.from({ length: s.maxLevel - s.minLevel + 1 }, (_, i) => {
+          const level = s.minLevel + i;
+          return {
+            level,
+            description:
+              s.levelDescriptions?.[level] || s.overallDescription || '',
+          };
+        }),
       }));
     } catch (error) {
       this.logger.error(

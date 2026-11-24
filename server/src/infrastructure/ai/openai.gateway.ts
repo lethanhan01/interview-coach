@@ -497,9 +497,7 @@ export class OpenAIGateway implements IAIGateway {
     });
   }
 
-  transcribeAudio(
-    _params: TranscribeAudioParams,
-  ): Promise<TranscribeResult> {
+  transcribeAudio(_params: TranscribeAudioParams): Promise<TranscribeResult> {
     return Promise.reject(
       new InterviewAIException(
         ErrorCode.AI_SERVICE_UNAVAILABLE,

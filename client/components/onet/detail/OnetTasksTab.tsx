@@ -1,285 +1,145 @@
 'use client'
 
-import * as React from 'react'
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
-  Search,
-  X,
-  Star,
-  ListChecks,
-  Copy,
-  Check,
-  FileCheck2,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { EmptyState } from '@/components/common/patterns/FeedbackPatterns'
+  ActionIcon,
+  Badge,
+  Button,
+  Group,
+  Paper,
+  SegmentedControl,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core'
+import { IconSearch, IconX } from '@tabler/icons-react'
+import surfaces from '@/styles/surfaces.module.css'
 import type { OnetTaskStatement } from '@/types'
+import { OnetTaskItem } from './OnetTaskItem'
 
 export interface OnetTasksTabProps {
   tasks: OnetTaskStatement[]
-  className?: string
 }
 
-/**
- * Helper tách và highlight từ khóa tìm kiếm trong chuỗi văn bản
- */
-function HighlightedText({ text, query }: { text: string; query: string }) {
-  const clean = query.trim()
-  if (!clean) return <>{text}</>
+type TaskFilterType = 'all' | 'core' | 'supplemental'
 
-  // Escape special regex characters
-  const escaped = clean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const parts = text.split(new RegExp(`(${escaped})`, 'gi'))
-
-  return (
-    <>
-      {parts.map((part, index) =>
-        part.toLowerCase() === clean.toLowerCase() ? (
-          <mark
-            key={index}
-            className="bg-brand/20 text-ink rounded px-0.5 font-medium"
-          >
-            {part}
-          </mark>
-        ) : (
-          part
-        )
-      )}
-    </>
-  )
-}
-
-export function OnetTasksTab({ tasks, className }: OnetTasksTabProps) {
+export function OnetTasksTab({ tasks }: Readonly<OnetTasksTabProps>) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [copiedTaskId, setCopiedTaskId] = useState<string | null>(null)
+  const [filterType, setFilterType] = useState<TaskFilterType>('all')
 
-  // Split tasks into Core and Supplemental
-  const { coreTasks, supplementalTasks } = useMemo(() => {
-    const core: OnetTaskStatement[] = []
-    const supplemental: OnetTaskStatement[] = []
+  const coreCount = useMemo(() => tasks.filter((t) => t.isCore).length, [tasks])
+  const supplementalCount = tasks.length - coreCount
 
-    for (const t of tasks) {
-      if (t.isCore) {
-        core.push(t)
-      } else {
-        supplemental.push(t)
-      }
-    }
-
-    return { coreTasks: core, supplementalTasks: supplemental }
-  }, [tasks])
-
-  // Filter tasks based on search
-  const q = searchQuery.trim().toLowerCase()
-
-  const filteredCore = useMemo(() => {
-    if (!q) return coreTasks
-    return coreTasks.filter((t) => t.statement.toLowerCase().includes(q))
-  }, [coreTasks, q])
-
-  const filteredSupplemental = useMemo(() => {
-    if (!q) return supplementalTasks
-    return supplementalTasks.filter((t) =>
-      t.statement.toLowerCase().includes(q)
-    )
-  }, [supplementalTasks, q])
-
-  const totalFilteredCount = filteredCore.length + filteredSupplemental.length
-
-  const handleCopyTask = async (task: OnetTaskStatement) => {
-    try {
-      await navigator.clipboard.writeText(task.statement)
-      setCopiedTaskId(task.id)
-      setTimeout(() => setCopiedTaskId(null), 2000)
-    } catch {
-      // Fallback
-    }
-  }
+  const filteredTasks = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    return tasks.filter((t) => {
+      if (filterType === 'core' && !t.isCore) return false
+      if (filterType === 'supplemental' && t.isCore) return false
+      if (!q) return true
+      return t.statement.toLowerCase().includes(q)
+    })
+  }, [tasks, filterType, searchQuery])
 
   return (
-    <div className={cn('space-y-4', className)}>
-      {/* Search Header Bar */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1">
-          <Search className="text-ink-muted absolute left-3 top-1/2 size-4 -translate-y-1/2" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm kiếm nội dung nhiệm vụ công việc..."
-            className="bg-surface-inset h-9 pl-9 pr-8 text-xs sm:text-sm"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="text-ink-muted hover:text-ink focus-ring absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5"
-              title="Xóa từ khóa tìm kiếm"
-              aria-label="Xóa từ khóa tìm kiếm"
-            >
-              <X className="size-3.5" />
-            </button>
-          )}
-        </div>
+    <Stack gap="sm">
+      {/* Header Controls */}
+      <Paper withBorder p="sm" radius="md">
+        <Stack gap="xs">
+          <Group justify="space-between" align="center" wrap="wrap">
+            <Group gap="xs">
+              <Title order={2} size="h6">
+                Nhiệm vụ Công việc (Work Tasks)
+              </Title>
+              <Badge color="neutral" variant="outline" size="xs">
+                {tasks.length} nhiệm vụ
+              </Badge>
+            </Group>
 
-        <div className="text-ink-muted flex shrink-0 items-center gap-1.5 self-end text-xs sm:self-auto">
-          <span>Hiển thị</span>
-          <span className="text-ink font-semibold tabular-nums">
-            {totalFilteredCount}
-          </span>
-          <span>/</span>
-          <span className="font-mono tabular-nums">{tasks.length}</span>
-          <span>nhiệm vụ</span>
-        </div>
-      </div>
+            <Text size="xs" c="dimmed">
+              Hiển thị {filteredTasks.length} / {tasks.length}
+            </Text>
+          </Group>
 
-      {/* Empty State when no tasks match */}
-      {totalFilteredCount === 0 && (
-        <Card className="p-8">
-          <EmptyState
-            icon={<FileCheck2 className="text-ink-muted size-10" />}
-            title="Không tìm thấy nhiệm vụ nào"
-            description={`Không có nhiệm vụ nào chứa từ khóa "${searchQuery}".`}
-            action={{
-              label: 'Xóa bộ lọc tìm kiếm',
-              onClick: () => setSearchQuery(''),
-            }}
-          />
-        </Card>
+          <Group gap="xs" wrap="wrap">
+            <TextInput
+              size="xs"
+              flex={1}
+              miw={200}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.currentTarget.value)}
+              placeholder="Tìm kiếm nội dung nhiệm vụ..."
+              aria-label="Tìm kiếm nội dung nhiệm vụ"
+              leftSection={<IconSearch size={14} stroke={1.5} />}
+              rightSection={
+                searchQuery ? (
+                  <ActionIcon
+                    size="xs"
+                    variant="subtle"
+                    color="neutral"
+                    aria-label="Xóa tìm kiếm"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <IconX size={12} stroke={1.5} />
+                  </ActionIcon>
+                ) : null
+              }
+            />
+
+            <SegmentedControl
+              size="xs"
+              value={filterType}
+              onChange={(val) => setFilterType(val as TaskFilterType)}
+              aria-label="Lọc theo phân loại nhiệm vụ"
+              data={[
+                { value: 'all', label: `Tất cả (${tasks.length})` },
+                { value: 'core', label: `Cốt lõi (${coreCount})` },
+                {
+                  value: 'supplemental',
+                  label: `Bổ trợ (${supplementalCount})`,
+                },
+              ]}
+            />
+          </Group>
+        </Stack>
+      </Paper>
+
+      {/* Task List */}
+      {filteredTasks.length === 0 ? (
+        <Paper p="xl" radius="md" className={surfaces.subtleSurface}>
+          <Stack align="center" gap="xs">
+            <Text size="sm" fw={600}>
+              Không tìm thấy nhiệm vụ nào
+            </Text>
+            <Text size="xs" c="dimmed">
+              Thử thay đổi từ khóa tìm kiếm hoặc bỏ chọn bộ lọc.
+            </Text>
+            {searchQuery || filterType !== 'all' ? (
+              <Button
+                size="xs"
+                variant="light"
+                onClick={() => {
+                  setSearchQuery('')
+                  setFilterType('all')
+                }}
+              >
+                Đặt lại bộ lọc
+              </Button>
+            ) : null}
+          </Stack>
+        </Paper>
+      ) : (
+        <Stack gap="xs">
+          {filteredTasks.map((task, index) => (
+            <OnetTaskItem
+              key={task.id}
+              task={task}
+              searchQuery={searchQuery}
+              index={index}
+            />
+          ))}
+        </Stack>
       )}
-
-      {/* Section 1: Core Tasks */}
-      {filteredCore.length > 0 && (
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Star className="size-4 fill-amber-500/20 text-amber-500" />
-              <h3 className="text-ink text-xs font-bold tracking-tight sm:text-sm">
-                Nhiệm vụ Cốt lõi (Core Tasks)
-              </h3>
-            </div>
-            <Badge
-              variant="outline"
-              className="border-brand/40 text-brand font-mono text-[11px] tabular-nums"
-            >
-              {q
-                ? `${filteredCore.length} / ${coreTasks.length}`
-                : `${coreTasks.length}`}{' '}
-              nhiệm vụ
-            </Badge>
-          </div>
-
-          <div className="space-y-2">
-            {filteredCore.map((task, index) => {
-              const isCopied = copiedTaskId === task.id
-
-              return (
-                <Card
-                  key={task.id}
-                  className="border-l-brand/80 hover:border-brand group relative border-l-4 p-3 transition-colors hover:shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-2.5">
-                      <span className="bg-brand/10 text-brand flex size-5 shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-bold tabular-nums">
-                        {index + 1}
-                      </span>
-                      <p className="text-ink/90 text-xs leading-relaxed sm:text-sm">
-                        <HighlightedText
-                          text={task.statement}
-                          query={searchQuery}
-                        />
-                      </p>
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCopyTask(task)}
-                      className="text-ink-muted hover:text-ink -mr-1 -mt-1 h-7 w-7 shrink-0 p-0"
-                      title="Sao chép câu nhiệm vụ"
-                      aria-label="Sao chép câu nhiệm vụ"
-                    >
-                      {isCopied ? (
-                        <Check className="text-success size-3.5" />
-                      ) : (
-                        <Copy className="size-3.5" />
-                      )}
-                    </Button>
-                  </div>
-                </Card>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Section 2: Supplemental Tasks */}
-      {filteredSupplemental.length > 0 && (
-        <div className="space-y-2.5 pt-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ListChecks className="text-ink-muted size-4" />
-              <h3 className="text-ink text-xs font-bold tracking-tight sm:text-sm">
-                Nhiệm vụ Bổ trợ (Supplemental Tasks)
-              </h3>
-            </div>
-            <Badge
-              variant="secondary"
-              className="font-mono text-[11px] tabular-nums"
-            >
-              {q
-                ? `${filteredSupplemental.length} / ${supplementalTasks.length}`
-                : `${supplementalTasks.length}`}{' '}
-              nhiệm vụ
-            </Badge>
-          </div>
-
-          <div className="space-y-2">
-            {filteredSupplemental.map((task, index) => {
-              const isCopied = copiedTaskId === task.id
-
-              return (
-                <Card
-                  key={task.id}
-                  className="border-l-border hover:border-ink-muted/40 group relative border-l-4 p-3 transition-colors hover:shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-2.5">
-                      <span className="bg-surface-inset text-ink-muted flex size-5 shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-medium tabular-nums">
-                        {index + 1}
-                      </span>
-                      <p className="text-ink/80 text-xs leading-relaxed sm:text-sm">
-                        <HighlightedText
-                          text={task.statement}
-                          query={searchQuery}
-                        />
-                      </p>
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCopyTask(task)}
-                      className="text-ink-muted hover:text-ink -mr-1 -mt-1 h-7 w-7 shrink-0 p-0"
-                      title="Sao chép câu nhiệm vụ"
-                      aria-label="Sao chép câu nhiệm vụ"
-                    >
-                      {isCopied ? (
-                        <Check className="text-success size-3.5" />
-                      ) : (
-                        <Copy className="size-3.5" />
-                      )}
-                    </Button>
-                  </div>
-                </Card>
-              )
-            })}
-          </div>
-        </div>
-      )}
-    </div>
+    </Stack>
   )
 }

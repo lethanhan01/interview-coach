@@ -15,6 +15,8 @@ import {
 
 export const ONET_ADMIN_REPOSITORY_TOKEN = Symbol('IOnetAdminRepository');
 
+export type OnetMappingStatusFilter = 'all' | 'mapped' | 'unmapped';
+
 export interface IOnetAdminRepository {
   getSystemSummary(
     tx?: Prisma.TransactionClient,
@@ -26,7 +28,7 @@ export interface IOnetAdminRepository {
 
   searchSidebarOccupations(
     groupCode?: string,
-    mappedOnly?: boolean,
+    mappingStatus?: OnetMappingStatusFilter | boolean,
     search?: string,
     limit?: number,
     tx?: Prisma.TransactionClient,
@@ -36,11 +38,12 @@ export interface IOnetAdminRepository {
     search?: string,
     sortBy?: 'interviews' | 'jds' | 'mappings',
     limit?: number,
+    groupCode?: string,
     tx?: Prisma.TransactionClient,
   ): Promise<TopOccupationRawRow[]>;
 
   getSfiaSkillCoverage(
-    limit: number,
+    limit?: number,
     tx?: Prisma.TransactionClient,
   ): Promise<SfiaSkillCoverageRawRow[]>;
 
@@ -128,4 +131,8 @@ export interface IOnetAdminRepository {
     socCode: string,
     tx?: Prisma.TransactionClient,
   ): Promise<number>;
+
+  resetUserDefinedMappings(
+    socCode: string,
+  ): Promise<OccupationSfiaMappingRawRow[]>;
 }

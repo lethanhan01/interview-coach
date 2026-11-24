@@ -1,52 +1,23 @@
 'use client'
 
-import * as React from 'react'
-import { useState, useMemo, useEffect } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import {
-  Plus,
-  Search,
-  X,
-  RotateCcw,
-  Network,
-  Star,
-  AlertTriangle,
-  FileX,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-} from '@/components/ui/Table'
-import { Input } from '@/components/ui/Input'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from '@/components/ui/AlertDialog'
-import { EmptyState } from '@/components/common/patterns/FeedbackPatterns'
+import { useEffect, useMemo, useState } from 'react'
+import { Stack, Text } from '@mantine/core'
+import { modals } from '@mantine/modals'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { onetAdminQueries } from '@/queries/onet.queries'
+import { sfiaAdminQueries } from '@/queries/sfia.queries'
 import { queryKeys } from '@/queries/keys'
-import { useOptionalQueryClient } from '@/providers/QueryProvider'
 import { onetAdminService } from '@/services'
-import { OnetSfiaSpectrumBar } from './OnetSfiaSpectrumBar'
-import { OnetSfiaRow } from './OnetSfiaRow'
 import type {
   CreateOnetSfiaMappingPayload,
   OnetSfiaMapping,
   UpdateOnetSfiaMappingPayload,
 } from '@/types'
+import { OnetSfiaAddModal } from './OnetSfiaAddModal'
+import { OnetSfiaResetModal } from './OnetSfiaResetModal'
+import { OnetSfiaSpectrumBar } from './OnetSfiaSpectrumBar'
+import { OnetSfiaSummaryBar } from './OnetSfiaSummaryBar'
+import { OnetSfiaTable } from './OnetSfiaTable'
 
 export interface OnetSfiaTabProps {
   socCode: string
@@ -54,10 +25,7 @@ export interface OnetSfiaTabProps {
   mappings: OnetSfiaMapping[]
   onUpdateMappings?: (newMappings: OnetSfiaMapping[]) => void
   onDirtyChange?: (isDirty: boolean) => void
-  className?: string
 }
-
-type FilterChip = 'all' | 'core' | 'secondary'
 
 export function OnetSfiaTab({
   socCode,
@@ -65,13 +33,18 @@ export function OnetSfiaTab({
   mappings,
   onUpdateMappings,
   onDirtyChange,
-  className,
-}: OnetSfiaTabProps) {
-  const queryClient = useOptionalQueryClient()
-  // Local state for mappings (synced with parent)
-  const [localMappings, setLocalMappings] =
-    useState<OnetSfiaMapping[]>(mappings)
+}: Readonly<OnetSfiaTabProps>) {
+  const queryClient = useQueryClient()
+  const [localMappings, setLocalMappings] = useState<OnetSfiaMapping[]>(mappings)
+  const [prevMappings, setPrevMappings] = useState(mappings)
+
+  if (prevMappings !== mappings) {
+    setPrevMappings(mappings)
+    setLocalMappings(mappings)
+  }
+
   const { data: sfiaLibrary = [] } = useQuery(onetAdminQueries.sfiaLibrary())
+  const { data: levels = [] } = useQuery(sfiaAdminQueries.levels())
 
   const invalidateOnetAdmin = () => {
     void queryClient.invalidateQueries({
@@ -84,6 +57,7 @@ export function OnetSfiaTab({
     })
   }
 
+  // Mutations
   const updateMappingMutation = useMutation({
     mutationFn: ({
       id,
@@ -111,694 +85,185 @@ export function OnetSfiaTab({
     onSuccess: invalidateOnetAdmin,
   })
 
-  // Search & Filter
+  // State
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeFilter, setActiveFilter] = useState<FilterChip>('all')
-
-  // Edit State Machine
+  const [activeFilter, setActiveFilter] = useState<'all' | 'core' | 'secondary'>('all')
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [isInserting, setIsInserting] = useState(false)
-  const [isCurrentRowDirty, setIsCurrentRowDirty] = useState(false)
+  const [savingId, setSavingId] = useState<string | null>(null)
+  const [isRowDirty, setIsRowDirty] = useState(false)
+  const [addModalOpened, setAddModalOpened] = useState(false)
+  const [resetModalOpened, setResetModalOpened] = useState(false)
+  const [highlightedSkillCode, setHighlightedSkillCode] = useState<string | null>(null)
 
-  // Highlight skill from spectrum bar
-  const [highlightedSkillCode, setHighlightedSkillCode] = useState<
-    string | null
-  >(null)
-
-  // Modals
-  const [deleteTarget, setDeleteTarget] = useState<OnetSfiaMapping | null>(null)
-  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false)
-  const [switchRowAlert, setSwitchRowAlert] = useState<{
-    targetId: string | null
-    isTargetInserting: boolean
-  } | null>(null)
-
-  const isSaving =
-    updateMappingMutation.isPending || createMappingMutation.isPending
-  const isDeleting = deleteMappingMutation.isPending
-  const isResetting = resetMappingsMutation.isPending
-
-  // Error tracking per row
-  const [rowError, setRowError] = useState<{
-    rowId: string | 'insert'
-    field: 'level' | 'skillCode' | 'weight' | null
-  } | null>(null)
-
-  // Toast / Status Message
-  const [statusMessage, setStatusMessage] = useState<{
-    text: string
-    type: 'success' | 'error'
-  } | null>(null)
-
-  const [prevSocCode, setPrevSocCode] = useState(socCode)
-  const [prevMappings, setPrevMappings] = useState(mappings)
-
-  // Adjust state during render when props change to avoid effect-driven cascading renders
-  if (prevSocCode !== socCode || prevMappings !== mappings) {
-    setPrevSocCode(socCode)
-    setPrevMappings(mappings)
-    setLocalMappings(mappings)
-    setEditingId(null)
-    setIsInserting(false)
-    setIsCurrentRowDirty(false)
-    setRowError(null)
-  }
-
-  // Inform parent of dirty state
   useEffect(() => {
-    onDirtyChange?.(isCurrentRowDirty)
-  }, [isCurrentRowDirty, onDirtyChange])
+    onDirtyChange?.(isRowDirty)
+  }, [isRowDirty, onDirtyChange])
 
-  // Auto clear status message after 3 seconds
-  useEffect(() => {
-    if (statusMessage) {
-      const timer = setTimeout(() => setStatusMessage(null), 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [statusMessage])
-
-  // Filter available skills for Combobox (exclude already mapped ones when inserting)
-  const unmappedSkills = useMemo(() => {
-    const existingCodes = new Set(localMappings.map((m) => m.skillCode))
-    return sfiaLibrary.filter((s) => !existingCodes.has(s.code))
-  }, [sfiaLibrary, localMappings])
-
-  // Filter mappings based on search query & chip
+  // Filtered mappings
   const filteredMappings = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     return localMappings.filter((m) => {
-      // Chip filter
       if (activeFilter === 'core' && !m.isCore) return false
       if (activeFilter === 'secondary' && m.isCore) return false
-
-      // Search query
       if (!q) return true
       return (
         m.skillCode.toLowerCase().includes(q) ||
         m.skillName.toLowerCase().includes(q) ||
-        (m.category && m.category.toLowerCase().includes(q))
+        Boolean(m.category?.toLowerCase().includes(q))
       )
     })
-  }, [localMappings, searchQuery, activeFilter])
+  }, [localMappings, activeFilter, searchQuery])
 
-  // Metrics for Filter Chips
   const coreCount = useMemo(
     () => localMappings.filter((m) => m.isCore).length,
     [localMappings]
   )
   const secondaryCount = localMappings.length - coreCount
 
-  // --------------------------------------------------------------------------
-  // Edit State Machine Handlers
-  // --------------------------------------------------------------------------
-  const handleRequestStartEdit = (targetId: string) => {
-    if (isCurrentRowDirty) {
-      setSwitchRowAlert({ targetId, isTargetInserting: false })
+  // Handlers with dirty guard
+  const runWithRowGuard = (action: () => void) => {
+    if (!isRowDirty) {
+      action()
       return
     }
-    setRowError(null)
-    setIsInserting(false)
-    setEditingId(targetId)
+    modals.openConfirmModal({
+      title: 'Thay đổi chưa lưu trên dòng',
+      children: (
+        <Text size="sm">
+          Bạn đang có thay đổi chưa lưu trên dòng kỹ năng hiện tại. Bạn có chắc muốn hủy bỏ?
+        </Text>
+      ),
+      labels: { confirm: 'Hủy thay đổi', cancel: 'Tiếp tục sửa' },
+      confirmProps: { color: 'danger' },
+      onConfirm: () => {
+        setIsRowDirty(false)
+        setEditingId(null)
+        action()
+      },
+    })
   }
 
-  const handleRequestStartInsert = () => {
-    if (isCurrentRowDirty) {
-      setSwitchRowAlert({ targetId: null, isTargetInserting: true })
-      return
-    }
-    setRowError(null)
+  const handleStartEdit = (id: string) => {
+    if (editingId === id) return
+    runWithRowGuard(() => setEditingId(id))
+  }
+
+  const handleCancelEdit = () => {
+    setIsRowDirty(false)
     setEditingId(null)
-    setIsInserting(true)
   }
 
-  const handleConfirmSwitchRow = () => {
-    setIsCurrentRowDirty(false)
-    setRowError(null)
-    if (!switchRowAlert) return
-
-    if (switchRowAlert.isTargetInserting) {
-      setEditingId(null)
-      setIsInserting(true)
-    } else {
-      setIsInserting(false)
-      setEditingId(switchRowAlert.targetId)
-    }
-    setSwitchRowAlert(null)
-  }
-
-  // --------------------------------------------------------------------------
-  // CRUD Handlers
-  // --------------------------------------------------------------------------
-  const handleSaveExisting = async (
-    id: string,
-    updatedData: Partial<OnetSfiaMapping>
-  ) => {
-    setRowError(null)
+  const handleSave = async (id: string, payload: Partial<OnetSfiaMapping>) => {
+    setSavingId(id)
     try {
-      const saved = await updateMappingMutation.mutateAsync({
+      await updateMappingMutation.mutateAsync({
         id,
         payload: {
-          targetLevel: updatedData.targetLevel,
-          weight: updatedData.weight,
-          isCore: updatedData.isCore,
-          source: updatedData.source,
+          targetLevel: payload.targetLevel,
+          weight: payload.weight,
+          isCore: payload.isCore,
         },
       })
-      const updated = localMappings.map((m) => (m.id === id ? saved : m))
+      const updated = localMappings.map((m) =>
+        m.id === id ? { ...m, ...payload } : m
+      )
       setLocalMappings(updated)
       onUpdateMappings?.(updated)
+      setIsRowDirty(false)
       setEditingId(null)
-      setIsCurrentRowDirty(false)
-      setRowError(null)
-      setStatusMessage({
-        text: `Đã cập nhật ánh xạ kỹ năng ${saved.skillCode} thành công!`,
-        type: 'success',
-      })
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'Không thể lưu ánh xạ kỹ năng'
-      let field: 'level' | 'skillCode' | 'weight' | null = null
-      const lower = msg.toLowerCase()
-      if (
-        lower.includes('cấp độ') ||
-        lower.includes('level') ||
-        lower.includes('tồn tại') ||
-        lower.includes('409')
-      ) {
-        field = 'level'
-      } else if (lower.includes('trọng số') || lower.includes('weight')) {
-        field = 'weight'
-      }
-      setRowError({ rowId: id, field })
-      setStatusMessage({
-        text: msg,
-        type: 'error',
-      })
-      throw err
+    } finally {
+      setSavingId(null)
     }
   }
 
-  const handleSaveInsert = async (data: Partial<OnetSfiaMapping>) => {
-    setRowError(null)
-    try {
-      const newMapping = await createMappingMutation.mutateAsync({
-        skillCode: data.skillCode || '',
-        targetLevel: data.targetLevel || 3,
-        weight: data.weight || 1.0,
-        isCore: data.isCore ?? true,
-        source: 'USER_DEFINED',
-      })
-      const updated = [newMapping, ...localMappings]
-      setLocalMappings(updated)
-      onUpdateMappings?.(updated)
-      setIsInserting(false)
-      setIsCurrentRowDirty(false)
-      setRowError(null)
-      setStatusMessage({
-        text: `Đã thêm mới ánh xạ kỹ năng ${newMapping.skillCode} thành công!`,
-        type: 'success',
-      })
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'Không thể thêm mới ánh xạ kỹ năng'
-      let field: 'level' | 'skillCode' | 'weight' | null = null
-      const lower = msg.toLowerCase()
-      if (
-        lower.includes('cấp độ') ||
-        lower.includes('level') ||
-        lower.includes('tồn tại') ||
-        lower.includes('409')
-      ) {
-        field = 'level'
-      } else if (lower.includes('kỹ năng') || lower.includes('skill')) {
-        field = 'skillCode'
-      } else if (lower.includes('trọng số') || lower.includes('weight')) {
-        field = 'weight'
-      }
-      setRowError({ rowId: 'insert', field })
-      setStatusMessage({
-        text: msg,
-        type: 'error',
-      })
-      throw err
-    }
-  }
-
-  const handleConfirmDelete = async () => {
-    if (!deleteTarget) return
-    try {
-      await deleteMappingMutation.mutateAsync(deleteTarget.id)
-      const updated = localMappings.filter((m) => m.id !== deleteTarget.id)
-      setLocalMappings(updated)
-      onUpdateMappings?.(updated)
-      setStatusMessage({
-        text: `Đã xóa ánh xạ kỹ năng ${deleteTarget.skillCode}!`,
-        type: 'success',
-      })
-      setDeleteTarget(null)
-    } catch (err) {
-      setStatusMessage({
-        text: err instanceof Error ? err.message : 'Lỗi khi xóa ánh xạ kỹ năng',
-        type: 'error',
-      })
-    }
-  }
-
-  const handleExecuteReset = async () => {
-    try {
-      const restored = await resetMappingsMutation.mutateAsync()
-      setLocalMappings(restored)
-      onUpdateMappings?.(restored)
+  const handleDelete = async (id: string) => {
+    await deleteMappingMutation.mutateAsync(id)
+    const updated = localMappings.filter((m) => m.id !== id)
+    setLocalMappings(updated)
+    onUpdateMappings?.(updated)
+    if (editingId === id) {
+      setIsRowDirty(false)
       setEditingId(null)
-      setIsInserting(false)
-      setIsCurrentRowDirty(false)
-      setRowError(null)
-      setIsResetConfirmOpen(false)
-      setStatusMessage({
-        text: 'Đã khôi phục dữ liệu ánh xạ từ database thành công!',
-        type: 'success',
-      })
-    } catch {
-      setStatusMessage({
-        text: 'Không thể khôi phục dữ liệu ánh xạ',
-        type: 'error',
-      })
     }
   }
 
-  const handleResetToDefault = () => {
-    setIsResetConfirmOpen(true)
+  const handleAddMapping = async (payload: CreateOnetSfiaMappingPayload) => {
+    const created = await createMappingMutation.mutateAsync(payload)
+    const updated = [...localMappings, created]
+    setLocalMappings(updated)
+    onUpdateMappings?.(updated)
   }
 
-  // Temporary dummy mapping template for insert row
-  const insertDummyMapping: OnetSfiaMapping = {
-    id: 'temp-insert-row',
-    skillCode: '',
-    skillName: '',
-    targetLevel: 3,
-    minLevel: 1,
-    maxLevel: 7,
-    weight: 1.0,
-    isCore: true,
-    source: 'USER_DEFINED',
+  const handleResetMappings = async () => {
+    const restored = await resetMappingsMutation.mutateAsync()
+    setLocalMappings(restored)
+    onUpdateMappings?.(restored)
+    setResetModalOpened(false)
+    setIsRowDirty(false)
+    setEditingId(null)
   }
+
+  const isMutating =
+    createMappingMutation.isPending ||
+    updateMappingMutation.isPending ||
+    deleteMappingMutation.isPending ||
+    resetMappingsMutation.isPending
 
   return (
-    <div className={cn('space-y-4', className)}>
-      {/* TẦNG 1: THƯỚC ĐO PHỔ NĂNG LỰC & CHỈ SỐ VĨ MÔ */}
+    <Stack gap="sm">
       <OnetSfiaSpectrumBar
         mappings={localMappings}
+        levels={levels}
         onSelectSkill={(code) => {
           setHighlightedSkillCode(code)
           setTimeout(() => setHighlightedSkillCode(null), 3000)
         }}
       />
 
-      {/* Floating Status Notification Feedback */}
-      {statusMessage && (
-        <div
-          className={cn(
-            'shadow-elevation-2 animate-in fade-in slide-in-from-top-2 flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-semibold',
-            statusMessage.type === 'success'
-              ? 'bg-success text-success-foreground'
-              : 'bg-destructive text-destructive-foreground'
-          )}
-        >
-          <span>{statusMessage.text}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setStatusMessage(null)}
-            className="h-6 w-6 rounded-full p-0 text-current hover:bg-white/20"
-            aria-label="Đóng thông báo"
-          >
-            <X className="size-3.5" />
-          </Button>
-        </div>
-      )}
+      <OnetSfiaSummaryBar
+        totalCount={localMappings.length}
+        filteredCount={filteredMappings.length}
+        coreCount={coreCount}
+        secondaryCount={secondaryCount}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+        onOpenAddModal={() => runWithRowGuard(() => setAddModalOpened(true))}
+        onOpenResetModal={() => runWithRowGuard(() => setResetModalOpened(true))}
+        isMutating={isMutating}
+      />
 
-      {/* TẦNG 2: BẢNG QUẢN TRỊ INLINE CRUD */}
-      <Card className="space-y-3.5 p-3.5 sm:p-4">
-        {/* Table Controls Header: Search, Chips & Add Button */}
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-          {/* Search Bar */}
-          <div className="relative max-w-sm flex-1">
-            <Search className="text-ink-muted absolute left-3 top-1/2 size-4 -translate-y-1/2" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm theo mã hoặc tên kỹ năng SFIA..."
-              className="bg-surface-inset h-9 pl-9 pr-8 text-xs sm:text-sm"
-            />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSearchQuery('')}
-                className="text-ink-muted hover:text-ink absolute right-2 top-1/2 h-6 w-6 -translate-y-1/2 rounded-full p-0"
-                title="Xóa từ khóa tìm kiếm"
-                aria-label="Xóa từ khóa tìm kiếm"
-              >
-                <X className="size-3.5" />
-              </Button>
-            )}
-          </div>
+      <OnetSfiaTable
+        mappings={filteredMappings}
+        availableSkills={sfiaLibrary}
+        editingId={editingId}
+        savingId={savingId}
+        highlightedSkillCode={highlightedSkillCode}
+        onStartEdit={handleStartEdit}
+        onCancelEdit={handleCancelEdit}
+        onSave={handleSave}
+        onDelete={handleDelete}
+        onDirtyChange={setIsRowDirty}
+      />
 
-          {/* Action Buttons */}
-          <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleResetToDefault}
-              className="text-ink-muted hover:text-ink h-9 gap-1.5 px-2.5 text-xs"
-              title="Khôi phục dữ liệu mẫu ban đầu"
-            >
-              <RotateCcw className="size-3.5" />
-              <span className="hidden md:inline">Khôi phục Mẫu</span>
-            </Button>
+      <OnetSfiaAddModal
+        opened={addModalOpened}
+        onClose={() => setAddModalOpened(false)}
+        availableSkills={sfiaLibrary}
+        currentMappings={localMappings}
+        onAddMapping={handleAddMapping}
+        isPending={createMappingMutation.isPending}
+      />
 
-            <Button
-              size="sm"
-              onClick={handleRequestStartInsert}
-              disabled={isInserting || isSaving}
-              className="bg-brand text-brand-foreground h-9 gap-1.5 px-3.5 text-xs font-semibold shadow-sm"
-            >
-              <Plus className="size-4" />
-              <span>Thêm Ánh xạ Mới</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* Filter Chips Bar */}
-        <div className="border-border/60 flex flex-wrap items-center gap-2 border-b pb-2.5">
-          <Button
-            variant={activeFilter === 'all' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => setActiveFilter('all')}
-            className={cn(
-              'h-7.5 gap-1 rounded-full px-3 text-xs transition-all',
-              activeFilter !== 'all' &&
-                'border-border/80 text-ink-muted hover:text-ink'
-            )}
-          >
-            <span>Tất cả</span>
-            <span className="font-mono text-[11px] tabular-nums">
-              ({localMappings.length})
-            </span>
-          </Button>
-
-          <Button
-            variant={activeFilter === 'core' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => setActiveFilter('core')}
-            className={cn(
-              'h-7.5 gap-1 rounded-full px-3 text-xs transition-all',
-              activeFilter === 'core'
-                ? 'border-amber-500 bg-amber-500 text-white hover:bg-amber-600'
-                : 'border-amber-500/30 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:text-amber-300'
-            )}
-          >
-            <Star className="size-3" />
-            <span>Cốt lõi (Core)</span>
-            <span className="font-mono text-[11px] tabular-nums">
-              ({coreCount})
-            </span>
-          </Button>
-
-          <Button
-            variant={activeFilter === 'secondary' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => setActiveFilter('secondary')}
-            className={cn(
-              'h-7.5 gap-1 rounded-full px-3 text-xs transition-all',
-              activeFilter !== 'secondary' &&
-                'border-border/80 text-ink-muted hover:text-ink'
-            )}
-          >
-            <span>Bổ trợ (Secondary)</span>
-            <span className="font-mono text-[11px] tabular-nums">
-              ({secondaryCount})
-            </span>
-          </Button>
-        </div>
-
-        {/* Empty State when no mappings exist and not currently inserting */}
-        {localMappings.length === 0 && !isInserting && (
-          <div className="p-8">
-            <EmptyState
-              icon={<Network className="text-brand size-12" />}
-              title="Chưa có ánh xạ năng lực SFIA"
-              description={`Nghề "${occupationTitle}" chưa được liên kết với kỹ năng nào trong khung SFIA 9.`}
-              action={{
-                label: '+ Thêm ánh xạ SFIA đầu tiên',
-                onClick: handleRequestStartInsert,
-              }}
-            />
-          </div>
-        )}
-
-        {/* Empty State when filter/search yields 0 */}
-        {localMappings.length > 0 &&
-          filteredMappings.length === 0 &&
-          !isInserting && (
-            <div className="p-8">
-              <EmptyState
-                icon={<FileX className="text-ink-muted size-10" />}
-                title="Không tìm thấy ánh xạ phù hợp"
-                description={
-                  searchQuery
-                    ? `Không có kỹ năng nào khớp với từ khóa "${searchQuery}" và bộ lọc hiện tại.`
-                    : 'Không có kỹ năng nào thuộc tiêu chí lọc đã chọn.'
-                }
-                action={{
-                  label: 'Xóa bộ lọc tìm kiếm',
-                  onClick: () => {
-                    setSearchQuery('')
-                    setActiveFilter('all')
-                  },
-                }}
-              />
-            </div>
-          )}
-
-        {/* Mapping Data Table */}
-        {(filteredMappings.length > 0 || isInserting) && (
-          <div className="border-border/80 overflow-x-auto rounded-xl border">
-            <Table className="text-xs">
-              <TableHeader>
-                <TableRow className="bg-surface-inset/80 text-ink-muted text-[11px] font-semibold uppercase tracking-wider">
-                  <TableHead className="min-w-[200px] flex-[2] p-3 text-left">
-                    Kỹ năng SFIA 9
-                  </TableHead>
-                  <TableHead className="min-w-[170px] flex-[2] p-3 text-left">
-                    Cấp độ & Thang đo (Gauge)
-                  </TableHead>
-                  <TableHead className="w-24 justify-start p-3">
-                    Trọng số
-                  </TableHead>
-                  <TableHead className="w-28 justify-start p-3">
-                    Vai trò
-                  </TableHead>
-                  <TableHead className="w-28 justify-start p-3">
-                    Nguồn
-                  </TableHead>
-                  <TableHead className="w-20 justify-end p-3 text-right">
-                    Thao tác
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {/* Inline Insert Row at Top */}
-                {isInserting && (
-                  <OnetSfiaRow
-                    key="insert-row"
-                    mapping={insertDummyMapping}
-                    isEditing={true}
-                    isInserting={true}
-                    isSaving={isSaving}
-                    availableSkills={unmappedSkills}
-                    errorField={
-                      rowError?.rowId === 'insert' ? rowError.field : null
-                    }
-                    onStartEdit={() => {}}
-                    onCancelEdit={() => {
-                      setIsInserting(false)
-                      setIsCurrentRowDirty(false)
-                      setRowError(null)
-                    }}
-                    onSave={handleSaveInsert}
-                    onDelete={() => {}}
-                    onDirtyChange={setIsCurrentRowDirty}
-                    className="border-brand bg-brand/5 border-2 shadow-sm"
-                  />
-                )}
-
-                {/* Table Data Rows */}
-                {filteredMappings.map((mapping) => (
-                  <OnetSfiaRow
-                    key={mapping.id}
-                    mapping={mapping}
-                    isEditing={editingId === mapping.id}
-                    isSaving={isSaving && editingId === mapping.id}
-                    availableSkills={sfiaLibrary}
-                    errorField={
-                      rowError?.rowId === mapping.id ? rowError.field : null
-                    }
-                    onStartEdit={() => handleRequestStartEdit(mapping.id)}
-                    onCancelEdit={() => {
-                      setEditingId(null)
-                      setIsCurrentRowDirty(false)
-                      setRowError(null)
-                    }}
-                    onSave={(data) => handleSaveExisting(mapping.id, data)}
-                    onDelete={() => setDeleteTarget(mapping)}
-                    onDirtyChange={setIsCurrentRowDirty}
-                    isHighlighted={highlightedSkillCode === mapping.skillCode}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </Card>
-
-      {/* Modal 1: Delete Confirmation Guard */}
-      <AlertDialog
-        open={deleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open && !isDeleting) setDeleteTarget(null)
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="bg-destructive/10 text-destructive mb-1 flex size-10 items-center justify-center rounded-full">
-              <AlertTriangle className="size-5" />
-            </div>
-            <AlertDialogTitle className="text-ink text-base">
-              Xác nhận xóa ánh xạ kỹ năng SFIA
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-ink-muted space-y-2 text-xs leading-relaxed">
-              <span>
-                Bạn có chắc chắn muốn xóa ánh xạ kỹ năng{' '}
-                <strong className="text-ink font-mono font-semibold">
-                  {deleteTarget?.skillCode} — {deleteTarget?.skillName}
-                </strong>{' '}
-                (Cấp độ {deleteTarget?.targetLevel}) khỏi nghề{' '}
-                <strong className="text-ink font-semibold">
-                  {occupationTitle}
-                </strong>{' '}
-                ({socCode})?
-              </span>
-              <span className="text-destructive block font-medium">
-                Hành động này sẽ làm thay đổi tiêu chuẩn đánh giá và ngân hàng
-                câu hỏi phỏng vấn liên quan.
-              </span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting} className="text-xs">
-              Hủy bỏ
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5 text-xs"
-            >
-              {isDeleting ? (
-                <LoadingSpinner className="size-3.5" />
-              ) : (
-                'Xác nhận xóa'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Modal 2: Unsaved Row Switch Warning */}
-      <AlertDialog
-        open={switchRowAlert !== null}
-        onOpenChange={(open) => {
-          if (!open) setSwitchRowAlert(null)
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-amber-500/10 text-amber-600">
-              <AlertTriangle className="size-5" />
-            </div>
-            <AlertDialogTitle className="text-ink text-base">
-              Thay đổi chưa được lưu
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-ink-muted text-xs leading-relaxed">
-              Bạn đang có các thay đổi chưa được lưu trên hàng hiện tại. Nếu
-              chuyển sang chỉnh sửa hàng khác bây giờ, các thay đổi chưa lưu sẽ
-              bị mất.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => setSwitchRowAlert(null)}
-              className="text-xs"
-            >
-              Ở lại hàng hiện tại
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmSwitchRow}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-xs"
-            >
-              Hủy thay đổi & Tiếp tục
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Modal 3: Reset to Default Confirmation Guard */}
-      <AlertDialog
-        open={isResetConfirmOpen}
-        onOpenChange={(open) => {
-          if (!open && !isResetting) setIsResetConfirmOpen(false)
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="bg-brand/10 text-brand mb-1 flex size-10 items-center justify-center rounded-full">
-              <RotateCcw className="size-5" />
-            </div>
-            <AlertDialogTitle className="text-ink text-base">
-              Khôi phục Ánh xạ SFIA Mặc định
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-ink-muted space-y-2 text-xs leading-relaxed">
-              <span>
-                Bạn có chắc chắn muốn tải lại toàn bộ danh sách ánh xạ SFIA từ
-                cơ sở dữ liệu cho nghề{' '}
-                <strong className="text-ink font-semibold">
-                  {occupationTitle}
-                </strong>{' '}
-                ({socCode})?
-              </span>
-              <span className="text-ink-muted block">
-                Các chỉnh sửa chưa lưu hoặc hàng nháp đang mở sẽ bị hủy bỏ.
-              </span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isResetting} className="text-xs">
-              Hủy bỏ
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleExecuteReset}
-              disabled={isResetting}
-              className="bg-brand text-brand-foreground hover:bg-brand/90 gap-1.5 text-xs"
-            >
-              {isResetting ? (
-                <LoadingSpinner className="size-3.5" />
-              ) : (
-                'Xác nhận khôi phục'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+      <OnetSfiaResetModal
+        opened={resetModalOpened}
+        onClose={() => setResetModalOpened(false)}
+        occupationTitle={occupationTitle}
+        socCode={socCode}
+        onConfirmReset={handleResetMappings}
+        isResetting={resetMappingsMutation.isPending}
+      />
+    </Stack>
   )
 }

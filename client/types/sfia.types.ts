@@ -72,6 +72,8 @@ export interface SfiaLevelResponsibility {
   description: string
 }
 
+export type SfiaLevelDto = SfiaLevelResponsibility
+
 export interface SfiaGenericAttribute {
   code: string
   name: string

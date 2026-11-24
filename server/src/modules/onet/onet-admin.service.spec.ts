@@ -141,6 +141,18 @@ describe('OnetAdminService', () => {
     }),
     deleteSfiaMapping: jest.fn().mockResolvedValue(true),
     deleteOccupationMappings: jest.fn().mockResolvedValue(1),
+    resetUserDefinedMappings: jest.fn().mockResolvedValue([
+      {
+        id: 'map_1',
+        onetSocCode: '15-1252.00',
+        sfiaSkillCode: 'PROG',
+        targetSfiaLevel: 3,
+        defaultWeight: 1.0,
+        isCore: true,
+        source: 'EXPERT_CURATED',
+        createdAt: new Date(),
+      },
+    ]),
   };
 
   const mockSfiaFacade = {
@@ -148,14 +160,29 @@ describe('OnetAdminService', () => {
       code: 'PROG',
       name: 'Software Development',
       categoryCode: 'DEV_IMPL',
+      categoryName: 'Phát triển & Triển khai',
     }),
+    getAllLevels: jest.fn().mockResolvedValue([
+      {
+        levelId: 3,
+        name: 'Apply',
+        nameVi: 'Áp dụng độc lập',
+        essence: 'Works under general direction.',
+        description: 'Applies knowledge.',
+      },
+    ]),
     getAllSkills: jest.fn().mockResolvedValue([
       {
         code: 'PROG',
         name: 'Software Development',
         categoryCode: 'DEV_IMPL',
+        categoryName: 'Phát triển & Triển khai',
+        overallDescription: 'Designing and building software.',
         minLevel: 1,
         maxLevel: 6,
+        levelDescriptions: {
+          4: 'Designs, codes, verifies, tests complex programs.',
+        },
       },
     ]),
   };
@@ -194,45 +221,64 @@ describe('OnetAdminService', () => {
   });
 
   describe('getMajorGroupsDistribution', () => {
-    it('returns major groups with coverage percentages', async () => {
+    it('returns major groups with real bilingual names and coverage percentages', async () => {
       const result = await service.getMajorGroupsDistribution();
       expect(result.length).toBe(1);
       const itGroup = result.find((g) => g.code === '15');
       expect(itGroup?.isFocusGroup).toBe(true);
+      expect(itGroup?.name).toBe('Máy tính & Toán học');
+      expect(itGroup?.englishName).toBe(
+        'Computer and Mathematical Occupations',
+      );
       expect(itGroup?.totalOccupations).toBe(100);
       expect(itGroup?.mappingCoveragePercent).toBe(80.0);
     });
   });
 
   describe('searchOccupations', () => {
-    it('returns formatted sidebar occupations', async () => {
+    it('forwards mappingStatus unmapped and lifts group limit up to 500', async () => {
       const result = await service.searchOccupations({
         groupCode: '15',
-        mappedOnly: true,
-        limit: 10,
+        mappingStatus: 'unmapped',
+        limit: 300,
       });
       expect(result).toHaveLength(1);
-      expect(result[0].socCode).toBe('15-1252.00');
+      expect(mockAdminRepo.searchSidebarOccupations).toHaveBeenCalledWith(
+        '15',
+        'unmapped',
+        undefined,
+        300,
+      );
     });
   });
 
   describe('getTopOccupations', () => {
-    it('returns top occupations with major group names', async () => {
+    it('forwards groupCode and returns real major group names', async () => {
       const result = await service.getTopOccupations({
         sortBy: 'interviews',
         limit: 5,
+        groupCode: '15',
       });
       expect(result).toHaveLength(1);
-      expect(result[0].majorGroupName).toBeDefined();
+      expect(result[0].majorGroupName).toBe('Máy tính & Toán học');
+      expect(mockAdminRepo.getTopOccupations).toHaveBeenCalledWith(
+        undefined,
+        'interviews',
+        5,
+        '15',
+      );
     });
   });
 
   describe('getSfiaSkillCoverage', () => {
-    it('enriches coverage items with SFIA Facade metadata', async () => {
-      const result = await service.getSfiaSkillCoverage(10);
+    it('enriches coverage items with SFIA Facade metadata and filters before slicing', async () => {
+      const result = await service.getSfiaSkillCoverage(10, 'DEV_IMPL');
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('Software Development');
-      expect(result[0].category).toBe('DEV_IMPL');
+      expect(result[0].category).toBe('Phát triển & Triển khai');
+      expect(mockAdminRepo.getSfiaSkillCoverage).toHaveBeenCalledWith(
+        undefined,
+      );
     });
   });
 
@@ -295,9 +341,20 @@ describe('OnetAdminService', () => {
       expect(result.success).toBe(true);
     });
 
-    it('resets sfia mappings', async () => {
+    it('resets USER_DEFINED sfia mappings via repository transaction', async () => {
       const result = await service.resetSfiaMappings('15-1252.00');
+      expect(mockAdminRepo.resetUserDefinedMappings).toHaveBeenCalledWith(
+        '15-1252.00',
+      );
       expect(result).toHaveLength(1);
+    });
+
+    it('returns real level descriptions in getSfiaLibrary', async () => {
+      const library = await service.getSfiaLibrary();
+      expect(library).toHaveLength(1);
+      expect(library[0].category).toBe('Phát triển & Triển khai');
+      const level4 = library[0].levels.find((l) => l.level === 4);
+      expect(level4?.description).toContain('complex programs');
     });
   });
 });

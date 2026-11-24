@@ -1,193 +1,167 @@
 'use client'
 
-import * as React from 'react'
-import { useState, useMemo } from 'react'
-import { Network, ChevronDown, ChevronUp } from 'lucide-react'
-import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { cn } from '@/lib/utils'
+import { useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
+import {
+  Badge,
+  Button,
+  Chip,
+  Group,
+  Paper,
+  Skeleton,
+  Stack,
+  Text,
+  Title,
+} from '@mantine/core'
+import { IconChevronDown, IconChevronUp } from '@tabler/icons-react'
+import surfaces from '@/styles/surfaces.module.css'
+import typography from '@/styles/typography.module.css'
 import type { SfiaSkillCoverageItem } from '@/types'
 
-export interface SfiaSkillCoverageChartProps {
-  data: SfiaSkillCoverageItem[]
-  className?: string
-}
+const SfiaCoverageBarChart = dynamic(() => import('./SfiaCoverageBarChart'), {
+  ssr: false,
+  loading: () => <Skeleton height={180} radius="md" />,
+})
 
 const DEFAULT_VISIBLE_COUNT = 5
 
+export interface SfiaSkillCoverageChartProps {
+  data: SfiaSkillCoverageItem[]
+}
+
 export function SfiaSkillCoverageChart({
   data,
-  className,
-}: SfiaSkillCoverageChartProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [isExpanded, setIsExpanded] = useState<boolean>(false)
+}: Readonly<SfiaSkillCoverageChartProps>) {
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [isExpanded, setIsExpanded] = useState(false)
 
-  // Danh sách categories duy nhất
   const categories = useMemo(() => {
-    const set = new Set<string>()
-    data.forEach((item) => {
-      if (item.category) set.add(item.category)
-    })
-    return ['all', ...Array.from(set)]
+    const unique = new Set<string>()
+    for (const item of data) {
+      if (item.category) unique.add(item.category)
+    }
+    return ['all', ...Array.from(unique)]
   }, [data])
 
-  // Lọc theo Category
   const filteredData = useMemo(() => {
     if (selectedCategory === 'all') return data
     return data.filter((item) => item.category === selectedCategory)
   }, [data, selectedCategory])
 
-  // Danh sách hiển thị theo trạng thái mở rộng
-  const displayData = useMemo(() => {
-    if (isExpanded) return filteredData
-    return filteredData.slice(0, DEFAULT_VISIBLE_COUNT)
-  }, [filteredData, isExpanded])
+  const visibleItems = useMemo(
+    () =>
+      isExpanded ? filteredData : filteredData.slice(0, DEFAULT_VISIBLE_COUNT),
+    [filteredData, isExpanded]
+  )
 
-  // Giá trị max để tính % chiều rộng thanh ngang
-  const maxMapped = useMemo(() => {
-    return Math.max(...data.map((d) => d.mappedOccupationsCount), 1)
-  }, [data])
+  const chartData = useMemo(
+    () =>
+      visibleItems.map((item) => ({
+        code: item.code,
+        name: item.name,
+        coreCount: item.coreCount,
+        secondaryCount: item.secondaryCount,
+      })),
+    [visibleItems]
+  )
 
   return (
-    <Card
-      className={cn(
-        'flex flex-col justify-between overflow-hidden p-2 sm:p-2.5',
-        className
-      )}
-    >
-      {/* Header toolbar */}
-      <div className="border-border/60 flex shrink-0 flex-col gap-1 border-b pb-1">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5">
-            <div className="bg-success/10 text-success size-5.5 flex shrink-0 items-center justify-center rounded-md">
-              <Network className="size-3" />
-            </div>
-            <div>
-              <h3 className="text-ink text-xs font-bold tracking-tight sm:text-sm">
-                Độ phủ Kỹ năng SFIA 9 Phổ biến
-              </h3>
-              <p className="text-ink-muted text-[10px]">
-                Tần suất xuất hiện của các kỹ năng số trong chuẩn nghề nghiệp
-              </p>
-            </div>
-          </div>
-
-          <Badge
-            variant="outline"
-            className="shrink-0 px-1.5 py-0 font-mono text-[10px]"
-          >
+    <Paper withBorder p="sm" radius="md" h="100%">
+      <Stack gap="xs" h="100%">
+        <Group justify="space-between" align="center" wrap="wrap" gap="xs">
+          <Stack gap={0}>
+            <Title order={2} size="h5">
+              Độ phủ kỹ năng SFIA 9
+            </Title>
+            <Text size="xs" c="dimmed">
+              Kỹ năng cốt lõi (Core) và bổ trợ theo dải cấp độ mục tiêu
+            </Text>
+          </Stack>
+          <Badge color="brand" variant="light" size="xs">
             {filteredData.length} kỹ năng
           </Badge>
-        </div>
+        </Group>
 
-        {/* Category Filter Chips */}
-        <div className="flex flex-wrap items-center gap-1 overflow-x-auto pt-0.5">
-          {categories.map((cat) => {
-            const isAll = cat === 'all'
-            const label = isAll ? 'Tất cả' : cat
-            const isActive = selectedCategory === cat
-
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={cn(
-                  'py-0.2 cursor-pointer whitespace-nowrap rounded-full border px-1.5 text-[9px] font-medium leading-tight transition-all',
-                  isActive
-                    ? 'bg-brand text-brand-foreground border-brand shadow-xs font-semibold'
-                    : 'bg-surface-raised text-ink-muted border-border/70 hover:text-ink hover:border-brand/40'
-                )}
-              >
-                {label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Ranked Horizontal Bars */}
-      <div className="min-h-0 flex-1 space-y-1 overflow-y-auto py-1 pr-0.5">
-        {displayData.map((item) => {
-          const widthPercent = Math.max(
-            Math.round((item.mappedOccupationsCount / maxMapped) * 100),
-            12
-          )
-
-          return (
-            <div
-              key={item.code}
-              className="hover:bg-surface-muted/50 group flex flex-col gap-0.5 rounded-md p-0.5 px-1 transition-colors"
-            >
-              <div className="flex items-center justify-between gap-1.5 text-xs">
-                <div className="flex min-w-0 items-center gap-1">
-                  <span className="bg-brand/10 text-brand py-0.2 shrink-0 rounded px-1 font-mono text-[9px] font-bold leading-none">
-                    {item.code}
-                  </span>
-                  <span className="text-ink truncate text-[11px] font-medium">
-                    {item.name}
-                  </span>
-                </div>
-
-                <div className="flex shrink-0 items-center gap-1 text-[10px]">
-                  {/* Badge dải level */}
-                  <span className="bg-surface-inset text-ink-muted py-0.2 rounded px-1 font-mono text-[9px]">
-                    L{item.minTargetLevel}–L{item.maxTargetLevel}
-                  </span>
-
-                  {/* Core vs Secondary breakdown */}
-                  <span className="text-success bg-success/10 py-0.2 rounded px-1 text-[9px] font-semibold">
-                    Core: {item.coreCount}
-                  </span>
-                  {item.secondaryCount > 0 && (
-                    <span className="text-ink-muted bg-surface-inset py-0.2 rounded px-1 text-[9px]">
-                      Sec: {item.secondaryCount}
-                    </span>
-                  )}
-
-                  {/* Số nghề */}
-                  <span className="text-ink ml-0.5 text-[10px] font-bold tabular-nums">
-                    {item.mappedOccupationsCount} nghề
-                  </span>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="bg-surface-raised border-border/50 h-1.5 w-full overflow-hidden rounded-full border">
-                <div
-                  style={{ width: `${widthPercent}%` }}
-                  className="bg-brand group-hover:bg-brand/90 h-full rounded-full transition-all duration-500 ease-out"
-                />
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Footer Toggle Expand / Collapse */}
-      {filteredData.length > DEFAULT_VISIBLE_COUNT && (
-        <div className="border-border/50 flex shrink-0 justify-center border-t pt-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-ink-muted hover:text-ink h-5 gap-1 text-[10px]"
+        {categories.length > 1 ? (
+          <Chip.Group
+            value={selectedCategory}
+            onChange={(value) => {
+              setSelectedCategory(Array.isArray(value) ? (value[0] ?? 'all') : value)
+              setIsExpanded(false)
+            }}
           >
-            {isExpanded ? (
-              <>
-                <ChevronUp className="size-2.5" />
-                <span>Thu gọn về Top {DEFAULT_VISIBLE_COUNT}</span>
-              </>
-            ) : (
-              <>
-                <ChevronDown className="size-2.5" />
-                <span>Xem tất cả {filteredData.length} kỹ năng SFIA</span>
-              </>
-            )}
-          </Button>
-        </div>
-      )}
-    </Card>
+            <Group gap={6} wrap="wrap">
+              {categories.map((cat) => (
+                <Chip key={cat} value={cat} size="xs" variant="light">
+                  {cat === 'all' ? 'Tất cả' : cat}
+                </Chip>
+              ))}
+            </Group>
+          </Chip.Group>
+        ) : null}
+
+        {visibleItems.length === 0 ? (
+          <Paper p="md" radius="md" className={surfaces.subtleSurface}>
+            <Text size="xs" c="dimmed" ta="center">
+              Chưa có dữ liệu độ phủ kỹ năng SFIA.
+            </Text>
+          </Paper>
+        ) : (
+          <>
+            <SfiaCoverageBarChart data={chartData} />
+
+            <Stack gap={4}>
+              {visibleItems.map((item) => (
+                <Group
+                  key={item.code}
+                  justify="space-between"
+                  align="center"
+                  wrap="nowrap"
+                  gap="xs"
+                >
+                  <Group gap={6} wrap="nowrap" miw={0}>
+                    <Badge color="brand" variant="outline" size="xs">
+                      {item.code}
+                    </Badge>
+                    <Text size="xs" lineClamp={1}>
+                      {item.name}
+                    </Text>
+                  </Group>
+                  <Group gap={6} wrap="nowrap" className={typography.tabularNums}>
+                    <Badge color="neutral" variant="light" size="xs">
+                      L{item.minTargetLevel}–L{item.maxTargetLevel}
+                    </Badge>
+                    <Text size="xs" c="dimmed">
+                      TB L{item.avgTargetLevel}
+                    </Text>
+                  </Group>
+                </Group>
+              ))}
+            </Stack>
+
+            {filteredData.length > DEFAULT_VISIBLE_COUNT ? (
+              <Group justify="center" mt="auto">
+                <Button
+                  size="xs"
+                  variant="subtle"
+                  onClick={() => setIsExpanded((prev) => !prev)}
+                  rightSection={
+                    isExpanded ? (
+                      <IconChevronUp size={14} stroke={1.5} />
+                    ) : (
+                      <IconChevronDown size={14} stroke={1.5} />
+                    )
+                  }
+                >
+                  {isExpanded
+                    ? 'Thu gọn'
+                    : `Xem thêm ${filteredData.length - DEFAULT_VISIBLE_COUNT} kỹ năng`}
+                </Button>
+              </Group>
+            ) : null}
+          </>
+        )}
+      </Stack>
+    </Paper>
   )
 }

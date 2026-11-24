@@ -84,7 +84,7 @@ export class GenerateSessionQuestions {
     private readonly skillQuestionGenerator: SkillTargetedQuestionGeneratorService,
     @Inject(AI_GATEWAY_TOKEN)
     private readonly openai: IAIGateway,
-  ) { }
+  ) {}
 
   async execute(job: QuestionGenerationJobDto): Promise<void> {
     try {
@@ -368,10 +368,10 @@ export class GenerateSessionQuestions {
           question.estimatedTimeMin > 0
             ? question.estimatedTimeMin
             : calculateEstimatedTimeMin({
-              durationMin: job.durationMin,
-              numQuestions: job.totalQuestions,
-              difficulty: 2,
-            }),
+                durationMin: job.durationMin,
+                numQuestions: job.totalQuestions,
+                difficulty: 2,
+              }),
       })),
     );
   }
@@ -415,10 +415,10 @@ export class GenerateSessionQuestions {
             question.estimatedTimeMin > 0
               ? question.estimatedTimeMin
               : calculateEstimatedTimeMin({
-                durationMin,
-                numQuestions: total,
-                difficulty: 2,
-              }),
+                  durationMin,
+                  numQuestions: total,
+                  difficulty: 2,
+                }),
         });
       }
     }

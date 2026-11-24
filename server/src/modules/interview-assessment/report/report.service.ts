@@ -236,10 +236,7 @@ export class ReportService {
       annotation: s.annotation,
       suggestion: s.suggestion ?? undefined,
     }));
-    const segments = sanitizeFeedbackSegments(
-      answerText,
-      rawSegments,
-    ).segments;
+    const segments = sanitizeFeedbackSegments(answerText, rawSegments).segments;
 
     return {
       answerId: answer?.id,
@@ -257,9 +254,7 @@ export class ReportService {
           : ''),
       isFallback: feedback?.isFallback ?? false,
       segments: answer?.skipped ? [] : segments,
-      criteriaEvaluations:
-        (feedback?.criteriaEvaluations as unknown as BinaryCriterionResultDto[]) ??
-        undefined,
+      criteriaEvaluations: feedback?.criteriaEvaluations ?? undefined,
       demonstratedLevel: feedback?.demonstratedLevel ?? null,
       criteriaPassRate: feedback?.criteriaPassRate
         ? Number(feedback.criteriaPassRate)

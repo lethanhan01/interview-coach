@@ -1,138 +1,199 @@
 'use client'
 
-import * as React from 'react'
-import { BookOpen, Layers, Sparkles, Wrench } from 'lucide-react'
-import { Card } from '@/components/ui/Card'
-import { Progress } from '@/components/ui/Progress'
-import { cn } from '@/lib/utils'
+import {
+  Badge,
+  Group,
+  NumberFormatter,
+  Paper,
+  RingProgress,
+  SimpleGrid,
+  Stack,
+  Text,
+  ThemeIcon,
+} from '@mantine/core'
+import {
+  IconActivity,
+  IconBook,
+  IconCpu,
+  IconLayersLinked,
+} from '@tabler/icons-react'
+import typography from '@/styles/typography.module.css'
 import type { OnetAnalyticsSummary } from '@/types'
 
 export interface OnetSummaryCardsProps {
   summary: OnetAnalyticsSummary
-  className?: string
 }
 
 export function OnetSummaryCards({
   summary,
-  className,
-}: OnetSummaryCardsProps) {
-  const numberFormatter = new Intl.NumberFormat('vi-VN')
-
+}: Readonly<OnetSummaryCardsProps>) {
   return (
-    <div
-      className={cn(
-        'grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4',
-        className
-      )}
-    >
-      {/* Card 1: Nghề nghiệp Chuẩn SOC */}
-      <Card className="hover:border-border/90 p-2.5 transition-all duration-200 hover:shadow-md">
-        <div className="flex items-center justify-between">
-          <span className="text-ink-muted text-[11px] font-semibold uppercase tracking-wider">
-            Nghề nghiệp SOC Chuẩn
-          </span>
-          <div className="bg-brand/10 text-brand flex size-7 items-center justify-center rounded-md">
-            <BookOpen className="size-3.5" />
-          </div>
-        </div>
-        <div className="mt-1 flex items-baseline gap-1.5">
-          <span className="text-ink text-xl font-bold tabular-nums">
-            {numberFormatter.format(summary.totalOccupations)}
-          </span>
-          <span className="text-ink-faint text-[11px]">mã chuẩn</span>
-        </div>
-        <div className="text-ink-muted mt-0.5 flex items-center gap-1.5 text-[10px]">
-          <span className="bg-surface-inset text-ink py-0.2 rounded px-1.5 font-medium">
-            23 nhóm
-          </span>
-          <span>•</span>
-          <span>
-            {summary.totalMappedOccupations} nghề mapped (
-            {summary.overallMappingCoveragePercent}%)
-          </span>
-        </div>
-      </Card>
+    <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="xs">
+      {/* Card 1: Tổng nghề O*NET (100% real data — Bug #4 fix) */}
+      <Paper withBorder p="sm" radius="md">
+        <Stack gap={6}>
+          <Group justify="space-between" wrap="nowrap">
+            <Text size="xs" fw={600} tt="uppercase" c="dimmed">
+              Tổng nghề O*NET
+            </Text>
+            <ThemeIcon color="brand" variant="light" size="sm" radius="md">
+              <IconBook size={14} stroke={1.5} aria-hidden="true" />
+            </ThemeIcon>
+          </Group>
+          <Group align="baseline" gap="xs">
+            <Text size="xl" fw={700} className={typography.tabularNums}>
+              <NumberFormatter
+                value={summary.totalOccupations}
+                thousandSeparator="."
+                decimalSeparator=","
+              />
+            </Text>
+            <Text size="xs" c="dimmed">
+              mã chuẩn SOC
+            </Text>
+          </Group>
+          <Group gap="xs" wrap="wrap">
+            <Badge color="neutral" variant="light" size="xs">
+              {summary.totalMajorGroups} nhóm ngành
+            </Badge>
+            <Text size="xs" c="dimmed" className={typography.tabularNums}>
+              {summary.totalMappedOccupations} nghề đã ánh xạ
+            </Text>
+          </Group>
+        </Stack>
+      </Paper>
 
-      {/* Card 2: Ánh xạ Khung SFIA 9 */}
-      <Card className="hover:border-border/90 p-2.5 transition-all duration-200 hover:shadow-md">
-        <div className="flex items-center justify-between">
-          <span className="text-ink-muted text-[11px] font-semibold uppercase tracking-wider">
-            Ánh xạ Khung SFIA 9
-          </span>
-          <div className="bg-success/10 text-success flex size-7 items-center justify-center rounded-md">
-            <Layers className="size-3.5" />
-          </div>
-        </div>
-        <div className="mt-1 flex items-baseline gap-1.5">
-          <span className="text-ink text-xl font-bold tabular-nums">
-            {numberFormatter.format(summary.totalMappedOccupations * 3 + 12)}
-          </span>
-          <span className="text-ink-faint text-[11px]">mappings</span>
-        </div>
-        <p className="text-ink-muted mt-0.5 truncate text-[10px]">
-          Chuẩn năng lực 7 cấp độ trách nhiệm (L1–L7)
-        </p>
-      </Card>
-
-      {/* Card 3: Độ phủ Nhóm IT & Toán (Nhóm 15) */}
-      <Card className="hover:border-border/90 p-2.5 transition-all duration-200 hover:shadow-md">
-        <div className="flex items-center justify-between">
-          <span className="text-ink-muted text-[11px] font-semibold uppercase tracking-wider">
-            Độ phủ Nhóm IT (SOC 15)
-          </span>
-          <div className="bg-brand/10 text-brand flex size-7 items-center justify-center rounded-md">
-            <Sparkles className="size-3.5" />
-          </div>
-        </div>
-        <div className="mt-1 flex items-baseline gap-1.5">
-          <span className="text-ink text-xl font-bold tabular-nums">
-            {summary.itGroupCoveragePercent}%
-          </span>
-          <span className="text-ink-faint text-[11px]">hoàn thiện</span>
-        </div>
-        <div className="mt-1 space-y-0.5">
-          <Progress
-            value={summary.itGroupCoveragePercent}
-            variant="brand"
-            size="sm"
-            aria-label="Tỷ lệ hoàn thiện ánh xạ nhóm IT"
+      {/* Card 2: Độ phủ ánh xạ SFIA (Real percentage + IT Group 15) */}
+      <Paper withBorder p="sm" radius="md">
+        <Group align="center" gap="sm" wrap="nowrap">
+          <RingProgress
+            size={64}
+            thickness={7}
+            roundCaps
+            sections={[
+              {
+                value: summary.overallMappingCoveragePercent,
+                color: 'brand',
+              },
+            ]}
+            label={
+              <Text
+                ta="center"
+                fw={700}
+                size="xs"
+                className={typography.tabularNums}
+              >
+                {summary.overallMappingCoveragePercent}%
+              </Text>
+            }
           />
-          <div className="text-ink-muted flex justify-between text-[10px]">
-            <span>
-              {summary.itGroupMappedOccupations} / {summary.itGroupOccupations}{' '}
-              nghề trọng điểm
-            </span>
-            <span className="text-brand font-semibold">Ưu tiên</span>
-          </div>
-        </div>
-      </Card>
+          <Stack gap={4} flex={1}>
+            <Group justify="space-between" wrap="nowrap">
+              <Text size="xs" fw={600} tt="uppercase" c="dimmed">
+                Độ phủ ánh xạ SFIA
+              </Text>
+              <ThemeIcon color="success" variant="light" size="sm" radius="md">
+                <IconLayersLinked size={14} stroke={1.5} aria-hidden="true" />
+              </ThemeIcon>
+            </Group>
+            <Text size="xs" fw={600} className={typography.tabularNums}>
+              {summary.totalMappedOccupations} / {summary.totalOccupations} nghề
+            </Text>
+            <Badge color="brand" variant="light" size="xs">
+              Nhóm CNTT (15): {summary.itGroupMappedOccupations}/
+              {summary.itGroupOccupations} ({summary.itGroupCoveragePercent}%)
+            </Badge>
+          </Stack>
+        </Group>
+      </Paper>
 
-      {/* Card 4: Công nghệ & Công cụ Phần mềm */}
-      <Card className="hover:border-border/90 p-2.5 transition-all duration-200 hover:shadow-md">
-        <div className="flex items-center justify-between">
-          <span className="text-ink-muted text-[11px] font-semibold uppercase tracking-wider">
-            Công nghệ & Phần mềm
-          </span>
-          <div className="bg-warning/10 text-warning flex size-7 items-center justify-center rounded-md">
-            <Wrench className="size-3.5" />
-          </div>
-        </div>
-        <div className="mt-1 flex items-baseline gap-1.5">
-          <span className="text-ink text-xl font-bold tabular-nums">
-            {numberFormatter.format(summary.totalSoftwareSkills)}
-          </span>
-          <span className="text-ink-faint text-[11px]">công cụ</span>
-        </div>
-        <div className="text-ink-muted mt-0.5 flex items-center gap-1.5 text-[10px]">
-          <span className="bg-warning/15 text-warning-foreground py-0.2 rounded px-1.5 font-semibold">
-            🔥 {numberFormatter.format(summary.hotTechCount)} Hot
-          </span>
-          <span>•</span>
-          <span className="bg-success/15 text-success py-0.2 rounded px-1.5 font-medium">
-            ⚡ {numberFormatter.format(summary.inDemandTechCount)} Demand
-          </span>
-        </div>
-      </Card>
-    </div>
+      {/* Card 3: Công nghệ phần mềm */}
+      <Paper withBorder p="sm" radius="md">
+        <Stack gap={6}>
+          <Group justify="space-between" wrap="nowrap">
+            <Text size="xs" fw={600} tt="uppercase" c="dimmed">
+              Công nghệ phần mềm
+            </Text>
+            <ThemeIcon color="warning" variant="light" size="sm" radius="md">
+              <IconCpu size={14} stroke={1.5} aria-hidden="true" />
+            </ThemeIcon>
+          </Group>
+          <Group align="baseline" gap="xs">
+            <Text size="xl" fw={700} className={typography.tabularNums}>
+              <NumberFormatter
+                value={summary.totalSoftwareSkills}
+                thousandSeparator="."
+                decimalSeparator=","
+              />
+            </Text>
+            <Text size="xs" c="dimmed">
+              kỹ năng & công cụ
+            </Text>
+          </Group>
+          <Group gap="xs" wrap="wrap">
+            <Badge color="warning" variant="light" size="xs">
+              Hot Tech:{' '}
+              <NumberFormatter
+                value={summary.hotTechCount}
+                thousandSeparator="."
+                decimalSeparator=","
+              />
+            </Badge>
+            <Badge color="success" variant="light" size="xs">
+              Nhu cầu cao:{' '}
+              <NumberFormatter
+                value={summary.inDemandTechCount}
+                thousandSeparator="."
+                decimalSeparator=","
+              />
+            </Badge>
+          </Group>
+        </Stack>
+      </Paper>
+
+      {/* Card 4: Ứng dụng thực tế */}
+      <Paper withBorder p="sm" radius="md">
+        <Stack gap={6}>
+          <Group justify="space-between" wrap="nowrap">
+            <Text size="xs" fw={600} tt="uppercase" c="dimmed">
+              Ứng dụng thực tế
+            </Text>
+            <ThemeIcon color="success" variant="light" size="sm" radius="md">
+              <IconActivity size={14} stroke={1.5} aria-hidden="true" />
+            </ThemeIcon>
+          </Group>
+          <Group align="baseline" gap="xs">
+            <Text size="xl" fw={700} className={typography.tabularNums}>
+              <NumberFormatter
+                value={summary.totalMockInterviews}
+                thousandSeparator="."
+                decimalSeparator=","
+              />
+            </Text>
+            <Text size="xs" c="dimmed">
+              phiên phỏng vấn
+            </Text>
+          </Group>
+          <Group gap="xs" wrap="wrap">
+            <Badge color="brand" variant="light" size="xs">
+              <NumberFormatter
+                value={summary.totalLinkedJobDescriptions}
+                thousandSeparator="."
+                decimalSeparator=","
+              />{' '}
+              JD liên kết
+            </Badge>
+            <Badge color="neutral" variant="light" size="xs">
+              <NumberFormatter
+                value={summary.totalAlternateTitles}
+                thousandSeparator="."
+                decimalSeparator=","
+              />{' '}
+              chức danh
+            </Badge>
+          </Group>
+        </Stack>
+      </Paper>
+    </SimpleGrid>
   )
 }

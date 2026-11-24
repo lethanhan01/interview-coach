@@ -114,7 +114,11 @@ export const onetAdminService = {
   ): Promise<OnetOccupationSummary[]> {
     const params = new URLSearchParams()
     if (query.groupCode) params.append('groupCode', query.groupCode)
-    if (query.mappedOnly) params.append('mappedOnly', 'true')
+    if (query.mappingStatus) {
+      params.append('mappingStatus', query.mappingStatus)
+    } else if (query.mappedOnly) {
+      params.append('mappedOnly', 'true')
+    }
     if (query.search?.trim()) params.append('search', query.search.trim())
     if (query.limit) params.append('limit', String(query.limit))
 
@@ -136,6 +140,9 @@ export const onetAdminService = {
     if (query.limit) params.append('limit', String(query.limit))
     if (query.sortBy) params.append('sortBy', query.sortBy)
     if (query.search?.trim()) params.append('search', query.search.trim())
+    if (query.groupCode?.trim()) {
+      params.append('groupCode', query.groupCode.trim())
+    }
 
     const qs = params.toString()
     return apiClient.get<OnetTopOccupationItem[]>(

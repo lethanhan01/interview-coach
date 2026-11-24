@@ -1,0 +1,23 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--mantine-color-body);
+}
+
+.header {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  background-color: var(--mantine-color-default);
+  padding: var(--mantine-spacing-sm);
+}
+
+.scrollArea {
+  flex: 1;
+  min-height: 0;
+}
+
+.body {
+  padding: var(--mantine-spacing-sm);
+}

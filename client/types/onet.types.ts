@@ -152,9 +152,12 @@ export interface PaginatedAlternateTitles {
   totalPages: number
 }
 
+export type OnetMappingStatusFilter = 'all' | 'mapped' | 'unmapped'
+
 export interface OnetOccupationSearchFilters {
   groupCode?: string
   mappedOnly?: boolean
+  mappingStatus?: OnetMappingStatusFilter
   search?: string
   limit?: number
 }
@@ -163,6 +166,7 @@ export interface OnetTopOccupationsQuery {
   limit?: number
   sortBy?: 'interviews' | 'jds' | 'mappings'
   search?: string
+  groupCode?: string
 }
 
 export interface OnetAlternateTitlesQuery {

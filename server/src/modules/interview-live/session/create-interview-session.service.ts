@@ -197,7 +197,8 @@ export class CreateInterviewSession {
     rawTech: string[],
   ): Promise<string[]> {
     try {
-      const onetTools = await this.onetFacade.getToolsAndTechnology(onetSocCode);
+      const onetTools =
+        await this.onetFacade.getToolsAndTechnology(onetSocCode);
       if (onetTools.length === 0) {
         return rawTech;
       }

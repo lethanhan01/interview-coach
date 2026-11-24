@@ -88,7 +88,7 @@ describe('OnetAdminRepository', () => {
 
       const result = await repository.searchSidebarOccupations(
         '15',
-        true,
+        'unmapped',
         'developer',
         10,
       );
@@ -97,7 +97,7 @@ describe('OnetAdminRepository', () => {
   });
 
   describe('getTopOccupations', () => {
-    it('returns top occupations', async () => {
+    it('returns top occupations with optional groupCode', async () => {
       const mockTop = [
         {
           socCode: '15-1252.00',
@@ -112,7 +112,12 @@ describe('OnetAdminRepository', () => {
       ];
       queryRawMock.mockResolvedValueOnce(mockTop);
 
-      const result = await repository.getTopOccupations('dev', 'interviews', 5);
+      const result = await repository.getTopOccupations(
+        'dev',
+        'interviews',
+        5,
+        '15',
+      );
       expect(result).toEqual(mockTop);
     });
   });
