@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { axe } from 'jest-axe'
 import { render, screen } from '@test-utils'
 import { PasswordStrengthMeter } from './PasswordStrengthMeter'
 
@@ -28,11 +29,14 @@ describe('PasswordStrengthMeter', () => {
     ).toHaveAttribute('aria-valuenow', '75')
   })
 
-  it('shows strong state (100%) when all 4 criteria are met', () => {
-    render(<PasswordStrengthMeter password="StrongPass123!" />)
+  it('shows strong state (100%) when all 4 criteria are met', async () => {
+    const { container } = render(
+      <PasswordStrengthMeter password="StrongPass123!" />
+    )
     expect(screen.getByText('Mạnh')).toBeInTheDocument()
     expect(
       screen.getByRole('progressbar', { name: 'Độ mạnh mật khẩu' })
     ).toHaveAttribute('aria-valuenow', '100')
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

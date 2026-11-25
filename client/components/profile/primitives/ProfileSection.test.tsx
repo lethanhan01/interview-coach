@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
+import { axe } from 'jest-axe'
 import { Button, Text } from '@mantine/core'
 import { render, screen } from '@test-utils'
 import ProfileSection from './ProfileSection'
 
 describe('ProfileSection', () => {
-  it('renders title, action slot, and children', () => {
-    render(
+  it('renders title, action slot, and children', async () => {
+    const { container } = render(
       <ProfileSection
         title="Thông tin học vấn"
         action={
@@ -23,5 +24,6 @@ describe('ProfileSection', () => {
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Thêm' })).toBeInTheDocument()
     expect(screen.getByText('Nội dung chi tiết')).toBeInTheDocument()
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

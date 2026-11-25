@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import { axe } from 'jest-axe'
 import { render, screen } from '@test-utils'
 import AccountInfoGroup from './AccountInfoGroup'
 
 describe('AccountInfoGroup', () => {
-  it('renders email, candidate role, active status, and formatted Vietnam createdAt', () => {
-    render(
+  it('renders email, candidate role, active status, and formatted Vietnam createdAt', async () => {
+    const { container } = render(
       <AccountInfoGroup
         email="candidate@example.com"
         role="candidate"
@@ -17,6 +18,7 @@ describe('AccountInfoGroup', () => {
     expect(screen.getByText('Ứng viên')).toBeInTheDocument()
     expect(screen.getByText('Đang hoạt động')).toBeInTheDocument()
     expect(screen.getByText(/10\/05\/2026/)).toBeInTheDocument()
+    expect(await axe(container)).toHaveNoViolations()
   })
 
   it('renders all 4 AccountStatus labels and admin role correctly', () => {

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { describe, expect, it } from 'vitest'
+import { axe } from 'jest-axe'
 import { Button, Stack, Text } from '@mantine/core'
 import { render, screen, userEvent } from '@test-utils'
 import {
@@ -46,14 +47,15 @@ function TypedTransitionDemo() {
 }
 
 describe('SafeViewTransition & startTypedTransition', () => {
-  it('renders children via passthrough fallback cleanly under Vitest React 19.2.4', () => {
-    render(
+  it('renders children via passthrough fallback cleanly under Vitest React 19.2.4', async () => {
+    const { container } = render(
       <SafeViewTransition enter="slide-from-right" exit="slide-to-left">
         <Text>Nội dung an toàn</Text>
       </SafeViewTransition>
     )
 
     expect(screen.getByText('Nội dung an toàn')).toBeInTheDocument()
+    expect(await axe(container)).toHaveNoViolations()
   })
 
   it('executes state updates with single and array transition types without crashing', async () => {

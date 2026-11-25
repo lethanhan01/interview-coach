@@ -1,3 +1,4 @@
+import { axe } from 'jest-axe'
 import { render, screen } from '@test-utils'
 import UnauthenticatedPage from './page'
 
@@ -6,7 +7,7 @@ describe('UnauthenticatedPage', () => {
     const element = await UnauthenticatedPage({
       searchParams: Promise.resolve({ next: '/resume?tab=skills' }),
     })
-    render(element)
+    const { container } = render(element)
 
     expect(
       screen.getByRole('heading', { level: 1, name: 'Bạn chưa đăng nhập' })
@@ -15,6 +16,7 @@ describe('UnauthenticatedPage', () => {
       'href',
       '/login?next=%2Fresume%3Ftab%3Dskills'
     )
+    expect(await axe(container)).toHaveNoViolations()
   })
 
   it('sanitizes unsafe external next parameter back to /sessions', async () => {

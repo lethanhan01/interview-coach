@@ -166,7 +166,13 @@ export default function RegisterForm({
 
       <Text size="sm" c="dimmed" ta="center">
         Đã có tài khoản?{' '}
-        <Anchor component={Link} href="/login" size="sm" c="brand">
+        <Anchor
+          component={Link}
+          href="/login"
+          size="sm"
+          c="brand"
+          underline="always"
+        >
           Đăng nhập ngay
         </Anchor>
       </Text>

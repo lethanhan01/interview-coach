@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { axe } from 'jest-axe'
 import { Text } from '@mantine/core'
 import { render, screen, waitFor } from '@test-utils'
 import RoleGuard from './RoleGuard'
@@ -67,10 +68,10 @@ describe('RoleGuard', () => {
     expect(screen.queryByText('Protected content')).not.toBeInTheDocument()
   })
 
-  it('renders children when authenticated role matches allowedRole', () => {
+  it('renders children when authenticated role matches allowedRole', async () => {
     mockUseAuth.mockReturnValue({ role: 'candidate', isLoading: false })
 
-    render(
+    const { container } = render(
       <RoleGuard allowedRole="candidate" fallbackRoute="/admin/dashboard">
         <Text>Protected content</Text>
       </RoleGuard>
@@ -78,5 +79,6 @@ describe('RoleGuard', () => {
 
     expect(screen.getByText('Protected content')).toBeInTheDocument()
     expect(mockReplace).not.toHaveBeenCalled()
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

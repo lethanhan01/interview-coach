@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { axe } from 'jest-axe'
 import {
   createTestQueryClient,
   render,
@@ -54,7 +55,7 @@ describe('ProfileClient', () => {
       updatedAccount
     )
 
-    render(<ProfileClient />, { queryClient })
+    const { container } = render(<ProfileClient />, { queryClient })
 
     expect(
       await screen.findByRole('heading', { name: 'Cài đặt tài khoản' })
@@ -63,6 +64,7 @@ describe('ProfileClient', () => {
       'href',
       '/resume'
     )
+    expect(await axe(container)).toHaveNoViolations()
 
     await user.click(screen.getByRole('button', { name: /Chỉnh sửa/i }))
     const lastnameInput = screen.getByLabelText(/Họ/i)

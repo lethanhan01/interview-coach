@@ -64,7 +64,13 @@ export default function LoginForm({
         </Title>
         <Text size="sm" c="dimmed">
           Chưa có tài khoản?{' '}
-          <Anchor component={Link} href="/register" size="sm" c="brand">
+          <Anchor
+            component={Link}
+            href="/register"
+            size="sm"
+            c="brand"
+            underline="always"
+          >
             Đăng ký
           </Anchor>
         </Text>

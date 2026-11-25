@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { axe } from 'jest-axe'
 import {
   createTestQueryClient,
   render,
@@ -146,12 +147,13 @@ describe('LoginClient', () => {
     })
   })
 
-  it('shows inactive account banner and session expired notice from query params', () => {
+  it('shows inactive account banner and session expired notice from query params', async () => {
     currentSearchParams = new URLSearchParams('error=account_inactive')
-    const { rerender } = render(<LoginClient />)
+    const { container, rerender } = render(<LoginClient />)
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Tài khoản của bạn đã bị khóa hoặc xóa'
     )
+    expect(await axe(container)).toHaveNoViolations()
 
     currentSearchParams = new URLSearchParams('reason=session_expired')
     rerender(<LoginClient />)

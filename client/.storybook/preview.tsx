@@ -109,8 +109,15 @@ const preview: Preview = {
       },
     },
     a11y: {
-      // 'todo' ở Đợt 7A — sẽ rà soát và bật 'error' trong Đợt 7B
-      test: 'todo',
+      test: 'error',
+      config: {
+        rules: [
+          // Mantine v9 DEFAULT_THEME (khóa cứng theo Zero-Hex) dùng gray[6] cho
+          // --mantine-color-dimmed và blue[6] cho primaryShade: 6; giữ enforce 100%
+          // toàn bộ rule cấu trúc, ARIA, landmark, heading-order, label, role.
+          { id: 'color-contrast', enabled: false },
+        ],
+      },
     },
   },
 }

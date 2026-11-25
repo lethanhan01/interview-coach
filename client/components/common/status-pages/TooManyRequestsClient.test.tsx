@@ -1,3 +1,4 @@
+import { axe } from 'jest-axe'
 import { act, render, screen } from '@test-utils'
 import { vi } from 'vitest'
 import { TooManyRequestsClient } from './TooManyRequestsClient'
@@ -34,5 +35,12 @@ describe('TooManyRequestsClient', () => {
       enabledBtn.click()
     })
     expect(onRetry).toHaveBeenCalledTimes(1)
+  })
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(
+      <TooManyRequestsClient initialSeconds={5} onRetry={vi.fn()} />
+    )
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

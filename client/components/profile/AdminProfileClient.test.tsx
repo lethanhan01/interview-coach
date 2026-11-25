@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { axe } from 'jest-axe'
 import {
   createTestQueryClient,
   render,
@@ -53,12 +54,13 @@ describe('AdminProfileClient', () => {
       updatedAccount
     )
 
-    render(<AdminProfileClient />, { queryClient })
+    const { container } = render(<AdminProfileClient />, { queryClient })
 
     expect(
       await screen.findByRole('heading', { name: 'Hồ sơ Quản trị viên' })
     ).toBeInTheDocument()
     expect(screen.getByText('Toàn quyền hệ thống')).toBeInTheDocument()
+    expect(await axe(container)).toHaveNoViolations()
 
     await user.click(screen.getByRole('button', { name: /Chỉnh sửa/i }))
     const firstnameInput = screen.getByLabelText(/Tên/i)

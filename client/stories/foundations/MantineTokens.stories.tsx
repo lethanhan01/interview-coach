@@ -83,7 +83,9 @@ function SemanticColorsShowcase() {
                   <ThemeIcon color={role} variant="light" radius="md" size="md">
                     <Icon size={16} stroke={1.5} aria-hidden="true" />
                   </ThemeIcon>
-                  <Title order={4}>{title}</Title>
+                  <Title order={3} size="h4">
+                    {title}
+                  </Title>
                 </Group>
                 <Badge color={role} variant="light">
                   {role}
@@ -126,7 +128,9 @@ function SemanticColorsShowcase() {
 
         <Paper withBorder radius="md" p="md" className={surfaces.subtleSurface}>
           <Stack gap="sm">
-            <Title order={4}>Bề mặt phụ & Văn bản mờ</Title>
+            <Title order={3} size="h4">
+              Bề mặt phụ & Văn bản mờ
+            </Title>
             <Text size="sm">Văn bản chính (--mantine-color-text)</Text>
             <Text size="sm" c="dimmed">
               Văn bản phụ (c=&quot;dimmed&quot; / --mantine-color-dimmed)
