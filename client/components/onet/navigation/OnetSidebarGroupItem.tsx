@@ -14,9 +14,11 @@ import {
   UnstyledButton,
 } from '@mantine/core'
 import { IconRefresh } from '@tabler/icons-react'
+import interactions from '@/styles/interactions.module.css'
+import layout from '@/styles/layout.module.css'
 import typography from '@/styles/typography.module.css'
 import type { OnetOccupationSummary, SocMajorGroup } from '@/types'
-import classes from './OnetSidebar.module.css'
+import onet from '../onet.module.css'
 
 export interface OnetSidebarGroupItemProps {
   group: SocMajorGroup
@@ -52,21 +54,26 @@ export function OnetSidebarGroupItem({
         <Stack gap={4}>
           <Group justify="space-between" wrap="nowrap" gap="xs">
             <Group gap={6} wrap="nowrap" miw={0}>
-              <Badge color="brand" variant="light" size="xs">
+              <Badge
+                color="brand"
+                variant="light"
+                size="sm"
+                className={layout.shrink0}
+              >
                 {group.code}
               </Badge>
-              <Text size="xs" fw={600} lineClamp={1}>
+              <Text size="sm" fw={600} lineClamp={1}>
                 {group.name}
               </Text>
             </Group>
             {isLoading ? (
-              <Loader size={12} />
+              <Loader size={14} />
             ) : (
               <Badge
                 color="neutral"
                 variant="light"
-                size="xs"
-                className={typography.tabularNums}
+                size="sm"
+                className={`${typography.tabularNums} ${layout.shrink0}`}
               >
                 {countLabel}
               </Badge>
@@ -94,13 +101,13 @@ export function OnetSidebarGroupItem({
         {errorMessage ? (
           <Alert color="danger" variant="light" p="xs">
             <Stack gap={6}>
-              <Text size="xs">{errorMessage}</Text>
+              <Text size="sm">{errorMessage}</Text>
               <Group>
                 <Button
-                  size="compact-xs"
+                  size="compact-sm"
                   variant="light"
                   color="danger"
-                  leftSection={<IconRefresh size={12} stroke={1.5} />}
+                  leftSection={<IconRefresh size={13} stroke={1.5} />}
                   onClick={onRetry}
                 >
                   Thử lại
@@ -111,12 +118,12 @@ export function OnetSidebarGroupItem({
         ) : isLoading && occupations.length === 0 ? (
           <Group justify="center" gap="xs" py="xs">
             <Loader size="xs" />
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Đang tải danh sách nghề...
             </Text>
           </Group>
         ) : occupations.length === 0 ? (
-          <Text size="xs" c="dimmed" ta="center" py="xs">
+          <Text size="sm" c="dimmed" ta="center" py="xs">
             Không có nghề phù hợp trong nhóm này
           </Text>
         ) : (
@@ -126,7 +133,7 @@ export function OnetSidebarGroupItem({
               return (
                 <UnstyledButton
                   key={occ.socCode}
-                  className={classes.occButton}
+                  className={`${interactions.selectableItem} ${onet.sidebarOccButton}`}
                   mod={{ selected: isSelected }}
                   aria-current={isSelected ? 'true' : undefined}
                   onClick={() => onSelectSoc(occ.socCode)}
@@ -139,14 +146,14 @@ export function OnetSidebarGroupItem({
                     >
                       {occ.socCode}
                     </Text>
-                    <Text size="xs" fw={isSelected ? 600 : 400} lineClamp={2}>
+                    <Text size="sm" fw={isSelected ? 600 : 400} lineClamp={2}>
                       {occ.title}
                     </Text>
                   </Stack>
                   <Box
                     component="span"
                     role="status"
-                    className={classes.statusDot}
+                    className={onet.sidebarStatusDot}
                     mod={{ mapped: occ.isMapped }}
                     title={
                       occ.isMapped

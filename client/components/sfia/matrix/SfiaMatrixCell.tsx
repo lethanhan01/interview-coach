@@ -21,7 +21,7 @@ import {
   getSfiaCategorySemanticTheme,
   getSfiaHeatmapSemanticTheme,
 } from '@/components/sfia/sfia-theme'
-import classes from './SfiaMatrixView.module.css'
+import sfia from '../sfia.module.css'
 
 export interface SfiaMatrixCellProps {
   skill: SfiaSkillSummary
@@ -75,7 +75,7 @@ export const SfiaMatrixCell = memo(function SfiaMatrixCell({
       <HoverCard.Target>
         <UnstyledButton
           data-testid={`cell-${skill.code}-L${levelId}`}
-          className={classes.heatCell}
+          className={sfia.matrixHeatCell}
           mod={{ heat: heat.dataHeat, active: isInspected }}
           onClick={() => onSelectCell(skill.code, levelId)}
           aria-label={`${skill.code} Cấp độ ${levelId} (${levelName}), ${qCount} câu hỏi, ${onetCount} nghề O*NET`}
@@ -83,11 +83,11 @@ export const SfiaMatrixCell = memo(function SfiaMatrixCell({
           {isBlind && (
             <Box
               component="span"
-              className={classes.blindSpotDot}
+              className={sfia.matrixBlindSpotDot}
               aria-hidden="true"
             />
           )}
-          <Text component="span" ff="monospace" fz="xs" fw={700} lh={1.1}>
+          <Text component="span" ff="monospace" fz="sm" fw={700} lh={1.1}>
             L{levelId}
           </Text>
           <Text
@@ -109,34 +109,34 @@ export const SfiaMatrixCell = memo(function SfiaMatrixCell({
             <Badge
               color={categoryTheme.color}
               variant="light"
-              size="xs"
+              size="sm"
               ff="monospace"
             >
               {skill.code}
             </Badge>
-            <Badge color={heat.color} variant="light" size="xs">
+            <Badge color={heat.color} variant="light" size="sm">
               L{levelId}
               {levelMeta?.nameVi ? ` — ${levelMeta.nameVi}` : ''}
             </Badge>
           </Group>
-          <Text size="xs" fw={600} lh={1.3}>
+          <Text size="sm" fw={600} lh={1.35}>
             {skill.name}
           </Text>
           {cell?.statementSnippet && (
-            <Text size="xs" c="dimmed" lineClamp={3} lh={1.4}>
+            <Text size="sm" c="dimmed" lineClamp={3} lh={1.45}>
               {cell.statementSnippet}
             </Text>
           )}
           <Divider />
           <Group justify="space-between" gap="xs">
             <Text
-              size="xs"
+              size="sm"
               fw={isBlind ? 700 : 500}
               c={isBlind ? 'danger' : undefined}
             >
               Câu hỏi: {qCount}
             </Text>
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Nghề O*NET: {onetCount}
             </Text>
           </Group>

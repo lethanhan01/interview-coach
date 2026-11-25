@@ -31,16 +31,16 @@ export function OnetTechCategoryCard({
   skills,
 }: Readonly<OnetTechCategoryCardProps>) {
   return (
-    <Paper withBorder p="sm" radius="md">
+    <Paper withBorder p="xs" radius="md">
       <Stack gap="xs">
         <Group justify="space-between" align="center">
           <Group gap={6} align="center">
             <IconFolder size={16} stroke={1.5} />
-            <Title order={3} size="h6">
+            <Title order={3} size="h5">
               {category}
             </Title>
           </Group>
-          <Badge color="neutral" variant="outline" size="xs">
+          <Badge color="neutral" variant="outline" size="sm">
             {skills.length} công cụ
           </Badge>
         </Group>
@@ -54,7 +54,7 @@ export function OnetTechCategoryCard({
               className={surfaces.subtleSurface}
             >
               <Group gap={6} align="center" wrap="nowrap">
-                <Text size="xs" fw={500}>
+                <Text size="sm" fw={500}>
                   {skill.name}
                 </Text>
 

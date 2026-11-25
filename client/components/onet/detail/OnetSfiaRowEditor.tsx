@@ -14,7 +14,7 @@ import {
 } from '@mantine/core'
 import { IconCheck, IconX } from '@tabler/icons-react'
 import type { OnetSfiaMapping, SfiaLevelResponsibility } from '@/types'
-import classes from './OnetSfiaRow.module.css'
+import onet from '../onet.module.css'
 
 export interface OnetSfiaRowEditorProps {
   mapping: OnetSfiaMapping
@@ -138,10 +138,10 @@ export function OnetSfiaRowEditor({
       {/* Col 1: Skill Code & Name */}
       <Table.Td>
         <Group gap={6} align="center" wrap="nowrap">
-          <Badge color="brand" variant="light" size="xs">
+          <Badge color="brand" variant="light" size="sm">
             {mapping.skillCode}
           </Badge>
-          <Text size="xs" fw={600}>
+          <Text size="sm" fw={600}>
             {mapping.skillName}
           </Text>
         </Group>
@@ -149,7 +149,7 @@ export function OnetSfiaRowEditor({
 
       {/* Col 2: Category */}
       <Table.Td>
-        <Text size="xs" c="dimmed">
+        <Text size="sm" c="dimmed">
           {mapping.category}
         </Text>
       </Table.Td>
@@ -157,8 +157,8 @@ export function OnetSfiaRowEditor({
       {/* Col 3: Single Target Level Select */}
       <Table.Td>
         <Select
-          size="xs"
-          w={150}
+          size="sm"
+          w={165}
           comboboxProps={{ withinPortal: true }}
           allowDeselect={false}
           value={draftLevel}
@@ -171,10 +171,10 @@ export function OnetSfiaRowEditor({
       </Table.Td>
 
       {/* Col 4: Weight */}
-      <Table.Td className={classes.weightCell}>
+      <Table.Td className={onet.sfiaWeightCell}>
         <NumberInput
-          size="xs"
-          w={90}
+          size="sm"
+          w={95}
           min={0.1}
           max={5.0}
           step={0.1}
@@ -191,7 +191,7 @@ export function OnetSfiaRowEditor({
       {/* Col 5: Core Switch */}
       <Table.Td>
         <Switch
-          size="xs"
+          size="sm"
           checked={draftIsCore}
           onChange={(e) => setDraftIsCore(e.currentTarget.checked)}
           aria-label="Chỉnh sửa vai trò cốt lõi"
@@ -200,13 +200,13 @@ export function OnetSfiaRowEditor({
 
       {/* Col 6: Source */}
       <Table.Td>
-        <Badge color={sourceMeta.color} variant={sourceMeta.variant} size="xs">
+        <Badge color={sourceMeta.color} variant={sourceMeta.variant} size="sm">
           {sourceMeta.label}
         </Badge>
       </Table.Td>
 
       {/* Col 7: Save / Cancel Actions */}
-      <Table.Td className={classes.actionsCell}>
+      <Table.Td className={onet.sfiaActionsCell}>
         <Group gap={4} justify="flex-end" wrap="nowrap">
           <Tooltip label="Lưu thay đổi" withArrow>
             <ActionIcon

@@ -85,10 +85,10 @@ export function SfiaAnalyticsView({
           {onRetry ? (
             <Group>
               <Button
-                size="xs"
+                size="sm"
                 variant="light"
                 color="danger"
-                leftSection={<IconRefresh size={14} stroke={1.5} />}
+                leftSection={<IconRefresh size={15} stroke={1.5} />}
                 onClick={onRetry}
               >
                 Thử tải lại dữ liệu
@@ -101,13 +101,13 @@ export function SfiaAnalyticsView({
   }
 
   return (
-    <Stack gap="md" className={className}>
+    <Stack gap="sm" className={className}>
       <SfiaAnalyticsKpis
         stats={stats}
         onScrollToBlindSpots={onScrollToBlindSpots}
       />
 
-      <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md">
+      <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="sm">
         <SfiaCategoryCoverageChart
           categoryDistribution={stats.categoryDistribution}
           selectedCategory={selectedCategoryFilter}

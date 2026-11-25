@@ -17,8 +17,8 @@ import {
   IconUserCog,
   IconUsers,
 } from '@tabler/icons-react'
+import interactions from '@/styles/interactions.module.css'
 import type { SemanticColor } from '@/theme'
-import classes from './AdminQuickActions.module.css'
 
 interface QuickActionItem {
   href: string
@@ -80,29 +80,41 @@ export function AdminQuickActions() {
                 key={item.href}
                 component={Link}
                 href={item.href}
-                className={classes.actionCard}
+                className={interactions.cardLink}
               >
-                <Group justify="space-between" wrap="nowrap" gap="sm">
-                  <Group gap="sm" wrap="nowrap">
-                    <ThemeIcon
-                      color={item.color}
-                      variant="light"
-                      size="md"
-                      radius="md"
-                    >
-                      <Icon size={16} stroke={1.5} aria-hidden="true" />
-                    </ThemeIcon>
-                    <Stack gap={0}>
-                      <Text size="sm" fw={600}>
-                        {item.title}
-                      </Text>
-                      <Text size="xs" c="dimmed">
-                        {item.description}
-                      </Text>
-                    </Stack>
+                <Paper
+                  withBorder
+                  radius="md"
+                  p="sm"
+                  className={interactions.interactiveCard}
+                >
+                  <Group justify="space-between" wrap="nowrap" gap="sm">
+                    <Group gap="sm" wrap="nowrap">
+                      <ThemeIcon
+                        color={item.color}
+                        variant="light"
+                        size="md"
+                        radius="md"
+                      >
+                        <Icon size={16} stroke={1.5} aria-hidden="true" />
+                      </ThemeIcon>
+                      <Stack gap={0}>
+                        <Text size="sm" fw={600}>
+                          {item.title}
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {item.description}
+                        </Text>
+                      </Stack>
+                    </Group>
+                    <IconArrowRight
+                      size={16}
+                      stroke={1.5}
+                      aria-hidden="true"
+                      className={interactions.chevronShift}
+                    />
                   </Group>
-                  <IconArrowRight size={16} stroke={1.5} aria-hidden="true" />
-                </Group>
+                </Paper>
               </UnstyledButton>
             )
           })}

@@ -14,13 +14,14 @@ import {
   UnstyledButton,
 } from '@mantine/core'
 import { IconInfoCircle, IconPencil, IconTrash } from '@tabler/icons-react'
+import interactions from '@/styles/interactions.module.css'
 import type {
   OnetSfiaMapping,
   SfiaLevelResponsibility,
   SfiaSkillDefinition,
 } from '@/types'
+import onet from '../onet.module.css'
 import { OnetSfiaRowEditor } from './OnetSfiaRowEditor'
-import classes from './OnetSfiaRow.module.css'
 
 export interface OnetSfiaRowProps {
   mapping: OnetSfiaMapping
@@ -109,15 +110,15 @@ export function OnetSfiaRow({
   return (
     <Table.Tr
       id={`sfia-row-${mapping.skillCode}`}
-      className={isHighlighted ? classes.highlighted : undefined}
+      className={isHighlighted ? onet.sfiaRowHighlighted : undefined}
     >
       {/* Col 1: Skill Code & Name */}
       <Table.Td>
         <Group gap={6} align="center" wrap="nowrap">
-          <Badge color="brand" variant="light" size="xs">
+          <Badge color="brand" variant="light" size="sm">
             {mapping.skillCode}
           </Badge>
-          <Text size="xs" fw={600}>
+          <Text size="sm" fw={600}>
             {mapping.skillName}
           </Text>
         </Group>
@@ -125,7 +126,7 @@ export function OnetSfiaRow({
 
       {/* Col 2: Category */}
       <Table.Td>
-        <Text size="xs" c="dimmed">
+        <Text size="sm" c="dimmed">
           {mapping.category}
         </Text>
       </Table.Td>
@@ -142,21 +143,21 @@ export function OnetSfiaRow({
           <HoverCard.Target>
             <UnstyledButton
               type="button"
-              className={classes.levelTarget}
+              className={`${interactions.hoverRow} ${onet.sfiaLevelTarget}`}
               aria-label={`Xem mô tả ${levelTitle} (dải L${minLevel} đến L${maxLevel})`}
             >
               <Group gap={4} align="center" wrap="nowrap">
-                <Badge color="brand" size="xs">
+                <Badge color="brand" size="sm">
                   L{mapping.targetLevel}
                 </Badge>
-                <IconInfoCircle size={12} stroke={1.5} />
+                <IconInfoCircle size={13} stroke={1.5} />
               </Group>
-              <Box className={classes.miniGauge} aria-hidden="true">
+              <Box className={onet.sfiaMiniGauge} aria-hidden="true">
                 {SFIA_LEVELS.map((lvl) => (
                   <Box
                     key={lvl}
                     component="span"
-                    className={classes.gaugeBar}
+                    className={onet.sfiaGaugeBar}
                     mod={{
                       available: lvl >= minLevel && lvl <= maxLevel,
                       active: lvl === mapping.targetLevel,
@@ -168,10 +169,10 @@ export function OnetSfiaRow({
           </HoverCard.Target>
           <HoverCard.Dropdown>
             <Stack gap={4}>
-              <Text size="xs" fw={700}>
+              <Text size="sm" fw={700}>
                 {levelTitle}
               </Text>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 {levelDescription}
               </Text>
             </Stack>
@@ -180,7 +181,7 @@ export function OnetSfiaRow({
       </Table.Td>
 
       {/* Col 4: Weight */}
-      <Table.Td className={classes.weightCell}>
+      <Table.Td className={onet.sfiaWeightCell}>
         <Group gap="xs" align="center" wrap="nowrap">
           <Progress
             value={Math.min(100, (mapping.weight / 5) * 100)}
@@ -190,7 +191,7 @@ export function OnetSfiaRow({
             flex={1}
             aria-label={`Trọng số ${mapping.weight}/5.0`}
           />
-          <Text size="xs" fw={600} w={28}>
+          <Text size="sm" fw={600} w={30}>
             {mapping.weight.toFixed(1)}
           </Text>
         </Group>
@@ -199,11 +200,11 @@ export function OnetSfiaRow({
       {/* Col 5: Role (Core vs Secondary) */}
       <Table.Td>
         {mapping.isCore ? (
-          <Badge color="brand" variant="light" size="xs">
+          <Badge color="brand" variant="light" size="sm">
             Cốt lõi
           </Badge>
         ) : (
-          <Badge color="neutral" variant="outline" size="xs">
+          <Badge color="neutral" variant="outline" size="sm">
             Bổ trợ
           </Badge>
         )}
@@ -211,13 +212,13 @@ export function OnetSfiaRow({
 
       {/* Col 6: Source */}
       <Table.Td>
-        <Badge color={sourceMeta.color} variant={sourceMeta.variant} size="xs">
+        <Badge color={sourceMeta.color} variant={sourceMeta.variant} size="sm">
           {sourceMeta.label}
         </Badge>
       </Table.Td>
 
       {/* Col 7: Actions */}
-      <Table.Td className={classes.actionsCell}>
+      <Table.Td className={onet.sfiaActionsCell}>
         <Group gap={4} justify="flex-end" wrap="nowrap">
           <Tooltip label="Chỉnh sửa ánh xạ" withArrow>
             <ActionIcon

@@ -42,52 +42,52 @@ export function OnetTasksTab({ tasks }: Readonly<OnetTasksTabProps>) {
   }, [tasks, filterType, searchQuery])
 
   return (
-    <Stack gap="sm">
+    <Stack gap="xs">
       {/* Header Controls */}
-      <Paper withBorder p="sm" radius="md">
+      <Paper withBorder p="xs" radius="md">
         <Stack gap="xs">
           <Group justify="space-between" align="center" wrap="wrap">
             <Group gap="xs">
-              <Title order={3} size="h6">
+              <Title order={3} size="h5">
                 Nhiệm vụ Công việc
               </Title>
-              <Badge color="neutral" variant="outline" size="xs">
+              <Badge color="neutral" variant="outline" size="sm">
                 {tasks.length} nhiệm vụ
               </Badge>
             </Group>
 
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Hiển thị {filteredTasks.length} / {tasks.length}
             </Text>
           </Group>
 
           <Group gap="xs" wrap="wrap">
             <TextInput
-              size="xs"
+              size="sm"
               flex={1}
               miw={200}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.currentTarget.value)}
               placeholder="Tìm kiếm nội dung nhiệm vụ..."
               aria-label="Tìm kiếm nội dung nhiệm vụ"
-              leftSection={<IconSearch size={14} stroke={1.5} />}
+              leftSection={<IconSearch size={15} stroke={1.5} />}
               rightSection={
                 searchQuery ? (
                   <ActionIcon
-                    size="xs"
+                    size="sm"
                     variant="subtle"
                     color="neutral"
                     aria-label="Xóa tìm kiếm"
                     onClick={() => setSearchQuery('')}
                   >
-                    <IconX size={12} stroke={1.5} />
+                    <IconX size={14} stroke={1.5} />
                   </ActionIcon>
                 ) : null
               }
             />
 
             <SegmentedControl
-              size="xs"
+              size="sm"
               value={filterType}
               onChange={(val) => setFilterType(val as TaskFilterType)}
               aria-label="Lọc theo phân loại nhiệm vụ"
@@ -106,17 +106,17 @@ export function OnetTasksTab({ tasks }: Readonly<OnetTasksTabProps>) {
 
       {/* Task List */}
       {filteredTasks.length === 0 ? (
-        <Paper p="xl" radius="md" className={surfaces.subtleSurface}>
+        <Paper p="md" radius="md" className={surfaces.subtleSurface}>
           <Stack align="center" gap="xs">
-            <Text size="sm" fw={600}>
+            <Text size="md" fw={600}>
               Không tìm thấy nhiệm vụ nào
             </Text>
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Thử thay đổi từ khóa tìm kiếm hoặc bỏ chọn bộ lọc.
             </Text>
             {searchQuery || filterType !== 'all' ? (
               <Button
-                size="xs"
+                size="sm"
                 variant="light"
                 onClick={() => {
                   setSearchQuery('')

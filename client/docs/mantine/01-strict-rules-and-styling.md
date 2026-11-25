@@ -124,7 +124,9 @@ Không sử dụng **Tailwind CSS**, **`styled-components`**, **Emotion** hay CS
      - Biến CSS ngữ nghĩa tự đổi theo Light/Dark của Mantine (`--mantine-color-*`), hoặc `light-dark(...)` khi cần biểu thức chuyển đổi sáng/tối hợp lệ.
      - `@mixin hover` cho hiệu ứng hover an toàn trên thiết bị cảm ứng.
      - `mod={{ active }}` kết hợp selector `&[data-active]` và `:focus-visible`.
-   - **Cô lập CSS theo component**: Mọi class riêng của component/trang (kể cả trạng thái `active`, `selected`, `focused`, `dropzoneInner`) phải đặt trong `<ComponentName>.module.css`. Không thêm class riêng của component vào [app/globals.css](../../app/globals.css).
+   - **Kiến trúc CSS Modules 2 tầng (Rule of Three)**:
+     - **Tầng 1 (`client/styles/`)**: Tái sử dụng 4 shared CSS Modules (`layout.module.css`, `surfaces.module.css`, `interactions.module.css`, `typography.module.css`) cho các pattern dùng chéo `>= 2` domain; không lặp `light-dark(...)` (dùng `surfaces.subtleSurface`) hoặc `&:focus-visible` mặc định (dùng `theme.focusClassName` ở `client/theme.ts`).
+     - **Tầng 2 (Domain `*.module.css`)**: Gom mọi class đặc thù nghiệp vụ (kể cả trạng thái `active`, `selected`, `focused`, `dropzoneInner`) vào `components/<domain>/<domain>.module.css` (hoặc `components/layout/app-shell.module.css`) với prefix theo widget; không tạo `<ComponentName>.module.css` nhỏ lẻ và không thêm class riêng vào [app/globals.css](../../app/globals.css).
 3. **Styles API (`classNames`, `styles`, `vars`)**:
    - Dùng khi cần chỉnh phần tử con bên trong component Mantine (tra danh sách selector tại tab **Styles API** của từng component trên `mantine.dev`).
 

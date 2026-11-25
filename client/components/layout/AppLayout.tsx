@@ -6,7 +6,7 @@ import { AppShell, Box } from '@mantine/core'
 import { useDisclosure, useReducedMotion } from '@mantine/hooks'
 import AppHeader from '@/components/layout/header/AppHeader'
 import AppSidebar from '@/components/layout/sidebar/AppSidebar'
-import classes from './AppLayout.module.css'
+import appShell from './app-shell.module.css'
 
 export interface AppLayoutProps {
   children: ReactNode
@@ -60,10 +60,13 @@ export default function AppLayout({
       </AppShell.Navbar>
 
       <AppShell.Main
-        className={classes.main}
+        className={appShell.appMain}
         mod={{ workspace: isWorkspaceMode }}
       >
-        <Box className={classes.content} mod={{ workspace: isWorkspaceMode }}>
+        <Box
+          className={appShell.appContent}
+          mod={{ workspace: isWorkspaceMode }}
+        >
           {children}
         </Box>
       </AppShell.Main>

@@ -2,8 +2,9 @@
 
 import { Box, Group, Paper, Stack, Text } from '@mantine/core'
 import { IconVolume } from '@tabler/icons-react'
+import surfaces from '@/styles/surfaces.module.css'
+import interview from '../interview.module.css'
 import type { WaveLevel } from './useVoiceRecorder'
-import classes from './VoiceWaveform.module.css'
 
 export interface VoiceWaveformProps {
   levels: WaveLevel[]
@@ -17,7 +18,7 @@ export default function VoiceWaveform({
   return (
     <Stack gap="xs" align="center" w="100%">
       <Group gap="xs" align="center">
-        <Box className={classes.recordingDot} aria-hidden="true" />
+        <Box className={interview.recordingDot} aria-hidden="true" />
         <Text size="sm" fw={500}>
           {statusText}
         </Text>
@@ -28,7 +29,7 @@ export default function VoiceWaveform({
         radius="lg"
         px="lg"
         py="sm"
-        className={classes.waveformBox}
+        className={`${surfaces.subtleSurface} ${interview.waveformBox}`}
         role="img"
         aria-label="Biểu đồ sóng âm microphone"
       >
@@ -36,7 +37,7 @@ export default function VoiceWaveform({
         {levels.map((level, idx) => (
           <Box
             key={`waveform-bar-${idx}`}
-            className={classes.bar}
+            className={interview.waveformBar}
             mod={{ level }}
           />
         ))}

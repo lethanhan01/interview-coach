@@ -23,8 +23,8 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { catalogQueries } from '@/queries/catalog.queries'
 import type { SkillBreakdownItem } from '@/types'
+import report from '../report.module.css'
 import { SfiaSegmentMeter } from './SfiaSegmentMeter'
-import classes from './SfiaCompetencyOverview.module.css'
 
 const SfiaCompetencyCharts = dynamic(() => import('./SfiaCompetencyCharts'), {
   ssr: false,
@@ -134,8 +134,8 @@ export function SfiaCompetencyOverview({
 
               return (
                 <Paper key={skill.skillCode} withBorder radius="md" p="md">
-                  <Box className={classes.skillRow}>
-                    <Stack gap={4} className={classes.skillInfo}>
+                  <Box className={report.competencyRow}>
+                    <Stack gap={4} className={report.competencyInfo}>
                       <Group gap="xs">
                         <Badge variant="outline" size="sm" ff="monospace">
                           {skill.skillCode}
@@ -151,7 +151,7 @@ export function SfiaCompetencyOverview({
                       )}
                     </Stack>
 
-                    <Box className={classes.skillMeter}>
+                    <Box className={report.competencyMeter}>
                       <SfiaSegmentMeter
                         demonstratedLevel={skill.demonstratedLevel}
                         targetLevel={skill.targetLevel}
@@ -160,7 +160,7 @@ export function SfiaCompetencyOverview({
                       />
                     </Box>
 
-                    <Box className={classes.skillStatus}>
+                    <Box className={report.competencyStatus}>
                       <Stack gap={2} align="flex-end">
                         <Text size="xs" c="dimmed">
                           Kỳ vọng:{' '}

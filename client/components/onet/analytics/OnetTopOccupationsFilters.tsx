@@ -44,17 +44,17 @@ export function OnetTopOccupationsFilters({
     <Stack gap="xs">
       <Group justify="space-between" align="center" wrap="wrap" gap="xs">
         <Group gap="xs" align="center" wrap="wrap">
-          <Title order={2} size="h5">
+          <Title order={2} size="h4">
             Top nghề nghiệp được quan tâm nhất
           </Title>
-          <Badge color="neutral" variant="light" size="xs">
+          <Badge color="neutral" variant="light" size="sm">
             {totalCount} nghề
           </Badge>
           {activeGroupFilter ? (
             <Badge
               color="brand"
               variant="light"
-              size="xs"
+              size="sm"
               rightSection={
                 onClearGroupFilter ? (
                   <ActionIcon
@@ -74,30 +74,30 @@ export function OnetTopOccupationsFilters({
             </Badge>
           ) : null}
         </Group>
-        <Text size="xs" c="dimmed">
+        <Text size="sm" c="dimmed">
           Bấm mã kỹ năng SFIA để mở thẳng sang Khung năng lực SFIA 9
         </Text>
       </Group>
 
       <Group justify="space-between" align="center" gap="xs" wrap="wrap">
         <TextInput
-          size="xs"
-          w={{ base: '100%', sm: 260 }}
+          size="sm"
+          w={{ base: '100%', sm: 280 }}
           placeholder="Tìm theo mã SOC, tên nghề..."
           aria-label="Tìm trong bảng Top nghề nghiệp"
           value={searchQuery}
           onChange={(event) => onSearchChange(event.currentTarget.value)}
-          leftSection={<IconSearch size={14} stroke={1.5} />}
+          leftSection={<IconSearch size={15} stroke={1.5} />}
           rightSection={
             searchQuery ? (
               <ActionIcon
-                size="xs"
+                size="sm"
                 variant="subtle"
                 color="neutral"
                 aria-label="Xóa từ khóa tìm kiếm"
                 onClick={() => onSearchChange('')}
               >
-                <IconX size={12} stroke={1.5} />
+                <IconX size={14} stroke={1.5} />
               </ActionIcon>
             ) : null
           }
@@ -105,8 +105,8 @@ export function OnetTopOccupationsFilters({
 
         <Group gap="xs" wrap="wrap">
           <Select
-            size="xs"
-            w={175}
+            size="sm"
+            w={195}
             aria-label="Sắp xếp Top nghề nghiệp"
             value={sortBy}
             allowDeselect={false}
@@ -122,8 +122,8 @@ export function OnetTopOccupationsFilters({
           />
 
           <Select
-            size="xs"
-            w={110}
+            size="sm"
+            w={120}
             aria-label="Số dòng mỗi trang"
             value={String(pageSize)}
             allowDeselect={false}

@@ -24,8 +24,8 @@ import {
 } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
 import { onetQueries } from '@/queries/onet.queries'
+import surfaces from '@/styles/surfaces.module.css'
 import type { OnetOccupation } from '@/types'
-import classes from './OnetOccupationPicker.module.css'
 
 export interface OnetOccupationPickerProps {
   socCode?: string
@@ -92,7 +92,7 @@ export default function OnetOccupationPicker({
       </Group>
 
       {socCode && occupationTitle ? (
-        <Paper withBorder radius="md" p="sm" className={classes.selectedCard}>
+        <Paper withBorder radius="md" p="xs" className={surfaces.subtleSurface}>
           <Group justify="space-between" align="center" gap="sm" wrap="nowrap">
             <Group gap="sm" align="center" wrap="nowrap" flex={1} miw={0}>
               <ThemeIcon size={34} radius="md" variant="filled" color="brand">
@@ -102,7 +102,7 @@ export default function OnetOccupationPicker({
                 <Text size="sm" fw={600} truncate>
                   {occupationTitle}
                 </Text>
-                <Text size="xs" c="dimmed" className={classes.mono}>
+                <Text size="xs" c="dimmed" ff="monospace">
                   {codePrefix}: {socCode}
                 </Text>
               </Stack>
@@ -112,10 +112,10 @@ export default function OnetOccupationPicker({
               type="button"
               variant="subtle"
               color="neutral"
-              size="xs"
+              size="sm"
               disabled={disabled}
               aria-label={clearAriaLabel}
-              leftSection={<IconX size={14} stroke={1.5} aria-hidden="true" />}
+              leftSection={<IconX size={15} stroke={1.5} aria-hidden="true" />}
               onClick={onClear}
             >
               {clearLabel}
@@ -155,14 +155,14 @@ export default function OnetOccupationPicker({
                   <Combobox.Empty>
                     <Group justify="center" gap="xs" py="xs">
                       <Loader size={14} color="brand" />
-                      <Text size="xs" c="dimmed">
+                      <Text size="sm" c="dimmed">
                         Đang tìm kiếm chức danh O*NET...
                       </Text>
                     </Group>
                   </Combobox.Empty>
                 ) : results.length === 0 ? (
                   <Combobox.Empty>
-                    <Text size="xs" c="dimmed">
+                    <Text size="sm" c="dimmed">
                       {query.trim()
                         ? 'Không tìm thấy chức danh O*NET phù hợp.'
                         : 'Gõ để tìm kiếm chức danh O*NET...'}
@@ -195,8 +195,8 @@ export default function OnetOccupationPicker({
                         <Badge
                           variant="outline"
                           color="neutral"
-                          size="xs"
-                          className={classes.mono}
+                          size="sm"
+                          ff="monospace"
                         >
                           {occ.socCode}
                         </Badge>

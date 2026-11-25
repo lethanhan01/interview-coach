@@ -15,12 +15,12 @@ import {
 } from '@mantine/core'
 import { IconAlertCircle, IconCompass, IconRefresh } from '@tabler/icons-react'
 import { onetAdminQueries } from '@/queries/onet.queries'
+import layout from '@/styles/layout.module.css'
 import type { OnetDetailSubTab } from '@/types'
 import { OnetSummaryCards } from './OnetSummaryCards'
 import { OnetTopOccupations } from './OnetTopOccupations'
 import { SfiaSkillCoverageChart } from './SfiaSkillCoverageChart'
 import { SocGroupDistributionChart } from './SocGroupDistributionChart'
-import classes from './OnetAnalyticsView.module.css'
 
 export interface OnetAnalyticsViewProps {
   onSwitchToExplorer: () => void
@@ -139,10 +139,10 @@ export function OnetAnalyticsView({
           </Text>
           <Group>
             <Button
-              size="xs"
+              size="sm"
               variant="light"
               color="danger"
-              leftSection={<IconRefresh size={14} stroke={1.5} />}
+              leftSection={<IconRefresh size={15} stroke={1.5} />}
               onClick={handleRefreshAll}
             >
               Thử lại
@@ -154,30 +154,30 @@ export function OnetAnalyticsView({
   }
 
   return (
-    <ScrollArea className={classes.scrollRoot} type="auto" offsetScrollbars>
-      <Stack gap="sm" pb="md">
+    <ScrollArea className={layout.scrollFlex} type="auto" offsetScrollbars>
+      <Stack gap="xs" pb="sm">
         <Group justify="space-between" align="center" wrap="wrap" gap="xs">
-          <Text size="xs" c="dimmed">
+          <Text size="sm" c="dimmed">
             {lastRefreshedLabel
               ? `Cập nhật gần nhất lúc ${lastRefreshedLabel}`
               : 'Dữ liệu thống kê thực từ PostgreSQL O*NET 29.1'}
           </Text>
           <Group gap="xs">
             <Button
-              size="xs"
+              size="sm"
               variant="light"
               color="neutral"
               loading={isRefreshing}
-              leftSection={<IconRefresh size={14} stroke={1.5} />}
+              leftSection={<IconRefresh size={15} stroke={1.5} />}
               onClick={handleRefreshAll}
             >
               Làm mới
             </Button>
             <Button
-              size="xs"
+              size="sm"
               variant="light"
               color="brand"
-              leftSection={<IconCompass size={14} stroke={1.5} />}
+              leftSection={<IconCompass size={15} stroke={1.5} />}
               onClick={onSwitchToExplorer}
             >
               Quay lại Khám phá

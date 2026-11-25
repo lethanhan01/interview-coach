@@ -19,8 +19,9 @@ import {
   IconShare,
   IconSparkles,
 } from '@tabler/icons-react'
+import layout from '@/styles/layout.module.css'
 import type { OnetDetailSubTab, OnetOccupationDetail } from '@/types'
-import classes from './OnetDetailShell.module.css'
+import onet from '../onet.module.css'
 
 export interface OnetDetailHeaderProps {
   detail: OnetOccupationDetail
@@ -34,7 +35,7 @@ export function OnetDetailHeader({
   onSelectDetailTab,
 }: Readonly<OnetDetailHeaderProps>) {
   return (
-    <Box className={classes.header}>
+    <Box className={`${layout.panelHeader} ${onet.detailHeader}`}>
       <Stack gap="xs">
         {/* Row 1: Badges */}
         <Group gap="xs" wrap="wrap">
@@ -100,12 +101,12 @@ export function OnetDetailHeader({
               <Button
                 variant="subtle"
                 color={copied ? 'success' : 'neutral'}
-                size="xs"
+                size="sm"
                 leftSection={
                   copied ? (
-                    <IconCheck size={14} stroke={1.5} />
+                    <IconCheck size={15} stroke={1.5} />
                   ) : (
-                    <IconShare size={14} stroke={1.5} />
+                    <IconShare size={15} stroke={1.5} />
                   )
                 }
                 onClick={copy}
@@ -124,7 +125,7 @@ export function OnetDetailHeader({
 
         {/* Row 4: 5 Subtabs Switcher */}
         <SegmentedControl
-          size="xs"
+          size="sm"
           fullWidth
           value={activeDetailTab}
           onChange={(val) => onSelectDetailTab(val as OnetDetailSubTab)}

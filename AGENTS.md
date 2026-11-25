@@ -48,9 +48,11 @@ Never guess Mantine v9 APIs or copy deprecated v6/v7/v8 patterns. Always check:
    - **Single allowed exception** for nested subtle surfaces in `*.module.css`: `light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6))`.
 8. **No Inline Border, Radius-Shorthand, or `style` Props in JSX**:
    - NEVER pass CSS border shorthands to `bd="..."`, use `bdrs="..."`, or pass `style={{...}}` in JSX.
-   - Use `<Paper withBorder radius="...">` or `<Card>` for bordered surfaces, `<Table.ScrollContainer>` for horizontal table scrolling, and `<ComponentName>.module.css` for Dropzone inner pointer-events or conditional/stateful borders (`mod={{ active, selected, focused }}` + `&[data-*]`).
-9. **Component CSS Isolation (`*.module.css` vs `client/app/globals.css`)**:
-   - Place all component/page-specific classes, hover (`@mixin hover`), `:focus-visible`, and state selectors inside `<ComponentName>.module.css`.
+   - Use `<Paper withBorder radius="...">` or `<Card>` for bordered surfaces, `<Table.ScrollContainer>` for horizontal table scrolling, and CSS Modules (`client/styles/*.module.css` or domain `*.module.css`) for Dropzone inner pointer-events or conditional/stateful borders (`mod={{ active, selected, focused }}` + `&[data-*]`).
+9. **2-Tier CSS Modules Architecture (`client/styles/` -> Domain `*.module.css` vs `client/app/globals.css`)**:
+   - **Tier 1 — Shared CSS Modules (`client/styles/`, Rule of Three)**: Always check and reuse the 4 shared CSS Modules before writing new CSS (`layout.module.css` for workspace/drawer/flex/scroll, `surfaces.module.css` for subtle/body surfaces & borders, `interactions.module.css` for focus ring/hover rows/selectable items/card links/nav links, `typography.module.css` for tabular numbers/pre-line/srOnly). Only add patterns reused across `>= 2` domains.
+   - **Tier 2 — Domain CSS Modules**: Do NOT create small per-component `<ComponentName>.module.css` files; place domain-specific styles (`@mixin hover`, `&[data-*]`, layout/widget rules) inside `components/<domain>/<domain>.module.css` (or `components/layout/app-shell.module.css`) with widget-prefixed class names, and never import CSS Modules across unrelated domains.
+   - Do NOT duplicate `light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6))` (use `surfaces.subtleSurface`) or default `&:focus-visible` rules (rely on `theme.focusClassName` in `client/theme.ts` / `interactions.focusRing`).
    - Keep `client/app/globals.css` strictly for app-wide layer declarations (`@layer mantine, components;` + `@mantine/*/styles.layer.css`), global base rules, and View Transition keyframes.
 10. **Standardized Forms, Hooks & Server State**:
     - Use `@mantine/form` (`mode: 'uncontrolled'`, `form.key('path')`, `{...form.getInputProps('path')}`, `schemaResolver(zodSchema, { sync: true })` with Zod v4) and `<Box component="form" onSubmit={form.onSubmit(...)} noValidate>`.

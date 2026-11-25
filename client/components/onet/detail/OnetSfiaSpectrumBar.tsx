@@ -23,7 +23,7 @@ import { useQuery } from '@tanstack/react-query'
 import { sfiaAdminQueries } from '@/queries/sfia.queries'
 import surfaces from '@/styles/surfaces.module.css'
 import type { OnetSfiaMapping, SfiaLevelDto } from '@/types'
-import classes from './OnetSfiaSpectrumBar.module.css'
+import onet from '../onet.module.css'
 
 export interface OnetSfiaSpectrumBarProps {
   mappings: OnetSfiaMapping[]
@@ -102,21 +102,21 @@ export function OnetSfiaSpectrumBar({
   }
 
   return (
-    <Stack gap="xs" className={classes.root}>
+    <Stack gap="xs" className={surfaces.bodySurface}>
       {/* 4 KPI Metrics */}
       <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="xs">
         <Paper p="xs" radius="sm" className={surfaces.subtleSurface}>
           <Group justify="space-between" align="center">
             <Stack gap={2}>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 Tổng kỹ năng SFIA
               </Text>
-              <Text size="lg" fw={700}>
+              <Text size="xl" fw={700}>
                 {totalCount}
               </Text>
             </Stack>
             <ThemeIcon size="sm" variant="light" color="brand">
-              <IconSparkles size={14} stroke={1.5} />
+              <IconSparkles size={15} stroke={1.5} />
             </ThemeIcon>
           </Group>
         </Paper>
@@ -124,15 +124,15 @@ export function OnetSfiaSpectrumBar({
         <Paper p="xs" radius="sm" className={surfaces.subtleSurface}>
           <Group justify="space-between" align="center">
             <Stack gap={2}>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 Tỷ lệ Cốt lõi
               </Text>
-              <Text size="lg" fw={700}>
+              <Text size="xl" fw={700}>
                 {corePercentage}%
               </Text>
             </Stack>
             <ThemeIcon size="sm" variant="light" color="warning">
-              <IconStar size={14} stroke={1.5} />
+              <IconStar size={15} stroke={1.5} />
             </ThemeIcon>
           </Group>
         </Paper>
@@ -140,15 +140,15 @@ export function OnetSfiaSpectrumBar({
         <Paper p="xs" radius="sm" className={surfaces.subtleSurface}>
           <Group justify="space-between" align="center">
             <Stack gap={2}>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 Cấp độ Trung bình
               </Text>
-              <Text size="lg" fw={700}>
+              <Text size="xl" fw={700}>
                 L{avgLevel || '—'}
               </Text>
             </Stack>
             <ThemeIcon size="sm" variant="light" color="brand">
-              <IconTrendingUp size={14} stroke={1.5} />
+              <IconTrendingUp size={15} stroke={1.5} />
             </ThemeIcon>
           </Group>
         </Paper>
@@ -156,15 +156,15 @@ export function OnetSfiaSpectrumBar({
         <Paper p="xs" radius="sm" className={surfaces.subtleSurface}>
           <Group justify="space-between" align="center">
             <Stack gap={2}>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 Tổng Trọng số
               </Text>
-              <Text size="lg" fw={700}>
+              <Text size="xl" fw={700}>
                 {totalWeight}
               </Text>
             </Stack>
             <ThemeIcon size="sm" variant="light" color="success">
-              <IconScale size={14} stroke={1.5} />
+              <IconScale size={15} stroke={1.5} />
             </ThemeIcon>
           </Group>
         </Paper>
@@ -178,24 +178,24 @@ export function OnetSfiaSpectrumBar({
           const list = skillsByLevel[lvl] ?? []
 
           return (
-            <Box key={lvl} className={classes.levelCol}>
+            <Box key={lvl} className={onet.spectrumLevelCol}>
               <Stack gap={2}>
                 <Group justify="space-between" align="center" wrap="nowrap">
-                  <Badge color={token.color} variant={token.variant} size="xs">
+                  <Badge color={token.color} variant={token.variant} size="sm">
                     L{lvl}
                   </Badge>
                   <Text size="xs" c="dimmed">
                     ({list.length})
                   </Text>
                 </Group>
-                <Text size="xs" fw={600} truncate title={levelMeta?.name}>
+                <Text size="sm" fw={600} truncate title={levelMeta?.name}>
                   {levelMeta?.nameVi ?? levelMeta?.name ?? `L${lvl}`}
                 </Text>
               </Stack>
 
               <Stack gap={4} flex={1}>
                 {list.length === 0 ? (
-                  <Text size="xs" c="dimmed" ta="center" pt="md">
+                  <Text size="sm" c="dimmed" ta="center" pt="sm">
                     —
                   </Text>
                 ) : (
@@ -203,7 +203,7 @@ export function OnetSfiaSpectrumBar({
                     <UnstyledButton
                       key={m.id}
                       onClick={() => handleSkillClick(m.skillCode)}
-                      className={classes.skillPill}
+                      className={onet.spectrumSkillPill}
                       aria-label={`Đi tới kỹ năng ${m.skillCode}`}
                     >
                       <Tooltip
@@ -212,7 +212,7 @@ export function OnetSfiaSpectrumBar({
                       >
                         <Badge
                           fullWidth
-                          size="xs"
+                          size="sm"
                           variant={m.isCore ? 'filled' : 'light'}
                           color={m.isCore ? 'brand' : 'neutral'}
                         >

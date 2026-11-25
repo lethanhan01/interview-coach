@@ -25,7 +25,7 @@ export function OnetOverviewTab({
   onSelectDetailTab,
 }: Readonly<OnetOverviewTabProps>) {
   return (
-    <Stack gap="sm">
+    <Stack gap="xs">
       {/* 4 Interactive KPI Cards + Job Zone Visual Stepper */}
       <OnetOverviewStats
         detail={detail}
@@ -33,10 +33,10 @@ export function OnetOverviewTab({
       />
 
       {/* Role Description Card */}
-      <Paper withBorder p="sm" radius="md">
+      <Paper withBorder p="xs" radius="md">
         <Stack gap="xs">
           <Group justify="space-between" align="center" wrap="nowrap">
-            <Title order={3} size="h6">
+            <Title order={3} size="h5">
               Mô tả Vai trò Nghề nghiệp
             </Title>
             <CopyButton value={detail.description} timeout={2000}>
@@ -76,7 +76,7 @@ export function OnetOverviewTab({
         icon={<IconInfoCircle size={18} />}
         title="Chuẩn hóa Đánh giá Phỏng vấn AI"
       >
-        <Text size="xs" lh="relaxed">
+        <Text size="sm" lh="relaxed">
           Dữ liệu O*NET được AI Interview Coach đối chiếu để phân tích JD thực
           tế, tự động sinh ngân hàng câu hỏi tình huống phù hợp với cấp độ Job
           Zone {detail.jobZone.zone}, và đánh giá năng lực ứng viên theo các kỹ

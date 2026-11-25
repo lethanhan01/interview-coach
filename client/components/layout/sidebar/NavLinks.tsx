@@ -11,7 +11,8 @@ import {
   UnstyledButton,
 } from '@mantine/core'
 import type { NavIconComponent } from '@/config/navigation'
-import classes from './NavLinks.module.css'
+import interactions from '@/styles/interactions.module.css'
+import appShell from '../app-shell.module.css'
 
 export interface NavLinkItem {
   href: string
@@ -57,7 +58,7 @@ export default function NavLinks({
             <UnstyledButton
               component={Link}
               href={href}
-              className={classes.railLink}
+              className={appShell.navRailLink}
               mod={{ active }}
               aria-label={label}
               aria-current={active ? 'page' : undefined}
@@ -89,7 +90,8 @@ export default function NavLinks({
           active={active}
           color="brand"
           variant="light"
-          className={classes.navLink}
+          fw={500}
+          className={interactions.navLink}
           aria-current={active ? 'page' : undefined}
           onClick={onNavigate}
         />
@@ -114,7 +116,7 @@ export default function NavLinks({
         key={href}
         component={Link}
         href={href}
-        className={classes.horizontalLink}
+        className={appShell.navHorizontalLink}
         mod={{ active }}
         aria-current={active ? 'page' : undefined}
         onClick={onNavigate}

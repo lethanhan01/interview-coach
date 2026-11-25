@@ -24,8 +24,10 @@ import {
 } from '@tabler/icons-react'
 import { adminNavigation, candidateNavigation } from '@/config/navigation'
 import { useAuth } from '@/providers/AuthProvider'
+import interactions from '@/styles/interactions.module.css'
+import surfaces from '@/styles/surfaces.module.css'
+import appShell from '../app-shell.module.css'
 import NavLinks from './NavLinks'
-import classes from './AppSidebar.module.css'
 
 export interface AppSidebarProps {
   role: 'admin' | 'candidate'
@@ -58,13 +60,13 @@ export default function AppSidebar({
   }
 
   return (
-    <Stack gap={0} className={classes.root}>
-      <Box className={classes.header} mod={{ collapsed }}>
+    <Stack gap={0} h="100%" className={surfaces.bodySurface}>
+      <Box className={appShell.sidebarHeader} mod={{ collapsed }}>
         <Anchor
           component={Link}
           href="/"
           underline="never"
-          className={classes.brandLink}
+          className={interactions.brandLink}
           onClick={onNavigate}
           aria-label="AI Mock Interview — Trang chủ"
         >
@@ -88,7 +90,7 @@ export default function AppSidebar({
         </Anchor>
       </Box>
 
-      <ScrollArea className={classes.scrollArea} type="auto">
+      <ScrollArea className={appShell.sidebarScroll} type="auto">
         <NavLinks
           items={items}
           orientation="vertical"
@@ -100,8 +102,9 @@ export default function AppSidebar({
 
       <Stack
         gap="xs"
+        p="xs"
         align={collapsed ? 'center' : 'stretch'}
-        className={classes.footer}
+        className={surfaces.borderedTop}
       >
         {collapsed ? (
           <Tooltip label="Đăng xuất" position="right" withArrow>

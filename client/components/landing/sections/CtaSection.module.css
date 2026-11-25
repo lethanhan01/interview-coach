@@ -1,9 +1,0 @@
-.section {
-  padding-bottom: rem(72px);
-}
-
-.banner {
-  /* prettier-ignore */
-  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
-  padding: rem(40px) var(--mantine-spacing-xl);
-}

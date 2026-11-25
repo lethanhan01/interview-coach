@@ -88,7 +88,7 @@ export function OnetTopOccupations({
   )
 
   return (
-    <Paper withBorder p="sm" radius="md">
+    <Paper withBorder p="xs" radius="md">
       <Stack gap="xs">
         <OnetTopOccupationsFilters
           totalCount={filteredAndSorted.length}
@@ -115,25 +115,25 @@ export function OnetTopOccupations({
         {isFetching ? (
           <Group gap="xs">
             <Loader size="xs" />
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Đang cập nhật dữ liệu nhóm ngành...
             </Text>
           </Group>
         ) : null}
 
         {paginatedItems.length === 0 ? (
-          <Paper p="lg" radius="md" className={surfaces.subtleSurface}>
+          <Paper p="md" radius="md" className={surfaces.subtleSurface}>
             <Stack align="center" gap="xs">
-              <Text size="sm" fw={600}>
+              <Text size="md" fw={600}>
                 Không tìm thấy nghề nghiệp phù hợp
               </Text>
-              <Text size="xs" c="dimmed" ta="center">
+              <Text size="sm" c="dimmed" ta="center">
                 Thử thay đổi từ khóa tìm kiếm hoặc bỏ bộ lọc nhóm ngành SOC hiện
                 tại.
               </Text>
               {searchQuery || activeGroupFilter ? (
                 <Button
-                  size="xs"
+                  size="sm"
                   variant="light"
                   onClick={() => {
                     setSearchQuery('')
@@ -156,13 +156,13 @@ export function OnetTopOccupations({
 
             {totalPages > 1 ? (
               <Group justify="space-between" align="center" wrap="wrap">
-                <Text size="xs" c="dimmed">
+                <Text size="sm" c="dimmed">
                   Hiển thị {startIndex + 1}–
                   {Math.min(startIndex + pageSize, filteredAndSorted.length)}{' '}
                   trên {filteredAndSorted.length} nghề
                 </Text>
                 <Pagination
-                  size="xs"
+                  size="sm"
                   total={totalPages}
                   value={safePage}
                   onChange={setCurrentPage}

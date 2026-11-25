@@ -4,17 +4,17 @@ import Link from 'next/link'
 import { Anchor, Box, Group, Text, ThemeIcon } from '@mantine/core'
 import { IconMicrophone } from '@tabler/icons-react'
 import { ColorSchemeToggle } from '@/components/layout/header/ColorSchemeToggle'
-import classes from './AuthLayout.module.css'
+import interactions from '@/styles/interactions.module.css'
 
 export function AuthHeader() {
   return (
-    <Box component="header" className={classes.header}>
+    <Box component="header" w="100%" px="lg" py="md">
       <Group justify="space-between" wrap="nowrap">
         <Anchor
           component={Link}
           href="/"
           underline="never"
-          className={classes.brandLink}
+          className={interactions.brandLink}
           aria-label="Interview Coach — Trang chủ"
         >
           <ThemeIcon color="brand" variant="light" size="md" radius="md">

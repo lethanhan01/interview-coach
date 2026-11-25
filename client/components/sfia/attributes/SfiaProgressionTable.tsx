@@ -17,7 +17,9 @@ import {
   getSfiaAttributeSemanticTheme,
   getSfiaLevelSemanticTheme,
 } from '@/components/sfia/sfia-theme'
-import classes from './SfiaAttributesProgressionMatrix.module.css'
+import interactions from '@/styles/interactions.module.css'
+import surfaces from '@/styles/surfaces.module.css'
+import sfia from '../sfia.module.css'
 
 export interface SfiaProgressionTableProps {
   levels: SfiaLevelResponsibility[]
@@ -42,15 +44,18 @@ export function SfiaProgressionTable({
   const normalizedQuery = trimmedQuery.toLowerCase()
 
   return (
-    <Box className={classes.tableViewport}>
+    <Box className={sfia.matrixViewport}>
       <Table
-        className={classes.matrixTable}
+        className={sfia.matrixTable}
         verticalSpacing="xs"
         horizontalSpacing="xs"
       >
         <Table.Thead>
           <Table.Tr>
-            <Table.Th scope="col" className={classes.stickyCorner}>
+            <Table.Th
+              scope="col"
+              className={`${sfia.matrixStickyCorner} ${surfaces.subtleSurface} ${sfia.progCorner}`}
+            >
               <Group justify="space-between" gap="xs" wrap="nowrap">
                 <Text size="sm" fw={700}>
                   5 Thuộc tính Chung
@@ -72,11 +77,11 @@ export function SfiaProgressionTable({
                   key={lvl.levelId}
                   scope="col"
                   aria-label={headerLabel}
-                  className={classes.stickyHeader}
+                  className={`${sfia.matrixStickyHeader} ${surfaces.subtleSurface} ${sfia.progHeader}`}
                   mod={{ selected: isSelected }}
                 >
                   <UnstyledButton
-                    className={classes.levelHeaderBtn}
+                    className={`${interactions.hoverRow} ${sfia.progLevelHeaderBtn}`}
                     onClick={() => onSelectLevel(lvl.levelId)}
                     aria-pressed={isSelected}
                     aria-label={headerLabel}
@@ -148,7 +153,10 @@ export function SfiaProgressionTable({
 
               return (
                 <Table.Tr key={attr.code}>
-                  <Table.Th scope="row" className={classes.stickyAttrCol}>
+                  <Table.Th
+                    scope="row"
+                    className={`${sfia.matrixStickyLeftCol} ${sfia.progAttrCol}`}
+                  >
                     <Stack gap={4}>
                       <Group gap="xs" wrap="nowrap">
                         <ThemeIcon
@@ -199,7 +207,7 @@ export function SfiaProgressionTable({
                     return (
                       <Table.Td
                         key={lvl.levelId}
-                        className={classes.statementCell}
+                        className={sfia.progStatementCell}
                         mod={{ selected: isSelected, matched: isMatched }}
                       >
                         <Stack gap={4}>

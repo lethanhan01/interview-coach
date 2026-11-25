@@ -20,6 +20,7 @@ import type { SfiaLevelResponsibility, SfiaSkillDetail } from '@/types'
 import { buildKeyedOnetMappings } from '@/components/sfia/sfia-onet-mapping.utils'
 import { getSfiaLevelSemanticTheme } from '@/components/sfia/sfia-theme'
 import surfaces from '@/styles/surfaces.module.css'
+import typography from '@/styles/typography.module.css'
 
 export interface SfiaInspectionDetailsProps {
   detail: SfiaSkillDetail
@@ -55,8 +56,8 @@ export function SfiaInspectionDetails({
   const isBlindSpot = levelQuestions.length === 0
 
   return (
-    <Stack gap="sm">
-      <Paper withBorder radius="md" p="sm" className={surfaces.subtleSurface}>
+    <Stack gap="xs">
+      <Paper withBorder radius="md" p="xs" className={surfaces.subtleSurface}>
         <Group justify="space-between" align="center" wrap="wrap" gap="xs">
           <Group gap="xs" align="center">
             <Badge
@@ -66,7 +67,7 @@ export function SfiaInspectionDetails({
             >
               Cấp độ {levelId}
             </Badge>
-            <Text size="sm" fw={700}>
+            <Text size="md" fw={700}>
               {levelTitle}
             </Text>
           </Group>
@@ -91,40 +92,40 @@ export function SfiaInspectionDetails({
         <Blockquote
           color="brand"
           icon={<IconQuote size={16} stroke={1.5} />}
-          p="sm"
+          p="xs"
           radius="md"
         >
           <Stack gap={4}>
             <Text size="xs" fw={700} tt="uppercase" c="dimmed">
               Tinh hoa cấp độ
             </Text>
-            <Text size="xs" fs="italic">
+            <Text size="sm" fs="italic" lh={1.5}>
               &ldquo;{levelStatement.essence}&rdquo;
             </Text>
           </Stack>
         </Blockquote>
       )}
 
-      <Paper withBorder radius="md" p="sm">
+      <Paper withBorder radius="md" p="xs">
         <Stack gap="xs">
           <Group gap="xs" align="center">
             <IconBook size={16} stroke={1.5} />
-            <Text size="xs" fw={700}>
+            <Text size="sm" fw={700}>
               Tuyên bố hành vi chuẩn SFIA 9
             </Text>
           </Group>
-          <Text size="xs" lh={1.6} className={surfaces.preLine}>
+          <Text size="sm" lh={1.6} className={typography.preLine}>
             {levelStatement?.description ||
               `Tiêu chuẩn năng lực cho ${detail.name} tại Cấp độ ${levelId}.`}
           </Text>
         </Stack>
       </Paper>
 
-      <Paper withBorder radius="md" p="sm">
+      <Paper withBorder radius="md" p="xs">
         <Stack gap="xs">
           <Group gap="xs" align="center">
             <IconHelpCircle size={16} stroke={1.5} />
-            <Text size="xs" fw={700}>
+            <Text size="sm" fw={700}>
               Ngân hàng câu hỏi ({levelQuestions.length})
             </Text>
           </Group>
@@ -135,7 +136,7 @@ export function SfiaInspectionDetails({
               icon={<IconAlertTriangle size={16} stroke={1.5} />}
               title="Cảnh báo điểm mù"
             >
-              <Text size="xs">
+              <Text size="sm">
                 Chưa có câu hỏi phỏng vấn nào cho {detail.code} ở Cấp độ{' '}
                 {levelId}. Nhấn &ldquo;Tạo câu hỏi&rdquo; bên dưới để bổ sung.
               </Text>
@@ -160,11 +161,11 @@ export function SfiaInspectionDetails({
                         <Text size="xs" ff="monospace" c="dimmed">
                           {q.id}
                         </Text>
-                        <Badge color={diff.color} variant="light" size="xs">
+                        <Badge color={diff.color} variant="light" size="sm">
                           {diff.label}
                         </Badge>
                       </Group>
-                      <Text size="xs" fw={500} lineClamp={2}>
+                      <Text size="sm" fw={500} lineClamp={2}>
                         {q.questionText}
                       </Text>
                     </Stack>
@@ -172,7 +173,7 @@ export function SfiaInspectionDetails({
                 )
               })}
               {levelQuestions.length > 3 && (
-                <Text size="xs" c="dimmed" ta="center" fs="italic">
+                <Text size="sm" c="dimmed" ta="center" fs="italic">
                   và {levelQuestions.length - 3} câu hỏi khác...
                 </Text>
               )}
@@ -181,17 +182,17 @@ export function SfiaInspectionDetails({
         </Stack>
       </Paper>
 
-      <Paper withBorder radius="md" p="sm">
+      <Paper withBorder radius="md" p="xs">
         <Stack gap="xs">
           <Group gap="xs" align="center">
             <IconBriefcase size={16} stroke={1.5} />
-            <Text size="xs" fw={700}>
+            <Text size="sm" fw={700}>
               Nghề O*NET yêu cầu cấp độ này ({levelOnetMappings.length})
             </Text>
           </Group>
 
           {levelOnetMappings.length === 0 ? (
-            <Text size="xs" c="dimmed" fs="italic">
+            <Text size="sm" c="dimmed" fs="italic">
               Chưa có nghề O*NET nào ánh xạ trực tiếp ở cấp độ này.
             </Text>
           ) : (
@@ -206,16 +207,16 @@ export function SfiaInspectionDetails({
                 >
                   <Group justify="space-between" align="center" wrap="nowrap">
                     <Group gap="xs" align="center" wrap="nowrap" miw={0}>
-                      <Text size="xs" ff="monospace" fw={600}>
+                      <Text size="sm" ff="monospace" fw={600}>
                         {m.socCode}
                       </Text>
-                      <Text size="xs" truncate>
+                      <Text size="sm" truncate>
                         {m.occupationTitle}
                       </Text>
                     </Group>
                     <Group gap={6} align="center" wrap="nowrap">
                       {m.isCore && (
-                        <Badge color="brand" variant="light" size="xs">
+                        <Badge color="brand" variant="light" size="sm">
                           Cốt lõi
                         </Badge>
                       )}

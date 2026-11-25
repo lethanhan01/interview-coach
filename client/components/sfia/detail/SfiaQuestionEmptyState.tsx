@@ -18,23 +18,23 @@ export function SfiaQuestionEmptyState({
 }: Readonly<SfiaQuestionEmptyStateProps>) {
   if (variant === 'blind-spot') {
     return (
-      <Paper withBorder p="xl" radius="md" ta="center">
+      <Paper withBorder p="md" radius="md" ta="center">
         <Stack align="center" gap="xs">
           <ThemeIcon color="danger" variant="light" size="lg" radius="xl">
             <IconAlertTriangle size={20} stroke={1.5} />
           </ThemeIcon>
-          <Text fw={700} size="sm">
+          <Text fw={700} size="md">
             Chưa có câu hỏi nào cho kỹ năng này
           </Text>
-          <Text size="xs" c="dimmed" maw={420}>
+          <Text size="sm" c="dimmed" maw={440}>
             Kỹ năng {skillCode} hiện đang là điểm mù trong ngân hàng câu hỏi
             phỏng vấn. Tạo câu hỏi đầu tiên để lấp đầy độ phủ.
           </Text>
           <Button
-            size="xs"
+            size="sm"
             color="brand"
             onClick={onOpenCreateModal}
-            leftSection={<IconPlus size={14} stroke={1.5} />}
+            leftSection={<IconPlus size={15} stroke={1.5} />}
           >
             Tạo câu hỏi đầu tiên
           </Button>
@@ -44,18 +44,18 @@ export function SfiaQuestionEmptyState({
   }
 
   return (
-    <Paper withBorder p="xl" radius="md" ta="center">
+    <Paper withBorder p="md" radius="md" ta="center">
       <Stack align="center" gap="xs">
-        <IconSearch size={28} stroke={1.5} />
-        <Text fw={700} size="sm">
+        <IconSearch size={26} stroke={1.5} />
+        <Text fw={700} size="md">
           Không tìm thấy câu hỏi phù hợp
         </Text>
-        <Text size="xs" c="dimmed">
+        <Text size="sm" c="dimmed">
           Thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh các bộ lọc.
         </Text>
         <Button
           variant="outline"
-          size="xs"
+          size="sm"
           color="neutral"
           onClick={onResetFilters}
         >

@@ -1,10 +1,10 @@
 'use client'
 
 import { useDisclosure } from '@mantine/hooks'
-import { Badge, Button, Drawer, Group, Paper, Stack, Text } from '@mantine/core'
+import { Badge, Button, Group, Stack, Text } from '@mantine/core'
 import { IconListDetails } from '@tabler/icons-react'
+import { AdminMobileSidebarDrawer } from '@/components/admin/shared/AdminMobileSidebarDrawer'
 import { OnetSidebar } from './OnetSidebar'
-import classes from './OnetMobileDrawer.module.css'
 
 export interface OnetMobileDrawerProps {
   selectedSoc: string
@@ -22,54 +22,46 @@ export function OnetMobileDrawer({
   const [opened, { open, close }] = useDisclosure(false)
 
   return (
-    <>
-      <Paper withBorder p="xs" radius="md" hiddenFrom="lg">
+    <AdminMobileSidebarDrawer
+      opened={opened}
+      onClose={close}
+      drawerPosition="left"
+      drawerSize="85%"
+      drawerPadding={0}
+      drawerTitle="Danh mục nghề nghiệp O*NET"
+      triggerBar={
         <Group justify="space-between" wrap="nowrap" gap="xs">
           <Stack gap={0} miw={0}>
             <Group gap={6} wrap="nowrap">
-              <Badge color="brand" variant="outline" size="xs">
+              <Badge color="brand" variant="outline" size="sm">
                 {selectedSoc}
               </Badge>
               {selectedTitle ? (
-                <Text size="xs" fw={600} lineClamp={1}>
+                <Text size="sm" fw={600} lineClamp={1}>
                   {selectedTitle}
                 </Text>
               ) : null}
             </Group>
           </Stack>
           <Button
-            size="xs"
+            size="sm"
             variant="light"
-            leftSection={<IconListDetails size={14} stroke={1.5} />}
+            leftSection={<IconListDetails size={15} stroke={1.5} />}
             onClick={open}
           >
             Danh mục nghề
           </Button>
         </Group>
-      </Paper>
-
-      <Drawer
-        opened={opened}
-        onClose={close}
-        position="left"
-        size="85%"
-        padding={0}
-        title="Danh mục nghề nghiệp O*NET"
-        hiddenFrom="lg"
-        classNames={{
-          content: classes.drawerContent,
-          body: classes.drawerBody,
+      }
+    >
+      <OnetSidebar
+        selectedSoc={selectedSoc}
+        onSelectSoc={(socCode) => {
+          onSelectSoc(socCode)
+          close()
         }}
-      >
-        <OnetSidebar
-          selectedSoc={selectedSoc}
-          onSelectSoc={(socCode) => {
-            onSelectSoc(socCode)
-            close()
-          }}
-          refreshTrigger={refreshTrigger}
-        />
-      </Drawer>
-    </>
+        refreshTrigger={refreshTrigger}
+      />
+    </AdminMobileSidebarDrawer>
   )
 }

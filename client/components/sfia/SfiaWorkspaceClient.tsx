@@ -1,21 +1,39 @@
 'use client'
 
 import { useState } from 'react'
-import { Alert, Box, Button, ScrollArea, Skeleton, Stack } from '@mantine/core'
-import { IconAlertCircle, IconRefresh } from '@tabler/icons-react'
-import type { SfiaSkillSummary } from '@/types'
+import {
+  Alert,
+  Badge,
+  Box,
+  Button,
+  Group,
+  ScrollArea,
+  Skeleton,
+  Stack,
+  Text,
+} from '@mantine/core'
+import {
+  IconAlertCircle,
+  IconChartBar,
+  IconFolderRoot,
+  IconGridDots,
+  IconRefresh,
+  IconShieldCheck,
+  IconStack2,
+} from '@tabler/icons-react'
+import { AdminWorkspaceHeader } from '@/components/admin/shared/AdminWorkspaceHeader'
+import layout from '@/styles/layout.module.css'
+import type { SfiaMainTab, SfiaSkillSummary } from '@/types'
 import { SfiaGenericAttributesView } from './attributes/SfiaGenericAttributesView'
 import { SfiaCreateQuestionModal } from './detail/SfiaCreateQuestionModal'
 import { SfiaAnalyticsModeView } from './SfiaAnalyticsModeView'
 import { SfiaMatrixModeView } from './SfiaMatrixModeView'
 import { SfiaSkillsModeView } from './SfiaSkillsModeView'
-import { SfiaTopBar } from './SfiaTopBar'
 import { useSfiaParams } from './useSfiaParams'
 import {
   toSfiaErrorMessage,
   useSfiaWorkspaceQueries,
 } from './useSfiaWorkspaceQueries'
-import classes from './SfiaWorkspaceClient.module.css'
 
 interface CreateQuestionTarget {
   skillCode: string
@@ -81,11 +99,72 @@ export function SfiaWorkspaceClient() {
   }
 
   return (
-    <Box component="section" className={classes.workspace}>
-      <SfiaTopBar
+    <Box className={layout.workspace}>
+      <AdminWorkspaceHeader
+        icon={<IconStack2 size={20} stroke={1.5} aria-hidden="true" />}
+        title="Khung Năng Lực SFIA 9"
+        subtitle="Quản trị cây kỹ năng, ma trận 2D, 5 thuộc tính chung và độ phủ ngân hàng câu hỏi"
+        badges={
+          <>
+            <Badge color="brand" variant="light" size="sm">
+              Quản trị
+            </Badge>
+            {skills.length > 0 ? (
+              <Badge color="neutral" variant="outline" size="sm">
+                {skills.length} kỹ năng
+              </Badge>
+            ) : null}
+          </>
+        }
         activeTab={activeTab}
-        onTabChange={setTab}
-        totalSkills={skills.length > 0 ? skills.length : undefined}
+        onTabChange={(val) => setTab(val as SfiaMainTab)}
+        tabSwitcherAriaLabel="Chuyển chế độ làm việc SFIA 9"
+        tabs={[
+          {
+            value: 'taxonomy',
+            label: (
+              <Group gap={6} wrap="nowrap" justify="center">
+                <IconFolderRoot size={15} stroke={1.5} aria-hidden="true" />
+                <Text span size="sm" fw={600}>
+                  Cây kỹ năng
+                </Text>
+              </Group>
+            ),
+          },
+          {
+            value: 'matrix',
+            label: (
+              <Group gap={6} wrap="nowrap" justify="center">
+                <IconGridDots size={15} stroke={1.5} aria-hidden="true" />
+                <Text span size="sm" fw={600}>
+                  Ma trận 2D
+                </Text>
+              </Group>
+            ),
+          },
+          {
+            value: 'attributes',
+            label: (
+              <Group gap={6} wrap="nowrap" justify="center">
+                <IconShieldCheck size={15} stroke={1.5} aria-hidden="true" />
+                <Text span size="sm" fw={600}>
+                  Thuộc tính chung
+                </Text>
+              </Group>
+            ),
+          },
+          {
+            value: 'analytics',
+            label: (
+              <Group gap={6} wrap="nowrap" justify="center">
+                <IconChartBar size={15} stroke={1.5} aria-hidden="true" />
+                <Text span size="sm" fw={600}>
+                  Phân tích độ phủ
+                </Text>
+              </Group>
+            ),
+          },
+        ]}
       />
 
       {coreError ? (
@@ -162,7 +241,7 @@ export function SfiaWorkspaceClient() {
           ) : null}
 
           {activeTab === 'attributes' ? (
-            <Box className={classes.scrollPane}>
+            <Box className={layout.scrollPane}>
               <ScrollArea flex={1} type="auto">
                 <SfiaGenericAttributesView
                   levels={levels}

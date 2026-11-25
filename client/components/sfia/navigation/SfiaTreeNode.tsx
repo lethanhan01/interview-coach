@@ -3,9 +3,11 @@
 import { Badge, Box, Group, Text, Tooltip, UnstyledButton } from '@mantine/core'
 import type { RenderTreeNodePayload } from '@mantine/core'
 import { IconChevronRight, IconFolderRoot } from '@tabler/icons-react'
+import interactions from '@/styles/interactions.module.css'
+import layout from '@/styles/layout.module.css'
 import type { SfiaSkillSummary } from '@/types'
+import sfia from '../sfia.module.css'
 import { getSfiaCategorySemanticTheme } from '../sfia-theme'
-import classes from './SfiaSidebarTree.module.css'
 
 export interface SfiaTreeNodeProps {
   payload: RenderTreeNodePayload
@@ -45,7 +47,11 @@ export function SfiaTreeNode({
         wrap="nowrap"
         justify="space-between"
         gap="xs"
-        className={[payload.elementProps.className, classes.categoryNode]
+        className={[
+          payload.elementProps.className,
+          interactions.hoverRow,
+          sfia.treeCategoryNode,
+        ]
           .filter(Boolean)
           .join(' ')}
       >
@@ -53,10 +59,10 @@ export function SfiaTreeNode({
           <IconChevronRight
             size={15}
             stroke={1.5}
-            className={`${classes.chevron} ${classes.iconShrink}`}
+            className={sfia.treeChevron}
             data-expanded={payload.expanded}
           />
-          <CategoryIcon size={16} stroke={1.5} className={classes.iconShrink} />
+          <CategoryIcon size={16} stroke={1.5} className={layout.shrink0} />
           <Text size="sm" fw={700} truncate>
             {payload.node.label}
           </Text>
@@ -65,7 +71,7 @@ export function SfiaTreeNode({
           size="sm"
           variant="light"
           color={theme.color}
-          className={classes.countBadge}
+          className={layout.shrink0}
         >
           {nodeProps.count ?? 0}
         </Badge>
@@ -80,7 +86,11 @@ export function SfiaTreeNode({
         wrap="nowrap"
         justify="space-between"
         gap="xs"
-        className={[payload.elementProps.className, classes.subcategoryNode]
+        className={[
+          payload.elementProps.className,
+          interactions.hoverRow,
+          sfia.treeSubcategoryNode,
+        ]
           .filter(Boolean)
           .join(' ')}
       >
@@ -88,14 +98,10 @@ export function SfiaTreeNode({
           <IconChevronRight
             size={14}
             stroke={1.5}
-            className={`${classes.chevron} ${classes.iconShrink}`}
+            className={sfia.treeChevron}
             data-expanded={payload.expanded}
           />
-          <IconFolderRoot
-            size={15}
-            stroke={1.5}
-            className={classes.iconShrink}
-          />
+          <IconFolderRoot size={15} stroke={1.5} className={layout.shrink0} />
           <Text size="sm" fw={600} truncate>
             {payload.node.label}
           </Text>
@@ -104,7 +110,7 @@ export function SfiaTreeNode({
           size="xs"
           variant="outline"
           color="neutral"
-          className={classes.countBadge}
+          className={layout.shrink0}
         >
           {nodeProps.count ?? 0}
         </Badge>
@@ -123,7 +129,7 @@ export function SfiaTreeNode({
   return (
     <Box
       {...payload.elementProps}
-      className={[payload.elementProps.className, classes.skillWrapper]
+      className={[payload.elementProps.className, sfia.treeSkillWrapper]
         .filter(Boolean)
         .join(' ')}
     >
@@ -136,7 +142,7 @@ export function SfiaTreeNode({
         <UnstyledButton
           id={`sfia-tree-skill-${skill.code}`}
           aria-label={`${skill.code} ${skill.name}`}
-          className={classes.skillButton}
+          className={interactions.selectableItem}
           mod={{ selected: isSelected }}
           onClick={() => onSelectSkill(skill.code, effectiveLevel)}
         >
@@ -145,11 +151,18 @@ export function SfiaTreeNode({
             variant="light"
             color={theme.color}
             ff="monospace"
-            className={classes.skillCodeBadge}
+            className={sfia.treeSkillCodeBadge}
           >
             {skill.code}
           </Badge>
-          <Text size="sm" fw={isSelected ? 600 : 400} truncate miw={0} flex={1}>
+          <Text
+            size="sm"
+            fw={isSelected ? 600 : 400}
+            c={isSelected ? 'brand' : undefined}
+            truncate
+            miw={0}
+            flex={1}
+          >
             {skill.name}
           </Text>
         </UnstyledButton>

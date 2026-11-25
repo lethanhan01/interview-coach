@@ -42,24 +42,24 @@ export function OnetSfiaSummaryBar({
   isMutating = false,
 }: Readonly<OnetSfiaSummaryBarProps>) {
   return (
-    <Paper withBorder p="sm" radius="md">
+    <Paper withBorder p="xs" radius="md">
       <Stack gap="xs">
         <Group justify="space-between" align="center" wrap="wrap">
           <Group gap="xs">
-            <Title order={3} size="h6">
+            <Title order={3} size="h5">
               Danh sách Ánh xạ Kỹ năng SFIA 9
             </Title>
-            <Badge color="neutral" variant="outline" size="xs">
+            <Badge color="neutral" variant="outline" size="sm">
               {totalCount} kỹ năng
             </Badge>
           </Group>
 
           <Group gap="xs">
             <Button
-              size="xs"
+              size="sm"
               variant="outline"
               color="danger"
-              leftSection={<IconRotate size={14} stroke={1.5} />}
+              leftSection={<IconRotate size={15} stroke={1.5} />}
               onClick={onOpenResetModal}
               disabled={isMutating}
             >
@@ -67,9 +67,9 @@ export function OnetSfiaSummaryBar({
             </Button>
 
             <Button
-              size="xs"
+              size="sm"
               color="brand"
-              leftSection={<IconPlus size={14} stroke={1.5} />}
+              leftSection={<IconPlus size={15} stroke={1.5} />}
               onClick={onOpenAddModal}
               disabled={isMutating}
             >
@@ -80,31 +80,31 @@ export function OnetSfiaSummaryBar({
 
         <Group justify="space-between" align="center" wrap="wrap">
           <TextInput
-            size="xs"
+            size="sm"
             flex={1}
             miw={220}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.currentTarget.value)}
             placeholder="Tìm kiếm mã hoặc tên kỹ năng SFIA..."
             aria-label="Tìm kiếm kỹ năng SFIA"
-            leftSection={<IconSearch size={14} stroke={1.5} />}
+            leftSection={<IconSearch size={15} stroke={1.5} />}
             rightSection={
               searchQuery ? (
                 <ActionIcon
-                  size="xs"
+                  size="sm"
                   variant="subtle"
                   color="neutral"
                   aria-label="Xóa tìm kiếm"
                   onClick={() => onSearchChange('')}
                 >
-                  <IconX size={12} stroke={1.5} />
+                  <IconX size={14} stroke={1.5} />
                 </ActionIcon>
               ) : null
             }
           />
 
           <Group gap="xs">
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Hiển thị {filteredCount} / {totalCount}
             </Text>
 
@@ -116,15 +116,15 @@ export function OnetSfiaSummaryBar({
               }
             >
               <Group gap="xs">
-                <Chip value="all" size="xs" variant="outline">
+                <Chip value="all" size="sm" variant="outline">
                   Tất cả ({totalCount})
                 </Chip>
-                <Chip value="core" size="xs" variant="outline" color="brand">
+                <Chip value="core" size="sm" variant="outline" color="brand">
                   Cốt lõi ({coreCount})
                 </Chip>
                 <Chip
                   value="secondary"
-                  size="xs"
+                  size="sm"
                   variant="outline"
                   color="neutral"
                 >

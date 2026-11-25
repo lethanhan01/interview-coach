@@ -15,7 +15,8 @@ import {
   IconFileDescription,
   IconMicrophone,
 } from '@tabler/icons-react'
-import classes from './WorkflowSection.module.css'
+import surfaces from '@/styles/surfaces.module.css'
+import landing from '../landing.module.css'
 
 const WORKFLOW_STEPS = [
   {
@@ -58,7 +59,10 @@ const PLATFORM_HIGHLIGHTS = [
 
 export function WorkflowSection() {
   return (
-    <Box component="section" className={classes.section}>
+    <Box
+      component="section"
+      className={`${landing.workflowSection} ${surfaces.subtleSurface}`}
+    >
       <Container size="lg">
         <Stack gap="xl">
           <Stack align="center" gap="xs">
@@ -81,7 +85,7 @@ export function WorkflowSection() {
                 withBorder
                 radius="md"
                 p="lg"
-                className={classes.stepCard}
+                className={surfaces.bodySurface}
               >
                 <Stack gap="sm">
                   <Group justify="space-between">
@@ -115,7 +119,7 @@ export function WorkflowSection() {
                 withBorder
                 radius="md"
                 p="md"
-                className={classes.highlightCard}
+                className={surfaces.bodySurface}
               >
                 <Stack gap={4}>
                   <Text fw={700} size="sm" c="brand">

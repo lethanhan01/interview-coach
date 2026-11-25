@@ -23,7 +23,7 @@ import {
 } from '@tabler/icons-react'
 import typography from '@/styles/typography.module.css'
 import type { SfiaCoverageStats } from '@/types'
-import classes from './SfiaAnalytics.module.css'
+import sfia from '../sfia.module.css'
 
 export interface SfiaAnalyticsKpisProps {
   stats: SfiaCoverageStats
@@ -50,10 +50,10 @@ function CoverageRingCard({
   footer,
 }: Readonly<CoverageRingCardProps>) {
   return (
-    <Paper withBorder p="md" radius="md">
+    <Paper withBorder p="sm" radius="md">
       <Stack justify="space-between" gap="xs" h="100%">
         <Group justify="space-between" align="center" wrap="nowrap">
-          <Text size="xs" fw={600} c="dimmed">
+          <Text size="sm" fw={600} c="dimmed">
             {title}
           </Text>
           <ThemeIcon size="md" radius="md" variant="light" color={color}>
@@ -83,14 +83,14 @@ function CoverageRingCard({
           <Stack gap={2} miw={0}>
             <Group gap={4} align="baseline" wrap="nowrap">
               <Text
-                size="lg"
+                size="xl"
                 fw={800}
                 c={color}
                 className={typography.tabularNums}
               >
                 {rate}%
               </Text>
-              <Text size="xs" c="dimmed" className={typography.tabularNums}>
+              <Text size="sm" c="dimmed" className={typography.tabularNums}>
                 {ratioText}
               </Text>
             </Group>
@@ -118,11 +118,11 @@ export function SfiaAnalyticsKpis({
   const blindColor = hasBlindSpots ? 'danger' : 'success'
 
   return (
-    <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="sm">
-      <Paper withBorder p="md" radius="md">
+    <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="xs">
+      <Paper withBorder p="sm" radius="md">
         <Stack justify="space-between" gap="xs" h="100%">
           <Group justify="space-between" align="center" wrap="nowrap">
-            <Text size="xs" fw={600} c="dimmed">
+            <Text size="sm" fw={600} c="dimmed">
               Tổng kỹ năng SFIA 9
             </Text>
             <ThemeIcon size="md" radius="md" variant="light" color="brand">
@@ -138,15 +138,15 @@ export function SfiaAnalyticsKpis({
                   decimalSeparator=","
                 />
               </Text>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 kỹ năng
               </Text>
             </Group>
             <Group gap={6} wrap="wrap">
-              <Badge size="xs" variant="light" color="brand">
+              <Badge size="sm" variant="light" color="brand">
                 {stats.totalCategories} Danh mục
               </Badge>
-              <Badge size="xs" variant="outline" color="neutral">
+              <Badge size="sm" variant="outline" color="neutral">
                 {stats.totalSubcategories} Phân nhóm
               </Badge>
             </Group>
@@ -162,7 +162,7 @@ export function SfiaAnalyticsKpis({
         ratioText={`(${stats.skillsWithQuestions}/${stats.totalSkills})`}
         tooltip={`${stats.skillsWithQuestions}/${stats.totalSkills} kỹ năng có câu hỏi (${questionRate}%)`}
         footer={
-          <Text size="xs" c="dimmed" className={typography.tabularNums}>
+          <Text size="sm" c="dimmed" className={typography.tabularNums}>
             <NumberFormatter
               prefix="Tổng số câu hỏi: "
               value={stats.totalQuestions}
@@ -181,7 +181,7 @@ export function SfiaAnalyticsKpis({
         ratioText={`(${stats.skillsWithOnet}/${stats.totalSkills})`}
         tooltip={`${stats.skillsWithOnet}/${stats.totalSkills} kỹ năng gắn nghề O*NET (${onetRate}%)`}
         footer={
-          <Text size="xs" c="dimmed">
+          <Text size="sm" c="dimmed">
             Chuẩn tham chiếu O*NET SOC
           </Text>
         }
@@ -190,12 +190,12 @@ export function SfiaAnalyticsKpis({
       <UnstyledButton
         onClick={onScrollToBlindSpots}
         title="Nhấp để cuộn nhanh đến Bảng Điểm mù"
-        className={classes.blindSpotCard}
+        className={sfia.analyticsBlindSpotCard}
         mod={{ clear: !hasBlindSpots || undefined }}
       >
         <Stack justify="space-between" gap="xs" h="100%">
           <Group justify="space-between" align="center" wrap="nowrap">
-            <Text size="xs" fw={700} c={blindColor}>
+            <Text size="sm" fw={700} c={blindColor}>
               Điểm mù cần hành động
             </Text>
             <ThemeIcon size="md" radius="md" variant="light" color={blindColor}>
@@ -216,19 +216,19 @@ export function SfiaAnalyticsKpis({
                   decimalSeparator=","
                 />
               </Text>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 kỹ năng (0 câu hỏi)
               </Text>
             </Group>
             <Group justify="space-between" align="center" wrap="nowrap">
-              <Badge size="xs" variant="filled" color={blindColor}>
+              <Badge size="sm" variant="filled" color={blindColor}>
                 {hasBlindSpots ? 'Ưu tiên bổ sung' : 'Đã phủ đầy đủ'}
               </Badge>
               <Group gap={2} wrap="nowrap">
-                <Text size="xs" fw={600} c={blindColor}>
+                <Text size="sm" fw={600} c={blindColor}>
                   Xem bảng
                 </Text>
-                <IconArrowUpRight size={14} stroke={1.5} />
+                <IconArrowUpRight size={15} stroke={1.5} />
               </Group>
             </Group>
           </Stack>

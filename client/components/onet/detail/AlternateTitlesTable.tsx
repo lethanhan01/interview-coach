@@ -39,7 +39,7 @@ export function AlternateTitlesTable({
   return (
     <Stack gap="xs">
       <Group justify="space-between" align="center" wrap="wrap">
-        <Text size="xs" c="dimmed">
+        <Text size="sm" c="dimmed">
           Hiển thị {(currentPage - 1) * pageSize + 1} -{' '}
           {Math.min(currentPage * pageSize, total)} trong tổng số {total} chức
           danh
@@ -48,14 +48,14 @@ export function AlternateTitlesTable({
         <CopyButton value={allPageTitles} timeout={2000}>
           {({ copied, copy }) => (
             <Button
-              size="xs"
+              size="sm"
               variant="subtle"
               color={copied ? 'success' : 'neutral'}
               leftSection={
                 copied ? (
-                  <IconCheck size={14} stroke={1.5} />
+                  <IconCheck size={15} stroke={1.5} />
                 ) : (
-                  <IconCopy size={14} stroke={1.5} />
+                  <IconCopy size={15} stroke={1.5} />
                 )
               }
               onClick={copy}
@@ -68,12 +68,12 @@ export function AlternateTitlesTable({
 
       <Paper withBorder radius="md">
         <Table.ScrollContainer minWidth={350}>
-          <Table verticalSpacing="xs" horizontalSpacing="sm">
+          <Table verticalSpacing="xs" horizontalSpacing="xs">
             <Table.Thead>
               <Table.Tr>
                 <Table.Th w={60}>STT</Table.Th>
                 <Table.Th>Chức danh tương đương</Table.Th>
-                <Table.Th w={80} ta="right">
+                <Table.Th w={88} ta="right">
                   Sao chép
                 </Table.Th>
               </Table.Tr>
@@ -84,12 +84,12 @@ export function AlternateTitlesTable({
                 return (
                   <Table.Tr key={`${title}-${index}`}>
                     <Table.Td>
-                      <Text size="xs" c="dimmed" ff="monospace">
+                      <Text size="sm" c="dimmed" ff="monospace">
                         #{globalIndex}
                       </Text>
                     </Table.Td>
                     <Table.Td>
-                      <Highlight highlight={searchQuery} size="xs" fw={500}>
+                      <Highlight highlight={searchQuery} size="sm" fw={500}>
                         {title}
                       </Highlight>
                     </Table.Td>
@@ -101,16 +101,16 @@ export function AlternateTitlesTable({
                             withArrow
                           >
                             <ActionIcon
-                              size="xs"
+                              size="sm"
                               variant="subtle"
                               color={copied ? 'success' : 'neutral'}
                               onClick={copy}
                               aria-label={`Sao chép chức danh ${title}`}
                             >
                               {copied ? (
-                                <IconCheck size={14} stroke={1.5} />
+                                <IconCheck size={15} stroke={1.5} />
                               ) : (
-                                <IconCopy size={14} stroke={1.5} />
+                                <IconCopy size={15} stroke={1.5} />
                               )}
                             </ActionIcon>
                           </Tooltip>
@@ -131,7 +131,7 @@ export function AlternateTitlesTable({
             total={totalPages}
             value={currentPage}
             onChange={onPageChange}
-            size="xs"
+            size="sm"
           />
         </Group>
       ) : null}

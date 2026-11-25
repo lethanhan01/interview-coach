@@ -1,0 +1,87 @@
+/* VoiceWaveform */
+.waveformBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mantine-spacing-xs);
+  height: rem(56px);
+}
+
+.waveformBar {
+  width: rem(6px);
+  height: rem(36px);
+  border-radius: var(--mantine-radius-xl);
+  background-color: var(--mantine-primary-color-filled);
+  transform-origin: center;
+  transform: scaleY(0.2);
+  transition: transform 80ms ease-out;
+
+  &[data-level='1'] {
+    transform: scaleY(0.15);
+  }
+
+  &[data-level='2'] {
+    transform: scaleY(0.25);
+  }
+
+  &[data-level='3'] {
+    transform: scaleY(0.35);
+  }
+
+  &[data-level='4'] {
+    transform: scaleY(0.45);
+  }
+
+  &[data-level='5'] {
+    transform: scaleY(0.55);
+  }
+
+  &[data-level='6'] {
+    transform: scaleY(0.65);
+  }
+
+  &[data-level='7'] {
+    transform: scaleY(0.75);
+  }
+
+  &[data-level='8'] {
+    transform: scaleY(0.85);
+  }
+
+  &[data-level='9'] {
+    transform: scaleY(0.92);
+  }
+
+  &[data-level='10'] {
+    transform: scaleY(1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.recordingDot {
+  width: rem(10px);
+  height: rem(10px);
+  border-radius: var(--mantine-radius-xl);
+  background-color: var(--mantine-color-danger-filled);
+  animation: voice-dot-pulse 1.2s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes voice-dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(1.25);
+  }
+}

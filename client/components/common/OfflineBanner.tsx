@@ -12,7 +12,7 @@ import {
 } from '@mantine/core'
 import { useNetwork } from '@mantine/hooks'
 import { IconRefresh, IconWifiOff } from '@tabler/icons-react'
-import classes from './OfflineBanner.module.css'
+import common from './common.module.css'
 
 export interface OfflineBannerProps {
   onRetry?: () => void
@@ -32,9 +32,15 @@ export function OfflineBanner({ onRetry }: Readonly<OfflineBannerProps>) {
   }
 
   return (
-    <Box className={classes.root} role="alert" aria-live="assertive">
+    <Box className={common.offlineOverlay} role="alert" aria-live="assertive">
       <Overlay blur={4} backgroundOpacity={0.75} zIndex={1} />
-      <Paper withBorder shadow="md" p="xl" radius="lg" className={classes.card}>
+      <Paper
+        withBorder
+        shadow="md"
+        p="xl"
+        radius="lg"
+        className={common.offlineCard}
+      >
         <Stack align="center" gap="md">
           <ThemeIcon color="warning" variant="light" size={56} radius="md">
             <IconWifiOff size={28} stroke={1.5} aria-hidden="true" />

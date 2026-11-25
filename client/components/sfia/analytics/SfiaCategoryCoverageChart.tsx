@@ -19,7 +19,7 @@ import { getSfiaCategorySemanticTheme } from '@/components/sfia/sfia-theme'
 import surfaces from '@/styles/surfaces.module.css'
 import typography from '@/styles/typography.module.css'
 import type { SfiaCategoryMetric } from '@/types'
-import classes from './SfiaAnalytics.module.css'
+import sfia from '../sfia.module.css'
 
 const SfiaCategoryBarChart = dynamic(() => import('./SfiaCategoryBarChart'), {
   ssr: false,
@@ -38,9 +38,9 @@ export function SfiaCategoryCoverageChart({
   onSelectCategory,
 }: Readonly<SfiaCategoryCoverageChartProps>) {
   return (
-    <Paper withBorder p="md" radius="md" h="100%">
-      <Stack justify="space-between" gap="sm" h="100%">
-        <Stack gap="sm">
+    <Paper withBorder p="sm" radius="md" h="100%">
+      <Stack justify="space-between" gap="xs" h="100%">
+        <Stack gap="xs">
           <Group
             justify="space-between"
             align="flex-start"
@@ -52,10 +52,10 @@ export function SfiaCategoryCoverageChart({
                 <IconFolder size={16} stroke={1.5} />
               </ThemeIcon>
               <Stack gap={0}>
-                <Title order={3} size="h5">
+                <Title order={3} size="h4">
                   Phân bổ &amp; Độ phủ theo 6 Danh mục SFIA
                 </Title>
-                <Text size="xs" c="dimmed">
+                <Text size="sm" c="dimmed">
                   So sánh số lượng câu hỏi và kỹ năng trong từng danh mục
                 </Text>
               </Stack>
@@ -65,8 +65,8 @@ export function SfiaCategoryCoverageChart({
               <Button
                 variant="light"
                 color="brand"
-                size="compact-xs"
-                rightSection={<IconX size={12} stroke={1.5} />}
+                size="compact-sm"
+                rightSection={<IconX size={13} stroke={1.5} />}
                 onClick={() => onSelectCategory?.(null)}
               >
                 Bỏ lọc danh mục
@@ -75,8 +75,8 @@ export function SfiaCategoryCoverageChart({
           </Group>
 
           {categoryDistribution.length === 0 ? (
-            <Paper p="md" radius="md" className={surfaces.subtleSurface}>
-              <Text size="xs" c="dimmed" ta="center">
+            <Paper p="sm" radius="md" className={surfaces.subtleSurface}>
+              <Text size="sm" c="dimmed" ta="center">
                 Chưa có dữ liệu phân bổ theo danh mục SFIA.
               </Text>
             </Paper>
@@ -99,7 +99,7 @@ export function SfiaCategoryCoverageChart({
                   key={cat.code}
                   aria-pressed={isSelected}
                   aria-label={`Lọc theo danh mục ${cat.nameVi} (${cat.code})`}
-                  className={classes.filterPill}
+                  className={sfia.analyticsFilterPill}
                   mod={{ active: isSelected || undefined }}
                   onClick={() =>
                     onSelectCategory?.(isSelected ? null : cat.code)
@@ -107,15 +107,15 @@ export function SfiaCategoryCoverageChart({
                 >
                   <Group gap="xs" wrap="nowrap" miw={0}>
                     <ThemeIcon
-                      size="xs"
+                      size="sm"
                       radius="sm"
                       variant={theme.badgeVariant}
                       color={theme.color}
                     >
-                      <Icon size={12} stroke={1.5} />
+                      <Icon size={14} stroke={1.5} />
                     </ThemeIcon>
-                    <Stack gap={0} miw={0}>
-                      <Text size="xs" fw={600} truncate>
+                    <Stack gap={2} miw={0}>
+                      <Text size="sm" fw={600} truncate>
                         {cat.nameVi}
                       </Text>
                       <Group gap={6} wrap="nowrap">
@@ -143,8 +143,8 @@ export function SfiaCategoryCoverageChart({
         </Stack>
 
         <Group gap={6} wrap="nowrap" pt="xs" className={surfaces.borderedTop}>
-          <IconInfoCircle size={14} stroke={1.5} />
-          <Text size="xs" c="dimmed">
+          <IconInfoCircle size={15} stroke={1.5} />
+          <Text size="sm" c="dimmed">
             Chọn cột biểu đồ hoặc nút danh mục để lọc chéo Bảng Điểm mù bên
             dưới.
           </Text>

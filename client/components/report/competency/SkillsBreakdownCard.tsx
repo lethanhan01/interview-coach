@@ -16,8 +16,9 @@ import {
   IconCpu,
   IconSparkles,
 } from '@tabler/icons-react'
+import surfaces from '@/styles/surfaces.module.css'
 import type { SkillBreakdownItem } from '@/types'
-import classes from './SkillsBreakdownCard.module.css'
+import report from '../report.module.css'
 
 export interface SkillsBreakdownCardProps {
   skills?: SkillBreakdownItem[]
@@ -140,7 +141,7 @@ export function SkillsBreakdownCard({
 
                 <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                   <Box
-                    className={classes.feedbackBox}
+                    className={`${surfaces.subtleSurface} ${report.feedbackBox}`}
                     mod={{ variant: 'strength' }}
                   >
                     <Group gap={6} mb={4}>
@@ -159,7 +160,7 @@ export function SkillsBreakdownCard({
                   </Box>
 
                   <Box
-                    className={classes.feedbackBox}
+                    className={`${surfaces.subtleSurface} ${report.feedbackBox}`}
                     mod={{ variant: 'improvement' }}
                   >
                     <Group gap={6} mb={4}>

@@ -6,7 +6,7 @@ import {
   useMantineColorScheme,
 } from '@mantine/core'
 import { IconMoon, IconSun } from '@tabler/icons-react'
-import classes from './ColorSchemeToggle.module.css'
+import appShell from '../app-shell.module.css'
 
 export function ColorSchemeToggle() {
   const { setColorScheme } = useMantineColorScheme()
@@ -27,12 +27,12 @@ export function ColorSchemeToggle() {
       aria-label="Chuyển đổi chế độ sáng tối"
     >
       <IconSun
-        className={`${classes.icon} ${classes.light}`}
+        className={`${appShell.schemeIcon} ${appShell.schemeLight}`}
         stroke={1.5}
         aria-hidden="true"
       />
       <IconMoon
-        className={`${classes.icon} ${classes.dark}`}
+        className={`${appShell.schemeIcon} ${appShell.schemeDark}`}
         stroke={1.5}
         aria-hidden="true"
       />

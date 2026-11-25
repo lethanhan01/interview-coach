@@ -3,6 +3,7 @@
 import { Accordion, Group, Paper, Stack, Text, ThemeIcon } from '@mantine/core'
 import { IconBulb, IconInfoCircle } from '@tabler/icons-react'
 import surfaces from '@/styles/surfaces.module.css'
+import typography from '@/styles/typography.module.css'
 
 export interface SfiaGuidanceNotesProps {
   guidanceNotes?: string
@@ -49,7 +50,7 @@ export function SfiaGuidanceNotes({
                 <ThemeIcon color="brand" variant="subtle" size="sm">
                   <IconInfoCircle size={15} stroke={1.5} />
                 </ThemeIcon>
-                <Text size="sm" lh={1.55} className={surfaces.preLine}>
+                <Text size="sm" lh={1.55} className={typography.preLine}>
                   {guidanceNotes}
                 </Text>
               </Group>

@@ -22,9 +22,10 @@ import type {
   SfiaSkillSummary,
 } from '@/types'
 import { getSfiaCategorySemanticTheme } from '@/components/sfia/sfia-theme'
+import surfaces from '@/styles/surfaces.module.css'
+import sfia from '../sfia.module.css'
 import { SfiaMatrixHeatmapSummary } from './SfiaMatrixHeatmapSummary'
 import { SfiaMatrixRow } from './SfiaMatrixRow'
-import classes from './SfiaMatrixView.module.css'
 
 const SFIA_LEVELS = [1, 2, 3, 4, 5, 6, 7] as const
 
@@ -88,26 +89,26 @@ export function SfiaMatrixView({
       <Paper
         withBorder
         radius="md"
-        p="xl"
+        p="md"
         data-testid="matrix-empty-state"
         className={className}
       >
-        <Stack align="center" gap="sm" py="xl">
+        <Stack align="center" gap="xs" py="lg">
           <ThemeIcon size="xl" radius="xl" variant="light" color="neutral">
             <IconSearchOff size={24} stroke={1.5} />
           </ThemeIcon>
-          <Title order={3} fz="sm" fw={700} ta="center">
+          <Title order={3} fz="md" fw={700} ta="center">
             {blindSpotsOnly
               ? 'Không phát hiện điểm mù nào trong nhóm lọc hiện tại'
               : 'Không tìm thấy kỹ năng SFIA phù hợp'}
           </Title>
-          <Text size="xs" c="dimmed" ta="center" maw={380}>
+          <Text size="sm" c="dimmed" ta="center" maw={420}>
             {blindSpotsOnly
               ? 'Tất cả các ô năng lực trong phạm vi lọc hiện tại đều đã có ít nhất một câu hỏi phỏng vấn.'
               : 'Hãy thử điều chỉnh từ khóa tìm kiếm hoặc chọn danh mục khác để xem kết quả.'}
           </Text>
           {onClearFilters && (
-            <Button variant="default" size="xs" onClick={onClearFilters}>
+            <Button variant="default" size="sm" onClick={onClearFilters}>
               Xóa bộ lọc
             </Button>
           )}
@@ -117,7 +118,7 @@ export function SfiaMatrixView({
   }
 
   return (
-    <Box className={[classes.root, className].filter(Boolean).join(' ')}>
+    <Box className={[sfia.matrixRoot, className].filter(Boolean).join(' ')}>
       <SfiaMatrixHeatmapSummary
         skills={filteredSkills}
         cells={cells}
@@ -125,16 +126,19 @@ export function SfiaMatrixView({
         onToggleBlindSpotsOnly={onBlindSpotsOnlyChange}
       />
 
-      <Box className={classes.tableViewport}>
-        <Table className={classes.matrixTable} highlightOnHover>
+      <Box className={sfia.matrixViewport}>
+        <Table className={sfia.matrixTable} highlightOnHover>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th scope="col" className={classes.stickyCorner}>
+              <Table.Th
+                scope="col"
+                className={`${sfia.matrixStickyCorner} ${surfaces.subtleSurface} ${sfia.matrixCorner}`}
+              >
                 <Group justify="space-between" gap="xs" wrap="nowrap">
-                  <Text size="xs" fw={700}>
+                  <Text size="sm" fw={700}>
                     Kỹ năng SFIA 9
                   </Text>
-                  <Text size="xs" c="dimmed">
+                  <Text size="sm" c="dimmed">
                     ({filteredSkills.length})
                   </Text>
                 </Group>
@@ -146,10 +150,10 @@ export function SfiaMatrixView({
                   <Table.Th
                     key={lvl}
                     scope="col"
-                    className={classes.stickyHeader}
+                    className={`${sfia.matrixStickyHeader} ${surfaces.subtleSurface} ${sfia.matrixHeader}`}
                   >
                     <Stack gap={0} align="center">
-                      <Text size="xs" fw={700} ff="monospace">
+                      <Text size="sm" fw={700} ff="monospace">
                         L{lvl}
                       </Text>
                       {label && (
@@ -158,7 +162,7 @@ export function SfiaMatrixView({
                           c="dimmed"
                           fw={400}
                           truncate
-                          maw={84}
+                          maw={92}
                           title={label}
                         >
                           {label}
@@ -181,23 +185,26 @@ export function SfiaMatrixView({
               return (
                 <Fragment key={category.code}>
                   <Table.Tr data-testid={`category-header-${category.code}`}>
-                    <Table.Td colSpan={8} className={classes.categoryBanner}>
+                    <Table.Td
+                      colSpan={8}
+                      className={`${surfaces.subtleSurface} ${surfaces.borderedBottom}`}
+                    >
                       <Group gap="xs" align="center" wrap="nowrap">
                         <ThemeIcon
                           color={theme.color}
                           variant="light"
-                          size="xs"
+                          size="sm"
                           radius="sm"
                         >
-                          <CategoryIcon size={12} stroke={1.5} />
+                          <CategoryIcon size={14} stroke={1.5} />
                         </ThemeIcon>
-                        <Text size="xs" fw={700}>
+                        <Text size="sm" fw={700}>
                           {category.nameVi || category.name}
                         </Text>
                         <Badge
                           color={theme.color}
                           variant={theme.badgeVariant}
-                          size="xs"
+                          size="sm"
                         >
                           {categorySkills.length} kỹ năng
                         </Badge>

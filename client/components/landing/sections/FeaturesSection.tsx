@@ -9,7 +9,7 @@ import {
   Title,
 } from '@mantine/core'
 import { IconBrain, IconTargetArrow, IconWorld } from '@tabler/icons-react'
-import classes from './FeaturesSection.module.css'
+import landing from '../landing.module.css'
 
 const FEATURES = [
   {
@@ -34,7 +34,7 @@ const FEATURES = [
 
 export function FeaturesSection() {
   return (
-    <Box component="section" className={classes.section}>
+    <Box component="section" className={landing.featuresSection}>
       <Container size="lg">
         <Stack gap="xl">
           <Stack align="center" gap="xs">
@@ -54,7 +54,7 @@ export function FeaturesSection() {
                 withBorder
                 radius="md"
                 p="lg"
-                className={classes.card}
+                className={landing.featureCard}
               >
                 <Stack gap="sm">
                   <ThemeIcon

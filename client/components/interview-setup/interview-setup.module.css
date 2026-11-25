@@ -1,4 +1,5 @@
-.newButton {
+/* SavedJdPicker */
+.dashedCtaButton {
   display: block;
   width: 100%;
   border-radius: var(--mantine-radius-md);
@@ -22,16 +23,4 @@
       transform: none;
     }
   }
-}
-
-.itemButton {
-  display: block;
-  width: 100%;
-  border-radius: var(--mantine-radius-md);
-  text-align: left;
-}
-
-.chevron {
-  color: var(--mantine-color-dimmed);
-  flex-shrink: 0;
 }

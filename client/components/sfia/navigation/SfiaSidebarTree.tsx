@@ -18,10 +18,10 @@ import type {
   SfiaSkillSummary,
   SfiaSubcategory,
 } from '@/types'
+import layout from '@/styles/layout.module.css'
 import { SfiaSidebarFilters } from './SfiaSidebarFilters'
 import { SfiaTreeNode } from './SfiaTreeNode'
 import { buildSfiaTreeData, filterSfiaSkills } from './sfia-tree.utils'
-import classes from './SfiaSidebarTree.module.css'
 
 export interface SfiaSidebarTreeProps {
   categories: SfiaCategory[]
@@ -176,7 +176,7 @@ export function SfiaSidebarTree({
     <Paper
       withBorder
       radius="md"
-      className={`${classes.treeContainer} ${className ?? ''}`}
+      className={[layout.panelColumn, className].filter(Boolean).join(' ')}
     >
       <SfiaSidebarFilters
         searchQuery={searchQuery}
@@ -196,7 +196,7 @@ export function SfiaSidebarTree({
 
       <Divider />
 
-      <ScrollArea className={classes.treeScroll} p="xs">
+      <ScrollArea className={layout.scrollFlex} p="xs">
         {treeData.length === 0 ? (
           <Text size="sm" c="dimmed" ta="center" py="lg">
             Không tìm thấy kỹ năng phù hợp

@@ -83,12 +83,12 @@ export function OnetSfiaTable({
 
   if (mappings.length === 0) {
     return (
-      <Paper p="xl" radius="md" className={surfaces.subtleSurface}>
+      <Paper p="md" radius="md" className={surfaces.subtleSurface}>
         <Stack align="center" gap="xs">
-          <Text size="sm" fw={600}>
+          <Text size="md" fw={600}>
             Chưa có kỹ năng SFIA nào phù hợp với bộ lọc
           </Text>
-          <Text size="xs" c="dimmed">
+          <Text size="sm" c="dimmed">
             Thử thay đổi từ khóa tìm kiếm hoặc bấm Thêm ánh xạ để bổ sung kỹ
             năng mới.
           </Text>
@@ -101,7 +101,7 @@ export function OnetSfiaTable({
     <>
       <Paper withBorder radius="md">
         <Table.ScrollContainer minWidth={650}>
-          <Table verticalSpacing="xs" horizontalSpacing="sm" highlightOnHover>
+          <Table verticalSpacing="xs" horizontalSpacing="xs" highlightOnHover>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th w="28%">Kỹ năng SFIA</Table.Th>

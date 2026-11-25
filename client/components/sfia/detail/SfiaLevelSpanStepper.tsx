@@ -11,9 +11,10 @@ import {
   UnstyledButton,
 } from '@mantine/core'
 import { IconSparkles } from '@tabler/icons-react'
+import interactions from '@/styles/interactions.module.css'
 import type { SfiaLevelResponsibility } from '@/types'
+import sfia from '../sfia.module.css'
 import { getSfiaCategorySemanticTheme } from '../sfia-theme'
-import classes from './SfiaLevelSpanStepper.module.css'
 
 export interface SfiaLevelSpanStepperProps {
   minLevel: number
@@ -74,7 +75,7 @@ export function SfiaLevelSpanStepper({
       withBorder
       radius="md"
       p="xs"
-      className={[classes.stepperPaper, className].filter(Boolean).join(' ')}
+      className={[interactions.focusRing, className].filter(Boolean).join(' ')}
       component="section"
       tabIndex={0}
       onKeyDown={handleKeyDown}
@@ -85,10 +86,7 @@ export function SfiaLevelSpanStepper({
           <Group gap="xs" align="center">
             <IconSparkles size={16} stroke={1.5} />
             <Text size="sm" fw={700}>
-              Thước Đo Cấp Độ Trách Nhiệm (L1–L7)
-            </Text>
-            <Text size="xs" c="dimmed" visibleFrom="sm">
-              (Dùng phím ← → hoặc 1–7)
+              Thước Đo Cấp Độ Trách Nhiệm
             </Text>
           </Group>
 
@@ -98,8 +96,8 @@ export function SfiaLevelSpanStepper({
           </Badge>
         </Group>
 
-        <Box className={classes.stepperContainer} pt={4}>
-          <Box className={classes.railGrid}>
+        <Box className={sfia.stepperContainer} pt={4}>
+          <Box className={sfia.stepperRailGrid}>
             {ALL_LEVELS.map((lvl) => {
               const isAvailable = lvl >= minLevel && lvl <= maxLevel
               const isSelected = lvl === selectedLevel
@@ -108,10 +106,10 @@ export function SfiaLevelSpanStepper({
               const isRightInRange = lvl >= minLevel && lvl < maxLevel
 
               return (
-                <Box key={lvl} className={classes.column}>
-                  <Box className={classes.nodeRailWrapper}>
+                <Box key={lvl} className={sfia.stepperColumn}>
+                  <Box className={sfia.stepperNodeRailWrapper}>
                     <Box
-                      className={classes.connector}
+                      className={sfia.stepperConnector}
                       data-hidden={lvl === 1}
                       data-in-range={isLeftInRange}
                     />
@@ -128,7 +126,7 @@ export function SfiaLevelSpanStepper({
                       <UnstyledButton
                         aria-label={`Chọn Cấp độ ${lvl} - ${levelName}`}
                         aria-current={isSelected ? 'step' : undefined}
-                        className={classes.nodeCircle}
+                        className={sfia.stepperNodeCircle}
                         data-active={isSelected}
                         data-available={isAvailable}
                         disabled={!isAvailable}
@@ -139,7 +137,7 @@ export function SfiaLevelSpanStepper({
                     </Tooltip>
 
                     <Box
-                      className={classes.connector}
+                      className={sfia.stepperConnector}
                       data-hidden={lvl === 7}
                       data-in-range={isRightInRange}
                     />

@@ -21,8 +21,8 @@ import { getSfiaLevelSemanticTheme } from '@/components/sfia/sfia-theme'
 import surfaces from '@/styles/surfaces.module.css'
 import typography from '@/styles/typography.module.css'
 import type { SfiaLevelMetric, SfiaLevelResponsibility } from '@/types'
+import sfia from '../sfia.module.css'
 import type { SfiaLevelChartMode } from './SfiaLevelBarChart'
-import classes from './SfiaAnalytics.module.css'
 
 const SfiaLevelBarChart = dynamic(() => import('./SfiaLevelBarChart'), {
   ssr: false,
@@ -57,9 +57,9 @@ export function SfiaLevelDistributionChart({
   const hasSelectedLevel = selectedLevel !== null && selectedLevel !== undefined
 
   return (
-    <Paper withBorder p="md" radius="md" h="100%">
-      <Stack justify="space-between" gap="sm" h="100%">
-        <Stack gap="sm">
+    <Paper withBorder p="sm" radius="md" h="100%">
+      <Stack justify="space-between" gap="xs" h="100%">
+        <Stack gap="xs">
           <Group
             justify="space-between"
             align="flex-start"
@@ -71,10 +71,10 @@ export function SfiaLevelDistributionChart({
                 <IconAdjustments size={16} stroke={1.5} />
               </ThemeIcon>
               <Stack gap={0}>
-                <Title order={3} size="h5">
+                <Title order={3} size="h4">
                   Phân bổ câu hỏi theo 7 Cấp độ SFIA
                 </Title>
-                <Text size="xs" c="dimmed">
+                <Text size="sm" c="dimmed">
                   Độ phủ câu hỏi trên 7 cấp độ trách nhiệm L1–L7
                 </Text>
               </Stack>
@@ -82,7 +82,7 @@ export function SfiaLevelDistributionChart({
 
             <Group gap="xs" wrap="wrap">
               <SegmentedControl
-                size="xs"
+                size="sm"
                 value={chartMode}
                 onChange={(val) => setChartMode(val as SfiaLevelChartMode)}
                 aria-label="Chế độ biểu đồ cấp độ SFIA"
@@ -95,8 +95,8 @@ export function SfiaLevelDistributionChart({
                 <Button
                   variant="light"
                   color="brand"
-                  size="compact-xs"
-                  rightSection={<IconX size={12} stroke={1.5} />}
+                  size="compact-sm"
+                  rightSection={<IconX size={13} stroke={1.5} />}
                   onClick={() => onSelectLevel?.(null)}
                 >
                   Bỏ lọc Cấp L{selectedLevel}
@@ -106,8 +106,8 @@ export function SfiaLevelDistributionChart({
           </Group>
 
           {levelDistribution.length === 0 ? (
-            <Paper p="md" radius="md" className={surfaces.subtleSurface}>
-              <Text size="xs" c="dimmed" ta="center">
+            <Paper p="sm" radius="md" className={surfaces.subtleSurface}>
+              <Text size="sm" c="dimmed" ta="center">
                 Chưa có dữ liệu phân bổ theo cấp độ SFIA.
               </Text>
             </Paper>
@@ -131,20 +131,20 @@ export function SfiaLevelDistributionChart({
                   key={lvl.level}
                   aria-pressed={isSelected}
                   aria-label={`Lọc theo Cấp L${lvl.level}`}
-                  className={classes.filterPill}
+                  className={sfia.analyticsFilterPill}
                   mod={{ active: isSelected || undefined }}
                   onClick={() => onSelectLevel?.(isSelected ? null : lvl.level)}
                 >
                   <Group gap="xs" wrap="nowrap" miw={0}>
                     <Badge
-                      size="xs"
+                      size="sm"
                       color={theme.color}
                       variant={theme.badgeVariant}
                       className={typography.tabularNums}
                     >
                       L{lvl.level}
                     </Badge>
-                    <Text size="xs" fw={600} truncate>
+                    <Text size="sm" fw={600} truncate>
                       {displayName}
                     </Text>
                   </Group>
@@ -158,8 +158,8 @@ export function SfiaLevelDistributionChart({
         </Stack>
 
         <Group gap={6} wrap="nowrap" pt="xs" className={surfaces.borderedTop}>
-          <IconInfoCircle size={14} stroke={1.5} />
-          <Text size="xs" c="dimmed">
+          <IconInfoCircle size={15} stroke={1.5} />
+          <Text size="sm" c="dimmed">
             Chọn cấp độ để lọc các kỹ năng có phạm vi tương ứng trong Bảng Điểm
             mù.
           </Text>

@@ -81,7 +81,7 @@ export function OnetOverviewStats({
   ]
 
   return (
-    <Stack gap="sm">
+    <Stack gap="xs">
       {/* 4 Interactive KPI Cards using UnstyledButton (SEM-HTML-003) */}
       <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="xs">
         {kpiCards.map((card) => (
@@ -90,14 +90,14 @@ export function OnetOverviewStats({
             onClick={() => onSelectDetailTab(card.tab)}
             aria-label={card.aria}
           >
-            <Paper withBorder p="sm" radius="md" h="100%">
+            <Paper withBorder p="xs" radius="md" h="100%">
               <Stack gap={6} justify="space-between" h="100%">
                 <Group justify="space-between" wrap="nowrap">
-                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">
+                  <Text size="sm" c="dimmed" fw={600} tt="uppercase">
                     {card.label}
                   </Text>
                   <ThemeIcon size="sm" variant="light" color={card.color}>
-                    <card.Icon size={14} stroke={1.5} />
+                    <card.Icon size={15} stroke={1.5} />
                   </ThemeIcon>
                 </Group>
 
@@ -106,11 +106,11 @@ export function OnetOverviewStats({
                     <Text size="xl" fw={700}>
                       {card.count}
                     </Text>
-                    <Text size="xs" c="dimmed">
+                    <Text size="sm" c="dimmed">
                       {card.unit}
                     </Text>
                   </Group>
-                  <IconArrowRight size={14} stroke={1.5} />
+                  <IconArrowRight size={15} stroke={1.5} />
                 </Group>
               </Stack>
             </Paper>
@@ -119,18 +119,18 @@ export function OnetOverviewStats({
       </SimpleGrid>
 
       {/* Job Zone Section */}
-      <Paper withBorder p="sm" radius="md">
+      <Paper withBorder p="xs" radius="md">
         <Stack gap="xs">
           <Group justify="space-between" align="center" wrap="wrap">
             <Group gap="xs">
               <ThemeIcon size="sm" variant="light" color="brand">
                 <IconSchool size={16} stroke={1.5} />
               </ThemeIcon>
-              <Text size="sm" fw={700}>
+              <Text size="md" fw={700}>
                 Job Zone {detail.jobZone.zone}: {detail.jobZone.name}
               </Text>
             </Group>
-            <Badge color="brand" variant="outline" size="xs">
+            <Badge color="brand" variant="outline" size="sm">
               Cấp độ {detail.jobZone.zone} / 5
             </Badge>
           </Group>
@@ -138,10 +138,10 @@ export function OnetOverviewStats({
           {/* Job Zone Gauge */}
           <Group justify="space-between" align="center" wrap="wrap">
             <Stack gap={2}>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 Mức độ đào tạo & yêu cầu kinh nghiệm:
               </Text>
-              <Text size="xs" fw={600} c="brand">
+              <Text size="sm" fw={600} c="brand">
                 {JOB_ZONE_LABELS[detail.jobZone.zone - 1] ??
                   `Cấp độ ${detail.jobZone.zone}`}
               </Text>
@@ -161,12 +161,12 @@ export function OnetOverviewStats({
             <Paper p="xs" radius="sm" className={surfaces.subtleSurface}>
               <Stack gap={2}>
                 <Group gap={6}>
-                  <IconSchool size={14} stroke={1.5} />
-                  <Text size="xs" c="dimmed">
+                  <IconSchool size={15} stroke={1.5} />
+                  <Text size="sm" c="dimmed">
                     Trình độ học vấn
                   </Text>
                 </Group>
-                <Text size="xs" fw={600}>
+                <Text size="sm" fw={600}>
                   {detail.jobZone.education}
                 </Text>
               </Stack>
@@ -175,12 +175,12 @@ export function OnetOverviewStats({
             <Paper p="xs" radius="sm" className={surfaces.subtleSurface}>
               <Stack gap={2}>
                 <Group gap={6}>
-                  <IconBriefcase size={14} stroke={1.5} />
-                  <Text size="xs" c="dimmed">
+                  <IconBriefcase size={15} stroke={1.5} />
+                  <Text size="sm" c="dimmed">
                     Kinh nghiệm yêu cầu
                   </Text>
                 </Group>
-                <Text size="xs" fw={600}>
+                <Text size="sm" fw={600}>
                   {detail.jobZone.experience}
                 </Text>
               </Stack>
@@ -189,12 +189,12 @@ export function OnetOverviewStats({
             <Paper p="xs" radius="sm" className={surfaces.subtleSurface}>
               <Stack gap={2}>
                 <Group gap={6}>
-                  <IconClock size={14} stroke={1.5} />
-                  <Text size="xs" c="dimmed">
+                  <IconClock size={15} stroke={1.5} />
+                  <Text size="sm" c="dimmed">
                     Đào tạo tại chỗ
                   </Text>
                 </Group>
-                <Text size="xs" fw={600}>
+                <Text size="sm" fw={600}>
                   {detail.jobZone.jobTraining}
                 </Text>
               </Stack>

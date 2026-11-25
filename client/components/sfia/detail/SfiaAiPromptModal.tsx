@@ -63,19 +63,19 @@ export function SfiaAiPromptModal({
       size="lg"
       title={
         <Group gap="xs" align="center">
-          <Text fw={700} size="sm">
+          <Text fw={700} size="md">
             Mẫu Prompt AI Rubric Đánh Giá Phỏng Vấn
           </Text>
-          <Badge color="brand" variant="light" size="xs">
+          <Badge color="brand" variant="light" size="sm">
             {skillDetail.code} — Cấp độ {selectedLevel}
           </Badge>
         </Group>
       }
       closeButtonProps={{ 'aria-label': 'Đóng cửa sổ AI Rubric' }}
     >
-      <Stack gap="sm">
+      <Stack gap="xs">
         <Alert color="brand" icon={<IconInfoCircle size={16} />} radius="sm">
-          <Text size="xs">
+          <Text size="sm">
             Prompt này nhúng trực tiếp tinh hoa và tiêu chí hành vi SFIA 9 Cấp
             độ {selectedLevel} để AI Evaluator đánh giá khách quan và chính xác.
           </Text>
@@ -91,13 +91,15 @@ export function SfiaAiPromptModal({
             <Tabs.List>
               <Tabs.Tab
                 value="markdown"
-                leftSection={<IconFileText size={14} stroke={1.5} />}
+                fz="sm"
+                leftSection={<IconFileText size={15} stroke={1.5} />}
               >
                 Markdown System Prompt
               </Tabs.Tab>
               <Tabs.Tab
                 value="json"
-                leftSection={<IconFileCode size={14} stroke={1.5} />}
+                fz="sm"
+                leftSection={<IconFileCode size={15} stroke={1.5} />}
               >
                 JSON Schema Rubric
               </Tabs.Tab>
@@ -112,7 +114,7 @@ export function SfiaAiPromptModal({
                 <Button
                   variant="light"
                   color="brand"
-                  size="xs"
+                  size="sm"
                   onClick={() => {
                     copy()
                     notifications.show({
@@ -124,9 +126,9 @@ export function SfiaAiPromptModal({
                   }}
                   leftSection={
                     copied ? (
-                      <IconCheck size={14} stroke={1.5} />
+                      <IconCheck size={15} stroke={1.5} />
                     ) : (
-                      <IconCopy size={14} stroke={1.5} />
+                      <IconCopy size={15} stroke={1.5} />
                     )
                   }
                 >

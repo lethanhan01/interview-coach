@@ -18,7 +18,8 @@ import {
   Title,
 } from '@mantine/core'
 import { IconArrowRight, IconCheck, IconSparkles } from '@tabler/icons-react'
-import classes from './HeroSection.module.css'
+import surfaces from '@/styles/surfaces.module.css'
+import landing from '../landing.module.css'
 
 const HERO_BULLETS = [
   'Bám sát Job Description thực tế với câu hỏi follow-up tự động theo câu trả lời',
@@ -28,13 +29,13 @@ const HERO_BULLETS = [
 
 export function HeroSection() {
   return (
-    <Box component="section" className={classes.section}>
+    <Box component="section" className={landing.heroSection}>
       <Container size="lg">
         <SimpleGrid
           cols={{ base: 1, md: 2 }}
           spacing="xl"
           verticalSpacing="xl"
-          className={classes.grid}
+          className={landing.heroGrid}
         >
           <Stack gap="lg">
             <Group>
@@ -43,7 +44,7 @@ export function HeroSection() {
               </Badge>
             </Group>
 
-            <Title order={1} className={classes.title}>
+            <Title order={1} className={landing.heroTitle}>
               Luyện phỏng vấn{' '}
               <Text component="span" c="brand" inherit>
                 thông minh hơn
@@ -104,7 +105,7 @@ export function HeroSection() {
             shadow="sm"
             radius="lg"
             p="lg"
-            className={classes.previewCard}
+            className={surfaces.bodySurface}
           >
             <Stack gap="md">
               <Group justify="space-between" wrap="wrap" gap="xs">
@@ -155,7 +156,12 @@ export function HeroSection() {
 
               <Divider />
 
-              <Paper p="sm" radius="md" className={classes.quoteBox}>
+              <Paper
+                withBorder
+                p="sm"
+                radius="md"
+                className={surfaces.subtleSurface}
+              >
                 <Text size="sm">
                   &ldquo;Hãy kể về một tình huống bạn phải debug một lỗi khó
                   hoặc tối ưu truy vấn chậm trên production.&rdquo;

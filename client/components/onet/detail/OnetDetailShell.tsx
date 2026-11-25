@@ -16,6 +16,8 @@ import { IconAlertCircle, IconRefresh } from '@tabler/icons-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { onetAdminQueries } from '@/queries/onet.queries'
 import { queryKeys } from '@/queries/keys'
+import layout from '@/styles/layout.module.css'
+import surfaces from '@/styles/surfaces.module.css'
 import type {
   OnetDetailSubTab,
   OnetOccupationDetail,
@@ -27,7 +29,6 @@ import { OnetOverviewTab } from './OnetOverviewTab'
 import { OnetSfiaTab } from './OnetSfiaTab'
 import { OnetTasksTab } from './OnetTasksTab'
 import { OnetTechSkillsTab } from './OnetTechSkillsTab'
-import classes from './OnetDetailShell.module.css'
 
 export interface OnetDetailShellProps {
   socCode: string
@@ -98,7 +99,7 @@ export function OnetDetailShell({
 
   if (isLoading) {
     return (
-      <Stack gap="md" p="md">
+      <Stack gap="sm" p="sm">
         <Group gap="xs">
           <Skeleton height={24} width={100} radius="sm" />
           <Skeleton height={24} width={140} radius="sm" />
@@ -118,7 +119,7 @@ export function OnetDetailShell({
 
   if (errorMessage || !detail) {
     return (
-      <Box p="xl">
+      <Box p="md">
         <Alert
           color="danger"
           variant="light"
@@ -129,10 +130,10 @@ export function OnetDetailShell({
             <Text size="sm">{errorMessage ?? 'Nghề không tồn tại'}</Text>
             <Group>
               <Button
-                size="xs"
+                size="sm"
                 variant="light"
                 color="danger"
-                leftSection={<IconRefresh size={14} stroke={1.5} />}
+                leftSection={<IconRefresh size={15} stroke={1.5} />}
                 onClick={() => void refetch()}
               >
                 Thử lại
@@ -145,7 +146,7 @@ export function OnetDetailShell({
   }
 
   return (
-    <Box className={classes.root}>
+    <Box className={`${layout.panelColumn} ${surfaces.bodySurface}`}>
       <OnetDetailHeader
         detail={detail}
         activeDetailTab={activeDetailTab}
@@ -154,11 +155,11 @@ export function OnetDetailShell({
 
       <ScrollArea
         viewportRef={viewportRef}
-        className={classes.scrollArea}
+        className={layout.scrollFlex}
         type="auto"
         offsetScrollbars
       >
-        <Box className={classes.body}>
+        <Box p="xs">
           {activeDetailTab === 'overview' ? (
             <OnetOverviewTab
               detail={detail}

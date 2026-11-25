@@ -14,7 +14,7 @@ import {
   Title,
 } from '@mantine/core'
 import type { SemanticColor } from '@/theme'
-import classes from './ErrorPageTemplate.module.css'
+import common from '../common.module.css'
 
 export type ErrorPageIconVariant = SemanticColor
 
@@ -59,15 +59,15 @@ export function ErrorPageTemplate({
   children,
 }: Readonly<ErrorPageTemplateProps>) {
   return (
-    <Container size="sm" className={classes.container}>
-      <Paper withBorder shadow="sm" p="xl" radius="lg" className={classes.card}>
+    <Container size="sm" className={common.errorContainer}>
+      <Paper withBorder shadow="sm" p="xl" radius="lg" w="100%">
         <Stack align="center" gap="md">
           <ThemeIcon color={iconVariant} variant="light" size={64} radius="xl">
             {icon}
           </ThemeIcon>
 
           {statusCode !== undefined ? (
-            <Text className={classes.statusCode} c="dimmed">
+            <Text className={common.errorStatusCode} c="dimmed">
               {statusCode}
             </Text>
           ) : null}

@@ -10,9 +10,9 @@ import {
 } from '@mantine/core'
 import { IconAlertTriangle } from '@tabler/icons-react'
 import type { AnnotatedSegment, TranscriptItem } from '@/types'
+import report from '../report.module.css'
 import { BinaryCriteriaChecklist } from './BinaryCriteriaChecklist'
 import { TranscriptFeedbackSegments } from './TranscriptFeedbackSegments'
-import classes from './AnnotatedTranscript.module.css'
 
 export interface AnnotatedTranscriptProps {
   items?: TranscriptItem[]
@@ -154,7 +154,7 @@ export function AnnotatedTranscript({
 
               {item.modelAnswer && (
                 <Box component="details">
-                  <Box component="summary" className={classes.summary}>
+                  <Box component="summary" className={report.transcriptSummary}>
                     <Text
                       component="span"
                       size="xs"

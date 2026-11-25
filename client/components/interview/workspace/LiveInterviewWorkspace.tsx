@@ -28,9 +28,9 @@ import {
   SafeViewTransition,
 } from '@/components/common/SafeViewTransition'
 import type { ConnectionState } from '@/hooks/useSessionEvents'
+import typography from '@/styles/typography.module.css'
 import type { Question, SessionStatusAction, VoiceMetrics } from '@/types'
 import SessionHeaderBar from './SessionHeaderBar'
-import classes from './LiveInterviewWorkspace.module.css'
 
 export interface LiveInterviewWorkspaceProps {
   sessionId: string
@@ -98,7 +98,7 @@ export default function LiveInterviewWorkspace({
   const current = questions[currentIndex]
 
   return (
-    <Container size="md" px={0} className={classes.workspace}>
+    <Container size="md" px={0} w="100%">
       <VisuallyHidden>
         <Title order={1}>Phòng phỏng vấn trực tiếp</Title>
       </VisuallyHidden>
@@ -138,7 +138,7 @@ export default function LiveInterviewWorkspace({
             return (
               <Badge
                 key={`q-step-${idx}`}
-                className={classes.questionBadge}
+                className={typography.tabularNums}
                 variant={isCurrent ? 'filled' : isPast ? 'light' : 'outline'}
                 color={isCurrent ? 'brand' : isPast ? 'success' : 'neutral'}
                 size="sm"

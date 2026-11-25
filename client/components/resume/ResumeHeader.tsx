@@ -22,9 +22,10 @@ import {
   IconTool,
   IconUserCheck,
 } from '@tabler/icons-react'
+import interactions from '@/styles/interactions.module.css'
+import layout from '@/styles/layout.module.css'
 import type { GetProfileResponse } from '@/types'
 import { isSectionCompleted, type ResumeSectionId } from './resume-schemas'
-import classes from './ResumeHeader.module.css'
 
 export interface ResumeHeaderProps {
   data: GetProfileResponse | null
@@ -160,7 +161,7 @@ export default function ResumeHeader({
                     label={label}
                     active={activeSection === id}
                     color="brand"
-                    className={classes.navLink}
+                    className={interactions.navLink}
                     onClick={() => handleSelect(id)}
                     leftSection={
                       <Icon size={16} stroke={1.5} aria-hidden="true" />
@@ -170,15 +171,17 @@ export default function ResumeHeader({
                         <IconCircleCheck
                           size={16}
                           stroke={1.5}
+                          color="var(--mantine-color-success-filled)"
                           aria-label="Đã hoàn thiện"
-                          className={classes.statusDone}
+                          className={layout.shrink0}
                         />
                       ) : (
                         <IconCircleDashed
                           size={16}
                           stroke={1.5}
+                          color="var(--mantine-color-dimmed)"
                           aria-label="Chưa hoàn thiện"
-                          className={classes.statusTodo}
+                          className={layout.shrink0}
                         />
                       )
                     }

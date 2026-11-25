@@ -14,10 +14,11 @@ import {
 } from '@mantine/core'
 import { IconExternalLink, IconTrophy } from '@tabler/icons-react'
 import { getSfiaCategorySemanticTheme } from '@/components/sfia/sfia-theme'
+import interactions from '@/styles/interactions.module.css'
 import surfaces from '@/styles/surfaces.module.css'
 import typography from '@/styles/typography.module.css'
 import type { SfiaTopOnetMappedSkill } from '@/types'
-import classes from './SfiaAnalytics.module.css'
+import sfia from '../sfia.module.css'
 
 export interface SfiaTopOnetSkillsCardProps {
   topSkills: SfiaTopOnetMappedSkill[]
@@ -40,18 +41,18 @@ export function SfiaTopOnetSkillsCard({
   const maxOnetCount = Math.max(...topSkills.map((item) => item.onetCount), 1)
 
   return (
-    <Paper withBorder p="md" radius="md">
-      <Stack gap="sm">
+    <Paper withBorder p="sm" radius="md">
+      <Stack gap="xs">
         <Group justify="space-between" align="flex-start" wrap="wrap" gap="xs">
           <Group gap="xs" align="flex-start" wrap="nowrap">
             <ThemeIcon size="md" radius="md" variant="light" color="warning">
               <IconTrophy size={16} stroke={1.5} />
             </ThemeIcon>
             <Stack gap={0}>
-              <Title order={3} size="h5">
+              <Title order={3} size="h4">
                 Top 10 Kỹ Năng SFIA Phổ Biến Nhất trong O*NET
               </Title>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 Xếp hạng theo số vị trí nghề nghiệp O*NET SOC đang tích hợp (Cốt
                 lõi so với Bổ trợ)
               </Text>
@@ -59,18 +60,18 @@ export function SfiaTopOnetSkillsCard({
           </Group>
 
           <Group gap="xs">
-            <Badge size="xs" variant="light" color="brand">
+            <Badge size="sm" variant="light" color="brand">
               Cốt lõi (Core)
             </Badge>
-            <Badge size="xs" variant="light" color="neutral">
+            <Badge size="sm" variant="light" color="neutral">
               Bổ trợ
             </Badge>
           </Group>
         </Group>
 
         {topSkills.length === 0 ? (
-          <Paper p="md" radius="md" className={surfaces.subtleSurface}>
-            <Text size="xs" c="dimmed" ta="center">
+          <Paper p="sm" radius="md" className={surfaces.subtleSurface}>
+            <Text size="sm" c="dimmed" ta="center">
               Chưa có dữ liệu xếp hạng kỹ năng SFIA gắn với O*NET.
             </Text>
           </Paper>
@@ -97,8 +98,9 @@ export function SfiaTopOnetSkillsCard({
                   justify="space-between"
                   align="center"
                   gap="sm"
+                  p="xs"
                   wrap="nowrap"
-                  className={classes.leaderboardRow}
+                  className={`${interactions.hoverRow} ${sfia.analyticsLeaderboardRow}`}
                 >
                   <Group gap="sm" wrap="nowrap" miw={0} flex={1}>
                     <Badge
@@ -113,17 +115,17 @@ export function SfiaTopOnetSkillsCard({
 
                     <Stack gap={4} miw={0} flex={1}>
                       <Group gap="xs" wrap="wrap">
-                        <Text size="xs" fw={700} ff="monospace">
+                        <Text size="sm" fw={700} ff="monospace">
                           {item.skillCode}
                         </Text>
                         <Badge
-                          size="xs"
+                          size="sm"
                           color={categoryTheme.color}
                           variant={categoryTheme.badgeVariant}
                         >
                           {item.categoryCode}
                         </Badge>
-                        <Text size="xs" c="dimmed" truncate>
+                        <Text size="sm" c="dimmed" truncate>
                           {item.skillName}
                         </Text>
                       </Group>
@@ -153,10 +155,10 @@ export function SfiaTopOnetSkillsCard({
                     </Stack>
                   </Group>
 
-                  <Group gap="md" wrap="nowrap">
+                  <Group gap="sm" wrap="nowrap">
                     <Stack gap={0} align="flex-end">
                       <Text
-                        size="xs"
+                        size="sm"
                         fw={700}
                         c="brand"
                         className={typography.tabularNums}
@@ -173,7 +175,7 @@ export function SfiaTopOnetSkillsCard({
                     </Stack>
 
                     <Badge
-                      size="xs"
+                      size="sm"
                       variant="light"
                       color="success"
                       visibleFrom="sm"

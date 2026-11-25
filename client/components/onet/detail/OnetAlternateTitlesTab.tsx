@@ -76,16 +76,16 @@ export function OnetAlternateTitlesTab({
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
   return (
-    <Stack gap="sm">
+    <Stack gap="xs">
       {/* Control Header */}
-      <Paper withBorder p="sm" radius="md">
+      <Paper withBorder p="xs" radius="md">
         <Stack gap="xs">
           <Group justify="space-between" align="center" wrap="wrap">
             <Group gap="xs">
-              <Title order={3} size="h6">
+              <Title order={3} size="h5">
                 Chức danh Thị trường Tương đương
               </Title>
-              <Badge color="neutral" variant="outline" size="xs">
+              <Badge color="neutral" variant="outline" size="sm">
                 {total} chức danh
               </Badge>
             </Group>
@@ -93,7 +93,7 @@ export function OnetAlternateTitlesTab({
             {loading ? (
               <Group gap={6} align="center">
                 <Loader size="xs" />
-                <Text size="xs" c="dimmed">
+                <Text size="sm" c="dimmed">
                   Đang tải...
                 </Text>
               </Group>
@@ -101,22 +101,22 @@ export function OnetAlternateTitlesTab({
           </Group>
 
           <TextInput
-            size="xs"
+            size="sm"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.currentTarget.value)}
             placeholder="Tìm kiếm tên chức danh tương đương..."
             aria-label="Tìm kiếm chức danh tương đương"
-            leftSection={<IconSearch size={14} stroke={1.5} />}
+            leftSection={<IconSearch size={15} stroke={1.5} />}
             rightSection={
               searchQuery ? (
                 <ActionIcon
-                  size="xs"
+                  size="sm"
                   variant="subtle"
                   color="neutral"
                   aria-label="Xóa tìm kiếm"
                   onClick={() => setSearchQuery('')}
                 >
-                  <IconX size={12} stroke={1.5} />
+                  <IconX size={14} stroke={1.5} />
                 </ActionIcon>
               ) : null
             }
@@ -126,17 +126,17 @@ export function OnetAlternateTitlesTab({
 
       {/* Table Content */}
       {items.length === 0 ? (
-        <Paper p="xl" radius="md" className={surfaces.subtleSurface}>
+        <Paper p="md" radius="md" className={surfaces.subtleSurface}>
           <Stack align="center" gap="xs">
-            <Text size="sm" fw={600}>
+            <Text size="md" fw={600}>
               Không tìm thấy chức danh nào
             </Text>
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Thử thay đổi từ khóa tìm kiếm.
             </Text>
             {searchQuery ? (
               <Button
-                size="xs"
+                size="sm"
                 variant="light"
                 onClick={() => setSearchQuery('')}
               >

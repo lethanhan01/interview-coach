@@ -17,8 +17,9 @@ import type {
   SfiaSkillSummary,
 } from '@/types'
 import { getSfiaCategorySemanticTheme } from '@/components/sfia/sfia-theme'
+import surfaces from '@/styles/surfaces.module.css'
+import sfia from '../sfia.module.css'
 import { SfiaMatrixCell } from './SfiaMatrixCell'
-import classes from './SfiaMatrixView.module.css'
 
 const SFIA_LEVELS = [1, 2, 3, 4, 5, 6, 7] as const
 
@@ -43,13 +44,16 @@ export const SfiaMatrixRow = memo(function SfiaMatrixRow({
 
   return (
     <Table.Tr data-testid={`matrix-row-${skill.code}`}>
-      <Table.Th scope="row" className={classes.stickySkillCol}>
+      <Table.Th
+        scope="row"
+        className={`${sfia.matrixStickyLeftCol} ${sfia.matrixSkillCol}`}
+      >
         <Stack gap={2}>
           <Group gap={6} align="center" wrap="nowrap">
             <Badge
               color={categoryTheme.color}
               variant={categoryTheme.badgeVariant}
-              size="xs"
+              size="sm"
               ff="monospace"
             >
               {skill.code}
@@ -58,7 +62,7 @@ export const SfiaMatrixRow = memo(function SfiaMatrixRow({
               L{skill.minLevel}–L{skill.maxLevel}
             </Text>
           </Group>
-          <Text size="xs" fw={500} truncate title={skill.name}>
+          <Text size="sm" fw={500} truncate title={skill.name}>
             {skill.name}
           </Text>
         </Stack>
@@ -67,10 +71,10 @@ export const SfiaMatrixRow = memo(function SfiaMatrixRow({
       {SFIA_LEVELS.map((lvl) => {
         if (lvl < skill.minLevel || lvl > skill.maxLevel) {
           return (
-            <Table.Td key={lvl} className={classes.cellTd}>
+            <Table.Td key={lvl} className={sfia.matrixCellTd}>
               <Box
                 data-testid={`cell-${skill.code}-L${lvl}-inactive`}
-                className={classes.inactiveCell}
+                className={`${surfaces.subtleSurface} ${sfia.matrixInactiveCell}`}
               >
                 <Text component="span" size="xs" aria-hidden="true">
                   —
@@ -88,7 +92,7 @@ export const SfiaMatrixRow = memo(function SfiaMatrixRow({
           inspectedCell?.levelId === lvl
 
         return (
-          <Table.Td key={lvl} className={classes.cellTd}>
+          <Table.Td key={lvl} className={sfia.matrixCellTd}>
             <SfiaMatrixCell
               skill={skill}
               levelId={lvl}

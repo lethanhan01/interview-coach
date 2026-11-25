@@ -12,7 +12,8 @@ import {
   IconUser,
 } from '@tabler/icons-react'
 import { useAuth } from '@/providers/AuthProvider'
-import classes from './UserMenuButton.module.css'
+import interactions from '@/styles/interactions.module.css'
+import appShell from '../app-shell.module.css'
 
 export interface UserMenuButtonProps {
   role: 'admin' | 'candidate'
@@ -51,7 +52,10 @@ export function UserMenuButton({ role }: Readonly<UserMenuButtonProps>) {
   return (
     <Menu position="bottom-end" width={240} shadow="md" withinPortal>
       <Menu.Target>
-        <UnstyledButton className={classes.trigger} aria-label="Menu tài khoản">
+        <UnstyledButton
+          className={`${appShell.userMenuTrigger} ${interactions.hoverRow}`}
+          aria-label="Menu tài khoản"
+        >
           <Group gap="xs" wrap="nowrap">
             <Avatar color="brand" radius="xl" size="sm">
               {initials}

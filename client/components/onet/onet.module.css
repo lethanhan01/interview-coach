@@ -1,0 +1,92 @@
+/* Sidebar */
+.sidebarOccButton {
+  justify-content: space-between;
+}
+
+.sidebarStatusDot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: rem(8px);
+  height: rem(8px);
+  border-radius: var(--mantine-radius-xl);
+  background-color: var(--mantine-color-default-border);
+
+  &[data-mapped] {
+    background-color: var(--mantine-color-success-filled);
+  }
+}
+
+/* Detail Header */
+.detailHeader {
+  background-color: var(--mantine-color-default);
+}
+
+/* SFIA Mapping Row */
+.sfiaRowHighlighted {
+  background-color: var(--mantine-color-brand-light);
+  transition: background-color 400ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.sfiaWeightCell {
+  min-width: rem(112px);
+}
+
+.sfiaLevelTarget {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: rem(4px);
+  padding: rem(2px) rem(4px);
+  border-radius: var(--mantine-radius-sm);
+  cursor: pointer;
+}
+
+.sfiaMiniGauge {
+  display: inline-flex;
+  align-items: center;
+  gap: rem(2px);
+}
+
+.sfiaGaugeBar {
+  display: inline-block;
+  width: rem(6px);
+  height: rem(4px);
+  border-radius: var(--mantine-radius-xs);
+  background-color: var(--mantine-color-default-border);
+
+  &[data-available] {
+    background-color: var(--mantine-color-brand-light);
+  }
+
+  &[data-active] {
+    height: rem(6px);
+    background-color: var(--mantine-color-brand-filled);
+  }
+}
+
+.sfiaActionsCell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* SFIA Spectrum Bar */
+.spectrumLevelCol {
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-sm);
+  padding: var(--mantine-spacing-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-xs);
+  min-height: rem(128px);
+  background-color: var(--mantine-color-default);
+}
+
+.spectrumSkillPill {
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}

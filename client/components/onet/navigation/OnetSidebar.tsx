@@ -13,10 +13,10 @@ import {
   Text,
 } from '@mantine/core'
 import { IconRefresh } from '@tabler/icons-react'
+import layout from '@/styles/layout.module.css'
 import { OnetSidebarGroupItem } from './OnetSidebarGroupItem'
 import { OnetSidebarHeader } from './OnetSidebarHeader'
 import { toSidebarError, useOnetSidebarData } from './useOnetSidebarData'
-import classes from './OnetSidebar.module.css'
 
 export interface OnetSidebarProps {
   selectedSoc: string
@@ -59,7 +59,7 @@ export function OnetSidebar({
   )
 
   return (
-    <Box className={classes.root}>
+    <Box className={layout.panelColumn}>
       <OnetSidebarHeader
         totalOccupations={totalOccupations}
         hasSearch={hasSearch}
@@ -72,7 +72,7 @@ export function OnetSidebar({
         onMappingStatusChange={setMappingStatus}
       />
 
-      <ScrollArea className={classes.scroll} type="auto" offsetScrollbars>
+      <ScrollArea className={layout.scrollFlex} type="auto" offsetScrollbars>
         <Box p="xs">
           {majorGroupsQuery.isLoading ? (
             <Stack gap="xs">
@@ -83,13 +83,13 @@ export function OnetSidebar({
           ) : majorGroupsError || (hasSearch && searchError) ? (
             <Alert color="danger" variant="light" title="Lỗi tải dữ liệu">
               <Stack gap="xs">
-                <Text size="xs">{majorGroupsError ?? searchError}</Text>
+                <Text size="sm">{majorGroupsError ?? searchError}</Text>
                 <Group>
                   <Button
-                    size="xs"
+                    size="sm"
                     variant="light"
                     color="danger"
-                    leftSection={<IconRefresh size={14} stroke={1.5} />}
+                    leftSection={<IconRefresh size={15} stroke={1.5} />}
                     onClick={() => {
                       void majorGroupsQuery.refetch()
                       if (hasSearch) void searchQuery.refetch()
@@ -101,21 +101,21 @@ export function OnetSidebar({
               </Stack>
             </Alert>
           ) : hasSearch && searchQuery.isFetching ? (
-            <Group justify="center" gap="xs" py="lg">
+            <Group justify="center" gap="xs" py="md">
               <Loader size="xs" />
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 Đang tìm kiếm trong cơ sở dữ liệu...
               </Text>
             </Group>
           ) : visibleGroups.length === 0 ? (
-            <Stack align="center" gap="xs" py="lg">
-              <Text size="sm" fw={600}>
+            <Stack align="center" gap="xs" py="md">
+              <Text size="md" fw={600}>
                 Không tìm thấy nghề nghiệp phù hợp
               </Text>
-              <Text size="xs" c="dimmed" ta="center">
+              <Text size="sm" c="dimmed" ta="center">
                 Không có nhóm SOC nào khớp với bộ lọc hiện tại.
               </Text>
-              <Button size="xs" variant="light" onClick={resetFilters}>
+              <Button size="sm" variant="light" onClick={resetFilters}>
                 Đặt lại bộ lọc
               </Button>
             </Stack>

@@ -75,22 +75,22 @@ export function OnetTechSkillsTab({
   }, [filteredSkills])
 
   return (
-    <Stack gap="sm">
+    <Stack gap="xs">
       {/* Control Header */}
-      <Paper withBorder p="sm" radius="md">
+      <Paper withBorder p="xs" radius="md">
         <Stack gap="xs">
           <Group justify="space-between" align="center" wrap="wrap">
             <Group gap="xs">
-              <Title order={3} size="h6">
+              <Title order={3} size="h5">
                 Kỹ năng Phần mềm & Công cụ
               </Title>
-              <Badge color="neutral" variant="outline" size="xs">
+              <Badge color="neutral" variant="outline" size="sm">
                 {skills.length} công nghệ
               </Badge>
             </Group>
 
             <SegmentedControl
-              size="xs"
+              size="sm"
               value={viewMode}
               onChange={(val) => setViewMode(val as TechViewMode)}
               aria-label="Chế độ xem kỹ năng công nghệ"
@@ -103,24 +103,24 @@ export function OnetTechSkillsTab({
 
           <Group gap="xs" wrap="wrap" justify="space-between">
             <TextInput
-              size="xs"
+              size="sm"
               flex={1}
               miw={200}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.currentTarget.value)}
               placeholder="Tìm kiếm công nghệ, ngôn ngữ, công cụ..."
               aria-label="Tìm kiếm công nghệ"
-              leftSection={<IconSearch size={14} stroke={1.5} />}
+              leftSection={<IconSearch size={15} stroke={1.5} />}
               rightSection={
                 searchQuery ? (
                   <ActionIcon
-                    size="xs"
+                    size="sm"
                     variant="subtle"
                     color="neutral"
                     aria-label="Xóa tìm kiếm"
                     onClick={() => setSearchQuery('')}
                   >
-                    <IconX size={12} stroke={1.5} />
+                    <IconX size={14} stroke={1.5} />
                   </ActionIcon>
                 ) : null
               }
@@ -134,15 +134,15 @@ export function OnetTechSkillsTab({
               }
             >
               <Group gap="xs">
-                <Chip value="all" size="xs" variant="outline">
+                <Chip value="all" size="sm" variant="outline">
                   Tất cả ({skills.length})
                 </Chip>
-                <Chip value="hot" size="xs" variant="outline" color="warning">
+                <Chip value="hot" size="sm" variant="outline" color="warning">
                   Nóng ({hotCount})
                 </Chip>
                 <Chip
                   value="demand"
-                  size="xs"
+                  size="sm"
                   variant="outline"
                   color="success"
                 >
@@ -156,16 +156,16 @@ export function OnetTechSkillsTab({
 
       {/* Skills Display */}
       {filteredSkills.length === 0 ? (
-        <Paper p="xl" radius="md" className={surfaces.subtleSurface}>
+        <Paper p="md" radius="md" className={surfaces.subtleSurface}>
           <Stack align="center" gap="xs">
-            <Text size="sm" fw={600}>
+            <Text size="md" fw={600}>
               Không tìm thấy kỹ năng công nghệ nào
             </Text>
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Thử thay đổi từ khóa tìm kiếm hoặc chọn bộ lọc khác.
             </Text>
             <Button
-              size="xs"
+              size="sm"
               variant="light"
               onClick={() => {
                 setSearchQuery('')
@@ -183,7 +183,7 @@ export function OnetTechSkillsTab({
           ))}
         </Stack>
       ) : (
-        <Paper withBorder p="sm" radius="md">
+        <Paper withBorder p="xs" radius="md">
           <Group gap="xs" wrap="wrap">
             {filteredSkills.map((skill, index) => (
               <Badge

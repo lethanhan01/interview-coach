@@ -22,9 +22,9 @@ import {
   IconStack2,
 } from '@tabler/icons-react'
 import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
+import sfia from '../sfia.module.css'
 import { downloadSfiaAttributesProgressionCsv } from './sfia-attributes-export'
 import { SfiaProgressionTable } from './SfiaProgressionTable'
-import classes from './SfiaAttributesProgressionMatrix.module.css'
 
 export interface SfiaAttributesProgressionMatrixProps {
   levels: SfiaLevelResponsibility[]
@@ -88,7 +88,7 @@ export function SfiaAttributesProgressionMatrix({
   }
 
   return (
-    <Box className={[classes.root, className].filter(Boolean).join(' ')}>
+    <Box className={[sfia.matrixRoot, className].filter(Boolean).join(' ')}>
       <Paper withBorder p="xs" radius="md">
         <Group justify="space-between" align="center" gap="xs" wrap="wrap">
           <Group gap="xs" align="center" wrap="nowrap">

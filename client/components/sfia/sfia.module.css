@@ -1,0 +1,449 @@
+/* Sidebar Tree */
+.treeCategoryNode {
+  cursor: pointer;
+  border-radius: var(--mantine-radius-sm);
+  padding-block: rem(5px);
+  padding-inline-end: rem(6px);
+  user-select: none;
+}
+
+.treeSubcategoryNode {
+  cursor: pointer;
+  border-radius: var(--mantine-radius-sm);
+  padding-block: rem(4px);
+  padding-inline-end: rem(6px);
+  user-select: none;
+}
+
+.treeSkillWrapper {
+  display: flex;
+  width: 100%;
+}
+
+.treeSkillCodeBadge {
+  flex-shrink: 0;
+  min-width: rem(54px);
+}
+
+.treeChevron {
+  flex-shrink: 0;
+  transition: transform 150ms ease;
+
+  &[data-expanded='true'] {
+    transform: rotate(90deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+/* Level Span Stepper */
+.stepperContainer {
+  position: relative;
+}
+
+.stepperRailGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: flex-start;
+  position: relative;
+}
+
+.stepperColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.stepperNodeRailWrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.stepperConnector {
+  height: rem(3px);
+  flex: 1;
+  background-color: var(--mantine-color-default-border);
+
+  &[data-in-range='true'] {
+    background-color: var(--mantine-primary-color-filled);
+  }
+
+  &[data-hidden='true'] {
+    visibility: hidden;
+  }
+}
+
+.stepperNodeCircle {
+  width: rem(36px);
+  height: rem(36px);
+  border-radius: var(--mantine-radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mantine-font-family-monospace);
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 700;
+  border: 1px solid var(--mantine-color-default-border);
+  background-color: var(--mantine-color-body);
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+  flex-shrink: 0;
+  z-index: 1;
+
+  &[data-active='true'] {
+    background-color: var(--mantine-primary-color-filled);
+    color: var(--mantine-primary-color-contrast);
+    border-color: var(--mantine-primary-color-filled);
+    transform: scale(1.1);
+  }
+
+  &[data-available='false'] {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background-color: var(--mantine-color-default);
+  }
+
+  @mixin hover {
+    &[data-available='true'] {
+      border-color: var(--mantine-primary-color-filled);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+/* Matrix Inspection Sheet */
+.inspectionScrollBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--mantine-spacing-md);
+}
+
+.inspectionFooter {
+  flex-shrink: 0;
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  border-top: 1px solid var(--mantine-color-default-border);
+  background-color: var(--mantine-color-body);
+}
+
+/* Shared SFIA 2D Matrix Base (SfiaMatrixView & SfiaProgressionTable) */
+.matrixRoot {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  gap: var(--mantine-spacing-xs);
+}
+
+.matrixViewport {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  background-color: var(--mantine-color-body);
+}
+
+.matrixTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.matrixStickyCorner {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  border-right: 1px solid var(--mantine-color-default-border);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.matrixStickyHeader {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-right: 1px solid var(--mantine-color-default-border);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+
+  &:last-child {
+    border-right: 0;
+  }
+}
+
+.matrixStickyLeftCol {
+  position: sticky;
+  left: 0;
+  z-index: 15;
+  border-right: 1px solid var(--mantine-color-default-border);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  background-color: var(--mantine-color-body);
+}
+
+/* Matrix 2D Specifics (SfiaMatrixView) */
+.matrixCorner {
+  min-width: rem(240px);
+  max-width: rem(280px);
+  text-align: left;
+}
+
+.matrixHeader {
+  min-width: rem(96px);
+  text-align: center;
+}
+
+.matrixSkillCol {
+  min-width: rem(240px);
+  max-width: rem(280px);
+  text-align: left;
+}
+
+.matrixCellTd {
+  min-width: rem(96px);
+  padding: rem(4px);
+  text-align: center;
+  vertical-align: middle;
+  border-right: 1px solid var(--mantine-color-default-border);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+
+  &:last-child {
+    border-right: 0;
+  }
+}
+
+.matrixInactiveCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: rem(52px);
+  border-radius: var(--mantine-radius-sm);
+  color: var(--mantine-color-dimmed);
+  user-select: none;
+}
+
+.matrixHeatCell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: rem(52px);
+  padding: rem(4px);
+  border-radius: var(--mantine-radius-sm);
+  border: 1px solid transparent;
+  transition:
+    transform 120ms ease,
+    border-color 120ms ease,
+    background-color 120ms ease;
+
+  &[data-heat='blind'] {
+    background-color: var(--mantine-color-danger-light);
+    border: 1px dashed var(--mantine-color-danger-outline);
+    color: var(--mantine-color-danger-light-color);
+  }
+
+  &[data-heat='low'] {
+    background-color: var(--mantine-color-warning-light);
+    border-color: var(--mantine-color-warning-outline);
+    color: var(--mantine-color-warning-light-color);
+  }
+
+  &[data-heat='good'] {
+    background-color: var(--mantine-color-brand-light);
+    border-color: var(--mantine-color-brand-outline);
+    color: var(--mantine-color-brand-light-color);
+  }
+
+  &[data-heat='rich'] {
+    background-color: var(--mantine-color-success-light);
+    border-color: var(--mantine-color-success-filled);
+    color: var(--mantine-color-success-light-color);
+  }
+
+  &[data-active] {
+    outline: rem(2px) solid var(--mantine-primary-color-filled);
+    outline-offset: rem(1px);
+    z-index: 5;
+  }
+
+  @mixin hover {
+    transform: translateY(rem(-1px));
+  }
+
+  &:focus-visible {
+    z-index: 6;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    @mixin hover {
+      transform: none;
+    }
+  }
+}
+
+.matrixBlindSpotDot {
+  position: absolute;
+  top: rem(5px);
+  right: rem(5px);
+  width: rem(6px);
+  height: rem(6px);
+  border-radius: var(--mantine-radius-xl);
+  background-color: var(--mantine-color-danger-filled);
+}
+
+/* Progression 5x7 Matrix Specifics (SfiaProgressionTable) */
+.progCorner {
+  min-width: rem(220px);
+  max-width: rem(240px);
+  vertical-align: middle;
+}
+
+.progHeader {
+  min-width: rem(260px);
+  max-width: rem(320px);
+  padding: 0;
+  vertical-align: top;
+
+  &[data-selected] {
+    background-color: var(--mantine-color-brand-light);
+    border-bottom: rem(2px) solid var(--mantine-primary-color-filled);
+  }
+}
+
+.progLevelHeaderBtn {
+  display: flex;
+  flex-direction: column;
+  gap: rem(4px);
+  width: 100%;
+  height: 100%;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  text-align: left;
+
+  &:focus-visible {
+    outline-offset: rem(-2px);
+  }
+}
+
+.progAttrCol {
+  min-width: rem(220px);
+  max-width: rem(240px);
+  vertical-align: top;
+}
+
+.progStatementCell {
+  min-width: rem(260px);
+  max-width: rem(320px);
+  border-right: 1px solid var(--mantine-color-default-border);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  background-color: var(--mantine-color-body);
+  vertical-align: top;
+  transition: background-color 150ms ease;
+
+  &[data-selected] {
+    background-color: var(--mantine-color-brand-light);
+  }
+
+  &[data-matched] {
+    box-shadow: inset 0 0 0 rem(2px) var(--mantine-color-warning-outline);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+/* Analytics */
+.analyticsBlindSpotCard {
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-align: left;
+  border-radius: var(--mantine-radius-md);
+  border: 1px solid var(--mantine-color-danger-outline);
+  background-color: var(--mantine-color-danger-light);
+  padding: var(--mantine-spacing-sm);
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+
+  &[data-clear] {
+    border-color: var(--mantine-color-success-outline);
+    background-color: var(--mantine-color-success-light);
+  }
+
+  @mixin hover {
+    background-color: var(--mantine-color-danger-light-hover);
+
+    &[data-clear] {
+      background-color: var(--mantine-color-success-light-hover);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.analyticsFilterPill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-xs);
+  width: 100%;
+  text-align: left;
+  padding: rem(6px) rem(10px);
+  border-radius: var(--mantine-radius-sm);
+  border: 1px solid var(--mantine-color-default-border);
+  background-color: var(--mantine-color-body);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+
+  @mixin hover {
+    background-color: var(--mantine-color-default-hover);
+  }
+
+  &[data-active] {
+    border-color: var(--mantine-primary-color-filled);
+    background-color: var(--mantine-primary-color-light);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.analyticsSkillCodeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: rem(4px);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 700;
+  color: var(--mantine-primary-color-filled);
+  border-radius: var(--mantine-radius-xs);
+  padding: rem(2px) rem(4px);
+
+  @mixin hover {
+    text-decoration: underline;
+  }
+}
+
+.analyticsLeaderboardRow {
+  border-radius: var(--mantine-radius-sm);
+}

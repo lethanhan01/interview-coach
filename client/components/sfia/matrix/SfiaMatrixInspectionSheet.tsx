@@ -23,8 +23,9 @@ import type { SfiaCategory, SfiaLevelResponsibility } from '@/types'
 import { sfiaAdminQueries } from '@/queries/sfia.queries'
 import { getSfiaCategorySemanticTheme } from '@/components/sfia/sfia-theme'
 import { generateSfiaRubricMarkdownPrompt } from '@/components/sfia/sfia-prompt-helper'
+import layout from '@/styles/layout.module.css'
+import sfia from '../sfia.module.css'
 import { SfiaInspectionDetails } from './SfiaInspectionDetails'
-import classes from './SfiaMatrixInspectionSheet.module.css'
 
 export interface SfiaMatrixInspectionSheetProps {
   isOpen: boolean
@@ -100,8 +101,9 @@ export function SfiaMatrixInspectionSheet({
       onClose={onClose}
       position="right"
       size="lg"
+      padding={0}
       closeButtonProps={{ 'aria-label': 'Đóng bảng kiểm tra kỹ năng' }}
-      classNames={{ content: classes.drawerContent, body: classes.drawerBody }}
+      classNames={{ content: layout.drawerContent, body: layout.drawerBody }}
       title={
         <Stack gap={4}>
           <Group gap={6} align="center" wrap="wrap">
@@ -109,33 +111,33 @@ export function SfiaMatrixInspectionSheet({
               <Badge
                 color={categoryTheme.color}
                 variant={categoryTheme.badgeVariant}
-                size="xs"
+                size="sm"
                 ff="monospace"
               >
                 {skillCode}
               </Badge>
             )}
             {categoryLabel && (
-              <Badge color="neutral" variant="light" size="xs">
+              <Badge color="neutral" variant="light" size="sm">
                 {categoryLabel}
               </Badge>
             )}
             {detail?.subcategoryCode && (
-              <Text component="span" size="xs" ff="monospace" c="dimmed">
+              <Text component="span" size="sm" ff="monospace" c="dimmed">
                 / {detail.subcategoryCode}
               </Text>
             )}
           </Group>
-          <Text component="span" size="md" fw={700} lh={1.3}>
+          <Text component="span" size="lg" fw={700} lh={1.3}>
             {detail?.name || skillCode || 'Kiểm tra kỹ năng SFIA 9'}
           </Text>
         </Stack>
       }
     >
-      <Box className={classes.scrollBody}>
+      <Box className={sfia.inspectionScrollBody}>
         {loading && (
-          <Stack gap="sm">
-            <Text size="xs" c="dimmed">
+          <Stack gap="xs">
+            <Text size="sm" c="dimmed">
               Đang tải thông tin kỹ năng {skillCode}...
             </Text>
             <Skeleton height={48} radius="md" />
@@ -152,10 +154,10 @@ export function SfiaMatrixInspectionSheet({
             title="Không thể tải chi tiết kỹ năng"
           >
             <Stack gap="xs" align="flex-start">
-              <Text size="xs">{error}</Text>
+              <Text size="sm">{error}</Text>
               <Button
                 variant="default"
-                size="xs"
+                size="sm"
                 onClick={() => skillCode && void refetch()}
               >
                 Thử lại
@@ -173,12 +175,12 @@ export function SfiaMatrixInspectionSheet({
         )}
       </Box>
 
-      <Box className={classes.footer}>
+      <Box className={sfia.inspectionFooter}>
         <Group grow gap="xs" wrap="wrap">
           <Button
             variant="default"
-            size="xs"
-            leftSection={<IconFolderRoot size={14} stroke={1.5} />}
+            size="sm"
+            leftSection={<IconFolderRoot size={15} stroke={1.5} />}
             disabled={!skillCode || !levelId}
             onClick={() => {
               if (skillCode && levelId) {
@@ -192,8 +194,8 @@ export function SfiaMatrixInspectionSheet({
           <Button
             variant="light"
             color="brand"
-            size="xs"
-            leftSection={<IconCopy size={14} stroke={1.5} />}
+            size="sm"
+            leftSection={<IconCopy size={15} stroke={1.5} />}
             disabled={!detail || !levelId}
             onClick={() => void handleCopyPrompt()}
           >
@@ -202,8 +204,8 @@ export function SfiaMatrixInspectionSheet({
           <Button
             variant="filled"
             color="brand"
-            size="xs"
-            leftSection={<IconPlus size={14} stroke={1.5} />}
+            size="sm"
+            leftSection={<IconPlus size={15} stroke={1.5} />}
             disabled={!skillCode || !levelId}
             onClick={() =>
               skillCode && levelId && onCreateQuestion(skillCode, levelId)

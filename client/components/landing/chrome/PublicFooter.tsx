@@ -2,11 +2,15 @@
 
 import Link from 'next/link'
 import { Anchor, Box, Container, Group, Text } from '@mantine/core'
-import classes from './PublicFooter.module.css'
+import surfaces from '@/styles/surfaces.module.css'
 
 export function PublicFooter() {
   return (
-    <Box component="footer" className={classes.footer}>
+    <Box
+      component="footer"
+      py="lg"
+      className={`${surfaces.borderedTop} ${surfaces.bodySurface}`}
+    >
       <Container size="lg">
         <Group justify="space-between" wrap="wrap" gap="sm">
           <Text size="sm" c="dimmed">

@@ -85,10 +85,10 @@ export function SfiaMatrixHeatmapSummary({
             <Button
               variant={blindSpotsOnly ? 'filled' : 'light'}
               color="danger"
-              size="compact-xs"
+              size="compact-sm"
               radius="xl"
               aria-pressed={blindSpotsOnly}
-              leftSection={<IconAlertTriangle size={12} stroke={1.5} />}
+              leftSection={<IconAlertTriangle size={13} stroke={1.5} />}
               disabled={!onToggleBlindSpotsOnly}
               onClick={() => onToggleBlindSpotsOnly?.(!blindSpotsOnly)}
             >
@@ -96,7 +96,7 @@ export function SfiaMatrixHeatmapSummary({
             </Button>
           </Group>
 
-          <Text size="xs" c="dimmed">
+          <Text size="sm" c="dimmed">
             Tổng {counts.total} ô khả dụng
           </Text>
         </Group>

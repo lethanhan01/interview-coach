@@ -1,6 +1,8 @@
 import { Box, Group, Stack, Text } from '@mantine/core'
+import surfaces from '@/styles/surfaces.module.css'
+import typography from '@/styles/typography.module.css'
 import type { CatalogSfiaLevelOption } from '@/types'
-import classes from './SfiaSegmentMeter.module.css'
+import report from '../report.module.css'
 
 export interface SfiaSegmentMeterProps {
   demonstratedLevel: number
@@ -31,7 +33,7 @@ export function SfiaSegmentMeter({
         aria-valuemin={0}
         aria-valuemax={7}
         aria-label={`Thang đo SFIA 7 cấp độ cho ${skillName}`}
-        className={classes.srOnly}
+        className={typography.srOnly}
       >
         {safeDemonstratedLevel} / 7
       </Box>
@@ -61,7 +63,7 @@ export function SfiaSegmentMeter({
             <Box
               key={level}
               title={title}
-              className={classes.segment}
+              className={`${surfaces.subtleSurface} ${report.meterSegment}`}
               mod={{ state, target: isTarget }}
             >
               {level}

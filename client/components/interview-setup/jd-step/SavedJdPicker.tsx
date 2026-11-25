@@ -25,9 +25,10 @@ import { useQuery } from '@tanstack/react-query'
 import { formatVietnamRelativeDate } from '@/lib/date-time'
 import { getJdLevelLabel } from '@/lib/interview-option-helpers'
 import { catalogQueries } from '@/queries/catalog.queries'
-import type { SavedJobDescription } from '@/types'
 import interactions from '@/styles/interactions.module.css'
-import classes from './SavedJdPicker.module.css'
+import layout from '@/styles/layout.module.css'
+import type { SavedJobDescription } from '@/types'
+import interviewSetup from '../interview-setup.module.css'
 
 export interface SavedJdPickerProps {
   items: SavedJobDescription[]
@@ -82,7 +83,7 @@ export default function SavedJdPicker({
       <UnstyledButton
         type="button"
         onClick={onNew}
-        className={`${classes.newButton} ${interactions.focusRing}`}
+        className={interviewSetup.dashedCtaButton}
       >
         <Group justify="space-between" align="center" wrap="nowrap" gap="md">
           <Group gap="md" align="center" wrap="nowrap">
@@ -101,8 +102,9 @@ export default function SavedJdPicker({
           <IconChevronRight
             size={18}
             stroke={1.5}
+            color="var(--mantine-color-dimmed)"
             aria-hidden="true"
-            className={classes.chevron}
+            className={layout.shrink0}
           />
         </Group>
       </UnstyledButton>
@@ -124,7 +126,7 @@ export default function SavedJdPicker({
               key={item.id}
               type="button"
               onClick={() => onSelect(item)}
-              className={`${classes.itemButton} ${interactions.focusRing}`}
+              className={interactions.cardLink}
             >
               <Paper
                 withBorder
@@ -213,8 +215,9 @@ export default function SavedJdPicker({
                   <IconChevronRight
                     size={18}
                     stroke={1.5}
+                    color="var(--mantine-color-dimmed)"
                     aria-hidden="true"
-                    className={classes.chevron}
+                    className={layout.shrink0}
                   />
                 </Group>
               </Paper>

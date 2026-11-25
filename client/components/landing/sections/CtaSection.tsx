@@ -12,13 +12,18 @@ import {
   Title,
 } from '@mantine/core'
 import { IconArrowRight } from '@tabler/icons-react'
-import classes from './CtaSection.module.css'
+import surfaces from '@/styles/surfaces.module.css'
+import landing from '../landing.module.css'
 
 export function CtaSection() {
   return (
-    <Box component="section" className={classes.section}>
+    <Box component="section" className={landing.ctaSection}>
       <Container size="lg">
-        <Paper withBorder radius="lg" className={classes.banner}>
+        <Paper
+          withBorder
+          radius="lg"
+          className={`${landing.ctaBanner} ${surfaces.subtleSurface}`}
+        >
           <Stack align="center" gap="md">
             <Title order={2} ta="center">
               Sẵn sàng luyện tập?

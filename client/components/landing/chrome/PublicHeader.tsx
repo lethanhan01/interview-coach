@@ -17,20 +17,24 @@ import { useDisclosure } from '@mantine/hooks'
 import { IconMicrophone } from '@tabler/icons-react'
 import { ColorSchemeToggle } from '@/components/layout/header/ColorSchemeToggle'
 import interactions from '@/styles/interactions.module.css'
-import classes from './PublicHeader.module.css'
+import surfaces from '@/styles/surfaces.module.css'
+import landing from '../landing.module.css'
 
 export function PublicHeader() {
   const [opened, { toggle, close }] = useDisclosure(false)
 
   return (
-    <Box component="header" className={classes.header}>
+    <Box
+      component="header"
+      className={`${landing.publicHeader} ${surfaces.bodySurface} ${surfaces.borderedBottom}`}
+    >
       <Container size="lg" h="100%">
         <Group h="100%" justify="space-between" wrap="nowrap">
           <Anchor
             component={Link}
             href="/"
             underline="never"
-            className={`${classes.brandLink} ${interactions.focusRing}`}
+            className={interactions.brandLink}
             aria-label="Interview Coach — Trang chủ"
           >
             <ThemeIcon color="brand" variant="light" size="md" radius="md">

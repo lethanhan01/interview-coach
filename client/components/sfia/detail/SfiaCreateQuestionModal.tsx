@@ -148,7 +148,7 @@ export function SfiaCreateQuestionModal({
       title={
         <Group gap="xs" align="center">
           <IconPlus size={16} stroke={1.5} />
-          <Text fw={700} size="sm">
+          <Text fw={700} size="md">
             Tạo Câu Hỏi Phỏng Vấn Mới
           </Text>
         </Group>
@@ -156,18 +156,18 @@ export function SfiaCreateQuestionModal({
       closeButtonProps={{ 'aria-label': 'Đóng cửa sổ thêm câu hỏi' }}
     >
       <Box component="form" onSubmit={form.onSubmit(handleSubmit)} noValidate>
-        <Stack gap="sm">
+        <Stack gap="xs">
           <Paper withBorder p="xs" radius="sm">
             <Group justify="space-between" align="center">
               <Stack gap={2}>
                 <Text size="xs" c="dimmed">
                   Kỹ năng SFIA 9
                 </Text>
-                <Text fw={700} size="xs" ff="monospace">
+                <Text fw={700} size="sm" ff="monospace">
                   {skillCode} — {skillName}
                 </Text>
               </Stack>
-              <Badge color="brand" variant="light" size="xs">
+              <Badge color="brand" variant="light" size="sm">
                 L{minLevel} ➔ L{maxLevel}
               </Badge>
             </Group>
@@ -219,7 +219,7 @@ export function SfiaCreateQuestionModal({
           <Group justify="flex-end" gap="xs" mt="xs">
             <Button
               variant="default"
-              size="xs"
+              size="sm"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
@@ -227,10 +227,10 @@ export function SfiaCreateQuestionModal({
             </Button>
             <Button
               type="submit"
-              size="xs"
+              size="sm"
               color="brand"
               loading={isSubmitting}
-              leftSection={<IconPlus size={14} stroke={1.5} />}
+              leftSection={<IconPlus size={15} stroke={1.5} />}
             >
               Tạo câu hỏi
             </Button>

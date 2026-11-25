@@ -104,7 +104,7 @@ Trên props `color` và `c` trong JSX, chỉ được phép dùng: `brand`, `suc
 
 ### 3.3. `SEM-TOKEN-003` — Cấm `bd=`, `bdrs=`, và Inline `style={{...}}` (`ERROR` · `[Active]`)
 
-Không truyền border shorthand `bd="1px solid ..."`, `bdrs="..."` hay inline `style={{...}}` trong JSX. Dùng `<Paper withBorder radius="md">`, `<Card>`, `<Table.ScrollContainer>`, và `<ComponentName>.module.css`.
+Không truyền border shorthand `bd="1px solid ..."`, `bdrs="..."` hay inline `style={{...}}` trong JSX. Dùng `<Paper withBorder radius="md">`, `<Card>`, `<Table.ScrollContainer>`, và CSS Modules 2 tầng (`client/styles/*.module.css` hoặc domain `*.module.css`).
 
 <a id="sem-token-004"></a>
 
@@ -116,9 +116,9 @@ Trong `*.module.css`, chỉ dùng các biến ngữ nghĩa tự thích ứng Lig
 
 <a id="sem-token-005"></a>
 
-### 3.5. `SEM-TOKEN-005` — Cô Lập CSS Trong `*.module.css` & Container Queries (`WARN` · `[Active]`)
+### 3.5. `SEM-TOKEN-005` — Kiến Trúc CSS Modules 2 Tầng (`client/styles/` -> Domain `*.module.css`) & Container Queries (`WARN` · `[Active]`)
 
-Mọi class riêng của component, `@mixin hover`, `:focus-visible`, `&[data-*]`, và `@container` queries đặt trọn trong `<ComponentName>.module.css`. Giữ `client/app/globals.css` thuần khai báo `@layer` và base rules.
+Tổ chức CSS Modules theo 2 tầng (Rule of Three): tái sử dụng 4 shared module trong `client/styles/` (`layout`, `surfaces`, `interactions`, `typography`) cho pattern dùng chéo `>= 2` domain, và đặt mọi class đặc thù nghiệp vụ (`@mixin hover`, `&[data-*]`, `@container` queries) trong file cấp domain (`components/<domain>/<domain>.module.css` hoặc `components/layout/app-shell.module.css`) với prefix theo widget. Không tạo `<ComponentName>.module.css` nhỏ lẻ mới, không lặp `light-dark(...)` (dùng `surfaces.subtleSurface`) hay `&:focus-visible` mặc định (dùng `theme.focusClassName`). Giữ `client/app/globals.css` thuần khai báo `@layer` và base rules.
 
 ```css
 /* Incorrect: Hardcode hex, px spacing và biến vật lý đứng đơn lẻ

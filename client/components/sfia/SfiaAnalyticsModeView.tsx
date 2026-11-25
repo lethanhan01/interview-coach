@@ -9,10 +9,10 @@ import type {
   SfiaLevelResponsibility,
   SfiaSkillSummary,
 } from '@/types'
+import layout from '@/styles/layout.module.css'
 import { downloadSfiaBlindSpotsCsv } from './analytics/sfia-analytics-export'
 import { SfiaAnalyticsView } from './analytics/SfiaAnalyticsView'
 import { SfiaBlindSpotsTable } from './analytics/SfiaBlindSpotsTable'
-import classes from './SfiaWorkspaceClient.module.css'
 
 export interface SfiaAnalyticsModeViewProps {
   stats: SfiaCoverageStats | null
@@ -67,7 +67,7 @@ export function SfiaAnalyticsModeView({
   }
 
   return (
-    <Box className={classes.scrollPane}>
+    <Box className={layout.scrollPane}>
       <ScrollArea flex={1} type="auto">
         <Stack gap="md" pb="md">
           <SfiaAnalyticsView

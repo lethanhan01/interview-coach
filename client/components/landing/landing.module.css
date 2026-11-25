@@ -1,0 +1,67 @@
+/* PublicHeader */
+.publicHeader {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: rem(64px);
+}
+
+/* HeroSection */
+.heroSection {
+  padding-block: rem(56px);
+
+  @media (min-width: $mantine-breakpoint-md) {
+    padding-block: rem(80px);
+  }
+}
+
+.heroGrid {
+  align-items: center;
+}
+
+.heroTitle {
+  font-size: rem(34px);
+  line-height: 1.15;
+  letter-spacing: rem(-0.5px);
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    font-size: rem(44px);
+  }
+}
+
+/* FeaturesSection */
+.featuresSection {
+  padding-block: rem(64px);
+}
+
+.featureCard {
+  transition: transform 180ms ease;
+
+  @mixin hover {
+    transform: translateY(rem(-2px));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    @mixin hover {
+      transform: none;
+    }
+  }
+}
+
+/* WorkflowSection */
+.workflowSection {
+  padding-block: rem(56px);
+  border-top: 1px solid var(--mantine-color-default-border);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+/* CtaSection */
+.ctaSection {
+  padding-bottom: rem(72px);
+}
+
+.ctaBanner {
+  padding: rem(40px) var(--mantine-spacing-xl);
+}

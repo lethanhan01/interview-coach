@@ -26,24 +26,24 @@ export function OnetSfiaLevelPreview({
     <Paper p="xs" radius="sm" className={surfaces.subtleSurface}>
       <Stack gap={6}>
         <Group justify="space-between" align="center" wrap="wrap" gap="xs">
-          <Text size="xs" fw={600}>
+          <Text size="sm" fw={600}>
             {skill.name} ({skill.code})
           </Text>
-          <Badge color="brand" variant="light" size="xs">
+          <Badge color="brand" variant="light" size="sm">
             Dải hợp lệ: L{skill.minLevel}–L{skill.maxLevel}
           </Badge>
         </Group>
         {skill.description ? (
-          <Text size="xs" c="dimmed">
+          <Text size="sm" c="dimmed">
             {skill.description}
           </Text>
         ) : null}
         <Divider />
         <Stack gap={2}>
-          <Text size="xs" c="dimmed" fw={600}>
+          <Text size="sm" c="dimmed" fw={600}>
             Mô tả hành vi cấp độ {levelTitle}:
           </Text>
-          <Text size="xs">{description}</Text>
+          <Text size="sm">{description}</Text>
         </Stack>
       </Stack>
     </Paper>

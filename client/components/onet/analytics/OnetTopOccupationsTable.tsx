@@ -27,14 +27,19 @@ export function OnetTopOccupationsTable({
 }: Readonly<OnetTopOccupationsTableProps>) {
   return (
     <Table.ScrollContainer minWidth={720}>
-      <Table verticalSpacing="xs" fz="xs" highlightOnHover>
+      <Table
+        verticalSpacing="xs"
+        horizontalSpacing="xs"
+        fz="sm"
+        highlightOnHover
+      >
         <Table.Thead>
           <Table.Tr>
-            <Table.Th w={56}>Hạng</Table.Th>
+            <Table.Th w={60}>Hạng</Table.Th>
             <Table.Th>Nghề nghiệp O*NET</Table.Th>
-            <Table.Th w={230}>Tỷ trọng Phỏng vấn / JD / SFIA</Table.Th>
+            <Table.Th w={240}>Tỷ trọng Phỏng vấn / JD / SFIA</Table.Th>
             <Table.Th>Kỹ năng cốt lõi SFIA</Table.Th>
-            <Table.Th ta="right" w={140}>
+            <Table.Th ta="right" w={156}>
               Thao tác
             </Table.Th>
           </Table.Tr>
@@ -65,7 +70,7 @@ export function OnetTopOccupationsTable({
                   <Badge
                     color={rank <= 3 ? 'brand' : 'neutral'}
                     variant={rank === 1 ? 'filled' : 'light'}
-                    size="xs"
+                    size="sm"
                     className={typography.tabularNums}
                   >
                     #{rank}
@@ -75,10 +80,10 @@ export function OnetTopOccupationsTable({
                 <Table.Td>
                   <Stack gap={2}>
                     <Group gap={6} wrap="nowrap">
-                      <Badge color="brand" variant="outline" size="xs">
+                      <Badge color="brand" variant="outline" size="sm">
                         {item.socCode}
                       </Badge>
-                      <Text size="xs" fw={600} lineClamp={1}>
+                      <Text size="sm" fw={600} lineClamp={1}>
                         {item.title}
                       </Text>
                     </Group>
@@ -127,7 +132,7 @@ export function OnetTopOccupationsTable({
 
                 <Table.Td>
                   {uniqueCoreSkills.length === 0 ? (
-                    <Text size="xs" c="dimmed">
+                    <Text size="sm" c="dimmed">
                       Chưa gán
                     </Text>
                   ) : (
@@ -139,10 +144,10 @@ export function OnetTopOccupationsTable({
                           href={`/admin/sfia?skill=${encodeURIComponent(code)}`}
                           color="brand"
                           variant="light"
-                          size="xs"
+                          size="sm"
                           rightSection={
                             <IconArrowUpRight
-                              size={10}
+                              size={11}
                               stroke={1.5}
                               aria-hidden="true"
                             />
@@ -152,7 +157,7 @@ export function OnetTopOccupationsTable({
                         </Badge>
                       ))}
                       {uniqueCoreSkills.length > 4 ? (
-                        <Badge color="neutral" variant="light" size="xs">
+                        <Badge color="neutral" variant="light" size="sm">
                           +{uniqueCoreSkills.length - 4}
                         </Badge>
                       ) : null}
@@ -163,7 +168,7 @@ export function OnetTopOccupationsTable({
                 <Table.Td ta="right">
                   <Group gap={4} justify="flex-end" wrap="nowrap">
                     <Button
-                      size="compact-xs"
+                      size="compact-sm"
                       variant="light"
                       color={item.isMapped ? 'success' : 'neutral'}
                       onClick={() => onNavigateToExplorer(item.socCode, 'sfia')}
@@ -171,12 +176,12 @@ export function OnetTopOccupationsTable({
                       SFIA ({item.mappingCount})
                     </Button>
                     <Button
-                      size="compact-xs"
+                      size="compact-sm"
                       variant="subtle"
                       color="brand"
                       leftSection={
                         <IconCompass
-                          size={12}
+                          size={13}
                           stroke={1.5}
                           aria-hidden="true"
                         />

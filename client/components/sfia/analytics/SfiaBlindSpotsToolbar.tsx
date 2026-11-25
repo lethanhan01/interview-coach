@@ -113,7 +113,7 @@ export function SfiaBlindSpotsToolbar({
   }, [categories, selectedCategoryFilter])
 
   return (
-    <Stack gap="sm" p="md">
+    <Stack gap="xs" p="sm">
       <Group justify="space-between" align="flex-start" gap="xs" wrap="wrap">
         <Group gap="xs" align="flex-start" wrap="nowrap">
           <ThemeIcon size="md" radius="md" variant="light" color="danger">
@@ -121,14 +121,14 @@ export function SfiaBlindSpotsToolbar({
           </ThemeIcon>
           <Stack gap={2}>
             <Group gap="xs" wrap="wrap">
-              <Title order={3} size="h5">
+              <Title order={3} size="h4">
                 Bảng Cảnh Báo Điểm Mù Kỹ Năng
               </Title>
               <Badge size="sm" variant="light" color="danger">
                 {totalBlindSpots} điểm mù
               </Badge>
             </Group>
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Danh sách kỹ năng SFIA 9 chưa có câu hỏi trong Ngân hàng câu hỏi
             </Text>
           </Stack>
@@ -138,9 +138,9 @@ export function SfiaBlindSpotsToolbar({
           <Button
             variant="light"
             color="neutral"
-            size="xs"
+            size="sm"
             loading={isExportingCsv}
-            leftSection={<IconDownload size={14} stroke={1.5} />}
+            leftSection={<IconDownload size={15} stroke={1.5} />}
             onClick={onExportCsv}
           >
             Xuất CSV Điểm mù
@@ -150,16 +150,16 @@ export function SfiaBlindSpotsToolbar({
 
       <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="xs">
         <TextInput
-          size="xs"
+          size="sm"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.currentTarget.value)}
           placeholder="Tìm mã (PROG) hoặc tên kỹ năng..."
           aria-label="Tìm kiếm điểm mù kỹ năng"
-          leftSection={<IconSearch size={14} stroke={1.5} />}
+          leftSection={<IconSearch size={15} stroke={1.5} />}
           rightSection={
             searchQuery ? (
               <CloseButton
-                size="xs"
+                size="sm"
                 aria-label="Xóa từ khóa tìm kiếm"
                 onClick={() => onSearchChange('')}
               />
@@ -168,7 +168,7 @@ export function SfiaBlindSpotsToolbar({
         />
 
         <Select
-          size="xs"
+          size="sm"
           searchable
           clearable
           aria-label="Lọc theo danh mục SFIA"
@@ -179,7 +179,7 @@ export function SfiaBlindSpotsToolbar({
         />
 
         <Select
-          size="xs"
+          size="sm"
           clearable
           aria-label="Lọc theo cấp độ SFIA"
           placeholder="Tất cả cấp độ"
@@ -194,8 +194,8 @@ export function SfiaBlindSpotsToolbar({
       {hasActiveFilters ? (
         <Group gap="xs" align="center" wrap="wrap">
           <Group gap={4} wrap="nowrap">
-            <IconFilter size={13} stroke={1.5} />
-            <Text size="xs" c="dimmed">
+            <IconFilter size={14} stroke={1.5} />
+            <Text size="sm" c="dimmed">
               Đang lọc:
             </Text>
           </Group>
@@ -227,7 +227,7 @@ export function SfiaBlindSpotsToolbar({
           <Button
             variant="subtle"
             color="neutral"
-            size="compact-xs"
+            size="compact-sm"
             onClick={onClearAllFilters}
           >
             Xóa tất cả bộ lọc

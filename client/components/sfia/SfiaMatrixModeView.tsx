@@ -11,11 +11,11 @@ import type {
   SfiaMatrixDisplayMode,
   SfiaSkillSummary,
 } from '@/types'
+import layout from '@/styles/layout.module.css'
 import { downloadSfiaMatrixCsv } from './matrix/sfia-matrix-export'
 import { SfiaMatrixInspectionSheet } from './matrix/SfiaMatrixInspectionSheet'
 import { SfiaMatrixToolbar } from './matrix/SfiaMatrixToolbar'
 import { SfiaMatrixView } from './matrix/SfiaMatrixView'
-import classes from './SfiaWorkspaceClient.module.css'
 
 export interface SfiaMatrixModeViewProps {
   categories: SfiaCategory[]
@@ -170,7 +170,7 @@ export function SfiaMatrixModeView({
   }
 
   return (
-    <Box className={classes.tabPane}>
+    <Box className={layout.workspacePane}>
       <SfiaMatrixToolbar
         categories={matrixCategories}
         selectedCategory={selectedCategory ?? ''}

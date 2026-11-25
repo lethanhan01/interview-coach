@@ -46,8 +46,8 @@ const DISPLAY_MODE_OPTIONS = [
     value: 'level',
     label: (
       <Group gap={4} wrap="nowrap" justify="center">
-        <IconStack2 size={13} stroke={1.5} />
-        <Text component="span" size="xs">
+        <IconStack2 size={14} stroke={1.5} />
+        <Text component="span" size="sm">
           Cấp độ
         </Text>
       </Group>
@@ -57,8 +57,8 @@ const DISPLAY_MODE_OPTIONS = [
     value: 'questions',
     label: (
       <Group gap={4} wrap="nowrap" justify="center">
-        <IconHelpCircle size={13} stroke={1.5} />
-        <Text component="span" size="xs">
+        <IconHelpCircle size={14} stroke={1.5} />
+        <Text component="span" size="sm">
           Câu hỏi
         </Text>
       </Group>
@@ -68,8 +68,8 @@ const DISPLAY_MODE_OPTIONS = [
     value: 'onet',
     label: (
       <Group gap={4} wrap="nowrap" justify="center">
-        <IconBriefcase size={13} stroke={1.5} />
-        <Text component="span" size="xs">
+        <IconBriefcase size={14} stroke={1.5} />
+        <Text component="span" size="sm">
           O*NET
         </Text>
       </Group>
@@ -100,22 +100,22 @@ export function SfiaMatrixToolbar({
   }))
 
   return (
-    <Paper withBorder radius="md" p="sm" className={className}>
+    <Paper withBorder radius="md" p="xs" className={className}>
       <Stack gap="xs">
         <Group justify="space-between" align="center" wrap="wrap" gap="xs">
           <Group gap="xs" align="center" wrap="wrap" flex={1}>
             <TextInput
-              size="xs"
+              size="sm"
               w={{ base: '100%', sm: 260, lg: 300 }}
               value={searchQuery}
               onChange={(event) => onSearchChange(event.currentTarget.value)}
               placeholder="Tìm mã (PROG) hoặc tên kỹ năng..."
               aria-label="Tìm kiếm kỹ năng SFIA"
-              leftSection={<IconSearch size={14} stroke={1.5} />}
+              leftSection={<IconSearch size={15} stroke={1.5} />}
               rightSection={
                 searchQuery ? (
                   <CloseButton
-                    size="xs"
+                    size="sm"
                     aria-label="Xóa từ khóa tìm kiếm"
                     onClick={() => onSearchChange('')}
                   />
@@ -123,8 +123,8 @@ export function SfiaMatrixToolbar({
               }
             />
             <Select
-              size="xs"
-              w={{ base: '100%', sm: 240 }}
+              size="sm"
+              w={{ base: '100%', sm: 250 }}
               aria-label="Lọc theo danh mục"
               placeholder="Tất cả danh mục"
               clearable
@@ -137,8 +137,8 @@ export function SfiaMatrixToolbar({
 
           <Button
             variant="default"
-            size="xs"
-            leftSection={<IconDownload size={14} stroke={1.5} />}
+            size="sm"
+            leftSection={<IconDownload size={15} stroke={1.5} />}
             loading={isExporting}
             onClick={onExportCsv}
           >
@@ -149,13 +149,13 @@ export function SfiaMatrixToolbar({
         <Divider />
 
         <Group justify="space-between" align="center" wrap="wrap" gap="xs">
-          <Group gap="md" align="center" wrap="wrap">
+          <Group gap="sm" align="center" wrap="wrap">
             <Group gap="xs" align="center" wrap="nowrap">
-              <Text size="xs" c="dimmed" fw={500}>
+              <Text size="sm" c="dimmed" fw={500}>
                 Hiển thị ô:
               </Text>
               <SegmentedControl
-                size="xs"
+                size="sm"
                 aria-label="Chế độ hiển thị ô ma trận"
                 value={displayMode}
                 onChange={(val) =>
@@ -167,7 +167,7 @@ export function SfiaMatrixToolbar({
 
             <Group gap={6} align="center" wrap="nowrap">
               <Switch
-                size="xs"
+                size="sm"
                 color="danger"
                 checked={blindSpotsOnly}
                 onChange={(e) =>
@@ -176,14 +176,14 @@ export function SfiaMatrixToolbar({
                 label="Chỉ hiện điểm mù (0 câu hỏi)"
               />
               {blindSpotsCount !== undefined && (
-                <Badge color="danger" variant="light" size="xs">
+                <Badge color="danger" variant="light" size="sm">
                   {blindSpotsCount}
                 </Badge>
               )}
             </Group>
           </Group>
 
-          <Text size="xs" c="dimmed">
+          <Text size="sm" c="dimmed">
             Đang hiển thị:{' '}
             <Text component="span" fw={700} c="inherit">
               {displayedSkillsCount}

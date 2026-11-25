@@ -21,7 +21,6 @@ import type { Session, SessionStatus } from '@/types'
 import interactions from '@/styles/interactions.module.css'
 import surfaces from '@/styles/surfaces.module.css'
 import typography from '@/styles/typography.module.css'
-import classes from './SessionListCard.module.css'
 
 type SemanticColor = 'brand' | 'success' | 'warning' | 'danger' | 'neutral'
 
@@ -83,7 +82,8 @@ export default function SessionListCard({
       withBorder
       radius="md"
       p="lg"
-      className={`${classes.card} ${interactions.interactiveCard}`}
+      h="100%"
+      className={interactions.interactiveCard}
     >
       <Stack gap="md" flex={1}>
         <Group justify="space-between" align="flex-start" gap="xs" wrap="wrap">

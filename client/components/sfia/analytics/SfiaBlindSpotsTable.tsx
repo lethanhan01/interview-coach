@@ -113,7 +113,7 @@ export function SfiaBlindSpotsTable({
       <Paper
         id="sfia-blind-spots-table-container"
         withBorder
-        p="xl"
+        p="md"
         radius="md"
         className={className}
       >
@@ -121,10 +121,10 @@ export function SfiaBlindSpotsTable({
           <ThemeIcon size="xl" radius="xl" variant="light" color="success">
             <IconCircleCheck size={24} stroke={1.5} />
           </ThemeIcon>
-          <Title order={3} size="h5">
+          <Title order={3} size="h4">
             Xuất sắc! Không còn điểm mù kỹ năng nào
           </Title>
-          <Text size="xs" c="dimmed" maw={420}>
+          <Text size="sm" c="dimmed" maw={440}>
             100% kỹ năng SFIA 9 đều đã có ít nhất một câu hỏi phỏng vấn mẫu
             trong Ngân hàng câu hỏi.
           </Text>
@@ -158,21 +158,21 @@ export function SfiaBlindSpotsTable({
       <Divider />
 
       {totalItems === 0 ? (
-        <Stack align="center" gap="xs" p="xl" ta="center">
+        <Stack align="center" gap="xs" p="md" ta="center">
           <ThemeIcon size="lg" radius="xl" variant="light" color="neutral">
             <IconSearchOff size={20} stroke={1.5} />
           </ThemeIcon>
-          <Title order={4} size="h6">
+          <Title order={4} size="h5">
             Không tìm thấy điểm mù nào khớp bộ lọc
           </Title>
-          <Text size="xs" c="dimmed" maw={380}>
+          <Text size="sm" c="dimmed" maw={400}>
             Thử điều chỉnh từ khóa tìm kiếm hoặc đặt lại bộ lọc danh mục và cấp
             độ.
           </Text>
           <Button
             variant="light"
             color="brand"
-            size="xs"
+            size="sm"
             onClick={handleClearAllFilters}
           >
             Đặt lại bộ lọc
@@ -181,7 +181,7 @@ export function SfiaBlindSpotsTable({
       ) : (
         <>
           <Table.ScrollContainer minWidth={720}>
-            <Table highlightOnHover verticalSpacing="xs" horizontalSpacing="sm">
+            <Table highlightOnHover verticalSpacing="xs" horizontalSpacing="xs">
               <Table.Thead className={surfaces.subtleSurface}>
                 <Table.Tr>
                   <Table.Th>Mã kỹ năng</Table.Th>
@@ -212,13 +212,13 @@ export function SfiaBlindSpotsTable({
           <Group
             justify="space-between"
             align="center"
-            gap="sm"
-            p="sm"
+            gap="xs"
+            p="xs"
             wrap="wrap"
             className={surfaces.borderedTop}
           >
             <Text
-              size="xs"
+              size="sm"
               c="dimmed"
               data-testid="pagination-summary"
               className={typography.tabularNums}
@@ -228,7 +228,7 @@ export function SfiaBlindSpotsTable({
             </Text>
             {totalPages > 1 ? (
               <Pagination
-                size="xs"
+                size="sm"
                 total={totalPages}
                 value={safePage}
                 onChange={setCurrentPage}

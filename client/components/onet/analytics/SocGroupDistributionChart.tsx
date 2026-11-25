@@ -69,20 +69,20 @@ export function SocGroupDistributionChart({
   )
 
   return (
-    <Paper withBorder p="sm" radius="md" h="100%">
+    <Paper withBorder p="xs" radius="md" h="100%">
       <Stack gap="xs" h="100%">
         <Group justify="space-between" align="flex-start" gap="xs" wrap="wrap">
           <Stack gap={0}>
-            <Title order={2} size="h5">
+            <Title order={2} size="h4">
               Phân bổ {data.length || 23} nhóm ngành SOC
             </Title>
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Chọn cột hoặc danh sách để lọc chéo bảng Top nghề nghiệp bên dưới
             </Text>
           </Stack>
 
           <SegmentedControl
-            size="xs"
+            size="sm"
             value={metricMode}
             onChange={(val) => setMetricMode(val as SocChartMetricMode)}
             aria-label="Chế độ hiển thị biểu đồ nhóm ngành SOC"
@@ -97,10 +97,10 @@ export function SocGroupDistributionChart({
         {/* Keyboard-accessible Dual Interaction filter (Q8) */}
         <Group gap="xs" align="center" wrap="wrap">
           <Select
-            size="xs"
+            size="sm"
             searchable
             clearable
-            w={{ base: '100%', sm: 280 }}
+            w={{ base: '100%', sm: 300 }}
             placeholder="Lọc nhanh theo nhóm ngành SOC..."
             aria-label="Lọc nhanh theo nhóm ngành SOC"
             value={selectedGroup}
@@ -131,8 +131,8 @@ export function SocGroupDistributionChart({
         </Group>
 
         {chartData.length === 0 ? (
-          <Paper p="md" radius="md" className={surfaces.subtleSurface}>
-            <Text size="xs" c="dimmed" ta="center">
+          <Paper p="sm" radius="md" className={surfaces.subtleSurface}>
+            <Text size="sm" c="dimmed" ta="center">
               Chưa có dữ liệu phân bổ nhóm ngành SOC.
             </Text>
           </Paper>

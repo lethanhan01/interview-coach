@@ -37,19 +37,19 @@ export function OnetTaskItem({
               <Badge
                 color="brand"
                 variant="light"
-                size="xs"
-                leftSection={<IconStar size={10} stroke={1.5} />}
+                size="sm"
+                leftSection={<IconStar size={11} stroke={1.5} />}
               >
                 Cốt lõi
               </Badge>
             ) : (
-              <Badge color="neutral" variant="outline" size="xs">
+              <Badge color="neutral" variant="outline" size="sm">
                 Bổ trợ
               </Badge>
             )}
           </Group>
 
-          <Highlight highlight={searchQuery} size="xs" lh="relaxed">
+          <Highlight highlight={searchQuery} size="sm" lh="relaxed">
             {task.statement}
           </Highlight>
         </Stack>
@@ -63,14 +63,14 @@ export function OnetTaskItem({
               <ActionIcon
                 color={copied ? 'success' : 'neutral'}
                 variant="subtle"
-                size="xs"
+                size="sm"
                 onClick={copy}
                 aria-label="Sao chép nội dung nhiệm vụ"
               >
                 {copied ? (
-                  <IconCheck size={14} stroke={1.5} />
+                  <IconCheck size={15} stroke={1.5} />
                 ) : (
-                  <IconCopy size={14} stroke={1.5} />
+                  <IconCopy size={15} stroke={1.5} />
                 )}
               </ActionIcon>
             </Tooltip>

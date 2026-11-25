@@ -173,7 +173,7 @@ export function OnetSfiaTab({
   }
 
   return (
-    <Stack gap="sm">
+    <Stack gap="xs">
       <OnetSfiaSpectrumBar
         mappings={localMappings}
         levels={levels}

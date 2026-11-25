@@ -10,8 +10,8 @@ import {
   TextInput,
 } from '@mantine/core'
 import { IconSearch, IconX } from '@tabler/icons-react'
+import layout from '@/styles/layout.module.css'
 import type { OnetMappingStatusFilter } from '@/types'
-import classes from './OnetSidebar.module.css'
 
 export interface OnetSidebarHeaderProps {
   totalOccupations: number
@@ -37,13 +37,13 @@ export function OnetSidebarHeader({
   onMappingStatusChange,
 }: Readonly<OnetSidebarHeaderProps>) {
   return (
-    <Stack gap="xs" className={classes.header}>
+    <Stack gap={6} className={layout.panelHeader}>
       <Group justify="space-between" wrap="nowrap">
         <Group gap={6} wrap="nowrap">
-          <Text size="sm" fw={700}>
+          <Text size="md" fw={700}>
             Phân loại nghề nghiệp
           </Text>
-          <Badge color="neutral" variant="outline" size="xs">
+          <Badge color="neutral" variant="outline" size="sm">
             {totalOccupations > 0 ? `${totalOccupations} SOC` : 'O*NET SOC'}
           </Badge>
         </Group>
@@ -55,29 +55,29 @@ export function OnetSidebarHeader({
       </Group>
 
       <TextInput
-        size="xs"
+        size="sm"
         value={query}
         onChange={(event) => onQueryChange(event.currentTarget.value)}
         placeholder="Tìm mã SOC hoặc tên nghề..."
         aria-label="Tìm kiếm nghề nghiệp O*NET"
-        leftSection={<IconSearch size={14} stroke={1.5} />}
+        leftSection={<IconSearch size={15} stroke={1.5} />}
         rightSection={
           query ? (
             <ActionIcon
-              size="xs"
+              size="sm"
               variant="subtle"
               color="neutral"
               aria-label="Xóa từ khóa tìm kiếm"
               onClick={() => onQueryChange('')}
             >
-              <IconX size={12} stroke={1.5} />
+              <IconX size={14} stroke={1.5} />
             </ActionIcon>
           ) : null
         }
       />
 
       <SegmentedControl
-        size="xs"
+        size="sm"
         fullWidth
         value={mappingStatus}
         onChange={(val) =>

@@ -85,22 +85,22 @@ export function SfiaSkillCoverageChart({
   )
 
   return (
-    <Paper withBorder p="sm" radius="md" h="100%">
+    <Paper withBorder p="xs" radius="md" h="100%">
       <Stack gap="xs" h="100%">
         <Group justify="space-between" align="center" wrap="wrap" gap="xs">
           <Stack gap={0}>
-            <Title order={2} size="h5">
+            <Title order={2} size="h4">
               Độ phủ kỹ năng SFIA 9
             </Title>
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Kỹ năng cốt lõi và bổ trợ theo dải cấp độ mục tiêu
             </Text>
           </Stack>
           <Group gap={6} align="center">
             {isFiltered && categoryQuery.isFetching ? (
-              <Loader size={12} />
+              <Loader size={14} />
             ) : null}
-            <Badge color="brand" variant="light" size="xs">
+            <Badge color="brand" variant="light" size="sm">
               {filteredData.length} kỹ năng
             </Badge>
           </Group>
@@ -118,7 +118,7 @@ export function SfiaSkillCoverageChart({
           >
             <Group gap={6} wrap="wrap">
               {categories.map((cat) => (
-                <Chip key={cat} value={cat} size="xs" variant="light">
+                <Chip key={cat} value={cat} size="sm" variant="light">
                   {cat === 'ALL' ? 'Tất cả' : cat}
                 </Chip>
               ))}
@@ -134,17 +134,17 @@ export function SfiaSkillCoverageChart({
             title="Không thể lọc độ phủ SFIA"
           >
             <Stack gap="xs">
-              <Text size="xs">
+              <Text size="sm">
                 {categoryQuery.error instanceof Error
                   ? categoryQuery.error.message
                   : 'Đã xảy ra lỗi khi tải dữ liệu theo danh mục.'}
               </Text>
               <Group>
                 <Button
-                  size="xs"
+                  size="sm"
                   variant="light"
                   color="danger"
-                  leftSection={<IconRefresh size={12} stroke={1.5} />}
+                  leftSection={<IconRefresh size={14} stroke={1.5} />}
                   onClick={() => void categoryQuery.refetch()}
                 >
                   Thử lại
@@ -153,8 +153,8 @@ export function SfiaSkillCoverageChart({
             </Stack>
           </Alert>
         ) : visibleItems.length === 0 ? (
-          <Paper p="md" radius="md" className={surfaces.subtleSurface}>
-            <Text size="xs" c="dimmed" ta="center">
+          <Paper p="sm" radius="md" className={surfaces.subtleSurface}>
+            <Text size="sm" c="dimmed" ta="center">
               Chưa có dữ liệu độ phủ kỹ năng SFIA.
             </Text>
           </Paper>
@@ -172,10 +172,10 @@ export function SfiaSkillCoverageChart({
                   gap="xs"
                 >
                   <Group gap={6} wrap="nowrap" miw={0}>
-                    <Badge color="brand" variant="outline" size="xs">
+                    <Badge color="brand" variant="outline" size="sm">
                       {item.code}
                     </Badge>
-                    <Text size="xs" lineClamp={1}>
+                    <Text size="sm" lineClamp={1}>
                       {item.name}
                     </Text>
                   </Group>
@@ -184,7 +184,7 @@ export function SfiaSkillCoverageChart({
                     wrap="nowrap"
                     className={typography.tabularNums}
                   >
-                    <Badge color="neutral" variant="light" size="xs">
+                    <Badge color="neutral" variant="light" size="sm">
                       L{item.minTargetLevel}–L{item.maxTargetLevel}
                     </Badge>
                     <Text size="xs" c="dimmed">
@@ -198,14 +198,14 @@ export function SfiaSkillCoverageChart({
             {filteredData.length > DEFAULT_VISIBLE_COUNT ? (
               <Group justify="center" mt="auto">
                 <Button
-                  size="xs"
+                  size="sm"
                   variant="subtle"
                   onClick={() => setIsExpanded((prev) => !prev)}
                   rightSection={
                     isExpanded ? (
-                      <IconChevronUp size={14} stroke={1.5} />
+                      <IconChevronUp size={15} stroke={1.5} />
                     ) : (
-                      <IconChevronDown size={14} stroke={1.5} />
+                      <IconChevronDown size={15} stroke={1.5} />
                     )
                   }
                 >
