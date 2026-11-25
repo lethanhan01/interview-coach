@@ -1,0 +1,27 @@
+import { Canvas, Meta } from '@storybook/addon-docs/blocks'
+import * as MantineTokensStories from './MantineTokens.stories'
+
+<Meta title="Foundations/Design System" />
+
+# InterviewCoach Design System — Mantine v9 Zero-Hex
+
+Hệ thống giao diện của **InterviewCoach** được chuẩn hóa 100% trên **Mantine UI v9** kết hợp **Zero-Hex Semantic-Only**:
+
+- **5 vai trò màu ngữ nghĩa duy nhất** (`brand`, `success`, `warning`, `danger`, `neutral`) cấu hình trong `client/theme.ts`, cùng `c="dimmed"` cho văn bản phụ.
+- **Không sử dụng** mã HEX/RGB/HSL, tên màu vật lý, Tailwind CSS, hoặc inline `style={{...}}`.
+- **Phân cấp kiểu dáng 3 tầng:** Mantine Style Props → CSS Modules (`*.module.css` dùng `rem()`, `--mantine-*`, `@mixin hover`, `mod={{ active }}`) → Styles API.
+- **Chế độ Sáng / Tối tự động:** Chuyển trực tiếp trên thanh công cụ **Color Scheme** ở phía trên để kiểm chứng toàn bộ token ở cả Light Mode và Dark Mode.
+
+---
+
+## 1. Hệ Thống Màu Ngữ Nghĩa (Semantic Colors)
+
+<Canvas of={MantineTokensStories.SemanticColors} />
+
+## 2. Thang Đo Kiểu Chữ (Typography Scale)
+
+<Canvas of={MantineTokensStories.TypographyScale} />
+
+## 3. Khoảng Cách & Bo Góc (Spacing & Radius)
+
+<Canvas of={MantineTokensStories.SpacingAndRadius} />

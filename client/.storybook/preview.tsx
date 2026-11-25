@@ -1,24 +1,11 @@
 import '../app/globals.css'
-import DocTemplate from './DocTemplate'
-
-// Polyfill to fix Radix UI's "Illegal invocation" focus error in Storybook
-if (typeof HTMLElement !== 'undefined' && typeof HTMLElement.prototype.focus !== 'function') {
-  const originalFocus = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'focus')
-  if (originalFocus?.get) {
-    Object.defineProperty(HTMLElement.prototype, 'focus', {
-      value: function focus(options?: FocusOptions) {
-        return originalFocus.get?.call(this)?.call(this, options)
-      },
-      writable: true,
-      configurable: true,
-    })
-  }
-}
+import 'dayjs/locale/vi'
 
 import type { Preview, Decorator } from '@storybook/nextjs-vite'
-import { withThemeByClassName } from '@storybook/addon-themes'
 import { MantineProvider } from '@mantine/core'
+import { DatesProvider } from '@mantine/dates'
 import { ModalsProvider } from '@mantine/modals'
+import { Notifications } from '@mantine/notifications'
 import React, { useEffect } from 'react'
 import { QueryProvider } from '../providers/QueryProvider'
 import { theme } from '../theme'
@@ -42,25 +29,28 @@ function ReducedMotionWrapper({
 }
 
 const withReducedMotion: Decorator = (Story, context) => (
-  <ReducedMotionWrapper reducedMotion={context.globals.reducedMotion as string | undefined}>
+  <ReducedMotionWrapper
+    reducedMotion={context.globals.reducedMotion as string | undefined}
+  >
     <Story />
   </ReducedMotionWrapper>
 )
 
 const withMantineProvider: Decorator = (Story, context) => {
-  const themeOverride = context.parameters?.themes?.themeOverride as
-    | string
-    | undefined
-  const activeTheme =
-    themeOverride || (context.globals.theme as string | undefined)
-  const scheme = activeTheme === 'dark' ? 'dark' : 'light'
+  const paramScheme = context.parameters?.colorScheme as string | undefined
+  const globalScheme = context.globals.colorScheme as string | undefined
+  const activeScheme = paramScheme ?? globalScheme
+  const scheme = activeScheme === 'dark' ? 'dark' : 'light'
 
   return (
     <QueryProvider>
       <MantineProvider theme={theme} forceColorScheme={scheme}>
-        <ModalsProvider>
-          <Story />
-        </ModalsProvider>
+        <DatesProvider settings={{ locale: 'vi', firstDayOfWeek: 1 }}>
+          <Notifications position="top-right" />
+          <ModalsProvider>
+            <Story />
+          </ModalsProvider>
+        </DatesProvider>
       </MantineProvider>
     </QueryProvider>
   )
@@ -68,6 +58,19 @@ const withMantineProvider: Decorator = (Story, context) => {
 
 const preview: Preview = {
   globalTypes: {
+    colorScheme: {
+      name: 'Color Scheme',
+      description: 'Mantine color scheme (light / dark)',
+      defaultValue: 'light',
+      toolbar: {
+        icon: 'mirror',
+        items: [
+          { value: 'light', title: 'Light' },
+          { value: 'dark', title: 'Dark' },
+        ],
+        dynamicTitle: true,
+      },
+    },
     reducedMotion: {
       name: 'Reduced Motion',
       description: 'Enable reduced motion preview',
@@ -82,21 +85,10 @@ const preview: Preview = {
       },
     },
   },
-  decorators: [
-    withMantineProvider,
-    withReducedMotion,
-    // Toggles class `dark` on <html> element — integrates with next-themes
-    withThemeByClassName({
-      themes: {
-        light: '',
-        dark: 'dark',
-      },
-      defaultTheme: 'light',
-    }),
-  ],
+  decorators: [withMantineProvider, withReducedMotion],
   parameters: {
-    docs: {
-      page: DocTemplate,
+    nextjs: {
+      appDirectory: true,
     },
     viewport: {
       viewports: {
@@ -104,7 +96,10 @@ const preview: Preview = {
         md: { name: 'md (768px)', styles: { width: '768px', height: '100%' } },
         lg: { name: 'lg (1024px)', styles: { width: '1024px', height: '100%' } },
         xl: { name: 'xl (1280px)', styles: { width: '1280px', height: '100%' } },
-        '2xl': { name: '2xl (1536px)', styles: { width: '1536px', height: '100%' } },
+        '2xl': {
+          name: '2xl (1536px)',
+          styles: { width: '1536px', height: '100%' },
+        },
       },
     },
     controls: {
@@ -113,11 +108,8 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
-
     a11y: {
-      // 'todo' - show a11y violations in the test UI only
-      // 'error' - fail CI on a11y violations
-      // 'off' - skip a11y checks entirely
+      // 'todo' ở Đợt 7A — sẽ rà soát và bật 'error' trong Đợt 7B
       test: 'todo',
     },
   },
