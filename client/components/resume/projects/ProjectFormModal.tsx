@@ -118,7 +118,7 @@ export default function ProjectFormModal({
           <TextInput
             withAsterisk
             label="Tên dự án"
-            placeholder="VD: InterviewCoach"
+            placeholder="VD: Intervia"
             disabled={saving}
             key={form.key('name')}
             {...form.getInputProps('name')}

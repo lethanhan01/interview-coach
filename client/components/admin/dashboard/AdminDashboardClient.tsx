@@ -67,7 +67,7 @@ export function AdminDashboardClient() {
                 </Badge>
               </Group>
               <Title order={1} size="h2">
-                Tổng quan hệ thống InterviewCoach
+                Tổng quan hệ thống Intervia
               </Title>
               <Text size="sm" c="dimmed">
                 Giám sát tăng trưởng người dùng, trạng thái phân quyền và độ phủ

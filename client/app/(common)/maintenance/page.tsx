@@ -4,9 +4,9 @@ import { IconTool } from '@tabler/icons-react'
 import { ErrorPageTemplate } from '@/components/common/status-pages/ErrorPageTemplate'
 
 export const metadata: Metadata = {
-  title: 'Hệ thống đang bảo trì — Interview Coach',
+  title: 'Hệ thống đang bảo trì',
   description:
-    'Interview Coach đang thực hiện bảo trì nâng cấp và sẽ sớm hoạt động trở lại.',
+    'Intervia đang thực hiện bảo trì nâng cấp và sẽ sớm hoạt động trở lại.',
 }
 
 export default function MaintenancePage() {

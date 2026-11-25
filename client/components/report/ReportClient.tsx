@@ -19,6 +19,7 @@ import { SkillsBreakdownCard } from '@/components/report/competency/SkillsBreakd
 import { ActionPlanTimeline } from '@/components/report/overview/ActionPlanTimeline'
 import { ReportHeroSummary } from '@/components/report/overview/ReportHeroSummary'
 import { ReportOverviewTab } from '@/components/report/overview/ReportOverviewTab'
+import { BrandLogo } from '@/components/common/BrandLogo'
 import ErrorBoundary from '@/components/common/ErrorBoundary'
 import { SafeViewTransition } from '@/components/common/SafeViewTransition'
 import { buildOverviewSummary } from './report-summary-helpers'
@@ -76,9 +77,12 @@ export function ReportClient({
       <SafeViewTransition>
         <Container size="md" py="xl">
           <Stack gap="xl">
-            <Title order={1} size="h2">
-              Báo cáo phỏng vấn
-            </Title>
+            <Group justify="space-between" align="center" wrap="wrap" gap="sm">
+              <Title order={1} size="h2">
+                Báo cáo phỏng vấn
+              </Title>
+              <BrandLogo variant="lockup" size="sm" />
+            </Group>
 
             <ReportHeroSummary report={report} />
 

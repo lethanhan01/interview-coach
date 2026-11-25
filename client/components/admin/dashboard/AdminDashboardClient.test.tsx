@@ -132,7 +132,7 @@ describe('AdminDashboardClient', () => {
     expect(
       await screen.findByRole('heading', {
         level: 1,
-        name: /Tổng quan hệ thống InterviewCoach/i,
+        name: /Tổng quan hệ thống Intervia/i,
       })
     ).toBeInTheDocument()
 
@@ -301,7 +301,7 @@ describe('AdminDashboardClient', () => {
     await waitFor(() => {
       expect(
         screen.queryByRole('heading', {
-          name: /Tổng quan hệ thống InterviewCoach/i,
+          name: /Tổng quan hệ thống Intervia/i,
         })
       ).not.toBeInTheDocument()
     })

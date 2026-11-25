@@ -10,11 +10,9 @@ import {
   Drawer,
   Group,
   Stack,
-  Text,
-  ThemeIcon,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { IconMicrophone } from '@tabler/icons-react'
+import { BrandLogo } from '@/components/common/BrandLogo'
 import { ColorSchemeToggle } from '@/components/layout/header/ColorSchemeToggle'
 import interactions from '@/styles/interactions.module.css'
 import surfaces from '@/styles/surfaces.module.css'
@@ -35,14 +33,9 @@ export function PublicHeader() {
             href="/"
             underline="never"
             className={interactions.brandLink}
-            aria-label="Interview Coach — Trang chủ"
+            aria-label="Intervia — Trang chủ"
           >
-            <ThemeIcon color="brand" variant="light" size="md" radius="md">
-              <IconMicrophone size={18} stroke={1.5} aria-hidden="true" />
-            </ThemeIcon>
-            <Text fw={700} size="lg">
-              Interview Coach
-            </Text>
+            <BrandLogo variant="lockup" size="md" decorative />
           </Anchor>
 
           <Group
@@ -77,7 +70,7 @@ export function PublicHeader() {
         onClose={close}
         position="right"
         size="xs"
-        title="Interview Coach"
+        title={<BrandLogo variant="lockup" size="sm" />}
       >
         <Stack gap="sm" mt="sm">
           <Button

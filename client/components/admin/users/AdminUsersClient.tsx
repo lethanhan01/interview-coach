@@ -29,7 +29,6 @@ import {
   type RoleFilter,
   type StatusFilter,
 } from './UsersFilterToolbar'
-import { UsersStatusSummary } from './UsersStatusSummary'
 import { UsersTable } from './UsersTable'
 
 export function AdminUsersClient() {
@@ -100,11 +99,6 @@ export function AdminUsersClient() {
             </Badge>
           )}
         </Group>
-
-        <UsersStatusSummary
-          metrics={metrics}
-          isLoading={usersQuery.isLoading}
-        />
 
         <UsersFilterToolbar
           search={search}

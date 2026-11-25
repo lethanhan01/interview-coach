@@ -4,7 +4,7 @@ import { SetupWizardSkeleton } from '@/components/interview-setup/SetupStepPanel
 import SetupWizardClient from '@/components/interview-setup/SetupWizardClient'
 
 export const metadata: Metadata = {
-  title: 'Thiết lập phiên phỏng vấn | InterviewCoach',
+  title: 'Thiết lập phiên phỏng vấn',
   description:
     'Nhập hoặc chọn Job Description, cấu hình phong cách phỏng vấn và bắt đầu luyện tập với AI.',
 }

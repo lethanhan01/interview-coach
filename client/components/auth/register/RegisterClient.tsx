@@ -35,7 +35,7 @@ export default function RegisterClient() {
       applyAuthenticatedSession(queryClient, user)
       notifications.show({
         title: 'Đăng ký thành công',
-        message: 'Chào mừng bạn đến với Interview Coach!',
+        message: 'Chào mừng bạn đến với Intervia!',
         color: 'success',
         closeButtonProps: { 'aria-label': 'Đóng thông báo' },
       })

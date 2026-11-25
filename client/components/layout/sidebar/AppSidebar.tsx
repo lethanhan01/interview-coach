@@ -12,16 +12,14 @@ import {
   Group,
   ScrollArea,
   Stack,
-  Text,
-  ThemeIcon,
   Tooltip,
 } from '@mantine/core'
 import {
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
   IconLogout,
-  IconMicrophone,
 } from '@tabler/icons-react'
+import { BrandLogo } from '@/components/common/BrandLogo'
 import { adminNavigation, candidateNavigation } from '@/config/navigation'
 import { useAuth } from '@/providers/AuthProvider'
 import interactions from '@/styles/interactions.module.css'
@@ -68,16 +66,13 @@ export default function AppSidebar({
           underline="never"
           className={interactions.brandLink}
           onClick={onNavigate}
-          aria-label="AI Mock Interview — Trang chủ"
+          aria-label="Intervia — Trang chủ"
         >
-          <ThemeIcon color="brand" variant="light" size="md" radius="md">
-            <IconMicrophone size={18} stroke={1.5} aria-hidden="true" />
-          </ThemeIcon>
-          {!collapsed ? (
+          {collapsed ? (
+            <BrandLogo variant="mark" size="md" decorative />
+          ) : (
             <Group gap="xs" wrap="nowrap">
-              <Text fw={700} size="sm" truncate>
-                AI Mock Interview
-              </Text>
+              <BrandLogo variant="lockup" size="sm" decorative />
               <Badge
                 size="xs"
                 variant="light"
@@ -86,7 +81,7 @@ export default function AppSidebar({
                 {role === 'admin' ? 'Admin' : 'Ứng viên'}
               </Badge>
             </Group>
-          ) : null}
+          )}
         </Anchor>
       </Box>
 

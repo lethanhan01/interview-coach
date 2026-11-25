@@ -9,7 +9,7 @@ describe('FeaturesSection', () => {
     expect(
       screen.getByRole('heading', {
         level: 2,
-        name: /tại sao chọn ai mock interview/i,
+        name: /tại sao chọn intervia/i,
       })
     ).toBeInTheDocument()
     expect(screen.getByText('AI Follow-up thông minh')).toBeInTheDocument()

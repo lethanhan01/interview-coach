@@ -32,3 +32,55 @@
   line-height: 1;
   letter-spacing: rem(-0.5px);
 }
+
+/* BrandLogo */
+.brandLogo {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.brandMark {
+  display: block;
+  width: auto;
+  flex-shrink: 0;
+
+  &[data-size='xs'] {
+    height: rem(20px);
+  }
+
+  &[data-size='sm'] {
+    height: rem(24px);
+  }
+
+  &[data-size='md'] {
+    height: rem(30px);
+  }
+
+  &[data-size='lg'] {
+    height: rem(38px);
+  }
+}
+
+.brandWordmark {
+  display: block;
+  width: auto;
+  flex-shrink: 0;
+
+  &[data-size='xs'] {
+    height: rem(12px);
+  }
+
+  &[data-size='sm'] {
+    height: rem(14px);
+  }
+
+  &[data-size='md'] {
+    height: rem(18px);
+  }
+
+  &[data-size='lg'] {
+    height: rem(23px);
+  }
+}

@@ -4,9 +4,9 @@ import { Center, Loader } from '@mantine/core'
 import LoginClient from '@/components/auth/login/LoginClient'
 
 export const metadata: Metadata = {
-  title: 'Đăng nhập | InterviewCoach',
+  title: 'Đăng nhập',
   description:
-    'Đăng nhập vào InterviewCoach để tiếp tục luyện tập phỏng vấn cùng AI.',
+    'Đăng nhập vào Intervia để tiếp tục luyện tập phỏng vấn cùng AI.',
 }
 
 export default function LoginPage() {

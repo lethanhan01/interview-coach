@@ -1,4 +1,4 @@
-# InterviewCoach — Frontend
+# Intervia — Frontend
 
 **Next.js 16 (App Router), React 19, TypeScript 5, Mantine UI v9 (`^9.8.2`, Zero-Hex Semantic-Only, bao gồm `@mantine/charts` & `@mantine/dates`), `@mantine/form` + Zod v4, `@tabler/icons-react`, TanStack Query v5.**
 

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import SessionsClient from '@/components/sessions/SessionsClient'
 
 export const metadata: Metadata = {
-  title: 'Phiên phỏng vấn | InterviewCoach',
+  title: 'Phiên phỏng vấn',
   description:
     'Theo dõi lịch sử phiên phỏng vấn AI, tiếp tục phiên đang chạy hoặc xem báo cáo đánh giá.',
 }

@@ -4,7 +4,7 @@ import ResumeClient from '@/components/resume/ResumeClient'
 import { ResumeSkeleton } from '@/components/resume/ResumeSectionContent'
 
 export const metadata: Metadata = {
-  title: 'Hồ sơ CV & Kinh nghiệm | InterviewCoach',
+  title: 'Hồ sơ CV & Kinh nghiệm',
   description:
     'Quản lý định hướng nghề nghiệp, kỹ năng chuyên môn, kinh nghiệm làm việc, dự án và chứng chỉ.',
 }

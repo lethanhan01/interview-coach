@@ -92,7 +92,7 @@ Tuyệt đối không gắn `onClick` lên `<Box>`, `<Paper>`, `<Card>`, hoặc 
 
 ### 3.1. `SEM-TOKEN-001` — Zero-Hex & Semantic Alias Duy Nhất Tại `client/theme.ts` (`ERROR` · `[Active]`)
 
-Cấm tuyệt đối mã màu HEX (`#...`), `rgb()`/`rgba()`, `hsl()`/`hsla()`, `virtualColor()`, `colorsTuple()`, mảng `MantineColorsTuple` tự định nghĩa, biến `--app-*`, và shade số đứng đơn lẻ (`brand.6`, `--mantine-color-gray-0`) trên toàn dự án. Chỉ đăng ký duy nhất 5 vai trò ngữ nghĩa qua `DEFAULT_THEME.colors` trong `client/theme.ts` (`brand → blue`, `success → teal`, `warning → yellow`, `danger → red`, `neutral → gray`).
+Cấm tuyệt đối mã màu HEX (`#...`), `rgb()`/`rgba()`, `hsl()`/`hsla()`, `virtualColor()`, `colorsTuple()`, mảng `MantineColorsTuple` tự định nghĩa, biến `--app-*`, và shade số đứng đơn lẻ (`brand.6`, `--mantine-color-gray-0`) trên toàn dự án. Chỉ đăng ký duy nhất 5 vai trò ngữ nghĩa qua `DEFAULT_THEME.colors` trong `client/theme.ts` (`brand → cyan`, `success → green`, `warning → yellow`, `danger → red`, `neutral → gray`).
 
 <a id="sem-token-002"></a>
 

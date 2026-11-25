@@ -39,7 +39,7 @@ export function FeaturesSection() {
         <Stack gap="xl">
           <Stack align="center" gap="xs">
             <Title order={2} ta="center">
-              Tại sao chọn AI Mock Interview?
+              Tại sao chọn Intervia?
             </Title>
             <Text c="dimmed" ta="center" maw={560}>
               Được thiết kế riêng cho thị trường tuyển dụng IT Việt Nam và sinh

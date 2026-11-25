@@ -54,6 +54,11 @@ test.describe('Mantine v9 Zero-Hex Design System Visual Baseline', () => {
             (document.querySelector('#storybook-root')?.textContent?.trim()
               .length ?? 0) > 0
         )
+        await page.waitForFunction(() =>
+          Array.from(
+            document.querySelectorAll<HTMLImageElement>('#storybook-root img')
+          ).every((img) => img.complete && img.naturalWidth > 0)
+        )
         await page.evaluate(() => document.fonts.ready)
 
         await expect(page).toHaveScreenshot(

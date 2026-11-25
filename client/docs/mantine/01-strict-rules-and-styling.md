@@ -185,14 +185,14 @@ Toàn bộ màu sắc đi qua **5 vai trò ngữ nghĩa** đăng ký trực ti�
 
 ### Bảng Vai trò Màu Ngữ Nghĩa (`color` / `c` prop)
 
-| Vai trò (Tên bắt buộc)              | Ánh xạ mặc định tại `client/theme.ts`                 | Ngữ cảnh sử dụng trong InterviewCoach                                      | Tên vật lý / Giá trị bị cấm                             |
-| ----------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `brand` _(hoặc bỏ trống = primary)_ | `primaryColor: 'brand'` → `DEFAULT_THEME.colors.blue` | Hành động chính, item đang chọn, bắt đầu phiên phỏng vấn, nút lưu          | `blue`, `indigo`, `brand.6`, `--mantine-color-blue-*`   |
-| `success`                           | `DEFAULT_THEME.colors.teal`                           | Hoàn thành phiên, điểm STAR đạt chuẩn, CV/JD hợp lệ, xác thực thành công   | `teal`, `green`, `emerald`, `--mantine-color-teal-*`    |
-| `warning`                           | `DEFAULT_THEME.colors.yellow`                         | Cảnh báo nhẹ, cần cải thiện câu trả lời, sắp hết giờ, trạng thái chờ xử lý | `yellow`, `amber`, `orange`, `--mantine-color-yellow-*` |
-| `danger`                            | `DEFAULT_THEME.colors.red`                            | Lỗi validation/API, hành động xóa phá hủy, điểm dưới chuẩn, mất kết nối    | `red`, `rose`, `destructive`, `--mantine-color-red-*`   |
-| `neutral`                           | `DEFAULT_THEME.colors.gray`                           | Metadata trung tính, badge thẻ kỹ năng phụ, trạng thái nháp/đã lưu trữ     | `gray`, `slate`, `dark`, `--mantine-color-gray-*`       |
-| `dimmed` _(chỉ dùng trên `c`)_      | `--mantine-color-dimmed`                              | Văn bản phụ, timestamp, mô tả hướng dẫn, chú thích                         | `white`, `black`, `--app-text-muted`                    |
+| Vai trò (Tên bắt buộc)              | Ánh xạ mặc định tại `client/theme.ts`                 | Ngữ cảnh sử dụng trong InterviewCoach                                      | Tên vật lý / Giá trị bị cấm                                   |
+| ----------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `brand` _(hoặc bỏ trống = primary)_ | `primaryColor: 'brand'` → `DEFAULT_THEME.colors.cyan` | Hành động chính, item đang chọn, bắt đầu phiên phỏng vấn, nút lưu          | `cyan`, `blue`, `indigo`, `brand.6`, `--mantine-color-cyan-*` |
+| `success`                           | `DEFAULT_THEME.colors.green`                          | Hoàn thành phiên, điểm STAR đạt chuẩn, CV/JD hợp lệ, xác thực thành công   | `green`, `teal`, `emerald`, `--mantine-color-green-*`         |
+| `warning`                           | `DEFAULT_THEME.colors.yellow`                         | Cảnh báo nhẹ, cần cải thiện câu trả lời, sắp hết giờ, trạng thái chờ xử lý | `yellow`, `amber`, `orange`, `--mantine-color-yellow-*`       |
+| `danger`                            | `DEFAULT_THEME.colors.red`                            | Lỗi validation/API, hành động xóa phá hủy, điểm dưới chuẩn, mất kết nối    | `red`, `rose`, `destructive`, `--mantine-color-red-*`         |
+| `neutral`                           | `DEFAULT_THEME.colors.gray`                           | Metadata trung tính, badge thẻ kỹ năng phụ, trạng thái nháp/đã lưu trữ     | `gray`, `slate`, `dark`, `--mantine-color-gray-*`             |
+| `dimmed` _(chỉ dùng trên `c`)_      | `--mantine-color-dimmed`                              | Văn bản phụ, timestamp, mô tả hướng dẫn, chú thích                         | `white`, `black`, `--app-text-muted`                          |
 
 ### Bảng CSS Variables Ngữ Nghĩa được phép dùng trong `*.module.css`
 

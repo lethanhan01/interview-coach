@@ -169,7 +169,7 @@ function TypographyScaleShowcase() {
           {[...SCALE_TOKENS].reverse().map((size) => (
             <Group key={size} justify="space-between" wrap="nowrap">
               <Text size={size}>
-                Văn bản cỡ {size} — InterviewCoach Mantine v9 Zero-Hex
+                Văn bản cỡ {size} — Intervia Mantine v9 Zero-Hex
               </Text>
               <Badge color="neutral" variant="outline">
                 size=&quot;{size}&quot;

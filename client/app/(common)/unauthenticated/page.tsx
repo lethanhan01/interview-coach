@@ -4,7 +4,7 @@ import { ErrorPageTemplate } from '@/components/common/status-pages/ErrorPageTem
 import { getSafeNext } from '@/lib/auth-redirect'
 
 export const metadata: Metadata = {
-  title: 'Chưa đăng nhập (401) — Interview Coach',
+  title: 'Chưa đăng nhập (401)',
   description: 'Vui lòng đăng nhập để tiếp tục truy cập tính năng này.',
 }
 

@@ -2,7 +2,8 @@
 
 import { useEffect, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { Center, Loader } from '@mantine/core'
+import { Center, Loader, Stack } from '@mantine/core'
+import { BrandLogo } from '@/components/common/BrandLogo'
 import { useAuth } from '@/providers/AuthProvider'
 
 export interface RoleGuardProps {
@@ -36,7 +37,10 @@ export default function RoleGuard({
         role="status"
         aria-label="Đang kiểm tra quyền truy cập"
       >
-        <Loader color="brand" size="md" />
+        <Stack align="center" gap="sm">
+          <BrandLogo variant="mark" size="md" decorative />
+          <Loader color="brand" size="md" />
+        </Stack>
       </Center>
     )
   }

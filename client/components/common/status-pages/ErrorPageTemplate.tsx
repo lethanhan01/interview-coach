@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import {
+  Anchor,
   Button,
   Code,
   Container,
@@ -13,6 +14,8 @@ import {
   ThemeIcon,
   Title,
 } from '@mantine/core'
+import { BrandLogo } from '@/components/common/BrandLogo'
+import interactions from '@/styles/interactions.module.css'
 import type { SemanticColor } from '@/theme'
 import common from '../common.module.css'
 
@@ -62,6 +65,16 @@ export function ErrorPageTemplate({
     <Container size="sm" className={common.errorContainer}>
       <Paper withBorder shadow="sm" p="xl" radius="lg" w="100%">
         <Stack align="center" gap="md">
+          <Anchor
+            component={Link}
+            href="/"
+            underline="never"
+            className={interactions.brandLink}
+            aria-label="Intervia — Trang chủ"
+          >
+            <BrandLogo variant="lockup" size="sm" decorative />
+          </Anchor>
+
           <ThemeIcon color={iconVariant} variant="light" size={64} radius="xl">
             {icon}
           </ThemeIcon>

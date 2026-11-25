@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import JdLibraryClient from '@/components/jd-library/JdLibraryClient'
 
 export const metadata: Metadata = {
-  title: 'Thư viện Job Description | InterviewCoach',
+  title: 'Thư viện Job Description',
   description:
     'Quản lý và tái sử dụng các Job Description đã lưu cho phiên phỏng vấn AI.',
 }

@@ -19,8 +19,8 @@ export const theme = createTheme({
   primaryColor: 'brand',
   focusClassName: interactions.focusRing,
   colors: {
-    brand: DEFAULT_THEME.colors.blue,
-    success: DEFAULT_THEME.colors.teal,
+    brand: DEFAULT_THEME.colors.cyan,
+    success: DEFAULT_THEME.colors.green,
     warning: DEFAULT_THEME.colors.yellow,
     danger: DEFAULT_THEME.colors.red,
     neutral: DEFAULT_THEME.colors.gray,

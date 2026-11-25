@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { Anchor, Burger, Group, Text, ThemeIcon } from '@mantine/core'
-import { IconMicrophone } from '@tabler/icons-react'
+import { Anchor, Burger, Group, Text } from '@mantine/core'
+import { BrandLogo } from '@/components/common/BrandLogo'
+import interactions from '@/styles/interactions.module.css'
 import { ColorSchemeToggle } from './ColorSchemeToggle'
 import { UserMenuButton } from './UserMenuButton'
 
@@ -32,19 +33,15 @@ export default function AppHeader({
           href="/"
           underline="never"
           hiddenFrom="md"
-          aria-label="AI Mock Interview — Trang chủ"
+          className={interactions.brandLink}
+          aria-label="Intervia — Trang chủ"
         >
-          <Group gap="xs" wrap="nowrap">
-            <ThemeIcon color="brand" variant="light" size="sm" radius="md">
-              <IconMicrophone size={14} stroke={1.5} aria-hidden="true" />
-            </ThemeIcon>
-            <Text fw={700} size="sm">
-              AI Mock Interview
-            </Text>
-          </Group>
+          <BrandLogo variant="lockup" size="xs" decorative />
         </Anchor>
         <Text fw={600} size="sm" c="dimmed" visibleFrom="md">
-          {role === 'admin' ? 'Cổng quản trị' : 'Không gian luyện tập'}
+          {role === 'admin'
+            ? 'Intervia · Cổng quản trị'
+            : 'Intervia · Không gian luyện tập'}
         </Text>
       </Group>
 

@@ -3,7 +3,7 @@ import { IconError404, IconHome } from '@tabler/icons-react'
 import { ErrorPageTemplate } from '@/components/common/status-pages/ErrorPageTemplate'
 
 export const metadata: Metadata = {
-  title: 'Không tìm thấy trang (404) — Interview Coach',
+  title: 'Không tìm thấy trang (404)',
   description:
     'Đường dẫn bạn yêu cầu không tồn tại hoặc đã được di chuyển sang địa chỉ mới.',
 }

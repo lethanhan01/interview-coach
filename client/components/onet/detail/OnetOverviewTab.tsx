@@ -77,10 +77,10 @@ export function OnetOverviewTab({
         title="Chuẩn hóa Đánh giá Phỏng vấn AI"
       >
         <Text size="sm" lh="relaxed">
-          Dữ liệu O*NET được AI Interview Coach đối chiếu để phân tích JD thực
-          tế, tự động sinh ngân hàng câu hỏi tình huống phù hợp với cấp độ Job
-          Zone {detail.jobZone.zone}, và đánh giá năng lực ứng viên theo các kỹ
-          năng SFIA đã ánh xạ.
+          Dữ liệu O*NET được Intervia đối chiếu để phân tích JD thực tế, tự động
+          sinh ngân hàng câu hỏi tình huống phù hợp với cấp độ Job Zone{' '}
+          {detail.jobZone.zone}, và đánh giá năng lực ứng viên theo các kỹ năng
+          SFIA đã ánh xạ.
         </Text>
       </Alert>
     </Stack>

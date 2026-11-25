@@ -26,7 +26,7 @@ export function CtaSection() {
         >
           <Stack align="center" gap="md">
             <Title order={2} ta="center">
-              Sẵn sàng luyện tập?
+              Sẵn sàng luyện tập cùng Intervia?
             </Title>
             <Text c="dimmed" ta="center" maw={480}>
               Tạo tài khoản miễn phí và bắt đầu phiên phỏng vấn đầu tiên ngay

@@ -12,6 +12,7 @@ import {
 } from '@mantine/core'
 import { useNetwork } from '@mantine/hooks'
 import { IconRefresh, IconWifiOff } from '@tabler/icons-react'
+import { BrandLogo } from './BrandLogo'
 import common from './common.module.css'
 
 export interface OfflineBannerProps {
@@ -42,6 +43,8 @@ export function OfflineBanner({ onRetry }: Readonly<OfflineBannerProps>) {
         className={common.offlineCard}
       >
         <Stack align="center" gap="md">
+          <BrandLogo variant="lockup" size="sm" />
+
           <ThemeIcon color="warning" variant="light" size={56} radius="md">
             <IconWifiOff size={28} stroke={1.5} aria-hidden="true" />
           </ThemeIcon>

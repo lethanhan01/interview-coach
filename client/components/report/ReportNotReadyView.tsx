@@ -1,4 +1,5 @@
 import { Card, Container, Loader, Progress, Stack, Text } from '@mantine/core'
+import { BrandLogo } from '@/components/common/BrandLogo'
 import type { FeedbackProgress } from '@/types'
 
 export interface ReportNotReadyViewProps {
@@ -16,7 +17,7 @@ export function ReportNotReadyView({
   const progressLabel = progress
     ? `Đã chấm ${feedbackCompleted}/${feedbackRequired} câu trả lời`
     : 'Đang kiểm tra tiến trình chấm điểm...'
-  let detailLabel = 'AI đang chuẩn bị dữ liệu báo cáo.'
+  let detailLabel = 'Intervia AI đang chuẩn bị dữ liệu báo cáo.'
   if (progress) {
     detailLabel =
       feedbackPending > 0
@@ -28,6 +29,7 @@ export function ReportNotReadyView({
     <Container size="xs" py="xl">
       <Card withBorder radius="md" p="xl" ta="center">
         <Stack align="center" gap="md">
+          <BrandLogo variant="lockup" size="sm" />
           <Loader size="lg" color="brand" />
           <Stack gap="xs" w="100%">
             <Text size="sm" fw={600}>

@@ -9,7 +9,7 @@ describe('PublicHeader', () => {
 
     expect(screen.getByRole('banner')).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: 'Interview Coach — Trang chủ' })
+      screen.getByRole('link', { name: 'Intervia — Trang chủ' })
     ).toHaveAttribute('href', '/')
     expect(screen.getByRole('link', { name: 'Đăng nhập' })).toHaveAttribute(
       'href',

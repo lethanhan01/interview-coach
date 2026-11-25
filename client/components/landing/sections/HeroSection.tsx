@@ -18,6 +18,7 @@ import {
   Title,
 } from '@mantine/core'
 import { IconArrowRight, IconCheck, IconSparkles } from '@tabler/icons-react'
+import { BrandLogo } from '@/components/common/BrandLogo'
 import surfaces from '@/styles/surfaces.module.css'
 import landing from '../landing.module.css'
 
@@ -40,7 +41,7 @@ export function HeroSection() {
           <Stack gap="lg">
             <Group>
               <Badge color="brand" variant="light" size="lg">
-                Dành cho sinh viên CNTT Việt Nam
+                Intervia · Dành cho sinh viên CNTT
               </Badge>
             </Group>
 
@@ -108,12 +109,21 @@ export function HeroSection() {
             className={surfaces.bodySurface}
           >
             <Stack gap="md">
+              <Group
+                justify="space-between"
+                align="center"
+                wrap="wrap"
+                gap="xs"
+              >
+                <BrandLogo variant="lockup" size="xs" />
+                <Badge color="brand" variant="light">
+                  SFIA Level 4 — Enable
+                </Badge>
+              </Group>
+
               <Group justify="space-between" wrap="wrap" gap="xs">
                 <Badge color="success" variant="dot">
                   Phiên mẫu — Backend Engineer
-                </Badge>
-                <Badge color="brand" variant="light">
-                  SFIA Level 4 — Enable
                 </Badge>
               </Group>
 
