@@ -48,12 +48,12 @@ flowchart TD
 
 ### 2.1. Tách biệt 2 Project trong `client/vitest.config.mts` (`[Active in Codebase]`)
 
-- **Project `unit` (`npm run test:unit`):** Chạy trên `jsdom` kèm `vitest.setup.ts` (`jest-axe`, `matchMedia`, `ResizeObserver`, `PointerEvent`, `scrollIntoView`), kiểm thử unit/component nhanh ở mức giây.
+- **Project `unit` (`npm run test:unit`):** Chạy trên `jsdom` kèm `vitest.setup.ts` (`jest-axe`, `matchMedia`, `ResizeObserver`, `document.fonts`, `scrollIntoView`), kiểm thử unit/component nhanh ở mức giây.
 - **Project `storybook` (`npm run test:storybook`):** Chạy trình duyệt Playwright Chromium qua `@storybook/addon-vitest` cho interaction tests trực quan.
 
 ### 2.2. 3 Quy tắc bắt buộc khi test component Mantine v9 (`mantine.dev/guides/vitest/`)
 
-1. **Luôn import `{ render, screen, userEvent }` từ `@test-utils`:** Không import `render` trực tiếp từ `@testing-library/react`. Wrapper `test-utils/render.tsx` tự bọc `<MantineProvider theme={theme} env="test"><ModalsProvider>` (`env="test"` tắt transition giúp test nhanh và không flaky).
+1. **Luôn import `{ render, screen, userEvent }` từ `@test-utils`:** Không import `render` trực tiếp từ `@testing-library/react`. Wrapper `test-utils/render.tsx` tự bọc `<QueryClientProvider><MantineProvider theme={theme} env="test"><DatesProvider><Notifications /><ModalsProvider>` (`env="test"` tắt transition giúp test nhanh và không flaky).
 2. **Kiểm thử Portal (`Modal`, `Drawer`, `Select`, `Menu`, `Popover`):** Vì Mantine render lớp phủ trực tiếp vào `document.body`, luôn truy vấn qua `screen.getByRole(...)` / `screen.findByText(...)` hoặc `within(document.body)` thay vì giới hạn trong `container`.
 3. **Môi trường Node test:** Với file test thuần logic Node không cần DOM, khai báo `// @vitest-environment node` ở đầu tệp (`vitest.setup.ts` đã bảo vệ polyfill bằng `if (typeof window !== 'undefined')`).
 

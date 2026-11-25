@@ -8,7 +8,7 @@
 > **Trạng thái thực thi Dual-Track:**
 >
 > - **Track 1 — Micro-Interactions & Local UI (`[Active]`):** Mantine `<Transition>` / `<Collapse>` và CSS Modules (`transform`/`opacity`) kết hợp `useReducedMotion()`.
-> - **Track 2 — Route, Shared Element & List Transitions (`[Active trên Next.js 16.2.6]`):** React `<ViewTransition>` + `transitionTypes` trên `next/link` / `router.push()` + `startTransition` / `addTransitionType` (Next.js `16.2+` đã tích hợp sẵn `<ViewTransition>` và `transitionTypes`, **không** cài `react@canary`, **không** bật cờ `experimental.viewTransition` cũ, và **không** tự gọi trực tiếp `document.startViewTransition()` khi đã dùng `<ViewTransition>`).
+> - **Track 2 — Route, Shared Element & List Transitions (`[Active trên Next.js 16.2.6]`):** Bật `experimental: { viewTransition: true }` trong `client/next.config.ts` kết hợp wrapper `SafeViewTransition` & `startTypedTransition()` (sử dụng `<ViewTransition>` + `addTransitionType` thật trên Next.js 16 runtime và fallback passthrough an toàn trên Vitest/Storybook dùng `react@19.2.4`) cùng `transitionTypes` trên `next/link` / `router.push()`. **Không** cài `react@canary` và **không** tự gọi trực tiếp `document.startViewTransition()` khi đã dùng `<ViewTransition>`.
 >
 > **Cơ sở tham chiếu quốc tế:**
 >

@@ -20,7 +20,7 @@ import {
   computeUserMetrics,
   getUserDisplayName,
 } from '@/components/admin/user-metrics'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/providers/AuthProvider'
 import { userQueries } from '@/queries/user.queries'
 import { DeleteUserModal } from './DeleteUserModal'
 import { useAdminUserMutations } from './useAdminUserMutations'

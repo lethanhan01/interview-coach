@@ -10,8 +10,6 @@ const config = {
         'mantine-breakpoint-xl': '88em',
       },
     },
-    // Giữ lại trong giai đoạn chuyển tiếp cho các component cũ dùng Tailwind v4
-    '@tailwindcss/postcss': {},
   },
 }
 

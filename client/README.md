@@ -1,8 +1,8 @@
 # InterviewCoach — Frontend
 
-**Next.js 16 (App Router), React 19, TypeScript 5, Mantine UI v9 (`^9.8.2`, Zero-Hex Semantic-Only), `@mantine/form` + Zod v4, `@tabler/icons-react`, TanStack Query v5.**
+**Next.js 16 (App Router), React 19, TypeScript 5, Mantine UI v9 (`^9.8.2`, Zero-Hex Semantic-Only, bao gồm `@mantine/charts` & `@mantine/dates`), `@mantine/form` + Zod v4, `@tabler/icons-react`, TanStack Query v5.**
 
-> **Ghi chú chuyển tiếp**: Tailwind CSS v4 và một số component legacy vẫn đang tồn tại song song qua CSS Cascade Layers (`@layer theme, base, mantine, components, utilities;` trong `app/globals.css`) trong giai đoạn chuẩn hóa sang Mantine v9. Mọi UI mới và màn hình cập nhật đều tuân thủ 100% chuẩn Mantine v9.
+Toàn bộ giao diện `client/` tuân thủ 100% chuẩn **Mantine UI v9 Zero-Hex Semantic-Only** với CSS Cascade Layers (`@layer mantine, components;` trong `app/globals.css`).
 
 Ứng dụng chạy cục bộ ở `http://localhost:5173`.
 
@@ -95,11 +95,11 @@ NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>/api/v1
 Để nắm nhanh luồng hoạt động của Frontend từ ngoài vào trong, đọc theo đúng thứ tự phụ thuộc một chiều sau:
 
 1. **`app/`** — Next.js 16 App Router thuần routing (5 Route Groups: `(public)`, `(auth)`, `(candidate)`, `(admin)`, `(common)`); chỉ chứa `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx` (chiến lược **Thin `app/`**, không đặt `_components/` trong `app/`).
-2. **`providers/`** — Toàn bộ React Context & App-level Client Providers (`AppProviders`, `AuthProvider`, `QueryProvider`, `MantineColorSchemeSync`).
+2. **`providers/`** — Toàn bộ React Context & App-level Client Providers (`AppProviders`, `AuthProvider`, `QueryProvider`).
 3. **`components/`** — Toàn bộ Shared & Domain UI Components dựng trên Mantine v9 (`layout`, `common`, `landing`, `auth`, `interview`, `interview-setup`, `jd-library`, `sessions`, `report`, `resume`, `profile`, `onet`, `sfia`).
 4. **`styles/`** & **`theme.ts`** — SSOT Mantine v9 Theme (Zero-Hex, RSC-safe) và các shared semantic CSS Modules (`surfaces`, `interactions`, `typography`).
 5. **`queries/`** — 100% Pure TS / RSC-safe TanStack Query v5 (`query-client.ts`, `keys.ts`, `*.queries.ts` theo từng miền, không barrel).
-6. **`hooks/`** — Shared Cross-App Custom Hooks (`useAuth`, `useSessions`, `useSessionEvents`, `useCountdown`).
+6. **`hooks/`** — Shared Cross-App Custom Hooks (`useSessionEvents`, `useCountdown`).
 7. **`services/`** — Typed HTTP clients theo domain (`*.service.ts`).
 8. **`types/`** & **`lib/`** — Pure TypeScript contracts (11 Bounded Contexts) và pure TS utilities (0 file `.tsx`).
 
@@ -115,18 +115,15 @@ client/
 │   ├── (candidate)/       — Luồng ứng viên: setup, sessions/[sessionId], jd-library, resume, profile
 │   ├── (admin)/admin/     — Trang quản trị: dashboard, users, sfia, onet, profile
 │   ├── (common)/          — Trang trạng thái hệ thống: offline, maintenance, unauthorized, unauthenticated, too-many-requests, coming-soon
-│   ├── layout.tsx         — RootLayout (ColorSchemeScript, MantineProvider, MantineColorSchemeSync, AppProviders, OfflineBanner)
-│   ├── globals.css        — Khai báo @layer + @mantine/*/styles.layer.css (+ CSS chuyển tiếp)
-│   ├── styles/            — [LEGACY FROZEN] Tailwind tokens/themes/utilities chờ xóa ở Phase 8
+│   ├── layout.tsx         — RootLayout (ColorSchemeScript, MantineProvider, AppProviders, OfflineBanner)
+│   ├── globals.css        — Khai báo @layer mantine, components + @mantine/*/styles.layer.css + View Transitions
 │   ├── error.tsx          — Route Error Boundary
 │   └── global-error.tsx   — Global Error Boundary
-├── providers/             — App-level Client Providers (AppProviders, AuthProvider, QueryProvider, MantineColorSchemeSync) + __tests__/
+├── providers/             — App-level Client Providers (AppProviders, AuthProvider, QueryProvider) + __tests__/
 ├── styles/                — Shared Semantic CSS Modules (surfaces, interactions, typography) chuẩn Mantine v9 Zero-Hex
-├── components/            — Toàn bộ UI components theo miền (layout, common, landing, auth, interview, interview-setup, jd-library, sessions, report, resume, profile, onet, sfia)
-│   ├── ui/                — [LEGACY FROZEN] Chờ xóa hoàn toàn ở Phase 8 — CẤM thêm file mới
-│   └── form/              — [LEGACY FROZEN] Chờ xóa hoàn toàn ở Phase 8 — CẤM thêm file mới
+├── components/            — Toàn bộ UI components theo miền (admin, layout, common, landing, auth, interview, interview-setup, jd-library, sessions, report, resume, profile, onet, sfia)
 ├── queries/               — Pure TS / RSC-safe TanStack Query v5 (query-client.ts, keys.ts, *.queries.ts) + __tests__/
-├── hooks/                 — Shared cross-app custom hooks (useAuth, useSessions, useSessionEvents, useCountdown)
+├── hooks/                 — Shared cross-app custom hooks (useSessionEvents, useCountdown)
 ├── services/              — API service layer theo domain (*.service.ts) + __tests__/
 ├── types/                 — Pure TypeScript Domain & API Contracts (11 Bounded Contexts)
 ├── lib/                   — 100% Pure TS Infrastructure (api-client, auth-redirect, date-time, form-errors, setup-helpers)

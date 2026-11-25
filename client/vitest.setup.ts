@@ -26,7 +26,7 @@ if (typeof window !== 'undefined') {
   const { getComputedStyle } = window
   window.getComputedStyle = (elt) => getComputedStyle(elt)
 
-  // Mock ResizeObserver for Radix UI & Mantine v9
+  // Mock ResizeObserver for Mantine v9 in jsdom
   class ResizeObserverMock {
     observe() {
       // Mock implementation for Vitest
@@ -40,18 +40,6 @@ if (typeof window !== 'undefined') {
   }
   window.ResizeObserver = ResizeObserverMock
 
-  // Mock PointerEvent for Radix UI
-  if (typeof window.PointerEvent === 'undefined') {
-    class PointerEventMock extends Event {
-      pointerId: number
-      constructor(type: string, props: PointerEventInit = {}) {
-        super(type, props)
-        this.pointerId = props.pointerId || 0
-      }
-    }
-    window.PointerEvent = PointerEventMock as unknown as typeof PointerEvent
-  }
-
   // Mock document.fonts for Mantine v9 TextareaAutosize in jsdom
   if (typeof document !== 'undefined' && !('fonts' in document)) {
     Object.defineProperty(document, 'fonts', {
@@ -64,15 +52,8 @@ if (typeof window !== 'undefined') {
     })
   }
 
-  // Mock HTMLElement.prototype helpers for Radix UI & Mantine v9
+  // Mock scrollIntoView for Mantine v9 Combobox/Select in jsdom
   HTMLElement.prototype.scrollIntoView = () => {
-    // Mock implementation for Vitest
-  }
-  HTMLElement.prototype.hasPointerCapture = () => false
-  HTMLElement.prototype.setPointerCapture = () => {
-    // Mock implementation for Vitest
-  }
-  HTMLElement.prototype.releasePointerCapture = () => {
     // Mock implementation for Vitest
   }
 }

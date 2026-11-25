@@ -4,12 +4,12 @@ These rules are mandatory for every UI task in `client/`.
 
 ## 1. Verified Project Stack (`client/package.json`)
 
-- **UI Core, Hooks & Extensions**: `@mantine/core`, `@mantine/hooks`, `@mantine/form`, `@mantine/dropzone`, `@mantine/modals`, `@mantine/notifications` (`^9.8.2`)
+- **UI Core, Hooks & Extensions**: `@mantine/core`, `@mantine/hooks`, `@mantine/form`, `@mantine/dropzone`, `@mantine/modals`, `@mantine/notifications`, `@mantine/dates`, `@mantine/charts` (`^9.8.2`), `dayjs`, `recharts`
 - **Icons**: `@tabler/icons-react` (`^3.52.0`)
 - **Framework, Data & Validation**: `next` `16.2.6` (App Router), `react` `19.2.4`, `@tanstack/react-query` `^5`, `zod` `^4.4.3`
 - **Styling Toolchain**: `postcss` `^8.5.33`, `postcss-preset-mantine` `^1.18.0`, `postcss-simple-vars` `^7.0.1` (`$mantine-breakpoint-xs`..`xl` in `client/postcss.config.mjs`), `stylelint` `^17.16.0` (`stylelint-config-standard` `^40.0.0`)
 - **Build, Lint, Format & Test**: `npm`, TypeScript `^5`, ESLint `^9` (`eslint-config-next`, `eslint-plugin-storybook`), Prettier `^3.2.5`, Vitest `^4.1.10`, Storybook `^10.5.5` (`@storybook/nextjs-vite`), Playwright `^1.62.1`
-- **Not pre-installed**: `@mantine/dates`, `@mantine/charts`, `@mantine/spotlight`, `@mantine/tiptap`, `@phosphor-icons/react`. Always inspect `client/package.json` before importing an extension package; run `npm install` in `client/` only when a feature needs it.
+- **Not pre-installed**: `@mantine/spotlight`, `@mantine/tiptap`, `@phosphor-icons/react`. Always inspect `client/package.json` before importing an extension package; run `npm install` in `client/` only when a feature needs it.
 
 ## 2. Official Documentation Lookup Protocol
 
@@ -51,7 +51,7 @@ Never guess Mantine v9 APIs or copy deprecated v6/v7/v8 patterns. Always check:
    - Use `<Paper withBorder radius="...">` or `<Card>` for bordered surfaces, `<Table.ScrollContainer>` for horizontal table scrolling, and `<ComponentName>.module.css` for Dropzone inner pointer-events or conditional/stateful borders (`mod={{ active, selected, focused }}` + `&[data-*]`).
 9. **Component CSS Isolation (`*.module.css` vs `client/app/globals.css`)**:
    - Place all component/page-specific classes, hover (`@mixin hover`), `:focus-visible`, and state selectors inside `<ComponentName>.module.css`.
-   - Keep `client/app/globals.css` strictly for app-wide layer declarations (`@layer theme, base, mantine, components, utilities;` + `@mantine/*/styles.layer.css`) and global base rules.
+   - Keep `client/app/globals.css` strictly for app-wide layer declarations (`@layer mantine, components;` + `@mantine/*/styles.layer.css`), global base rules, and View Transition keyframes.
 10. **Standardized Forms, Hooks & Server State**:
     - Use `@mantine/form` (`mode: 'uncontrolled'`, `form.key('path')`, `{...form.getInputProps('path')}`, `schemaResolver(zodSchema, { sync: true })` with Zod v4) and `<Box component="form" onSubmit={form.onSubmit(...)} noValidate>`.
     - Prefer `@mantine/hooks` (`useDisclosure`, `useDebouncedValue`, `useMediaQuery`, `useReducedMotion`, `useHotkeys`, `useNetwork`, etc.) over hand-rolled DOM/window `useEffect` helpers.
@@ -60,14 +60,14 @@ Never guess Mantine v9 APIs or copy deprecated v6/v7/v8 patterns. Always check:
 ## 4. Testing & Verification (`client/`)
 
 - Import `{ render, screen, userEvent }` from `@test-utils` (`client/test-utils/index.ts`), never `render` directly from `@testing-library/react`.
-- Keep `@layer theme, base, mantine, components, utilities;` and `@mantine/*/styles.layer.css` at the top of `client/app/globals.css`, and keep `<ColorSchemeScript defaultColorScheme="auto" />` + `{...mantineHtmlProps}` in `client/app/layout.tsx` (zero-FOUC).
+- Keep `@layer mantine, components;` and `@mantine/*/styles.layer.css` at the top of `client/app/globals.css`, and keep `<ColorSchemeScript defaultColorScheme="auto" />` + `{...mantineHtmlProps}` in `client/app/layout.tsx` (zero-FOUC).
 - Format all new/edited code according to `client/.prettierrc` (`semi: false`, `singleQuote: true`, `trailingComma: 'es5'`).
 - After UI changes, run inside `client/`:
   - `npm run typecheck` (`tsc --noEmit`)
   - `npm run lint` (ESLint 9)
   - `npm run format:check` (Prettier)
   - `npm run stylelint` (`**/*.module.css`)
-  - `npm run ui:lint` (or `npm run ui:lint -- <touched-files>` — enforces all 8 Mantine v9 Zero-Hex rules in `scripts/check-ui-rules.mjs`)
+  - `npm run ui:lint` (defaults to scanning 100% of `client/` UI codebase — `app`, `components`, `hooks`, `lib`, `config`, `providers`, `queries`, `test-utils`, `stories`, `.storybook`, `theme.ts`, `**/*.module.css` — enforcing all 8 Mantine v9 Zero-Hex rules in `scripts/check-ui-rules.mjs`; or `npm run ui:lint -- <touched-files>`)
   - `npm run test:unit` (Vitest 4 `--project unit` on `jsdom`)
   - `npm run build` (Next.js 16 production build)
   - `npm run build-storybook` when adding/modifying `*.stories.tsx`, MDX docs, or theme/preview setup

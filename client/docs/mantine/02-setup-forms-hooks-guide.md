@@ -6,21 +6,19 @@ Tài liệu này mô tả cấu hình nền tảng thực tế trong `client/` (
 
 ## 1. Setup Next.js App Router, CSS Layers & Theme
 
-### Thứ tự khai báo CSS Layers trong giai đoạn chuyển tiếp ([client/app/globals.css](../../app/globals.css))
+### Thứ tự khai báo CSS Layers thuần Mantine v9 ([client/app/globals.css](../../app/globals.css))
 
-Để Mantine v9 chạy an toàn song song các trang legacy còn dùng Tailwind CSS v4 mà không gây xung đột cascade reset/utilities, dự án sử dụng **`styles.layer.css`** (`@layer mantine`) đặt sau `base` và trước `utilities`:
+Dự án sử dụng **`styles.layer.css`** (`@layer mantine`) đặt trước `@layer components` để toàn bộ CSS Modules ghi đè sạch sẽ mà không cần `!important`:
 
 ```css
-@layer theme, base, mantine, components, utilities;
+@layer mantine, components;
 
 @import '@mantine/core/styles.layer.css';
 @import '@mantine/notifications/styles.layer.css';
 @import '@mantine/dropzone/styles.layer.css';
-
-@import 'tailwindcss';
+@import '@mantine/dates/styles.layer.css';
+@import '@mantine/charts/styles.layer.css';
 ```
-
-> Khi hoàn tất migrate toàn bộ trang cũ và gỡ Tailwind CSS v4, có thể xóa `@import 'tailwindcss'` cùng `@tailwindcss/postcss` trong [postcss.config.mjs](../../postcss.config.mjs).
 
 ### Root Layout ([client/app/layout.tsx](../../app/layout.tsx))
 
@@ -79,15 +77,16 @@ export default function RootLayout({
 }
 ```
 
-> Trong giai đoạn chuyển tiếp song song `next-themes`, [MantineColorSchemeSync](../../providers/MantineColorSchemeSync.tsx) đồng bộ `resolvedTheme` sang `useMantineColorScheme().setColorScheme(...)` để giữ Light/Dark khớp nhau 100%.
+> `MantineProvider` (`defaultColorScheme="auto"`) là nguồn sự thật duy nhất cho Light/Dark/Auto Color Scheme trên toàn ứng dụng; `<AppProviders>` gom `<DatesProvider settings={{ locale: 'vi', firstDayOfWeek: 1 }}>`, `<Notifications />`, `<ModalsProvider>`, `<QueryProvider>`, và `<AuthProvider>`.
 
 ### Tối ưu Tree-Shaking ([client/next.config.ts](../../next.config.ts))
 
-Đã khai báo `experimental.optimizePackageImports` cho toàn bộ package `@mantine/*`, `@tabler/icons-react`, và `@tanstack/react-query` nhằm giữ bundle gọn nhẹ trên Next.js 16:
+Đã khai báo `experimental.optimizePackageImports` cho toàn bộ package `@mantine/*`, `@tabler/icons-react`, và `@tanstack/react-query` cùng `experimental.viewTransition: true` nhằm giữ bundle gọn nhẹ trên Next.js 16:
 
 ```ts
 const nextConfig: NextConfig = {
   experimental: {
+    viewTransition: true,
     optimizePackageImports: [
       '@mantine/core',
       '@mantine/hooks',
@@ -95,6 +94,8 @@ const nextConfig: NextConfig = {
       '@mantine/notifications',
       '@mantine/modals',
       '@mantine/dropzone',
+      '@mantine/dates',
+      '@mantine/charts',
       '@tabler/icons-react',
       '@tanstack/react-query',
     ],
@@ -348,16 +349,16 @@ export function ResponsiveSummaryCard({ summary }: { summary: string }) {
 
 ## 4. Trạng thái Package mở rộng trong `client/package.json`
 
-Các package Mantine & icon **đã cài sẵn**: `@mantine/core`, `@mantine/hooks`, `@mantine/form`, `@mantine/notifications`, `@mantine/modals`, `@mantine/dropzone` (`^9.8.2`) và `@tabler/icons-react` (`^3.52.0`).
+Các package Mantine & icon **đã cài sẵn**: `@mantine/core`, `@mantine/hooks`, `@mantine/form`, `@mantine/notifications`, `@mantine/modals`, `@mantine/dropzone`, `@mantine/dates`, `@mantine/charts` (`^9.8.2`), `dayjs`, `recharts`, và `@tabler/icons-react` (`^3.52.0`).
 
 Chỉ chạy `npm install` trong `client/` khi tính năng thực sự cần package chưa cài:
 
-| Nhu cầu                        | Trạng thái / Lệnh `npm install` (trong `client/`) | Tích hợp bắt buộc                                                                                         | Tài liệu                                                                  |
-| ------------------------------ | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| **Icons**                      | Đã cài sẵn (`@tabler/icons-react`)                | Dùng thống nhất `@tabler/icons-react` (`stroke={1.5}`), cấm inline `<svg>`                                | [`/guides/icons/`](https://mantine.dev/guides/icons/)                     |
-| **Toast Notifications**        | Đã cài sẵn (`@mantine/notifications`)             | Đã import `styles.layer.css` trong `app/globals.css` & gắn `<Notifications />` tại `app/layout.tsx`       | [`/x/notifications/`](https://mantine.dev/x/notifications/)               |
-| **Confirm / Promise Modals**   | Đã cài sẵn (`@mantine/modals`)                    | Đã bọc `<ModalsProvider>` trong `app/layout.tsx` & `test-utils/render.tsx`; gọi `modals.openConfirmModal` | [`/x/modals/`](https://mantine.dev/x/modals/)                             |
-| **File Dropzone**              | Đã cài sẵn (`@mantine/dropzone`)                  | Đã import `styles.layer.css` trong `app/globals.css` (dùng cho upload CV/Resume)                          | [`/x/dropzone/`](https://mantine.dev/x/dropzone/)                         |
-| **Date / Time Pickers**        | Chưa cài — `npm install @mantine/dates dayjs`     | Import `@mantine/dates/styles.layer.css` trong `app/globals.css`; bọc `<DatesProvider>`                   | [`/dates/getting-started/`](https://mantine.dev/dates/getting-started/)   |
-| **Charts**                     | Chưa cài — `npm install @mantine/charts recharts` | Import `@mantine/charts/styles.layer.css` trong `app/globals.css`                                         | [`/charts/getting-started/`](https://mantine.dev/charts/getting-started/) |
-| **Command Palette (`Ctrl+K`)** | Chưa cài — `npm install @mantine/spotlight`       | Import `@mantine/spotlight/styles.layer.css` trong `app/globals.css`                                      | [`/x/spotlight/`](https://mantine.dev/x/spotlight/)                       |
+| Nhu cầu                        | Trạng thái / Lệnh `npm install` (trong `client/`) | Tích hợp bắt buộc                                                                                           | Tài liệu                                                                  |
+| ------------------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Icons**                      | Đã cài sẵn (`@tabler/icons-react`)                | Dùng thống nhất `@tabler/icons-react` (`stroke={1.5}`), cấm inline `<svg>`                                  | [`/guides/icons/`](https://mantine.dev/guides/icons/)                     |
+| **Toast Notifications**        | Đã cài sẵn (`@mantine/notifications`)             | Đã import `styles.layer.css` trong `app/globals.css` & gắn `<Notifications />` tại `AppProviders`           | [`/x/notifications/`](https://mantine.dev/x/notifications/)               |
+| **Confirm / Promise Modals**   | Đã cài sẵn (`@mantine/modals`)                    | Đã bọc `<ModalsProvider>` trong `AppProviders` & `test-utils/render.tsx`; gọi `modals.openConfirmModal`     | [`/x/modals/`](https://mantine.dev/x/modals/)                             |
+| **File Dropzone**              | Đã cài sẵn (`@mantine/dropzone`)                  | Đã import `styles.layer.css` trong `app/globals.css` (dùng cho upload CV/Resume)                            | [`/x/dropzone/`](https://mantine.dev/x/dropzone/)                         |
+| **Date / Time Pickers**        | Đã cài sẵn (`@mantine/dates`, `dayjs`)            | Đã import `@mantine/dates/styles.layer.css` trong `app/globals.css`; đã bọc `<DatesProvider>` (locale `vi`) | [`/dates/getting-started/`](https://mantine.dev/dates/getting-started/)   |
+| **Charts**                     | Đã cài sẵn (`@mantine/charts`, `recharts`)        | Đã import `@mantine/charts/styles.layer.css` trong `app/globals.css` (load qua `next/dynamic`)              | [`/charts/getting-started/`](https://mantine.dev/charts/getting-started/) |
+| **Command Palette (`Ctrl+K`)** | Chưa cài — `npm install @mantine/spotlight`       | Import `@mantine/spotlight/styles.layer.css` trong `app/globals.css`                                        | [`/x/spotlight/`](https://mantine.dev/x/spotlight/)                       |

@@ -73,14 +73,14 @@ flowchart TD
 
 ## 2. Bối Cảnh Kỹ Thuật Chuẩn Hóa Của InterviewCoach Frontend
 
-| Thành phần              | Stack chuẩn hóa (`client/package.json`)                                                                                                       | Ghi chú thực thi                                                                                                    |
-| :---------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
-| **Framework & Runtime** | Next.js `16.2.6` (App Router, `proxy.ts`), React `19.2.4`, TypeScript `^5`, `npm`                                                             | 5 Route Groups: `(public)`, `(auth)`, `(candidate)`, `(admin)`, `(common)`                                          |
-| **UI Library & Icons**  | Mantine UI v9 (`@mantine/core`, `hooks`, `form`, `notifications`, `modals`, `dropzone` `^9.8.2`) + `@tabler/icons-react` `^3.52.0`            | **Mantine-First & Zero-Hex Semantic-Only** (`client/theme.ts` RSC-safe, 5 vai trò ngữ nghĩa)                        |
-| **Styling & CSS Gate**  | PostCSS (`postcss-preset-mantine`, `postcss-simple-vars`), CSS Modules (`*.module.css`), Stylelint `^17.16.0`                                 | Chạy song song Tailwind v4 qua `@layer` + `styles.layer.css` & `MantineColorSchemeSync` trong giai đoạn chuyển tiếp |
-| **Data, State & Forms** | `@tanstack/react-query` `^5`, SSE `EventSource`, Minimal React Context, Next.js URL params, `@mantine/form` (`uncontrolled`) + `zod` `^4.4.3` | Không cài thêm store bên ngoài hay lớp wrapper form thừa                                                            |
-| **Testing & QA**        | Vitest `^4.1.10` (`unit` vs `storybook`), `@test-utils`, `jest-axe`, Storybook `^10.5.5` (`@storybook/nextjs-vite`), Playwright `^1.62.1`     | Tích hợp `scripts/check-ui-rules.mjs` (`ui:lint`) và `scripts/verify-docs-integrity.mjs` (`verify:docs`)            |
-| **Deployment**          | Vercel (`client/vercel.json`, `regions: ["sin1"]`) + GitHub Actions CI                                                                        | Fail-fast `NEXT_PUBLIC_API_BASE_URL` tại `client/next.config.ts`                                                    |
+| Thành phần              | Stack chuẩn hóa (`client/package.json`)                                                                                                               | Ghi chú thực thi                                                                                         |
+| :---------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
+| **Framework & Runtime** | Next.js `16.2.6` (App Router, `proxy.ts`), React `19.2.4`, TypeScript `^5`, `npm`                                                                     | 5 Route Groups: `(public)`, `(auth)`, `(candidate)`, `(admin)`, `(common)`                               |
+| **UI Library & Icons**  | Mantine UI v9 (`@mantine/core`, `hooks`, `form`, `notifications`, `modals`, `dropzone`, `dates`, `charts` `^9.8.2`) + `@tabler/icons-react` `^3.52.0` | **Mantine-First & Zero-Hex Semantic-Only** (`client/theme.ts` RSC-safe, 5 vai trò ngữ nghĩa)             |
+| **Styling & CSS Gate**  | PostCSS (`postcss-preset-mantine`, `postcss-simple-vars`), CSS Modules (`*.module.css`), Stylelint `^17.16.0`                                         | Thuần Mantine v9 qua `@layer mantine, components;` + `styles.layer.css` (100% Zero-Hex)                  |
+| **Data, State & Forms** | `@tanstack/react-query` `^5`, SSE `EventSource`, Minimal React Context, Next.js URL params, `@mantine/form` (`uncontrolled`) + `zod` `^4.4.3`         | Không cài thêm store bên ngoài hay lớp wrapper form thừa                                                 |
+| **Testing & QA**        | Vitest `^4.1.10` (`unit` vs `storybook`), `@test-utils`, `jest-axe`, Storybook `^10.5.5` (`@storybook/nextjs-vite`), Playwright `^1.62.1`             | Tích hợp `scripts/check-ui-rules.mjs` (`ui:lint`) và `scripts/verify-docs-integrity.mjs` (`verify:docs`) |
+| **Deployment**          | Vercel (`client/vercel.json`, `regions: ["sin1"]`) + GitHub Actions CI                                                                                | Fail-fast `NEXT_PUBLIC_API_BASE_URL` tại `client/next.config.ts`                                         |
 
 ---
 
@@ -170,7 +170,7 @@ Mọi chuyên đề trong 16 tài liệu đều tuân thủ 6 khối chuẩn (đ
 - **Hỏi: Có được sao chép code từ các component/hook cũ trong `client/` để làm mẫu cho tính năng mới hoặc tài liệu không?**  
   **Đáp:** **Không.** Mã nguồn legacy trong `client/` còn tồn tại nhiều điểm chưa chuẩn (barrel imports, Tailwind/Radix, thiếu return type, thiếu Zod validation). Luôn lấy chuẩn từ tài liệu trong `client/docs/`, [`mantine.dev`](https://mantine.dev/), [`ui.mantine.dev`](https://ui.mantine.dev/), và `client/.agents/skills/vercel-*`.
 - **Hỏi: Tôi nên tạo wrapper `<PrimaryButton>` trong `components/ui/` không?**  
-  **Đáp:** **Không.** Theo nguyên tắc **Mantine-First** (`SEM-HTML-001`, `SEM-PROPS-001`), import trực tiếp `<Button color="brand">` từ `@mantine/core`. `components/ui/` đã đóng băng chờ gỡ bỏ sau khi migrate xong.
+  **Đáp:** **Không.** Theo nguyên tắc **Mantine-First** (`SEM-HTML-001`, `SEM-PROPS-001`), import trực tiếp `<Button color="brand">` từ `@mantine/core`. Thư mục `components/ui/` legacy đã được gỡ bỏ hoàn toàn.
 - **Hỏi: Khi nào được phép dùng ngoại lệ `interviewcoach-convention-exempt`?**  
   **Đáp:** Chỉ trong tình huống kỹ thuật bất khả kháng (DOM mount ref cho audio canvas hoặc `style={transitionStyles}` của Mantine `Transition`), bắt buộc ghi đúng định dạng `// interviewcoach-convention-exempt: <RULE_ID> <lý do> until: YYYY-MM-DD` (`SEM-GOV-001`, `STD-EXEMPT-001`).
 - **Hỏi: Tại sao một số mục ghi `[Target Standard]`?**  

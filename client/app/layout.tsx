@@ -9,7 +9,6 @@ import {
 } from '@mantine/core'
 import { theme } from '@/theme'
 import { AppProviders } from '@/providers/AppProviders'
-import { MantineColorSchemeSync } from '@/providers/MantineColorSchemeSync'
 import { OfflineBanner } from '@/components/common/OfflineBanner'
 
 const geistSans = Geist({
@@ -37,14 +36,13 @@ export default function RootLayout({
     <html
       lang="vi"
       {...mantineHtmlProps}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <head>
         <ColorSchemeScript defaultColorScheme="auto" />
       </head>
-      <body className="flex min-h-full flex-col" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <MantineProvider theme={theme} defaultColorScheme="auto">
-          <MantineColorSchemeSync />
           <AppProviders>
             <OfflineBanner />
             {children}

@@ -1,7 +1,5 @@
-import type { ReactNode } from 'react'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { renderHook, waitFor } from '@test-utils'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient } from '@tanstack/react-query'
 import { ApiClientError } from '@/lib/api-client'
 import { authQueries } from '@/queries/auth.queries'
 import { candidateProfileQueries } from '@/queries/candidate-profile.queries'
@@ -13,7 +11,6 @@ import { rubricQueries } from '@/queries/rubric.queries'
 import { sessionQueries } from '@/queries/session.queries'
 import { sfiaAdminQueries } from '@/queries/sfia.queries'
 import { userQueries } from '@/queries/user.queries'
-import { useSessions } from '@/hooks/useSessions'
 import { authService } from '@/services/auth.service'
 import { userService } from '@/services/user.service'
 import { userManagementService } from '@/services/admin.service'
@@ -327,40 +324,6 @@ describe('query-client infrastructure & TanStack Query v5 integration', () => {
         'PROG',
         expect.any(AbortSignal)
       )
-    })
-  })
-
-  describe('useSessions hook', () => {
-    it('fetches sessions using TanStack Query v5 and supports cache invalidation', async () => {
-      vi.mocked(sessionService.getSessions).mockResolvedValue([mockSessionItem])
-
-      const testClient = new QueryClient({
-        defaultOptions: { queries: { retry: false, gcTime: 0 } },
-      })
-
-      const wrapper = ({ children }: { children: ReactNode }) => (
-        <QueryClientProvider client={testClient}>
-          {children}
-        </QueryClientProvider>
-      )
-
-      const { result } = renderHook(() => useSessions(), { wrapper })
-
-      expect(result.current.isLoading).toBe(true)
-      expect(result.current.sessions).toEqual([])
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true)
-      })
-
-      expect(result.current.sessions).toEqual([mockSessionItem])
-      expect(result.current.error).toBeNull()
-
-      const invalidateSpy = vi.spyOn(testClient, 'invalidateQueries')
-      await result.current.invalidate()
-      expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: queryKeys.sessions.all,
-      })
     })
   })
 })

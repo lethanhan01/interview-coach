@@ -23,7 +23,7 @@ const mockAuthState = {
   isLoading: false,
 }
 
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/providers/AuthProvider', () => ({
   useAuth: () => mockAuthState,
 }))
 

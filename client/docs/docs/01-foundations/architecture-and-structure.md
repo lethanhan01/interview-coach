@@ -45,7 +45,7 @@ flowchart TD
     end
 
     APP --> GROUPS
-    GROUPS --> PROV["providers/ (AppProviders, AuthProvider, QueryProvider, MantineColorSchemeSync)"]
+    GROUPS --> PROV["providers/ (AppProviders, AuthProvider, QueryProvider)"]
     GROUPS --> UI["components/<domain>/ (Domain Co-location)<br/>Mantine v9 + CSS Modules"]
     UI --> STYLES["styles/ (Shared Semantic CSS Modules) & theme.ts (RSC-Safe Zero-Hex)"]
     PROV --> QUERIES["queries/ (100% Pure TS / RSC-safe queryKeys & queryOptions)"]
@@ -89,24 +89,22 @@ client/
 │   ├── (candidate)/              # Không gian ứng viên: sessions, setup, resume, jd-library, profile
 │   ├── (admin)/                  # Không gian quản trị: dashboard, sfia, onet, users, profile
 │   ├── (common)/                 # Trang trạng thái hệ thống: offline, maintenance, unauthorized
-│   ├── layout.tsx                # RootLayout (RSC): ColorSchemeScript, mantineHtmlProps, MantineProvider, QueryProvider
-│   ├── globals.css               # @layer theme, base, mantine, components, utilities + styles.layer.css
+│   ├── layout.tsx                # RootLayout (RSC): ColorSchemeScript, mantineHtmlProps, MantineProvider, AppProviders
+│   ├── globals.css               # @layer mantine, components + @mantine/*/styles.layer.css + View Transitions
 │   ├── error.tsx                 # Route Segment Error Boundary
 │   ├── global-error.tsx          # Fatal Root Layout Error Boundary
 │   └── not-found.tsx             # 404 Page
 ├── providers/                    # Toàn bộ React Context & App-level Client Providers ('use client')
 │   ├── AppProviders.tsx          # DatesProvider, Notifications, ModalsProvider, QueryProvider, AuthProvider
 │   ├── AuthProvider.tsx          # AuthProvider, useAuth, applyAuthenticatedSession
-│   ├── QueryProvider.tsx         # QueryProvider (+ @deprecated useOptionalQueryClient đến Phase 8)
-│   ├── MantineColorSchemeSync.tsx
+│   ├── QueryProvider.tsx         # QueryProvider (TanStack Query v5)
 │   └── __tests__/                # Unit tests cho providers
 ├── styles/                       # Shared Semantic CSS Modules (surfaces, interactions, typography)
-├── components/                   # Domain UI Components (Mantine v9 Zero-Hex cho code mới/migrate)
-│   ├── <domain>/                 # auth, interview, interview-setup, jd-library, sessions, landing, report, sfia, onet, resume, profile
-│   ├── layout/ & common/         # Khung AppShell và mẫu UI tái sử dụng dựng trên Mantine v9
-│   └── ui/ & form/               # [LEGACY FROZEN] Chờ gỡ bỏ ở Phase 8 — CẤM thêm file mới
+├── components/                   # Domain UI Components (100% Mantine v9 Zero-Hex)
+│   ├── <domain>/                 # admin, auth, interview, interview-setup, jd-library, sessions, landing, report, sfia, onet, resume, profile
+│   └── layout/ & common/         # Khung AppShell và mẫu UI tái sử dụng dựng trên Mantine v9
 ├── queries/                      # 100% Pure TS / RSC-safe (query-client.ts, keys.ts, *.queries.ts) + __tests__/
-├── hooks/                        # Custom hooks dùng chung (useAuth, useSessions, useSessionEvents, useCountdown)
+├── hooks/                        # Custom hooks dùng chung (useSessionEvents, useCountdown)
 ├── services/                     # Domain API Services (1 tệp / 1 ngữ cảnh nghiệp vụ) + __tests__/
 ├── types/                        # Central Pure TypeScript Domain & API Contracts (11 Bounded Contexts + barrel)
 ├── lib/                          # 100% Pure TS Infrastructure (api-client.ts, auth-redirect, date-time, form-errors, setup-helpers)

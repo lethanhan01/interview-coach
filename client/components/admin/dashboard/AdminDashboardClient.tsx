@@ -23,7 +23,7 @@ import {
   IconRefresh,
   IconUsers,
 } from '@tabler/icons-react'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/providers/AuthProvider'
 import { userQueries } from '@/queries/user.queries'
 import { AdminKpiGrid } from './AdminKpiGrid'
 import { AdminQuickActions } from './AdminQuickActions'

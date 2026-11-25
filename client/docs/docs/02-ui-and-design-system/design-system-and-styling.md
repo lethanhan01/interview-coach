@@ -45,22 +45,19 @@ flowchart TD
     THEME --> S5["S5: SEM-GOV-001..002<br/>Time-bound Exemptions & Storybook 10"]
 ```
 
-### Kiến trúc CSS Cascade Layers & Dual Theme Sync trong giai đoạn chuyển tiếp (`[Active in Codebase]`)
+### Kiến trúc CSS Cascade Layers & Color Scheme Thuần Mantine v9 (`[Active in Codebase]`)
 
-Để Mantine v9 chạy song song an toàn với các trang legacy còn dùng Tailwind CSS v4 mà không vỡ visual regression (`npm run test:visual`), hạ tầng CSS giữ nguyên 2 cơ chế chuyển tiếp:
+Toàn bộ hạ tầng styling vận hành thuần trên Mantine UI v9 Zero-Hex với 1 nguồn sự thật duy nhất cho Color Scheme (`MantineProvider`):
 
 ```mermaid
 flowchart LR
-    L1["@layer theme"] --> L2["@layer base"]
-    L2 --> L3["@layer mantine<br/>(@mantine/*/styles.layer.css)"]
-    L3 --> L4["@layer components"]
-    L4 --> L5["@layer utilities"]
-    NT["next-themes (legacy toggle)"] --> BRIDGE["MantineColorSchemeSync<br/>(Bridge chuyển tiếp)"]
-    BRIDGE --> MP["MantineProvider<br/>(data-mantine-color-scheme)"]
+    L1["@layer mantine<br/>(@mantine/*/styles.layer.css)"] --> L2["@layer components<br/>(CSS Modules *.module.css)"]
+    CS["ColorSchemeScript<br/>(defaultColorScheme=auto)"] --> MP["MantineProvider<br/>(data-mantine-color-scheme)"]
+    TOGGLE["ColorSchemeToggle<br/>(useMantineColorScheme)"] --> MP
 ```
 
-- `client/app/globals.css` khai báo `@layer theme, base, mantine, components, utilities;` và import 3 tệp `.layer.css` (`@mantine/core`, `@mantine/notifications`, `@mantine/dropzone`).
-- `MantineColorSchemeSync` đồng bộ `resolvedTheme` của `next-themes` sang `useMantineColorScheme().setColorScheme(...)` cho tới khi hoàn tất migrate và gỡ bỏ `next-themes`.
+- `client/app/globals.css` khai báo `@layer mantine, components;` và import 5 tệp `.layer.css` (`@mantine/core`, `@mantine/notifications`, `@mantine/dropzone`, `@mantine/dates`, `@mantine/charts`).
+- `MantineProvider` kết hợp `<ColorSchemeScript defaultColorScheme="auto" />` và `useMantineColorScheme()` là nguồn sự thật duy nhất cho Light/Dark/Auto Color Scheme (không còn `next-themes` hay bridge đồng bộ).
 
 ---
 

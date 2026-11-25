@@ -8,7 +8,7 @@ Tài liệu này bám sát cấu hình kiểm thử và công cụ kiểm toán 
 
 Mọi component Mantine và hook dữ liệu đều yêu cầu `<MantineProvider>` cùng `<QueryClientProvider>`. Do đó trong unit/component test **bắt buộc** import `render`, `screen`, `userEvent` từ `@test-utils` ([client/test-utils/index.ts](../../test-utils/index.ts)), **không** import `render` trực tiếp từ `@testing-library/react`.
 
-- File [client/test-utils/render.tsx](../../test-utils/render.tsx) tự động khởi tạo một instance `QueryClient` cô lập cho mỗi bài test (`retry: false`, `gcTime: 0`) và bọc `<QueryClientProvider client={testQueryClient}><MantineProvider theme={theme} env="test"><ModalsProvider>{children}</ModalsProvider></MantineProvider></QueryClientProvider>` (`env="test"` tắt transition/animation để test ổn định và chạy nhanh).
+- File [client/test-utils/render.tsx](../../test-utils/render.tsx) tự động khởi tạo một instance `QueryClient` cô lập cho mỗi bài test (`retry: false`, `gcTime: 0`) và bọc `<QueryClientProvider client={testQueryClient}><MantineProvider theme={theme} env="test"><DatesProvider settings={{ locale: 'vi', firstDayOfWeek: 1 }}><Notifications /><ModalsProvider>{children}</ModalsProvider></DatesProvider></MantineProvider></QueryClientProvider>` (`env="test"` tắt transition/animation để test ổn định và chạy nhanh).
 - File [client/vitest.config.mts](../../vitest.config.mts) tách rõ 2 project:
   - **`unit`** (`jsdom` + `@testing-library/react` + `jest-axe`, alias `@` và `@test-utils`): chạy bằng `npm run test:unit`.
   - **`storybook`** (trình duyệt Playwright Chromium qua `@storybook/addon-vitest`): chạy bằng `npm run test:storybook`.
@@ -44,7 +44,7 @@ describe('SetupInterviewForm', () => {
 
 ### Lưu ý môi trường Test ([client/vitest.setup.ts](../../vitest.setup.ts))
 
-- Đã kích hoạt sẵn matcher `toHaveNoViolations` từ `jest-axe` và polyfill `window.matchMedia`, `window.getComputedStyle`, `ResizeObserver`, `PointerEvent`, `HTMLElement.prototype.scrollIntoView` (chỉ chạy khi `typeof window !== 'undefined'`, an toàn cho test `@vitest-environment node`).
+- Đã kích hoạt sẵn matcher `toHaveNoViolations` từ `jest-axe` và polyfill `window.matchMedia`, `window.getComputedStyle`, `ResizeObserver`, `document.fonts`, `HTMLElement.prototype.scrollIntoView` (chỉ chạy khi `typeof window !== 'undefined'`, an toàn cho test `@vitest-environment node`).
 - Khi test `Modal`, `Drawer`, `Menu`, `Popover`, hoặc `Select` (dùng Portal render vào `document.body`), dùng `screen.getBy...` hoặc `within(document.body)` thay vì query giới hạn trong `container`.
 - Tham khảo thêm hướng dẫn test chính thức của Mantine tại [`https://mantine.dev/guides/vitest/`](https://mantine.dev/guides/vitest/).
 
@@ -54,7 +54,7 @@ describe('SetupInterviewForm', () => {
 
 - Dự án dùng **Storybook 10** với framework `@storybook/nextjs-vite` (xem [client/.storybook/main.ts](../../.storybook/main.ts)).
 - Đặt file `<ComponentName>.stories.tsx` ngay cạnh component trong `components/` hoặc trong `stories/` (đúng glob `**/*.stories.@(js|jsx|mjs|ts|tsx)`).
-- [client/.storybook/preview.tsx](../../.storybook/preview.tsx) import `../app/globals.css` (đã gồm `@layer` + `@mantine/*/styles.layer.css`) và gắn decorator `withMantineProvider` bọc `<MantineProvider theme={theme} forceColorScheme={scheme}><ModalsProvider>`, đồng bộ 100% với toolbar Light/Dark (`withThemeByClassName`) và chế độ Reduced Motion.
+- [client/.storybook/preview.tsx](../../.storybook/preview.tsx) import `../app/globals.css` (gồm `@layer mantine, components;` + 5 tệp `@mantine/*/styles.layer.css`) và gắn decorator `withMantineProvider` bọc `<MantineProvider theme={theme} forceColorScheme={scheme}><DatesProvider><Notifications /><ModalsProvider><QueryProvider>`, đồng bộ 100% với toolbar Light/Dark (`colorScheme`) và chế độ Reduced Motion.
 - Tích hợp sẵn `@storybook/addon-a11y` để kiểm tra khả năng tiếp cận (WCAG 2.2 AA) trực tiếp trên từng story qua lệnh `npm run test:a11y`.
 
 ---
@@ -65,9 +65,9 @@ describe('SetupInterviewForm', () => {
 
 - **Stylelint ([.stylelintrc.json](../../.stylelintrc.json))**: Chạy `stylelint` (`^17.16.0`) + `stylelint-config-standard` (`^40.0.0`) trên `**/*.module.css` — cấm mã màu HEX và hàm `rgb()`/`rgba()`/`hsl()`/`hsla()`, đồng thời hỗ trợ đầy đủ `rem()`, `em()`, `light-dark()`, `@mixin` và `$mantine-breakpoint-*`.
 - **UI Rules Linter ([scripts/check-ui-rules.mjs](../../scripts/check-ui-rules.mjs))**: Kiểm tra tự động 8 nhóm luật Mantine v9 Zero-Hex (`SEM-HTML-001..003`, `SEM-TOKEN-001..004`, `SEM-TOKEN-008`, `SEM-GOV-001`):
-  - `npm run ui:lint` — Quét phạm vi mặc định (`test-utils/`, `**/*.module.css` bao gồm `styles/`, `theme.ts`, `providers/MantineColorSchemeSync.tsx`).
+  - `npm run ui:lint` — Mặc định quét **100% codebase UI `client/`** (`app/`, `components/`, `hooks/`, `lib/`, `config/`, `providers/`, `queries/`, `test-utils/`, `stories/`, `.storybook/`, `theme.ts`, `**/*.module.css`).
   - `npm run ui:lint -- app/duong-dan.tsx components/moi/` — Quét các file/thư mục vừa tạo hoặc chỉnh sửa.
-  - `npm run ui:lint -- --all` — Quét toàn bộ codebase UI `client/` (dùng sau khi hoàn tất migrate Tailwind).
+  - `npm run ui:lint -- --all` — Alias tương đương phạm vi mặc định 100% codebase UI `client/`.
   - `npm run ui:lint -- --strict-expiry` — Đẩy mọi chú thích ngoại lệ `interviewcoach-convention-exempt` quá hạn `until: YYYY-MM-DD` thành lỗi exit code `1`.
 
 ### Bảng lệnh CLI chuẩn (chạy từ thư mục `client/`)
