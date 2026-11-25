@@ -43,16 +43,16 @@ export function SfiaTopBar({
               <Title order={1} size="h3">
                 Khung Năng Lực SFIA 9
               </Title>
-              <Badge color="brand" variant="light" size="xs">
+              <Badge color="brand" variant="light" size="sm">
                 Quản trị
               </Badge>
               {totalSkills !== undefined && totalSkills > 0 ? (
-                <Badge color="neutral" variant="outline" size="xs">
+                <Badge color="neutral" variant="outline" size="sm">
                   {totalSkills} kỹ năng
                 </Badge>
               ) : null}
             </Group>
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Quản trị cây kỹ năng, ma trận 2D, 5 thuộc tính chung và độ phủ
               ngân hàng câu hỏi
             </Text>
@@ -60,7 +60,7 @@ export function SfiaTopBar({
         </Group>
 
         <SegmentedControl
-          size="xs"
+          size="sm"
           value={activeTab}
           onChange={(val) => onTabChange(val as SfiaMainTab)}
           aria-label="Chuyển chế độ làm việc SFIA 9"
@@ -69,8 +69,8 @@ export function SfiaTopBar({
               value: 'taxonomy',
               label: (
                 <Group gap={6} wrap="nowrap" justify="center">
-                  <IconFolderRoot size={14} stroke={1.5} />
-                  <Text span size="xs" fw={600}>
+                  <IconFolderRoot size={15} stroke={1.5} />
+                  <Text span size="sm" fw={600}>
                     Cây kỹ năng
                   </Text>
                 </Group>
@@ -80,8 +80,8 @@ export function SfiaTopBar({
               value: 'matrix',
               label: (
                 <Group gap={6} wrap="nowrap" justify="center">
-                  <IconGridDots size={14} stroke={1.5} />
-                  <Text span size="xs" fw={600}>
+                  <IconGridDots size={15} stroke={1.5} />
+                  <Text span size="sm" fw={600}>
                     Ma trận 2D
                   </Text>
                 </Group>
@@ -91,8 +91,8 @@ export function SfiaTopBar({
               value: 'attributes',
               label: (
                 <Group gap={6} wrap="nowrap" justify="center">
-                  <IconShieldCheck size={14} stroke={1.5} />
-                  <Text span size="xs" fw={600}>
+                  <IconShieldCheck size={15} stroke={1.5} />
+                  <Text span size="sm" fw={600}>
                     Thuộc tính chung
                   </Text>
                 </Group>
@@ -102,8 +102,8 @@ export function SfiaTopBar({
               value: 'analytics',
               label: (
                 <Group gap={6} wrap="nowrap" justify="center">
-                  <IconChartBar size={14} stroke={1.5} />
-                  <Text span size="xs" fw={600}>
+                  <IconChartBar size={15} stroke={1.5} />
+                  <Text span size="sm" fw={600}>
                     Phân tích độ phủ
                   </Text>
                 </Group>

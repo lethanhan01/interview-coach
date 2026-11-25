@@ -79,38 +79,38 @@ export function SfiaQuestionCard({
     <Paper
       withBorder
       radius="md"
-      p="sm"
+      p="xs"
       bg={isNewlyCreated ? 'var(--mantine-color-brand-light)' : undefined}
     >
       <Stack gap="xs">
         <Group justify="space-between" align="center" wrap="wrap">
           <Group gap={6} align="center" wrap="wrap">
-            <Badge color="neutral" variant="outline" size="xs" ff="monospace">
+            <Badge color="neutral" variant="outline" size="sm" ff="monospace">
               {question.id}
             </Badge>
 
             <Badge
               color={levelTheme.color}
               variant={levelTheme.badgeVariant}
-              size="xs"
+              size="sm"
             >
               Cấp độ {question.targetSfiaLevel}
             </Badge>
 
-            <Badge color={diffBadge.color} variant="light" size="xs">
+            <Badge color={diffBadge.color} variant="light" size="sm">
               {diffBadge.label}
             </Badge>
 
             <Badge
               color={typeBadge.color}
               variant={typeBadge.variant}
-              size="xs"
+              size="sm"
             >
               {typeBadge.label}
             </Badge>
 
             {isNewlyCreated && (
-              <Badge color="brand" variant="filled" size="xs">
+              <Badge color="brand" variant="filled" size="sm">
                 Mới tạo
               </Badge>
             )}
@@ -133,16 +133,16 @@ export function SfiaQuestionCard({
                 aria-label="Sao chép nội dung câu hỏi"
               >
                 {copied ? (
-                  <IconCheck size={14} stroke={1.5} />
+                  <IconCheck size={15} stroke={1.5} />
                 ) : (
-                  <IconCopy size={14} stroke={1.5} />
+                  <IconCopy size={15} stroke={1.5} />
                 )}
               </ActionIcon>
             )}
           </CopyButton>
         </Group>
 
-        <Text size="xs" lh={1.5} fw={500}>
+        <Text size="sm" lh={1.55} fw={500}>
           {question.questionText}
         </Text>
       </Stack>

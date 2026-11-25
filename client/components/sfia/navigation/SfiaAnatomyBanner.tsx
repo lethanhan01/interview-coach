@@ -57,11 +57,11 @@ export function SfiaAnatomyBanner({
   const resolvedStats = coverageStats ?? stats
   const [collapsed, setCollapsed] = useLocalStorage<boolean>({
     key: LOCAL_STORAGE_KEY,
-    defaultValue: false,
+    defaultValue: true,
   })
 
   return (
-    <Paper withBorder radius="md" p="sm" className={className}>
+    <Paper withBorder radius="md" p="xs" className={className}>
       <Stack gap="xs">
         <Group justify="space-between" align="center" wrap="nowrap">
           <Group gap="xs" align="center">
@@ -70,14 +70,14 @@ export function SfiaAnatomyBanner({
             </ThemeIcon>
             <Stack gap={2}>
               <Group gap="xs" align="center">
-                <Title order={3} fz="sm" fw={700}>
+                <Title order={3} fz="md" fw={700}>
                   Cấu Trúc Khung Năng Lực SFIA 9
                 </Title>
-                <Badge color="brand" variant="light" size="xs">
+                <Badge color="brand" variant="light" size="sm">
                   4 TRỤ CỘT CỐT LÕI
                 </Badge>
               </Group>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 Kiến trúc chuẩn hóa: Danh mục ➔ Phân nhóm ➔ Kỹ năng ➔ 7 Cấp độ
                 trách nhiệm
               </Text>
@@ -87,7 +87,7 @@ export function SfiaAnatomyBanner({
           <Button
             variant="subtle"
             color="neutral"
-            size="xs"
+            size="sm"
             onClick={() => setCollapsed(!collapsed)}
             aria-label={
               collapsed
@@ -96,9 +96,9 @@ export function SfiaAnatomyBanner({
             }
             rightSection={
               collapsed ? (
-                <IconChevronDown size={14} stroke={1.5} />
+                <IconChevronDown size={15} stroke={1.5} />
               ) : (
-                <IconChevronUp size={14} stroke={1.5} />
+                <IconChevronUp size={15} stroke={1.5} />
               )
             }
           >
@@ -107,17 +107,17 @@ export function SfiaAnatomyBanner({
         </Group>
 
         <Collapse expanded={!collapsed}>
-          <Stack gap="sm" pt="xs">
+          <Stack gap="xs" pt="xs">
             <SfiaAnatomyDiagram />
 
-            <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="sm">
+            <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="xs">
               <Paper withBorder p="xs" radius="sm">
                 <Group justify="space-between" align="center">
                   <Stack gap={2}>
                     <Text size="xs" c="dimmed">
                       Kỹ năng SFIA 9
                     </Text>
-                    <Text fw={700} size="sm">
+                    <Text fw={700} size="md">
                       <StatValue
                         value={resolvedStats?.totalSkills}
                         suffix="Kỹ năng"
@@ -136,7 +136,7 @@ export function SfiaAnatomyBanner({
                     <Text size="xs" c="dimmed">
                       Phân nhóm
                     </Text>
-                    <Text fw={700} size="sm">
+                    <Text fw={700} size="md">
                       <StatValue
                         value={resolvedStats?.totalSubcategories}
                         suffix="Phân nhóm"
@@ -155,7 +155,7 @@ export function SfiaAnatomyBanner({
                     <Text size="xs" c="dimmed">
                       Danh mục
                     </Text>
-                    <Text fw={700} size="sm">
+                    <Text fw={700} size="md">
                       <StatValue
                         value={resolvedStats?.totalCategories}
                         suffix="Danh mục"
@@ -174,7 +174,7 @@ export function SfiaAnatomyBanner({
                     <Text size="xs" c="dimmed">
                       Ngân hàng câu hỏi
                     </Text>
-                    <Text fw={700} size="sm">
+                    <Text fw={700} size="md">
                       <StatValue
                         value={resolvedStats?.totalQuestions}
                         suffix="Câu hỏi"

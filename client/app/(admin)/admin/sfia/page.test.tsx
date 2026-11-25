@@ -211,10 +211,19 @@ describe('SfiaAdminPage — Analytics & Attributes Tabs Integration', () => {
     ).toBeInTheDocument()
   })
 
-  it('navigates atomically from Attributes tab to Matrix tab with level', async () => {
+  it('navigates atomically from Attributes tab to Matrix tab with level and shows AnatomyBanner collapsed by default', async () => {
     const user = userEvent.setup()
     mockSearchParams = new URLSearchParams('tab=attributes&level=4')
     render(<SfiaAdminPage />)
+
+    expect(
+      await screen.findByText('Cấu Trúc Khung Năng Lực SFIA 9')
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: /Mở rộng cấu trúc khung năng lực SFIA 9/i,
+      })
+    ).toBeInTheDocument()
 
     const jumpButton = await screen.findByRole('button', {
       name: /Xem kỹ năng Cấp L4/i,
@@ -224,5 +233,21 @@ describe('SfiaAdminPage — Analytics & Attributes Tabs Integration', () => {
     expect(mockReplace).toHaveBeenCalledWith('/admin/sfia?tab=matrix&level=4', {
       scroll: false,
     })
+  })
+
+  it('omits AnatomyBanner and coverage query on default taxonomy tab', async () => {
+    mockSearchParams = new URLSearchParams('')
+    render(<SfiaAdminPage />)
+
+    await waitFor(() => {
+      expect(
+        screen.getByPlaceholderText(/Tìm mã hoặc tên kỹ năng/i)
+      ).toBeInTheDocument()
+    })
+
+    expect(
+      screen.queryByText('Cấu Trúc Khung Năng Lực SFIA 9')
+    ).not.toBeInTheDocument()
+    expect(sfiaAdminService.getCoverageStats).not.toHaveBeenCalled()
   })
 })

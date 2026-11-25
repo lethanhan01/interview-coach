@@ -28,8 +28,8 @@ export function SfiaLevelAttributeCard({
     attribute.levels[selectedLevel] || 'Chưa có mô tả cho cấp độ này.'
 
   return (
-    <Paper withBorder p="md" radius="md">
-      <Stack gap="sm" h="100%" justify="space-between">
+    <Paper withBorder p="sm" radius="md">
+      <Stack gap="xs" h="100%" justify="space-between">
         <Stack gap="xs">
           <Group
             justify="space-between"
@@ -47,7 +47,7 @@ export function SfiaLevelAttributeCard({
                 <Icon size={16} stroke={1.5} />
               </ThemeIcon>
               <Stack gap={0}>
-                <Title order={4} fz="sm" fw={700}>
+                <Title order={4} fz="md" fw={700}>
                   {attribute.nameVi || attribute.name}
                 </Title>
                 {attribute.nameVi && attribute.name !== attribute.nameVi && (
@@ -60,29 +60,29 @@ export function SfiaLevelAttributeCard({
             <Badge
               color={theme.color}
               variant={theme.badgeVariant}
-              size="xs"
+              size="sm"
               flex="0 0 auto"
             >
               {attribute.code}
             </Badge>
           </Group>
 
-          <Text size="xs" c="dimmed" lh={1.5}>
+          <Text size="sm" c="dimmed" lh={1.5}>
             {attribute.description}
           </Text>
         </Stack>
 
-        <Paper withBorder p="sm" radius="sm" className={surfaces.subtleSurface}>
+        <Paper withBorder p="xs" radius="sm" className={surfaces.subtleSurface}>
           <Stack gap={6}>
             <Group justify="space-between" align="center" gap="xs">
-              <Text size="xs" fw={700} c={theme.color}>
+              <Text size="sm" fw={700} c={theme.color}>
                 Tiêu chuẩn Cấp độ {selectedLevel}
               </Text>
-              <Badge color={theme.color} variant="light" size="xs">
+              <Badge color={theme.color} variant="light" size="sm">
                 L{selectedLevel}
               </Badge>
             </Group>
-            <Text size="xs" lh={1.6}>
+            <Text size="sm" lh={1.6}>
               {statement}
             </Text>
           </Stack>

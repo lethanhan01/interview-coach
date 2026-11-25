@@ -27,7 +27,7 @@ export function useSfiaWorkspaceQueries(
   })
   const coverageQuery = useQuery({
     ...sfiaAdminQueries.coverage(),
-    enabled: activeTab === 'taxonomy' || activeTab === 'analytics',
+    enabled: activeTab === 'attributes' || activeTab === 'analytics',
   })
   const matrixQuery = useQuery({
     ...sfiaAdminQueries.matrix(),

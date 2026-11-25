@@ -67,9 +67,9 @@ export function SfiaMobileDrawer({
         <Group gap="xs" align="center" wrap="nowrap" miw={0}>
           <Button
             variant="outline"
-            size="xs"
+            size="sm"
             color="brand"
-            leftSection={<IconFolderRoot size={14} stroke={1.5} />}
+            leftSection={<IconFolderRoot size={15} stroke={1.5} />}
             onClick={open}
             aria-label="Mở cây kỹ năng SFIA 9"
           >
@@ -78,13 +78,13 @@ export function SfiaMobileDrawer({
 
           {currentSkill && (
             <Group gap={6} align="center" wrap="nowrap" miw={0}>
-              <Badge color={theme.color} variant="light" size="xs">
+              <Badge color={theme.color} variant="light" size="sm">
                 {currentSkill.code}
               </Badge>
-              <Text size="xs" fw={500} truncate maw={{ base: 120, sm: 200 }}>
+              <Text size="sm" fw={500} truncate maw={{ base: 140, sm: 220 }}>
                 {currentSkill.name}
               </Text>
-              <Badge color="neutral" variant="outline" size="xs">
+              <Badge color="neutral" variant="outline" size="sm">
                 L{selectedLevel}
               </Badge>
             </Group>

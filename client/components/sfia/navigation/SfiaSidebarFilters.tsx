@@ -25,8 +25,8 @@ export interface SfiaSidebarFiltersProps {
   onBlindSpotsOnlyChange: (val: boolean) => void
   categories: SfiaCategory[]
   levels?: SfiaLevelResponsibility[]
-  onExpandAll: () => void
-  onCollapseAll: () => void
+  isAllExpanded: boolean
+  onToggleExpandAll: () => void
   searchInputRef: RefObject<HTMLInputElement | null>
 }
 
@@ -41,8 +41,8 @@ export function SfiaSidebarFilters({
   onBlindSpotsOnlyChange,
   categories,
   levels,
-  onExpandAll,
-  onCollapseAll,
+  isAllExpanded,
+  onToggleExpandAll,
   searchInputRef,
 }: Readonly<SfiaSidebarFiltersProps>) {
   const categoryData = categories.map((c) => ({
@@ -60,26 +60,26 @@ export function SfiaSidebarFilters({
   ]
 
   return (
-    <Stack gap="xs" p="xs">
+    <Stack gap={6} p="xs">
       <TextInput
         ref={searchInputRef}
-        size="xs"
-        placeholder="Tìm mã hoặc tên kỹ năng... (Ctrl+K)"
+        size="sm"
+        placeholder="Tìm mã hoặc tên kỹ năng..."
         aria-label="Tìm kiếm kỹ năng SFIA 9"
         value={searchQuery}
         onChange={(e) => onSearchChange(e.currentTarget.value)}
-        leftSection={<IconSearch size={14} stroke={1.5} />}
+        leftSection={<IconSearch size={15} stroke={1.5} />}
         rightSectionWidth={64}
         rightSection={
           searchQuery ? (
             <ActionIcon
-              size="xs"
+              size="sm"
               variant="subtle"
               color="neutral"
               aria-label="Xóa tìm kiếm"
               onClick={() => onSearchChange('')}
             >
-              <IconX size={12} stroke={1.5} />
+              <IconX size={14} stroke={1.5} />
             </ActionIcon>
           ) : (
             <Kbd size="xs">Ctrl+K</Kbd>
@@ -87,9 +87,9 @@ export function SfiaSidebarFilters({
         }
       />
 
-      <Group grow gap="xs">
+      <Group grow gap={6}>
         <Select
-          size="xs"
+          size="sm"
           placeholder="Tất cả danh mục"
           aria-label="Lọc theo danh mục SFIA 9"
           data={categoryData}
@@ -100,7 +100,7 @@ export function SfiaSidebarFilters({
         />
 
         <Select
-          size="xs"
+          size="sm"
           placeholder="Cấp độ"
           aria-label="Lọc theo cấp độ SFIA 9"
           data={levelData}
@@ -112,33 +112,24 @@ export function SfiaSidebarFilters({
         />
       </Group>
 
-      <Group justify="space-between" align="center">
+      <Group justify="space-between" align="center" wrap="nowrap" gap="xs">
         <Switch
-          size="xs"
+          size="sm"
           color="danger"
           label="Chỉ điểm mù (0 câu)"
           checked={blindSpotsOnly}
           onChange={(e) => onBlindSpotsOnlyChange(e.currentTarget.checked)}
         />
 
-        <Group gap={4}>
-          <Button
-            variant="subtle"
-            size="xs"
-            color="neutral"
-            onClick={onExpandAll}
-          >
-            Mở rộng
-          </Button>
-          <Button
-            variant="subtle"
-            size="xs"
-            color="neutral"
-            onClick={onCollapseAll}
-          >
-            Thu gọn
-          </Button>
-        </Group>
+        <Button
+          variant="subtle"
+          size="compact-sm"
+          color="neutral"
+          flex="0 0 auto"
+          onClick={onToggleExpandAll}
+        >
+          {isAllExpanded ? 'Thu gọn' : 'Mở tất cả'}
+        </Button>
       </Group>
     </Stack>
   )

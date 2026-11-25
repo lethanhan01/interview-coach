@@ -118,14 +118,14 @@ export function SfiaQuestionBankTab({
   const hardPct = stats.total > 0 ? (stats.hard / stats.total) * 100 : 0
 
   return (
-    <Stack gap="sm" className={className}>
+    <Stack gap="xs" className={className}>
       {/* 1. Mini KPI Distribution Cards */}
       <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="xs">
         <Paper withBorder p="xs" radius="sm">
           <Text size="xs" c="dimmed">
             Tổng số câu hỏi mẫu
           </Text>
-          <Text fw={700} size="sm">
+          <Text fw={700} size="md">
             {stats.total} câu hỏi
           </Text>
         </Paper>
@@ -144,7 +144,7 @@ export function SfiaQuestionBankTab({
             <Progress.Section value={hardPct} color="danger" withAria={false} />
           </Progress.Root>
           <Group gap={6} mt={2}>
-            <Text size="xs" c="dimmed" fz={10}>
+            <Text size="xs" c="dimmed">
               {stats.easy} Dễ · {stats.medium} TB · {stats.hard} Khó
             </Text>
           </Group>
@@ -154,7 +154,7 @@ export function SfiaQuestionBankTab({
           <Text size="xs" c="dimmed">
             Khớp cấp độ L{selectedLevel}
           </Text>
-          <Text fw={700} size="sm" c="brand">
+          <Text fw={700} size="md" c="brand">
             {stats.matchingCurrentLevel} câu hỏi
           </Text>
         </Paper>
@@ -163,7 +163,7 @@ export function SfiaQuestionBankTab({
           <Text size="xs" c="dimmed">
             Dải cấp độ áp dụng
           </Text>
-          <Text fw={700} size="sm" ff="monospace">
+          <Text fw={700} size="md" ff="monospace">
             L{skillDetail.minLevel} ➔ L{skillDetail.maxLevel}
           </Text>
         </Paper>

@@ -130,10 +130,42 @@ describe('SfiaSidebarTree (Deep Linking, Auto-Expansion & Auto-Scroll)', () => {
     expect(progBtn).toBeDefined()
     expect(progBtn.id).toBe('sfia-tree-skill-PROG')
 
+    // Skill nodes omit redundant CH count and L2-6 range labels
+    expect(screen.queryByText(/CH$/i)).toBeNull()
+    expect(screen.queryByText(/L2–6/)).toBeNull()
+
     // Verify auto-scroll was triggered
     await waitFor(() => {
       expect(scrollIntoViewMock).toHaveBeenCalled()
     })
+  })
+
+  it('6. toggles expand all / collapse all via a single button', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <SfiaSidebarTree
+        categories={mockCategories}
+        subcategories={mockSubcategories}
+        skills={mockSkills}
+        selectedSkill="PROG"
+        selectedLevel={3}
+        onSelectSkill={vi.fn()}
+      />
+    )
+
+    const toggleBtn = screen.getByRole('button', { name: /Mở tất cả/i })
+    await user.click(toggleBtn)
+
+    expect(
+      await screen.findByRole('button', { name: /ARCH/i })
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Thu gọn/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Thu gọn/i }))
+    expect(
+      screen.getByRole('button', { name: /Mở tất cả/i })
+    ).toBeInTheDocument()
   })
 
   it('2. handles skill click and calls onSelectSkill with clamped level', async () => {

@@ -89,22 +89,22 @@ export function SfiaAttributesProgressionMatrix({
 
   return (
     <Box className={[classes.root, className].filter(Boolean).join(' ')}>
-      <Paper withBorder p="sm" radius="md">
-        <Group justify="space-between" align="center" gap="sm" wrap="wrap">
-          <Group gap="sm" align="center" wrap="nowrap">
+      <Paper withBorder p="xs" radius="md">
+        <Group justify="space-between" align="center" gap="xs" wrap="wrap">
+          <Group gap="xs" align="center" wrap="nowrap">
             <ThemeIcon color="brand" variant="light" size="md" radius="md">
               <IconStack2 size={16} stroke={1.5} />
             </ThemeIcon>
             <Stack gap={2}>
               <Group gap="xs" align="center">
-                <Title order={3} fz="sm">
+                <Title order={3} fz="md">
                   Ma trận Tiến triển 5 Thuộc tính Chung (5×7)
                 </Title>
-                <Badge color="brand" variant="light" size="xs">
+                <Badge color="brand" variant="light" size="sm">
                   SFIA 9
                 </Badge>
               </Group>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 So sánh tiến triển tiêu chuẩn hành vi qua 7 cấp độ trách nhiệm
                 (L1 ➔ L7)
               </Text>
@@ -113,17 +113,17 @@ export function SfiaAttributesProgressionMatrix({
 
           <Group gap="xs" align="center" wrap="wrap">
             <TextInput
-              size="xs"
-              w={{ base: '100%', sm: 240 }}
+              size="sm"
+              w={{ base: '100%', sm: 250 }}
               placeholder="Tìm kiếm tiêu chí thuộc tính..."
               aria-label="Tìm kiếm tiêu chí thuộc tính"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.currentTarget.value)}
-              leftSection={<IconSearch size={14} stroke={1.5} />}
+              leftSection={<IconSearch size={15} stroke={1.5} />}
               rightSection={
                 searchQuery ? (
                   <CloseButton
-                    size="xs"
+                    size="sm"
                     aria-label="Xóa từ khóa tìm kiếm"
                     onClick={() => setSearchQuery('')}
                   />
@@ -133,8 +133,8 @@ export function SfiaAttributesProgressionMatrix({
 
             <Button
               variant="default"
-              size="xs"
-              leftSection={<IconDownload size={14} stroke={1.5} />}
+              size="sm"
+              leftSection={<IconDownload size={15} stroke={1.5} />}
               onClick={handleExportCsv}
               loading={isExporting}
             >
@@ -154,19 +154,19 @@ export function SfiaAttributesProgressionMatrix({
         onClearSearch={() => setSearchQuery('')}
       />
 
-      <Paper withBorder px="sm" py="xs" radius="md">
+      <Paper withBorder px="xs" py="xs" radius="md">
         <Group justify="space-between" align="center" gap="xs" wrap="wrap">
           <Group gap="xs" align="center">
-            <Badge color="success" variant="dot" size="xs">
+            <Badge color="success" variant="dot" size="sm">
               SFIA 9
             </Badge>
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Ma trận Tiến triển 5 Thuộc tính × 7 Cấp độ — Chuẩn quốc tế SFIA 9
             </Text>
           </Group>
 
           <Group gap="xs" align="center">
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Cột đang chọn:{' '}
               <Text span fw={700} c="brand">
                 Cấp độ L{selectedLevel}
@@ -176,8 +176,8 @@ export function SfiaAttributesProgressionMatrix({
               <Button
                 variant="light"
                 color="brand"
-                size="compact-xs"
-                rightSection={<IconArrowUpRight size={13} stroke={1.5} />}
+                size="compact-sm"
+                rightSection={<IconArrowUpRight size={14} stroke={1.5} />}
                 onClick={onSwitchToLevelView}
               >
                 Xem chi tiết Cấp L{selectedLevel}

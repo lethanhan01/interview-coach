@@ -73,7 +73,7 @@ export function SfiaLevelSpanStepper({
     <Paper
       withBorder
       radius="md"
-      p="sm"
+      p="xs"
       className={[classes.stepperPaper, className].filter(Boolean).join(' ')}
       component="section"
       tabIndex={0}
@@ -84,7 +84,7 @@ export function SfiaLevelSpanStepper({
         <Group justify="space-between" align="center" wrap="nowrap">
           <Group gap="xs" align="center">
             <IconSparkles size={16} stroke={1.5} />
-            <Text size="xs" fw={700}>
+            <Text size="sm" fw={700}>
               Thước Đo Cấp Độ Trách Nhiệm (L1–L7)
             </Text>
             <Text size="xs" c="dimmed" visibleFrom="sm">
@@ -92,13 +92,13 @@ export function SfiaLevelSpanStepper({
             </Text>
           </Group>
 
-          <Badge color={theme.color} variant="light" size="xs">
+          <Badge color={theme.color} variant="light" size="sm">
             Dải áp dụng: Cấp độ {minLevel} ➔ Cấp độ {maxLevel} (
             {maxLevel - minLevel + 1}/7 cấp)
           </Badge>
         </Group>
 
-        <Box className={classes.stepperContainer} pt="xs">
+        <Box className={classes.stepperContainer} pt={4}>
           <Box className={classes.railGrid}>
             {ALL_LEVELS.map((lvl) => {
               const isAvailable = lvl >= minLevel && lvl <= maxLevel
@@ -145,7 +145,7 @@ export function SfiaLevelSpanStepper({
                     />
                   </Box>
 
-                  <Stack gap={1} align="center" mt={6}>
+                  <Stack gap={1} align="center" mt={4}>
                     <Text
                       size="xs"
                       fw={isSelected ? 700 : 500}
@@ -157,17 +157,15 @@ export function SfiaLevelSpanStepper({
                             : 'dimmed'
                       }
                       ff="monospace"
-                      fz={11}
                     >
                       L{lvl}
                     </Text>
                     <Text
                       size="xs"
                       c={isSelected ? undefined : 'dimmed'}
-                      fz={10}
                       ta="center"
                       truncate
-                      maw={{ base: 45, sm: 80 }}
+                      maw={{ base: 56, sm: 100 }}
                     >
                       {levelName}
                     </Text>

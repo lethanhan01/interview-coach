@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge, Box, Group, Stack, Text, UnstyledButton } from '@mantine/core'
+import { Badge, Box, Group, Text, Tooltip, UnstyledButton } from '@mantine/core'
 import type { RenderTreeNodePayload } from '@mantine/core'
 import { IconChevronRight, IconFolderRoot } from '@tabler/icons-react'
 import type { SfiaSkillSummary } from '@/types'
@@ -44,23 +44,29 @@ export function SfiaTreeNode({
         {...payload.elementProps}
         wrap="nowrap"
         justify="space-between"
+        gap="xs"
         className={[payload.elementProps.className, classes.categoryNode]
           .filter(Boolean)
           .join(' ')}
       >
         <Group gap={6} wrap="nowrap" miw={0}>
           <IconChevronRight
-            size={14}
+            size={15}
             stroke={1.5}
-            className={classes.chevron}
+            className={`${classes.chevron} ${classes.iconShrink}`}
             data-expanded={payload.expanded}
           />
-          <CategoryIcon size={14} stroke={1.5} />
-          <Text size="xs" fw={700} truncate>
+          <CategoryIcon size={16} stroke={1.5} className={classes.iconShrink} />
+          <Text size="sm" fw={700} truncate>
             {payload.node.label}
           </Text>
         </Group>
-        <Badge size="xs" variant="light" color={theme.color}>
+        <Badge
+          size="sm"
+          variant="light"
+          color={theme.color}
+          className={classes.countBadge}
+        >
           {nodeProps.count ?? 0}
         </Badge>
       </Group>
@@ -73,23 +79,33 @@ export function SfiaTreeNode({
         {...payload.elementProps}
         wrap="nowrap"
         justify="space-between"
+        gap="xs"
         className={[payload.elementProps.className, classes.subcategoryNode]
           .filter(Boolean)
           .join(' ')}
       >
         <Group gap={6} wrap="nowrap" miw={0}>
           <IconChevronRight
-            size={12}
+            size={14}
             stroke={1.5}
-            className={classes.chevron}
+            className={`${classes.chevron} ${classes.iconShrink}`}
             data-expanded={payload.expanded}
           />
-          <IconFolderRoot size={13} stroke={1.5} />
-          <Text size="xs" fw={500} truncate>
+          <IconFolderRoot
+            size={15}
+            stroke={1.5}
+            className={classes.iconShrink}
+          />
+          <Text size="sm" fw={600} truncate>
             {payload.node.label}
           </Text>
         </Group>
-        <Badge size="xs" variant="outline" color="neutral">
+        <Badge
+          size="xs"
+          variant="outline"
+          color="neutral"
+          className={classes.countBadge}
+        >
           {nodeProps.count ?? 0}
         </Badge>
       </Group>
@@ -111,39 +127,33 @@ export function SfiaTreeNode({
         .filter(Boolean)
         .join(' ')}
     >
-      <UnstyledButton
-        id={`sfia-tree-skill-${skill.code}`}
-        aria-label={`${skill.code} ${skill.name}`}
-        className={classes.skillButton}
-        mod={{ selected: isSelected }}
-        onClick={() => onSelectSkill(skill.code, effectiveLevel)}
+      <Tooltip
+        label={`${skill.code} — ${skill.name}`}
+        position="right"
+        openDelay={400}
+        withArrow
       >
-        <Group gap={6} wrap="nowrap" miw={0}>
-          <Badge size="xs" variant="light" color={theme.color}>
+        <UnstyledButton
+          id={`sfia-tree-skill-${skill.code}`}
+          aria-label={`${skill.code} ${skill.name}`}
+          className={classes.skillButton}
+          mod={{ selected: isSelected }}
+          onClick={() => onSelectSkill(skill.code, effectiveLevel)}
+        >
+          <Badge
+            size="sm"
+            variant="light"
+            color={theme.color}
+            ff="monospace"
+            className={classes.skillCodeBadge}
+          >
             {skill.code}
           </Badge>
-          <Stack gap={1} miw={0}>
-            <Text size="xs" fw={isSelected ? 600 : 400} truncate>
-              {skill.name}
-            </Text>
-          </Stack>
-        </Group>
-
-        <Group gap={4} wrap="nowrap">
-          {skill.questionCount === 0 ? (
-            <Badge size="xs" variant="outline" color="danger">
-              0 CH
-            </Badge>
-          ) : (
-            <Badge size="xs" variant="light" color="brand">
-              {skill.questionCount} CH
-            </Badge>
-          )}
-          <Text size="xs" c="dimmed" ff="monospace">
-            L{skill.minLevel}–{skill.maxLevel}
+          <Text size="sm" fw={isSelected ? 600 : 400} truncate miw={0} flex={1}>
+            {skill.name}
           </Text>
-        </Group>
-      </UnstyledButton>
+        </UnstyledButton>
+      </Tooltip>
     </Box>
   )
 }

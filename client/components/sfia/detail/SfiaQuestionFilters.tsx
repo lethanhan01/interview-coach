@@ -67,22 +67,22 @@ export function SfiaQuestionFilters({
     <Paper withBorder p="xs" radius="md">
       <Group justify="space-between" align="center" wrap="wrap" gap="xs">
         <TextInput
-          size="xs"
+          size="sm"
           placeholder="Tìm kiếm câu hỏi hoặc mã ID..."
           aria-label="Tìm kiếm câu hỏi"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.currentTarget.value)}
-          leftSection={<IconSearch size={14} stroke={1.5} />}
+          leftSection={<IconSearch size={15} stroke={1.5} />}
           rightSection={
             searchQuery ? (
               <ActionIcon
-                size="xs"
+                size="sm"
                 variant="subtle"
                 color="neutral"
                 aria-label="Xóa tìm kiếm"
                 onClick={() => onSearchChange('')}
               >
-                <IconX size={12} stroke={1.5} />
+                <IconX size={14} stroke={1.5} />
               </ActionIcon>
             ) : null
           }
@@ -92,40 +92,40 @@ export function SfiaQuestionFilters({
 
         <Group gap="xs" wrap="wrap">
           <Select
-            size="xs"
+            size="sm"
             placeholder="Cấp độ"
             aria-label="Lọc theo cấp độ"
             data={levelData}
             value={filterLevel}
             onChange={(val) => onFilterLevelChange(val ?? 'all')}
-            w={150}
+            w={155}
           />
 
           <Select
-            size="xs"
+            size="sm"
             placeholder="Độ khó"
             aria-label="Lọc theo độ khó"
             data={difficultyData}
             value={filterDifficulty}
             onChange={(val) => onFilterDifficultyChange(val ?? 'ALL')}
-            w={130}
+            w={135}
           />
 
           <Select
-            size="xs"
+            size="sm"
             placeholder="Phân loại"
             aria-label="Lọc theo phân loại"
             data={typeData}
             value={filterType}
             onChange={(val) => onFilterTypeChange(val ?? 'ALL')}
-            w={160}
+            w={165}
           />
 
           <Button
-            size="xs"
+            size="sm"
             color="brand"
             onClick={onOpenCreateModal}
-            leftSection={<IconPlus size={14} stroke={1.5} />}
+            leftSection={<IconPlus size={15} stroke={1.5} />}
           >
             Thêm câu hỏi
           </Button>

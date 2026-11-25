@@ -46,16 +46,16 @@ export function SfiaProgressionTable({
       <Table
         className={classes.matrixTable}
         verticalSpacing="xs"
-        horizontalSpacing="sm"
+        horizontalSpacing="xs"
       >
         <Table.Thead>
           <Table.Tr>
             <Table.Th scope="col" className={classes.stickyCorner}>
               <Group justify="space-between" gap="xs" wrap="nowrap">
-                <Text size="xs" fw={700}>
+                <Text size="sm" fw={700}>
                   5 Thuộc tính Chung
                 </Text>
-                <Badge color="neutral" variant="light" size="xs">
+                <Badge color="neutral" variant="light" size="sm">
                   {attributes.length}/{totalAttributesCount}
                 </Badge>
               </Group>
@@ -91,12 +91,12 @@ export function SfiaProgressionTable({
                         <Badge
                           color={theme.color}
                           variant={isSelected ? 'filled' : theme.badgeVariant}
-                          size="xs"
+                          size="sm"
                         >
                           L{lvl.levelId}
                         </Badge>
                         <Text
-                          size="xs"
+                          size="sm"
                           fw={700}
                           c={isSelected ? 'brand' : undefined}
                           lineClamp={1}
@@ -129,13 +129,13 @@ export function SfiaProgressionTable({
         <Table.Tbody>
           {attributes.length === 0 ? (
             <Table.Tr>
-              <Table.Td colSpan={levels.length + 1} p="xl" ta="center">
+              <Table.Td colSpan={levels.length + 1} p="md" ta="center">
                 <Stack gap="xs" align="center">
                   <Text size="sm" c="dimmed">
                     Không tìm thấy thuộc tính nào khớp với &quot;{searchQuery}
                     &quot;.
                   </Text>
-                  <Button variant="light" size="xs" onClick={onClearSearch}>
+                  <Button variant="light" size="sm" onClick={onClearSearch}>
                     Xóa từ khóa tìm kiếm
                   </Button>
                 </Stack>
@@ -157,9 +157,9 @@ export function SfiaProgressionTable({
                           size="sm"
                           radius="sm"
                         >
-                          <Icon size={14} stroke={1.5} />
+                          <Icon size={15} stroke={1.5} />
                         </ThemeIcon>
-                        <Text size="xs" fw={700} lh={1.3}>
+                        <Text size="sm" fw={700} lh={1.3}>
                           {attr.nameVi || attr.name}
                         </Text>
                       </Group>
@@ -182,7 +182,7 @@ export function SfiaProgressionTable({
                         c="dimmed"
                         fw={400}
                         lineClamp={3}
-                        lh={1.4}
+                        lh={1.45}
                       >
                         {attr.description}
                       </Text>
@@ -216,8 +216,8 @@ export function SfiaProgressionTable({
                           <Highlight
                             highlight={trimmedQuery}
                             color="warning"
-                            size="xs"
-                            lh={1.6}
+                            size="sm"
+                            lh={1.55}
                             fw={isSelected ? 500 : 400}
                           >
                             {statement}

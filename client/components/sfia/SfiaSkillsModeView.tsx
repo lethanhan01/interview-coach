@@ -4,14 +4,12 @@ import { Alert, Box, Button, ScrollArea, Skeleton, Stack } from '@mantine/core'
 import { IconAlertCircle, IconRefresh } from '@tabler/icons-react'
 import type {
   SfiaCategory,
-  SfiaCoverageStats,
   SfiaLevelResponsibility,
   SfiaSkillDetail,
   SfiaSkillSummary,
   SfiaSubcategory,
 } from '@/types'
 import { SfiaDetailPanel } from './detail/SfiaDetailPanel'
-import { SfiaAnatomyBanner } from './navigation/SfiaAnatomyBanner'
 import { SfiaMobileDrawer } from './navigation/SfiaMobileDrawer'
 import { SfiaSidebarTree } from './navigation/SfiaSidebarTree'
 import classes from './SfiaWorkspaceClient.module.css'
@@ -24,7 +22,6 @@ export interface SfiaSkillsModeViewProps {
   onRetrySubcategories: () => void
   skills: SfiaSkillSummary[]
   levels: SfiaLevelResponsibility[]
-  coverageStats: SfiaCoverageStats | null
   selectedSkill: string
   selectedLevel: number
   skillDetail: SfiaSkillDetail | null
@@ -44,7 +41,6 @@ export function SfiaSkillsModeView({
   onRetrySubcategories,
   skills,
   levels,
-  coverageStats,
   selectedSkill,
   selectedLevel,
   skillDetail,
@@ -57,8 +53,6 @@ export function SfiaSkillsModeView({
 }: Readonly<SfiaSkillsModeViewProps>) {
   return (
     <Box className={classes.tabPane}>
-      <SfiaAnatomyBanner coverageStats={coverageStats} />
-
       <SfiaMobileDrawer
         categories={categories}
         subcategories={subcategories}

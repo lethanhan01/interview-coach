@@ -127,7 +127,6 @@ export function SfiaWorkspaceClient() {
               onRetrySubcategories={() => void subcategoriesQuery.refetch()}
               skills={skills}
               levels={levels}
-              coverageStats={coverageQuery.data ?? null}
               selectedSkill={selectedSkill}
               selectedLevel={selectedLevel}
               skillDetail={skillDetailQuery.data ?? null}
@@ -168,6 +167,7 @@ export function SfiaWorkspaceClient() {
                 <SfiaGenericAttributesView
                   levels={levels}
                   attributes={attributesQuery.data ?? []}
+                  coverageStats={coverageQuery.data ?? null}
                   selectedLevel={selectedLevel}
                   onSelectLevel={setLevel}
                   viewMode={attrView}

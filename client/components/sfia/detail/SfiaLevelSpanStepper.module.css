@@ -52,7 +52,7 @@
   align-items: center;
   justify-content: center;
   font-family: var(--mantine-font-family-monospace);
-  font-size: var(--mantine-font-size-xs);
+  font-size: var(--mantine-font-size-sm);
   font-weight: 700;
   border: 1px solid var(--mantine-color-default-border);
   background-color: var(--mantine-color-body);

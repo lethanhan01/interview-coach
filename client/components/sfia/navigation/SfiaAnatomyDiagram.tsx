@@ -76,14 +76,14 @@ const PILLARS: PillarItem[] = [
 
 export function SfiaAnatomyDiagram() {
   return (
-    <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="sm">
+    <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="xs">
       {PILLARS.map((p) => {
         const IconComponent = p.icon
         return (
           <Paper
             key={p.id}
             withBorder
-            p="sm"
+            p="xs"
             radius="md"
             bg="var(--mantine-color-body)"
           >
@@ -93,28 +93,28 @@ export function SfiaAnatomyDiagram() {
                   <Badge
                     color={p.color}
                     variant="light"
-                    size="xs"
-                    leftSection={<IconComponent size={12} stroke={1.5} />}
+                    size="sm"
+                    leftSection={<IconComponent size={13} stroke={1.5} />}
                   >
                     Trụ cột {p.pillarNumber}
                   </Badge>
-                  <Badge color={p.color} variant="outline" size="xs">
+                  <Badge color={p.color} variant="outline" size="sm">
                     {p.badgeCount}
                   </Badge>
                 </Group>
 
-                <Text fw={700} size="xs">
+                <Text fw={700} size="sm">
                   {p.title}
                 </Text>
 
-                <Text size="xs" c="dimmed" lh={1.4}>
+                <Text size="sm" c="dimmed" lh={1.45}>
                   {p.description}
                 </Text>
               </Stack>
 
               <Stack gap={4}>
                 <Divider />
-                <Text size="xs" c="dimmed" ff="monospace" fz={10}>
+                <Text size="xs" c="dimmed" ff="monospace">
                   {p.example}
                 </Text>
               </Stack>

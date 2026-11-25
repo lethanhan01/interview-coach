@@ -60,7 +60,7 @@ export function SfiaLevelStatementCards({
   }, [currentStatement])
 
   return (
-    <Stack gap="sm" className={className}>
+    <Stack gap="xs" className={className}>
       {/* Out of Range Warning */}
       {!isLevelInRange && (
         <Alert
@@ -69,15 +69,15 @@ export function SfiaLevelStatementCards({
           icon={<IconAlertTriangle size={16} />}
         >
           <Group justify="space-between" align="center" wrap="wrap" gap="xs">
-            <Text size="xs">
+            <Text size="sm">
               SFIA 9 xác định dải năng lực cho {skillDetail.name} từ Cấp độ{' '}
               {skillDetail.minLevel} đến Cấp độ {skillDetail.maxLevel}.
             </Text>
             <Button
               variant="default"
-              size="xs"
+              size="sm"
               onClick={() => onSelectLevel(skillDetail.minLevel)}
-              rightSection={<IconArrowRight size={14} stroke={1.5} />}
+              rightSection={<IconArrowRight size={15} stroke={1.5} />}
             >
               Chuyển sang Cấp độ {skillDetail.minLevel}
             </Button>
@@ -86,7 +86,7 @@ export function SfiaLevelStatementCards({
       )}
 
       {/* 1. Level Essence Quote */}
-      <Paper withBorder p="sm" radius="md">
+      <Paper withBorder p="xs" radius="md">
         <Stack gap="xs">
           <Group justify="space-between" align="center">
             <Group gap="xs" align="center">
@@ -98,22 +98,22 @@ export function SfiaLevelStatementCards({
               >
                 <IconSparkles size={14} stroke={1.5} />
               </ThemeIcon>
-              <Text size="xs" fw={700} tt="uppercase">
+              <Text size="sm" fw={700} tt="uppercase">
                 Tinh hoa cấp độ {selectedLevel}
               </Text>
             </Group>
-            <Badge color={theme.color} variant="light" size="xs">
+            <Badge color={theme.color} variant="light" size="sm">
               Cấp độ SFIA L{selectedLevel}
             </Badge>
           </Group>
 
           <Blockquote
             color={theme.color}
-            icon={<IconQuote size={14} stroke={1.5} />}
+            icon={<IconQuote size={15} stroke={1.5} />}
             p="xs"
             radius="sm"
           >
-            <Text size="xs" fs="italic">
+            <Text size="sm" fs="italic" lh={1.5}>
               {currentStatement?.essence ||
                 'Thể hiện năng lực chuyên môn và tinh thần trách nhiệm tương ứng với cấp độ này.'}
             </Text>
@@ -122,19 +122,19 @@ export function SfiaLevelStatementCards({
       </Paper>
 
       {/* 2. Detailed Behavioral Statements */}
-      <Paper withBorder p="sm" radius="md">
-        <Stack gap="sm">
+      <Paper withBorder p="xs" radius="md">
+        <Stack gap="xs">
           <Group justify="space-between" align="center">
             <Stack gap={2}>
-              <Title order={4} fz="sm" fw={700}>
+              <Title order={4} fz="md" fw={700}>
                 Hành vi chuẩn mực
               </Title>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 Tiêu chuẩn đánh giá cho {skillDetail.name} ({skillDetail.code})
                 tại Cấp độ {selectedLevel}
               </Text>
             </Stack>
-            <Badge color="neutral" variant="light" size="xs">
+            <Badge color="neutral" variant="light" size="sm">
               {parsedStatements.length} tiêu chí
             </Badge>
           </Group>
@@ -142,36 +142,36 @@ export function SfiaLevelStatementCards({
           {currentStatement ? (
             <List
               spacing="xs"
-              size="xs"
+              size="sm"
               icon={
                 <ThemeIcon
                   color="success"
-                  size={16}
+                  size={18}
                   radius="xl"
                   variant="light"
                 >
-                  <IconCheck size={10} stroke={2} />
+                  <IconCheck size={12} stroke={2} />
                 </ThemeIcon>
               }
             >
               {parsedStatements.map((statement, idx) => (
                 <List.Item key={idx}>
-                  <Text size="xs" lh={1.5}>
+                  <Text size="sm" lh={1.55}>
                     {statement}
                   </Text>
                 </List.Item>
               ))}
             </List>
           ) : (
-            <Paper withBorder p="md" radius="sm" ta="center">
-              <Text size="xs" c="dimmed">
+            <Paper withBorder p="sm" radius="sm" ta="center">
+              <Text size="sm" c="dimmed">
                 Không tìm thấy dữ liệu tiêu chí hành vi cho Cấp độ{' '}
                 {selectedLevel}.
               </Text>
               {availableLevels.length > 0 && (
                 <Button
                   variant="subtle"
-                  size="xs"
+                  size="sm"
                   mt="xs"
                   onClick={() => onSelectLevel(availableLevels[0])}
                 >

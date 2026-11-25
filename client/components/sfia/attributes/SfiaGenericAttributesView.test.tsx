@@ -62,6 +62,14 @@ describe('SfiaGenericAttributesView', () => {
       <SfiaGenericAttributesView {...defaultProps} />
     )
     expect(
+      screen.getByText(/Cấu Trúc Khung Năng Lực SFIA 9/i)
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: /Mở rộng cấu trúc khung năng lực SFIA 9/i,
+      })
+    ).toBeInTheDocument()
+    expect(
       screen.getByText(/7 Cấp độ Trách nhiệm & 5 Thuộc tính Chung Cốt lõi/i)
     ).toBeInTheDocument()
     expect(

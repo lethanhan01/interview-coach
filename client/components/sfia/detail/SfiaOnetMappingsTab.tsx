@@ -75,26 +75,26 @@ export function SfiaOnetMappingsTab({
 
   if (onetMappings.length === 0) {
     return (
-      <Paper withBorder radius="md" p="xl" ta="center" className={className}>
-        <Stack align="center" gap="sm">
+      <Paper withBorder radius="md" p="md" ta="center" className={className}>
+        <Stack align="center" gap="xs">
           <Paper
             withBorder
-            p="sm"
+            p="xs"
             radius="xl"
             bg="var(--mantine-color-body)"
-            w={48}
-            h={48}
+            w={44}
+            h={44}
           >
             <Center h="100%">
-              <IconBriefcase size={24} stroke={1.5} />
+              <IconBriefcase size={22} stroke={1.5} />
             </Center>
           </Paper>
 
-          <Stack gap={2} maw={400}>
-            <Text fw={700} size="sm">
+          <Stack gap={2} maw={420}>
+            <Text fw={700} size="md">
               Chưa có ánh xạ nghề nghiệp O*NET
             </Text>
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Kỹ năng{' '}
               <Text span ff="monospace" fw={600}>
                 {skillCode}
@@ -109,8 +109,8 @@ export function SfiaOnetMappingsTab({
             href="/admin/onet"
             variant="light"
             color="brand"
-            size="xs"
-            leftSection={<IconCompass size={14} stroke={1.5} />}
+            size="sm"
+            leftSection={<IconCompass size={15} stroke={1.5} />}
           >
             Khám phá O*NET Browser
           </Button>
@@ -120,27 +120,27 @@ export function SfiaOnetMappingsTab({
   }
 
   return (
-    <Stack gap="sm" className={className}>
+    <Stack gap="xs" className={className}>
       {/* 1. Header Toolbar */}
       <Paper withBorder p="xs" radius="md">
         <Group justify="space-between" align="center" wrap="wrap" gap="xs">
           <TextInput
-            size="xs"
+            size="sm"
             placeholder="Tìm theo mã SOC hoặc tên nghề nghiệp..."
             aria-label="Tìm kiếm nghề nghiệp O*NET"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.currentTarget.value)}
-            leftSection={<IconSearch size={14} stroke={1.5} />}
+            leftSection={<IconSearch size={15} stroke={1.5} />}
             rightSection={
               searchQuery ? (
                 <ActionIcon
-                  size="xs"
+                  size="sm"
                   variant="subtle"
                   color="neutral"
                   onClick={() => setSearchQuery('')}
                   aria-label="Xóa tìm kiếm"
                 >
-                  <IconX size={12} stroke={1.5} />
+                  <IconX size={14} stroke={1.5} />
                 </ActionIcon>
               ) : null
             }
@@ -149,7 +149,7 @@ export function SfiaOnetMappingsTab({
           />
 
           <SegmentedControl
-            size="xs"
+            size="sm"
             value={filterType}
             onChange={(val) => setFilterType(val as OnetFilterType)}
             data={[
@@ -163,19 +163,19 @@ export function SfiaOnetMappingsTab({
 
       {/* 2. Content */}
       {keyedMappings.length === 0 ? (
-        <Paper withBorder p="xl" radius="md" ta="center">
+        <Paper withBorder p="md" radius="md" ta="center">
           <Stack align="center" gap="xs">
-            <IconSearch size={28} stroke={1.5} />
-            <Text fw={700} size="sm">
+            <IconSearch size={26} stroke={1.5} />
+            <Text fw={700} size="md">
               Không tìm thấy nghề nghiệp phù hợp
             </Text>
-            <Text size="xs" c="dimmed">
+            <Text size="sm" c="dimmed">
               Không có nghề nghiệp nào khớp với từ khóa &quot;{searchQuery}
               &quot;.
             </Text>
             <Button
               variant="outline"
-              size="xs"
+              size="sm"
               color="neutral"
               onClick={() => {
                 setSearchQuery('')
@@ -193,7 +193,7 @@ export function SfiaOnetMappingsTab({
             <Table.ScrollContainer minWidth={650}>
               <Table
                 verticalSpacing="xs"
-                horizontalSpacing="sm"
+                horizontalSpacing="xs"
                 highlightOnHover
               >
                 <Table.Thead>

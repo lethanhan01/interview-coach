@@ -13,7 +13,7 @@
 .categoryNode {
   cursor: pointer;
   border-radius: var(--mantine-radius-sm);
-  padding-block: rem(4px);
+  padding-block: rem(5px);
   padding-inline-end: rem(6px);
   user-select: none;
 
@@ -25,7 +25,7 @@
 .subcategoryNode {
   cursor: pointer;
   border-radius: var(--mantine-radius-sm);
-  padding-block: rem(3px);
+  padding-block: rem(4px);
   padding-inline-end: rem(6px);
   user-select: none;
 
@@ -41,12 +41,12 @@
 
 .skillButton {
   width: 100%;
+  min-width: 0;
   border-radius: var(--mantine-radius-sm);
-  padding: rem(4px) rem(6px);
+  padding: rem(5px) rem(6px);
   text-align: left;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--mantine-spacing-xs);
   transition: background-color 150ms ease;
 
@@ -63,6 +63,19 @@
     background-color: var(--mantine-color-brand-light);
     color: var(--mantine-color-brand-light-color);
   }
+}
+
+.iconShrink {
+  flex-shrink: 0;
+}
+
+.countBadge {
+  flex-shrink: 0;
+}
+
+.skillCodeBadge {
+  flex-shrink: 0;
+  min-width: rem(54px);
 }
 
 .chevron {

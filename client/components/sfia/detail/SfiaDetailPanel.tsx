@@ -66,16 +66,16 @@ export function SfiaDetailPanel({
 
   if (loading) {
     return (
-      <Paper withBorder radius="md" p="md" className={className}>
-        <Stack gap="md">
+      <Paper withBorder radius="md" p="sm" className={className}>
+        <Stack gap="sm">
           <Skeleton height={48} radius="md" />
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="xs">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} height={60} radius="sm" />
             ))}
           </SimpleGrid>
-          <Skeleton height={120} radius="md" />
-          <Skeleton height={200} radius="md" />
+          <Skeleton height={110} radius="md" />
+          <Skeleton height={190} radius="md" />
         </Stack>
       </Paper>
     )
@@ -83,8 +83,8 @@ export function SfiaDetailPanel({
 
   if (error || !skillDetail) {
     return (
-      <Paper withBorder radius="md" p="xl" className={className}>
-        <Stack align="center" gap="sm" py="xl">
+      <Paper withBorder radius="md" p="md" className={className}>
+        <Stack align="center" gap="sm" py="lg">
           <Alert
             color="danger"
             title="Không tìm thấy kỹ năng SFIA"
@@ -99,9 +99,9 @@ export function SfiaDetailPanel({
           {onRetry && (
             <Button
               variant="outline"
-              size="xs"
+              size="sm"
               onClick={onRetry}
-              leftSection={<IconRefresh size={14} stroke={1.5} />}
+              leftSection={<IconRefresh size={15} stroke={1.5} />}
             >
               Thử lại
             </Button>
@@ -117,8 +117,8 @@ export function SfiaDetailPanel({
     skillDetail.questionBankItems?.length ?? skillDetail.questionCount ?? 0
 
   return (
-    <Paper withBorder radius="md" p="md" className={className}>
-      <Stack gap="md">
+    <Paper withBorder radius="md" p="sm" className={className}>
+      <Stack gap="sm">
         <SfiaDetailHeader
           skillDetail={skillDetail}
           categories={categories}
@@ -146,15 +146,17 @@ export function SfiaDetailPanel({
           <Tabs.List>
             <Tabs.Tab
               value="statements"
-              leftSection={<IconLayersLinked size={14} stroke={1.5} />}
+              fz="sm"
+              leftSection={<IconLayersLinked size={15} stroke={1.5} />}
             >
               Tiêu chí hành vi & Hướng dẫn
             </Tabs.Tab>
             <Tabs.Tab
               value="onet"
-              leftSection={<IconBriefcase size={14} stroke={1.5} />}
+              fz="sm"
+              leftSection={<IconBriefcase size={15} stroke={1.5} />}
               rightSection={
-                <Badge size="xs" variant="light" color="neutral">
+                <Badge size="sm" variant="light" color="neutral">
                   {onetMappingCount}
                 </Badge>
               }
@@ -163,9 +165,10 @@ export function SfiaDetailPanel({
             </Tabs.Tab>
             <Tabs.Tab
               value="questions"
-              leftSection={<IconHelpCircle size={14} stroke={1.5} />}
+              fz="sm"
+              leftSection={<IconHelpCircle size={15} stroke={1.5} />}
               rightSection={
-                <Badge size="xs" variant="light" color="brand">
+                <Badge size="sm" variant="light" color="brand">
                   {questionCount}
                 </Badge>
               }
@@ -174,8 +177,8 @@ export function SfiaDetailPanel({
             </Tabs.Tab>
           </Tabs.List>
 
-          <Tabs.Panel value="statements" pt="sm">
-            <Stack gap="md">
+          <Tabs.Panel value="statements" pt="xs">
+            <Stack gap="sm">
               <SfiaLevelStatementCards
                 skillDetail={skillDetail}
                 selectedLevel={selectedLevel}
@@ -188,7 +191,7 @@ export function SfiaDetailPanel({
             </Stack>
           </Tabs.Panel>
 
-          <Tabs.Panel value="onet" pt="sm">
+          <Tabs.Panel value="onet" pt="xs">
             <SfiaOnetMappingsTab
               skillCode={skillDetail.code}
               skillName={skillDetail.name}
@@ -196,7 +199,7 @@ export function SfiaDetailPanel({
             />
           </Tabs.Panel>
 
-          <Tabs.Panel value="questions" pt="sm">
+          <Tabs.Panel value="questions" pt="xs">
             <SfiaQuestionBankTab
               skillDetail={skillDetail}
               selectedLevel={selectedLevel}

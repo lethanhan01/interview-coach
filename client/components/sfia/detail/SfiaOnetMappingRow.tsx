@@ -28,13 +28,13 @@ export function SfiaOnetMappingRow({
   return (
     <Table.Tr>
       <Table.Td w={120}>
-        <Text ff="monospace" fw={700} size="xs" c="brand">
+        <Text ff="monospace" fw={700} size="sm" c="brand">
           {mapping.socCode}
         </Text>
       </Table.Td>
 
       <Table.Td miw={200}>
-        <Text size="xs" fw={500}>
+        <Text size="sm" fw={500}>
           {mapping.occupationTitle}
         </Text>
       </Table.Td>
@@ -43,7 +43,7 @@ export function SfiaOnetMappingRow({
         <Badge
           color={levelTheme.color}
           variant={levelTheme.badgeVariant}
-          size="xs"
+          size="sm"
         >
           Cấp độ {mapping.targetLevel}
         </Badge>
@@ -52,10 +52,10 @@ export function SfiaOnetMappingRow({
       <Table.Td w={140}>
         <Stack gap={2}>
           <Group justify="space-between" align="center">
-            <Text size="xs" ff="monospace" fw={600}>
+            <Text size="sm" ff="monospace" fw={600}>
               x{mapping.weight.toFixed(1)}
             </Text>
-            <Text size="xs" c="dimmed" fz={10}>
+            <Text size="xs" c="dimmed">
               {mapping.weight >= 2.0
                 ? 'Rất cao'
                 : mapping.weight >= 1.5
@@ -75,28 +75,28 @@ export function SfiaOnetMappingRow({
 
       <Table.Td w={100} ta="center">
         {mapping.isCore ? (
-          <Badge color="success" variant="light" size="xs">
+          <Badge color="success" variant="light" size="sm">
             Cốt lõi
           </Badge>
         ) : (
-          <Badge color="neutral" variant="outline" size="xs">
+          <Badge color="neutral" variant="outline" size="sm">
             Bổ trợ
           </Badge>
         )}
       </Table.Td>
 
-      <Table.Td w={80} ta="right">
+      <Table.Td w={88} ta="right">
         <Anchor
           component={Link}
           href={`/admin/onet?soc=${encodeURIComponent(mapping.socCode)}&detail=sfia`}
           target="_blank"
           rel="noopener noreferrer"
-          size="xs"
+          size="sm"
           c="brand"
         >
           <Group gap={4} justify="flex-end" wrap="nowrap">
-            <Text size="xs">Chi tiết</Text>
-            <IconExternalLink size={12} stroke={1.5} />
+            <Text size="sm">Chi tiết</Text>
+            <IconExternalLink size={14} stroke={1.5} />
           </Group>
         </Anchor>
       </Table.Td>
@@ -114,20 +114,20 @@ export function SfiaOnetMappingCard({
       <Stack gap="xs">
         <Group justify="space-between" align="flex-start">
           <Stack gap={2} miw={0}>
-            <Text ff="monospace" fw={700} size="xs" c="brand">
+            <Text ff="monospace" fw={700} size="sm" c="brand">
               {mapping.socCode}
             </Text>
-            <Text size="xs" fw={600} truncate>
+            <Text size="sm" fw={600} truncate>
               {mapping.occupationTitle}
             </Text>
           </Stack>
 
           {mapping.isCore ? (
-            <Badge color="success" variant="light" size="xs">
+            <Badge color="success" variant="light" size="sm">
               Cốt lõi
             </Badge>
           ) : (
-            <Badge color="neutral" variant="outline" size="xs">
+            <Badge color="neutral" variant="outline" size="sm">
               Bổ trợ
             </Badge>
           )}
@@ -137,12 +137,12 @@ export function SfiaOnetMappingCard({
           <Badge
             color={levelTheme.color}
             variant={levelTheme.badgeVariant}
-            size="xs"
+            size="sm"
           >
             L{mapping.targetLevel}
           </Badge>
 
-          <Text size="xs" c="dimmed">
+          <Text size="sm" c="dimmed">
             Trọng số:{' '}
             <Text span fw={700} c="inherit">
               x{mapping.weight.toFixed(1)}
@@ -154,12 +154,12 @@ export function SfiaOnetMappingCard({
             href={`/admin/onet?soc=${encodeURIComponent(mapping.socCode)}&detail=sfia`}
             target="_blank"
             rel="noopener noreferrer"
-            size="xs"
+            size="sm"
             c="brand"
           >
             <Group gap={2} wrap="nowrap">
-              <Text size="xs">Xem</Text>
-              <IconExternalLink size={12} stroke={1.5} />
+              <Text size="sm">Xem</Text>
+              <IconExternalLink size={14} stroke={1.5} />
             </Group>
           </Anchor>
         </Group>

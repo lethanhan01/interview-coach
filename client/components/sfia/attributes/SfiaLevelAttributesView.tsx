@@ -73,7 +73,7 @@ export function SfiaLevelAttributesView({
   }
 
   return (
-    <Stack gap="md" className={className}>
+    <Stack gap="sm" className={className}>
       <SfiaLevelSpanStepper
         minLevel={1}
         maxLevel={7}
@@ -83,15 +83,15 @@ export function SfiaLevelAttributesView({
         levels={levels}
       />
 
-      <Paper withBorder p="md" radius="md">
-        <Stack gap="sm">
+      <Paper withBorder p="sm" radius="md">
+        <Stack gap="xs">
           <Group
             justify="space-between"
             align="flex-start"
-            gap="sm"
+            gap="xs"
             wrap="wrap"
           >
-            <Group gap="sm" wrap="nowrap">
+            <Group gap="xs" wrap="nowrap">
               <Badge
                 color={levelTheme.color}
                 variant={levelTheme.badgeVariant}
@@ -101,11 +101,11 @@ export function SfiaLevelAttributesView({
                 L{selectedLevel}
               </Badge>
               <Stack gap={2}>
-                <Title order={3} fz="md">
+                <Title order={3} fz="lg">
                   Cấp độ {selectedLevel} —{' '}
                   {currentLevel.nameVi || currentLevel.name}
                 </Title>
-                <Text size="xs" c="dimmed">
+                <Text size="sm" c="dimmed">
                   ({currentLevel.name}) • Chuẩn hành vi &amp; trách nhiệm quốc
                   tế SFIA 9
                 </Text>
@@ -118,22 +118,22 @@ export function SfiaLevelAttributesView({
                   <Button
                     variant="light"
                     color="brand"
-                    size="xs"
-                    leftSection={<IconCopy size={14} stroke={1.5} />}
-                    rightSection={<IconChevronDown size={14} stroke={1.5} />}
+                    size="sm"
+                    leftSection={<IconCopy size={15} stroke={1.5} />}
+                    rightSection={<IconChevronDown size={15} stroke={1.5} />}
                   >
                     Xuất AI Rubric
                   </Button>
                 </Menu.Target>
                 <Menu.Dropdown>
                   <Menu.Item
-                    leftSection={<IconMarkdown size={14} stroke={1.5} />}
+                    leftSection={<IconMarkdown size={15} stroke={1.5} />}
                     onClick={() => handleCopyRubric('markdown')}
                   >
                     Sao chép Markdown
                   </Menu.Item>
                   <Menu.Item
-                    leftSection={<IconBraces size={14} stroke={1.5} />}
+                    leftSection={<IconBraces size={15} stroke={1.5} />}
                     onClick={() => handleCopyRubric('json')}
                   >
                     Sao chép JSON
@@ -144,8 +144,8 @@ export function SfiaLevelAttributesView({
               {onNavigateToMatrixWithLevel && (
                 <Button
                   variant="default"
-                  size="xs"
-                  rightSection={<IconChevronRight size={14} stroke={1.5} />}
+                  size="sm"
+                  rightSection={<IconChevronRight size={15} stroke={1.5} />}
                   onClick={() => onNavigateToMatrixWithLevel(selectedLevel)}
                 >
                   Xem kỹ năng Cấp L{selectedLevel}
@@ -160,14 +160,16 @@ export function SfiaLevelAttributesView({
             color="brand"
             icon={<IconSparkles size={16} stroke={1.5} />}
             cite={`Tinh hoa Cấp độ ${selectedLevel}`}
-            p="sm"
+            p="xs"
             radius="sm"
           >
-            &quot;{currentLevel.essence}&quot;
+            <Text size="sm" lh={1.55}>
+              &quot;{currentLevel.essence}&quot;
+            </Text>
           </Blockquote>
 
           <Stack gap={4}>
-            <Text size="xs" fw={700}>
+            <Text size="sm" fw={700}>
               Phạm vi &amp; Trách nhiệm tổng quát:
             </Text>
             <Text size="sm" c="dimmed" lh={1.6}>
@@ -179,15 +181,15 @@ export function SfiaLevelAttributesView({
 
       <Stack gap="xs">
         <Group justify="space-between" gap="xs" wrap="wrap">
-          <Title order={3} fz="sm">
+          <Title order={3} fz="md">
             5 Thuộc tính Chung Cốt lõi tại Cấp độ {selectedLevel}
           </Title>
-          <Text size="xs" c="dimmed">
+          <Text size="sm" c="dimmed">
             Tiêu chuẩn hành vi nền tảng cho đánh giá AI
           </Text>
         </Group>
 
-        <SimpleGrid cols={{ base: 1, md: 2, xl: 3 }} spacing="sm">
+        <SimpleGrid cols={{ base: 1, md: 2, xl: 3 }} spacing="xs">
           {attributes.map((attr) => (
             <SfiaLevelAttributeCard
               key={attr.code}

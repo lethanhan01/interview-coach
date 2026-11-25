@@ -149,6 +149,29 @@ export function SfiaSidebarTree({
     return () => clearTimeout(timer)
   }, [selectedSkill])
 
+  const expandableKeys = useMemo(() => {
+    const keys: string[] = []
+    for (const cat of treeData) {
+      keys.push(cat.value)
+      for (const sub of cat.children ?? []) {
+        keys.push(sub.value)
+      }
+    }
+    return keys
+  }, [treeData])
+
+  const isAllExpanded =
+    expandableKeys.length > 0 &&
+    expandableKeys.every((key) => Boolean(tree.expandedState[key]))
+
+  const handleToggleExpandAll = () => {
+    if (isAllExpanded) {
+      tree.collapseAllNodes()
+    } else {
+      tree.setExpandedState(getTreeExpandedState(treeData, '*'))
+    }
+  }
+
   return (
     <Paper
       withBorder
@@ -166,10 +189,8 @@ export function SfiaSidebarTree({
         onBlindSpotsOnlyChange={setBlindSpotsOnly}
         categories={categories}
         levels={levels}
-        onExpandAll={() =>
-          tree.setExpandedState(getTreeExpandedState(treeData, '*'))
-        }
-        onCollapseAll={() => tree.collapseAllNodes()}
+        isAllExpanded={isAllExpanded}
+        onToggleExpandAll={handleToggleExpandAll}
         searchInputRef={searchInputRef}
       />
 
@@ -177,14 +198,14 @@ export function SfiaSidebarTree({
 
       <ScrollArea className={classes.treeScroll} p="xs">
         {treeData.length === 0 ? (
-          <Text size="xs" c="dimmed" ta="center" py="xl">
+          <Text size="sm" c="dimmed" ta="center" py="lg">
             Không tìm thấy kỹ năng phù hợp
           </Text>
         ) : (
           <Tree
             data={treeData}
             tree={tree}
-            levelOffset="sm"
+            levelOffset="xs"
             renderNode={(payload) => (
               <SfiaTreeNode
                 payload={payload}

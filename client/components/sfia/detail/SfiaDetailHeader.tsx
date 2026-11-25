@@ -54,19 +54,19 @@ export function SfiaDetailHeader({
     : (skillDetail.onetCount ?? 0)
 
   return (
-    <Stack gap="sm">
+    <Stack gap="xs">
       <Group justify="space-between" align="flex-start" wrap="wrap" gap="xs">
-        <Group gap="sm" align="flex-start" wrap="nowrap" miw={0}>
+        <Group gap="xs" align="flex-start" wrap="nowrap" miw={0}>
           <Paper
             withBorder
             p="xs"
             radius="md"
             bg="var(--mantine-color-body)"
-            w={48}
-            h={48}
+            w={52}
+            h={52}
           >
             <Center h="100%">
-              <Text fw={700} ff="monospace" size="sm" c={theme.color}>
+              <Text fw={700} ff="monospace" size="md" c={theme.color}>
                 {skillDetail.code}
               </Text>
             </Center>
@@ -74,32 +74,32 @@ export function SfiaDetailHeader({
 
           <Stack gap={2} miw={0}>
             <Group gap="xs" align="center" wrap="wrap">
-              <Title order={2} fz="md" fw={700}>
+              <Title order={2} fz="lg" fw={700}>
                 {skillDetail.name}
               </Title>
-              <Badge color={theme.color} variant="light" size="xs">
+              <Badge color={theme.color} variant="light" size="sm">
                 Cấp độ {skillDetail.minLevel} ➔ {skillDetail.maxLevel}
               </Badge>
             </Group>
 
             <Group gap={6} align="center" wrap="wrap">
-              <Text size="xs" fw={500}>
+              <Text size="sm" fw={500}>
                 {currentCat?.nameVi ||
                   currentCat?.name ||
                   skillDetail.categoryCode}
               </Text>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 ›
               </Text>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 {currentSub?.nameVi ||
                   currentSub?.name ||
                   skillDetail.subcategoryCode}
               </Text>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" c="dimmed">
                 ›
               </Text>
-              <Text size="xs" ff="monospace" fw={600}>
+              <Text size="sm" ff="monospace" fw={600}>
                 {skillDetail.code}
               </Text>
             </Group>
@@ -111,7 +111,7 @@ export function SfiaDetailHeader({
             {({ copied, copy }) => (
               <Button
                 variant="default"
-                size="xs"
+                size="sm"
                 onClick={() => {
                   copy()
                   notifications.show({
@@ -121,9 +121,9 @@ export function SfiaDetailHeader({
                 }}
                 leftSection={
                   copied ? (
-                    <IconCheck size={14} stroke={1.5} />
+                    <IconCheck size={15} stroke={1.5} />
                   ) : (
-                    <IconCopy size={14} stroke={1.5} />
+                    <IconCopy size={15} stroke={1.5} />
                   )
                 }
               >
@@ -135,9 +135,9 @@ export function SfiaDetailHeader({
           <Button
             variant="light"
             color="brand"
-            size="xs"
+            size="sm"
             onClick={onOpenAiModal}
-            leftSection={<IconRobot size={14} stroke={1.5} />}
+            leftSection={<IconRobot size={15} stroke={1.5} />}
           >
             Gợi ý AI Rubric
           </Button>
@@ -145,9 +145,9 @@ export function SfiaDetailHeader({
           {onNavigateToMatrix && (
             <Button
               variant="default"
-              size="xs"
+              size="sm"
               onClick={onNavigateToMatrix}
-              leftSection={<IconGridDots size={14} stroke={1.5} />}
+              leftSection={<IconGridDots size={15} stroke={1.5} />}
             >
               Ma trận 2D
             </Button>
@@ -160,7 +160,7 @@ export function SfiaDetailHeader({
           <Text size="xs" c="dimmed">
             Dải cấp độ chuẩn
           </Text>
-          <Text fw={700} size="sm" ff="monospace">
+          <Text fw={700} size="md" ff="monospace">
             L{skillDetail.minLevel} – L{skillDetail.maxLevel} (
             {skillDetail.maxLevel - skillDetail.minLevel + 1} cấp)
           </Text>
@@ -170,7 +170,7 @@ export function SfiaDetailHeader({
           <Text size="xs" c="dimmed">
             Câu hỏi phỏng vấn
           </Text>
-          <Text fw={700} size="sm">
+          <Text fw={700} size="md">
             {questionCount} câu hỏi
           </Text>
         </Paper>
@@ -179,7 +179,7 @@ export function SfiaDetailHeader({
           <Text size="xs" c="dimmed">
             Ánh xạ O*NET
           </Text>
-          <Text fw={700} size="sm">
+          <Text fw={700} size="md">
             {uniqueOccupationCount} nghề nghiệp
             {mappingCount > uniqueOccupationCount && (
               <Text span size="xs" c="dimmed" fw={400}>
@@ -194,7 +194,7 @@ export function SfiaDetailHeader({
           <Text size="xs" c="dimmed">
             Cấp độ đang xem
           </Text>
-          <Text fw={700} size="sm" c="brand">
+          <Text fw={700} size="md" c="brand">
             Cấp độ {selectedLevel}
           </Text>
         </Paper>
