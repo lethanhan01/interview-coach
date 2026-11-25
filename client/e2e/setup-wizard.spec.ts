@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { CATALOG_INTERVIEW_OPTIONS_FIXTURE } from '../test-utils/fixtures/catalog.fixture'
 
 const MOCK_SESSION_ID = 'session-abc123'
 const VALID_REQUIREMENTS =
@@ -6,13 +7,28 @@ const VALID_REQUIREMENTS =
 const VALID_JOB_CONTENT =
   'Phát triển giao diện web, phối hợp backend và tối ưu trải nghiệm người dùng.'
 
+const MOCK_TECHNOLOGIES = [
+  { example: 'PyTorch', isHotTechnology: true, inDemand: true },
+  { example: 'Playwright', isHotTechnology: true, inDemand: true },
+  { example: 'Terraform', isHotTechnology: true, inDemand: true },
+  { example: 'OWASP', isHotTechnology: false, inDemand: true },
+  { example: 'React', isHotTechnology: true, inDemand: true },
+  { example: 'TypeScript', isHotTechnology: true, inDemand: true },
+]
+
 let savedJobDescriptionPayload: Record<string, unknown> | null = null
 let sessionPayload: Record<string, unknown> | null = null
 
+async function selectLevel(page: Page, optionLabel: string) {
+  const levelInput = page.getByLabel('Level yêu cầu')
+  await levelInput.click()
+  await page.getByRole('option', { name: optionLabel, exact: true }).click()
+}
+
 async function fillValidJd(page: Page) {
   await page.getByLabel('Tên công ty').fill('FPT Software')
-  await page.getByLabel('Vị trí').selectOption('Frontend Developer')
-  await page.getByLabel('Level yêu cầu').selectOption('junior')
+  await page.getByLabel('Vị trí').fill('Frontend Developer')
+  await selectLevel(page, 'Junior')
   await page.getByLabel('Yêu cầu', { exact: true }).fill(VALID_REQUIREMENTS)
   await page.getByLabel('Nội dung công việc').fill(VALID_JOB_CONTENT)
 }
@@ -25,6 +41,70 @@ async function selectTech(page: Page, tech: string) {
 test.beforeEach(async ({ page }) => {
   savedJobDescriptionPayload = null
   sessionPayload = null
+
+  await page.route('**/api/v1/auth/me**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          id: 'u1',
+          email: 'test@example.com',
+          role: 'candidate',
+          status: 'active',
+          firstname: 'Test',
+          lastname: 'User',
+          emailVerified: true,
+        },
+      }),
+    })
+  })
+
+  await page.route('**/api/v1/catalog/interview-options**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: CATALOG_INTERVIEW_OPTIONS_FIXTURE,
+      }),
+    })
+  })
+
+  await page.route('**/api/v1/onet/occupations**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: [
+          {
+            socCode: '15-1254.00',
+            title: 'Frontend Developer',
+            description: 'Web and digital interface development',
+          },
+        ],
+      }),
+    })
+  })
+
+  await page.route('**/api/v1/onet/technologies**', async (route) => {
+    const url = new URL(route.request().url())
+    const query = (url.searchParams.get('query') ?? '').trim().toLowerCase()
+    const filtered = query
+      ? MOCK_TECHNOLOGIES.filter((t) => t.example.toLowerCase().includes(query))
+      : MOCK_TECHNOLOGIES
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: filtered,
+      }),
+    })
+  })
 
   await page.route('**/api/v1/saved-job-descriptions', async (route) => {
     if (route.request().method() === 'GET') {
@@ -72,11 +152,11 @@ test('nút Tiếp theo disabled khi JD chưa đủ thông tin bắt buộc', asy
   await page.getByLabel('Yêu cầu', { exact: true }).fill('x'.repeat(30))
   await expect(nextBtn).toBeDisabled()
 
-  await page.getByLabel('Vị trí').selectOption('Frontend Developer')
+  await page.getByLabel('Vị trí').fill('Frontend Developer')
   await page.getByLabel('Nội dung công việc').fill('x'.repeat(30))
   await expect(nextBtn).toBeDisabled()
 
-  await page.getByLabel('Level yêu cầu').selectOption('fresher')
+  await selectLevel(page, 'Fresher')
   await expect(nextBtn).toBeEnabled()
 })
 
@@ -119,7 +199,7 @@ test('chọn Western gửi language=en khi tạo session', async ({ page }) => {
 
   await fillValidJd(page)
   await page.getByRole('button', { name: 'Tiếp theo' }).click()
-  await page.getByRole('button', { name: 'Western' }).click()
+  await page.getByRole('radio', { name: /Western/i }).click()
   await page.getByRole('button', { name: 'Tiếp theo' }).click()
   await page.getByRole('button', { name: 'Bắt đầu phỏng vấn' }).click()
 
@@ -147,11 +227,7 @@ test('có thể tìm kiếm, chọn và lưu các tech stack mới trong JD', as
   await selectTech(page, 'PyTorch')
   await selectTech(page, 'Playwright')
   await selectTech(page, 'Terraform')
-  await expect(
-    page.getByText('Cloud / DevOps / SRE', { exact: true })
-  ).toBeVisible()
   await selectTech(page, 'OWASP')
-  await expect(page.getByText('Security', { exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'Tiếp theo' }).click()
   await page.getByRole('button', { name: 'Tiếp theo' }).click()
@@ -195,8 +271,8 @@ test('chuẩn hóa draft JD cũ thiếu field để input luôn controlled', asy
 
   await page.goto('/setup')
   await page.getByLabel('Website công ty').fill('https://fptsoftware.com')
-  await page.getByLabel('Vị trí').selectOption('Frontend Developer')
-  await page.getByLabel('Level yêu cầu').selectOption('junior')
+  await page.getByLabel('Vị trí').fill('Frontend Developer')
+  await selectLevel(page, 'Junior')
   await page.getByLabel('Số lượng tuyển').fill('2 người')
   await page.getByLabel('Địa điểm làm việc').fill('Hà Nội')
   await page.getByLabel('Lương').fill('20-30 triệu VNĐ')

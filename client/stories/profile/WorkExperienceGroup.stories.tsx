@@ -7,6 +7,7 @@ const meta: Meta<typeof WorkExperienceGroup> = {
   tags: ['autodocs'],
   args: {
     data: [],
+    availableTechs: [],
     onSave: async () => {
       await new Promise((r) => setTimeout(r, 1000))
     },

@@ -8,8 +8,10 @@ import {
 import { axe } from 'jest-axe'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { queryKeys } from '@/queries/keys'
+import { catalogService } from '@/services/catalog.service'
 import { prepService } from '@/services/prep.service'
 import { sessionService } from '@/services/session.service'
+import { CATALOG_INTERVIEW_OPTIONS_FIXTURE } from '@/test-utils/fixtures/catalog.fixture'
 import type { SavedJobDescription } from '@/types'
 import SetupWizardClient from '@/components/interview-setup/SetupWizardClient'
 import { JD_DRAFT_KEY } from '@/components/interview-setup/useSetupDraft'
@@ -38,10 +40,17 @@ vi.mock('@/services/session.service', () => ({
   },
 }))
 
+vi.mock('@/services/catalog.service', () => ({
+  catalogService: {
+    getInterviewOptions: vi.fn(),
+  },
+}))
+
 vi.mock('@/services/onet.service', () => ({
   onetService: {
     searchOccupations: vi.fn().mockResolvedValue([]),
     getOccupationTech: vi.fn().mockResolvedValue([]),
+    searchTechnologies: vi.fn().mockResolvedValue([]),
   },
 }))
 
@@ -66,6 +75,9 @@ describe('SetupWizardClient', () => {
     vi.clearAllMocks()
     window.localStorage.clear()
     mockSearchParams = new URLSearchParams()
+    vi.mocked(catalogService.getInterviewOptions).mockResolvedValue(
+      CATALOG_INTERVIEW_OPTIONS_FIXTURE
+    )
     vi.mocked(prepService.getSavedJobDescriptions).mockResolvedValue([
       mockSavedJd,
     ])

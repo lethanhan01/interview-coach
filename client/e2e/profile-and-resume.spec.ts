@@ -31,8 +31,8 @@ test.describe('Profile & Resume Frontend Flow', () => {
     const editBtn = page.getByRole('button', { name: /chỉnh sửa/i }).first()
     await editBtn.click()
 
-    const lastnameInput = page.locator('#profile-lastname')
-    const firstnameInput = page.locator('#profile-firstname')
+    const lastnameInput = page.getByLabel(/^Họ/i)
+    const firstnameInput = page.getByLabel(/^Tên/i)
 
     await expect(lastnameInput).toBeVisible()
     await expect(firstnameInput).toBeVisible()
@@ -44,7 +44,7 @@ test.describe('Profile & Resume Frontend Flow', () => {
     await saveBtn.click()
 
     // Đợi form đóng lại và hiển thị text mới
-    await expect(page.locator('#profile-firstname')).not.toBeVisible()
+    await expect(firstnameInput).not.toBeVisible()
     await expect(
       page.getByRole('heading', { name: 'An Lê Thành' })
     ).toBeVisible()
@@ -54,11 +54,14 @@ test.describe('Profile & Resume Frontend Flow', () => {
       .getByRole('button', { name: /chỉnh sửa/i })
       .first()
       .click()
-    await page.locator('#profile-firstname').fill('   ')
+    await page.getByLabel(/^Tên/i).fill('   ')
     await page.getByRole('button', { name: 'Lưu thay đổi' }).click()
 
-    // Xác nhận hiển thị thông báo lỗi và không bị crash
-    await expect(page.locator('.text-danger')).toBeVisible()
+    // Xác nhận input báo lỗi hợp lệ theo ARIA và không bị crash
+    await expect(page.getByLabel(/^Tên/i)).toHaveAttribute(
+      'aria-invalid',
+      'true'
+    )
     await page.getByRole('button', { name: 'Hủy' }).click()
 
     // TC-FE-05: Chuyển hướng sang trang /resume
