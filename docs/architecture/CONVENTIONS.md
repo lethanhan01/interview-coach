@@ -1,5 +1,5 @@
 # Quy chuẩn Quản trị & Cấu trúc Tài liệu Kiến trúc Hệ thống
-> **InterviewCoach Architecture Documentation Guidelines (`docs/architecture/`)** — Bộ quy chuẩn phân loại taxonomy, quy ước đặt tên, bộ khung cấu trúc chuẩn 5 phần (Standard Anatomy), mẫu template Markdown và quy trình chuẩn hóa tài liệu sau mỗi Phase refactor.
+> **Intervia Architecture Documentation Guidelines (`docs/architecture/`)** — Bộ quy chuẩn phân loại taxonomy, quy ước đặt tên, bộ khung cấu trúc chuẩn 5 phần (Standard Anatomy), mẫu template Markdown và quy trình chuẩn hóa tài liệu sau mỗi Phase refactor.
 
 ---
 

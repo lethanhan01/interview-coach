@@ -6,7 +6,7 @@ import ProjectsGroup from './ProjectsGroup'
 
 const SAMPLE_PROJECT: ProjectEntry = {
   id: 'proj-1',
-  name: 'InterviewCoach',
+  name: 'Intervia',
   description: 'Nền tảng luyện phỏng vấn AI.',
   techStack: ['Next.js', 'Mantine'],
   url: 'https://github.com/example/interview-coach',
@@ -25,7 +25,7 @@ describe('ProjectsGroup', () => {
       />
     )
 
-    expect(screen.getByText('InterviewCoach')).toBeInTheDocument()
+    expect(screen.getByText('Intervia')).toBeInTheDocument()
     expect(screen.getByText('01/2025 → Hiện tại')).toBeInTheDocument()
     expect(
       screen.getByRole('link', {

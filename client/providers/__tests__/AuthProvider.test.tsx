@@ -26,7 +26,7 @@ vi.mock('@/services/auth.service', () => ({
 
 const mockCandidateUser: AuthUser = {
   id: 'user-1',
-  email: 'candidate@interviewcoach.vn',
+  email: 'candidate@intervia.vn',
   role: 'candidate',
   status: 'active',
   firstname: 'An',
@@ -36,7 +36,7 @@ const mockCandidateUser: AuthUser = {
 
 const mockAdminUser: AuthUser = {
   id: 'admin-1',
-  email: 'admin@interviewcoach.vn',
+  email: 'admin@intervia.vn',
   role: 'admin',
   status: 'active',
   firstname: 'Admin',
@@ -100,9 +100,7 @@ describe('AuthProvider (TanStack Query v5)', () => {
       expect(screen.getByText('loading:false')).toBeInTheDocument()
     })
 
-    expect(
-      screen.getByText('email:candidate@interviewcoach.vn')
-    ).toBeInTheDocument()
+    expect(screen.getByText('email:candidate@intervia.vn')).toBeInTheDocument()
     expect(screen.getByText('role:candidate')).toBeInTheDocument()
     expect(screen.getByText('status:active')).toBeInTheDocument()
     expect(authService.getMe).toHaveBeenCalledTimes(1)
@@ -155,9 +153,7 @@ describe('AuthProvider (TanStack Query v5)', () => {
     await user.click(screen.getByRole('button', { name: 'Refresh' }))
 
     await waitFor(() => {
-      expect(
-        screen.getByText('email:admin@interviewcoach.vn')
-      ).toBeInTheDocument()
+      expect(screen.getByText('email:admin@intervia.vn')).toBeInTheDocument()
     })
     expect(screen.getByText('role:admin')).toBeInTheDocument()
     expect(onRefreshResult).toHaveBeenCalledWith('admin')
@@ -182,7 +178,7 @@ describe('AuthProvider (TanStack Query v5)', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('email:candidate@interviewcoach.vn')
+        screen.getByText('email:candidate@intervia.vn')
       ).toBeInTheDocument()
     })
 
@@ -217,7 +213,7 @@ describe('AuthProvider (TanStack Query v5)', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('email:candidate@interviewcoach.vn')
+        screen.getByText('email:candidate@intervia.vn')
       ).toBeInTheDocument()
     })
 

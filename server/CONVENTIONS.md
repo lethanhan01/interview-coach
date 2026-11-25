@@ -1,5 +1,5 @@
 # Backend Engineering Conventions & Architecture Guidelines
-> **InterviewCoach Backend (`@server`)** — Bộ quy chuẩn kỹ thuật, kiến trúc phân lớp, thiết kế API, nghiệp vụ, dữ liệu, AI Resiliency, Observability và kiểm thử chuẩn Enterprise cho NestJS.
+> **Intervia Backend (`@server`)** — Bộ quy chuẩn kỹ thuật, kiến trúc phân lớp, thiết kế API, nghiệp vụ, dữ liệu, AI Resiliency, Observability và kiểm thử chuẩn Enterprise cho NestJS.
 
 ---
 
@@ -52,7 +52,7 @@
 
 ## 1. Tổng quan Kiến trúc & Triết lý Thiết kế
 
-Backend của InterviewCoach được xây dựng theo mô hình **Modular Monolith** kết hợp nguyên lý **Bounded Contexts (Domain-Driven Design - DDD)** và kiến trúc phân lớp sạch **3-Layer Clean Architecture**:
+Backend của Intervia được xây dựng theo mô hình **Modular Monolith** kết hợp nguyên lý **Bounded Contexts (Domain-Driven Design - DDD)** và kiến trúc phân lớp sạch **3-Layer Clean Architecture**:
 
 ```mermaid
 graph TD

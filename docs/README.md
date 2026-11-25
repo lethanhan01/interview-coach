@@ -1,6 +1,6 @@
-# Tài liệu dự án InterviewAI (AI Mock Interview)
+# Tài liệu dự án Intervia
 
-InterviewAI là ứng dụng AI Mock Interview — nền tảng luyện phỏng vấn cho sinh viên CNTT Việt Nam. Thư mục này chứa toàn bộ tài liệu từ giai đoạn khám phá vấn đề đến thiết kế hệ thống.
+Intervia là nền tảng luyện phỏng vấn AI chuẩn STAR & SFIA 9 dành cho sinh viên CNTT Việt Nam. Thư mục này chứa toàn bộ tài liệu từ giai đoạn khám phá vấn đề đến thiết kế và kiến trúc hệ thống.
 
 ## Tài liệu kiến trúc sống (Living Architecture Docs)
 

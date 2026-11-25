@@ -1,7 +1,7 @@
 # Chuyên Đề 05: Kiến Trúc Biểu Mẫu & Xác Thực Dữ Liệu Với `@mantine/form` v9 + Zod v4 (Forms & Validation)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [Setup Forms & Hooks (`docs/mantine/02`)](../../mantine/02-setup-forms-hooks-guide.md) | [Coding Standards](../01-foundations/coding-standards.md) | [Design System & Styling](./design-system-and-styling.md) | [Accessibility](./accessibility.md)  
 > **Trạng thái thực thi:** `@mantine/form` (`^9.8.2`), `@mantine/dropzone` (`^9.8.2`), và `zod` (`^4.4.3`) đã cài sẵn `[Active in Codebase]`. Toàn bộ ví dụ dưới đây tự chứa theo tài liệu gốc `mantine.dev/form/`.  
@@ -29,7 +29,7 @@
 
 ## 1. Triết Lý Form Uncontrolled & Chính Sách Chuyển Tiếp Legacy
 
-Biểu mẫu trong **InterviewCoach** (xác thực, thiết lập phiên phỏng vấn nhiều bước, chỉnh sửa hồ sơ CV, cấu hình dữ liệu quản trị) là nơi tập trung nhiều tương tác người dùng nhất. **`@mantine/form` v9** với `mode: 'uncontrolled'` loại bỏ re-render toàn form khi gõ phím, tự động hoàn thiện ARIA accessibility trên từng input và kết nối trực tiếp với Zod v4 qua `schemaResolver`.
+Biểu mẫu trong **Intervia** (xác thực, thiết lập phiên phỏng vấn nhiều bước, chỉnh sửa hồ sơ CV, cấu hình dữ liệu quản trị) là nơi tập trung nhiều tương tác người dùng nhất. **`@mantine/form` v9** với `mode: 'uncontrolled'` loại bỏ re-render toàn form khi gõ phím, tự động hoàn thiện ARIA accessibility trên từng input và kết nối trực tiếp với Zod v4 qua `schemaResolver`.
 
 ```mermaid
 sequenceDiagram
@@ -189,7 +189,7 @@ type SetupWizardValues = z.infer<typeof setupWizardSchema>
 const [SetupFormProvider, useSetupFormContext, useSetupForm] =
   createFormContext<SetupWizardValues>()
 
-const DRAFT_STORAGE_KEY = 'interviewcoach:setup-wizard-draft:v1'
+const DRAFT_STORAGE_KEY = 'intervia:setup-wizard-draft:v1'
 
 function ConfigStepFields() {
   const form = useSetupFormContext()

@@ -1,16 +1,16 @@
-# Master Hub: Hệ Thống Quy Chuẩn Kiến Trúc Frontend InterviewCoach (`client/docs/docs/`)
+# Master Hub: Hệ Thống Quy Chuẩn Kiến Trúc Frontend Intervia (`client/docs/docs/`)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng tra cứu nhanh:** [Quick Reference Sheet & Ma trận 131 Rule IDs](./QUICK_REFERENCE.md) | [Cẩm nang thực chiến Mantine v9](../mantine/README.md) | [Bộ luật AI Agents (`AGENTS.md`)](../../../AGENTS.md)  
-> **Trạng thái:** Nguồn chân lý duy nhất (Single Source of Truth — SSOT) định nghĩa chuẩn mực kiến trúc, quy chuẩn viết mã, kiểm thử, bảo mật và vận hành cho toàn bộ Frontend của InterviewCoach.
+> **Trạng thái:** Nguồn chân lý duy nhất (Single Source of Truth — SSOT) định nghĩa chuẩn mực kiến trúc, quy chuẩn viết mã, kiểm thử, bảo mật và vận hành cho toàn bộ Frontend của Intervia.
 
 ---
 
 ## MỤC LỤC
 
 1. [Giới Thiệu, Chính Sách Clean Normative Docs & Kiến Trúc 4 Miền](#1-giới-thiệu-chính-sách-clean-normative-docs-kiến-trúc-4-miền)
-2. [Bối Cảnh Kỹ Thuật Chuẩn Hóa Của InterviewCoach Frontend](#2-bối-cảnh-kỹ-thuật-chuẩn-hóa-của-interviewcoach-frontend)
+2. [Bối Cảnh Kỹ Thuật Chuẩn Hóa Của Intervia Frontend](#2-bối-cảnh-kỹ-thuật-chuẩn-hóa-của-intervia-frontend)
 3. [Sitemap Toàn Bộ 16 Chuyên Đề Theo 4 Miền Chức Năng](#3-sitemap-toàn-bộ-16-chuyên-đề-theo-4-miền-chức-năng)
 4. [Khung Cấu Trúc 6 Phần Thống Nhất (Unified 6-Part Anatomy)](#4-khung-cấu-trúc-6-phần-thống-nhất-unified-6-part-anatomy)
 5. [4 Lộ Trình Đọc Tài Liệu Theo Vai Trò](#5-4-lộ-trình-đọc-tài-liệu-theo-vai-trò)
@@ -21,7 +21,7 @@
 
 ## 1. Giới Thiệu, Chính Sách Clean Normative Docs & Kiến Trúc 4 Miền
 
-Hệ thống quy chuẩn Frontend của **InterviewCoach** được tổ chức theo mô hình **Master Hub & 4 Miền Chức Năng** (16 chuyên đề + `QUICK_REFERENCE.md`, tổng **131 Core Rule IDs + 18 Vercel Sub-Rules**), đảm bảo nguyên tắc **1 File = 1 Tiền tố SSOT — 0 chồng lấn**:
+Hệ thống quy chuẩn Frontend của **Intervia** được tổ chức theo mô hình **Master Hub & 4 Miền Chức Năng** (16 chuyên đề + `QUICK_REFERENCE.md`, tổng **131 Core Rule IDs + 18 Vercel Sub-Rules**), đảm bảo nguyên tắc **1 File = 1 Tiền tố SSOT — 0 chồng lấn**:
 
 - **`client/docs/docs/` (Bộ Tiêu chuẩn Kiến trúc Doanh nghiệp):** Giải thích _tại sao_ (triết lý, sơ đồ Mermaid), đặc tả chính thức từng Rule ID, Case Studies tự chứa, đối chiếu `Anti-Pattern` vs `Best Practice`, ánh xạ CI Gate và PR Review Checklist.
 - **`client/docs/mantine/` (Cẩm nang tra cứu nhanh — Tactical Lookup):** Bản đồ URL `mantine.dev` / `ui.mantine.dev`, bảng thay thế 1-1 Raw HTML → Mantine v9, setup cấu hình cốt lõi và bảng lệnh CLI hằng ngày.
@@ -36,7 +36,7 @@ Vì nhiều màn hình cũ trong `client/` đang trong quá trình chuyển đ�
 
 ```mermaid
 mindmap
-  root((InterviewCoach<br/>Frontend v9.0))
+  root((Intervia<br/>Frontend v9.0))
     01-foundations
       Architecture & App Router
       Coding Standards STD
@@ -71,7 +71,7 @@ flowchart TD
 
 ---
 
-## 2. Bối Cảnh Kỹ Thuật Chuẩn Hóa Của InterviewCoach Frontend
+## 2. Bối Cảnh Kỹ Thuật Chuẩn Hóa Của Intervia Frontend
 
 | Thành phần              | Stack chuẩn hóa (`client/package.json`)                                                                                                               | Ghi chú thực thi                                                                                         |
 | :---------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |

@@ -1,7 +1,7 @@
-# Quick Reference Sheet: Sổ Tay Tra Cứu Nhanh Chuẩn Frontend InterviewCoach
+# Quick Reference Sheet: Sổ Tay Tra Cứu Nhanh Chuẩn Frontend Intervia
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub (16 Chuyên đề / 4 Miền)](./README.md) | [Cẩm nang Mantine v9](../mantine/README.md) | [Bộ luật AI Agents (`AGENTS.md`)](../../../AGENTS.md)  
 > **Mục tiêu:** Tra cứu nhanh 3 điều cấm kỵ, 12 tiêu chí DoD PR, 4 Cheat-Recipes tự chứa theo chuẩn `mantine.dev` / `tanstack.com/query/v5`, và ma trận đồng bộ 2 chiều chính xác **131 Core Rule IDs (+ 18 Vercel Sub-Rules)**.
 
@@ -37,7 +37,7 @@ flowchart LR
 ## 2. Checklist Nghiệm Thu PR 12 Tiêu Chí (Definition of Done)
 
 ```markdown
-### PR Verification Checklist (InterviewCoach Frontend v9.0)
+### PR Verification Checklist (Intervia Frontend v9.0)
 
 - [ ] 1. Type Safety: 0 lỗi `npm run typecheck`, không dùng `any` / `as unknown as` (STD-TS-001).
 - [ ] 2. Mantine-First: 0 thẻ raw HTML & 0 non-semantic `onClick` (SEM-HTML-001..003).
@@ -501,7 +501,7 @@ describe('SessionCard', () => {
 | **[`vercel-react-view-transitions`](../../.agents/skills/vercel-react-view-transitions/SKILL.md)**             | `<ViewTransition>`, `transitionTypes` (`next/link`, `router.push`), `addTransitionType`, `default="none"`, shared element `name`, placement rule, reduced motion CSS                                                                                                                                                                                                                                       | `02-ui-and-design-system/view-transitions-and-motion.md`                                             |
 | **[`vercel-optimize`](../../.agents/skills/vercel-optimize/SKILL.md)**                                         | Metrics-first audit (Observability Plus), deterministic gating, safe caching policy (`private, no-store` cho auth/error routes), version-aware citations, CLI token hygiene                                                                                                                                                                                                                                | `04-performance-and-ops/release-and-devops.md`, `observability-and-telemetry.md`                     |
 
-### 5.13. 10 Quy Tắc Vàng Bắt Buộc Cho Lập Trình Viên InterviewCoach (10 Core Rules)
+### 5.13. 10 Quy Tắc Vàng Bắt Buộc Cho Lập Trình Viên Intervia (10 Core Rules)
 
 |  STT   | Mã Quy Tắc                   | Nội dung bắt buộc                                                                                                                                                                             | Lỗi thường gặp cần tránh                                                      |
 | :----: | :--------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- |

@@ -1,7 +1,7 @@
 # Chuyên Đề 12: Bảo Mật Giao Diện & Quản Trị Phiên (`SEC-*`)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [API Contracts & Resilience (`API-*`)](./api-contracts-and-resilience.md) | [State Management](../01-foundations/state-management.md) | [Observability & Telemetry (`OBS-*`)](../04-performance-and-ops/observability-and-telemetry.md) | [Release & DevOps (`OPS-*`)](../04-performance-and-ops/release-and-devops.md)  
 > **Vai trò SSOT:** Nguồn chân lý duy nhất cho **11 mã quy chuẩn `SEC-001` đến `SEC-011`**, phân tách trung thực giữa cơ chế đã có và chuẩn mục tiêu `[Target Standard]` cần hoàn thiện khi migrate.  
@@ -25,7 +25,7 @@
 
 ## 1. Triết Lý Bảo Mật Defense-in-Depth & Luồng Xác Thực Chuẩn
 
-Trình duyệt luôn là môi trường không tin cậy (**Untrusted Client**). **InterviewCoach** áp dụng nguyên tắc **Defense-in-Depth**: khóa phiên bằng **HttpOnly Cookies** ở biên `proxy.ts`, xoay vòng token qua Mutex Refresh Queue, lọc tham số điều hướng `?next=` chống Open Redirect, và luôn xác thực lại quyền hạn độc lập phía server (`server-auth-actions`) cho mọi mutation.
+Trình duyệt luôn là môi trường không tin cậy (**Untrusted Client**). **Intervia** áp dụng nguyên tắc **Defense-in-Depth**: khóa phiên bằng **HttpOnly Cookies** ở biên `proxy.ts`, xoay vòng token qua Mutex Refresh Queue, lọc tham số điều hướng `?next=` chống Open Redirect, và luôn xác thực lại quyền hạn độc lập phía server (`server-auth-actions`) cho mọi mutation.
 
 ```mermaid
 sequenceDiagram
@@ -224,7 +224,7 @@ export function ReferenceDocLink({
 // Correct: Hủy phiên đăng xuất sạch sẽ (Server Cookie + Auth State + QueryClient Cache + Draft)
 import type { QueryClient } from '@tanstack/react-query'
 
-const SETUP_DRAFT_KEY = 'interviewcoach:setup-wizard-draft:v1'
+const SETUP_DRAFT_KEY = 'intervia:setup-wizard-draft:v1'
 
 export async function performCleanLogout(
   queryClient: QueryClient,

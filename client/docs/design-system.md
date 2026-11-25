@@ -1,4 +1,4 @@
-# InterviewCoach Design System
+# Intervia Design System
 
 > [!CAUTION]
 > **DEPRECATED — Tài liệu Legacy (Tailwind CSS v4 + Radix UI + CVA + `cn()`):**
@@ -11,7 +11,7 @@
 
 ## Overview
 
-This document outlines the architecture and guidelines for the InterviewCoach Design System, built with Next.js, Tailwind CSS v4, and React.
+This document outlines the architecture and guidelines for the Intervia Design System, built with Next.js, Tailwind CSS v4, and React.
 
 ## Core Principles
 

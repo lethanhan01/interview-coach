@@ -1,8 +1,8 @@
-# KIẾN TRÚC TỔNG THỂ HỆ THỐNG INTERVIEWCOACH (SYSTEM OVERVIEW)
+# KIẾN TRÚC TỔNG THỂ HỆ THỐNG INTERVIA (SYSTEM OVERVIEW)
 
 > **Trạng thái**: Living / Production Specification  
 > **Cấp độ**: Global System Architecture  
-> **Áp dụng cho**: Toàn bộ hệ sinh thái InterviewCoach (`client/`, `server/`, `ai-service/`, `contracts/`)  
+> **Áp dụng cho**: Toàn bộ hệ sinh thái Intervia (`client/`, `server/`, `ai-service/`, `contracts/`)  
 > **Tài liệu cha**: [docs/architecture/README.md](../README.md)  
 > **Cập nhật lần cuối**: 2026-10-08  
 
@@ -10,7 +10,7 @@
 
 ## 1. BỐI CẢNH & TRIẾT LÝ KIẾN TRÚC (ARCHITECTURAL PHILOSOPHY)
 
-Nền tảng **InterviewCoach** là giải pháp luyện phỏng vấn kỹ thuật toàn diện cho sinh viên và kỹ sư CNTT. Để cân bằng giữa tính toàn vẹn dữ liệu nghiệp vụ, độ tin cậy của thuật toán tính điểm và hiệu năng xử lý mô hình trí tuệ nhân tạo (AI/ML), hệ thống kiên định áp dụng triết lý:
+Nền tảng **Intervia** là giải pháp luyện phỏng vấn kỹ thuật toàn diện cho sinh viên và kỹ sư CNTT. Để cân bằng giữa tính toàn vẹn dữ liệu nghiệp vụ, độ tin cậy của thuật toán tính điểm và hiệu năng xử lý mô hình trí tuệ nhân tạo (AI/ML), hệ thống kiên định áp dụng triết lý:
 
 $$\mathbf{Pragmatic\ Polyglot\ Architecture} = \mathbf{NestJS\ Core\ Orchestrator} + \mathbf{Python\ AI\ Stateless\ Compute}$$
 

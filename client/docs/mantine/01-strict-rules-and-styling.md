@@ -10,7 +10,7 @@ Quy trình 3 bước trước khi viết UI:
 
 1. **Dùng component/hook có sẵn của Mantine**: Tra cứu [`https://mantine.dev/core/package/`](https://mantine.dev/core/package/) và [`https://mantine.dev/hooks/package/`](https://mantine.dev/hooks/package/) trước tiên. Không tạo lớp wrapper mỏng thừa trong `components/ui/` khi `@mantine/core` đã đáp ứng trực tiếp.
 2. **Tùy biến qua Theme / Style Props / Styles API**: Mở rộng giao diện từ [client/theme.ts](../../theme.ts), Style Props hoặc `classNames`/`styles`/`vars`.
-3. **Custom component từ Mantine primitives**: Khi Mantine chưa có widget đặc thù cho domain InterviewCoach (ví dụ thẻ phiên phỏng vấn tương tác, bộ chấm điểm STAR), **bắt buộc ghép từ các element sẵn có của Mantine** (`Box`, `Paper`, `UnstyledButton`, `Group`, `Stack`, `Input.Wrapper`, `InputBase`, polymorphic `component="..."`, `createPolymorphicComponent`) để giữ nguyên theme tokens, color scheme và style props.
+3. **Custom component từ Mantine primitives**: Khi Mantine chưa có widget đặc thù cho domain Intervia (ví dụ thẻ phiên phỏng vấn tương tác, bộ chấm điểm STAR), **bắt buộc ghép từ các element sẵn có của Mantine** (`Box`, `Paper`, `UnstyledButton`, `Group`, `Stack`, `Input.Wrapper`, `InputBase`, polymorphic `component="..."`, `createPolymorphicComponent`) để giữ nguyên theme tokens, color scheme và style props.
 
 ### Ví dụ đối chiếu: Custom clickable card (`SessionCard`)
 
@@ -131,7 +131,7 @@ Không sử dụng **Tailwind CSS**, **`styled-components`**, **Emotion** hay CS
    - Dùng khi cần chỉnh phần tử con bên trong component Mantine (tra danh sách selector tại tab **Styles API** của từng component trên `mantine.dev`).
 
 ```css
-/* SessionCard.module.css — Chuẩn CSS Module Zero-Hex của InterviewCoach */
+/* SessionCard.module.css — Chuẩn CSS Module Zero-Hex của Intervia */
 .root {
   display: block;
   text-align: start;
@@ -185,7 +185,7 @@ Toàn bộ màu sắc đi qua **5 vai trò ngữ nghĩa** đăng ký trực ti�
 
 ### Bảng Vai trò Màu Ngữ Nghĩa (`color` / `c` prop)
 
-| Vai trò (Tên bắt buộc)              | Ánh xạ mặc định tại `client/theme.ts`                 | Ngữ cảnh sử dụng trong InterviewCoach                                      | Tên vật lý / Giá trị bị cấm                                   |
+| Vai trò (Tên bắt buộc)              | Ánh xạ mặc định tại `client/theme.ts`                 | Ngữ cảnh sử dụng trong Intervia                                            | Tên vật lý / Giá trị bị cấm                                   |
 | ----------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | `brand` _(hoặc bỏ trống = primary)_ | `primaryColor: 'brand'` → `DEFAULT_THEME.colors.cyan` | Hành động chính, item đang chọn, bắt đầu phiên phỏng vấn, nút lưu          | `cyan`, `blue`, `indigo`, `brand.6`, `--mantine-color-cyan-*` |
 | `success`                           | `DEFAULT_THEME.colors.green`                          | Hoàn thành phiên, điểm STAR đạt chuẩn, CV/JD hợp lệ, xác thực thành công   | `green`, `teal`, `emerald`, `--mantine-color-green-*`         |

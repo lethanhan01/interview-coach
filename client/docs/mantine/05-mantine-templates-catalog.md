@@ -138,7 +138,7 @@ export function CandidateWorkspaceShell({
               aria-label="Mở menu điều hướng"
             />
             <Title order={1} size="h4">
-              InterviewCoach
+              Intervia
             </Title>
           </Group>
 
@@ -363,7 +363,7 @@ export function AuthenticationRegisterCard({
       <Stack gap="md">
         <Stack gap={4} align="center">
           <Title order={1} size="h2" ta="center">
-            Tạo tài khoản InterviewCoach
+            Tạo tài khoản Intervia
           </Title>
           <Text c="dimmed" size="sm" ta="center">
             Đã có tài khoản?{' '}

@@ -1,7 +1,7 @@
 # Chuyên Đề 07: Tiêu Chuẩn Khả Năng Tiếp Cận & W3C WCAG 2.2 AA (`A11Y-*`)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [Design System & Styling (`SEM-*`)](./design-system-and-styling.md) | [View Transitions & Motion (`MOTION-*`)](./view-transitions-and-motion.md) | [Responsive & Touch UX (`MOB-*`)](./responsive-and-touch-ux.md) | [Testing & QA](../03-quality-and-security/testing-and-qa.md)  
 > **Vai trò SSOT:** Nguồn chân lý duy nhất cho **12 mã quy chuẩn `A11Y-001` đến `A11Y-012`** (Trụ cột S4 của Design System dẫn chiếu trực tiếp về tài liệu này).  

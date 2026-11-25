@@ -5,13 +5,13 @@ export function setupSwagger(app: INestApplication): void {
   const document = SwaggerModule.createDocument(
     app,
     new DocumentBuilder()
-      .setTitle('InterviewCoach API')
+      .setTitle('Intervia API')
       .setDescription(
         'API test guide: call `POST /auth/login` or `/auth/register` first. The browser then sends the HttpOnly authentication cookie automatically for protected endpoints.',
       )
       .setVersion('1.0')
       .addCookieAuth(
-        process.env.AUTH_COOKIE_NAME || 'interviewcoach_auth',
+        process.env.AUTH_COOKIE_NAME || 'intervia_auth',
         undefined,
         'cookieAuth',
       )

@@ -1,7 +1,7 @@
 # Chuyên Đề 16: Kỹ Thuật Phát Hành, Đa Môi Trường & CI/CD DevOps Frontend (`OPS-*`)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [Security & Auth (`SEC-*`)](../03-quality-and-security/security-and-auth.md) | [Performance & Web Vitals (`PERF-*`)](./performance-and-web-vitals.md) | [Observability (`OBS-*`)](./observability-and-telemetry.md) | [Testing & QA](../03-quality-and-security/testing-and-qa.md)  
 > **Vai trò SSOT:** Nguồn chân lý duy nhất cho **12 mã quy chuẩn `OPS-001` đến `OPS-012`**, phản ánh trung thực cấu hình triển khai (`client/vercel.json`, `client/next.config.ts`, `.github/workflows/ci.yml`), chuẩn hóa theo Next.js 16 Production Checklist và nguyên tắc `vercel-optimize`.  

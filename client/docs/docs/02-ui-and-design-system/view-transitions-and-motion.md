@@ -1,7 +1,7 @@
 # Chuyên Đề 08: Kỹ Thuật Chuyển Cảnh Giao Diện & Native View Transitions (`MOTION-*`)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [Design System & Styling (`SEM-*`)](./design-system-and-styling.md) | [Accessibility (`A11Y-*`)](./accessibility.md) | [Responsive & Touch UX (`MOB-*`)](./responsive-and-touch-ux.md)  
 > **Vai trò SSOT:** Nguồn chân lý duy nhất cho **8 mã quy chuẩn `MOTION-001` đến `MOTION-008`**, đồng bộ 100% với **Next.js `16.2.6` App Router** và skill [`vercel-react-view-transitions`](../../../.agents/skills/vercel-react-view-transitions/SKILL.md).  
@@ -32,7 +32,7 @@
 
 ## 1. Triết Lý Chuyển Động Không Gian & Cây Quyết Định Dual-Track
 
-Chuyển động (Motion) chỉ tồn tại để **truyền đạt mối quan hệ không gian hoặc tính liên tục** — nếu không thể diễn đạt rõ chuyển động truyền tải thông tin gì cho người dùng, hãy bỏ nó. Mọi chuyển động trong **InterviewCoach** chạy hoàn toàn trên GPU (`transform`, `opacity`) và tự động tắt khi người dùng bật `prefers-reduced-motion: reduce`.
+Chuyển động (Motion) chỉ tồn tại để **truyền đạt mối quan hệ không gian hoặc tính liên tục** — nếu không thể diễn đạt rõ chuyển động truyền tải thông tin gì cho người dùng, hãy bỏ nó. Mọi chuyển động trong **Intervia** chạy hoàn toàn trên GPU (`transform`, `opacity`) và tự động tắt khi người dùng bật `prefers-reduced-motion: reduce`.
 
 ```mermaid
 flowchart TD

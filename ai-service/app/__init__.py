@@ -1,1 +1,1 @@
-"""InterviewAI Compute Engine App Package."""
+"""Intervia Compute Engine App Package."""

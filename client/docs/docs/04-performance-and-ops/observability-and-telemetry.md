@@ -1,7 +1,7 @@
 # Chuyên Đề 14: Giám Sát, Đo Lường Từ Xa (Telemetry) & Ghi Log (`OBS-*`)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [Security & Auth (`SEC-*`)](../03-quality-and-security/security-and-auth.md) | [API Contracts & Resilience (`API-*`)](../03-quality-and-security/api-contracts-and-resilience.md) | [Performance & Web Vitals (`PERF-*`)](./performance-and-web-vitals.md) | [Release & DevOps (`OPS-*`)](./release-and-devops.md)  
 > **Vai trò SSOT:** Nguồn chân lý duy nhất cho **9 mã quy chuẩn `OBS-001` đến `OBS-009`**, định nghĩa chuẩn Error Boundary Mantine v9, truy vết phân tán W3C `traceparent`, và lộ trình 2 chặng `[Target Standard — cài khi triển khai]` trên Vercel.  

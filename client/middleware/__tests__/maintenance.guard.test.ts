@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { maintenanceGuard } from '@/middleware/guards/maintenance.guard'
 
 function createRequest(path: string): NextRequest {
-  return new NextRequest(`https://interviewcoach.local${path}`)
+  return new NextRequest(`https://intervia.local${path}`)
 }
 
 describe('maintenanceGuard', () => {
@@ -30,7 +30,7 @@ describe('maintenanceGuard', () => {
       const res = maintenanceGuard(createRequest(path))
       expect(res?.status).toBe(307)
       expect(res?.headers.get('location')).toBe(
-        'https://interviewcoach.local/maintenance'
+        'https://intervia.local/maintenance'
       )
     }
   })

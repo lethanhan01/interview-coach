@@ -1,4 +1,4 @@
-# InterviewAI Compute Engine (`ai-service`)
+# Intervia Compute Engine (`ai-service`)
 
 Dedicated Stateless AI Compute Microservice for STT (faster-whisper), Hybrid TTS (Kokoro-82M EN & Edge-TTS VI), and advanced voice metrics extraction.
 

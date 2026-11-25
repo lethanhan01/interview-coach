@@ -8,7 +8,7 @@ import {
 import { EMPTY_JD } from '@/lib/setup-helpers'
 import type { JdFormData } from '@/types'
 
-export const JD_DRAFT_KEY = 'interviewcoach_jd_draft'
+export const JD_DRAFT_KEY = 'intervia_jd_draft'
 
 function readStoredDraft(): JdFormData {
   if (typeof window === 'undefined') return EMPTY_JD

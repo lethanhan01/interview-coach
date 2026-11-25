@@ -34,15 +34,15 @@ describe('AuthController', () => {
       const auth = {
         getRefreshCookieName: jest
           .fn()
-          .mockReturnValue('interviewcoach_refresh'),
-        getAccessCookieName: jest.fn().mockReturnValue('interviewcoach_access'),
+          .mockReturnValue('intervia_refresh'),
+        getAccessCookieName: jest.fn().mockReturnValue('intervia_access'),
         logout: jest.fn().mockResolvedValue(undefined),
       };
       const config = { get: jest.fn().mockReturnValue('development') };
       const controller = new AuthController(auth as never, config as never);
 
       const mockReq = {
-        cookies: { interviewcoach_refresh: 'sample-refresh-token' },
+        cookies: { intervia_refresh: 'sample-refresh-token' },
       };
       const mockRes = {
         clearCookie: jest.fn(),
@@ -52,7 +52,7 @@ describe('AuthController', () => {
 
       expect(auth.logout).toHaveBeenCalledWith('sample-refresh-token');
       expect(mockRes.clearCookie).toHaveBeenCalledWith(
-        'interviewcoach_access',
+        'intervia_access',
         {
           httpOnly: true,
           secure: false,
@@ -61,7 +61,7 @@ describe('AuthController', () => {
         },
       );
       expect(mockRes.clearCookie).toHaveBeenCalledWith(
-        'interviewcoach_refresh',
+        'intervia_refresh',
         {
           httpOnly: true,
           secure: false,
@@ -75,8 +75,8 @@ describe('AuthController', () => {
       const auth = {
         getRefreshCookieName: jest
           .fn()
-          .mockReturnValue('interviewcoach_refresh'),
-        getAccessCookieName: jest.fn().mockReturnValue('interviewcoach_access'),
+          .mockReturnValue('intervia_refresh'),
+        getAccessCookieName: jest.fn().mockReturnValue('intervia_access'),
         logout: jest.fn().mockResolvedValue(undefined),
       };
       const config = { get: jest.fn().mockReturnValue('production') };
@@ -89,7 +89,7 @@ describe('AuthController', () => {
 
       expect(auth.logout).toHaveBeenCalledWith(undefined);
       expect(mockRes.clearCookie).toHaveBeenCalledWith(
-        'interviewcoach_access',
+        'intervia_access',
         {
           httpOnly: true,
           secure: true,
@@ -98,7 +98,7 @@ describe('AuthController', () => {
         },
       );
       expect(mockRes.clearCookie).toHaveBeenCalledWith(
-        'interviewcoach_refresh',
+        'intervia_refresh',
         {
           httpOnly: true,
           secure: true,
@@ -114,8 +114,8 @@ describe('AuthController', () => {
       const auth = {
         getRefreshCookieName: jest
           .fn()
-          .mockReturnValue('interviewcoach_refresh'),
-        getAccessCookieName: jest.fn().mockReturnValue('interviewcoach_access'),
+          .mockReturnValue('intervia_refresh'),
+        getAccessCookieName: jest.fn().mockReturnValue('intervia_access'),
         getAccessCookieMaxAge: jest.fn().mockReturnValue(900),
         getRefreshCookieMaxAge: jest.fn().mockReturnValue(604800),
         refreshSession: jest.fn().mockResolvedValue({
@@ -137,7 +137,7 @@ describe('AuthController', () => {
       const config = { get: jest.fn().mockReturnValue('development') };
       const controller = new AuthController(auth as never, config as never);
 
-      const mockReq = { cookies: { interviewcoach_refresh: 'valid-token' } };
+      const mockReq = { cookies: { intervia_refresh: 'valid-token' } };
       const mockRes = { cookie: jest.fn(), clearCookie: jest.fn() };
 
       const res = await controller.refresh(mockReq as never, mockRes as never);
@@ -151,8 +151,8 @@ describe('AuthController', () => {
       const auth = {
         getRefreshCookieName: jest
           .fn()
-          .mockReturnValue('interviewcoach_refresh'),
-        getAccessCookieName: jest.fn().mockReturnValue('interviewcoach_access'),
+          .mockReturnValue('intervia_refresh'),
+        getAccessCookieName: jest.fn().mockReturnValue('intervia_access'),
         refreshSession: jest
           .fn()
           .mockRejectedValue(new Error('Compromised refresh token detected')),
@@ -161,7 +161,7 @@ describe('AuthController', () => {
       const controller = new AuthController(auth as never, config as never);
 
       const mockReq = {
-        cookies: { interviewcoach_refresh: 'compromised-token' },
+        cookies: { intervia_refresh: 'compromised-token' },
       };
       const mockRes = { clearCookie: jest.fn() };
 
@@ -170,11 +170,11 @@ describe('AuthController', () => {
       ).rejects.toThrow('Compromised refresh token detected');
 
       expect(mockRes.clearCookie).toHaveBeenCalledWith(
-        'interviewcoach_access',
+        'intervia_access',
         expect.any(Object),
       );
       expect(mockRes.clearCookie).toHaveBeenCalledWith(
-        'interviewcoach_refresh',
+        'intervia_refresh',
         expect.any(Object),
       );
     });

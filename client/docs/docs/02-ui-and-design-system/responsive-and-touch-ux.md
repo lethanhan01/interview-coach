@@ -1,7 +1,7 @@
 # Chuyên Đề 09: Kiến Trúc Responsive Web, Mobile-First & Touch UX Với Mantine v9 (`MOB-*`)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [Design System & Styling (`SEM-*`)](./design-system-and-styling.md) | [Accessibility (`A11Y-*`)](./accessibility.md) | [View Transitions & Motion (`MOTION-*`)](./view-transitions-and-motion.md)  
 > **Vai trò SSOT:** Nguồn chân lý duy nhất cho **10 mã quy chuẩn `MOB-001` đến `MOB-010`** dành cho **Responsive Web & Mobile-First** trên Next.js 16 App Router + Mantine v9.  
@@ -26,7 +26,7 @@
 
 ## 1. Triết Lý Responsive Mobile-First & SSR-Safe Trên Next.js 16
 
-Ứng viên của **InterviewCoach** có thể xem báo cáo STAR, ôn tập câu hỏi hoặc luyện phỏng vấn trực tiếp trên thiết bị di động. Vì Next.js 16 render HTML từ Server (SSR) nơi chưa tồn tại kích thước viewport trình duyệt, mọi bố cục responsive bắt buộc tuân theo nguyên tắc **CSS-First, SSR-Safe** để đạt **0 lỗi hydration mismatch** và **0 dịch chuyển bố cục (CLS)**:
+Ứng viên của **Intervia** có thể xem báo cáo STAR, ôn tập câu hỏi hoặc luyện phỏng vấn trực tiếp trên thiết bị di động. Vì Next.js 16 render HTML từ Server (SSR) nơi chưa tồn tại kích thước viewport trình duyệt, mọi bố cục responsive bắt buộc tuân theo nguyên tắc **CSS-First, SSR-Safe** để đạt **0 lỗi hydration mismatch** và **0 dịch chuyển bố cục (CLS)**:
 
 ```mermaid
 flowchart TD

@@ -51,10 +51,9 @@ export class AuthService implements AuthTokenVerifier {
     this.accessCookieName =
       config.get<string>('AUTH_ACCESS_COOKIE_NAME') ??
       config.get<string>('AUTH_COOKIE_NAME') ??
-      'interviewcoach_access';
+      'intervia_access';
     this.refreshCookieName =
-      config.get<string>('AUTH_REFRESH_COOKIE_NAME') ??
-      'interviewcoach_refresh';
+      config.get<string>('AUTH_REFRESH_COOKIE_NAME') ?? 'intervia_refresh';
     this.accessCookieMaxAge =
       config.get<number>('AUTH_ACCESS_COOKIE_MAX_AGE') ?? 900; // 15 minutes
     this.refreshCookieMaxAge =
@@ -63,7 +62,7 @@ export class AuthService implements AuthTokenVerifier {
       (config.get<number>('PASSWORD_RESET_OTP_TTL_MINUTES') ?? 15) * 60 * 1000;
     this.authSecret = config.getOrThrow<string>('AUTH_JWT_SECRET');
     this.smtpFrom =
-      config.get<string>('SMTP_FROM') ?? 'noreply@interviewcoach.com';
+      config.get<string>('SMTP_FROM') ?? 'noreply@intervia.vn';
     this.mailer = nodemailer.createTransport({
       host: config.getOrThrow<string>('SMTP_HOST'),
       port: config.getOrThrow<number>('SMTP_PORT'),
@@ -381,7 +380,7 @@ export class AuthService implements AuthTokenVerifier {
     await this.mailer.sendMail({
       from: this.smtpFrom,
       to: user.email,
-      subject: 'Mã OTP đặt lại mật khẩu InterviewCoach',
+      subject: 'Mã OTP đặt lại mật khẩu Intervia',
       text: `Mã OTP đặt lại mật khẩu của bạn là: ${code}\nMã có hiệu lực trong ${this.otpTtlMs / 60000} phút. Không chia sẻ mã này với bất kỳ ai.`,
     });
   }
@@ -530,7 +529,7 @@ export class AuthService implements AuthTokenVerifier {
     await this.mailer.sendMail({
       from: this.smtpFrom,
       to: user.email,
-      subject: 'Mã OTP xác thực tài khoản InterviewCoach',
+      subject: 'Mã OTP xác thực tài khoản Intervia',
       text: `Mã OTP xác thực email của bạn là: ${code}\nMã có hiệu lực trong ${this.otpTtlMs / 60000} phút.`,
     });
   }

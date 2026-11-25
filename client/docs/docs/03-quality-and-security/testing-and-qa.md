@@ -1,7 +1,7 @@
 # Chuyên Đề 10: Chiến Lược Kiểm Thử 4 Tầng & Đảm Bảo Chất Lượng (Testing & QA)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [Testing & Toolchain (`docs/mantine/03`)](../../mantine/03-testing-and-tooling.md) | [Accessibility (`A11Y-*`)](../02-ui-and-design-system/accessibility.md) | [API Contracts & Resilience (`API-*`)](./api-contracts-and-resilience.md) | [Coding Standards (`STD-*`)](../01-foundations/coding-standards.md)  
 > **Trạng thái thực thi:** Vitest 4 (`unit` vs `storybook`), `@test-utils`, `jest-axe`, Storybook 10 (`@storybook/nextjs-vite`), và Playwright đã cấu hình `[Active in Codebase]`; MSW v2 và coverage thresholds cứng là `[Target Standard]`.  
@@ -28,7 +28,7 @@
 
 ## 1. Triết Lý Kiểm Thử Doanh Nghiệp & Kim Tự Tháp 4 Tầng
 
-Nguyên tắc cốt lõi của kiểm thử tại **InterviewCoach** là **User-Centric Testing (kiểm thử hành vi người dùng thực)** thay vì kiểm thử chi tiết triển khai nội bộ (tên class CSS, tên biến state). Bộ test độc lập với triển khai giúp tự tin migrate màn hình sang Mantine v9 mà không đánh mất hành vi nghiệp vụ.
+Nguyên tắc cốt lõi của kiểm thử tại **Intervia** là **User-Centric Testing (kiểm thử hành vi người dùng thực)** thay vì kiểm thử chi tiết triển khai nội bộ (tên class CSS, tên biến state). Bộ test độc lập với triển khai giúp tự tin migrate màn hình sang Mantine v9 mà không đánh mất hành vi nghiệp vụ.
 
 ```mermaid
 flowchart TD

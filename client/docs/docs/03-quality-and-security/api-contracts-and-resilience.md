@@ -1,7 +1,7 @@
 # Chuyên Đề 11: Hợp Đồng API, Khả Năng Chịu Lỗi & Xử Lý Ngoại Tuyến (`API-*`)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [State Management (TanStack Query & SSE)](../01-foundations/state-management.md) | [Security & Auth (`SEC-*`)](./security-and-auth.md) | [Testing & QA](./testing-and-qa.md) | [Coding Standards (`STD-*`)](../01-foundations/coding-standards.md)  
 > **Vai trò SSOT:** Nguồn chân lý duy nhất cho **12 mã quy chuẩn `API-001` đến `API-012`**, định nghĩa chuẩn mực hợp đồng API, khử trùng lặp với TanStack Query v5 (`client-swr-dedup`), chống waterfall (`async-parallel`, `server-parallel-fetching`), và xử lý ngoại tuyến bằng `@mantine/hooks`.  

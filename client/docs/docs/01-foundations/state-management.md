@@ -1,7 +1,7 @@
 # Chuyên Đề 03: Quản Trị Trạng Thái Đa Tầng & Realtime Stream (State Management)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md) | [Cẩm nang TanStack Query v5](../../mantine/04-tanstack-query-guide.md)  
 > **Tài liệu liên quan:** [Architecture & Structure](./architecture-and-structure.md) | [Coding Standards](./coding-standards.md) | [API Contracts & Resilience](../03-quality-and-security/api-contracts-and-resilience.md) | [Forms & Validation](../02-ui-and-design-system/forms-and-validation.md)  
 > **Tính chất tài liệu:** Chuẩn mực mục tiêu (Normative Standard) dựa trên **TanStack Query v5 (`@tanstack/react-query`)**, **React 19 Context**, **Next.js 16 URL Params**, **`@mantine/hooks`**, và **SSE `EventSource`**; mọi đoạn mã minh họa tự chứa theo tài liệu gốc chính thức (không trích xuất code legacy từ `client/`).  
@@ -30,7 +30,7 @@
 
 ## 1. Triết Lý Phân Tầng State & Cây Quyết Định Trong 30 Giây
 
-Sai lầm phổ biến nhất ở các ứng dụng Frontend quy mô lớn là dồn dữ liệu máy chủ, trạng thái bộ lọc URL và biến đóng/mở Modal vào cùng một kho chung, dẫn đến đồng bộ thủ công rườm rà, re-render dây chuyền và rò rỉ dữ liệu cũ. **InterviewCoach** áp dụng **Mô hình Phân Tầng State 4 Lớp + Kênh Realtime SSE** dựa trực tiếp trên **TanStack Query v5 (`@tanstack/react-query`)**, React Context tối giản, Next.js App Router URL APIs và `@mantine/hooks` mà không cài thêm store cồng kềnh bên ngoài.
+Sai lầm phổ biến nhất ở các ứng dụng Frontend quy mô lớn là dồn dữ liệu máy chủ, trạng thái bộ lọc URL và biến đóng/mở Modal vào cùng một kho chung, dẫn đến đồng bộ thủ công rườm rà, re-render dây chuyền và rò rỉ dữ liệu cũ. **Intervia** áp dụng **Mô hình Phân Tầng State 4 Lớp + Kênh Realtime SSE** dựa trực tiếp trên **TanStack Query v5 (`@tanstack/react-query`)**, React Context tối giản, Next.js App Router URL APIs và `@mantine/hooks` mà không cài thêm store cồng kềnh bên ngoài.
 
 ```mermaid
 flowchart TD
@@ -470,7 +470,7 @@ export function useCancelSessionMutation() {
 
 ### 4.3. Mở rộng Đa Tab & Nháp Ngoại Tuyến (`[Target Standard]`)
 
-- **Multi-Tab Auth Sync (`[Target Standard]`):** Phát sự kiện đăng xuất qua `BroadcastChannel('interviewcoach-auth')` để các tab đang mở đồng thời reset Auth Context và xóa sạch TanStack Query cache (`queryClient.clear()`).
+- **Multi-Tab Auth Sync (`[Target Standard]`):** Phát sự kiện đăng xuất qua `BroadcastChannel('intervia-auth')` để các tab đang mở đồng thời reset Auth Context và xóa sạch TanStack Query cache (`queryClient.clear()`).
 - **Persistent Offline Draft (`[Target Standard]`):** Lưu bản nháp câu trả lời dài hoặc JD phi nhạy cảm vào `sessionStorage`/`IndexedDB` kèm kiểm tra schema Zod khi khôi phục.
 
 ---

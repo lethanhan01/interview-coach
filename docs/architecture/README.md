@@ -1,11 +1,11 @@
-# Bản đồ Kiến trúc Hệ thống InterviewCoach (Master Architecture Map)
-> **InterviewCoach Living Architecture Hub (`docs/architecture/`)** — Cổng thông tin kiến trúc chính thức, tài liệu tham chiếu kỹ thuật và hướng dẫn Onboarding cho toàn bộ nền tảng InterviewCoach.
+# Bản đồ Kiến trúc Hệ thống Intervia (Master Architecture Map)
+> **Intervia Living Architecture Hub (`docs/architecture/`)** — Cổng thông tin kiến trúc chính thức, tài liệu tham chiếu kỹ thuật và hướng dẫn Onboarding cho toàn bộ nền tảng Intervia.
 
 ---
 
 ## 1. Giới thiệu & Mục đích
 
-Thư mục `docs/architecture/` là **Single Source of Truth** về mặt kiến trúc và thiết kế kỹ thuật của hệ thống InterviewCoach. Tất cả tài liệu ở đây được duy trì liên tục bám sát mã nguồn thực tế của dự án (*Living Architecture Documentation*), thay thế cho các tài liệu kế hoạch ban đầu đã hoàn thành.
+Thư mục `docs/architecture/` là **Single Source of Truth** về mặt kiến trúc và thiết kế kỹ thuật của hệ thống Intervia. Tất cả tài liệu ở đây được duy trì liên tục bám sát mã nguồn thực tế của dự án (*Living Architecture Documentation*), thay thế cho các tài liệu kế hoạch ban đầu đã hoàn thành.
 
 Mọi tài liệu trong thư mục này được tổ chức và quản trị theo quy chuẩn kỹ thuật nghiêm ngặt tại:
 👉 **[Quy chuẩn Quản trị & Cấu trúc Tài liệu (CONVENTIONS.md)](CONVENTIONS.md)**

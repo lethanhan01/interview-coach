@@ -1,7 +1,7 @@
 # Chuyên Đề 02: Tiêu Chuẩn Coding Standards Doanh Nghiệp & TypeScript Strict (`STD-*`)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [Architecture & Structure](./architecture-and-structure.md) | [State Management](./state-management.md) | [Design System & Styling](../02-ui-and-design-system/design-system-and-styling.md) | [API Contracts & Resilience](../03-quality-and-security/api-contracts-and-resilience.md)  
 > **Vai trò SSOT:** Nguồn chân lý duy nhất cho **16 Core Rule IDs (`STD-*`)** và **18 Vercel Sub-Rules (`STD-JS-001..014`, `STD-ADV-001..004`)**.  

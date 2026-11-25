@@ -1,7 +1,7 @@
 # Chuyên Đề 06: Hệ Thống Thiết Kế Ngữ Nghĩa, Zero-Hex Styling & Storybook Catalog (`SEM-*`)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [Quy tắc UI chặt chẽ (`docs/mantine/01`)](../../mantine/01-strict-rules-and-styling.md) | [Setup Theme & CSS Layers (`docs/mantine/02`)](../../mantine/02-setup-forms-hooks-guide.md) | [Component Patterns](./component-patterns.md) | [Accessibility (`A11Y-*`)](./accessibility.md)  
 > **Vai trò SSOT:** Nguồn chân lý duy nhất cho **toàn bộ 19 mã quy chuẩn `SEM-*`** (`SEM-HTML-001..003`, `SEM-TOKEN-001..009`, `SEM-PROPS-001..005`, `SEM-GOV-001..002`), gộp trọn kiến trúc Styling 3 bậc Zero-Hex, CSS Cascade Layers chuyển tiếp, 3 Enterprise Layout Archetypes (adapted từ `ui.mantine.dev`) và Storybook 10 Living Catalog.  
@@ -30,7 +30,7 @@
 
 ## 1. Triết Lý Zero-Hex Mantine-First & Kiến Trúc 5 Trụ Cột
 
-Hệ thống thiết kế của **InterviewCoach** loại bỏ gánh nặng duy trì bảng màu thủ công và các framework CSS cạnh tranh. Toàn bộ giao diện mới dựa trên **1 nguồn chân lý duy nhất `client/theme.ts`** (Zero-Hex, 100% RSC-safe, ánh xạ 5 vai trò ngữ nghĩa trực tiếp từ `DEFAULT_THEME.colors` của Mantine v9) và tuân theo **thứ tự ưu tiên Styling 3 bậc**:
+Hệ thống thiết kế của **Intervia** loại bỏ gánh nặng duy trì bảng màu thủ công và các framework CSS cạnh tranh. Toàn bộ giao diện mới dựa trên **1 nguồn chân lý duy nhất `client/theme.ts`** (Zero-Hex, 100% RSC-safe, ánh xạ 5 vai trò ngữ nghĩa trực tiếp từ `DEFAULT_THEME.colors` của Mantine v9) và tuân theo **thứ tự ưu tiên Styling 3 bậc**:
 
 1. **Bậc 1 — Mantine Style Props:** Cho spacing, màu ngữ nghĩa, typography, kích thước (`p="md"`, `gap="sm"`, `c="dimmed"`, `w={{ base: '100%', sm: '50%' }}`).
 2. **Bậc 2 — CSS Modules (`*.module.css`) + `postcss-preset-mantine`:** Cho hover (`@mixin hover`), trạng thái `mod` (`&[data-active]`), `:focus-visible`, `@container` queries, đơn vị `rem()`/`em()`, và `$mantine-breakpoint-xs..xl`.
@@ -294,7 +294,7 @@ export function WorkspaceArchetype({
             size="sm"
             aria-label="Mở thanh điều hướng"
           />
-          <Title order={3}>InterviewCoach</Title>
+          <Title order={3}>Intervia</Title>
         </Group>
       </AppShell.Header>
 

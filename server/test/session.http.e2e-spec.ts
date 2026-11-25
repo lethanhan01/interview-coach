@@ -116,7 +116,7 @@ describe('session HTTP contracts', () => {
 
     await request(app.getHttpServer())
       .get(`/api/v1/sessions/${created.body.id}/events`)
-      .set('Cookie', 'interviewcoach_auth=invalid-token')
+      .set('Cookie', 'intervia_auth=invalid-token')
       .expect(401);
 
     const otherEmail = `phase0-other-${Date.now()}@example.com`;

@@ -6,7 +6,7 @@ function createRequest(
   path: string,
   cookies: Record<string, string> = {}
 ): NextRequest {
-  const req = new NextRequest(`https://interviewcoach.local${path}`)
+  const req = new NextRequest(`https://intervia.local${path}`)
   for (const [name, value] of Object.entries(cookies)) {
     req.cookies.set(name, value)
   }
@@ -30,7 +30,7 @@ describe('handleMiddleware pipeline', () => {
     const res = handleMiddleware(createRequest('/sessions'))
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toBe(
-      'https://interviewcoach.local/maintenance'
+      'https://intervia.local/maintenance'
     )
   })
 
@@ -40,7 +40,7 @@ describe('handleMiddleware pipeline', () => {
     const res = handleMiddleware(createRequest('/admin/dashboard'))
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toBe(
-      'https://interviewcoach.local/unauthenticated?next=%2Fadmin%2Fdashboard'
+      'https://intervia.local/unauthenticated?next=%2Fadmin%2Fdashboard'
     )
   })
 
@@ -48,7 +48,7 @@ describe('handleMiddleware pipeline', () => {
     process.env.NEXT_PUBLIC_MAINTENANCE_MODE = 'false'
 
     const res = handleMiddleware(
-      createRequest('/sessions', { interviewcoach_access: 'valid' })
+      createRequest('/sessions', { intervia_access: 'valid' })
     )
     expect(res.status).toBe(200)
     expect(res.headers.get('location')).toBeNull()

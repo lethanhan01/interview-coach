@@ -4,7 +4,7 @@ import { DEFAULT_DB_TIME_ZONE } from '@infra/database/prisma/db-timezone';
 const EnvSchema = z.object({
   APP_URL: z.string().url().default('http://localhost:3000'),
   AUTH_JWT_SECRET: z.string().min(32),
-  AUTH_COOKIE_NAME: z.string().min(1).default('interviewcoach_auth'),
+  AUTH_COOKIE_NAME: z.string().min(1).default('intervia_auth'),
   AUTH_COOKIE_MAX_AGE: z.coerce.number().int().positive().default(86_400),
   AUTH_ACCESS_COOKIE_NAME: z.string().optional(),
   AUTH_REFRESH_COOKIE_NAME: z.string().optional(),

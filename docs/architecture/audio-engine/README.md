@@ -5,7 +5,7 @@
 
 ## 1. TỔNG QUAN PHÂN HỆ (SUBSYSTEM OVERVIEW)
 
-Audio Engine là phân hệ xử lý giọng nói thời gian thực của InterviewCoach, được thiết kế nhằm giải quyết triệt để 2 vấn đề lớn trong các ứng dụng phỏng vấn ảo truyền thống:
+Audio Engine là phân hệ xử lý giọng nói thời gian thực của Intervia, được thiết kế nhằm giải quyết triệt để 2 vấn đề lớn trong các ứng dụng phỏng vấn ảo truyền thống:
 1. **Sự bất ổn định của Web Speech API**: Trình duyệt thường xuyên ngắt kết nối khi ứng viên im lặng suy nghĩ, không đồng nhất giữa Chrome/Safari/Firefox, và không có khả năng phân tích nhịp ngập ngừng hay từ đệm kỹ thuật.
 2. **Chi phí và Độ trễ cao của Cloud API**: Gọi OpenAI Whisper API trên đám mây tiêu tốn $0.006/phút và chịu độ trễ mạng quốc tế $1.5\text{s} - 3.5\text{s}$.
 

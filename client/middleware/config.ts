@@ -3,7 +3,7 @@ export function getAccessCookieName(): string {
   return (
     process.env.AUTH_ACCESS_COOKIE_NAME ??
     process.env.AUTH_COOKIE_NAME ??
-    'interviewcoach_access'
+    'intervia_access'
   )
 }
 
@@ -12,12 +12,12 @@ export function getRefreshCookieName(): string {
   return (
     process.env.AUTH_REFRESH_COOKIE_NAME ??
     process.env.REFRESH_COOKIE_NAME ??
-    'interviewcoach_refresh'
+    'intervia_refresh'
   )
 }
 
 /** Legacy fallback cookie name from older auth implementation. */
-export const LEGACY_COOKIE = 'interviewcoach_auth'
+export const LEGACY_COOKIE = 'intervia_auth'
 
 /** Đọc runtime để hỗ trợ kiểm thử và cấu hình động. */
 export function isMaintenanceModeEnabled(): boolean {

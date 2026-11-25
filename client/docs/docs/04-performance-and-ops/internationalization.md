@@ -1,7 +1,7 @@
 # Chuyên Đề 15: Quốc Tế Hóa & Bản Địa Hóa (`I18N-*`)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [Coding Standards (`STD-TIME-*`)](../01-foundations/coding-standards.md) | [Design System & Styling (`SEM-*`)](../02-ui-and-design-system/design-system-and-styling.md) | [Performance (`PERF-*`)](./performance-and-web-vitals.md)  
 > **Vai trò SSOT:** Nguồn chân lý duy nhất cho **9 mã quy chuẩn `I18N-001` đến `I18N-009`**.  
@@ -26,11 +26,11 @@
 
 ## 1. Triết Lý Bản Địa Hóa & Phân Loại 3 Nhóm Văn Bản
 
-Lộ trình đa ngôn ngữ của **InterviewCoach** hướng tới **2 locale chính: `vi` (mặc định) và `en`** bằng **`next-intl`** (hỗ trợ trực tiếp Next.js 16 Server Components). Vì sản phẩm phục vụ sinh viên và kỹ sư CNTT, văn bản hiển thị được phân tách thành **3 nhóm rành mạch** để tránh dịch gượng thuật ngữ kỹ thuật:
+Lộ trình đa ngôn ngữ của **Intervia** hướng tới **2 locale chính: `vi` (mặc định) và `en`** bằng **`next-intl`** (hỗ trợ trực tiếp Next.js 16 Server Components). Vì sản phẩm phục vụ sinh viên và kỹ sư CNTT, văn bản hiển thị được phân tách thành **3 nhóm rành mạch** để tránh dịch gượng thuật ngữ kỹ thuật:
 
 ```mermaid
 flowchart TD
-    TXT["Văn bản hiển thị trong InterviewCoach"] --> G1["<b>Nhóm 1: UI Chrome & Validation</b><br/>Nhãn nút, menu, tiêu đề, thông báo lỗi form<br/>-> Quản lý qua next-intl (messages/vi.json, en.json) [Roadmap]"]
+    TXT["Văn bản hiển thị trong Intervia"] --> G1["<b>Nhóm 1: UI Chrome & Validation</b><br/>Nhãn nút, menu, tiêu đề, thông báo lỗi form<br/>-> Quản lý qua next-intl (messages/vi.json, en.json) [Roadmap]"]
     TXT --> G2["<b>Nhóm 2: Thuật ngữ chuẩn CNTT</b><br/>SFIA, O*NET, STAR, REST API, JWT, Backend Engineer<br/>-> Giữ nguyên thuật ngữ gốc, không dịch gượng"]
     TXT --> G3["<b>Nhóm 3: Nội dung Phiên Phỏng Vấn</b><br/>Câu hỏi AI, JD, CV, ghi âm trả lời (language: vi / en)<br/>-> Độc lập theo ngôn ngữ phiên ứng viên chọn"]
 ```

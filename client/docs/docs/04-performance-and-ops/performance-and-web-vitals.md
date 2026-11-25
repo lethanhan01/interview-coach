@@ -1,7 +1,7 @@
 # Chuyên Đề 13: Kỹ Thuật Hiệu Năng & Core Web Vitals (`PERF-*`)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [Architecture & Structure](../01-foundations/architecture-and-structure.md) | [Coding Standards (`STD-*`)](../01-foundations/coding-standards.md) | [State Management](../01-foundations/state-management.md) | [Observability & Telemetry (`OBS-*`)](./observability-and-telemetry.md)  
 > **Vai trò SSOT:** Nguồn chân lý duy nhất cho **13 mã quy chuẩn `PERF-001` đến `PERF-013`**, áp dụng ngân sách **First Load JS ≤ 180KB (gzip)** và đồng bộ trực tiếp với 8 nhóm hiệu năng trong `vercel-react-best-practices`.  

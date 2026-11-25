@@ -1,11 +1,11 @@
 [project]
 name = "interviewai-engine"
 version = "0.1.0"
-description = "High-Performance AI Compute Microservice for InterviewAI Platform"
+description = "High-Performance AI Compute Microservice for Intervia Platform"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 authors = [
-    { name = "InterviewAI Core Team", email = "engineering@interviewai.internal" }
+    { name = "Intervia Core Team", email = "engineering@intervia.vn" }
 ]
 dependencies = [
     "fastapi>=0.115.0",

@@ -1,6 +1,6 @@
 # Hướng dẫn áp dụng & tra cứu Mantine UI (`client/`)
 
-Thư mục này quy định chuẩn phát triển UI cho **InterviewCoach Frontend (`client/`)** dựa trên **Next.js 16 (App Router) + React 19 + Mantine v9 (`^9.8.2`, Zero-Hex Semantic-Only)** và chỉ dẫn cách tra cứu chính xác trên [`https://mantine.dev/`](https://mantine.dev/) cùng [`https://ui.mantine.dev/`](https://ui.mantine.dev/).
+Thư mục này quy định chuẩn phát triển UI cho **Intervia Frontend (`client/`)** dựa trên **Next.js 16 (App Router) + React 19 + Mantine v9 (`^9.8.2`, Zero-Hex Semantic-Only)** và chỉ dẫn cách tra cứu chính xác trên [`https://mantine.dev/`](https://mantine.dev/) cùng [`https://ui.mantine.dev/`](https://ui.mantine.dev/).
 
 > **Cổng tài liệu chính của Frontend**: Xem thêm [Master Hub Quy chuẩn Frontend (`client/docs/docs/README.md`)](../docs/README.md) và [Bộ luật AI Agents (`AGENTS.md`)](../../../AGENTS.md).
 
@@ -51,7 +51,7 @@ Khi cần layout hoàn chỉnh (navigation, auth, dashboard, landing section), t
 
 Dự án có sẵn bộ skills tại `client/.agents/skills/` (và bản đồng bộ tại `client/.aider-desk/skills/`). Khi triển khai hoặc review code React/Next.js/UI trong `client/`, Agent cần đọc đúng file `SKILL.md` tương ứng trước khi làm:
 
-| Nhu cầu / Tác vụ                                                                                | Skill cần đọc (`client/.agents/skills/...`)                                                                | Cách áp dụng vào InterviewCoach (`Next.js 16 + Mantine v9`)                                                                                           |
+| Nhu cầu / Tác vụ                                                                                | Skill cần đọc (`client/.agents/skills/...`)                                                                | Cách áp dụng vào Intervia (`Next.js 16 + Mantine v9`)                                                                                                 |
 | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Thiết kế Server State, `queryOptions()`, caching, prefetching & invalidation với TanStack Query | [`tanstack-integration-best-practices`](../../.agents/skills/tanstack-integration-best-practices/SKILL.md) | Áp dụng `queryOptions()` factory, `cache-single-source`, `ensureQueryData` và isolated `QueryClient`; chuyển phần Router sang Next.js 16 + Mantine v9 |
 | Viết, refactor, tối ưu hiệu năng React & Next.js (RSC, async, bundle, re-render)                | [`vercel-react-best-practices`](../../.agents/skills/vercel-react-best-practices/SKILL.md)                 | Áp dụng đầy đủ các rule cho **Next.js App Router, Server Components (RSC)** và client performance                                                     |

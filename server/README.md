@@ -1,4 +1,4 @@
-# InterviewCoach — Backend
+# Intervia — Backend
 
 NestJS 11, TypeScript 5.7, Prisma, BullMQ, Redis, Supabase (PostgreSQL + Auth).
 
@@ -104,7 +104,7 @@ Mở `.env` và điền các biến bắt buộc:
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 AUTH_JWT_SECRET=<at-least-32-random-characters>
-AUTH_COOKIE_NAME=interviewcoach_auth
+AUTH_COOKIE_NAME=intervia_auth
 AUTH_COOKIE_MAX_AGE=86400
 SMTP_HOST=
 SMTP_PORT=587

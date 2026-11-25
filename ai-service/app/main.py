@@ -42,7 +42,7 @@ async def lifespan(fastapi_app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(
-    title="InterviewAI Compute Engine",
+    title="Intervia Compute Engine",
     description="Stateless STT, TTS & NLP Microservice",
     version="1.0.0",
     lifespan=lifespan,

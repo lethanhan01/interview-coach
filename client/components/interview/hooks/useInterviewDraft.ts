@@ -8,9 +8,7 @@ const draftMapSchema = z.record(z.string(), z.string())
 function getStoredDrafts(sessionId: string): Record<string, string> {
   if (typeof window === 'undefined') return {}
   try {
-    const raw = window.sessionStorage.getItem(
-      `interviewcoach_draft_${sessionId}`
-    )
+    const raw = window.sessionStorage.getItem(`intervia_draft_${sessionId}`)
     if (!raw) return {}
     const parsed = JSON.parse(raw) as unknown
     const result = draftMapSchema.safeParse(parsed)
@@ -27,7 +25,7 @@ function persistDrafts(
   if (typeof window === 'undefined') return
   try {
     window.sessionStorage.setItem(
-      `interviewcoach_draft_${sessionId}`,
+      `intervia_draft_${sessionId}`,
       JSON.stringify(drafts)
     )
   } catch {}
@@ -73,7 +71,7 @@ export function useInterviewDraft(sessionId: string) {
     setDrafts({})
     if (typeof window !== 'undefined') {
       try {
-        window.sessionStorage.removeItem(`interviewcoach_draft_${sessionId}`)
+        window.sessionStorage.removeItem(`intervia_draft_${sessionId}`)
       } catch {}
     }
   }, [sessionId])

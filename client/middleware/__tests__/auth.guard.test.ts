@@ -6,7 +6,7 @@ function createRequest(
   path: string,
   cookies: Record<string, string> = {}
 ): NextRequest {
-  const req = new NextRequest(`https://interviewcoach.local${path}`)
+  const req = new NextRequest(`https://intervia.local${path}`)
   for (const [name, value] of Object.entries(cookies)) {
     req.cookies.set(name, value)
   }
@@ -41,19 +41,19 @@ describe('authGuard', () => {
     expect(res).not.toBeNull()
     expect(res?.status).toBe(307)
     expect(res?.headers.get('location')).toBe(
-      'https://interviewcoach.local/unauthenticated?next=%2Fsessions%2F123%3Ftab%3Dnotes'
+      'https://intervia.local/unauthenticated?next=%2Fsessions%2F123%3Ftab%3Dnotes'
     )
   })
 
   it('allows protected routes when access, refresh, or legacy cookie is present', () => {
     expect(
-      authGuard(createRequest('/sessions', { interviewcoach_access: 'tok' }))
+      authGuard(createRequest('/sessions', { intervia_access: 'tok' }))
     ).toBeNull()
     expect(
-      authGuard(createRequest('/profile', { interviewcoach_refresh: 'ref' }))
+      authGuard(createRequest('/profile', { intervia_refresh: 'ref' }))
     ).toBeNull()
     expect(
-      authGuard(createRequest('/admin/profile', { interviewcoach_auth: 'leg' }))
+      authGuard(createRequest('/admin/profile', { intervia_auth: 'leg' }))
     ).toBeNull()
   })
 
@@ -72,34 +72,34 @@ describe('authGuard', () => {
       createRequest('/login?next=/profile', { custom_access: 'tok' })
     )
     expect(redirected?.headers.get('location')).toBe(
-      'https://interviewcoach.local/profile'
+      'https://intervia.local/profile'
     )
   })
 
   it('redirects authenticated users away from /login and /register using safe next', () => {
     const fromLogin = authGuard(
       createRequest('/login?next=/setup?jdId=42', {
-        interviewcoach_access: 'tok',
+        intervia_access: 'tok',
       })
     )
     expect(fromLogin?.headers.get('location')).toBe(
-      'https://interviewcoach.local/setup?jdId=42'
+      'https://intervia.local/setup?jdId=42'
     )
 
     const fromRegister = authGuard(
-      createRequest('/register', { interviewcoach_access: 'tok' })
+      createRequest('/register', { intervia_access: 'tok' })
     )
     expect(fromRegister?.headers.get('location')).toBe(
-      'https://interviewcoach.local/sessions'
+      'https://intervia.local/sessions'
     )
 
     const unsafeNext = authGuard(
       createRequest('/login?next=https://evil.com', {
-        interviewcoach_access: 'tok',
+        intervia_access: 'tok',
       })
     )
     expect(unsafeNext?.headers.get('location')).toBe(
-      'https://interviewcoach.local/sessions'
+      'https://intervia.local/sessions'
     )
   })
 
@@ -107,7 +107,7 @@ describe('authGuard', () => {
     expect(
       authGuard(
         createRequest('/login?error=account_inactive', {
-          interviewcoach_access: 'stale-token',
+          intervia_access: 'stale-token',
         })
       )
     ).toBeNull()
@@ -115,7 +115,7 @@ describe('authGuard', () => {
     expect(
       authGuard(
         createRequest('/login?reason=session_expired', {
-          interviewcoach_access: 'stale-token',
+          intervia_access: 'stale-token',
         })
       )
     ).toBeNull()
@@ -123,9 +123,7 @@ describe('authGuard', () => {
 
   it('keeps /reset-password accessible even when access cookie exists', () => {
     expect(
-      authGuard(
-        createRequest('/reset-password', { interviewcoach_access: 'tok' })
-      )
+      authGuard(createRequest('/reset-password', { intervia_access: 'tok' }))
     ).toBeNull()
   })
 })

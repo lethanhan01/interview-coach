@@ -262,7 +262,7 @@ test('chuẩn hóa draft JD cũ thiếu field để input luôn controlled', asy
   await page.addInitScript(
     ({ requirements, jobContent }) => {
       window.localStorage.setItem(
-        'interviewcoach_jd_draft',
+        'intervia_jd_draft',
         JSON.stringify({ company: 'FPT Software', requirements, jobContent })
       )
     },

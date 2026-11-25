@@ -45,8 +45,8 @@ describe('AuthService', () => {
 
     mockConfig = {
       get: jest.fn((key: string) => {
-        if (key === 'AUTH_ACCESS_COOKIE_NAME') return 'interviewcoach_access';
-        if (key === 'AUTH_REFRESH_COOKIE_NAME') return 'interviewcoach_refresh';
+        if (key === 'AUTH_ACCESS_COOKIE_NAME') return 'intervia_access';
+        if (key === 'AUTH_REFRESH_COOKIE_NAME') return 'intervia_refresh';
         if (key === 'AUTH_ACCESS_COOKIE_MAX_AGE') return 900;
         if (key === 'AUTH_REFRESH_COOKIE_MAX_AGE') return 604800;
         if (key === 'PASSWORD_RESET_OTP_TTL_MINUTES') return 15;

@@ -1,4 +1,4 @@
-# HƯỚNG DẪN KHỞI CHẠY HỆ THỐNG TOÀN DIỆN (INTERVIEWCOACH LOCAL RUNNING GUIDE)
+# HƯỚNG DẪN KHỞI CHẠY HỆ THỐNG TOÀN DIỆN (INTERVIA LOCAL RUNNING GUIDE)
 
 Tài liệu này cung cấp chi tiết:
 1. **Phân tích nguyên nhân gốc rễ (Root Cause Analysis)** của lỗi biên dịch khi chạy server.
@@ -59,7 +59,7 @@ Khi chạy `npm run start:dev` trên `server/`, quá trình khởi động thự
 
 ## 3. HƯỚNG DẪN KHỞI CHẠY ĐÚNG CÁCH (STEP-BY-STEP)
 
-Hệ thống InterviewCoach hoạt động theo mô hình **Pragmatic Polyglot Architecture**, bao gồm 4 dịch vụ cần chạy song song trong quá trình phát triển:
+Hệ thống Intervia hoạt động theo mô hình **Pragmatic Polyglot Architecture**, bao gồm 4 dịch vụ cần chạy song song trong quá trình phát triển:
 
 ```
 [Port 6379] Redis (Docker)

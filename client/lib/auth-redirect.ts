@@ -41,8 +41,8 @@ export function getSafeNext(next: string | null | undefined): string {
   }
 
   try {
-    const target = new URL(next, 'https://interviewcoach.local')
-    if (target.origin !== 'https://interviewcoach.local') {
+    const target = new URL(next, 'https://intervia.local')
+    if (target.origin !== 'https://intervia.local') {
       return DEFAULT_AUTH_DESTINATION
     }
     if (

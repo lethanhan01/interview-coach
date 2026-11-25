@@ -9,7 +9,7 @@
 ---
 
 ## 1. TỔNG QUAN PHÂN HỆ LÕI
-Phân hệ NestJS Core Platform là trái tim điều phối của hệ thống InterviewCoach:
+Phân hệ NestJS Core Platform là trái tim điều phối của hệ thống Intervia:
 1. **Kiến trúc Modular Monolith & Clean Architecture 3 Lớp**: Presentation Layer (Controllers, DTOs, Guards), Application/Domain Layer (Use Case Services, Facades), Data/Persistence Layer (Prisma, Repositories).
 2. **Giao tiếp Xuyên Module qua Facade Pattern**: Mọi tương tác giữa các Bounded Contexts (Auth, Session, Media, Assessment, Question) bắt buộc thông qua thư mục `@modules/<context>/contracts`.
 3. **Tính Toàn vẹn Dữ liệu (ACID Interactive Transactions)**: Toàn bộ quá trình biến đổi trạng thái nhiều bảng được bao bọc trong `prisma.$transaction`.

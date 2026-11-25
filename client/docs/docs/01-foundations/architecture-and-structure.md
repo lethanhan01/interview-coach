@@ -1,7 +1,7 @@
 # Chuyên Đề 01: Kiến Trúc Ứng Dụng & Cấu Trúc Thư Mục (Architecture & Project Structure)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [Coding Standards](./coding-standards.md) | [State Management](./state-management.md) | [Component Patterns](../02-ui-and-design-system/component-patterns.md) | [Design System & Styling](../02-ui-and-design-system/design-system-and-styling.md)  
 > **Tính chất tài liệu:** Chuẩn mực kiến trúc mục tiêu (Normative Standard) cho toàn bộ tính năng mới và các màn hình migrate sang Next.js 16 App Router + Mantine v9; không sao chép mẫu từ mã nguồn legacy chưa chuẩn hóa trong `client/`.  
@@ -29,7 +29,7 @@
 
 ## 1. Triết Lý Kiến Trúc & Luồng Phụ Thuộc Một Chiều
 
-Kiến trúc Frontend của **InterviewCoach** ưu tiên ba thuộc tính cốt lõi: **tính dự đoán được (Predictability)**, **tách biệt chặt ranh giới Server/Client của Next.js 16 App Router**, và **cô lập thay đổi theo miền nghiệp vụ (Feature Isolation)**. Mọi tệp mới phải trả lời rõ ngay ba câu hỏi: _thuộc miền nghiệp vụ nào_, _chạy trên Server hay Client_, và _phụ thuộc một chiều về tầng nào_.
+Kiến trúc Frontend của **Intervia** ưu tiên ba thuộc tính cốt lõi: **tính dự đoán được (Predictability)**, **tách biệt chặt ranh giới Server/Client của Next.js 16 App Router**, và **cô lập thay đổi theo miền nghiệp vụ (Feature Isolation)**. Mọi tệp mới phải trả lời rõ ngay ba câu hỏi: _thuộc miền nghiệp vụ nào_, _chạy trên Server hay Client_, và _phụ thuộc một chiều về tầng nào_.
 
 ```mermaid
 flowchart TD

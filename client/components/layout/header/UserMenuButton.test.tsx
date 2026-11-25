@@ -16,7 +16,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/providers/AuthProvider', () => ({
   useAuth: () => ({
-    user: { id: 'u-1', email: 'candidate@interviewcoach.vn' },
+    user: { id: 'u-1', email: 'candidate@intervia.vn' },
     role: 'candidate',
     status: 'active',
     isLoading: false,

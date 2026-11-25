@@ -1,7 +1,7 @@
 # Chuyên Đề 04: React Component Design Patterns Với Mantine v9 (Component Patterns)
 
-> **Dự án:** InterviewCoach Frontend (`client/`)  
-> **Phiên bản:** 9.0 (InterviewCoach Next.js 16 + React 19 + Mantine v9 Standard)  
+> **Dự án:** Intervia Frontend (`client/`)  
+> **Phiên bản:** 9.0 (Intervia Next.js 16 + React 19 + Mantine v9 Standard)  
 > **Cổng điều hướng:** [Master Hub](../README.md) | [Quick Reference](../QUICK_REFERENCE.md) | [Cẩm nang Mantine v9](../../mantine/README.md)  
 > **Tài liệu liên quan:** [Architecture & Structure](../01-foundations/architecture-and-structure.md) | [Forms & Validation](./forms-and-validation.md) | [Design System & Styling](./design-system-and-styling.md) | [Accessibility](./accessibility.md)  
 > **Tính chất tài liệu:** Chuẩn mực thiết kế component kết hợp **Mantine v9 Primitives** với **React 19 Composition Patterns**; toàn bộ mã mẫu tự chứa từ `mantine.dev` và `vercel-composition-patterns`.  
@@ -30,7 +30,7 @@
 
 ## 1. Triết Lý Compose Over Wrap & Cây Chọn Pattern
 
-Thay vì tạo các lớp bọc mỏng trùng lặp trong `components/ui/` hay thêm hàng loạt props boolean điều khiển cấu trúc, mọi component mới của **InterviewCoach** tuân thủ nguyên tắc **Compose over Wrap**: tận dụng trực tiếp `@mantine/core`, chỉ ghép custom domain widgets từ Mantine primitives (`Box`, `Paper`, `UnstyledButton`, `Stack`, `Group`, `createPolymorphicComponent`) khi có yêu cầu nghiệp vụ đặc thù.
+Thay vì tạo các lớp bọc mỏng trùng lặp trong `components/ui/` hay thêm hàng loạt props boolean điều khiển cấu trúc, mọi component mới của **Intervia** tuân thủ nguyên tắc **Compose over Wrap**: tận dụng trực tiếp `@mantine/core`, chỉ ghép custom domain widgets từ Mantine primitives (`Box`, `Paper`, `UnstyledButton`, `Stack`, `Group`, `createPolymorphicComponent`) khi có yêu cầu nghiệp vụ đặc thù.
 
 ```mermaid
 flowchart TD

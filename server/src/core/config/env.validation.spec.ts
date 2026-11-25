@@ -16,7 +16,7 @@ describe('validateEnv', () => {
   it('validates local authentication configuration', () => {
     const result = validateEnv(validEnv);
     expect(result.APP_URL).toBe('http://localhost:3000');
-    expect(result.AUTH_COOKIE_NAME).toBe('interviewcoach_auth');
+    expect(result.AUTH_COOKIE_NAME).toBe('intervia_auth');
     expect(result.AUTH_COOKIE_MAX_AGE).toBe(86_400);
     expect(result.SMTP_PORT).toBe(587);
   });

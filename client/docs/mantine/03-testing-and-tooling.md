@@ -1,6 +1,6 @@
 # Testing, Storybook & Toolchain (`client/`)
 
-Tài liệu này bám sát cấu hình kiểm thử và công cụ kiểm toán tĩnh thực tế của **InterviewCoach Frontend** (`Next.js 16 + Vitest 4 + Storybook 10 + Stylelint 17 + Playwright`) trong `client/`.
+Tài liệu này bám sát cấu hình kiểm thử và công cụ kiểm toán tĩnh thực tế của **Intervia Frontend** (`Next.js 16 + Vitest 4 + Storybook 10 + Stylelint 17 + Playwright`) trong `client/`.
 
 ---
 
