@@ -8,21 +8,22 @@ import {
   Group,
   Select,
   SimpleGrid,
+  Skeleton,
   Stack,
+  Text,
   TextInput,
 } from '@mantine/core'
 import { schemaResolver, useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { IconAlertCircle } from '@tabler/icons-react'
+import { useQuery } from '@tanstack/react-query'
 import { getErrorMessage } from '@/lib/form-errors'
+import { catalogQueries } from '@/queries/catalog.queries'
 import type { EducationEntry } from '@/types'
-import { EDUCATION_DEGREE_OPTIONS } from '@/components/resume/constants'
 import {
   educationSchema,
   type EducationFormValues,
 } from '@/components/resume/resume-schemas'
-
-const DEGREE_OPTIONS = EDUCATION_DEGREE_OPTIONS.filter((o) => o.value !== '')
 
 export interface EducationEditFormProps {
   initialValues: EducationFormValues
@@ -39,6 +40,12 @@ export default function EducationEditForm({
   onCancel,
   onDirtyChange,
 }: Readonly<EducationEditFormProps>) {
+  const catalogQuery = useQuery(catalogQueries.interviewOptions())
+  const degreeOptions = [
+    { value: '', label: 'Chọn trình độ' },
+    ...(catalogQuery.data?.educationDegrees ?? []),
+  ]
+
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -84,17 +91,53 @@ export default function EducationEditForm({
         ) : null}
 
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-          <Select
-            id="education-degree"
-            clearable
-            label="Trình độ"
-            placeholder="Chọn trình độ..."
-            data={DEGREE_OPTIONS}
-            disabled={saving}
-            key={form.key('degree')}
-            {...form.getInputProps('degree')}
-            onChange={(val) => form.setFieldValue('degree', val ?? '')}
-          />
+          {catalogQuery.isPending ? (
+            <Stack gap={4}>
+              <Text size="sm" fw={500}>
+                Trình độ
+              </Text>
+              <Skeleton h={36} radius="sm" />
+            </Stack>
+          ) : catalogQuery.isError ? (
+            <Alert
+              color="danger"
+              variant="light"
+              role="alert"
+              title="Không thể tải danh mục cấu hình"
+              icon={
+                <IconAlertCircle size={18} stroke={1.5} aria-hidden="true" />
+              }
+            >
+              <Stack gap="xs">
+                <Text size="xs">
+                  Không thể tải danh mục trình độ học vấn từ máy chủ.
+                </Text>
+                <Group>
+                  <Button
+                    type="button"
+                    size="compact-xs"
+                    variant="light"
+                    color="danger"
+                    onClick={() => void catalogQuery.refetch()}
+                  >
+                    Thử lại
+                  </Button>
+                </Group>
+              </Stack>
+            </Alert>
+          ) : (
+            <Select
+              id="education-degree"
+              clearable
+              label="Trình độ"
+              placeholder="Chọn trình độ..."
+              data={degreeOptions}
+              disabled={saving}
+              key={form.key('degree')}
+              {...form.getInputProps('degree')}
+              onChange={(val) => form.setFieldValue('degree', val ?? '')}
+            />
+          )}
 
           <TextInput
             id="education-grad-year"

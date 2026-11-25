@@ -1,8 +1,16 @@
-import { render, screen } from '@test-utils'
+import {
+  createTestQueryClient,
+  render,
+  screen,
+  userEvent,
+  waitFor,
+} from '@test-utils'
 import { axe } from 'jest-axe'
-import { describe, expect, it } from 'vitest'
-import SessionMetadataCard from './SessionMetadataCard'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { catalogService } from '@/services/catalog.service'
+import { seedCatalogQuery } from '@/test-utils/fixtures/catalog.fixture'
 import type { Session } from '@/types'
+import SessionMetadataCard from './SessionMetadataCard'
 
 const mockSession: Session = {
   id: 'session-123',
@@ -17,13 +25,28 @@ const mockSession: Session = {
 }
 
 describe('SessionMetadataCard', () => {
-  it('renders correctly', () => {
-    const { container } = render(<SessionMetadataCard session={mockSession} />)
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('renders correctly with seeded catalog labels', () => {
+    const queryClient = createTestQueryClient()
+    seedCatalogQuery(queryClient)
+
+    const { container } = render(
+      <SessionMetadataCard session={mockSession} />,
+      { queryClient }
+    )
     expect(container).toBeInTheDocument()
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument()
+    expect(screen.getByText('Kỹ thuật')).toBeInTheDocument()
+    expect(screen.getByText('Việt Nam')).toBeInTheDocument()
   })
 
   it('parses JD sections and tech stack case-insensitively', () => {
+    const queryClient = createTestQueryClient()
+    seedCatalogQuery(queryClient)
+
     const sessionWithJd: Session = {
       ...mockSession,
       jobDescription: [
@@ -39,7 +62,7 @@ describe('SessionMetadataCard', () => {
       ].join('\n'),
     }
 
-    render(<SessionMetadataCard session={sessionWithJd} />)
+    render(<SessionMetadataCard session={sessionWithJd} />, { queryClient })
     expect(screen.getByText('Acme Corp')).toBeInTheDocument()
     expect(screen.getByText('React')).toBeInTheDocument()
     expect(screen.getByText('Node.js')).toBeInTheDocument()
@@ -49,8 +72,45 @@ describe('SessionMetadataCard', () => {
     ).toBeInTheDocument()
   })
 
+  it('falls back to raw codes while catalog is pending', () => {
+    vi.spyOn(catalogService, 'getInterviewOptions').mockImplementation(
+      () => new Promise(() => {})
+    )
+
+    render(<SessionMetadataCard session={mockSession} />)
+    expect(screen.getByText('technical')).toBeInTheDocument()
+    expect(screen.getByText('VN')).toBeInTheDocument()
+  })
+
+  it('shows compact error alert with retry when catalog fails', async () => {
+    const spy = vi
+      .spyOn(catalogService, 'getInterviewOptions')
+      .mockRejectedValue(new Error('Catalog error'))
+    const user = userEvent.setup()
+
+    render(<SessionMetadataCard session={mockSession} />)
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Không thể tải danh mục nhãn phiên phỏng vấn/)
+      ).toBeInTheDocument()
+    })
+    expect(screen.getByText('technical')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Thử lại' }))
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledTimes(2)
+    })
+  })
+
   it('has no accessibility violations', async () => {
-    const { container } = render(<SessionMetadataCard session={mockSession} />)
+    const queryClient = createTestQueryClient()
+    seedCatalogQuery(queryClient)
+
+    const { container } = render(
+      <SessionMetadataCard session={mockSession} />,
+      { queryClient }
+    )
     expect(await axe(container)).toHaveNoViolations()
   })
 })

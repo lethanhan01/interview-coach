@@ -13,7 +13,7 @@ describe('useSetupDraft', () => {
     expect(result.current.jd).toEqual(EMPTY_JD)
   })
 
-  it('normalizes legacy partial drafts missing optional fields', () => {
+  it('normalizes legacy partial drafts without synchronous SFIA derivation', () => {
     window.localStorage.setItem(
       JD_DRAFT_KEY,
       JSON.stringify({
@@ -28,6 +28,21 @@ describe('useSetupDraft', () => {
     expect(result.current.jd.company).toBe('FPT Software')
     expect(result.current.jd.website).toBe('')
     expect(result.current.jd.techStack).toEqual([])
+    expect(result.current.jd.targetSfiaLevel).toBeUndefined()
+  })
+
+  it('preserves valid targetSfiaLevel from stored draft', () => {
+    window.localStorage.setItem(
+      JD_DRAFT_KEY,
+      JSON.stringify({
+        company: 'FPT Software',
+        level: 'senior',
+        targetSfiaLevel: 4,
+      })
+    )
+
+    const { result } = renderHook(() => useSetupDraft())
+
     expect(result.current.jd.targetSfiaLevel).toBe(4)
   })
 

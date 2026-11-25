@@ -13,7 +13,10 @@ import {
   Text,
 } from '@mantine/core'
 import { IconClock } from '@tabler/icons-react'
+import { useQuery } from '@tanstack/react-query'
 import { formatVietnamDateTime } from '@/lib/date-time'
+import { getSessionTypeLabel } from '@/lib/interview-option-helpers'
+import { catalogQueries } from '@/queries/catalog.queries'
 import type { Session, SessionStatus } from '@/types'
 import interactions from '@/styles/interactions.module.css'
 import surfaces from '@/styles/surfaces.module.css'
@@ -21,11 +24,6 @@ import typography from '@/styles/typography.module.css'
 import classes from './SessionListCard.module.css'
 
 type SemanticColor = 'brand' | 'success' | 'warning' | 'danger' | 'neutral'
-
-const SESSION_TYPE_LABELS: Record<string, string> = {
-  hr: 'HR / Behavioral',
-  technical: 'Technical',
-}
 
 const STATUS_META: Record<
   SessionStatus,
@@ -62,6 +60,12 @@ export interface SessionListCardProps {
 export default function SessionListCard({
   session,
 }: Readonly<SessionListCardProps>) {
+  const catalogQuery = useQuery(catalogQueries.interviewOptions())
+  const sessionTypeLabel = getSessionTypeLabel(
+    session.sessionType,
+    catalogQuery.data?.sessionTypes ?? [],
+    'label'
+  )
   const statusInfo = STATUS_META[session.status] ?? {
     label: session.status,
     color: 'neutral' as const,
@@ -106,7 +110,7 @@ export default function SessionListCard({
 
         <Group gap={6} wrap="wrap">
           <Badge variant="outline" color="neutral" size="sm">
-            {SESSION_TYPE_LABELS[session.sessionType] ?? session.sessionType}
+            {sessionTypeLabel || session.sessionType}
           </Badge>
           <Badge variant="outline" color="neutral" size="sm">
             {session.contextPackId}

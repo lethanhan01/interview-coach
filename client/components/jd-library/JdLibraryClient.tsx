@@ -5,44 +5,35 @@ import Link from 'next/link'
 import {
   Alert,
   Button,
-  CloseButton,
   Container,
   Group,
   Paper,
-  ScrollArea,
-  SegmentedControl,
   Skeleton,
   Stack,
   Text,
-  TextInput,
   ThemeIcon,
   Title,
   VisuallyHidden,
 } from '@mantine/core'
-import {
-  IconAlertCircle,
-  IconBuilding,
-  IconPlus,
-  IconSearch,
-} from '@tabler/icons-react'
+import { IconAlertCircle, IconBuilding, IconPlus } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
 import { SafeViewTransition } from '@/components/common/SafeViewTransition'
 import { getErrorMessage } from '@/lib/form-errors'
-import { JD_LEVEL_OPTIONS, normalizeJdLevel } from '@/lib/interview-options'
+import { normalizeJdLevel } from '@/lib/interview-option-helpers'
+import { catalogQueries } from '@/queries/catalog.queries'
 import { prepQueries } from '@/queries/prep.queries'
 import JdCard from './JdCard'
-
-const LEVEL_FILTER_OPTIONS = [
-  { value: 'all', label: 'Tất cả' },
-  ...JD_LEVEL_OPTIONS.map((opt) => ({
-    value: opt.value,
-    label: opt.value === 'intern' ? 'Intern' : opt.label,
-  })),
-]
+import JdLibraryFilterBar from './JdLibraryFilterBar'
 
 export default function JdLibraryClient() {
   const [search, setSearch] = useState('')
   const [levelFilter, setLevelFilter] = useState('all')
+
+  const catalogQuery = useQuery(catalogQueries.interviewOptions())
+  const jdLevels = useMemo(
+    () => catalogQuery.data?.jdLevels ?? [],
+    [catalogQuery.data]
+  )
 
   const {
     data: items = [],
@@ -58,7 +49,10 @@ export default function JdLibraryClient() {
   const filteredItems = useMemo(() => {
     const q = search.trim().toLowerCase()
     return items.filter((item) => {
-      if (levelFilter !== 'all' && normalizeJdLevel(item.level) !== levelFilter)
+      if (
+        levelFilter !== 'all' &&
+        normalizeJdLevel(item.level, jdLevels) !== levelFilter
+      )
         return false
       if (!q) return true
       return [
@@ -74,7 +68,7 @@ export default function JdLibraryClient() {
         .toLowerCase()
         .includes(q)
     })
-  }, [items, levelFilter, search])
+  }, [items, jdLevels, levelFilter, search])
 
   if (isPending) {
     return (
@@ -175,38 +169,16 @@ export default function JdLibraryClient() {
           </Paper>
         ) : (
           <>
-            <Paper withBorder radius="md" p="md">
-              <Stack gap="sm">
-                <TextInput
-                  aria-label="Tìm kiếm Job Description"
-                  placeholder="Tìm theo công ty, vị trí, địa điểm hoặc tech stack..."
-                  value={search}
-                  onChange={(event) => setSearch(event.currentTarget.value)}
-                  leftSection={
-                    <IconSearch size={16} stroke={1.5} aria-hidden="true" />
-                  }
-                  rightSection={
-                    search ? (
-                      <CloseButton
-                        size="sm"
-                        aria-label="Xóa từ khóa tìm kiếm"
-                        onClick={() => setSearch('')}
-                      />
-                    ) : null
-                  }
-                />
-
-                <ScrollArea type="auto" offsetScrollbars>
-                  <SegmentedControl
-                    aria-label="Lọc theo cấp bậc"
-                    size="xs"
-                    value={levelFilter}
-                    onChange={setLevelFilter}
-                    data={LEVEL_FILTER_OPTIONS}
-                  />
-                </ScrollArea>
-              </Stack>
-            </Paper>
+            <JdLibraryFilterBar
+              search={search}
+              onSearchChange={setSearch}
+              levelFilter={levelFilter}
+              onLevelFilterChange={setLevelFilter}
+              jdLevels={jdLevels}
+              isCatalogPending={catalogQuery.isPending}
+              isCatalogError={catalogQuery.isError}
+              onRetryCatalog={() => void catalogQuery.refetch()}
+            />
 
             {filteredItems.length === 0 ? (
               <Paper withBorder radius="md" p="xl">
@@ -235,7 +207,7 @@ export default function JdLibraryClient() {
               <SafeViewTransition default="none">
                 <Stack gap="sm">
                   {filteredItems.map((item) => (
-                    <JdCard key={item.id} item={item} />
+                    <JdCard key={item.id} item={item} jdLevels={jdLevels} />
                   ))}
                 </Stack>
               </SafeViewTransition>

@@ -44,6 +44,12 @@ export const queryKeys = {
     search: (query?: string, limit?: number) =>
       ['onet', 'search', query ?? '', limit ?? 20] as const,
     tech: (socCode: string) => ['onet', 'tech', socCode] as const,
+    technologies: (query?: string, limit?: number) =>
+      ['onet', 'technologies', query ?? '', limit ?? 30] as const,
+  },
+  catalog: {
+    all: ['catalog'] as const,
+    interviewOptions: () => ['catalog', 'interview-options'] as const,
   },
   onetAdmin: {
     all: ['onet-admin'] as const,

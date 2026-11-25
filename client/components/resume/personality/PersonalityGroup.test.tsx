@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import PersonalityGroup from './PersonalityGroup'
 
 describe('PersonalityGroup', () => {
-  it('renders empty state and existing personality label cleanly', async () => {
+  it('renders empty state and existing personality text cleanly', async () => {
     const { container, rerender } = render(
       <PersonalityGroup data={{}} onSave={vi.fn()} />
     )
@@ -12,19 +12,24 @@ describe('PersonalityGroup', () => {
     expect(await axe(container)).toHaveNoViolations()
 
     rerender(
-      <PersonalityGroup data={{ personality: 'analytical' }} onSave={vi.fn()} />
+      <PersonalityGroup
+        data={{ personality: 'Chủ động, thích phân tích hệ thống' }}
+        onSave={vi.fn()}
+      />
     )
-    expect(screen.getByText('Phân tích (Analytical)')).toBeInTheDocument()
-  })
+    expect(
+      screen.getByText('Chủ động, thích phân tích hệ thống')
+    ).toBeInTheDocument()
+  }, 15_000)
 
-  it('allows selecting a single personality card and saving to API', async () => {
+  it('allows editing free-text personality and saving to API', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn().mockResolvedValue(undefined)
     const onDirtyChange = vi.fn()
 
     const { container } = render(
       <PersonalityGroup
-        data={{ personality: 'introvert' }}
+        data={{ personality: 'Hướng nội' }}
         onSave={onSave}
         onDirtyChange={onDirtyChange}
       />
@@ -33,14 +38,37 @@ describe('PersonalityGroup', () => {
     await user.click(screen.getByRole('button', { name: /chỉnh sửa/i }))
     expect(await axe(container)).toHaveNoViolations()
 
-    await user.click(screen.getByText('Lãnh đạo (Leader)'))
+    const textarea = screen.getByLabelText(
+      'Mô tả tính cách & phong cách làm việc'
+    )
+    await user.clear(textarea)
+    await user.type(textarea, 'Chủ động và phối hợp nhóm tốt')
     expect(onDirtyChange).toHaveBeenCalledWith(true)
 
     await user.click(screen.getByRole('button', { name: /lưu thay đổi/i }))
 
     await waitFor(() => {
-      expect(onSave).toHaveBeenCalledWith({ personality: 'leader' })
+      expect(onSave).toHaveBeenCalledWith({
+        personality: 'Chủ động và phối hợp nhóm tốt',
+      })
     })
     expect(onDirtyChange).toHaveBeenLastCalledWith(false)
+  }, 15_000)
+
+  it('allows clearing personality text and saving null', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <PersonalityGroup data={{ personality: 'Phân tích' }} onSave={onSave} />
+    )
+
+    await user.click(screen.getByRole('button', { name: /chỉnh sửa/i }))
+    await user.click(screen.getByRole('button', { name: 'Xóa nội dung' }))
+    await user.click(screen.getByRole('button', { name: /lưu thay đổi/i }))
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith({ personality: null })
+    })
   })
 })

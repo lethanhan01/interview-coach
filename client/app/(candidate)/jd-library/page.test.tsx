@@ -1,7 +1,14 @@
-import { render, screen, userEvent, waitFor } from '@test-utils'
+import {
+  createTestQueryClient,
+  render,
+  screen,
+  userEvent,
+  waitFor,
+} from '@test-utils'
 import { axe } from 'jest-axe'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { prepService } from '@/services/prep.service'
+import { seedCatalogQuery } from '@/test-utils/fixtures/catalog.fixture'
 import type { SavedJobDescription } from '@/types'
 import JdLibraryClient from '@/components/jd-library/JdLibraryClient'
 
@@ -50,11 +57,17 @@ describe('JdLibraryClient', () => {
     vi.clearAllMocks()
   })
 
+  function renderJdLibrary() {
+    const queryClient = createTestQueryClient()
+    seedCatalogQuery(queryClient)
+    return render(<JdLibraryClient />, { queryClient })
+  }
+
   it('renders accessible loading state initially', () => {
     vi.mocked(prepService.getSavedJobDescriptions).mockReturnValue(
       new Promise(() => {})
     )
-    render(<JdLibraryClient />)
+    renderJdLibrary()
     expect(screen.getByRole('status')).toHaveTextContent(
       'Đang tải danh sách Job Descriptions...'
     )
@@ -66,7 +79,7 @@ describe('JdLibraryClient', () => {
       .mockRejectedValueOnce(new Error('Lỗi kết nối máy chủ'))
       .mockResolvedValueOnce(mockJdList)
 
-    render(<JdLibraryClient />)
+    renderJdLibrary()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Lỗi kết nối máy chủ'
@@ -80,7 +93,7 @@ describe('JdLibraryClient', () => {
 
   it('renders empty state with semantic links to /setup?new=1', async () => {
     vi.mocked(prepService.getSavedJobDescriptions).mockResolvedValue([])
-    const { container } = render(<JdLibraryClient />)
+    const { container } = renderJdLibrary()
 
     expect(
       await screen.findByRole('heading', {
@@ -99,7 +112,7 @@ describe('JdLibraryClient', () => {
 
   it('renders saved JDs with O*NET/SFIA badges, tech overflow, and semantic links', async () => {
     vi.mocked(prepService.getSavedJobDescriptions).mockResolvedValue(mockJdList)
-    const { container } = render(<JdLibraryClient />)
+    const { container } = renderJdLibrary()
 
     expect(await screen.findByText('VNG Corporation')).toBeInTheDocument()
     expect(screen.getByText('Backend Engineer')).toBeInTheDocument()
@@ -122,7 +135,7 @@ describe('JdLibraryClient', () => {
   it('filters JDs by search query and level filter, with reset button', async () => {
     const user = userEvent.setup()
     vi.mocked(prepService.getSavedJobDescriptions).mockResolvedValue(mockJdList)
-    render(<JdLibraryClient />)
+    renderJdLibrary()
 
     await screen.findByText('VNG Corporation')
 

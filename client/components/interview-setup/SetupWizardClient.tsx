@@ -2,25 +2,24 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Box, Button, Container, Stack, Stepper } from '@mantine/core'
-import { notifications } from '@mantine/notifications'
 import { IconArrowLeft } from '@tabler/icons-react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import {
   DIRECTIONAL_VIEW_TRANSITION_ENTER,
   DIRECTIONAL_VIEW_TRANSITION_EXIT,
   SafeViewTransition,
   startTypedTransition,
 } from '@/components/common/SafeViewTransition'
-import { getErrorMessage } from '@/lib/form-errors'
-import { normalizeJdLevel } from '@/lib/interview-options'
+import {
+  mapJdLevelToSfia,
+  normalizeJdLevel,
+} from '@/lib/interview-option-helpers'
+import { EMPTY_JD } from '@/lib/setup-helpers'
+import { catalogQueries } from '@/queries/catalog.queries'
 import { prepQueries } from '@/queries/prep.queries'
-import { queryKeys } from '@/queries/keys'
 import { sessionQueries } from '@/queries/session.queries'
-import { DURATION_OPTIONS, EMPTY_JD } from '@/lib/setup-helpers'
-import { prepService } from '@/services/prep.service'
-import { sessionService } from '@/services/session.service'
 import type {
   ContextPack,
   InterviewDuration,
@@ -29,22 +28,19 @@ import type {
   SessionType,
 } from '@/types'
 import {
-  buildCreateSessionPayload,
   hasJdContent,
   hydrateSavedJobDescriptionLevels,
   savedJobDescriptionToForm,
-  toSavedJobDescriptionPayload,
 } from './setup-mappers'
 import SetupStepPanels, {
   SetupWizardSkeleton,
   type SetupStep,
 } from './SetupStepPanels'
 import { useSetupDraft } from './useSetupDraft'
+import { useSetupSessionSubmit } from './useSetupSessionSubmit'
 
 export default function SetupWizardClient() {
-  const router = useRouter()
   const searchParams = useSearchParams()
-  const queryClient = useQueryClient()
   const {
     jd: draftJd,
     formVersion,
@@ -58,14 +54,20 @@ export default function SetupWizardClient() {
   const [sessionType, setSessionType] = useState<SessionType>('hr')
   const [contextPack, setContextPack] = useState<ContextPack>('VN')
   const [duration, setDuration] = useState<InterviewDuration>(30)
-  const [error, setError] = useState<string | null>(null)
 
   const jdIdParam = searchParams.get('jdId')
   const isNewParam = searchParams.get('new') === '1'
+  const catalogQuery = useQuery(catalogQueries.interviewOptions())
+  const jdLevels = useMemo(
+    () => catalogQuery.data?.jdLevels ?? [],
+    [catalogQuery.data]
+  )
+
   const savedJdsQuery = useQuery(prepQueries.savedJds())
   const needsLevelHydration =
     savedJdsQuery.isSuccess &&
-    savedJdsQuery.data.some((item) => !normalizeJdLevel(item.level))
+    catalogQuery.isSuccess &&
+    savedJdsQuery.data.some((item) => !normalizeJdLevel(item.level, jdLevels))
   const sessionsQuery = useQuery({
     ...sessionQueries.list(),
     enabled: needsLevelHydration,
@@ -74,8 +76,8 @@ export default function SetupWizardClient() {
   const savedJobDescriptions = useMemo(() => {
     const items = savedJdsQuery.data ?? []
     if (!needsLevelHydration || !sessionsQuery.data) return items
-    return hydrateSavedJobDescriptionLevels(items, sessionsQuery.data)
-  }, [needsLevelHydration, savedJdsQuery.data, sessionsQuery.data])
+    return hydrateSavedJobDescriptionLevels(items, sessionsQuery.data, jdLevels)
+  }, [jdLevels, needsLevelHydration, savedJdsQuery.data, sessionsQuery.data])
 
   const prefilledFromParam = useMemo(() => {
     if (!jdIdParam) return null
@@ -83,9 +85,13 @@ export default function SetupWizardClient() {
     if (!match) return null
     return {
       id: match.id,
-      form: savedJobDescriptionToForm(match, sessionsQuery.data ?? []),
+      form: savedJobDescriptionToForm(
+        match,
+        jdLevels,
+        sessionsQuery.data ?? []
+      ),
     }
-  }, [jdIdParam, savedJobDescriptions, sessionsQuery.data])
+  }, [jdIdParam, jdLevels, savedJobDescriptions, sessionsQuery.data])
 
   const isLoadingInitial =
     savedJdsQuery.isPending || (needsLevelHydration && sessionsQuery.isPending)
@@ -99,11 +105,41 @@ export default function SetupWizardClient() {
       : 0
 
   const step = userStep ?? derivedStep
-  const activeJd: JdFormData =
+  const rawActiveJd: JdFormData =
     !hasCustomJd && prefilledFromParam ? prefilledFromParam.form : draftJd
+
+  const activeJd: JdFormData = useMemo(() => {
+    if (
+      rawActiveJd.targetSfiaLevel !== undefined ||
+      !rawActiveJd.level ||
+      !catalogQuery.data
+    ) {
+      return rawActiveJd
+    }
+    const mapped = mapJdLevelToSfia(
+      rawActiveJd.level,
+      catalogQuery.data.jdLevels
+    )
+    return mapped !== undefined
+      ? { ...rawActiveJd, targetSfiaLevel: mapped }
+      : rawActiveJd
+  }, [catalogQuery.data, rawActiveJd])
+
   const activeSelectedId =
     selectedSavedId || (!hasCustomJd ? (prefilledFromParam?.id ?? '') : '')
   const jdFormKey = `${formVersion}-${!hasCustomJd && prefilledFromParam ? prefilledFromParam.id : 'draft'}`
+
+  const { error, submitting, canSubmit, submit } = useSetupSessionSubmit({
+    activeJd,
+    sessionType,
+    contextPack,
+    duration,
+    catalog: catalogQuery.data,
+    onSubmitted: () => {
+      setHasCustomJd(true)
+      clearDraft()
+    },
+  })
 
   function goToStep(next: SetupStep) {
     if (next === step) return
@@ -114,7 +150,9 @@ export default function SetupWizardClient() {
 
   function handlePickerSelect(item: SavedJobDescription) {
     setHasCustomJd(true)
-    replaceJd(savedJobDescriptionToForm(item, sessionsQuery.data ?? []))
+    replaceJd(
+      savedJobDescriptionToForm(item, jdLevels, sessionsQuery.data ?? [])
+    )
     setSelectedSavedId(item.id)
     goToStep(1)
   }
@@ -126,46 +164,6 @@ export default function SetupWizardClient() {
     goToStep(1)
   }
 
-  const numQuestions = DURATION_OPTIONS.find(
-    (d) => d.value === duration
-  )!.numQuestions
-  const createSessionMutation = useMutation({
-    mutationFn: async () => {
-      const savedJd = await prepService.saveJobDescription(
-        toSavedJobDescriptionPayload(activeJd)
-      )
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.prep.savedJds(),
-      })
-      return sessionService.createSession(
-        buildCreateSessionPayload({
-          jd: activeJd,
-          sessionType,
-          contextPack,
-          numQuestions,
-          savedJobDescriptionId: savedJd.id,
-        })
-      )
-    },
-    onSuccess: (created) => {
-      setHasCustomJd(true)
-      clearDraft()
-      void queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all })
-      router.push(`/sessions/${created.id}`)
-    },
-    onError: (err) => {
-      const message = getErrorMessage(err, 'Không thể tạo phiên phỏng vấn')
-      setError(message)
-      notifications.show({
-        title: 'Không thể tạo phiên phỏng vấn',
-        message,
-        color: 'danger',
-        closeButtonProps: { 'aria-label': 'Đóng thông báo' },
-      })
-    },
-  })
-  const submitting =
-    createSessionMutation.isPending || createSessionMutation.isSuccess
   if (isLoadingInitial) return <SetupWizardSkeleton />
 
   return (
@@ -220,6 +218,7 @@ export default function SetupWizardClient() {
               duration={duration}
               error={error}
               submitting={submitting}
+              submitDisabled={!canSubmit}
               onSelectSaved={handlePickerSelect}
               onNewFromPicker={handlePickerNew}
               onJdChange={(next) => {
@@ -236,11 +235,7 @@ export default function SetupWizardClient() {
               onSetContextPack={setContextPack}
               onSetDuration={setDuration}
               onGoToStep={goToStep}
-              onSubmit={() => {
-                if (submitting) return
-                setError(null)
-                createSessionMutation.mutate()
-              }}
+              onSubmit={submit}
             />
           </Box>
         </SafeViewTransition>

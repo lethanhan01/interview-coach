@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { useQueryClient } from '@tanstack/react-query'
 import { EMPTY_JD } from '@/lib/setup-helpers'
+import { seedCatalogQuery } from '@/test-utils/fixtures/catalog.fixture'
 import type { JdFormData } from '@/types'
 import JdForm from './JdForm'
 
@@ -11,6 +13,13 @@ const meta: Meta<typeof JdForm> = {
   parameters: {
     layout: 'padded',
   },
+  decorators: [
+    (Story) => {
+      const queryClient = useQueryClient()
+      seedCatalogQuery(queryClient)
+      return <Story />
+    },
+  ],
 }
 
 export default meta

@@ -1,20 +1,12 @@
 import { Box, Group, Stack, Text } from '@mantine/core'
+import type { CatalogSfiaLevelOption } from '@/types'
 import classes from './SfiaSegmentMeter.module.css'
 
 export interface SfiaSegmentMeterProps {
   demonstratedLevel: number
   targetLevel: number
   skillName: string
-}
-
-const SFIA_LEVEL_DESCRIPTIONS: Record<number, string> = {
-  1: 'Follow',
-  2: 'Assist',
-  3: 'Apply',
-  4: 'Enable',
-  5: 'Ensure, Advise',
-  6: 'Initiate, Influence',
-  7: 'Set Strategy, Inspire',
+  sfiaLevels?: readonly CatalogSfiaLevelOption[]
 }
 
 const SEGMENTS = [1, 2, 3, 4, 5, 6, 7]
@@ -23,6 +15,7 @@ export function SfiaSegmentMeter({
   demonstratedLevel,
   targetLevel,
   skillName,
+  sfiaLevels,
 }: Readonly<SfiaSegmentMeterProps>) {
   const safeDemonstratedLevel = Math.max(0, Math.min(7, demonstratedLevel ?? 0))
   const isPassed = safeDemonstratedLevel >= targetLevel && targetLevel > 0
@@ -58,7 +51,9 @@ export function SfiaSegmentMeter({
             state = 'gap'
           }
 
-          const title = `Level ${level}: ${SFIA_LEVEL_DESCRIPTIONS[level] || ''}${
+          const levelMeta = sfiaLevels?.find((item) => item.levelId === level)
+          const levelLabel = levelMeta?.nameVi || levelMeta?.name || `L${level}`
+          const title = `Level ${level}: ${levelLabel}${
             isTarget ? ' (Mục tiêu)' : ''
           }${level === safeDemonstratedLevel ? ' (Thể hiện)' : ''}`
 

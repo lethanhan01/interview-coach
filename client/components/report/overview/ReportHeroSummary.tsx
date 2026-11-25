@@ -1,4 +1,4 @@
-import { Badge, Card, Group, Paper, Stack, Text } from '@mantine/core'
+import { Badge, Group, Paper, Stack, Text } from '@mantine/core'
 import type { Report } from '@/types'
 import { RecommendationBadge } from './RecommendationBadge'
 import { getReportRecommendationStatus } from '@/components/report/report-summary-helpers'

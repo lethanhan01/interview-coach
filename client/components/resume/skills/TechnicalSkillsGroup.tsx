@@ -8,12 +8,9 @@ import { IconAlertCircle, IconPencil } from '@tabler/icons-react'
 import ProfileSection from '@/components/profile/primitives/ProfileSection'
 import { getErrorMessage } from '@/lib/form-errors'
 import type { OnetTech, TechnicalSkillEntry } from '@/types'
-import type { TechCategory } from '@/components/resume/constants'
 import OnetSkillSuggestions from './OnetSkillSuggestions'
-import SkillCategoryEditor, { detectTechCategory } from './SkillCategoryEditor'
+import SkillCategoryEditor from './SkillCategoryEditor'
 import SkillCategoryGrid from './SkillCategoryGrid'
-
-export { detectTechCategory }
 
 export interface TechnicalSkillsGroupProps {
   data: TechnicalSkillEntry[]
@@ -32,8 +29,6 @@ export default function TechnicalSkillsGroup({
   const [isEditing, { open: openEdit, close: closeEdit }] = useDisclosure(false)
   const [entries, setEntries] = useState<TechnicalSkillEntry[]>(data)
   const [customName, setCustomName] = useState('')
-  const [customCategory, setCustomCategory] =
-    useState<TechCategory>('framework')
   const [customMonths, setCustomMonths] = useState<number | string>('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -55,7 +50,6 @@ export default function TechnicalSkillsGroup({
 
   function handlePickOnet(tech: OnetTech) {
     setCustomName(tech.example)
-    setCustomCategory(detectTechCategory(tech.example))
     if (customMonths === '') setCustomMonths(12)
   }
 
@@ -77,7 +71,6 @@ export default function TechnicalSkillsGroup({
       ...prev,
       {
         id: crypto.randomUUID(),
-        category: customCategory,
         name: trimmed,
         usagePeriod: parsedMonths,
       },
@@ -146,14 +139,9 @@ export default function TechnicalSkillsGroup({
               />
               <SkillCategoryEditor
                 customName={customName}
-                customCategory={customCategory}
                 customMonths={customMonths}
                 disabled={saving}
-                onNameChange={(val) => {
-                  setCustomName(val)
-                  if (val.trim()) setCustomCategory(detectTechCategory(val))
-                }}
-                onCategoryChange={setCustomCategory}
+                onNameChange={setCustomName}
                 onMonthsChange={setCustomMonths}
                 onAdd={handleAddSkill}
               />
@@ -166,47 +154,42 @@ export default function TechnicalSkillsGroup({
             onRemove={removeEntry}
           />
 
+          {error ? (
+            <Alert
+              color="danger"
+              variant="light"
+              role="alert"
+              icon={
+                <IconAlertCircle size={18} stroke={1.5} aria-hidden="true" />
+              }
+            >
+              {error}
+            </Alert>
+          ) : null}
+
           {isEditing ? (
-            <>
-              {error ? (
-                <Alert
-                  color="danger"
-                  variant="light"
-                  role="alert"
-                  icon={
-                    <IconAlertCircle
-                      size={18}
-                      stroke={1.5}
-                      aria-hidden="true"
-                    />
-                  }
-                >
-                  {error}
-                </Alert>
-              ) : null}
-              <Group gap="xs">
-                <Button
-                  type="button"
-                  color="brand"
-                  size="sm"
-                  loading={saving}
-                  disabled={saving}
-                  onClick={handleSave}
-                >
-                  Lưu kỹ năng
-                </Button>
-                <Button
-                  type="button"
-                  variant="subtle"
-                  color="neutral"
-                  size="sm"
-                  disabled={saving}
-                  onClick={handleCancel}
-                >
-                  Hủy
-                </Button>
-              </Group>
-            </>
+            <Group gap="xs">
+              <Button
+                type="button"
+                color="brand"
+                size="sm"
+                loading={saving}
+                disabled={saving}
+                onClick={handleSave}
+              >
+                Lưu kỹ năng
+              </Button>
+              <Button
+                type="button"
+                variant="subtle"
+                color="neutral"
+                size="sm"
+                disabled={saving}
+                onClick={handleCancel}
+              >
+                Hủy
+              </Button>
+            </Group>
           ) : null}
         </Stack>
       </ProfileSection>

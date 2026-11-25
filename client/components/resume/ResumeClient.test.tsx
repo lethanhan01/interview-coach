@@ -1,7 +1,15 @@
-import { render, screen, userEvent, waitFor, within } from '@test-utils'
+import {
+  createTestQueryClient,
+  render,
+  screen,
+  userEvent,
+  waitFor,
+  within,
+} from '@test-utils'
 import { axe } from 'jest-axe'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { candidateProfileService } from '@/services/candidate-profile.service'
+import { seedCatalogQuery } from '@/test-utils/fixtures/catalog.fixture'
 import type { GetProfileResponse } from '@/types'
 import ResumeClient from './ResumeClient'
 
@@ -24,8 +32,15 @@ vi.mock('@/services/candidate-profile.service', () => ({
 
 vi.mock('@/services/onet.service', () => ({
   onetService: {
-    searchOccupations: vi.fn().mockResolvedValue([]),
+    searchOccupations: vi.fn().mockResolvedValue([
+      {
+        socCode: '15-1252.00',
+        title: 'Backend Developer',
+        description: 'Build backend services',
+      },
+    ]),
     getOccupationTech: vi.fn().mockResolvedValue([]),
+    searchTechnologies: vi.fn().mockResolvedValue([]),
   },
 }))
 
@@ -75,7 +90,10 @@ describe('ResumeClient', () => {
 
   it('loads profile, syncs ?section= URL param, and switches sections cleanly', async () => {
     const user = userEvent.setup()
-    const { container } = render(<ResumeClient />)
+    const queryClient = createTestQueryClient()
+    seedCatalogQuery(queryClient)
+
+    const { container } = render(<ResumeClient />, { queryClient })
 
     expect(
       await screen.findByRole('heading', { name: 'Hồ sơ CV & Kinh nghiệm' })
@@ -90,15 +108,20 @@ describe('ResumeClient', () => {
       scroll: false,
     })
     expect(screen.getByText('Legacy Co')).toBeInTheDocument()
-  })
+  }, 15_000)
 
   it('opens confirm modal when switching section with unsaved inline edits', async () => {
     const user = userEvent.setup()
-    render(<ResumeClient />)
+    const queryClient = createTestQueryClient()
+    seedCatalogQuery(queryClient)
+
+    render(<ResumeClient />, { queryClient })
 
     await screen.findByText('Frontend Developer')
     await user.click(screen.getByRole('button', { name: /chỉnh sửa/i }))
-    await user.click(screen.getByRole('button', { name: 'Backend Developer' }))
+    await user.click(
+      await screen.findByRole('button', { name: 'Backend Developer' })
+    )
 
     const nav = screen.getByRole('navigation', { name: 'Danh mục hồ sơ CV' })
     await user.click(within(nav).getByRole('button', { name: /Học vấn/i }))

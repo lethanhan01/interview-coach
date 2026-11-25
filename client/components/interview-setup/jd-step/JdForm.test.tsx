@@ -1,10 +1,27 @@
-import { render, screen, userEvent, waitFor } from '@test-utils'
+import {
+  createTestQueryClient,
+  render,
+  screen,
+  userEvent,
+  waitFor,
+} from '@test-utils'
 import { axe } from 'jest-axe'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { EMPTY_JD } from '@/lib/setup-helpers'
+import { catalogService } from '@/services/catalog.service'
 import { onetService } from '@/services/onet.service'
+import {
+  CATALOG_INTERVIEW_OPTIONS_FIXTURE,
+  seedCatalogQuery,
+} from '@/test-utils/fixtures/catalog.fixture'
 import type { JdFormData } from '@/types'
 import JdForm from './JdForm'
+
+vi.mock('@/services/catalog.service', () => ({
+  catalogService: {
+    getInterviewOptions: vi.fn(),
+  },
+}))
 
 vi.mock('@/services/onet.service', () => ({
   onetService: {
@@ -19,8 +36,18 @@ vi.mock('@/services/onet.service', () => ({
       { example: 'Docker', isHotTechnology: true, inDemand: true },
       { example: 'Kubernetes', isHotTechnology: true, inDemand: false },
     ]),
+    searchTechnologies: vi.fn().mockResolvedValue([
+      { example: 'React', isHotTechnology: true, inDemand: true },
+      { example: 'TypeScript', isHotTechnology: true, inDemand: true },
+    ]),
   },
 }))
+
+function renderWithCatalog(ui: React.ReactElement) {
+  const queryClient = createTestQueryClient()
+  seedCatalogQuery(queryClient)
+  return render(ui, { queryClient })
+}
 
 describe('JdForm', () => {
   beforeEach(() => {
@@ -28,7 +55,9 @@ describe('JdForm', () => {
   })
 
   it('renders all 4 section headings and passes jest-axe', async () => {
-    const { container } = render(<JdForm value={EMPTY_JD} onChange={vi.fn()} />)
+    const { container } = renderWithCatalog(
+      <JdForm value={EMPTY_JD} onChange={vi.fn()} />
+    )
     expect(screen.getByText('Thông tin công ty')).toBeInTheDocument()
     expect(screen.getByText('Vị trí tuyển dụng')).toBeInTheDocument()
     expect(screen.getByText('Nội dung & Yêu cầu')).toBeInTheDocument()
@@ -39,7 +68,7 @@ describe('JdForm', () => {
   it('updates text fields and shows 30-char hint for short requirements', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
-    render(<JdForm value={EMPTY_JD} onChange={onChange} />)
+    renderWithCatalog(<JdForm value={EMPTY_JD} onChange={onChange} />)
 
     await user.type(
       screen.getByPlaceholderText('VD: FPT Software, Shopee...'),
@@ -63,7 +92,7 @@ describe('JdForm', () => {
       ...EMPTY_JD,
       techStack: ['React', 'TypeScript'],
     }
-    render(<JdForm value={valueWithTechs} onChange={onChange} />)
+    renderWithCatalog(<JdForm value={valueWithTechs} onChange={onChange} />)
 
     expect(screen.getByText('Đã chọn (2)')).toBeInTheDocument()
 
@@ -87,10 +116,10 @@ describe('JdForm', () => {
     )
   })
 
-  it('searches O*NET occupation, populates position outside POSITION_OPTIONS, and fetches tech suggestions', async () => {
+  it('searches O*NET occupation, populates position, and fetches tech suggestions', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
-    render(<JdForm value={EMPTY_JD} onChange={onChange} />)
+    renderWithCatalog(<JdForm value={EMPTY_JD} onChange={onChange} />)
 
     const onetInput = screen.getByRole('searchbox', {
       name: 'Tìm kiếm chức danh chuẩn O*NET',
@@ -143,4 +172,48 @@ describe('JdForm', () => {
       })
     )
   }, 15_000)
+
+  it('shows skeletons while catalog is pending and preserves existing draft values', () => {
+    vi.mocked(catalogService.getInterviewOptions).mockImplementation(
+      () => new Promise(() => {})
+    )
+    const onChange = vi.fn()
+    const draft: JdFormData = {
+      ...EMPTY_JD,
+      company: 'FPT Software',
+      position: 'Backend Developer',
+      level: 'senior',
+    }
+
+    const { container } = render(<JdForm value={draft} onChange={onChange} />)
+
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument()
+    expect(
+      screen.getByPlaceholderText('VD: FPT Software, Shopee...')
+    ).toHaveValue('FPT Software')
+    expect(screen.getByPlaceholderText('Nhập hoặc chọn vị trí...')).toHaveValue(
+      'Backend Developer'
+    )
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it('shows danger alert with retry when catalog fails to load', async () => {
+    const user = userEvent.setup()
+    vi.mocked(catalogService.getInterviewOptions)
+      .mockRejectedValueOnce(new Error('Server error'))
+      .mockResolvedValueOnce(CATALOG_INTERVIEW_OPTIONS_FIXTURE)
+
+    render(<JdForm value={EMPTY_JD} onChange={vi.fn()} />)
+
+    const alerts = await screen.findAllByRole('alert')
+    expect(alerts[0]).toHaveTextContent('Không thể tải danh mục cấu hình')
+
+    const retryButtons = screen.getAllByRole('button', { name: 'Thử lại' })
+    await user.click(retryButtons[0])
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Chọn level...')).toBeInTheDocument()
+    })
+    expect(catalogService.getInterviewOptions).toHaveBeenCalledTimes(2)
+  })
 })

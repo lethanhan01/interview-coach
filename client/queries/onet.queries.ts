@@ -24,6 +24,13 @@ export const onetQueries = {
       queryFn: ({ signal }) => onetService.getOccupationTech(socCode, signal),
       staleTime: 60_000,
     }),
+  technologies: (query?: string, limit = 30) =>
+    queryOptions({
+      queryKey: queryKeys.onet.technologies(query, limit),
+      queryFn: ({ signal }) =>
+        onetService.searchTechnologies(query, limit, signal),
+      staleTime: 60_000,
+    }),
 }
 
 export const onetAdminQueries = {

@@ -1,6 +1,7 @@
-import { render, screen, userEvent } from '@test-utils'
+import { createTestQueryClient, render, screen, userEvent } from '@test-utils'
 import { axe } from 'jest-axe'
 import { describe, expect, it, vi } from 'vitest'
+import { seedCatalogQuery } from '@/test-utils/fixtures/catalog.fixture'
 import type { JdFormData } from '@/types'
 import ConfirmStep from './ConfirmStep'
 
@@ -38,6 +39,12 @@ const MINIMAL_JD: JdFormData = {
   bonus: '',
 }
 
+function renderWithCatalog(ui: React.ReactElement) {
+  const queryClient = createTestQueryClient()
+  seedCatalogQuery(queryClient)
+  return render(ui, { queryClient })
+}
+
 describe('ConfirmStep', () => {
   it('renders full JD summary, AI profile, and session config without a11y issues', async () => {
     const onetJd: JdFormData = {
@@ -46,7 +53,7 @@ describe('ConfirmStep', () => {
       onetOccupationTitle: 'Software Developers',
       targetSfiaLevel: 2,
     }
-    const { container } = render(
+    const { container } = renderWithCatalog(
       <ConfirmStep
         jd={onetJd}
         sessionType="technical"
@@ -73,7 +80,7 @@ describe('ConfirmStep', () => {
   })
 
   it('omits empty optional fields and shows fallback when O*NET is missing', () => {
-    render(
+    renderWithCatalog(
       <ConfirmStep
         jd={MINIMAL_JD}
         sessionType="hr"
@@ -90,7 +97,7 @@ describe('ConfirmStep', () => {
   })
 
   it('renders alert when error prop is provided', () => {
-    render(
+    renderWithCatalog(
       <ConfirmStep
         jd={FULL_JD}
         sessionType="hr"
@@ -107,7 +114,7 @@ describe('ConfirmStep', () => {
   it('exposes SFIA levels 1 through 7 and updates targetSfiaLevel via onChange', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
-    render(
+    renderWithCatalog(
       <ConfirmStep
         jd={FULL_JD}
         sessionType="technical"
@@ -128,13 +135,13 @@ describe('ConfirmStep', () => {
     for (let level = 1; level <= 7; level += 1) {
       expect(
         screen.getByRole('option', {
-          name: new RegExp(`SFIA Level ${level}`, 'i'),
+          name: new RegExp(`L${level} —`, 'i'),
         })
       ).toBeInTheDocument()
     }
 
     const level7Option = screen.getByRole('option', {
-      name: /SFIA Level 7/i,
+      name: /L7 —/i,
     })
     await user.click(level7Option)
 

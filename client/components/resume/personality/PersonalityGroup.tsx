@@ -1,27 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import {
-  Alert,
-  Badge,
-  Box,
-  Button,
-  Group,
-  Radio,
-  SimpleGrid,
-  Stack,
-  Text,
-} from '@mantine/core'
+import { Alert, Box, Button, Group, Stack, Text, Textarea } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
 import { IconAlertCircle, IconPencil } from '@tabler/icons-react'
 import ProfileEmptyState from '@/components/profile/primitives/ProfileEmptyState'
 import ProfileSection from '@/components/profile/primitives/ProfileSection'
 import { getErrorMessage } from '@/lib/form-errors'
-import { PERSONALITY_OPTIONS } from '@/components/resume/constants'
-import interactions from '@/styles/interactions.module.css'
-
-const SELECTABLE_OPTIONS = PERSONALITY_OPTIONS.filter((opt) => opt.value !== '')
 
 export interface PersonalityGroupProps {
   data: { personality?: string | null }
@@ -35,19 +21,19 @@ export default function PersonalityGroup({
   onDirtyChange,
 }: Readonly<PersonalityGroupProps>) {
   const [isEditing, { open: openEdit, close: closeEdit }] = useDisclosure(false)
-  const [selected, setSelected] = useState(data.personality ?? '')
+  const [value, setValue] = useState(data.personality ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   function handleEdit() {
-    setSelected(data.personality ?? '')
+    setValue(data.personality ?? '')
     setError(null)
     onDirtyChange?.(false)
     openEdit()
   }
 
   function handleCancel() {
-    setSelected(data.personality ?? '')
+    setValue(data.personality ?? '')
     setError(null)
     onDirtyChange?.(false)
     closeEdit()
@@ -57,7 +43,8 @@ export default function PersonalityGroup({
     setSaving(true)
     setError(null)
     try {
-      await onSave({ personality: selected || null })
+      const trimmed = value.trim()
+      await onSave({ personality: trimmed || null })
       onDirtyChange?.(false)
       notifications.show({
         title: 'Đã cập nhật',
@@ -73,9 +60,7 @@ export default function PersonalityGroup({
     }
   }
 
-  const personalityLabel = SELECTABLE_OPTIONS.find(
-    (opt) => opt.value === data.personality
-  )?.label
+  const displayText = data.personality?.trim() || undefined
 
   return (
     <Box id="personality">
@@ -113,34 +98,19 @@ export default function PersonalityGroup({
               </Alert>
             ) : null}
 
-            <Radio.Group
-              aria-label="Tính cách & phong cách làm việc"
-              value={selected}
-              onChange={(val) => {
-                setSelected(val)
+            <Textarea
+              label="Mô tả tính cách & phong cách làm việc"
+              placeholder="VD: Chủ động, tư duy phân tích hệ thống, phối hợp nhóm tốt..."
+              autosize
+              minRows={3}
+              maxRows={6}
+              value={value}
+              disabled={saving}
+              onChange={(e) => {
+                setValue(e.currentTarget.value)
                 onDirtyChange?.(true)
               }}
-            >
-              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
-                {SELECTABLE_OPTIONS.map((opt) => (
-                  <Radio.Card
-                    key={opt.value}
-                    value={opt.value}
-                    radius="md"
-                    p="sm"
-                    disabled={saving}
-                    className={interactions.optionCard}
-                  >
-                    <Group justify="space-between" align="center" wrap="nowrap">
-                      <Text size="sm" fw={500}>
-                        {opt.label}
-                      </Text>
-                      <Radio.Indicator color="brand" />
-                    </Group>
-                  </Radio.Card>
-                ))}
-              </SimpleGrid>
-            </Radio.Group>
+            />
 
             <Group justify="space-between" align="center" wrap="wrap">
               <Group gap="xs">
@@ -166,7 +136,7 @@ export default function PersonalityGroup({
                 </Button>
               </Group>
 
-              {selected ? (
+              {value.trim() ? (
                 <Button
                   type="button"
                   variant="subtle"
@@ -174,19 +144,19 @@ export default function PersonalityGroup({
                   size="xs"
                   disabled={saving}
                   onClick={() => {
-                    setSelected('')
+                    setValue('')
                     onDirtyChange?.(true)
                   }}
                 >
-                  Bỏ chọn
+                  Xóa nội dung
                 </Button>
               ) : null}
             </Group>
           </Stack>
-        ) : personalityLabel ? (
-          <Badge size="lg" variant="light" color="brand" w="fit-content">
-            {personalityLabel}
-          </Badge>
+        ) : displayText ? (
+          <Text size="sm" lh={1.6}>
+            {displayText}
+          </Text>
         ) : (
           <ProfileEmptyState message="Chưa cập nhật" />
         )}

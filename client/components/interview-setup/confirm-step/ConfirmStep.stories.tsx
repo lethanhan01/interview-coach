@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { useQueryClient } from '@tanstack/react-query'
+import { seedCatalogQuery } from '@/test-utils/fixtures/catalog.fixture'
 import ConfirmStep from './ConfirmStep'
 import type { JdFormData } from '@/types'
 
@@ -43,6 +45,13 @@ const meta: Meta<typeof ConfirmStep> = {
   parameters: {
     layout: 'padded',
   },
+  decorators: [
+    (Story) => {
+      const queryClient = useQueryClient()
+      seedCatalogQuery(queryClient)
+      return <Story />
+    },
+  ],
 }
 
 export default meta

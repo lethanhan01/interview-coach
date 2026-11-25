@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { EMPTY_JD, mapJdLevelToSfia } from '@/lib/setup-helpers'
+import { EMPTY_JD } from '@/lib/setup-helpers'
 import type { JdFormData } from '@/types'
 
 const HTTP_URL_RE = /^https?:\/\/.+/i
@@ -73,17 +73,13 @@ export function normalizeJdFormData(
   value: Partial<Record<keyof JdFormData, unknown>> | null | undefined
 ): JdFormData {
   const level = toText(value?.level)
-  let targetSfia: number | undefined
-  if (
+  const targetSfia =
     typeof value?.targetSfiaLevel === 'number' &&
     Number.isInteger(value.targetSfiaLevel) &&
     value.targetSfiaLevel >= 1 &&
     value.targetSfiaLevel <= 7
-  ) {
-    targetSfia = value.targetSfiaLevel
-  } else if (level) {
-    targetSfia = mapJdLevelToSfia(level)
-  }
+      ? value.targetSfiaLevel
+      : undefined
 
   return {
     company: toText(value?.company),

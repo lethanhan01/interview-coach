@@ -4,6 +4,7 @@ import { QuestionBankModule } from './question-bank/question-bank.module';
 import { QuestionCriteriaModule } from './question-criteria/question-criteria.module';
 import { JobDescriptionModule } from './job-description/job-description.module';
 import { TaxonomyModule } from './taxonomy/taxonomy.module';
+import { CatalogModule } from './catalog/catalog.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { TaxonomyModule } from './taxonomy/taxonomy.module';
     QuestionCriteriaModule,
     JobDescriptionModule,
     TaxonomyModule,
+    CatalogModule,
   ],
   exports: [
     QuestionGenerationModule,
@@ -19,6 +21,7 @@ import { TaxonomyModule } from './taxonomy/taxonomy.module';
     QuestionCriteriaModule,
     JobDescriptionModule,
     TaxonomyModule,
+    CatalogModule,
   ],
 })
 export class InterviewPrepModule {}

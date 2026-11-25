@@ -133,4 +133,65 @@ describe('OnetRepository', () => {
       expect(result).toEqual([mockOccupationRow]);
     });
   });
+
+  describe('searchTechnologies', () => {
+    it('returns popular grouped technologies when query is empty', async () => {
+      queryRawMock.mockResolvedValueOnce([
+        { example: 'Docker', isHotTechnology: 1, inDemand: 0 },
+      ]);
+
+      const result = await repository.searchTechnologies(undefined, 20);
+
+      expect(queryRawMock).toHaveBeenCalledTimes(1);
+      const [strings, ...values] = queryRawMock.mock.calls[0] as [
+        TemplateStringsArray,
+        ...unknown[],
+      ];
+      const sql = strings.join('?');
+      expect(sql).toContain('FROM onet.software_skills');
+      expect(sql).toContain('GROUP BY workplace_example');
+      expect(sql).not.toContain('ILIKE');
+      expect(values).toEqual([20]);
+      expect(result).toEqual([
+        { example: 'Docker', isHotTechnology: true, inDemand: false },
+      ]);
+    });
+
+    it('escapes LIKE wildcards and searches with pg_trgm when query is provided', async () => {
+      queryRawMock.mockResolvedValueOnce(mockTechRows);
+
+      const result = await repository.searchTechnologies('C%_\\', 15);
+
+      expect(queryRawMock).toHaveBeenCalledTimes(1);
+      const [strings, ...values] = queryRawMock.mock.calls[0] as [
+        TemplateStringsArray,
+        ...unknown[],
+      ];
+      const sql = strings.join('?');
+      expect(sql).toContain('word_similarity');
+      expect(sql).toContain('ILIKE');
+      expect(values).toContain('%C\\%\\_\\\\%');
+      expect(values[values.length - 1]).toBe(15);
+      expect(result).toEqual([
+        { example: 'Docker', isHotTechnology: true, inDemand: true },
+      ]);
+    });
+
+    it('defensively clamps limit to [1..100]', async () => {
+      queryRawMock.mockResolvedValueOnce([]);
+      await repository.searchTechnologies('', 999);
+      expect(queryRawMock.mock.calls[0][1]).toBe(100);
+
+      queryRawMock.mockResolvedValueOnce([]);
+      await repository.searchTechnologies('', -10);
+      expect(queryRawMock.mock.calls[1][1]).toBe(1);
+    });
+
+    it('throws error when raw query fails', async () => {
+      queryRawMock.mockRejectedValueOnce(new Error('SQL failure'));
+      await expect(repository.searchTechnologies('React', 10)).rejects.toThrow(
+        'SQL failure',
+      );
+    });
+  });
 });

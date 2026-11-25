@@ -34,4 +34,26 @@ export const onetService = {
       { signal }
     )
   },
+
+  /**
+   * Tìm kiếm công nghệ phần mềm O*NET (gộp trùng theo tên) hoặc lấy công nghệ phổ biến
+   */
+  async searchTechnologies(
+    query?: string,
+    limit = 30,
+    signal?: AbortSignal
+  ): Promise<OnetTech[]> {
+    const params = new URLSearchParams()
+    if (query && query.trim()) {
+      params.append('query', query.trim())
+    }
+    if (limit) {
+      params.append('limit', String(limit))
+    }
+    const queryString = params.toString()
+    return apiClient.get<OnetTech[]>(
+      `/onet/technologies${queryString ? `?${queryString}` : ''}`,
+      { signal }
+    )
+  },
 }

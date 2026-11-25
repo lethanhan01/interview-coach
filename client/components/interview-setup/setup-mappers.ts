@@ -1,9 +1,13 @@
 import { normalizeJdFormData } from '@/components/interview-setup/jd-step/jd-form.schema'
-import { getJdLevelLabel, normalizeJdLevel } from '@/lib/interview-options'
-import { mapJdLevelToSfia } from '@/lib/setup-helpers'
+import {
+  getJdLevelLabel,
+  mapJdLevelToSfia,
+  normalizeJdLevel,
+} from '@/lib/interview-option-helpers'
 import type {
   ContextPack,
   JdFormData,
+  JdLevelOption,
   OutputLanguage,
   SaveJobDescriptionPayload,
   SavedJobDescription,
@@ -15,17 +19,23 @@ function optionalText(value: string): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined
 }
 
-export function extractSerializedJdLevel(jobDescription: string): string {
+export function extractSerializedJdLevel(
+  jobDescription: string,
+  jdLevels: readonly JdLevelOption[]
+): string {
   const match = jobDescription.match(/^Level yêu cầu:\s*(.+)$/im)
-  return normalizeJdLevel(match?.[1])
+  return normalizeJdLevel(match?.[1], jdLevels)
 }
 
-export function serializeJd(form: JdFormData): string {
+export function serializeJd(
+  form: JdFormData,
+  jdLevels: readonly JdLevelOption[]
+): string {
   const lines: string[] = [
     `Tên công ty: ${form.company}`,
     form.website ? `Website: ${form.website}` : '',
     `Vị trí tuyển dụng: ${form.position}`,
-    `Level yêu cầu: ${getJdLevelLabel(form.level)}`,
+    `Level yêu cầu: ${getJdLevelLabel(form.level, jdLevels)}`,
     form.headcount ? `Số lượng tuyển: ${form.headcount}` : '',
     form.location ? `Địa điểm làm việc: ${form.location}` : '',
     '',
@@ -45,7 +55,8 @@ export function serializeJd(form: JdFormData): string {
 }
 
 export function toSavedJobDescriptionPayload(
-  form: JdFormData
+  form: JdFormData,
+  jdLevels: readonly JdLevelOption[]
 ): SaveJobDescriptionPayload {
   return {
     companyName: form.company.trim(),
@@ -62,7 +73,8 @@ export function toSavedJobDescriptionPayload(
     bonus: optionalText(form.bonus),
     onetSocCode: optionalText(form.onetSocCode ?? ''),
     onetOccupationTitle: optionalText(form.onetOccupationTitle ?? ''),
-    targetSfiaLevel: form.targetSfiaLevel ?? mapJdLevelToSfia(form.level),
+    targetSfiaLevel:
+      form.targetSfiaLevel ?? mapJdLevelToSfia(form.level, jdLevels),
   }
 }
 
@@ -82,18 +94,25 @@ export function buildCreateSessionPayload(params: {
   contextPack: ContextPack
   numQuestions: number
   savedJobDescriptionId: string
+  jdLevels: readonly JdLevelOption[]
 }) {
-  const { jd, sessionType, contextPack, numQuestions, savedJobDescriptionId } =
-    params
+  const {
+    jd,
+    sessionType,
+    contextPack,
+    numQuestions,
+    savedJobDescriptionId,
+    jdLevels,
+  } = params
   return {
-    jobDescription: serializeJd(jd),
+    jobDescription: serializeJd(jd, jdLevels),
     sessionType,
     contextPack,
     language: resolveSessionLanguage(contextPack),
     numQuestions,
     targetRoles: [jd.position],
     savedJobDescriptionId,
-    targetSfiaLevel: jd.targetSfiaLevel ?? mapJdLevelToSfia(jd.level),
+    targetSfiaLevel: jd.targetSfiaLevel ?? mapJdLevelToSfia(jd.level, jdLevels),
     onetSocCode: jd.onetSocCode,
   }
 }
@@ -106,9 +125,10 @@ export function resolveSessionLanguage(
 
 export function resolveSavedJobDescriptionLevel(
   item: SavedJobDescription,
+  jdLevels: readonly JdLevelOption[],
   sessions: Session[] = []
 ): string {
-  const savedLevel = normalizeJdLevel(item.level)
+  const savedLevel = normalizeJdLevel(item.level, jdLevels)
   if (savedLevel) return savedLevel
 
   return (
@@ -118,26 +138,34 @@ export function resolveSavedJobDescriptionLevel(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       )
-      .map((session) => extractSerializedJdLevel(session.jobDescription))
+      .map((session) =>
+        extractSerializedJdLevel(session.jobDescription, jdLevels)
+      )
       .find(Boolean) ?? ''
   )
 }
 
 export function hydrateSavedJobDescriptionLevels(
   items: SavedJobDescription[],
-  sessions: Session[]
+  sessions: Session[],
+  jdLevels: readonly JdLevelOption[]
 ): SavedJobDescription[] {
   return items.map((item) => {
-    const level = resolveSavedJobDescriptionLevel(item, sessions)
+    const level = resolveSavedJobDescriptionLevel(item, jdLevels, sessions)
     return level && level !== item.level ? { ...item, level } : item
   })
 }
 
 export function savedJobDescriptionToForm(
   item: SavedJobDescription,
+  jdLevels: readonly JdLevelOption[],
   sessions: Session[] = []
 ): JdFormData {
-  const resolvedLevel = resolveSavedJobDescriptionLevel(item, sessions)
+  const resolvedLevel = resolveSavedJobDescriptionLevel(
+    item,
+    jdLevels,
+    sessions
+  )
   return normalizeJdFormData({
     company: item.companyName,
     website: item.companyWebsite ?? undefined,
@@ -155,6 +183,6 @@ export function savedJobDescriptionToForm(
     onetOccupationTitle: item.onetOccupationTitle ?? undefined,
     targetSfiaLevel:
       item.targetSfiaLevel ??
-      (resolvedLevel ? mapJdLevelToSfia(resolvedLevel) : undefined),
+      (resolvedLevel ? mapJdLevelToSfia(resolvedLevel, jdLevels) : undefined),
   })
 }

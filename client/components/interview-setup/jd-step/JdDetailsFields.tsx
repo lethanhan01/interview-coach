@@ -1,9 +1,8 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { Card, Select, Stack, Textarea, TextInput, Title } from '@mantine/core'
+import { Card, Stack, Textarea, TextInput, Title } from '@mantine/core'
 import type { UseFormReturnType } from '@mantine/form'
-import { BONUS_OPTIONS } from '@/lib/interview-options'
 import type { JdFormData } from '@/types'
 
 export interface JdDetailsFieldsProps {
@@ -33,7 +32,7 @@ export default function JdDetailsFields({
       <Card withBorder radius="md" p="lg">
         <Stack gap="md">
           <Title order={2} size="h4">
-            Nội dung & Yêu cầu
+            Nội dung &amp; Yêu cầu
           </Title>
 
           <Textarea
@@ -65,7 +64,7 @@ export default function JdDetailsFields({
       <Card withBorder radius="md" p="lg">
         <Stack gap="md">
           <Title order={2} size="h4">
-            Phúc lợi & Lương
+            Phúc lợi &amp; Lương
           </Title>
 
           <TextInput
@@ -75,15 +74,12 @@ export default function JdDetailsFields({
             {...form.getInputProps('salary')}
           />
 
-          <Select
+          <TextInput
             id="jd-bonus"
-            clearable
             label="Thưởng"
-            placeholder="Chọn hình thức thưởng..."
-            data={BONUS_OPTIONS}
+            placeholder="VD: Tháng 13, Theo KPI, Hàng quý..."
             key={form.key('bonus')}
             {...form.getInputProps('bonus')}
-            onChange={(val) => form.setFieldValue('bonus', val ?? '')}
           />
 
           <Textarea

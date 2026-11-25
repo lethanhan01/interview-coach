@@ -3,18 +3,26 @@
 import { useMemo, useState } from 'react'
 import {
   ActionIcon,
+  Alert,
   Badge,
   Button,
   Group,
   Paper,
+  Skeleton,
   Stack,
   Text,
   TextInput,
 } from '@mantine/core'
-import { IconPlus, IconSearch, IconSparkles, IconX } from '@tabler/icons-react'
+import { useDebouncedValue } from '@mantine/hooks'
+import {
+  IconAlertCircle,
+  IconPlus,
+  IconSearch,
+  IconX,
+} from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
-import { TECH_STACK_OPTIONS } from '@/lib/interview-options'
 import { onetQueries } from '@/queries/onet.queries'
+import OnetSocTechSuggestions from './OnetSocTechSuggestions'
 
 export interface JdTechStackFieldProps {
   techStack: string[]
@@ -23,6 +31,8 @@ export interface JdTechStackFieldProps {
   onChange: (next: string[]) => void
 }
 
+const TECH_SKELETON_KEYS = ['sk-1', 'sk-2', 'sk-3', 'sk-4', 'sk-5', 'sk-6']
+
 export default function JdTechStackField({
   techStack,
   onetSocCode,
@@ -30,11 +40,20 @@ export default function JdTechStackField({
   onChange,
 }: Readonly<JdTechStackFieldProps>) {
   const [techQuery, setTechQuery] = useState('')
+  const [debouncedQuery] = useDebouncedValue(techQuery, 250)
 
   const { data: onetTechSuggestions = [] } = useQuery({
     ...onetQueries.tech(onetSocCode ?? ''),
     enabled: Boolean(onetSocCode),
   })
+
+  const technologiesQuery = useQuery(
+    onetQueries.technologies(debouncedQuery.trim() || undefined, 30)
+  )
+  const technologies = useMemo(
+    () => technologiesQuery.data ?? [],
+    [technologiesQuery.data]
+  )
 
   function toggleTech(tech: string) {
     if (techStack.includes(tech)) {
@@ -60,36 +79,16 @@ export default function JdTechStackField({
     setTechQuery('')
   }
 
-  const normalizedQuery = techQuery.trim().toLowerCase()
-
-  const filteredTechGroups = useMemo(
-    () =>
-      Object.entries(TECH_STACK_OPTIONS)
-        .map(
-          ([category, techs]) =>
-            [
-              category,
-              normalizedQuery
-                ? techs.filter((tech) =>
-                    tech.toLowerCase().includes(normalizedQuery)
-                  )
-                : techs,
-            ] as const
-        )
-        .filter(([, techs]) => techs.length > 0),
-    [normalizedQuery]
-  )
-
   const canAddCustom = useMemo(() => {
     const trimmed = techQuery.trim()
     if (!trimmed) return false
     const lower = trimmed.toLowerCase()
     const inSelected = techStack.some((t) => t.toLowerCase() === lower)
-    const inDictionary = Object.values(TECH_STACK_OPTIONS)
-      .flat()
-      .some((t) => t.toLowerCase() === lower)
-    return !inSelected && !inDictionary
-  }, [techQuery, techStack])
+    const inResults = technologies.some(
+      (t) => t.example.toLowerCase() === lower
+    )
+    return !inSelected && !inResults
+  }, [techQuery, techStack, technologies])
 
   return (
     <Stack gap={6}>
@@ -98,43 +97,12 @@ export default function JdTechStackField({
       </Text>
       <Paper withBorder radius="md" p="md">
         <Stack gap="md">
-          {onetTechSuggestions.length > 0 ? (
-            <Paper withBorder radius="md" p="sm">
-              <Stack gap="xs">
-                <Group justify="space-between" align="center" wrap="wrap">
-                  <Group gap={6} wrap="nowrap">
-                    <IconSparkles size={14} stroke={1.5} aria-hidden="true" />
-                    <Text size="xs" fw={600} c="brand">
-                      Gợi ý công nghệ O*NET cho {onetOccupationTitle}
-                    </Text>
-                  </Group>
-                  <Text size="xs" c="dimmed">
-                    Bấm để thêm nhanh vào Tech Stack
-                  </Text>
-                </Group>
-
-                <Group gap={6} wrap="wrap">
-                  {onetTechSuggestions.map((tech) => {
-                    const selected = techStack.includes(tech.example)
-                    return (
-                      <Button
-                        key={tech.example}
-                        type="button"
-                        size="compact-xs"
-                        variant={selected ? 'filled' : 'light'}
-                        color="brand"
-                        aria-pressed={selected}
-                        onClick={() => toggleTech(tech.example)}
-                      >
-                        {selected ? '✓ ' : '+ '}
-                        {tech.example}
-                      </Button>
-                    )
-                  })}
-                </Group>
-              </Stack>
-            </Paper>
-          ) : null}
+          <OnetSocTechSuggestions
+            suggestions={onetTechSuggestions}
+            occupationTitle={onetOccupationTitle}
+            techStack={techStack}
+            onToggle={toggleTech}
+          />
 
           <Group align="flex-end" gap="xs" wrap="wrap">
             <TextInput
@@ -202,38 +170,61 @@ export default function JdTechStackField({
             </Stack>
           ) : null}
 
-          {filteredTechGroups.length === 0 ? (
+          {technologiesQuery.isPending ? (
+            <Group gap={6} wrap="wrap" aria-busy="true">
+              {TECH_SKELETON_KEYS.map((key) => (
+                <Skeleton key={key} height={24} width={76} radius="sm" />
+              ))}
+            </Group>
+          ) : technologiesQuery.isError ? (
+            <Alert
+              color="danger"
+              variant="light"
+              role="alert"
+              title="Không thể tải danh mục cấu hình"
+              icon={
+                <IconAlertCircle size={16} stroke={1.5} aria-hidden="true" />
+              }
+            >
+              <Button
+                type="button"
+                variant="light"
+                color="danger"
+                size="xs"
+                mt="xs"
+                onClick={() => void technologiesQuery.refetch()}
+              >
+                Thử lại
+              </Button>
+            </Alert>
+          ) : technologies.length === 0 ? (
             <Text size="xs" c="dimmed">
-              Không tìm thấy tech stack phù hợp trong từ điển. Bạn có thể bấm
+              Không tìm thấy công nghệ phù hợp trong danh mục. Bạn có thể bấm
               &ldquo;Thêm&rdquo; để nhập công nghệ tùy chỉnh.
             </Text>
           ) : (
-            <Stack gap="sm">
-              {filteredTechGroups.map(([category, techs]) => (
-                <Stack key={category} gap={6}>
-                  <Text size="xs" fw={500} c="dimmed">
-                    {category}
-                  </Text>
-                  <Group gap={6} wrap="wrap">
-                    {techs.map((tech) => {
-                      const selected = techStack.includes(tech)
-                      return (
-                        <Button
-                          key={tech}
-                          type="button"
-                          size="compact-xs"
-                          variant={selected ? 'filled' : 'default'}
-                          color={selected ? 'brand' : 'neutral'}
-                          aria-pressed={selected}
-                          onClick={() => toggleTech(tech)}
-                        >
-                          {tech}
-                        </Button>
-                      )
-                    })}
-                  </Group>
-                </Stack>
-              ))}
+            <Stack gap={6}>
+              <Text size="xs" fw={500} c="dimmed">
+                Công nghệ phổ biến (O*NET)
+              </Text>
+              <Group gap={6} wrap="wrap">
+                {technologies.map((tech) => {
+                  const selected = techStack.includes(tech.example)
+                  return (
+                    <Button
+                      key={tech.example}
+                      type="button"
+                      size="compact-xs"
+                      variant={selected ? 'filled' : 'default'}
+                      color={selected ? 'brand' : 'neutral'}
+                      aria-pressed={selected}
+                      onClick={() => toggleTech(tech.example)}
+                    >
+                      {tech.example}
+                    </Button>
+                  )
+                })}
+              </Group>
             </Stack>
           )}
 

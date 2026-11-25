@@ -1,7 +1,9 @@
 'use client'
 
 import {
+  Alert,
   Badge,
+  Button,
   Divider,
   Group,
   Paper,
@@ -12,14 +14,17 @@ import {
   UnstyledButton,
 } from '@mantine/core'
 import {
+  IconAlertCircle,
   IconBuilding,
   IconChevronRight,
   IconClock,
   IconMapPin,
   IconPlus,
 } from '@tabler/icons-react'
+import { useQuery } from '@tanstack/react-query'
 import { formatVietnamRelativeDate } from '@/lib/date-time'
-import { getJdLevelLabel } from '@/lib/interview-options'
+import { getJdLevelLabel } from '@/lib/interview-option-helpers'
+import { catalogQueries } from '@/queries/catalog.queries'
 import type { SavedJobDescription } from '@/types'
 import interactions from '@/styles/interactions.module.css'
 import classes from './SavedJdPicker.module.css'
@@ -39,6 +44,9 @@ export default function SavedJdPicker({
   onSelect,
   onNew,
 }: Readonly<SavedJdPickerProps>) {
+  const catalogQuery = useQuery(catalogQueries.interviewOptions())
+  const jdLevels = catalogQuery.data?.jdLevels ?? []
+
   return (
     <Stack gap="lg">
       <Stack gap={4}>
@@ -49,6 +57,27 @@ export default function SavedJdPicker({
           Tái sử dụng JD từ phiên phỏng vấn trước hoặc tạo JD mới.
         </Text>
       </Stack>
+
+      {catalogQuery.isError ? (
+        <Alert
+          color="danger"
+          variant="light"
+          role="alert"
+          title="Không thể tải danh mục cấu hình"
+          icon={<IconAlertCircle size={16} stroke={1.5} aria-hidden="true" />}
+        >
+          <Button
+            type="button"
+            variant="light"
+            color="danger"
+            size="xs"
+            mt="xs"
+            onClick={() => void catalogQuery.refetch()}
+          >
+            Thử lại
+          </Button>
+        </Alert>
+      ) : null}
 
       <UnstyledButton
         type="button"
@@ -137,7 +166,7 @@ export default function SavedJdPicker({
                     <Group gap="md" wrap="wrap">
                       {item.level ? (
                         <Text size="xs" fw={500} c="brand">
-                          {getJdLevelLabel(item.level)}
+                          {getJdLevelLabel(item.level, jdLevels)}
                         </Text>
                       ) : null}
                       {item.location ? (

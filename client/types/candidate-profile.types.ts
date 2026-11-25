@@ -33,7 +33,7 @@ export interface ProjectEntry {
 
 export interface TechnicalSkillEntry {
   id: string
-  category: TechCategory
+  category?: TechCategory
   name: string
   usagePeriod: number
 }

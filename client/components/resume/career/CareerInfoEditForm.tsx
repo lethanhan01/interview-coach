@@ -1,28 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import {
-  Alert,
-  Box,
-  Button,
-  Group,
-  Select,
-  Stack,
-  Text,
-  TextInput,
-} from '@mantine/core'
+import { Alert, Box, Button, Group, Stack } from '@mantine/core'
 import { schemaResolver, useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { IconAlertCircle } from '@tabler/icons-react'
+import { useQuery } from '@tanstack/react-query'
 import OnetOccupationPicker from '@/components/onet/OnetOccupationPicker'
 import { getErrorMessage } from '@/lib/form-errors'
-import { JD_LEVEL_OPTIONS, POSITION_OPTIONS } from '@/lib/interview-options'
-import { mapJdLevelToSfia } from '@/lib/setup-helpers'
+import { mapJdLevelToSfia } from '@/lib/interview-option-helpers'
+import { catalogQueries } from '@/queries/catalog.queries'
 import type { CareerInfoData, OnetOccupation } from '@/types'
 import {
   careerInfoSchema,
   type CareerInfoFormValues,
 } from '@/components/resume/resume-schemas'
+import CareerLevelField from './CareerLevelField'
+import CareerPositionField from './CareerPositionField'
 
 export interface CareerInfoEditFormProps {
   initialValues: CareerInfoFormValues
@@ -39,11 +33,15 @@ export default function CareerInfoEditForm({
   onCancel,
   onDirtyChange,
 }: Readonly<CareerInfoEditFormProps>) {
+  const catalogQuery = useQuery(catalogQueries.interviewOptions())
+  const jdLevels = catalogQuery.data?.jdLevels ?? []
+
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [onetView, setOnetView] = useState({
     socCode: initialValues.onetSocCode,
     title: initialValues.onetOccupationTitle,
+    targetPosition: initialValues.targetPosition,
     targetLevel: initialValues.targetLevel,
   })
 
@@ -56,6 +54,7 @@ export default function CareerInfoEditForm({
       setOnetView({
         socCode: values.onetSocCode,
         title: values.onetOccupationTitle,
+        targetPosition: values.targetPosition,
         targetLevel: values.targetLevel,
       })
     },
@@ -86,7 +85,9 @@ export default function CareerInfoEditForm({
     form.setValues({
       ...current,
       targetLevel: nextLevel,
-      targetSfiaLevel: nextLevel ? mapJdLevelToSfia(nextLevel) : undefined,
+      targetSfiaLevel: nextLevel
+        ? mapJdLevelToSfia(nextLevel, jdLevels)
+        : undefined,
     })
   }
 
@@ -102,7 +103,7 @@ export default function CareerInfoEditForm({
         targetSfiaLevel:
           values.targetSfiaLevel ??
           (values.targetLevel
-            ? mapJdLevelToSfia(values.targetLevel)
+            ? mapJdLevelToSfia(values.targetLevel, jdLevels)
             : undefined),
       })
       onDirtyChange?.(false)
@@ -119,22 +120,6 @@ export default function CareerInfoEditForm({
       setSaving(false)
     }
   }
-
-  const levelSelectData = [
-    ...(onetView.targetLevel &&
-    !JD_LEVEL_OPTIONS.some((o) => o.value === onetView.targetLevel)
-      ? [
-          {
-            value: onetView.targetLevel,
-            label: `Giá trị hiện tại: ${onetView.targetLevel}`,
-          },
-        ]
-      : []),
-    ...JD_LEVEL_OPTIONS.map((o) => ({
-      value: o.value,
-      label: `${o.label} (SFIA Level ${mapJdLevelToSfia(o.value)})`,
-    })),
-  ]
 
   return (
     <Box component="form" onSubmit={form.onSubmit(handleSubmit)} noValidate>
@@ -163,49 +148,21 @@ export default function CareerInfoEditForm({
           onClear={handleClearOnet}
         />
 
-        <Stack gap={6}>
-          <TextInput
-            id="target-position"
-            label="Vị trí mục tiêu (Tên hiển thị)"
-            placeholder="VD: Senior Frontend Engineer, Full-stack Developer..."
-            disabled={saving}
-            key={form.key('targetPosition')}
-            {...form.getInputProps('targetPosition')}
-          />
-          <Group gap={6} wrap="wrap" align="center">
-            <Text size="xs" c="dimmed">
-              Vị trí IT phổ biến:
-            </Text>
-            {POSITION_OPTIONS.slice(0, 5).map((pos) => (
-              <Button
-                key={pos}
-                type="button"
-                variant="light"
-                color="brand"
-                size="compact-xs"
-                disabled={saving}
-                onClick={() => form.setFieldValue('targetPosition', pos)}
-              >
-                {pos}
-              </Button>
-            ))}
-          </Group>
-        </Stack>
-
-        <Select
-          id="target-level"
-          clearable
-          label="Mức kinh nghiệm"
-          placeholder="Chọn mức kinh nghiệm"
-          description={
-            onetView.targetLevel
-              ? `Ánh xạ SFIA Level: ${mapJdLevelToSfia(onetView.targetLevel)}`
-              : undefined
-          }
-          data={levelSelectData}
+        <CareerPositionField
+          value={onetView.targetPosition}
+          error={form.errors.targetPosition}
           disabled={saving}
-          key={form.key('targetLevel')}
-          {...form.getInputProps('targetLevel')}
+          onChange={(val) => form.setFieldValue('targetPosition', val)}
+        />
+
+        <CareerLevelField
+          value={onetView.targetLevel}
+          error={form.errors.targetLevel}
+          jdLevels={jdLevels}
+          isPending={catalogQuery.isPending}
+          isError={catalogQuery.isError}
+          disabled={saving}
+          onRetry={() => void catalogQuery.refetch()}
           onChange={handleLevelChange}
         />
 

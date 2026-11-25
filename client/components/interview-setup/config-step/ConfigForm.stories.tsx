@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { seedCatalogQuery } from '@/test-utils/fixtures/catalog.fixture'
 import ConfigForm from './ConfigForm'
 import type { SessionType, ContextPack, InterviewDuration } from '@/types'
 
@@ -10,6 +12,13 @@ const meta: Meta<typeof ConfigForm> = {
   parameters: {
     layout: 'padded',
   },
+  decorators: [
+    (Story) => {
+      const queryClient = useQueryClient()
+      seedCatalogQuery(queryClient)
+      return <Story />
+    },
+  ],
 }
 
 export default meta

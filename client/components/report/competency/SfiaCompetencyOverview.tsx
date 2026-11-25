@@ -2,8 +2,10 @@
 
 import dynamic from 'next/dynamic'
 import {
+  Alert,
   Badge,
   Box,
+  Button,
   Card,
   Group,
   Paper,
@@ -18,6 +20,8 @@ import {
   IconCircleCheck,
   IconStack2,
 } from '@tabler/icons-react'
+import { useQuery } from '@tanstack/react-query'
+import { catalogQueries } from '@/queries/catalog.queries'
 import type { SkillBreakdownItem } from '@/types'
 import { SfiaSegmentMeter } from './SfiaSegmentMeter'
 import classes from './SfiaCompetencyOverview.module.css'
@@ -36,12 +40,18 @@ export function SfiaCompetencyOverview({
   skills = [],
   className,
 }: Readonly<SfiaCompetencyOverviewProps>) {
+  const catalogQuery = useQuery({
+    ...catalogQueries.interviewOptions(),
+    enabled: skills.length > 0,
+  })
+
   if (!skills || skills.length === 0) {
     return null
   }
 
   const passedCount = skills.filter((s) => s.status === 'passed').length
   const gapCount = skills.filter((s) => s.status === 'gap').length
+  const sfiaLevels = catalogQuery.data?.sfiaLevels
 
   return (
     <Card withBorder radius="md" p="lg" className={className}>
@@ -92,6 +102,31 @@ export function SfiaCompetencyOverview({
 
         <SfiaCompetencyCharts skills={skills} />
 
+        {catalogQuery.isError ? (
+          <Alert
+            color="danger"
+            variant="light"
+            icon={
+              <IconAlertTriangle size={16} stroke={1.5} aria-hidden="true" />
+            }
+          >
+            <Group justify="space-between" align="center" wrap="wrap" gap="xs">
+              <Text size="xs">
+                Không thể tải mô tả cấp độ SFIA. Thanh đo đang hiển thị theo mã
+                cấp độ L1–L7.
+              </Text>
+              <Button
+                size="xs"
+                variant="light"
+                color="danger"
+                onClick={() => void catalogQuery.refetch()}
+              >
+                Thử lại
+              </Button>
+            </Group>
+          </Alert>
+        ) : null}
+
         <Table.ScrollContainer minWidth={680}>
           <Stack gap="xs">
             {skills.map((skill) => {
@@ -121,6 +156,7 @@ export function SfiaCompetencyOverview({
                         demonstratedLevel={skill.demonstratedLevel}
                         targetLevel={skill.targetLevel}
                         skillName={skill.skillName}
+                        sfiaLevels={sfiaLevels}
                       />
                     </Box>
 

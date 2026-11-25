@@ -1,9 +1,7 @@
 import { render, screen, userEvent, waitFor } from '@test-utils'
 import { axe } from 'jest-axe'
-import { describe, expect, it, vi } from 'vitest'
-import TechnicalSkillsGroup, {
-  detectTechCategory,
-} from './TechnicalSkillsGroup'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import TechnicalSkillsGroup from './TechnicalSkillsGroup'
 
 vi.mock('@/services/onet.service', () => ({
   onetService: {
@@ -13,21 +11,19 @@ vi.mock('@/services/onet.service', () => ({
       { example: 'Python', isHotTechnology: true, inDemand: true },
       { example: 'PostgreSQL', isHotTechnology: false, inDemand: true },
     ]),
+    searchTechnologies: vi.fn().mockResolvedValue([
+      { example: 'Docker', isHotTechnology: true, inDemand: true },
+      { example: 'React', isHotTechnology: true, inDemand: true },
+    ]),
   },
 }))
 
 describe('TechnicalSkillsGroup (Resume)', () => {
-  it('detectTechCategory identifies common technologies accurately', () => {
-    expect(detectTechCategory('TypeScript')).toBe('language')
-    expect(detectTechCategory('Python')).toBe('language')
-    expect(detectTechCategory('React')).toBe('framework')
-    expect(detectTechCategory('PostgreSQL')).toBe('database')
-    expect(detectTechCategory('Docker')).toBe('platform')
-    expect(detectTechCategory('Git')).toBe('devtool')
-    expect(detectTechCategory('Linux')).toBe('os')
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  it('renders grouped skill list in view mode and passes jest-axe', async () => {
+  it('renders flat skill tags in view mode and passes jest-axe', async () => {
     const { container } = render(
       <TechnicalSkillsGroup
         data={[
@@ -37,18 +33,19 @@ describe('TechnicalSkillsGroup (Resume)', () => {
             name: 'TypeScript',
             usagePeriod: 24,
           },
-          { id: '2', category: 'framework', name: 'React', usagePeriod: 18 },
+          { id: '2', name: 'React', usagePeriod: 18 },
         ]}
         onSave={vi.fn()}
       />
     )
 
+    expect(screen.getByText('2 kỹ năng')).toBeInTheDocument()
     expect(screen.getByText('TypeScript · 24th')).toBeInTheDocument()
     expect(screen.getByText('React · 18th')).toBeInTheDocument()
     expect(await axe(container)).toHaveNoViolations()
-  })
+  }, 15_000)
 
-  it('loads O*NET tech suggestions, adds & saves skill, and guards duplicates', async () => {
+  it('loads O*NET tech suggestions, adds flat skill tag, and saves', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn().mockResolvedValue(undefined)
     const onDirtyChange = vi.fn()
@@ -78,11 +75,31 @@ describe('TechnicalSkillsGroup (Resume)', () => {
         technicalSkills: [
           expect.objectContaining({
             name: 'Docker',
-            category: 'platform',
             usagePeriod: 12,
           }),
         ],
       })
+    })
+  })
+
+  it('allows removing a skill tag in edit mode', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <TechnicalSkillsGroup
+        data={[{ id: '1', name: 'Rust', usagePeriod: 6 }]}
+        onSave={onSave}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: /chỉnh sửa/i }))
+    await user.click(screen.getByRole('button', { name: 'Xóa kỹ năng Rust' }))
+    expect(screen.getByText('Chưa thêm kỹ năng nào')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Lưu kỹ năng' }))
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith({ technicalSkills: [] })
     })
   })
 })

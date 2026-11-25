@@ -19,8 +19,8 @@ import {
   IconSparkles,
 } from '@tabler/icons-react'
 import { formatVietnamRelativeDate } from '@/lib/date-time'
-import { getJdLevelLabel } from '@/lib/interview-options'
-import type { SavedJobDescription } from '@/types'
+import { getJdLevelLabel } from '@/lib/interview-option-helpers'
+import type { JdLevelOption, SavedJobDescription } from '@/types'
 import interactions from '@/styles/interactions.module.css'
 import classes from './JdCard.module.css'
 
@@ -28,9 +28,10 @@ const MAX_TECH_SHOWN = 5
 
 export interface JdCardProps {
   item: SavedJobDescription
+  jdLevels?: readonly JdLevelOption[]
 }
 
-export default function JdCard({ item }: Readonly<JdCardProps>) {
+export default function JdCard({ item, jdLevels = [] }: Readonly<JdCardProps>) {
   const displayDate = item.lastUsedAt
     ? `Dùng lần cuối ${formatVietnamRelativeDate(item.lastUsedAt)}`
     : `Tạo ${formatVietnamRelativeDate(item.createdAt)}`
@@ -72,7 +73,7 @@ export default function JdCard({ item }: Readonly<JdCardProps>) {
                   </Text>
                   {item.level ? (
                     <Badge variant="outline" color="neutral" size="sm">
-                      {getJdLevelLabel(item.level)}
+                      {getJdLevelLabel(item.level, jdLevels)}
                     </Badge>
                   ) : null}
                 </Group>

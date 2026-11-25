@@ -53,6 +53,7 @@ export interface SetupStepPanelsProps {
   duration: InterviewDuration
   error: string | null
   submitting: boolean
+  submitDisabled?: boolean
   onSelectSaved: (item: SavedJobDescription) => void
   onNewFromPicker: () => void
   onJdChange: (next: JdFormData) => void
@@ -76,6 +77,7 @@ export default function SetupStepPanels({
   duration,
   error,
   submitting,
+  submitDisabled = false,
   onSelectSaved,
   onNewFromPicker,
   onJdChange,
@@ -212,7 +214,7 @@ export default function SetupStepPanels({
           type="button"
           color="brand"
           loading={submitting}
-          disabled={submitting}
+          disabled={submitting || submitDisabled}
           onClick={onSubmit}
         >
           Bắt đầu phỏng vấn

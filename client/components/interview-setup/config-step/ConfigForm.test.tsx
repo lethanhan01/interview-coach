@@ -1,8 +1,25 @@
-import { render, screen, userEvent } from '@test-utils'
+import {
+  createTestQueryClient,
+  render,
+  screen,
+  userEvent,
+  waitFor,
+} from '@test-utils'
 import { axe } from 'jest-axe'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { catalogService } from '@/services/catalog.service'
+import {
+  CATALOG_INTERVIEW_OPTIONS_FIXTURE,
+  seedCatalogQuery,
+} from '@/test-utils/fixtures/catalog.fixture'
 import type { ContextPack, InterviewDuration, SessionType } from '@/types'
 import ConfigForm from './ConfigForm'
+
+vi.mock('@/services/catalog.service', () => ({
+  catalogService: {
+    getInterviewOptions: vi.fn(),
+  },
+}))
 
 const DEFAULT_PROPS = {
   sessionType: 'hr' as SessionType,
@@ -14,8 +31,17 @@ const DEFAULT_PROPS = {
 }
 
 describe('ConfigForm', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('renders session type, context pack, and duration options cleanly', async () => {
-    const { container } = render(<ConfigForm {...DEFAULT_PROPS} />)
+    const queryClient = createTestQueryClient()
+    seedCatalogQuery(queryClient)
+
+    const { container } = render(<ConfigForm {...DEFAULT_PROPS} />, {
+      queryClient,
+    })
     expect(screen.getByText('Loại phỏng vấn')).toBeInTheDocument()
     expect(screen.getByText('HR / Behavioral')).toBeInTheDocument()
     expect(screen.getByText('Technical')).toBeInTheDocument()
@@ -31,6 +57,8 @@ describe('ConfigForm', () => {
 
   it('invokes callbacks when selecting radio cards', async () => {
     const user = userEvent.setup()
+    const queryClient = createTestQueryClient()
+    seedCatalogQuery(queryClient)
     const setSessionType = vi.fn()
     const setContextPack = vi.fn()
     const setDuration = vi.fn()
@@ -41,7 +69,8 @@ describe('ConfigForm', () => {
         setSessionType={setSessionType}
         setContextPack={setContextPack}
         setDuration={setDuration}
-      />
+      />,
+      { queryClient }
     )
 
     await user.click(screen.getByText('Technical'))
@@ -55,13 +84,17 @@ describe('ConfigForm', () => {
   })
 
   it('marks selected radio cards with aria-checked true', () => {
+    const queryClient = createTestQueryClient()
+    seedCatalogQuery(queryClient)
+
     render(
       <ConfigForm
         {...DEFAULT_PROPS}
         sessionType="technical"
         contextPack="Western"
         duration={90}
-      />
+      />,
+      { queryClient }
     )
 
     expect(screen.getByRole('radio', { name: /Technical/i })).toHaveAttribute(
@@ -75,5 +108,48 @@ describe('ConfigForm', () => {
     expect(
       screen.getByRole('radio', { name: /1 tiếng rưỡi/i })
     ).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('renders loading skeletons while catalog is pending without clearing state', () => {
+    vi.mocked(catalogService.getInterviewOptions).mockImplementation(
+      () => new Promise(() => {})
+    )
+    const setSessionType = vi.fn()
+    const setContextPack = vi.fn()
+    const setDuration = vi.fn()
+
+    const { container } = render(
+      <ConfigForm
+        {...DEFAULT_PROPS}
+        setSessionType={setSessionType}
+        setContextPack={setContextPack}
+        setDuration={setDuration}
+      />
+    )
+
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument()
+    expect(setSessionType).not.toHaveBeenCalled()
+    expect(setContextPack).not.toHaveBeenCalled()
+    expect(setDuration).not.toHaveBeenCalled()
+  })
+
+  it('shows danger alert and retries when catalog fetch fails', async () => {
+    const user = userEvent.setup()
+    vi.mocked(catalogService.getInterviewOptions)
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce(CATALOG_INTERVIEW_OPTIONS_FIXTURE)
+
+    render(<ConfigForm {...DEFAULT_PROPS} />)
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Không thể tải danh mục cấu hình')
+    expect(screen.queryByText('HR / Behavioral')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Thử lại' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('HR / Behavioral')).toBeInTheDocument()
+    })
+    expect(catalogService.getInterviewOptions).toHaveBeenCalledTimes(2)
   })
 })

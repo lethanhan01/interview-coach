@@ -1,6 +1,7 @@
-import { render, screen, userEvent } from '@test-utils'
+import { createTestQueryClient, render, screen, userEvent } from '@test-utils'
 import { axe } from 'jest-axe'
 import { describe, expect, it, vi } from 'vitest'
+import { seedCatalogQuery } from '@/test-utils/fixtures/catalog.fixture'
 import type { SavedJobDescription } from '@/types'
 import SavedJdPicker from './SavedJdPicker'
 
@@ -47,8 +48,11 @@ const MOCK_JDS: SavedJobDescription[] = [
 
 describe('SavedJdPicker', () => {
   it('renders heading, new JD action, divider count, and saved JD cards', async () => {
+    const queryClient = createTestQueryClient()
+    seedCatalogQuery(queryClient)
     const { container } = render(
-      <SavedJdPicker items={MOCK_JDS} onSelect={vi.fn()} onNew={vi.fn()} />
+      <SavedJdPicker items={MOCK_JDS} onSelect={vi.fn()} onNew={vi.fn()} />,
+      { queryClient }
     )
 
     expect(
@@ -65,10 +69,15 @@ describe('SavedJdPicker', () => {
 
   it('calls onNew and onSelect on semantic button clicks', async () => {
     const user = userEvent.setup()
+    const queryClient = createTestQueryClient()
+    seedCatalogQuery(queryClient)
     const onNew = vi.fn()
     const onSelect = vi.fn()
 
-    render(<SavedJdPicker items={MOCK_JDS} onSelect={onSelect} onNew={onNew} />)
+    render(
+      <SavedJdPicker items={MOCK_JDS} onSelect={onSelect} onNew={onNew} />,
+      { queryClient }
+    )
 
     await user.click(screen.getByRole('button', { name: /Thêm JD mới/i }))
     expect(onNew).toHaveBeenCalledTimes(1)
