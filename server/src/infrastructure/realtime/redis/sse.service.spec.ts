@@ -16,6 +16,7 @@ jest.mock('ioredis', () => ({
     on: jest.fn(),
     off: jest.fn(),
     quit: jest.fn().mockResolvedValue(undefined),
+    disconnect: jest.fn(),
   })),
 }));
 
@@ -111,6 +112,51 @@ describe('SseService', () => {
         connectTimeout: 10_000,
         commandTimeout: 3_000,
       });
+    });
+  });
+
+  describe('Shutdown & subscribe resilience', () => {
+    const buildService = () =>
+      new SseService({
+        get: jest.fn((key: string) =>
+          key === 'REDIS_PORT' ? 6379 : 'localhost',
+        ),
+      } as unknown as ConfigService);
+
+    it('onModuleDestroy gọi disconnect() dự phòng khi quit() thất bại', async () => {
+      const service = buildService();
+      service.onModuleInit();
+      const publisher = (Redis as unknown as jest.Mock).mock.results[0]
+        .value as { quit: jest.Mock; disconnect: jest.Mock };
+      const subscriber = (Redis as unknown as jest.Mock).mock.results[1]
+        .value as { quit: jest.Mock; disconnect: jest.Mock };
+      publisher.quit.mockRejectedValueOnce(new Error('Connection is closed.'));
+
+      await expect(service.onModuleDestroy()).resolves.toBeUndefined();
+      expect(publisher.disconnect).toHaveBeenCalledTimes(1);
+      expect(subscriber.quit).toHaveBeenCalledTimes(1);
+    });
+
+    it('subscribe đẩy lỗi Redis vào observer.error mà không rò unhandled rejection', async () => {
+      const service = buildService();
+      service.onModuleInit();
+      const subscriber = (Redis as unknown as jest.Mock).mock.results[1]
+        .value as { subscribe: jest.Mock };
+      subscriber.subscribe.mockRejectedValueOnce(
+        new Error('Connection is closed.'),
+      );
+
+      const errorSpy = jest.fn();
+      const sub = service
+        .subscribe('sse:session:fail')
+        .subscribe({ error: errorSpy });
+
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Connection is closed.' }),
+      );
+      sub.unsubscribe();
     });
   });
 });

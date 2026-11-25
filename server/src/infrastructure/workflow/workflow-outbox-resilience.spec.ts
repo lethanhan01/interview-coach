@@ -319,4 +319,64 @@ describe('WorkflowOutboxResilienceSpec', () => {
       expect(() => dispatcher.onModuleDestroy()).not.toThrow();
     });
   });
+
+  describe('Scenario 8: Re-entrancy Guard & DB Disconnect Isolation', () => {
+    it('bỏ qua tick reconcile() thứ 2 khi vòng trước chưa hoàn tất', async () => {
+      let releaseFirstReconcile!: () => void;
+      prisma.workflowOutbox.updateMany.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            releaseFirstReconcile = () => resolve({ count: 0 });
+          }),
+      );
+
+      const firstRun = dispatcher.reconcile();
+      const secondRun = dispatcher.reconcile();
+      await secondRun;
+
+      expect(prisma.workflowOutbox.updateMany).toHaveBeenCalledTimes(1);
+
+      releaseFirstReconcile();
+      await firstRun;
+
+      await dispatcher.reconcile();
+      expect(prisma.workflowOutbox.updateMany).toHaveBeenCalledTimes(2);
+    });
+
+    it('tiếp tục xử lý command kế tiếp trong batch kể cả khi recordFailure() gặp Connection terminated unexpectedly', async () => {
+      const failedCmd = {
+        id: 'cmd-fail-1',
+        commandType: 'feedback',
+        aggregateId: 'ans-1',
+        payload: { answerId: 'ans-1' },
+        attempts: 0,
+      };
+      const healthyCmd = {
+        id: 'cmd-ok-2',
+        commandType: 'question-generation',
+        aggregateId: 'sess-2',
+        payload: { sessionId: 'sess-2' },
+        attempts: 0,
+      };
+
+      prisma.workflowOutbox.findMany.mockResolvedValue([failedCmd, healthyCmd]);
+      prisma.workflowOutbox.updateMany
+        .mockResolvedValueOnce({ count: 0 }) // reclaim stale
+        .mockResolvedValueOnce({ count: 1 }) // claim failedCmd
+        .mockRejectedValueOnce(new Error('Connection terminated unexpectedly')) // recordFailure fails
+        .mockResolvedValueOnce({ count: 1 }) // claim healthyCmd
+        .mockResolvedValueOnce({ count: 1 }); // complete healthyCmd
+      feedbackQueue.add.mockRejectedValueOnce(
+        new Error('Connection is closed.'),
+      );
+
+      await expect(dispatcher.reconcile()).resolves.toBeUndefined();
+      expect(questionQueue.add).toHaveBeenCalledTimes(1);
+      expect(questionQueue.add).toHaveBeenCalledWith(
+        'question-generation',
+        expect.objectContaining({ sessionId: 'sess-2' }),
+        expect.objectContaining({ jobId: 'workflow-cmd-ok-2' }),
+      );
+    });
+  });
 });

@@ -1,12 +1,34 @@
 import { NestFactory } from '@nestjs/core';
-import { RequestMethod, ValidationPipe } from '@nestjs/common';
+import {
+  INestApplicationContext,
+  Logger,
+  LoggerService,
+  RequestMethod,
+  ValidationPipe,
+} from '@nestjs/common';
 import { exec } from 'node:child_process';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 import { setupSwagger } from '@core/common/swagger/swagger';
 import { resolveRuntimeRole } from '@core/runtime/runtime-role';
+import { registerProcessErrorHandlers } from '@core/runtime/process-error-handlers';
 import { validationErrorFactory } from '@core/common/pipes/validation-error.factory';
 import { AppLogger } from '@core/common/services/app-logger.service';
+
+let activeApp: INestApplicationContext | undefined;
+let activeLogger: LoggerService = new Logger('Bootstrap');
+
+registerProcessErrorHandlers({
+  logger: {
+    error: (message, trace, context) => {
+      activeLogger.error(message, trace, context);
+    },
+    warn: (message, context) => {
+      activeLogger.warn(message, context);
+    },
+  },
+  getApp: () => activeApp,
+});
 
 async function bootstrap() {
   const runtimeRole = resolveRuntimeRole();
@@ -14,13 +36,20 @@ async function bootstrap() {
     const app = await NestFactory.createApplicationContext(AppModule, {
       bufferLogs: true,
     });
-    app.useLogger(app.get(AppLogger));
+    activeApp = app;
+    const appLogger = app.get(AppLogger);
+    activeLogger = appLogger;
+    app.useLogger(appLogger);
     app.enableShutdownHooks();
     return;
   }
 
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
-  app.useLogger(app.get(AppLogger));
+  activeApp = app;
+  const appLogger = app.get(AppLogger);
+  activeLogger = appLogger;
+  app.useLogger(appLogger);
+  app.enableShutdownHooks();
   app.setGlobalPrefix('api/v1', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
@@ -51,4 +80,10 @@ async function bootstrap() {
     exec(command);
   }
 }
-void bootstrap();
+
+bootstrap().catch((error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  const stack = error instanceof Error ? error.stack : undefined;
+  activeLogger.error(`Application bootstrap failed: ${message}`, stack);
+  process.exit(1);
+});

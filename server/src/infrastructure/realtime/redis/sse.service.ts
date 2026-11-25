@@ -60,7 +60,27 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    await Promise.all([this.publisher.quit(), this.subscriber.quit()]);
+    const clients = [
+      { name: 'publisher', client: this.publisher },
+      { name: 'subscriber', client: this.subscriber },
+    ].filter((item): item is { name: string; client: Redis } =>
+      Boolean(item.client),
+    );
+
+    await Promise.allSettled(
+      clients.map(async ({ name, client }) => {
+        try {
+          await client.quit();
+        } catch (error: unknown) {
+          this.logger.warn(
+            `SSE Redis ${name} quit failed during shutdown; forcing disconnect: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+          client.disconnect();
+        }
+      }),
+    );
   }
 
   async emit(channel: string, event: string, data: unknown): Promise<void> {
@@ -86,8 +106,13 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
       const subscriberCount = this.channelSubscribers.get(channel) ?? 0;
       this.channelSubscribers.set(channel, subscriberCount + 1);
       if (subscriberCount === 0) {
-        void this.subscriber.subscribe(channel, (err) => {
-          if (err) observer.error(err);
+        this.subscriber.subscribe(channel).catch((err: unknown) => {
+          this.logger.warn(
+            `Failed to subscribe to Redis channel ${channel}: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          );
+          observer.error(err);
         });
       }
       const handler = (receivedChannel: string, message: string) => {

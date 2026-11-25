@@ -5,9 +5,16 @@ import { InterviewAIException } from './interview-ai.exception';
 import { ErrorCode } from './error-code.enum';
 
 const mockResponse = () => {
-  const res = {} as Record<string, jest.Mock>;
-  res.status = jest.fn().mockReturnValue(res);
-  res.json = jest.fn().mockReturnValue(res);
+  const res = {
+    status: jest.fn(),
+    json: jest.fn(),
+    setHeader: jest.fn(),
+    headersSent: false,
+    writableEnded: false,
+  };
+  res.status.mockReturnValue(res);
+  res.json.mockReturnValue(res);
+  res.setHeader.mockReturnValue(res);
   return res;
 };
 
@@ -15,7 +22,9 @@ const mockHost = (
   res: ReturnType<typeof mockResponse>,
   url = '/api/v1/test',
   headers: Record<string, string> = {},
+  type = 'http',
 ) => ({
+  getType: () => type,
   switchToHttp: () => ({
     getResponse: () => res,
     getRequest: () => ({ url, headers }),
@@ -301,9 +310,126 @@ describe('InterviewAIExceptionFilter', () => {
       const error = new Error('Debug error with details');
       filter.catch(error, mockHost(res) as never);
 
-      const body = res.json.mock.calls[0][0];
+      const body = (res.json as jest.Mock).mock.calls[0][0];
       expect(body.error.message).toBe('Debug error with details');
       expect(body.error.details).toEqual({ stack: error.stack });
+    });
+  });
+
+  describe('Transient infrastructure errors & fail-safe guards', () => {
+    it('map raw pg Error Connection terminated unexpectedly sang 503 SERVICE_UNAVAILABLE + Retry-After', () => {
+      const res = mockResponse();
+      filter.catch(
+        new Error('Connection terminated unexpectedly'),
+        mockHost(res, '/api/v1/sessions/123/report') as never,
+      );
+
+      expect(res.setHeader).toHaveBeenCalledWith('Retry-After', '5');
+      expect(res.status).toHaveBeenCalledWith(503);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: expect.objectContaining({
+            code: ErrorCode.SERVICE_UNAVAILABLE,
+          }),
+        }),
+      );
+    });
+
+    it('map PrismaClientUnknownRequestError transient sang 503 SERVICE_UNAVAILABLE', () => {
+      const res = mockResponse();
+      const error = new Prisma.PrismaClientUnknownRequestError(
+        'Server closed the connection unexpectedly',
+        { clientVersion: '7.8.0' },
+      );
+
+      filter.catch(error, mockHost(res) as never);
+
+      expect(res.setHeader).toHaveBeenCalledWith('Retry-After', '5');
+      expect(res.status).toHaveBeenCalledWith(503);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({
+            code: ErrorCode.SERVICE_UNAVAILABLE,
+          }),
+        }),
+      );
+    });
+
+    it('map lỗi mất kết nối Redis (MaxRetriesPerRequestError / Connection is closed) sang 503 + Retry-After', () => {
+      const res1 = mockResponse();
+      const maxRetriesError = new Error('Reached the max retries per request limit');
+      maxRetriesError.name = 'MaxRetriesPerRequestError';
+      filter.catch(maxRetriesError, mockHost(res1) as never);
+      expect(res1.setHeader).toHaveBeenCalledWith('Retry-After', '5');
+      expect(res1.status).toHaveBeenCalledWith(503);
+
+      const res2 = mockResponse();
+      filter.catch(new Error('Connection is closed.'), mockHost(res2) as never);
+      expect(res2.setHeader).toHaveBeenCalledWith('Retry-After', '5');
+      expect(res2.status).toHaveBeenCalledWith(503);
+    });
+
+    it('không nhận nhầm ReplyError hoặc EACCES thành 503 SERVICE_UNAVAILABLE', () => {
+      const res1 = mockResponse();
+      const replyErr = new Error('ERR wrong number of arguments');
+      replyErr.name = 'ReplyError';
+      filter.catch(replyErr, mockHost(res1) as never);
+      expect(res1.status).toHaveBeenCalledWith(500);
+
+      const res2 = mockResponse();
+      const eacces = Object.assign(new Error('permission denied'), {
+        code: 'EACCES',
+      });
+      filter.catch(eacces, mockHost(res2) as never);
+      expect(res2.status).toHaveBeenCalledWith(500);
+    });
+
+    it('bỏ qua ghi response khi headersSent hoặc writableEnded là true', () => {
+      const res1 = mockResponse();
+      res1.headersSent = true;
+      expect(() =>
+        filter.catch(new Error('Stream aborted'), mockHost(res1) as never),
+      ).not.toThrow();
+      expect(res1.status).not.toHaveBeenCalled();
+      expect(res1.json).not.toHaveBeenCalled();
+
+      const res2 = mockResponse();
+      res2.writableEnded = true;
+      expect(() =>
+        filter.catch(new Error('Stream ended'), mockHost(res2) as never),
+      ).not.toThrow();
+      expect(res2.status).not.toHaveBeenCalled();
+      expect(res2.json).not.toHaveBeenCalled();
+    });
+
+    it('bỏ qua an toàn khi ArgumentsHost không phải HTTP', () => {
+      const res = mockResponse();
+      const errorSpy = jest.spyOn((filter as any).logger, 'error');
+      expect(() =>
+        filter.catch(
+          new Error('RPC failure'),
+          mockHost(res, '/rpc', {}, 'rpc') as never,
+        ),
+      ).not.toThrow();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalled();
+    });
+
+    it('outer fail-safe catch ngăn filter ném lỗi ngược khi response.json lỗi', () => {
+      const res = mockResponse();
+      (res.json as jest.Mock).mockImplementation(() => {
+        throw new Error('Socket write failure');
+      });
+      const errorSpy = jest.spyOn((filter as any).logger, 'error');
+
+      expect(() =>
+        filter.catch(new Error('Original error'), mockHost(res) as never),
+      ).not.toThrow();
+      expect(errorSpy).toHaveBeenCalledWith(
+        'Fatal error inside InterviewAIExceptionFilter',
+        expect.any(String),
+      );
     });
   });
 });

@@ -1,5 +1,9 @@
 import { HttpStatus } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import {
+  isPgConnectionDropError,
+  isTransientPrismaConnectionError,
+} from '@infra/database/prisma/prisma-connection-error';
 import { ErrorCode } from '../error-code.enum';
 import { InterviewAIException } from '../interview-ai.exception';
 
@@ -91,8 +95,21 @@ export class PrismaErrorMapper {
               isOperational: false,
             },
           );
+        case 'P2028':
+          return new InterviewAIException(
+            ErrorCode.SERVICE_UNAVAILABLE,
+            HttpStatus.SERVICE_UNAVAILABLE,
+            'Database transaction timed out or connection was interrupted',
+            {
+              cause: error,
+              metadata: { prismaCode: error.code },
+              isOperational: false,
+            },
+          );
         case 'P1001':
         case 'P1002':
+        case 'P1008':
+        case 'P1017':
           return new InterviewAIException(
             ErrorCode.SERVICE_UNAVAILABLE,
             HttpStatus.SERVICE_UNAVAILABLE,
@@ -111,6 +128,32 @@ export class PrismaErrorMapper {
             { cause: error, metadata: { prismaCode: error.code } },
           );
       }
+    }
+
+    if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+      if (isTransientPrismaConnectionError(error)) {
+        return new InterviewAIException(
+          ErrorCode.SERVICE_UNAVAILABLE,
+          HttpStatus.SERVICE_UNAVAILABLE,
+          'Database connection was interrupted temporarily',
+          { cause: error, isOperational: false },
+        );
+      }
+      return new InterviewAIException(
+        ErrorCode.INTERNAL_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        'Database operation failed',
+        { cause: error, isOperational: false },
+      );
+    }
+
+    if (isPgConnectionDropError(error)) {
+      return new InterviewAIException(
+        ErrorCode.SERVICE_UNAVAILABLE,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        'Database connection was interrupted temporarily',
+        { cause: error, isOperational: false },
+      );
     }
 
     return new InterviewAIException(

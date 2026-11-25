@@ -43,6 +43,7 @@ export class WorkflowDispatcher
 {
   private readonly logger = new Logger(WorkflowDispatcher.name);
   private interval?: NodeJS.Timeout;
+  private isReconciling = false;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -92,6 +93,13 @@ export class WorkflowDispatcher
   }
 
   async reconcile(): Promise<void> {
+    if (this.isReconciling) {
+      this.logger.warn(
+        'Skipping workflow outbox reconcile tick because previous run is still in progress',
+      );
+      return;
+    }
+    this.isReconciling = true;
     try {
       await this.prisma.workflowOutbox.updateMany({
         where: {
@@ -116,11 +124,29 @@ export class WorkflowDispatcher
           attempts: true,
         },
       });
-      for (const command of commands) await this.dispatch(command);
+      await commands.reduce(
+        (chain, command) => chain.then(() => this.safeDispatch(command)),
+        Promise.resolve(),
+      );
     } catch (error: unknown) {
       this.logger.error(
         'Unable to reconcile workflow outbox',
         error instanceof Error ? error.stack : String(error),
+      );
+    } finally {
+      this.isReconciling = false;
+    }
+  }
+
+  private async safeDispatch(command: OutboxCommand): Promise<void> {
+    try {
+      await this.dispatch(command);
+    } catch (commandError: unknown) {
+      this.logger.error(
+        `Unexpected error dispatching workflow command ${command.id} (${command.commandType})`,
+        commandError instanceof Error
+          ? commandError.stack
+          : String(commandError),
       );
     }
   }
@@ -140,41 +166,11 @@ export class WorkflowDispatcher
     });
     if (claimed.count === 0) return;
 
-    const rawPayload =
-      typeof command.payload === 'object' &&
-      command.payload !== null &&
-      !Array.isArray(command.payload)
-        ? (command.payload as Record<string, unknown>)
-        : {};
-    const correlationId =
-      (rawPayload.correlationId as string) || `workflow-${command.id}`;
-    const jobPayload = {
-      ...rawPayload,
-      correlationId,
-    };
+    const jobPayload = this.buildJobPayload(command);
 
     try {
-      if (command.commandType === 'question-generation') {
-        await this.questionQueue.add('question-generation', jobPayload, {
-          jobId: `workflow-${command.id}`,
-          attempts: QUESTION_GEN_JOB_ATTEMPTS,
-          backoff: { type: 'exponential', delay: 3_000 },
-        });
-      } else if (command.commandType === 'report-generation') {
-        if (!(await this.enqueueReport(command, jobPayload))) return;
-      } else if (command.commandType === 'feedback') {
-        await this.feedbackQueue.add('feedback', jobPayload, {
-          jobId: `workflow-${command.id}`,
-          attempts: FEEDBACK_JOB_ATTEMPTS,
-          backoff: { type: 'exponential', delay: 3_000 },
-        });
-      } else {
-        throw new InterviewAIException(
-          ErrorCode.BAD_REQUEST,
-          HttpStatus.BAD_REQUEST,
-          `Unsupported workflow command: ${command.commandType}`,
-        );
-      }
+      const completed = await this.enqueueCommand(command, jobPayload);
+      if (!completed) return;
 
       await this.prisma.workflowOutbox.updateMany({
         where: { id: command.id, state: 'processing' },
@@ -188,7 +184,66 @@ export class WorkflowDispatcher
       this.logger.error(
         `Failed to dispatch command ${command.id} (${command.commandType}): ${error instanceof Error ? error.message : String(error)}`,
       );
+      await this.safeRecordFailure(command, error);
+    }
+  }
+
+  private buildJobPayload(command: OutboxCommand): Record<string, unknown> {
+    const rawPayload =
+      typeof command.payload === 'object' &&
+      command.payload !== null &&
+      !Array.isArray(command.payload)
+        ? (command.payload as Record<string, unknown>)
+        : {};
+    const correlationId =
+      (rawPayload.correlationId as string) || `workflow-${command.id}`;
+    return {
+      ...rawPayload,
+      correlationId,
+    };
+  }
+
+  private async enqueueCommand(
+    command: OutboxCommand,
+    jobPayload: Record<string, unknown>,
+  ): Promise<boolean> {
+    if (command.commandType === 'question-generation') {
+      await this.questionQueue.add('question-generation', jobPayload, {
+        jobId: `workflow-${command.id}`,
+        attempts: QUESTION_GEN_JOB_ATTEMPTS,
+        backoff: { type: 'exponential', delay: 3_000 },
+      });
+      return true;
+    }
+    if (command.commandType === 'report-generation') {
+      return this.enqueueReport(command, jobPayload);
+    }
+    if (command.commandType === 'feedback') {
+      await this.feedbackQueue.add('feedback', jobPayload, {
+        jobId: `workflow-${command.id}`,
+        attempts: FEEDBACK_JOB_ATTEMPTS,
+        backoff: { type: 'exponential', delay: 3_000 },
+      });
+      return true;
+    }
+    throw new InterviewAIException(
+      ErrorCode.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST,
+      `Unsupported workflow command: ${command.commandType}`,
+    );
+  }
+
+  private async safeRecordFailure(
+    command: OutboxCommand,
+    error: unknown,
+  ): Promise<void> {
+    try {
       await this.recordFailure(command, error);
+    } catch (recordError: unknown) {
+      this.logger.error(
+        `Unable to persist dispatch failure for workflow command ${command.id}`,
+        recordError instanceof Error ? recordError.stack : String(recordError),
+      );
     }
   }
 

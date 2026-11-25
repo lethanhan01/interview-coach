@@ -154,4 +154,54 @@ describe('PrismaErrorMapper', () => {
     expect(exception.getStatus()).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
     expect(exception.errorCode).toBe(ErrorCode.INTERNAL_ERROR);
   });
+
+  it('map P1008 / P1017 / P2028 sang SERVICE_UNAVAILABLE (503) với isOperational = false', () => {
+    for (const code of ['P1008', 'P1017', 'P2028']) {
+      const error = new Prisma.PrismaClientKnownRequestError(
+        `Transient Prisma fault ${code}`,
+        { code, clientVersion: '7.8.0' },
+      );
+
+      const exception = PrismaErrorMapper.map(error);
+      expect(exception.getStatus()).toBe(HttpStatus.SERVICE_UNAVAILABLE);
+      expect(exception.errorCode).toBe(ErrorCode.SERVICE_UNAVAILABLE);
+      expect(exception.isOperational).toBe(false);
+      expect(exception.cause).toBe(error);
+    }
+  });
+
+  it('map PrismaClientUnknownRequestError chứa lỗi rớt kết nối sang SERVICE_UNAVAILABLE (503)', () => {
+    const error = new Prisma.PrismaClientUnknownRequestError(
+      'Connection terminated unexpectedly',
+      { clientVersion: '7.8.0' },
+    );
+
+    const exception = PrismaErrorMapper.map(error);
+    expect(exception.getStatus()).toBe(HttpStatus.SERVICE_UNAVAILABLE);
+    expect(exception.errorCode).toBe(ErrorCode.SERVICE_UNAVAILABLE);
+    expect(exception.isOperational).toBe(false);
+    expect(exception.cause).toBe(error);
+  });
+
+  it('map PrismaClientUnknownRequestError không phải lỗi kết nối sang INTERNAL_ERROR (500)', () => {
+    const error = new Prisma.PrismaClientUnknownRequestError(
+      'Unexpected SQL grammar fault',
+      { clientVersion: '7.8.0' },
+    );
+
+    const exception = PrismaErrorMapper.map(error);
+    expect(exception.getStatus()).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+    expect(exception.errorCode).toBe(ErrorCode.INTERNAL_ERROR);
+    expect(exception.isOperational).toBe(false);
+  });
+
+  it('map raw pg Error Connection terminated unexpectedly sang SERVICE_UNAVAILABLE (503)', () => {
+    const error = new Error('Connection terminated unexpectedly');
+
+    const exception = PrismaErrorMapper.map(error);
+    expect(exception.getStatus()).toBe(HttpStatus.SERVICE_UNAVAILABLE);
+    expect(exception.errorCode).toBe(ErrorCode.SERVICE_UNAVAILABLE);
+    expect(exception.isOperational).toBe(false);
+    expect(exception.cause).toBe(error);
+  });
 });

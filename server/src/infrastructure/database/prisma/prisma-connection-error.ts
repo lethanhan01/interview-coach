@@ -1,7 +1,20 @@
-const TRANSIENT_PRISMA_CODES = new Set(['P1001', 'P1002', 'P1008', 'P1017']);
-const TRANSIENT_MESSAGE_PATTERNS = [
+const TRANSIENT_PRISMA_CODES = new Set([
+  'P1001',
+  'P1002',
+  'P1008',
+  'P1017',
+  'P2024',
+  'P2028',
+]);
+const PG_CONNECTION_DROP_PATTERNS = [
   'connection terminated due to connection timeout',
   'connection terminated unexpectedly',
+  'server closed the connection unexpectedly',
+  "can't reach database server",
+  'client has encountered a connection error and is not queryable',
+];
+const TRANSIENT_MESSAGE_PATTERNS = [
+  ...PG_CONNECTION_DROP_PATTERNS,
   'connection timeout',
   'connection timed out',
   'connect etimedout',
@@ -11,9 +24,7 @@ const TRANSIENT_MESSAGE_PATTERNS = [
   'eacces',
   'enotfound',
   'eai_again',
-  "can't reach database server",
   'could not connect',
-  'server closed the connection unexpectedly',
 ];
 export function isTransientPrismaConnectionError(error: unknown): boolean {
   return collectErrorSignals(error).some((signal) => {
@@ -21,6 +32,18 @@ export function isTransientPrismaConnectionError(error: unknown): boolean {
     return (
       TRANSIENT_PRISMA_CODES.has(signal) ||
       TRANSIENT_MESSAGE_PATTERNS.some((pattern) => normalized.includes(pattern))
+    );
+  });
+}
+export function isPgConnectionDropError(error: unknown): error is Error {
+  if (!(error instanceof Error)) return false;
+  return collectErrorSignals(error).some((signal) => {
+    const normalized = signal.toLowerCase();
+    return (
+      TRANSIENT_PRISMA_CODES.has(signal) ||
+      PG_CONNECTION_DROP_PATTERNS.some((pattern) =>
+        normalized.includes(pattern),
+      )
     );
   });
 }
