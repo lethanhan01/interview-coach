@@ -144,4 +144,84 @@ describe('SfiaDetailPanel Integration', () => {
 
     expect(await axe(container)).toHaveNoViolations()
   })
+
+  it('distinguishes unique occupations in header KPI from total mapping rows in tab badge', async () => {
+    const user = userEvent.setup()
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+
+    try {
+      const multiLevelDetail: SfiaSkillDetail = {
+        ...mockDetail,
+        onetCount: 2,
+        onetMappings: [
+          {
+            id: 'map-1',
+            socCode: '15-1252.00',
+            occupationTitle: 'Software Developers',
+            targetLevel: 3,
+            weight: 1.5,
+            isCore: true,
+          },
+          {
+            id: 'map-2',
+            socCode: '15-1252.00',
+            occupationTitle: 'Software Developers',
+            targetLevel: 4,
+            weight: 2.0,
+            isCore: true,
+          },
+          {
+            id: 'map-3',
+            socCode: '15-1253.00',
+            occupationTitle: 'Software Quality Assurance Analysts',
+            targetLevel: 3,
+            weight: 1.2,
+            isCore: false,
+          },
+        ],
+      }
+
+      render(
+        <SfiaDetailPanel
+          skillDetail={multiLevelDetail}
+          categories={mockCat}
+          subcategories={mockSub}
+          selectedLevel={3}
+          onSelectLevel={vi.fn()}
+        />
+      )
+
+      expect(screen.getByText(/2 nghề nghiệp/)).toBeInTheDocument()
+      expect(screen.getByText(/\(3 ánh xạ\)/)).toBeInTheDocument()
+
+      const onetTab = screen.getByRole('tab', { name: /Nghề nghiệp O\*NET/i })
+      expect(onetTab).toHaveTextContent('3')
+
+      await user.click(onetTab)
+
+      const duplicateKeyCalls = consoleErrorSpy.mock.calls.filter((args) =>
+        args.some((arg) => typeof arg === 'string' && arg.includes('same key'))
+      )
+      expect(duplicateKeyCalls).toHaveLength(0)
+    } finally {
+      consoleErrorSpy.mockRestore()
+    }
+  })
+
+  it('does not show redundant mapping count caption when each occupation has a single mapping', () => {
+    render(
+      <SfiaDetailPanel
+        skillDetail={mockDetail}
+        categories={mockCat}
+        subcategories={mockSub}
+        selectedLevel={3}
+        onSelectLevel={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText(/1 nghề nghiệp/)).toBeInTheDocument()
+    expect(screen.queryByText(/ánh xạ\)/)).not.toBeInTheDocument()
+  })
 })

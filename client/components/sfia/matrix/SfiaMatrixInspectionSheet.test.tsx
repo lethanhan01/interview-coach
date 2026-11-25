@@ -223,4 +223,62 @@ describe('SfiaMatrixInspectionSheet', () => {
       message: 'Đã sao chép AI Rubric vào bộ nhớ tạm',
     })
   })
+
+  it('renders level-filtered ONET mappings with and without ids without duplicate key errors', async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+
+    try {
+      const detailWithMultiLevels: SfiaSkillDetail = {
+        ...mockDetail,
+        onetMappings: [
+          {
+            id: 'map-dev-l3',
+            socCode: '15-1252.00',
+            occupationTitle: 'Software Developers',
+            targetLevel: 3,
+            weight: 1.8,
+            isCore: true,
+          },
+          {
+            id: 'map-dev-l4',
+            socCode: '15-1252.00',
+            occupationTitle: 'Software Developers',
+            targetLevel: 4,
+            weight: 2.0,
+            isCore: true,
+          },
+          {
+            socCode: '15-1253.00',
+            occupationTitle: 'Software Quality Assurance Analysts',
+            targetLevel: 3,
+            weight: 1.2,
+            isCore: false,
+          },
+        ],
+      }
+      vi.spyOn(sfiaAdminService, 'getSkillDetail').mockResolvedValueOnce(
+        detailWithMultiLevels
+      )
+
+      render(<SfiaMatrixInspectionSheet {...defaultProps} />)
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Nghề O\*NET yêu cầu cấp độ này \(2\)/)
+        ).toBeInTheDocument()
+      })
+
+      expect(screen.getByText('15-1252.00')).toBeInTheDocument()
+      expect(screen.getByText('15-1253.00')).toBeInTheDocument()
+
+      const duplicateKeyCalls = consoleErrorSpy.mock.calls.filter((args) =>
+        args.some((arg) => typeof arg === 'string' && arg.includes('same key'))
+      )
+      expect(duplicateKeyCalls).toHaveLength(0)
+    } finally {
+      consoleErrorSpy.mockRestore()
+    }
+  })
 })

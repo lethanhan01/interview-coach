@@ -111,7 +111,7 @@ export function SfiaDetailPanel({
     )
   }
 
-  const onetCount =
+  const onetMappingCount =
     skillDetail.onetMappings?.length ?? skillDetail.onetCount ?? 0
   const questionCount =
     skillDetail.questionBankItems?.length ?? skillDetail.questionCount ?? 0
@@ -155,7 +155,7 @@ export function SfiaDetailPanel({
               leftSection={<IconBriefcase size={14} stroke={1.5} />}
               rightSection={
                 <Badge size="xs" variant="light" color="neutral">
-                  {onetCount}
+                  {onetMappingCount}
                 </Badge>
               }
             >

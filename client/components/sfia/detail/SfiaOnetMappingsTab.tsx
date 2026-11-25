@@ -21,6 +21,10 @@ import {
   IconX,
 } from '@tabler/icons-react'
 import type { SfiaOnetMappingItem } from '@/types'
+import {
+  buildKeyedOnetMappings,
+  compareSfiaOnetMappings,
+} from '../sfia-onet-mapping.utils'
 import { SfiaOnetMappingCard, SfiaOnetMappingRow } from './SfiaOnetMappingRow'
 
 export interface SfiaOnetMappingsTabProps {
@@ -47,7 +51,7 @@ export function SfiaOnetMappingsTab({
   )
   const supplementalCount = onetMappings.length - coreCount
 
-  const filteredAndSortedMappings = useMemo(() => {
+  const keyedMappings = useMemo(() => {
     let result = [...onetMappings]
 
     if (searchQuery.trim()) {
@@ -65,17 +69,8 @@ export function SfiaOnetMappingsTab({
       result = result.filter((m) => !m.isCore)
     }
 
-    result.sort((a, b) => {
-      if (a.isCore !== b.isCore) {
-        return a.isCore ? -1 : 1
-      }
-      if (b.weight !== a.weight) {
-        return b.weight - a.weight
-      }
-      return a.socCode.localeCompare(b.socCode)
-    })
-
-    return result
+    result.sort(compareSfiaOnetMappings)
+    return buildKeyedOnetMappings(result)
   }, [onetMappings, searchQuery, filterType])
 
   if (onetMappings.length === 0) {
@@ -167,7 +162,7 @@ export function SfiaOnetMappingsTab({
       </Paper>
 
       {/* 2. Content */}
-      {filteredAndSortedMappings.length === 0 ? (
+      {keyedMappings.length === 0 ? (
         <Paper withBorder p="xl" radius="md" ta="center">
           <Stack align="center" gap="xs">
             <IconSearch size={28} stroke={1.5} />
@@ -218,11 +213,8 @@ export function SfiaOnetMappingsTab({
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {filteredAndSortedMappings.map((mapping) => (
-                    <SfiaOnetMappingRow
-                      key={mapping.socCode}
-                      mapping={mapping}
-                    />
+                  {keyedMappings.map(({ key, mapping }) => (
+                    <SfiaOnetMappingRow key={key} mapping={mapping} />
                   ))}
                 </Table.Tbody>
               </Table>
@@ -231,8 +223,8 @@ export function SfiaOnetMappingsTab({
 
           {/* Mobile Cards */}
           <Stack gap="xs" hiddenFrom="sm">
-            {filteredAndSortedMappings.map((mapping) => (
-              <SfiaOnetMappingCard key={mapping.socCode} mapping={mapping} />
+            {keyedMappings.map(({ key, mapping }) => (
+              <SfiaOnetMappingCard key={key} mapping={mapping} />
             ))}
           </Stack>
         </>

@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, userEvent } from '@test-utils'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { axe } from 'jest-axe'
 import { SfiaOnetMappingsTab } from './SfiaOnetMappingsTab'
 import type { SfiaOnetMappingItem } from '@/types'
@@ -149,5 +149,172 @@ describe('SfiaOnetMappingsTab', () => {
     expect(links[0]).toHaveAttribute('target', '_blank')
 
     expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('renders multiple levels for the same socCode (with ids) without duplicate key errors and sorts deterministically by targetLevel', async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+
+    try {
+      const multiLevelMappings: SfiaOnetMappingItem[] = [
+        {
+          id: 'map-dev-l4',
+          socCode: '15-1252.00',
+          occupationTitle: 'Software Developers',
+          targetLevel: 4,
+          weight: 2.0,
+          isCore: true,
+        },
+        {
+          id: 'map-dev-l3',
+          socCode: '15-1252.00',
+          occupationTitle: 'Software Developers',
+          targetLevel: 3,
+          weight: 2.0,
+          isCore: true,
+        },
+        {
+          id: 'map-qa-l5',
+          socCode: '15-1253.00',
+          occupationTitle: 'Software Quality Assurance Analysts',
+          targetLevel: 5,
+          weight: 1.5,
+          isCore: false,
+        },
+        {
+          id: 'map-qa-l3',
+          socCode: '15-1253.00',
+          occupationTitle: 'Software Quality Assurance Analysts',
+          targetLevel: 3,
+          weight: 1.5,
+          isCore: false,
+        },
+      ]
+
+      const { container } = render(
+        <SfiaOnetMappingsTab
+          skillCode="PROG"
+          skillName="Programming"
+          onetMappings={multiLevelMappings}
+        />
+      )
+
+      const duplicateKeyCalls = consoleErrorSpy.mock.calls.filter((args) =>
+        args.some((arg) => typeof arg === 'string' && arg.includes('same key'))
+      )
+      expect(duplicateKeyCalls).toHaveLength(0)
+
+      const rows = container.querySelectorAll('tbody tr')
+      expect(rows).toHaveLength(4)
+      expect(rows[0]).toHaveTextContent('15-1252.00')
+      expect(rows[0]).toHaveTextContent('Cấp độ 3')
+      expect(rows[1]).toHaveTextContent('15-1252.00')
+      expect(rows[1]).toHaveTextContent('Cấp độ 4')
+      expect(rows[2]).toHaveTextContent('15-1253.00')
+      expect(rows[2]).toHaveTextContent('Cấp độ 3')
+      expect(rows[3]).toHaveTextContent('15-1253.00')
+      expect(rows[3]).toHaveTextContent('Cấp độ 5')
+
+      expect(await axe(container)).toHaveNoViolations()
+    } finally {
+      consoleErrorSpy.mockRestore()
+    }
+  })
+
+  it('renders multiple levels for the same socCode without ids and handles filtering without duplicate key errors', async () => {
+    const user = userEvent.setup()
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+
+    try {
+      const legacyMappings: SfiaOnetMappingItem[] = [
+        {
+          socCode: '15-1252.00',
+          occupationTitle: 'Software Developers',
+          targetLevel: 2,
+          weight: 1.0,
+          isCore: true,
+        },
+        {
+          socCode: '15-1252.00',
+          occupationTitle: 'Software Developers',
+          targetLevel: 4,
+          weight: 2.0,
+          isCore: true,
+        },
+        {
+          socCode: '15-1253.00',
+          occupationTitle: 'Software Quality Assurance Analysts',
+          targetLevel: 3,
+          weight: 1.2,
+          isCore: false,
+        },
+      ]
+
+      const { container } = render(
+        <SfiaOnetMappingsTab
+          skillCode="PROG"
+          skillName="Programming"
+          onetMappings={legacyMappings}
+        />
+      )
+
+      const searchInput = screen.getByPlaceholderText(
+        /Tìm theo mã SOC hoặc tên nghề nghiệp/i
+      )
+      await user.type(searchInput, '15-1252.00')
+
+      expect(container.querySelectorAll('tbody tr')).toHaveLength(2)
+
+      const duplicateKeyCalls = consoleErrorSpy.mock.calls.filter((args) =>
+        args.some((arg) => typeof arg === 'string' && arg.includes('same key'))
+      )
+      expect(duplicateKeyCalls).toHaveLength(0)
+    } finally {
+      consoleErrorSpy.mockRestore()
+    }
+  })
+
+  it('prevents duplicate key warnings even with colliding socCode and targetLevel without id', () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+
+    try {
+      const collidingMappings: SfiaOnetMappingItem[] = [
+        {
+          socCode: '15-1252.00',
+          occupationTitle: 'Software Developers',
+          targetLevel: 3,
+          weight: 1.5,
+          isCore: true,
+        },
+        {
+          socCode: '15-1252.00',
+          occupationTitle: 'Software Developers',
+          targetLevel: 3,
+          weight: 1.5,
+          isCore: true,
+        },
+      ]
+
+      const { container } = render(
+        <SfiaOnetMappingsTab
+          skillCode="PROG"
+          skillName="Programming"
+          onetMappings={collidingMappings}
+        />
+      )
+
+      expect(container.querySelectorAll('tbody tr')).toHaveLength(2)
+      const duplicateKeyCalls = consoleErrorSpy.mock.calls.filter((args) =>
+        args.some((arg) => typeof arg === 'string' && arg.includes('same key'))
+      )
+      expect(duplicateKeyCalls).toHaveLength(0)
+    } finally {
+      consoleErrorSpy.mockRestore()
+    }
   })
 })

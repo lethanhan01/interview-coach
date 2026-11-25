@@ -70,6 +70,7 @@ describe('SfiaAdminRepository', () => {
 
   const mockOnetMappings = [
     {
+      id: 'map-uuid-1',
       socCode: '15-1252.00',
       occupationTitle: 'Software Developers',
       targetLevel: 3,
@@ -228,10 +229,12 @@ describe('SfiaAdminRepository', () => {
   });
 
   describe('loadSkillsWithCounts', () => {
-    it('returns skills with counts without filters', async () => {
+    it('returns skills with counts without filters and counts distinct ONET occupations', async () => {
       queryRawMock.mockResolvedValueOnce(mockSkillsWithCounts);
       const res = await repository.loadSkillsWithCounts();
       expect(res).toEqual(mockSkillsWithCounts);
+      const sqlText = (queryRawMock.mock.calls[0][0] as TemplateStringsArray).join(' ');
+      expect(sqlText).toContain('COUNT(DISTINCT osm.onet_soc_code)::int AS "onetCount"');
     });
 
     it('applies query and category filters properly', async () => {
@@ -248,10 +251,12 @@ describe('SfiaAdminRepository', () => {
   });
 
   describe('loadSkillDetailBase', () => {
-    it('returns skill detail base when skill exists', async () => {
+    it('returns skill detail base when skill exists and counts distinct ONET occupations', async () => {
       queryRawMock.mockResolvedValueOnce([mockSkillDetailBase]);
       const res = await repository.loadSkillDetailBase('PROG');
       expect(res).toEqual(mockSkillDetailBase);
+      const sqlText = (queryRawMock.mock.calls[0][0] as TemplateStringsArray).join(' ');
+      expect(sqlText).toContain('COUNT(DISTINCT osm.onet_soc_code)::int AS "onetCount"');
     });
 
     it('returns null when skill is not found', async () => {
@@ -270,10 +275,15 @@ describe('SfiaAdminRepository', () => {
   });
 
   describe('loadSkillOnetMappings', () => {
-    it('returns ONET occupation mappings for a skill', async () => {
+    it('returns ONET occupation mappings with id and deterministic ordering for a skill', async () => {
       queryRawMock.mockResolvedValueOnce(mockOnetMappings);
       const res = await repository.loadSkillOnetMappings('PROG');
       expect(res).toEqual(mockOnetMappings);
+      const sqlText = (queryRawMock.mock.calls[0][0] as TemplateStringsArray).join(' ');
+      expect(sqlText).toContain('osm.id::text AS "id"');
+      expect(sqlText).toContain(
+        'ORDER BY osm.is_core DESC, osm.default_weight DESC, osm.onet_soc_code ASC, osm.target_sfia_level ASC',
+      );
     });
   });
 
@@ -308,10 +318,12 @@ describe('SfiaAdminRepository', () => {
   });
 
   describe('loadMatrixCells', () => {
-    it('returns 2D matrix cell records', async () => {
+    it('returns 2D matrix cell records counting distinct ONET occupations', async () => {
       queryRawMock.mockResolvedValueOnce(mockMatrixCells);
       const res = await repository.loadMatrixCells('DEV_IMPL');
       expect(res).toEqual(mockMatrixCells);
+      const sqlText = (queryRawMock.mock.calls[0][0] as TemplateStringsArray).join(' ');
+      expect(sqlText).toContain('COUNT(DISTINCT osm.onet_soc_code)::int AS "onetCount"');
     });
   });
 

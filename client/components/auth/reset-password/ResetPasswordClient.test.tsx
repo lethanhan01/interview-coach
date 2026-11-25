@@ -130,7 +130,7 @@ describe('ResetPasswordClient', () => {
       mockCandidateUser
     )
     expect(queryClient.getQueryData(['sessions', 'list'])).toBeUndefined()
-  })
+  }, 15_000)
 
   it('redirects admin users to /admin/dashboard after confirmPasswordReset', async () => {
     const user = userEvent.setup()

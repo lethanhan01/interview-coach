@@ -37,6 +37,7 @@ export interface SfiaSkillLevelStatement {
 }
 
 export interface SfiaOnetMappingItem {
+  id?: string
   socCode: string
   occupationTitle: string
   targetLevel: number

@@ -254,6 +254,7 @@ export class SfiaAdminService implements OnModuleInit {
         essence: l.essence ?? undefined,
       })),
       onetMappings: onetMappings.map((m) => ({
+        id: m.id,
         socCode: m.socCode,
         occupationTitle: m.occupationTitle,
         targetLevel: m.targetLevel,

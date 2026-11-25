@@ -17,6 +17,7 @@ import {
   IconQuote,
 } from '@tabler/icons-react'
 import type { SfiaLevelResponsibility, SfiaSkillDetail } from '@/types'
+import { buildKeyedOnetMappings } from '@/components/sfia/sfia-onet-mapping.utils'
 import { getSfiaLevelSemanticTheme } from '@/components/sfia/sfia-theme'
 import surfaces from '@/styles/surfaces.module.css'
 
@@ -48,8 +49,8 @@ export function SfiaInspectionDetails({
   const levelQuestions = detail.questionBankItems.filter(
     (q) => q.targetSfiaLevel === levelId
   )
-  const levelOnetMappings = detail.onetMappings.filter(
-    (m) => m.targetLevel === levelId
+  const levelOnetMappings = buildKeyedOnetMappings(
+    detail.onetMappings.filter((m) => m.targetLevel === levelId)
   )
   const isBlindSpot = levelQuestions.length === 0
 
@@ -195,9 +196,9 @@ export function SfiaInspectionDetails({
             </Text>
           ) : (
             <Stack gap="xs">
-              {levelOnetMappings.map((m) => (
+              {levelOnetMappings.map(({ key, mapping: m }) => (
                 <Paper
-                  key={m.socCode}
+                  key={key}
                   withBorder
                   radius="sm"
                   p="xs"

@@ -101,6 +101,7 @@ describe('SfiaAdminService', () => {
 
   const mockOnetMappings = [
     {
+      id: 'map-uuid-1',
       socCode: '15-1252.00',
       occupationTitle: 'Software Developers',
       targetLevel: 3,
@@ -308,7 +309,7 @@ describe('SfiaAdminService', () => {
   });
 
   describe('getSkillDetail', () => {
-    it('returns full skill detail with levels, onet, and questions', async () => {
+    it('returns full skill detail with levels, onet (including id), and questions', async () => {
       const res = await service.getSkillDetail('prog');
       expect(res.code).toBe('PROG');
       expect(res.overallDescription).toBe(
@@ -316,7 +317,37 @@ describe('SfiaAdminService', () => {
       );
       expect(res.skillLevels).toHaveLength(1);
       expect(res.onetMappings).toHaveLength(1);
+      expect(res.onetMappings[0].id).toBe('map-uuid-1');
       expect(res.questionBankItems).toHaveLength(1);
+    });
+
+    it('preserves multiple level mappings for the same ONET occupation with distinct ids', async () => {
+      repoMock.loadSkillOnetMappings.mockResolvedValueOnce([
+        {
+          id: 'map-uuid-l3',
+          socCode: '15-1252.00',
+          occupationTitle: 'Software Developers',
+          targetLevel: 3,
+          weight: 1.5,
+          isCore: true,
+        },
+        {
+          id: 'map-uuid-l4',
+          socCode: '15-1252.00',
+          occupationTitle: 'Software Developers',
+          targetLevel: 4,
+          weight: 2.0,
+          isCore: true,
+        },
+      ]);
+
+      const res = await service.getSkillDetail('prog');
+      expect(res.onetMappings).toHaveLength(2);
+      expect(res.onetMappings.map((m) => m.id)).toEqual([
+        'map-uuid-l3',
+        'map-uuid-l4',
+      ]);
+      expect(res.onetMappings.map((m) => m.targetLevel)).toEqual([3, 4]);
     });
 
     it('throws VALIDATION_ERROR when code is empty', async () => {

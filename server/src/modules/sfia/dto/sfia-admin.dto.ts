@@ -143,6 +143,9 @@ export class SfiaSkillLevelStatementDto {
 }
 
 export class SfiaOnetMappingItemDto {
+  @ApiProperty({ example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' })
+  id!: string;
+
   @ApiProperty({ example: '15-1252.00' })
   socCode!: string;
 

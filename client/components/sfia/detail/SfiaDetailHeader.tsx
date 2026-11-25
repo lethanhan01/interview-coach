@@ -20,6 +20,7 @@ import {
   IconRobot,
 } from '@tabler/icons-react'
 import type { SfiaCategory, SfiaSkillDetail, SfiaSubcategory } from '@/types'
+import { countUniqueOnetOccupations } from '../sfia-onet-mapping.utils'
 import { getSfiaCategorySemanticTheme } from '../sfia-theme'
 
 export interface SfiaDetailHeaderProps {
@@ -47,8 +48,10 @@ export function SfiaDetailHeader({
 
   const questionCount =
     skillDetail.questionBankItems?.length ?? skillDetail.questionCount ?? 0
-  const onetCount =
-    skillDetail.onetMappings?.length ?? skillDetail.onetCount ?? 0
+  const mappingCount = skillDetail.onetMappings?.length ?? 0
+  const uniqueOccupationCount = skillDetail.onetMappings
+    ? countUniqueOnetOccupations(skillDetail.onetMappings)
+    : (skillDetail.onetCount ?? 0)
 
   return (
     <Stack gap="sm">
@@ -177,7 +180,13 @@ export function SfiaDetailHeader({
             Ánh xạ O*NET
           </Text>
           <Text fw={700} size="sm">
-            {onetCount} nghề nghiệp
+            {uniqueOccupationCount} nghề nghiệp
+            {mappingCount > uniqueOccupationCount && (
+              <Text span size="xs" c="dimmed" fw={400}>
+                {' '}
+                ({mappingCount} ánh xạ)
+              </Text>
+            )}
           </Text>
         </Paper>
 

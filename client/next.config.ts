@@ -28,6 +28,11 @@ const nextConfig: NextConfig = {
   redirects() {
     return Promise.resolve([
       {
+        source: '/admin',
+        destination: '/admin/dashboard',
+        permanent: false,
+      },
+      {
         source: '/admin-dashboard',
         destination: '/admin/dashboard',
         permanent: true,
