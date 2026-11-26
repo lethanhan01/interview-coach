@@ -36,14 +36,10 @@ export interface SfiaMatrixCellProps {
 function getCellSubLabel(
   mode: SfiaMatrixDisplayMode,
   questionCount: number,
-  onetCount: number,
-  levelName: string
+  onetCount: number
 ): string {
-  if (mode === 'questions') {
-    return questionCount === 0 ? '0 CH' : `${questionCount} CH`
-  }
   if (mode === 'onet') return `${onetCount} nghề`
-  return levelName
+  return `${questionCount} CH`
 }
 
 export const SfiaMatrixCell = memo(function SfiaMatrixCell({
@@ -61,7 +57,7 @@ export const SfiaMatrixCell = memo(function SfiaMatrixCell({
   const heat = getSfiaHeatmapSemanticTheme(qCount)
   const categoryTheme = getSfiaCategorySemanticTheme(skill.categoryCode)
   const levelName = levelMeta?.nameVi || levelMeta?.name || `L${levelId}`
-  const subLabel = getCellSubLabel(displayMode, qCount, onetCount, levelName)
+  const subLabel = getCellSubLabel(displayMode, qCount, onetCount)
 
   return (
     <HoverCard

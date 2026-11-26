@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, type ReactNode, useMemo, useState } from 'react'
 import {
   Badge,
   Box,
@@ -43,6 +43,7 @@ export interface SfiaMatrixViewProps {
   onSelectCell: (skillCode: string, levelId: number) => void
   onClearFilters?: () => void
   filterKey?: string
+  toolbar?: ReactNode
   className?: string
 }
 
@@ -51,13 +52,14 @@ export function SfiaMatrixView({
   categories,
   cells,
   levels,
-  displayMode = 'level',
+  displayMode = 'questions',
   blindSpotsOnly = false,
   onBlindSpotsOnlyChange,
   inspectedCell = null,
   onSelectCell,
   onClearFilters,
   filterKey = '',
+  toolbar,
   className,
 }: Readonly<SfiaMatrixViewProps>) {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
@@ -133,51 +135,61 @@ export function SfiaMatrixView({
 
   if (filteredSkills.length === 0) {
     return (
-      <Paper
-        withBorder
-        radius="md"
-        p="md"
-        data-testid="matrix-empty-state"
-        className={className}
+      <Box
+        className={[sfia.matrixPageRoot, className].filter(Boolean).join(' ')}
       >
-        <Stack align="center" gap="xs" py="lg">
-          <ThemeIcon size="xl" radius="xl" variant="light" color="neutral">
-            <IconSearchOff size={24} stroke={1.5} />
-          </ThemeIcon>
-          <Title order={3} fz="md" fw={700} ta="center">
-            {blindSpotsOnly
-              ? 'Không phát hiện điểm mù nào trong nhóm lọc hiện tại'
-              : 'Không tìm thấy kỹ năng SFIA phù hợp'}
-          </Title>
-          <Text size="sm" c="dimmed" ta="center" maw={420}>
-            {blindSpotsOnly
-              ? 'Tất cả các ô năng lực trong phạm vi lọc hiện tại đều đã có ít nhất một câu hỏi phỏng vấn.'
-              : 'Hãy thử điều chỉnh từ khóa tìm kiếm hoặc chọn danh mục khác để xem kết quả.'}
-          </Text>
-          {onClearFilters && (
-            <Button variant="default" size="sm" onClick={onClearFilters}>
-              Xóa bộ lọc
-            </Button>
-          )}
-        </Stack>
-      </Paper>
+        {toolbar && (
+          <Paper withBorder radius="md" px="xs" py={6}>
+            {toolbar}
+          </Paper>
+        )}
+
+        <Paper withBorder radius="md" p="md" data-testid="matrix-empty-state">
+          <Stack align="center" gap="xs" py="lg">
+            <ThemeIcon size="xl" radius="xl" variant="light" color="neutral">
+              <IconSearchOff size={24} stroke={1.5} />
+            </ThemeIcon>
+            <Title order={3} fz="md" fw={700} ta="center">
+              {blindSpotsOnly
+                ? 'Không phát hiện điểm mù nào trong nhóm lọc hiện tại'
+                : 'Không tìm thấy kỹ năng SFIA phù hợp'}
+            </Title>
+            <Text size="sm" c="dimmed" ta="center" maw={420}>
+              {blindSpotsOnly
+                ? 'Tất cả các ô năng lực trong phạm vi lọc hiện tại đều đã có ít nhất một câu hỏi phỏng vấn.'
+                : 'Hãy thử điều chỉnh từ khóa tìm kiếm hoặc chọn danh mục khác để xem kết quả.'}
+            </Text>
+            {onClearFilters && (
+              <Button variant="default" size="sm" onClick={onClearFilters}>
+                Xóa bộ lọc
+              </Button>
+            )}
+          </Stack>
+        </Paper>
+      </Box>
     )
   }
 
   return (
     <Box className={[sfia.matrixPageRoot, className].filter(Boolean).join(' ')}>
-      <SfiaMatrixHeatmapSummary
-        skills={filteredSkills}
-        cells={cells}
-        blindSpotsOnly={blindSpotsOnly}
-        onToggleBlindSpotsOnly={onBlindSpotsOnlyChange}
-        allCollapsed={allCollapsed}
-        onToggleAllCategories={
-          visibleCategoryCodes.length > 0
-            ? handleToggleAllCategories
-            : undefined
-        }
-      />
+      <Paper withBorder radius="md" px="xs" py={6}>
+        <Stack gap={6}>
+          {toolbar}
+          <SfiaMatrixHeatmapSummary
+            embedded
+            skills={filteredSkills}
+            cells={cells}
+            blindSpotsOnly={blindSpotsOnly}
+            onToggleBlindSpotsOnly={onBlindSpotsOnlyChange}
+            allCollapsed={allCollapsed}
+            onToggleAllCategories={
+              visibleCategoryCodes.length > 0
+                ? handleToggleAllCategories
+                : undefined
+            }
+          />
+        </Stack>
+      </Paper>
 
       <Box className={sfia.matrixPageViewport}>
         <Table className={sfia.matrixPageTable} highlightOnHover>

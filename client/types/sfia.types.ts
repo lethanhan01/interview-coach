@@ -83,7 +83,7 @@ export interface SfiaGenericAttribute {
   levels: Record<number, string>
 }
 
-export type SfiaMatrixDisplayMode = 'level' | 'questions' | 'onet'
+export type SfiaMatrixDisplayMode = 'questions' | 'onet'
 
 export interface SfiaMatrixCellData {
   skillCode: string

@@ -14,7 +14,6 @@ import {
   IconBook,
   IconBriefcase,
   IconHelpCircle,
-  IconQuote,
 } from '@tabler/icons-react'
 import type { SfiaLevelResponsibility, SfiaSkillDetail } from '@/types'
 import { buildKeyedOnetMappings } from '@/components/sfia/sfia-onet-mapping.utils'
@@ -89,12 +88,7 @@ export function SfiaInspectionDetails({
       </Paper>
 
       {levelStatement?.essence && (
-        <Blockquote
-          color="brand"
-          icon={<IconQuote size={16} stroke={1.5} />}
-          p="xs"
-          radius="md"
-        >
+        <Blockquote color="brand" p="xs" radius="md">
           <Stack gap={4}>
             <Text size="xs" fw={700} tt="uppercase" c="dimmed">
               Tinh hoa cấp độ

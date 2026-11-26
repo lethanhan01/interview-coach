@@ -18,7 +18,6 @@ import {
   IconAlertTriangle,
   IconArrowRight,
   IconCheck,
-  IconQuote,
   IconSparkles,
 } from '@tabler/icons-react'
 import type { SfiaSkillDetail } from '@/types'
@@ -107,12 +106,7 @@ export function SfiaLevelStatementCards({
             </Badge>
           </Group>
 
-          <Blockquote
-            color={theme.color}
-            icon={<IconQuote size={15} stroke={1.5} />}
-            p="xs"
-            radius="sm"
-          >
+          <Blockquote color={theme.color} p="xs" radius="sm">
             <Text size="sm" fs="italic" lh={1.5}>
               {currentStatement?.essence ||
                 'Thể hiện năng lực chuyên môn và tinh thần trách nhiệm tương ứng với cấp độ này.'}

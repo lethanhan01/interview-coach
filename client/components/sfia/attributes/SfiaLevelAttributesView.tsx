@@ -20,7 +20,6 @@ import {
   IconChevronRight,
   IconCopy,
   IconMarkdown,
-  IconSparkles,
 } from '@tabler/icons-react'
 import type { SfiaLevelResponsibility, SfiaGenericAttribute } from '@/types'
 import { getSfiaLevelSemanticTheme } from '@/components/sfia/sfia-theme'
@@ -158,7 +157,6 @@ export function SfiaLevelAttributesView({
 
           <Blockquote
             color="brand"
-            icon={<IconSparkles size={16} stroke={1.5} />}
             cite={`Tinh hoa Cấp độ ${selectedLevel}`}
             p="xs"
             radius="sm"

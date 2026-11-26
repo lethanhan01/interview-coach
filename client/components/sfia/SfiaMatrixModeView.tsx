@@ -45,7 +45,8 @@ export function SfiaMatrixModeView({
   onCreateQuestion,
 }: Readonly<SfiaMatrixModeViewProps>) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [displayMode, setDisplayMode] = useState<SfiaMatrixDisplayMode>('level')
+  const [displayMode, setDisplayMode] =
+    useState<SfiaMatrixDisplayMode>('questions')
   const [blindSpotsOnly, setBlindSpotsOnly] = useState(false)
   const [isExportingCsv, setIsExportingCsv] = useState(false)
   const [inspectedCell, setInspectedCell] = useState<{
@@ -81,30 +82,6 @@ export function SfiaMatrixModeView({
       )
     })
   }, [matrixSkills, selectedCategory, deferredSearchQuery])
-
-  const blindSpotsCount = useMemo(() => {
-    let count = 0
-    filteredSkills.forEach((skill) => {
-      for (let lvl = skill.minLevel; lvl <= skill.maxLevel; lvl += 1) {
-        const cell = matrixCells[`${skill.code}_L${lvl}`]
-        if (!cell || cell.questionCount === 0) {
-          count += 1
-        }
-      }
-    })
-    return count
-  }, [filteredSkills, matrixCells])
-
-  const displayedSkillsCount = useMemo(() => {
-    if (!blindSpotsOnly) return filteredSkills.length
-    return filteredSkills.filter((skill) => {
-      for (let lvl = skill.minLevel; lvl <= skill.maxLevel; lvl += 1) {
-        const cell = matrixCells[`${skill.code}_L${lvl}`]
-        if (!cell || cell.questionCount === 0) return true
-      }
-      return false
-    }).length
-  }, [blindSpotsOnly, filteredSkills, matrixCells])
 
   const handleExportCsv = () => {
     setIsExportingCsv(true)
@@ -171,23 +148,6 @@ export function SfiaMatrixModeView({
 
   return (
     <Box className={sfia.matrixPagePane} mod={{ 'workspace-scroll': 'page' }}>
-      <SfiaMatrixToolbar
-        categories={matrixCategories}
-        selectedCategory={selectedCategory ?? ''}
-        onCategoryChange={(code) => onCategoryChange(code || null)}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        displayMode={displayMode}
-        onDisplayModeChange={setDisplayMode}
-        blindSpotsOnly={blindSpotsOnly}
-        onBlindSpotsOnlyChange={setBlindSpotsOnly}
-        onExportCsv={handleExportCsv}
-        totalSkillsCount={matrixSkills.length}
-        displayedSkillsCount={displayedSkillsCount}
-        blindSpotsCount={blindSpotsCount}
-        isExporting={isExportingCsv}
-      />
-
       <SfiaMatrixView
         skills={filteredSkills}
         categories={matrixCategories}
@@ -200,6 +160,17 @@ export function SfiaMatrixModeView({
         onSelectCell={handleSelectCell}
         onClearFilters={handleClearFilters}
         filterKey={`${deferredSearchQuery.trim()}::${selectedCategory ?? ''}`}
+        toolbar={
+          <SfiaMatrixToolbar
+            embedded
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            displayMode={displayMode}
+            onDisplayModeChange={setDisplayMode}
+            onExportCsv={handleExportCsv}
+            isExporting={isExportingCsv}
+          />
+        }
       />
 
       <SfiaMatrixInspectionSheet

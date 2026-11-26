@@ -29,4 +29,11 @@ export const theme = createTheme({
   fontFamilyMonospace:
     'var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace',
   defaultRadius: 'md',
+  components: {
+    Blockquote: {
+      defaultProps: {
+        icon: null,
+      },
+    },
+  },
 })

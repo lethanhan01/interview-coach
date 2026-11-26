@@ -170,7 +170,7 @@ describe('SfiaMatrixView', () => {
     categories: mockCategories,
     cells: mockCells,
     levels: mockLevels,
-    displayMode: 'level' as const,
+    displayMode: 'questions' as const,
     blindSpotsOnly: false,
     onBlindSpotsOnlyChange: vi.fn(),
     inspectedCell: null,

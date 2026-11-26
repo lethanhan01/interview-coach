@@ -1,5 +1,4 @@
-import { Blockquote, Paper, Stack, Text, ThemeIcon } from '@mantine/core'
-import { IconQuote } from '@tabler/icons-react'
+import { Blockquote, Paper, Stack, Text } from '@mantine/core'
 import type { AnnotatedSegment } from '@/types'
 
 export interface TranscriptFeedbackSegmentsProps {
@@ -53,20 +52,7 @@ function FeedbackGroup({
             <Paper key={seg.id} withBorder radius="md" p="sm">
               <Stack gap={4}>
                 {quote && (
-                  <Blockquote
-                    color="neutral"
-                    radius="sm"
-                    p="xs"
-                    icon={
-                      <ThemeIcon
-                        size={16}
-                        variant="transparent"
-                        color="neutral"
-                      >
-                        <IconQuote size={12} aria-hidden="true" />
-                      </ThemeIcon>
-                    }
-                  >
+                  <Blockquote color="neutral" radius="sm" p="xs">
                     <Text size="xs" fs="italic">
                       &ldquo;{quote}&rdquo;
                     </Text>
