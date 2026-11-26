@@ -11,7 +11,11 @@ import {
   Text,
   Tooltip,
 } from '@mantine/core'
-import { IconAlertTriangle } from '@tabler/icons-react'
+import {
+  IconAlertTriangle,
+  IconChevronsDown,
+  IconChevronsUp,
+} from '@tabler/icons-react'
 import type { SfiaMatrixCellData, SfiaSkillSummary } from '@/types'
 import { getSfiaHeatmapSemanticTheme } from '@/components/sfia/sfia-theme'
 
@@ -20,6 +24,8 @@ export interface SfiaMatrixHeatmapSummaryProps {
   cells: Record<string, SfiaMatrixCellData>
   blindSpotsOnly: boolean
   onToggleBlindSpotsOnly?: (enabled: boolean) => void
+  allCollapsed?: boolean
+  onToggleAllCategories?: () => void
 }
 
 const TIER_META = [
@@ -34,6 +40,8 @@ export function SfiaMatrixHeatmapSummary({
   cells,
   blindSpotsOnly,
   onToggleBlindSpotsOnly,
+  allCollapsed = false,
+  onToggleAllCategories,
 }: Readonly<SfiaMatrixHeatmapSummaryProps>) {
   const counts = useMemo(() => {
     const tally = { rich: 0, good: 0, low: 0, blind: 0, total: 0 }
@@ -96,9 +104,28 @@ export function SfiaMatrixHeatmapSummary({
             </Button>
           </Group>
 
-          <Text size="sm" c="dimmed">
-            Tổng {counts.total} ô khả dụng
-          </Text>
+          <Group gap="sm" align="center" wrap="nowrap">
+            {onToggleAllCategories && (
+              <Button
+                variant="subtle"
+                color="neutral"
+                size="compact-sm"
+                leftSection={
+                  allCollapsed ? (
+                    <IconChevronsDown size={14} stroke={1.5} />
+                  ) : (
+                    <IconChevronsUp size={14} stroke={1.5} />
+                  )
+                }
+                onClick={onToggleAllCategories}
+              >
+                {allCollapsed ? 'Mở rộng tất cả' : 'Thu gọn tất cả'}
+              </Button>
+            )}
+            <Text size="sm" c="dimmed">
+              Tổng {counts.total} ô khả dụng
+            </Text>
+          </Group>
         </Group>
       </Stack>
     </Paper>

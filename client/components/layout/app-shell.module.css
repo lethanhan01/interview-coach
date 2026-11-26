@@ -8,6 +8,11 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+
+    &:has([data-workspace-scroll='page']) {
+      height: auto;
+      overflow: visible;
+    }
   }
 }
 
@@ -24,6 +29,10 @@
     display: flex;
     flex-direction: column;
     padding: rem(6px) rem(8px);
+
+    &:has([data-workspace-scroll='page']) {
+      overflow: visible;
+    }
   }
 }
 

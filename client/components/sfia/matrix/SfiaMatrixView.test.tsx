@@ -294,4 +294,37 @@ describe('SfiaMatrixView', () => {
     await user.click(clearBtn)
     expect(onClearFilters).toHaveBeenCalled()
   })
+
+  it('collapses and expands a category on header click and supports collapse/expand all', async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(
+      <SfiaMatrixView {...defaultProps} filterKey="::" />
+    )
+
+    const categoryToggle = screen.getByRole('button', {
+      name: /Phát triển & Triển khai/i,
+    })
+    expect(categoryToggle).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByTestId('matrix-row-PROG')).toBeInTheDocument()
+
+    await user.click(categoryToggle)
+    expect(categoryToggle).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByTestId('matrix-row-PROG')).not.toBeInTheDocument()
+
+    const expandAllBtn = screen.getByRole('button', {
+      name: 'Mở rộng tất cả',
+    })
+    await user.click(expandAllBtn)
+    expect(categoryToggle).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByTestId('matrix-row-PROG')).toBeInTheDocument()
+
+    const collapseAllBtn = screen.getByRole('button', {
+      name: 'Thu gọn tất cả',
+    })
+    await user.click(collapseAllBtn)
+    expect(screen.queryByTestId('matrix-row-PROG')).not.toBeInTheDocument()
+
+    rerender(<SfiaMatrixView {...defaultProps} filterKey="prog::" />)
+    expect(screen.getByTestId('matrix-row-PROG')).toBeInTheDocument()
+  })
 })

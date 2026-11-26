@@ -90,10 +90,110 @@ function generateUuid(): string {
     return crypto.randomUUID()
   }
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0
+    const r = Math.trunc(Math.random() * 16)
     const v = c === 'x' ? r : (r & 0x3) | 0x8
     return v.toString(16)
   })
+}
+
+const MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+
+function buildRequestHeaders(
+  options: RequestOptions,
+  method: string
+): Record<string, string> {
+  const isFormData =
+    typeof FormData !== 'undefined' && options.body instanceof FormData
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string>),
+  }
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json'
+  }
+  if (MUTATION_METHODS.has(method)) {
+    headers['Idempotency-Key'] = options.idempotencyKey || generateUuid()
+  }
+  return headers
+}
+
+function isRefreshableUnauthorized(path: string, status: number): boolean {
+  return (
+    status === 401 &&
+    !AUTH_EXCLUDED_FROM_REFRESH.some((excluded) => path.startsWith(excluded))
+  )
+}
+
+function enqueueTokenRefresh<T>(retry: () => Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    subscribeTokenRefresh((err) => {
+      if (err) {
+        reject(
+          new ApiClientError(
+            API_ERROR_MESSAGES.UNAUTHORIZED,
+            401,
+            'UNAUTHORIZED'
+          )
+        )
+        return
+      }
+      resolve(retry())
+    })
+  })
+}
+
+async function refreshAuthSession(): Promise<boolean> {
+  isRefreshing = true
+  try {
+    const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+
+    if (refreshResponse.ok) {
+      isRefreshing = false
+      onRefreshed(null)
+      return true
+    }
+
+    isRefreshing = false
+    const sessionErr = new Error('Session expired')
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('auth:session-expired'))
+    }
+    onRefreshed(sessionErr)
+    return false
+  } catch (err) {
+    isRefreshing = false
+    onRefreshed(err instanceof Error ? err : new Error(String(err)))
+    return false
+  }
+}
+
+function throwApiClientError(
+  response: Response,
+  body: ServerErrorPayload
+): never {
+  const code = body.error?.code ?? body.errorCode
+  const details = body.error?.details ?? null
+  const requestId = body.meta?.requestId
+  const correlationId = body.meta?.correlationId
+
+  const message =
+    (code ? API_ERROR_MESSAGES[code] : undefined) ??
+    body.error?.message ??
+    body.message ??
+    code ??
+    `Yêu cầu thất bại (${response.status})`
+
+  throw new ApiClientError(
+    message,
+    response.status,
+    code,
+    details,
+    requestId,
+    correlationId,
+    body
+  )
 }
 
 export interface RequestOptions extends RequestInit {
@@ -101,19 +201,8 @@ export interface RequestOptions extends RequestInit {
 }
 
 async function request<T>(path: string, options: RequestOptions): Promise<T> {
-  const isFormData =
-    typeof FormData !== 'undefined' && options.body instanceof FormData
-  const headers: Record<string, string> = {
-    ...(options.headers as Record<string, string>),
-  }
-  if (!isFormData) headers['Content-Type'] = 'application/json'
-
   const method = (options.method || 'GET').toUpperCase()
-  const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)
-
-  if (isMutation) {
-    headers['Idempotency-Key'] = options.idempotencyKey || generateUuid()
-  }
+  const headers = buildRequestHeaders(options, method)
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -121,55 +210,16 @@ async function request<T>(path: string, options: RequestOptions): Promise<T> {
     credentials: 'include',
   })
 
-  // Handle 401 Silent Refresh for non-auth endpoints
-  if (
-    response.status === 401 &&
-    !AUTH_EXCLUDED_FROM_REFRESH.some((excluded) => path.startsWith(excluded))
-  ) {
-    if (!isRefreshing) {
-      isRefreshing = true
-      try {
-        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-          method: 'POST',
-          credentials: 'include',
-        })
-
-        if (refreshResponse.ok) {
-          isRefreshing = false
-          onRefreshed(null)
-          return request<T>(path, options)
-        } else {
-          isRefreshing = false
-          const sessionErr = new Error('Session expired')
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('auth:session-expired'))
-          }
-          onRefreshed(sessionErr)
-        }
-      } catch (err) {
-        isRefreshing = false
-        onRefreshed(err instanceof Error ? err : new Error(String(err)))
-      }
-    } else {
-      return new Promise<T>((resolve, reject) => {
-        subscribeTokenRefresh((err) => {
-          if (err) {
-            reject(
-              new ApiClientError(
-                API_ERROR_MESSAGES.UNAUTHORIZED,
-                401,
-                'UNAUTHORIZED'
-              )
-            )
-          } else {
-            resolve(request<T>(path, options))
-          }
-        })
-      })
+  if (isRefreshableUnauthorized(path, response.status)) {
+    if (isRefreshing) {
+      return enqueueTokenRefresh(() => request<T>(path, options))
+    }
+    const refreshed = await refreshAuthSession()
+    if (refreshed) {
+      return request<T>(path, options)
     }
   }
 
-  // 204 No Content
   if (response.status === 204) {
     return undefined as unknown as T
   }
@@ -179,27 +229,7 @@ async function request<T>(path: string, options: RequestOptions): Promise<T> {
     .catch(() => ({ message: response.statusText }))) as ServerErrorPayload
 
   if (!response.ok || isErrorBody(body)) {
-    const err = body
-    const code = err.error?.code ?? err.errorCode
-    const details = err.error?.details ?? null
-    const requestId = err.meta?.requestId
-    const correlationId = err.meta?.correlationId
-
-    const message =
-      (code ? API_ERROR_MESSAGES[code] : undefined) ??
-      err.error?.message ??
-      err.message ??
-      code ??
-      `Yêu cầu thất bại (${response.status})`
-    throw new ApiClientError(
-      message,
-      response.status,
-      code,
-      details,
-      requestId,
-      correlationId,
-      body
-    )
+    throwApiClientError(response, body)
   }
 
   return body as T

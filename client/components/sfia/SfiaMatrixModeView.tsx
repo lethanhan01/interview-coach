@@ -11,11 +11,11 @@ import type {
   SfiaMatrixDisplayMode,
   SfiaSkillSummary,
 } from '@/types'
-import layout from '@/styles/layout.module.css'
 import { downloadSfiaMatrixCsv } from './matrix/sfia-matrix-export'
 import { SfiaMatrixInspectionSheet } from './matrix/SfiaMatrixInspectionSheet'
 import { SfiaMatrixToolbar } from './matrix/SfiaMatrixToolbar'
 import { SfiaMatrixView } from './matrix/SfiaMatrixView'
+import sfia from './sfia.module.css'
 
 export interface SfiaMatrixModeViewProps {
   categories: SfiaCategory[]
@@ -170,7 +170,7 @@ export function SfiaMatrixModeView({
   }
 
   return (
-    <Box className={layout.workspacePane}>
+    <Box className={sfia.matrixPagePane} mod={{ 'workspace-scroll': 'page' }}>
       <SfiaMatrixToolbar
         categories={matrixCategories}
         selectedCategory={selectedCategory ?? ''}
@@ -199,6 +199,7 @@ export function SfiaMatrixModeView({
         inspectedCell={inspectedCell}
         onSelectCell={handleSelectCell}
         onClearFilters={handleClearFilters}
+        filterKey={`${deferredSearchQuery.trim()}::${selectedCategory ?? ''}`}
       />
 
       <SfiaMatrixInspectionSheet

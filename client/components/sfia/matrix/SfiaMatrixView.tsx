@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useMemo } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import {
   Badge,
   Box,
@@ -12,8 +12,9 @@ import {
   Text,
   ThemeIcon,
   Title,
+  UnstyledButton,
 } from '@mantine/core'
-import { IconSearchOff } from '@tabler/icons-react'
+import { IconChevronRight, IconSearchOff } from '@tabler/icons-react'
 import type {
   SfiaCategory,
   SfiaLevelResponsibility,
@@ -22,6 +23,7 @@ import type {
   SfiaSkillSummary,
 } from '@/types'
 import { getSfiaCategorySemanticTheme } from '@/components/sfia/sfia-theme'
+import interactions from '@/styles/interactions.module.css'
 import surfaces from '@/styles/surfaces.module.css'
 import sfia from '../sfia.module.css'
 import { SfiaMatrixHeatmapSummary } from './SfiaMatrixHeatmapSummary'
@@ -40,6 +42,7 @@ export interface SfiaMatrixViewProps {
   inspectedCell?: { skillCode: string; levelId: number } | null
   onSelectCell: (skillCode: string, levelId: number) => void
   onClearFilters?: () => void
+  filterKey?: string
   className?: string
 }
 
@@ -54,8 +57,20 @@ export function SfiaMatrixView({
   inspectedCell = null,
   onSelectCell,
   onClearFilters,
+  filterKey = '',
   className,
 }: Readonly<SfiaMatrixViewProps>) {
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
+    () => new Set()
+  )
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey)
+    if (filterKey && filterKey !== '::' && collapsedCategories.size > 0) {
+      setCollapsedCategories(new Set())
+    }
+  }
   const filteredSkills = useMemo(() => {
     if (!blindSpotsOnly) return skills
     return skills.filter((skill) => {
@@ -83,6 +98,38 @@ export function SfiaMatrixView({
     for (const lvl of levels ?? []) map.set(lvl.levelId, lvl.nameVi || lvl.name)
     return map
   }, [levels])
+
+  const visibleCategoryCodes = useMemo(
+    () =>
+      categories
+        .filter((cat) => (groupedSkills.get(cat.code)?.length ?? 0) > 0)
+        .map((cat) => cat.code),
+    [categories, groupedSkills]
+  )
+
+  const allCollapsed =
+    visibleCategoryCodes.length > 0 &&
+    visibleCategoryCodes.every((code) => collapsedCategories.has(code))
+
+  const toggleCategory = (categoryCode: string) => {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev)
+      if (next.has(categoryCode)) {
+        next.delete(categoryCode)
+      } else {
+        next.add(categoryCode)
+      }
+      return next
+    })
+  }
+
+  const handleToggleAllCategories = () => {
+    if (allCollapsed) {
+      setCollapsedCategories(new Set())
+    } else {
+      setCollapsedCategories(new Set(visibleCategoryCodes))
+    }
+  }
 
   if (filteredSkills.length === 0) {
     return (
@@ -118,24 +165,30 @@ export function SfiaMatrixView({
   }
 
   return (
-    <Box className={[sfia.matrixRoot, className].filter(Boolean).join(' ')}>
+    <Box className={[sfia.matrixPageRoot, className].filter(Boolean).join(' ')}>
       <SfiaMatrixHeatmapSummary
         skills={filteredSkills}
         cells={cells}
         blindSpotsOnly={blindSpotsOnly}
         onToggleBlindSpotsOnly={onBlindSpotsOnlyChange}
+        allCollapsed={allCollapsed}
+        onToggleAllCategories={
+          visibleCategoryCodes.length > 0
+            ? handleToggleAllCategories
+            : undefined
+        }
       />
 
-      <Box className={sfia.matrixViewport}>
-        <Table className={sfia.matrixTable} highlightOnHover>
+      <Box className={sfia.matrixPageViewport}>
+        <Table className={sfia.matrixPageTable} highlightOnHover>
           <Table.Thead>
             <Table.Tr>
               <Table.Th
                 scope="col"
-                className={`${sfia.matrixStickyCorner} ${surfaces.subtleSurface} ${sfia.matrixCorner}`}
+                className={`${sfia.matrixPageStickyCorner} ${surfaces.subtleSurface} ${sfia.matrixCorner}`}
               >
                 <Group justify="space-between" gap="xs" wrap="nowrap">
-                  <Text size="sm" fw={700}>
+                  <Text size="sm" fw={700} truncate>
                     Kỹ năng SFIA 9
                   </Text>
                   <Text size="sm" c="dimmed">
@@ -150,9 +203,9 @@ export function SfiaMatrixView({
                   <Table.Th
                     key={lvl}
                     scope="col"
-                    className={`${sfia.matrixStickyHeader} ${surfaces.subtleSurface} ${sfia.matrixHeader}`}
+                    className={`${sfia.matrixPageStickyHeader} ${surfaces.subtleSurface} ${sfia.matrixHeader}`}
                   >
-                    <Stack gap={0} align="center">
+                    <Stack gap={0} align="center" miw={0}>
                       <Text size="sm" fw={700} ff="monospace">
                         L{lvl}
                       </Text>
@@ -162,7 +215,7 @@ export function SfiaMatrixView({
                           c="dimmed"
                           fw={400}
                           truncate
-                          maw={92}
+                          maw="100%"
                           title={label}
                         >
                           {label}
@@ -182,47 +235,64 @@ export function SfiaMatrixView({
               const theme = getSfiaCategorySemanticTheme(category.code)
               const CategoryIcon = theme.icon
 
+              const isExpanded = !collapsedCategories.has(category.code)
+              const categoryTitle = category.nameVi || category.name
+
               return (
                 <Fragment key={category.code}>
                   <Table.Tr data-testid={`category-header-${category.code}`}>
                     <Table.Td
                       colSpan={8}
-                      className={`${surfaces.subtleSurface} ${surfaces.borderedBottom}`}
+                      className={`${surfaces.subtleSurface} ${surfaces.borderedBottom} ${sfia.matrixCategoryCell}`}
                     >
-                      <Group gap="xs" align="center" wrap="nowrap">
-                        <ThemeIcon
-                          color={theme.color}
-                          variant="light"
-                          size="sm"
-                          radius="sm"
-                        >
-                          <CategoryIcon size={14} stroke={1.5} />
-                        </ThemeIcon>
-                        <Text size="sm" fw={700}>
-                          {category.nameVi || category.name}
-                        </Text>
-                        <Badge
-                          color={theme.color}
-                          variant={theme.badgeVariant}
-                          size="sm"
-                        >
-                          {categorySkills.length} kỹ năng
-                        </Badge>
-                      </Group>
+                      <UnstyledButton
+                        className={`${interactions.hoverRow} ${sfia.matrixCategoryToggle}`}
+                        aria-expanded={isExpanded}
+                        onClick={() => toggleCategory(category.code)}
+                      >
+                        <Group gap="xs" align="center" wrap="nowrap">
+                          <IconChevronRight
+                            size={15}
+                            stroke={1.5}
+                            className={sfia.treeChevron}
+                            data-expanded={isExpanded ? 'true' : 'false'}
+                            aria-hidden="true"
+                          />
+                          <ThemeIcon
+                            color={theme.color}
+                            variant="light"
+                            size="sm"
+                            radius="sm"
+                          >
+                            <CategoryIcon size={14} stroke={1.5} />
+                          </ThemeIcon>
+                          <Text size="sm" fw={700}>
+                            {categoryTitle}
+                          </Text>
+                          <Badge
+                            color={theme.color}
+                            variant={theme.badgeVariant}
+                            size="sm"
+                          >
+                            {categorySkills.length} kỹ năng
+                          </Badge>
+                        </Group>
+                      </UnstyledButton>
                     </Table.Td>
                   </Table.Tr>
 
-                  {categorySkills.map((skill) => (
-                    <SfiaMatrixRow
-                      key={skill.code}
-                      skill={skill}
-                      cells={cells}
-                      displayMode={displayMode}
-                      levels={levels}
-                      inspectedCell={inspectedCell}
-                      onSelectCell={onSelectCell}
-                    />
-                  ))}
+                  {isExpanded &&
+                    categorySkills.map((skill) => (
+                      <SfiaMatrixRow
+                        key={skill.code}
+                        skill={skill}
+                        cells={cells}
+                        displayMode={displayMode}
+                        levels={levels}
+                        inspectedCell={inspectedCell}
+                        onSelectCell={onSelectCell}
+                      />
+                    ))}
                 </Fragment>
               )
             })}
