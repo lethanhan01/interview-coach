@@ -91,7 +91,7 @@ describe('SfiaFacade & SfiaService', () => {
 
     facade = module.get<ISfiaFacade>(SFIA_FACADE_TOKEN);
     service = module.get<SfiaService>(SfiaService);
-    await service.onModuleInit();
+    await service.loadCache();
   });
 
   it('should be defined', () => {

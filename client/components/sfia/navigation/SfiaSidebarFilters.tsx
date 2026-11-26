@@ -6,7 +6,6 @@ import {
   Button,
   Group,
   Kbd,
-  Select,
   Stack,
   Switch,
   TextInput,
@@ -33,32 +32,12 @@ export interface SfiaSidebarFiltersProps {
 export function SfiaSidebarFilters({
   searchQuery,
   onSearchChange,
-  selectedCategory,
-  onCategoryChange,
-  selectedLevel,
-  onLevelChange,
   blindSpotsOnly,
   onBlindSpotsOnlyChange,
-  categories,
-  levels,
   isAllExpanded,
   onToggleExpandAll,
   searchInputRef,
 }: Readonly<SfiaSidebarFiltersProps>) {
-  const categoryData = categories.map((c) => ({
-    value: c.code,
-    label: c.nameVi || c.name,
-  }))
-
-  const hasLevels = Boolean(levels && levels.length > 0)
-  const levelData = [
-    { value: 'all', label: 'Tất cả cấp độ' },
-    ...(levels ?? []).map((l) => ({
-      value: String(l.levelId),
-      label: `L${l.levelId} — ${l.nameVi || l.name}`,
-    })),
-  ]
-
   return (
     <Stack gap={6} p="xs">
       <TextInput
@@ -87,30 +66,7 @@ export function SfiaSidebarFilters({
         }
       />
 
-      <Group grow gap={6}>
-        <Select
-          size="sm"
-          placeholder="Tất cả danh mục"
-          aria-label="Lọc theo danh mục SFIA 9"
-          data={categoryData}
-          value={selectedCategory}
-          onChange={(val) => onCategoryChange(val)}
-          clearable
-          searchable
-        />
-
-        <Select
-          size="sm"
-          placeholder="Cấp độ"
-          aria-label="Lọc theo cấp độ SFIA 9"
-          data={levelData}
-          value={String(selectedLevel)}
-          disabled={!hasLevels}
-          onChange={(val) =>
-            onLevelChange(val === 'all' || !val ? 'all' : Number(val))
-          }
-        />
-      </Group>
+      <Group grow gap={6}></Group>
 
       <Group justify="space-between" align="center" wrap="nowrap" gap="xs">
         <Switch

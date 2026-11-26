@@ -69,7 +69,10 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    process.env.OPEN_SWAGGER === 'true'
+  ) {
     const url = `http://localhost:${port}/api/docs`;
     const command =
       process.platform === 'win32'

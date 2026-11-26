@@ -215,7 +215,7 @@ describe('SfiaAdminService', () => {
     }).compile();
 
     service = module.get<SfiaAdminService>(SfiaAdminService);
-    await service.onModuleInit();
+    await service.loadStaticCache();
   });
 
   it('should be defined and initialized', () => {

@@ -10,17 +10,28 @@ export class SfiaService implements OnModuleInit {
   private readonly skillMap = new Map<string, SfiaSkillDto>();
   private readonly levelMap = new Map<number, SfiaLevelDto>();
   private initialized = false;
+  private loadPromise: Promise<void> | null = null;
 
   constructor(
     @Inject(SFIA_REPOSITORY_TOKEN)
     private readonly sfiaRepository: ISfiaRepository,
   ) {}
 
-  async onModuleInit(): Promise<void> {
-    await this.loadCache();
+  onModuleInit(): void {
+    void this.loadCache();
   }
 
   async loadCache(): Promise<void> {
+    if (this.loadPromise) {
+      return this.loadPromise;
+    }
+    this.loadPromise = this.executeLoadCache().finally(() => {
+      this.loadPromise = null;
+    });
+    return this.loadPromise;
+  }
+
+  private async executeLoadCache(): Promise<void> {
     try {
       const [rawSkills, rawLevels, rawSkillLevels] = await Promise.all([
         this.sfiaRepository.loadAllRawSkills(),

@@ -39,20 +39,31 @@ export class SfiaAdminService implements OnModuleInit {
   private cachedLevels: SfiaLevelResponsibilityDto[] = [];
   private cachedGenericAttributes: SfiaGenericAttributeDto[] = [];
   private initialized = false;
+  private loadPromise: Promise<void> | null = null;
 
   constructor(
     @Inject(SFIA_ADMIN_REPOSITORY_TOKEN)
     private readonly sfiaAdminRepo: ISfiaAdminRepository,
   ) {}
 
-  async onModuleInit(): Promise<void> {
-    await this.loadStaticCache();
+  onModuleInit(): void {
+    void this.loadStaticCache();
   }
 
   /**
    * Nạp sẵn dữ liệu cấu trúc tĩnh SFIA 9 vào bộ nhớ đệm
    */
   async loadStaticCache(): Promise<void> {
+    if (this.loadPromise) {
+      return this.loadPromise;
+    }
+    this.loadPromise = this.executeLoadStaticCache().finally(() => {
+      this.loadPromise = null;
+    });
+    return this.loadPromise;
+  }
+
+  private async executeLoadStaticCache(): Promise<void> {
     try {
       const [
         rawCategories,

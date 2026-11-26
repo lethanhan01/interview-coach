@@ -86,7 +86,7 @@ export function SfiaLevelSpanStepper({
           <Group gap="xs" align="center">
             <IconSparkles size={16} stroke={1.5} />
             <Text size="sm" fw={700}>
-              Thước Đo Cấp Độ Trách Nhiệm
+              Thước Đo Cấp Độ
             </Text>
           </Group>
 

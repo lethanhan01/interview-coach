@@ -89,6 +89,7 @@ const EnvSchema = z.object({
     .enum(['development', 'production', 'test'])
     .default('development'),
   CLIENT_URL: z.string().default('http://localhost:5173'),
+  OPEN_SWAGGER: z.enum(['true', 'false']).default('false'),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
