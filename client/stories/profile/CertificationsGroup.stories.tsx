@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import CertificationsGroup from '../../components/resume/CertificationsGroup'
+import CertificationsGroup from '@/components/resume/certifications/CertificationsGroup'
 
 const meta: Meta<typeof CertificationsGroup> = {
   title: 'Feature/Profile/CertificationsGroup',
@@ -8,8 +8,8 @@ const meta: Meta<typeof CertificationsGroup> = {
   args: {
     data: { certifications: [], awards: [] },
     onSave: async () => {
-      await new Promise(r => setTimeout(r, 1000))
-    }
+      await new Promise((r) => setTimeout(r, 1000))
+    },
   },
 }
 

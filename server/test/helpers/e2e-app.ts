@@ -9,7 +9,6 @@ import {
   QUESTION_GEN_QUEUE,
   FEEDBACK_QUEUE,
   REPORT_QUEUE,
-  TRANSCRIPTION_QUEUE,
 } from '../../src/core/common/constants/queue.constants';
 
 export interface E2eTestContext {
@@ -35,8 +34,6 @@ export async function createE2eTestApp(): Promise<E2eTestContext> {
     .overrideProvider(getQueueToken(FEEDBACK_QUEUE))
     .useValue(mockQueue)
     .overrideProvider(getQueueToken(REPORT_QUEUE))
-    .useValue(mockQueue)
-    .overrideProvider(getQueueToken(TRANSCRIPTION_QUEUE))
     .useValue(mockQueue)
     .compile();
 

@@ -1,3 +1,4 @@
+import { RequestContext } from '@core/common/context/request-context';
 import { WorkflowService } from './workflow.service';
 
 describe('WorkflowService', () => {
@@ -88,5 +89,36 @@ describe('WorkflowService', () => {
         payload: {},
       }),
     ).toThrow('aggregateId or sessionId must be provided for workflow command');
+  });
+
+  it('tự động nhúng correlationId từ RequestContext vào payload', async () => {
+    await RequestContext.run(
+      {
+        requestId: 'req-http-123',
+        correlationId: 'trace-http-correlation-abc',
+        startTime: Date.now(),
+      },
+      async () => {
+        await service.enqueueInTransaction(
+          { workflowOutbox: { upsert } } as any,
+          {
+            commandType: 'question-generation',
+            sessionId: '11111111-1111-4111-8111-111111111111',
+            payload: { sessionId: '11111111-1111-4111-8111-111111111111' },
+          },
+        );
+
+        expect(upsert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            create: expect.objectContaining({
+              payload: {
+                sessionId: '11111111-1111-4111-8111-111111111111',
+                correlationId: 'trace-http-correlation-abc',
+              },
+            }),
+          }),
+        );
+      },
+    );
   });
 });

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import type { Session } from '../lib/types'
+import type { Session } from '../types'
 
 const MOCK_ACTIVE: Session = {
   id: 'sess-active',
@@ -47,6 +47,24 @@ const MOCK_PAUSED: Session = {
 }
 
 test.beforeEach(async ({ page }) => {
+  await page.route('**/api/v1/auth/me**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          id: 'u1',
+          email: 'test@example.com',
+          role: 'candidate',
+          status: 'active',
+          firstname: 'Test',
+          lastname: 'User',
+          emailVerified: true,
+        },
+      }),
+    })
+  })
   await page.route('**/auth/v1/user**', async (route) => {
     await route.fulfill({
       status: 200,

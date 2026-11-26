@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import QuestionCard from '../../components/interview/QuestionCard'
+import QuestionCard from '@/components/interview/workspace/QuestionCard'
 
 const meta: Meta<typeof QuestionCard> = {
   title: 'Feature/Interview/QuestionCard',

@@ -9,10 +9,11 @@ import {
   Sse,
   MessageEvent,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { UserRole } from '@prisma/client';
-import { Roles, CurrentUser } from '@core/common/decorators';
+import { Observable, catchError, of } from 'rxjs';
+import { UserRole } from '@core/common/enums';
+import { Roles, CurrentUser, Idempotent } from '@core/common/decorators';
 import { SseTokenGuard } from '@core/common/guards';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { SessionService } from './session.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
 import { AssessmentFacade } from '@modules/interview-assessment/contracts';
@@ -85,6 +86,7 @@ export class SessionController {
   ) {}
 
   @Post()
+  @Idempotent({ ttlSeconds: 86400 })
   @ApiOperation({
     summary: 'Create an interview session and queue question generation',
   })
@@ -157,6 +159,7 @@ export class SessionController {
   }
 
   @Patch(':id/status')
+  @Idempotent({ ttlSeconds: 86400 })
   @ApiOperation({ summary: 'Update interview session status' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ description: 'Updated session.' })
@@ -192,6 +195,20 @@ export class SessionController {
   ): Promise<Observable<MessageEvent>> {
     const user = extractUser(userOrReq);
     await this.sessionService.findById(id, user.id);
-    return this.sseService.subscribe(`sse:session:${id}`);
+    return this.sseService.subscribe(`sse:session:${id}`).pipe(
+      catchError((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        return of({
+          type: 'session.error',
+          data: {
+            error: {
+              code: ErrorCode.INTERNAL_ERROR,
+              message,
+            },
+            timestamp: new Date().toISOString(),
+          },
+        } as MessageEvent);
+      }),
+    );
   }
 }

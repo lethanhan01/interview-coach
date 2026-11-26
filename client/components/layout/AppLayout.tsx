@@ -1,25 +1,30 @@
 'use client'
 
-import React from 'react'
+import type { ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
-import AppSidebar from './AppSidebar'
-import AppHeader from './AppHeader'
-import { cn } from '@/lib/utils'
+import { AppShell, Box } from '@mantine/core'
+import { useDisclosure, useReducedMotion } from '@mantine/hooks'
+import AppHeader from '@/components/layout/header/AppHeader'
+import AppSidebar from '@/components/layout/sidebar/AppSidebar'
+import appShell from './app-shell.module.css'
 
-interface AppLayoutProps {
-  children: React.ReactNode
+export interface AppLayoutProps {
+  children: ReactNode
   role: 'admin' | 'candidate'
-  logoutActionSlot?: React.ReactNode
   isWorkspace?: boolean
 }
 
 export default function AppLayout({
   children,
   role,
-  logoutActionSlot,
   isWorkspace,
-}: AppLayoutProps) {
+}: Readonly<AppLayoutProps>) {
   const pathname = usePathname()
+  const [mobileOpened, { toggle: toggleMobile, close: closeMobile }] =
+    useDisclosure(false)
+  const [desktopCollapsed, { toggle: toggleDesktop }] = useDisclosure(false)
+  const reduceMotion = useReducedMotion()
+
   const isWorkspaceMode =
     isWorkspace ??
     (pathname?.startsWith('/admin/onet') ||
@@ -27,32 +32,44 @@ export default function AppLayout({
       false)
 
   return (
-    <div className="bg-surface-raised flex h-screen overflow-hidden">
-      {/* Desktop Sidebar (hidden on mobile) */}
-      <div className="hidden md:block">
-        <AppSidebar role={role} />
-      </div>
+    <AppShell
+      header={{ height: 60 }}
+      navbar={{
+        width: { base: 260, md: desktopCollapsed ? 72 : 260 },
+        breakpoint: 'md',
+        collapsed: { mobile: !mobileOpened },
+      }}
+      padding={isWorkspaceMode ? 0 : 'md'}
+      transitionDuration={reduceMotion ? 0 : 200}
+    >
+      <AppShell.Header>
+        <AppHeader
+          role={role}
+          mobileOpened={mobileOpened}
+          onToggleMobile={toggleMobile}
+        />
+      </AppShell.Header>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <AppHeader role={role} logoutActionSlot={logoutActionSlot} />
-        <main
-          className={cn(
-            'flex-1',
-            isWorkspaceMode
-              ? 'overflow-hidden p-1 sm:p-1.5 lg:px-2 lg:pt-1.5 lg:pb-1'
-              : 'overflow-y-auto p-4 sm:p-6 lg:p-8'
-          )}
+      <AppShell.Navbar aria-label="Điều hướng chính">
+        <AppSidebar
+          role={role}
+          collapsed={desktopCollapsed}
+          onToggleCollapse={toggleDesktop}
+          onNavigate={closeMobile}
+        />
+      </AppShell.Navbar>
+
+      <AppShell.Main
+        className={appShell.appMain}
+        mod={{ workspace: isWorkspaceMode }}
+      >
+        <Box
+          className={appShell.appContent}
+          mod={{ workspace: isWorkspaceMode }}
         >
-          <div
-            className={cn(
-              isWorkspaceMode ? 'h-full w-full' : 'mx-auto max-w-7xl'
-            )}
-          >
-            {children}
-          </div>
-        </main>
-      </div>
-    </div>
+          {children}
+        </Box>
+      </AppShell.Main>
+    </AppShell>
   )
 }
-

@@ -1,24 +1,15 @@
 import { apiClient } from '@/lib/api-client'
-
-export interface OnetOccupation {
-  socCode: string
-  title: string
-  description: string
-  matchedTitle?: string
-  similarityScore?: number
-}
-
-export interface OnetTech {
-  example: string
-  isHotTechnology: boolean
-  inDemand: boolean
-}
+import type { OnetOccupation, OnetTech } from '@/types'
 
 export const onetService = {
   /**
    * Tìm kiếm chức danh O*NET theo từ khóa hoặc lấy danh sách chức danh IT phổ biến
    */
-  async searchOccupations(query?: string, limit = 10): Promise<OnetOccupation[]> {
+  async searchOccupations(
+    query?: string,
+    limit = 10,
+    signal?: AbortSignal
+  ): Promise<OnetOccupation[]> {
     const params = new URLSearchParams()
     if (query && query.trim()) {
       params.append('query', query.trim())
@@ -28,15 +19,41 @@ export const onetService = {
     }
     const queryString = params.toString()
     const path = `/onet/occupations${queryString ? `?${queryString}` : ''}`
-    return apiClient.get<OnetOccupation[]>(path)
+    return apiClient.get<OnetOccupation[]>(path, { signal })
   },
 
   /**
    * Lấy danh sách công cụ và công nghệ phần mềm gắn với mã SOC
    */
-  async getOccupationTech(socCode: string): Promise<OnetTech[]> {
+  async getOccupationTech(
+    socCode: string,
+    signal?: AbortSignal
+  ): Promise<OnetTech[]> {
     return apiClient.get<OnetTech[]>(
-      `/onet/occupations/${encodeURIComponent(socCode.trim())}/tech`
+      `/onet/occupations/${encodeURIComponent(socCode.trim())}/tech`,
+      { signal }
+    )
+  },
+
+  /**
+   * Tìm kiếm công nghệ phần mềm O*NET (gộp trùng theo tên) hoặc lấy công nghệ phổ biến
+   */
+  async searchTechnologies(
+    query?: string,
+    limit = 30,
+    signal?: AbortSignal
+  ): Promise<OnetTech[]> {
+    const params = new URLSearchParams()
+    if (query && query.trim()) {
+      params.append('query', query.trim())
+    }
+    if (limit) {
+      params.append('limit', String(limit))
+    }
+    const queryString = params.toString()
+    return apiClient.get<OnetTech[]>(
+      `/onet/technologies${queryString ? `?${queryString}` : ''}`,
+      { signal }
     )
   },
 }

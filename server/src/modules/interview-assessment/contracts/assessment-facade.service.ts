@@ -1,4 +1,4 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { RubricCatalogService } from '../evaluation/rubric/rubric-catalog.service';
@@ -16,6 +16,8 @@ import type { ReportResponseDto } from '../report/dto/report-response.dto';
 
 @Injectable()
 export class AssessmentFacade {
+  private readonly logger = new Logger(AssessmentFacade.name);
+
   constructor(
     private readonly rubricCatalog: RubricCatalogService,
     private readonly contextPackService: ContextPackService,
@@ -159,7 +161,12 @@ export class AssessmentFacade {
           params.contextPack,
           params.language,
         ),
-      ).catch(() => {});
+        // Rule 6: best-effort enqueue — must log so report pipeline failures are visible
+      ).catch((err: unknown) =>
+        this.logger.warn(
+          `Failed to enqueue report for session ${params.sessionId}: ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
     }
 
     return result;

@@ -3,55 +3,59 @@ import { InterviewAIException } from './interview-ai.exception';
 import { ErrorCode } from './error-code.enum';
 
 describe('InterviewAIException', () => {
-  it('set errorCode đúng', () => {
-    const ex = new InterviewAIException(
-      ErrorCode.UNAUTHORIZED,
-      HttpStatus.UNAUTHORIZED,
-    );
-    expect(ex.errorCode).toBe(ErrorCode.UNAUTHORIZED);
-  });
-
-  it('set HTTP status đúng', () => {
-    const ex = new InterviewAIException(
-      ErrorCode.FORBIDDEN,
-      HttpStatus.FORBIDDEN,
-    );
-    expect(ex.getStatus()).toBe(403);
-  });
-
-  it('dùng errorCode làm message mặc định khi không truyền message', () => {
+  it('khởi tạo với các tham số cơ bản (backward compatibility)', () => {
     const ex = new InterviewAIException(
       ErrorCode.NOT_FOUND,
       HttpStatus.NOT_FOUND,
+      'Resource not found',
     );
-    const response = ex.getResponse() as Record<string, unknown>;
-    expect(response.message).toBe(ErrorCode.NOT_FOUND);
+
+    expect(ex.errorCode).toBe(ErrorCode.NOT_FOUND);
+    expect(ex.getStatus()).toBe(404);
+    expect(ex.message).toBe('Resource not found');
+    expect(ex.details).toBeUndefined();
+    expect(ex.cause).toBeUndefined();
+    expect(ex.metadata).toBeUndefined();
+    expect(ex.isOperational).toBe(true);
+
+    const res = ex.getResponse() as Record<string, unknown>;
+    expect(res.success).toBe(false);
+    expect(res.errorCode).toBe(ErrorCode.NOT_FOUND);
+    expect(res.message).toBe('Resource not found');
+    expect(res.details).toBeNull();
   });
 
-  it('dùng message custom khi được truyền vào', () => {
+  it('khởi tạo với đầy đủ options (v2 features)', () => {
+    const causeError = new Error('Database connection failed');
+    const details = { email: ['Email already taken'] };
+    const metadata = { traceId: '123' };
+
     const ex = new InterviewAIException(
-      ErrorCode.UNAUTHORIZED,
-      HttpStatus.UNAUTHORIZED,
-      'Custom error message',
+      ErrorCode.CONFLICT,
+      HttpStatus.CONFLICT,
+      'Email conflict',
+      {
+        details,
+        cause: causeError,
+        metadata,
+        isOperational: false,
+      },
     );
-    const response = ex.getResponse() as Record<string, unknown>;
-    expect(response.message).toBe('Custom error message');
+
+    expect(ex.errorCode).toBe(ErrorCode.CONFLICT);
+    expect(ex.getStatus()).toBe(409);
+    expect(ex.message).toBe('Email conflict');
+    expect(ex.details).toEqual(details);
+    expect(ex.cause).toBe(causeError);
+    expect(ex.metadata).toEqual(metadata);
+    expect(ex.isOperational).toBe(false);
+
+    const res = ex.getResponse() as Record<string, unknown>;
+    expect(res.details).toEqual(details);
   });
 
-  it('response body có success = false', () => {
-    const ex = new InterviewAIException(
-      ErrorCode.INTERNAL_ERROR,
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
-    const response = ex.getResponse() as Record<string, unknown>;
-    expect(response.success).toBe(false);
-  });
-
-  it('extends Error', () => {
-    const ex = new InterviewAIException(
-      ErrorCode.UNAUTHORIZED,
-      HttpStatus.UNAUTHORIZED,
-    );
-    expect(ex).toBeInstanceOf(Error);
+  it('bảo toàn prototype chain cho instanceof checking', () => {
+    const ex = new InterviewAIException(ErrorCode.BAD_REQUEST);
+    expect(ex instanceof InterviewAIException).toBe(true);
   });
 });

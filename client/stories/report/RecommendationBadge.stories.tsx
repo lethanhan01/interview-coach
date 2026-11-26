@@ -1,6 +1,7 @@
 import React from 'react'
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { RecommendationBadge } from '@/components/report/RecommendationBadge'
+import { Group, Stack, Text } from '@mantine/core'
+import { RecommendationBadge } from '@/components/report/overview/RecommendationBadge'
 
 const meta: Meta<typeof RecommendationBadge> = {
   title: 'Feature/Report/RecommendationBadge',
@@ -41,20 +42,26 @@ export const NotRecommended: Story = {
 
 export const AllSizes: Story = {
   render: () => (
-    <div className="flex flex-col gap-4 items-start">
-      <div className="flex items-center gap-3">
-        <span className="w-16 text-xs text-ink-muted">Small:</span>
+    <Stack align="flex-start" gap="md">
+      <Group gap="sm">
+        <Text size="xs" c="dimmed" miw={64}>
+          Nhỏ:
+        </Text>
         <RecommendationBadge status="strongly_recommended" size="sm" />
-      </div>
-      <div className="flex items-center gap-3">
-        <span className="w-16 text-xs text-ink-muted">Medium:</span>
+      </Group>
+      <Group gap="sm">
+        <Text size="xs" c="dimmed" miw={64}>
+          Vừa:
+        </Text>
         <RecommendationBadge status="strongly_recommended" size="md" />
-      </div>
-      <div className="flex items-center gap-3">
-        <span className="w-16 text-xs text-ink-muted">Large:</span>
+      </Group>
+      <Group gap="sm">
+        <Text size="xs" c="dimmed" miw={64}>
+          Lớn:
+        </Text>
         <RecommendationBadge status="strongly_recommended" size="lg" />
-      </div>
-    </div>
+      </Group>
+    </Stack>
   ),
 }
 

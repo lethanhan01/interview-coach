@@ -5,7 +5,6 @@ import {
   QUESTION_GEN_QUEUE,
   QUEUE_DEFAULT_JOB_OPTIONS,
   REPORT_QUEUE,
-  TRANSCRIPTION_QUEUE,
 } from '@core/common/constants/queue.constants';
 import { PrismaModule } from '@infra/database/prisma/prisma.module';
 import { WorkflowDispatcher } from './workflow-dispatcher.service';
@@ -26,10 +25,6 @@ import { WorkflowService } from './workflow.service';
       {
         name: FEEDBACK_QUEUE,
         defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[FEEDBACK_QUEUE],
-      },
-      {
-        name: TRANSCRIPTION_QUEUE,
-        defaultJobOptions: QUEUE_DEFAULT_JOB_OPTIONS[TRANSCRIPTION_QUEUE],
       },
     ),
   ],

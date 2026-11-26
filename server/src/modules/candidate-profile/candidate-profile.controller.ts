@@ -1,5 +1,5 @@
 import { Controller, Get, Patch, Body } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@core/common/enums';
 import { Roles, CurrentUser } from '@core/common/decorators';
 import { CandidateProfileService } from './candidate-profile.service';
 import { UpdateCandidateProfileDto } from './dto/update-candidate-profile.dto';

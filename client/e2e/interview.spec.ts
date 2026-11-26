@@ -7,6 +7,24 @@ const MOCK_QUESTIONS = [
 ]
 
 test.beforeEach(async ({ page }) => {
+  await page.route('**/api/v1/auth/me**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          id: 'u1',
+          email: 'test@example.com',
+          role: 'candidate',
+          status: 'active',
+          firstname: 'Test',
+          lastname: 'User',
+          emailVerified: true,
+        },
+      }),
+    })
+  })
   await page.route('**/auth/v1/user**', async (route) => {
     await route.fulfill({
       status: 200,
@@ -364,11 +382,11 @@ test('mode toggle giữa Text và Giọng nói', async ({ page }) => {
     timeout: 10000,
   })
 
-  const voiceBtn = page.getByRole('button', { name: 'Giọng nói' })
+  const voiceBtn = page.getByRole('tab', { name: /Giọng nói/i })
   await voiceBtn.click()
-  await expect(page.getByRole('button', { name: 'Text' })).toBeVisible()
+  await expect(page.getByRole('tab', { name: /Văn bản/i })).toBeVisible()
 
-  const textBtn = page.getByRole('button', { name: 'Text' })
+  const textBtn = page.getByRole('tab', { name: /Văn bản/i })
   await textBtn.click()
 })
 
@@ -484,8 +502,17 @@ test('hết giờ tự động skip câu chưa trả lời và chuyển sang tra
       status: 404,
       contentType: 'application/json',
       body: JSON.stringify({
-        errorCode: 'REPORT_NOT_READY',
-        message: 'REPORT_NOT_READY',
+        success: false,
+        error: {
+          code: 'REPORT_NOT_READY',
+          message: 'REPORT_NOT_READY',
+          details: null,
+        },
+        meta: {
+          requestId: 'test-mock-id',
+          timestamp: new Date().toISOString(),
+          path: route.request().url(),
+        },
       }),
     })
   })
@@ -531,8 +558,17 @@ test('khi session kết thúc, chuyển sang trang chờ báo cáo', async ({
       status: 404,
       contentType: 'application/json',
       body: JSON.stringify({
-        errorCode: 'REPORT_NOT_READY',
-        message: 'REPORT_NOT_READY',
+        success: false,
+        error: {
+          code: 'REPORT_NOT_READY',
+          message: 'REPORT_NOT_READY',
+          details: null,
+        },
+        meta: {
+          requestId: 'test-mock-id',
+          timestamp: new Date().toISOString(),
+          path: route.request().url(),
+        },
       }),
     })
   })

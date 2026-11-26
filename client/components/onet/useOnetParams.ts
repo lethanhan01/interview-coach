@@ -2,11 +2,19 @@
 
 import { useCallback } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import type { OnetDetailSubTab, OnetMainTab } from './types'
+import type { OnetDetailSubTab, OnetMainTab } from '@/types'
 
 export const DEFAULT_SOC_CODE = '15-1252.00'
 export const DEFAULT_MAIN_TAB: OnetMainTab = 'explorer'
 export const DEFAULT_DETAIL_TAB: OnetDetailSubTab = 'overview'
+
+const VALID_DETAIL_TABS: OnetDetailSubTab[] = [
+  'overview',
+  'tech',
+  'sfia',
+  'tasks',
+  'titles',
+]
 
 export function useOnetParams() {
   const router = useRouter()
@@ -20,20 +28,12 @@ export function useOnetParams() {
   const selectedSoc = searchParams.get('soc') || DEFAULT_SOC_CODE
 
   const rawDetail = searchParams.get('detail')
-  const validDetailTabs: OnetDetailSubTab[] = [
-    'overview',
-    'tech',
-    'sfia',
-    'tasks',
-    'titles',
-  ]
-  const activeDetailTab: OnetDetailSubTab = validDetailTabs.includes(
+  const activeDetailTab: OnetDetailSubTab = VALID_DETAIL_TABS.includes(
     rawDetail as OnetDetailSubTab
   )
     ? (rawDetail as OnetDetailSubTab)
     : DEFAULT_DETAIL_TAB
 
-  // Update query params helper
   const updateParams = useCallback(
     (updates: Record<string, string | null | undefined>) => {
       const current = new URLSearchParams(searchParams.toString())
@@ -64,7 +64,7 @@ export function useOnetParams() {
     (soc: string) => {
       updateParams({
         soc,
-        tab: activeTab === 'analytics' ? null : undefined, // Trở về explorer nếu đang ở analytics
+        tab: activeTab === 'analytics' ? null : undefined,
       })
     },
     [activeTab, updateParams]
@@ -79,6 +79,18 @@ export function useOnetParams() {
     [updateParams]
   )
 
+  // Atomic navigation (Bug #1 fix): updates soc, detail, and explorer tab in a single router.replace
+  const navigateToOccupation = useCallback(
+    (soc: string, detail?: OnetDetailSubTab) => {
+      updateParams({
+        soc,
+        detail: !detail || detail === DEFAULT_DETAIL_TAB ? null : detail,
+        tab: null,
+      })
+    },
+    [updateParams]
+  )
+
   return {
     activeTab,
     selectedSoc,
@@ -86,6 +98,7 @@ export function useOnetParams() {
     setTab,
     setSoc,
     setDetailTab,
+    navigateToOccupation,
     updateParams,
   }
 }

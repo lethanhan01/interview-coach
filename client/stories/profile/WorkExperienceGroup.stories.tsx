@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import WorkExperienceGroup from '../../components/resume/WorkExperienceGroup'
+import WorkExperienceGroup from '@/components/resume/experience/WorkExperienceGroup'
 
 const meta: Meta<typeof WorkExperienceGroup> = {
   title: 'Feature/Profile/WorkExperienceGroup',
@@ -7,9 +7,10 @@ const meta: Meta<typeof WorkExperienceGroup> = {
   tags: ['autodocs'],
   args: {
     data: [],
+    availableTechs: [],
     onSave: async () => {
-      await new Promise(r => setTimeout(r, 1000))
-    }
+      await new Promise((r) => setTimeout(r, 1000))
+    },
   },
 }
 

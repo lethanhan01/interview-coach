@@ -212,7 +212,8 @@ describe('OnetAdminController', () => {
 
   describe('4. GET /onet/admin/analytics/sfia-coverage', () => {
     it('returns sfia skills coverage distribution', async () => {
-      const result = await controller.getSfiaSkillCoverage(20, 'Software');
+      const query = { limit: 20, category: 'Software' };
+      const result = await controller.getSfiaSkillCoverage(query);
       expect(mockService.getSfiaSkillCoverage).toHaveBeenCalledWith(
         20,
         'Software',

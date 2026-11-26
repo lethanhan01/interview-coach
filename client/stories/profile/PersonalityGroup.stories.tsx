@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import PersonalityGroup from '../../components/resume/PersonalityGroup'
+import PersonalityGroup from '@/components/resume/personality/PersonalityGroup'
 
 const meta: Meta<typeof PersonalityGroup> = {
   title: 'Feature/Profile/PersonalityGroup',
@@ -9,8 +9,8 @@ const meta: Meta<typeof PersonalityGroup> = {
     // Add default args here based on component props
     data: {},
     onSave: async () => {
-      await new Promise(r => setTimeout(r, 1000))
-    }
+      await new Promise((r) => setTimeout(r, 1000))
+    },
   },
 }
 

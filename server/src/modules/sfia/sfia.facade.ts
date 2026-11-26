@@ -15,6 +15,10 @@ export class SfiaFacade implements ISfiaFacade {
     return this.sfiaService.getLevel(levelId);
   }
 
+  async getAllLevels(): Promise<SfiaLevelDto[]> {
+    return this.sfiaService.getAllLevels();
+  }
+
   async getAllSkills(): Promise<SfiaSkillDto[]> {
     return this.sfiaService.getAllSkills();
   }

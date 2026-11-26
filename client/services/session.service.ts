@@ -1,72 +1,89 @@
 import { apiClient, getApiBaseUrl } from '@/lib/api-client'
 import type {
-  AudioUploadResult,
   CreateSessionPayload,
+  CreateSessionResponse,
   FeedbackProgress,
   QuestionsResponse,
   Report,
   Session,
-  SessionStatus,
+  SessionsListResponse,
+  SessionStatusResponse,
   SubmitAnswerPayload,
   TurnResponse,
   UpdateSessionStatusPayload,
-} from '@/lib/types'
+} from '@/types'
 
 export const sessionService = {
   /**
    * Tạo phiên phỏng vấn mới và kích hoạt tạo bộ câu hỏi
    */
-  async createSession(payload: CreateSessionPayload): Promise<{ id: string }> {
-    return apiClient.post<{ id: string }>('/sessions', payload)
+  async createSession(
+    payload: CreateSessionPayload
+  ): Promise<CreateSessionResponse> {
+    return apiClient.post<CreateSessionResponse>('/sessions', payload)
   },
 
   /**
    * Lấy danh sách các phiên phỏng vấn của người dùng
    */
-  async getSessions(): Promise<Session[]> {
-    const res = await apiClient.get<{ sessions: Session[] }>('/sessions')
+  async getSessions(signal?: AbortSignal): Promise<Session[]> {
+    const res = await apiClient.get<SessionsListResponse>('/sessions', {
+      signal,
+    })
     return res.sessions ?? []
   },
 
   /**
    * Lấy chi tiết một phiên phỏng vấn theo ID
    */
-  async getSession(sessionId: string): Promise<Session> {
-    return apiClient.get<Session>(`/sessions/${sessionId}`)
+  async getSession(sessionId: string, signal?: AbortSignal): Promise<Session> {
+    return apiClient.get<Session>(`/sessions/${sessionId}`, { signal })
   },
 
   /**
    * Lấy trạng thái sinh câu hỏi của phiên
    */
   async getSessionStatus(
-    sessionId: string
-  ): Promise<{ status: SessionStatus; numQuestions: number }> {
-    return apiClient.get<{ status: SessionStatus; numQuestions: number }>(
-      `/sessions/${sessionId}/status`
+    sessionId: string,
+    signal?: AbortSignal
+  ): Promise<SessionStatusResponse> {
+    return apiClient.get<SessionStatusResponse>(
+      `/sessions/${sessionId}/status`,
+      { signal }
     )
   },
 
   /**
    * Lấy danh sách câu hỏi của phiên
    */
-  async getQuestions(sessionId: string): Promise<QuestionsResponse> {
-    return apiClient.get<QuestionsResponse>(`/sessions/${sessionId}/questions`)
+  async getQuestions(
+    sessionId: string,
+    signal?: AbortSignal
+  ): Promise<QuestionsResponse> {
+    return apiClient.get<QuestionsResponse>(
+      `/sessions/${sessionId}/questions`,
+      { signal }
+    )
   },
 
   /**
    * Lấy tiến độ đánh giá feedback bất đồng bộ
    */
-  async getFeedbackProgress(sessionId: string): Promise<FeedbackProgress> {
+  async getFeedbackProgress(
+    sessionId: string,
+    signal?: AbortSignal
+  ): Promise<FeedbackProgress> {
     return apiClient.get<FeedbackProgress>(
-      `/sessions/${sessionId}/feedback-progress`
+      `/sessions/${sessionId}/feedback-progress`,
+      { signal }
     )
   },
 
   /**
    * Lấy báo cáo phỏng vấn đã hoàn tất
    */
-  async getReport(sessionId: string): Promise<Report> {
-    return apiClient.get<Report>(`/sessions/${sessionId}/report`)
+  async getReport(sessionId: string, signal?: AbortSignal): Promise<Report> {
+    return apiClient.get<Report>(`/sessions/${sessionId}/report`, { signal })
   },
 
   /**
@@ -86,29 +103,7 @@ export const sessionService = {
     sessionId: string,
     payload: SubmitAnswerPayload
   ): Promise<TurnResponse> {
-    return apiClient.post<TurnResponse>(
-      `/sessions/${sessionId}/turns`,
-      payload
-    )
-  },
-
-  /**
-   * Upload file ghi âm audio cho câu trả lời dạng voice
-   */
-  async uploadAudio(sessionId: string, blob: Blob): Promise<AudioUploadResult> {
-    let ext = 'webm'
-    if (blob.type.includes('mp4')) {
-      ext = 'mp4'
-    } else if (blob.type.includes('wav')) {
-      ext = 'wav'
-    }
-    const filename = `audio-${crypto.randomUUID()}.${ext}`
-    const formData = new FormData()
-    formData.append('file', blob, filename)
-    return apiClient.postForm<AudioUploadResult>(
-      `/sessions/${sessionId}/turns/audio`,
-      formData
-    )
+    return apiClient.post<TurnResponse>(`/sessions/${sessionId}/turns`, payload)
   },
 
   /**

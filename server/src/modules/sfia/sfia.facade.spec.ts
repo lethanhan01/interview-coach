@@ -56,9 +56,19 @@ describe('SfiaFacade & SfiaService', () => {
     },
   ];
 
+  const mockSkillLevels = [
+    {
+      skillCode: 'PROG',
+      levelId: 4,
+      description:
+        'Designs, codes, verifies, tests, documents complex programs.',
+    },
+  ];
+
   const mockSfiaRepository: ISfiaRepository = {
     loadAllRawSkills: jest.fn().mockResolvedValue(mockSkills),
     loadAllRawLevels: jest.fn().mockResolvedValue(mockLevels),
+    loadAllRawSkillLevels: jest.fn().mockResolvedValue(mockSkillLevels),
   };
 
   beforeEach(async () => {
@@ -81,7 +91,7 @@ describe('SfiaFacade & SfiaService', () => {
 
     facade = module.get<ISfiaFacade>(SFIA_FACADE_TOKEN);
     service = module.get<SfiaService>(SfiaService);
-    await service.onModuleInit();
+    await service.loadCache();
   });
 
   it('should be defined', () => {
@@ -141,11 +151,20 @@ describe('SfiaFacade & SfiaService', () => {
     });
   });
 
-  describe('getAllSkills', () => {
-    it('should return all cached skills', async () => {
+  describe('getAllSkills & getAllLevels', () => {
+    it('should return all cached skills with categoryName and levelDescriptions', async () => {
       const all = await facade.getAllSkills();
       expect(all).toHaveLength(2);
       expect(all.map((s) => s.code)).toEqual(['PROG', 'DBDS']);
+      expect(all[0].categoryName).toBe('Phát triển & Triển khai');
+      expect(all[0].levelDescriptions?.[4]).toContain('complex programs');
+    });
+
+    it('should return all cached levels sorted by levelId with nameVi', async () => {
+      const allLevels = await facade.getAllLevels();
+      expect(allLevels).toHaveLength(3);
+      expect(allLevels.map((l) => l.levelId)).toEqual([1, 3, 4]);
+      expect(allLevels[1].nameVi).toBe('Áp dụng độc lập');
     });
   });
 

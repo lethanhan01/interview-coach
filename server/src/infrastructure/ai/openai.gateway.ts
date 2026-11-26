@@ -1,10 +1,9 @@
 import { Injectable, HttpStatus, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { APIError, APIUserAbortError } from 'openai';
+import { APIError, APIUserAbortError, APIConnectionTimeoutError } from 'openai';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { OpenAIChatClient } from './openai-chat.client';
-import { OpenAITranscriptionClient } from './openai-transcription.client';
 import {
   type IAIGateway,
   type ChatTask,
@@ -14,6 +13,9 @@ import {
   type GenerateStructuredParams,
   type GenerateTextParams,
   type TranscribeAudioParams,
+  type TranscribeWithMetricsResult,
+  type SynthesizeSpeechParams,
+  type SynthesizeSpeechResult,
 } from './ai-gateway.interface';
 
 export type {
@@ -57,10 +59,6 @@ export class OpenAIGateway implements IAIGateway {
     config: ConfigService,
     @Inject(OpenAIChatClient)
     private readonly chatClient = new OpenAIChatClient(config),
-    @Inject(OpenAITranscriptionClient)
-    private readonly transcriptionClient = new OpenAITranscriptionClient(
-      config,
-    ),
   ) {
     this.chatModel =
       config.get<string>('OPENAI_CHAT_MODEL') ?? 'google/gemma-4-e4b';
@@ -92,7 +90,8 @@ export class OpenAIGateway implements IAIGateway {
     const body = error.error as Record<string, unknown> | undefined;
     return (
       body?.code === 'insufficient_quota' ||
-      error.message.includes('exceeded your current quota')
+      body?.type === 'insufficient_quota' ||
+      error.code === 'insufficient_quota'
     );
   }
 
@@ -111,6 +110,23 @@ export class OpenAIGateway implements IAIGateway {
       } catch (error) {
         if (error instanceof InterviewAIException) throw error;
 
+        if (
+          error instanceof APIUserAbortError ||
+          error instanceof APIConnectionTimeoutError ||
+          (error instanceof Error &&
+            (error.name === 'TimeoutError' ||
+              error.name === 'AbortError' ||
+              error.message.toLowerCase().includes('timeout') ||
+              error.message.toLowerCase().includes('timed out')))
+        ) {
+          throw new InterviewAIException(
+            ErrorCode.AI_TIMEOUT,
+            HttpStatus.GATEWAY_TIMEOUT,
+            'AI provider request timed out',
+            { cause: error },
+          );
+        }
+
         if (!(error instanceof APIError)) {
           throw new InterviewAIException(
             ErrorCode.AI_SERVICE_ERROR,
@@ -118,14 +134,7 @@ export class OpenAIGateway implements IAIGateway {
             `AI provider error: ${
               error instanceof Error ? error.message : String(error)
             }`,
-          );
-        }
-
-        if (error instanceof APIUserAbortError) {
-          throw new InterviewAIException(
-            ErrorCode.AI_TIMEOUT,
-            HttpStatus.GATEWAY_TIMEOUT,
-            'AI provider request timed out',
+            { cause: error },
           );
         }
 
@@ -148,6 +157,7 @@ export class OpenAIGateway implements IAIGateway {
             ErrorCode.AI_RATE_LIMIT,
             HttpStatus.TOO_MANY_REQUESTS,
             `AI provider rate limit persists after ${RATE_LIMIT_RETRY_DELAYS_MS.length} retries.`,
+            { cause: error },
           );
         }
 
@@ -155,6 +165,7 @@ export class OpenAIGateway implements IAIGateway {
           ErrorCode.AI_SERVICE_ERROR,
           HttpStatus.BAD_GATEWAY,
           `AI provider API error ${error.status ?? 'unknown'}: ${error.message}`,
+          { cause: error },
         );
       }
     }
@@ -196,7 +207,7 @@ export class OpenAIGateway implements IAIGateway {
       (_match, inner: string) => {
         changed = true;
         return JSON.stringify(
-          inner.replace(/\\'/g, "'").replace(/\\\\/g, '\\'),
+          inner.replaceAll("\\'", "'").replaceAll('\\\\', '\\'),
         );
       },
     );
@@ -421,26 +432,14 @@ export class OpenAIGateway implements IAIGateway {
     });
   }
 
-  async transcribe(params: TranscribeParams): Promise<TranscribeResult> {
-    const { audioBuffer, mimeType, language, timeoutMs } = params;
-
-    return this.withRetry(async () => {
-      const response = await this.transcriptionClient.create(
-        audioBuffer,
-        mimeType,
-        language,
-        timeoutMs,
-      );
-      const responseRecord = response as unknown as Record<string, unknown>;
-      const duration =
-        typeof responseRecord.duration === 'number'
-          ? responseRecord.duration
-          : 0;
-      return {
-        text: response.text,
-        durationSeconds: duration,
-      };
-    });
+  transcribe(_params: TranscribeParams): Promise<TranscribeResult> {
+    return Promise.reject(
+      new InterviewAIException(
+        ErrorCode.AI_SERVICE_UNAVAILABLE,
+        HttpStatus.NOT_IMPLEMENTED,
+        'OpenAI Whisper STT has been retired. Use Python AI service.',
+      ),
+    );
   }
 
   async generateStructured<T>(params: GenerateStructuredParams<T>): Promise<T> {
@@ -460,11 +459,12 @@ export class OpenAIGateway implements IAIGateway {
     let parsed: unknown;
     try {
       parsed = JSON.parse(raw);
-    } catch {
+    } catch (parseErr) {
       throw new InterviewAIException(
         ErrorCode.AI_INVALID_JSON,
         HttpStatus.BAD_GATEWAY,
         'Invalid JSON returned by AI provider',
+        { cause: parseErr },
       );
     }
 
@@ -497,14 +497,37 @@ export class OpenAIGateway implements IAIGateway {
     });
   }
 
-  async transcribeAudio(
-    params: TranscribeAudioParams,
-  ): Promise<TranscribeResult> {
-    return this.transcribe({
-      audioBuffer: params.audioBuffer,
-      mimeType: params.mimeType ?? 'audio/webm',
-      language: params.language,
-      timeoutMs: params.timeoutMs,
-    });
+  transcribeAudio(_params: TranscribeAudioParams): Promise<TranscribeResult> {
+    return Promise.reject(
+      new InterviewAIException(
+        ErrorCode.AI_SERVICE_UNAVAILABLE,
+        HttpStatus.NOT_IMPLEMENTED,
+        'OpenAI Whisper STT has been retired. Use Python AI service.',
+      ),
+    );
+  }
+
+  transcribeWithMetrics(
+    _params: TranscribeAudioParams,
+  ): Promise<TranscribeWithMetricsResult> {
+    return Promise.reject(
+      new InterviewAIException(
+        ErrorCode.AI_SERVICE_UNAVAILABLE,
+        HttpStatus.NOT_IMPLEMENTED,
+        'OpenAI Whisper STT has been retired. Use Python AI service.',
+      ),
+    );
+  }
+
+  synthesizeSpeech(
+    _params: SynthesizeSpeechParams,
+  ): Promise<SynthesizeSpeechResult> {
+    return Promise.reject(
+      new InterviewAIException(
+        ErrorCode.AI_SERVICE_UNAVAILABLE,
+        HttpStatus.NOT_IMPLEMENTED,
+        'Speech synthesis is not implemented for OpenAIGateway. Use Python AI service.',
+      ),
+    );
   }
 }

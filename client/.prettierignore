@@ -6,3 +6,4 @@ storybook-static/
 coverage/
 test-results/
 .storybook/
+next-env.d.ts

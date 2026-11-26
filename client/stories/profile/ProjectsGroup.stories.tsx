@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import ProjectsGroup from '../../components/resume/ProjectsGroup'
+import ProjectsGroup from '@/components/resume/projects/ProjectsGroup'
 
 const meta: Meta<typeof ProjectsGroup> = {
   title: 'Feature/Profile/ProjectsGroup',
@@ -7,9 +7,10 @@ const meta: Meta<typeof ProjectsGroup> = {
   tags: ['autodocs'],
   args: {
     data: [],
+    availableTechs: [],
     onSave: async () => {
-      await new Promise(r => setTimeout(r, 1000))
-    }
+      await new Promise((r) => setTimeout(r, 1000))
+    },
   },
 }
 

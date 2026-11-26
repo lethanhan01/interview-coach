@@ -1,0 +1,145 @@
+'use client'
+
+import { useMemo, useState } from 'react'
+import {
+  ActionIcon,
+  Badge,
+  Button,
+  Group,
+  Paper,
+  SegmentedControl,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core'
+import { IconSearch, IconX } from '@tabler/icons-react'
+import surfaces from '@/styles/surfaces.module.css'
+import type { OnetTaskStatement } from '@/types'
+import { OnetTaskItem } from './OnetTaskItem'
+
+export interface OnetTasksTabProps {
+  tasks: OnetTaskStatement[]
+}
+
+type TaskFilterType = 'all' | 'core' | 'supplemental'
+
+export function OnetTasksTab({ tasks }: Readonly<OnetTasksTabProps>) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterType, setFilterType] = useState<TaskFilterType>('all')
+
+  const coreCount = useMemo(() => tasks.filter((t) => t.isCore).length, [tasks])
+  const supplementalCount = tasks.length - coreCount
+
+  const filteredTasks = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    return tasks.filter((t) => {
+      if (filterType === 'core' && !t.isCore) return false
+      if (filterType === 'supplemental' && t.isCore) return false
+      if (!q) return true
+      return t.statement.toLowerCase().includes(q)
+    })
+  }, [tasks, filterType, searchQuery])
+
+  return (
+    <Stack gap="xs">
+      {/* Header Controls */}
+      <Paper withBorder p="xs" radius="md">
+        <Stack gap="xs">
+          <Group justify="space-between" align="center" wrap="wrap">
+            <Group gap="xs">
+              <Title order={3} size="h5">
+                Nhiệm vụ Công việc
+              </Title>
+              <Badge color="neutral" variant="outline" size="sm">
+                {tasks.length} nhiệm vụ
+              </Badge>
+            </Group>
+
+            <Text size="sm" c="dimmed">
+              Hiển thị {filteredTasks.length} / {tasks.length}
+            </Text>
+          </Group>
+
+          <Group gap="xs" wrap="wrap">
+            <TextInput
+              size="sm"
+              flex={1}
+              miw={200}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.currentTarget.value)}
+              placeholder="Tìm kiếm nội dung nhiệm vụ..."
+              aria-label="Tìm kiếm nội dung nhiệm vụ"
+              leftSection={<IconSearch size={15} stroke={1.5} />}
+              rightSection={
+                searchQuery ? (
+                  <ActionIcon
+                    size="sm"
+                    variant="subtle"
+                    color="neutral"
+                    aria-label="Xóa tìm kiếm"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <IconX size={14} stroke={1.5} />
+                  </ActionIcon>
+                ) : null
+              }
+            />
+
+            <SegmentedControl
+              size="sm"
+              value={filterType}
+              onChange={(val) => setFilterType(val as TaskFilterType)}
+              aria-label="Lọc theo phân loại nhiệm vụ"
+              data={[
+                { value: 'all', label: `Tất cả (${tasks.length})` },
+                { value: 'core', label: `Cốt lõi (${coreCount})` },
+                {
+                  value: 'supplemental',
+                  label: `Bổ trợ (${supplementalCount})`,
+                },
+              ]}
+            />
+          </Group>
+        </Stack>
+      </Paper>
+
+      {/* Task List */}
+      {filteredTasks.length === 0 ? (
+        <Paper p="md" radius="md" className={surfaces.subtleSurface}>
+          <Stack align="center" gap="xs">
+            <Text size="md" fw={600}>
+              Không tìm thấy nhiệm vụ nào
+            </Text>
+            <Text size="sm" c="dimmed">
+              Thử thay đổi từ khóa tìm kiếm hoặc bỏ chọn bộ lọc.
+            </Text>
+            {searchQuery || filterType !== 'all' ? (
+              <Button
+                size="sm"
+                variant="light"
+                onClick={() => {
+                  setSearchQuery('')
+                  setFilterType('all')
+                }}
+              >
+                Đặt lại bộ lọc
+              </Button>
+            ) : null}
+          </Stack>
+        </Paper>
+      ) : (
+        <Stack gap="xs">
+          {filteredTasks.map((task, index) => (
+            <OnetTaskItem
+              key={task.id}
+              task={task}
+              searchQuery={searchQuery.trim()}
+              index={index}
+            />
+          ))}
+        </Stack>
+      )}
+    </Stack>
+  )
+}

@@ -8,8 +8,8 @@ function removeVietnameseTones(str: string): string {
   return str
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'd')
+    .replaceAll('đ', 'd')
+    .replaceAll('Đ', 'd')
     .toLowerCase();
 }
 
@@ -19,20 +19,9 @@ export function inferTargetSfiaLevel(
   jobContent?: string | null,
 ): number {
   // Tầng 1: Đánh giá chức danh công việc `jobTitle` (thường mang chức danh chính thức)
+  // Kiểm tra cấp thấp trước để không nhận nhầm "Junior Product Manager" thành L5
   if (jobTitle && typeof jobTitle === 'string' && jobTitle.trim()) {
     const normTitle = removeVietnameseTones(jobTitle.trim());
-    if (
-      /\b(lead|principal|architect|director|truong nhom|kien truc su|team lead|tech lead)\b/i.test(
-        normTitle,
-      )
-    ) {
-      return 5;
-    }
-    if (
-      /\b(senior|sr\b|chuyen vien cao cap|chuyen vien chinh)\b/i.test(normTitle)
-    ) {
-      return 4;
-    }
     if (/\b(intern|thuc tap|sinh vien|trainee)\b/i.test(normTitle)) {
       return 1;
     }
@@ -41,7 +30,19 @@ export function inferTargetSfiaLevel(
     ) {
       return 2;
     }
-    if (/\b(middle|mid)\b/i.test(normTitle)) {
+    if (
+      /\b(lead|principal|architect|director|vp|head of|truong nhom|kien truc su|team lead|tech lead|engineering manager|technical manager|it manager|delivery manager|development manager)\b/i.test(
+        normTitle,
+      )
+    ) {
+      return 5;
+    }
+    if (
+      /\b(senior|sr|chuyen vien cao cap|chuyen vien chinh)\b/i.test(normTitle)
+    ) {
+      return 4;
+    }
+    if (/\b(middle|mid|intermediate)\b/i.test(normTitle)) {
       return 3;
     }
   }
@@ -49,18 +50,6 @@ export function inferTargetSfiaLevel(
   // Tầng 2: Đánh giá trường `level` chỉ định trực tiếp từ form/user
   if (level && typeof level === 'string' && level.trim()) {
     const normLevel = removeVietnameseTones(level.trim());
-    if (
-      /\b(lead|principal|architect|director|truong nhom|kien truc su|team lead|tech lead)\b/i.test(
-        normLevel,
-      )
-    ) {
-      return 5;
-    }
-    if (
-      /\b(senior|sr\b|chuyen vien cao cap|chuyen vien chinh)\b/i.test(normLevel)
-    ) {
-      return 4;
-    }
     if (/\b(intern|thuc tap|sinh vien|trainee)\b/i.test(normLevel)) {
       return 1;
     }
@@ -68,6 +57,18 @@ export function inferTargetSfiaLevel(
       /\b(junior|fresher|associate|moi tot nghiep|entry)\b/i.test(normLevel)
     ) {
       return 2;
+    }
+    if (
+      /\b(lead|principal|architect|director|manager|truong nhom|kien truc su|team lead|tech lead)\b/i.test(
+        normLevel,
+      )
+    ) {
+      return 5;
+    }
+    if (
+      /\b(senior|sr|chuyen vien cao cap|chuyen vien chinh)\b/i.test(normLevel)
+    ) {
+      return 4;
     }
     if (/\b(middle|mid|intermediate)\b/i.test(normLevel)) {
       return 3;

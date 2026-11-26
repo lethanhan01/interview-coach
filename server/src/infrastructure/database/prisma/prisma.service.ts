@@ -15,6 +15,8 @@ import {
 const DEFAULT_POOL_MAX = 5;
 const DEFAULT_CONNECTION_TIMEOUT_MS = 30_000;
 const DEFAULT_IDLE_TIMEOUT_MS = 30_000;
+const DEFAULT_KEEPALIVE_INITIAL_DELAY_MS = 10_000;
+const DEFAULT_MAX_LIFETIME_SECONDS = 1_800;
 const DEFAULT_TRANSACTION_MAX_WAIT_MS = 15_000;
 const DEFAULT_TRANSACTION_TIMEOUT_MS = 30_000;
 const DEFAULT_CONNECT_RETRIES = 3;
@@ -25,21 +27,39 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  private readonly logger = new Logger(PrismaService.name);
+  private readonly logger: Logger;
   private bootstrapDatabaseAvailable = false;
   constructor() {
-    const adapter = new PrismaPg({
-      ...buildPgConnectionConfig(process.env['DATABASE_URL']),
-      max: readPositiveIntEnv('PRISMA_POOL_MAX', DEFAULT_POOL_MAX),
-      connectionTimeoutMillis: readPositiveIntEnv(
-        'PRISMA_CONNECTION_TIMEOUT_MS',
-        DEFAULT_CONNECTION_TIMEOUT_MS,
-      ),
-      idleTimeoutMillis: readPositiveIntEnv(
-        'PRISMA_IDLE_TIMEOUT_MS',
-        DEFAULT_IDLE_TIMEOUT_MS,
-      ),
-    });
+    const logger = new Logger(PrismaService.name);
+    const adapter = new PrismaPg(
+      {
+        ...buildPgConnectionConfig(process.env['DATABASE_URL']),
+        max: readPositiveIntEnv('PRISMA_POOL_MAX', DEFAULT_POOL_MAX),
+        connectionTimeoutMillis: readPositiveIntEnv(
+          'PRISMA_CONNECTION_TIMEOUT_MS',
+          DEFAULT_CONNECTION_TIMEOUT_MS,
+        ),
+        idleTimeoutMillis: readPositiveIntEnv(
+          'PRISMA_IDLE_TIMEOUT_MS',
+          DEFAULT_IDLE_TIMEOUT_MS,
+        ),
+        keepAlive: true,
+        keepAliveInitialDelayMillis: DEFAULT_KEEPALIVE_INITIAL_DELAY_MS,
+        maxLifetimeSeconds: DEFAULT_MAX_LIFETIME_SECONDS,
+      },
+      {
+        onPoolError: (error) => {
+          logger.warn(
+            `PostgreSQL idle pool client error (connection evicted): ${formatDatabaseStartupError(error)}`,
+          );
+        },
+        onConnectionError: (error) => {
+          logger.warn(
+            `PostgreSQL active connection error: ${formatDatabaseStartupError(error)}`,
+          );
+        },
+      },
+    );
     super({
       adapter,
       transactionOptions: {
@@ -53,12 +73,19 @@ export class PrismaService
         ),
       },
     });
+    this.logger = logger;
   }
   async onModuleInit() {
     await this.connectWithRetry();
   }
   async onModuleDestroy() {
-    await this.$disconnect();
+    try {
+      await this.$disconnect();
+    } catch (error) {
+      this.logger.warn(
+        `Prisma disconnect encountered an error during shutdown: ${formatDatabaseStartupError(error)}`,
+      );
+    }
   }
   isBootstrapDatabaseAvailable(): boolean {
     return this.bootstrapDatabaseAvailable;
@@ -72,32 +99,38 @@ export class PrismaService
       'PRISMA_CONNECT_RETRY_DELAY_MS',
       DEFAULT_CONNECT_RETRY_DELAY_MS,
     );
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1)
-      try {
-        await this.$connect();
-        await this.$queryRaw`SELECT 1`;
-        this.bootstrapDatabaseAvailable = true;
-        return;
-      } catch (error) {
-        const transient = isTransientPrismaConnectionError(error);
-        const formattedError = formatDatabaseStartupError(error);
-        if (!transient) {
-          this.logger.error(
-            `Prisma startup check failed with a non-transient database error: ${formattedError}`,
-          );
-          throw error;
-        }
-        if (attempt === maxAttempts) {
-          this.logger.warn(
-            `Database is unavailable after ${maxAttempts} startup attempt(s). The API will continue booting and /health will report db=down until the connection recovers. Last error: ${formattedError}`,
-          );
-          return;
-        }
-        this.logger.warn(
-          `Database startup check failed on attempt ${attempt}/${maxAttempts}; retrying in ${retryDelayMs}ms. Error: ${formattedError}`,
+    await this.connectAttempt(1, maxAttempts, retryDelayMs);
+  }
+  private async connectAttempt(
+    attempt: number,
+    maxAttempts: number,
+    retryDelayMs: number,
+  ): Promise<void> {
+    try {
+      await this.$connect();
+      await this.$queryRaw`SELECT 1`;
+      this.bootstrapDatabaseAvailable = true;
+    } catch (error) {
+      const transient = isTransientPrismaConnectionError(error);
+      const formattedError = formatDatabaseStartupError(error);
+      if (!transient) {
+        this.logger.error(
+          `Prisma startup check failed with a non-transient database error: ${formattedError}`,
         );
-        await delay(retryDelayMs);
+        throw error;
       }
+      if (attempt >= maxAttempts) {
+        this.logger.warn(
+          `Database is unavailable after ${maxAttempts} startup attempt(s). The API will continue booting and /health will report db=down until the connection recovers. Last error: ${formattedError}`,
+        );
+        return;
+      }
+      this.logger.warn(
+        `Database startup check failed on attempt ${attempt}/${maxAttempts}; retrying in ${retryDelayMs}ms. Error: ${formattedError}`,
+      );
+      await delay(retryDelayMs);
+      await this.connectAttempt(attempt + 1, maxAttempts, retryDelayMs);
+    }
   }
 }
 function readPositiveIntEnv(name: string, defaultValue: number): number {

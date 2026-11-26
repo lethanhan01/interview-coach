@@ -2,16 +2,28 @@
  * AI Rubric Prompt Generator & Formatter for SFIA 9 Technical Mock Interview Evaluator
  */
 
-import type { SfiaSkillDetail } from './types'
-import { SFIA_LEVEL_DEFINITIONS, getCategoryName } from './sfia-theme'
+import type {
+  SfiaCategory,
+  SfiaLevelResponsibility,
+  SfiaSkillDetail,
+} from '@/types'
 
 export function generateSfiaRubricMarkdownPrompt(
   skillDetail: SfiaSkillDetail,
-  selectedLevel: number
+  selectedLevel: number,
+  levels?: SfiaLevelResponsibility[],
+  categories?: SfiaCategory[]
 ): string {
-  const levelDef = SFIA_LEVEL_DEFINITIONS[selectedLevel]
-  const statement = skillDetail.skillLevels.find((sl) => sl.levelId === selectedLevel)
-  const categoryName = getCategoryName(skillDetail.categoryCode)
+  const levelDef = levels?.find((l) => l.levelId === selectedLevel)
+  const levelLabel = levelDef
+    ? `${levelDef.name}${levelDef.nameVi ? ` (${levelDef.nameVi})` : ''}`
+    : `L${selectedLevel}`
+  const statement = skillDetail.skillLevels.find(
+    (sl) => sl.levelId === selectedLevel
+  )
+  const category = categories?.find((c) => c.code === skillDetail.categoryCode)
+  const categoryName =
+    category?.nameVi || category?.name || skillDetail.categoryCode
 
   const prompt = `---
 # AI INTERVIEW EVALUATION SYSTEM PROMPT
@@ -26,7 +38,7 @@ You are an expert AI Interview Evaluator assessing a candidate's competency base
 - **Skill Name**: ${skillDetail.name}
 - **Category**: ${categoryName} (${skillDetail.categoryCode})
 - **Subcategory**: ${skillDetail.subcategoryCode}
-- **Target SFIA Level**: Level ${selectedLevel} — ${levelDef?.name || ''}
+- **Target SFIA Level**: Level ${selectedLevel} — ${levelLabel}
 
 ## 2. GENERAL LEVEL RESPONSIBILITY & ESSENCE
 - **Core Essence**: "${statement?.essence || 'Demonstrates professional competence at this level.'}"
@@ -75,10 +87,13 @@ Your output MUST be a strict JSON object with the following schema:
 
 export function generateSfiaRubricJsonSchema(
   skillDetail: SfiaSkillDetail,
-  selectedLevel: number
+  selectedLevel: number,
+  levels?: SfiaLevelResponsibility[]
 ): string {
-  const statement = skillDetail.skillLevels.find((sl) => sl.levelId === selectedLevel)
-  const levelDef = SFIA_LEVEL_DEFINITIONS[selectedLevel]
+  const statement = skillDetail.skillLevels.find(
+    (sl) => sl.levelId === selectedLevel
+  )
+  const levelDef = levels?.find((l) => l.levelId === selectedLevel)
 
   const schema = {
     $schema: 'http://json-schema.org/draft-07/schema#',

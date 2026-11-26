@@ -484,6 +484,35 @@ describe('QuestionGenerationProcessor', () => {
     );
   });
 
+  it('không đánh dấu session status=error trên attempt 1 của retryable error', async () => {
+    mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);
+    mockFactory.getStrategy.mockReturnValue({
+      generateQuestions: jest
+        .fn()
+        .mockRejectedValue(new Error('Transient AI network drop')),
+    });
+    mockQuestionBankService.selectFallbackQuestions.mockRejectedValue(
+      new Error('Transient QB timeout'),
+    );
+
+    const retryableJob = {
+      data: BASE_JOB_DATA,
+      attemptsMade: 0,
+      opts: { attempts: 2 },
+    } as unknown as Job<any>;
+
+    await expect(processor.process(retryableJob)).rejects.toThrow(
+      'Transient QB timeout',
+    );
+
+    expect(mockPrisma.interviewSession.update).not.toHaveBeenCalled();
+    expect(mockSse.emit).not.toHaveBeenCalledWith(
+      'sse:session:session-123',
+      'session.status',
+      expect.objectContaining({ status: 'error' }),
+    );
+  });
+
   it('không chuyển session sang error hoặc chạy fallback lần hai khi SSE emit thất bại', async () => {
     // totalQuestions=5 → aiCount=1, qbCount=4; QB called once (hybrid), not twice
     mockContextPack.getContextPack.mockReturnValue(MOCK_CONTEXT_PACK as any);

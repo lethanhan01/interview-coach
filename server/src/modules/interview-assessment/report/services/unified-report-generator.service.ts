@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  Optional,
+  HttpStatus,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import {
@@ -6,6 +12,8 @@ import {
   type IAIGateway,
 } from '@infra/ai/ai-gateway.interface';
 import { SFIA_FACADE_TOKEN, type ISfiaFacade } from '@modules/sfia/contracts';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { ScoringEngineService } from '../../evaluation/scoring-engine.service';
 
 export const UNIFIED_REPORT_TYPE = 'session_competency_evaluation';
@@ -134,7 +142,11 @@ export class UnifiedReportGeneratorService {
     });
 
     if (!session) {
-      throw new Error(`Session ${sessionId} not found`);
+      throw new InterviewAIException(
+        ErrorCode.SESSION_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+        `Session ${sessionId} not found`,
+      );
     }
 
     const targetSfiaLevel = session.targetSfiaLevel ?? 3;
@@ -165,8 +177,10 @@ export class UnifiedReportGeneratorService {
           if (sfiaSkill?.name) {
             skillName = sfiaSkill.name;
           }
-        } catch {
-          // Bỏ qua lỗi tra cứu, giữ skillCode
+        } catch (error: unknown) {
+          this.logger.warn(
+            `Failed to resolve SFIA skill name for ${skill.skillCode}: ${error instanceof Error ? error.message : String(error)}`,
+          );
         }
       }
 
@@ -498,7 +512,11 @@ export class UnifiedReportGeneratorService {
     actionPlan: CompetencyActionPlanItem[];
   }> {
     if (!this.aiGateway) {
-      throw new Error('AI Gateway is not available');
+      throw new InterviewAIException(
+        ErrorCode.SERVICE_UNAVAILABLE,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        'AI Gateway is not available',
+      );
     }
 
     const isVietnamese = params.language !== 'en';

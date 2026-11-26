@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import type { SfiaMainTab } from './types'
+import type { SfiaMainTab } from '@/types'
 
 export type SfiaAttributesViewMode = 'level' | 'matrix'
 
@@ -17,16 +17,26 @@ export function useSfiaParams() {
   const searchParams = useSearchParams()
 
   const rawTab = searchParams.get('tab')
-  const validTabs: SfiaMainTab[] = ['taxonomy', 'matrix', 'attributes', 'analytics']
+  const validTabs: SfiaMainTab[] = [
+    'taxonomy',
+    'matrix',
+    'attributes',
+    'analytics',
+  ]
   const activeTab: SfiaMainTab = validTabs.includes(rawTab as SfiaMainTab)
     ? (rawTab as SfiaMainTab)
     : DEFAULT_SFIA_MAIN_TAB
 
   const selectedSkill = searchParams.get('skill') || DEFAULT_SFIA_SKILL_CODE
-  
+
   const rawLevel = searchParams.get('level')
-  const parsedLevel = rawLevel ? parseInt(rawLevel, 10) : DEFAULT_SFIA_LEVEL
-  const selectedLevel = isNaN(parsedLevel) || parsedLevel < 1 || parsedLevel > 7 ? DEFAULT_SFIA_LEVEL : parsedLevel
+  const parsedLevel = rawLevel
+    ? Number.parseInt(rawLevel, 10)
+    : DEFAULT_SFIA_LEVEL
+  const selectedLevel =
+    Number.isNaN(parsedLevel) || parsedLevel < 1 || parsedLevel > 7
+      ? DEFAULT_SFIA_LEVEL
+      : parsedLevel
 
   const selectedCategory = searchParams.get('category') || null
 
@@ -66,10 +76,20 @@ export function useSfiaParams() {
       updateParams({
         skill: skillCode,
         level: levelId !== undefined ? levelId : undefined,
-        tab: activeTab !== 'taxonomy' ? 'taxonomy' : undefined,
+        tab: activeTab !== 'taxonomy' ? null : undefined,
       })
     },
     [activeTab, updateParams]
+  )
+
+  const navigateToMatrixWithLevel = useCallback(
+    (levelId: number) => {
+      updateParams({
+        tab: 'matrix',
+        level: levelId,
+      })
+    },
+    [updateParams]
   )
 
   const setLevel = useCallback(
@@ -110,6 +130,7 @@ export function useSfiaParams() {
     setLevel,
     setCategory,
     setAttrView,
+    navigateToMatrixWithLevel,
     updateParams,
   }
 }

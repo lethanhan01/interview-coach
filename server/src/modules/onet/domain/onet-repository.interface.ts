@@ -61,4 +61,13 @@ export interface IOnetRepository {
     limit: number,
     tx?: Prisma.TransactionClient,
   ): Promise<OnetOccupationDto[]>;
+
+  /**
+   * Tìm kiếm công nghệ và công cụ phần mềm trên onet.software_skills (deduplicate theo workplace_example)
+   */
+  searchTechnologies(
+    query?: string,
+    limit?: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<OnetTechDto[]>;
 }

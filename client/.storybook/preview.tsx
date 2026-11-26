@@ -1,36 +1,27 @@
 import '../app/globals.css'
-import DocTemplate from './DocTemplate'
-
-// Polyfill to fix Radix UI's "Illegal invocation" focus error in Storybook
-if (typeof HTMLElement !== 'undefined' && typeof HTMLElement.prototype.focus !== 'function') {
-  const originalFocus = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'focus')
-  if (originalFocus && originalFocus.get) {
-    Object.defineProperty(HTMLElement.prototype, 'focus', {
-      value: function focus(options?: FocusOptions) {
-        return originalFocus.get?.call(this)?.call(this, options)
-      },
-      writable: true,
-      configurable: true,
-    })
-  }
-}
+import 'dayjs/locale/vi'
 
 import type { Preview, Decorator } from '@storybook/nextjs-vite'
-import { withThemeByClassName } from '@storybook/addon-themes'
+import { MantineProvider } from '@mantine/core'
+import { DatesProvider } from '@mantine/dates'
+import { ModalsProvider } from '@mantine/modals'
+import { Notifications } from '@mantine/notifications'
 import React, { useEffect } from 'react'
+import { QueryProvider } from '../providers/QueryProvider'
+import { theme } from '../theme'
 
 function ReducedMotionWrapper({
   reducedMotion,
   children,
-}: {
+}: Readonly<{
   reducedMotion?: string
   children: React.ReactNode
-}) {
+}>) {
   useEffect(() => {
     if (reducedMotion === 'reduce') {
-      document.documentElement.setAttribute('data-reduced-motion', 'true')
+      document.documentElement.dataset.reducedMotion = 'true'
     } else {
-      document.documentElement.removeAttribute('data-reduced-motion')
+      delete document.documentElement.dataset.reducedMotion
     }
   }, [reducedMotion])
 
@@ -38,19 +29,54 @@ function ReducedMotionWrapper({
 }
 
 const withReducedMotion: Decorator = (Story, context) => (
-  <ReducedMotionWrapper reducedMotion={context.globals.reducedMotion as string | undefined}>
+  <ReducedMotionWrapper
+    reducedMotion={context.globals.reducedMotion as string | undefined}
+  >
     <Story />
   </ReducedMotionWrapper>
 )
 
+const withMantineProvider: Decorator = (Story, context) => {
+  const paramScheme = context.parameters?.colorScheme as string | undefined
+  const globalScheme = context.globals.colorScheme as string | undefined
+  const activeScheme = paramScheme ?? globalScheme
+  const scheme = activeScheme === 'dark' ? 'dark' : 'light'
+
+  return (
+    <QueryProvider>
+      <MantineProvider theme={theme} forceColorScheme={scheme}>
+        <DatesProvider settings={{ locale: 'vi', firstDayOfWeek: 1 }}>
+          <Notifications position="top-right" />
+          <ModalsProvider>
+            <Story />
+          </ModalsProvider>
+        </DatesProvider>
+      </MantineProvider>
+    </QueryProvider>
+  )
+}
+
 const preview: Preview = {
   globalTypes: {
+    colorScheme: {
+      name: 'Color Scheme',
+      description: 'Mantine color scheme (light / dark)',
+      defaultValue: 'light',
+      toolbar: {
+        icon: 'mirror',
+        items: [
+          { value: 'light', title: 'Light' },
+          { value: 'dark', title: 'Dark' },
+        ],
+        dynamicTitle: true,
+      },
+    },
     reducedMotion: {
       name: 'Reduced Motion',
       description: 'Enable reduced motion preview',
       defaultValue: 'auto',
       toolbar: {
-        icon: 'videooff',
+        icon: 'lightningoff',
         items: [
           { value: 'auto', title: 'Auto (OS Default)' },
           { value: 'reduce', title: 'Force Reduced Motion' },
@@ -59,20 +85,10 @@ const preview: Preview = {
       },
     },
   },
-  decorators: [
-    withReducedMotion,
-    // Toggles class `dark` on <html> element — integrates with next-themes
-    withThemeByClassName({
-      themes: {
-        light: '',
-        dark: 'dark',
-      },
-      defaultTheme: 'light',
-    }),
-  ],
+  decorators: [withMantineProvider, withReducedMotion],
   parameters: {
-    docs: {
-      page: DocTemplate,
+    nextjs: {
+      appDirectory: true,
     },
     viewport: {
       viewports: {
@@ -80,7 +96,10 @@ const preview: Preview = {
         md: { name: 'md (768px)', styles: { width: '768px', height: '100%' } },
         lg: { name: 'lg (1024px)', styles: { width: '1024px', height: '100%' } },
         xl: { name: 'xl (1280px)', styles: { width: '1280px', height: '100%' } },
-        '2xl': { name: '2xl (1536px)', styles: { width: '1536px', height: '100%' } },
+        '2xl': {
+          name: '2xl (1536px)',
+          styles: { width: '1536px', height: '100%' },
+        },
       },
     },
     controls: {
@@ -89,12 +108,16 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
-
     a11y: {
-      // 'todo' - show a11y violations in the test UI only
-      // 'error' - fail CI on a11y violations
-      // 'off' - skip a11y checks entirely
-      test: 'todo',
+      test: 'error',
+      config: {
+        rules: [
+          // Mantine v9 DEFAULT_THEME (khóa cứng theo Zero-Hex) dùng gray[6] cho
+          // --mantine-color-dimmed và blue[6] cho primaryShade: 6; giữ enforce 100%
+          // toàn bộ rule cấu trúc, ARIA, landmark, heading-order, label, role.
+          { id: 'color-contrast', enabled: false },
+        ],
+      },
     },
   },
 }

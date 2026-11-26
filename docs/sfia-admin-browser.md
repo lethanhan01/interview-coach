@@ -2,8 +2,8 @@
 
 ## 1. Tầm Nhìn, Bối Cảnh Nghiệp Vụ & Dữ Liệu Nền Tảng
 
-### 1.1. Bối cảnh & Vai trò của SFIA 9 trong InterviewCoach
-Hệ thống **AI Mock Interview Coach** sử dụng chuẩn phân loại nghề nghiệp của Bộ Lao động Hoa Kỳ (**O\*NET Content Model**) kết hợp với khung năng lực kỹ năng số chuẩn quốc tế (**SFIA 9 — Skills Framework for the Information Age**) để định hình tiêu chuẩn phỏng vấn và đánh giá ứng viên:
+### 1.1. Bối cảnh & Vai trò của SFIA 9 trong Intervia
+Hệ thống **Intervia** sử dụng chuẩn phân loại nghề nghiệp của Bộ Lao động Hoa Kỳ (**O\*NET Content Model**) kết hợp với khung năng lực kỹ năng số chuẩn quốc tế (**SFIA 9 — Skills Framework for the Information Age**) để định hình tiêu chuẩn phỏng vấn và đánh giá ứng viên:
 1. **Gán nhãn đa tầng**: Gán nhãn câu hỏi phỏng vấn trong Ngân hàng câu hỏi (`public.question_bank`) theo mã kỹ năng SFIA (`sfia_skill_code`) và cấp độ mục tiêu (`target_sfia_level`).
 2. **Chuẩn đánh giá cho AI Evaluator**: Cung cấp chuẩn tham chiếu hành vi (Rubric Benchmark) để LLM chấm điểm câu trả lời phỏng vấn theo 7 cấp độ trách nhiệm được quốc tế công nhận (Level 1 ➔ Level 7).
 3. **Ánh xạ nghề nghiệp - năng lực**: Kết nối trực tiếp từ mã nghề O\*NET SOC sang các kỹ năng SFIA cốt lõi (`public.onet_sfia_mappings`) nhằm tự động gợi ý bộ câu hỏi phù hợp cho từng vị trí tuyển dụng.

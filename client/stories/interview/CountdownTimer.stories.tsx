@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import CountdownTimer from '../../components/interview/CountdownTimer'
+import CountdownTimer from '@/components/interview/workspace/CountdownTimer'
 
 const meta: Meta<typeof CountdownTimer> = {
   title: 'Feature/Interview/CountdownTimer',

@@ -52,6 +52,7 @@ export interface SfiaSkillLevelStatementRawRow {
 }
 
 export interface SfiaOnetMappingRawRow {
+  id: string;
   socCode: string;
   occupationTitle: string;
   targetLevel: number;

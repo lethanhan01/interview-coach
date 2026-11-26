@@ -1,0 +1,9 @@
+{
+  "success": false,
+  "errorCode": "AUDIO_CORRUPTED",
+  "message": "Không thể giải mã dữ liệu âm thanh WebM/Opus trong RAM",
+  "details": {
+    "mimeType": "audio/webm",
+    "decoderError": "Invalid data found when processing input"
+  }
+}

@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@core/common/enums';
 import { Roles, CurrentUser } from '@core/common/decorators';
 import { SaveJobDescriptionDto } from './dto/save-job-description.dto';
 import { SavedJobDescriptionService } from './saved-job-description.service';

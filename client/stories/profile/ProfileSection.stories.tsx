@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import ProfileSection from '../../components/profile/ProfileSection'
+import { Text } from '@mantine/core'
+import ProfileSection from '@/components/profile/primitives/ProfileSection'
 
 const meta: Meta<typeof ProfileSection> = {
   title: 'Feature/Profile/ProfileSection',
@@ -7,7 +8,7 @@ const meta: Meta<typeof ProfileSection> = {
   tags: ['autodocs'],
   args: {
     title: 'Kinh nghiệm làm việc',
-    children: <div>Nội dung section...</div>,
+    children: <Text size="sm">Nội dung section...</Text>,
   },
 }
 

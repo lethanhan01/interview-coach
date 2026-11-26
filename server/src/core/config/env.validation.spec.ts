@@ -2,7 +2,6 @@ import { validateEnv } from './env.validation';
 
 const validEnv = {
   APP_URL: 'http://localhost:3000',
-  MEDIA_STORAGE_PATH: './uploads/audio',
   AUTH_JWT_SECRET: 'a-very-long-local-auth-secret-for-tests',
   SMTP_HOST: 'smtp.example.com',
   SMTP_PORT: '587',
@@ -14,12 +13,10 @@ const validEnv = {
 };
 
 describe('validateEnv', () => {
-  it('validates local authentication and storage configuration', () => {
+  it('validates local authentication configuration', () => {
     const result = validateEnv(validEnv);
     expect(result.APP_URL).toBe('http://localhost:3000');
-    expect(result.MEDIA_STORAGE_PATH).toBe('./uploads/audio');
-    expect(result.MEDIA_SIGNED_URL_TTL_SECONDS).toBe(1800);
-    expect(result.AUTH_COOKIE_NAME).toBe('interviewcoach_auth');
+    expect(result.AUTH_COOKIE_NAME).toBe('intervia_auth');
     expect(result.AUTH_COOKIE_MAX_AGE).toBe(86_400);
     expect(result.SMTP_PORT).toBe(587);
   });
@@ -44,5 +41,33 @@ describe('validateEnv', () => {
     expect(result.AUTH_ACCESS_COOKIE_MAX_AGE).toBe(1200);
     expect(result.AUTH_REFRESH_COOKIE_MAX_AGE).toBe(1209600);
     expect(result.REDIS_PASSWORD).toBe('secure_redis_password');
+  });
+
+  it('validates timeout defaults and custom overrides for Redis', () => {
+    const defaultResult = validateEnv(validEnv);
+    expect(defaultResult.REDIS_CONNECT_TIMEOUT_MS).toBe(10_000);
+    expect(defaultResult.REDIS_COMMAND_TIMEOUT_MS).toBe(3_000);
+
+    const customResult = validateEnv({
+      ...validEnv,
+      REDIS_CONNECT_TIMEOUT_MS: '5000',
+      REDIS_COMMAND_TIMEOUT_MS: '2000',
+    });
+    expect(customResult.REDIS_CONNECT_TIMEOUT_MS).toBe(5_000);
+    expect(customResult.REDIS_COMMAND_TIMEOUT_MS).toBe(2_000);
+  });
+
+  it('validates idempotency TTL defaults and custom overrides', () => {
+    const defaultResult = validateEnv(validEnv);
+    expect(defaultResult.IDEMPOTENCY_LOCK_TTL_SECONDS).toBe(60);
+    expect(defaultResult.IDEMPOTENCY_CACHE_TTL_SECONDS).toBe(86_400);
+
+    const customResult = validateEnv({
+      ...validEnv,
+      IDEMPOTENCY_LOCK_TTL_SECONDS: '120',
+      IDEMPOTENCY_CACHE_TTL_SECONDS: '3600',
+    });
+    expect(customResult.IDEMPOTENCY_LOCK_TTL_SECONDS).toBe(120);
+    expect(customResult.IDEMPOTENCY_CACHE_TTL_SECONDS).toBe(3600);
   });
 });

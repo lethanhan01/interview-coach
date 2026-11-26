@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
+import { ErrorCode } from '@core/common/exceptions/error-code.enum';
+import { RequestContext } from '@core/common/context/request-context';
 
 export type WorkflowCommandType =
   | 'question-generation'
   | 'report-generation'
-  | 'transcription'
   | 'feedback';
 
 export interface EnqueueWorkflowCommand {
@@ -23,12 +25,30 @@ export class WorkflowService {
   ) {
     const aggregateId = command.aggregateId ?? command.sessionId;
     if (!aggregateId) {
-      throw new Error(
+      throw new InterviewAIException(
+        ErrorCode.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST,
         'aggregateId or sessionId must be provided for workflow command',
       );
     }
     const idempotencyKey =
       command.idempotencyKey ?? `${command.commandType}:${aggregateId}`;
+
+    const correlationId = RequestContext.getCorrelationId();
+    let payloadToStore = command.payload;
+    if (
+      typeof command.payload === 'object' &&
+      command.payload !== null &&
+      !Array.isArray(command.payload)
+    ) {
+      const payloadObj = command.payload as Record<string, unknown>;
+      payloadToStore = {
+        ...payloadObj,
+        ...(payloadObj.correlationId || correlationId !== 'no-correlation-id'
+          ? { correlationId: payloadObj.correlationId ?? correlationId }
+          : {}),
+      };
+    }
 
     return tx.workflowOutbox.upsert({
       where: {
@@ -37,7 +57,7 @@ export class WorkflowService {
       create: {
         commandType: command.commandType,
         aggregateId,
-        payload: command.payload,
+        payload: payloadToStore,
         idempotencyKey,
       },
       update: {

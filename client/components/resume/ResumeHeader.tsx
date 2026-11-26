@@ -1,33 +1,51 @@
 'use client'
 
 import {
-  Sparkles,
-  GraduationCap,
-  Wrench,
-  Briefcase,
-  FolderGit2,
-  Award,
-  UserCheck,
-  Target,
-} from 'lucide-react'
-import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
-import Button from '@/components/ui/Button'
-import { Progress } from '@/components/ui/Progress'
-import type { GetProfileResponse } from '@/lib/types'
+  Badge,
+  Card,
+  Divider,
+  Group,
+  NavLink,
+  RingProgress,
+  Stack,
+  Text,
+  Title,
+} from '@mantine/core'
+import {
+  IconAward,
+  IconBriefcase,
+  IconCircleCheck,
+  IconCircleDashed,
+  IconFolderCode,
+  IconSchool,
+  IconTarget,
+  IconTool,
+  IconUserCheck,
+} from '@tabler/icons-react'
+import interactions from '@/styles/interactions.module.css'
+import layout from '@/styles/layout.module.css'
+import type { GetProfileResponse } from '@/types'
+import { isSectionCompleted, type ResumeSectionId } from './resume-schemas'
 
-interface ResumeHeaderProps {
+export interface ResumeHeaderProps {
   data: GetProfileResponse | null
+  activeSection?: ResumeSectionId
+  onSelectSection?: (section: ResumeSectionId) => void
+  compact?: boolean
 }
 
-const SECTIONS = [
-  { id: 'career', label: 'Định hướng', icon: Target },
-  { id: 'personality', label: 'Giới thiệu', icon: UserCheck },
-  { id: 'education', label: 'Học vấn', icon: GraduationCap },
-  { id: 'skills', label: 'Kỹ năng', icon: Wrench },
-  { id: 'experience', label: 'Kinh nghiệm', icon: Briefcase },
-  { id: 'projects', label: 'Dự án', icon: FolderGit2 },
-  { id: 'certifications', label: 'Chứng chỉ & Giải thưởng', icon: Award },
+export const RESUME_SECTION_ITEMS: {
+  id: ResumeSectionId
+  label: string
+  icon: typeof IconTarget
+}[] = [
+  { id: 'career', label: 'Định hướng', icon: IconTarget },
+  { id: 'personality', label: 'Tính cách', icon: IconUserCheck },
+  { id: 'education', label: 'Học vấn', icon: IconSchool },
+  { id: 'skills', label: 'Kỹ năng', icon: IconTool },
+  { id: 'experience', label: 'Kinh nghiệm', icon: IconBriefcase },
+  { id: 'projects', label: 'Dự án', icon: IconFolderCode },
+  { id: 'certifications', label: 'Chứng chỉ & Giải thưởng', icon: IconAward },
 ]
 
 export function calculateCompleteness(data: GetProfileResponse | null): number {
@@ -46,9 +64,13 @@ export function calculateCompleteness(data: GetProfileResponse | null): number {
     profile.technicalSkills.length > 0
   )
     score += 20
-  if (Array.isArray(profile.workExperience) && profile.workExperience.length > 0)
+  if (
+    Array.isArray(profile.workExperience) &&
+    profile.workExperience.length > 0
+  )
     score += 25
-  if (Array.isArray(profile.projects) && profile.projects.length > 0) score += 15
+  if (Array.isArray(profile.projects) && profile.projects.length > 0)
+    score += 15
   if (
     (Array.isArray(profile.certifications) &&
       profile.certifications.length > 0) ||
@@ -59,94 +81,117 @@ export function calculateCompleteness(data: GetProfileResponse | null): number {
   return Math.min(100, score)
 }
 
-export default function ResumeHeader({ data }: ResumeHeaderProps) {
+function getCompletenessMeta(completeness: number) {
+  if (completeness >= 80) {
+    return {
+      color: 'success' as const,
+      label: `Hồ sơ hoàn hảo (${completeness}%)`,
+    }
+  }
+  if (completeness >= 50) {
+    return {
+      color: 'brand' as const,
+      label: `Đang hoàn thiện (${completeness}%)`,
+    }
+  }
+  return {
+    color: 'warning' as const,
+    label: `Cần bổ sung thêm (${completeness}%)`,
+  }
+}
+
+export default function ResumeHeader({
+  data,
+  activeSection = 'career',
+  onSelectSection,
+  compact = false,
+}: Readonly<ResumeHeaderProps>) {
   const completeness = calculateCompleteness(data)
+  const meta = getCompletenessMeta(completeness)
 
-  const getStatusBadge = () => {
-    if (completeness >= 80) {
-      return (
-        <Badge variant="success">
-          Hồ sơ hoàn hảo ({completeness}%)
-        </Badge>
-      )
+  function handleSelect(sectionId: ResumeSectionId) {
+    if (onSelectSection) {
+      onSelectSection(sectionId)
+      return
     }
-    if (completeness >= 50) {
-      return (
-        <Badge variant="brand">
-          Đang hoàn thiện ({completeness}%)
-        </Badge>
-      )
-    }
-    return (
-      <Badge variant="secondary">
-        Cần bổ sung thêm ({completeness}%)
-      </Badge>
-    )
-  }
-
-  const getProgressVariant = () => {
-    if (completeness >= 80) return 'success'
-    if (completeness >= 50) return 'brand'
-    return 'default'
-  }
-
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(id)
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+    const element = document.getElementById(sectionId)
+    element?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   return (
-    <Card className="flex flex-col gap-5 p-5">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="bg-brand-subtle text-brand flex size-10 shrink-0 items-center justify-center rounded-xl">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-ink text-base font-semibold">
+    <Card withBorder radius="md" p={compact ? 'md' : 'lg'}>
+      <Stack gap="md">
+        <Group gap="md" wrap="nowrap" align="center">
+          <RingProgress
+            size={compact ? 70 : 88}
+            thickness={compact ? 7 : 8}
+            roundCaps
+            sections={[{ value: completeness, color: meta.color }]}
+            label={
+              <Text ta="center" fw={700} fz={compact ? 'xs' : 'sm'}>
+                {completeness}%
+              </Text>
+            }
+          />
+          <Stack gap={4} flex={1} miw={0}>
+            <Title order={2} size="h5">
               Độ hoàn thiện hồ sơ CV
-            </h2>
-            <p className="text-ink-muted text-xs">
-              Hồ sơ càng chi tiết, hệ thống phỏng vấn AI càng đánh giá và phản hồi chính xác.
-            </p>
-          </div>
-        </div>
-        <div>{getStatusBadge()}</div>
-      </div>
+            </Title>
+            <Badge color={meta.color} variant="light" size="sm" w="fit-content">
+              {meta.label}
+            </Badge>
+            <Text size="xs" c="dimmed">
+              Hồ sơ càng chi tiết, AI càng cá nhân hóa câu hỏi và đánh giá chính
+              xác.
+            </Text>
+          </Stack>
+        </Group>
 
-      {/* Progress bar using UI Progress component */}
-      <div className="space-y-1.5">
-        <Progress
-          value={completeness}
-          variant={getProgressVariant()}
-          size="md"
-          aria-label="Độ hoàn thiện hồ sơ"
-        />
-      </div>
-
-      {/* Quick Jump Navigation */}
-      <div className="border-t border-border/60 pt-3">
-        <span className="text-ink-muted mb-2 block text-xs font-medium uppercase tracking-wider">
-          Chuyển nhanh đến mục:
-        </span>
-        <div className="flex flex-wrap gap-2">
-          {SECTIONS.map(({ id, label, icon: Icon }) => (
-            <Button
-              key={id}
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => scrollTo(id)}
-              className="h-8 gap-1.5 px-2.5 text-xs text-ink-muted hover:text-brand"
-            >
-              <Icon className="h-3.5 w-3.5" />
-              <span>{label}</span>
-            </Button>
-          ))}
-        </div>
-      </div>
+        {!compact ? (
+          <>
+            <Divider />
+            <Stack gap={4} component="nav" aria-label="Danh mục hồ sơ CV">
+              {RESUME_SECTION_ITEMS.map(({ id, label, icon: Icon }) => {
+                const completed = isSectionCompleted(id, data?.profile)
+                return (
+                  <NavLink
+                    key={id}
+                    component="button"
+                    type="button"
+                    label={label}
+                    active={activeSection === id}
+                    color="brand"
+                    className={interactions.navLink}
+                    onClick={() => handleSelect(id)}
+                    leftSection={
+                      <Icon size={16} stroke={1.5} aria-hidden="true" />
+                    }
+                    rightSection={
+                      completed ? (
+                        <IconCircleCheck
+                          size={16}
+                          stroke={1.5}
+                          color="var(--mantine-color-success-filled)"
+                          aria-label="Đã hoàn thiện"
+                          className={layout.shrink0}
+                        />
+                      ) : (
+                        <IconCircleDashed
+                          size={16}
+                          stroke={1.5}
+                          color="var(--mantine-color-dimmed)"
+                          aria-label="Chưa hoàn thiện"
+                          className={layout.shrink0}
+                        />
+                      )
+                    }
+                  />
+                )
+              })}
+            </Stack>
+          </>
+        ) : null}
+      </Stack>
     </Card>
   )
 }

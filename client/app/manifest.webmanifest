@@ -1,0 +1,22 @@
+{
+  "name": "Intervia",
+  "short_name": "Intervia",
+  "description": "Nền tảng luyện phỏng vấn AI chuẩn STAR & SFIA 9 dành cho sinh viên CNTT Việt Nam.",
+  "lang": "vi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#15aabf",
+  "icons": [
+    {
+      "src": "/brand/intervia-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/brand/intervia-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

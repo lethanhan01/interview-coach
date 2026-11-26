@@ -2,7 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { ISfiaRepository } from '../domain/sfia-repository.interface';
-import { SfiaSkillRawRow, SfiaLevelRawRow } from './types/sfia-raw-row.types';
+import {
+  SfiaSkillRawRow,
+  SfiaLevelRawRow,
+  SfiaSkillLevelRawRow,
+} from './types/sfia-raw-row.types';
 
 @Injectable()
 export class SfiaRepository implements ISfiaRepository {
@@ -55,6 +59,26 @@ export class SfiaRepository implements ISfiaRepository {
     } catch (error) {
       this.logger.error(
         `Failed to query SFIA levels: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
+  }
+
+  async loadAllRawSkillLevels(
+    tx?: Prisma.TransactionClient,
+  ): Promise<SfiaSkillLevelRawRow[]> {
+    try {
+      return await this.getClient(tx).$queryRaw<SfiaSkillLevelRawRow[]>`
+        SELECT
+          skill_code AS "skillCode",
+          level_id AS "levelId",
+          COALESCE(description, '') AS description
+        FROM sfia.skill_levels
+        ORDER BY skill_code ASC, level_id ASC;
+      `;
+    } catch (error) {
+      this.logger.error(
+        `Failed to query SFIA skill levels: ${error instanceof Error ? error.message : String(error)}`,
       );
       throw error;
     }

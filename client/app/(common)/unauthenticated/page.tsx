@@ -1,27 +1,28 @@
-'use client'
-
-import { useSearchParams } from 'next/navigation'
-import { LockKeyhole, Home } from 'lucide-react'
-import { ErrorPageTemplate } from '@/components/patterns/ErrorPageTemplate'
+import type { Metadata } from 'next'
+import { IconHome, IconLock } from '@tabler/icons-react'
+import { ErrorPageTemplate } from '@/components/common/status-pages/ErrorPageTemplate'
 import { getSafeNext } from '@/lib/auth-redirect'
 
-/**
- * /unauthenticated — 401 Unauthenticated Page
- *
- * Shown when middleware detects no auth cookie on a protected route.
- * Reads ?next= param and passes it through to the login page so the user
- * is redirected back to their original destination after signing in.
- */
-import { Suspense } from 'react'
+export const metadata: Metadata = {
+  title: 'Chưa đăng nhập (401)',
+  description: 'Vui lòng đăng nhập để tiếp tục truy cập tính năng này.',
+}
 
-function UnauthenticatedContent() {
-  const searchParams = useSearchParams()
-  const next = getSafeNext(searchParams.get('next'))
-  const loginHref = `/login?next=${encodeURIComponent(next)}`
+interface UnauthenticatedPageProps {
+  searchParams: Promise<{ next?: string | string[] }>
+}
+
+export default async function UnauthenticatedPage({
+  searchParams,
+}: Readonly<UnauthenticatedPageProps>) {
+  const resolved = await searchParams
+  const rawNext = typeof resolved.next === 'string' ? resolved.next : null
+  const safeNext = getSafeNext(rawNext)
+  const loginHref = `/login?next=${encodeURIComponent(safeNext)}`
 
   return (
     <ErrorPageTemplate
-      icon={<LockKeyhole className="size-16" />}
+      icon={<IconLock size={32} stroke={1.5} aria-hidden="true" />}
       iconVariant="brand"
       statusCode={401}
       title="Bạn chưa đăng nhập"
@@ -36,17 +37,9 @@ function UnauthenticatedContent() {
           label: 'Trang chủ',
           href: '/',
           variant: 'outline',
-          icon: <Home className="size-4" />,
+          icon: <IconHome size={16} stroke={1.5} aria-hidden="true" />,
         },
       ]}
     />
-  )
-}
-
-export default function UnauthenticatedPage() {
-  return (
-    <Suspense fallback={null}>
-      <UnauthenticatedContent />
-    </Suspense>
   )
 }

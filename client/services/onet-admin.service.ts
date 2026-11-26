@@ -1,65 +1,47 @@
 import { apiClient } from '@/lib/api-client'
 import type {
+  CreateOnetSfiaMappingPayload,
+  DeleteOnetSfiaMappingResponse,
+  OnetAlternateTitlesQuery,
   OnetAnalyticsSummary,
+  OnetOccupationDetail,
+  OnetOccupationSearchFilters,
+  OnetOccupationSummary,
+  OnetSfiaMapping,
+  OnetTopOccupationItem,
+  OnetTopOccupationsQuery,
+  PaginatedAlternateTitles,
+  RawOccupationDetail,
+  RawSfiaLibrarySkill,
+  RawSfiaMappingItem,
+  SfiaSkillCoverageItem,
+  SfiaSkillDefinition,
   SocGroupDistributionItem,
   SocMajorGroup,
-  OnetOccupationSummary,
-  OnetOccupationDetail,
-  PaginatedAlternateTitles,
-  SfiaSkillCoverageItem,
-  OnetTopOccupationItem,
-  OnetSfiaMapping,
-  SfiaSkillDefinition,
-} from '@/components/onet/types'
-
-// Backend Response DTO Shapes
-interface RawSfiaMappingItem {
-  id: string
-  onetSocCode: string
-  sfiaSkillCode: string
-  skillName: string
-  skillCategory?: string
-  targetSfiaLevel: number
-  defaultWeight: number | string
-  isCore: boolean
-  source: string
-  minLevel: number
-  maxLevel: number
-  responsibility?: string
-  createdAt?: string
-}
-
-interface RawSfiaLibrarySkill {
-  code: string
-  name: string
-  category: string
-  categoryCode?: string
-  minLevel: number
-  maxLevel: number
-  description: string
-  levels: Array<{ level: number; description: string }>
-}
-
-interface RawOccupationDetail extends Omit<OnetOccupationDetail, 'sfiaMappings'> {
-  sfiaMappings: RawSfiaMappingItem[]
-}
+  UpdateOnetSfiaMappingPayload,
+} from '@/types'
 
 /**
  * Mapper: Chuyển đổi DTO Backend thành interface OnetSfiaMapping ở frontend
  */
 function mapRawSfiaMapping(raw: RawSfiaMappingItem): OnetSfiaMapping {
-  return {
+  const mapped: OnetSfiaMapping & { responsibility?: string } = {
     id: raw.id,
     skillCode: raw.sfiaSkillCode,
     skillName: raw.skillName || raw.sfiaSkillCode,
-    category: raw.skillCategory || 'Software Engineering',
+    category: raw.skillCategory || 'Tổng quát',
     targetLevel: raw.targetSfiaLevel,
     minLevel: raw.minLevel ?? 1,
     maxLevel: raw.maxLevel ?? 7,
-    weight: typeof raw.defaultWeight === 'number' ? raw.defaultWeight : Number(raw.defaultWeight) || 1.0,
+    weight:
+      typeof raw.defaultWeight === 'number'
+        ? raw.defaultWeight
+        : Number(raw.defaultWeight) || 1.0,
     isCore: Boolean(raw.isCore),
     source: (raw.source || 'USER_DEFINED') as OnetSfiaMapping['source'],
+    ...(raw.responsibility ? { responsibility: raw.responsibility } : {}),
   }
+  return mapped
 }
 
 /**
@@ -88,22 +70,34 @@ export const onetAdminService = {
   /**
    * 1. Lấy thông tin thống kê KPI vĩ mô cho Analytics Dashboard
    */
-  async getAnalyticsSummary(): Promise<OnetAnalyticsSummary> {
-    return apiClient.get<OnetAnalyticsSummary>('/onet/admin/analytics/summary')
+  async getAnalyticsSummary(
+    signal?: AbortSignal
+  ): Promise<OnetAnalyticsSummary> {
+    return apiClient.get<OnetAnalyticsSummary>(
+      '/onet/admin/analytics/summary',
+      {
+        signal,
+      }
+    )
   },
 
   /**
    * 2. Lấy phân bổ 23 nhóm nghề Major Groups SOC
    */
-  async getMajorGroupsDistribution(): Promise<SocGroupDistributionItem[]> {
-    return apiClient.get<SocGroupDistributionItem[]>('/onet/admin/analytics/major-groups')
+  async getMajorGroupsDistribution(
+    signal?: AbortSignal
+  ): Promise<SocGroupDistributionItem[]> {
+    return apiClient.get<SocGroupDistributionItem[]>(
+      '/onet/admin/analytics/major-groups',
+      { signal }
+    )
   },
 
   /**
    * 3. Lấy danh sách 23 Major Groups ngắn gọn cho Master Sidebar
    */
-  async getMajorGroups(): Promise<SocMajorGroup[]> {
-    const list = await this.getMajorGroupsDistribution()
+  async getMajorGroups(signal?: AbortSignal): Promise<SocMajorGroup[]> {
+    const list = await this.getMajorGroupsDistribution(signal)
     return list.map((item) => ({
       code: item.code,
       name: item.name,
@@ -116,57 +110,80 @@ export const onetAdminService = {
   /**
    * 4. Tìm kiếm / Danh sách nghề cho Master Sidebar
    */
-  async searchOccupations(query: {
-    groupCode?: string
-    mappedOnly?: boolean
-    search?: string
-    limit?: number
-  } = {}): Promise<OnetOccupationSummary[]> {
+  async searchOccupations(
+    query: OnetOccupationSearchFilters = {},
+    signal?: AbortSignal
+  ): Promise<OnetOccupationSummary[]> {
     const params = new URLSearchParams()
     if (query.groupCode) params.append('groupCode', query.groupCode)
-    if (query.mappedOnly) params.append('mappedOnly', 'true')
+    if (query.mappingStatus) {
+      params.append('mappingStatus', query.mappingStatus)
+    } else if (query.mappedOnly) {
+      params.append('mappedOnly', 'true')
+    }
     if (query.search?.trim()) params.append('search', query.search.trim())
     if (query.limit) params.append('limit', String(query.limit))
 
     const qs = params.toString()
-    return apiClient.get<OnetOccupationSummary[]>(`/onet/admin/occupations${qs ? `?${qs}` : ''}`)
+    return apiClient.get<OnetOccupationSummary[]>(
+      `/onet/admin/occupations${qs ? `?${qs}` : ''}`,
+      { signal }
+    )
   },
 
   /**
    * 5. Lấy danh sách Top nghề quan tâm nhất
    */
-  async getTopOccupations(query: {
-    limit?: number
-    sortBy?: 'interviews' | 'jds' | 'mappings'
-    search?: string
-  } = {}): Promise<OnetTopOccupationItem[]> {
+  async getTopOccupations(
+    query: OnetTopOccupationsQuery = {},
+    signal?: AbortSignal
+  ): Promise<OnetTopOccupationItem[]> {
     const params = new URLSearchParams()
     if (query.limit) params.append('limit', String(query.limit))
     if (query.sortBy) params.append('sortBy', query.sortBy)
     if (query.search?.trim()) params.append('search', query.search.trim())
+    if (query.groupCode?.trim()) {
+      params.append('groupCode', query.groupCode.trim())
+    }
 
     const qs = params.toString()
-    return apiClient.get<OnetTopOccupationItem[]>(`/onet/admin/analytics/top-occupations${qs ? `?${qs}` : ''}`)
+    return apiClient.get<OnetTopOccupationItem[]>(
+      `/onet/admin/analytics/top-occupations${qs ? `?${qs}` : ''}`,
+      { signal }
+    )
   },
 
   /**
    * 6. Lấy phân bổ độ phủ kỹ năng SFIA
    */
-  async getSfiaSkillCoverage(limit = 20, category?: string): Promise<SfiaSkillCoverageItem[]> {
+  async getSfiaSkillCoverage(
+    limit = 20,
+    category?: string,
+    signal?: AbortSignal
+  ): Promise<SfiaSkillCoverageItem[]> {
     const params = new URLSearchParams()
     if (limit) params.append('limit', String(limit))
     if (category?.trim()) params.append('category', category.trim())
 
     const qs = params.toString()
-    return apiClient.get<SfiaSkillCoverageItem[]>(`/onet/admin/analytics/sfia-coverage${qs ? `?${qs}` : ''}`)
+    return apiClient.get<SfiaSkillCoverageItem[]>(
+      `/onet/admin/analytics/sfia-coverage${qs ? `?${qs}` : ''}`,
+      { signal }
+    )
   },
 
   /**
    * 7. Lấy chi tiết một nghề nghiệp theo mã SOC
    */
-  async getOccupationDetail(socCode: string): Promise<OnetOccupationDetail> {
+  async getOccupationDetail(
+    socCode: string,
+    signal?: AbortSignal
+  ): Promise<OnetOccupationDetail> {
     const cleanSoc = encodeURIComponent(socCode.trim())
-    const res = await apiClient.get<RawOccupationDetail>(`/onet/admin/occupations/${cleanSoc}`)
+    const res = await apiClient.get<RawOccupationDetail>(
+      `/onet/admin/occupations/${cleanSoc}`,
+      { signal }
+    )
     return {
       ...res,
       sfiaMappings: (res.sfiaMappings || []).map(mapRawSfiaMapping),
@@ -178,11 +195,8 @@ export const onetAdminService = {
    */
   async getAlternateTitles(
     socCode: string,
-    query: {
-      page?: number
-      limit?: number
-      search?: string
-    } = {}
+    query: OnetAlternateTitlesQuery = {},
+    signal?: AbortSignal
   ): Promise<PaginatedAlternateTitles> {
     const cleanSoc = encodeURIComponent(socCode.trim())
     const params = new URLSearchParams()
@@ -192,17 +206,22 @@ export const onetAdminService = {
 
     const qs = params.toString()
     return apiClient.get<PaginatedAlternateTitles>(
-      `/onet/admin/occupations/${cleanSoc}/alternate-titles${qs ? `?${qs}` : ''}`
+      `/onet/admin/occupations/${cleanSoc}/alternate-titles${qs ? `?${qs}` : ''}`,
+      { signal }
     )
   },
 
   /**
    * 9. Lấy danh sách ánh xạ kỹ năng SFIA của một nghề
    */
-  async getOccupationSfiaMappings(socCode: string): Promise<OnetSfiaMapping[]> {
+  async getOccupationSfiaMappings(
+    socCode: string,
+    signal?: AbortSignal
+  ): Promise<OnetSfiaMapping[]> {
     const cleanSoc = encodeURIComponent(socCode.trim())
     const rawList = await apiClient.get<RawSfiaMappingItem[]>(
-      `/onet/admin/occupations/${cleanSoc}/sfia-mappings`
+      `/onet/admin/occupations/${cleanSoc}/sfia-mappings`,
+      { signal }
     )
     return rawList.map(mapRawSfiaMapping)
   },
@@ -212,13 +231,7 @@ export const onetAdminService = {
    */
   async createSfiaMapping(
     socCode: string,
-    data: {
-      skillCode: string
-      targetLevel: number
-      weight?: number
-      isCore?: boolean
-      source?: string
-    }
+    data: CreateOnetSfiaMappingPayload
   ): Promise<OnetSfiaMapping> {
     const cleanSoc = encodeURIComponent(socCode.trim())
     const payload = {
@@ -241,12 +254,7 @@ export const onetAdminService = {
   async updateSfiaMapping(
     socCode: string,
     mappingId: string,
-    data: {
-      targetLevel?: number
-      weight?: number
-      isCore?: boolean
-      source?: string
-    }
+    data: UpdateOnetSfiaMappingPayload
   ): Promise<OnetSfiaMapping> {
     const cleanSoc = encodeURIComponent(socCode.trim())
     const cleanMappingId = encodeURIComponent(mappingId.trim())
@@ -269,10 +277,10 @@ export const onetAdminService = {
   async deleteSfiaMapping(
     socCode: string,
     mappingId: string
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<DeleteOnetSfiaMappingResponse> {
     const cleanSoc = encodeURIComponent(socCode.trim())
     const cleanMappingId = encodeURIComponent(mappingId.trim())
-    return apiClient.delete<{ success: boolean; message: string }>(
+    return apiClient.delete<DeleteOnetSfiaMappingResponse>(
       `/onet/admin/occupations/${cleanSoc}/sfia-mappings/${cleanMappingId}`
     )
   },
@@ -291,8 +299,11 @@ export const onetAdminService = {
   /**
    * 14. Lấy toàn bộ thư viện kỹ năng SFIA 9 cho Combobox gợi ý
    */
-  async getSfiaLibrary(): Promise<SfiaSkillDefinition[]> {
-    const rawList = await apiClient.get<RawSfiaLibrarySkill[]>('/onet/admin/sfia-library')
+  async getSfiaLibrary(signal?: AbortSignal): Promise<SfiaSkillDefinition[]> {
+    const rawList = await apiClient.get<RawSfiaLibrarySkill[]>(
+      '/onet/admin/sfia-library',
+      { signal }
+    )
     return rawList.map(mapRawSfiaLibrarySkill)
   },
 }

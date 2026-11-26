@@ -1,4 +1,4 @@
-import { APIError, APIUserAbortError } from 'openai';
+import { APIError, APIUserAbortError, APIConnectionTimeoutError } from 'openai';
 import { z } from 'zod';
 import { OpenAIGateway } from './openai.gateway';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
@@ -58,6 +58,34 @@ describe('OpenAIGateway', () => {
       .mockRejectedValue(
         new APIUserAbortError({ message: 'Request was aborted.' }),
       );
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(params)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_TIMEOUT,
+    });
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('ném AI_TIMEOUT khi gặp lỗi kết nối timeout mạng (APIConnectionTimeoutError)', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest
+      .fn()
+      .mockRejectedValue(
+        new APIConnectionTimeoutError({ message: 'Request timed out.' }),
+      );
+    (gateway as any).chatClient.chat.completions.create = create;
+
+    await expect(gateway.chatCompletion(params)).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_TIMEOUT,
+    });
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('ném AI_TIMEOUT khi gặp lỗi timeout chung (message contains timeout)', async () => {
+    const gateway = new OpenAIGateway(config as any);
+    const create = jest
+      .fn()
+      .mockRejectedValue(new Error('Connection timed out after 30000ms'));
     (gateway as any).chatClient.chat.completions.create = create;
 
     await expect(gateway.chatCompletion(params)).rejects.toMatchObject({
@@ -429,17 +457,10 @@ describe('OpenAIGateway — empty response và task-specific timeout', () => {
   });
 });
 
-describe('OpenAIGateway — transcription boundary', () => {
-  it('giữ nguyên audio request và response mapping qua transcription client', async () => {
+describe('OpenAIGateway — transcription retired', () => {
+  it('ném NOT_IMPLEMENTED khi gọi transcribe', async () => {
     const config = { get: jest.fn() };
-    const transcriptionClient = {
-      create: jest.fn().mockResolvedValue({ text: 'xin chào', duration: 12.5 }),
-    };
-    const gateway = new OpenAIGateway(
-      config as any,
-      undefined,
-      transcriptionClient as any,
-    );
+    const gateway = new OpenAIGateway(config as any);
     const audioBuffer = Buffer.from('audio');
 
     await expect(
@@ -447,16 +468,25 @@ describe('OpenAIGateway — transcription boundary', () => {
         audioBuffer,
         mimeType: 'audio/webm',
         language: 'vi',
-        timeoutMs: 12_000,
       }),
-    ).resolves.toEqual({ text: 'xin chào', durationSeconds: 12.5 });
+    ).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_SERVICE_UNAVAILABLE,
+      status: 501,
+    });
+  });
 
-    expect(transcriptionClient.create).toHaveBeenCalledWith(
-      audioBuffer,
-      'audio/webm',
-      'vi',
-      12_000,
-    );
+  it('ném NOT_IMPLEMENTED khi gọi transcribeWithMetrics', async () => {
+    const config = { get: jest.fn() };
+    const gateway = new OpenAIGateway(config as any);
+
+    await expect(
+      gateway.transcribeWithMetrics({
+        audioBuffer: Buffer.from('audio'),
+      }),
+    ).rejects.toMatchObject({
+      errorCode: ErrorCode.AI_SERVICE_UNAVAILABLE,
+      status: 501,
+    });
   });
 });
 
@@ -543,34 +573,6 @@ describe('OpenAIGateway — Hexagonal port methods', () => {
       }),
     ).rejects.toThrow(
       'AI response failed schema validation for InvalidPayload',
-    );
-  });
-
-  it('transcribeAudio delegates with default mimeType', async () => {
-    const config = { get: jest.fn() };
-    const transcriptionClient = {
-      create: jest
-        .fn()
-        .mockResolvedValue({ text: 'audio transcribed', duration: 5 }),
-    };
-    const gateway = new OpenAIGateway(
-      config as any,
-      undefined,
-      transcriptionClient as any,
-    );
-    const audioBuffer = Buffer.from('audio-data');
-
-    const result = await gateway.transcribeAudio({
-      audioBuffer,
-      language: 'en',
-    });
-
-    expect(result).toEqual({ text: 'audio transcribed', durationSeconds: 5 });
-    expect(transcriptionClient.create).toHaveBeenCalledWith(
-      audioBuffer,
-      'audio/webm',
-      'en',
-      undefined,
     );
   });
 });

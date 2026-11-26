@@ -56,8 +56,8 @@ CLAUDE.local.md
 .agents/
 skills-lock.json
 
-data/*
-!data/scripts/
+ai-service/data/*
+!ai-service/data/scripts/
 
 docs/plans/*
 scripts/*
@@ -67,3 +67,6 @@ skills-lock.json
 .codex
 *storybook.log
 storybook-static
+client/.agents/*
+client/.aider-desk/*
+client/scripts/*

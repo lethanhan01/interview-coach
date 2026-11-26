@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import TextAnswerInput from '../../components/interview/TextAnswerInput'
+import TextAnswerInput from '@/components/interview/workspace/TextAnswerInput'
 
 const meta: Meta<typeof TextAnswerInput> = {
   title: 'Feature/Interview/TextAnswerInput',

@@ -46,6 +46,11 @@ model QuestionBank {
   sfiaSkillCode           String?                  @map("sfia_skill_code") @db.VarChar(10)
   targetSfiaLevel         Int?                     @map("target_sfia_level") @db.SmallInt
 
+  // === PHASE 2: SEMANTIC RETRIEVAL (pgvector, BAAI/bge-m3 → 1024D) ===
+  // Unsupported type: không có trong Prisma Client. Chỉ đọc/ghi qua $queryRaw/$executeRaw.
+  // Không đánh index (exact cosine trên idx_question_bank_sfia_skill_level đủ cho quy mô hiện tại).
+  embedding               Unsupported("vector(1024)")?
+
   questionCriteria        QuestionCriteria[]
   sessionQuestions        SessionQuestion[]
 
@@ -326,12 +331,9 @@ model UserAnswer {
   questionId           String          @unique @map("question_id") @db.Uuid
   answerMode           String          @map("answer_mode")
   answerText           String          @map("answer_text")
-  audioFileUrl         String?         @map("audio_file_url")
   audioDurationSeconds Int?            @map("audio_duration_seconds")
-  audioSizeBytes       Int?            @map("audio_size_bytes")
   skipped              Boolean         @default(false)
   voiceMetricsJson     Json?           @map("voice_metrics_json")
-  transcriptionStatus  String?         @map("transcription_status")
   feedbackGenerated    Boolean         @default(false) @map("feedback_generated")
   createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)

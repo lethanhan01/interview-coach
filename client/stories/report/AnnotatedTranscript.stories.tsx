@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import AnnotatedTranscript from '../../components/report/AnnotatedTranscript'
+import AnnotatedTranscript from '@/components/report/transcript/AnnotatedTranscript'
 import {
   mockUnifiedReport,
   mockLegacyReport,
   mockSkippedTurnsReport,
-} from '../../tests/fixtures/report.fixture'
+} from '@/test-utils/fixtures/report.fixture'
 
 const meta: Meta<typeof AnnotatedTranscript> = {
   title: 'Feature/Report/AnnotatedTranscript',

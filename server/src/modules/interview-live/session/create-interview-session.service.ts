@@ -1,4 +1,4 @@
-import { Inject, Injectable, HttpStatus } from '@nestjs/common';
+import { Inject, Injectable, HttpStatus, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { InterviewSession, SavedJobDescription } from '@prisma/client';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
@@ -14,6 +14,7 @@ import { inferTargetSfiaLevel } from '@modules/interview-prep/contracts';
 
 @Injectable()
 export class CreateInterviewSession {
+  private readonly logger = new Logger(CreateInterviewSession.name);
   private readonly sessionCreationLimitPer24h: number;
 
   constructor(
@@ -150,7 +151,10 @@ export class CreateInterviewSession {
           savedJobDescription.jobTitle,
         );
         onetSocCode = occupation ? occupation.socCode : '15-1252.00';
-      } catch {
+      } catch (error: unknown) {
+        this.logger.warn(
+          `Failed to infer ONET occupation for "${savedJobDescription.jobTitle}": ${error instanceof Error ? error.message : String(error)}. Defaulting to 15-1252.00.`,
+        );
         onetSocCode = '15-1252.00';
       }
     }
@@ -164,32 +168,10 @@ export class CreateInterviewSession {
     }
 
     if (!normalizedTechStack || normalizedTechStack.length === 0) {
-      const rawTech = savedJobDescription.techStack ?? [];
-      try {
-        const onetTools =
-          await this.onetFacade.getToolsAndTechnology(onetSocCode);
-        if (onetTools.length > 0) {
-          const toolMap = new Map(
-            onetTools.map((t) => [t.example.toLowerCase(), t.example]),
-          );
-          const matchedTech = new Set<string>();
-          for (const item of rawTech) {
-            const canonical = toolMap.get(item.toLowerCase());
-            matchedTech.add(canonical || item);
-          }
-          if (matchedTech.size === 0) {
-            onetTools
-              .filter((t) => t.isHotTechnology)
-              .slice(0, 5)
-              .forEach((t) => matchedTech.add(t.example));
-          }
-          normalizedTechStack = Array.from(matchedTech);
-        } else {
-          normalizedTechStack = rawTech;
-        }
-      } catch {
-        normalizedTechStack = rawTech;
-      }
+      normalizedTechStack = await this.normalizeTechStackWithOnet(
+        onetSocCode,
+        savedJobDescription.techStack ?? [],
+      );
     }
 
     await this.prisma.savedJobDescription.update({
@@ -208,5 +190,39 @@ export class CreateInterviewSession {
       targetSfiaLevel,
       normalizedTechStack,
     };
+  }
+
+  private async normalizeTechStackWithOnet(
+    onetSocCode: string,
+    rawTech: string[],
+  ): Promise<string[]> {
+    try {
+      const onetTools =
+        await this.onetFacade.getToolsAndTechnology(onetSocCode);
+      if (onetTools.length === 0) {
+        return rawTech;
+      }
+
+      const toolMap = new Map(
+        onetTools.map((t) => [t.example.toLowerCase(), t.example]),
+      );
+      const matchedTech = new Set<string>();
+      for (const item of rawTech) {
+        const canonical = toolMap.get(item.toLowerCase());
+        matchedTech.add(canonical || item);
+      }
+      if (matchedTech.size === 0) {
+        onetTools
+          .filter((t) => t.isHotTechnology)
+          .slice(0, 5)
+          .forEach((t) => matchedTech.add(t.example));
+      }
+      return Array.from(matchedTech);
+    } catch (error: unknown) {
+      this.logger.warn(
+        `Failed to fetch ONET tools and technology: ${error instanceof Error ? error.message : String(error)}. Falling back to raw tech stack.`,
+      );
+      return rawTech;
+    }
   }
 }

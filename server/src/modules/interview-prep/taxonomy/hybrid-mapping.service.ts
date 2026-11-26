@@ -236,8 +236,10 @@ Please select 2-4 appropriate SFIA skill codes for this role.`;
           ),
         }));
       }
-    } catch {
-      // Bỏ qua lỗi DB truy vấn phụ
+    } catch (error: unknown) {
+      this.logger.warn(
+        `Failed to query SOC fallback mappings: ${error instanceof Error ? error.message : String(error)}. Falling back to default IT taxonomy.`,
+      );
     }
 
     // Default IT resilience fallback
@@ -296,7 +298,7 @@ Please select 2-4 appropriate SFIA skill codes for this role.`;
   }
 
   private clampLevel(level?: number | null): number {
-    if (typeof level !== 'number' || isNaN(level)) return 3;
+    if (typeof level !== 'number' || Number.isNaN(level)) return 3;
     return Math.max(1, Math.min(7, Math.round(level)));
   }
 }

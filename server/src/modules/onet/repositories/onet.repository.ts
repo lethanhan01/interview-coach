@@ -278,6 +278,74 @@ export class OnetRepository implements IOnetRepository {
     }
   }
 
+  async searchTechnologies(
+    query?: string,
+    limit = 30,
+    tx?: Prisma.TransactionClient,
+  ): Promise<OnetTechDto[]> {
+    const cleanLimit = Math.max(
+      1,
+      Math.min(100, Math.floor(Number(limit) || 30)),
+    );
+    const searchTerm = typeof query === 'string' ? query.trim() : '';
+
+    try {
+      if (!searchTerm) {
+        const records = await this.getClient(tx).$queryRaw<OnetTechRawRow[]>`
+          SELECT
+            workplace_example AS example,
+            BOOL_OR(hot_technology = 'Y') AS "isHotTechnology",
+            BOOL_OR(in_demand = 'Y') AS "inDemand"
+          FROM onet.software_skills
+          GROUP BY workplace_example
+          ORDER BY BOOL_OR(hot_technology = 'Y') DESC, COUNT(*) DESC, workplace_example ASC
+          LIMIT ${cleanLimit};
+        `;
+
+        return records.map((item) => ({
+          example: item.example,
+          isHotTechnology: Boolean(item.isHotTechnology),
+          inDemand: Boolean(item.inDemand),
+        }));
+      }
+
+      const escapedSearchTerm = searchTerm.replace(/[\\%_]/g, '\\$&');
+      const likePattern = `%${escapedSearchTerm}%`;
+
+      const records = await this.getClient(tx).$queryRaw<OnetTechRawRow[]>`
+        SELECT
+          workplace_example AS example,
+          BOOL_OR(hot_technology = 'Y') AS "isHotTechnology",
+          BOOL_OR(in_demand = 'Y') AS "inDemand",
+          GREATEST(
+            similarity(workplace_example, ${searchTerm}),
+            word_similarity(${searchTerm}, workplace_example),
+            CASE WHEN workplace_example ILIKE ${likePattern} THEN 0.35 ELSE 0 END
+          )::float AS score
+        FROM onet.software_skills
+        WHERE workplace_example % ${searchTerm}
+           OR ${searchTerm} <% workplace_example
+           OR word_similarity(${searchTerm}, workplace_example) >= 0.25
+           OR similarity(workplace_example, ${searchTerm}) >= 0.2
+           OR workplace_example ILIKE ${likePattern}
+        GROUP BY workplace_example
+        ORDER BY score DESC, BOOL_OR(hot_technology = 'Y') DESC, COUNT(*) DESC, workplace_example ASC
+        LIMIT ${cleanLimit};
+      `;
+
+      return records.map((item) => ({
+        example: item.example,
+        isHotTechnology: Boolean(item.isHotTechnology),
+        inDemand: Boolean(item.inDemand),
+      }));
+    } catch (error) {
+      this.logger.error(
+        `Error searching O*NET technologies for query "${searchTerm}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
+  }
+
   private mapOccupationRow(row: OnetOccupationRawRow): OnetOccupationDto {
     return {
       socCode: row.socCode,

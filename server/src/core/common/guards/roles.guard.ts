@@ -5,7 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../enums/user-role.enum';
 import { ErrorCode } from '../exceptions/error-code.enum';
 import { InterviewAIException } from '../exceptions/interview-ai.exception';
 import { ROLES_KEY } from '../decorators/roles.decorator';

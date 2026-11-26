@@ -9,7 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
 } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@core/common/enums';
 import { ErrorCode } from '@core/common/exceptions/error-code.enum';
 import { InterviewAIException } from '@core/common/exceptions/interview-ai.exception';
 import { Roles, CurrentUser } from '@core/common/decorators';

@@ -1,38 +1,44 @@
-// ─── Auth cookies ─────────────────────────────────────────────────────────────
-/** Primary HttpOnly access token cookie. Configurable via env. */
-export const ACCESS_COOKIE  = process.env.AUTH_COOKIE_NAME    ?? 'interviewcoach_access'
-/** Refresh token cookie. Configurable via env. */
-export const REFRESH_COOKIE = process.env.REFRESH_COOKIE_NAME ?? 'interviewcoach_refresh'
+/** Primary HttpOnly access token cookie (khớp server/src/modules/auth/auth.service.ts). */
+export function getAccessCookieName(): string {
+  return (
+    process.env.AUTH_ACCESS_COOKIE_NAME ??
+    process.env.AUTH_COOKIE_NAME ??
+    'intervia_access'
+  )
+}
+
+/** Refresh token cookie (khớp server/src/modules/auth/auth.service.ts). */
+export function getRefreshCookieName(): string {
+  return (
+    process.env.AUTH_REFRESH_COOKIE_NAME ??
+    process.env.REFRESH_COOKIE_NAME ??
+    'intervia_refresh'
+  )
+}
+
 /** Legacy fallback cookie name from older auth implementation. */
-export const LEGACY_COOKIE  = 'interviewcoach_auth'
+export const LEGACY_COOKIE = 'intervia_auth'
 
-// ─── Maintenance mode ─────────────────────────────────────────────────────────
-/**
- * Set NEXT_PUBLIC_MAINTENANCE_MODE=true to activate maintenance mode.
- * All routes except those in MAINTENANCE_BYPASS_PREFIXES will be redirected to /maintenance.
- */
-export const MAINTENANCE_MODE =
-  process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true'
+/** Đọc runtime để hỗ trợ kiểm thử và cấu hình động. */
+export function isMaintenanceModeEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true'
+}
 
 /**
- * Routes that are NOT redirected during maintenance mode.
- * - /maintenance → the maintenance page itself
- * - /admin       → admins can bypass to check system status
- * - /_next       → Next.js internals
- * - /favicon     → favicon asset
+ * Các đường dẫn được đi qua khi bật Maintenance Mode (so khớp ranh giới path):
+ * - /maintenance     → trang thông báo bảo trì
+ * - /admin           → cổng quản trị kiểm tra trạng thái hệ thống
+ * - /login           → cho phép quản trị viên đăng nhập khi đang bảo trì
+ * - /unauthenticated → luồng chuyển tiếp từ authGuard khi chưa có phiên
+ * - /_next           → tài nguyên nội bộ Next.js
  */
-export const MAINTENANCE_BYPASS_PREFIXES = [
+export const MAINTENANCE_BYPASS_PATHS = [
   '/maintenance',
   '/admin',
+  '/login',
+  '/unauthenticated',
   '/_next',
-  '/favicon',
 ] as const
 
-// ─── Next.js middleware matcher ───────────────────────────────────────────────
-/**
- * Excludes static assets and images from middleware processing.
- * Re-exported here so middleware.ts (root) stays as a thin wrapper.
- */
-export const middlewareMatcher = [
-  '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-]
+/** Các route chỉ dành cho khách chưa đăng nhập (giữ mở /reset-password). */
+export const GUEST_ONLY_AUTH_PATHS = ['/login', '/register'] as const

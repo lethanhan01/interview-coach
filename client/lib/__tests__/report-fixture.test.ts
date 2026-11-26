@@ -3,8 +3,9 @@ import {
   mockLegacyReport,
   mockSkippedTurnsReport,
   mockUnifiedReport,
-} from '@/tests/fixtures/report.fixture'
-import { mapJdLevelToSfia } from '@/lib/setup-types'
+} from '@/test-utils/fixtures/report.fixture'
+import { CATALOG_INTERVIEW_OPTIONS_FIXTURE } from '@/test-utils/fixtures/catalog.fixture'
+import { mapJdLevelToSfia } from '@/lib/interview-option-helpers'
 
 describe('Report Fixtures & Setup Helpers (Phase 1)', () => {
   describe('mockUnifiedReport', () => {
@@ -43,7 +44,11 @@ describe('Report Fixtures & Setup Helpers (Phase 1)', () => {
 
     it('contains structured action plan with priority and topics', () => {
       const actionPlan = mockUnifiedReport.actionPlan as {
-        actionPlan: Array<{ priority: string; skillCode: string; topics: string[] }>
+        actionPlan: Array<{
+          priority: string
+          skillCode: string
+          topics: string[]
+        }>
       }
       expect(actionPlan.actionPlan).toHaveLength(2)
       expect(actionPlan.actionPlan[0].priority).toBe('high')
@@ -70,17 +75,20 @@ describe('Report Fixtures & Setup Helpers (Phase 1)', () => {
   })
 
   describe('mapJdLevelToSfia helper', () => {
+    const { jdLevels } = CATALOG_INTERVIEW_OPTIONS_FIXTURE
+
     it('correctly maps various levels to SFIA levels', () => {
-      expect(mapJdLevelToSfia('Intern')).toBe(1)
-      expect(mapJdLevelToSfia('fresher')).toBe(1)
-      expect(mapJdLevelToSfia('Junior')).toBe(2)
-      expect(mapJdLevelToSfia('Middle')).toBe(3)
-      expect(mapJdLevelToSfia('mid')).toBe(3)
-      expect(mapJdLevelToSfia('Senior')).toBe(4)
-      expect(mapJdLevelToSfia('Tech Lead')).toBe(5)
-      expect(mapJdLevelToSfia('Principal')).toBe(5)
-      expect(mapJdLevelToSfia('Architect')).toBe(5)
-      expect(mapJdLevelToSfia('unknown')).toBe(3)
+      expect(mapJdLevelToSfia('Intern', jdLevels)).toBe(1)
+      expect(mapJdLevelToSfia('fresher', jdLevels)).toBe(2)
+      expect(mapJdLevelToSfia('Junior', jdLevels)).toBe(2)
+      expect(mapJdLevelToSfia('Middle', jdLevels)).toBe(3)
+      expect(mapJdLevelToSfia('mid', jdLevels)).toBe(3)
+      expect(mapJdLevelToSfia('Senior', jdLevels)).toBe(4)
+      expect(mapJdLevelToSfia('Tech Lead', jdLevels)).toBe(5)
+      expect(mapJdLevelToSfia('Principal', jdLevels)).toBe(5)
+      expect(mapJdLevelToSfia('Architect', jdLevels)).toBe(5)
+      expect(mapJdLevelToSfia('manager', jdLevels)).toBe(5)
+      expect(mapJdLevelToSfia('unknown', jdLevels)).toBeUndefined()
     })
   })
 })

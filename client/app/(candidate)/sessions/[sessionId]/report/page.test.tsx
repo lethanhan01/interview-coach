@@ -1,20 +1,30 @@
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
-import { vi, describe, it, expect, beforeEach } from 'vitest'
+import { render, screen, waitFor } from '@test-utils'
+import { axe } from 'jest-axe'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ReportPage from './page'
-import { sessionService } from '@/services'
+import { ApiClientError } from '@/lib/api-client'
+import { sessionService } from '@/services/session.service'
 import {
-  mockUnifiedReport,
   mockLegacyReport,
   mockSkippedTurnsReport,
-} from '@/tests/fixtures/report.fixture'
-import type { Session } from '@/lib/types'
+  mockUnifiedReport,
+} from '@/test-utils/fixtures/report.fixture'
+import type { Session } from '@/types'
 
 vi.mock('next/navigation', () => ({
   useParams: () => ({ sessionId: 'test-session-123' }),
 }))
 
-vi.mock('@/services', () => ({
+vi.mock('next/dynamic', () => ({
+  default: () => {
+    return function MockDynamicComponent() {
+      return null
+    }
+  },
+}))
+
+vi.mock('@/services/session.service', () => ({
   sessionService: {
     getSession: vi.fn(),
     getReport: vi.fn(),
@@ -70,19 +80,27 @@ describe('ReportPage', () => {
     // Hero banner assertions
     expect(screen.getByText('85.0')).toBeInTheDocument()
     expect(screen.getByText('/ 100')).toBeInTheDocument()
-    expect(screen.getAllByText(/SFIA Level 4/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/SFIA Level 4/i).length).toBeGreaterThanOrEqual(
+      1
+    )
     expect(screen.getByText('Đạt Yêu Cầu Tuyển Dụng')).toBeInTheDocument()
 
     // Skills breakdown and overview assertions
-    expect(screen.getAllByText(/Phát triển Phần mềm/i).length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/Thiết kế Cơ sở Dữ liệu/i).length).toBeGreaterThanOrEqual(1)
+    expect(
+      screen.getAllByText(/Phát triển Phần mềm/i).length
+    ).toBeGreaterThanOrEqual(1)
+    expect(
+      screen.getAllByText(/Thiết kế Cơ sở Dữ liệu/i).length
+    ).toBeGreaterThanOrEqual(1)
 
     // Action plan assertions
     expect(
       screen.getByText(/Kế Hoạch Hành Động & Lộ Trình Ôn Tập/i)
     ).toBeInTheDocument()
     expect(
-      screen.getAllByText(/Nâng cao kỹ thuật thiết kế CSDL phân tán và phân vùng/i).length
+      screen.getAllByText(
+        /Nâng cao kỹ thuật thiết kế CSDL phân tán và phân vùng/i
+      ).length
     ).toBeGreaterThanOrEqual(2)
 
     // Transcript assertions
@@ -102,12 +120,16 @@ describe('ReportPage', () => {
     expect(screen.getByText('74.0')).toBeInTheDocument()
     expect(screen.getByText('Báo cáo phiên bản trước')).toBeInTheDocument()
     expect(
-      screen.getByText(/Phiên phỏng vấn này được khởi tạo trước khi hệ thống nâng cấp khung năng lực SFIA 9 & O\*NET/i)
+      screen.getByText(
+        /Phiên phỏng vấn này được khởi tạo trước khi hệ thống nâng cấp khung năng lực SFIA 9 & O\*NET/i
+      )
     ).toBeInTheDocument()
   })
 
   it('renders skipped report with partial banner and skipped warning', async () => {
-    vi.mocked(sessionService.getReport).mockResolvedValue(mockSkippedTurnsReport)
+    vi.mocked(sessionService.getReport).mockResolvedValue(
+      mockSkippedTurnsReport
+    )
 
     render(<ReportPage />)
 
@@ -126,5 +148,43 @@ describe('ReportPage', () => {
 
     // Skipped question warning inside transcript
     expect(screen.getByText('Câu hỏi này đã bị bỏ qua')).toBeInTheDocument()
+  })
+
+  it('keeps progress view without retrying when API returns REPORT_NOT_READY', async () => {
+    vi.mocked(sessionService.getFeedbackProgress).mockResolvedValue({
+      sessionId: 'test-session-123',
+      status: 'completing',
+      totalQuestions: 2,
+      answeredQuestions: 2,
+      skippedQuestions: 0,
+      feedbackRequired: 2,
+      feedbackCompleted: 1,
+      feedbackPending: 1,
+      reportReady: false,
+    })
+    vi.mocked(sessionService.getReport).mockRejectedValue(
+      new ApiClientError('Báo cáo đang được tổng hợp', 409, 'REPORT_NOT_READY')
+    )
+
+    render(<ReportPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Đã chấm 1/2 câu trả lời')).toBeInTheDocument()
+    })
+
+    expect(screen.getByText('Còn 1 câu đang xử lý')).toBeInTheDocument()
+    expect(sessionService.getReport).toHaveBeenCalledTimes(1)
+  })
+
+  it('has no accessibility violations when report is displayed', async () => {
+    vi.mocked(sessionService.getReport).mockResolvedValue(mockUnifiedReport)
+
+    const { container } = render(<ReportPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Báo cáo phỏng vấn')).toBeInTheDocument()
+    })
+
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

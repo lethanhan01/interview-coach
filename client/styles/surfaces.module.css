@@ -1,0 +1,21 @@
+.subtleSurface {
+  /* prettier-ignore */
+  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+}
+
+.bodySurface {
+  background-color: var(--mantine-color-body);
+}
+
+.borderedTop {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.borderedBottom {
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.stickyPanel {
+  position: sticky;
+  top: var(--mantine-spacing-md);
+}

@@ -29,6 +29,7 @@ describe('OnetController', () => {
   beforeEach(async () => {
     const mockOnetService = {
       searchOccupations: jest.fn().mockResolvedValue(mockOccupations),
+      searchTechnologies: jest.fn().mockResolvedValue(mockTech),
       getToolsAndTechnology: jest.fn().mockResolvedValue(mockTech),
     };
 
@@ -71,6 +72,27 @@ describe('OnetController', () => {
 
       expect(searchSpy).toHaveBeenCalledWith(undefined, 10);
       expect(result).toEqual(mockOccupations);
+    });
+  });
+
+  describe('GET /onet/technologies', () => {
+    it('calls onetService.searchTechnologies with query and limit', async () => {
+      const searchTechSpy = jest.spyOn(service, 'searchTechnologies');
+      const result = await controller.searchTechnologies({
+        query: 'Node',
+        limit: 15,
+      });
+
+      expect(searchTechSpy).toHaveBeenCalledWith('Node', 15);
+      expect(result).toEqual(mockTech);
+    });
+
+    it('calls onetService.searchTechnologies with undefined query and default limit 30', async () => {
+      const searchTechSpy = jest.spyOn(service, 'searchTechnologies');
+      const result = await controller.searchTechnologies({});
+
+      expect(searchTechSpy).toHaveBeenCalledWith(undefined, 30);
+      expect(result).toEqual(mockTech);
     });
   });
 

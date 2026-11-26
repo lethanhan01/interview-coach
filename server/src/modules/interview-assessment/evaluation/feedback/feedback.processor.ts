@@ -10,6 +10,7 @@ import { ReportService } from '../../report/report.service';
 import {
   FEEDBACK_QUEUE,
   FEEDBACK_JOB_ATTEMPTS,
+  FEEDBACK_WORKER_CONCURRENCY,
 } from '@core/common/constants/queue.constants';
 import { SURGICAL_FEEDBACK_PROMPT_CONFIG } from '@infra/ai/prompts/surgical-feedback-v1.5';
 import type { SessionType } from '@infra/ai/pipelines/interview-pipeline.interface';
@@ -23,6 +24,7 @@ import type { OutputLanguage } from '@infra/ai/output-language';
 import { resolveOutputLanguage } from '@infra/ai/output-language';
 import { sanitizeFeedbackSegments } from '../feedback-segment-sanitizer';
 import { PipelineStrategyFactory } from '@infra/ai/pipelines/pipeline-strategy.factory';
+import { BullMqJobErrorHandler } from '@infra/workflow/bullmq-error-handler';
 
 import {
   BinaryCriteriaEvaluatorService,
@@ -42,21 +44,16 @@ interface FeedbackJobDto {
   contextPack: 'VN' | 'Western';
   sessionType: SessionType;
   language?: OutputLanguage;
+  correlationId?: string;
 }
 
 const REPORT_READINESS_LOCAL_ATTEMPTS = 2;
-const DEFAULT_FEEDBACK_WORKER_CONCURRENCY = 2;
 
-function parseFeedbackWorkerConcurrency(): number {
-  const raw = process.env.FEEDBACK_WORKER_CONCURRENCY;
-  const parsed = raw === undefined ? NaN : Number(raw);
-  if (!Number.isInteger(parsed) || parsed < 1) {
-    return DEFAULT_FEEDBACK_WORKER_CONCURRENCY;
-  }
-  return parsed;
-}
-
-@Processor(FEEDBACK_QUEUE, { concurrency: parseFeedbackWorkerConcurrency() })
+@Processor(FEEDBACK_QUEUE, {
+  concurrency: FEEDBACK_WORKER_CONCURRENCY,
+  lockDuration: 420_000,
+  stalledInterval: 60_000,
+})
 export class FeedbackProcessor extends WorkerHost {
   private readonly logger = new Logger(FeedbackProcessor.name);
 
@@ -74,7 +71,15 @@ export class FeedbackProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<FeedbackJobDto>): Promise<void> {
+  process(job: Job<FeedbackJobDto>): Promise<void> {
+    return BullMqJobErrorHandler.handleJobExecution(
+      FeedbackProcessor.name,
+      job,
+      () => this.executeFeedback(job),
+    );
+  }
+
+  private async executeFeedback(job: Job<FeedbackJobDto>): Promise<void> {
     const {
       sessionId,
       answerId,

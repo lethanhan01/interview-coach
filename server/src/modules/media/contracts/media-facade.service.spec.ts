@@ -1,88 +1,36 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Readable } from 'node:stream';
 import { MediaFacade } from './media-facade.service';
-import { AudioObjectStorage } from '../audio-object-storage.service';
-import { UploadAndTranscribeAnswerAudio } from '../upload-and-transcribe-answer-audio.service';
 import { VoiceMetricsService } from '../voice-metrics.service';
+import {
+  AI_GATEWAY_TOKEN,
+  type IAIGateway,
+} from '@infra/ai/ai-gateway.interface';
 
 describe('MediaFacade', () => {
   let facade: MediaFacade;
-  let audioStorage: jest.Mocked<AudioObjectStorage>;
-  let uploadAndTranscribeAudioService: jest.Mocked<UploadAndTranscribeAnswerAudio>;
   let voiceMetricsService: jest.Mocked<VoiceMetricsService>;
+  let aiGateway: jest.Mocked<IAIGateway>;
 
   beforeEach(async () => {
-    audioStorage = {
-      uploadInterviewAudio: jest.fn(),
-      getSignedUrl: jest.fn(),
-    } as unknown as jest.Mocked<AudioObjectStorage>;
-
-    uploadAndTranscribeAudioService = {
-      execute: jest.fn(),
-    } as unknown as jest.Mocked<UploadAndTranscribeAnswerAudio>;
-
     voiceMetricsService = {
       calculate: jest.fn(),
     };
 
+    aiGateway = {
+      transcribeWithMetrics: jest.fn(),
+      synthesizeSpeech: jest.fn(),
+    } as unknown as jest.Mocked<IAIGateway>;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MediaFacade,
-        { provide: AudioObjectStorage, useValue: audioStorage },
-        {
-          provide: UploadAndTranscribeAnswerAudio,
-          useValue: uploadAndTranscribeAudioService,
-        },
         { provide: VoiceMetricsService, useValue: voiceMetricsService },
+        { provide: AI_GATEWAY_TOKEN, useValue: aiGateway },
       ],
     }).compile();
 
     facade = module.get<MediaFacade>(MediaFacade);
-  });
-
-  it('delegates uploadInterviewAudio to AudioObjectStorage', async () => {
-    const mockResult = {
-      mediaKey: 'path/audio.mp4',
-      audioFileUrl: 'https://storage/audio.mp4',
-      storageProvider: 'supabase' as const,
-      sizeBytes: 1024,
-      mimeType: 'audio/mp4',
-    };
-    audioStorage.uploadInterviewAudio.mockResolvedValue(mockResult);
-
-    const params = {
-      sessionId: 's-1',
-      userId: 'u-1',
-      file: { buffer: Buffer.from([]), mimetype: 'audio/mp4', size: 1024 },
-    };
-    const result = await facade.uploadInterviewAudio(params);
-
-    expect(audioStorage.uploadInterviewAudio).toHaveBeenCalledWith(params);
-    expect(result).toEqual(mockResult);
-  });
-
-  it('delegates uploadAndTranscribeAudio to UploadAndTranscribeAnswerAudio', async () => {
-    const mockResult = {
-      mediaKey: 'path/audio.mp4',
-      audioFileUrl: 'https://storage/audio.mp4',
-      storageProvider: 'supabase' as const,
-      sizeBytes: 1024,
-      mimeType: 'audio/mp4',
-      transcript: 'hello world',
-      transcriptDurationSeconds: 10,
-    };
-    uploadAndTranscribeAudioService.execute.mockResolvedValue(mockResult);
-
-    const params = {
-      sessionId: 's-1',
-      userId: 'u-1',
-      file: { buffer: Buffer.from([]), mimetype: 'audio/mp4', size: 1024 },
-    };
-    const result = await facade.uploadAndTranscribeAudio(params);
-
-    expect(uploadAndTranscribeAudioService.execute).toHaveBeenCalledWith(
-      params,
-    );
-    expect(result).toEqual(mockResult);
   });
 
   it('delegates calculateVoiceMetrics to VoiceMetricsService', () => {
@@ -102,16 +50,58 @@ describe('MediaFacade', () => {
     expect(result).toEqual(mockMetrics);
   });
 
-  it('delegates getSignedUrl to AudioObjectStorage', async () => {
-    const mockSigned = {
-      signedUrl: 'https://signed.url',
-      expiresAt: new Date(),
+  it('delegates transcribeAudio to aiGateway.transcribeWithMetrics', async () => {
+    const mockFile = {
+      buffer: Buffer.from('fake-audio'),
+      mimetype: 'audio/webm',
+    } as Express.Multer.File;
+
+    const mockResult = {
+      text: 'Hello world',
+      language: 'en',
+      durationSeconds: 2.5,
+      metrics: {
+        wpm: 120,
+        fillerWordCount: 0,
+        fillerWords: [],
+        pauseCount: 0,
+        totalPauseDurationSeconds: 0,
+        speechDurationSeconds: 2.5,
+        confidenceScore: 0.95,
+      },
     };
-    audioStorage.getSignedUrl.mockResolvedValue(mockSigned);
 
-    const result = await facade.getSignedUrl('key-1', 3600);
+    aiGateway.transcribeWithMetrics.mockResolvedValue(mockResult);
 
-    expect(audioStorage.getSignedUrl).toHaveBeenCalledWith('key-1', 3600);
-    expect(result).toEqual(mockSigned);
+    const result = await facade.transcribeAudio(mockFile, 'en');
+
+    expect(aiGateway.transcribeWithMetrics).toHaveBeenCalledWith({
+      audioBuffer: mockFile.buffer,
+      mimeType: 'audio/webm',
+      language: 'en',
+    });
+    expect(result.text).toBe('Hello world');
+    expect(result.metrics.wpm).toBe(120);
+  });
+
+  it('delegates synthesizeSpeech to aiGateway.synthesizeSpeech', async () => {
+    const mockStream = new Readable({
+      read() {
+        this.push(null);
+      },
+    });
+    aiGateway.synthesizeSpeech.mockResolvedValue({
+      stream: mockStream,
+      contentType: 'audio/wav',
+    });
+
+    const result = await facade.synthesizeSpeech('Test question', 'en');
+
+    expect(aiGateway.synthesizeSpeech).toHaveBeenCalledWith({
+      text: 'Test question',
+      language: 'en',
+    });
+    expect(result.contentType).toBe('audio/wav');
+    expect(result.stream).toBe(mockStream);
   });
 });

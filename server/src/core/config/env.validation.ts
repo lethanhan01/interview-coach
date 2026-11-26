@@ -3,14 +3,8 @@ import { DEFAULT_DB_TIME_ZONE } from '@infra/database/prisma/db-timezone';
 
 const EnvSchema = z.object({
   APP_URL: z.string().url().default('http://localhost:3000'),
-  MEDIA_STORAGE_PATH: z.string().min(1).default('./uploads/audio'),
-  MEDIA_SIGNED_URL_TTL_SECONDS: z.coerce
-    .number()
-    .int()
-    .positive()
-    .default(1800),
   AUTH_JWT_SECRET: z.string().min(32),
-  AUTH_COOKIE_NAME: z.string().min(1).default('interviewcoach_auth'),
+  AUTH_COOKIE_NAME: z.string().min(1).default('intervia_auth'),
   AUTH_COOKIE_MAX_AGE: z.coerce.number().int().positive().default(86_400),
   AUTH_ACCESS_COOKIE_NAME: z.string().optional(),
   AUTH_REFRESH_COOKIE_NAME: z.string().optional(),
@@ -66,6 +60,19 @@ const EnvSchema = z.object({
   OPENAI_FEEDBACK_TIMEOUT_MS: z.coerce.number().positive().default(420_000),
   OPENAI_REPORT_TIMEOUT_MS: z.coerce.number().positive().default(600_000),
   OPENAI_QUESTION_TIMEOUT_MS: z.coerce.number().positive().default(240_000),
+  AI_STT_TIMEOUT_MS: z.coerce.number().positive().default(60_000),
+  AI_STT_PROVIDER: z.enum(['python', 'disabled']).default('python'),
+  AI_TTS_PROVIDER: z.enum(['python', 'disabled']).default('python'),
+  AI_SERVICE_URL: z.string().url().default('http://localhost:8000'),
+  INTERNAL_AI_SECRET: z.string().min(1).default('dev-secret-internal-ai-key'),
+  IDEMPOTENCY_LOCK_TTL_SECONDS: z.coerce.number().int().positive().default(60),
+  IDEMPOTENCY_CACHE_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(86_400),
+  REDIS_CONNECT_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+  REDIS_COMMAND_TIMEOUT_MS: z.coerce.number().int().positive().default(3_000),
   OPENAI_QUESTION_MAX_TOKENS: z.coerce.number().int().positive().default(2_400),
   FEEDBACK_WORKER_CONCURRENCY: z.coerce.number().int().min(1).default(2),
   RUNTIME_ROLE: z.enum(['api', 'worker', 'all']).default('all'),
@@ -73,7 +80,6 @@ const EnvSchema = z.object({
   REDIS_HOST: z.string().default('localhost'),
   REDIS_PORT: z.coerce.number().default(6379),
   REDIS_PASSWORD: z.string().optional(),
-  AUDIO_ALLOWED_HOSTS: z.string().optional(),
   PORT: z.coerce.number().default(3000),
   SESSION_CREATION_LIMIT_PER_24H: z.coerce.number().int().min(0).default(10),
   MAINTENANCE_MODE: z.enum(['true', 'false']).default('false'),
@@ -83,6 +89,7 @@ const EnvSchema = z.object({
     .enum(['development', 'production', 'test'])
     .default('development'),
   CLIENT_URL: z.string().default('http://localhost:5173'),
+  OPEN_SWAGGER: z.enum(['true', 'false']).default('false'),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

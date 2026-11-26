@@ -134,7 +134,7 @@ export class SfiaAdminRepository implements ISfiaAdminRepository {
           s.min_level AS "minLevel",
           s.max_level AS "maxLevel",
           COUNT(DISTINCT qb.id)::int AS "questionCount",
-          COUNT(DISTINCT osm.id)::int AS "onetCount"
+          COUNT(DISTINCT osm.onet_soc_code)::int AS "onetCount"
         FROM sfia.skills s
         JOIN sfia.subcategories sc ON s.subcategory_code = sc.code
         LEFT JOIN public.question_bank qb ON qb.sfia_skill_code = s.code AND qb.deleted_at IS NULL
@@ -172,7 +172,7 @@ export class SfiaAdminRepository implements ISfiaAdminRepository {
           s.min_level AS "minLevel",
           s.max_level AS "maxLevel",
           COUNT(DISTINCT qb.id)::int AS "questionCount",
-          COUNT(DISTINCT osm.id)::int AS "onetCount"
+          COUNT(DISTINCT osm.onet_soc_code)::int AS "onetCount"
         FROM sfia.skills s
         JOIN sfia.subcategories sc ON s.subcategory_code = sc.code
         LEFT JOIN public.question_bank qb ON qb.sfia_skill_code = s.code AND qb.deleted_at IS NULL
@@ -229,6 +229,7 @@ export class SfiaAdminRepository implements ISfiaAdminRepository {
     try {
       return await this.getClient(tx).$queryRaw<SfiaOnetMappingRawRow[]>`
         SELECT 
+          osm.id::text AS "id",
           osm.onet_soc_code AS "socCode",
           COALESCE(occ.title, osm.onet_soc_code) AS "occupationTitle",
           osm.target_sfia_level AS "targetLevel",
@@ -237,7 +238,7 @@ export class SfiaAdminRepository implements ISfiaAdminRepository {
         FROM public.onet_sfia_mappings osm
         LEFT JOIN onet.occupation_data occ ON osm.onet_soc_code = occ.onetsoc_code
         WHERE UPPER(osm.sfia_skill_code) = UPPER(${code})
-        ORDER BY osm.is_core DESC, osm.target_sfia_level ASC;
+        ORDER BY osm.is_core DESC, osm.default_weight DESC, osm.onet_soc_code ASC, osm.target_sfia_level ASC;
       `;
     } catch (error) {
       this.logger.error(
@@ -363,7 +364,7 @@ export class SfiaAdminRepository implements ISfiaAdminRepository {
           sl.level_id AS "levelId",
           sl.description AS "statementSnippet",
           COUNT(DISTINCT qb.id)::int AS "questionCount",
-          COUNT(DISTINCT osm.id)::int AS "onetCount"
+          COUNT(DISTINCT osm.onet_soc_code)::int AS "onetCount"
         FROM sfia.skill_levels sl
         JOIN sfia.skills s ON sl.skill_code = s.code
         JOIN sfia.subcategories sc ON s.subcategory_code = sc.code

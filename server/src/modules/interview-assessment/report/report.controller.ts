@@ -1,5 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@core/common/enums';
 import { Roles, CurrentUser } from '@core/common/decorators';
 import type { AuthenticatedUserPayload } from '@core/common/guards/auth-token-verifier.interface';
 import { ReportService } from './report.service';

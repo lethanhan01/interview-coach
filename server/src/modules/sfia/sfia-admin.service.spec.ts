@@ -101,6 +101,7 @@ describe('SfiaAdminService', () => {
 
   const mockOnetMappings = [
     {
+      id: 'map-uuid-1',
       socCode: '15-1252.00',
       occupationTitle: 'Software Developers',
       targetLevel: 3,
@@ -214,7 +215,7 @@ describe('SfiaAdminService', () => {
     }).compile();
 
     service = module.get<SfiaAdminService>(SfiaAdminService);
-    await service.onModuleInit();
+    await service.loadStaticCache();
   });
 
   it('should be defined and initialized', () => {
@@ -231,11 +232,33 @@ describe('SfiaAdminService', () => {
       expect(res[0].skillCount).toBe(42);
     });
 
-    it('falls back to cache when DB throws error', async () => {
+    it('falls back to cache when DB throws error and logs warn, not error', async () => {
+      const warnSpy = jest.spyOn((service as any).logger, 'warn');
+      const errorSpy = jest.spyOn((service as any).logger, 'error');
+
       repoMock.loadCategories.mockRejectedValueOnce(new Error('DB failure'));
       const res = await service.getCategories();
       expect(res).toHaveLength(1);
       expect(res[0].code).toBe('DEV_IMPL');
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Database error in getCategories, falling back to cached categories',
+        ),
+      );
+      expect(errorSpy).not.toHaveBeenCalled();
+    });
+
+    it('re-throws DB error without logger.error when cache is empty', async () => {
+      (service as any).cachedCategories = [];
+      const errorSpy = jest.spyOn((service as any).logger, 'error');
+
+      repoMock.loadCategories.mockRejectedValueOnce(
+        new Error('Fatal DB crash'),
+      );
+
+      await expect(service.getCategories()).rejects.toThrow('Fatal DB crash');
+      expect(errorSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -271,10 +294,22 @@ describe('SfiaAdminService', () => {
         query: undefined,
       });
     });
+
+    it('propagates DB error directly without duplicate logger.error', async () => {
+      const errorSpy = jest.spyOn((service as any).logger, 'error');
+      repoMock.loadSkillsWithCounts.mockRejectedValueOnce(
+        new Error('DB skills query timeout'),
+      );
+
+      await expect(service.getSkills()).rejects.toThrow(
+        'DB skills query timeout',
+      );
+      expect(errorSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe('getSkillDetail', () => {
-    it('returns full skill detail with levels, onet, and questions', async () => {
+    it('returns full skill detail with levels, onet (including id), and questions', async () => {
       const res = await service.getSkillDetail('prog');
       expect(res.code).toBe('PROG');
       expect(res.overallDescription).toBe(
@@ -282,7 +317,37 @@ describe('SfiaAdminService', () => {
       );
       expect(res.skillLevels).toHaveLength(1);
       expect(res.onetMappings).toHaveLength(1);
+      expect(res.onetMappings[0].id).toBe('map-uuid-1');
       expect(res.questionBankItems).toHaveLength(1);
+    });
+
+    it('preserves multiple level mappings for the same ONET occupation with distinct ids', async () => {
+      repoMock.loadSkillOnetMappings.mockResolvedValueOnce([
+        {
+          id: 'map-uuid-l3',
+          socCode: '15-1252.00',
+          occupationTitle: 'Software Developers',
+          targetLevel: 3,
+          weight: 1.5,
+          isCore: true,
+        },
+        {
+          id: 'map-uuid-l4',
+          socCode: '15-1252.00',
+          occupationTitle: 'Software Developers',
+          targetLevel: 4,
+          weight: 2.0,
+          isCore: true,
+        },
+      ]);
+
+      const res = await service.getSkillDetail('prog');
+      expect(res.onetMappings).toHaveLength(2);
+      expect(res.onetMappings.map((m) => m.id)).toEqual([
+        'map-uuid-l3',
+        'map-uuid-l4',
+      ]);
+      expect(res.onetMappings.map((m) => m.targetLevel)).toEqual([3, 4]);
     });
 
     it('throws VALIDATION_ERROR when code is empty', async () => {

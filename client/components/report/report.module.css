@@ -1,0 +1,95 @@
+/* SfiaCompetencyOverview */
+.competencyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--mantine-spacing-md);
+}
+
+.competencyInfo {
+  flex: 1 1 rem(200px);
+}
+
+.competencyMeter {
+  flex: 2 1 rem(260px);
+}
+
+.competencyStatus {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--mantine-spacing-md);
+  flex: 1 1 rem(180px);
+}
+
+/* SfiaSegmentMeter */
+.meterSegment {
+  position: relative;
+  display: flex;
+  height: rem(24px);
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--mantine-radius-xs);
+  border: 1px solid var(--mantine-color-default-border);
+  font-size: rem(10px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--mantine-color-dimmed);
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+
+  &[data-state='passed'] {
+    background-color: var(--mantine-color-success-filled);
+    color: var(--mantine-color-success-contrast);
+    border-color: var(--mantine-color-success-filled);
+  }
+
+  &[data-state='warning'] {
+    background-color: var(--mantine-color-warning-filled);
+    color: var(--mantine-color-warning-contrast);
+    border-color: var(--mantine-color-warning-filled);
+  }
+
+  &[data-state='gap'] {
+    background-color: var(--mantine-color-default);
+    border: 1px dashed var(--mantine-color-warning-filled);
+    color: var(--mantine-color-warning-text);
+  }
+
+  &[data-target='true'] {
+    outline: rem(2px) solid var(--mantine-color-brand-filled);
+    outline-offset: rem(1px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+/* SkillsBreakdownCard */
+.feedbackBox {
+  border-inline-start: rem(4px) solid;
+  border-radius: var(--mantine-radius-md);
+  padding: var(--mantine-spacing-sm);
+
+  &[data-variant='strength'] {
+    border-inline-start-color: var(--mantine-color-success-filled);
+  }
+
+  &[data-variant='improvement'] {
+    border-inline-start-color: var(--mantine-color-warning-filled);
+  }
+}
+
+/* AnnotatedTranscript */
+.transcriptSummary {
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+}

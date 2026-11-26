@@ -73,6 +73,7 @@ const mockSkillDetail: SfiaSkillDetailDto = {
   ],
   onetMappings: [
     {
+      id: 'map-uuid-1',
       socCode: '15-1252.00',
       occupationTitle: 'Software Developers',
       targetLevel: 3,

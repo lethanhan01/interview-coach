@@ -7,8 +7,8 @@ function removeVietnameseTones(str: string): string {
   return str
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'd')
+    .replaceAll('đ', 'd')
+    .replaceAll('Đ', 'd')
     .toLowerCase();
 }
 
@@ -210,6 +210,27 @@ export class OnetService {
     } catch (error) {
       this.logger.error(
         `Error searching O*NET occupations for query "${cleanQuery}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return [];
+    }
+  }
+
+  /**
+   * Tìm kiếm danh sách công nghệ và công cụ phần mềm trên toàn bộ danh mục O*NET.
+   * Khi query rỗng, trả về danh sách công nghệ phổ biến nhất (ưu tiên Hot Technologies).
+   */
+  async searchTechnologies(query?: string, limit = 30): Promise<OnetTechDto[]> {
+    const cleanLimit = Math.max(1, Math.min(100, limit || 30));
+    const cleanQuery = typeof query === 'string' ? query.trim() : '';
+
+    try {
+      return await this.onetRepository.searchTechnologies(
+        cleanQuery || undefined,
+        cleanLimit,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error searching O*NET technologies for query "${cleanQuery}": ${error instanceof Error ? error.message : String(error)}`,
       );
       return [];
     }

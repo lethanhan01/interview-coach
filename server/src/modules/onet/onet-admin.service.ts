@@ -29,7 +29,12 @@ import {
   SfiaLibrarySkillDto,
 } from './dto/onet-admin.dto';
 import { ONET_ADMIN_REPOSITORY_TOKEN } from './domain/onet-admin-repository.interface';
-import type { IOnetAdminRepository } from './domain/onet-admin-repository.interface';
+import type {
+  IOnetAdminRepository,
+  OnetMappingStatusFilter,
+} from './domain/onet-admin-repository.interface';
+import type { OccupationSfiaMappingRawRow } from './repositories/types/onet-raw-row.types';
+import { getSocMajorGroupMeta } from './constants/soc-major-groups.constant';
 
 @Injectable()
 export class OnetAdminService {
@@ -95,6 +100,7 @@ export class OnetAdminService {
         ErrorCode.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Không thể truy vấn thông tin thống kê O*NET Analytics.',
+        { cause: error },
       );
     }
   }
@@ -112,11 +118,12 @@ export class OnetAdminService {
         const mapped = Number(g.mappedOccupations) || 0;
         const coverage =
           total > 0 ? Number(((mapped / total) * 100).toFixed(1)) : 0;
+        const meta = getSocMajorGroupMeta(g.code);
 
         return {
           code: g.code,
-          name: `Nhóm ${g.code}`,
-          englishName: `Major Group ${g.code}`,
+          name: meta.name,
+          englishName: meta.englishName,
           totalOccupations: total,
           mappedOccupations: mapped,
           mappingCoveragePercent: coverage,
@@ -131,6 +138,7 @@ export class OnetAdminService {
         ErrorCode.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Không thể truy vấn phân bổ 23 nhóm nghề O*NET SOC.',
+        { cause: error },
       );
     }
   }
@@ -165,13 +173,15 @@ export class OnetAdminService {
   ): Promise<OnetOccupationSummaryDto[]> {
     const search = query.search?.trim();
     const groupCode = query.groupCode?.trim();
-    const mappedOnly = Boolean(query.mappedOnly);
-    const limit = Math.max(1, Math.min(200, query.limit || 50));
+    const mappingStatus: OnetMappingStatusFilter =
+      query.mappingStatus ?? (query.mappedOnly ? 'mapped' : 'all');
+    const maxAllowed = groupCode ? 500 : 200;
+    const limit = Math.max(1, Math.min(maxAllowed, query.limit || 50));
 
     try {
       const rows = await this.onetAdminRepository.searchSidebarOccupations(
         groupCode,
-        mappedOnly,
+        mappingStatus,
         search,
         limit,
       );
@@ -191,6 +201,7 @@ export class OnetAdminService {
         ErrorCode.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Không thể tìm kiếm danh sách nghề nghiệp O*NET.',
+        { cause: error },
       );
     }
   }
@@ -204,20 +215,23 @@ export class OnetAdminService {
     const limit = Math.max(1, Math.min(50, query.limit || 10));
     const sortBy = query.sortBy || 'interviews';
     const search = query.search?.trim();
+    const groupCode = query.groupCode?.trim();
 
     try {
       const rows = await this.onetAdminRepository.getTopOccupations(
         search,
         sortBy,
         limit,
+        groupCode,
       );
 
       return rows.map((r) => {
+        const groupMeta = getSocMajorGroupMeta(r.majorGroupCode);
         return {
           socCode: r.socCode,
           title: r.title,
           majorGroupCode: r.majorGroupCode,
-          majorGroupName: `Nhóm ${r.majorGroupCode}`,
+          majorGroupName: groupMeta.name,
           mockInterviewCount: Number(r.mockInterviewCount) || 0,
           jobDescriptionCount: Number(r.jobDescriptionCount) || 0,
           mappingCount: Number(r.mappingCount) || 0,
@@ -235,6 +249,7 @@ export class OnetAdminService {
         ErrorCode.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Không thể truy vấn danh sách Top nghề quan tâm.',
+        { cause: error },
       );
     }
   }
@@ -247,12 +262,18 @@ export class OnetAdminService {
     category?: string,
   ): Promise<SfiaSkillCoverageItemDto[]> {
     const cleanLimit = Math.max(1, Math.min(100, limit || 20));
+    const cleanCategory = category?.trim().toLowerCase();
 
     try {
-      const rawRows =
-        await this.onetAdminRepository.getSfiaSkillCoverage(cleanLimit);
+      // Query without SQL LIMIT when filtering by category so filtering precedes slicing
+      const rawRows = await this.onetAdminRepository.getSfiaSkillCoverage(
+        cleanCategory ? undefined : cleanLimit,
+      );
 
-      const skillMap = new Map<string, { name: string; category: string }>();
+      const skillMap = new Map<
+        string,
+        { name: string; categoryCode: string; categoryName: string }
+      >();
 
       if (this.sfiaFacade) {
         try {
@@ -260,7 +281,8 @@ export class OnetAdminService {
           for (const s of allSkills) {
             skillMap.set(s.code.toUpperCase(), {
               name: s.name,
-              category: s.categoryCode || 'Software Engineering',
+              categoryCode: s.categoryCode || 'GENERAL',
+              categoryName: s.categoryName || s.categoryCode || 'Tổng quát',
             });
           }
         } catch (err) {
@@ -274,12 +296,15 @@ export class OnetAdminService {
       for (const row of rawRows) {
         const meta = skillMap.get(row.code.toUpperCase());
         const name = meta?.name || row.code;
-        const skillCategory = meta?.category || 'Chung';
+        const skillCategory = meta?.categoryName || 'Tổng quát';
+        const skillCategoryCode = meta?.categoryCode || '';
 
-        if (
-          !category ||
-          skillCategory.toLowerCase().includes(category.toLowerCase())
-        ) {
+        const matchesCategory =
+          !cleanCategory ||
+          skillCategory.toLowerCase().includes(cleanCategory) ||
+          skillCategoryCode.toLowerCase().includes(cleanCategory);
+
+        if (matchesCategory) {
           enriched.push({
             code: row.code,
             name,
@@ -294,7 +319,7 @@ export class OnetAdminService {
         }
       }
 
-      return enriched;
+      return enriched.slice(0, cleanLimit);
     } catch (error) {
       this.logger.error(
         `Error querying SFIA skill coverage: ${error instanceof Error ? error.message : String(error)}`,
@@ -303,6 +328,7 @@ export class OnetAdminService {
         ErrorCode.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Không thể truy vấn độ phủ kỹ năng SFIA.',
+        { cause: error },
       );
     }
   }
@@ -401,6 +427,7 @@ export class OnetAdminService {
         ErrorCode.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR,
         `Không thể lấy thông tin chi tiết nghề nghiệp ${cleanSoc}.`,
+        { cause: error },
       );
     }
   }
@@ -509,57 +536,75 @@ export class OnetAdminService {
     try {
       const rawMappings =
         await this.onetAdminRepository.getOccupationSfiaMappings(cleanSoc);
-
-      const items: OnetSfiaMappingItemDto[] = [];
-      for (const m of rawMappings) {
-        let skillName = m.sfiaSkillCode;
-        let skillCategory = 'Software Engineering';
-        let minLevel = 1;
-        let maxLevel = 7;
-        let responsibility = '';
-
-        if (this.sfiaFacade) {
-          try {
-            const skill = await this.sfiaFacade.getSkillByCode(m.sfiaSkillCode);
-            if (skill) {
-              skillName = skill.name;
-              skillCategory = skill.categoryCode || skillCategory;
-              minLevel = skill.minLevel;
-              maxLevel = skill.maxLevel;
-            }
-            const lvl = await this.sfiaFacade.getLevel(m.targetSfiaLevel);
-            if (lvl) {
-              responsibility = lvl.description;
-            }
-          } catch {
-            // ignore facade lookup failure
-          }
-        }
-
-        items.push({
-          id: m.id,
-          onetSocCode: m.onetSocCode,
-          sfiaSkillCode: m.sfiaSkillCode,
-          skillName,
-          skillCategory,
-          targetSfiaLevel: m.targetSfiaLevel,
-          defaultWeight: m.defaultWeight,
-          isCore: m.isCore,
-          source: m.source,
-          minLevel,
-          maxLevel,
-          responsibility,
-          createdAt: m.createdAt?.toISOString(),
-        });
-      }
-
-      return items;
+      return await this.enrichSfiaMappings(rawMappings);
     } catch (error) {
       this.logger.error(
         `Error querying SFIA mappings for "${cleanSoc}": ${error instanceof Error ? error.message : String(error)}`,
       );
       return [];
     }
+  }
+
+  private async enrichSfiaMappings(
+    rawMappings: OccupationSfiaMappingRawRow[],
+  ): Promise<OnetSfiaMappingItemDto[]> {
+    const items: OnetSfiaMappingItemDto[] = [];
+    for (const m of rawMappings) {
+      let skillName = m.sfiaSkillCode;
+      let skillCategory = 'Tổng quát';
+      let minLevel = 1;
+      let maxLevel = 7;
+      let responsibility = '';
+
+      if (this.sfiaFacade) {
+        try {
+          const skill = await this.sfiaFacade.getSkillByCode(m.sfiaSkillCode);
+          if (skill) {
+            skillName = skill.name;
+            skillCategory =
+              skill.categoryName || skill.categoryCode || 'Tổng quát';
+            if (typeof skill.minLevel === 'number') {
+              minLevel = skill.minLevel;
+            }
+            if (typeof skill.maxLevel === 'number') {
+              maxLevel = skill.maxLevel;
+            }
+            responsibility = skill.levelDescriptions?.[m.targetSfiaLevel] || '';
+          }
+          if (
+            !responsibility &&
+            typeof this.sfiaFacade.getLevel === 'function'
+          ) {
+            const lvl = await this.sfiaFacade.getLevel(m.targetSfiaLevel);
+            if (lvl) {
+              responsibility = lvl.description;
+            }
+          }
+        } catch (error: unknown) {
+          this.logger.warn(
+            `Failed to lookup SFIA metadata for ${m.sfiaSkillCode}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      }
+
+      items.push({
+        id: m.id,
+        onetSocCode: m.onetSocCode,
+        sfiaSkillCode: m.sfiaSkillCode,
+        skillName,
+        skillCategory,
+        targetSfiaLevel: m.targetSfiaLevel,
+        defaultWeight: m.defaultWeight,
+        isCore: m.isCore,
+        source: m.source,
+        minLevel,
+        maxLevel,
+        responsibility,
+        createdAt: m.createdAt?.toISOString(),
+      });
+    }
+
+    return items;
   }
 
   /**
@@ -575,7 +620,7 @@ export class OnetAdminService {
 
     // Validate level range from SFIA facade
     let skillName = skillCode;
-    let skillCategory = 'Software Engineering';
+    let skillCategory = 'Tổng quát';
     let minLevel = 1;
     let maxLevel = 7;
 
@@ -589,7 +634,7 @@ export class OnetAdminService {
         );
       }
       skillName = skill.name;
-      skillCategory = skill.categoryCode || skillCategory;
+      skillCategory = skill.categoryName || skill.categoryCode || 'Tổng quát';
       minLevel = skill.minLevel;
       maxLevel = skill.maxLevel;
 
@@ -661,22 +706,57 @@ export class OnetAdminService {
       );
     }
 
-    if (
-      typeof dto.targetSfiaLevel === 'number' &&
-      dto.targetSfiaLevel !== existing.targetSfiaLevel
-    ) {
-      // Validate unique constraint on level change
-      const conflict = await this.onetAdminRepository.findSfiaMappingByUnique(
-        cleanSoc,
-        existing.sfiaSkillCode,
-        dto.targetSfiaLevel,
-      );
-      if (conflict && conflict.id !== mappingId) {
-        throw new InterviewAIException(
-          ErrorCode.CONFLICT,
-          HttpStatus.CONFLICT,
-          `Ánh xạ cho kỹ năng ${existing.sfiaSkillCode} cấp độ ${dto.targetSfiaLevel} đã tồn tại trong nghề này.`,
+    let skillName = existing.sfiaSkillCode;
+    let skillCategory = 'Tổng quát';
+    let minLevel = 1;
+    let maxLevel = 7;
+
+    if (this.sfiaFacade) {
+      try {
+        const skill = await this.sfiaFacade.getSkillByCode(
+          existing.sfiaSkillCode,
         );
+        if (skill) {
+          skillName = skill.name;
+          skillCategory =
+            skill.categoryName || skill.categoryCode || 'Tổng quát';
+          if (typeof skill.minLevel === 'number') {
+            minLevel = skill.minLevel;
+          }
+          if (typeof skill.maxLevel === 'number') {
+            maxLevel = skill.maxLevel;
+          }
+        }
+      } catch (error: unknown) {
+        this.logger.warn(
+          `Failed to lookup SFIA metadata for ${existing.sfiaSkillCode}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
+    if (typeof dto.targetSfiaLevel === 'number') {
+      if (dto.targetSfiaLevel < minLevel || dto.targetSfiaLevel > maxLevel) {
+        throw new InterviewAIException(
+          ErrorCode.VALIDATION_ERROR,
+          HttpStatus.BAD_REQUEST,
+          `Kỹ năng ${existing.sfiaSkillCode} chỉ hỗ trợ cấp độ từ ${minLevel} đến ${maxLevel} (bạn đã chọn Level ${dto.targetSfiaLevel}).`,
+        );
+      }
+
+      if (dto.targetSfiaLevel !== existing.targetSfiaLevel) {
+        // Validate unique constraint on level change
+        const conflict = await this.onetAdminRepository.findSfiaMappingByUnique(
+          cleanSoc,
+          existing.sfiaSkillCode,
+          dto.targetSfiaLevel,
+        );
+        if (conflict && conflict.id !== mappingId) {
+          throw new InterviewAIException(
+            ErrorCode.CONFLICT,
+            HttpStatus.CONFLICT,
+            `Ánh xạ cho kỹ năng ${existing.sfiaSkillCode} cấp độ ${dto.targetSfiaLevel} đã tồn tại trong nghề này.`,
+          );
+        }
       }
     }
 
@@ -687,27 +767,6 @@ export class OnetAdminService {
       dto.isCore,
       dto.source,
     );
-
-    let skillName = updated.sfiaSkillCode;
-    let skillCategory = 'Software Engineering';
-    let minLevel = 1;
-    let maxLevel = 7;
-
-    if (this.sfiaFacade) {
-      try {
-        const skill = await this.sfiaFacade.getSkillByCode(
-          updated.sfiaSkillCode,
-        );
-        if (skill) {
-          skillName = skill.name;
-          skillCategory = skill.categoryCode || skillCategory;
-          minLevel = skill.minLevel;
-          maxLevel = skill.maxLevel;
-        }
-      } catch {
-        // ignore facade failure
-      }
-    }
 
     return {
       id: updated.id,
@@ -752,11 +811,13 @@ export class OnetAdminService {
   }
 
   /**
-   * 15. Khôi phục ánh xạ SFIA về mặc định
+   * 15. Khôi phục ánh xạ SFIA về mặc định (xóa các ánh xạ USER_DEFINED trong transaction)
    */
   async resetSfiaMappings(socCode: string): Promise<OnetSfiaMappingItemDto[]> {
     const cleanSoc = socCode.trim();
-    return this.getOccupationSfiaMappings(cleanSoc);
+    const remainingRows =
+      await this.onetAdminRepository.resetUserDefinedMappings(cleanSoc);
+    return await this.enrichSfiaMappings(remainingRows);
   }
 
   /**
@@ -772,15 +833,19 @@ export class OnetAdminService {
       return skills.map((s) => ({
         code: s.code,
         name: s.name,
-        category: s.categoryCode || 'Software Engineering',
-        categoryCode: s.categoryCode || 'SWEN',
+        category: s.categoryName || s.categoryCode || 'Chung',
+        categoryCode: s.categoryCode || 'GENERAL',
         minLevel: s.minLevel,
         maxLevel: s.maxLevel,
         description: s.overallDescription || '',
-        levels: Array.from({ length: s.maxLevel - s.minLevel + 1 }, (_, i) => ({
-          level: s.minLevel + i,
-          description: `Cấp độ ${s.minLevel + i} theo chuẩn SFIA 9`,
-        })),
+        levels: Array.from({ length: s.maxLevel - s.minLevel + 1 }, (_, i) => {
+          const level = s.minLevel + i;
+          return {
+            level,
+            description:
+              s.levelDescriptions?.[level] || s.overallDescription || '',
+          };
+        }),
       }));
     } catch (error) {
       this.logger.error(

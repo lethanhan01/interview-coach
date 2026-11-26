@@ -1,0 +1,111 @@
+import { writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { AuditSummary } from '../types';
+import { SERVER_ROOT } from '../config';
+
+export function writeMarkdownReport(
+  summary: AuditSummary,
+  outputPath: string = resolve(SERVER_ROOT, 'CONVENTIONS-AUDIT-REPORT.md'),
+): void {
+  const isPassed = summary.errorsCount === 0;
+  const statusBadge =
+    summary.errorsCount > 0
+      ? '![Status: FAILED](https://img.shields.io/badge/Conventions-FAILED-red)'
+      : summary.warningsCount > 0
+        ? '![Status: PASSED WITH WARNINGS](https://img.shields.io/badge/Conventions-PASSED_WITH_WARNINGS-yellow)'
+        : '![Status: PASSED](https://img.shields.io/badge/Conventions-PASSED-brightgreen)';
+
+  const lines: string[] = [
+    '# Backend Architecture & Conventions Audit Report',
+    '',
+    `> Generated automatically on **${new Date().toISOString()}** by \`npm run check:conventions:report\`.`,
+    '',
+    `### Status: ${statusBadge}`,
+    '',
+    '## 1. Executive Summary',
+    '',
+    '| Metric | Value | Status |',
+    '| :--- | :--- | :--- |',
+    `| **Total Files Analyzed** | \`${summary.totalFiles}\` | ✅ Complete |`,
+    `| **Rules Evaluated** | \`${summary.totalRules}\` | ✅ Complete |`,
+    `| **Blocking Errors** | \`${summary.errorsCount}\` | ${summary.errorsCount === 0 ? '✅ 0 Errors' : '❌ Needs Fix'} |`,
+    `| **Advisory Warnings** | \`${summary.warningsCount}\` | ${summary.warningsCount === 0 ? '✅ 0 Warnings' : '⚠️ Review'} |`,
+    `| **Analysis Duration** | \`${summary.durationMs}ms\` | ⚡ Fast |`,
+    '',
+    '## 2. Rule Evaluation Matrix',
+    '',
+    '| Category | Rule ID | Description | Severity | Status |',
+    '| :--- | :--- | :--- | :--- | :--- |',
+    '| **ARCH** | `ARCH_001` | Controller Presentation Isolation | `ERROR` | Active |',
+    '| **ARCH** | `ARCH_002` | Core Layer Independence | `ERROR` | Active |',
+    '| **ARCH** | `ARCH_003` | Bounded Context Contract Enforcement | `ERROR` | Active |',
+    '| **ARCH** | `ARCH_004` | Transaction Boundary Isolation | `ERROR` | Active |',
+    '| **PRES** | `PRES_001` | Presentation DTO Explicit Typing | `ERROR` | Active |',
+    '| **PRES** | `PRES_002` | DTO Validation Decorators | `ERROR` | Active |',
+    '| **PRES** | `PRES_003` | Pagination Query Bound (@Max <= 100) | `ERROR` | Active |',
+    '| **PRES** | `PRES_004` | SSE Endpoint Guard & catchError Pipe | `ERROR` | Active |',
+    '| **ERR**  | `ERR_001`  | Raw Error & Literal Throw Prohibition | `ERROR` | Active |',
+    '| **ERR**  | `ERR_002`  | Application Layer HTTP Exception Prohibition | `ERROR` | Active |',
+    '| **ERR**  | `ERR_003`  | Empty Catch Clause / Swallow Detection | `ERROR` | Active |',
+    '| **ERR**  | `ERR_004`  | String Error Matching Prohibition | `ERROR` | Active |',
+    '| **ERR**  | `ERR_005`  | Root Cause Preservation in Catch Blocks | `ERROR` | Active |',
+    '| **INFRA**| `INFRA_001`| Direct Vendor AI SDK Prohibition | `ERROR` | Active |',
+    '| **INFRA**| `INFRA_002`| BullMQ Worker Error Boundary Wrapper | `ERROR` | Active |',
+    '| **INFRA**| `INFRA_003`| Bootstrap Logger Wire Enforcement | `ERROR` | Active |',
+    '| **INFRA**| `CONF_001` | Direct process.env Access Prohibition | `ERROR` | Active |',
+    '| **OBS**  | `OBS_001`  | Direct Console Logging Prohibition | `ERROR` | Active |',
+    '| **NAME** | `NAME_001` | Kebab-Case File Naming Convention | `WARN`  | Active |',
+    '| **NAME** | `NAME_002` | Class Suffix & PascalCase Alignment | `WARN`  | Active |',
+    '',
+  ];
+
+  if (summary.violations.length === 0) {
+    lines.push(
+      '## 3. Findings & Violations',
+      '',
+      '> 🎉 **Zero violations found!** All backend source code strictly complies with `server/CONVENTIONS.md` and NestJS/TypeScript engineering standards.',
+      '',
+    );
+  } else {
+    lines.push(
+      '## 3. Findings & Violations',
+      '',
+      `The audit discovered **${summary.violations.length}** violation(s) across the codebase:`,
+      '',
+      '| # | Severity | Rule | Location | Violation Message | Remediation |',
+      '| :- | :--- | :--- | :--- | :--- | :--- |',
+    );
+
+    summary.violations.forEach((v, index) => {
+      const sevIcon = v.severity === 'ERROR' ? '🔴 `ERROR`' : '🟡 `WARN`';
+      const fileLoc = `\`${v.relPath}:${v.line}\``;
+      lines.push(
+        `| ${index + 1} | ${sevIcon} | **${v.ruleId}** | ${fileLoc} | ${v.message} | ${v.remediation} |`,
+      );
+    });
+
+    lines.push('');
+  }
+
+  lines.push(
+    '## 4. Suppression & Exception Guidelines',
+    '',
+    'If a specific line or file represents an intentional design exception (e.g. an administrative endpoint with higher query limits), you can suppress the checker rule using an inline comment:',
+    '',
+    '```typescript',
+    '// convention-ignore: RULE_ID <justification comment>',
+    '```',
+    '',
+    'Example:',
+    '```typescript',
+    '// convention-ignore: PRES_003 Admin requires listing all 1500 ONET occupations',
+    '@Max(1500)',
+    'limit?: number = 50;',
+    '```',
+    '',
+    '---',
+    '*Report generated by Backend Conventions Checker Script.*',
+  );
+
+  writeFileSync(outputPath, lines.join('\n'), 'utf8');
+}

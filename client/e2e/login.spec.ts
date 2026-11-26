@@ -27,7 +27,16 @@ test.beforeEach(async ({ page }) => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: false,
-          message: 'Invalid login credentials',
+          error: {
+            code: 'INVALID_CREDENTIALS',
+            message: 'Invalid login credentials',
+            details: null,
+          },
+          meta: {
+            requestId: 'mock-req-login-fail',
+            timestamp: new Date().toISOString(),
+            path: route.request().url(),
+          },
         }),
       })
     }
@@ -50,7 +59,16 @@ test('nút submit hiện loading khi đang gửi', async ({ page }) => {
       contentType: 'application/json',
       body: JSON.stringify({
         success: false,
-        message: 'Invalid login credentials',
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: 'Invalid login credentials',
+          details: null,
+        },
+        meta: {
+          requestId: 'mock-req-login-loading',
+          timestamp: new Date().toISOString(),
+          path: route.request().url(),
+        },
       }),
     })
   })

@@ -131,12 +131,22 @@ export class OnetSearchOccupationsQueryDto {
   mappedOnly?: boolean;
 
   @ApiPropertyOptional({
+    enum: ['all', 'mapped', 'unmapped'],
+    description:
+      'Lọc theo trạng thái ánh xạ SFIA (all | mapped | unmapped). Ưu tiên hơn mappedOnly nếu được truyền.',
+  })
+  @IsOptional()
+  @IsEnum(['all', 'mapped', 'unmapped'])
+  mappingStatus?: 'all' | 'mapped' | 'unmapped';
+
+  @ApiPropertyOptional({
     example: 50,
     description: 'Số lượng kết quả tối đa',
   })
   @IsOptional()
   @IsInt()
   @Min(1)
+  // convention-ignore: PRES_003 Admin requires listing all ONET occupations up to 1500
   @Max(1500)
   @Type(() => Number)
   limit?: number = 50;
@@ -185,6 +195,13 @@ export class OnetTopOccupationsQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiPropertyOptional({
+    description: 'Lọc theo mã nhóm lớn SOC 2 chữ số (ví dụ: "15")',
+  })
+  @IsOptional()
+  @IsString()
+  groupCode?: string;
 }
 
 export class OnetSfiaCoverageQueryDto {

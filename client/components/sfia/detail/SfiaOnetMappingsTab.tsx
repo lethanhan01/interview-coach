@@ -1,0 +1,234 @@
+'use client'
+
+import { useMemo, useState } from 'react'
+import Link from 'next/link'
+import {
+  ActionIcon,
+  Button,
+  Center,
+  Group,
+  Paper,
+  SegmentedControl,
+  Stack,
+  Table,
+  Text,
+  TextInput,
+} from '@mantine/core'
+import {
+  IconBriefcase,
+  IconCompass,
+  IconSearch,
+  IconX,
+} from '@tabler/icons-react'
+import type { SfiaOnetMappingItem } from '@/types'
+import {
+  buildKeyedOnetMappings,
+  compareSfiaOnetMappings,
+} from '../sfia-onet-mapping.utils'
+import { SfiaOnetMappingCard, SfiaOnetMappingRow } from './SfiaOnetMappingRow'
+
+export interface SfiaOnetMappingsTabProps {
+  skillCode: string
+  skillName: string
+  onetMappings: SfiaOnetMappingItem[]
+  className?: string
+}
+
+type OnetFilterType = 'all' | 'core' | 'supplemental'
+
+export function SfiaOnetMappingsTab({
+  skillCode,
+  skillName,
+  onetMappings = [],
+  className,
+}: Readonly<SfiaOnetMappingsTabProps>) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterType, setFilterType] = useState<OnetFilterType>('all')
+
+  const coreCount = useMemo(
+    () => onetMappings.filter((m) => m.isCore).length,
+    [onetMappings]
+  )
+  const supplementalCount = onetMappings.length - coreCount
+
+  const keyedMappings = useMemo(() => {
+    let result = [...onetMappings]
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim()
+      result = result.filter(
+        (m) =>
+          m.socCode.toLowerCase().includes(q) ||
+          m.occupationTitle.toLowerCase().includes(q)
+      )
+    }
+
+    if (filterType === 'core') {
+      result = result.filter((m) => m.isCore)
+    } else if (filterType === 'supplemental') {
+      result = result.filter((m) => !m.isCore)
+    }
+
+    result.sort(compareSfiaOnetMappings)
+    return buildKeyedOnetMappings(result)
+  }, [onetMappings, searchQuery, filterType])
+
+  if (onetMappings.length === 0) {
+    return (
+      <Paper withBorder radius="md" p="md" ta="center" className={className}>
+        <Stack align="center" gap="xs">
+          <Paper
+            withBorder
+            p="xs"
+            radius="xl"
+            bg="var(--mantine-color-body)"
+            w={44}
+            h={44}
+          >
+            <Center h="100%">
+              <IconBriefcase size={22} stroke={1.5} />
+            </Center>
+          </Paper>
+
+          <Stack gap={2} maw={420}>
+            <Text fw={700} size="md">
+              Chưa có ánh xạ nghề nghiệp O*NET
+            </Text>
+            <Text size="sm" c="dimmed">
+              Kỹ năng{' '}
+              <Text span ff="monospace" fw={600}>
+                {skillCode}
+              </Text>{' '}
+              ({skillName}) hiện chưa được liên kết với nghề nghiệp O*NET SOC
+              nào trong cơ sở dữ liệu.
+            </Text>
+          </Stack>
+
+          <Button
+            component={Link}
+            href="/admin/onet"
+            variant="light"
+            color="brand"
+            size="sm"
+            leftSection={<IconCompass size={15} stroke={1.5} />}
+          >
+            Khám phá O*NET Browser
+          </Button>
+        </Stack>
+      </Paper>
+    )
+  }
+
+  return (
+    <Stack gap="xs" className={className}>
+      {/* 1. Header Toolbar */}
+      <Paper withBorder p="xs" radius="md">
+        <Group justify="space-between" align="center" wrap="wrap" gap="xs">
+          <TextInput
+            size="sm"
+            placeholder="Tìm theo mã SOC hoặc tên nghề nghiệp..."
+            aria-label="Tìm kiếm nghề nghiệp O*NET"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.currentTarget.value)}
+            leftSection={<IconSearch size={15} stroke={1.5} />}
+            rightSection={
+              searchQuery ? (
+                <ActionIcon
+                  size="sm"
+                  variant="subtle"
+                  color="neutral"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Xóa tìm kiếm"
+                >
+                  <IconX size={14} stroke={1.5} />
+                </ActionIcon>
+              ) : null
+            }
+            flex={1}
+            miw={200}
+          />
+
+          <SegmentedControl
+            size="sm"
+            value={filterType}
+            onChange={(val) => setFilterType(val as OnetFilterType)}
+            data={[
+              { value: 'all', label: `Tất cả (${onetMappings.length})` },
+              { value: 'core', label: `Cốt lõi (${coreCount})` },
+              { value: 'supplemental', label: `Bổ trợ (${supplementalCount})` },
+            ]}
+          />
+        </Group>
+      </Paper>
+
+      {/* 2. Content */}
+      {keyedMappings.length === 0 ? (
+        <Paper withBorder p="md" radius="md" ta="center">
+          <Stack align="center" gap="xs">
+            <IconSearch size={26} stroke={1.5} />
+            <Text fw={700} size="md">
+              Không tìm thấy nghề nghiệp phù hợp
+            </Text>
+            <Text size="sm" c="dimmed">
+              Không có nghề nghiệp nào khớp với từ khóa &quot;{searchQuery}
+              &quot;.
+            </Text>
+            <Button
+              variant="outline"
+              size="sm"
+              color="neutral"
+              onClick={() => {
+                setSearchQuery('')
+                setFilterType('all')
+              }}
+            >
+              Đặt lại bộ lọc
+            </Button>
+          </Stack>
+        </Paper>
+      ) : (
+        <>
+          {/* Desktop Table */}
+          <Paper withBorder radius="md" visibleFrom="sm">
+            <Table.ScrollContainer minWidth={650}>
+              <Table
+                verticalSpacing="xs"
+                horizontalSpacing="xs"
+                highlightOnHover
+              >
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th w={120}>Mã SOC</Table.Th>
+                    <Table.Th miw={200}>Chức danh nghề nghiệp O*NET</Table.Th>
+                    <Table.Th w={100} ta="center">
+                      Cấp độ
+                    </Table.Th>
+                    <Table.Th w={140}>Trọng số</Table.Th>
+                    <Table.Th w={100} ta="center">
+                      Phân loại
+                    </Table.Th>
+                    <Table.Th w={80} ta="right">
+                      Thao tác
+                    </Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {keyedMappings.map(({ key, mapping }) => (
+                    <SfiaOnetMappingRow key={key} mapping={mapping} />
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </Table.ScrollContainer>
+          </Paper>
+
+          {/* Mobile Cards */}
+          <Stack gap="xs" hiddenFrom="sm">
+            {keyedMappings.map(({ key, mapping }) => (
+              <SfiaOnetMappingCard key={key} mapping={mapping} />
+            ))}
+          </Stack>
+        </>
+      )}
+    </Stack>
+  )
+}

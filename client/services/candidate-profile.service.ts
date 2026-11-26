@@ -1,12 +1,12 @@
 import { apiClient } from '@/lib/api-client'
-import type { GetProfileResponse } from '@/lib/types'
+import type { GetProfileResponse } from '@/types'
 
 export const candidateProfileService = {
   /**
    * Fetch current candidate's profile (career targets, education, skills, experience, etc.)
    */
-  async getProfile(): Promise<GetProfileResponse> {
-    return apiClient.get<GetProfileResponse>('/candidate-profile')
+  async getProfile(signal?: AbortSignal): Promise<GetProfileResponse> {
+    return apiClient.get<GetProfileResponse>('/candidate-profile', { signal })
   },
 
   /**

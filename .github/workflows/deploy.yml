@@ -20,7 +20,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   # ----------------------------------------------------------------------------
@@ -29,13 +28,19 @@ jobs:
   test-and-verify:
     name: Server (Lint & Test Quality Gate)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      # Single source for the throwaway CI DB password (must match services.postgres below).
+      CI_PG_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'ci_test_password_unrestricted' }}
     services:
       postgres:
-        image: postgres:16-alpine
+        # PG18 + pgvector to match production (question_bank.embedding vector(1024)).
+        image: pgvector/pgvector:pg18
         env:
           POSTGRES_DB: interviewcoach_test
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'ci_test_password_unrestricted' }}
         options: >-
           --health-cmd "pg_isready -U postgres -d interviewcoach_test"
           --health-interval 10s
@@ -82,17 +87,23 @@ jobs:
       - name: Compile TypeScript
         run: npm run build
 
+      - name: Enable pgvector extension
+        run: echo "CREATE EXTENSION IF NOT EXISTS vector;" | npx prisma db execute --stdin
+        env:
+          DATABASE_URL: postgresql://postgres:${{ env.CI_PG_PASSWORD }}@localhost:5433/interviewcoach_test?schema=public
+          DIRECT_URL: postgresql://postgres:${{ env.CI_PG_PASSWORD }}@localhost:5433/interviewcoach_test?schema=public
+
       - name: Prepare test database
         run: npx prisma db push
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5433/interviewcoach_test?schema=public
-          DIRECT_URL: postgresql://postgres:postgres@localhost:5433/interviewcoach_test?schema=public
+          DATABASE_URL: postgresql://postgres:${{ env.CI_PG_PASSWORD }}@localhost:5433/interviewcoach_test?schema=public
+          DIRECT_URL: postgresql://postgres:${{ env.CI_PG_PASSWORD }}@localhost:5433/interviewcoach_test?schema=public
 
       - name: Run Unit Tests
         run: npm test -- --runInBand --passWithNoTests
         env:
           NODE_ENV: test
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5433/interviewcoach_test?schema=public
+          DATABASE_URL: postgresql://postgres:${{ env.CI_PG_PASSWORD }}@localhost:5433/interviewcoach_test?schema=public
           REDIS_HOST: localhost
           REDIS_PORT: '6379'
 
@@ -100,7 +111,7 @@ jobs:
         run: npm run test:integration
         env:
           NODE_ENV: test
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5433/interviewcoach_test?schema=public
+          DATABASE_URL: postgresql://postgres:${{ env.CI_PG_PASSWORD }}@localhost:5433/interviewcoach_test?schema=public
           REDIS_HOST: localhost
           REDIS_PORT: '6379'
 
@@ -111,6 +122,9 @@ jobs:
     name: Server (Docker Build & Push)
     needs: [test-and-verify]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - uses: actions/checkout@v4

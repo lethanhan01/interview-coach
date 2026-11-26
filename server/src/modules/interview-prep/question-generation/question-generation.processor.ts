@@ -4,6 +4,7 @@ import type { Job } from 'bullmq';
 import { PrismaService } from '@infra/database/prisma/prisma.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
 import { QUESTION_GEN_QUEUE } from '@core/common/constants/queue.constants';
+import { BullMqJobErrorHandler } from '@infra/workflow/bullmq-error-handler';
 import {
   GenerateSessionQuestions,
   type QuestionGenerationJobDto,
@@ -21,20 +22,28 @@ export class QuestionGenerationProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<QuestionGenerationJobDto>): Promise<void> {
-    try {
-      await this.generateSessionQuestions.execute(job.data);
-      if (await this.markActiveUnlessStopped(job.data.sessionId)) {
-        await this.emitStatus(job.data.sessionId, 'active');
-      }
-    } catch (error: unknown) {
-      this.logger.error(
-        `Unable to generate questions for session ${job.data.sessionId}`,
-        error instanceof Error ? error.stack : String(error),
-      );
-      await this.markSessionError(job.data.sessionId);
-      throw error;
-    }
+  process(job: Job<QuestionGenerationJobDto>): Promise<void> {
+    return BullMqJobErrorHandler.handleJobExecution(
+      QuestionGenerationProcessor.name,
+      job,
+      async () => {
+        try {
+          await this.generateSessionQuestions.execute(job.data);
+          if (await this.markActiveUnlessStopped(job.data.sessionId)) {
+            await this.emitStatus(job.data.sessionId, 'active');
+          }
+        } catch (error: unknown) {
+          const maxAttempts = job.opts?.attempts ?? 1;
+          const attemptsMade = (job.attemptsMade ?? 0) + 1;
+          const isFatal = BullMqJobErrorHandler.isFatal(error);
+
+          if (isFatal || attemptsMade >= maxAttempts) {
+            await this.markSessionError(job.data.sessionId);
+          }
+          throw error;
+        }
+      },
+    );
   }
 
   private async markActiveUnlessStopped(sessionId: string): Promise<boolean> {
@@ -48,8 +57,18 @@ export class QuestionGenerationProcessor extends WorkerHost {
   private async markSessionError(sessionId: string): Promise<void> {
     await this.prisma.interviewSession
       .update({ where: { id: sessionId }, data: { status: 'error' } })
-      .catch(() => {});
-    await this.emitStatus(sessionId, 'error').catch(() => {});
+      // Rule 6: best-effort cleanup, must log so infra failures are visible
+      .catch((err: unknown) =>
+        this.logger.warn(
+          `Failed to mark session ${sessionId} as error in DB: ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
+    // Rule 6: best-effort SSE notify, must log if emit fails
+    await this.emitStatus(sessionId, 'error').catch((err: unknown) =>
+      this.logger.warn(
+        `Failed to emit error status for session ${sessionId}: ${err instanceof Error ? err.message : String(err)}`,
+      ),
+    );
   }
 
   private async emitStatus(

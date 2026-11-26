@@ -10,7 +10,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@core/common/enums';
 import { Roles } from '@core/common/decorators';
 import {
   ApiBearerAuth,
@@ -28,6 +28,7 @@ import {
   SocGroupDistributionItemDto,
   OnetTopOccupationItemDto,
   OnetTopOccupationsQueryDto,
+  OnetSfiaCoverageQueryDto,
   SfiaSkillCoverageItemDto,
   OnetSearchOccupationsQueryDto,
   OnetOccupationSummaryDto,
@@ -107,10 +108,12 @@ export class OnetAdminController {
   })
   @ApiCommonErrors(HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN)
   async getSfiaSkillCoverage(
-    @Query('limit') limit?: number,
-    @Query('category') category?: string,
+    @Query() query: OnetSfiaCoverageQueryDto,
   ): Promise<SfiaSkillCoverageItemDto[]> {
-    return await this.onetAdminService.getSfiaSkillCoverage(limit, category);
+    return await this.onetAdminService.getSfiaSkillCoverage(
+      query.limit,
+      query.category,
+    );
   }
 
   /**

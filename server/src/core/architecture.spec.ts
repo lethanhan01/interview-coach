@@ -52,7 +52,7 @@ const IMPORT_PATTERN = /from\s+['"]([^'"]+)['"]/g;
 
 // Các import bị cấm trong Controller để tránh vi phạm Presentation layer
 const CONTROLLER_FORBIDDEN_IMPORT =
-  /(?:prisma\.service|infrastructure\/database\/prisma|@nestjs\/bullmq|bullmq|openai|@supabase\/supabase-js)/i;
+  /(?:prisma\.service|@prisma\/client|infrastructure\/database\/prisma|@nestjs\/bullmq|bullmq|openai|@supabase\/supabase-js|axios|workflow\.service|infrastructure\/workflow)/i;
 
 function sourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {

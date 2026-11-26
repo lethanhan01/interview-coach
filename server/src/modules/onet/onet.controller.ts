@@ -9,6 +9,7 @@ import {
 import { ApiCommonErrors } from '@core/common/swagger/api-error-responses.decorator';
 import { OnetService } from './onet.service';
 import { SearchOnetOccupationsDto } from './dto/search-onet-occupations.dto';
+import { SearchOnetTechnologiesDto } from './dto/search-onet-technologies.dto';
 import { GetOnetTechParamDto } from './dto/get-onet-tech-param.dto';
 
 @Controller('onet')
@@ -23,6 +24,16 @@ export class OnetController {
   @ApiCommonErrors(401)
   async searchOccupations(@Query() dto: SearchOnetOccupationsDto) {
     return this.onetService.searchOccupations(dto.query, dto.limit ?? 10);
+  }
+
+  @Get('technologies')
+  @ApiOperation({ summary: 'Search O*NET software technologies by keyword' })
+  @ApiOkResponse({
+    description: 'List of matching O*NET software technologies',
+  })
+  @ApiCommonErrors(401)
+  async searchTechnologies(@Query() dto: SearchOnetTechnologiesDto) {
+    return this.onetService.searchTechnologies(dto.query, dto.limit ?? 30);
   }
 
   @Get('occupations/:socCode/tech')

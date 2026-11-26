@@ -108,6 +108,14 @@ describe('inferTargetSfiaLevel', () => {
       ),
     ).toBe(3);
   });
+
+  it('should safely classify manager titles and levels without misclassifying Junior managers (R6)', () => {
+    expect(inferTargetSfiaLevel(null, 'Junior Product Manager')).toBe(2);
+    expect(inferTargetSfiaLevel(null, 'Engineering Manager')).toBe(5);
+    expect(inferTargetSfiaLevel('manager', 'Software Engineer')).toBe(5);
+    expect(inferTargetSfiaLevel('fresher', 'Backend Developer')).toBe(2);
+    expect(inferTargetSfiaLevel(null, 'Product Manager')).toBe(3);
+  });
 });
 
 describe('SavedJobDescriptionService', () => {

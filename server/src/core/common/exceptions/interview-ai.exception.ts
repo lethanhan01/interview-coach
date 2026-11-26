@@ -1,19 +1,44 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { ErrorCode } from './error-code.enum';
 
+export interface InterviewAIExceptionOptions {
+  details?: unknown;
+  cause?: unknown;
+  metadata?: Record<string, unknown>;
+  isOperational?: boolean;
+}
+
 export class InterviewAIException extends HttpException {
+  public readonly details?: unknown;
+  // Explicit class property for cause so consumers can read it without
+  // relying on the native Node.js Error.cause (architectural clarity).
+  public override readonly cause: unknown;
+  public readonly metadata?: Record<string, unknown>;
+  public readonly isOperational: boolean;
+
   constructor(
     public readonly errorCode: ErrorCode,
-    statusCode: HttpStatus,
+    statusCode: HttpStatus = HttpStatus.BAD_REQUEST,
     message?: string,
+    options?: InterviewAIExceptionOptions,
   ) {
     super(
       {
         success: false,
         errorCode,
         message: message ?? errorCode,
+        details: options?.details ?? null,
       },
       statusCode,
+      { cause: options?.cause },
     );
+
+    this.details = options?.details;
+    this.cause = options?.cause;
+    this.metadata = options?.metadata;
+    this.isOperational = options?.isOperational ?? true;
+
+    // Giữ nguyên prototype chain cho instanceof checking
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }

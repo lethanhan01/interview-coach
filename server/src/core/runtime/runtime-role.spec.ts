@@ -20,12 +20,6 @@ const processorModules = [
     'ReportModule',
     'ComprehensiveReportProcessor',
   ],
-  [
-    '../../modules/media/media.module',
-    '../../modules/media/transcription.processor',
-    'MediaModule',
-    'TranscriptionProcessor',
-  ],
 ] as const;
 
 describe('resolveRuntimeRole', () => {

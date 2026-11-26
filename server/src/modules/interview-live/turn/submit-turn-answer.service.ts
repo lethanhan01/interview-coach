@@ -61,7 +61,6 @@ export class SubmitTurnAnswer {
       return {
         answerId: existing.id,
         feedbackQueued: !existing.skipped,
-        transcriptionPending: existing.transcriptionStatus === 'pending',
       };
     }
 
@@ -76,7 +75,6 @@ export class SubmitTurnAnswer {
       return {
         answerId: recorded.answerId,
         feedbackQueued: false,
-        transcriptionPending: false,
       };
     }
 
@@ -96,7 +94,6 @@ export class SubmitTurnAnswer {
     return {
       answerId: answer.id,
       feedbackQueued: false,
-      transcriptionPending: false,
     };
   }
 }

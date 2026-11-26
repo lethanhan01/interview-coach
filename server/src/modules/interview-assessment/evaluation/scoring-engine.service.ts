@@ -25,6 +25,15 @@ export interface SkippedFeedbackData {
   isFallback: boolean;
 }
 
+interface WeightAccumulator {
+  totalWeight: number;
+  totalPassedWeight: number;
+  coreWeight: number;
+  corePassedWeight: number;
+  seniorityWeight: number;
+  seniorityPassedWeight: number;
+}
+
 @Injectable()
 export class ScoringEngineService {
   private readonly logger = new Logger(ScoringEngineService.name);
@@ -52,39 +61,28 @@ export class ScoringEngineService {
       evaluations.map((ev) => [ev.criteriaId, Boolean(ev.passed)]),
     );
 
-    let totalWeight = 0;
-    let totalPassedWeight = 0;
-
-    let coreWeight = 0;
-    let corePassedWeight = 0;
-
-    let seniorityWeight = 0;
-    let seniorityPassedWeight = 0;
+    const acc: WeightAccumulator = {
+      totalWeight: 0,
+      totalPassedWeight: 0,
+      coreWeight: 0,
+      corePassedWeight: 0,
+      seniorityWeight: 0,
+      seniorityPassedWeight: 0,
+    };
 
     for (const criterion of rubricCriteria) {
-      const weight = Number(criterion.weight ?? 1.0);
       const isPassed = evalMap.get(criterion.id) ?? false;
-
-      totalWeight += weight;
-      if (isPassed) {
-        totalPassedWeight += weight;
-      }
-
-      const dimension = String(criterion.dimension || '')
-        .toLowerCase()
-        .trim();
-      if (dimension === 'core') {
-        coreWeight += weight;
-        if (isPassed) {
-          corePassedWeight += weight;
-        }
-      } else if (dimension === 'seniority') {
-        seniorityWeight += weight;
-        if (isPassed) {
-          seniorityPassedWeight += weight;
-        }
-      }
+      this.accumulateCriterion(criterion, isPassed, acc);
     }
+
+    const {
+      totalWeight,
+      totalPassedWeight,
+      coreWeight,
+      corePassedWeight,
+      seniorityWeight,
+      seniorityPassedWeight,
+    } = acc;
 
     const criteriaPassRate =
       totalWeight > 0 ? (totalPassedWeight / totalWeight) * 100 : 0;
@@ -103,6 +101,33 @@ export class ScoringEngineService {
       corePassRate: Math.round(corePassRate * 100) / 100,
       seniorityPassRate: Math.round(seniorityPassRate * 100) / 100,
     };
+  }
+
+  private accumulateCriterion(
+    criterion: BinaryEvaluationCriterion,
+    isPassed: boolean,
+    acc: WeightAccumulator,
+  ): void {
+    const weight = Number(criterion.weight ?? 1.0);
+    acc.totalWeight += weight;
+    if (isPassed) {
+      acc.totalPassedWeight += weight;
+    }
+
+    const dimension = String(criterion.dimension || '')
+      .toLowerCase()
+      .trim();
+    if (dimension === 'core') {
+      acc.coreWeight += weight;
+      if (isPassed) {
+        acc.corePassedWeight += weight;
+      }
+    } else if (dimension === 'seniority') {
+      acc.seniorityWeight += weight;
+      if (isPassed) {
+        acc.seniorityPassedWeight += weight;
+      }
+    }
   }
 
   /**
@@ -143,7 +168,6 @@ export class ScoringEngineService {
     rubricCriteria: BinaryEvaluationCriterion[],
     _targetLevel: number,
   ): SkippedFeedbackData {
-    void _targetLevel;
     const criteriaEvaluations: BinaryCriterionEvaluationResult[] = (
       rubricCriteria || []
     ).map((c) => ({

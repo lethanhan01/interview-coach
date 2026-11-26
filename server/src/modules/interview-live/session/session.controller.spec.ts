@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { of } from 'rxjs';
+import { of, firstValueFrom, throwError } from 'rxjs';
 import { SessionController } from './session.controller';
 import { SessionService } from './session.service';
 import { SseService } from '@infra/realtime/redis/sse.service';
@@ -171,12 +171,12 @@ describe('SessionController', () => {
 
   describe('SSE /sessions/:id/events', () => {
     it('xác thực ownership trước khi subscribe vào đúng session channel', async () => {
-      const observable = of({ data: 'event' });
+      const event = { type: 'session.status', data: { status: 'active' } };
+      const observable = of(event as any);
       mockSseService.subscribe.mockReturnValue(observable);
 
       const result = await controller.streamEvents('session-1', mockReq());
 
-      expect(result).toBe(observable);
       expect(mockSessionService.findById).toHaveBeenCalledWith(
         'session-1',
         'user-abc',
@@ -184,6 +184,21 @@ describe('SessionController', () => {
       expect(mockSseService.subscribe).toHaveBeenCalledWith(
         'sse:session:session-1',
       );
+      const emitted = await firstValueFrom(result);
+      expect(emitted).toEqual(event);
+    });
+
+    it('bắt lỗi trên stream và phát sự kiện error chuẩn hóa', async () => {
+      mockSseService.subscribe.mockReturnValue(
+        throwError(() => new Error('Redis connection lost')),
+      );
+
+      const result = await controller.streamEvents('session-1', mockReq());
+      const emitted = await firstValueFrom(result);
+
+      expect(emitted.type).toBe('session.error');
+      expect((emitted.data as any).error.code).toBe('INTERNAL_ERROR');
+      expect((emitted.data as any).error.message).toBe('Redis connection lost');
     });
 
     it('không subscribe khi session không thuộc user', async () => {

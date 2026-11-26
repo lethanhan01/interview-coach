@@ -1,8 +1,19 @@
-# Tài liệu dự án InterviewAI (AI Mock Interview)
+# Tài liệu dự án Intervia
 
-InterviewAI là ứng dụng AI Mock Interview — nền tảng luyện phỏng vấn cho sinh viên CNTT Việt Nam. Thư mục này chứa toàn bộ tài liệu từ giai đoạn khám phá vấn đề đến thiết kế hệ thống.
+Intervia là nền tảng luyện phỏng vấn AI chuẩn STAR & SFIA 9 dành cho sinh viên CNTT Việt Nam. Thư mục này chứa toàn bộ tài liệu từ giai đoạn khám phá vấn đề đến thiết kế và kiến trúc hệ thống.
 
-## Tài liệu hiện có
+## Tài liệu kiến trúc sống (Living Architecture Docs)
+
+Kho tài liệu kiến trúc chuẩn hóa hiện hành của hệ thống, được duy trì liên tục bám sát mã nguồn và phục vụ trực tiếp cho việc đọc hiểu, onboarding kỹ sư mới:
+
+| Phân hệ / Tài liệu | Mô tả | Trạng thái |
+| :--- | :--- | :---: |
+| [Bản đồ Kiến trúc Toàn diện (architecture/README.md)](architecture/README.md) | Tổng quan phân hệ kiến trúc, taxonomy và quy chuẩn tài liệu | 🟢 Hoàn thành |
+| [Quy chuẩn Quản trị Tài liệu (architecture/CONVENTIONS.md)](architecture/CONVENTIONS.md) | Cẩm nang taxonomy, naming và 5 phần cấu trúc chuẩn (Standard Anatomy) | 🟢 Hoàn thành |
+| [Kiến trúc Tổng thể Toàn hệ thống (architecture/overview/)](architecture/overview/README.md) | Pragmatic Polyglot Architecture & Strangler Fig Transition Pattern | 🟢 Hoàn thành |
+| [Audio Engine & Onboarding (architecture/audio-engine/)](architecture/audio-engine/README.md) | STT faster-whisper, Hybrid TTS, In-memory DSP & NestJS MediaModule | 🟢 Hoàn thành |
+
+## Tài liệu hiện có (Legacy Design Documents)
 
 ### Khám phá và yêu cầu
 
@@ -59,17 +70,18 @@ Hiện tại các  tài liệu đều đã  outdate, chưa cập nhật theo tr�
 
 ## Trình tự đọc
 
-**Người mới vào dự án:**
-Discovery Document → Glossary → SRS (phần tổng quan) → HLD
+**Người mới vào dự án (Onboarding Path):**
+[Bản đồ Kiến trúc (architecture/README.md)](architecture/README.md) → [Kiến trúc Toàn hệ thống (architecture/overview/)](architecture/overview/README.md) → [Audio Engine & Onboarding (architecture/audio-engine/)](architecture/audio-engine/README.md) → Discovery Document → Glossary
+
+**Bắt đầu phát triển AI Microservice:**
+[audio-engine/README.md](architecture/audio-engine/README.md) (mục Developer Onboarding Quickstart) → [python-ai-service-runtime.md](architecture/audio-engine/python-ai-service-runtime.md) → [contracts-and-testing.md](architecture/audio-engine/contracts-and-testing.md)
 
 **Bắt đầu thiết kế backend:**
-HLD → Database Design → SAD (phần AI pipeline)
-
-**Bắt đầu thiết kế frontend:**
-HLD → Session Type Spec → UI/UX Design (khi có)
+[Bản đồ Kiến trúc](architecture/README.md) → [server/CONVENTIONS.md](../server/CONVENTIONS.md) → [nestjs-integration-flow.md](architecture/audio-engine/nestjs-integration-flow.md) → Database Design
 
 **Xem lý do chọn công nghệ:**
-ADR-001 → ADR-007 (mỗi file ~1 trang, đọc theo thứ tự)
+[ADRs Index (architecture/adrs/)](architecture/adrs/README.md) → ADR-001 → ADR-007
+
 
 ## Cập nhật tài liệu này
 

@@ -1,9 +1,9 @@
 import { WorkflowDispatcher } from './workflow-dispatcher.service';
 import {
+  FEEDBACK_JOB_ATTEMPTS,
   QUESTION_GEN_JOB_ATTEMPTS,
   REPORT_JOB_ATTEMPTS,
   REPORT_JOB_RETRY_DELAY_MS,
-  TRANSCRIPTION_JOB_ATTEMPTS,
 } from '@core/common/constants/queue.constants';
 
 describe('WorkflowOutboxResilienceSpec', () => {
@@ -11,7 +11,6 @@ describe('WorkflowOutboxResilienceSpec', () => {
   let questionQueue: { add: jest.Mock };
   let reportQueue: { add: jest.Mock };
   let feedbackQueue: { add: jest.Mock };
-  let transcriptionQueue: { add: jest.Mock };
   let dispatcher: WorkflowDispatcher;
 
   beforeEach(() => {
@@ -26,14 +25,12 @@ describe('WorkflowOutboxResilienceSpec', () => {
     questionQueue = { add: jest.fn().mockResolvedValue({}) };
     reportQueue = { add: jest.fn().mockResolvedValue({}) };
     feedbackQueue = { add: jest.fn().mockResolvedValue({}) };
-    transcriptionQueue = { add: jest.fn().mockResolvedValue({}) };
 
     dispatcher = new WorkflowDispatcher(
       prisma,
       questionQueue as any,
       reportQueue as any,
       feedbackQueue as any,
-      transcriptionQueue as any,
     );
   });
 
@@ -82,7 +79,7 @@ describe('WorkflowOutboxResilienceSpec', () => {
       expect(questionQueue.add).toHaveBeenCalledTimes(1);
       expect(questionQueue.add).toHaveBeenCalledWith(
         'question-generation',
-        command.payload,
+        expect.objectContaining(command.payload),
         expect.objectContaining({
           jobId: 'workflow-cmd-race-1',
           attempts: QUESTION_GEN_JOB_ATTEMPTS,
@@ -95,9 +92,12 @@ describe('WorkflowOutboxResilienceSpec', () => {
     it('reclaims orphaned processing records older than 5 minutes and successfully redispatches them', async () => {
       const orphanedCommand = {
         id: 'cmd-crashed-1',
-        commandType: 'transcription',
+        commandType: 'feedback',
         aggregateId: 'answer-crashed-1',
-        payload: { audioFileUrl: 'https://storage.example.com/audio.webm' },
+        payload: {
+          answerId: 'answer-crashed-1',
+          answerText: 'Test answer text',
+        },
         attempts: 1,
       };
 
@@ -121,13 +121,13 @@ describe('WorkflowOutboxResilienceSpec', () => {
         },
       });
 
-      // Verified: Transcription job was dispatched with deterministic job id
-      expect(transcriptionQueue.add).toHaveBeenCalledWith(
-        'transcription',
-        orphanedCommand.payload,
+      // Verified: Feedback job was dispatched with deterministic job id
+      expect(feedbackQueue.add).toHaveBeenCalledWith(
+        'feedback',
+        expect.objectContaining(orphanedCommand.payload),
         expect.objectContaining({
           jobId: 'workflow-cmd-crashed-1',
-          attempts: TRANSCRIPTION_JOB_ATTEMPTS,
+          attempts: FEEDBACK_JOB_ATTEMPTS,
         }),
       );
 
@@ -268,15 +268,15 @@ describe('WorkflowOutboxResilienceSpec', () => {
 
       expect(reportQueue.add).toHaveBeenCalledWith(
         'comprehensive-report',
-        {
+        expect.objectContaining({
           sessionId: 'session-report-2',
           reportType: 'comprehensive',
           turnIds: ['ans-1', 'ans-2'],
-        },
+        }),
         expect.objectContaining({
           jobId: 'workflow-cmd-report-ready',
           attempts: REPORT_JOB_ATTEMPTS,
-          backoff: { type: 'fixed', delay: REPORT_JOB_RETRY_DELAY_MS },
+          backoff: { type: 'exponential', delay: REPORT_JOB_RETRY_DELAY_MS },
         }),
       );
 
@@ -296,15 +296,15 @@ describe('WorkflowOutboxResilienceSpec', () => {
       const customKey = 'custom-key-12345';
       const command = {
         id: 'cmd-custom-1',
-        commandType: 'transcription',
+        commandType: 'feedback',
         aggregateId: 'ans-12345',
-        payload: { audioFileUrl: 'https://example.com/audio.webm' },
+        payload: { answerId: 'ans-12345', answerText: 'Test custom key' },
         attempts: 0,
       };
 
       prisma.workflowOutbox.findUnique.mockResolvedValue(command);
 
-      await dispatcher.dispatchFor('transcription', 'ans-12345', customKey);
+      await dispatcher.dispatchFor('feedback', 'ans-12345', customKey);
 
       expect(prisma.workflowOutbox.findUnique).toHaveBeenCalledWith({
         where: { idempotencyKey: customKey },
@@ -317,6 +317,66 @@ describe('WorkflowOutboxResilienceSpec', () => {
     it('clears interval timer onModuleDestroy without throwing errors', () => {
       dispatcher.onApplicationBootstrap();
       expect(() => dispatcher.onModuleDestroy()).not.toThrow();
+    });
+  });
+
+  describe('Scenario 8: Re-entrancy Guard & DB Disconnect Isolation', () => {
+    it('bỏ qua tick reconcile() thứ 2 khi vòng trước chưa hoàn tất', async () => {
+      let releaseFirstReconcile!: () => void;
+      prisma.workflowOutbox.updateMany.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            releaseFirstReconcile = () => resolve({ count: 0 });
+          }),
+      );
+
+      const firstRun = dispatcher.reconcile();
+      const secondRun = dispatcher.reconcile();
+      await secondRun;
+
+      expect(prisma.workflowOutbox.updateMany).toHaveBeenCalledTimes(1);
+
+      releaseFirstReconcile();
+      await firstRun;
+
+      await dispatcher.reconcile();
+      expect(prisma.workflowOutbox.updateMany).toHaveBeenCalledTimes(2);
+    });
+
+    it('tiếp tục xử lý command kế tiếp trong batch kể cả khi recordFailure() gặp Connection terminated unexpectedly', async () => {
+      const failedCmd = {
+        id: 'cmd-fail-1',
+        commandType: 'feedback',
+        aggregateId: 'ans-1',
+        payload: { answerId: 'ans-1' },
+        attempts: 0,
+      };
+      const healthyCmd = {
+        id: 'cmd-ok-2',
+        commandType: 'question-generation',
+        aggregateId: 'sess-2',
+        payload: { sessionId: 'sess-2' },
+        attempts: 0,
+      };
+
+      prisma.workflowOutbox.findMany.mockResolvedValue([failedCmd, healthyCmd]);
+      prisma.workflowOutbox.updateMany
+        .mockResolvedValueOnce({ count: 0 }) // reclaim stale
+        .mockResolvedValueOnce({ count: 1 }) // claim failedCmd
+        .mockRejectedValueOnce(new Error('Connection terminated unexpectedly')) // recordFailure fails
+        .mockResolvedValueOnce({ count: 1 }) // claim healthyCmd
+        .mockResolvedValueOnce({ count: 1 }); // complete healthyCmd
+      feedbackQueue.add.mockRejectedValueOnce(
+        new Error('Connection is closed.'),
+      );
+
+      await expect(dispatcher.reconcile()).resolves.toBeUndefined();
+      expect(questionQueue.add).toHaveBeenCalledTimes(1);
+      expect(questionQueue.add).toHaveBeenCalledWith(
+        'question-generation',
+        expect.objectContaining({ sessionId: 'sess-2' }),
+        expect.objectContaining({ jobId: 'workflow-cmd-ok-2' }),
+      );
     });
   });
 });

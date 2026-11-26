@@ -9,6 +9,9 @@ import { ConfigService } from '@nestjs/config';
 import { Observable, map } from 'rxjs';
 import Redis from 'ioredis';
 
+const DEFAULT_REDIS_CONNECT_TIMEOUT_MS = 10_000;
+const DEFAULT_REDIS_COMMAND_TIMEOUT_MS = 3_000;
+
 interface SseMessage {
   event: string;
   data: unknown;
@@ -25,12 +28,22 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     const password = this.config.get<string>('REDIS_PASSWORD') || undefined;
+    const connectTimeout = this.readPositiveMs(
+      'REDIS_CONNECT_TIMEOUT_MS',
+      DEFAULT_REDIS_CONNECT_TIMEOUT_MS,
+    );
+    const commandTimeout = this.readPositiveMs(
+      'REDIS_COMMAND_TIMEOUT_MS',
+      DEFAULT_REDIS_COMMAND_TIMEOUT_MS,
+    );
     const options = {
       host: this.config.get<string>('REDIS_HOST'),
       port: this.config.get<number>('REDIS_PORT'),
       ...(password ? { password } : {}),
+      connectTimeout,
     };
-    this.publisher = new Redis(options);
+    this.publisher = new Redis({ ...options, commandTimeout });
+    // Subscriber stays in subscribe mode, so no commandTimeout is applied.
     this.subscriber = new Redis(options);
 
     this.publisher.on('error', (err: Error) => {
@@ -41,12 +54,51 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
+  private readPositiveMs(key: string, fallback: number): number {
+    const value = Number(this.config.get<number | string>(key));
+    return Number.isFinite(value) && value > 0 ? value : fallback;
+  }
+
   async onModuleDestroy() {
-    await Promise.all([this.publisher.quit(), this.subscriber.quit()]);
+    const clients = [
+      { name: 'publisher', client: this.publisher },
+      { name: 'subscriber', client: this.subscriber },
+    ].filter((item): item is { name: string; client: Redis } =>
+      Boolean(item.client),
+    );
+
+    await Promise.allSettled(
+      clients.map(async ({ name, client }) => {
+        try {
+          await client.quit();
+        } catch (error: unknown) {
+          this.logger.warn(
+            `SSE Redis ${name} quit failed during shutdown; forcing disconnect: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+          client.disconnect();
+        }
+      }),
+    );
   }
 
   async emit(channel: string, event: string, data: unknown): Promise<void> {
     await this.publisher.publish(channel, JSON.stringify({ event, data }));
+  }
+
+  async emitError(
+    channel: string,
+    code: string,
+    message: string,
+  ): Promise<void> {
+    await this.emit(channel, 'session.error', {
+      error: {
+        code,
+        message,
+      },
+      timestamp: new Date().toISOString(),
+    });
   }
 
   subscribe(channel: string): Observable<MessageEvent> {
@@ -54,8 +106,13 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
       const subscriberCount = this.channelSubscribers.get(channel) ?? 0;
       this.channelSubscribers.set(channel, subscriberCount + 1);
       if (subscriberCount === 0) {
-        void this.subscriber.subscribe(channel, (err) => {
-          if (err) observer.error(err);
+        this.subscriber.subscribe(channel).catch((err: unknown) => {
+          this.logger.warn(
+            `Failed to subscribe to Redis channel ${channel}: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          );
+          observer.error(err);
         });
       }
       const handler = (receivedChannel: string, message: string) => {
@@ -73,7 +130,12 @@ export class SseService implements OnModuleInit, OnModuleDestroy {
           (this.channelSubscribers.get(channel) ?? 1) - 1;
         if (remainingSubscribers <= 0) {
           this.channelSubscribers.delete(channel);
-          this.subscriber.unsubscribe(channel).catch(() => {});
+          // convention: Rule 6 - Non-fatal cleanup: unsubscription error during client disconnect
+          this.subscriber.unsubscribe(channel).catch((err: unknown) => {
+            this.logger.debug?.(
+              `Failed to unsubscribe from Redis channel ${channel}: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          });
         } else this.channelSubscribers.set(channel, remainingSubscribers);
       };
     }).pipe(

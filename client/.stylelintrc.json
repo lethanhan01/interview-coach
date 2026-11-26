@@ -1,0 +1,22 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "rules": {
+    "color-no-hex": true,
+    "function-disallowed-list": ["rgb", "rgba", "hsl", "hsla"],
+    "function-no-unknown": [
+      true,
+      {
+        "ignoreFunctions": ["rem", "em", "light-dark"]
+      }
+    ],
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": ["mixin", "add-mixin", "define-mixin"]
+      }
+    ],
+    "media-query-no-invalid": null,
+    "selector-class-pattern": null,
+    "declaration-property-value-no-unknown": null
+  }
+}

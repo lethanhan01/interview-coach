@@ -1,0 +1,140 @@
+'use client'
+
+import {
+  ActionIcon,
+  Badge,
+  Button,
+  Chip,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core'
+import { IconPlus, IconRotate, IconSearch, IconX } from '@tabler/icons-react'
+
+export interface OnetSfiaSummaryBarProps {
+  totalCount: number
+  filteredCount: number
+  coreCount: number
+  secondaryCount: number
+  searchQuery: string
+  onSearchChange: (q: string) => void
+  activeFilter: 'all' | 'core' | 'secondary'
+  onFilterChange: (f: 'all' | 'core' | 'secondary') => void
+  onOpenAddModal: () => void
+  onOpenResetModal: () => void
+  isMutating?: boolean
+}
+
+export function OnetSfiaSummaryBar({
+  totalCount,
+  filteredCount,
+  coreCount,
+  secondaryCount,
+  searchQuery,
+  onSearchChange,
+  activeFilter,
+  onFilterChange,
+  onOpenAddModal,
+  onOpenResetModal,
+  isMutating = false,
+}: Readonly<OnetSfiaSummaryBarProps>) {
+  return (
+    <Paper withBorder p="xs" radius="md">
+      <Stack gap="xs">
+        <Group justify="space-between" align="center" wrap="wrap">
+          <Group gap="xs">
+            <Title order={3} size="h5">
+              Danh sách Ánh xạ Kỹ năng SFIA 9
+            </Title>
+            <Badge color="neutral" variant="outline" size="sm">
+              {totalCount} kỹ năng
+            </Badge>
+          </Group>
+
+          <Group gap="xs">
+            <Button
+              size="sm"
+              variant="outline"
+              color="danger"
+              leftSection={<IconRotate size={15} stroke={1.5} />}
+              onClick={onOpenResetModal}
+              disabled={isMutating}
+            >
+              Khôi phục Mẫu
+            </Button>
+
+            <Button
+              size="sm"
+              color="brand"
+              leftSection={<IconPlus size={15} stroke={1.5} />}
+              onClick={onOpenAddModal}
+              disabled={isMutating}
+            >
+              Thêm ánh xạ
+            </Button>
+          </Group>
+        </Group>
+
+        <Group justify="space-between" align="center" wrap="wrap">
+          <TextInput
+            size="sm"
+            flex={1}
+            miw={220}
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.currentTarget.value)}
+            placeholder="Tìm kiếm mã hoặc tên kỹ năng SFIA..."
+            aria-label="Tìm kiếm kỹ năng SFIA"
+            leftSection={<IconSearch size={15} stroke={1.5} />}
+            rightSection={
+              searchQuery ? (
+                <ActionIcon
+                  size="sm"
+                  variant="subtle"
+                  color="neutral"
+                  aria-label="Xóa tìm kiếm"
+                  onClick={() => onSearchChange('')}
+                >
+                  <IconX size={14} stroke={1.5} />
+                </ActionIcon>
+              ) : null
+            }
+          />
+
+          <Group gap="xs">
+            <Text size="sm" c="dimmed">
+              Hiển thị {filteredCount} / {totalCount}
+            </Text>
+
+            <Chip.Group
+              multiple={false}
+              value={activeFilter}
+              onChange={(val) =>
+                onFilterChange((val as 'all' | 'core' | 'secondary') || 'all')
+              }
+            >
+              <Group gap="xs">
+                <Chip value="all" size="sm" variant="outline">
+                  Tất cả ({totalCount})
+                </Chip>
+                <Chip value="core" size="sm" variant="outline" color="brand">
+                  Cốt lõi ({coreCount})
+                </Chip>
+                <Chip
+                  value="secondary"
+                  size="sm"
+                  variant="outline"
+                  color="neutral"
+                >
+                  Bổ trợ ({secondaryCount})
+                </Chip>
+              </Group>
+            </Chip.Group>
+          </Group>
+        </Group>
+      </Stack>
+    </Paper>
+  )
+}

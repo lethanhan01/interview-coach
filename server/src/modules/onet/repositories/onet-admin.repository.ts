@@ -77,7 +77,7 @@ export class OnetAdminRepository implements IOnetAdminRepository {
       return await this.getClient(tx).$queryRaw<SocMajorGroupRawRow[]>`
         SELECT 
           SUBSTRING(occ.onetsoc_code, 1, 2) AS "code",
-          COUNT(occ.onetsoc_code)::int AS "totalOccupations",
+          COUNT(DISTINCT occ.onetsoc_code)::int AS "totalOccupations",
           COUNT(DISTINCT m.onet_soc_code)::int AS "mappedOccupations"
         FROM onet.occupation_data occ
         LEFT JOIN public.onet_sfia_mappings m ON occ.onetsoc_code = m.onet_soc_code
@@ -94,19 +94,28 @@ export class OnetAdminRepository implements IOnetAdminRepository {
 
   async searchSidebarOccupations(
     groupCode?: string,
-    mappedOnly?: boolean,
+    mappingStatus?: 'all' | 'mapped' | 'unmapped' | boolean,
     search?: string,
     limit = 50,
     tx?: Prisma.TransactionClient,
   ): Promise<SidebarOccupationRawRow[]> {
     try {
+      const resolvedStatus: 'all' | 'mapped' | 'unmapped' =
+        typeof mappingStatus === 'boolean'
+          ? mappingStatus
+            ? 'mapped'
+            : 'all'
+          : (mappingStatus ?? 'all');
+
       const conditions: Prisma.Sql[] = [Prisma.sql`1=1`];
       if (groupCode) {
         const groupPattern = `${groupCode}-%`;
         conditions.push(Prisma.sql`occ.onetsoc_code LIKE ${groupPattern}`);
       }
-      if (mappedOnly) {
+      if (resolvedStatus === 'mapped') {
         conditions.push(Prisma.sql`COALESCE(m.mapping_count, 0) > 0`);
+      } else if (resolvedStatus === 'unmapped') {
+        conditions.push(Prisma.sql`COALESCE(m.mapping_count, 0) = 0`);
       }
       if (search) {
         const searchPattern = `%${search}%`;
@@ -146,10 +155,15 @@ export class OnetAdminRepository implements IOnetAdminRepository {
     search?: string,
     sortBy: 'interviews' | 'jds' | 'mappings' = 'interviews',
     limit = 10,
+    groupCode?: string,
     tx?: Prisma.TransactionClient,
   ): Promise<TopOccupationRawRow[]> {
     try {
       const conditions: Prisma.Sql[] = [Prisma.sql`1=1`];
+      if (groupCode) {
+        const groupPattern = `${groupCode}-%`;
+        conditions.push(Prisma.sql`occ.onetsoc_code LIKE ${groupPattern}`);
+      }
       if (search) {
         const searchPattern = `%${search}%`;
         conditions.push(
@@ -212,10 +226,13 @@ export class OnetAdminRepository implements IOnetAdminRepository {
   }
 
   async getSfiaSkillCoverage(
-    limit = 20,
+    limit?: number,
     tx?: Prisma.TransactionClient,
   ): Promise<SfiaSkillCoverageRawRow[]> {
     try {
+      const limitClause =
+        typeof limit === 'number' ? Prisma.sql`LIMIT ${limit}` : Prisma.empty;
+
       return await this.getClient(tx).$queryRaw<SfiaSkillCoverageRawRow[]>`
         SELECT 
           m.sfia_skill_code AS "code",
@@ -228,7 +245,7 @@ export class OnetAdminRepository implements IOnetAdminRepository {
         FROM public.onet_sfia_mappings m
         GROUP BY m.sfia_skill_code
         ORDER BY "mappedOccupationsCount" DESC, "coreCount" DESC
-        LIMIT ${limit};
+        ${limitClause};
       `;
     } catch (error) {
       this.logger.error(
@@ -645,6 +662,27 @@ export class OnetAdminRepository implements IOnetAdminRepository {
     } catch (error) {
       this.logger.error(
         `Error deleting occupation mappings for "${socCode}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
+  }
+
+  async resetUserDefinedMappings(
+    socCode: string,
+  ): Promise<OccupationSfiaMappingRawRow[]> {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        await tx.onetSfiaMapping.deleteMany({
+          where: {
+            onetSocCode: socCode,
+            source: 'USER_DEFINED',
+          },
+        });
+        return this.getOccupationSfiaMappings(socCode, tx);
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error resetting USER_DEFINED mappings for "${socCode}": ${error instanceof Error ? error.message : String(error)}`,
       );
       throw error;
     }

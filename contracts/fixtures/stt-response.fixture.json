@@ -1,0 +1,28 @@
+{
+  "text": "Tôi có 3 năm kinh nghiệm làm việc với kiến trúc microservices và Docker.",
+  "language": "vi",
+  "durationSeconds": 35.8,
+  "metrics": {
+    "wpm": 134,
+    "fillerWordCount": 2,
+    "fillerWords": ["ừm", "kiểu như"],
+    "pauseCount": 1,
+    "totalPauseDurationSeconds": 1.8,
+    "speechDurationSeconds": 34.0,
+    "confidenceScore": 96.4
+  },
+  "words": [
+    {
+      "word": "Tôi",
+      "start": 0.42,
+      "end": 0.68,
+      "probability": 0.99
+    },
+    {
+      "word": "có",
+      "start": 0.7,
+      "end": 0.88,
+      "probability": 0.98
+    }
+  ]
+}
